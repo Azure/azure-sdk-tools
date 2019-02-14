@@ -19,7 +19,7 @@ class WardenConfiguration():
             help = 'The repo directory that this tool should be scanning.',
             required = True)
         parser.add_argument(
-            '-y',
+            '-c',
             '--config-location',
             dest = 'config_location',
             required = False,

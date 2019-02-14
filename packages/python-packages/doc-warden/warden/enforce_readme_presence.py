@@ -77,8 +77,8 @@ def check_python_readmes(configuration):
     expected_readmes, omitted_readmes = get_file_sets(configuration, '*/setup.py')
     missing_expected_readme_locations = []
 
-    for expected_location in expected_readme_locations:
-        result = find_alongside_file(expected_location, 'readme.md')
+    for expected_location in expected_readmes:
+        result = find_alongside_file(expected_location, 'readme.md') or find_alongside_file(expected_location, 'readme.rst')
         if not result:
             missing_expected_readme_locations.append(os.path.dirname(expected_location))
 

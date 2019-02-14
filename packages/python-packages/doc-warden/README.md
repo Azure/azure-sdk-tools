@@ -13,26 +13,38 @@ Features:
 
 This package is under development, and as such Python version compatibility has not been finalized at this time.
 
-## PreRequisites
+## Prerequisites
 This package is intended to be run as part of a pipeline within Azure DevOps. As such, [Python](https://www.python.org/downloads/) must be installed prior to attempting to install or use `Doc-Warden.` While `pip` comes pre-installed on most modern Python installs, if `pip` is an unrecognized command when attempting to install `warden`, run the following command **after** your Python installation is complete.
+
+In addition, `warden` is distributed using `setuptools` and `wheel`, so those packages should also be present prior to install. 
 
 ```
 /:> python -m ensurepip
+/:> pip install setuptools wheel
 ```
 
 ## Usage
 
-There are two primary ways of running `warden`.  One, `configured` mode, looks for a target `.docsettings.yml` file within the target repo. 
+Right now, `warden` has a single command.  `scan`, which by default looks for a target `.docsettings.yml` file within the target repo. However, all the parameters that can be pulled from the `.docsettings` files will **override** whatever is placed within the `.docsettings` file.
 
 Example usage:
 
 ```
+
 <pre-step, clone target repository>
 ...
-
-/:> pip install https://azuresdkscratch.blob.core.windows.net/wheel/latest.whl
+/:> pip install setuptools wheel
+/:> sudo pip install doc-warden
 /:> ward scan -d $(Build.SourcesDirectory)
+
 ```
+**Notes for example above**
+
+* Devops is a bit finicky with registering a console entry point, hence the `sudo` just on the installation. `sudo` is only required on devops machines.
+* Assumption is that the `.docsettings` file is placed at the root of the repository.
+    * To provide a different path (like `azure-sdk-for-java` does...), use: 
+        * `ward scan -d $(Build.SourcesDirectory) -c $(Build.SourcesDirectory)/eng/.docsettings.yml`
+
 ##### Parameter Options
 
 `command` 
@@ -67,10 +79,9 @@ When should we expect a readme to be present?
 
 #### .Net
 
-Currently, the repository structure for .Net is simply too chaotic to match by convention. As such, this tool should run only against a directory of actual generated `nupkgs` vs the standard repo structure.
-
 A package is indicated by:
-* a `*.nupkg` file
+* a `*.csproj` file
+    * Project file does not end with `tests.csproj`
 
 #### Python
 
@@ -93,7 +104,7 @@ A package is indicated by:
 
 #### Control, the `.docsettings.yml` File, and You
 
-Special cases often need to be configurred. It seems logical that there needs be a central location (per repo) to override conventional settings. To that end, a new `.docsettings.yml` file will be added to each repo. 
+Special cases often need to be configured. It seems logical that there needs be a central location (per repo) to override conventional settings. To that end, a new `.docsettings.yml` file will be added to each repo. 
 
 ```
 <repo-root>
@@ -124,10 +135,6 @@ The above configuration tells `warden`...
 - To omit any paths under `archive/` from the readme checks.
 
 Possible values for `language` right now are `['net', 'java', 'js', 'python']`. Greater than one target language is not currently supported.
-
-#### Enforcing Readme Content
-
-PENDING.
 
 ## Provide Feedback
 

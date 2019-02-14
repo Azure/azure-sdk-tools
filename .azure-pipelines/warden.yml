@@ -1,0 +1,39 @@
+trigger:
+- master
+
+jobs:
+- job: 'Build'
+
+  pool:
+    vmImage: 'ubuntu-16.04'  
+
+  steps:
+  - task: UsePythonVersion@0
+    displayName: 'Use Python 3.6'
+    inputs:
+      versionSpec: 3.6
+
+  - script: |
+     pip install setuptools 
+     pip install wheel twine readme-renderer[md]
+    displayName: 'Prep Environment'
+
+  - script: |
+      cd $(Build.SourcesDirectory)/packages/python-packages/doc-warden/
+      python setup.py bdist_wheel -d $(Build.ArtifactStagingDirectory)
+    displayName: 'Build Package'
+
+  - script: |
+      twine check $(Build.ArtifactStagingDirectory)/*
+    displayName: 'Verify Readme'
+
+  - task: PublishBuildArtifacts@1
+    displayName: 'Publish Artifacts'
+    condition: succeededOrFailed()
+
+  - task: ms.vss-governance-buildtask.governance-build-task-component-detection.ComponentGovernanceComponentDetection@0
+    # ComponentGovernance is currently unable to run on pull requests of public projects. Running on non-PR
+    # builds should be sufficient.
+    condition: and(succeededOrFailed(), ne(variables['Build.Reason'], 'PullRequest'))
+    displayName: 'Component Detection'
+

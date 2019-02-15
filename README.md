@@ -4,9 +4,9 @@ This repository contains useful tools that the Azure SDK team utilizes across th
 
 # Index
 
-| Package or Intent | Path                                    | Description                                                     |
-|-------------------|-----------------------------------------|-----------------------------------------------------------------|
-| doc-warden        | [Readme](packages/python-packages/doc-warden/README.md) | A tool used to enforce readme standards across Azure SDK Repos. |
+| Package or Intent | Path                                    | Description                                                     | Status   |
+|-------------------|-----------------------------------------|-----------------------------------------------------------------|----------|
+| doc-warden        | [Readme](packages/python-packages/doc-warden/README.md) | A tool used to enforce readme standards across Azure SDK Repos. |[![Build Status](https://dev.azure.com/azure-sdk/public/_apis/build/status/108?branchName=master)](https://dev.azure.com/azure-sdk/public/_build/latest?definitionId=108&branchName=master) |
 
 # Contributing
 

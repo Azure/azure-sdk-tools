@@ -1,0 +1,6 @@
+[packaging]
+auto_update = true
+package_name = "doc-warden"
+package_pprint_name = "Doc Warden"
+is_stable = false
+is_arm = false

@@ -11,7 +11,6 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace PixelServer.Controllers
 {
-    [Route("api/impressions")]
     [ApiController]
     public class TrackingController : ControllerBase
     {
@@ -31,6 +30,7 @@ namespace PixelServer.Controllers
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>
+        [Route("api/impressions/{*path}")]
         [HttpGet]
         public IActionResult Get(string path)
         {
@@ -42,7 +42,7 @@ namespace PixelServer.Controllers
 
             return new ImageActionResult();
         }
-
+        
         private string getCachedVisitorStatus(System.Net.IPAddress address)
         {
             if (!_cache.TryGetValue(address, out _))

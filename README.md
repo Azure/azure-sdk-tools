@@ -4,10 +4,11 @@ This repository contains useful tools that the Azure SDK team utilizes across th
 
 # Index
 
-| Package or Intent | Path                                    | Description                                                     | Status   |
-|-------------------|-----------------------------------------|-----------------------------------------------------------------|----------|
-| doc-warden        | [Readme](packages/python-packages/doc-warden/README.md) | A tool used to enforce readme standards across Azure SDK Repos. |[![Build Status](https://dev.azure.com/azure-sdk/public/_apis/build/status/108?branchName=master)](https://dev.azure.com/azure-sdk/public/_build/latest?definitionId=108&branchName=master) |
-| pixel-server      | [Readme](packages/web/pixel-server/README.md) | A tiny ASP.NET Core site used to serve a pixel and record impressions. | Not Yet Enabled |
+| Package or Intent    | Path                                    | Description                                                     | Status   |
+|----------------------|-----------------------------------------|-----------------------------------------------------------------|----------|
+| doc-warden           | [Readme](packages/python-packages/doc-warden/README.md) | A tool used to enforce readme standards across Azure SDK Repos. |[![Build Status](https://dev.azure.com/azure-sdk/public/_apis/build/status/108?branchName=master)](https://dev.azure.com/azure-sdk/public/_build/latest?definitionId=108&branchName=master) |
+| pixel-server         | [Readme](packages/web/pixel-server/README.md) | A tiny ASP.NET Core site used to serve a pixel and record impressions. | Not Yet Enabled |
+| pixel insertion tool | [Readme](scripts/python/readme_tracking/README.md) | A tool used to insert the image reference. Served by `pixel server`.  | Not Yet Enabled |
 
 # Contributing
 

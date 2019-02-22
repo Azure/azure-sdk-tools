@@ -1,20 +1,15 @@
-# ------------------------------------------------------------------------------
 # Copyright (c) Microsoft Corporation. All rights reserved.
-# Licensed under the MIT License. See License.txt in the project 
-# root for license information.
-# ------------------------------------------------------------------------------
+# Licensed under the MIT License.
+
 from __future__ import print_function
 
-import argparse
-import yaml
 import pathlib
 import os
 import glob
 import xml.etree.ElementTree as ET
 import fnmatch
 import zipfile
-import re
-from .WardenConfiguration import WardenConfiguration
+from .warden_common import check_match, walk_directory_for_pattern, get_omitted_files
 
 # python 3 transitioned StringIO to be part of `io` module. 
 # python 2 needs the old version however
@@ -23,35 +18,14 @@ try:
 except ImportError:
     from io import StringIO
 
-DEFAULT_LOCATION = '.docsettings.yml'
-
-def return_true(param):
-    return True
-
 # default option for handling an uncrecognized language
 def unrecognized_option(configuration):
     print('Argument {} provided is not a supported option'.format(configuration.scan_language))
     exit(1)
 
-# CONFIGURATION. ENTRY POINT. EXECUTION.
-def console_entry_point():
-    cfg = WardenConfiguration()
-    print(cfg.dump())
-
-    command_selector = {
-        'scan': scan_repo,
-    }
-    
-    if cfg.command in command_selector:
-        command_selector.get(cfg.command)(cfg)
-    else:
-        print('Unrecognized command invocation {}.'.format(cfg.command))
-        exit(1)
-
-def scan_repo(config):
+def find_missing_readmes(config):
     missing_readme_paths = check_package_readmes(config)
     results(missing_readme_paths, config)
-
 
 # print results
 def results(missing_readme_paths, config):
@@ -167,41 +141,6 @@ def get_file_sets(configuration, target_pattern, lambda_check = None):
     omitted_files = get_omitted_files(configuration)
 
     return list(set(expected_locations) - set(omitted_files)), set(omitted_files).intersection(expected_locations) 
-
-# gets the set of files in the target directory that have explicitly been omitted in the config settings
-def get_omitted_files(configuration):
-    target_directory = configuration.target_directory
-    omitted_paths = []
-    dirs = configuration.omitted_paths or []
-
-    # single special case here. if wildcard match at the beginning, do not join, use the pattern as is
-    adjusted_dirs = [pattern if pattern.startswith("*") else os.path.join(target_directory, pattern) for pattern in dirs]
-    omitted_paths.extend(walk_directory_for_pattern(target_directory, adjusted_dirs, None))
-
-    return omitted_paths
-
-# Returns a list of files under a target directory. The files included will match any of the
-# target_patterns AND the lambda_check function. 
-def walk_directory_for_pattern(target_directory, target_patterns, lambda_check = None):
-    expected_locations = []
-    target_directory = os.path.normpath(target_directory)
-    normalized_target_patterns = [os.path.normpath(pattern) for pattern in target_patterns]
-    check_function = lambda_check or return_true
-
-    # walk the folders, filter to the patterns established
-    for folder, subfolders, files in os.walk(target_directory): 
-        for file in files:
-            file_path = os.path.join(folder, file)
-            if check_match(file_path, normalized_target_patterns) and check_function(file_path):
-                expected_locations.append(file_path)
-
-    return expected_locations
-
-# we want to walk the files as few times as possible. as such, for omitted_files, we provide a SET 
-# of patterns that we want to omit. This function simply checks 
-def check_match(file_path, normalized_target_patterns):
-    return any([fnmatch.fnmatch(file_path, normalized_target_pattern) 
-                for normalized_target_pattern in normalized_target_patterns])
 
 # namespaces in xml really mess with xmlTree: https://bugs.python.org/issue18304
 # this function provides a workaround for both parsing an xml file as well as REMOVING said namespaces

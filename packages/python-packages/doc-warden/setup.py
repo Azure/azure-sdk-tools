@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
 from setuptools import setup, find_packages
 import setuptools
 
@@ -25,7 +28,7 @@ setup(
     description=DESCRIPTION,
     long_description=long_description,
     long_description_content_type='text/markdown',
-    url='https://github.com/Azure/azure-sdk-tools/packages/python-packages/',
+    url='https://github.com/Azure/azure-sdk-tools/',
     author='Microsoft Corporation',
     author_email='azuresdkengsysadmins@microsoft.com',
 
@@ -45,7 +48,11 @@ setup(
     ],
     packages=find_packages(),
     install_requires = [
-        'pyyaml',
+        'pyyaml', # docsettings file parse
+        'markdown2', # parsing markdown to html
+        'docutils', # parsing rst to html
+        'pygments', # docutils uses pygments for parsing rst to html
+        'beautifulsoup4', # parsing of generated html
         'pathlib'
     ],
     entry_points = {

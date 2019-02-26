@@ -5,13 +5,12 @@ Every CI build owned by the Azure-SDK team also needs to verify that the documen
 Features:
 
 * Enforces Readme Standards
-    - [x] Readmes present 
-    - [ ] Readmes have appropriate contents
-    - [ ] Files issues for failed standards checks
-        - [ ] Exit code > 0 for issues discovered
-* Generates report for included observed packages
+    - Readmes present - *completed*
+    - Readmes have appropriate contents - *completed*
+    - Files issues for failed standards checks - *pending*
+* Generates report for included observed packages - *pending*
 
-This package is under development, and as such Python version compatibility has not been finalized at this time.
+This package is tested on Python 2.7 -> 3.8.
 
 ## Prerequisites
 This package is intended to be run as part of a pipeline within Azure DevOps. As such, [Python](https://www.python.org/downloads/) must be installed prior to attempting to install or use `Doc-Warden.` While `pip` comes pre-installed on most modern Python installs, if `pip` is an unrecognized command when attempting to install `warden`, run the following command **after** your Python installation is complete.
@@ -42,8 +41,14 @@ Example usage:
 
 * Devops is a bit finicky with registering a console entry point, hence the `sudo` just on the installation. `sudo` is only required on devops machines.
 * Assumption is that the `.docsettings` file is placed at the root of the repository.
-    * To provide a different path (like `azure-sdk-for-java` does...), use: 
-        * `ward scan -d $(Build.SourcesDirectory) -c $(Build.SourcesDirectory)/eng/.docsettings.yml`
+
+To provide a different path (like `azure-sdk-for-java` does...), use: 
+
+```
+
+/:> ward scan -d $(Build.SourcesDirectory) -c $(Build.SourcesDirectory)/eng/.docsettings.yml
+
+```
 
 ##### Parameter Options
 
@@ -102,6 +107,15 @@ A package is indicated by:
 
 * The presence of a `package.json` file
 
+### Enforcing Readme Content
+
+`doc-warden` has the ability to check discovered readme files to ensure that a set of configured sections is present. How does it work? `doc-warden` will check each pattern present within `required_readme_sections` against all headers present within a target readme. If all the patterns match at least one header, the readme will pass content verification.
+
+Other Notes:
+* A `section` title is any markdown or RST that will result in a `<h1>` to `<h6>` html tag.
+* `warden` will content verify any `readme.rst` or `readme.md` file found outside the `omitted_paths` in the targeted repo. 
+    * Case of the readme file title is ignored.
+
 #### Control, the `.docsettings.yml` File, and You
 
 Special cases often need to be configured. It seems logical that there needs be a central location (per repo) to override conventional settings. To that end, a new `.docsettings.yml` file will be added to each repo. 
@@ -109,7 +123,7 @@ Special cases often need to be configured. It seems logical that there needs be 
 ```
 <repo-root>
 │   README.md
-│   .docsettings.yml    
+│   .docsettings.yml
 │
 └───.azure-pipelines
 │   │   <build def>
@@ -126,6 +140,9 @@ omitted_paths:
   - archive/*
 language: java
 root_check_enabled: True
+required_readme_sections:
+  - "(Client Library for Azure .*|Microsoft Azure SDK for .*)"
+  - Getting Started
 ```
 
 The above configuration tells `warden`...
@@ -136,6 +153,15 @@ The above configuration tells `warden`...
 
 Possible values for `language` right now are `['net', 'java', 'js', 'python']`. Greater than one target language is not currently supported.
 
+##### `required_readme_sections` Configuration
+This section instructs `warden` to verify that there is at least one matching section title for each provided `section` pattern in any discovered readme. Regex is fully supported.
+
+The two items listed from the example `.docsettings` file will:
+- Match a header matched by a simple regex expression
+- Match a header exactly titled "Getting Started"
+
+Note that the regex is surrounded by quotation marks where the regex will break `yml` parsing of the configuration file.
+
 ## Provide Feedback
 
-If you encounter any bugs or have suggestions, please file an issue [here](<https://github.com/Azure/azure-sdk/issues>) and assign to `scbedd`.
+If you encounter any bugs or have suggestions, please file an issue [here](https://github.com/Azure/azure-sdk-tools/issues) and assign to `scbedd`.

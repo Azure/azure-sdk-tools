@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
 from __future__ import print_function
 import argparse
 import yaml
@@ -67,6 +70,11 @@ class WardenConfiguration():
             self.omitted_paths = []
 
         try:
+            self.required_readme_sections = doc['required_readme_sections'] or []
+        except:
+            self.required_readme_sections = []
+
+        try:
             self.scan_language = args.scan_language or doc['language']
         except:
             print('.docsettings has no selected language, neither has the --scan-language parameter been populated. Exiting.')
@@ -88,5 +96,6 @@ class WardenConfiguration():
             'omitted_paths': self.omitted_paths,
             'scan_language': self.scan_language,
             'root_check_enabled': self.root_check_enabled,
-            'verbose_output': self.verbose_output
+            'verbose_output': self.verbose_output,
+            'required_readme_sections': self.required_readme_sections
         }

@@ -5,9 +5,9 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.ApplicationInsights;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Primitives;
 
 namespace PixelServer.Controllers
 {
@@ -15,18 +15,13 @@ namespace PixelServer.Controllers
     [ApiController]
     public class TrackingController : ControllerBase
     {
-        // used for manual logs to application insights
-        private static TelemetryClient telemetry;
+        private readonly IMemoryCache _cache;
+        private readonly TelemetryClient _telemetry;
 
-        // populated and returned as 1 pixel image
-        private static byte[] img;
-        private static string imgPath = AppDomain.CurrentDomain.BaseDirectory + "/Etc/pixel.png";
-
-        private IMemoryCache _cache;
-
-        public TrackingController(IMemoryCache memoryCache)
+        public TrackingController(IMemoryCache memoryCache, TelemetryClient telemetry)
         {
             _cache = memoryCache;
+            _telemetry = telemetry;
         }
 
         /// <summary>
@@ -37,30 +32,18 @@ namespace PixelServer.Controllers
         /// <param name="path"></param>
         /// <returns></returns>
         [HttpGet]
-        public async Task<ActionResult> Get(string path)
+        public IActionResult Get(string path)
         {
-            await trackEventAsync(path);
-
-            return File(getCachedImage(), "image/png");
-        }
-
-        private async Task trackEventAsync(string path)
-        {
-            if (telemetry == null)
+            _telemetry.TrackEvent("PixelImpression", new Dictionary<string, string>()
             {
-                telemetry = new TelemetryClient();
-            }
-
-            await Task.Run(() => {
-                telemetry.TrackEvent("PixelImpression", new Dictionary<string, string>()
-                {
-                    { "visitor_duplicate", getCachedVisitorStatus(getRequestAddress()) },
-                    { "visitor_path", path }
-                });
+                { "visitor_duplicate", getCachedVisitorStatus(getRequestAddress()) },
+                { "visitor_path", path }
             });
+
+            return new ImageActionResult();
         }
 
-        private string getCachedVisitorStatus(string address)
+        private string getCachedVisitorStatus(System.Net.IPAddress address)
         {
             if (!_cache.TryGetValue(address, out _))
             {
@@ -78,19 +61,23 @@ namespace PixelServer.Controllers
             return "true";
         }
 
-        private byte[] getCachedImage()
+        private System.Net.IPAddress getRequestAddress()
         {
-            if (img == null)
+            return Request.HttpContext.Connection.RemoteIpAddress;
+        }
+
+        private class ImageActionResult : IActionResult
+        {
+            private static readonly byte[] _imgPayload = System.IO.File.ReadAllBytes(AppDomain.CurrentDomain.BaseDirectory + "/Etc/pixel.png");
+
+            public Task ExecuteResultAsync(ActionContext context)
             {
-                img = System.IO.File.ReadAllBytes(imgPath);
+                context.HttpContext.Response.StatusCode = StatusCodes.Status200OK;
+                context.HttpContext.Response.ContentType = "image/png";
+                context.HttpContext.Response.ContentLength = _imgPayload.Length;
+                return context.HttpContext.Response.Body.WriteAsync(_imgPayload, 0, _imgPayload.Length);
             }
-
-            return img;
         }
 
-        private string getRequestAddress()
-        {
-            return Request.HttpContext.Connection.RemoteIpAddress.ToString();
-        }
     }
 }

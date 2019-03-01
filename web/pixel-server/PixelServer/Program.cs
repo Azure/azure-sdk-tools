@@ -14,12 +14,16 @@ namespace PixelServer
     {
         public static void Main(string[] args)
         {
-            CreateWebHostBuilder(args).Build().Run();
-        }
+            var webHostBuilder = new WebHostBuilder()
+                .UseContentRoot(Directory.GetCurrentDirectory())
+                .UseStartup<Startup>()
+                .UseDefaultServiceProvider(
+                    (context, options) => options.ValidateScopes = context.HostingEnvironment.IsDevelopment())
+                .UseKestrel();
 
-        public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
-            WebHost.CreateDefaultBuilder(args)
-                .UseApplicationInsights()
-                .UseStartup<Startup>();
+            webHostBuilder.UseSockets(x => x.IOQueueCount = 2);
+            webHostBuilder.UseApplicationInsights();
+            webHostBuilder.Build().Run();
+        }
     }
 }

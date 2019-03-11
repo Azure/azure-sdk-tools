@@ -84,26 +84,26 @@ When should we expect a readme to be present?
 
 #### .Net
 
-A package is indicated by:
+A package directory is indicated by:
 * a `*.csproj` file
     * Project file does not end with `tests.csproj`
 
 #### Python
 
-A package is indicated by: 
+A package directory is indicated by: 
 
 * the presence of a `setup.py` file
 
 #### Java
 
-A package is indicated by:
+A package directory is indicated by:
 
 * the presence of a `pom.xml` file
     * The POM `<packaging>` value within is set to `JAR`
 
 #### Node & JS
 
-A package is indicated by: 
+A package directory is indicated by: 
 
 * The presence of a `package.json` file
 

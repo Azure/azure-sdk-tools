@@ -19,68 +19,73 @@ def verify_readme_content(config):
     all_readmes = walk_directory_for_pattern(config.target_directory, README_PATTERNS)
     omitted_readmes = get_omitted_files(config)
     targeted_readmes = [readme for readme in all_readmes if readme not in omitted_readmes]
+    known_issue_paths = config.get_known_content_issues()
+    section_sorting_dict = config.get_readme_sections_dictionary()
 
+    ignored_missing_readme_paths = []
     readme_results = []
+    readmes_with_issues = []
 
     for readme in targeted_readmes:
         ext = os.path.splitext(readme)[1]
         if ext == '.rst':
-            readme_results.append(verify_rst_readme(readme, config))
+            readme_results.append(verify_rst_readme(readme, config, section_sorting_dict))
         else:
-            readme_results.append(verify_md_readme(readme, config))
+            readme_results.append(verify_md_readme(readme, config, section_sorting_dict))
 
-    results([readme_tuple for readme_tuple in readme_results if readme_tuple[1]], config)
+    for readme_tuple in readme_results:
+        if readme_tuple[1]:
+            if readme_tuple[0] in known_issue_paths:
+                ignored_missing_readme_paths.append(readme_tuple)
+            else:
+                readmes_with_issues.append(readme_tuple)
 
-# output results
-def results(readmes_with_issues, config):
-    if len(readmes_with_issues):
-        print('{} readmes have missing required sections.'.format(len(readmes_with_issues)))
-        for readme_tuple in readmes_with_issues:
-            print(readme_tuple[0].replace(os.path.normpath(config.target_directory), '') + ' is missing headers with pattern(s):')
-            for missing_pattern in readme_tuple[1]:
-                print(' * {0}'.format(missing_pattern))
-        exit(1)
+    return readmes_with_issues, ignored_missing_readme_paths
 
 # parse rst to html, check for presence of appropriate sections
-def verify_rst_readme(readme, config):
+def verify_rst_readme(readme, config, section_sorting_dict):
     with open(readme, 'r') as f:
         readme_content = f.read()
     html_readme_content = rst_to_html(readme_content)
     html_soup = bs4.BeautifulSoup(html_readme_content, "html.parser")
 
     missed_patterns = find_missed_sections(html_soup, config.required_readme_sections)
+    missed_patterns.sort(key=lambda pattern: section_sorting_dict[pattern])
 
     return (readme, missed_patterns)
 
 # parse md to html, check for presence of appropriate sections
-def verify_md_readme(readme, config):
+def verify_md_readme(readme, config, section_sorting_dict):
     with open(readme, 'r') as f:
         readme_content = f.read()
     html_readme_content = markdown2.markdown(readme_content)
     html_soup = bs4.BeautifulSoup(html_readme_content, "html.parser")
 
     missed_patterns = find_missed_sections(html_soup, config.required_readme_sections)
+    missed_patterns.sort(key=lambda pattern: section_sorting_dict[pattern])
 
     return (readme, missed_patterns)
 
 # within the entire readme, are there any missing sections that are expected?
 def find_missed_sections(html_soup, patterns):
-    headers = html_soup.find_all(re.compile('^h[1-6]$'))
+    headers = html_soup.find_all(re.compile('^h[1-2]$'))
     missed_patterns = []
     observed_patterns = []
 
     for header in headers:
-        observed_patterns.extend(match_regex_set(header, patterns))
+        observed_patterns.extend(match_regex_set(header.get_text(), patterns))
 
     return list(set(patterns) - set(observed_patterns))
 
-# checks a header tag (soup) against a set of configured patterns
+# checks a header string against a set of configured patterns
 def match_regex_set(header, patterns):
     matching_patterns = []
     for pattern in patterns:
-        result = re.search(pattern, header.get_text())
+        result = re.search(pattern, header)
         if result:
             matching_patterns.append(pattern)
+            break
+
     return matching_patterns
 
 # boilerplate for translating RST

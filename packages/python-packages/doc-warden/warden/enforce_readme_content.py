@@ -22,6 +22,14 @@ def verify_readme_content(config):
     known_issue_paths = config.get_known_content_issues()
     section_sorting_dict = config.get_readme_sections_dictionary()
 
+    if config.verbose_output:
+        print("All Visible Readmes:")
+        print(all_readmes)
+        print('All Visible Known Issues')
+        print(known_issue_paths)
+        print('All Visible Omitted Files')
+        print(omitted_readmes)
+
     ignored_missing_readme_paths = []
     readme_results = []
     readmes_with_issues = []

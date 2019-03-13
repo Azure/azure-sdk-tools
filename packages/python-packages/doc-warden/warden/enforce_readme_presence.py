@@ -23,28 +23,26 @@ def unrecognized_option(configuration):
     print('Argument {} provided is not a supported option'.format(configuration.scan_language))
     exit(1)
 
-def find_missing_readmes(config):
-    missing_readme_paths = check_package_readmes(config)
-    results(missing_readme_paths, config)
-
-# print results
-def results(missing_readme_paths, config):
-    if len(missing_readme_paths):
-        print('{} missing readmes detected at:'.format(len(missing_readme_paths)))
-        for path in missing_readme_paths:
-            print(path.replace(os.path.normpath(config.target_directory), ''))
-        exit(1)
-
 # parent caller for language types
-def check_package_readmes(configuration):
+def find_missing_readmes(configuration):
     language_selector = {
         'python': check_python_readmes,
         'js': check_js_readmes,
         'java': check_java_readmes,
         'net': check_net_readmes
     }
+    missing_readme_paths = []
+    ignored_missing_readme_paths = []
+    known_issue_paths = configuration.get_known_presence_issues()
+    readme_results = language_selector.get(configuration.scan_language.lower(), unrecognized_option)(configuration)
 
-    return language_selector.get(configuration.scan_language.lower(), unrecognized_option)(configuration)
+    for readme_path in readme_results:
+        if readme_path in known_issue_paths:
+            ignored_missing_readme_paths.append(readme_path)
+        else:
+            missing_readme_paths.append(readme_path)
+
+    return missing_readme_paths, ignored_missing_readme_paths
 
 # return all missing readmes for a PYTHON repostiroy
 def check_python_readmes(configuration):

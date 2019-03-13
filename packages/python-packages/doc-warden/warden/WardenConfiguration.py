@@ -45,9 +45,9 @@ class WardenConfiguration():
         parser.add_argument(
             '-o',
             '--verbose-output',
-            dest = 'output_report',
+            dest = 'verbose_output',
             required = False,
-            help = 'Enable or disable html generation.')
+            help = 'Enable or disable verbose output. Defaults false. Overrides .docsettings contents.')
         parser.add_argument(
             'command',
             help = ('The warden command to run.'))
@@ -60,12 +60,12 @@ class WardenConfiguration():
 
         with open(self.yml_location, 'r') as f:
             try:
-                doc = yaml.load(f)
+                doc = yaml.safe_load(f)
             except err:
                 print('Unable to parse .docsettings. Check the location of the file.')
 
         try:
-            self.omitted_paths = doc['omitted_paths']
+            self.omitted_paths = doc['omitted_paths'] or []
         except:
             self.omitted_paths = []
 
@@ -73,6 +73,16 @@ class WardenConfiguration():
             self.required_readme_sections = doc['required_readme_sections'] or []
         except:
             self.required_readme_sections = []
+
+        try:
+            self.known_content_issues = doc['known_content_issues'] or []
+        except:
+            self.known_content_issues = []
+
+        try:
+            self.known_presence_issues = doc['known_presence_issues'] or []
+        except:
+            self.known_presence_issues = []
 
         try:
             self.scan_language = args.scan_language or doc['language']
@@ -86,10 +96,28 @@ class WardenConfiguration():
             settings_file_root_check = False
         self.root_check_enabled = args.root_check_enabled or settings_file_root_check or True
 
-        self.verbose_output = args.output_report or False
+        try:
+            settings_file_verbose_output = doc['verbose_output']
+        except:
+            settings_file_verbose_output = False
+        self.verbose_output = args.verbose_output or settings_file_verbose_output or False
+
+    # strips the directory up till the repo root. Allows us to easily think about 
+    # relative paths instead of absolute on disk
+    def get_output_path(self, input_path):
+        return input_path.replace(os.path.normpath(self.target_directory), '')
+
+    def get_known_presence_issues(self):
+        return [os.path.normpath(os.path.join(self.target_directory, exception_tuple[0])) for exception_tuple in self.known_presence_issues]
+
+    def get_known_content_issues(self):
+        return [os.path.normpath(os.path.join(self.target_directory, exception_tuple[0])) for exception_tuple in self.known_content_issues]
+
+    def get_readme_sections_dictionary(self):
+        return { key: i for i, key in enumerate(self.required_readme_sections) }
 
     def dump(self):
-        return {
+        current_config = {
             'command': self.command,
             'target_directory': self.target_directory,
             'yml_location': self.yml_location,
@@ -97,5 +125,13 @@ class WardenConfiguration():
             'scan_language': self.scan_language,
             'root_check_enabled': self.root_check_enabled,
             'verbose_output': self.verbose_output,
-            'required_readme_sections': self.required_readme_sections
+            'required_readme_sections': self.required_readme_sections,
+            'known_content_issues': self.known_content_issues,
+            'known_presence_issues': self.known_presence_issues
         }
+
+        print("Warden configuration this run:")
+        for key in current_config:
+            print('{0}: {1}'.format(key, current_config[key]))
+
+        return current_config

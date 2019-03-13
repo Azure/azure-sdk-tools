@@ -33,12 +33,22 @@ def verify_readme_content(config):
         else:
             readme_results.append(verify_md_readme(readme, config, section_sorting_dict))
 
+    if config.verbose_output:
+        print("Scanned Readmes:")
+        print(readme_results)
+
     for readme_tuple in readme_results:
         if readme_tuple[1]:
             if readme_tuple[0] in known_issue_paths:
                 ignored_missing_readme_paths.append(readme_tuple)
             else:
                 readmes_with_issues.append(readme_tuple)
+
+    if config.verbose_output:
+        print("Readmes with Issues")
+        print(ignored_missing_readme_paths)
+        print("Ignored Readmes with Issues")
+        print(ignored_missing_readme_paths)
 
     return readmes_with_issues, ignored_missing_readme_paths
 

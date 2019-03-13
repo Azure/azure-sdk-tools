@@ -1,6 +1,5 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
-
 from __future__ import print_function
 
 from .enforce_readme_presence import find_missing_readmes
@@ -74,6 +73,7 @@ def output_presence_results(missing_readme_paths, config):
 
 # execute both presence and content verification
 def all_operations(config):
+    print('all_operations')
     content_results, ignored_content_results = verify_readme_content(config)
     presence_results, ignored_presence_results = find_missing_readmes(config)
 

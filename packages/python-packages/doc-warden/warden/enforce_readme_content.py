@@ -11,8 +11,7 @@ from docutils import core
 from docutils.writers.html4css1 import Writer,HTMLTranslator
 import pathlib
 
-# fnmatch is case insensitive by default, just look for readme rst and md
-README_PATTERNS = ['*/readme.md', '*/readme.rst']
+README_PATTERNS = ['*/readme.md', '*/readme.rst', '*/README.md', '*/README.rst']
 
 # entry point
 def verify_readme_content(config):

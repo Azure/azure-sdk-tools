@@ -1,6 +1,5 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
-
 from __future__ import print_function
 
 import os
@@ -10,6 +9,7 @@ import re
 from .warden_common import check_match, walk_directory_for_pattern, get_omitted_files
 from docutils import core
 from docutils.writers.html4css1 import Writer,HTMLTranslator
+import pathlib
 
 # fnmatch is case insensitive by default, just look for readme rst and md
 README_PATTERNS = ['*/readme.md', '*/readme.rst']

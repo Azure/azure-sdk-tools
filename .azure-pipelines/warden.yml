@@ -37,3 +37,46 @@ jobs:
     condition: and(succeededOrFailed(), ne(variables['Build.Reason'], 'PullRequest'))
     displayName: 'Component Detection'
 
+- job: 'Test'
+  
+  dependsOn: 'Build'
+
+  pool:
+    vmImage: 'ubuntu-16.04'  
+
+  steps:
+
+  - task: UsePythonVersion@0
+    displayName: 'Use Python 3.6'
+    inputs:
+      versionSpec: 3.6
+
+  - script: |
+      pip install setuptools 
+      pip install wheel twine readme-renderer[md]
+
+      cd $(Build.SourcesDirectory)
+      mkdir sdk-for-js
+      mkdir sdk-for-python
+      mkdir sdk-for-java
+
+      git clone https://github.com/Azure/azure-sdk-for-java.git sdk-for-java
+      git clone https://github.com/Azure/azure-sdk-for-python.git sdk-for-python
+      git clone https://github.com/Azure/azure-sdk-for-js.git sdk-for-js
+    displayName: 'Setup Environment'
+
+  - script: |
+      pip install -e $(Build.SourcesDirectory)/packages/python-packages/doc-warden/
+    displayName: 'Install doc-warden'
+
+  - script: |
+      ward scan -d $(Build.SourcesDirectory)/sdk-for-java  -c $(Build.SourcesDirectory)/sdk-for-java/eng/.docsettings.yml -o True
+    displayName: 'Ensure Java Backwards Compat'
+
+  - script: |
+      ward scan -d $(Build.SourcesDirectory)/sdk-for-python -o True
+    displayName: 'Ensure Python Backwards Compat'
+
+  - script: |
+      ward scan -d $(Build.SourcesDirectory)/sdk-for-js -o True
+    displayName: 'Ensure JS Backwards Compat'

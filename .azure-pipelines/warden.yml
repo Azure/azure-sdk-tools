@@ -63,20 +63,20 @@ jobs:
       git clone https://github.com/Azure/azure-sdk-for-java.git sdk-for-java
       git clone https://github.com/Azure/azure-sdk-for-python.git sdk-for-python
       git clone https://github.com/Azure/azure-sdk-for-js.git sdk-for-js
-    displayName: 'Download Repos'
+    displayName: 'Setup Environment'
 
   - script: |
       pip install -e $(Build.SourcesDirectory)/packages/python-packages/doc-warden/
     displayName: 'Install doc-warden'
 
   - script: |
-      ward scan $(Build.SourcesDirectory)/sdk-for-java
-    displayName: 'Ensure Python'
+      ward scan -d $(Build.SourcesDirectory)/sdk-for-java  -c $(Build.SourcesDirectory)/sdk-for-java/eng/.docsettings.yml -o True
+    displayName: 'Ensure Java Backwards Compat'
 
   - script: |
-      ward scan $(Build.SourcesDirectory)/sdk-for-python
-    displayName: 'Ensure Python'
+      ward scan -d $(Build.SourcesDirectory)/sdk-for-python -o True
+    displayName: 'Ensure Python Backwards Compat'
 
   - script: |
-      ward scan $(Build.SourcesDirectory)/sdk-for-js
-    displayName: 'Ensure JS'
+      ward scan -d $(Build.SourcesDirectory)/sdk-for-js -o True
+    displayName: 'Ensure JS Backwards Compat'

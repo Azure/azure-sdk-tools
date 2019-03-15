@@ -76,7 +76,7 @@ def check_net_readmes(configuration):
     for expected_location in expected_readmes:
         result = find_alongside_file(expected_location, 'readme.md')
         if not result:
-            missing_expected_readmes.append(os.path.dirname(expected_location))
+            missing_expected_readme_locations.append(os.path.dirname(expected_location))
     return missing_expected_readme_locations
 
 # convention. omit test projects

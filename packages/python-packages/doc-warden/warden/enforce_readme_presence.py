@@ -70,7 +70,7 @@ def check_js_readmes(configuration):
 
 # return all missing readmes for a .NET repostory
 def check_net_readmes(configuration):
-    expected_readmes, omitted_readmes = get_file_sets(configuration, '*.csproj', is_net_csproj_package)
+    expected_readmes, omitted_readmes = get_file_sets(configuration, '*.sln', is_net_csproj_package)
     missing_expected_readme_locations = []
 
     for expected_location in expected_readmes:

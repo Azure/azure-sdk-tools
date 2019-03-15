@@ -85,8 +85,7 @@ When should we expect a readme to be present?
 #### .Net
 
 A package directory is indicated by:
-* a `*.csproj` file
-    * Project file does not end with `tests.csproj`
+* a `*.sln` file under the `sdk` directory
 
 #### Python
 

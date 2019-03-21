@@ -11,6 +11,7 @@ steps:
         import platform
         osparameter = '${{ parameters.osname }}'
         print ("Parameter passed by matrix print -", osparameter)
-        osinfo = 'Job ran on Linux OS' if(platform.system().startswith(osparameter[:3])) else 'Job ran on the Wrong OS'
+        agentos = platform.system()
+        osinfo = 'Job ran on %s OS' %agentos if(agentos.startswith(osparameter[:3])) else 'Job ran on the Wrong OS'
         print (osinfo)
     displayName: 'Verify Agent OS'

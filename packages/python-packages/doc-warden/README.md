@@ -111,9 +111,9 @@ A package directory is indicated by:
 `doc-warden` has the ability to check discovered readme files to ensure that a set of configured sections is present. How does it work? `doc-warden` will check each pattern present within `required_readme_sections` against all headers present within a target readme. If all the patterns match at least one header, the readme will pass content verification.
 
 Other Notes:
-* A `section` title is any markdown or RST that will result in a `<h1>` to `<h6>` html tag.
+
+* A `section` title is any markdown or RST that will result in a `<h1>` to `<h2>` html tag.
 * `warden` will content verify any `readme.rst` or `readme.md` file found outside the `omitted_paths` in the targeted repo. 
-    * Case of the readme file title is ignored.
 
 #### Control, the `.docsettings.yml` File, and You
 
@@ -142,6 +142,10 @@ root_check_enabled: True
 required_readme_sections:
   - "(Client Library for Azure .*|Microsoft Azure SDK for .*)"
   - Getting Started
+known_presence_issues:
+  - ['cognitiveservices/data-plane/language/bingspellcheck', '#2847']
+known_content_issues:
+  - ['sdk/template/azure-sdk-template/README.md','#1368']
 ```
 
 The above configuration tells `warden`...
@@ -160,6 +164,15 @@ The two items listed from the example `.docsettings` file will:
 - Match a header exactly titled "Getting Started"
 
 Note that the regex is surrounded by quotation marks where the regex will break `yml` parsing of the configuration file.
+
+##### `known_presence_issues` and `known_content_issues` Configuration
+`doc-warden` is designed to crash builds if it detects failures. However, the vast majority of the time, these issues cannot be fixed immediately. In the above configuration, there are two paths highlighted as known issues. 
+
+The first, `known_presence_issues`, tells warden that a presence failure detected at the specified paths _should be ignored_ and should not result in a crashed build. A `tuple` describing each known issue specifies both what the known issue is, as well as some sort of justification. Having an exception with an issueId attached is a good justification for not failing the build.
+
+> We're aware of this issue, and it is tracked in the following github issue.
+
+The `known_content_issues` parameter functions _identically_ to the `known_presence_issues` check. If a readme is listed as "already known" to have failures, the entire CI build will not be crashed by Warden.
 
 ## Provide Feedback
 

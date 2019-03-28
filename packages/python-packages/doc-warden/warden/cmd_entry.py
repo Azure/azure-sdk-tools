@@ -38,7 +38,6 @@ def verify_content(config):
 # verify the presence of the readmes only
 def verify_presence(config):
     presence_results, ignored_presence_results = find_missing_readmes(config)
-    print(presence_results)
     output_presence_results(presence_results, config)
 
     if len(presence_results) > 0:

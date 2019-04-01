@@ -7,7 +7,6 @@ Features:
 * Enforces Readme Standards
     - Readmes present - *completed*
     - Readmes have appropriate contents - *completed*
-    - Files issues for failed standards checks - *pending*
 * Generates report for included observed packages - *pending*
 
 This package is tested on Python 2.7 -> 3.8.
@@ -33,13 +32,14 @@ Example usage:
 <pre-step, clone target repository>
 ...
 /:> pip install setuptools wheel
-/:> sudo pip install doc-warden
+/:> pip install doc-warden
+...
+<next task, because PATH doesn't update without another one>
 /:> ward scan -d $(Build.SourcesDirectory)
 
 ```
 **Notes for example above**
 
-* Devops is a bit finicky with registering a console entry point, hence the `sudo` just on the installation. `sudo` is only required on devops machines.
 * Assumption is that the `.docsettings` file is placed at the root of the repository.
 
 To provide a different path (like `azure-sdk-for-java` does...), use: 
@@ -53,7 +53,11 @@ To provide a different path (like `azure-sdk-for-java` does...), use:
 ##### Parameter Options
 
 `command` 
-Currently supports the `scan` command. Additional commands may be supported in the future. **Required.**
+Currently supports 3 commands. Values: `['scan', 'presence', 'content']` **Required.**
+
+* `scan` checks both readme presence as well as readme content
+* `content` checks just the content
+* and as you'd expect, `presence` just checks for readmes existing where they should be.
 
 `--scan-directory`
 The target directory `warden` should be scanning. **Required.**
@@ -108,11 +112,11 @@ A package directory is indicated by:
 
 ### Enforcing Readme Content
 
-`doc-warden` has the ability to check discovered readme files to ensure that a set of configured sections is present. How does it work? `doc-warden` will check each pattern present within `required_readme_sections` against all headers present within a target readme. If all the patterns match at least one header, the readme will pass content verification.
+`doc-warden` has the ability to check discovered readme files to ensure that a set of configured sections is present. How does it work? `doc-warden` will ensure that each regex defined in `required_readme_sections` matches against at least one section header in the readme. If all the patterns match at least one header, the readme will pass content verification.
 
 Other Notes:
 
-* A `section` title is any markdown or RST that will result in a `<h1>` to `<h2>` html tag.
+* A `section` header is any markdown or RST that will result in a `<h1>` to `<h2>` html tag.
 * `warden` will content verify any `readme.rst` or `readme.md` file found outside the `omitted_paths` in the targeted repo. 
 
 #### Control, the `.docsettings.yml` File, and You

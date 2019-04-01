@@ -78,7 +78,7 @@ jobs:
 
   - script: |
       ward scan -d $(Build.SourcesDirectory)/sdk-for-net  -c $(Build.SourcesDirectory)/sdk-for-net/eng/.docsettings.yml -o True
-    displayName: 'Ensure .NET Backwards Compat
+    displayName: 'Ensure .NET Backwards Compat'
 
   - script: |
       ward scan -d $(Build.SourcesDirectory)/sdk-for-python -o True

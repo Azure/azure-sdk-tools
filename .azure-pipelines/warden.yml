@@ -42,6 +42,7 @@ jobs:
 
   - task: GitHubRelease@0
     displayName: 'GitHub release of public sdk tools'
+    condition: and(succeededOrFailed(), ne(variables['System.TeamProject'], 'public'))
     inputs:
       gitHubConnection: GithubReleases
       repositoryName: 'Azure/azure-sdk-tools'

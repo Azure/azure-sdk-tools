@@ -43,7 +43,7 @@ jobs:
   - task: GitHubRelease@0
     displayName: 'GitHub release of public sdk tools'
     inputs:
-      gitHubConnection: public
+      gitHubConnection: Public
       repositoryName: 'Azure/azure-sdk-tools'
       tagSource: manual
       tag: 'sdk-tools_$(Build.BuildId)'

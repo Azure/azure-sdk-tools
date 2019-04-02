@@ -38,15 +38,16 @@ jobs:
     inputs:
       rootFolderOrFile: '$(Build.BinariesDirectory)/sdk-tools'
       includeRootFolder: false
-      archiveFile: '$(Build.ArtifactStagingDirectory)/sdk-tools.zip'
+      archiveFile: '$(Build.BinariesDirectory)/sdk-tools.zip'
 
-  - powershell: 'Get-ChildItem'
-    workingDirectory: '$(Build.BinariesDirectory)'
-    displayName: 'Display Content of the Build Binary Directory'
-
-  - powershell: 'Get-ChildItem'
-    workingDirectory: '$(Build.BinariesDirectory)/sdk-tools'
-    displayName: 'Display Content of Build Binaries/sdk-tools'
+  - task: GitHubRelease@0
+    displayName: 'GitHub release of public sdk tools'
+    inputs:
+      gitHubConnection: chidozieononiwu
+      repositoryName: 'chidozieononiwu/azure-sdk-tools'
+      releaseNotesSource: input
+      releaseNotes: 'Tools for managing build pipelines'
+      assets: '$(Build.BinariesDirectory)/sdk-tools.zip'
 
   - script: |
       twine check $(Build.ArtifactStagingDirectory)/*

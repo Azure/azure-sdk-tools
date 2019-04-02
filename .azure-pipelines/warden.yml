@@ -25,13 +25,20 @@ jobs:
     displayName: 'Build Package'
 
   - task: CopyFiles@2
-    displayName: 'Copy scripts for github release'
+    displayName: 'Copy files for github release'
     inputs:
-      SourceFolder: '$(Build.SourcesDirectory)/scripts'
-      Contents: '*/verify_agent_os.py'
+      SourceFolder: '$(Build.SourcesDirectory)'
+      Contents: 'scripts/*/verify_agent_os.py' # More files should be added here
       TargetFolder: '$(Build.BinariesDirectory)/sdk-tools'
       OverWrite: true
       flattenFolders: true
+  
+  - task: ArchiveFiles@2
+    displayName: 'Archive files for GitHub release'
+    inputs:
+      rootFolderOrFile: '$(Build.BinariesDirectory)/sdk-tools'
+      includeRootFolder: false
+      archiveFile: '$(Build.ArtifactStagingDirectory)/sdk-tools.zip'
 
   - powershell: 'Get-ChildItem'
     workingDirectory: '$(Build.BinariesDirectory)'

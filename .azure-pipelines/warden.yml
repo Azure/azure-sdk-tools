@@ -24,6 +24,23 @@ jobs:
       python setup.py sdist -d $(Build.ArtifactStagingDirectory) --format zip
     displayName: 'Build Package'
 
+  - task: CopyFiles@2
+    displayName: 'Copy scripts for github release'
+    inputs:
+      SourceFolder: '$(Build.SourcesDirectory)/scripts'
+      Contents: '*/verify_agent_os.py'
+      TargetFolder: '$(Build.BinariesDirectory)/sdk-tools'
+      OverWrite: true
+      flattenFolders: true
+
+  - powershell: 'Get-ChildItem'
+    workingDirectory: '$(Build.BinariesDirectory)'
+    displayName: 'Display Content of the Build Binary Directory'
+
+  - powershell: 'Get-ChildItem'
+    workingDirectory: '$(Build.BinariesDirectory)/sdk-tools'
+    displayName: 'Display Content of Build Binaries/sdk-tools'
+
   - script: |
       twine check $(Build.ArtifactStagingDirectory)/*
     displayName: 'Verify Readme'

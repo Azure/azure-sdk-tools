@@ -4,11 +4,11 @@
 
 import sys
 import platform
-osparameter = sys.argv[1]
-print ("Parameter passed by matrix -", osparameter)
-osparameter = 'Darwin' if(osparameter.lower() == 'MacOS'.lower()) else osparameter
-agentos = platform.system()
-if (agentos.lower().startswith(osparameter.lower()[:3])):
-	print ('Job ran on %s OS' %agentos)
+os_parameter = sys.argv[1]
+print ("Parameter passed by matrix -", os_parameter)
+os_parameter = 'Darwin' if(os_parameter.lower() == 'MacOS'.lower()) else os_parameter
+agent_os = platform.system()
+if (agent_os.lower() == os_parameter.lower()):
+	print ('Job ran on %s OS' %agent_os)
 else:
-	raise Exception('Job ran on the Wrong OS: %s' %agentos)
+	raise Exception('Job ran on the Wrong OS: %s' %agent_os)

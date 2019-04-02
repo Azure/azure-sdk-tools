@@ -24,6 +24,34 @@ jobs:
       python setup.py sdist -d $(Build.ArtifactStagingDirectory) --format zip
     displayName: 'Build Package'
 
+  - task: CopyFiles@2
+    displayName: 'Copy files for github release'
+    inputs:
+      SourceFolder: '$(Build.SourcesDirectory)'
+      Contents: 'scripts/*/verify_agent_os.py'
+      TargetFolder: '$(Build.BinariesDirectory)/sdk-tools'
+      OverWrite: true
+      flattenFolders: true
+  
+  - task: ArchiveFiles@2
+    displayName: 'Archive files for GitHub release'
+    inputs:
+      rootFolderOrFile: '$(Build.BinariesDirectory)/sdk-tools'
+      includeRootFolder: false
+      archiveFile: '$(Build.BinariesDirectory)/sdk-tools.zip'
+
+  - task: GitHubRelease@0
+    displayName: 'GitHub release of public sdk tools'
+    condition: and(succeededOrFailed(), ne(variables['System.TeamProject'], 'public'))
+    inputs:
+      gitHubConnection: GithubReleases
+      repositoryName: 'Azure/azure-sdk-tools'
+      tagSource: manual
+      tag: 'sdk-tools_$(Build.BuildId)'
+      releaseNotesSource: input
+      releaseNotes: 'Tools for managing build pipelines'
+      assets: '$(Build.BinariesDirectory)/sdk-tools.zip'
+
   - script: |
       twine check $(Build.ArtifactStagingDirectory)/*
     displayName: 'Verify Readme'

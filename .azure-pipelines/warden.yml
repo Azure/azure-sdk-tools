@@ -45,6 +45,8 @@ jobs:
     inputs:
       gitHubConnection: chidozieononiwu
       repositoryName: 'chidozieononiwu/azure-sdk-tools'
+      tagSource: manual
+      tag: 'sdk-tools_$(Build.BuildId)'
       releaseNotesSource: input
       releaseNotes: 'Tools for managing build pipelines'
       assets: '$(Build.BinariesDirectory)/sdk-tools.zip'

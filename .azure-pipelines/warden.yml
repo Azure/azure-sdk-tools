@@ -47,6 +47,7 @@ jobs:
       repositoryName: 'azure/azure-sdk-tools'
       tagSource: manual
       tag: 'sdk-tools_$(Build.BuildId)'
+      title: 'sdk-tools'
       releaseNotesSource: input
       releaseNotes: 'Tools for managing build pipelines'
       assets: '$(Build.BinariesDirectory)/sdk-tools.zip'

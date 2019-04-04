@@ -29,12 +29,12 @@ jobs:
     inputs:
       SourceFolder: '$(Build.SourcesDirectory)'
       Contents: 'scripts/**/*.py'
-      TargetFolder: '$(Build.BinariesDirectory)/sdk-tools'
+      TargetFolder: '$(Build.ArtifactStagingDirectory)/sdk-tools'
   
   - task: ArchiveFiles@2
     displayName: 'Archive files for GitHub release'
     inputs:
-      rootFolderOrFile: '$(Build.BinariesDirectory)/sdk-tools'
+      rootFolderOrFile: '$(Build.ArtifactStagingDirectory)/sdk-tools'
       includeRootFolder: false
       archiveFile: '$(Build.ArtifactStagingDirectory)/sdk-tools.zip'
 

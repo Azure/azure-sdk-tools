@@ -24,9 +24,19 @@ jobs:
       python setup.py sdist -d $(Build.ArtifactStagingDirectory) --format zip
     displayName: 'Build Package'
 
-  - script: |
-      twine check $(Build.ArtifactStagingDirectory)/*
-    displayName: 'Verify Readme'
+  - task: CopyFiles@2
+    displayName: 'Copy files for github release'
+    inputs:
+      SourceFolder: '$(Build.SourcesDirectory)'
+      Contents: 'scripts/**/*.py'
+      TargetFolder: '$(Build.BinariesDirectory)/sdk-tools'
+  
+  - task: ArchiveFiles@2
+    displayName: 'Archive files for GitHub release'
+    inputs:
+      rootFolderOrFile: '$(Build.BinariesDirectory)/sdk-tools'
+      includeRootFolder: false
+      archiveFile: '$(Build.ArtifactStagingDirectory)/sdk-tools.zip'
 
   - task: PublishBuildArtifacts@1
     displayName: 'Publish Artifacts'

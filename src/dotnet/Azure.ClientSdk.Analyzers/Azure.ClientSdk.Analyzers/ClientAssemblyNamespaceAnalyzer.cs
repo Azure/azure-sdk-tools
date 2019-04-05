@@ -18,7 +18,8 @@ namespace Azure.ClientSdk.Analyzers
             "Azure.Networking",
             "Azure.Runtime",
             "Azure.Security",
-            "Azure.Storage"
+            "Azure.Storage",
+            "Azure.ApplicationModel"
         };
 
         public ClientAssemblyNamespaceAnalyzer()
@@ -44,24 +45,33 @@ namespace Azure.ClientSdk.Analyzers
         private void AnalyzeNamespace(SymbolAnalysisContext symbolAnalysisContext)
         {
             var namespaceSymbol = (INamespaceSymbol)symbolAnalysisContext.Symbol;
+            bool hasPublicTypes = false;
             foreach (var member in namespaceSymbol.GetMembers())
             {
                 if (member.IsType && member.DeclaredAccessibility == Accessibility.Public)
                 {
-                    var displayString = namespaceSymbol.ToDisplayString();
-                    foreach (var prefix in AllowedNamespacePrefix)
-                    {
-                        if (displayString.StartsWith(prefix))
-                        {
-                            return;
-                        }
-                    }
-
-                    foreach (var namespaceSymbolLocation in namespaceSymbol.Locations)
-                    {
-                        symbolAnalysisContext.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0001, namespaceSymbolLocation, displayString));
-                    }
+                    hasPublicTypes = true;
+                    break;
                 }
+            }
+
+            if (!hasPublicTypes)
+            {
+                return;
+            }
+
+            var displayString = namespaceSymbol.ToDisplayString();
+            foreach (var prefix in AllowedNamespacePrefix)
+            {
+                if (displayString.StartsWith(prefix))
+                {
+                    return;
+                }
+            }
+
+            foreach (var namespaceSymbolLocation in namespaceSymbol.Locations)
+            {
+                symbolAnalysisContext.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0001, namespaceSymbolLocation, displayString));
             }
         }
     }

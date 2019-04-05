@@ -29,6 +29,25 @@ namespace /*MM*/RandomNamespace
         }
 
         [Fact]
+        public async Task AZC0001ProducedOneErrorPerNamspaceDefinition()
+        {
+            var testSource = TestSource.Read(@"
+namespace RandomNamespace
+{
+    public class Program { }
+}
+
+namespace RandomNamespace
+{
+    public class Program2 { }
+}
+");
+            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
+            Assert.Equal(2, diagnostics.Length);
+            Assert.All(diagnostics, d => Assert.Equal("AZC0001", d.Id));
+        }
+
+        [Fact]
         public async Task AZC0001NotProducedForNamespacesWithPrivateMembersOnly()
         {
             var testSource = TestSource.Read(@"

@@ -1,6 +1,5 @@
 # External variables:
 # ProjectFile - The project to build and test. This variable is defined in pipeline web ui because we want to be able to provide it at queue time and that isn't supported in yaml yet.
-# MaxParallelTestJobs - Maximum number of parallel test jobs
 
 trigger:
   - master
@@ -53,6 +52,7 @@ jobs:
         inputs:
           command: test
           projects: '$(ProjectFile)'
+          arguments: --logger trx
           publishTestResults: false
 
       - task: PublishTestResults@2

@@ -1,0 +1,21 @@
+﻿<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup>
+    <IsTestProject Condition="'$(IsTestProject)' == '' and $(MSBuildProjectName.EndsWith('.Tests'))">true</IsTestProject>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(IsTestProject)' == 'true' or '$(IsTestHelperLibrary)' == 'true'">
+    <IsPackable>false</IsPackable>
+    <SignAssembly>false</SignAssembly>
+
+    <!-- Disable running of tests for test helper libraries -->
+    <IsTestProject Condition="'$(IsTestHelperLibrary)' == 'true'">false</IsTestProject>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(SignAssembly)' != 'false'">
+    <SignAssembly>true</SignAssembly>
+    <DelaySign>false</DelaySign>
+    <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)AzureSDKToolsKey.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+
+</Project>

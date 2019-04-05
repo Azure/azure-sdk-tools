@@ -1,5 +1,5 @@
 <Project Sdk="Microsoft.Build.Traversal">
   <ItemGroup>
-    <ProjectReference Include="$(RepoRoot)\**\*.csproj" />
+    <ProjectReference Include="src\dotnet\**\*.csproj" />
   </ItemGroup>
 </Project>

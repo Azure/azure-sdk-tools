@@ -18,4 +18,5 @@
     <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)AzureSDKToolsKey.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
+  <Import Project="Versioning.targets" />
 </Project>

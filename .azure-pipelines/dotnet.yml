@@ -1,5 +1,6 @@
 # External variables:
 # ProjectFile - The project to build and test. This variable is defined in pipeline web ui because we want to be able to provide it at queue time and that isn't supported in yaml yet.
+# VersioningProps - A collection of extra msbuild versioning properties like OfficialBuildId, PreReleaseVersionLabel, and DotNetFinalVersionKind
 
 trigger:
   - master
@@ -19,7 +20,7 @@ jobs:
         inputs:
           version: '$(DotNetCoreVersion)'
 
-      - script: 'dotnet pack $(ProjectFile) -o $(Build.ArtifactStagingDirectory) -warnaserror'
+      - script: 'dotnet pack $(ProjectFile) -o $(Build.ArtifactStagingDirectory) -warnaserror $(VersioningProps)'
         displayName: 'Build and Package'
         env:
           DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1

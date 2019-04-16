@@ -20,8 +20,8 @@ jobs:
 
   - script: |
       cd $(Build.SourcesDirectory)/packages/python-packages/doc-warden/
-      python setup.py bdist_wheel -d $(Build.ArtifactStagingDirectory)
-      python setup.py sdist -d $(Build.ArtifactStagingDirectory) --format zip
+      python setup.py bdist_wheel -d $(Build.ArtifactStagingDirectory)/warden
+      python setup.py sdist -d $(Build.ArtifactStagingDirectory)/warden --format zip
     displayName: 'Build Package'
 
   - task: CopyFiles@2

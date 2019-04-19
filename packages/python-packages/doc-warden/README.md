@@ -5,9 +5,9 @@ Every CI build owned by the Azure-SDK team also needs to verify that the documen
 Features:
 
 * Enforces Readme Standards
-    - Readmes present - *completed*
-    - Readmes have appropriate contents - *completed*
-* Generates report for included observed packages - *pending*
+    - Readmes present
+    - Readmes have appropriate contents
+* Generates report for included observed packages
 
 This package is tested on Python 2.7 -> 3.8.
 
@@ -23,9 +23,9 @@ In addition, `warden` is distributed using `setuptools` and `wheel`, so those pa
 
 ## Usage
 
-Right now, `warden` has a single command.  `scan`, which by default looks for a target `.docsettings.yml` file within the target repo. However, all the parameters that can be pulled from the `.docsettings` files will **override** whatever is placed within the `.docsettings` file.
+Right now, `warden` supports two main purposes. Readme enforcement (`scan`, `content`, `presence`) and package indexing (`index`).  
 
-Example usage:
+### Example usage (for any of the above commands):
 
 ```
 
@@ -53,11 +53,16 @@ To provide a different path (like `azure-sdk-for-java` does...), use:
 ##### Parameter Options
 
 `command` 
-Currently supports 3 commands. Values: `['scan', 'presence', 'content']` **Required.**
+Currently supports 3 commands. Values: `['scan', 'presence', 'content', `index`]` **Required.**
 
-* `scan` checks both readme presence as well as readme content
-* `content` checks just the content
-* and as you'd expect, `presence` just checks for readmes existing where they should be.
+* `scan`
+    * Run both `content` and `presence` enforcement on the targeted directory.
+* `content`
+    * Run only `content` readme enforcement on the target directory. Ensures content in each matches the regex patterns defined in the .docsettings file.
+* `presence` 
+    * Run only `presence` readme enforcement on the target directory. Ensures readmes exist where they should.
+* `index`
+    * Take inventory of the target folder. Attempts to leverage selected docsettings to discover all packages within the directory, and generate a `packages.md` index file.
 
 `--scan-directory`
 The target directory `warden` should be scanning. **Required.**
@@ -67,6 +72,9 @@ The target directory `warden` should be scanning. **Required.**
 
 `--config-location`
 By default, `warden` looks for the `.docsettings` file in the root of the repository. However, populating this location will override this behavior and instead pull the file from the location in this parameter. **Optional.**
+
+`--package-output`
+Override the default location that the generated `packages.md` file is dropped to during execution of the `index` command.
 
 `--verbose-output`
 Enable or disable output of an html report. Defaults to false. **Optional.**
@@ -89,7 +97,10 @@ When should we expect a readme to be present?
 #### .Net
 
 A package directory is indicated by:
-* a `*.sln` file under the `sdk` directory
+
+* a `*,csproj` file under the `sdk` directory
+    * Note that this is just a proxy. `warden` attempts to omit test projects by convention.
+
 
 #### Python
 
@@ -177,6 +188,21 @@ The first, `known_presence_issues`, tells warden that a presence failure detecte
 > We're aware of this issue, and it is tracked in the following github issue.
 
 The `known_content_issues` parameter functions _identically_ to the `known_presence_issues` check. If a readme is listed as "already known" to have failures, the entire CI build will not be crashed by Warden.
+
+##### `package_indexing_exclusion_list` and `package_indexing_traversal_stops` Configuration
+Indexing packages is often done as part of nightly (or triggered) automation. With this being the case, sometimes `warden` may detect a PackageId that users wish to omit from the generated `packages.md` file. The Azure SDK team leverages 
+the `package_indexing_exclusion_list` array members to enable just this sort of scenario.
+
+`package_indexing_traversal_stops` is used during parse of .NET language repos _only_. This is due to how the discovery logic for readme and changelog is implemented for .NET projects. Specifically, readmes for a .csproj are often a couple directories up from their parent .csproj location!
+
+For .net, `warden` will traverse **up** one directory at a time, looking for the readme and changelog files in each traversed directory. `warden` will continue to traverse until...
+
+1. It discovers a folder with a `.sln` within it
+2. It encounters a folder that exactly matches one present in `package_indexing_traversal_stops`
+
+Note that `warden` will not even execute an index against a .NET repo _unless the traversal stops are set_. 
+
+[SDK for net .docsettings](https://github.com/Azure/azure-sdk-for-net/blob/master/eng/.docsettings.yml) is a great example for both the exclusion list as well as the traversal stops.
 
 ## Provide Feedback
 

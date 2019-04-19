@@ -7,6 +7,26 @@ import yaml
 import os
 
 class WardenConfiguration():
+    REPOSITORY_SETS = {
+        # 0 = groupId
+        'java': { 
+            'URL': 'https://search.maven.org/search?q=g:[0]%20AND%20a:{packageId}',
+            'Text': 'Maven'
+        },
+        'python': { 
+            'URL': 'https://pypi.org/project/{package_id}',
+            'Text': 'PyPI'
+        },
+        'js': { 
+            'URL': 'https://www.npmjs.com/package/{package_id}',
+            'Text': 'NPM'
+        },
+        'net': { 
+            'URL': 'https://www.nuget.org/packages/{package_id}/',
+            'Text': 'Nuget'
+        }
+    }
+
     def __init__(self):
         parser = argparse.ArgumentParser(description ='''\
         Scan an azure-sdk repo and ensure that readmes are present and have appropriate content. 
@@ -28,7 +48,16 @@ class WardenConfiguration():
             required = False,
             help = '''
                   If provided, will replace the repo native .docsettings file 
-                  with a .docsettings file found at the location provided by this input
+                  with a .docsettings file found at the location provided by this input.
+                  ''')
+        parser.add_argument(
+            '-p',
+            '--package-output',
+            dest = 'package_output_location',
+            required = False,
+            help = '''
+                  If provided, will replace the root packages.md file output location 
+                  with the location provided by this input.
                   ''')
         parser.add_argument(
             '-l',
@@ -57,6 +86,7 @@ class WardenConfiguration():
         self.command = args.command
         self.target_directory = args.scan_directory
         self.yml_location = args.config_location or os.path.join(self.target_directory, '.docsettings.yml')
+        self.package_index_output_location = args.package_output_location or os.path.join(self.target_directory, 'packages.md')
 
         with open(self.yml_location, 'r') as f:
             try:
@@ -68,6 +98,16 @@ class WardenConfiguration():
             self.omitted_paths = doc['omitted_paths'] or []
         except:
             self.omitted_paths = []
+
+        try:
+            self.package_indexing_exclusion_list = doc['package_indexing_exclusion_list'] or []
+        except:
+            self.package_indexing_exclusion_list = []
+
+        try:
+            self.package_indexing_traversal_stops = doc['package_indexing_traversal_stops'] or []
+        except: 
+            self.package_indexing_traversal_stops = []
 
         try:
             self.required_readme_sections = doc['required_readme_sections'] or []
@@ -113,8 +153,14 @@ class WardenConfiguration():
     def get_known_content_issues(self):
         return [os.path.normpath(os.path.join(self.target_directory, exception_tuple[0])) for exception_tuple in self.known_content_issues]
 
+    def get_package_indexing_traversal_stops(self):
+        return [os.path.normpath(os.path.join(self.target_directory, traversal_stop)) for traversal_stop in self.package_indexing_traversal_stops]
+
     def get_readme_sections_dictionary(self):
         return { key: i for i, key in enumerate(self.required_readme_sections) }
+
+    def get_repository_details(self):
+        return WardenConfiguration.REPOSITORY_SETS[self.scan_language]
 
     def dump(self):
         current_config = {
@@ -122,6 +168,8 @@ class WardenConfiguration():
             'target_directory': self.target_directory,
             'yml_location': self.yml_location,
             'omitted_paths': self.omitted_paths,
+            'package_indexing_exclusion_list': self.package_indexing_exclusion_list,
+            'package_indexing_traversal_stops': self.package_indexing_traversal_stops,
             'scan_language': self.scan_language,
             'root_check_enabled': self.root_check_enabled,
             'verbose_output': self.verbose_output,

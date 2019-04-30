@@ -36,7 +36,12 @@ class PackageInfo():
 
     # test a remote URL. True if sucessful
     def test_url(self, configuration):
-        url = self.get_formatted_repository_url(configuration)
+        
+        # leverage test URL if it exists
+        if configuration.get_repository_details()['TestUrl']:
+            url = self.get_formatted_repo_test_url(configuration)
+        else:
+            url = self.get_formatted_repository_url(configuration)
 
         try:
             response = requests.get(url)
@@ -53,11 +58,34 @@ class PackageInfo():
         repo_url_template = configuration.get_repository_details()['URL']
 
         # pull in the package id
-        repo_url_template = repo_url_template.format(package_id = self.package_id)
+        repo_url_template = repo_url_template.format(package_id = self.package_id, package_version = self.package_version)
+
+        if configuration.get_repository_details()['UrlTransformationFunction']:
+            transformer = configuration.get_repository_details()['UrlTransformationFunction']
+        else:
+            transformer = lambda input_string: input_string
 
         # pull in any additional elements through repository_args
         for index, additional_argument in enumerate(self.repository_args):
-            repo_url_template = repo_url_template.replace('[' + str(index) + ']', self.repository_args[index])
+            repo_url_template = repo_url_template.replace('[' + str(index) + ']', transformer(self.repository_args[index]))
+
+        # possibly need to url encode here.
+        return repo_url_template
+
+    def get_formatted_repo_test_url(self, configuration):
+        repo_url_template = configuration.get_repository_details()['TestUrl']
+
+        # pull in the package id
+        repo_url_template = repo_url_template.format(package_id = self.package_id, package_version = self.package_version)
+
+        if configuration.get_repository_details()['TestUrlTransformationFunction']:
+            transformer = configuration.get_repository_details()['TestUrlTransformationFunction']
+        else:
+            transformer = lambda input_string: input_string
+
+        # pull in any additional elements through repository_args
+        for index, additional_argument in enumerate(self.repository_args):
+            repo_url_template = repo_url_template.replace('[' + str(index) + ']', transformer(self.repository_args[index]))
 
         # possibly need to url encode here.
         return repo_url_template

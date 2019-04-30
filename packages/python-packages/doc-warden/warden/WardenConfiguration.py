@@ -10,8 +10,11 @@ class WardenConfiguration():
     REPOSITORY_SETS = {
         # 0 = groupId
         'java': { 
-            'URL': 'https://search.maven.org/classic/#search%7Cga%7C1%7Cg:%22[0]%22%20AND%20a:%22{package_id}%22',
-            'Text': 'Maven'
+            'TestUrl': 'https://oss.sonatype.org/content/repositories/releases/[0]/{package_id}/{package_version}/{package_id}-{package_version}.pom',
+            'TestUrlTransformationFunction': lambda input_string: input_string.replace('.','/'),
+            'URL': 'https://search.maven.org/artifact/[0]/{package_id}',
+            'UrlTransformationFunction': lambda input_string: input_string,
+            'Text': 'Maven',
         },
         'python': { 
             'URL': 'https://pypi.org/project/{package_id}',

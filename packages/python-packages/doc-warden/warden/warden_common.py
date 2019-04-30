@@ -129,13 +129,15 @@ def find_below_file(glob_pattern, file):
 # file is the file we're starting from
 # path_exclusion_list the list of paths we should hard stop traversing up on if we haven't already exited
 # early_exit_lambda_check a specific check that isn't only based on file. for .net we check to see of a .sln is present in the directory
-def find_above_file(glob_pattern, file, path_exclusion_list, early_exit_lambda_check):
+def find_above_file(glob_pattern, file, path_exclusion_list, early_exit_lambda_check, root_directory):
     if not os.path.exists(file) or not glob_pattern or os.path.isdir(file):
         return None
 
     if (path_exclusion_list is None or len(path_exclusion_list) == 0) and early_exit_lambda_check is None:
         print('Using find_above_file without at least one member set for package_indexing_traversal_stops in .docsettings OR setting an early_exit_lambda_check is disallowed. Exiting.')
         exit(1)
+
+    complete_exclusion_list = path_exclusion_list + [root_directory]
 
     if early_exit_lambda_check is None:
         early_exit_lambda_check = lambda path: True
@@ -144,7 +146,7 @@ def find_above_file(glob_pattern, file, path_exclusion_list, early_exit_lambda_c
 
     file_dir = os.path.dirname(file)
 
-    while not check_folder_against_exclusion_list(file_dir, path_exclusion_list):
+    while not check_folder_against_exclusion_list(file_dir, complete_exclusion_list):
         for file in os.listdir(file_dir):
             if target_rule.match(file):
                 return os.path.normpath(os.path.join(file_dir, file))

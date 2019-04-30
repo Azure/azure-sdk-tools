@@ -44,7 +44,7 @@ OUTPUT_HEADER = """
 JAVA_OUTPUT_HEADER = """
 # Package Index - {{ title }}
 
-| Package Id     | GroupId   | Readme    | Published Url       |
+| Artifact Id    | Group Id  | Readme    | Published Url       |
 |----------------|-----------|-----------|---------------------|
 """
 
@@ -225,8 +225,8 @@ def get_net_packages_info(config):
     for pkg_file in (pkg_locations + ignored_pkg_locations):
         pkg_name = os.path.splitext(os.path.basename(pkg_file))[0]
         if(pkg_name not in config.package_indexing_exclusion_list):
-            changelog = find_above_file('changelog.md', pkg_file, config.get_package_indexing_traversal_stops() + [os.path.normpath(config.target_directory)], net_early_exit)
-            readme = find_above_file('readme.md', pkg_file, config.get_package_indexing_traversal_stops() + [os.path.normpath(config.target_directory)], net_early_exit)
+            changelog = find_above_file('changelog.md', pkg_file, config.get_package_indexing_traversal_stops(), net_early_exit, os.path.normpath(config.target_directory))
+            readme = find_above_file('readme.md', pkg_file, config.get_package_indexing_traversal_stops(), net_early_exit, os.path.normpath(config.target_directory))
 
             if changelog:
                 changelog_relpath = webify_relative_path(os.path.relpath(changelog, config.target_directory))

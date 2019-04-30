@@ -32,7 +32,7 @@ REPO_COL = ' `[Repo Link]( {{ pkg.relative_package_location }}` )'
 PUBLISH_COL = ' {% if pkg.test_url(config) %}[{{ pkg.get_repository_link_text(config) }}]( {{ pkg.get_formatted_repository_url(config) }} ){% else %} N/A {% endif %} '
 COLUMN_LOOP = '{% for pkg in packages %}'
 COLUMN_TEMPLATE = '{0}|{1}|{2}|{3}|{4}|'.format(COLUMN_LOOP, PKGID_COL, RM_COL, CL_COL, PUBLISH_COL)
-JAVA_COLUMN_TEMPLATE = '{0}|{1}|{2}|{3}|{4}|{5}|'.format(COLUMN_LOOP, PKGID_COL, GROUPID_COL, RM_COL, CL_COL, PUBLISH_COL)
+JAVA_COLUMN_TEMPLATE = '{0}|{1}|{2}|{3}|{4}|'.format(COLUMN_LOOP, PKGID_COL, GROUPID_COL, RM_COL, PUBLISH_COL)
 
 OUTPUT_HEADER = """
 # Package Index - {{ title }}
@@ -44,8 +44,8 @@ OUTPUT_HEADER = """
 JAVA_OUTPUT_HEADER = """
 # Package Index - {{ title }}
 
-| Package Id     | GroupId   | Readme    | Changelog                 | Published Url       |
-|----------------|-----------|-----------|---------------------------|---------------------|
+| Package Id     | GroupId   | Readme    | Published Url       |
+|----------------|-----------|-----------|---------------------|
 """
 
 COLUMN_OUTPUT_FOOTER = """

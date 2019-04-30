@@ -10,7 +10,7 @@ class WardenConfiguration():
     REPOSITORY_SETS = {
         # 0 = groupId
         'java': { 
-            'URL': 'https://search.maven.org/search?q=g:[0]%20AND%20a:{packageId}',
+            'URL': 'https://search.maven.org/classic/#search%7Cga%7C1%7Cg:%22[0]%22%20AND%20a:%22{package_id}%22',
             'Text': 'Maven'
         },
         'python': { 

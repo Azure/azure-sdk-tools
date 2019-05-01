@@ -38,7 +38,7 @@ class PackageInfo():
     def test_url(self, configuration):
         
         # leverage test URL if it exists
-        if configuration.get_repository_details()['TestUrl']:
+        if configuration.get_repository_details().get('TestUrl', None):
             url = self.get_formatted_repo_test_url(configuration)
         else:
             url = self.get_formatted_repository_url(configuration)
@@ -60,7 +60,7 @@ class PackageInfo():
         # pull in the package id
         repo_url_template = repo_url_template.format(package_id = self.package_id, package_version = self.package_version)
 
-        if configuration.get_repository_details()['UrlTransformationFunction']:
+        if configuration.get_repository_details().get('UrlTransformationFunction', None):
             transformer = configuration.get_repository_details()['UrlTransformationFunction']
         else:
             transformer = lambda input_string: input_string

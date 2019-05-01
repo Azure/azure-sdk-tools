@@ -4,7 +4,9 @@ from __future__ import print_function
 
 from .enforce_readme_presence import find_missing_readmes
 from .enforce_readme_content import verify_readme_content
+from .index_packages import index_packages, render
 from .WardenConfiguration import WardenConfiguration
+from .PackageInfo import PackageInfo
 import os
 
 # CONFIGURATION. ENTRY POINT. EXECUTION.
@@ -17,7 +19,8 @@ def console_entry_point():
     command_selector = {
         'scan': all_operations,
         'content': verify_content,
-        'presence': verify_presence
+        'presence': verify_presence,
+        'index': index
     }
     
     if cfg.command in command_selector:
@@ -25,6 +28,16 @@ def console_entry_point():
     else:
         print('Unrecognized command invocation {}.'.format(cfg.command))
         exit(1)
+
+# index the packages present in the repository
+def index(config):
+    packages = index_packages(config)
+    render(config, packages)
+
+    if config.verbose_output:
+        print('Warden located the following packages: ')
+        for pkg in packages:
+            print(pkg.package_id)
 
 # verify the content of the readmes only
 def verify_content(config):

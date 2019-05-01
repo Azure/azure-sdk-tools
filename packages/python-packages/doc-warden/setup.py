@@ -53,6 +53,8 @@ setup(
         'docutils', # parsing rst to html
         'pygments', # docutils uses pygments for parsing rst to html
         'beautifulsoup4', # parsing of generated html
+        'jinja2', # used for generation from template for index_packages
+        'requests', # utilized to validate published repository URLs. 
         'pathlib'
     ],
     entry_points = {

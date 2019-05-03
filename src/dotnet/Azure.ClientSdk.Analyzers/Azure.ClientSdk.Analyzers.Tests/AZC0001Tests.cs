@@ -22,8 +22,8 @@ namespace /*MM*/RandomNamespace
             var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
             var diagnostic = Assert.Single(diagnostics);
             Assert.Equal("AZC0001", diagnostic.Id);
-            Assert.Equal("Namespace 'RandomNamespace' shouldn't contain public types. Use one of the following pre-approved namespace groups:" +
-                         " Azure.Diagnostics, Azure.Cognitive, Azure.Iot, Azure.Networking, Azure.Runtime, Azure.Security, Azure.Storage, Azure.ApplicationModel", diagnostic.GetMessage());
+            Assert.Equal("Namespace 'RandomNamespace' shouldn't contain public types. Use one of the following pre-approved namespace groups: " +
+                         "Azure.ApplicationModel, Azure.Analytics, Azure.Data, Azure.Iot, Azure.Media, Azure.Messaging, Azure.ML, Azure.Security, Azure.Storage", diagnostic.GetMessage());
 
             AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostic.Location);
         }

@@ -12,6 +12,7 @@ namespace Azure.ClientSdk.Analyzers
     {
         internal static readonly string[] AllowedNamespacePrefix = new[]
         {
+            "Azure.ApplicationModel",
             "Azure.Analytics",
             "Azure.Data",
             "Azure.Iot",

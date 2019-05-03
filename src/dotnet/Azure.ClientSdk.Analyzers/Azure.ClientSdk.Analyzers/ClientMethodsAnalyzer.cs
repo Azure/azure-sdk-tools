@@ -25,7 +25,7 @@ namespace Azure.ClientSdk.Analyzers
             var typeSymbol = (INamedTypeSymbol)context.Symbol;
             foreach (var member in typeSymbol.GetMembers())
             {
-                if (member is IMethodSymbol methodSymbol && methodSymbol.Name.EndsWith(AsyncSuffix))
+                if (member is IMethodSymbol methodSymbol && methodSymbol.Name.EndsWith(AsyncSuffix) && methodSymbol.DeclaredAccessibility == Accessibility.Public)
                 {
                     CheckClientMethod(context, methodSymbol);
 

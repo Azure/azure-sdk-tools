@@ -41,5 +41,32 @@ namespace RandomNamespace
             AnalyzerAssert.DiagnosticLocation(testSource.MarkerLocations["MM0"], diagnostics[0].Location);
             AnalyzerAssert.DiagnosticLocation(testSource.MarkerLocations["MM1"], diagnostics[1].Location);
         }
+
+        [Fact]
+        public async Task AZC0002SkippedForPrivateMethods()
+        {
+            var testSource = TestSource.Read(@"
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace RandomNamespace
+{
+    public class SomeClient
+    {
+        private Task GetAsync(CancellationToken cancellationToken = default)
+        {
+            return null;
+        }
+
+        private void Get(CancellationToken cancellationToken = default)
+        {
+        }
+    }
+}
+");
+            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
+
+            Assert.Empty(diagnostics);
+        }
     }
 }

@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
 using Microsoft.Extensions.DependencyModel;
 using Microsoft.Extensions.DependencyModel.Resolution;
@@ -36,7 +37,8 @@ namespace Azure.ClientSdk.Analyzers.Tests
                     var projectId = ProjectId.CreateNewId(debugName: TestProjectName);
                     solution = new AdhocWorkspace()
                         .CurrentSolution
-                        .AddProject(projectId, TestProjectName, TestProjectName, LanguageNames.CSharp);
+                        .AddProject(projectId, TestProjectName, TestProjectName, LanguageNames.CSharp)
+                        .WithProjectParseOptions(projectId, new CSharpParseOptions(LanguageVersion.Latest));
 
                     foreach (var defaultCompileLibrary in DependencyContext.Load(testAssembly).CompileLibraries)
                     {

@@ -12,14 +12,14 @@ namespace Azure.ClientSdk.Analyzers
     {
         internal static readonly string[] AllowedNamespacePrefix = new[]
         {
-            "Azure.Diagnostics",
-            "Azure.Cognitive",
+            "Azure.Analytics",
+            "Azure.Data",
             "Azure.Iot",
-            "Azure.Networking",
-            "Azure.Runtime",
+            "Azure.Media",
+            "Azure.Messaging",
+            "Azure.ML",
             "Azure.Security",
-            "Azure.Storage",
-            "Azure.ApplicationModel"
+            "Azure.Storage"
         };
 
         public ClientAssemblyNamespaceAnalyzer()

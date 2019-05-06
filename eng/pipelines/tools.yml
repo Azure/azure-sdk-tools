@@ -17,7 +17,7 @@ jobs:
   parameters:
     JobName: roslyn_sdk_analyzers
     ProjectFile: tools/roslyn-sdk-analyzers/Azure.ClientSdk.Analyzers/Azure.ClientSdk.Analyzers.sln
-- job: 'warden_build'
+- job: 'Building and Testing tools/doc-warden'
   pool:
     vmImage: 'ubuntu-16.04'  
   steps:
@@ -53,19 +53,7 @@ jobs:
     # builds should be sufficient.
     condition: and(succeededOrFailed(), ne(variables['Build.Reason'], 'PullRequest'))
     displayName: 'Component Detection'
-- job: 'warden_test'
-  dependsOn: 'warden_build'
-  pool:
-    vmImage: 'ubuntu-16.04'  
-  steps:
-  - task: UsePythonVersion@0
-    displayName: 'Use Python 3.6'
-    inputs:
-      versionSpec: 3.6
   - script: |
-      pip install setuptools 
-      pip install wheel twine readme-renderer[md]
-
       cd $(Build.SourcesDirectory)
       mkdir sdk-for-js
       mkdir sdk-for-python

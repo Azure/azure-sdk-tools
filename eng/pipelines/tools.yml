@@ -12,3 +12,6 @@ jobs:
 - template: templates/jobs/archetype-tools-net.yml
   parameters:
     ProjectFile: tools/pixel-server/PixelServer.sln
+- template: templates/jobs/archetype-tools-net.yml
+  parameters:
+    ProjectFile: tools/roslyn-sdk-analyzers/Azure.ClientSdk.Analyzers/Azure.ClientSdk.Analyzers.sln

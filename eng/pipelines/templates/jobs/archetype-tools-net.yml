@@ -11,18 +11,13 @@ jobs:
     inputs:
       version: '$(DotNetCoreVersion)'
   - script: 'dotnet pack ${{parameters.ProjectFile}} -o $(Build.ArtifactStagingDirectory) -warnaserror /p:OfficialBuildId=$(Build.BuildNumber)'
-    displayName: 'Build and Package'
+    displayName: 'Build'
     env:
       DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
       DOTNET_CLI_TELEMETRY_OPTOUT: 1
       DOTNET_MULTILEVEL_LOOKUP: 0
-  - task: PublishBuildArtifacts@1
-    condition: succeededOrFailed()
-    displayName: 'Publish Artifacts'
-    inputs:
-      ArtifactName: packages
   - task: DotNetCoreCLI@2
-    displayName: 'Build & Test'
+    displayName: 'Test'
     env:
       DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
       DOTNET_CLI_TELEMETRY_OPTOUT: 1
@@ -39,3 +34,10 @@ jobs:
       testRunTitle: 'Windows DotNet $(DotNetCoreVersion)'
       testResultsFormat: 'VSTest'
       mergeTestResults: true
+  - task: PublishPipelineArtifact@0
+      condition: succeededOrFailed()
+      displayName: 'Publish Artifacts'
+      inputs:
+        artifactName: packages
+        targetPath: $(Build.ArtifactStagingDirectory)
+    

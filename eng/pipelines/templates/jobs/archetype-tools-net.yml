@@ -1,5 +1,5 @@
 jobs:
-- job: 'Build'
+- job: 'build-${{parameters.JobName}}'
   displayName: 'Building and Testing: ${{parameters.ProjectFile}}'
   variables:
   - template: ../variables/globals.yml

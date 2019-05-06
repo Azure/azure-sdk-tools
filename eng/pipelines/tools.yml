@@ -1,5 +1,7 @@
 trigger:
-- master
+  branches:
+    include:
+    - users/mitchdenny/pipelines-evolution
 
 pr:
   branches:

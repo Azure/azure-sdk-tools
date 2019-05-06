@@ -30,7 +30,7 @@ jobs:
      pip install wheel twine readme-renderer[md]
     displayName: 'Prep Environment'
   - script: |
-      cd $(Build.SourcesDirectory)/packages/python-packages/doc-warden/
+      cd $(Build.SourcesDirectory)/tools/doc-warden/
       python setup.py bdist_wheel -d $(Build.ArtifactStagingDirectory)/warden
       python setup.py sdist -d $(Build.ArtifactStagingDirectory)/warden --format zip
     displayName: 'Build Package'
@@ -38,7 +38,7 @@ jobs:
     displayName: 'Copy files for github release'
     inputs:
       SourceFolder: '$(Build.SourcesDirectory)'
-      Contents: 'scripts/**/*.py'
+      Contents: 'tools/**/*.py'
       TargetFolder: '$(Build.ArtifactStagingDirectory)/sdk-tools'
   - task: ArchiveFiles@2
     displayName: 'Archive files for GitHub release'
@@ -78,7 +78,7 @@ jobs:
       git clone https://github.com/Azure/azure-sdk-for-net.git sdk-for-net
     displayName: 'Setup Environment'
   - script: |
-      pip install -e $(Build.SourcesDirectory)/packages/python-packages/doc-warden/
+      pip install -e $(Build.SourcesDirectory)/tools/doc-warden/
     displayName: 'Install doc-warden'
   - script: |
       ward scan -d $(Build.SourcesDirectory)/sdk-for-java  -c $(Build.SourcesDirectory)/sdk-for-java/eng/.docsettings.yml -o True

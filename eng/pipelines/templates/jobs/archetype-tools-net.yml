@@ -1,6 +1,6 @@
 jobs:
 - job: 'Build'
-  displayName: 'Building ${{parameters.ProjectFile}}'
+  displayName: 'Building and Testing: ${{parameters.ProjectFile}}'
   variables:
   - template: ../variables/globals.yml
   pool:
@@ -10,7 +10,7 @@ jobs:
     displayName: 'Use .NET Core sdk $(DotNetCoreVersion)'
     inputs:
       version: '$(DotNetCoreVersion)'
-  - script: 'dotnet pack ${{parameters.ProjectFile}} -o $(Build.ArtifactStagingDirectory) -warnaserror $(VersioningProps)'
+  - script: 'dotnet pack ${{parameters.ProjectFile}} -o $(Build.ArtifactStagingDirectory) -warnaserror /p:OfficialBuildId=$(Build.BuildNumber)'
     displayName: 'Build and Package'
     env:
       DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
@@ -21,15 +21,6 @@ jobs:
     displayName: 'Publish Artifacts'
     inputs:
       ArtifactName: packages
-- job: 'Test'
-  displayName: 'Testing ${{parameters.ProjectFile}}'
-  pool:
-    vmImage: 'vs2017-win2016'
-  steps:
-  - task: DotNetCoreInstaller@0
-    displayName: 'Use .NET Core sdk $(DotNetCoreVersion)'
-    inputs:
-      version: '$(DotNetCoreVersion)'
   - task: DotNetCoreCLI@2
     displayName: 'Build & Test'
     env:

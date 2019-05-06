@@ -34,10 +34,5 @@ jobs:
       testRunTitle: 'Windows DotNet $(DotNetCoreVersion)'
       testResultsFormat: 'VSTest'
       mergeTestResults: true
-  - task: PublishPipelineArtifact@0
-    condition: succeededOrFailed()
-    displayName: 'Publish Artifacts'
-    inputs:
-      artifactName: packages
-      targetPath: $(Build.ArtifactStagingDirectory)
-  
+  - upload: $(Build.ArtifactStagingDirectory)
+    artifact: ${{parameters.JobName}}

@@ -46,9 +46,8 @@ jobs:
       rootFolderOrFile: '$(Build.ArtifactStagingDirectory)/sdk-tools'
       includeRootFolder: false
       archiveFile: '$(Build.ArtifactStagingDirectory)/sdk-tools.zip'
-  - task: PublishBuildArtifacts@1
-    displayName: 'Publish Artifacts'
-    condition: succeededOrFailed()
+  - upload: $(Build.ArtifactStagingDirectory)
+    artifact: doc_warden
   - task: ms.vss-governance-buildtask.governance-build-task-component-detection.ComponentGovernanceComponentDetection@0
     # ComponentGovernance is currently unable to run on pull requests of public projects. Running on non-PR
     # builds should be sufficient.

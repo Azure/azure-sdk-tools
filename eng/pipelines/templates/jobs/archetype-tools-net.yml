@@ -35,9 +35,9 @@ jobs:
       testResultsFormat: 'VSTest'
       mergeTestResults: true
   - task: PublishPipelineArtifact@0
-      condition: succeededOrFailed()
-      displayName: 'Publish Artifacts'
-      inputs:
-        artifactName: packages
-        targetPath: $(Build.ArtifactStagingDirectory)
-    
+    condition: succeededOrFailed()
+    displayName: 'Publish Artifacts'
+    inputs:
+      artifactName: packages
+      targetPath: $(Build.ArtifactStagingDirectory)
+  

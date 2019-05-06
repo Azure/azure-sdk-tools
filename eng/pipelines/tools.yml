@@ -18,20 +18,17 @@ jobs:
     displayName: 'Use .NET Core sdk $(DotNetCoreVersion)'
     inputs:
       version: '$(DotNetCoreVersion)'
-
   - script: 'dotnet pack $(ProjectFile) -o $(Build.ArtifactStagingDirectory) -warnaserror $(VersioningProps)'
     displayName: 'Build and Package'
     env:
       DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
       DOTNET_CLI_TELEMETRY_OPTOUT: 1
       DOTNET_MULTILEVEL_LOOKUP: 0
-
   - task: PublishBuildArtifacts@1
     condition: succeededOrFailed()
     displayName: 'Publish Artifacts'
     inputs:
       ArtifactName: packages
-
 - job: 'Test'
   pool:
     vmImage: 'vs2017-win2016'
@@ -51,7 +48,6 @@ jobs:
       projects: '$(ProjectFile)'
       arguments: --logger trx
       publishTestResults: false
-
   - task: PublishTestResults@2
     condition: succeededOrFailed()
     inputs:

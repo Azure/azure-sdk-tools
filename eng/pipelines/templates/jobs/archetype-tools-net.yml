@@ -1,5 +1,6 @@
 jobs:
-- job: 'Build ${{parameters.ProjectFile}}'
+- job: 'Build'
+  displayName: 'Building ${{parameters.ProjectFile}}'
   variables:
   - template: ../variables/globals.yml
   pool:
@@ -20,7 +21,8 @@ jobs:
     displayName: 'Publish Artifacts'
     inputs:
       ArtifactName: packages
-- job: 'Test ${{parameters.ProjectFile}}'
+- job: 'Test'
+  displayName: 'Testing ${{parameters.ProjectFile}}'
   pool:
     vmImage: 'vs2017-win2016'
   steps:

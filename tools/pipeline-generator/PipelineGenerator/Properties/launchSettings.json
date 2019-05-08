@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "PipelineGenerator": {
+      "commandName": "Project",
+      "commandLineArgs": "--organization https://dev.azure.com/azure-sdk/ --project playground --prefix mitchdenny.net --path C:\\Code\\azure-sdk-for-net\\sdk --patvar PATVAR --convention ci --endpoint Azure"
+    }
+  }
+}

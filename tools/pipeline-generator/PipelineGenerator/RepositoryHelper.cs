@@ -1,19 +1,30 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace PipelineGenerator
 {
     public class RepositoryHelper
     {
-        public string GetRepositoryRelativePath(string path)
+        public string GetRepositoryRoot(DirectoryInfo path)
         {
-            return "/sdk/servicebus/ci.yml";
-        }
+            // This code is a little sloppy. Looking to bring in a dependency
+            // on LibGit2Sharp to make this more robust, but this will do for now.
+            var currentPath = path;
 
-        public string GetRepositoryOrigin(string path)
-        {
-            return "https://github.com/azure/azure-sdk-for-net";
+            while (true)
+            {
+                if (path.GetDirectories(".git").Length > 0)
+                {
+                    return path.FullName;
+                }
+                else
+                {
+                    path = path.Parent;
+                }
+            }
         }
     }
 }

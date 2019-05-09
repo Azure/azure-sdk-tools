@@ -5,6 +5,7 @@ using Microsoft.VisualStudio.Services.Common;
 using Microsoft.VisualStudio.Services.ServiceEndpoints.WebApi;
 using Microsoft.VisualStudio.Services.WebApi;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -27,6 +28,8 @@ namespace PipelineGenerator
             var patvarOption = app.Option("--patvar <env>", "Name of an environment variable which contains a PAT.", CommandOptionType.SingleValue).IsRequired();
             var endpointOption = app.Option("--endpoint <endpoint>", "Name of the service endpoint to configure repositories with.", CommandOptionType.SingleValue).IsRequired();
             var repositoryOption = app.Option("--repository <repository>", "Name of the GitHub repo in the form [org]/[repo].", CommandOptionType.SingleValue).IsRequired();
+            var conventionOption = app.Option("--convention <convention>", "What convention are you building pipelines for?", CommandOptionType.SingleValue).IsRequired();
+            var variablegroupsOption = app.Option("--variablegroups <variablegroup>", "Comma seperated list of variable groups.", CommandOptionType.MultipleValue);
             var whatifOption = app.Option("--whatif", "Use this to understand what will happen, but don't change anything.", CommandOptionType.NoValue);
             var openOption = app.Option("--open", "Open a browser window to the definitions that are created.", CommandOptionType.NoValue);
             var destroyOption = app.Option("--destroy", "Use this switch to delete the pipelines instead (DANGER!)", CommandOptionType.NoValue);
@@ -49,6 +52,8 @@ namespace PipelineGenerator
                     patvarOption.Value(),
                     endpointOption.Value(),
                     repositoryOption.Value(),
+                    conventionOption.Value(),
+                    variablegroupsOption.Values.ToArray(),
                     whatifOption.HasValue(),
                     openOption.HasValue(),
                     destroyOption.HasValue(),
@@ -61,33 +66,62 @@ namespace PipelineGenerator
             return app.Execute(args);
         }
 
-        public async Task<ExitCondition> RunAsync(string organization, string project, string prefix, string path, string patvar, string endpoint, string repository, bool whatIf, bool open, bool destroy, CancellationToken cancellationToken)
+        public Program()
         {
-            var scanDirectory = new DirectoryInfo(path);
-            var scanner = new SdkComponentScanner();
-            var components = scanner.Scan(scanDirectory);
+
+        }
+
+        private Dictionary<string, Type> conventions = new Dictionary<string, Type>()
+        {
+            {"ci", typeof(PullRequestValidationPipelineConvention) },
+            {"tests", typeof(IntegrationTestingPipelineConvention) }
+        };
+
+        private PipelineConvention GetPipelineConvention(string convention, PipelineGenerationContext context)
+        {
+            var normalizedConvention = convention.ToLower();
+            if (conventions.ContainsKey(normalizedConvention))
+            {
+                return (PipelineConvention)Activator.CreateInstance(conventions[normalizedConvention], context);
+            }
+            else
+            {
+                throw new ArgumentOutOfRangeException(nameof(convention), "Could not find matching convention.");
+            }
+        }
+
+        public async Task<ExitCondition> RunAsync(
+            string organization,
+            string project,
+            string prefix,
+            string path,
+            string patvar,
+            string endpoint,
+            string repository,
+            string convention,
+            string[] variableGroups,
+            bool whatIf,
+            bool open,
+            bool destroy,
+            CancellationToken cancellationToken)
+        {
+            var context = new PipelineGenerationContext(
+                organization,
+                project,
+                patvar,
+                endpoint,
+                repository,
+                variableGroups
+                );
+
+            var pipelineConvention = GetPipelineConvention(convention, context);
+            var components = ScanForComponents(path, pipelineConvention.SearchPattern);
 
             if (components.Count() == 0)
             {
                 return ExitCondition.NoComponentsFound;
             }
 
-            // In order to create build definitions we need to fetch metadata from GitHub
-            // about the repository through the service endpoint. We need the project ID
-            // and service endpoint ID for these, and we'll use them later also.
-            var connection = GetConnection(organization, patvar);
-            var projectReference = await GetProjectReferenceAsync(connection, project, cancellationToken);
-            var serviceEndpoint = await GetServiceEndpointAsync(connection, projectReference, endpoint, cancellationToken);
-            var buildClient = await connection.GetClientAsync<BuildHttpClient>(cancellationToken);
-            var sourceRepositories = await buildClient.ListRepositoriesAsync(
-                projectReference.Id,
-                "github",
-                serviceEndpointId: serviceEndpoint.Id,
-                repository: repository,
-                cancellationToken: cancellationToken
-                );
-            var sourceRepository = sourceRepositories.Repositories.Single();
-            
             // Now we just iterate over each of the components and check to see whether
             // we have an existing build definition for it.
             foreach (var component in components)
@@ -150,6 +184,14 @@ namespace PipelineGenerator
             return ExitCondition.Success;
         }
 
+        private IEnumerable<SdkComponent> ScanForComponents(string path, string searchPattern)
+        {
+            var scanDirectory = new DirectoryInfo(path);
+            var scanner = new SdkComponentScanner();
+            var components = scanner.Scan(scanDirectory, searchPattern);
+            return components;
+        }
+
         private async Task<BuildDefinition> CreateDefinitionAsync(TeamProjectReference projectReference, BuildHttpClient buildClient, SourceRepository sourceRepository, string conventionDefinitionName, SdkComponent component, CancellationToken cancellationToken)
         {
             var repositoryHelper = new RepositoryHelper();
@@ -205,34 +247,5 @@ namespace PipelineGenerator
             return createdDefinition;
         }
 
-        private async Task<ServiceEndpoint> GetServiceEndpointAsync(VssConnection connection, TeamProjectReference projectReference, string endpoint, CancellationToken cancellationToken)
-        {
-            var serviceEndpointClient = await connection.GetClientAsync<ServiceEndpointHttpClient>(cancellationToken);
-            var serviceEndpoints = await serviceEndpointClient.GetServiceEndpointsByNamesAsync(
-                projectReference.Id,
-                new string[] { endpoint },
-                cancellationToken: cancellationToken
-                );
-
-            var serviceEndpoint = serviceEndpoints.First();
-            return serviceEndpoint;
-        }
-
-        private async Task<TeamProjectReference> GetProjectReferenceAsync(VssConnection connection, string project, CancellationToken cancellationToken)
-        {
-            var projectClient = await connection.GetClientAsync<ProjectHttpClient>(cancellationToken);
-            var projects = await projectClient.GetProjects(ProjectState.WellFormed);
-            var projectReference = projects.Single(p => p.Name.Equals(project, StringComparison.OrdinalIgnoreCase));
-            return projectReference;
-        }
-
-        private static VssConnection GetConnection(string organization, string patvar)
-        {
-            var pat = Environment.GetEnvironmentVariable(patvar);
-            var credentials = new VssBasicCredential("nobody", pat);
-
-            var connection = new VssConnection(new Uri(organization), credentials);
-            return connection;
-        }
     }
 }

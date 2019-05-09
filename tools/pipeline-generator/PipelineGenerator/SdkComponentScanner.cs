@@ -8,9 +8,11 @@ namespace PipelineGenerator
 {
     public class SdkComponentScanner
     {
-        public IEnumerable<SdkComponent> Scan(DirectoryInfo path)
+        public IEnumerable<SdkComponent> Scan(DirectoryInfo path, string searchPattern)
         {
-            var pipelineYamlFiles = path.EnumerateFiles("ci.yml", SearchOption.AllDirectories);
+            if (!path.Exists) throw new ArgumentException(nameof(path), "Path does not exist.");
+
+            var pipelineYamlFiles = path.EnumerateFiles(searchPattern, SearchOption.AllDirectories);
 
             foreach (var pipelineYamlFile in pipelineYamlFiles)
             {

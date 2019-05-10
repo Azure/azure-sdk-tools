@@ -14,12 +14,18 @@ namespace PipelineGenerator
 
             var pipelineYamlFiles = path.EnumerateFiles(searchPattern, SearchOption.AllDirectories);
 
+            var repositoryHelper = new RepositoryHelper();
+            var root = repositoryHelper.GetRepositoryRoot(path);
+
             foreach (var pipelineYamlFile in pipelineYamlFiles)
             {
+                var relativePath = Path.GetRelativePath(root, pipelineYamlFile.FullName);
+
                 var component = new SdkComponent()
                 {
                     Name = pipelineYamlFile.Directory.Name,
-                    Path = pipelineYamlFile.Directory
+                    Path = pipelineYamlFile.Directory,
+                    RelativeYamlPath = relativePath
                 };
 
                 yield return component;

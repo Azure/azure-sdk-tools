@@ -1,6 +1,8 @@
-﻿using System;
+﻿using Microsoft.TeamFoundation.Build.WebApi;
+using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace PipelineGenerator
 {
@@ -10,6 +12,18 @@ namespace PipelineGenerator
 
         public IntegrationTestingPipelineConvention(PipelineGenerationContext context) : base(context)
         {
+        }
+
+        protected override string GetDefinitionName(SdkComponent component)
+        {
+            return $"{Context.Prefix} - {component.Name} - tests";
+        }
+
+        protected async override Task<bool> ApplyConventionAsync(BuildDefinition definition, SdkComponent component)
+        {
+            // Daniel - your custom logic goes here.!
+
+            return false;
         }
     }
 }

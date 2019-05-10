@@ -1,4 +1,6 @@
 ﻿using McMaster.Extensions.CommandLineUtils;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Console;
 using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.TeamFoundation.Core.WebApi;
 using Microsoft.VisualStudio.Services.Common;
@@ -19,6 +21,18 @@ namespace PipelineGenerator
 
         public static int Main(string[] args)
         {
+            var cancellationTokenSource = new CancellationTokenSource();
+            Console.CancelKeyPress += (sender, e) =>
+            {
+                cancellationTokenSource.Cancel();
+            };
+
+            var app = PrepareApplication(cancellationTokenSource);
+            return app.Execute(args);
+        }
+
+        private static CommandLineApplication PrepareApplication(CancellationTokenSource cancellationTokenSource)
+        {
             var app = new CommandLineApplication();
             app.HelpOption();
             var organizationOption = app.Option("--organization <url>", "The URL of the Azure DevOps organization.", CommandOptionType.SingleValue).IsRequired();
@@ -28,17 +42,12 @@ namespace PipelineGenerator
             var patvarOption = app.Option("--patvar <env>", "Name of an environment variable which contains a PAT.", CommandOptionType.SingleValue).IsRequired();
             var endpointOption = app.Option("--endpoint <endpoint>", "Name of the service endpoint to configure repositories with.", CommandOptionType.SingleValue).IsRequired();
             var repositoryOption = app.Option("--repository <repository>", "Name of the GitHub repo in the form [org]/[repo].", CommandOptionType.SingleValue).IsRequired();
+            var agentpoolOption = app.Option("--agentpool <agentpool>", "Name of the agent pool to use when pool isn't speciifed.", CommandOptionType.SingleValue).IsRequired();
             var conventionOption = app.Option("--convention <convention>", "What convention are you building pipelines for?", CommandOptionType.SingleValue).IsRequired();
             var variablegroupsOption = app.Option("--variablegroups <variablegroup>", "Comma seperated list of variable groups.", CommandOptionType.MultipleValue);
             var whatifOption = app.Option("--whatif", "Use this to understand what will happen, but don't change anything.", CommandOptionType.NoValue);
             var openOption = app.Option("--open", "Open a browser window to the definitions that are created.", CommandOptionType.NoValue);
             var destroyOption = app.Option("--destroy", "Use this switch to delete the pipelines instead (DANGER!)", CommandOptionType.NoValue);
-
-            var cancellationTokenSource = new CancellationTokenSource();
-            Console.CancelKeyPress += (sender, e) =>
-            {
-                cancellationTokenSource.Cancel();
-            };
 
             app.OnExecute(() =>
             {
@@ -52,6 +61,7 @@ namespace PipelineGenerator
                     patvarOption.Value(),
                     endpointOption.Value(),
                     repositoryOption.Value(),
+                    agentpoolOption.Value(),
                     conventionOption.Value(),
                     variablegroupsOption.Values.ToArray(),
                     whatifOption.HasValue(),
@@ -63,12 +73,11 @@ namespace PipelineGenerator
                 return (int)exitCondition;
             });
 
-            return app.Execute(args);
+            return app;
         }
 
         public Program()
         {
-
         }
 
         private Dictionary<string, Type> conventions = new Dictionary<string, Type>()
@@ -76,6 +85,8 @@ namespace PipelineGenerator
             {"ci", typeof(PullRequestValidationPipelineConvention) },
             {"tests", typeof(IntegrationTestingPipelineConvention) }
         };
+
+        public ILoggerFactory LoggerFactory { get; }
 
         private PipelineConvention GetPipelineConvention(string convention, PipelineGenerationContext context)
         {
@@ -98,6 +109,7 @@ namespace PipelineGenerator
             string patvar,
             string endpoint,
             string repository,
+            string agentPool,
             string convention,
             string[] variableGroups,
             bool whatIf,
@@ -111,7 +123,10 @@ namespace PipelineGenerator
                 patvar,
                 endpoint,
                 repository,
-                variableGroups
+                agentPool,
+                variableGroups,
+                prefix,
+                whatIf
                 );
 
             var pipelineConvention = GetPipelineConvention(convention, context);
@@ -126,49 +141,19 @@ namespace PipelineGenerator
             // we have an existing build definition for it.
             foreach (var component in components)
             {
-                var conventionDefinitionName = $"{prefix} - {component.Name} - ci";
-
-                var matchingDefinitionReferences = await buildClient.GetDefinitionsAsync(
-                    project: project,
-                    name: conventionDefinitionName,
-                    cancellationToken: cancellationToken
-                    );
-
-                // We should consider two definitions with the same name an error.
-                var matchingDefinitionReference = matchingDefinitionReferences.SingleOrDefault();
-
-                if (!destroy && matchingDefinitionReference != null)
+                if (destroy)
                 {
-                    var referenceLink = (ReferenceLink)matchingDefinitionReference.Links.Links["web"];
-                    Console.WriteLine($"Skipping: {component.Name} ({referenceLink.Href})");
+                    var definition = await pipelineConvention.DeleteDefinitionAsync(component, cancellationToken);
                 }
-                else if (destroy && matchingDefinitionReference != null)
+                else
                 {
-                    var referenceLink = (ReferenceLink)matchingDefinitionReference.Links.Links["web"];
-                    Console.WriteLine($"Destroying: {component.Name} ({referenceLink.Href})");
+                    var definition = await pipelineConvention.CreateOrUpdateDefinitionAsync(component, cancellationToken);
 
-                    if (!whatIf)
+                    if (open)
                     {
-                        await buildClient.DeleteDefinitionAsync(projectReference.Id, matchingDefinitionReference.Id, cancellationToken);
-                    }
-                }
-                else if (!destroy && matchingDefinitionReference == null)
-                {
-                    Console.Write($"Creating: {component.Name}");
-
-                    if (whatIf)
-                    {
-                        Console.WriteLine(" (whatif)");
-                    }
-                    else
-                    {
-                        var createdDefinition = await CreateDefinitionAsync(projectReference, buildClient, sourceRepository, conventionDefinitionName, component, cancellationToken);
-
-                        var referenceLink = (ReferenceLink)createdDefinition.Links.Links["web"];
-                        Console.WriteLine($" ({referenceLink.Href})");
-
                         if (open && Environment.OSVersion.Platform == PlatformID.Win32NT)
                         {
+                            var referenceLink = (ReferenceLink)definition.Links.Links["web"];
                             var processStartInfo = new ProcessStartInfo()
                             {
                                 FileName = referenceLink.Href.ToString(),
@@ -191,61 +176,5 @@ namespace PipelineGenerator
             var components = scanner.Scan(scanDirectory, searchPattern);
             return components;
         }
-
-        private async Task<BuildDefinition> CreateDefinitionAsync(TeamProjectReference projectReference, BuildHttpClient buildClient, SourceRepository sourceRepository, string conventionDefinitionName, SdkComponent component, CancellationToken cancellationToken)
-        {
-            var repositoryHelper = new RepositoryHelper();
-            var root = repositoryHelper.GetRepositoryRoot(component.Path);
-            var relativePath = Path.GetRelativePath(root, component.Path.FullName);
-            var yamlPath = Path.Combine(relativePath, "ci.yml");
-
-            var buildRepository = new BuildRepository()
-            {
-                DefaultBranch = "refs/heads/master",
-                Id = sourceRepository.Id,
-                Name = sourceRepository.FullName,
-                Type = "GitHub",
-                Url = new Uri(sourceRepository.Properties["cloneUrl"]),
-            };
-
-            buildRepository.Properties.AddRangeIfRangeNotNull(sourceRepository.Properties);
-
-            var newDefinition = new BuildDefinition()
-            {
-                Name = conventionDefinitionName,
-                Project = projectReference,
-                Repository = buildRepository,
-                Process = new YamlProcess()
-                {
-                    YamlFilename = yamlPath
-                },
-                Queue = new AgentPoolQueue()
-                {
-                    Id = 42
-                }
-            };
-
-            newDefinition.Triggers.Add(new ContinuousIntegrationTrigger()
-            {
-                SettingsSourceType = 2 // HACK: This is editor invisible, but this is required to inherit branch filters from YAML file.
-            });
-
-            newDefinition.Triggers.Add(new PullRequestTrigger()
-            {
-                SettingsSourceType = 2, // HACK: See above.
-                Forks = new Forks()
-                {
-                    AllowSecrets = false,
-                    Enabled = true
-                }
-            });
-
-            var createdDefinition = await buildClient.CreateDefinitionAsync(
-                definition: newDefinition,
-                cancellationToken: cancellationToken
-                );
-            return createdDefinition;
-        }
-
     }
 }

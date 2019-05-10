@@ -9,5 +9,6 @@ namespace PipelineGenerator
     {
         public string Name { get; set; }
         public DirectoryInfo Path { get; set; }
+        public string RelativeYamlPath { get; set; }
     }
 }

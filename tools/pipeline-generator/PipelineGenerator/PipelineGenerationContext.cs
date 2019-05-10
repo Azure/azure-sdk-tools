@@ -1,5 +1,7 @@
-﻿using Microsoft.TeamFoundation.Build.WebApi;
+﻿using Microsoft.Extensions.Logging;
+using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.TeamFoundation.Core.WebApi;
+using Microsoft.TeamFoundation.DistributedTask.WebApi;
 using Microsoft.VisualStudio.Services.Common;
 using Microsoft.VisualStudio.Services.ServiceEndpoints.WebApi;
 using Microsoft.VisualStudio.Services.WebApi;
@@ -19,17 +21,24 @@ namespace PipelineGenerator
         private string patvar;
         private string endpoint;
         private string repository;
+        private string agentPool;
         private string[] variableGroups;
 
-        public PipelineGenerationContext(string organization, string project, string patvar, string endpoint, string repository, string[] variableGroups)
+        public PipelineGenerationContext(string organization, string project, string patvar, string endpoint, string repository, string agentPool, string[] variableGroups, string prefix, bool whatIf)
         {
             this.organization = organization;
             this.project = project;
             this.patvar = patvar;
             this.endpoint = endpoint;
             this.repository = repository;
+            this.agentPool = agentPool;
             this.variableGroups = variableGroups;
+            this.Prefix = prefix;
+            this.WhatIf = whatIf;
         }
+
+        public string Prefix { get; private set; }
+        public bool WhatIf { get; private set; }
 
         private VssConnection cachedConnection;
 
@@ -60,7 +69,7 @@ namespace PipelineGenerator
 
         private TeamProjectReference cachedProjectReference;
        
-        private async Task<TeamProjectReference> GetProjectReferenceAsync(CancellationToken cancellationToken)
+        public async Task<TeamProjectReference> GetProjectReferenceAsync(CancellationToken cancellationToken)
         {
             if (cachedProjectReference == null)
             {
@@ -85,9 +94,9 @@ namespace PipelineGenerator
             return cachedSeviceEndpointClient;
         }
 
-        private ServiceEndpoint cachedServiceEndpoint;
+        private Microsoft.VisualStudio.Services.ServiceEndpoints.WebApi.ServiceEndpoint cachedServiceEndpoint;
 
-        private async Task<ServiceEndpoint> GetServiceEndpointAsync(CancellationToken cancellationToken)
+        private async Task<Microsoft.VisualStudio.Services.ServiceEndpoints.WebApi.ServiceEndpoint> GetServiceEndpointAsync(CancellationToken cancellationToken)
         {
             if (cachedServiceEndpoint == null)
             {
@@ -106,7 +115,7 @@ namespace PipelineGenerator
 
         private BuildHttpClient cachedBuildClient;
 
-        private async Task<BuildHttpClient> GetBuildHttpClientAsync(CancellationToken cancellationToken)
+        public async Task<BuildHttpClient> GetBuildHttpClientAsync(CancellationToken cancellationToken)
         {
             if (cachedBuildClient == null)
             {
@@ -119,7 +128,7 @@ namespace PipelineGenerator
 
         private SourceRepository cachedSourceRepository;
 
-        private async Task<SourceRepository> GetSourceRepositoryAsync(CancellationToken cancellationToken)
+        public async Task<SourceRepository> GetSourceRepositoryAsync(CancellationToken cancellationToken)
         {
             if (cachedSourceRepository == null)
             {
@@ -138,6 +147,42 @@ namespace PipelineGenerator
             }
 
             return cachedSourceRepository;
+        }
+
+        private TaskAgentHttpClient cachedTaskAgentClient;
+
+        private async Task<TaskAgentHttpClient> GetTaskAgentClientAsync(CancellationToken cancellationToken)
+        {
+            if (cachedTaskAgentClient == null)
+            {
+                var connection = GetConnection();
+                cachedTaskAgentClient = await connection.GetClientAsync<TaskAgentHttpClient>(cancellationToken);
+            }
+
+            return cachedTaskAgentClient;
+        }
+
+        private AgentPoolQueue cachedAgentPoolQueue;
+
+        public async Task<AgentPoolQueue> GetAgentPoolQueue(CancellationToken cancellationToken)
+        {
+            if (cachedAgentPoolQueue == null)
+            {
+                var projectReference = await GetProjectReferenceAsync(cancellationToken);
+                var taskAgentClient = await GetTaskAgentClientAsync(cancellationToken);
+                var agentQueues = await taskAgentClient.GetAgentQueuesAsync(
+                    project: projectReference.Id,
+                    queueName: agentPool,
+                    cancellationToken: cancellationToken
+                    );
+
+                cachedAgentPoolQueue = new AgentPoolQueue()
+                {
+                    Id = agentQueues.First().Id
+                };
+            }
+
+            return cachedAgentPoolQueue;
         }
     }
 }

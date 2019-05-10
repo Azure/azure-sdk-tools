@@ -56,6 +56,7 @@ namespace PipelineGenerator
             var patvarOption = app.Option("--patvar <env>", "Name of an environment variable which contains a PAT.", CommandOptionType.SingleValue).IsRequired();
             var endpointOption = app.Option("--endpoint <endpoint>", "Name of the service endpoint to configure repositories with.", CommandOptionType.SingleValue).IsRequired();
             var repositoryOption = app.Option("--repository <repository>", "Name of the GitHub repo in the form [org]/[repo].", CommandOptionType.SingleValue).IsRequired();
+            var branchOption = app.Option("--branch <branch>", "Typically refs/heads/master.", CommandOptionType.SingleValue).IsRequired();
             var agentpoolOption = app.Option("--agentpool <agentpool>", "Name of the agent pool to use when pool isn't speciifed.", CommandOptionType.SingleValue).IsRequired();
             var conventionOption = app.Option("--convention <convention>", "What convention are you building pipelines for?", CommandOptionType.SingleValue).IsRequired();
             var variablegroupsOption = app.Option("--variablegroups <variablegroup>", "Comma seperated list of variable groups.", CommandOptionType.MultipleValue);
@@ -76,6 +77,7 @@ namespace PipelineGenerator
                     patvarOption.Value(),
                     endpointOption.Value(),
                     repositoryOption.Value(),
+                    branchOption.Value(),
                     agentpoolOption.Value(),
                     conventionOption.Value(),
                     variablegroupsOption.Values.ToArray(),
@@ -128,6 +130,7 @@ namespace PipelineGenerator
             string patvar,
             string endpoint,
             string repository,
+            string branch,
             string agentPool,
             string convention,
             string[] variableGroups,
@@ -145,6 +148,7 @@ namespace PipelineGenerator
                     patvar,
                     endpoint,
                     repository,
+                    branch,
                     agentPool,
                     variableGroups,
                     prefix,

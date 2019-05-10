@@ -24,21 +24,23 @@ namespace PipelineGenerator
         private string agentPool;
         private string[] variableGroups;
 
-        public PipelineGenerationContext(string organization, string project, string patvar, string endpoint, string repository, string agentPool, string[] variableGroups, string prefix, bool whatIf)
+        public PipelineGenerationContext(string organization, string project, string patvar, string endpoint, string repository, string branch, string agentPool, string[] variableGroups, string prefix, bool whatIf)
         {
             this.organization = organization;
             this.project = project;
             this.patvar = patvar;
             this.endpoint = endpoint;
             this.repository = repository;
+            this.Branch = branch;
             this.agentPool = agentPool;
             this.variableGroups = variableGroups;
             this.Prefix = prefix;
             this.WhatIf = whatIf;
         }
 
-        public string Prefix { get; private set; }
-        public bool WhatIf { get; private set; }
+        public string Branch { get; }
+        public string Prefix { get; }
+        public bool WhatIf { get; }
 
         private VssConnection cachedConnection;
 

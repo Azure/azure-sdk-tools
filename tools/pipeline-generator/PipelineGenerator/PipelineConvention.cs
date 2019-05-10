@@ -149,7 +149,7 @@ namespace PipelineGenerator
 
             var buildRepository = new BuildRepository()
             {
-                DefaultBranch = "refs/heads/master",
+                DefaultBranch = Context.Branch,
                 Id = sourceRepository.Id,
                 Name = sourceRepository.FullName,
                 Type = "GitHub",

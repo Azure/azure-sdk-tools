@@ -1,4 +1,5 @@
 ﻿using McMaster.Extensions.CommandLineUtils;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
 using Microsoft.TeamFoundation.Build.WebApi;
@@ -21,6 +22,7 @@ namespace PipelineGenerator
 
         public static int Main(string[] args)
         {
+
             var cancellationTokenSource = new CancellationTokenSource();
             Console.CancelKeyPress += (sender, e) =>
             {
@@ -29,6 +31,18 @@ namespace PipelineGenerator
 
             var app = PrepareApplication(cancellationTokenSource);
             return app.Execute(args);
+        }
+
+        private static IServiceProvider GetServiceProvider(bool debug)
+        {
+            var serviceCollection = new ServiceCollection();
+            serviceCollection.AddLogging(config => config.AddConsole().SetMinimumLevel(debug ? LogLevel.Debug : LogLevel.Information))
+                .AddTransient<Program>()
+                .AddTransient<SdkComponentScanner>()
+                .AddTransient<PullRequestValidationPipelineConvention>()
+                .AddTransient<IntegrationTestingPipelineConvention>();
+
+            return serviceCollection.BuildServiceProvider();
         }
 
         private static CommandLineApplication PrepareApplication(CancellationTokenSource cancellationTokenSource)
@@ -48,11 +62,12 @@ namespace PipelineGenerator
             var whatifOption = app.Option("--whatif", "Use this to understand what will happen, but don't change anything.", CommandOptionType.NoValue);
             var openOption = app.Option("--open", "Open a browser window to the definitions that are created.", CommandOptionType.NoValue);
             var destroyOption = app.Option("--destroy", "Use this switch to delete the pipelines instead (DANGER!)", CommandOptionType.NoValue);
+            var debugOption = app.Option("--debug", "Turn on debug level logging.", CommandOptionType.NoValue);
 
             app.OnExecute(() =>
             {
-                var program = new Program();
-
+                var serviceProvider = GetServiceProvider(debugOption.HasValue());
+                var program = serviceProvider.GetService<Program>();
                 var exitCondition = program.RunAsync(
                     organizationOption.Value(),
                     projectOption.Value(),
@@ -76,28 +91,32 @@ namespace PipelineGenerator
             return app;
         }
 
-        public Program()
+        public Program(IServiceProvider serviceProvider, ILogger<Program> logger)
         {
+            this.serviceProvider = serviceProvider;
+            this.logger = logger;
         }
 
-        private Dictionary<string, Type> conventions = new Dictionary<string, Type>()
-        {
-            {"ci", typeof(PullRequestValidationPipelineConvention) },
-            {"tests", typeof(IntegrationTestingPipelineConvention) }
-        };
+        private IServiceProvider serviceProvider;
+        private ILogger<Program> logger;
 
         public ILoggerFactory LoggerFactory { get; }
 
         private PipelineConvention GetPipelineConvention(string convention, PipelineGenerationContext context)
         {
             var normalizedConvention = convention.ToLower();
-            if (conventions.ContainsKey(normalizedConvention))
+
+            switch (normalizedConvention)
             {
-                return (PipelineConvention)Activator.CreateInstance(conventions[normalizedConvention], context);
-            }
-            else
-            {
-                throw new ArgumentOutOfRangeException(nameof(convention), "Could not find matching convention.");
+                case "ci":
+                    var ciLogger = serviceProvider.GetService<ILogger<PullRequestValidationPipelineConvention>>();
+                    return new PullRequestValidationPipelineConvention(ciLogger, context);
+
+                case "tests":
+                    var testLogger = serviceProvider.GetService<ILogger<IntegrationTestingPipelineConvention>>();
+                    return new IntegrationTestingPipelineConvention(testLogger, context);
+
+                default: throw new ArgumentOutOfRangeException(nameof(convention), "Could not find matching convention.");
             }
         }
 
@@ -117,62 +136,76 @@ namespace PipelineGenerator
             bool destroy,
             CancellationToken cancellationToken)
         {
-            var context = new PipelineGenerationContext(
-                organization,
-                project,
-                patvar,
-                endpoint,
-                repository,
-                agentPool,
-                variableGroups,
-                prefix,
-                whatIf
-                );
-
-            var pipelineConvention = GetPipelineConvention(convention, context);
-            var components = ScanForComponents(path, pipelineConvention.SearchPattern);
-
-            if (components.Count() == 0)
+            try
             {
-                return ExitCondition.NoComponentsFound;
-            }
+                logger.LogDebug("Creating context.");
+                var context = new PipelineGenerationContext(
+                    organization,
+                    project,
+                    patvar,
+                    endpoint,
+                    repository,
+                    agentPool,
+                    variableGroups,
+                    prefix,
+                    whatIf
+                    );
 
-            // Now we just iterate over each of the components and check to see whether
-            // we have an existing build definition for it.
-            foreach (var component in components)
-            {
-                if (destroy)
+                var pipelineConvention = GetPipelineConvention(convention, context);
+                var components = ScanForComponents(path, pipelineConvention.SearchPattern);
+
+                if (components.Count() == 0)
                 {
-                    var definition = await pipelineConvention.DeleteDefinitionAsync(component, cancellationToken);
+                    logger.LogWarning("No components were found.");
+                    return ExitCondition.NoComponentsFound;
                 }
-                else
-                {
-                    var definition = await pipelineConvention.CreateOrUpdateDefinitionAsync(component, cancellationToken);
 
-                    if (open)
+                logger.LogInformation("Found {0} components", components.Count());
+                foreach (var component in components)
+                {
+                    logger.LogInformation("Processing component '{0}' in '{1}'.", component.Name, component.Path);
+                    if (destroy)
                     {
-                        if (open && Environment.OSVersion.Platform == PlatformID.Win32NT)
+                        var definition = await pipelineConvention.DeleteDefinitionAsync(component, cancellationToken);
+                    }
+                    else
+                    {
+                        var definition = await pipelineConvention.CreateOrUpdateDefinitionAsync(component, cancellationToken);
+
+                        if (open)
                         {
-                            var referenceLink = (ReferenceLink)definition.Links.Links["web"];
-                            var processStartInfo = new ProcessStartInfo()
+                            if (open && Environment.OSVersion.Platform == PlatformID.Win32NT)
                             {
-                                FileName = referenceLink.Href.ToString(),
-                                UseShellExecute = true
-                            };
-                            // TODO: Need to test this on macOS and Linux.
-                            System.Diagnostics.Process.Start(processStartInfo);
+                                logger.LogDebug("Launching browser window for: {0}", definition.GetWebUrl());
+
+                                var processStartInfo = new ProcessStartInfo()
+                                {
+                                    FileName = definition.GetWebUrl(),
+                                    UseShellExecute = true
+                                };
+                                
+                                // TODO: Need to test this on macOS and Linux.
+                                System.Diagnostics.Process.Start(processStartInfo);
+                            }
                         }
                     }
                 }
-            }
 
-            return ExitCondition.Success;
+                return ExitCondition.Success;
+
+            }
+            catch (Exception ex)
+            {
+                logger.LogCritical(ex, "BOOM! Something went wrong, try running with --debug.");
+                return ExitCondition.Exception;
+            }
         }
 
         private IEnumerable<SdkComponent> ScanForComponents(string path, string searchPattern)
         {
+            var scanner = serviceProvider.GetService<SdkComponentScanner>();
+
             var scanDirectory = new DirectoryInfo(path);
-            var scanner = new SdkComponentScanner();
             var components = scanner.Scan(scanDirectory, searchPattern);
             return components;
         }

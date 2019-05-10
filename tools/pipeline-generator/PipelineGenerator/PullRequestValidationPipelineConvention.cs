@@ -1,4 +1,5 @@
-﻿using Microsoft.TeamFoundation.Build.WebApi;
+﻿using Microsoft.Extensions.Logging;
+using Microsoft.TeamFoundation.Build.WebApi;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -10,7 +11,7 @@ namespace PipelineGenerator
     {
         public override string SearchPattern => "ci.yml";
 
-        public PullRequestValidationPipelineConvention(PipelineGenerationContext context) : base(context)
+        public PullRequestValidationPipelineConvention(ILogger logger, PipelineGenerationContext context) : base(logger, context)
         {
         }
 

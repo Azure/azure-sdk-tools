@@ -79,12 +79,19 @@ namespace PipelineGenerator
 
             if (hasChanges)
             {
-                Logger.LogInformation("Convention had changes, updating '{0}' definition.", definitionName);
-                var buildClient = await Context.GetBuildHttpClientAsync(cancellationToken);
-                definition = await buildClient.UpdateDefinitionAsync(
-                    definition: definition,
-                    cancellationToken: cancellationToken
-                    );
+                if (!Context.WhatIf)
+                {
+                    Logger.LogInformation("Convention had changes, updating '{0}' definition.", definitionName);
+                    var buildClient = await Context.GetBuildHttpClientAsync(cancellationToken);
+                    definition = await buildClient.UpdateDefinitionAsync(
+                        definition: definition,
+                        cancellationToken: cancellationToken
+                        );
+                }
+                else
+                {
+                    Logger.LogWarning("Skipping update to definition '{0}' (--whatif).", definitionName);
+                }
             }
             else
             {

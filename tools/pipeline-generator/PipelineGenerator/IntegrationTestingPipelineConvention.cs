@@ -22,8 +22,6 @@ namespace PipelineGenerator
 
         protected override Task<bool> ApplyConventionAsync(BuildDefinition definition, SdkComponent component)
         {
-            // Daniel - your custom logic goes here.!
-
             return Task.FromResult(false);
         }
     }

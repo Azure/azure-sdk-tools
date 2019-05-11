@@ -26,7 +26,9 @@ namespace PipelineGenerator
             // NOTE: Not happy with this code at all, I'm going to look for a reasonable
             // API that can do equality comparisons (without having to do all the checks myself).
 
-            var hasChanges = false;
+#pragma warning disable CS0219
+            var hasChanges = false; // Warning disabled because we sometimes want to to slip through without being changed.
+#pragma warning restore CS0219
 
             var ciTrigger = definition.Triggers.OfType<ContinuousIntegrationTrigger>().SingleOrDefault();
 
@@ -75,7 +77,7 @@ namespace PipelineGenerator
                 }
             }
 
-            return Task.FromResult(true);
+            return Task.FromResult(hasChanges);
         }
     }
 }

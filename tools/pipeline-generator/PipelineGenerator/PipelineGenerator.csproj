@@ -4,6 +4,8 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp2.0</TargetFramework>
     <AssemblyName>pipegen</AssemblyName>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>azure-sdk-pipeline-generator</ToolCommandName>
   </PropertyGroup>
 
   <ItemGroup>

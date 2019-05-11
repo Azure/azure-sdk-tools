@@ -21,4 +21,4 @@ jobs:
   parameters:
     JobName: pipeline_generator
     ProjectFile: tools/pipeline-generator/PipelineGenerator.sln
-- template: templates/jobs/specific-doc-warden.yml
+- template: templates/jobs/specific-tools-doc-warden.yml

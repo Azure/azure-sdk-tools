@@ -1,3 +1,4 @@
+jobs:
 - job: 'build_doc_warden'
   displayName: 'Building and Testing: tools/doc-warden'
   pool:

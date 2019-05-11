@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PipelineGenerator
+namespace Microsoft.Azure.Sdk.PipelineGenerator.Tool
 {
     public class PullRequestValidationPipelineConvention : PipelineConvention
     {

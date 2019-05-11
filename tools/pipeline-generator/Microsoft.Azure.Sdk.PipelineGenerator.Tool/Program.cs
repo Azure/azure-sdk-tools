@@ -15,7 +15,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace PipelineGenerator
+namespace Microsoft.Azure.Sdk.PipelineGenerator.Tool
 {
     public class Program
     {

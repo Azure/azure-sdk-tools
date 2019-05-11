@@ -1,34 +1,25 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.26124.0
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.28803.352
 MinimumVisualStudioVersion = 15.0.26124.0
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PipelineGenerator", "PipelineGenerator\PipelineGenerator.csproj", "{810396BC-39B3-4E3D-A2CA-585A131AEF53}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Azure.Sdk.PipelineGenerator.Tool", "Microsoft.Azure.Sdk.PipelineGenerator.Tool\Microsoft.Azure.Sdk.PipelineGenerator.Tool.csproj", "{1029A65F-A849-4592-B98B-073BDF6239D2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
-		Debug|x64 = Debug|x64
-		Debug|x86 = Debug|x86
 		Release|Any CPU = Release|Any CPU
-		Release|x64 = Release|x64
-		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1029A65F-A849-4592-B98B-073BDF6239D2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1029A65F-A849-4592-B98B-073BDF6239D2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1029A65F-A849-4592-B98B-073BDF6239D2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1029A65F-A849-4592-B98B-073BDF6239D2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
-	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{810396BC-39B3-4E3D-A2CA-585A131AEF53}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{810396BC-39B3-4E3D-A2CA-585A131AEF53}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{810396BC-39B3-4E3D-A2CA-585A131AEF53}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{810396BC-39B3-4E3D-A2CA-585A131AEF53}.Debug|x64.Build.0 = Debug|Any CPU
-		{810396BC-39B3-4E3D-A2CA-585A131AEF53}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{810396BC-39B3-4E3D-A2CA-585A131AEF53}.Debug|x86.Build.0 = Debug|Any CPU
-		{810396BC-39B3-4E3D-A2CA-585A131AEF53}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{810396BC-39B3-4E3D-A2CA-585A131AEF53}.Release|Any CPU.Build.0 = Release|Any CPU
-		{810396BC-39B3-4E3D-A2CA-585A131AEF53}.Release|x64.ActiveCfg = Release|Any CPU
-		{810396BC-39B3-4E3D-A2CA-585A131AEF53}.Release|x64.Build.0 = Release|Any CPU
-		{810396BC-39B3-4E3D-A2CA-585A131AEF53}.Release|x86.ActiveCfg = Release|Any CPU
-		{810396BC-39B3-4E3D-A2CA-585A131AEF53}.Release|x86.Build.0 = Release|Any CPU
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B299F712-5DF3-491E-8F54-449A26C32F3B}
 	EndGlobalSection
 EndGlobal

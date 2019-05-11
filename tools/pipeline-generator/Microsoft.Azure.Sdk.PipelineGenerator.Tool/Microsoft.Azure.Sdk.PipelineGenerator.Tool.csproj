@@ -3,7 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp2.2</TargetFramework>
-    <AssemblyName>pipegen</AssemblyName>
+    <AssemblyName>Microsoft.Azure.Sdk.PipelineGenerator.Tool</AssemblyName>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>azure-sdk-pipeline-generator</ToolCommandName>
     <VersionPrefix>0.1.0</VersionPrefix>

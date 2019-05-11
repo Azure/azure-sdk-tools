@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
-namespace PipelineGenerator
+namespace Microsoft.Azure.Sdk.PipelineGenerator.Tool
 {
     public class SdkComponent
     {

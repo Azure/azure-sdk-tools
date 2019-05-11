@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace PipelineGenerator
+namespace Microsoft.Azure.Sdk.PipelineGenerator.Tool
 {
     public static class BuildDefinitionExtensions
     {

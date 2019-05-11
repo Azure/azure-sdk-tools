@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PipelineGenerator
+namespace Microsoft.Azure.Sdk.PipelineGenerator.Tool
 {
     public class IntegrationTestingPipelineConvention : PipelineConvention
     {

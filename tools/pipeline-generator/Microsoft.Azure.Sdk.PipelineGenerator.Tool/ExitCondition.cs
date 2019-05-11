@@ -1,6 +1,6 @@
 using System;
 
-namespace PipelineGenerator
+namespace Microsoft.Azure.Sdk.PipelineGenerator.Tool
 {
     public enum ExitCondition
     {

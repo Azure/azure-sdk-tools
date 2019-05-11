@@ -20,11 +20,11 @@ namespace PipelineGenerator
             return $"{Context.Prefix} - {component.Name} - tests";
         }
 
-        protected async override Task<bool> ApplyConventionAsync(BuildDefinition definition, SdkComponent component)
+        protected override Task<bool> ApplyConventionAsync(BuildDefinition definition, SdkComponent component)
         {
             // Daniel - your custom logic goes here.!
 
-            return false;
+            return Task.FromResult(false);
         }
     }
 }

@@ -8,7 +8,7 @@ __pycache__/
 
 # Distribution / packaging
 .Python
-build/
+#build/
 develop-eggs/
 dist/
 downloads/
@@ -286,7 +286,7 @@ publish/
 PublishScripts/
 
 # NuGet Packages
-*.nupkg
+#*.nupkg
 # The packages folder can be ignored because of Package Restore
 **/[Pp]ackages/*
 # except build/, which is used as an MSBuild target.
@@ -294,8 +294,8 @@ PublishScripts/
 # Uncomment if necessary however generally it will be regenerated when needed
 #!**/[Pp]ackages/repositories.config
 # NuGet v3's project.json files produces more ignorable files
-*.nuget.props
-*.nuget.targets
+#*.nuget.props
+#*.nuget.targets
 
 # Microsoft Azure Build Output
 csx/
@@ -448,3 +448,9 @@ healthchecksdb
 
 # Backup folder for Package Reference Convert tool in Visual Studio 2017
 MigrationBackup/
+
+# management build tools related
+tools/LocalNugetFeed/Microsoft.Internal.NetSdkBuild.Mgmt.Tools.*.nupkg
+restoredPackages/
+src/dotnet/Mgmt.CI.BuildTools/NugetToolsPackage/CI.Tools.Package/build/tasks/net461/
+src/dotnet/Mgmt.CI.BuildTools/NugetToolsPackage/CI.Tools.Package/build/tasks/netstandard2.0

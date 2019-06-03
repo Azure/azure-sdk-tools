@@ -1,0 +1,225 @@
+﻿<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">    
+    <PropertyGroup>
+        <LocalSToSNugPkgCacheDir>$(USERPROFILE)\.nuget\packages\microsoft.internal.swaggertosdk.tools</LocalSToSNugPkgCacheDir>
+        <LocalKVNugPkgCacheDir>$(USERPROFILE)\.nuget\packages\microsoft.azure.keyvault;$(USERPROFILE)\.nuget\packages\microsoft.azure.keyvault.webkey</LocalKVNugPkgCacheDir>
+        <PublishNet461Dir>$(RepoTaskBinaryOutputDir)\net461</PublishNet461Dir>
+        <PublishNetStd20Dir>$(RepoTaskBinaryOutputDir)\netstandard2.0</PublishNetStd20Dir>
+        <PublishLinuxNetStd20Dir>$(RepoTaskBinaryOutputDir)\netstandard2.0\linux</PublishLinuxNetStd20Dir>
+    </PropertyGroup>
+    <ItemGroup>
+        <LocalNugPkgsCleanup Include="$(USERPROFILE)\.nuget\packages\*keyvault*\**\" />
+    </ItemGroup>
+    <PropertyGroup>
+        <CTPTargets>
+            CleanTasksProjects;
+        </CTPTargets>
+    </PropertyGroup>
+    <PropertyGroup>
+        <CleanProjectDependsOn>
+            CleanTasksProjects;
+        </CleanProjectDependsOn>
+        <RestoreProjectDependsOn>
+            RestoreTasksProjects;
+        </RestoreProjectDependsOn>
+        <BuildProjectDependsOn>
+            $(RestoreProjectDependsOn);
+            BuildTasksProjects;
+        </BuildProjectDependsOn>
+        <BuildToolsPackageDependsOn>
+            $(BuildProjectDependsOn);            
+            PublishTasksProjects;
+            BuildToolsPackageTarget
+        </BuildToolsPackageDependsOn>
+        <PublishNugetPackageDependsOn>
+            $(BuildToolsPackageDependsOn);
+            PublishNugetPackageLocally
+        </PublishNugetPackageDependsOn>
+    </PropertyGroup>
+
+    <Target Name="CleanTasksProjects">
+        <Message Text="Cleaning Projects ........"/>
+        <Message Text="%(ProjectsToBuild.Identity)" Condition="'$(DebugTraceEnv)' == 'true' "/>
+
+        <MSBuild Targets="Clean"
+            Projects="@(ProjectsToBuild);@(NugetPkgProjects)"
+            Properties="Configuration=$(Configuration)"
+            BuildInParallel="$(BuildInParallel)"
+            ContinueOnError="ErrorAndStop" />
+        
+        <ItemGroup>
+            <ArtiDirs Include="$(RepositoryRoot)\artifacts\bin\Microsoft.Internal.AznetSdk.CITools" />
+            <ArtiDirs Include="$(RepositoryRoot)\artifacts\bin\MS.Az.Mgmt.CI.BuildTasks" />
+            <ArtiDirs Include="$(RepositoryRoot)\artifacts\bin\MS.Az.Mgmt.CI.Common" />
+            <ArtiDirs Include="$(RepositoryRoot)\artifacts\bin\Tests.CI.Common" />
+            <ArtiDirs Include="$(RepositoryRoot)\artifacts\bin\Tests.CI.BuildTasks" />
+        </ItemGroup>
+
+        <Message Text = "Artifacts dirs...... @(ArtiDirs)" />
+
+        <!-- Need to check all conditions due to https://github.com/Microsoft/msbuild/issues/4105 -->
+        <RemoveDir Condition="'$(RepoNugetRestoreDir)' != '' OR '$(RepoNugetRestoreDir)' != '\' OR '$(RepoNugetRestoreDir)' != '/' " Directories="$(RepoNugetRestoreDir)" />
+        <RemoveDir Condition=" '$(ArtiDirs)' != '' OR '$(ArtiDirs)' != '\' OR '$(ArtiDirs)' != '/' " Directories="@(ArtiDirs)" />
+        <RemoveDir Condition="'$(CINugPkgPublish_NetStd20Dir)' != '' OR '$(CINugPkgPublish_NetStd20Dir)' != '\' OR '$(CINugPkgPublish_NetStd20Dir)' != '/' " Directories="$(CINugPkgPublish_NetStd20Dir)" />
+        <RemoveDir Condition="'$(CINugPkgPublish_Net461Dir)' != '' OR '$(CINugPkgPublish_Net461Dir)' != '\' OR '$(CINugPkgPublish_Net461Dir)' != '/' " Directories="$(CINugPkgPublish_Net461Dir)" />
+    </Target>
+
+    <Target Name="RestoreTasksProjects">
+        <Message Text="Restoring Projects ........"/>
+        <Message Text="%(ProjectsToBuild.Identity)" Condition="'$(DebugTraceEnv)' == 'true' "/>
+        <MSBuild Targets="Restore"
+            Projects="@(ProjectsToBuild)"
+            Properties="Configuration=$(Configuration);RestorePackagesPath=$(RepoNugetRestoreDir);RepositoryPath=$(RepoNugetRestoreDir)"
+            BuildInParallel="$(BuildInParallel)"
+            ContinueOnError="ErrorAndStop" />
+    </Target>
+
+    <Target Name="BuildTasksProjects" DependsOnTargets="PublishNet461">
+        <Message Text="Building Projects........." />
+        <Message Text="@(ProjectsToBuild.Identity)" Condition=" '$(DebugTraceEnv)' == 'true' " />
+
+        <MSBuild Targets="Build"
+            Projects="@(ProjectsToBuild)"
+            Properties="Configuration=$(Configuration)"
+            BuildInParallel="$(BuildInParallel)"
+            ContinueOnError="ErrorAndStop" />
+    </Target>
+
+    <Target Name="PublishNet461">
+        <Message Text="Publishingnet461....." Importance="High" />
+        <MSBuild Targets="Publish"
+            Projects="@(ProjectsToPublish)"
+            Properties="Configuration=$(Configuration);TargetFramework=net461;PublishDir=$(CINugPkgPublish_Net461Dir)"
+            BuildInParallel="$(BuildInParallel)"
+            ContinueOnError="ErrorAndStop" />
+        
+        <PropertyGroup>
+            <PlatWin32DirPath>$(CINugPkgPublish_Net461Dir)\lib\win32\x64</PlatWin32DirPath>
+        </PropertyGroup>
+        <ItemGroup>
+            <Net461NativeFilesToBeCopied Include="$(PlatWin32DirPath)\*.*" />
+        </ItemGroup>
+        
+
+        <Message Text="Copying Platform specific files...." Importance="High" />
+        <PropertyGroup>
+            <destDir>$(PlatWin32DirPath)\..\..\..\</destDir>
+        </PropertyGroup>
+
+        <Message Text="Destination Dir.... $(destDir)" Importance="High" />
+
+        <Copy SourceFiles="@(Net461NativeFilesToBeCopied)" DestinationFolder="$(PlatWin32DirPath)\..\..\..\" SkipUnchangedFiles="true" />
+    </Target>
+
+    <Target Name="CleanToolsPackage">
+        <ItemGroup>
+            <LocalNugPkgs Include="$(RepoNugetFeedDir)\Microsoft.Internal.*.nupkg;$(RepoNugetFeedDir)\Microsoft.Internal.*.zip" />
+            <LocalNugPkgs Include="$(PackageOutputPath)\**\Microsoft.Internal.*.nupkg;$(PackageOutputPath)\**\Microsoft.Internal.*.zip" />
+        </ItemGroup>
+        <Message Text="Files to delete ==== @(LocalNugPkgs)" />
+        <Delete Condition=" '@(LocalNugPkgs)' != '' OR '@(LocalNugPkgs)' != '\' " Files="@(LocalNugPkgs)" />
+    </Target>
+
+    <Target Name="BuildCIPackageTarget" DependsOnTargets="CleanToolsPackage" Condition=" '$(Scope)' == 'ci' OR '$(Scope)' != 'CI' ">
+        <PropertyGroup>
+            <CINugPkgProj>$(CINugPkgSrcDir)\Microsoft.Internal.AzNetSdk.CITools.csproj</CINugPkgProj>
+            <CINuspecFile>$(CINugPkgSrcDir)\nuspec\Microsoft.Internal.AzNetSdk.CITools.nuspec</CINuspecFile>
+        </PropertyGroup>
+        <Message Condition=" Exists($(CINugPkgProj)) " Text="Projects to be build ======== $(CINugPkgProj)" />
+        <Error Condition=" !Exists($(CINuspecFile)) " Text="Projects $(CINuspecFile) do not exists" />       
+        
+        <MSBuild 
+            Targets="Restore"
+            Projects="$(CINugPkgProj)"
+            BuildInParallel="$(BuildInParallel)"
+            ContinueOnError="ErrorAndStop" 
+            Condition=" '$(SkipRestore)' != 'true' " />
+
+        <MSBuild 
+            Targets="Build"
+            Projects="$(CINugPkgProj)"
+            BuildInParallel="$(BuildInParallel)"
+            ContinueOnError="ErrorAndStop" 
+            Condition=" '$(SkipBuild)' != 'true' " />
+
+        <MSBuild
+            Targets="Pack"
+            Projects="$(CINugPkgProj)"            
+            Properties="Configuration=$(Configuration);
+            NuspecFile=$(CINuspecFile);
+            VisualStudioVersion=$(VisualStudioVersion); 
+            PackageOutputPath=$(PackageOutputPath); 
+            IncludeBuildOutput=false;
+            NoPackageAnalysis=true; 
+            IncludeSymbols=false;
+            NoBuild=true;"
+            BuildInParallel="$(BuildInParallel)"
+            ContinueOnError="ErrorAndStop" 
+            Condition=" '$(SkipPack)' != 'true' " />
+    </Target>
+
+    <Target Name="BuildToolsPackageTarget" DependsOnTargets="BuildCIPackageTarget">
+        <Message Text="Done Building Package" />
+    </Target>
+
+    <Target Name="PublishNugetPackageLocally">
+        <PropertyGroup>
+            <CINugetPackageDeployDirPath>$(CINugPkgDeploySdkNetDirPath)\tools\LocalNugetFeed</CINugetPackageDeployDirPath>
+            <CINugetPkgSourceDirPath>$(RepoToolsDir)\LocalNugetFeed</CINugetPkgSourceDirPath>
+            <CINugetPkgSourceFilePath>$(CINugetPkgSourceDirPath)\Microsoft.Internal.NetSdkBuild.Mgmt.Tools.0.9.0.nupkg</CINugetPkgSourceFilePath>
+        </PropertyGroup>
+
+        <Copy 
+            Condition=" Exists('$(CINugetPkgSourceFilePath)')  AND Exists('$(CINugetPackageDeployDirPath)') AND '$(Scope)' == 'ci' "
+            SourceFiles="$(CINugetPkgSourceFilePath)" 
+            DestinationFolder="$(CINugetPkgSourceDirPath)" SkipUnchangedFiles="true" />
+    </Target>
+    
+    <Target Name="PublishTasksProjects" DependsOnTargets="PublishNet461">
+        <PropertyGroup>
+            <NugPkgPublishDir Condition=" '$(NugPkgPublishDir)' == '' AND ( '$(Scope)' == 'ci' OR '$(Scope)' == 'CI' ) ">$(CINugPkgPublish_NetStd20Dir)</NugPkgPublishDir>
+        </PropertyGroup>
+
+        <Message Text="Publishing Projects........." />
+        <Message Text="@(ProjectsToPublish.Identity)" Condition=" '$(DebugTraceEnv)' == 'true' " />
+
+        <Exec Command="dotnet publish %(ProjectsToPublish.Identity) -f netstandard2.0 -o $(NugPkgPublishDir) -r win10-x64"  />
+        <!--
+        <Exec Command="dotnet publish %(ProjectsToPublish.Identity) -f netstandard2.0 -o $(PublishLinuxNetStd20Dir) -r ubuntu-x64" />       
+        Condition=" '$(PublishNet461)' == 'true' "         
+            Condition=" '$(PublishNet461)' == 'true' "
+        -->
+    </Target>
+
+    <Target Name="myenv">
+		<Message Text="CurrentDir=========$(CurrentDir)" />
+		<Message Text="RepoRoot=========$(RepoRoot)" />
+		<Message Text="RepoSrcDir=========$(RepoSrcDir)" />
+        <Message Text="RepoTaskBinaryOutputDir ....$(RepoTaskBinaryOutputDir)" />
+        <Message Text="OutputPath ....$(OutputPath)" />  
+        <Message Text="IntermediateOutputPath .... $(IntermediateOutputPath)" />
+        <Message Text="PackageOutputPath .... $(PackageOutputPath)" />
+        
+
+        <Message Text=" "/>
+		<Message Text="RepoCISrcDir=========$(RepoCISrcDir)" />
+		<Message Text="RepoCICommonSrcDir=========$(RepoCICommonSrcDir)" />
+		<Message Text="RepoCIBuildTaskDir=========$(RepoCIBuildTaskDir)" />
+        <Message Text="CINugPkgSrcDir=========$(CINugPkgSrcDir)" />
+		<Message Text="CIBuildOutputDir=========$(CIBuildOutputDir)" />
+		<Message Text="CINugPkgPublish_NetStd20Dir=========$(CINugPkgPublish_NetStd20Dir)" />
+		<Message Text="CINugPkgPublish_Net461Dir=========$(CINugPkgPublish_Net461Dir)" />
+		<Message Text="CINugPkgDeployLocalRootDirPath=========$(CINugPkgDeployLocalRootDirPath)" />
+		<Message Text="CINugPkgDeploySdkNetDirPath=========$(CINugPkgDeploySdkNetDirPath)" />      
+	</Target>
+
+	<Target Name="DisplayProjData">
+		<Message Text="TestDataProjects=========%(TestDataProjects.Identity)" />		
+		<Message Text="BuildTaskTestProjects=========%(BuildTaskTestProjects.Identity)" />		
+		<Message Text="SwaggerToSdkTestProjects=========%(SwaggerToSdkTestProjects.Identity)" />
+		<Message Text="BuildTasksProjects=========%(BuildTasksProjects.Identity)" />
+		<Message Text="CommonTestProjects=========%(CommonTestProjects.Identity)" />
+		<Message Text="CommonTaskProjects=========%(CommonTaskProjects.Identity)" />
+		<Message Text="SwaggerToSdkProjects=========%(SwaggerToSdkProjects.Identity)" />
+		<Message Text="ProjectsToBuild=========@(ProjectsToBuild)" />
+	</Target>    
+</Project>

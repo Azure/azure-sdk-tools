@@ -1,0 +1,30 @@
+﻿<Project ToolsVersion="15.0" Sdk="Microsoft.NET.Sdk">
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('ci.common.props'))" />	
+  <PropertyGroup>
+    <PackageId>MS.Az.NetSdk.Build.Common</PackageId>
+    <Description>Azure SDK build common </Description>
+    <AssemblyTitle>Microsoft.Azure.NetSdk.Build.Common</AssemblyTitle>
+    <AssemblyName>MS.Az.Mgmt.NetSdk.BuildTasks.Common</AssemblyName>
+    <Version>$(PackageVersion)</Version>
+  </PropertyGroup>
+  <PropertyGroup>
+		<TargetFrameworks>net461;netstandard2.0</TargetFrameworks>
+  </PropertyGroup>
+
+  <!-- Their is an issue building dependencies that have platform specific dependencies -->
+  <PropertyGroup Condition="'$(TargetFramework)|$(Platform)'=='net461|AnyCPU'">
+    <PlatformTarget>$(FullNetFxBitness)</PlatformTarget>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Octokit" Version="0.32.0" />
+    <PackageReference Include="Microsoft.Azure.KeyVault" Version="3.0.99-private" />
+    <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="4.5.0" />      
+    <PackageReference Include="System.Net.Requests" Version="4.3.0" />
+  </ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
+    <PackageReference Include="NuGet.Versioning" Version="4.9.2" />
+	</ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net461' ">		
+    <PackageReference Include="NuGet.Versioning" Version="5.0.0" />
+	</ItemGroup>  
+</Project>

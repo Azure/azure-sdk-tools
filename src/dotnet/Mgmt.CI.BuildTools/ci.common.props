@@ -29,7 +29,7 @@
 		<Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
 		<Authors>Microsoft</Authors>
 		<PackageIconUrl>http://go.microsoft.com/fwlink/?LinkID=288890</PackageIconUrl>		
-		<PackageLicenseUrl>https://raw.githubusercontent.com/Microsoft/dotnet/master/LICENSE</PackageLicenseUrl>
+		<!-- <PackageLicenseUrl>https://raw.githubusercontent.com/Microsoft/dotnet/master/LICENSE</PackageLicenseUrl> -->
 		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
 		<PackageTags>$(PackageTags);$(NugetCommonTags);$(NugetCommonProfileTags);$(AzureApiVersionInTags)</PackageTags>
 		<GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>

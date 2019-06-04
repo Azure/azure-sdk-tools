@@ -75,6 +75,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Common.Models
             string latestVersionFile = string.Empty;
             string fileMatchPattern = string.Empty;
             string flName = string.Empty;
+            _fileNameWithoutVersion = string.Empty;
 
             flName = Path.GetFileName(nupkgFileName);
 

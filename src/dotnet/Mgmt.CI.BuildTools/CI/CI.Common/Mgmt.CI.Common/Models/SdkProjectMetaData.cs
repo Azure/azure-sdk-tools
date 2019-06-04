@@ -297,7 +297,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Common.Tasks.Models
                     break;
             }
 
-            //targetFx = validMoniker;
+            
             return fxSupported;
         }
 

@@ -26,8 +26,8 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Models
         //bool _hasXunitPackageReference;
         List<string> _packageReferenceList;
         string _targetFxMoniker;
-        SdkProjectType _sdkProjType;
-        SdkProjectCategory _sdkProjCategory;
+        //SdkProjectType _sdkProjType;
+        //SdkProjectCategory _sdkProjCategory;
 
         #endregion
 
@@ -165,8 +165,8 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Models
         #region Constructor
         MsbuildProject()
         {
-            _sdkProjType = SdkProjectType.UnDetermined;
-            _sdkProjCategory = SdkProjectCategory.UnDetermined;
+        //    _sdkProjType = SdkProjectType.UnDetermined;
+        //    _sdkProjCategory = SdkProjectCategory.UnDetermined;
         }
         public MsbuildProject(string projectFullPath) : this()
         {

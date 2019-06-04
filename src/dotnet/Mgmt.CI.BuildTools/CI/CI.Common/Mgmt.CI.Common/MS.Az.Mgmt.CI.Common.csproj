@@ -16,6 +16,9 @@
     <PlatformTarget>$(FullNetFxBitness)</PlatformTarget>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Remove="Models\SdkProjectMetaData.cs" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Octokit" Version="0.32.0" />
     <PackageReference Include="Microsoft.Azure.KeyVault" Version="3.0.99-private" />
     <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="4.5.0" />      

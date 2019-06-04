@@ -11,6 +11,7 @@
   <!-- Their is an issue building dependencies that have platform specific dependencies -->
   <PropertyGroup Condition="'$(TargetFramework)|$(Platform)'=='net461|AnyCPU'">
     <PlatformTarget>$(FullNetFxBitness)</PlatformTarget>
+    <NoWarn>CS0414;CS0219;CS0649</NoWarn>
   </PropertyGroup>
   <PropertyGroup>
 		<TargetFrameworks>net461;netstandard2.0</TargetFrameworks>		

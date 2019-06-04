@@ -4,7 +4,11 @@
     <Description>Tests for MS.Az.NetSdk.Build.Tasks msbuild build tasks tests</Description>
     <AssemblyTitle>MS.Az.NetSdk.Build.Tasks Tests</AssemblyTitle>
     <AssemblyName>Build.Tasks.Tests</AssemblyName>
-  </PropertyGroup>
+  </PropertyGroup>  
+  <PropertyGroup>
+		<TargetFramework>netcoreapp2.1</TargetFramework>
+    <IsPackable>false</IsPackable>
+	</PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.9.0" />
     <!--<PackageReference Include="Microsoft.VisualStudio.Setup.Configuration.Interop" Version="1.16.30" />-->
@@ -17,7 +21,4 @@
     <ProjectReference Include="..\..\..\CI.Common\Tests\Tests.CI.Common.csproj" />
     <ProjectReference Include="..\..\..\CI.Common\Mgmt.CI.Common\MS.Az.Mgmt.CI.Common.csproj" />    
   </ItemGroup>
-  <PropertyGroup>
-		<TargetFramework>netcoreapp2.1</TargetFramework>
-	</PropertyGroup>
 </Project>

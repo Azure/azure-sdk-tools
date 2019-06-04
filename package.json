@@ -5,15 +5,23 @@
   "keywords": [
     "eslint",
     "eslintplugin",
-    "eslint-plugin"
+    "eslint-plugin",
+    "azure",
+    "azure-sdk",
+    "eslint-plugin-azure"
   ],
   "author": "Arpan Laha",
   "main": "lib/index.js",
   "scripts": {
     "test": "mocha tests --recursive"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/arpanlaha/eslint-plugin-azure"
+  },
   "dependencies": {
-    "requireindex": "~1.1.0"
+    "requireindex": "~1.1.0",
+    "vscode-json-languageservice": "^3.2.0"
   },
   "devDependencies": {
     "eslint": "~3.9.1",

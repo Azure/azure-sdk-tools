@@ -4,7 +4,6 @@
     <Description>Tests for MS.Az.NetSdk.Build.Tasks msbuild build tasks tests</Description>
     <AssemblyTitle>MS.Az.NetSdk.Build.Tasks Tests</AssemblyTitle>
     <AssemblyName>Build.Tasks.Tests</AssemblyName>
-    <Version>1.0.0</Version>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.9.0" />

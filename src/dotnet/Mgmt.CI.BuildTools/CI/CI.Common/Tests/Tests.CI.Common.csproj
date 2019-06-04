@@ -4,7 +4,6 @@
     <Description>Tests for Common code for Build Tasks</Description>
     <AssemblyTitle>MS.Az.NetSdk.Common.BuildTasks Tests</AssemblyTitle>
     <AssemblyName>Common.BuildTasks.Tests</AssemblyName>
-    <Version>1.0.0</Version>
     <ProjectGuid>{DB4263F3-7041-4C7E-A373-BB04A5A32C34}</ProjectGuid>
   </PropertyGroup>
   <PropertyGroup>

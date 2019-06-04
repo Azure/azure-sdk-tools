@@ -5,7 +5,6 @@
     <Description>Provides .NET SDK Build tools and msbuild tasks</Description>
     <AssemblyTitle>Microsoft.Azure.NetSdk.Build.Tasks</AssemblyTitle>
     <AssemblyName>MS.Az.Mgmt.NetSdk.BuildTasks</AssemblyName>
-    <Version>$(PackageVersion)</Version>
   </PropertyGroup>
 
   <!-- Their is an issue building dependencies that have platform specific dependencies -->

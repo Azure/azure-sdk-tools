@@ -3,7 +3,6 @@
     <TargetFrameworks>net461;netstandard2.0</TargetFrameworks>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageId>Microsoft.Internal.NetSdkBuild.Mgmt.Tools</PackageId>
-    <Version>0.9.0-preview</Version>
     <Authors>Microsoft</Authors>
     <Description>Build tools for building Azure SDK for NET repository</Description>
     <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>

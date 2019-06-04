@@ -19,7 +19,6 @@
     <ProjectReference Include="..\..\..\CI.Common\Mgmt.CI.Common\MS.Az.Mgmt.CI.Common.csproj" />    
   </ItemGroup>
   <PropertyGroup>
-		<TargetFramework>netcoreapp2.2</TargetFramework>
-    <!-- <OutputPath Condition="'$(PlatformName)' != 'AnyCPU'">$(Configuration)\</OutputPath> -->
+		<TargetFramework>netcoreapp2.1</TargetFramework>
 	</PropertyGroup>
 </Project>

@@ -8,8 +8,7 @@
     <ProjectGuid>{DB4263F3-7041-4C7E-A373-BB04A5A32C34}</ProjectGuid>
   </PropertyGroup>
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.2</TargetFramework>
-    <!-- <OutputPath Condition="'$(PlatformName)' != 'AnyCPU'">$(Configuration)\</OutputPath> -->
+    <TargetFramework>netcoreapp2.1</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.9.0" />

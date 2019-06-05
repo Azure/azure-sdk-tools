@@ -2,6 +2,6 @@
   <ItemGroup>
     <ProjectReference 
         Include="src\dotnet\**\*.csproj;mgmtci.proj" 
-        Exclude="src\dotnet\Mgmt.CI.BuildTools\**\Tests*.csproj" />
+        Exclude="src\dotnet\Mgmt.CI.BuildTools\**\*.csproj" />
   </ItemGroup>
 </Project>

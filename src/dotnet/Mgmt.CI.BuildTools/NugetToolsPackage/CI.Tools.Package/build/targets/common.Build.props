@@ -1,0 +1,37 @@
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+	<PropertyGroup>
+		<Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+		<!--<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<IncludeSymbols>true</IncludeSymbols>-->
+		<!-- <RestorePackagesPath>$(LibraryNugetPackageFolder)</RestorePackagesPath>
+		<NugetCommonProfileTags></NugetCommonProfileTags>
+		<PackageOutputPath>$(pkg_root_RepoNugPkgOutputDir)</PackageOutputPath>
+		<AddProjectReferenceForDebuggingPurpose>false</AddProjectReferenceForDebuggingPurpose>
+		<AddNugetReferenceForCIandCmdlineBuild>true</AddNugetReferenceForCIandCmdlineBuild>
+		<SkipBuildingTestProject>false</SkipBuildingTestProject>
+		<SignAssembly>true</SignAssembly>
+		<DelaySign>true</DelaySign>
+		<AssemblyOriginatorKeyFile>$(pkg_root_RepoToolsDir)\MSSharedLibKey.snk</AssemblyOriginatorKeyFile>
+		
+		<NoWarn>1591;1701;1573;CS1591</NoWarn>
+		<DefaultPathTokenToIgnore>$(DefaultPathTokenToIgnore) $(IgnorePathTokens)</DefaultPathTokenToIgnore>
+		<BuildWideDebugTrace Condition=" '$(DebugTrace)' == '' ">false</BuildWideDebugTrace>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile> -->
+	</PropertyGroup>
+	<Choose>
+		<When Condition=" '$(BuildingInsideVisualStudio)' == 'true' ">
+		  <PropertyGroup>
+			<AddProjectReferenceForDebuggingPurpose>true</AddProjectReferenceForDebuggingPurpose>
+			<Scope Condition=" '$(Scope)' == 'All' ">IdeScope</Scope>
+			<CmdLineBuild>false</CmdLineBuild>
+			<DefineConstants>$(DefineConstants);DebugInVS</DefineConstants>
+		  </PropertyGroup>
+		</When>
+		<Otherwise>
+		  <PropertyGroup>
+			<AddNugetReferenceForCIandCmdlineBuild>true</AddNugetReferenceForCIandCmdlineBuild>
+			<CmdLineBuild>true</CmdLineBuild>
+		  </PropertyGroup>
+		</Otherwise>
+	</Choose>
+</Project>

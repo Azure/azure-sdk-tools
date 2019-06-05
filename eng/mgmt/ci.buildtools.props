@@ -1,0 +1,69 @@
+﻿<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+	<PropertyGroup>
+		<CurrentDir>$(MSBuildThisFileDirectory)</CurrentDir>
+		<RootDir>$(MSBuildProjectDirectory)</RootDir>
+		<RepoRootRelPath>.\..\</RepoRootRelPath>
+		<RepoRelAbsPath>$([System.IO.Path]::GetFullPath($(RootDir)))</RepoRelAbsPath>
+		<RepoRootAbspath>$([System.IO.Path]::GetFullPath($(RootDir)).Trim('\'))</RepoRootAbspath>
+	</PropertyGroup>
+	<PropertyGroup>
+		<RepoRoot>$(RootDir)\</RepoRoot>
+		<RepositoryRoot>$(RepoRootAbspath)</RepositoryRoot>
+		<RepoSrcDir>$(RepositoryRoot)\src</RepoSrcDir>
+		<RepoMgmtCIToolsSrcDir>$(RepoSrcDir)\dotnet\Mgmt.CI.BuildTools</RepoMgmtCIToolsSrcDir>
+		<RepoToolsDir>$(RepositoryRoot)\tools</RepoToolsDir>
+		<RepoEngDir>$(RepositoryRoot)\eng</RepoEngDir>
+		<SubModuleRootDir>$(RepositoryRoot)\repos</SubModuleRootDir>
+		<RepoNugetFeedDir>$(RepoToolsDir)\LocalNugetFeed</RepoNugetFeedDir>
+		<RepoDeveloperDir>$(RepoEngDir)\alias</RepoDeveloperDir>
+		<RepoNugetDir>$(RepoToolsDir)\NugetExe</RepoNugetDir>
+    <NugPkgSrcDir>$(RepoMgmtCIToolsSrcDir)\NugetToolsPackage</NugPkgSrcDir>
+		<RepoNugetRestoreDir>$(RepositoryRoot)\restoredPackages</RepoNugetRestoreDir>
+	</PropertyGroup>
+
+	<PropertyGroup Label="CI paths">
+		<RepoCISrcDir>$(RepoMgmtCIToolsSrcDir)\CI</RepoCISrcDir>
+		<RepoCICommonSrcDir>$(RepoCISrcDir)\CI.Common</RepoCICommonSrcDir>
+		<RepoCIBuildTaskDir>$(RepoCISrcDir)\CI.BuildTasks</RepoCIBuildTaskDir>
+		<CINugPkgSrcDir>$(NugPkgSrcDir)\CI.Tools.Package</CINugPkgSrcDir>
+		<CIBuildOutputDir>$(CINugPkgSrcDir)\build\tasks</CIBuildOutputDir>
+		<CINugPkgPublish_NetStd20Dir>$(CIBuildOutputDir)\netstandard2.0</CINugPkgPublish_NetStd20Dir>
+		<CINugPkgPublish_Net461Dir>$(CIBuildOutputDir)\net461</CINugPkgPublish_Net461Dir>
+		<CINugPkgDeployLocalRootDirPath>$(SubModuleRootDir)\netSdkMaster</CINugPkgDeployLocalRootDirPath>
+		<!-- <CINugPkgDeploySdkNetDirPath>D:\Myfork\sdkfornet\master</CINugPkgDeploySdkNetDirPath> -->
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
+		<Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
+	</PropertyGroup>
+
+	<!-- 
+    MSBuildRuntimeType can have 'Core', 'Full' and 'Mono' as three possible values 
+    https://docs.microsoft.com/en-us/visualstudio/msbuild/msbuild-reserved-and-well-known-properties?view=vs-2017
+  -->
+	<PropertyGroup>
+		<DotNetRuntimeContext>$(MSBuildRuntimeType)</DotNetRuntimeContext>
+		<FxVersionTasksToUse Condition=" '$(DotNetRuntimeContext)' == 'Core' ">netstandard2.0</FxVersionTasksToUse>
+		<FxVersionTasksToUse Condition=" '$(FxVersionTasksToUse)' == '' AND '$(DotNetRuntimeContext)' != 'Core' ">net461</FxVersionTasksToUse>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(MSBuildRuntimeType)' == 'Core'">
+		<IsOSX Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX)))' == 'true'">true</IsOSX>
+		<IsLinux Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'true'">true</IsLinux>
+	</PropertyGroup>
+
+	<ItemGroup Condition=" '$(Scope)' == 'ci' OR '$(Scope)' == 'CI' ">
+		<TestDataProjects Include="$(RepoCISrcDir)\CI.BuildTasks\Tests\TestDataProject\*.csproj" />
+
+		<CITestProjects Include="$(RepoCISrcDir)\CI.BuildTasks\Tests\CI.BuildTasks.Tests\*.csproj" />
+		<CITestProjects Include="$(CITestProjects);$(RepoCISrcDir)\CI.Common\Tests\*.csproj" />
+
+		<CIProjects Include="$(RepoCISrcDir)\CI.BuildTasks\Mgmt.CI.BuildTasks\*.csproj" />
+		<CIProjects Include="$(CIProjects);$(RepoCISrcDir)\CI.Common\Mgmt.CI.Common\*.csproj" />
+
+		<NugetPkgProjects Include="@(CIProjects)" />		
+		<ProjectsToBuild Include="@(CIProjects);@(CITestProjects)" />
+		<ProjectsToPublish Include="@(CIProjects)" />
+	</ItemGroup>
+	<Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props'))" />
+</Project>

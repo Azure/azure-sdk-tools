@@ -4,7 +4,7 @@
  ```json
 {
     "compilerOptions": {
-        "strict: true
+        "strict": true
     }
 }
 ```

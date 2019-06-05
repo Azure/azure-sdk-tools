@@ -13,7 +13,6 @@
     <PackageTags>Azure.NETSDKBuildToolsPackage</PackageTags>
     <PackageReleaseNotes>Build tools for Azure .NET SDKs repository</PackageReleaseNotes>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
   </PropertyGroup>
 
   <ItemGroup>
@@ -26,7 +25,7 @@
     </None>
     <None Update="build\targets\**\*.*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>    
+    </None>
     <None Update="build\tasks\*.*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

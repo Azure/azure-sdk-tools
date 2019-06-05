@@ -1,22 +1,27 @@
 ﻿using Microsoft.CodeAnalysis;
 using System;
+using System.Collections.Immutable;
 using System.Collections.ObjectModel;
+using System.Text;
 
 namespace TypeList
 {
     internal class Method
     {
-        private readonly IMethodSymbol symbol;
-        private readonly MethodKind methodKind;
-        private readonly ITypeSymbol returnType;
+        private readonly ImmutableArray<AttributeData> attributes;
 
-        private readonly bool isAsync;
-        private readonly bool isOverride;
         private readonly bool isStatic;
         private readonly bool isVirtual;
+        private readonly bool isSealed;
+        private readonly bool isOverride;
+        private readonly bool isAbstract;
+        private readonly bool isExtern;
+        private readonly bool isAsync;
+
+        private readonly string name;
+        private readonly string returnType;
 
         private readonly Collection<Parameter> parameters = new Collection<Parameter>();
-        private readonly Collection<TypeArgument> typeArguments = new Collection<TypeArgument>();
         private readonly Collection<TypeParameter> typeParameters = new Collection<TypeParameter>();
 
         /// <summary>
@@ -25,19 +30,19 @@ namespace TypeList
         /// <param name="symbol">The symbol representing the method.</param>
         public Method(IMethodSymbol symbol)
         {
-            this.symbol = symbol;
-            this.methodKind = symbol.MethodKind;
-            this.returnType = symbol.ReturnType;
+            this.attributes = symbol.GetAttributes();
 
-            this.isAsync = symbol.IsAsync;
-            this.isOverride = symbol.IsOverride;
             this.isStatic = symbol.IsStatic;
             this.isVirtual = symbol.IsVirtual;
+            this.isSealed = symbol.IsSealed;
+            this.isOverride = symbol.IsOverride;
+            this.isAbstract = symbol.IsAbstract;
+            this.isExtern = symbol.IsExtern;
+            this.isAsync = symbol.IsAsync;
 
-            foreach (ITypeSymbol argument in symbol.TypeArguments)
-            {
-                this.typeArguments.Add(new TypeArgument(argument));
-            }
+            this.name = symbol.Name;
+            this.returnType = symbol.ReturnType.ToString();
+
             foreach (ITypeParameterSymbol typeParam in symbol.TypeParameters)
             {
                 this.typeParameters.Add(new TypeParameter(typeParam));
@@ -50,24 +55,51 @@ namespace TypeList
 
         public override string ToString()
         {
-            string returnString = "Method: " + symbol + "\n" +
-                                  "Method kind: " + methodKind + "\n" +
-                                  "Return type: " + returnType + "\n";
+            StringBuilder returnString = new StringBuilder("");
+            if (!attributes.IsEmpty)
+                returnString.Append(attributes + " ");
 
-            foreach (Parameter p in parameters)
+            returnString.Append("public");
+
+            if (isStatic)
+                returnString.Append(" static");
+            if (isVirtual)
+                returnString.Append(" virtual");
+            if (isSealed)
+                returnString.Append(" sealed");
+            if (isOverride)
+                returnString.Append(" override");
+            if (isAbstract)
+                returnString.Append(" abstract");
+            if (isExtern)
+                returnString.Append(" extern");
+            if (isAsync)
+                returnString.Append(" async");
+
+            returnString.Append(" " + returnType + " " + name);
+            if (typeParameters.Count != 0)
             {
-                returnString += p.ToString();
-            }
-            foreach (TypeParameter tp in typeParameters)
-            {
-                returnString += tp.ToString();
-            }
-            foreach (TypeArgument ta in typeArguments)
-            {
-                returnString += ta.ToString();
+                returnString.Append(" <");
+                foreach (TypeParameter tp in typeParameters)
+                {
+                    returnString.Append(tp.ToString() + ", ");
+                }
+                returnString.Length = returnString.Length - 2;
+                returnString.Append("> ");
             }
 
-            return returnString;
+            returnString.Append("(");
+            if (parameters.Count != 0)
+            {
+                foreach (Parameter p in parameters)
+                {
+                    returnString.Append(p.ToString() + ", ");
+                }
+                returnString.Length = returnString.Length - 2;
+            }
+            returnString.Append(") { };\n");
+
+            return returnString.ToString();
         }
     }
 }

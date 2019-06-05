@@ -43,6 +43,7 @@ namespace TypeList
 
         public override string ToString()
         {
+            // TODO: find way to determine class vs. interface status
             string returnString = "Class/interface: " + symbol + "\n";
             
             foreach (Event e in events)

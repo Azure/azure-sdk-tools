@@ -20,6 +20,7 @@
     "url": "https://github.com/arpanlaha/eslint-plugin-azure"
   },
   "dependencies": {
+    "eslint-plugin-json": "^1.4.0",
     "requireindex": "~1.1.0",
     "typescript": "^3.5.1"
   },

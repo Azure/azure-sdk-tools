@@ -3,13 +3,9 @@
 `tsconfig.json` should look as follows:
  ```json
 {
-    //...
-    compilerOptions: {
-        //...
-        strict: true,
-        //...
+    "compilerOptions": {
+        "strict: true
     }
-
 }
 ```
 

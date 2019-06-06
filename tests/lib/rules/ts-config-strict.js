@@ -7,18 +7,18 @@
 
 var rule = require("../../../lib/rules/ts-config-strict");
 var RuleTester = require("eslint").RuleTester;
-var preprocess = require("../../../lib/index").processors[".json"].preprocess;
+var processJSON = require("../../../lib/index").processors[".json"];
 
-var ruleTester = new RuleTester({ parser: "@typescript-eslint/parser" });
+var ruleTester = new RuleTester({
+  parser: "@typescript-eslint/parser",
+  parserOptions: { globalReturn: true }
+});
 
 ruleTester.run("ts-config-strict", rule, {
   valid: [
     {
-      filename: "tsconfig.json",
-      code: preprocess(
-        '{"compilerOptions": { "strict": true }}',
-        "tsconfig.json"
-      )[0]
+      code: '{"compilerOptions": { "strict": true }}',
+      filename: Object.assign(processJSON, { filename: "tsconfig.json" }) // this is stupid but it works
     }
   ],
   invalid: [

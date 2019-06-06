@@ -1,12 +1,24 @@
+/**
+ * @fileoverview Testing the ts-config-strict rule.
+ * @author Arpan Laha
+ */
+
+"use strict";
+
 var rule = require("../../../lib/rules/ts-config-strict");
 var RuleTester = require("eslint").RuleTester;
+var preprocess = require("../../../lib/index").processors[".json"].preprocess;
 
 var ruleTester = new RuleTester({ parser: "@typescript-eslint/parser" });
+
 ruleTester.run("ts-config-strict", rule, {
   valid: [
     {
-      code: 'const json = {"compilerOptions": { "strict": true }}',
-      filename: "tsconfig.json"
+      filename: "tsconfig.json",
+      code: preprocess(
+        '{"compilerOptions": { "strict": true }}',
+        "tsconfig.json"
+      )[0]
     }
   ],
   invalid: [
@@ -16,5 +28,3 @@ ruleTester.run("ts-config-strict", rule, {
     // }
   ]
 });
-
-const json = { compilerOptions: { strict: true } };

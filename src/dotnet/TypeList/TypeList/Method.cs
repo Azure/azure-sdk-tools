@@ -1,14 +1,20 @@
 ﻿using Microsoft.CodeAnalysis;
-using System;
 using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Text;
 
 namespace TypeList
 {
-    internal class Method
+    /// <summary>
+    /// Class representing a C# method. Each method includes a name, return type, attributes, 
+    /// modifiers, type parameters, and parameters.
+    /// 
+    /// Method is an immutable, thread-safe type.
+    /// </summary>
+    public class Method
     {
-        private readonly ImmutableArray<AttributeData> attributes;
+        private readonly string name;
+        private readonly string returnType;
 
         private readonly bool isStatic;
         private readonly bool isVirtual;
@@ -18,11 +24,9 @@ namespace TypeList
         private readonly bool isExtern;
         private readonly bool isAsync;
 
-        private readonly string name;
-        private readonly string returnType;
-
-        private readonly Collection<Parameter> parameters = new Collection<Parameter>();
-        private readonly Collection<TypeParameter> typeParameters = new Collection<TypeParameter>();
+        private readonly ImmutableArray<AttributeData> attributes;
+        private readonly ImmutableArray<Parameter> parameters;
+        private readonly ImmutableArray<TypeParameter> typeParameters;
 
         /// <summary>
         /// Construct a new Method instance, represented by the provided symbol.
@@ -30,7 +34,8 @@ namespace TypeList
         /// <param name="symbol">The symbol representing the method.</param>
         public Method(IMethodSymbol symbol)
         {
-            this.attributes = symbol.GetAttributes();
+            this.name = symbol.Name;
+            this.returnType = symbol.ReturnType.ToString();
 
             this.isStatic = symbol.IsStatic;
             this.isVirtual = symbol.IsVirtual;
@@ -40,17 +45,81 @@ namespace TypeList
             this.isExtern = symbol.IsExtern;
             this.isAsync = symbol.IsAsync;
 
-            this.name = symbol.Name;
-            this.returnType = symbol.ReturnType.ToString();
+            this.attributes = symbol.GetAttributes();
+            Collection<TypeParameter> typeParameters = new Collection<TypeParameter>();
+            Collection<Parameter> parameters = new Collection<Parameter>();
 
             foreach (ITypeParameterSymbol typeParam in symbol.TypeParameters)
             {
-                this.typeParameters.Add(new TypeParameter(typeParam));
+                typeParameters.Add(new TypeParameter(typeParam));
             }
             foreach (IParameterSymbol param in symbol.Parameters)
             {
-                this.parameters.Add(new Parameter(param));
+                parameters.Add(new Parameter(param));
             }
+
+            this.typeParameters = typeParameters.ToImmutableArray();
+            this.parameters = parameters.ToImmutableArray();
+        }
+
+        public string GetName()
+        {
+            return name;
+        }
+
+        public string GetReturnType()
+        {
+            return returnType;
+        }
+
+        public bool IsStatic()
+        {
+            return isStatic;
+        }
+
+        public bool IsVirtual()
+        {
+            return isVirtual;
+        }
+
+        public bool IsSealed()
+        {
+            return isSealed;
+        }
+
+        public bool IsOverride()
+        {
+            return isOverride;
+        }
+
+        public bool IsAbstract()
+        {
+            return isAbstract;
+        }
+
+        public bool IsExtern()
+        {
+            return isExtern;
+        }
+
+        public bool IsAsync()
+        {
+            return isAsync;
+        }
+
+        public ImmutableArray<AttributeData> GetAttributes()
+        {
+            return attributes;
+        }
+
+        public ImmutableArray<Parameter> GetParameters()
+        {
+            return parameters;
+        }
+
+        public ImmutableArray<TypeParameter> GetTypeParameters()
+        {
+            return typeParameters;
         }
 
         public override string ToString()
@@ -77,7 +146,7 @@ namespace TypeList
                 returnString.Append(" async");
 
             returnString.Append(" " + returnType + " " + name);
-            if (typeParameters.Count != 0)
+            if (typeParameters.Length != 0)
             {
                 returnString.Append(" <");
                 foreach (TypeParameter tp in typeParameters)
@@ -89,7 +158,7 @@ namespace TypeList
             }
 
             returnString.Append("(");
-            if (parameters.Count != 0)
+            if (parameters.Length != 0)
             {
                 foreach (Parameter p in parameters)
                 {
@@ -97,7 +166,7 @@ namespace TypeList
                 }
                 returnString.Length = returnString.Length - 2;
             }
-            returnString.Append(") { };\n");
+            returnString.Append(") { }\n");
 
             return returnString.ToString();
         }

@@ -1,11 +1,9 @@
 ﻿using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
 
 namespace TypeList
 {
-    internal class Parameter
+    public class Parameter
     {
-        private readonly IParameterSymbol symbol;
         private readonly string name;
         private readonly string type;
         private readonly string refKind = RefKind.None.ToString();
@@ -17,12 +15,31 @@ namespace TypeList
         /// <param name="symbol">The symbol representing the parameter.</param>
         public Parameter(IParameterSymbol symbol)
         {
-            this.symbol = symbol;
             this.name = symbol.Name;
             this.type = symbol.ToString();
             this.refKind = symbol.RefKind.ToString();
             if (symbol.HasExplicitDefaultValue)
                 this.explicitDefaultValue = symbol.ExplicitDefaultValue;
+        }
+
+        public string GetName()
+        {
+            return name;
+        }
+
+        public string GetParameterType()
+        {
+            return type;
+        }
+
+        public string GetRefKind()
+        {
+            return refKind;
+        }
+
+        public object GetExplicitDefaultValue()
+        {
+            return explicitDefaultValue;
         }
 
         public override string ToString()

@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\TestLibrary\TestLibrary.csproj" />
+    <ProjectReference Include="..\TypeList\TypeList.csproj" />
   </ItemGroup>
 
 </Project>

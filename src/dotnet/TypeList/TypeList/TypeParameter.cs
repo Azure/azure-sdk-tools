@@ -1,11 +1,11 @@
 ﻿using Microsoft.CodeAnalysis;
 using System.Collections.Immutable;
+using System.Text;
 
 namespace TypeList
 {
-    internal class TypeParameter
+    public class TypeParameter
     {
-        private readonly ITypeParameterSymbol symbol;
         private readonly string name;
         private readonly ImmutableArray<AttributeData> attributes;
 
@@ -15,14 +15,27 @@ namespace TypeList
         /// <param name="symbol">The symbol representing the type parameter.</param>
         public TypeParameter(ITypeParameterSymbol symbol)
         {
-            this.symbol = symbol;
             this.name = symbol.ToString();
             this.attributes = symbol.GetAttributes();
         }
 
+        public string GetName()
+        {
+            return name;
+        }
+
+        public ImmutableArray<AttributeData> GetAttributes()
+        {
+            return attributes;
+        }
+
         public override string ToString()
         {
-            return "Type parameter: " + symbol + "\n";
+            StringBuilder returnString = new StringBuilder("");
+            if (attributes.Length != 0)
+                returnString.Append(attributes + " ");
+            returnString.Append(name);
+            return returnString.ToString();
         }
     }
 }

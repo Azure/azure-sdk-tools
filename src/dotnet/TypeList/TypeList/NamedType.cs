@@ -1,16 +1,19 @@
 ﻿using Microsoft.CodeAnalysis;
+using System.Collections.Immutable;
 using System.Collections.ObjectModel;
+using System.Text;
 
 namespace TypeList
 {
-    internal class NamedType
+    public class NamedType
     {
-        private readonly INamedTypeSymbol symbol;
+        private readonly string name;
+        private readonly string type;
 
-        private readonly Collection<Event> events = new Collection<Event>();
-        private readonly Collection<Field> fields = new Collection<Field>();
-        private readonly Collection<Method> methods = new Collection<Method>();
-        private readonly Collection<NamedType> namedTypes = new Collection<NamedType>();
+        private readonly ImmutableArray<Event> events;
+        private readonly ImmutableArray<Field> fields;
+        private readonly ImmutableArray<Method> methods;
+        private readonly ImmutableArray<NamedType> namedTypes;
 
         /// <summary>
         /// Construct a new NamedType instance, represented by the provided symbol.
@@ -18,7 +21,13 @@ namespace TypeList
         /// <param name="symbol">The symbol representing the named type.</param>
         public NamedType(INamedTypeSymbol symbol)
         {
-            this.symbol = symbol;
+            this.name = symbol.Name;
+            this.type = symbol.TypeKind.ToString().ToLower();
+
+            Collection<Event> events = new Collection<Event>();
+            Collection<Field> fields = new Collection<Field>();
+            Collection<Method> methods = new Collection<Method>();
+            Collection<NamedType> namedTypes = new Collection<NamedType>();
 
             foreach (var memberSymbol in symbol.GetMembers())
             {
@@ -27,43 +36,83 @@ namespace TypeList
                 switch (memberSymbol)
                 {
                     case IEventSymbol e:
-                        this.events.Add(new Event(e));
+                        events.Add(new Event(e));
                         break;
 
                     case IFieldSymbol f:
-                        this.fields.Add(new Field(f));
+                        fields.Add(new Field(f));
                         break;
 
                     case IMethodSymbol m:
-                        this.methods.Add(new Method(m));
+                        methods.Add(new Method(m));
+                        break;
+
+                    case INamedTypeSymbol n:
+                        namedTypes.Add(new NamedType(n));
                         break;
                 }
             }
+
+            this.events = events.ToImmutableArray();
+            this.fields = fields.ToImmutableArray();
+            this.methods = methods.ToImmutableArray();
+            this.namedTypes = namedTypes.ToImmutableArray();
+        }
+
+        public string GetName()
+        {
+            return name;
+        }
+
+        public string GetNamedType()
+        {
+            return type;
+        }
+
+        public ImmutableArray<Event> GetEvents()
+        {
+            return events;
+        }
+
+        public ImmutableArray<Field> GetFields()
+        {
+            return fields;
+        }
+
+        public ImmutableArray<Method> GetMethods()
+        {
+            return methods;
+        }
+
+        public ImmutableArray<NamedType> GetNamedTypes()
+        {
+            return namedTypes;
         }
 
         public override string ToString()
         {
-            // TODO: find way to determine class vs. interface status
-            string returnString = "Class/interface: " + symbol + "\n";
-            
-            foreach (Event e in events)
-            {
-                returnString += e.ToString();
-            }
+            StringBuilder returnString = new StringBuilder("public " + type + " " + name + " {\n\n");
+
             foreach (Field f in fields)
             {
-                returnString += f.ToString();
+                returnString.Append("    " + f.ToString() + "\n");
+            }
+            foreach (Event e in events)
+            {
+                returnString.Append("    " + e.ToString() + "\n");
             }
             foreach (Method m in methods)
             {
-                returnString += m.ToString();
+                returnString.Append("    " + m.ToString() + "\n");
             }
             foreach (NamedType n in namedTypes)
             {
-                returnString += n.ToString();
+                returnString.Append("    " + n.ToString() + "\n");
             }
 
-            return returnString;
+            returnString.Append("}\n");
+
+            return returnString.ToString();
         }
     }
 }

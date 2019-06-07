@@ -3,15 +3,14 @@
  * @author Arpan Laha
  */
 
-"use strict";
-
-var structure = require("../utils/structure");
+import { structure } from "../utils/structure";
+import { Rule } from "eslint";
 
 //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
-module.exports = {
+export default {
   meta: {
     type: "Problem",
 
@@ -26,7 +25,7 @@ module.exports = {
     fixable: "code",
     schema: [] // no options
   },
-  create: function(context) {
+  create: function(context: Rule.RuleContext) {
     var checkers = structure(context, {
       outer: "compilerOptions",
       inner: "strict",

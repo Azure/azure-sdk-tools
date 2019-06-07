@@ -3,11 +3,9 @@
  * @author Arpan Laha
  */
 
-"use strict";
-
-var rule = require("../../../lib/rules/ts-config-strict");
-var RuleTester = require("eslint").RuleTester;
-var processJSONFile = require("../utils/processTests");
+import rule from "../../../src/rules/ts-config-strict";
+import { RuleTester } from "eslint";
+import processJSONFile from "../utils/processTests";
 
 //------------------------------------------------------------------------------
 // Example files

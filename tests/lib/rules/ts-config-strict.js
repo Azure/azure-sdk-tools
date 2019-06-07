@@ -142,6 +142,17 @@ ruleTester.run("ts-config-strict", rule, {
             "tsconfig.json: compilerOptions.strict is set to false when it should be set to true"
         }
       ]
+    },
+    {
+      // example file with compilerOptions.strict set to false
+      code: '{"outer": {"compilerOptions": { "strict": true }}}',
+      filename: processJSONFile("tsconfig.json"),
+      errors: [
+        {
+          message:
+            "tsconfig.json: compilerOptions is not at the outermost level"
+        }
+      ]
     }
   ]
 });

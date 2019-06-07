@@ -143,6 +143,16 @@ ruleTester.run("ts-config-strict", rule, {
       ]
     },
     {
+      // commpilerOptions does not contain strict
+      code: '{"compilerOptions": { "lenient": true }}',
+      filename: processJSONFile("tsconfig.json"),
+      errors: [
+        {
+          message: "tsconfig.json: strict is not a member of compilerOptions"
+        }
+      ]
+    },
+    {
       // only the fields we care about
       code: '{"compilerOptions": { "strict": false }}',
       filename: processJSONFile("tsconfig.json"),

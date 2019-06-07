@@ -41,8 +41,7 @@ namespace Tests.CI.BuildTasks.UtilityTests
 
         [Fact]
         public void GetAllProjects()
-        {
-            
+        {   
             List<string> sdkProj = ProjSearch.Find_Mgmt_SDKProjects();
             List<string> allRpDirs = ProjSearch.GetRPDirs();
 

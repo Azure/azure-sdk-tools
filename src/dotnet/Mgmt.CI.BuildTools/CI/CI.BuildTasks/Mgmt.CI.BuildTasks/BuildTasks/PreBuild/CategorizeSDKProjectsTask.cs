@@ -260,62 +260,11 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Tasks.PreBuild
 
             ProjectSearchUtility psu = null;
             Dictionary<string, SdkProjectMetadata> allProj = null;
-            //List<string> multiScopeDirPaths = new List<string>();
-
-            //if(MultipleScopes.NotNullOrAny<string>())
-            //{
-            //    multiScopeDirPaths = MultipleScopes.ToList<string>();
-            //}
 
             psu = new ProjectSearchUtility(RepositoryRootDirPath, MultipleScopes, BuildScope, FullyQualifiedBuildScopeDirPath, CmdLineExcludeScope, CmdLineIncludeScope, ProjType, ProjCat);
 
             searchedProjects = psu.FindProjects();
             allProj = LoadProjectData(searchedProjects);
-
-            //if (MultipleScopes.NotNullOrAny<string>())
-            //{
-            //    psu = new ProjectSearchUtility(RepositoryRootDirPath, string.Empty,
-            //                                    CmdLineExcludeScope, CmdLineIncludeScope, ProjType, ProjCat);
-
-            //    foreach (string scope in MultipleScopes)
-            //    {
-            //        searchedProjects.AddRange(psu.FindProjects(scope));
-            //    }
-            //}
-            //else if (!string.IsNullOrWhiteSpace(FullyQualifiedBuildScopeDirPath))
-            //{
-            //    psu = new ProjectSearchUtility(FullyQualifiedBuildScopeDirPath,
-            //                                        CmdLineExcludeScope, CmdLineIncludeScope, ProjType, ProjCat);
-            //    searchedProjects = psu.FindProjects();
-            //}            
-            //else
-            //{
-            //    //If BuildScope is empty, we will default to the root anyway, so regardless if we have a valid token or an invalid token or empty token
-            //    psu = new ProjectSearchUtility(RepositoryRootDirPath, BuildScope,
-            //                                        CmdLineExcludeScope, CmdLineIncludeScope, ProjType, ProjCat);
-            //    searchedProjects = psu.FindProjects();
-            //}
-            
-            //if(psu == null)
-            //{
-            //    if(MultipleScopes != null)
-            //    {
-            //        psu = new ProjectSearchUtility(RepositoryRootDirPath, string.Empty,
-            //                                        CmdLineExcludeScope, CmdLineIncludeScope, ProjType, ProjCat);
-            //        foreach (string scope in MultipleScopes)
-            //        {
-            //            searchedProjects.AddRange(psu.FindProjects(scope));
-            //        }
-
-            //        allProj = LoadProjectData(searchedProjects);
-            //    }
-            //}
-            //else
-            //{   
-            //    allProj = LoadProjectData(searchedProjects);
-            //}
-
-            //allProj = LoadProjectData(searchedProjects);
 
             foreach (KeyValuePair<string, SdkProjectMetadata> kv in allProj)
             {
@@ -561,3 +510,53 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Tasks.PreBuild
         #endregion
     }
 }
+
+#region commented code
+/*
+//if (MultipleScopes.NotNullOrAny<string>())
+            //{
+            //    psu = new ProjectSearchUtility(RepositoryRootDirPath, string.Empty,
+            //                                    CmdLineExcludeScope, CmdLineIncludeScope, ProjType, ProjCat);
+
+            //    foreach (string scope in MultipleScopes)
+            //    {
+            //        searchedProjects.AddRange(psu.FindProjects(scope));
+            //    }
+            //}
+            //else if (!string.IsNullOrWhiteSpace(FullyQualifiedBuildScopeDirPath))
+            //{
+            //    psu = new ProjectSearchUtility(FullyQualifiedBuildScopeDirPath,
+            //                                        CmdLineExcludeScope, CmdLineIncludeScope, ProjType, ProjCat);
+            //    searchedProjects = psu.FindProjects();
+            //}            
+            //else
+            //{
+            //    //If BuildScope is empty, we will default to the root anyway, so regardless if we have a valid token or an invalid token or empty token
+            //    psu = new ProjectSearchUtility(RepositoryRootDirPath, BuildScope,
+            //                                        CmdLineExcludeScope, CmdLineIncludeScope, ProjType, ProjCat);
+            //    searchedProjects = psu.FindProjects();
+            //}
+            
+            //if(psu == null)
+            //{
+            //    if(MultipleScopes != null)
+            //    {
+            //        psu = new ProjectSearchUtility(RepositoryRootDirPath, string.Empty,
+            //                                        CmdLineExcludeScope, CmdLineIncludeScope, ProjType, ProjCat);
+            //        foreach (string scope in MultipleScopes)
+            //        {
+            //            searchedProjects.AddRange(psu.FindProjects(scope));
+            //        }
+
+            //        allProj = LoadProjectData(searchedProjects);
+            //    }
+            //}
+            //else
+            //{   
+            //    allProj = LoadProjectData(searchedProjects);
+            //}
+
+            //allProj = LoadProjectData(searchedProjects);
+
+*/
+#endregion

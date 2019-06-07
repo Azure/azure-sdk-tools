@@ -44,8 +44,6 @@ namespace MS.Az.NetSdk.Build.Utilities
 
         public List<string> ScopeDirPaths { get; set; }
 
-        //public string[] Scopes { get; set; }
-
         public string ScopeToken
         {
             get
@@ -85,6 +83,8 @@ namespace MS.Az.NetSdk.Build.Utilities
                 _fqScopeDirPath = value;
             }
         }
+
+
 
         public SdkProjectCategory SearchProjectCategory { get; set; }
 
@@ -179,11 +179,17 @@ namespace MS.Az.NetSdk.Build.Utilities
             }
         }
 
+        string cmdLineExclude { get; set; }
+
+        string cmdLineInclude { get; set; }
+
         #region internal lists
 
-        List<string> AllSearchProjectList { get; set; }
+        //List<string> AllSearchProjectList { get; set; }
         List<string> SDK_MgmtDirList { get; set; }
         List<string> SDK_dataPlaneDirList { get; set; }
+
+        List<string> SDK_DirList { get; set; }
 
         List<string> MGMT_SdkProjList { get; set; }
 
@@ -200,6 +206,7 @@ namespace MS.Az.NetSdk.Build.Utilities
         {
             SDK_MgmtDirList = new List<string>();
             SDK_dataPlaneDirList = new List<string>();
+            SDK_DirList = new List<string>();
 
             MGMT_SdkProjList = new List<string>();
             MGMT_TestProjList = new List<string>();
@@ -212,6 +219,8 @@ namespace MS.Az.NetSdk.Build.Utilities
             SearchDirPaths = new List<string>();
             SRCRootDir = string.Empty;
             SDKRootDir = string.Empty;
+            cmdLineExclude = string.Empty;
+            cmdLineInclude = string.Empty;
 
             UseLegacyDirs = true;
         }
@@ -329,6 +338,9 @@ namespace MS.Az.NetSdk.Build.Utilities
             Check.DirectoryExists(rootDirPath);
             RootDirForSearch = rootDirPath;
             ScopeToken = scopeToken;
+            cmdLineExclude = cmdLineExcludePathTokenString;
+            cmdLineInclude = cmdLineIncludePathTokenString;
+
             //Scopes = scopeDirPaths;
 
             if (scopeDirPaths.NotNullOrAny<string>())
@@ -338,9 +350,57 @@ namespace MS.Az.NetSdk.Build.Utilities
 
             FQScopeDirPath = fullQualifiedScopeDirPath;
             InitProjectKind(searchProjType, searchProjCategory);
-            Init(cmdLineExcludePathTokenString, cmdLineIncludePathTokenString);
+            Init();
         }
         
+        void Init()
+        {
+            SearchDirPaths.Clear();
+            // First try to get the Scope Token
+            string validScope = GetScope(ScopeToken);
+
+            if (!string.IsNullOrWhiteSpace(validScope))
+            {
+                SearchDirPaths.Add(validScope);
+            }
+
+            // Then get the Fully Qualified scope directory path
+            validScope = GetScope(FQScopeDirPath);
+            if (!string.IsNullOrWhiteSpace(validScope))
+            {
+                SearchDirPaths.Add(validScope);
+            }
+
+            // Finally you try to get valid scope from list of scopes provided
+            foreach (string s in ScopeDirPaths)
+            {
+                validScope = GetScope(s);
+                if (string.IsNullOrWhiteSpace(validScope))
+                {
+                    SearchDirPaths.Add(s);
+                }
+            }
+
+            // Either we encountered bad scope or no scope was provided, this means we are in filter mode where Include/Exclude tokens were provided, we default to searching the entire repo
+            if (SearchDirPaths.Count == 0)
+            {
+                if (Directory.Exists(Legacy_SDKRootDir))
+                {
+                    SearchDirPaths.Add(Legacy_SDKRootDir);
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(cmdLineExclude))
+            {
+                cmdLineExcludePathList = ParseIncludeExcludeTokens(cmdLineExclude);
+            }
+
+            if (!string.IsNullOrWhiteSpace(cmdLineInclude))
+            {
+                cmdLineIncludePathList = ParseIncludeExcludeTokens(cmdLineInclude);
+            }
+        }
+
         /// <summary>
         /// 
         /// </summary>
@@ -370,6 +430,15 @@ namespace MS.Az.NetSdk.Build.Utilities
                 if(string.IsNullOrWhiteSpace(validScope))
                 {
                     SearchDirPaths.Add(s);
+                }
+            }
+
+            // Either we encountered bad scope or no scope was provided, this means we are in filter mode where Include/Exclude tokens were provided, we default to searching the entire repo
+            if(SearchDirPaths.Count == 0)
+            {
+                if(Directory.Exists(Legacy_SDKRootDir))
+                {
+                    SearchDirPaths.Add(Legacy_SDKRootDir);
                 }
             }
 
@@ -498,17 +567,29 @@ namespace MS.Az.NetSdk.Build.Utilities
 
         public List<string> GetRPDirs()
         {
-            Check.DirectoryExists(SDKRootDir);
-            var rpDirs = Directory.EnumerateDirectories(SDKRootDir, "*", SearchOption.TopDirectoryOnly);
+            List<string> rpDirList = new List<string>();
+            foreach (string dirPath in SearchDirPaths)
+            {
+                var rpDirs = Directory.EnumerateDirectories(dirPath, "*", SearchOption.TopDirectoryOnly);
 
-            if(rpDirs.Any<string>())
-            {
-                return rpDirs.ToList<string>();
+                if(rpDirs.Any<string>())
+                {
+                    rpDirList.AddRange(rpDirs);
+                }
             }
-            else
-            {
-                return new List<string>();
-            }
+
+            return rpDirList;
+            //Check.DirectoryExists(SDKRootDir);
+            //var rpDirs = Directory.EnumerateDirectories(SDKRootDir, "*", SearchOption.TopDirectoryOnly);
+
+            //if(rpDirs.Any<string>())
+            //{
+            //    return rpDirs.ToList<string>();
+            //}
+            //else
+            //{
+            //    return new List<string>();
+            //}
         }
 
         /// <summary>
@@ -518,9 +599,10 @@ namespace MS.Az.NetSdk.Build.Utilities
         public List<string> FindTopLevelScopes(bool returnPartialScopePaths = false)
         {
             List<string> topLevelScopeDirs = new List<string>();
-            CategorizeDirectories();
+            //CategorizeDirectories();
+            List<string> dirList = CatDirs();
 
-            var topLevelDirs = from d in SDK_MgmtDirList select Path.GetDirectoryName(d);
+            var topLevelDirs = from d in dirList select Path.GetDirectoryName(d);
 
             if (returnPartialScopePaths)
             {
@@ -582,9 +664,9 @@ namespace MS.Az.NetSdk.Build.Utilities
         #region private functions
         void InitSearch()
         {
-            //CategorizeDirectories();
-            CatDirs();
-            CategorizeProjects();
+            Init();
+            SDK_DirList = CatDirs();
+            CatProjs();
         }
 
         /// <summary>
@@ -673,13 +755,77 @@ namespace MS.Az.NetSdk.Build.Utilities
             return rootDirPath;
         }
 
-        void CatDirs()
-        {
-            List<string> managementSdkDirs = new List<string>();
-            List<string> dataPlaneSdkDirs = new List<string>();
 
-            List<string> dpD = new List<string>();
+        void CatProjs()
+        {
+            IEnumerable<string> mgmtProjects = null;
+            IEnumerable<string> testProjects = null;
+            IEnumerable<string> commonProjects = null;
+            IEnumerable<string> dataProjects = null;
+
+            MGMT_SdkProjList.Clear();
+            MGMT_TestProjList.Clear();
+
+            foreach (string sdkDir in SDK_DirList)
+            {
+                UtilLogger.LogInfo(MessageImportance.Low, "Searching Projects in:'{0}'", sdkDir);
+                var allprojs = Directory.EnumerateFiles(sdkDir, "*.csproj", SearchOption.AllDirectories);
+
+                mgmtProjects = FilterCollection(allprojs, SdkProjectCategory.MgmtPlane);
+                commonProjects = FilterCollection(allprojs, SdkProjectCategory.SdkCommon_Mgmt);
+                testProjects = FilterCollection(allprojs, SdkProjectCategory.Test);
+                dataProjects = FilterCollection(allprojs, SdkProjectCategory.DataPlane);
+
+                //NOTE: quick way to get all data plane is to find everything else except the SDK collection
+                //var f1 = mgmtProjects?.Union<string>(commonProjects);
+                //dataProjects = allprojs.Except<string>(f1, StringComparer.OrdinalIgnoreCase);
+
+                // Combine all non-test projects
+                if (mgmtProjects.NotNullOrAny<string>())
+                {
+                    MGMT_SdkProjList.AddRange(mgmtProjects);
+                }
+
+                if (commonProjects.NotNullOrAny<string>())
+                {
+                    MGMT_SdkProjList.AddRange(commonProjects);
+                }
+
+                if (dataProjects.NotNullOrAny<string>())
+                {
+                    MGMT_SdkProjList.AddRange(dataProjects);
+                }
+
+                if (testProjects.NotNullOrAny<string>())
+                {
+                    MGMT_TestProjList.AddRange(testProjects);
+                }
+            }
+
+            MGMT_SdkProjList = ExcludeIncludeProjects(MGMT_SdkProjList);
+            MGMT_TestProjList = ExcludeIncludeProjects(MGMT_TestProjList);
+
+            //TODO: can we do better than this check
+            //This is performant than trying to adding check during search, we search test/sdk multiple times/ways, hence the number of checks will be more
+            if (SearchProjectType == SdkProjectType.Sdk)
+            {
+                //If user selected to search for SDK projects, we clear all searched test projects
+                MGMT_TestProjList.Clear();
+            }
+
+            if (SearchProjectType == SdkProjectType.Test)
+            {
+                //If user selected to search for test projects, we clear all searched sdk projects
+                MGMT_SdkProjList.Clear();
+            }
+        }
+
+        List<string> CatDirs()
+        {
+            List<string> masterList = new List<string>();
+            //List<string> dpD = new List<string>();
             List<string> mpD = new List<string>();
+            List<string> mpT = new List<string>();
 
             foreach (string sdp in SearchDirPaths)
             {
@@ -687,30 +833,40 @@ namespace MS.Az.NetSdk.Build.Utilities
 
                 foreach (string serviceDir in svcTopDirs)
                 {
-                    var alldirs = Directory.EnumerateDirectories(serviceDir, "*", SearchOption.TopDirectoryOnly);
+                    // If ever data plane needs to be part of this, enable the below
+                    //dpD = FindDataPlaneDirs(serviceDir);
 
-                    dpD = FindDataPlaneDirs(serviceDir);
                     mpD = FindManagementDirs(serviceDir);
+                    mpT = FindManagementTestDirs(serviceDir);
 
-                    if(dpD.Any<string>())
+                    if ( (!mpT.Any<string>()) && (!mpD.Any<string>()) /*&& (!dpD.Any<string>())*/ )
                     {
-                        SDK_dataPlaneDirList.AddRange(dpD);
+                        masterList.Add(sdp);
                     }
 
-                    if(mpD.Any<string>())
+                    if (mpD.Any<string>())
                     {
-                        SDK_MgmtDirList.AddRange(mpD);
+                        masterList.AddRange(mpD);
                     }
+
+                    if (mpT.Any<string>())
+                    {
+                        masterList.AddRange(mpT);
+                    }
+
+                    //if(dpD.Any<string>())
+                    //{
+                    //    SDK_DirList.AddRange(dpD);
+                    //    //SDK_dataPlaneDirList.AddRange(dpD);
+                    //}
                 }
 
-                UtilLogger.LogInfo(MessageImportance.Low, "Count of SDK_MgmtDirList before dedupe '{0}'", SDK_MgmtDirList.Count.ToString());
-                SDK_MgmtDirList = DeDupeList(SDK_MgmtDirList);
-                UtilLogger.LogInfo(MessageImportance.Low, "Count of SDK_MgmtDirList before dedupe '{0}'", SDK_MgmtDirList.Count.ToString());
-
-                UtilLogger.LogInfo(MessageImportance.Low, "Count of SDK_dataPlaneDirList before dedupe '{0}'", SDK_dataPlaneDirList.Count.ToString());
-                SDK_dataPlaneDirList = DeDupeList(SDK_dataPlaneDirList);
-                UtilLogger.LogInfo(MessageImportance.Low, "Count of SDK_dataPlaneDirList before dedupe '{0}'", SDK_dataPlaneDirList.Count.ToString());
+                UtilLogger.LogInfo(MessageImportance.Low, "Count of SDK_dataPlaneDirList before dedupe '{0}'", masterList.Count.ToString());
+                masterList = DeDupeList(masterList);
+                UtilLogger.LogInfo(MessageImportance.Low, "Count of SDK_dataPlaneDirList before dedupe '{0}'", masterList.Count.ToString());
             }
+
+            return masterList;
         }
 
         List<string> FindDataPlaneDirs(string searchDirPath)
@@ -750,10 +906,22 @@ namespace MS.Az.NetSdk.Build.Utilities
                 mpD.AddRange(managementDir);
             }
 
-            var mgmtSearchedDirs = Directory.EnumerateDirectories(searchDirPath, "*Management*", SearchOption.AllDirectories);
+            var mgmtSearchedDirs = Directory.EnumerateDirectories(searchDirPath, "*Management*", SearchOption.TopDirectoryOnly);
             if (mgmtSearchedDirs.Any<string>())
             {
                 mpD.AddRange(mgmtSearchedDirs);
+            }
+
+            return mpD;
+        }
+
+        List<string> FindManagementTestDirs(string searchDirPath)
+        {
+            List<string> mpD = new List<string>();
+            var managementDir = Directory.EnumerateDirectories(searchDirPath, "*.Test*", SearchOption.TopDirectoryOnly);
+            if (managementDir.Any<string>())
+            {
+                mpD.AddRange(managementDir);
             }
 
             return mpD;
@@ -1024,6 +1192,7 @@ namespace MS.Az.NetSdk.Build.Utilities
                 case SdkProjectCategory.MgmtPlane:
                     {
                         filteredCollection = FilterCollection(collection, "management", "sdkcommon");
+                        filteredCollection = FilterCollection(collection, "management", "mgmtcommon");
                         filteredCollection = FilterOutTestProjects(filteredCollection);
                         break;
                     }
@@ -1031,6 +1200,7 @@ namespace MS.Az.NetSdk.Build.Utilities
                 case SdkProjectCategory.SdkCommon_Mgmt:
                     {
                         filteredCollection = FilterCollection(collection, "sdkcommon", "management");
+                        filteredCollection = FilterCollection(collection, "mgmtcommon", "management");
                         filteredCollection = FilterOutTestProjects(filteredCollection);
                         break;
                     }

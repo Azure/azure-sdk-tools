@@ -52,7 +52,8 @@ namespace BuildTasks.Tests
             }
         }
 
-        [Fact(Skip = "Investigate as it fails only in Run mode, works fine during debug mode")]
+        //[Fact(Skip = "Investigate as it fails only in Run mode, works fine during debug mode")]
+        [Fact]
         public void GetProjectsWithNonSupportedFxVersion()
         {
             string scopeDir = @"SDKs\Blueprint";
@@ -103,7 +104,7 @@ namespace BuildTasks.Tests
             {
                 Assert.True(cproj.SDK_Projects.Count<ITaskItem>() > 10);
                 Assert.True(cproj.Test_Projects.Count<ITaskItem>() > 10);
-                Assert.True(cproj.UnSupportedProjects.Count<ITaskItem>() == 0);
+                Assert.True(cproj.UnSupportedProjects.Count<ITaskItem>() == 1);
                 Assert.True(cproj.Test_ToBe_Run.Count<ITaskItem>() > 10);
             }
             DateTime endTime = DateTime.Now;
@@ -242,7 +243,8 @@ namespace BuildTasks.Tests
             }
         }
 
-        [Fact(Skip = "Investigate as it fails only in Run mode, works fine during debug mode")]
+        //[Fact(Skip = "Investigate as it fails only in Run mode, works fine during debug mode")]
+        [Fact]
         public void PlatSpecificTestProjectsForWindows()
         {
             //This RP has FullDesktop specific test projects. The idea is to test if that test projects is getting picked up
@@ -295,7 +297,8 @@ namespace BuildTasks.Tests
             }
         }
 
-        [Fact(Skip ="Investigate as it fails only in Run mode, works fine during debug mode")]
+        //[Fact(Skip ="Investigate as it fails only in Run mode, works fine during debug mode")]
+        [Fact]
         public void AdditionalFxProject()
         {
             // This test will be important when we stop supporting .NET 452 and will have to keep supporting .NET 452 until we move to MSAL
@@ -328,15 +331,17 @@ namespace BuildTasks.Tests
             }
         }
 
-        [Fact(Skip = "Not applicable, this is for old task. Keeping it for reference, eventually needs to be deleted")]
-        public void UnSupportedProjects()
+        //[Fact(Skip = "Not applicable, this is for old task. Keeping it for reference, eventually needs to be deleted")]
+        [Fact]
+        public void DefaultIgnoredProjects()
         {
+            // we have ignored all Batch data plane projects
             CategorizeSDKProjectsTask cproj = new CategorizeSDKProjectsTask(rootDir);
             cproj.BuildScope = @"SDKs\Batch\DataPlane";
 
             if (cproj.Execute())
             {
-                Assert.Equal(3, cproj.SDK_Projects.Count<ITaskItem>());
+                Assert.Empty(cproj.SDK_Projects);
             }
         }
 
@@ -355,7 +360,8 @@ namespace BuildTasks.Tests
             }
         }
 
-        [Fact(Skip = "Investigate as it fails only in Run mode, works fine during debug mode")]
+        //[Fact(Skip = "Investigate as it fails only in Run mode, works fine during debug mode")]
+        [Fact]
         public void ClientRuntimeProjects()
         {
             CategorizeSDKProjectsTask cproj = new CategorizeSDKProjectsTask(rootDir);
@@ -368,7 +374,8 @@ namespace BuildTasks.Tests
             }
         }
 
-        [Fact(Skip = "Investigate as it fails only in Run mode, works fine during debug mode")]
+//        [Fact(Skip = "Investigate as it fails only in Run mode, works fine during debug mode")]
+        [Fact]
         public void SDKCommonProjects()
         {
             CategorizeSDKProjectsTask cproj = new CategorizeSDKProjectsTask(rootDir);
@@ -384,7 +391,8 @@ namespace BuildTasks.Tests
             }
         }
 
-        [Fact(Skip = "Investigate as it fails only in Run mode, works fine during debug mode")]
+        //[Fact(Skip = "Investigate as it fails only in Run mode, works fine during debug mode")]
+        [Fact]
         public void TestFrameworkDir()
         {
             CategorizeSDKProjectsTask cproj = new CategorizeSDKProjectsTask(rootDir);
@@ -413,7 +421,8 @@ namespace BuildTasks.Tests
             }
         }
 
-        [Fact(Skip = "Not applicable, this is for old task. Keeping it for reference, eventually needs to be deleted")]
+        //[Fact(Skip = "Not applicable, this is for old task. Keeping it for reference, eventually needs to be deleted")]
+        [Fact]
         public void TestIgnoredTokens()
         {
             //Gallery projects are being ignored

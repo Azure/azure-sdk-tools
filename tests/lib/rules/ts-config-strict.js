@@ -122,6 +122,27 @@ ruleTester.run("ts-config-strict", rule, {
   ],
   invalid: [
     {
+      code: '{"notCompilerOptions": {}}',
+      filename: processJSONFile("tsconfig.json"),
+      errors: [
+        {
+          message:
+            "tsconfig.json: compilerOptions does not exist at the outermost level"
+        }
+      ]
+    },
+    {
+      // commpilerOptions is in a nested object
+      code: '{"outer": {"compilerOptions": { "strict": true }}}',
+      filename: processJSONFile("tsconfig.json"),
+      errors: [
+        {
+          message:
+            "tsconfig.json: compilerOptions does not exist at the outermost level"
+        }
+      ]
+    },
+    {
       // only the fields we care about
       code: '{"compilerOptions": { "strict": false }}',
       filename: processJSONFile("tsconfig.json"),
@@ -140,17 +161,6 @@ ruleTester.run("ts-config-strict", rule, {
         {
           message:
             "tsconfig.json: compilerOptions.strict is set to false when it should be set to true"
-        }
-      ]
-    },
-    {
-      // example file with compilerOptions.strict set to false
-      code: '{"outer": {"compilerOptions": { "strict": true }}}',
-      filename: processJSONFile("tsconfig.json"),
-      errors: [
-        {
-          message:
-            "tsconfig.json: compilerOptions is not at the outermost level"
         }
       ]
     }

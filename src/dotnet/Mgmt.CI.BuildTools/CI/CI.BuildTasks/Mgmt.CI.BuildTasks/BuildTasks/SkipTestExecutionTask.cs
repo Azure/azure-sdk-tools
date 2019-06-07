@@ -30,6 +30,8 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks
         #region Task Input Properties
         public string BuildScope { get; set; }
 
+        //public string FullyQualifiedBuildScopeDirPath { get; set; }
+
         public string ProjectType { get; set; }
 
         public string ProjectCategory { get; set; }
@@ -146,6 +148,29 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks
                     msbp.AddUpdateProperty(PROPNAME_SKIP_BUILD, "false");
                 }
             }
+        }
+
+        CategorizeSDKProjectsTask GetCategorizeProjectTask(string BuildScope, string FQBuildScopeDirPath, string projType, string projCategory)
+        {
+
+            if (string.IsNullOrEmpty(BuildScope) && string.IsNullOrEmpty(FQBuildScopeDirPath))
+            {
+                TaskLogger.LogError("Both BuildScope and FullyQualifiedBuildScopeDirPath properties cannot be null/empty. Need at least one property to be set in order for the task to execute.");
+            }
+
+            if(!string.IsNullOrWhiteSpace(BuildScope))
+            {
+                
+            }
+
+
+            if(!string.IsNullOrWhiteSpace(FQBuildScopeDirPath))
+            {
+
+            }
+
+
+            return null;
         }
 
         #endregion

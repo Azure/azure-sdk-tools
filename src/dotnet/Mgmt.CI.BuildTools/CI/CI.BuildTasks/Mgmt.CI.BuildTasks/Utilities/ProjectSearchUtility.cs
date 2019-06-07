@@ -18,14 +18,19 @@ namespace MS.Az.NetSdk.Build.Utilities
     public class ProjectSearchUtility : NetSdkUtilTask
     {
         #region CONST
-        //const string SDK_DIR_NAME = "sdk";
-        const string SDK_DIR_NAME = @"sdks";
+        const string SDK_DIR_NAME = "sdk";
+        const string LEGACY_SDK_DIR_NAME = @"sdks";
+        const string SRC_DIR_NAME = @"src";
         #endregion
 
         #region fields
         string _scopeSeedDirPath;
         string _scopeToken;
         string _fqScopeDirPath;
+
+        string _srcRootDir;
+        string _sdkRootDir;
+        string _legacy_SdkRootDir;
         #endregion
 
         #region properties
@@ -36,6 +41,10 @@ namespace MS.Az.NetSdk.Build.Utilities
         #endregion
 
         public string RootDirForSearch { get; set; }
+
+        public List<string> ScopeDirPaths { get; set; }
+
+        //public string[] Scopes { get; set; }
 
         public string ScopeToken
         {
@@ -83,11 +92,63 @@ namespace MS.Az.NetSdk.Build.Utilities
 
         public bool UseLegacyDirs { get; set; }
 
-        internal string SDKRootDir { get; set; }
 
-        internal string SRCRootDir { get; set; }
+        internal List<string> SearchDirPaths { get; set; }
 
-        internal string ScopeRootDir { get; set; }
+        internal string SRCRootDir
+        {
+            get
+            {
+                if(string.IsNullOrWhiteSpace(_srcRootDir))
+                {
+                    _srcRootDir = Path.Combine(RootDirForSearch, SRC_DIR_NAME);
+                    if(!Directory.Exists(_srcRootDir))
+                    {
+                        _srcRootDir = string.Empty;
+                    }
+                }
+
+                return _srcRootDir;
+            }
+
+            set { _srcRootDir = value; }
+        }
+
+
+        internal string SDKRootDir
+        {
+            get
+            {
+                if(string.IsNullOrWhiteSpace(_sdkRootDir))
+                {
+                    _sdkRootDir = Path.Combine(RootDirForSearch, SDK_DIR_NAME);
+                    Check.DirectoryExists(_sdkRootDir);
+                }
+
+                return _sdkRootDir;
+            }
+
+            set { _sdkRootDir = value; }
+        }
+
+        internal string Legacy_SDKRootDir
+        {
+            get
+            {
+                if(string.IsNullOrWhiteSpace(_legacy_SdkRootDir))
+                {
+                    _legacy_SdkRootDir = Path.Combine(SRCRootDir, LEGACY_SDK_DIR_NAME);
+                    if(!Directory.Exists(_legacy_SdkRootDir))
+                    {
+                        _legacy_SdkRootDir = string.Empty;
+                    }
+                }
+
+                return _legacy_SdkRootDir;
+            }
+
+            set { _legacy_SdkRootDir = value; }
+        }
 
         string ScopeSeedDirPath
         {
@@ -128,9 +189,6 @@ namespace MS.Az.NetSdk.Build.Utilities
 
         List<string> MGMT_TestProjList { get; set; }
 
-        //List<string> mgmtSdkDirList { get; set; }
-
-
         List<string> cmdLineExcludePathList { get; set; }
         List<string> cmdLineIncludePathList { get; set; }
         #endregion
@@ -149,22 +207,47 @@ namespace MS.Az.NetSdk.Build.Utilities
             cmdLineExcludePathList = new List<string>();
             cmdLineIncludePathList = new List<string>();
 
+            ScopeDirPaths = new List<string>();
+
+            SearchDirPaths = new List<string>();
+            SRCRootDir = string.Empty;
+            SDKRootDir = string.Empty;
+
             UseLegacyDirs = true;
         }
-        public ProjectSearchUtility(string rootDirPath) : this(rootDirPath, string.Empty) { }
 
-        public ProjectSearchUtility(string rootDirPath, string scopeToken) : this(rootDirPath, scopeToken, string.Empty, string.Empty) { }
+        #region overloads
+        public ProjectSearchUtility(string rootDirPath)
+            : this(rootDirPath, null, string.Empty, string.Empty, string.Empty, string.Empty, SdkProjectType.Sdk, SdkProjectCategory.MgmtPlane) { }
+            //: this(rootDirPath, string.Empty) { }
 
-        public ProjectSearchUtility(string rootDirPath, string cmdLineExcludePathTokens, string cmdLineIncludePathTokens) : this(rootDirPath, string.Empty, cmdLineExcludePathTokens, cmdLineIncludePathTokens) { }
+        //public ProjectSearchUtility(string rootDirPath, string scopeToken)
+        //    : this(rootDirPath, scopeToken, string.Empty, string.Empty) { }
 
-        public ProjectSearchUtility(string rootDirPath, string scopeToken, string cmdLineExcludePathTokenString, string cmdLineIncludePathTokenString) : this(rootDirPath, scopeToken, cmdLineExcludePathTokenString, cmdLineIncludePathTokenString, SdkProjectType.Sdk, SdkProjectCategory.MgmtPlane) { }
+        //public ProjectSearchUtility(string rootDirPath, string cmdLineExcludePathTokens, string cmdLineIncludePathTokens)
+        //    : this(rootDirPath, string.Empty, cmdLineExcludePathTokens, cmdLineIncludePathTokens) { }
 
-        public ProjectSearchUtility(string rootDirPath, string scopeToken, string cmdLineExcludePathTokenString, string cmdLineIncludePathTokenString, SdkProjectType SearchProjType, SdkProjectCategory SearchProjCategory) : this()
-        {
-            RootDirForSearch = rootDirPath;
-            ScopeToken = scopeToken;
-            Init(cmdLineExcludePathTokenString, cmdLineIncludePathTokenString, SearchProjType, SearchProjCategory);
-        }
+        //public ProjectSearchUtility(string rootDirPath, string scopeToken, string cmdLineExcludePathTokenString, string cmdLineIncludePathTokenString)
+        //    : this(rootDirPath, scopeToken, cmdLineExcludePathTokenString, cmdLineIncludePathTokenString, SdkProjectType.Sdk, SdkProjectCategory.MgmtPlane) { }
+
+        //public ProjectSearchUtility(string rootDirPath, List<string> scopes,
+        //    string cmdLineExcludePathTokenString, string cmdLineIncludePathTokenString,
+        //    SdkProjectType SearchProjType, SdkProjectCategory SearchProjCategory) : this()
+        //{
+        //    RootDirForSearch = rootDirPath;
+        //    ScopeDirPaths = scopes;
+        //    Init(cmdLineExcludePathTokenString, cmdLineIncludePathTokenString, SearchProjType, SearchProjCategory);
+        //}
+
+        //public ProjectSearchUtility(string rootDirPath, string scopeToken,
+        //    string cmdLineExcludePathTokenString, string cmdLineIncludePathTokenString,
+        //    SdkProjectType SearchProjType, SdkProjectCategory SearchProjCategory) : this()
+        //{
+        //    RootDirForSearch = rootDirPath;
+        //    ScopeToken = scopeToken;
+        //    ScopeDirPaths.Add(scopeToken);
+        //    Init(cmdLineExcludePathTokenString, cmdLineIncludePathTokenString, SearchProjType, SearchProjCategory);
+        //}
 
         /// <summary>
         /// 
@@ -174,24 +257,121 @@ namespace MS.Az.NetSdk.Build.Utilities
         /// <param name="cmdLineIncludePathTokenString">Semicolon separated token string that needs to be included from search</param>
         /// <param name="SearchProjType">ProjectType</param>
         /// <param name="SearchProjCategory">ProjectCategory</param>
-        public ProjectSearchUtility(string fqScopeDirPath, string cmdLineExcludePathTokenString, string cmdLineIncludePathTokenString, SdkProjectType SearchProjType, SdkProjectCategory SearchProjCategory):this()
+        //public ProjectSearchUtility(string fqScopeDirPath, string cmdLineExcludePathTokenString, string cmdLineIncludePathTokenString, SdkProjectType SearchProjType, SdkProjectCategory SearchProjCategory) : this()
+        //{
+        //    FQScopeDirPath = fqScopeDirPath;
+        //    RootDirForSearch = FindRootDirPath(FQScopeDirPath);
+        //    ScopeToken = string.Empty;
+        //    ScopeDirPaths.Add(FQScopeDirPath);
+        //    Init(cmdLineExcludePathTokenString, cmdLineIncludePathTokenString, SearchProjType, SearchProjCategory);
+        //}
+
+        //void Init(string cmdLineExcludePathTokenString, string cmdLineIncludePathTokenString, SdkProjectType SearchProjType, SdkProjectCategory SearchProjCategory)
+        //{
+        //    string legacySDKDir = string.Empty;
+        //    InitProjectKind(SearchProjType, SearchProjCategory);
+
+        //    SRCRootDir = Path.Combine(RootDirForSearch, SRC_DIR_NAME);
+        //    legacySDKDir = Path.Combine(SRCRootDir, LEGACY_SDK_DIR_NAME);
+
+        //    // During the transition phase of 'src' directory getting completely eliminated from the repository
+        //    // We will be searching at both location
+        //    if (Directory.Exists(legacySDKDir))
+        //    {
+        //        SearchDirPaths.Add(legacySDKDir);
+        //    }
+
+        //    // If src directory not found, we will assume src has been eliminated and now we should be searching only in sdk directory
+        //    if(string.IsNullOrWhiteSpace(SDKRootDir))
+        //    {
+        //        SDKRootDir = Path.Combine(RootDirForSearch, SDK_DIR_NAME);
+        //        if(Directory.Exists(SDKRootDir))
+        //        {
+        //            SearchDirPaths.Add(SDKRootDir);
+        //        }
+        //        //else
+        //        //{
+        //        //    SDKRootDir = string.Empty;
+        //        //    UtilLogger.LogError("Unable to determine SDK root dir using repository rootDir '{0}'", RootDirForSearch);
+        //        //    UtilLogger.LogException<DirectoryNotFoundException>("Unable to determine SDK root dir using repository rootDir '{0}'", RootDirForSearch);
+        //        //}
+        //    }
+        //    else
+        //    {
+        //        SearchDirPaths.Add(SDKRootDir);
+        //    }
+
+        //    //ScopeRootDir = SRCRootDir;
+
+        //    //Check.DirectoryExists(SDKRootDir);
+        //    //Check.DirectoryExists(SRCRootDir);
+        //    Check.DirectoryExists(SearchDirPaths);
+        //    //Check.DirectoryExists(ScopeRootDir);
+
+        //    if (!string.IsNullOrWhiteSpace(cmdLineExcludePathTokenString))
+        //    {
+        //        cmdLineExcludePathList = ParseIncludeExcludeTokens(cmdLineExcludePathTokenString);
+        //    }
+
+        //    if (!string.IsNullOrWhiteSpace(cmdLineIncludePathTokenString))
+        //    {
+        //        cmdLineIncludePathList = ParseIncludeExcludeTokens(cmdLineIncludePathTokenString);
+        //    }
+        //}
+
+        #endregion
+
+        public ProjectSearchUtility(string rootDirPath, string[] scopeDirPaths, string scopeToken, string fullQualifiedScopeDirPath,
+            string cmdLineExcludePathTokenString, string cmdLineIncludePathTokenString,
+            SdkProjectType searchProjType, SdkProjectCategory searchProjCategory) : this()
         {
-            FQScopeDirPath = fqScopeDirPath;
-            RootDirForSearch = FindRootDirPath(FQScopeDirPath);
-            ScopeToken = string.Empty;
-            Init(cmdLineExcludePathTokenString, cmdLineIncludePathTokenString, SearchProjType, SearchProjCategory);
+            // We shuold fail if the root directory is not a valid directory path
+            Check.DirectoryExists(rootDirPath);
+            RootDirForSearch = rootDirPath;
+            ScopeToken = scopeToken;
+            //Scopes = scopeDirPaths;
+
+            if (scopeDirPaths.NotNullOrAny<string>())
+            {
+                ScopeDirPaths = scopeDirPaths.ToList<string>();
+            }
+
+            FQScopeDirPath = fullQualifiedScopeDirPath;
+            InitProjectKind(searchProjType, searchProjCategory);
+            Init(cmdLineExcludePathTokenString, cmdLineIncludePathTokenString);
         }
-
-        void Init(string cmdLineExcludePathTokenString, string cmdLineIncludePathTokenString, SdkProjectType SearchProjType, SdkProjectCategory SearchProjCategory)
+        
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="cmdLineExcludePathTokenString"></param>
+        /// <param name="cmdLineIncludePathTokenString"></param>
+        void Init(string cmdLineExcludePathTokenString, string cmdLineIncludePathTokenString)
         {
-            InitProjectKind(SearchProjType, SearchProjCategory);
-            SRCRootDir = Path.Combine(RootDirForSearch, "src");
-            SDKRootDir = Path.Combine(SRCRootDir, SDK_DIR_NAME);
-            ScopeRootDir = SRCRootDir;
+            // First try to get the Scope Token
+            string validScope = GetScope(ScopeToken);
 
-            Check.DirectoryExists(SDKRootDir);
-            Check.DirectoryExists(SRCRootDir);
-            Check.DirectoryExists(ScopeRootDir);
+            if(!string.IsNullOrWhiteSpace(validScope))
+            {
+                SearchDirPaths.Add(validScope);
+            }
+
+            // Then get the Fully Qualified scope directory path
+            validScope = GetScope(FQScopeDirPath);
+            if(!string.IsNullOrWhiteSpace(validScope))
+            {
+                SearchDirPaths.Add(validScope);
+            }
+
+            // Finally you try to get valid scope from list of scopes provided
+            foreach(string s in ScopeDirPaths)
+            {
+                validScope = GetScope(s);
+                if(string.IsNullOrWhiteSpace(validScope))
+                {
+                    SearchDirPaths.Add(s);
+                }
+            }
 
             if (!string.IsNullOrWhiteSpace(cmdLineExcludePathTokenString))
             {
@@ -228,6 +408,43 @@ namespace MS.Az.NetSdk.Build.Utilities
             {
                 SearchProjectCategory = ProjCategory;
             }
+        }
+
+        string GetScope(string scope)
+        {
+            string validScope = string.Empty;
+
+            // If the provided scope is a fully qualified directory path, we only do one check to see if the path is rooted within the repo root directory path
+            // if yes we simply return that as a valid scope
+            if(Directory.Exists(scope))
+            {
+                if(scope.StartsWith(RootDirForSearch))
+                {
+                    validScope = scope;
+                }
+            }
+            else
+            {
+                // FIRST ATTEMPT with (root)\src\SDKs dir
+                if (!string.IsNullOrWhiteSpace(scope))
+                {
+                    validScope = Path.Combine(SRCRootDir, scope);
+
+                    // SECOND ATTEMPT with root\sdk
+                    if(!Directory.Exists(validScope))
+                    {
+                        validScope = Path.Combine(SDKRootDir, scope);
+                    }
+
+                    // At this point we will set it to empty string, because we have tried both legacy sdk directory as well as new sdk directory
+                    if(!Directory.Exists(validScope))
+                    {
+                        validScope = string.Empty;
+                    }
+                }
+            }
+
+            return validScope;
         }
 
         #endregion
@@ -365,7 +582,8 @@ namespace MS.Az.NetSdk.Build.Utilities
         #region private functions
         void InitSearch()
         {
-            CategorizeDirectories();
+            //CategorizeDirectories();
+            CatDirs();
             CategorizeProjects();
         }
 
@@ -403,7 +621,7 @@ namespace MS.Az.NetSdk.Build.Utilities
                 }
                 else
                 {
-                    validScopePath = Path.Combine(ScopeRootDir, scopePath);
+                    //validScopePath = Path.Combine(ScopeRootDir, scopePath);
                     UtilLogger.LogInfo(MessageImportance.Low, "Constructed Scope path is: '{0}'", validScopePath);
 
                     if (Directory.Exists(validScopePath))
@@ -453,6 +671,92 @@ namespace MS.Az.NetSdk.Build.Utilities
 
             Check.DirectoryExists(rootDirPath);
             return rootDirPath;
+        }
+
+        void CatDirs()
+        {
+            List<string> managementSdkDirs = new List<string>();
+            List<string> dataPlaneSdkDirs = new List<string>();
+
+            List<string> dpD = new List<string>();
+            List<string> mpD = new List<string>();
+
+            foreach (string sdp in SearchDirPaths)
+            {
+                var svcTopDirs = Directory.EnumerateDirectories(sdp, "*", SearchOption.TopDirectoryOnly);
+
+                foreach (string serviceDir in svcTopDirs)
+                {
+                    var alldirs = Directory.EnumerateDirectories(serviceDir, "*", SearchOption.TopDirectoryOnly);
+
+                    dpD = FindDataPlaneDirs(serviceDir);
+                    mpD = FindManagementDirs(serviceDir);
+
+                    if(dpD.Any<string>())
+                    {
+                        SDK_dataPlaneDirList.AddRange(dpD);
+                    }
+
+                    if(mpD.Any<string>())
+                    {
+                        SDK_MgmtDirList.AddRange(mpD);
+                    }
+                }
+
+                UtilLogger.LogInfo(MessageImportance.Low, "Count of SDK_MgmtDirList before dedupe '{0}'", SDK_MgmtDirList.Count.ToString());
+                SDK_MgmtDirList = DeDupeList(SDK_MgmtDirList);
+                UtilLogger.LogInfo(MessageImportance.Low, "Count of SDK_MgmtDirList before dedupe '{0}'", SDK_MgmtDirList.Count.ToString());
+
+                UtilLogger.LogInfo(MessageImportance.Low, "Count of SDK_dataPlaneDirList before dedupe '{0}'", SDK_dataPlaneDirList.Count.ToString());
+                SDK_dataPlaneDirList = DeDupeList(SDK_dataPlaneDirList);
+                UtilLogger.LogInfo(MessageImportance.Low, "Count of SDK_dataPlaneDirList before dedupe '{0}'", SDK_dataPlaneDirList.Count.ToString());
+            }
+        }
+
+        List<string> FindDataPlaneDirs(string searchDirPath)
+        {
+            List<string> dpD = new List<string>();
+            #region legacy data-plane dirs
+            //Legacy data-plane dirs
+            var dpDirs = Directory.EnumerateDirectories(searchDirPath, "dataplane", SearchOption.TopDirectoryOnly);
+            if (dpDirs.Any<string>())
+            {
+                dpD.AddRange(dpDirs);
+            }
+
+            var dppDirs = Directory.EnumerateDirectories(searchDirPath, "data-plane", SearchOption.TopDirectoryOnly);
+            if (dppDirs.Any<string>())
+            {
+                dpD.AddRange(dppDirs);
+            }
+            #endregion
+
+            // There is a case that in new dir structure, few dirs are starting with Azure.* name, so will have to add this if DP decides to leverage this
+            var newDPDirs = Directory.EnumerateDirectories(searchDirPath, "Microsoft.Azure.*", SearchOption.TopDirectoryOnly);
+            if(newDPDirs.Any<string>())
+            {
+                dpD.AddRange(newDPDirs);
+            }
+
+            return dpD;
+        }
+
+        List<string> FindManagementDirs(string searchDirPath)
+        {
+            List<string> mpD = new List<string>();
+            var managementDir = Directory.EnumerateDirectories(searchDirPath, "management", SearchOption.TopDirectoryOnly);
+            if (managementDir.Any<string>())
+            {
+                mpD.AddRange(managementDir);
+            }
+
+            var mgmtSearchedDirs = Directory.EnumerateDirectories(searchDirPath, "*Management*", SearchOption.AllDirectories);
+            if (mgmtSearchedDirs.Any<string>())
+            {
+                mpD.AddRange(mgmtSearchedDirs);
+            }
+
+            return mpD;
         }
 
         /// <summary>
@@ -982,73 +1286,6 @@ namespace MS.Az.NetSdk.Build.Utilities
             tokenList = DeDupeList(tokenList);
             return tokenList;
         }
-
         #endregion
     }
 }
-
-
-#region commented code
-/*
- * 
- 
-            //List<string> FilterOut(IEnumerable<string> collection, List<string> listOfTokenToFilterOut)
-        //{
-        //    List<string> finalList = new List<string>();
-        //    if(collection.NotNullOrAny<string>())
-        //    {
-        //        foreach (string tkn in listOfTokenToFilterOut)
-        //        {
-        //            var filterList = collection.Where<string>((item) => !item.Contains(tkn, StringComparison.OrdinalIgnoreCase));
-        //            if(filterList.NotNullOrAny<string>())
-        //            {
-        //                finalList.AddRange(filterList);
-        //            }
-        //        }
-        //    }
-            
-        //}
-
-    void InitSearch()
-        {
-            if (topLevelDirsProcessed == false)
-            {
-                CategorizeDirectories();
-            }
-
-            if (mgmt_Proj_Processed == false)
-            {
-                CategorizeMgmtProjects();
-            }
-        }
-List<string> Find_Mgmt_SDKProjects()
-{
-    //TODO: We can do better than this check
-    if (SearchProjectType == SdkProjectType.Sdk)
-    {
-        InitSearch();
-    }
-    else
-    {
-        UtilLogger.LogInfo("Skipping searching for Sdk projects");
-    }
-
-    return MGMT_SdkProjList;
-}
-
-List<string> Find_Mgmt_TestProjects()
-{
-    //TODO: We can do better than this check
-    if (SearchProjectType == SdkProjectType.Test)
-    {
-        InitSearch();
-    }
-    else
-    {
-        UtilLogger.LogInfo("Skipping searching for Test projects");
-    }
-
-    return MGMT_TestProjList;
-}
-*/
-#endregion

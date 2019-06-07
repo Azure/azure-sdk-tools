@@ -67,6 +67,8 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Tasks.PreBuild
 
         #region Task Input Properties
 
+        public bool UseLegacyDirStructure { get; set; }
+
         /// <summary>
         /// Scope is a hint as to which directories to build
         /// If no scope is specified, it's assumed the entire repo needs to be built
@@ -236,9 +238,10 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Tasks.PreBuild
             //ProjectSearchUtility psu = new ProjectSearchUtility(RepositoryRootDirPath, BuildScope,
             //                            CmdLineExcludeScope, CmdLineIncludeScope, ProjType, ProjCat);
             ProjectSearchUtility psu = new ProjectSearchUtility(RepositoryRootDirPath, MultipleScopes, BuildScope, FullyQualifiedBuildScopeDirPath, CmdLineExcludeScope, CmdLineIncludeScope, ProjType, ProjCat);
+            psu.UseLegacyDirs = UseLegacyDirStructure;
             TaskLogger.LogInfo(MessageImportance.High, "Use Legacy Directory Strucuture is set to '{0}'", psu.UseLegacyDirs.ToString());
             TaskLogger.LogInfo(MessageImportance.High, "SDK Root Dir Path '{0}'", psu.SDKRootDir);
-            TaskLogger.LogInfo(MessageImportance.High, psu.SearchDirPaths, "Scope Root Dir Path(s) '{0}'");
+            TaskLogger.LogInfo(MessageImportance.High, psu.SearchDirPaths, "Search Dir Path(s)");
         }
 
         #endregion
@@ -262,6 +265,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Tasks.PreBuild
             Dictionary<string, SdkProjectMetadata> allProj = null;
 
             psu = new ProjectSearchUtility(RepositoryRootDirPath, MultipleScopes, BuildScope, FullyQualifiedBuildScopeDirPath, CmdLineExcludeScope, CmdLineIncludeScope, ProjType, ProjCat);
+            psu.UseLegacyDirs = UseLegacyDirStructure;
 
             searchedProjects = psu.FindProjects();
             allProj = LoadProjectData(searchedProjects);

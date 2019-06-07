@@ -341,8 +341,6 @@ namespace MS.Az.NetSdk.Build.Utilities
             cmdLineExclude = cmdLineExcludePathTokenString;
             cmdLineInclude = cmdLineIncludePathTokenString;
 
-            //Scopes = scopeDirPaths;
-
             if (scopeDirPaths.NotNullOrAny<string>())
             {
                 ScopeDirPaths = scopeDirPaths.ToList<string>();
@@ -355,7 +353,10 @@ namespace MS.Az.NetSdk.Build.Utilities
         
         void Init()
         {
+            MessageImportance msgImp = MessageImportance.High;
+            UtilLogger.LogInfo(msgImp, SearchDirPaths, "Existing SearchDirPaths before clearing");
             SearchDirPaths.Clear();
+            
             // First try to get the Scope Token
             string validScope = GetScope(ScopeToken);
 
@@ -383,11 +384,24 @@ namespace MS.Az.NetSdk.Build.Utilities
 
             // Either we encountered bad scope or no scope was provided, this means we are in filter mode where Include/Exclude tokens were provided, we default to searching the entire repo
             if (SearchDirPaths.Count == 0)
-            {
+            {   
                 if (Directory.Exists(Legacy_SDKRootDir))
                 {
-                    SearchDirPaths.Add(Legacy_SDKRootDir);
+                    if(UseLegacyDirs)
+                    {
+                        SearchDirPaths.Add(Legacy_SDKRootDir);
+                    }
                 }
+
+                if (Directory.Exists(SDKRootDir))
+                {
+                    if(!UseLegacyDirs)
+                    {
+                        SearchDirPaths.Add(SDKRootDir);
+                    }
+                }
+
+                UtilLogger.LogInfo(msgImp, SearchDirPaths, "Defaulting to searching at these locations");
             }
 
             if (!string.IsNullOrWhiteSpace(cmdLineExclude))
@@ -436,7 +450,8 @@ namespace MS.Az.NetSdk.Build.Utilities
             // Either we encountered bad scope or no scope was provided, this means we are in filter mode where Include/Exclude tokens were provided, we default to searching the entire repo
             if(SearchDirPaths.Count == 0)
             {
-                if(Directory.Exists(Legacy_SDKRootDir))
+                
+                if (Directory.Exists(Legacy_SDKRootDir))
                 {
                     SearchDirPaths.Add(Legacy_SDKRootDir);
                 }
@@ -481,15 +496,19 @@ namespace MS.Az.NetSdk.Build.Utilities
 
         string GetScope(string scope)
         {
+            UtilLogger.LogInfo(MessageImportance.High, "Trying to find valid scope for token '{0}'", scope);
             string validScope = string.Empty;
 
             // If the provided scope is a fully qualified directory path, we only do one check to see if the path is rooted within the repo root directory path
             // if yes we simply return that as a valid scope
-            if(Directory.Exists(scope))
+            if (Path.IsPathRooted(scope))
             {
-                if(scope.StartsWith(RootDirForSearch))
+                if (Directory.Exists(scope))
                 {
-                    validScope = scope;
+                    if (scope.StartsWith(RootDirForSearch))
+                    {
+                        validScope = scope;
+                    }
                 }
             }
             else
@@ -497,10 +516,13 @@ namespace MS.Az.NetSdk.Build.Utilities
                 // FIRST ATTEMPT with (root)\src\SDKs dir
                 if (!string.IsNullOrWhiteSpace(scope))
                 {
-                    validScope = Path.Combine(SRCRootDir, scope);
+                    if(UseLegacyDirs)
+                    {
+                        validScope = Path.Combine(SRCRootDir, scope);
+                    }
 
                     // SECOND ATTEMPT with root\sdk
-                    if(!Directory.Exists(validScope))
+                    if (!Directory.Exists(validScope))
                     {
                         validScope = Path.Combine(SDKRootDir, scope);
                     }
@@ -513,6 +535,7 @@ namespace MS.Az.NetSdk.Build.Utilities
                 }
             }
 
+            UtilLogger.LogInfo(MessageImportance.High, "ValidScope Found '{0}'", validScope);
             return validScope;
         }
 
@@ -839,7 +862,7 @@ namespace MS.Az.NetSdk.Build.Utilities
                     mpD = FindManagementDirs(serviceDir);
                     mpT = FindManagementTestDirs(serviceDir);
 
-                    if ( (!mpT.Any<string>()) && (!mpD.Any<string>()) /*&& (!dpD.Any<string>())*/ )
+                    if ((!mpT.Any<string>()) && (!mpD.Any<string>()) /*&& (!dpD.Any<string>())*/ )
                     {
                         masterList.Add(sdp);
                     }
@@ -860,11 +883,11 @@ namespace MS.Az.NetSdk.Build.Utilities
                     //    //SDK_dataPlaneDirList.AddRange(dpD);
                     //}
                 }
-
-                UtilLogger.LogInfo(MessageImportance.Low, "Count of SDK_dataPlaneDirList before dedupe '{0}'", masterList.Count.ToString());
-                masterList = DeDupeList(masterList);
-                UtilLogger.LogInfo(MessageImportance.Low, "Count of SDK_dataPlaneDirList before dedupe '{0}'", masterList.Count.ToString());
             }
+
+            UtilLogger.LogInfo(MessageImportance.Low, "Count of SDK_dataPlaneDirList before dedupe '{0}'", masterList.Count.ToString());
+            masterList = DeDupeList(masterList);
+            UtilLogger.LogInfo(MessageImportance.Low, "Count of SDK_dataPlaneDirList before dedupe '{0}'", masterList.Count.ToString());
 
             return masterList;
         }
@@ -1263,6 +1286,13 @@ namespace MS.Az.NetSdk.Build.Utilities
                 {
                     finalList.Add(filePath);
                 }
+            }
+
+            var mgmtTestProj = finalList.Where<string>((item) => item.Contains("management", StringComparison.OrdinalIgnoreCase));
+
+            if(mgmtTestProj.NotNullOrAny<string>())
+            {
+                finalList = mgmtTestProj.ToList<string>();
             }
 
             return finalList;

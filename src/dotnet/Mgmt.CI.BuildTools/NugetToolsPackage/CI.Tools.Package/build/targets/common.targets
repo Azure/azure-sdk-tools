@@ -156,6 +156,7 @@
       WhatIf="$(WhatIf)"
       ProjectType="$(ProjectType)"
       ProjectCategory="$(ProjectCategory)"
+      UseLegacyDirStructure="$(UseLegacyDirStructure)"
       >
       <Output TaskParameter="SDK_Projects" ItemName="SDK_Projects" />
 	    <Output TaskParameter="Test_Projects" ItemName="Test_Projects" />

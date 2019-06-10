@@ -3,15 +3,14 @@
  * @author Arpan Laha
  */
 
-"use strict";
-
-var structure = require("../utils/structure");
+import { structure } from "../utils/structure";
+import { Rule } from "eslint";
 
 //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
-module.exports = {
+export const rule = {
   meta: {
     type: "problem",
 
@@ -23,10 +22,9 @@ module.exports = {
       url:
         "https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-config-module"
     },
-    fixable: "code",
     schema: [] // no options
   },
-  create: function(context) {
+  create: function(context: Rule.RuleContext) {
     var checkers = structure(context, {
       outer: "compilerOptions",
       inner: "module",
@@ -45,6 +43,6 @@ module.exports = {
       // check the node corresponding to compilerOptions.module to see if it is set to es6
       "VariableDeclarator > ObjectExpression > Property[key.value='compilerOptions'] > ObjectExpression > Property[key.value='module']":
         checkers.innerMatchesExpected
-    };
+    } as Rule.RuleListener;
   }
 };

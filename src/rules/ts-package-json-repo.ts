@@ -3,15 +3,14 @@
  * @author Arpan Laha
  */
 
-"use strict";
-
-var structure = require("../utils/structure");
+import { structure } from "../utils/structure";
+import { Rule } from "eslint";
 
 //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
-module.exports = {
+export const rule = {
   meta: {
     type: "problem",
 
@@ -23,10 +22,9 @@ module.exports = {
       url:
         "https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-package-json-repo"
     },
-    fixable: "code",
     schema: [] // no options
   },
-  create: function(context) {
+  create: function(context: Rule.RuleContext) {
     var checkers = structure(context, {
       outer: "repository",
       expectedValue: "github:Azure/azure-sdk-for-js",
@@ -44,6 +42,6 @@ module.exports = {
       // check the node corresponding to repository to see if it's value is github:Azure/azure-sdk-for-js
       "VariableDeclarator > ObjectExpression > Property[key.value='repository']":
         checkers.outerMatchesExpected
-    };
+    } as Rule.RuleListener;
   }
 };

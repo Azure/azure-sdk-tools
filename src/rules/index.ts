@@ -13,6 +13,7 @@ import { rule as tsConfigModule } from "./ts-config-module";
 import { rule as tsConfigNoExperimentalDecorators } from "./ts-config-no-experimentaldecorators";
 import { rule as tsConfigStrict } from "./ts-config-strict";
 import { rule as tsPackageJsonBugs } from "./ts-package-json-bugs";
+import { rule as tsPackageJsonRepo } from "./ts-package-json-repo";
 
 export const rules = {
   "ts-config-allowsyntheticdefaultimports": tsConfigAllowSyntheticDefaultImports,
@@ -24,5 +25,6 @@ export const rules = {
   "ts-config-module": tsConfigModule,
   "ts-config-noexperimentaldecorators": tsConfigNoExperimentalDecorators,
   "ts-config-strict": tsConfigStrict,
-  "ts-package-json-bugs": tsPackageJsonBugs
+  "ts-package-json-bugs": tsPackageJsonBugs,
+  "ts-package-json-repo": tsPackageJsonRepo
 };

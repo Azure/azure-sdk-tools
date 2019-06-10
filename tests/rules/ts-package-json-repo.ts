@@ -3,11 +3,9 @@
  * @author Arpan Laha
  */
 
-"use strict";
-
-var rule = require("../../../lib/rules/ts-package-json-repo");
-var RuleTester = require("eslint").RuleTester;
-var processJSONFile = require("../utils/processTests");
+import { rule } from "../../src/rules/ts-package-json-repo";
+import { RuleTester } from "eslint";
+import { processJSON } from "../utils/processTests";
 
 //------------------------------------------------------------------------------
 // Example files
@@ -252,23 +250,23 @@ ruleTester.run("ts-package-json-repo", rule, {
     {
       // only the fields we care about
       code: '{"repository": "github:Azure/azure-sdk-for-js"}',
-      filename: processJSONFile("package.json") // this is stupid but it works
+      filename: processJSON("package.json") as any // this is stupid but it works
     },
     {
       // a full example package.json (taken from https://github.com/Azure/azure-sdk-for-js/blob/master/sdk/eventhub/event-hubs/package.json with "scripts" removed for testing purposes)
       code: example_package_good,
-      filename: processJSONFile("package.json")
+      filename: processJSON("package.json") as any
     },
     {
       // incorrect format but in a file we don't care about
       code: '{"repository": "github:Azure/azure-sdk-for-java"}',
-      filename: processJSONFile("not_package.json")
+      filename: processJSON("not_package.json") as any
     }
   ],
   invalid: [
     {
       code: '{"notRepository": "github:Azure/azure-sdk-for-js"}',
-      filename: processJSONFile("package.json"),
+      filename: processJSON("package.json") as any,
       errors: [
         {
           message:
@@ -279,7 +277,7 @@ ruleTester.run("ts-package-json-repo", rule, {
     {
       // repository is in a nested object
       code: '{"outer": {"repository": "github:Azure/azure-sdk-for-js"}}',
-      filename: processJSONFile("package.json"),
+      filename: processJSON("package.json") as any,
       errors: [
         {
           message:
@@ -290,7 +288,7 @@ ruleTester.run("ts-package-json-repo", rule, {
     {
       // only the fields we care about
       code: '{"repository": "github:Azure/azure-sdk-for-java"}',
-      filename: processJSONFile("package.json"),
+      filename: processJSON("package.json") as any,
       errors: [
         {
           message:
@@ -301,7 +299,7 @@ ruleTester.run("ts-package-json-repo", rule, {
     {
       // example file with repository set to false
       code: example_package_bad,
-      filename: processJSONFile("package.json"),
+      filename: processJSON("package.json") as any,
       errors: [
         {
           message:

@@ -1,13 +1,11 @@
 /**
- * @fileoverview Testing the ts-config-forceconsistentcasinginfilenames rule.
+ * @fileoverview Testing the ts-config-esmoduleinterop rule.
  * @author Arpan Laha
  */
 
-"use strict";
-
-var rule = require("../../../lib/rules/ts-config-forceconsistentcasinginfilenames");
-var RuleTester = require("eslint").RuleTester;
-var processJSONFile = require("../utils/processTests");
+import { rule } from "../../src/rules/ts-config-esmoduleinterop";
+import { RuleTester } from "eslint";
+import { processJSON } from "../utils/processTests";
 
 //------------------------------------------------------------------------------
 // Example files
@@ -78,10 +76,10 @@ const example_tsconfig_bad = `{
     /* Module Resolution Options */
     "moduleResolution": "node" /* Specify module resolution strategy: 'node' (Node.js) or 'classic' (TypeScript pre-1.6). */,
     "allowSyntheticDefaultImports": true /* Allow default imports from modules with no default export. This does not affect code emit, just typechecking. */,
-    "esModuleInterop": true /* Enables emit interoperability between CommonJS and ES Modules via creation of namespace objects for all imports. Implies 'allowSyntheticDefaultImports'. */,
+    "esModuleInterop": false /* Enables emit interoperability between CommonJS and ES Modules via creation of namespace objects for all imports. Implies 'allowSyntheticDefaultImports'. */,
 
     /* Experimental Options */
-    "forceConsistentCasingInFileNames": false,
+    "forceConsistentCasingInFileNames": true,
 
     /* Other options */
     "newLine": "LF" /*	Use the specified end of line sequence to be used when emitting files: "crlf" (windows) or "lf" (unix).”*/,
@@ -101,29 +99,28 @@ var ruleTester = new RuleTester({
   parser: "@typescript-eslint/parser"
 });
 
-ruleTester.run("ts-config-forceconsistentcasinginfilenames", rule, {
+ruleTester.run("ts-config-esmoduleinterop", rule, {
   valid: [
     {
       // only the fields we care about
-      code: '{"compilerOptions": { "forceConsistentCasingInFileNames": true }}',
-      filename: processJSONFile("tsconfig.json") // this is stupid but it works
+      code: '{"compilerOptions": { "esModuleInterop": true }}',
+      filename: processJSON("tsconfig.json") as any // this is stupid but it works
     },
     {
       // a full example tsconfig.json (taken from https://github.com/Azure/azure-sdk-for-js/blob/master/sdk/eventhub/event-hubs/tsconfig.json)
       code: example_tsconfig_good,
-      filename: processJSONFile("tsconfig.json")
+      filename: processJSON("tsconfig.json") as any
     },
     {
       // incorrect format but in a file we don't care about
-      code:
-        '{"compilerOptions": { "forceConsistentCasingInFileNames": false }}',
-      filename: processJSONFile("not_tsconfig.json")
+      code: '{"compilerOptions": { "esModuleInterop": false }}',
+      filename: processJSON("not_tsconfig.json") as any
     }
   ],
   invalid: [
     {
       code: '{"notCompilerOptions": {}}',
-      filename: processJSONFile("tsconfig.json"),
+      filename: processJSON("tsconfig.json") as any,
       errors: [
         {
           message:
@@ -133,9 +130,8 @@ ruleTester.run("ts-config-forceconsistentcasinginfilenames", rule, {
     },
     {
       // commpilerOptions is in a nested object
-      code:
-        '{"outer": {"compilerOptions": { "forceConsistentCasingInFileNames": true }}}',
-      filename: processJSONFile("tsconfig.json"),
+      code: '{"outer": {"compilerOptions": { "esModuleInterop": true }}}',
+      filename: processJSON("tsconfig.json") as any,
       errors: [
         {
           message:
@@ -144,36 +140,35 @@ ruleTester.run("ts-config-forceconsistentcasinginfilenames", rule, {
       ]
     },
     {
-      // commpilerOptions does not contain forceConsistentCasingInFileNames
+      // commpilerOptions does not contain esModuleInterop
       code: '{"compilerOptions": { "lenient": true }}',
-      filename: processJSONFile("tsconfig.json"),
+      filename: processJSON("tsconfig.json") as any,
       errors: [
         {
           message:
-            "tsconfig.json: forceConsistentCasingInFileNames is not a member of compilerOptions"
+            "tsconfig.json: esModuleInterop is not a member of compilerOptions"
         }
       ]
     },
     {
       // only the fields we care about
-      code:
-        '{"compilerOptions": { "forceConsistentCasingInFileNames": false }}',
-      filename: processJSONFile("tsconfig.json"),
+      code: '{"compilerOptions": { "esModuleInterop": false }}',
+      filename: processJSON("tsconfig.json") as any,
       errors: [
         {
           message:
-            "tsconfig.json: compilerOptions.forceConsistentCasingInFileNames is set to false when it should be set to true"
+            "tsconfig.json: compilerOptions.esModuleInterop is set to false when it should be set to true"
         }
       ]
     },
     {
-      // example file with compilerOptions.forceConsistentCasingInFileNames set to false
+      // example file with compilerOptions.esModuleInterop set to false
       code: example_tsconfig_bad,
-      filename: processJSONFile("tsconfig.json"),
+      filename: processJSON("tsconfig.json") as any,
       errors: [
         {
           message:
-            "tsconfig.json: compilerOptions.forceConsistentCasingInFileNames is set to false when it should be set to true"
+            "tsconfig.json: compilerOptions.esModuleInterop is set to false when it should be set to true"
         }
       ]
     }

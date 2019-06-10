@@ -5,13 +5,15 @@
 
 "use strict";
 
-var structure = require("../utils/structure");
+import { structure } from "../utils/structure";
+import { Rule } from "eslint";
+
 
 //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
-module.exports = {
+export default {
   meta: {
     type: "problem",
 
@@ -23,10 +25,9 @@ module.exports = {
       url:
         "https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-config-allowsyntheticdefaultimports"
     },
-    fixable: "code",
     schema: [] // no options
   },
-  create: function(context) {
+  create: function(context: Rule.RuleContext) {
     var checkers = structure(context, {
       outer: "compilerOptions",
       inner: "allowSyntheticDefaultImports",
@@ -45,6 +46,6 @@ module.exports = {
       // check the node corresponding to compilerOptions.allowSyntheticDefaultImports to see if it is set to true
       "VariableDeclarator > ObjectExpression > Property[key.value='compilerOptions'] > ObjectExpression > Property[key.value='allowSyntheticDefaultImports']":
         checkers.innerMatchesExpected
-    };
+    } as Rule.RuleListener;
   }
 };

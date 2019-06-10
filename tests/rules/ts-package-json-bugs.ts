@@ -3,11 +3,9 @@
  * @author Arpan Laha
  */
 
-"use strict";
-
-var rule = require("../../../lib/rules/ts-package-json-bugs");
-var RuleTester = require("eslint").RuleTester;
-var processJSONFile = require("../utils/processTests");
+import { rule } from "../../src/rules/ts-package-json-bugs";
+import { RuleTester } from "eslint";
+import { processJSON } from "../utils/processTests";
 
 //------------------------------------------------------------------------------
 // Example files
@@ -253,24 +251,24 @@ ruleTester.run("ts-package-json-bugs", rule, {
       // only the fields we care about
       code:
         '{"bugs": { "url": "https://github.com/Azure/azure-sdk-for-js/issues" }}',
-      filename: processJSONFile("package.json") // this is stupid but it works
+      filename: processJSON("package.json") as any // this is stupid but it works
     },
     {
       // a full example package.json (taken from https://github.com/Azure/azure-sdk-for-js/blob/master/sdk/eventhub/event-hubs/package.json)
       code: example_package_good,
-      filename: processJSONFile("package.json")
+      filename: processJSON("package.json") as any
     },
     {
       // incorrect format but in a file we don't care about
       code:
         '{"bugs": { "url": "https://github.com/Azure/azure-sdk-for-java/issues" }}',
-      filename: processJSONFile("not_package.json")
+      filename: processJSON("not_package.json") as any
     }
   ],
   invalid: [
     {
       code: '{"notBugs": {}}',
-      filename: processJSONFile("package.json"),
+      filename: processJSON("package.json") as any,
       errors: [
         {
           message: "package.json: bugs does not exist at the outermost level"
@@ -281,7 +279,7 @@ ruleTester.run("ts-package-json-bugs", rule, {
       // commpilerOptions is in a nested object
       code:
         '{"outer": {"bugs": { "url": "https://github.com/Azure/azure-sdk-for-js/issues" }}}',
-      filename: processJSONFile("package.json"),
+      filename: processJSON("package.json") as any,
       errors: [
         {
           message: "package.json: bugs does not exist at the outermost level"
@@ -292,7 +290,7 @@ ruleTester.run("ts-package-json-bugs", rule, {
       // commpilerOptions does not contain strict
       code:
         '{"bugs": { "link": "https://github.com/Azure/azure-sdk-for-js/issues" }}',
-      filename: processJSONFile("package.json"),
+      filename: processJSON("package.json") as any,
       errors: [
         {
           message: "package.json: url is not a member of bugs"
@@ -303,7 +301,7 @@ ruleTester.run("ts-package-json-bugs", rule, {
       // only the fields we care about
       code:
         '{"bugs": { "url": "https://github.com/Azure/azure-sdk-for-java/issues" }}',
-      filename: processJSONFile("package.json"),
+      filename: processJSON("package.json") as any,
       errors: [
         {
           message:
@@ -314,7 +312,7 @@ ruleTester.run("ts-package-json-bugs", rule, {
     {
       // example file with compilerOptions.strict set to false
       code: example_package_bad,
-      filename: processJSONFile("package.json"),
+      filename: processJSON("package.json") as any,
       errors: [
         {
           message:

@@ -3,15 +3,14 @@
  * @author Arpan Laha
  */
 
-"use url";
-
-var structure = require("../utils/structure");
+import { structure } from "../utils/structure";
+import { Rule } from "eslint";
 
 //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
-module.exports = {
+export const rule = {
   meta: {
     type: "problem",
 
@@ -23,10 +22,9 @@ module.exports = {
       url:
         "https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-package-json-bugs"
     },
-    fixable: "code",
     schema: [] // no options
   },
-  create: function(context) {
+  create: function(context: Rule.RuleContext) {
     var checkers = structure(context, {
       outer: "bugs",
       inner: "url",
@@ -45,6 +43,6 @@ module.exports = {
       // check the node corresponding to bugs.url to see if it is set to 'https://github.com/Azure/azure-sdk-for-js/issues'
       "VariableDeclarator > ObjectExpression > Property[key.value='bugs'] > ObjectExpression > Property[key.value='url']":
         checkers.innerMatchesExpected
-    };
+    } as Rule.RuleListener;
   }
 };

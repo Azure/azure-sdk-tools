@@ -5,7 +5,8 @@
 
 import { Rule } from "eslint";
 import { TSESTree } from "@typescript-eslint/experimental-utils";
-import { Property } from "@typescript-eslint/typescript-estree/dist/ts-estree/ts-estree";
+import { Property, ObjectExpression } from "@typescript-eslint/typescript-estree/dist/ts-estree/ts-estree";
+import { Literal } from "estree";
 
 interface StructureData {
   outer: string;
@@ -24,19 +25,23 @@ export const structure = function(
       const outer = data.outer;
       const fileName = data.fileName;
 
-      const properties : Property[] = node.properties;
+      const properties: Property[] = node.properties as Property[];
       let foundOuter = false;
 
-      properties.forEach( function(value :Property, index: number) : void {
-        if (element.key && element.key
-      })
+      // properties.forEach( function(value :Property, index: number) : void {
+      //   if (element.key && element.key
+      // })
 
-      for (const (property of properties) {
-        if (property.key && property.key.value === outer) {
-          foundOuter = true;
-          break;
+      for (const property of properties) {
+        if (property.key) {
+          let key = property.key as Literal
+          if (key.value === outer) {
+            foundOuter = true;
+            break;
+          }
         }
       }
+
       context.getFilename() === fileName
         ? foundOuter
           ? []
@@ -47,7 +52,7 @@ export const structure = function(
                 ": " +
                 outer +
                 " does not exist at the outermost level"
-            })
+            } as any)
         : [];
     },
 
@@ -57,12 +62,16 @@ export const structure = function(
       const inner = data.inner;
       const fileName = data.fileName;
 
-      const properties = node.value.properties;
+      const value: ObjectExpression = node.value as ObjectExpression
+      const properties: Property[] = value.properties as Property[];
       let foundInner = false;
       for (const property of properties) {
-        if (property.key && property.key.value === inner) {
-          foundInner = true;
-          break;
+        if (property.key) {
+          let key = property.key as Literal
+          if (key.value === inner) {
+            foundInner = true;
+            break;
+          }
         }
       }
       context.getFilename() === fileName
@@ -71,7 +80,7 @@ export const structure = function(
           : context.report({
               node: node,
               message: fileName + ": " + inner + " is not a member of " + outer
-            })
+            } as any)
         : [];
     },
 
@@ -82,8 +91,10 @@ export const structure = function(
       const expectedValue = data.expectedValue;
       const fileName = data.fileName;
 
+      let nodeValue: Literal = node.value as Literal
+
       context.getFilename() === fileName
-        ? node.value.value === expectedValue
+        ? nodeValue.value === expectedValue
           ? []
           : context.report({
               node: node,
@@ -96,9 +107,9 @@ export const structure = function(
                 " is set to {{identifier }} when it should be set to " +
                 expectedValue,
               data: {
-                identifier: node.value.value
+                identifier: nodeValue.value as string
               }
-            })
+            } as any)
         : [];
     }
   };

@@ -22,7 +22,6 @@ export default {
       url:
         "https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-config-strict"
     },
-    fixable: "code",
     schema: [] // no options
   },
   create: function(context: Rule.RuleContext) {
@@ -44,6 +43,6 @@ export default {
       // check the node corresponding to compilerOptions.strict to see if it is set to true
       "VariableDeclarator > ObjectExpression > Property[key.value='compilerOptions'] > ObjectExpression > Property[key.value='strict']":
         checkers.innerMatchesExpected
-    };
+    } as Rule.RuleListener;
   }
 };

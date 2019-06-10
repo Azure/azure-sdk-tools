@@ -2,8 +2,6 @@
   "compilerOptions": {
     "outDir": "./dist",
     "types": ["eslint", "estree"],
-    // "lib": ["es2015"],
-    // "strict": true
     "allowSyntheticDefaultImports": true,
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,

@@ -100,8 +100,7 @@ const example_tsconfig_bad = `{
 //------------------------------------------------------------------------------
 
 var ruleTester = new RuleTester({
-  parser: "@typescript-eslint/parser",
-  parserOptions: { globalReturn: true }
+  parser: "@typescript-eslint/parser"
 });
 
 ruleTester.run("ts-config-isolatedmodules", rule, {

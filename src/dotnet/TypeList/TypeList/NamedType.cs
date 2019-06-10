@@ -15,6 +15,7 @@ namespace TypeList
         private readonly ImmutableArray<Field> fields;
         private readonly ImmutableArray<Method> methods;
         private readonly ImmutableArray<NamedType> namedTypes;
+        private readonly ImmutableArray<Property> properties;
 
         /// <summary>
         /// Construct a new NamedType instance, represented by the provided symbol.
@@ -29,6 +30,7 @@ namespace TypeList
             List<Field> fields = new List<Field>();
             List<Method> methods = new List<Method>();
             List<NamedType> namedTypes = new List<NamedType>();
+            List<Property> properties = new List<Property>();
 
             foreach (var memberSymbol in symbol.GetMembers())
             {
@@ -56,6 +58,10 @@ namespace TypeList
                     case INamedTypeSymbol n:
                         namedTypes.Add(new NamedType(n));
                         break;
+
+                    case IPropertySymbol p:
+                        properties.Add(new Property(p));
+                        break;
                 }
             }
 
@@ -63,6 +69,7 @@ namespace TypeList
             this.fields = fields.ToImmutableArray();
             this.methods = methods.ToImmutableArray();
             this.namedTypes = namedTypes.ToImmutableArray();
+            this.properties = properties.ToImmutableArray();
         }
 
         public string GetName()
@@ -93,6 +100,11 @@ namespace TypeList
         public ImmutableArray<NamedType> GetNamedTypes()
         {
             return namedTypes;
+        }
+
+        public ImmutableArray<Property> GetProperties()
+        {
+            return properties;
         }
 
         public override string ToString()

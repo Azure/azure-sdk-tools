@@ -5,6 +5,7 @@ using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Reflection;
 using TestLibrary;
+using TypeList;
 using Xunit;
 using Assembly = TypeList.Assembly;
 using Event = TypeList.Event;
@@ -55,6 +56,7 @@ namespace TypeListTest
          * NamedType:
          *    NamedType(INamedTypeSymbol symbol):
          *       symbol.TypeKind: class, interface
+         *       symbol implements interface: yes, no
          *       events in symbol.GetMembers(): 0, > 0
          *          count: 0, > 0
          *          access: public, private, protected, internal, protected internal, private protected
@@ -80,6 +82,10 @@ namespace TypeListTest
          *    Parameter(IParameterSymbol symbol):
          *       symbol.Type: has reference type, doesn't have reference type
          *       symbol.HasExplicitDefaultValue: true, false
+         *       
+         * Property:
+         *    Property(IPropertySymbol symbol):
+         *       symbol.SetMethod: null, not null
          * 
          * TypeParameter:
          *    TypeParameter(ITypeParameterSymbol symbol):
@@ -519,6 +525,80 @@ namespace TypeListTest
             Assert.Null(parameters[0].GetExplicitDefaultValue());
 
             Assert.Contains("string RefKindParamMethod(ref string str);", method.ToString());
+        }
+
+        [Fact]
+        public void PropertyTestNoSetter()
+        {
+            Assembly assembly = Assembly.AssembliesFromFile("C:\\Users\\t-mcpat\\Documents\\azure-sdk-tools\\artifacts\\bin\\" +
+                "TestLibrary\\Debug\\netstandard2.0\\TestLibrary.dll")[0];
+            Assert.Equal("TestLibrary", assembly.GetName());
+
+            Namespace globalNamespace = assembly.GetGlobalNamespace();
+            ImmutableArray<Namespace> namespaces = globalNamespace.GetNamespaces();
+            Namespace testLibNamespace = namespaces[0];
+            Assert.Equal("TestLibrary", testLibNamespace.GetName());
+
+            ImmutableArray<NamedType> namedTypes = testLibNamespace.GetNamedTypes();
+            NamedType publicClass = null;
+            foreach (NamedType namedType in namedTypes)
+            {
+                if (namedType.GetName().Equals("PublicClass"))
+                    publicClass = namedType;
+            }
+            Assert.NotNull(publicClass);
+            Assert.Equal("PublicClass", publicClass.GetName());
+
+            ImmutableArray<Property> properties = publicClass.GetProperties();
+            Property property = null;
+            foreach (Property p in properties)
+            {
+                if (p.GetName().Equals("propertyGet"))
+                    property = p;
+            }
+            Assert.NotNull(property);
+            Assert.Equal("propertyGet", property.GetName());
+            Assert.Equal("uint", property.GetPropertyType());
+            Assert.False(property.HasSetMethod());
+
+            Assert.Contains("public uint propertyGet { get; }", property.ToString());
+        }
+
+        [Fact]
+        public void PropertyTestHasSetter()
+        {
+            Assembly assembly = Assembly.AssembliesFromFile("C:\\Users\\t-mcpat\\Documents\\azure-sdk-tools\\artifacts\\bin\\" +
+                "TestLibrary\\Debug\\netstandard2.0\\TestLibrary.dll")[0];
+            Assert.Equal("TestLibrary", assembly.GetName());
+
+            Namespace globalNamespace = assembly.GetGlobalNamespace();
+            ImmutableArray<Namespace> namespaces = globalNamespace.GetNamespaces();
+            Namespace testLibNamespace = namespaces[0];
+            Assert.Equal("TestLibrary", testLibNamespace.GetName());
+
+            ImmutableArray<NamedType> namedTypes = testLibNamespace.GetNamedTypes();
+            NamedType publicClass = null;
+            foreach (NamedType namedType in namedTypes)
+            {
+                if (namedType.GetName().Equals("PublicClass"))
+                    publicClass = namedType;
+            }
+            Assert.NotNull(publicClass);
+            Assert.Equal("PublicClass", publicClass.GetName());
+
+            ImmutableArray<Property> properties = publicClass.GetProperties();
+            Property property = null;
+            foreach (Property p in properties)
+            {
+                if (p.GetName().Equals("propertyBoth"))
+                    property = p;
+            }
+            Assert.NotNull(property);
+            Assert.Equal("propertyBoth", property.GetName());
+            Assert.Equal("int", property.GetPropertyType());
+            Assert.True(property.HasSetMethod());
+
+            Assert.Contains("public int propertyBoth { get; set; }", property.ToString());
         }
 
         [Fact]

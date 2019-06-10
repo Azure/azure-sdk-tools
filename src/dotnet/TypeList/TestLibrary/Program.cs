@@ -7,8 +7,12 @@ using System.Threading.Tasks;
 
 namespace TestLibrary
 {
+    public delegate int outerDelegate(int num);
+
     public class PublicClass
     {
+        public delegate int innerDelegate(int num);
+
         public int publicField = 1;
         public const string publicString = "constant string";
         private int privateField;
@@ -17,6 +21,14 @@ namespace TestLibrary
         protected internal int protectedInternalField;
         private protected int privateProtectedField;
 
+        public uint propertyGet { get; }
+        public int propertyBoth { get; set; }
+        private bool privateProperty { get; }
+        protected object protectedProperty { get; set; }
+        internal string internalProperty { get; set; }
+        protected internal uint protectedInternalProperty { get; }
+        private protected string privateProtectedProperty { get; set; }
+
         public event EventHandler PublicEvent;
         private event EventHandler PrivateEvent;
         protected event EventHandler ProtectedEvent;
@@ -24,15 +36,15 @@ namespace TestLibrary
         protected internal event EventHandler ProtectedInternalEvent;
         private protected event EventHandler PrivateProtectedEvent;
 
-        [ConditionalAttribute("DEBUG")]
+        [Conditional("DEBUG")]
         public static void StaticVoid(string[] args)
         {
             
         }
 
-        private static void PrivateMethod(int times)
+        private static int PrivateMethod(int times)
         {
-            
+            return times;
         }
 
         public class Repeater
@@ -171,5 +183,18 @@ namespace TestLibrary
         int TypeParamParamsMethod<T>(T param, string str = "hello");
 
         string RefKindParamMethod(ref string str);
+    }
+
+    public class ImplementingClass : PublicInterface<int>
+    {
+        public string RefKindParamMethod(ref string str)
+        {
+            throw new NotImplementedException();
+        }
+
+        public int TypeParamParamsMethod<T>(T param, string str = "hello")
+        {
+            throw new NotImplementedException();
+        }
     }
 }

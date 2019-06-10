@@ -1,21 +1,16 @@
 {
   "compilerOptions": {
-    "outDir": "./dist",
-    "types": ["eslint", "estree"],
-    "allowSyntheticDefaultImports": true,
-    "allowUnreachableCode": false,
-    "allowUnusedLabels": false,
-    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "importHelpers": true,
+    "isolatedModules": true,
     "module": "commonjs",
     "noImplicitReturns": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
+    "outDir": "./dist",
     "pretty": true,
-    "sourceMap": true,
     "strict": true,
     "target": "es6",
-    "lib": ["es6"],
-    "declaration": false,
-    "declarationMap": false
+    "types": ["eslint", "estree"]
   }
 }

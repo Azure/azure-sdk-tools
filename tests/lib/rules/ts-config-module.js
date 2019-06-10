@@ -1,11 +1,13 @@
 /**
- * @fileoverview Testing the ts-config-strict rule.
+ * @fileoverview Testing the ts-config-module rule.
  * @author Arpan Laha
  */
 
-import rule from "../../../src/rules/ts-config-strict";
-import { RuleTester } from "eslint";
-import processJSONFile from "../utils/processTests";
+"use strict";
+
+var rule = require("../../../lib/rules/ts-config-module");
+var RuleTester = require("eslint").RuleTester;
+var processJSONFile = require("../utils/processTests");
 
 //------------------------------------------------------------------------------
 // Example files
@@ -55,7 +57,7 @@ const example_tsconfig_bad = `{
   "compilerOptions": {
     /* Basic Options */
     "target": "es6" /* Specify ECMAScript target version: 'ES3' (default), 'ES5', 'ES2015', 'ES2016', 'ES2017','ES2018' or 'ESNEXT'. */,
-    "module": "es6" /* Specify module code generation: 'none', 'commonjs', 'amd', 'system', 'umd', 'es2015', or 'ESNext'. */,
+    "module": "es5" /* Specify module code generation: 'none', 'commonjs', 'amd', 'system', 'umd', 'es2015', or 'ESNext'. */,
 
     "declaration": true /* Generates corresponding '.d.ts' file. */,
     "declarationMap": true /* Generates a sourcemap for each corresponding '.d.ts' file. */,
@@ -67,7 +69,7 @@ const example_tsconfig_bad = `{
     "importHelpers": true /* Import emit helpers from 'tslib'. */,
 
     /* Strict Type-Checking Options */
-    "strict": false /* Enable all strict type-checking options. */,
+    "strict": true /* Enable all strict type-checking options. */,
     "noImplicitReturns": true /* Report error when not all code paths in function return a value. */,
 
     /* Additional Checks */
@@ -99,28 +101,28 @@ var ruleTester = new RuleTester({
   parser: "@typescript-eslint/parser"
 });
 
-ruleTester.run("ts-config-strict", rule, {
+ruleTester.run("ts-config-module", rule, {
   valid: [
     {
       // only the fields we care about
-      code: '{"compilerOptions": { "strict": true }}',
-      filename: processJSONFile("tsconfig.json") as any // this is stupid but it works
+      code: '{"compilerOptions": { "module": "es6" }}',
+      filename: processJSONFile("tsconfig.json") // this is stupid but it works
     },
     {
       // a full example tsconfig.json (taken from https://github.com/Azure/azure-sdk-for-js/blob/master/sdk/eventhub/event-hubs/tsconfig.json)
       code: example_tsconfig_good,
-      filename: processJSONFile("tsconfig.json") as any
+      filename: processJSONFile("tsconfig.json")
     },
     {
       // incorrect format but in a file we don't care about
-      code: '{"compilerOptions": { "strict": false }}',
-      filename: processJSONFile("not_tsconfig.json") as any
+      code: '{"compilerOptions": { "module": "es5" }}',
+      filename: processJSONFile("not_tsconfig.json")
     }
   ],
   invalid: [
     {
       code: '{"notCompilerOptions": {}}',
-      filename: processJSONFile("tsconfig.json") as any,
+      filename: processJSONFile("tsconfig.json"),
       errors: [
         {
           message:
@@ -130,8 +132,8 @@ ruleTester.run("ts-config-strict", rule, {
     },
     {
       // commpilerOptions is in a nested object
-      code: '{"outer": {"compilerOptions": { "strict": true }}}',
-      filename: processJSONFile("tsconfig.json") as any,
+      code: '{"outer": {"compilerOptions": { "module": "es6" }}}',
+      filename: processJSONFile("tsconfig.json"),
       errors: [
         {
           message:
@@ -140,34 +142,34 @@ ruleTester.run("ts-config-strict", rule, {
       ]
     },
     {
-      // commpilerOptions does not contain strict
+      // commpilerOptions does not contain module
       code: '{"compilerOptions": { "lenient": true }}',
-      filename: processJSONFile("tsconfig.json") as any,
+      filename: processJSONFile("tsconfig.json"),
       errors: [
         {
-          message: "tsconfig.json: strict is not a member of compilerOptions"
+          message: "tsconfig.json: module is not a member of compilerOptions"
         }
       ]
     },
     {
       // only the fields we care about
-      code: '{"compilerOptions": { "strict": false }}',
-      filename: processJSONFile("tsconfig.json") as any,
+      code: '{"compilerOptions": { "module": "es5" }}',
+      filename: processJSONFile("tsconfig.json"),
       errors: [
         {
           message:
-            "tsconfig.json: compilerOptions.strict is set to false when it should be set to true"
+            "tsconfig.json: compilerOptions.module is set to es5 when it should be set to es6"
         }
       ]
     },
     {
-      // example file with compilerOptions.strict set to false
+      // example file with compilerOptions.module set to es5
       code: example_tsconfig_bad,
-      filename: processJSONFile("tsconfig.json") as any,
+      filename: processJSONFile("tsconfig.json"),
       errors: [
         {
           message:
-            "tsconfig.json: compilerOptions.strict is set to false when it should be set to true"
+            "tsconfig.json: compilerOptions.module is set to es5 when it should be set to es6"
         }
       ]
     }

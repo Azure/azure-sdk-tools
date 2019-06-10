@@ -9,9 +9,10 @@
 
 import rules from "./rules";
 import processors from "./processors";
+import configs from "./configs"
 
 //------------------------------------------------------------------------------
 // Plugin Definition
 //------------------------------------------------------------------------------
 
-export { rules, processors };
+export { rules, processors, configs };

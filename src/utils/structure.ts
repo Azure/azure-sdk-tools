@@ -56,6 +56,30 @@ export const structure = function(
         : [];
     },
 
+    // check to see if the value of the outer key matches the expected value
+    outerMatchesExpected: function(node) {
+      const outer = data.outer
+      const expectedValue = data.expectedValue
+      const fileName = data.fileName
+
+      context.getFilename() === fileName
+        ? node.value.value === expectedValue
+          ? []
+          : context.report({
+              node: node,
+              message:
+                fileName +
+                ": " +
+                outer +
+                " is set to {{ identifier }} when it should be set to " +
+                expectedValue,
+              data: {
+                identifier: node.value.value
+              }
+            })
+        : [];
+    },
+
     // check that the inner key is a member of the outer key
     isMemberOf: function(node: TSESTree.Property) {
       const outer = data.outer;
@@ -82,6 +106,7 @@ export const structure = function(
               message: fileName + ": " + inner + " is not a member of " + outer
             } as any)
         : [];
+        
     },
 
     // check the node corresponding to the inner value to see if it is set to true
@@ -104,7 +129,7 @@ export const structure = function(
                 outer +
                 "." +
                 inner +
-                " is set to {{identifier }} when it should be set to " +
+                " is set to {{ identifier }} when it should be set to " +
                 expectedValue,
               data: {
                 identifier: nodeValue.value as string

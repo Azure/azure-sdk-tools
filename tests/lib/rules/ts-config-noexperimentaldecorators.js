@@ -1,11 +1,13 @@
 /**
- * @fileoverview Testing the ts-config-strict rule.
+ * @fileoverview Testing the ts-config-no-experimentaldecorators rule.
  * @author Arpan Laha
  */
 
-import rule from "../../../src/rules/ts-config-strict";
-import { RuleTester } from "eslint";
-import processJSONFile from "../utils/processTests";
+"use strict";
+
+var rule = require("../../../lib/rules/ts-config-no-experimentaldecorators");
+var RuleTester = require("eslint").RuleTester;
+var processJSONFile = require("../utils/processTests");
 
 //------------------------------------------------------------------------------
 // Example files
@@ -67,7 +69,7 @@ const example_tsconfig_bad = `{
     "importHelpers": true /* Import emit helpers from 'tslib'. */,
 
     /* Strict Type-Checking Options */
-    "strict": false /* Enable all strict type-checking options. */,
+    "strict": true /* Enable all strict type-checking options. */,
     "noImplicitReturns": true /* Report error when not all code paths in function return a value. */,
 
     /* Additional Checks */
@@ -84,7 +86,8 @@ const example_tsconfig_bad = `{
     /* Other options */
     "newLine": "LF" /*	Use the specified end of line sequence to be used when emitting files: "crlf" (windows) or "lf" (unix).”*/,
     "allowJs": false /* Don't allow JavaScript files to be compiled.*/,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "experimentalDecorators": true
   },
   "compileOnSave": true,
   "exclude": ["node_modules", "typings/**", "./samples/**/*.ts"],
@@ -99,28 +102,33 @@ var ruleTester = new RuleTester({
   parser: "@typescript-eslint/parser"
 });
 
-ruleTester.run("ts-config-strict", rule, {
+ruleTester.run("ts-config-no-experimentaldecorators", rule, {
   valid: [
     {
       // only the fields we care about
-      code: '{"compilerOptions": { "strict": true }}',
-      filename: processJSONFile("tsconfig.json") as any // this is stupid but it works
+      code: '{"compilerOptions": { "experimentalDecorators": false }}',
+      filename: processJSONFile("tsconfig.json") // this is stupid but it works
     },
     {
       // a full example tsconfig.json (taken from https://github.com/Azure/azure-sdk-for-js/blob/master/sdk/eventhub/event-hubs/tsconfig.json)
       code: example_tsconfig_good,
-      filename: processJSONFile("tsconfig.json") as any
+      filename: processJSONFile("tsconfig.json")
     },
     {
       // incorrect format but in a file we don't care about
-      code: '{"compilerOptions": { "strict": false }}',
-      filename: processJSONFile("not_tsconfig.json") as any
+      code: '{"compilerOptions": { "experimentalDecorators": true }}',
+      filename: processJSONFile("not_tsconfig.json")
+    },
+    {
+      // field not provided
+      code: '{"compilerOptions": {}}',
+      filename: processJSONFile("tsconfig.json")
     }
   ],
   invalid: [
     {
       code: '{"notCompilerOptions": {}}',
-      filename: processJSONFile("tsconfig.json") as any,
+      filename: processJSONFile("tsconfig.json"),
       errors: [
         {
           message:
@@ -130,8 +138,9 @@ ruleTester.run("ts-config-strict", rule, {
     },
     {
       // commpilerOptions is in a nested object
-      code: '{"outer": {"compilerOptions": { "strict": true }}}',
-      filename: processJSONFile("tsconfig.json") as any,
+      code:
+        '{"outer": {"compilerOptions": { "experimentalDecorators": false }}}',
+      filename: processJSONFile("tsconfig.json"),
       errors: [
         {
           message:
@@ -140,34 +149,24 @@ ruleTester.run("ts-config-strict", rule, {
       ]
     },
     {
-      // commpilerOptions does not contain strict
-      code: '{"compilerOptions": { "lenient": true }}',
-      filename: processJSONFile("tsconfig.json") as any,
-      errors: [
-        {
-          message: "tsconfig.json: strict is not a member of compilerOptions"
-        }
-      ]
-    },
-    {
       // only the fields we care about
-      code: '{"compilerOptions": { "strict": false }}',
-      filename: processJSONFile("tsconfig.json") as any,
+      code: '{"compilerOptions": { "experimentalDecorators": true }}',
+      filename: processJSONFile("tsconfig.json"),
       errors: [
         {
           message:
-            "tsconfig.json: compilerOptions.strict is set to false when it should be set to true"
+            "tsconfig.json: compilerOptions.experimentalDecorators is set to true when it should be set to false"
         }
       ]
     },
     {
-      // example file with compilerOptions.strict set to false
+      // example file with compilerOptions.experimentalDecorators set to true
       code: example_tsconfig_bad,
-      filename: processJSONFile("tsconfig.json") as any,
+      filename: processJSONFile("tsconfig.json"),
       errors: [
         {
           message:
-            "tsconfig.json: compilerOptions.strict is set to false when it should be set to true"
+            "tsconfig.json: compilerOptions.experimentalDecorators is set to true when it should be set to false"
         }
       ]
     }

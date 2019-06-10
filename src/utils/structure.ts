@@ -57,13 +57,15 @@ export const structure = function(
     },
 
     // check to see if the value of the outer key matches the expected value
-    outerMatchesExpected: function(node) {
+    outerMatchesExpected: function(node: TSESTree.Property) {
       const outer = data.outer
       const expectedValue = data.expectedValue
       const fileName = data.fileName
 
+      const nodeValue: Literal = node.value as Literal
+
       context.getFilename() === fileName
-        ? node.value.value === expectedValue
+        ? nodeValue.value === expectedValue
           ? []
           : context.report({
               node: node,
@@ -74,9 +76,9 @@ export const structure = function(
                 " is set to {{ identifier }} when it should be set to " +
                 expectedValue,
               data: {
-                identifier: node.value.value
+                identifier: nodeValue.value as string
               }
-            })
+            } as any)
         : [];
     },
 

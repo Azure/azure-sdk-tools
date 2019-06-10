@@ -11,6 +11,6 @@ interface Info {
   filename: string;
 }
 
-export default function(fileName: string): Info {
+export const processJSON = function(fileName: string): Info {
   return { ...processors[".json"], filename: fileName };
-}
+};

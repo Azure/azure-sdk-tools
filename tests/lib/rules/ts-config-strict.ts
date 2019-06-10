@@ -3,9 +3,9 @@
  * @author Arpan Laha
  */
 
-import rule from "../../../src/rules/ts-config-strict";
+import { rule } from "../../../src/rules/ts-config-strict";
 import { RuleTester } from "eslint";
-import processJSONFile from "../utils/processTests";
+import { processJSON } from "../utils/processTests";
 
 //------------------------------------------------------------------------------
 // Example files
@@ -104,23 +104,23 @@ ruleTester.run("ts-config-strict", rule, {
     {
       // only the fields we care about
       code: '{"compilerOptions": { "strict": true }}',
-      filename: processJSONFile("tsconfig.json") as any // this is stupid but it works
+      filename: processJSON("tsconfig.json") as any // this is stupid but it works
     },
     {
       // a full example tsconfig.json (taken from https://github.com/Azure/azure-sdk-for-js/blob/master/sdk/eventhub/event-hubs/tsconfig.json)
       code: example_tsconfig_good,
-      filename: processJSONFile("tsconfig.json") as any
+      filename: processJSON("tsconfig.json") as any
     },
     {
       // incorrect format but in a file we don't care about
       code: '{"compilerOptions": { "strict": false }}',
-      filename: processJSONFile("not_tsconfig.json") as any
+      filename: processJSON("not_tsconfig.json") as any
     }
   ],
   invalid: [
     {
       code: '{"notCompilerOptions": {}}',
-      filename: processJSONFile("tsconfig.json") as any,
+      filename: processJSON("tsconfig.json") as any,
       errors: [
         {
           message:
@@ -131,7 +131,7 @@ ruleTester.run("ts-config-strict", rule, {
     {
       // commpilerOptions is in a nested object
       code: '{"outer": {"compilerOptions": { "strict": true }}}',
-      filename: processJSONFile("tsconfig.json") as any,
+      filename: processJSON("tsconfig.json") as any,
       errors: [
         {
           message:
@@ -142,7 +142,7 @@ ruleTester.run("ts-config-strict", rule, {
     {
       // commpilerOptions does not contain strict
       code: '{"compilerOptions": { "lenient": true }}',
-      filename: processJSONFile("tsconfig.json") as any,
+      filename: processJSON("tsconfig.json") as any,
       errors: [
         {
           message: "tsconfig.json: strict is not a member of compilerOptions"
@@ -152,7 +152,7 @@ ruleTester.run("ts-config-strict", rule, {
     {
       // only the fields we care about
       code: '{"compilerOptions": { "strict": false }}',
-      filename: processJSONFile("tsconfig.json") as any,
+      filename: processJSON("tsconfig.json") as any,
       errors: [
         {
           message:
@@ -163,7 +163,7 @@ ruleTester.run("ts-config-strict", rule, {
     {
       // example file with compilerOptions.strict set to false
       code: example_tsconfig_bad,
-      filename: processJSONFile("tsconfig.json") as any,
+      filename: processJSON("tsconfig.json") as any,
       errors: [
         {
           message:

@@ -7,17 +7,15 @@
     "allowUnusedLabels": false,
     "esModuleInterop": true,
     "module": "commonjs",
-    "moduleResolution": "node",
     "noImplicitReturns": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "pretty": true,
     "sourceMap": true,
     "strict": true,
-    "target": "es2017",
-    "lib": ["es2017"],
+    "target": "es6",
+    "lib": ["es6"],
     "declaration": false,
-    "declarationMap": false,
-    "resolveJsonModule": true
+    "declarationMap": false
   }
 }

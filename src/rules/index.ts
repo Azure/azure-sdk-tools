@@ -3,10 +3,10 @@
  * @author Arpan Laha
  */
 
-import tsConfigAllowSyntheticDefaultImports from './ts-config-allowsyntheticdefaultimports'
-import tsConfigStrict from "./ts-config-strict";
+import { rule as tsConfigAllowSyntheticDefaultImports } from "./ts-config-allowsyntheticdefaultimports";
+import { rule as tsConfigStrict } from "./ts-config-strict";
 
-export default {
+export const rules = {
   "ts-config-allowsyntheticdefaultimports": tsConfigAllowSyntheticDefaultImports,
   "ts-config-strict": tsConfigStrict
 };

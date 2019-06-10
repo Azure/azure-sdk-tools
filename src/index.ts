@@ -7,9 +7,9 @@
 // Requirements
 //------------------------------------------------------------------------------
 
-import rules from "./rules";
+import { rules } from "./rules";
 import processors from "./processors";
-import configs from "./configs"
+import configs from "./configs";
 
 //------------------------------------------------------------------------------
 // Plugin Definition

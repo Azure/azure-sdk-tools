@@ -10,7 +10,7 @@ import { Rule } from "eslint";
 // Rule Definition
 //------------------------------------------------------------------------------
 
-export default {
+export const rule = {
   meta: {
     type: "problem",
 

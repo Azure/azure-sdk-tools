@@ -5,14 +5,17 @@
 
 import { Rule } from "eslint";
 import { TSESTree } from "@typescript-eslint/experimental-utils";
-import { Property, ObjectExpression } from "@typescript-eslint/typescript-estree/dist/ts-estree/ts-estree";
+import {
+  Property,
+  ObjectExpression
+} from "@typescript-eslint/typescript-estree/dist/ts-estree/ts-estree";
 import { Literal } from "estree";
 
 interface StructureData {
   outer: string;
-  inner: string;
+  inner?: string;
   expectedValue: any;
-  fileName: string;
+  fileName?: string;
 }
 
 export const structure = function(
@@ -34,7 +37,7 @@ export const structure = function(
 
       for (const property of properties) {
         if (property.key) {
-          let key = property.key as Literal
+          let key = property.key as Literal;
           if (key.value === outer) {
             foundOuter = true;
             break;
@@ -58,11 +61,11 @@ export const structure = function(
 
     // check to see if the value of the outer key matches the expected value
     outerMatchesExpected: function(node: TSESTree.Property) {
-      const outer = data.outer
-      const expectedValue = data.expectedValue
-      const fileName = data.fileName
+      const outer = data.outer;
+      const expectedValue = data.expectedValue;
+      const fileName = data.fileName;
 
-      const nodeValue: Literal = node.value as Literal
+      const nodeValue: Literal = node.value as Literal;
 
       context.getFilename() === fileName
         ? nodeValue.value === expectedValue
@@ -88,12 +91,12 @@ export const structure = function(
       const inner = data.inner;
       const fileName = data.fileName;
 
-      const value: ObjectExpression = node.value as ObjectExpression
+      const value: ObjectExpression = node.value as ObjectExpression;
       const properties: Property[] = value.properties as Property[];
       let foundInner = false;
       for (const property of properties) {
         if (property.key) {
-          let key = property.key as Literal
+          let key = property.key as Literal;
           if (key.value === inner) {
             foundInner = true;
             break;
@@ -108,7 +111,6 @@ export const structure = function(
               message: fileName + ": " + inner + " is not a member of " + outer
             } as any)
         : [];
-        
     },
 
     // check the node corresponding to the inner value to see if it is set to true
@@ -118,7 +120,7 @@ export const structure = function(
       const expectedValue = data.expectedValue;
       const fileName = data.fileName;
 
-      let nodeValue: Literal = node.value as Literal
+      let nodeValue: Literal = node.value as Literal;
 
       context.getFilename() === fileName
         ? nodeValue.value === expectedValue

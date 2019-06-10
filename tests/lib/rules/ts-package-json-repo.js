@@ -277,7 +277,7 @@ ruleTester.run("ts-package-json-repo", rule, {
       ]
     },
     {
-      // commpilerOptions is in a nested object
+      // repository is in a nested object
       code: '{"outer": {"repository": "github:Azure/azure-sdk-for-js"}}',
       filename: processJSONFile("package.json"),
       errors: [
@@ -299,7 +299,7 @@ ruleTester.run("ts-package-json-repo", rule, {
       ]
     },
     {
-      // example file with repository.strict set to false
+      // example file with repository set to false
       code: example_package_bad,
       filename: processJSONFile("package.json"),
       errors: [

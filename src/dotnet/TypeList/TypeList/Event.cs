@@ -27,7 +27,8 @@ namespace TypeList
 
         public override string ToString()
         {
-            return "Event: " + name + "\n";
+            //TODO: determine whether event is EventHandler or other type - and if it has type parameter(s)
+            return "public event EventHandler " + name + ";\n";
         }
     }
 }

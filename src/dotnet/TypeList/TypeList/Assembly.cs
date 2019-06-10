@@ -1,4 +1,5 @@
-﻿using System.Collections.ObjectModel;
+﻿using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
@@ -25,11 +26,11 @@ namespace TypeList
             this.globalNamespace = new Namespace(symbol.GlobalNamespace);
         }
 
-        public static Collection<Assembly> AssembliesFromFile(string dllPath)
+        public static List<Assembly> AssembliesFromFile(string dllPath)
         {
             var reference = MetadataReference.CreateFromFile(dllPath);
             var compilation = CSharpCompilation.Create(null).AddReferences(reference);
-            Collection<Assembly> assemblies = new Collection<Assembly>();
+            List<Assembly> assemblies = new List<Assembly>();
 
             foreach (var assemblySymbol in compilation.SourceModule.ReferencedAssemblySymbols)
             {

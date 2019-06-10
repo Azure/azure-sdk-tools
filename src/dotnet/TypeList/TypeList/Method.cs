@@ -1,4 +1,6 @@
 ﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Text;
@@ -13,6 +15,8 @@ namespace TypeList
     /// </summary>
     public class Method
     {
+        private readonly IMethodSymbol symbol;
+
         private readonly string name;
         private readonly string returnType;
 
@@ -22,9 +26,8 @@ namespace TypeList
         private readonly bool isOverride;
         private readonly bool isAbstract;
         private readonly bool isExtern;
-        private readonly bool isAsync;
 
-        private readonly ImmutableArray<AttributeData> attributes;
+        private readonly ImmutableArray<AttributeData> attributes;  //TODO: determine how to obtain all attribute info and display in string
         private readonly ImmutableArray<Parameter> parameters;
         private readonly ImmutableArray<TypeParameter> typeParameters;
 
@@ -34,6 +37,8 @@ namespace TypeList
         /// <param name="symbol">The symbol representing the method.</param>
         public Method(IMethodSymbol symbol)
         {
+            this.symbol = symbol;
+
             this.name = symbol.Name;
             this.returnType = symbol.ReturnType.ToString();
 
@@ -43,11 +48,14 @@ namespace TypeList
             this.isOverride = symbol.IsOverride;
             this.isAbstract = symbol.IsAbstract;
             this.isExtern = symbol.IsExtern;
-            this.isAsync = symbol.IsAsync;
 
             this.attributes = symbol.GetAttributes();
-            Collection<TypeParameter> typeParameters = new Collection<TypeParameter>();
-            Collection<Parameter> parameters = new Collection<Parameter>();
+#if DEBUG
+            if (attributes.Length > 0)
+                isExtern = false;
+#endif
+            List<TypeParameter> typeParameters = new List<TypeParameter>();
+            List<Parameter> parameters = new List<Parameter>();
 
             foreach (ITypeParameterSymbol typeParam in symbol.TypeParameters)
             {
@@ -102,11 +110,6 @@ namespace TypeList
             return isExtern;
         }
 
-        public bool IsAsync()
-        {
-            return isAsync;
-        }
-
         public ImmutableArray<AttributeData> GetAttributes()
         {
             return attributes;
@@ -124,11 +127,14 @@ namespace TypeList
 
         public override string ToString()
         {
+            bool interfaceMethod = symbol.ContainingType.TypeKind.ToString().ToLower().Equals("interface");
+
             StringBuilder returnString = new StringBuilder("");
             if (!attributes.IsEmpty)
-                returnString.Append(attributes + " ");
+                returnString.Append("[" + attributes[0].AttributeClass.Name + "] ");
 
-            returnString.Append("public");
+            if (!interfaceMethod)
+                returnString.Append("public");
 
             if (isStatic)
                 returnString.Append(" static");
@@ -138,23 +144,21 @@ namespace TypeList
                 returnString.Append(" sealed");
             if (isOverride)
                 returnString.Append(" override");
-            if (isAbstract)
+            if (isAbstract && !interfaceMethod)
                 returnString.Append(" abstract");
             if (isExtern)
                 returnString.Append(" extern");
-            if (isAsync)
-                returnString.Append(" async");
 
             returnString.Append(" " + returnType + " " + name);
             if (typeParameters.Length != 0)
             {
-                returnString.Append(" <");
+                returnString.Append("<");
                 foreach (TypeParameter tp in typeParameters)
                 {
                     returnString.Append(tp.ToString() + ", ");
                 }
                 returnString.Length = returnString.Length - 2;
-                returnString.Append("> ");
+                returnString.Append(">");
             }
 
             returnString.Append("(");
@@ -166,7 +170,11 @@ namespace TypeList
                 }
                 returnString.Length = returnString.Length - 2;
             }
-            returnString.Append(") { }\n");
+
+            if (interfaceMethod)
+                returnString.Append(");\n");
+            else
+                returnString.Append(") { }\n");
 
             return returnString.ToString();
         }

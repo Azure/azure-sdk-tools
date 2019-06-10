@@ -1,4 +1,5 @@
 ﻿using Microsoft.CodeAnalysis;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Text;
@@ -24,10 +25,10 @@ namespace TypeList
             this.name = symbol.Name;
             this.type = symbol.TypeKind.ToString().ToLower();
 
-            Collection<Event> events = new Collection<Event>();
-            Collection<Field> fields = new Collection<Field>();
-            Collection<Method> methods = new Collection<Method>();
-            Collection<NamedType> namedTypes = new Collection<NamedType>();
+            List<Event> events = new List<Event>();
+            List<Field> fields = new List<Field>();
+            List<Method> methods = new List<Method>();
+            List<NamedType> namedTypes = new List<NamedType>();
 
             foreach (var memberSymbol in symbol.GetMembers())
             {
@@ -44,7 +45,12 @@ namespace TypeList
                         break;
 
                     case IMethodSymbol m:
-                        methods.Add(new Method(m));
+                        bool eventMethod = false;
+                        if (m.AssociatedSymbol != null)
+                            eventMethod = m.AssociatedSymbol.Kind == SymbolKind.Event;
+
+                        if (!(m.Name.Equals(".ctor") || eventMethod))
+                            methods.Add(new Method(m));
                         break;
 
                     case INamedTypeSymbol n:

@@ -1,4 +1,5 @@
 ﻿using Microsoft.CodeAnalysis;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -21,8 +22,8 @@ namespace TypeList
         {
             this.name = symbol.Name;
 
-            Collection<NamedType> namedTypes = new Collection<NamedType>();
-            Collection<Namespace> namespaces = new Collection<Namespace>();
+            List<NamedType> namedTypes = new List<NamedType>();
+            List<Namespace> namespaces = new List<Namespace>();
 
             foreach (var memberSymbol in symbol.GetMembers().OfType<INamespaceOrTypeSymbol>())
             {

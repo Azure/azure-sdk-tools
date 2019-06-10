@@ -1,4 +1,5 @@
 ﻿using Microsoft.CodeAnalysis;
+using System.Text;
 
 namespace TypeList
 {
@@ -6,8 +7,9 @@ namespace TypeList
     {
         private readonly string name;
         private readonly string type;
-        private readonly string refKind = RefKind.None.ToString();
-        private readonly object explicitDefaultValue = null;
+
+        private readonly bool hasExplicitDefaultValue;
+        private readonly object explicitDefaultValue;
 
         /// <summary>
         /// Construct a new Parameter instance, represented by the provided symbol.
@@ -17,7 +19,7 @@ namespace TypeList
         {
             this.name = symbol.Name;
             this.type = symbol.ToString();
-            this.refKind = symbol.RefKind.ToString();
+            this.hasExplicitDefaultValue = symbol.HasExplicitDefaultValue;
             if (symbol.HasExplicitDefaultValue)
                 this.explicitDefaultValue = symbol.ExplicitDefaultValue;
         }
@@ -32,9 +34,9 @@ namespace TypeList
             return type;
         }
 
-        public string GetRefKind()
+        public bool HasExplicitDefaultValue()
         {
-            return refKind;
+            return hasExplicitDefaultValue;
         }
 
         public object GetExplicitDefaultValue()
@@ -44,13 +46,15 @@ namespace TypeList
 
         public override string ToString()
         {
-            string returnString = "";
-            if (refKind != RefKind.None.ToString())
-                returnString += refKind + " ";
-            returnString += type + " " + name;
-            if (explicitDefaultValue != null)
-                returnString += " = " + explicitDefaultValue;
-            return returnString;
+            StringBuilder returnString = new StringBuilder(type + " " + name);
+            if (hasExplicitDefaultValue)
+            {
+                if (explicitDefaultValue.GetType().Name.Equals("String"))
+                    returnString.Append(" = \"" + explicitDefaultValue + "\"");
+                else
+                    returnString.Append(" = " + explicitDefaultValue);
+            }
+            return returnString.ToString();
         }
     }
 }

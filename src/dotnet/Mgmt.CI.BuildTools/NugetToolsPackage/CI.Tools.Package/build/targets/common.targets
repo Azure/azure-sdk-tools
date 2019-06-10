@@ -247,8 +247,6 @@
       <Output TaskParameter="TargetOutputs" ItemName="SdkNuGetPackages" />
     </MSBuild>
   </Target>
-  
- 
 
   <Target Name="DisplayHelp">
     <Message Text="msbuild build.proj /t:Build"/>

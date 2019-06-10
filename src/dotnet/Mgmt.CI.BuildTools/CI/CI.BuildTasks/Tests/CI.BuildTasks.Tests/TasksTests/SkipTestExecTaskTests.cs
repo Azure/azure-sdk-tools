@@ -42,7 +42,7 @@ namespace Tests.CI.BuildTasks.TasksTests
 
             SkipTestExecutionTask ste = new SkipTestExecutionTask(rootDir);
             ste.BuildScope = @"SDKs\Advisor";
-            ste.SkipTestExecution = true;
+            ste.ExcludeFromTestExecution = true;
             ste.ProjectType = "Test";
             Assert.True(ste.Execute());
         }
@@ -58,7 +58,7 @@ namespace Tests.CI.BuildTasks.TasksTests
             {
                 SkipTestExecutionTask ste = new SkipTestExecutionTask(rootDir);
                 ste.BuildScope = relativeScopePath;
-                ste.SkipTestExecution = true;
+                ste.ExcludeFromTestExecution = true;
                 ste.ProjectType = "Test";
                 Assert.True(ste.Execute());
             }

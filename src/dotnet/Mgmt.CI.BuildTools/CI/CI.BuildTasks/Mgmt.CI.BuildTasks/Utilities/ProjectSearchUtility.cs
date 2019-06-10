@@ -496,7 +496,11 @@ namespace MS.Az.NetSdk.Build.Utilities
 
         string GetScope(string scope)
         {
-            UtilLogger.LogInfo(MessageImportance.High, "Trying to find valid scope for token '{0}'", scope);
+            if(!string.IsNullOrWhiteSpace(scope))
+            {
+                UtilLogger.LogInfo(MessageImportance.High, "Trying to find valid scope for token '{0}'", scope);
+            }
+            
             string validScope = string.Empty;
 
             // If the provided scope is a fully qualified directory path, we only do one check to see if the path is rooted within the repo root directory path
@@ -535,7 +539,11 @@ namespace MS.Az.NetSdk.Build.Utilities
                 }
             }
 
-            UtilLogger.LogInfo(MessageImportance.High, "ValidScope Found '{0}'", validScope);
+            if(!string.IsNullOrWhiteSpace(validScope))
+            {
+                UtilLogger.LogInfo(MessageImportance.High, "ValidScope Found '{0}'", validScope);
+            }
+            
             return validScope;
         }
 

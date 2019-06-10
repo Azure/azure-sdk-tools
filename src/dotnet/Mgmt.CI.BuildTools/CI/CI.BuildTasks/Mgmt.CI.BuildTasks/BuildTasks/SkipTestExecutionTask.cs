@@ -36,8 +36,8 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks
 
         public string ProjectCategory { get; set; }
 
-        public bool SkipTestExecution { get; set; }
-        public bool SkipBuild { get; set; }
+        public bool ExcludeFromTestExecution { get; set; }
+        public bool ExcludeFromBuild { get; set; }
         //public string RepositoryRootDirPath { get; set; }
         #endregion
 
@@ -126,20 +126,23 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks
         #region private functions
         void UpdateProjects(List<string> projectList)
         {
-            foreach(string projectPath in projectList)
+            foreach (string projectPath in projectList)
             {
                 MsbuildProject msbp = new MsbuildProject(projectPath);
 
-                if(SkipTestExecution == true)
+                if (msbp.IsProjectTestType)
                 {
-                    msbp.AddUpdateProperty(PROPNAME_SKIP_TEST_EXECUTION, "true");
-                }
-                else
-                {
-                    msbp.AddUpdateProperty(PROPNAME_SKIP_TEST_EXECUTION, "false");
+                    if (ExcludeFromTestExecution == true)
+                    {
+                        msbp.AddUpdateProperty(PROPNAME_SKIP_TEST_EXECUTION, "true");
+                    }
+                    else
+                    {
+                        msbp.AddUpdateProperty(PROPNAME_SKIP_TEST_EXECUTION, "false");
+                    }
                 }
 
-                if(SkipBuild == true)
+                if (ExcludeFromBuild == true)
                 {
                     msbp.AddUpdateProperty(PROPNAME_SKIP_BUILD, "true");
                 }

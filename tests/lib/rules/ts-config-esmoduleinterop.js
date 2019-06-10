@@ -1,5 +1,5 @@
 /**
- * @fileoverview Testing the ts-config-strict rule.
+ * @fileoverview Testing the ts-config-esmoduleinterop rule.
  * @author Arpan Laha
  */
 
@@ -143,7 +143,7 @@ ruleTester.run("ts-config-esmoduleinterop", rule, {
       ]
     },
     {
-      // commpilerOptions does not contain strict
+      // commpilerOptions does not contain esModuleInterop
       code: '{"compilerOptions": { "lenient": true }}',
       filename: processJSONFile("tsconfig.json"),
       errors: [
@@ -165,7 +165,7 @@ ruleTester.run("ts-config-esmoduleinterop", rule, {
       ]
     },
     {
-      // example file with compilerOptions.strict set to false
+      // example file with compilerOptions.esModuleInterop set to false
       code: example_tsconfig_bad,
       filename: processJSONFile("tsconfig.json"),
       errors: [

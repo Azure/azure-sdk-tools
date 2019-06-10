@@ -1,5 +1,5 @@
 /**
- * @fileoverview Testing the ts-config-strict rule.
+ * @fileoverview Testing the ts-config-isolatedmodules rule.
  * @author Arpan Laha
  */
 
@@ -145,7 +145,7 @@ ruleTester.run("ts-config-isolatedmodules", rule, {
       ]
     },
     {
-      // commpilerOptions does not contain strict
+      // commpilerOptions does not contain isolatedModules
       code: '{"compilerOptions": { "lenient": true }}',
       filename: processJSONFile("tsconfig.json"),
       errors: [
@@ -167,7 +167,7 @@ ruleTester.run("ts-config-isolatedmodules", rule, {
       ]
     },
     {
-      // example file with compilerOptions.strict set to false
+      // example file with compilerOptions.isolatedModules set to false
       code: example_tsconfig_bad,
       filename: processJSONFile("tsconfig.json"),
       errors: [

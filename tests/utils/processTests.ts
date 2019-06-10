@@ -3,7 +3,7 @@
  * @author Arpan Laha
  */
 
-import { processors } from "../../../src/index";
+import { processors } from "../../src/index";
 
 interface Info {
   preprocess: (text: string) => string[];

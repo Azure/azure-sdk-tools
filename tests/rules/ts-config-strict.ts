@@ -1,11 +1,9 @@
 /**
- * @fileoverview Testing the ts-config-allowsyntheticdefaultimports rule.
+ * @fileoverview Testing the ts-config-strict rule.
  * @author Arpan Laha
  */
 
-"use strict";
-
-import { rule } from "../../../src/rules/ts-config-allowsyntheticdefaultimports";
+import { rule } from "../../src/rules/ts-config-strict";
 import { RuleTester } from "eslint";
 import { processJSON } from "../utils/processTests";
 
@@ -69,7 +67,7 @@ const example_tsconfig_bad = `{
     "importHelpers": true /* Import emit helpers from 'tslib'. */,
 
     /* Strict Type-Checking Options */
-    "strict": true /* Enable all strict type-checking options. */,
+    "strict": false /* Enable all strict type-checking options. */,
     "noImplicitReturns": true /* Report error when not all code paths in function return a value. */,
 
     /* Additional Checks */
@@ -77,7 +75,7 @@ const example_tsconfig_bad = `{
 
     /* Module Resolution Options */
     "moduleResolution": "node" /* Specify module resolution strategy: 'node' (Node.js) or 'classic' (TypeScript pre-1.6). */,
-    "allowSyntheticDefaultImports": false /* Allow default imports from modules with no default export. This does not affect code emit, just typechecking. */,
+    "allowSyntheticDefaultImports": true /* Allow default imports from modules with no default export. This does not affect code emit, just typechecking. */,
     "esModuleInterop": true /* Enables emit interoperability between CommonJS and ES Modules via creation of namespace objects for all imports. Implies 'allowSyntheticDefaultImports'. */,
 
     /* Experimental Options */
@@ -101,11 +99,11 @@ var ruleTester = new RuleTester({
   parser: "@typescript-eslint/parser"
 });
 
-ruleTester.run("ts-config-allowsyntheticdefaultimports", rule, {
+ruleTester.run("ts-config-strict", rule, {
   valid: [
     {
       // only the fields we care about
-      code: '{"compilerOptions": { "allowSyntheticDefaultImports": true }}',
+      code: '{"compilerOptions": { "strict": true }}',
       filename: processJSON("tsconfig.json") as any // this is stupid but it works
     },
     {
@@ -115,7 +113,7 @@ ruleTester.run("ts-config-allowsyntheticdefaultimports", rule, {
     },
     {
       // incorrect format but in a file we don't care about
-      code: '{"compilerOptions": { "allowSyntheticDefaultImports": false }}',
+      code: '{"compilerOptions": { "strict": false }}',
       filename: processJSON("not_tsconfig.json") as any
     }
   ],
@@ -132,8 +130,7 @@ ruleTester.run("ts-config-allowsyntheticdefaultimports", rule, {
     },
     {
       // commpilerOptions is in a nested object
-      code:
-        '{"outer": {"compilerOptions": { "allowSyntheticDefaultImports": true }}}',
+      code: '{"outer": {"compilerOptions": { "strict": true }}}',
       filename: processJSON("tsconfig.json") as any,
       errors: [
         {
@@ -143,35 +140,34 @@ ruleTester.run("ts-config-allowsyntheticdefaultimports", rule, {
       ]
     },
     {
-      // commpilerOptions does not contain allowSyntheticDefaultImports
+      // commpilerOptions does not contain strict
       code: '{"compilerOptions": { "lenient": true }}',
       filename: processJSON("tsconfig.json") as any,
       errors: [
         {
-          message:
-            "tsconfig.json: allowSyntheticDefaultImports is not a member of compilerOptions"
+          message: "tsconfig.json: strict is not a member of compilerOptions"
         }
       ]
     },
     {
       // only the fields we care about
-      code: '{"compilerOptions": { "allowSyntheticDefaultImports": false }}',
+      code: '{"compilerOptions": { "strict": false }}',
       filename: processJSON("tsconfig.json") as any,
       errors: [
         {
           message:
-            "tsconfig.json: compilerOptions.allowSyntheticDefaultImports is set to false when it should be set to true"
+            "tsconfig.json: compilerOptions.strict is set to false when it should be set to true"
         }
       ]
     },
     {
-      // example file with compilerOptions.allowSyntheticDefaultImports set to false
+      // example file with compilerOptions.strict set to false
       code: example_tsconfig_bad,
       filename: processJSON("tsconfig.json") as any,
       errors: [
         {
           message:
-            "tsconfig.json: compilerOptions.allowSyntheticDefaultImports is set to false when it should be set to true"
+            "tsconfig.json: compilerOptions.strict is set to false when it should be set to true"
         }
       ]
     }

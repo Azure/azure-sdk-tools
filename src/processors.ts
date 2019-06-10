@@ -3,7 +3,7 @@
  * @author Arpan Laha
  */
 
-export default {
+export const processors = {
   ".json": {
     preprocess: function(text: string): string[] {
       const code = "const json = " + text;

@@ -1,4 +1,4 @@
-export default {
+export const configs = {
   recommended: {
     plugins: ["azure"],
     env: ["node"],

@@ -31,12 +31,10 @@
     "@typescript-eslint/typescript-estree": "^1.9.0",
     "eslint": "^5.16.0",
     "mocha": "^6.1.4",
-    "prettier": "^1.17.1",
-    "ts-mocha": "^6.0.0",
-    "typescript-require": "^0.2.10"
+    "ts-mocha": "^6.0.0"
   },
   "engines": {
     "node": ">=0.10.0"
   },
-  "license": "ISC"
+  "license": "MIT"
 }

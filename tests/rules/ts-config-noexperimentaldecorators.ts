@@ -3,11 +3,9 @@
  * @author Arpan Laha
  */
 
-"use strict";
-
-var rule = require("../../../lib/rules/ts-config-no-experimentaldecorators");
-var RuleTester = require("eslint").RuleTester;
-var processJSONFile = require("../utils/processTests");
+import { rule } from "../../src/rules/ts-config-no-experimentaldecorators";
+import { RuleTester } from "eslint";
+import { processJSON } from "../utils/processTests";
 
 //------------------------------------------------------------------------------
 // Example files
@@ -107,28 +105,28 @@ ruleTester.run("ts-config-no-experimentaldecorators", rule, {
     {
       // only the fields we care about
       code: '{"compilerOptions": { "experimentalDecorators": false }}',
-      filename: processJSONFile("tsconfig.json") // this is stupid but it works
+      filename: processJSON("tsconfig.json") as any // this is stupid but it works
     },
     {
       // a full example tsconfig.json (taken from https://github.com/Azure/azure-sdk-for-js/blob/master/sdk/eventhub/event-hubs/tsconfig.json)
       code: example_tsconfig_good,
-      filename: processJSONFile("tsconfig.json")
+      filename: processJSON("tsconfig.json") as any
     },
     {
       // incorrect format but in a file we don't care about
       code: '{"compilerOptions": { "experimentalDecorators": true }}',
-      filename: processJSONFile("not_tsconfig.json")
+      filename: processJSON("not_tsconfig.json") as any
     },
     {
       // field not provided
       code: '{"compilerOptions": {}}',
-      filename: processJSONFile("tsconfig.json")
+      filename: processJSON("tsconfig.json") as any
     }
   ],
   invalid: [
     {
       code: '{"notCompilerOptions": {}}',
-      filename: processJSONFile("tsconfig.json"),
+      filename: processJSON("tsconfig.json") as any,
       errors: [
         {
           message:
@@ -140,7 +138,7 @@ ruleTester.run("ts-config-no-experimentaldecorators", rule, {
       // commpilerOptions is in a nested object
       code:
         '{"outer": {"compilerOptions": { "experimentalDecorators": false }}}',
-      filename: processJSONFile("tsconfig.json"),
+      filename: processJSON("tsconfig.json") as any,
       errors: [
         {
           message:
@@ -151,7 +149,7 @@ ruleTester.run("ts-config-no-experimentaldecorators", rule, {
     {
       // only the fields we care about
       code: '{"compilerOptions": { "experimentalDecorators": true }}',
-      filename: processJSONFile("tsconfig.json"),
+      filename: processJSON("tsconfig.json") as any,
       errors: [
         {
           message:
@@ -162,7 +160,7 @@ ruleTester.run("ts-config-no-experimentaldecorators", rule, {
     {
       // example file with compilerOptions.experimentalDecorators set to true
       code: example_tsconfig_bad,
-      filename: processJSONFile("tsconfig.json"),
+      filename: processJSON("tsconfig.json") as any,
       errors: [
         {
           message:

@@ -10,6 +10,7 @@ import { rule as tsConfigForceConsistentCasingInFileNames } from "./ts-config-fo
 import { rule as tsConfigImportHelpers } from "./ts-config-importhelpers";
 import { rule as tsConfigIsolatedModules } from "./ts-config-isolatedmodules";
 import { rule as tsConfigModule } from "./ts-config-module";
+import { rule as tsConfigNoExperimentalDecorators } from "./ts-config-no-experimentaldecorators";
 import { rule as tsConfigStrict } from "./ts-config-strict";
 
 export const rules = {
@@ -20,5 +21,6 @@ export const rules = {
   "ts-config-importhelpers": tsConfigImportHelpers,
   "ts-config-isolatedmodules": tsConfigIsolatedModules,
   "ts-config-module": tsConfigModule,
+  "ts-config-noexperimentaldecorators": tsConfigNoExperimentalDecorators,
   "ts-config-strict": tsConfigStrict
 };

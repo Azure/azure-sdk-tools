@@ -3,15 +3,14 @@
  * @author Arpan Laha
  */
 
-"use strict";
-
-var structure = require("../utils/structure");
+import { structure } from "../utils/structure";
+import { Rule } from "eslint";
 
 //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
-module.exports = {
+export const rule = {
   meta: {
     type: "problem",
 
@@ -23,10 +22,9 @@ module.exports = {
       url:
         "https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-config-importhelpers"
     },
-    fixable: "code",
     schema: [] // no options
   },
-  create: function(context) {
+  create: function(context: Rule.RuleContext) {
     var checkers = structure(context, {
       outer: "compilerOptions",
       inner: "importHelpers",
@@ -45,6 +43,6 @@ module.exports = {
       // check the node corresponding to compilerOptions.importHelpers to see if it is set to true
       "VariableDeclarator > ObjectExpression > Property[key.value='compilerOptions'] > ObjectExpression > Property[key.value='importHelpers']":
         checkers.innerMatchesExpected
-    };
+    } as Rule.RuleListener;
   }
 };

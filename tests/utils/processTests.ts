@@ -3,7 +3,7 @@
  * @author Arpan Laha
  */
 
-import { processors } from "../../src/index";
+import plugin from "../../src";
 import { Linter } from "eslint";
 
 interface Info {
@@ -13,5 +13,5 @@ interface Info {
 }
 
 export const processJSON = function(fileName: string): Info {
-  return { ...processors[".json"], filename: fileName };
+  return { ...plugin.processors[".json"], filename: fileName };
 };

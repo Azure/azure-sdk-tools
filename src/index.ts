@@ -15,4 +15,4 @@ import { configs } from "./configs";
 // Plugin Definition
 //------------------------------------------------------------------------------
 
-export { rules, processors, configs };
+export = { rules, processors, configs };

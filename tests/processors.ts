@@ -3,7 +3,7 @@
  * @author Arpan Laha
  */
 
-import * as plugin from "../src";
+import plugin from "../src";
 import { assert } from "chai";
 
 /**

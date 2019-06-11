@@ -9,7 +9,7 @@ export = {
       "azure/ts-config-esmoduleinterop": "error",
       "azure/ts-config-forceconsistentcasinginfilenames": "error",
       "azure/ts-config-importhelpers": "error",
-      "azure/ts-config-isolatedmodules": "warning",
+      "azure/ts-config-isolatedmodules": "warn",
       "azure/ts-config-module": "error",
       "azure/ts-config-no-experimentaldecorators": "error",
       "azure/ts-config-strict": "error",

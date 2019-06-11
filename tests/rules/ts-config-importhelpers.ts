@@ -5,7 +5,7 @@
 
 "use strict";
 
-import { rule } from "../../src/rules/ts-config-importhelpers";
+import rule from "../../src/rules/ts-config-importhelpers";
 import { RuleTester } from "eslint";
 import { processJSON } from "../utils/processTests";
 

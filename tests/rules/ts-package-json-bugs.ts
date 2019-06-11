@@ -3,7 +3,7 @@
  * @author Arpan Laha
  */
 
-import { rule } from "../../src/rules/ts-package-json-bugs";
+import rule from "../../src/rules/ts-package-json-bugs";
 import { RuleTester } from "eslint";
 import { processJSON } from "../utils/processTests";
 

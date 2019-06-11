@@ -3,7 +3,7 @@
  * @author Arpan Laha
  */
 
-import { rule } from "../../src/rules/ts-config-isolatedmodules";
+import rule from "../../src/rules/ts-config-isolatedmodules";
 import { RuleTester } from "eslint";
 import { processJSON } from "../utils/processTests";
 

@@ -3,7 +3,7 @@
  * @author Arpan Laha
  */
 
-import { rule } from "../../src/rules/ts-config-forceconsistentcasinginfilenames";
+import rule from "../../src/rules/ts-config-forceconsistentcasinginfilenames";
 import { RuleTester } from "eslint";
 import { processJSON } from "../utils/processTests";
 

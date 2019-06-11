@@ -11,14 +11,23 @@
     "eslint-plugin-azure"
   ],
   "author": "Arpan Laha",
-  "main": "dist/src/index.js",
-  "scripts": {
-    "format": "prettier --write \"./**/*.{ts,json,md}\"",
-    "test": "ts-mocha -p tsconfig.json tests/**/*.ts"
-  },
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/arpanlaha/eslint-plugin-azure"
+  },
+  "bugs": {
+    "url": "https://github.com/arpanlaha/eslint-plugin-azure/issues"
+  },
+  "main": "dist/src/index.js",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "format": "prettier --write \"./**/*.{ts,json,md}\"",
+    "test": "ts-mocha -p tsconfig.json tests/**/*.ts"
   },
   "dependencies": {
     "@types/eslint": "^4.16.6",
@@ -40,6 +49,5 @@
   },
   "engines": {
     "node": ">=0.10.0"
-  },
-  "license": "MIT"
+  }
 }

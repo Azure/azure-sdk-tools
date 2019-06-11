@@ -7,7 +7,7 @@
 
 import rule from "../../src/rules/ts-config-module";
 import { RuleTester } from "eslint";
-import { processJSON } from "../utils/processTests";
+import processJSON from "../utils/processJSON";
 
 //------------------------------------------------------------------------------
 // Example files

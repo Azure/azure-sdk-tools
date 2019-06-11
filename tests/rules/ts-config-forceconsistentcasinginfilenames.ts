@@ -5,7 +5,7 @@
 
 import rule from "../../src/rules/ts-config-forceconsistentcasinginfilenames";
 import { RuleTester } from "eslint";
-import { processJSON } from "../utils/processTests";
+import processJSON from "../utils/processJSON";
 
 //------------------------------------------------------------------------------
 // Example files

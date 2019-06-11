@@ -15,7 +15,7 @@ import tsConfigStrict from "./ts-config-strict";
 import tsPackageJsonBugs from "./ts-package-json-bugs";
 import tsPackageJsonRepo from "./ts-package-json-repo";
 
-export const rules = {
+export = {
   "ts-config-allowsyntheticdefaultimports": tsConfigAllowSyntheticDefaultImports,
   "ts-config-declaration": tsConfigDeclaration,
   "ts-config-esmoduleinterop": tsConfigEsModuleInterop,

@@ -5,7 +5,7 @@
 
 import { Linter } from "eslint";
 
-export const processors = {
+export = {
   ".json": {
     preprocess: function(text: string): string[] {
       const code = "const json = " + text;

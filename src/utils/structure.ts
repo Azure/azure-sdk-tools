@@ -45,7 +45,7 @@ export const structure = function(
         }
       }
 
-      context.getFilename() === fileName
+      context.getFilename().replace(/^.*[\\\/]/, "") === fileName
         ? foundOuter
           ? []
           : context.report({
@@ -67,7 +67,7 @@ export const structure = function(
 
       const nodeValue: Literal = node.value as Literal;
 
-      context.getFilename() === fileName
+      context.getFilename().replace(/^.*[\\\/]/, "") === fileName
         ? nodeValue.value === expectedValue
           ? []
           : context.report({
@@ -103,7 +103,7 @@ export const structure = function(
           }
         }
       }
-      context.getFilename() === fileName
+      context.getFilename().replace(/^.*[\\\/]/, "") === fileName
         ? foundInner
           ? []
           : context.report({
@@ -122,7 +122,7 @@ export const structure = function(
 
       let nodeValue: Literal = node.value as Literal;
 
-      context.getFilename() === fileName
+      context.getFilename().replace(/^.*[\\\/]/, "") === fileName
         ? nodeValue.value === expectedValue
           ? []
           : context.report({

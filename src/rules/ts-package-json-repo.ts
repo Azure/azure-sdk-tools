@@ -33,11 +33,8 @@ export = {
     return {
       // callback functions
 
-      // check to see if compilerOptions exists at the outermost level
+      // check to see if repository exists at the outermost level
       "VariableDeclarator > ObjectExpression": checkers.existsInFile,
-
-      // check that repository is a member of compilerOptions
-      "Property[key.value='compilerOptions']": checkers.isMemberOf,
 
       // check the node corresponding to repository to see if it's value is github:Azure/azure-sdk-for-js
       "VariableDeclarator > ObjectExpression > Property[key.value='repository']":

@@ -4,10 +4,11 @@
  */
 
 import { processors } from "../../src/index";
+import { Linter } from "eslint";
 
 interface Info {
   preprocess: (text: string) => string[];
-  postprocess: (messages: string[][]) => string[];
+  postprocess: (messages: Linter.LintMessage[][]) => Linter.LintMessage[];
   filename: string;
 }
 

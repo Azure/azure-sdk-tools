@@ -18,10 +18,7 @@ interface StructureData {
   fileName?: string;
 }
 
-export const structure = function(
-  context: Rule.RuleContext,
-  data: StructureData
-) {
+export = function(context: Rule.RuleContext, data: StructureData) {
   return {
     // check to see if if the outer key exists at the outermost level
     existsInFile: function(node: TSESTree.ObjectExpression) {

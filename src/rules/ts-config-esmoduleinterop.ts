@@ -5,7 +5,7 @@
 
 "use strict";
 
-import { structure } from "../utils/structure";
+import structure from "../utils/structure";
 import { Rule } from "eslint";
 
 //------------------------------------------------------------------------------

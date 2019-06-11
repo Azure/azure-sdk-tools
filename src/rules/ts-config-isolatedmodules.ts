@@ -3,7 +3,7 @@
  * @author Arpan Laha
  */
 
-import { structure } from "../utils/structure";
+import structure from "../utils/structure";
 import { Rule } from "eslint";
 
 //------------------------------------------------------------------------------

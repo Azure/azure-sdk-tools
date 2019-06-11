@@ -70,7 +70,7 @@ namespace TypeList
                     returnString.Append(" = " + value);
             }
 
-            returnString.Append(";\n");
+            returnString.Append(";");
             return returnString.ToString();
         }
 
@@ -87,7 +87,7 @@ namespace TypeList
                 else
                     returnString.Append(" = " + value);
             }
-            returnString.Append(";\n");
+            returnString.Append(";");
             return returnString.ToString();
         }
     }

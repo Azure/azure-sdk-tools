@@ -1,5 +1,4 @@
 ﻿using Microsoft.CodeAnalysis;
-using System.Collections;
 using System.Text;
 
 namespace TypeList

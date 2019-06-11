@@ -1,10 +1,7 @@
 ﻿using Microsoft.CodeAnalysis;
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Collections.ObjectModel;
 using System.Text;
-using System.Threading;
 
 namespace TypeList
 {
@@ -57,11 +54,11 @@ namespace TypeList
                         break;
 
                     case IMethodSymbol m:
-                        bool eventMethod = false;
+                        bool autoMethod = false;
                         if (m.AssociatedSymbol != null)
-                            eventMethod = m.AssociatedSymbol.Kind == SymbolKind.Event;
+                            autoMethod = (m.AssociatedSymbol.Kind == SymbolKind.Event) || (m.AssociatedSymbol.Kind == SymbolKind.Property);
 
-                        if (!(m.Name.Equals(".ctor") || eventMethod))
+                        if (!(m.Name.Equals(".ctor") || autoMethod))
                             methods.Add(new Method(m));
                         break;
 
@@ -162,31 +159,31 @@ namespace TypeList
                 returnString.Length = returnString.Length - 2;
                 returnString.Append(" ");
             }
-            returnString.Append("{\n\n");
+            returnString.Append("{\n");
 
             // add any types declared in this type's body
             foreach (Field f in fields)
             {
-                returnString.Append(indent + f.RenderField(indents + 1) + "\n");
+                returnString.Append(f.RenderField(indents + 1) + "\n");
             }
             foreach (Property p in properties)
             {
-                returnString.Append(indent + p.RenderProperty(indents + 1) + "\n");
+                returnString.Append(p.RenderProperty(indents + 1) + "\n");
             }
             foreach (Event e in events)
             {
-                returnString.Append(indent + e.RenderEvent(indents + 1) + "\n");
+                returnString.Append(e.RenderEvent(indents + 1) + "\n");
             }
             foreach (Method m in methods)
             {
-                returnString.Append(indent + m.RenderMethod(indents + 1) + "\n");
+                returnString.Append(m.RenderMethod(indents + 1) + "\n");
             }
             foreach (NamedType n in namedTypes)
             {
-                returnString.Append(indent + n.RenderNamedType(indents + 1) + "\n");
+                returnString.Append(n.RenderNamedType(indents + 1) + "\n");
             }
 
-            returnString.Append(indent + "}\n");
+            returnString.Append(indent + "}");
 
             return returnString.ToString();
         }
@@ -206,7 +203,7 @@ namespace TypeList
                 returnString.Length = returnString.Length - 2;
                 returnString.Append(" ");
             }
-            returnString.Append("{\n\n");
+            returnString.Append("{\n");
 
             // add any types declared in this type's body
             foreach (Field f in fields)
@@ -230,7 +227,7 @@ namespace TypeList
                 returnString.Append(n.ToString() + "\n");
             }
 
-            returnString.Append("}\n");
+            returnString.Append("}");
 
             return returnString.ToString();
         }

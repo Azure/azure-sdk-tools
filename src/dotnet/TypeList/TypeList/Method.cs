@@ -1,8 +1,6 @@
 ﻿using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Collections.ObjectModel;
 using System.Text;
 
 namespace TypeList
@@ -135,7 +133,7 @@ namespace TypeList
 
             StringBuilder returnString = new StringBuilder(indent);
             if (!attributes.IsEmpty)
-                returnString.Append("[" + attributes[0].AttributeClass.Name + "] ");
+                returnString.Append("[" + attributes[0].AttributeClass.Name + "]\n" + indent);
 
             if (!interfaceMethod)
                 returnString.Append("public");
@@ -176,9 +174,9 @@ namespace TypeList
             }
 
             if (interfaceMethod)
-                returnString.Append(");\n");
+                returnString.Append(");");
             else
-                returnString.Append(") { }\n");
+                returnString.Append(") { }");
 
             return returnString.ToString();
         }
@@ -230,9 +228,9 @@ namespace TypeList
             }
 
             if (interfaceMethod)
-                returnString.Append(");\n");
+                returnString.Append(");");
             else
-                returnString.Append(") { }\n");
+                returnString.Append(") { }");
 
             return returnString.ToString();
         }

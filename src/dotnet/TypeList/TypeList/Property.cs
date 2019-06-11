@@ -49,7 +49,7 @@ namespace TypeList
             StringBuilder returnString = new StringBuilder(indent + "public " + type + " " + name + " { get; ");
             if (hasSet)
                 returnString.Append("set; ");
-            returnString.Append("}\n");
+            returnString.Append("}");
             return returnString.ToString();
         }
 
@@ -58,7 +58,7 @@ namespace TypeList
             StringBuilder returnString = new StringBuilder("public " + type + " " + name + " { get; ");
             if (hasSet)
                 returnString.Append("set; ");
-            returnString.Append("}\n");
+            returnString.Append("}");
             return returnString.ToString();
         }
     }

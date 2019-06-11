@@ -61,7 +61,7 @@ namespace TypeList
             StringBuilder returnString = new StringBuilder("");
 
             if (name.Length != 0)
-                returnString = new StringBuilder(indent + "namespace " + name + " {\n\n");
+                returnString = new StringBuilder(indent + "namespace " + name + " {\n");
 
             foreach (NamedType nt in namedTypes)
             {
@@ -76,7 +76,7 @@ namespace TypeList
             }
 
             if (name.Length != 0)
-                returnString.Append(indent + "}\n");
+                returnString.Append(indent + "}");
 
             return returnString.ToString();
         }
@@ -86,7 +86,7 @@ namespace TypeList
             StringBuilder returnString = new StringBuilder("");
 
             if (name.Length != 0)
-                returnString = new StringBuilder("namespace " + name + " {\n\n");
+                returnString = new StringBuilder("namespace " + name + " {\n");
 
             foreach (NamedType nt in namedTypes)
             {
@@ -98,7 +98,7 @@ namespace TypeList
             }
 
             if (name.Length != 0)
-                returnString.Append("}\n");
+                returnString.Append("}");
 
             return returnString.ToString();
         }

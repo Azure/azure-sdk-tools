@@ -32,13 +32,13 @@ namespace TypeList
             string indent = new string(' ', indents * INDENT_SIZE);
 
             //TODO: determine whether event is EventHandler or other type - and if it has type parameter(s)
-            return indent + "public event EventHandler " + name + ";\n";
+            return indent + "public event EventHandler " + name + ";";
         }
 
         public override string ToString()
         {
             //TODO: determine whether event is EventHandler or other type - and if it has type parameter(s)
-            return "public event EventHandler " + name + ";\n";
+            return "public event EventHandler " + name + ";";
         }
     }
 }

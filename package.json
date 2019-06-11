@@ -13,6 +13,7 @@
   "author": "Arpan Laha",
   "main": "dist/src/index.js",
   "scripts": {
+    "format": "prettier --write \"./**/*.{ts,js,json,md}\"",
     "test": "ts-mocha -p tsconfig.json tests/**/*.ts"
   },
   "repository": {
@@ -34,6 +35,7 @@
     "@types/mocha": "^5.2.7",
     "chai": "^4.2.0",
     "mocha": "^6.1.4",
+    "prettier": "^1.18.2",
     "ts-mocha": "^6.0.0"
   },
   "engines": {

@@ -24,28 +24,20 @@ Add `azure` to the plugins section of your `.eslintrc` configuration file. You c
 
 ```json
 {
-    "plugins": [
-        "azure"
-    ]
+  "plugins": ["azure"]
 }
 ```
-
 
 Then configure the rules you want to use under the rules section.
 
 ```json
 {
-    "rules": {
-        "azure/rule-name": 2
-    }
+  "rules": {
+    "azure/rule-name": 2
+  }
 }
 ```
 
 ## Supported Rules
 
-* Fill in provided rules here
-
-
-
-
-
+- Fill in provided rules here

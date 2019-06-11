@@ -19,14 +19,18 @@
   "bugs": {
     "url": "https://github.com/arpanlaha/eslint-plugin-azure/issues"
   },
-  "main": "dist/src/index.js",
+  "main": "dist/index.js",
   "files": [
     "dist",
-    "README.md",
-    "LICENSE"
+    "LICENSE",
+    "package.json",
+    "README.md"
   ],
   "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "clean": "rimraf dist/",
     "format": "prettier --write \"./**/*.{ts,json,md}\"",
+    "prebuild": "npm run clean",
     "test": "ts-mocha -p tsconfig.json tests/**/*.ts"
   },
   "dependencies": {

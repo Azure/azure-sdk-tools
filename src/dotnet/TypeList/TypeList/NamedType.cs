@@ -7,29 +7,29 @@ namespace TypeList
 {
     public class NamedType
     {
-        private const int INDENT_SIZE = 4;
+        private const int indentSize = 4;
 
-        private readonly string name;
-        private readonly string type;
-        private readonly string enumUnderlyingType = null;
+        private readonly string Name;
+        private readonly string Type;
+        private readonly string EnumUnderlyingType = null;
 
-        private readonly ImmutableArray<Event> events;
-        private readonly ImmutableArray<Field> fields;
-        private readonly ImmutableArray<string> implementations;
-        private readonly ImmutableArray<Method> methods;
-        private readonly ImmutableArray<NamedType> namedTypes;
-        private readonly ImmutableArray<Property> properties;
+        private readonly ImmutableArray<Event> Events;
+        private readonly ImmutableArray<Field> Fields;
+        private readonly ImmutableArray<string> Implementations;
+        private readonly ImmutableArray<Method> Methods;
+        private readonly ImmutableArray<NamedType> NamedTypes;
+        private readonly ImmutableArray<Property> Properties;
 
         /// <summary>
-        /// Construct a new NamedType instance, represented by the provided symbol.
+        /// Construct a new namedType instance, represented by the provided symbol.
         /// </summary>
         /// <param name="symbol">The symbol representing the named type.</param>
         public NamedType(INamedTypeSymbol symbol)
         {
-            this.name = symbol.Name;
-            this.type = symbol.TypeKind.ToString().ToLower();
+            this.Name = symbol.Name;
+            this.Type = symbol.TypeKind.ToString().ToLower();
             if (symbol.EnumUnderlyingType != null)
-                this.enumUnderlyingType = symbol.EnumUnderlyingType.ToDisplayString();
+                this.EnumUnderlyingType = symbol.EnumUnderlyingType.ToDisplayString();
 
             List<Event> events = new List<Event>();
             List<Field> fields = new List<Field>();
@@ -89,70 +89,70 @@ namespace TypeList
                 implementations.Add(stringRep.ToString());
             }
 
-            this.events = events.ToImmutableArray();
-            this.fields = fields.ToImmutableArray();
-            this.implementations = implementations.ToImmutableArray();
-            this.methods = methods.ToImmutableArray();
-            this.namedTypes = namedTypes.ToImmutableArray();
-            this.properties = properties.ToImmutableArray();
+            this.Events = events.ToImmutableArray();
+            this.Fields = fields.ToImmutableArray();
+            this.Implementations = implementations.ToImmutableArray();
+            this.Methods = methods.ToImmutableArray();
+            this.NamedTypes = namedTypes.ToImmutableArray();
+            this.Properties = properties.ToImmutableArray();
         }
 
         public string GetName()
         {
-            return name;
+            return Name;
         }
 
         public string GetNamedType()
         {
-            return type;
+            return Type;
         }
 
         public string GetEnumUnderlyingType()
         {
-            return enumUnderlyingType;
+            return EnumUnderlyingType;
         }
 
         public ImmutableArray<Event> GetEvents()
         {
-            return events;
+            return Events;
         }
 
         public ImmutableArray<Field> GetFields()
         {
-            return fields;
+            return Fields;
         }
 
         public ImmutableArray<string> GetImplementations()
         {
-            return implementations;
+            return Implementations;
         }
 
         public ImmutableArray<Method> GetMethods()
         {
-            return methods;
+            return Methods;
         }
 
         public ImmutableArray<NamedType> GetNamedTypes()
         {
-            return namedTypes;
+            return NamedTypes;
         }
 
         public ImmutableArray<Property> GetProperties()
         {
-            return properties;
+            return Properties;
         }
 
         public string RenderNamedType(int indents = 0)
         {
-            string indent = new string(' ', indents * INDENT_SIZE);
+            string indent = new string(' ', indents * indentSize);
 
-            StringBuilder returnString = new StringBuilder(indent + "public " + type + " " + name + " ");
+            StringBuilder returnString = new StringBuilder(indent + "public " + Type + " " + Name + " ");
 
             // add any implemented types to string
-            if (implementations.Length > 0)
+            if (Implementations.Length > 0)
             {
                 returnString.Append(": ");
-                foreach (var i in implementations)
+                foreach (var i in Implementations)
                 {
                     returnString.Append(i + ", ");
                 }
@@ -162,23 +162,23 @@ namespace TypeList
             returnString.Append("{\n");
 
             // add any types declared in this type's body
-            foreach (Field f in fields)
+            foreach (Field f in Fields)
             {
                 returnString.Append(f.RenderField(indents + 1) + "\n");
             }
-            foreach (Property p in properties)
+            foreach (Property p in Properties)
             {
                 returnString.Append(p.RenderProperty(indents + 1) + "\n");
             }
-            foreach (Event e in events)
+            foreach (Event e in Events)
             {
                 returnString.Append(e.RenderEvent(indents + 1) + "\n");
             }
-            foreach (Method m in methods)
+            foreach (Method m in Methods)
             {
                 returnString.Append(m.RenderMethod(indents + 1) + "\n");
             }
-            foreach (NamedType n in namedTypes)
+            foreach (NamedType n in NamedTypes)
             {
                 returnString.Append(n.RenderNamedType(indents + 1) + "\n");
             }
@@ -190,13 +190,13 @@ namespace TypeList
 
         public override string ToString()
         {
-            StringBuilder returnString = new StringBuilder("public " + type + " " + name + " ");
+            StringBuilder returnString = new StringBuilder("public " + Type + " " + Name + " ");
 
             // add any implemented types to string
-            if (implementations.Length > 0)
+            if (Implementations.Length > 0)
             {
                 returnString.Append(": ");
-                foreach (var i in implementations)
+                foreach (var i in Implementations)
                 {
                     returnString.Append(i + ", ");
                 }
@@ -206,23 +206,23 @@ namespace TypeList
             returnString.Append("{\n");
 
             // add any types declared in this type's body
-            foreach (Field f in fields)
+            foreach (Field f in Fields)
             {
                 returnString.Append(f.ToString() + "\n");
             }
-            foreach (Property p in properties)
+            foreach (Property p in Properties)
             {
                 returnString.Append(p.ToString() + "\n");
             }
-            foreach (Event e in events)
+            foreach (Event e in Events)
             {
                 returnString.Append(e.ToString() + "\n");
             }
-            foreach (Method m in methods)
+            foreach (Method m in Methods)
             {
                 returnString.Append(m.ToString() + "\n");
             }
-            foreach (NamedType n in namedTypes)
+            foreach (NamedType n in NamedTypes)
             {
                 returnString.Append(n.ToString() + "\n");
             }

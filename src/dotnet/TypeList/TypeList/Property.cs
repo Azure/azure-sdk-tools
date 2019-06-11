@@ -10,11 +10,11 @@ namespace TypeList
     /// </summary>
     public class Property
     {
-        private const int INDENT_SIZE = 4;
+        private const int indentSize = 4;
 
-        private readonly string name;
-        private readonly string type;
-        private readonly bool hasSet;
+        private readonly string Name;
+        private readonly string Type;
+        private readonly bool HasSet;
 
         /// <summary>
         /// Construct a new Property instance, represented by the provided symbol.
@@ -22,32 +22,32 @@ namespace TypeList
         /// <param name="symbol">The symbol representing the property.</param>
         public Property(IPropertySymbol symbol)
         {
-            this.name = symbol.Name;
-            this.type = symbol.Type.ToString();
-            this.hasSet = symbol.SetMethod != null;
+            this.Name = symbol.Name;
+            this.Type = symbol.Type.ToString();
+            this.HasSet = symbol.SetMethod != null;
         }
 
         public string GetName()
         {
-            return name;
+            return Name;
         }
 
         public string GetPropertyType()
         {
-            return type;
+            return Type;
         }
 
         public bool HasSetMethod()
         {
-            return hasSet;
+            return HasSet;
         }
 
         public string RenderProperty(int indents = 0)
         {
-            string indent = new string(' ', indents * INDENT_SIZE);
+            string indent = new string(' ', indents * indentSize);
 
-            StringBuilder returnString = new StringBuilder(indent + "public " + type + " " + name + " { get; ");
-            if (hasSet)
+            StringBuilder returnString = new StringBuilder(indent + "public " + Type + " " + Name + " { get; ");
+            if (HasSet)
                 returnString.Append("set; ");
             returnString.Append("}");
             return returnString.ToString();
@@ -55,8 +55,8 @@ namespace TypeList
 
         public override string ToString()
         {
-            StringBuilder returnString = new StringBuilder("public " + type + " " + name + " { get; ");
-            if (hasSet)
+            StringBuilder returnString = new StringBuilder("public " + Type + " " + Name + " { get; ");
+            if (HasSet)
                 returnString.Append("set; ");
             returnString.Append("}");
             return returnString.ToString();

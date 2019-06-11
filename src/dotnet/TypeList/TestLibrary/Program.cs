@@ -14,7 +14,7 @@ namespace TestLibrary
             One, Two, Three
         }
 
-        public int publicField = 1;
+        public readonly int publicField = 1;
         public const string publicString = "constant string";
         private int privateField;
         protected int protectedField;
@@ -82,7 +82,7 @@ namespace TestLibrary
         }
     }
 
-    public class SomeEventsSomeFieldsNoMethodsSomeNamedTypes
+    public class SomeEventsSomeFieldsNoMethodsSomenamedTypes
     {
         public string publicField;
         private object privateField;

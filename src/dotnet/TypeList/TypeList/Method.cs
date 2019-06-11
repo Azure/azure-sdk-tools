@@ -13,23 +13,23 @@ namespace TypeList
     /// </summary>
     public class Method
     {
-        private const int INDENT_SIZE = 4;
+        private const int indentSize = 4;
 
-        private readonly IMethodSymbol symbol;
+        private readonly IMethodSymbol Symbol;
 
-        private readonly string name;
-        private readonly string returnType;
+        private readonly string Name;
+        private readonly string ReturnType;
 
-        private readonly bool isStatic;
-        private readonly bool isVirtual;
-        private readonly bool isSealed;
-        private readonly bool isOverride;
-        private readonly bool isAbstract;
-        private readonly bool isExtern;
+        private readonly bool Static;
+        private readonly bool Virtual;
+        private readonly bool Sealed;
+        private readonly bool Override;
+        private readonly bool Abstract;
+        private readonly bool Extern;
 
-        private readonly ImmutableArray<AttributeData> attributes;  //TODO: determine how to obtain all attribute info and display in string
-        private readonly ImmutableArray<Parameter> parameters;
-        private readonly ImmutableArray<TypeParameter> typeParameters;
+        private readonly ImmutableArray<AttributeData> Attributes;  //TODO: determine how to obtain all attribute info and display in string
+        private readonly ImmutableArray<Parameter> Parameters;
+        private readonly ImmutableArray<TypeParameter> TypeParameters;
 
         /// <summary>
         /// Construct a new Method instance, represented by the provided symbol.
@@ -37,22 +37,22 @@ namespace TypeList
         /// <param name="symbol">The symbol representing the method.</param>
         public Method(IMethodSymbol symbol)
         {
-            this.symbol = symbol;
+            this.Symbol = symbol;
 
-            this.name = symbol.Name;
-            this.returnType = symbol.ReturnType.ToString();
+            this.Name = symbol.Name;
+            this.ReturnType = symbol.ReturnType.ToString();
 
-            this.isStatic = symbol.IsStatic;
-            this.isVirtual = symbol.IsVirtual;
-            this.isSealed = symbol.IsSealed;
-            this.isOverride = symbol.IsOverride;
-            this.isAbstract = symbol.IsAbstract;
-            this.isExtern = symbol.IsExtern;
+            this.Static = symbol.IsStatic;
+            this.Virtual = symbol.IsVirtual;
+            this.Sealed = symbol.IsSealed;
+            this.Override = symbol.IsOverride;
+            this.Abstract = symbol.IsAbstract;
+            this.Extern = symbol.IsExtern;
 
-            this.attributes = symbol.GetAttributes();
+            this.Attributes = symbol.GetAttributes();
 #if DEBUG
-            if (attributes.Length > 0)
-                isExtern = false;
+            if (Attributes.Length > 0)
+                Extern = false;
 #endif
             List<TypeParameter> typeParameters = new List<TypeParameter>();
             List<Parameter> parameters = new List<Parameter>();
@@ -66,96 +66,96 @@ namespace TypeList
                 parameters.Add(new Parameter(param));
             }
 
-            this.typeParameters = typeParameters.ToImmutableArray();
-            this.parameters = parameters.ToImmutableArray();
+            this.TypeParameters = typeParameters.ToImmutableArray();
+            this.Parameters = parameters.ToImmutableArray();
         }
 
         public string GetName()
         {
-            return name;
+            return Name;
         }
 
         public string GetReturnType()
         {
-            return returnType;
+            return ReturnType;
         }
 
         public bool IsStatic()
         {
-            return isStatic;
+            return Static;
         }
 
         public bool IsVirtual()
         {
-            return isVirtual;
+            return Virtual;
         }
 
         public bool IsSealed()
         {
-            return isSealed;
+            return Sealed;
         }
 
         public bool IsOverride()
         {
-            return isOverride;
+            return Override;
         }
 
         public bool IsAbstract()
         {
-            return isAbstract;
+            return Abstract;
         }
 
         public bool IsExtern()
         {
-            return isExtern;
+            return Extern;
         }
 
         public ImmutableArray<AttributeData> GetAttributes()
         {
-            return attributes;
+            return Attributes;
         }
 
         public ImmutableArray<Parameter> GetParameters()
         {
-            return parameters;
+            return Parameters;
         }
 
         public ImmutableArray<TypeParameter> GetTypeParameters()
         {
-            return typeParameters;
+            return TypeParameters;
         }
 
         public string RenderMethod(int indents = 0)
         {
-            string indent = new string(' ', indents * INDENT_SIZE);
+            string indent = new string(' ', indents * indentSize);
 
-            bool interfaceMethod = symbol.ContainingType.TypeKind.ToString().ToLower().Equals("interface");
+            bool interfaceMethod = Symbol.ContainingType.TypeKind.ToString().ToLower().Equals("interface");
 
             StringBuilder returnString = new StringBuilder(indent);
-            if (!attributes.IsEmpty)
-                returnString.Append("[" + attributes[0].AttributeClass.Name + "]\n" + indent);
+            if (!Attributes.IsEmpty)
+                returnString.Append("[" + Attributes[0].AttributeClass.Name + "]\n" + indent);
 
             if (!interfaceMethod)
                 returnString.Append("public");
 
-            if (isStatic)
+            if (Static)
                 returnString.Append(" static");
-            if (isVirtual)
+            if (Virtual)
                 returnString.Append(" virtual");
-            if (isSealed)
+            if (Sealed)
                 returnString.Append(" sealed");
-            if (isOverride)
+            if (Override)
                 returnString.Append(" override");
-            if (isAbstract && !interfaceMethod)
+            if (Abstract && !interfaceMethod)
                 returnString.Append(" abstract");
-            if (isExtern)
+            if (Extern)
                 returnString.Append(" extern");
 
-            returnString.Append(" " + returnType + " " + name);
-            if (typeParameters.Length != 0)
+            returnString.Append(" " + ReturnType + " " + Name);
+            if (TypeParameters.Length != 0)
             {
                 returnString.Append("<");
-                foreach (TypeParameter tp in typeParameters)
+                foreach (TypeParameter tp in TypeParameters)
                 {
                     returnString.Append(tp.RenderTypeParameter() + ", ");
                 }
@@ -164,9 +164,9 @@ namespace TypeList
             }
 
             returnString.Append("(");
-            if (parameters.Length != 0)
+            if (Parameters.Length != 0)
             {
-                foreach (Parameter p in parameters)
+                foreach (Parameter p in Parameters)
                 {
                     returnString.Append(p.RenderParameter() + ", ");
                 }
@@ -183,33 +183,33 @@ namespace TypeList
 
         public override string ToString()
         {
-            bool interfaceMethod = symbol.ContainingType.TypeKind.ToString().ToLower().Equals("interface");
+            bool interfaceMethod = Symbol.ContainingType.TypeKind.ToString().ToLower().Equals("interface");
 
             StringBuilder returnString = new StringBuilder("");
-            if (!attributes.IsEmpty)
-                returnString.Append("[" + attributes[0].AttributeClass.Name + "] ");
+            if (!Attributes.IsEmpty)
+                returnString.Append("[" + Attributes[0].AttributeClass.Name + "] ");
 
             if (!interfaceMethod)
                 returnString.Append("public");
 
-            if (isStatic)
+            if (Static)
                 returnString.Append(" static");
-            if (isVirtual)
+            if (Virtual)
                 returnString.Append(" virtual");
-            if (isSealed)
+            if (Sealed)
                 returnString.Append(" sealed");
-            if (isOverride)
+            if (Override)
                 returnString.Append(" override");
-            if (isAbstract && !interfaceMethod)
+            if (Abstract && !interfaceMethod)
                 returnString.Append(" abstract");
-            if (isExtern)
+            if (Extern)
                 returnString.Append(" extern");
 
-            returnString.Append(" " + returnType + " " + name);
-            if (typeParameters.Length != 0)
+            returnString.Append(" " + ReturnType + " " + Name);
+            if (TypeParameters.Length != 0)
             {
                 returnString.Append("<");
-                foreach (TypeParameter tp in typeParameters)
+                foreach (TypeParameter tp in TypeParameters)
                 {
                     returnString.Append(tp.ToString() + ", ");
                 }
@@ -218,9 +218,9 @@ namespace TypeList
             }
 
             returnString.Append("(");
-            if (parameters.Length != 0)
+            if (Parameters.Length != 0)
             {
-                foreach (Parameter p in parameters)
+                foreach (Parameter p in Parameters)
                 {
                     returnString.Append(p.ToString() + ", ");
                 }

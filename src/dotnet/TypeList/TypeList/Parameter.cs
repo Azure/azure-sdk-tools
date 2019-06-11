@@ -5,11 +5,11 @@ namespace TypeList
 {
     public class Parameter
     {
-        private readonly string name;
-        private readonly string type;
+        private readonly string Name;
+        private readonly string Type;
 
-        private readonly bool hasExplicitDefaultValue;
-        private readonly object explicitDefaultValue;
+        private readonly bool HasExplicitDefaultValue;
+        private readonly object ExplicitDefaultValue = null;
 
         /// <summary>
         /// Construct a new Parameter instance, represented by the provided symbol.
@@ -17,56 +17,51 @@ namespace TypeList
         /// <param name="symbol">The symbol representing the parameter.</param>
         public Parameter(IParameterSymbol symbol)
         {
-            this.name = symbol.Name;
-            this.type = symbol.ToString();
+            this.Name = symbol.Name;
+            this.Type = symbol.ToString();
 
-            this.hasExplicitDefaultValue = symbol.HasExplicitDefaultValue;
+            this.HasExplicitDefaultValue = symbol.HasExplicitDefaultValue;
             if (symbol.HasExplicitDefaultValue)
-                this.explicitDefaultValue = symbol.ExplicitDefaultValue;
+                this.ExplicitDefaultValue = symbol.ExplicitDefaultValue;
         }
 
         public string GetName()
         {
-            return name;
+            return Name;
         }
 
         public string GetParameterType()
         {
-            return type;
-        }
-
-        public bool HasExplicitDefaultValue()
-        {
-            return hasExplicitDefaultValue;
+            return Type;
         }
 
         public object GetExplicitDefaultValue()
         {
-            return explicitDefaultValue;
+            return ExplicitDefaultValue;
         }
 
         public string RenderParameter()
         {
-            StringBuilder returnString = new StringBuilder(type + " " + name);
-            if (hasExplicitDefaultValue)
+            StringBuilder returnString = new StringBuilder(Type + " " + Name);
+            if (HasExplicitDefaultValue)
             {
-                if (type.Equals("string"))
-                    returnString.Append(" = \"" + explicitDefaultValue + "\"");
+                if (Type.Equals("string"))
+                    returnString.Append(" = \"" + ExplicitDefaultValue + "\"");
                 else
-                    returnString.Append(" = " + explicitDefaultValue);
+                    returnString.Append(" = " + ExplicitDefaultValue);
             }
             return returnString.ToString();
         }
 
         public override string ToString()
         {
-            StringBuilder returnString = new StringBuilder(type + " " + name);
-            if (hasExplicitDefaultValue)
+            StringBuilder returnString = new StringBuilder(Type + " " + Name);
+            if (HasExplicitDefaultValue)
             {
-                if (type.Equals("string"))
-                    returnString.Append(" = \"" + explicitDefaultValue + "\"");
+                if (Type.Equals("string"))
+                    returnString.Append(" = \"" + ExplicitDefaultValue + "\"");
                 else
-                    returnString.Append(" = " + explicitDefaultValue);
+                    returnString.Append(" = " + ExplicitDefaultValue);
             }
             return returnString.ToString();
         }

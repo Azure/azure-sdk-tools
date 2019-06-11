@@ -6,8 +6,8 @@ namespace TypeList
 {
     public class TypeParameter
     {
-        private readonly string name;
-        private readonly ImmutableArray<AttributeData> attributes;
+        private readonly string Name;
+        private readonly ImmutableArray<AttributeData> Attributes;
 
         /// <summary>
         /// Construct a new TypeParameter instance, represented by the provided symbol.
@@ -15,35 +15,35 @@ namespace TypeList
         /// <param name="symbol">The symbol representing the type parameter.</param>
         public TypeParameter(ITypeParameterSymbol symbol)
         {
-            this.name = symbol.ToString();
-            this.attributes = symbol.GetAttributes();
+            this.Name = symbol.ToString();
+            this.Attributes = symbol.GetAttributes();
         }
 
         public string GetName()
         {
-            return name;
+            return Name;
         }
 
         public ImmutableArray<AttributeData> GetAttributes()
         {
-            return attributes;
+            return Attributes;
         }
 
         public string RenderTypeParameter()
         {
             StringBuilder returnString = new StringBuilder("");
-            if (attributes.Length != 0)
-                returnString.Append(attributes + " ");
-            returnString.Append(name);
+            if (Attributes.Length != 0)
+                returnString.Append(Attributes + " ");
+            returnString.Append(Name);
             return returnString.ToString();
         }
 
         public override string ToString()
         {
             StringBuilder returnString = new StringBuilder("");
-            if (attributes.Length != 0)
-                returnString.Append(attributes + " ");
-            returnString.Append(name);
+            if (Attributes.Length != 0)
+                returnString.Append(Attributes + " ");
+            returnString.Append(Name);
             return returnString.ToString();
         }
     }

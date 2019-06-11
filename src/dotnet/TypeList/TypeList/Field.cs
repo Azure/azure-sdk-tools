@@ -10,13 +10,17 @@ namespace TypeList
     /// </summary>
     public class Field
     {
-        private const int INDENT_SIZE = 4;
+        private const int indentSize = 4;
 
-        private readonly string name;
-        private readonly string type;
+        private readonly string Name;
+        private readonly string Type;
 
-        private readonly bool constant;
-        private readonly object value;
+        private readonly bool Constant;
+        private readonly bool ReadOnly;
+        private readonly bool Static;
+        private readonly bool Volatile;
+        
+        private readonly object Value;
 
         /// <summary>
         /// Construct a new Field instance, represented by the provided symbol.
@@ -24,50 +28,79 @@ namespace TypeList
         /// <param name="symbol">The symbol representing the field.</param>
         public Field(IFieldSymbol symbol)
         {
-            this.name = symbol.Name;
-            this.type = symbol.Type.ToDisplayString();
-            this.constant = symbol.HasConstantValue;
+            this.Name = symbol.Name;
+            this.Type = symbol.Type.ToDisplayString();
+
+            this.Constant = symbol.HasConstantValue;
+            this.ReadOnly = symbol.IsReadOnly;
+            this.Static = symbol.IsStatic;
+            this.Volatile = symbol.IsVolatile;
+
             if (symbol.HasConstantValue)
-                this.value = symbol.ConstantValue;
+                this.Value = symbol.ConstantValue;
         }
 
         public string GetName()
         {
-            return name;
+            return Name;
         }
 
         public string GetFieldType()
         {
-            return type;
+            return Type;
         }
 
         public bool IsConstant()
         {
-            return constant;
+            return Constant;
+        }
+
+        public bool IsReadOnly()
+        {
+            return ReadOnly;
+        }
+
+        public bool IsStatic()
+        {
+            return Static;
+        }
+
+        public bool IsVolatile()
+        {
+            return Volatile;
         }
 
         public object GetValue()
         {
-            return value;
+            return Value;
         }
 
         public string RenderField(int indents = 0)
         {
-            string indent = new string(' ', indents * INDENT_SIZE);
+            string indent = new string(' ', indents * indentSize);
 
             StringBuilder returnString = new StringBuilder(indent + "public");
 
-            if (constant)
+            if (Constant)
                 returnString.Append(" const");
 
-            returnString.Append(" " + type + " " + name);
+            if (Static)
+                returnString.Append(" static");
 
-            if (constant)
+            if (ReadOnly)
+                returnString.Append(" readonly");
+
+            if (Volatile)
+                returnString.Append(" volatile");
+
+            returnString.Append(" " + Type + " " + Name);
+
+            if (Constant)
             {
-                if (value.GetType().Name.Equals("String"))
-                    returnString.Append(" = \"" + value + "\"");
+                if (Value.GetType().Name.Equals("String"))
+                    returnString.Append(" = \"" + Value + "\"");
                 else
-                    returnString.Append(" = " + value);
+                    returnString.Append(" = " + Value);
             }
 
             returnString.Append(";");
@@ -77,16 +110,29 @@ namespace TypeList
         public override string ToString()
         {
             StringBuilder returnString = new StringBuilder("public");
-            if (constant)
+
+            if (Constant)
                 returnString.Append(" const");
-            returnString.Append(" " + type + " " + name);
-            if (constant)
+
+            if (Static)
+                returnString.Append(" static");
+
+            if (ReadOnly)
+                returnString.Append(" readonly");
+
+            if (Volatile)
+                returnString.Append(" volatile");
+
+            returnString.Append(" " + Type + " " + Name);
+
+            if (Constant)
             {
-                if (value.GetType().Name.Equals("String"))
-                    returnString.Append(" = \"" + value + "\"");
+                if (Value.GetType().Name.Equals("String"))
+                    returnString.Append(" = \"" + Value + "\"");
                 else
-                    returnString.Append(" = " + value);
+                    returnString.Append(" = " + Value);
             }
+
             returnString.Append(";");
             return returnString.ToString();
         }

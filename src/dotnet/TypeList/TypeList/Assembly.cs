@@ -12,8 +12,8 @@ namespace TypeList
     /// </summary>
     public class Assembly
     {
-        private readonly string name;
-        private Namespace globalNamespace;
+        private readonly string Name;
+        private Namespace GlobalNamespace;
 
         /// <summary>
         /// Construct a new Assembly instance, represented by the provided symbol.
@@ -21,8 +21,8 @@ namespace TypeList
         /// <param name="symbol">The symbol representing the assembly.</param>
         public Assembly(IAssemblySymbol symbol)
         {
-            this.name = symbol.Name;
-            this.globalNamespace = new Namespace(symbol.GlobalNamespace);
+            this.Name = symbol.Name;
+            this.GlobalNamespace = new Namespace(symbol.GlobalNamespace);
         }
 
         public static List<Assembly> AssembliesFromFile(string dllPath)
@@ -41,22 +41,22 @@ namespace TypeList
 
         public string GetName()
         {
-            return name;
+            return Name;
         }
 
         public Namespace GetGlobalNamespace()
         {
-            return globalNamespace;
+            return GlobalNamespace;
         }
 
         public string RenderAssembly()
         {
-            return globalNamespace.RenderNamespace();
+            return GlobalNamespace.RenderNamespace();
         }
 
         public override string ToString()
         {
-            return "Assembly: " + name + "\n\n" + globalNamespace.ToString();
+            return "Assembly: " + Name + "\n\n" + GlobalNamespace.ToString();
         }
     }
 }

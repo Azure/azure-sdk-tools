@@ -13,7 +13,7 @@
   "author": "Arpan Laha",
   "main": "dist/src/index.js",
   "scripts": {
-    "format": "prettier --write \"./**/*.{ts,js,json,md}\"",
+    "format": "prettier --write \"./**/*.{ts,json,md}\"",
     "test": "ts-mocha -p tsconfig.json tests/**/*.ts"
   },
   "repository": {

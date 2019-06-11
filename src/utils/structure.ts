@@ -18,6 +18,10 @@ interface StructureData {
   fileName?: string;
 }
 
+const stripPath = function(pathOrFileName: string): string {
+  return pathOrFileName.replace(/^.*[\\\/]/, "");
+};
+
 export = function(context: Rule.RuleContext, data: StructureData) {
   return {
     // check to see if if the outer key exists at the outermost level
@@ -42,7 +46,7 @@ export = function(context: Rule.RuleContext, data: StructureData) {
         }
       }
 
-      context.getFilename().replace(/^.*[\\\/]/, "") === fileName
+      stripPath(context.getFilename()) === fileName
         ? foundOuter
           ? []
           : context.report({
@@ -64,7 +68,7 @@ export = function(context: Rule.RuleContext, data: StructureData) {
 
       const nodeValue: Literal = node.value as Literal;
 
-      context.getFilename().replace(/^.*[\\\/]/, "") === fileName
+      stripPath(context.getFilename()) === fileName
         ? nodeValue.value === expectedValue
           ? []
           : context.report({
@@ -100,7 +104,7 @@ export = function(context: Rule.RuleContext, data: StructureData) {
           }
         }
       }
-      context.getFilename().replace(/^.*[\\\/]/, "") === fileName
+      stripPath(context.getFilename()) === fileName
         ? foundInner
           ? []
           : context.report({
@@ -119,7 +123,7 @@ export = function(context: Rule.RuleContext, data: StructureData) {
 
       let nodeValue: Literal = node.value as Literal;
 
-      context.getFilename().replace(/^.*[\\\/]/, "") === fileName
+      stripPath(context.getFilename()) === fileName
         ? nodeValue.value === expectedValue
           ? []
           : context.report({

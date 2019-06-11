@@ -1,4 +1,5 @@
 ﻿using Microsoft.CodeAnalysis;
+using System.Collections;
 using System.Text;
 
 namespace TypeList
@@ -19,6 +20,7 @@ namespace TypeList
         {
             this.name = symbol.Name;
             this.type = symbol.ToString();
+
             this.hasExplicitDefaultValue = symbol.HasExplicitDefaultValue;
             if (symbol.HasExplicitDefaultValue)
                 this.explicitDefaultValue = symbol.ExplicitDefaultValue;
@@ -44,12 +46,25 @@ namespace TypeList
             return explicitDefaultValue;
         }
 
+        public string RenderParameter()
+        {
+            StringBuilder returnString = new StringBuilder(type + " " + name);
+            if (hasExplicitDefaultValue)
+            {
+                if (type.Equals("string"))
+                    returnString.Append(" = \"" + explicitDefaultValue + "\"");
+                else
+                    returnString.Append(" = " + explicitDefaultValue);
+            }
+            return returnString.ToString();
+        }
+
         public override string ToString()
         {
             StringBuilder returnString = new StringBuilder(type + " " + name);
             if (hasExplicitDefaultValue)
             {
-                if (explicitDefaultValue.GetType().Name.Equals("String"))
+                if (type.Equals("string"))
                     returnString.Append(" = \"" + explicitDefaultValue + "\"");
                 else
                     returnString.Append(" = " + explicitDefaultValue);

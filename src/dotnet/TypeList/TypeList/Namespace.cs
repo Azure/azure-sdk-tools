@@ -1,7 +1,6 @@
 ﻿using Microsoft.CodeAnalysis;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 
@@ -9,6 +8,8 @@ namespace TypeList
 {
     public class Namespace
     {
+        private const int INDENT_SIZE = 4;
+
         private readonly string name;
 
         private readonly ImmutableArray<NamedType> namedTypes;
@@ -51,6 +52,33 @@ namespace TypeList
         public ImmutableArray<Namespace> GetNamespaces()
         {
             return namespaces;
+        }
+
+        public string RenderNamespace(int indents = 0)
+        {
+            string indent = new string(' ', indents * INDENT_SIZE);
+
+            StringBuilder returnString = new StringBuilder("");
+
+            if (name.Length != 0)
+                returnString = new StringBuilder(indent + "namespace " + name + " {\n\n");
+
+            foreach (NamedType nt in namedTypes)
+            {
+                returnString.Append(indent + nt.RenderNamedType(indents + 1) + "\n");
+            }
+            foreach (Namespace ns in namespaces)
+            {
+                if (name.Length != 0)
+                    returnString.Append(indent + ns.RenderNamespace(indents + 1) + "\n");
+                else
+                    returnString.Append(indent + ns.RenderNamespace(indents) + "\n");
+            }
+
+            if (name.Length != 0)
+                returnString.Append(indent + "}\n");
+
+            return returnString.ToString();
         }
 
         public override string ToString()

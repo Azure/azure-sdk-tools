@@ -9,6 +9,8 @@ namespace TypeList
     /// </summary>
     public class Event
     {
+        private const int INDENT_SIZE = 4;
+
         private readonly string name;
 
         /// <summary>
@@ -23,6 +25,14 @@ namespace TypeList
         public string GetName()
         {
             return name;
+        }
+
+        public string RenderEvent(int indents = 0)
+        {
+            string indent = new string(' ', indents * INDENT_SIZE);
+
+            //TODO: determine whether event is EventHandler or other type - and if it has type parameter(s)
+            return indent + "public event EventHandler " + name + ";\n";
         }
 
         public override string ToString()

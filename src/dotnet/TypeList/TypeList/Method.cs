@@ -15,6 +15,8 @@ namespace TypeList
     /// </summary>
     public class Method
     {
+        private const int INDENT_SIZE = 4;
+
         private readonly IMethodSymbol symbol;
 
         private readonly string name;
@@ -123,6 +125,62 @@ namespace TypeList
         public ImmutableArray<TypeParameter> GetTypeParameters()
         {
             return typeParameters;
+        }
+
+        public string RenderMethod(int indents = 0)
+        {
+            string indent = new string(' ', indents * INDENT_SIZE);
+
+            bool interfaceMethod = symbol.ContainingType.TypeKind.ToString().ToLower().Equals("interface");
+
+            StringBuilder returnString = new StringBuilder(indent);
+            if (!attributes.IsEmpty)
+                returnString.Append("[" + attributes[0].AttributeClass.Name + "] ");
+
+            if (!interfaceMethod)
+                returnString.Append("public");
+
+            if (isStatic)
+                returnString.Append(" static");
+            if (isVirtual)
+                returnString.Append(" virtual");
+            if (isSealed)
+                returnString.Append(" sealed");
+            if (isOverride)
+                returnString.Append(" override");
+            if (isAbstract && !interfaceMethod)
+                returnString.Append(" abstract");
+            if (isExtern)
+                returnString.Append(" extern");
+
+            returnString.Append(" " + returnType + " " + name);
+            if (typeParameters.Length != 0)
+            {
+                returnString.Append("<");
+                foreach (TypeParameter tp in typeParameters)
+                {
+                    returnString.Append(tp.RenderTypeParameter() + ", ");
+                }
+                returnString.Length = returnString.Length - 2;
+                returnString.Append(">");
+            }
+
+            returnString.Append("(");
+            if (parameters.Length != 0)
+            {
+                foreach (Parameter p in parameters)
+                {
+                    returnString.Append(p.RenderParameter() + ", ");
+                }
+                returnString.Length = returnString.Length - 2;
+            }
+
+            if (interfaceMethod)
+                returnString.Append(");\n");
+            else
+                returnString.Append(") { }\n");
+
+            return returnString.ToString();
         }
 
         public override string ToString()

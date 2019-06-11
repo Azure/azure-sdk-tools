@@ -55,7 +55,9 @@ namespace TypeListTest
          * 
          * NamedType:
          *    NamedType(INamedTypeSymbol symbol):
-         *       symbol.TypeKind: class, interface
+         *       symbol.TypeKind: class, interface, delegate, enum
+         *       symbol declares underlying enum type: yes, no
+         *       symbol declares values for enum entries: yes, no
          *       symbol implements interface: yes, no
          *       events in symbol.GetMembers(): 0, > 0
          *          count: 0, > 0
@@ -67,6 +69,9 @@ namespace TypeListTest
          *          count: 0, > 0
          *          access: public, private, protected, internal, protected internal, private protected
          *       named types in symbol.GetMembers():
+         *          count: 0, > 0
+         *          access: public, private, protected, internal, protected internal, private protected
+         *       properties in symbol.GetMembers():
          *          count: 0, > 0
          *          access: public, private, protected, internal, protected internal, private protected
          * 
@@ -82,6 +87,7 @@ namespace TypeListTest
          *    Parameter(IParameterSymbol symbol):
          *       symbol.Type: has reference type, doesn't have reference type
          *       symbol.HasExplicitDefaultValue: true, false
+         *       symbol.ExplicitDefaultValue.Type: string, other
          *       
          * Property:
          *    Property(IPropertySymbol symbol):
@@ -136,7 +142,13 @@ namespace TypeListTest
             Assert.Equal("TestLibrary", testLibNamespace.GetName());
 
             ImmutableArray<NamedType> classes = testLibNamespace.GetNamedTypes();
-            NamedType publicClass = classes[0];
+            NamedType publicClass = null;
+            foreach (NamedType n in classes)
+            {
+                if (n.GetName().Equals("PublicClass"))
+                    publicClass = n;
+            }
+            Assert.NotNull(publicClass);
             Assert.Equal("PublicClass", publicClass.GetName());
 
             ImmutableArray<Event> events = publicClass.GetEvents();
@@ -159,7 +171,13 @@ namespace TypeListTest
             Assert.Equal("TestLibrary", testLibNamespace.GetName());
 
             ImmutableArray<NamedType> classes = testLibNamespace.GetNamedTypes();
-            NamedType publicClass = classes[0];
+            NamedType publicClass = null;
+            foreach (NamedType n in classes)
+            {
+                if (n.GetName().Equals("PublicClass"))
+                    publicClass = n;
+            }
+            Assert.NotNull(publicClass);
             Assert.Equal("PublicClass", publicClass.GetName());
 
             ImmutableArray<Field> fields = publicClass.GetFields();
@@ -192,7 +210,13 @@ namespace TypeListTest
             Assert.Equal("TestLibrary", testLibNamespace.GetName());
 
             ImmutableArray<NamedType> classes = testLibNamespace.GetNamedTypes();
-            NamedType publicClass = classes[0];
+            NamedType publicClass = null;
+            foreach (NamedType n in classes)
+            {
+                if (n.GetName().Equals("PublicClass"))
+                    publicClass = n;
+            }
+            Assert.NotNull(publicClass);
             Assert.Equal("PublicClass", publicClass.GetName());
 
             ImmutableArray<Field> fields = publicClass.GetFields();
@@ -339,6 +363,7 @@ namespace TypeListTest
             }
             Assert.False(publicClass == null);
             Assert.Equal("SomeEventsSomeFieldsNoMethodsSomeNamedTypes", publicClass.GetName());
+            Assert.Equal("class", publicClass.GetNamedType());
 
             ImmutableArray<Event> events = publicClass.GetEvents();
             Assert.Single(events);
@@ -377,6 +402,7 @@ namespace TypeListTest
             }
             Assert.False(publicInterface == null);
             Assert.Equal("PublicInterface", publicInterface.GetName());
+            Assert.Equal("interface", publicInterface.GetNamedType());
 
             ImmutableArray<Event> events = publicInterface.GetEvents();
             Assert.Empty(events);
@@ -391,6 +417,148 @@ namespace TypeListTest
             Assert.Empty(namedTypes);
 
             Assert.Contains("public interface PublicInterface {", publicInterface.ToString());
+        }
+
+        [Fact]
+        public void NamedTypeTestImplementsInterface()
+        {
+            Assembly assembly = Assembly.AssembliesFromFile("C:\\Users\\t-mcpat\\Documents\\azure-sdk-tools\\artifacts\\bin\\" +
+                "TestLibrary\\Debug\\netstandard2.0\\TestLibrary.dll")[0];
+            Assert.Equal("TestLibrary", assembly.GetName());
+
+            Namespace globalNamespace = assembly.GetGlobalNamespace();
+            ImmutableArray<Namespace> namespaces = globalNamespace.GetNamespaces();
+            Namespace testLibNamespace = namespaces[0];
+            Assert.Equal("TestLibrary", testLibNamespace.GetName());
+
+            ImmutableArray<NamedType> namedTypes = testLibNamespace.GetNamedTypes();
+            NamedType implementer = null;
+
+            foreach (NamedType namedType in namedTypes)
+            {
+                if (namedType.GetName().Equals("ImplementingClass"))
+                    implementer = namedType;
+            }
+            Assert.False(implementer == null);
+            Assert.Equal("ImplementingClass", implementer.GetName());
+            Assert.Equal("class", implementer.GetNamedType());
+
+            ImmutableArray<string> implementations = implementer.GetImplementations();
+            Assert.Single(implementations);
+            Assert.Equal("PublicInterface<int>", implementations[0]);
+
+            Assert.Contains("public class ImplementingClass : PublicInterface<int> {", implementer.ToString());
+        }
+
+        [Fact]
+        public void NamedTypeEnumDefaultUnderlyingType()
+        {
+            Assembly assembly = Assembly.AssembliesFromFile("C:\\Users\\t-mcpat\\Documents\\azure-sdk-tools\\artifacts\\bin\\" +
+                "TestLibrary\\Debug\\netstandard2.0\\TestLibrary.dll")[0];
+            Assert.Equal("TestLibrary", assembly.GetName());
+
+            Namespace globalNamespace = assembly.GetGlobalNamespace();
+            ImmutableArray<Namespace> namespaces = globalNamespace.GetNamespaces();
+            Namespace testLibNamespace = namespaces[0];
+            Assert.Equal("TestLibrary", testLibNamespace.GetName());
+
+            ImmutableArray<NamedType> namedTypes = testLibNamespace.GetNamedTypes();
+            NamedType publicClass = null;
+
+            foreach (NamedType namedType in namedTypes)
+            {
+                if (namedType.GetName().Equals("PublicClass"))
+                    publicClass = namedType;
+            }
+            Assert.False(publicClass == null);
+            Assert.Equal("PublicClass", publicClass.GetName());
+
+            namedTypes = publicClass.GetNamedTypes();
+            NamedType publicEnum = null;
+
+            foreach (NamedType namedType in namedTypes)
+            {
+                if (namedType.GetName().Equals("PublicEnum"))
+                    publicEnum = namedType;
+            }
+            Assert.False(publicEnum == null);
+            Assert.Equal("PublicEnum", publicEnum.GetName());
+            Assert.Equal("enum", publicEnum.GetNamedType());
+            Assert.Equal("int", publicEnum.GetEnumUnderlyingType());
+
+            Assert.Contains("public enum PublicEnum {", publicEnum.ToString());
+            Assert.Contains("One = 0,", publicEnum.ToString());
+            Assert.Contains("Two = 1,", publicEnum.ToString());
+            Assert.Contains("Three = 2", publicEnum.ToString());
+        }
+
+        [Fact]
+        public void NamedTypeEnumDeclaredUnderlyingType()
+        {
+            Assembly assembly = Assembly.AssembliesFromFile("C:\\Users\\t-mcpat\\Documents\\azure-sdk-tools\\artifacts\\bin\\" +
+                "TestLibrary\\Debug\\netstandard2.0\\TestLibrary.dll")[0];
+            Assert.Equal("TestLibrary", assembly.GetName());
+
+            Namespace globalNamespace = assembly.GetGlobalNamespace();
+            ImmutableArray<Namespace> namespaces = globalNamespace.GetNamespaces();
+            Namespace testLibNamespace = namespaces[0];
+            Assert.Equal("TestLibrary", testLibNamespace.GetName());
+
+            ImmutableArray<NamedType> namedTypes = testLibNamespace.GetNamedTypes();
+            NamedType publicClass = null;
+
+            foreach (NamedType namedType in namedTypes)
+            {
+                if (namedType.GetName().Equals("PublicClass"))
+                    publicClass = namedType;
+            }
+            Assert.False(publicClass == null);
+            Assert.Equal("PublicClass", publicClass.GetName());
+
+            namedTypes = publicClass.GetNamedTypes();
+            NamedType publicEnum = null;
+
+            foreach (NamedType namedType in namedTypes)
+            {
+                if (namedType.GetName().Equals("PublicEnum"))
+                    publicEnum = namedType;
+            }
+            Assert.False(publicEnum == null);
+            Assert.Equal("PublicEnum", publicEnum.GetName());
+            Assert.Equal("enum", publicEnum.GetNamedType());
+            Assert.Equal("long", publicEnum.GetEnumUnderlyingType());
+
+            Assert.Contains("public enum PublicEnum : long {", publicEnum.ToString());
+            Assert.Contains("One = 1,", publicEnum.ToString());
+            Assert.Contains("Two = 2,", publicEnum.ToString());
+            Assert.Contains("Three = 3", publicEnum.ToString());
+        }
+
+        [Fact]
+        public void NamedTypeDelegate()
+        {
+            Assembly assembly = Assembly.AssembliesFromFile("C:\\Users\\t-mcpat\\Documents\\azure-sdk-tools\\artifacts\\bin\\" +
+                "TestLibrary\\Debug\\netstandard2.0\\TestLibrary.dll")[0];
+            Assert.Equal("TestLibrary", assembly.GetName());
+
+            Namespace globalNamespace = assembly.GetGlobalNamespace();
+            ImmutableArray<Namespace> namespaces = globalNamespace.GetNamespaces();
+            Namespace testLibNamespace = namespaces[0];
+            Assert.Equal("TestLibrary", testLibNamespace.GetName());
+
+            ImmutableArray<NamedType> namedTypes = testLibNamespace.GetNamedTypes();
+            NamedType publicDelegate = null;
+
+            foreach (NamedType namedType in namedTypes)
+            {
+                if (namedType.GetName().Equals("publicDelegate"))
+                    publicDelegate = namedType;
+            }
+            Assert.False(publicDelegate == null);
+            Assert.Equal("publicDelegate", publicDelegate.GetName());
+            Assert.Equal("delegate", publicDelegate.GetNamedType());
+
+            Assert.Contains("public delegate int publicDelegate(int num = 10);", publicDelegate.ToString());
         }
 
         [Fact]
@@ -433,7 +601,7 @@ namespace TypeListTest
         }
 
         [Fact]
-        public void ParameterTestNoRefKindSomeDefaultValue()
+        public void ParameterTestNoRefKindStringDefaultValue()
         {
             Assembly assembly = Assembly.AssembliesFromFile("C:\\Users\\t-mcpat\\Documents\\azure-sdk-tools\\artifacts\\bin\\" +
                 "TestLibrary\\Debug\\netstandard2.0\\TestLibrary.dll")[0];

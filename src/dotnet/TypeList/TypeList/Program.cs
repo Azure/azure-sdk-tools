@@ -42,7 +42,7 @@ namespace TypeList
                 foreach (var assemblySymbol in compilation.SourceModule.ReferencedAssemblySymbols)
                 {
                     Assembly data = new Assembly(assemblySymbol);
-                    Console.WriteLine(data.ToString());
+                    Console.WriteLine(data.RenderAssembly());
                 }
             }
             catch (Exception e) {

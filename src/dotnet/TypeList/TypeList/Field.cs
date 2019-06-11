@@ -1,6 +1,4 @@
 ﻿using Microsoft.CodeAnalysis;
-using System;
-using System.Collections.Generic;
 using System.Text;
 
 namespace TypeList
@@ -12,6 +10,8 @@ namespace TypeList
     /// </summary>
     public class Field
     {
+        private const int INDENT_SIZE = 4;
+
         private readonly string name;
         private readonly string type;
 
@@ -49,6 +49,29 @@ namespace TypeList
         public object GetValue()
         {
             return value;
+        }
+
+        public string RenderField(int indents = 0)
+        {
+            string indent = new string(' ', indents * INDENT_SIZE);
+
+            StringBuilder returnString = new StringBuilder(indent + "public");
+
+            if (constant)
+                returnString.Append(" const");
+
+            returnString.Append(" " + type + " " + name);
+
+            if (constant)
+            {
+                if (value.GetType().Name.Equals("String"))
+                    returnString.Append(" = \"" + value + "\"");
+                else
+                    returnString.Append(" = " + value);
+            }
+
+            returnString.Append(";\n");
+            return returnString.ToString();
         }
 
         public override string ToString()

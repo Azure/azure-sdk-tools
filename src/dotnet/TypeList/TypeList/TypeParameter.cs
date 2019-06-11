@@ -29,6 +29,15 @@ namespace TypeList
             return attributes;
         }
 
+        public string RenderTypeParameter()
+        {
+            StringBuilder returnString = new StringBuilder("");
+            if (attributes.Length != 0)
+                returnString.Append(attributes + " ");
+            returnString.Append(name);
+            return returnString.ToString();
+        }
+
         public override string ToString()
         {
             StringBuilder returnString = new StringBuilder("");

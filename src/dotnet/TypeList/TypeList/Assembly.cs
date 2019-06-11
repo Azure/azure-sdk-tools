@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
@@ -48,6 +47,11 @@ namespace TypeList
         public Namespace GetGlobalNamespace()
         {
             return globalNamespace;
+        }
+
+        public string RenderAssembly()
+        {
+            return globalNamespace.RenderNamespace();
         }
 
         public override string ToString()

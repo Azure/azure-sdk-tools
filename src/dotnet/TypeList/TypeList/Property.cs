@@ -10,6 +10,8 @@ namespace TypeList
     /// </summary>
     public class Property
     {
+        private const int INDENT_SIZE = 4;
+
         private readonly string name;
         private readonly string type;
         private readonly bool hasSet;
@@ -40,12 +42,23 @@ namespace TypeList
             return hasSet;
         }
 
+        public string RenderProperty(int indents = 0)
+        {
+            string indent = new string(' ', indents * INDENT_SIZE);
+
+            StringBuilder returnString = new StringBuilder(indent + "public " + type + " " + name + " { get; ");
+            if (hasSet)
+                returnString.Append("set; ");
+            returnString.Append("}\n");
+            return returnString.ToString();
+        }
+
         public override string ToString()
         {
             StringBuilder returnString = new StringBuilder("public " + type + " " + name + " { get; ");
             if (hasSet)
                 returnString.Append("set; ");
-            returnString.Append("}");
+            returnString.Append("}\n");
             return returnString.ToString();
         }
     }

@@ -1,17 +1,18 @@
 ﻿#define DEBUG
 using System;
 using System.Diagnostics;
-using System.Net.Http;
-using System.Runtime.InteropServices;
-using System.Threading.Tasks;
+using Assembly = TypeList.Assembly;
 
 namespace TestLibrary
 {
-    public delegate int outerDelegate(int num);
+    public delegate int publicDelegate(int num = 10);
 
     public class PublicClass
     {
-        public delegate int innerDelegate(int num);
+        public enum PublicEnum
+        {
+            One, Two, Three
+        }
 
         public int publicField = 1;
         public const string publicString = "constant string";
@@ -99,7 +100,7 @@ namespace TestLibrary
 
         private void PrivateMethod()
         {
-
+            
         }
 
         protected void ProtectedMethod()
@@ -187,6 +188,11 @@ namespace TestLibrary
 
     public class ImplementingClass : PublicInterface<int>
     {
+        public enum PublicEnum : long
+        {
+            One = 1, Two = 2, Three = 3
+        }
+
         public string RefKindParamMethod(ref string str)
         {
             throw new NotImplementedException();

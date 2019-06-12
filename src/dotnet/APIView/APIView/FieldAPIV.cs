@@ -42,9 +42,6 @@ namespace APIView
         {
             StringBuilder returnString = new StringBuilder("public");
 
-            if (IsConstant)
-                returnString.Append(" const");
-
             if (IsStatic)
                 returnString.Append(" static");
 
@@ -53,6 +50,9 @@ namespace APIView
 
             if (IsVolatile)
                 returnString.Append(" volatile");
+
+            if (IsConstant)
+                returnString.Append(" const");
 
             returnString.Append(" " + Type + " " + Name);
 

@@ -4,6 +4,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using APIView;
 using Xunit;
+using System.Reflection.Metadata;
 
 namespace APIViewTest
 {
@@ -12,32 +13,12 @@ namespace APIViewTest
         [Fact]
         public void MethodTestNoAttributesOneTypeParamMultipleParams()
         {
-            AssemblyAPIV assembly = AssemblyAPIV.AssembliesFromFile("C:\\Users\\t-mcpat\\Documents\\azure-sdk-tools\\artifacts\\bin\\" +
-                "TestLibrary\\Debug\\netstandard2.0\\TestLibrary.dll")[0];
-            Assert.Equal("TestLibrary", assembly.Name);
+            var reference = MetadataReference.CreateFromFile("TestLibrary.dll");
+            var compilation = CSharpCompilation.Create(null).AddReferences(reference);
+            var a = compilation.SourceModule.ReferencedAssemblySymbols[0];
 
-            NamespaceAPIV globalNamespace = assembly.GlobalNamespace;
-            ImmutableArray<NamespaceAPIV> namespaces = globalNamespace.Namespaces;
-            NamespaceAPIV testLibNamespace = namespaces[0];
-            Assert.Equal("TestLibrary", testLibNamespace.Name);
-
-            ImmutableArray<NamedTypeAPIV> namedTypes = testLibNamespace.NamedTypes;
-            NamedTypeAPIV publicInterface = null;
-            foreach (NamedTypeAPIV NamedType in namedTypes)
-            {
-                if (NamedType.Name.Equals("PublicInterface"))
-                    publicInterface = NamedType;
-            }
-            Assert.False(publicInterface == null);
-            Assert.Equal("PublicInterface", publicInterface.Name);
-
-            ImmutableArray<MethodAPIV> methods = publicInterface.Methods;
-            MethodAPIV method = null;
-            foreach (MethodAPIV m in methods)
-            {
-                if (m.Name.Equals("TypeParamParamsMethod"))
-                    method = m;
-            }
+            var methodSymbol = (IMethodSymbol)a.GetTypeByMetadataName("TestLibrary.PublicInterface`1").GetMembers("TypeParamParamsMethod").Single();
+            MethodAPIV method = new MethodAPIV(methodSymbol);
 
             Assert.False(method == null);
             Assert.False(method.IsStatic);
@@ -48,9 +29,25 @@ namespace APIViewTest
             Assert.False(method.IsExtern);
             Assert.Equal("int", method.ReturnType);
 
+            ImmutableArray<AttributeData> attributes = method.Attributes;
+            Assert.Empty(attributes);
+
+            ImmutableArray<ParameterAPIV> parameters = method.Parameters;
+            Assert.Equal(2, parameters.Length);
+
             ImmutableArray<TypeParameterAPIV> typeParameters = method.TypeParameters;
             Assert.Single(typeParameters);
-            Assert.Equal("T", typeParameters[0].Name);
+        }
+
+        [Fact]
+        public void MethodTestNoAttributesOneTypeParamMultipleParamsStringRep()
+        {
+            var reference = MetadataReference.CreateFromFile("TestLibrary.dll");
+            var compilation = CSharpCompilation.Create(null).AddReferences(reference);
+            var a = compilation.SourceModule.ReferencedAssemblySymbols[0];
+
+            var methodSymbol = (IMethodSymbol)a.GetTypeByMetadataName("TestLibrary.PublicInterface`1").GetMembers("TypeParamParamsMethod").Single();
+            MethodAPIV method = new MethodAPIV(methodSymbol);
 
             Assert.Contains("int TypeParamParamsMethod<T>(T param, string str = \"hello\");", method.ToString());
         }
@@ -58,32 +55,12 @@ namespace APIViewTest
         [Fact]
         public void MethodTestOneAttributeNoTypeParamsOneParam()
         {
-            AssemblyAPIV assembly = AssemblyAPIV.AssembliesFromFile("C:\\Users\\t-mcpat\\Documents\\azure-sdk-tools\\artifacts\\bin\\" +
-                "TestLibrary\\Debug\\netstandard2.0\\TestLibrary.dll")[0];
-            Assert.Equal("TestLibrary", assembly.Name);
+            var reference = MetadataReference.CreateFromFile("TestLibrary.dll");
+            var compilation = CSharpCompilation.Create(null).AddReferences(reference);
+            var a = compilation.SourceModule.ReferencedAssemblySymbols[0];
 
-            NamespaceAPIV globalNamespace = assembly.GlobalNamespace;
-            ImmutableArray<NamespaceAPIV> namespaces = globalNamespace.Namespaces;
-            NamespaceAPIV testLibNamespace = namespaces[0];
-            Assert.Equal("TestLibrary", testLibNamespace.Name);
-
-            ImmutableArray<NamedTypeAPIV> NamedTypes = testLibNamespace.NamedTypes;
-            NamedTypeAPIV publicClass = null;
-            foreach (NamedTypeAPIV NamedType in NamedTypes)
-            {
-                if (NamedType.Name.Equals("PublicClass"))
-                    publicClass = NamedType;
-            }
-            Assert.False(publicClass == null);
-            Assert.Equal("PublicClass", publicClass.Name);
-
-            ImmutableArray<MethodAPIV> methods = publicClass.Methods;
-            MethodAPIV method = null;
-            foreach (MethodAPIV m in methods)
-            {
-                if (m.Name.Equals("StaticVoid"))
-                    method = m;
-            }
+            var methodSymbol = (IMethodSymbol)a.GetTypeByMetadataName("TestLibrary.PublicClass").GetMembers("StaticVoid").Single();
+            MethodAPIV method = new MethodAPIV(methodSymbol);
 
             Assert.False(method == null);
             Assert.True(method.IsStatic);
@@ -99,8 +76,20 @@ namespace APIViewTest
 
             ImmutableArray<ParameterAPIV> parameters = method.Parameters;
             Assert.Single(parameters);
-            Assert.Equal("args", parameters[0].Name);
-            Assert.Equal("string[]", parameters[0].Type);
+
+            ImmutableArray<TypeParameterAPIV> typeParameters = method.TypeParameters;
+            Assert.Empty(typeParameters);
+        }
+
+        [Fact]
+        public void MethodTestOneAttributeNoTypeParamsOneParamStringRep()
+        {
+            var reference = MetadataReference.CreateFromFile("TestLibrary.dll");
+            var compilation = CSharpCompilation.Create(null).AddReferences(reference);
+            var a = compilation.SourceModule.ReferencedAssemblySymbols[0];
+
+            var methodSymbol = (IMethodSymbol)a.GetTypeByMetadataName("TestLibrary.PublicClass").GetMembers("StaticVoid").Single();
+            MethodAPIV method = new MethodAPIV(methodSymbol);
 
             string stringRep = method.ToString();
             Assert.Contains("[Conditional(\"DEBUG\")]", stringRep);

@@ -12,23 +12,13 @@ namespace APIViewTest
         [Fact]
         public void NamedTypeTestClassSomeEventsSomeFieldsNoMethodsSomeNamedTypes()
         {
-            AssemblyAPIV assembly = AssemblyAPIV.AssembliesFromFile("C:\\Users\\t-mcpat\\Documents\\azure-sdk-tools\\artifacts\\bin\\" +
-                "TestLibrary\\Debug\\netstandard2.0\\TestLibrary.dll")[0];
-            Assert.Equal("TestLibrary", assembly.Name);
+            var reference = MetadataReference.CreateFromFile("TestLibrary.dll");
+            var compilation = CSharpCompilation.Create(null).AddReferences(reference);
+            var a = compilation.SourceModule.ReferencedAssemblySymbols[0];
 
-            NamespaceAPIV globalNamespace = assembly.GlobalNamespace;
-            ImmutableArray<NamespaceAPIV> namespaces = globalNamespace.Namespaces;
-            NamespaceAPIV testLibNamespace = namespaces[0];
-            Assert.Equal("TestLibrary", testLibNamespace.Name);
+            var namedTypeSymbol = a.GetTypeByMetadataName("TestLibrary.SomeEventsSomeFieldsNoMethodsSomeNamedTypes");
+            NamedTypeAPIV publicClass = new NamedTypeAPIV(namedTypeSymbol);
 
-            ImmutableArray<NamedTypeAPIV> NamedTypes = testLibNamespace.NamedTypes;
-            NamedTypeAPIV publicClass = null;
-
-            foreach (NamedTypeAPIV NamedType in NamedTypes)
-            {
-                if (NamedType.Name.Equals("SomeEventsSomeFieldsNoMethodsSomeNamedTypes"))
-                    publicClass = NamedType;
-            }
             Assert.False(publicClass == null);
             Assert.Equal("SomeEventsSomeFieldsNoMethodsSomeNamedTypes", publicClass.Name);
             Assert.Equal("class", publicClass.Type);
@@ -42,8 +32,19 @@ namespace APIViewTest
             ImmutableArray<MethodAPIV> methods = publicClass.Methods;
             Assert.Empty(methods);
 
-            NamedTypes = publicClass.NamedTypes;
-            Assert.Single(NamedTypes);
+            ImmutableArray<NamedTypeAPIV> namedTypes = publicClass.NamedTypes;
+            Assert.Single(namedTypes);
+        }
+
+        [Fact]
+        public void NamedTypeTestClassSomeEventsSomeFieldsNoMethodsSomeNamedTypesStringRep()
+        {
+            var reference = MetadataReference.CreateFromFile("TestLibrary.dll");
+            var compilation = CSharpCompilation.Create(null).AddReferences(reference);
+            var a = compilation.SourceModule.ReferencedAssemblySymbols[0];
+
+            var namedTypeSymbol = a.GetTypeByMetadataName("TestLibrary.SomeEventsSomeFieldsNoMethodsSomeNamedTypes");
+            NamedTypeAPIV publicClass = new NamedTypeAPIV(namedTypeSymbol);
 
             Assert.Contains("public class SomeEventsSomeFieldsNoMethodsSomeNamedTypes {", publicClass.ToString());
         }
@@ -51,23 +52,13 @@ namespace APIViewTest
         [Fact]
         public void NamedTypeTestInterfaceNoEventsNoFieldsSomeMethodsNoNamedTypes()
         {
-            AssemblyAPIV assembly = AssemblyAPIV.AssembliesFromFile("C:\\Users\\t-mcpat\\Documents\\azure-sdk-tools\\artifacts\\bin\\" +
-                "TestLibrary\\Debug\\netstandard2.0\\TestLibrary.dll")[0];
-            Assert.Equal("TestLibrary", assembly.Name);
+            var reference = MetadataReference.CreateFromFile("TestLibrary.dll");
+            var compilation = CSharpCompilation.Create(null).AddReferences(reference);
+            var a = compilation.SourceModule.ReferencedAssemblySymbols[0];
 
-            NamespaceAPIV globalNamespace = assembly.GlobalNamespace;
-            ImmutableArray<NamespaceAPIV> namespaces = globalNamespace.Namespaces;
-            NamespaceAPIV testLibNamespace = namespaces[0];
-            Assert.Equal("TestLibrary", testLibNamespace.Name);
+            var namedTypeSymbol = a.GetTypeByMetadataName("TestLibrary.PublicInterface`1");
+            NamedTypeAPIV publicInterface = new NamedTypeAPIV(namedTypeSymbol);
 
-            ImmutableArray<NamedTypeAPIV> NamedTypes = testLibNamespace.NamedTypes;
-            NamedTypeAPIV publicInterface = null;
-
-            foreach (NamedTypeAPIV NamedType in NamedTypes)
-            {
-                if (NamedType.Name.Equals("PublicInterface"))
-                    publicInterface = NamedType;
-            }
             Assert.False(publicInterface == null);
             Assert.Equal("PublicInterface", publicInterface.Name);
             Assert.Equal("interface", publicInterface.Type);
@@ -81,8 +72,19 @@ namespace APIViewTest
             ImmutableArray<MethodAPIV> methods = publicInterface.Methods;
             Assert.Equal(2, methods.Length);
 
-            NamedTypes = publicInterface.NamedTypes;
-            Assert.Empty(NamedTypes);
+            ImmutableArray<NamedTypeAPIV> namedTypes = publicInterface.NamedTypes;
+            Assert.Empty(namedTypes);
+        }
+
+        [Fact]
+        public void NamedTypeTestInterfaceNoEventsNoFieldsSomeMethodsNoNamedTypesStringRep()
+        {
+            var reference = MetadataReference.CreateFromFile("TestLibrary.dll");
+            var compilation = CSharpCompilation.Create(null).AddReferences(reference);
+            var a = compilation.SourceModule.ReferencedAssemblySymbols[0];
+
+            var namedTypeSymbol = a.GetTypeByMetadataName("TestLibrary.PublicInterface`1");
+            NamedTypeAPIV publicInterface = new NamedTypeAPIV(namedTypeSymbol);
 
             Assert.Contains("public interface PublicInterface {", publicInterface.ToString());
         }
@@ -90,23 +92,13 @@ namespace APIViewTest
         [Fact]
         public void NamedTypeTestImplementsInterface()
         {
-            AssemblyAPIV assembly = AssemblyAPIV.AssembliesFromFile("C:\\Users\\t-mcpat\\Documents\\azure-sdk-tools\\artifacts\\bin\\" +
-                "TestLibrary\\Debug\\netstandard2.0\\TestLibrary.dll")[0];
-            Assert.Equal("TestLibrary", assembly.Name);
+            var reference = MetadataReference.CreateFromFile("TestLibrary.dll");
+            var compilation = CSharpCompilation.Create(null).AddReferences(reference);
+            var a = compilation.SourceModule.ReferencedAssemblySymbols[0];
 
-            NamespaceAPIV globalNamespace = assembly.GlobalNamespace;
-            ImmutableArray<NamespaceAPIV> namespaces = globalNamespace.Namespaces;
-            NamespaceAPIV testLibNamespace = namespaces[0];
-            Assert.Equal("TestLibrary", testLibNamespace.Name);
+            var namedTypeSymbol = a.GetTypeByMetadataName("TestLibrary.ImplementingClass");
+            NamedTypeAPIV implementer = new NamedTypeAPIV(namedTypeSymbol);
 
-            ImmutableArray<NamedTypeAPIV> NamedTypes = testLibNamespace.NamedTypes;
-            NamedTypeAPIV implementer = null;
-
-            foreach (NamedTypeAPIV NamedType in NamedTypes)
-            {
-                if (NamedType.Name.Equals("ImplementingClass"))
-                    implementer = NamedType;
-            }
             Assert.False(implementer == null);
             Assert.Equal("ImplementingClass", implementer.Name);
             Assert.Equal("class", implementer.Type);
@@ -114,6 +106,17 @@ namespace APIViewTest
             ImmutableArray<string> implementations = implementer.Implementations;
             Assert.Single(implementations);
             Assert.Equal("PublicInterface<int>", implementations[0]);
+        }
+
+        [Fact]
+        public void NamedTypeTestImplementsInterfaceStringRep()
+        {
+            var reference = MetadataReference.CreateFromFile("TestLibrary.dll");
+            var compilation = CSharpCompilation.Create(null).AddReferences(reference);
+            var a = compilation.SourceModule.ReferencedAssemblySymbols[0];
+
+            var namedTypeSymbol = a.GetTypeByMetadataName("TestLibrary.ImplementingClass");
+            NamedTypeAPIV implementer = new NamedTypeAPIV(namedTypeSymbol);
 
             Assert.Contains("public class ImplementingClass : PublicInterface<int> {", implementer.ToString());
         }
@@ -121,81 +124,61 @@ namespace APIViewTest
         [Fact]
         public void NamedTypeEnumDefaultUnderlyingType()
         {
-            AssemblyAPIV assembly = AssemblyAPIV.AssembliesFromFile("C:\\Users\\t-mcpat\\Documents\\azure-sdk-tools\\artifacts\\bin\\" +
-                "TestLibrary\\Debug\\netstandard2.0\\TestLibrary.dll")[0];
-            Assert.Equal("TestLibrary", assembly.Name);
+            var reference = MetadataReference.CreateFromFile("TestLibrary.dll");
+            var compilation = CSharpCompilation.Create(null).AddReferences(reference);
+            var a = compilation.SourceModule.ReferencedAssemblySymbols[0];
 
-            NamespaceAPIV globalNamespace = assembly.GlobalNamespace;
-            ImmutableArray<NamespaceAPIV> namespaces = globalNamespace.Namespaces;
-            NamespaceAPIV testLibNamespace = namespaces[0];
-            Assert.Equal("TestLibrary", testLibNamespace.Name);
+            var namedTypeSymbol = (INamedTypeSymbol)a.GetTypeByMetadataName("TestLibrary.PublicClass").GetMembers("PublicEnum").Single();
+            NamedTypeAPIV publicEnum = new NamedTypeAPIV(namedTypeSymbol);
 
-            ImmutableArray<NamedTypeAPIV> NamedTypes = testLibNamespace.NamedTypes;
-            NamedTypeAPIV publicClass = null;
-
-            foreach (NamedTypeAPIV NamedType in NamedTypes)
-            {
-                if (NamedType.Name.Equals("PublicClass"))
-                    publicClass = NamedType;
-            }
-            Assert.False(publicClass == null);
-            Assert.Equal("PublicClass", publicClass.Name);
-
-            NamedTypes = publicClass.NamedTypes;
-            NamedTypeAPIV publicEnum = null;
-
-            foreach (NamedTypeAPIV NamedType in NamedTypes)
-            {
-                if (NamedType.Name.Equals("PublicEnum"))
-                    publicEnum = NamedType;
-            }
             Assert.False(publicEnum == null);
             Assert.Equal("PublicEnum", publicEnum.Name);
             Assert.Equal("enum", publicEnum.Type);
             Assert.Equal("int", publicEnum.EnumUnderlyingType);
+        }
+        
+        [Fact]
+        public void NamedTypeEnumDefaultUnderlyingTypeStringRep()
+        {
+            var reference = MetadataReference.CreateFromFile("TestLibrary.dll");
+            var compilation = CSharpCompilation.Create(null).AddReferences(reference);
+            var a = compilation.SourceModule.ReferencedAssemblySymbols[0];
+
+            var namedTypeSymbol = (INamedTypeSymbol)a.GetTypeByMetadataName("TestLibrary.PublicClass").GetMembers("PublicEnum").Single();
+            NamedTypeAPIV publicEnum = new NamedTypeAPIV(namedTypeSymbol);
 
             string stringRep = publicEnum.ToString();
-            Assert.Contains("public enum PublicEnum {", stringRep);
+            Assert.Contains("public enum PublicEnumDefault {", stringRep);
             Assert.Contains("One = 0,", stringRep);
             Assert.Contains("Two = 1,", stringRep);
             Assert.Contains("Three = 2", stringRep);
         }
-
+        
         [Fact]
         public void NamedTypeEnumDeclaredUnderlyingType()
         {
-            AssemblyAPIV assembly = AssemblyAPIV.AssembliesFromFile("C:\\Users\\t-mcpat\\Documents\\azure-sdk-tools\\artifacts\\bin\\" +
-                "TestLibrary\\Debug\\netstandard2.0\\TestLibrary.dll")[0];
-            Assert.Equal("TestLibrary", assembly.Name);
+            var reference = MetadataReference.CreateFromFile("TestLibrary.dll");
+            var compilation = CSharpCompilation.Create(null).AddReferences(reference);
+            var a = compilation.SourceModule.ReferencedAssemblySymbols[0];
 
-            NamespaceAPIV globalNamespace = assembly.GlobalNamespace;
-            ImmutableArray<NamespaceAPIV> namespaces = globalNamespace.Namespaces;
-            NamespaceAPIV testLibNamespace = namespaces[0];
-            Assert.Equal("TestLibrary", testLibNamespace.Name);
+            var namedTypeSymbol = (INamedTypeSymbol)a.GetTypeByMetadataName("TestLibrary.ImplementingClass").GetMembers("PublicEnum").Single();
+            NamedTypeAPIV publicEnum = new NamedTypeAPIV(namedTypeSymbol);
 
-            ImmutableArray<NamedTypeAPIV> NamedTypes = testLibNamespace.NamedTypes;
-            NamedTypeAPIV publicClass = null;
-
-            foreach (NamedTypeAPIV NamedType in NamedTypes)
-            {
-                if (NamedType.Name.Equals("PublicClass"))
-                    publicClass = NamedType;
-            }
-            Assert.False(publicClass == null);
-            Assert.Equal("PublicClass", publicClass.Name);
-
-            NamedTypes = publicClass.NamedTypes;
-            NamedTypeAPIV publicEnum = null;
-
-            foreach (NamedTypeAPIV NamedType in NamedTypes)
-            {
-                if (NamedType.Name.Equals("PublicEnum"))
-                    publicEnum = NamedType;
-            }
             Assert.False(publicEnum == null);
             Assert.Equal("PublicEnum", publicEnum.Name);
             Assert.Equal("enum", publicEnum.Type);
             Assert.Equal("long", publicEnum.EnumUnderlyingType);
+        }
+
+        [Fact]
+        public void NamedTypeEnumDeclaredUnderlyingTypeStringRep()
+        {
+            var reference = MetadataReference.CreateFromFile("TestLibrary.dll");
+            var compilation = CSharpCompilation.Create(null).AddReferences(reference);
+            var a = compilation.SourceModule.ReferencedAssemblySymbols[0];
+
+            var namedTypeSymbol = (INamedTypeSymbol)a.GetTypeByMetadataName("TestLibrary.ImplementingClass").GetMembers("PublicEnum").Single();
+            NamedTypeAPIV publicEnum = new NamedTypeAPIV(namedTypeSymbol);
 
             string stringRep = publicEnum.ToString();
             Assert.Contains("public enum PublicEnum : long {", stringRep);
@@ -207,26 +190,27 @@ namespace APIViewTest
         [Fact]
         public void NamedTypeDelegate()
         {
-            AssemblyAPIV assembly = AssemblyAPIV.AssembliesFromFile("C:\\Users\\t-mcpat\\Documents\\azure-sdk-tools\\artifacts\\bin\\" +
-                "TestLibrary\\Debug\\netstandard2.0\\TestLibrary.dll")[0];
-            Assert.Equal("TestLibrary", assembly.Name);
+            var reference = MetadataReference.CreateFromFile("TestLibrary.dll");
+            var compilation = CSharpCompilation.Create(null).AddReferences(reference);
+            var a = compilation.SourceModule.ReferencedAssemblySymbols[0];
 
-            NamespaceAPIV globalNamespace = assembly.GlobalNamespace;
-            ImmutableArray<NamespaceAPIV> namespaces = globalNamespace.Namespaces;
-            NamespaceAPIV testLibNamespace = namespaces[0];
-            Assert.Equal("TestLibrary", testLibNamespace.Name);
+            var namedTypeSymbol = a.GetTypeByMetadataName("TestLibrary.publicDelegate");
+            NamedTypeAPIV publicDelegate = new NamedTypeAPIV(namedTypeSymbol);
 
-            ImmutableArray<NamedTypeAPIV> NamedTypes = testLibNamespace.NamedTypes;
-            NamedTypeAPIV publicDelegate = null;
-
-            foreach (NamedTypeAPIV NamedType in NamedTypes)
-            {
-                if (NamedType.Name.Equals("publicDelegate"))
-                    publicDelegate = NamedType;
-            }
             Assert.False(publicDelegate == null);
             Assert.Equal("publicDelegate", publicDelegate.Name);
             Assert.Equal("delegate", publicDelegate.Type);
+        }
+
+        [Fact]
+        public void NamedTypeDelegateStringRep()
+        {
+            var reference = MetadataReference.CreateFromFile("TestLibrary.dll");
+            var compilation = CSharpCompilation.Create(null).AddReferences(reference);
+            var a = compilation.SourceModule.ReferencedAssemblySymbols[0];
+
+            var namedTypeSymbol = a.GetTypeByMetadataName("TestLibrary.publicDelegate");
+            NamedTypeAPIV publicDelegate = new NamedTypeAPIV(namedTypeSymbol);
 
             Assert.Contains("public delegate int publicDelegate(int num = 10);", publicDelegate.ToString());
         }

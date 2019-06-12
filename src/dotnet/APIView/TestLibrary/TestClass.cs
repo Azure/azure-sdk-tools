@@ -81,7 +81,7 @@ namespace TestLibrary
         }
     }
 
-    public class SomeEventsSomeFieldsNoMethodsSomenamedTypes
+    public class SomeEventsSomeFieldsNoMethodsSomeNamedTypes
     {
         public string publicField;
         private object privateField;

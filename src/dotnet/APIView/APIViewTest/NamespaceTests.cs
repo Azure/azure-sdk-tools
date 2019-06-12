@@ -32,20 +32,28 @@ namespace APIViewTest
             Assert.Equal("TestLibrary", assembly.Name);
 
             NamespaceAPIV globalNamespace = assembly.GlobalNamespace;
+            NamespaceAPIV nestedNamespace = globalNamespace.Namespaces[0];
 
-            ImmutableArray<NamespaceAPIV> namespaces = globalNamespace.Namespaces;
-            Assert.Single(namespaces);
+            Assert.Equal("TestLibrary", nestedNamespace.Name);
 
-            NamespaceAPIV nestednamespace = namespaces[0];
-            Assert.Equal("TestLibrary", nestednamespace.Name);
-
-            ImmutableArray<NamedTypeAPIV> NamedTypes = nestednamespace.NamedTypes;
+            ImmutableArray<NamedTypeAPIV> NamedTypes = nestedNamespace.NamedTypes;
             Assert.NotEmpty(NamedTypes);
 
-            namespaces = nestednamespace.Namespaces;
+            ImmutableArray<NamespaceAPIV> namespaces = nestedNamespace.Namespaces;
             Assert.Empty(namespaces);
+        }
 
-            Assert.Contains("namespace TestLibrary {", nestednamespace.ToString());
+        [Fact]
+        public void NamespaceTestNonGlobalSomeNamedTypesNonamespacesStringRep()
+        {
+            AssemblyAPIV assembly = AssemblyAPIV.AssembliesFromFile("C:\\Users\\t-mcpat\\Documents\\azure-sdk-tools\\artifacts\\bin\\" +
+                "TestLibrary\\Debug\\netstandard2.0\\TestLibrary.dll")[0];
+            Assert.Equal("TestLibrary", assembly.Name);
+
+            NamespaceAPIV globalNamespace = assembly.GlobalNamespace;
+            NamespaceAPIV nestedNamespace = globalNamespace.Namespaces[0];
+
+            Assert.Contains("namespace TestLibrary {", nestedNamespace.ToString());
         }
     }
 }

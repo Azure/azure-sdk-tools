@@ -12,30 +12,29 @@ namespace APIViewTest
         [Fact]
         public void EventTestCreation()
         {
-            AssemblyAPIV assembly = AssemblyAPIV.AssembliesFromFile("C:\\Users\\t-mcpat\\Documents\\azure-sdk-tools\\artifacts\\bin\\" +
-                "TestLibrary\\Debug\\netstandard2.0\\TestLibrary.dll")[0];
-            Assert.Equal("TestLibrary", assembly.Name);
+            var reference = MetadataReference.CreateFromFile("TestLibrary.dll");
+            var compilation = CSharpCompilation.Create(null).AddReferences(reference);
+            var a = compilation.SourceModule.ReferencedAssemblySymbols[0];
 
-            NamespaceAPIV globalNamespace = assembly.GlobalNamespace;
-            ImmutableArray<NamespaceAPIV> namespaces = globalNamespace.Namespaces;
-            NamespaceAPIV testLibNamespace = namespaces[0];
-            Assert.Equal("TestLibrary", testLibNamespace.Name);
+            var eventSymbol = (IEventSymbol)a.GetTypeByMetadataName("TestLibrary.PublicClass").GetMembers("PublicEvent").Single();
+            var e = new EventAPIV(eventSymbol);
 
-            ImmutableArray<NamedTypeAPIV> classes = testLibNamespace.NamedTypes;
-            NamedTypeAPIV publicClass = null;
-            foreach (NamedTypeAPIV n in classes)
-            {
-                if (n.Name.Equals("PublicClass"))
-                    publicClass = n;
-            }
-            Assert.NotNull(publicClass);
-            Assert.Equal("PublicClass", publicClass.Name);
+            Assert.Equal("PublicEvent", e.Name);
 
-            ImmutableArray<EventAPIV> events = publicClass.Events;
-            Assert.Single(events);
-            Assert.Equal("PublicEvent", events[0].Name);
+            Assert.Contains("public event EventHandler PublicEvent;", e.ToString());
+        }
 
-            Assert.Contains("public event EventHandler PublicEvent;", events[0].ToString());
+        [Fact]
+        public void EventTestStringRep()
+        {
+            var reference = MetadataReference.CreateFromFile("TestLibrary.dll");
+            var compilation = CSharpCompilation.Create(null).AddReferences(reference);
+            var a = compilation.SourceModule.ReferencedAssemblySymbols[0];
+
+            var eventSymbol = (IEventSymbol)a.GetTypeByMetadataName("TestLibrary.PublicClass").GetMembers("PublicEvent").Single();
+            var e = new EventAPIV(eventSymbol);
+
+            Assert.Contains("public event EventHandler PublicEvent;", e.ToString());
         }
     }
 }

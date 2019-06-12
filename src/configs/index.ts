@@ -6,7 +6,9 @@
 export = {
   recommended: {
     plugins: ["azure"],
-    env: ["node"],
+    env: {
+      node: true
+    },
     parser: "@typescript-eslint/parser",
     rules: {
       "azure/ts-config-allowsyntheticdefaultimports": "error",

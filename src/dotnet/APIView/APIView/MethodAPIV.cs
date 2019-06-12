@@ -12,7 +12,7 @@ namespace APIView
     /// 
     /// Method is an immutable, thread-safe type.
     /// </summary>
-    public class Method
+    public class MethodAPIV
     {
         public IMethodSymbol Symbol { get; }
 
@@ -27,14 +27,14 @@ namespace APIView
         public bool IsExtern { get; }
 
         public ImmutableArray<AttributeData> Attributes { get; }  //TODO: determine how to obtain all attribute info and display in string
-        public ImmutableArray<Parameter> Parameters { get; }
-        public ImmutableArray<TypeParameter> TypeParameters { get; }
+        public ImmutableArray<ParameterAPIV> Parameters { get; }
+        public ImmutableArray<TypeParameterAPIV> TypeParameters { get; }
 
         /// <summary>
         /// Construct a new Method instance, represented by the provided symbol.
         /// </summary>
         /// <param name="symbol">The symbol representing the method.</param>
-        public Method(IMethodSymbol symbol)
+        public MethodAPIV(IMethodSymbol symbol)
         {
             this.Symbol = symbol;
 
@@ -50,16 +50,16 @@ namespace APIView
 
             this.Attributes = symbol.GetAttributes();
 
-            List<TypeParameter> typeParameters = new List<TypeParameter>();
-            List<Parameter> parameters = new List<Parameter>();
+            List<TypeParameterAPIV> typeParameters = new List<TypeParameterAPIV>();
+            List<ParameterAPIV> parameters = new List<ParameterAPIV>();
 
             foreach (ITypeParameterSymbol typeParam in symbol.TypeParameters)
             {
-                typeParameters.Add(new TypeParameter(typeParam));
+                typeParameters.Add(new TypeParameterAPIV(typeParam));
             }
             foreach (IParameterSymbol param in symbol.Parameters)
             {
-                parameters.Add(new Parameter(param));
+                parameters.Add(new ParameterAPIV(param));
             }
 
             this.TypeParameters = typeParameters.ToImmutableArray();
@@ -94,7 +94,7 @@ namespace APIView
             if (TypeParameters.Length != 0)
             {
                 returnString.Append("<");
-                foreach (TypeParameter tp in TypeParameters)
+                foreach (TypeParameterAPIV tp in TypeParameters)
                 {
                     returnString.Append(tp.ToString() + ", ");
                 }
@@ -105,7 +105,7 @@ namespace APIView
             returnString.Append("(");
             if (Parameters.Length != 0)
             {
-                foreach (Parameter p in Parameters)
+                foreach (ParameterAPIV p in Parameters)
                 {
                     returnString.Append(p.ToString() + ", ");
                 }

@@ -4,16 +4,16 @@ using System.Text;
 
 namespace APIView
 {
-    public class TreeRenderer
+    public class TreeRendererAPIV
     {
         private const int IndentSize = 4;
 
-        public string Render(Assembly assembly)
+        public string Render(AssemblyAPIV assembly)
         {
             return Render(assembly.GlobalNamespace);
         }
 
-        private string Render(Event e, int indents = 0)
+        private string Render(EventAPIV e, int indents = 0)
         {
             string indent = new string(' ', indents * IndentSize);
 
@@ -21,7 +21,7 @@ namespace APIView
             return indent + "public event EventHandler " + e.Name + ";";
         }
 
-        private string Render(Field f, int indents = 0)
+        private string Render(FieldAPIV f, int indents = 0)
         {
             string indent = new string(' ', indents * IndentSize);
 
@@ -53,7 +53,7 @@ namespace APIView
             return returnString.ToString();
         }
 
-        private string Render(Method m, int indents = 0)
+        private string Render(MethodAPIV m, int indents = 0)
         {
             string indent = new string(' ', indents * IndentSize);
 
@@ -83,7 +83,7 @@ namespace APIView
             if (m.TypeParameters.Length != 0)
             {
                 returnString.Append("<");
-                foreach (TypeParameter tp in m.TypeParameters)
+                foreach (TypeParameterAPIV tp in m.TypeParameters)
                 {
                     returnString.Append(Render(tp) + ", ");
                 }
@@ -94,7 +94,7 @@ namespace APIView
             returnString.Append("(");
             if (m.Parameters.Length != 0)
             {
-                foreach (Parameter p in m.Parameters)
+                foreach (ParameterAPIV p in m.Parameters)
                 {
                     returnString.Append(Render(p) + ", ");
                 }
@@ -109,7 +109,7 @@ namespace APIView
             return returnString.ToString();
         }
 
-        private string Render(NamedType nt, int indents = 0)
+        private string Render(NamedTypeAPIV nt, int indents = 0)
         {
             string indent = new string(' ', indents * IndentSize);
 
@@ -129,23 +129,23 @@ namespace APIView
             returnString.Append("{\n");
 
             // add any types declared in this type's body
-            foreach (Field f in nt.Fields)
+            foreach (FieldAPIV f in nt.Fields)
             {
                 returnString.Append(Render(f, indents + 1) + "\n");
             }
-            foreach (Property p in nt.Properties)
+            foreach (PropertyAPIV p in nt.Properties)
             {
                 returnString.Append(Render(p, indents + 1) + "\n");
             }
-            foreach (Event e in nt.Events)
+            foreach (EventAPIV e in nt.Events)
             {
                 returnString.Append(Render(e, indents + 1) + "\n");
             }
-            foreach (Method m in nt.Methods)
+            foreach (MethodAPIV m in nt.Methods)
             {
                 returnString.Append(Render(m, indents + 1) + "\n");
             }
-            foreach (NamedType n in nt.NamedTypes)
+            foreach (NamedTypeAPIV n in nt.NamedTypes)
             {
                 returnString.Append(Render(n, indents + 1) + "\n");
             }
@@ -155,7 +155,7 @@ namespace APIView
             return returnString.ToString();
         }
 
-        private string Render(Namespace ns, int indents = 0)
+        private string Render(NamespaceAPIV ns, int indents = 0)
         {
             string indent = new string(' ', indents * IndentSize);
 
@@ -164,11 +164,11 @@ namespace APIView
             if (ns.Name.Length != 0)
                 returnString = new StringBuilder(indent + "namespace " + ns.Name + " {\n");
 
-            foreach (NamedType nt in ns.NamedTypes)
+            foreach (NamedTypeAPIV nt in ns.NamedTypes)
             {
                 returnString.Append(indent + Render(nt, indents + 1) + "\n");
             }
-            foreach (Namespace n in ns.Namespaces)
+            foreach (NamespaceAPIV n in ns.Namespaces)
             {
                 if (ns.Name.Length != 0)
                     returnString.Append(indent + Render(n, indents + 1) + "\n");
@@ -182,7 +182,7 @@ namespace APIView
             return returnString.ToString();
         }
 
-        private string Render(Parameter p, int indents = 0)
+        private string Render(ParameterAPIV p, int indents = 0)
         {
             StringBuilder returnString = new StringBuilder(p.Type + " " + p.Name);
             if (p.HasExplicitDefaultValue)
@@ -195,7 +195,7 @@ namespace APIView
             return returnString.ToString();
         }
 
-        private string Render(Property p, int indents = 0)
+        private string Render(PropertyAPIV p, int indents = 0)
         {
             string indent = new string(' ', indents * IndentSize);
 
@@ -207,7 +207,7 @@ namespace APIView
             return returnString.ToString();
         }
 
-        private string Render(TypeParameter tp, int indents = 0)
+        private string Render(TypeParameterAPIV tp, int indents = 0)
         {
             StringBuilder returnString = new StringBuilder("");
             if (tp.Attributes.Length != 0)

@@ -3,7 +3,7 @@ using System.Text;
 
 namespace APIView
 {
-    public class Parameter
+    public class ParameterAPIV
     {
         public string Name { get; }
         public string Type { get; }
@@ -15,7 +15,7 @@ namespace APIView
         /// Construct a new Parameter instance, represented by the provided symbol.
         /// </summary>
         /// <param name="symbol">The symbol representing the parameter.</param>
-        public Parameter(IParameterSymbol symbol)
+        public ParameterAPIV(IParameterSymbol symbol)
         {
             this.Name = symbol.Name;
             this.Type = symbol.ToString();

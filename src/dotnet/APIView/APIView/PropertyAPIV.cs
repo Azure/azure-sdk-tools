@@ -8,7 +8,7 @@ namespace APIView
     /// 
     /// Property is an immutable, thread-safe type.
     /// </summary>
-    public class Property
+    public class PropertyAPIV
     {
         public string Name { get; }
         public string Type { get; }
@@ -18,7 +18,7 @@ namespace APIView
         /// Construct a new Property instance, represented by the provided symbol.
         /// </summary>
         /// <param name="symbol">The symbol representing the property.</param>
-        public Property(IPropertySymbol symbol)
+        public PropertyAPIV(IPropertySymbol symbol)
         {
             this.Name = symbol.Name;
             this.Type = symbol.Type.ToString();

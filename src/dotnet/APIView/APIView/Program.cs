@@ -17,8 +17,8 @@ namespace APIView
                 // analyze the provided assembly, and create a unique TypeData instance if this DLL hasn't been given already
                 foreach (var assemblySymbol in compilation.SourceModule.ReferencedAssemblySymbols)
                 {
-                    Assembly data = new Assembly(assemblySymbol);
-                    TreeRenderer tr = new TreeRenderer();
+                    AssemblyAPIV data = new AssemblyAPIV(assemblySymbol);
+                    TreeRendererAPIV tr = new TreeRendererAPIV();
                     Console.WriteLine(tr.Render(data));
                 }
             }

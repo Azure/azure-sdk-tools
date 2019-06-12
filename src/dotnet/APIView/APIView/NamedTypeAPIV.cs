@@ -5,36 +5,36 @@ using System.Text;
 
 namespace APIView
 {
-    public class NamedType
+    public class NamedTypeAPIV
     {
         public string Name { get; }
         public string Type { get; }
         public string EnumUnderlyingType { get; }
 
-        public ImmutableArray<Event> Events { get; }
-        public ImmutableArray<Field> Fields { get; }
+        public ImmutableArray<EventAPIV> Events { get; }
+        public ImmutableArray<FieldAPIV> Fields { get; }
         public ImmutableArray<string> Implementations { get; }
-        public ImmutableArray<Method> Methods { get; }
-        public ImmutableArray<NamedType> NamedTypes { get; }
-        public ImmutableArray<Property> Properties { get; }
+        public ImmutableArray<MethodAPIV> Methods { get; }
+        public ImmutableArray<NamedTypeAPIV> NamedTypes { get; }
+        public ImmutableArray<PropertyAPIV> Properties { get; }
 
         /// <summary>
         /// Construct a new namedType instance, represented by the provided symbol.
         /// </summary>
         /// <param name="symbol">The symbol representing the named type.</param>
-        public NamedType(INamedTypeSymbol symbol)
+        public NamedTypeAPIV(INamedTypeSymbol symbol)
         {
             this.Name = symbol.Name;
             this.Type = symbol.TypeKind.ToString().ToLower();
             if (symbol.EnumUnderlyingType != null)
                 this.EnumUnderlyingType = symbol.EnumUnderlyingType.ToDisplayString();
 
-            List<Event> events = new List<Event>();
-            List<Field> fields = new List<Field>();
+            List<EventAPIV> events = new List<EventAPIV>();
+            List<FieldAPIV> fields = new List<FieldAPIV>();
             List<string> implementations = new List<string>();
-            List<Method> methods = new List<Method>();
-            List<NamedType> namedTypes = new List<NamedType>();
-            List<Property> properties = new List<Property>();
+            List<MethodAPIV> methods = new List<MethodAPIV>();
+            List<NamedTypeAPIV> namedTypes = new List<NamedTypeAPIV>();
+            List<PropertyAPIV> properties = new List<PropertyAPIV>();
 
             // add any types declared in the body of this type to lists
             foreach (var memberSymbol in symbol.GetMembers())
@@ -44,11 +44,11 @@ namespace APIView
                 switch (memberSymbol)
                 {
                     case IEventSymbol e:
-                        events.Add(new Event(e));
+                        events.Add(new EventAPIV(e));
                         break;
 
                     case IFieldSymbol f:
-                        fields.Add(new Field(f));
+                        fields.Add(new FieldAPIV(f));
                         break;
 
                     case IMethodSymbol m:
@@ -57,15 +57,15 @@ namespace APIView
                             autoMethod = (m.AssociatedSymbol.Kind == SymbolKind.Event) || (m.AssociatedSymbol.Kind == SymbolKind.Property);
 
                         if (!(m.Name.Equals(".ctor") || autoMethod))
-                            methods.Add(new Method(m));
+                            methods.Add(new MethodAPIV(m));
                         break;
 
                     case INamedTypeSymbol n:
-                        namedTypes.Add(new NamedType(n));
+                        namedTypes.Add(new NamedTypeAPIV(n));
                         break;
 
                     case IPropertySymbol p:
-                        properties.Add(new Property(p));
+                        properties.Add(new PropertyAPIV(p));
                         break;
                 }
             }
@@ -113,23 +113,23 @@ namespace APIView
             returnString.Append("{\n");
 
             // add any types declared in this type's body
-            foreach (Field f in Fields)
+            foreach (FieldAPIV f in Fields)
             {
                 returnString.Append(f.ToString() + "\n");
             }
-            foreach (Property p in Properties)
+            foreach (PropertyAPIV p in Properties)
             {
                 returnString.Append(p.ToString() + "\n");
             }
-            foreach (Event e in Events)
+            foreach (EventAPIV e in Events)
             {
                 returnString.Append(e.ToString() + "\n");
             }
-            foreach (Method m in Methods)
+            foreach (MethodAPIV m in Methods)
             {
                 returnString.Append(m.ToString() + "\n");
             }
-            foreach (NamedType n in NamedTypes)
+            foreach (NamedTypeAPIV n in NamedTypes)
             {
                 returnString.Append(n.ToString() + "\n");
             }

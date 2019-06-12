@@ -7,31 +7,31 @@ using System.Text;
 
 namespace APIView
 {
-    public class Namespace
+    public class NamespaceAPIV
     {
         public string Name { get; }
 
-        public ImmutableArray<NamedType> NamedTypes { get; }
-        public ImmutableArray<Namespace> Namespaces { get; }
+        public ImmutableArray<NamedTypeAPIV> NamedTypes { get; }
+        public ImmutableArray<NamespaceAPIV> Namespaces { get; }
 
         /// <summary>
         /// Construct a new namespace instance, represented by the provided symbol.
         /// </summary>
         /// <param name="symbol">The symbol representing the namespace.</param>
-        public Namespace(INamespaceSymbol symbol)
+        public NamespaceAPIV(INamespaceSymbol symbol)
         {
             this.Name = symbol.Name;
 
-            List<NamedType> namedTypes = new List<NamedType>();
-            List<Namespace> namespaces = new List<Namespace>();
+            List<NamedTypeAPIV> namedTypes = new List<NamedTypeAPIV>();
+            List<NamespaceAPIV> namespaces = new List<NamespaceAPIV>();
 
             foreach (var memberSymbol in symbol.GetMembers().OfType<INamespaceOrTypeSymbol>())
             {
                 if (memberSymbol.DeclaredAccessibility != Accessibility.Public) continue;
 
-                if (memberSymbol is INamedTypeSymbol nt) namedTypes.Add(new NamedType(nt));
+                if (memberSymbol is INamedTypeSymbol nt) namedTypes.Add(new NamedTypeAPIV(nt));
 
-                else if (memberSymbol is INamespaceSymbol ns) namespaces.Add(new Namespace(ns));
+                else if (memberSymbol is INamespaceSymbol ns) namespaces.Add(new NamespaceAPIV(ns));
             }
 
             this.NamedTypes = namedTypes.ToImmutableArray();
@@ -45,11 +45,11 @@ namespace APIView
             if (Name.Length != 0)
                 returnString = new StringBuilder("namespace " + Name + " {\n");
 
-            foreach (NamedType nt in NamedTypes)
+            foreach (NamedTypeAPIV nt in NamedTypes)
             {
                 returnString.Append(nt.ToString() + "\n");
             }
-            foreach(Namespace ns in Namespaces)
+            foreach(NamespaceAPIV ns in Namespaces)
             {
                 returnString.Append(ns.ToString() + "\n");
             }

@@ -10,32 +10,32 @@ namespace APIView
     /// 
     /// Assembly is an immutable, thread-safe type.
     /// </summary>
-    public class Assembly
+    public class AssemblyAPIV
     {
         public string Name { get; }
-        public Namespace GlobalNamespace { get; }
+        public NamespaceAPIV GlobalNamespace { get; }
 
         /// <summary>
         /// Construct a new Assembly instance, represented by the provided symbol.
         /// </summary>
         /// <param name="symbol">The symbol representing the assembly.</param>
-        public Assembly(IAssemblySymbol symbol)
+        public AssemblyAPIV(IAssemblySymbol symbol)
         {
             this.Name = symbol.Name;
-            this.GlobalNamespace = new Namespace(symbol.GlobalNamespace);
+            this.GlobalNamespace = new NamespaceAPIV(symbol.GlobalNamespace);
         }
 
-        public static List<Assembly> AssembliesFromFile(string dllPath)
+        public static List<AssemblyAPIV> AssembliesFromFile(string dllPath)
         {
             var reference = MetadataReference.CreateFromFile(dllPath);
             var compilation = CSharpCompilation.Create(null).AddReferences(reference);
             compilation = compilation.AddReferences(MetadataReference.CreateFromFile(typeof(object).Assembly.Location));
 
-            List<Assembly> assemblies = new List<Assembly>();
+            List<AssemblyAPIV> assemblies = new List<AssemblyAPIV>();
 
             foreach (var assemblySymbol in compilation.SourceModule.ReferencedAssemblySymbols)
             {
-                assemblies.Add(new Assembly(assemblySymbol));
+                assemblies.Add(new AssemblyAPIV(assemblySymbol));
             }
 
             return assemblies;

@@ -7,7 +7,7 @@ namespace APIView
     /// 
     /// Event is an immutable, thread-safe type.
     /// </summary>
-    public class Event
+    public class EventAPIV
     {
         public string Name { get; }
 
@@ -15,7 +15,7 @@ namespace APIView
         /// Construct a new Event instance, represented by the provided symbol.
         /// </summary>
         /// <param name="symbol">The symbol representing the event.</param>
-        public Event(IEventSymbol symbol)
+        public EventAPIV(IEventSymbol symbol)
         {
             this.Name = symbol.Name;
         }

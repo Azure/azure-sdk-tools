@@ -1,7 +1,6 @@
 # eslint-plugin-azure
 
-Linting rules for the JavaScript/TypeScript Azure SDK - derived from the [Azure SDK Design Guidelines for TypeScript](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html
-).
+Linting rules for the JavaScript/TypeScript Azure SDK - derived from the [Azure SDK Design Guidelines for TypeScript](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html).
 
 ## Installation
 
@@ -33,9 +32,7 @@ For all rules to be enforced according to the standards set by the Design Guidel
 
 ```json
 {
-  "extends": [
-    "plugin:azure/recommended"
-  ]
+  "extends": ["plugin:azure/recommended"]
 }
 ```
 

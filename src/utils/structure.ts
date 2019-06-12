@@ -4,12 +4,7 @@
  */
 
 import { Rule } from "eslint";
-import { TSESTree } from "@typescript-eslint/experimental-utils";
-import {
-  Property,
-  ObjectExpression
-} from "@typescript-eslint/typescript-estree/dist/ts-estree/ts-estree";
-import { Literal } from "estree";
+import { Property, ObjectExpression, Literal } from "estree";
 
 interface StructureData {
   outer: string;
@@ -25,16 +20,12 @@ const stripPath = function(pathOrFileName: string): string {
 export = function(context: Rule.RuleContext, data: StructureData) {
   return {
     // check to see if if the outer key exists at the outermost level
-    existsInFile: function(node: TSESTree.ObjectExpression) {
+    existsInFile: function(node: ObjectExpression) {
       const outer = data.outer;
       const fileName = data.fileName;
 
       const properties: Property[] = node.properties as Property[];
       let foundOuter = false;
-
-      // properties.forEach( function(value :Property, index: number) : void {
-      //   if (element.key && element.key
-      // })
 
       for (const property of properties) {
         if (property.key) {
@@ -61,7 +52,7 @@ export = function(context: Rule.RuleContext, data: StructureData) {
     },
 
     // check to see if the value of the outer key matches the expected value
-    outerMatchesExpected: function(node: TSESTree.Property) {
+    outerMatchesExpected: function(node: Property) {
       const outer = data.outer;
       const expectedValue = data.expectedValue;
       const fileName = data.fileName;
@@ -87,7 +78,7 @@ export = function(context: Rule.RuleContext, data: StructureData) {
     },
 
     // check that the inner key is a member of the outer key
-    isMemberOf: function(node: TSESTree.Property) {
+    isMemberOf: function(node: Property) {
       const outer = data.outer;
       const inner = data.inner;
       const fileName = data.fileName;
@@ -115,7 +106,7 @@ export = function(context: Rule.RuleContext, data: StructureData) {
     },
 
     // check the node corresponding to the inner value to see if it is set to true
-    innerMatchesExpected: function(node: TSESTree.Property) {
+    innerMatchesExpected: function(node: Property) {
       const outer = data.outer;
       const inner = data.inner;
       const expectedValue = data.expectedValue;

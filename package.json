@@ -31,6 +31,7 @@
     "clean": "rimraf dist/",
     "format": "prettier --write \"./**/*.{ts,json,md}\"",
     "prebuild": "npm run clean",
+    "prepublish": "npm test && npm run format && npm run build",
     "test": "ts-mocha -p tsconfig.json tests/**/*.ts"
   },
   "dependencies": {

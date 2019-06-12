@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Text;
 
-namespace TypeList
+namespace APIView
 {
     public class NamedType
     {

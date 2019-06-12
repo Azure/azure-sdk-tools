@@ -1,7 +1,7 @@
 ﻿using Microsoft.CodeAnalysis;
 using System.Text;
 
-namespace TypeList
+namespace APIView
 {
     public class Parameter
     {

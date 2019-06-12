@@ -2,7 +2,7 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
-namespace TypeList
+namespace APIView
 {
     /// <summary>
     /// Class representing a C# assembly. Each assembly has a name and global namespace, 

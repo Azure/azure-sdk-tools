@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Text;
 
-namespace TypeList
+namespace APIView
 {
     /// <summary>
     /// Class representing a C# method. Each method includes a name, return type, attributes, 

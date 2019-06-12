@@ -1,7 +1,7 @@
 ﻿using Microsoft.CodeAnalysis;
 using System.Text;
 
-namespace TypeList
+namespace APIView
 {
     /// <summary>
     /// Class representing a field in a C# class/interface.

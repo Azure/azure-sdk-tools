@@ -5,7 +5,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 
-namespace TypeList
+namespace APIView
 {
     public class Namespace
     {

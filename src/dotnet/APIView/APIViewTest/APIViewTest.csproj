@@ -1,11 +1,8 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.2</TargetFramework>
-    <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
-    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
-    <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
@@ -16,8 +13,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\APIView\APIView.csproj" />
     <ProjectReference Include="..\TestLibrary\TestLibrary.csproj" />
-    <ProjectReference Include="..\TypeList\TypeList.csproj" />
   </ItemGroup>
 
 </Project>

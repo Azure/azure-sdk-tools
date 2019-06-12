@@ -1,6 +1,6 @@
 ﻿using Microsoft.CodeAnalysis;
 
-namespace TypeList
+namespace APIView
 {
     /// <summary>
     /// Class representing a C# event.

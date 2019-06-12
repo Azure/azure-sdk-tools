@@ -4,7 +4,7 @@
  */
 
 import { Rule } from "eslint";
-import { Property, ObjectExpression, Literal } from "estree";
+import { Property, ObjectExpression, Literal, ArrayExpression } from "estree";
 
 interface StructureData {
   outer: string;
@@ -105,7 +105,7 @@ export = function(context: Rule.RuleContext, data: StructureData) {
         : [];
     },
 
-    // check the node corresponding to the inner value to see if it is set to true
+    // check the node corresponding to the inner value to see if it is set to the expected value
     innerMatchesExpected: function(node: Property) {
       const outer = data.outer;
       const inner = data.inner;
@@ -132,6 +132,51 @@ export = function(context: Rule.RuleContext, data: StructureData) {
               }
             } as any)
         : [];
+    },
+
+    // check the node corresponding to the inner value to see if it contains the expected value
+    outerContainsExpected: function(node: Property) {
+      const outer = data.outer;
+      const expectedValue = data.expectedValue;
+      const fileName = data.fileName;
+
+      let nodeValue: ArrayExpression = node.value as ArrayExpression;
+      let candidateArray: Literal[] = nodeValue.elements as Literal[];
+
+      if (expectedValue instanceof Array) {
+        for (const value of expectedValue) {
+          let foundValue: boolean = false;
+          for (const candidate of candidateArray) {
+            if (candidate.value === value) {
+              foundValue = true;
+              break;
+            }
+          }
+
+          if (!foundValue) {
+            context.report({
+              node: node,
+              message: fileName + ": " + outer + " does not contain " + value
+            } as any);
+          }
+        }
+      } else {
+        let foundValue: boolean = false;
+        for (const candidate of candidateArray) {
+          if (candidate.value === expectedValue) {
+            foundValue = true;
+            break;
+          }
+        }
+
+        if (!foundValue) {
+          context.report({
+            node: node,
+            message:
+              fileName + ": " + outer + " does not contain " + expectedValue
+          } as any);
+        }
+      }
     }
   };
 };

@@ -30,7 +30,7 @@ export = {
     var checkers = structure(context, {
       outer: "compilerOptions",
       inner: "esModuleInterop",
-      expectedValue: true,
+      expected: true,
       fileName: "tsconfig.json"
     });
     return {

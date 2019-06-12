@@ -27,7 +27,7 @@ export = {
   create: function(context: Rule.RuleContext) {
     var checkers = structure(context, {
       outer: "repository",
-      expectedValue: "github:Azure/azure-sdk-for-js",
+      expected: "github:Azure/azure-sdk-for-js",
       fileName: "package.json"
     });
     return {

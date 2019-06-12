@@ -28,7 +28,7 @@ export = {
     var checkers = structure(context, {
       outer: "compilerOptions",
       inner: "experimentalDecorators",
-      expectedValue: false,
+      expected: false,
       fileName: "tsconfig.json"
     });
     return {

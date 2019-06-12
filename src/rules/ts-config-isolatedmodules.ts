@@ -28,7 +28,7 @@ export = {
     var checkers = structure(context, {
       outer: "compilerOptions",
       inner: "isolatedModules",
-      expectedValue: true,
+      expected: true,
       fileName: "tsconfig.json"
     });
     return {

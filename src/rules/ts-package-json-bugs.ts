@@ -28,7 +28,7 @@ export = {
     var checkers = structure(context, {
       outer: "bugs",
       inner: "url",
-      expectedValue: "https://github.com/Azure/azure-sdk-for-js/issues",
+      expected: "https://github.com/Azure/azure-sdk-for-js/issues",
       fileName: "package.json"
     });
     return {

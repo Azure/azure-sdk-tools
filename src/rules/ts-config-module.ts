@@ -28,7 +28,7 @@ export = {
     var checkers = structure(context, {
       outer: "compilerOptions",
       inner: "module",
-      expectedValue: "es6",
+      expected: "es6",
       fileName: "tsconfig.json"
     });
     return {

@@ -9,7 +9,7 @@ import { Property, ObjectExpression, Literal, ArrayExpression } from "estree";
 interface StructureData {
   outer: string;
   inner?: string;
-  expectedValue: any;
+  expected: any;
   fileName?: string;
 }
 
@@ -54,13 +54,13 @@ export = function(context: Rule.RuleContext, data: StructureData) {
     // check to see if the value of the outer key matches the expected value
     outerMatchesExpected: function(node: Property) {
       const outer = data.outer;
-      const expectedValue = data.expectedValue;
+      const expected = data.expected;
       const fileName = data.fileName;
 
       const nodeValue: Literal = node.value as Literal;
 
       stripPath(context.getFilename()) === fileName
-        ? nodeValue.value === expectedValue
+        ? nodeValue.value === expected
           ? []
           : context.report({
               node: node,
@@ -69,7 +69,7 @@ export = function(context: Rule.RuleContext, data: StructureData) {
                 ": " +
                 outer +
                 " is set to {{ identifier }} when it should be set to " +
-                expectedValue,
+                expected,
               data: {
                 identifier: nodeValue.value as string
               }
@@ -109,13 +109,13 @@ export = function(context: Rule.RuleContext, data: StructureData) {
     innerMatchesExpected: function(node: Property) {
       const outer = data.outer;
       const inner = data.inner;
-      const expectedValue = data.expectedValue;
+      const expected = data.expected;
       const fileName = data.fileName;
 
       let nodeValue: Literal = node.value as Literal;
 
       stripPath(context.getFilename()) === fileName
-        ? nodeValue.value === expectedValue
+        ? nodeValue.value === expected
           ? []
           : context.report({
               node: node,
@@ -126,7 +126,7 @@ export = function(context: Rule.RuleContext, data: StructureData) {
                 "." +
                 inner +
                 " is set to {{ identifier }} when it should be set to " +
-                expectedValue,
+                expected,
               data: {
                 identifier: nodeValue.value as string
               }
@@ -137,14 +137,14 @@ export = function(context: Rule.RuleContext, data: StructureData) {
     // check the node corresponding to the inner value to see if it contains the expected value
     outerContainsExpected: function(node: Property) {
       const outer = data.outer;
-      const expectedValue = data.expectedValue;
+      const expected = data.expected;
       const fileName = data.fileName;
 
       let nodeValue: ArrayExpression = node.value as ArrayExpression;
       let candidateArray: Literal[] = nodeValue.elements as Literal[];
 
-      if (expectedValue instanceof Array) {
-        for (const value of expectedValue) {
+      if (expected instanceof Array) {
+        for (const value of expected) {
           let foundValue: boolean = false;
           for (const candidate of candidateArray) {
             if (candidate.value === value) {
@@ -163,7 +163,7 @@ export = function(context: Rule.RuleContext, data: StructureData) {
       } else {
         let foundValue: boolean = false;
         for (const candidate of candidateArray) {
-          if (candidate.value === expectedValue) {
+          if (candidate.value === expected) {
             foundValue = true;
             break;
           }
@@ -172,8 +172,7 @@ export = function(context: Rule.RuleContext, data: StructureData) {
         if (!foundValue) {
           context.report({
             node: node,
-            message:
-              fileName + ": " + outer + " does not contain " + expectedValue
+            message: fileName + ": " + outer + " does not contain " + expected
           } as any);
         }
       }

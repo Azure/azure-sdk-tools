@@ -26,7 +26,7 @@ export = {
   create: function(context: Rule.RuleContext) {
     var checkers = structure(context, {
       outer: "sideEffects",
-      expectedValue: false,
+      expected: false,
       fileName: "package.json"
     });
     return {

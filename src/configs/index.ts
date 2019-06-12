@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Definition of configs
+ * @author Arpan Laha
+ */
+
 export = {
   recommended: {
     plugins: ["azure"],

@@ -31,7 +31,7 @@ namespace APIView
             {
                 if (Type.Equals("string"))
                     returnString.Append(" = \"" + ExplicitDefaultValue + "\"");
-                else
+                else if (!(Type == null))
                     returnString.Append(" = " + ExplicitDefaultValue);
             }
             return returnString.ToString();

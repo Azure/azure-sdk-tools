@@ -12,6 +12,8 @@ namespace APIView
     {
         public string Name { get; }
         public string Type { get; }
+        public bool IsAbstract { get; }
+        public bool IsVirtual { get; }
         public bool HasSetMethod { get; }
 
         /// <summary>
@@ -22,12 +24,21 @@ namespace APIView
         {
             this.Name = symbol.Name;
             this.Type = symbol.Type.ToString();
+
+            this.IsAbstract = symbol.IsAbstract;
+            this.IsVirtual = symbol.IsVirtual;
             this.HasSetMethod = symbol.SetMethod != null;
         }
 
         public override string ToString()
         {
-            StringBuilder returnString = new StringBuilder("public " + Type + " " + Name + " { get; ");
+            StringBuilder returnString = new StringBuilder("public " + Type);
+            if (IsAbstract)
+                returnString.Append(" abstract");
+            if (IsVirtual)
+                returnString.Append(" virtual");
+
+            returnString.Append(Name + " { get; ");
             if (HasSetMethod)
                 returnString.Append("set; ");
             returnString.Append("}");

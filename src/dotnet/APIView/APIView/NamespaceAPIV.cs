@@ -43,7 +43,7 @@ namespace APIView
             StringBuilder returnString = new StringBuilder("");
 
             if (Name.Length != 0)
-                returnString = new StringBuilder("namespace " + Name + " {\n");
+                returnString.Append("namespace " + Name + " {\n");
 
             foreach (NamedTypeAPIV nt in NamedTypes)
             {

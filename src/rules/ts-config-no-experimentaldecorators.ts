@@ -20,7 +20,7 @@ export = {
       category: "Best Practices",
       recommended: true,
       url:
-        "https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-config-experimentalDecorators"
+        "https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-config-experimentaldecorators"
     },
     schema: [] // no options
   },

@@ -125,8 +125,7 @@ ruleTester.run("ts-config-importhelpers", rule, {
       filename: processJSON("tsconfig.json") as any,
       errors: [
         {
-          message:
-            "tsconfig.json: compilerOptions does not exist at the outermost level"
+          message: "compilerOptions does not exist at the outermost level"
         }
       ]
     },
@@ -136,8 +135,7 @@ ruleTester.run("ts-config-importhelpers", rule, {
       filename: processJSON("tsconfig.json") as any,
       errors: [
         {
-          message:
-            "tsconfig.json: compilerOptions does not exist at the outermost level"
+          message: "compilerOptions does not exist at the outermost level"
         }
       ]
     },
@@ -147,8 +145,7 @@ ruleTester.run("ts-config-importhelpers", rule, {
       filename: processJSON("tsconfig.json") as any,
       errors: [
         {
-          message:
-            "tsconfig.json: importHelpers is not a member of compilerOptions"
+          message: "importHelpers is not a member of compilerOptions"
         }
       ]
     },
@@ -159,7 +156,7 @@ ruleTester.run("ts-config-importhelpers", rule, {
       errors: [
         {
           message:
-            "tsconfig.json: compilerOptions.importHelpers is set to false when it should be set to true"
+            "compilerOptions.importHelpers is set to false when it should be set to true"
         }
       ]
     },
@@ -170,7 +167,7 @@ ruleTester.run("ts-config-importhelpers", rule, {
       errors: [
         {
           message:
-            "tsconfig.json: compilerOptions.importHelpers is set to false when it should be set to true"
+            "compilerOptions.importHelpers is set to false when it should be set to true"
         }
       ]
     }

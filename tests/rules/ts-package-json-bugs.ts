@@ -271,7 +271,7 @@ ruleTester.run("ts-package-json-bugs", rule, {
       filename: processJSON("package.json") as any,
       errors: [
         {
-          message: "package.json: bugs does not exist at the outermost level"
+          message: "bugs does not exist at the outermost level"
         }
       ]
     },
@@ -282,7 +282,7 @@ ruleTester.run("ts-package-json-bugs", rule, {
       filename: processJSON("package.json") as any,
       errors: [
         {
-          message: "package.json: bugs does not exist at the outermost level"
+          message: "bugs does not exist at the outermost level"
         }
       ]
     },
@@ -293,7 +293,7 @@ ruleTester.run("ts-package-json-bugs", rule, {
       filename: processJSON("package.json") as any,
       errors: [
         {
-          message: "package.json: url is not a member of bugs"
+          message: "url is not a member of bugs"
         }
       ]
     },
@@ -305,7 +305,7 @@ ruleTester.run("ts-package-json-bugs", rule, {
       errors: [
         {
           message:
-            "package.json: bugs.url is set to https://github.com/Azure/azure-sdk-for-java/issues when it should be set to https://github.com/Azure/azure-sdk-for-js/issues"
+            "bugs.url is set to https://github.com/Azure/azure-sdk-for-java/issues when it should be set to https://github.com/Azure/azure-sdk-for-js/issues"
         }
       ]
     },
@@ -316,7 +316,7 @@ ruleTester.run("ts-package-json-bugs", rule, {
       errors: [
         {
           message:
-            "package.json: bugs.url is set to https://github.com/Azure/azure-sdk-for-java/issues when it should be set to https://github.com/Azure/azure-sdk-for-js/issues"
+            "bugs.url is set to https://github.com/Azure/azure-sdk-for-java/issues when it should be set to https://github.com/Azure/azure-sdk-for-js/issues"
         }
       ]
     }

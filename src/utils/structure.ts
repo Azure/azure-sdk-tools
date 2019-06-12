@@ -21,107 +21,100 @@ export = function(context: Rule.RuleContext, data: StructureData) {
   return {
     // check to see if if the outer key exists at the outermost level
     existsInFile: function(node: ObjectExpression) {
-      const outer = data.outer;
       const fileName = data.fileName;
+      if (stripPath(context.getFilename()) === fileName) {
+        const outer = data.outer;
 
-      const properties: Property[] = node.properties as Property[];
-      let foundOuter = false;
+        const properties: Property[] = node.properties as Property[];
+        let foundOuter = false;
 
-      for (const property of properties) {
-        if (property.key) {
-          let key = property.key as Literal;
-          if (key.value === outer) {
-            foundOuter = true;
-            break;
+        for (const property of properties) {
+          if (property.key) {
+            let key = property.key as Literal;
+            if (key.value === outer) {
+              foundOuter = true;
+              break;
+            }
           }
         }
-      }
 
-      stripPath(context.getFilename()) === fileName
-        ? foundOuter
+        foundOuter
           ? []
           : context.report({
               node: node,
-              message:
-                fileName +
-                ": " +
-                outer +
-                " does not exist at the outermost level"
-            } as any)
-        : [];
+              message: outer + " does not exist at the outermost level"
+            } as any);
+      }
     },
 
     // check to see if the value of the outer key matches the expected value
     outerMatchesExpected: function(node: Property) {
-      const outer = data.outer;
-      const expectedValue = data.expectedValue;
       const fileName = data.fileName;
+      if (stripPath(context.getFilename()) === fileName) {
+        const outer = data.outer;
+        const expectedValue = data.expectedValue;
 
-      const nodeValue: Literal = node.value as Literal;
+        const nodeValue: Literal = node.value as Literal;
 
-      stripPath(context.getFilename()) === fileName
-        ? nodeValue.value === expectedValue
+        nodeValue.value === expectedValue
           ? []
           : context.report({
               node: node,
               message:
-                fileName +
-                ": " +
                 outer +
                 " is set to {{ identifier }} when it should be set to " +
                 expectedValue,
               data: {
                 identifier: nodeValue.value as string
               }
-            } as any)
-        : [];
+            } as any);
+      }
     },
 
     // check that the inner key is a member of the outer key
     isMemberOf: function(node: Property) {
-      const outer = data.outer;
-      const inner = data.inner;
       const fileName = data.fileName;
+      if (stripPath(context.getFilename()) === fileName) {
+        const outer = data.outer;
+        const inner = data.inner;
 
-      const value: ObjectExpression = node.value as ObjectExpression;
-      const properties: Property[] = value.properties as Property[];
-      let foundInner = false;
-      for (const property of properties) {
-        if (property.key) {
-          let key = property.key as Literal;
-          if (key.value === inner) {
-            foundInner = true;
-            break;
+        const value: ObjectExpression = node.value as ObjectExpression;
+        const properties: Property[] = value.properties as Property[];
+        let foundInner = false;
+        for (const property of properties) {
+          if (property.key) {
+            let key = property.key as Literal;
+            if (key.value === inner) {
+              foundInner = true;
+              break;
+            }
           }
         }
-      }
-      stripPath(context.getFilename()) === fileName
-        ? foundInner
+
+        foundInner
           ? []
           : context.report({
               node: node,
-              message: fileName + ": " + inner + " is not a member of " + outer
-            } as any)
-        : [];
+              message: inner + " is not a member of " + outer
+            } as any);
+      }
     },
 
     // check the node corresponding to the inner value to see if it is set to true
     innerMatchesExpected: function(node: Property) {
-      const outer = data.outer;
-      const inner = data.inner;
-      const expectedValue = data.expectedValue;
       const fileName = data.fileName;
+      if (stripPath(context.getFilename()) === fileName) {
+        const outer = data.outer;
+        const inner = data.inner;
+        const expectedValue = data.expectedValue;
 
-      let nodeValue: Literal = node.value as Literal;
+        let nodeValue: Literal = node.value as Literal;
 
-      stripPath(context.getFilename()) === fileName
-        ? nodeValue.value === expectedValue
+        nodeValue.value === expectedValue
           ? []
           : context.report({
               node: node,
               message:
-                fileName +
-                ": " +
                 outer +
                 "." +
                 inner +
@@ -130,8 +123,8 @@ export = function(context: Rule.RuleContext, data: StructureData) {
               data: {
                 identifier: nodeValue.value as string
               }
-            } as any)
-        : [];
+            } as any);
+      }
     }
   };
 };

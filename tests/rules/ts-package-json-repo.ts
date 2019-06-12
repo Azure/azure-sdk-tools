@@ -269,8 +269,7 @@ ruleTester.run("ts-package-json-repo", rule, {
       filename: processJSON("package.json") as any,
       errors: [
         {
-          message:
-            "package.json: repository does not exist at the outermost level"
+          message: "repository does not exist at the outermost level"
         }
       ]
     },
@@ -280,8 +279,7 @@ ruleTester.run("ts-package-json-repo", rule, {
       filename: processJSON("package.json") as any,
       errors: [
         {
-          message:
-            "package.json: repository does not exist at the outermost level"
+          message: "repository does not exist at the outermost level"
         }
       ]
     },
@@ -292,7 +290,7 @@ ruleTester.run("ts-package-json-repo", rule, {
       errors: [
         {
           message:
-            "package.json: repository is set to github:Azure/azure-sdk-for-java when it should be set to github:Azure/azure-sdk-for-js"
+            "repository is set to github:Azure/azure-sdk-for-java when it should be set to github:Azure/azure-sdk-for-js"
         }
       ]
     },
@@ -303,7 +301,7 @@ ruleTester.run("ts-package-json-repo", rule, {
       errors: [
         {
           message:
-            "package.json: repository is set to github:Azure/azure-sdk-for-java when it should be set to github:Azure/azure-sdk-for-js"
+            "repository is set to github:Azure/azure-sdk-for-java when it should be set to github:Azure/azure-sdk-for-js"
         }
       ]
     }

@@ -129,8 +129,7 @@ ruleTester.run("ts-config-no-experimentaldecorators", rule, {
       filename: processJSON("tsconfig.json") as any,
       errors: [
         {
-          message:
-            "tsconfig.json: compilerOptions does not exist at the outermost level"
+          message: "compilerOptions does not exist at the outermost level"
         }
       ]
     },
@@ -141,8 +140,7 @@ ruleTester.run("ts-config-no-experimentaldecorators", rule, {
       filename: processJSON("tsconfig.json") as any,
       errors: [
         {
-          message:
-            "tsconfig.json: compilerOptions does not exist at the outermost level"
+          message: "compilerOptions does not exist at the outermost level"
         }
       ]
     },
@@ -153,7 +151,7 @@ ruleTester.run("ts-config-no-experimentaldecorators", rule, {
       errors: [
         {
           message:
-            "tsconfig.json: compilerOptions.experimentalDecorators is set to true when it should be set to false"
+            "compilerOptions.experimentalDecorators is set to true when it should be set to false"
         }
       ]
     },
@@ -164,7 +162,7 @@ ruleTester.run("ts-config-no-experimentaldecorators", rule, {
       errors: [
         {
           message:
-            "tsconfig.json: compilerOptions.experimentalDecorators is set to true when it should be set to false"
+            "compilerOptions.experimentalDecorators is set to true when it should be set to false"
         }
       ]
     }

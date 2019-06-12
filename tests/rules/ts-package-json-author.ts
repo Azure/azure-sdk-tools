@@ -269,7 +269,7 @@ ruleTester.run("ts-package-json-author", rule, {
       filename: processJSON("package.json") as any,
       errors: [
         {
-          message: "package.json: author does not exist at the outermost level"
+          message: "author does not exist at the outermost level"
         }
       ]
     },
@@ -279,7 +279,7 @@ ruleTester.run("ts-package-json-author", rule, {
       filename: processJSON("package.json") as any,
       errors: [
         {
-          message: "package.json: author does not exist at the outermost level"
+          message: "author does not exist at the outermost level"
         }
       ]
     },
@@ -290,7 +290,7 @@ ruleTester.run("ts-package-json-author", rule, {
       errors: [
         {
           message:
-            "package.json: author is set to Not Microsoft Corporation when it should be set to Microsoft Corporation"
+            "author is set to Not Microsoft Corporation when it should be set to Microsoft Corporation"
         }
       ]
     },
@@ -301,7 +301,7 @@ ruleTester.run("ts-package-json-author", rule, {
       errors: [
         {
           message:
-            "package.json: author is set to Not Microsoft Corporation when it should be set to Microsoft Corporation"
+            "author is set to Not Microsoft Corporation when it should be set to Microsoft Corporation"
         }
       ]
     }

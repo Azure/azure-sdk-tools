@@ -123,8 +123,7 @@ ruleTester.run("ts-config-strict", rule, {
       filename: processJSON("tsconfig.json") as any,
       errors: [
         {
-          message:
-            "tsconfig.json: compilerOptions does not exist at the outermost level"
+          message: "compilerOptions does not exist at the outermost level"
         }
       ]
     },
@@ -134,8 +133,7 @@ ruleTester.run("ts-config-strict", rule, {
       filename: processJSON("tsconfig.json") as any,
       errors: [
         {
-          message:
-            "tsconfig.json: compilerOptions does not exist at the outermost level"
+          message: "compilerOptions does not exist at the outermost level"
         }
       ]
     },
@@ -145,7 +143,7 @@ ruleTester.run("ts-config-strict", rule, {
       filename: processJSON("tsconfig.json") as any,
       errors: [
         {
-          message: "tsconfig.json: strict is not a member of compilerOptions"
+          message: "strict is not a member of compilerOptions"
         }
       ]
     },
@@ -156,7 +154,7 @@ ruleTester.run("ts-config-strict", rule, {
       errors: [
         {
           message:
-            "tsconfig.json: compilerOptions.strict is set to false when it should be set to true"
+            "compilerOptions.strict is set to false when it should be set to true"
         }
       ]
     },
@@ -167,7 +165,7 @@ ruleTester.run("ts-config-strict", rule, {
       errors: [
         {
           message:
-            "tsconfig.json: compilerOptions.strict is set to false when it should be set to true"
+            "compilerOptions.strict is set to false when it should be set to true"
         }
       ]
     }

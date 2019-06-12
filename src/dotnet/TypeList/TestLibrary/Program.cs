@@ -1,7 +1,6 @@
 ﻿#define DEBUG
 using System;
 using System.Diagnostics;
-using Assembly = TypeList.Assembly;
 
 namespace TestLibrary
 {

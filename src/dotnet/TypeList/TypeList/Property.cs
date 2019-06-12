@@ -10,11 +10,9 @@ namespace TypeList
     /// </summary>
     public class Property
     {
-        private const int indentSize = 4;
-
-        private readonly string Name;
-        private readonly string Type;
-        private readonly bool HasSet;
+        public string Name { get; }
+        public string Type { get; }
+        public bool HasSetMethod { get; }
 
         /// <summary>
         /// Construct a new Property instance, represented by the provided symbol.
@@ -24,39 +22,13 @@ namespace TypeList
         {
             this.Name = symbol.Name;
             this.Type = symbol.Type.ToString();
-            this.HasSet = symbol.SetMethod != null;
-        }
-
-        public string GetName()
-        {
-            return Name;
-        }
-
-        public string GetPropertyType()
-        {
-            return Type;
-        }
-
-        public bool HasSetMethod()
-        {
-            return HasSet;
-        }
-
-        public string RenderProperty(int indents = 0)
-        {
-            string indent = new string(' ', indents * indentSize);
-
-            StringBuilder returnString = new StringBuilder(indent + "public " + Type + " " + Name + " { get; ");
-            if (HasSet)
-                returnString.Append("set; ");
-            returnString.Append("}");
-            return returnString.ToString();
+            this.HasSetMethod = symbol.SetMethod != null;
         }
 
         public override string ToString()
         {
             StringBuilder returnString = new StringBuilder("public " + Type + " " + Name + " { get; ");
-            if (HasSet)
+            if (HasSetMethod)
                 returnString.Append("set; ");
             returnString.Append("}");
             return returnString.ToString();

@@ -12,8 +12,8 @@ namespace TypeList
     /// </summary>
     public class Assembly
     {
-        private readonly string Name;
-        private Namespace GlobalNamespace;
+        public string Name { get; }
+        public Namespace GlobalNamespace { get; }
 
         /// <summary>
         /// Construct a new Assembly instance, represented by the provided symbol.
@@ -29,6 +29,8 @@ namespace TypeList
         {
             var reference = MetadataReference.CreateFromFile(dllPath);
             var compilation = CSharpCompilation.Create(null).AddReferences(reference);
+            compilation = compilation.AddReferences(MetadataReference.CreateFromFile(typeof(object).Assembly.Location));
+
             List<Assembly> assemblies = new List<Assembly>();
 
             foreach (var assemblySymbol in compilation.SourceModule.ReferencedAssemblySymbols)
@@ -37,21 +39,6 @@ namespace TypeList
             }
 
             return assemblies;
-        }
-
-        public string GetName()
-        {
-            return Name;
-        }
-
-        public Namespace GetGlobalNamespace()
-        {
-            return GlobalNamespace;
-        }
-
-        public string RenderAssembly()
-        {
-            return GlobalNamespace.RenderNamespace();
         }
 
         public override string ToString()

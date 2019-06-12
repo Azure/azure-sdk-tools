@@ -10,17 +10,15 @@ namespace TypeList
     /// </summary>
     public class Field
     {
-        private const int indentSize = 4;
+        public string Name { get; }
+        public string Type { get; }
 
-        private readonly string Name;
-        private readonly string Type;
+        public bool IsConstant { get; }
+        public bool IsReadOnly { get; }
+        public bool IsStatic { get; }
+        public bool IsVolatile { get; }
 
-        private readonly bool Constant;
-        private readonly bool ReadOnly;
-        private readonly bool Static;
-        private readonly bool Volatile;
-        
-        private readonly object Value;
+        public object Value { get; }
 
         /// <summary>
         /// Construct a new Field instance, represented by the provided symbol.
@@ -31,101 +29,34 @@ namespace TypeList
             this.Name = symbol.Name;
             this.Type = symbol.Type.ToDisplayString();
 
-            this.Constant = symbol.HasConstantValue;
-            this.ReadOnly = symbol.IsReadOnly;
-            this.Static = symbol.IsStatic;
-            this.Volatile = symbol.IsVolatile;
+            this.IsConstant = symbol.HasConstantValue;
+            this.IsReadOnly = symbol.IsReadOnly;
+            this.IsStatic = symbol.IsStatic;
+            this.IsVolatile = symbol.IsVolatile;
 
             if (symbol.HasConstantValue)
                 this.Value = symbol.ConstantValue;
-        }
-
-        public string GetName()
-        {
-            return Name;
-        }
-
-        public string GetFieldType()
-        {
-            return Type;
-        }
-
-        public bool IsConstant()
-        {
-            return Constant;
-        }
-
-        public bool IsReadOnly()
-        {
-            return ReadOnly;
-        }
-
-        public bool IsStatic()
-        {
-            return Static;
-        }
-
-        public bool IsVolatile()
-        {
-            return Volatile;
-        }
-
-        public object GetValue()
-        {
-            return Value;
-        }
-
-        public string RenderField(int indents = 0)
-        {
-            string indent = new string(' ', indents * indentSize);
-
-            StringBuilder returnString = new StringBuilder(indent + "public");
-
-            if (Constant)
-                returnString.Append(" const");
-
-            if (Static)
-                returnString.Append(" static");
-
-            if (ReadOnly)
-                returnString.Append(" readonly");
-
-            if (Volatile)
-                returnString.Append(" volatile");
-
-            returnString.Append(" " + Type + " " + Name);
-
-            if (Constant)
-            {
-                if (Value.GetType().Name.Equals("String"))
-                    returnString.Append(" = \"" + Value + "\"");
-                else
-                    returnString.Append(" = " + Value);
-            }
-
-            returnString.Append(";");
-            return returnString.ToString();
         }
 
         public override string ToString()
         {
             StringBuilder returnString = new StringBuilder("public");
 
-            if (Constant)
+            if (IsConstant)
                 returnString.Append(" const");
 
-            if (Static)
+            if (IsStatic)
                 returnString.Append(" static");
 
-            if (ReadOnly)
+            if (IsReadOnly)
                 returnString.Append(" readonly");
 
-            if (Volatile)
+            if (IsVolatile)
                 returnString.Append(" volatile");
 
             returnString.Append(" " + Type + " " + Name);
 
-            if (Constant)
+            if (IsConstant)
             {
                 if (Value.GetType().Name.Equals("String"))
                     returnString.Append(" = \"" + Value + "\"");

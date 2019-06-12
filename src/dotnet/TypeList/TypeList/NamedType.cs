@@ -7,18 +7,16 @@ namespace TypeList
 {
     public class NamedType
     {
-        private const int indentSize = 4;
+        public string Name { get; }
+        public string Type { get; }
+        public string EnumUnderlyingType { get; }
 
-        private readonly string Name;
-        private readonly string Type;
-        private readonly string EnumUnderlyingType = null;
-
-        private readonly ImmutableArray<Event> Events;
-        private readonly ImmutableArray<Field> Fields;
-        private readonly ImmutableArray<string> Implementations;
-        private readonly ImmutableArray<Method> Methods;
-        private readonly ImmutableArray<NamedType> NamedTypes;
-        private readonly ImmutableArray<Property> Properties;
+        public ImmutableArray<Event> Events { get; }
+        public ImmutableArray<Field> Fields { get; }
+        public ImmutableArray<string> Implementations { get; }
+        public ImmutableArray<Method> Methods { get; }
+        public ImmutableArray<NamedType> NamedTypes { get; }
+        public ImmutableArray<Property> Properties { get; }
 
         /// <summary>
         /// Construct a new namedType instance, represented by the provided symbol.
@@ -95,97 +93,6 @@ namespace TypeList
             this.Methods = methods.ToImmutableArray();
             this.NamedTypes = namedTypes.ToImmutableArray();
             this.Properties = properties.ToImmutableArray();
-        }
-
-        public string GetName()
-        {
-            return Name;
-        }
-
-        public string GetNamedType()
-        {
-            return Type;
-        }
-
-        public string GetEnumUnderlyingType()
-        {
-            return EnumUnderlyingType;
-        }
-
-        public ImmutableArray<Event> GetEvents()
-        {
-            return Events;
-        }
-
-        public ImmutableArray<Field> GetFields()
-        {
-            return Fields;
-        }
-
-        public ImmutableArray<string> GetImplementations()
-        {
-            return Implementations;
-        }
-
-        public ImmutableArray<Method> GetMethods()
-        {
-            return Methods;
-        }
-
-        public ImmutableArray<NamedType> GetNamedTypes()
-        {
-            return NamedTypes;
-        }
-
-        public ImmutableArray<Property> GetProperties()
-        {
-            return Properties;
-        }
-
-        public string RenderNamedType(int indents = 0)
-        {
-            string indent = new string(' ', indents * indentSize);
-
-            StringBuilder returnString = new StringBuilder(indent + "public " + Type + " " + Name + " ");
-
-            // add any implemented types to string
-            if (Implementations.Length > 0)
-            {
-                returnString.Append(": ");
-                foreach (var i in Implementations)
-                {
-                    returnString.Append(i + ", ");
-                }
-                returnString.Length = returnString.Length - 2;
-                returnString.Append(" ");
-            }
-            returnString.Append("{\n");
-
-            // add any types declared in this type's body
-            foreach (Field f in Fields)
-            {
-                returnString.Append(f.RenderField(indents + 1) + "\n");
-            }
-            foreach (Property p in Properties)
-            {
-                returnString.Append(p.RenderProperty(indents + 1) + "\n");
-            }
-            foreach (Event e in Events)
-            {
-                returnString.Append(e.RenderEvent(indents + 1) + "\n");
-            }
-            foreach (Method m in Methods)
-            {
-                returnString.Append(m.RenderMethod(indents + 1) + "\n");
-            }
-            foreach (NamedType n in NamedTypes)
-            {
-                returnString.Append(n.RenderNamedType(indents + 1) + "\n");
-            }
-
-            returnString.Append(indent + "}");
-
-            return returnString.ToString();
         }
 
         public override string ToString()

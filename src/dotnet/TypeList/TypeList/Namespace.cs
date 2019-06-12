@@ -1,4 +1,5 @@
 ﻿using Microsoft.CodeAnalysis;
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
@@ -8,12 +9,10 @@ namespace TypeList
 {
     public class Namespace
     {
-        private const int indentSize = 4;
+        public string Name { get; }
 
-        private readonly string Name;
-
-        private readonly ImmutableArray<NamedType> NamedTypes;
-        private readonly ImmutableArray<Namespace> Namespaces;
+        public ImmutableArray<NamedType> NamedTypes { get; }
+        public ImmutableArray<Namespace> Namespaces { get; }
 
         /// <summary>
         /// Construct a new namespace instance, represented by the provided symbol.
@@ -37,48 +36,6 @@ namespace TypeList
 
             this.NamedTypes = namedTypes.ToImmutableArray();
             this.Namespaces = namespaces.ToImmutableArray();
-        }
-
-        public string GetName()
-        {
-            return Name;
-        }
-
-        public ImmutableArray<NamedType> GetNamedTypes()
-        {
-            return NamedTypes;
-        }
-
-        public ImmutableArray<Namespace> GetNamespaces()
-        {
-            return Namespaces;
-        }
-
-        public string RenderNamespace(int indents = 0)
-        {
-            string indent = new string(' ', indents * indentSize);
-
-            StringBuilder returnString = new StringBuilder("");
-
-            if (Name.Length != 0)
-                returnString = new StringBuilder(indent + "namespace " + Name + " {\n");
-
-            foreach (NamedType nt in NamedTypes)
-            {
-                returnString.Append(indent + nt.RenderNamedType(indents + 1) + "\n");
-            }
-            foreach (Namespace ns in Namespaces)
-            {
-                if (Name.Length != 0)
-                    returnString.Append(indent + ns.RenderNamespace(indents + 1) + "\n");
-                else
-                    returnString.Append(indent + ns.RenderNamespace(indents) + "\n");
-            }
-
-            if (Name.Length != 0)
-                returnString.Append(indent + "}");
-
-            return returnString.ToString();
         }
 
         public override string ToString()

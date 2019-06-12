@@ -9,9 +9,7 @@ namespace TypeList
     /// </summary>
     public class Event
     {
-        private const int indentSize = 4;
-
-        private readonly string Name;
+        public string Name { get; }
 
         /// <summary>
         /// Construct a new Event instance, represented by the provided symbol.
@@ -20,19 +18,6 @@ namespace TypeList
         public Event(IEventSymbol symbol)
         {
             this.Name = symbol.Name;
-        }
-
-        public string GetName()
-        {
-            return Name;
-        }
-
-        public string RenderEvent(int indents = 0)
-        {
-            string indent = new string(' ', indents * indentSize);
-
-            //TODO: determine whether event is EventHandler or other type - and if it has type parameter(s)
-            return indent + "public event EventHandler " + Name + ";";
         }
 
         public override string ToString()

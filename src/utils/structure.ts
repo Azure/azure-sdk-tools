@@ -143,11 +143,28 @@ export = function(context: Rule.RuleContext, data: StructureData) {
       let nodeValue: ArrayExpression = node.value as ArrayExpression;
       let candidateArray: Literal[] = nodeValue.elements as Literal[];
 
-      if (expected instanceof Array) {
-        for (const value of expected) {
+      if (stripPath(context.getFilename()) === fileName) {
+        if (expected instanceof Array) {
+          for (const value of expected) {
+            let foundValue: boolean = false;
+            for (const candidate of candidateArray) {
+              if (candidate.value === value) {
+                foundValue = true;
+                break;
+              }
+            }
+
+            if (!foundValue) {
+              context.report({
+                node: node,
+                message: fileName + ": " + outer + " does not contain " + value
+              } as any);
+            }
+          }
+        } else {
           let foundValue: boolean = false;
           for (const candidate of candidateArray) {
-            if (candidate.value === value) {
+            if (candidate.value === expected) {
               foundValue = true;
               break;
             }
@@ -156,24 +173,9 @@ export = function(context: Rule.RuleContext, data: StructureData) {
           if (!foundValue) {
             context.report({
               node: node,
-              message: fileName + ": " + outer + " does not contain " + value
+              message: fileName + ": " + outer + " does not contain " + expected
             } as any);
           }
-        }
-      } else {
-        let foundValue: boolean = false;
-        for (const candidate of candidateArray) {
-          if (candidate.value === expected) {
-            foundValue = true;
-            break;
-          }
-        }
-
-        if (!foundValue) {
-          context.report({
-            node: node,
-            message: fileName + ": " + outer + " does not contain " + expected
-          } as any);
         }
       }
     }

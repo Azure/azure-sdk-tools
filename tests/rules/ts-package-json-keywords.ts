@@ -254,7 +254,7 @@ ruleTester.run("ts-package-json-keywords", rule, {
     },
     {
       // incorrect format but in a file we don't care about
-      code: '{"keywords": []]}',
+      code: '{"keywords": []}',
       filename: processJSON("not_package.json") as any
     }
   ],

@@ -33,10 +33,10 @@ export = {
     return {
       // callback functions
 
-      // check to see if author exists at the outermost level
+      // check to see if keywords exists at the outermost level
       "VariableDeclarator > ObjectExpression": checkers.existsInFile,
 
-      // check the node corresponding to author to see if it's value is "Microsoft Corporation"
+      // check the node corresponding to keywords to see if its value contains "Azure" and "cloud"
       "VariableDeclarator > ObjectExpression > Property[key.value='keywords']":
         checkers.outerContainsExpected
     } as Rule.RuleListener;

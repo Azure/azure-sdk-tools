@@ -36,7 +36,7 @@ export = {
       // check to see if author exists at the outermost level
       "VariableDeclarator > ObjectExpression": checkers.existsInFile,
 
-      // check the node corresponding to author to see if it's value is "Microsoft Corporation"
+      // check the node corresponding to author to see if its value is "Microsoft Corporation"
       "VariableDeclarator > ObjectExpression > Property[key.value='author']":
         checkers.outerMatchesExpected
     } as Rule.RuleListener;

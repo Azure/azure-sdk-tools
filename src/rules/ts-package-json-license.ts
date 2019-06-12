@@ -35,7 +35,7 @@ export = {
       // check to see if license exists at the outermost level
       "VariableDeclarator > ObjectExpression": checkers.existsInFile,
 
-      // check the node corresponding to license to see if it's value is "MIT"
+      // check the node corresponding to license to see if its value is "MIT"
       "VariableDeclarator > ObjectExpression > Property[key.value='license']":
         checkers.outerMatchesExpected
     } as Rule.RuleListener;

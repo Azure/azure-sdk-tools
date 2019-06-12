@@ -35,7 +35,7 @@ export = {
       // check to see if sideEffects exists at the outermost level
       "VariableDeclarator > ObjectExpression": checkers.existsInFile,
 
-      // check the node corresponding to sideEffects to see if it's value is false
+      // check the node corresponding to sideEffects to see if its value is false
       "VariableDeclarator > ObjectExpression > Property[key.value='sideEffects']":
         checkers.outerMatchesExpected
     } as Rule.RuleListener;

@@ -40,6 +40,7 @@ export = {
   "ts-package-json-author": tsPackageJsonAuthor,
   "ts-package-json-bugs": tsPackageJsonBugs,
   "ts-package-json-keywords": tsPackageJsonKeywords,
+  "ts-package-json-license": tsPackageJsonLicense,
   "ts-package-json-name": tsPackageJsonName,
   "ts-package-json-repo": tsPackageJsonRepo,
   "ts-package-json-required-scripts": tsPackageJsonRequiredScripts,

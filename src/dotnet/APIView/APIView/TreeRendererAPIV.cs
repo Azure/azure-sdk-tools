@@ -133,34 +133,36 @@ namespace APIView
             builder.Append("{");
             builder.AppendLine();
 
+            indents++;
+
             // add any types declared in this type's body
             foreach (FieldAPIV f in nt.Fields)
             {
-                Render(f, builder, indents + 1);
+                Render(f, builder, indents);
                 builder.AppendLine();
             }
             foreach (PropertyAPIV p in nt.Properties)
             {
-                Render(p, builder, indents + 1);
+                Render(p, builder, indents);
                 builder.AppendLine();
             }
             foreach (EventAPIV e in nt.Events)
             {
-                Render(e, builder, indents + 1);
+                Render(e, builder, indents);
                 builder.AppendLine();
             }
             foreach (MethodAPIV m in nt.Methods)
             {
-                Render(m, builder, indents + 1);
+                Render(m, builder, indents);
                 builder.AppendLine();
             }
             foreach (NamedTypeAPIV n in nt.NamedTypes)
             {
-                Render(n, builder, indents + 1);
+                Render(n, builder, indents);
                 builder.AppendLine();
             }
 
-            AppendIndents(builder, indents);
+            AppendIndents(builder, indents - 1);
             builder.Append("}");
         }
 

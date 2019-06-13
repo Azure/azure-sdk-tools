@@ -1,5 +1,4 @@
-﻿using System.Collections.Immutable;
-using APIView;
+﻿using APIView;
 using Xunit;
 
 namespace APIViewTest
@@ -13,11 +12,8 @@ namespace APIViewTest
             Assert.Equal("TestLibrary", assembly.Name);
 
             NamespaceAPIV globalNamespace = assembly.GlobalNamespace;
-            ImmutableArray<NamedTypeAPIV> namedTypes = globalNamespace.NamedTypes;
-            Assert.Empty(namedTypes);
-
-            ImmutableArray<NamespaceAPIV> namespaces = globalNamespace.Namespaces;
-            Assert.Single(namespaces);
+            Assert.Empty(globalNamespace.NamedTypes);
+            Assert.Single(globalNamespace.Namespaces);
         }
 
         [Fact]
@@ -31,11 +27,8 @@ namespace APIViewTest
 
             Assert.Equal("TestLibrary", nestedNamespace.Name);
 
-            ImmutableArray<NamedTypeAPIV> NamedTypes = nestedNamespace.NamedTypes;
-            Assert.NotEmpty(NamedTypes);
-
-            ImmutableArray<NamespaceAPIV> namespaces = nestedNamespace.Namespaces;
-            Assert.Empty(namespaces);
+            Assert.NotEmpty(nestedNamespace.NamedTypes);
+            Assert.Empty(nestedNamespace.Namespaces);
         }
 
         [Fact]

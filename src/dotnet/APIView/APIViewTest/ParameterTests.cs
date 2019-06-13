@@ -1,6 +1,5 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using System.Collections.Immutable;
 using System.Linq;
 using APIView;
 using Xunit;
@@ -19,12 +18,11 @@ namespace APIViewTest
             var methodSymbol = (IMethodSymbol)a.GetTypeByMetadataName("TestLibrary.PublicInterface`1").GetMembers("TypeParamParamsMethod").Single();
             MethodAPIV method = new MethodAPIV(methodSymbol);
 
-            ImmutableArray<ParameterAPIV> parameters = method.Parameters;
-            Assert.Equal(2, parameters.Length);
+            Assert.Equal(2, method.Parameters.Length);
 
             ParameterAPIV param = null;
             ParameterAPIV num = null;
-            foreach (ParameterAPIV p in parameters)
+            foreach (ParameterAPIV p in method.Parameters)
             {
                 if (p.Name.Equals("param"))
                     param = p;
@@ -52,12 +50,11 @@ namespace APIViewTest
             var methodSymbol = (IMethodSymbol)a.GetTypeByMetadataName("TestLibrary.PublicInterface`1").GetMembers("RefKindParamMethod").Single();
             MethodAPIV method = new MethodAPIV(methodSymbol);
 
-            ImmutableArray<ParameterAPIV> parameters = method.Parameters;
-            Assert.Single(parameters);
+            Assert.Single(method.Parameters);
 
-            Assert.Equal("ref string", parameters[0].Type);
-            Assert.Equal("str", parameters[0].Name);
-            Assert.Null(parameters[0].ExplicitDefaultValue);
+            Assert.Equal("ref string", method.Parameters[0].Type);
+            Assert.Equal("str", method.Parameters[0].Name);
+            Assert.Null(method.Parameters[0].ExplicitDefaultValue);
         }
     }
 }

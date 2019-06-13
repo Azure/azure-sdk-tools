@@ -1,10 +1,8 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using System.Collections.Immutable;
 using System.Linq;
 using APIView;
 using Xunit;
-using System.Reflection.Metadata;
 
 namespace APIViewTest
 {
@@ -29,14 +27,9 @@ namespace APIViewTest
             Assert.False(method.IsExtern);
             Assert.Equal("int", method.ReturnType);
 
-            ImmutableArray<AttributeData> attributes = method.Attributes;
-            Assert.Empty(attributes);
-
-            ImmutableArray<ParameterAPIV> parameters = method.Parameters;
-            Assert.Equal(2, parameters.Length);
-
-            ImmutableArray<TypeParameterAPIV> typeParameters = method.TypeParameters;
-            Assert.Single(typeParameters);
+            Assert.Empty(method.Attributes);
+            Assert.Equal(2, method.Parameters.Length);
+            Assert.Single(method.TypeParameters);
         }
 
         [Fact]
@@ -71,14 +64,9 @@ namespace APIViewTest
             Assert.False(method.IsExtern);
             Assert.Equal("void", method.ReturnType);
 
-            ImmutableArray<AttributeData> attributes = method.Attributes;
-            Assert.Single(attributes);
-
-            ImmutableArray<ParameterAPIV> parameters = method.Parameters;
-            Assert.Single(parameters);
-
-            ImmutableArray<TypeParameterAPIV> typeParameters = method.TypeParameters;
-            Assert.Empty(typeParameters);
+            Assert.Single(method.Attributes);
+            Assert.Single(method.Parameters);
+            Assert.Empty(method.TypeParameters);
         }
 
         [Fact]

@@ -1,6 +1,5 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using System.Collections.Immutable;
 using System.Linq;
 using APIView;
 using Xunit;
@@ -19,9 +18,8 @@ namespace APIViewTest
             var methodSymbol = (IMethodSymbol)a.GetTypeByMetadataName("TestLibrary.PublicInterface`1").GetMembers("TypeParamParamsMethod").Single();
             MethodAPIV method = new MethodAPIV(methodSymbol);
 
-            ImmutableArray<TypeParameterAPIV> parameters = method.TypeParameters;
-            Assert.Single(parameters);
-            Assert.Equal("T", parameters[0].Name);
+            Assert.Single(method.TypeParameters);
+            Assert.Equal("T", method.TypeParameters[0].Name);
         }
     }
 }

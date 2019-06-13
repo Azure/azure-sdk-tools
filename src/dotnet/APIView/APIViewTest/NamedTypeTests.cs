@@ -1,6 +1,5 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using System.Collections.Immutable;
 using System.Linq;
 using APIView;
 using Xunit;
@@ -21,18 +20,10 @@ namespace APIViewTest
 
             Assert.Equal("SomeEventsSomeFieldsNoMethodsSomeNamedTypes", publicClass.Name);
             Assert.Equal("class", publicClass.Type);
-
-            ImmutableArray<EventAPIV> events = publicClass.Events;
-            Assert.Single(events);
-
-            ImmutableArray<FieldAPIV> fields = publicClass.Fields;
-            Assert.Single(fields);
-
-            ImmutableArray<MethodAPIV> methods = publicClass.Methods;
-            Assert.Empty(methods);
-
-            ImmutableArray<NamedTypeAPIV> namedTypes = publicClass.NamedTypes;
-            Assert.Single(namedTypes);
+            Assert.Single(publicClass.Events);
+            Assert.Single(publicClass.Fields);
+            Assert.Empty(publicClass.Methods);
+            Assert.Single(publicClass.NamedTypes);
         }
 
         [Fact]
@@ -60,18 +51,10 @@ namespace APIViewTest
 
             Assert.Equal("PublicInterface", publicInterface.Name);
             Assert.Equal("interface", publicInterface.Type);
-
-            ImmutableArray<EventAPIV> events = publicInterface.Events;
-            Assert.Empty(events);
-
-            ImmutableArray<FieldAPIV> fields = publicInterface.Fields;
-            Assert.Empty(fields);
-
-            ImmutableArray<MethodAPIV> methods = publicInterface.Methods;
-            Assert.Equal(2, methods.Length);
-
-            ImmutableArray<NamedTypeAPIV> namedTypes = publicInterface.NamedTypes;
-            Assert.Empty(namedTypes);
+            Assert.Empty(publicInterface.Events);
+            Assert.Empty(publicInterface.Fields);
+            Assert.Equal(2, publicInterface.Methods.Length);
+            Assert.Empty(publicInterface.NamedTypes);
         }
 
         [Fact]
@@ -99,10 +82,8 @@ namespace APIViewTest
 
             Assert.Equal("ImplementingClass", implementer.Name);
             Assert.Equal("class", implementer.Type);
-
-            ImmutableArray<string> implementations = implementer.Implementations;
-            Assert.Single(implementations);
-            Assert.Equal("TestLibrary.PublicInterface<int>", implementations[0]);
+            Assert.Single(implementer.Implementations);
+            Assert.Equal("TestLibrary.PublicInterface<int>", implementer.Implementations[0]);
         }
 
         [Fact]

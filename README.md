@@ -6,14 +6,14 @@ Linting rules for the JavaScript/TypeScript Azure SDK - derived from the [Azure 
 
 You'll first need to install [ESLint](http://eslint.org):
 
-```
-$ npm i eslint --save-dev
+```shell
+npm i eslint --save-dev
 ```
 
 Next, install `eslint-plugin-azure`:
 
-```
-$ npm install eslint-plugin-azure --save-dev
+```shell
+npm install eslint-plugin-azure --save-dev
 ```
 
 **Note:** If you installed ESLint globally (using the `-g` flag) then you must also install `eslint-plugin-azure` globally.

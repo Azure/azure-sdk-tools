@@ -20,6 +20,7 @@ export = {
       "azure/ts-config-isolatedmodules": "warn",
       "azure/ts-config-module": "error",
       "azure/ts-config-no-experimentaldecorators": "error",
+      "azure/ts-config-sourcemap": "error",
       "azure/ts-config-strict": "error",
       "azure/ts-package-json-author": "error",
       "azure/ts-package-json-bugs": "error",

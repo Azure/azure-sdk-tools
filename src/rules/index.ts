@@ -12,6 +12,7 @@ import tsConfigImportHelpers from "./ts-config-importhelpers";
 import tsConfigIsolatedModules from "./ts-config-isolatedmodules";
 import tsConfigModule from "./ts-config-module";
 import tsConfigNoExperimentalDecorators from "./ts-config-no-experimentaldecorators";
+import tsConfigSourceMap from "./ts-config-sourcemap";
 import tsConfigStrict from "./ts-config-strict";
 import tsPackageJsonAuthor from "./ts-package-json-author";
 import tsPackageJsonBugs from "./ts-package-json-bugs";
@@ -30,6 +31,7 @@ export = {
   "ts-config-isolatedmodules": tsConfigIsolatedModules,
   "ts-config-module": tsConfigModule,
   "ts-config-no-experimentaldecorators": tsConfigNoExperimentalDecorators,
+  "ts-config-sourcemap": tsConfigSourceMap,
   "ts-config-strict": tsConfigStrict,
   "ts-package-json-author": tsPackageJsonAuthor,
   "ts-package-json-bugs": tsPackageJsonBugs,

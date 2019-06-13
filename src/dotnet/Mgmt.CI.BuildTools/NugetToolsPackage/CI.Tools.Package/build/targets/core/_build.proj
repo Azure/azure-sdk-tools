@@ -5,5 +5,7 @@
 	<Target Name="Rebuild" DependsOnTargets="Clean;Build" />
 	<Target Name="RunTests" DependsOnTargets="$(RunTestProjectsDependsOn)" />
 	<Target Name="CreateNugetPackage" DependsOnTargets="$(CreateNugetPackageDependsOn)" />
+	<Target Name="CNP" DependsOnTargets="$(CreateNugetPackageDependsOn)" />
+	<Target Name="CP" DependsOnTargets="$(CategorizeProjects)" />
 	<Target Name="Help" DependsOnTargets="$(HelpDependsOn)" />
 </Project>

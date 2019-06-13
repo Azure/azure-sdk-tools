@@ -85,7 +85,6 @@ namespace MS.Az.NetSdk.Build.Utilities
         }
 
 
-
         public SdkProjectCategory SearchProjectCategory { get; set; }
 
         public SdkProjectType SearchProjectType { get; set; }
@@ -221,164 +220,87 @@ namespace MS.Az.NetSdk.Build.Utilities
             SDKRootDir = string.Empty;
             cmdLineExclude = string.Empty;
             cmdLineInclude = string.Empty;
+            ScopeToken = string.Empty;
+            FQScopeDirPath = string.Empty;
 
-            UseLegacyDirs = true;
+            //UseLegacyDirs = lega;
         }
-
-        #region overloads
+                
         public ProjectSearchUtility(string rootDirPath)
             : this(rootDirPath, null, string.Empty, string.Empty, string.Empty, string.Empty, SdkProjectType.Sdk, SdkProjectCategory.MgmtPlane) { }
-            //: this(rootDirPath, string.Empty) { }
-
-        //public ProjectSearchUtility(string rootDirPath, string scopeToken)
-        //    : this(rootDirPath, scopeToken, string.Empty, string.Empty) { }
-
-        //public ProjectSearchUtility(string rootDirPath, string cmdLineExcludePathTokens, string cmdLineIncludePathTokens)
-        //    : this(rootDirPath, string.Empty, cmdLineExcludePathTokens, cmdLineIncludePathTokens) { }
-
-        //public ProjectSearchUtility(string rootDirPath, string scopeToken, string cmdLineExcludePathTokenString, string cmdLineIncludePathTokenString)
-        //    : this(rootDirPath, scopeToken, cmdLineExcludePathTokenString, cmdLineIncludePathTokenString, SdkProjectType.Sdk, SdkProjectCategory.MgmtPlane) { }
-
-        //public ProjectSearchUtility(string rootDirPath, List<string> scopes,
-        //    string cmdLineExcludePathTokenString, string cmdLineIncludePathTokenString,
-        //    SdkProjectType SearchProjType, SdkProjectCategory SearchProjCategory) : this()
-        //{
-        //    RootDirForSearch = rootDirPath;
-        //    ScopeDirPaths = scopes;
-        //    Init(cmdLineExcludePathTokenString, cmdLineIncludePathTokenString, SearchProjType, SearchProjCategory);
-        //}
-
-        //public ProjectSearchUtility(string rootDirPath, string scopeToken,
-        //    string cmdLineExcludePathTokenString, string cmdLineIncludePathTokenString,
-        //    SdkProjectType SearchProjType, SdkProjectCategory SearchProjCategory) : this()
-        //{
-        //    RootDirForSearch = rootDirPath;
-        //    ScopeToken = scopeToken;
-        //    ScopeDirPaths.Add(scopeToken);
-        //    Init(cmdLineExcludePathTokenString, cmdLineIncludePathTokenString, SearchProjType, SearchProjCategory);
-        //}
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="fqScopeDirPath">Fully Qualified Scope Dir Path</param>
-        /// <param name="cmdLineExcludePathTokenString">Semicolon separated token string that needs to be excluded from search</param>
-        /// <param name="cmdLineIncludePathTokenString">Semicolon separated token string that needs to be included from search</param>
-        /// <param name="SearchProjType">ProjectType</param>
-        /// <param name="SearchProjCategory">ProjectCategory</param>
-        //public ProjectSearchUtility(string fqScopeDirPath, string cmdLineExcludePathTokenString, string cmdLineIncludePathTokenString, SdkProjectType SearchProjType, SdkProjectCategory SearchProjCategory) : this()
-        //{
-        //    FQScopeDirPath = fqScopeDirPath;
-        //    RootDirForSearch = FindRootDirPath(FQScopeDirPath);
-        //    ScopeToken = string.Empty;
-        //    ScopeDirPaths.Add(FQScopeDirPath);
-        //    Init(cmdLineExcludePathTokenString, cmdLineIncludePathTokenString, SearchProjType, SearchProjCategory);
-        //}
-
-        //void Init(string cmdLineExcludePathTokenString, string cmdLineIncludePathTokenString, SdkProjectType SearchProjType, SdkProjectCategory SearchProjCategory)
-        //{
-        //    string legacySDKDir = string.Empty;
-        //    InitProjectKind(SearchProjType, SearchProjCategory);
-
-        //    SRCRootDir = Path.Combine(RootDirForSearch, SRC_DIR_NAME);
-        //    legacySDKDir = Path.Combine(SRCRootDir, LEGACY_SDK_DIR_NAME);
-
-        //    // During the transition phase of 'src' directory getting completely eliminated from the repository
-        //    // We will be searching at both location
-        //    if (Directory.Exists(legacySDKDir))
-        //    {
-        //        SearchDirPaths.Add(legacySDKDir);
-        //    }
-
-        //    // If src directory not found, we will assume src has been eliminated and now we should be searching only in sdk directory
-        //    if(string.IsNullOrWhiteSpace(SDKRootDir))
-        //    {
-        //        SDKRootDir = Path.Combine(RootDirForSearch, SDK_DIR_NAME);
-        //        if(Directory.Exists(SDKRootDir))
-        //        {
-        //            SearchDirPaths.Add(SDKRootDir);
-        //        }
-        //        //else
-        //        //{
-        //        //    SDKRootDir = string.Empty;
-        //        //    UtilLogger.LogError("Unable to determine SDK root dir using repository rootDir '{0}'", RootDirForSearch);
-        //        //    UtilLogger.LogException<DirectoryNotFoundException>("Unable to determine SDK root dir using repository rootDir '{0}'", RootDirForSearch);
-        //        //}
-        //    }
-        //    else
-        //    {
-        //        SearchDirPaths.Add(SDKRootDir);
-        //    }
-
-        //    //ScopeRootDir = SRCRootDir;
-
-        //    //Check.DirectoryExists(SDKRootDir);
-        //    //Check.DirectoryExists(SRCRootDir);
-        //    Check.DirectoryExists(SearchDirPaths);
-        //    //Check.DirectoryExists(ScopeRootDir);
-
-        //    if (!string.IsNullOrWhiteSpace(cmdLineExcludePathTokenString))
-        //    {
-        //        cmdLineExcludePathList = ParseIncludeExcludeTokens(cmdLineExcludePathTokenString);
-        //    }
-
-        //    if (!string.IsNullOrWhiteSpace(cmdLineIncludePathTokenString))
-        //    {
-        //        cmdLineIncludePathList = ParseIncludeExcludeTokens(cmdLineIncludePathTokenString);
-        //    }
-        //}
-
-        #endregion
-
-        public ProjectSearchUtility(string rootDirPath, string[] scopeDirPaths, string scopeToken, string fullQualifiedScopeDirPath,
+        
+        public ProjectSearchUtility(string rootDirPath, List<string> scopeDirPaths, string scopeToken, string fullQualifiedScopeDirPath,
             string cmdLineExcludePathTokenString, string cmdLineIncludePathTokenString,
             SdkProjectType searchProjType, SdkProjectCategory searchProjCategory) : this()
         {
             // We shuold fail if the root directory is not a valid directory path
             Check.DirectoryExists(rootDirPath);
             RootDirForSearch = rootDirPath;
-            ScopeToken = scopeToken;
             cmdLineExclude = cmdLineExcludePathTokenString;
             cmdLineInclude = cmdLineIncludePathTokenString;
 
             if (scopeDirPaths.NotNullOrAny<string>())
             {
-                ScopeDirPaths = scopeDirPaths.ToList<string>();
+                ScopeDirPaths = scopeDirPaths;
             }
 
-            FQScopeDirPath = fullQualifiedScopeDirPath;
+            if(!string.IsNullOrWhiteSpace(scopeToken))
+            {
+                ScopeToken = scopeToken;
+                ScopeDirPaths.Add(scopeToken);
+            }
+
+
+            if(!string.IsNullOrWhiteSpace(fullQualifiedScopeDirPath))
+            {
+                ScopeDirPaths.Add(fullQualifiedScopeDirPath);
+                FQScopeDirPath = fullQualifiedScopeDirPath;
+            }
+
             InitProjectKind(searchProjType, searchProjCategory);
+            ScopeDirPaths = DeDupeList(ScopeDirPaths);
             Init();
         }
+
+        
         
         void Init()
         {
             MessageImportance msgImp = MessageImportance.High;
-            UtilLogger.LogInfo(msgImp, SearchDirPaths, "Existing SearchDirPaths before clearing");
-            SearchDirPaths.Clear();
+            string validScope = string.Empty;
+
+            if(SearchDirPaths.NotNullOrAny<string>())
+            {
+                UtilLogger.LogInfo(msgImp, SearchDirPaths, "Existing SearchDirPaths before clearing");
+                SearchDirPaths.Clear();
+            }
             
-            // First try to get the Scope Token
-            string validScope = GetScope(ScopeToken);
+            //// First try to get the Scope Token
+            //string validScope = GetScope(ScopeToken);
 
-            if (!string.IsNullOrWhiteSpace(validScope))
-            {
-                SearchDirPaths.Add(validScope);
-            }
+            //if (!string.IsNullOrWhiteSpace(validScope))
+            //{
+            //    SearchDirPaths.Add(validScope);
+            //}
 
-            // Then get the Fully Qualified scope directory path
-            validScope = GetScope(FQScopeDirPath);
-            if (!string.IsNullOrWhiteSpace(validScope))
-            {
-                SearchDirPaths.Add(validScope);
-            }
+            //// Then get the Fully Qualified scope directory path
+            //validScope = GetScope(FQScopeDirPath);
+            //if (!string.IsNullOrWhiteSpace(validScope))
+            //{
+            //    SearchDirPaths.Add(validScope);
+            //}
 
             // Finally you try to get valid scope from list of scopes provided
-            foreach (string s in ScopeDirPaths)
+            foreach (string sdp in ScopeDirPaths)
             {
-                validScope = GetScope(s);
+                validScope = GetScope(sdp);
                 if (string.IsNullOrWhiteSpace(validScope))
                 {
-                    SearchDirPaths.Add(s);
+                    SearchDirPaths.Add(sdp);
+                }
+                else
+                {
+                    SearchDirPaths.Add(validScope);
                 }
             }
 
@@ -822,10 +744,10 @@ namespace MS.Az.NetSdk.Build.Utilities
                     MGMT_SdkProjList.AddRange(commonProjects);
                 }
 
-                if (dataProjects.NotNullOrAny<string>())
-                {
-                    MGMT_SdkProjList.AddRange(dataProjects);
-                }
+                //if (dataProjects.NotNullOrAny<string>())
+                //{
+                //    MGMT_SdkProjList.AddRange(dataProjects);
+                //}
 
                 if (testProjects.NotNullOrAny<string>())
                 {
@@ -1244,17 +1166,24 @@ namespace MS.Az.NetSdk.Build.Utilities
 
                 case SdkProjectCategory.DataPlane:
                     {
-                        var f1 = collection.Where<string>((item) => !item.Contains("management", StringComparison.OrdinalIgnoreCase));
-                        if (f1.NotNullOrAny<string>())
-                        {
-                            f1 = f1.Where<string>((item) => item.Contains("sdkcommon", StringComparison.OrdinalIgnoreCase));
-                        }
-                        else
-                        {
-                            f1 = collection.Where<string>((item) => !item.Contains("sdkcommon", StringComparison.OrdinalIgnoreCase));
-                        }
+                        var f1 = collection
+                            .Where<string>((item) => !item.Contains("management", StringComparison.OrdinalIgnoreCase))
+                            .Where<string>((item) => !item.Contains("mgmtcommon", StringComparison.OrdinalIgnoreCase))
+                            .Where<string>((item) => !item.Contains("sdkcommon", StringComparison.OrdinalIgnoreCase));
 
-                        f1 = FilterOutTestProjects(f1);
+                        //if (f1.NotNullOrAny<string>())
+                        //{
+                        //    f1 = f1.Where<string>((item) => item.Contains("sdkcommon", StringComparison.OrdinalIgnoreCase));
+                        //}
+                        //else
+                        //{
+                        //    f1 = collection.Where<string>((item) => !item.Contains("sdkcommon", StringComparison.OrdinalIgnoreCase));
+                        //}
+
+                        if(filteredCollection.NotNullOrAny<string>())
+                        {
+                            f1 = FilterOutTestProjects(f1);
+                        }
 
                         filteredCollection = f1;
                         break;

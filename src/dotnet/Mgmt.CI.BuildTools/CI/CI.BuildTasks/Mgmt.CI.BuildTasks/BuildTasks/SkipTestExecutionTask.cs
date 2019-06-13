@@ -30,7 +30,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks
         #region Task Input Properties
         public string BuildScope { get; set; }
 
-        //public string FullyQualifiedBuildScopeDirPath { get; set; }
+        public List<string> BuildScopes { get; set; }
 
         public string ProjectType { get; set; }
 
@@ -38,7 +38,6 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks
 
         public bool ExcludeFromTestExecution { get; set; }
         public bool ExcludeFromBuild { get; set; }
-        //public string RepositoryRootDirPath { get; set; }
         #endregion
 
         string RepositoryRootDirPath
@@ -85,7 +84,6 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks
             }
             else
             {
-
                 List<string> ScopedProjects = new List<string>();
 
                 // We will not skip broad build scope (e.g. sdk), the idea is to not to skip all the tests in a broader build scope.
@@ -99,7 +97,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks
                 }
                 else
                 {
-                    CategorizeSDKProjectsTask catProj = new CategorizeSDKProjectsTask(RepositoryRootDirPath, BuildScope, ProjectType, ProjectCategory);
+                    CategorizeSDKProjectsTask catProj = new CategorizeSDKProjectsTask(RepositoryRootDirPath, BuildScope, BuildScopes, ProjectType, ProjectCategory);
                     catProj.Execute();
 
                     var sdkProj = catProj.SDK_Projects.Select<SDKMSBTaskItem, string>((item) => item.ItemSpec);
@@ -119,6 +117,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks
                     ScopedProjects.Clear();
                 }
             }
+
             return TaskLogger.TaskSucceededWithNoErrorsLogged;
         }
         #endregion

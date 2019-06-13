@@ -8,7 +8,7 @@ namespace APIViewTest
         [Fact]
         public void NamespaceTestGlobalNoNamedTypesSomenamespaces()
         {
-            AssemblyAPIV assembly = AssemblyAPIV.AssembliesFromFile("TestLibrary.dll")[0];
+            AssemblyAPIV assembly = new AssemblyAPIV(TestResource.GetAssemblySymbol());
             Assert.Equal("TestLibrary", assembly.Name);
 
             NamespaceAPIV globalNamespace = assembly.GlobalNamespace;
@@ -19,7 +19,7 @@ namespace APIViewTest
         [Fact]
         public void NamespaceTestNonGlobalSomeNamedTypesNonamespaces()
         {
-            AssemblyAPIV assembly = AssemblyAPIV.AssembliesFromFile("TestLibrary.dll")[0];
+            AssemblyAPIV assembly = new AssemblyAPIV(TestResource.GetAssemblySymbol());
             Assert.Equal("TestLibrary", assembly.Name);
 
             NamespaceAPIV globalNamespace = assembly.GlobalNamespace;
@@ -34,7 +34,7 @@ namespace APIViewTest
         [Fact]
         public void NamespaceTestNonGlobalSomeNamedTypesNonamespacesStringRep()
         {
-            AssemblyAPIV assembly = AssemblyAPIV.AssembliesFromFile("TestLibrary.dll")[0];
+            AssemblyAPIV assembly = new AssemblyAPIV(TestResource.GetAssemblySymbol());
             Assert.Equal("TestLibrary", assembly.Name);
 
             NamespaceAPIV globalNamespace = assembly.GlobalNamespace;

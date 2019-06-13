@@ -1,6 +1,4 @@
 ﻿using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using System.Linq;
 using APIView;
 using Xunit;
 
@@ -11,11 +9,7 @@ namespace APIViewTest
         [Fact]
         public void FieldTestReadOnly()
         {
-            var reference = MetadataReference.CreateFromFile("TestLibrary.dll");
-            var compilation = CSharpCompilation.Create(null).AddReferences(reference);
-            var a = compilation.SourceModule.ReferencedAssemblySymbols[0];
-
-            var fieldSymbol = (IFieldSymbol)a.GetTypeByMetadataName("TestLibrary.PublicClass").GetMembers("publicField").Single();
+            var fieldSymbol = (IFieldSymbol)TestResource.GetTestMember("TestLibrary.PublicClass", "publicField");
             FieldAPIV field = new FieldAPIV(fieldSymbol);
             
             Assert.Equal("publicField", field.Name);
@@ -31,11 +25,7 @@ namespace APIViewTest
         [Fact]
         public void FieldTestReadOnlyStringRep()
         {
-            var reference = MetadataReference.CreateFromFile("TestLibrary.dll");
-            var compilation = CSharpCompilation.Create(null).AddReferences(reference);
-            var a = compilation.SourceModule.ReferencedAssemblySymbols[0];
-
-            var fieldSymbol = (IFieldSymbol)a.GetTypeByMetadataName("TestLibrary.PublicClass").GetMembers("publicField").Single();
+            var fieldSymbol = (IFieldSymbol)TestResource.GetTestMember("TestLibrary.PublicClass", "publicField");
             FieldAPIV field = new FieldAPIV(fieldSymbol);
 
             Assert.Contains("public readonly int publicField;", field.ToString());
@@ -44,11 +34,7 @@ namespace APIViewTest
         [Fact]
         public void FieldTestConstant()
         {
-            var reference = MetadataReference.CreateFromFile("TestLibrary.dll");
-            var compilation = CSharpCompilation.Create(null).AddReferences(reference);
-            var a = compilation.SourceModule.ReferencedAssemblySymbols[0];
-
-            var fieldSymbol = (IFieldSymbol)a.GetTypeByMetadataName("TestLibrary.PublicClass").GetMembers("publicString").Single();
+            var fieldSymbol = (IFieldSymbol)TestResource.GetTestMember("TestLibrary.PublicClass", "publicString");
             FieldAPIV field = new FieldAPIV(fieldSymbol);
 
             Assert.Equal("publicString", field.Name);
@@ -64,11 +50,7 @@ namespace APIViewTest
         [Fact]
         public void FieldTestConstantStringRep()
         {
-            var reference = MetadataReference.CreateFromFile("TestLibrary.dll");
-            var compilation = CSharpCompilation.Create(null).AddReferences(reference);
-            var a = compilation.SourceModule.ReferencedAssemblySymbols[0];
-
-            var fieldSymbol = (IFieldSymbol)a.GetTypeByMetadataName("TestLibrary.PublicClass").GetMembers("publicString").Single();
+            var fieldSymbol = (IFieldSymbol)TestResource.GetTestMember("TestLibrary.PublicClass", "publicString");
             FieldAPIV field = new FieldAPIV(fieldSymbol);
 
             Assert.Contains("public static const string publicString = \"constant string\";", field.ToString());
@@ -77,11 +59,7 @@ namespace APIViewTest
         [Fact]
         public void FieldTestProtected()
         {
-            var reference = MetadataReference.CreateFromFile("TestLibrary.dll");
-            var compilation = CSharpCompilation.Create(null).AddReferences(reference);
-            var a = compilation.SourceModule.ReferencedAssemblySymbols[0];
-
-            var fieldSymbol = (IFieldSymbol)a.GetTypeByMetadataName("TestLibrary.PublicClass").GetMembers("protectedField").Single();
+            var fieldSymbol = (IFieldSymbol)TestResource.GetTestMember("TestLibrary.PublicClass", "protectedField");
             FieldAPIV field = new FieldAPIV(fieldSymbol);
 
             Assert.Equal("protectedField", field.Name);
@@ -97,11 +75,7 @@ namespace APIViewTest
         [Fact]
         public void FieldTestProtectedStringRep()
         {
-            var reference = MetadataReference.CreateFromFile("TestLibrary.dll");
-            var compilation = CSharpCompilation.Create(null).AddReferences(reference);
-            var a = compilation.SourceModule.ReferencedAssemblySymbols[0];
-
-            var fieldSymbol = (IFieldSymbol)a.GetTypeByMetadataName("TestLibrary.PublicClass").GetMembers("protectedField").Single();
+            var fieldSymbol = (IFieldSymbol)TestResource.GetTestMember("TestLibrary.PublicClass", "protectedField");
             FieldAPIV field = new FieldAPIV(fieldSymbol);
 
             Assert.Contains("protected int protectedField;", field.ToString());

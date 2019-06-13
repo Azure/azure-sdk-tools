@@ -38,7 +38,7 @@ namespace APIView
             if (IsVirtual)
                 returnString.Append(" virtual");
 
-            returnString.Append(Name + " { get; ");
+            returnString.Append(" " + Name + " { get; ");
             if (HasSetMethod)
                 returnString.Append("set; ");
             returnString.Append("}");

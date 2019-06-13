@@ -11,11 +11,7 @@ namespace APIViewTest
         [Fact]
         public void MethodTestNoAttributesOneTypeParamMultipleParams()
         {
-            var reference = MetadataReference.CreateFromFile("TestLibrary.dll");
-            var compilation = CSharpCompilation.Create(null).AddReferences(reference);
-            var a = compilation.SourceModule.ReferencedAssemblySymbols[0];
-
-            var methodSymbol = (IMethodSymbol)a.GetTypeByMetadataName("TestLibrary.PublicInterface`1").GetMembers("TypeParamParamsMethod").Single();
+            var methodSymbol = (IMethodSymbol)TestResource.GetTestMember("TestLibrary.PublicInterface`1", "TypeParamParamsMethod");
             MethodAPIV method = new MethodAPIV(methodSymbol);
 
             Assert.True(method.IsInterfaceMethod);
@@ -35,11 +31,7 @@ namespace APIViewTest
         [Fact]
         public void MethodTestNoAttributesOneTypeParamMultipleParamsStringRep()
         {
-            var reference = MetadataReference.CreateFromFile("TestLibrary.dll");
-            var compilation = CSharpCompilation.Create(null).AddReferences(reference);
-            var a = compilation.SourceModule.ReferencedAssemblySymbols[0];
-
-            var methodSymbol = (IMethodSymbol)a.GetTypeByMetadataName("TestLibrary.PublicInterface`1").GetMembers("TypeParamParamsMethod").Single();
+            var methodSymbol = (IMethodSymbol)TestResource.GetTestMember("TestLibrary.PublicInterface`1", "TypeParamParamsMethod");
             MethodAPIV method = new MethodAPIV(methodSymbol);
 
             Assert.Contains("int TypeParamParamsMethod<T>(T param, string str = \"hello\");", method.ToString());
@@ -48,11 +40,7 @@ namespace APIViewTest
         [Fact]
         public void MethodTestOneAttributeNoTypeParamsOneParam()
         {
-            var reference = MetadataReference.CreateFromFile("TestLibrary.dll");
-            var compilation = CSharpCompilation.Create(null).AddReferences(reference);
-            var a = compilation.SourceModule.ReferencedAssemblySymbols[0];
-
-            var methodSymbol = (IMethodSymbol)a.GetTypeByMetadataName("TestLibrary.PublicClass").GetMembers("StaticVoid").Single();
+            var methodSymbol = (IMethodSymbol)TestResource.GetTestMember("TestLibrary.PublicClass", "StaticVoid");
             MethodAPIV method = new MethodAPIV(methodSymbol);
 
             Assert.False(method.IsInterfaceMethod);
@@ -72,15 +60,11 @@ namespace APIViewTest
         [Fact]
         public void MethodTestOneAttributeNoTypeParamsOneParamStringRep()
         {
-            var reference = MetadataReference.CreateFromFile("TestLibrary.dll");
-            var compilation = CSharpCompilation.Create(null).AddReferences(reference);
-            var a = compilation.SourceModule.ReferencedAssemblySymbols[0];
-
-            var methodSymbol = (IMethodSymbol)a.GetTypeByMetadataName("TestLibrary.PublicClass").GetMembers("StaticVoid").Single();
+            var methodSymbol = (IMethodSymbol)TestResource.GetTestMember("TestLibrary.PublicClass", "StaticVoid");
             MethodAPIV method = new MethodAPIV(methodSymbol);
 
             string stringRep = method.ToString();
-            Assert.Contains("[Conditional(\"DEBUG\")]", stringRep);
+            Assert.Contains("[ConditionalAttribute(\"DEBUG\")]", stringRep);
             Assert.Contains("public static void StaticVoid(string[] args) {", stringRep);
         }
 

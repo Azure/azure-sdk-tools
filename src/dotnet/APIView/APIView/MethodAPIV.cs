@@ -68,7 +68,7 @@ namespace APIView
         {
             StringBuilder returnString = new StringBuilder("");
             if (!Attributes.IsEmpty)
-                returnString.Append("[" + Attributes[0].AttributeClass.Name + "] ");
+                returnString.Append("[").Append(Attributes[0].AttributeClass.Name).Append("(").Append(Attributes[0].AttributeConstructor).Append(")] ");
 
             if (!IsInterfaceMethod)
                 returnString.Append("public");

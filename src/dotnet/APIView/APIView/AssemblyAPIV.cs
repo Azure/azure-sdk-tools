@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
@@ -31,6 +33,12 @@ namespace APIView
             var compilation = CSharpCompilation.Create(null).AddReferences(reference);
             compilation = compilation.AddReferences(MetadataReference.CreateFromFile(typeof(object).Assembly.Location));
 
+            var trustedAssemblies = ((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")).Split(Path.PathSeparator);
+            foreach (var tpl in trustedAssemblies)
+            {
+                compilation = compilation.AddReferences(MetadataReference.CreateFromFile(tpl));
+            }
+
             List<AssemblyAPIV> assemblies = new List<AssemblyAPIV>();
 
             foreach (var assemblySymbol in compilation.SourceModule.ReferencedAssemblySymbols)
@@ -39,6 +47,23 @@ namespace APIView
             }
 
             return assemblies;
+        }
+
+        private static IAssemblySymbol GetAssembly(string dllPath)
+        {
+            string code = File.ReadAllText(dllPath);
+            var trustedAssemblies = ((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")).Split(Path.PathSeparator);
+
+            // create a compilation so the assembly semantics can be analyzed
+            var compilation = CSharpCompilation.Create(null, options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+            compilation.AddSyntaxTrees(CSharpSyntaxTree.ParseText(code));
+
+            foreach (var tpl in trustedAssemblies)
+            {
+                compilation = compilation.AddReferences(MetadataReference.CreateFromFile(tpl));
+            }
+
+            return compilation.Assembly;
         }
 
         public override string ToString()

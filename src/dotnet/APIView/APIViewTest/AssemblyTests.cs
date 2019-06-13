@@ -1,5 +1,4 @@
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
 using APIView;
 using Xunit;
 
@@ -10,21 +9,23 @@ namespace APIViewTest
         [Fact]
         public void AssemblyTestAssembly()
         {
-            var reference = MetadataReference.CreateFromFile("TestLibrary.dll");
-            var compilation = CSharpCompilation.Create(null).AddReferences(reference);
-            var a = compilation.SourceModule.ReferencedAssemblySymbols[0];
-
-            AssemblyAPIV assembly = new AssemblyAPIV(a);
+            IAssemblySymbol assemblySymbol = TestResource.GetAssemblySymbol();
+            AssemblyAPIV assembly = new AssemblyAPIV(assemblySymbol);
+            
             Assert.Equal("TestLibrary", assembly.Name);
 
-            NamespaceAPIV globalNamespace = assembly.GlobalNamespace;
-            Assert.Single(globalNamespace.Namespaces);
+            Assert.Single(assembly.GlobalNamespace.Namespaces);
         }
 
         [Fact]
         public void AssemblyTestAssembliesFromFile()
         {
-            AssemblyAPIV assembly = AssemblyAPIV.AssembliesFromFile("TestLibrary.dll")[0];
+            AssemblyAPIV assembly = null;
+            foreach (AssemblyAPIV a in AssemblyAPIV.AssembliesFromFile("TestLibrary.dll"))
+            {
+                if (a.Name.Equals("TestLibrary"))
+                    assembly = a;
+            }
             Assert.Equal("TestLibrary", assembly.Name);
 
             NamespaceAPIV globalNamespace = assembly.GlobalNamespace;

@@ -1,6 +1,4 @@
 ﻿using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using System.Linq;
 using APIView;
 using Xunit;
 
@@ -11,11 +9,7 @@ namespace APIViewTest
         [Fact]
         public void ParameterTestNoRefKindStringDefaultValue()
         {
-            var reference = MetadataReference.CreateFromFile("TestLibrary.dll");
-            var compilation = CSharpCompilation.Create(null).AddReferences(reference);
-            var a = compilation.SourceModule.ReferencedAssemblySymbols[0];
-
-            var methodSymbol = (IMethodSymbol)a.GetTypeByMetadataName("TestLibrary.PublicInterface`1").GetMembers("TypeParamParamsMethod").Single();
+            var methodSymbol = (IMethodSymbol)TestResource.GetTestMember("TestLibrary.PublicInterface`1", "TypeParamParamsMethod");
             MethodAPIV method = new MethodAPIV(methodSymbol);
 
             Assert.Equal(2, method.Parameters.Length);
@@ -43,11 +37,7 @@ namespace APIViewTest
         [Fact]
         public void ParameterTestSomeRefKindNoDefaultValue()
         {
-            var reference = MetadataReference.CreateFromFile("TestLibrary.dll");
-            var compilation = CSharpCompilation.Create(null).AddReferences(reference);
-            var a = compilation.SourceModule.ReferencedAssemblySymbols[0];
-
-            var methodSymbol = (IMethodSymbol)a.GetTypeByMetadataName("TestLibrary.PublicInterface`1").GetMembers("RefKindParamMethod").Single();
+            var methodSymbol = (IMethodSymbol)TestResource.GetTestMember("TestLibrary.PublicInterface`1", "RefKindParamMethod");
             MethodAPIV method = new MethodAPIV(methodSymbol);
 
             Assert.Single(method.Parameters);

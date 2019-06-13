@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
@@ -30,16 +29,7 @@ namespace APIView
 
         public static List<AssemblyAPIV> AssembliesFromFile(string dllPath)
         {
-            var reference = MetadataReference.CreateFromFile(dllPath);
-            var compilation = CSharpCompilation.Create(null).AddReferences(reference);
-            compilation = compilation.AddReferences(MetadataReference.CreateFromFile(typeof(object).Assembly.Location));
-
-            var trustedAssemblies = ((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")).Split(Path.PathSeparator);
-            foreach (var tpl in trustedAssemblies)
-            {
-                compilation = compilation.AddReferences(MetadataReference.CreateFromFile(tpl));
-            }
-
+            var compilation = GetCompilation(dllPath);
             List<AssemblyAPIV> assemblies = new List<AssemblyAPIV>();
 
             foreach (var assemblySymbol in compilation.SourceModule.ReferencedAssemblySymbols)
@@ -50,21 +40,19 @@ namespace APIView
             return assemblies;
         }
 
-        private static IAssemblySymbol GetAssembly(string dllPath)
+        public static CSharpCompilation GetCompilation(string dllPath)
         {
-            string code = File.ReadAllText(dllPath);
+            var reference = MetadataReference.CreateFromFile(dllPath);
+            var compilation = CSharpCompilation.Create(null).AddReferences(reference);
+            compilation = compilation.AddReferences(MetadataReference.CreateFromFile(typeof(object).Assembly.Location));
+
             var trustedAssemblies = ((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")).Split(Path.PathSeparator);
-
-            // create a compilation so the assembly semantics can be analyzed
-            var compilation = CSharpCompilation.Create(null, options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
-            compilation.AddSyntaxTrees(CSharpSyntaxTree.ParseText(code));
-
             foreach (var tpl in trustedAssemblies)
             {
                 compilation = compilation.AddReferences(MetadataReference.CreateFromFile(tpl));
             }
 
-            return compilation.Assembly;
+            return compilation;
         }
 
         public override string ToString()

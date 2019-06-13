@@ -20,6 +20,7 @@ import tsPackageJsonBugs from "./ts-package-json-bugs";
 import tsPackageJsonKeywords from "./ts-package-json-keywords";
 import tsPackageJsonLicense from "./ts-package-json-license";
 import tsPackageJsonRepo from "./ts-package-json-repo";
+import tsPackageJsonRequiredScripts from "./ts-package-json-required-scripts";
 import tsPackageJsonSideEffects from "./ts-package-json-sideeffects";
 
 export = {
@@ -40,5 +41,6 @@ export = {
   "ts-package-json-keywords": tsPackageJsonKeywords,
   "ts-package-json-license": tsPackageJsonLicense,
   "ts-package-json-repo": tsPackageJsonRepo,
+  "ts-package-json-required-scripts": tsPackageJsonRequiredScripts,
   "ts-package-json-sideeffects": tsPackageJsonSideEffects
 };

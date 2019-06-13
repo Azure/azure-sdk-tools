@@ -5,6 +5,7 @@
 
 import structure from "../utils/structure";
 import { Rule } from "eslint";
+import { Property } from "estree";
 
 //------------------------------------------------------------------------------
 // Rule Definition
@@ -38,8 +39,16 @@ export = {
       "VariableDeclarator > ObjectExpression": verifiers.existsInFile,
 
       // check the node corresponding to name to see if its value is @azure/<service>
-      "VariableDeclarator > ObjectExpression > Property[key.value='name']":
-        verifiers.outerMatchesExpected
+      "VariableDeclarator > ObjectExpression > Property[key.value='name']": (
+        node: Property
+      ): void => {
+        context.settings.hasOwnProperty("service")
+          ? verifiers.outerMatchesExpected(node)
+          : context.report({
+              node: node,
+              message: "service not specified in .eslintrc.json settings"
+            });
+      }
     } as Rule.RuleListener;
   }
 };

@@ -27,7 +27,7 @@ namespace APIView
 
             this.IsAbstract = symbol.IsAbstract;
             this.IsVirtual = symbol.IsVirtual;
-            this.HasSetMethod = symbol.SetMethod != null;
+            this.HasSetMethod = (symbol.SetMethod != null) && (symbol.SetMethod.DeclaredAccessibility == Accessibility.Public);
         }
 
         public override string ToString()

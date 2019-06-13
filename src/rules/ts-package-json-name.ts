@@ -53,10 +53,10 @@ export = {
               message: "name is not set to @azure/<service>"
             });
 
-          const kebabRegex = /^@azure\/[a-z-]/;
+          const kebabRegex = /^@azure\/([a-z]*-)*[a-z]+$/;
 
           prefixRegex.test(value) &&
-            kebabRegex.test(value) &&
+            !kebabRegex.test(value) &&
             context.report({
               node: node,
               message:

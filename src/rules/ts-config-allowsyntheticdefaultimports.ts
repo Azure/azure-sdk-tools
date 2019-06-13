@@ -25,7 +25,7 @@ export = {
     schema: [] // no options
   },
   create: (context: Rule.RuleContext): Rule.RuleListener => {
-    var checkers = structure(context, {
+    const verifiers = structure(context, {
       outer: "compilerOptions",
       inner: "allowSyntheticDefaultImports",
       expected: true,
@@ -35,14 +35,14 @@ export = {
       // callback functions
 
       // check to see if compilerOptions exists at the outermost level
-      "VariableDeclarator > ObjectExpression": checkers.existsInFile,
+      "VariableDeclarator > ObjectExpression": verifiers.existsInFile,
 
       // check that allowSyntheticDefaultImports is a member of compilerOptions
-      "Property[key.value='compilerOptions']": checkers.isMemberOf,
+      "Property[key.value='compilerOptions']": verifiers.isMemberOf,
 
       // check the node corresponding to compilerOptions.allowSyntheticDefaultImports to see if it is set to true
       "VariableDeclarator > ObjectExpression > Property[key.value='compilerOptions'] > ObjectExpression > Property[key.value='allowSyntheticDefaultImports']":
-        checkers.innerMatchesExpected
+        verifiers.innerMatchesExpected
     } as Rule.RuleListener;
   }
 };

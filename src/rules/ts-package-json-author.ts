@@ -25,7 +25,7 @@ export = {
     schema: [] // no options
   },
   create: (context: Rule.RuleContext): Rule.RuleListener => {
-    var checkers = structure(context, {
+    const verifiers = structure(context, {
       outer: "author",
       expected: "Microsoft Corporation",
       fileName: "package.json"
@@ -34,11 +34,11 @@ export = {
       // callback functions
 
       // check to see if author exists at the outermost level
-      "VariableDeclarator > ObjectExpression": checkers.existsInFile,
+      "VariableDeclarator > ObjectExpression": verifiers.existsInFile,
 
       // check the node corresponding to author to see if its value is "Microsoft Corporation"
       "VariableDeclarator > ObjectExpression > Property[key.value='author']":
-        checkers.outerMatchesExpected
+        verifiers.outerMatchesExpected
     } as Rule.RuleListener;
   }
 };

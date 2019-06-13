@@ -26,12 +26,12 @@ export = {
     schema: [] // no options
   },
   create: (context: Rule.RuleContext): Rule.RuleListener => {
-    var buildCheckers = structure(context, {
+    var buildVerifiers = structure(context, {
       outer: "scripts",
       inner: "build",
       fileName: "package.json"
     });
-    var testCheckers = structure(context, {
+    var testVerifiers = structure(context, {
       outer: "scripts",
       inner: "test",
       fileName: "package.json"
@@ -40,12 +40,12 @@ export = {
       // callback functions
 
       // check to see if scripts exists at the outermost level
-      "VariableDeclarator > ObjectExpression": buildCheckers.existsInFile,
+      "VariableDeclarator > ObjectExpression": buildVerifiers.existsInFile,
 
       // check to see if scripts contains both build and test
       "Property[key.value='scripts']": (node: Property): void => {
-        buildCheckers.isMemberOf(node);
-        testCheckers.isMemberOf(node);
+        buildVerifiers.isMemberOf(node);
+        testVerifiers.isMemberOf(node);
       }
     } as Rule.RuleListener;
   }

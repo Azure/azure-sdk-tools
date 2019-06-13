@@ -26,13 +26,13 @@ export = {
     schema: [] // no options
   },
   create: (context: Rule.RuleContext): Rule.RuleListener => {
-    var sourceMapCheckers = structure(context, {
+    var sourceMapVerifiers = structure(context, {
       outer: "compilerOptions",
       inner: "sourceMap",
       expected: true,
       fileName: "tsconfig.json"
     });
-    var declarationMapCheckers = structure(context, {
+    var declarationMapVerifiers = structure(context, {
       outer: "compilerOptions",
       inner: "declarationMap",
       expected: true,
@@ -43,21 +43,21 @@ export = {
       // callback functions
 
       // check to see if compilerOptions exists at the outermost level
-      "VariableDeclarator > ObjectExpression": sourceMapCheckers.existsInFile,
+      "VariableDeclarator > ObjectExpression": sourceMapVerifiers.existsInFile,
 
       // check that sourceMap and declarationMap are both members of compilerOptions
       "Property[key.value='compilerOptions']": (node: Property): void => {
-        sourceMapCheckers.isMemberOf(node);
-        declarationMapCheckers.isMemberOf(node);
+        sourceMapVerifiers.isMemberOf(node);
+        declarationMapVerifiers.isMemberOf(node);
       },
 
       // check the node corresponding to compilerOptions.sourceMap to see if it is set to true
       "VariableDeclarator > ObjectExpression > Property[key.value='compilerOptions'] > ObjectExpression > Property[key.value='sourceMap']":
-        sourceMapCheckers.innerMatchesExpected,
+        sourceMapVerifiers.innerMatchesExpected,
 
       // check the node corresponding to compilerOptions.declarationMap to see if it is set to true
       "VariableDeclarator > ObjectExpression > Property[key.value='compilerOptions'] > ObjectExpression > Property[key.value='declarationMap']":
-        declarationMapCheckers.innerMatchesExpected
+        declarationMapVerifiers.innerMatchesExpected
     } as Rule.RuleListener;
   }
 };

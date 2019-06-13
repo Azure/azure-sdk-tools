@@ -25,7 +25,7 @@ export = {
     schema: [] // no options
   },
   create: (context: Rule.RuleContext): Rule.RuleListener => {
-    var checkers = structure(context, {
+    const verifiers = structure(context, {
       outer: "repository",
       expected: "github:Azure/azure-sdk-for-js",
       fileName: "package.json"
@@ -34,11 +34,11 @@ export = {
       // callback functions
 
       // check to see if repository exists at the outermost level
-      "VariableDeclarator > ObjectExpression": checkers.existsInFile,
+      "VariableDeclarator > ObjectExpression": verifiers.existsInFile,
 
       // check the node corresponding to repository to see if its value is github:Azure/azure-sdk-for-js
       "VariableDeclarator > ObjectExpression > Property[key.value='repository']":
-        checkers.outerMatchesExpected
+        verifiers.outerMatchesExpected
     } as Rule.RuleListener;
   }
 };

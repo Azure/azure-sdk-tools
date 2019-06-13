@@ -25,7 +25,7 @@ export = {
     schema: [] // no options
   },
   create: (context: Rule.RuleContext): Rule.RuleListener => {
-    var checkers = structure(context, {
+    const verifiers = structure(context, {
       outer: "compilerOptions",
       inner: "experimentalDecorators",
       expected: false,
@@ -35,11 +35,11 @@ export = {
       // callback functions
 
       // check to see if compilerOptions exists at the outermost level
-      "VariableDeclarator > ObjectExpression": checkers.existsInFile,
+      "VariableDeclarator > ObjectExpression": verifiers.existsInFile,
 
       // check the node corresponding to compilerOptions.experimentalDecorators to see if it is set to false
       "VariableDeclarator > ObjectExpression > Property[key.value='compilerOptions'] > ObjectExpression > Property[key.value='experimentalDecorators']":
-        checkers.innerMatchesExpected
+        verifiers.innerMatchesExpected
     } as Rule.RuleListener;
   }
 };

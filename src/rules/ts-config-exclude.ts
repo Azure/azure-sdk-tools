@@ -25,7 +25,7 @@ export = {
     schema: [] // no options
   },
   create: (context: Rule.RuleContext): Rule.RuleListener => {
-    var checkers = structure(context, {
+    const verifiers = structure(context, {
       outer: "exclude",
       expected: "node_modules",
       fileName: "tsconfig.json"
@@ -34,11 +34,11 @@ export = {
       // callback functions
 
       // check to see if exclude exists at the outermost level
-      "VariableDeclarator > ObjectExpression": checkers.existsInFile,
+      "VariableDeclarator > ObjectExpression": verifiers.existsInFile,
 
       // check the node corresponding to exclude to see if its value contains "node_modules"
       "VariableDeclarator > ObjectExpression > Property[key.value='exclude']":
-        checkers.outerContainsExpected
+        verifiers.outerContainsExpected
     } as Rule.RuleListener;
   }
 };

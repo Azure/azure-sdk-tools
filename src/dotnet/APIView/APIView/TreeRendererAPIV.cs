@@ -25,7 +25,7 @@ namespace APIView
         {
             AppendIndents(builder, indents);
             //TODO: determine whether event is EventHandler or other type - and if it has type parameter(s)
-            builder.Append("public event EventHandler " + e.Name + ";");
+            builder.Append("public event EventHandler ").Append(e.Name).Append(";");
         }
 
         private void Render(FieldAPIV f, StringBuilder builder, int indents = 0)
@@ -45,14 +45,14 @@ namespace APIView
             if (f.IsVolatile)
                 builder.Append(" volatile");
 
-            builder.Append(" " + f.Type + " " + f.Name);
+            builder.Append(" ").Append(f.Type).Append(" ").Append(f.Name);
 
             if (f.IsConstant)
             {
                 if (f.Value.GetType().Name.Equals("String"))
-                    builder.Append(" = \"" + f.Value + "\"");
+                    builder.Append(" = \"").Append(f.Value).Append("\"");
                 else
-                    builder.Append(" = " + f.Value);
+                    builder.Append(" = ").Append(f.Value);
             }
 
             builder.Append(";");
@@ -63,7 +63,7 @@ namespace APIView
             AppendIndents(builder, indents);
             if (!m.Attributes.IsEmpty)
             {
-                builder.Append("[" + m.Attributes[0].AttributeClass.Name + "]");
+                builder.Append("[").Append(m.Attributes[0].AttributeClass.Name).Append("]");
                 builder.AppendLine();
                 AppendIndents(builder, indents);
             }
@@ -84,7 +84,7 @@ namespace APIView
             if (m.IsExtern)
                 builder.Append(" extern");
 
-            builder.Append(" " + m.ReturnType + " " + m.Name);
+            builder.Append(" ").Append(m.ReturnType).Append(" ").Append(m.Name);
             if (m.TypeParameters.Length != 0)
             {
                 builder.Append("<");
@@ -117,7 +117,7 @@ namespace APIView
         private void Render(NamedTypeAPIV nt, StringBuilder builder, int indents = 0)
         {
             AppendIndents(builder, indents);
-            builder.Append("public " + nt.Type + " " + nt.Name + " ");
+            builder.Append("public ").Append(nt.Type).Append(" ").Append(nt.Name).Append(" ");
 
             // add any implemented types to string
             if (nt.Implementations.Length > 0)
@@ -125,7 +125,7 @@ namespace APIView
                 builder.Append(": ");
                 foreach (var i in nt.Implementations)
                 {
-                    builder.Append(i + ", ");
+                    builder.Append(i).Append(", ");
                 }
                 builder.Length = builder.Length - 2;
                 builder.Append(" ");
@@ -171,7 +171,7 @@ namespace APIView
             if (ns.Name.Length != 0)
             {
                 AppendIndents(builder, indents);
-                builder.Append("namespace " + ns.Name + " {");
+                builder.Append("namespace ").Append(ns.Name).Append(" {");
                 builder.AppendLine();
             }
 
@@ -203,20 +203,20 @@ namespace APIView
 
         private void Render(ParameterAPIV p, StringBuilder builder, int indents = 0)
         {
-            builder.Append(p.Type + " " + p.Name);
+            builder.Append(p.Type).Append(" ").Append(p.Name);
             if (p.HasExplicitDefaultValue)
             {
                 if (p.Type.Equals("string"))
-                    builder.Append(" = \"" + p.ExplicitDefaultValue + "\"");
+                    builder.Append(" = \"").Append(p.ExplicitDefaultValue).Append("\"");
                 else
-                    builder.Append(" = " + p.ExplicitDefaultValue);
+                    builder.Append(" = ").Append(p.ExplicitDefaultValue);
             }
         }
 
         private void Render(PropertyAPIV p, StringBuilder builder, int indents = 0)
         {
             AppendIndents(builder, indents);
-            builder.Append("public " + p.Type + " " + p.Name + " { get; ");
+            builder.Append("public ").Append(p.Type).Append(" ").Append(p.Name).Append(" { get; ");
 
             if (p.HasSetMethod)
                 builder.Append("set; ");
@@ -227,7 +227,7 @@ namespace APIView
         private void Render(TypeParameterAPIV tp, StringBuilder builder, int indents = 0)
         {
             if (tp.Attributes.Length != 0)
-                builder.Append(tp.Attributes + " ");
+                builder.Append(tp.Attributes).Append(" ");
 
             builder.Append(tp.Name);
         }

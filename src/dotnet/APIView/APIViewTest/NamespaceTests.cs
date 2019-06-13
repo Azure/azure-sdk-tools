@@ -1,7 +1,4 @@
-﻿using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using System.Collections.Immutable;
-using System.Linq;
+﻿using System.Collections.Immutable;
 using APIView;
 using Xunit;
 

@@ -19,7 +19,6 @@ namespace APIViewTest
             var namedTypeSymbol = a.GetTypeByMetadataName("TestLibrary.SomeEventsSomeFieldsNoMethodsSomeNamedTypes");
             NamedTypeAPIV publicClass = new NamedTypeAPIV(namedTypeSymbol);
 
-            Assert.False(publicClass == null);
             Assert.Equal("SomeEventsSomeFieldsNoMethodsSomeNamedTypes", publicClass.Name);
             Assert.Equal("class", publicClass.Type);
 
@@ -59,7 +58,6 @@ namespace APIViewTest
             var namedTypeSymbol = a.GetTypeByMetadataName("TestLibrary.PublicInterface`1");
             NamedTypeAPIV publicInterface = new NamedTypeAPIV(namedTypeSymbol);
 
-            Assert.False(publicInterface == null);
             Assert.Equal("PublicInterface", publicInterface.Name);
             Assert.Equal("interface", publicInterface.Type);
 
@@ -99,7 +97,6 @@ namespace APIViewTest
             var namedTypeSymbol = a.GetTypeByMetadataName("TestLibrary.ImplementingClass");
             NamedTypeAPIV implementer = new NamedTypeAPIV(namedTypeSymbol);
 
-            Assert.False(implementer == null);
             Assert.Equal("ImplementingClass", implementer.Name);
             Assert.Equal("class", implementer.Type);
 
@@ -131,7 +128,6 @@ namespace APIViewTest
             var namedTypeSymbol = (INamedTypeSymbol)a.GetTypeByMetadataName("TestLibrary.PublicClass").GetMembers("PublicEnum").Single();
             NamedTypeAPIV publicEnum = new NamedTypeAPIV(namedTypeSymbol);
 
-            Assert.False(publicEnum == null);
             Assert.Equal("PublicEnum", publicEnum.Name);
             Assert.Equal("enum", publicEnum.Type);
             Assert.Equal("int", publicEnum.EnumUnderlyingType);
@@ -164,7 +160,6 @@ namespace APIViewTest
             var namedTypeSymbol = (INamedTypeSymbol)a.GetTypeByMetadataName("TestLibrary.ImplementingClass").GetMembers("PublicEnum").Single();
             NamedTypeAPIV publicEnum = new NamedTypeAPIV(namedTypeSymbol);
 
-            Assert.False(publicEnum == null);
             Assert.Equal("PublicEnum", publicEnum.Name);
             Assert.Equal("enum", publicEnum.Type);
             Assert.Equal("long", publicEnum.EnumUnderlyingType);
@@ -197,7 +192,6 @@ namespace APIViewTest
             var namedTypeSymbol = a.GetTypeByMetadataName("TestLibrary.publicDelegate");
             NamedTypeAPIV publicDelegate = new NamedTypeAPIV(namedTypeSymbol);
 
-            Assert.False(publicDelegate == null);
             Assert.Equal("publicDelegate", publicDelegate.Name);
             Assert.Equal("delegate", publicDelegate.Type);
         }

@@ -18,7 +18,6 @@ namespace APIViewTest
             var fieldSymbol = (IFieldSymbol)a.GetTypeByMetadataName("TestLibrary.PublicClass").GetMembers("publicField").Single();
             FieldAPIV field = new FieldAPIV(fieldSymbol);
             
-            Assert.NotNull(field);
             Assert.Equal("publicField", field.Name);
             Assert.Equal("int", field.Type);
             Assert.Equal("public", field.Accessibility);
@@ -52,7 +51,6 @@ namespace APIViewTest
             var fieldSymbol = (IFieldSymbol)a.GetTypeByMetadataName("TestLibrary.PublicClass").GetMembers("publicString").Single();
             FieldAPIV field = new FieldAPIV(fieldSymbol);
 
-            Assert.NotNull(field);
             Assert.Equal("publicString", field.Name);
             Assert.Equal("string", field.Type);
             Assert.Equal("public", field.Accessibility);
@@ -86,7 +84,6 @@ namespace APIViewTest
             var fieldSymbol = (IFieldSymbol)a.GetTypeByMetadataName("TestLibrary.PublicClass").GetMembers("protectedField").Single();
             FieldAPIV field = new FieldAPIV(fieldSymbol);
 
-            Assert.NotNull(field);
             Assert.Equal("protectedField", field.Name);
             Assert.Equal("int", field.Type);
             Assert.Equal("protected", field.Accessibility);

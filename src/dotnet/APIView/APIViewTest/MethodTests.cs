@@ -20,7 +20,6 @@ namespace APIViewTest
             var methodSymbol = (IMethodSymbol)a.GetTypeByMetadataName("TestLibrary.PublicInterface`1").GetMembers("TypeParamParamsMethod").Single();
             MethodAPIV method = new MethodAPIV(methodSymbol);
 
-            Assert.False(method == null);
             Assert.True(method.IsInterfaceMethod);
             Assert.False(method.IsStatic);
             Assert.False(method.IsVirtual);
@@ -63,7 +62,6 @@ namespace APIViewTest
             var methodSymbol = (IMethodSymbol)a.GetTypeByMetadataName("TestLibrary.PublicClass").GetMembers("StaticVoid").Single();
             MethodAPIV method = new MethodAPIV(methodSymbol);
 
-            Assert.False(method == null);
             Assert.False(method.IsInterfaceMethod);
             Assert.True(method.IsStatic);
             Assert.False(method.IsVirtual);

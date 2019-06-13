@@ -1,6 +1,5 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using System.Collections.Immutable;
 using System.Linq;
 using APIView;
 using Xunit;
@@ -19,7 +18,6 @@ namespace APIViewTest
             var propertySymbol = (IPropertySymbol)a.GetTypeByMetadataName("TestLibrary.PublicClass").GetMembers("propertyGet").Single();
             PropertyAPIV property = new PropertyAPIV(propertySymbol);
             
-            Assert.NotNull(property);
             Assert.Equal("propertyGet", property.Name);
             Assert.Equal("uint", property.Type);
             Assert.False(property.HasSetMethod);
@@ -48,7 +46,6 @@ namespace APIViewTest
             var propertySymbol = (IPropertySymbol)a.GetTypeByMetadataName("TestLibrary.PublicClass").GetMembers("propertyBoth").Single();
             PropertyAPIV property = new PropertyAPIV(propertySymbol);
             
-            Assert.NotNull(property);
             Assert.Equal("propertyBoth", property.Name);
             Assert.Equal("int", property.Type);
             Assert.True(property.HasSetMethod);

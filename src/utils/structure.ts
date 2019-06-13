@@ -69,6 +69,28 @@ export = (context: Rule.RuleContext, data: StructureData): any => {
       }
     },
 
+    // check to see if the outer key is prefixed by the expected value
+    outerPrefixExpected: (node: Property): void => {
+      const fileName = data.fileName;
+      if (stripPath(context.getFilename()) === fileName) {
+        const outer = data.outer;
+        const expected = data.expected;
+        const regex = new RegExp("^" + expected);
+
+        const nodeValue: Literal = node.value as Literal;
+        const value: string = nodeValue.value as string;
+
+        !regex.exec(value) &&
+          context.report({
+            node: node,
+            message:
+              outer +
+              " is set to {{ identifier }} when it should be set to " +
+              expected
+          });
+      }
+    },
+
     // check that the inner key is a member of the outer key
     isMemberOf: (node: Property): void => {
       const fileName = data.fileName;

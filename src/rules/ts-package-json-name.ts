@@ -5,7 +5,7 @@
 
 import structure from "../utils/structure";
 import { Rule } from "eslint";
-import { Property } from "estree";
+import { Literal, Property } from "estree";
 
 //------------------------------------------------------------------------------
 // Rule Definition
@@ -26,10 +26,9 @@ export = {
     schema: [] // no options
   },
   create: (context: Rule.RuleContext): Rule.RuleListener => {
-    const expectedName = "@azure/" + context.settings.service;
     const verifiers = structure(context, {
       outer: "name",
-      expected: expectedName,
+      expected: "@azure/",
       fileName: "package.json"
     });
     return {
@@ -42,12 +41,18 @@ export = {
       "VariableDeclarator > ObjectExpression > Property[key.value='name']": (
         node: Property
       ): void => {
-        context.settings.hasOwnProperty("service")
-          ? verifiers.outerMatchesExpected(node)
-          : context.report({
+        if (context.getFilename().replace(/^.*[\\\/]/, "") === "package.json") {
+          const regex = /^@azure\//;
+
+          const nodeValue: Literal = node.value as Literal;
+          const value: string = nodeValue.value as string;
+
+          !regex.test(value) &&
+            context.report({
               node: node,
-              message: "service not specified in .eslintrc.json settings"
+              message: "name is not set to @azure/<service>"
             });
+        }
       }
     } as Rule.RuleListener;
   }

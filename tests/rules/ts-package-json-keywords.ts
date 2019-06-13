@@ -1,5 +1,5 @@
 /**
- * @fileoverview Testing the ts-package-json-keywores rule.
+ * @fileoverview Testing the ts-package-json-keywords rule.
  * @author Arpan Laha
  */
 

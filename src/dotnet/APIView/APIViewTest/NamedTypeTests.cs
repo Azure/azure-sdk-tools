@@ -1,6 +1,7 @@
 ﻿using Microsoft.CodeAnalysis;
 using APIView;
 using Xunit;
+using System;
 
 namespace APIViewTest
 {
@@ -15,7 +16,7 @@ namespace APIViewTest
             Assert.Equal("SomeEventsSomeFieldsNoMethodsSomeNamedTypes", publicClass.Name);
             Assert.Equal("class", publicClass.Type);
             Assert.Single(publicClass.Events);
-            Assert.Single(publicClass.Fields);
+            Assert.Equal(2, publicClass.Fields.Length);
             Assert.Empty(publicClass.Methods);
             Assert.Single(publicClass.NamedTypes);
         }
@@ -90,11 +91,8 @@ namespace APIViewTest
             var namedTypeSymbol = (INamedTypeSymbol)TestResource.GetTestMember("TestLibrary.PublicClass", "PublicEnum");
             NamedTypeAPIV publicEnum = new NamedTypeAPIV(namedTypeSymbol);
 
-            string stringRep = publicEnum.ToString();
-            Assert.Contains("public enum PublicEnumDefault {", stringRep);
-            Assert.Contains("One = 0,", stringRep);
-            Assert.Contains("Two = 1,", stringRep);
-            Assert.Contains("Three = 2", stringRep);
+            string stringRep = publicEnum.ToString().Replace(Environment.NewLine, "");
+            Assert.Equal("public enum PublicEnum {    One = 0,    Two = 1,    Three = 2,}", stringRep);
         }
         
         [Fact]
@@ -114,11 +112,8 @@ namespace APIViewTest
             var namedTypeSymbol = (INamedTypeSymbol)TestResource.GetTestMember("TestLibrary.ImplementingClass", "PublicEnum");
             NamedTypeAPIV publicEnum = new NamedTypeAPIV(namedTypeSymbol);
 
-            string stringRep = publicEnum.ToString();
-            Assert.Contains("public enum PublicEnum : long {", stringRep);
-            Assert.Contains("One = 1,", stringRep);
-            Assert.Contains("Two = 2,", stringRep);
-            Assert.Contains("Three = 3", stringRep);
+            string stringRep = publicEnum.ToString().Replace(Environment.NewLine, "");
+            Assert.Equal("public enum PublicEnum : long {    One = 1,    Two = 2,    Three = 3,}", stringRep);
         }
 
         [Fact]
@@ -137,7 +132,7 @@ namespace APIViewTest
             var namedTypeSymbol = (INamedTypeSymbol)TestResource.GetTestMember("TestLibrary.publicDelegate");
             NamedTypeAPIV publicDelegate = new NamedTypeAPIV(namedTypeSymbol);
 
-            Assert.Contains("public delegate int publicDelegate(int num = 10);", publicDelegate.ToString());
+            Assert.Equal("public delegate int publicDelegate(int num = 10) { }", publicDelegate.ToString());
         }
     }
 }

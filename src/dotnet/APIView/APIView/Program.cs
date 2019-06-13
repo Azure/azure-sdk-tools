@@ -10,16 +10,13 @@ namespace APIView
         {
             try
             {
-                // create a compilation so the assembly semantics can be analyzed
-                var reference = MetadataReference.CreateFromFile(args[0]);
-                var compilation = CSharpCompilation.Create(null).AddReferences(reference);
-
-                // analyze the provided assembly, and create a unique TypeData instance if this DLL hasn't been given already
+                var compilation = AssemblyAPIV.GetCompilation(args[0]);
                 foreach (var assemblySymbol in compilation.SourceModule.ReferencedAssemblySymbols)
                 {
-                    AssemblyAPIV data = new AssemblyAPIV(assemblySymbol);
-                    Console.WriteLine(TreeRendererAPIV.Render(data));
+                    if (assemblySymbol.Name.Equals("TestLibrary"))
+                        Console.WriteLine(TreeRendererAPIV.Render(new AssemblyAPIV(assemblySymbol)));
                 }
+
             }
             catch (Exception e)
             {

@@ -27,6 +27,7 @@ export = {
       "azure/ts-package-json-bugs": "error",
       "azure/ts-package-json-keywords": "error",
       "azure/ts-package-json-license": "error",
+      "azure/ts-package-json-name": "error",
       "azure/ts-package-json-repo": "error",
       "azure/ts-package-json-required-scripts": "error",
       "azure/ts-package-json-sideeffects": "error"

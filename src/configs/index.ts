@@ -14,6 +14,7 @@ export = {
       "azure/ts-config-allowsyntheticdefaultimports": "error",
       "azure/ts-config-declaration": "error",
       "azure/ts-config-esmoduleinterop": "error",
+      "azure/ts-config-exclude": "error",
       "azure/ts-config-forceconsistentcasinginfilenames": "error",
       "azure/ts-config-importhelpers": "error",
       "azure/ts-config-isolatedmodules": "warn",

@@ -6,6 +6,7 @@
 import tsConfigAllowSyntheticDefaultImports from "./ts-config-allowsyntheticdefaultimports";
 import tsConfigDeclaration from "./ts-config-declaration";
 import tsConfigEsModuleInterop from "./ts-config-esmoduleinterop";
+import tsConfigExclude from "./ts-tsConfigExclude";
 import tsConfigForceConsistentCasingInFileNames from "./ts-config-forceconsistentcasinginfilenames";
 import tsConfigImportHelpers from "./ts-config-importhelpers";
 import tsConfigIsolatedModules from "./ts-config-isolatedmodules";
@@ -23,6 +24,7 @@ export = {
   "ts-config-allowsyntheticdefaultimports": tsConfigAllowSyntheticDefaultImports,
   "ts-config-declaration": tsConfigDeclaration,
   "ts-config-esmoduleinterop": tsConfigEsModuleInterop,
+  "ts-config-exclude": tsConfigExclude,
   "ts-config-forceconsistentcasinginfilenames": tsConfigForceConsistentCasingInFileNames,
   "ts-config-importhelpers": tsConfigImportHelpers,
   "ts-config-isolatedmodules": tsConfigIsolatedModules,

@@ -3,7 +3,7 @@
  * @author Arpan Laha
  */
 
-import structure from "../utils/structure";
+import getVerifiers from "../utils/verifiers";
 import { Rule } from "eslint";
 import { Property } from "estree";
 
@@ -26,13 +26,13 @@ export = {
     schema: [] // no options
   },
   create: (context: Rule.RuleContext): Rule.RuleListener => {
-    var sourceMapVerifiers = structure(context, {
+    var sourceMapVerifiers = getVerifiers(context, {
       outer: "compilerOptions",
       inner: "sourceMap",
       expected: true,
       fileName: "tsconfig.json"
     });
-    var declarationMapVerifiers = structure(context, {
+    var declarationMapVerifiers = getVerifiers(context, {
       outer: "compilerOptions",
       inner: "declarationMap",
       expected: true,

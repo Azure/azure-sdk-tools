@@ -3,7 +3,7 @@
  * @author Arpan Laha
  */
 
-import structure from "../utils/structure";
+import getVerifiers from "../utils/verifiers";
 import { Rule } from "eslint";
 
 //------------------------------------------------------------------------------
@@ -25,7 +25,7 @@ export = {
     schema: [] // no options
   },
   create: (context: Rule.RuleContext): Rule.RuleListener => {
-    const verifiers = structure(context, {
+    const verifiers = getVerifiers(context, {
       outer: "compilerOptions",
       inner: "isolatedModules",
       expected: true,

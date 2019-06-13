@@ -3,7 +3,7 @@
  * @author Arpan Laha
  */
 
-import structure from "../utils/structure";
+import getVerifiers from "../utils/verifiers";
 import { Rule } from "eslint";
 import { Property } from "estree";
 
@@ -26,12 +26,12 @@ export = {
     schema: [] // no options
   },
   create: (context: Rule.RuleContext): Rule.RuleListener => {
-    var buildVerifiers = structure(context, {
+    var buildVerifiers = getVerifiers(context, {
       outer: "scripts",
       inner: "build",
       fileName: "package.json"
     });
-    var testVerifiers = structure(context, {
+    var testVerifiers = getVerifiers(context, {
       outer: "scripts",
       inner: "test",
       fileName: "package.json"

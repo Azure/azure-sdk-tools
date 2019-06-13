@@ -3,7 +3,7 @@
  * @author Arpan Laha
  */
 
-import structure from "../utils/structure";
+import getVerifiers from "../utils/verifiers";
 import { Rule } from "eslint";
 import { Literal, Property } from "estree";
 
@@ -26,7 +26,7 @@ export = {
     schema: [] // no options
   },
   create: (context: Rule.RuleContext): Rule.RuleListener => {
-    const verifiers = structure(context, {
+    const verifiers = getVerifiers(context, {
       outer: "homepage",
       fileName: "package.json"
     });

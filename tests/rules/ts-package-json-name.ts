@@ -1,9 +1,9 @@
 /**
- * @fileoverview Testing the ts-package-json-sideeffects rule.
- * @sideEffects Arpan Laha
+ * @fileoverview Testing the ts-package-json-name rule.
+ * @author Arpan Laha
  */
 
-import rule from "../../src/rules/ts-package-json-sideeffects";
+import rule from "../../src/rules/ts-package-json-name";
 import { RuleTester } from "eslint";
 import processJSON from "../utils/processJSON";
 
@@ -125,7 +125,7 @@ const example_package_good = `{
 }`;
 
 const example_package_bad = `{
-  "name": "@azure/service-bus",
+  "name": "service-bus",
   "author": "Microsoft Corporation",
   "version": "1.0.2",
   "license": "MIT",
@@ -234,7 +234,7 @@ const example_package_bad = `{
     "typings/service-bus.d.ts",
     "tsconfig.json"
   ],
-  "sideEffects": true
+  "sideEffects": false
 }`;
 
 //------------------------------------------------------------------------------
@@ -245,11 +245,11 @@ const ruleTester = new RuleTester({
   parser: "@typescript-eslint/parser"
 });
 
-ruleTester.run("ts-package-json-sideeffects", rule, {
+ruleTester.run("ts-package-json-name", rule, {
   valid: [
     {
       // only the fields we care about
-      code: '{"sideEffects": false}',
+      code: '{"name": "@azure/service-bus"}',
       filename: processJSON("package.json") as any // this is stupid but it works
     },
     {
@@ -259,47 +259,80 @@ ruleTester.run("ts-package-json-sideeffects", rule, {
     },
     {
       // incorrect format but in a file we don't care about
-      code: '{"sideEffects": true}',
+      code: '{"name": "service-bus"}',
       filename: processJSON("not_package.json") as any
     }
   ],
   invalid: [
     {
-      code: '{"notSideEffects": false}',
+      code: '{"notName": "@azure/service-bus"}',
       filename: processJSON("package.json") as any,
       errors: [
         {
-          message: "sideEffects does not exist at the outermost level"
+          message: "name does not exist at the outermost level"
         }
       ]
     },
     {
-      // sideEffects is in a nested object
-      code: '{"outer": {"sideEffects": false}}',
+      // name is in a nested object
+      code: '{"outer": {"name": "@azure/service-bus"}}',
       filename: processJSON("package.json") as any,
       errors: [
         {
-          message: "sideEffects does not exist at the outermost level"
+          message: "name does not exist at the outermost level"
         }
       ]
     },
     {
-      // only the fields we care about
-      code: '{"sideEffects": true}',
+      // forgot the @azure/
+      code: '{"name": "service-bus"}',
       filename: processJSON("package.json") as any,
       errors: [
         {
-          message: "sideEffects is set to true when it should be set to false"
+          message: "name is not set to @azure/<service>"
         }
       ]
     },
     {
-      // example file with sideEffects set to Not Microsoft Corporation
+      // not kebab-case
+      code: '{"name": "@azure/serviceBus"}',
+      filename: processJSON("package.json") as any,
+      errors: [
+        {
+          message:
+            "service name is not in kebab-case (lowercase and separated by hyphens)"
+        }
+      ]
+    },
+    {
+      // not kebab-case
+      code: '{"name": "@azure/service_bus"}',
+      filename: processJSON("package.json") as any,
+      errors: [
+        {
+          message:
+            "service name is not in kebab-case (lowercase and separated by hyphens)"
+        }
+      ]
+    },
+    {
+      // not kebab-case
+      code: '{"name": "@azure/service-bus-"}',
+      filename: processJSON("package.json") as any,
+      errors: [
+        {
+          message:
+            "service name is not in kebab-case (lowercase and separated by hyphens)"
+        }
+      ]
+    },
+    {
+      // example file with name set to service-bus
       code: example_package_bad,
       filename: processJSON("package.json") as any,
       errors: [
         {
-          message: "sideEffects is set to true when it should be set to false"
+          message: "name is not set to @azure/<service>"
         }
       ]
     }

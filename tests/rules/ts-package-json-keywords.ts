@@ -1,9 +1,9 @@
 /**
- * @fileoverview Testing the ts-package-json-sideeffects rule.
- * @sideEffects Arpan Laha
+ * @fileoverview Testing the ts-package-json-keywords rule.
+ * @author Arpan Laha
  */
 
-import rule from "../../src/rules/ts-package-json-sideeffects";
+import rule from "../../src/rules/ts-package-json-keywords";
 import { RuleTester } from "eslint";
 import processJSON from "../utils/processJSON";
 
@@ -20,7 +20,7 @@ const example_package_good = `{
   "homepage": "https://github.com/Azure/azure-sdk-for-js/tree/master/sdk/servicebus/service-bus",
   "repository": "github:Azure/azure-sdk-for-js",
   "keywords": [
-    "azure",
+    "Azure",
     "cloud",
     "service bus",
     "AMQP"
@@ -132,12 +132,7 @@ const example_package_bad = `{
   "description": "Azure Service Bus SDK for Node.js",
   "homepage": "https://github.com/Azure/azure-sdk-for-js/tree/master/sdk/servicebus/service-bus",
   "repository": "github:Azure/azure-sdk-for-js",
-  "keywords": [
-    "azure",
-    "cloud",
-    "service bus",
-    "AMQP"
-  ],
+  "keywords": [],
   "bugs": {
     "url": "https://github.com/azure/azure-sdk-for-js/issues"
   },
@@ -234,7 +229,7 @@ const example_package_bad = `{
     "typings/service-bus.d.ts",
     "tsconfig.json"
   ],
-  "sideEffects": true
+  "sideEffects": false
 }`;
 
 //------------------------------------------------------------------------------
@@ -245,11 +240,11 @@ const ruleTester = new RuleTester({
   parser: "@typescript-eslint/parser"
 });
 
-ruleTester.run("ts-package-json-sideeffects", rule, {
+ruleTester.run("ts-package-json-keywords", rule, {
   valid: [
     {
       // only the fields we care about
-      code: '{"sideEffects": false}',
+      code: '{"keywords": ["Azure", "cloud"]}',
       filename: processJSON("package.json") as any // this is stupid but it works
     },
     {
@@ -259,47 +254,73 @@ ruleTester.run("ts-package-json-sideeffects", rule, {
     },
     {
       // incorrect format but in a file we don't care about
-      code: '{"sideEffects": true}',
+      code: '{"keywords": []}',
       filename: processJSON("not_package.json") as any
     }
   ],
   invalid: [
     {
-      code: '{"notSideEffects": false}',
+      code: '{"notKeywords": ["Azure", "cloud"]}',
       filename: processJSON("package.json") as any,
       errors: [
         {
-          message: "sideEffects does not exist at the outermost level"
+          message: "keywords does not exist at the outermost level"
         }
       ]
     },
     {
-      // sideEffects is in a nested object
-      code: '{"outer": {"sideEffects": false}}',
+      // keywords is in a nested object
+      code: '{"outer": {"keywords": ["Azure", "cloud"]}}',
       filename: processJSON("package.json") as any,
       errors: [
         {
-          message: "sideEffects does not exist at the outermost level"
+          message: "keywords does not exist at the outermost level"
         }
       ]
     },
     {
-      // only the fields we care about
-      code: '{"sideEffects": true}',
+      // both missing
+      code: '{"keywords": []}',
       filename: processJSON("package.json") as any,
       errors: [
         {
-          message: "sideEffects is set to true when it should be set to false"
+          message: "keywords does not contain Azure"
+        },
+        {
+          message: "keywords does not contain cloud"
         }
       ]
     },
     {
-      // example file with sideEffects set to Not Microsoft Corporation
+      // Azure missing
+      code: '{"keywords": ["cloud"]}',
+      filename: processJSON("package.json") as any,
+      errors: [
+        {
+          message: "keywords does not contain Azure"
+        }
+      ]
+    },
+    {
+      // cloud missing
+      code: '{"keywords": ["Azure"]}',
+      filename: processJSON("package.json") as any,
+      errors: [
+        {
+          message: "keywords does not contain cloud"
+        }
+      ]
+    },
+    {
+      // example file with keywords not containing Azure or cloud
       code: example_package_bad,
       filename: processJSON("package.json") as any,
       errors: [
         {
-          message: "sideEffects is set to true when it should be set to false"
+          message: "keywords does not contain Azure"
+        },
+        {
+          message: "keywords does not contain cloud"
         }
       ]
     }

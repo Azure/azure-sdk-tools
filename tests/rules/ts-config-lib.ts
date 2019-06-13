@@ -1,9 +1,9 @@
 /**
- * @fileoverview Testing the ts-config-strict rule.
+ * @fileoverview Testing the ts-config-lib rule.
  * @author Arpan Laha
  */
 
-import rule from "../../src/rules/ts-config-strict";
+import rule from "../../src/rules/ts-config-lib";
 import { RuleTester } from "eslint";
 import processJSON from "../utils/processJSON";
 
@@ -67,7 +67,7 @@ const example_tsconfig_bad = `{
     "importHelpers": true /* Import emit helpers from 'tslib'. */,
 
     /* Strict Type-Checking Options */
-    "strict": false /* Enable all strict type-checking options. */,
+    "strict": true /* Enable all strict type-checking options. */,
     "noImplicitReturns": true /* Report error when not all code paths in function return a value. */,
 
     /* Additional Checks */
@@ -84,7 +84,9 @@ const example_tsconfig_bad = `{
     /* Other options */
     "newLine": "LF" /*	Use the specified end of line sequence to be used when emitting files: "crlf" (windows) or "lf" (unix).”*/,
     "allowJs": false /* Don't allow JavaScript files to be compiled.*/,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+
+    "lib": ["es7"]
   },
   "compileOnSave": true,
   "exclude": ["node_modules", "typings/**", "./samples/**/*.ts"],
@@ -99,11 +101,11 @@ const ruleTester = new RuleTester({
   parser: "@typescript-eslint/parser"
 });
 
-ruleTester.run("ts-config-strict", rule, {
+ruleTester.run("ts-config-lib", rule, {
   valid: [
     {
       // only the fields we care about
-      code: '{"compilerOptions": { "strict": true }}',
+      code: '{"compilerOptions": {}}',
       filename: processJSON("tsconfig.json") as any // this is stupid but it works
     },
     {
@@ -113,7 +115,7 @@ ruleTester.run("ts-config-strict", rule, {
     },
     {
       // incorrect format but in a file we don't care about
-      code: '{"compilerOptions": { "strict": false }}',
+      code: '{"compilerOptions": { "lib": ["es6"] }}',
       filename: processJSON("not_tsconfig.json") as any
     }
   ],
@@ -129,7 +131,7 @@ ruleTester.run("ts-config-strict", rule, {
     },
     {
       // commpilerOptions is in a nested object
-      code: '{"outer": {"compilerOptions": { "strict": true }}}',
+      code: '{"outer": {"compilerOptions": {}}}',
       filename: processJSON("tsconfig.json") as any,
       errors: [
         {
@@ -138,34 +140,22 @@ ruleTester.run("ts-config-strict", rule, {
       ]
     },
     {
-      // commpilerOptions does not contain strict
-      code: '{"compilerOptions": { "lenient": true }}',
+      // commpilerOptions contains lib
+      code: '{"compilerOptions": { "lib": ["es7"] }}',
       filename: processJSON("tsconfig.json") as any,
       errors: [
         {
-          message: "strict is not a member of compilerOptions"
+          message: "compilerOptions.lib should not be used"
         }
       ]
     },
     {
-      // only the fields we care about
-      code: '{"compilerOptions": { "strict": false }}',
-      filename: processJSON("tsconfig.json") as any,
-      errors: [
-        {
-          message:
-            "compilerOptions.strict is set to false when it should be set to true"
-        }
-      ]
-    },
-    {
-      // example file with compilerOptions.strict set to false
+      // example file with compilerOptions.lib used
       code: example_tsconfig_bad,
       filename: processJSON("tsconfig.json") as any,
       errors: [
         {
-          message:
-            "compilerOptions.strict is set to false when it should be set to true"
+          message: "compilerOptions.lib should not be used"
         }
       ]
     }

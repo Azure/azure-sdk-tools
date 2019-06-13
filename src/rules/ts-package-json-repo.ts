@@ -3,7 +3,7 @@
  * @author Arpan Laha
  */
 
-import structure from "../utils/structure";
+import getVerifiers from "../utils/verifiers";
 import { Rule } from "eslint";
 
 //------------------------------------------------------------------------------
@@ -24,21 +24,21 @@ export = {
     },
     schema: [] // no options
   },
-  create: function(context: Rule.RuleContext) {
-    var checkers = structure(context, {
+  create: (context: Rule.RuleContext): Rule.RuleListener => {
+    const verifiers = getVerifiers(context, {
       outer: "repository",
-      expectedValue: "github:Azure/azure-sdk-for-js",
+      expected: "github:Azure/azure-sdk-for-js",
       fileName: "package.json"
     });
     return {
       // callback functions
 
       // check to see if repository exists at the outermost level
-      "VariableDeclarator > ObjectExpression": checkers.existsInFile,
+      "VariableDeclarator > ObjectExpression": verifiers.existsInFile,
 
-      // check the node corresponding to repository to see if it's value is github:Azure/azure-sdk-for-js
+      // check the node corresponding to repository to see if its value is github:Azure/azure-sdk-for-js
       "VariableDeclarator > ObjectExpression > Property[key.value='repository']":
-        checkers.outerMatchesExpected
+        verifiers.outerMatchesExpected
     } as Rule.RuleListener;
   }
 };

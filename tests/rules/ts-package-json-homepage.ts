@@ -1,9 +1,9 @@
 /**
- * @fileoverview Testing the ts-package-json-sideeffects rule.
- * @sideEffects Arpan Laha
+ * @fileoverview Testing the ts-package-json-homepage rule.
+ * @author Arpan Laha
  */
 
-import rule from "../../src/rules/ts-package-json-sideeffects";
+import rule from "../../src/rules/ts-package-json-homepage";
 import { RuleTester } from "eslint";
 import processJSON from "../utils/processJSON";
 
@@ -17,7 +17,7 @@ const example_package_good = `{
   "version": "1.0.2",
   "license": "MIT",
   "description": "Azure Service Bus SDK for Node.js",
-  "homepage": "https://github.com/Azure/azure-sdk-for-js/tree/master/sdk/servicebus/service-bus",
+  "homepage": "https://github.com/Azure/azure-sdk-for-js/blob/master/sdk/servicebus/service-bus/README.md",
   "repository": "github:Azure/azure-sdk-for-js",
   "keywords": [
     "azure",
@@ -234,7 +234,7 @@ const example_package_bad = `{
     "typings/service-bus.d.ts",
     "tsconfig.json"
   ],
-  "sideEffects": true
+  "sideEffects": false
 }`;
 
 //------------------------------------------------------------------------------
@@ -245,11 +245,12 @@ const ruleTester = new RuleTester({
   parser: "@typescript-eslint/parser"
 });
 
-ruleTester.run("ts-package-json-sideeffects", rule, {
+ruleTester.run("ts-package-json-homepage", rule, {
   valid: [
     {
       // only the fields we care about
-      code: '{"sideEffects": false}',
+      code:
+        '{"homepage": "https://github.com/Azure/azure-sdk-for-js/blob/master/sdk/servicebus/service-bus/README.md"}',
       filename: processJSON("package.json") as any // this is stupid but it works
     },
     {
@@ -259,47 +260,64 @@ ruleTester.run("ts-package-json-sideeffects", rule, {
     },
     {
       // incorrect format but in a file we don't care about
-      code: '{"sideEffects": true}',
+      code:
+        '{"homepage": "https://github.com/Azure/azure-sdk-for-js/tree/master/sdk/servicebus/service-bus"}',
       filename: processJSON("not_package.json") as any
     }
   ],
   invalid: [
     {
-      code: '{"notSideEffects": false}',
+      code:
+        '{"notHomepage": "https://github.com/Azure/azure-sdk-for-js/blob/master/sdk/servicebus/service-bus/README.md"}',
       filename: processJSON("package.json") as any,
       errors: [
         {
-          message: "sideEffects does not exist at the outermost level"
+          message: "homepage does not exist at the outermost level"
         }
       ]
     },
     {
-      // sideEffects is in a nested object
-      code: '{"outer": {"sideEffects": false}}',
+      // homepage is in a nested object
+      code:
+        '{"outer": {"homepage": "https://github.com/Azure/azure-sdk-for-js/blob/master/sdk/servicebus/service-bus/README.md"}}',
       filename: processJSON("package.json") as any,
       errors: [
         {
-          message: "sideEffects does not exist at the outermost level"
+          message: "homepage does not exist at the outermost level"
         }
       ]
     },
     {
-      // only the fields we care about
-      code: '{"sideEffects": true}',
+      // not pointing to README
+      code:
+        '{"homepage": "https://github.com/Azure/azure-sdk-for-js/tree/master/sdk/servicebus/service-bus"}',
       filename: processJSON("package.json") as any,
       errors: [
         {
-          message: "sideEffects is set to true when it should be set to false"
+          message:
+            "homepage is not a URL pointing to your library's readme inside the git repo"
         }
       ]
     },
     {
-      // example file with sideEffects set to Not Microsoft Corporation
+      // some other website
+      code: '{"homepage": "someothersite.com/README.md"}',
+      filename: processJSON("package.json") as any,
+      errors: [
+        {
+          message:
+            "homepage is not a URL pointing to your library's readme inside the git repo"
+        }
+      ]
+    },
+    {
+      // example file not pointing to the readme
       code: example_package_bad,
       filename: processJSON("package.json") as any,
       errors: [
         {
-          message: "sideEffects is set to true when it should be set to false"
+          message:
+            "homepage is not a URL pointing to your library's readme inside the git repo"
         }
       ]
     }

@@ -1,9 +1,9 @@
 /**
- * @fileoverview Testing the ts-config-strict rule.
+ * @fileoverview Testing the ts-config-exclude rule.
  * @author Arpan Laha
  */
 
-import rule from "../../src/rules/ts-config-strict";
+import rule from "../../src/rules/ts-config-exclude";
 import { RuleTester } from "eslint";
 import processJSON from "../utils/processJSON";
 
@@ -67,7 +67,7 @@ const example_tsconfig_bad = `{
     "importHelpers": true /* Import emit helpers from 'tslib'. */,
 
     /* Strict Type-Checking Options */
-    "strict": false /* Enable all strict type-checking options. */,
+    "strict": true /* Enable all strict type-checking options. */,
     "noImplicitReturns": true /* Report error when not all code paths in function return a value. */,
 
     /* Additional Checks */
@@ -87,7 +87,7 @@ const example_tsconfig_bad = `{
     "resolveJsonModule": true
   },
   "compileOnSave": true,
-  "exclude": ["node_modules", "typings/**", "./samples/**/*.ts"],
+  "exclude": ["typings/**", "./samples/**/*.ts"],
   "include": ["./src/**/*.ts", "./test/**/*.ts"]
 }`;
 
@@ -99,73 +99,61 @@ const ruleTester = new RuleTester({
   parser: "@typescript-eslint/parser"
 });
 
-ruleTester.run("ts-config-strict", rule, {
+ruleTester.run("ts-config-exclude", rule, {
   valid: [
     {
       // only the fields we care about
-      code: '{"compilerOptions": { "strict": true }}',
+      code: '{"exclude": ["node_modules"]}',
       filename: processJSON("tsconfig.json") as any // this is stupid but it works
     },
     {
-      // a full example tsconfig.json (taken from https://github.com/Azure/azure-sdk-for-js/blob/master/sdk/eventhub/event-hubs/tsconfig.json)
+      // a full example tsconfig.json (taken from https://github.com/Azure/azure-sdk-for-js/blob/master/sdk/eventhub/event-hubs/tsconfig.json with "scripts" removed for testing purposes)
       code: example_tsconfig_good,
       filename: processJSON("tsconfig.json") as any
     },
     {
       // incorrect format but in a file we don't care about
-      code: '{"compilerOptions": { "strict": false }}',
+      code: '{"exclude": []}',
       filename: processJSON("not_tsconfig.json") as any
     }
   ],
   invalid: [
     {
-      code: '{"notCompilerOptions": {}}',
+      code: '{"notExclude": ["node_modules"]}',
       filename: processJSON("tsconfig.json") as any,
       errors: [
         {
-          message: "compilerOptions does not exist at the outermost level"
+          message: "exclude does not exist at the outermost level"
         }
       ]
     },
     {
-      // commpilerOptions is in a nested object
-      code: '{"outer": {"compilerOptions": { "strict": true }}}',
+      // exclude is in a nested object
+      code: '{"outer": {"exclude": ["node_modules"]}}',
       filename: processJSON("tsconfig.json") as any,
       errors: [
         {
-          message: "compilerOptions does not exist at the outermost level"
-        }
-      ]
-    },
-    {
-      // commpilerOptions does not contain strict
-      code: '{"compilerOptions": { "lenient": true }}',
-      filename: processJSON("tsconfig.json") as any,
-      errors: [
-        {
-          message: "strict is not a member of compilerOptions"
+          message: "exclude does not exist at the outermost level"
         }
       ]
     },
     {
       // only the fields we care about
-      code: '{"compilerOptions": { "strict": false }}',
+      code: '{"exclude": []}',
       filename: processJSON("tsconfig.json") as any,
       errors: [
         {
-          message:
-            "compilerOptions.strict is set to false when it should be set to true"
+          message: "exclude does not contain node_modules"
         }
       ]
     },
     {
-      // example file with compilerOptions.strict set to false
+      // example file with exclude not containing node_modules
       code: example_tsconfig_bad,
       filename: processJSON("tsconfig.json") as any,
       errors: [
         {
-          message:
-            "compilerOptions.strict is set to false when it should be set to true"
+          message: "exclude does not contain node_modules"
         }
       ]
     }

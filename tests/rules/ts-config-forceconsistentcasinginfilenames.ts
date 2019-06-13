@@ -95,7 +95,7 @@ const example_tsconfig_bad = `{
 // Tests
 //------------------------------------------------------------------------------
 
-var ruleTester = new RuleTester({
+const ruleTester = new RuleTester({
   parser: "@typescript-eslint/parser"
 });
 

@@ -5,7 +5,7 @@
 
 "use strict";
 
-import structure from "../utils/structure";
+import getVerifiers from "../utils/verifiers";
 import { Rule } from "eslint";
 
 //------------------------------------------------------------------------------
@@ -26,25 +26,25 @@ export = {
     },
     schema: [] // no options
   },
-  create: function(context: Rule.RuleContext) {
-    var checkers = structure(context, {
+  create: (context: Rule.RuleContext): Rule.RuleListener => {
+    const verifiers = getVerifiers(context, {
       outer: "compilerOptions",
       inner: "esModuleInterop",
-      expectedValue: true,
+      expected: true,
       fileName: "tsconfig.json"
     });
     return {
       // callback functions
 
       // check to see if compilerOptions exists at the outermost level
-      "VariableDeclarator > ObjectExpression": checkers.existsInFile,
+      "VariableDeclarator > ObjectExpression": verifiers.existsInFile,
 
       // check that esModuleInterop is a member of compilerOptions
-      "Property[key.value='compilerOptions']": checkers.isMemberOf,
+      "Property[key.value='compilerOptions']": verifiers.isMemberOf,
 
       // check the node corresponding to compilerOptions.esModuleInterop to see if it is set to true
       "VariableDeclarator > ObjectExpression > Property[key.value='compilerOptions'] > ObjectExpression > Property[key.value='esModuleInterop']":
-        checkers.innerMatchesExpected
+        verifiers.innerMatchesExpected
     } as Rule.RuleListener;
   }
 };

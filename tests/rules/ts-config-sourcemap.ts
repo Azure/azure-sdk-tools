@@ -1,9 +1,9 @@
 /**
- * @fileoverview Testing the ts-config-strict rule.
+ * @fileoverview Testing the ts-config-sourcemap rule.
  * @author Arpan Laha
  */
 
-import rule from "../../src/rules/ts-config-strict";
+import rule from "../../src/rules/ts-config-sourcemap";
 import { RuleTester } from "eslint";
 import processJSON from "../utils/processJSON";
 
@@ -58,8 +58,8 @@ const example_tsconfig_bad = `{
     "module": "es6" /* Specify module code generation: 'none', 'commonjs', 'amd', 'system', 'umd', 'es2015', or 'ESNext'. */,
 
     "declaration": true /* Generates corresponding '.d.ts' file. */,
-    "declarationMap": true /* Generates a sourcemap for each corresponding '.d.ts' file. */,
-    "sourceMap": true /* Generates corresponding '.map' file. */,
+    "declarationMap": false /* Generates a sourcemap for each corresponding '.d.ts' file. */,
+    "sourceMap": false /* Generates corresponding '.map' file. */,
 
     "outDir": "./dist-esm" /* Redirect output structure to the directory. */,
     "declarationDir": "./typings" /* Output directory for generated declaration files.*/,
@@ -67,7 +67,7 @@ const example_tsconfig_bad = `{
     "importHelpers": true /* Import emit helpers from 'tslib'. */,
 
     /* Strict Type-Checking Options */
-    "strict": false /* Enable all strict type-checking options. */,
+    "strict": true /* Enable all strict type-checking options. */,
     "noImplicitReturns": true /* Report error when not all code paths in function return a value. */,
 
     /* Additional Checks */
@@ -99,11 +99,12 @@ const ruleTester = new RuleTester({
   parser: "@typescript-eslint/parser"
 });
 
-ruleTester.run("ts-config-strict", rule, {
+ruleTester.run("ts-config-sourcemap", rule, {
   valid: [
     {
       // only the fields we care about
-      code: '{"compilerOptions": { "strict": true }}',
+      code:
+        '{"compilerOptions": { "sourceMap": true, "declarationMap": true }}',
       filename: processJSON("tsconfig.json") as any // this is stupid but it works
     },
     {
@@ -113,7 +114,8 @@ ruleTester.run("ts-config-strict", rule, {
     },
     {
       // incorrect format but in a file we don't care about
-      code: '{"compilerOptions": { "strict": false }}',
+      code:
+        '{"compilerOptions": { "sourceMap": false, declarationMap: false }}',
       filename: processJSON("not_tsconfig.json") as any
     }
   ],
@@ -129,7 +131,8 @@ ruleTester.run("ts-config-strict", rule, {
     },
     {
       // commpilerOptions is in a nested object
-      code: '{"outer": {"compilerOptions": { "strict": true }}}',
+      code:
+        '{"outer": {"compilerOptions": { "sourceMap": true, "declarationMap": true }}}',
       filename: processJSON("tsconfig.json") as any,
       errors: [
         {
@@ -138,34 +141,90 @@ ruleTester.run("ts-config-strict", rule, {
       ]
     },
     {
-      // commpilerOptions does not contain strict
-      code: '{"compilerOptions": { "lenient": true }}',
+      // commpilerOptions does not contain sourceMap or declarationMap
+      code: '{"compilerOptions": {}}',
       filename: processJSON("tsconfig.json") as any,
       errors: [
         {
-          message: "strict is not a member of compilerOptions"
+          message: "sourceMap is not a member of compilerOptions"
+        },
+        {
+          message: "declarationMap is not a member of compilerOptions"
         }
       ]
     },
     {
-      // only the fields we care about
-      code: '{"compilerOptions": { "strict": false }}',
+      // commpilerOptions does not contain sourceMap
+      code: '{"compilerOptions": { "declarationMap": true }}',
+      filename: processJSON("tsconfig.json") as any,
+      errors: [
+        {
+          message: "sourceMap is not a member of compilerOptions"
+        }
+      ]
+    },
+    {
+      // commpilerOptions does not contain declarationMap
+      code: '{"compilerOptions": { "sourceMap": true }}',
+      filename: processJSON("tsconfig.json") as any,
+      errors: [
+        {
+          message: "declarationMap is not a member of compilerOptions"
+        }
+      ]
+    },
+    {
+      // both sourceMap and declarationMap are set to false
+      code:
+        '{"compilerOptions": { "sourceMap": false, "declarationMap": false }}',
       filename: processJSON("tsconfig.json") as any,
       errors: [
         {
           message:
-            "compilerOptions.strict is set to false when it should be set to true"
+            "compilerOptions.sourceMap is set to false when it should be set to true"
+        },
+        {
+          message:
+            "compilerOptions.declarationMap is set to false when it should be set to true"
         }
       ]
     },
     {
-      // example file with compilerOptions.strict set to false
+      // only sourceMap is set to false
+      code:
+        '{"compilerOptions": { "sourceMap": false, "declarationMap": true }}',
+      filename: processJSON("tsconfig.json") as any,
+      errors: [
+        {
+          message:
+            "compilerOptions.sourceMap is set to false when it should be set to true"
+        }
+      ]
+    },
+    {
+      // only declarationMap is set to false
+      code:
+        '{"compilerOptions": { "sourceMap": true, "declarationMap": false }}',
+      filename: processJSON("tsconfig.json") as any,
+      errors: [
+        {
+          message:
+            "compilerOptions.declarationMap is set to false when it should be set to true"
+        }
+      ]
+    },
+    {
+      // example file with both set to false
       code: example_tsconfig_bad,
       filename: processJSON("tsconfig.json") as any,
       errors: [
         {
           message:
-            "compilerOptions.strict is set to false when it should be set to true"
+            "compilerOptions.declarationMap is set to false when it should be set to true"
+        },
+        {
+          message:
+            "compilerOptions.sourceMap is set to false when it should be set to true"
         }
       ]
     }

@@ -1,5 +1,5 @@
 /**
- * @fileoverview Rule to force package.json's author value to be set to "Microsoft Corporation".
+ * @fileoverview Rule to force tsconfig.json's "exclude" value to at least contain "node_modules"
  * @author Arpan Laha
  */
 
@@ -16,29 +16,29 @@ export = {
 
     docs: {
       description:
-        "force package.json's author value to be 'Microsoft Corporation'",
+        "force tsconfig.json's compilerOptions.exclude value to at least contain 'node_modules'",
       category: "Best Practices",
       recommended: true,
       url:
-        "https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-package-json-author"
+        "https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-config-exclude"
     },
     schema: [] // no options
   },
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     const verifiers = getVerifiers(context, {
-      outer: "author",
-      expected: "Microsoft Corporation",
-      fileName: "package.json"
+      outer: "exclude",
+      expected: "node_modules",
+      fileName: "tsconfig.json"
     });
     return {
       // callback functions
 
-      // check to see if author exists at the outermost level
+      // check to see if exclude exists at the outermost level
       "VariableDeclarator > ObjectExpression": verifiers.existsInFile,
 
-      // check the node corresponding to author to see if its value is "Microsoft Corporation"
-      "VariableDeclarator > ObjectExpression > Property[key.value='author']":
-        verifiers.outerMatchesExpected
+      // check the node corresponding to exclude to see if its value contains "node_modules"
+      "VariableDeclarator > ObjectExpression > Property[key.value='exclude']":
+        verifiers.outerContainsExpected
     } as Rule.RuleListener;
   }
 };

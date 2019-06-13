@@ -1,9 +1,9 @@
 /**
- * @fileoverview Testing the ts-package-json-sideeffects rule.
+ * @fileoverview Testing the ts-package-json-required-scripts rule.
  * @sideEffects Arpan Laha
  */
 
-import rule from "../../src/rules/ts-package-json-sideeffects";
+import rule from "../../src/rules/ts-package-json-required-scripts";
 import { RuleTester } from "eslint";
 import processJSON from "../utils/processJSON";
 
@@ -121,7 +121,13 @@ const example_package_good = `{
     "typings/service-bus.d.ts",
     "tsconfig.json"
   ],
-  "sideEffects": false
+  "sideEffects": false,
+  "scripts": {
+    "build": "build",
+    "test": "test",
+    "format": "format",
+    "lint": "lint"
+  }
 }`;
 
 const example_package_bad = `{
@@ -234,7 +240,11 @@ const example_package_bad = `{
     "typings/service-bus.d.ts",
     "tsconfig.json"
   ],
-  "sideEffects": true
+  "sideEffects": false,
+  "scripts": {
+    "format": "format",
+    "lint": "lint"
+  }
 }`;
 
 //------------------------------------------------------------------------------
@@ -245,11 +255,11 @@ const ruleTester = new RuleTester({
   parser: "@typescript-eslint/parser"
 });
 
-ruleTester.run("ts-package-json-sideeffects", rule, {
+ruleTester.run("ts-package-json-required-scripts", rule, {
   valid: [
     {
       // only the fields we care about
-      code: '{"sideEffects": false}',
+      code: '{"scripts": {"build": "build", "test": "test"}}',
       filename: processJSON("package.json") as any // this is stupid but it works
     },
     {
@@ -259,47 +269,73 @@ ruleTester.run("ts-package-json-sideeffects", rule, {
     },
     {
       // incorrect format but in a file we don't care about
-      code: '{"sideEffects": true}',
+      code: '{"scripts": {}}',
       filename: processJSON("not_package.json") as any
     }
   ],
   invalid: [
     {
-      code: '{"notSideEffects": false}',
+      code: '{"notScripts": {"build": "build", "test": "test"}}',
       filename: processJSON("package.json") as any,
       errors: [
         {
-          message: "sideEffects does not exist at the outermost level"
+          message: "scripts does not exist at the outermost level"
         }
       ]
     },
     {
-      // sideEffects is in a nested object
-      code: '{"outer": {"sideEffects": false}}',
+      // scripts is in a nested object
+      code: '{"outer": {"scripts": {"build": "build", "test": "test"}}}',
       filename: processJSON("package.json") as any,
       errors: [
         {
-          message: "sideEffects does not exist at the outermost level"
+          message: "scripts does not exist at the outermost level"
         }
       ]
     },
     {
-      // only the fields we care about
-      code: '{"sideEffects": true}',
+      // both build and test missing
+      code: '{"scripts": {}}',
       filename: processJSON("package.json") as any,
       errors: [
         {
-          message: "sideEffects is set to true when it should be set to false"
+          message: "build is not a member of scripts"
+        },
+        {
+          message: "test is not a member of scripts"
         }
       ]
     },
     {
-      // example file with sideEffects set to Not Microsoft Corporation
+      // build missing
+      code: '{"scripts": {"test": "test"}}',
+      filename: processJSON("package.json") as any,
+      errors: [
+        {
+          message: "build is not a member of scripts"
+        }
+      ]
+    },
+    {
+      // test missing
+      code: '{"scripts": {"build": "build"}}',
+      filename: processJSON("package.json") as any,
+      errors: [
+        {
+          message: "test is not a member of scripts"
+        }
+      ]
+    },
+    {
+      // example file with scripts missing both build and test
       code: example_package_bad,
       filename: processJSON("package.json") as any,
       errors: [
         {
-          message: "sideEffects is set to true when it should be set to false"
+          message: "build is not a member of scripts"
+        },
+        {
+          message: "test is not a member of scripts"
         }
       ]
     }

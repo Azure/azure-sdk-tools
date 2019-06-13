@@ -1,5 +1,5 @@
 /**
- * @fileoverview Rule to force package.json's author value to be set to "Microsoft Corporation".
+ * @fileoverview Rule to force package.json's keywords value to contain at least "Azure" and "cloud".
  * @author Arpan Laha
  */
 
@@ -26,19 +26,19 @@ export = {
   },
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     const verifiers = getVerifiers(context, {
-      outer: "author",
-      expected: "Microsoft Corporation",
+      outer: "keywords",
+      expected: ["Azure", "cloud"],
       fileName: "package.json"
     });
     return {
       // callback functions
 
-      // check to see if author exists at the outermost level
+      // check to see if keywords exists at the outermost level
       "VariableDeclarator > ObjectExpression": verifiers.existsInFile,
 
-      // check the node corresponding to author to see if its value is "Microsoft Corporation"
-      "VariableDeclarator > ObjectExpression > Property[key.value='author']":
-        verifiers.outerMatchesExpected
+      // check the node corresponding to keywords to see if its value contains "Azure" and "cloud"
+      "VariableDeclarator > ObjectExpression > Property[key.value='keywords']":
+        verifiers.outerContainsExpected
     } as Rule.RuleListener;
   }
 };

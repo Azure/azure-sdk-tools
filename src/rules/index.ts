@@ -17,6 +17,7 @@ import tsConfigSourceMap from "./ts-config-sourcemap";
 import tsConfigStrict from "./ts-config-strict";
 import tsPackageJsonAuthor from "./ts-package-json-author";
 import tsPackageJsonBugs from "./ts-package-json-bugs";
+import tsPackageJsonHomepage from "./ts-package-json-homepage";
 import tsPackageJsonKeywords from "./ts-package-json-keywords";
 import tsPackageJsonLicense from "./ts-package-json-license";
 import tsPackageJsonName from "./ts-package-json-name";
@@ -39,6 +40,7 @@ export = {
   "ts-config-strict": tsConfigStrict,
   "ts-package-json-author": tsPackageJsonAuthor,
   "ts-package-json-bugs": tsPackageJsonBugs,
+  "ts-package-json-homepage": tsPackageJsonHomepage,
   "ts-package-json-keywords": tsPackageJsonKeywords,
   "ts-package-json-license": tsPackageJsonLicense,
   "ts-package-json-name": tsPackageJsonName,

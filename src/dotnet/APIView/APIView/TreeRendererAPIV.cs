@@ -10,22 +10,24 @@ namespace APIView
 
         public string Render(AssemblyAPIV assembly)
         {
-            return Render(assembly.GlobalNamespace);
+            StringBuilder returnString = new StringBuilder();
+            Render(assembly.GlobalNamespace, returnString);
+            return returnString.ToString();
         }
 
-        private string Render(EventAPIV e, int indents = 0)
+        private void Render(EventAPIV e, StringBuilder returnString, int indents = 0)
         {
             string indent = new string(' ', indents * IndentSize);
 
             //TODO: determine whether event is EventHandler or other type - and if it has type parameter(s)
-            return indent + "public event EventHandler " + e.Name + ";";
+            returnString.Append(indent + "public event EventHandler " + e.Name + ";");
         }
 
-        private string Render(FieldAPIV f, int indents = 0)
+        private void Render(FieldAPIV f, StringBuilder returnString, int indents = 0)
         {
             string indent = new string(' ', indents * IndentSize);
 
-            StringBuilder returnString = new StringBuilder(indent + "public");
+            returnString.Append(indent + "public");
 
             if (f.IsConstant)
                 returnString.Append(" const");
@@ -50,16 +52,15 @@ namespace APIView
             }
 
             returnString.Append(";");
-            return returnString.ToString();
         }
 
-        private string Render(MethodAPIV m, int indents = 0)
+        private void Render(MethodAPIV m, StringBuilder returnString, int indents = 0)
         {
             string indent = new string(' ', indents * IndentSize);
 
             bool interfaceMethod = m.Symbol.ContainingType.TypeKind.ToString().ToLower().Equals("interface");
 
-            StringBuilder returnString = new StringBuilder(indent);
+            returnString.Append(indent);
             if (!m.Attributes.IsEmpty)
                 returnString.Append("[" + m.Attributes[0].AttributeClass.Name + "]\n" + indent);
 
@@ -85,7 +86,8 @@ namespace APIView
                 returnString.Append("<");
                 foreach (TypeParameterAPIV tp in m.TypeParameters)
                 {
-                    returnString.Append(Render(tp) + ", ");
+                    Render(tp, returnString);
+                    returnString.Append(", ");
                 }
                 returnString.Length = returnString.Length - 2;
                 returnString.Append(">");
@@ -96,7 +98,8 @@ namespace APIView
             {
                 foreach (ParameterAPIV p in m.Parameters)
                 {
-                    returnString.Append(Render(p) + ", ");
+                    Render(p, returnString);
+                    returnString.Append(", ");
                 }
                 returnString.Length = returnString.Length - 2;
             }
@@ -105,15 +108,13 @@ namespace APIView
                 returnString.Append(");");
             else
                 returnString.Append(") { }");
-
-            return returnString.ToString();
         }
 
-        private string Render(NamedTypeAPIV nt, int indents = 0)
+        private void Render(NamedTypeAPIV nt, StringBuilder returnString, int indents = 0)
         {
             string indent = new string(' ', indents * IndentSize);
 
-            StringBuilder returnString = new StringBuilder(indent + "public " + nt.Type + " " + nt.Name + " ");
+            returnString.Append(indent + "public " + nt.Type + " " + nt.Name + " ");
 
             // add any implemented types to string
             if (nt.Implementations.Length > 0)
@@ -131,60 +132,66 @@ namespace APIView
             // add any types declared in this type's body
             foreach (FieldAPIV f in nt.Fields)
             {
-                returnString.Append(Render(f, indents + 1) + "\n");
+                Render(f, returnString, indents + 1);
+                returnString.AppendLine();
             }
             foreach (PropertyAPIV p in nt.Properties)
             {
-                returnString.Append(Render(p, indents + 1) + "\n");
+                Render(p, returnString, indents + 1);
+                returnString.AppendLine();
             }
             foreach (EventAPIV e in nt.Events)
             {
-                returnString.Append(Render(e, indents + 1) + "\n");
+                Render(e, returnString, indents + 1);
+                returnString.AppendLine();
             }
             foreach (MethodAPIV m in nt.Methods)
             {
-                returnString.Append(Render(m, indents + 1) + "\n");
+                Render(m, returnString, indents + 1);
+                returnString.AppendLine();
             }
             foreach (NamedTypeAPIV n in nt.NamedTypes)
             {
-                returnString.Append(Render(n, indents + 1) + "\n");
+                Render(n, returnString, indents + 1);
+                returnString.AppendLine();
             }
 
             returnString.Append(indent + "}");
-
-            return returnString.ToString();
         }
 
-        private string Render(NamespaceAPIV ns, int indents = 0)
+        private void Render(NamespaceAPIV ns, StringBuilder returnString, int indents = 0)
         {
             string indent = new string(' ', indents * IndentSize);
 
-            StringBuilder returnString = new StringBuilder("");
-
             if (ns.Name.Length != 0)
-                returnString = new StringBuilder(indent + "namespace " + ns.Name + " {\n");
+                returnString.Append(indent + "namespace " + ns.Name + " {\n");
 
             foreach (NamedTypeAPIV nt in ns.NamedTypes)
             {
-                returnString.Append(indent + Render(nt, indents + 1) + "\n");
+                Render(nt, returnString, indents + 1);
+                returnString.AppendLine();
             }
             foreach (NamespaceAPIV n in ns.Namespaces)
             {
                 if (ns.Name.Length != 0)
-                    returnString.Append(indent + Render(n, indents + 1) + "\n");
+                {
+                    Render(n, returnString, indents + 1);
+                    returnString.AppendLine();
+                }
                 else
-                    returnString.Append(indent + Render(n, indents) + "\n");
+                {
+                    Render(n, returnString, indents);
+                    returnString.AppendLine();
+                }
             }
 
             if (ns.Name.Length != 0)
                 returnString.Append(indent + "}");
-
-            return returnString.ToString();
         }
 
-        private string Render(ParameterAPIV p, int indents = 0)
+        private void Render(ParameterAPIV p, StringBuilder returnString, int indents = 0)
         {
-            StringBuilder returnString = new StringBuilder(p.Type + " " + p.Name);
+            returnString.Append(p.Type + " " + p.Name);
             if (p.HasExplicitDefaultValue)
             {
                 if (p.Type.Equals("string"))
@@ -192,29 +199,25 @@ namespace APIView
                 else
                     returnString.Append(" = " + p.ExplicitDefaultValue);
             }
-            return returnString.ToString();
         }
 
-        private string Render(PropertyAPIV p, int indents = 0)
+        private void Render(PropertyAPIV p, StringBuilder returnString, int indents = 0)
         {
             string indent = new string(' ', indents * IndentSize);
 
-            StringBuilder returnString = new StringBuilder(indent + "public " + p.Type + " " + p.Name + " { get; ");
+            returnString.Append(indent + "public " + p.Type + " " + p.Name + " { get; ");
             if (p.HasSetMethod)
                 returnString.Append("set; ");
 
             returnString.Append("}");
-            return returnString.ToString();
         }
 
-        private string Render(TypeParameterAPIV tp, int indents = 0)
+        private void Render(TypeParameterAPIV tp, StringBuilder returnString, int indents = 0)
         {
-            StringBuilder returnString = new StringBuilder("");
             if (tp.Attributes.Length != 0)
                 returnString.Append(tp.Attributes + " ");
 
             returnString.Append(tp.Name);
-            return returnString.ToString();
         }
     }
 }

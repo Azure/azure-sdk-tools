@@ -1,9 +1,9 @@
 /**
- * @fileoverview Testing the ts-package-json-bugs rule.
+ * @fileoverview Testing the ts-package-json-license rule.
  * @author Arpan Laha
  */
 
-import rule from "../../src/rules/ts-package-json-bugs";
+import rule from "../../src/rules/ts-package-json-license";
 import { RuleTester } from "eslint";
 import processJSON from "../utils/processJSON";
 
@@ -26,7 +26,7 @@ const example_package_good = `{
     "AMQP"
   ],
   "bugs": {
-    "url": "https://github.com/Azure/azure-sdk-for-js/issues"
+    "url": "https://github.com/azure/azure-sdk-for-js/issues"
   },
   "main": "./dist/index.js",
   "module": "dist-esm/src/index.js",
@@ -128,7 +128,7 @@ const example_package_bad = `{
   "name": "@azure/service-bus",
   "author": "Microsoft Corporation",
   "version": "1.0.2",
-  "license": "MIT",
+  "license": "Apache",
   "description": "Azure Service Bus SDK for Node.js",
   "homepage": "https://github.com/Azure/azure-sdk-for-js/tree/master/sdk/servicebus/service-bus",
   "repository": "github:Azure/azure-sdk-for-js",
@@ -139,7 +139,7 @@ const example_package_bad = `{
     "AMQP"
   ],
   "bugs": {
-    "url": "https://github.com/Azure/azure-sdk-for-java/issues"
+    "url": "https://github.com/azure/azure-sdk-for-js/issues"
   },
   "main": "./dist/index.js",
   "module": "dist-esm/src/index.js",
@@ -245,78 +245,61 @@ var ruleTester = new RuleTester({
   parser: "@typescript-eslint/parser"
 });
 
-ruleTester.run("ts-package-json-bugs", rule, {
+ruleTester.run("ts-package-json-license", rule, {
   valid: [
     {
       // only the fields we care about
-      code:
-        '{"bugs": { "url": "https://github.com/Azure/azure-sdk-for-js/issues" }}',
+      code: '{"license": "MIT"}',
       filename: processJSON("package.json") as any // this is stupid but it works
     },
     {
-      // a full example package.json (taken from https://github.com/Azure/azure-sdk-for-js/blob/master/sdk/eventhub/event-hubs/package.json)
+      // a full example package.json (taken from https://github.com/Azure/azure-sdk-for-js/blob/master/sdk/eventhub/event-hubs/package.json with "scripts" removed for testing purposes)
       code: example_package_good,
       filename: processJSON("package.json") as any
     },
     {
       // incorrect format but in a file we don't care about
-      code:
-        '{"bugs": { "url": "https://github.com/Azure/azure-sdk-for-java/issues" }}',
+      code: '{"license": "Apache"}',
       filename: processJSON("not_package.json") as any
     }
   ],
   invalid: [
     {
-      code: '{"notBugs": {}}',
+      code: '{"notLicense": "MIT"}',
       filename: processJSON("package.json") as any,
       errors: [
         {
-          message: "bugs does not exist at the outermost level"
+          message: "license does not exist at the outermost level"
         }
       ]
     },
     {
-      // commpilerOptions is in a nested object
-      code:
-        '{"outer": {"bugs": { "url": "https://github.com/Azure/azure-sdk-for-js/issues" }}}',
+      // license is in a nested object
+      code: '{"outer": {"license": "MIT"}}',
       filename: processJSON("package.json") as any,
       errors: [
         {
-          message: "bugs does not exist at the outermost level"
-        }
-      ]
-    },
-    {
-      // commpilerOptions does not contain strict
-      code:
-        '{"bugs": { "link": "https://github.com/Azure/azure-sdk-for-js/issues" }}',
-      filename: processJSON("package.json") as any,
-      errors: [
-        {
-          message: "url is not a member of bugs"
+          message: "license does not exist at the outermost level"
         }
       ]
     },
     {
       // only the fields we care about
-      code:
-        '{"bugs": { "url": "https://github.com/Azure/azure-sdk-for-java/issues" }}',
+      code: '{"license": "Apache"}',
       filename: processJSON("package.json") as any,
       errors: [
         {
-          message:
-            "bugs.url is set to https://github.com/Azure/azure-sdk-for-java/issues when it should be set to https://github.com/Azure/azure-sdk-for-js/issues"
+          message: "license is set to Apache when it should be set to MIT"
         }
       ]
     },
     {
-      // example file with compilerOptions.strict set to false
+      // example file with license set to Apache
       code: example_package_bad,
       filename: processJSON("package.json") as any,
       errors: [
         {
-          message:
-            "bugs.url is set to https://github.com/Azure/azure-sdk-for-java/issues when it should be set to https://github.com/Azure/azure-sdk-for-js/issues"
+          message: "license is set to Apache when it should be set to MIT"
         }
       ]
     }

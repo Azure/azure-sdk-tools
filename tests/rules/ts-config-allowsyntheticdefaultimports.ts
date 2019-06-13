@@ -125,8 +125,7 @@ ruleTester.run("ts-config-allowsyntheticdefaultimports", rule, {
       filename: processJSON("tsconfig.json") as any,
       errors: [
         {
-          message:
-            "tsconfig.json: compilerOptions does not exist at the outermost level"
+          message: "compilerOptions does not exist at the outermost level"
         }
       ]
     },
@@ -137,8 +136,7 @@ ruleTester.run("ts-config-allowsyntheticdefaultimports", rule, {
       filename: processJSON("tsconfig.json") as any,
       errors: [
         {
-          message:
-            "tsconfig.json: compilerOptions does not exist at the outermost level"
+          message: "compilerOptions does not exist at the outermost level"
         }
       ]
     },
@@ -149,7 +147,7 @@ ruleTester.run("ts-config-allowsyntheticdefaultimports", rule, {
       errors: [
         {
           message:
-            "tsconfig.json: allowSyntheticDefaultImports is not a member of compilerOptions"
+            "allowSyntheticDefaultImports is not a member of compilerOptions"
         }
       ]
     },
@@ -160,7 +158,7 @@ ruleTester.run("ts-config-allowsyntheticdefaultimports", rule, {
       errors: [
         {
           message:
-            "tsconfig.json: compilerOptions.allowSyntheticDefaultImports is set to false when it should be set to true"
+            "compilerOptions.allowSyntheticDefaultImports is set to false when it should be set to true"
         }
       ]
     },
@@ -171,7 +169,7 @@ ruleTester.run("ts-config-allowsyntheticdefaultimports", rule, {
       errors: [
         {
           message:
-            "tsconfig.json: compilerOptions.allowSyntheticDefaultImports is set to false when it should be set to true"
+            "compilerOptions.allowSyntheticDefaultImports is set to false when it should be set to true"
         }
       ]
     }

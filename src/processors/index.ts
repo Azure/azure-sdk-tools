@@ -15,7 +15,10 @@ export = {
       messages: Linter.LintMessage[][]
     ): Linter.LintMessage[] {
       return messages[0].filter(function(message) {
-        return message.ruleId !== "no-unused-vars";
+        return (
+          message.ruleId !== "no-unused-vars" &&
+          message.ruleId !== "@typescript-eslint/no-unused-vars"
+        );
       });
     }
   }

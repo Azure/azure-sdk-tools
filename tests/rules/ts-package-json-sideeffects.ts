@@ -269,8 +269,7 @@ ruleTester.run("ts-package-json-sideeffects", rule, {
       filename: processJSON("package.json") as any,
       errors: [
         {
-          message:
-            "package.json: sideEffects does not exist at the outermost level"
+          message: "sideEffects does not exist at the outermost level"
         }
       ]
     },
@@ -280,8 +279,7 @@ ruleTester.run("ts-package-json-sideeffects", rule, {
       filename: processJSON("package.json") as any,
       errors: [
         {
-          message:
-            "package.json: sideEffects does not exist at the outermost level"
+          message: "sideEffects does not exist at the outermost level"
         }
       ]
     },
@@ -291,8 +289,7 @@ ruleTester.run("ts-package-json-sideeffects", rule, {
       filename: processJSON("package.json") as any,
       errors: [
         {
-          message:
-            "package.json: sideEffects is set to true when it should be set to false"
+          message: "sideEffects is set to true when it should be set to false"
         }
       ]
     },
@@ -302,8 +299,7 @@ ruleTester.run("ts-package-json-sideeffects", rule, {
       filename: processJSON("package.json") as any,
       errors: [
         {
-          message:
-            "package.json: sideEffects is set to true when it should be set to false"
+          message: "sideEffects is set to true when it should be set to false"
         }
       ]
     }

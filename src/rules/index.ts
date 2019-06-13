@@ -27,7 +27,7 @@ export = {
   "ts-config-importhelpers": tsConfigImportHelpers,
   "ts-config-isolatedmodules": tsConfigIsolatedModules,
   "ts-config-module": tsConfigModule,
-  "ts-config-noexperimentaldecorators": tsConfigNoExperimentalDecorators,
+  "ts-config-no-experimentaldecorators": tsConfigNoExperimentalDecorators,
   "ts-config-strict": tsConfigStrict,
   "ts-package-json-author": tsPackageJsonAuthor,
   "ts-package-json-bugs": tsPackageJsonBugs,

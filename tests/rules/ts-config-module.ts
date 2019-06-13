@@ -125,8 +125,7 @@ ruleTester.run("ts-config-module", rule, {
       filename: processJSON("tsconfig.json") as any,
       errors: [
         {
-          message:
-            "tsconfig.json: compilerOptions does not exist at the outermost level"
+          message: "compilerOptions does not exist at the outermost level"
         }
       ]
     },
@@ -136,8 +135,7 @@ ruleTester.run("ts-config-module", rule, {
       filename: processJSON("tsconfig.json") as any,
       errors: [
         {
-          message:
-            "tsconfig.json: compilerOptions does not exist at the outermost level"
+          message: "compilerOptions does not exist at the outermost level"
         }
       ]
     },
@@ -147,7 +145,7 @@ ruleTester.run("ts-config-module", rule, {
       filename: processJSON("tsconfig.json") as any,
       errors: [
         {
-          message: "tsconfig.json: module is not a member of compilerOptions"
+          message: "module is not a member of compilerOptions"
         }
       ]
     },
@@ -158,7 +156,7 @@ ruleTester.run("ts-config-module", rule, {
       errors: [
         {
           message:
-            "tsconfig.json: compilerOptions.module is set to es5 when it should be set to es6"
+            "compilerOptions.module is set to es5 when it should be set to es6"
         }
       ]
     },
@@ -169,7 +167,7 @@ ruleTester.run("ts-config-module", rule, {
       errors: [
         {
           message:
-            "tsconfig.json: compilerOptions.module is set to es5 when it should be set to es6"
+            "compilerOptions.module is set to es5 when it should be set to es6"
         }
       ]
     }

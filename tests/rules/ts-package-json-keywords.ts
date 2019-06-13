@@ -264,8 +264,7 @@ ruleTester.run("ts-package-json-keywords", rule, {
       filename: processJSON("package.json") as any,
       errors: [
         {
-          message:
-            "package.json: keywords does not exist at the outermost level"
+          message: "keywords does not exist at the outermost level"
         }
       ]
     },
@@ -275,8 +274,7 @@ ruleTester.run("ts-package-json-keywords", rule, {
       filename: processJSON("package.json") as any,
       errors: [
         {
-          message:
-            "package.json: keywords does not exist at the outermost level"
+          message: "keywords does not exist at the outermost level"
         }
       ]
     },
@@ -286,10 +284,10 @@ ruleTester.run("ts-package-json-keywords", rule, {
       filename: processJSON("package.json") as any,
       errors: [
         {
-          message: "package.json: keywords does not contain Azure"
+          message: "keywords does not contain Azure"
         },
         {
-          message: "package.json: keywords does not contain cloud"
+          message: "keywords does not contain cloud"
         }
       ]
     },
@@ -299,7 +297,7 @@ ruleTester.run("ts-package-json-keywords", rule, {
       filename: processJSON("package.json") as any,
       errors: [
         {
-          message: "package.json: keywords does not contain Azure"
+          message: "keywords does not contain Azure"
         }
       ]
     },
@@ -309,7 +307,7 @@ ruleTester.run("ts-package-json-keywords", rule, {
       filename: processJSON("package.json") as any,
       errors: [
         {
-          message: "package.json: keywords does not contain cloud"
+          message: "keywords does not contain cloud"
         }
       ]
     },
@@ -319,10 +317,10 @@ ruleTester.run("ts-package-json-keywords", rule, {
       filename: processJSON("package.json") as any,
       errors: [
         {
-          message: "package.json: keywords does not contain Azure"
+          message: "keywords does not contain Azure"
         },
         {
-          message: "package.json: keywords does not contain cloud"
+          message: "keywords does not contain cloud"
         }
       ]
     }

@@ -26,13 +26,13 @@ export = {
     schema: [] // no options
   },
   create: (context: Rule.RuleContext): Rule.RuleListener => {
-    var sourceMapVerifiers = getVerifiers(context, {
+    const sourceMapVerifiers = getVerifiers(context, {
       outer: "compilerOptions",
       inner: "sourceMap",
       expected: true,
       fileName: "tsconfig.json"
     });
-    var declarationMapVerifiers = getVerifiers(context, {
+    const declarationMapVerifiers = getVerifiers(context, {
       outer: "compilerOptions",
       inner: "declarationMap",
       expected: true,

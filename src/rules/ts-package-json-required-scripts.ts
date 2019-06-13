@@ -26,12 +26,12 @@ export = {
     schema: [] // no options
   },
   create: (context: Rule.RuleContext): Rule.RuleListener => {
-    var buildVerifiers = getVerifiers(context, {
+    const buildVerifiers = getVerifiers(context, {
       outer: "scripts",
       inner: "build",
       fileName: "package.json"
     });
-    var testVerifiers = getVerifiers(context, {
+    const testVerifiers = getVerifiers(context, {
       outer: "scripts",
       inner: "test",
       fileName: "package.json"

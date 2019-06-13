@@ -46,7 +46,7 @@ export = {
           let foundInner = false;
           for (const property of properties) {
             if (property.key) {
-              let key = property.key as Literal;
+              const key = property.key as Literal;
               if (key.value === "lib") {
                 foundInner = true;
                 break;

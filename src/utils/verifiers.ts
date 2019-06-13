@@ -30,7 +30,7 @@ export = (context: Rule.RuleContext, data: StructureData): any => {
 
         for (const property of properties) {
           if (property.key) {
-            let key = property.key as Literal;
+            const key = property.key as Literal;
             if (key.value === outer) {
               foundOuter = true;
               break;
@@ -81,7 +81,7 @@ export = (context: Rule.RuleContext, data: StructureData): any => {
         let foundInner = false;
         for (const property of properties) {
           if (property.key) {
-            let key = property.key as Literal;
+            const key = property.key as Literal;
             if (key.value === inner) {
               foundInner = true;
               break;
@@ -105,7 +105,7 @@ export = (context: Rule.RuleContext, data: StructureData): any => {
         const inner = data.inner;
         const expected = data.expected;
 
-        let nodeValue: Literal = node.value as Literal;
+        const nodeValue: Literal = node.value as Literal;
 
         nodeValue.value !== expected &&
           context.report({
@@ -129,8 +129,8 @@ export = (context: Rule.RuleContext, data: StructureData): any => {
       const expected = data.expected;
       const fileName = data.fileName;
 
-      let nodeValue: ArrayExpression = node.value as ArrayExpression;
-      let candidateArray: Literal[] = nodeValue.elements as Literal[];
+      const nodeValue: ArrayExpression = node.value as ArrayExpression;
+      const candidateArray: Literal[] = nodeValue.elements as Literal[];
 
       if (stripPath(context.getFilename()) === fileName) {
         if (expected instanceof Array) {

@@ -25,7 +25,7 @@ export = {
     },
     schema: [] // no options
   },
-  create: function(context: Rule.RuleContext) {
+  create: (context: Rule.RuleContext): Rule.RuleListener => {
     var buildCheckers = structure(context, {
       outer: "scripts",
       inner: "build",
@@ -43,7 +43,7 @@ export = {
       "VariableDeclarator > ObjectExpression": buildCheckers.existsInFile,
 
       // check to see if scripts contains both build and test
-      "Property[key.value='scripts']": function(node: Property) {
+      "Property[key.value='scripts']": (node: Property): void => {
         buildCheckers.isMemberOf(node);
         testCheckers.isMemberOf(node);
       }

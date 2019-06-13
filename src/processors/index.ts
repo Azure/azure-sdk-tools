@@ -7,14 +7,12 @@ import { Linter } from "eslint";
 
 export = {
   ".json": {
-    preprocess: function(text: string): string[] {
+    preprocess: (text: string): string[] => {
       const code = "const json = " + text;
       return [code];
     },
-    postprocess: function(
-      messages: Linter.LintMessage[][]
-    ): Linter.LintMessage[] {
-      return messages[0].filter(function(message) {
+    postprocess: (messages: Linter.LintMessage[][]): Linter.LintMessage[] => {
+      return messages[0].filter((message: Linter.LintMessage): boolean => {
         return (
           message.ruleId !== "no-unused-vars" &&
           message.ruleId !== "@typescript-eslint/no-unused-vars"

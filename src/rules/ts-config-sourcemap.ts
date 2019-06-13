@@ -25,7 +25,7 @@ export = {
     },
     schema: [] // no options
   },
-  create: function(context: Rule.RuleContext) {
+  create: (context: Rule.RuleContext): Rule.RuleListener => {
     var sourceMapCheckers = structure(context, {
       outer: "compilerOptions",
       inner: "sourceMap",
@@ -46,7 +46,7 @@ export = {
       "VariableDeclarator > ObjectExpression": sourceMapCheckers.existsInFile,
 
       // check that sourceMap and declarationMap are both members of compilerOptions
-      "Property[key.value='compilerOptions']": function(node: Property) {
+      "Property[key.value='compilerOptions']": (node: Property): void => {
         sourceMapCheckers.isMemberOf(node);
         declarationMapCheckers.isMemberOf(node);
       },

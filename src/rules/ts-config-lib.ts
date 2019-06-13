@@ -25,7 +25,7 @@ export = {
     },
     schema: [] // no options
   },
-  create: function(context: Rule.RuleContext) {
+  create: (context: Rule.RuleContext): Rule.RuleListener => {
     var checkers = structure(context, {
       outer: "compilerOptions",
       fileName: "tsconfig.json"
@@ -37,7 +37,7 @@ export = {
       "VariableDeclarator > ObjectExpression": checkers.existsInFile,
 
       // check that lib is not a member of compilerOptions
-      "Property[key.value='compilerOptions']": function(node: Property) {
+      "Property[key.value='compilerOptions']": (node: Property): void => {
         if (
           context.getFilename().replace(/^.*[\\\/]/, "") === "tsconfig.json"
         ) {
@@ -54,12 +54,11 @@ export = {
             }
           }
 
-          foundInner
-            ? context.report({
-                node: node,
-                message: "compilerOptions.lib should not be used"
-              } as any)
-            : [];
+          foundInner &&
+            context.report({
+              node: node,
+              message: "compilerOptions.lib should not be used"
+            } as any);
         }
       }
     } as Rule.RuleListener;

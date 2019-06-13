@@ -13,14 +13,14 @@ interface StructureData {
   fileName?: string;
 }
 
-const stripPath = function(pathOrFileName: string): string {
+const stripPath = (pathOrFileName: string): string => {
   return pathOrFileName.replace(/^.*[\\\/]/, "");
 };
 
-export = function(context: Rule.RuleContext, data: StructureData) {
+export = (context: Rule.RuleContext, data: StructureData): any => {
   return {
     // check to see if if the outer key exists at the outermost level
-    existsInFile: function(node: ObjectExpression) {
+    existsInFile: (node: ObjectExpression): void => {
       const fileName = data.fileName;
       if (stripPath(context.getFilename()) === fileName) {
         const outer = data.outer;
@@ -38,17 +38,16 @@ export = function(context: Rule.RuleContext, data: StructureData) {
           }
         }
 
-        foundOuter
-          ? []
-          : context.report({
-              node: node,
-              message: outer + " does not exist at the outermost level"
-            } as any);
+        !foundOuter &&
+          context.report({
+            node: node,
+            message: outer + " does not exist at the outermost level"
+          } as any);
       }
     },
 
     // check to see if the value of the outer key matches the expected value
-    outerMatchesExpected: function(node: Property) {
+    outerMatchesExpected: (node: Property): void => {
       const fileName = data.fileName;
       if (stripPath(context.getFilename()) === fileName) {
         const outer = data.outer;
@@ -56,23 +55,22 @@ export = function(context: Rule.RuleContext, data: StructureData) {
 
         const nodeValue: Literal = node.value as Literal;
 
-        nodeValue.value === expected
-          ? []
-          : context.report({
-              node: node,
-              message:
-                outer +
-                " is set to {{ identifier }} when it should be set to " +
-                expected,
-              data: {
-                identifier: nodeValue.value as string
-              }
-            } as any);
+        nodeValue.value !== expected &&
+          context.report({
+            node: node,
+            message:
+              outer +
+              " is set to {{ identifier }} when it should be set to " +
+              expected,
+            data: {
+              identifier: nodeValue.value as string
+            }
+          } as any);
       }
     },
 
     // check that the inner key is a member of the outer key
-    isMemberOf: function(node: Property) {
+    isMemberOf: (node: Property): void => {
       const fileName = data.fileName;
       if (stripPath(context.getFilename()) === fileName) {
         const outer = data.outer;
@@ -91,17 +89,16 @@ export = function(context: Rule.RuleContext, data: StructureData) {
           }
         }
 
-        foundInner
-          ? []
-          : context.report({
-              node: node,
-              message: inner + " is not a member of " + outer
-            } as any);
+        !foundInner &&
+          context.report({
+            node: node,
+            message: inner + " is not a member of " + outer
+          } as any);
       }
     },
 
     // check the node corresponding to the inner value to see if it is set to the expected value
-    innerMatchesExpected: function(node: Property) {
+    innerMatchesExpected: (node: Property): void => {
       const fileName = data.fileName;
       if (stripPath(context.getFilename()) === fileName) {
         const outer = data.outer;
@@ -110,25 +107,24 @@ export = function(context: Rule.RuleContext, data: StructureData) {
 
         let nodeValue: Literal = node.value as Literal;
 
-        nodeValue.value === expected
-          ? []
-          : context.report({
-              node: node,
-              message:
-                outer +
-                "." +
-                inner +
-                " is set to {{ identifier }} when it should be set to " +
-                expected,
-              data: {
-                identifier: nodeValue.value as string
-              }
-            } as any);
+        nodeValue.value !== expected &&
+          context.report({
+            node: node,
+            message:
+              outer +
+              "." +
+              inner +
+              " is set to {{ identifier }} when it should be set to " +
+              expected,
+            data: {
+              identifier: nodeValue.value as string
+            }
+          } as any);
       }
     },
 
     // check the node corresponding to the inner value to see if it contains the expected value
-    outerContainsExpected: function(node: Property) {
+    outerContainsExpected: (node: Property): void => {
       const outer = data.outer;
       const expected = data.expected;
       const fileName = data.fileName;
@@ -147,12 +143,11 @@ export = function(context: Rule.RuleContext, data: StructureData) {
               }
             }
 
-            if (!foundValue) {
+            !foundValue &&
               context.report({
                 node: node,
                 message: outer + " does not contain " + value
               } as any);
-            }
           }
         } else {
           let foundValue: boolean = false;
@@ -163,12 +158,11 @@ export = function(context: Rule.RuleContext, data: StructureData) {
             }
           }
 
-          if (!foundValue) {
+          !foundValue &&
             context.report({
               node: node,
               message: outer + " does not contain " + expected
             } as any);
-          }
         }
       }
     }

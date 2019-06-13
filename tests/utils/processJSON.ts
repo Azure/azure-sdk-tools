@@ -12,6 +12,6 @@ interface Info {
   filename: string;
 }
 
-export = function(fileName: string): Info {
+export = (fileName: string): Info => {
   return { ...plugin.processors[".json"], filename: fileName };
 };

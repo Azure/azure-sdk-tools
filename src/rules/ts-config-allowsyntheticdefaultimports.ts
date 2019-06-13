@@ -24,7 +24,7 @@ export = {
     },
     schema: [] // no options
   },
-  create: function(context: Rule.RuleContext) {
+  create: (context: Rule.RuleContext): Rule.RuleListener => {
     var checkers = structure(context, {
       outer: "compilerOptions",
       inner: "allowSyntheticDefaultImports",

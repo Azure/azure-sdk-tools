@@ -28,7 +28,6 @@ export = {
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     const verifiers = structure(context, {
       outer: "name",
-      expected: "@azure/",
       fileName: "package.json"
     });
     return {
@@ -53,7 +52,7 @@ export = {
               message: "name is not set to @azure/<service>"
             });
 
-          const kebabRegex = /^@azure\/([a-z]*-)*[a-z]+$/;
+          const kebabRegex = /^@azure\/([a-z]+-)*[a-z]+$/;
 
           prefixRegex.test(value) &&
             !kebabRegex.test(value) &&

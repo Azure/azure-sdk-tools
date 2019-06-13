@@ -10,6 +10,7 @@ import tsConfigExclude from "./ts-config-exclude";
 import tsConfigForceConsistentCasingInFileNames from "./ts-config-forceconsistentcasinginfilenames";
 import tsConfigImportHelpers from "./ts-config-importhelpers";
 import tsConfigIsolatedModules from "./ts-config-isolatedmodules";
+import tsConfigLib from "./ts-config-lib";
 import tsConfigModule from "./ts-config-module";
 import tsConfigNoExperimentalDecorators from "./ts-config-no-experimentaldecorators";
 import tsConfigSourceMap from "./ts-config-sourcemap";
@@ -29,6 +30,7 @@ export = {
   "ts-config-forceconsistentcasinginfilenames": tsConfigForceConsistentCasingInFileNames,
   "ts-config-importhelpers": tsConfigImportHelpers,
   "ts-config-isolatedmodules": tsConfigIsolatedModules,
+  "ts-config-lib": tsConfigLib,
   "ts-config-module": tsConfigModule,
   "ts-config-no-experimentaldecorators": tsConfigNoExperimentalDecorators,
   "ts-config-sourcemap": tsConfigSourceMap,

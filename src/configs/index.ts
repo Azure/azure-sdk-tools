@@ -18,6 +18,7 @@ export = {
       "azure/ts-config-forceconsistentcasinginfilenames": "error",
       "azure/ts-config-importhelpers": "error",
       "azure/ts-config-isolatedmodules": "warn",
+      "azure/ts-config-lib": "error",
       "azure/ts-config-module": "error",
       "azure/ts-config-no-experimentaldecorators": "error",
       "azure/ts-config-sourcemap": "error",

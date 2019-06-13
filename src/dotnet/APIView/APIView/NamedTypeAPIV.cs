@@ -39,52 +39,44 @@ namespace APIView
             // add any types declared in the body of this type to lists
             foreach (var memberSymbol in symbol.GetMembers())
             {
-                if (memberSymbol.DeclaredAccessibility != Accessibility.Public) continue;
-
-                switch (memberSymbol)
+                if (memberSymbol.DeclaredAccessibility == Accessibility.Public)
                 {
-                    case IEventSymbol e:
-                        events.Add(new EventAPIV(e));
-                        break;
+                    switch (memberSymbol)
+                    {
+                        case IEventSymbol e:
+                            events.Add(new EventAPIV(e));
+                            break;
 
-                    case IFieldSymbol f:
-                        fields.Add(new FieldAPIV(f));
-                        break;
+                        case IFieldSymbol f:
+                            fields.Add(new FieldAPIV(f));
+                            break;
 
-                    case IMethodSymbol m:
-                        bool autoMethod = false;
-                        if (m.AssociatedSymbol != null)
-                            autoMethod = (m.AssociatedSymbol.Kind == SymbolKind.Event) || (m.AssociatedSymbol.Kind == SymbolKind.Property);
+                        case IMethodSymbol m:
+                            bool autoMethod = false;
+                            if (m.AssociatedSymbol != null)
+                                autoMethod = (m.AssociatedSymbol.Kind == SymbolKind.Event) || (m.AssociatedSymbol.Kind == SymbolKind.Property);
 
-                        if (!(m.Name.Equals(".ctor") || autoMethod))
-                            methods.Add(new MethodAPIV(m));
-                        break;
+                            if (!(m.Name.Equals(".ctor") || autoMethod))
+                                methods.Add(new MethodAPIV(m));
+                            break;
 
-                    case INamedTypeSymbol n:
-                        namedTypes.Add(new NamedTypeAPIV(n));
-                        break;
+                        case INamedTypeSymbol n:
+                            namedTypes.Add(new NamedTypeAPIV(n));
+                            break;
 
-                    case IPropertySymbol p:
-                        properties.Add(new PropertyAPIV(p));
-                        break;
+                        case IPropertySymbol p:
+                            properties.Add(new PropertyAPIV(p));
+                            break;
+                    }
                 }
+                else if ((memberSymbol.DeclaredAccessibility == Accessibility.Protected) && (memberSymbol is IFieldSymbol f))
+                    fields.Add(new FieldAPIV(f));
             }
 
             // add a string representation of each implemented type to list
             foreach (var i in symbol.Interfaces)
             {
-                StringBuilder stringRep = new StringBuilder(i.Name);
-                if (i.TypeArguments.Length > 0)
-                {
-                    stringRep.Append("<");
-                    foreach (var arg in i.TypeArguments)
-                    {
-                        stringRep.Append(arg.ToDisplayString() + ", ");
-                    }
-                    stringRep.Length = stringRep.Length - 2;
-                    stringRep.Append(">");
-                }
-                implementations.Add(stringRep.ToString());
+                implementations.Add(i.ToDisplayString());
             }
 
             this.Events = events.ToImmutableArray();

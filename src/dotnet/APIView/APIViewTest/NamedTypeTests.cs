@@ -105,7 +105,7 @@ namespace APIViewTest
 
             ImmutableArray<string> implementations = implementer.Implementations;
             Assert.Single(implementations);
-            Assert.Equal("PublicInterface<int>", implementations[0]);
+            Assert.Equal("TestLibrary.PublicInterface<int>", implementations[0]);
         }
 
         [Fact]
@@ -118,7 +118,7 @@ namespace APIViewTest
             var namedTypeSymbol = a.GetTypeByMetadataName("TestLibrary.ImplementingClass");
             NamedTypeAPIV implementer = new NamedTypeAPIV(namedTypeSymbol);
 
-            Assert.Contains("public class ImplementingClass : PublicInterface<int> {", implementer.ToString());
+            Assert.Contains("public class ImplementingClass : TestLibrary.PublicInterface<int> {", implementer.ToString());
         }
 
         [Fact]

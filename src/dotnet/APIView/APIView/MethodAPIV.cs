@@ -14,11 +14,10 @@ namespace APIView
     /// </summary>
     public class MethodAPIV
     {
-        public IMethodSymbol Symbol { get; }
-
         public string Name { get; }
         public string ReturnType { get; }
 
+        public bool IsInterfaceMethod { get; }
         public bool IsStatic { get; }
         public bool IsVirtual { get; }
         public bool IsSealed { get; }
@@ -36,11 +35,10 @@ namespace APIView
         /// <param name="symbol">The symbol representing the method.</param>
         public MethodAPIV(IMethodSymbol symbol)
         {
-            this.Symbol = symbol;
-
             this.Name = symbol.Name;
             this.ReturnType = symbol.ReturnType.ToString();
 
+            this.IsInterfaceMethod = symbol.ContainingType.TypeKind.ToString().ToLower().Equals("interface");
             this.IsStatic = symbol.IsStatic;
             this.IsVirtual = symbol.IsVirtual;
             this.IsSealed = symbol.IsSealed;
@@ -68,13 +66,11 @@ namespace APIView
 
         public override string ToString()
         {
-            bool interfaceMethod = Symbol.ContainingType.TypeKind.ToString().ToLower().Equals("interface");
-
             StringBuilder returnString = new StringBuilder("");
             if (!Attributes.IsEmpty)
                 returnString.Append("[" + Attributes[0].AttributeClass.Name + "] ");
 
-            if (!interfaceMethod)
+            if (!IsInterfaceMethod)
                 returnString.Append("public");
 
             if (IsStatic)
@@ -85,7 +81,7 @@ namespace APIView
                 returnString.Append(" sealed");
             if (IsOverride)
                 returnString.Append(" override");
-            if (IsAbstract && !interfaceMethod)
+            if (IsAbstract && !IsInterfaceMethod)
                 returnString.Append(" abstract");
             if (IsExtern)
                 returnString.Append(" extern");
@@ -112,7 +108,7 @@ namespace APIView
                 returnString.Length = returnString.Length - 2;
             }
 
-            if (interfaceMethod)
+            if (IsInterfaceMethod)
                 returnString.Append(");");
             else
                 returnString.Append(") { }");

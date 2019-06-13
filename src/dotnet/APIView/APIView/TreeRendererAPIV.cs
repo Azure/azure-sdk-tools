@@ -58,13 +58,11 @@ namespace APIView
         {
             string indent = new string(' ', indents * IndentSize);
 
-            bool interfaceMethod = m.Symbol.ContainingType.TypeKind.ToString().ToLower().Equals("interface");
-
             returnString.Append(indent);
             if (!m.Attributes.IsEmpty)
                 returnString.Append("[" + m.Attributes[0].AttributeClass.Name + "]\n" + indent);
 
-            if (!interfaceMethod)
+            if (!m.IsInterfaceMethod)
                 returnString.Append("public");
 
             if (m.IsStatic)
@@ -75,7 +73,7 @@ namespace APIView
                 returnString.Append(" sealed");
             if (m.IsOverride)
                 returnString.Append(" override");
-            if (m.IsAbstract && !interfaceMethod)
+            if (m.IsAbstract && !m.IsInterfaceMethod)
                 returnString.Append(" abstract");
             if (m.IsExtern)
                 returnString.Append(" extern");
@@ -104,7 +102,7 @@ namespace APIView
                 returnString.Length = returnString.Length - 2;
             }
 
-            if (interfaceMethod)
+            if (m.IsInterfaceMethod)
                 returnString.Append(");");
             else
                 returnString.Append(") { }");

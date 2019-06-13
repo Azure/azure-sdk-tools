@@ -12,6 +12,7 @@ namespace APIView
     {
         public string Name { get; }
         public string Type { get; }
+        public string Accessibility { get; }
 
         public bool IsConstant { get; }
         public bool IsReadOnly { get; }
@@ -28,6 +29,7 @@ namespace APIView
         {
             this.Name = symbol.Name;
             this.Type = symbol.Type.ToDisplayString();
+            this.Accessibility = symbol.DeclaredAccessibility.ToString().ToLower();
 
             this.IsConstant = symbol.HasConstantValue;
             this.IsReadOnly = symbol.IsReadOnly;
@@ -40,7 +42,7 @@ namespace APIView
 
         public override string ToString()
         {
-            StringBuilder returnString = new StringBuilder("public");
+            StringBuilder returnString = new StringBuilder(Accessibility);
 
             if (IsStatic)
                 returnString.Append(" static");

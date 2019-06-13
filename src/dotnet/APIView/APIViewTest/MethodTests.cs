@@ -21,6 +21,7 @@ namespace APIViewTest
             MethodAPIV method = new MethodAPIV(methodSymbol);
 
             Assert.False(method == null);
+            Assert.True(method.IsInterfaceMethod);
             Assert.False(method.IsStatic);
             Assert.False(method.IsVirtual);
             Assert.False(method.IsSealed);
@@ -63,6 +64,7 @@ namespace APIViewTest
             MethodAPIV method = new MethodAPIV(methodSymbol);
 
             Assert.False(method == null);
+            Assert.False(method.IsInterfaceMethod);
             Assert.True(method.IsStatic);
             Assert.False(method.IsVirtual);
             Assert.False(method.IsSealed);

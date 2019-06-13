@@ -42,15 +42,25 @@ export = {
         node: Property
       ): void => {
         if (context.getFilename().replace(/^.*[\\\/]/, "") === "package.json") {
-          const regex = /^@azure\//;
+          const prefixRegex = /^@azure\//;
 
           const nodeValue: Literal = node.value as Literal;
           const value: string = nodeValue.value as string;
 
-          !regex.test(value) &&
+          !prefixRegex.test(value) &&
             context.report({
               node: node,
               message: "name is not set to @azure/<service>"
+            });
+
+          const kebabRegex = /^@azure\/[a-z-]/;
+
+          prefixRegex.test(value) &&
+            kebabRegex.test(value) &&
+            context.report({
+              node: node,
+              message:
+                "service name is not in kebab-case (lowercase and separated by hyphens)"
             });
         }
       }

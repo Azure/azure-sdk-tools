@@ -57,11 +57,11 @@ export = {
           foundInner
             ? context.report({
                 node: node,
-                message: "lib should not be used in compilerOptions"
+                message: "compilerOptions.lib should not be used"
               } as any)
             : [];
         }
       }
-    };
+    } as Rule.RuleListener;
   }
 };

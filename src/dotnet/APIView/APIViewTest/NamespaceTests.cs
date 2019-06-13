@@ -12,8 +12,7 @@ namespace APIViewTest
         [Fact]
         public void NamespaceTestGlobalNoNamedTypesSomenamespaces()
         {
-            AssemblyAPIV assembly = AssemblyAPIV.AssembliesFromFile("C:\\Users\\t-mcpat\\Documents\\azure-sdk-tools\\artifacts\\bin\\" +
-                "TestLibrary\\Debug\\netstandard2.0\\TestLibrary.dll")[0];
+            AssemblyAPIV assembly = AssemblyAPIV.AssembliesFromFile("TestLibrary.dll")[0];
             Assert.Equal("TestLibrary", assembly.Name);
 
             NamespaceAPIV globalNamespace = assembly.GlobalNamespace;
@@ -27,8 +26,7 @@ namespace APIViewTest
         [Fact]
         public void NamespaceTestNonGlobalSomeNamedTypesNonamespaces()
         {
-            AssemblyAPIV assembly = AssemblyAPIV.AssembliesFromFile("C:\\Users\\t-mcpat\\Documents\\azure-sdk-tools\\artifacts\\bin\\" +
-                "TestLibrary\\Debug\\netstandard2.0\\TestLibrary.dll")[0];
+            AssemblyAPIV assembly = AssemblyAPIV.AssembliesFromFile("TestLibrary.dll")[0];
             Assert.Equal("TestLibrary", assembly.Name);
 
             NamespaceAPIV globalNamespace = assembly.GlobalNamespace;
@@ -46,8 +44,7 @@ namespace APIViewTest
         [Fact]
         public void NamespaceTestNonGlobalSomeNamedTypesNonamespacesStringRep()
         {
-            AssemblyAPIV assembly = AssemblyAPIV.AssembliesFromFile("C:\\Users\\t-mcpat\\Documents\\azure-sdk-tools\\artifacts\\bin\\" +
-                "TestLibrary\\Debug\\netstandard2.0\\TestLibrary.dll")[0];
+            AssemblyAPIV assembly = AssemblyAPIV.AssembliesFromFile("TestLibrary.dll")[0];
             Assert.Equal("TestLibrary", assembly.Name);
 
             NamespaceAPIV globalNamespace = assembly.GlobalNamespace;

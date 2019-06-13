@@ -312,7 +312,7 @@ ruleTester.run("ts-package-json-keywords", rule, {
       ]
     },
     {
-      // example file with author set to Not Microsoft Corporation
+      // example file with keywords not containing Azure or cloud
       code: example_package_bad,
       filename: processJSON("package.json") as any,
       errors: [

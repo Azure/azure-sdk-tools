@@ -1,6 +1,9 @@
 ﻿#define DEBUG
 using System;
+using System.ComponentModel;
 using System.Diagnostics;
+using System.Reflection.Metadata;
+using System.Security;
 
 namespace TestLibrary
 {
@@ -183,6 +186,21 @@ namespace TestLibrary
         int TypeParamParamsMethod<T>(T param, string str = "hello");
 
         string RefKindParamMethod(ref string str);
+
+        //[Custom("Test"), New()]
+        object AttributesTypeParamsMethod<T, R>();
+    }
+
+    internal class NewAttribute : Attribute
+    {
+    }
+
+    internal class CustomAttribute : Attribute
+    {
+        internal CustomAttribute(string str)
+        {
+
+        }
     }
 
     public class ImplementingClass : PublicInterface<int>
@@ -198,6 +216,11 @@ namespace TestLibrary
         }
 
         public int TypeParamParamsMethod<T>(T param, string str = "hello")
+        {
+            throw new NotImplementedException();
+        }
+
+        public object AttributesTypeParamsMethod<T, R>()
         {
             throw new NotImplementedException();
         }

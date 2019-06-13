@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.CodeAnalysis;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -62,11 +63,17 @@ namespace APIView
             AppendIndents(builder, indents);
             if (!m.Attributes.IsEmpty)
             {
-                builder.Append("[").Append(m.Attributes[0].AttributeClass.Name).Append("]").AppendLine();
+                builder.Append("[");
+                foreach (AttributeData a in m.Attributes)
+                {
+                    builder.Append(a.ToString()).Append(", ");
+                }
+                builder.Length -= 2;
+                builder.Append("]").AppendLine();
                 AppendIndents(builder, indents);
             }
 
-            if (!m.IsInterfaceMethod)
+            if (m.IsInterfaceMethod)
                 builder.Append("public ");
 
             if (m.IsStatic)
@@ -160,6 +167,19 @@ namespace APIView
 
                 default:
                     builder.Append(nt.Name).Append(" ");
+
+                    if (nt.TypeParameters.Length != 0)
+                    {
+                        builder.Length -= 1;
+                        builder.Append("<");
+                        foreach (TypeParameterAPIV tp in nt.TypeParameters)
+                        {
+                            Render(tp, builder);
+                            builder.Append(", ");
+                        }
+                        builder.Length -= 2;
+                        builder.Append("> ");
+                    }
 
                     // add any implemented types to string
                     if (nt.Implementations.Length > 0)

@@ -40,7 +40,7 @@ namespace APIViewTest
             Assert.Equal("interface", publicInterface.Type);
             Assert.Empty(publicInterface.Events);
             Assert.Empty(publicInterface.Fields);
-            Assert.Equal(2, publicInterface.Methods.Length);
+            Assert.Equal(3, publicInterface.Methods.Length);
             Assert.Empty(publicInterface.NamedTypes);
         }
 

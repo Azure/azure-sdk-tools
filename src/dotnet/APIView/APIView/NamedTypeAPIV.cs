@@ -17,6 +17,7 @@ namespace APIView
         public ImmutableArray<MethodAPIV> Methods { get; }
         public ImmutableArray<NamedTypeAPIV> NamedTypes { get; }
         public ImmutableArray<PropertyAPIV> Properties { get; }
+        public ImmutableArray<TypeParameterAPIV> TypeParameters { get; }
 
         /// <summary>
         /// Construct a new namedType instance, represented by the provided symbol.
@@ -28,13 +29,14 @@ namespace APIView
             this.Type = symbol.TypeKind.ToString().ToLower();
             if (symbol.EnumUnderlyingType != null)
                 this.EnumUnderlyingType = symbol.EnumUnderlyingType.ToDisplayString();
-
+            
             List<EventAPIV> events = new List<EventAPIV>();
             List<FieldAPIV> fields = new List<FieldAPIV>();
             List<string> implementations = new List<string>();
             List<MethodAPIV> methods = new List<MethodAPIV>();
             List<NamedTypeAPIV> namedTypes = new List<NamedTypeAPIV>();
             List<PropertyAPIV> properties = new List<PropertyAPIV>();
+            List<TypeParameterAPIV> typeParameters = new List<TypeParameterAPIV>();
 
             // add any types declared in the body of this type to lists
             foreach (var memberSymbol in symbol.GetMembers())
@@ -79,12 +81,18 @@ namespace APIView
                 implementations.Add(i.ToDisplayString());
             }
 
+            foreach (var t in symbol.TypeParameters)
+            {
+                typeParameters.Add(new TypeParameterAPIV(t));
+            }
+
             this.Events = events.ToImmutableArray();
             this.Fields = fields.ToImmutableArray();
             this.Implementations = implementations.ToImmutableArray();
             this.Methods = methods.ToImmutableArray();
             this.NamedTypes = namedTypes.ToImmutableArray();
             this.Properties = properties.ToImmutableArray();
+            this.TypeParameters = typeParameters.ToImmutableArray();
         }
 
         public override string ToString()

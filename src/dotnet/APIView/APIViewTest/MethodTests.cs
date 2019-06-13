@@ -1,8 +1,7 @@
 ﻿using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using System.Linq;
 using APIView;
 using Xunit;
+using System;
 
 namespace APIViewTest
 {
@@ -34,7 +33,7 @@ namespace APIViewTest
             var methodSymbol = (IMethodSymbol)TestResource.GetTestMember("TestLibrary.PublicInterface`1", "TypeParamParamsMethod");
             MethodAPIV method = new MethodAPIV(methodSymbol);
 
-            Assert.Contains("int TypeParamParamsMethod<T>(T param, string str = \"hello\");", method.ToString());
+            Assert.Equal("int TypeParamParamsMethod<T>(T param, string str = \"hello\");", method.ToString());
         }
 
         [Fact]
@@ -63,9 +62,8 @@ namespace APIViewTest
             var methodSymbol = (IMethodSymbol)TestResource.GetTestMember("TestLibrary.PublicClass", "StaticVoid");
             MethodAPIV method = new MethodAPIV(methodSymbol);
 
-            string stringRep = method.ToString();
-            Assert.Contains("[ConditionalAttribute(\"DEBUG\")]", stringRep);
-            Assert.Contains("public static void StaticVoid(string[] args) {", stringRep);
+            string stringRep = method.ToString().Replace(Environment.NewLine, "");
+            Assert.Equal("[System.Diagnostics.ConditionalAttribute(\"DEBUG\")]public static void StaticVoid(string[] args) { }", stringRep);
         }
 
         [Fact]

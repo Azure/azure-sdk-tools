@@ -18,8 +18,7 @@ namespace APIView
                 foreach (var assemblySymbol in compilation.SourceModule.ReferencedAssemblySymbols)
                 {
                     AssemblyAPIV data = new AssemblyAPIV(assemblySymbol);
-                    TreeRendererAPIV tr = new TreeRendererAPIV();
-                    Console.WriteLine(tr.Render(data));
+                    Console.WriteLine(TreeRendererAPIV.Render(data));
                 }
             }
             catch (Exception e)

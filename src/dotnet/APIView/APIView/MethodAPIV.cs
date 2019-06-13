@@ -1,5 +1,4 @@
 ﻿using Microsoft.CodeAnalysis;
-using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Text;
@@ -66,53 +65,8 @@ namespace APIView
 
         public override string ToString()
         {
-            StringBuilder returnString = new StringBuilder("");
-            if (!Attributes.IsEmpty)
-                returnString.Append("[").Append(Attributes[0].AttributeClass.Name).Append("(").Append(Attributes[0].AttributeConstructor).Append(")] ");
-
-            if (!IsInterfaceMethod)
-                returnString.Append("public");
-
-            if (IsStatic)
-                returnString.Append(" static");
-            if (IsVirtual)
-                returnString.Append(" virtual");
-            if (IsSealed)
-                returnString.Append(" sealed");
-            if (IsOverride)
-                returnString.Append(" override");
-            if (IsAbstract && !IsInterfaceMethod)
-                returnString.Append(" abstract");
-            if (IsExtern)
-                returnString.Append(" extern");
-
-            returnString.Append(" " + ReturnType + " " + Name);
-            if (TypeParameters.Length != 0)
-            {
-                returnString.Append("<");
-                foreach (TypeParameterAPIV tp in TypeParameters)
-                {
-                    returnString.Append(tp.ToString() + ", ");
-                }
-                returnString.Length = returnString.Length - 2;
-                returnString.Append(">");
-            }
-
-            returnString.Append("(");
-            if (Parameters.Length != 0)
-            {
-                foreach (ParameterAPIV p in Parameters)
-                {
-                    returnString.Append(p.ToString() + ", ");
-                }
-                returnString.Length = returnString.Length - 2;
-            }
-
-            if (IsInterfaceMethod)
-                returnString.Append(");");
-            else
-                returnString.Append(") { }");
-
+            var returnString = new StringBuilder();
+            TreeRendererAPIV.Render(this, returnString);
             return returnString.ToString();
         }
     }

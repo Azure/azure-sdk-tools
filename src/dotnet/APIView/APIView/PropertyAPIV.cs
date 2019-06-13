@@ -32,16 +32,8 @@ namespace APIView
 
         public override string ToString()
         {
-            StringBuilder returnString = new StringBuilder("public " + Type);
-            if (IsAbstract)
-                returnString.Append(" abstract");
-            if (IsVirtual)
-                returnString.Append(" virtual");
-
-            returnString.Append(" " + Name + " { get; ");
-            if (HasSetMethod)
-                returnString.Append("set; ");
-            returnString.Append("}");
+            var returnString = new StringBuilder();
+            TreeRendererAPIV.Render(this, returnString);
             return returnString.ToString();
         }
     }

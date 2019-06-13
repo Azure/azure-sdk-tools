@@ -1,4 +1,5 @@
 ﻿using Microsoft.CodeAnalysis;
+using System.Text;
 
 namespace APIView
 {
@@ -22,8 +23,9 @@ namespace APIView
 
         public override string ToString()
         {
-            //TODO: determine whether event is EventHandler or other type - and if it has type parameter(s)
-            return "public event EventHandler " + Name + ";";
+            var returnString = new StringBuilder();
+            TreeRendererAPIV.Render(this, returnString);
+            return returnString.ToString();
         }
     }
 }

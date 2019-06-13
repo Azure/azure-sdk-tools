@@ -89,45 +89,8 @@ namespace APIView
 
         public override string ToString()
         {
-            StringBuilder returnString = new StringBuilder("public " + Type + " " + Name + " ");
-
-            // add any implemented types to string
-            if (Implementations.Length > 0)
-            {
-                returnString.Append(": ");
-                foreach (var i in Implementations)
-                {
-                    returnString.Append(i + ", ");
-                }
-                returnString.Length = returnString.Length - 2;
-                returnString.Append(" ");
-            }
-            returnString.Append("{\n");
-
-            // add any types declared in this type's body
-            foreach (FieldAPIV f in Fields)
-            {
-                returnString.Append(f.ToString() + "\n");
-            }
-            foreach (PropertyAPIV p in Properties)
-            {
-                returnString.Append(p.ToString() + "\n");
-            }
-            foreach (EventAPIV e in Events)
-            {
-                returnString.Append(e.ToString() + "\n");
-            }
-            foreach (MethodAPIV m in Methods)
-            {
-                returnString.Append(m.ToString() + "\n");
-            }
-            foreach (NamedTypeAPIV n in NamedTypes)
-            {
-                returnString.Append(n.ToString() + "\n");
-            }
-
-            returnString.Append("}");
-
+            var returnString = new StringBuilder();
+            TreeRendererAPIV.Render(this, returnString);
             return returnString.ToString();
         }
     }

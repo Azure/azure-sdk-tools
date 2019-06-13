@@ -42,31 +42,8 @@ namespace APIView
 
         public override string ToString()
         {
-            StringBuilder returnString = new StringBuilder(Accessibility);
-
-            if (IsStatic)
-                returnString.Append(" static");
-
-            if (IsReadOnly)
-                returnString.Append(" readonly");
-
-            if (IsVolatile)
-                returnString.Append(" volatile");
-
-            if (IsConstant)
-                returnString.Append(" const");
-
-            returnString.Append(" " + Type + " " + Name);
-
-            if (IsConstant)
-            {
-                if (Value.GetType().Name.Equals("String"))
-                    returnString.Append(" = \"" + Value + "\"");
-                else
-                    returnString.Append(" = " + Value);
-            }
-
-            returnString.Append(";");
+            var returnString = new StringBuilder();
+            TreeRendererAPIV.Render(this, returnString);
             return returnString.ToString();
         }
     }

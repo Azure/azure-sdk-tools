@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
@@ -68,7 +69,7 @@ namespace APIView
 
         public override string ToString()
         {
-            return "Assembly: " + Name + "\n\n" + GlobalNamespace.ToString();
+            return TreeRendererAPIV.Render(this);
         }
     }
 }

@@ -21,10 +21,8 @@ namespace APIView
 
         public override string ToString()
         {
-            StringBuilder returnString = new StringBuilder("");
-            if (Attributes.Length != 0)
-                returnString.Append(Attributes + " ");
-            returnString.Append(Name);
+            var returnString = new StringBuilder();
+            TreeRendererAPIV.Render(this, returnString);
             return returnString.ToString();
         }
     }

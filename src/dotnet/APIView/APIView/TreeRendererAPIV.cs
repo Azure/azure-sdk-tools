@@ -6,35 +6,31 @@ namespace APIView
 {
     public class TreeRendererAPIV
     {
-        private const int IndentSize = 4;
-
-        private void AppendIndents(StringBuilder builder, int indents)
+        private static void AppendIndents(StringBuilder builder, int indents)
         {
-            string indent = new string(' ', indents * IndentSize);
+            int indentSize = 4;
+            string indent = new string(' ', indents * indentSize);
             builder.Append(indent);
         }
 
-        public string Render(AssemblyAPIV assembly)
+        public static string Render(AssemblyAPIV assembly)
         {
             StringBuilder returnString = new StringBuilder();
             Render(assembly.GlobalNamespace, returnString);
             return returnString.ToString();
         }
 
-        private void Render(EventAPIV e, StringBuilder builder, int indents = 0)
+        internal static void Render(EventAPIV e, StringBuilder builder, int indents = 0)
         {
             AppendIndents(builder, indents);
             //TODO: determine whether event is EventHandler or other type - and if it has type parameter(s)
             builder.Append("public event EventHandler ").Append(e.Name).Append(";");
         }
 
-        private void Render(FieldAPIV f, StringBuilder builder, int indents = 0)
+        internal static void Render(FieldAPIV f, StringBuilder builder, int indents = 0)
         {
             AppendIndents(builder, indents);
-            builder.Append("public");
-
-            if (f.IsConstant)
-                builder.Append(" const");
+            builder.Append(f.Accessibility);
 
             if (f.IsStatic)
                 builder.Append(" static");
@@ -44,6 +40,9 @@ namespace APIView
 
             if (f.IsVolatile)
                 builder.Append(" volatile");
+
+            if (f.IsConstant)
+                builder.Append(" const");
 
             builder.Append(" ").Append(f.Type).Append(" ").Append(f.Name);
 
@@ -58,7 +57,7 @@ namespace APIView
             builder.Append(";");
         }
 
-        private void Render(MethodAPIV m, StringBuilder builder, int indents = 0)
+        internal static void Render(MethodAPIV m, StringBuilder builder, int indents = 0)
         {
             AppendIndents(builder, indents);
             if (!m.Attributes.IsEmpty)
@@ -114,7 +113,7 @@ namespace APIView
                 builder.Append(") { }");
         }
 
-        private void Render(NamedTypeAPIV nt, StringBuilder builder, int indents = 0)
+        internal static void Render(NamedTypeAPIV nt, StringBuilder builder, int indents = 0)
         {
             AppendIndents(builder, indents);
             builder.Append("public ").Append(nt.Type).Append(" ").Append(nt.Name).Append(" ");
@@ -166,7 +165,7 @@ namespace APIView
             builder.Append("}");
         }
 
-        private void Render(NamespaceAPIV ns, StringBuilder builder, int indents = 0)
+        internal static void Render(NamespaceAPIV ns, StringBuilder builder, int indents = 0)
         {
             if (ns.Name.Length != 0)
             {
@@ -201,7 +200,7 @@ namespace APIView
             }
         }
 
-        private void Render(ParameterAPIV p, StringBuilder builder, int indents = 0)
+        internal static void Render(ParameterAPIV p, StringBuilder builder, int indents = 0)
         {
             builder.Append(p.Type).Append(" ").Append(p.Name);
             if (p.HasExplicitDefaultValue)
@@ -213,7 +212,7 @@ namespace APIView
             }
         }
 
-        private void Render(PropertyAPIV p, StringBuilder builder, int indents = 0)
+        internal static void Render(PropertyAPIV p, StringBuilder builder, int indents = 0)
         {
             AppendIndents(builder, indents);
             builder.Append("public ").Append(p.Type).Append(" ").Append(p.Name).Append(" { get; ");
@@ -224,7 +223,7 @@ namespace APIView
             builder.Append("}");
         }
 
-        private void Render(TypeParameterAPIV tp, StringBuilder builder, int indents = 0)
+        internal static void Render(TypeParameterAPIV tp, StringBuilder builder, int indents = 0)
         {
             if (tp.Attributes.Length != 0)
                 builder.Append(tp.Attributes).Append(" ");

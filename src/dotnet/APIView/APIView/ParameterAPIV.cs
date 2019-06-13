@@ -26,14 +26,8 @@ namespace APIView
 
         public override string ToString()
         {
-            StringBuilder returnString = new StringBuilder(Type + " " + Name);
-            if (HasExplicitDefaultValue)
-            {
-                if (Type.Equals("string"))
-                    returnString.Append(" = \"" + ExplicitDefaultValue + "\"");
-                else if (!(Type == null))
-                    returnString.Append(" = " + ExplicitDefaultValue);
-            }
+            var returnString = new StringBuilder();
+            TreeRendererAPIV.Render(this, returnString);
             return returnString.ToString();
         }
     }

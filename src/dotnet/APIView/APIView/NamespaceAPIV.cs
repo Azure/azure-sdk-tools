@@ -1,5 +1,4 @@
 ﻿using Microsoft.CodeAnalysis;
-using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
@@ -40,23 +39,8 @@ namespace APIView
 
         public override string ToString()
         {
-            StringBuilder returnString = new StringBuilder("");
-
-            if (Name.Length != 0)
-                returnString.Append("namespace " + Name + " {\n");
-
-            foreach (NamedTypeAPIV nt in NamedTypes)
-            {
-                returnString.Append(nt.ToString() + "\n");
-            }
-            foreach(NamespaceAPIV ns in Namespaces)
-            {
-                returnString.Append(ns.ToString() + "\n");
-            }
-
-            if (Name.Length != 0)
-                returnString.Append("}");
-
+            var returnString = new StringBuilder();
+            TreeRendererAPIV.Render(this, returnString);
             return returnString.ToString();
         }
     }

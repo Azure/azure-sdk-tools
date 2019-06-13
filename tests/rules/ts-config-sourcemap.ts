@@ -214,7 +214,7 @@ ruleTester.run("ts-config-sourcemap", rule, {
       ]
     },
     {
-      // example file with compilerOptions.strict set to false
+      // example file with both set to false
       code: example_tsconfig_bad,
       filename: processJSON("tsconfig.json") as any,
       errors: [

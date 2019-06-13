@@ -9,7 +9,7 @@ import { Property, ObjectExpression, Literal, ArrayExpression } from "estree";
 interface StructureData {
   outer: string;
   inner?: string;
-  expected: any;
+  expected?: any;
   fileName?: string;
 }
 

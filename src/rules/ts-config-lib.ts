@@ -58,7 +58,7 @@ export = {
             context.report({
               node: node,
               message: "compilerOptions.lib should not be used"
-            } as any);
+            });
         }
       }
     } as Rule.RuleListener;

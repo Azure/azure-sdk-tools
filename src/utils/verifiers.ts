@@ -9,7 +9,7 @@ import { Property, ObjectExpression, Literal, ArrayExpression } from "estree";
 interface StructureData {
   outer: string;
   inner?: string;
-  expected?: any;
+  expected?: any; //eslint-disable-line @typescript-eslint/no-explicit-any
   fileName?: string;
 }
 
@@ -17,6 +17,7 @@ const stripPath = (pathOrFileName: string): string => {
   return pathOrFileName.replace(/^.*[\\\/]/, "");
 };
 
+//eslint-disable-next-line @typescript-eslint/no-explicit-any
 export = (context: Rule.RuleContext, data: StructureData): any => {
   return {
     // check to see if if the outer key exists at the outermost level
@@ -42,7 +43,7 @@ export = (context: Rule.RuleContext, data: StructureData): any => {
           context.report({
             node: node,
             message: outer + " does not exist at the outermost level"
-          } as any);
+          });
       }
     },
 
@@ -65,7 +66,7 @@ export = (context: Rule.RuleContext, data: StructureData): any => {
             data: {
               identifier: nodeValue.value as string
             }
-          } as any);
+          });
       }
     },
 
@@ -93,7 +94,7 @@ export = (context: Rule.RuleContext, data: StructureData): any => {
           context.report({
             node: node,
             message: inner + " is not a member of " + outer
-          } as any);
+          });
       }
     },
 
@@ -119,7 +120,7 @@ export = (context: Rule.RuleContext, data: StructureData): any => {
             data: {
               identifier: nodeValue.value as string
             }
-          } as any);
+          });
       }
     },
 
@@ -147,7 +148,7 @@ export = (context: Rule.RuleContext, data: StructureData): any => {
               context.report({
                 node: node,
                 message: outer + " does not contain " + value
-              } as any);
+              });
           }
         } else {
           let foundValue = false;
@@ -162,7 +163,7 @@ export = (context: Rule.RuleContext, data: StructureData): any => {
             context.report({
               node: node,
               message: outer + " does not contain " + expected
-            } as any);
+            });
         }
       }
     }

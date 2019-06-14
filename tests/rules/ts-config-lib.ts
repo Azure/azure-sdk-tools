@@ -1,5 +1,5 @@
 /**
- * @fileoverview Testing the ts-config-lib rule.
+ * @fileoverview Testing the ts-config-strict rule.
  * @author Arpan Laha
  */
 
@@ -43,7 +43,8 @@ const exampleTsconfigGood = `{
     /* Other options */
     "newLine": "LF" /*	Use the specified end of line sequence to be used when emitting files: "crlf" (windows) or "lf" (unix).”*/,
     "allowJs": false /* Don't allow JavaScript files to be compiled.*/,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "lib": []
   },
   "compileOnSave": true,
   "exclude": ["node_modules", "typings/**", "./samples/**/*.ts"],
@@ -84,8 +85,7 @@ const exampleTsconfigBad = `{
     "newLine": "LF" /*	Use the specified end of line sequence to be used when emitting files: "crlf" (windows) or "lf" (unix).”*/,
     "allowJs": false /* Don't allow JavaScript files to be compiled.*/,
     "resolveJsonModule": true,
-
-    "lib": ["es7"]
+    "lib": ["es6"]
   },
   "compileOnSave": true,
   "exclude": ["node_modules", "typings/**", "./samples/**/*.ts"],
@@ -103,11 +103,11 @@ const ruleTester = new RuleTester({
   }
 });
 
-ruleTester.run("ts-config-lib", rule, {
+ruleTester.run("ts-config-strict", rule, {
   valid: [
     {
       // only the fields we care about
-      code: '{"compilerOptions": {}}',
+      code: '{"compilerOptions": { "lib": [] }}',
       filename: "tsconfig.json"
     },
     {
@@ -133,7 +133,7 @@ ruleTester.run("ts-config-lib", rule, {
     },
     {
       // commpilerOptions is in a nested object
-      code: '{"outer": {"compilerOptions": {}}}',
+      code: '{"outer": {"compilerOptions": { "lib": [] }}}',
       filename: "tsconfig.json",
       errors: [
         {
@@ -142,22 +142,32 @@ ruleTester.run("ts-config-lib", rule, {
       ]
     },
     {
-      // commpilerOptions contains lib
-      code: '{"compilerOptions": { "lib": ["es7"] }}',
+      // commpilerOptions does not contain strict
+      code: '{"compilerOptions": { "notLib": true }}',
       filename: "tsconfig.json",
       errors: [
         {
-          message: "compilerOptions.lib should not be used"
+          message: "lib is not a member of compilerOptions"
         }
       ]
     },
     {
-      // example file with compilerOptions.lib used
+      // only the fields we care about
+      code: '{"compilerOptions": { "lib": ["es6"] }}',
+      filename: "tsconfig.json",
+      errors: [
+        {
+          message: "compilerOptions.lib is not set to an empty array"
+        }
+      ]
+    },
+    {
+      // example file with compilerOptions.strict set to false
       code: exampleTsconfigBad,
       filename: "tsconfig.json",
       errors: [
         {
-          message: "compilerOptions.lib should not be used"
+          message: "compilerOptions.lib is not set to an empty array"
         }
       ]
     }

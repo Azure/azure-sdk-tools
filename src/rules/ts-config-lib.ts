@@ -1,11 +1,11 @@
 /**
- * @fileoverview Rule to force tsconfig.json's compilerOptions.lib value to not be used.
+ * @fileoverview Rule to force tsconfig.json's compilerOptions.lib value to be an empty array.
  * @author Arpan Laha
  */
 
 import getVerifiers from "../utils/verifiers";
 import { Rule } from "eslint";
-import { Literal, ObjectExpression, Property } from "estree";
+import { ArrayExpression, Property } from "estree";
 
 //------------------------------------------------------------------------------
 // Rule Definition
@@ -17,7 +17,7 @@ export = {
 
     docs: {
       description:
-        "force tsconfig.json's compilerOptions.lib value to not be used",
+        "force tsconfig.json's compilerOptions.lib value to be an empty array",
       category: "Best Practices",
       recommended: true,
       url:
@@ -28,6 +28,7 @@ export = {
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     const verifiers = getVerifiers(context, {
       outer: "compilerOptions",
+      inner: "lib",
       fileName: "tsconfig.json"
     });
     return {
@@ -36,29 +37,29 @@ export = {
       // check to see if compilerOptions exists at the outermost level
       "ExpressionStatement > ObjectExpression": verifiers.existsInFile,
 
-      // check that lib is not a member of compilerOptions
-      "Property[key.value='compilerOptions']": (node: Property): void => {
+      // check that lib is a member of compilerOptions
+      "Property[key.value='compilerOptions']": verifiers.isMemberOf,
+
+      // check the node corresponding to compilerOptions.lib to see if it is set to an empty array
+      "ExpressionStatement > ObjectExpression > Property[key.value='compilerOptions'] > ObjectExpression > Property[key.value='lib']": (
+        node: Property
+      ): void => {
         if (
           context.getFilename().replace(/^.*[\\\/]/, "") === "tsconfig.json"
         ) {
-          const value: ObjectExpression = node.value as ObjectExpression;
-          const properties: Property[] = value.properties as Property[];
-          let foundInner = false;
-          for (const property of properties) {
-            if (property.key) {
-              const key = property.key as Literal;
-              if (key.value === "lib") {
-                foundInner = true;
-                break;
-              }
-            }
-          }
-
-          foundInner &&
+          if (node.value.hasOwnProperty("elements")) {
+            const nodeValue: ArrayExpression = node.value as ArrayExpression;
+            nodeValue.elements.length !== 0 &&
+              context.report({
+                node: node,
+                message: "compilerOptions.lib is not set to an empty array"
+              });
+          } else {
             context.report({
               node: node,
-              message: "compilerOptions.lib should not be used"
+              message: "compilerOptions.lib is not set to an empty array"
             });
+          }
         }
       }
     } as Rule.RuleListener;

@@ -58,7 +58,7 @@ namespace APIView
                             if (m.AssociatedSymbol != null)
                                 autoMethod = (m.AssociatedSymbol.Kind == SymbolKind.Event) || (m.AssociatedSymbol.Kind == SymbolKind.Property);
 
-                            if (!(m.Name.Equals(".ctor") || autoMethod))
+                            if (!((m.MethodKind == MethodKind.Constructor && m.Parameters.Length == 0) || autoMethod))
                                 methods.Add(new MethodAPIV(m));
                             break;
 

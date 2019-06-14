@@ -64,9 +64,9 @@ namespace APIView
             if (!m.Attributes.IsEmpty)
             {
                 builder.Append("[");
-                foreach (AttributeData a in m.Attributes)
+                foreach (string attribute in m.Attributes)
                 {
-                    builder.Append(a.ToString()).Append(", ");
+                    builder.Append(attribute).Append(", ");
                 }
                 builder.Length -= 2;
                 builder.Append("]").AppendLine();
@@ -89,7 +89,10 @@ namespace APIView
             if (m.IsExtern)
                 builder.Append("extern ");
 
-            builder.Append(m.ReturnType).Append(" ").Append(m.Name);
+            if (m.ReturnType.Length > 0)
+                builder.Append(m.ReturnType).Append(" ");
+            builder.Append(m.Name);
+
             if (m.TypeParameters.Length != 0)
             {
                 builder.Append("<");

@@ -24,7 +24,7 @@ namespace APIView
         public bool IsAbstract { get; }
         public bool IsExtern { get; }
 
-        public ImmutableArray<AttributeData> Attributes { get; }  //TODO: determine how to obtain all attribute info and display in string
+        public ImmutableArray<string> Attributes { get; }
         public ImmutableArray<ParameterAPIV> Parameters { get; }
         public ImmutableArray<TypeParameterAPIV> TypeParameters { get; }
 
@@ -34,8 +34,16 @@ namespace APIView
         /// <param name="symbol">The symbol representing the method.</param>
         public MethodAPIV(IMethodSymbol symbol)
         {
-            this.Name = symbol.Name;
-            this.ReturnType = symbol.ReturnType.ToString();
+            if (symbol.MethodKind == MethodKind.Constructor)
+            {
+                this.Name = symbol.ContainingType.Name;
+                this.ReturnType = "";
+            }
+            else
+            {
+                this.Name = symbol.Name;
+                this.ReturnType = symbol.ReturnType.ToString();
+            }
 
             this.IsInterfaceMethod = symbol.ContainingType.TypeKind.ToString().ToLower().Equals("interface");
             this.IsStatic = symbol.IsStatic;
@@ -45,11 +53,14 @@ namespace APIView
             this.IsAbstract = symbol.IsAbstract;
             this.IsExtern = symbol.IsExtern;
 
-            this.Attributes = symbol.GetAttributes();
-
+            List<string> attributes = new List<string>();
             List<TypeParameterAPIV> typeParameters = new List<TypeParameterAPIV>();
             List<ParameterAPIV> parameters = new List<ParameterAPIV>();
 
+            foreach (AttributeData attribute in symbol.GetAttributes())
+            {
+                attributes.Add(attribute.ToString());
+            }
             foreach (ITypeParameterSymbol typeParam in symbol.TypeParameters)
             {
                 typeParameters.Add(new TypeParameterAPIV(typeParam));
@@ -59,6 +70,7 @@ namespace APIView
                 parameters.Add(new ParameterAPIV(param));
             }
 
+            this.Attributes = attributes.ToImmutableArray();
             this.TypeParameters = typeParameters.ToImmutableArray();
             this.Parameters = parameters.ToImmutableArray();
         }

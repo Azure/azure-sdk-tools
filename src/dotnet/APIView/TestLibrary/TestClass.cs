@@ -39,6 +39,11 @@ namespace TestLibrary
         protected internal event EventHandler ProtectedInternalEvent;
         private protected event EventHandler PrivateProtectedEvent;
 
+        public PublicClass(int value)
+        {
+
+        }
+
         [Conditional("DEBUG")]
         public static void StaticVoid(string[] args)
         {

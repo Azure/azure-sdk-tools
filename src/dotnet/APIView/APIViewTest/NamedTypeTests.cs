@@ -75,7 +75,7 @@ namespace APIViewTest
         }
 
         [Fact]
-        public void NamedTypeEnumDefaultUnderlyingType()
+        public void NamedTypeTestEnumDefaultUnderlyingType()
         {
             var namedTypeSymbol = (INamedTypeSymbol)TestResource.GetTestMember("TestLibrary.PublicClass", "PublicEnum");
             NamedTypeAPIV publicEnum = new NamedTypeAPIV(namedTypeSymbol);
@@ -86,7 +86,7 @@ namespace APIViewTest
         }
         
         [Fact]
-        public void NamedTypeEnumDefaultUnderlyingTypeStringRep()
+        public void NamedTypeTestEnumDefaultUnderlyingTypeStringRep()
         {
             var namedTypeSymbol = (INamedTypeSymbol)TestResource.GetTestMember("TestLibrary.PublicClass", "PublicEnum");
             NamedTypeAPIV publicEnum = new NamedTypeAPIV(namedTypeSymbol);
@@ -96,7 +96,7 @@ namespace APIViewTest
         }
         
         [Fact]
-        public void NamedTypeEnumDeclaredUnderlyingType()
+        public void NamedTypeTestEnumDeclaredUnderlyingType()
         {
             var namedTypeSymbol = (INamedTypeSymbol)TestResource.GetTestMember("TestLibrary.ImplementingClass", "PublicEnum");
             NamedTypeAPIV publicEnum = new NamedTypeAPIV(namedTypeSymbol);
@@ -107,7 +107,7 @@ namespace APIViewTest
         }
 
         [Fact]
-        public void NamedTypeEnumDeclaredUnderlyingTypeStringRep()
+        public void NamedTypeTestEnumDeclaredUnderlyingTypeStringRep()
         {
             var namedTypeSymbol = (INamedTypeSymbol)TestResource.GetTestMember("TestLibrary.ImplementingClass", "PublicEnum");
             NamedTypeAPIV publicEnum = new NamedTypeAPIV(namedTypeSymbol);
@@ -117,7 +117,7 @@ namespace APIViewTest
         }
 
         [Fact]
-        public void NamedTypeDelegate()
+        public void NamedTypeTestDelegate()
         {
             var namedTypeSymbol = (INamedTypeSymbol)TestResource.GetTestMember("TestLibrary.publicDelegate");
             NamedTypeAPIV publicDelegate = new NamedTypeAPIV(namedTypeSymbol);
@@ -127,12 +127,41 @@ namespace APIViewTest
         }
 
         [Fact]
-        public void NamedTypeDelegateStringRep()
+        public void NamedTypeTestDelegateStringRep()
         {
             var namedTypeSymbol = (INamedTypeSymbol)TestResource.GetTestMember("TestLibrary.publicDelegate");
             NamedTypeAPIV publicDelegate = new NamedTypeAPIV(namedTypeSymbol);
 
             Assert.Equal("public delegate int publicDelegate(int num = 10) { }", publicDelegate.ToString());
+        }
+
+        [Fact]
+        public void NamedTypeTestAutomaticConstructor()
+        {
+            var namedTypeSymbol = (INamedTypeSymbol)TestResource.GetTestMember("TestLibrary.SomeEventsSomeFieldsNoMethodsSomeNamedTypes");
+            NamedTypeAPIV publicClass = new NamedTypeAPIV(namedTypeSymbol);
+
+            foreach (MethodAPIV method in publicClass.Methods)
+            {
+                Assert.NotEqual("SomeEventsSomeFieldsNoMethodsSomeNamedTypes", method.Name);
+                Assert.NotEqual(".ctor", method.Name);
+            }
+        }
+
+        [Fact]
+        public void NamedTypeTestExplicitConstructor()
+        {
+            var namedTypeSymbol = (INamedTypeSymbol)TestResource.GetTestMember("TestLibrary.PublicClass");
+            NamedTypeAPIV publicClass = new NamedTypeAPIV(namedTypeSymbol);
+
+            bool constructorFound = false;
+            foreach (MethodAPIV method in publicClass.Methods)
+            {
+                if (method.Name.Equals("PublicClass"))
+                    constructorFound = true;
+            }
+
+            Assert.True(constructorFound);
         }
     }
 }

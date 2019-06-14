@@ -5,7 +5,6 @@
 
 import rule from "../../src/rules/ts-config-sourcemap";
 import { RuleTester } from "eslint";
-import processJSON from "../utils/processJSON";
 
 //------------------------------------------------------------------------------
 // Example files
@@ -108,24 +107,24 @@ ruleTester.run("ts-config-sourcemap", rule, {
       // only the fields we care about
       code:
         '{"compilerOptions": { "sourceMap": true, "declarationMap": true }}',
-      filename: processJSON("tsconfig.json") as any // this is stupid but it works
+      filename: "tsconfig.json"
     },
     {
       // a full example tsconfig.json (taken from https://github.com/Azure/azure-sdk-for-js/blob/master/sdk/eventhub/event-hubs/tsconfig.json)
       code: example_tsconfig_good,
-      filename: processJSON("tsconfig.json") as any
+      filename: "tsconfig.json"
     },
     {
       // incorrect format but in a file we don't care about
       code:
         '{"compilerOptions": { "sourceMap": false, "declarationMap": false }}',
-      filename: processJSON("not_tsconfig.json") as any
+      filename: "not_tsconfig.json"
     }
   ],
   invalid: [
     {
       code: '{"notCompilerOptions": {}}',
-      filename: processJSON("tsconfig.json") as any,
+      filename: "tsconfig.json",
       errors: [
         {
           message: "compilerOptions does not exist at the outermost level"
@@ -136,7 +135,7 @@ ruleTester.run("ts-config-sourcemap", rule, {
       // commpilerOptions is in a nested object
       code:
         '{"outer": {"compilerOptions": { "sourceMap": true, "declarationMap": true }}}',
-      filename: processJSON("tsconfig.json") as any,
+      filename: "tsconfig.json",
       errors: [
         {
           message: "compilerOptions does not exist at the outermost level"
@@ -146,7 +145,7 @@ ruleTester.run("ts-config-sourcemap", rule, {
     {
       // commpilerOptions does not contain sourceMap or declarationMap
       code: '{"compilerOptions": {}}',
-      filename: processJSON("tsconfig.json") as any,
+      filename: "tsconfig.json",
       errors: [
         {
           message: "sourceMap is not a member of compilerOptions"
@@ -159,7 +158,7 @@ ruleTester.run("ts-config-sourcemap", rule, {
     {
       // commpilerOptions does not contain sourceMap
       code: '{"compilerOptions": { "declarationMap": true }}',
-      filename: processJSON("tsconfig.json") as any,
+      filename: "tsconfig.json",
       errors: [
         {
           message: "sourceMap is not a member of compilerOptions"
@@ -169,7 +168,7 @@ ruleTester.run("ts-config-sourcemap", rule, {
     {
       // commpilerOptions does not contain declarationMap
       code: '{"compilerOptions": { "sourceMap": true }}',
-      filename: processJSON("tsconfig.json") as any,
+      filename: "tsconfig.json",
       errors: [
         {
           message: "declarationMap is not a member of compilerOptions"
@@ -180,7 +179,7 @@ ruleTester.run("ts-config-sourcemap", rule, {
       // both sourceMap and declarationMap are set to false
       code:
         '{"compilerOptions": { "sourceMap": false, "declarationMap": false }}',
-      filename: processJSON("tsconfig.json") as any,
+      filename: "tsconfig.json",
       errors: [
         {
           message:
@@ -196,7 +195,7 @@ ruleTester.run("ts-config-sourcemap", rule, {
       // only sourceMap is set to false
       code:
         '{"compilerOptions": { "sourceMap": false, "declarationMap": true }}',
-      filename: processJSON("tsconfig.json") as any,
+      filename: "tsconfig.json",
       errors: [
         {
           message:
@@ -208,7 +207,7 @@ ruleTester.run("ts-config-sourcemap", rule, {
       // only declarationMap is set to false
       code:
         '{"compilerOptions": { "sourceMap": true, "declarationMap": false }}',
-      filename: processJSON("tsconfig.json") as any,
+      filename: "tsconfig.json",
       errors: [
         {
           message:
@@ -219,7 +218,7 @@ ruleTester.run("ts-config-sourcemap", rule, {
     {
       // example file with both set to false
       code: example_tsconfig_bad,
-      filename: processJSON("tsconfig.json") as any,
+      filename: "tsconfig.json",
       errors: [
         {
           message:

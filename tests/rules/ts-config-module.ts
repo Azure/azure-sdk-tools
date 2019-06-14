@@ -7,7 +7,6 @@
 
 import rule from "../../src/rules/ts-config-module";
 import { RuleTester } from "eslint";
-import processJSON from "../utils/processJSON";
 
 //------------------------------------------------------------------------------
 // Example files
@@ -109,23 +108,23 @@ ruleTester.run("ts-config-module", rule, {
     {
       // only the fields we care about
       code: '{"compilerOptions": { "module": "es6" }}',
-      filename: processJSON("tsconfig.json") as any // this is stupid but it works
+      filename: "tsconfig.json"
     },
     {
       // a full example tsconfig.json (taken from https://github.com/Azure/azure-sdk-for-js/blob/master/sdk/eventhub/event-hubs/tsconfig.json)
       code: example_tsconfig_good,
-      filename: processJSON("tsconfig.json") as any
+      filename: "tsconfig.json"
     },
     {
       // incorrect format but in a file we don't care about
       code: '{"compilerOptions": { "module": "es5" }}',
-      filename: processJSON("not_tsconfig.json") as any
+      filename: "not_tsconfig.json"
     }
   ],
   invalid: [
     {
       code: '{"notCompilerOptions": {}}',
-      filename: processJSON("tsconfig.json") as any,
+      filename: "tsconfig.json",
       errors: [
         {
           message: "compilerOptions does not exist at the outermost level"
@@ -135,7 +134,7 @@ ruleTester.run("ts-config-module", rule, {
     {
       // commpilerOptions is in a nested object
       code: '{"outer": {"compilerOptions": { "module": "es6" }}}',
-      filename: processJSON("tsconfig.json") as any,
+      filename: "tsconfig.json",
       errors: [
         {
           message: "compilerOptions does not exist at the outermost level"
@@ -145,7 +144,7 @@ ruleTester.run("ts-config-module", rule, {
     {
       // commpilerOptions does not contain module
       code: '{"compilerOptions": { "lenient": true }}',
-      filename: processJSON("tsconfig.json") as any,
+      filename: "tsconfig.json",
       errors: [
         {
           message: "module is not a member of compilerOptions"
@@ -155,7 +154,7 @@ ruleTester.run("ts-config-module", rule, {
     {
       // only the fields we care about
       code: '{"compilerOptions": { "module": "es5" }}',
-      filename: processJSON("tsconfig.json") as any,
+      filename: "tsconfig.json",
       errors: [
         {
           message:
@@ -166,7 +165,7 @@ ruleTester.run("ts-config-module", rule, {
     {
       // example file with compilerOptions.module set to es5
       code: example_tsconfig_bad,
-      filename: processJSON("tsconfig.json") as any,
+      filename: "tsconfig.json",
       errors: [
         {
           message:

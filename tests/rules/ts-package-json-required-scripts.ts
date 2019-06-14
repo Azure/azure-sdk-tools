@@ -5,7 +5,6 @@
 
 import rule from "../../src/rules/ts-package-json-required-scripts";
 import { RuleTester } from "eslint";
-import processJSON from "../utils/processJSON";
 
 //------------------------------------------------------------------------------
 // Example files
@@ -263,23 +262,23 @@ ruleTester.run("ts-package-json-required-scripts", rule, {
     {
       // only the fields we care about
       code: '{"scripts": {"build": "build", "test": "test"}}',
-      filename: processJSON("package.json") as any // this is stupid but it works
+      filename: "package.json"
     },
     {
       // a full example package.json (taken from https://github.com/Azure/azure-sdk-for-js/blob/master/sdk/eventhub/event-hubs/package.json with "scripts" removed for testing purposes)
       code: example_package_good,
-      filename: processJSON("package.json") as any
+      filename: "package.json"
     },
     {
       // incorrect format but in a file we don't care about
       code: '{"scripts": {}}',
-      filename: processJSON("not_package.json") as any
+      filename: "not_package.json"
     }
   ],
   invalid: [
     {
       code: '{"notScripts": {"build": "build", "test": "test"}}',
-      filename: processJSON("package.json") as any,
+      filename: "package.json",
       errors: [
         {
           message: "scripts does not exist at the outermost level"
@@ -289,7 +288,7 @@ ruleTester.run("ts-package-json-required-scripts", rule, {
     {
       // scripts is in a nested object
       code: '{"outer": {"scripts": {"build": "build", "test": "test"}}}',
-      filename: processJSON("package.json") as any,
+      filename: "package.json",
       errors: [
         {
           message: "scripts does not exist at the outermost level"
@@ -299,7 +298,7 @@ ruleTester.run("ts-package-json-required-scripts", rule, {
     {
       // both build and test missing
       code: '{"scripts": {}}',
-      filename: processJSON("package.json") as any,
+      filename: "package.json",
       errors: [
         {
           message: "build is not a member of scripts"
@@ -312,7 +311,7 @@ ruleTester.run("ts-package-json-required-scripts", rule, {
     {
       // build missing
       code: '{"scripts": {"test": "test"}}',
-      filename: processJSON("package.json") as any,
+      filename: "package.json",
       errors: [
         {
           message: "build is not a member of scripts"
@@ -322,7 +321,7 @@ ruleTester.run("ts-package-json-required-scripts", rule, {
     {
       // test missing
       code: '{"scripts": {"build": "build"}}',
-      filename: processJSON("package.json") as any,
+      filename: "package.json",
       errors: [
         {
           message: "test is not a member of scripts"
@@ -332,7 +331,7 @@ ruleTester.run("ts-package-json-required-scripts", rule, {
     {
       // example file with scripts missing both build and test
       code: example_package_bad,
-      filename: processJSON("package.json") as any,
+      filename: "package.json",
       errors: [
         {
           message: "build is not a member of scripts"

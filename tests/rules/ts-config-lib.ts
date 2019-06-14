@@ -5,7 +5,6 @@
 
 import rule from "../../src/rules/ts-config-lib";
 import { RuleTester } from "eslint";
-import processJSON from "../utils/processJSON";
 
 //------------------------------------------------------------------------------
 // Example files
@@ -109,23 +108,23 @@ ruleTester.run("ts-config-lib", rule, {
     {
       // only the fields we care about
       code: '{"compilerOptions": {}}',
-      filename: processJSON("tsconfig.json") as any // this is stupid but it works
+      filename: "tsconfig.json"
     },
     {
       // a full example tsconfig.json (taken from https://github.com/Azure/azure-sdk-for-js/blob/master/sdk/eventhub/event-hubs/tsconfig.json)
       code: example_tsconfig_good,
-      filename: processJSON("tsconfig.json") as any
+      filename: "tsconfig.json"
     },
     {
       // incorrect format but in a file we don't care about
       code: '{"compilerOptions": { "lib": ["es6"] }}',
-      filename: processJSON("not_tsconfig.json") as any
+      filename: "not_tsconfig.json"
     }
   ],
   invalid: [
     {
       code: '{"notCompilerOptions": {}}',
-      filename: processJSON("tsconfig.json") as any,
+      filename: "tsconfig.json",
       errors: [
         {
           message: "compilerOptions does not exist at the outermost level"
@@ -135,7 +134,7 @@ ruleTester.run("ts-config-lib", rule, {
     {
       // commpilerOptions is in a nested object
       code: '{"outer": {"compilerOptions": {}}}',
-      filename: processJSON("tsconfig.json") as any,
+      filename: "tsconfig.json",
       errors: [
         {
           message: "compilerOptions does not exist at the outermost level"
@@ -145,7 +144,7 @@ ruleTester.run("ts-config-lib", rule, {
     {
       // commpilerOptions contains lib
       code: '{"compilerOptions": { "lib": ["es7"] }}',
-      filename: processJSON("tsconfig.json") as any,
+      filename: "tsconfig.json",
       errors: [
         {
           message: "compilerOptions.lib should not be used"
@@ -155,7 +154,7 @@ ruleTester.run("ts-config-lib", rule, {
     {
       // example file with compilerOptions.lib used
       code: example_tsconfig_bad,
-      filename: processJSON("tsconfig.json") as any,
+      filename: "tsconfig.json",
       errors: [
         {
           message: "compilerOptions.lib should not be used"

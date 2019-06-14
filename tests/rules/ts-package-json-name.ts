@@ -10,7 +10,7 @@ import { RuleTester } from "eslint";
 // Example files
 //------------------------------------------------------------------------------
 
-const example_package_good = `{
+const examplePackageGood = `{
   "name": "@azure/service-bus",
   "author": "Microsoft Corporation",
   "version": "1.0.2",
@@ -123,7 +123,7 @@ const example_package_good = `{
   "sideEffects": false
 }`;
 
-const example_package_bad = `{
+const examplePackageBad = `{
   "name": "service-bus",
   "author": "Microsoft Corporation",
   "version": "1.0.2",
@@ -256,7 +256,7 @@ ruleTester.run("ts-package-json-name", rule, {
     },
     {
       // a full example package.json (taken from https://github.com/Azure/azure-sdk-for-js/blob/master/sdk/eventhub/event-hubs/package.json with "scripts" removed for testing purposes)
-      code: example_package_good,
+      code: examplePackageGood,
       filename: "package.json"
     },
     {
@@ -330,7 +330,7 @@ ruleTester.run("ts-package-json-name", rule, {
     },
     {
       // example file with name set to service-bus
-      code: example_package_bad,
+      code: examplePackageBad,
       filename: "package.json",
       errors: [
         {

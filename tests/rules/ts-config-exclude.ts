@@ -10,7 +10,7 @@ import { RuleTester } from "eslint";
 // Example files
 //------------------------------------------------------------------------------
 
-const example_tsconfig_good = `{
+const exampleTsconfigGood = `{
   "compilerOptions": {
     /* Basic Options */
     "target": "es6" /* Specify ECMAScript target version: 'ES3' (default), 'ES5', 'ES2015', 'ES2016', 'ES2017','ES2018' or 'ESNEXT'. */,
@@ -50,7 +50,7 @@ const example_tsconfig_good = `{
   "include": ["./src/**/*.ts", "./test/**/*.ts"]
 }`;
 
-const example_tsconfig_bad = `{
+const exampleTsconfigBad = `{
   "compilerOptions": {
     /* Basic Options */
     "target": "es6" /* Specify ECMAScript target version: 'ES3' (default), 'ES5', 'ES2015', 'ES2016', 'ES2017','ES2018' or 'ESNEXT'. */,
@@ -110,7 +110,7 @@ ruleTester.run("ts-config-exclude", rule, {
     },
     {
       // a full example tsconfig.json (taken from https://github.com/Azure/azure-sdk-for-js/blob/master/sdk/eventhub/event-hubs/tsconfig.json with "scripts" removed for testing purposes)
-      code: example_tsconfig_good,
+      code: exampleTsconfigGood,
       filename: "tsconfig.json"
     },
     {
@@ -151,7 +151,7 @@ ruleTester.run("ts-config-exclude", rule, {
     },
     {
       // example file with exclude not containing node_modules
-      code: example_tsconfig_bad,
+      code: exampleTsconfigBad,
       filename: "tsconfig.json",
       errors: [
         {

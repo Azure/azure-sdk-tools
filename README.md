@@ -16,7 +16,7 @@ Next, install `@ts-common/eslint-plugin-azure-sdk`:
 npm install @ts-common/eslint-plugin-azure-sdk --save-dev
 ```
 
-**Note:** If you installed ESLint globally (using the `-g` flag) then you must also install `@ts-common/eslint-plugin-azure` globally.
+**Note:** If you installed ESLint globally (using the `-g` flag) then you must also install `@ts-common/eslint-plugin-azure-sdk` globally.
 
 ## Usage
 

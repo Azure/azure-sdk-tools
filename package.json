@@ -10,7 +10,7 @@
     "azure-sdk",
     "eslint-plugin-azure"
   ],
-  "author": "Arpan Laha",
+  "author": "Microsoft Corporation",
   "license": "MIT",
   "repository": {
     "type": "git",

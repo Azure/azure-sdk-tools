@@ -9,6 +9,14 @@ namespace TestLibrary
 {
     public delegate int publicDelegate(int num = 10);
 
+    public struct PublicStruct
+    {
+        public PublicStruct(int x, int y)
+        {
+
+        }
+    }
+
     public class PublicClass
     {
         public enum PublicEnum

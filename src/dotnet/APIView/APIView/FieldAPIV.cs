@@ -6,7 +6,7 @@ namespace APIView
     /// <summary>
     /// Class representing a field in a C# class/interface.
     /// 
-    /// Field is an immutable, thread-safe type.
+    /// FieldAPIV is an immutable, thread-safe type.
     /// </summary>
     public class FieldAPIV
     {
@@ -22,7 +22,7 @@ namespace APIView
         public object Value { get; }
 
         /// <summary>
-        /// Construct a new Field instance, represented by the provided symbol.
+        /// Construct a new FieldAPIV instance, represented by the provided symbol.
         /// </summary>
         /// <param name="symbol">The symbol representing the field.</param>
         public FieldAPIV(IFieldSymbol symbol)

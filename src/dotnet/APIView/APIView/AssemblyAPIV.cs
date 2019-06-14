@@ -10,7 +10,7 @@ namespace APIView
     /// Class representing a C# assembly. Each assembly has a name and global namespace, 
     /// which may or may not contain further types.
     /// 
-    /// Assembly is an immutable, thread-safe type.
+    /// AssemblyAPIV is an immutable, thread-safe type.
     /// </summary>
     public class AssemblyAPIV
     {
@@ -18,7 +18,7 @@ namespace APIView
         public NamespaceAPIV GlobalNamespace { get; }
 
         /// <summary>
-        /// Construct a new Assembly instance, represented by the provided symbol.
+        /// Construct a new AssemblyAPIV instance, represented by the provided symbol.
         /// </summary>
         /// <param name="symbol">The symbol representing the assembly.</param>
         public AssemblyAPIV(IAssemblySymbol symbol)

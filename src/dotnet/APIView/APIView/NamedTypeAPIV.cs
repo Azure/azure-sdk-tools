@@ -5,6 +5,13 @@ using System.Text;
 
 namespace APIView
 {
+    /// <summary>
+    /// Class representing a C# named type (class, interface, delegate, enum, or struct). 
+    /// A named type can have a name, type, enum underlying type, events, fields, implemented 
+    /// classes/interfaces, methods, properties, type parameters, and/or other named types.
+    /// 
+    /// NamedTypeAPIV is an immutable, thread-safe type.
+    /// </summary>
     public class NamedTypeAPIV
     {
         public string Name { get; }
@@ -20,7 +27,7 @@ namespace APIView
         public ImmutableArray<TypeParameterAPIV> TypeParameters { get; }
 
         /// <summary>
-        /// Construct a new namedType instance, represented by the provided symbol.
+        /// Construct a new NamedTypeAPIV instance, represented by the provided symbol.
         /// </summary>
         /// <param name="symbol">The symbol representing the named type.</param>
         public NamedTypeAPIV(INamedTypeSymbol symbol)
@@ -75,7 +82,7 @@ namespace APIView
                     fields.Add(new FieldAPIV(f));
             }
 
-            if (symbol.BaseType != null && !(symbol.BaseType.ToDisplayString().Equals("object")))
+            if (symbol.BaseType != null && !(symbol.BaseType.ToDisplayString().Equals("object") || symbol.BaseType.ToDisplayString().Equals("System.ValueType")))
                 implementations.Add(symbol.BaseType.ToDisplayString());
 
             // add a string representation of each implemented type to list

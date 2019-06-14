@@ -6,6 +6,12 @@ using System.Text;
 
 namespace APIView
 {
+    /// <summary>
+    /// Class representing a C# namespace. Each namespace can contain named types 
+    /// and/or other namespaces.
+    /// 
+    /// NamespaceAPIV is an immutable, thread-safe type.
+    /// </summary>
     public class NamespaceAPIV
     {
         public string Name { get; }
@@ -14,7 +20,7 @@ namespace APIView
         public ImmutableArray<NamespaceAPIV> Namespaces { get; }
 
         /// <summary>
-        /// Construct a new namespace instance, represented by the provided symbol.
+        /// Construct a new NamespaceAPIV instance, represented by the provided symbol.
         /// </summary>
         /// <param name="symbol">The symbol representing the namespace.</param>
         public NamespaceAPIV(INamespaceSymbol symbol)

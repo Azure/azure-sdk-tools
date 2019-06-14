@@ -9,7 +9,7 @@ namespace APIView
     /// Class representing a C# method. Each method includes a name, return type, attributes, 
     /// modifiers, type parameters, and parameters.
     /// 
-    /// Method is an immutable, thread-safe type.
+    /// MethodAPIV is an immutable, thread-safe type.
     /// </summary>
     public class MethodAPIV
     {
@@ -29,7 +29,7 @@ namespace APIView
         public ImmutableArray<TypeParameterAPIV> TypeParameters { get; }
 
         /// <summary>
-        /// Construct a new Method instance, represented by the provided symbol.
+        /// Construct a new MethodAPIV instance, represented by the provided symbol.
         /// </summary>
         /// <param name="symbol">The symbol representing the method.</param>
         public MethodAPIV(IMethodSymbol symbol)

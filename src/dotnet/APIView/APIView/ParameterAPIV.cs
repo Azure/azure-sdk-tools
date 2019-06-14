@@ -5,6 +5,11 @@ using System.Text;
 
 namespace APIView
 {
+    /// <summary>
+    /// Class representing a C# method parameter.
+    /// 
+    /// ParameterAPIV is an immutable, thread-safe type.
+    /// </summary>
     public class ParameterAPIV
     {
         public string Name { get; }
@@ -16,7 +21,7 @@ namespace APIView
         public ImmutableArray<string> Attributes { get; }
 
         /// <summary>
-        /// Construct a new Parameter instance, represented by the provided symbol.
+        /// Construct a new ParameterAPIV instance, represented by the provided symbol.
         /// </summary>
         /// <param name="symbol">The symbol representing the parameter.</param>
         public ParameterAPIV(IParameterSymbol symbol)

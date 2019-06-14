@@ -6,7 +6,7 @@ namespace APIView
     /// <summary>
     /// Class representing a C# property.
     /// 
-    /// Property is an immutable, thread-safe type.
+    /// PropertyAPIV is an immutable, thread-safe type.
     /// </summary>
     public class PropertyAPIV
     {
@@ -17,7 +17,7 @@ namespace APIView
         public bool HasSetMethod { get; }
 
         /// <summary>
-        /// Construct a new Property instance, represented by the provided symbol.
+        /// Construct a new PropertyAPIV instance, represented by the provided symbol.
         /// </summary>
         /// <param name="symbol">The symbol representing the property.</param>
         public PropertyAPIV(IPropertySymbol symbol)

@@ -1,6 +1,6 @@
 {
   "name": "@ts-common/eslint-plugin-azure-sdk",
-  "version": "1.0.0",
+  "version": "1.0.0-preview.1",
   "description": "Linting rules for the JavaScript/TypeScript Azure SDK",
   "keywords": [
     "eslint",
@@ -46,8 +46,7 @@
   },
   "dependencies": {
     "@types/eslint": "^4.16.6",
-    "@types/estree": "0.0.39",
-    "typescript": "<3.5.1"
+    "@types/estree": "0.0.39"
   },
   "devDependencies": {
     "@types/chai": "^4.1.7",
@@ -58,11 +57,13 @@
     "eslint": "^5.16.0",
     "mocha": "^6.1.4",
     "prettier": "^1.18.2",
-    "ts-mocha": "^6.0.0"
+    "ts-mocha": "^6.0.0",
+    "typescript": "^3.4.5"
   },
   "peerDependencies": {
     "@typescript-eslint/parser": "^1.10.2",
-    "eslint": "^5.16.0"
+    "eslint": "^5.16.0",
+    "typescript": "^3.4.5"
   },
   "engines": {
     "node": ">=0.10.0"

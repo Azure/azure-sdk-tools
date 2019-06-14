@@ -135,7 +135,7 @@ export = (context: Rule.RuleContext, data: StructureData): any => {
       if (stripPath(context.getFilename()) === fileName) {
         if (expected instanceof Array) {
           for (const value of expected) {
-            let foundValue: boolean = false;
+            let foundValue = false;
             for (const candidate of candidateArray) {
               if (candidate.value === value) {
                 foundValue = true;
@@ -150,7 +150,7 @@ export = (context: Rule.RuleContext, data: StructureData): any => {
               } as any);
           }
         } else {
-          let foundValue: boolean = false;
+          let foundValue = false;
           for (const candidate of candidateArray) {
             if (candidate.value === expected) {
               foundValue = true;

@@ -33,10 +33,10 @@ export = {
       // callback functions
 
       // check to see if license exists at the outermost level
-      "Program > ObjectExpression": verifiers.existsInFile,
+      "ExpressionStatement > ObjectExpression": verifiers.existsInFile,
 
       // check the node corresponding to license to see if its value is "MIT"
-      "Program > ObjectExpression > Property[key.value='license']":
+      "ExpressionStatement > ObjectExpression > Property[key.value='license']":
         verifiers.outerMatchesExpected
     } as Rule.RuleListener;
   }

@@ -34,7 +34,7 @@ export = {
       // callback functions
 
       // check to see if compilerOptions exists at the outermost level
-      "Program > ObjectExpression": verifiers.existsInFile,
+      "ExpressionStatement > ObjectExpression": verifiers.existsInFile,
 
       // check that lib is not a member of compilerOptions
       "Property[key.value='compilerOptions']": (node: Property): void => {

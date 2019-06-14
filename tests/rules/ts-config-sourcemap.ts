@@ -118,7 +118,7 @@ ruleTester.run("ts-config-sourcemap", rule, {
     {
       // incorrect format but in a file we don't care about
       code:
-        '{"compilerOptions": { "sourceMap": false, declarationMap: false }}',
+        '{"compilerOptions": { "sourceMap": false, "declarationMap": false }}',
       filename: processJSON("not_tsconfig.json") as any
     }
   ],

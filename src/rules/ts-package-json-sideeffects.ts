@@ -33,10 +33,10 @@ export = {
       // callback functions
 
       // check to see if sideEffects exists at the outermost level
-      "Program > ObjectExpression": verifiers.existsInFile,
+      "ExpressionStatement > ObjectExpression": verifiers.existsInFile,
 
       // check the node corresponding to sideEffects to see if its value is false
-      "Program > ObjectExpression > Property[key.value='sideEffects']":
+      "ExpressionStatement > ObjectExpression > Property[key.value='sideEffects']":
         verifiers.outerMatchesExpected
     } as Rule.RuleListener;
   }

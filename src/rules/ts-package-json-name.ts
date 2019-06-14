@@ -34,10 +34,10 @@ export = {
       // callback functions
 
       // check to see if name exists at the outermost level
-      "Program > ObjectExpression": verifiers.existsInFile,
+      "ExpressionStatement > ObjectExpression": verifiers.existsInFile,
 
       // check the node corresponding to name to see if its value is @azure/<service>
-      "Program > ObjectExpression > Property[key.value='name']": (
+      "ExpressionStatement > ObjectExpression > Property[key.value='name']": (
         node: Property
       ): void => {
         if (context.getFilename().replace(/^.*[\\\/]/, "") === "package.json") {

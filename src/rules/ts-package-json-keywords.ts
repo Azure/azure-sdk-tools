@@ -34,10 +34,10 @@ export = {
       // callback functions
 
       // check to see if keywords exists at the outermost level
-      "Program > ObjectExpression": verifiers.existsInFile,
+      "ExpressionStatement > ObjectExpression": verifiers.existsInFile,
 
       // check the node corresponding to keywords to see if its value contains "Azure" and "cloud"
-      "Program > ObjectExpression > Property[key.value='keywords']":
+      "ExpressionStatement > ObjectExpression > Property[key.value='keywords']":
         verifiers.outerContainsExpected
     } as Rule.RuleListener;
   }

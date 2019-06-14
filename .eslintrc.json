@@ -4,7 +4,7 @@
     "es6": true,
     "node": true
   },
-  "extends": "eslint:recommended",
+  "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
   "globals": {
     "Atomics": "readonly",
     "SharedArrayBuffer": "readonly"
@@ -14,5 +14,9 @@
     "sourceType": "module"
   },
   "parser": "@typescript-eslint/parser",
-  "rules": {}
+  "rules": {
+    "indent": "off",
+    "@typescript-eslint/indent": ["error", 2],
+    "@typescript-eslint/no-useless-escape": "off"
+  }
 }

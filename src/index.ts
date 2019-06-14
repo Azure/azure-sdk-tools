@@ -8,10 +8,11 @@
 //------------------------------------------------------------------------------
 
 import rules from "./rules";
+import processors from "./processors";
 import configs from "./configs";
 
 //------------------------------------------------------------------------------
 // Plugin Definition
 //------------------------------------------------------------------------------
 
-export = { rules, configs };
+export = { rules, processors, configs };

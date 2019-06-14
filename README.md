@@ -1,4 +1,4 @@
-# eslint-plugin-azure
+# eslint-plugin-azure-sdk
 
 Linting rules for the JavaScript/TypeScript Azure SDK - derived from the [Azure SDK Design Guidelines for TypeScript](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html).
 
@@ -10,21 +10,21 @@ You'll first need to install [ESLint](http://eslint.org):
 npm i eslint --save-dev
 ```
 
-Next, install `eslint-plugin-azure`:
+Next, install `@ts-common/eslint-plugin-azure-sdk`:
 
 ```shell
-npm install eslint-plugin-azure --save-dev
+npm install @ts-common/eslint-plugin-azure-sdk --save-dev
 ```
 
-**Note:** If you installed ESLint globally (using the `-g` flag) then you must also install `eslint-plugin-azure` globally.
+**Note:** If you installed ESLint globally (using the `-g` flag) then you must also install `@ts-common/eslint-plugin-azure-sdk` globally.
 
 ## Usage
 
-Add `azure` to the `plugins` section of your `.eslintrc` configuration file. You can omit the `eslint-plugin-` prefix:
+Add `@ts-common/azure-sdk` to the `plugins` section of your `.eslintrc` configuration file. You can omit the `eslint-plugin-` prefix:
 
 ```json
 {
-  "plugins": ["azure"]
+  "plugins": ["@ts-common/azure-sdk"]
 }
 ```
 
@@ -42,7 +42,7 @@ For all rules to be enforced according to the standards set by the Design Guidel
 
 ```json
 {
-  "extends": ["plugin:azure/recommended"]
+  "extends": ["plugin:@ts-common/azure-sdk/recommended"]
 }
 ```
 
@@ -51,7 +51,7 @@ If you need to modify or disable specific rules, you can do so in the `rules` se
 ```json
 {
   "rules": {
-    "azure/rule-name": "off"
+    "@ts-common/azure-sdk/rule-name": "off"
   }
 }
 ```

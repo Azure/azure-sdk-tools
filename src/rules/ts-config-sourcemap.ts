@@ -43,7 +43,7 @@ export = {
       // callback functions
 
       // check to see if compilerOptions exists at the outermost level
-      "VariableDeclarator > ObjectExpression": sourceMapVerifiers.existsInFile,
+      "Program > ObjectExpression": sourceMapVerifiers.existsInFile,
 
       // check that sourceMap and declarationMap are both members of compilerOptions
       "Property[key.value='compilerOptions']": (node: Property): void => {
@@ -52,11 +52,11 @@ export = {
       },
 
       // check the node corresponding to compilerOptions.sourceMap to see if it is set to true
-      "VariableDeclarator > ObjectExpression > Property[key.value='compilerOptions'] > ObjectExpression > Property[key.value='sourceMap']":
+      "Program > ObjectExpression > Property[key.value='compilerOptions'] > ObjectExpression > Property[key.value='sourceMap']":
         sourceMapVerifiers.innerMatchesExpected,
 
       // check the node corresponding to compilerOptions.declarationMap to see if it is set to true
-      "VariableDeclarator > ObjectExpression > Property[key.value='compilerOptions'] > ObjectExpression > Property[key.value='declarationMap']":
+      "Program > ObjectExpression > Property[key.value='compilerOptions'] > ObjectExpression > Property[key.value='declarationMap']":
         declarationMapVerifiers.innerMatchesExpected
     } as Rule.RuleListener;
   }

@@ -34,10 +34,10 @@ export = {
       // callback functions
 
       // check to see if repository exists at the outermost level
-      "VariableDeclarator > ObjectExpression": verifiers.existsInFile,
+      "Program > ObjectExpression": verifiers.existsInFile,
 
       // check the node corresponding to repository to see if its value is github:Azure/azure-sdk-for-js
-      "VariableDeclarator > ObjectExpression > Property[key.value='repository']":
+      "Program > ObjectExpression > Property[key.value='repository']":
         verifiers.outerMatchesExpected
     } as Rule.RuleListener;
   }

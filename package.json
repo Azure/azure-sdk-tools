@@ -32,7 +32,8 @@
     "format": "prettier --write \"./**/*.{ts,json,md}\"",
     "prebuild": "npm run clean",
     "prepare": "npm test && npm run format && npm run build",
-    "test": "ts-mocha -p tsconfig.json tests/**/*.ts"
+    "test": "ts-mocha -p tsconfig.json tests/**/*.ts",
+    "test-temp": "ts-mocha -p tsconfig.json tests/rules/ts-config-strict.ts"
   },
   "dependencies": {
     "@types/eslint": "^4.16.6",

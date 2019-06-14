@@ -8,8 +8,7 @@ import { Linter } from "eslint";
 export = {
   ".json": {
     preprocess: (text: string): string[] => {
-      const code = "const json = " + text;
-      return [code];
+      return [text];
     },
     postprocess: (messages: Linter.LintMessage[][]): Linter.LintMessage[] => {
       return messages[0].filter((message: Linter.LintMessage): boolean => {

@@ -34,10 +34,10 @@ export = {
       // callback functions
 
       // check to see if exclude exists at the outermost level
-      "VariableDeclarator > ObjectExpression": verifiers.existsInFile,
+      "Program > ObjectExpression": verifiers.existsInFile,
 
       // check the node corresponding to exclude to see if its value contains "node_modules"
-      "VariableDeclarator > ObjectExpression > Property[key.value='exclude']":
+      "Program > ObjectExpression > Property[key.value='exclude']":
         verifiers.outerContainsExpected
     } as Rule.RuleListener;
   }

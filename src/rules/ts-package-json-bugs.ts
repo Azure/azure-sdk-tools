@@ -35,13 +35,13 @@ export = {
       // callback functions
 
       // check to see if bugs exists at the outermost level
-      "VariableDeclarator > ObjectExpression": verifiers.existsInFile,
+      "Program > ObjectExpression": verifiers.existsInFile,
 
       // check that url is a member of bugs
       "Property[key.value='bugs']": verifiers.isMemberOf,
 
       // check the node corresponding to bugs.url to see if it is set to 'https://github.com/Azure/azure-sdk-for-js/issues'
-      "VariableDeclarator > ObjectExpression > Property[key.value='bugs'] > ObjectExpression > Property[key.value='url']":
+      "Program > ObjectExpression > Property[key.value='bugs'] > ObjectExpression > Property[key.value='url']":
         verifiers.innerMatchesExpected
     } as Rule.RuleListener;
   }

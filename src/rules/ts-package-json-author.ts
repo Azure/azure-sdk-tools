@@ -34,10 +34,10 @@ export = {
       // callback functions
 
       // check to see if author exists at the outermost level
-      "VariableDeclarator > ObjectExpression": verifiers.existsInFile,
+      "Program > ObjectExpression": verifiers.existsInFile,
 
       // check the node corresponding to author to see if its value is "Microsoft Corporation"
-      "VariableDeclarator > ObjectExpression > Property[key.value='author']":
+      "Program > ObjectExpression > Property[key.value='author']":
         verifiers.outerMatchesExpected
     } as Rule.RuleListener;
   }

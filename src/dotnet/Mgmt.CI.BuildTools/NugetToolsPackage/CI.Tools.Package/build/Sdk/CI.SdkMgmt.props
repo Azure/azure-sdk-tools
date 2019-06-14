@@ -13,7 +13,8 @@
     <pkg_root_RepoNugetFeedDir>$(pkg_root_RepoToolsDir)\LocalNugetFeed</pkg_root_RepoNugetFeedDir>
     <pkg_root_RepoTestResultsDir>$(pkg_root_RepoRoot)\TestResults</pkg_root_RepoTestResultsDir>
     <pkg_root_RepoBinariesDir>$(pkg_root_RepoRoot)\binaries</pkg_root_RepoBinariesDir>
-    <pkg_root_RepoNugPkgOutputDir>$(pkg_root_RepoBinariesDir)\packages</pkg_root_RepoNugPkgOutputDir>    
+    <!-- $(PackageOutputPath) is being set at root\Directory.Build.props -->
+    <pkg_root_RepoNugPkgOutputDir>$(PackageOutputPath)</pkg_root_RepoNugPkgOutputDir>
   </PropertyGroup>
 
   <PropertyGroup>

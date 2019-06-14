@@ -1,6 +1,7 @@
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 	<PropertyGroup>
 		<Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+		<NoWarn>1591;1701;1573;CS1591;MSB3245;3245</NoWarn>
 		<!--<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<IncludeSymbols>true</IncludeSymbols>-->
 		<!-- <RestorePackagesPath>$(LibraryNugetPackageFolder)</RestorePackagesPath>
@@ -13,11 +14,40 @@
 		<DelaySign>true</DelaySign>
 		<AssemblyOriginatorKeyFile>$(pkg_root_RepoToolsDir)\MSSharedLibKey.snk</AssemblyOriginatorKeyFile>
 		
-		<NoWarn>1591;1701;1573;CS1591</NoWarn>
+		
 		<DefaultPathTokenToIgnore>$(DefaultPathTokenToIgnore) $(IgnorePathTokens)</DefaultPathTokenToIgnore>
 		<BuildWideDebugTrace Condition=" '$(DebugTrace)' == '' ">false</BuildWideDebugTrace>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile> -->
 	</PropertyGroup>
+	
+	<PropertyGroup Condition=" '$(TargetFramework)'=='net452' ">
+		<DefineConstants>net452;FullNetFx;LEGACY</DefineConstants>
+	</PropertyGroup>
+
+	<PropertyGroup Condition=" '$(TargetFramework)'=='net461' ">
+		<DefineConstants>net461;FullNetFx</DefineConstants>
+	</PropertyGroup>
+
+	<PropertyGroup Condition=" '$(TargetFramework)'=='net472' ">
+		<DefineConstants>net472;FullNetFx</DefineConstants>
+	</PropertyGroup>
+
+	<PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard1.4' ">
+		<DefineConstants>netstandard14</DefineConstants>
+	</PropertyGroup>
+
+		<PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
+		<DefineConstants>netstandard20</DefineConstants>
+	</PropertyGroup>
+
+	<PropertyGroup Condition=" '$(TargetFramework)' == 'netcoreapp1.1' ">
+		<DefineConstants>netcoreapp11</DefineConstants>
+	</PropertyGroup>
+
+	<PropertyGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.0' ">
+		<DefineConstants>netcoreapp20</DefineConstants>
+	</PropertyGroup>
+
 	<Choose>
 		<When Condition=" '$(BuildingInsideVisualStudio)' == 'true' ">
 		  <PropertyGroup>

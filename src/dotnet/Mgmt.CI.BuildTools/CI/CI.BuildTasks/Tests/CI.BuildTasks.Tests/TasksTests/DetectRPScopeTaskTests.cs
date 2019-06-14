@@ -42,6 +42,24 @@ namespace Tests.CI.BuildTasks.TasksTests
             Assert.Throws<ArgumentException>(() => rpScope.Execute());
         }
 
+        [Fact]
+        public void MultipleScopes()
+        {
+            string ghUrl = NET_SDK_PUB_URL;
+            long ghPrNumber = 6499;
+            DetectRPScopeTask rpScope = new DetectRPScopeTask(ghUrl, ghPrNumber);
+
+            if(rpScope.Execute())
+            {
+                Assert.NotNull(rpScope.ScopesFromPR);
+                Assert.True(rpScope.ScopesFromPR.Length > 5);
+            }
+            else
+            {
+                Assert.True(false);
+            }
+        }
+
         [Theory]
         [InlineData(NET_SDK_PUB_URL, 6396)]
         [InlineData(NET_SDK_PUB_URL, 6418)]

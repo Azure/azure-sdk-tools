@@ -30,13 +30,14 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks
         #region Task Input Properties
         public string BuildScope { get; set; }
 
+        public List<string> BuildScopes { get; set; }
+
         public string ProjectType { get; set; }
 
         public string ProjectCategory { get; set; }
 
-        public bool SkipTestExecution { get; set; }
-        public bool SkipBuild { get; set; }
-        //public string RepositoryRootDirPath { get; set; }
+        public bool ExcludeFromTestExecution { get; set; }
+        public bool ExcludeFromBuild { get; set; }
         #endregion
 
         string RepositoryRootDirPath
@@ -83,7 +84,6 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks
             }
             else
             {
-
                 List<string> ScopedProjects = new List<string>();
 
                 // We will not skip broad build scope (e.g. sdk), the idea is to not to skip all the tests in a broader build scope.
@@ -97,7 +97,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks
                 }
                 else
                 {
-                    CategorizeSDKProjectsTask catProj = new CategorizeSDKProjectsTask(RepositoryRootDirPath, BuildScope, ProjectType, ProjectCategory);
+                    CategorizeSDKProjectsTask catProj = new CategorizeSDKProjectsTask(RepositoryRootDirPath, BuildScope, BuildScopes, ProjectType, ProjectCategory);
                     catProj.Execute();
 
                     var sdkProj = catProj.SDK_Projects.Select<SDKMSBTaskItem, string>((item) => item.ItemSpec);
@@ -117,6 +117,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks
                     ScopedProjects.Clear();
                 }
             }
+
             return TaskLogger.TaskSucceededWithNoErrorsLogged;
         }
         #endregion
@@ -124,20 +125,23 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks
         #region private functions
         void UpdateProjects(List<string> projectList)
         {
-            foreach(string projectPath in projectList)
+            foreach (string projectPath in projectList)
             {
                 MsbuildProject msbp = new MsbuildProject(projectPath);
 
-                if(SkipTestExecution == true)
+                if (msbp.IsProjectTestType)
                 {
-                    msbp.AddUpdateProperty(PROPNAME_SKIP_TEST_EXECUTION, "true");
-                }
-                else
-                {
-                    msbp.AddUpdateProperty(PROPNAME_SKIP_TEST_EXECUTION, "false");
+                    if (ExcludeFromTestExecution == true)
+                    {
+                        msbp.AddUpdateProperty(PROPNAME_SKIP_TEST_EXECUTION, "true");
+                    }
+                    else
+                    {
+                        msbp.AddUpdateProperty(PROPNAME_SKIP_TEST_EXECUTION, "false");
+                    }
                 }
 
-                if(SkipBuild == true)
+                if (ExcludeFromBuild == true)
                 {
                     msbp.AddUpdateProperty(PROPNAME_SKIP_BUILD, "true");
                 }
@@ -146,6 +150,29 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks
                     msbp.AddUpdateProperty(PROPNAME_SKIP_BUILD, "false");
                 }
             }
+        }
+
+        CategorizeSDKProjectsTask GetCategorizeProjectTask(string BuildScope, string FQBuildScopeDirPath, string projType, string projCategory)
+        {
+
+            if (string.IsNullOrEmpty(BuildScope) && string.IsNullOrEmpty(FQBuildScopeDirPath))
+            {
+                TaskLogger.LogError("Both BuildScope and FullyQualifiedBuildScopeDirPath properties cannot be null/empty. Need at least one property to be set in order for the task to execute.");
+            }
+
+            if(!string.IsNullOrWhiteSpace(BuildScope))
+            {
+                
+            }
+
+
+            if(!string.IsNullOrWhiteSpace(FQBuildScopeDirPath))
+            {
+
+            }
+
+
+            return null;
         }
 
         #endregion

@@ -40,7 +40,7 @@ export = {
       // callback functions
 
       // check to see if scripts exists at the outermost level
-      "VariableDeclarator > ObjectExpression": buildVerifiers.existsInFile,
+      "ExpressionStatement > ObjectExpression": buildVerifiers.existsInFile,
 
       // check to see if scripts contains both build and test
       "Property[key.value='scripts']": (node: Property): void => {

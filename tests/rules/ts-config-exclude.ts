@@ -5,7 +5,6 @@
 
 import rule from "../../src/rules/ts-config-exclude";
 import { RuleTester } from "eslint";
-import processJSON from "../utils/processJSON";
 
 //------------------------------------------------------------------------------
 // Example files
@@ -96,7 +95,10 @@ const example_tsconfig_bad = `{
 //------------------------------------------------------------------------------
 
 const ruleTester = new RuleTester({
-  parser: "@typescript-eslint/parser"
+  parser: "@typescript-eslint/parser",
+  parserOptions: {
+    project: "./tsconfig.json"
+  }
 });
 
 ruleTester.run("ts-config-exclude", rule, {
@@ -104,23 +106,23 @@ ruleTester.run("ts-config-exclude", rule, {
     {
       // only the fields we care about
       code: '{"exclude": ["node_modules"]}',
-      filename: processJSON("tsconfig.json") as any // this is stupid but it works
+      filename: "tsconfig.json"
     },
     {
       // a full example tsconfig.json (taken from https://github.com/Azure/azure-sdk-for-js/blob/master/sdk/eventhub/event-hubs/tsconfig.json with "scripts" removed for testing purposes)
       code: example_tsconfig_good,
-      filename: processJSON("tsconfig.json") as any
+      filename: "tsconfig.json"
     },
     {
       // incorrect format but in a file we don't care about
       code: '{"exclude": []}',
-      filename: processJSON("not_tsconfig.json") as any
+      filename: "not_tsconfig.json"
     }
   ],
   invalid: [
     {
       code: '{"notExclude": ["node_modules"]}',
-      filename: processJSON("tsconfig.json") as any,
+      filename: "tsconfig.json",
       errors: [
         {
           message: "exclude does not exist at the outermost level"
@@ -130,7 +132,7 @@ ruleTester.run("ts-config-exclude", rule, {
     {
       // exclude is in a nested object
       code: '{"outer": {"exclude": ["node_modules"]}}',
-      filename: processJSON("tsconfig.json") as any,
+      filename: "tsconfig.json",
       errors: [
         {
           message: "exclude does not exist at the outermost level"
@@ -140,7 +142,7 @@ ruleTester.run("ts-config-exclude", rule, {
     {
       // only the fields we care about
       code: '{"exclude": []}',
-      filename: processJSON("tsconfig.json") as any,
+      filename: "tsconfig.json",
       errors: [
         {
           message: "exclude does not contain node_modules"
@@ -150,7 +152,7 @@ ruleTester.run("ts-config-exclude", rule, {
     {
       // example file with exclude not containing node_modules
       code: example_tsconfig_bad,
-      filename: processJSON("tsconfig.json") as any,
+      filename: "tsconfig.json",
       errors: [
         {
           message: "exclude does not contain node_modules"

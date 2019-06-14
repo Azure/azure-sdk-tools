@@ -34,10 +34,10 @@ export = {
       // callback functions
 
       // check to see if homepage exists at the outermost level
-      "VariableDeclarator > ObjectExpression": verifiers.existsInFile,
+      "ExpressionStatement > ObjectExpression": verifiers.existsInFile,
 
       // check the node corresponding to homepage to see if its value is a URL pointing to your library's readme inside the git repo
-      "VariableDeclarator > ObjectExpression > Property[key.value='homepage']": (
+      "ExpressionStatement > ObjectExpression > Property[key.value='homepage']": (
         node: Property
       ): void => {
         if (context.getFilename().replace(/^.*[\\\/]/, "") === "package.json") {

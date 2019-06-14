@@ -5,7 +5,6 @@
 
 import rule from "../../src/rules/ts-package-json-name";
 import { RuleTester } from "eslint";
-import processJSON from "../utils/processJSON";
 
 //------------------------------------------------------------------------------
 // Example files
@@ -242,7 +241,10 @@ const example_package_bad = `{
 //------------------------------------------------------------------------------
 
 const ruleTester = new RuleTester({
-  parser: "@typescript-eslint/parser"
+  parser: "@typescript-eslint/parser",
+  parserOptions: {
+    project: "./tsconfig.json"
+  }
 });
 
 ruleTester.run("ts-package-json-name", rule, {
@@ -250,23 +252,23 @@ ruleTester.run("ts-package-json-name", rule, {
     {
       // only the fields we care about
       code: '{"name": "@azure/service-bus"}',
-      filename: processJSON("package.json") as any // this is stupid but it works
+      filename: "package.json"
     },
     {
       // a full example package.json (taken from https://github.com/Azure/azure-sdk-for-js/blob/master/sdk/eventhub/event-hubs/package.json with "scripts" removed for testing purposes)
       code: example_package_good,
-      filename: processJSON("package.json") as any
+      filename: "package.json"
     },
     {
       // incorrect format but in a file we don't care about
       code: '{"name": "service-bus"}',
-      filename: processJSON("not_package.json") as any
+      filename: "not_package.json"
     }
   ],
   invalid: [
     {
       code: '{"notName": "@azure/service-bus"}',
-      filename: processJSON("package.json") as any,
+      filename: "package.json",
       errors: [
         {
           message: "name does not exist at the outermost level"
@@ -276,7 +278,7 @@ ruleTester.run("ts-package-json-name", rule, {
     {
       // name is in a nested object
       code: '{"outer": {"name": "@azure/service-bus"}}',
-      filename: processJSON("package.json") as any,
+      filename: "package.json",
       errors: [
         {
           message: "name does not exist at the outermost level"
@@ -286,7 +288,7 @@ ruleTester.run("ts-package-json-name", rule, {
     {
       // forgot the @azure/
       code: '{"name": "service-bus"}',
-      filename: processJSON("package.json") as any,
+      filename: "package.json",
       errors: [
         {
           message: "name is not set to @azure/<service>"
@@ -296,7 +298,7 @@ ruleTester.run("ts-package-json-name", rule, {
     {
       // not kebab-case
       code: '{"name": "@azure/serviceBus"}',
-      filename: processJSON("package.json") as any,
+      filename: "package.json",
       errors: [
         {
           message:
@@ -307,7 +309,7 @@ ruleTester.run("ts-package-json-name", rule, {
     {
       // not kebab-case
       code: '{"name": "@azure/service_bus"}',
-      filename: processJSON("package.json") as any,
+      filename: "package.json",
       errors: [
         {
           message:
@@ -318,7 +320,7 @@ ruleTester.run("ts-package-json-name", rule, {
     {
       // not kebab-case
       code: '{"name": "@azure/service-bus-"}',
-      filename: processJSON("package.json") as any,
+      filename: "package.json",
       errors: [
         {
           message:
@@ -329,7 +331,7 @@ ruleTester.run("ts-package-json-name", rule, {
     {
       // example file with name set to service-bus
       code: example_package_bad,
-      filename: processJSON("package.json") as any,
+      filename: "package.json",
       errors: [
         {
           message: "name is not set to @azure/<service>"

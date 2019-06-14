@@ -5,7 +5,6 @@
 
 import rule from "../../src/rules/ts-package-json-keywords";
 import { RuleTester } from "eslint";
-import processJSON from "../utils/processJSON";
 
 //------------------------------------------------------------------------------
 // Example files
@@ -237,7 +236,10 @@ const example_package_bad = `{
 //------------------------------------------------------------------------------
 
 const ruleTester = new RuleTester({
-  parser: "@typescript-eslint/parser"
+  parser: "@typescript-eslint/parser",
+  parserOptions: {
+    project: "./tsconfig.json"
+  }
 });
 
 ruleTester.run("ts-package-json-keywords", rule, {
@@ -245,23 +247,23 @@ ruleTester.run("ts-package-json-keywords", rule, {
     {
       // only the fields we care about
       code: '{"keywords": ["Azure", "cloud"]}',
-      filename: processJSON("package.json") as any // this is stupid but it works
+      filename: "package.json"
     },
     {
       // a full example package.json (taken from https://github.com/Azure/azure-sdk-for-js/blob/master/sdk/eventhub/event-hubs/package.json with "scripts" removed for testing purposes)
       code: example_package_good,
-      filename: processJSON("package.json") as any
+      filename: "package.json"
     },
     {
       // incorrect format but in a file we don't care about
       code: '{"keywords": []}',
-      filename: processJSON("not_package.json") as any
+      filename: "not_package.json"
     }
   ],
   invalid: [
     {
       code: '{"notKeywords": ["Azure", "cloud"]}',
-      filename: processJSON("package.json") as any,
+      filename: "package.json",
       errors: [
         {
           message: "keywords does not exist at the outermost level"
@@ -271,7 +273,7 @@ ruleTester.run("ts-package-json-keywords", rule, {
     {
       // keywords is in a nested object
       code: '{"outer": {"keywords": ["Azure", "cloud"]}}',
-      filename: processJSON("package.json") as any,
+      filename: "package.json",
       errors: [
         {
           message: "keywords does not exist at the outermost level"
@@ -281,7 +283,7 @@ ruleTester.run("ts-package-json-keywords", rule, {
     {
       // both missing
       code: '{"keywords": []}',
-      filename: processJSON("package.json") as any,
+      filename: "package.json",
       errors: [
         {
           message: "keywords does not contain Azure"
@@ -294,7 +296,7 @@ ruleTester.run("ts-package-json-keywords", rule, {
     {
       // Azure missing
       code: '{"keywords": ["cloud"]}',
-      filename: processJSON("package.json") as any,
+      filename: "package.json",
       errors: [
         {
           message: "keywords does not contain Azure"
@@ -304,7 +306,7 @@ ruleTester.run("ts-package-json-keywords", rule, {
     {
       // cloud missing
       code: '{"keywords": ["Azure"]}',
-      filename: processJSON("package.json") as any,
+      filename: "package.json",
       errors: [
         {
           message: "keywords does not contain cloud"
@@ -314,7 +316,7 @@ ruleTester.run("ts-package-json-keywords", rule, {
     {
       // example file with keywords not containing Azure or cloud
       code: example_package_bad,
-      filename: processJSON("package.json") as any,
+      filename: "package.json",
       errors: [
         {
           message: "keywords does not contain Azure"

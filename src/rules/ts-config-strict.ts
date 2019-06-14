@@ -35,13 +35,13 @@ export = {
       // callback functions
 
       // check to see if compilerOptions exists at the outermost level
-      "VariableDeclarator > ObjectExpression": verifiers.existsInFile,
+      "ExpressionStatement > ObjectExpression": verifiers.existsInFile,
 
       // check that strict is a member of compilerOptions
       "Property[key.value='compilerOptions']": verifiers.isMemberOf,
 
       // check the node corresponding to compilerOptions.strict to see if it is set to true
-      "VariableDeclarator > ObjectExpression > Property[key.value='compilerOptions'] > ObjectExpression > Property[key.value='strict']":
+      "ExpressionStatement > ObjectExpression > Property[key.value='compilerOptions'] > ObjectExpression > Property[key.value='strict']":
         verifiers.innerMatchesExpected
     } as Rule.RuleListener;
   }

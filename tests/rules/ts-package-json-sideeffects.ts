@@ -5,7 +5,6 @@
 
 import rule from "../../src/rules/ts-package-json-sideeffects";
 import { RuleTester } from "eslint";
-import processJSON from "../utils/processJSON";
 
 //------------------------------------------------------------------------------
 // Example files
@@ -242,7 +241,10 @@ const example_package_bad = `{
 //------------------------------------------------------------------------------
 
 const ruleTester = new RuleTester({
-  parser: "@typescript-eslint/parser"
+  parser: "@typescript-eslint/parser",
+  parserOptions: {
+    project: "./tsconfig.json"
+  }
 });
 
 ruleTester.run("ts-package-json-sideeffects", rule, {
@@ -250,23 +252,23 @@ ruleTester.run("ts-package-json-sideeffects", rule, {
     {
       // only the fields we care about
       code: '{"sideEffects": false}',
-      filename: processJSON("package.json") as any // this is stupid but it works
+      filename: "package.json"
     },
     {
       // a full example package.json (taken from https://github.com/Azure/azure-sdk-for-js/blob/master/sdk/eventhub/event-hubs/package.json with "scripts" removed for testing purposes)
       code: example_package_good,
-      filename: processJSON("package.json") as any
+      filename: "package.json"
     },
     {
       // incorrect format but in a file we don't care about
       code: '{"sideEffects": true}',
-      filename: processJSON("not_package.json") as any
+      filename: "not_package.json"
     }
   ],
   invalid: [
     {
       code: '{"notSideEffects": false}',
-      filename: processJSON("package.json") as any,
+      filename: "package.json",
       errors: [
         {
           message: "sideEffects does not exist at the outermost level"
@@ -276,7 +278,7 @@ ruleTester.run("ts-package-json-sideeffects", rule, {
     {
       // sideEffects is in a nested object
       code: '{"outer": {"sideEffects": false}}',
-      filename: processJSON("package.json") as any,
+      filename: "package.json",
       errors: [
         {
           message: "sideEffects does not exist at the outermost level"
@@ -286,7 +288,7 @@ ruleTester.run("ts-package-json-sideeffects", rule, {
     {
       // only the fields we care about
       code: '{"sideEffects": true}',
-      filename: processJSON("package.json") as any,
+      filename: "package.json",
       errors: [
         {
           message: "sideEffects is set to true when it should be set to false"
@@ -296,7 +298,7 @@ ruleTester.run("ts-package-json-sideeffects", rule, {
     {
       // example file with sideEffects set to Not Microsoft Corporation
       code: example_package_bad,
-      filename: processJSON("package.json") as any,
+      filename: "package.json",
       errors: [
         {
           message: "sideEffects is set to true when it should be set to false"

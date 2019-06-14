@@ -5,7 +5,6 @@
 
 import rule from "../../src/rules/ts-package-json-homepage";
 import { RuleTester } from "eslint";
-import processJSON from "../utils/processJSON";
 
 //------------------------------------------------------------------------------
 // Example files
@@ -242,7 +241,10 @@ const example_package_bad = `{
 //------------------------------------------------------------------------------
 
 const ruleTester = new RuleTester({
-  parser: "@typescript-eslint/parser"
+  parser: "@typescript-eslint/parser",
+  parserOptions: {
+    project: "./tsconfig.json"
+  }
 });
 
 ruleTester.run("ts-package-json-homepage", rule, {
@@ -251,25 +253,25 @@ ruleTester.run("ts-package-json-homepage", rule, {
       // only the fields we care about
       code:
         '{"homepage": "https://github.com/Azure/azure-sdk-for-js/blob/master/sdk/servicebus/service-bus/README.md"}',
-      filename: processJSON("package.json") as any // this is stupid but it works
+      filename: "package.json"
     },
     {
       // a full example package.json (taken from https://github.com/Azure/azure-sdk-for-js/blob/master/sdk/eventhub/event-hubs/package.json with "scripts" removed for testing purposes)
       code: example_package_good,
-      filename: processJSON("package.json") as any
+      filename: "package.json"
     },
     {
       // incorrect format but in a file we don't care about
       code:
         '{"homepage": "https://github.com/Azure/azure-sdk-for-js/tree/master/sdk/servicebus/service-bus"}',
-      filename: processJSON("not_package.json") as any
+      filename: "not_package.json"
     }
   ],
   invalid: [
     {
       code:
         '{"notHomepage": "https://github.com/Azure/azure-sdk-for-js/blob/master/sdk/servicebus/service-bus/README.md"}',
-      filename: processJSON("package.json") as any,
+      filename: "package.json",
       errors: [
         {
           message: "homepage does not exist at the outermost level"
@@ -280,7 +282,7 @@ ruleTester.run("ts-package-json-homepage", rule, {
       // homepage is in a nested object
       code:
         '{"outer": {"homepage": "https://github.com/Azure/azure-sdk-for-js/blob/master/sdk/servicebus/service-bus/README.md"}}',
-      filename: processJSON("package.json") as any,
+      filename: "package.json",
       errors: [
         {
           message: "homepage does not exist at the outermost level"
@@ -291,7 +293,7 @@ ruleTester.run("ts-package-json-homepage", rule, {
       // not pointing to README
       code:
         '{"homepage": "https://github.com/Azure/azure-sdk-for-js/tree/master/sdk/servicebus/service-bus"}',
-      filename: processJSON("package.json") as any,
+      filename: "package.json",
       errors: [
         {
           message:
@@ -302,7 +304,7 @@ ruleTester.run("ts-package-json-homepage", rule, {
     {
       // some other website
       code: '{"homepage": "someothersite.com/README.md"}',
-      filename: processJSON("package.json") as any,
+      filename: "package.json",
       errors: [
         {
           message:
@@ -313,7 +315,7 @@ ruleTester.run("ts-package-json-homepage", rule, {
     {
       // example file not pointing to the readme
       code: example_package_bad,
-      filename: processJSON("package.json") as any,
+      filename: "package.json",
       errors: [
         {
           message:

@@ -35,13 +35,13 @@ export = {
       // callback functions
 
       // check to see if compilerOptions exists at the outermost level
-      "VariableDeclarator > ObjectExpression": verifiers.existsInFile,
+      "ExpressionStatement > ObjectExpression": verifiers.existsInFile,
 
       // check that module is a member of compilerOptions
       "Property[key.value='compilerOptions']": verifiers.isMemberOf,
 
       // check the node corresponding to compilerOptions.module to see if it is set to es6
-      "VariableDeclarator > ObjectExpression > Property[key.value='compilerOptions'] > ObjectExpression > Property[key.value='module']":
+      "ExpressionStatement > ObjectExpression > Property[key.value='compilerOptions'] > ObjectExpression > Property[key.value='module']":
         verifiers.innerMatchesExpected
     } as Rule.RuleListener;
   }

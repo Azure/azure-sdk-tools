@@ -28,6 +28,16 @@ Add `azure` to the `plugins` section of your `.eslintrc` configuration file. You
 }
 ```
 
+Make sure to set your `.eslintrc` configuration file's `parserOptions.project` field to point to the tsconfig file at the root of your project as follows:
+
+```json
+{
+  "parserOptions": {
+    "project": "./tsconfig.json"
+  }
+}
+```
+
 For all rules to be enforced according to the standards set by the Design Guidelines, add this plugin's `recommended` configuration to the `extends` section of your `eslintrc` configuration file as follows:
 
 ```json

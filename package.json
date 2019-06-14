@@ -32,18 +32,17 @@
     "format": "prettier --write \"./**/*.{ts,json,md}\"",
     "prebuild": "npm run clean",
     "prepare": "npm test && npm run format && npm run build",
-    "test": "ts-mocha -p tsconfig.json tests/**/*.ts",
-    "test-temp": "ts-mocha -p tsconfig.json tests/rules/ts-config-strict.ts"
+    "test": "ts-mocha -p tsconfig.json --timeout 10000 tests/**/*.ts"
   },
   "dependencies": {
     "@types/eslint": "^4.16.6",
     "@types/estree": "0.0.39",
-    "@typescript-eslint/parser": "^1.9.0",
     "typescript": "<3.5.1"
   },
   "devDependencies": {
     "@types/chai": "^4.1.7",
     "@types/mocha": "^5.2.7",
+    "@typescript-eslint/parser": "^1.10.2",
     "chai": "^4.2.0",
     "eslint": "^5.16.0",
     "mocha": "^6.1.4",
@@ -51,6 +50,7 @@
     "ts-mocha": "^6.0.0"
   },
   "peerDependencies": {
+    "@typescript-eslint/parser": "^1.10.2",
     "eslint": "^5.16.0"
   },
   "engines": {

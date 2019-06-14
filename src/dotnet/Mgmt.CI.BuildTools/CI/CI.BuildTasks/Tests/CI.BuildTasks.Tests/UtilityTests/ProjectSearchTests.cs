@@ -26,16 +26,18 @@ namespace Tests.CI.BuildTasks.UtilityTests
             ProjSearch = new ProjectSearchUtility(this.TestAssetSdkForNetDirPath);
         }
 
+        //[Fact(Skip ="This test requires to fix Search utility")]
         [Fact]
         public void GetMgmtProjects()
         {
-            ProjSearch.ScopeToken = @"SDKs\Compute";
-            ProjSearch.SearchProjectType = SdkProjectType.All;
+            string scopeToken = "compute";
+            ProjectSearchUtility psu = new ProjectSearchUtility(this.TestAssetSdkForNetDirPath, null, scopeToken,
+                string.Empty, string.Empty, string.Empty, SdkProjectType.All, SdkProjectCategory.MgmtPlane);
 
-            List<string> sdkProj = ProjSearch.Find_Mgmt_SDKProjects();
+            List<string> sdkProj = psu.Find_Mgmt_SDKProjects();
             Assert.Single(sdkProj);
 
-            List<string> testProj = ProjSearch.Find_Mgmt_TestProjects();
+            List<string> testProj = psu.Find_Mgmt_TestProjects();
             Assert.Single(testProj);
         }
 

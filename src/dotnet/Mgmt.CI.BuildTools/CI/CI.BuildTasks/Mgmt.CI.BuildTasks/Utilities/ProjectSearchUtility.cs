@@ -250,7 +250,6 @@ namespace MS.Az.NetSdk.Build.Utilities
                 ScopeDirPaths.Add(scopeToken);
             }
 
-
             if(!string.IsNullOrWhiteSpace(fullQualifiedScopeDirPath))
             {
                 ScopeDirPaths.Add(fullQualifiedScopeDirPath);
@@ -274,21 +273,6 @@ namespace MS.Az.NetSdk.Build.Utilities
                 UtilLogger.LogInfo(msgImp, SearchDirPaths, "Existing SearchDirPaths before clearing");
                 SearchDirPaths.Clear();
             }
-            
-            //// First try to get the Scope Token
-            //string validScope = GetScope(ScopeToken);
-
-            //if (!string.IsNullOrWhiteSpace(validScope))
-            //{
-            //    SearchDirPaths.Add(validScope);
-            //}
-
-            //// Then get the Fully Qualified scope directory path
-            //validScope = GetScope(FQScopeDirPath);
-            //if (!string.IsNullOrWhiteSpace(validScope))
-            //{
-            //    SearchDirPaths.Add(validScope);
-            //}
 
             // Finally you try to get valid scope from list of scopes provided
             foreach (string sdp in ScopeDirPaths)

@@ -1,4 +1,5 @@
 ﻿using Microsoft.CodeAnalysis;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Text;
 
@@ -7,7 +8,7 @@ namespace APIView
     public class TypeParameterAPIV
     {
         public string Name { get; }
-        public ImmutableArray<AttributeData> Attributes { get; }
+        public ImmutableArray<string> Attributes { get; }
 
         /// <summary>
         /// Construct a new TypeParameter instance, represented by the provided symbol.
@@ -16,7 +17,13 @@ namespace APIView
         public TypeParameterAPIV(ITypeParameterSymbol symbol)
         {
             this.Name = symbol.ToString();
-            this.Attributes = symbol.GetAttributes();
+
+            List<string> attributes = new List<string>();
+            foreach (AttributeData attribute in symbol.GetAttributes())
+            {
+                attributes.Add(attribute.ToString());
+            }
+            this.Attributes = attributes.ToImmutableArray();
         }
 
         public override string ToString()

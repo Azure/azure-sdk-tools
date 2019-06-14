@@ -1,4 +1,6 @@
 ﻿using Microsoft.CodeAnalysis;
+using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Text;
 
 namespace APIView
@@ -11,6 +13,8 @@ namespace APIView
         public bool HasExplicitDefaultValue { get; }
         public object ExplicitDefaultValue { get; }
 
+        public ImmutableArray<string> Attributes { get; }
+
         /// <summary>
         /// Construct a new Parameter instance, represented by the provided symbol.
         /// </summary>
@@ -22,6 +26,13 @@ namespace APIView
 
             this.HasExplicitDefaultValue = symbol.HasExplicitDefaultValue;
             this.ExplicitDefaultValue = HasExplicitDefaultValue ? symbol.ExplicitDefaultValue : null;
+
+            List<string> attributes = new List<string>();
+            foreach (AttributeData attribute in symbol.GetAttributes())
+            {
+                attributes.Add(attribute.ToString());
+            }
+            this.Attributes = attributes.ToImmutableArray();
         }
 
         public override string ToString()

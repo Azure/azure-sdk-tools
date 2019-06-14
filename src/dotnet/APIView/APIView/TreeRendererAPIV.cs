@@ -266,6 +266,18 @@ namespace APIView
 
         internal static void Render(ParameterAPIV p, StringBuilder builder, int indents = 0)
         {
+            if (!p.Attributes.IsEmpty)
+            {
+                builder.Append("[");
+                foreach (string attribute in p.Attributes)
+                {
+                    builder.Append(attribute).Append(", ");
+                }
+                builder.Length -= 2;
+                builder.Append("] ").AppendLine();
+                AppendIndents(builder, indents);
+            }
+
             builder.Append(p.Type).Append(" ").Append(p.Name);
             if (p.HasExplicitDefaultValue)
             {
@@ -289,8 +301,17 @@ namespace APIView
 
         internal static void Render(TypeParameterAPIV tp, StringBuilder builder, int indents = 0)
         {
-            if (tp.Attributes.Length != 0)
-                builder.Append(tp.Attributes).Append(" ");
+            if (!tp.Attributes.IsEmpty)
+            {
+                builder.Append("[");
+                foreach (string attribute in tp.Attributes)
+                {
+                    builder.Append(attribute).Append(", ");
+                }
+                builder.Length -= 2;
+                builder.Append("] ").AppendLine();
+                AppendIndents(builder, indents);
+            }
 
             builder.Append(tp.Name);
         }

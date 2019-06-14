@@ -265,7 +265,7 @@ namespace MS.Az.NetSdk.Build.Utilities
         
         void Init()
         {
-            MessageImportance msgImp = MessageImportance.High;
+            MessageImportance msgImp = MessageImportance.Low;
             string validScope = string.Empty;
 
             if(SearchDirPaths.NotNullOrAny<string>())
@@ -402,9 +402,10 @@ namespace MS.Az.NetSdk.Build.Utilities
 
         string GetScope(string scope)
         {
+            MessageImportance msgImp = MessageImportance.Low;
             if(!string.IsNullOrWhiteSpace(scope))
             {
-                UtilLogger.LogInfo(MessageImportance.High, "Trying to find valid scope for token '{0}'", scope);
+                UtilLogger.LogInfo(msgImp, "Trying to find valid scope for token '{0}'", scope);
             }
             
             string validScope = string.Empty;
@@ -447,7 +448,7 @@ namespace MS.Az.NetSdk.Build.Utilities
 
             if(!string.IsNullOrWhiteSpace(validScope))
             {
-                UtilLogger.LogInfo(MessageImportance.High, "ValidScope Found '{0}'", validScope);
+                UtilLogger.LogInfo(msgImp, "ValidScope Found '{0}'", validScope);
             }
             
             return validScope;
@@ -766,36 +767,47 @@ namespace MS.Az.NetSdk.Build.Utilities
 
             foreach (string sdp in SearchDirPaths)
             {
-                var svcTopDirs = Directory.EnumerateDirectories(sdp, "*", SearchOption.TopDirectoryOnly);
+                IEnumerable<string> svcTopDirs = null;
 
-                foreach (string serviceDir in svcTopDirs)
+                try
                 {
-                    // If ever data plane needs to be part of this, enable the below
-                    //dpD = FindDataPlaneDirs(serviceDir);
+                    svcTopDirs = Directory.EnumerateDirectories(sdp, "*", SearchOption.TopDirectoryOnly);
 
-                    mpD = FindManagementDirs(serviceDir);
-                    mpT = FindManagementTestDirs(serviceDir);
-
-                    if ((!mpT.Any<string>()) && (!mpD.Any<string>()) /*&& (!dpD.Any<string>())*/ )
+                    foreach (string serviceDir in svcTopDirs)
                     {
-                        masterList.Add(sdp);
-                    }
+                        // If ever data plane needs to be part of this, enable the below
+                        //dpD = FindDataPlaneDirs(serviceDir);
 
-                    if (mpD.Any<string>())
-                    {
-                        masterList.AddRange(mpD);
-                    }
+                        mpD = FindManagementDirs(serviceDir);
+                        mpT = FindManagementTestDirs(serviceDir);
 
-                    if (mpT.Any<string>())
-                    {
-                        masterList.AddRange(mpT);
-                    }
+                        if ((!mpT.Any<string>()) && (!mpD.Any<string>()) /*&& (!dpD.Any<string>())*/ )
+                        {
+                            masterList.Add(sdp);
+                        }
 
-                    //if(dpD.Any<string>())
-                    //{
-                    //    SDK_DirList.AddRange(dpD);
-                    //    //SDK_dataPlaneDirList.AddRange(dpD);
-                    //}
+                        if (mpD.Any<string>())
+                        {
+                            masterList.AddRange(mpD);
+                        }
+
+                        if (mpT.Any<string>())
+                        {
+                            masterList.AddRange(mpT);
+                        }
+
+                        //if(dpD.Any<string>())
+                        //{
+                        //    SDK_DirList.AddRange(dpD);
+                        //    //SDK_dataPlaneDirList.AddRange(dpD);
+                        //}
+                    }
+                }
+                catch(Exception ex)
+                {
+                    // you end up in this situation where users make mistakes in providing scope
+                    // we simply do passthru
+                    UtilLogger.LogWarning("'{0}' is not a valid scope", sdp);
                 }
             }
 

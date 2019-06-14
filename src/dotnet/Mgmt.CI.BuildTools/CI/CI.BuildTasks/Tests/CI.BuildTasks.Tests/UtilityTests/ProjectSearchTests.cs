@@ -26,7 +26,6 @@ namespace Tests.CI.BuildTasks.UtilityTests
             ProjSearch = new ProjectSearchUtility(this.TestAssetSdkForNetDirPath);
         }
 
-        //[Fact(Skip ="This test requires to fix Search utility")]
         [Fact]
         public void GetMgmtProjects()
         {

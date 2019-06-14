@@ -807,6 +807,7 @@ namespace MS.Az.NetSdk.Build.Utilities
                 {
                     // you end up in this situation where users make mistakes in providing scope
                     // we simply do passthru
+                    UtilLogger.LogInfo(ex.Message);
                     UtilLogger.LogWarning("'{0}' is not a valid scope", sdp);
                 }
             }

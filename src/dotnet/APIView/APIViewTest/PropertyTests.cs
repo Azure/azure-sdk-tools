@@ -23,7 +23,7 @@ namespace APIViewTest
             var propertySymbol = (IPropertySymbol)TestResource.GetTestMember("TestLibrary.PublicClass", "propertyGet");
             PropertyAPIV property = new PropertyAPIV(propertySymbol);
 
-            Assert.Contains("public uint propertyGet { get; }", property.ToString());
+            Assert.Equal("public uint propertyGet { get; }", property.ToString());
         }
 
         [Fact]
@@ -43,7 +43,7 @@ namespace APIViewTest
             var propertySymbol = (IPropertySymbol)TestResource.GetTestMember("TestLibrary.PublicClass", "propertyBoth");
             PropertyAPIV property = new PropertyAPIV(propertySymbol);
 
-            Assert.Contains("public int propertyBoth { get; set; }", property.ToString());
+            Assert.Equal("public int propertyBoth { get; set; }", property.ToString());
         }
     }
 }

@@ -73,7 +73,7 @@ namespace APIView
                 AppendIndents(builder, indents);
             }
 
-            if (m.IsInterfaceMethod)
+            if (!m.IsInterfaceMethod)
                 builder.Append("public ");
 
             if (m.IsStatic)

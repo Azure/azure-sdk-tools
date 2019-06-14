@@ -69,7 +69,31 @@ namespace APIViewTest
         [Fact]
         public void MethodTestMultipleAttributesMultipleTypeParamsNoParams()
         {
-            //TODO
+            var methodSymbol = (IMethodSymbol)TestResource.GetTestMember("TestLibrary.PublicInterface`1", "AttributesTypeParamsMethod");
+            MethodAPIV method = new MethodAPIV(methodSymbol);
+
+            Assert.True(method.IsInterfaceMethod);
+            Assert.False(method.IsStatic);
+            Assert.False(method.IsVirtual);
+            Assert.False(method.IsSealed);
+            Assert.False(method.IsOverride);
+            Assert.True(method.IsAbstract);
+            Assert.False(method.IsExtern);
+            Assert.Equal("int", method.ReturnType);
+
+            Assert.Equal(2, method.Attributes.Length);
+            Assert.Empty(method.Parameters);
+            Assert.Equal(2, method.TypeParameters.Length);
+        }
+
+        [Fact]
+        public void MethodTestMultipleAttributesMultipleTypeParamsNoParamsStringRep()
+        {
+            var methodSymbol = (IMethodSymbol)TestResource.GetTestMember("TestLibrary.PublicInterface`1", "AttributesTypeParamsMethod");
+            MethodAPIV method = new MethodAPIV(methodSymbol);
+
+            string stringRep = method.ToString().Replace(Environment.NewLine, "");
+            Assert.Equal("[TestLibrary.CustomAttribute(\"Test\"), TestLibrary.NewAttribute]int AttributesTypeParamsMethod<T, R>();", stringRep);
         }
     }
 }

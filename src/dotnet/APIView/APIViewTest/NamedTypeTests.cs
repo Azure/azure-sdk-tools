@@ -50,7 +50,7 @@ namespace APIViewTest
             var namedTypeSymbol = (INamedTypeSymbol)TestResource.GetTestMember("TestLibrary.PublicInterface`1");
             NamedTypeAPIV publicInterface = new NamedTypeAPIV(namedTypeSymbol);
 
-            Assert.Contains("public interface PublicInterface {", publicInterface.ToString());
+            Assert.Contains("public interface PublicInterface<T> {", publicInterface.ToString());
         }
 
         [Fact]

@@ -28,7 +28,7 @@ namespace APIViewTest
             var fieldSymbol = (IFieldSymbol)TestResource.GetTestMember("TestLibrary.PublicClass", "publicField");
             FieldAPIV field = new FieldAPIV(fieldSymbol);
 
-            Assert.Contains("public readonly int publicField;", field.ToString());
+            Assert.Equal("public readonly int publicField;", field.ToString());
         }
 
         [Fact]
@@ -53,7 +53,7 @@ namespace APIViewTest
             var fieldSymbol = (IFieldSymbol)TestResource.GetTestMember("TestLibrary.PublicClass", "publicString");
             FieldAPIV field = new FieldAPIV(fieldSymbol);
 
-            Assert.Contains("public static const string publicString = \"constant string\";", field.ToString());
+            Assert.Equal("public static const string publicString = \"constant string\";", field.ToString());
         }
 
         [Fact]
@@ -78,7 +78,7 @@ namespace APIViewTest
             var fieldSymbol = (IFieldSymbol)TestResource.GetTestMember("TestLibrary.PublicClass", "protectedField");
             FieldAPIV field = new FieldAPIV(fieldSymbol);
 
-            Assert.Contains("protected int protectedField;", field.ToString());
+            Assert.Equal("protected int protectedField;", field.ToString());
         }
     }
 }

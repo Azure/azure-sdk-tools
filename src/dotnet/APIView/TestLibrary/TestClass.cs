@@ -187,11 +187,11 @@ namespace TestLibrary
 
         string RefKindParamMethod(ref string str);
 
-        //[Custom("Test"), New()]
-        object AttributesTypeParamsMethod<T, R>();
+        [Custom("Test"), New()]
+        int AttributesTypeParamsMethod<T, R>();
     }
 
-    internal class NewAttribute : Attribute
+    public class NewAttribute : Attribute
     {
     }
 
@@ -220,7 +220,7 @@ namespace TestLibrary
             throw new NotImplementedException();
         }
 
-        public object AttributesTypeParamsMethod<T, R>()
+        public int AttributesTypeParamsMethod<T, R>()
         {
             throw new NotImplementedException();
         }

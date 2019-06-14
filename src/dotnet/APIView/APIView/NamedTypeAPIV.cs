@@ -75,6 +75,9 @@ namespace APIView
                     fields.Add(new FieldAPIV(f));
             }
 
+            if (symbol.BaseType != null && !(symbol.BaseType.ToDisplayString().Equals("object")))
+                implementations.Add(symbol.BaseType.ToDisplayString());
+
             // add a string representation of each implemented type to list
             foreach (var i in symbol.Interfaces)
             {

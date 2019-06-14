@@ -21,7 +21,7 @@ namespace APIViewTest
             var eventSymbol = (IEventSymbol)TestResource.GetTestMember("TestLibrary.PublicClass", "PublicEvent");
             var e = new EventAPIV(eventSymbol);
 
-            Assert.Contains("public event EventHandler PublicEvent;", e.ToString());
+            Assert.Equal("public event EventHandler PublicEvent;", e.ToString());
         }
     }
 }

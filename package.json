@@ -1,6 +1,6 @@
 {
   "name": "@ts-common/eslint-plugin-azure-sdk",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "Linting rules for the JavaScript/TypeScript Azure SDK",
   "keywords": [
     "eslint",

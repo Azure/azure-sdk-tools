@@ -1,23 +1,32 @@
 {
-  "name": "eslint-plugin-azure",
-  "version": "0.0.0",
+  "name": "@ts-common/eslint-plugin-azure-sdk",
+  "version": "1.0.0",
   "description": "Linting rules for the JavaScript/TypeScript Azure SDK",
   "keywords": [
     "eslint",
-    "eslintplugin",
     "eslint-plugin",
     "azure",
     "azure-sdk",
-    "eslint-plugin-azure"
+    "sdk",
+    "eslint-plugin-azure",
+    "eslint-plugin-azure-sdk"
   ],
-  "author": "Arpan Laha",
+  "author": "Microsoft Corporation",
+  "contributors": [
+    {
+      "name": "Arpan Laha",
+      "email": "arpanlaha99@gmail.com",
+      "url": "https://github.com/arpanlaha"
+    }
+  ],
   "license": "MIT",
+  "homepage": "https://github.com/Azure/azure-sdk-tools/src/ts/eslint-plugin-azure-sdk",
   "repository": {
     "type": "git",
-    "url": "https://github.com/arpanlaha/eslint-plugin-azure"
+    "url": "https://github.com/Azure/azure-sdk-tools"
   },
   "bugs": {
-    "url": "https://github.com/arpanlaha/eslint-plugin-azure/issues"
+    "url": "https://github.com/Azure/azure-sdk-tools/issues"
   },
   "main": "dist/index.js",
   "files": [

@@ -5,33 +5,34 @@
 
 export = {
   recommended: {
-    plugins: ["azure"],
+    plugins: ["@ts-common/azure-sdk"],
     env: {
       node: true
     },
     parser: "@typescript-eslint/parser",
     rules: {
-      "azure/ts-config-allowsyntheticdefaultimports": "error",
-      "azure/ts-config-declaration": "error",
-      "azure/ts-config-esmoduleinterop": "error",
-      "azure/ts-config-exclude": "error",
-      "azure/ts-config-forceconsistentcasinginfilenames": "error",
-      "azure/ts-config-importhelpers": "error",
-      "azure/ts-config-isolatedmodules": "warn",
-      "azure/ts-config-lib": "error",
-      "azure/ts-config-module": "error",
-      "azure/ts-config-no-experimentaldecorators": "error",
-      "azure/ts-config-sourcemap": "error",
-      "azure/ts-config-strict": "error",
-      "azure/ts-package-json-author": "error",
-      "azure/ts-package-json-bugs": "error",
-      "azure/ts-package-json-homepage": "error",
-      "azure/ts-package-json-keywords": "error",
-      "azure/ts-package-json-license": "error",
-      "azure/ts-package-json-name": "error",
-      "azure/ts-package-json-repo": "error",
-      "azure/ts-package-json-required-scripts": "error",
-      "azure/ts-package-json-sideeffects": "error"
+      "@ts-common/azure-sdk/ts-config-allowsyntheticdefaultimports": "error",
+      "@ts-common/azure-sdk/ts-config-declaration": "error",
+      "@ts-common/azure-sdk/ts-config-esmoduleinterop": "error",
+      "@ts-common/azure-sdk/ts-config-exclude": "error",
+      "@ts-common/azure-sdk/ts-config-forceconsistentcasinginfilenames":
+        "error",
+      "@ts-common/azure-sdk/ts-config-importhelpers": "error",
+      "@ts-common/azure-sdk/ts-config-isolatedmodules": "warn",
+      "@ts-common/azure-sdk/ts-config-lib": "error",
+      "@ts-common/azure-sdk/ts-config-module": "error",
+      "@ts-common/azure-sdk/ts-config-no-experimentaldecorators": "error",
+      "@ts-common/azure-sdk/ts-config-sourcemap": "error",
+      "@ts-common/azure-sdk/ts-config-strict": "error",
+      "@ts-common/azure-sdk/ts-package-json-author": "error",
+      "@ts-common/azure-sdk/ts-package-json-bugs": "error",
+      "@ts-common/azure-sdk/ts-package-json-homepage": "error",
+      "@ts-common/azure-sdk/ts-package-json-keywords": "error",
+      "@ts-common/azure-sdk/ts-package-json-license": "error",
+      "@ts-common/azure-sdk/ts-package-json-name": "error",
+      "@ts-common/azure-sdk/ts-package-json-repo": "error",
+      "@ts-common/azure-sdk/ts-package-json-required-scripts": "error",
+      "@ts-common/azure-sdk/ts-package-json-sideeffects": "error"
     }
   }
 };

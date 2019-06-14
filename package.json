@@ -11,6 +11,13 @@
     "eslint-plugin-azure"
   ],
   "author": "Microsoft Corporation",
+  "contributors": [
+    {
+      "name": "Arpan Laha",
+      "email": "arpanlaha99@gmail.com",
+      "url": "https://github.com/arpanlaha"
+    }
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",

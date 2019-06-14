@@ -1,6 +1,6 @@
 /**
  * @fileoverview Rule to force package.json's sideEffects value to be set to false.
- * @sideEffects Arpan Laha
+ * @author Arpan Laha
  */
 
 import getVerifiers from "../utils/verifiers";

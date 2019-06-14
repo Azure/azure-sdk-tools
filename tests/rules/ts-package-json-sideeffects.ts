@@ -1,6 +1,6 @@
 /**
  * @fileoverview Testing the ts-package-json-sideeffects rule.
- * @sideEffects Arpan Laha
+ * @author Arpan Laha
  */
 
 import rule from "../../src/rules/ts-package-json-sideeffects";

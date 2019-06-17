@@ -3,5 +3,6 @@
   "exclude": ["tests"],
   "compilerOptions": {
     "types": ["eslint", "estree"]
-  }
+  },
+  "outDir": "./dist"
 }

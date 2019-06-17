@@ -46,7 +46,7 @@ namespace APIView
         public override string ToString()
         {
             var returnString = new StringBuilder();
-            TreeRendererAPIV.Render(this, returnString);
+            TreeRendererAPIV.RenderText(this, returnString);
             return returnString.ToString();
         }
     }

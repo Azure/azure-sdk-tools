@@ -14,7 +14,7 @@ namespace APIView
                 foreach (var assemblySymbol in compilation.SourceModule.ReferencedAssemblySymbols)
                 {
                     if (assemblySymbol.Name.Equals("TestLibrary"))
-                        Console.WriteLine(TreeRendererAPIV.Render(new AssemblyAPIV(assemblySymbol)));
+                        Console.WriteLine(TreeRendererAPIV.RenderText(new AssemblyAPIV(assemblySymbol)));
                 }
 
             }

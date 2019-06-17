@@ -57,7 +57,7 @@ namespace APIView
 
         public override string ToString()
         {
-            return TreeRendererAPIV.Render(this);
+            return TreeRendererAPIV.RenderText(this);
         }
     }
 }

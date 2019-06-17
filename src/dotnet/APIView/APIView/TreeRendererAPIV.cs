@@ -30,7 +30,7 @@ namespace APIView
         {
             AppendIndentsText(builder, indents);
             //TODO: determine whether event is EventHandler or other type - and if it has type parameter(s)
-            builder.Append("public event EventHandler ").Append(e.Name).Append(";");
+            builder.Append(e.Accessibility).Append(" event EventHandler ").Append(e.Name).Append(";");
         }
 
         internal static void RenderText(FieldAPIV f, StringBuilder builder, int indents = 0)
@@ -79,7 +79,7 @@ namespace APIView
             }
 
             if (!m.IsInterfaceMethod)
-                builder.Append("public ");
+                builder.Append(m.Accessibility).Append(" ");
 
             if (m.IsStatic)
                 builder.Append("static ");
@@ -130,7 +130,7 @@ namespace APIView
         internal static void RenderText(NamedTypeAPIV nt, StringBuilder builder, int indents = 0)
         {
             AppendIndentsText(builder, indents);
-            builder.Append("public ").Append(nt.Type).Append(" ");
+            builder.Append(nt.Accessibility).Append(" ").Append(nt.Type).Append(" ");
 
             indents++;
 
@@ -296,7 +296,7 @@ namespace APIView
         internal static void RenderText(PropertyAPIV p, StringBuilder builder, int indents = 0)
         {
             AppendIndentsText(builder, indents);
-            builder.Append("public ").Append(p.Type).Append(" ").Append(p.Name).Append(" { get; ");
+            builder.Append(p.Accessibility).Append(" ").Append(p.Type).Append(" ").Append(p.Name).Append(" { get; ");
 
             if (p.HasSetMethod)
                 builder.Append("set; ");

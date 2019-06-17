@@ -118,11 +118,6 @@ namespace TestLibrary
 
         }
 
-        protected void ProtectedMethod()
-        {
-
-        }
-
         internal void InternalMethod()
         {
 

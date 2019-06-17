@@ -15,10 +15,10 @@ namespace APIViewTest
 
             Assert.Equal("SomeEventsSomeFieldsNoMethodsSomeNamedTypes", publicClass.Name);
             Assert.Equal("class", publicClass.Type);
-            Assert.Single(publicClass.Events);
+            Assert.Equal(2, publicClass.Events.Length);
             Assert.Equal(2, publicClass.Fields.Length);
             Assert.Empty(publicClass.Methods);
-            Assert.Single(publicClass.NamedTypes);
+            Assert.Equal(2, publicClass.NamedTypes.Length);
         }
 
         [Fact]

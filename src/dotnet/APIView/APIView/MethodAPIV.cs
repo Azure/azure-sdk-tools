@@ -45,7 +45,7 @@ namespace APIView
                 this.ReturnType = symbol.ReturnType.ToString();
             }
 
-            this.IsInterfaceMethod = symbol.ContainingType.TypeKind.ToString().ToLower().Equals("interface");
+            this.IsInterfaceMethod = symbol.ContainingType.TypeKind == TypeKind.Interface;
             this.IsStatic = symbol.IsStatic;
             this.IsVirtual = symbol.IsVirtual;
             this.IsSealed = symbol.IsSealed;

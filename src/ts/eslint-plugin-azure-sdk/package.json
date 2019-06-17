@@ -37,12 +37,13 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "clean": "rimraf dist*/",
+    "clean": "rimraf dist/",
     "format": "prettier --write \"./**/*.{ts,json,md}\"",
     "lint": "eslint src tests --ext .ts",
-    "prepare": "npm run format && npm run lint && npm run clean && npm test && npm run build",
+    "prebuild": "npm run clean",
+    "prepare": "npm run format && npm run lint && npm test && npm run build",
     "pretest": "tsc -p tsconfig.json",
-    "test": "mocha --timeout 10000 --recursive dist-test/tests"
+    "test": "mocha --timeout 10000 --recursive dist/tests"
   },
   "dependencies": {
     "@types/eslint": "^4.16.6",

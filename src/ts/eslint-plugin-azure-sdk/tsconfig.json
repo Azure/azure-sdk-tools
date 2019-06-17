@@ -8,7 +8,7 @@
     "noImplicitReturns": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "outDir": "./dist-test",
+    "outDir": "./dist",
     "pretty": true,
     "strict": true,
     "target": "es6",

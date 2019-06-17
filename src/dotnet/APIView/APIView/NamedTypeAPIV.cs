@@ -17,6 +17,7 @@ namespace APIView
         public string Name { get; }
         public string Type { get; }
         public string EnumUnderlyingType { get; }
+        public string Accessibility { get; }
 
         public ImmutableArray<EventAPIV> Events { get; }
         public ImmutableArray<FieldAPIV> Fields { get; }
@@ -36,7 +37,8 @@ namespace APIView
             this.Type = symbol.TypeKind.ToString().ToLower();
             if (symbol.EnumUnderlyingType != null)
                 this.EnumUnderlyingType = symbol.EnumUnderlyingType.ToDisplayString();
-            
+            this.Accessibility = symbol.DeclaredAccessibility.ToString().ToLower();
+
             List<EventAPIV> events = new List<EventAPIV>();
             List<FieldAPIV> fields = new List<FieldAPIV>();
             List<string> implementations = new List<string>();
@@ -48,7 +50,8 @@ namespace APIView
             // add any types declared in the body of this type to lists
             foreach (var memberSymbol in symbol.GetMembers())
             {
-                if (memberSymbol.DeclaredAccessibility == Accessibility.Public)
+                if (memberSymbol.DeclaredAccessibility == Microsoft.CodeAnalysis.Accessibility.Public || 
+                    memberSymbol.DeclaredAccessibility == Microsoft.CodeAnalysis.Accessibility.Protected)
                 {
                     switch (memberSymbol)
                     {
@@ -78,11 +81,9 @@ namespace APIView
                             break;
                     }
                 }
-                else if ((memberSymbol.DeclaredAccessibility == Accessibility.Protected) && (memberSymbol is IFieldSymbol f))
-                    fields.Add(new FieldAPIV(f));
             }
 
-            if (symbol.BaseType != null && !(symbol.BaseType.ToDisplayString().Equals("object") || symbol.BaseType.ToDisplayString().Equals("System.ValueType")))
+            if (symbol.BaseType != null && !(symbol.BaseType.SpecialType == SpecialType.System_Object || symbol.BaseType.SpecialType == SpecialType.System_ValueType))
                 implementations.Add(symbol.BaseType.ToDisplayString());
 
             // add a string representation of each implemented type to list

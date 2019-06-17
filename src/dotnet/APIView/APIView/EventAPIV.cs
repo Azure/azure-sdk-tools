@@ -11,6 +11,7 @@ namespace APIView
     public class EventAPIV
     {
         public string Name { get; }
+        public string Accessibility { get; }
 
         /// <summary>
         /// Construct a new EventAPIV instance, represented by the provided symbol.
@@ -19,6 +20,7 @@ namespace APIView
         public EventAPIV(IEventSymbol symbol)
         {
             this.Name = symbol.Name;
+            this.Accessibility = symbol.DeclaredAccessibility.ToString().ToLower();
         }
 
         public override string ToString()

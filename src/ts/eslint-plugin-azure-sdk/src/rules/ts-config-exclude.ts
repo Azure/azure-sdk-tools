@@ -3,7 +3,7 @@
  * @author Arpan Laha
  */
 
-import getVerifiers from "../utils/verifiers";
+import { getVerifiers, stripPath } from "../utils/verifiers";
 import { Rule } from "eslint";
 
 //------------------------------------------------------------------------------
@@ -27,18 +27,19 @@ export = {
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     const verifiers = getVerifiers(context, {
       outer: "exclude",
-      expected: "node_modules",
-      fileName: "tsconfig.json"
+      expected: "node_modules"
     });
-    return {
-      // callback functions
+    return stripPath(context.getFilename()) === "tsconfig.json"
+      ? {
+          // callback functions
 
-      // check to see if exclude exists at the outermost level
-      "ExpressionStatement > ObjectExpression": verifiers.existsInFile,
+          // check to see if exclude exists at the outermost level
+          "ExpressionStatement > ObjectExpression": verifiers.existsInFile,
 
-      // check the node corresponding to exclude to see if its value contains "node_modules"
-      "ExpressionStatement > ObjectExpression > Property[key.value='exclude']":
-        verifiers.outerContainsExpected
-    } as Rule.RuleListener;
+          // check the node corresponding to exclude to see if its value contains "node_modules"
+          "ExpressionStatement > ObjectExpression > Property[key.value='exclude']":
+            verifiers.outerContainsExpected
+        }
+      : {};
   }
 };

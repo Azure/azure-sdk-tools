@@ -3,7 +3,7 @@
  * @author Arpan Laha
  */
 
-import getVerifiers from "../utils/verifiers";
+import { getVerifiers, stripPath } from "../utils/verifiers";
 import { Rule } from "eslint";
 import { Property } from "estree";
 
@@ -36,17 +36,19 @@ export = {
       inner: "test",
       fileName: "package.json"
     });
-    return {
-      // callback functions
+    return stripPath(context.getFilename()) === "package.json"
+      ? ({
+          // callback functions
 
-      // check to see if scripts exists at the outermost level
-      "ExpressionStatement > ObjectExpression": buildVerifiers.existsInFile,
+          // check to see if scripts exists at the outermost level
+          "ExpressionStatement > ObjectExpression": buildVerifiers.existsInFile,
 
-      // check to see if scripts contains both build and test
-      "Property[key.value='scripts']": (node: Property): void => {
-        buildVerifiers.isMemberOf(node);
-        testVerifiers.isMemberOf(node);
-      }
-    } as Rule.RuleListener;
+          // check to see if scripts contains both build and test
+          "Property[key.value='scripts']": (node: Property): void => {
+            buildVerifiers.isMemberOf(node);
+            testVerifiers.isMemberOf(node);
+          }
+        } as Rule.RuleListener)
+      : {};
   }
 };

@@ -16,7 +16,7 @@
   },
   "parser": "@typescript-eslint/parser",
   "rules": {
-    "@typescript-eslint/indent": ["error", 2],
+    "@typescript-eslint/indent": "off",
     "indent": "off",
     "no-useless-escape": "off"
   }

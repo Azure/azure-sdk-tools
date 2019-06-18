@@ -10,150 +10,124 @@ interface StructureData {
   outer: string;
   inner?: string;
   expected?: any; //eslint-disable-line @typescript-eslint/no-explicit-any
-  fileName?: string;
 }
 
-const stripPath = (pathOrFileName: string): string => {
+export const stripPath = (pathOrFileName: string): string => {
   return pathOrFileName.replace(/^.*[\\\/]/, "");
 };
 
-//eslint-disable-next-line @typescript-eslint/no-explicit-any
-export = (context: Rule.RuleContext, data: StructureData): any => {
+/*eslint-disable @typescript-eslint/no-explicit-any*/
+export const getVerifiers = (
+  context: Rule.RuleContext,
+  data: StructureData
+): any => {
+  /* eslint-enable @typescript-eslint/no-explicit-any*/
   return {
     // check to see if if the outer key exists at the outermost level
     existsInFile: (node: ObjectExpression): void => {
-      const fileName = data.fileName;
-      if (stripPath(context.getFilename()) === fileName) {
-        const outer = data.outer;
+      const outer = data.outer;
 
-        const properties: Property[] = node.properties as Property[];
-        let foundOuter = false;
+      const properties: Property[] = node.properties as Property[];
+      let foundOuter = false;
 
-        for (const property of properties) {
-          if (property.key) {
-            const key = property.key as Literal;
-            if (key.value === outer) {
-              foundOuter = true;
-              break;
-            }
+      for (const property of properties) {
+        if (property.key) {
+          const key = property.key as Literal;
+          if (key.value === outer) {
+            foundOuter = true;
+            break;
           }
         }
-
-        !foundOuter &&
-          context.report({
-            node: node,
-            message: outer + " does not exist at the outermost level"
-          });
       }
+
+      !foundOuter &&
+        context.report({
+          node: node,
+          message: outer + " does not exist at the outermost level"
+        });
     },
 
     // check to see if the value of the outer key matches the expected value
     outerMatchesExpected: (node: Property): void => {
-      const fileName = data.fileName;
-      if (stripPath(context.getFilename()) === fileName) {
-        const outer = data.outer;
-        const expected = data.expected;
+      const outer = data.outer;
+      const expected = data.expected;
 
-        const nodeValue: Literal = node.value as Literal;
+      const nodeValue: Literal = node.value as Literal;
 
-        nodeValue.value !== expected &&
-          context.report({
-            node: node,
-            message:
-              outer +
-              " is set to {{ identifier }} when it should be set to " +
-              expected,
-            data: {
-              identifier: nodeValue.value as string
-            }
-          });
-      }
+      nodeValue.value !== expected &&
+        context.report({
+          node: node,
+          message:
+            outer +
+            " is set to {{ identifier }} when it should be set to " +
+            expected,
+          data: {
+            identifier: nodeValue.value as string
+          }
+        });
     },
 
     // check that the inner key is a member of the outer key
     isMemberOf: (node: Property): void => {
-      const fileName = data.fileName;
-      if (stripPath(context.getFilename()) === fileName) {
-        const outer = data.outer;
-        const inner = data.inner;
+      const outer = data.outer;
+      const inner = data.inner;
 
-        const value: ObjectExpression = node.value as ObjectExpression;
-        const properties: Property[] = value.properties as Property[];
-        let foundInner = false;
-        for (const property of properties) {
-          if (property.key) {
-            const key = property.key as Literal;
-            if (key.value === inner) {
-              foundInner = true;
-              break;
-            }
+      const value: ObjectExpression = node.value as ObjectExpression;
+      const properties: Property[] = value.properties as Property[];
+      let foundInner = false;
+      for (const property of properties) {
+        if (property.key) {
+          const key = property.key as Literal;
+          if (key.value === inner) {
+            foundInner = true;
+            break;
           }
         }
-
-        !foundInner &&
-          context.report({
-            node: node,
-            message: inner + " is not a member of " + outer
-          });
       }
+
+      !foundInner &&
+        context.report({
+          node: node,
+          message: inner + " is not a member of " + outer
+        });
     },
 
     // check the node corresponding to the inner value to see if it is set to the expected value
     innerMatchesExpected: (node: Property): void => {
-      const fileName = data.fileName;
-      if (stripPath(context.getFilename()) === fileName) {
-        const outer = data.outer;
-        const inner = data.inner;
-        const expected = data.expected;
+      const outer = data.outer;
+      const inner = data.inner;
+      const expected = data.expected;
 
-        const nodeValue: Literal = node.value as Literal;
+      const nodeValue: Literal = node.value as Literal;
 
-        nodeValue.value !== expected &&
-          context.report({
-            node: node,
-            message:
-              outer +
-              "." +
-              inner +
-              " is set to {{ identifier }} when it should be set to " +
-              expected,
-            data: {
-              identifier: nodeValue.value as string
-            }
-          });
-      }
+      nodeValue.value !== expected &&
+        context.report({
+          node: node,
+          message:
+            outer +
+            "." +
+            inner +
+            " is set to {{ identifier }} when it should be set to " +
+            expected,
+          data: {
+            identifier: nodeValue.value as string
+          }
+        });
     },
 
     // check the node corresponding to the inner value to see if it contains the expected value
     outerContainsExpected: (node: Property): void => {
       const outer = data.outer;
       const expected = data.expected;
-      const fileName = data.fileName;
 
       const nodeValue: ArrayExpression = node.value as ArrayExpression;
       const candidateArray: Literal[] = nodeValue.elements as Literal[];
 
-      if (stripPath(context.getFilename()) === fileName) {
-        if (expected instanceof Array) {
-          for (const value of expected) {
-            let foundValue = false;
-            for (const candidate of candidateArray) {
-              if (candidate.value === value) {
-                foundValue = true;
-                break;
-              }
-            }
-
-            !foundValue &&
-              context.report({
-                node: node,
-                message: outer + " does not contain " + value
-              });
-          }
-        } else {
+      if (expected instanceof Array) {
+        for (const value of expected) {
           let foundValue = false;
           for (const candidate of candidateArray) {
-            if (candidate.value === expected) {
+            if (candidate.value === value) {
               foundValue = true;
               break;
             }
@@ -162,9 +136,23 @@ export = (context: Rule.RuleContext, data: StructureData): any => {
           !foundValue &&
             context.report({
               node: node,
-              message: outer + " does not contain " + expected
+              message: outer + " does not contain " + value
             });
         }
+      } else {
+        let foundValue = false;
+        for (const candidate of candidateArray) {
+          if (candidate.value === expected) {
+            foundValue = true;
+            break;
+          }
+        }
+
+        !foundValue &&
+          context.report({
+            node: node,
+            message: outer + " does not contain " + expected
+          });
       }
     }
   };

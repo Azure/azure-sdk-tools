@@ -3,7 +3,7 @@
  * @author Arpan Laha
  */
 
-import getVerifiers from "../utils/verifiers";
+import { getVerifiers, stripPath } from "../utils/verifiers";
 import { Rule } from "eslint";
 
 //------------------------------------------------------------------------------
@@ -28,18 +28,19 @@ export = {
     const verifiers = getVerifiers(context, {
       outer: "compilerOptions",
       inner: "experimentalDecorators",
-      expected: false,
-      fileName: "tsconfig.json"
+      expected: false
     });
-    return {
-      // callback functions
+    return stripPath(context.getFilename()) === "tsconfig.json"
+      ? {
+          // callback functions
 
-      // check to see if compilerOptions exists at the outermost level
-      "ExpressionStatement > ObjectExpression": verifiers.existsInFile,
+          // check to see if compilerOptions exists at the outermost level
+          "ExpressionStatement > ObjectExpression": verifiers.existsInFile,
 
-      // check the node corresponding to compilerOptions.experimentalDecorators to see if it is set to false
-      "ExpressionStatement > ObjectExpression > Property[key.value='compilerOptions'] > ObjectExpression > Property[key.value='experimentalDecorators']":
-        verifiers.innerMatchesExpected
-    } as Rule.RuleListener;
+          // check the node corresponding to compilerOptions.experimentalDecorators to see if it is set to false
+          "ExpressionStatement > ObjectExpression > Property[key.value='compilerOptions'] > ObjectExpression > Property[key.value='experimentalDecorators']":
+            verifiers.innerMatchesExpected
+        }
+      : {};
   }
 };

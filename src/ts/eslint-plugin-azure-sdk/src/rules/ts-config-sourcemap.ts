@@ -3,7 +3,7 @@
  * @author Arpan Laha
  */
 
-import getVerifiers from "../utils/verifiers";
+import { getVerifiers, stripPath } from "../utils/verifiers";
 import { Rule } from "eslint";
 import { Property } from "estree";
 
@@ -29,35 +29,36 @@ export = {
     const sourceMapVerifiers = getVerifiers(context, {
       outer: "compilerOptions",
       inner: "sourceMap",
-      expected: true,
-      fileName: "tsconfig.json"
+      expected: true
     });
     const declarationMapVerifiers = getVerifiers(context, {
       outer: "compilerOptions",
       inner: "declarationMap",
-      expected: true,
-      fileName: "tsconfig.json"
+      expected: true
     });
 
-    return {
-      // callback functions
+    return stripPath(context.getFilename()) === "tsconfig.json"
+      ? ({
+          // callback functions
 
-      // check to see if compilerOptions exists at the outermost level
-      "ExpressionStatement > ObjectExpression": sourceMapVerifiers.existsInFile,
+          // check to see if compilerOptions exists at the outermost level
+          "ExpressionStatement > ObjectExpression":
+            sourceMapVerifiers.existsInFile,
 
-      // check that sourceMap and declarationMap are both members of compilerOptions
-      "Property[key.value='compilerOptions']": (node: Property): void => {
-        sourceMapVerifiers.isMemberOf(node);
-        declarationMapVerifiers.isMemberOf(node);
-      },
+          // check that sourceMap and declarationMap are both members of compilerOptions
+          "Property[key.value='compilerOptions']": (node: Property): void => {
+            sourceMapVerifiers.isMemberOf(node);
+            declarationMapVerifiers.isMemberOf(node);
+          },
 
-      // check the node corresponding to compilerOptions.sourceMap to see if it is set to true
-      "ExpressionStatement > ObjectExpression > Property[key.value='compilerOptions'] > ObjectExpression > Property[key.value='sourceMap']":
-        sourceMapVerifiers.innerMatchesExpected,
+          // check the node corresponding to compilerOptions.sourceMap to see if it is set to true
+          "ExpressionStatement > ObjectExpression > Property[key.value='compilerOptions'] > ObjectExpression > Property[key.value='sourceMap']":
+            sourceMapVerifiers.innerMatchesExpected,
 
-      // check the node corresponding to compilerOptions.declarationMap to see if it is set to true
-      "ExpressionStatement > ObjectExpression > Property[key.value='compilerOptions'] > ObjectExpression > Property[key.value='declarationMap']":
-        declarationMapVerifiers.innerMatchesExpected
-    } as Rule.RuleListener;
+          // check the node corresponding to compilerOptions.declarationMap to see if it is set to true
+          "ExpressionStatement > ObjectExpression > Property[key.value='compilerOptions'] > ObjectExpression > Property[key.value='declarationMap']":
+            declarationMapVerifiers.innerMatchesExpected
+        } as Rule.RuleListener)
+      : {};
   }
 };

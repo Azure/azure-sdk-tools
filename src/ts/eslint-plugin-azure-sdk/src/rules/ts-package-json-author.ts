@@ -27,8 +27,7 @@ export = {
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     const verifiers = getVerifiers(context, {
       outer: "author",
-      expected: "Microsoft Corporation",
-      fileName: "package.json"
+      expected: "Microsoft Corporation"
     });
     return stripPath(context.getFilename()) === "package.json"
       ? {

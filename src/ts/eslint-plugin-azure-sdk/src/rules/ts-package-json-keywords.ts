@@ -27,8 +27,7 @@ export = {
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     const verifiers = getVerifiers(context, {
       outer: "keywords",
-      expected: ["Azure", "cloud"],
-      fileName: "package.json"
+      expected: ["Azure", "cloud"]
     });
     return stripPath(context.getFilename()) === "package.json"
       ? {

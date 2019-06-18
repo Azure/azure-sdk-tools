@@ -27,8 +27,7 @@ export = {
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     const verifiers = getVerifiers(context, {
       outer: "repository",
-      expected: "github:Azure/azure-sdk-for-js",
-      fileName: "package.json"
+      expected: "github:Azure/azure-sdk-for-js"
     });
     return stripPath(context.getFilename()) === "package.json"
       ? {

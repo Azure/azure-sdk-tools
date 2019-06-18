@@ -28,8 +28,7 @@ export = {
     const verifiers = getVerifiers(context, {
       outer: "bugs",
       inner: "url",
-      expected: "https://github.com/Azure/azure-sdk-for-js/issues",
-      fileName: "package.json"
+      expected: "https://github.com/Azure/azure-sdk-for-js/issues"
     });
     return stripPath(context.getFilename()) === "package.json"
       ? {

@@ -28,13 +28,11 @@ export = {
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     const buildVerifiers = getVerifiers(context, {
       outer: "scripts",
-      inner: "build",
-      fileName: "package.json"
+      inner: "build"
     });
     const testVerifiers = getVerifiers(context, {
       outer: "scripts",
-      inner: "test",
-      fileName: "package.json"
+      inner: "test"
     });
     return stripPath(context.getFilename()) === "package.json"
       ? ({

@@ -49,7 +49,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Tasks.PreBuild
         const string REPO_ROOT_TOKEN_DIR = ".git";
 
         //const string default_excludeTokens = @"Batch\Support;D:\adxRepo\netSdk\master\src\SDKCommon\Test\SampleProjectPublish\SampleSDKTestPublish.csproj";
-        const string default_excludeTokens = @"Batch\Support;SDKCommon\Test\SampleProjectPublish\";
+        const string default_excludeTokens = @"Batch\Microsoft.Azure.Batch;Batch\Microsoft.Azure.Batch.FilesConventions;Batch\Microsoft.Azure.Batch.FileStaging;mgmtCommon\Test\SampleProjectPublish\";
         #endregion
 
         #region fields
@@ -67,6 +67,8 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Tasks.PreBuild
 
         #region Task Input Properties
 
+        public bool UseLegacyDirStructure { get; set; }
+
         /// <summary>
         /// Scope is a hint as to which directories to build
         /// If no scope is specified, it's assumed the entire repo needs to be built
@@ -74,9 +76,15 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Tasks.PreBuild
         public string BuildScope { get; set; }
 
         /// <summary>
-        /// 
+        /// Semicolon seperated scopes, this can be partial or fully qualified scopes
         /// </summary>
-        public string[] MultipleScopes { get; set; }
+        public string BuildScopes { get; set; }
+
+        /// <summary>
+        /// Provide list of scopes for the task
+        /// This can be either fully qualified scopes or relative scopes
+        /// </summary>
+        List<string> MultipleScopes { get; set; }
 
         /// <summary>
         /// Fully qualified Scope Path
@@ -191,16 +199,34 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Tasks.PreBuild
         #endregion
 
         #region Constructor
-        public CategorizeSDKProjectsTask() { }
+        public CategorizeSDKProjectsTask()
+        {
+            MultipleScopes = new List<string>();
+        }
 
         public CategorizeSDKProjectsTask(string rootDirPath) : this(rootDirPath, string.Empty, string.Empty, string.Empty) { }
 
-        public CategorizeSDKProjectsTask(string rootDirPath, string buildScope, string PType, string PCategory) : this()
+        public CategorizeSDKProjectsTask(string rootDirPath, string buildScope, string PType, string PCategory)
+            : this(rootDirPath, buildScope, null, PType, PCategory)
         {
             RepositoryRootDirPath = rootDirPath;
             BuildScope = buildScope;
             ProjectType = PType;
             ProjectCategory = PCategory;
+        }
+
+        public CategorizeSDKProjectsTask(string rootDirPath, string buildScope, List<string> multipleScopes, 
+            string PType, string PCategory) : this()
+        {
+            RepositoryRootDirPath = rootDirPath;            
+            BuildScope = buildScope;
+            ProjectType = PType;
+            ProjectCategory = PCategory;
+
+            if(multipleScopes != null)
+            {
+                MultipleScopes = multipleScopes;
+            }
         }
 
         #endregion
@@ -232,11 +258,12 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Tasks.PreBuild
             TaskLogger.LogInfo(MessageImportance.High, "Tokens to be excluded '{0}'", CmdLineExcludeScope);
 
             TaskLogger.LogInfo(MessageImportance.High, "Repository Root Dir Path '{0}'", RepositoryRootDirPath);
-            ProjectSearchUtility psu = new ProjectSearchUtility(RepositoryRootDirPath, BuildScope,
-                                        CmdLineExcludeScope, CmdLineIncludeScope, ProjType, ProjCat);
+
+            ProjectSearchUtility psu = new ProjectSearchUtility(RepositoryRootDirPath, MultipleScopes, BuildScope, FullyQualifiedBuildScopeDirPath, CmdLineExcludeScope, CmdLineIncludeScope, ProjType, ProjCat);
+            psu.UseLegacyDirs = UseLegacyDirStructure;
             TaskLogger.LogInfo(MessageImportance.High, "Use Legacy Directory Strucuture is set to '{0}'", psu.UseLegacyDirs.ToString());
             TaskLogger.LogInfo(MessageImportance.High, "SDK Root Dir Path '{0}'", psu.SDKRootDir);
-            TaskLogger.LogInfo(MessageImportance.High, "Scope Root Dir Path '{0}'", psu.ScopeRootDir);
+            TaskLogger.LogInfo(MessageImportance.High, psu.SearchDirPaths, "Search Dir Path(s)");
         }
 
         #endregion
@@ -259,49 +286,10 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Tasks.PreBuild
             ProjectSearchUtility psu = null;
             Dictionary<string, SdkProjectMetadata> allProj = null;
 
-            if (MultipleScopes.NotNullOrAny<string>())
-            {
-                psu = new ProjectSearchUtility(RepositoryRootDirPath, string.Empty,
-                                                CmdLineExcludeScope, CmdLineIncludeScope, ProjType, ProjCat);
+            psu = new ProjectSearchUtility(RepositoryRootDirPath, MultipleScopes, BuildScope, FullyQualifiedBuildScopeDirPath, CmdLineExcludeScope, CmdLineIncludeScope, ProjType, ProjCat);
+            psu.UseLegacyDirs = UseLegacyDirStructure;
 
-                foreach (string scope in MultipleScopes)
-                {
-                    searchedProjects.AddRange(psu.FindProjects(scope));
-                }
-            }
-            else if (!string.IsNullOrWhiteSpace(FullyQualifiedBuildScopeDirPath))
-            {
-                psu = new ProjectSearchUtility(FullyQualifiedBuildScopeDirPath,
-                                                    CmdLineExcludeScope, CmdLineIncludeScope, ProjType, ProjCat);
-                searchedProjects = psu.FindProjects();
-            }            
-            else
-            {
-                //If BuildScope is empty, we will default to the root anyway, so regardless if we have a valid token or an invalid token or empty token
-                psu = new ProjectSearchUtility(RepositoryRootDirPath, BuildScope,
-                                                    CmdLineExcludeScope, CmdLineIncludeScope, ProjType, ProjCat);
-                searchedProjects = psu.FindProjects();
-            }
-            
-            //if(psu == null)
-            //{
-            //    if(MultipleScopes != null)
-            //    {
-            //        psu = new ProjectSearchUtility(RepositoryRootDirPath, string.Empty,
-            //                                        CmdLineExcludeScope, CmdLineIncludeScope, ProjType, ProjCat);
-            //        foreach (string scope in MultipleScopes)
-            //        {
-            //            searchedProjects.AddRange(psu.FindProjects(scope));
-            //        }
-
-            //        allProj = LoadProjectData(searchedProjects);
-            //    }
-            //}
-            //else
-            //{   
-            //    allProj = LoadProjectData(searchedProjects);
-            //}
-
+            searchedProjects = psu.FindProjects();
             allProj = LoadProjectData(searchedProjects);
 
             foreach (KeyValuePair<string, SdkProjectMetadata> kv in allProj)
@@ -448,6 +436,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Tasks.PreBuild
         {
             string azSdkFilePath = string.Empty;
             string azTestFilePath = string.Empty;
+            
 
             var azSdkRef = Directory.EnumerateFiles(RepositoryRootDirPath, "AzSdk.reference.props", SearchOption.AllDirectories);
             if(azSdkRef.Any<string>())
@@ -489,7 +478,31 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Tasks.PreBuild
                 ProjCat = ParseProjectKind<SdkProjectCategory>(ProjectCategory, SdkProjectCategory.MgmtPlane);
             }
 
+            if(!string.IsNullOrWhiteSpace(BuildScope))
+            {
+                MultipleScopes.Add(BuildScope);
+            }
 
+            if(!string.IsNullOrWhiteSpace(BuildScopes))
+            {
+                if(BuildScopes.Contains(";"))
+                {
+                    var tokens = BuildScopes.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+                    if(tokens.Any<string>())
+                    {
+                        MultipleScopes = tokens.ToList<string>();
+                    }
+                }
+                else
+                { 
+                    MultipleScopes.Add(BuildScopes);
+                }
+            }
+
+            if(!string.IsNullOrWhiteSpace(FullyQualifiedBuildScopeDirPath))
+            {
+                MultipleScopes.Add(FullyQualifiedBuildScopeDirPath);
+            }
         }
 
         List<string> ParseIncludeExcludeTokens(string tokenString)
@@ -546,8 +559,6 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Tasks.PreBuild
 
             return pkgRefArray;
         }
-
-        
 
         #endregion
     }

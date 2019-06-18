@@ -257,6 +257,8 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Models
                 envTargetFxList.AddRange(TargetFxList);
             }
 
+            UtilLogger.LogInfo(MessageImportance.Low, envTargetFxList, "Platform specific Fx list");
+
             return envTargetFxList;
         }
 

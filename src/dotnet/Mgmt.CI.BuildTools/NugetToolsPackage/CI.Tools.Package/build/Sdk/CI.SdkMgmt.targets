@@ -11,6 +11,8 @@
 
 		<Message Text=" " Condition="'$(DebugTraceEnv)' == 'true' "/>
 		<Message Text="pkg_root_RepoTestResultsDir=========$(pkg_root_RepoTestResultsDir)" Condition="'$(DebugTraceEnv)' == 'true' " />
+		<Message Text="PackageOutputPath=========$(PackageOutputPath)" Condition="'$(DebugTraceEnv)' == 'true' " />
+		<Message Text="pkg_root_RepoNugPkgOutputDir=========$(pkg_root_RepoNugPkgOutputDir)" Condition="'$(DebugTraceEnv)' == 'true' " />
 
 		<Message Text=" " Condition="'$(DebugTraceEnv)' == 'true' "/>
 		

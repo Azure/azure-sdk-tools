@@ -146,16 +146,18 @@
     <Message Text="pkg_root_RepoRoot..............$(pkg_root_RepoRoot)" Condition=" '$(DebugTrace)' == 'true' " />
     <Message Text="pkg_root_RepoSrcDir..............$(pkg_root_RepoSrcDir)" Condition=" '$(DebugTrace)' == 'true' " />
 
+    <!--MultipleScopes="@(ScopesFromPullRequest)" -->
     <CategorizeSDKProjectsTask
       BuildScope="$(Scope)"
       FullyQualifiedBuildScopeDirPath="$(FQBuildScopeDirPath)"
-      MultipleScopes="@(ScopesFromPullRequest)"
+      BuildScopes="$(BuildScopes)"  
       CmdLineIncludeScope="$(IncludeRPs)"
       CmdLineExcludeScope="$(ExcludeRPs)"
       DebugMode="$(DebugMode)"
       WhatIf="$(WhatIf)"
       ProjectType="$(ProjectType)"
       ProjectCategory="$(ProjectCategory)"
+      UseLegacyDirStructure="$(UseLegacyDirStructure)"
       >
       <Output TaskParameter="SDK_Projects" ItemName="SDK_Projects" />
 	    <Output TaskParameter="Test_Projects" ItemName="Test_Projects" />
@@ -246,8 +248,6 @@
       <Output TaskParameter="TargetOutputs" ItemName="SdkNuGetPackages" />
     </MSBuild>
   </Target>
-  
- 
 
   <Target Name="DisplayHelp">
     <Message Text="msbuild build.proj /t:Build"/>
@@ -271,59 +271,3 @@
   <Target Name="PreBuildStaticAnalysis" DependsOnTargets="$(PreBuildStaticAnalysisTargets)"/>
   <Import Project="..\tasks\common.tasks"/>  
 </Project>
-
-<!--
-
- <Target Name="PublishingNuget">
-    <Error Condition=" ('$(NugetPackageName)' == '') AND '$(MultiPackagePublish)' != 'true' " Text="Please Provide Package Name that has to be published /p:NugetPackageName=[packagename]" />
-    <Error Condition="( ('$(Scope)' == '' OR '$(Scope)' == 'all' OR '$(Scope)' == 'All') AND '$(MultiPackagePublish)' != 'true' )" 
-                        Text="Publishing nuget package without specifying scope and packageName has now been disabled (e.g /p:NugetPackageName=Microsoft.Azure.Management.Compute /p:Scope=SDKs\Compute )" />
-                    Condition=" ('$(NugetPackageName)' == '') OR ('$(Scope)' == '' OR '$(Scope)' == 'all' OR '$(Scope)' == 'All') AND '$(PublishMultiPackage)' != 'true' "  
-    <PropertyGroup>
-      <PublishNugetToDir Condition=" '$(PublishNugetToDir)' == '' ">$(LibraryRoot)PublishedNugets</PublishNugetToDir>
-      <TaskDebugOutput Condition=" '$(TaskDebugOutput)' == '' ">false</TaskDebugOutput>
-      <SkipNugetPublishing Condition=" '$(SkipNugetPublishing)' == '' ">false</SkipNugetPublishing>
-      <SkipSymbolPublishing Condition=" '$(SkipSymbolPublishing)' == '' ">true</SkipSymbolPublishing>
-    </PropertyGroup>
-	
-    <Message Text="NugetPackageName...... $(NugetPackageName)" Condition=" '$(DebugTrace)' == 'true' "/>
-    <Message Text="PackageOutputPath...... $(PackageOutputPath)" Condition=" '$(DebugTrace)' == 'true' "/>
-    <Message Text="PublishNugetToDir...... $(PublishNugetToDir)" Condition=" '$(DebugTrace)' == 'true' "/>
-    <Message Text="NuGetCommand...... $(NuGetCommand)" Condition=" '$(DebugTrace)' == 'true' "/>
-    <Message Text="UserId...... $(CIUserId)" Condition=" '$(DebugTrace)' == 'true' "/>
-    <DebugTask Condition=" '$(DebugMode)' == 'true' "/>
-	
-    <MakeDir Directories="$(PublishNugetToDir)" Condition="!Exists($(PublishNugetToDir)) AND !$([System.Text.RegularExpressions.Regex]::IsMatch('$(PublishNugetToDir)', '^(?i)http'))" />
-    <PublishSDKNugetTask 
-      NugetPackageName="$(NugetPackageName)" 
-      PackageOutputPath="$(PackageOutputPath)" 
-      PublishNugetToPath="$(PublishNugetToDir)" 
-      NugetExePath="$(NuGetCommand)"
-      CIUserId="$(CIUserId)"
-      SkipNugetPublishing="$(SkipNugetPublishing)"
-      SkipSymbolPublishing="$(SkipSymbolPublishing)"
-      TaskDebugOutput="$(TaskDebugOutput)"
-      ApiKey="$(ApiKey)"
-      MultiPackagePublish="$(MultiPackagePublish)" 
-      ScopePath="$(Scope)"
-      />
-  </Target>
-
-  <Target Name="ArchiveSymbolsTarget" Condition=" '$(CodeSign)' == 'true'         
-        AND '$(Configuration)' == 'Release' AND '$(SkipArchiveSymbols)' != 'true' ">
-    <Message Text="Archiving Symbols......." />
-    <Message Text="AssemblyFileList ==== @(FilesToSign)" Importance="Normal" />
-    <Message Text="ArchiveSymbolsRootDir ==== $(ArchiveSymbolsRootDir)" Importance="Normal" />
-    
-    <ArchiveSymbolsTask
-      BuiltAssemblyFileCollection="@(FilesToSign)"
-      ArchiveSymbolsRootDir="$(ArchiveSymbolsRootDir)"
-      BuildJobId="$(JenkinsJobId)"
-      ArchiveSymbolsRequestStatusEmail="$(ArchiveSymbolsRequestStatusEmail)"
-      ArchiveSymbolsRequestProjectName="$(ArchiveSymbolsRequestProjectName)"      
-      SkipExecuteSymbolsRequest="$(SkipExecuteSymbolsRequest)"
-    >
-    </ArchiveSymbolsTask>
-  </Target>
-
--->

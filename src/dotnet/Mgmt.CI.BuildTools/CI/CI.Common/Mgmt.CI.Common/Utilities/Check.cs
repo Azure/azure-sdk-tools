@@ -167,6 +167,15 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Common.Utilities
             }
         }
 
+        public static void DirectoryExists(List<string> dirPaths, string argumentName = "argument")
+        {
+            foreach(string dp in dirPaths)
+            {
+                NotNull(dp, argumentName);
+                DirectoryExists(dp);
+            }
+        }
+
         public static void Empty<T>(IEnumerable<T> collection, bool expectedResult, string exceptionMessage = "Collection items do not match with expectedResult" )
         {
             if (collection == null) throw new ArgumentNullException(exceptionMessage);
@@ -176,6 +185,5 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Common.Utilities
                 throw new ArgumentException(exceptionMessage);
             }
         }
-
     }
 }

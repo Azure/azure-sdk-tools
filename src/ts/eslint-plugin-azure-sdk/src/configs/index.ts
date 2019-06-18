@@ -24,6 +24,7 @@ export = {
       "@ts-common/azure-sdk/ts-config-no-experimentaldecorators": "error",
       "@ts-common/azure-sdk/ts-config-sourcemap": "error",
       "@ts-common/azure-sdk/ts-config-strict": "error",
+      "@ts-common/azure-sdk/ts-modules-no-default": "error",
       "@ts-common/azure-sdk/ts-package-json-author": "error",
       "@ts-common/azure-sdk/ts-package-json-bugs": "error",
       "@ts-common/azure-sdk/ts-package-json-homepage": "error",

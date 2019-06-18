@@ -10,7 +10,5 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Common.Base
         /// Task name, either class name or a friendly name that identifies your task (Build task or Util task)
         /// </summary>
         string NetSdkTaskName { get; }
-
-        //bool IsDisposed { get; }
     }
 }

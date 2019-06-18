@@ -101,5 +101,16 @@ namespace Tests.CI.BuildTasks.TasksTests
                 Assert.True(false);
             }
         }
+
+        [Fact]
+        public void MultipleScopes()
+        {
+            DetectRPScopeTask rpScope = new DetectRPScopeTask(NET_SDK_PUB_URL, 6606);
+
+            if(rpScope.Execute())
+            {
+                Assert.True(rpScope.ScopesFromPR.Length > 0);
+            }
+        }
     }
 }

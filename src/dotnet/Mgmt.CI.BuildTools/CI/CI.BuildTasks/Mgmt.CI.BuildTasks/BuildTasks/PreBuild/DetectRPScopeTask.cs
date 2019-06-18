@@ -5,7 +5,6 @@
 namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
 {
     using Microsoft.Build.Framework;
-    using MS.Az.Mgmt.CI.BuildTasks.Common;
     using MS.Az.Mgmt.CI.BuildTasks.Common.Base;
     using MS.Az.Mgmt.CI.BuildTasks.Common.ExtensionMethods;
     using MS.Az.Mgmt.CI.BuildTasks.Common.Utilities;
@@ -16,8 +15,6 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
-    using System.Text;
-    using System.Threading.Tasks;
 
     /// <summary>
     /// Based on the values passed during PR validation
@@ -76,17 +73,17 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
             {
                 if(_ghSvc == null)
                 {
-                    string accTkn = KVSvc.GetSecret(CommonConstants.AzureAuth.KVInfo.Secrets.GH_AdxSdkNetAcccesToken);
+                    //string accTkn = KVSvc.GetSecret(CommonConstants.AzureAuth.KVInfo.Secrets.GH_AdxSdkNetAcccesToken);
+
+                    //hard coding this, the downside is, the read limit can be reached early if this token is misused.
+                    // this token does not allow to do any writes, so we should be ok.
+                    string accTkn = @"e25934fa80d5a9d587c9ced3f95a5d0e05fd6c8d";
                     _ghSvc = new GitHubService(TaskLogger, accTkn);
                 }
 
                 return _ghSvc;
             }
         }
-
-        //long RepoId { get; set; }
-
-        //long PrNumber { get; set; }
         #endregion
 
         #region Constructor
@@ -197,34 +194,10 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
             TaskLogger.LogInfo(MessageImportance.Low, prFileList, "List of files from PR");
             Dictionary<string, string> RPDirs = FindScopeFromPullRequestFileList(prFileList);
 
-            //Dictionary<string, string> RPDirs = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-
             if (RPDirs.NotNullOrAny<KeyValuePair<string, string>>())
             {
                 finalScopePathList = RPDirs.Select<KeyValuePair<string, string>, string>((item) => item.Key).ToList<string>();
             }
-
-            
-            //foreach(string filePath in prFileList)
-            //{
-            //    string slnDirPath = fileSysUtil.TraverUptoRootWithFileExtension(filePath);
-
-            //    if (Directory.Exists(slnDirPath))
-            //    {
-            //        if(!RPDirs.ContainsKey(slnDirPath))
-            //        {
-            //            RPDirs.Add(slnDirPath, slnDirPath);
-            //        }
-            //    }
-            //    else
-            //    {
-            //        TaskLogger.LogWarning("RPScope Detection: '{0}' does not exists", slnDirPath);
-            //    }
-            //}
-
-            //TaskLogger.LogInfo("Number of RPs detected", RPDirs);
-
-            //return RPDirs.Select<KeyValuePair<string, string>, string>((item) => item.Key).ToList<string>();
 
             return finalScopePathList;
         }
@@ -284,18 +257,8 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
                 }
             }
 
-            //if (scopeDictionary.NotNullOrAny<KeyValuePair<string, string>>())
-            //{
-            //    finalScopePathList = scopeDictionary.Select<KeyValuePair<string, string>, string>((item) => item.Key).ToList<string>();
-            //}
-
             return scopeDictionary;
-
-            //else
-            //{
-            //    TaskLogger.LogError("Provided repo '{0}' is not currently supported", repo.ToString());
-            //}
-}
+        }
 
         string AdjustPlatformPaths(string givenPath)
         {

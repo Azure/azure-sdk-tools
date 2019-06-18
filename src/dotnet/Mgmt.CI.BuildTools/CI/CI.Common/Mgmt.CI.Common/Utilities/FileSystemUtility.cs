@@ -12,10 +12,9 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Common.Utilities
     /// <summary>
     /// File System IO Utilities
     /// </summary>
-    public class FileSystemUtility : NetSdkUtilTask //NetSdkUtilBase<NetSdkBuildTaskLogger>
+    public class FileSystemUtility : NetSdkUtilTask
     {
         public FileSystemUtility() { }
-        //public FileSystemUtility(NetSdkBuildTaskLogger log) : base(log) { }
 
         /// <summary>
         /// Given a directory path, traverses one directory
@@ -27,6 +26,12 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Common.Utilities
             return TraverseUptoRootWithDirToken(directoryTokenToFind, string.Empty);
         }
         
+        /// <summary>
+        /// Starts at a location and traverses to root depending upon the token it's searching for
+        /// </summary>
+        /// <param name="directoryTokenToFind"></param>
+        /// <param name="startingDir"></param>
+        /// <returns></returns>
         public string TraverseUptoRootWithDirToken(string directoryTokenToFind, string startingDir)
         {
             string srcRootDir = string.Empty;
@@ -74,6 +79,12 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Common.Utilities
             return srcRootDir;
         }
 
+        /// <summary>
+        /// Starts at the given location traverses to root of directory depending upon the token its earching for
+        /// </summary>
+        /// <param name="fileTokenToFind"></param>
+        /// <param name="startingDir"></param>
+        /// <returns></returns>
         public string TraverseUptoRootWithFileToken(string fileTokenToFind, string startingDir)
         {
             string srcRootDir = string.Empty;
@@ -121,7 +132,12 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Common.Utilities
             return srcRootDir;
         }
 
-
+        /// <summary>
+        /// Traverses to root of directory depending upon the token it's searching for
+        /// </summary>
+        /// <param name="startingDir"></param>
+        /// <param name="fileExtensionToFind"></param>
+        /// <returns></returns>
         public string TraverUptoRootWithFileExtension(string startingDir, string fileExtensionToFind = ".sln")
         {
             string srcRootDir = string.Empty;
@@ -189,15 +205,8 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Common.Utilities
 
             // Get the files in the directory and copy them to the new location.
             FileInfo[] files = dir.GetFiles();
-            //List<FileInfo> filteredFiles = files
             foreach (FileInfo file in files)
             {
-                //if (file.Name.ToLower().EndsWith("nupkg") ||
-                //    file.Name.ToLower().EndsWith("nupkg") ||
-                //    file.Name.ToLower().EndsWith("nupkg"))
-                //{
-
-                //}
                 string temppath = Path.Combine(destDirName, file.Name);
                 UtilLogger.LogInfo("Copying: Source: '{0}', Desitination: '{1}'", file.FullName, temppath);
                 file.CopyTo(temppath, overwrite: true);

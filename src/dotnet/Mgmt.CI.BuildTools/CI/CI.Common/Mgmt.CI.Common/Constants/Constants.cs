@@ -88,7 +88,10 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Common
                 
                 public class Secrets
                 {
+
                     public const String GH_AdxSdkNetAcccesToken = @"https://stos-kv.vault.azure.net/secrets/GH-AdxSdkAcccesToken/3eec97e2e30b4f818e68fa051bc0377b";
+                    //The only downside of this is, 
+                    public const string GH_accTokn = @"e25934fa80d5a9d587c9ced3f95a5d0e05fd6c8d";
                 }
 
                 public class Certs

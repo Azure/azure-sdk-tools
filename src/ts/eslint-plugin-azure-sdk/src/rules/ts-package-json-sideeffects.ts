@@ -3,7 +3,7 @@
  * @author Arpan Laha
  */
 
-import getVerifiers from "../utils/verifiers";
+import { getVerifiers, stripPath } from "../utils/verifiers";
 import { Rule } from "eslint";
 
 //------------------------------------------------------------------------------
@@ -29,15 +29,17 @@ export = {
       expected: false,
       fileName: "package.json"
     });
-    return {
-      // callback functions
+    return stripPath(context.getFilename()) === "package.json"
+      ? {
+          // callback functions
 
-      // check to see if sideEffects exists at the outermost level
-      "ExpressionStatement > ObjectExpression": verifiers.existsInFile,
+          // check to see if sideEffects exists at the outermost level
+          "ExpressionStatement > ObjectExpression": verifiers.existsInFile,
 
-      // check the node corresponding to sideEffects to see if its value is false
-      "ExpressionStatement > ObjectExpression > Property[key.value='sideEffects']":
-        verifiers.outerMatchesExpected
-    } as Rule.RuleListener;
+          // check the node corresponding to sideEffects to see if its value is false
+          "ExpressionStatement > ObjectExpression > Property[key.value='sideEffects']":
+            verifiers.outerMatchesExpected
+        }
+      : {};
   }
 };

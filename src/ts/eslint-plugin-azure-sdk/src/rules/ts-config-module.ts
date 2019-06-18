@@ -3,7 +3,7 @@
  * @author Arpan Laha
  */
 
-import getVerifiers from "../utils/verifiers";
+import { getVerifiers, stripPath } from "../utils/verifiers";
 import { Rule } from "eslint";
 
 //------------------------------------------------------------------------------
@@ -28,21 +28,22 @@ export = {
     const verifiers = getVerifiers(context, {
       outer: "compilerOptions",
       inner: "module",
-      expected: "es6",
-      fileName: "tsconfig.json"
+      expected: "es6"
     });
-    return {
-      // callback functions
+    return stripPath(context.getFilename()) === "tsconfig.json"
+      ? {
+          // callback functions
 
-      // check to see if compilerOptions exists at the outermost level
-      "ExpressionStatement > ObjectExpression": verifiers.existsInFile,
+          // check to see if compilerOptions exists at the outermost level
+          "ExpressionStatement > ObjectExpression": verifiers.existsInFile,
 
-      // check that module is a member of compilerOptions
-      "Property[key.value='compilerOptions']": verifiers.isMemberOf,
+          // check that module is a member of compilerOptions
+          "Property[key.value='compilerOptions']": verifiers.isMemberOf,
 
-      // check the node corresponding to compilerOptions.module to see if it is set to es6
-      "ExpressionStatement > ObjectExpression > Property[key.value='compilerOptions'] > ObjectExpression > Property[key.value='module']":
-        verifiers.innerMatchesExpected
-    } as Rule.RuleListener;
+          // check the node corresponding to compilerOptions.module to see if it is set to es6
+          "ExpressionStatement > ObjectExpression > Property[key.value='compilerOptions'] > ObjectExpression > Property[key.value='module']":
+            verifiers.innerMatchesExpected
+        }
+      : {};
   }
 };

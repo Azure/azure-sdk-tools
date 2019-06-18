@@ -3,7 +3,7 @@
  * @license Arpan Laha
  */
 
-import getVerifiers from "../utils/verifiers";
+import { getVerifiers, stripPath } from "../utils/verifiers";
 import { Rule } from "eslint";
 
 //------------------------------------------------------------------------------
@@ -29,15 +29,17 @@ export = {
       expected: "MIT",
       fileName: "package.json"
     });
-    return {
-      // callback functions
+    return stripPath(context.getFilename()) === "package.json"
+      ? {
+          // callback functions
 
-      // check to see if license exists at the outermost level
-      "ExpressionStatement > ObjectExpression": verifiers.existsInFile,
+          // check to see if license exists at the outermost level
+          "ExpressionStatement > ObjectExpression": verifiers.existsInFile,
 
-      // check the node corresponding to license to see if its value is "MIT"
-      "ExpressionStatement > ObjectExpression > Property[key.value='license']":
-        verifiers.outerMatchesExpected
-    } as Rule.RuleListener;
+          // check the node corresponding to license to see if its value is "MIT"
+          "ExpressionStatement > ObjectExpression > Property[key.value='license']":
+            verifiers.outerMatchesExpected
+        }
+      : {};
   }
 };

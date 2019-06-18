@@ -3,7 +3,7 @@
  * @author Arpan Laha
  */
 
-import getVerifiers from "../utils/verifiers";
+import { getVerifiers, stripPath } from "../utils/verifiers";
 import { Rule } from "eslint";
 
 //------------------------------------------------------------------------------
@@ -30,15 +30,17 @@ export = {
       expected: "github:Azure/azure-sdk-for-js",
       fileName: "package.json"
     });
-    return {
-      // callback functions
+    return stripPath(context.getFilename()) === "package.json"
+      ? {
+          // callback functions
 
-      // check to see if repository exists at the outermost level
-      "ExpressionStatement > ObjectExpression": verifiers.existsInFile,
+          // check to see if repository exists at the outermost level
+          "ExpressionStatement > ObjectExpression": verifiers.existsInFile,
 
-      // check the node corresponding to repository to see if its value is github:Azure/azure-sdk-for-js
-      "ExpressionStatement > ObjectExpression > Property[key.value='repository']":
-        verifiers.outerMatchesExpected
-    } as Rule.RuleListener;
+          // check the node corresponding to repository to see if its value is github:Azure/azure-sdk-for-js
+          "ExpressionStatement > ObjectExpression > Property[key.value='repository']":
+            verifiers.outerMatchesExpected
+        }
+      : {};
   }
 };

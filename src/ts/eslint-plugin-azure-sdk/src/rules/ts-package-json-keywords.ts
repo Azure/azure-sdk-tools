@@ -3,7 +3,7 @@
  * @author Arpan Laha
  */
 
-import getVerifiers from "../utils/verifiers";
+import { getVerifiers, stripPath } from "../utils/verifiers";
 import { Rule } from "eslint";
 
 //------------------------------------------------------------------------------
@@ -30,15 +30,17 @@ export = {
       expected: ["Azure", "cloud"],
       fileName: "package.json"
     });
-    return {
-      // callback functions
+    return stripPath(context.getFilename()) === "package.json"
+      ? {
+          // callback functions
 
-      // check to see if keywords exists at the outermost level
-      "ExpressionStatement > ObjectExpression": verifiers.existsInFile,
+          // check to see if keywords exists at the outermost level
+          "ExpressionStatement > ObjectExpression": verifiers.existsInFile,
 
-      // check the node corresponding to keywords to see if its value contains "Azure" and "cloud"
-      "ExpressionStatement > ObjectExpression > Property[key.value='keywords']":
-        verifiers.outerContainsExpected
-    } as Rule.RuleListener;
+          // check the node corresponding to keywords to see if its value contains "Azure" and "cloud"
+          "ExpressionStatement > ObjectExpression > Property[key.value='keywords']":
+            verifiers.outerContainsExpected
+        }
+      : {};
   }
 };

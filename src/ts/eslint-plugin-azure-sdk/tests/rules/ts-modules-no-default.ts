@@ -13,7 +13,11 @@ import { RuleTester } from "eslint";
 const ruleTester = new RuleTester({
   parser: "@typescript-eslint/parser",
   parserOptions: {
-    project: "./tsconfig.json"
+    project: "./tsconfig.json",
+    sourceType: "module"
+  },
+  settings: {
+    main: "test.ts"
   }
 });
 
@@ -21,18 +25,27 @@ ruleTester.run("ts-modules-no-default", rule, {
   valid: [
     // different non-default exports
     {
-      code: 'export = {test: "test"}'
+      code: 'export = {test: "test"}',
+      filename: "test.ts"
     },
     {
-      code: 'const foo = {test: "test"}; export {foo}'
+      code: 'const foo = {test: "test"}; export {foo}',
+      filename: "test.ts"
     },
     {
-      code: 'export const foo = {test: "test"}'
+      code: 'export const foo = {test: "test"}',
+      filename: "test.ts"
+    },
+    // invalid but in a file we dont care about
+    {
+      code: 'export default {test: "test"}',
+      filename: "notTest.ts"
     }
   ],
   invalid: [
     {
       code: 'export default {test: "test"}',
+      filename: "test.ts",
       errors: [
         {
           message: "default exports exist at top level"
@@ -41,6 +54,7 @@ ruleTester.run("ts-modules-no-default", rule, {
     },
     {
       code: 'const foo = {test: "test"}; export default foo',
+      filename: "test.ts",
       errors: [
         {
           message: "default exports exist at top level"

@@ -46,6 +46,16 @@ For all rules to be enforced according to the standards set by the Design Guidel
 }
 ```
 
+If the main TypeScript entrypoint to your package is not in `src/index.ts`, set `settings.main` in your `eslintrc` configuration file to the entrypoint as follows:
+
+```json
+{
+  "settings": {
+    "main": <path-to-entrypoint>
+  }
+}
+```
+
 If you need to modify or disable specific rules, you can do so in the `rules` section of your `eslintrc` configuration file:
 
 ```json

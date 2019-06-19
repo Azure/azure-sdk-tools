@@ -1,5 +1,5 @@
 /**
- * @fileoverview Rule to force there to be no default exports at the top level.
+ * @fileoverview Rule to force there to be only named exports at the top level.
  * @author Arpan Laha
  */
 
@@ -16,11 +16,11 @@ export = {
     type: "problem",
 
     docs: {
-      description: "force there to be no default exports at the top level",
+      description: "force there to be only named exports at the top level",
       category: "Best Practices",
       recommended: true,
       url:
-        "https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-modules-no-default"
+        "https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-modules-named-only"
     },
     schema: [] // no options
   },
@@ -29,11 +29,7 @@ export = {
       normalize(context.getFilename()),
       normalize(context.settings.main)
     )
-      ? // return context
-        //   .getFilename()
-        //   .replace("\\", "/")
-        //   .endsWith(context.settings.main.replace("\\", "/"))
-        ({
+      ? ({
           // callback functions
           ExportDefaultDeclaration: (node: ExportDefaultDeclaration): void => {
             context.report({

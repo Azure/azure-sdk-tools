@@ -40,8 +40,7 @@
     "prebuild": "npm run clean",
     "prepare": "npm test && npm run build",
     "pretest": "npm run format && npm run lint && npm run clean && tsc -p tsconfig.json",
-    "test": "mocha --timeout 10000 --recursive dist/tests",
-    "test-temp": "mocha --timeout 10000 dist/tests/rules/ts-modules-no-default.js"
+    "test": "mocha --timeout 10000 --recursive dist/tests"
   },
   "dependencies": {
     "@types/eslint": "^4.16.6",

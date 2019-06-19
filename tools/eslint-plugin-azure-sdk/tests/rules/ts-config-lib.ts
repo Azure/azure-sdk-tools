@@ -103,7 +103,7 @@ const ruleTester = new RuleTester({
   }
 });
 
-ruleTester.run("ts-config-strict", rule, {
+ruleTester.run("ts-config-lib", rule, {
   valid: [
     {
       // only the fields we care about

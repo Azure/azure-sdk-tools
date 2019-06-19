@@ -4,6 +4,7 @@
 
 import { Rule } from "eslint";
 import { ExportDefaultDeclaration } from "estree";
+import { normalize, relative } from "path";
 
 //------------------------------------------------------------------------------
 // Rule Definition
@@ -23,14 +24,23 @@ export = {
     schema: [] // no options
   },
   create: (context: Rule.RuleContext): Rule.RuleListener => {
-    return {
-      // callback functions
-      ExportDefaultDeclaration: (node: ExportDefaultDeclaration): void => {
-        context.report({
-          node: node,
-          message: "default exports exist at top level"
-        });
-      }
-    } as Rule.RuleListener;
+    return !relative(
+      normalize(context.getFilename()),
+      normalize(context.settings.main)
+    )
+      ? // return context
+        //   .getFilename()
+        //   .replace("\\", "/")
+        //   .endsWith(context.settings.main.replace("\\", "/"))
+        ({
+          // callback functions
+          ExportDefaultDeclaration: (node: ExportDefaultDeclaration): void => {
+            context.report({
+              node: node,
+              message: "default exports exist at top level"
+            });
+          }
+        } as Rule.RuleListener)
+      : {};
   }
 };

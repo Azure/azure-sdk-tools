@@ -266,7 +266,7 @@ describe("plugin", (): void => {
           assert.property(
             recommended,
             "rules",
-            "rules is not a member of recomended"
+            "rules is not a member of recommended"
           );
         });
         const rules = recommended.rules;
@@ -276,6 +276,33 @@ describe("plugin", (): void => {
               rules,
               "@ts-common/azure-sdk/" + rule,
               "rules does not contain a setting for " + rule
+            );
+          });
+        });
+      });
+      describe("settings", (): void => {
+        it("settings should be a member of recommended", (): void => {
+          assert.property(
+            recommended,
+            "settings",
+            "settings is not a member of recommended"
+          );
+        });
+        const settings = recommended.settings;
+        describe("main", (): void => {
+          it("main should be a member of settings", (): void => {
+            assert.property(
+              settings,
+              "main",
+              "main is not a member of settings"
+            );
+          });
+          const main = settings.main;
+          it("main should be set to 'src/index.ts'", (): void => {
+            assert.strictEqual(
+              main,
+              "src/index.ts",
+              "main is not set to 'src/index.ts'"
             );
           });
         });

@@ -1,5 +1,5 @@
 /**
- * @fileoverview Testing the ts-modules-no-default rule.
+ * @fileoverview Testing the ts-modules-named-only rule.
  * @author Arpan Laha
  */
 

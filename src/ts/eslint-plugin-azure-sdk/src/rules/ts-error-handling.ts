@@ -34,7 +34,7 @@ export = {
       ): void => {
         context.report({
           node: node,
-          message: "new error object is not thrown"
+          message: "statement is not throwing a new error object"
         });
       },
 

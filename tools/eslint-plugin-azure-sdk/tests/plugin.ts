@@ -23,6 +23,8 @@ const ruleList = [
   "ts-config-no-experimentaldecorators",
   "ts-config-sourcemap",
   "ts-config-strict",
+  "ts-error-handling",
+  "ts-modules-only-named",
   "ts-package-json-author",
   "ts-package-json-bugs",
   "ts-package-json-homepage",

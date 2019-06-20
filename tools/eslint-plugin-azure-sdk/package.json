@@ -47,7 +47,6 @@
     "@types/estree": "0.0.39",
     "path": "^0.12.7"
   },
-  "dependencies": {},
   "devDependencies": {
     "@types/chai": "^4.1.7",
     "@types/eslint": "^4.16.6",

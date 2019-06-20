@@ -45,13 +45,22 @@ export = {
           "ExpressionStatement > ObjectExpression > Property[key.value='compilerOptions'] > ObjectExpression > Property[key.value='lib']": (
             node: Property
           ): void => {
-            if (node.value.hasOwnProperty("elements")) {
-              const nodeValue: ArrayExpression = node.value as ArrayExpression;
-              nodeValue.elements.length !== 0 &&
+            if (
+              context.getFilename().replace(/^.*[\\\/]/, "") === "tsconfig.json"
+            ) {
+              if (node.value.hasOwnProperty("elements")) {
+                const nodeValue: ArrayExpression = node.value as ArrayExpression;
+                nodeValue.elements.length !== 0 &&
+                  context.report({
+                    node: nodeValue,
+                    message: "compilerOptions.lib is not set to an empty array"
+                  });
+              } else {
                 context.report({
-                  node: node,
+                  node: node.value,
                   message: "compilerOptions.lib is not set to an empty array"
                 });
+              }
             } else {
               context.report({
                 node: node,

@@ -45,7 +45,7 @@ export = {
 
             !value.startsWith("@azure/") &&
               context.report({
-                node: node,
+                node: nodeValue,
                 message: "name is not set to @azure/<service>"
               });
 
@@ -54,7 +54,7 @@ export = {
             value.startsWith("@azure/") &&
               !kebabRegex.test(value) &&
               context.report({
-                node: node,
+                node: nodeValue,
                 message:
                   "service name is not in kebab-case (lowercase and separated by hyphens)"
               });

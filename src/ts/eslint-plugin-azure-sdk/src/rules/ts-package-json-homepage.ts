@@ -50,7 +50,7 @@ export = {
 
               !regex.test(value) &&
                 context.report({
-                  node: node,
+                  node: nodeValue,
                   message:
                     "homepage is not a URL pointing to your library's readme inside the git repo"
                 });

@@ -51,12 +51,12 @@ export = {
                 const nodeValue: ArrayExpression = node.value as ArrayExpression;
                 nodeValue.elements.length !== 0 &&
                   context.report({
-                    node: node,
+                    node: nodeValue,
                     message: "compilerOptions.lib is not set to an empty array"
                   });
               } else {
                 context.report({
-                  node: node,
+                  node: node.value,
                   message: "compilerOptions.lib is not set to an empty array"
                 });
               }

@@ -81,6 +81,7 @@ If you need to modify or disable specific rules, you can do so in the `rules` se
 - [ts-config-sourcemap](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-config-sourcemap)
 - [ts-config-strict](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-config-strict)
 - [ts-error-handling](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-error-handling)
+- [ts-include-original-source](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-include-original-source)
 - [ts-modules-named-only](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-modules-named-only)
 - [ts-package-json-author](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-package-json-author)
 - [ts-package-json-bugs](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-package-json-bugs)

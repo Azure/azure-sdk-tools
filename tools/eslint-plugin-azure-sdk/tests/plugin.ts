@@ -24,6 +24,7 @@ const ruleList = [
   "ts-config-sourcemap",
   "ts-config-strict",
   "ts-error-handling",
+  "ts-include-original-source",
   "ts-modules-only-named",
   "ts-package-json-author",
   "ts-package-json-bugs",

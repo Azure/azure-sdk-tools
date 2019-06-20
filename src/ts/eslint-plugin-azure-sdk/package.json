@@ -40,9 +40,8 @@
     "clean": "rimraf dist/",
     "format": "prettier --write \"./**/*.{ts,json,md}\"",
     "lint": "eslint src tests --ext .ts",
-    "prebuild": "npm run clean",
-    "prepare": "npm test && npm run build",
-    "pretest": "npm run format && npm run lint && npm run clean && tsc -p tsconfig.json",
+    "prebuild": "npm run clean && npm run format",
+    "pretest": "npm run clean && tsc -p tsconfig.json",
     "test": "mocha --timeout 10000 --recursive dist/tests"
   },
   "dependencies": {

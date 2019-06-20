@@ -16,6 +16,7 @@ import tsConfigNoExperimentalDecorators from "./ts-config-no-experimentaldecorat
 import tsConfigSourceMap from "./ts-config-sourcemap";
 import tsConfigStrict from "./ts-config-strict";
 import tsErrorHandling from "./ts-error-handling";
+import tsIncludeOriginalSource from "./ts-include-original-source";
 import tsModulesOnlyNamed from "./ts-modules-only-named";
 import tsPackageJsonAuthor from "./ts-package-json-author";
 import tsPackageJsonBugs from "./ts-package-json-bugs";
@@ -41,6 +42,7 @@ export = {
   "ts-config-sourcemap": tsConfigSourceMap,
   "ts-config-strict": tsConfigStrict,
   "ts-error-handling": tsErrorHandling,
+  "ts-include-original-source": tsIncludeOriginalSource,
   "ts-modules-only-named": tsModulesOnlyNamed,
   "ts-package-json-author": tsPackageJsonAuthor,
   "ts-package-json-bugs": tsPackageJsonBugs,

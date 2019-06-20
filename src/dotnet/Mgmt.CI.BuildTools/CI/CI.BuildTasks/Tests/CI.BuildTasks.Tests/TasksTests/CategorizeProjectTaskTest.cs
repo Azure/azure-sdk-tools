@@ -9,6 +9,7 @@ namespace BuildTasks.Tests
 {
     using global::Tests.CI.Common.Base;
     using Microsoft.Build.Framework;
+    using MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild;
     using MS.Az.Mgmt.CI.BuildTasks.Models;
     using MS.Az.Mgmt.CI.BuildTasks.Tasks.PreBuild;
     using MS.Az.Mgmt.CI.Common.ExtensionMethods;
@@ -31,6 +32,9 @@ namespace BuildTasks.Tests
             //create an env. variable 'testAssetdir' and point to a directory that will host multiple repos
             // e.g. sdkfornet directory structure as well as Fluent directory structure
             // basically test asset directory will be the root for all other repos that can be used for testing directory structure
+
+            // also make sure you execute any target in that repo because that would force the nuget package to
+            // download and get all the files necessary for the tasks to execute successfully
             rootDir = this.TestAssetsDirPath;
             rootDir = Path.Combine(rootDir, "sdkForNet");
             sourceRootDir = rootDir;
@@ -39,19 +43,19 @@ namespace BuildTasks.Tests
         }
 
         [Fact]
-        public void FullyQualifiedScopeDirPath()
+        public void BuildMgmtProjectsForCertainScopes()
         {
-            //string scopeDir = @"SDKs\Compute";
+            const string NET_SDK_PUB_URL = @"https://github.com/azure/azure-sdk-for-net";
+            //6453 non sdk changes
+            DetectRPScopeTask rpScope = new DetectRPScopeTask(NET_SDK_PUB_URL, 6453);
+            rpScope.Execute();
+
             CategorizeSDKProjectsTask cproj = new CategorizeSDKProjectsTask(rootDir);
-            //cproj.FullyQualifiedBuildScopeDirPath = Path.Combine(rootDir, "src", "SDKs", "Compute");
-            cproj.FullyQualifiedBuildScopeDirPath = Path.Combine(rootDir, "sdk", "Compute");
+            cproj.BuildScopes = rpScope.PRScopeString;
 
             if (cproj.Execute())
             {
-                Assert.True(cproj.SDK_Projects.Count<ITaskItem>() == 1);
-
-                //This is comment out because at the time of writing this test, compute test was set to exlcude from build
-                //Assert.True(cproj.Test_Projects.Count<ITaskItem>() == 1);
+                Assert.True(cproj.SDK_Projects.Count<ITaskItem>() >= 80);
             }
         }
 
@@ -107,7 +111,7 @@ namespace BuildTasks.Tests
             {
                 Assert.True(cproj.SDK_Projects.Count<ITaskItem>() > 10);
                 Assert.True(cproj.Test_Projects.Count<ITaskItem>() > 10);
-                Assert.True(cproj.UnSupportedProjects.Count<ITaskItem>() > 1);
+                Assert.True(cproj.UnSupportedProjects.Count<ITaskItem>() >= 1);
                 Assert.True(cproj.Test_ToBe_Run.Count<ITaskItem>() > 10);
             }
             DateTime endTime = DateTime.Now;
@@ -118,14 +122,14 @@ namespace BuildTasks.Tests
         public void ScopedProject()
         {
             CategorizeSDKProjectsTask cproj = new CategorizeSDKProjectsTask(rootDir);
-            cproj.BuildScope = @"Compute";
+            cproj.BuildScope = @"mgmtcommon\AppAuthentication";
 
             if (cproj.Execute())
             {
                 Assert.True(cproj.SDK_Projects.Count<ITaskItem>() == 1);
 
                 //Uncomment when test project is fixed
-                //Assert.True(cproj.Test_Projects.Count<ITaskItem>() == 1);
+                Assert.True(cproj.Test_Projects.Count<ITaskItem>() == 0);
             }
         }
 
@@ -453,21 +457,20 @@ namespace BuildTasks.Tests
             }
         }
 
-        [Fact(Skip = "Investigate as it fails only in Run mode, works fine during debug mode")]
-        //[Fact]
-        public void SDKCommonProjects()
+        //[Fact(Skip = "Investigate as it fails only in Run mode, works fine during debug mode")]
+        [Fact]
+        public void MgmtCommonProjects()
         {
             CategorizeSDKProjectsTask cproj = new CategorizeSDKProjectsTask(rootDir);
-            cproj.BuildScope = @"SDKCommon";
-            cproj.UseLegacyDirStructure = true;
+            cproj.BuildScope = @"mgmtcommon";
 
             if (cproj.Execute())
             {
                 //Since HttpRecorder and TestFramework are multi-targeting, they are no 
                 //longer treated as regular nuget packages (targeting net452 and netStd1.4)
                 //but rather projects that are built without any targetFx
-                Assert.True(cproj.SDK_Projects.Count<ITaskItem>() == 8);
-                Assert.True(cproj.Test_Projects.Count<ITaskItem>() == 16);
+                Assert.True(cproj.SDK_Projects.Count<ITaskItem>() >= 8);
+                Assert.True(cproj.Test_Projects.Count<ITaskItem>() >= 7);
             }
         }
 

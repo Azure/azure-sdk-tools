@@ -43,10 +43,28 @@ namespace Tests.CI.BuildTasks.TasksTests
         }
 
         [Fact]
+        public void DefaultToBuildEntireMgmtProjects()
+        {
+            string ghUrl = NET_SDK_PUB_URL;
+            long ghPrNumber = 6453; //6606
+            DetectRPScopeTask rpScope = new DetectRPScopeTask(ghUrl, ghPrNumber);
+
+            if (rpScope.Execute())
+            {
+                Assert.Empty(rpScope.ScopesFromPR);
+                Assert.True(string.IsNullOrWhiteSpace(rpScope.PRScopeString));
+            }
+            else
+            {
+                Assert.True(false);
+            }
+        }
+
+        [Fact]
         public void MultipleScopes()
         {
             string ghUrl = NET_SDK_PUB_URL;
-            long ghPrNumber = 6499;
+            long ghPrNumber = 6499; //6606
             DetectRPScopeTask rpScope = new DetectRPScopeTask(ghUrl, ghPrNumber);
 
             if(rpScope.Execute())
@@ -120,15 +138,5 @@ namespace Tests.CI.BuildTasks.TasksTests
             }
         }
 
-        [Fact]
-        public void MultipleScopes()
-        {
-            DetectRPScopeTask rpScope = new DetectRPScopeTask(NET_SDK_PUB_URL, 6606);
-
-            if(rpScope.Execute())
-            {
-                Assert.True(rpScope.ScopesFromPR.Length > 0);
-            }
-        }
     }
 }

@@ -90,7 +90,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Tasks.PreBuild
         /// Fully qualified Scope Path
         /// This is especially required for Swagger to SDK scenarios
         /// </summary>
-        public string FullyQualifiedBuildScopeDirPath { get; set; }
+        string FullyQualifiedBuildScopeDirPath { get; set; }
 
         /// <summary>
         /// Resource Providers to include for applicable targets (clean, build etc)
@@ -295,6 +295,8 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Tasks.PreBuild
             foreach (KeyValuePair<string, SdkProjectMetadata> kv in allProj)
             {
                 SdkProjectMetadata pmd = kv.Value;
+
+                string projFile = pmd.ProjectFilePath;
 
                 switch(pmd.ProjectType)
                 {

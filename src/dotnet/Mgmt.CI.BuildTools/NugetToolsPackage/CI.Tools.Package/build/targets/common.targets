@@ -133,6 +133,7 @@
       WhatIf="$(WhatIf)"
       >
       <Output TaskParameter="ScopesFromPR" ItemName="ScopesFromPullRequest" />
+      <Output TaskParameter="PRScopeString" PropertyName="ScopeStringFromTask" />
     </DetectRPScopeTask>
 
     <Message Text="Scopes retrieved from PR......@(ScopesFromPullRequest)" Importance="High" />
@@ -146,10 +147,12 @@
     <Message Text="pkg_root_RepoRoot..............$(pkg_root_RepoRoot)" Condition=" '$(DebugTrace)' == 'true' " />
     <Message Text="pkg_root_RepoSrcDir..............$(pkg_root_RepoSrcDir)" Condition=" '$(DebugTrace)' == 'true' " />
 
-    <!--MultipleScopes="@(ScopesFromPullRequest)" -->
+    <PropertyGroup>
+      <BuildScopes Condition=" '$(ScopeStringFromTask)' != '' ">$(ScopeStringFromTask)</BuildScopes>
+    </PropertyGroup>
+
     <CategorizeSDKProjectsTask
       BuildScope="$(Scope)"
-      FullyQualifiedBuildScopeDirPath="$(FQBuildScopeDirPath)"
       BuildScopes="$(BuildScopes)"  
       CmdLineIncludeScope="$(IncludeRPs)"
       CmdLineExcludeScope="$(ExcludeRPs)"

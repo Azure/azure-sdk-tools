@@ -63,6 +63,9 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
         #region task output properties
         [Output]
         public string[] ScopesFromPR { get; set; }
+
+        [Output]
+        public string PRScopeString { get; set; }
         #endregion
 
         public override string NetSdkTaskName => "DetectRPScopeTask";
@@ -92,6 +95,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
             GH_PRNumber = 0;
             GH_RepositoryHtmlUrl = string.Empty;
             GH_RepositoryId = 0;
+            PRScopeString = string.Empty;
         }
 
         public DetectRPScopeTask(string repoHtmlUrl, Int64 prNumber) : this()
@@ -140,6 +144,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
                 if (validScopes.NotNullOrAny<string>())
                 {
                     ScopesFromPR = validScopes.ToArray<string>();
+                    PRScopeString = string.Join(";", ScopesFromPR);
                 }
             }
             else

@@ -11,6 +11,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Models
     using MS.Az.Mgmt.CI.Common.ExtensionMethods;
     using System;
     using System.Collections.Generic;
+    using System.IO;
     using System.Linq;
     using System.Text;
     using System.Threading.Tasks;
@@ -20,7 +21,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Models
         #region const
         const string BASELINE_SDK_FX_MONIKER = @"net452;net461;netstandard1.4;netstandard2.0";
         const string BASELINE_TEST_FX_MONIKER = @"netcoreapp2.0";
-        const string SKIP_TARGETFX_MATCHING = "Microsoft.Azure.Services.AppAuthentication.csproj;Microsoft.Rest.ClientRuntime.Etw.csproj;Microsoft.Rest.ClientRuntime.Log4Net.csproj;Microsoft.Azure.Test.HttpRecorder.csproj;Microsoft.Rest.ClientRuntime.Azure.TestFramework.csproj";
+        //const string SKIP_TARGETFX_MATCHING = "Microsoft.Azure.Services.AppAuthentication.csproj;Microsoft.Rest.ClientRuntime.Etw.csproj;Microsoft.Rest.ClientRuntime.Log4Net.csproj;Microsoft.Azure.Test.HttpRecorder.csproj;Microsoft.Rest.ClientRuntime.Azure.TestFramework.csproj";
         #endregion
 
         #region fields
@@ -33,23 +34,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Models
         #endregion
 
         #region Properties
-        internal List<string> SkipTargetFxMatchingList
-        {
-            get
-            {
-                if(_skipTargetFxMatchingList == null)
-                {
-                    _skipTargetFxMatchingList = new List<string>();
-                    string[] tokens = SKIP_TARGETFX_MATCHING.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
-                    if(tokens.NotNullOrAny<string>())
-                    {
-                        _skipTargetFxMatchingList = tokens.ToList<string>();
-                    }
-                }
-
-                return _skipTargetFxMatchingList;
-            }
-        }
+        
         public string FxTargetMonikerString
         {
             get
@@ -174,19 +159,48 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Models
 
         public string ProjectFile { get; set; }
 
+        //internal List<string> SkipTargetFxMatchingList
+        //{
+        //    get
+        //    {
+        //        if (_skipTargetFxMatchingList == null)
+        //        {
+        //            _skipTargetFxMatchingList = new List<string>();
+        //            string[] tokens = SKIP_TARGETFX_MATCHING.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+        //            if (tokens.NotNullOrAny<string>())
+        //            {
+        //                _skipTargetFxMatchingList = tokens.ToList<string>();
+        //            }
+        //        }
+
+        //        return _skipTargetFxMatchingList;
+        //    }
+        //}
+
         #region private properties
         SdkProjectType ProjectType { get; set; }
         List<string> BaselineTargetFxList { get; set; }
+
+        string MgmtCommonDirToken
+        {
+            get
+            {
+                return Path.Combine("sdk", "mgmtcommon");
+            }
+        }
         #endregion
 
         #endregion
 
         #region Constructor
-        //public TargetFx(string targetFxMoniker, SdkProjectType sdkProjectType = SdkProjectType.Sdk) : this(targetFxMoniker, string.Empty, sdkProjectType) { }
+        TargetFx()
+        {
+            NotMatchingFxList = new List<string>();
+        }
 
         public TargetFx(string projectFilePath, string targetFxMoniker, string baselineFxMoniker, SdkProjectType projectType) : this(projectFilePath, targetFxMoniker, baselineFxMoniker, projectType, skipBaselineTargetFxMatching: false) { }
 
-        public TargetFx(string projectFilePath, string targetFxMoniker, string baselineFxMoniker, SdkProjectType projectType, bool skipBaselineTargetFxMatching)
+        public TargetFx(string projectFilePath, string targetFxMoniker, string baselineFxMoniker, SdkProjectType projectType, bool skipBaselineTargetFxMatching) : this()
         {
             Check.NotEmptyNotNull(projectFilePath);
             Check.NotEmptyNotNull(targetFxMoniker);
@@ -225,7 +239,15 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Models
             UtilLogger.LogInfo(MessageImportance.Low, "Target Fx list '{0}' for '{1}' ProjectType. Expected baseline Fx list '{2}'", FxTargetMonikerString, ProjectType.ToString(), FxBaselineMonikerString);
 
             EnvironmentSpecificTargetFxList = GetPlatformSpecificApplicableFxList();
-            NotMatchingFxList = GetNotMatchingFxList(BaselineTargetFxList, EnvironmentSpecificTargetFxList);
+
+            // We only allow to have non-standard target fx projects that are part of mgmtcommon
+            if(SkipBaselineTargetFxMatching)
+            {
+                if(!ProjectFile.Contains(MgmtCommonDirToken))
+                {
+                    NotMatchingFxList = GetNotMatchingFxList(BaselineTargetFxList, EnvironmentSpecificTargetFxList);
+                }
+            }
         }
         #endregion
 
@@ -275,7 +297,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Models
                 {
                     IsTargetFxMatch = false;
                     notMatchingFx = misMatch.ToList<string>();
-                    UtilLogger.LogInfo("Target Fx that do not match the baseline", notMatchingFx);
+                    UtilLogger.LogInfo(MessageImportance.Low, notMatchingFx, "Target Fx that do not match the baseline");
                 }
             }
             else if(targetFxList.Count > baseLineFxList.Count)
@@ -285,7 +307,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Models
                 {
                     IsTargetFxMatch = false;
                     notMatchingFx = misMatch.ToList<string>();
-                    UtilLogger.LogInfo("Target Fx that do not match the baseline", notMatchingFx);
+                    UtilLogger.LogInfo(MessageImportance.Low, notMatchingFx, "Target Fx that do not match the baseline");
                 }
             }
             else if(targetFxList.Count == targetFxList.Count)
@@ -295,7 +317,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Models
                 {
                     IsTargetFxMatch = false;
                     notMatchingFx = misMatch.ToList<string>();
-                    UtilLogger.LogInfo("Target Fx that do not match the baseline", notMatchingFx);
+                    UtilLogger.LogInfo(MessageImportance.Low, notMatchingFx, "Target Fx that do not match the baseline");
                 }
             }
 

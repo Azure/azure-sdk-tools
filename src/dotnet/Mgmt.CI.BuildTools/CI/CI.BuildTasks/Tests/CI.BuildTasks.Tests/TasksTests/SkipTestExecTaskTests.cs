@@ -3,18 +3,13 @@
 
 namespace Tests.CI.BuildTasks.TasksTests
 {
-    using MS.Az.Mgmt.CI.BuildTasks.Models;
-    using MS.Az.Mgmt.CI.BuildTasks.Tasks.PreBuild;
+    using MS.Az.Mgmt.CI.BuildTasks.BuildTasks;
     using MS.Az.NetSdk.Build.Utilities;
-    using System;
     using System.Collections.Generic;
     using System.IO;
-    using System.Text;
     using Tests.CI.Common.Base;
     using Xunit;
     using Xunit.Abstractions;
-    using System.Linq;
-    using MS.Az.Mgmt.CI.BuildTasks.BuildTasks;
 
     public class SkipTestExecTaskTests : BuildTasksTestBase
     {

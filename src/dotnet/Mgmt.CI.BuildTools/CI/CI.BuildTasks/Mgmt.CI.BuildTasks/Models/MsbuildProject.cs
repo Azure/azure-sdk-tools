@@ -102,7 +102,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Models
         {
             get
             {
-                if(ProjectFilePath.Contains("sdkcommon", StringComparison.OrdinalIgnoreCase))
+                if(ProjectFilePath.Contains("mgmtcommon", StringComparison.OrdinalIgnoreCase))
                     return true;
                 else
                     return false;

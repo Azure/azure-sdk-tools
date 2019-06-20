@@ -154,9 +154,9 @@ describe("plugin", (): void => {
       assert.property(plugin, "rules", "rules is not a member of the plugin");
     });
     const rules = plugin.rules;
-    for (const rule of ruleList) {
+    ruleList.forEach(rule => {
       testRule(rule, rules);
-    }
+    });
   });
   describe("processors", (): void => {
     it("processors should a member of the plugin", (): void => {
@@ -270,13 +270,13 @@ describe("plugin", (): void => {
         });
         const rules = recommended.rules;
         it("rules should contain settings for every supported rule", (): void => {
-          for (const rule of ruleList) {
+          ruleList.forEach(rule => {
             assert.property(
               rules,
               "@ts-common/azure-sdk/" + rule,
               "rules does not contain a setting for " + rule
             );
-          }
+          });
         });
       });
       describe("settings", (): void => {

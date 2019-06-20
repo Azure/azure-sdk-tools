@@ -28,19 +28,11 @@ export const getVerifiers = (
       const outer = data.outer;
 
       const properties: Property[] = node.properties as Property[];
-      let foundOuter = false;
 
-      for (const property of properties) {
-        if (property.key) {
-          const key = property.key as Literal;
-          if (key.value === outer) {
-            foundOuter = true;
-            break;
-          }
-        }
-      }
-
-      !foundOuter &&
+      !properties.find(property => {
+        const key = property.key as Literal;
+        return key.value === outer;
+      }) &&
         context.report({
           node: node,
           message: outer + " does not exist at the outermost level"
@@ -74,18 +66,11 @@ export const getVerifiers = (
 
       const value: ObjectExpression = node.value as ObjectExpression;
       const properties: Property[] = value.properties as Property[];
-      let foundInner = false;
-      for (const property of properties) {
-        if (property.key) {
-          const key = property.key as Literal;
-          if (key.value === inner) {
-            foundInner = true;
-            break;
-          }
-        }
-      }
 
-      !foundInner &&
+      !properties.find(property => {
+        const key = property.key as Literal;
+        return key.value === inner;
+      }) &&
         context.report({
           node: value,
           message: inner + " is not a member of " + outer
@@ -124,31 +109,19 @@ export const getVerifiers = (
       const candidateArray: Literal[] = nodeValue.elements as Literal[];
 
       if (expected instanceof Array) {
-        for (const value of expected) {
-          let foundValue = false;
-          for (const candidate of candidateArray) {
-            if (candidate.value === value) {
-              foundValue = true;
-              break;
-            }
-          }
-
-          !foundValue &&
+        expected.forEach(value => {
+          !candidateArray.find(candidate => {
+            return candidate.value === value;
+          }) &&
             context.report({
               node: nodeValue,
               message: outer + " does not contain " + value
             });
-        }
+        });
       } else {
-        let foundValue = false;
-        for (const candidate of candidateArray) {
-          if (candidate.value === expected) {
-            foundValue = true;
-            break;
-          }
-        }
-
-        !foundValue &&
+        !candidateArray.find(candidate => {
+          return candidate.value === expected;
+        }) &&
           context.report({
             node: nodeValue,
             message: outer + " does not contain " + expected

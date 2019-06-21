@@ -29,7 +29,7 @@ export const getVerifiers = (
 
       const properties: Property[] = node.properties as Property[];
 
-      !properties.find(property => {
+      !properties.find((property: Property): boolean => {
         const key = property.key as Literal;
         return key.value === outer;
       }) &&
@@ -67,7 +67,7 @@ export const getVerifiers = (
       const value: ObjectExpression = node.value as ObjectExpression;
       const properties: Property[] = value.properties as Property[];
 
-      !properties.find(property => {
+      !properties.find((property: Property): boolean => {
         const key = property.key as Literal;
         return key.value === inner;
       }) &&
@@ -109,8 +109,9 @@ export const getVerifiers = (
       const candidateArray: Literal[] = nodeValue.elements as Literal[];
 
       if (expected instanceof Array) {
-        expected.forEach(value => {
-          !candidateArray.find(candidate => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        expected.forEach((value: any): void => {
+          !candidateArray.find((candidate: Literal): boolean => {
             return candidate.value === value;
           }) &&
             context.report({
@@ -119,7 +120,7 @@ export const getVerifiers = (
             });
         });
       } else {
-        !candidateArray.find(candidate => {
+        !candidateArray.find((candidate: Literal): boolean => {
           return candidate.value === expected;
         }) &&
           context.report({

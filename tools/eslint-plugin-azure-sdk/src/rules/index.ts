@@ -20,6 +20,7 @@ import tsIncludeOriginalSource from "./ts-include-original-source";
 import tsModulesOnlyNamed from "./ts-modules-only-named";
 import tsPackageJsonAuthor from "./ts-package-json-author";
 import tsPackageJsonBugs from "./ts-package-json-bugs";
+import tsPackageJsonFilesRequired from "./ts-package-json-files-required";
 import tsPackageJsonHomepage from "./ts-package-json-homepage";
 import tsPackageJsonKeywords from "./ts-package-json-keywords";
 import tsPackageJsonLicense from "./ts-package-json-license";
@@ -46,6 +47,7 @@ export = {
   "ts-modules-only-named": tsModulesOnlyNamed,
   "ts-package-json-author": tsPackageJsonAuthor,
   "ts-package-json-bugs": tsPackageJsonBugs,
+  "ts-package-json-files-required": tsPackageJsonFilesRequired,
   "ts-package-json-homepage": tsPackageJsonHomepage,
   "ts-package-json-keywords": tsPackageJsonKeywords,
   "ts-package-json-license": tsPackageJsonLicense,

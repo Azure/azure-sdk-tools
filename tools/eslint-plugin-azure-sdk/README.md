@@ -85,6 +85,7 @@ If you need to modify or disable specific rules, you can do so in the `rules` se
 - [ts-modules-named-only](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-modules-named-only)
 - [ts-package-json-author](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-package-json-author)
 - [ts-package-json-bugs](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-package-json-bugs)
+- [ts-package-json-files-required](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-package-json-files-required)
 - [ts-package-json-homepage](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-package-json-homepage)
 - [ts-package-json-keywords](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-package-json-keywords)
 - [ts-package-json-license](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-package-json-license)

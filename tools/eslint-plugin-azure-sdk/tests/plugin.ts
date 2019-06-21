@@ -28,6 +28,7 @@ const ruleList = [
   "ts-modules-only-named",
   "ts-package-json-author",
   "ts-package-json-bugs",
+  "ts-package-json-files-required",
   "ts-package-json-homepage",
   "ts-package-json-keywords",
   "ts-package-json-license",

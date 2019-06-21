@@ -37,7 +37,7 @@ export = {
           "ExpressionStatement > ObjectExpression": verifiers.existsInFile,
 
           // check the node corresponding to types to see if its value is a TypeScript declaration file
-          "ExpressionStatement > ObjectExpression > Property[key.value='sideEffects']": (
+          "ExpressionStatement > ObjectExpression > Property[key.value='types']": (
             node: Property
           ): void => {
             const nodeValue: Literal = node.value as Literal;
@@ -47,7 +47,7 @@ export = {
               context.report({
                 node: nodeValue,
                 message:
-                  "provided types path is not a valid TypeScript declaration file"
+                  "provided types path is not a TypeScript declaration file"
               });
           }
         } as Rule.RuleListener)

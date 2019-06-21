@@ -3,8 +3,15 @@
 	<Target Name="Restore" DependsOnTargets="$(RestoreTargetsDependsOn)" />
 	<Target Name="Build" DependsOnTargets="$(BuildTargetsDependsOn)" />
 	<Target Name="Rebuild" DependsOnTargets="Clean;Build" />
+
+	<!-- Wrapper targets to aligh with dotnet CLI -->
+	<Target Name="Test" DependsOnTargets="$(RunTestProjectsDependsOn)" />
+	<Target Name="Pack" DependsOnTargets="$(CreateNugetPackageDependsOn)" />
+
+	<!-- Old Targets to maintain parity-->
 	<Target Name="RunTests" DependsOnTargets="$(RunTestProjectsDependsOn)" />
 	<Target Name="CreateNugetPackage" DependsOnTargets="$(CreateNugetPackageDependsOn)" />
+	
 	<Target Name="CNP" DependsOnTargets="$(CreateNugetPackageDependsOn)" />
 	<Target Name="CP" DependsOnTargets="$(CategorizeProjects)" />
 	<Target Name="Help" DependsOnTargets="$(HelpDependsOn)" />

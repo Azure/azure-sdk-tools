@@ -1,6 +1,4 @@
 ﻿<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-	<!-- <Import Condition="Exists('$(NetSdkBuildTargetsDir)\common.targets')" Project="$(NetSdkBuildTargetsDir)\common.targets" />
-	<Import Condition="Exists('$(NetSdkBuildTargetsDir)\ideCmd.targets')" Project="$(NetSdkBuildTargetsDir)\ideCmd.targets" /> -->
 	<!--
 TODO
 	Sometime later, this particular file can be removed from the chain and the contents of this file should be included
@@ -10,8 +8,4 @@ TODO
 -->	
 	<Import Project="_build.proj" />
 	<Import Condition="Exists('..\common.targets')" Project="..\common.targets" />	
-
-<!--
-<Import Condition="Exists('..\ideCmd.targets')" Project="..\ideCmd.targets" />
--->
 </Project>

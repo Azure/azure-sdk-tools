@@ -35,9 +35,19 @@ namespace Tests.CI.BuildTasks.TasksTests
             List<string> scopeDirs = psu.FindTopLevelScopes(returnPartialScopePaths: true);
             Assert.NotEmpty(scopeDirs);
 
-            SkipTestExecutionTask ste = new SkipTestExecutionTask(rootDir);
+            SkipBuildOrTestExecutionTask ste = new SkipBuildOrTestExecutionTask(rootDir);
             ste.BuildScope = @"Advisor";
-            ste.ExcludeFromTestExecution = true;
+            ste.SkipFromTestExecution = true;
+            ste.ProjectType = "Test";
+            Assert.True(ste.Execute());
+        }
+
+        [Fact]
+        public void SkipTestExecutionForMultipleProjects()
+        {
+            SkipBuildOrTestExecutionTask ste = new SkipBuildOrTestExecutionTask(rootDir);
+            ste.BuildScopes = @"Advisor;Cdn";
+            ste.SkipFromTestExecution = true;
             ste.ProjectType = "Test";
             Assert.True(ste.Execute());
         }
@@ -51,9 +61,9 @@ namespace Tests.CI.BuildTasks.TasksTests
 
             foreach (string relativeScopePath in scopeDirs)
             {
-                SkipTestExecutionTask ste = new SkipTestExecutionTask(rootDir);
+                SkipBuildOrTestExecutionTask ste = new SkipBuildOrTestExecutionTask(rootDir);
                 ste.BuildScope = relativeScopePath;
-                ste.ExcludeFromTestExecution = true;
+                ste.SkipFromTestExecution = true;
                 ste.ProjectType = "Test";
                 Assert.True(ste.Execute());
             }

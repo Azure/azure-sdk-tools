@@ -35,11 +35,12 @@ export = {
           // check to see if files exists at the outermost level
           "ExpressionStatement > ObjectExpression": verifiers.existsInFile,
 
+          // check that files contains both dist and dist-esm
           "Property[key.value='files'": (node: Property): void => {
             const nodeValue: ArrayExpression = node.value as ArrayExpression;
             const elements: Literal[] = nodeValue.elements as Literal[];
 
-            const distPattern = /^(.\/)?dist\/?$/;
+            const distPattern = /^(.\/)?dist\/?$/; // looks for 'dist' with optional leading './' and optional trailing '/'
             !elements.find((element: Literal): boolean => {
               return distPattern.test(element.value as string);
             }) &&
@@ -48,7 +49,7 @@ export = {
                 message: "dist is not included in files"
               });
 
-            const distESMPattern = /^(.\/)?dist-esm\/?$/;
+            const distESMPattern = /^(.\/)?dist-esm\/?$/; // looks for 'dist-esm' with optional leading './' and optional trailing '/'
             !elements.find((element: Literal): boolean => {
               return distESMPattern.test(element.value as string);
             }) &&

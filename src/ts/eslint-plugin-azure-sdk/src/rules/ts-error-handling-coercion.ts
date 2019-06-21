@@ -4,7 +4,7 @@
  */
 
 import { Rule } from "eslint";
-import { Identifier } from "estree";
+import { Identifier, Node } from "estree";
 
 //------------------------------------------------------------------------------
 // Rule Definition
@@ -34,7 +34,7 @@ export = {
         const ancestors = context.getAncestors().reverse();
 
         // look for closest ancestor where a choice was made
-        const ifNode = ancestors.find(ancestor => {
+        const ifNode = ancestors.find((ancestor: Node): boolean => {
           return ancestor.type === "IfStatement";
         });
         // return if none found

@@ -35,7 +35,8 @@ export = {
       "@ts-common/azure-sdk/ts-package-json-name": "error",
       "@ts-common/azure-sdk/ts-package-json-repo": "error",
       "@ts-common/azure-sdk/ts-package-json-required-scripts": "error",
-      "@ts-common/azure-sdk/ts-package-json-sideeffects": "error"
+      "@ts-common/azure-sdk/ts-package-json-sideeffects": "error",
+      "@ts-common/azure-sdk/ts-ship-type-declarations": "error"
     },
     settings: {
       main: "src/index.ts"

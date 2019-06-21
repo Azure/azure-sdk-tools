@@ -38,7 +38,8 @@ export = {
           "ExpressionStatement > ObjectExpression": verifiers.existsInFile,
 
           // check that url is a member of bugs
-          "Property[key.value='bugs']": verifiers.isMemberOf,
+          "ExpressionStatement > ObjectExpression > Property[key.value='bugs']":
+            verifiers.isMemberOf,
 
           // check the node corresponding to bugs.url to see if it is set to 'https://github.com/Azure/azure-sdk-for-js/issues'
           "ExpressionStatement > ObjectExpression > Property[key.value='bugs'] > ObjectExpression > Property[key.value='url']":

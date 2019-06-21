@@ -46,7 +46,9 @@ export = {
             sourceMapVerifiers.existsInFile,
 
           // check that sourceMap and declarationMap are both members of compilerOptions
-          "Property[key.value='compilerOptions']": (node: Property): void => {
+          "ExpressionStatement > ObjectExpression > Property[key.value='compilerOptions']": (
+            node: Property
+          ): void => {
             sourceMapVerifiers.isMemberOf(node);
             declarationMapVerifiers.isMemberOf(node);
           },

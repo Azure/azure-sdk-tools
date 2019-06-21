@@ -38,7 +38,8 @@ export = {
           "ExpressionStatement > ObjectExpression": verifiers.existsInFile,
 
           // check that lib is a member of compilerOptions
-          "Property[key.value='compilerOptions']": verifiers.isMemberOf,
+          "ExpressionStatement > ObjectExpression > Property[key.value='compilerOptions']":
+            verifiers.isMemberOf,
 
           // check the node corresponding to compilerOptions.lib to see if it is set to an empty array
           "ExpressionStatement > ObjectExpression > Property[key.value='compilerOptions'] > ObjectExpression > Property[key.value='lib']": (

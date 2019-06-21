@@ -46,8 +46,11 @@ export = {
 
             const nodeValue: ArrayExpression = node.value as ArrayExpression;
             const elements: Literal[] = nodeValue.elements as Literal[];
+
+            const pattern = /^(.\/)?src\/?/;
+
             !elements.find(element => {
-              element.value === "src";
+              return pattern.test(element.value as string);
             }) &&
               context.report({
                 node: nodeValue,

@@ -28,6 +28,12 @@ namespace PipelineGenerator
 
             var hasChanges = false;
 
+            if (definition.Path != $"\\{this.Context.Prefix}")
+            {
+                definition.Path = $"\\{this.Context.Prefix}";
+                hasChanges = true;
+            }
+
             var ciTrigger = definition.Triggers.OfType<ContinuousIntegrationTrigger>().SingleOrDefault();
 
             if (ciTrigger == null)

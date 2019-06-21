@@ -1,9 +1,3 @@
-# External variables:
-# rushFlags
-#   Flags to pass to Rush for bulk commands. Typically, this is used to limit commands to a subset of packages, or to enable verbose output.
-#   Defined in pipeline web ui because multiple pipelines use this YAML with different packages.
-#   Example: -t @azure/event-hubs --verbose
-#
 trigger:
   - master
 
@@ -24,24 +18,28 @@ jobs:
         displayName: "Install Node.js $(NodeVersion)"
 
       - script: |
+          cd src/ts/eslint-plugin-azure-sdk
+        displayName: "Reach directory"
+
+      - script: |
           npm install -g npm@6.9.0
         displayName: "Install npm version 6.9.0"
 
       - script: |
-          node common/scripts/install-run-rush.js install
+          npm install
         displayName: "Install dependencies"
 
       - script: |
-          node common/scripts/install-run-rush.js build $(rushFlags)
-        displayName: "Build libraries"
+          npm run build
+        displayName: "Build library"
 
       - script: |
-          node common/scripts/install-run-rush.js pack $(rushFlags)
+          npm pack
         displayName: "Pack libraries"
 
       - task: CopyFiles@2
         inputs:
-          contents: "src/ts/*.tgz"
+          contents: "src/ts/eslint-plugin-azure-sdk/*.tgz"
           targetFolder: $(Build.ArtifactStagingDirectory)
           flattenFolders: true
         displayName: "Copy packages"
@@ -64,36 +62,25 @@ jobs:
         displayName: "Install Node.js $(NodeVersion)"
 
       - script: |
-          node common/scripts/install-run-rush.js install
+          cd src/ts/eslint-plugin-azure-sdk
+        displayName: "Reach directory"
+
+      - script: |
+          npm install -g npm@6.9.0
+        displayName: "Install npm version 6.9.0"
+
+      - script: |
+          npm install
         displayName: "Install dependencies"
 
       - script: |
-          node common/scripts/install-run-rush.js lint $(rushFlags)
+          npm run lint
         displayName: "Run lint"
 
-      - task: CopyFiles@2
-        inputs:
-          contents: "sdk/**/**/*lintReport.html"
-          targetFolder: $(Build.ArtifactStagingDirectory)
-          flattenFolders: true
-        displayName: "Copy packages"
-
-      - task: PublishBuildArtifacts@1
-        condition: succeededOrFailed()
-        displayName: "Publish lint reports"
-        inputs:
-          artifactName: reports
-
       - script: |
-          node common/scripts/install-run-rush.js audit $(rushFlags)
+          npm audit
         condition: and(succeeded(), eq(variables['RunNpmAudit'], 'true'))
         displayName: "Audit packages"
-
-      - task: ms.vss-governance-buildtask.governance-build-task-component-detection.ComponentGovernanceComponentDetection@0
-        # ComponentGovernance is currently unable to run on pull requests of public projects. Running on non-PR
-        # builds should be sufficient.
-        condition: and(succeededOrFailed(), ne(variables['Build.Reason'], 'PullRequest'))
-        displayName: "Component Detection"
 
   - job: "Test"
 
@@ -146,16 +133,17 @@ jobs:
         displayName: "Install Node.js $(NodeVersion)"
 
       - script: |
-          node common/scripts/install-run-rush.js install
+          cd src/ts/eslint-plugin-azure-sdk
+        displayName: "Reach directory"
+
+      - script: |
+          npm install -g npm@6.9.0
+        displayName: "Install npm version 6.9.0"
+
+      - script: |
+          npm install
         displayName: "Install dependencies"
 
       - script: |
-          node common/scripts/install-run-rush.js test $(rushFlags)
-        displayName: 'Test libraries"'
-
-      - task: PublishTestResults@2
-        inputs:
-          testResultsFiles: "**/test-results.xml"
-          testRunTitle: "$(OSName) Node $(NodeVersion)"
-        condition: succeededOrFailed()
-        displayName: "Publish test results"
+          npm test
+        displayName: "Test library"

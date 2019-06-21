@@ -47,8 +47,7 @@ export = {
             const nodeValue: ArrayExpression = node.value as ArrayExpression;
             const elements: Literal[] = nodeValue.elements as Literal[];
 
-            const pattern = /^(.\/)?src\/?/;
-
+            const pattern = /^(.\/)?src\/?/; // looks for 'src' with optional leading './' and optional trailing '/'
             !elements.find(element => {
               return pattern.test(element.value as string);
             }) &&

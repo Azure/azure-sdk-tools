@@ -35,8 +35,19 @@ export = {
           // check to see if files exists at the outermost level
           "ExpressionStatement > ObjectExpression": verifiers.existsInFile,
 
-          // check that files contains both dist and dist-esm
-          "Property[key.value='files'": (node: Property): void => {
+          // check that files contains dist, dist-esm, and src
+          "ExpressionStatement > ObjectExpression > Property[key.value='files']": (
+            node: Property
+          ): void => {
+            // check that files is set to an array
+            if (node.value.type !== "ArrayExpression") {
+              context.report({
+                node: node.value,
+                message: "files is not set to an array"
+              });
+              return;
+            }
+
             const nodeValue: ArrayExpression = node.value as ArrayExpression;
             const elements: Literal[] = nodeValue.elements as Literal[];
 
@@ -49,13 +60,22 @@ export = {
                 message: "dist is not included in files"
               });
 
-            const distESMPattern = /^(.\/)?dist-esm\/?$/; // looks for 'dist-esm' with optional leading './' and optional trailing '/'
+            const distESMPattern = /^(.\/)?dist-esm\/src\/?$/; // looks for 'dist-esm/src' with optional leading './' and optional trailing '/'
             !elements.find((element: Literal): boolean => {
               return distESMPattern.test(element.value as string);
             }) &&
               context.report({
                 node: nodeValue,
-                message: "dist-esm is not included in files"
+                message: "dist-esm/src is not included in files"
+              });
+
+            const srcPattern = /^(.\/)?src\/?$/; // looks for 'src' with optional leading './' and optional trailing '/'
+            !elements.find((element: Literal): boolean => {
+              return srcPattern.test(element.value as string);
+            }) &&
+              context.report({
+                node: nodeValue,
+                message: "src is not included in files"
               });
           }
         } as Rule.RuleListener)

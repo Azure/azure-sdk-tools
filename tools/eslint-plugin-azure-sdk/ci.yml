@@ -18,7 +18,7 @@ jobs:
         displayName: "Install Node.js $(NodeVersion)"
 
       - script: |
-          cd src/ts/eslint-plugin-azure-sdk
+          cd tools/eslint-plugin-azure-sdk
         displayName: "Reach directory"
 
       - script: |
@@ -39,7 +39,7 @@ jobs:
 
       - task: CopyFiles@2
         inputs:
-          contents: "src/ts/eslint-plugin-azure-sdk/*.tgz"
+          contents: "tools/eslint-plugin-azure-sdk/*.tgz"
           targetFolder: $(Build.ArtifactStagingDirectory)
           flattenFolders: true
         displayName: "Copy packages"
@@ -62,7 +62,7 @@ jobs:
         displayName: "Install Node.js $(NodeVersion)"
 
       - script: |
-          cd src/ts/eslint-plugin-azure-sdk
+          cd tools/eslint-plugin-azure-sdk
         displayName: "Reach directory"
 
       - script: |
@@ -94,7 +94,7 @@ jobs:
         displayName: "Install Node.js $(NodeVersion)"
 
       - script: |
-          cd src/ts/eslint-plugin-azure-sdk
+          cd tools/eslint-plugin-azure-sdk
         displayName: "Reach directory"
 
       - script: |

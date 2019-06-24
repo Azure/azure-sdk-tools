@@ -21,6 +21,7 @@ export = {
       "@ts-common/azure-sdk/ts-config-isolatedmodules": "warn",
       "@ts-common/azure-sdk/ts-config-lib": "error",
       "@ts-common/azure-sdk/ts-config-module": "error",
+      "@ts-common/azure-sdk/ts-config-moduleresolution": "error",
       "@ts-common/azure-sdk/ts-config-no-experimentaldecorators": "error",
       "@ts-common/azure-sdk/ts-config-sourcemap": "error",
       "@ts-common/azure-sdk/ts-config-strict": "error",

@@ -19,6 +19,7 @@ import tsErrorHandling from "./ts-error-handling";
 import tsModulesOnlyNamed from "./ts-modules-only-named";
 import tsPackageJsonAuthor from "./ts-package-json-author";
 import tsPackageJsonBugs from "./ts-package-json-bugs";
+import tsPackageJsonEngineIsPresent from "./ts-package-json-engine-is-present";
 import tsPackageJsonFilesRequired from "./ts-package-json-files-required";
 import tsPackageJsonHomepage from "./ts-package-json-homepage";
 import tsPackageJsonKeywords from "./ts-package-json-keywords";
@@ -46,6 +47,7 @@ export = {
   "ts-modules-only-named": tsModulesOnlyNamed,
   "ts-package-json-author": tsPackageJsonAuthor,
   "ts-package-json-bugs": tsPackageJsonBugs,
+  "ts-package-json-engine-is-present": tsPackageJsonEngineIsPresent,
   "ts-package-json-files-required": tsPackageJsonFilesRequired,
   "ts-package-json-homepage": tsPackageJsonHomepage,
   "ts-package-json-keywords": tsPackageJsonKeywords,

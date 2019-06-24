@@ -39,21 +39,23 @@ export = {
           "ExpressionStatement > ObjectExpression > Property[key.value='version']": (
             node: Property
           ): void => {
-            node.value.type !== "Literal" &&
+            if (node.value.type !== "Literal") {
               context.report({
                 node: node.value,
                 message: "version is not set to a string"
               });
+              return;
+            }
             const nodeValue: Literal = node.value as Literal;
 
-            const semverPattern = /^(\d+\.){2}\d/;
+            const semverPattern = /^((0|[1-9](\d*))\.){2}(0|[1-9](\d*))(-|$)/;
             !semverPattern.test(nodeValue.value as string) &&
               context.report({
                 node: nodeValue,
                 message: "version is not in semver"
               });
 
-            const previewPattern = /^(\d+\.){2}\d(-preview-\d+)?$/;
+            const previewPattern = /^((0|[1-9](\d*))\.){2}(0|[1-9](\d*))(-preview-(0|([1-9](\d*))))?$/;
             semverPattern.test(nodeValue.value as string) &&
               !previewPattern.test(nodeValue.value as string) &&
               context.report({

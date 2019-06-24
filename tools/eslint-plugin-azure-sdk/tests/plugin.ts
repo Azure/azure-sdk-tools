@@ -36,7 +36,8 @@ const ruleList = [
   "ts-package-json-repo",
   "ts-package-json-required-scripts",
   "ts-package-json-sideeffects",
-  "ts-package-json-types"
+  "ts-package-json-types",
+  "ts-versioning-semver"
 ];
 
 /**

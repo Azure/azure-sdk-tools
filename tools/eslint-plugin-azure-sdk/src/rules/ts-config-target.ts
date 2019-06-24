@@ -5,7 +5,7 @@
 
 import { getVerifiers, stripPath } from "../utils/verifiers";
 import { Rule } from "eslint";
-import { Property, Literal } from "estree";
+import { Literal, Property } from "estree";
 
 //------------------------------------------------------------------------------
 // Rule Definition

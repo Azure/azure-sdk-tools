@@ -36,6 +36,9 @@ const ruleList = [
 
 /**
  * Verifies that each inputted rule is properly structured
+ * @param ruleName the name of the rule to test
+ * @param rules the ESLint plugin rules object containing all rule information
+ * @throws chai assert errors if the provided rule is not configured properly
  */
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 const testRule = (ruleName: string, rules: any): void => {
@@ -144,6 +147,7 @@ const testRule = (ruleName: string, rules: any): void => {
 
 /**
  * Verifies the structure of the plugin
+ * @throws chai assert errors if the plugin is not configured properly
  */
 describe("plugin", (): void => {
   describe("rules", (): void => {

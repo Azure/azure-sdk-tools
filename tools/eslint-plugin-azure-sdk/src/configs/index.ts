@@ -28,6 +28,7 @@ export = {
       "@ts-common/azure-sdk/ts-modules-only-named": "error",
       "@ts-common/azure-sdk/ts-package-json-author": "error",
       "@ts-common/azure-sdk/ts-package-json-bugs": "error",
+      "@ts-common/azure-sdk/ts-package-json-engine-is-present": "error",
       "@ts-common/azure-sdk/ts-package-json-files-required": "error",
       "@ts-common/azure-sdk/ts-package-json-homepage": "error",
       "@ts-common/azure-sdk/ts-package-json-keywords": "error",

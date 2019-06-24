@@ -66,6 +66,16 @@ If you need to modify or disable specific rules, you can do so in the `rules` se
 }
 ```
 
+For example, if you are not targeting Node, disable `ts-config-moduleresolution` as follows:
+
+```json
+{
+  "rules": {
+    "@ts-common/azure-sdk/ts-config-moduleresolution": "off"
+  }
+}
+```
+
 ## Supported Rules
 
 - [ts-config-allowsyntheticdefaultimports](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-config-allowsyntheticdefaultimports)
@@ -77,6 +87,7 @@ If you need to modify or disable specific rules, you can do so in the `rules` se
 - [ts-config-isolatedmodules](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-config-isolatedmodules)
 - [ts-config-lib](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-config-lib)
 - [ts-config-module](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-config-module)
+- [ts-config-moduleresolution](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-config-moduleresolution)
 - [ts-config-no-experimentaldecorators](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-config-no-experimentaldecorators)
 - [ts-config-sourcemap](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-config-sourcemap)
 - [ts-config-strict](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-config-strict)

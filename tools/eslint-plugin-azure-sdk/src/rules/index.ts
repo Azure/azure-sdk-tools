@@ -43,7 +43,7 @@ export = {
   "ts-config-isolatedmodules": tsConfigIsolatedModules,
   "ts-config-lib": tsConfigLib,
   "ts-config-module": tsConfigModule,
-  "ts-config-module-resolution": tsConfigModuleResolution,
+  "ts-config-moduleresolution": tsConfigModuleResolution,
   "ts-config-no-experimentaldecorators": tsConfigNoExperimentalDecorators,
   "ts-config-sourcemap": tsConfigSourceMap,
   "ts-config-strict": tsConfigStrict,

@@ -80,6 +80,7 @@ If you need to modify or disable specific rules, you can do so in the `rules` se
 - [ts-config-no-experimentaldecorators](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-config-no-experimentaldecorators)
 - [ts-config-sourcemap](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-config-sourcemap)
 - [ts-config-strict](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-config-strict)
+- [ts-config-target](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-config-target)
 - [ts-error-handling](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-error-handling)
 - [ts-include-original-source](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-include-original-source)
 - [ts-modules-named-only](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-modules-named-only)

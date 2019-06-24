@@ -93,4 +93,4 @@ If you need to modify or disable specific rules, you can do so in the `rules` se
 - [ts-package-json-repo](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-package-json-repo)
 - [ts-package-json-required-scripts](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-package-json-required-scripts)
 - [ts-package-json-sideeffects](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-package-json-sideeffects)
-- [ts-ship-type-declarations](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-ship-type-declarations)
+- [ts-package-json-types](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-package-json-types)

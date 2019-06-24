@@ -20,7 +20,7 @@ export = {
       category: "Best Practices",
       recommended: true,
       url:
-        "https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-ship-type-declarations"
+        "https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-package-json-types"
     },
     schema: [] // no options
   },

@@ -1,6 +1,7 @@
 ﻿using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace APIView
@@ -13,12 +14,12 @@ namespace APIView
             string indent = new string(' ', indents * indentSize);
             builder.Append(indent);
         }
-        /*
+        
         private static void AppendIndentsHTML(StringBuilder builder, int indents)
         {
-            string indent = new string("<span class=\"indent\"><\\span>", indents);
+            builder.Append(Enumerable.Repeat("<span class=\"indent\"><\\span>", indents));
         }
-        */
+        
         public static string RenderText(AssemblyAPIV assembly)
         {
             StringBuilder returnString = new StringBuilder();

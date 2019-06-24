@@ -42,17 +42,23 @@ namespace APIView
 
         public static CSharpCompilation GetCompilation(string dllPath)
         {
-            var reference = MetadataReference.CreateFromFile(dllPath);
-            var compilation = CSharpCompilation.Create(null).AddReferences(reference);
-            compilation = compilation.AddReferences(MetadataReference.CreateFromFile(typeof(object).Assembly.Location));
-
-            var trustedAssemblies = ((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")).Split(Path.PathSeparator);
-            foreach (var tpl in trustedAssemblies)
+            try
             {
-                compilation = compilation.AddReferences(MetadataReference.CreateFromFile(tpl));
-            }
+                var reference = MetadataReference.CreateFromFile(dllPath);
+                var compilation = CSharpCompilation.Create(null).AddReferences(reference);
+                compilation = compilation.AddReferences(MetadataReference.CreateFromFile(typeof(object).Assembly.Location));
 
-            return compilation;
+                var trustedAssemblies = ((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")).Split(Path.PathSeparator);
+                foreach (var tpl in trustedAssemblies)
+                {
+                    compilation = compilation.AddReferences(MetadataReference.CreateFromFile(tpl));
+                }
+
+                return compilation;
+            } catch (Exception e)
+            {
+                throw e;
+            }
         }
 
         public override string ToString()

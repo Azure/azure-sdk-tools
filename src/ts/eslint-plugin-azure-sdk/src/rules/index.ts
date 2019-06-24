@@ -29,6 +29,7 @@ import tsPackageJsonRepo from "./ts-package-json-repo";
 import tsPackageJsonRequiredScripts from "./ts-package-json-required-scripts";
 import tsPackageJsonSideEffects from "./ts-package-json-sideeffects";
 import tsPackageJsonTypes from "./ts-package-json-types";
+import tsVersioningSemver from "./ts-versioning-semver";
 
 export = {
   "ts-config-allowsyntheticdefaultimports": tsConfigAllowSyntheticDefaultImports,
@@ -56,5 +57,6 @@ export = {
   "ts-package-json-repo": tsPackageJsonRepo,
   "ts-package-json-required-scripts": tsPackageJsonRequiredScripts,
   "ts-package-json-sideeffects": tsPackageJsonSideEffects,
-  "ts-package-json-types": tsPackageJsonTypes
+  "ts-package-json-types": tsPackageJsonTypes,
+  "ts-versioning-semver": tsVersioningSemver
 };

@@ -39,12 +39,11 @@
     "lint": "eslint src tests --ext .ts",
     "test": "npm run clean && tsc -p tsconfig.json && mocha --timeout 10000 --recursive dist/tests"
   },
-  "dependencies": {
-    "@types/eslint": "^4.16.6",
-    "@types/estree": "0.0.39"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@types/chai": "^4.1.7",
+    "@types/eslint": "^4.16.6",
+    "@types/estree": "0.0.39",
     "@types/mocha": "^5.2.7",
     "@typescript-eslint/eslint-plugin": "^1.10.2",
     "@typescript-eslint/parser": "^1.10.2",

@@ -1,5 +1,5 @@
 /**
- * @fileoverview Rule to force the package major version not to be zero.
+ * @fileoverview Rule to force adherence to semver guidelines.
  * @author Arpan Laha
  */
 
@@ -16,7 +16,7 @@ export = {
     type: "problem",
 
     docs: {
-      description: "force the package major version not to be zero",
+      description: "force adherence to semver guidelines",
       category: "Best Practices",
       recommended: true,
       url:
@@ -48,6 +48,7 @@ export = {
             }
             const nodeValue: Literal = node.value as Literal;
 
+            // check for violations specific to semver
             const semverPattern = /^((0|[1-9](\d*))\.){2}(0|[1-9](\d*))(-|$)/;
             !semverPattern.test(nodeValue.value as string) &&
               context.report({
@@ -55,6 +56,7 @@ export = {
                 message: "version is not in semver"
               });
 
+            // check that if preview is in proper syntax if provided
             const previewPattern = /^((0|[1-9](\d*))\.){2}(0|[1-9](\d*))(-preview-(0|([1-9](\d*))))?$/;
             semverPattern.test(nodeValue.value as string) &&
               !previewPattern.test(nodeValue.value as string) &&
@@ -63,7 +65,8 @@ export = {
                 message: "preview format is not x.y.z-preview-i"
               });
 
-            const major0Pattern = /^0\./; // version starting in '0.'
+            // check that major version is not set to 0
+            const major0Pattern = /^0\./;
             semverPattern.test(nodeValue.value as string) &&
               major0Pattern.test(nodeValue.value as string) &&
               context.report({

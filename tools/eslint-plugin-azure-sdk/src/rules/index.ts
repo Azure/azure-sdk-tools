@@ -12,6 +12,7 @@ import tsConfigImportHelpers from "./ts-config-importhelpers";
 import tsConfigIsolatedModules from "./ts-config-isolatedmodules";
 import tsConfigLib from "./ts-config-lib";
 import tsConfigModule from "./ts-config-module";
+import tsConfigModuleResolution from "./ts-config-moduleresolution";
 import tsConfigNoExperimentalDecorators from "./ts-config-no-experimentaldecorators";
 import tsConfigSourceMap from "./ts-config-sourcemap";
 import tsConfigStrict from "./ts-config-strict";
@@ -42,6 +43,7 @@ export = {
   "ts-config-isolatedmodules": tsConfigIsolatedModules,
   "ts-config-lib": tsConfigLib,
   "ts-config-module": tsConfigModule,
+  "ts-config-module-resolution": tsConfigModuleResolution,
   "ts-config-no-experimentaldecorators": tsConfigNoExperimentalDecorators,
   "ts-config-sourcemap": tsConfigSourceMap,
   "ts-config-strict": tsConfigStrict,

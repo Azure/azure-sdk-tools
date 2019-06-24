@@ -20,6 +20,7 @@ const ruleList = [
   "ts-config-isolatedmodules",
   "ts-config-lib",
   "ts-config-module",
+  "ts-config-moduleresolution",
   "ts-config-no-experimentaldecorators",
   "ts-config-sourcemap",
   "ts-config-strict",

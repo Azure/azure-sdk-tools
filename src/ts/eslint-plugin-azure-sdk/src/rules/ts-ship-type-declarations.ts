@@ -40,6 +40,11 @@ export = {
           "ExpressionStatement > ObjectExpression > Property[key.value='types']": (
             node: Property
           ): void => {
+            node.value.type !== "Literal" &&
+              context.report({
+                node: node.value,
+                message: "types is not set to a string"
+              });
             const nodeValue: Literal = node.value as Literal;
 
             const pattern = /\.d\.ts$/; // filename ending in '.d.ts'

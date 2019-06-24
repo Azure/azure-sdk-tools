@@ -35,7 +35,7 @@ const ruleList = [
   "ts-package-json-repo",
   "ts-package-json-required-scripts",
   "ts-package-json-sideeffects",
-  "ts-ship-type-declarations"
+  "ts-package-json-types"
 ];
 
 /**

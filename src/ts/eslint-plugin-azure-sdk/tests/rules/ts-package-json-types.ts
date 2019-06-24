@@ -1,9 +1,9 @@
 /**
- * @fileoverview Testing the ts-ship-type-declarations rule.
+ * @fileoverview Testing the ts-package-json-types rule.
  * @author Arpan Laha
  */
 
-import rule from "../../src/rules/ts-ship-type-declarations";
+import rule from "../../src/rules/ts-package-json-types";
 import { RuleTester } from "eslint";
 
 //------------------------------------------------------------------------------
@@ -247,7 +247,7 @@ const ruleTester = new RuleTester({
   }
 });
 
-ruleTester.run("ts-ship-type-declarations", rule, {
+ruleTester.run("ts-package-json-types", rule, {
   valid: [
     {
       // only the fields we care about

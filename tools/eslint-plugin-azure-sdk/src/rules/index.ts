@@ -27,7 +27,7 @@ import tsPackageJsonName from "./ts-package-json-name";
 import tsPackageJsonRepo from "./ts-package-json-repo";
 import tsPackageJsonRequiredScripts from "./ts-package-json-required-scripts";
 import tsPackageJsonSideEffects from "./ts-package-json-sideeffects";
-import tsShipTypeDeclarations from "./ts-ship-type-declarations";
+import tsPackageJsonTypes from "./ts-package-json-types";
 
 export = {
   "ts-config-allowsyntheticdefaultimports": tsConfigAllowSyntheticDefaultImports,
@@ -54,5 +54,5 @@ export = {
   "ts-package-json-repo": tsPackageJsonRepo,
   "ts-package-json-required-scripts": tsPackageJsonRequiredScripts,
   "ts-package-json-sideeffects": tsPackageJsonSideEffects,
-  "ts-ship-type-declarations": tsShipTypeDeclarations
+  "ts-package-json-types": tsPackageJsonTypes
 };

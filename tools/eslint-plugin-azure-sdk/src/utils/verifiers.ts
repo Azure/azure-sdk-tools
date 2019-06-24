@@ -120,6 +120,8 @@ export const getVerifiers = (
         context.report({
           node: node.value,
           message:
+            outer +
+            "." +
             inner +
             " is not set to a literal (string | boolean | null | number | RegExp)"
         });

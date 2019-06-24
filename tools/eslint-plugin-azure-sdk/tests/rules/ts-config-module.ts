@@ -158,7 +158,7 @@ ruleTester.run("ts-config-module", rule, {
       errors: [
         {
           message:
-            "compilerOptions.module is set to es5 when it should be set to es6"
+            "compilerOptions.module is set to es5 when it should be set to ES6"
         }
       ]
     },
@@ -169,7 +169,7 @@ ruleTester.run("ts-config-module", rule, {
       errors: [
         {
           message:
-            "compilerOptions.module is set to es5 when it should be set to es6"
+            "compilerOptions.module is set to es5 when it should be set to ES6"
         }
       ]
     }

@@ -36,7 +36,7 @@ export = {
           "ExpressionStatement > ObjectExpression": verifiers.existsInFile,
 
           // check the node corresponding to main to see if its value is dist/index.js
-          "ExpressionStatement > ObjectExpression > Property[key.value='name']": (
+          "ExpressionStatement > ObjectExpression > Property[key.value='main']": (
             node: Property
           ): void => {
             if (node.value.type !== "Literal") {

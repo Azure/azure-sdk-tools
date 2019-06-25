@@ -30,7 +30,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Models
         string _fxTargetMonikerString;
         string _environmentSpecificTargetFxMonikerString;
         string _fxBaseLineMonikerString;
-        List<string> _skipTargetFxMatchingList;
+        //List<string> _skipTargetFxMatchingList;
         #endregion
 
         #region Properties

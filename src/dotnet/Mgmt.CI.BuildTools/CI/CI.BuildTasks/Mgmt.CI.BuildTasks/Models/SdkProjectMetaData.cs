@@ -123,11 +123,25 @@ namespace MS.Az.NetSdk.Build.Models
             else
                 ProjectCategory = SdkProjectCategory.UnDetermined;
 
-            if (!string.IsNullOrWhiteSpace(msbProject.GetPropertyValue(EXCLUDE_FROM_BUILD)))
-                ExcludeFromBuild = true;
 
-            if (!string.IsNullOrWhiteSpace(msbProject.GetPropertyValue(EXCLUDE_FROM_TEST)))
-                ExcludeFromTest = true;
+            string buildPropValue = msbProject.GetPropertyValue(EXCLUDE_FROM_BUILD);
+            string testPropValue = msbProject.GetPropertyValue(EXCLUDE_FROM_TEST);
+
+            if(bool.TryParse(buildPropValue, out bool parsedBuildPropValue))
+            {
+                ExcludeFromBuild = parsedBuildPropValue;
+            }
+
+            if (bool.TryParse(testPropValue, out bool parsedTestPropValue))
+            {
+                ExcludeFromTest = parsedTestPropValue;
+            }
+
+            //if (!string.IsNullOrWhiteSpace(msbProject.GetPropertyValue(EXCLUDE_FROM_BUILD)))
+            //    ExcludeFromBuild = true;
+
+            //if (!string.IsNullOrWhiteSpace(msbProject.GetPropertyValue(EXCLUDE_FROM_TEST)))
+            //    ExcludeFromTest = true;
 
         }
         #endregion

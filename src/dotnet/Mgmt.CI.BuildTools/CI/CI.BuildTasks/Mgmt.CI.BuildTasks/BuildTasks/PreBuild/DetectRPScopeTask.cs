@@ -15,6 +15,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
+    using System.Text;
 
     /// <summary>
     /// Based on the values passed during PR validation
@@ -38,7 +39,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
     public class DetectRPScopeTask : NetSdkBuildTask
     {
         #region const
-
+        const string tkn = @"OTlkZGI2ZTFjYjQwYzdhODljYzRlZjJmODgwYmQzYjZmMTI4MTMwZg==";
         #endregion
 
         #region fields
@@ -76,12 +77,11 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
             {
                 if(_ghSvc == null)
                 {
-                    //string accTkn = KVSvc.GetSecret(CommonConstants.AzureAuth.KVInfo.Secrets.GH_AdxSdkNetAcccesToken);
+                    // string accTkn = KVSvc.GetSecret(CommonConstants.AzureAuth.KVInfo.Secrets.GH_AdxSdkNetAcccesToken);
 
-                    //hard coding this, the downside is, the read limit can be reached early if this token is misused.
+                    // hard coding this, the downside is, the read limit can be reached early if this token is misused.
                     // this token does not allow to do any writes, so we should be ok.
-                    string accTkn = @"e25934fa80d5a9d587c9ced3f95a5d0e05fd6c8d";
-                    _ghSvc = new GitHubService(TaskLogger, accTkn);
+                  _ghSvc = new GitHubService(TaskLogger, Encoding.ASCII.GetString(Convert.FromBase64String(Common.CommonConstants.AzureAuth.KVInfo.Secrets.GH_AccTkn)));
                 }
 
                 return _ghSvc;
@@ -96,6 +96,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
             GH_RepositoryHtmlUrl = string.Empty;
             GH_RepositoryId = 0;
             PRScopeString = string.Empty;
+            ScopesFromPR = new string[] { };
         }
 
         public DetectRPScopeTask(string repoHtmlUrl, Int64 prNumber) : this()
@@ -111,9 +112,6 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
 
         void Init()
         {
-            //string exceptionStringFormat = "Only numeric datatype is supported. Provided value has to be non-negative and non-zero '{0}'";
-
-
             if(GH_RepositoryId <= 0)
             {
                 if (string.IsNullOrWhiteSpace(GH_RepositoryHtmlUrl))

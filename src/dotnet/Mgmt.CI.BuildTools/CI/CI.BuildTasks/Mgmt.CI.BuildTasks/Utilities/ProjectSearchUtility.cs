@@ -517,17 +517,6 @@ namespace MS.Az.NetSdk.Build.Utilities
             }
 
             return rpDirList;
-            //Check.DirectoryExists(SDKRootDir);
-            //var rpDirs = Directory.EnumerateDirectories(SDKRootDir, "*", SearchOption.TopDirectoryOnly);
-
-            //if(rpDirs.Any<string>())
-            //{
-            //    return rpDirs.ToList<string>();
-            //}
-            //else
-            //{
-            //    return new List<string>();
-            //}
         }
 
         /// <summary>

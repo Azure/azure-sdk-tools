@@ -5,12 +5,15 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks
 {
     using Microsoft.Build.Framework;
     using MS.Az.Mgmt.CI.BuildTasks.Common.Base;
+    using MS.Az.Mgmt.CI.BuildTasks.Common.ExtensionMethods;
     using MS.Az.Mgmt.CI.BuildTasks.Common.Utilities;
     using MS.Az.Mgmt.CI.BuildTasks.Models;
     using MS.Az.Mgmt.CI.BuildTasks.Tasks.PreBuild;
     using MS.Az.Mgmt.CI.Common.ExtensionMethods;
+    using MS.Az.NetSdk.Build.Utilities;
     using System;
     using System.Collections.Generic;
+    using System.IO;
     using System.Linq;
 
     /// <summary>
@@ -103,42 +106,8 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks
             {
                 List<string> ScopedProjects = new List<string>();
                 ScopedProjects = GetProjectsToBeSkiped();
-                //UpdateProjects(ScopedProjects);
-                up(ScopedProjects);
+                UpdateProjects(ScopedProjects);
                 ScopedProjects.Clear();
-                #region old code
-                //// We will not skip broad build scope (e.g. sdk), the idea is to not to skip all the tests in a broader build scope.
-                //if (string.IsNullOrWhiteSpace(BuildScope))
-                //{
-                //    TaskLogger.LogWarning("BuildScope is required to skip tests.");
-                //}
-                //else if (BuildScope.Equals("sdk", StringComparison.OrdinalIgnoreCase))
-                //{
-                //    TaskLogger.LogWarning("'{0}' BuildScope is not supported", BuildScope);
-                //}
-                //else
-                //{
-                //    CategorizeSDKProjectsTask catProj = new CategorizeSDKProjectsTask(RepositoryRootDirPath, BuildScope, null, ProjectType, ProjectCategory);
-                //    catProj.BuildScopes = BuildScopes;
-                //    catProj.Execute();
-
-                //    var sdkProj = catProj.SDK_Projects.Select<SDKMSBTaskItem, string>((item) => item.ItemSpec);
-                //    var testProj = catProj.Test_Projects.Select<SDKMSBTaskItem, string>((item) => item.ItemSpec);
-
-                //    if (sdkProj.NotNullOrAny<string>())
-                //    {
-                //        ScopedProjects.AddRange(sdkProj.ToList<string>());
-                //    }
-
-                //    if (testProj.NotNullOrAny<string>())
-                //    {
-                //        ScopedProjects.AddRange(testProj.ToList<string>());
-                //    }
-
-                //    UpdateProjects(ScopedProjects);
-                //    ScopedProjects.Clear();
-                //}
-                #endregion
             }
 
             return TaskLogger.TaskSucceededWithNoErrorsLogged;
@@ -167,34 +136,45 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks
 
         List<string> GetProjectsToBeSkiped()
         {
+            string notSupportedErrorFormat = @"Unable to execute skipping tests on following directory '{0}'";
+
             List<string> ScopedProjects = new List<string>();
 
             // We will not skip broad build scope (e.g. sdk), the idea is to not to skip all the tests in a broader build scope.
             if (BuildScope.Equals("sdk", StringComparison.OrdinalIgnoreCase))
             {
-                TaskLogger.LogWarning("'{0}' BuildScope is not supported", BuildScope);
+                TaskLogger.LogException<NotSupportedException>(notSupportedErrorFormat, BuildScope);
             }
             else if (BuildScopes.Equals("sdk", StringComparison.OrdinalIgnoreCase))
             {
-                TaskLogger.LogWarning("'{0}' BuildScopes is not supported", BuildScope);
+                TaskLogger.LogException<NotSupportedException>(notSupportedErrorFormat, BuildScope);
             }
             else
             {
+                string sdkRootDirPath = Path.Combine(RepositoryRootDirPath, "sdk");
+
                 CategorizeSDKProjectsTask catProj = new CategorizeSDKProjectsTask(RepositoryRootDirPath, BuildScope, null, ProjectType, ProjectCategory);
                 catProj.BuildScopes = BuildScopes;
                 catProj.Execute();
 
-                var sdkProj = catProj.SDK_Projects.Select<SDKMSBTaskItem, string>((item) => item.ItemSpec);
-                var testProj = catProj.Test_Projects.Select<SDKMSBTaskItem, string>((item) => item.ItemSpec);
-
-                if (sdkProj.NotNullOrAny<string>())
+                if (catProj.MultipleScopes.Contains("sdk"))
                 {
-                    ScopedProjects.AddRange(sdkProj.ToList<string>());
+                    TaskLogger.LogException<NotSupportedException>(notSupportedErrorFormat, sdkRootDirPath);
                 }
-
-                if (testProj.NotNullOrAny<string>())
+                else
                 {
-                    ScopedProjects.AddRange(testProj.ToList<string>());
+                    var sdkProj = catProj.SDK_Projects.Select<SDKMSBTaskItem, string>((item) => item.ItemSpec);
+                    var testProj = catProj.Test_Projects.Select<SDKMSBTaskItem, string>((item) => item.ItemSpec);
+
+                    if (sdkProj.NotNullOrAny<string>())
+                    {
+                        ScopedProjects.AddRange(sdkProj.ToList<string>());
+                    }
+
+                    if (testProj.NotNullOrAny<string>())
+                    {
+                        ScopedProjects.AddRange(testProj.ToList<string>());
+                    }
                 }
             }
 
@@ -202,37 +182,6 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks
         }
 
         void UpdateProjects(List<string> projectList)
-        {
-            foreach (string projectPath in projectList)
-            {
-                TaskLogger.LogInfo("Updating '{0}'", projectPath);
-                MsbuildProject msbp = new MsbuildProject(projectPath);
-
-                //Only test project should be excluded from test execution
-                if (msbp.IsProjectTestType)
-                {
-                    if (SkipFromTestExecution == true)
-                    {
-                        msbp.AddUpdateProperty(PROPNAME_SKIP_TEST_EXECUTION, "true");
-                    }
-                    else
-                    {
-                        msbp.AddUpdateProperty(PROPNAME_SKIP_TEST_EXECUTION, "false");
-                    }
-                }
-
-                if (SkipFromBuild == true)
-                {
-                    msbp.AddUpdateProperty(PROPNAME_SKIP_BUILD, "true");
-                }
-                else
-                {
-                    msbp.AddUpdateProperty(PROPNAME_SKIP_BUILD, "false");
-                }
-            }
-        }
-
-        void up(List<string> projectList)
         {
             foreach (string projectPath in projectList)
             {

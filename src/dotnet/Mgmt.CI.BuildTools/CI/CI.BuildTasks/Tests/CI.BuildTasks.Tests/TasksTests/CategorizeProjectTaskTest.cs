@@ -111,7 +111,7 @@ namespace BuildTasks.Tests
             {
                 Assert.True(cproj.SDK_Projects.Count<ITaskItem>() > 10);
                 Assert.True(cproj.Test_Projects.Count<ITaskItem>() > 10);
-                Assert.True(cproj.UnSupportedProjects.Count<ITaskItem>() >= 1);
+                //Assert.True(cproj.UnSupportedProjects.Count<ITaskItem>() >= 1);
                 Assert.True(cproj.Test_ToBe_Run.Count<ITaskItem>() > 10);
             }
             DateTime endTime = DateTime.Now;
@@ -122,18 +122,52 @@ namespace BuildTasks.Tests
         public void ScopedProject()
         {
             CategorizeSDKProjectsTask cproj = new CategorizeSDKProjectsTask(rootDir);
-            cproj.BuildScope = @"mgmtcommon\AppAuthentication";
+            cproj.BuildScope = @"mgmtcommon\ClientRuntime";
 
             if (cproj.Execute())
             {
                 Assert.True(cproj.SDK_Projects.Count<ITaskItem>() == 1);
 
                 //Uncomment when test project is fixed
-                Assert.True(cproj.Test_Projects.Count<ITaskItem>() == 0);
+                Assert.True(cproj.Test_Projects.Count<ITaskItem>() == 3);
+                Assert.True(cproj.Test_ToBe_Run.Count<ITaskItem>() == 2);
             }
         }
 
-        //[Fact(Skip = "Not applicable, this is for old task. Keeping it for reference, eventually needs to be deleted")]
+        [Fact]
+        public void SearchmgmtProject()
+        {
+            //Search test projects are multi-targeted, hence the number of test projects will be two
+            // one project for each targeted framework
+            CategorizeSDKProjectsTask cproj = new CategorizeSDKProjectsTask(rootDir);
+            cproj.BuildScope = @"search";
+
+            if (cproj.Execute())
+            {
+                Assert.True(cproj.SDK_Projects.Count<ITaskItem>() == 1);
+
+                //Assert.True(cproj.Test_Projects.Count<ITaskItem>() == 1);
+                //Assert.True(cproj.Test_ToBe_Run.Count<ITaskItem>() == 2);
+            }
+        }
+
+        [Fact]
+        public void AppAuthScope()
+        {
+            // Search test projects are multi-targeted, hence the number of test projects will be two
+            // one project for each targeted framework
+            CategorizeSDKProjectsTask cproj = new CategorizeSDKProjectsTask(rootDir);
+            cproj.BuildScope = Path.Combine("mgmtcommon", "appauthentication");
+
+            if (cproj.Execute())
+            {
+                Assert.True(cproj.SDK_Projects.Count<ITaskItem>() == 1);
+
+                Assert.True(cproj.Test_Projects.Count<ITaskItem>() == 2);
+                Assert.True(cproj.Test_ToBe_Run.Count<ITaskItem>() > 5);
+            }
+        }
+
         [Fact]
         public void GetReferencedPackagesForScope()
         {
@@ -442,13 +476,13 @@ namespace BuildTasks.Tests
             }
         }
 
-        [Fact(Skip = "Investigate as it fails only in Run mode, works fine during debug mode")]
-        //[Fact]
+        //[Fact(Skip = "Investigate as it fails only in Run mode, works fine during debug mode")]
+        [Fact]
         public void ClientRuntimeProjects()
         {
             CategorizeSDKProjectsTask cproj = new CategorizeSDKProjectsTask(rootDir);
-            cproj.BuildScope = @"SDKCommon\ClientRuntime";
-            cproj.UseLegacyDirStructure = true;
+            cproj.BuildScope = Path.Combine("mgmtcommon", "ClientRuntime");
+            //cproj.UseLegacyDirStructure = true;
 
             if (cproj.Execute())
             {
@@ -457,7 +491,6 @@ namespace BuildTasks.Tests
             }
         }
 
-        //[Fact(Skip = "Investigate as it fails only in Run mode, works fine during debug mode")]
         [Fact]
         public void MgmtCommonProjects()
         {
@@ -474,12 +507,12 @@ namespace BuildTasks.Tests
             }
         }
 
-        [Fact(Skip = "Investigate as it fails only in Run mode, works fine during debug mode")]
-        //[Fact]
+        //[Fact(Skip = "Investigate as it fails only in Run mode, works fine during debug mode")]
+        [Fact]
         public void TestFrameworkDir()
         {
             CategorizeSDKProjectsTask cproj = new CategorizeSDKProjectsTask(rootDir);
-            cproj.BuildScope = @"SDKCommon\TestFramework";
+            cproj.BuildScope = Path.Combine("mgmtcommon", "TestFramework");
             cproj.UseLegacyDirStructure = true;
 
             if (cproj.Execute())
@@ -488,7 +521,7 @@ namespace BuildTasks.Tests
                 //longer treated as regular nuget packages (targeting net452 and netStd1.4)
                 //but rather projects that are build without any targetFx
                 Assert.True(cproj.SDK_Projects.Count<ITaskItem>() == 2);
-                Assert.True(cproj.Test_Projects.Count<ITaskItem>() == 3);
+                //Assert.True(cproj.Test_Projects.Count<ITaskItem>() == 3);
             }
         }
 

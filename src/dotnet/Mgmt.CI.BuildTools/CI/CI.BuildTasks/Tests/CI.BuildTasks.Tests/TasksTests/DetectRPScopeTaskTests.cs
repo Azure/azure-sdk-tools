@@ -122,7 +122,7 @@ namespace Tests.CI.BuildTasks.TasksTests
                         }
                     case 6453:
                         {
-                            Assert.Null(rpScope.ScopesFromPR);
+                            Assert.Empty(rpScope.ScopesFromPR);
                             break;
                         }
                     default:

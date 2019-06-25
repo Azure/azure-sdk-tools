@@ -84,7 +84,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Tasks.PreBuild
         /// Provide list of scopes for the task
         /// This can be either fully qualified scopes or relative scopes
         /// </summary>
-        List<string> MultipleScopes { get; set; }
+        internal List<string> MultipleScopes { get; set; }
 
         /// <summary>
         /// Fully qualified Scope Path
@@ -333,6 +333,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Tasks.PreBuild
                     #region Test
                     case SdkProjectType.Test:
                         {
+                            #region baseline Target Fx check
                             // WE HAVE INTENTIONALLY SKIPPED CHECKING THIS PROPERTY, BASICALLY WE WILL NOT BE VERIFYING BASELINE TARGETFX FOR TEST PROJECTS
                             // IF WE EVER DECIDE TO DO IT, SIMPLY ENABLE THE BELOW CODE
 
@@ -347,7 +348,8 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Tasks.PreBuild
                             //            unsupportedProjList.Add(pmd);
                             //        }
                             //    }
-                            
+                            #endregion
+
                             if (!pmd.Fx.IsApplicableForCurrentPlatform)
                             {
                                 platformSpecificSkippedProjList.Add(pmd);
@@ -374,6 +376,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Tasks.PreBuild
             Test_Projects = testProjList.Select<SdkProjectMetadata, SDKMSBTaskItem>((item) => new SDKMSBTaskItem(item)).ToArray<SDKMSBTaskItem>();
             UnSupportedProjects = unsupportedProjList.Select<SdkProjectMetadata, SDKMSBTaskItem>((item) => new SDKMSBTaskItem(item)).ToArray<SDKMSBTaskItem>();
             Test_ToBe_Run = testToBeRunProjList.Select<SdkProjectMetadata, SDKMSBTaskItem>((item) => new SDKMSBTaskItem(item)).ToArray<SDKMSBTaskItem>();
+            Test_ToBe_Run = AdjustMultiTargetTests(Test_ToBe_Run).ToArray<SDKMSBTaskItem>();
             PlatformSpecificSkippedProjects = platformSpecificSkippedProjList.Select<SdkProjectMetadata, SDKMSBTaskItem>((item) => new SDKMSBTaskItem(item)).ToArray<SDKMSBTaskItem>();
             SdkPkgReferenceList = GetNormalizedPkgRefList();
 
@@ -409,6 +412,40 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Tasks.PreBuild
                 TaskLogger.LogInfo("PackageReferences count:'{0}'", SdkPkgReferenceList.Count().ToString());
                 TaskLogger.LogInfo(MessageImportance.Low, SdkPkgReferenceList, "Packages References");
             }
+        }
+
+        /// <summary>
+        /// We split multi-targeted test projects into individual targeted test projects
+        /// This will be then used in executing test projects for each of the targted projects
+        /// e.g. if a test project is targeting 4 different target fx, we will create 4 list item
+        /// same project 4 different target fx
+        /// </summary>
+        /// <param name="testsTobeRun"></param>
+        /// <returns></returns>
+        IEnumerable<SDKMSBTaskItem> AdjustMultiTargetTests(IEnumerable<SDKMSBTaskItem> testsTobeRun)
+        {
+            List<SDKMSBTaskItem> newTestList = new List<SDKMSBTaskItem>();
+            foreach(SDKMSBTaskItem testProj in testsTobeRun)
+            {   
+                if(testProj.PlatformSpecificTargetFxMonikerString.Contains(";"))
+                {
+                    string[] tfx = testProj.PlatformSpecificTargetFxMonikerString.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+
+                    foreach(string fxMonikerToken in tfx)
+                    {
+                        SDKMSBTaskItem ti = new SDKMSBTaskItem(testProj);
+                        ti.PlatformSpecificTargetFxMonikerString = fxMonikerToken;
+                        ti.UpdateMetadata();
+                        newTestList.Add(ti);
+                    }
+                }
+                else
+                {
+                    newTestList.Add(testProj);
+                }
+            }
+
+            return newTestList;
         }
 
         /// <summary>

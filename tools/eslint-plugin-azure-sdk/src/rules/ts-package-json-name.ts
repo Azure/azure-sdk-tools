@@ -40,28 +40,24 @@ export = {
           "ExpressionStatement > ObjectExpression > Property[key.value='name']": (
             node: Property
           ): void => {
-            if (
-              context.getFilename().replace(/^.*[\\\/]/, "") === "package.json"
-            ) {
-              const nodeValue: Literal = node.value as Literal;
-              const value: string = nodeValue.value as string;
+            const nodeValue: Literal = node.value as Literal;
+            const value: string = nodeValue.value as string;
 
-              !value.startsWith("@azure/") &&
-                context.report({
-                  node: node,
-                  message: "name is not set to @azure/<service>"
-                });
+            !value.startsWith("@azure/") &&
+              context.report({
+                node: node,
+                message: "name is not set to @azure/<service>"
+              });
 
-              const kebabRegex = /^@azure\/([a-z]+-)*[a-z]+$/;
+            const kebabRegex = /^@azure\/([a-z]+-)*[a-z]+$/;
 
-              value.startsWith("@azure/") &&
-                !kebabRegex.test(value) &&
-                context.report({
-                  node: node,
-                  message:
-                    "service name is not in kebab-case (lowercase and separated by hyphens)"
-                });
-            }
+            value.startsWith("@azure/") &&
+              !kebabRegex.test(value) &&
+              context.report({
+                node: node,
+                message:
+                  "service name is not in kebab-case (lowercase and separated by hyphens)"
+              });
           }
         } as Rule.RuleListener)
       : {};

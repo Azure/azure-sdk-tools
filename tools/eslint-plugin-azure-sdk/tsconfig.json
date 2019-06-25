@@ -13,7 +13,7 @@
     "pretty": true,
     "strict": true,
     "target": "es6",
-    "types": ["chai", "eslint", "estree", "mocha", "node"]
+    "types": ["chai", "eslint", "estree", "mocha"]
   },
   "exclude": ["node_modules"]
 }

@@ -24,8 +24,8 @@ export = {
     schema: [] // no options
   },
   create: (context: Rule.RuleContext): Rule.RuleListener => {
-    // regex to see if file is a "source file"
-    const sourceFileRegex = /src\/\S+.ts$/; // ...src/...ts
+    // regex checking file ending
+    const sourceFileRegex = /\.ts$/; // ...src/...ts
 
     return sourceFileRegex.test(context.getFilename())
       ? {
@@ -36,27 +36,32 @@ export = {
             const headerComments = sourceCode.getCommentsBefore(node);
 
             // check that there are any header comments at all
-            headerComments.length &&
+            if (!headerComments.length) {
               context.report({
                 node: node,
                 message: "no copyright header found"
               });
+              return;
+            }
 
             // expoected copyright header
             const copyright =
-              "Copyright (c) Microsoft Corporation. All rights reserved.\nLicensed under the MIT License.";
+              "Copyright (c) Microsoft Corporation. All rights reserved.\nLicensed under the MIT License.\n";
 
             // copyright header line regexes
             const line1Regex = /Copyright \(c\) Microsoft Corporation\. All rights reserved\./;
             const line2Regex = /Licensed under the MIT License\./;
 
-            // look for both lines
-            !headerComments.find((comment: Comment): boolean => {
-              return line1Regex.test(comment.value);
-            }) &&
-              !headerComments.find((comment: Comment): boolean => {
-                return line2Regex.test(comment.value);
+            const adheres =
+              headerComments.find((comment: Comment): boolean => {
+                return line1Regex.test(comment.value);
               }) &&
+              headerComments.find((comment: Comment): boolean => {
+                return line2Regex.test(comment.value);
+              });
+
+            // look for both lines
+            !adheres &&
               context.report({
                 node: node,
                 message:

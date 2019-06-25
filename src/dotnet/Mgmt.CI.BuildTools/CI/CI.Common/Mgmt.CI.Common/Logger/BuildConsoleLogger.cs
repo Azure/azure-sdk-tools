@@ -27,6 +27,7 @@ namespace MS.Az.Mgmt.CI.Common.Logger
         public override void LogException(Exception ex, bool showDetails)
         {
             ShowError(ex.ToString());
+            throw ex;
         }
 
         public override void LogWarning(string warningMessage)
@@ -37,7 +38,7 @@ namespace MS.Az.Mgmt.CI.Common.Logger
         void ShowError(string errorMessage)
         {
 #if DEBUG
-            Debug.WriteLine(errorMessage);
+            Debug.WriteLine(errorMessage);            
 #else
             ConsoleColor currentForegroundColor = Console.ForegroundColor;
             Console.ForegroundColor = ConsoleColor.Red;

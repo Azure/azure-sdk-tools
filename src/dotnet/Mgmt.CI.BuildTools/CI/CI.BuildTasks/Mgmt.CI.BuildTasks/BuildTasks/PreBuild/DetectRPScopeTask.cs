@@ -5,7 +5,6 @@
 namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
 {
     using Microsoft.Build.Framework;
-    using MS.Az.Mgmt.CI.BuildTasks.Common;
     using MS.Az.Mgmt.CI.BuildTasks.Common.Base;
     using MS.Az.Mgmt.CI.BuildTasks.Common.ExtensionMethods;
     using MS.Az.Mgmt.CI.BuildTasks.Common.Utilities;
@@ -17,7 +16,6 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
     using System.IO;
     using System.Linq;
     using System.Text;
-    using System.Threading.Tasks;
 
     /// <summary>
     /// Based on the values passed during PR validation
@@ -41,7 +39,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
     public class DetectRPScopeTask : NetSdkBuildTask
     {
         #region const
-
+        const string tkn = @"OTlkZGI2ZTFjYjQwYzdhODljYzRlZjJmODgwYmQzYjZmMTI4MTMwZg==";
         #endregion
 
         #region fields
@@ -66,6 +64,9 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
         #region task output properties
         [Output]
         public string[] ScopesFromPR { get; set; }
+
+        [Output]
+        public string PRScopeString { get; set; }
         #endregion
 
         public override string NetSdkTaskName => "DetectRPScopeTask";
@@ -76,17 +77,16 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
             {
                 if(_ghSvc == null)
                 {
-                    string accTkn = KVSvc.GetSecret(CommonConstants.AzureAuth.KVInfo.Secrets.GH_AdxSdkNetAcccesToken);
-                    _ghSvc = new GitHubService(TaskLogger, accTkn);
+                    // string accTkn = KVSvc.GetSecret(CommonConstants.AzureAuth.KVInfo.Secrets.GH_AdxSdkNetAcccesToken);
+
+                    // hard coding this, the downside is, the read limit can be reached early if this token is misused.
+                    // this token does not allow to do any writes, so we should be ok.
+                  _ghSvc = new GitHubService(TaskLogger, Encoding.ASCII.GetString(Convert.FromBase64String(Common.CommonConstants.AzureAuth.KVInfo.Secrets.GH_AccTkn)));
                 }
 
                 return _ghSvc;
             }
         }
-
-        //long RepoId { get; set; }
-
-        //long PrNumber { get; set; }
         #endregion
 
         #region Constructor
@@ -95,6 +95,8 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
             GH_PRNumber = 0;
             GH_RepositoryHtmlUrl = string.Empty;
             GH_RepositoryId = 0;
+            PRScopeString = string.Empty;
+            ScopesFromPR = new string[] { };
         }
 
         public DetectRPScopeTask(string repoHtmlUrl, Int64 prNumber) : this()
@@ -110,9 +112,6 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
 
         void Init()
         {
-            //string exceptionStringFormat = "Only numeric datatype is supported. Provided value has to be non-negative and non-zero '{0}'";
-
-
             if(GH_RepositoryId <= 0)
             {
                 if (string.IsNullOrWhiteSpace(GH_RepositoryHtmlUrl))
@@ -143,6 +142,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
                 if (validScopes.NotNullOrAny<string>())
                 {
                     ScopesFromPR = validScopes.ToArray<string>();
+                    PRScopeString = string.Join(";", ScopesFromPR);
                 }
             }
             else
@@ -197,34 +197,10 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
             TaskLogger.LogInfo(MessageImportance.Low, prFileList, "List of files from PR");
             Dictionary<string, string> RPDirs = FindScopeFromPullRequestFileList(prFileList);
 
-            //Dictionary<string, string> RPDirs = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-
             if (RPDirs.NotNullOrAny<KeyValuePair<string, string>>())
             {
                 finalScopePathList = RPDirs.Select<KeyValuePair<string, string>, string>((item) => item.Key).ToList<string>();
             }
-
-            
-            //foreach(string filePath in prFileList)
-            //{
-            //    string slnDirPath = fileSysUtil.TraverUptoRootWithFileExtension(filePath);
-
-            //    if (Directory.Exists(slnDirPath))
-            //    {
-            //        if(!RPDirs.ContainsKey(slnDirPath))
-            //        {
-            //            RPDirs.Add(slnDirPath, slnDirPath);
-            //        }
-            //    }
-            //    else
-            //    {
-            //        TaskLogger.LogWarning("RPScope Detection: '{0}' does not exists", slnDirPath);
-            //    }
-            //}
-
-            //TaskLogger.LogInfo("Number of RPs detected", RPDirs);
-
-            //return RPDirs.Select<KeyValuePair<string, string>, string>((item) => item.Key).ToList<string>();
 
             return finalScopePathList;
         }
@@ -284,18 +260,8 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
                 }
             }
 
-            //if (scopeDictionary.NotNullOrAny<KeyValuePair<string, string>>())
-            //{
-            //    finalScopePathList = scopeDictionary.Select<KeyValuePair<string, string>, string>((item) => item.Key).ToList<string>();
-            //}
-
             return scopeDictionary;
-
-            //else
-            //{
-            //    TaskLogger.LogError("Provided repo '{0}' is not currently supported", repo.ToString());
-            //}
-}
+        }
 
         string AdjustPlatformPaths(string givenPath)
         {

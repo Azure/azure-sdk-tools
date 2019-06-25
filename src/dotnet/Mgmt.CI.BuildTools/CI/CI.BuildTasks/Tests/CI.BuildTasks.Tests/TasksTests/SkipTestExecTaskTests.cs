@@ -3,18 +3,14 @@
 
 namespace Tests.CI.BuildTasks.TasksTests
 {
-    using MS.Az.Mgmt.CI.BuildTasks.Models;
-    using MS.Az.Mgmt.CI.BuildTasks.Tasks.PreBuild;
+    using MS.Az.Mgmt.CI.BuildTasks.BuildTasks;
     using MS.Az.NetSdk.Build.Utilities;
     using System;
     using System.Collections.Generic;
     using System.IO;
-    using System.Text;
     using Tests.CI.Common.Base;
     using Xunit;
     using Xunit.Abstractions;
-    using System.Linq;
-    using MS.Az.Mgmt.CI.BuildTasks.BuildTasks;
 
     public class SkipTestExecTaskTests : BuildTasksTestBase
     {
@@ -40,28 +36,51 @@ namespace Tests.CI.BuildTasks.TasksTests
             List<string> scopeDirs = psu.FindTopLevelScopes(returnPartialScopePaths: true);
             Assert.NotEmpty(scopeDirs);
 
-            SkipTestExecutionTask ste = new SkipTestExecutionTask(rootDir);
+            SkipBuildOrTestExecutionTask ste = new SkipBuildOrTestExecutionTask(rootDir);
             ste.BuildScope = @"Advisor";
-            ste.ExcludeFromTestExecution = true;
+            ste.SkipFromTestExecution = true;
             ste.ProjectType = "Test";
             Assert.True(ste.Execute());
         }
 
-        [Fact(Skip = "Skip this test")]
+        [Fact]
+        public void SkipTestExecutionForMultipleProjects()
+        {
+            SkipBuildOrTestExecutionTask ste = new SkipBuildOrTestExecutionTask(rootDir);
+            ste.BuildScopes = @"Advisor;Cdn";
+            ste.SkipFromTestExecution = true;
+            ste.ProjectType = "Test";
+            Assert.True(ste.Execute());
+        }
+
+        [Fact]
         public void SkipTestExecutionForAllProjects()
         {
-            ProjectSearchUtility psu = new ProjectSearchUtility(rootDir);
-            List<string> scopeDirs = psu.FindTopLevelScopes(returnPartialScopePaths: true);
-            Assert.NotEmpty(scopeDirs);
+            SkipBuildOrTestExecutionTask ste = new SkipBuildOrTestExecutionTask(rootDir);
+            ste.BuildScope = "sdk";
+            ste.SkipFromTestExecution = true;
+            ste.ProjectType = "Test";
+            Assert.Throws<NotSupportedException>(() => ste.Execute());
 
-            foreach (string relativeScopePath in scopeDirs)
-            {
-                SkipTestExecutionTask ste = new SkipTestExecutionTask(rootDir);
-                ste.BuildScope = relativeScopePath;
-                ste.ExcludeFromTestExecution = true;
-                ste.ProjectType = "Test";
-                Assert.True(ste.Execute());
-            }
+            //We are executing the positive case under whatIf to avoid file changes
+            ste = new SkipBuildOrTestExecutionTask(rootDir);
+            string sdkComputeScope = Path.Combine("sdk", "compute");
+            ste.BuildScopes = string.Concat(sdkComputeScope, ";", "storage");
+            ste.SkipFromTestExecution = true;
+            ste.ProjectType = "Test";
+            ste.WhatIf = true;
+
+            Assert.True(ste.Execute());
+        }
+
+        [Fact]
+        public void ExecuteSdkScope()
+        {
+            SkipBuildOrTestExecutionTask ste = new SkipBuildOrTestExecutionTask(rootDir);
+            ste.BuildScopes = "sdk;compute";
+            ste.SkipFromTestExecution = true;
+            ste.ProjectType = "Test";
+            Assert.Throws<NotSupportedException>(() => ste.Execute());
         }
     }
 }

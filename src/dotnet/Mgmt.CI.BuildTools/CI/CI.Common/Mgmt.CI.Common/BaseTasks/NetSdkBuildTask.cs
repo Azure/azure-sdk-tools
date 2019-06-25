@@ -16,7 +16,6 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Common.Base
         #region Fields
         NetSdkBuildTaskLogger _taskLogger;
         DebugTask _debugTask;
-        //bool _isRunningUnderTest;
         bool _isBuildEngineInitialized;
         KeyVaultService _kvSvc;
         #endregion

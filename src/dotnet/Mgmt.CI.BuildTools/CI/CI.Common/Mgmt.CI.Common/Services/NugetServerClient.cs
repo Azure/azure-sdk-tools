@@ -63,14 +63,6 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Services
             {
                 NuGetVersion nugVer = new NuGetVersion(ver);
                 availableVersionList.Add(nugVer);
-
-                //string[] splitVerString = ver.Split(new string[] { "-" }, StringSplitOptions.RemoveEmptyEntries);
-
-                //Version pkgVersion = null;
-                //if(Version.TryParse(splitVerString[0], out pkgVersion))
-                //{
-                //    availableVersionList.Add(pkgVersion);
-                //}
             }
 
             UtilLogger.LogInfo(availableVersionList, "Available versions on nuget.org for Pacakge '{0}'", exactPackageId);

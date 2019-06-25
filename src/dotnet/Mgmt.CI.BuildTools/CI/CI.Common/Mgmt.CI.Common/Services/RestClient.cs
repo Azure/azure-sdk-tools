@@ -19,7 +19,6 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Services
         bool _disposed;
         #endregion
         protected Uri BaseUri { get; }
-
         protected HttpClient Client
         {
             get
@@ -40,8 +39,6 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Services
 
         #region Constructor
         public RestClient() : base() { }
-
-        
 
         public RestClient(Uri baseUri): this()
         {
@@ -98,25 +95,4 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Services
             }
         }
     }
-
-    //internal class RestClientResponse<T> : IRestClientResponse<T> where T:class
-    //{
-    //    public HttpRequestMessage Request { get; set; }
-
-    //    public HttpResponseMessage Response { get; set; }
-
-    //    public T Body { get; set; }
-    //}
-
-    //internal class RestClientResponse : RestClientResponse<Object> { }
-
-
-    //interface IRestClientResponse<T> where T: class
-    //{
-    //    HttpRequestMessage Request { get; set; }
-
-    //    HttpResponseMessage Response { get; set; }
-
-    //    T Body { get; set; }
-    //}
 }

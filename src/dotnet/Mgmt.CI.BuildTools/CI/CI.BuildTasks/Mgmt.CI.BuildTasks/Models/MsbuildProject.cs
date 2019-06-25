@@ -42,9 +42,14 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Models
             {
                 bool ifXunit = DoesParticularPkgRefExists("xunit");
                 bool ifTestFileName = false;
-                if(ProjectFileName.Contains("test", StringComparison.OrdinalIgnoreCase))
+                string projDirPath = Path.GetDirectoryName(ProjectFilePath);
+
+                if (ProjectFileName.Contains("test", StringComparison.OrdinalIgnoreCase))
                 {
-                    ifTestFileName = true;
+                    if (projDirPath.Contains("test", StringComparison.OrdinalIgnoreCase))
+                    {
+                        ifTestFileName = true;
+                    }
                 }
 
                 return (ifXunit && ifTestFileName);
@@ -102,7 +107,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Models
         {
             get
             {
-                if(ProjectFilePath.Contains("sdkcommon", StringComparison.OrdinalIgnoreCase))
+                if(ProjectFilePath.Contains("mgmtcommon", StringComparison.OrdinalIgnoreCase))
                     return true;
                 else
                     return false;
@@ -121,24 +126,6 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Models
                 return _packageReferenceList;
             }
         }
-
-
-        //public SdkProjectType SdkProjType
-        //{
-        //    get
-        //    {
-        //        return SdkProjectType.NotSupported;
-        //    }
-        //}
-
-        //public SdkProjectCategory SdkProjCategory
-        //{
-        //    get
-        //    {
-        //        return SdkProjectCategory.NotSupported;
-        //    }
-        //}
-        
 
         public string TargetFxMoniker
         {
@@ -364,6 +351,10 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Models
             Dictionary<string, string> pkgRefVer = null;
             List<Tuple<string, string, string>> pkgRefTup = new List<Tuple<string, string, string>>();
             ICollection<ProjectItem> pkgRefItems = LoadedProj.GetItemsIgnoringCondition(ITEMGROUP_PKGREF);
+            //ICollection<ProjectItem> pkgRefItems = LoadedProj.GetItemsByEvaluatedInclude(ITEMGROUP_PKGREF);
+            //ICollection<ProjectItem> allItems = LoadedProj.ItemsIgnoringCondition;
+            //ICollection<ProjectItem> pkgRefItems = allItems.Where<ProjectItem>((item) => item.ItemType.Equals(ITEMGROUP_PKGREF)).ToList<ProjectItem>();
+
             string piPkgRef = string.Empty;
             string pkgRefVerStr = string.Empty;
 

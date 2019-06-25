@@ -5,6 +5,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Common.Utilities
 {
     using MS.Az.Mgmt.CI.BuildTasks.Common.Base;
     using MS.Az.Mgmt.CI.BuildTasks.Common.Logger;
+    using System;
     using System.IO;
     using System.Linq;
     using System.Reflection;
@@ -12,10 +13,25 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Common.Utilities
     /// <summary>
     /// File System IO Utilities
     /// </summary>
-    public class FileSystemUtility : NetSdkUtilTask //NetSdkUtilBase<NetSdkBuildTaskLogger>
+    public class FileSystemUtility : NetSdkUtilTask
     {
+        #region const
+        const int TEMP_DIR_COUNT = 1000;
+        #endregion
+
+        #region fields
+
+        #endregion
+
+        #region Properties
+
+        #endregion
+
+        #region Constructor
         public FileSystemUtility() { }
-        //public FileSystemUtility(NetSdkBuildTaskLogger log) : base(log) { }
+        #endregion
+
+        #region Public Functions
 
         /// <summary>
         /// Given a directory path, traverses one directory
@@ -26,26 +42,32 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Common.Utilities
         {
             return TraverseUptoRootWithDirToken(directoryTokenToFind, string.Empty);
         }
-        
+
+        /// <summary>
+        /// Starts at a location and traverses to root depending upon the token it's searching for
+        /// </summary>
+        /// <param name="directoryTokenToFind"></param>
+        /// <param name="startingDir"></param>
+        /// <returns></returns>
         public string TraverseUptoRootWithDirToken(string directoryTokenToFind, string startingDir)
         {
             string srcRootDir = string.Empty;
             string seedDirPath = string.Empty;
 
-            if(!string.IsNullOrWhiteSpace(startingDir))
+            if (!string.IsNullOrWhiteSpace(startingDir))
             {
-                if(Directory.Exists(startingDir))
+                if (Directory.Exists(startingDir))
                 {
                     seedDirPath = startingDir;
                 }
             }
 
-            if(string.IsNullOrWhiteSpace(directoryTokenToFind))
+            if (string.IsNullOrWhiteSpace(directoryTokenToFind))
             {
                 directoryTokenToFind = ".git";
             }
 
-            if(string.IsNullOrWhiteSpace(seedDirPath))
+            if (string.IsNullOrWhiteSpace(seedDirPath))
             {
                 seedDirPath = Directory.GetCurrentDirectory();
             }
@@ -74,6 +96,12 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Common.Utilities
             return srcRootDir;
         }
 
+        /// <summary>
+        /// Starts at the given location traverses to root of directory depending upon the token its earching for
+        /// </summary>
+        /// <param name="fileTokenToFind"></param>
+        /// <param name="startingDir"></param>
+        /// <returns></returns>
         public string TraverseUptoRootWithFileToken(string fileTokenToFind, string startingDir)
         {
             string srcRootDir = string.Empty;
@@ -87,7 +115,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Common.Utilities
                 }
             }
 
-            if(string.IsNullOrWhiteSpace(fileTokenToFind))
+            if (string.IsNullOrWhiteSpace(fileTokenToFind))
             {
                 fileTokenToFind = "build.proj";
             }
@@ -121,7 +149,12 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Common.Utilities
             return srcRootDir;
         }
 
-
+        /// <summary>
+        /// Traverses to root of directory depending upon the token it's searching for
+        /// </summary>
+        /// <param name="startingDir"></param>
+        /// <param name="fileExtensionToFind"></param>
+        /// <returns></returns>
         public string TraverUptoRootWithFileExtension(string startingDir, string fileExtensionToFind = ".sln")
         {
             string srcRootDir = string.Empty;
@@ -189,15 +222,8 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Common.Utilities
 
             // Get the files in the directory and copy them to the new location.
             FileInfo[] files = dir.GetFiles();
-            //List<FileInfo> filteredFiles = files
             foreach (FileInfo file in files)
             {
-                //if (file.Name.ToLower().EndsWith("nupkg") ||
-                //    file.Name.ToLower().EndsWith("nupkg") ||
-                //    file.Name.ToLower().EndsWith("nupkg"))
-                //{
-
-                //}
                 string temppath = Path.Combine(destDirName, file.Name);
                 UtilLogger.LogInfo("Copying: Source: '{0}', Desitination: '{1}'", file.FullName, temppath);
                 file.CopyTo(temppath, overwrite: true);
@@ -223,12 +249,72 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Common.Utilities
 
             var files = Directory.EnumerateFiles(rootDirPathToSearchIn, fileNameToSearch, SearchOption.AllDirectories);
 
-            if(files.Any<string>())
+            if (files.Any<string>())
             {
                 fileFound = files.FirstOrDefault<string>();
             }
 
             return fileFound;
         }
+
+        public string GetTempDirPath(string seedDirPath = "", string GIT_DIR_POSTFIX = "")
+        {
+            string newDir = "FSUtil";
+            int tempDirCount = 0;
+            string initialTempDirPath = string.Empty;
+            if (!string.IsNullOrWhiteSpace(seedDirPath))
+            {
+                if (Directory.Exists(seedDirPath))
+                {
+                    initialTempDirPath = seedDirPath;
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(initialTempDirPath))
+            {
+                initialTempDirPath = Path.GetTempPath();
+                initialTempDirPath = Path.Combine(initialTempDirPath, newDir);
+            }
+
+            string tempFileName = Path.GetFileNameWithoutExtension(Path.GetTempFileName());
+            tempFileName = string.Concat(tempFileName, GIT_DIR_POSTFIX);
+
+            string tempDir = Path.Combine(initialTempDirPath, tempFileName);
+
+            while (DirFileExists(tempDir) && tempDirCount < TEMP_DIR_COUNT)
+            {
+                tempFileName = string.Concat(Path.GetFileNameWithoutExtension(Path.GetTempFileName()), GIT_DIR_POSTFIX);
+                tempDir = Path.Combine(Path.GetTempFileName(), tempFileName);
+                tempDirCount++;
+            }
+
+            if (tempDirCount >= TEMP_DIR_COUNT)
+            {
+                ApplicationException appEx = new ApplicationException(string.Format("Cleanup temp directory. More than '{0}' directories detected with similar naming pattern: '{1}", TEMP_DIR_COUNT.ToString(), tempDir));
+                UtilLogger.LogException(appEx);
+            }
+
+            if (!Directory.Exists(tempDir))
+            {
+                Directory.CreateDirectory(tempDir);
+            }
+
+            return tempDir;
+        }
+        #endregion
+
+        #region private functions
+        private bool DirFileExists(string path)
+        {
+            bool dirExists = true;
+            bool fileExists = true;
+            bool dirFileExists = true;
+
+            dirExists = Directory.Exists(path);
+            fileExists = File.Exists(path);
+            dirFileExists = (dirExists && fileExists);
+            return dirFileExists;
+        }
+        #endregion
     }
 }

@@ -3,18 +3,15 @@
 
 namespace MS.Az.Mgmt.CI.Common.Services
 {
-    using MS.Az.Mgmt.CI.BuildTasks.Common;
     using MS.Az.Mgmt.CI.BuildTasks.Common.Base;
     using MS.Az.Mgmt.CI.BuildTasks.Common.ExtensionMethods;
     using MS.Az.Mgmt.CI.BuildTasks.Common.Logger;
-    using MS.Az.Mgmt.CI.BuildTasks.Common.Services;
     using MS.Az.Mgmt.CI.Common.ExtensionMethods;
     using MS.Az.Mgmt.CI.Common.Models;
     using Octokit;
     using Octokit.Internal;
     using System;
     using System.Collections.Generic;
-    using System.ComponentModel;
     using System.Linq;
     using System.Net;
 
@@ -29,19 +26,13 @@ namespace MS.Az.Mgmt.CI.Common.Services
 
         #region fields
         GitHubClient _octokitClient;
-        //InMemoryCredentialStore _octokitCredential;
         Credentials _githubCredentials;
         InMemoryCredentialStore _credentialStore;
         ProductHeaderValue _myProductInfo;
-        //RepositoriesClient _repoClient;
         PrSvc _pr;
-
-        //IReadOnlyList<Repository> _repoList;
-
         #endregion
 
         #region Properties
-        //KeyVaultService KVSvc { get; set; }
 
         public PrSvc PR
         {
@@ -115,10 +106,6 @@ namespace MS.Az.Mgmt.CI.Common.Services
         #endregion
 
         #region Constructor
-        //public GitHubService() { }
-
-        //public GitHubService(NetSdkBuildTaskLogger utilLog) : base(utilLog) { }
-
         public GitHubService(NetSdkBuildTaskLogger utilLog, string ghAccessToken) : base(utilLog)
         {
             GHAccessToken = ghAccessToken;
@@ -180,18 +167,13 @@ namespace MS.Az.Mgmt.CI.Common.Services
 
         NetSdkBuildTaskLogger Logger { get; set; }
 
-
-        //KeyVaultService KVSvc { get; set; }
-
         #endregion
 
         #region Constructor
-        //public PrSvc(Octokit.GitHubClient ghc, NetSdkBuildTaskLogger log, KeyVaultService kvService)
         public PrSvc(Octokit.GitHubClient ghc, NetSdkBuildTaskLogger log)
         {
             Logger = log;
             OC = ghc;
-            //KVSvc = kvService;
         }
         #endregion
 
@@ -339,7 +321,7 @@ namespace MS.Az.Mgmt.CI.Common.Services
         /// <returns></returns>
         public IEnumerable<string> GetPullRequestFileList(string repoName, long prNumber)
         {
-            Repository repo = GetRepository(repoName);            
+            Repository repo = GetRepository(repoName);
             return GetPullRequestFileList(repo.Id, prNumber);
         }
 

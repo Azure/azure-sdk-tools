@@ -32,6 +32,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Models
 
         #region fields
         Dictionary<string, string> _metaDataCollection;
+        //List<string> _mdNames;
         #endregion
 
         #region Properties
@@ -43,7 +44,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Models
 
         public string TargetFxMonikerString { get; private set; }
 
-        public string PlatformSpecificTargetFxMonikerString { get; private set; }
+        public string PlatformSpecificTargetFxMonikerString { get; internal set; }
 
         public List<string> PackageRefList { get; set; }
         #endregion
@@ -71,21 +72,51 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Models
         #endregion
 
         #region Constructor
-        SDKMSBTaskItem(string itemSpecFullPath)
+        SDKMSBTaskItem()
+        {
+            _metaDataCollection = new Dictionary<string, string>();
+        }
+        SDKMSBTaskItem(string itemSpecFullPath) : this()
         {
             InternalSdkProjMD = new SdkProjectMetadata(itemSpecFullPath);
             Init();
         }
 
-        internal SDKMSBTaskItem(SdkProjectMetadata sdkProjMetadata)
+        internal SDKMSBTaskItem(SdkProjectMetadata sdkProjMetadata) : this()
         {
             InternalSdkProjMD = sdkProjMetadata;
             Init();
         }
 
+        internal SDKMSBTaskItem(SDKMSBTaskItem ti) : this()
+        {
+            SdkProjCategory = ti.SdkProjCategory;
+            SdkProjType = ti.SdkProjType;
+            TargetFxMonikerString = ti.TargetFxMonikerString;
+            PlatformSpecificTargetFxMonikerString = ti.PlatformSpecificTargetFxMonikerString;
+            PackageRefList = ti.PackageRefList;
+            ItemSpec = ti.ItemSpec;
+            InternalSdkProjMD = ti.InternalSdkProjMD;
+            //_metaDataCollection = ti._metaDataCollection;
+        }
+
+        public void UpdateMetadata()
+        {
+            this.SetMetadata(TARGET_FX, TargetFxMonikerString);
+            this.SetMetadata(PLATFORM_SPECIFIC_TARGET_FX, PlatformSpecificTargetFxMonikerString);
+            this.SetMetadata(PROJECT_TYPE, SdkProjType.ToString());
+            this.SetMetadata(PROJECT_CATEGORY, SdkProjCategory.ToString());
+
+            if (PackageRefList.Any<string>())
+            {
+                string pkgStr = string.Join(";", PackageRefList);
+                this.SetMetadata(PKG_REF_LIST, pkgStr);
+            }
+        }
+
         void Init()
         {
-            _metaDataCollection = new Dictionary<string, string>();
+            //_metaDataCollection = new Dictionary<string, string>();
 
             ItemSpec = InternalSdkProjMD.ProjectFilePath;
 

@@ -377,6 +377,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Common.Logger
             else
             {
                 TraceException(ex);
+                //throw ex;
             }
         }
 

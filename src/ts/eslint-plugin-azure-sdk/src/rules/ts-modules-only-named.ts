@@ -5,6 +5,7 @@
 
 import { Rule } from "eslint";
 import { ExportDefaultDeclaration } from "estree";
+// @ts-ignore (path has no typings)
 import { normalize, relative } from "path";
 
 //------------------------------------------------------------------------------

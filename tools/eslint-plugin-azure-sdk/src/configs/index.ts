@@ -35,7 +35,7 @@ export = {
       "@ts-common/azure-sdk/ts-package-json-homepage": "error",
       "@ts-common/azure-sdk/ts-package-json-keywords": "error",
       "@ts-common/azure-sdk/ts-package-json-license": "error",
-      "@ts-common/azure/sdk/ts-package-json-main-is-cjs": "error",
+      "@ts-common/azure-sdk/ts-package-json-main-is-cjs": "error",
       "@ts-common/azure-sdk/ts-package-json-name": "error",
       "@ts-common/azure-sdk/ts-package-json-repo": "error",
       "@ts-common/azure-sdk/ts-package-json-required-scripts": "error",

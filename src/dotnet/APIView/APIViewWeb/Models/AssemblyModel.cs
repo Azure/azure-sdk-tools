@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace APIViewWeb.Models
@@ -25,12 +26,12 @@ namespace APIViewWeb.Models
             this.DllPath = "null";
         }
 
-        public AssemblyModel(string dllPath)
+        public AssemblyModel(string dllPath, string fileName)
         {
             AssemblyAPIV assembly = null;
             foreach (AssemblyAPIV a in AssemblyAPIV.AssembliesFromFile(dllPath))
             {
-                if (a.Name.Equals("TestLibrary"))
+                if (fileName.EndsWith(".dll") && a.Name.Equals(fileName.Remove(fileName.IndexOf('.'))))
                     assembly = a;
             }
             this.DisplayString = assembly.ToString();

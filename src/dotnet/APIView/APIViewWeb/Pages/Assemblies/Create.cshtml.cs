@@ -38,7 +38,8 @@ namespace APIViewWeb.Pages.Assemblies
                 }
             }
 
-            AssemblyModel = new AssemblyModel("generated.txt");
+            AssemblyModel = new AssemblyModel("generated.txt", file.FileName);
+            System.IO.File.WriteAllText("generated.txt", AssemblyModel.DisplayString);
 
             return RedirectToPage("./Index");
         }

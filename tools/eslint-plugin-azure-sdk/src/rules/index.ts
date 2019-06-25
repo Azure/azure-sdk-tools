@@ -27,6 +27,7 @@ import tsPackageJsonHomepage from "./ts-package-json-homepage";
 import tsPackageJsonKeywords from "./ts-package-json-keywords";
 import tsPackageJsonLicense from "./ts-package-json-license";
 import tsPackageJsonMainIsCjs from "./ts-package-json-main-is-cjs";
+import tsPackageJsonModule from "./ts-package-json-module";
 import tsPackageJsonName from "./ts-package-json-name";
 import tsPackageJsonRepo from "./ts-package-json-repo";
 import tsPackageJsonRequiredScripts from "./ts-package-json-required-scripts";
@@ -59,6 +60,7 @@ export = {
   "ts-package-json-keywords": tsPackageJsonKeywords,
   "ts-package-json-license": tsPackageJsonLicense,
   "ts-package-json-main-is-cjs": tsPackageJsonMainIsCjs,
+  "ts-package-json-module": tsPackageJsonModule,
   "ts-package-json-name": tsPackageJsonName,
   "ts-package-json-repo": tsPackageJsonRepo,
   "ts-package-json-required-scripts": tsPackageJsonRequiredScripts,

@@ -3,6 +3,7 @@
  * @author Arpan Laha
  */
 
+import githubSourceHeaders from "./github-source-headers";
 import tsConfigAllowSyntheticDefaultImports from "./ts-config-allowsyntheticdefaultimports";
 import tsConfigDeclaration from "./ts-config-declaration";
 import tsConfigEsModuleInterop from "./ts-config-esmoduleinterop";
@@ -36,6 +37,7 @@ import tsPackageJsonTypes from "./ts-package-json-types";
 import tsVersioningSemver from "./ts-versioning-semver";
 
 export = {
+  "github-source-headers": githubSourceHeaders,
   "ts-config-allowsyntheticdefaultimports": tsConfigAllowSyntheticDefaultImports,
   "ts-config-declaration": tsConfigDeclaration,
   "ts-config-esmoduleinterop": tsConfigEsModuleInterop,

@@ -11,6 +11,7 @@ import { assert } from "chai";
  * A list of all currently supported rules
  */
 const ruleList = [
+  "github-source-headers",
   "ts-config-allowsyntheticdefaultimports",
   "ts-config-declaration",
   "ts-config-esmoduleinterop",

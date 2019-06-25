@@ -11,6 +11,7 @@ export = {
     },
     parser: "@typescript-eslint/parser",
     rules: {
+      "@ts-common/azure-sdk/github-source-headers": "error",
       "@ts-common/azure-sdk/ts-config-allowsyntheticdefaultimports": "error",
       "@ts-common/azure-sdk/ts-config-declaration": "error",
       "@ts-common/azure-sdk/ts-config-esmoduleinterop": "error",

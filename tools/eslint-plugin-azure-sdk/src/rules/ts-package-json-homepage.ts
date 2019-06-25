@@ -40,21 +40,17 @@ export = {
           "ExpressionStatement > ObjectExpression > Property[key.value='homepage']": (
             node: Property
           ): void => {
-            if (
-              context.getFilename().replace(/^.*[\\\/]/, "") === "package.json"
-            ) {
-              const regex = /^https:\/\/github.com\/Azure\/azure-sdk-for-js\/blob\/master\/sdk\/(([a-z]+-)*[a-z]+\/)+README\.md$/;
+            const regex = /^https:\/\/github.com\/Azure\/azure-sdk-for-js\/blob\/master\/sdk\/(([a-z]+-)*[a-z]+\/)+README\.md$/;
 
-              const nodeValue: Literal = node.value as Literal;
-              const value: string = nodeValue.value as string;
+            const nodeValue: Literal = node.value as Literal;
+            const value: string = nodeValue.value as string;
 
-              !regex.test(value) &&
-                context.report({
-                  node: nodeValue,
-                  message:
-                    "homepage is not a URL pointing to your library's readme inside the git repo"
-                });
-            }
+            !regex.test(value) &&
+              context.report({
+                node: nodeValue,
+                message:
+                  "homepage is not a URL pointing to your library's readme inside the git repo"
+              });
           }
         } as Rule.RuleListener)
       : {};

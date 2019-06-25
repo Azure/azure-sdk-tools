@@ -27,7 +27,7 @@ namespace APIViewWeb.Pages.Assemblies
                 return Page();
             }
 
-            BlobServiceClient service = new BlobServiceClient("DefaultEndpointsProtocol=https;AccountName=mcpatdemo;AccountKey=9UDTZ0uNAnEufkV09rhOvN0VrJyvDN+pxrdMEDTJ5FefYzNEAL0avRQ7Qro4zwHtOECMMfryUMxKeFI/Wx/jaQ==;EndpointSuffix=core.windows.net");
+            BlobServiceClient service = new BlobServiceClient("");
             var container = service.GetBlobContainerClient("hello");
 
             if (file.Length > 0)

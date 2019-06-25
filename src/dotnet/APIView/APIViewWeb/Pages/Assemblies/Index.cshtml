@@ -4,5 +4,5 @@
     ViewData["Title"] = "Index";
 }
 
-<h1>@Html.Raw(@System.IO.File.ReadAllText("generated.txt").Replace("\r\n", "<br />"))</h1>
+<p>@Html.Raw(@System.IO.File.ReadAllText("generated.txt").Replace("\r\n", "<br />").Replace("    ", "<p style=\"margin-left: 40px\"></p>"))</p>
 

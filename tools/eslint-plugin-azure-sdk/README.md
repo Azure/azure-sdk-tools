@@ -103,6 +103,7 @@ For example, if you are not targeting Node, disable `ts-config-moduleresolution`
 - [ts-package-json-keywords](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-package-json-keywords)
 - [ts-package-json-license](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-package-json-license)
 - [ts-package-json-main-is-cjs](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-package-json-main-is-cjs)
+- [ts-package-json-module](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-package-json-module)
 - [ts-package-json-name](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-package-json-name)
 - [ts-package-json-repo](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-package-json-repo)
 - [ts-package-json-required-scripts](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-package-json-required-scripts)

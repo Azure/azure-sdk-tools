@@ -43,6 +43,17 @@ namespace Tests.CI.BuildTasks.TasksTests
         }
 
         [Fact]
+        public void NonExistantPrNumber()
+        {
+            DetectRPScopeTask rpScope = new DetectRPScopeTask(NET_SDK_PUB_URL, 10945356);
+            if (rpScope.Execute())
+            {
+                Assert.Empty(rpScope.ScopesFromPR);
+            }
+            //Assert.Throws<ArgumentException>(() => rpScope.Execute());
+        }
+
+        [Fact]
         public void DefaultToBuildEntireMgmtProjects()
         {
             string ghUrl = NET_SDK_PUB_URL;

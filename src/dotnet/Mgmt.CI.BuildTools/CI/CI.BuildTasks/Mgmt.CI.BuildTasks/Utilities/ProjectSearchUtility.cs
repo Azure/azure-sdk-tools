@@ -435,7 +435,16 @@ namespace MS.Az.NetSdk.Build.Utilities
                     // SECOND ATTEMPT with root\sdk
                     if (!Directory.Exists(validScope))
                     {
-                        validScope = Path.Combine(SDKRootDir, scope);
+                        // this is a scenario where we detect scope from PR and their we include the full path that is available
+                        // in the pr
+                        if(scope.StartsWith("sdk", StringComparison.OrdinalIgnoreCase))
+                        {
+                            validScope = Path.Combine(RootDirForSearch, scope);
+                        }
+                        else
+                        {
+                            validScope = Path.Combine(SDKRootDir, scope);
+                        }
                     }
 
                     // At this point we will set it to empty string, because we have tried both legacy sdk directory as well as new sdk directory

@@ -54,6 +54,17 @@ namespace Tests.CI.BuildTasks.TasksTests
         }
 
         [Fact]
+        public void SkipPrivateDns()
+        {
+            SkipBuildOrTestExecutionTask ste = new SkipBuildOrTestExecutionTask(rootDir);
+            ste.BuildScope = @"privatedns";
+            ste.SkipFromTestExecution = true;
+            ste.SkipFromBuild = true;
+            ste.ProjectType = "Test";
+            Assert.True(ste.Execute());
+        }
+
+        [Fact]
         public void SkipTestExecutionForAllProjects()
         {
             SkipBuildOrTestExecutionTask ste = new SkipBuildOrTestExecutionTask(rootDir);

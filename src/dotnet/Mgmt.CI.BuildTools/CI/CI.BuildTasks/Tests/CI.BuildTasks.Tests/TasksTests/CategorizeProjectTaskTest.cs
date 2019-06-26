@@ -113,6 +113,9 @@ namespace BuildTasks.Tests
                 Assert.True(cproj.Test_Projects.Count<ITaskItem>() > 10);
                 //Assert.True(cproj.UnSupportedProjects.Count<ITaskItem>() >= 1);
                 Assert.True(cproj.Test_ToBe_Run.Count<ITaskItem>() > 10);
+
+                VerifyListDoesNotContains(cproj.SDK_Projects, cproj.DefaultExcludedTokens);
+
             }
             DateTime endTime = DateTime.Now;
             OutputTrace.WriteLine("Total time taken:'{0}'", (endTime - startTime).TotalSeconds.ToString());
@@ -618,13 +621,12 @@ namespace BuildTasks.Tests
         public bool VerifyListDoesNotContains(IEnumerable<ITaskItem> projectPathList, List<string> tokenList)
         {
             bool tokensDoNotExist = true;
+            IEnumerable<string> foundTokens = null;
             foreach (ITaskItem projPath in projectPathList)
             {
-                if (tokenList.Count > 0)
-                {
-                    tokenList = tokenList.Where<string>((item) => projPath.ItemSpec.Contains(item, StringComparison.OrdinalIgnoreCase)).ToList<string>();
-                }
-                else
+                foundTokens = tokenList.Where<string>((item) => projPath.ItemSpec.Contains(item, StringComparison.OrdinalIgnoreCase));
+
+                if(foundTokens.NotNullOrAny<string>())
                 {
                     tokensDoNotExist = false;
                     break;
@@ -636,61 +638,4 @@ namespace BuildTasks.Tests
 
         #endregion
     }
-
-    /*
-    public class CategorizeMultipleScopes : BuildTasksTestBase
-    {
-        [Fact]
-        public void CategorizeMultiScopeProjects()
-        {
-            string srcDir = string.Empty;
-            List<string> dirs = new List<string>();
-            // sdkRepoClient = this.GitRepoClient.SubModulesGitClients[Common.BuildTasks.Tests.Base.RepoName.NetSdkRepo];
-
-            string netSdkRepoSrcDir = this.GitRepoClient.SrcDir;
-            string computeDir = Path.Combine(netSdkRepoSrcDir, "SDKs", "Compute");
-            string networkDir = Path.Combine(netSdkRepoSrcDir, "SDKs", "Network");
-            dirs.Add(computeDir);
-            dirs.Add(networkDir);
-
-            SDKCategorizeProjectsTask cproj = new SDKCategorizeProjectsTask();
-            cproj.SourceRootDirPath = netSdkRepoSrcDir;
-            cproj.BuildScopes = dirs?.ToArray<string>();
-            
-            if (cproj.Execute())
-            {
-                int totalSdkProjectCount = cproj.net452SdkProjectsToBuild.Count() + cproj.netStd14SdkProjectsToBuild.Count<ITaskItem>();
-                Assert.True(totalSdkProjectCount > 3);
-                Assert.True(cproj.netCore20TestProjectsToBuild.Count<ITaskItem>() > 1);
-            }
-        }
-
-        [Fact]
-        public void CatMultiScopeRootScope()
-        {
-            string srcDir = string.Empty;
-            List<string> dirs = new List<string>();
-            //TODO: find a way to have the dictionary created using an enum for all submodules
-            GitRepositoryClient sdkRepoClient = this.GitRepoClient.SubModuleGitClients["https://github.com/Azure/azure-sdk-for-net.git"];
-            //First<KeyValuePair<string, GitRepositoryClient>>();
-            string netSdkRepoSrcDir = sdkRepoClient.SrcDir;
-            string computeDir = Path.Combine(netSdkRepoSrcDir, "SDKs", "Compute");
-            string kvDir = Path.Combine(netSdkRepoSrcDir, "SDKs", "KeyVault");
-            dirs.Add(computeDir);
-            dirs.Add(kvDir);
-
-
-            SDKCategorizeProjectsTask cproj = new SDKCategorizeProjectsTask();
-            cproj.SourceRootDirPath = netSdkRepoSrcDir;
-            cproj.BuildScopes = dirs?.ToArray<string>();
-
-            if (cproj.Execute())
-            {
-                int totalSdkProjectCount = cproj.net452SdkProjectsToBuild.Count() + cproj.netStd14SdkProjectsToBuild.Count<ITaskItem>();
-                Assert.True(totalSdkProjectCount > 5);
-                Assert.True(cproj.netCore20TestProjectsToBuild.Count<ITaskItem>() > 5);
-            }
-        }
-    }
-    */
 }

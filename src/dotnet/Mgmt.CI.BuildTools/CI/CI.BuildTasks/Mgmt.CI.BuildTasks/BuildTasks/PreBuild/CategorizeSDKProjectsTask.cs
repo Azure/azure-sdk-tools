@@ -49,7 +49,8 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Tasks.PreBuild
         const string REPO_ROOT_TOKEN_DIR = ".git";
 
         //const string default_excludeTokens = @"Batch\Support;D:\adxRepo\netSdk\master\src\SDKCommon\Test\SampleProjectPublish\SampleSDKTestPublish.csproj";
-        const string default_excludeTokens = @"Batch\Microsoft.Azure.Batch;Batch\Microsoft.Azure.Batch.FilesConventions;Batch\Microsoft.Azure.Batch.FileStaging;mgmtCommon\Test\SampleProjectPublish\";
+        //const string default_excludeTokens = @"Batch\Microsoft.Azure.Batch;Batch\Microsoft.Azure.Batch.FilesConventions;Batch\Microsoft.Azure.Batch.FileStaging;mgmtCommon\Test\SampleProjectPublish\";
+        const string default_excludeTokens = @"azure.core;appconfiguration;Microsoft.Azure.Batch.FilesConventions;Microsoft.Azure.Batch.FileStaging";
         #endregion
 
         #region fields
@@ -196,12 +197,33 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Tasks.PreBuild
         internal SdkProjectCategory ProjCat { get; set; }
 
         #endregion
+
+        public List<string> DefaultExcludedTokens
+        {
+            get
+            {
+                List<string> _defExTknList = new List<string>();
+                if(!string.IsNullOrWhiteSpace(CmdLineExcludeScope))
+                {
+                    string[] tokens = CmdLineExcludeScope.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+
+                    if(tokens.NotNullOrAny<string>())
+                    {
+                        _defExTknList = tokens.ToList<string>();
+                    }
+                }
+
+                return _defExTknList;
+            }
+        }
         #endregion
 
         #region Constructor
         public CategorizeSDKProjectsTask()
         {
             MultipleScopes = new List<string>();
+            BuildScope = string.Empty;
+            BuildScopes = string.Empty;
         }
 
         public CategorizeSDKProjectsTask(string rootDirPath) : this(rootDirPath, string.Empty, string.Empty, string.Empty) { }
@@ -274,6 +296,8 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Tasks.PreBuild
         /// </summary>
         void Categorize()
         {
+            //MessageImportance lowMsgImp = MessageImportance.Low;
+            //MessageImportance highMsgImp = MessageImportance.Low;
             TaskLogger.LogInfo("Categorizing Projects.....");
             List<SdkProjectMetadata> sdkProjList = new List<SdkProjectMetadata>();
             List<SdkProjectMetadata> testProjList = new List<SdkProjectMetadata>();
@@ -383,15 +407,15 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Tasks.PreBuild
             TaskLogger.LogInfo("SDK Project(s) found:'{0}'", SDK_Projects.Count().ToString());
             TaskLogger.LogInfo(MessageImportance.Low, SDK_Projects, "File Paths for SDK Projects");
 
-            TaskLogger.LogInfo("Test Project(s) found:'{0}'", Test_Projects.Count().ToString());
+            TaskLogger.LogInfo(MessageImportance.Normal, "Test Project(s) found:'{0}'", Test_Projects.Count().ToString());
             TaskLogger.LogInfo(MessageImportance.Low, Test_Projects, "File Paths for Test Projects");
 
-            TaskLogger.LogInfo("Test Project(s) whose tests will be executed are:'{0}'", Test_ToBe_Run.Count().ToString());
+            TaskLogger.LogInfo(MessageImportance.Normal, "Test Project(s) whose tests will be executed are:'{0}'", Test_ToBe_Run.Count().ToString());
             TaskLogger.LogInfo(MessageImportance.Low, Test_ToBe_Run, "File Paths for Test Projects whose tests will be executed");
 
             if (UnSupportedProjects.NotNullOrAny<SDKMSBTaskItem>())
             {
-                TaskLogger.LogInfo("Project(s) whose target framework is not currently supported:'{0}'", UnSupportedProjects.Count().ToString());
+                TaskLogger.LogInfo(MessageImportance.Normal, "Project(s) whose target framework is not currently supported:'{0}'", UnSupportedProjects.Count().ToString());
                 TaskLogger.LogInfo(MessageImportance.Low, UnSupportedProjects, "File Paths for Unsupported Projects");
             }
 
@@ -403,13 +427,13 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Tasks.PreBuild
 
             if (PlatformSpecificSkippedProjects.NotNullOrAny<SDKMSBTaskItem>())
             {
-                TaskLogger.LogInfo("Test Project(s) that will be skipped from building/executing tests are:'{0}'", PlatformSpecificSkippedProjects.Count().ToString());
+                TaskLogger.LogInfo(MessageImportance.Normal, "Test Project(s) that will be skipped from building/executing tests are:'{0}'", PlatformSpecificSkippedProjects.Count().ToString());
                 TaskLogger.LogInfo(MessageImportance.Low, PlatformSpecificSkippedProjects, "File Paths for Projects that will be skipped that are platform specific");
             }
 
             if (SdkPkgReferenceList != null)
             {
-                TaskLogger.LogInfo("PackageReferences count:'{0}'", SdkPkgReferenceList.Count().ToString());
+                TaskLogger.LogInfo(MessageImportance.Normal, "PackageReferences count:'{0}'", SdkPkgReferenceList.Count().ToString());
                 TaskLogger.LogInfo(MessageImportance.Low, SdkPkgReferenceList, "Packages References");
             }
         }

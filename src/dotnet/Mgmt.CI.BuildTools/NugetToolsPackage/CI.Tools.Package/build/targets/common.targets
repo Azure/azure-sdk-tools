@@ -162,23 +162,7 @@
     </MSBuild>
   </Target>
 
-  <Target Name="FindRPScopeFromPR" Condition=" '$(PullRequestNumber)' != '' AND '$(RepoHtmlUrl)' != '' ">
-    <Message Text="Finding Scope..." />
-
-    <DetectRPScopeTask
-      GH_PRNumber="$(PullRequestNumber)"
-      GH_RepositoryHtmlUrl="$(RepoHtmlUrl)"
-      GH_RepositoryId="$(RepoId)"
-      DebugMode="$(DebugMode)"
-      WhatIf="$(WhatIf)"
-      >
-      <Output TaskParameter="ScopesFromPR" ItemName="ScopesFromPullRequest" />
-      <Output TaskParameter="PRScopeString" PropertyName="ScopeStringFromTask" />
-    </DetectRPScopeTask>
-
-    <Message Text="Scopes retrieved from PR......@(ScopesFromPullRequest)" Importance="High" />
-  </Target>
-
+  
   <Target Name="CategorizeProjects">
     <Message Text="Target ==> CategorizeProjects Initiated....." Importance="Low" />
     <Message Text="Categorizing Target....." Condition=" '$(DebugTrace)' == 'true' " />
@@ -187,6 +171,7 @@
     <Message Text="RootDirNoTrailSepp..............$(RootDirNoTrailSepp)" Condition=" '$(DebugTrace)' == 'true' " />
     <Message Text="pkg_root_RepoRoot..............$(pkg_root_RepoRoot)" Condition=" '$(DebugTrace)' == 'true' " />
     <Message Text="pkg_root_RepoSrcDir..............$(pkg_root_RepoSrcDir)" Condition=" '$(DebugTrace)' == 'true' " />
+    <Message Text="CatProj - Scope retrieved from PR......$(ScopeStringFromTask)" Importance="High" />
 
     <PropertyGroup>
       <BuildScopes Condition=" '$(ScopeStringFromTask)' != '' ">$(ScopeStringFromTask)</BuildScopes>
@@ -234,42 +219,6 @@
         <Properties>TargetFrameworks=%(PlatformSpecificFx)</Properties>
       </TestProjectsToBuild> 
     </ItemGroup>
-
-    <!--
-        <Message Text="Projects .......@(SDK_Projects->'%(Identity)')" />
-        <Message Text="2nd way Projects ....... %(SDK_Projects.Identity)" />
-        <Message Text="TargetFx ....... %(SDK_Projects.PlatformSpecificFx)" />
-        <Message Text="2nd way TargetFx ....... @(SDKProjects->'%(TargetFx)')" />    
-    -->
-
-  </Target>
-
-  <Target Name="SkipProjectFromBuildTest">
-    <Message Text="Skip Projects from build or test....." />
-    <PropertyGroup> 
-      <NugPkgOutPutDirPath>$(pkg_root_RepoNugPkgOutputDir)</NugPkgOutPutDirPath>
-    </PropertyGroup>
-    <ItemGroup>    
-      <ProjectsToPackage Include="@(CombinedNugetPkgProjects)" />      
-    </ItemGroup>
-    
-    <Message Condition=" '$(Scope)' != '' " Text="Scope..... $(Scope)" />
-    <Message Condition=" '$(BuildScopes)' != '' " Text="BuildScopes....... $(BuildScopes)" />   
-    <Message Condition=" '$(ProjectType)' != '' " Text="ProjectType..... $(ProjectType)" />
-    <Message Condition=" '$(ProjectCategory)' != '' " Text="ProjectCategory..... $(ProjectCategory)" />
-    <Message Condition=" '$(SkipFromTestExecution)' != '' " Text="SkipFromTestExecution..... $(SkipFromTestExecution)" />
-    <Message Condition=" '$(SkipFromBuild)' != '' " Text="SkipFromBuild..... $(SkipFromBuild)" />
-
-    <SkipBuildOrTestExecutionTask
-      BuildScope="$(Scope)"
-      BuildScopes="$(BuildScopes)" 
-      DebugMode="$(DebugMode)"
-      WhatIf="$(WhatIf)"
-      ProjectType="$(ProjectType)"
-      ProjectCategory="$(ProjectCategory)" 
-      SkipFromTestExecution="$(SkipFromTestExecution)"
-      SkipFromBuild="$(SkipFromBuild)"
-      />
   </Target>
 
   <Target Name="DisplayHelp">
@@ -292,5 +241,6 @@
   
   <!--Do not delete-->
   <Target Name="PreBuildStaticAnalysis" DependsOnTargets="$(PreBuildStaticAnalysisTargets)"/>
-  <Import Project="..\tasks\common.tasks"/>  
+  <Import Project="utility.targets" />
+  <Import Project="..\tasks\common.tasks" />  
 </Project>

@@ -160,6 +160,8 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
         #region private functions
 
 
+
+
         /// <summary>
         /// Detect valid scope based on the change list in the PR
         /// Get affected files and find scope based on directory that contains .sln file
@@ -171,6 +173,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
             FileSystemUtility fileSysUtil = new FileSystemUtility();
             IEnumerable<string> prFileList = null;
             List<string> finalScopePathList = new List<string>();
+            List<string> intermediateList = new List<string>();
 
             if (!string.IsNullOrWhiteSpace(GH_RepositoryHtmlUrl))
             {
@@ -199,7 +202,20 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
 
             if (RPDirs.NotNullOrAny<KeyValuePair<string, string>>())
             {
-                finalScopePathList = RPDirs.Select<KeyValuePair<string, string>, string>((item) => item.Key).ToList<string>();
+                intermediateList = RPDirs.Select<KeyValuePair<string, string>, string>((item) => item.Key).ToList<string>();
+            }
+
+            if (DetectEnv.IsRunningUnderNonWindows)
+            {
+                foreach (string scopePath in intermediateList)
+                {
+                    string newPath = scopePath.Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                    finalScopePathList.Add(newPath);
+                }
+            }
+            else
+            {
+                finalScopePathList = intermediateList;
             }
 
             return finalScopePathList;

@@ -12,9 +12,9 @@ using Microsoft.Extensions.Configuration;
 
 namespace APIViewWeb.Pages.Assemblies
 {
-    public class CreateModel : PageModel
+    public class UploadModel : PageModel
     {
-        public CreateModel(IConfiguration configuration)
+        public UploadModel(IConfiguration configuration)
         {
             Configuration = configuration;
         }

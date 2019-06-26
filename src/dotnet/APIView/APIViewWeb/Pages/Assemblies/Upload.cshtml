@@ -1,16 +1,16 @@
 ﻿@page
-@model APIViewWeb.Pages.Assemblies.CreateModel
+@model APIViewWeb.Pages.Assemblies.UploadModel
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Upload";
 }
 
-<h1>Upload Files</h1>
+<h1>Upload a DLL</h1>
 <div class="row">
     <section>
         <form method="post" enctype="multipart/form-data">
             <div class="form-group">
                 <div class="col-md-10">
-                    <p>Upload a file using this form:</p>
+                    <p>Upload an API assembly for review using this form:</p>
                     <input type="file" name="file" />
                 </div>
             </div>

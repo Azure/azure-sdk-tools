@@ -36,21 +36,24 @@ namespace APIViewWeb {
                 public APIViewWeb.Models.AssemblyModel AssemblyModel { get; set; }
                 public CreateModel(Microsoft.Extensions.Configuration.IConfiguration configuration) { }
                 public Microsoft.AspNetCore.Mvc.IActionResult OnGet() { }
-                [System.Runtime.CompilerServices.AsyncStateMachineAttribute(typeof(APIViewWeb.Pages.Assemblies.CreateModel.<OnPostAsync>d__9)), System.Diagnostics.DebuggerStepThroughAttribute]
+                [System.Runtime.CompilerServices.AsyncStateMachineAttribute(typeof(APIViewWeb.Pages.Assemblies.CreateModel.<OnPostAsync>d__9))]
+                [System.Diagnostics.DebuggerStepThroughAttribute]
                 public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostAsync(Microsoft.AspNetCore.Http.IFormFile file) { }
             }
             public class IndexModel : Microsoft.AspNetCore.Mvc.RazorPages.PageModel {
                 public Microsoft.Extensions.Configuration.IConfiguration Configuration { get; }
                 public Azure.Response<Azure.Storage.Blobs.Models.BlobsFlatSegment> Segment { get; set; }
                 public IndexModel(Microsoft.Extensions.Configuration.IConfiguration configuration) { }
-                [System.Runtime.CompilerServices.AsyncStateMachineAttribute(typeof(APIViewWeb.Pages.Assemblies.IndexModel.<OnGetAsync>d__8)), System.Diagnostics.DebuggerStepThroughAttribute]
+                [System.Runtime.CompilerServices.AsyncStateMachineAttribute(typeof(APIViewWeb.Pages.Assemblies.IndexModel.<OnGetAsync>d__8))]
+                [System.Diagnostics.DebuggerStepThroughAttribute]
                 public System.Threading.Tasks.Task OnGetAsync() { }
             }
             public class ReviewModel : Microsoft.AspNetCore.Mvc.RazorPages.PageModel {
                 public Microsoft.Extensions.Configuration.IConfiguration Configuration { get; }
                 public string AssemblyModel { get; set; }
                 public ReviewModel(Microsoft.Extensions.Configuration.IConfiguration configuration) { }
-                [System.Runtime.CompilerServices.AsyncStateMachineAttribute(typeof(APIViewWeb.Pages.Assemblies.ReviewModel.<OnGetAsync>d__8)), System.Diagnostics.DebuggerStepThroughAttribute]
+                [System.Runtime.CompilerServices.AsyncStateMachineAttribute(typeof(APIViewWeb.Pages.Assemblies.ReviewModel.<OnGetAsync>d__8))]
+                [System.Diagnostics.DebuggerStepThroughAttribute]
                 public System.Threading.Tasks.Task OnGetAsync(string id) { }
             }
         }

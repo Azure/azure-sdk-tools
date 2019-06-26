@@ -69,14 +69,11 @@ namespace APIView
             AppendIndentsText(builder, indents);
             if (!m.Attributes.IsEmpty)
             {
-                builder.Append("[");
                 foreach (string attribute in m.Attributes)
                 {
-                    builder.Append(attribute).Append(", ");
+                    builder.Append("[").Append(attribute).Append("]").AppendLine();
+                    AppendIndentsText(builder, indents);
                 }
-                builder.Length -= 2;
-                builder.Append("]").AppendLine();
-                AppendIndentsText(builder, indents);
             }
 
             if (!m.IsInterfaceMethod)

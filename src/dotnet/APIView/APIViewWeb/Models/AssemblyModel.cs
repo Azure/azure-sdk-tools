@@ -1,7 +1,10 @@
 ﻿using APIView;
+using Azure.Storage.Blobs;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -10,6 +13,13 @@ namespace APIViewWeb.Models
 {
     public class AssemblyModel
     {
+        public AssemblyModel(IConfiguration configuration)
+        {
+            Configuration = configuration;
+        }
+
+        public IConfiguration Configuration { get; }
+
         public int ID { get; set; }
 
         [Required]

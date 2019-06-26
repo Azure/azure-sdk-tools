@@ -1,0 +1,8 @@
+﻿@page
+@model APIViewWeb.Pages.Assemblies.ReviewModel
+@{
+    ViewData["Title"] = "Review";
+}
+
+<pre>@Html.Raw(Model.AssemblyModel.Replace("\r\n", "<br />"))</pre>
+

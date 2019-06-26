@@ -1,98 +1,58 @@
-namespace APIView {
-    public class AssemblyAPIV {
-        public string Name { get; }
-        public APIView.NamespaceAPIV GlobalNamespace { get; }
-        public AssemblyAPIV(Microsoft.CodeAnalysis.IAssemblySymbol symbol) { }
-        public static System.Collections.Generic.List<APIView.AssemblyAPIV> AssembliesFromFile(string dllPath) { }
-        public static Microsoft.CodeAnalysis.CSharp.CSharpCompilation GetCompilation(string dllPath) { }
-        public override string ToString() { }
+namespace APIViewWeb {
+    public class Program {
+        public static void Main(string[] args) { }
+        public static Microsoft.AspNetCore.Hosting.IWebHostBuilder CreateWebHostBuilder(string[] args) { }
     }
-    public class EventAPIV {
-        public string Name { get; }
-        public string Accessibility { get; }
-        public EventAPIV(Microsoft.CodeAnalysis.IEventSymbol symbol) { }
-        public override string ToString() { }
+    public class Startup {
+        public Microsoft.Extensions.Configuration.IConfiguration Configuration { get; }
+        protected string ConnectionString { get; set; }
+        public Startup(Microsoft.Extensions.Configuration.IConfiguration configuration) { }
+        public void ConfigureServices(Microsoft.Extensions.DependencyInjection.IServiceCollection services) { }
+        public void Configure(Microsoft.AspNetCore.Builder.IApplicationBuilder app, Microsoft.AspNetCore.Hosting.IHostingEnvironment env) { }
     }
-    public class FieldAPIV {
-        public string Name { get; }
-        public string Type { get; }
-        public string Accessibility { get; }
-        public bool IsConstant { get; }
-        public bool IsReadOnly { get; }
-        public bool IsStatic { get; }
-        public bool IsVolatile { get; }
-        public object Value { get; }
-        public FieldAPIV(Microsoft.CodeAnalysis.IFieldSymbol symbol) { }
-        public override string ToString() { }
+    namespace Models {
+        public class AssemblyModel {
+            public int ID { get; set; }
+            public string DllPath { get; set; }
+            public string DisplayString { get; set; }
+            public AssemblyModel(string dllPath, string fileName) { }
+        }
     }
-    public class MethodAPIV {
-        public string Name { get; }
-        public string ReturnType { get; }
-        public string Accessibility { get; }
-        public bool IsInterfaceMethod { get; }
-        public bool IsStatic { get; }
-        public bool IsVirtual { get; }
-        public bool IsSealed { get; }
-        public bool IsOverride { get; }
-        public bool IsAbstract { get; }
-        public bool IsExtern { get; }
-        public System.Collections.Immutable.ImmutableArray<string> Attributes { get; }
-        public System.Collections.Immutable.ImmutableArray<APIView.ParameterAPIV> Parameters { get; }
-        public System.Collections.Immutable.ImmutableArray<APIView.TypeParameterAPIV> TypeParameters { get; }
-        public MethodAPIV(Microsoft.CodeAnalysis.IMethodSymbol symbol) { }
-        public override string ToString() { }
-    }
-    public class NamedTypeAPIV {
-        public string Name { get; }
-        public string Type { get; }
-        public string EnumUnderlyingType { get; }
-        public string Accessibility { get; }
-        public System.Collections.Immutable.ImmutableArray<APIView.EventAPIV> Events { get; }
-        public System.Collections.Immutable.ImmutableArray<APIView.FieldAPIV> Fields { get; }
-        public System.Collections.Immutable.ImmutableArray<string> Implementations { get; }
-        public System.Collections.Immutable.ImmutableArray<APIView.MethodAPIV> Methods { get; }
-        public System.Collections.Immutable.ImmutableArray<APIView.NamedTypeAPIV> NamedTypes { get; }
-        public System.Collections.Immutable.ImmutableArray<APIView.PropertyAPIV> Properties { get; }
-        public System.Collections.Immutable.ImmutableArray<APIView.TypeParameterAPIV> TypeParameters { get; }
-        public NamedTypeAPIV(Microsoft.CodeAnalysis.INamedTypeSymbol symbol) { }
-        public override string ToString() { }
-    }
-    public class NamespaceAPIV {
-        public string Name { get; }
-        public System.Collections.Immutable.ImmutableArray<APIView.NamedTypeAPIV> NamedTypes { get; }
-        public System.Collections.Immutable.ImmutableArray<APIView.NamespaceAPIV> Namespaces { get; }
-        public NamespaceAPIV(Microsoft.CodeAnalysis.INamespaceSymbol symbol) { }
-        public override string ToString() { }
-    }
-    public class ParameterAPIV {
-        public string Name { get; }
-        public string Type { get; }
-        public bool HasExplicitDefaultValue { get; }
-        public object ExplicitDefaultValue { get; }
-        public System.Collections.Immutable.ImmutableArray<string> Attributes { get; }
-        public ParameterAPIV(Microsoft.CodeAnalysis.IParameterSymbol symbol) { }
-        public override string ToString() { }
-    }
-    public class PropertyAPIV {
-        public string Name { get; }
-        public string Type { get; }
-        public string Accessibility { get; }
-        public bool IsAbstract { get; }
-        public bool IsVirtual { get; }
-        public bool HasSetMethod { get; }
-        public PropertyAPIV(Microsoft.CodeAnalysis.IPropertySymbol symbol) { }
-        public override string ToString() { }
-    }
-    public class TreeRendererAPIV {
-        public static string RenderText(APIView.AssemblyAPIV assembly) { }
-        public static string RenderHTML(APIView.AssemblyAPIV assembly) { }
-    }
-    public class TypeParameterAPIV {
-        public string Name { get; }
-        public System.Collections.Immutable.ImmutableArray<string> Attributes { get; }
-        public TypeParameterAPIV(Microsoft.CodeAnalysis.ITypeParameterSymbol symbol) { }
-        public override string ToString() { }
-    }
-    public enum TypeReference {
+    namespace Pages {
+        public class ErrorModel : Microsoft.AspNetCore.Mvc.RazorPages.PageModel {
+            public string RequestId { get; set; }
+            public bool ShowRequestId { get; }
+            public void OnGet() { }
+        }
+        public class IndexModel : Microsoft.AspNetCore.Mvc.RazorPages.PageModel {
+            public void OnGet() { }
+        }
+        public class PrivacyModel : Microsoft.AspNetCore.Mvc.RazorPages.PageModel {
+            public void OnGet() { }
+        }
+        namespace Assemblies {
+            public class CreateModel : Microsoft.AspNetCore.Mvc.RazorPages.PageModel {
+                public Microsoft.Extensions.Configuration.IConfiguration Configuration { get; }
+                public APIViewWeb.Models.AssemblyModel AssemblyModel { get; set; }
+                public CreateModel(Microsoft.Extensions.Configuration.IConfiguration configuration) { }
+                public Microsoft.AspNetCore.Mvc.IActionResult OnGet() { }
+                [System.Runtime.CompilerServices.AsyncStateMachineAttribute(typeof(APIViewWeb.Pages.Assemblies.CreateModel.<OnPostAsync>d__9)), System.Diagnostics.DebuggerStepThroughAttribute]
+                public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostAsync(Microsoft.AspNetCore.Http.IFormFile file) { }
+            }
+            public class IndexModel : Microsoft.AspNetCore.Mvc.RazorPages.PageModel {
+                public Microsoft.Extensions.Configuration.IConfiguration Configuration { get; }
+                public Azure.Response<Azure.Storage.Blobs.Models.BlobsFlatSegment> Segment { get; set; }
+                public IndexModel(Microsoft.Extensions.Configuration.IConfiguration configuration) { }
+                [System.Runtime.CompilerServices.AsyncStateMachineAttribute(typeof(APIViewWeb.Pages.Assemblies.IndexModel.<OnGetAsync>d__8)), System.Diagnostics.DebuggerStepThroughAttribute]
+                public System.Threading.Tasks.Task OnGetAsync() { }
+            }
+            public class ReviewModel : Microsoft.AspNetCore.Mvc.RazorPages.PageModel {
+                public Microsoft.Extensions.Configuration.IConfiguration Configuration { get; }
+                public string AssemblyModel { get; set; }
+                public ReviewModel(Microsoft.Extensions.Configuration.IConfiguration configuration) { }
+                [System.Runtime.CompilerServices.AsyncStateMachineAttribute(typeof(APIViewWeb.Pages.Assemblies.ReviewModel.<OnGetAsync>d__8)), System.Diagnostics.DebuggerStepThroughAttribute]
+                public System.Threading.Tasks.Task OnGetAsync(string id) { }
+            }
+        }
     }
 }

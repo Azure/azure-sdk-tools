@@ -19,6 +19,10 @@ namespace APIViewWeb
 
         public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
+                .ConfigureAppConfiguration((hostingContext, config) =>
+                {
+                    config.AddEnvironmentVariables(prefix: "APIVIEW_");
+                })
                 .UseStartup<Startup>();
     }
 }

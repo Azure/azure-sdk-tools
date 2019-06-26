@@ -1,8 +1,24 @@
 ﻿@page
+@using Azure.Storage.Blobs;
 @model APIViewWeb.Pages.Assemblies.IndexModel
 @{
     ViewData["Title"] = "Index";
 }
 
-<p>@Html.Raw(@System.IO.File.ReadAllText("generated.txt").Replace("\r\n", "<br />").Replace("    ", "<p style=\"margin-left: 40px\"></p>"))</p>
+@foreach (var item in Model.Segment.Value.BlobItems)
+{
+    <tr>
+        <td>
+            @foreach (var pair in item.Metadata)
+            {
+                @Html.Raw(pair.Value)
+            }
+        </td>
+        <td>
+            <a asp-page="./Review" asp-route-id="@item.Name">Review</a>
+        </td>
+    </tr>
+    <br />
+}
+
 

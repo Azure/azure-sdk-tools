@@ -5,15 +5,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="bin\**" />
-    <Compile Remove="obj\**" />
-    <EmbeddedResource Remove="bin\**" />
-    <EmbeddedResource Remove="obj\**" />
-    <None Remove="bin\**" />
-    <None Remove="obj\**" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis" Version="3.1.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.1.0" />
   </ItemGroup>

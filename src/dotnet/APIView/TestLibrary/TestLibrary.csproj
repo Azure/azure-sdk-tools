@@ -12,15 +12,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="bin\**" />
-    <Compile Remove="obj\**" />
-    <EmbeddedResource Remove="bin\**" />
-    <EmbeddedResource Remove="obj\**" />
-    <None Remove="bin\**" />
-    <None Remove="obj\**" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\APIView\APIView.csproj" />
   </ItemGroup>
 

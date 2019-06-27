@@ -20,7 +20,7 @@ namespace APIViewWeb.Models
 
         public IConfiguration Configuration { get; }
 
-        public int ID { get; set; }
+        public int Id { get; set; }
 
         [Required]
         [Display(Name = "DLL Path")]
@@ -32,7 +32,7 @@ namespace APIViewWeb.Models
         // test DLL: C:\Users\t-mcpat\Documents\azure-sdk-tools\artifacts\bin\TestLibrary\Debug\netcoreapp2.1\TestLibrary.dll
         public AssemblyModel()
         {
-            this.DisplayString = "";
+            this.DisplayString = "<empty>";
             this.DllPath = "null";
         }
 

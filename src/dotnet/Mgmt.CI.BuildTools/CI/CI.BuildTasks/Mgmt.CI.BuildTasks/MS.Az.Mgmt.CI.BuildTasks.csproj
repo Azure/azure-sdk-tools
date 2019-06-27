@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="15.0">
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('ci.common.props'))" />  
+  <PropertyGroup>
+    <PackageId>MS.Az.NetSdk.Build.Tasks</PackageId>
+    <Description>Provides .NET SDK Build tools and msbuild tasks</Description>
+    <AssemblyTitle>Microsoft.Azure.NetSdk.Build.Tasks</AssemblyTitle>
+    <AssemblyName>MS.Az.Mgmt.NetSdk.BuildTasks</AssemblyName>
+  </PropertyGroup>
+
+  <!-- Their is an issue building dependencies that have platform specific dependencies -->
+  <PropertyGroup Condition="'$(TargetFramework)|$(Platform)'=='net461|AnyCPU'">
+    <PlatformTarget>$(FullNetFxBitness)</PlatformTarget>
+    <NoWarn>CS0414;CS0219;CS0649</NoWarn>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <PropertyGroup>
+		<TargetFrameworks>net461;netstandard2.0</TargetFrameworks>		
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="Models\Backup_SdkProjectMetaData.cs" />
+    <Compile Remove="BuildTasks\PreBuild\Backup_SDKCategorizeProjectsTask.cs" />
+    <Compile Remove="Models\ProjMd.cs" />
+    <Compile Remove="Utilities\Check.cs" />
+    <Compile Remove="Utilities\FileSystemUtility.cs" />
+    <Compile Remove="Utilities\NetSdkTaskLogger.cs" />
+    <Compile Remove="Utilities\ObjectComparer.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\CI.Common\Mgmt.CI.Common\MS.Az.Mgmt.CI.Common.csproj" />
+  </ItemGroup>  
+</Project>

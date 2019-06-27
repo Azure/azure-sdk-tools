@@ -16,21 +16,21 @@ function Get-SdkRepoRootDirectory {
     )
     
     $currPath = $scriptPath
-    if($scriptPath.Contains("sdk") -or $scriptPath.Contains("\src\Profiles\"))
+    if( $scriptPath.Contains("sdk") )
     {
-        while(![string]::IsNullOrEmpty($currPath) -and !(($currPath.EndsWith("sdk") -or $currPath.EndsWith("\src\Profiles")) -and $(Test-Path "$currPath\..\..\.gitignore")))
+        $dirRoot = [System.IO.Directory]::GetDirectoryRoot($currPath)
+        while( ![string]::IsNullOrEmpty($currPath) )
         {
-            $currPath = $(Split-Path $currPath -parent)
+            if($currPath.EndsWith("sdk") -or $currPath.Equals($dirRoot))
+            {
+                break;                
+            }
+            else
+            {
+                $currPath = $(Split-Path $currPath -parent)
+            }
         }
     }
-
-    # if($scriptPath.Contains("\src\SDKs\") -or $scriptPath.Contains("\src\AzureStack\") -or $scriptPath.Contains("\src\Profiles\"))
-    # {
-    #     while(![string]::IsNullOrEmpty($currPath) -and !(($currPath.EndsWith("\src\SDKs") -or $currPath.EndsWith("\src\AzureStack") -or $currPath.EndsWith("\src\Profiles")) -and $(Test-Path "$currPath\..\..\.gitignore")))
-    #     {
-    #         $currPath = $(Split-Path $currPath -parent)
-    #     }
-    # }
     return $currPath
 }
 

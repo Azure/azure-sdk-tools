@@ -78,7 +78,7 @@ For example, if you are not targeting Node, disable `ts-config-moduleresolution`
 
 ## Supported Rules
 
-- [github-source-headers](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#github-sourceheaders)
+- [github-source-headers](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#github-source-headers)
 - [ts-config-allowsyntheticdefaultimports](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-config-allowsyntheticdefaultimports)
 - [ts-config-declaration](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-config-declaration)
 - [ts-config-esmoduleinterop](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-config-esmoduleinterop)

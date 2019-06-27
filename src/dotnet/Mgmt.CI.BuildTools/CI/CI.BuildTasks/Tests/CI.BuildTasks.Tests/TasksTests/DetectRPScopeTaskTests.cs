@@ -38,8 +38,22 @@ namespace Tests.CI.BuildTasks.TasksTests
         [Fact]
         public void InvalidPrNumber()
         {
-            DetectRPScopeTask rpScope = new DetectRPScopeTask(NET_SDK_PUB_URL, -1);
-            Assert.Throws<ArgumentException>(() => rpScope.Execute());
+            DetectRPScopeTask rpScope = new DetectRPScopeTask(NET_SDK_PUB_URL, "-1");
+            if(rpScope.Execute())
+            {
+                Assert.Empty(rpScope.ScopesFromPR);
+            }
+        }
+
+        [Fact]
+        public void NonExistantPrNumber()
+        {
+            DetectRPScopeTask rpScope = new DetectRPScopeTask(NET_SDK_PUB_URL, "10945356");
+            if (rpScope.Execute())
+            {
+                Assert.Empty(rpScope.ScopesFromPR);
+            }
+            //Assert.Throws<ArgumentException>(() => rpScope.Execute());
         }
 
         [Fact]
@@ -47,7 +61,7 @@ namespace Tests.CI.BuildTasks.TasksTests
         {
             string ghUrl = NET_SDK_PUB_URL;
             long ghPrNumber = 6453; //6606
-            DetectRPScopeTask rpScope = new DetectRPScopeTask(ghUrl, ghPrNumber);
+            DetectRPScopeTask rpScope = new DetectRPScopeTask(ghUrl, ghPrNumber.ToString());
 
             if (rpScope.Execute())
             {
@@ -65,7 +79,7 @@ namespace Tests.CI.BuildTasks.TasksTests
         {
             string ghUrl = NET_SDK_PUB_URL;
             long ghPrNumber = 6499; //6606
-            DetectRPScopeTask rpScope = new DetectRPScopeTask(ghUrl, ghPrNumber);
+            DetectRPScopeTask rpScope = new DetectRPScopeTask(ghUrl, ghPrNumber.ToString());
 
             if(rpScope.Execute())
             {
@@ -87,7 +101,7 @@ namespace Tests.CI.BuildTasks.TasksTests
         [InlineData(@"azure/azure-sdk-for-net", 6304)]
         public void SingleScope(string ghUrl, long ghPrNumber)
         {
-            DetectRPScopeTask rpScope = new DetectRPScopeTask(ghUrl, ghPrNumber);
+            DetectRPScopeTask rpScope = new DetectRPScopeTask(ghUrl, ghPrNumber.ToString());
 
             if (rpScope.Execute())
             {

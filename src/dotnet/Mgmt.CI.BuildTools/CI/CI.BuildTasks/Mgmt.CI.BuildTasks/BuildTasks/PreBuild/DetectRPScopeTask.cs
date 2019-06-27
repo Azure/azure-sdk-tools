@@ -44,20 +44,50 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
 
         #region fields
         GitHubService _ghSvc;
+        Int64 _gh_prNumber;
         #endregion
 
         #region Properties
         #region task input properties
-        public Int64 GH_PRNumber { get; set; }
+        Int64 GH_PRNumber
+        {
+            get
+            {
+                if(string.IsNullOrWhiteSpace(GitHubPRNumber))
+                {
+                    _gh_prNumber = 0;
+                }
+                else
+                {
+                    if(Int64.TryParse(GitHubPRNumber, out Int64 parsedGHPRNum))
+                    {
+                        _gh_prNumber = parsedGHPRNum;
+                    }
+                    else
+                    {
+                        _gh_prNumber = 0;
+                    }
+                }
 
-        public Int64 GH_RepositoryId { get; set; }
+                return _gh_prNumber;
+            }
+
+            set
+            {
+                _gh_prNumber = value;
+            }
+        }
+
+        public string GitHubPRNumber { get; set; }
+
+        //public Int64 GH_RepositoryId { get; set; }
 
         /// <summary>
         /// Repository Url that is being used in browser
         /// Not the SSH uri, neither clone uri
         /// This can also contain relative Url
         /// </summary>
-        public string GH_RepositoryHtmlUrl { get; set; }
+        public string GitHubRepositoryHtmlUrl { get; set; }
 
         #endregion
 
@@ -92,38 +122,30 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
         #region Constructor
         public DetectRPScopeTask()
         {
+            GitHubPRNumber = string.Empty;
             GH_PRNumber = 0;
-            GH_RepositoryHtmlUrl = string.Empty;
-            GH_RepositoryId = 0;
+            GitHubRepositoryHtmlUrl = string.Empty;
             PRScopeString = string.Empty;
             ScopesFromPR = new string[] { };
         }
 
-        public DetectRPScopeTask(string repoHtmlUrl, Int64 prNumber) : this()
+        public DetectRPScopeTask(string repoHtmlUrl, string prNumberString) : this()
         {
-            GH_RepositoryHtmlUrl = repoHtmlUrl.Trim();
-            GH_PRNumber = prNumber;
-        }
-        public DetectRPScopeTask(Int64 repoId, Int64 prNumber) : this()
-        {
-            GH_RepositoryId = repoId;
-            GH_PRNumber = prNumber;
+            GitHubRepositoryHtmlUrl = repoHtmlUrl.Trim();
+            GitHubPRNumber = prNumberString;
         }
 
         void Init()
         {
-            if(GH_RepositoryId <= 0)
+            if (string.IsNullOrWhiteSpace(GitHubRepositoryHtmlUrl))
             {
-                if (string.IsNullOrWhiteSpace(GH_RepositoryHtmlUrl))
-                {
-                    //throw new ArgumentException("Provide either Repository Id or Repositry Url");
-                    TaskLogger.LogWarning("Repository Html Url not provided");
-                }
+                //throw new ArgumentException("Provide either Repository Id or Repositry Url");
+                //TaskLogger.LogWarning("Repository Html Url not provided");
             }
 
-            if(GH_PRNumber < 0)
+            if (GH_PRNumber < 0)
             {
-                throw new ArgumentException("Provide non-zero, non-negative PR Number");
+                //throw new ArgumentException("Provide non-zero, non-negative PR Number");
             }
         }
         #endregion
@@ -160,6 +182,8 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
         #region private functions
 
 
+
+
         /// <summary>
         /// Detect valid scope based on the change list in the PR
         /// Get affected files and find scope based on directory that contains .sln file
@@ -171,14 +195,15 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
             FileSystemUtility fileSysUtil = new FileSystemUtility();
             IEnumerable<string> prFileList = null;
             List<string> finalScopePathList = new List<string>();
+            List<string> intermediateList = new List<string>();
 
-            if (!string.IsNullOrWhiteSpace(GH_RepositoryHtmlUrl))
+            if (!string.IsNullOrWhiteSpace(GitHubRepositoryHtmlUrl))
             {
-                TaskLogger.LogInfo("Trying to get Pr info using PrNumber:'{0}', GitHubUrl:'{1}'", GH_PRNumber.ToString(), GH_RepositoryHtmlUrl);
+                TaskLogger.LogInfo("Trying to get Pr info using PrNumber:'{0}', GitHubUrl:'{1}'", GH_PRNumber.ToString(), GitHubRepositoryHtmlUrl);
 
                 string repoName = string.Empty;
                 //Split the url
-                string[] tokens = GH_RepositoryHtmlUrl.Split(new char[] { Path.AltDirectorySeparatorChar }, StringSplitOptions.RemoveEmptyEntries);
+                string[] tokens = GitHubRepositoryHtmlUrl.Split(new char[] { Path.AltDirectorySeparatorChar }, StringSplitOptions.RemoveEmptyEntries);
 
                 //Get the last token which represents the repository name
                 if (tokens != null)
@@ -188,18 +213,31 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
 
                 prFileList = GHSvc.PR.GetPullRequestFileList(repoName, GH_PRNumber);
             }
-            else if (GH_RepositoryId > 0)
-            {
-                TaskLogger.LogInfo("Trying to get Pr info using PrNumber:'{0}', GitHub Repo Id:'{1}'", GH_PRNumber.ToString(), GH_RepositoryId.ToString());
-                prFileList = GHSvc.PR.GetPullRequestFileList(GH_RepositoryId, GH_PRNumber);
-            }
+            //else if (GH_RepositoryId > 0)
+            //{
+            //    TaskLogger.LogInfo("Trying to get Pr info using PrNumber:'{0}', GitHub Repo Id:'{1}'", GH_PRNumber.ToString(), GH_RepositoryId.ToString());
+            //    prFileList = GHSvc.PR.GetPullRequestFileList(GH_RepositoryId, GH_PRNumber);
+            //}
 
             TaskLogger.LogInfo(MessageImportance.Low, prFileList, "List of files from PR");
             Dictionary<string, string> RPDirs = FindScopeFromPullRequestFileList(prFileList);
 
             if (RPDirs.NotNullOrAny<KeyValuePair<string, string>>())
             {
-                finalScopePathList = RPDirs.Select<KeyValuePair<string, string>, string>((item) => item.Key).ToList<string>();
+                intermediateList = RPDirs.Select<KeyValuePair<string, string>, string>((item) => item.Key).ToList<string>();
+            }
+
+            if (DetectEnv.IsRunningUnderNonWindows)
+            {
+                foreach (string scopePath in intermediateList)
+                {
+                    string newPath = scopePath.Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                    finalScopePathList.Add(newPath);
+                }
+            }
+            else
+            {
+                finalScopePathList = intermediateList;
             }
 
             return finalScopePathList;
@@ -257,6 +295,14 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
                             }
                         }
                     }
+                }
+                else if(prFilePath.StartsWith("eng", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Anything outside of sdk should be treated as if a common props file was changed and so
+                    // the entire mgmt sdks should be built and all tests should be ran
+                    TaskLogger.LogWarning("Detected common files were changed. All mgmt sdks will be built.");
+                    scopeDictionary.Clear();
+                    break;
                 }
             }
 

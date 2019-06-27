@@ -110,7 +110,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Common.Logger
         public NetSdkBuildTaskLogger()
         {
             _isInitialized = false;
-            DefaultMessageImportance = MessageImportance.Low;
+            DefaultMessageImportance = MessageImportance.Normal;
             _isBuildEngineInitialized = false;
             syncObject = new object();
 

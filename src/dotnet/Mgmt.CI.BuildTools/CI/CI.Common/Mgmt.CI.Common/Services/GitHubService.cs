@@ -333,8 +333,21 @@ namespace MS.Az.Mgmt.CI.Common.Services
         /// <returns></returns>
         public IEnumerable<string> GetPullRequestFileList(long repoId, long prNumber)
         {
-            IReadOnlyList<PullRequestFile> prFiles = OC.PullRequest.Files(repoId, (int)prNumber).GetAwaiter().GetResult();
-            IEnumerable<string> filePathList = prFiles.Select<PullRequestFile, string>((item) => item.FileName);
+            List<string> filePathList = new List<string>();
+            try
+            {
+                IReadOnlyList<PullRequestFile> prFiles = OC.PullRequest.Files(repoId, (int)prNumber).GetAwaiter().GetResult();
+                //IEnumerable<string> filePathList = prFiles.Select<PullRequestFile, string>((item) => item.FileName);
+                if(prFiles.NotNullOrAny<PullRequestFile>())
+                {
+                    filePathList = prFiles.Select<PullRequestFile, string>((item) => item.FileName).ToList<string>();
+                }
+            }
+            catch(Exception ex)
+            {
+                Logger.LogInfo(ex.ToString());
+            }
+
             return filePathList;
         }
 

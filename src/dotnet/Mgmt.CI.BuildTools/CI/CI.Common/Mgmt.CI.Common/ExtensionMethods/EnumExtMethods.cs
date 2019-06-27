@@ -11,7 +11,6 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Common.ExtensionMethods
     using System.Reflection;
     public static class EnumExtMethods
     {
-
         #region public functions
         /// <summary>
         /// Get Attribute info for enum

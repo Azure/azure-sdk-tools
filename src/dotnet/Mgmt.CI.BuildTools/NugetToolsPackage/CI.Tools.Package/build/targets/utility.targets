@@ -1,0 +1,60 @@
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+    <Target Name="SkipBuildTest">
+        <!--
+            msbuild .\build.proj /t:SkipBuildTest /v:m /p:Scope=DataFactory /p:SkipFromBuild=true /p:SkipfromTestExecution=true /p:ProjectType=Sdk
+            msbuild .\build.proj /t:SkipBuildTest /v:m /p:Scope=DataFactory /p:SkipFromBuild=true /p:SkipfromTestExecution=true /p:ProjectType=Test
+        -->
+        <Message Text="Skip Projects from build or test....." />
+        <Message Condition=" '$(Scope)' != '' " Text="Scope..... $(Scope)" />
+        <Message Condition=" '$(BuildScopes)' != '' " Text="BuildScopes....... $(BuildScopes)" />   
+        <Message Condition=" '$(ProjectType)' != '' " Text="ProjectType..... $(ProjectType)" />
+        <Message Condition=" '$(ProjectCategory)' != '' " Text="ProjectCategory..... $(ProjectCategory)" />
+        <Message Condition=" '$(SkipFromTestExecution)' != '' " Text="SkipFromTestExecution..... $(SkipFromTestExecution)" />
+        <Message Condition=" '$(SkipFromBuild)' != '' " Text="SkipFromBuild..... $(SkipFromBuild)" />
+
+        <SkipBuildOrTestExecutionTask
+        BuildScope="$(Scope)"
+        BuildScopes="$(BuildScopes)" 
+        DebugMode="$(DebugMode)"
+        WhatIf="$(WhatIf)"
+        ProjectType="$(ProjectType)"
+        ProjectCategory="$(ProjectCategory)" 
+        SkipFromTestExecution="$(SkipFromTestExecution)"
+        SkipFromBuild="$(SkipFromBuild)"
+        />
+  </Target>
+
+  <!--Condition=" '$(PullRequestNumber)' != '' AND '$(RepoHtmlUrl)' != '' " -->
+  <Target Name="FindRPScopeFromPR" Condition=" '$(PullRequestNumber)' != '' AND '$(RepoHtmlUrl)' != '' ">
+    <Message Text="Finding Scope..." />
+    <Message Text="PullRequestNumber... $(PullRequestNumber)" />
+    <Message Text="RepoHtmlUrl... $(RepoHtmlUrl)" />
+    <Message Text="RepoId... $(RepoId)" />
+
+    <DetectRPScopeTask
+      GitHubPRNumber="$(PullRequestNumber)"
+      GitHubRepositoryHtmlUrl="$(RepoHtmlUrl)"
+      DebugMode="$(DebugMode)"
+      WhatIf="$(WhatIf)"
+      >
+      <Output TaskParameter="ScopesFromPR" ItemName="ScopesFromPullRequest" />
+      <Output TaskParameter="PRScopeString" PropertyName="ScopeStringFromTask" />
+    </DetectRPScopeTask>
+
+    <Message Text="Scopes retrieved from PR......@(ScopesFromPullRequest)" Importance="High" />
+    <Message Text="ScopeString retrieved from PR......$(ScopeStringFromTask)" Importance="High" />
+  </Target>
+
+  <Target Name="ExecUtil" >
+    <Message Text="Executing Utilities......" />
+
+    <UtilTask
+      UtilityName="$(UtilityName)"
+      ToolsPkgRootDirPath="$(PkgRootDirPath)"
+      PsModulerootDirPath="$(PkgPsModulesDirPath)"
+      DebugMode="$(DebugMode)"
+    />
+  </Target>
+
+</Project>

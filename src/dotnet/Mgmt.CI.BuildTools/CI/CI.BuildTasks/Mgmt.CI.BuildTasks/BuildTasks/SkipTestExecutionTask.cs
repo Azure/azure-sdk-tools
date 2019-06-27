@@ -204,7 +204,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks
 
         void UpdatePropertyValue(MsbuildProject proj, string propertyName, bool newPropValue)
         {
-            string existingVal = proj.GetPropertyValue(PROPNAME_SKIP_TEST_EXECUTION);
+            string existingVal = proj.GetPropertyValue(propertyName);
 
             if (string.IsNullOrWhiteSpace(existingVal) && newPropValue == false)
             {

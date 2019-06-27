@@ -8,6 +8,9 @@
 	<Target Name="Test" DependsOnTargets="$(RunTestProjectsDependsOn)" />
 	<Target Name="Pack" DependsOnTargets="$(CreateNugetPackageDependsOn)" />
 
+	<!-- Utility Target -->
+	<Target Name="Util" DependsOnTargets="$(UtilTargetsDependsOn)" />
+
 	<!-- Old Targets to maintain parity-->
 	<Target Name="RunTests" DependsOnTargets="$(RunTestProjectsDependsOn)" />
 	<Target Name="CreateNugetPackage" DependsOnTargets="$(CreateNugetPackageDependsOn)" />

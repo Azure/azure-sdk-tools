@@ -550,6 +550,9 @@ function Start-CodeGeneration {
         [string] $AutoRestCodeGenerationFlags,
         [string] $SdkRepoRootPath
     )
+
+    # metadata directory name
+    $metadataDirName = "mgmtmetadata"
     # If repo root is provided, use that as the SDK root directory
     if(-not [string]::IsNullOrWhiteSpace($SdkRepoRootPath))
     {
@@ -578,12 +581,12 @@ function Start-CodeGeneration {
         New-Item -ItemType Directory -Path $localSdkRepoDirectory
     }
 
-    if(!(Test-Path -Path "$localSdkRepoDirectory\_metadata"))
+    if(!(Test-Path -Path "$localSdkRepoDirectory\$metadataDirName"))
     {
-        New-Item -ItemType Directory -Path "$localSdkRepoDirectory\_metadata"
+        New-Item -ItemType Directory -Path "$localSdkRepoDirectory\$metadataDirName"
     }
 
-    $logFile = "$localSdkRepoDirectory\_metadata\$($ResourceProvider.Replace("/","_").Replace('\','_')).txt"    
+    $logFile = "$localSdkRepoDirectory\$metadataDirName\$($ResourceProvider.Replace("/","_").Replace('\','_')).txt"    
     if(!$(Test-Path -Path $logFile))
     {
         New-Item -Path $logFile -ItemType File
@@ -592,7 +595,7 @@ function Start-CodeGeneration {
     if(-not [string]::IsNullOrWhiteSpace($LocalConfigFilePath)) 
     {
         # if generating using a local config file, create an obscure temp log file, makes detection easier
-        Remove-Item "$localSdkRepoDirectory\_metadata\$($ResourceProvider.Replace("/","_")).txt" -ErrorAction SilentlyContinue
+        Remove-Item "$localSdkRepoDirectory\$metadataDirName\$($ResourceProvider.Replace("/","_")).txt" -ErrorAction SilentlyContinue
         $logFile = [System.IO.Path]::GetTempFileName()+".txt";
         
         Write-Warning "!!!!!WARNING!!!!!!" 

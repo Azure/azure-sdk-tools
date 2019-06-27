@@ -30,6 +30,9 @@
       PublishingNuget;
       ArchiveSymbolsTarget
     </PublishNugetDependsOn>
+    <UtilTargetsDependsOn>
+      ExecUtil;
+    </UtilTargetsDependsOn>
     <HelpDependsOn>
       DisplayHelp
     </HelpDependsOn>

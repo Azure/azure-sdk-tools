@@ -26,16 +26,15 @@
   </Target>
 
   <!--Condition=" '$(PullRequestNumber)' != '' AND '$(RepoHtmlUrl)' != '' " -->
-  <Target Name="FindRPScopeFromPR" >
+  <Target Name="FindRPScopeFromPR" Condition=" '$(PullRequestNumber)' != '' AND '$(RepoHtmlUrl)' != '' ">
     <Message Text="Finding Scope..." />
     <Message Text="PullRequestNumber... $(PullRequestNumber)" />
     <Message Text="RepoHtmlUrl... $(RepoHtmlUrl)" />
     <Message Text="RepoId... $(RepoId)" />
 
     <DetectRPScopeTask
-      GH_PRNumber="$(PullRequestNumber)"
-      GH_RepositoryHtmlUrl="$(RepoHtmlUrl)"
-      GH_RepositoryId="$(RepoId)"
+      GitHubPRNumber="$(PullRequestNumber)"
+      GitHubRepositoryHtmlUrl="$(RepoHtmlUrl)"
       DebugMode="$(DebugMode)"
       WhatIf="$(WhatIf)"
       >
@@ -47,5 +46,15 @@
     <Message Text="ScopeString retrieved from PR......$(ScopeStringFromTask)" Importance="High" />
   </Target>
 
+  <Target Name="ExecUtil" >
+    <Message Text="Executing Utilities......" />
+
+    <UtilTask
+      UtilityName="$(UtilityName)"
+      ToolsPkgRootDirPath="$(PkgRootDirPath)"
+      PsModulerootDirPath="$(PkgPsModulesDirPath)"
+      DebugMode="$(DebugMode)"
+    />
+  </Target>
 
 </Project>

@@ -32,6 +32,7 @@
     <PkgSdkDirPath>$(PkgRootDirPath)\Sdk</PkgSdkDirPath>
     <PkgTaskDirPath>$(PkgRootDirPath)\tasks</PkgTaskDirPath>
     <PkgTargetDirPath>$(PkgRootDirPath)\targets</PkgTargetDirPath>
+    <PkgPsModulesDirPath>$(PkgRootDirPath)\psModules</PkgPsModulesDirPath>
   </PropertyGroup>
 
   <PropertyGroup>

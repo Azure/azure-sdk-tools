@@ -47,7 +47,7 @@ namespace BuildTasks.Tests
         {
             const string NET_SDK_PUB_URL = @"https://github.com/azure/azure-sdk-for-net";
             //6453 non sdk changes
-            DetectRPScopeTask rpScope = new DetectRPScopeTask(NET_SDK_PUB_URL, 6453);
+            DetectRPScopeTask rpScope = new DetectRPScopeTask(NET_SDK_PUB_URL, 6453.ToString());
             rpScope.Execute();
 
             CategorizeSDKProjectsTask cproj = new CategorizeSDKProjectsTask(rootDir);

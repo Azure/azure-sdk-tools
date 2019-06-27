@@ -28,13 +28,31 @@ export = {
     return {
       // callback functions
 
-      // if not 'throw new <error>'
-      "ThrowStatement[argument.type!='NewExpression']": (
+      // if throwing a literal value
+      "ThrowStatement[argument.type='Literal']": (
         node: ThrowStatement
       ): void => {
         context.report({
           node: node,
-          message: "statement is not throwing a new error object"
+          message: "statement is throwing a literal"
+        });
+      },
+
+      "ThrowStatement[argument.type='Identifier']": (
+        node: ThrowStatement
+      ): void => {
+        const thrown: Identifier = node.argument as Identifier;
+        const parserServices = context.parserServices;
+        const typeChecker = parserServices.program.getTypeChecker();
+        const TSNode = parserServices.esTreeNodeToTSNodeMap.get(thrown);
+        const symbol = typeChecker.getSymbolAtLocation(TSNode.name);
+        const type = typeChecker.typeToString(
+          typeChecker.getTypeOfSymbolatLocation(symbol, symbol.valueDeclaration)
+        );
+        //const type = typeChecker.getTypeAtLocation(TSNode.expression);
+        context.report({
+          node: thrown,
+          message: type as string
         });
       },
 

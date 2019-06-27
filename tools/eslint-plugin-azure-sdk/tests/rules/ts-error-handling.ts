@@ -28,6 +28,9 @@ ruleTester.run("ts-error-handling", rule, {
     },
     {
       code: 'throw new Error("test")'
+    },
+    {
+      code: 'const err = new Error("test"); throw err'
     }
   ],
   invalid: [
@@ -36,7 +39,7 @@ ruleTester.run("ts-error-handling", rule, {
       code: 'throw "test"',
       errors: [
         {
-          message: "statement is not throwing a new error object"
+          message: "statement is throwing a literal"
         }
       ]
     },
@@ -45,7 +48,7 @@ ruleTester.run("ts-error-handling", rule, {
       code: "throw 1",
       errors: [
         {
-          message: "statement is not throwing a new error object"
+          message: "statement is throwing a literal"
         }
       ]
     },

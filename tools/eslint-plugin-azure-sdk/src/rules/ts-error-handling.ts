@@ -45,26 +45,29 @@ export = {
         const parserServices = context.parserServices;
         const typeChecker = parserServices.program.getTypeChecker();
         const TSNode = parserServices.esTreeNodeToTSNodeMap.get(thrown);
-        const symbol = typeChecker.getSymbolAtLocation(TSNode.name);
         const type = typeChecker.typeToString(
-          typeChecker.getTypeOfSymbolatLocation(symbol, symbol.valueDeclaration)
+          typeChecker.getTypeAtLocation(TSNode)
         );
-        //const type = typeChecker.getTypeAtLocation(TSNode.expression);
-        context.report({
-          node: thrown,
-          message: type as string
-        });
+
+        const allowedTypes = ["TypeError", "RangeError", "Error", "any"];
+
+        !allowedTypes.includes(type) &&
+          context.report({
+            node: thrown,
+            message:
+              "error thrown is not one of the following types: TypeError, RangeError, Error"
+          });
       },
 
       // check to see that thrown error is valid type
       "ThrowStatement[argument.type='NewExpression']": (
         node: ThrowStatement
       ): void => {
-        const valid = ["TypeError", "RangeError", "Error"];
+        const allowedTypes = ["TypeError", "RangeError", "Error"];
         const argument = node.argument as NewExpression;
         const callee = argument.callee as Identifier;
 
-        !valid.includes(callee.name) &&
+        !allowedTypes.includes(callee.name) &&
           context.report({
             node: callee,
             message:

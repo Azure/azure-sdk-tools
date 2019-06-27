@@ -19,7 +19,7 @@ const ruleTester = new RuleTester({
 
 ruleTester.run("ts-error-handling", rule, {
   valid: [
-    // different non-default exports
+    // different valid errors
     {
       code: 'throw new TypeError("test")'
     },

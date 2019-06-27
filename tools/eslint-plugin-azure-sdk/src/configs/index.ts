@@ -43,6 +43,7 @@ export = {
       "@ts-common/azure-sdk/ts-package-json-required-scripts": "error",
       "@ts-common/azure-sdk/ts-package-json-sideeffects": "error",
       "@ts-common/azure-sdk/ts-package-json-types": "error",
+      "@ts-common/azure/sdk/ts-use-interface-parameters": "warn",
       "@ts-common/azure-sdk/ts-versioning-semver": "error"
     },
     settings: {

@@ -42,6 +42,7 @@ const ruleList = [
   "ts-package-json-required-scripts",
   "ts-package-json-sideeffects",
   "ts-package-json-types",
+  "ts-use-interface-parameters",
   "ts-versioning-semver"
 ];
 

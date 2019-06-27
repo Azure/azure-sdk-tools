@@ -109,5 +109,6 @@ For example, if you are not targeting Node, disable `ts-config-moduleresolution`
 - [ts-package-json-repo](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-package-json-repo)
 - [ts-package-json-required-scripts](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-package-json-required-scripts)
 - [ts-package-json-sideeffects](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-package-json-sideeffects)
-- [ts-package-json-types](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-package-json-types)
+- [ts-package-json-types](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-package-json-types)- 
+- [ts-use-interface-parameters](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-use-interface-parameters)
 - [ts-versioning-semver](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-versioning-semver)

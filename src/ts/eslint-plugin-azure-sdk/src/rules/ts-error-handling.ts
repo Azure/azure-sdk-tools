@@ -5,6 +5,7 @@
 
 import { Rule } from "eslint";
 import { Identifier, NewExpression, ThrowStatement } from "estree";
+import { TypeChecker } from "typescript";
 
 //------------------------------------------------------------------------------
 // Rule Definition
@@ -43,7 +44,7 @@ export = {
       ): void => {
         const thrown: Identifier = node.argument as Identifier;
         const parserServices = context.parserServices;
-        const typeChecker = parserServices.program.getTypeChecker();
+        const typeChecker: TypeChecker = parserServices.program.getTypeChecker();
         const TSNode = parserServices.esTreeNodeToTSNodeMap.get(thrown);
         const type = typeChecker.typeToString(
           typeChecker.getTypeAtLocation(TSNode)

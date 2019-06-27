@@ -160,6 +160,7 @@ namespace PipelineGenerator
 
             var projectReference = await Context.GetProjectReferenceAsync(cancellationToken);
             var agentPoolQueue = await Context.GetAgentPoolQueue(cancellationToken);
+            var normalizedRelativeYamlPath = component.RelativeYamlPath.Replace("\\", "/");
 
             var definition = new BuildDefinition()
             {
@@ -168,7 +169,7 @@ namespace PipelineGenerator
                 Repository = buildRepository,
                 Process = new YamlProcess()
                 {
-                    YamlFilename = component.RelativeYamlPath
+                    YamlFilename = normalizedRelativeYamlPath
                 },
                 Queue = agentPoolQueue
             };

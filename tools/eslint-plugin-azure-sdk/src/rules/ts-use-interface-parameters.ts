@@ -9,6 +9,7 @@ import {
   AssignmentPattern,
   FunctionDeclaration,
   FunctionExpression,
+  Identifier,
   Pattern
 } from "estree";
 import { SymbolFlags, TypeChecker } from "typescript";
@@ -42,6 +43,7 @@ export = {
             const assignmentPattern: AssignmentPattern = param as AssignmentPattern;
             identifier = assignmentPattern.left;
           }
+          identifier = identifier as Identifier;
           const parserServices = context.parserServices;
           const typeChecker: TypeChecker = parserServices.program.getTypeChecker();
           const TSNode = parserServices.esTreeNodeToTSNodeMap.get(identifier);
@@ -49,7 +51,12 @@ export = {
           type.symbol.flags === SymbolFlags.Class &&
             context.report({
               node: identifier,
-              message: "parameters should be interfaces, not classes"
+              message:
+                "type {{ type }} of parameter {{ param }} is a class, not an interface",
+              data: {
+                type: typeChecker.typeToString(type),
+                param: identifier.name
+              }
             });
         });
       }

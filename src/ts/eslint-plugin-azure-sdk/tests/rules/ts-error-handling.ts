@@ -30,7 +30,16 @@ ruleTester.run("ts-error-handling", rule, {
       code: 'throw new Error("test")'
     },
     {
+      code: 'const err = new TypeError("test"); throw err'
+    },
+    {
+      code: 'const err = new RangeError("test"); throw err'
+    },
+    {
       code: 'const err = new Error("test"); throw err'
+    },
+    {
+      code: 'try { console.log("test"); } catch(err) { throw err; }'
     }
   ],
   invalid: [
@@ -55,7 +64,18 @@ ruleTester.run("ts-error-handling", rule, {
     // user-defined exception
     {
       code:
-        "function UserException(message) { this.message = message; this.name = 'UserException';}; throw new UserException('test')",
+        'function UserException(message) { this.message = message; this.name = "UserException";}; throw new UserException("test")',
+      errors: [
+        {
+          message:
+            "error thrown is not one of the following types: TypeError, RangeError, Error"
+        }
+      ]
+    },
+    {
+      code:
+        'class TestError extends Error { constructor(m: string) { super(m); }; } const err = new TestError("test"); throw err',
+      //'interface UserExceptionType { message: string, name: string }; function UserException(message: string): UserExceptionType { this.message = message; this.name = "UserException";}; const err = new UserException("test"); throw err',
       errors: [
         {
           message:

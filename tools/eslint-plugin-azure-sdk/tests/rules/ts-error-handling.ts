@@ -68,18 +68,17 @@ ruleTester.run("ts-error-handling", rule, {
       errors: [
         {
           message:
-            "error thrown is not one of the following types: TypeError, RangeError, Error"
+            "type UserException of thrown error is not one of the allowed error types: TypeError, RangeError, Error"
         }
       ]
     },
     {
       code:
         'class TestError extends Error { constructor(m: string) { super(m); }; } const err = new TestError("test"); throw err',
-      //'interface UserExceptionType { message: string, name: string }; function UserException(message: string): UserExceptionType { this.message = message; this.name = "UserException";}; const err = new UserException("test"); throw err',
       errors: [
         {
           message:
-            "error thrown is not one of the following types: TypeError, RangeError, Error"
+            "type TestError of thrown error is not one of the allowed error types: TypeError, RangeError, Error"
         }
       ]
     }

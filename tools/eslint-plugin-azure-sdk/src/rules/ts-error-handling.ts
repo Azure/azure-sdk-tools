@@ -56,7 +56,10 @@ export = {
           context.report({
             node: thrown,
             message:
-              "error thrown is not one of the following types: TypeError, RangeError, Error"
+              "type {{ type }} of thrown error is not one of the allowed error types: TypeError, RangeError, Error",
+            data: {
+              type: type
+            }
           });
       },
 
@@ -72,7 +75,10 @@ export = {
           context.report({
             node: callee,
             message:
-              "error thrown is not one of the following types: TypeError, RangeError, Error"
+              "type {{ type }} of thrown error is not one of the allowed error types: TypeError, RangeError, Error",
+            data: {
+              type: callee.name
+            }
           });
       }
     } as Rule.RuleListener;

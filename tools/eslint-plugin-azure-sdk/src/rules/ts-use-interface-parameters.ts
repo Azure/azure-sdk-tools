@@ -48,7 +48,9 @@ export = {
           const typeChecker: TypeChecker = parserServices.program.getTypeChecker();
           const TSNode = parserServices.esTreeNodeToTSNodeMap.get(identifier);
           const type = typeChecker.getTypeAtLocation(TSNode);
-          type.symbol.flags === SymbolFlags.Class &&
+          const symbol = type.getSymbol();
+          symbol &&
+            symbol.getFlags() === SymbolFlags.Class &&
             context.report({
               node: identifier,
               message:

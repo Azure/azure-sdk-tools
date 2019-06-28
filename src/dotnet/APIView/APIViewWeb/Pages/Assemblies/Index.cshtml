@@ -1,24 +1,20 @@
 ﻿@page
-@using Azure.Storage.Blobs;
 @model APIViewWeb.Pages.Assemblies.IndexModel
 @{
     ViewData["Title"] = "Index";
 }
 
-@foreach (var item in Model.Segment.Value.BlobItems)
+@foreach (var assembly in Model.Assemblies)
 {
     <tr>
         <td>
-            @foreach (var pair in item.Metadata)
-            {
-                @Html.Raw(pair.Value)
-            }
+            @Html.Raw(assembly[1])
         </td>
         <td>
-            <a asp-page="./Review" asp-route-id="@item.Name">Review</a>
+            <a asp-page="./Review" asp-route-id="@assembly[0]">Review</a>
         </td>
         <td>
-            <a asp-page="./Delete" asp-route-id="@item.Name">Delete</a>
+            <a asp-page="./Delete" asp-route-id="@assembly[0]">Delete</a>
         </td>
     </tr>
     <br />

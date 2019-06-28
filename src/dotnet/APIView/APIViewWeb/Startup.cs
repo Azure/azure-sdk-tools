@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System;
 
 namespace APIViewWeb
 {
@@ -17,8 +16,6 @@ namespace APIViewWeb
 
         public IConfiguration Configuration { get; }
 
-        protected string ConnectionString { get; set; }
-
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
@@ -30,6 +27,8 @@ namespace APIViewWeb
             });
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+
+            services.AddSingleton<BlobAssemblyRepository>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

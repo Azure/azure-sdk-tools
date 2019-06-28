@@ -20,12 +20,7 @@ namespace APIViewTest
         [Fact]
         public void AssemblyTestAssembliesFromFile()
         {
-            AssemblyAPIV assembly = null;
-            foreach (AssemblyAPIV a in AssemblyAPIV.AssembliesFromFile("TestLibrary.dll"))
-            {
-                if (a.Name.Equals("TestLibrary"))
-                    assembly = a;
-            }
+            AssemblyAPIV assembly = AssemblyAPIV.AssemblyFromFile("TestLibrary.dll");
             Assert.Equal("TestLibrary", assembly.Name);
 
             NamespaceAPIV globalNamespace = assembly.GlobalNamespace;

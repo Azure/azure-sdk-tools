@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
+﻿using System.IO;
 using System.Threading.Tasks;
-using APIViewWeb.Models;
 using Azure.Storage.Blobs;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -13,19 +9,14 @@ namespace APIViewWeb.Pages.Assemblies
 {
     public class DeleteModel : PageModel
     {
-        public DeleteModel(IConfiguration configuration)
+        private readonly BlobAssemblyRepository assemblyRepository;
+
+        public DeleteModel(BlobAssemblyRepository assemblyRepository)
         {
-            Configuration = configuration;
-            string connectionString = Configuration.GetValue<String>("APIVIEW_STORAGE");
-            BlobServiceClient service = new BlobServiceClient(connectionString);
-            Container = service.GetBlobContainerClient("hello");
+            this.assemblyRepository = assemblyRepository;
         }
 
-        public IConfiguration Configuration { get; }
-
-        public BlobContainerClient Container { get; set; }
-
-        public string AssemblyModel { get; set; }
+        public string Content { get; set; }
 
         public async Task<IActionResult> OnGetAsync(string id)
         {
@@ -34,13 +25,9 @@ namespace APIViewWeb.Pages.Assemblies
                 return NotFound();
             }
 
-            
-            var client = Container.GetBlockBlobClient(id);
-            var result = await client.DownloadAsync();
-            StreamReader reader = new StreamReader(result.Value.Content);
-            AssemblyModel = reader.ReadToEnd();
+            Content = await assemblyRepository.ReadAssemblyContentAsync(id);
 
-            if (AssemblyModel == null)
+            if (Content == null)
             {
                 return NotFound();
             }
@@ -54,8 +41,7 @@ namespace APIViewWeb.Pages.Assemblies
                 return NotFound();
             }
 
-            var client = Container.GetBlockBlobClient(id);
-            await client.DeleteAsync();
+            await assemblyRepository.DeleteAssemblyAsync(id);
 
             return RedirectToPage("./Index");
         }

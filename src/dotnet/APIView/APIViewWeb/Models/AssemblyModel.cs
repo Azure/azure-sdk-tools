@@ -1,13 +1,8 @@
 ﻿using APIView;
-using Azure.Storage.Blobs;
 using Microsoft.Extensions.Configuration;
-using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Threading.Tasks;
 
 namespace APIViewWeb.Models
 {
@@ -22,30 +17,44 @@ namespace APIViewWeb.Models
 
         public int Id { get; set; }
 
-        [Required]
-        [Display(Name = "DLL Path")]
-        public string DllPath { get; set; }
-
         [Display(Name = "Display String")]
         public string DisplayString { get; set; }
 
-        // test DLL: C:\Users\t-mcpat\Documents\azure-sdk-tools\artifacts\bin\TestLibrary\Debug\netcoreapp2.1\TestLibrary.dll
+        public string Name { get; set; }
+
         public AssemblyModel()
         {
             this.DisplayString = "<empty>";
-            this.DllPath = "null";
+            this.Name = "Empty Assembly";
         }
 
         public AssemblyModel(string dllPath, string fileName)
         {
-            AssemblyAPIV assembly = null;
-            foreach (AssemblyAPIV a in AssemblyAPIV.AssembliesFromFile(dllPath))
+            AssemblyAPIV assembly = AssemblyAPIV.AssemblyFromFile(dllPath);
+            
+            if (assembly == null)
             {
-                if (fileName.EndsWith(".dll") && a.Name.Equals(fileName.Remove(fileName.IndexOf('.'))))
-                    assembly = a;
+                this.DisplayString = "<empty>";
             }
-            this.DisplayString = assembly.ToString();
-            this.DllPath = dllPath;
+            else
+            {
+                this.DisplayString = assembly.ToString();
+            }
+            this.Name = fileName;
+        }
+
+        public AssemblyModel(Stream stream, string fileName)
+        {
+            AssemblyAPIV assembly = AssemblyAPIV.AssemblyFromStream(stream);
+            if (assembly == null)
+            {
+                this.DisplayString = "<empty>";
+            }
+            else
+            {
+                this.DisplayString = assembly.ToString();
+            }
+            this.Name = fileName;
         }
     }
 }

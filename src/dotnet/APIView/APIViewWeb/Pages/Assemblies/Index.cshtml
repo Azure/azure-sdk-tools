@@ -8,13 +8,13 @@
 {
     <tr>
         <td>
-            @Html.Raw(assembly[1])
+            @Html.Raw(assembly.name)
         </td>
         <td>
-            <a asp-page="./Review" asp-route-id="@assembly[0]">Review</a>
+            <a asp-page="./Review" asp-route-id="@assembly.id">Review</a>
         </td>
         <td>
-            <a asp-page="./Delete" asp-route-id="@assembly[0]">Delete</a>
+            <a asp-page="./Delete" asp-route-id="@assembly.id">Delete</a>
         </td>
     </tr>
     <br />

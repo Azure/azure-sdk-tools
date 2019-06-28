@@ -1,15 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using APIViewWeb.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Azure.Storage.Blobs;
-using Microsoft.Extensions.Configuration;
-using System.Text;
 
 namespace APIViewWeb.Pages.Assemblies
 {
@@ -36,7 +29,8 @@ namespace APIViewWeb.Pages.Assemblies
 
             if (file.Length > 0)
             {
-                await assemblyRepository.UploadAssemblyAsync(file);
+                AssemblyModel assemblyModel = new AssemblyModel(file.OpenReadStream(), file.FileName);
+                await assemblyRepository.UploadAssemblyAsync(assemblyModel, file.FileName);
             }
 
             return RedirectToPage("./Index");

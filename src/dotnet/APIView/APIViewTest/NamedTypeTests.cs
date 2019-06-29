@@ -115,7 +115,7 @@ namespace APIViewTest
             string stringRep = publicEnum.ToString().Replace(Environment.NewLine, "");
             Assert.Equal("public enum PublicEnum : long {    One = 1,    Two = 2,    Three = 3,}", stringRep);
         }
-
+        
         [Fact]
         public void NamedTypeTestDelegate()
         {
@@ -134,7 +134,7 @@ namespace APIViewTest
 
             Assert.Equal("public delegate int publicDelegate(int num = 10) { }", publicDelegate.ToString());
         }
-
+        
         [Fact]
         public void NamedTypeTestAutomaticConstructor()
         {

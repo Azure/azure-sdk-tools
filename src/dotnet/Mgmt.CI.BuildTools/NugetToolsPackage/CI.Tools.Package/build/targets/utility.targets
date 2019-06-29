@@ -32,6 +32,8 @@
     <Message Text="RepoHtmlUrl... $(RepoHtmlUrl)" />
     <Message Text="RepoId... $(RepoId)" />
 
+    <Message Text="">
+
     <DetectRPScopeTask
       GitHubPRNumber="$(PullRequestNumber)"
       GitHubRepositoryHtmlUrl="$(RepoHtmlUrl)"
@@ -55,6 +57,24 @@
       PsModulerootDirPath="$(PkgPsModulesDirPath)"
       DebugMode="$(DebugMode)"
     />
+  </Target>
+
+  <Target Name="UpdateSdkInfo">
+    <Message Text="Updating SdkInfo......" />
+
+    <ItemGroup>
+      <SdkProjectFilePathList Include="@(SDKProjects)" />
+    </ItemGroup>
+
+    <PropertyGroup>
+      <ArtifactsRootDir>$(PkgArtifactsRootDir)</ArtifactsRootDir>
+    </PropertyGroup>
+
+    <!-- ArtifactRootDir structure .... artifacts\bin\Microsoft.Azure.Management.Billing\Debug\netstandard2.0\Microsoft.Azure.Management.Billing.dll -->
+    <UpdateNetSdkInfoTask
+      SdkProjectFilePaths="@(SdkProjectFilePathList)"
+      GeneratedAssemblyRootDirPath="$(ArtifactsRootDir)"
+    >
   </Target>
 
 </Project>

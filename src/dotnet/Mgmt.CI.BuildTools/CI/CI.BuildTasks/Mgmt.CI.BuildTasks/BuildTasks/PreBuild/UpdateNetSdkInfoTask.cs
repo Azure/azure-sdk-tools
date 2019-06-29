@@ -7,17 +7,19 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
     using MS.Az.Mgmt.CI.BuildTasks.Common.Base;
     using MS.Az.Mgmt.CI.BuildTasks.Common.ExtensionMethods;
     using MS.Az.Mgmt.CI.BuildTasks.Common.Utilities;
+    using MS.Az.Mgmt.CI.BuildTasks.Models;
     using MS.Az.Mgmt.CI.Common.ExtensionMethods;
     using MS.Az.Mgmt.CI.Common.Services;
     using System;
     using System.Collections.Generic;
+    using System.Dynamic;
     using System.IO;
     using System.Linq;
     using System.Reflection;
     using System.Text;
     using System.Threading.Tasks;
 
-    public class UpdateNetSdkInfoTask : NetSdkBuildTask
+    public class UpdateNetSdkInfoTask : NetSdkUtilTask
     {
         #region const
         public const string API_TAG_PROPERTYNAME = "AzureApiTag";
@@ -28,73 +30,55 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
         #endregion
 
         #region fields
-        //SdkForNetRepoDirectoryStructure _netSdkDirStructure;
         string _apiMapTag;
+        FileSystemUtility _fileSysUtil;
         #endregion
 
         #region Properties        
 
         #region Input Properties
-        
-        /// <summary>
-        /// This will be ArtifactsBinDir path in the current scheme of things
-        /// </summary>
-        [Required]
-        public string GeneratedAssemblyDirPath { get; set; }
 
-        //[Required]
-        public string GeneratedAssemblyName { get; set; }
         [Required]
-        public ITaskItem[] SdkProjectFilePaths { get; set; }
+        public SDKMSBTaskItem[] SdkProjectFilePaths { get; set; }
         #endregion
 
         #region other properties
-        List<string> SdkProjectFilePathList { get; set; }
 
-        string SdkInfoBinaryName
+        //List<Tuple<string, string, string>> AssemblyInfoList { get; set; }
+        //List<SDKMSBTaskItem> AssemblyInfoList { get; set; }
+        List<ExpandoObject> AssemblyInfoList { get; set; }
+        FileSystemUtility FileSysUtil
         {
             get
             {
-                return string.Format("{0}-SdkInfo.dll", "RPName");
-            }
-        }
-
-        bool IsSdkRPPropsFileExists
-        {
-            get
-            {
-                bool fileExists = false;
-                //string sdkRpPropFile = NetSdkDirStructure.FindFile("AzSdk.RP.props");
-                string sdkRpPropFile = string.Empty;
-                if (!string.IsNullOrWhiteSpace(sdkRpPropFile))
+                if (_fileSysUtil == null)
                 {
-                    if (File.Exists(sdkRpPropFile))
-                    {
-                        fileExists = true;
-                    }
+                    _fileSysUtil = new FileSystemUtility();
                 }
 
-                return fileExists;
+                return _fileSysUtil;
             }
         }
 
-        public string ApiMapTag
-        {
-            get
-            {
-                if(string.IsNullOrWhiteSpace(_apiMapTag))
-                {
-                    _apiMapTag = GetApiMapTag();
-                }
+        bool AzPropFileExists { get; set; }
+        bool AssemblyFilePathExists { get; set; }
+        //public string ApiMapTag
+        //{
+        //    get
+        //    {
+        //        if(string.IsNullOrWhiteSpace(_apiMapTag))
+        //        {
+        //            _apiMapTag = GetApiMapTag();
+        //        }
 
-                return _apiMapTag;
-            }
+        //        return _apiMapTag;
+        //    }
 
-            private set
-            {
-                _apiMapTag = value;
-            }
-        }
+        //    private set
+        //    {
+        //        _apiMapTag = value;
+        //    }
+        //}
 
         public override string NetSdkTaskName => "UpdateNetSdkInfoTask";
         #endregion
@@ -103,22 +87,11 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
         #region Constructor
         public UpdateNetSdkInfoTask()
         {
-            SdkProjectFilePathList = new List<string>();
-        }
-        public UpdateNetSdkInfoTask(ITaskItem[] sdkProjectFilePaths) : this()
-        {
-            Init();
-        }
-
-        void Init()
-        {
-            if (SdkProjectFilePaths != null)
-            {
-                if (SdkProjectFilePaths.Length > 0)
-                {
-                    SdkProjectFilePathList = SdkProjectFilePaths.Select<ITaskItem, string>((item) => item.ItemSpec).ToList<string>();
-                }
-            }
+            //AssemblyInfoList = new List<Tuple<string, string, string>>();            
+            //AssemblyInfoList = new List<SDKMSBTaskItem>();
+            AssemblyInfoList = new List<ExpandoObject>();
+            AzPropFileExists = true;
+            AssemblyFilePathExists = true;
         }
 
         #endregion
@@ -127,141 +100,202 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
 
         public bool ExecuteTask()
         {
+            ParseInput();
             UpdateApiTag();
 
-            return TaskLogger.TaskSucceededWithNoErrorsLogged;
+            return UtilLogger.TaskSucceededWithNoErrorsLogged;
         }
 
         public void UpdateApiTag()
         {
-            string apiTag = GetApiMapTag();
-            if(string.IsNullOrWhiteSpace(apiTag))
+            foreach(dynamic asmInfoItem in AssemblyInfoList)
             {
-                TaskLogger.LogWarning("Unable to update ApiTag");
-            }
-            else
-            {
-                UpdateSdkRpPropsFile(apiTag);
+                string apiTag = GetApiFromSdkInfo(asmInfoItem.AssemblyFilePath);
+
+                if(!File.Exists(asmInfoItem.AzPropFilePath))
+                {
+                    MsbuildProject buildProj = new MsbuildProject();
+                    buildProj.CreateAzPropsfile(asmInfoItem.AzPropFilePath);
+                }
+
+                MsbuildProject msbProj = new MsbuildProject(asmInfoItem.AzPropFilePath);
+                msbProj.AddUpdateProperty(API_TAG_PROPERTYNAME, apiTag);
             }
         }
-        #endregion
+        #endregion        
 
-        #region private functions
-        private string GetApiMapTag()
+        private void ParseInput()
         {
-            List<string> sdkInfoFileToBeBuilt = new List<string>();
-            string apiMapTag = string.Empty;
-
-            //string dirToSearch = Path.Combine(GitWorkingDir, RPRelativePath);
-            string dirToSearch = string.Empty;
-            if(Directory.Exists(dirToSearch))
+            foreach(SDKMSBTaskItem sdkProjTaskItem in SdkProjectFilePaths)
             {
-                var sdkInfoFiles = Directory.EnumerateFiles(dirToSearch, "SdkInfo*.cs", SearchOption.AllDirectories);
+                string azPropFilePath = string.Empty;
+                string asmPath = string.Empty;
+                string projectName = Path.GetFileNameWithoutExtension(sdkProjTaskItem.ItemSpec);
+                string dllName = string.Format("{0}.dll", projectName);
 
-                if (sdkInfoFiles.Any<string>())
+                //e.g. <root>\artifacts\bin\Microsoft.Azure.Management.Billing\Debug\
+                string outputDirRootPath = sdkProjTaskItem.OutputPath;
+                string azSdkPropDirPath = FileSysUtil.TraverseUptoRootWithFileToken(PROPS_APITAG_FILE_NAME, Path.GetDirectoryName(sdkProjTaskItem.ItemSpec));
+
+                if(string.IsNullOrWhiteSpace(azSdkPropDirPath))
                 {
-                    foreach (string sdkFile in sdkInfoFiles)
+                    azSdkPropDirPath = FileSysUtil.TraverUptoRootWithFileExtension(Path.GetDirectoryName(sdkProjTaskItem.ItemSpec));
+                }
+                
+                if(Directory.Exists(azSdkPropDirPath))
+                {
+                    azPropFilePath = Path.Combine(azSdkPropDirPath, PROPS_APITAG_FILE_NAME);
+                }
+
+                var files = FileSysUtil.FindFilePaths(outputDirRootPath, dllName);
+
+                if(files.NotNullOrAny<string>())
+                {
+                    var asms = files.Where<string>((item) => item.Contains("netstandard2.0", StringComparison.OrdinalIgnoreCase));
+
+                    if(asms.NotNullOrAny<string>())
                     {
-                        if (sdkFile.Contains("management", StringComparison.OrdinalIgnoreCase))
-                        {
-                            sdkInfoFileToBeBuilt.Add(sdkFile);
-                            break;
-                        }
+                        asmPath = asms.FirstOrDefault<string>();
                     }
                 }
-            }
-            else
-            {
-                TaskLogger.LogException<DirectoryNotFoundException>("'{0}' directory for searching SDKInfo does not exists", dirToSearch);
-            }
 
-            if(sdkInfoFileToBeBuilt.Any<string>())
-            {
-                string sdkInfoBinaryPath = BuildBinary(sdkInfoFileToBeBuilt, SdkInfoBinaryName);
-                if (!File.Exists(sdkInfoBinaryPath))
+                if(!File.Exists(azPropFilePath))
                 {
-                    TaskLogger.LogWarning("Unable to build SdkInfo binary to retrieve API Version.");
+                    AzPropFileExists = false;
                 }
 
-                apiMapTag = GetApiFromSdkInfo(sdkInfoBinaryPath);
+                if (!File.Exists(asmPath))
+                {
+                    AssemblyFilePathExists = false;
+                    UtilLogger.LogWarning("'{0}' does not exist. Build project '{1}'", asmPath, sdkProjTaskItem.ItemSpec);
+                }
 
-                //update ApiMapTag
-                ApiMapTag = apiMapTag;
-            }
+                if(File.Exists(sdkProjTaskItem.ItemSpec) &&
+                    //AzPropFileExists == true &&
+                    AssemblyFilePathExists == true)
+                {
+                    dynamic newObj = new ExpandoObject();
+                    //dynamic newObj = new SDKMSBTaskItem(sdkProjTaskItem);
+                    newObj.AzPropFilePath = azPropFilePath;
+                    newObj.AssemblyFilePath = asmPath;
+                    newObj.ProjectFilePath = sdkProjTaskItem.ItemSpec;
 
-            return apiMapTag;
+                    AssemblyInfoList.Add(newObj);
 
-        }
-
-        private string GetApiMapTag(string rpRelativePath)
-        {
-
-            //List<string> findFiles = NetSdkDirStructure.FindFiles(RPName, "SdkInfo*.cs");
-            List<string> findFiles = new List<string>();
-            if (!findFiles.Any<string>())
-            {
-                TaskLogger.LogException<ApplicationException>("Unable to find SdkInfo after SDK generation. Exiting.....");
-            }
-
-            string sdkInfoBinaryPath = BuildBinary(findFiles, SdkInfoBinaryName);
-            if (!File.Exists(sdkInfoBinaryPath))
-            {
-                TaskLogger.LogException<ApplicationException>("Unable to build SdkInfo binary to retrieve API Version. Exiting....");
-            }
-
-            string apiMapTag = GetApiFromSdkInfo(sdkInfoBinaryPath);
-
-            //update ApiMapTag
-            ApiMapTag = apiMapTag;
-
-            return apiMapTag;
-        }
-
-
-        private void UpdateSdkRpPropsFile(string newApiTag)
-        {
-            string apiPropsFile = string.Empty;
-            if (IsSdkRPPropsFileExists)
-            {
-                TaskLogger.LogInfo("Updating Api Tag");
-                //apiPropsFile = NetSdkDirStructure.FindFile(PROPS_APITAG_FILE_NAME);
-                //MsBuildProj.MsBuildFilePath = apiPropsFile;
-                //MsBuildProj.UpdatePropertyValue(API_TAG_PROPERTYNAME, newApiTag);
-            }
-            else
-            {
-                TaskLogger.LogInfo("Creating SdK API props file");
-                CreateSdkRpPropsFile();
-                //apiPropsFile = NetSdkDirStructure.FindFile(PROPS_APITAG_FILE_NAME);
-                //MsBuildProj.MsBuildFilePath = apiPropsFile;
-                TaskLogger.LogInfo("Updating Api Tag");
-                //MsBuildProj.UpdatePropertyValue(API_TAG_PROPERTYNAME, newApiTag);
+                    //Tuple<string, string, string> asmTuple = new Tuple<string, string, string>(sdkProjTaskItem.ItemSpec, azPropFilePath, asmPath);
+                    //AssemblyInfoList.Add(asmTuple);
+                }
             }
         }
 
-        private void CreateSdkRpPropsFile()
-        {
-            string sdkRpPropsFilePath = string.Empty;
-            //string slnFile = NetSdkDirStructure.FindSlnFilePath();
-            string slnfile = string.Empty;
-            //if(File.Exists(slnFile))
-            //{
-            //    string slnDir = Path.GetDirectoryName(slnFile);
-            //    sdkRpPropsFilePath = Path.Combine(slnDir, PROPS_APITAG_FILE_NAME);
+        //private string GetApiMapTag()
+        //{
+        //    List<string> sdkInfoFileToBeBuilt = new List<string>();
+        //    string apiMapTag = string.Empty;
 
-            //    //MsBuildFile msbuildPropsFile = new MsBuildFile(sdkRpPropsFilePath);
-            //    sdkRpPropsFilePath = msbuildPropsFile.CreateXmlDocWithProps();
-            //}
-        }
+        //    //string dirToSearch = Path.Combine(GitWorkingDir, RPRelativePath);
+        //    string dirToSearch = string.Empty;
+        //    if(Directory.Exists(dirToSearch))
+        //    {
+        //        var sdkInfoFiles = Directory.EnumerateFiles(dirToSearch, "SdkInfo*.cs", SearchOption.AllDirectories);
+
+        //        if (sdkInfoFiles.Any<string>())
+        //        {
+        //            foreach (string sdkFile in sdkInfoFiles)
+        //            {
+        //                if (sdkFile.Contains("management", StringComparison.OrdinalIgnoreCase))
+        //                {
+        //                    sdkInfoFileToBeBuilt.Add(sdkFile);
+        //                    break;
+        //                }
+        //            }
+        //        }
+        //    }
+        //    else
+        //    {
+        //        UtilLogger.LogException<DirectoryNotFoundException>("'{0}' directory for searching SDKInfo does not exists", dirToSearch);
+        //    }
+
+        //    if(sdkInfoFileToBeBuilt.Any<string>())
+        //    {
+        //        string sdkInfoBinaryPath = BuildBinary(sdkInfoFileToBeBuilt, SdkInfoBinaryName);
+        //        if (!File.Exists(sdkInfoBinaryPath))
+        //        {
+        //            UtilLogger.LogWarning("Unable to build SdkInfo binary to retrieve API Version.");
+        //        }
+
+        //        apiMapTag = GetApiFromSdkInfo(sdkInfoBinaryPath);
+
+        //        //update ApiMapTag
+        //        ApiMapTag = apiMapTag;
+        //    }
+
+        //    return apiMapTag;
+
+        //}
+
+        //private string GetApiMapTag(string rpRelativePath)
+        //{
+
+        //    //List<string> findFiles = NetSdkDirStructure.FindFiles(RPName, "SdkInfo*.cs");
+        //    List<string> findFiles = new List<string>();
+        //    if (!findFiles.Any<string>())
+        //    {
+        //        UtilLogger.LogException<ApplicationException>("Unable to find SdkInfo after SDK generation. Exiting.....");
+        //    }
+
+        //    string sdkInfoBinaryPath = BuildBinary(findFiles, SdkInfoBinaryName);
+        //    if (!File.Exists(sdkInfoBinaryPath))
+        //    {
+        //        UtilLogger.LogException<ApplicationException>("Unable to build SdkInfo binary to retrieve API Version. Exiting....");
+        //    }
+
+        //    string apiMapTag = GetApiFromSdkInfo(sdkInfoBinaryPath);
+
+        //    //update ApiMapTag
+        //    ApiMapTag = apiMapTag;
+
+        //    return apiMapTag;
+        //}
+
+
+        //private void UpdateSdkRpPropsFile(string newApiTag)
+        //{
+        //    string apiPropsFile = string.Empty;
+        //    if (AzPropFileExists)
+        //    {
+        //        UtilLogger.LogInfo("Updating Api Tag");
+        //        //apiPropsFile = NetSdkDirStructure.FindFile(PROPS_APITAG_FILE_NAME);
+        //        //MsBuildProj.MsBuildFilePath = apiPropsFile;
+        //        //MsBuildProj.UpdatePropertyValue(API_TAG_PROPERTYNAME, newApiTag);
+        //    }
+        //    else
+        //    {
+        //        UtilLogger.LogInfo("Creating SdK API props file");
+        //        //CreateSdkRpPropsFile();
+        //        //apiPropsFile = NetSdkDirStructure.FindFile(PROPS_APITAG_FILE_NAME);
+        //        //MsBuildProj.MsBuildFilePath = apiPropsFile;
+        //        UtilLogger.LogInfo("Updating Api Tag");
+        //        //MsBuildProj.UpdatePropertyValue(API_TAG_PROPERTYNAME, newApiTag);
+        //    }
+        //}
+
+        //private void CreateSdkRpPropsFile(string azPropFilePath)
+        //{
+        //    string sdkRpPropsFilePath = string.Empty;
+        //    //string slnFile = NetSdkDirStructure.FindSlnFilePath();
+        //    string slnfile = string.Empty;
+        //    //if(File.Exists(slnFile))
+        //    //{
+        //    //    string slnDir = Path.GetDirectoryName(slnFile);
+        //    //    sdkRpPropsFilePath = Path.Combine(slnDir, PROPS_APITAG_FILE_NAME);
+
+        //    //    //MsBuildFile msbuildPropsFile = new MsBuildFile(sdkRpPropsFilePath);
+        //    //    sdkRpPropsFilePath = msbuildPropsFile.CreateXmlDocWithProps();
+        //    //}
+        //}
 
         #region ApiMap
-        /// <summary>
-        /// Finds SDKInfo
-        /// Builds assembly, extracts api information
-        /// Finally constructs api version tag string
-        /// </summary>
-        
-
         /// <summary>
         /// Extracts api from the built assembly for sdkinfo
         /// Iterates on api version, normalizes and creates api tag string
@@ -270,8 +304,8 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
         /// <returns></returns>
         private string GetApiFromSdkInfo(string binaryPath)
         {
-            ReflectionService refSvc = new ReflectionService(binaryPath);
-            List<PropertyInfo> props = refSvc.GetPropertiesContainingName(PROPERTYNAMEPREFIX);
+            ReflectionService refSvc = new ReflectionService(binaryPath, false);
+            List<PropertyInfo> props = refSvc.GetProperties(APIMAPTYPENAMETOSEARCH, PROPERTYNAMEPREFIX);
             List<Tuple<string, string, string>> combinedApiMap = new List<Tuple<string, string, string>>();
             StringBuilder sb = new StringBuilder();
 
@@ -298,26 +332,6 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
 
             return sb.ToString();
         }
-
-        /// <summary>
-        /// Builds assembly from SDKInfo*.cs
-        /// </summary>
-        /// <param name="filesToBuild"></param>
-        /// <param name="binaryToBeBuiltFullPath"></param>
-        /// <returns></returns>
-        private string BuildBinary(List<string> filesToBuild, string binaryToBeBuiltFullPath)
-        {
-            //CSCExec csc = new CSCExec();
-            //csc.CsFileList = filesToBuild;
-            //csc.DllName = binaryToBeBuiltFullPath;
-            //csc.ExecuteCommand();           
-
-            //return csc.GeneratedAssemblyFullPath;
-
-            return "";
-        }
-        #endregion
-
         #endregion
 
     }

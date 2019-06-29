@@ -1,6 +1,7 @@
 using Microsoft.CodeAnalysis;
 using APIView;
 using Xunit;
+using System;
 
 namespace APIViewTest
 {

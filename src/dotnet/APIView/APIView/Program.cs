@@ -8,8 +8,7 @@ namespace APIView
         {
             try
             {
-                var compilation = AssemblyAPIV.GetCompilation(args[0]);
-                Console.WriteLine(TreeRendererAPIV.RenderText(new AssemblyAPIV(compilation)));
+                Console.WriteLine(TreeRendererAPIV.RenderText(AssemblyAPIV.AssemblyFromFile(args[0])));
 
             }
             catch (Exception e)

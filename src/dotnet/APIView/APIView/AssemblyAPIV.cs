@@ -53,12 +53,18 @@ namespace APIView
         {
             var reference = MetadataReference.CreateFromStream(stream);
             var compilation = CSharpCompilation.Create(null).AddReferences(reference);
-            compilation = compilation.AddReferences(MetadataReference.CreateFromFile(typeof(object).Assembly.Location));
+            var corlibLocation = typeof(object).Assembly.Location;
+            var runtimeFolder = Path.GetDirectoryName(corlibLocation);
+
+            compilation = compilation.AddReferences(MetadataReference.CreateFromFile(corlibLocation));
 
             var trustedAssemblies = ((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")).Split(Path.PathSeparator);
             foreach (var tpl in trustedAssemblies)
             {
-                compilation = compilation.AddReferences(MetadataReference.CreateFromFile(tpl));
+                if (tpl.StartsWith(runtimeFolder))
+                {
+                    compilation = compilation.AddReferences(MetadataReference.CreateFromFile(tpl));
+                }
             }
 
             return (IAssemblySymbol)compilation.GetAssemblyOrModuleSymbol(reference);

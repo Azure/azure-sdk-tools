@@ -16,7 +16,7 @@ namespace APIViewWeb.Pages.Assemblies
             this.assemblyRepository = assemblyRepository;
         }
 
-        public string Content { get; set; }
+        public string AssemblyContent { get; set; }
 
         public async Task<IActionResult> OnGetAsync(string id)
         {
@@ -25,9 +25,9 @@ namespace APIViewWeb.Pages.Assemblies
                 return NotFound();
             }
 
-            Content = await assemblyRepository.ReadAssemblyContentAsync(id);
+            AssemblyContent = await assemblyRepository.ReadAssemblyContentAsync(id);
 
-            if (Content == null)
+            if (AssemblyContent == null)
             {
                 return NotFound();
             }

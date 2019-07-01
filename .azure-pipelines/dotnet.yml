@@ -6,7 +6,7 @@ trigger:
   - master
 
 variables:
-  DotNetCoreVersion: '2.1.503'
+  DotNetCoreVersion: '3.0.100-preview5-011568'
 
 jobs:
   - job: 'Build'

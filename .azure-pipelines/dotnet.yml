@@ -6,7 +6,7 @@ trigger:
   - master
 
 variables:
-  DotNetCoreVersion: '3.0.100-preview5-011568'
+  DotNetCoreVersion: '2.1.503'
 
 jobs:
   - job: 'Build'
@@ -63,3 +63,4 @@ jobs:
           testRunTitle: 'Windows DotNet $(DotNetCoreVersion)'
           testResultsFormat: 'VSTest'
           mergeTestResults: true
+          

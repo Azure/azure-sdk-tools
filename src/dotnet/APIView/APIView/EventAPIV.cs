@@ -10,8 +10,11 @@ namespace APIView
     /// </summary>
     public class EventAPIV
     {
-        public string Name { get; }
-        public string Accessibility { get; }
+        public string Name { get; set; }
+        public string Accessibility { get; set; }
+
+
+        public EventAPIV() { }
 
         /// <summary>
         /// Construct a new EventAPIV instance, represented by the provided symbol.

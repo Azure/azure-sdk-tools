@@ -1,7 +1,4 @@
-﻿using Microsoft.CodeAnalysis;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using System.Text;
 
 namespace APIView
@@ -67,7 +64,7 @@ namespace APIView
         internal static void RenderText(MethodAPIV m, StringBuilder builder, int indents = 0)
         {
             AppendIndentsText(builder, indents);
-            if (!m.Attributes.IsEmpty)
+            if (m.Attributes.Length != 0)
             {
                 foreach (string attribute in m.Attributes)
                 {
@@ -269,7 +266,7 @@ namespace APIView
 
         internal static void RenderText(ParameterAPIV p, StringBuilder builder, int indents = 0)
         {
-            if (!p.Attributes.IsEmpty)
+            if (p.Attributes.Length != 0)
             {
                 builder.Append("[");
                 foreach (string attribute in p.Attributes)
@@ -304,7 +301,7 @@ namespace APIView
 
         internal static void RenderText(TypeParameterAPIV tp, StringBuilder builder, int indents = 0)
         {
-            if (!tp.Attributes.IsEmpty)
+            if (tp.Attributes.Length != 0)
             {
                 builder.Append("[");
                 foreach (string attribute in tp.Attributes)

@@ -1,7 +1,7 @@
 ﻿using APIView;
 using Microsoft.Extensions.Configuration;
-using System.ComponentModel.DataAnnotations;
 using System.IO;
+using System.Text.Json.Serialization;
 
 namespace APIViewWeb.Models
 {
@@ -16,14 +16,13 @@ namespace APIViewWeb.Models
 
         public int Id { get; set; }
 
-        [Display(Name = "Display String")]
-        public string DisplayString { get; set; }
+        public string JsonSerialization { get; set; }
 
         public string Name { get; set; }
 
         public AssemblyModel()
         {
-            this.DisplayString = "<empty>";
+            this.JsonSerialization = "{}";
             this.Name = "Empty Assembly";
         }
 
@@ -33,11 +32,11 @@ namespace APIViewWeb.Models
             
             if (assembly == null)
             {
-                this.DisplayString = "<empty>";
+                this.JsonSerialization = "{}";
             }
             else
             {
-                this.DisplayString = assembly.ToString();
+                this.JsonSerialization = JsonSerializer.ToString(assembly);
             }
             this.Name = fileName;
         }
@@ -47,11 +46,11 @@ namespace APIViewWeb.Models
             AssemblyAPIV assembly = AssemblyAPIV.AssemblyFromStream(stream);
             if (assembly == null)
             {
-                this.DisplayString = "<empty>";
+                this.JsonSerialization = "{}";
             }
             else
             {
-                this.DisplayString = assembly.ToString();
+                this.JsonSerialization = JsonSerializer.ToString(assembly);
             }
             this.Name = fileName;
         }

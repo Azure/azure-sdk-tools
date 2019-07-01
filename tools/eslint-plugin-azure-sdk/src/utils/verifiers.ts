@@ -39,10 +39,10 @@ export const getVerifiers = (
 
       const properties: Property[] = node.properties as Property[];
 
-      !properties.find((property: Property): boolean => {
+      properties.find((property: Property): boolean => {
         const key = property.key as Literal;
         return key.value === outer;
-      }) &&
+      }) === undefined &&
         context.report({
           node: node,
           message: outer + " does not exist at the outermost level"
@@ -95,10 +95,10 @@ export const getVerifiers = (
       const value: ObjectExpression = node.value as ObjectExpression;
       const properties: Property[] = value.properties as Property[];
 
-      !properties.find((property: Property): boolean => {
+      properties.find((property: Property): boolean => {
         const key = property.key as Literal;
         return key.value === inner;
-      }) &&
+      }) === undefined &&
         context.report({
           node: node,
           message: inner + " is not a member of " + outer
@@ -166,7 +166,7 @@ export const getVerifiers = (
         return element.type !== "Literal";
       });
 
-      nonLiteral &&
+      nonLiteral !== undefined &&
         context.report({
           node: nonLiteral,
           message:
@@ -179,18 +179,18 @@ export const getVerifiers = (
       if (expected instanceof Array) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         expected.forEach((value: any): void => {
-          !candidateArray.find((candidate: Literal): boolean => {
+          candidateArray.find((candidate: Literal): boolean => {
             return candidate.value === value;
-          }) &&
+          }) === undefined &&
             context.report({
               node: node,
               message: outer + " does not contain " + value
             });
         });
       } else {
-        !candidateArray.find((candidate: Literal): boolean => {
+        candidateArray.find((candidate: Literal): boolean => {
           return candidate.value === expected;
-        }) &&
+        }) === undefined &&
           context.report({
             node: node,
             message: outer + " does not contain " + expected

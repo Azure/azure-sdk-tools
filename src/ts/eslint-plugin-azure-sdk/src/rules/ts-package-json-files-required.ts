@@ -52,27 +52,27 @@ export = {
             const elements: Literal[] = nodeValue.elements as Literal[];
 
             const distPattern = /^(.\/)?((dist\/)|(dist$))/; // looks for 'dist' with optional leading './' and optional trailing '/'
-            !elements.find((element: Literal): boolean => {
+            elements.find((element: Literal): boolean => {
               return distPattern.test(element.value as string);
-            }) &&
+            }) === undefined &&
               context.report({
                 node: nodeValue,
                 message: "dist is not included in files"
               });
 
             const distESMPattern = /^(.\/)?dist-esm\/((src\/)|(src$))/; // looks for 'dist-esm/src' with optional leading './' and optional trailing '/'
-            !elements.find((element: Literal): boolean => {
+            elements.find((element: Literal): boolean => {
               return distESMPattern.test(element.value as string);
-            }) &&
+            }) === undefined &&
               context.report({
                 node: nodeValue,
                 message: "dist-esm/src is not included in files"
               });
 
             const srcPattern = /^(.\/)?((src\/)|(src$))/; // looks for 'src' with optional leading './' and optional trailing '/ '
-            !elements.find((element: Literal): boolean => {
+            elements.find((element: Literal): boolean => {
               return srcPattern.test(element.value as string);
-            }) &&
+            }) === undefined &&
               context.report({
                 node: nodeValue,
                 message: "src is not included in files"

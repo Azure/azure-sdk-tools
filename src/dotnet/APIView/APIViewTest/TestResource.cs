@@ -8,14 +8,7 @@ namespace APIViewTest
     {
         public static IAssemblySymbol GetAssemblySymbol()
         {
-            var compilation = AssemblyAPIV.GetCompilation("TestLibrary.dll");
-            foreach (var assemblySymbol in compilation.SourceModule.ReferencedAssemblySymbols)
-            {
-                if (assemblySymbol.Name.Equals("TestLibrary"))
-                    return assemblySymbol;
-            }
-
-            return null;
+            return AssemblyAPIV.GetCompilation("TestLibrary.dll");
         }
 
         public static object GetTestMember(string typeName, string memberName = null)

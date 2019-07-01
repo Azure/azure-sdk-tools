@@ -2,6 +2,7 @@
 using APIView;
 using Xunit;
 using System;
+using Azure.Storage.Blobs;
 
 namespace APIViewTest
 {
@@ -93,7 +94,7 @@ namespace APIViewTest
             MethodAPIV method = new MethodAPIV(methodSymbol);
 
             string stringRep = method.ToString().Replace(Environment.NewLine, "");
-            Assert.Equal("[TestLibrary.CustomAttribute(\"Test\"), TestLibrary.NewAttribute]int AttributesTypeParamsMethod<T, R>();", stringRep);
+            Assert.Equal("[TestLibrary.CustomAttribute(\"Test\")][TestLibrary.NewAttribute]int AttributesTypeParamsMethod<T, R>();", stringRep);
         }
     }
 }

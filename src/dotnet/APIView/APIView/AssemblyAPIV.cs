@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -27,32 +26,48 @@ namespace APIView
             this.GlobalNamespace = new NamespaceAPIV(symbol.GlobalNamespace);
         }
 
-        public static List<AssemblyAPIV> AssembliesFromFile(string dllPath)
+        public static AssemblyAPIV AssemblyFromFile(string dllPath)
         {
-            var compilation = GetCompilation(dllPath);
-            List<AssemblyAPIV> assemblies = new List<AssemblyAPIV>();
-
-            foreach (var assemblySymbol in compilation.SourceModule.ReferencedAssemblySymbols)
+            using (var fileStream = File.OpenRead(dllPath))
             {
-                assemblies.Add(new AssemblyAPIV(assemblySymbol));
+                return AssemblyFromStream(fileStream);
             }
-
-            return assemblies;
         }
 
-        public static CSharpCompilation GetCompilation(string dllPath)
+        public static AssemblyAPIV AssemblyFromStream(Stream stream)
         {
-            var reference = MetadataReference.CreateFromFile(dllPath);
+            var compilation = GetCompilation(stream);
+
+            return new AssemblyAPIV(compilation);
+        }
+
+        public static IAssemblySymbol GetCompilation(string dllPath)
+        {
+            using (var fileStream = File.OpenRead(dllPath))
+            {
+                return GetCompilation(fileStream);
+            }
+        }
+
+        public static IAssemblySymbol GetCompilation(Stream stream)
+        {
+            var reference = MetadataReference.CreateFromStream(stream);
             var compilation = CSharpCompilation.Create(null).AddReferences(reference);
-            compilation = compilation.AddReferences(MetadataReference.CreateFromFile(typeof(object).Assembly.Location));
+            var corlibLocation = typeof(object).Assembly.Location;
+            var runtimeFolder = Path.GetDirectoryName(corlibLocation);
+
+            compilation = compilation.AddReferences(MetadataReference.CreateFromFile(corlibLocation));
 
             var trustedAssemblies = ((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")).Split(Path.PathSeparator);
             foreach (var tpl in trustedAssemblies)
             {
-                compilation = compilation.AddReferences(MetadataReference.CreateFromFile(tpl));
+                if (tpl.StartsWith(runtimeFolder))
+                {
+                    compilation = compilation.AddReferences(MetadataReference.CreateFromFile(tpl));
+                }
             }
 
-            return compilation;
+            return (IAssemblySymbol)compilation.GetAssemblyOrModuleSymbol(reference);
         }
 
         public override string ToString()

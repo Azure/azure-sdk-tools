@@ -6,6 +6,8 @@
 
   <PropertyGroup>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningsAsErrors />
+    <WarningLevel>0</WarningLevel>
   </PropertyGroup>
 
   <ItemGroup>

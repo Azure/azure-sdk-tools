@@ -16,7 +16,7 @@ namespace Tests.CI.BuildTasks.TasksTests
     using Xunit;
     using Xunit.Abstractions;
 
-    public class UpdateNetSdkInfoTaskTests : BuildTasksTestBase
+    public class UpdateNetSdkApiTagInfoTaskTests : BuildTasksTestBase
     {
 
         #region const
@@ -46,7 +46,7 @@ namespace Tests.CI.BuildTasks.TasksTests
         #endregion
 
         #region Constructor
-        public UpdateNetSdkInfoTaskTests(ITestOutputHelper output)
+        public UpdateNetSdkApiTagInfoTaskTests(ITestOutputHelper output)
         {
             //create an env. variable 'testAssetdir' and point to a directory that will host multiple repos
             // e.g. sdkfornet directory structure as well as Fluent directory structure
@@ -65,7 +65,7 @@ namespace Tests.CI.BuildTasks.TasksTests
 
         #region Tests
         [Fact]
-        public void GetSdkInfoScopedProjects()
+        public void UpdateSdkInfoScopedProjects()
         {
             CategorizeSDKProjectsTask cproj = new CategorizeSDKProjectsTask(rootDir);
             cproj.BuildScope = "Compute";
@@ -75,10 +75,11 @@ namespace Tests.CI.BuildTasks.TasksTests
                 Assert.Single(cproj.SDK_Projects);
             }
 
-            UpdateNetSdkInfoTask updateSdkInfo = new UpdateNetSdkInfoTask();
+            UpdateNetSdkApiTagInfoTask updateSdkInfo = new UpdateNetSdkApiTagInfoTask();
             updateSdkInfo.SdkProjectFilePaths = cproj.SDK_Projects;
 
-            if(updateSdkInfo.ExecuteTask())
+            //TODO: Add a verification step to verify if the azPropFile was updated
+            if (updateSdkInfo.Execute())
             {
                 Assert.True(true);
             }
@@ -97,10 +98,11 @@ namespace Tests.CI.BuildTasks.TasksTests
 
             DeleteAzPropFiles(cproj.SDK_Projects);
 
-            UpdateNetSdkInfoTask updateSdkInfo = new UpdateNetSdkInfoTask();
+            UpdateNetSdkApiTagInfoTask updateSdkInfo = new UpdateNetSdkApiTagInfoTask();
             updateSdkInfo.SdkProjectFilePaths = cproj.SDK_Projects;
 
-            if (updateSdkInfo.ExecuteTask())
+            //TODO: Add a verification step to verify if the azPropFile was created
+            if (updateSdkInfo.Execute())
             {
                 Assert.True(true);
             }

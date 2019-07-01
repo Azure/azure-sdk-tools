@@ -32,8 +32,6 @@
     <Message Text="RepoHtmlUrl... $(RepoHtmlUrl)" />
     <Message Text="RepoId... $(RepoId)" />
 
-    <Message Text="">
-
     <DetectRPScopeTask
       GitHubPRNumber="$(PullRequestNumber)"
       GitHubRepositoryHtmlUrl="$(RepoHtmlUrl)"
@@ -59,22 +57,23 @@
     />
   </Target>
 
-  <Target Name="UpdateSdkInfo">
-    <Message Text="Updating SdkInfo......" />
+  <Target Name="UpdateApiTagInfo" Condition=" '$(CIBuildId)' == '' ">
+    <Message Text="Updating ApiTag Info......" />
 
     <ItemGroup>
-      <SdkProjectFilePathList Include="@(SDKProjects)" />
+      <ProjectFilePathList Include="@(SDKProjects)" />
     </ItemGroup>
 
     <PropertyGroup>
       <ArtifactsRootDir>$(PkgArtifactsRootDir)</ArtifactsRootDir>
     </PropertyGroup>
 
-    <!-- ArtifactRootDir structure .... artifacts\bin\Microsoft.Azure.Management.Billing\Debug\netstandard2.0\Microsoft.Azure.Management.Billing.dll -->
-    <UpdateNetSdkInfoTask
-      SdkProjectFilePaths="@(SdkProjectFilePathList)"
-      GeneratedAssemblyRootDirPath="$(ArtifactsRootDir)"
-    >
+    <!-- ArtifactRootDir structure .... artifacts\bin\Microsoft.Azure.Management.Billing\Debug\netstandard2.0\Microsoft.Azure.Management.Billing.dll 
+    GeneratedAssemblyRootDirPath="$(ArtifactsRootDir)"
+    -->
+    <UpdateNetSdkApiTagInfoTask
+      ProjectFilePaths="@(ProjectFilePathList)"      
+    />
   </Target>
 
 </Project>

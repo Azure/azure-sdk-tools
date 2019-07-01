@@ -79,7 +79,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Models
         {
             _metaDataCollection = new Dictionary<string, string>();
         }
-        SDKMSBTaskItem(string itemSpecFullPath) : this()
+        internal SDKMSBTaskItem(string itemSpecFullPath) : this()
         {
             InternalSdkProjMD = new SdkProjectMetadata(itemSpecFullPath);
             Init();
@@ -90,6 +90,8 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Models
             InternalSdkProjMD = sdkProjMetadata;
             Init();
         }
+
+
 
         internal SDKMSBTaskItem(SDKMSBTaskItem ti) : this()
         {

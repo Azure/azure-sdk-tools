@@ -77,7 +77,9 @@ namespace MS.Az.Mgmt.CI.Common.Services
                 byte[] asmData = File.ReadAllBytes(AsmFilePath);
                 if (asmData != null)
                 {
-                    loadedAssemly = Assembly.Load(asmData);
+                    //loadedAssemly = Assembly.Load(asmData);
+                    loadedAssemly = Assembly.LoadFile(AsmFilePath);
+                    //loadedAssemly = Assembly.ReflectionOnlyLoad(AsmFilePath);
                 }
             }
 
@@ -87,22 +89,30 @@ namespace MS.Az.Mgmt.CI.Common.Services
         public List<PropertyInfo> GetProperties(string typeNameStartWith, string propertyName)
         {
             List<PropertyInfo> propertyList = new List<PropertyInfo>();
-            var typ = from t in AssemblyToReflect.GetTypes() where t.Name.StartsWith("SdkInfo", StringComparison.OrdinalIgnoreCase) select t;
-
-            foreach (Type t in typ)
+            try
             {
-                UtilLogger.LogInfo("Querying Type '{0}' for propertyName '{1}'", t.Name, propertyName);
-                PropertyInfo[] memInfos = t.GetProperties(BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
+                //var typ = from t in AssemblyToReflect.GetTypes() where t.Name.StartsWith("SdkInfo", StringComparison.OrdinalIgnoreCase) select t;
+                var typ = from t in AssemblyToReflect.GetExportedTypes() where t.Name.StartsWith("SdkInfo", StringComparison.OrdinalIgnoreCase) select t;
 
-                foreach (PropertyInfo mInfo in memInfos)
+                foreach (Type t in typ)
                 {
-                    UtilLogger.LogInfo("Found:'{0}'", mInfo.Name);
-                    if (mInfo.Name.Contains(propertyName))
+                    UtilLogger.LogInfo("Querying Type '{0}' for propertyName '{1}'", t.Name, propertyName);
+                    PropertyInfo[] memInfos = t.GetProperties(BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
+
+                    foreach (PropertyInfo mInfo in memInfos)
                     {
-                        UtilLogger.LogInfo("Added:'{0}' to list", mInfo.Name);
-                        propertyList.Add(mInfo);
+                        UtilLogger.LogInfo("Found:'{0}'", mInfo.Name);
+                        if (mInfo.Name.Contains(propertyName))
+                        {
+                            UtilLogger.LogInfo("Added:'{0}' to list", mInfo.Name);
+                            propertyList.Add(mInfo);
+                        }
                     }
                 }
+            }
+            catch(Exception ex)
+            {
+                UtilLogger.LogException(ex);
             }
 
             return propertyList;

@@ -6,7 +6,8 @@ trigger:
   - master
 
 variables:
-  DotNetCoreVersion: '3.0.100-preview5-011568'
+  DotNetCoreSDKVersion: '3.0.100-preview5-011568'
+  DotNetCoreRuntimeVersion: '2.1.10'
 
 jobs:
   - job: 'Build'
@@ -16,9 +17,15 @@ jobs:
 
     steps:
       - task: DotNetCoreInstaller@0
-        displayName: 'Use .NET Core sdk $(DotNetCoreVersion)'
+        displayName: 'Use .NET Core sdk $(DotNetCoreSDKVersion)'
         inputs:
-          version: '$(DotNetCoreVersion)'
+          version: '$(DotNetCoreSDKVersion)'
+
+      - task: DotNetCoreInstaller@2
+        displayName: "Use .NET Core runtime $(DotNetCoreRuntimeVersion)"
+        inputs:
+          packageType: runtime
+          version: "$(DotNetCoreRuntimeVersion)"
 
       - script: 'dotnet pack $(ProjectFile) -o $(Build.ArtifactStagingDirectory) -warnaserror $(VersioningProps)'
         displayName: 'Build and Package'
@@ -40,9 +47,15 @@ jobs:
 
     steps:
       - task: DotNetCoreInstaller@0
-        displayName: 'Use .NET Core sdk $(DotNetCoreVersion)'
+        displayName: 'Use .NET Core sdk $(DotNetCoreSDKVersion)'
         inputs:
-          version: '$(DotNetCoreVersion)'
+          version: '$(DotNetCoreSDKVersion)'
+
+      - task: DotNetCoreInstaller@2
+        displayName: "Use .NET Core runtime $(DotNetCoreRuntimeVersion)"
+        inputs:
+          packageType: runtime
+          version: "$(DotNetCoreRuntimeVersion)"
 
       - task: DotNetCoreCLI@2
         displayName: 'Build & Test'

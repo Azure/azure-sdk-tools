@@ -63,4 +63,3 @@ jobs:
           testRunTitle: 'Windows DotNet $(DotNetCoreVersion)'
           testResultsFormat: 'VSTest'
           mergeTestResults: true
-          

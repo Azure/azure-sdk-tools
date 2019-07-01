@@ -21,7 +21,6 @@ namespace APIView
 
         public object Value { get; set; }
 
-
         public FieldAPIV() { }
 
         /// <summary>

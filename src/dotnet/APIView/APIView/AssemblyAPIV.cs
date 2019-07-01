@@ -2,6 +2,7 @@
 using System.IO;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using System.Text.Json.Serialization;
 
 namespace APIView
 {
@@ -15,7 +16,6 @@ namespace APIView
     {
         public string Name { get; set; }
         public NamespaceAPIV GlobalNamespace { get; set; }
-
 
         public AssemblyAPIV() { }
 
@@ -71,6 +71,16 @@ namespace APIView
             }
 
             return (IAssemblySymbol)compilation.GetAssemblyOrModuleSymbol(reference);
+        }
+
+        public string JsonSerialize()
+        {
+            return JsonSerializer.ToString(this);
+        }
+
+        public static AssemblyAPIV JsonDeserialize(string json)
+        {
+            return JsonSerializer.Parse<AssemblyAPIV>(json);
         }
 
         public override string ToString()

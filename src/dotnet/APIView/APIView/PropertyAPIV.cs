@@ -18,7 +18,6 @@ namespace APIView
         public bool IsVirtual { get; set; }
         public bool HasSetMethod { get; set; }
 
-
         public PropertyAPIV() { }
 
         /// <summary>

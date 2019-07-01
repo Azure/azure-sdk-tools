@@ -50,7 +50,9 @@ namespace APIViewWeb
         {
             var guid = Guid.NewGuid().ToString();
             var blob = ContainerClient.GetBlockBlobClient(guid);
-            using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(assemblyModel.JsonSerialization))) {
+
+            // Store the JSON serialization of the assembly.
+            using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(assemblyModel.Assembly.JsonSerialize()))) {
                 await blob.UploadAsync(stream);
             }
             blob = ContainerClient.GetBlockBlobClient(guid);

@@ -13,7 +13,6 @@ namespace APIView
         public string Name { get; set; }
         public string Accessibility { get; set; }
 
-
         public EventAPIV() { }
 
         /// <summary>

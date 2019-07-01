@@ -18,7 +18,6 @@ namespace APIView
         public NamedTypeAPIV[] NamedTypes { get; set; }
         public NamespaceAPIV[] Namespaces { get; set; }
 
-
         public NamespaceAPIV() { }
 
         /// <summary>

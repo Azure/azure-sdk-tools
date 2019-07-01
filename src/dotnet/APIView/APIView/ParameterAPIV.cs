@@ -19,7 +19,6 @@ namespace APIView
 
         public string[] Attributes { get; set; }
 
-
         public ParameterAPIV() { }
 
         /// <summary>

@@ -55,10 +55,10 @@ export = {
             const adheres =
               headerComments.find((comment: Comment): boolean => {
                 return line1Regex.test(comment.value);
-              }) &&
+              }) !== undefined &&
               headerComments.find((comment: Comment): boolean => {
                 return line2Regex.test(comment.value);
-              });
+              }) !== undefined;
 
             // look for both lines
             !adheres &&

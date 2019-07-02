@@ -1,6 +1,5 @@
 ﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using APIView;
 
 namespace APIViewWeb.Pages.Assemblies
 {
@@ -17,7 +16,8 @@ namespace APIViewWeb.Pages.Assemblies
 
         public async Task OnGetAsync(string id)
         {
-            AssemblyModel = await assemblyRepository.ReadAssemblyContentAsync(id);
+            var assemblyModel = await assemblyRepository.ReadAssemblyContentAsync(id);
+            AssemblyModel = assemblyModel.Assembly.ToString();
         }
     }
 }

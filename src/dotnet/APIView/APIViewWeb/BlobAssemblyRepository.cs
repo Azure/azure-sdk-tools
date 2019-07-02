@@ -9,6 +9,7 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using APIView;
+using System.Linq;
 
 namespace APIViewWeb
 {
@@ -24,14 +25,15 @@ namespace APIViewWeb
 
         private BlobContainerClient ContainerClient { get; }
 
-        public async Task<string> ReadAssemblyContentAsync(string id)
+        public async Task<AssemblyModel> ReadAssemblyContentAsync(string id)
         {
             var result = await ContainerClient.GetBlockBlobClient(id).DownloadAsync();
 
             // Return a rendering of the AssemblyAPIV object deserialized from JSON.
             using (StreamReader reader = new StreamReader(result.Value.Content))
             {
-                return JsonSerializer.Parse<AssemblyAPIV>(reader.ReadToEnd()).ToString();
+                AssemblyAPIV assembly = JsonSerializer.Parse<AssemblyAPIV>(reader.ReadToEnd());
+                return new AssemblyModel(assembly, result.Value.Properties.Metadata.Values.First());
             }
         }
 

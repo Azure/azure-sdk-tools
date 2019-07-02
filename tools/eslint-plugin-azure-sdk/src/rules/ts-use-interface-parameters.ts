@@ -183,10 +183,11 @@ export = {
           context.report({
             node: identifier,
             message:
-              "type {{ type }} of parameter {{ param }} is a class, not an interface",
+              "type {{ type }} of parameter {{ param }} of function {{ func }} is a class, not an interface",
             data: {
               type: typeChecker.typeToString(type),
-              param: identifier.name
+              param: identifier.name,
+              func: name
             }
           });
         });

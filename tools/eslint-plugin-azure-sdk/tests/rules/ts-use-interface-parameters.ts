@@ -109,7 +109,8 @@ ruleTester.run("ts-use-interface-parameters", rule, {
       code: example + "const func7 = (a: A): void => { console.log(a); }",
       errors: [
         {
-          message: "type A of parameter a is a class, not an interface"
+          message:
+            "type A of parameter a of function func7 is a class, not an interface"
         }
       ]
     },
@@ -118,7 +119,8 @@ ruleTester.run("ts-use-interface-parameters", rule, {
       code: example + "const func8 = function(a: A): void { console.log(a); }",
       errors: [
         {
-          message: "type A of parameter a is a class, not an interface"
+          message:
+            "type A of parameter a of function func8 is a class, not an interface"
         }
       ]
     },
@@ -127,7 +129,8 @@ ruleTester.run("ts-use-interface-parameters", rule, {
       code: example + "function func9(a: A): void { console.log(a); }",
       errors: [
         {
-          message: "type A of parameter a is a class, not an interface"
+          message:
+            "type A of parameter a of function func9 is a class, not an interface"
         }
       ]
     },
@@ -136,7 +139,8 @@ ruleTester.run("ts-use-interface-parameters", rule, {
       code: example + "class { method3(a: A): void { console.log(a); } }",
       errors: [
         {
-          message: "type A of parameter a is a class, not an interface"
+          message:
+            "type A of parameter a of function method3 is a class, not an interface"
         }
       ]
     },
@@ -147,7 +151,8 @@ ruleTester.run("ts-use-interface-parameters", rule, {
         example + "const func10 = (a: A, b: B): void => { console.log(a, b); }",
       errors: [
         {
-          message: "type A of parameter a is a class, not an interface"
+          message:
+            "type A of parameter a of function func10 is a class, not an interface"
         }
       ]
     },
@@ -158,7 +163,8 @@ ruleTester.run("ts-use-interface-parameters", rule, {
         "const func11 = function(a: A, b: B): void { console.log(a, b); }",
       errors: [
         {
-          message: "type A of parameter a is a class, not an interface"
+          message:
+            "type A of parameter a of function func11 is a class, not an interface"
         }
       ]
     },
@@ -168,7 +174,8 @@ ruleTester.run("ts-use-interface-parameters", rule, {
         example + "function func12(a: A, b: B): void { console.log(a, b); }",
       errors: [
         {
-          message: "type A of parameter a is a class, not an interface"
+          message:
+            "type A of parameter a of function func12 is a class, not an interface"
         }
       ]
     },
@@ -178,7 +185,8 @@ ruleTester.run("ts-use-interface-parameters", rule, {
         example + "class { method4(a: A, b: B): void { console.log(a, b); } }",
       errors: [
         {
-          message: "type A of parameter a is a class, not an interface"
+          message:
+            "type A of parameter a of function method4 is a class, not an interface"
         }
       ]
     },
@@ -190,10 +198,12 @@ ruleTester.run("ts-use-interface-parameters", rule, {
         "const func13 = (a1: A, a2: A): void => { console.log(a1, a2); }",
       errors: [
         {
-          message: "type A of parameter a1 is a class, not an interface"
+          message:
+            "type A of parameter a1 of function func13 is a class, not an interface"
         },
         {
-          message: "type A of parameter a2 is a class, not an interface"
+          message:
+            "type A of parameter a2 of function func13 is a class, not an interface"
         }
       ]
     },
@@ -204,10 +214,12 @@ ruleTester.run("ts-use-interface-parameters", rule, {
         "const func14 = function(a1: A, a2: A): void { console.log(a1, a2); }",
       errors: [
         {
-          message: "type A of parameter a1 is a class, not an interface"
+          message:
+            "type A of parameter a1 of function func14 is a class, not an interface"
         },
         {
-          message: "type A of parameter a2 is a class, not an interface"
+          message:
+            "type A of parameter a2 of function func14 is a class, not an interface"
         }
       ]
     },
@@ -218,10 +230,12 @@ ruleTester.run("ts-use-interface-parameters", rule, {
         "function func15(a1: A, a2: A): void { console.log(a1, a2); }",
       errors: [
         {
-          message: "type A of parameter a1 is a class, not an interface"
+          message:
+            "type A of parameter a1 of function func15 is a class, not an interface"
         },
         {
-          message: "type A of parameter a2 is a class, not an interface"
+          message:
+            "type A of parameter a2 of function func15 is a class, not an interface"
         }
       ]
     },
@@ -232,10 +246,12 @@ ruleTester.run("ts-use-interface-parameters", rule, {
         "class { method3(a1: A, a2: A): void { console.log(a1, a2); } }",
       errors: [
         {
-          message: "type A of parameter a1 is a class, not an interface"
+          message:
+            "type A of parameter a1 of function method3 is a class, not an interface"
         },
         {
-          message: "type A of parameter a2 is a class, not an interface"
+          message:
+            "type A of parameter a2 of function method3 is a class, not an interface"
         }
       ]
     },
@@ -247,13 +263,16 @@ ruleTester.run("ts-use-interface-parameters", rule, {
         "class C { overloadMethodBad(a: A): void { console.log(a); } overloadMethodBad(a1: A, a2: A): void { console.log(a1, a2); }; }",
       errors: [
         {
-          message: "type A of parameter a is a class, not an interface"
+          message:
+            "type A of parameter a of function overloadMethodBad is a class, not an interface"
         },
         {
-          message: "type A of parameter a1 is a class, not an interface"
+          message:
+            "type A of parameter a1 of function overloadMethodBad is a class, not an interface"
         },
         {
-          message: "type A of parameter a2 is a class, not an interface"
+          message:
+            "type A of parameter a2 of function overloadMethodBad is a class, not an interface"
         }
       ]
     },
@@ -264,13 +283,16 @@ ruleTester.run("ts-use-interface-parameters", rule, {
         "function overloadDeclarationBad(a: A): void { console.log(a); } function overloadDeclarationBad(a1: A, a2: A): void { console.log(a1, a2); }",
       errors: [
         {
-          message: "type A of parameter a is a class, not an interface"
+          message:
+            "type A of parameter a of function overloadDeclarationBad is a class, not an interface"
         },
         {
-          message: "type A of parameter a1 is a class, not an interface"
+          message:
+            "type A of parameter a1 of function overloadDeclarationBad is a class, not an interface"
         },
         {
-          message: "type A of parameter a2 is a class, not an interface"
+          message:
+            "type A of parameter a2 of function overloadDeclarationBad is a class, not an interface"
         }
       ]
     }

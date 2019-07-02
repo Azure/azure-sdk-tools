@@ -26,7 +26,6 @@ namespace APIView
         public ParameterAPIV[] Parameters { get; set; }
         public TypeParameterAPIV[] TypeParameters { get; set; }
 
-
         public MethodAPIV() { }
 
         /// <summary>

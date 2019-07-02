@@ -1,9 +1,6 @@
-﻿using System.IO;
-using System.Threading.Tasks;
-using Azure.Storage.Blobs;
+﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.Configuration;
 
 namespace APIViewWeb.Pages.Assemblies
 {
@@ -25,7 +22,8 @@ namespace APIViewWeb.Pages.Assemblies
                 return NotFound();
             }
 
-            AssemblyContent = await assemblyRepository.ReadAssemblyContentAsync(id);
+            var assemblyModel = await assemblyRepository.ReadAssemblyContentAsync(id);
+            AssemblyContent = assemblyModel.Assembly.ToString();
 
             if (AssemblyContent == null)
             {

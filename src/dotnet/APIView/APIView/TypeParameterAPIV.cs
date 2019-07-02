@@ -15,7 +15,6 @@ namespace APIView
         public string Name { get; set; }
         public string[] Attributes { get; set; }
 
-
         public TypeParameterAPIV() { }
 
         /// <summary>

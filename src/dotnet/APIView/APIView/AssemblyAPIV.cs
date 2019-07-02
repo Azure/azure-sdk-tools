@@ -16,7 +16,6 @@ namespace APIView
         public string Name { get; set; }
         public NamespaceAPIV GlobalNamespace { get; set; }
 
-
         public AssemblyAPIV() { }
 
         /// <summary>

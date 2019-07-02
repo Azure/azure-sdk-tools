@@ -30,7 +30,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
         #endregion
 
         #region fields
-        string _apiMapTag;
+        //string _apiMapTag;
         FileSystemUtility _fileSysUtil;
         SDKMSBTaskItem[] _sdkProjectFilePaths;
         #endregion

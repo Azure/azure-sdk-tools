@@ -1,6 +1,5 @@
 ﻿using Microsoft.CodeAnalysis;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 
@@ -14,10 +13,12 @@ namespace APIView
     /// </summary>
     public class NamespaceAPIV
     {
-        public string Name { get; }
+        public string Name { get; set; }
 
-        public ImmutableArray<NamedTypeAPIV> NamedTypes { get; }
-        public ImmutableArray<NamespaceAPIV> Namespaces { get; }
+        public NamedTypeAPIV[] NamedTypes { get; set; }
+        public NamespaceAPIV[] Namespaces { get; set; }
+
+        public NamespaceAPIV() { }
 
         /// <summary>
         /// Construct a new NamespaceAPIV instance, represented by the provided symbol.
@@ -39,8 +40,8 @@ namespace APIView
                 else if (memberSymbol is INamespaceSymbol ns) namespaces.Add(new NamespaceAPIV(ns));
             }
 
-            this.NamedTypes = namedTypes.ToImmutableArray();
-            this.Namespaces = namespaces.ToImmutableArray();
+            this.NamedTypes = namedTypes.ToArray();
+            this.Namespaces = namespaces.ToArray();
         }
 
         public override string ToString()

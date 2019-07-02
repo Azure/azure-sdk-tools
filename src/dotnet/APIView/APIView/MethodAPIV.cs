@@ -1,6 +1,5 @@
 ﻿using Microsoft.CodeAnalysis;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Text;
 
 namespace APIView
@@ -8,26 +7,26 @@ namespace APIView
     /// <summary>
     /// Class representing a C# method. Each method includes a name, return type, attributes, 
     /// modifiers, type parameters, and parameters.
-    /// 
-    /// MethodAPIV is an immutable, thread-safe type.
     /// </summary>
     public class MethodAPIV
     {
-        public string Name { get; }
-        public string ReturnType { get; }
-        public string Accessibility { get; }
+        public string Name { get; set; }
+        public string ReturnType { get; set; }
+        public string Accessibility { get; set; }
 
-        public bool IsInterfaceMethod { get; }
-        public bool IsStatic { get; }
-        public bool IsVirtual { get; }
-        public bool IsSealed { get; }
-        public bool IsOverride { get; }
-        public bool IsAbstract { get; }
-        public bool IsExtern { get; }
+        public bool IsInterfaceMethod { get; set; }
+        public bool IsStatic { get; set; }
+        public bool IsVirtual { get; set; }
+        public bool IsSealed { get; set; }
+        public bool IsOverride { get; set; }
+        public bool IsAbstract { get; set; }
+        public bool IsExtern { get; set; }
 
-        public ImmutableArray<string> Attributes { get; }
-        public ImmutableArray<ParameterAPIV> Parameters { get; }
-        public ImmutableArray<TypeParameterAPIV> TypeParameters { get; }
+        public string[] Attributes { get; set; }
+        public ParameterAPIV[] Parameters { get; set; }
+        public TypeParameterAPIV[] TypeParameters { get; set; }
+
+        public MethodAPIV() { }
 
         /// <summary>
         /// Construct a new MethodAPIV instance, represented by the provided symbol.
@@ -72,9 +71,9 @@ namespace APIView
                 parameters.Add(new ParameterAPIV(param));
             }
 
-            this.Attributes = attributes.ToImmutableArray();
-            this.TypeParameters = typeParameters.ToImmutableArray();
-            this.Parameters = parameters.ToImmutableArray();
+            this.Attributes = attributes.ToArray();
+            this.TypeParameters = typeParameters.ToArray();
+            this.Parameters = parameters.ToArray();
         }
 
         public override string ToString()

@@ -12,8 +12,10 @@ namespace APIView
     /// </summary>
     public class TypeParameterAPIV
     {
-        public string Name { get; }
-        public ImmutableArray<string> Attributes { get; }
+        public string Name { get; set; }
+        public string[] Attributes { get; set; }
+
+        public TypeParameterAPIV() { }
 
         /// <summary>
         /// Construct a new TypeParameterAPIV instance, represented by the provided symbol.
@@ -28,7 +30,7 @@ namespace APIView
             {
                 attributes.Add(attribute.ToString());
             }
-            this.Attributes = attributes.ToImmutableArray();
+            this.Attributes = attributes.ToArray();
         }
 
         public override string ToString()

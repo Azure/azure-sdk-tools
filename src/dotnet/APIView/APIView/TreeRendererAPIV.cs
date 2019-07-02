@@ -1,7 +1,4 @@
-﻿using Microsoft.CodeAnalysis;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using System.Text;
 
 namespace APIView
@@ -67,7 +64,7 @@ namespace APIView
         internal static void RenderText(MethodAPIV m, StringBuilder builder, int indents = 0)
         {
             AppendIndentsText(builder, indents);
-            if (!m.Attributes.IsEmpty)
+            if (m.Attributes.Any())
             {
                 foreach (string attribute in m.Attributes)
                 {
@@ -92,11 +89,11 @@ namespace APIView
             if (m.IsExtern)
                 builder.Append("extern ");
 
-            if (m.ReturnType.Length > 0)
+            if (m.ReturnType.Any())
                 builder.Append(m.ReturnType).Append(" ");
             builder.Append(m.Name);
 
-            if (m.TypeParameters.Length != 0)
+            if (m.TypeParameters.Any())
             {
                 builder.Append("<");
                 foreach (TypeParameterAPIV tp in m.TypeParameters)
@@ -109,7 +106,7 @@ namespace APIView
             }
 
             builder.Append("(");
-            if (m.Parameters.Length != 0)
+            if (m.Parameters.Any())
             {
                 foreach (ParameterAPIV p in m.Parameters)
                 {
@@ -157,7 +154,7 @@ namespace APIView
                         if (m.Name.Equals("Invoke"))
                         {
                             builder.Append(m.ReturnType).Append(" ").Append(nt.Name).Append("(");
-                            if (m.Parameters.Length != 0)
+                            if (m.Parameters.Any())
                             {
                                 foreach (ParameterAPIV p in m.Parameters)
                                 {
@@ -174,7 +171,7 @@ namespace APIView
                 default:
                     builder.Append(nt.Name).Append(" ");
 
-                    if (nt.TypeParameters.Length != 0)
+                    if (nt.TypeParameters.Any())
                     {
                         builder.Length -= 1;
                         builder.Append("<");
@@ -188,14 +185,14 @@ namespace APIView
                     }
 
                     // add any implemented types to string
-                    if (nt.Implementations.Length > 0)
+                    if (nt.Implementations.Any())
                     {
                         builder.Append(": ");
                         foreach (var i in nt.Implementations)
                         {
                             builder.Append(i).Append(", ");
                         }
-                        builder.Length = builder.Length - 2;
+                        builder.Length -= 2;
                         builder.Append(" ");
                     }
                     builder.Append("{").AppendLine();
@@ -235,7 +232,7 @@ namespace APIView
 
         internal static void RenderText(NamespaceAPIV ns, StringBuilder builder, int indents = 0)
         {
-            if (ns.Name.Length != 0)
+            if (ns.Name.Any())
             {
                 AppendIndentsText(builder, indents);
                 builder.Append("namespace ").Append(ns.Name).Append(" {").AppendLine();
@@ -248,7 +245,7 @@ namespace APIView
             }
             foreach (NamespaceAPIV n in ns.Namespaces)
             {
-                if (ns.Name.Length != 0)
+                if (ns.Name.Any())
                 {
                     RenderText(n, builder, indents + 1);
                     builder.AppendLine();
@@ -260,7 +257,7 @@ namespace APIView
                 }
             }
 
-            if (ns.Name.Length != 0)
+            if (ns.Name.Any())
             {
                 AppendIndentsText(builder, indents);
                 builder.Append("}");
@@ -269,7 +266,7 @@ namespace APIView
 
         internal static void RenderText(ParameterAPIV p, StringBuilder builder, int indents = 0)
         {
-            if (!p.Attributes.IsEmpty)
+            if (p.Attributes.Any())
             {
                 builder.Append("[");
                 foreach (string attribute in p.Attributes)
@@ -304,7 +301,7 @@ namespace APIView
 
         internal static void RenderText(TypeParameterAPIV tp, StringBuilder builder, int indents = 0)
         {
-            if (!tp.Attributes.IsEmpty)
+            if (tp.Attributes.Any())
             {
                 builder.Append("[");
                 foreach (string attribute in tp.Attributes)

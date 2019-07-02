@@ -2,11 +2,14 @@
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Microsoft.Extensions.Configuration;
+using System.Text.Json.Serialization;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
+using APIView;
+using System.Linq;
 
 namespace APIViewWeb
 {
@@ -22,12 +25,15 @@ namespace APIViewWeb
 
         private BlobContainerClient ContainerClient { get; }
 
-        public async Task<string> ReadAssemblyContentAsync(string id)
+        public async Task<AssemblyModel> ReadAssemblyContentAsync(string id)
         {
             var result = await ContainerClient.GetBlockBlobClient(id).DownloadAsync();
+
+            // Return a rendering of the AssemblyAPIV object deserialized from JSON.
             using (StreamReader reader = new StreamReader(result.Value.Content))
             {
-                return reader.ReadToEnd();
+                AssemblyAPIV assembly = JsonSerializer.Parse<AssemblyAPIV>(reader.ReadToEnd());
+                return new AssemblyModel(assembly, result.Value.Properties.Metadata.Values.First());
             }
         }
 
@@ -50,7 +56,9 @@ namespace APIViewWeb
         {
             var guid = Guid.NewGuid().ToString();
             var blob = ContainerClient.GetBlockBlobClient(guid);
-            using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(assemblyModel.DisplayString))) {
+
+            // Store the JSON serialization of the assembly.
+            using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(JsonSerializer.ToString(assemblyModel.Assembly)))) {
                 await blob.UploadAsync(stream);
             }
             blob = ContainerClient.GetBlockBlobClient(guid);

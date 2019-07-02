@@ -1,6 +1,5 @@
 ﻿using Microsoft.CodeAnalysis;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Text;
 
 namespace APIView
@@ -12,13 +11,15 @@ namespace APIView
     /// </summary>
     public class ParameterAPIV
     {
-        public string Name { get; }
-        public string Type { get; }
+        public string Name { get; set; }
+        public string Type { get; set; }
 
-        public bool HasExplicitDefaultValue { get; }
-        public object ExplicitDefaultValue { get; }
+        public bool HasExplicitDefaultValue { get; set; }
+        public object ExplicitDefaultValue { get; set; }
 
-        public ImmutableArray<string> Attributes { get; }
+        public string[] Attributes { get; set; }
+
+        public ParameterAPIV() { }
 
         /// <summary>
         /// Construct a new ParameterAPIV instance, represented by the provided symbol.
@@ -37,7 +38,7 @@ namespace APIView
             {
                 attributes.Add(attribute.ToString());
             }
-            this.Attributes = attributes.ToImmutableArray();
+            this.Attributes = attributes.ToArray();
         }
 
         public override string ToString()

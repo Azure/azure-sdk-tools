@@ -10,16 +10,18 @@ namespace APIView
     /// </summary>
     public class FieldAPIV
     {
-        public string Name { get; }
-        public string Type { get; }
-        public string Accessibility { get; }
+        public string Name { get; set; }
+        public string Type { get; set; }
+        public string Accessibility { get; set; }
 
-        public bool IsConstant { get; }
-        public bool IsReadOnly { get; }
-        public bool IsStatic { get; }
-        public bool IsVolatile { get; }
+        public bool IsConstant { get; set; }
+        public bool IsReadOnly { get; set; }
+        public bool IsStatic { get; set; }
+        public bool IsVolatile { get; set; }
 
-        public object Value { get; }
+        public object Value { get; set; }
+
+        public FieldAPIV() { }
 
         /// <summary>
         /// Construct a new FieldAPIV instance, represented by the provided symbol.

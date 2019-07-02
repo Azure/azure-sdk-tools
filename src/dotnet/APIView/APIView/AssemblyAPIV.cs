@@ -13,8 +13,10 @@ namespace APIView
     /// </summary>
     public class AssemblyAPIV
     {
-        public string Name { get; }
-        public NamespaceAPIV GlobalNamespace { get; }
+        public string Name { get; set; }
+        public NamespaceAPIV GlobalNamespace { get; set; }
+
+        public AssemblyAPIV() { }
 
         /// <summary>
         /// Construct a new AssemblyAPIV instance, represented by the provided symbol.

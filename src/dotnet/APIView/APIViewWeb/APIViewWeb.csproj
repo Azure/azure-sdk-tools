@@ -13,8 +13,8 @@
   <ItemGroup>
     <PackageReference Include="Azure.Storage.Blobs" Version="1.0.0-preview.1" />
     <PackageReference Include="Microsoft.AspNetCore.App" />
-    <PackageReference Include="Microsoft.CodeAnalysis" Version="3.2.0-beta1-final" />
-    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="2.1.9" />
+    <PackageReference Include="Microsoft.CodeAnalysis" Version="3.2.0-beta3-final" />
+    <PackageReference Include="System.Text.Json" Version="4.6.0-preview6.19303.8" />
   </ItemGroup>
 
 

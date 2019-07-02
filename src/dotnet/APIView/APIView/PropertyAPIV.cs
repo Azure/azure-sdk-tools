@@ -10,13 +10,15 @@ namespace APIView
     /// </summary>
     public class PropertyAPIV
     {
-        public string Name { get; }
-        public string Type { get; }
-        public string Accessibility { get; }
+        public string Name { get; set; }
+        public string Type { get; set; }
+        public string Accessibility { get; set; }
 
-        public bool IsAbstract { get; }
-        public bool IsVirtual { get; }
-        public bool HasSetMethod { get; }
+        public bool IsAbstract { get; set; }
+        public bool IsVirtual { get; set; }
+        public bool HasSetMethod { get; set; }
+
+        public PropertyAPIV() { }
 
         /// <summary>
         /// Construct a new PropertyAPIV instance, represented by the provided symbol.

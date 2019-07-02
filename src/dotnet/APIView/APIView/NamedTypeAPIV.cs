@@ -1,6 +1,5 @@
 ﻿using Microsoft.CodeAnalysis;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Text;
 
 namespace APIView
@@ -14,18 +13,20 @@ namespace APIView
     /// </summary>
     public class NamedTypeAPIV
     {
-        public string Name { get; }
-        public string Type { get; }
-        public string EnumUnderlyingType { get; }
-        public string Accessibility { get; }
+        public string Name { get; set; }
+        public string Type { get; set; }
+        public string EnumUnderlyingType { get; set; }
+        public string Accessibility { get; set; }
 
-        public ImmutableArray<EventAPIV> Events { get; }
-        public ImmutableArray<FieldAPIV> Fields { get; }
-        public ImmutableArray<string> Implementations { get; }
-        public ImmutableArray<MethodAPIV> Methods { get; }
-        public ImmutableArray<NamedTypeAPIV> NamedTypes { get; }
-        public ImmutableArray<PropertyAPIV> Properties { get; }
-        public ImmutableArray<TypeParameterAPIV> TypeParameters { get; }
+        public EventAPIV[]  Events { get; set; }
+        public FieldAPIV[] Fields { get; set; }
+        public string[] Implementations { get; set; }
+        public MethodAPIV[] Methods { get; set; }
+        public NamedTypeAPIV[] NamedTypes { get; set; }
+        public PropertyAPIV[] Properties { get; set; }
+        public TypeParameterAPIV[] TypeParameters { get; set; }
+
+        public NamedTypeAPIV() { }
 
         /// <summary>
         /// Construct a new NamedTypeAPIV instance, represented by the provided symbol.
@@ -97,13 +98,13 @@ namespace APIView
                 typeParameters.Add(new TypeParameterAPIV(t));
             }
 
-            this.Events = events.ToImmutableArray();
-            this.Fields = fields.ToImmutableArray();
-            this.Implementations = implementations.ToImmutableArray();
-            this.Methods = methods.ToImmutableArray();
-            this.NamedTypes = namedTypes.ToImmutableArray();
-            this.Properties = properties.ToImmutableArray();
-            this.TypeParameters = typeParameters.ToImmutableArray();
+            this.Events = events.ToArray();
+            this.Fields = fields.ToArray();
+            this.Implementations = implementations.ToArray();
+            this.Methods = methods.ToArray();
+            this.NamedTypes = namedTypes.ToArray();
+            this.Properties = properties.ToArray();
+            this.TypeParameters = typeParameters.ToArray();
         }
 
         public override string ToString()

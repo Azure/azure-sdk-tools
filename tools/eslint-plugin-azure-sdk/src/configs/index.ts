@@ -29,6 +29,7 @@ export = {
       "@ts-common/azure-sdk/ts-config-target": "error",
       "@ts-common/azure-sdk/ts-error-handling": "off",
       "@ts-common/azure-sdk/ts-modules-only-named": "error",
+      "@ts-common/azure-sdk/ts-no-const-enums": "warn",
       "@ts-common/azure-sdk/ts-package-json-author": "error",
       "@ts-common/azure-sdk/ts-package-json-bugs": "error",
       "@ts-common/azure-sdk/ts-package-json-engine-is-present": "error",

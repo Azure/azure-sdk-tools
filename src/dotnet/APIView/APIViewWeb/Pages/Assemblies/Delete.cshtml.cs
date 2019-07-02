@@ -1,5 +1,4 @@
 ﻿using System.Threading.Tasks;
-using APIView;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -23,8 +22,7 @@ namespace APIViewWeb.Pages.Assemblies
                 return NotFound();
             }
 
-            string json = await assemblyRepository.ReadAssemblyContentAsync(id);
-            AssemblyContent = AssemblyAPIV.JsonDeserialize(json).ToString();
+            AssemblyContent = await assemblyRepository.ReadAssemblyContentAsync(id);
 
             if (AssemblyContent == null)
             {

@@ -2,11 +2,13 @@
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Microsoft.Extensions.Configuration;
+using System.Text.Json.Serialization;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
+using APIView;
 
 namespace APIViewWeb
 {
@@ -25,9 +27,11 @@ namespace APIViewWeb
         public async Task<string> ReadAssemblyContentAsync(string id)
         {
             var result = await ContainerClient.GetBlockBlobClient(id).DownloadAsync();
+
+            // Return a rendering of the AssemblyAPIV object deserialized from JSON.
             using (StreamReader reader = new StreamReader(result.Value.Content))
             {
-                return reader.ReadToEnd();
+                return JsonSerializer.Parse<AssemblyAPIV>(reader.ReadToEnd()).ToString();
             }
         }
 
@@ -52,7 +56,7 @@ namespace APIViewWeb
             var blob = ContainerClient.GetBlockBlobClient(guid);
 
             // Store the JSON serialization of the assembly.
-            using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(assemblyModel.Assembly.JsonSerialize()))) {
+            using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(JsonSerializer.ToString(assemblyModel.Assembly)))) {
                 await blob.UploadAsync(stream);
             }
             blob = ContainerClient.GetBlockBlobClient(guid);

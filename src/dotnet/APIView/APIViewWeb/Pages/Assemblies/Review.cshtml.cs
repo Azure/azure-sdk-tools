@@ -17,8 +17,7 @@ namespace APIViewWeb.Pages.Assemblies
 
         public async Task OnGetAsync(string id)
         {
-            string json = await assemblyRepository.ReadAssemblyContentAsync(id);
-            AssemblyModel = AssemblyAPIV.JsonDeserialize(json).ToString();
+            AssemblyModel = await assemblyRepository.ReadAssemblyContentAsync(id);
         }
     }
 }

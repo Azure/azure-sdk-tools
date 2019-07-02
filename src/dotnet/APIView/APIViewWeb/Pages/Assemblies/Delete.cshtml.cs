@@ -22,7 +22,8 @@ namespace APIViewWeb.Pages.Assemblies
                 return NotFound();
             }
 
-            AssemblyContent = await assemblyRepository.ReadAssemblyContentAsync(id);
+            var assemblyModel = await assemblyRepository.ReadAssemblyContentAsync(id);
+            AssemblyContent = assemblyModel.Assembly.ToString();
 
             if (AssemblyContent == null)
             {

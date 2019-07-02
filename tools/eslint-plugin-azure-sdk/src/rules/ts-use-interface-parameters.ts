@@ -59,28 +59,28 @@ export = {
               | VariableDeclarator;
             if (parent.type === "MethodDefinition") {
               const key: Identifier = parent.key as Identifier;
-              name = key.name;
+              name = key !== undefined ? key.name : "";
             } else {
               // VariableDeclarator
               const id: Identifier = parent.id as Identifier;
-              name = id.name;
+              name = id !== undefined ? id.name : "";
             }
             break;
           }
           case "FunctionDeclaration": {
             const id: Identifier = node.id as Identifier;
-            name = id.name;
+            name = id !== undefined ? id.name : "";
             break;
           }
           case "ArrowFunctionExpression": {
             const parent: VariableDeclarator = ancestors[0] as VariableDeclarator;
             const id: Identifier = parent.id as Identifier;
-            name = id.name;
+            name = id !== undefined ? id.name : "";
             break;
           }
         }
 
-        if (verified.includes(name)) {
+        if (name !== "" && name !== undefined && verified.includes(name)) {
           return;
         }
 
@@ -101,38 +101,49 @@ export = {
             return;
           }
 
-          let bodyNode: BodyNodeType = ancestors.find(
+          const bodyNode: BodyNodeType = ancestors.find(
             (ancestor: Node): boolean => {
               return ["BlockStatement", "ClassBody", "Program"].includes(
                 ancestor.type
               );
             }
           ) as BodyNodeType;
+          const body = bodyNode.body as Node[];
 
           let overloads: FunctionType[] = [];
           if (node.type === "FunctionExpression") {
             const parent: Node = ancestors[0];
             if (parent.type === "MethodDefinition") {
-              bodyNode = bodyNode as ClassBody;
-              overloads = bodyNode.body
-                .filter((methodDefinition: MethodDefinition): boolean => {
+              overloads = body
+                .filter((element: Node): boolean => {
+                  if (element.type !== "MethodDefinition") {
+                    return false;
+                  }
+                  const methodDefinition = element as MethodDefinition;
+                  const key: Identifier = methodDefinition.key as Identifier;
                   const functionExpression = methodDefinition.value;
-                  return functionExpression.params !== node.params;
+                  return (
+                    key.name === name &&
+                    functionExpression.params !== node.params
+                  );
                 })
                 .map(
-                  (methodDefinition: MethodDefinition): FunctionExpression => {
+                  (element: Node): FunctionExpression => {
+                    const methodDefinition = element as MethodDefinition;
                     return methodDefinition.value;
                   }
                 );
             }
           } else if (node.type === "FunctionDeclaration") {
-            bodyNode = bodyNode as BlockStatement | Program;
-            overloads = bodyNode.body.filter((element: Node): boolean => {
+            overloads = body.filter((element: Node): boolean => {
               if (element.type !== "FunctionDeclaration") {
                 return false;
               }
               const functionDeclaration = element as FunctionDeclaration;
-              return functionDeclaration.params !== node.params;
+              const key: Identifier = functionDeclaration.id as Identifier;
+              return (
+                key.name === name && functionDeclaration.params !== node.params
+              );
             }) as FunctionDeclaration[];
           }
 

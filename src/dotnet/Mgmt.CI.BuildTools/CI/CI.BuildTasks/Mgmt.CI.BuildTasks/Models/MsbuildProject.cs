@@ -14,6 +14,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Models
     using System.Diagnostics;
     using System.IO;
     using System.Linq;
+    using System.Xml;
 
     public class MsbuildProject : NetSdkUtilTask
     {
@@ -150,11 +151,8 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Models
         #endregion
 
         #region Constructor
-        MsbuildProject()
-        {
-        //    _sdkProjType = SdkProjectType.UnDetermined;
-        //    _sdkProjCategory = SdkProjectCategory.UnDetermined;
-        }
+        public MsbuildProject() { }
+
         public MsbuildProject(string projectFullPath) : this()
         {
             Check.FileExists(projectFullPath);
@@ -438,6 +436,40 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Models
         public override void Dispose()
         {
             LoadedProj = null;
+        }
+
+        internal string CreateAzPropsfile(string fullFilePathToCreate)
+        {
+            if (!File.Exists(fullFilePathToCreate))
+            {
+                XmlDocument doc = new XmlDocument();
+                XmlElement root = doc.DocumentElement;
+
+                XmlComment comment = doc.CreateComment("This file and it's contents are updated at build time moving or editing might result in build failure. Take due deligence while editing this file");
+
+                XmlElement projNode = doc.CreateElement("Project");
+                projNode.SetAttribute("ToolsVersion", "15.0");
+                projNode.SetAttribute("xmlns", "http://schemas.microsoft.com/developer/msbuild/2003");
+                doc.AppendChild(projNode);
+
+                projNode.AppendChild(comment);
+
+                XmlElement propGroup = doc.CreateElement("PropertyGroup");
+                projNode.AppendChild(propGroup);
+
+                XmlElement apiTagProp = doc.CreateElement("AzureApiTag");
+                propGroup.AppendChild(apiTagProp);
+
+                XmlElement pkgTag = doc.CreateElement("PackageTags");
+                XmlText pkgTagValue = doc.CreateTextNode("$(PackageTags);$(CommonTags);$(AzureApiTag);");
+                pkgTag.AppendChild(pkgTagValue);
+
+                propGroup.AppendChild(pkgTag);
+
+                doc.Save(fullFilePathToCreate);
+            }
+
+            return fullFilePathToCreate;
         }
 
         #endregion

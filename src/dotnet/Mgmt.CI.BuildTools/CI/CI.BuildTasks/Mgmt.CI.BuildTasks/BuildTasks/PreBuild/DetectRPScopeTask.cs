@@ -49,38 +49,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
 
         #region Properties
         #region task input properties
-        Int64 GH_PRNumber
-        {
-            get
-            {
-                if(string.IsNullOrWhiteSpace(GitHubPRNumber))
-                {
-                    _gh_prNumber = 0;
-                }
-                else
-                {
-                    if(Int64.TryParse(GitHubPRNumber, out Int64 parsedGHPRNum))
-                    {
-                        _gh_prNumber = parsedGHPRNum;
-                    }
-                    else
-                    {
-                        _gh_prNumber = 0;
-                    }
-                }
-
-                return _gh_prNumber;
-            }
-
-            set
-            {
-                _gh_prNumber = value;
-            }
-        }
-
         public string GitHubPRNumber { get; set; }
-
-        //public Int64 GH_RepositoryId { get; set; }
 
         /// <summary>
         /// Repository Url that is being used in browser
@@ -99,6 +68,34 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
         public string PRScopeString { get; set; }
         #endregion
 
+        Int64 GH_PRNumber
+        {
+            get
+            {
+                if (string.IsNullOrWhiteSpace(GitHubPRNumber))
+                {
+                    _gh_prNumber = 0;
+                }
+                else
+                {
+                    if (Int64.TryParse(GitHubPRNumber, out Int64 parsedGHPRNum))
+                    {
+                        _gh_prNumber = parsedGHPRNum;
+                    }
+                    else
+                    {
+                        _gh_prNumber = 0;
+                    }
+                }
+
+                return _gh_prNumber;
+            }
+
+            set
+            {
+                _gh_prNumber = value;
+            }
+        }
         public override string NetSdkTaskName => "DetectRPScopeTask";
 
         GitHubService GHSvc
@@ -180,10 +177,6 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
         #endregion
 
         #region private functions
-
-
-
-
         /// <summary>
         /// Detect valid scope based on the change list in the PR
         /// Get affected files and find scope based on directory that contains .sln file

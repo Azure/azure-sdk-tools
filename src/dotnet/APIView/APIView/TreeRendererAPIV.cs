@@ -12,11 +12,6 @@ namespace APIView
             builder.Append(indent);
         }
         
-        private static void AppendIndentsHTML(StringBuilder builder, int indents)
-        {
-            builder.Append(Enumerable.Repeat("<span class=\"indent\"><\\span>", indents));
-        }
-        
         public static string RenderText(AssemblyAPIV assembly)
         {
             StringBuilder returnString = new StringBuilder();
@@ -284,7 +279,11 @@ namespace APIView
                 if (p.Type.Equals("string"))
                     builder.Append(" = \"").Append(p.ExplicitDefaultValue).Append("\"");
                 else
-                    builder.Append(" = ").Append(p.ExplicitDefaultValue);
+                    builder.Append(" = ");
+                if (p.ExplicitDefaultValue == null)
+                    builder.Append("null");
+                else
+                    builder.Append(p.ExplicitDefaultValue);
             }
         }
 
@@ -316,10 +315,21 @@ namespace APIView
             builder.Append(tp.Name);
         }
 
+        private static void AppendIndentsHTML(StringBuilder builder, int indents)
+        {
+            builder.Append(Enumerable.Repeat("<span class=\"indent\"><\\span>", indents));
+        }
 
         public static string RenderHTML(AssemblyAPIV assembly)
         {
             return null;
+        }
+
+        internal static void RenderHTML(EventAPIV e, StringBuilder builder, int indents = 0)
+        {
+            AppendIndentsHTML(builder, indents);
+            //TODO: determine whether event is EventHandler or other type - and if it has type parameter(s)
+            builder.Append(e.Accessibility).Append(" event EventHandler ").Append(e.Name).Append(";");
         }
     }
 }

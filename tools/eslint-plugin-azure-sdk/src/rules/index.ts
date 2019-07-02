@@ -20,6 +20,7 @@ import tsConfigStrict from "./ts-config-strict";
 import tsConfigTarget from "./ts-config-target";
 import tsErrorHandling from "./ts-error-handling";
 import tsModulesOnlyNamed from "./ts-modules-only-named";
+import tsNoConstEnums from "./ts-no-const-enums";
 import tsPackageJsonAuthor from "./ts-package-json-author";
 import tsPackageJsonBugs from "./ts-package-json-bugs";
 import tsPackageJsonEngineIsPresent from "./ts-package-json-engine-is-present";
@@ -55,6 +56,7 @@ export = {
   "ts-config-target": tsConfigTarget,
   "ts-error-handling": tsErrorHandling,
   "ts-modules-only-named": tsModulesOnlyNamed,
+  "ts-no-const-enums": tsNoConstEnums,
   "ts-package-json-author": tsPackageJsonAuthor,
   "ts-package-json-bugs": tsPackageJsonBugs,
   "ts-package-json-engine-is-present": tsPackageJsonEngineIsPresent,

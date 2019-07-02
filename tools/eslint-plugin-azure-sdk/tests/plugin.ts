@@ -28,6 +28,7 @@ const ruleList = [
   "ts-config-target",
   "ts-error-handling",
   "ts-modules-only-named",
+  "ts-no-const-enums",
   "ts-package-json-author",
   "ts-package-json-bugs",
   "ts-package-json-engine-is-present",

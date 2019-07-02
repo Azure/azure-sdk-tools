@@ -156,8 +156,8 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
 
                 if(files.NotNullOrAny<string>())
                 {
-                    //var asms = files.Where<string>((item) => item.Contains("netstandard2.0", StringComparison.OrdinalIgnoreCase));
-                    var asms = files.Where<string>((item) => item.Contains("net45", StringComparison.OrdinalIgnoreCase));
+                    var asms = files.Where<string>((item) => item.Contains("netstandard2.0", StringComparison.OrdinalIgnoreCase));
+                    //var asms = files.Where<string>((item) => item.Contains("net45", StringComparison.OrdinalIgnoreCase));
 
                     if (asms.NotNullOrAny<string>())
                     {

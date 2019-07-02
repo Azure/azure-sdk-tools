@@ -15,12 +15,12 @@
     </RestoreTargetsDependsOn>
     <BuildTargetsDependsOn>
       $(RestoreTargetsDependsOn);
-      BuildProjects;      
+      BuildProjects;
+      UpdateApiTagInfo
     </BuildTargetsDependsOn>
     <RunTestProjectsDependsOn>
       $(BuildTargetsDependsOn);
       ExecuteTests;
-      UpdateApiTagInfo
     </RunTestProjectsDependsOn>
      <CreateNugetPackageDependsOn>
       $(RunTestProjectsDependsOn);

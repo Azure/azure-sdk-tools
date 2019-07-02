@@ -23,7 +23,7 @@ namespace MS.Az.Mgmt.CI.Common.Services
             {
                 if(_asmToReflect == null)
                 {
-                    _asmToReflect = GetAssembly();
+                    _asmToReflect = GetAssembly(UseMetadataLoadContext);
                 }
 
                 return _asmToReflect;
@@ -64,55 +64,56 @@ namespace MS.Az.Mgmt.CI.Common.Services
         #endregion
 
         #region Public Functions
-
-        public Assembly GetAssembly()
+        public Assembly GetAssembly(bool useMetadataLoadContext)
         {
             Assembly loadedAssemly = null;
-            if (UseMetadataLoadContext)
+            if (useMetadataLoadContext)
             {
                 loadedAssemly = MetaCtx.LoadFromAssemblyPath(AsmFilePath);
             }
             else
             {
-                byte[] asmData = File.ReadAllBytes(AsmFilePath);
-                if (asmData != null)
-                {
-                    //loadedAssemly = Assembly.Load(asmData);
-                    loadedAssemly = Assembly.LoadFile(AsmFilePath);
-                    //loadedAssemly = Assembly.ReflectionOnlyLoad(AsmFilePath);
-                }
+                loadedAssemly = Assembly.LoadFrom(AsmFilePath);
             }
 
             return loadedAssemly;
-        }        
+        }
 
         public List<PropertyInfo> GetProperties(string typeNameStartWith, string propertyName)
         {
             List<PropertyInfo> propertyList = new List<PropertyInfo>();
             try
             {
-                //var typ = from t in AssemblyToReflect.GetTypes() where t.Name.StartsWith("SdkInfo", StringComparison.OrdinalIgnoreCase) select t;
-                var typ = from t in AssemblyToReflect.GetExportedTypes() where t.Name.StartsWith("SdkInfo", StringComparison.OrdinalIgnoreCase) select t;
+                var exportedNS = GetAssembly(true).ExportedTypes.Select<Type, string>((item) => item.Namespace);
+                var distinctNS = exportedNS.Distinct<string>();
+                Type sdkInfoType = null;
 
-                foreach (Type t in typ)
+                foreach(string ns in distinctNS)
                 {
-                    UtilLogger.LogInfo("Querying Type '{0}' for propertyName '{1}'", t.Name, propertyName);
-                    PropertyInfo[] memInfos = t.GetProperties(BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
-
-                    foreach (PropertyInfo mInfo in memInfos)
+                    string fqtype = string.Format("{0}.sdkinfo", ns);
+                    sdkInfoType = GetAssembly(false).GetType(fqtype, throwOnError: true, ignoreCase: true);
+                    if(sdkInfoType != null)
                     {
-                        UtilLogger.LogInfo("Found:'{0}'", mInfo.Name);
-                        if (mInfo.Name.Contains(propertyName))
-                        {
-                            UtilLogger.LogInfo("Added:'{0}' to list", mInfo.Name);
-                            propertyList.Add(mInfo);
-                        }
+                        break;
+                    }
+                }
+
+                UtilLogger.LogInfo("Querying Type '{0}' for propertyName '{1}'", sdkInfoType.Name, propertyName);
+                PropertyInfo[] memInfos = sdkInfoType.GetProperties(BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
+
+                foreach (PropertyInfo mInfo in memInfos)
+                {
+                    UtilLogger.LogInfo("Found:'{0}'", mInfo.Name);
+                    if (mInfo.Name.Contains(propertyName))
+                    {
+                        UtilLogger.LogInfo("Added:'{0}' to list", mInfo.Name);
+                        propertyList.Add(mInfo);
                     }
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                UtilLogger.LogException(ex);
+                UtilLogger.LogWarning(ex.Message);
             }
 
             return propertyList;
@@ -189,6 +190,7 @@ namespace MS.Az.Mgmt.CI.Common.Services
                 name.Equals("System.Private.CoreLib", StringComparison.OrdinalIgnoreCase) ||
                 name.Equals("System.Runtime", StringComparison.OrdinalIgnoreCase) ||
                 name.Equals("netstandard", StringComparison.OrdinalIgnoreCase) ||
+                name.Equals("System.Reflection.Metadata", StringComparison.OrdinalIgnoreCase) ||
                 // For interop attributes such as DllImport and Guid:
                 name.Equals("System.Runtime.InteropServices", StringComparison.OrdinalIgnoreCase))
             {

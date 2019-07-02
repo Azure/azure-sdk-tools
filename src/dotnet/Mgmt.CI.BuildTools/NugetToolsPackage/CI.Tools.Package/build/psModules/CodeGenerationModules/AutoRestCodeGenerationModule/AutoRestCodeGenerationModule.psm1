@@ -551,8 +551,6 @@ function Start-CodeGeneration {
         [string] $SdkRepoRootPath
     )
 
-    # metadata directory name
-    $metadataDirName = "$SdkRepoRootPath\eng\mgmt\mgmtmetadata"
     # If repo root is provided, use that as the SDK root directory
     if(-not [string]::IsNullOrWhiteSpace($SdkRepoRootPath))
     {
@@ -562,6 +560,10 @@ function Start-CodeGeneration {
     {
         $localSdkRepoDirectory = Get-SdkRepoRootDirectory($(Get-InvokingScriptPath))
     }
+
+     # metadata directory name
+    $repoRootDirPath = [System.IO.Path]::GetDirectoryName($localSdkRepoDirectory)
+    $metadataDirName = "$repoRootDirPath\eng\mgmt\mgmtmetadata"
     
     # if config file comes from a private repo, fail immediately
     if ($SpecsRepoName.EndsWith("-pr")) {

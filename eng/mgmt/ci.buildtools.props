@@ -17,7 +17,7 @@
 		<RepoNugetFeedDir>$(RepoToolsDir)\LocalNugetFeed</RepoNugetFeedDir>
 		<RepoDeveloperDir>$(RepoEngDir)\alias</RepoDeveloperDir>
 		<RepoNugetDir>$(RepoToolsDir)\NugetExe</RepoNugetDir>
-    <NugPkgSrcDir>$(RepoMgmtCIToolsSrcDir)\NugetToolsPackage</NugPkgSrcDir>
+    	<NugPkgSrcDir>$(RepoMgmtCIToolsSrcDir)\NugetToolsPackage</NugPkgSrcDir>
 		<RepoNugetRestoreDir>$(RepositoryRoot)\restoredPackages</RepoNugetRestoreDir>
 	</PropertyGroup>
 

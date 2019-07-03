@@ -30,7 +30,6 @@
     <Message Text="Finding Scope..." />
     <Message Text="PullRequestNumber... $(PullRequestNumber)" />
     <Message Text="RepoHtmlUrl... $(RepoHtmlUrl)" />
-    <Message Text="RepoId... $(RepoId)" />
 
     <DetectRPScopeTask
       GitHubPRNumber="$(PullRequestNumber)"
@@ -42,8 +41,8 @@
       <Output TaskParameter="PRScopeString" PropertyName="ScopeStringFromTask" />
     </DetectRPScopeTask>
 
-    <Message Text="Scopes retrieved from PR......@(ScopesFromPullRequest)" Importance="High" />
-    <Message Text="ScopeString retrieved from PR......$(ScopeStringFromTask)" Importance="High" />
+    <Message Text="Scopes retrieved from PR......@(ScopesFromPullRequest)" Importance="Low" />
+    <Message Text="Scope(s) retrieved from PR......$(ScopeStringFromTask)" Importance="High" />
   </Target>
 
   <Target Name="ExecUtil" >
@@ -58,7 +57,7 @@
   </Target>
 
   <Target Name="UpdateApiTagInfo" Condition=" '$(CIBuildId)' == '' ">
-    <Message Text="Updating ApiTag Info......" />
+    <Message Text="Updating ApiTag Info......" Condition=" '$(SDKProjects)' != '' " />
 
     <ItemGroup>
       <ProjectFilePathList Include="@(SDKProjects)" />

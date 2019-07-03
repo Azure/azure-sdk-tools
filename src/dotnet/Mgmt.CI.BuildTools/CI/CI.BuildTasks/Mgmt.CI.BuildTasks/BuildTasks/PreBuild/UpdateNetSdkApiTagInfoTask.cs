@@ -43,14 +43,17 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
         {
             get
             {
-                if(_sdkProjectFilePaths == null)
+                if(_sdkProjectFilePaths.Length <= 0)
                 {
-                    var sdkProjItems = ProjectFilePaths.Select<ITaskItem, SDKMSBTaskItem>((item) => new SDKMSBTaskItem(item.ItemSpec));
-
-                    if(sdkProjItems.NotNullOrAny<SDKMSBTaskItem>())
+                    if (ProjectFilePaths.Length >= 0)
                     {
-                        _sdkProjectFilePaths = sdkProjItems.ToArray<SDKMSBTaskItem>();
-                    }
+                        var sdkProjItems = ProjectFilePaths.Select<ITaskItem, SDKMSBTaskItem>((item) => new SDKMSBTaskItem(item.ItemSpec));
+
+                        if (sdkProjItems.NotNullOrAny<SDKMSBTaskItem>())
+                        {
+                            _sdkProjectFilePaths = sdkProjItems.ToArray<SDKMSBTaskItem>();
+                        }
+                    }                    
                 }
 
                 return _sdkProjectFilePaths;
@@ -92,11 +95,11 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
         #region Constructor
         public UpdateNetSdkApiTagInfoTask()
         {
-            //AssemblyInfoList = new List<Tuple<string, string, string>>();            
-            //AssemblyInfoList = new List<SDKMSBTaskItem>();
             AssemblyInfoList = new List<ExpandoObject>();
             AzPropFileExists = true;
             AssemblyFilePathExists = true;
+            _sdkProjectFilePaths = new SDKMSBTaskItem[] { };
+            ProjectFilePaths = new ITaskItem[] { };
         }
 
         #endregion

@@ -99,7 +99,6 @@
             <Net461NativeFilesToBeCopied Include="$(PlatWin32DirPath)\*.*" />
         </ItemGroup>
 
-
         <Message Text="Copying Platform specific files...." Importance="High" />
         <PropertyGroup>
             <destDir>$(PlatWin32DirPath)\..\..\..\</destDir>
@@ -165,7 +164,7 @@
         <PropertyGroup>
             <CINugetPackageDeployDirPath>$(CINugPkgDeploySdkNetDirPath)\tools\LocalNugetFeed</CINugetPackageDeployDirPath>
             <CINugetPkgSourceDirPath>$(RepoToolsDir)\LocalNugetFeed</CINugetPkgSourceDirPath>
-            <CINugetPkgSourceFilePath>$(CINugetPkgSourceDirPath)\Microsoft.Internal.NetSdkBuild.Mgmt.Tools.0.9.0.nupkg</CINugetPkgSourceFilePath>
+            <CINugetPkgSourceFilePath>$(CINugetPkgSourceDirPath)\Microsoft.Internal.NetSdkBuild.Mgmt.Tools.0.10.0.nupkg</CINugetPkgSourceFilePath>
         </PropertyGroup>
 
         <Copy
@@ -177,14 +176,19 @@
     <Target Name="PublishTasksProjects" DependsOnTargets="PublishNet461">
         <PropertyGroup>
             <NugPkgPublishDir Condition=" '$(NugPkgPublishDir)' == '' AND ( '$(Scope)' == 'ci' OR '$(Scope)' == 'CI' ) ">$(CINugPkgPublish_NetStd20Dir)</NugPkgPublishDir>
+            <NugPkgUbuntuPublishDir Condition=" '$(NugPkgUbuntuPublishDir)' == '' AND ( '$(Scope)' == 'ci' OR '$(Scope)' == 'CI' ) ">$(CINugPkgPublish_NetStd20Dir)\ubuntu</NugPkgUbuntuPublishDir>
         </PropertyGroup>
 
         <Message Text="Publishing Projects........." />
         <Message Text="@(ProjectsToPublish.Identity)" Condition=" '$(DebugTraceEnv)' == 'true' " />
 
-        <Exec Command="dotnet publish %(ProjectsToPublish.Identity) -f netstandard2.0 -o $(NugPkgPublishDir) -r win10-x64"  />
+        <Exec Command="dotnet publish %(ProjectsToPublish.Identity) -f netcoreapp2.1 -o $(NugPkgPublishDir) "  />
+        
+        
+        <Copy SourceFiles="@(Net461NativeFilesToBeCopied)" DestinationFolder="$(PlatWin32DirPath)\..\..\..\" SkipUnchangedFiles="true" />
         <!--
-        <Exec Command="dotnet publish %(ProjectsToPublish.Identity) -f netstandard2.0 -o $(PublishLinuxNetStd20Dir) -r ubuntu-x64" />
+        -r win10-x64
+        <Exec Command="dotnet publish %(ProjectsToPublish.Identity) -f netstandard2.0 -o $(NugPkgUbuntuPublishDir) -r ubuntu-x64" />
         Condition=" '$(PublishNet461)' == 'true' "
             Condition=" '$(PublishNet461)' == 'true' "
         -->

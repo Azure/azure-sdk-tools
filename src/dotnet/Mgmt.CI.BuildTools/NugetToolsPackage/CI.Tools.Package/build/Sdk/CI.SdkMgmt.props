@@ -33,6 +33,7 @@
     <PkgTaskDirPath>$(PkgRootDirPath)\tasks</PkgTaskDirPath>
     <PkgTargetDirPath>$(PkgRootDirPath)\targets</PkgTargetDirPath>
     <PkgPsModulesDirPath>$(PkgRootDirPath)\psModules</PkgPsModulesDirPath>
+    <PkgArtifactsRootDir>$(ArtifactsPackagesDir)</PkgArtifactsRootDir> <!--Defined at root (Directory.Build.props) in sdk repo -->
   </PropertyGroup>
 
   <PropertyGroup>

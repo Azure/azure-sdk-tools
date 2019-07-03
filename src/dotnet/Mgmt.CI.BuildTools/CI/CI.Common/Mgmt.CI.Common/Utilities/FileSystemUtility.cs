@@ -6,6 +6,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Common.Utilities
     using MS.Az.Mgmt.CI.BuildTasks.Common.Base;
     using MS.Az.Mgmt.CI.BuildTasks.Common.Logger;
     using System;
+    using System.Collections.Generic;
     using System.IO;
     using System.Linq;
     using System.Reflection;
@@ -198,8 +199,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Common.Utilities
 
             return srcRootDir;
         }
-
-
+        
         public void DirectoryCopy(string sourceDirName, string destDirName, bool copySubDirs)
         {
             // Get the subdirectories for the specified directory.
@@ -242,12 +242,8 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Common.Utilities
 
         public string FindFilePath(string rootDirPathToSearchIn, string fileNameToSearch)
         {
-            Check.DirectoryExists(rootDirPathToSearchIn);
-            Check.NotEmptyNotNull(fileNameToSearch);
             string fileFound = string.Empty;
-
-
-            var files = Directory.EnumerateFiles(rootDirPathToSearchIn, fileNameToSearch, SearchOption.AllDirectories);
+            var files = FindFilePaths(rootDirPathToSearchIn, fileNameToSearch);
 
             if (files.Any<string>())
             {
@@ -255,6 +251,22 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Common.Utilities
             }
 
             return fileFound;
+        }
+
+        public List<string> FindFilePaths(string rootDirPathToSearchIn, string fileNameToSearch)
+        {
+            Check.DirectoryExists(rootDirPathToSearchIn);
+            Check.NotEmptyNotNull(fileNameToSearch);
+            List<string> foundFiles = new List<string>();
+
+            var files = Directory.EnumerateFiles(rootDirPathToSearchIn, fileNameToSearch, SearchOption.AllDirectories);
+
+            if (files.Any<string>())
+            {
+                foundFiles = files.ToList<string>();
+            }
+
+            return foundFiles;
         }
 
         public string GetTempDirPath(string seedDirPath = "", string GIT_DIR_POSTFIX = "")

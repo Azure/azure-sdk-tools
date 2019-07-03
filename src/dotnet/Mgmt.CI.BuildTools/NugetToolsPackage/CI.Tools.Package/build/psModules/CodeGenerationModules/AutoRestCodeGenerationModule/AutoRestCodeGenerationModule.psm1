@@ -551,8 +551,6 @@ function Start-CodeGeneration {
         [string] $SdkRepoRootPath
     )
 
-    # metadata directory name
-    $metadataDirName = "mgmtmetadata"
     # If repo root is provided, use that as the SDK root directory
     if(-not [string]::IsNullOrWhiteSpace($SdkRepoRootPath))
     {
@@ -562,6 +560,10 @@ function Start-CodeGeneration {
     {
         $localSdkRepoDirectory = Get-SdkRepoRootDirectory($(Get-InvokingScriptPath))
     }
+
+     # metadata directory name
+    $repoRootDirPath = [System.IO.Path]::GetDirectoryName($localSdkRepoDirectory)
+    $metadataDirName = "$repoRootDirPath\eng\mgmt\mgmtmetadata"
     
     # if config file comes from a private repo, fail immediately
     if ($SpecsRepoName.EndsWith("-pr")) {
@@ -581,12 +583,12 @@ function Start-CodeGeneration {
         New-Item -ItemType Directory -Path $localSdkRepoDirectory
     }
 
-    if(!(Test-Path -Path "$localSdkRepoDirectory\$metadataDirName"))
+    if(!(Test-Path -Path "$metadataDirName"))
     {
-        New-Item -ItemType Directory -Path "$localSdkRepoDirectory\$metadataDirName"
+        New-Item -ItemType Directory -Path "$metadataDirName"
     }
 
-    $logFile = "$localSdkRepoDirectory\$metadataDirName\$($ResourceProvider.Replace("/","_").Replace('\','_')).txt"    
+    $logFile = "$metadataDirName\$($ResourceProvider.Replace("/","_").Replace('\','_')).txt"    
     if(!$(Test-Path -Path $logFile))
     {
         New-Item -Path $logFile -ItemType File
@@ -595,7 +597,7 @@ function Start-CodeGeneration {
     if(-not [string]::IsNullOrWhiteSpace($LocalConfigFilePath)) 
     {
         # if generating using a local config file, create an obscure temp log file, makes detection easier
-        Remove-Item "$localSdkRepoDirectory\$metadataDirName\$($ResourceProvider.Replace("/","_")).txt" -ErrorAction SilentlyContinue
+        Remove-Item "$metadataDirName\$($ResourceProvider.Replace("/","_")).txt" -ErrorAction SilentlyContinue
         $logFile = [System.IO.Path]::GetTempFileName()+".txt";
         
         Write-Warning "!!!!!WARNING!!!!!!" 

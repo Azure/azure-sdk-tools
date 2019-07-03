@@ -30,7 +30,7 @@ export = {
       expected: "github:Azure/azure-sdk-for-js"
     });
     return stripPath(context.getFilename()) === "package.json"
-      ? {
+      ? ({
           // callback functions
 
           // check to see if repository exists at the outermost level
@@ -39,7 +39,7 @@ export = {
           // check the node corresponding to repository to see if its value is github:Azure/azure-sdk-for-js
           "ExpressionStatement > ObjectExpression > Property[key.value='repository']":
             verifiers.outerMatchesExpected
-        }
+        } as Rule.RuleListener)
       : {};
   }
 };

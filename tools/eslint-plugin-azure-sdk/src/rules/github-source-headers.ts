@@ -53,12 +53,12 @@ export = {
             const line2Regex = /Licensed under the MIT License\./;
 
             const adheres =
-              headerComments.find((comment: Comment): boolean => {
+              headerComments.some((comment: Comment): boolean => {
                 return line1Regex.test(comment.value);
-              }) !== undefined &&
-              headerComments.find((comment: Comment): boolean => {
+              }) &&
+              headerComments.some((comment: Comment): boolean => {
                 return line2Regex.test(comment.value);
-              }) !== undefined;
+              });
 
             // look for both lines
             !adheres &&

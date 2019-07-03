@@ -9,14 +9,21 @@ import { Property, ObjectExpression, Literal, ArrayExpression } from "estree";
 interface StructureData {
   outer: string;
   inner?: string;
-  expected?: any; //eslint-disable-line @typescript-eslint/no-explicit-any
+  expected?: unknown;
+}
+
+interface Verifiers {
+  existsInFile: (node: ObjectExpression) => void;
+  outerMatchesExpected: (node: Property) => void;
+  isMemberOf: (node: Property) => void;
+  innerMatchesExpected: (node: Property) => void;
+  outerContainsExpected: (node: Property) => void;
 }
 
 export const stripPath = (pathOrFileName: string): string => {
   return pathOrFileName.replace(/^.*[\\\/]/, "");
 };
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Returns structural verifiers given input
  * @param context provided ESLint context object
@@ -26,8 +33,7 @@ export const stripPath = (pathOrFileName: string): string => {
 export const getVerifiers = (
   context: Rule.RuleContext,
   data: StructureData
-): any => {
-  /* eslint-enable @typescript-eslint/no-explicit-any*/
+): Verifiers => {
   return {
     /**
      * check to see if if the outer key exists at the outermost level
@@ -39,10 +45,10 @@ export const getVerifiers = (
 
       const properties: Property[] = node.properties as Property[];
 
-      properties.find((property: Property): boolean => {
+      properties.every((property: Property): boolean => {
         const key = property.key as Literal;
-        return key.value === outer;
-      }) === undefined &&
+        return key.value !== outer;
+      }) &&
         context.report({
           node: node,
           message: outer + " does not exist at the outermost level"
@@ -95,10 +101,10 @@ export const getVerifiers = (
       const value: ObjectExpression = node.value as ObjectExpression;
       const properties: Property[] = value.properties as Property[];
 
-      properties.find((property: Property): boolean => {
+      properties.every((property: Property): boolean => {
         const key = property.key as Literal;
-        return key.value === inner;
-      }) === undefined &&
+        return key.value !== inner;
+      }) &&
         context.report({
           node: node,
           message: inner + " is not a member of " + outer
@@ -177,20 +183,19 @@ export const getVerifiers = (
       const candidateArray: Literal[] = nodeValue.elements as Literal[];
 
       if (expected instanceof Array) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        expected.forEach((value: any): void => {
-          candidateArray.find((candidate: Literal): boolean => {
-            return candidate.value === value;
-          }) === undefined &&
+        expected.forEach((value: unknown): void => {
+          candidateArray.every((candidate: Literal): boolean => {
+            return candidate.value !== value;
+          }) &&
             context.report({
               node: node,
               message: outer + " does not contain " + value
             });
         });
       } else {
-        candidateArray.find((candidate: Literal): boolean => {
-          return candidate.value === expected;
-        }) === undefined &&
+        candidateArray.every((candidate: Literal): boolean => {
+          return candidate.value !== expected;
+        }) &&
           context.report({
             node: node,
             message: outer + " does not contain " + expected

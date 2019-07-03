@@ -30,7 +30,7 @@ export = {
       expected: ["Azure", "cloud"]
     });
     return stripPath(context.getFilename()) === "package.json"
-      ? {
+      ? ({
           // callback functions
 
           // check to see if keywords exists at the outermost level
@@ -39,7 +39,7 @@ export = {
           // check the node corresponding to keywords to see if its value contains "Azure" and "cloud"
           "ExpressionStatement > ObjectExpression > Property[key.value='keywords']":
             verifiers.outerContainsExpected
-        }
+        } as Rule.RuleListener)
       : {};
   }
 };

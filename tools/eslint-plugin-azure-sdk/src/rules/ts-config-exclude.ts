@@ -30,7 +30,7 @@ export = {
       expected: "node_modules"
     });
     return stripPath(context.getFilename()) === "tsconfig.json"
-      ? {
+      ? ({
           // callback functions
 
           // check to see if exclude exists at the outermost level
@@ -39,7 +39,7 @@ export = {
           // check the node corresponding to exclude to see if its value contains "node_modules"
           "ExpressionStatement > ObjectExpression > Property[key.value='exclude']":
             verifiers.outerContainsExpected
-        }
+        } as Rule.RuleListener)
       : {};
   }
 };

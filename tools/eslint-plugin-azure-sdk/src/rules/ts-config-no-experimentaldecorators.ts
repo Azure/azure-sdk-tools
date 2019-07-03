@@ -31,7 +31,7 @@ export = {
       expected: false
     });
     return stripPath(context.getFilename()) === "tsconfig.json"
-      ? {
+      ? ({
           // callback functions
 
           // check to see if compilerOptions exists at the outermost level
@@ -40,7 +40,7 @@ export = {
           // check the node corresponding to compilerOptions.experimentalDecorators to see if it is set to false
           "ExpressionStatement > ObjectExpression > Property[key.value='compilerOptions'] > ObjectExpression > Property[key.value='experimentalDecorators']":
             verifiers.innerMatchesExpected
-        }
+        } as Rule.RuleListener)
       : {};
   }
 };

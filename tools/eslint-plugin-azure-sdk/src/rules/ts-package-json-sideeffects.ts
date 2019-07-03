@@ -29,7 +29,7 @@ export = {
       expected: false
     });
     return stripPath(context.getFilename()) === "package.json"
-      ? {
+      ? ({
           // callback functions
 
           // check to see if sideEffects exists at the outermost level
@@ -38,7 +38,7 @@ export = {
           // check the node corresponding to sideEffects to see if its value is false
           "ExpressionStatement > ObjectExpression > Property[key.value='sideEffects']":
             verifiers.outerMatchesExpected
-        }
+        } as Rule.RuleListener)
       : {};
   }
 };

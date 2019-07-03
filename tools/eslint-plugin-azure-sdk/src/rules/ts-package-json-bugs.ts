@@ -31,7 +31,7 @@ export = {
       expected: "https://github.com/Azure/azure-sdk-for-js/issues"
     });
     return stripPath(context.getFilename()) === "package.json"
-      ? {
+      ? ({
           // callback functions
 
           // check to see if bugs exists at the outermost level
@@ -44,7 +44,7 @@ export = {
           // check the node corresponding to bugs.url to see if it is set to 'https://github.com/Azure/azure-sdk-for-js/issues'
           "ExpressionStatement > ObjectExpression > Property[key.value='bugs'] > ObjectExpression > Property[key.value='url']":
             verifiers.innerMatchesExpected
-        }
+        } as Rule.RuleListener)
       : {};
   }
 };

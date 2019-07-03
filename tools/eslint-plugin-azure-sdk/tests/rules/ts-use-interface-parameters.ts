@@ -52,14 +52,6 @@ ruleTester.run("ts-use-interface-parameters", rule, {
   valid: [
     // single parameter
     {
-      // arrow function expression
-      code: example + "const func1 = (b: B): void => { console.log(b); }"
-    },
-    {
-      // function expression
-      code: example + "const func2 = function(b: B): void { console.log(b); }"
-    },
-    {
       // function declaration
       code: example + "function func3(b: B): void { console.log(b); }"
     },
@@ -68,17 +60,6 @@ ruleTester.run("ts-use-interface-parameters", rule, {
       code: example + "class C { method1(b: B): void { console.log(b); } }"
     },
     // multiple parameters
-    {
-      // arrow function expression
-      code:
-        example + "const func4 = (b1: B, b2: B): void => { console.log(b); }"
-    },
-    {
-      // function expression
-      code:
-        example +
-        "const func5 = function(b1: B, b2: B): void { console.log(b); }"
-    },
     {
       // function declaration
       code: example + "function func6(b1: B, b2: B): void { console.log(b); }"
@@ -105,26 +86,6 @@ ruleTester.run("ts-use-interface-parameters", rule, {
   invalid: [
     // single parameter
     {
-      // arrow function expression
-      code: example + "const func7 = (a: A): void => { console.log(a); }",
-      errors: [
-        {
-          message:
-            "type A of parameter a of function func7 is a class, not an interface"
-        }
-      ]
-    },
-    {
-      // function expression
-      code: example + "const func8 = function(a: A): void { console.log(a); }",
-      errors: [
-        {
-          message:
-            "type A of parameter a of function func8 is a class, not an interface"
-        }
-      ]
-    },
-    {
       // function declaration
       code: example + "function func9(a: A): void { console.log(a); }",
       errors: [
@@ -145,29 +106,6 @@ ruleTester.run("ts-use-interface-parameters", rule, {
       ]
     },
     // one interface, one class
-    {
-      // arrow function expression
-      code:
-        example + "const func10 = (a: A, b: B): void => { console.log(a, b); }",
-      errors: [
-        {
-          message:
-            "type A of parameter a of function func10 is a class, not an interface"
-        }
-      ]
-    },
-    {
-      // function expression
-      code:
-        example +
-        "const func11 = function(a: A, b: B): void { console.log(a, b); }",
-      errors: [
-        {
-          message:
-            "type A of parameter a of function func11 is a class, not an interface"
-        }
-      ]
-    },
     {
       // function declaration
       code:
@@ -191,38 +129,6 @@ ruleTester.run("ts-use-interface-parameters", rule, {
       ]
     },
     // multiple classes
-    {
-      // arrow function expression
-      code:
-        example +
-        "const func13 = (a1: A, a2: A): void => { console.log(a1, a2); }",
-      errors: [
-        {
-          message:
-            "type A of parameter a1 of function func13 is a class, not an interface"
-        },
-        {
-          message:
-            "type A of parameter a2 of function func13 is a class, not an interface"
-        }
-      ]
-    },
-    {
-      // function expression
-      code:
-        example +
-        "const func14 = function(a1: A, a2: A): void { console.log(a1, a2); }",
-      errors: [
-        {
-          message:
-            "type A of parameter a1 of function func14 is a class, not an interface"
-        },
-        {
-          message:
-            "type A of parameter a2 of function func14 is a class, not an interface"
-        }
-      ]
-    },
     {
       // function declaration
       code:

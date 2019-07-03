@@ -1,6 +1,5 @@
 ﻿using Microsoft.CodeAnalysis;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Text;
 
 namespace APIView
@@ -36,7 +35,8 @@ namespace APIView
         public override string ToString()
         {
             var returnString = new StringBuilder();
-            TreeRendererAPIV.RenderText(this, returnString);
+            var renderer = new TextRenderer();
+            renderer.Render(this, returnString);
             return returnString.ToString();
         }
     }

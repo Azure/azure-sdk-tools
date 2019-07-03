@@ -74,12 +74,14 @@ namespace APIView
 
         public string ToHTML()
         {
-            return TreeRendererAPIV.RenderHTML(this);
+            var renderer = new HTMLRenderer();
+            return renderer.Render(this);
         }
 
         public override string ToString()
         {
-            return TreeRendererAPIV.RenderText(this);
+            var renderer = new TextRenderer();
+            return renderer.Render(this);
         }
     }
 }

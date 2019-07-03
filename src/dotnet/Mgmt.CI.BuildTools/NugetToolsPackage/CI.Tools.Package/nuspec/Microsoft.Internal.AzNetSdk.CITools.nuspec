@@ -21,6 +21,7 @@
     <file src="..\build\Sdk\*.*" target="Sdk" />
     <file src="..\build\psModules\**\*.*" target="psModules" />
     <file src="..\build\tasks\netstandard2.0\**\*.*" target="tasks\netstandard2.0" />
+    <file src="..\build\tasks\netcoreapp2.1\**\*.*" target="tasks\netstandard2.0" />
     <file src="..\build\tasks\net461\**\*.*" target="tasks\net461" />
   </files>  
 </package>

@@ -6,7 +6,7 @@
 	</PropertyGroup>
 	<PropertyGroup>
 		<FullNetFxBitness>AnyCPU</FullNetFxBitness>
-		<CurrentTargetFxVersion>net461;netstandard2.0</CurrentTargetFxVersion>
+		<CurrentTargetFxVersion>net461;netstandard2.0;netcoreapp2.1</CurrentTargetFxVersion>
 		<TargetFrameworks>$(CurrentTargetFxVersion)</TargetFrameworks>
 		<OutputPath>$(CIBuildOutputDir)</OutputPath>
 		<SignAssembly>false</SignAssembly>

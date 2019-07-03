@@ -23,7 +23,7 @@ namespace APIView
         public bool IsAbstract { get; set; }
         public bool IsExtern { get; set; }
 
-        public string[] Attributes { get; set; }
+        public AttributeAPIV[] Attributes { get; set; }
         public ParameterAPIV[] Parameters { get; set; }
         public TypeParameterAPIV[] TypeParameters { get; set; }
 
@@ -56,13 +56,13 @@ namespace APIView
             this.IsAbstract = symbol.IsAbstract;
             this.IsExtern = symbol.IsExtern;
 
-            List<string> attributes = new List<string>();
+            List<AttributeAPIV> attributes = new List<AttributeAPIV>();
             List<TypeParameterAPIV> typeParameters = new List<TypeParameterAPIV>();
             List<ParameterAPIV> parameters = new List<ParameterAPIV>();
 
             foreach (AttributeData attribute in symbol.GetAttributes())
             {
-                attributes.Add(attribute.ToString());
+                attributes.Add(new AttributeAPIV(attribute));
             }
             foreach (ITypeParameterSymbol typeParam in symbol.TypeParameters)
             {

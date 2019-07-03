@@ -4,6 +4,18 @@ using System.Text;
 
 namespace APIView
 {
+
+    public abstract class Renderer
+    {
+        protected abstract void RenderKeyword(StringBuilder s, string kw);
+    }
+
+
+    public class HtmlRendered
+    {
+
+    }
+
     public class TreeRendererAPIV
     {
         private static void AppendIndents(StringBuilder builder, int indents)
@@ -19,6 +31,25 @@ namespace APIView
             StringBuilder returnString = new StringBuilder();
             RenderText(assembly.GlobalNamespace, returnString);
             return returnString.ToString();
+        }
+
+        internal static void RenderText(AttributeAPIV a, StringBuilder builder)
+        {
+            builder.Append("[");
+            builder.Append(a.Type);
+            
+            if (a.ConstructorArgs.Any())
+            {
+                builder.Append("(");
+                foreach (var arg in a.ConstructorArgs)
+                {
+                    builder.Append(arg);
+                    builder.Append(", ");
+                }
+                builder.Length -= 2;
+                builder.Append(")");
+            }
+            builder.Append("]");
         }
 
         internal static void RenderText(EventAPIV e, StringBuilder builder, int indents = 0)
@@ -63,9 +94,9 @@ namespace APIView
             AppendIndents(builder, indents);
             if (m.Attributes.Any())
             {
-                foreach (string attribute in m.Attributes)
+                foreach (var attribute in m.Attributes)
                 {
-                    builder.Append("[").Append(attribute).Append("]").AppendLine();
+                    builder.Append(attribute).AppendLine();
                     AppendIndents(builder, indents);
                 }
             }
@@ -327,6 +358,26 @@ namespace APIView
             return returnString.ToString();
         }
 
+        internal static void RenderHTML(AttributeAPIV a, StringBuilder builder)
+        {
+            builder.Append("[");
+            MakeClass(builder, a.Type);
+
+            if (a.ConstructorArgs.Any())
+            {
+                builder.Append("(");
+                foreach (var arg in a.ConstructorArgs)
+                {
+                    MakeValue(builder, arg);
+                    builder.Append(", ");
+                }
+                builder.Length -= 2;
+                builder.Append(")");
+            }
+
+            builder.Append("]");
+        }
+
         internal static void RenderHTML(EventAPIV e, StringBuilder builder, int indents = 0)
         {
             AppendIndents(builder, indents);
@@ -391,11 +442,10 @@ namespace APIView
             AppendIndents(builder, indents);
             if (m.Attributes.Any())
             {
-                foreach (string attribute in m.Attributes)
+                foreach (var attribute in m.Attributes)
                 {
-                    builder.Append("[");
-                    MakeClass(builder, attribute);
-                    builder.Append("]").Append("<br />");
+                    RenderHTML(attribute, builder);
+                    builder.Append("<br />");
                     AppendIndents(builder, indents);
                 }
             }

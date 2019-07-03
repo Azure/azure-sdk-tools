@@ -72,6 +72,11 @@ namespace APIView
             return (IAssemblySymbol)compilation.GetAssemblyOrModuleSymbol(reference);
         }
 
+        public string ToHTML()
+        {
+            return TreeRendererAPIV.RenderHTML(this);
+        }
+
         public override string ToString()
         {
             return TreeRendererAPIV.RenderText(this);

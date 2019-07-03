@@ -1,10 +1,5 @@
 ﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-<<<<<<< HEAD
-using System.Text.Json.Serialization;
-using APIView;
-=======
->>>>>>> json2
 
 namespace APIViewWeb.Pages.Assemblies
 {
@@ -22,7 +17,7 @@ namespace APIViewWeb.Pages.Assemblies
         public async Task OnGetAsync(string id)
         {
             var assemblyModel = await assemblyRepository.ReadAssemblyContentAsync(id);
-            AssemblyModel = assemblyModel.Assembly.ToString();
+            AssemblyModel = assemblyModel.Assembly.ToHTML();
         }
     }
 }

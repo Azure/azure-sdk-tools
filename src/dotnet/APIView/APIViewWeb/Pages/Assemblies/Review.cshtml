@@ -3,6 +3,10 @@
 @{
     ViewData["Title"] = "Review";
 }
-
-<pre>@Html.Raw(Model.AssemblyModel.Replace("\r\n", "<br />"))</pre>
+<head>
+    <link rel="stylesheet" href="~/css/StyleSheet.css" type="text/css"/>
+</head>
+<body>
+    <pre>@Html.Raw(Model.AssemblyModel)</pre>
+</body>
 

@@ -1,15 +1,17 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Text;
 
 namespace APIView
 {
     public class TreeRendererAPIV
     {
-        private static void AppendIndentsText(StringBuilder builder, int indents)
+        private static void AppendIndents(StringBuilder builder, int indents)
         {
-            int indentSize = 4;
-            string indent = new string(' ', indents * indentSize);
-            builder.Append(indent);
+            for (int i = 0; i < indents; i++)
+            {
+                builder.Append("    ");
+            }
         }
         
         public static string RenderText(AssemblyAPIV assembly)
@@ -21,14 +23,14 @@ namespace APIView
 
         internal static void RenderText(EventAPIV e, StringBuilder builder, int indents = 0)
         {
-            AppendIndentsText(builder, indents);
+            AppendIndents(builder, indents);
             //TODO: determine whether event is EventHandler or other type - and if it has type parameter(s)
             builder.Append(e.Accessibility).Append(" event EventHandler ").Append(e.Name).Append(";");
         }
 
         internal static void RenderText(FieldAPIV f, StringBuilder builder, int indents = 0)
         {
-            AppendIndentsText(builder, indents);
+            AppendIndents(builder, indents);
             builder.Append(f.Accessibility);
 
             if (f.IsStatic)
@@ -47,7 +49,7 @@ namespace APIView
 
             if (f.IsConstant)
             {
-                if (f.Value.GetType().Name.Equals("String"))
+                if (f.Type.Equals("string"))
                     builder.Append(" = \"").Append(f.Value).Append("\"");
                 else
                     builder.Append(" = ").Append(f.Value);
@@ -58,13 +60,13 @@ namespace APIView
 
         internal static void RenderText(MethodAPIV m, StringBuilder builder, int indents = 0)
         {
-            AppendIndentsText(builder, indents);
+            AppendIndents(builder, indents);
             if (m.Attributes.Any())
             {
                 foreach (string attribute in m.Attributes)
                 {
                     builder.Append("[").Append(attribute).Append("]").AppendLine();
-                    AppendIndentsText(builder, indents);
+                    AppendIndents(builder, indents);
                 }
             }
 
@@ -119,7 +121,7 @@ namespace APIView
 
         internal static void RenderText(NamedTypeAPIV nt, StringBuilder builder, int indents = 0)
         {
-            AppendIndentsText(builder, indents);
+            AppendIndents(builder, indents);
             builder.Append(nt.Accessibility).Append(" ").Append(nt.Type).Append(" ");
 
             indents++;
@@ -135,11 +137,11 @@ namespace APIView
 
                     foreach (FieldAPIV f in nt.Fields)
                     {
-                        AppendIndentsText(builder, indents);
+                        AppendIndents(builder, indents);
                         builder.Append(f.Name).Append(" = ").Append(f.Value).Append(",").AppendLine();
                     }
 
-                    AppendIndentsText(builder, indents - 1);
+                    AppendIndents(builder, indents - 1);
                     builder.Append("}");
                     break;
 
@@ -219,7 +221,7 @@ namespace APIView
                         builder.AppendLine();
                     }
 
-                    AppendIndentsText(builder, indents - 1);
+                    AppendIndents(builder, indents - 1);
                     builder.Append("}");
                     break;
             }
@@ -229,7 +231,7 @@ namespace APIView
         {
             if (ns.Name.Any())
             {
-                AppendIndentsText(builder, indents);
+                AppendIndents(builder, indents);
                 builder.Append("namespace ").Append(ns.Name).Append(" {").AppendLine();
             }
 
@@ -254,7 +256,7 @@ namespace APIView
 
             if (ns.Name.Any())
             {
-                AppendIndentsText(builder, indents);
+                AppendIndents(builder, indents);
                 builder.Append("}");
             }
         }
@@ -270,7 +272,7 @@ namespace APIView
                 }
                 builder.Length -= 2;
                 builder.Append("] ").AppendLine();
-                AppendIndentsText(builder, indents);
+                AppendIndents(builder, indents);
             }
 
             builder.Append(p.Type).Append(" ").Append(p.Name);
@@ -278,18 +280,21 @@ namespace APIView
             {
                 if (p.Type.Equals("string"))
                     builder.Append(" = \"").Append(p.ExplicitDefaultValue).Append("\"");
+
                 else
+                {
                     builder.Append(" = ");
-                if (p.ExplicitDefaultValue == null)
-                    builder.Append("null");
-                else
-                    builder.Append(p.ExplicitDefaultValue);
+                    if (p.ExplicitDefaultValue == null)
+                        builder.Append("null");
+                    else
+                        builder.Append(p.ExplicitDefaultValue);
+                }
             }
         }
 
         internal static void RenderText(PropertyAPIV p, StringBuilder builder, int indents = 0)
         {
-            AppendIndentsText(builder, indents);
+            AppendIndents(builder, indents);
             builder.Append(p.Accessibility).Append(" ").Append(p.Type).Append(" ").Append(p.Name).Append(" { get; ");
 
             if (p.HasSetMethod)
@@ -309,15 +314,10 @@ namespace APIView
                 }
                 builder.Length -= 2;
                 builder.Append("] ").AppendLine();
-                AppendIndentsText(builder, indents);
+                AppendIndents(builder, indents);
             }
 
             builder.Append(tp.Name);
-        }
-
-        private static void AppendIndentsHTML(StringBuilder builder, int indents)
-        {
-            builder.Append(Enumerable.Repeat("<span class=\"indent\"><\\span>", indents));
         }
 
         public static string RenderHTML(AssemblyAPIV assembly)
@@ -329,34 +329,56 @@ namespace APIView
 
         internal static void RenderHTML(EventAPIV e, StringBuilder builder, int indents = 0)
         {
-            AppendIndentsHTML(builder, indents);
+            AppendIndents(builder, indents);
             //TODO: determine whether event is EventHandler or other type - and if it has type parameter(s)
-            builder.Append(e.Accessibility).Append(" event EventHandler ").Append(e.Name).Append(";");
+            MakeKeyword(builder, e.Accessibility);
+            builder.Append(" ");
+            MakeKeyword(builder, "event");
+            builder.Append(" ");
+            MakeClass(builder, "EventHandler");
+            builder.Append(" ");
+            MakeName(builder, e.Name);
+            builder.Append(";");
         }
 
         internal static void RenderHTML(FieldAPIV f, StringBuilder builder, int indents = 0)
         {
-            AppendIndentsHTML(builder, indents);
-            builder.Append(f.Accessibility);
+            AppendIndents(builder, indents);
+            MakeKeyword(builder, f.Accessibility);
+            builder.Append(" ");
 
             if (f.IsStatic)
-                builder.Append(" static");
-
+            {
+                MakeKeyword(builder, "static");
+                builder.Append(" ");
+            }
             if (f.IsReadOnly)
-                builder.Append(" readonly");
-
+            {
+                MakeKeyword(builder, "readonly");
+                builder.Append(" ");
+            }
             if (f.IsVolatile)
-                builder.Append(" volatile");
-
+            {
+                MakeKeyword(builder, "volatile");
+                builder.Append(" ");
+            }
             if (f.IsConstant)
-                builder.Append(" const");
+            {
+                MakeKeyword(builder, "const");
+                builder.Append(" ");
+            }
 
-            builder.Append(" ").Append(f.Type).Append(" ").Append(f.Name);
+            MakeType(builder, f.Type);
+            builder.Append(" ");
+            MakeName(builder, f.Name);
 
             if (f.IsConstant)
             {
-                if (f.Value.GetType().Name.Equals("String"))
-                    builder.Append(" = \"").Append(f.Value).Append("\"");
+                if (f.Type.Equals("string"))
+                {
+                    builder.Append(" = ");
+                    MakeValue(builder, "\"" + f.Value + "\"");
+                }
                 else
                     builder.Append(" = ").Append(f.Value);
             }
@@ -366,35 +388,66 @@ namespace APIView
 
         internal static void RenderHTML(MethodAPIV m, StringBuilder builder, int indents = 0)
         {
-            AppendIndentsHTML(builder, indents);
+            AppendIndents(builder, indents);
             if (m.Attributes.Any())
             {
                 foreach (string attribute in m.Attributes)
                 {
-                    builder.Append("[").Append(attribute).Append("]").Append("<br />");
-                    AppendIndentsHTML(builder, indents);
+                    builder.Append("[");
+                    MakeClass(builder, attribute);
+                    builder.Append("]").Append("<br />");
+                    AppendIndents(builder, indents);
                 }
             }
 
             if (!m.IsInterfaceMethod)
-                builder.Append(m.Accessibility).Append(" ");
+            {
+                MakeKeyword(builder, m.Accessibility);
+                builder.Append(" ");
+            }
 
             if (m.IsStatic)
-                builder.Append("static ");
+            {
+                MakeKeyword(builder, "static");
+                builder.Append(" ");
+            }
             if (m.IsVirtual)
-                builder.Append("virtual ");
+            {
+                MakeKeyword(builder, "virtual");
+                builder.Append(" ");
+            }
             if (m.IsSealed)
-                builder.Append("sealed ");
+            {
+                MakeKeyword(builder, "sealed");
+                builder.Append(" ");
+            }
             if (m.IsOverride)
-                builder.Append("override ");
+            {
+                MakeKeyword(builder, "override");
+                builder.Append(" ");
+            }
             if (m.IsAbstract && !m.IsInterfaceMethod)
-                builder.Append("abstract ");
+            {
+                MakeKeyword(builder, "abstract");
+                builder.Append(" ");
+            }
             if (m.IsExtern)
-                builder.Append("extern ");
+            {
+                MakeKeyword(builder, "extern");
+                builder.Append(" ");
+            }
 
             if (m.ReturnType.Any())
-                builder.Append(m.ReturnType).Append(" ");
-            builder.Append(m.Name);
+            {
+                MakeType(builder, m.ReturnType);
+                builder.Append(" ");
+            }
+
+            // Indicates method is a constructor.
+            if (m.Name.Equals(m.Parent))
+                MakeClass(builder, m.Name);
+            else
+                MakeName(builder, m.Name);
 
             if (m.TypeParameters.Any())
             {
@@ -427,27 +480,37 @@ namespace APIView
 
         internal static void RenderHTML(NamedTypeAPIV nt, StringBuilder builder, int indents = 0)
         {
-            AppendIndentsHTML(builder, indents);
-            builder.Append(nt.Accessibility).Append(" ").Append(nt.Type).Append(" ");
+            AppendIndents(builder, indents);
+            MakeKeyword(builder, nt.Accessibility);
+            builder.Append(" ");
+            MakeSpecialName(builder, nt.Type);
+            builder.Append(" ");
 
             indents++;
 
             switch (nt.Type)
             {
                 case ("enum"):
-                    builder.Append(nt.Name).Append(" ");
+                    MakeName(builder, nt.Name);
+                    builder.Append(" ");
 
                     if (!nt.EnumUnderlyingType.Equals("int"))
-                        builder.Append(": ").Append(nt.EnumUnderlyingType).Append(" ");
+                    {
+                        builder.Append(": ");
+                        MakeType(builder, nt.EnumUnderlyingType);
+                        builder.Append(" ");
+                    }
                     builder.Append("{").Append("<br />");
 
                     foreach (FieldAPIV f in nt.Fields)
                     {
-                        AppendIndentsHTML(builder, indents);
-                        builder.Append(f.Name).Append(" = ").Append(f.Value).Append(",").Append("<br />");
+                        AppendIndents(builder, indents);
+                        builder.Append(f.Name).Append(" = ");
+                        MakeValue(builder, f.Value.ToString());
+                        builder.Append(",").Append("<br />");
                     }
 
-                    AppendIndentsHTML(builder, indents - 1);
+                    AppendIndents(builder, indents - 1);
                     builder.Append("}");
                     break;
 
@@ -456,7 +519,11 @@ namespace APIView
                     {
                         if (m.Name.Equals("Invoke"))
                         {
-                            builder.Append(m.ReturnType).Append(" ").Append(nt.Name).Append("(");
+                            MakeType(builder, m.ReturnType);
+                            builder.Append(" ");
+                            MakeName(builder, nt.Name);
+                            builder.Append("(");
+
                             if (m.Parameters.Any())
                             {
                                 foreach (ParameterAPIV p in m.Parameters)
@@ -472,7 +539,8 @@ namespace APIView
                     break;
 
                 default:
-                    builder.Append(nt.Name).Append(" ");
+                    MakeClass(builder, nt.Name);
+                    builder.Append(" ");
 
                     if (nt.TypeParameters.Any())
                     {
@@ -493,7 +561,8 @@ namespace APIView
                         builder.Append(": ");
                         foreach (var i in nt.Implementations)
                         {
-                            builder.Append(i).Append(", ");
+                            MakeClass(builder, i);
+                            builder.Append(", ");
                         }
                         builder.Length -= 2;
                         builder.Append(" ");
@@ -527,7 +596,7 @@ namespace APIView
                         builder.Append("<br />");
                     }
 
-                    AppendIndentsHTML(builder, indents - 1);
+                    AppendIndents(builder, indents - 1);
                     builder.Append("}");
                     break;
             }
@@ -537,8 +606,11 @@ namespace APIView
         {
             if (ns.Name.Any())
             {
-                AppendIndentsHTML(builder, indents);
-                builder.Append("namespace ").Append(ns.Name).Append(" {").Append("<br />");
+                AppendIndents(builder, indents);
+                MakeSpecialName(builder, "namespace");
+                builder.Append(" ");
+                MakeName(builder, ns.Name);
+                builder.Append(" {").Append("<br />");
             }
 
             foreach (NamedTypeAPIV nt in ns.NamedTypes)
@@ -562,7 +634,7 @@ namespace APIView
 
             if (ns.Name.Any())
             {
-                AppendIndentsHTML(builder, indents);
+                AppendIndents(builder, indents);
                 builder.Append("}");
             }
         }
@@ -574,34 +646,50 @@ namespace APIView
                 builder.Append("[");
                 foreach (string attribute in p.Attributes)
                 {
-                    builder.Append(attribute).Append(", ");
+                    MakeName(builder, attribute);
+                    builder.Append(", ");
                 }
                 builder.Length -= 2;
                 builder.Append("] ").Append("<br />");
-                AppendIndentsHTML(builder, indents);
+                AppendIndents(builder, indents);
             }
 
-            builder.Append(p.Type).Append(" ").Append(p.Name);
+            MakeType(builder, p.Type);
+            builder.Append(" ").Append(p.Name);
             if (p.HasExplicitDefaultValue)
             {
                 if (p.Type.Equals("string"))
-                    builder.Append(" = \"").Append(p.ExplicitDefaultValue).Append("\"");
-                else
+                {
                     builder.Append(" = ");
-                if (p.ExplicitDefaultValue == null)
-                    builder.Append("null");
+                    MakeValue(builder, "\"" + p.ExplicitDefaultValue.ToString() + "\"");
+                }
+
                 else
-                    builder.Append(p.ExplicitDefaultValue);
+                {
+                    builder.Append(" = ");
+                    if (p.ExplicitDefaultValue == null)
+                        MakeSpecialName(builder, "null");
+                    else
+                        MakeValue(builder, p.ExplicitDefaultValue.ToString());
+                }
             }
         }
 
         internal static void RenderHTML(PropertyAPIV p, StringBuilder builder, int indents = 0)
         {
-            AppendIndentsHTML(builder, indents);
-            builder.Append(p.Accessibility).Append(" ").Append(p.Type).Append(" ").Append(p.Name).Append(" { get; ");
+            AppendIndents(builder, indents);
+            MakeKeyword(builder, p.Accessibility);
+            builder.Append(" ");
+            MakeType(builder, p.Type);
+            builder.Append(" ").Append(p.Name).Append(" { ");
+            MakeKeyword(builder, "get");
+            builder.Append("; ");
 
             if (p.HasSetMethod)
-                builder.Append("set; ");
+            {
+                MakeKeyword(builder, "set");
+                builder.Append("; ");
+            }
 
             builder.Append("}");
         }
@@ -613,14 +701,45 @@ namespace APIView
                 builder.Append("[");
                 foreach (string attribute in tp.Attributes)
                 {
-                    builder.Append(attribute).Append(", ");
+                    MakeName(builder, attribute);
+                    builder.Append(", ");
                 }
                 builder.Length -= 2;
                 builder.Append("] ").Append("<br />");
-                AppendIndentsHTML(builder, indents);
+                AppendIndents(builder, indents);
             }
 
             builder.Append(tp.Name);
+        }
+
+        private static void MakeClass(StringBuilder builder, string word)
+        {
+            builder.Append("<font class=\"class\">").Append(word).Append("</font>");
+        }
+
+        private static void MakeKeyword(StringBuilder builder, string word)
+        {
+            builder.Append("<font class=\"keyword\">").Append(word).Append("</font>");
+        }
+
+        private static void MakeName(StringBuilder builder, string word)
+        {
+            builder.Append("<font class=\"name\">").Append(word).Append("</font>");
+        }
+
+        private static void MakeSpecialName(StringBuilder builder, string word)
+        {
+            builder.Append("<font class=\"specialName\">").Append(word).Append("</font>");
+        }
+
+        private static void MakeType(StringBuilder builder, string word)
+        {
+            builder.Append("<font class=\"type\">").Append(word).Append("</font>");
+        }
+
+        private static void MakeValue(StringBuilder builder, string word)
+        {
+            builder.Append("<font class=\"value\">").Append(word).Append("</font>");
         }
     }
 }

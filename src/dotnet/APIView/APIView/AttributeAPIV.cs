@@ -22,7 +22,10 @@ namespace APIView
             var args = new List<string>();
             foreach (var arg in attributeData.ConstructorArguments)
             {
-                args.Add("\"" + arg.Value.ToString() + "\"");
+                if (arg.Type.Name.Equals("String"))
+                    args.Add("\"" + arg.Value.ToString() + "\"");
+                else
+                    args.Add(arg.Value.ToString());
             }
             this.ConstructorArgs = args.ToArray();
         }
@@ -30,7 +33,7 @@ namespace APIView
         public override string ToString()
         {
             var returnString = new StringBuilder();
-            var renderer = new TextRenderer();
+            var renderer = new TextRendererAPIV();
             renderer.Render(this, returnString);
             return returnString.ToString();
         }

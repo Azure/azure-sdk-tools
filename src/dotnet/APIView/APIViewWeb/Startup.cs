@@ -26,7 +26,12 @@ namespace APIViewWeb
                 options.MinimumSameSitePolicy = SameSiteMode.None;
             });
 
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+            services.AddMvc()
+                .SetCompatibilityVersion(CompatibilityVersion.Version_2_1)
+                .AddRazorPagesOptions(options =>
+            {
+                options.Conventions.AddPageRoute("/Assemblies/Index", "");
+            });
 
             services.AddSingleton<BlobAssemblyRepository>();
         }

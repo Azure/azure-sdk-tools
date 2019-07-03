@@ -8,7 +8,7 @@ namespace APIView
         {
             try
             {
-                var renderer = new TextRenderer();
+                var renderer = new TextRendererAPIV();
                 Console.WriteLine(renderer.Render(AssemblyAPIV.AssemblyFromFile(args[0])));
 
             }

@@ -15,6 +15,7 @@ namespace APIView
         public string Accessibility { get; set; }
         public string Parent { get; set; }
 
+        public bool IsConstructor { get; set; }
         public bool IsInterfaceMethod { get; set; }
         public bool IsStatic { get; set; }
         public bool IsVirtual { get; set; }
@@ -35,9 +36,11 @@ namespace APIView
         /// <param name="symbol">The symbol representing the method.</param>
         public MethodAPIV(IMethodSymbol symbol)
         {
+            this.IsConstructor = false;
             if (symbol.MethodKind == MethodKind.Constructor)
             {
                 this.Name = symbol.ContainingType.Name;
+                this.IsConstructor = true;
                 this.ReturnType = "";
             }
             else
@@ -81,7 +84,7 @@ namespace APIView
         public override string ToString()
         {
             var returnString = new StringBuilder();
-            var renderer = new TextRenderer();
+            var renderer = new TextRendererAPIV();
             renderer.Render(this, returnString);
             return returnString.ToString();
         }

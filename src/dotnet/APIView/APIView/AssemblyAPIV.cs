@@ -72,15 +72,9 @@ namespace APIView
             return (IAssemblySymbol)compilation.GetAssemblyOrModuleSymbol(reference);
         }
 
-        public string ToHTML()
-        {
-            var renderer = new HTMLRenderer();
-            return renderer.Render(this);
-        }
-
         public override string ToString()
         {
-            var renderer = new TextRenderer();
+            var renderer = new TextRendererAPIV();
             return renderer.Render(this);
         }
     }

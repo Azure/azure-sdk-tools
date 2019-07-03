@@ -156,8 +156,7 @@ namespace APIView
                 builder.Append(" ");
             }
 
-            // Indicates method is a constructor.
-            if (m.Name.Equals(m.Parent))
+            if (m.IsConstructor)
                 RenderClass(builder, m.Name);
             else
                 RenderName(builder, m.Name);
@@ -444,82 +443,5 @@ namespace APIView
         protected abstract void RenderType(StringBuilder s, string word);
 
         protected abstract void RenderValue(StringBuilder s, string word);
-    }
-
-
-    public class HTMLRenderer : TreeRendererAPIV
-    {
-        protected override void RenderClass(StringBuilder builder, string word)
-        {
-            builder.Append("<font class=\"class\">").Append(word).Append("</font>");
-        }
-
-        protected override void RenderKeyword(StringBuilder builder, string word)
-        {
-            builder.Append("<font class=\"keyword\">").Append(word).Append("</font>");
-        }
-
-        protected override void RenderName(StringBuilder builder, string word)
-        {
-            builder.Append("<font class=\"name\">").Append(word).Append("</font>");
-        }
-
-        protected override void RenderNewline(StringBuilder builder)
-        {
-            builder.Append("<br />");
-        }
-
-        protected override void RenderSpecialName(StringBuilder builder, string word)
-        {
-            builder.Append("<font class=\"specialName\">").Append(word).Append("</font>");
-        }
-
-        protected override void RenderType(StringBuilder builder, string word)
-        {
-            builder.Append("<font class=\"type\">").Append(word).Append("</font>");
-        }
-
-        protected override void RenderValue(StringBuilder builder, string word)
-        {
-            builder.Append("<font class=\"value\">").Append(word).Append("</font>");
-        }
-    }
-
-    public class TextRenderer : TreeRendererAPIV
-    {
-        protected override void RenderClass(StringBuilder builder, string word)
-        {
-            builder.Append(word);
-        }
-
-        protected override void RenderKeyword(StringBuilder builder, string word)
-        {
-            builder.Append(word);
-        }
-
-        protected override void RenderName(StringBuilder builder, string word)
-        {
-            builder.Append(word);
-        }
-
-        protected override void RenderNewline(StringBuilder builder)
-        {
-            builder.AppendLine();
-        }
-
-        protected override void RenderSpecialName(StringBuilder builder, string word)
-        {
-            builder.Append(word);
-        }
-
-        protected override void RenderType(StringBuilder builder, string word)
-        {
-            builder.Append(word);
-        }
-
-        protected override void RenderValue(StringBuilder builder, string word)
-        {
-            builder.Append(word);
-        }
     }
 }

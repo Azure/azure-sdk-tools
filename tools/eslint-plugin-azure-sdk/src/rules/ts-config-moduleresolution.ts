@@ -31,7 +31,7 @@ export = {
       expected: "node"
     });
     return stripPath(context.getFilename()) === "tsconfig.json"
-      ? {
+      ? ({
           // callback functions
 
           // check to see if compilerOptions exists at the outermost level
@@ -44,7 +44,7 @@ export = {
           // check the node corresponding to compilerOptions.moduleResolution to see if it is set to 'node'
           "ExpressionStatement > ObjectExpression > Property[key.value='compilerOptions'] > ObjectExpression > Property[key.value='moduleResolution']":
             verifiers.innerMatchesExpected
-        }
+        } as Rule.RuleListener)
       : {};
   }
 };

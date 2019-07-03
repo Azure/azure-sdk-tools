@@ -46,6 +46,16 @@ const getTypeOfParam = (
   return typeChecker.getTypeAtLocation(tsNode);
 };
 
+/* eslint-disable @typescript-eslint/ban-types */
+const addSeenSymbols = (symbol: Symbol, symbols: Symbol[]): void => {
+  symbols.push(symbol);
+  if (symbol.members !== undefined) {
+    symbol.members.forEach((member: Symbol): void => {
+      addSeenSymbols(member, symbols);
+    });
+  }
+};
+
 const getSymbolsUsedInParam = (
   param: Pattern,
   converter: ParserWeakMap<TSESTree.Node, TSNode>,
@@ -62,15 +72,6 @@ const getSymbolsUsedInParam = (
   return symbols;
 };
 
-const addSeenSymbols = (symbol: Symbol, symbols: Symbol[]): void => {
-  symbols.push(symbol);
-  if (symbol.members !== undefined) {
-    symbol.members.forEach((member: Symbol): void => {
-      addSeenSymbols(member, symbols);
-    });
-  }
-};
-
 const isValidParam = (
   param: Pattern,
   converter: ParserWeakMap<TSESTree.Node, TSNode>,
@@ -82,6 +83,7 @@ const isValidParam = (
     }
   );
 };
+/* eslint-enable @typescript-eslint/ban-types */
 
 const isValidOverload = (
   overloads: FunctionType[],

@@ -30,7 +30,7 @@ export = {
       expected: "Microsoft Corporation"
     });
     return stripPath(context.getFilename()) === "package.json"
-      ? {
+      ? ({
           // callback functions
 
           // check to see if author exists at the outermost level
@@ -39,7 +39,7 @@ export = {
           // check the node corresponding to author to see if its value is "Microsoft Corporation"
           "ExpressionStatement > ObjectExpression > Property[key.value='author']":
             verifiers.outerMatchesExpected
-        }
+        } as Rule.RuleListener)
       : {};
   }
 };

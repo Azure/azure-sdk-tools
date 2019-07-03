@@ -29,7 +29,7 @@ export = {
       expected: "MIT"
     });
     return stripPath(context.getFilename()) === "package.json"
-      ? {
+      ? ({
           // callback functions
 
           // check to see if license exists at the outermost level
@@ -38,7 +38,7 @@ export = {
           // check the node corresponding to license to see if its value is "MIT"
           "ExpressionStatement > ObjectExpression > Property[key.value='license']":
             verifiers.outerMatchesExpected
-        }
+        } as Rule.RuleListener)
       : {};
   }
 };

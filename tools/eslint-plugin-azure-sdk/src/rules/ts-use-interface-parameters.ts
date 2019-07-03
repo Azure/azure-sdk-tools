@@ -16,7 +16,7 @@ import {
   Pattern,
   Program
 } from "estree";
-import { SymbolFlags, Type, TypeChecker } from "typescript";
+import { Symbol, SymbolFlags, Type, TypeChecker } from "typescript";
 import { ParserServices } from "@typescript-eslint/experimental-utils";
 import { TSESTree, TSNode } from "@typescript-eslint/typescript-estree";
 import { ParserWeakMap } from "@typescript-eslint/typescript-estree/dist/parser-options";
@@ -46,14 +46,41 @@ const getTypeOfParam = (
   return typeChecker.getTypeAtLocation(tsNode);
 };
 
+const getSymbolsUsedInParam = (
+  param: Pattern,
+  converter: ParserWeakMap<TSESTree.Node, TSNode>,
+  typeChecker: TypeChecker
+): Symbol[] => {
+  const symbols: Symbol[] = [];
+  const identifier = getParamAsIdentifier(param);
+  const tsNode = converter.get(identifier as TSESTree.Node);
+  const type = typeChecker.getTypeAtLocation(tsNode);
+  const symbol = type.getSymbol();
+  if (symbol !== undefined) {
+    addSeenSymbols(symbol, symbols);
+  }
+  return symbols;
+};
+
+const addSeenSymbols = (symbol: Symbol, symbols: Symbol[]): void => {
+  symbols.push(symbol);
+  if (symbol.members !== undefined) {
+    symbol.members.forEach((member: Symbol): void => {
+      addSeenSymbols(member, symbols);
+    });
+  }
+};
+
 const isValidParam = (
   param: Pattern,
   converter: ParserWeakMap<TSESTree.Node, TSNode>,
   typeChecker: TypeChecker
 ): boolean => {
-  const type = getTypeOfParam(param, converter, typeChecker);
-  const symbol = type.getSymbol();
-  return symbol === undefined || symbol.getFlags() !== SymbolFlags.Class;
+  return getSymbolsUsedInParam(param, converter, typeChecker).every(
+    (symbol: Symbol): boolean => {
+      return symbol === undefined || symbol.getFlags() !== SymbolFlags.Class;
+    }
+  );
 };
 
 const isValidOverload = (
@@ -61,15 +88,11 @@ const isValidOverload = (
   converter: ParserWeakMap<TSESTree.Node, TSNode>,
   typeChecker: TypeChecker
 ): boolean => {
-  return (
-    overloads.find((overload: FunctionType): boolean => {
-      return (
-        overload.params.find((overloadParam: Pattern): boolean => {
-          return !isValidParam(overloadParam, converter, typeChecker);
-        }) === undefined
-      );
-    }) !== undefined
-  );
+  return overloads.some((overload: FunctionType): boolean => {
+    return overload.params.every((overloadParam: Pattern): boolean => {
+      return isValidParam(overloadParam, converter, typeChecker);
+    });
+  });
 };
 
 const evaluateOverloads = (
@@ -133,7 +156,8 @@ export = {
     const typeChecker = parserServices.program.getTypeChecker();
     const converter = parserServices.esTreeNodeToTSNodeMap;
 
-    const verified: string[] = [];
+    const verifiedMethods: string[] = [];
+    const verifiedDeclarations: string[] = [];
 
     return {
       "MethodDefinition > FunctionExpression": (
@@ -144,7 +168,11 @@ export = {
         const key: Identifier = parent.key as Identifier;
         const name = key.name;
 
-        if (name !== undefined && name !== "" && verified.includes(name)) {
+        if (
+          name !== undefined &&
+          name !== "" &&
+          verifiedMethods.includes(name)
+        ) {
           return;
         }
 
@@ -177,7 +205,7 @@ export = {
               overloads,
               converter,
               typeChecker,
-              verified,
+              verifiedMethods,
               name,
               param,
               context
@@ -189,7 +217,11 @@ export = {
       FunctionDeclaration: (node: FunctionDeclaration): void => {
         const id: Identifier = node.id as Identifier;
         const name = id.name;
-        if (name !== undefined && name !== "" && verified.includes(name)) {
+        if (
+          name !== undefined &&
+          name !== "" &&
+          verifiedDeclarations.includes(name)
+        ) {
           return;
         }
 
@@ -217,7 +249,7 @@ export = {
               overloads,
               converter,
               typeChecker,
-              verified,
+              verifiedDeclarations,
               name,
               param,
               context

@@ -27,6 +27,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Models
         const string PROJECT_TYPE = "ProjectType";
         const string PROJECT_CATEGORY = "ProjectCategory";
         const string PKG_REF_LIST = "PkgRefList";
+        const string OUTPUT_PATH = "OutputPath";
 
         #endregion
 
@@ -47,6 +48,8 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Models
         public string PlatformSpecificTargetFxMonikerString { get; internal set; }
 
         public List<string> PackageRefList { get; set; }
+
+        public string OutputPath { get; set; }
         #endregion
 
         public string ItemSpec { get; set; }
@@ -76,7 +79,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Models
         {
             _metaDataCollection = new Dictionary<string, string>();
         }
-        SDKMSBTaskItem(string itemSpecFullPath) : this()
+        internal SDKMSBTaskItem(string itemSpecFullPath) : this()
         {
             InternalSdkProjMD = new SdkProjectMetadata(itemSpecFullPath);
             Init();
@@ -88,6 +91,8 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Models
             Init();
         }
 
+
+
         internal SDKMSBTaskItem(SDKMSBTaskItem ti) : this()
         {
             SdkProjCategory = ti.SdkProjCategory;
@@ -96,6 +101,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Models
             PlatformSpecificTargetFxMonikerString = ti.PlatformSpecificTargetFxMonikerString;
             PackageRefList = ti.PackageRefList;
             ItemSpec = ti.ItemSpec;
+            OutputPath = ti.OutputPath;
             InternalSdkProjMD = ti.InternalSdkProjMD;
             //_metaDataCollection = ti._metaDataCollection;
         }
@@ -106,6 +112,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Models
             this.SetMetadata(PLATFORM_SPECIFIC_TARGET_FX, PlatformSpecificTargetFxMonikerString);
             this.SetMetadata(PROJECT_TYPE, SdkProjType.ToString());
             this.SetMetadata(PROJECT_CATEGORY, SdkProjCategory.ToString());
+            this.SetMetadata(OUTPUT_PATH, OutputPath);
 
             if (PackageRefList.Any<string>())
             {
@@ -143,6 +150,10 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Models
 
             // Package Reference list
             PackageRefList = InternalSdkProjMD.SdkPkgRefList;
+
+            // Output Path
+            OutputPath = InternalSdkProjMD.OutputPath;
+            this.SetMetadata(OUTPUT_PATH, OutputPath);
 
             if (PackageRefList.Any<string>())
             {

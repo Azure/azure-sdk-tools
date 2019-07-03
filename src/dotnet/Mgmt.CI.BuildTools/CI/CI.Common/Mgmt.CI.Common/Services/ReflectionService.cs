@@ -3,75 +3,103 @@
 
 namespace MS.Az.Mgmt.CI.Common.Services
 {
-    using Microsoft.Azure.KeyVault;
     using MS.Az.Mgmt.CI.BuildTasks.Common.Base;
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics;
     using System.IO;
     using System.Linq;
     using System.Reflection;
-    using System.Runtime.Loader;
-    using System.Text;
-    using System.Threading.Tasks;
     public class ReflectionService : NetSdkUtilTask
     {
-        #region const
-
-        #endregion
-
         #region fields
         Assembly _asmToReflect;
+        MetadataLoadContext _mlc;
         #endregion
 
         #region Properties
-        Assembly AsmToReflect
+        Assembly AssemblyToReflect
         {
             get
             {
-                if (_asmToReflect == null)
+                if(_asmToReflect == null)
                 {
-                    byte[] asmData = File.ReadAllBytes(AsmFilePath);
-                    if (asmData != null)
-                    {
-                        _asmToReflect = Assembly.Load(asmData);
-                    }
+                    _asmToReflect = GetAssembly(UseMetadataLoadContext);
                 }
 
                 return _asmToReflect;
             }
+            set
+            {
+                _asmToReflect = value;
+            }
+        }
 
-            set { _asmToReflect = value; }
+        MetadataLoadContext MetaCtx
+        {
+            get
+            {
+                if (_mlc == null)
+                {
+                    _mlc = new MetadataLoadContext(new SimpleAssemblyResolver());
+                }
+
+                return _mlc;
+            }
+            
         }
 
         string AsmFilePath { get; set; }
+
+        bool UseMetadataLoadContext { get; set; }
         #endregion
 
         #region Constructor
-        public ReflectionService(string AssemblyFilePath)
+        public ReflectionService(string AssemblyFilePath) : this(AssemblyFilePath, useMetadataLoadContext: true) { }
+
+        public ReflectionService(string assemblyFilePath, bool useMetadataLoadContext = true)
         {
-            AsmFilePath = AssemblyFilePath;
+            AsmFilePath = assemblyFilePath;
+            UseMetadataLoadContext = useMetadataLoadContext;
         }
         #endregion
 
         #region Public Functions
-
-        public void MetadataLoad()
+        public Assembly GetAssembly(bool useMetadataLoadContext)
         {
-            //System.Reflection.MetadataLoadContext 
-            //MetadataAssemblyResolver foo = new 
-            //MetadataLoadContext mdlc = new MetadataLoadContext()
+            Assembly loadedAssemly = null;
+            if (useMetadataLoadContext)
+            {
+                loadedAssemly = MetaCtx.LoadFromAssemblyPath(AsmFilePath);
+            }
+            else
+            {
+                loadedAssemly = Assembly.LoadFrom(AsmFilePath);
+            }
+
+            return loadedAssemly;
         }
 
-        public List<PropertyInfo> GetPropertiesContainingName(string propertyName)
+        public List<PropertyInfo> GetProperties(string typeNameStartWith, string propertyName)
         {
             List<PropertyInfo> propertyList = new List<PropertyInfo>();
-            Type[] availableTypes = AsmToReflect.GetTypes();
-
-            foreach (Type t in availableTypes)
+            try
             {
-                UtilLogger.LogInfo("Querying Type '{0}' for propertyName '{1}'", t.Name, propertyName);
-                PropertyInfo[] memInfos = t.GetProperties(BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
+                var exportedNS = GetAssembly(true).ExportedTypes.Select<Type, string>((item) => item.Namespace);
+                var distinctNS = exportedNS.Distinct<string>();
+                Type sdkInfoType = null;
+
+                foreach(string ns in distinctNS)
+                {
+                    string fqtype = string.Format("{0}.sdkinfo", ns);
+                    sdkInfoType = GetAssembly(false).GetType(fqtype, throwOnError: true, ignoreCase: true);
+                    if(sdkInfoType != null)
+                    {
+                        break;
+                    }
+                }
+
+                UtilLogger.LogInfo("Querying Type '{0}' for propertyName '{1}'", sdkInfoType.Name, propertyName);
+                PropertyInfo[] memInfos = sdkInfoType.GetProperties(BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
 
                 foreach (PropertyInfo mInfo in memInfos)
                 {
@@ -83,105 +111,124 @@ namespace MS.Az.Mgmt.CI.Common.Services
                     }
                 }
             }
+            catch (Exception ex)
+            {
+                UtilLogger.LogWarning(ex.Message);
+            }
 
             return propertyList;
         }
-        #endregion
 
-        #region private functions
-        void GetConstructorInfo()
-        {
-            Assembly asm = typeof(KeyVaultClient).Assembly;
-            FileVersionInfo fver = FileVersionInfo.GetVersionInfo(asm.Location);
-            UtilLogger.LogInfo("{0}:{1}:::{2} => {3}", asm.FullName, asm.GetName().Version.ToString(), fver.FileVersion, asm.Location);
-            ConstructorInfo[] conArray = typeof(KeyVaultClient).GetConstructors();
-            StringBuilder strb = new StringBuilder();
-
-            foreach (ConstructorInfo cInfo in conArray)
-            {
-                ParameterInfo[] paramArray = cInfo.GetParameters();
-                foreach (ParameterInfo pInfo in paramArray)
-                {
-                    string args = string.Format("{0} {1}, ", pInfo.ParameterType.FullName, pInfo.Name);
-                    strb.Append(args);
-                }
-
-                string con = string.Format("{0}({1})", cInfo.Name, strb.ToString());
-                UtilLogger.LogInfo(con);
-
-                strb.Clear();
-            }
-        }
         #endregion
 
         public override void Dispose()
         {
-            AsmToReflect = null;
+            AssemblyToReflect = null;
             IsDisposed = true;
         }
     }
 
-
-    internal class AssemblyLoader : AssemblyLoadContext
+    class SimpleAssemblyResolver : CoreMetadataAssemblyResolver
     {
-        private string folderPath;
+        private static readonly Version s_Version0000 = new Version(0, 0, 0, 0);
 
-        internal AssemblyLoader(string folderPath)
+        public SimpleAssemblyResolver() { }
+
+        public override Assembly Resolve(MetadataLoadContext context, AssemblyName assemblyName)
         {
-            this.folderPath = Path.GetDirectoryName(folderPath);
-        }
+            Assembly core = base.Resolve(context, assemblyName);
+            if (core != null)
+                return core;
 
-        internal Assembly Load(string filePath)
-        {
-            FileInfo fileInfo = new FileInfo(filePath);
-            AssemblyName assemblyName = new AssemblyName(fileInfo.Name.Replace(fileInfo.Extension, string.Empty));
-
-            return this.Load(assemblyName);
-        }
-
-        protected override Assembly Load(AssemblyName assemblyName)
-        {
-            //var dependencyContext = DependencyContext.Default;
-            //var ressource = dependencyContext.CompileLibraries.FirstOrDefault(r => r.Name.Contains(assemblyName.Name));
-
-            //if (ressource != null)
-            //{
-            //    return Assembly.Load(new AssemblyName(ressource.Name));
-            //}
-
-            var fileInfo = this.LoadFileInfo(assemblyName.Name);
-            if (File.Exists(fileInfo.FullName))
+            ReadOnlySpan<byte> pktFromAssemblyName = assemblyName.GetPublicKeyToken();
+            foreach (Assembly assembly in context.GetAssemblies())
             {
-                Assembly assembly = null;
-                if (this.TryGetAssemblyFromAssemblyName(assemblyName, out assembly))
-                {
+                AssemblyName assemblyNameFromContext = assembly.GetName();
+                if (assemblyName.Name.Equals(assemblyNameFromContext.Name, StringComparison.OrdinalIgnoreCase) &&
+                    NormalizeVersion(assemblyName.Version).Equals(assemblyNameFromContext.Version) &&
+                    pktFromAssemblyName.SequenceEqual(assemblyNameFromContext.GetPublicKeyToken()) &&
+                    NormalizeCultureName(assemblyName.CultureName).Equals(NormalizeCultureName(assemblyNameFromContext.CultureName)))
                     return assembly;
-                }
-                return this.LoadFromAssemblyPath(fileInfo.FullName);
             }
 
-            return Assembly.Load(assemblyName);
+            return null;
         }
 
-        private FileInfo LoadFileInfo(string assemblyName)
+        private Version NormalizeVersion(Version version)
         {
-            string fullPath = Path.Combine(this.folderPath, $"{assemblyName}.dll");
+            if (version == null)
+                return s_Version0000;
 
-            return new FileInfo(fullPath);
+            return version;
         }
 
-        private bool TryGetAssemblyFromAssemblyName(AssemblyName assemblyName, out Assembly assembly)
+        private string NormalizeCultureName(string cultureName)
         {
-            try
-            {
-                assembly = Default.LoadFromAssemblyName(assemblyName);
-                return true;
-            }
-            catch
-            {
-                assembly = null;
-                return false;
-            }
+            if (cultureName == null)
+                return string.Empty;
+
+            return cultureName;
         }
+    }
+
+    class CoreMetadataAssemblyResolver : MetadataAssemblyResolver
+    {
+        #region fields
+        private Assembly _coreAssembly;
+        #endregion
+
+        #region Constructor
+        public CoreMetadataAssemblyResolver() { }
+        #endregion
+
+        #region Public Functions
+        public override Assembly Resolve(MetadataLoadContext context, AssemblyName assemblyName)
+        {
+            string name = assemblyName.Name;
+
+            if (name.Equals("mscorlib", StringComparison.OrdinalIgnoreCase) ||
+                name.Equals("System.Private.CoreLib", StringComparison.OrdinalIgnoreCase) ||
+                name.Equals("System.Runtime", StringComparison.OrdinalIgnoreCase) ||
+                name.Equals("netstandard", StringComparison.OrdinalIgnoreCase) ||
+                name.Equals("System.Reflection.Metadata", StringComparison.OrdinalIgnoreCase) ||
+                // For interop attributes such as DllImport and Guid:
+                name.Equals("System.Runtime.InteropServices", StringComparison.OrdinalIgnoreCase))
+            {
+                if (_coreAssembly == null)
+                    _coreAssembly = context.LoadFromStream(CreateStreamForCoreAssembly());
+
+                return _coreAssembly;
+            }
+
+            return null;
+        }
+        #endregion
+
+        #region private functions
+        Stream CreateStreamForCoreAssembly()
+        {
+            // We need a core assembly in IL form. Since this version of this code is for Jitted platforms, the System.Private.Corelib
+            // of the underlying runtime will do just fine.
+            string assumedLocationOfCoreLibrary = typeof(object).Assembly.Location;
+            if (assumedLocationOfCoreLibrary == null || assumedLocationOfCoreLibrary == string.Empty)
+            {
+                throw new Exception("Could not find a core assembly to use for tests as 'typeof(object).Assembly.Location` returned " +
+                    "a null or empty value. The most likely cause is that you built the tests for a Jitted runtime but are running them " +
+                    "on an AoT runtime.");
+            }
+
+            return File.OpenRead(GetPathToCoreAssembly());
+        }
+
+        string GetPathToCoreAssembly()
+        {
+            return typeof(object).Assembly.Location;
+        }
+
+        string GetNameOfCoreAssembly()
+        {
+            return typeof(object).Assembly.GetName().Name;
+        }
+        #endregion
     }
 }

@@ -160,7 +160,6 @@ namespace APIView
                 RenderClass(builder, m.Name);
             else
                 RenderName(builder, m.Name);
-
             if (m.TypeParameters.Any())
             {
                 builder.Append("<");

@@ -7,5 +7,6 @@
     <UsingTask TaskName="DetectRPScopeTask" AssemblyFile="$(CustomTaskDirectory)\MS.Az.Mgmt.NetSdk.BuildTasks.dll"  />
     <UsingTask TaskName="SkipBuildOrTestExecutionTask" AssemblyFile="$(CustomTaskDirectory)\MS.Az.Mgmt.NetSdk.BuildTasks.dll" />
     <UsingTask TaskName="UtilTask" AssemblyFile="$(CustomTaskDirectory)\MS.Az.Mgmt.NetSdk.BuildTasks.dll" />
+    <UsingTask TaskName="UpdateNetSdkApiTagInfoTask" AssemblyFile="$(CustomTaskDirectory)\MS.Az.Mgmt.NetSdk.BuildTasks.dll" />
     <UsingTask TaskName="DebugTask" AssemblyFile="$(CustomTaskDirectory)\MS.Az.Mgmt.NetSdk.BuildTasks.Common.dll"  />
 </Project>

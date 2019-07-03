@@ -62,9 +62,7 @@ const getSymbolsUsedInParam = (
   typeChecker: TypeChecker
 ): Symbol[] => {
   const symbols: Symbol[] = [];
-  const identifier = getParamAsIdentifier(param);
-  const tsNode = converter.get(identifier as TSESTree.Node);
-  const type = typeChecker.getTypeAtLocation(tsNode);
+  const type = getTypeOfParam(param, converter, typeChecker);
   const symbol = type.getSymbol();
   if (symbol !== undefined) {
     addSeenSymbols(symbol, symbols);
@@ -79,7 +77,12 @@ const isValidParam = (
 ): boolean => {
   return getSymbolsUsedInParam(param, converter, typeChecker).every(
     (symbol: Symbol): boolean => {
-      return symbol === undefined || symbol.getFlags() !== SymbolFlags.Class;
+      const tsIdentifier: TSESTree.Identifier = param as TSESTree.Identifier;
+      return (
+        tsIdentifier.optional ||
+        symbol === undefined ||
+        symbol.getFlags() !== SymbolFlags.Class
+      );
     }
   );
 };

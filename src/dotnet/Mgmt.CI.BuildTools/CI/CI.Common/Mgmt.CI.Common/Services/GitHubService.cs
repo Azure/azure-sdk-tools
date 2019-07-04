@@ -33,31 +33,6 @@ namespace MS.Az.Mgmt.CI.Common.Services
         #endregion
 
         #region Properties
-
-        //public bool IsRepoAuthorized
-        //{
-        //    get
-        //    {
-        //        bool isAuthorized = false;
-        //        try
-        //        {
-        //            if (OctoClient != null)
-        //            {
-        //                if (OctoClient.User != null)
-        //                {
-        //                    isAuthorized = true;
-        //                }
-        //            }
-        //        }
-        //        catch (Exception ex)
-        //        {
-        //            UtilLogger.LogInfo("And error occured while initialzing Octokit client", ex.ToString());
-        //        }
-
-        //        return isAuthorized;
-        //    }
-        //}
-
         public PrSvc PR
         {
             get

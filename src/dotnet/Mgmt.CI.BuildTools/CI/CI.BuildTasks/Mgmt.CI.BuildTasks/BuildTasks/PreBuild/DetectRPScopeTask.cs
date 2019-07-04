@@ -185,7 +185,6 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
         /// <returns></returns>
         List<string> GetRPScopes()
         {
-            //TaskLogger.LogInfo("Trying to get Pr info for PrNumber:'{0}'", GH_PRNumber.ToString());
             FileSystemUtility fileSysUtil = new FileSystemUtility();
             IEnumerable<string> prFileList = null;
             List<string> finalScopePathList = new List<string>();

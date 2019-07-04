@@ -199,7 +199,6 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Tasks.PreBuild
                 if (_refSvc == null)
                 {
                     _refSvc = new ReflectionService();
-                    //Forcing metadata load context assemblies to load upfront
                     _refSvc.GetAssembly(useMetadataLoadContext: true);
                 }
 
@@ -531,7 +530,6 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Tasks.PreBuild
 
         void ParseCmdLineProperties()
         {
-            //TaskLogger.LogInfo(RefSvc.ToString());
             InitBaselineTargetFx();
 
             if(string.IsNullOrWhiteSpace(ProjectType) && ProjType == SdkProjectType.UnDetermined)

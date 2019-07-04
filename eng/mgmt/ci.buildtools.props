@@ -28,6 +28,7 @@
 		<CINugPkgSrcDir>$(NugPkgSrcDir)\CI.Tools.Package</CINugPkgSrcDir>
 		<CIBuildOutputDir>$(CINugPkgSrcDir)\build\tasks</CIBuildOutputDir>
 		<CINugPkgPublish_NetStd20Dir>$(CIBuildOutputDir)\netstandard2.0</CINugPkgPublish_NetStd20Dir>
+		<CINugPkgPublish_NetCoreApp21Dir>$(CIBuildOutputDir)\netcoreapp2.1</CINugPkgPublish_NetCoreApp21Dir>
 		<CINugPkgPublish_Net461Dir>$(CIBuildOutputDir)\net461</CINugPkgPublish_Net461Dir>
 		<CINugPkgDeployLocalRootDirPath>$(SubModuleRootDir)\netSdkMaster</CINugPkgDeployLocalRootDirPath>
 		<!-- <CINugPkgDeploySdkNetDirPath>D:\Myfork\sdkfornet\master</CINugPkgDeploySdkNetDirPath> -->

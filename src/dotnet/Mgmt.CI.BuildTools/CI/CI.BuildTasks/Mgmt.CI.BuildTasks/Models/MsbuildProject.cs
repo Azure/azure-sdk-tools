@@ -402,31 +402,34 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Models
         #region Add/Update Properties
         public void AddUpdateProperty(string propertyName, string newPropertyValue)
         {
-            ProjectProperty prop = LoadedProj.GetProperty(propertyName);
-            UtilLogger.LogInfo(MessageImportance.Low, "Processing Project '{0}'", this.ProjectFilePath);
-            if(prop == null)
+            if(!string.IsNullOrWhiteSpace(newPropertyValue))
             {
-                UtilLogger.LogInfo(MessageImportance.Low, "'{0}' property not found. Adding/setting it's value to '{1}'", propertyName, newPropertyValue);
-                LoadedProj.SetProperty(propertyName, newPropertyValue);
-                LoadedProj.Save(this.ProjectFilePath);
-            }
-            else
-            {
-                string currentValue = prop.EvaluatedValue;
-                if(string.IsNullOrWhiteSpace(currentValue))
+                ProjectProperty prop = LoadedProj.GetProperty(propertyName);
+                UtilLogger.LogInfo(MessageImportance.Low, "Processing Project '{0}'", this.ProjectFilePath);
+                if (prop == null)
                 {
-                    UtilLogger.LogInfo(MessageImportance.Low, "Setting '{0}' value to '{1}'", propertyName, newPropertyValue);
+                    UtilLogger.LogInfo(MessageImportance.Low, "'{0}' property not found. Adding/setting it's value to '{1}'", propertyName, newPropertyValue);
                     LoadedProj.SetProperty(propertyName, newPropertyValue);
                     LoadedProj.Save(this.ProjectFilePath);
                 }
                 else
                 {
-                    UtilLogger.LogInfo(MessageImportance.Low, "Current value of '{0}' is '{1}'", propertyName, newPropertyValue);
-                    if (!currentValue.Equals(newPropertyValue, StringComparison.OrdinalIgnoreCase))
+                    string currentValue = prop.EvaluatedValue;
+                    if (string.IsNullOrWhiteSpace(currentValue))
                     {
                         UtilLogger.LogInfo(MessageImportance.Low, "Setting '{0}' value to '{1}'", propertyName, newPropertyValue);
                         LoadedProj.SetProperty(propertyName, newPropertyValue);
                         LoadedProj.Save(this.ProjectFilePath);
+                    }
+                    else
+                    {
+                        UtilLogger.LogInfo(MessageImportance.Low, "Current value of '{0}' is '{1}'", propertyName, newPropertyValue);
+                        if (!currentValue.Equals(newPropertyValue, StringComparison.OrdinalIgnoreCase))
+                        {
+                            UtilLogger.LogInfo(MessageImportance.Low, "Setting '{0}' value to '{1}'", propertyName, newPropertyValue);
+                            LoadedProj.SetProperty(propertyName, newPropertyValue);
+                            LoadedProj.Save(this.ProjectFilePath);
+                        }
                     }
                 }
             }

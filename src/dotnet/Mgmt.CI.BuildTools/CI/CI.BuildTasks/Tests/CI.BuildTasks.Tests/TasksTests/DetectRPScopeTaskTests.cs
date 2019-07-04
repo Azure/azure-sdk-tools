@@ -16,6 +16,7 @@ namespace Tests.CI.BuildTasks.TasksTests
     {
         #region CONST
         const string NET_SDK_PUB_URL = @"https://github.com/azure/azure-sdk-for-net";
+        const string NET_SDK_PUB_URL_pr = @"https://github.com/azure/azure-sdk-for-net-pr";
         #endregion
         #region field
         internal string rootDir = string.Empty;
@@ -85,6 +86,24 @@ namespace Tests.CI.BuildTasks.TasksTests
             {
                 Assert.NotNull(rpScope.ScopesFromPR);
                 Assert.True(rpScope.ScopesFromPR.Length > 5);
+            }
+            else
+            {
+                Assert.True(false);
+            }
+        }
+
+        [Fact]
+        public void PrivateRepoPR()
+        {
+            string ghUrl = NET_SDK_PUB_URL_pr;
+            long ghPrNumber = 923;
+            DetectRPScopeTask rpScope = new DetectRPScopeTask(ghUrl, ghPrNumber.ToString());
+
+            if (rpScope.Execute())
+            {
+                Assert.Empty(rpScope.ScopesFromPR);
+                Assert.True(string.IsNullOrWhiteSpace(rpScope.PRScopeString));
             }
             else
             {

@@ -1,12 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net461;netstandard2.0;netcoreapp2.1</TargetFrameworks>
+    <TargetFrameworks>net461;netstandard2.0</TargetFrameworks>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageId>Microsoft.Internal.NetSdkBuild.Mgmt.Tools</PackageId>
     <Authors>Microsoft</Authors>
     <Description>Build tools for building Azure SDK for NET repository</Description>
     <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
-    <!-- <PackageLicenseUrl>https://raw.githubusercontent.com/Microsoft/dotnet/master/LICENSE</PackageLicenseUrl> -->
+    <!-- <PackageLicenseUrl>https://raw.githubusercontent.com/Microsoft/dotnet/master/LICENSE</PackageLicenseUrl> 
+    ;netcoreapp2.1
+    -->
     <PackageProjectUrl>https://github.com/Azure/azure-sdk-for-net</PackageProjectUrl>
     <PackageIconUrl>http://go.microsoft.com/fwlink/?LinkID=288890</PackageIconUrl>
     <RepositoryUrl>https://github.com/Azure/azure-sdk-for-net</RepositoryUrl>

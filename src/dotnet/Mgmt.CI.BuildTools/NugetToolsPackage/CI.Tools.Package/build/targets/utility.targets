@@ -26,7 +26,7 @@
   </Target>
 
   <!--Condition=" '$(PullRequestNumber)' != '' AND '$(RepoHtmlUrl)' != '' " -->
-  <Target Name="FindRPScopeFromPR" Condition=" '$(PullRequestNumber)' != '' AND '$(RepoHtmlUrl)' != '' ">
+  <Target Name="FindRPScopeFromPR" Condition=" '$(PullRequestNumber)' != '' AND '$(RepoHtmlUrl)' != '' AND '$(DetectRPScope)' == 'true' ">
     <Message Text="Finding Scope..." />
     <Message Text="PullRequestNumber... $(PullRequestNumber)" />
     <Message Text="RepoHtmlUrl... $(RepoHtmlUrl)" />
@@ -42,7 +42,7 @@
     </DetectRPScopeTask>
 
     <Message Text="Scopes retrieved from PR......@(ScopesFromPullRequest)" Importance="Low" />
-    <Message Text="Scope(s) retrieved from PR......$(ScopeStringFromTask)" Importance="High" />
+    <Message Text="Scope(s) retrieved from PR......$(ScopeStringFromTask)" Importance="High" Condition="'$(ScopeStringFromTask)' != '' " />
   </Target>
 
   <Target Name="ExecUtil" >
@@ -56,7 +56,11 @@
     />
   </Target>
 
-  <Target Name="UpdateApiTagInfo" Condition=" '$(CIBuildId)' == '' ">
+  <!-- Due to lack of feature in netcore, currently cannot execute this target for .net core 
+  https://github.com/microsoft/msbuild/blob/master/documentation/specs/task-isolation-and-dependencies.md
+  -->
+  <Target Name="UpdateApiTagInfo" Condition=" '$(DotNetRuntimeContext)' != 'Core' ">
+    <Message Text="CIBuild ..... $(CIBuild)" Condition=" '$(CIBuild)' == '' " />
     <Message Text="Updating ApiTag Info......" Condition=" '$(SDKProjects)' != '' " />
 
     <ItemGroup>
@@ -69,9 +73,11 @@
 
     <!-- ArtifactRootDir structure .... artifacts\bin\Microsoft.Azure.Management.Billing\Debug\netstandard2.0\Microsoft.Azure.Management.Billing.dll 
     GeneratedAssemblyRootDirPath="$(ArtifactsRootDir)"
+    TaskBinRootDir="$(CustomTaskDirectory)"
     -->
     <UpdateNetSdkApiTagInfoTask
-      ProjectFilePaths="@(ProjectFilePathList)"      
+      ProjectFilePaths="@(ProjectFilePathList)"
+      Condition=" '$(CIBuildId)' == '' "
     />
   </Target>
 

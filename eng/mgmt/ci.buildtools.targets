@@ -26,7 +26,8 @@
             BuildTasksProjects;
         </BuildProjectDependsOn>
         <BuildToolsPackageDependsOn>
-            $(RestoreProjectDependsOn);
+            $(CleanProjectDependsOn);
+            $(RestoreProjectDependsOn);            
             PublishTasksProjects;
             BuildToolsPackageTarget
         </BuildToolsPackageDependsOn>
@@ -47,20 +48,24 @@
             ContinueOnError="ErrorAndStop" />
 
         <ItemGroup>
-            <ArtiDirs Include="$(RepositoryRoot)\artifacts\bin\Microsoft.Internal.AznetSdk.CITools" />
+            <!-- <ArtiDirs Include="$(RepositoryRoot)\artifacts\bin\Microsoft.Internal.AznetSdk.CITools" />
             <ArtiDirs Include="$(RepositoryRoot)\artifacts\bin\MS.Az.Mgmt.CI.BuildTasks" />
             <ArtiDirs Include="$(RepositoryRoot)\artifacts\bin\MS.Az.Mgmt.CI.Common" />
             <ArtiDirs Include="$(RepositoryRoot)\artifacts\bin\Tests.CI.Common" />
-            <ArtiDirs Include="$(RepositoryRoot)\artifacts\bin\Tests.CI.BuildTasks" />
+            <ArtiDirs Include="$(RepositoryRoot)\artifacts\bin\Tests.CI.BuildTasks" /> -->
+            <ArtiDirs Include="$(RepositoryRoot)\artifacts\obj" />
+            <ArtiDirs Include="$(RepositoryRoot)\artifacts\bin" />
+            <ArtiDirs Include="$(RepositoryRoot)\artifacts\packages" />
         </ItemGroup>
 
         <Message Text = "Artifacts dirs...... @(ArtiDirs)" />
 
         <!-- Need to check all conditions due to https://github.com/Microsoft/msbuild/issues/4105 -->
         <RemoveDir Condition="'$(RepoNugetRestoreDir)' != '' OR '$(RepoNugetRestoreDir)' != '\' OR '$(RepoNugetRestoreDir)' != '/' " Directories="$(RepoNugetRestoreDir)" />
-        <RemoveDir Condition=" '$(ArtiDirs)' != '' OR '$(ArtiDirs)' != '\' OR '$(ArtiDirs)' != '/' " Directories="@(ArtiDirs)" />
+        <RemoveDir Condition=" '@(ArtiDirs)' != '' OR '@(ArtiDirs)' != '\' OR '@(ArtiDirs)' != '/' " Directories="@(ArtiDirs)" />
         <RemoveDir Condition="'$(CINugPkgPublish_NetStd20Dir)' != '' OR '$(CINugPkgPublish_NetStd20Dir)' != '\' OR '$(CINugPkgPublish_NetStd20Dir)' != '/' " Directories="$(CINugPkgPublish_NetStd20Dir)" />
         <RemoveDir Condition="'$(CINugPkgPublish_Net461Dir)' != '' OR '$(CINugPkgPublish_Net461Dir)' != '\' OR '$(CINugPkgPublish_Net461Dir)' != '/' " Directories="$(CINugPkgPublish_Net461Dir)" />
+        <!-- <RemoveDir Directories="$(RepositoryRoot)\artifacts\obj\" /> -->
     </Target>
 
     <Target Name="RestoreTasksProjects">
@@ -182,11 +187,10 @@
         <Message Text="Publishing Projects........." />
         <Message Text="@(ProjectsToPublish.Identity)" Condition=" '$(DebugTraceEnv)' == 'true' " />
 
-        <Exec Command="dotnet publish %(ProjectsToPublish.Identity) -f netcoreapp2.1 -o $(NugPkgPublishDir) "  />
-        
-        
-        <Copy SourceFiles="@(Net461NativeFilesToBeCopied)" DestinationFolder="$(PlatWin32DirPath)\..\..\..\" SkipUnchangedFiles="true" />
+        <Exec Command="dotnet publish %(ProjectsToPublish.Identity) -f netstandard2.0 -o $(NugPkgPublishDir) -r win10-x64"  />
         <!--
+        <Exec Command="dotnet publish %(ProjectsToPublish.Identity) -f netcoreapp2.1 -o $(CINugPkgPublish_NetCoreApp21Dir) "  />
+        <Exec Command="dotnet publish %(ProjectsToPublish.Identity) -f netcoreapp2.1 -o $(CINugPkgPublish_NetCoreApp21Dir) "  />
         -r win10-x64
         <Exec Command="dotnet publish %(ProjectsToPublish.Identity) -f netstandard2.0 -o $(NugPkgUbuntuPublishDir) -r ubuntu-x64" />
         Condition=" '$(PublishNet461)' == 'true' "

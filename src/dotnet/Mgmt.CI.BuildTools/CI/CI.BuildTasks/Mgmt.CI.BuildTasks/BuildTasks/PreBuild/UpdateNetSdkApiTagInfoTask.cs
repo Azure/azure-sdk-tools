@@ -224,7 +224,6 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
         /// <returns></returns>
         private string GetApiFromSdkInfo(string binaryPath)
         {
-            //ReflectionService refSvc = new ReflectionService(binaryPath, false);
             RefSvc.AssemblyToReflectFilePath = binaryPath;
             RefSvc.UseMetadataLoadContext = false;
             List<PropertyInfo> props = RefSvc.GetProperties(APIMAPTYPENAMETOSEARCH, PROPERTYNAMEPREFIX);

@@ -14,7 +14,7 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <PropertyGroup>
-		<TargetFrameworks>net461;netstandard2.0;netcoreapp2.1</TargetFrameworks>		
+		<TargetFrameworks>$(CurrentTargetFxVersion)</TargetFrameworks>		
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="Models\Backup_SdkProjectMetaData.cs" />

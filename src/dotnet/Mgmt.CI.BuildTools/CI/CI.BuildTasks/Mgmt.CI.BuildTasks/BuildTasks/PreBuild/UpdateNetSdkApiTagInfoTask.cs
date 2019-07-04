@@ -33,6 +33,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
         //string _apiMapTag;
         FileSystemUtility _fileSysUtil;
         SDKMSBTaskItem[] _sdkProjectFilePaths;
+        ReflectionService _refSvc;
         #endregion
 
         #region Properties        
@@ -69,8 +70,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
         public ITaskItem[] ProjectFilePaths { get; set; }
         #endregion
 
-        #region other properties
-                
+        #region other properties                
         List<ExpandoObject> AssemblyInfoList { get; set; }
         FileSystemUtility FileSysUtil
         {
@@ -82,6 +82,19 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
                 }
 
                 return _fileSysUtil;
+            }
+        }
+
+        ReflectionService RefSvc
+        {
+            get
+            {
+                if(_refSvc == null)
+                {
+                    _refSvc = new ReflectionService();
+                }
+
+                return _refSvc;
             }
         }
 
@@ -211,8 +224,10 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
         /// <returns></returns>
         private string GetApiFromSdkInfo(string binaryPath)
         {
-            ReflectionService refSvc = new ReflectionService(binaryPath, false);
-            List<PropertyInfo> props = refSvc.GetProperties(APIMAPTYPENAMETOSEARCH, PROPERTYNAMEPREFIX);
+            //ReflectionService refSvc = new ReflectionService(binaryPath, false);
+            RefSvc.AssemblyToReflectFilePath = binaryPath;
+            RefSvc.UseMetadataLoadContext = false;
+            List<PropertyInfo> props = RefSvc.GetProperties(APIMAPTYPENAMETOSEARCH, PROPERTYNAMEPREFIX);
             List<Tuple<string, string, string>> combinedApiMap = new List<Tuple<string, string, string>>();
             StringBuilder sb = new StringBuilder();
 

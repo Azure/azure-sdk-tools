@@ -102,13 +102,14 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
         {
             get
             {
-                if(_ghSvc == null)
+                if (_ghSvc == null)
                 {
                     // string accTkn = KVSvc.GetSecret(CommonConstants.AzureAuth.KVInfo.Secrets.GH_AdxSdkNetAcccesToken);
 
                     // hard coding this, the downside is, the read limit can be reached early if this token is misused.
                     // this token does not allow to do any writes, so we should be ok.
-                  _ghSvc = new GitHubService(TaskLogger, Encoding.ASCII.GetString(Convert.FromBase64String(Common.CommonConstants.AzureAuth.KVInfo.Secrets.GH_AccTkn)));
+                    _ghSvc = new GitHubService(TaskLogger, Encoding.ASCII.GetString(Convert.FromBase64String(Common.CommonConstants.AzureAuth.KVInfo.Secrets.GH_AccTkn)));
+
                 }
 
                 return _ghSvc;
@@ -204,34 +205,39 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
                     repoName = tokens[tokens.Length - 1];
                 }
 
-                prFileList = GHSvc.PR.GetPullRequestFileList(repoName, GH_PRNumber);
-            }
-            //else if (GH_RepositoryId > 0)
-            //{
-            //    TaskLogger.LogInfo("Trying to get Pr info using PrNumber:'{0}', GitHub Repo Id:'{1}'", GH_PRNumber.ToString(), GH_RepositoryId.ToString());
-            //    prFileList = GHSvc.PR.GetPullRequestFileList(GH_RepositoryId, GH_PRNumber);
-            //}
-
-            TaskLogger.LogInfo(MessageImportance.Low, prFileList, "List of files from PR");
-            Dictionary<string, string> RPDirs = FindScopeFromPullRequestFileList(prFileList);
-
-            if (RPDirs.NotNullOrAny<KeyValuePair<string, string>>())
-            {
-                intermediateList = RPDirs.Select<KeyValuePair<string, string>, string>((item) => item.Key).ToList<string>();
-            }
-
-            if (DetectEnv.IsRunningUnderNonWindows)
-            {
-                foreach (string scopePath in intermediateList)
+                if (GHSvc.IsRepoAuthorized(GitHubRepositoryHtmlUrl))
                 {
-                    string newPath = scopePath.Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-                    finalScopePathList.Add(newPath);
+                    prFileList = GHSvc.PR.GetPullRequestFileList(repoName, GH_PRNumber);
+                }
+                else
+                {
+                    TaskLogger.LogWarning("You are not authorized to access '{0}', skipping detecting RP Scope", GitHubRepositoryHtmlUrl);
                 }
             }
-            else
+
+            if(prFileList != null)
             {
-                finalScopePathList = intermediateList;
-            }
+                TaskLogger.LogInfo(MessageImportance.Low, prFileList, "List of files from PR");
+                Dictionary<string, string> RPDirs = FindScopeFromPullRequestFileList(prFileList);
+
+                if (RPDirs.NotNullOrAny<KeyValuePair<string, string>>())
+                {
+                    intermediateList = RPDirs.Select<KeyValuePair<string, string>, string>((item) => item.Key).ToList<string>();
+                }
+
+                if (DetectEnv.IsRunningUnderNonWindows)
+                {
+                    foreach (string scopePath in intermediateList)
+                    {
+                        string newPath = scopePath.Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                        finalScopePathList.Add(newPath);
+                    }
+                }
+                else
+                {
+                    finalScopePathList = intermediateList;
+                }
+            }            
 
             return finalScopePathList;
         }

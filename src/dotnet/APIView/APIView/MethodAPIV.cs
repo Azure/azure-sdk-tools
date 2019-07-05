@@ -14,6 +14,7 @@ namespace APIView
         public string ReturnType { get; set; }
         public string Accessibility { get; set; }
 
+        public bool IsConstructor { get; set; }
         public bool IsInterfaceMethod { get; set; }
         public bool IsStatic { get; set; }
         public bool IsVirtual { get; set; }
@@ -22,7 +23,7 @@ namespace APIView
         public bool IsAbstract { get; set; }
         public bool IsExtern { get; set; }
 
-        public string[] Attributes { get; set; }
+        public AttributeAPIV[] Attributes { get; set; }
         public ParameterAPIV[] Parameters { get; set; }
         public TypeParameterAPIV[] TypeParameters { get; set; }
 
@@ -34,9 +35,11 @@ namespace APIView
         /// <param name="symbol">The symbol representing the method.</param>
         public MethodAPIV(IMethodSymbol symbol)
         {
+            this.IsConstructor = false;
             if (symbol.MethodKind == MethodKind.Constructor)
             {
                 this.Name = symbol.ContainingType.Name;
+                this.IsConstructor = true;
                 this.ReturnType = "";
             }
             else
@@ -54,13 +57,13 @@ namespace APIView
             this.IsAbstract = symbol.IsAbstract;
             this.IsExtern = symbol.IsExtern;
 
-            List<string> attributes = new List<string>();
+            List<AttributeAPIV> attributes = new List<AttributeAPIV>();
             List<TypeParameterAPIV> typeParameters = new List<TypeParameterAPIV>();
             List<ParameterAPIV> parameters = new List<ParameterAPIV>();
 
             foreach (AttributeData attribute in symbol.GetAttributes())
             {
-                attributes.Add(attribute.ToString());
+                attributes.Add(new AttributeAPIV(attribute));
             }
             foreach (ITypeParameterSymbol typeParam in symbol.TypeParameters)
             {
@@ -79,7 +82,8 @@ namespace APIView
         public override string ToString()
         {
             var returnString = new StringBuilder();
-            TreeRendererAPIV.RenderText(this, returnString);
+            var renderer = new TextRendererAPIV();
+            renderer.Render(this, returnString);
             return returnString.ToString();
         }
     }

@@ -2,6 +2,8 @@
 using APIView;
 using Xunit;
 using System;
+using System.Text;
+using TestLibrary;
 
 namespace APIViewTest
 {
@@ -162,6 +164,69 @@ namespace APIViewTest
             }
 
             Assert.True(constructorFound);
+        }
+
+        [Fact]
+        public void NamedTypeTestImplementingHTMLRender()
+        {
+            var p = new PropertyAPIV
+            {
+                Name = "TestProperty",
+                Type = "string",
+                Accessibility = "protected",
+                IsAbstract = false,
+                IsVirtual = false,
+                HasSetMethod = true
+            };
+
+            var nt = new NamedTypeAPIV
+            {
+                Name = "ImplementingClass",
+                Type = "class",
+                Accessibility = "public",
+                Events = new EventAPIV[] { },
+                Fields = new FieldAPIV[] { },
+                Implementations = new string[] { "BaseClass" },
+                Methods = new MethodAPIV[] { },
+                NamedTypes = new NamedTypeAPIV[] { },
+                Properties = new PropertyAPIV[] { p },
+                TypeParameters = new TypeParameterAPIV[] { }
+            };
+            var builder = new StringBuilder();
+            var renderer = new HTMLRendererAPIV();
+            renderer.Render(nt, builder);
+            Assert.Equal("<span class=\"keyword\">public</span> <span class=\"specialName\">class</span> <span class=\"class\">ImplementingClass</span> : " +
+                "<span class=\"class\">BaseClass</span> {<br />    <span class=\"keyword\">protected</span> <span class=\"type\">string</span> <span class" +
+                "=\"name\">TestProperty</span> { <span class=\"keyword\">get</span>; <span class=\"keyword\">set</span>; }<br />}", builder.ToString());
+        }
+
+        [Fact]
+        public void NamedTypeTestTypeParamHTMLRender()
+        {
+            var tp = new TypeParameterAPIV
+            {
+                Name = "T",
+                Attributes = new string[] { }
+            };
+
+            var nt = new NamedTypeAPIV
+            {
+                Name = "TestInterface",
+                Type = "interface",
+                Accessibility = "public",
+                Events = new EventAPIV[] { },
+                Fields = new FieldAPIV[] { },
+                Implementations = new string[] { },
+                Methods = new MethodAPIV[] { },
+                NamedTypes = new NamedTypeAPIV[] { },
+                Properties = new PropertyAPIV[] { },
+                TypeParameters = new TypeParameterAPIV[] { tp }
+            };
+            var builder = new StringBuilder();
+            var renderer = new HTMLRendererAPIV();
+            renderer.Render(nt, builder);
+            Assert.Equal("<span class=\"keyword\">public</span> <span class=\"specialName\">interface</span> <span class=\"class\">TestInterface</span>&lt;" +
+                "<span class=\"type\">T</span>&gt; {<br />}", builder.ToString());
         }
     }
 }

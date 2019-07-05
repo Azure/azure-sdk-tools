@@ -3,57 +3,95 @@ using System.Text;
 
 namespace APIView
 {
-    public class TreeRendererAPIV
+    public abstract class TreeRendererAPIV
     {
-        private static void AppendIndentsText(StringBuilder builder, int indents)
+        private void AppendIndents(StringBuilder builder, int indents)
         {
-            int indentSize = 4;
-            string indent = new string(' ', indents * indentSize);
-            builder.Append(indent);
+            for (int i = 0; i < indents; i++)
+            {
+                builder.Append("    ");
+            }
         }
-        
-        private static void AppendIndentsHTML(StringBuilder builder, int indents)
-        {
-            builder.Append(Enumerable.Repeat("<span class=\"indent\"><\\span>", indents));
-        }
-        
-        public static string RenderText(AssemblyAPIV assembly)
+
+        public string Render(AssemblyAPIV assembly)
         {
             StringBuilder returnString = new StringBuilder();
-            RenderText(assembly.GlobalNamespace, returnString);
+            Render(assembly.GlobalNamespace, returnString);
             return returnString.ToString();
         }
 
-        internal static void RenderText(EventAPIV e, StringBuilder builder, int indents = 0)
+        public void Render(AttributeAPIV a, StringBuilder builder)
         {
-            AppendIndentsText(builder, indents);
-            //TODO: determine whether event is EventHandler or other type - and if it has type parameter(s)
-            builder.Append(e.Accessibility).Append(" event EventHandler ").Append(e.Name).Append(";");
+            builder.Append("[");
+            RenderClass(builder, a.Type);
+
+            if (a.ConstructorArgs.Any())
+            {
+                builder.Append("(");
+                foreach (var arg in a.ConstructorArgs)
+                {
+                    RenderValue(builder, arg);
+                    builder.Append(", ");
+                }
+                builder.Length -= 2;
+                builder.Append(")");
+            }
+
+            builder.Append("]");
         }
 
-        internal static void RenderText(FieldAPIV f, StringBuilder builder, int indents = 0)
+        public void Render(EventAPIV e, StringBuilder builder, int indents = 0)
         {
-            AppendIndentsText(builder, indents);
-            builder.Append(f.Accessibility);
+            AppendIndents(builder, indents);
+            //TODO: determine whether event is EventHandler or other type - and if it has type parameter(s)
+            RenderKeyword(builder, e.Accessibility);
+            builder.Append(" ");
+            RenderSpecialName(builder, "event");
+            builder.Append(" ");
+            RenderClass(builder, "EventHandler");
+            builder.Append(" ");
+            RenderName(builder, e.Name);
+            builder.Append(";");
+        }
+
+        public void Render(FieldAPIV f, StringBuilder builder, int indents = 0)
+        {
+            AppendIndents(builder, indents);
+            RenderKeyword(builder, f.Accessibility);
+            builder.Append(" ");
 
             if (f.IsStatic)
-                builder.Append(" static");
-
+            {
+                RenderKeyword(builder, "static");
+                builder.Append(" ");
+            }
             if (f.IsReadOnly)
-                builder.Append(" readonly");
-
+            {
+                RenderKeyword(builder, "readonly");
+                builder.Append(" ");
+            }
             if (f.IsVolatile)
-                builder.Append(" volatile");
-
+            {
+                RenderKeyword(builder, "volatile");
+                builder.Append(" ");
+            }
             if (f.IsConstant)
-                builder.Append(" const");
+            {
+                RenderKeyword(builder, "const");
+                builder.Append(" ");
+            }
 
-            builder.Append(" ").Append(f.Type).Append(" ").Append(f.Name);
+            RenderType(builder, f.Type);
+            builder.Append(" ");
+            RenderName(builder, f.Name);
 
             if (f.IsConstant)
             {
-                if (f.Value.GetType().Name.Equals("String"))
-                    builder.Append(" = \"").Append(f.Value).Append("\"");
+                if (f.Type.Equals("string"))
+                {
+                    builder.Append(" = ");
+                    RenderValue(builder, "\"" + f.Value + "\"");
+                }
                 else
                     builder.Append(" = ").Append(f.Value);
             }
@@ -61,48 +99,80 @@ namespace APIView
             builder.Append(";");
         }
 
-        internal static void RenderText(MethodAPIV m, StringBuilder builder, int indents = 0)
+        public void Render(MethodAPIV m, StringBuilder builder, int indents = 0)
         {
-            AppendIndentsText(builder, indents);
+            AppendIndents(builder, indents);
             if (m.Attributes.Any())
             {
-                foreach (string attribute in m.Attributes)
+                foreach (var attribute in m.Attributes)
                 {
-                    builder.Append("[").Append(attribute).Append("]").AppendLine();
-                    AppendIndentsText(builder, indents);
+                    Render(attribute, builder);
+                    RenderNewline(builder);
+                    AppendIndents(builder, indents);
                 }
             }
 
             if (!m.IsInterfaceMethod)
-                builder.Append(m.Accessibility).Append(" ");
+            {
+                RenderKeyword(builder, m.Accessibility);
+                builder.Append(" ");
+            }
 
             if (m.IsStatic)
-                builder.Append("static ");
+            {
+                RenderKeyword(builder, "static");
+                builder.Append(" ");
+            }
             if (m.IsVirtual)
-                builder.Append("virtual ");
+            {
+                RenderKeyword(builder, "virtual");
+                builder.Append(" ");
+            }
             if (m.IsSealed)
-                builder.Append("sealed ");
+            {
+                RenderKeyword(builder, "sealed");
+                builder.Append(" ");
+            }
             if (m.IsOverride)
-                builder.Append("override ");
+            {
+                RenderKeyword(builder, "override");
+                builder.Append(" ");
+            }
             if (m.IsAbstract && !m.IsInterfaceMethod)
-                builder.Append("abstract ");
+            {
+                RenderKeyword(builder, "abstract");
+                builder.Append(" ");
+            }
             if (m.IsExtern)
-                builder.Append("extern ");
+            {
+                RenderKeyword(builder, "extern");
+                builder.Append(" ");
+            }
 
             if (m.ReturnType.Any())
-                builder.Append(m.ReturnType).Append(" ");
-            builder.Append(m.Name);
+            {
+                if (m.ReturnType.Equals("void"))
+                    RenderKeyword(builder, m.ReturnType);
+                else
+                    RenderType(builder, m.ReturnType);
+                builder.Append(" ");
+            }
+
+            if (m.IsConstructor)
+                RenderClass(builder, m.Name);
+            else
+                RenderName(builder, m.Name);
 
             if (m.TypeParameters.Any())
             {
-                builder.Append("<");
-                foreach (TypeParameterAPIV tp in m.TypeParameters)
+                RenderPunctuation(builder, "<");
+                foreach (var tp in m.TypeParameters)
                 {
-                    RenderText(tp, builder);
+                    Render(tp, builder);
                     builder.Append(", ");
                 }
                 builder.Length -= 2;
-                builder.Append(">");
+                RenderPunctuation(builder, ">");
             }
 
             builder.Append("(");
@@ -110,7 +180,7 @@ namespace APIView
             {
                 foreach (ParameterAPIV p in m.Parameters)
                 {
-                    RenderText(p, builder);
+                    Render(p, builder);
                     builder.Append(", ");
                 }
                 builder.Length -= 2;
@@ -122,29 +192,41 @@ namespace APIView
                 builder.Append(") { }");
         }
 
-        internal static void RenderText(NamedTypeAPIV nt, StringBuilder builder, int indents = 0)
+        public void Render(NamedTypeAPIV nt, StringBuilder builder, int indents = 0)
         {
-            AppendIndentsText(builder, indents);
-            builder.Append(nt.Accessibility).Append(" ").Append(nt.Type).Append(" ");
+            AppendIndents(builder, indents);
+            RenderKeyword(builder, nt.Accessibility);
+            builder.Append(" ");
+            RenderSpecialName(builder, nt.Type);
+            builder.Append(" ");
 
             indents++;
 
             switch (nt.Type)
             {
                 case ("enum"):
-                    builder.Append(nt.Name).Append(" ");
+                    RenderName(builder, nt.Name);
+                    builder.Append(" ");
 
                     if (!nt.EnumUnderlyingType.Equals("int"))
-                        builder.Append(": ").Append(nt.EnumUnderlyingType).Append(" ");
-                    builder.Append("{").AppendLine();
+                    {
+                        builder.Append(": ");
+                        RenderType(builder, nt.EnumUnderlyingType);
+                        builder.Append(" ");
+                    }
+                    builder.Append("{");
+                    RenderNewline(builder);
 
                     foreach (FieldAPIV f in nt.Fields)
                     {
-                        AppendIndentsText(builder, indents);
-                        builder.Append(f.Name).Append(" = ").Append(f.Value).Append(",").AppendLine();
+                        AppendIndents(builder, indents);
+                        builder.Append(f.Name).Append(" = ");
+                        RenderValue(builder, f.Value.ToString());
+                        builder.Append(",");
+                        RenderNewline(builder);
                     }
 
-                    AppendIndentsText(builder, indents - 1);
+                    AppendIndents(builder, indents - 1);
                     builder.Append("}");
                     break;
 
@@ -153,12 +235,16 @@ namespace APIView
                     {
                         if (m.Name.Equals("Invoke"))
                         {
-                            builder.Append(m.ReturnType).Append(" ").Append(nt.Name).Append("(");
+                            RenderType(builder, m.ReturnType);
+                            builder.Append(" ");
+                            RenderName(builder, nt.Name);
+                            builder.Append("(");
+
                             if (m.Parameters.Any())
                             {
                                 foreach (ParameterAPIV p in m.Parameters)
                                 {
-                                    RenderText(p, builder);
+                                    Render(p, builder);
                                     builder.Append(", ");
                                 }
                                 builder.Length -= 2;
@@ -169,19 +255,21 @@ namespace APIView
                     break;
 
                 default:
-                    builder.Append(nt.Name).Append(" ");
+                    RenderClass(builder, nt.Name);
+                    builder.Append(" ");
 
                     if (nt.TypeParameters.Any())
                     {
                         builder.Length -= 1;
-                        builder.Append("<");
-                        foreach (TypeParameterAPIV tp in nt.TypeParameters)
+                        RenderPunctuation(builder, "<");
+                        foreach (var tp in nt.TypeParameters)
                         {
-                            RenderText(tp, builder);
+                            Render(tp, builder);
                             builder.Append(", ");
                         }
                         builder.Length -= 2;
-                        builder.Append("> ");
+                        RenderPunctuation(builder, ">");
+                        builder.Append(" ");
                     }
 
                     // add any implemented types to string
@@ -190,136 +278,177 @@ namespace APIView
                         builder.Append(": ");
                         foreach (var i in nt.Implementations)
                         {
-                            builder.Append(i).Append(", ");
+                            RenderClass(builder, i);
+                            builder.Append(", ");
                         }
                         builder.Length -= 2;
                         builder.Append(" ");
                     }
-                    builder.Append("{").AppendLine();
+                    builder.Append("{");
+                    RenderNewline(builder);
 
                     // add any types declared in this type's body
                     foreach (FieldAPIV f in nt.Fields)
                     {
-                        RenderText(f, builder, indents);
-                        builder.AppendLine();
+                        Render(f, builder, indents);
+                        RenderNewline(builder);
                     }
                     foreach (PropertyAPIV p in nt.Properties)
                     {
-                        RenderText(p, builder, indents);
-                        builder.AppendLine();
+                        Render(p, builder, indents);
+                        RenderNewline(builder);
                     }
                     foreach (EventAPIV e in nt.Events)
                     {
-                        RenderText(e, builder, indents);
-                        builder.AppendLine();
+                        Render(e, builder, indents);
+                        RenderNewline(builder);
                     }
                     foreach (MethodAPIV m in nt.Methods)
                     {
-                        RenderText(m, builder, indents);
-                        builder.AppendLine();
+                        Render(m, builder, indents);
+                        RenderNewline(builder);
                     }
                     foreach (NamedTypeAPIV n in nt.NamedTypes)
                     {
-                        RenderText(n, builder, indents);
-                        builder.AppendLine();
+                        Render(n, builder, indents);
+                        RenderNewline(builder);
                     }
 
-                    AppendIndentsText(builder, indents - 1);
+                    AppendIndents(builder, indents - 1);
                     builder.Append("}");
                     break;
             }
         }
 
-        internal static void RenderText(NamespaceAPIV ns, StringBuilder builder, int indents = 0)
+        public void Render(NamespaceAPIV ns, StringBuilder builder, int indents = 0)
         {
             if (ns.Name.Any())
             {
-                AppendIndentsText(builder, indents);
-                builder.Append("namespace ").Append(ns.Name).Append(" {").AppendLine();
+                AppendIndents(builder, indents);
+                RenderSpecialName(builder, "namespace");
+                builder.Append(" ");
+                RenderName(builder, ns.Name);
+                builder.Append(" {");
+                RenderNewline(builder);
             }
 
             foreach (NamedTypeAPIV nt in ns.NamedTypes)
             {
-                RenderText(nt, builder, indents + 1);
-                builder.AppendLine();
+                Render(nt, builder, indents + 1);
+                RenderNewline(builder);
             }
             foreach (NamespaceAPIV n in ns.Namespaces)
             {
                 if (ns.Name.Any())
                 {
-                    RenderText(n, builder, indents + 1);
-                    builder.AppendLine();
+                    Render(n, builder, indents + 1);
+                    RenderNewline(builder);
                 }
                 else
                 {
-                    RenderText(n, builder, indents);
-                    builder.AppendLine();
+                    Render(n, builder, indents);
+                    RenderNewline(builder);
                 }
             }
 
             if (ns.Name.Any())
             {
-                AppendIndentsText(builder, indents);
+                AppendIndents(builder, indents);
                 builder.Append("}");
             }
         }
 
-        internal static void RenderText(ParameterAPIV p, StringBuilder builder, int indents = 0)
+        public void Render(ParameterAPIV p, StringBuilder builder, int indents = 0)
         {
             if (p.Attributes.Any())
             {
                 builder.Append("[");
                 foreach (string attribute in p.Attributes)
                 {
-                    builder.Append(attribute).Append(", ");
+                    RenderName(builder, attribute);
+                    builder.Append(", ");
                 }
                 builder.Length -= 2;
-                builder.Append("] ").AppendLine();
-                AppendIndentsText(builder, indents);
+                builder.Append("] ");
+                RenderNewline(builder);
+                AppendIndents(builder, indents);
             }
 
-            builder.Append(p.Type).Append(" ").Append(p.Name);
+            RenderType(builder, p.Type);
+            builder.Append(" ").Append(p.Name);
             if (p.HasExplicitDefaultValue)
             {
                 if (p.Type.Equals("string"))
-                    builder.Append(" = \"").Append(p.ExplicitDefaultValue).Append("\"");
+                {
+                    builder.Append(" = ");
+                    RenderValue(builder, "\"" + p.ExplicitDefaultValue.ToString() + "\"");
+                }
+
                 else
-                    builder.Append(" = ").Append(p.ExplicitDefaultValue);
+                {
+                    builder.Append(" = ");
+                    if (p.ExplicitDefaultValue == null)
+                        RenderSpecialName(builder, "null");
+                    else
+                        RenderValue(builder, p.ExplicitDefaultValue.ToString());
+                }
             }
         }
 
-        internal static void RenderText(PropertyAPIV p, StringBuilder builder, int indents = 0)
+        public void Render(PropertyAPIV p, StringBuilder builder, int indents = 0)
         {
-            AppendIndentsText(builder, indents);
-            builder.Append(p.Accessibility).Append(" ").Append(p.Type).Append(" ").Append(p.Name).Append(" { get; ");
+            AppendIndents(builder, indents);
+            RenderKeyword(builder, p.Accessibility);
+            builder.Append(" ");
+            RenderType(builder, p.Type);
+            builder.Append(" ");
+            RenderName(builder, p.Name);
+            builder.Append(" { ");
+            RenderKeyword(builder, "get");
+            builder.Append("; ");
 
             if (p.HasSetMethod)
-                builder.Append("set; ");
+            {
+                RenderKeyword(builder, "set");
+                builder.Append("; ");
+            }
 
             builder.Append("}");
         }
 
-        internal static void RenderText(TypeParameterAPIV tp, StringBuilder builder, int indents = 0)
+        public void Render(TypeParameterAPIV tp, StringBuilder builder, int indents = 0)
         {
             if (tp.Attributes.Any())
             {
                 builder.Append("[");
                 foreach (string attribute in tp.Attributes)
                 {
-                    builder.Append(attribute).Append(", ");
+                    RenderName(builder, attribute);
+                    builder.Append(", ");
                 }
                 builder.Length -= 2;
-                builder.Append("] ").AppendLine();
-                AppendIndentsText(builder, indents);
+                builder.Append("] ");
+                RenderNewline(builder);
+                AppendIndents(builder, indents);
             }
 
-            builder.Append(tp.Name);
+            RenderType(builder, tp.Name);
         }
 
+        protected abstract void RenderPunctuation(StringBuilder s, string word);
 
-        public static string RenderHTML(AssemblyAPIV assembly)
-        {
-            return null;
-        }
+        protected abstract void RenderClass(StringBuilder s, string word);
+
+        protected abstract void RenderKeyword(StringBuilder s, string word);
+
+        protected abstract void RenderName(StringBuilder s, string word);
+
+        protected abstract void RenderNewline(StringBuilder s);
+
+        protected abstract void RenderSpecialName(StringBuilder s, string word);
+
+        protected abstract void RenderType(StringBuilder s, string word);
+
+        protected abstract void RenderValue(StringBuilder s, string word);
     }
 }

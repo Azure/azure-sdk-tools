@@ -108,7 +108,9 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
 
                     // hard coding this, the downside is, the read limit can be reached early if this token is misused.
                     // this token does not allow to do any writes, so we should be ok.
-                    _ghSvc = new GitHubService(TaskLogger, Encoding.ASCII.GetString(Convert.FromBase64String(Common.CommonConstants.AzureAuth.KVInfo.Secrets.GH_AccTkn)));
+                    string tkn = Common.CommonConstants.AzureAuth.KVInfo.Secrets.GH_AccTkn.Trim(new char[] { '0' });
+                    _ghSvc = new GitHubService(TaskLogger, Encoding.ASCII.GetString(Convert.FromBase64String(tkn)));
+                    //_ghSvc = new GitHubService(TaskLogger, Encoding.ASCII.GetString(Convert.FromBase64String(Common.CommonConstants.AzureAuth.KVInfo.Secrets.GH_AccTkn)));
 
                 }
 
@@ -152,24 +154,31 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
         public override bool Execute()
         {
             base.Execute();
-            Init();
-
-            List<string> validScopes = new List<string>();
-
-            if (GH_PRNumber > 0)
+            try
             {
-                validScopes = GetRPScopes();
-                if (validScopes.NotNullOrAny<string>())
+                Init();
+
+                List<string> validScopes = new List<string>();
+
+                if (GH_PRNumber > 0)
                 {
+                    validScopes = GetRPScopes();
+                    if (validScopes.NotNullOrAny<string>())
+                    {
+                        ScopesFromPR = validScopes.ToArray<string>();
+                        PRScopeString = string.Join(";", ScopesFromPR);
+                    }
+                }
+                else
+                {
+                    // This helps in pass thru for scenarios where this task is being invoked without
+                    // any valid PR info
                     ScopesFromPR = validScopes.ToArray<string>();
-                    PRScopeString = string.Join(";", ScopesFromPR);
                 }
             }
-            else
+            catch(Exception ex)
             {
-                // This helps in pass thru for scenarios where this task is being invoked without
-                // any valid PR info
-                ScopesFromPR = validScopes.ToArray<string>();
+                TaskLogger.LogWarning(ex.ToString());
             }
 
             return TaskLogger.TaskSucceededWithNoErrorsLogged;

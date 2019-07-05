@@ -140,8 +140,8 @@ namespace APIViewTest
             var builder = new StringBuilder();
             var renderer = new HTMLRendererAPIV();
             renderer.Render(m, builder);
-            Assert.Equal("<font class=\"keyword\">public</font> <font class=\"class\">TestClass</font>(<font class=\"type\">int</font> num" +
-                " = <font class=\"value\">2</font>) { }", builder.ToString());
+            Assert.Equal("<span class=\"keyword\">public</span> <span class=\"class\">TestClass</span>(<span class=\"type\">int</span> num" +
+                " = <span class=\"value\">2</span>) { }", builder.ToString());
         }
 
         [Fact]
@@ -173,8 +173,8 @@ namespace APIViewTest
             var builder = new StringBuilder();
             var renderer = new HTMLRendererAPIV();
             renderer.Render(m, builder);
-            Assert.Equal("[<font class=\"class\">TestAttribute</font>(<font class=\"value\">Test</font>, <font class=\"value\">\"String\"</font>)]<br />" +
-                "<font class=\"keyword\">public</font> <font class=\"keyword\">void</font> <font class=\"name\">TestMethod</font>() { }", builder.ToString());
+            Assert.Equal("[<span class=\"class\">TestAttribute</span>(<span class=\"value\">Test</span>, <span class=\"value\">\"String\"</span>)]<br />" +
+                "<span class=\"keyword\">public</span> <span class=\"keyword\">void</span> <span class=\"name\">TestMethod</span>() { }", builder.ToString());
         }
     }
 }

@@ -168,7 +168,7 @@ namespace APIView
                 builder.Append("<");
                 foreach (TypeParameterAPIV tp in m.TypeParameters)
                 {
-                    Render(tp, builder);
+                    builder.Append(Render(tp));
                     builder.Append(", ");
                 }
                 builder.Length -= 2;
@@ -260,13 +260,31 @@ namespace APIView
 
                     if (nt.TypeParameters.Any())
                     {
-                        RenderTypeParameters(nt, builder);
+                        builder.Length -= 1;
+                        var sb = new StringBuilder();
+                        sb.Append("&lt;");
+                        foreach (var tp in nt.TypeParameters)
+                        {
+                            sb.Append(Render(tp));
+                            sb.Append(", ");
+                        }
+                        sb.Length -= 2;
+                        sb.Append("&gt;");
+                        builder.Append(RenderPunctuation(sb.ToString()));
+                        builder.Append(" ");
                     }
 
                     // add any implemented types to string
                     if (nt.Implementations.Any())
                     {
-                        RenderImplementations(nt, builder);
+                        builder.Append(": ");
+                        foreach (var i in nt.Implementations)
+                        {
+                            RenderClass(builder, RenderPunctuation(i.Replace("<", "&lt;").Replace(">", "&gt;")));
+                            builder.Append(", ");
+                        }
+                        builder.Length -= 2;
+                        builder.Append(" ");
                     }
                     builder.Append("{");
                     RenderNewline(builder);
@@ -400,8 +418,9 @@ namespace APIView
             builder.Append("}");
         }
 
-        public void Render(TypeParameterAPIV tp, StringBuilder builder, int indents = 0)
+        public string Render(TypeParameterAPIV tp, int indents = 0)
         {
+            var builder = new StringBuilder();
             if (tp.Attributes.Any())
             {
                 builder.Append("[");
@@ -417,11 +436,10 @@ namespace APIView
             }
 
             RenderType(builder, tp.Name);
+            return builder.ToString();
         }
 
-        protected abstract void RenderImplementations(NamedTypeAPIV nt, StringBuilder s);
-
-        protected abstract void RenderTypeParameters(NamedTypeAPIV nt, StringBuilder s);
+        protected abstract string RenderPunctuation(string s);
 
         protected abstract void RenderClass(StringBuilder s, string word);
 

@@ -36,8 +36,8 @@ namespace APIViewTest
             var builder = new StringBuilder();
             var renderer = new HTMLRendererAPIV();
             renderer.Render(e, builder);
-            Assert.Equal("<font class=\"keyword\">public</font> <font class=\"specialName\">event</font> <font class=\"class\">" +
-                "EventHandler</font> <font class=\"name\">TestEvent</font>;", builder.ToString());
+            Assert.Equal("<span class=\"keyword\">public</span> <span class=\"specialName\">event</span> <span class=\"class\">" +
+                "EventHandler</span> <span class=\"name\">TestEvent</span>;", builder.ToString());
         }
     }
 }

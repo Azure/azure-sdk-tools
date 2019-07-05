@@ -4,29 +4,10 @@ namespace APIView
 {
     public class TextRendererAPIV : TreeRendererAPIV
     {
-        protected override void RenderImplementations(NamedTypeAPIV nt, StringBuilder builder)
+        protected override string RenderPunctuation(string s)
         {
-            builder.Append(": ");
-            foreach (var i in nt.Implementations)
-            {
-                RenderClass(builder, i);
-                builder.Append(", ");
-            }
-            builder.Length -= 2;
-            builder.Append(" ");
-        }
-
-        protected override void RenderTypeParameters(NamedTypeAPIV nt, StringBuilder builder)
-        {
-            builder.Length -= 1;
-            builder.Append("<");
-            foreach (TypeParameterAPIV tp in nt.TypeParameters)
-            {
-                Render(tp, builder);
-                builder.Append(", ");
-            }
-            builder.Length -= 2;
-            builder.Append("> ");
+            string returnString = s.Replace("&lt;", "<").Replace("&gt;", ">");
+            return returnString;
         }
 
         protected override void RenderClass(StringBuilder builder, string word)

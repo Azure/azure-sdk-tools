@@ -99,8 +99,8 @@ namespace APIViewTest
             var builder = new StringBuilder();
             var renderer = new HTMLRendererAPIV();
             renderer.Render(f, builder);
-            Assert.Equal("<font class=\"keyword\">public</font> <font class=\"keyword\">static</font> <font class=\"keyword\">const</font> <font class=\"type\">string</font>" +
-                " <font class=\"name\">publicString</font> = <font class=\"value\">\"constant string\"</font>;", builder.ToString());
+            Assert.Equal("<span class=\"keyword\">public</span> <span class=\"keyword\">static</span> <span class=\"keyword\">const</span> <span class=\"type\">string</span>" +
+                " <span class=\"name\">publicString</span> = <span class=\"value\">\"constant string\"</span>;", builder.ToString());
         }
     }
 }

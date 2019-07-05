@@ -56,7 +56,7 @@ namespace APIViewTest
             var builder = new StringBuilder();
             var renderer = new HTMLRendererAPIV();
             renderer.Render(ns, builder);
-            Assert.Equal("<font class=\"specialName\">namespace</font> <font class=\"name\">TestNamespace</font> {<br />}", builder.ToString());
+            Assert.Equal("<span class=\"specialName\">namespace</span> <span class=\"name\">TestNamespace</span> {<br />}", builder.ToString());
         }
     }
 }

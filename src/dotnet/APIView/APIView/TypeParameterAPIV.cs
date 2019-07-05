@@ -34,8 +34,10 @@ namespace APIView
 
         public override string ToString()
         {
+            var builder = new StringBuilder();
             var renderer = new TextRendererAPIV();
-            return renderer.Render(this);
+            renderer.Render(this, builder);
+            return builder.ToString();
         }
     }
 }

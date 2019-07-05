@@ -4,9 +4,9 @@ namespace APIView
 {
     public class HTMLRendererAPIV : TreeRendererAPIV
     {
-        protected override string RenderPunctuation(string s)
+        protected override void RenderPunctuation(StringBuilder builder, string word)
         {
-            return s;
+            builder.Append(word.Replace("<", "&lt;").Replace(">", "&gt;"));
         }
 
         protected override void RenderClass(StringBuilder builder, string word)

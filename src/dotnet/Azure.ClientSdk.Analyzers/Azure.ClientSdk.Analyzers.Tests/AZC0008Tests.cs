@@ -10,7 +10,7 @@ namespace Azure.ClientSdk.Analyzers.Tests
         private readonly DiagnosticAnalyzerRunner _runner = new DiagnosticAnalyzerRunner(new ClientOptionsAnalyzer());
 
         [Fact]
-        public async Task AZC0008ProducedForClientsOptionsWithoutServiceVersionEnum()
+        public async Task AZC0008ProducedForClientOptionsWithoutServiceVersionEnum()
         {
             var testSource = TestSource.Read(@"
 namespace RandomNamespace
@@ -29,7 +29,7 @@ namespace RandomNamespace
         }
 
         [Fact]
-        public async Task AZC0008NotProducedForClientsOptionsWithServiceVersionEnum()
+        public async Task AZC0008NotProducedForClientOptionsWithServiceVersionEnum()
         {
             var testSource = TestSource.Read(@"
 namespace RandomNamespace

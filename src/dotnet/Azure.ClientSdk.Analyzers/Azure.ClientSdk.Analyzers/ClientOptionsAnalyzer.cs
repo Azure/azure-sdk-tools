@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
+using System;
 using System.Collections.Immutable;
 using System.Linq;
 
@@ -14,12 +15,13 @@ namespace Azure.ClientSdk.Analyzers
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(new[]
         {
-            Descriptors.AZC0008
+            Descriptors.AZC0008,
+            Descriptors.AZC0009
         });
 
         public override void Initialize(AnalysisContext context)
         {
-            context.EnableConcurrentExecution();
+            //context.EnableConcurrentExecution();
 
             context.RegisterCompilationStartAction(
                 analysisContext =>
@@ -46,7 +48,36 @@ namespace Azure.ClientSdk.Analyzers
             if (serviceVersionEnum == null)
             {
                 context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0008, typeSymbol.Locations.First()));
+                return;
             }
+
+            foreach (var constructor in typeSymbol.Constructors)
+            {
+                if (constructor.DeclaredAccessibility == Accessibility.Public)
+                {
+                    if (constructor.Parameters == null || constructor.Parameters.Length == 0)
+                    {
+                        context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0009, constructor.Locations.First()));
+                        continue;
+                    }
+
+                    var firstParam = constructor.Parameters.FirstOrDefault();
+                    if (!IsServiceVersionParameter(firstParam))
+                    {
+                        context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0009, firstParam.Locations.First()));
+                    }
+                }
+            }
+        }
+
+        private bool IsServiceVersionParameter(IParameterSymbol symbol)
+        {
+            if (symbol == null)
+            {
+                return false;
+            }
+
+            return (symbol.Type.Name == "ServiceVersion" && symbol.Type.TypeKind == TypeKind.Enum);
         }
     }
 }

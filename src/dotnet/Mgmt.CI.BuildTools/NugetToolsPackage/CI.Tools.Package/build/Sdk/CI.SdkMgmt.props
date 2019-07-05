@@ -39,7 +39,6 @@
   <PropertyGroup>
     <DotNetRuntimeContext>$(MSBuildRuntimeType)</DotNetRuntimeContext>
     <FxVersionTasksToUse Condition=" '$(DotNetRuntimeContext)' == 'Core' ">netstandard2.0</FxVersionTasksToUse>
-    <!-- <FxVersionTasksToUse Condition=" '$(DotNetRuntimeContext)' == 'Core' ">netcoreapp2.1</FxVersionTasksToUse> -->
     <FxVersionTasksToUse Condition=" '$(FxVersionTasksToUse)' == '' AND '$(DotNetRuntimeContext)' != 'Core' ">net461</FxVersionTasksToUse>
   </PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildRuntimeType)' == 'Core'">

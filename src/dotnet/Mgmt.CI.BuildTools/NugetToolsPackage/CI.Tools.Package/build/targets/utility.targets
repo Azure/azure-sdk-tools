@@ -26,7 +26,7 @@
   </Target>
 
   <!--Condition=" '$(PullRequestNumber)' != '' AND '$(RepoHtmlUrl)' != '' " -->
-  <Target Name="FindRPScopeFromPR" Condition=" '$(PullRequestNumber)' != '' AND '$(RepoHtmlUrl)' != '' AND '$(DetectRPScope)' == 'true' ">
+  <Target Name="FindRPScopeFromPR" Condition=" '$(PullRequestNumber)' != '' AND '$(RepoHtmlUrl)' != '' ">
     <Message Text="Finding Scope..." />
     <Message Text="PullRequestNumber... $(PullRequestNumber)" />
     <Message Text="RepoHtmlUrl... $(RepoHtmlUrl)" />

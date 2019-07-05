@@ -140,6 +140,7 @@
 
   <Target Name="Package" Condition=" '@(CombinedNugetPkgProjects)' != '' ">
     <Message Text="Target ==> Package Initiated....." Importance="Low" />
+    <Message Text="Packaging..... @(CombinedNugetPkgProjects)" Importance="High" />
     <PropertyGroup> 
       <NugPkgOutPutDirPath>$(pkg_root_RepoNugPkgOutputDir)</NugPkgOutPutDirPath>
     </PropertyGroup>
@@ -149,7 +150,7 @@
     
     <Message Text="Packaging..... @(ProjectsToPackage)" Condition=" '$(ProjectsToPackage)' != '' " />
     <Message Text="PackageOutputDir....... $(NugPkgOutPutDirPath)" Condition=" '$(NugPkgOutPutDirPath)' != '' " Importance="Low" />   
-    <Message Text="Starting Packaging..... @(ProjectsToPackage)" Condition=" '$(ProjectsToPackage)' != '' "/>
+    <Message Text="Starting Packaging..... @(ProjectsToPackage)" Condition=" '@(ProjectsToPackage)' != '' "/>
 
     <MSBuild
         Projects="@(ProjectsToPackage)"

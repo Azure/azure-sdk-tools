@@ -15,7 +15,7 @@ namespace Tests.CI.BuildTasks.TasksTests
     public class DetectRPScopeTaskTests : BuildTasksTestBase
     {
         #region CONST
-        const string NET_SDK_PUB_URL = @"https://github.com/azure/azure-sdk-for-net";
+        const string NET_SDK_PUB_URL = @"http://github.com/azure/azure-sdk-for-net";
         const string NET_SDK_PUB_URL_pr = @"https://github.com/azure/azure-sdk-for-net-pr";
         #endregion
         #region field
@@ -149,8 +149,8 @@ namespace Tests.CI.BuildTasks.TasksTests
 
                     case 6304:
                         {
-                            Assert.NotNull(rpScope.ScopesFromPR);
-                            Assert.True(rpScope.ScopesFromPR.Length == 1);
+                            Assert.Empty(rpScope.ScopesFromPR);
+                            Assert.True(string.IsNullOrWhiteSpace(rpScope.PRScopeString));
                             break;
                         }
                     case 6453:

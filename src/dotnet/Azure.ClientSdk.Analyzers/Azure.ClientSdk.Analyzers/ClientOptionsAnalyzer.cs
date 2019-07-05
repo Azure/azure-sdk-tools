@@ -16,7 +16,8 @@ namespace Azure.ClientSdk.Analyzers
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(new[]
         {
             Descriptors.AZC0008,
-            Descriptors.AZC0009
+            Descriptors.AZC0009,
+            Descriptors.AZC0010
         });
 
         public override void Initialize(AnalysisContext context)
@@ -65,6 +66,12 @@ namespace Azure.ClientSdk.Analyzers
                     if (!IsServiceVersionParameter(firstParam))
                     {
                         context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0009, firstParam.Locations.First()));
+                        continue;
+                    }
+
+                    if (!firstParam.HasExplicitDefaultValue)
+                    {
+                        context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0010, firstParam.Locations.First()));
                     }
                 }
             }

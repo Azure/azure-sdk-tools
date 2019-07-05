@@ -41,8 +41,8 @@ namespace Azure.ClientSdk.Analyzers
         {
             var typeSymbol = (INamedTypeSymbol)context.Symbol;
 
-            var members = typeSymbol.GetMembers();
-            var serviceVersionEnum = members.SingleOrDefault(member => member.Kind == SymbolKind.NamedType && ((INamedTypeSymbol)member).TypeKind == TypeKind.Enum && member.Name == "ServiceVersion");
+            var serviceVersion = typeSymbol.GetTypeMembers("ServiceVersion");
+            var serviceVersionEnum = serviceVersion.SingleOrDefault(member => member.TypeKind == TypeKind.Enum);
             if (serviceVersionEnum == null)
             {
                 context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0008, typeSymbol.Locations.First()));

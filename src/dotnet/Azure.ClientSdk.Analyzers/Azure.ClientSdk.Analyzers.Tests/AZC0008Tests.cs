@@ -17,12 +17,6 @@ namespace RandomNamespace
 {
     public class /*MM*/SomeClientOptions { 
 
-//        public enum ServiceVersion
-//        {
-//#pragma warning disable CA1707 // Identifiers should not contain underscores
-//            V2018_11_09 = 0
-//#pragma warning restore CA1707 // Identifiers should not contain underscores
-//        }
     }
 }
 ");
@@ -35,12 +29,12 @@ namespace RandomNamespace
         }
 
         [Fact]
-        public async Task AZC0008NotProducedForClientsOptionsWithoutServiceVersionEnum()
+        public async Task AZC0008NotProducedForClientsOptionsWithServiceVersionEnum()
         {
             var testSource = TestSource.Read(@"
 namespace RandomNamespace
 {
-    public class /*MM*/SomeClientOptions { 
+    public class SomeClientOptions { 
 
         public enum ServiceVersion
         {

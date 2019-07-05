@@ -13,7 +13,6 @@ namespace APIView
         public string Name { get; set; }
         public string ReturnType { get; set; }
         public string Accessibility { get; set; }
-        public string Parent { get; set; }
 
         public bool IsConstructor { get; set; }
         public bool IsInterfaceMethod { get; set; }
@@ -49,7 +48,6 @@ namespace APIView
                 this.ReturnType = symbol.ReturnType.ToString();
             }
             this.Accessibility = symbol.DeclaredAccessibility.ToString().ToLower();
-            this.Parent = symbol.ContainingType.Name;
 
             this.IsInterfaceMethod = symbol.ContainingType.TypeKind == TypeKind.Interface;
             this.IsStatic = symbol.IsStatic;

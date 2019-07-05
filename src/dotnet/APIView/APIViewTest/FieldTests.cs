@@ -1,6 +1,7 @@
 ﻿using Microsoft.CodeAnalysis;
 using APIView;
 using Xunit;
+using System.Text;
 
 namespace APIViewTest
 {
@@ -79,6 +80,27 @@ namespace APIViewTest
             FieldAPIV field = new FieldAPIV(fieldSymbol);
 
             Assert.Equal("protected int protectedField;", field.ToString());
+        }
+
+        [Fact]
+        public void FieldTestHTMLRender()
+        {
+            var f = new FieldAPIV
+            {
+                Accessibility = "public",
+                Type = "string",
+                IsConstant = true,
+                IsReadOnly = false,
+                IsStatic = true,
+                IsVolatile = false,
+                Value = "constant string",
+                Name = "publicString"
+            };
+            var builder = new StringBuilder();
+            var renderer = new HTMLRendererAPIV();
+            renderer.Render(f, builder);
+            Assert.Equal("<font class=\"keyword\">public</font> <font class=\"keyword\">static</font> <font class=\"keyword\">const</font> <font class=\"type\">string</font>" +
+                " <font class=\"name\">publicString</font> = <font class=\"value\">\"constant string\"</font>;", builder.ToString());
         }
     }
 }

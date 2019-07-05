@@ -1,4 +1,5 @@
 ﻿using APIView;
+using System.Text;
 using Xunit;
 
 namespace APIViewTest
@@ -41,6 +42,21 @@ namespace APIViewTest
             NamespaceAPIV nestedNamespace = globalNamespace.Namespaces[0];
 
             Assert.Contains("namespace TestLibrary {", nestedNamespace.ToString());
+        }
+
+        [Fact]
+        public void NamespaceTestImplementingHTMLRender()
+        {
+            var ns = new NamespaceAPIV
+            {
+                Name = "TestNamespace",
+                NamedTypes = new NamedTypeAPIV[] { },
+                Namespaces = new NamespaceAPIV[] { }
+            };
+            var builder = new StringBuilder();
+            var renderer = new HTMLRendererAPIV();
+            renderer.Render(ns, builder);
+            Assert.Equal("<font class=\"specialName\">namespace</font> <font class=\"name\">TestNamespace</font> {<br />}", builder.ToString());
         }
     }
 }

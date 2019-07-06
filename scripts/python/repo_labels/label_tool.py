@@ -36,7 +36,6 @@ def get_repo(repo_name):
     repo.name  # Force checking if repo exists, otherwise "get_repo" does nothing
     return repo
 
-
 def create_label(repo, label):
     print(f"Adding label {label}")
     try:

@@ -36,6 +36,7 @@ def get_repo(repo_name):
     repo.name  # Force checking if repo exists, otherwise "get_repo" does nothing
     return repo
 
+
 def create_label(repo, label):
     print(f"Adding label {label}")
     try:
@@ -47,6 +48,7 @@ def create_label(repo, label):
             print(f"* Label {label} already exists")
             return
         raise
+
 
 def push_labels(repo_name, label_list):
     print(f"Getting repo {repo_name}")
@@ -78,6 +80,7 @@ def print_labels(repo_name):
     repo = get_repo(repo_name)
     for label in repo.get_labels():
         print(f" {label.name}")
+
 
 def audit(repolist_filepath):
     print(f"Reading repo list from file: {repolist_filepath}")

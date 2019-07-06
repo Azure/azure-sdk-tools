@@ -1,4 +1,5 @@
 Azure/azure-sdk-for-js
+<<<<<<< HEAD
 Azure/azure-sdk-for-net
 Azure/azure-sdk-for-python
 Azure/azure-sdk-for-java
@@ -10,3 +11,8 @@ Azure/azure-libraries-for-java
 Azure/azure-cli-extensions
 Azure/azure-sdk-for-ruby
 Azure/azure-sdk-for-go
+=======
+//Azure/azure-sdk-for-net
+//Azure/azure-sdk-for-python
+//Azure/azure-sdk-for-java
+>>>>>>> Tool to push labels to multiple repos

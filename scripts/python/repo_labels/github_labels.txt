@@ -13,10 +13,7 @@ Analysis Services
 API Management
 Application Insights
 App Services
-<<<<<<< HEAD
 Authentication
-=======
->>>>>>> Tool to push labels to multiple repos
 Authorization
 Automation
 Azure Stack
@@ -26,10 +23,7 @@ BatchAI
 Billing
 Bot Services
 CDN
-<<<<<<< HEAD
 Cloud Shell
-=======
->>>>>>> Tool to push labels to multiple repos
 Cognitive Services
 Commerce
 Compute
@@ -41,14 +35,9 @@ Compute - VMSS
 Consumption
 Container Instance
 Container Registry
-<<<<<<< HEAD
 Cosmos
 Customer Insights
 Data Bricks
-=======
-CosmosDB
-Customer Insights
->>>>>>> Tool to push labels to multiple repos
 Data Catalog
 Data Factory
 Data Lake
@@ -68,10 +57,7 @@ Intune
 Insights
 IotHub
 KeyVault
-<<<<<<< HEAD
 Lab Services 
-=======
->>>>>>> Tool to push labels to multiple repos
 Logic App
 Machine Learning
 Machine Learning Compute
@@ -101,10 +87,7 @@ Network - Traffic Manager
 Notification Hubs
 Operational Insights
 Operations Management
-<<<<<<< HEAD
 Policy
-=======
->>>>>>> Tool to push labels to multiple repos
 Policy Insights
 PostgreSQL
 PowerBI
@@ -115,10 +98,7 @@ Redis Cache
 Relay
 Reservations
 Resource Authorization
-<<<<<<< HEAD
 Resource Graph
-=======
->>>>>>> Tool to push labels to multiple repos
 Resource Manager
 Resource Health
 Search
@@ -132,10 +112,7 @@ SQL
 Storage
 Storsimple
 Stream Analytics
-<<<<<<< HEAD
 Subscription
-=======
->>>>>>> Tool to push labels to multiple repos
 TimeseriesInsights
 Visual Studio
 vFXT

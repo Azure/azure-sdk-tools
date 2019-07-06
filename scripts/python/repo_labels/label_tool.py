@@ -8,11 +8,8 @@ SERVICE_LABEL_COLOR = "e99695"
 #
 # Help
 #
-<<<<<<< HEAD
 
 
-=======
->>>>>>> Tool to push labels to multiple repos
 def print_help():
     print("""
 Usage: label_tool.py [command] [options]
@@ -20,25 +17,19 @@ Usage: label_tool.py [command] [options]
 Commands:
     audit [repo file] - prints out labels from each repo
     push [repo file] [label file] - pushes labels to all repos
-<<<<<<< HEAD
 
 Notes:
     Expects environment variable GH_TOKEN to be filled with your 
     access token to GitHub.  This can be generated on GitHub under
     Account->Settings->Developer settings->Personal access tokens.
-=======
->>>>>>> Tool to push labels to multiple repos
     """)
     sys.exit()
 
 #
 # Push
 #
-<<<<<<< HEAD
 
 
-=======
->>>>>>> Tool to push labels to multiple repos
 def get_repo(repo_name):
     con = Github(os.environ["GH_TOKEN"])
     repo = con.get_repo(repo_name)
@@ -58,10 +49,6 @@ def create_label(repo, label):
             return
         raise
 
-<<<<<<< HEAD
-
-=======
->>>>>>> Tool to push labels to multiple repos
 def push_labels(repo_name, label_list):
     print(f"Getting repo {repo_name}")
     repo = get_repo(repo_name)
@@ -71,14 +58,8 @@ def push_labels(repo_name, label_list):
         create_label(repo, label)
 
 
-<<<<<<< HEAD
 def push(repolist_filepath, labellist_filepath):
     print(f"Reading label list from file: {labellist_filepath}")
-=======
-    
-def push(repolist_filepath, labellist_filepath):
-    print (f"Reading label list from file: {labellist_filepath}")
->>>>>>> Tool to push labels to multiple repos
     with open(labellist_filepath, "r") as lfile:
         label_list = lfile.read().splitlines()
 
@@ -91,21 +72,14 @@ def push(repolist_filepath, labellist_filepath):
 #
 # Audit
 #
-<<<<<<< HEAD
 
 
-=======
->>>>>>> Tool to push labels to multiple repos
 def print_labels(repo_name):
     print(f"Printing labels in repo {repo_name}")
     repo = get_repo(repo_name)
     for label in repo.get_labels():
         print(f" {label.name}")
 
-<<<<<<< HEAD
-
-=======
->>>>>>> Tool to push labels to multiple repos
 def audit(repolist_filepath):
     print(f"Reading repo list from file: {repolist_filepath}")
     with open(repolist_filepath, "r") as rfile:
@@ -113,18 +87,11 @@ def audit(repolist_filepath):
             if not line.startswith("//"):
                 print_labels(line)
 
-<<<<<<< HEAD
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print_help()
 
-=======
-if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print_help()
-    
->>>>>>> Tool to push labels to multiple repos
     if sys.argv[1] == "push" and len(sys.argv) == 4:
         push(sys.argv[2], sys.argv[3])
     elif sys.argv[1] == "audit" and len(sys.argv) == 3:

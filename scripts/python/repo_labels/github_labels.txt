@@ -33,7 +33,7 @@ Compute - VMSS
 Consumption
 Container Instance
 Container Registry
-CosmosDB
+Cosmos
 Customer Insights
 Data Catalog
 Data Factory

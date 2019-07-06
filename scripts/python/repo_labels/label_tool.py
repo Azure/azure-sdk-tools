@@ -15,6 +15,11 @@ Usage: label_tool.py [command] [options]
 Commands:
     audit [repo file] - prints out labels from each repo
     push [repo file] [label file] - pushes labels to all repos
+
+Notes:
+    Expects environment variable GH_TOKEN to be filled with your 
+    access token to GitHub.  This can be generated on GitHub under
+    Account->Settings->Developer settings->Personal access tokens.
     """)
     sys.exit()
 

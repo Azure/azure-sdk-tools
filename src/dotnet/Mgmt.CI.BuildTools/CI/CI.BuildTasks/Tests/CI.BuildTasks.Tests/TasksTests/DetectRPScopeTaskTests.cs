@@ -15,7 +15,8 @@ namespace Tests.CI.BuildTasks.TasksTests
     public class DetectRPScopeTaskTests : BuildTasksTestBase
     {
         #region CONST
-        const string NET_SDK_PUB_URL = @"https://github.com/azure/azure-sdk-for-net";
+        const string NET_SDK_PUB_URL = @"http://github.com/azure/azure-sdk-for-net";
+        const string NET_SDK_PUB_URL_pr = @"https://github.com/azure/azure-sdk-for-net-pr";
         #endregion
         #region field
         internal string rootDir = string.Empty;
@@ -92,6 +93,24 @@ namespace Tests.CI.BuildTasks.TasksTests
             }
         }
 
+        [Fact]
+        public void PrivateRepoPR()
+        {
+            string ghUrl = NET_SDK_PUB_URL_pr;
+            long ghPrNumber = 923;
+            DetectRPScopeTask rpScope = new DetectRPScopeTask(ghUrl, ghPrNumber.ToString());
+
+            if (rpScope.Execute())
+            {
+                Assert.Empty(rpScope.ScopesFromPR);
+                Assert.True(string.IsNullOrWhiteSpace(rpScope.PRScopeString));
+            }
+            else
+            {
+                Assert.True(false);
+            }
+        }
+
         [Theory]
         [InlineData(NET_SDK_PUB_URL, 6396)]
         [InlineData(NET_SDK_PUB_URL, 6418)]
@@ -130,8 +149,8 @@ namespace Tests.CI.BuildTasks.TasksTests
 
                     case 6304:
                         {
-                            Assert.NotNull(rpScope.ScopesFromPR);
-                            Assert.True(rpScope.ScopesFromPR.Length == 1);
+                            Assert.Empty(rpScope.ScopesFromPR);
+                            Assert.True(string.IsNullOrWhiteSpace(rpScope.PRScopeString));
                             break;
                         }
                     case 6453:

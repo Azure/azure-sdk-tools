@@ -33,7 +33,6 @@ namespace MS.Az.Mgmt.CI.Common.Services
         #endregion
 
         #region Properties
-
         public PrSvc PR
         {
             get
@@ -144,6 +143,22 @@ namespace MS.Az.Mgmt.CI.Common.Services
                 UtilLogger.LogException(ex);
                 throw;
             }
+        }
+
+        public bool IsRepoAuthorized(string repoUrl)
+        {
+            bool isAuthorized = false;
+            try
+            {
+                OctoClient.Repository.Get("Azure", repoUrl).GetAwaiter().GetResult();
+                isAuthorized = true;
+            }
+            catch (Exception ex)
+            {
+                UtilLogger.LogInfo("An error occured while initialzing Octokit client", ex.ToString());
+            }
+
+            return isAuthorized;
         }
 
         #endregion

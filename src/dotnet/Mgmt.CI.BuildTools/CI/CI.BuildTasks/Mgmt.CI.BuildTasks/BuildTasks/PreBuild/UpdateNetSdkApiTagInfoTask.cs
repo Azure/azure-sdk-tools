@@ -33,6 +33,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
         //string _apiMapTag;
         FileSystemUtility _fileSysUtil;
         SDKMSBTaskItem[] _sdkProjectFilePaths;
+        ReflectionService _refSvc;
         #endregion
 
         #region Properties        
@@ -43,14 +44,17 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
         {
             get
             {
-                if(_sdkProjectFilePaths == null)
+                if(_sdkProjectFilePaths.Length <= 0)
                 {
-                    var sdkProjItems = ProjectFilePaths.Select<ITaskItem, SDKMSBTaskItem>((item) => new SDKMSBTaskItem(item.ItemSpec));
-
-                    if(sdkProjItems.NotNullOrAny<SDKMSBTaskItem>())
+                    if (ProjectFilePaths.Length >= 0)
                     {
-                        _sdkProjectFilePaths = sdkProjItems.ToArray<SDKMSBTaskItem>();
-                    }
+                        var sdkProjItems = ProjectFilePaths.Select<ITaskItem, SDKMSBTaskItem>((item) => new SDKMSBTaskItem(item.ItemSpec));
+
+                        if (sdkProjItems.NotNullOrAny<SDKMSBTaskItem>())
+                        {
+                            _sdkProjectFilePaths = sdkProjItems.ToArray<SDKMSBTaskItem>();
+                        }
+                    }                    
                 }
 
                 return _sdkProjectFilePaths;
@@ -66,8 +70,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
         public ITaskItem[] ProjectFilePaths { get; set; }
         #endregion
 
-        #region other properties
-                
+        #region other properties                
         List<ExpandoObject> AssemblyInfoList { get; set; }
         FileSystemUtility FileSysUtil
         {
@@ -82,6 +85,19 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
             }
         }
 
+        ReflectionService RefSvc
+        {
+            get
+            {
+                if(_refSvc == null)
+                {
+                    _refSvc = new ReflectionService();
+                }
+
+                return _refSvc;
+            }
+        }
+
         bool AzPropFileExists { get; set; }
         bool AssemblyFilePathExists { get; set; }
 
@@ -92,11 +108,11 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
         #region Constructor
         public UpdateNetSdkApiTagInfoTask()
         {
-            //AssemblyInfoList = new List<Tuple<string, string, string>>();            
-            //AssemblyInfoList = new List<SDKMSBTaskItem>();
             AssemblyInfoList = new List<ExpandoObject>();
             AzPropFileExists = true;
             AssemblyFilePathExists = true;
+            _sdkProjectFilePaths = new SDKMSBTaskItem[] { };
+            ProjectFilePaths = new ITaskItem[] { };
         }
 
         #endregion
@@ -208,8 +224,9 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
         /// <returns></returns>
         private string GetApiFromSdkInfo(string binaryPath)
         {
-            ReflectionService refSvc = new ReflectionService(binaryPath, false);
-            List<PropertyInfo> props = refSvc.GetProperties(APIMAPTYPENAMETOSEARCH, PROPERTYNAMEPREFIX);
+            RefSvc.AssemblyToReflectFilePath = binaryPath;
+            RefSvc.UseMetadataLoadContext = false;
+            List<PropertyInfo> props = RefSvc.GetProperties(APIMAPTYPENAMETOSEARCH, PROPERTYNAMEPREFIX);
             List<Tuple<string, string, string>> combinedApiMap = new List<Tuple<string, string, string>>();
             StringBuilder sb = new StringBuilder();
 

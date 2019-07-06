@@ -32,7 +32,6 @@ def get_repo(repo_name):
     repo.name  # Force checking if repo exists, otherwise "get_repo" does nothing
     return repo
 
-
 def create_label(repo, label):
     print(f"Adding label {label}")
     try:
@@ -52,9 +51,7 @@ def push_labels(repo_name, label_list):
     print("Adding labels to repo")
     for label in label_list:
         create_label(repo, label)
-
-
-    
+ 
 def push(repolist_filepath, labellist_filepath):
     print (f"Reading label list from file: {labellist_filepath}")
     with open(labellist_filepath, "r") as lfile:

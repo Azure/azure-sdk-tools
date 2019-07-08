@@ -17,25 +17,13 @@ jobs:
           versionSpec: "$(NodeVersion)"
         displayName: "Install Node.js $(NodeVersion)"
 
-      - script: |
-          cd tools/eslint-plugin-azure-sdk
-        displayName: "Reach directory"
-
-      - script: |
-          npm install -g npm@6.9.0
-        displayName: "Install npm version 6.9.0"
-
-      - script: |
-          npm install
-        displayName: "Install dependencies"
-
-      - script: |
-          npm run build
-        displayName: "Build library"
-
-      - script: |
-          npm pack
-        displayName: "Pack libraries"
+      - script: | 
+        set -e
+        npm install -g npm@6.90
+        npm install
+        npm run build
+        npm run pack
+        workingDirectory: tools/eslint-plugin-azure-sdk
 
       - task: CopyFiles@2
         inputs:
@@ -61,26 +49,14 @@ jobs:
           versionSpec: "$(NodeVersion)"
         displayName: "Install Node.js $(NodeVersion)"
 
-      - script: |
-          cd tools/eslint-plugin-azure-sdk
-        displayName: "Reach directory"
-
-      - script: |
-          npm install -g npm@6.9.0
-        displayName: "Install npm version 6.9.0"
-
-      - script: |
-          npm install
-        displayName: "Install dependencies"
-
-      - script: |
-          npm run lint
-        displayName: "Run lint"
-
-      - script: |
-          npm audit
+      - script: | 
+        set -e
+        npm install -g npm@6.90
+        npm install
+        npm run lint
+        npm audit
+        workingDirectory: tools/eslint-plugin-azure-sdk
         condition: and(succeeded(), eq(variables['RunNpmAudit'], 'true'))
-        displayName: "Audit packages"
 
   - job: "Test"
 
@@ -93,18 +69,9 @@ jobs:
           versionSpec: "$(NodeVersion)"
         displayName: "Install Node.js $(NodeVersion)"
 
-      - script: |
-          cd tools/eslint-plugin-azure-sdk
-        displayName: "Reach directory"
-
-      - script: |
-          npm install -g npm@6.9.0
-        displayName: "Install npm version 6.9.0"
-
-      - script: |
-          npm install
-        displayName: "Install dependencies"
-
-      - script: |
-          npm test
-        displayName: "Test library"
+      - script: | 
+        set -e
+        npm install -g npm@6.90
+        npm install
+        npm test
+        workingDirectory: tools/eslint-plugin-azure-sdk

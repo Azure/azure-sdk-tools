@@ -36,7 +36,7 @@ jobs:
         condition: succeededOrFailed()
         displayName: "Publish artifacts"
         inputs:
-          artifactName: packages
+          artifactName: package gzip
 
   - job: "Analyze"
 

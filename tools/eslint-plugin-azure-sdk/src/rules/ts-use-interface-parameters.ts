@@ -11,12 +11,20 @@ import {
   FunctionDeclaration,
   FunctionExpression,
   Identifier,
-  Node,
   MethodDefinition,
+  Node,
   Pattern,
   Program
 } from "estree";
-import { Symbol, SymbolFlags, Type, TypeChecker } from "typescript";
+import {
+  Node as NodeType,
+  PropertySignature,
+  Symbol,
+  SymbolFlags,
+  Type,
+  TypeChecker,
+  SourceFile
+} from "typescript";
 import { ParserServices } from "@typescript-eslint/experimental-utils";
 import { TSESTree, TSNode } from "@typescript-eslint/typescript-estree";
 import { ParserWeakMap } from "@typescript-eslint/typescript-estree/dist/parser-options";
@@ -56,10 +64,34 @@ const addSeenSymbols = (
   typeChecker
     .getPropertiesOfType(typeChecker.getDeclaredTypeOfSymbol(symbol))
     .forEach((element: Symbol): void => {
-      const memberType = typeChecker
+      const memberSymbol = typeChecker
         .getTypeAtLocation(element.valueDeclaration)
         .getSymbol();
-      memberType && addSeenSymbols(memberType, symbols, typeChecker);
+      if (memberSymbol !== undefined) {
+        let isExternal = false;
+        let isOptional = false;
+        const declaration: PropertySignature = memberSymbol.valueDeclaration as PropertySignature;
+        if (declaration !== undefined) {
+          isOptional = declaration.questionToken !== undefined;
+          let parent: NodeType = declaration.parent;
+          while (
+            !parent.hasOwnProperty("fileName") &&
+            parent.hasOwnProperty("parent")
+          ) {
+            parent = parent.parent;
+          }
+          const sourceFile = parent as SourceFile;
+          const externalRegex = /node_modules/;
+          isExternal = externalRegex.test(sourceFile.fileName);
+        }
+        !isExternal &&
+          !isOptional &&
+          [SymbolFlags.Class, SymbolFlags.Interface].includes(
+            memberSymbol.getFlags()
+          ) &&
+          !symbols.includes(memberSymbol) &&
+          addSeenSymbols(memberSymbol, symbols, typeChecker);
+      }
     });
 };
 
@@ -128,7 +160,7 @@ const evaluateOverloads = (
   context.report({
     node: identifier,
     message:
-      "type {{ type }} of parameter {{ param }} of function {{ func }} is a class, not an interface",
+      "type {{ type }} of parameter {{ param }} of function {{ func }} is a class or contains a class as a member",
     data: {
       type: typeChecker.typeToString(type),
       param: identifier.name,

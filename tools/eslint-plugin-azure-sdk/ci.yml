@@ -21,7 +21,7 @@ jobs:
           set -e
           npm install
           npm run build
-          npm run pack
+          npm pack
         workingDirectory: tools/eslint-plugin-azure-sdk
         displayName: "Build and pack package"
 
@@ -51,7 +51,6 @@ jobs:
 
       - script: |
           set -e
-          npm install -g npm@6.90
           npm install
           npm run lint
           npm audit

@@ -24,13 +24,14 @@ jobs:
           npm run build
           npm run pack
         workingDirectory: tools/eslint-plugin-azure-sdk
+        displayName: "Build and pack package"
 
       - task: CopyFiles@2
         inputs:
           contents: "tools/eslint-plugin-azure-sdk/*.tgz"
           targetFolder: $(Build.ArtifactStagingDirectory)
           flattenFolders: true
-        displayName: "Copy packages"
+        displayName: "Copy package"
 
       - task: PublishBuildArtifacts@1
         condition: succeededOrFailed()
@@ -57,6 +58,7 @@ jobs:
           npm audit
         workingDirectory: tools/eslint-plugin-azure-sdk
         condition: and(succeeded(), eq(variables['RunNpmAudit'], 'true'))
+        displayName: "Lint and audit package"
 
   - job: "Test"
 
@@ -75,3 +77,5 @@ jobs:
           npm install
           npm test
         workingDirectory: tools/eslint-plugin-azure-sdk
+        condition: succeededOrFailed()
+        displayName: "Run package tests"

@@ -2,7 +2,7 @@
   "extends": "./tsconfig.json",
   "exclude": ["tests"],
   "compilerOptions": {
-    "types": ["eslint", "estree", "node"]
+    "types": []
   },
   "outDir": "./dist"
 }

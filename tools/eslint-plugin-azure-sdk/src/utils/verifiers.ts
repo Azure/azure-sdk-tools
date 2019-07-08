@@ -78,7 +78,7 @@ export const getVerifiers = (
       // check node value against expected value
       nodeValue.value !== expected &&
         context.report({
-          node: node,
+          node: nodeValue,
           message:
             outer +
             " is set to {{ identifier }} when it should be set to " +
@@ -106,7 +106,7 @@ export const getVerifiers = (
         return key.value !== inner;
       }) &&
         context.report({
-          node: node,
+          node: value,
           message: inner + " is not a member of " + outer
         });
     },
@@ -137,7 +137,7 @@ export const getVerifiers = (
       // check node value against expected value
       nodeValue.value !== expected &&
         context.report({
-          node: node,
+          node: nodeValue,
           message:
             outer +
             "." +
@@ -188,7 +188,7 @@ export const getVerifiers = (
             return candidate.value !== value;
           }) &&
             context.report({
-              node: node,
+              node: nodeValue,
               message: outer + " does not contain " + value
             });
         });
@@ -197,7 +197,7 @@ export const getVerifiers = (
           return candidate.value !== expected;
         }) &&
           context.report({
-            node: node,
+            node: nodeValue,
             message: outer + " does not contain " + expected
           });
       }

@@ -47,13 +47,20 @@ const getTypeOfParam = (
 };
 
 /* eslint-disable @typescript-eslint/ban-types */
-const addSeenSymbols = (symbol: Symbol, symbols: Symbol[]): void => {
+const addSeenSymbols = (
+  symbol: Symbol,
+  symbols: Symbol[],
+  typeChecker: TypeChecker
+): void => {
   symbols.push(symbol);
-  if (symbol.members !== undefined) {
-    symbol.members.forEach((member: Symbol): void => {
-      addSeenSymbols(member, symbols);
+  typeChecker
+    .getPropertiesOfType(typeChecker.getDeclaredTypeOfSymbol(symbol))
+    .forEach((element: Symbol): void => {
+      const memberType = typeChecker
+        .getTypeAtLocation(element.valueDeclaration)
+        .getSymbol();
+      memberType && addSeenSymbols(memberType, symbols, typeChecker);
     });
-  }
 };
 
 const getSymbolsUsedInParam = (
@@ -65,7 +72,7 @@ const getSymbolsUsedInParam = (
   const type = getTypeOfParam(param, converter, typeChecker);
   const symbol = type.getSymbol();
   if (symbol !== undefined) {
-    addSeenSymbols(symbol, symbols);
+    addSeenSymbols(symbol, symbols, typeChecker);
   }
   return symbols;
 };

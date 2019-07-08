@@ -21,21 +21,15 @@ class A2 {
 interface B {
   message: string
 }
+
+interface B2 {
+  message: B
+}
+
+interface B3 {
+  message: A
+}
 `;
-
-// class Foo {
-//   constructor() { }
-//   method() { }
-//   set foo(v) { };
-// }
-
-// class OverloadExample {
-//   constructor(a: A);
-//   constructor(b: B);
-//   construcotR(a: A | B) {
-
-//   }
-// `;
 
 //------------------------------------------------------------------------------
 // Tests
@@ -81,6 +75,30 @@ ruleTester.run("ts-use-interface-parameters", rule, {
       code:
         example +
         "function overloadDeclaration(a: A): void { console.log(a); }; function overloadDeclaration(b: B): void { console.log(b); }"
+    },
+    // nested objects
+    {
+      // class methods
+      code:
+        example + "class C { nestedMethod(b: B2): void { console.log(b); }; }"
+    },
+    {
+      // function declaration
+      code:
+        example + "function nestedDeclaration(b: B2): void { console.log(b); }"
+    },
+    // optional parameters
+    {
+      // class methods
+      code:
+        example +
+        "class C { nestedMethod(b: B, a?: A): void { console.log(b); a && console.log(a); }; }"
+    },
+    {
+      // function declaration
+      code:
+        example +
+        "function nestedDeclaration(b: B, a?: A): void { console.log(b); a && console.log(a); }"
     }
   ],
   invalid: [
@@ -199,6 +217,31 @@ ruleTester.run("ts-use-interface-parameters", rule, {
         {
           message:
             "type A of parameter a2 of function overloadDeclarationBad is a class, not an interface"
+        }
+      ]
+    },
+    // nested objects
+    {
+      // class methods
+      code:
+        example +
+        "class C { nestedMethodBad(b: B3): void { console.log(b); }; }",
+      errors: [
+        {
+          message:
+            "type B3 of parameter b of function nestedMethodBad is a class, not an interface"
+        }
+      ]
+    },
+    {
+      // function declaration
+      code:
+        example +
+        "function nestedDeclarationBad(b: B3): void { console.log(b); }",
+      errors: [
+        {
+          message:
+            "type B3 of parameter b of function nestedDeclarationBad is a class, not an interface"
         }
       ]
     }

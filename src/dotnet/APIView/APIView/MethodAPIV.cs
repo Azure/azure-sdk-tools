@@ -11,7 +11,7 @@ namespace APIView
     public class MethodAPIV
     {
         public string Name { get; set; }
-        public string ReturnType { get; set; }
+        public Token ReturnType { get; set; }
         public string Accessibility { get; set; }
 
         public bool IsConstructor { get; set; }
@@ -40,12 +40,18 @@ namespace APIView
             {
                 this.Name = symbol.ContainingType.Name;
                 this.IsConstructor = true;
-                this.ReturnType = "";
+                this.ReturnType = new Token();
             }
             else
             {
                 this.Name = symbol.Name;
-                this.ReturnType = symbol.ReturnType.ToString();
+                var returnType = new Token();
+                returnType.DisplayString = symbol.ReturnType.ToDisplayString();
+                if (symbol.ReturnType.SpecialType.ToString().StartsWith("System"))
+                    returnType.Type = TypeReference.BuiltInType;
+                else
+                    returnType.Type = TypeReference.SpecialType;
+                this.ReturnType = returnType;
             }
             this.Accessibility = symbol.DeclaredAccessibility.ToString().ToLower();
 

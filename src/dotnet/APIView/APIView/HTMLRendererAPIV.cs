@@ -6,7 +6,8 @@ namespace APIView
     {
         protected override void RenderDeclaration(StringBuilder builder, string word)
         {
-            builder.Append("<span id=\"").Append(word).Append("\" class=\"class\">").Append(word).Append("</span>");
+            builder.Append("<span id=\"").Append(word.Replace("<", "&lt;").Replace(">", "&gt;")).Append("\" class=\"class\">")
+                .Append(word.Replace("<", "&lt;").Replace(">", "&gt;")).Append("</span>");
         }
 
         protected override void RenderPunctuation(StringBuilder builder, string word)
@@ -17,17 +18,18 @@ namespace APIView
         protected override void RenderClass(StringBuilder builder, string word)
         {
             var shortName = word.Substring(word.LastIndexOf(".") + 1);
-            builder.Append("<a href=\"#").Append(shortName).Append("\" class=\"class\">").Append(word).Append("</a>");
+            builder.Append("<a href=\"#").Append(shortName.Replace("<", "&lt;").Replace(">", "&gt;")).Append("\" class=\"class\">")
+                .Append(word.Replace("<", "&lt;").Replace(">", "&gt;")).Append("</a>");
         }
 
         protected override void RenderKeyword(StringBuilder builder, string word)
         {
-            builder.Append("<span class=\"keyword\">").Append(word).Append("</span>");
+            builder.Append("<span class=\"keyword\">").Append(word.Replace("<", "&lt;").Replace(">", "&gt;")).Append("</span>");
         }
 
         protected override void RenderName(StringBuilder builder, string word)
         {
-            builder.Append("<span class=\"name\">").Append(word).Append("</span>");
+            builder.Append("<span class=\"name\">").Append(word.Replace("<", "&lt;").Replace(">", "&gt;")).Append("</span>");
         }
 
         protected override void RenderNewline(StringBuilder builder)
@@ -37,17 +39,17 @@ namespace APIView
 
         protected override void RenderSpecialName(StringBuilder builder, string word)
         {
-            builder.Append("<span class=\"specialName\">").Append(word).Append("</span>");
+            builder.Append("<span class=\"specialName\">").Append(word.Replace("<", "&lt;").Replace(">", "&gt;")).Append("</span>");
         }
 
         protected override void RenderType(StringBuilder builder, string word)
         {
-            builder.Append("<span class=\"type\">").Append(word).Append("</span>");
+            builder.Append("<span class=\"type\">").Append(word.Replace("<", "&lt;").Replace(">", "&gt;")).Append("</span>");
         }
 
         protected override void RenderValue(StringBuilder builder, string word)
         {
-            builder.Append("<span class=\"value\">").Append(word).Append("</span>");
+            builder.Append("<span class=\"value\">").Append(word.Replace("<", "&lt;").Replace(">", "&gt;")).Append("</span>");
         }
     }
 }

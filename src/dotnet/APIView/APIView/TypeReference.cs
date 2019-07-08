@@ -6,6 +6,6 @@ namespace APIView
 {
     public enum TypeReference
     {
-
+        SpecialType, BuiltInType
     }
 }

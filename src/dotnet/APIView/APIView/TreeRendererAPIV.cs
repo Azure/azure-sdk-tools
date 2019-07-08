@@ -149,12 +149,12 @@ namespace APIView
                 builder.Append(" ");
             }
 
-            if (m.ReturnType.Any())
+            if (m.ReturnType.DisplayString.Any())
             {
-                if (m.ReturnType.Equals("void"))
-                    RenderKeyword(builder, m.ReturnType);
+                if (m.ReturnType.Type == TypeReference.BuiltInType)
+                    RenderKeyword(builder, m.ReturnType.DisplayString);
                 else
-                    RenderType(builder, m.ReturnType);
+                    RenderType(builder, m.ReturnType.DisplayString);
                 builder.Append(" ");
             }
 
@@ -235,7 +235,7 @@ namespace APIView
                     {
                         if (m.Name.Equals("Invoke"))
                         {
-                            RenderType(builder, m.ReturnType);
+                            RenderType(builder, m.ReturnType.DisplayString);
                             builder.Append(" ");
                             RenderName(builder, nt.Name);
                             builder.Append("(");
@@ -374,11 +374,18 @@ namespace APIView
                 AppendIndents(builder, indents);
             }
 
-            RenderType(builder, p.Type);
+            foreach (var part in p.TypeParts)
+            {
+                if (part.Type == TypeReference.BuiltInType)
+                    RenderKeyword(builder, part.DisplayString);
+                else
+                    RenderType(builder, part.DisplayString);
+            }
+
             builder.Append(" ").Append(p.Name);
             if (p.HasExplicitDefaultValue)
             {
-                if (p.Type.Equals("string"))
+                if (p.TypeParts.Equals("string"))
                 {
                     builder.Append(" = ");
                     RenderValue(builder, "\"" + p.ExplicitDefaultValue.ToString() + "\"");

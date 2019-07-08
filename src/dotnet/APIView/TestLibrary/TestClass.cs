@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Reflection.Metadata;
@@ -231,6 +232,14 @@ namespace TestLibrary
         public int AttributesTypeParamsMethod<T, R>()
         {
             throw new NotImplementedException();
+        }
+    }
+
+    public class TestClass
+    {
+        public void TestMethod(List<ImplementingClass> testParam)
+        {
+
         }
     }
 }

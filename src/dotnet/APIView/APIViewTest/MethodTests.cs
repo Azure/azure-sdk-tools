@@ -113,7 +113,7 @@ namespace APIViewTest
         {
             var p = new ParameterAPIV
             {
-                Type = "int",
+                TypeParts = "int",
                 Name = "num",
                 HasExplicitDefaultValue = true,
                 ExplicitDefaultValue = 2,

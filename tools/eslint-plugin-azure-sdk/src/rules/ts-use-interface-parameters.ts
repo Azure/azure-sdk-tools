@@ -6,18 +6,15 @@
 import { Rule } from "eslint";
 import {
   AssignmentPattern,
-  BlockStatement,
-  ClassBody,
   FunctionDeclaration,
   FunctionExpression,
   Identifier,
   MethodDefinition,
-  Node,
-  Pattern,
-  Program
+  Pattern
 } from "estree";
 import {
-  Node as NodeType,
+  Declaration,
+  Node,
   PropertySignature,
   Symbol,
   SymbolFlags,
@@ -73,7 +70,7 @@ const addSeenSymbols = (
         const declaration: PropertySignature = memberSymbol.valueDeclaration as PropertySignature;
         if (declaration !== undefined) {
           isOptional = declaration.questionToken !== undefined;
-          let parent: NodeType = declaration.parent;
+          let parent: Node = declaration.parent;
           while (
             !parent.hasOwnProperty("fileName") &&
             parent.hasOwnProperty("parent")
@@ -198,6 +195,13 @@ export = {
     }
     const typeChecker = parserServices.program.getTypeChecker();
     const converter = parserServices.esTreeNodeToTSNodeMap;
+    const reverter: ParserWeakMap<
+      TSNode,
+      TSESTree.Node
+    > = parserServices.tsNodeToESTreeNodeMap as ParserWeakMap<
+      TSNode,
+      TSESTree.Node
+    >;
 
     const verifiedMethods: string[] = [];
     const verifiedDeclarations: string[] = [];
@@ -221,29 +225,20 @@ export = {
 
         node.params.forEach((param: Pattern): void => {
           if (!isValidParam(param, converter, typeChecker)) {
-            const bodyNode: ClassBody = ancestors.find(
-              (ancestor: Node): boolean => {
-                return ancestor.type === "ClassBody";
-              }
-            ) as ClassBody;
-            const overloads: FunctionExpression[] = bodyNode.body
-              .filter((element: Node): boolean => {
-                if (element.type !== "MethodDefinition") {
-                  return false;
-                }
-                const methodDefinition = element as MethodDefinition;
-                const key: Identifier = methodDefinition.key as Identifier;
-                const functionExpression = methodDefinition.value;
-                return (
-                  key.name === name && functionExpression.params !== node.params
-                );
-              })
-              .map(
-                (element: Node): FunctionExpression => {
-                  const methodDefinition = element as MethodDefinition;
-                  return methodDefinition.value;
-                }
-              );
+            const tsNode = converter.get(node as TSESTree.Node);
+            const type = typeChecker.getTypeAtLocation(tsNode);
+            const symbol = type.getSymbol();
+            const overloads =
+              symbol !== undefined
+                ? symbol.declarations.map(
+                    (declaration: Declaration): FunctionExpression => {
+                      const method: MethodDefinition = reverter.get(
+                        declaration as TSNode
+                      ) as MethodDefinition;
+                      return method.value;
+                    }
+                  )
+                : [];
             evaluateOverloads(
               overloads,
               converter,
@@ -268,26 +263,21 @@ export = {
           return;
         }
 
-        const ancestors = context.getAncestors().reverse();
         node.params.forEach((param: Pattern): void => {
           if (!isValidParam(param, converter, typeChecker)) {
-            const bodyNode: BlockStatement | Program = ancestors.find(
-              (ancestor: Node): boolean => {
-                return ["BlockStatement", "Program"].includes(ancestor.type);
-              }
-            ) as BlockStatement | Program;
-            const overloads: FunctionDeclaration[] = bodyNode.body.filter(
-              (element: Node): boolean => {
-                if (element.type !== "FunctionDeclaration") {
-                  return false;
-                }
-                const functionDeclaration = element as FunctionDeclaration;
-                const id: Identifier = functionDeclaration.id as Identifier;
-                return (
-                  id.name === name && functionDeclaration.params !== node.params
-                );
-              }
-            ) as FunctionDeclaration[];
+            const tsNode = converter.get(node as TSESTree.Node);
+            const type = typeChecker.getTypeAtLocation(tsNode);
+            const symbol = type.getSymbol();
+            const overloads =
+              symbol !== undefined
+                ? symbol.declarations.map(
+                    (declaration: Declaration): FunctionDeclaration => {
+                      return reverter.get(
+                        declaration as TSNode
+                      ) as FunctionDeclaration;
+                    }
+                  )
+                : [];
             evaluateOverloads(
               overloads,
               converter,

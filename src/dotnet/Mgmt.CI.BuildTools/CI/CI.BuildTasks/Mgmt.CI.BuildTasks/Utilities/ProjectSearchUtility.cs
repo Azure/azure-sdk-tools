@@ -435,7 +435,16 @@ namespace MS.Az.NetSdk.Build.Utilities
                     // SECOND ATTEMPT with root\sdk
                     if (!Directory.Exists(validScope))
                     {
-                        validScope = Path.Combine(SDKRootDir, scope);
+                        // this is a scenario where we detect scope from PR and their we include the full path that is available
+                        // in the pr
+                        if(scope.StartsWith("sdk", StringComparison.OrdinalIgnoreCase))
+                        {
+                            validScope = Path.Combine(RootDirForSearch, scope);
+                        }
+                        else
+                        {
+                            validScope = Path.Combine(SDKRootDir, scope);
+                        }
                     }
 
                     // At this point we will set it to empty string, because we have tried both legacy sdk directory as well as new sdk directory
@@ -517,17 +526,6 @@ namespace MS.Az.NetSdk.Build.Utilities
             }
 
             return rpDirList;
-            //Check.DirectoryExists(SDKRootDir);
-            //var rpDirs = Directory.EnumerateDirectories(SDKRootDir, "*", SearchOption.TopDirectoryOnly);
-
-            //if(rpDirs.Any<string>())
-            //{
-            //    return rpDirs.ToList<string>();
-            //}
-            //else
-            //{
-            //    return new List<string>();
-            //}
         }
 
         /// <summary>
@@ -822,20 +820,20 @@ namespace MS.Az.NetSdk.Build.Utilities
         List<string> FindDataPlaneDirs(string searchDirPath)
         {
             List<string> dpD = new List<string>();
-            #region legacy data-plane dirs
-            //Legacy data-plane dirs
-            var dpDirs = Directory.EnumerateDirectories(searchDirPath, "dataplane", SearchOption.TopDirectoryOnly);
-            if (dpDirs.Any<string>())
-            {
-                dpD.AddRange(dpDirs);
-            }
+            //#region legacy data-plane dirs
+            ////Legacy data-plane dirs
+            //var dpDirs = Directory.EnumerateDirectories(searchDirPath, "dataplane", SearchOption.TopDirectoryOnly);
+            //if (dpDirs.Any<string>())
+            //{
+            //    dpD.AddRange(dpDirs);
+            //}
 
-            var dppDirs = Directory.EnumerateDirectories(searchDirPath, "data-plane", SearchOption.TopDirectoryOnly);
-            if (dppDirs.Any<string>())
-            {
-                dpD.AddRange(dppDirs);
-            }
-            #endregion
+            //var dppDirs = Directory.EnumerateDirectories(searchDirPath, "data-plane", SearchOption.TopDirectoryOnly);
+            //if (dppDirs.Any<string>())
+            //{
+            //    dpD.AddRange(dppDirs);
+            //}
+            //#endregion
 
             // There is a case that in new dir structure, few dirs are starting with Azure.* name, so will have to add this if DP decides to leverage this
             var newDPDirs = Directory.EnumerateDirectories(searchDirPath, "Microsoft.Azure.*", SearchOption.TopDirectoryOnly);

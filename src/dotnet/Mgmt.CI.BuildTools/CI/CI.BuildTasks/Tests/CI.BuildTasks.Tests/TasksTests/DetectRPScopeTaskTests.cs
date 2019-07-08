@@ -15,7 +15,8 @@ namespace Tests.CI.BuildTasks.TasksTests
     public class DetectRPScopeTaskTests : BuildTasksTestBase
     {
         #region CONST
-        const string NET_SDK_PUB_URL = @"https://github.com/azure/azure-sdk-for-net";
+        const string NET_SDK_PUB_URL = @"http://github.com/azure/azure-sdk-for-net";
+        const string NET_SDK_PUB_URL_pr = @"https://github.com/azure/azure-sdk-for-net-pr";
         #endregion
         #region field
         internal string rootDir = string.Empty;
@@ -38,21 +39,71 @@ namespace Tests.CI.BuildTasks.TasksTests
         [Fact]
         public void InvalidPrNumber()
         {
-            DetectRPScopeTask rpScope = new DetectRPScopeTask(NET_SDK_PUB_URL, -1);
-            Assert.Throws<ArgumentException>(() => rpScope.Execute());
+            DetectRPScopeTask rpScope = new DetectRPScopeTask(NET_SDK_PUB_URL, "-1");
+            if(rpScope.Execute())
+            {
+                Assert.Empty(rpScope.ScopesFromPR);
+            }
+        }
+
+        [Fact]
+        public void NonExistantPrNumber()
+        {
+            DetectRPScopeTask rpScope = new DetectRPScopeTask(NET_SDK_PUB_URL, "10945356");
+            if (rpScope.Execute())
+            {
+                Assert.Empty(rpScope.ScopesFromPR);
+            }
+            //Assert.Throws<ArgumentException>(() => rpScope.Execute());
+        }
+
+        [Fact]
+        public void DefaultToBuildEntireMgmtProjects()
+        {
+            string ghUrl = NET_SDK_PUB_URL;
+            long ghPrNumber = 6453; //6606
+            DetectRPScopeTask rpScope = new DetectRPScopeTask(ghUrl, ghPrNumber.ToString());
+
+            if (rpScope.Execute())
+            {
+                Assert.Empty(rpScope.ScopesFromPR);
+                Assert.True(string.IsNullOrWhiteSpace(rpScope.PRScopeString));
+            }
+            else
+            {
+                Assert.True(false);
+            }
         }
 
         [Fact]
         public void MultipleScopes()
         {
             string ghUrl = NET_SDK_PUB_URL;
-            long ghPrNumber = 6499;
-            DetectRPScopeTask rpScope = new DetectRPScopeTask(ghUrl, ghPrNumber);
+            long ghPrNumber = 6499; //6606
+            DetectRPScopeTask rpScope = new DetectRPScopeTask(ghUrl, ghPrNumber.ToString());
 
             if(rpScope.Execute())
             {
                 Assert.NotNull(rpScope.ScopesFromPR);
                 Assert.True(rpScope.ScopesFromPR.Length > 5);
+            }
+            else
+            {
+                Assert.True(false);
+            }
+        }
+
+        [Fact]
+        public void PrivateRepoPR()
+        {
+            string ghUrl = NET_SDK_PUB_URL_pr;
+            long ghPrNumber = 923;
+            DetectRPScopeTask rpScope = new DetectRPScopeTask(ghUrl, ghPrNumber.ToString());
+
+            if (rpScope.Execute())
+            {
+                Assert.Empty(rpScope.ScopesFromPR);
+                Assert.True(string.IsNullOrWhiteSpace(rpScope.PRScopeString));
             }
             else
             {
@@ -69,7 +120,7 @@ namespace Tests.CI.BuildTasks.TasksTests
         [InlineData(@"azure/azure-sdk-for-net", 6304)]
         public void SingleScope(string ghUrl, long ghPrNumber)
         {
-            DetectRPScopeTask rpScope = new DetectRPScopeTask(ghUrl, ghPrNumber);
+            DetectRPScopeTask rpScope = new DetectRPScopeTask(ghUrl, ghPrNumber.ToString());
 
             if (rpScope.Execute())
             {
@@ -98,13 +149,13 @@ namespace Tests.CI.BuildTasks.TasksTests
 
                     case 6304:
                         {
-                            Assert.NotNull(rpScope.ScopesFromPR);
-                            Assert.True(rpScope.ScopesFromPR.Length == 1);
+                            Assert.Empty(rpScope.ScopesFromPR);
+                            Assert.True(string.IsNullOrWhiteSpace(rpScope.PRScopeString));
                             break;
                         }
                     case 6453:
                         {
-                            Assert.Null(rpScope.ScopesFromPR);
+                            Assert.Empty(rpScope.ScopesFromPR);
                             break;
                         }
                     default:
@@ -119,5 +170,6 @@ namespace Tests.CI.BuildTasks.TasksTests
                 Assert.True(false);
             }
         }
+
     }
 }

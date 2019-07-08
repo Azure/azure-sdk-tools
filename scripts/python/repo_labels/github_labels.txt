@@ -1,0 +1,111 @@
+AAD
+ACS
+AKS
+ARM
+ARM - Templates
+ARM - Tags
+ARM - Core
+ARM - Managed Applications
+ARM - Service Catalog 
+ARM - RBAC
+Advisor
+Analysis Services
+API Management
+Application Insights
+App Services
+Authorization
+Automation
+Azure Stack
+Azure Cloud Shell
+Batch
+BatchAI
+Billing
+Bot Services
+CDN
+Cognitive Services
+Commerce
+Compute
+Compute - Extensions
+Compute - Images
+Compute - Managed Disks
+Compute - VM
+Compute - VMSS
+Consumption
+Container Instance
+Container Registry
+Cosmos
+Customer Insights
+Data Catalog
+Data Factory
+Data Lake
+Data Lake Storage Gen1
+Data Lake Storage Gen2
+Data Lake Analytics
+Data Lake Store
+Data Migration
+Devtestlab
+Docs
+Event Grid
+Event Hub
+Graph
+HDInsight
+Import Export
+Intune
+Insights
+IotHub
+KeyVault
+Logic App
+Machine Learning
+Machine Learning Compute
+Machine Learning Experimentation
+Marketplace Ordering
+Media Services
+Migrate
+Mobile Engagement
+Monitor
+Monitor - Autoscale
+Monitor - ActivityLogs
+Monitor - Metrics
+Monitor - Diagnostic Settings
+Monitor - Alerts
+Monitor - ActionGroups
+Monitor - LogAnalytics
+Monitor - ApplicationInsights
+MySQL
+Network
+Network - Application Gateway
+Network - Express Routes
+Network - Gateways
+Network - Load Balancer
+Network - Watcher
+Network - DNS
+Network - Traffic Manager
+Notification Hubs
+Operational Insights
+Operations Management
+Policy Insights
+PostgreSQL
+PowerBI
+Recovery Services
+Recovery Services Backup
+Recovery Services Site-Recovery
+Redis Cache
+Relay
+Reservations
+Resource Authorization
+Resource Manager
+Resource Health
+Search
+Security
+Scheduler
+Server Management
+Service Bus
+Service Fabric
+Service Map
+SQL
+Storage
+Storsimple
+Stream Analytics
+TimeseriesInsights
+Visual Studio
+vFXT

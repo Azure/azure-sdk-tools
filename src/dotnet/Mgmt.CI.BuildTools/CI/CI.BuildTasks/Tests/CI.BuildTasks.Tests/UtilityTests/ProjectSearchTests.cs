@@ -65,7 +65,7 @@ namespace Tests.CI.BuildTasks.UtilityTests
             }
 
             //There are few edge cases, will fix this test once we move to new directory structure
-            if(rpDirClone.Count < 5)
+            if(rpDirClone.Count <= 5)
             {
                 return true;
             }

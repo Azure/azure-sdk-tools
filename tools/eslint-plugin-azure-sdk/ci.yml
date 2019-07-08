@@ -1,0 +1,78 @@
+trigger:
+  - master
+
+variables:
+  NodeVersion: "10.x"
+  skipComponentGovernanceDetection: true
+
+jobs:
+  - job: "Build"
+
+    pool:
+      vmImage: "ubuntu-16.04"
+
+    steps:
+      - task: NodeTool@0
+        inputs:
+          versionSpec: "$(NodeVersion)"
+        displayName: "Install Node.js $(NodeVersion)"
+
+      - script: |
+          set -e
+          npm install
+          npm run build
+          npm pack
+        workingDirectory: tools/eslint-plugin-azure-sdk
+        displayName: "Build and pack package"
+
+      - task: CopyFiles@2
+        inputs:
+          contents: "tools/eslint-plugin-azure-sdk/*.tgz"
+          targetFolder: $(Build.ArtifactStagingDirectory)
+          flattenFolders: true
+        displayName: "Copy package"
+
+      - task: PublishBuildArtifacts@1
+        condition: succeededOrFailed()
+        displayName: "Publish artifacts"
+        inputs:
+          artifactName: package gzip
+
+  - job: "Analyze"
+
+    pool:
+      vmImage: "ubuntu-16.04"
+
+    steps:
+      - task: NodeTool@0
+        inputs:
+          versionSpec: "$(NodeVersion)"
+        displayName: "Install Node.js $(NodeVersion)"
+
+      - script: |
+          set -e
+          npm install
+          npm run lint
+          npm audit
+        workingDirectory: tools/eslint-plugin-azure-sdk
+        condition: and(succeeded(), eq(variables['RunNpmAudit'], 'true'))
+        displayName: "Lint and audit package"
+
+  - job: "Test"
+
+    pool:
+      vmImage: "ubuntu-16.04"
+
+    steps:
+      - task: NodeTool@0
+        inputs:
+          versionSpec: "$(NodeVersion)"
+        displayName: "Install Node.js $(NodeVersion)"
+
+      - script: |
+          set -e
+          npm install
+          npm test
+        workingDirectory: tools/eslint-plugin-azure-sdk
+        condition: succeededOrFailed()
+        displayName: "Run package tests"

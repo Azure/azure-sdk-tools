@@ -36,5 +36,9 @@ namespace Azure.ClientSdk.Analyzers
         public static DiagnosticDescriptor AZC0007 = new DiagnosticDescriptor(
             "AZC0007", "Client type should have public constructor with equivalent parameters not taking client options",
             "Client type should have public constructor with equivalent parameters not taking '{0}' as last argument", "Usage", DiagnosticSeverity.Warning, true);
+
+        public static DiagnosticDescriptor AZC0008 = new DiagnosticDescriptor(
+            "AZC0008", "ClientOptions should have a nested enum called ServiceVersion",
+            "Client type should have a nested enum called ServiceVersion", "Usage", DiagnosticSeverity.Warning, true);
     }
 }

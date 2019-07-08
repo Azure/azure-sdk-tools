@@ -3,18 +3,15 @@
 
 namespace MS.Az.Mgmt.CI.Common.Services
 {
-    using MS.Az.Mgmt.CI.BuildTasks.Common;
     using MS.Az.Mgmt.CI.BuildTasks.Common.Base;
     using MS.Az.Mgmt.CI.BuildTasks.Common.ExtensionMethods;
     using MS.Az.Mgmt.CI.BuildTasks.Common.Logger;
-    using MS.Az.Mgmt.CI.BuildTasks.Common.Services;
     using MS.Az.Mgmt.CI.Common.ExtensionMethods;
     using MS.Az.Mgmt.CI.Common.Models;
     using Octokit;
     using Octokit.Internal;
     using System;
     using System.Collections.Generic;
-    using System.ComponentModel;
     using System.Linq;
     using System.Net;
 
@@ -29,20 +26,13 @@ namespace MS.Az.Mgmt.CI.Common.Services
 
         #region fields
         GitHubClient _octokitClient;
-        //InMemoryCredentialStore _octokitCredential;
         Credentials _githubCredentials;
         InMemoryCredentialStore _credentialStore;
         ProductHeaderValue _myProductInfo;
-        //RepositoriesClient _repoClient;
         PrSvc _pr;
-
-        //IReadOnlyList<Repository> _repoList;
-
         #endregion
 
         #region Properties
-        //KeyVaultService KVSvc { get; set; }
-
         public PrSvc PR
         {
             get
@@ -115,10 +105,6 @@ namespace MS.Az.Mgmt.CI.Common.Services
         #endregion
 
         #region Constructor
-        //public GitHubService() { }
-
-        //public GitHubService(NetSdkBuildTaskLogger utilLog) : base(utilLog) { }
-
         public GitHubService(NetSdkBuildTaskLogger utilLog, string ghAccessToken) : base(utilLog)
         {
             GHAccessToken = ghAccessToken;
@@ -159,6 +145,22 @@ namespace MS.Az.Mgmt.CI.Common.Services
             }
         }
 
+        public bool IsRepoAuthorized(string repoUrl)
+        {
+            bool isAuthorized = false;
+            try
+            {
+                OctoClient.Repository.Get("Azure", repoUrl).GetAwaiter().GetResult();
+                isAuthorized = true;
+            }
+            catch (Exception ex)
+            {
+                UtilLogger.LogInfo("An error occured while initialzing Octokit client", ex.ToString());
+            }
+
+            return isAuthorized;
+        }
+
         #endregion
 
         #region private functions
@@ -180,18 +182,13 @@ namespace MS.Az.Mgmt.CI.Common.Services
 
         NetSdkBuildTaskLogger Logger { get; set; }
 
-
-        //KeyVaultService KVSvc { get; set; }
-
         #endregion
 
         #region Constructor
-        //public PrSvc(Octokit.GitHubClient ghc, NetSdkBuildTaskLogger log, KeyVaultService kvService)
         public PrSvc(Octokit.GitHubClient ghc, NetSdkBuildTaskLogger log)
         {
             Logger = log;
             OC = ghc;
-            //KVSvc = kvService;
         }
         #endregion
 
@@ -339,7 +336,7 @@ namespace MS.Az.Mgmt.CI.Common.Services
         /// <returns></returns>
         public IEnumerable<string> GetPullRequestFileList(string repoName, long prNumber)
         {
-            Repository repo = GetRepository(repoName);            
+            Repository repo = GetRepository(repoName);
             return GetPullRequestFileList(repo.Id, prNumber);
         }
 
@@ -351,8 +348,21 @@ namespace MS.Az.Mgmt.CI.Common.Services
         /// <returns></returns>
         public IEnumerable<string> GetPullRequestFileList(long repoId, long prNumber)
         {
-            IReadOnlyList<PullRequestFile> prFiles = OC.PullRequest.Files(repoId, (int)prNumber).GetAwaiter().GetResult();
-            IEnumerable<string> filePathList = prFiles.Select<PullRequestFile, string>((item) => item.FileName);
+            List<string> filePathList = new List<string>();
+            try
+            {
+                IReadOnlyList<PullRequestFile> prFiles = OC.PullRequest.Files(repoId, (int)prNumber).GetAwaiter().GetResult();
+                //IEnumerable<string> filePathList = prFiles.Select<PullRequestFile, string>((item) => item.FileName);
+                if(prFiles.NotNullOrAny<PullRequestFile>())
+                {
+                    filePathList = prFiles.Select<PullRequestFile, string>((item) => item.FileName).ToList<string>();
+                }
+            }
+            catch(Exception ex)
+            {
+                Logger.LogInfo(ex.ToString());
+            }
+
             return filePathList;
         }
 

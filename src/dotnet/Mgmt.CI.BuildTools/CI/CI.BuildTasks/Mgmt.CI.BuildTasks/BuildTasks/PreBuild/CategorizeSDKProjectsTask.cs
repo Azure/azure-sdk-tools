@@ -16,6 +16,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Tasks.PreBuild
     using System.Linq;
     using MS.Az.Mgmt.CI.BuildTasks.Common.ExtensionMethods;
     using MS.Az.Mgmt.CI.Common.ExtensionMethods;
+    using MS.Az.Mgmt.CI.Common.Services;
 
     /// <summary>
     /// Vocabulary:
@@ -49,18 +50,14 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Tasks.PreBuild
         const string REPO_ROOT_TOKEN_DIR = ".git";
 
         //const string default_excludeTokens = @"Batch\Support;D:\adxRepo\netSdk\master\src\SDKCommon\Test\SampleProjectPublish\SampleSDKTestPublish.csproj";
-        const string default_excludeTokens = @"Batch\Microsoft.Azure.Batch;Batch\Microsoft.Azure.Batch.FilesConventions;Batch\Microsoft.Azure.Batch.FileStaging;mgmtCommon\Test\SampleProjectPublish\";
+        //const string default_excludeTokens = @"Batch\Microsoft.Azure.Batch;Batch\Microsoft.Azure.Batch.FilesConventions;Batch\Microsoft.Azure.Batch.FileStaging;mgmtCommon\Test\SampleProjectPublish\";
+        const string default_excludeTokens = @"azure.core;appconfiguration;Microsoft.Azure.Batch.FilesConventions;Microsoft.Azure.Batch.FileStaging";
         #endregion
 
         #region fields
-        //string _scope;
         string _repositoryRootDirPath;
         string _cmdLineExcludeScope;
-
-        //string _projType;
-        //string _projCat;
-        //SdkProjectType _projectType;
-        //SdkProjectCategory _projectCategory;
+        ReflectionService _refSvc;
         #endregion
 
         #region Properties
@@ -84,13 +81,13 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Tasks.PreBuild
         /// Provide list of scopes for the task
         /// This can be either fully qualified scopes or relative scopes
         /// </summary>
-        List<string> MultipleScopes { get; set; }
+        internal List<string> MultipleScopes { get; set; }
 
         /// <summary>
         /// Fully qualified Scope Path
         /// This is especially required for Swagger to SDK scenarios
         /// </summary>
-        public string FullyQualifiedBuildScopeDirPath { get; set; }
+        string FullyQualifiedBuildScopeDirPath { get; set; }
 
         /// <summary>
         /// Resource Providers to include for applicable targets (clean, build etc)
@@ -195,13 +192,48 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Tasks.PreBuild
 
         internal SdkProjectCategory ProjCat { get; set; }
 
+        ReflectionService RefSvc
+        {
+            get
+            {
+                if (_refSvc == null)
+                {
+                    _refSvc = new ReflectionService();
+                    _refSvc.GetAssembly(useMetadataLoadContext: true);
+                }
+
+                return _refSvc;
+            }
+        }
+
         #endregion
+
+        public List<string> DefaultExcludedTokens
+        {
+            get
+            {
+                List<string> _defExTknList = new List<string>();
+                if(!string.IsNullOrWhiteSpace(CmdLineExcludeScope))
+                {
+                    string[] tokens = CmdLineExcludeScope.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+
+                    if(tokens.NotNullOrAny<string>())
+                    {
+                        _defExTknList = tokens.ToList<string>();
+                    }
+                }
+
+                return _defExTknList;
+            }
+        }
         #endregion
 
         #region Constructor
         public CategorizeSDKProjectsTask()
         {
             MultipleScopes = new List<string>();
+            BuildScope = string.Empty;
+            BuildScopes = string.Empty;
         }
 
         public CategorizeSDKProjectsTask(string rootDirPath) : this(rootDirPath, string.Empty, string.Empty, string.Empty) { }
@@ -274,6 +306,8 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Tasks.PreBuild
         /// </summary>
         void Categorize()
         {
+            //MessageImportance lowMsgImp = MessageImportance.Low;
+            //MessageImportance highMsgImp = MessageImportance.Low;
             TaskLogger.LogInfo("Categorizing Projects.....");
             List<SdkProjectMetadata> sdkProjList = new List<SdkProjectMetadata>();
             List<SdkProjectMetadata> testProjList = new List<SdkProjectMetadata>();
@@ -295,6 +329,8 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Tasks.PreBuild
             foreach (KeyValuePair<string, SdkProjectMetadata> kv in allProj)
             {
                 SdkProjectMetadata pmd = kv.Value;
+
+                string projFile = pmd.ProjectFilePath;
 
                 switch(pmd.ProjectType)
                 {
@@ -331,6 +367,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Tasks.PreBuild
                     #region Test
                     case SdkProjectType.Test:
                         {
+                            #region baseline Target Fx check
                             // WE HAVE INTENTIONALLY SKIPPED CHECKING THIS PROPERTY, BASICALLY WE WILL NOT BE VERIFYING BASELINE TARGETFX FOR TEST PROJECTS
                             // IF WE EVER DECIDE TO DO IT, SIMPLY ENABLE THE BELOW CODE
 
@@ -345,7 +382,8 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Tasks.PreBuild
                             //            unsupportedProjList.Add(pmd);
                             //        }
                             //    }
-                            
+                            #endregion
+
                             if (!pmd.Fx.IsApplicableForCurrentPlatform)
                             {
                                 platformSpecificSkippedProjList.Add(pmd);
@@ -372,21 +410,22 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Tasks.PreBuild
             Test_Projects = testProjList.Select<SdkProjectMetadata, SDKMSBTaskItem>((item) => new SDKMSBTaskItem(item)).ToArray<SDKMSBTaskItem>();
             UnSupportedProjects = unsupportedProjList.Select<SdkProjectMetadata, SDKMSBTaskItem>((item) => new SDKMSBTaskItem(item)).ToArray<SDKMSBTaskItem>();
             Test_ToBe_Run = testToBeRunProjList.Select<SdkProjectMetadata, SDKMSBTaskItem>((item) => new SDKMSBTaskItem(item)).ToArray<SDKMSBTaskItem>();
+            Test_ToBe_Run = AdjustMultiTargetTests(Test_ToBe_Run).ToArray<SDKMSBTaskItem>();
             PlatformSpecificSkippedProjects = platformSpecificSkippedProjList.Select<SdkProjectMetadata, SDKMSBTaskItem>((item) => new SDKMSBTaskItem(item)).ToArray<SDKMSBTaskItem>();
             SdkPkgReferenceList = GetNormalizedPkgRefList();
 
-            TaskLogger.LogInfo("SDK Project(s) found:'{0}'", SDK_Projects.Count().ToString());
+            TaskLogger.LogInfo(MessageImportance.High, "SDK Project(s) found:'{0}'", SDK_Projects.Count().ToString());
             TaskLogger.LogInfo(MessageImportance.Low, SDK_Projects, "File Paths for SDK Projects");
 
-            TaskLogger.LogInfo("Test Project(s) found:'{0}'", Test_Projects.Count().ToString());
+            TaskLogger.LogInfo(MessageImportance.High, "Test Project(s) found:'{0}'", Test_Projects.Count().ToString());
             TaskLogger.LogInfo(MessageImportance.Low, Test_Projects, "File Paths for Test Projects");
 
-            TaskLogger.LogInfo("Test Project(s) whose tests will be executed are:'{0}'", Test_ToBe_Run.Count().ToString());
+            TaskLogger.LogInfo(MessageImportance.High, "Test Project(s) whose tests will be executed are:'{0}'", Test_ToBe_Run.Count().ToString());
             TaskLogger.LogInfo(MessageImportance.Low, Test_ToBe_Run, "File Paths for Test Projects whose tests will be executed");
 
             if (UnSupportedProjects.NotNullOrAny<SDKMSBTaskItem>())
             {
-                TaskLogger.LogInfo("Project(s) whose target framework is not currently supported:'{0}'", UnSupportedProjects.Count().ToString());
+                TaskLogger.LogInfo(MessageImportance.Normal, "Project(s) whose target framework is not currently supported:'{0}'", UnSupportedProjects.Count().ToString());
                 TaskLogger.LogInfo(MessageImportance.Low, UnSupportedProjects, "File Paths for Unsupported Projects");
             }
 
@@ -398,15 +437,49 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Tasks.PreBuild
 
             if (PlatformSpecificSkippedProjects.NotNullOrAny<SDKMSBTaskItem>())
             {
-                TaskLogger.LogInfo("Test Project(s) that will be skipped from building/executing tests are:'{0}'", PlatformSpecificSkippedProjects.Count().ToString());
+                TaskLogger.LogInfo(MessageImportance.Normal, "Test Project(s) that will be skipped from building/executing tests are:'{0}'", PlatformSpecificSkippedProjects.Count().ToString());
                 TaskLogger.LogInfo(MessageImportance.Low, PlatformSpecificSkippedProjects, "File Paths for Projects that will be skipped that are platform specific");
             }
 
             if (SdkPkgReferenceList != null)
             {
-                TaskLogger.LogInfo("PackageReferences count:'{0}'", SdkPkgReferenceList.Count().ToString());
+                TaskLogger.LogInfo(MessageImportance.Normal, "PackageReferences count:'{0}'", SdkPkgReferenceList.Count().ToString());
                 TaskLogger.LogInfo(MessageImportance.Low, SdkPkgReferenceList, "Packages References");
             }
+        }
+
+        /// <summary>
+        /// We split multi-targeted test projects into individual targeted test projects
+        /// This will be then used in executing test projects for each of the targted projects
+        /// e.g. if a test project is targeting 4 different target fx, we will create 4 list item
+        /// same project 4 different target fx
+        /// </summary>
+        /// <param name="testsTobeRun"></param>
+        /// <returns></returns>
+        IEnumerable<SDKMSBTaskItem> AdjustMultiTargetTests(IEnumerable<SDKMSBTaskItem> testsTobeRun)
+        {
+            List<SDKMSBTaskItem> newTestList = new List<SDKMSBTaskItem>();
+            foreach(SDKMSBTaskItem testProj in testsTobeRun)
+            {   
+                if(testProj.PlatformSpecificTargetFxMonikerString.Contains(";"))
+                {
+                    string[] tfx = testProj.PlatformSpecificTargetFxMonikerString.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+
+                    foreach(string fxMonikerToken in tfx)
+                    {
+                        SDKMSBTaskItem ti = new SDKMSBTaskItem(testProj);
+                        ti.PlatformSpecificTargetFxMonikerString = fxMonikerToken;
+                        ti.UpdateMetadata();
+                        newTestList.Add(ti);
+                    }
+                }
+                else
+                {
+                    newTestList.Add(testProj);
+                }
+            }
+
+            return newTestList;
         }
 
         /// <summary>
@@ -436,7 +509,6 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Tasks.PreBuild
         {
             string azSdkFilePath = string.Empty;
             string azTestFilePath = string.Empty;
-            
 
             var azSdkRef = Directory.EnumerateFiles(RepositoryRootDirPath, "AzSdk.reference.props", SearchOption.AllDirectories);
             if(azSdkRef.Any<string>())

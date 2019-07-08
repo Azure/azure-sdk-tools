@@ -1,0 +1,23 @@
+﻿@page
+@model APIViewWeb.Pages.Assemblies.IndexModel
+@{
+    ViewData["Title"] = "Index";
+}
+
+@foreach (var assembly in Model.Assemblies)
+{
+    <tr>
+        <td>
+            @Html.Raw(assembly.name)
+        </td>
+        <td>
+            <a asp-page="./Review" asp-route-id="@assembly.id">Review</a>
+        </td>
+        <td>
+            <a asp-page="./Delete" asp-route-id="@assembly.id">Delete</a>
+        </td>
+    </tr>
+    <br />
+}
+
+

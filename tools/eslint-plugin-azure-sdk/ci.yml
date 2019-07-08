@@ -51,6 +51,7 @@ jobs:
 
       - script: |
           set -e
+          npm install -g npm@6.90
           npm install
           npm run lint
           npm audit

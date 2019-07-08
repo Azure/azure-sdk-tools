@@ -40,5 +40,12 @@ namespace Azure.ClientSdk.Analyzers
         public static DiagnosticDescriptor AZC0008 = new DiagnosticDescriptor(
             "AZC0008", "ClientOptions should have a nested enum called ServiceVersion",
             "Client type should have a nested enum called ServiceVersion", "Usage", DiagnosticSeverity.Warning, true);
+
+        public static DiagnosticDescriptor AZC0101 = new DiagnosticDescriptor(
+            "AZC0101", "Avoid multiple newlines",
+            "Avoid multiple newlines", "Usage", DiagnosticSeverity.Warning, true);
+        public static DiagnosticDescriptor AZC0102 = new DiagnosticDescriptor(
+            "AZC0102", "Avoid whitespace in the end of the line",
+            "Avoid whitespace in the end of the line", "Usage", DiagnosticSeverity.Warning, true);
     }
 }

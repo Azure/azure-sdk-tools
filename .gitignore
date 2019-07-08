@@ -461,3 +461,6 @@ src/dotnet/Mgmt.CI.BuildTools/NugetToolsPackage/CI.Tools.Package/build/tasks/net
 
 # npm pack artifacts
 *.tgz
+
+# Visual Studio launch settings (frequently user-specific)
+launchSettings.json

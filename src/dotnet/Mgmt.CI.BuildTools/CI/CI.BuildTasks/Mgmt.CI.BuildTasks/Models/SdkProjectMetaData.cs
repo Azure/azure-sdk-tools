@@ -17,6 +17,7 @@ namespace MS.Az.NetSdk.Build.Models
         #region const
         const string EXCLUDE_FROM_BUILD = @"ExcludeFromBuild";
         const string EXCLUDE_FROM_TEST = @"ExcludeFromTest";
+        const string OUTPUTPATH = @"OutputPath";
         #endregion
 
         #region fields
@@ -56,6 +57,8 @@ namespace MS.Az.NetSdk.Build.Models
                 return _sdkPkgRefList;
             }
         }
+
+        public string OutputPath { get; set; }
 
 
         public string BaseLineSdkTargetFxMonikerString { get; private set; }
@@ -123,12 +126,21 @@ namespace MS.Az.NetSdk.Build.Models
             else
                 ProjectCategory = SdkProjectCategory.UnDetermined;
 
-            if (!string.IsNullOrWhiteSpace(msbProject.GetPropertyValue(EXCLUDE_FROM_BUILD)))
-                ExcludeFromBuild = true;
 
-            if (!string.IsNullOrWhiteSpace(msbProject.GetPropertyValue(EXCLUDE_FROM_TEST)))
-                ExcludeFromTest = true;
+            string buildPropValue = msbProject.GetPropertyValue(EXCLUDE_FROM_BUILD);
+            string testPropValue = msbProject.GetPropertyValue(EXCLUDE_FROM_TEST);
 
+            if(bool.TryParse(buildPropValue, out bool parsedBuildPropValue))
+            {
+                ExcludeFromBuild = parsedBuildPropValue;
+            }
+
+            if (bool.TryParse(testPropValue, out bool parsedTestPropValue))
+            {
+                ExcludeFromTest = parsedTestPropValue;
+            }
+
+            OutputPath = msbProject.GetPropertyValue(OUTPUTPATH);
         }
         #endregion
 

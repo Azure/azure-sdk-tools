@@ -16,10 +16,11 @@
     <BuildTargetsDependsOn>
       $(RestoreTargetsDependsOn);
       BuildProjects;
+      UpdateApiTagInfo
     </BuildTargetsDependsOn>
     <RunTestProjectsDependsOn>
       $(BuildTargetsDependsOn);
-      ExecuteTests
+      ExecuteTests;
     </RunTestProjectsDependsOn>
      <CreateNugetPackageDependsOn>
       $(RunTestProjectsDependsOn);
@@ -30,6 +31,9 @@
       PublishingNuget;
       ArchiveSymbolsTarget
     </PublishNugetDependsOn>
+    <UtilTargetsDependsOn>
+      ExecUtil;
+    </UtilTargetsDependsOn>
     <HelpDependsOn>
       DisplayHelp
     </HelpDependsOn>
@@ -38,7 +42,6 @@
   <Target Name="GetBuildEnv">
     <Message Text="CISignRepo......$(CISignRepo)" Importance="Low" />
     <Message Text="OnPremiseBuild .... $(OnPremiseBuild)" Importance="Low" />
-    <!--<Message Text="OnPremiseBuildTasks .... $(OnPremiseBuildTasks)"/>-->
     <Message Text="CIToolsPath .... $(CIToolsPath)"  Importance="Low" />
     <Message Text="CodeSign .... $(CodeSign)"  Importance="Low" />
     <Message Text="PackageOutputPath .... $(PackageOutputPath)" Importance="Low" />
@@ -96,7 +99,7 @@
       <ProjectsToBeRestored Include="@(CombineProjects)" />
     </ItemGroup>
 	  
-    <Message Text="Now Restoring @(ProjectsToBeRestored)" Condition=" '$(SkipRestore)' != 'true' OR '@(ProjectsToBeRestored)' != '' OR '$(DebugTrace)' == 'true' "/>
+    <Message Text="Now Restoring @(ProjectsToBeRestored)" Condition=" '@(ProjectsToBeRestored)' != '' OR '$(DebugTrace)' == 'true' "/>
 
     <MSBuild Targets="$(LatestProjectDefaultRestoreTarget)"
             Projects="@(ProjectsToBeRestored)"
@@ -122,21 +125,49 @@
     </MSBuild>
   </Target>
 
-  <Target Name="FindRPScopeFromPR" Condition=" '$(PullRequestNumber)' != '' AND '$(RepoHtmlUrl)' != '' ">
-    <Message Text="Finding Scope..." />
+  <Target Name="ExecuteTests" Condition=" '$(SkipTests)' != 'true' ">
+    <Message Text="Target ==> ExecuteTests Initiated....." Importance="Low" />
+    <ItemGroup>
+      <ExecuteTestSuite Include="@(TestToBeRun)" />
+    </ItemGroup>
 
-    <DetectRPScopeTask
-      GH_PRNumber="$(PullRequestNumber)"
-      GH_RepositoryHtmlUrl="$(RepoHtmlUrl)"
-      GH_RepositoryId="$(RepoId)"
-      DebugMode="$(DebugMode)"
-      WhatIf="$(WhatIf)"
-      >
-      <Output TaskParameter="ScopesFromPR" ItemName="ScopesFromPullRequest" />
-    </DetectRPScopeTask>
-
-    <Message Text="Scopes retrieved from PR......@(ScopesFromPullRequest)" Importance="High" />
+    <Message Text="Running .NET Core Tests .... %(ExecuteTestSuite.Identity)" Condition=" '@(ExecuteTestSuite)' != '' " />
+    <Message Text="Running .NET Core Tests .... %(ExecuteTestSuite.PlatformSpecificFx)" Condition=" '@(ExecuteTestSuite)' != '' " />
+    
+    <Exec Command="dotnet test %(ExecuteTestSuite.Identity) -f %(ExecuteTestSuite.PlatformSpecificFx) -l trx;LogFileName=$(pkg_root_RepoTestResultsDir)\%(ExecuteTestSuite.PlatformSpecificFx)\%(ExecuteTestSuite.Filename).trx" 
+          Condition="( ('@(ExecuteTestSuite)' != '') AND ('$(WhatIf)' != 'true') )" ContinueOnError="false" WorkingDirectory="%(ExecuteTestSuite.RootDir)%(ExecuteTestSuite.Directory)" />
   </Target>
+
+  <Target Name="Package" Condition=" '@(CombinedNugetPkgProjects)' != '' ">
+    <Message Text="Target ==> Package Initiated....." Importance="Low" />
+    <Message Text="Packaging..... @(CombinedNugetPkgProjects)" Importance="High" />
+    <PropertyGroup> 
+      <NugPkgOutPutDirPath>$(pkg_root_RepoNugPkgOutputDir)</NugPkgOutPutDirPath>
+    </PropertyGroup>
+    <ItemGroup>    
+      <ProjectsToPackage Include="@(CombinedNugetPkgProjects)" />      
+    </ItemGroup>
+    
+    <Message Text="Packaging..... @(ProjectsToPackage)" Condition=" '$(ProjectsToPackage)' != '' " />
+    <Message Text="PackageOutputDir....... $(NugPkgOutPutDirPath)" Condition=" '$(NugPkgOutPutDirPath)' != '' " Importance="Low" />   
+    <Message Text="Starting Packaging..... @(ProjectsToPackage)" Condition=" '@(ProjectsToPackage)' != '' "/>
+
+    <MSBuild
+        Projects="@(ProjectsToPackage)"
+        Targets="Pack"
+        Properties="Configuration=$(Configuration);
+        VisualStudioVersion=$(VisualStudioVersion); 
+        PackageOutputPath=$(NugPkgOutPutDirPath); 
+        NoPackageAnalysis=true; 
+        IncludeSymbols=true;
+        SymbolPackageFormat=snupkg;
+        IsPackable=true;
+        NoBuild=true;" Condition=" ('@(ProjectsToPackage)' != '') OR ('$(WhatIf)' != 'true') ">
+      <Output TaskParameter="TargetOutputs" ItemName="SdkNuGetPackages" />
+    </MSBuild>
+  </Target>
+
+  
   <Target Name="CategorizeProjects">
     <Message Text="Target ==> CategorizeProjects Initiated....." Importance="Low" />
     <Message Text="Categorizing Target....." Condition=" '$(DebugTrace)' == 'true' " />
@@ -145,11 +176,14 @@
     <Message Text="RootDirNoTrailSepp..............$(RootDirNoTrailSepp)" Condition=" '$(DebugTrace)' == 'true' " />
     <Message Text="pkg_root_RepoRoot..............$(pkg_root_RepoRoot)" Condition=" '$(DebugTrace)' == 'true' " />
     <Message Text="pkg_root_RepoSrcDir..............$(pkg_root_RepoSrcDir)" Condition=" '$(DebugTrace)' == 'true' " />
+    <Message Text="CatProj - Scope retrieved from PR......$(ScopeStringFromTask)" Importance="High" />
 
-    <!--MultipleScopes="@(ScopesFromPullRequest)" -->
+    <PropertyGroup>
+      <BuildScopes Condition=" '$(ScopeStringFromTask)' != '' ">$(ScopeStringFromTask)</BuildScopes>
+    </PropertyGroup>
+
     <CategorizeSDKProjectsTask
       BuildScope="$(Scope)"
-      FullyQualifiedBuildScopeDirPath="$(FQBuildScopeDirPath)"
       BuildScopes="$(BuildScopes)"  
       CmdLineIncludeScope="$(IncludeRPs)"
       CmdLineExcludeScope="$(ExcludeRPs)"
@@ -190,63 +224,6 @@
         <Properties>TargetFrameworks=%(PlatformSpecificFx)</Properties>
       </TestProjectsToBuild> 
     </ItemGroup>
-
-    <!--
-        <Message Text="Projects .......@(SDK_Projects->'%(Identity)')" />
-        <Message Text="2nd way Projects ....... %(SDK_Projects.Identity)" />
-        <Message Text="TargetFx ....... %(SDK_Projects.PlatformSpecificFx)" />
-        <Message Text="2nd way TargetFx ....... @(SDKProjects->'%(TargetFx)')" />    
-    -->
-
-  </Target>
-
-  <Target Name="ExecuteTests" Condition=" '$(SkipTests)' != 'true' ">
-    <Message Text="Target ==> ExecuteTests Initiated....." Importance="Low" />
-    <ItemGroup>
-      <ExecuteTestSuite Include="@(TestToBeRun)" />
-    </ItemGroup>
-
-    <Message Text="Running .NET Core Tests .... %(ExecuteTestSuite.Identity)" Condition=" '@(ExecuteTestSuite)' != '' " />
-    <Message Text="Running .NET Core Tests .... %(ExecuteTestSuite.PlatformSpecificFx)" Condition=" '@(ExecuteTestSuite)' != '' " />
-    
-    <Exec Command="dotnet test %(ExecuteTestSuite.Identity) -f %(ExecuteTestSuite.PlatformSpecificFx) -l trx;LogFileName=$(pkg_root_RepoTestResultsDir)\%(ExecuteTestSuite.PlatformSpecificFx)\%(ExecuteTestSuite.Filename).trx" 
-          Condition="( ('@(ExecuteTestSuite)' != '') AND ('$(WhatIf)' != 'true') )" ContinueOnError="false" WorkingDirectory="%(ExecuteTestSuite.RootDir)%(ExecuteTestSuite.Directory)" />
-  </Target>
-
-  <!--
-    This target is primarily being used by DevOps pipeline scenario for data plan which is using VSO tasks to sign.
-    So this target assumes build outputs are already generated and would simply like to package the
-    signed artificats (without rebuilding)
-    NOTE: This package cannot be used independently, will get an error as build outputs are not generated.
-  -->
-  <Target Name="PackageNoBuild" DependsOnTargets="CategorizeProjects;Package" />
-  
-  <Target Name="Package">
-    <Message Text="Target ==> Package Initiated....." Importance="Low" />
-    <PropertyGroup> 
-      <NugPkgOutPutDirPath>$(pkg_root_RepoNugPkgOutputDir)</NugPkgOutPutDirPath>
-    </PropertyGroup>
-    <ItemGroup>    
-      <ProjectsToPackage Include="@(CombinedNugetPkgProjects)" />      
-    </ItemGroup>
-    
-    <Message Text="Packaging..... @(ProjectsToPackage)" />
-    <Message Text="PackageOutputDir....... $(NugPkgOutPutDirPath)" />   
-    <Message Text="Starting Packaging..... @(ProjectsToPackage)" />
-
-    <MSBuild
-        Projects="@(ProjectsToPackage)"
-        Targets="Pack"
-        Properties="Configuration=$(Configuration);
-        VisualStudioVersion=$(VisualStudioVersion); 
-        PackageOutputPath=$(NugPkgOutPutDirPath); 
-        NoPackageAnalysis=true; 
-        IncludeSymbols=true;
-        SymbolPackageFormat=snupkg;
-        IsPackable=true;
-        NoBuild=true;" Condition=" ('@(ProjectsToPackage)' != '') OR ('$(WhatIf)' != 'true') ">
-      <Output TaskParameter="TargetOutputs" ItemName="SdkNuGetPackages" />
-    </MSBuild>
   </Target>
 
   <Target Name="DisplayHelp">
@@ -268,6 +245,7 @@
   </Target>
   
   <!--Do not delete-->
-  <Target Name="PreBuildStaticAnalysis" DependsOnTargets="$(PreBuildStaticAnalysisTargets)"/>
-  <Import Project="..\tasks\common.tasks"/>  
+  <Target Name="PreBuildStaticAnalysis" DependsOnTargets="$(PreBuildStaticAnalysisTargets)"/>  
+  <Import Project="..\tasks\common.tasks" />
+  <Import Project="utility.targets" />
 </Project>

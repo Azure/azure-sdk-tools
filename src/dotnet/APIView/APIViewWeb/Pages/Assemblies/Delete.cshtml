@@ -1,0 +1,17 @@
+﻿@page
+@model APIViewWeb.Pages.Assemblies.DeleteModel
+@{
+    ViewData["Title"] = "Delete";
+}
+
+<h3>Are you sure you want to delete this?</h3>
+<br />
+<form method="post">
+    <input type="hidden" asp-for="AssemblyContent" />
+    <input type="submit" value="Delete" class="btn btn-danger" /> |
+    <a asp-page="./Index">Back to List</a>
+</form>
+<br />
+<hr />
+<pre>@Html.Raw(Model.AssemblyContent)</pre>
+

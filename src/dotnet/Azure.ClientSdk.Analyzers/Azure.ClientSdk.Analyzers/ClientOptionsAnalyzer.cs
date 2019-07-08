@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
-using System;
 using System.Collections.Immutable;
 using System.Linq;
 
@@ -12,6 +11,7 @@ namespace Azure.ClientSdk.Analyzers
     public class ClientOptionsAnalyzer : DiagnosticAnalyzer
     {
         protected const string ClientOptionsSuffix = "ClientOptions";
+        protected const string ServiceVersionName = "ServiceVersion";
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(new[]
         {
@@ -22,7 +22,7 @@ namespace Azure.ClientSdk.Analyzers
 
         public override void Initialize(AnalysisContext context)
         {
-            //context.EnableConcurrentExecution();
+            context.EnableConcurrentExecution();
 
             context.RegisterCompilationStartAction(
                 analysisContext =>
@@ -44,7 +44,7 @@ namespace Azure.ClientSdk.Analyzers
         {
             var typeSymbol = (INamedTypeSymbol)context.Symbol;
 
-            var serviceVersion = typeSymbol.GetTypeMembers("ServiceVersion");
+            var serviceVersion = typeSymbol.GetTypeMembers(ServiceVersionName);
             var serviceVersionEnum = serviceVersion.SingleOrDefault(member => member.TypeKind == TypeKind.Enum);
             if (serviceVersionEnum == null)
             {
@@ -84,7 +84,7 @@ namespace Azure.ClientSdk.Analyzers
                 return false;
             }
 
-            return (symbol.Type.Name == "ServiceVersion" && symbol.Type.TypeKind == TypeKind.Enum);
+            return (symbol.Type.Name == ServiceVersionName && symbol.Type.TypeKind == TypeKind.Enum);
         }
     }
 }

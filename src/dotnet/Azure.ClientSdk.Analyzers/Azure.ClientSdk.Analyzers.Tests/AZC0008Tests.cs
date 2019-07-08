@@ -1,5 +1,6 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
+using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -44,7 +45,13 @@ namespace RandomNamespace
 }
 ");
             var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-            Assert.Empty(diagnostics);
+
+            if (diagnostics == null)
+            {
+                return;
+            }
+
+            Assert.True(diagnostics.Where(d => d.Id == "AZC0008").FirstOrDefault() == null);
         }
     }
 }

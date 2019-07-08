@@ -42,8 +42,8 @@ namespace Azure.ClientSdk.Analyzers
             "Client type should have a nested enum called ServiceVersion", "Usage", DiagnosticSeverity.Warning, true);
 
         public static DiagnosticDescriptor AZC0009 = new DiagnosticDescriptor(
-            "AZC0009", "All ClientOptions constructors should take a ServiceVersion as their first parameter",
-            "All ClientOptions constructors should take a ServiceVersion as their first parameter", "Usage", DiagnosticSeverity.Warning, true);
+            "AZC0009", "ClientOptions constructors should take a ServiceVersion as their first parameter",
+            "ClientOptions constructors should take a ServiceVersion as their first parameter.  Default constructor should be overloaded to provide ServiceVersion.", "Usage", DiagnosticSeverity.Warning, true);
 
         public static DiagnosticDescriptor AZC0010 = new DiagnosticDescriptor(
             "AZC0010", "ClientOptions constructors should default ServiceVersion to latest supported service version",

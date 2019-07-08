@@ -19,7 +19,6 @@ jobs:
 
       - script: |
           set -e
-          npm install -g npm@6.90
           npm install
           npm run build
           npm run pack
@@ -52,7 +51,6 @@ jobs:
 
       - script: |
           set -e
-          npm install -g npm@6.90
           npm install
           npm run lint
           npm audit
@@ -73,7 +71,6 @@ jobs:
 
       - script: |
           set -e
-          npm install -g npm@6.90
           npm install
           npm test
         workingDirectory: tools/eslint-plugin-azure-sdk

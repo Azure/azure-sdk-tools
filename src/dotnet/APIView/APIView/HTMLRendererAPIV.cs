@@ -4,6 +4,11 @@ namespace APIView
 {
     public class HTMLRendererAPIV : TreeRendererAPIV
     {
+        protected override void RenderDeclaration(StringBuilder builder, string word)
+        {
+            builder.Append("<span id=\"").Append(word).Append("\" class=\"class\">").Append(word).Append("</span>");
+        }
+
         protected override void RenderPunctuation(StringBuilder builder, string word)
         {
             builder.Append(word.Replace("<", "&lt;").Replace(">", "&gt;"));
@@ -11,7 +16,8 @@ namespace APIView
 
         protected override void RenderClass(StringBuilder builder, string word)
         {
-            builder.Append("<span class=\"class\">").Append(word).Append("</span>");
+            var shortName = word.Substring(word.LastIndexOf(".") + 1);
+            builder.Append("<a href=\"#").Append(shortName).Append("\" class=\"class\">").Append(word).Append("</a>");
         }
 
         protected override void RenderKeyword(StringBuilder builder, string word)

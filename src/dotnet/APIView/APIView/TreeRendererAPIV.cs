@@ -255,7 +255,7 @@ namespace APIView
                     break;
 
                 default:
-                    RenderClass(builder, nt.Name);
+                    RenderDeclaration(builder, nt.Name);
                     builder.Append(" ");
 
                     if (nt.TypeParameters.Any())
@@ -435,20 +435,22 @@ namespace APIView
             RenderType(builder, tp.Name);
         }
 
-        protected abstract void RenderPunctuation(StringBuilder s, string word);
+        protected abstract void RenderDeclaration(StringBuilder builder, string word);
 
-        protected abstract void RenderClass(StringBuilder s, string word);
+        protected abstract void RenderPunctuation(StringBuilder builder, string word);
 
-        protected abstract void RenderKeyword(StringBuilder s, string word);
+        protected abstract void RenderClass(StringBuilder builder, string word);
 
-        protected abstract void RenderName(StringBuilder s, string word);
+        protected abstract void RenderKeyword(StringBuilder builder, string word);
 
-        protected abstract void RenderNewline(StringBuilder s);
+        protected abstract void RenderName(StringBuilder builder, string word);
 
-        protected abstract void RenderSpecialName(StringBuilder s, string word);
+        protected abstract void RenderNewline(StringBuilder builder);
 
-        protected abstract void RenderType(StringBuilder s, string word);
+        protected abstract void RenderSpecialName(StringBuilder builder, string word);
 
-        protected abstract void RenderValue(StringBuilder s, string word);
+        protected abstract void RenderType(StringBuilder builder, string word);
+
+        protected abstract void RenderValue(StringBuilder builder, string word);
     }
 }

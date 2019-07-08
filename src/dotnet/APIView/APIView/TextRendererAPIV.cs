@@ -4,6 +4,11 @@ namespace APIView
 {
     public class TextRendererAPIV : TreeRendererAPIV
     {
+        protected override void RenderDeclaration(StringBuilder builder, string word)
+        {
+            builder.Append(word);
+        }
+
         protected override void RenderPunctuation(StringBuilder builder, string word)
         {
             builder.Append(word.Replace("&lt;", "<").Replace("&gt;", ">"));

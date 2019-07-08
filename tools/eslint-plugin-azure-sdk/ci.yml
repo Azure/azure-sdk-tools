@@ -17,12 +17,12 @@ jobs:
           versionSpec: "$(NodeVersion)"
         displayName: "Install Node.js $(NodeVersion)"
 
-      - script: | 
-        set -e
-        npm install -g npm@6.90
-        npm install
-        npm run build
-        npm run pack
+      - script: |
+          set -e
+          npm install -g npm@6.90
+          npm install
+          npm run build
+          npm run pack
         workingDirectory: tools/eslint-plugin-azure-sdk
 
       - task: CopyFiles@2
@@ -49,12 +49,12 @@ jobs:
           versionSpec: "$(NodeVersion)"
         displayName: "Install Node.js $(NodeVersion)"
 
-      - script: | 
-        set -e
-        npm install -g npm@6.90
-        npm install
-        npm run lint
-        npm audit
+      - script: |
+          set -e
+          npm install -g npm@6.90
+          npm install
+          npm run lint
+          npm audit
         workingDirectory: tools/eslint-plugin-azure-sdk
         condition: and(succeeded(), eq(variables['RunNpmAudit'], 'true'))
 
@@ -69,9 +69,9 @@ jobs:
           versionSpec: "$(NodeVersion)"
         displayName: "Install Node.js $(NodeVersion)"
 
-      - script: | 
-        set -e
-        npm install -g npm@6.90
-        npm install
-        npm test
+      - script: |
+          set -e
+          npm install -g npm@6.90
+          npm install
+          npm test
         workingDirectory: tools/eslint-plugin-azure-sdk

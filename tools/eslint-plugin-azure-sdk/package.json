@@ -1,0 +1,64 @@
+{
+  "name": "@ts-common/eslint-plugin-azure-sdk",
+  "version": "1.0.0-preview.1",
+  "description": "An ESLint plugin enforcing design guidelines for the JavaScript/TypeScript Azure SDK",
+  "keywords": [
+    "eslint",
+    "eslint-plugin",
+    "azure",
+    "azure-sdk",
+    "sdk",
+    "eslint-plugin-azure",
+    "eslint-plugin-azure-sdk"
+  ],
+  "author": "Microsoft Corporation",
+  "contributors": [
+    {
+      "name": "Arpan Laha",
+      "email": "arpanlaha99@gmail.com",
+      "url": "https://github.com/arpanlaha"
+    }
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/Azure/azure-sdk-tools/src/ts/eslint-plugin-azure-sdk",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Azure/azure-sdk-tools"
+  },
+  "bugs": {
+    "url": "https://github.com/Azure/azure-sdk-tools/issues"
+  },
+  "main": "dist/index.js",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "npm run clean && npm run format && tsc -p tsconfig.build.json",
+    "clean": "rimraf dist/",
+    "format": "prettier --write \"./**/*.{ts,json,md}\"",
+    "lint": "eslint src tests --ext .ts",
+    "test": "npm run clean && tsc -p tsconfig.json && mocha --timeout 10000 --recursive dist/tests"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/chai": "^4.1.7",
+    "@types/eslint": "^4.16.6",
+    "@types/estree": "0.0.39",
+    "@types/mocha": "^5.2.7",
+    "@typescript-eslint/eslint-plugin": "^1.10.2",
+    "@typescript-eslint/parser": "^1.10.2",
+    "chai": "^4.2.0",
+    "eslint": "^5.16.0",
+    "mocha": "^6.1.4",
+    "prettier": "^1.18.2",
+    "typescript": "^3.4.5"
+  },
+  "peerDependencies": {
+    "@typescript-eslint/parser": "^1.10.2",
+    "eslint": "^5.16.0",
+    "typescript": "^3.4.5"
+  },
+  "engines": {
+    "node": ">=0.10.0"
+  }
+}

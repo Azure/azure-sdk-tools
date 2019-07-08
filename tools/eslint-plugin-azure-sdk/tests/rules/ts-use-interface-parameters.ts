@@ -109,7 +109,7 @@ ruleTester.run("ts-use-interface-parameters", rule, {
       errors: [
         {
           message:
-            "type A of parameter a of function func9 is a class, not an interface"
+            "type A of parameter a of function func9 is a class or contains a class as a member"
         }
       ]
     },
@@ -119,7 +119,7 @@ ruleTester.run("ts-use-interface-parameters", rule, {
       errors: [
         {
           message:
-            "type A of parameter a of function method3 is a class, not an interface"
+            "type A of parameter a of function method3 is a class or contains a class as a member"
         }
       ]
     },
@@ -131,7 +131,7 @@ ruleTester.run("ts-use-interface-parameters", rule, {
       errors: [
         {
           message:
-            "type A of parameter a of function func12 is a class, not an interface"
+            "type A of parameter a of function func12 is a class or contains a class as a member"
         }
       ]
     },
@@ -142,7 +142,7 @@ ruleTester.run("ts-use-interface-parameters", rule, {
       errors: [
         {
           message:
-            "type A of parameter a of function method4 is a class, not an interface"
+            "type A of parameter a of function method4 is a class or contains a class as a member"
         }
       ]
     },
@@ -155,11 +155,11 @@ ruleTester.run("ts-use-interface-parameters", rule, {
       errors: [
         {
           message:
-            "type A of parameter a1 of function func15 is a class, not an interface"
+            "type A of parameter a1 of function func15 is a class or contains a class as a member"
         },
         {
           message:
-            "type A of parameter a2 of function func15 is a class, not an interface"
+            "type A of parameter a2 of function func15 is a class or contains a class as a member"
         }
       ]
     },
@@ -171,11 +171,11 @@ ruleTester.run("ts-use-interface-parameters", rule, {
       errors: [
         {
           message:
-            "type A of parameter a1 of function method3 is a class, not an interface"
+            "type A of parameter a1 of function method3 is a class or contains a class as a member"
         },
         {
           message:
-            "type A of parameter a2 of function method3 is a class, not an interface"
+            "type A of parameter a2 of function method3 is a class or contains a class as a member"
         }
       ]
     },
@@ -188,15 +188,15 @@ ruleTester.run("ts-use-interface-parameters", rule, {
       errors: [
         {
           message:
-            "type A of parameter a of function overloadMethodBad is a class, not an interface"
+            "type A of parameter a of function overloadMethodBad is a class or contains a class as a member"
         },
         {
           message:
-            "type A of parameter a1 of function overloadMethodBad is a class, not an interface"
+            "type A of parameter a1 of function overloadMethodBad is a class or contains a class as a member"
         },
         {
           message:
-            "type A of parameter a2 of function overloadMethodBad is a class, not an interface"
+            "type A of parameter a2 of function overloadMethodBad is a class or contains a class as a member"
         }
       ]
     },
@@ -208,15 +208,15 @@ ruleTester.run("ts-use-interface-parameters", rule, {
       errors: [
         {
           message:
-            "type A of parameter a of function overloadDeclarationBad is a class, not an interface"
+            "type A of parameter a of function overloadDeclarationBad is a class or contains a class as a member"
         },
         {
           message:
-            "type A of parameter a1 of function overloadDeclarationBad is a class, not an interface"
+            "type A of parameter a1 of function overloadDeclarationBad is a class or contains a class as a member"
         },
         {
           message:
-            "type A of parameter a2 of function overloadDeclarationBad is a class, not an interface"
+            "type A of parameter a2 of function overloadDeclarationBad is a class or contains a class as a member"
         }
       ]
     },
@@ -229,7 +229,7 @@ ruleTester.run("ts-use-interface-parameters", rule, {
       errors: [
         {
           message:
-            "type B3 of parameter b of function nestedMethodBad is a class, not an interface"
+            "type B3 of parameter b of function nestedMethodBad is a class or contains a class as a member"
         }
       ]
     },
@@ -241,7 +241,7 @@ ruleTester.run("ts-use-interface-parameters", rule, {
       errors: [
         {
           message:
-            "type B3 of parameter b of function nestedDeclarationBad is a class, not an interface"
+            "type B3 of parameter b of function nestedDeclarationBad is a class or contains a class as a member"
         }
       ]
     }

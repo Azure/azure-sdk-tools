@@ -82,14 +82,13 @@ const isValidParam = (
   converter: ParserWeakMap<TSESTree.Node, TSNode>,
   typeChecker: TypeChecker
 ): boolean => {
+  const tsIdentifier: TSESTree.Identifier = param as TSESTree.Identifier;
+  if (tsIdentifier.optional) {
+    return true;
+  }
   return getSymbolsUsedInParam(param, converter, typeChecker).every(
     (symbol: Symbol): boolean => {
-      const tsIdentifier: TSESTree.Identifier = param as TSESTree.Identifier;
-      return (
-        tsIdentifier.optional ||
-        symbol === undefined ||
-        symbol.getFlags() !== SymbolFlags.Class
-      );
+      return symbol === undefined || symbol.getFlags() !== SymbolFlags.Class;
     }
   );
 };

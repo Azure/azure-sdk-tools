@@ -455,5 +455,12 @@ restoredPackages/
 src/dotnet/Mgmt.CI.BuildTools/NugetToolsPackage/CI.Tools.Package/build/tasks/net461/
 src/dotnet/Mgmt.CI.BuildTools/NugetToolsPackage/CI.Tools.Package/build/tasks/netstandard2.0
 
+# local settings
+.DS_Store
+.vscode
+
+# npm pack artifacts
+*.tgz
+
 # Visual Studio launch settings (frequently user-specific)
 launchSettings.json

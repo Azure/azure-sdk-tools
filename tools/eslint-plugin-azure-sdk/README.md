@@ -72,7 +72,7 @@ If you need to modify or disable specific rules, you can do so in the `rules` se
 - [ts-config-strict](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-strict.md)
 - [ts-package-json-author](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-author.md)
 - [ts-package-json-bugs](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-bugs.md)
-- [ts-package-json-homepage](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-package-json-homepage)
+- [ts-package-json-homepage](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-homepage.md)
 - [ts-package-json-keywords](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-package-json-keywords)
 - [ts-package-json-license](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-package-json-license)
 - [ts-package-json-name](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-package-json-name)

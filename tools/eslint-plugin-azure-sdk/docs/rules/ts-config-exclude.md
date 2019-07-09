@@ -27,7 +27,7 @@ Requires `compilerOptions.exclude` in `tsconfig.json` to include `node_modules`.
 ```json
 {
     "compilerOptions": {
-        "exclude": []]
+        "exclude": []
     }
 }
 ```

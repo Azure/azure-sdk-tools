@@ -21,7 +21,7 @@ export = {
       category: "Best Practices",
       recommended: true,
       url:
-        "https://github.com/Azure/azure-sdk-tools/blob/master/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-allowsyntheticdefaultimports.md"
+        "https://github.com/Azure/azure-sdk-tools/blob/master/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-module.md"
     },
     schema: [] // no options
   },

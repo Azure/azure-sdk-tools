@@ -1,4 +1,4 @@
-# ts-config-allow-syntheticdefaultimports
+# ts-config-allowsyntheticdefaultimports
 
 Requires `compilerOptions.allowSyntheticDefaultImports` in `tsconfig.json` to be set to true.
 
@@ -29,3 +29,5 @@ Requires `compilerOptions.allowSyntheticDefaultImports` in `tsconfig.json` to be
     "compilerOptions": {}
 }
 ```
+
+## [Source](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-config-allowsyntheticdefaultimports)

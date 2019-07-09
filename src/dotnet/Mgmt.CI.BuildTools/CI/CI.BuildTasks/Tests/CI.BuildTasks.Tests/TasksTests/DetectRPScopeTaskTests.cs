@@ -15,8 +15,8 @@ namespace Tests.CI.BuildTasks.TasksTests
     public class DetectRPScopeTaskTests : BuildTasksTestBase
     {
         #region CONST
-        const string NET_SDK_PUB_URL = @"http://github.com/azure/azure-sdk-for-net";
-        const string NET_SDK_PUB_URL_pr = @"https://github.com/azure/azure-sdk-for-net-pr";
+        //const string NET_SDK_PUB_URL = @"http://github.com/azure/azure-sdk-for-net";
+        //const string NET_SDK_PUB_URL_pr = @"https://github.com/azure/azure-sdk-for-net-pr";
         #endregion
         #region field
         internal string rootDir = string.Empty;
@@ -112,6 +112,7 @@ namespace Tests.CI.BuildTasks.TasksTests
         }
 
         [Theory]
+        [InlineData(NET_SDK_PUB_URL, 6804)]
         [InlineData(NET_SDK_PUB_URL, 6396)]
         [InlineData(NET_SDK_PUB_URL, 6418)]
         [InlineData(NET_SDK_PUB_URL, 6419)]
@@ -127,6 +128,13 @@ namespace Tests.CI.BuildTasks.TasksTests
             {
                 switch (ghPrNumber)
                 {
+                    case 6804:
+                        {
+                            Assert.Single(rpScope.ScopesFromPR);
+                            Assert.True(!string.IsNullOrWhiteSpace(rpScope.PRScopeString));
+                            break;
+                        }
+
                     case 6687:
                         {
                             Assert.Empty(rpScope.ScopesFromPR);

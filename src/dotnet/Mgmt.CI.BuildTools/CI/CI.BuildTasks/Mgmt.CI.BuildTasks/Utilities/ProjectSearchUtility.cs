@@ -1216,16 +1216,29 @@ namespace MS.Az.NetSdk.Build.Utilities
                     (filePath.EndsWith("tests.csproj", StringComparison.OrdinalIgnoreCase))
                     )
                 {
-                    finalList.Add(filePath);
+                    if(filePath.Contains("mgmtcommon"))
+                    {
+                        finalList.Add(filePath);
+                    }
+                    else if(filePath.Contains("management"))
+                    {
+                        finalList.Add(filePath);
+                    }
                 }
             }
 
-            var mgmtTestProj = finalList.Where<string>((item) => item.Contains("management", StringComparison.OrdinalIgnoreCase));
 
-            if(mgmtTestProj.NotNullOrAny<string>())
-            {
-                finalList = mgmtTestProj.ToList<string>();
-            }
+
+            //var mgmtTestProj = finalList.Where<string>((item) => item.Contains("management", StringComparison.OrdinalIgnoreCase));
+
+            //if(mgmtTestProj.NotNullOrAny<string>())
+            //{
+            //    finalList = mgmtTestProj.ToList<string>();
+            //}
+            //else
+            //{
+            //    finalList.Clear();
+            //}
 
             return finalList;
         }

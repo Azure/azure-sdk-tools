@@ -23,8 +23,13 @@ namespace APIView
 
         protected override void RenderClass(StringBuilder builder, string word)
         {
-            var typeParamIndex = word.LastIndexOf("<") > 0 ? word.LastIndexOf("<") : word.Length;
-            var shortName = word.Substring(word.LastIndexOf(".") + 1, typeParamIndex - word.LastIndexOf(".") - 1);
+            var typeParamIndex = word.LastIndexOf("<");
+            string newWord;
+            if (typeParamIndex >= 0)
+                newWord = word.Remove(typeParamIndex);
+            else
+                newWord = word;
+            var shortName = newWord.Substring(newWord.LastIndexOf(".") + 1);
             builder.Append("<a href=\"#").Append(shortName.Replace("<", "&lt;").Replace(">", "&gt;")).Append("\" class=\"class\">")
                 .Append(word.Replace("<", "&lt;").Replace(">", "&gt;")).Append("</a>");
         }

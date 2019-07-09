@@ -399,6 +399,11 @@ namespace APIView
                 var isString = false;
                 foreach (var part in p.TypeParts)
                 {
+                    if (part.Type == TypeReference.SpecialType)
+                    {
+                        isString = false;
+                        break;
+                    }
                     if (part.DisplayString == "string")
                         isString = true;
                 }
@@ -406,7 +411,10 @@ namespace APIView
                 if (isString)
                 {
                     builder.Append(" = ");
-                    RenderValue(builder, "\"" + p.ExplicitDefaultValue.ToString() + "\"");
+                    if (p.ExplicitDefaultValue == null)
+                        RenderSpecialName(builder, "null");
+                    else
+                        RenderValue(builder, "\"" + p.ExplicitDefaultValue.ToString() + "\"");
                 }
 
                 else

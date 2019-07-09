@@ -23,7 +23,9 @@ import {
   TypeChecker,
   SourceFile,
   TypeReferenceNode,
-  TypeReference
+  TypeReference,
+  Modifier,
+  SyntaxKind
 } from "typescript";
 import { ParserServices } from "@typescript-eslint/experimental-utils";
 import { TSESTree, TSNode } from "@typescript-eslint/typescript-estree";
@@ -57,7 +59,9 @@ const getTypeOfParam = (
   if (typeNode !== undefined && isArrayTypeNode(typeNode)) {
     const elementTypeReference = typeNode.elementType as TypeReferenceNode;
     const typeName = elementTypeReference.typeName as any; // eslint-disable-line @typescript-eslint/no-explicit-any
-    return typeChecker.getDeclaredTypeOfSymbol(typeName.symbol);
+    if (typeName !== undefined && typeName.symbol !== undefined) {
+      return typeChecker.getDeclaredTypeOfSymbol(typeName.symbol);
+    }
   }
   return type;
 };
@@ -80,7 +84,7 @@ const addSeenSymbols = (
       if (memberTypeNode !== undefined && isArrayTypeNode(memberTypeNode)) {
         const elementTypeReference = memberTypeNode.elementType as TypeReferenceNode;
         const typeName = elementTypeReference.typeName as any; // eslint-disable-line @typescript-eslint/no-explicit-any
-        memberSymbol = typeName.symbol;
+        memberSymbol = typeName !== undefined ? typeName.symbol : undefined;
       } else {
         memberSymbol = memberType.getSymbol();
       }
@@ -239,6 +243,17 @@ export = {
           name !== undefined &&
           name !== "" &&
           verifiedMethods.includes(name)
+        ) {
+          return;
+        }
+
+        const tsFunction = converter.get(node as TSESTree.Node);
+        const modifiers = tsFunction.modifiers;
+        if (
+          modifiers !== undefined &&
+          modifiers.some((modifier: Modifier): boolean => {
+            return modifier.kind === SyntaxKind.PrivateKeyword;
+          })
         ) {
           return;
         }

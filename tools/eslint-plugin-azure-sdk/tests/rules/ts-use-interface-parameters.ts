@@ -131,6 +131,11 @@ ruleTester.run("ts-use-interface-parameters", rule, {
       code:
         example +
         "function array2Declaration(b: Array<B>): void { console.log(b); }"
+    },
+    // private method
+    {
+      code:
+        example + "class { private pMethod(a: A): void { console.log(a); } }"
     }
   ],
   invalid: [

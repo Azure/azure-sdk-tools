@@ -1,6 +1,6 @@
 # ts-config-allowsyntheticdefaultimports
 
-Requires `compilerOptions.allowSyntheticDefaultImports` in `tsconfig.json` to be set to true.
+Requires `compilerOptions.allowSyntheticDefaultImports` in `tsconfig.json` to be set to `true`.
 
 ## Examples
 

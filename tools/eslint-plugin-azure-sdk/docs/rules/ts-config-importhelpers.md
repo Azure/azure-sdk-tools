@@ -1,6 +1,6 @@
 # ts-config-importhelpers
 
-Requires `compilerOptions.importHelpers` in `tsconfig.json` to be set to true.
+Requires `compilerOptions.importHelpers` in `tsconfig.json` to be set to `true`.
 
 ## Examples
 

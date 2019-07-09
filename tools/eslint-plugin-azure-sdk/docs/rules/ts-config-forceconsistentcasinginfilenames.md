@@ -1,6 +1,6 @@
 # ts-config-forceconsistentcasinginfilenames
 
-Requires `compilerOptions.forceConsistentCasingInFileNames` in `tsconfig.json` to be set to true.
+Requires `compilerOptions.forceConsistentCasingInFileNames` in `tsconfig.json` to be set to `true`.
 
 ## Examples
 

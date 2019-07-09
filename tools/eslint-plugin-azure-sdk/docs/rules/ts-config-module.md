@@ -1,6 +1,6 @@
 # ts-config-module
 
-Requires `compilerOptions.module` in `tsconfig.json` to be set to es6.
+Requires `compilerOptions.module` in `tsconfig.json` to be set to `"es6"`.
 
 ## Examples
 

@@ -1,6 +1,6 @@
 # ts-config-esmoduleinterop
 
-Requires `compilerOptions.esModuleInterop` in `tsconfig.json` to be set to true.
+Requires `compilerOptions.esModuleInterop` in `tsconfig.json` to be set to `true`.
 
 ## Examples
 

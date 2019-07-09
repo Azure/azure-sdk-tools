@@ -1,6 +1,6 @@
 # ts-config-declaration
 
-Requires `compilerOptions.declaration` in `tsconfig.json` to be set to true.
+Requires `compilerOptions.declaration` in `tsconfig.json` to be set to `true`.
 
 ## Examples
 

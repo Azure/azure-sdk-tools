@@ -9,7 +9,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 namespace Azure.ClientSdk.Analyzers
 {
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
-    public class NewLineAnalyzer: DiagnosticAnalyzer
+    public class WhitespaceNewLineAnalyzer: DiagnosticAnalyzer
     {
         public override void Initialize(AnalysisContext context)
         {
@@ -40,12 +40,12 @@ namespace Azure.ClientSdk.Analyzers
                 {
                     if (previousTrivia.IsKind(SyntaxKind.WhitespaceTrivia))
                     {
-                        nodeContext.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0102, previousTrivia.GetLocation()));
+                        nodeContext.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC1002, previousTrivia.GetLocation()));
                     }
 
                     if (newLineCount > 0)
                     {
-                        nodeContext.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0101, trivia.GetLocation()));
+                        nodeContext.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC1001, trivia.GetLocation()));
                     }
 
                     newLineCount++;
@@ -62,8 +62,8 @@ namespace Azure.ClientSdk.Analyzers
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(new[]
         {
-            Descriptors.AZC0101,
-            Descriptors.AZC0102
+            Descriptors.AZC1001,
+            Descriptors.AZC1002
         });
     }
 }

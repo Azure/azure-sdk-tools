@@ -6,12 +6,12 @@ using Xunit;
 
 namespace Azure.ClientSdk.Analyzers.Tests
 {
-    public class AZC0101Tests
+    public class AZC1001Tests
     {
-        private readonly DiagnosticAnalyzerRunner _runner = new DiagnosticAnalyzerRunner(new NewLineAnalyzer());
+        private readonly DiagnosticAnalyzerRunner _runner = new DiagnosticAnalyzerRunner(new WhitespaceNewLineAnalyzer());
 
         [Fact]
-        public async Task AZC00101ProducedForDoubleNewline()
+        public async Task AZC1001ProducedForDoubleNewline()
         {
             var testSource = TestSource.Read(@"
 namespace RandomNamespace
@@ -24,12 +24,12 @@ namespace RandomNamespace
 
             var diagnostic = Assert.Single(diagnostics);
 
-            Assert.Equal("AZC0101", diagnostic.Id);
+            Assert.Equal("AZC1001", diagnostic.Id);
             AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostics[0].Location);
         }
 
         [Fact]
-        public async Task AZC00101NotProducedForSingleEmptyLine()
+        public async Task AZC1001NotProducedForSingleEmptyLine()
         {
             var testSource = TestSource.Read(@"
 namespace RandomNamespace
@@ -43,7 +43,7 @@ namespace RandomNamespace
         }
 
         [Fact]
-        public async Task AZC00101ProducedForDoubleNewlineInsideIf()
+        public async Task AZC1001ProducedForDoubleNewlineInsideIf()
         {
             var testSource = TestSource.Read(@"
 #define DEBUG
@@ -64,12 +64,12 @@ class c {}
 
             var diagnostic = Assert.Single(diagnostics);
 
-            Assert.Equal("AZC0101", diagnostic.Id);
+            Assert.Equal("AZC1001", diagnostic.Id);
             AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostics[0].Location);
         }
 
         [Fact]
-        public async Task AZC00101NotProducedForComments()
+        public async Task AZC1001NotProducedForComments()
         {
             var testSource = TestSource.Read(@"
 namespace RandomNamespace
@@ -85,7 +85,7 @@ namespace RandomNamespace
         }
 
         [Fact]
-        public async Task AZC00101NotProducedForIfDefs()
+        public async Task AZC1001NotProducedForIfDefs()
         {
             var testSource = TestSource.Read(@"
 namespace RandomNamespace
@@ -103,7 +103,7 @@ namespace RandomNamespace
         }
 
         [Fact]
-        public async Task Azc00101ProducedForTripleNewline()
+        public async Task AZC1001ProducedForTripleNewline()
         {
             var testSource = TestSource.Read(@"
 namespace RandomNamespace
@@ -117,8 +117,8 @@ namespace RandomNamespace
 
             Assert.Equal(2, diagnostics.Length);
 
-            Assert.Equal("AZC0101", diagnostics[0].Id);
-            Assert.Equal("AZC0101", diagnostics[1].Id);
+            Assert.Equal("AZC1001", diagnostics[0].Id);
+            Assert.Equal("AZC1001", diagnostics[1].Id);
             AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostics[0].Location);
             AnalyzerAssert.DiagnosticLocation(testSource.MarkerLocations["MM1"], diagnostics[1].Location);
         }

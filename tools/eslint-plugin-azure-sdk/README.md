@@ -68,7 +68,7 @@ If you need to modify or disable specific rules, you can do so in the `rules` se
 - [ts-config-lib](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-lib.md)
 - [ts-config-module](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-module.md)
 - [ts-config-no-experimentaldecorators](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-no-experimentaldecorators.md)
-- [ts-config-sourcemap](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-config-sourcemap)
+- [ts-config-sourcemap](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-sourcemap.md)
 - [ts-config-strict](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-config-strict)
 - [ts-package-json-author](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-package-json-author)
 - [ts-package-json-bugs](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-package-json-bugs)

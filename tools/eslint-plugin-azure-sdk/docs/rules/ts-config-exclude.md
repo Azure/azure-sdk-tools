@@ -14,6 +14,14 @@ Requires `compilerOptions.exclude` in `tsconfig.json` to include `node_modules`.
 }
 ```
 
+```json
+{
+    "compilerOptions": {
+        "exclude": ["node_modules", "test"]
+    }
+}
+```
+
 ### Bad
 
 ```json

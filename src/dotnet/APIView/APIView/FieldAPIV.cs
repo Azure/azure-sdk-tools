@@ -11,7 +11,7 @@ namespace APIView
     public class FieldAPIV
     {
         public string Name { get; set; }
-        public string Type { get; set; }
+        public Token Type { get; set; }
         public string Accessibility { get; set; }
 
         public bool IsConstant { get; set; }
@@ -30,7 +30,13 @@ namespace APIView
         public FieldAPIV(IFieldSymbol symbol)
         {
             this.Name = symbol.Name;
-            this.Type = symbol.Type.ToDisplayString();
+            var type = new Token();
+            type.DisplayString = symbol.Type.ToDisplayString();
+            if (symbol.Type.SpecialType.ToString().StartsWith("System"))
+                type.Type = TypeReference.BuiltInType;
+            else
+                type.Type = TypeReference.SpecialType;
+            this.Type = type;
             this.Accessibility = symbol.DeclaredAccessibility.ToString().ToLower();
 
             this.IsConstant = symbol.HasConstantValue;

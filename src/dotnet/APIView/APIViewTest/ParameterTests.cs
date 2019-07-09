@@ -25,11 +25,12 @@ namespace APIViewTest
             }
 
             Assert.False(param == null || num == null);
-            Assert.Equal("T", param.TypeParts);
+            Assert.Single(param.TypeParts);
+            Assert.Equal("T", param.TypeParts[0].DisplayString);
+            Assert.Equal(TypeReference.SpecialType, param.TypeParts[0].Type);
             Assert.Equal("param", param.Name);
             Assert.Null(param.ExplicitDefaultValue);
 
-            Assert.Equal("string", num.TypeParts);
             Assert.Equal("str", num.Name);
             Assert.Equal("hello", num.ExplicitDefaultValue);
         }
@@ -42,7 +43,14 @@ namespace APIViewTest
 
             Assert.Single(method.Parameters);
 
-            Assert.Equal("ref string", method.Parameters[0].TypeParts);
+            var typeParts = method.Parameters[0].TypeParts;
+            Assert.Equal(3, typeParts.Length);
+            Assert.Equal("ref", typeParts[0].DisplayString);
+            Assert.Equal(TypeReference.BuiltInType, typeParts[0].Type);
+            Assert.Equal(" ", typeParts[1].DisplayString);
+            Assert.Equal(TypeReference.SpecialType, typeParts[1].Type);
+            Assert.Equal("string", typeParts[2].DisplayString);
+            Assert.Equal(TypeReference.BuiltInType, typeParts[2].Type);
             Assert.Equal("str", method.Parameters[0].Name);
             Assert.Null(method.Parameters[0].ExplicitDefaultValue);
         }

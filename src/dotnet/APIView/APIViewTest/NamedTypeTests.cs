@@ -172,7 +172,7 @@ namespace APIViewTest
             var p = new PropertyAPIV
             {
                 Name = "TestProperty",
-                Type = "string",
+                Type = new Token("string", TypeReference.BuiltInType),
                 Accessibility = "protected",
                 IsAbstract = false,
                 IsVirtual = false,
@@ -195,8 +195,8 @@ namespace APIViewTest
             var builder = new StringBuilder();
             var renderer = new HTMLRendererAPIV();
             renderer.Render(nt, builder);
-            Assert.Equal("<span class=\"keyword\">public</span> <span class=\"specialName\">class</span> <span class=\"class\">ImplementingClass</span> : " +
-                "<span class=\"class\">BaseClass</span> {<br />    <span class=\"keyword\">protected</span> <span class=\"type\">string</span> <span class" +
+            Assert.Equal("<span class=\"keyword\">public</span> <span class=\"specialName\">class</span> <span id=\"ImplementingClass\" class=\"class\">ImplementingClass</span> : " +
+                "<a href=\"#BaseClass\" class=\"class\">BaseClass</a> {<br />    <span class=\"keyword\">protected</span> <span class=\"keyword\">string</span> <span class" +
                 "=\"name\">TestProperty</span> { <span class=\"keyword\">get</span>; <span class=\"keyword\">set</span>; }<br />}", builder.ToString());
         }
 
@@ -225,8 +225,8 @@ namespace APIViewTest
             var builder = new StringBuilder();
             var renderer = new HTMLRendererAPIV();
             renderer.Render(nt, builder);
-            Assert.Equal("<span class=\"keyword\">public</span> <span class=\"specialName\">interface</span> <span class=\"class\">TestInterface</span>&lt;" +
-                "<span class=\"type\">T</span>&gt; {<br />}", builder.ToString());
+            Assert.Equal("<span class=\"keyword\">public</span> <span class=\"specialName\">interface</span> <span id=\"TestInterface\" class=\"class\">TestInterface</span>&lt;" +
+                "<a href=\"#T\" class=\"type\">T</a>&gt; {<br />}", builder.ToString());
         }
     }
 }

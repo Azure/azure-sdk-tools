@@ -13,12 +13,12 @@ namespace APIView
     public class ParameterAPIV
     {
         public string Name { get; set; }
-        public Token[] TypeParts { get; set; }
 
         public bool HasExplicitDefaultValue { get; set; }
         public object ExplicitDefaultValue { get; set; }
 
         public string[] Attributes { get; set; }
+        public Token[] TypeParts { get; set; }
 
         public ParameterAPIV() { }
 
@@ -35,7 +35,18 @@ namespace APIView
             {
                 var token = new Token();
                 token.DisplayString = part.ToString();
-                token.Type = part.Kind == SymbolDisplayPartKind.Keyword ? TypeReference.BuiltInType : TypeReference.SpecialType;
+                switch (part.Kind)
+                {
+                    case SymbolDisplayPartKind.Keyword:
+                        token.Type = TypeReference.BuiltInType;
+                        break;
+                    case SymbolDisplayPartKind.Punctuation:
+                        token.Type = TypeReference.Punctuation;
+                        break;
+                    default:
+                        token.Type = TypeReference.SpecialType;
+                        break;
+                }
                 type.Add(token);
             }
             this.TypeParts = type.ToArray();

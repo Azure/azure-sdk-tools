@@ -4,7 +4,7 @@ namespace APIView
 {
     public class HTMLRendererAPIV : TreeRendererAPIV
     {
-        protected override void RenderDeclaration(StringBuilder builder, string word)
+        protected override void RenderClassDefinition(StringBuilder builder, string word)
         {
             builder.Append("<span id=\"").Append(word.Replace("<", "&lt;").Replace(">", "&gt;")).Append("\" class=\"class\">")
                 .Append(word.Replace("<", "&lt;").Replace(">", "&gt;")).Append("</span>");
@@ -15,9 +15,16 @@ namespace APIView
             builder.Append(word.Replace("<", "&lt;").Replace(">", "&gt;"));
         }
 
+        protected override void RenderEnum(StringBuilder builder, string word)
+        {
+            builder.Append("<span id=\"").Append(word.Replace("<", "&lt;").Replace(">", "&gt;")).Append("\" class=\"enum\">")
+                .Append(word.Replace("<", "&lt;").Replace(">", "&gt;")).Append("</span>");
+        }
+
         protected override void RenderClass(StringBuilder builder, string word)
         {
-            var shortName = word.Substring(word.LastIndexOf(".") + 1);
+            var typeParamIndex = word.LastIndexOf("<") > 0 ? word.LastIndexOf("<") : word.Length;
+            var shortName = word.Substring(word.LastIndexOf(".") + 1, typeParamIndex - word.LastIndexOf(".") - 1);
             builder.Append("<a href=\"#").Append(shortName.Replace("<", "&lt;").Replace(">", "&gt;")).Append("\" class=\"class\">")
                 .Append(word.Replace("<", "&lt;").Replace(">", "&gt;")).Append("</a>");
         }
@@ -44,7 +51,9 @@ namespace APIView
 
         protected override void RenderType(StringBuilder builder, string word)
         {
-            builder.Append("<span class=\"type\">").Append(word.Replace("<", "&lt;").Replace(">", "&gt;")).Append("</span>");
+            var shortName = word.Substring(word.LastIndexOf(".") + 1);
+            builder.Append("<a href=\"#").Append(shortName.Replace("<", "&lt;").Replace(">", "&gt;")).Append("\" class=\"type\">")
+                .Append(word.Replace("<", "&lt;").Replace(">", "&gt;")).Append("</a>");
         }
 
         protected override void RenderValue(StringBuilder builder, string word)

@@ -58,7 +58,7 @@ If you need to modify or disable specific rules, you can do so in the `rules` se
 
 ## Supported Rules
 
-- [ts-config-allowsyntheticdefaultimports](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-config-allowsyntheticdefaultimports)
+- [ts-config-allowsyntheticdefaultimports](/docs/rules/ts-config-allowsyntheticdefaultimports.md)
 - [ts-config-declaration](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-config-declaration)
 - [ts-config-esmoduleinterop](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-config-esmoduleinterop)
 - [ts-config-exclude](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-config-exclude)

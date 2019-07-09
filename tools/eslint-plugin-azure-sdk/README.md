@@ -64,7 +64,7 @@ If you need to modify or disable specific rules, you can do so in the `rules` se
 - [ts-config-exclude](/docs/rules/ts-config-exclude.md)
 - [ts-config-forceconsistentcasinginfilenames](/docs/rules/ts-config-forceconsistentcasinginfilenames.md)
 - [ts-config-importhelpers](/docs/rules/ts-config-importhelpers.md)
-- [ts-config-isolatedmodules](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-config-isolatedmodules)
+- [ts-config-isolatedmodules](/docs/rules/ts-config-isolatedmodules.md)
 - [ts-config-lib](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-config-lib)
 - [ts-config-module](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-config-module)
 - [ts-config-no-experimentaldecorators](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-config-no-experimentaldecorators)

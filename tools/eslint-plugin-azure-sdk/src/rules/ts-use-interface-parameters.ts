@@ -14,13 +14,16 @@ import {
 } from "estree";
 import {
   Declaration,
+  isArrayTypeNode,
   Node,
   PropertySignature,
   Symbol,
   SymbolFlags,
   Type,
   TypeChecker,
-  SourceFile
+  SourceFile,
+  TypeReferenceNode,
+  TypeReference
 } from "typescript";
 import { ParserServices } from "@typescript-eslint/experimental-utils";
 import { TSESTree, TSNode } from "@typescript-eslint/typescript-estree";
@@ -48,7 +51,15 @@ const getTypeOfParam = (
 ): Type => {
   const identifier = getParamAsIdentifier(param);
   const tsNode = converter.get(identifier as TSESTree.Node);
-  return typeChecker.getTypeAtLocation(tsNode);
+
+  const type = typeChecker.getTypeAtLocation(tsNode) as TypeReference;
+  const typeNode = typeChecker.typeToTypeNode(type);
+  if (typeNode !== undefined && isArrayTypeNode(typeNode)) {
+    const elementTypeReference = typeNode.elementType as TypeReferenceNode;
+    const typeName = elementTypeReference.typeName as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+    return typeChecker.getDeclaredTypeOfSymbol(typeName.symbol);
+  }
+  return type;
 };
 
 /* eslint-disable @typescript-eslint/ban-types */
@@ -61,9 +72,18 @@ const addSeenSymbols = (
   typeChecker
     .getPropertiesOfType(typeChecker.getDeclaredTypeOfSymbol(symbol))
     .forEach((element: Symbol): void => {
-      const memberSymbol = typeChecker
-        .getTypeAtLocation(element.valueDeclaration)
-        .getSymbol();
+      const memberType = typeChecker.getTypeAtLocation(
+        element.valueDeclaration
+      );
+      const memberTypeNode = typeChecker.typeToTypeNode(memberType);
+      let memberSymbol: Symbol | undefined;
+      if (memberTypeNode !== undefined && isArrayTypeNode(memberTypeNode)) {
+        const elementTypeReference = memberTypeNode.elementType as TypeReferenceNode;
+        const typeName = elementTypeReference.typeName as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+        memberSymbol = typeName.symbol;
+      } else {
+        memberSymbol = memberType.getSymbol();
+      }
       if (memberSymbol !== undefined) {
         let isExternal = false;
         let isOptional = false;

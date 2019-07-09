@@ -29,6 +29,14 @@ interface B2 {
 interface B3 {
   message: A
 }
+
+interface B4 {
+  message: A[]
+}
+
+interface B5 {
+  message: Array<A>
+}
 `;
 
 //------------------------------------------------------------------------------
@@ -99,6 +107,30 @@ ruleTester.run("ts-use-interface-parameters", rule, {
       code:
         example +
         "function nestedDeclaration(b: B, a?: A): void { console.log(b); a && console.log(a); }"
+    },
+    // array parameters []
+    {
+      // class method
+      code:
+        example + "class C { arrayMethod(b: B[]): void { console.log(b); }; }"
+    },
+    {
+      // function declaration
+      code:
+        example + "function arrayDeclaration(b: B[]): void { console.log(b); }"
+    },
+    // array parameters Array<>
+    {
+      // class method
+      code:
+        example +
+        "class C { array2Method(b: Array<B>): void { console.log(b); }; }"
+    },
+    {
+      // function declaration
+      code:
+        example +
+        "function array2Declaration(b: Array<B>): void { console.log(b); }"
     }
   ],
   invalid: [
@@ -242,6 +274,106 @@ ruleTester.run("ts-use-interface-parameters", rule, {
         {
           message:
             "type B3 of parameter b of function nestedDeclarationBad is a class or contains a class as a member"
+        }
+      ]
+    },
+    // array parameters []
+    {
+      // class method
+      code:
+        example +
+        "class C { arrayMethodBad(a: A[]): void { console.log(a); }; }",
+      errors: [
+        {
+          message:
+            "type A of parameter a of function arrayMethodBad is a class or contains a class as a member"
+        }
+      ]
+    },
+    {
+      // function declaration
+      code:
+        example +
+        "function arrayDeclarationBad(a: A[]): void { console.log(a); }",
+      errors: [
+        {
+          message:
+            "type A of parameter a of function arrayDeclarationBad is a class or contains a class as a member"
+        }
+      ]
+    },
+    // nested array parameters []
+    {
+      // class method
+      code:
+        example +
+        "class C { nestedArrayMethodBad(a: B4): void { console.log(a); }; }",
+      errors: [
+        {
+          message:
+            "type B4 of parameter a of function nestedArrayMethodBad is a class or contains a class as a member"
+        }
+      ]
+    },
+    {
+      // function declaration
+      code:
+        example +
+        "function nestedArrayDeclarationBad(a: B4): void { console.log(a); }",
+      errors: [
+        {
+          message:
+            "type B4 of parameter a of function nestedArrayDeclarationBad is a class or contains a class as a member"
+        }
+      ]
+    },
+    // array parameters Array<>
+    {
+      // class method
+      code:
+        example +
+        "class C { array2MethodBad(a: Array<A>): void { console.log(a); }; }",
+      errors: [
+        {
+          message:
+            "type A of parameter a of function array2MethodBad is a class or contains a class as a member"
+        }
+      ]
+    },
+    {
+      // function declaration
+      code:
+        example +
+        "function array2DeclarationBad(a: Array<A>): void { console.log(a); }",
+      errors: [
+        {
+          message:
+            "type A of parameter a of function array2DeclarationBad is a class or contains a class as a member"
+        }
+      ]
+    },
+    // nested array parameters Array<>
+    {
+      // class method
+      code:
+        example +
+        "class C { nestedArray2MethodBad(a: B5): void { console.log(a); }; }",
+      errors: [
+        {
+          message:
+            "type B5 of parameter a of function nestedArray2MethodBad is a class or contains a class as a member"
+        }
+      ]
+    },
+    {
+      // function declaration
+      code:
+        example +
+        "function nestedArray2DeclarationBad(a: B5): void { console.log(a); }",
+      errors: [
+        {
+          message:
+            "type B5 of parameter a of function nestedArray2DeclarationBad is a class or contains a class as a member"
         }
       ]
     }

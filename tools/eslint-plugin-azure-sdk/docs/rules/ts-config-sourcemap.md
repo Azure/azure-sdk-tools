@@ -39,4 +39,8 @@ Requires `compilerOptions.sourceMap` and `compilerOptions.declarationMap` in `ts
 }
 ```
 
+```json
+{}
+```
+
 ## [Source](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-config-sourcemap)

@@ -30,4 +30,8 @@ Requires `compilerOptions.strict` in `tsconfig.json` to be set to `false`.
 }
 ```
 
+```json
+{}
+```
+
 ## [Source](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-config-strict)

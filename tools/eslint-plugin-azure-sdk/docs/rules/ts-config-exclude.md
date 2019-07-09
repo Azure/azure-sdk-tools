@@ -30,4 +30,8 @@ Requires `compilerOptions.exclude` in `tsconfig.json` to include `node_modules`.
 }
 ```
 
+```json
+{}
+```
+
 ## [Source](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-config-exclude)

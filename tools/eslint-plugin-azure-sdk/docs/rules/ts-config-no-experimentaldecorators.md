@@ -30,4 +30,8 @@ Requires `compilerOptions.experimentalDecorators` in `tsconfig.json` to be set t
 }
 ```
 
+```json
+{}
+```
+
 ## [Source](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-config-no-experimentaldecorators)

@@ -30,4 +30,8 @@ Requires `compilerOptions.forceConsistentCasingInFileNames` in `tsconfig.json` t
 }
 ```
 
+```json
+{}
+```
+
 ## [Source](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-config-forceconsistentcasinginfilenames)

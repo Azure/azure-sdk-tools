@@ -30,4 +30,8 @@ Requires `compilerOptions.allowSyntheticDefaultImports` in `tsconfig.json` to be
 }
 ```
 
+```json
+{}
+```
+
 ## [Source](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-config-allowsyntheticdefaultimports)

@@ -30,4 +30,8 @@ Requires `compilerOptions.module` in `tsconfig.json` to be set to `"es6"`.
 }
 ```
 
+```json
+{}
+```
+
 ## [Source](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-config-module)

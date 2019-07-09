@@ -27,7 +27,7 @@ Requires `compilerOptions.lib` in `tsconfig.json` to be set to an empty array.
 ```json
 {
     "compilerOptions": {
-        "lib": ["esnext", "dom]
+        "lib": ["esnext", "dom"]
     }
 }
 ```
@@ -36,6 +36,10 @@ Requires `compilerOptions.lib` in `tsconfig.json` to be set to an empty array.
 {
     "compilerOptions": {}
 }
+```
+
+```json
+{}
 ```
 
 ## [Source](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-config-lib)

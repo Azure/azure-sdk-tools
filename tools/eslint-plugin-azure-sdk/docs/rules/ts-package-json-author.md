@@ -21,7 +21,7 @@ Requires `author` in `package.json` to be set to `"Microsoft Corporation"`.
 ```
 
 ```json
-{}}
+{}
 ```
 
 ## [Source](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-package-json-author)

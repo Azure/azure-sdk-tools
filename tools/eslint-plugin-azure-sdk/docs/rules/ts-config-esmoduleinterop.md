@@ -30,4 +30,8 @@ Requires `compilerOptions.esModuleInterop` in `tsconfig.json` to be set to `true
 }
 ```
 
+```json
+{}
+```
+
 ## [Source](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-config-esmoduleinterop)

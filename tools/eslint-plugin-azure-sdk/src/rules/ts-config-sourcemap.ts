@@ -21,7 +21,7 @@ export = {
       category: "Best Practices",
       recommended: true,
       url:
-        "https://github.com/Azure/azure-sdk-tools/blob/master/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-sourcemap.m"
+        "https://github.com/Azure/azure-sdk-tools/blob/master/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-sourcemap.md"
     },
     schema: [] // no options
   },

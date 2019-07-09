@@ -68,6 +68,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
         public string PRScopeString { get; set; }
         #endregion
 
+        #region other properties
         Int64 GH_PRNumber
         {
             get
@@ -104,19 +105,16 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
             {
                 if (_ghSvc == null)
                 {
-                    // string accTkn = KVSvc.GetSecret(CommonConstants.AzureAuth.KVInfo.Secrets.GH_AdxSdkNetAcccesToken);
-
                     // hard coding this, the downside is, the read limit can be reached early if this token is misused.
                     // this token does not allow to do any writes, so we should be ok.
-                    string tkn = Common.CommonConstants.AzureAuth.KVInfo.Secrets.GH_AccTkn.Trim(new char[] { '0' });
-                    _ghSvc = new GitHubService(TaskLogger, Encoding.ASCII.GetString(Convert.FromBase64String(tkn)));
-                    //_ghSvc = new GitHubService(TaskLogger, Encoding.ASCII.GetString(Convert.FromBase64String(Common.CommonConstants.AzureAuth.KVInfo.Secrets.GH_AccTkn)));
-
+                    byte[] ba = Common.CommonConstants.AzureAuth.KVInfo.Secrets.GH_AccTknArray.Select<string, byte>((item) => Convert.ToByte(item)).ToArray<byte>();
+                    _ghSvc = new GitHubService(TaskLogger, Encoding.Unicode.GetString(ba).Trim(new char[] { '0' }));
                 }
 
                 return _ghSvc;
             }
         }
+        #endregion
         #endregion
 
         #region Constructor
@@ -213,14 +211,14 @@ namespace MS.Az.Mgmt.CI.BuildTasks.BuildTasks.PreBuild
                     repoName = tokens[tokens.Length - 1];
                 }
 
-                if (GHSvc.IsRepoAuthorized(GitHubRepositoryHtmlUrl))
+                if (GHSvc.IsRepoAuthorized(repoName))
                 {
                     prFileList = GHSvc.PR.GetPullRequestFileList(repoName, GH_PRNumber);
                 }
-                else
-                {
-                    TaskLogger.LogWarning("You are not authorized to access '{0}', skipping detecting RP Scope", GitHubRepositoryHtmlUrl);
-                }
+            }
+            else
+            {
+                TaskLogger.LogWarning("You are not authorized to access '{0}', skipping detecting RP Scope", GitHubRepositoryHtmlUrl);
             }
 
             if(prFileList != null)

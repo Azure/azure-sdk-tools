@@ -79,13 +79,13 @@ namespace Tests.CI.BuildTasks.TasksTests
         public void MultipleScopes()
         {
             string ghUrl = NET_SDK_PUB_URL;
-            long ghPrNumber = 6499; //6606
+            long ghPrNumber = 6620;
             DetectRPScopeTask rpScope = new DetectRPScopeTask(ghUrl, ghPrNumber.ToString());
 
             if(rpScope.Execute())
             {
-                Assert.NotNull(rpScope.ScopesFromPR);
-                Assert.True(rpScope.ScopesFromPR.Length > 5);
+                Assert.True(rpScope.ScopesFromPR.Length > 1);
+                Assert.True(!string.IsNullOrWhiteSpace(rpScope.PRScopeString));
             }
             else
             {
@@ -117,6 +117,7 @@ namespace Tests.CI.BuildTasks.TasksTests
         [InlineData(NET_SDK_PUB_URL, 6419)]
         [InlineData(NET_SDK_PUB_URL, 6304)]
         [InlineData(NET_SDK_PUB_URL, 6453)]
+        [InlineData(NET_SDK_PUB_URL, 6687)]
         [InlineData(@"azure/azure-sdk-for-net", 6304)]
         public void SingleScope(string ghUrl, long ghPrNumber)
         {
@@ -126,6 +127,12 @@ namespace Tests.CI.BuildTasks.TasksTests
             {
                 switch (ghPrNumber)
                 {
+                    case 6687:
+                        {
+                            Assert.Empty(rpScope.ScopesFromPR);
+                            break;
+                        }
+
                     case 6396:
                         {
                             Assert.NotNull(rpScope.ScopesFromPR);
@@ -149,8 +156,8 @@ namespace Tests.CI.BuildTasks.TasksTests
 
                     case 6304:
                         {
-                            Assert.Empty(rpScope.ScopesFromPR);
-                            Assert.True(string.IsNullOrWhiteSpace(rpScope.PRScopeString));
+                            Assert.Single(rpScope.ScopesFromPR);
+                            Assert.True(!string.IsNullOrWhiteSpace(rpScope.PRScopeString));
                             break;
                         }
                     case 6453:

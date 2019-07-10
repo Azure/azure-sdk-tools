@@ -21,7 +21,7 @@ export = {
       category: "Best Practices",
       recommended: true,
       url:
-        "https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-package-json-homepage"
+        "https://github.com/Azure/azure-sdk-tools/blob/master/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-homepage.md"
     },
     schema: [] // no options
   },
@@ -40,7 +40,7 @@ export = {
           "ExpressionStatement > ObjectExpression > Property[key.value='homepage']": (
             node: Property
           ): void => {
-            const regex = /^https:\/\/github.com\/Azure\/azure-sdk-for-js\/blob\/master\/sdk\/(([a-z]+-)*[a-z]+\/)+README\.md$/;
+            const regex = /^https:\/\/github.com\/Azure\/azure-sdk-for-js\/blob\/master\/sdk\/(([a-z]+-)*[a-z]+\/)+(README\.md)?$/;
 
             const nodeValue: Literal = node.value as Literal;
             const value: string = nodeValue.value as string;

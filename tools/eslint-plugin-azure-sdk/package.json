@@ -23,14 +23,16 @@
   "homepage": "https://github.com/Azure/azure-sdk-tools/src/ts/eslint-plugin-azure-sdk",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Azure/azure-sdk-tools"
+    "url": "https://github.com/Azure/azure-sdk-tools.git",
+    "directory": "tools/eslint-plugin-azure-sdk"
   },
   "bugs": {
     "url": "https://github.com/Azure/azure-sdk-tools/issues"
   },
   "main": "dist/index.js",
   "files": [
-    "dist"
+    "dist",
+    "docs"
   ],
   "scripts": {
     "build": "npm run clean && npm run format && tsc -p tsconfig.build.json",

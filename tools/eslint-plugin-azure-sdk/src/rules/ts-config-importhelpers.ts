@@ -20,7 +20,7 @@ export = {
       category: "Best Practices",
       recommended: true,
       url:
-        "https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-config-importhelpers"
+        "https://github.com/Azure/azure-sdk-tools/blob/master/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-importhelpers.md"
     },
     schema: [] // no options
   },

@@ -20,6 +20,11 @@ interface Verifiers {
   outerContainsExpected: (node: Property) => void;
 }
 
+/**
+ * Removes directories from a path
+ * @param pathOrFileName the input path or file name
+ * @return the filename and extension
+ */
 export const stripPath = (pathOrFileName: string): string => {
   return pathOrFileName.replace(/^.*[\\\/]/, "");
 };

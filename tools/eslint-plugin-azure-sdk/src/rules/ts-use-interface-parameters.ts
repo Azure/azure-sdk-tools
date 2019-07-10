@@ -37,6 +37,11 @@ import { ParserWeakMap } from "@typescript-eslint/typescript-estree/dist/parser-
 
 type FunctionType = FunctionExpression | FunctionDeclaration;
 
+/**
+ * Gets a ESTree parameter node's identifier node
+ * @param param the parameter node
+ * @return the identifier node associated with the parameter
+ */
 const getParamAsIdentifier = (param: Pattern): Identifier => {
   let identifier = param;
   if (param.type === "AssignmentPattern") {
@@ -46,6 +51,13 @@ const getParamAsIdentifier = (param: Pattern): Identifier => {
   return identifier as Identifier;
 };
 
+/**
+ * Gets the type of a paramter
+ * @param param the ESTree node corresponding to the parameter
+ * @param converter a map between TSESTree nodes and TypeScript nodes
+ * @param typeChecker the TypeScript language typechecker
+ * @return the Type of the parameter, or the element Type if the parameter type is an array
+ */
 const getTypeOfParam = (
   param: Pattern,
   converter: ParserWeakMap<TSESTree.Node, TSNode>,
@@ -67,6 +79,12 @@ const getTypeOfParam = (
 };
 
 /* eslint-disable @typescript-eslint/ban-types */
+/**
+ * Recursive helper method to track the types seen in a parameter (including member types)
+ * @param symbol The Symbol being inspected for member types
+ * @param symbols A list of Symbols seen so far
+ * @param typeChecker the TypeScript language typechecker
+ */
 const addSeenSymbols = (
   symbol: Symbol,
   symbols: Symbol[],
@@ -116,6 +134,13 @@ const addSeenSymbols = (
     });
 };
 
+/**
+ * Gets Symbols corresponding to all types seen in a parameter
+ * @param param the ESTree node corresponding to the parameter
+ * @param converter a map between TSESTree nodes and TypeScript nodes
+ * @param typeChecker the TypeScript language typechecker
+ * @return a list of Symbols seen
+ */
 const getSymbolsUsedInParam = (
   param: Pattern,
   converter: ParserWeakMap<TSESTree.Node, TSNode>,
@@ -130,6 +155,13 @@ const getSymbolsUsedInParam = (
   return symbols;
 };
 
+/**
+ * Checks whether the parameter is valid
+ * @param param the ESTree node corresponding to the parameter
+ * @param converter a map between TSESTree nodes and TypeScript nodes
+ * @param typeChecker the TypeScript language typechecker
+ * @return if the parameter is optional or if every type is not a class
+ */
 const isValidParam = (
   param: Pattern,
   converter: ParserWeakMap<TSESTree.Node, TSNode>,
@@ -147,6 +179,13 @@ const isValidParam = (
 };
 /* eslint-enable @typescript-eslint/ban-types */
 
+/**
+ * Finds if an a function is valid
+ * @param overloads a list of definitions for a function
+ * @param converter a map between TSESTree nodes and TypeScript nodes
+ * @param typeChecker the TypeScript language typechecker
+ * @return if at least one definition has only valid parameters
+ */
 const isValidOverload = (
   overloads: FunctionType[],
   converter: ParserWeakMap<TSESTree.Node, TSNode>,
@@ -159,6 +198,17 @@ const isValidOverload = (
   });
 };
 
+/**
+ * Evaluates the overloads found for a function
+ * @param overloads a list of definitions for a function
+ * @param converter a map between TSESTree nodes and TypeScript nodes
+ * @param typeChecker the TypeScript language typechecker
+ * @param verified a list of functions verified so far
+ * @param name the name of the current function
+ * @param param the ESTree node corresponding to the parameter currently being inspected
+ * @param context the RuleContext object in the current runtime
+ * @throws if there are no overloads or if none have only non-class parameters
+ */
 const evaluateOverloads = (
   overloads: FunctionType[],
   converter: ParserWeakMap<TSESTree.Node, TSNode>,

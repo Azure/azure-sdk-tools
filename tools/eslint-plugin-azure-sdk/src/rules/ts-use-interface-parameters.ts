@@ -90,6 +90,25 @@ const addSeenSymbols = (
   symbols: Symbol[],
   typeChecker: TypeChecker
 ): void => {
+  let isExternal = false;
+  let isOptional = false;
+  const declaration: PropertySignature = symbol.valueDeclaration as PropertySignature;
+  if (declaration !== undefined) {
+    isOptional = declaration.questionToken !== undefined;
+    let parent: Node = declaration.parent;
+    while (
+      !parent.hasOwnProperty("fileName") &&
+      parent.hasOwnProperty("parent")
+    ) {
+      parent = parent.parent;
+    }
+    const sourceFile = parent as SourceFile;
+    const externalRegex = /node_modules/;
+    isExternal = externalRegex.test(sourceFile.fileName);
+  }
+  if (isExternal || isOptional) {
+    return;
+  }
   symbols.push(symbol);
   typeChecker
     .getPropertiesOfType(typeChecker.getDeclaredTypeOfSymbol(symbol))
@@ -107,27 +126,9 @@ const addSeenSymbols = (
         memberSymbol = memberType.getSymbol();
       }
       if (memberSymbol !== undefined) {
-        let isExternal = false;
-        let isOptional = false;
-        const declaration: PropertySignature = memberSymbol.valueDeclaration as PropertySignature;
-        if (declaration !== undefined) {
-          isOptional = declaration.questionToken !== undefined;
-          let parent: Node = declaration.parent;
-          while (
-            !parent.hasOwnProperty("fileName") &&
-            parent.hasOwnProperty("parent")
-          ) {
-            parent = parent.parent;
-          }
-          const sourceFile = parent as SourceFile;
-          const externalRegex = /node_modules/;
-          isExternal = externalRegex.test(sourceFile.fileName);
-        }
-        !isExternal &&
-          !isOptional &&
-          [SymbolFlags.Class, SymbolFlags.Interface].includes(
-            memberSymbol.getFlags()
-          ) &&
+        [SymbolFlags.Class, SymbolFlags.Interface].includes(
+          memberSymbol.getFlags()
+        ) &&
           !symbols.includes(memberSymbol) &&
           addSeenSymbols(memberSymbol, symbols, typeChecker);
       }

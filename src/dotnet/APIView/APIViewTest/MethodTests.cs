@@ -3,6 +3,7 @@ using APIView;
 using Xunit;
 using System;
 using System.Text;
+using System.Reflection;
 
 namespace APIViewTest
 {
@@ -21,7 +22,8 @@ namespace APIViewTest
             Assert.False(method.IsOverride);
             Assert.True(method.IsAbstract);
             Assert.False(method.IsExtern);
-            Assert.Equal("int", method.ReturnType.DisplayString);
+            Assert.Equal(TypeReference.TypeName.BuiltInType, method.ReturnType.Type);
+            Assert.Equal("int", method.ReturnType.Tokens[0].DisplayString);
 
             Assert.Empty(method.Attributes);
             Assert.Equal(2, method.Parameters.Length);
@@ -50,7 +52,8 @@ namespace APIViewTest
             Assert.False(method.IsOverride);
             Assert.False(method.IsAbstract);
             Assert.False(method.IsExtern);
-            Assert.Equal("void", method.ReturnType.DisplayString);
+            Assert.Equal(TypeReference.TypeName.BuiltInType, method.ReturnType.Type);
+            Assert.Equal("void", method.ReturnType.Tokens[0].DisplayString);
 
             Assert.Single(method.Attributes);
             Assert.Equal("System.Diagnostics.ConditionalAttribute", method.Attributes[0].Type);
@@ -84,7 +87,8 @@ namespace APIViewTest
             Assert.False(method.IsOverride);
             Assert.True(method.IsAbstract);
             Assert.False(method.IsExtern);
-            Assert.Equal("int", method.ReturnType.DisplayString);
+            Assert.Equal(TypeReference.TypeName.BuiltInType, method.ReturnType.Type);
+            Assert.Equal("int", method.ReturnType.Tokens[0].DisplayString);
 
             Assert.Equal(2, method.Attributes.Length);
             Assert.Equal("TestLibrary.CustomAttribute", method.Attributes[0].Type);
@@ -112,7 +116,7 @@ namespace APIViewTest
         {
             var p = new ParameterAPIV
             {
-                TypeParts = new Token[] { new Token("int", TypeReference.BuiltInType) },
+                Type = new TypeReference(new Token[] { new Token("int", TypeReference.TypeName.BuiltInType) }),
                 Name = "num",
                 HasExplicitDefaultValue = true,
                 ExplicitDefaultValue = 2,
@@ -122,7 +126,7 @@ namespace APIViewTest
             var m = new MethodAPIV
             {
                 Name = "TestClass",
-                ReturnType = new Token(),
+                ReturnType = new TypeReference(),
                 Accessibility = "public",
                 IsConstructor = true,
                 IsInterfaceMethod = false,
@@ -155,7 +159,7 @@ namespace APIViewTest
             var m = new MethodAPIV
             {
                 Name = "TestMethod",
-                ReturnType = new Token("void", TypeReference.BuiltInType),
+                ReturnType = new TypeReference(new Token[] { new Token("void", TypeReference.TypeName.BuiltInType) }),
                 Accessibility = "public",
                 IsConstructor = false,
                 IsInterfaceMethod = false,

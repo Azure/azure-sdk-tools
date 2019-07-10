@@ -14,7 +14,8 @@ namespace APIViewTest
             FieldAPIV field = new FieldAPIV(fieldSymbol);
             
             Assert.Equal("publicField", field.Name);
-            Assert.Equal("int", field.Type.DisplayString);
+            Assert.Equal(TypeReference.TypeName.BuiltInType, field.Type.Type);
+            Assert.Equal("int", field.Type.Tokens[0].DisplayString);
             Assert.Equal("public", field.Accessibility);
             Assert.False(field.IsConstant);
             Assert.True(field.IsReadOnly);
@@ -39,7 +40,8 @@ namespace APIViewTest
             FieldAPIV field = new FieldAPIV(fieldSymbol);
 
             Assert.Equal("publicString", field.Name);
-            Assert.Equal("string", field.Type.DisplayString);
+            Assert.Equal(TypeReference.TypeName.BuiltInType, field.Type.Type);
+            Assert.Equal("string", field.Type.Tokens[0].DisplayString);
             Assert.Equal("public", field.Accessibility);
             Assert.True(field.IsConstant);
             Assert.False(field.IsReadOnly);
@@ -64,7 +66,8 @@ namespace APIViewTest
             FieldAPIV field = new FieldAPIV(fieldSymbol);
 
             Assert.Equal("protectedField", field.Name);
-            Assert.Equal("int", field.Type.DisplayString);
+            Assert.Equal(TypeReference.TypeName.BuiltInType, field.Type.Type);
+            Assert.Equal("int", field.Type.Tokens[0].DisplayString);
             Assert.Equal("protected", field.Accessibility);
             Assert.False(field.IsConstant);
             Assert.False(field.IsReadOnly);
@@ -88,7 +91,7 @@ namespace APIViewTest
             var f = new FieldAPIV
             {
                 Accessibility = "public",
-                Type = new Token("string", TypeReference.BuiltInType),
+                Type = new TypeReference(new Token[] { new Token("string", TypeReference.TypeName.BuiltInType) }),
                 IsConstant = true,
                 IsReadOnly = false,
                 IsStatic = true,
@@ -96,6 +99,7 @@ namespace APIViewTest
                 Value = "constant string",
                 Name = "publicString"
             };
+            f.Type.IsString = true;
             var builder = new StringBuilder();
             var renderer = new HTMLRendererAPIV();
             renderer.Render(f, builder);

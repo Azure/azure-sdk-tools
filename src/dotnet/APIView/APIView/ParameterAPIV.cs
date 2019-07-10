@@ -1,5 +1,4 @@
 ﻿using Microsoft.CodeAnalysis;
-using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -13,12 +12,11 @@ namespace APIView
     public class ParameterAPIV
     {
         public string Name { get; set; }
-
         public bool HasExplicitDefaultValue { get; set; }
         public object ExplicitDefaultValue { get; set; }
+        public TypeReference Type { get; set; }
 
         public string[] Attributes { get; set; }
-        public Token[] TypeParts { get; set; }
 
         public ParameterAPIV() { }
 
@@ -29,27 +27,7 @@ namespace APIView
         public ParameterAPIV(IParameterSymbol symbol)
         {
             this.Name = symbol.Name;
-
-            var type = new List<Token>();
-            foreach (var part in symbol.ToDisplayParts())
-            {
-                var token = new Token();
-                token.DisplayString = part.ToString();
-                switch (part.Kind)
-                {
-                    case SymbolDisplayPartKind.Keyword:
-                        token.Type = TypeReference.BuiltInType;
-                        break;
-                    case SymbolDisplayPartKind.Punctuation:
-                        token.Type = TypeReference.Punctuation;
-                        break;
-                    default:
-                        token.Type = TypeReference.SpecialType;
-                        break;
-                }
-                type.Add(token);
-            }
-            this.TypeParts = type.ToArray();
+            this.Type = new TypeReference(symbol);
 
             this.HasExplicitDefaultValue = symbol.HasExplicitDefaultValue;
             this.ExplicitDefaultValue = HasExplicitDefaultValue ? symbol.ExplicitDefaultValue : null;

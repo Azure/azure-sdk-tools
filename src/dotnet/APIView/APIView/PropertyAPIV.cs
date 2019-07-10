@@ -11,7 +11,7 @@ namespace APIView
     public class PropertyAPIV
     {
         public string Name { get; set; }
-        public Token Type { get; set; }
+        public TypeReference Type { get; set; }
         public string Accessibility { get; set; }
 
         public bool IsAbstract { get; set; }
@@ -27,13 +27,7 @@ namespace APIView
         public PropertyAPIV(IPropertySymbol symbol)
         {
             this.Name = symbol.Name;
-            var type = new Token();
-            type.DisplayString = symbol.Type.ToDisplayString();
-            if (symbol.Type.SpecialType.ToString().StartsWith("System"))
-                type.Type = TypeReference.BuiltInType;
-            else
-                type.Type = TypeReference.SpecialType;
-            this.Type = type;
+            this.Type = new TypeReference(symbol);
             this.Accessibility = symbol.DeclaredAccessibility.ToString().ToLower();
 
             this.IsAbstract = symbol.IsAbstract;

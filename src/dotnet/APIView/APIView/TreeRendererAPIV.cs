@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Text;
 
 namespace APIView
@@ -46,7 +47,7 @@ namespace APIView
             //TODO: determine whether event is EventHandler or other type - and if it has type parameter(s)
             RenderKeyword(builder, e.Accessibility);
             builder.Append(" ");
-            RenderSpecialName(builder, "event");
+            RenderKeyword(builder, "event");
             builder.Append(" ");
             RenderClass(builder, "EventHandler");
             builder.Append(" ");
@@ -81,16 +82,13 @@ namespace APIView
                 builder.Append(" ");
             }
 
-            if (f.Type.Type == TypeReference.BuiltInType)
-                RenderKeyword(builder, f.Type.DisplayString);
-            else
-                RenderType(builder, f.Type.DisplayString);
+            Render(f.Type, builder);
             builder.Append(" ");
             RenderName(builder, f.Name);
 
             if (f.IsConstant)
             {
-                if (f.Type.DisplayString == "string")
+                if (f.Type.IsString)
                 {
                     builder.Append(" = ");
                     RenderValue(builder, "\"" + f.Value + "\"");
@@ -152,12 +150,9 @@ namespace APIView
                 builder.Append(" ");
             }
 
-            if (m.ReturnType.DisplayString.Any())
+            if (m.ReturnType.Type != TypeReference.TypeName.NullType)
             {
-                if (m.ReturnType.Type == TypeReference.BuiltInType)
-                    RenderKeyword(builder, m.ReturnType.DisplayString);
-                else
-                    RenderType(builder, m.ReturnType.DisplayString);
+                Render(m.ReturnType, builder);
                 builder.Append(" ");
             }
 
@@ -189,7 +184,7 @@ namespace APIView
                 builder.Length -= 2;
             }
 
-            if (m.IsInterfaceMethod)
+            if (m.IsInterfaceMethod || m.IsAbstract)
                 builder.Append(");");
             else
                 builder.Append(") { }");
@@ -200,7 +195,7 @@ namespace APIView
             AppendIndents(builder, indents);
             RenderKeyword(builder, nt.Accessibility);
             builder.Append(" ");
-            RenderSpecialName(builder, nt.Type);
+            RenderKeyword(builder, nt.Type);
             builder.Append(" ");
 
             indents++;
@@ -214,7 +209,7 @@ namespace APIView
                     if (!nt.EnumUnderlyingType.Equals("int"))
                     {
                         builder.Append(": ");
-                        RenderType(builder, nt.EnumUnderlyingType);
+                        RenderKeyword(builder, nt.EnumUnderlyingType);
                         builder.Append(" ");
                     }
                     builder.Append("{");
@@ -238,7 +233,7 @@ namespace APIView
                     {
                         if (m.Name.Equals("Invoke"))
                         {
-                            RenderType(builder, m.ReturnType.DisplayString);
+                            Render(m.ReturnType, builder);
                             builder.Append(" ");
                             RenderName(builder, nt.Name);
                             builder.Append("(");
@@ -328,7 +323,7 @@ namespace APIView
             if (ns.Name.Any())
             {
                 AppendIndents(builder, indents);
-                RenderSpecialName(builder, "namespace");
+                RenderKeyword(builder, "namespace");
                 builder.Append(" ");
                 RenderName(builder, ns.Name);
                 builder.Append(" {");
@@ -377,38 +372,12 @@ namespace APIView
                 AppendIndents(builder, indents);
             }
 
-            foreach (var part in p.TypeParts)
-            {
-                switch (part.Type)
-                {
-                    case TypeReference.BuiltInType:
-                        RenderKeyword(builder, part.DisplayString);
-                        break;
-                    case TypeReference.SpecialType:
-                        RenderType(builder, part.DisplayString);
-                        break;
-                    default:
-                        RenderPunctuation(builder, part.DisplayString);
-                        break;
-                }
-            }
+            Render(p.Type, builder);
 
             builder.Append(" ").Append(p.Name);
             if (p.HasExplicitDefaultValue)
             {
-                var isString = false;
-                foreach (var part in p.TypeParts)
-                {
-                    if (part.Type == TypeReference.SpecialType)
-                    {
-                        isString = false;
-                        break;
-                    }
-                    if (part.DisplayString == "string")
-                        isString = true;
-                }
-
-                if (isString)
+                if (p.Type.IsString)
                 {
                     builder.Append(" = ");
                     if (p.ExplicitDefaultValue == null)
@@ -433,10 +402,7 @@ namespace APIView
             AppendIndents(builder, indents);
             RenderKeyword(builder, p.Accessibility);
             builder.Append(" ");
-            if (p.Type.Type == TypeReference.BuiltInType)
-                RenderKeyword(builder, p.Type.DisplayString);
-            else
-                RenderType(builder, p.Type.DisplayString);
+            Render(p.Type, builder);
             builder.Append(" ");
             RenderName(builder, p.Name);
             builder.Append(" { ");
@@ -469,6 +435,39 @@ namespace APIView
             }
 
             RenderType(builder, tp.Name);
+        }
+
+        public void Render(TypeReference type, StringBuilder builder)
+        {
+            /*
+            switch (type)
+            {
+                case TypeReference.BuiltInType:
+                    RenderKeyword(builder, part.DisplayString);
+                    break;
+                case TypeReference.SpecialType:
+                    RenderType(builder, part.DisplayString);
+                    break;
+                default:
+                    RenderPunctuation(builder, part.DisplayString);
+                    break;
+            }
+            */
+            foreach (var token in type.Tokens)
+            {
+                switch (token.Type)
+                {
+                    case TypeReference.TypeName.BuiltInType:
+                        RenderKeyword(builder, token.DisplayString);
+                        break;
+                    case TypeReference.TypeName.SpecialType:
+                        RenderType(builder, token.DisplayString);
+                        break;
+                    default:
+                        RenderPunctuation(builder, token.DisplayString);
+                        break;
+                }
+            }
         }
 
         protected abstract void RenderClassDefinition(StringBuilder builder, string word);

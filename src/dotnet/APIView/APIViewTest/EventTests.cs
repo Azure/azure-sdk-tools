@@ -36,7 +36,7 @@ namespace APIViewTest
             var builder = new StringBuilder();
             var renderer = new HTMLRendererAPIV();
             renderer.Render(e, builder);
-            Assert.Equal("<span class=\"keyword\">public</span> <span class=\"specialName\">event</span> <a href=\"#EventHandler\" class=\"class\">" +
+            Assert.Equal("<span class=\"keyword\">public</span> <span class=\"keyword\">event</span> <a href=\"#EventHandler\" class=\"class\">" +
                 "EventHandler</a> <span class=\"name\">TestEvent</span>;", builder.ToString());
         }
     }

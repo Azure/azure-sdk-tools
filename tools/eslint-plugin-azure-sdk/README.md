@@ -111,4 +111,4 @@ For example, if you are not targeting Node, disable `ts-config-moduleresolution`
 - [ts-package-json-sideeffects](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-sideeffects.md)
 - [ts-package-json-types](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-types.md)
 - [ts-use-interface-parameters](/tools/eslint-plugin-azure-sdk/docs/rules/ts-use-interface-parameters.md)
-- [ts-versioning-semver](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-versioning-semver)
+- [ts-versioning-semver](/tools/eslint-plugin-azure-sdk/docs/rules/ts-versioning-semver.md)

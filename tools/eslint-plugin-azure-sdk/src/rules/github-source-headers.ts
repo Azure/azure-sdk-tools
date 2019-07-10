@@ -19,13 +19,13 @@ export = {
       category: "Best Practices",
       recommended: true,
       url:
-        "https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#github-source-headers"
+        "https://github.com/Azure/azure-sdk-tools/blob/master/tools/eslint-plugin-azure-sdk/docs/rules/github-source-headers.md"
     },
     schema: [] // no options
   },
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     // regex checking file ending
-    const sourceFileRegex = /\.ts$/; // ...src/...ts
+    const sourceFileRegex = /\.ts$/; //*.ts
 
     return sourceFileRegex.test(context.getFilename())
       ? {

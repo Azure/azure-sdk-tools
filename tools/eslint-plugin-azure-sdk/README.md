@@ -38,7 +38,7 @@ Make sure to set your `.eslintrc` configuration file's `parserOptions.project` f
 }
 ```
 
-For all rules to be enforced according to the standards set by the Design Guidelines, add this plugin's `recommended` configuration to the `extends` section of your `eslintrc` configuration file as follows:
+For all rules to be enforced according to the standards set by the Design Guidelines, add this plugin's `recommended` configuration to the `extends` section of your `.eslintrc` configuration file as follows:
 
 ```json
 {
@@ -46,17 +46,17 @@ For all rules to be enforced according to the standards set by the Design Guidel
 }
 ```
 
-If the main TypeScript entrypoint to your package is not in `src/index.ts`, set `settings.main` in your `eslintrc` configuration file to the entrypoint as follows:
+If the main TypeScript entrypoint to your package is not in `src/index.ts`, set `settings.main` in your `.eslintrc` configuration file to the entrypoint as follows (for example, if the entrypoint is `index.ts`):
 
 ```json
 {
   "settings": {
-    "main": <path-to-entrypoint>
+    "main": "index.ts"
   }
 }
 ```
 
-If you need to modify or disable specific rules, you can do so in the `rules` section of your `eslintrc` configuration file:
+If you need to modify or disable specific rules, you can do so in the `rules` section of your `.eslintrc` configuration file:
 
 ```json
 {
@@ -94,8 +94,7 @@ For example, if you are not targeting Node, disable `ts-config-moduleresolution`
 - [ts-config-strict](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-strict.md)
 - [ts-config-target](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-target.md)
 - [ts-error-handling](/tools/eslint-plugin-azure-sdk/docs/rules/ts-error-handling.md)
-- [ts-include-original-source](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-include-original-source)
-- [ts-modules-named-only](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-modules-named-only)
+- [ts-modules-only-named](/tools/eslint-plugin-azure-sdk/docs/rules/ts-modules-only-named.md)
 - [ts-no-const-enums](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-package-json-author)
 - [ts-package-json-author](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-author.md)
 - [ts-package-json-bugs](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-bugs.md)

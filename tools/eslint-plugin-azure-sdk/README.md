@@ -104,7 +104,7 @@ For example, if you are not targeting Node, disable `ts-config-moduleresolution`
 - [ts-package-json-keywords](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-keywords.md)
 - [ts-package-json-license](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-license.md)
 - [ts-package-json-main-is-cjs](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-main-is-cjs.md)
-- [ts-package-json-module](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-package-json-module)
+- [ts-package-json-module](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-module.md)
 - [ts-package-json-name](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-name.md)
 - [ts-package-json-repo](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-repo.md)
 - [ts-package-json-required-scripts](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-required-scripts.md)

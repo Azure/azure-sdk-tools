@@ -8,9 +8,9 @@ Recommends `compilerOptions.isolatedModules` in `tsconfig.json` to be set to `tr
 
 ```json
 {
-    "compilerOptions": {
-        "isolatedModules": true
-    }
+  "compilerOptions": {
+    "isolatedModules": true
+  }
 }
 ```
 
@@ -18,15 +18,15 @@ Recommends `compilerOptions.isolatedModules` in `tsconfig.json` to be set to `tr
 
 ```json
 {
-    "compilerOptions": {
-        "isolatedModules": false
-    }
+  "compilerOptions": {
+    "isolatedModules": false
+  }
 }
 ```
 
 ```json
 {
-    "compilerOptions": {}
+  "compilerOptions": {}
 }
 ```
 

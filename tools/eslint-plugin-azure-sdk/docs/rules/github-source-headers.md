@@ -40,7 +40,9 @@ These must be located at the top of every source file.
 ```
 
 ```ts
-class Class { /* source code here */ }
+class Class {
+  /* source code here */
+}
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 ```

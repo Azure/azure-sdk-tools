@@ -10,9 +10,9 @@ A valid ECMAScript standard is defined as any ECMASCript standard other than ES3
 
 ```json
 {
-    "compilerOptions": {
-        "target": "es6"
-    }
+  "compilerOptions": {
+    "target": "es6"
+  }
 }
 ```
 
@@ -20,31 +20,31 @@ A valid ECMAScript standard is defined as any ECMASCript standard other than ES3
 
 ```json
 {
-    "compilerOptions": {
-        "target": "es3"
-    }
+  "compilerOptions": {
+    "target": "es3"
+  }
 }
 ```
 
 ```json
 {
-    "compilerOptions": {
-        "target": "esnext"
-    }
+  "compilerOptions": {
+    "target": "esnext"
+  }
 }
 ```
 
 ```json
 {
-    "compilerOptions": {
-        "target": 6
-    }
+  "compilerOptions": {
+    "target": 6
+  }
 }
 ```
 
 ```json
 {
-    "compilerOptions": {}
+  "compilerOptions": {}
 }
 ```
 

@@ -8,9 +8,9 @@ Requires `compilerOptions.importHelpers` in `tsconfig.json` to be set to `true`.
 
 ```json
 {
-    "compilerOptions": {
-        "importHelpers": true
-    }
+  "compilerOptions": {
+    "importHelpers": true
+  }
 }
 ```
 
@@ -18,15 +18,15 @@ Requires `compilerOptions.importHelpers` in `tsconfig.json` to be set to `true`.
 
 ```json
 {
-    "compilerOptions": {
-        "importHelpers": false
-    }
+  "compilerOptions": {
+    "importHelpers": false
+  }
 }
 ```
 
 ```json
 {
-    "compilerOptions": {}
+  "compilerOptions": {}
 }
 ```
 

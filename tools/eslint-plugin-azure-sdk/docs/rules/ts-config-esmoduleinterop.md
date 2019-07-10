@@ -8,9 +8,9 @@ Requires `compilerOptions.esModuleInterop` in `tsconfig.json` to be set to `true
 
 ```json
 {
-    "compilerOptions": {
-        "esModuleInterop": true
-    }
+  "compilerOptions": {
+    "esModuleInterop": true
+  }
 }
 ```
 
@@ -18,15 +18,15 @@ Requires `compilerOptions.esModuleInterop` in `tsconfig.json` to be set to `true
 
 ```json
 {
-    "compilerOptions": {
-        "esModuleInterop": false
-    }
+  "compilerOptions": {
+    "esModuleInterop": false
+  }
 }
 ```
 
 ```json
 {
-    "compilerOptions": {}
+  "compilerOptions": {}
 }
 ```
 

@@ -8,7 +8,7 @@ Requires `name` in `package.json` to be set to `"@azure/<service-name>"`, with t
 
 ```json
 {
-    "name": "@azure/service-bus"
+  "name": "@azure/service-bus"
 }
 ```
 
@@ -16,19 +16,19 @@ Requires `name` in `package.json` to be set to `"@azure/<service-name>"`, with t
 
 ```json
 {
-    "name": "@microsoft/service-bus"
+  "name": "@microsoft/service-bus"
 }
 ```
 
 ```json
 {
-    "name": "service-bus"
+  "name": "service-bus"
 }
 ```
 
 ```json
 {
-    "name": "@azure/serviceBus"
+  "name": "@azure/serviceBus"
 }
 ```
 

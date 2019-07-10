@@ -8,9 +8,9 @@ Requires `compilerOptions.lib` in `tsconfig.json` to be set to an empty array.
 
 ```json
 {
-    "compilerOptions": {
-        "lib": []
-    }
+  "compilerOptions": {
+    "lib": []
+  }
 }
 ```
 
@@ -18,23 +18,23 @@ Requires `compilerOptions.lib` in `tsconfig.json` to be set to an empty array.
 
 ```json
 {
-    "compilerOptions": {
-        "lib": "exnext"
-    }
+  "compilerOptions": {
+    "lib": "exnext"
+  }
 }
 ```
 
 ```json
 {
-    "compilerOptions": {
-        "lib": ["esnext", "dom"]
-    }
+  "compilerOptions": {
+    "lib": ["esnext", "dom"]
+  }
 }
 ```
 
 ```json
 {
-    "compilerOptions": {}
+  "compilerOptions": {}
 }
 ```
 

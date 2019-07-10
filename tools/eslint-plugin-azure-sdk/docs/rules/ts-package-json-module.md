@@ -8,7 +8,7 @@ Requires `module` in `package.json` to be set to the ES6 entrypoint of the packa
 
 ```json
 {
-    "module": "dist-esm/src/index.js"
+  "module": "dist-esm/src/index.js"
 }
 ```
 
@@ -16,13 +16,13 @@ Requires `module` in `package.json` to be set to the ES6 entrypoint of the packa
 
 ```json
 {
-    "module": "dist-esm/src/lib/index.js"
+  "module": "dist-esm/src/lib/index.js"
 }
 ```
 
 ```json
 {
-    "module": "dist/index.js"
+  "module": "dist/index.js"
 }
 ```
 

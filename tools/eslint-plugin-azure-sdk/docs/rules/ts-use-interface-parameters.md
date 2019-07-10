@@ -11,18 +11,18 @@ However, exceptions are made for private class methods, overloads where at least
 The following interfaces and classes are to be used as example types:
 
 ```ts
-import ExternalClass from "example-library"
+import ExternalClass from "example-library";
 
 class BasicClass {}
 
 interface BasicInterface {}
 
 interface NestedInterface {
-  interface: BasicInterface
+  interface: BasicInterface;
 }
 
 interface ClassInInterface {
-  class: BasicClass
+  class: BasicClass;
 }
 ```
 
@@ -30,32 +30,32 @@ interface ClassInInterface {
 
 ```ts
 function example(param: BasicInterface) {
-    /* code here */
+  /* code here */
 }
 ```
 
 ```ts
 function example(param: NestedInterface) {
-    /* code here */
+  /* code here */
 }
 ```
 
 ```ts
 function example(param?: BasicClass) {
-    /* code here */
+  /* code here */
 }
 ```
 
 ```ts
 class Example {
-    constructor(param: BasicClass)
-    constructor(param: BasicInterface)
+  constructor(param: BasicClass);
+  constructor(param: BasicInterface);
 }
 ```
 
 ```ts
 class Example {
-    private _example(param: BasicClass)
+  private _example(param: BasicClass);
 }
 ```
 
@@ -63,32 +63,32 @@ class Example {
 
 ```ts
 function example(param: BasicClass) {
-    /* code here */
+  /* code here */
 }
 ```
 
 ```ts
 function example(param1: BasicInterface, param2: BasicClass) {
-    /* code here */
+  /* code here */
 }
 ```
 
 ```ts
 function example(param: BasicClass[]) {
-    /* code here */
+  /* code here */
 }
 ```
 
 ```ts
 function example(param: ClassInInterface) {
-    /* code here */
+  /* code here */
 }
 ```
 
 ```ts
 class Example {
-    constructor(param: BasicClass)
-    constructor(param1: BasicInterface, param2: BasicClass)
+  constructor(param: BasicClass);
+  constructor(param1: BasicInterface, param2: BasicClass);
 }
 ```
 

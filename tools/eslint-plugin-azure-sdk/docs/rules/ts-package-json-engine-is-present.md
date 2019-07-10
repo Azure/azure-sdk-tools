@@ -10,13 +10,13 @@ Currently, this requires `engine` in `package.json` to be set to `">=8.0.0"`.
 
 ```json
 {
-    "engine": ">=8.0.0"
+  "engine": ">=8.0.0"
 }
 ```
 
 ### Bad
 
-```json
+````json
 {
     "engine": ">=6.0.0"
 }
@@ -26,7 +26,7 @@ Currently, this requires `engine` in `package.json` to be set to `">=8.0.0"`.
 {
     "engine": ">=10.0.0"
 }
-```
+````
 
 ```json
 {}

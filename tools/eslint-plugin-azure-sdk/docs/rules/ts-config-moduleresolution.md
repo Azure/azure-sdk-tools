@@ -8,9 +8,9 @@ Requires `compilerOptions.moduleResolution` in `tsconfig.json` to be set to `"no
 
 ```json
 {
-    "compilerOptions": {
-        "moduleResolution": "node"
-    }
+  "compilerOptions": {
+    "moduleResolution": "node"
+  }
 }
 ```
 
@@ -18,15 +18,15 @@ Requires `compilerOptions.moduleResolution` in `tsconfig.json` to be set to `"no
 
 ```json
 {
-    "compilerOptions": {
-        "moduleResolution": "classic"
-    }
+  "compilerOptions": {
+    "moduleResolution": "classic"
+  }
 }
 ```
 
 ```json
 {
-    "compilerOptions": {}
+  "compilerOptions": {}
 }
 ```
 

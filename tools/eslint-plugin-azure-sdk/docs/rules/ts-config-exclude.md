@@ -8,17 +8,17 @@ Requires `compilerOptions.exclude` in `tsconfig.json` to include `node_modules`.
 
 ```json
 {
-    "compilerOptions": {
-        "exclude": ["node_modules"]
-    }
+  "compilerOptions": {
+    "exclude": ["node_modules"]
+  }
 }
 ```
 
 ```json
 {
-    "compilerOptions": {
-        "exclude": ["node_modules", "test"]
-    }
+  "compilerOptions": {
+    "exclude": ["node_modules", "test"]
+  }
 }
 ```
 
@@ -26,15 +26,15 @@ Requires `compilerOptions.exclude` in `tsconfig.json` to include `node_modules`.
 
 ```json
 {
-    "compilerOptions": {
-        "exclude": []
-    }
+  "compilerOptions": {
+    "exclude": []
+  }
 }
 ```
 
 ```json
 {
-    "compilerOptions": {}
+  "compilerOptions": {}
 }
 ```
 

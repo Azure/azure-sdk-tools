@@ -8,10 +8,10 @@ Recommends against the usage of TypeScript's const enums.
 
 ```ts
 enum Directions {
-    North,
-    East,
-    South,
-    West
+  North,
+  East,
+  South,
+  West
 }
 ```
 
@@ -19,10 +19,10 @@ enum Directions {
 
 ```ts
 const enum Directions {
-    North,
-    East,
-    South,
-    West
+  North,
+  East,
+  South,
+  West
 }
 ```
 

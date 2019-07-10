@@ -8,9 +8,9 @@ Requires `bugs` in `package.json` to be set to `"https://github.com/Azure/azure-
 
 ```json
 {
-    "bugs": {
-        "url": "https://github.com/Azure/azure-sdk-for-js/issues"
-    }
+  "bugs": {
+    "url": "https://github.com/Azure/azure-sdk-for-js/issues"
+  }
 }
 ```
 
@@ -18,15 +18,15 @@ Requires `bugs` in `package.json` to be set to `"https://github.com/Azure/azure-
 
 ```json
 {
-    "bugs": {
-        "url": "https://github.com/Azure/azure-sdk-for-java/issues"
-    }
+  "bugs": {
+    "url": "https://github.com/Azure/azure-sdk-for-java/issues"
+  }
 }
 ```
 
 ```json
 {
-    "bugs": {}
+  "bugs": {}
 }
 ```
 

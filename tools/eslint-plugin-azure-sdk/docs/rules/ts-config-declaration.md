@@ -8,9 +8,9 @@ Requires `compilerOptions.declaration` in `tsconfig.json` to be set to `true`.
 
 ```json
 {
-    "compilerOptions": {
-        "declaration": true
-    }
+  "compilerOptions": {
+    "declaration": true
+  }
 }
 ```
 
@@ -18,15 +18,15 @@ Requires `compilerOptions.declaration` in `tsconfig.json` to be set to `true`.
 
 ```json
 {
-    "compilerOptions": {
-        "declaration": false
-    }
+  "compilerOptions": {
+    "declaration": false
+  }
 }
 ```
 
 ```json
 {
-    "compilerOptions": {}
+  "compilerOptions": {}
 }
 ```
 

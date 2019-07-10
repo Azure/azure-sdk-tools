@@ -52,24 +52,19 @@ Specifically, this rule looks for inclusion of `dist`, `dist-esm/src`, and `src`
 
 ```json
 {
-    "files": [
-        "dist",
-        "dist-esm/src"
-    ]
+  "files": ["dist", "dist-esm/src"]
 }
 ```
 
 ```json
 {
-    "files": [
-        "dist",
-    ]
+  "files": ["dist"]
 }
 ```
 
 ```json
 {
-    "files": []
+  "files": []
 }
 ```
 

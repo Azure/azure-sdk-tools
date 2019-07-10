@@ -18,9 +18,10 @@ throw err;
 ```
 
 ```ts
-try { /* code here */ }
-catch (err) {
-    throw err;
+try {
+  /* code here */
+} catch (err) {
+  throw err;
 }
 ```
 
@@ -39,9 +40,10 @@ throw new OtherError("error");
 ```
 
 ```ts
-try { /* code here */ }
-catch (err: OtherError) {
-    throw err;
+try {
+  /* code here */
+} catch (err) {
+  throw err;
 }
 ```
 

@@ -10,7 +10,7 @@ In practice, this means `types` in `package.json` must be set to a path pointing
 
 ```json
 {
-    "types": "types/index.d.ts"
+  "types": "types/index.d.ts"
 }
 ```
 
@@ -18,7 +18,7 @@ In practice, this means `types` in `package.json` must be set to a path pointing
 
 ```json
 {
-    "types": "types/index.ts"
+  "types": "types/index.ts"
 }
 ```
 

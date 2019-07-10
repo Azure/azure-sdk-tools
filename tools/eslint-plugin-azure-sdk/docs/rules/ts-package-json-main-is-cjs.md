@@ -8,7 +8,7 @@ Requires `main` in `package.json` to be point to a CommonJS or UMD module. In th
 
 ```json
 {
-    "main": "dist/index.js"
+  "main": "dist/index.js"
 }
 ```
 
@@ -16,13 +16,13 @@ Requires `main` in `package.json` to be point to a CommonJS or UMD module. In th
 
 ```json
 {
-    "main": "dist/src/index.js"
+  "main": "dist/src/index.js"
 }
 ```
 
 ```json
 {
-    "main": "dist-esm/src/index.js"
+  "main": "dist-esm/src/index.js"
 }
 ```
 

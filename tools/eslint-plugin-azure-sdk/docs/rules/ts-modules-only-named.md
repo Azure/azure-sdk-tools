@@ -19,21 +19,25 @@ All examples are representative of the main entrypoint.
 ### Good
 
 ```ts
-export { /* package contents */ }
+export /* package contents */{};
 ```
 
 ```ts
-export { /* package contents */ }
+export /* package contents */{};
 ```
 
 ```ts
-export const package = { /* package contents */ }
+export const package = {
+  /* package contents */
+};
 ```
 
 ### Bad
 
 ```ts
-export default { /* package contents */ }
+export default {
+  /* package contents */
+};
 ```
 
 ## [Source](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-modules-only-named)

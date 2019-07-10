@@ -95,7 +95,7 @@ For example, if you are not targeting Node, disable `ts-config-moduleresolution`
 - [ts-config-target](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-target.md)
 - [ts-error-handling](/tools/eslint-plugin-azure-sdk/docs/rules/ts-error-handling.md)
 - [ts-modules-only-named](/tools/eslint-plugin-azure-sdk/docs/rules/ts-modules-only-named.md)
-- [ts-no-const-enums](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-package-json-author)
+- [ts-no-const-enums](/tools/eslint-plugin-azure-sdk/docs/rules/ts-no-const-enums.md)
 - [ts-package-json-author](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-author.md)
 - [ts-package-json-bugs](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-bugs.md)
 - [ts-package-json-engine-is-present](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-package-json-engine-is-present)

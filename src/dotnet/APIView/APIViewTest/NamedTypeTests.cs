@@ -16,7 +16,7 @@ namespace APIViewTest
             NamedTypeAPIV publicClass = new NamedTypeAPIV(namedTypeSymbol);
 
             Assert.Equal("SomeEventsSomeFieldsNoMethodsSomeNamedTypes", publicClass.Name);
-            Assert.Equal("class", publicClass.Type);
+            Assert.Equal("class", publicClass.TypeKind);
             Assert.Equal(2, publicClass.Events.Length);
             Assert.Equal(2, publicClass.Fields.Length);
             Assert.Empty(publicClass.Methods);
@@ -39,7 +39,7 @@ namespace APIViewTest
             NamedTypeAPIV publicInterface = new NamedTypeAPIV(namedTypeSymbol);
 
             Assert.Equal("PublicInterface", publicInterface.Name);
-            Assert.Equal("interface", publicInterface.Type);
+            Assert.Equal("interface", publicInterface.TypeKind);
             Assert.Empty(publicInterface.Events);
             Assert.Empty(publicInterface.Fields);
             Assert.Equal(3, publicInterface.Methods.Length);
@@ -62,7 +62,7 @@ namespace APIViewTest
             NamedTypeAPIV implementer = new NamedTypeAPIV(namedTypeSymbol);
 
             Assert.Equal("ImplementingClass", implementer.Name);
-            Assert.Equal("class", implementer.Type);
+            Assert.Equal("class", implementer.TypeKind);
             Assert.Single(implementer.Implementations);
             Assert.Equal("TestLibrary.PublicInterface<int>", implementer.Implementations[0]);
         }
@@ -83,7 +83,7 @@ namespace APIViewTest
             NamedTypeAPIV publicEnum = new NamedTypeAPIV(namedTypeSymbol);
 
             Assert.Equal("PublicEnum", publicEnum.Name);
-            Assert.Equal("enum", publicEnum.Type);
+            Assert.Equal("enum", publicEnum.TypeKind);
             Assert.Equal("int", publicEnum.EnumUnderlyingType);
         }
         
@@ -104,7 +104,7 @@ namespace APIViewTest
             NamedTypeAPIV publicEnum = new NamedTypeAPIV(namedTypeSymbol);
 
             Assert.Equal("PublicEnum", publicEnum.Name);
-            Assert.Equal("enum", publicEnum.Type);
+            Assert.Equal("enum", publicEnum.TypeKind);
             Assert.Equal("long", publicEnum.EnumUnderlyingType);
         }
 
@@ -125,7 +125,7 @@ namespace APIViewTest
             NamedTypeAPIV publicDelegate = new NamedTypeAPIV(namedTypeSymbol);
 
             Assert.Equal("publicDelegate", publicDelegate.Name);
-            Assert.Equal("delegate", publicDelegate.Type);
+            Assert.Equal("delegate", publicDelegate.TypeKind);
         }
 
         [Fact]
@@ -182,7 +182,7 @@ namespace APIViewTest
             var nt = new NamedTypeAPIV
             {
                 Name = "ImplementingClass",
-                Type = "class",
+                TypeKind = "class",
                 Accessibility = "public",
                 Events = new EventAPIV[] { },
                 Fields = new FieldAPIV[] { },
@@ -212,7 +212,7 @@ namespace APIViewTest
             var nt = new NamedTypeAPIV
             {
                 Name = "TestInterface",
-                Type = "interface",
+                TypeKind = "interface",
                 Accessibility = "public",
                 Events = new EventAPIV[] { },
                 Fields = new FieldAPIV[] { },

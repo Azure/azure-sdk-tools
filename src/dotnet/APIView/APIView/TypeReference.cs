@@ -23,6 +23,18 @@ namespace APIView
             this.Type = this.Tokens.Last().Type;
         }
 
+        public TypeReference(AttributeData data)
+        {
+            var tokens = new List<Token>();
+            foreach (var part in data.AttributeClass.ToDisplayParts())
+            {
+                tokens.Add(new Token(part));
+            }
+            this.Tokens = tokens.ToArray();
+            this.Type = this.Tokens.Last().Type;
+            this.IsString = this.Tokens.Last().IsString;
+        }
+
         public TypeReference(IFieldSymbol symbol)
         {
             var tokens = new List<Token>();
@@ -41,6 +53,28 @@ namespace APIView
             foreach (var part in symbol.ReturnType.ToDisplayParts())
             {
                 tokens.Add(new Token(part));
+            }
+            this.Tokens = tokens.ToArray();
+            this.Type = this.Tokens.Last().Type;
+            this.IsString = this.Tokens.Last().IsString;
+        }
+
+        public TypeReference(INamedTypeSymbol symbol)
+        {
+            var tokens = new List<Token>();
+            if (symbol.EnumUnderlyingType != null)
+            {
+                foreach (var part in symbol.EnumUnderlyingType.ToDisplayParts())
+                {
+                    tokens.Add(new Token(part));
+                }
+            }
+            else
+            {
+                foreach(var part in symbol.ToDisplayParts())
+                {
+                    tokens.Add(new Token(part));
+                }
             }
             this.Tokens = tokens.ToArray();
             this.Type = this.Tokens.Last().Type;
@@ -73,7 +107,7 @@ namespace APIView
 
         public enum TypeName
         {
-            SpecialType, BuiltInType, Punctuation, NullType
+            BuiltInType, ClassType, EnumType, SpecialType, Punctuation, NullType, ValueType
         }
     }
 }

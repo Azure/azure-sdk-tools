@@ -13,10 +13,27 @@ namespace APIView
         public Token()
         {
             this.DisplayString = "";
-            this.IsNavigable = true;
+            this.IsNavigable = false;
             this.IsString = false;
             this.NavigationID = "";
             this.Type = TypeReference.TypeName.NullType;
+        }
+
+        public Token(TypedConstant part)
+        {
+            this.DisplayString = part.Value.ToString();
+            this.IsNavigable = false;
+            this.NavigationID = "";
+            if (part.Type.Name.Equals("String"))
+            {
+                this.IsString = true;
+                this.Type = TypeReference.TypeName.ValueType;
+            }
+            else
+            {
+                this.IsString = false;
+                this.Type = TypeReference.TypeName.Punctuation;
+            }
         }
 
         public Token(SymbolDisplayPart part)
@@ -27,6 +44,18 @@ namespace APIView
             this.NavigationID = part.ToString();
             switch (part.Kind)
             {
+                case SymbolDisplayPartKind.ClassName:
+                    this.Type = TypeReference.TypeName.ClassType;
+                    break;
+                case SymbolDisplayPartKind.EnumName:
+                    this.Type = TypeReference.TypeName.EnumType;
+                    break;
+                case SymbolDisplayPartKind.ErrorTypeName:
+                    this.Type = TypeReference.TypeName.ClassType;
+                    break;
+                case SymbolDisplayPartKind.InterfaceName:
+                    this.Type = TypeReference.TypeName.ClassType;
+                    break;
                 case SymbolDisplayPartKind.Punctuation:
                     this.Type = TypeReference.TypeName.Punctuation;
                     break;

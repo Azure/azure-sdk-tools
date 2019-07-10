@@ -9,6 +9,11 @@ namespace APIView
             builder.Append(word);
         }
 
+        protected override void RenderEnumDefinition(StringBuilder builder, string word)
+        {
+            builder.Append(word);
+        }
+
         protected override void RenderPunctuation(StringBuilder builder, string word)
         {
             builder.Append(word.Replace("&lt;", "<").Replace("&gt;", ">"));

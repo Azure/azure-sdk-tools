@@ -24,7 +24,7 @@ namespace APIView
         public void Render(AttributeAPIV a, StringBuilder builder)
         {
             builder.Append("[");
-            RenderClass(builder, a.Type);
+            Render(a.Type, builder);
 
             if (a.ConstructorArgs.Any())
             {
@@ -195,21 +195,21 @@ namespace APIView
             AppendIndents(builder, indents);
             RenderKeyword(builder, nt.Accessibility);
             builder.Append(" ");
-            RenderKeyword(builder, nt.Type);
+            RenderKeyword(builder, nt.TypeKind);
             builder.Append(" ");
 
             indents++;
 
-            switch (nt.Type)
+            switch (nt.TypeKind)
             {
                 case ("enum"):
-                    RenderEnum(builder, nt.Name);
+                    RenderEnumDefinition(builder, nt.Name);
                     builder.Append(" ");
 
                     if (!nt.EnumUnderlyingType.Equals("int"))
                     {
                         builder.Append(": ");
-                        RenderKeyword(builder, nt.EnumUnderlyingType);
+                        Render(nt.EnumUnderlyingType, builder);
                         builder.Append(" ");
                     }
                     builder.Append("{");
@@ -276,7 +276,7 @@ namespace APIView
                         builder.Append(": ");
                         foreach (var i in nt.Implementations)
                         {
-                            RenderClass(builder, i);
+                            Render(i, builder);
                             builder.Append(", ");
                         }
                         builder.Length -= 2;
@@ -439,26 +439,18 @@ namespace APIView
 
         public void Render(TypeReference type, StringBuilder builder)
         {
-            /*
-            switch (type)
-            {
-                case TypeReference.BuiltInType:
-                    RenderKeyword(builder, part.DisplayString);
-                    break;
-                case TypeReference.SpecialType:
-                    RenderType(builder, part.DisplayString);
-                    break;
-                default:
-                    RenderPunctuation(builder, part.DisplayString);
-                    break;
-            }
-            */
             foreach (var token in type.Tokens)
             {
                 switch (token.Type)
                 {
                     case TypeReference.TypeName.BuiltInType:
                         RenderKeyword(builder, token.DisplayString);
+                        break;
+                    case TypeReference.TypeName.ClassType:
+                        RenderClass(builder, token.DisplayString);
+                        break;
+                    case TypeReference.TypeName.EnumType:
+                        RenderEnum(builder, token.DisplayString);
                         break;
                     case TypeReference.TypeName.SpecialType:
                         RenderType(builder, token.DisplayString);
@@ -471,6 +463,8 @@ namespace APIView
         }
 
         protected abstract void RenderClassDefinition(StringBuilder builder, string word);
+
+        protected abstract void RenderEnumDefinition(StringBuilder builder, string word);
 
         protected abstract void RenderPunctuation(StringBuilder builder, string word);
 

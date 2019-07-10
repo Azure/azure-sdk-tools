@@ -10,6 +10,12 @@ namespace APIView
                 .Append(word.Replace("<", "&lt;").Replace(">", "&gt;")).Append("</span>");
         }
 
+        protected override void RenderEnumDefinition(StringBuilder builder, string word)
+        {
+            builder.Append("<span id=\"").Append(word.Replace("<", "&lt;").Replace(">", "&gt;")).Append("\" class=\"enum\">")
+                .Append(word.Replace("<", "&lt;").Replace(">", "&gt;")).Append("</span>");
+        }
+
         protected override void RenderPunctuation(StringBuilder builder, string word)
         {
             builder.Append(word.Replace("<", "&lt;").Replace(">", "&gt;"));
@@ -17,8 +23,8 @@ namespace APIView
 
         protected override void RenderEnum(StringBuilder builder, string word)
         {
-            builder.Append("<span id=\"").Append(word.Replace("<", "&lt;").Replace(">", "&gt;")).Append("\" class=\"enum\">")
-                .Append(word.Replace("<", "&lt;").Replace(">", "&gt;")).Append("</span>");
+            builder.Append("<a href=\"#").Append(word.Replace("<", "&lt;").Replace(">", "&gt;")).Append("\" class=\"enum\">")
+                .Append(word.Replace("<", "&lt;").Replace(">", "&gt;")).Append("</a>");
         }
 
         protected override void RenderClass(StringBuilder builder, string word)

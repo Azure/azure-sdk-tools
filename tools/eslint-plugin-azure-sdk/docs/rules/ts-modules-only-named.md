@@ -38,4 +38,4 @@ export default { /* package contents */ }
 
 ## [Source](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-modules-only-named)
 
-Also includes definitions for [ts-config-no-default](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-modules-no-default), as the rules are similar enough to not exist separately for linting purposes.
+Also encompasses [ts-config-no-default](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-modules-no-default), as the rules are similar enough to not exist separately for linting purposes.

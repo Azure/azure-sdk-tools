@@ -33,3 +33,5 @@ Currently, this requires `engine` in `package.json` to be set to `">=8.0.0"`.
 ```
 
 ## [Source](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-package-json-engine-is-present)
+
+Also encompasses [ts-node-support](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-node-support), as the rules are similar enough to not exist separately for linting purposes.

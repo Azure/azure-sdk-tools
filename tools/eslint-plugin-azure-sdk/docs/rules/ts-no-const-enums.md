@@ -1,6 +1,6 @@
 # ts-no-const-enums
 
-Forbids usage of TypeScript's const enums.
+Recommends against the usage of TypeScript's const enums.
 
 ## Examples
 

@@ -536,7 +536,7 @@ namespace MS.Az.NetSdk.Build.Utilities
         {
             List<string> topLevelScopeDirs = new List<string>();
             //CategorizeDirectories();
-            List<string> dirList = CatDirs();
+            List<string> dirList = CategorizeDirs();
 
             var topLevelDirs = from d in dirList select Path.GetDirectoryName(d);
 
@@ -601,8 +601,8 @@ namespace MS.Az.NetSdk.Build.Utilities
         void InitSearch()
         {
             Init();
-            SDK_DirList = CatDirs();
-            CatProjs();
+            SDK_DirList = CategorizeDirs();
+            CategorizeProjs(SDK_DirList);
         }
 
         /// <summary>
@@ -692,7 +692,7 @@ namespace MS.Az.NetSdk.Build.Utilities
         }
 
 
-        void CatProjs()
+        void CategorizeProjs(List<string> projectSearchDirList)
         {
             IEnumerable<string> mgmtProjects = null;
             IEnumerable<string> testProjects = null;
@@ -702,7 +702,8 @@ namespace MS.Az.NetSdk.Build.Utilities
             MGMT_SdkProjList.Clear();
             MGMT_TestProjList.Clear();
 
-            foreach (string sdkDir in SDK_DirList)
+            //foreach (string sdkDir in SDK_DirList)
+            foreach (string sdkDir in projectSearchDirList)
             {
                 UtilLogger.LogInfo(MessageImportance.Low, "Searching Projects in:'{0}'", sdkDir);
                 var allprojs = Directory.EnumerateFiles(sdkDir, "*.csproj", SearchOption.AllDirectories);
@@ -756,7 +757,7 @@ namespace MS.Az.NetSdk.Build.Utilities
             }
         }
 
-        List<string> CatDirs()
+        List<string> CategorizeDirs()
         {
             List<string> masterList = new List<string>();
             //List<string> dpD = new List<string>();
@@ -813,6 +814,8 @@ namespace MS.Az.NetSdk.Build.Utilities
             UtilLogger.LogInfo(MessageImportance.Low, "Count of SDK_dataPlaneDirList before dedupe '{0}'", masterList.Count.ToString());
             masterList = DeDupeList(masterList);
             UtilLogger.LogInfo(MessageImportance.Low, "Count of SDK_dataPlaneDirList before dedupe '{0}'", masterList.Count.ToString());
+
+            masterList = ExcludeIncludeProjects(masterList);
 
             return masterList;
         }
@@ -1216,11 +1219,11 @@ namespace MS.Az.NetSdk.Build.Utilities
                     (filePath.EndsWith("tests.csproj", StringComparison.OrdinalIgnoreCase))
                     )
                 {
-                    if(filePath.Contains("mgmtcommon"))
+                    if(filePath.Contains("mgmtcommon", StringComparison.OrdinalIgnoreCase))
                     {
                         finalList.Add(filePath);
                     }
-                    else if(filePath.Contains("management"))
+                    else if(filePath.Contains("management", StringComparison.OrdinalIgnoreCase))
                     {
                         finalList.Add(filePath);
                     }
@@ -1330,7 +1333,19 @@ namespace MS.Az.NetSdk.Build.Utilities
                 if (cmdLineIncludePathList.Any<string>())
                 {
                     UtilLogger.LogInfo(MessageImportance.Low, cmdLineIncludePathList, "User Include Path token list count '{0}'", cmdLineIncludePathList.Count.ToString());
-                    var includeFilteredList = masterList.Intersect<string>(cmdLineIncludePathList, new ObjectComparer<string>((rhs, lhs) => lhs.Contains(rhs, StringComparison.OrdinalIgnoreCase)));
+                    List<string> includeFilteredList = new List<string>();
+                    foreach(string incTkn in cmdLineIncludePathList)
+                    {
+                        var filtered = masterList.Where<string>((item) => item.Contains(incTkn, StringComparison.OrdinalIgnoreCase));
+                        if(filtered.NotNullOrAny<string>())
+                        {
+                            includeFilteredList.AddRange(filtered);
+                        }
+                    }
+
+                    //var includeFilteredList = masterList.Intersect<string>(cmdLineIncludePathList, new ObjectComparer<string>((rhs, lhs) => lhs.Contains(rhs, StringComparison.OrdinalIgnoreCase)));
+                    //var includeFilteredList = masterList.Where<string>((item))
+
 
                     // We give priority to ONLY include projects that match include list, in case we do not have anything that matches provided include list, we discard all the projects that were found (because they do not match include list)
                     // The purpose of include list is to ONLY include what is specified
@@ -1358,14 +1373,27 @@ namespace MS.Az.NetSdk.Build.Utilities
                     if (includeList.Any<string>())
                     {
                         UtilLogger.LogInfo(MessageImportance.Low, "Final List count before filtering on exclusion path tokens:'{0}'", finalList.Count.ToString());
+                        List<string> excludeFilteredList = new List<string>();
+                        foreach (string exTkn in cmdLineExcludePathList)
+                        {
+                            var exFiltered = includeList.Where<string>((item) => item.Contains(exTkn, StringComparison.OrdinalIgnoreCase));
+                            if (exFiltered.NotNullOrAny<string>())
+                            {
+                                excludeFilteredList.AddRange(exFiltered);
+                            }
+                        }
+                        excludeFilteredList = DeDupeList(excludeFilteredList);
 
-                        var finalMgmtList = includeList.Except<string>(cmdLineExcludePathList, new ObjectComparer<string>((rhs, lhs) => lhs.Contains(rhs, StringComparison.OrdinalIgnoreCase)));
+
+
+
+                        //var finalMgmtList = includeList.Except<string>(cmdLineExcludePathList, new ObjectComparer<string>((rhs, lhs) => lhs.Contains(rhs, StringComparison.OrdinalIgnoreCase)));
 
                         // If we get anything in finalMgmtList that means, the filter was a success
-                        if (finalMgmtList.Any<string>())
+                        if (excludeFilteredList.Any<string>())
                         {
                             finalList.Clear();
-                            finalList.AddRange(finalMgmtList);
+                            finalList.AddRange(excludeFilteredList);
                             UtilLogger.LogInfo(MessageImportance.Low, "After filtering on 'UserExcludePathList', Final list count is:'{0}'", finalList.Count.ToString());
                         }
                         else

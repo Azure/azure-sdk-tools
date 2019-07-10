@@ -193,8 +193,22 @@ namespace BuildTasks.Tests
 
             if (cproj.Execute())
             {
-                Assert.Equal(3, cproj.SDK_Projects.Count<ITaskItem>());
-                Assert.Equal(3, cproj.Test_Projects.Count<ITaskItem>());
+                Assert.True(cproj.SDK_Projects.Count<ITaskItem>() > 4);
+                Assert.True(cproj.Test_Projects.Count<ITaskItem>() > 4);
+            }
+        }
+
+        [Fact]
+        public void BuildIncludeAndExcludeTokenListProjects()
+        {
+            CategorizeSDKProjectsTask cproj = new CategorizeSDKProjectsTask(rootDir);
+            cproj.CmdLineIncludeScope = "Compute;Network;DataBox";
+            cproj.CmdLineExcludeScope = "DataBox";
+
+            if (cproj.Execute())
+            {
+                Assert.True(cproj.SDK_Projects.Count<ITaskItem>() >= 4);
+                Assert.True(cproj.Test_Projects.Count<ITaskItem>() >= 4);
             }
         }
 

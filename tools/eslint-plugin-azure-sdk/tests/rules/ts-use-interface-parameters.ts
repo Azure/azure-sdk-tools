@@ -14,10 +14,6 @@ const example = `class A {
   message: string
 }
 
-class A2 {
-  message: string
-}
-
 interface B {
   message: string
 }

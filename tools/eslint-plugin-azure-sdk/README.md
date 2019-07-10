@@ -88,7 +88,7 @@ For example, if you are not targeting Node, disable `ts-config-moduleresolution`
 - [ts-config-isolatedmodules](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-isolatedmodules.md)
 - [ts-config-lib](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-lib.md)
 - [ts-config-module](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-module.md)
-- [ts-config-moduleresolution](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-config-moduleresolution)
+- [ts-config-moduleresolution](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-moduleresolution.md)
 - [ts-config-no-experimentaldecorators](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-no-experimentaldecorators.md)
 - [ts-config-sourcemap](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-sourcemap.md)
 - [ts-config-strict](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-strict.md)

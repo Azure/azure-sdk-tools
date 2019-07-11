@@ -13,6 +13,7 @@ Analysis Services
 API Management
 Application Insights
 App Services
+Authentication
 Authorization
 Automation
 Azure Stack
@@ -22,6 +23,7 @@ BatchAI
 Billing
 Bot Services
 CDN
+Cloud Shell
 Cognitive Services
 Commerce
 Compute
@@ -35,6 +37,7 @@ Container Instance
 Container Registry
 Cosmos
 Customer Insights
+Data Bricks
 Data Catalog
 Data Factory
 Data Lake
@@ -54,6 +57,7 @@ Intune
 Insights
 IotHub
 KeyVault
+Lab Services 
 Logic App
 Machine Learning
 Machine Learning Compute
@@ -83,6 +87,7 @@ Network - Traffic Manager
 Notification Hubs
 Operational Insights
 Operations Management
+Policy
 Policy Insights
 PostgreSQL
 PowerBI
@@ -93,6 +98,7 @@ Redis Cache
 Relay
 Reservations
 Resource Authorization
+Resource Graph
 Resource Manager
 Resource Health
 Search
@@ -106,6 +112,7 @@ SQL
 Storage
 Storsimple
 Stream Analytics
+Subscription
 TimeseriesInsights
 Visual Studio
 vFXT

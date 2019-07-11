@@ -39,9 +39,9 @@ namespace APIView
         public Token(SymbolDisplayPart part)
         {
             this.DisplayString = part.ToString();
-            this.IsNavigable = false;
+            this.IsNavigable = part.Symbol != null;
             this.IsString = false;
-            this.NavigationID = part.ToString();
+            this.NavigationID = part.Symbol?.ToDisplayString();
             switch (part.Kind)
             {
                 case SymbolDisplayPartKind.ClassName:

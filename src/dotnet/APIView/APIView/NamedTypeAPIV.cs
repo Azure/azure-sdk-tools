@@ -17,6 +17,7 @@ namespace APIView
         public string TypeKind { get; set; }
         public TypeReference EnumUnderlyingType { get; set; }
         public string Accessibility { get; set; }
+        public string NavigationID { get; set; }
 
         public EventAPIV[]  Events { get; set; }
         public FieldAPIV[] Fields { get; set; }
@@ -39,6 +40,7 @@ namespace APIView
             if (symbol.EnumUnderlyingType != null)
                 this.EnumUnderlyingType = new TypeReference(symbol);
             this.Accessibility = symbol.DeclaredAccessibility.ToString().ToLower();
+            this.NavigationID = symbol.ToDisplayString();
 
             List<EventAPIV> events = new List<EventAPIV>();
             List<FieldAPIV> fields = new List<FieldAPIV>();

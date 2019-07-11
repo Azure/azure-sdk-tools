@@ -203,7 +203,7 @@ namespace APIView
             switch (nt.TypeKind)
             {
                 case ("enum"):
-                    RenderEnumDefinition(builder, nt.Name);
+                    RenderEnumDefinition(builder, nt);
                     builder.Append(" ");
 
                     if (!nt.EnumUnderlyingType.Equals("int"))
@@ -253,7 +253,7 @@ namespace APIView
                     break;
 
                 default:
-                    RenderClassDefinition(builder, nt.Name);
+                    RenderClassDefinition(builder, nt);
                     builder.Append(" ");
 
                     if (nt.TypeParameters.Any())
@@ -447,7 +447,7 @@ namespace APIView
                         RenderKeyword(builder, token.DisplayString);
                         break;
                     case TypeReference.TypeName.ClassType:
-                        RenderClass(builder, token.DisplayString);
+                        RenderClass(builder, token.DisplayString, token.NavigationID);
                         break;
                     case TypeReference.TypeName.EnumType:
                         RenderEnum(builder, token.DisplayString);
@@ -462,15 +462,15 @@ namespace APIView
             }
         }
 
-        protected abstract void RenderClassDefinition(StringBuilder builder, string word);
+        protected abstract void RenderClassDefinition(StringBuilder builder, NamedTypeAPIV nt);
 
-        protected abstract void RenderEnumDefinition(StringBuilder builder, string word);
+        protected abstract void RenderEnumDefinition(StringBuilder builder, NamedTypeAPIV nt);
 
         protected abstract void RenderPunctuation(StringBuilder builder, string word);
 
         protected abstract void RenderEnum(StringBuilder builder, string word);
 
-        protected abstract void RenderClass(StringBuilder builder, string word);
+        protected abstract void RenderClass(StringBuilder builder, string word, string navID = "");
 
         protected abstract void RenderKeyword(StringBuilder builder, string word);
 

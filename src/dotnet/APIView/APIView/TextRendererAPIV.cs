@@ -4,14 +4,14 @@ namespace APIView
 {
     public class TextRendererAPIV : TreeRendererAPIV
     {
-        protected override void RenderClassDefinition(StringBuilder builder, string word)
+        protected override void RenderClassDefinition(StringBuilder builder, NamedTypeAPIV nt)
         {
-            builder.Append(word);
+            builder.Append(nt.Name);
         }
 
-        protected override void RenderEnumDefinition(StringBuilder builder, string word)
+        protected override void RenderEnumDefinition(StringBuilder builder, NamedTypeAPIV nt)
         {
-            builder.Append(word);
+            builder.Append(nt.Name);
         }
 
         protected override void RenderPunctuation(StringBuilder builder, string word)
@@ -24,7 +24,7 @@ namespace APIView
             builder.Append(word);
         }
 
-        protected override void RenderClass(StringBuilder builder, string word)
+        protected override void RenderClass(StringBuilder builder, string word, string navID = "")
         {
             builder.Append(word);
         }

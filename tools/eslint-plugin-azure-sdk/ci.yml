@@ -63,15 +63,15 @@ stages:
             inputs:
               artifactName: packages
 
-    - stage: Release
-      dependsOn: Build
-      jobs:
-        - deplooyment: PublishPackage
-          environment: registry-tools-internal
-          
-          pool:
-            vmImage: ubuntu-16.04
+  - stage: Release
+    dependsOn: Build
+    jobs:
+      - deplooyment: PublishPackage
+        environment: registry-tools-internal
+        
+        pool:
+          vmImage: ubuntu-16.04
 
-          steps:
-            - script: |
-                echo "Pretend I am releasing the package!"
+        steps:
+          - script: |
+              echo "Pretend I am releasing the package!"

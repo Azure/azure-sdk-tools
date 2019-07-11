@@ -48,7 +48,7 @@ export = {
       "@azuresdktools/azure-sdk/ts-use-interface-parameters": "warn",
       "@azuresdktools/azure-sdk/ts-use-promises": "error",
       "@azuresdktools/azure-sdk/ts-versioning-semver": "error",
-      "@azuresdktools/azure-sdk/tsdoc-ignore-helpers": "off"
+      "@azuresdktools/azure-sdk/tsdoc-ignore-helpers": "error"
     },
     settings: {
       main: "src/index.ts"

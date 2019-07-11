@@ -3,12 +3,9 @@
  * @author Arpan Laha
  */
 
-//import { stripPath } from "../utils/verifiers";
 import { Rule } from "eslint";
 import { createCompilerHost, ScriptTarget } from "typescript";
 import { ParserServices } from "@typescript-eslint/experimental-utils";
-
-//import { Declaration, ExportNamedDeclaration } from "estree";
 
 //------------------------------------------------------------------------------
 // Rule Definition
@@ -45,8 +42,6 @@ export = {
         return {};
       }
       console.log(sourceFile);
-      // const type = typeChecker.getTypeAtLocation(sourceFile);
-      // const symbol = type.getSymbol();
       const symbol = typeChecker.getSymbolAtLocation(sourceFile);
       if (symbol === undefined) {
         console.log("symbol undefined");
@@ -58,9 +53,6 @@ export = {
     }
     return {
       // callback functions
-      // ExportNamedDeclaration: (node: ExportNamedDeclaration): void => {
-      //   const declaration = node.declaration as Declaration;
-      // }
     } as Rule.RuleListener;
   }
 };

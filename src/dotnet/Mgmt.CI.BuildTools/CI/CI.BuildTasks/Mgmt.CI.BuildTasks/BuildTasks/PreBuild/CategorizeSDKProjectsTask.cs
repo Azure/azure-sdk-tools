@@ -16,6 +16,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Tasks.PreBuild
     using System.Linq;
     using MS.Az.Mgmt.CI.BuildTasks.Common.ExtensionMethods;
     using MS.Az.Mgmt.CI.Common.ExtensionMethods;
+    using MS.Az.Mgmt.CI.Common.Services;
 
     /// <summary>
     /// Vocabulary:
@@ -54,14 +55,9 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Tasks.PreBuild
         #endregion
 
         #region fields
-        //string _scope;
         string _repositoryRootDirPath;
         string _cmdLineExcludeScope;
-
-        //string _projType;
-        //string _projCat;
-        //SdkProjectType _projectType;
-        //SdkProjectCategory _projectCategory;
+        ReflectionService _refSvc;
         #endregion
 
         #region Properties
@@ -195,6 +191,20 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Tasks.PreBuild
         internal SdkProjectType ProjType { get; set; }
 
         internal SdkProjectCategory ProjCat { get; set; }
+
+        ReflectionService RefSvc
+        {
+            get
+            {
+                if (_refSvc == null)
+                {
+                    _refSvc = new ReflectionService();
+                    _refSvc.GetAssembly(useMetadataLoadContext: true);
+                }
+
+                return _refSvc;
+            }
+        }
 
         #endregion
 
@@ -404,13 +414,13 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Tasks.PreBuild
             PlatformSpecificSkippedProjects = platformSpecificSkippedProjList.Select<SdkProjectMetadata, SDKMSBTaskItem>((item) => new SDKMSBTaskItem(item)).ToArray<SDKMSBTaskItem>();
             SdkPkgReferenceList = GetNormalizedPkgRefList();
 
-            TaskLogger.LogInfo("SDK Project(s) found:'{0}'", SDK_Projects.Count().ToString());
+            TaskLogger.LogInfo(MessageImportance.High, "SDK Project(s) found:'{0}'", SDK_Projects.Count().ToString());
             TaskLogger.LogInfo(MessageImportance.Low, SDK_Projects, "File Paths for SDK Projects");
 
-            TaskLogger.LogInfo(MessageImportance.Normal, "Test Project(s) found:'{0}'", Test_Projects.Count().ToString());
+            TaskLogger.LogInfo(MessageImportance.High, "Test Project(s) found:'{0}'", Test_Projects.Count().ToString());
             TaskLogger.LogInfo(MessageImportance.Low, Test_Projects, "File Paths for Test Projects");
 
-            TaskLogger.LogInfo(MessageImportance.Normal, "Test Project(s) whose tests will be executed are:'{0}'", Test_ToBe_Run.Count().ToString());
+            TaskLogger.LogInfo(MessageImportance.High, "Test Project(s) whose tests will be executed are:'{0}'", Test_ToBe_Run.Count().ToString());
             TaskLogger.LogInfo(MessageImportance.Low, Test_ToBe_Run, "File Paths for Test Projects whose tests will be executed");
 
             if (UnSupportedProjects.NotNullOrAny<SDKMSBTaskItem>())
@@ -499,7 +509,6 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Tasks.PreBuild
         {
             string azSdkFilePath = string.Empty;
             string azTestFilePath = string.Empty;
-            
 
             var azSdkRef = Directory.EnumerateFiles(RepositoryRootDirPath, "AzSdk.reference.props", SearchOption.AllDirectories);
             if(azSdkRef.Any<string>())

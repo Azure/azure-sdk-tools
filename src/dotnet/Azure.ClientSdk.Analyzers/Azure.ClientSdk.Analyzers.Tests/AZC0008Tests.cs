@@ -1,5 +1,6 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
+using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -10,7 +11,7 @@ namespace Azure.ClientSdk.Analyzers.Tests
         private readonly DiagnosticAnalyzerRunner _runner = new DiagnosticAnalyzerRunner(new ClientOptionsAnalyzer());
 
         [Fact]
-        public async Task AZC0008ProducedForClientsOptionsWithoutServiceVersionEnum()
+        public async Task AZC0008ProducedForClientOptionsWithoutServiceVersionEnum()
         {
             var testSource = TestSource.Read(@"
 namespace RandomNamespace
@@ -29,7 +30,7 @@ namespace RandomNamespace
         }
 
         [Fact]
-        public async Task AZC0008NotProducedForClientsOptionsWithServiceVersionEnum()
+        public async Task AZC0008NotProducedForClientOptionsWithServiceVersionEnum()
         {
             var testSource = TestSource.Read(@"
 namespace RandomNamespace
@@ -44,7 +45,7 @@ namespace RandomNamespace
 }
 ");
             var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-            Assert.Empty(diagnostics);
+            Assert.Empty(diagnostics.Where(d => d.Id == "AZC0008"));
         }
     }
 }

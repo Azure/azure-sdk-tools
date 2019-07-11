@@ -1,14 +1,13 @@
 using Microsoft.CodeAnalysis;
 using APIView;
 using Xunit;
-using System;
 
 namespace APIViewTest
 {
     public class AssemblyTests
     {
         [Fact]
-        public void AssemblyTestAssembly()
+        public void AssemblyTestAssemblyFromSymbol()
         {
             IAssemblySymbol assemblySymbol = TestResource.GetAssemblySymbol();
             AssemblyAPIV assembly = new AssemblyAPIV(assemblySymbol);

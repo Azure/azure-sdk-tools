@@ -1,110 +1,91 @@
 trigger:
-  - master
+  branches:
+    include:
+      - master
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - tools/eslint-plugin-azure-sdk
+
+pr:
+  branches:
+    include:
+      - master
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - tools/eslint-plugin-azure-sdk
 
 variables:
   NodeVersion: "10.x"
   skipComponentGovernanceDetection: true
 
-jobs:
-  - job: "Build"
+stages:
+  - stage: Build
+    jobs:
+      - job: Build
 
-    pool:
-      vmImage: "ubuntu-16.04"
+        pool:
+          vmImage: ubuntu-16.04
 
-    steps:
-      - task: NodeTool@0
-        inputs:
-          versionSpec: "$(NodeVersion)"
-        displayName: "Install Node.js $(NodeVersion)"
+        steps:
+          - task: NodeTool@0
+            inputs:
+              versionSpec: "$(NodeVersion)"
+            displayName: "Install Node.js $(NodeVersion)"
 
-      - script: |
-          cd tools/eslint-plugin-azure-sdk
-        displayName: "Reach directory"
+          - script: |
+              set -e
+              npm install
+              npm run build
+              npm test
+              npm run lint
+              npm run build
+              npm pack
+              cp *.tgz $(Build.ArtifactStagingDirectory)
+            workingDirectory: tools/eslint-plugin-azure-sdk
+            displayName: "Build, test and package"
 
-      - script: |
-          npm install -g npm@6.9.0
-        displayName: "Install npm version 6.9.0"
+          - script: |
+              set -e
+              npm audit
+            workingDirectory: tools/eslint-plugin-azure-sdk
+            condition: eq(variables['RunNpmAudit'], 'true')
+            displayName: "Audit package"
 
-      - script: |
-          npm install
-        displayName: "Install dependencies"
+          - publish: $(Build.ArtifactStagingDirectory)
+            displayName: Publish package to run artifacts
+            artifact: packages
+            condition: succeededOrFailed()
 
-      - script: |
-          npm run build
-        displayName: "Build library"
+  - stage: Release
+    dependsOn: Build
+    condition: and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+    jobs:
+      - deployment: PublishPackage
+        environment: azure-sdk
+        
+        pool:
+          vmImage: ubuntu-16.04
 
-      - script: |
-          npm pack
-        displayName: "Pack libraries"
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - script: |
+                    export DETECTED_PACKAGE_NAME=`ls $(Pipeline.Workspace)/packages/*.tgz`
+                    echo "##vso[task.setvariable variable=Package.Archive]$DETECTED_PACKAGE_NAME"
+                  displayName: Detecting package archive
 
-      - task: CopyFiles@2
-        inputs:
-          contents: "tools/eslint-plugin-azure-sdk/*.tgz"
-          targetFolder: $(Build.ArtifactStagingDirectory)
-          flattenFolders: true
-        displayName: "Copy packages"
-
-      - task: PublishBuildArtifacts@1
-        condition: succeededOrFailed()
-        displayName: "Publish artifacts"
-        inputs:
-          artifactName: packages
-
-  - job: "Analyze"
-
-    pool:
-      vmImage: "ubuntu-16.04"
-
-    steps:
-      - task: NodeTool@0
-        inputs:
-          versionSpec: "$(NodeVersion)"
-        displayName: "Install Node.js $(NodeVersion)"
-
-      - script: |
-          cd tools/eslint-plugin-azure-sdk
-        displayName: "Reach directory"
-
-      - script: |
-          npm install -g npm@6.9.0
-        displayName: "Install npm version 6.9.0"
-
-      - script: |
-          npm install
-        displayName: "Install dependencies"
-
-      - script: |
-          npm run lint
-        displayName: "Run lint"
-
-      - script: |
-          npm audit
-        condition: and(succeeded(), eq(variables['RunNpmAudit'], 'true'))
-        displayName: "Audit packages"
-
-  - job: "Test"
-
-    pool:
-      vmImage: "ubuntu-16.04"
-
-    steps:
-      - task: NodeTool@0
-        inputs:
-          versionSpec: "$(NodeVersion)"
-        displayName: "Install Node.js $(NodeVersion)"
-
-      - script: |
-          cd tools/eslint-plugin-azure-sdk
-        displayName: "Reach directory"
-
-      - script: |
-          npm install -g npm@6.9.0
-        displayName: "Install npm version 6.9.0"
-
-      - script: |
-          npm install
-        displayName: "Install dependencies"
-
-      - script: |
-          npm test
-        displayName: "Test library"
+                - task: Npm@1
+                  displayName: Publish package to feed
+                  inputs:
+                    command: 'custom'
+                    workingDir: '$(Pipeline.Workspace)/packages'
+                    customCommand: 'publish $(Package.Archive)'
+                    customRegistry: 'useFeed'
+                    customFeed: '7a8a7255-a1aa-48df-a904-c77c0b78cb03'

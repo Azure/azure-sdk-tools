@@ -99,7 +99,7 @@
       <ProjectsToBeRestored Include="@(CombineProjects)" />
     </ItemGroup>
 	  
-    <Message Text="Now Restoring @(ProjectsToBeRestored)" Condition=" '$(SkipRestore)' != 'true' OR '@(ProjectsToBeRestored)' != '' OR '$(DebugTrace)' == 'true' "/>
+    <Message Text="Now Restoring @(ProjectsToBeRestored)" Condition=" '@(ProjectsToBeRestored)' != '' OR '$(DebugTrace)' == 'true' "/>
 
     <MSBuild Targets="$(LatestProjectDefaultRestoreTarget)"
             Projects="@(ProjectsToBeRestored)"
@@ -138,8 +138,9 @@
           Condition="( ('@(ExecuteTestSuite)' != '') AND ('$(WhatIf)' != 'true') )" ContinueOnError="false" WorkingDirectory="%(ExecuteTestSuite.RootDir)%(ExecuteTestSuite.Directory)" />
   </Target>
 
-  <Target Name="Package">
+  <Target Name="Package" Condition=" '@(CombinedNugetPkgProjects)' != '' ">
     <Message Text="Target ==> Package Initiated....." Importance="Low" />
+    <Message Text="Packaging..... @(CombinedNugetPkgProjects)" Importance="High" />
     <PropertyGroup> 
       <NugPkgOutPutDirPath>$(pkg_root_RepoNugPkgOutputDir)</NugPkgOutPutDirPath>
     </PropertyGroup>
@@ -147,9 +148,9 @@
       <ProjectsToPackage Include="@(CombinedNugetPkgProjects)" />      
     </ItemGroup>
     
-    <Message Text="Packaging..... @(ProjectsToPackage)" />
-    <Message Text="PackageOutputDir....... $(NugPkgOutPutDirPath)" />   
-    <Message Text="Starting Packaging..... @(ProjectsToPackage)" />
+    <Message Text="Packaging..... @(ProjectsToPackage)" Condition=" '$(ProjectsToPackage)' != '' " />
+    <Message Text="PackageOutputDir....... $(NugPkgOutPutDirPath)" Condition=" '$(NugPkgOutPutDirPath)' != '' " Importance="Low" />   
+    <Message Text="Starting Packaging..... @(ProjectsToPackage)" Condition=" '@(ProjectsToPackage)' != '' "/>
 
     <MSBuild
         Projects="@(ProjectsToPackage)"
@@ -244,7 +245,7 @@
   </Target>
   
   <!--Do not delete-->
-  <Target Name="PreBuildStaticAnalysis" DependsOnTargets="$(PreBuildStaticAnalysisTargets)"/>
+  <Target Name="PreBuildStaticAnalysis" DependsOnTargets="$(PreBuildStaticAnalysisTargets)"/>  
+  <Import Project="..\tasks\common.tasks" />
   <Import Project="utility.targets" />
-  <Import Project="..\tasks\common.tasks" />  
 </Project>

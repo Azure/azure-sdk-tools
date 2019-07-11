@@ -107,6 +107,29 @@ namespace Tests.CI.BuildTasks.TasksTests
                 Assert.True(true);
             }
         }
+
+        [Fact]
+        public void InvalidScope()
+        {
+            CategorizeSDKProjectsTask cproj = new CategorizeSDKProjectsTask(rootDir);
+            cproj.BuildScope = "SomethingRandom";
+
+            if (cproj.Execute())
+            {
+                Assert.Empty(cproj.SDK_Projects);
+            }
+
+            DeleteAzPropFiles(cproj.SDK_Projects);
+
+            UpdateNetSdkApiTagInfoTask updateSdkInfo = new UpdateNetSdkApiTagInfoTask();
+            updateSdkInfo.SdkProjectFilePaths = cproj.SDK_Projects;
+
+            //TODO: Add a verification step to verify if the azPropFile was created
+            if (updateSdkInfo.Execute())
+            {
+                Assert.True(true);
+            }
+        }
         #endregion
 
         #region private functions

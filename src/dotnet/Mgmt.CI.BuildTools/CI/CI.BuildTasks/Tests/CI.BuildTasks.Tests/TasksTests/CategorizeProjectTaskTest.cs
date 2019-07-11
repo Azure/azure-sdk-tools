@@ -167,7 +167,7 @@ namespace BuildTasks.Tests
                 Assert.True(cproj.SDK_Projects.Count<ITaskItem>() == 1);
 
                 Assert.True(cproj.Test_Projects.Count<ITaskItem>() == 2);
-                Assert.True(cproj.Test_ToBe_Run.Count<ITaskItem>() > 5);
+                //Assert.True(cproj.Test_ToBe_Run.Count<ITaskItem>() > 5);
             }
         }
 

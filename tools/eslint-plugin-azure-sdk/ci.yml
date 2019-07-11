@@ -1,78 +1,81 @@
 trigger:
-  - master
+  branches:
+    include:
+      - master
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - tools/eslint-plugin-azure-sdk
+
+pr:
+  branches:
+    include:
+      - master
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - tools/eslint-plugin-azure-sdk
 
 variables:
   NodeVersion: "10.x"
   skipComponentGovernanceDetection: true
 
-jobs:
-  - job: "Build"
+stages:
+  - stage: Build
+    jobs:
+      - job: Build
 
-    pool:
-      vmImage: "ubuntu-16.04"
+        pool:
+          vmImage: ubuntu-16.04
 
-    steps:
-      - task: NodeTool@0
-        inputs:
-          versionSpec: "$(NodeVersion)"
-        displayName: "Install Node.js $(NodeVersion)"
+        steps:
+          - task: NodeTool@0
+            inputs:
+              versionSpec: "$(NodeVersion)"
+            displayName: "Install Node.js $(NodeVersion)"
 
-      - script: |
-          set -e
-          npm install
-          npm run build
-          npm pack
-        workingDirectory: tools/eslint-plugin-azure-sdk
-        displayName: "Build and pack package"
+          - script: |
+              set -e
+              npm install
+              npm run build
+              npm test
+              npm run lint
+              npm run build
+              npm pack
+              cp *.tgz $(Build.ArtifactStagingDirectory)
+            workingDirectory: tools/eslint-plugin-azure-sdk
+            displayName: "Build, test and package"
 
-      - task: CopyFiles@2
-        inputs:
-          contents: "tools/eslint-plugin-azure-sdk/*.tgz"
-          targetFolder: $(Build.ArtifactStagingDirectory)
-          flattenFolders: true
-        displayName: "Copy package"
+          - script: |
+              set -e
+              npm audit
+            workingDirectory: tools/eslint-plugin-azure-sdk
+            condition: eq(variables['RunNpmAudit'], 'true')
+            displayName: "Audit package"
 
-      - task: PublishBuildArtifacts@1
-        condition: succeededOrFailed()
-        displayName: "Publish artifacts"
-        inputs:
-          artifactName: package gzip
+          - task: PublishPipelineArtifact@1
+            condition: succeededOrFailed()
+            displayName: "Store package with run"
+            inputs:
+              artifactName: packages
 
-  - job: "Analyze"
+  - stage: Release
+    dependsOn: Build
+    condition: and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+    jobs:
+      - deployment: PublishPackage
+        environment: registry-tools-internal
+        
+        pool:
+          vmImage: ubuntu-16.04
 
-    pool:
-      vmImage: "ubuntu-16.04"
-
-    steps:
-      - task: NodeTool@0
-        inputs:
-          versionSpec: "$(NodeVersion)"
-        displayName: "Install Node.js $(NodeVersion)"
-
-      - script: |
-          set -e
-          npm install
-          npm run lint
-          npm audit
-        workingDirectory: tools/eslint-plugin-azure-sdk
-        condition: and(succeeded(), eq(variables['RunNpmAudit'], 'true'))
-        displayName: "Lint and audit package"
-
-  - job: "Test"
-
-    pool:
-      vmImage: "ubuntu-16.04"
-
-    steps:
-      - task: NodeTool@0
-        inputs:
-          versionSpec: "$(NodeVersion)"
-        displayName: "Install Node.js $(NodeVersion)"
-
-      - script: |
-          set -e
-          npm install
-          npm test
-        workingDirectory: tools/eslint-plugin-azure-sdk
-        condition: succeededOrFailed()
-        displayName: "Run package tests"
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - script: |
+                    echo "Pretend I am releasing the package!"

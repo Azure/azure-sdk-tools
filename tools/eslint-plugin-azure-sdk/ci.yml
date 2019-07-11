@@ -67,7 +67,7 @@ stages:
     condition: and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
     jobs:
       - deployment: PublishPackage
-        environment: registry-tools-internal
+        environment: azure-sdk
         
         pool:
           vmImage: ubuntu-16.04

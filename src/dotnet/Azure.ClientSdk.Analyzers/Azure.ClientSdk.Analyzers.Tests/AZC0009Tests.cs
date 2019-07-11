@@ -106,23 +106,14 @@ namespace RandomNamespace
             V2018_11_09 = 0
         }
 
-        public ServiceVersion Version { get; }
-
         public SomeClientOptions(ServiceVersion version = ServiceVersion.V2018_11_09)
         {
-            this.Version = version;
         }
     }
 }
 ");
             var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-
-            if (diagnostics == null)
-            {
-                return;
-            }
-
-            Assert.True(diagnostics.Where(d => d.Id == "AZC0009").FirstOrDefault() == null);
+            Assert.Empty(diagnostics.Where(d => d.Id == "AZC0009"));
         }
     }
 }

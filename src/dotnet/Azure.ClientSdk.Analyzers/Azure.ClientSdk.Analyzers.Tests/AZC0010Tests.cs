@@ -62,13 +62,7 @@ namespace RandomNamespace
 }
 ");
             var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-
-            if (diagnostics == null)
-            {
-                return;
-            }
-
-            Assert.True(diagnostics.Where(d => d.Id == "AZC0010").FirstOrDefault() == null);
+            Assert.Empty(diagnostics.Where(d => d.Id == "AZC0010"));
         }
     }
 }

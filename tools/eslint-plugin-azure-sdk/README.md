@@ -10,21 +10,21 @@ You'll first need to install [ESLint](http://eslint.org):
 npm i eslint --save-dev
 ```
 
-Next, install `@ts-common/eslint-plugin-azure-sdk`:
+Next, install `@azuresdktools/eslint-plugin-azure-sdk`:
 
 ```shell
-npm install @ts-common/eslint-plugin-azure-sdk --save-dev
+npm install @azuresdktools/eslint-plugin-azure-sdk --save-dev
 ```
 
-**Note:** If you installed ESLint globally (using the `-g` flag) then you must also install `@ts-common/eslint-plugin-azure-sdk` globally.
+**Note:** If you installed ESLint globally (using the `-g` flag) then you must also install `@azuresdktools/eslint-plugin-azure-sdk` globally.
 
 ## Usage
 
-Add `@ts-common/azure-sdk` to the `plugins` section of your `.eslintrc` configuration file. You can omit the `eslint-plugin-` prefix:
+Add `@azuresdktools/azure-sdk` to the `plugins` section of your `.eslintrc` configuration file. You can omit the `eslint-plugin-` prefix:
 
 ```json
 {
-  "plugins": ["@ts-common/azure-sdk"]
+  "plugins": ["@azuresdktools/azure-sdk"]
 }
 ```
 
@@ -42,7 +42,7 @@ For all rules to be enforced according to the standards set by the Design Guidel
 
 ```json
 {
-  "extends": ["plugin:@ts-common/azure-sdk/recommended"]
+  "extends": ["plugin:@azuresdktools/azure-sdk/recommended"]
 }
 ```
 
@@ -51,7 +51,7 @@ If you need to modify or disable specific rules, you can do so in the `rules` se
 ```json
 {
   "rules": {
-    "@ts-common/azure-sdk/rule-name": "off"
+    "@azuresdktools/azure-sdk/rule-name": "off"
   }
 }
 ```

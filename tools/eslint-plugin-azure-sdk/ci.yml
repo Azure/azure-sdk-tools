@@ -75,5 +75,10 @@ stages:
           runOnce:
             deploy:
               steps:
-                - script: |
-                    echo "Pretend I am releasing the package!"
+                - task: Npm@1
+                  inputs:
+                    command: 'custom'
+                    workingDir: '$(Pipeline.Workspace)/packages'
+                    customCommand: 'publish'
+                    customRegistry: 'useFeed'
+                    customFeed: '7a8a7255-a1aa-48df-a904-c77c0b78cb03'

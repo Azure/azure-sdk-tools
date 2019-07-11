@@ -1,5 +1,5 @@
 /**
- * @fileoverview Testing the ts-versioning-no-version-0 rule.
+ * @fileoverview Testing the ts-versioning-semver rule.
  * @author Arpan Laha
  */
 

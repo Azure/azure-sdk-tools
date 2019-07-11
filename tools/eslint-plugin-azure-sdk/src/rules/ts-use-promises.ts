@@ -57,6 +57,6 @@ export = {
               "promises should use the in-built Promise type, not libraries or polyfills"
           });
       }
-    } as Rule.RuleListener;
+    };
   }
 };

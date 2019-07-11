@@ -39,19 +39,22 @@
     "clean": "rimraf dist/",
     "format": "prettier --write \"./**/*.{ts,json,md}\"",
     "lint": "eslint src tests --ext .ts && markdownlint README.md docs",
-    "test": "npm run clean && tsc -p tsconfig.json && mocha --timeout 10000 --recursive dist/tests"
+    "test": "npm run clean && tsc -p tsconfig.json && mocha --timeout 10000 --recursive dist/tests",
+    "test-temp": "npm run clean && tsc -p tsconfig.json && mocha --timeout 10000 dist/tests/rules/ts-use-promises.js"
   },
   "dependencies": {
     "path": "^0.12.7",
     "typescript": "^3.4.5"
   },
   "devDependencies": {
+    "@types/bluebird": "^3.5.27",
     "@types/chai": "^4.1.7",
     "@types/eslint": "^4.16.6",
     "@types/estree": "0.0.39",
     "@types/mocha": "^5.2.7",
     "@typescript-eslint/eslint-plugin": "^1.10.2",
     "@typescript-eslint/parser": "^1.10.2",
+    "bluebird": "^3.5.5",
     "chai": "^4.2.0",
     "eslint": "^5.16.0",
     "markdownlint-cli": "^0.17.0",

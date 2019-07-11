@@ -58,6 +58,7 @@ stages:
             displayName: "Audit package"
 
           - publish: $(Build.ArtifactStagingDirectory)
+            displayName: Publish package to run artifacts
             artifact: packages
             condition: succeededOrFailed()
 
@@ -66,7 +67,7 @@ stages:
     condition: and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
     jobs:
       - deployment: PublishPackage
-        environment: registry-tools-internal
+        environment: azure-sdk
         
         pool:
           vmImage: ubuntu-16.04
@@ -76,4 +77,15 @@ stages:
             deploy:
               steps:
                 - script: |
-                    echo "Pretend I am releasing the package!"
+                    export DETECTED_PACKAGE_NAME=`ls $(Pipeline.Workspace)/packages/*.tgz`
+                    echo "##vso[task.setvariable variable=Package.Archive]$DETECTED_PACKAGE_NAME"
+                  displayName: Detecting package archive
+
+                - task: Npm@1
+                  displayName: Publish package to feed
+                  inputs:
+                    command: 'custom'
+                    workingDir: '$(Pipeline.Workspace)/packages'
+                    customCommand: 'publish $(Package.Archive)'
+                    customRegistry: 'useFeed'
+                    customFeed: '7a8a7255-a1aa-48df-a904-c77c0b78cb03'

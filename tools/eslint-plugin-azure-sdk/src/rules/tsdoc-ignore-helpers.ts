@@ -24,7 +24,7 @@ export = {
     },
     schema: [] // no options
   },
-  create: async (context: Rule.RuleContext): Promise<Rule.RuleListener> => {
+  create: (context: Rule.RuleContext): Rule.RuleListener => {
     if (!context.settings.public) {
       const parserServices: ParserServices = context.parserServices;
       if (parserServices.program === undefined) {

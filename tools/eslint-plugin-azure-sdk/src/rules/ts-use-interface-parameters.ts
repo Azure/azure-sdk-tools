@@ -15,7 +15,6 @@ import {
 import {
   Declaration,
   isArrayTypeNode,
-  isExternalModule,
   PropertySignature,
   Symbol,
   SymbolFlags,
@@ -95,7 +94,8 @@ const addSeenSymbols = (
   if (declaration !== undefined) {
     isOptional = declaration.questionToken !== undefined;
     const sourceFile = declaration.getSourceFile();
-    isExternal = isExternalModule(sourceFile);
+    const externalRegex = /node_modules/;
+    isExternal = externalRegex.test(sourceFile.fileName);
   }
   if (isExternal || isOptional) {
     return;

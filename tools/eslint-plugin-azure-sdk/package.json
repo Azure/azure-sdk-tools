@@ -20,7 +20,7 @@
     }
   ],
   "license": "MIT",
-  "homepage": "https://github.com/Azure/azure-sdk-tools/tools/eslint-plugin-azure-sdk",
+  "homepage": "https://github.com/Azure/azure-sdk-tools/tree/master/tools/eslint-plugin-azure-sdk",
   "repository": {
     "type": "git",
     "url": "https://github.com/Azure/azure-sdk-tools.git",

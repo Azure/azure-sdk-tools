@@ -65,6 +65,7 @@ stages:
 
   - stage: Release
     dependsOn: Build
+    condition: and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
     jobs:
       - deployment: PublishPackage
         environment: registry-tools-internal

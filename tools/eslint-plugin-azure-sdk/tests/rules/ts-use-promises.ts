@@ -12,8 +12,8 @@ import { RuleTester } from "eslint";
 
 const example = `
 const promise = (): Promise<string> => {
-    return new Promise(resolve => resolve("hi"));
-  }
+    return new Promise(resolve => resolve("example"));
+}
 `;
 
 //------------------------------------------------------------------------------

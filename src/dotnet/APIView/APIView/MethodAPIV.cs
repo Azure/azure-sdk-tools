@@ -13,6 +13,7 @@ namespace APIView
         public string Name { get; set; }
         public TypeReference ReturnType { get; set; }
         public string Accessibility { get; set; }
+        public string ClassNavigationID { get; set; }
 
         public bool IsConstructor { get; set; }
         public bool IsInterfaceMethod { get; set; }
@@ -41,11 +42,13 @@ namespace APIView
                 this.Name = symbol.ContainingType.Name;
                 this.IsConstructor = true;
                 this.ReturnType = new TypeReference();
+                this.ClassNavigationID = symbol.ContainingType.ToDisplayString();
             }
             else
             {
                 this.Name = symbol.Name;
                 this.ReturnType = new TypeReference(symbol);
+                this.ClassNavigationID = "";
             }
             this.Accessibility = symbol.DeclaredAccessibility.ToString().ToLower();
 

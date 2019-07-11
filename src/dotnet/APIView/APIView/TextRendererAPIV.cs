@@ -19,14 +19,24 @@ namespace APIView
             builder.Append(word.Replace("&lt;", "<").Replace("&gt;", ">"));
         }
 
-        protected override void RenderEnum(StringBuilder builder, string word)
+        protected override void RenderEnum(StringBuilder builder, Token t)
+        {
+            builder.Append(t.DisplayString);
+        }
+
+        protected override void RenderClass(StringBuilder builder, string word)
         {
             builder.Append(word);
         }
 
-        protected override void RenderClass(StringBuilder builder, string word, string navID = "")
+        protected override void RenderClass(StringBuilder builder, Token t)
         {
-            builder.Append(word);
+            builder.Append(t.DisplayString);
+        }
+
+        protected override void RenderConstructor(StringBuilder builder, MethodAPIV m)
+        {
+            builder.Append(m.Name);
         }
 
         protected override void RenderKeyword(StringBuilder builder, string word)
@@ -37,6 +47,11 @@ namespace APIView
         protected override void RenderName(StringBuilder builder, string word)
         {
             builder.Append(word);
+        }
+
+        protected override void RenderNamespace(StringBuilder builder, NamespaceAPIV ns)
+        {
+            builder.Append(ns.Name);
         }
 
         protected override void RenderNewline(StringBuilder builder)

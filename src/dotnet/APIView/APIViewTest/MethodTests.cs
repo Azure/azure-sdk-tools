@@ -56,7 +56,11 @@ namespace APIViewTest
             Assert.Equal("void", method.ReturnType.Tokens[0].DisplayString);
 
             Assert.Single(method.Attributes);
-            Assert.Equal("System.Diagnostics.ConditionalAttribute", method.Attributes[0].Type);
+            Assert.Equal("System", method.Attributes[0].Type.Tokens[0].DisplayString);
+            Assert.Equal(".", method.Attributes[0].Type.Tokens[1].DisplayString);
+            Assert.Equal("Diagnostics", method.Attributes[0].Type.Tokens[2].DisplayString);
+            Assert.Equal(".", method.Attributes[0].Type.Tokens[3].DisplayString);
+            Assert.Equal("ConditionalAttribute", method.Attributes[0].Type.Tokens[4].DisplayString);
             Assert.Single(method.Attributes[0].ConstructorArgs);
             Assert.Equal("\"DEBUG\"", method.Attributes[0].ConstructorArgs[0]);
 
@@ -91,10 +95,14 @@ namespace APIViewTest
             Assert.Equal("int", method.ReturnType.Tokens[0].DisplayString);
 
             Assert.Equal(2, method.Attributes.Length);
-            Assert.Equal("TestLibrary.CustomAttribute", method.Attributes[0].Type);
+            Assert.Equal("TestLibrary", method.Attributes[0].Type.Tokens[0].DisplayString);
+            Assert.Equal(".", method.Attributes[0].Type.Tokens[1].DisplayString);
+            Assert.Equal("CustomAttribute", method.Attributes[0].Type.Tokens[2].DisplayString);
             Assert.Single(method.Attributes[0].ConstructorArgs);
             Assert.Equal("\"Test\"", method.Attributes[0].ConstructorArgs[0]);
-            Assert.Equal("TestLibrary.NewAttribute", method.Attributes[1].Type);
+            Assert.Equal("TestLibrary", method.Attributes[1].Type.Tokens[0].DisplayString);
+            Assert.Equal(".", method.Attributes[1].Type.Tokens[1].DisplayString);
+            Assert.Equal("NewAttribute", method.Attributes[1].Type.Tokens[2].DisplayString);
             Assert.Empty(method.Attributes[1].ConstructorArgs);
 
             Assert.Empty(method.Parameters);
@@ -128,6 +136,7 @@ namespace APIViewTest
                 Name = "TestClass",
                 ReturnType = new TypeReference(),
                 Accessibility = "public",
+                ClassNavigationID = "TestClass",
                 IsConstructor = true,
                 IsInterfaceMethod = false,
                 IsStatic = false,
@@ -152,7 +161,7 @@ namespace APIViewTest
         {
             var a = new AttributeAPIV
             {
-                Type = "TestAttribute",
+                Type = new TypeReference(new Token[] { new Token("TestAttribute", TypeReference.TypeName.ClassType) }),
                 ConstructorArgs = new string[] {"Test", "\"String\""}
             };
 
@@ -161,6 +170,7 @@ namespace APIViewTest
                 Name = "TestMethod",
                 ReturnType = new TypeReference(new Token[] { new Token("void", TypeReference.TypeName.BuiltInType) }),
                 Accessibility = "public",
+                ClassNavigationID = "",
                 IsConstructor = false,
                 IsInterfaceMethod = false,
                 IsStatic = false,
@@ -176,7 +186,7 @@ namespace APIViewTest
             var builder = new StringBuilder();
             var renderer = new HTMLRendererAPIV();
             renderer.Render(m, builder);
-            Assert.Equal("[<a href=\"#TestAttribute\" class=\"class\">TestAttribute</a>(<span class=\"value\">Test</span>, <span class=\"value\">\"String\"</span>)]<br />" +
+            Assert.Equal("[<a href=\"#\" class=\"class\">TestAttribute</a>(<span class=\"value\">Test</span>, <span class=\"value\">\"String\"</span>)]<br />" +
                 "<span class=\"keyword\">public</span> <span class=\"keyword\">void</span> <span class=\"name\">TestMethod</span>() { }", builder.ToString());
         }
     }

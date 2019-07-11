@@ -49,7 +49,7 @@ namespace APIView
             builder.Append(" ");
             RenderKeyword(builder, "event");
             builder.Append(" ");
-            RenderClass(builder, "EventHandler");
+            Render(e.Type, builder);
             builder.Append(" ");
             RenderName(builder, e.Name);
             builder.Append(";");
@@ -157,7 +157,7 @@ namespace APIView
             }
 
             if (m.IsConstructor)
-                RenderClass(builder, m.Name);
+                RenderConstructor(builder, m);
             else
                 RenderName(builder, m.Name);
 
@@ -206,7 +206,7 @@ namespace APIView
                     RenderEnumDefinition(builder, nt);
                     builder.Append(" ");
 
-                    if (!nt.EnumUnderlyingType.Equals("int"))
+                    if (nt.EnumUnderlyingType.Tokens[0].DisplayString != "int")
                     {
                         builder.Append(": ");
                         Render(nt.EnumUnderlyingType, builder);
@@ -325,7 +325,7 @@ namespace APIView
                 AppendIndents(builder, indents);
                 RenderKeyword(builder, "namespace");
                 builder.Append(" ");
-                RenderName(builder, ns.Name);
+                RenderNamespace(builder, ns);
                 builder.Append(" {");
                 RenderNewline(builder);
             }
@@ -447,10 +447,10 @@ namespace APIView
                         RenderKeyword(builder, token.DisplayString);
                         break;
                     case TypeReference.TypeName.ClassType:
-                        RenderClass(builder, token.DisplayString, token.NavigationID);
+                        RenderClass(builder, token);
                         break;
                     case TypeReference.TypeName.EnumType:
-                        RenderEnum(builder, token.DisplayString);
+                        RenderEnum(builder, token);
                         break;
                     case TypeReference.TypeName.SpecialType:
                         RenderType(builder, token.DisplayString);
@@ -468,13 +468,19 @@ namespace APIView
 
         protected abstract void RenderPunctuation(StringBuilder builder, string word);
 
-        protected abstract void RenderEnum(StringBuilder builder, string word);
+        protected abstract void RenderEnum(StringBuilder builder, Token t);
 
-        protected abstract void RenderClass(StringBuilder builder, string word, string navID = "");
+        protected abstract void RenderClass(StringBuilder builder, string word);
+
+        protected abstract void RenderClass(StringBuilder builder, Token t);
+
+        protected abstract void RenderConstructor(StringBuilder builder, MethodAPIV m);
 
         protected abstract void RenderKeyword(StringBuilder builder, string word);
 
         protected abstract void RenderName(StringBuilder builder, string word);
+
+        protected abstract void RenderNamespace(StringBuilder builder, NamespaceAPIV ns);
 
         protected abstract void RenderNewline(StringBuilder builder);
 

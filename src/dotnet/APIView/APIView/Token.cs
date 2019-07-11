@@ -41,7 +41,17 @@ namespace APIView
             this.DisplayString = part.ToString();
             this.IsNavigable = part.Symbol != null;
             this.IsString = false;
-            this.NavigationID = part.Symbol?.ToDisplayString();
+            if (part.Symbol == null)
+                this.NavigationID = "";
+            else
+            {
+                var typeParamIndex = part.Symbol.ToDisplayString().LastIndexOf("<");
+                if (typeParamIndex > 0)
+                    this.NavigationID = part.Symbol.ToDisplayString().Remove(typeParamIndex);
+                else
+                    this.NavigationID = part.Symbol.ToDisplayString();
+            }
+            
             switch (part.Kind)
             {
                 case SymbolDisplayPartKind.ClassName:

@@ -14,6 +14,7 @@ namespace APIView
     public class NamespaceAPIV
     {
         public string Name { get; set; }
+        public string NavigationID { get; set; }
 
         public NamedTypeAPIV[] NamedTypes { get; set; }
         public NamespaceAPIV[] Namespaces { get; set; }
@@ -27,6 +28,7 @@ namespace APIView
         public NamespaceAPIV(INamespaceSymbol symbol)
         {
             this.Name = symbol.Name;
+            this.NavigationID = symbol.ToDisplayString();
 
             List<NamedTypeAPIV> namedTypes = new List<NamedTypeAPIV>();
             List<NamespaceAPIV> namespaces = new List<NamespaceAPIV>();

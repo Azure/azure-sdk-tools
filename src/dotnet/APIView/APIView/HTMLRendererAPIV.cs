@@ -22,13 +22,13 @@ namespace APIView
             builder.Append(word.Replace("<", "&lt;").Replace(">", "&gt;"));
         }
 
-        protected override void RenderEnum(StringBuilder builder, string word)
+        protected override void RenderEnum(StringBuilder builder, Token t)
         {
-            builder.Append("<a href=\"#").Append(word).Append("\" class=\"enum\">")
-                .Append(word.Replace("<", "&lt;").Replace(">", "&gt;")).Append("</a>");
+            builder.Append("<a href=\"#").Append(t.NavigationID).Append("\" class=\"enum\">")
+                .Append(t.DisplayString.Replace("<", "&lt;").Replace(">", "&gt;")).Append("</a>");
         }
 
-        protected override void RenderClass(StringBuilder builder, string word, string navID = "")
+        protected override void RenderClass(StringBuilder builder, string word)
         {
             var typeParamIndex = word.LastIndexOf("<");
             string newWord;
@@ -37,12 +37,20 @@ namespace APIView
             else
                 newWord = word;
             var shortName = newWord.Substring(newWord.LastIndexOf(".") + 1);
-            if (navID.Any())
-                builder.Append("<a href=\"#").Append(navID).Append("\" class=\"class\">")
-                    .Append(word.Replace("<", "&lt;").Replace(">", "&gt;")).Append("</a>");
-            else
-                builder.Append("<a href=\"#").Append(shortName.Replace("<", "&lt;").Replace(">", "&gt;")).Append("\" class=\"class\">")
-                    .Append(word.Replace("<", "&lt;").Replace(">", "&gt;")).Append("</a>");
+            builder.Append("<a href=\"#").Append(shortName.Replace("<", "&lt;").Replace(">", "&gt;")).Append("\" class=\"class\">")
+                .Append(word.Replace("<", "&lt;").Replace(">", "&gt;")).Append("</a>");
+        }
+
+        protected override void RenderClass(StringBuilder builder, Token t)
+        {
+            builder.Append("<a href=\"#").Append(t.NavigationID).Append("\" class=\"class\">")
+                .Append(t.DisplayString.Replace("<", "&lt;").Replace(">", "&gt;")).Append("</a>");
+        }
+
+        protected override void RenderConstructor(StringBuilder builder, MethodAPIV m)
+        {
+            builder.Append("<a href=\"#").Append(m.ClassNavigationID.Replace("<", "&lt;").Replace(">", "&gt;")).Append("\" class=\"class\">")
+                .Append(m.Name.Replace("<", "&lt;").Replace(">", "&gt;")).Append("</a>");
         }
 
         protected override void RenderKeyword(StringBuilder builder, string word)
@@ -53,6 +61,12 @@ namespace APIView
         protected override void RenderName(StringBuilder builder, string word)
         {
             builder.Append("<span class=\"name\">").Append(word.Replace("<", "&lt;").Replace(">", "&gt;")).Append("</span>");
+        }
+
+        protected override void RenderNamespace(StringBuilder builder, NamespaceAPIV ns)
+        {
+            builder.Append("<span id=\"").Append(ns.NavigationID).Append("\" class=\"name\">")
+                .Append(ns.Name.Replace("<", "&lt;").Replace(">", "&gt;")).Append("</span>");
         }
 
         protected override void RenderNewline(StringBuilder builder)

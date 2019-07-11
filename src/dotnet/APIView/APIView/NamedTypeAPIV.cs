@@ -40,15 +40,20 @@ namespace APIView
             if (symbol.EnumUnderlyingType != null)
                 this.EnumUnderlyingType = new TypeReference(symbol);
             this.Accessibility = symbol.DeclaredAccessibility.ToString().ToLower();
-            this.NavigationID = symbol.ToDisplayString();
 
-            List<EventAPIV> events = new List<EventAPIV>();
-            List<FieldAPIV> fields = new List<FieldAPIV>();
-            List<TypeReference> implementations = new List<TypeReference>();
-            List<MethodAPIV> methods = new List<MethodAPIV>();
-            List<NamedTypeAPIV> namedTypes = new List<NamedTypeAPIV>();
-            List<PropertyAPIV> properties = new List<PropertyAPIV>();
-            List<TypeParameterAPIV> typeParameters = new List<TypeParameterAPIV>();
+            var typeParamIndex = symbol.ToDisplayString().LastIndexOf("<");
+            if (typeParamIndex > 0)
+                this.NavigationID = symbol.ToDisplayString().Remove(typeParamIndex);
+            else
+                this.NavigationID = symbol.ToDisplayString();
+
+            var events = new List<EventAPIV>();
+            var fields = new List<FieldAPIV>();
+            var implementations = new List<TypeReference>();
+            var methods = new List<MethodAPIV>();
+            var namedTypes = new List<NamedTypeAPIV>();
+            var properties = new List<PropertyAPIV>();
+            var typeParameters = new List<TypeParameterAPIV>();
 
             // add any types declared in the body of this type to lists
             foreach (var memberSymbol in symbol.GetMembers())

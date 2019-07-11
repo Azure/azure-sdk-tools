@@ -35,6 +35,18 @@ namespace APIView
             this.IsString = this.Tokens.Last().IsString;
         }
 
+        public TypeReference(IEventSymbol symbol)
+        {
+            var tokens = new List<Token>();
+            foreach (var part in symbol.Type.ToDisplayParts())
+            {
+                tokens.Add(new Token(part));
+            }
+            this.Tokens = tokens.ToArray();
+            this.Type = this.Tokens.Last().Type;
+            this.IsString = this.Tokens.Last().IsString;
+        }
+
         public TypeReference(IFieldSymbol symbol)
         {
             var tokens = new List<Token>();

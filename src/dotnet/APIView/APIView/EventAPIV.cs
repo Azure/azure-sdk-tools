@@ -12,6 +12,7 @@ namespace APIView
     {
         public string Name { get; set; }
         public string Accessibility { get; set; }
+        public TypeReference Type { get; set; }
 
         public EventAPIV() { }
 
@@ -23,6 +24,7 @@ namespace APIView
         {
             this.Name = symbol.Name;
             this.Accessibility = symbol.DeclaredAccessibility.ToString().ToLower();
+            this.Type = new TypeReference(symbol);
         }
 
         public override string ToString()

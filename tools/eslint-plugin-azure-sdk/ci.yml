@@ -72,6 +72,9 @@ stages:
         pool:
           vmImage: ubuntu-16.04
 
-        steps:
-          - script: |
-              echo "Pretend I am releasing the package!"
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - script: |
+                    echo "Pretend I am releasing the package!"

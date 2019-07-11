@@ -57,11 +57,9 @@ stages:
             condition: eq(variables['RunNpmAudit'], 'true')
             displayName: "Audit package"
 
-          - task: PublishPipelineArtifact@1
+          - publish: $(Build.ArtifactStagingDirectory)
+            artifact: packages
             condition: succeededOrFailed()
-            displayName: "Store package with run"
-            inputs:
-              artifactName: packages
 
   - stage: Release
     dependsOn: Build

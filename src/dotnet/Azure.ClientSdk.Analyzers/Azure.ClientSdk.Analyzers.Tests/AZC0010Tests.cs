@@ -1,6 +1,5 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
-using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -23,8 +22,6 @@ namespace RandomNamespace
             V2018_11_09 = 0
         }
 
-        public ServiceVersion Version { get; }
-
         public SomeClientOptions(ServiceVersion /*MM*/version)
         {
         }
@@ -40,7 +37,7 @@ namespace RandomNamespace
         }
 
         [Fact]
-        public async Task AZC0010NotProducedForClientOptionsCtorWithServiceVersionDefault()
+        public async Task AZC0010ProducedForClientOptionsCtorWithNonMaxVersionExplicit()
         {
             var testSource = TestSource.Read(@"
 namespace RandomNamespace
@@ -49,14 +46,68 @@ namespace RandomNamespace
 
         public enum ServiceVersion
         {
-            V2018_11_09 = 0
+            V2018_11_09 = 0,
+            V2019_03_20 = 1
         }
 
-        public ServiceVersion Version { get; }
-
-        public SomeClientOptions(ServiceVersion version = ServiceVersion.V2018_11_09)
+        public SomeClientOptions(ServiceVersion /*MM*/version = ServiceVersion.V2018_11_09)
         {
-            this.Version = version;
+        }
+    }
+}
+");
+            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
+
+            var diagnostic = Assert.Single(diagnostics);
+
+            Assert.Equal("AZC0010", diagnostic.Id);
+            AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostics[0].Location);
+        }
+
+        [Fact]
+        public async Task AZC0010ProducedForClientOptionsCtorWithNonMaxVersionImplicit()
+        {
+            var testSource = TestSource.Read(@"
+namespace RandomNamespace
+{
+    public class SomeClientOptions { 
+
+        public enum ServiceVersion
+        {
+            V2018_11_09,
+            V2019_03_20
+        }
+
+        public SomeClientOptions(ServiceVersion /*MM*/version = ServiceVersion.V2018_11_09)
+        {
+        }
+    }
+}
+");
+            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
+
+            var diagnostic = Assert.Single(diagnostics);
+
+            Assert.Equal("AZC0010", diagnostic.Id);
+            AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostics[0].Location);
+        }
+
+        [Fact]
+        public async Task AZC0010NotProducedForClientOptionsCtorWithMaxServiceVersionDefault()
+        {
+            var testSource = TestSource.Read(@"
+namespace RandomNamespace
+{
+    public class SomeClientOptions { 
+
+        public enum ServiceVersion
+        {
+            V2018_11_09 = 0,
+            V2019_03_20 = 1
+        }
+
+        public SomeClientOptions(ServiceVersion version = ServiceVersion.V2019_03_20)
+        {
         }
     }
 }

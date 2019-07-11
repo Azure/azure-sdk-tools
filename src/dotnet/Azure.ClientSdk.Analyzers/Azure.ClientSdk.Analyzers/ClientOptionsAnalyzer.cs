@@ -69,7 +69,8 @@ namespace Azure.ClientSdk.Analyzers
                         continue;
                     }
 
-                    if (!firstParam.HasExplicitDefaultValue)
+                    var maxVersion = serviceVersionEnum.GetMembers().Where(m => m.Kind == SymbolKind.Field).Max(m => ((IFieldSymbol)m).ConstantValue);
+                    if (!firstParam.HasExplicitDefaultValue || firstParam.ExplicitDefaultValue != maxVersion)
                     {
                         context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0010, firstParam.Locations.First()));
                     }

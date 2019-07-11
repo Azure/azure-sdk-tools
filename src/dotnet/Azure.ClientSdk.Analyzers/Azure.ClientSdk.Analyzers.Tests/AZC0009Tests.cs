@@ -1,6 +1,5 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
-using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -73,14 +72,8 @@ namespace RandomNamespace
             V2018_11_09 = 0
         }
 
-        public string AnOption { get; }
-
-        public ServiceVersion Version { get; }
-
         public SomeClientOptions(string /*MM*/anOption, ServiceVersion version = ServiceVersion.V2018_11_09)
         {
-            this.AnOption = anOption;
-            this.Version = version;
         }
     }
 }

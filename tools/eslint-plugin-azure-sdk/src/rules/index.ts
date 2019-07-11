@@ -37,6 +37,7 @@ import tsPackageJsonSideEffects from "./ts-package-json-sideeffects";
 import tsPackageJsonTypes from "./ts-package-json-types";
 import tsUseInterfaceParameters from "./ts-use-interface-parameters";
 import tsVersioningSemver from "./ts-versioning-semver";
+import tsdocIgnoreHelpers from "./tsdoc-ignore-helpers";
 
 export = {
   "github-source-headers": githubSourceHeaders,
@@ -72,5 +73,6 @@ export = {
   "ts-package-json-sideeffects": tsPackageJsonSideEffects,
   "ts-package-json-types": tsPackageJsonTypes,
   "ts-use-interface-parameters": tsUseInterfaceParameters,
-  "ts-versioning-semver": tsVersioningSemver
+  "ts-versioning-semver": tsVersioningSemver,
+  "tsdoc-ignore-helpers": tsdocIgnoreHelpers
 };

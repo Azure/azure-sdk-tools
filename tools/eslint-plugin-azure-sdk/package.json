@@ -42,7 +42,8 @@
     "test": "npm run clean && tsc -p tsconfig.json && mocha --timeout 10000 --recursive dist/tests"
   },
   "dependencies": {
-    "path": "^0.12.7"
+    "path": "^0.12.7",
+    "typescript": "^3.4.5"
   },
   "devDependencies": {
     "@types/chai": "^4.1.7",
@@ -55,8 +56,7 @@
     "eslint": "^5.16.0",
     "markdownlint-cli": "^0.17.0",
     "mocha": "^6.1.4",
-    "prettier": "^1.18.2",
-    "typescript": "^3.4.5"
+    "prettier": "^1.18.2"
   },
   "peerDependencies": {
     "@typescript-eslint/parser": "^1.10.2",

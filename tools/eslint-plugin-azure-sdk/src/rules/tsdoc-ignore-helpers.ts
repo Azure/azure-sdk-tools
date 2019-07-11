@@ -5,6 +5,9 @@
 
 //import { stripPath } from "../utils/verifiers";
 import { Rule } from "eslint";
+import { createCompilerHost, ScriptTarget } from "typescript";
+import { ParserServices } from "@typescript-eslint/experimental-utils";
+
 //import { Declaration, ExportNamedDeclaration } from "estree";
 
 //------------------------------------------------------------------------------
@@ -26,8 +29,32 @@ export = {
   },
   create: async (context: Rule.RuleContext): Promise<Rule.RuleListener> => {
     if (!context.settings.public) {
-      const module = await import(context.settings.main);
-      context.settings.public = Object.keys(module);
+      const parserServices: ParserServices = context.parserServices;
+      if (parserServices.program === undefined) {
+        console.log("program undefined");
+        return {};
+      }
+      const typeChecker = parserServices.program.getTypeChecker();
+      const compilerHost = createCompilerHost({});
+      const sourceFile = compilerHost.getSourceFile(
+        context.settings.main,
+        ScriptTarget.Latest
+      );
+      if (sourceFile === undefined) {
+        console.log("sourceFile undefined");
+        return {};
+      }
+      console.log(sourceFile);
+      // const type = typeChecker.getTypeAtLocation(sourceFile);
+      // const symbol = type.getSymbol();
+      const symbol = typeChecker.getSymbolAtLocation(sourceFile);
+      if (symbol === undefined) {
+        console.log("symbol undefined");
+        return {};
+      }
+      const exports = typeChecker.getExportsOfModule(symbol);
+
+      console.log(exports);
     }
     return {
       // callback functions

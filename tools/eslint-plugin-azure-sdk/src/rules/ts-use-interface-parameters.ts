@@ -15,13 +15,12 @@ import {
 import {
   Declaration,
   isArrayTypeNode,
-  Node,
+  isExternalModule,
   PropertySignature,
   Symbol,
   SymbolFlags,
   Type,
   TypeChecker,
-  SourceFile,
   TypeReferenceNode,
   TypeReference,
   Modifier,
@@ -95,16 +94,8 @@ const addSeenSymbols = (
   const declaration: PropertySignature = symbol.valueDeclaration as PropertySignature;
   if (declaration !== undefined) {
     isOptional = declaration.questionToken !== undefined;
-    let parent: Node = declaration.parent;
-    while (
-      !parent.hasOwnProperty("fileName") &&
-      parent.hasOwnProperty("parent")
-    ) {
-      parent = parent.parent;
-    }
-    const sourceFile = parent as SourceFile;
-    const externalRegex = /node_modules/;
-    isExternal = externalRegex.test(sourceFile.fileName);
+    const sourceFile = declaration.getSourceFile();
+    isExternal = isExternalModule(sourceFile);
   }
   if (isExternal || isOptional) {
     return;

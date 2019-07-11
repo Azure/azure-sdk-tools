@@ -45,7 +45,8 @@ export = {
       "@ts-common/azure-sdk/ts-package-json-sideeffects": "error",
       "@ts-common/azure-sdk/ts-package-json-types": "error",
       "@ts-common/azure-sdk/ts-use-interface-parameters": "warn",
-      "@ts-common/azure-sdk/ts-versioning-semver": "error"
+      "@ts-common/azure-sdk/ts-versioning-semver": "error",
+      "@ts-common/azure-sdk/tsdoc-ignore-helpers": "off"
     },
     settings: {
       main: "src/index.ts"

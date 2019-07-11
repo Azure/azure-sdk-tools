@@ -223,11 +223,11 @@ describe("plugin", (): void => {
         it("plugins should be an array", (): void => {
           assert.isArray(plugins, "plugins is not an array");
         });
-        it("plugins should contain '@ts-common/azure-sdk'", (): void => {
+        it("plugins should contain '@azuresdktools/azure-sdk'", (): void => {
           assert.include(
             plugins,
-            "@ts-common/azure-sdk",
-            "plugins does not contain '@ts-common/azure-sdk'"
+            "@azuresdktools/azure-sdk",
+            "plugins does not contain '@azuresdktools/azure-sdk'"
           );
         });
       });
@@ -274,7 +274,7 @@ describe("plugin", (): void => {
           ruleList.forEach((rule: string): void => {
             assert.property(
               rules,
-              "@ts-common/azure-sdk/" + rule,
+              "@azuresdktools/azure-sdk/" + rule,
               "rules does not contain a setting for " + rule
             );
           });

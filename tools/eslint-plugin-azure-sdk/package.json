@@ -1,5 +1,5 @@
 {
-  "name": "@ts-common/eslint-plugin-azure-sdk",
+  "name": "@azuresdktools/eslint-plugin-azure-sdk",
   "version": "1.0.0-preview.1",
   "description": "An ESLint plugin enforcing design guidelines for the JavaScript/TypeScript Azure SDK",
   "keywords": [
@@ -20,7 +20,7 @@
     }
   ],
   "license": "MIT",
-  "homepage": "https://github.com/Azure/azure-sdk-tools/src/ts/eslint-plugin-azure-sdk",
+  "homepage": "https://github.com/Azure/azure-sdk-tools/tools/eslint-plugin-azure-sdk",
   "repository": {
     "type": "git",
     "url": "https://github.com/Azure/azure-sdk-tools.git",

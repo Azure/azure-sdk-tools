@@ -470,8 +470,6 @@ namespace APIView
 
         protected abstract void RenderEnum(StringBuilder builder, Token t);
 
-        protected abstract void RenderClass(StringBuilder builder, string word);
-
         protected abstract void RenderClass(StringBuilder builder, Token t);
 
         protected abstract void RenderConstructor(StringBuilder builder, MethodAPIV m);

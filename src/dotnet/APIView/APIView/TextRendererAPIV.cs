@@ -24,11 +24,6 @@ namespace APIView
             builder.Append(t.DisplayString);
         }
 
-        protected override void RenderClass(StringBuilder builder, string word)
-        {
-            builder.Append(word);
-        }
-
         protected override void RenderClass(StringBuilder builder, Token t)
         {
             builder.Append(t.DisplayString);

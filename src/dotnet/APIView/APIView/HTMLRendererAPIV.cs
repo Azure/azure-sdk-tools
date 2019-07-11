@@ -28,19 +28,6 @@ namespace APIView
                 .Append(t.DisplayString.Replace("<", "&lt;").Replace(">", "&gt;")).Append("</a>");
         }
 
-        protected override void RenderClass(StringBuilder builder, string word)
-        {
-            var typeParamIndex = word.LastIndexOf("<");
-            string newWord;
-            if (typeParamIndex >= 0)
-                newWord = word.Remove(typeParamIndex);
-            else
-                newWord = word;
-            var shortName = newWord.Substring(newWord.LastIndexOf(".") + 1);
-            builder.Append("<a href=\"#").Append(shortName.Replace("<", "&lt;").Replace(">", "&gt;")).Append("\" class=\"class\">")
-                .Append(word.Replace("<", "&lt;").Replace(">", "&gt;")).Append("</a>");
-        }
-
         protected override void RenderClass(StringBuilder builder, Token t)
         {
             builder.Append("<a href=\"#").Append(t.NavigationID).Append("\" class=\"class\">")

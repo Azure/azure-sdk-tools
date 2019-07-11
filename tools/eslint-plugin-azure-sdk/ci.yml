@@ -58,10 +58,10 @@ stages:
             displayName: "Audit package"
 
           - task: PublishPipelineArtifact@1
-              condition: succeededOrFailed()
-              displayName: "Store package with run"
-              inputs:
-                artifactName: packages
+            condition: succeededOrFailed()
+            displayName: "Store package with run"
+            inputs:
+              artifactName: packages
 
     - stage: Release
       dependsOn: Build

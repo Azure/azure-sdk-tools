@@ -27,7 +27,9 @@ namespace APIView
         public PropertyAPIV(IPropertySymbol symbol)
         {
             this.Name = symbol.Name;
-            this.Type = new TypeReference(symbol);
+            this.Type = new TypeReference(symbol.Type);
+            if (symbol.Type.SpecialType == SpecialType.System_String)
+                this.Type.IsString = true;
             this.Accessibility = symbol.DeclaredAccessibility.ToString().ToLower();
 
             this.IsAbstract = symbol.IsAbstract;

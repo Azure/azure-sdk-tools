@@ -6,7 +6,7 @@ namespace APIView
     {
         public string DisplayString { get; set; }
         public bool IsNavigable { get; set; }
-        public bool IsString { get; set; }
+        
         public string NavigationID { get; set; }
         public TypeReference.TypeName Type { get; set; }
 
@@ -14,33 +14,14 @@ namespace APIView
         {
             this.DisplayString = "";
             this.IsNavigable = false;
-            this.IsString = false;
             this.NavigationID = "";
             this.Type = TypeReference.TypeName.NullType;
-        }
-
-        public Token(TypedConstant part)
-        {
-            this.DisplayString = part.Value.ToString();
-            this.IsNavigable = false;
-            this.NavigationID = "";
-            if (part.Type.Name.Equals("String"))
-            {
-                this.IsString = true;
-                this.Type = TypeReference.TypeName.ValueType;
-            }
-            else
-            {
-                this.IsString = false;
-                this.Type = TypeReference.TypeName.Punctuation;
-            }
         }
 
         public Token(SymbolDisplayPart part)
         {
             this.DisplayString = part.ToString();
             this.IsNavigable = part.Symbol != null;
-            this.IsString = false;
             if (part.Symbol == null)
                 this.NavigationID = "";
             else
@@ -73,8 +54,6 @@ namespace APIView
                     this.Type = TypeReference.TypeName.Punctuation;
                     break;
                 case SymbolDisplayPartKind.Keyword:
-                    if (part.ToString() == "string")
-                        this.IsString = true;
                     this.Type = TypeReference.TypeName.BuiltInType;
                     break;
                 default:

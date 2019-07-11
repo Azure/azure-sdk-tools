@@ -24,7 +24,9 @@ namespace APIView
         {
             this.Name = symbol.Name;
             this.Accessibility = symbol.DeclaredAccessibility.ToString().ToLower();
-            this.Type = new TypeReference(symbol);
+            this.Type = new TypeReference(symbol.Type);
+            if (symbol.Type.SpecialType == SpecialType.System_String)
+                this.Type.IsString = true;
         }
 
         public override string ToString()

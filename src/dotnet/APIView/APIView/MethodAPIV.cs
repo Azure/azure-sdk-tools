@@ -41,13 +41,14 @@ namespace APIView
             {
                 this.Name = symbol.ContainingType.Name;
                 this.IsConstructor = true;
-                this.ReturnType = new TypeReference();
                 this.ClassNavigationID = symbol.ContainingType.ToDisplayString();
             }
             else
             {
                 this.Name = symbol.Name;
-                this.ReturnType = new TypeReference(symbol);
+                this.ReturnType = new TypeReference(symbol.ReturnType);
+                if (symbol.ReturnType.SpecialType == SpecialType.System_String)
+                    this.ReturnType.IsString = true;
                 this.ClassNavigationID = "";
             }
             this.Accessibility = symbol.DeclaredAccessibility.ToString().ToLower();

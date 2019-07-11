@@ -28,6 +28,8 @@ namespace APIView
         {
             this.Name = symbol.Name;
             this.Type = new TypeReference(symbol);
+            if (symbol.Type.SpecialType == SpecialType.System_String)
+                this.Type.IsString = true;
 
             this.HasExplicitDefaultValue = symbol.HasExplicitDefaultValue;
             this.ExplicitDefaultValue = HasExplicitDefaultValue ? symbol.ExplicitDefaultValue : null;

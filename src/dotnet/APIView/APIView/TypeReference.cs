@@ -19,56 +19,19 @@ namespace APIView
         public TypeReference(Token[] tokens)
         {
             this.Tokens = tokens;
-            this.IsString = this.Tokens.Last().IsString;
+            this.IsString = false;
             this.Type = this.Tokens.Last().Type;
         }
 
-        public TypeReference(AttributeData data)
+        public TypeReference(ISymbol symbol)
         {
             var tokens = new List<Token>();
-            foreach (var part in data.AttributeClass.ToDisplayParts())
+            foreach (var part in symbol.ToDisplayParts())
             {
                 tokens.Add(new Token(part));
             }
             this.Tokens = tokens.ToArray();
             this.Type = this.Tokens.Last().Type;
-            this.IsString = this.Tokens.Last().IsString;
-        }
-
-        public TypeReference(IEventSymbol symbol)
-        {
-            var tokens = new List<Token>();
-            foreach (var part in symbol.Type.ToDisplayParts())
-            {
-                tokens.Add(new Token(part));
-            }
-            this.Tokens = tokens.ToArray();
-            this.Type = this.Tokens.Last().Type;
-            this.IsString = this.Tokens.Last().IsString;
-        }
-
-        public TypeReference(IFieldSymbol symbol)
-        {
-            var tokens = new List<Token>();
-            foreach (var part in symbol.Type.ToDisplayParts())
-            {
-                tokens.Add(new Token(part));
-            }
-            this.Tokens = tokens.ToArray();
-            this.Type = this.Tokens.Last().Type;
-            this.IsString = this.Tokens.Last().IsString;
-        }
-
-        public TypeReference(IMethodSymbol symbol)
-        {
-            var tokens = new List<Token>();
-            foreach (var part in symbol.ReturnType.ToDisplayParts())
-            {
-                tokens.Add(new Token(part));
-            }
-            this.Tokens = tokens.ToArray();
-            this.Type = this.Tokens.Last().Type;
-            this.IsString = this.Tokens.Last().IsString;
         }
 
         public TypeReference(INamedTypeSymbol symbol)
@@ -90,31 +53,7 @@ namespace APIView
             }
             this.Tokens = tokens.ToArray();
             this.Type = this.Tokens.Last().Type;
-            this.IsString = this.Tokens.Last().IsString;
-        }
-
-        public TypeReference(IParameterSymbol symbol)
-        {
-            var tokens = new List<Token>();
-            foreach (var part in symbol.ToDisplayParts())
-            {
-                tokens.Add(new Token(part));
-            }
-            this.Tokens = tokens.ToArray();
-            this.Type = this.Tokens.Last().Type;
-            this.IsString = this.Tokens.Last().IsString;
-        }
-
-        public TypeReference(IPropertySymbol symbol)
-        {
-            var tokens = new List<Token>();
-            foreach (var part in symbol.Type.ToDisplayParts())
-            {
-                tokens.Add(new Token(part));
-            }
-            this.Tokens = tokens.ToArray();
-            this.Type = this.Tokens.Last().Type;
-            this.IsString = this.Tokens.Last().IsString;
+            this.IsString = symbol.SpecialType == SpecialType.System_String;
         }
 
         public enum TypeName

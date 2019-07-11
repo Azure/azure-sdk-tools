@@ -150,7 +150,7 @@ namespace APIView
                 builder.Append(" ");
             }
 
-            if (m.ReturnType.Type != TypeReference.TypeName.NullType)
+            if (m.ReturnType != null) //(m.ReturnType.Type != TypeReference.TypeName.NullType)
             {
                 Render(m.ReturnType, builder);
                 builder.Append(" ");

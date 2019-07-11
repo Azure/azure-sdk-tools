@@ -134,7 +134,7 @@ namespace APIViewTest
             var m = new MethodAPIV
             {
                 Name = "TestClass",
-                ReturnType = new TypeReference(),
+                ReturnType = null,
                 Accessibility = "public",
                 ClassNavigationID = "TestClass",
                 IsConstructor = true,

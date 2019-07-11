@@ -17,7 +17,7 @@ namespace APIView
 
         public AttributeAPIV(AttributeData attributeData)
         {
-            this.Type = new TypeReference(attributeData);
+            this.Type = new TypeReference(attributeData.AttributeClass);
 
             var args = new List<string>();
             foreach (var arg in attributeData.ConstructorArguments)

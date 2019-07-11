@@ -88,4 +88,4 @@ stages:
                     workingDir: '$(Pipeline.Workspace)/packages'
                     customCommand: 'publish $(Package.Archive)'
                     customRegistry: 'useFeed'
-                    customFeed: '29ec6040-b234-4e31-b139-33dc4287b756/8bea7e97-84ed-4421-9a37-2bbf3200662b'
+                    customFeed: '7a8a7255-a1aa-48df-a904-c77c0b78cb03'

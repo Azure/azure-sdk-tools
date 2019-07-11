@@ -46,6 +46,7 @@ export = {
       "@azuresdktools/azure-sdk/ts-package-json-sideeffects": "error",
       "@azuresdktools/azure-sdk/ts-package-json-types": "error",
       "@azuresdktools/azure-sdk/ts-use-interface-parameters": "warn",
+      "@azuresdktools/azure-sdk/ts-use-promises": "error",
       "@azuresdktools/azure-sdk/ts-versioning-semver": "error",
       "@azuresdktools/azure-sdk/tsdoc-ignore-helpers": "off"
     },

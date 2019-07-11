@@ -24,7 +24,6 @@ export = {
   },
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     return {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       TSEnumDeclaration: (node: any): void => {
         node.const &&
           context.report({

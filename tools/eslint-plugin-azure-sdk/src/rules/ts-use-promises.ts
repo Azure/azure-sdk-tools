@@ -4,8 +4,8 @@
  */
 
 import { Rule } from "eslint";
-import { Literal, Property, Function } from "estree";
-import {} from "@typescript-eslint/typescript-estree"
+import { ParserServices } from "@typescript-eslint/experimental-utils";
+import { isExternalModule } from "typescript";
 
 //------------------------------------------------------------------------------
 // Rule Definition
@@ -25,15 +25,38 @@ export = {
     schema: [] // no options
   },
   create: (context: Rule.RuleContext): Rule.RuleListener => {
-    const verifiers = getVerifiers(context, {
-      outer: "types",
-      expected: false
-    });
+    const parserServices: ParserServices = context.parserServices;
+    if (
+      parserServices.program === undefined ||
+      parserServices.esTreeNodeToTSNodeMap === undefined
+    ) {
+      return {};
+    }
+    const typeChecker = parserServices.program.getTypeChecker();
+    const converter = parserServices.esTreeNodeToTSNodeMap;
     return {
-      "Function[returnType.typeAnnotation.typeName.name='Promise']": (node: Function): void => {
-        node = node as any
-        const returnType = function.retrunTy
+      ":function[returnType.typeAnnotation.typeName.name='Promise']": (
+        node: any
+      ): void => {
+        const name = node.returnType.typeAnnotation;
+        const tsNode = converter.get(name);
+        const type = typeChecker.getTypeAtLocation(tsNode);
+        const symbol = type.getSymbol();
+        if (symbol === undefined) {
+          return;
+        }
+        const declaration = symbol.valueDeclaration;
+        if (declaration === undefined) {
+          return;
+        }
+        const sourceFile = declaration.getSourceFile();
+        isExternalModule(sourceFile) &&
+          context.report({
+            node: node,
+            message:
+              "promises should use the in-built Promise type, not libraries or polyfills"
+          });
       }
-    } as Rule.RuleListener
+    } as Rule.RuleListener;
   }
 };

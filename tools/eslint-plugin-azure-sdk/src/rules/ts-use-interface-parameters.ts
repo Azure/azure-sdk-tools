@@ -69,7 +69,7 @@ const getTypeOfParam = (
   const typeNode = typeChecker.typeToTypeNode(type);
   if (typeNode !== undefined && isArrayTypeNode(typeNode)) {
     const elementTypeReference = typeNode.elementType as TypeReferenceNode;
-    const typeName = elementTypeReference.typeName as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+    const typeName = elementTypeReference.typeName as any;
     if (typeName !== undefined && typeName.symbol !== undefined) {
       return typeChecker.getDeclaredTypeOfSymbol(typeName.symbol);
     }
@@ -111,7 +111,7 @@ const addSeenSymbols = (
       let memberSymbol: Symbol | undefined;
       if (memberTypeNode !== undefined && isArrayTypeNode(memberTypeNode)) {
         const elementTypeReference = memberTypeNode.elementType as TypeReferenceNode;
-        const typeName = elementTypeReference.typeName as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+        const typeName = elementTypeReference.typeName as any;
         memberSymbol = typeName !== undefined ? typeName.symbol : undefined;
       } else {
         memberSymbol = memberType.getSymbol();

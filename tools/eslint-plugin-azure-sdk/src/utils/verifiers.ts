@@ -172,7 +172,6 @@ export const getVerifiers = (
 
       const nodeValue: ArrayExpression = node.value as ArrayExpression;
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const nonLiteral = nodeValue.elements.find((element: any): boolean => {
         return element.type !== "Literal";
       });

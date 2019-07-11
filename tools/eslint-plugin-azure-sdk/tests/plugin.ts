@@ -44,6 +44,7 @@ const ruleList = [
   "ts-package-json-sideeffects",
   "ts-package-json-types",
   "ts-use-interface-parameters",
+  "ts-use-promises",
   "ts-versioning-semver",
   "tsdoc-ignore-helpers"
 ];
@@ -54,7 +55,6 @@ const ruleList = [
  * @param rules the ESLint plugin rules object containing all rule information
  * @throws chai assert errors if the provided rule is not configured properly
  */
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 const testRule = (ruleName: string, rules: any): void => {
   describe(ruleName, (): void => {
     it(ruleName + " should be a member of rules", (): void => {

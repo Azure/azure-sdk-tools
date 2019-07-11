@@ -60,8 +60,7 @@
   },
   "peerDependencies": {
     "@typescript-eslint/parser": "^1.10.2",
-    "eslint": "^5.16.0",
-    "typescript": "^3.4.5"
+    "eslint": "^5.16.0"
   },
   "engines": {
     "node": ">=0.10.0"

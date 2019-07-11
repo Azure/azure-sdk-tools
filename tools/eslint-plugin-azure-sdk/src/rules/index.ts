@@ -36,6 +36,7 @@ import tsPackageJsonRequiredScripts from "./ts-package-json-required-scripts";
 import tsPackageJsonSideEffects from "./ts-package-json-sideeffects";
 import tsPackageJsonTypes from "./ts-package-json-types";
 import tsUseInterfaceParameters from "./ts-use-interface-parameters";
+import tsUsePromises from "./ts-use-promises";
 import tsVersioningSemver from "./ts-versioning-semver";
 import tsdocIgnoreHelpers from "./tsdoc-ignore-helpers";
 
@@ -73,6 +74,7 @@ export = {
   "ts-package-json-sideeffects": tsPackageJsonSideEffects,
   "ts-package-json-types": tsPackageJsonTypes,
   "ts-use-interface-parameters": tsUseInterfaceParameters,
+  "ts-use-promises": tsUsePromises,
   "ts-versioning-semver": tsVersioningSemver,
   "tsdoc-ignore-helpers": tsdocIgnoreHelpers
 };

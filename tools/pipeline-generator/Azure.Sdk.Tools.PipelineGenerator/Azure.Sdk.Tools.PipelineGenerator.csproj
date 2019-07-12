@@ -6,6 +6,8 @@
 
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>pipeline-generator</ToolCommandName>
+
+    <VersionPrefix>1.0.1</VersionPrefix>
   </PropertyGroup>
 
   <ItemGroup>

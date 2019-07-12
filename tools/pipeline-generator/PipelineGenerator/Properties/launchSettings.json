@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "PipelineGenerator": {
-      "commandName": "Project",
-      "commandLineArgs": "--organization https://dev.azure.com/azure-sdk/ --project public --prefix net --path C:\\Code\\azure-sdk-for-net\\sdk --patvar PATVAR --endpoint \"Azure\" --repository Azure/azure-sdk-for-net --convention ci --agentpool Hosted --whatif "
-    }
-  }
-}

@@ -3,7 +3,7 @@
  * @author Arpan Laha
  */
 
-import { getVerifiers, stripPath } from "../utils/verifiers";
+import { getVerifiers, stripPath } from "../utils";
 import { Rule } from "eslint";
 
 //------------------------------------------------------------------------------

@@ -4,7 +4,7 @@
  */
 
 import { Rule } from "eslint";
-import { ParserServices } from "@typescript-eslint/experimental-utils";
+import { getLocalExports } from "../utils";
 
 //------------------------------------------------------------------------------
 // Rule Definition
@@ -24,24 +24,13 @@ export = {
     schema: [] // no options
   },
   create: (context: Rule.RuleContext): Rule.RuleListener => {
-    if (!context.settings.public) {
-      const parserServices: ParserServices = context.parserServices;
-      if (parserServices.program === undefined) {
+    if (!context.settings.exported) {
+      const packageExports = getLocalExports(context);
+      if (packageExports !== undefined) {
+        context.settings.exported = packageExports;
+      } else {
         return {};
       }
-      const program = parserServices.program;
-      const typeChecker = program.getTypeChecker();
-      const sourceFile = program.getSourceFile(context.settings.main);
-      if (sourceFile === undefined) {
-        return {};
-      }
-      const symbol = typeChecker.getSymbolAtLocation(sourceFile);
-      if (symbol === undefined) {
-        return {};
-      }
-      const exports = typeChecker.getExportsOfModule(symbol);
-      console.log(exports);
-      context.settings.public = exports;
     }
     return {
       // callback functions

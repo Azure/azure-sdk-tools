@@ -5,7 +5,7 @@
 
 "use strict";
 
-import { getVerifiers, stripPath } from "../utils/verifiers";
+import { getVerifiers, stripPath } from "../utils";
 import { Rule } from "eslint";
 
 //------------------------------------------------------------------------------

@@ -3,7 +3,7 @@ stages:
   variables:
   - template: ../variables/globals.yml
   jobs:
-  - job: Build
+  - job: BuildPackage
     pool:
       vmImage: ubuntu-16.04
     steps:

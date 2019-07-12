@@ -1,5 +1,4 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using System.Text;
 
 namespace APIView
@@ -31,7 +30,10 @@ namespace APIView
                 builder.Append("(");
                 foreach (var arg in a.ConstructorArgs)
                 {
-                    RenderValue(builder, arg);
+                    foreach (var token in arg.Tokens)
+                    {
+                        Render(token, builder);
+                    }
                     builder.Append(", ");
                 }
                 builder.Length -= 2;
@@ -423,6 +425,31 @@ namespace APIView
             builder.Append("}");
         }
 
+        public void Render(TokenAPIV token, StringBuilder builder)
+        {
+            switch (token.Type)
+            {
+                case TypeReferenceAPIV.TokenType.BuiltInType:
+                    RenderKeyword(builder, token.DisplayString);
+                    break;
+                case TypeReferenceAPIV.TokenType.ClassType:
+                    RenderClass(builder, token);
+                    break;
+                case TypeReferenceAPIV.TokenType.EnumType:
+                    RenderEnum(builder, token);
+                    break;
+                case TypeReferenceAPIV.TokenType.TypeArgument:
+                    RenderType(builder, token.DisplayString);
+                    break;
+                case TypeReferenceAPIV.TokenType.ValueType:
+                    RenderValue(builder, token.DisplayString);
+                    break;
+                default:
+                    RenderPunctuation(builder, token.DisplayString);
+                    break;
+            }
+        }
+
         public void Render(TypeParameterAPIV tp, StringBuilder builder, int indents = 0)
         {
             if (tp.Attributes.Any())
@@ -442,30 +469,13 @@ namespace APIView
             RenderType(builder, tp.Name);
         }
 
-        public void Render(TypeReference type, StringBuilder builder)
+        public void Render(TypeReferenceAPIV type, StringBuilder builder)
         {
             if (type == null || type?.Tokens == null)
                 return;
             foreach (var token in type.Tokens)
             {
-                switch (token.Type)
-                {
-                    case TypeReference.TokenType.BuiltInType:
-                        RenderKeyword(builder, token.DisplayString);
-                        break;
-                    case TypeReference.TokenType.ClassType:
-                        RenderClass(builder, token);
-                        break;
-                    case TypeReference.TokenType.EnumType:
-                        RenderEnum(builder, token);
-                        break;
-                    case TypeReference.TokenType.TypeArgument:
-                        RenderType(builder, token.DisplayString);
-                        break;
-                    default:
-                        RenderPunctuation(builder, token.DisplayString);
-                        break;
-                }
+                Render(token, builder);
             }
         }
 
@@ -475,9 +485,9 @@ namespace APIView
 
         protected abstract void RenderPunctuation(StringBuilder builder, string word);
 
-        protected abstract void RenderEnum(StringBuilder builder, Token t);
+        protected abstract void RenderEnum(StringBuilder builder, TokenAPIV t);
 
-        protected abstract void RenderClass(StringBuilder builder, Token t);
+        protected abstract void RenderClass(StringBuilder builder, TokenAPIV t);
 
         protected abstract void RenderConstructor(StringBuilder builder, MethodAPIV m);
 

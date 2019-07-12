@@ -4,25 +4,25 @@ using System.Text;
 
 namespace APIView
 {
-    public class TypeReference
+    public class TypeReferenceAPIV
     {
         public bool IsString { get; set; }
-        public Token[] Tokens { get; set; }
+        public TokenAPIV[] Tokens { get; set; }
 
-        public TypeReference() { }
+        public TypeReferenceAPIV() { }
 
-        public TypeReference(Token[] tokens)
+        public TypeReferenceAPIV(TokenAPIV[] tokens)
         {
             this.Tokens = tokens;
             this.IsString = false;
         }
 
-        public TypeReference(ISymbol symbol)
+        public TypeReferenceAPIV(ISymbol symbol)
         {
-            var tokens = new List<Token>();
+            var tokens = new List<TokenAPIV>();
             foreach (var part in symbol.ToDisplayParts())
             {
-                tokens.Add(new Token(part));
+                tokens.Add(new TokenAPIV(part));
             }
             this.Tokens = tokens.ToArray();
             this.IsString = (symbol is ITypeSymbol typeSymbol) && typeSymbol.SpecialType == SpecialType.System_String;
@@ -30,7 +30,7 @@ namespace APIView
       
         public enum TokenType
         {
-            BuiltInType, ClassType, EnumType, TypeArgument, Punctuation
+            BuiltInType, ClassType, EnumType, TypeArgument, Punctuation, ValueType
         }
 
         public string ToDisplayString()

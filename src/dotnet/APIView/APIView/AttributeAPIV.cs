@@ -10,22 +10,24 @@ namespace APIView
     /// </summary>
     public class AttributeAPIV
     {
-        public TypeReference Type { get; set; }
-        public string[] ConstructorArgs { get; set; }  // TODO: Update to use TypeReference
+        public TypeReferenceAPIV Type { get; set; }
+        public AttributeConstructArgAPIV[] ConstructorArgs { get; set; }
 
         public AttributeAPIV() { }
 
         public AttributeAPIV(AttributeData attributeData)
         {
-            this.Type = new TypeReference(attributeData.AttributeClass);
+            this.Type = new TypeReferenceAPIV(attributeData.AttributeClass);
 
-            var args = new List<string>();
+            var args = new List<AttributeConstructArgAPIV>();
+
             foreach (var arg in attributeData.ConstructorArguments)
             {
-                if (arg.Type.Name.Equals("String"))
-                    args.Add("\"" + arg.Value.ToString() + "\"");
-                else
-                    args.Add(arg.Value.ToString());
+                args.Add(new AttributeConstructArgAPIV(arg));
+            }
+            foreach (var arg in attributeData.NamedArguments)
+            {
+                args.Add(new AttributeConstructArgAPIV(arg));
             }
             this.ConstructorArgs = args.ToArray();
         }

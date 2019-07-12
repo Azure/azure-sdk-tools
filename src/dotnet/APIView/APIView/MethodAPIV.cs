@@ -11,7 +11,7 @@ namespace APIView
     public class MethodAPIV
     {
         public string Name { get; set; }
-        public TypeReference ReturnType { get; set; }
+        public TypeReferenceAPIV ReturnType { get; set; }
         public string Accessibility { get; set; }
         public string ClassNavigationID { get; set; }
 
@@ -46,9 +46,7 @@ namespace APIView
             else
             {
                 this.Name = symbol.Name;
-                this.ReturnType = new TypeReference(symbol.ReturnType);
-                if (symbol.ReturnType.SpecialType == SpecialType.System_String)
-                    this.ReturnType.IsString = true;
+                this.ReturnType = new TypeReferenceAPIV(symbol.ReturnType);
                 this.ClassNavigationID = "";
             }
             this.Accessibility = symbol.DeclaredAccessibility.ToString().ToLower();

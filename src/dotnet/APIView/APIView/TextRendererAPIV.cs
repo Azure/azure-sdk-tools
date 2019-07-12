@@ -19,12 +19,12 @@ namespace APIView
             builder.Append(word.Replace("&lt;", "<").Replace("&gt;", ">"));
         }
 
-        protected override void RenderEnum(StringBuilder builder, Token t)
+        protected override void RenderEnum(StringBuilder builder, TokenAPIV t)
         {
             builder.Append(t.DisplayString);
         }
 
-        protected override void RenderClass(StringBuilder builder, Token t)
+        protected override void RenderClass(StringBuilder builder, TokenAPIV t)
         {
             builder.Append(t.DisplayString);
         }

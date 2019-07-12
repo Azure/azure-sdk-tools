@@ -22,13 +22,13 @@ namespace APIView
             builder.Append(EscapeHTML(word));
         }
 
-        protected override void RenderEnum(StringBuilder builder, Token t)
+        protected override void RenderEnum(StringBuilder builder, TokenAPIV t)
         {
             builder.Append("<a href=\"#").Append(t.NavigationID).Append("\" class=\"enum\">")
                 .Append(EscapeHTML(t.DisplayString)).Append("</a>");
         }
 
-        protected override void RenderClass(StringBuilder builder, Token t)
+        protected override void RenderClass(StringBuilder builder, TokenAPIV t)
         {
             builder.Append("<a href=\"#").Append(t.NavigationID).Append("\" class=\"class\">")
                 .Append(EscapeHTML(t.DisplayString)).Append("</a>");

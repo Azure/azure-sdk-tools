@@ -196,7 +196,7 @@ namespace TestLibrary
 
         string RefKindParamMethod(ref string str);
 
-        [Custom("Test"), New()]
+        [Custom("Test", Named="Param"), New()]
         int AttributesTypeParamsMethod<T, R>();
     }
 
@@ -210,6 +210,8 @@ namespace TestLibrary
         {
 
         }
+
+        public string Named { get; set; }
     }
 
     public class ImplementingClass : PublicInterface<int>

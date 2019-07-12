@@ -15,13 +15,13 @@ namespace APIView
     {
         public string Name { get; set; }
         public string TypeKind { get; set; }
-        public TypeReference EnumUnderlyingType { get; set; }
+        public TypeReferenceAPIV EnumUnderlyingType { get; set; }
         public string Accessibility { get; set; }
         public string NavigationID { get; set; }
 
         public EventAPIV[]  Events { get; set; }
         public FieldAPIV[] Fields { get; set; }
-        public TypeReference[] Implementations { get; set; }
+        public TypeReferenceAPIV[] Implementations { get; set; }
         public MethodAPIV[] Methods { get; set; }
         public NamedTypeAPIV[] NamedTypes { get; set; }
         public PropertyAPIV[] Properties { get; set; }
@@ -38,14 +38,14 @@ namespace APIView
             this.Name = symbol.Name;
             this.TypeKind = symbol.TypeKind.ToString().ToLower();
             if (symbol.EnumUnderlyingType != null)
-                this.EnumUnderlyingType = new TypeReference(symbol.EnumUnderlyingType);
+                this.EnumUnderlyingType = new TypeReferenceAPIV(symbol.EnumUnderlyingType);
             this.Accessibility = symbol.DeclaredAccessibility.ToString().ToLower();
 
             this.NavigationID = symbol.ConstructedFrom.ToDisplayString();
 
             var events = new List<EventAPIV>();
             var fields = new List<FieldAPIV>();
-            var implementations = new List<TypeReference>();
+            var implementations = new List<TypeReferenceAPIV>();
             var methods = new List<MethodAPIV>();
             var namedTypes = new List<NamedTypeAPIV>();
             var properties = new List<PropertyAPIV>();
@@ -88,12 +88,12 @@ namespace APIView
             }
 
             if (symbol.BaseType != null && !(symbol.BaseType.SpecialType == SpecialType.System_Object || symbol.BaseType.SpecialType == SpecialType.System_ValueType))
-                implementations.Add(new TypeReference(symbol.BaseType));
+                implementations.Add(new TypeReferenceAPIV(symbol.BaseType));
 
             // add a string representation of each implemented type to list
             foreach (var i in symbol.Interfaces)
             {
-                implementations.Add(new TypeReference(i));
+                implementations.Add(new TypeReferenceAPIV(i));
             }
 
             foreach (var t in symbol.TypeParameters)

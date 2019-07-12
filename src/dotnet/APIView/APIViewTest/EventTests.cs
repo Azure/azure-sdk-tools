@@ -32,7 +32,7 @@ namespace APIViewTest
             {
                 Accessibility = "public",
                 Name = "TestEvent",
-                Type = new TypeReference(new Token[] { new Token() })
+                Type = new TypeReferenceAPIV(new TokenAPIV[] { new TokenAPIV() })
             };
             var builder = new StringBuilder();
             var renderer = new HTMLRendererAPIV();

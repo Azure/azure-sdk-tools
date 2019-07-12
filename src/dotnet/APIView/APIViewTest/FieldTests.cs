@@ -88,7 +88,7 @@ namespace APIViewTest
             var f = new FieldAPIV
             {
                 Accessibility = "public",
-                Type = new TypeReference(new Token[] { new Token("string", TypeReference.TokenType.BuiltInType) }),
+                Type = new TypeReferenceAPIV(new TokenAPIV[] { new TokenAPIV("string", TypeReferenceAPIV.TokenType.BuiltInType) }),
                 IsConstant = true,
                 IsReadOnly = false,
                 IsStatic = true,

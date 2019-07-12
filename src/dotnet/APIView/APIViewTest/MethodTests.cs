@@ -60,7 +60,7 @@ namespace APIViewTest
             Assert.Equal(".", method.Attributes[0].Type.Tokens[3].DisplayString);
             Assert.Equal("ConditionalAttribute", method.Attributes[0].Type.Tokens[4].DisplayString);
             Assert.Single(method.Attributes[0].ConstructorArgs);
-            Assert.Equal("\"DEBUG\"", method.Attributes[0].ConstructorArgs[0]);
+            Assert.Equal("\"DEBUG\"", method.Attributes[0].ConstructorArgs[0].Tokens[0].DisplayString);
 
             Assert.Single(method.Parameters);
             Assert.Empty(method.TypeParameters);
@@ -95,8 +95,17 @@ namespace APIViewTest
             Assert.Equal("TestLibrary", method.Attributes[0].Type.Tokens[0].DisplayString);
             Assert.Equal(".", method.Attributes[0].Type.Tokens[1].DisplayString);
             Assert.Equal("CustomAttribute", method.Attributes[0].Type.Tokens[2].DisplayString);
-            Assert.Single(method.Attributes[0].ConstructorArgs);
-            Assert.Equal("\"Test\"", method.Attributes[0].ConstructorArgs[0]);
+
+            Assert.Equal(2, method.Attributes[0].ConstructorArgs.Length);
+            Assert.Equal("\"Test\"", method.Attributes[0].ConstructorArgs[0].Tokens[0].DisplayString);
+            Assert.Equal("Named", method.Attributes[0].ConstructorArgs[1].Tokens[0].DisplayString);
+            Assert.Equal(" ", method.Attributes[0].ConstructorArgs[1].Tokens[1].DisplayString);
+            Assert.Equal("=", method.Attributes[0].ConstructorArgs[1].Tokens[2].DisplayString);
+            Assert.Equal(" ", method.Attributes[0].ConstructorArgs[1].Tokens[3].DisplayString);
+            Assert.Equal("\"", method.Attributes[0].ConstructorArgs[1].Tokens[4].DisplayString);
+            Assert.Equal("Param", method.Attributes[0].ConstructorArgs[1].Tokens[5].DisplayString);
+            Assert.Equal("\"", method.Attributes[0].ConstructorArgs[1].Tokens[6].DisplayString);
+
             Assert.Equal("TestLibrary", method.Attributes[1].Type.Tokens[0].DisplayString);
             Assert.Equal(".", method.Attributes[1].Type.Tokens[1].DisplayString);
             Assert.Equal("NewAttribute", method.Attributes[1].Type.Tokens[2].DisplayString);
@@ -113,7 +122,7 @@ namespace APIViewTest
             MethodAPIV method = new MethodAPIV(methodSymbol);
 
             string stringRep = method.ToString().Replace(Environment.NewLine, "");
-            Assert.Equal("[TestLibrary.CustomAttribute(\"Test\")][TestLibrary.NewAttribute]int AttributesTypeParamsMethod<T, R>();", stringRep);
+            Assert.Equal("[TestLibrary.CustomAttribute(\"Test\", Named = \"Param\")][TestLibrary.NewAttribute]int AttributesTypeParamsMethod<T, R>();", stringRep);
         }
 
         [Fact]
@@ -121,7 +130,7 @@ namespace APIViewTest
         {
             var p = new ParameterAPIV
             {
-                Type = new TypeReference(new Token[] { new Token("int", TypeReference.TokenType.BuiltInType) }),
+                Type = new TypeReferenceAPIV(new TokenAPIV[] { new TokenAPIV("int", TypeReferenceAPIV.TokenType.BuiltInType) }),
                 Name = "num",
                 HasExplicitDefaultValue = true,
                 ExplicitDefaultValue = 2,
@@ -158,14 +167,15 @@ namespace APIViewTest
         {
             var a = new AttributeAPIV
             {
-                Type = new TypeReference(new Token[] { new Token("TestAttribute", TypeReference.TokenType.ClassType) }),
-                ConstructorArgs = new string[] {"Test", "\"String\""}
+                Type = new TypeReferenceAPIV(new TokenAPIV[] { new TokenAPIV("TestAttribute", TypeReferenceAPIV.TokenType.ClassType) }),
+                ConstructorArgs = new AttributeConstructArgAPIV[] { new AttributeConstructArgAPIV(new TokenAPIV[] { new TokenAPIV("Test",
+                    TypeReferenceAPIV.TokenType.ValueType) }), new AttributeConstructArgAPIV(new TokenAPIV[] { new TokenAPIV("\"String\"", TypeReferenceAPIV.TokenType.ValueType) }) }
             };
 
             var m = new MethodAPIV
             {
                 Name = "TestMethod",
-                ReturnType = new TypeReference(new Token[] { new Token("void", TypeReference.TokenType.BuiltInType) }),
+                ReturnType = new TypeReferenceAPIV(new TokenAPIV[] { new TokenAPIV("void", TypeReferenceAPIV.TokenType.BuiltInType) }),
                 Accessibility = "public",
                 ClassNavigationID = "",
                 IsConstructor = false,

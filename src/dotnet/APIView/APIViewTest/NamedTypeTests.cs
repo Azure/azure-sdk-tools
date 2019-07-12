@@ -177,7 +177,7 @@ namespace APIViewTest
             var p = new PropertyAPIV
             {
                 Name = "TestProperty",
-                Type = new TypeReference(new Token[] { new Token("string", TypeReference.TokenType.BuiltInType) }),
+                Type = new TypeReferenceAPIV(new TokenAPIV[] { new TokenAPIV("string", TypeReferenceAPIV.TokenType.BuiltInType) }),
                 Accessibility = "protected",
                 IsAbstract = false,
                 IsVirtual = false,
@@ -192,7 +192,7 @@ namespace APIViewTest
                 NavigationID = "ImplementingClass",
                 Events = new EventAPIV[] { },
                 Fields = new FieldAPIV[] { },
-                Implementations = new TypeReference[] { new TypeReference(new Token[] { new Token("BaseClass", TypeReference.TokenType.ClassType) }) },
+                Implementations = new TypeReferenceAPIV[] { new TypeReferenceAPIV(new TokenAPIV[] { new TokenAPIV("BaseClass", TypeReferenceAPIV.TokenType.ClassType) }) },
                 Methods = new MethodAPIV[] { },
                 NamedTypes = new NamedTypeAPIV[] { },
                 Properties = new PropertyAPIV[] { p },
@@ -223,7 +223,7 @@ namespace APIViewTest
                 NavigationID = "TestInterface",
                 Events = new EventAPIV[] { },
                 Fields = new FieldAPIV[] { },
-                Implementations = new TypeReference[] { },
+                Implementations = new TypeReferenceAPIV[] { },
                 Methods = new MethodAPIV[] { },
                 NamedTypes = new NamedTypeAPIV[] { },
                 Properties = new PropertyAPIV[] { },

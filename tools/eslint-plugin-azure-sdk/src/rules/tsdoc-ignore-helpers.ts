@@ -4,7 +4,6 @@
  */
 
 import { Rule } from "eslint";
-import { createCompilerHost, ScriptTarget } from "typescript";
 import { ParserServices } from "@typescript-eslint/experimental-utils";
 
 //------------------------------------------------------------------------------
@@ -28,28 +27,21 @@ export = {
     if (!context.settings.public) {
       const parserServices: ParserServices = context.parserServices;
       if (parserServices.program === undefined) {
-        console.log("program undefined");
         return {};
       }
-      const typeChecker = parserServices.program.getTypeChecker();
-      const compilerHost = createCompilerHost({});
-      const sourceFile = compilerHost.getSourceFile(
-        context.settings.main,
-        ScriptTarget.Latest
-      );
+      const program = parserServices.program;
+      const typeChecker = program.getTypeChecker();
+      const sourceFile = program.getSourceFile(context.settings.main);
       if (sourceFile === undefined) {
-        console.log("sourceFile undefined");
         return {};
       }
-      console.log(sourceFile);
       const symbol = typeChecker.getSymbolAtLocation(sourceFile);
       if (symbol === undefined) {
-        console.log("symbol undefined");
         return {};
       }
       const exports = typeChecker.getExportsOfModule(symbol);
-
       console.log(exports);
+      context.settings.public = exports;
     }
     return {
       // callback functions

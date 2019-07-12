@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.ComponentModel.Design;
+using System.Linq;
 using System.Text;
 
 namespace APIView
@@ -30,10 +31,12 @@ namespace APIView
                 builder.Append("(");
                 foreach (var arg in a.ConstructorArgs)
                 {
-                    foreach (var token in arg.Tokens)
+                    if (arg.IsNamed)
                     {
-                        Render(token, builder);
+                        builder.Append(arg.Name);
+                        builder.Append(" = ");
                     }
+                    RenderValue(builder, arg.Value);
                     builder.Append(", ");
                 }
                 builder.Length -= 2;

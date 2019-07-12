@@ -60,7 +60,7 @@ namespace APIViewTest
             Assert.Equal(".", method.Attributes[0].Type.Tokens[3].DisplayString);
             Assert.Equal("ConditionalAttribute", method.Attributes[0].Type.Tokens[4].DisplayString);
             Assert.Single(method.Attributes[0].ConstructorArgs);
-            Assert.Equal("\"DEBUG\"", method.Attributes[0].ConstructorArgs[0].Tokens[0].DisplayString);
+            Assert.Equal("\"DEBUG\"", method.Attributes[0].ConstructorArgs[0].Value);
 
             Assert.Single(method.Parameters);
             Assert.Empty(method.TypeParameters);
@@ -97,14 +97,9 @@ namespace APIViewTest
             Assert.Equal("CustomAttribute", method.Attributes[0].Type.Tokens[2].DisplayString);
 
             Assert.Equal(2, method.Attributes[0].ConstructorArgs.Length);
-            Assert.Equal("\"Test\"", method.Attributes[0].ConstructorArgs[0].Tokens[0].DisplayString);
-            Assert.Equal("Named", method.Attributes[0].ConstructorArgs[1].Tokens[0].DisplayString);
-            Assert.Equal(" ", method.Attributes[0].ConstructorArgs[1].Tokens[1].DisplayString);
-            Assert.Equal("=", method.Attributes[0].ConstructorArgs[1].Tokens[2].DisplayString);
-            Assert.Equal(" ", method.Attributes[0].ConstructorArgs[1].Tokens[3].DisplayString);
-            Assert.Equal("\"", method.Attributes[0].ConstructorArgs[1].Tokens[4].DisplayString);
-            Assert.Equal("Param", method.Attributes[0].ConstructorArgs[1].Tokens[5].DisplayString);
-            Assert.Equal("\"", method.Attributes[0].ConstructorArgs[1].Tokens[6].DisplayString);
+            Assert.Equal("\"Test\"", method.Attributes[0].ConstructorArgs[0].Value);
+            Assert.Equal("Named", method.Attributes[0].ConstructorArgs[1].Name);
+            Assert.Equal("\"Param\"", method.Attributes[0].ConstructorArgs[1].Value);
 
             Assert.Equal("TestLibrary", method.Attributes[1].Type.Tokens[0].DisplayString);
             Assert.Equal(".", method.Attributes[1].Type.Tokens[1].DisplayString);
@@ -165,11 +160,19 @@ namespace APIViewTest
         [Fact]
         public void MethodTestAttributesHTMLRender()
         {
+            var arg1 = new AttributeConstructArgAPIV
+            {
+                Value = "Test"
+            };
+            var arg2 = new AttributeConstructArgAPIV
+            {
+                Value = "\"String\""
+            };
+
             var a = new AttributeAPIV
             {
                 Type = new TypeReferenceAPIV(new TokenAPIV[] { new TokenAPIV("TestAttribute", TypeReferenceAPIV.TokenType.ClassType) }),
-                ConstructorArgs = new AttributeConstructArgAPIV[] { new AttributeConstructArgAPIV(new TokenAPIV[] { new TokenAPIV("Test",
-                    TypeReferenceAPIV.TokenType.ValueType) }), new AttributeConstructArgAPIV(new TokenAPIV[] { new TokenAPIV("\"String\"", TypeReferenceAPIV.TokenType.ValueType) }) }
+                ConstructorArgs = new AttributeConstructArgAPIV[] { arg1, arg2 }
             };
 
             var m = new MethodAPIV

@@ -65,6 +65,8 @@ namespace APIView
 
             foreach (AttributeData attribute in symbol.GetAttributes())
             {
+                if (attribute.AttributeClass.DeclaredAccessibility == Microsoft.CodeAnalysis.Accessibility.Public || 
+                    attribute.AttributeClass.DeclaredAccessibility == Microsoft.CodeAnalysis.Accessibility.Protected)
                 attributes.Add(new AttributeAPIV(attribute));
             }
             foreach (ITypeParameterSymbol typeParam in symbol.TypeParameters)

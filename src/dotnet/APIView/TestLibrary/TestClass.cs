@@ -204,9 +204,9 @@ namespace TestLibrary
     {
     }
 
-    internal class CustomAttribute : Attribute
+    public class CustomAttribute : Attribute
     {
-        internal CustomAttribute(string str)
+        public CustomAttribute(string str)
         {
 
         }

@@ -5,41 +5,27 @@ namespace APIView
 {
     public class AttributeConstructArgAPIV
     {
-        public TokenAPIV[] Tokens { get; set; }
+        public bool IsNamed => Name != null;
+        public string Name { get; set; }
+        public string Value { get; set; }
 
         public AttributeConstructArgAPIV() { }
 
-        public AttributeConstructArgAPIV(TokenAPIV[] tokens)
-        {
-            this.Tokens = tokens;
-        }
-
         public AttributeConstructArgAPIV(TypedConstant value)
         {
-            if (value.Type.Name.Equals("String"))
-                this.Tokens = new TokenAPIV[] { new TokenAPIV("\"" + value.Value.ToString() + "\"", TypeReferenceAPIV.TokenType.ValueType) };
+            if (value.Type.SpecialType == SpecialType.System_String)
+                this.Value = "\"" + value.Value.ToString() + "\"";
             else
-                this.Tokens = new TokenAPIV[] { new TokenAPIV(value.Value.ToString(), TypeReferenceAPIV.TokenType.ValueType) };
+                this.Value = value.Value.ToString();
         }
 
         public AttributeConstructArgAPIV(KeyValuePair<string, TypedConstant> pair)
         {
-            var tokens = new List<TokenAPIV>
-            {
-                new TokenAPIV(pair.Key, TypeReferenceAPIV.TokenType.Punctuation),
-                new TokenAPIV(" ", TypeReferenceAPIV.TokenType.Punctuation),
-                new TokenAPIV("=", TypeReferenceAPIV.TokenType.Punctuation),
-                new TokenAPIV(" ", TypeReferenceAPIV.TokenType.Punctuation)
-            };
+            this.Name = pair.Key;
             if (pair.Value.Type.SpecialType == SpecialType.System_String)
-            {
-                tokens.Add(new TokenAPIV("\"", TypeReferenceAPIV.TokenType.ValueType));
-                tokens.Add(new TokenAPIV(pair.Value.Value.ToString(), TypeReferenceAPIV.TokenType.ValueType));
-                tokens.Add(new TokenAPIV("\"", TypeReferenceAPIV.TokenType.ValueType));
-            }
+                this.Value = "\"" + pair.Value.Value.ToString() + "\"";
             else
-                tokens.Add(new TokenAPIV(pair.Value.Value.ToString(), TypeReferenceAPIV.TokenType.ValueType));
-            this.Tokens = tokens.ToArray();
+                this.Value = pair.Value.Value.ToString();
         }
     }
 }

@@ -4,7 +4,7 @@
     "forceConsistentCasingInFileNames": true,
     "importHelpers": true,
     "isolatedModules": true,
-    "lib": ["es2017", "dom"],
+    "lib": ["es2017"],
     "module": "commonjs",
     "noImplicitReturns": true,
     "noUnusedLocals": true,

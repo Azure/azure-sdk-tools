@@ -48,5 +48,12 @@ namespace Azure.ClientSdk.Analyzers
         public static DiagnosticDescriptor AZC0010 = new DiagnosticDescriptor(
             "AZC0010", "ClientOptions constructors should default ServiceVersion to latest supported service version",
             "ClientOptions constructors should default ServiceVersion to latest supported service version", "Usage", DiagnosticSeverity.Warning, true);
+
+        public static DiagnosticDescriptor AZC1001 = new DiagnosticDescriptor(
+            "AZC1001", "Avoid multiple newlines",
+            "Avoid multiple newlines", "Usage", DiagnosticSeverity.Warning, true);
+        public static DiagnosticDescriptor AZC1002 = new DiagnosticDescriptor(
+            "AZC1002", "Avoid whitespace in the end of the line",
+            "Avoid whitespace in the end of the line", "Usage", DiagnosticSeverity.Warning, true);
     }
 }

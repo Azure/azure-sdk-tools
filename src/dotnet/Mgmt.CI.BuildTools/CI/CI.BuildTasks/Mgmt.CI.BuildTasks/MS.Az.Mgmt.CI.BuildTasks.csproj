@@ -1,20 +1,28 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="15.0">
-  <Import Project="$([MSBuild]::GetPathOfFileAbove('ci.common.props'))" />  
   <PropertyGroup>
-    <PackageId>MS.Az.NetSdk.Build.Tasks</PackageId>
-    <Description>Provides .NET SDK Build tools and msbuild tasks</Description>
     <AssemblyTitle>Microsoft.Azure.NetSdk.Build.Tasks</AssemblyTitle>
     <AssemblyName>MS.Az.Mgmt.NetSdk.BuildTasks</AssemblyName>
+    <RuntimeIdentifier>win10-x64</RuntimeIdentifier>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <NoWarn>$(NoWarn);NU5100;NU5110;NU5111</NoWarn>
+
+    <PackageId>Microsoft.Internal.NetSdkBuild.Mgmt.Tools</PackageId>
+    <Description>Build tools for building Azure SDK for NET repository</Description>
+    <PackageProjectUrl>https://github.com/Azure/azure-sdk-for-net</PackageProjectUrl>
+    <PackageIconUrl>http://go.microsoft.com/fwlink/?LinkID=288890</PackageIconUrl>
+    <RepositoryUrl>https://github.com/Azure/azure-sdk-for-net</RepositoryUrl>
+    <PackageTags>Azure.NETSDKBuildToolsPackage</PackageTags>
+    <PackageReleaseNotes>Build tools for Azure .NET SDKs repository</PackageReleaseNotes>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
   </PropertyGroup>
 
   <!-- Their is an issue building dependencies that have platform specific dependencies -->
   <PropertyGroup Condition="'$(TargetFramework)|$(Platform)'=='net461|AnyCPU'">
     <PlatformTarget>$(FullNetFxBitness)</PlatformTarget>
-    <NoWarn>CS0414;CS0219;CS0649</NoWarn>
-    <IsPackable>false</IsPackable>
+    <NoWarn>$(NoWarn);CS0414;CS0219;CS0649</NoWarn>
   </PropertyGroup>
   <PropertyGroup>
-		<TargetFrameworks>$(CurrentTargetFxVersion)</TargetFrameworks>		
+		<TargetFrameworks>$(CurrentTargetFxVersion)</TargetFrameworks>
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="Models\Backup_SdkProjectMetaData.cs" />
@@ -28,5 +36,18 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\CI.Common\Mgmt.CI.Common\MS.Az.Mgmt.CI.Common.csproj" />
-  </ItemGroup>  
+    <None Include="$(PackageFilesPath)\**\*.*" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);_AddPublishOutputToPackage</TargetsForTfmSpecificContentInPackage>
+  </PropertyGroup>
+
+  <Target Name="_AddPublishOutputToPackage" DependsOnTargets="Publish">
+    <ItemGroup>
+      <!-- Publish .NET Core assets and include them in the package under tools directory. -->
+      <TfmSpecificPackageFile Include="$(PublishDir)**"
+                              PackagePath="tasks/$(TargetFramework)/%(RecursiveDir)%(FileName)%(Extension)"/>
+    </ItemGroup>
+  </Target>
 </Project>

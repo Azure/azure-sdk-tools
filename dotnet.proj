@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.Build.Traversal">
   <ItemGroup>
     <ProjectReference 
-        Include="src\dotnet\**\*.csproj;mgmtci.proj" 
+        Include="src\dotnet\**\*.csproj" 
         Exclude="src\dotnet\Mgmt.CI.BuildTools\**\*.*" />
   </ItemGroup>
 </Project>

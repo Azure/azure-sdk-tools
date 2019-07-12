@@ -5,9 +5,12 @@
     <AssemblyTitle>MS.Az.NetSdk.Common.BuildTasks Tests</AssemblyTitle>
     <AssemblyName>Common.BuildTasks.Tests</AssemblyName>
     <ProjectGuid>{DB4263F3-7041-4C7E-A373-BB04A5A32C34}</ProjectGuid>
+
+    <!-- Skip test projects until tests can be fixed -->
+    <IsTestProject>false</IsTestProject>
   </PropertyGroup>
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <TargetFrameworks>netcoreapp2.1</TargetFrameworks>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>

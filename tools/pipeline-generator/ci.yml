@@ -7,7 +7,7 @@ trigger:
       - hotfix/*
   paths:
     include:
-      - tools/eslint-plugin-azure-sdk
+      - tools/pipeline-generator
 
 pr:
   branches:

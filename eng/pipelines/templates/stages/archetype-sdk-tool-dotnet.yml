@@ -1,0 +1,38 @@
+stages:
+- stage: Build
+  variables:
+  - template: ../variables/globals.yml
+  jobs:
+  - job: BuildPackage
+    pool:
+      vmImage: ubuntu-16.04
+    steps:
+      - task: DotNetCoreInstaller@0
+        displayName: 'Use .NET Core sdk $(DotNetCoreVersion)'
+        inputs:
+          version: '$(DotNetCoreVersion)'
+      - script: 'dotnet pack -o $(Build.ArtifactStagingDirectory) -warnaserror'
+        displayName: 'Build and Package'
+        workingDirectory: $(Build.SourcesDirectory)/tools/${{parameters.ToolDirectory}}
+        env:
+          DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+          DOTNET_CLI_TELEMETRY_OPTOUT: 1
+          DOTNET_MULTILEVEL_LOOKUP: 0
+      - publish: $(Build.ArtifactStagingDirectory)
+        displayName: Publish package to run artifacts
+        artifact: packages
+        condition: succeededOrFailed()
+- stage: Release
+  dependsOn: Build
+  condition: and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+  jobs:
+  - deployment: PublishPackage
+    environment: azure-sdk
+    pool:
+      vmImage: ubuntu-16.04
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - script: |
+              echo "Pretend I'm publishing a package!"

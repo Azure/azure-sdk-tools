@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26124.0
 MinimumVisualStudioVersion = 15.0.26124.0
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PipelineGenerator", "PipelineGenerator\PipelineGenerator.csproj", "{810396BC-39B3-4E3D-A2CA-585A131AEF53}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.Sdk.Tools.PipelineGenerator", "Azure.Sdk.Tools.PipelineGenerator\Azure.Sdk.Tools.PipelineGenerator.csproj", "{810396BC-39B3-4E3D-A2CA-585A131AEF53}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -89,7 +89,6 @@ namespace APIViewTest
 
             Assert.Equal("PublicEnum", publicEnum.Name);
             Assert.Equal("enum", publicEnum.TypeKind);
-            Assert.Equal(TypeReference.TypeName.BuiltInType, publicEnum.EnumUnderlyingType.Type);
             Assert.Equal("int", publicEnum.EnumUnderlyingType.Tokens[0].DisplayString);
         }
         
@@ -111,7 +110,6 @@ namespace APIViewTest
 
             Assert.Equal("PublicEnum", publicEnum.Name);
             Assert.Equal("enum", publicEnum.TypeKind);
-            Assert.Equal(TypeReference.TypeName.BuiltInType, publicEnum.EnumUnderlyingType.Type);
             Assert.Equal("long", publicEnum.EnumUnderlyingType.Tokens[0].DisplayString);
         }
 
@@ -179,7 +177,7 @@ namespace APIViewTest
             var p = new PropertyAPIV
             {
                 Name = "TestProperty",
-                Type = new TypeReference(new Token[] { new Token("string", TypeReference.TypeName.BuiltInType) }),
+                Type = new TypeReference(new Token[] { new Token("string", TypeReference.TokenType.BuiltInType) }),
                 Accessibility = "protected",
                 IsAbstract = false,
                 IsVirtual = false,
@@ -194,7 +192,7 @@ namespace APIViewTest
                 NavigationID = "ImplementingClass",
                 Events = new EventAPIV[] { },
                 Fields = new FieldAPIV[] { },
-                Implementations = new TypeReference[] { new TypeReference(new Token[] { new Token("BaseClass", TypeReference.TypeName.ClassType) }) },
+                Implementations = new TypeReference[] { new TypeReference(new Token[] { new Token("BaseClass", TypeReference.TokenType.ClassType) }) },
                 Methods = new MethodAPIV[] { },
                 NamedTypes = new NamedTypeAPIV[] { },
                 Properties = new PropertyAPIV[] { p },

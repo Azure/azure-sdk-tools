@@ -15,6 +15,7 @@ namespace APIView
         public bool HasExplicitDefaultValue { get; set; }
         public object ExplicitDefaultValue { get; set; }
         public TypeReference Type { get; set; }
+        public RefKind RefKind { get; set; }
 
         public string[] Attributes { get; set; }
 
@@ -27,9 +28,8 @@ namespace APIView
         public ParameterAPIV(IParameterSymbol symbol)
         {
             this.Name = symbol.Name;
-            this.Type = new TypeReference(symbol);
-            if (symbol.Type.SpecialType == SpecialType.System_String)
-                this.Type.IsString = true;
+            this.Type = new TypeReference(symbol.Type);
+            this.RefKind = symbol.RefKind;
 
             this.HasExplicitDefaultValue = symbol.HasExplicitDefaultValue;
             this.ExplicitDefaultValue = HasExplicitDefaultValue ? symbol.ExplicitDefaultValue : null;

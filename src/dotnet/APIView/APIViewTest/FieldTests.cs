@@ -14,7 +14,6 @@ namespace APIViewTest
             FieldAPIV field = new FieldAPIV(fieldSymbol);
             
             Assert.Equal("publicField", field.Name);
-            Assert.Equal(TypeReference.TypeName.BuiltInType, field.Type.Type);
             Assert.Equal("int", field.Type.Tokens[0].DisplayString);
             Assert.Equal("public", field.Accessibility);
             Assert.False(field.IsConstant);
@@ -40,7 +39,6 @@ namespace APIViewTest
             FieldAPIV field = new FieldAPIV(fieldSymbol);
 
             Assert.Equal("publicString", field.Name);
-            Assert.Equal(TypeReference.TypeName.BuiltInType, field.Type.Type);
             Assert.Equal("string", field.Type.Tokens[0].DisplayString);
             Assert.Equal("public", field.Accessibility);
             Assert.True(field.IsConstant);
@@ -66,7 +64,6 @@ namespace APIViewTest
             FieldAPIV field = new FieldAPIV(fieldSymbol);
 
             Assert.Equal("protectedField", field.Name);
-            Assert.Equal(TypeReference.TypeName.BuiltInType, field.Type.Type);
             Assert.Equal("int", field.Type.Tokens[0].DisplayString);
             Assert.Equal("protected", field.Accessibility);
             Assert.False(field.IsConstant);
@@ -91,7 +88,7 @@ namespace APIViewTest
             var f = new FieldAPIV
             {
                 Accessibility = "public",
-                Type = new TypeReference(new Token[] { new Token("string", TypeReference.TypeName.BuiltInType) }),
+                Type = new TypeReference(new Token[] { new Token("string", TypeReference.TokenType.BuiltInType) }),
                 IsConstant = true,
                 IsReadOnly = false,
                 IsStatic = true,

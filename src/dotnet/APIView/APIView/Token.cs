@@ -8,20 +8,17 @@ namespace APIView
         public bool IsNavigable { get; set; }
         
         public string NavigationID { get; set; }
-        public TypeReference.TypeName Type { get; set; }
+        public TypeReference.TokenType Type { get; set; }
 
         public Token()
         {
             this.DisplayString = "";
-            this.IsNavigable = false;
-            this.NavigationID = "";
-            this.Type = TypeReference.TypeName.NullType;
         }
 
         public Token(SymbolDisplayPart part)
         {
             this.DisplayString = part.ToString();
-            this.IsNavigable = part.Symbol != null;
+            this.IsNavigable = false;
             if (part.Symbol == null)
                 this.NavigationID = "";
             else
@@ -36,34 +33,30 @@ namespace APIView
             switch (part.Kind)
             {
                 case SymbolDisplayPartKind.ClassName:
-                    this.Type = TypeReference.TypeName.ClassType;
+                case SymbolDisplayPartKind.ErrorTypeName:
+                case SymbolDisplayPartKind.InterfaceName:
+                case SymbolDisplayPartKind.StructName:
+                    this.Type = TypeReference.TokenType.ClassType;
+                    this.IsNavigable = true;
                     break;
                 case SymbolDisplayPartKind.EnumName:
-                    this.Type = TypeReference.TypeName.EnumType;
-                    break;
-                case SymbolDisplayPartKind.ErrorTypeName:
-                    this.Type = TypeReference.TypeName.ClassType;
-                    break;
-                case SymbolDisplayPartKind.InterfaceName:
-                    this.Type = TypeReference.TypeName.ClassType;
+                    this.Type = TypeReference.TokenType.EnumType;
+                    this.IsNavigable = true;
                     break;
                 case SymbolDisplayPartKind.Punctuation:
-                    this.Type = TypeReference.TypeName.Punctuation;
-                    break;
                 case SymbolDisplayPartKind.Space:
-                    this.Type = TypeReference.TypeName.Punctuation;
+                    this.Type = TypeReference.TokenType.Punctuation;
                     break;
                 case SymbolDisplayPartKind.Keyword:
-                    this.Type = TypeReference.TypeName.BuiltInType;
+                    this.Type = TypeReference.TokenType.BuiltInType;
                     break;
                 default:
-                    this.Type = TypeReference.TypeName.SpecialType;
-                    this.IsNavigable = true;
+                    this.Type = TypeReference.TokenType.TypeArgument;
                     break;
             }
         }
         
-        public Token(string displayString, TypeReference.TypeName type)
+        public Token(string displayString, TypeReference.TokenType type)
         {
             this.DisplayString = displayString;
             this.Type = type;

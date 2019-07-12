@@ -38,14 +38,10 @@ namespace APIView
             this.Name = symbol.Name;
             this.TypeKind = symbol.TypeKind.ToString().ToLower();
             if (symbol.EnumUnderlyingType != null)
-                this.EnumUnderlyingType = new TypeReference(symbol);
+                this.EnumUnderlyingType = new TypeReference(symbol.EnumUnderlyingType);
             this.Accessibility = symbol.DeclaredAccessibility.ToString().ToLower();
 
-            var typeParamIndex = symbol.ToDisplayString().LastIndexOf("<");
-            if (typeParamIndex > 0)
-                this.NavigationID = symbol.ToDisplayString().Remove(typeParamIndex);
-            else
-                this.NavigationID = symbol.ToDisplayString();
+            this.NavigationID = symbol.ConstructedFrom.ToDisplayString();
 
             var events = new List<EventAPIV>();
             var fields = new List<FieldAPIV>();

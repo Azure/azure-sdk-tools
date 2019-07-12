@@ -22,7 +22,6 @@ namespace APIViewTest
             Assert.False(method.IsOverride);
             Assert.True(method.IsAbstract);
             Assert.False(method.IsExtern);
-            Assert.Equal(TypeReference.TypeName.BuiltInType, method.ReturnType.Type);
             Assert.Equal("int", method.ReturnType.Tokens[0].DisplayString);
 
             Assert.Empty(method.Attributes);
@@ -52,7 +51,6 @@ namespace APIViewTest
             Assert.False(method.IsOverride);
             Assert.False(method.IsAbstract);
             Assert.False(method.IsExtern);
-            Assert.Equal(TypeReference.TypeName.BuiltInType, method.ReturnType.Type);
             Assert.Equal("void", method.ReturnType.Tokens[0].DisplayString);
 
             Assert.Single(method.Attributes);
@@ -91,7 +89,6 @@ namespace APIViewTest
             Assert.False(method.IsOverride);
             Assert.True(method.IsAbstract);
             Assert.False(method.IsExtern);
-            Assert.Equal(TypeReference.TypeName.BuiltInType, method.ReturnType.Type);
             Assert.Equal("int", method.ReturnType.Tokens[0].DisplayString);
 
             Assert.Equal(2, method.Attributes.Length);
@@ -124,7 +121,7 @@ namespace APIViewTest
         {
             var p = new ParameterAPIV
             {
-                Type = new TypeReference(new Token[] { new Token("int", TypeReference.TypeName.BuiltInType) }),
+                Type = new TypeReference(new Token[] { new Token("int", TypeReference.TokenType.BuiltInType) }),
                 Name = "num",
                 HasExplicitDefaultValue = true,
                 ExplicitDefaultValue = 2,
@@ -161,14 +158,14 @@ namespace APIViewTest
         {
             var a = new AttributeAPIV
             {
-                Type = new TypeReference(new Token[] { new Token("TestAttribute", TypeReference.TypeName.ClassType) }),
+                Type = new TypeReference(new Token[] { new Token("TestAttribute", TypeReference.TokenType.ClassType) }),
                 ConstructorArgs = new string[] {"Test", "\"String\""}
             };
 
             var m = new MethodAPIV
             {
                 Name = "TestMethod",
-                ReturnType = new TypeReference(new Token[] { new Token("void", TypeReference.TypeName.BuiltInType) }),
+                ReturnType = new TypeReference(new Token[] { new Token("void", TypeReference.TokenType.BuiltInType) }),
                 Accessibility = "public",
                 ClassNavigationID = "",
                 IsConstructor = false,

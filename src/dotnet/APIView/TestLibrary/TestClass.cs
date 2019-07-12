@@ -219,6 +219,11 @@ namespace TestLibrary
             One = 1, Two = 2, Three = 3
         }
 
+        public void MethodTakingEnum(PublicEnum publicEnum)
+        {
+
+        }
+
         public string RefKindParamMethod(ref string str)
         {
             throw new NotImplementedException();

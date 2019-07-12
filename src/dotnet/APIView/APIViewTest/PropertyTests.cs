@@ -13,7 +13,6 @@ namespace APIViewTest
             PropertyAPIV property = new PropertyAPIV(propertySymbol);
             
             Assert.Equal("propertyGet", property.Name);
-            Assert.Equal(TypeReference.TypeName.BuiltInType, property.Type.Type);
             Assert.Equal("uint", property.Type.Tokens[0].DisplayString);
             Assert.False(property.HasSetMethod);
         }
@@ -34,7 +33,6 @@ namespace APIViewTest
             PropertyAPIV property = new PropertyAPIV(propertySymbol);
             
             Assert.Equal("propertyBoth", property.Name);
-            Assert.Equal(TypeReference.TypeName.BuiltInType, property.Type.Type);
             Assert.Equal("int", property.Type.Tokens[0].DisplayString);
             Assert.True(property.HasSetMethod);
         }

@@ -372,6 +372,11 @@ namespace APIView
                 AppendIndents(builder, indents);
             }
 
+            if (p.RefKind != Microsoft.CodeAnalysis.RefKind.None)
+            {
+                RenderKeyword(builder, p.RefKind.ToString().ToLower());
+                builder.Append(" ");
+            }
             Render(p.Type, builder);
 
             builder.Append(" ").Append(p.Name);
@@ -439,20 +444,22 @@ namespace APIView
 
         public void Render(TypeReference type, StringBuilder builder)
         {
+            if (type == null || type?.Tokens == null)
+                return;
             foreach (var token in type.Tokens)
             {
                 switch (token.Type)
                 {
-                    case TypeReference.TypeName.BuiltInType:
+                    case TypeReference.TokenType.BuiltInType:
                         RenderKeyword(builder, token.DisplayString);
                         break;
-                    case TypeReference.TypeName.ClassType:
+                    case TypeReference.TokenType.ClassType:
                         RenderClass(builder, token);
                         break;
-                    case TypeReference.TypeName.EnumType:
+                    case TypeReference.TokenType.EnumType:
                         RenderEnum(builder, token);
                         break;
-                    case TypeReference.TypeName.SpecialType:
+                    case TypeReference.TokenType.TypeArgument:
                         RenderType(builder, token.DisplayString);
                         break;
                     default:

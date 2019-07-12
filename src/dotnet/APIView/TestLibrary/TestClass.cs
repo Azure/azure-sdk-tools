@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Reflection.Metadata;
@@ -195,7 +196,7 @@ namespace TestLibrary
 
         string RefKindParamMethod(ref string str);
 
-        [Custom("Test"), New()]
+        [Custom("Test", Named="Param"), New()]
         int AttributesTypeParamsMethod<T, R>();
     }
 
@@ -203,12 +204,14 @@ namespace TestLibrary
     {
     }
 
-    internal class CustomAttribute : Attribute
+    public class CustomAttribute : Attribute
     {
-        internal CustomAttribute(string str)
+        public CustomAttribute(string str)
         {
 
         }
+
+        public string Named { get; set; }
     }
 
     public class ImplementingClass : PublicInterface<int>
@@ -216,6 +219,11 @@ namespace TestLibrary
         public enum PublicEnum : long
         {
             One = 1, Two = 2, Three = 3
+        }
+
+        public void MethodTakingEnum(PublicEnum publicEnum)
+        {
+
         }
 
         public string RefKindParamMethod(ref string str)
@@ -231,6 +239,14 @@ namespace TestLibrary
         public int AttributesTypeParamsMethod<T, R>()
         {
             throw new NotImplementedException();
+        }
+    }
+
+    public class TestClass
+    {
+        public void TestMethod(List<ImplementingClass> testParam)
+        {
+
         }
     }
 }

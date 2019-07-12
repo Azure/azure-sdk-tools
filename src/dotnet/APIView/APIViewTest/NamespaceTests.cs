@@ -56,7 +56,7 @@ namespace APIViewTest
             var builder = new StringBuilder();
             var renderer = new HTMLRendererAPIV();
             renderer.Render(ns, builder);
-            Assert.Equal("<span class=\"specialName\">namespace</span> <span class=\"name\">TestNamespace</span> {<br />}", builder.ToString());
+            Assert.Equal("<span class=\"keyword\">namespace</span> <span id=\"\" class=\"name\">TestNamespace</span> {<br />}", builder.ToString());
         }
     }
 }

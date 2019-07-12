@@ -14,13 +14,14 @@ namespace APIView
     public class NamedTypeAPIV
     {
         public string Name { get; set; }
-        public string Type { get; set; }
-        public string EnumUnderlyingType { get; set; }
+        public string TypeKind { get; set; }
+        public TypeReferenceAPIV EnumUnderlyingType { get; set; }
         public string Accessibility { get; set; }
+        public string NavigationID { get; set; }
 
         public EventAPIV[]  Events { get; set; }
         public FieldAPIV[] Fields { get; set; }
-        public string[] Implementations { get; set; }
+        public TypeReferenceAPIV[] Implementations { get; set; }
         public MethodAPIV[] Methods { get; set; }
         public NamedTypeAPIV[] NamedTypes { get; set; }
         public PropertyAPIV[] Properties { get; set; }
@@ -35,18 +36,20 @@ namespace APIView
         public NamedTypeAPIV(INamedTypeSymbol symbol)
         {
             this.Name = symbol.Name;
-            this.Type = symbol.TypeKind.ToString().ToLower();
+            this.TypeKind = symbol.TypeKind.ToString().ToLower();
             if (symbol.EnumUnderlyingType != null)
-                this.EnumUnderlyingType = symbol.EnumUnderlyingType.ToDisplayString();
+                this.EnumUnderlyingType = new TypeReferenceAPIV(symbol.EnumUnderlyingType);
             this.Accessibility = symbol.DeclaredAccessibility.ToString().ToLower();
 
-            List<EventAPIV> events = new List<EventAPIV>();
-            List<FieldAPIV> fields = new List<FieldAPIV>();
-            List<string> implementations = new List<string>();
-            List<MethodAPIV> methods = new List<MethodAPIV>();
-            List<NamedTypeAPIV> namedTypes = new List<NamedTypeAPIV>();
-            List<PropertyAPIV> properties = new List<PropertyAPIV>();
-            List<TypeParameterAPIV> typeParameters = new List<TypeParameterAPIV>();
+            this.NavigationID = symbol.ConstructedFrom.ToDisplayString();
+
+            var events = new List<EventAPIV>();
+            var fields = new List<FieldAPIV>();
+            var implementations = new List<TypeReferenceAPIV>();
+            var methods = new List<MethodAPIV>();
+            var namedTypes = new List<NamedTypeAPIV>();
+            var properties = new List<PropertyAPIV>();
+            var typeParameters = new List<TypeParameterAPIV>();
 
             // add any types declared in the body of this type to lists
             foreach (var memberSymbol in symbol.GetMembers())
@@ -85,12 +88,12 @@ namespace APIView
             }
 
             if (symbol.BaseType != null && !(symbol.BaseType.SpecialType == SpecialType.System_Object || symbol.BaseType.SpecialType == SpecialType.System_ValueType))
-                implementations.Add(symbol.BaseType.ToDisplayString());
+                implementations.Add(new TypeReferenceAPIV(symbol.BaseType));
 
             // add a string representation of each implemented type to list
             foreach (var i in symbol.Interfaces)
             {
-                implementations.Add(i.ToDisplayString());
+                implementations.Add(new TypeReferenceAPIV(i));
             }
 
             foreach (var t in symbol.TypeParameters)

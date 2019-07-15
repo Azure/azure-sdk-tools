@@ -5,31 +5,44 @@
 trigger:
   - master
 
+resources:
+  repositories:
+    - repository: azure-sdk-build-tools
+      type: git
+      name: internal/azure-sdk-build-tools
+
 variables:
   DotNetCoreVersion: '2.1.503'
   ProjectFile: mgmtci.proj
+  BlobFeedUrl: https://azuresdkartifacts.blob.core.windows.net/azure-sdk-tools/index.json
 
-jobs:
-  - job: 'Build'
+stages:
+  - stage: Build
+    jobs:
+      - job: 'Build'
 
-    pool:
-      vmImage: 'vs2017-win2016'
+        pool:
+          vmImage: 'vs2017-win2016'
 
-    steps:
-      - task: DotNetCoreInstaller@0
-        displayName: 'Use .NET Core sdk $(DotNetCoreVersion)'
-        inputs:
-          version: '$(DotNetCoreVersion)'
+        steps:
+          - task: DotNetCoreInstaller@0
+            displayName: 'Use .NET Core sdk $(DotNetCoreVersion)'
+            inputs:
+              version: '$(DotNetCoreVersion)'
 
-      - script: 'dotnet pack $(ProjectFile) -o $(Build.ArtifactStagingDirectory) -warnaserror $(VersioningProps)'
-        displayName: 'Build and Package'
-        env:
-          DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
-          DOTNET_CLI_TELEMETRY_OPTOUT: 1
-          DOTNET_MULTILEVEL_LOOKUP: 0
+          - script: 'dotnet pack $(ProjectFile) -o $(Build.ArtifactStagingDirectory) -warnaserror $(VersioningProps)'
+            displayName: 'Build and Package'
+            env:
+              DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+              DOTNET_CLI_TELEMETRY_OPTOUT: 1
+              DOTNET_MULTILEVEL_LOOKUP: 0
 
-      - task: PublishBuildArtifacts@1
-        condition: succeededOrFailed()
-        displayName: 'Publish Artifacts'
-        inputs:
-          ArtifactName: packages
+          - task: PublishBuildArtifacts@1
+            condition: succeededOrFailed()
+            displayName: 'Publish Artifacts'
+            inputs:
+              ArtifactName: packages
+  - ${{ if ne(variables['System.TeamProject'], 'Public') }}:
+    - template: pipelines/stages/net-release-blobfeed.yml@azure-sdk-build-tools
+      parameters:
+        ShouldSign: false

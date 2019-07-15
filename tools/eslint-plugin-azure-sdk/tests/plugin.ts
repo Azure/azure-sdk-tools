@@ -26,7 +26,6 @@ const ruleList = [
   "ts-config-sourcemap",
   "ts-config-strict",
   "ts-config-target",
-  "ts-doc-external",
   "ts-doc-internal",
   "ts-error-handling",
   "ts-modules-only-named",

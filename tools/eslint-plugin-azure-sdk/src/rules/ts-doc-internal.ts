@@ -15,6 +15,14 @@ import { ParserServices } from "@typescript-eslint/experimental-utils";
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/**
+ * Helper method for reporting on a node
+ * @param node the Node being operated on
+ * @param context the ESLint runtime context
+ * @param converter a converter from TSESTree Nodes to TSNodes
+ * @param typeChecker the TypeScript TypeChecker
+ * @throws if the Node passes throught the initial checks and does not have an internal or ignore tag
+ */
 const reportInternal = (
   node: Node,
   context: Rule.RuleContext,
@@ -88,21 +96,28 @@ export = {
     const typeChecker = program.getTypeChecker();
     const converter = parserServices.esTreeNodeToTSNodeMap;
 
-    return {
-      // callback functions
-      ":matches(TSInterfaceDeclaration, ClassDeclaration)": (
-        node: Node
-      ): void => {
-        reportInternal(node, context, converter, typeChecker);
-      },
+    const srcRegex = /src/;
 
-      ":function": (node: Node): void => {
-        const ancestors = context.getAncestors();
+    return srcRegex.test(context.getFilename())
+      ? {
+          // callback functions
+          ":matches(TSInterfaceDeclaration, ClassDeclaration, TSModuleDeclaration)": (
+            node: Node
+          ): void => {
+            reportInternal(node, context, converter, typeChecker);
+          },
 
-        ancestors.every((ancestor: Node): boolean => {
-          return ancestor.type !== "ClassBody";
-        }) && reportInternal(node, context, converter, typeChecker);
-      }
-    };
+          ":function": (node: Node): void => {
+            const ancestors = context.getAncestors();
+            ancestors.every((ancestor: Node): boolean => {
+              return ![
+                "ClassBody",
+                "TSInterfaceBody",
+                "TSModuleBlock"
+              ].includes(ancestor.type);
+            }) && reportInternal(node, context, converter, typeChecker);
+          }
+        }
+      : {};
   }
 };

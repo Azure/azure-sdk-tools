@@ -29,7 +29,8 @@ ruleTester.run("ts-doc-internal", rule, {
              * Other documentation
              * @internal
              */
-            class ExampleClass {}`
+            class ExampleClass {}`,
+      filename: "src/test.ts"
     },
     {
       code: `
@@ -37,7 +38,8 @@ ruleTester.run("ts-doc-internal", rule, {
              * Other documentation
              * @ignore
              */
-            class ExampleClass {}`
+            class ExampleClass {}`,
+      filename: "src/test.ts"
     },
     // interface
     {
@@ -46,7 +48,8 @@ ruleTester.run("ts-doc-internal", rule, {
              * Other documentation
              * @internal
              */
-            interface ExampleInterface {}`
+            interface ExampleInterface {}`,
+      filename: "src/test.ts"
     },
     {
       code: `
@@ -54,7 +57,8 @@ ruleTester.run("ts-doc-internal", rule, {
              * Other documentation
              * @ignore
              */
-            interface ExampleInterface {}`
+            interface ExampleInterface {}`,
+      filename: "src/test.ts"
     },
     // function
     {
@@ -63,7 +67,8 @@ ruleTester.run("ts-doc-internal", rule, {
              * Other documentation
              * @internal
              */
-            function ExampleFunction() {}`
+            function ExampleFunction() {}`,
+      filename: "src/test.ts"
     },
     {
       code: `
@@ -71,7 +76,8 @@ ruleTester.run("ts-doc-internal", rule, {
              * Other documentation
              * @ignore
              */
-            function ExampleFunction() {}`
+            function ExampleFunction() {}`,
+      filename: "src/test.ts"
     }
   ],
   invalid: [
@@ -82,6 +88,7 @@ ruleTester.run("ts-doc-internal", rule, {
              * Other documentation
              */
             class ExampleClass {}`,
+      filename: "src/test.ts",
       errors: [
         {
           message:
@@ -96,6 +103,7 @@ ruleTester.run("ts-doc-internal", rule, {
              * Other documentation
              */
             interface ExampleInterface {}`,
+      filename: "src/test.ts",
       errors: [
         {
           message:
@@ -110,6 +118,7 @@ ruleTester.run("ts-doc-internal", rule, {
              * Other documentation
              */
             function ExampleFunction() {}`,
+      filename: "src/test.ts",
       errors: [
         {
           message:

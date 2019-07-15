@@ -42,7 +42,7 @@ throw new OtherError("error");
 ```ts
 try {
   /* code here */
-} catch (err: OtherError) {
+} catch (err) {
   throw err;
 }
 ```

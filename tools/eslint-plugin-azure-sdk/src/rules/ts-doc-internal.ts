@@ -62,7 +62,7 @@ export = {
       category: "Best Practices",
       recommended: true,
       url:
-        "https://github.com/arpanlaha/azure-sdk-tools/blob/ruleset-two/tools/eslint-plugin-azure-sdk/docs/rules/ts-doc-internal.md"
+        "https://github.com/Azure/azure-sdk-tools/blob/master/tools/eslint-plugin-azure-sdk/docs/rules/ts-doc-internal.md"
     },
     schema: [] // no options
   },

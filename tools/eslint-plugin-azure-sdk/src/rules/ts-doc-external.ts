@@ -15,17 +15,24 @@ import { Node } from "estree";
 //------------------------------------------------------------------------------
 
 const reportExternal = (
-  node: Node,
+  node: any,
   context: Rule.RuleContext,
   converter: ParserWeakMap<TSESTree.Node, TSNode>
 ): void => {
-  const tsNode = converter.get(node as TSESTree.Node) as any;
+  if (node.accessibility === "private") {
+    return;
+  }
 
+  const tsNode = converter.get(node as TSESTree.Node) as any;
   if (tsNode.jsDoc === undefined) {
     context.report({
       node: node,
       message: "all external items must include TSDoc comments"
     });
+    return;
+  }
+
+  if (node.kind === "constructor") {
     return;
   }
 
@@ -57,11 +64,11 @@ export = {
 
     docs: {
       description:
-        "require TSDoc comments on external objects and forbid usage of internal and ignore tags",
+        "require TSDoc comments on external objects and forbid usage of @internal and @ignore tags",
       category: "Best Practices",
       recommended: true,
       url:
-        "https://github.com/arpanlaha/azure-sdk-tools/blob/ruleset-two/tools/eslint-plugin-azure-sdk/docs/rules/ts-doc-external.md"
+        "https://github.com/Azure/azure-sdk-tools/blob/master/tools/eslint-plugin-azure-sdk/docs/rules/ts-doc-external.md"
     },
     schema: [] // no options
   },
@@ -98,7 +105,7 @@ export = {
 
         if (context.settings.exported.includes(symbol)) {
           reportExternal(node, context, converter);
-          const body: Node[] = node.body;
+          const body: Node[] = node.body.body;
           body.forEach((member: Node): void => {
             reportExternal(member, context, converter);
           });

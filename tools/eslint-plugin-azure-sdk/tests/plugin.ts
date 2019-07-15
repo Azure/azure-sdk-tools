@@ -26,6 +26,7 @@ const ruleList = [
   "ts-config-sourcemap",
   "ts-config-strict",
   "ts-config-target",
+  "ts-doc-external",
   "ts-doc-internal",
   "ts-error-handling",
   "ts-modules-only-named",
@@ -167,6 +168,9 @@ describe("plugin", (): void => {
   describe("rules", (): void => {
     it("rules should be a member of the plugin", (): void => {
       assert.property(plugin, "rules", "rules is not a member of the plugin");
+    });
+    it("the number of rules should match the expected value", (): void => {
+      assert.equal(Object.keys(plugin.rules).length, ruleList.length);
     });
     const rules = plugin.rules;
     ruleList.forEach((rule: string): void => {

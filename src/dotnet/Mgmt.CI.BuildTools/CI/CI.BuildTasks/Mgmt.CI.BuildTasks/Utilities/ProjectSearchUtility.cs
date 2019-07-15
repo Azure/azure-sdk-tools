@@ -630,7 +630,6 @@ namespace MS.Az.NetSdk.Build.Utilities
                 }
                 else
                 {
-                    //validScopePath = Path.Combine(ScopeRootDir, scopePath);
                     UtilLogger.LogInfo(MessageImportance.Low, "Constructed Scope path is: '{0}'", validScopePath);
 
                     if (Directory.Exists(validScopePath))
@@ -765,9 +764,6 @@ namespace MS.Az.NetSdk.Build.Utilities
 
                     foreach (string serviceDir in svcTopDirs)
                     {
-                        // handling mgmtCommon
-                        //cmnDir = FindMgmtCommonDirs(sdp, serviceDir);
-
                         // If ever data plane needs to be part of this, enable the below
                         //dpD = FindDataPlaneDirs(serviceDir);
 
@@ -788,11 +784,6 @@ namespace MS.Az.NetSdk.Build.Utilities
                         {
                             masterList.AddRange(mpT);
                         }
-
-                        //if(cmnDir.NotNullOrAny<string>())
-                        //{
-                        //    masterList.AddRange(cmnDir);
-                        //}
 
                         //if(dpD.Any<string>())
                         //{
@@ -822,20 +813,6 @@ namespace MS.Az.NetSdk.Build.Utilities
         List<string> FindDataPlaneDirs(string searchDirPath)
         {
             List<string> dpD = new List<string>();
-            //#region legacy data-plane dirs
-            ////Legacy data-plane dirs
-            //var dpDirs = Directory.EnumerateDirectories(searchDirPath, "dataplane", SearchOption.TopDirectoryOnly);
-            //if (dpDirs.Any<string>())
-            //{
-            //    dpD.AddRange(dpDirs);
-            //}
-
-            //var dppDirs = Directory.EnumerateDirectories(searchDirPath, "data-plane", SearchOption.TopDirectoryOnly);
-            //if (dppDirs.Any<string>())
-            //{
-            //    dpD.AddRange(dppDirs);
-            //}
-            //#endregion
 
             // There is a case that in new dir structure, few dirs are starting with Azure.* name, so will have to add this if DP decides to leverage this
             var newDPDirs = Directory.EnumerateDirectories(searchDirPath, "Microsoft.Azure.*", SearchOption.TopDirectoryOnly);
@@ -1098,13 +1075,6 @@ namespace MS.Az.NetSdk.Build.Utilities
                 if(testInSdkProj.Any<string>())
                 {
                     MGMT_TestProjList.AddRange(testInSdkProj);
-
-                    var foo = msdkProj.Except(testInSdkProj, new ObjectComparer<string>((lhs, rhs) => lhs.Equals(rhs, StringComparison.OrdinalIgnoreCase)));
-
-                    if(foo.Any<string>())
-                    {
-
-                    }
                 }
 
                 //Search test projects in the same directory, if the project name does not contain "test", they are non-test projects

@@ -14,7 +14,7 @@ namespace APIViewTest
             FieldAPIV field = new FieldAPIV(fieldSymbol);
             
             Assert.Equal("publicField", field.Name);
-            Assert.Equal("int", field.Type);
+            Assert.Equal("int", field.Type.Tokens[0].DisplayString);
             Assert.Equal("public", field.Accessibility);
             Assert.False(field.IsConstant);
             Assert.True(field.IsReadOnly);
@@ -39,7 +39,7 @@ namespace APIViewTest
             FieldAPIV field = new FieldAPIV(fieldSymbol);
 
             Assert.Equal("publicString", field.Name);
-            Assert.Equal("string", field.Type);
+            Assert.Equal("string", field.Type.Tokens[0].DisplayString);
             Assert.Equal("public", field.Accessibility);
             Assert.True(field.IsConstant);
             Assert.False(field.IsReadOnly);
@@ -64,7 +64,7 @@ namespace APIViewTest
             FieldAPIV field = new FieldAPIV(fieldSymbol);
 
             Assert.Equal("protectedField", field.Name);
-            Assert.Equal("int", field.Type);
+            Assert.Equal("int", field.Type.Tokens[0].DisplayString);
             Assert.Equal("protected", field.Accessibility);
             Assert.False(field.IsConstant);
             Assert.False(field.IsReadOnly);
@@ -88,7 +88,7 @@ namespace APIViewTest
             var f = new FieldAPIV
             {
                 Accessibility = "public",
-                Type = "string",
+                Type = new TypeReferenceAPIV(new TokenAPIV[] { new TokenAPIV("string", TypeReferenceAPIV.TokenType.BuiltInType) }),
                 IsConstant = true,
                 IsReadOnly = false,
                 IsStatic = true,
@@ -96,10 +96,11 @@ namespace APIViewTest
                 Value = "constant string",
                 Name = "publicString"
             };
+            f.Type.IsString = true;
             var builder = new StringBuilder();
             var renderer = new HTMLRendererAPIV();
             renderer.Render(f, builder);
-            Assert.Equal("<span class=\"keyword\">public</span> <span class=\"keyword\">static</span> <span class=\"keyword\">const</span> <span class=\"type\">string</span>" +
+            Assert.Equal("<span class=\"keyword\">public</span> <span class=\"keyword\">static</span> <span class=\"keyword\">const</span> <span class=\"keyword\">string</span>" +
                 " <span class=\"name\">publicString</span> = <span class=\"value\">\"constant string\"</span>;", builder.ToString());
         }
     }

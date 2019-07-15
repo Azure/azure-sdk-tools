@@ -4,14 +4,34 @@ namespace APIView
 {
     public class TextRendererAPIV : TreeRendererAPIV
     {
+        protected override void RenderClassDefinition(StringBuilder builder, NamedTypeAPIV nt)
+        {
+            builder.Append(nt.Name);
+        }
+
+        protected override void RenderEnumDefinition(StringBuilder builder, NamedTypeAPIV nt)
+        {
+            builder.Append(nt.Name);
+        }
+
         protected override void RenderPunctuation(StringBuilder builder, string word)
         {
             builder.Append(word.Replace("&lt;", "<").Replace("&gt;", ">"));
         }
 
-        protected override void RenderClass(StringBuilder builder, string word)
+        protected override void RenderEnum(StringBuilder builder, TokenAPIV t)
         {
-            builder.Append(word);
+            builder.Append(t.DisplayString);
+        }
+
+        protected override void RenderClass(StringBuilder builder, TokenAPIV t)
+        {
+            builder.Append(t.DisplayString);
+        }
+
+        protected override void RenderConstructor(StringBuilder builder, MethodAPIV m)
+        {
+            builder.Append(m.Name);
         }
 
         protected override void RenderKeyword(StringBuilder builder, string word)
@@ -22,6 +42,11 @@ namespace APIView
         protected override void RenderName(StringBuilder builder, string word)
         {
             builder.Append(word);
+        }
+
+        protected override void RenderNamespace(StringBuilder builder, NamespaceAPIV ns)
+        {
+            builder.Append(ns.Name);
         }
 
         protected override void RenderNewline(StringBuilder builder)

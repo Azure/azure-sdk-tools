@@ -16,7 +16,7 @@ namespace APIViewTest
             NamedTypeAPIV publicClass = new NamedTypeAPIV(namedTypeSymbol);
 
             Assert.Equal("SomeEventsSomeFieldsNoMethodsSomeNamedTypes", publicClass.Name);
-            Assert.Equal("class", publicClass.Type);
+            Assert.Equal("class", publicClass.TypeKind);
             Assert.Equal(2, publicClass.Events.Length);
             Assert.Equal(2, publicClass.Fields.Length);
             Assert.Empty(publicClass.Methods);
@@ -39,7 +39,7 @@ namespace APIViewTest
             NamedTypeAPIV publicInterface = new NamedTypeAPIV(namedTypeSymbol);
 
             Assert.Equal("PublicInterface", publicInterface.Name);
-            Assert.Equal("interface", publicInterface.Type);
+            Assert.Equal("interface", publicInterface.TypeKind);
             Assert.Empty(publicInterface.Events);
             Assert.Empty(publicInterface.Fields);
             Assert.Equal(3, publicInterface.Methods.Length);
@@ -62,9 +62,14 @@ namespace APIViewTest
             NamedTypeAPIV implementer = new NamedTypeAPIV(namedTypeSymbol);
 
             Assert.Equal("ImplementingClass", implementer.Name);
-            Assert.Equal("class", implementer.Type);
+            Assert.Equal("class", implementer.TypeKind);
             Assert.Single(implementer.Implementations);
-            Assert.Equal("TestLibrary.PublicInterface<int>", implementer.Implementations[0]);
+            Assert.Equal("TestLibrary", implementer.Implementations[0].Tokens[0].DisplayString);
+            Assert.Equal(".", implementer.Implementations[0].Tokens[1].DisplayString);
+            Assert.Equal("PublicInterface", implementer.Implementations[0].Tokens[2].DisplayString);
+            Assert.Equal("<", implementer.Implementations[0].Tokens[3].DisplayString);
+            Assert.Equal("int", implementer.Implementations[0].Tokens[4].DisplayString);
+            Assert.Equal(">", implementer.Implementations[0].Tokens[5].DisplayString);
         }
 
         [Fact]
@@ -83,8 +88,8 @@ namespace APIViewTest
             NamedTypeAPIV publicEnum = new NamedTypeAPIV(namedTypeSymbol);
 
             Assert.Equal("PublicEnum", publicEnum.Name);
-            Assert.Equal("enum", publicEnum.Type);
-            Assert.Equal("int", publicEnum.EnumUnderlyingType);
+            Assert.Equal("enum", publicEnum.TypeKind);
+            Assert.Equal("int", publicEnum.EnumUnderlyingType.Tokens[0].DisplayString);
         }
         
         [Fact]
@@ -104,8 +109,8 @@ namespace APIViewTest
             NamedTypeAPIV publicEnum = new NamedTypeAPIV(namedTypeSymbol);
 
             Assert.Equal("PublicEnum", publicEnum.Name);
-            Assert.Equal("enum", publicEnum.Type);
-            Assert.Equal("long", publicEnum.EnumUnderlyingType);
+            Assert.Equal("enum", publicEnum.TypeKind);
+            Assert.Equal("long", publicEnum.EnumUnderlyingType.Tokens[0].DisplayString);
         }
 
         [Fact]
@@ -125,7 +130,7 @@ namespace APIViewTest
             NamedTypeAPIV publicDelegate = new NamedTypeAPIV(namedTypeSymbol);
 
             Assert.Equal("publicDelegate", publicDelegate.Name);
-            Assert.Equal("delegate", publicDelegate.Type);
+            Assert.Equal("delegate", publicDelegate.TypeKind);
         }
 
         [Fact]
@@ -172,7 +177,7 @@ namespace APIViewTest
             var p = new PropertyAPIV
             {
                 Name = "TestProperty",
-                Type = "string",
+                Type = new TypeReferenceAPIV(new TokenAPIV[] { new TokenAPIV("string", TypeReferenceAPIV.TokenType.BuiltInType) }),
                 Accessibility = "protected",
                 IsAbstract = false,
                 IsVirtual = false,
@@ -182,11 +187,12 @@ namespace APIViewTest
             var nt = new NamedTypeAPIV
             {
                 Name = "ImplementingClass",
-                Type = "class",
+                TypeKind = "class",
                 Accessibility = "public",
+                NavigationID = "ImplementingClass",
                 Events = new EventAPIV[] { },
                 Fields = new FieldAPIV[] { },
-                Implementations = new string[] { "BaseClass" },
+                Implementations = new TypeReferenceAPIV[] { new TypeReferenceAPIV(new TokenAPIV[] { new TokenAPIV("BaseClass", TypeReferenceAPIV.TokenType.ClassType) }) },
                 Methods = new MethodAPIV[] { },
                 NamedTypes = new NamedTypeAPIV[] { },
                 Properties = new PropertyAPIV[] { p },
@@ -195,8 +201,8 @@ namespace APIViewTest
             var builder = new StringBuilder();
             var renderer = new HTMLRendererAPIV();
             renderer.Render(nt, builder);
-            Assert.Equal("<span class=\"keyword\">public</span> <span class=\"specialName\">class</span> <span class=\"class\">ImplementingClass</span> : " +
-                "<span class=\"class\">BaseClass</span> {<br />    <span class=\"keyword\">protected</span> <span class=\"type\">string</span> <span class" +
+            Assert.Equal("<span class=\"keyword\">public</span> <span class=\"keyword\">class</span> <span id=\"ImplementingClass\" class=\"class\">ImplementingClass</span> : " +
+                "<a href=\"#\" class=\"class\">BaseClass</a> {<br />    <span class=\"keyword\">protected</span> <span class=\"keyword\">string</span> <span class" +
                 "=\"name\">TestProperty</span> { <span class=\"keyword\">get</span>; <span class=\"keyword\">set</span>; }<br />}", builder.ToString());
         }
 
@@ -212,11 +218,12 @@ namespace APIViewTest
             var nt = new NamedTypeAPIV
             {
                 Name = "TestInterface",
-                Type = "interface",
+                TypeKind = "interface",
                 Accessibility = "public",
+                NavigationID = "TestInterface",
                 Events = new EventAPIV[] { },
                 Fields = new FieldAPIV[] { },
-                Implementations = new string[] { },
+                Implementations = new TypeReferenceAPIV[] { },
                 Methods = new MethodAPIV[] { },
                 NamedTypes = new NamedTypeAPIV[] { },
                 Properties = new PropertyAPIV[] { },
@@ -225,8 +232,8 @@ namespace APIViewTest
             var builder = new StringBuilder();
             var renderer = new HTMLRendererAPIV();
             renderer.Render(nt, builder);
-            Assert.Equal("<span class=\"keyword\">public</span> <span class=\"specialName\">interface</span> <span class=\"class\">TestInterface</span>&lt;" +
-                "<span class=\"type\">T</span>&gt; {<br />}", builder.ToString());
+            Assert.Equal("<span class=\"keyword\">public</span> <span class=\"keyword\">interface</span> <span id=\"TestInterface\" class=\"class\">TestInterface</span>&lt;" +
+                "<a href=\"#T\" class=\"type\">T</a>&gt; {<br />}", builder.ToString());
         }
     }
 }

@@ -28,6 +28,7 @@ export = {
       "@azuresdktools/azure-sdk/ts-config-sourcemap": "error",
       "@azuresdktools/azure-sdk/ts-config-strict": "error",
       "@azuresdktools/azure-sdk/ts-config-target": "error",
+      "@azuresdktools/azure-sdk/ts-doc-external": "error",
       "@azuresdktools/azure-sdk/ts-doc-internal": "error",
       "@azuresdktools/azure-sdk/ts-error-handling": "off",
       "@azuresdktools/azure-sdk/ts-modules-only-named": "error",

@@ -31,7 +31,6 @@ const reportInternal = (
   ) {
     let TSDocTags: string[] = [];
     tsNode.jsDoc.forEach((TSDocComment: any): void => {
-      //console.log(TSDocComment.tags);
       TSDocTags = TSDocTags.concat(
         TSDocComment.tags !== undefined
           ? TSDocComment.tags.map((TSDocTag: any): string => {
@@ -40,6 +39,7 @@ const reportInternal = (
           : []
       );
     });
+
     const internalRegex = /(ignore)|(internal)/;
     TSDocTags.every((TSDocTag: string): boolean => {
       return !internalRegex.test(TSDocTag);
@@ -61,7 +61,8 @@ export = {
         "require TSDoc comments to include an '@internal' or '@ignore' tag if the object is not public-facing",
       category: "Best Practices",
       recommended: true,
-      url: "to be added" //TODO
+      url:
+        "https://github.com/arpanlaha/azure-sdk-tools/blob/ruleset-two/tools/eslint-plugin-azure-sdk/docs/rules/ts-doc-internal.md"
     },
     schema: [] // no options
   },

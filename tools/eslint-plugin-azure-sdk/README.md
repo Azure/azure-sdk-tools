@@ -93,6 +93,7 @@ For example, if you are not targeting Node, disable `ts-config-moduleresolution`
 - [ts-config-sourcemap](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-sourcemap.md)
 - [ts-config-strict](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-strict.md)
 - [ts-config-target](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-target.md)
+- [ts-doc-external](/tools/eslint-plugin-azure-sdk/docs/rules/ts-doc-external.md)
 - [ts-doc-internal](/tools/eslint-plugin-azure-sdk/docs/rules/ts-doc-internal.md)
 - [ts-error-handling](/tools/eslint-plugin-azure-sdk/docs/rules/ts-error-handling.md)
 - [ts-modules-only-named](/tools/eslint-plugin-azure-sdk/docs/rules/ts-modules-only-named.md)

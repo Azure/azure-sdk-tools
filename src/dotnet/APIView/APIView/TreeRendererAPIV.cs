@@ -325,7 +325,7 @@ namespace APIView
 
         public void Render(NamespaceAPIV ns, StringBuilder builder, int indents = 0)
         {
-            if (ns.Name.Any())
+            if (ns.Name != "<global namespace>")
             {
                 AppendIndents(builder, indents);
                 RenderKeyword(builder, "namespace");

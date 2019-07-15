@@ -27,7 +27,7 @@ namespace APIView
         /// <param name="symbol">The symbol representing the namespace.</param>
         public NamespaceAPIV(INamespaceSymbol symbol)
         {
-            this.Name = symbol.Name;
+            this.Name = symbol.ToDisplayString();
             this.NavigationID = symbol.ToDisplayString();
 
             List<NamedTypeAPIV> namedTypes = new List<NamedTypeAPIV>();

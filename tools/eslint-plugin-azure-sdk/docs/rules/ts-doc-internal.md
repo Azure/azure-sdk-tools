@@ -63,4 +63,4 @@ function exampleFunction(): void {}
 
 ## Source
 
-Suggestion from @chradek.
+Suggestion by [@chradek](https://github.com/chradek).

@@ -164,7 +164,7 @@ namespace APIView
             if (m.IsConstructor)
                 RenderConstructor(builder, m);
             else
-                RenderName(builder, m.Name);
+                RenderMethod(builder, m);
 
             if (m.TypeParameters.Any())
             {
@@ -495,6 +495,8 @@ namespace APIView
         protected abstract void RenderConstructor(StringBuilder builder, MethodAPIV m);
 
         protected abstract void RenderKeyword(StringBuilder builder, string word);
+
+        protected abstract void RenderMethod(StringBuilder builder, MethodAPIV m);
 
         protected abstract void RenderName(StringBuilder builder, string word);
 

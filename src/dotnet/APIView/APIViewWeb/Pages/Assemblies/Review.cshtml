@@ -3,21 +3,35 @@
 @{
     ViewData["Title"] = "Review";
 }
+<script>
+    function toggleComment(id) {
+        // get the comment form
+        var myForm = document.getElementById("commentForm");
+
+        var idField = document.getElementById("idBox");
+        idField.innerHTML = id;
+
+        // get the current value of the form's display property
+        var displaySetting = myForm.style.display;
+
+        // now toggle the form, depending on current state
+        if (displaySetting != "block") {
+            // form is visible. hide it
+            myForm.style.display = "block";
+        }
+    }
+</script>
+
 <pre>@Html.Raw(Model.AssemblyModel)</pre>
 
-<form>
-    <div class="form-inline">
-        <div class="form-group">
-            <label for="commentThread">Line number:</label>
-            <input id="commentThread" type="text" class="form-control mx-sm-3" aria-describedby="commentHelp" />
-            <small id="commentHelp" class="text-muted">
-                Enter a line number or click on a line label to generate a comment.
-            </small>
-        </div>
+<form id="commentForm" class="comment">
+    <div class="form-group">
+        <label>ID:</label>
+        <textarea id="idBox" class="form-control" rows="1"></textarea>
     </div>
     <div class="form-group">
         <label>Comment:</label>
-        <textarea class="form-control" rows="3"></textarea>
+        <textarea id="commentThread" class="form-control" rows="3"></textarea>
     </div>
     <button type="submit" class="btn btn-primary">Add</button>
 </form>

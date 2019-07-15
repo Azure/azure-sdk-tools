@@ -7,14 +7,14 @@ namespace APIView
     {
         protected override void RenderClassDefinition(StringBuilder builder, NamedTypeAPIV nt)
         {
-            builder.Append("<span id=\"").Append(EscapeHTML(nt.NavigationID)).Append("\" class=\"class\">")
-                .Append(EscapeHTML(nt.Name)).Append("</span>");
+            builder.Append("<a href=\"#commentForm\"  id=\"").Append(EscapeHTML(nt.NavigationID)).Append("\" onclick=\"toggleComment(id)\"" +
+                " class=\"class\">").Append(EscapeHTML(nt.Name)).Append("</a>");
         }
 
         protected override void RenderEnumDefinition(StringBuilder builder, NamedTypeAPIV nt)
         {
-            builder.Append("<span id=\"").Append(nt.NavigationID).Append("\" class=\"enum\">")
-                .Append(EscapeHTML(nt.Name)).Append("</span>");
+            builder.Append("<a href=\"#commentForm\" id=\"").Append(nt.NavigationID).Append("\" onclick=\"toggleComment(id)\" " +
+                "class=\"enum\">").Append(EscapeHTML(nt.Name)).Append("</a>");
         }
 
         protected override void RenderPunctuation(StringBuilder builder, string word)
@@ -43,6 +43,12 @@ namespace APIView
         protected override void RenderKeyword(StringBuilder builder, string word)
         {
             builder.Append("<span class=\"keyword\">").Append(EscapeHTML(word)).Append("</span>");
+        }
+
+        protected override void RenderMethod(StringBuilder builder, MethodAPIV m)
+        {
+            builder.Append("<a href=\"#commentForm\" id=\"").Append(m.Id).Append("\" onclick=\"toggleComment(id)\" class=\"name\">").
+                Append(m.Name).Append("</a>");
         }
 
         protected override void RenderName(StringBuilder builder, string word)

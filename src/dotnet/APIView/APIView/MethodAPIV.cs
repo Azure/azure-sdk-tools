@@ -10,6 +10,7 @@ namespace APIView
     /// </summary>
     public class MethodAPIV
     {
+        public string Id { get; set; }
         public string Name { get; set; }
         public TypeReferenceAPIV ReturnType { get; set; }
         public string Accessibility { get; set; }
@@ -36,6 +37,7 @@ namespace APIView
         /// <param name="symbol">The symbol representing the method.</param>
         public MethodAPIV(IMethodSymbol symbol)
         {
+            this.Id = symbol.ToDisplayString();
             this.IsConstructor = false;
             if (symbol.MethodKind == MethodKind.Constructor)
             {

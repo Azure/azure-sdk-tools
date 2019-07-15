@@ -39,6 +39,11 @@ namespace APIView
             builder.Append(word);
         }
 
+        protected override void RenderMethod(StringBuilder builder, MethodAPIV m)
+        {
+            builder.Append(m.Name);
+        }
+
         protected override void RenderName(StringBuilder builder, string word)
         {
             builder.Append(word);

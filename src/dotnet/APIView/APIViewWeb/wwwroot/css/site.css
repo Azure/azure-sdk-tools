@@ -85,3 +85,7 @@ body {
 .value {
     color: #00B80F;
 }
+
+form.comment {
+    display: none;
+}

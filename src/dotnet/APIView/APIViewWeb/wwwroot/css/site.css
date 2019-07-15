@@ -65,6 +65,10 @@ body {
     color: #B93D3D;
 }
 
+.enum {
+    color: #8700BD;
+}
+
 .class {
     color: #00B8B1;
 }

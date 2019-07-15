@@ -12,10 +12,10 @@ namespace APIView
     public class ParameterAPIV
     {
         public string Name { get; set; }
-        public string Type { get; set; }
-
         public bool HasExplicitDefaultValue { get; set; }
         public object ExplicitDefaultValue { get; set; }
+        public TypeReferenceAPIV Type { get; set; }
+        public RefKind RefKind { get; set; }
 
         public string[] Attributes { get; set; }
 
@@ -28,7 +28,8 @@ namespace APIView
         public ParameterAPIV(IParameterSymbol symbol)
         {
             this.Name = symbol.Name;
-            this.Type = symbol.ToString();
+            this.Type = new TypeReferenceAPIV(symbol.Type);
+            this.RefKind = symbol.RefKind;
 
             this.HasExplicitDefaultValue = symbol.HasExplicitDefaultValue;
             this.ExplicitDefaultValue = HasExplicitDefaultValue ? symbol.ExplicitDefaultValue : null;

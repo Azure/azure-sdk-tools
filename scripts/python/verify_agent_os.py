@@ -1,14 +1,25 @@
 # Script verifies the operating system for the platform on which it is being run
 # Used in build pipelines to verify the build agent os
-# Variable: The name of the os to verfy against
-
+# Variable: The friendly name or image name of the os to verfy against
+from __future__ import print_function
 import sys
 import platform
-os_parameter = sys.argv[1]
-print ("Parameter passed by matrix -", os_parameter)
-os_parameter = 'Darwin' if(os_parameter.lower() == 'MacOS'.lower()) else os_parameter
+
+os_parameter = sys.argv[1].lower()
+if os_parameter.startswith('mac') or os_parameter.startswith('darwin'):
+    os_parameter = 'macOS'
+elif os_parameter.startswith('ubuntu') or os_parameter.startswith('linux'):
+    os_parameter = 'Linux'
+elif os_parameter.startswith('vs') or os_parameter.startswith('win'):
+    os_parameter = 'Windows'
+
+print("Job requested to run on OS: %s" % (os_parameter))
+
 agent_os = platform.system()
+agent_os = 'macOS' if agent_os == 'Darwin' else agent_os
+
 if (agent_os.lower() == os_parameter.lower()):
-	print ('Job ran on %s OS' %agent_os)
+    print('Job ran on OS: %s' % (agent_os))
+    print('##vso[task.setvariable variable=OSName]%s' % (agent_os))
 else:
-	raise Exception('Job ran on the Wrong OS: %s' %agent_os)
+    raise Exception('Job ran on the wrong OS: %s' % (agent_os))

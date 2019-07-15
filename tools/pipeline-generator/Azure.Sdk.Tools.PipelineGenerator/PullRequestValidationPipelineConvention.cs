@@ -21,7 +21,7 @@ namespace PipelineGenerator
             return $"{Context.Prefix} - {component.Name} - ci";
         }
 
-        protected async override Task<bool> ApplyConventionAsync(BuildDefinition definition, SdkComponent component)
+        protected override Task<bool> ApplyConventionAsync(BuildDefinition definition, SdkComponent component)
         {
             // NOTE: Not happy with this code at all, I'm going to look for a reasonable
             // API that can do equality comparisons (without having to do all the checks myself).
@@ -81,7 +81,7 @@ namespace PipelineGenerator
                 }
             }
 
-            return hasChanges;
+            return Task.FromResult(hasChanges);
         }
     }
 }

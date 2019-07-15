@@ -4,7 +4,7 @@ Azure/azure-sdk-for-python
 Azure/azure-sdk-for-java
 Azure/azure-powershell
 Azure/azure-cli
-Azure/azure-sdk-for-net
+Azure/azure-libraries-for-net
 Azure/azure-rest-api-specs
 Azure/azure-libraries-for-java
 Azure/azure-cli-extensions

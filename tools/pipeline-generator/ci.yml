@@ -1,0 +1,26 @@
+trigger:
+  branches:
+    include:
+      - master
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - tools/pipeline-generator
+
+pr:
+  branches:
+    include:
+      - master
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - tools/pipeline-generator
+
+stages:
+  - template: ../../eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
+    parameters:
+      ToolDirectory: pipeline-generator

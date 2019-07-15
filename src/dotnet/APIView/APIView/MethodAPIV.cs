@@ -11,8 +11,9 @@ namespace APIView
     public class MethodAPIV
     {
         public string Name { get; set; }
-        public string ReturnType { get; set; }
+        public TypeReferenceAPIV ReturnType { get; set; }
         public string Accessibility { get; set; }
+        public string ClassNavigationID { get; set; }
 
         public bool IsConstructor { get; set; }
         public bool IsInterfaceMethod { get; set; }
@@ -40,12 +41,13 @@ namespace APIView
             {
                 this.Name = symbol.ContainingType.Name;
                 this.IsConstructor = true;
-                this.ReturnType = "";
+                this.ClassNavigationID = symbol.ContainingType.ToDisplayString();
             }
             else
             {
                 this.Name = symbol.Name;
-                this.ReturnType = symbol.ReturnType.ToString();
+                this.ReturnType = new TypeReferenceAPIV(symbol.ReturnType);
+                this.ClassNavigationID = "";
             }
             this.Accessibility = symbol.DeclaredAccessibility.ToString().ToLower();
 
@@ -63,6 +65,8 @@ namespace APIView
 
             foreach (AttributeData attribute in symbol.GetAttributes())
             {
+                if (attribute.AttributeClass.DeclaredAccessibility == Microsoft.CodeAnalysis.Accessibility.Public || 
+                    attribute.AttributeClass.DeclaredAccessibility == Microsoft.CodeAnalysis.Accessibility.Protected)
                 attributes.Add(new AttributeAPIV(attribute));
             }
             foreach (ITypeParameterSymbol typeParam in symbol.TypeParameters)

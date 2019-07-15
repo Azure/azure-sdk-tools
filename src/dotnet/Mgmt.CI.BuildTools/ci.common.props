@@ -1,8 +1,8 @@
 ﻿<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 	<PropertyGroup>
-		<VersionPrefix>0.9.0</VersionPrefix>
-		<AsmVersion>0.9.0</AsmVersion>
-		<AsmFileVersion>0.9.0</AsmFileVersion>
+		<VersionPrefix>0.12.0</VersionPrefix>
+		<AsmVersion>0.12.0</AsmVersion>
+		<AsmFileVersion>0.12.0</AsmFileVersion>
 	</PropertyGroup>
 	<PropertyGroup>
 		<FullNetFxBitness>AnyCPU</FullNetFxBitness>

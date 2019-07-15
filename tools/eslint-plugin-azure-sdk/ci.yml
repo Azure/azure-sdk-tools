@@ -41,9 +41,9 @@ stages:
           - script: |
               set -e
               npm install
-              npm run build
-              npm test
+              npm run format:check
               npm run lint
+              npm test
               npm run build
               npm pack
               cp *.tgz $(Build.ArtifactStagingDirectory)
@@ -68,7 +68,7 @@ stages:
     jobs:
       - deployment: PublishPackage
         environment: azure-sdk
-        
+
         pool:
           vmImage: ubuntu-16.04
 
@@ -84,8 +84,8 @@ stages:
                 - task: Npm@1
                   displayName: Publish package to feed
                   inputs:
-                    command: 'custom'
-                    workingDir: '$(Pipeline.Workspace)/packages'
-                    customCommand: 'publish $(Package.Archive)'
-                    customRegistry: 'useFeed'
-                    customFeed: '7a8a7255-a1aa-48df-a904-c77c0b78cb03'
+                    command: "custom"
+                    workingDir: "$(Pipeline.Workspace)/packages"
+                    customCommand: "publish $(Package.Archive)"
+                    customRegistry: "useFeed"
+                    customFeed: "7a8a7255-a1aa-48df-a904-c77c0b78cb03"

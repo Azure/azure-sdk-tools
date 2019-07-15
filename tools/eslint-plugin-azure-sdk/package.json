@@ -35,9 +35,10 @@
     "docs"
   ],
   "scripts": {
-    "build": "npm run clean && npm run format && tsc -p tsconfig.build.json",
+    "build": "npm run clean && tsc -p tsconfig.build.json",
     "clean": "rimraf dist/",
     "format": "prettier --write \"./**/*.{ts,json,md}\"",
+    "format:check": "prettier --check \"./**/*.{ts,json,md}\"",
     "lint": "eslint src tests --ext .ts && markdownlint README.md docs",
     "test": "npm run clean && tsc -p tsconfig.json && mocha --timeout 10000 --recursive dist/tests"
   },

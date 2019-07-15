@@ -15,6 +15,7 @@ import {
 import {
   Declaration,
   isArrayTypeNode,
+  Node as TSNode,
   PropertySignature,
   Symbol,
   SymbolFlags,
@@ -25,8 +26,10 @@ import {
   Modifier,
   SyntaxKind
 } from "typescript";
-import { ParserServices } from "@typescript-eslint/experimental-utils";
-import { TSESTree, TSNode } from "@typescript-eslint/typescript-estree";
+import {
+  ParserServices,
+  TSESTree
+} from "@typescript-eslint/experimental-utils";
 import { ParserWeakMap } from "@typescript-eslint/typescript-estree/dist/parser-options";
 
 //------------------------------------------------------------------------------

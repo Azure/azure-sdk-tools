@@ -6,10 +6,12 @@
 import { Rule } from "eslint";
 import { getLocalExports } from "../utils";
 import { Node } from "estree";
-import { TypeChecker } from "typescript";
-import { TSESTree, TSNode } from "@typescript-eslint/typescript-estree";
+import { Node as TSNode, TypeChecker } from "typescript";
 import { ParserWeakMap } from "@typescript-eslint/typescript-estree/dist/parser-options";
-import { ParserServices } from "@typescript-eslint/experimental-utils";
+import {
+  ParserServices,
+  TSESTree
+} from "@typescript-eslint/experimental-utils";
 
 //------------------------------------------------------------------------------
 // Rule Definition

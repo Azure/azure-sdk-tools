@@ -91,7 +91,7 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Common.Services
             }
         }
 
-        KeyVaultClient KVClient
+        public KeyVaultClient KVClient
         {
             get
             {

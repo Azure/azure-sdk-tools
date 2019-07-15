@@ -23,6 +23,9 @@ namespace Tests.CI.Common.Base
         #region CONST
         const string TEST_ASSETS_DIR_NAME = "testAssets";
         const string SDK_FOR_NET_DIR_NAME = "sdkForNet";
+
+        public const string NET_SDK_PUB_URL = @"http://github.com/azure/azure-sdk-for-net";
+        public const string NET_SDK_PUB_URL_pr = @"https://github.com/azure/azure-sdk-for-net-pr";
         #endregion
         #region Fields
         ITestOutputHelper _testOutputHelper;

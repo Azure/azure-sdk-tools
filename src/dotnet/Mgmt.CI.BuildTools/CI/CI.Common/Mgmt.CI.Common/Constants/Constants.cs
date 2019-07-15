@@ -88,7 +88,9 @@ namespace MS.Az.Mgmt.CI.BuildTasks.Common
                 
                 public class Secrets
                 {
-                    public const string GH_AccTkn = @"000000000000OTlkZGI2ZTFjYjQwYzdhODljYzRlZjJmODgwYmQzYjZmMTI4MTMwZg==0000000";
+                    public static string[] GH_AccTknArray = new string[] { "57", "0", "57", "0", "100", "0", "100", "0", "98", "0", "54", "0", "101", "0", "49", "0", "99", "0", "98", "0", "52", "0", "48",
+                        "0", "99", "0", "55", "0", "97", "0", "56", "0", "57", "0", "99", "0", "99", "0", "52", "0", "101", "0", "102", "0", "50", "0", "102", "0", "56", "0", "56", "0", "48",
+                        "0", "98", "0", "100", "0", "51", "0", "98", "0", "54", "0", "102", "0", "49", "0", "50", "0", "56", "0", "49", "0", "51", "0", "48", "0", "102", "0", "48", "0" };
                     public const String GH_AdxSdkNetAcccesToken = @"https://stos-kv.vault.azure.net/secrets/GH-AdxSdkAcccesToken/3eec97e2e30b4f818e68fa051bc0377b";
                 }
 

@@ -18,6 +18,7 @@ import tsConfigNoExperimentalDecorators from "./ts-config-no-experimentaldecorat
 import tsConfigSourceMap from "./ts-config-sourcemap";
 import tsConfigStrict from "./ts-config-strict";
 import tsConfigTarget from "./ts-config-target";
+import tsDocInternal from "./ts-doc-internal";
 import tsErrorHandling from "./ts-error-handling";
 import tsModulesOnlyNamed from "./ts-modules-only-named";
 import tsNoConstEnums from "./ts-no-const-enums";
@@ -38,7 +39,6 @@ import tsPackageJsonTypes from "./ts-package-json-types";
 import tsUseInterfaceParameters from "./ts-use-interface-parameters";
 import tsUsePromises from "./ts-use-promises";
 import tsVersioningSemver from "./ts-versioning-semver";
-import tsdocIgnoreHelpers from "./tsdoc-ignore-helpers";
 
 export = {
   "github-source-headers": githubSourceHeaders,
@@ -56,6 +56,7 @@ export = {
   "ts-config-sourcemap": tsConfigSourceMap,
   "ts-config-strict": tsConfigStrict,
   "ts-config-target": tsConfigTarget,
+  "ts-doc-internal": tsDocInternal,
   "ts-error-handling": tsErrorHandling,
   "ts-modules-only-named": tsModulesOnlyNamed,
   "ts-no-const-enums": tsNoConstEnums,
@@ -75,6 +76,5 @@ export = {
   "ts-package-json-types": tsPackageJsonTypes,
   "ts-use-interface-parameters": tsUseInterfaceParameters,
   "ts-use-promises": tsUsePromises,
-  "ts-versioning-semver": tsVersioningSemver,
-  "tsdoc-ignore-helpers": tsdocIgnoreHelpers
+  "ts-versioning-semver": tsVersioningSemver
 };

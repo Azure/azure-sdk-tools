@@ -28,6 +28,7 @@ export = {
       "@azuresdktools/azure-sdk/ts-config-sourcemap": "error",
       "@azuresdktools/azure-sdk/ts-config-strict": "error",
       "@azuresdktools/azure-sdk/ts-config-target": "error",
+      "@azuresdktools/azure-sdk/ts-doc-internal": "error",
       "@azuresdktools/azure-sdk/ts-error-handling": "off",
       "@azuresdktools/azure-sdk/ts-modules-only-named": "error",
       "@azuresdktools/azure-sdk/ts-no-const-enums": "warn",
@@ -47,8 +48,7 @@ export = {
       "@azuresdktools/azure-sdk/ts-package-json-types": "error",
       "@azuresdktools/azure-sdk/ts-use-interface-parameters": "warn",
       "@azuresdktools/azure-sdk/ts-use-promises": "error",
-      "@azuresdktools/azure-sdk/ts-versioning-semver": "error",
-      "@azuresdktools/azure-sdk/tsdoc-ignore-helpers": "error"
+      "@azuresdktools/azure-sdk/ts-versioning-semver": "error"
     },
     settings: {
       main: "src/index.ts"

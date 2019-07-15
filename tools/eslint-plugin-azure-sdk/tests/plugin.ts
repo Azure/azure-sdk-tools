@@ -26,6 +26,7 @@ const ruleList = [
   "ts-config-sourcemap",
   "ts-config-strict",
   "ts-config-target",
+  "ts-doc-internal",
   "ts-error-handling",
   "ts-modules-only-named",
   "ts-no-const-enums",
@@ -45,8 +46,7 @@ const ruleList = [
   "ts-package-json-types",
   "ts-use-interface-parameters",
   "ts-use-promises",
-  "ts-versioning-semver",
-  "tsdoc-ignore-helpers"
+  "ts-versioning-semver"
 ];
 
 /**

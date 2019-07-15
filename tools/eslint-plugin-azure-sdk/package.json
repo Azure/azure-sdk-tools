@@ -39,8 +39,7 @@
     "clean": "rimraf dist/",
     "format": "prettier --write \"./**/*.{ts,json,md}\"",
     "lint": "eslint src tests --ext .ts && markdownlint README.md docs",
-    "test": "npm run clean && tsc -p tsconfig.json && mocha --timeout 10000 --recursive dist/tests",
-    "test-temp": "npm run clean && tsc -p tsconfig.json && mocha --timeout 10000 dist/tests/rules/ts-use-promises.js"
+    "test": "npm run clean && tsc -p tsconfig.json && mocha --timeout 10000 --recursive dist/tests"
   },
   "dependencies": {
     "path": "^0.12.7",

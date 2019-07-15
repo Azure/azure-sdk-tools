@@ -2,6 +2,11 @@ import { Rule } from "eslint";
 import { SourceFile, Symbol as TSSymbol } from "typescript";
 import { ParserServices } from "@typescript-eslint/experimental-utils";
 
+/**
+ * Gets all Symbols of Types of all top-level exports from a package.
+ * @param context the ESLint runtime context
+ * @returns a list of Symbols containing type information for all top-level exports, or undefined if improperly configured
+ */
 const getExports = (context: Rule.RuleContext): TSSymbol[] | undefined => {
   const parserServices: ParserServices = context.parserServices;
   if (parserServices.program === undefined) {
@@ -31,6 +36,11 @@ const getExports = (context: Rule.RuleContext): TSSymbol[] | undefined => {
   return exportSymbols;
 };
 
+/**
+ * Determines whether a given Symbol originates from the library or an external source
+ * @param symbol the Symbol of a Type to be tested
+ * @returns if the Symbol originates from a dependency
+ */
 export const isExternal = (symbol: TSSymbol): boolean => {
   const externalRegex = /node_modules/;
   if (symbol.valueDeclaration !== undefined) {
@@ -50,6 +60,11 @@ export const isExternal = (symbol: TSSymbol): boolean => {
   }
 };
 
+/**
+ * A helper method to verify exports and add them to running list if they are local and haven't been seen yet
+ * @param exportSymbol the current Symbol being examined
+ * @param localExports the running list of local export Symbols
+ */
 const addToSeenLocalExports = (
   exportSymbol: TSSymbol,
   localExports: TSSymbol[]
@@ -60,6 +75,11 @@ const addToSeenLocalExports = (
   localExports.push(exportSymbol);
 };
 
+/**
+ * An extension of getExports - additionally only returns Symbols defined locally and fetches information recursively
+ * @param context the ESLint runtime context
+ * @returns a list of Symbols corresponding to Types of exports and members that are defined inside the package
+ */
 export const getLocalExports = (
   context: Rule.RuleContext
 ): TSSymbol[] | undefined => {

@@ -1,5 +1,5 @@
 /**
- * @fileoverview Rule to require TSDoc comments to include '@ignore' if the object is not public-facing.
+ * @fileoverview Rule to require TSDoc comments to include internal or ignore tags if the object is internal.
  * @author Arpan Laha
  */
 
@@ -38,14 +38,14 @@ const reportInternal = (
           : [];
       })
       .flat();
-    const internalRegex = /internal/;
+    const internalRegex = /(ignore)|(internal)/;
     TSDocTags.every((TSDocTag: string): boolean => {
       return !internalRegex.test(TSDocTag);
     }) &&
       context.report({
         node: node,
         message:
-          "non-public facing items with TSDoc comments should include an @internal tag"
+          "internal items with TSDoc comments should include an @internal or @ignore tag"
       });
   }
 };
@@ -56,7 +56,7 @@ export = {
 
     docs: {
       description:
-        "require TSDoc comments to include '@ignore' if the object is not public-facing",
+        "require TSDoc comments to include an '@internal' or '@ignore' tag if the object is not public-facing",
       category: "Best Practices",
       recommended: true,
       url: "to be added" //TODO
@@ -69,6 +69,7 @@ export = {
       if (packageExports !== undefined) {
         context.settings.exported = packageExports;
       } else {
+        context.settings.exported = [];
         return {};
       }
     }
@@ -83,7 +84,6 @@ export = {
     const program = parserServices.program;
     const typeChecker = program.getTypeChecker();
     const converter = parserServices.esTreeNodeToTSNodeMap;
-    //const sourceCode = context.getSourceCode();
 
     return {
       // callback functions
@@ -91,30 +91,14 @@ export = {
         node: Node
       ): void => {
         reportInternal(node, context, converter, typeChecker);
-
-        // const comments = sourceCode.getCommentsBefore(node);
-        // const TSDocRegex = /^\*/;
-        // const TSDocComments = comments.filter((comment: Comment): boolean => {
-        //   return comment.type === "Block" && TSDocRegex.test(comment.value);
-        // });
-        // const ignoreRegex = /(@ignore)|(@internal)/;
-        // TSDocComments.every((TSDocComment: Comment): boolean => {
-        //   return !ignoreRegex.test(TSDocComment.value);
-        // }) &&
-        //   context.report({
-        //     node: node,
-        //     message:
-        //       "non-public facing items with TSDoc comments should include an @ignore tag"
-        //   });
       },
 
       ":function": (node: Node): void => {
         const ancestors = context.getAncestors();
 
-        ancestors.find((ancestor: Node): boolean => {
-          return ancestor.type === "ClassBody";
-        }) === undefined &&
-          reportInternal(node, context, converter, typeChecker);
+        ancestors.every((ancestor: Node): boolean => {
+          return ancestor.type !== "ClassBody";
+        }) && reportInternal(node, context, converter, typeChecker);
       }
     };
   }

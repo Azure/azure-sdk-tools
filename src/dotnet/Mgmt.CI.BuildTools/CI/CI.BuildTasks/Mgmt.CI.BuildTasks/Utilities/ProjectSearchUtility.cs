@@ -564,16 +564,7 @@ namespace MS.Az.NetSdk.Build.Utilities
             UtilLogger.LogInfo(MessageImportance.Low, topLevelScopeDirs, "Top Level Scopes");
             return topLevelScopeDirs; 
         }
-
-        #region Scoped Search
-        //public List<string> FindScopedTestProjects()
-        //{
-        //    InitSearch();
-
-
-        //}
-        #endregion
-
+        
         /// <summary>
         /// TODO: Provide a way to possible scopes user can provide when user provided token
         /// e.g. if user provides KeyVault, provide all possible scopes available for KeyVault token
@@ -691,7 +682,6 @@ namespace MS.Az.NetSdk.Build.Utilities
             return rootDirPath;
         }
 
-
         void CategorizeProjs(List<string> projectSearchDirList)
         {
             IEnumerable<string> mgmtProjects = null;
@@ -763,6 +753,7 @@ namespace MS.Az.NetSdk.Build.Utilities
             //List<string> dpD = new List<string>();
             List<string> mpD = new List<string>();
             List<string> mpT = new List<string>();
+            List<string> cmnDir = new List<string>();
 
             foreach (string sdp in SearchDirPaths)
             {
@@ -774,6 +765,9 @@ namespace MS.Az.NetSdk.Build.Utilities
 
                     foreach (string serviceDir in svcTopDirs)
                     {
+                        // handling mgmtCommon
+                        //cmnDir = FindMgmtCommonDirs(sdp, serviceDir);
+
                         // If ever data plane needs to be part of this, enable the below
                         //dpD = FindDataPlaneDirs(serviceDir);
 
@@ -794,6 +788,11 @@ namespace MS.Az.NetSdk.Build.Utilities
                         {
                             masterList.AddRange(mpT);
                         }
+
+                        //if(cmnDir.NotNullOrAny<string>())
+                        //{
+                        //    masterList.AddRange(cmnDir);
+                        //}
 
                         //if(dpD.Any<string>())
                         //{
@@ -864,6 +863,29 @@ namespace MS.Az.NetSdk.Build.Utilities
             }
 
             return mpD;
+        }
+
+        List<string> FindMgmtCommonDirs(string buildScope, string searchDirPath)
+        {
+            List<string> cmnDir = new List<string>();
+            // The idea is you check if the searchDirPath is rooted under mgmtCommon directory
+            // Then we check if the scope is part of the searchDirPath
+            // an assumption is that buildScope will be usually shorter than the searchDirPath
+
+            // And finally we simply return the searchDirPath if it staisfies teh above condition
+            // because searchproject will do the heavy lifting of finding the right kind of projects
+            if (!string.IsNullOrWhiteSpace(buildScope))
+            {
+                if (searchDirPath.Contains("mgmtcommon"))
+                {
+                    if (searchDirPath.Contains(buildScope, StringComparison.OrdinalIgnoreCase))
+                    {
+                        cmnDir.Add(searchDirPath);
+                    }
+                }
+            }
+
+            return cmnDir;
         }
 
         List<string> FindManagementTestDirs(string searchDirPath)
@@ -1384,16 +1406,15 @@ namespace MS.Az.NetSdk.Build.Utilities
                         }
                         excludeFilteredList = DeDupeList(excludeFilteredList);
 
-
-
+                        var afterRemoveExcluded = includeList.Except<string>(excludeFilteredList, StringComparer.OrdinalIgnoreCase);
 
                         //var finalMgmtList = includeList.Except<string>(cmdLineExcludePathList, new ObjectComparer<string>((rhs, lhs) => lhs.Contains(rhs, StringComparison.OrdinalIgnoreCase)));
 
                         // If we get anything in finalMgmtList that means, the filter was a success
-                        if (excludeFilteredList.Any<string>())
+                        if (afterRemoveExcluded.Any<string>())
                         {
                             finalList.Clear();
-                            finalList.AddRange(excludeFilteredList);
+                            finalList.AddRange(afterRemoveExcluded);
                             UtilLogger.LogInfo(MessageImportance.Low, "After filtering on 'UserExcludePathList', Final list count is:'{0}'", finalList.Count.ToString());
                         }
                         else

@@ -221,8 +221,8 @@ namespace BuildTasks.Tests
 
             if (cproj.Execute())
             {
-                Assert.True(cproj.SDK_Projects.Count<ITaskItem>() == 2);
-                Assert.True(cproj.Test_Projects.Count<ITaskItem>() == 2);
+                Assert.True(cproj.SDK_Projects.Count<ITaskItem>() == 4);
+                Assert.True(cproj.Test_Projects.Count<ITaskItem>() == 4);
             }
         }
 
@@ -249,8 +249,8 @@ namespace BuildTasks.Tests
 
             if (cproj.Execute())
             {
-                Assert.True(cproj.SDK_Projects.Count<ITaskItem>() == 1);
-                Assert.True(cproj.Test_Projects.Count<ITaskItem>() == 1);
+                Assert.True(cproj.SDK_Projects.Count<ITaskItem>() == 0);
+                Assert.True(cproj.Test_Projects.Count<ITaskItem>() == 0);
             }
         }
 

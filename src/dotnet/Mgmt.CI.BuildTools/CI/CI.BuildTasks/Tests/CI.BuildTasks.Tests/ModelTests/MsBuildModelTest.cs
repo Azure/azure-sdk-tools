@@ -7,16 +7,16 @@ namespace Tests.CI.BuildTasks.ModelTests
     using MS.Az.Mgmt.CI.BuildTasks.Models;
     using System;
     using System.Collections.Generic;
+    using System.IO;
     using System.Text;
     using Tests.CI.Common.Base;
     using Xunit;
 
     public class MsBuildModelTest : BuildTasksTestBase
     {
-        //MsbuildProject msBuildProj;
         public MsBuildModelTest()
         {
-            RepoRootDirPath = @"D:\myFork\sdkForNet\master";
+            RepoRootDirPath = Path.Combine(this.TestAssetsDirPath, "sdkForNet");
         }
 
         [Fact]

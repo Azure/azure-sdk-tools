@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>Microsoft.Internal.NetSdkBuild.Mgmt.Tools</id>
-    <version>0.10.0</version>
+    <version>0.11.0</version>
     <authors>Microsoft</authors>
     <owners>Microsoft</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>

@@ -29,15 +29,17 @@ const reportInternal = (
     !context.settings.exported.includes(symbol) &&
     tsNode.jsDoc !== undefined
   ) {
-    const TSDocTags: string[] = tsNode.jsDoc
-      .map((TSDocComment: any): string[] => {
-        return TSDocComment.tags !== undefined
+    let TSDocTags: string[] = [];
+    tsNode.jsDoc.forEach((TSDocComment: any): void => {
+      //console.log(TSDocComment.tags);
+      TSDocTags = TSDocTags.concat(
+        TSDocComment.tags !== undefined
           ? TSDocComment.tags.map((TSDocTag: any): string => {
               return TSDocTag.tagName.escapedText;
             })
-          : [];
-      })
-      .flat();
+          : []
+      );
+    });
     const internalRegex = /(ignore)|(internal)/;
     TSDocTags.every((TSDocTag: string): boolean => {
       return !internalRegex.test(TSDocTag);

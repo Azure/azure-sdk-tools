@@ -9,11 +9,16 @@
 <form id="commentForm" class="comment" method="post">
     <div class="form-group">
         <label>ID:</label>
-        <textarea id="idBox" class="form-control" rows="1"></textarea>
+        <textarea id="idBox" asp-for="Comment.Id" class="form-control" rows="1"></textarea>
     </div>
     <div class="form-group">
         <label>Comment:</label>
-        <textarea id="commentThread" class="form-control" rows="3"></textarea>
+        <textarea id="commentThread" asp-for="Comment.Comment" class="form-control" rows="3"></textarea>
     </div>
-    <button type="submit" class="btn btn-outline-dark">Add</button>
+    <button type="submit" id="submitButton" class="btn btn-outline-dark">Add</button>
 </form>
+
+@foreach  (var comment in Model.Comments)
+{
+    <a href="#@comment.Id">@comment.Id</a><span>: @comment.Comment</span><br />
+}

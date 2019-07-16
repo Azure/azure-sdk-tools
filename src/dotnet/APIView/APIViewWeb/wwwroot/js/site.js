@@ -14,3 +14,16 @@ $(function () {
         myForm.show();
     });
 });
+
+$(function () {
+    $(".submitButton").click(function () {
+        var oldUrl = window.location.href;
+        var newUrl = oldUrl;
+        var index = 0;
+        index = oldUrl.lastIndexOf("#");
+        if (index != -1) {
+            newUrl = oldUrl.substring(0, index);
+        }
+        window.location.href = newUrl;
+    });
+});

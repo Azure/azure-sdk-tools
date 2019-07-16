@@ -42,5 +42,5 @@ stages:
             displayName: 'Publish Artifacts'
             inputs:
               ArtifactName: packages
-  - {{ if ne(variables['System.TeamProject'], 'Public') }}:
+  - ${{if ne(variables['System.TeamProject'], 'Public')}}:
     - template: pipelines/archetype-sdk-dotnet-release.yml@azure-sdk-build-tools

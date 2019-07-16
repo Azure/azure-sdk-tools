@@ -8,9 +8,9 @@ Requires `compilerOptions.allowSyntheticDefaultImports` in `tsconfig.json` to be
 
 ```json
 {
-    "compilerOptions": {
-        "allowSyntheticDefaultImports": true
-    }
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true
+  }
 }
 ```
 
@@ -18,15 +18,15 @@ Requires `compilerOptions.allowSyntheticDefaultImports` in `tsconfig.json` to be
 
 ```json
 {
-    "compilerOptions": {
-        "allowSyntheticDefaultImports": false
-    }
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": false
+  }
 }
 ```
 
 ```json
 {
-    "compilerOptions": {}
+  "compilerOptions": {}
 }
 ```
 

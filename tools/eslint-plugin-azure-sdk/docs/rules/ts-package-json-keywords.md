@@ -8,13 +8,13 @@ Requires `keywords` in `package.json` to include `"Azure"` and `"cloud"`.
 
 ```json
 {
-    "keywords": ["Azure", "cloud"]
+  "keywords": ["Azure", "cloud"]
 }
 ```
 
 ```json
 {
-    "keywords": ["Azure", "cloud", "sdk"]
+  "keywords": ["Azure", "cloud", "sdk"]
 }
 ```
 
@@ -22,13 +22,13 @@ Requires `keywords` in `package.json` to include `"Azure"` and `"cloud"`.
 
 ```json
 {
-    "keywords": ["Azure"]
+  "keywords": ["Azure"]
 }
 ```
 
 ```json
 {
-    "keywords": []
+  "keywords": []
 }
 ```
 

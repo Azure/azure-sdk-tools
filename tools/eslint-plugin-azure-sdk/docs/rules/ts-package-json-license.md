@@ -8,7 +8,7 @@ Requires `license` in `package.json` to be set to `"MIT"`.
 
 ```json
 {
-    "license": "MIT"
+  "license": "MIT"
 }
 ```
 
@@ -16,7 +16,7 @@ Requires `license` in `package.json` to be set to `"MIT"`.
 
 ```json
 {
-    "license": "ISC"
+  "license": "ISC"
 }
 ```
 

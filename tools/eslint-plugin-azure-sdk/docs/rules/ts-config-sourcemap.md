@@ -8,10 +8,10 @@ Requires `compilerOptions.sourceMap` and `compilerOptions.declarationMap` in `ts
 
 ```json
 {
-    "compilerOptions": {
-        "declarationMap": true,
-        "sourceMap": true
-    }
+  "compilerOptions": {
+    "declarationMap": true,
+    "sourceMap": true
+  }
 }
 ```
 
@@ -19,14 +19,14 @@ Requires `compilerOptions.sourceMap` and `compilerOptions.declarationMap` in `ts
 
 ```json
 {
-    "compilerOptions": {
-        "declarationMap": false,
-        "sourceMap": true
-    }
+  "compilerOptions": {
+    "declarationMap": false,
+    "sourceMap": true
+  }
 }
 ```
 
-```json
+````json
 {
     "compilerOptions": {
         "sourceMap": true
@@ -37,7 +37,7 @@ Requires `compilerOptions.sourceMap` and `compilerOptions.declarationMap` in `ts
 {
     "compilerOptions": {}
 }
-```
+````
 
 ```json
 {}

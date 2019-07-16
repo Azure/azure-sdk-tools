@@ -8,9 +8,9 @@ Requires `compilerOptions.forceConsistentCasingInFileNames` in `tsconfig.json` t
 
 ```json
 {
-    "compilerOptions": {
-        "forceConsistentCasingInFileNames": true
-    }
+  "compilerOptions": {
+    "forceConsistentCasingInFileNames": true
+  }
 }
 ```
 
@@ -18,15 +18,15 @@ Requires `compilerOptions.forceConsistentCasingInFileNames` in `tsconfig.json` t
 
 ```json
 {
-    "compilerOptions": {
-        "forceConsistentCasingInFileNames": false
-    }
+  "compilerOptions": {
+    "forceConsistentCasingInFileNames": false
+  }
 }
 ```
 
 ```json
 {
-    "compilerOptions": {}
+  "compilerOptions": {}
 }
 ```
 

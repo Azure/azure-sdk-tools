@@ -8,20 +8,20 @@ Requires `scripts` in `package.json` to be contain `"build"` and `"test"`.
 
 ```json
 {
-    "scripts": {
-        "build": "...",
-        "test": "..."
-    }
+  "scripts": {
+    "build": "...",
+    "test": "..."
+  }
 }
 ```
 
 ```json
 {
-    "scripts": {
-        "build": "...",
-        "lint": "...",
-        "test": "..."
-    }
+  "scripts": {
+    "build": "...",
+    "lint": "...",
+    "test": "..."
+  }
 }
 ```
 
@@ -29,15 +29,15 @@ Requires `scripts` in `package.json` to be contain `"build"` and `"test"`.
 
 ```json
 {
-    "scripts": {
-        "build": "..."
-    }
+  "scripts": {
+    "build": "..."
+  }
 }
 ```
 
 ```json
 {
-    "scripts": {}
+  "scripts": {}
 }
 ```
 

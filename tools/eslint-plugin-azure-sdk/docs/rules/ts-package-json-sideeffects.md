@@ -8,7 +8,7 @@ Requires `sideEffects` in `package.json` to be set to `false`.
 
 ```json
 {
-    "sideEffects": false
+  "sideEffects": false
 }
 ```
 
@@ -16,7 +16,7 @@ Requires `sideEffects` in `package.json` to be set to `false`.
 
 ```json
 {
-    "sideEffects": true
+  "sideEffects": true
 }
 ```
 

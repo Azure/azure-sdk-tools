@@ -1,5 +1,5 @@
 {
-  "name": "@azuresdktools/eslint-plugin-azure-sdk",
+  "name": "@azure/eslint-plugin-azure-sdk",
   "version": "1.0.1-preview.2",
   "description": "An ESLint plugin enforcing design guidelines for the JavaScript/TypeScript Azure SDK",
   "keywords": [

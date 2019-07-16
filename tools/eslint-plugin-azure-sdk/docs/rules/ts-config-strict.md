@@ -8,9 +8,9 @@ Requires `compilerOptions.strict` in `tsconfig.json` to be set to `false`.
 
 ```json
 {
-    "compilerOptions": {
-        "strict": false
-    }
+  "compilerOptions": {
+    "strict": false
+  }
 }
 ```
 
@@ -18,15 +18,15 @@ Requires `compilerOptions.strict` in `tsconfig.json` to be set to `false`.
 
 ```json
 {
-    "compilerOptions": {
-        "strict": true
-    }
+  "compilerOptions": {
+    "strict": true
+  }
 }
 ```
 
 ```json
 {
-    "compilerOptions": {}
+  "compilerOptions": {}
 }
 ```
 

@@ -8,7 +8,7 @@ Requires `repository` in `package.json` to be set to `"github:Azure/azure-sdk-fo
 
 ```json
 {
-    "repository": "github:Azure/azure-sdk-for-js"
+  "repository": "github:Azure/azure-sdk-for-js"
 }
 ```
 
@@ -16,7 +16,7 @@ Requires `repository` in `package.json` to be set to `"github:Azure/azure-sdk-fo
 
 ```json
 {
-    "repository": "github:Azure/azure-sdk-for-java"
+  "repository": "github:Azure/azure-sdk-for-java"
 }
 ```
 

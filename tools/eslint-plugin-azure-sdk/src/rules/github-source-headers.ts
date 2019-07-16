@@ -5,24 +5,17 @@
 
 import { Rule } from "eslint";
 import { Comment, Node } from "estree";
+import { getRuleMetaData } from "../utils";
 
 //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
 export = {
-  meta: {
-    type: "problem",
-
-    docs: {
-      description: "require copyright headers in every source file",
-      category: "Best Practices",
-      recommended: true,
-      url:
-        "https://github.com/Azure/azure-sdk-tools/blob/master/tools/eslint-plugin-azure-sdk/docs/rules/github-source-headers.md"
-    },
-    schema: [] // no options
-  },
+  meta: getRuleMetaData(
+    "github-source-headers",
+    "require copyright headers in every source file"
+  ),
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     // regex checking file ending
     const sourceFileRegex = /\.ts$/; //*.ts

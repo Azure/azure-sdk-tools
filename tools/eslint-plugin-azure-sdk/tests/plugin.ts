@@ -66,19 +66,6 @@ const testRule = (ruleName: string, rules: any): void => {
         assert.property(rule, "meta", "meta is not a member of " + ruleName);
       });
       const meta = rule.meta;
-      describe("type", (): void => {
-        it("type should be a member of meta", (): void => {
-          assert.property(meta, "type", "type is not a member of meta");
-        });
-        const type = meta.type;
-        it("type should be one of the following: 'problem', 'suggestion', or 'layout'", (): void => {
-          assert.oneOf(
-            type,
-            ["problem", "suggestion", "layout"],
-            "type is not a valid option"
-          );
-        });
-      });
       describe("docs", (): void => {
         it("docs should be a member of meta", (): void => {
           assert.property(meta, "docs", "docs is not a member of meta");

@@ -6,24 +6,17 @@
 import { getVerifiers, stripPath } from "../utils";
 import { Rule } from "eslint";
 import { Literal, Property } from "estree";
+import { getRuleMetaData } from "../utils";
 
 //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
 export = {
-  meta: {
-    type: "problem",
-
-    docs: {
-      description: "force module to be the ES6 entrypoint to the application",
-      category: "Best Practices",
-      recommended: true,
-      url:
-        "https://github.com/Azure/azure-sdk-tools/blob/master/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-module.md"
-    },
-    schema: [] // no options
-  },
+  meta: getRuleMetaData(
+    "ts-package-json-module",
+    "force package.json's module value to be the ES6 entrypoint to the application"
+  ),
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     const verifiers = getVerifiers(context, {
       outer: "module"

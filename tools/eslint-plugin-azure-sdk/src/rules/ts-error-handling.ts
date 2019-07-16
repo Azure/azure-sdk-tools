@@ -6,25 +6,17 @@
 import { Rule } from "eslint";
 import { Identifier, NewExpression, ThrowStatement } from "estree";
 import { TypeChecker } from "typescript";
+import { getRuleMetaData } from "../utils";
 
 //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
 export = {
-  meta: {
-    type: "problem",
-
-    docs: {
-      description:
-        "limit thrown errors to ECMAScript built-in error types (TypeError, RangeError, Error)",
-      category: "Best Practices",
-      recommended: true,
-      url:
-        "https://github.com/Azure/azure-sdk-tools/blob/master/tools/eslint-plugin-azure-sdk/docs/rules/ts-error-handling.md"
-    },
-    schema: [] // no options
-  },
+  meta: getRuleMetaData(
+    "ts-error-handling",
+    "limit thrown errors to ECMAScript built-in error types (TypeError, RangeError, Error)"
+  ),
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     return {
       // callback functions

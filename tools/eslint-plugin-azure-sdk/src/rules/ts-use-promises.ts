@@ -6,24 +6,17 @@
 import { Rule } from "eslint";
 import { ParserServices } from "@typescript-eslint/experimental-utils";
 import { isExternalModule } from "typescript";
+import { getRuleMetaData } from "../utils";
 
 //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
 export = {
-  meta: {
-    type: "problem",
-
-    docs: {
-      description: "force usage of built-in promises over external ones",
-      category: "Best Practices",
-      recommended: true,
-      url:
-        "https://github.com/Azure/azure-sdk-tools/blob/master/tools/eslint-plugin-azure-sdk/docs/rules/ts-use-promises.md"
-    },
-    schema: [] // no options
-  },
+  meta: getRuleMetaData(
+    "ts-use-promises",
+    "force usage of built-in promises over external ones"
+  ),
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     const parserServices: ParserServices = context.parserServices;
     if (

@@ -5,25 +5,17 @@
 
 import { getVerifiers, stripPath } from "../utils";
 import { Rule } from "eslint";
+import { getRuleMetaData } from "../utils";
 
 //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
 export = {
-  meta: {
-    type: "problem",
-
-    docs: {
-      description:
-        "force package.json's repository value to be 'github:Azure/azure-sdk-for-js'",
-      category: "Best Practices",
-      recommended: true,
-      url:
-        "https://github.com/Azure/azure-sdk-tools/blob/master/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-repo.md"
-    },
-    schema: [] // no options
-  },
+  meta: getRuleMetaData(
+    "ts-package-json-repo",
+    "force package.json's repository value to be 'github:Azure/azure-sdk-for-js'"
+  ),
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     const verifiers = getVerifiers(context, {
       outer: "repository",

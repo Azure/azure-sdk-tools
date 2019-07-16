@@ -4,24 +4,17 @@
  */
 
 import { Rule } from "eslint";
+import { getRuleMetaData } from "../utils";
 
 //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
 export = {
-  meta: {
-    type: "problem",
-
-    docs: {
-      description: "forbid usage of TypeScript's const enums",
-      category: "Best Practices",
-      recommended: true,
-      url:
-        "https://github.com/Azure/azure-sdk-tools/blob/master/tools/eslint-plugin-azure-sdk/docs/rules/ts-no-const-enums.md"
-    },
-    schema: [] // no options
-  },
+  meta: getRuleMetaData(
+    "ts-no-const-enums",
+    "forbid usage of TypeScript's const enums"
+  ),
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     return {
       TSEnumDeclaration: (node: any): void => {

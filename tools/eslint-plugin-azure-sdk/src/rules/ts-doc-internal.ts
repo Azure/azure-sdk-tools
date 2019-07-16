@@ -12,6 +12,7 @@ import {
   ParserServices,
   TSESTree
 } from "@typescript-eslint/experimental-utils";
+import { getRuleMetaData } from "../utils";
 
 //------------------------------------------------------------------------------
 // Rule Definition
@@ -63,19 +64,10 @@ const reportInternal = (
 };
 
 export = {
-  meta: {
-    type: "problem",
-
-    docs: {
-      description:
-        "require TSDoc comments to include an '@internal' or '@ignore' tag if the object is not public-facing",
-      category: "Best Practices",
-      recommended: true,
-      url:
-        "https://github.com/Azure/azure-sdk-tools/blob/master/tools/eslint-plugin-azure-sdk/docs/rules/ts-doc-internal.md"
-    },
-    schema: [] // no options
-  },
+  meta: getRuleMetaData(
+    "ts-doc-internal",
+    "require TSDoc comments to include an '@internal' or '@ignore' tag if the object is not public-facing"
+  ),
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     if (!context.settings.exported) {
       const packageExports = getLocalExports(context);

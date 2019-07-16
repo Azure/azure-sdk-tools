@@ -1,29 +1,22 @@
 /**
- * @fileoverview Rule to force adherence to semver guidelines.
+ * @fileoverview Rule to force adherence to SemVer guidelines.
  * @author Arpan Laha
  */
 
 import { getVerifiers, stripPath } from "../utils";
 import { Rule } from "eslint";
 import { Literal, Property } from "estree";
+import { getRuleMetaData } from "../utils";
 
 //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
 export = {
-  meta: {
-    type: "problem",
-
-    docs: {
-      description: "force adherence to semver guidelines",
-      category: "Best Practices",
-      recommended: true,
-      url:
-        "https://github.com/Azure/azure-sdk-tools/blob/master/tools/eslint-plugin-azure-sdk/docs/rules/ts-versioning-semver.md"
-    },
-    schema: [] // no options
-  },
+  meta: getRuleMetaData(
+    "ts-versioning-semver",
+    "force adherence to SemVer guidelines"
+  ),
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     const verifiers = getVerifiers(context, {
       outer: "version"

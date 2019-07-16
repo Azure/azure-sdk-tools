@@ -5,24 +5,17 @@
 
 import { getVerifiers, stripPath } from "../utils";
 import { Rule } from "eslint";
+import { getRuleMetaData } from "../utils";
 
 //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
 export = {
-  meta: {
-    type: "problem",
-
-    docs: {
-      description: "force Node support for all LTS versions",
-      category: "Best Practices",
-      recommended: true,
-      url:
-        "https://github.com/Azure/azure-sdk-tools/blob/master/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-engine-is-present.md"
-    },
-    schema: [] // no options
-  },
+  meta: getRuleMetaData(
+    "ts-package-json-engine-is-present",
+    "force Node support for all LTS versions"
+  ),
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     /**
      * definition of LTS Node versions

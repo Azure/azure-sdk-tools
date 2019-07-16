@@ -6,25 +6,17 @@
 import { getVerifiers, stripPath } from "../utils";
 import { Rule } from "eslint";
 import { Literal, Property } from "estree";
+import { getRuleMetaData } from "../utils";
 
 //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
 export = {
-  meta: {
-    type: "problem",
-
-    docs: {
-      description:
-        "force tsconfig.json's compilerOptions.target value to be a valid EcmaScript standard",
-      category: "Best Practices",
-      recommended: true,
-      url:
-        "https://github.com/Azure/azure-sdk-tools/blob/master/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-target.md"
-    },
-    schema: [] // no options
-  },
+  meta: getRuleMetaData(
+    "ts-config-target",
+    "force tsconfig.json's compilerOptions.target value to be a valid EcmaScript standard"
+  ),
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     const verifiers = getVerifiers(context, {
       outer: "compilerOptions",

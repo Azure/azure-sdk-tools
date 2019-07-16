@@ -5,24 +5,17 @@
 
 import { getVerifiers, stripPath } from "../utils";
 import { Rule } from "eslint";
+import { getRuleMetaData } from "../utils";
 
 //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
 export = {
-  meta: {
-    type: "problem",
-
-    docs: {
-      description: "force package.json's license value to be 'MIT'",
-      category: "Best Practices",
-      recommended: true,
-      url:
-        "https://github.com/Azure/azure-sdk-tools/blob/master/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-license.md"
-    },
-    schema: [] // no options
-  },
+  meta: getRuleMetaData(
+    "ts-packge-json-license",
+    "force package.json's license value to be 'MIT'"
+  ),
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     const verifiers = getVerifiers(context, {
       outer: "license",

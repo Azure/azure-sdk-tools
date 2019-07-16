@@ -31,6 +31,7 @@ import {
   TSESTree
 } from "@typescript-eslint/experimental-utils";
 import { ParserWeakMap } from "@typescript-eslint/typescript-estree/dist/parser-options";
+import { getRuleMetaData } from "../utils";
 
 //------------------------------------------------------------------------------
 // Helpers
@@ -240,19 +241,10 @@ const evaluateOverloads = (
 //------------------------------------------------------------------------------
 
 export = {
-  meta: {
-    type: "problem",
-
-    docs: {
-      description:
-        "encourage usage of interfaces over classes as function parameters",
-      category: "Best Practices",
-      recommended: true,
-      url:
-        "https://github.com/Azure/azure-sdk-tools/blob/master/tools/eslint-plugin-azure-sdk/docs/rules/ts-use-interface-parameters.md"
-    },
-    schema: [] // no options
-  },
+  meta: getRuleMetaData(
+    "ts-use-interface-parameters",
+    "encourage usage of interfaces over classes as function parameters"
+  ),
 
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     const parserServices: ParserServices = context.parserServices;

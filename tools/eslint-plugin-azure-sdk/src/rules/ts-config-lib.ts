@@ -6,25 +6,17 @@
 import { getVerifiers, stripPath } from "../utils";
 import { Rule } from "eslint";
 import { ArrayExpression, Property } from "estree";
+import { getRuleMetaData } from "../utils";
 
 //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
 export = {
-  meta: {
-    type: "problem",
-
-    docs: {
-      description:
-        "force tsconfig.json's compilerOptions.lib value to be an empty array",
-      category: "Best Practices",
-      recommended: true,
-      url:
-        "https://github.com/Azure/azure-sdk-tools/blob/master/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-lib.md"
-    },
-    schema: [] // no options
-  },
+  meta: getRuleMetaData(
+    "ts-config-lib",
+    "force tsconfig.json's compilerOptions.lib value to be an empty array"
+  ),
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     const verifiers = getVerifiers(context, {
       outer: "compilerOptions",

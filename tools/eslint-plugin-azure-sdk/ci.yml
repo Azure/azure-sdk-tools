@@ -113,6 +113,6 @@ stages:
                     inputs:
                       command: 'custom'
                       workingDir: '$(Pipeline.Workspace)/packages'
-                      customCommand: 'publish $(Package.Archive)'
+                      customCommand: 'publish $(Package.Archive) --access=public'
                       customEndpoint: 'NPM @azure'
                     displayName: 'Publish to npmjs.org'

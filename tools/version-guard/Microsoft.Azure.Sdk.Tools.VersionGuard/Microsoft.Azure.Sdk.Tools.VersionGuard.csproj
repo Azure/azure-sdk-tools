@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <Version>0.1.0</Version>
+
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>version-guard</ToolCommandName>
+  </PropertyGroup>
+
+</Project>

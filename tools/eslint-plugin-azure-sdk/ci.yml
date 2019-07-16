@@ -62,30 +62,57 @@ stages:
             artifact: packages
             condition: succeededOrFailed()
 
-  - stage: Release
-    dependsOn: Build
-    condition: and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
-    jobs:
-      - deployment: PublishPackage
-        environment: azure-sdk
-        
-        pool:
-          vmImage: ubuntu-16.04
+  # The Prerelease and Release stages are conditioned on whether we are building a pull request and the branch.
+  - ${{if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['Build.SourceBranch'], 'refs/heads/master'))}}:
+    - stage: Prerelease
+      dependsOn: Build
+      jobs:
+        - deployment: PublishPackage
+          environment: azure-sdk
+          
+          pool:
+            vmImage: ubuntu-16.04
 
-        strategy:
-          runOnce:
-            deploy:
-              steps:
-                - script: |
-                    export DETECTED_PACKAGE_NAME=`ls $(Pipeline.Workspace)/packages/*.tgz`
-                    echo "##vso[task.setvariable variable=Package.Archive]$DETECTED_PACKAGE_NAME"
-                  displayName: Detecting package archive
+          strategy:
+            runOnce:
+              deploy:
+                steps:
+                  - script: |
+                      export DETECTED_PACKAGE_NAME=`ls $(Pipeline.Workspace)/packages/*.tgz`
+                      echo "##vso[task.setvariable variable=Package.Archive]$DETECTED_PACKAGE_NAME"
+                    displayName: Detecting package archive
 
-                - task: Npm@1
-                  displayName: Publish package to feed
-                  inputs:
-                    command: 'custom'
-                    workingDir: '$(Pipeline.Workspace)/packages'
-                    customCommand: 'publish $(Package.Archive)'
-                    customRegistry: 'useFeed'
-                    customFeed: '7a8a7255-a1aa-48df-a904-c77c0b78cb03'
+                  - task: Npm@1
+                    inputs:
+                      command: 'custom'
+                      workingDir: '$(Pipeline.Workspace)/packages'
+                      customCommand: 'publish $(Package.Archive)'
+                      customRegistry: 'useFeed'
+                      customFeed: '7a8a7255-a1aa-48df-a904-c77c0b78cb03'
+                    displayName: 'Publish package to azure-sdk public feed'
+
+    - stage: Release
+      dependsOn: Prerelease
+      jobs:
+        - deployment: PublishPackage
+          environment: npm
+          
+          pool:
+            vmImage: ubuntu-16.04
+
+          strategy:
+            runOnce:
+              deploy:
+                steps:
+                  - script: |
+                      export DETECTED_PACKAGE_NAME=`ls $(Pipeline.Workspace)/packages/*.tgz`
+                      echo "##vso[task.setvariable variable=Package.Archive]$DETECTED_PACKAGE_NAME"
+                    displayName: Detecting package archive
+
+                  - task: Npm@1
+                    inputs:
+                      command: 'custom'
+                      workingDir: '$(Pipeline.Workspace)/packages'
+                      customCommand: 'publish $(Package.Archive)'
+                      customEndpoint: 'NPM @azure'
+                    displayName: 'Publish to npmjs.org'

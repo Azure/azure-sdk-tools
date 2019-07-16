@@ -52,7 +52,7 @@ namespace APIViewWeb
             return assemblies;
         }
 
-        public async Task UploadAssemblyAsync(AssemblyModel assemblyModel, string fileName)
+        public async Task<string> UploadAssemblyAsync(AssemblyModel assemblyModel, string fileName)
         {
             var guid = Guid.NewGuid().ToString();
             var blob = ContainerClient.GetBlockBlobClient(guid);
@@ -63,6 +63,7 @@ namespace APIViewWeb
             }
             blob = ContainerClient.GetBlockBlobClient(guid);
             await blob.SetMetadataAsync(new Dictionary<string, string>() { { "name", fileName } });
+            return guid;
         }
 
         public async Task DeleteAssemblyAsync(string id)

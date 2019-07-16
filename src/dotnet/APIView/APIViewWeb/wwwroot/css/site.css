@@ -89,3 +89,9 @@ body {
 form.comment {
     display: none;
 }
+
+.commentBox {
+    border: 1px solid gray;
+    padding: 7px;
+    border-radius: 5px;
+}

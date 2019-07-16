@@ -17,8 +17,27 @@
     </div>
     <button type="submit" id="submitButton" class="btn btn-outline-dark">Add</button>
 </form>
+<br />
+<div>
+    <h3>Comments</h3>
+    <br />
 
-@foreach  (var comment in Model.Comments)
-{
-    <a href="#@comment.Id">@comment.Id</a><span>: @comment.Comment</span><br />
-}
+    @if (Model.Comments.Any())
+    {
+        @foreach (var comment in Model.Comments)
+        {
+            <div class="commentBox">
+                <b>Element: </b><a href="#@comment.Id">@comment.Id</a>
+                <br /><br />
+                <span>@comment.Comment</span>
+                <br /><br />
+                <button id="deleteButton">Delete</button>
+            </div>
+            <br />
+        }
+    }
+    else
+    {
+        <span>Click on a named type or method definition to leave a comment.</span>
+    }
+</div>

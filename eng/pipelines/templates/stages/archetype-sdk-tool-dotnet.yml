@@ -22,21 +22,21 @@ stages:
         displayName: Publish package to run artifacts
         artifact: packages
         condition: succeededOrFailed()
-- stage: Release
-  dependsOn: Build
-  condition: and(ne(variables['Build.Reason'], 'PullRequest'), or(eq(variables['Build.SourceBranch'], 'refs/heads/master'), eq(variables['Build.SourceBranch'], 'refs/heads/feature/get-publishing-working')))
-  jobs:
-  - deployment: PublishPackage
-    environment: azure-sdk
-    pool:
-      vmImage: ubuntu-16.04
-    strategy:
-      runOnce:
-        deploy:
-          steps:
-          - task: NuGetCommand@2
-            inputs:
-              command: 'push'
-              packagesToPush: '$(Pipeline.Workspace)/packages/**/*.nupkg'
-              nuGetFeedType: 'internal'
-              publishVstsFeed: '29ec6040-b234-4e31-b139-33dc4287b756/8bea7e97-84ed-4421-9a37-2bbf3200662b'
+  - ${{if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
+    - stage: Release
+      dependsOn: Build
+      jobs:
+      - deployment: PublishPackage
+        environment: azure-sdk
+        pool:
+          vmImage: ubuntu-16.04
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+              - task: NuGetCommand@2
+                inputs:
+                  command: 'push'
+                  packagesToPush: '$(Pipeline.Workspace)/packages/**/*.nupkg'
+                  nuGetFeedType: 'internal'
+                  publishVstsFeed: '29ec6040-b234-4e31-b139-33dc4287b756/8bea7e97-84ed-4421-9a37-2bbf3200662b'

@@ -193,8 +193,22 @@ namespace BuildTasks.Tests
 
             if (cproj.Execute())
             {
-                Assert.Equal(3, cproj.SDK_Projects.Count<ITaskItem>());
-                Assert.Equal(3, cproj.Test_Projects.Count<ITaskItem>());
+                Assert.True(cproj.SDK_Projects.Count<ITaskItem>() > 4);
+                Assert.True(cproj.Test_Projects.Count<ITaskItem>() > 4);
+            }
+        }
+
+        [Fact]
+        public void BuildIncludeAndExcludeTokenListProjects()
+        {
+            CategorizeSDKProjectsTask cproj = new CategorizeSDKProjectsTask(rootDir);
+            cproj.CmdLineIncludeScope = "Compute;Network;DataBox";
+            cproj.CmdLineExcludeScope = "DataBox";
+
+            if (cproj.Execute())
+            {
+                Assert.True(cproj.SDK_Projects.Count<ITaskItem>() >= 4);
+                Assert.True(cproj.Test_Projects.Count<ITaskItem>() >= 4);
             }
         }
 
@@ -207,8 +221,8 @@ namespace BuildTasks.Tests
 
             if (cproj.Execute())
             {
-                Assert.True(cproj.SDK_Projects.Count<ITaskItem>() == 2);
-                Assert.True(cproj.Test_Projects.Count<ITaskItem>() == 2);
+                Assert.True(cproj.SDK_Projects.Count<ITaskItem>() == 4);
+                Assert.True(cproj.Test_Projects.Count<ITaskItem>() == 4);
             }
         }
 
@@ -235,8 +249,8 @@ namespace BuildTasks.Tests
 
             if (cproj.Execute())
             {
-                Assert.True(cproj.SDK_Projects.Count<ITaskItem>() == 1);
-                Assert.True(cproj.Test_Projects.Count<ITaskItem>() == 1);
+                Assert.True(cproj.SDK_Projects.Count<ITaskItem>() == 0);
+                Assert.True(cproj.Test_Projects.Count<ITaskItem>() == 0);
             }
         }
 
@@ -354,6 +368,61 @@ namespace BuildTasks.Tests
 
         #endregion
 
+        #region Scope And Categorize
+
+        [Fact]
+        public void SingleScopeAndCat()
+        {
+            string ghUrl = NET_SDK_PUB_URL;
+            int ghPrNumber = 6804;
+            DetectRPScopeTask rpScope = new DetectRPScopeTask(ghUrl, ghPrNumber.ToString());
+            rpScope.Execute();
+            Assert.Single(rpScope.ScopesFromPR);
+
+            CategorizeSDKProjectsTask cproj = new CategorizeSDKProjectsTask(rootDir);
+            cproj.BuildScope = rpScope.PRScopeString;
+            cproj.Execute();
+
+            Assert.Empty(cproj.SDK_Projects);
+        }
+
+
+        [Theory]
+        [InlineData(@"sdk\servicebus\Microsoft.Azure.ServiceBus", 1)]
+        [InlineData(@"sdk\batch\Microsoft.Azure.Batch", 2)]
+        [InlineData(@"sdk\eventhub\Microsoft.Azure.EventHubs", 3)]
+        [InlineData(@"sdk\storage\Azure.Storage.Files", 4)]
+        [InlineData(@"sdk\storage", 5)]
+        //[InlineData(NET_SDK_PUB_URL)]
+        //[InlineData(NET_SDK_PUB_URL)]
+        //[InlineData(NET_SDK_PUB_URL)]
+        //[InlineData(NET_SDK_PUB_URL)]
+        public void DataPlaneScope(string buildScope, int scenarioNumber)
+        {
+            CategorizeSDKProjectsTask cproj = new CategorizeSDKProjectsTask(rootDir);
+            cproj.BuildScope = buildScope;
+            cproj.Execute();
+
+            switch(scenarioNumber)
+            {
+                case 1:
+                case 2:
+                case 3:
+                case 4:
+                    {
+                        Assert.Empty(cproj.SDK_Projects);
+                        break;
+                    }
+
+                case 5:
+                    {
+                        Assert.Single(cproj.SDK_Projects);
+                        break;
+                    }
+            }
+        }
+
+        #endregion
 
 
         [Fact]

@@ -71,7 +71,7 @@ For example, if you are not targeting Node, disable `ts-config-moduleresolution`
 ```json
 {
   "rules": {
-    "@ts-common/azure-sdk/ts-config-moduleresolution": "off"
+    "@azure/azure-sdk/ts-config-moduleresolution": "off"
   }
 }
 ```

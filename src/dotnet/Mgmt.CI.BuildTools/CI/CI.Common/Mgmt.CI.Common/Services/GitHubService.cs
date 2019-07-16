@@ -68,6 +68,7 @@ namespace MS.Az.Mgmt.CI.Common.Services
                     //TODO: Find the apiKey For the user that has access to both repo (public/private) in the new flow
                     //_githubCredentials = new Credentials(KVSvc.GetSecret(CommonConstants.AzureAuth.KVInfo.Secrets.GH_AdxSdkNetAcccesToken));
                     _githubCredentials = new Credentials(GHAccessToken);
+                    //_githubCredentials = new Credentials(GHAccessToken, AuthenticationType.Bearer);
                 }
 
                 return _githubCredentials;
@@ -94,6 +95,7 @@ namespace MS.Az.Mgmt.CI.Common.Services
                 {
                     _octokitClient = new GitHubClient(MyProductInfo);
                     _octokitClient.Credentials = GitHubCredentials;
+                    //_octokitClient.Credentials = CredentialStore.GetCredentials().GetAwaiter().GetResult();
                     ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
                 }
 

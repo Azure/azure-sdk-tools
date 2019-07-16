@@ -16,27 +16,27 @@ namespace Azure.ClientSdk.Analyzers.Tests
             @"
 namespace RandomNamespace
 {
-/*MM*/    
+/*MM*/____
 }
 ",
             @"
 namespace RandomNamespace
 {
-}/*MM*/    
+}/*MM*/____
 ",
             @"
 namespace RandomNamespace
-{/*MM*/    
+{/*MM*/____
 }
 ",
             @"
-namespace RandomNamespace/*MM*/     
+namespace RandomNamespace/*MM*/____
 {
 }
 ",          @"
 class C
 {
-    public void Main(int a,/*MM*/
+    public void Main(int a,/*MM*/____
                      int b){}
 }
 ",          @"
@@ -44,7 +44,7 @@ class C
 {
     public void Main(int a)
     {
-        a.ToString();/*MM*/
+        a.ToString();/*MM*/____
     }
 }
 ",
@@ -57,7 +57,7 @@ class C
         [MemberData(nameof(TestCases))]
         public async Task AZC1002ProducedForWhitespaceInTheEndOfTheLine(string testCase)
         {
-            var testSource = TestSource.Read(testCase);
+            var testSource = TestSource.Read(testCase.Replace("_", " "));
             var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
 
             var diagnostic = Assert.Single(diagnostics);

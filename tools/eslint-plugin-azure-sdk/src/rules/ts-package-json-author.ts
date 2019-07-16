@@ -3,34 +3,26 @@
  * @author Arpan Laha
  */
 
-import { getVerifiers, stripPath } from "../utils/verifiers";
+import { getVerifiers, stripPath } from "../utils";
 import { Rule } from "eslint";
+import { getRuleMetaData } from "../utils";
 
 //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
 export = {
-  meta: {
-    type: "problem",
-
-    docs: {
-      description:
-        "force package.json's author value to be 'Microsoft Corporation'",
-      category: "Best Practices",
-      recommended: true,
-      url:
-        "https://github.com/Azure/azure-sdk-tools/blob/master/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-author.md"
-    },
-    schema: [] // no options
-  },
+  meta: getRuleMetaData(
+    "ts-package-json-author",
+    "force package.json's author value to be 'Microsoft Corporation'"
+  ),
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     const verifiers = getVerifiers(context, {
       outer: "author",
       expected: "Microsoft Corporation"
     });
     return stripPath(context.getFilename()) === "package.json"
-      ? {
+      ? ({
           // callback functions
 
           // check to see if author exists at the outermost level
@@ -39,7 +31,7 @@ export = {
           // check the node corresponding to author to see if its value is "Microsoft Corporation"
           "ExpressionStatement > ObjectExpression > Property[key.value='author']":
             verifiers.outerMatchesExpected
-        }
+        } as Rule.RuleListener)
       : {};
   }
 };

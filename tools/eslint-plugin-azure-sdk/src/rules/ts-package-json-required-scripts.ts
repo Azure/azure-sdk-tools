@@ -3,28 +3,20 @@
  * @author Arpan Laha
  */
 
-import { getVerifiers, stripPath } from "../utils/verifiers";
+import { getVerifiers, stripPath } from "../utils";
 import { Rule } from "eslint";
 import { Property } from "estree";
+import { getRuleMetaData } from "../utils";
 
 //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
 export = {
-  meta: {
-    type: "problem",
-
-    docs: {
-      description:
-        "force package.json's scripts value to at least contain build, test, and prepack",
-      category: "Best Practices",
-      recommended: true,
-      url:
-        "https://github.com/Azure/azure-sdk-tools/blob/master/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-required-scripts.md"
-    },
-    schema: [] // no options
-  },
+  meta: getRuleMetaData(
+    "ts-package-json-required-scripts",
+    "force package.json's scripts value to at least contain build, test, and prepack"
+  ),
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     const buildVerifiers = getVerifiers(context, {
       outer: "scripts",

@@ -1,6 +1,6 @@
 {
   "name": "@azure/eslint-plugin-azure-sdk",
-  "version": "1.0.0",
+  "version": "1.1.0-preview.1",
   "description": "An ESLint plugin enforcing design guidelines for the JavaScript/TypeScript Azure SDK",
   "keywords": [
     "eslint",
@@ -20,7 +20,7 @@
     }
   ],
   "license": "MIT",
-  "homepage": "https://github.com/Azure/azure-sdk-tools/tools/eslint-plugin-azure-sdk",
+  "homepage": "https://github.com/Azure/azure-sdk-tools/tree/master/tools/eslint-plugin-azure-sdk",
   "repository": {
     "type": "git",
     "url": "https://github.com/Azure/azure-sdk-tools.git",
@@ -31,36 +31,43 @@
   },
   "main": "dist/index.js",
   "files": [
-    "dist",
-    "docs"
+    "dist"
   ],
   "scripts": {
-    "build": "npm run clean && npm run format && tsc -p tsconfig.build.json",
+    "build": "npm run clean && tsc -p tsconfig.build.json && npm run format:dist",
     "clean": "rimraf dist/",
     "format": "prettier --write \"./**/*.{ts,json,md}\"",
-    "lint": "eslint src tests --ext .ts",
+    "format:check": "prettier --check \"./**/*.{ts,json,md}\"",
+    "format:dist": "prettier --write dist/**/*.{js,json,md}",
+    "lint": "eslint src tests --ext .ts && markdownlint README.md docs",
     "test": "npm run clean && tsc -p tsconfig.json && mocha --timeout 10000 --recursive dist/tests"
   },
-  "dependencies": {},
+  "dependencies": {
+    "path": "^0.12.7",
+    "typescript": "^3.4.5"
+  },
   "devDependencies": {
+    "@types/bluebird": "^3.5.27",
     "@types/chai": "^4.1.7",
     "@types/eslint": "^4.16.6",
     "@types/estree": "0.0.39",
     "@types/mocha": "^5.2.7",
-    "@typescript-eslint/eslint-plugin": "^1.10.2",
-    "@typescript-eslint/parser": "^1.10.2",
+    "@typescript-eslint/eslint-plugin": "^1.12.0",
+    "@typescript-eslint/experimental-utils": "^1.12.0",
+    "@typescript-eslint/parser": "^1.12.0",
+    "@typescript-eslint/typescript-estree": "^1.12.0",
+    "bluebird": "^3.5.5",
     "chai": "^4.2.0",
     "eslint": "^5.16.0",
+    "markdownlint-cli": "^0.17.0",
     "mocha": "^6.1.4",
-    "prettier": "^1.18.2",
-    "typescript": "^3.4.5"
+    "prettier": "^1.18.2"
   },
   "peerDependencies": {
     "@typescript-eslint/parser": "^1.10.2",
-    "eslint": "^5.16.0",
-    "typescript": "^3.4.5"
+    "eslint": "^5.16.0"
   },
   "engines": {
-    "node": ">=0.10.0"
+    "node": ">=8.0.0"
   }
 }

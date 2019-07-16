@@ -1,4 +1,4 @@
-# ts-config-sourcmap
+# ts-config-sourcemap
 
 Requires `compilerOptions.sourceMap` and `compilerOptions.declarationMap` in `tsconfig.json` to be set to `true`.
 
@@ -32,6 +32,7 @@ Requires `compilerOptions.sourceMap` and `compilerOptions.declarationMap` in `ts
         "sourceMap": true
     }
 }
+```
 
 ```json
 {

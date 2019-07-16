@@ -11,6 +11,7 @@ import { assert } from "chai";
  * A list of all currently supported rules
  */
 const ruleList = [
+  "github-source-headers",
   "ts-config-allowsyntheticdefaultimports",
   "ts-config-declaration",
   "ts-config-esmoduleinterop",
@@ -20,18 +21,32 @@ const ruleList = [
   "ts-config-isolatedmodules",
   "ts-config-lib",
   "ts-config-module",
+  "ts-config-moduleresolution",
   "ts-config-no-experimentaldecorators",
   "ts-config-sourcemap",
   "ts-config-strict",
+  "ts-config-target",
+  "ts-doc-internal",
+  "ts-error-handling",
+  "ts-modules-only-named",
+  "ts-no-const-enums",
   "ts-package-json-author",
   "ts-package-json-bugs",
+  "ts-package-json-engine-is-present",
+  "ts-package-json-files-required",
   "ts-package-json-homepage",
   "ts-package-json-keywords",
   "ts-package-json-license",
+  "ts-package-json-main-is-cjs",
+  "ts-package-json-module",
   "ts-package-json-name",
   "ts-package-json-repo",
   "ts-package-json-required-scripts",
-  "ts-package-json-sideeffects"
+  "ts-package-json-sideeffects",
+  "ts-package-json-types",
+  "ts-use-interface-parameters",
+  "ts-use-promises",
+  "ts-versioning-semver"
 ];
 
 /**
@@ -40,7 +55,6 @@ const ruleList = [
  * @param rules the ESLint plugin rules object containing all rule information
  * @throws chai assert errors if the provided rule is not configured properly
  */
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 const testRule = (ruleName: string, rules: any): void => {
   describe(ruleName, (): void => {
     it(ruleName + " should be a member of rules", (): void => {
@@ -52,19 +66,6 @@ const testRule = (ruleName: string, rules: any): void => {
         assert.property(rule, "meta", "meta is not a member of " + ruleName);
       });
       const meta = rule.meta;
-      describe("type", (): void => {
-        it("type should be a member of meta", (): void => {
-          assert.property(meta, "type", "type is not a member of meta");
-        });
-        const type = meta.type;
-        it("type should be one of the following: 'problem', 'suggestion', or 'layout'", (): void => {
-          assert.oneOf(
-            type,
-            ["problem", "suggestion", "layout"],
-            "type is not a valid option"
-          );
-        });
-      });
       describe("docs", (): void => {
         it("docs should be a member of meta", (): void => {
           assert.property(meta, "docs", "docs is not a member of meta");
@@ -153,6 +154,9 @@ describe("plugin", (): void => {
   describe("rules", (): void => {
     it("rules should be a member of the plugin", (): void => {
       assert.property(plugin, "rules", "rules is not a member of the plugin");
+    });
+    it("the number of rules should match the expected value", (): void => {
+      assert.equal(Object.keys(plugin.rules).length, ruleList.length);
     });
     const rules = plugin.rules;
     ruleList.forEach((rule: string): void => {
@@ -266,7 +270,7 @@ describe("plugin", (): void => {
           assert.property(
             recommended,
             "rules",
-            "rules is not a member of recomended"
+            "rules is not a member of recommended"
           );
         });
         const rules = recommended.rules;
@@ -276,6 +280,33 @@ describe("plugin", (): void => {
               rules,
               "@azure/azure-sdk/" + rule,
               "rules does not contain a setting for " + rule
+            );
+          });
+        });
+      });
+      describe("settings", (): void => {
+        it("settings should be a member of recommended", (): void => {
+          assert.property(
+            recommended,
+            "settings",
+            "settings is not a member of recommended"
+          );
+        });
+        const settings = recommended.settings;
+        describe("main", (): void => {
+          it("main should be a member of settings", (): void => {
+            assert.property(
+              settings,
+              "main",
+              "main is not a member of settings"
+            );
+          });
+          const main = settings.main;
+          it("main should be set to 'src/index.ts'", (): void => {
+            assert.strictEqual(
+              main,
+              "src/index.ts",
+              "main is not set to 'src/index.ts'"
             );
           });
         });

@@ -4,14 +4,16 @@
     "forceConsistentCasingInFileNames": true,
     "importHelpers": true,
     "isolatedModules": true,
+    "lib": ["es2017"],
     "module": "commonjs",
     "noImplicitReturns": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "outDir": "./dist",
     "pretty": true,
+    "removeComments": true,
     "strict": true,
-    "target": "es6",
+    "target": "es2016",
     "types": ["chai", "eslint", "estree", "mocha"]
   },
   "exclude": ["node_modules"]

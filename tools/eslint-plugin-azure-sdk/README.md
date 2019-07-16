@@ -38,7 +38,7 @@ Make sure to set your `.eslintrc` configuration file's `parserOptions.project` f
 }
 ```
 
-For all rules to be enforced according to the standards set by the Design Guidelines, add this plugin's `recommended` configuration to the `extends` section of your `eslintrc` configuration file as follows:
+For all rules to be enforced according to the standards set by the Design Guidelines, add this plugin's `recommended` configuration to the `extends` section of your `.eslintrc` configuration file as follows:
 
 ```json
 {
@@ -46,7 +46,17 @@ For all rules to be enforced according to the standards set by the Design Guidel
 }
 ```
 
-If you need to modify or disable specific rules, you can do so in the `rules` section of your `eslintrc` configuration file:
+If the main TypeScript entrypoint to your package is not in `src/index.ts`, set `settings.main` in your `.eslintrc` configuration file to the entrypoint as follows (for example, if the entrypoint is `index.ts`):
+
+```json
+{
+  "settings": {
+    "main": "index.ts"
+  }
+}
+```
+
+If you need to modify or disable specific rules, you can do so in the `rules` section of your `.eslintrc` configuration file:
 
 ```json
 {
@@ -56,8 +66,19 @@ If you need to modify or disable specific rules, you can do so in the `rules` se
 }
 ```
 
+For example, if you are not targeting Node, disable `ts-config-moduleresolution` as follows:
+
+```json
+{
+  "rules": {
+    "@azure/azure-sdk/ts-config-moduleresolution": "off"
+  }
+}
+```
+
 ## Supported Rules
 
+- [github-source-headers](/tools/eslint-plugin-azure-sdk/docs/rules/github-source-headers.md)
 - [ts-config-allowsyntheticdefaultimports](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-allowsyntheticdefaultimports.md)
 - [ts-config-declaration](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-declaration.md)
 - [ts-config-esmoduleinterop](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-esmoduleinterop.md)
@@ -67,15 +88,29 @@ If you need to modify or disable specific rules, you can do so in the `rules` se
 - [ts-config-isolatedmodules](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-isolatedmodules.md)
 - [ts-config-lib](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-lib.md)
 - [ts-config-module](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-module.md)
+- [ts-config-moduleresolution](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-moduleresolution.md)
 - [ts-config-no-experimentaldecorators](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-no-experimentaldecorators.md)
 - [ts-config-sourcemap](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-sourcemap.md)
 - [ts-config-strict](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-strict.md)
+- [ts-config-target](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-target.md)
+- [ts-doc-internal](/tools/eslint-plugin-azure-sdk/docs/rules/ts-doc-internal.md)
+- [ts-error-handling](/tools/eslint-plugin-azure-sdk/docs/rules/ts-error-handling.md)
+- [ts-modules-only-named](/tools/eslint-plugin-azure-sdk/docs/rules/ts-modules-only-named.md)
+- [ts-no-const-enums](/tools/eslint-plugin-azure-sdk/docs/rules/ts-no-const-enums.md)
 - [ts-package-json-author](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-author.md)
 - [ts-package-json-bugs](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-bugs.md)
+- [ts-package-json-engine-is-present](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-engine-is-present.md)
+- [ts-package-json-files-required](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-files-required.md)
 - [ts-package-json-homepage](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-homepage.md)
 - [ts-package-json-keywords](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-keywords.md)
 - [ts-package-json-license](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-license.md)
+- [ts-package-json-main-is-cjs](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-main-is-cjs.md)
+- [ts-package-json-module](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-module.md)
 - [ts-package-json-name](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-name.md)
 - [ts-package-json-repo](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-repo.md)
 - [ts-package-json-required-scripts](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-required-scripts.md)
 - [ts-package-json-sideeffects](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-sideeffects.md)
+- [ts-package-json-types](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-types.md)
+- [ts-use-interface-parameters](/tools/eslint-plugin-azure-sdk/docs/rules/ts-use-interface-parameters.md)
+- [ts-use-promises](/tools/eslint-plugin-azure-sdk/docs/rules/ts-use-promises.md)
+- [ts-versioning-semver](/tools/eslint-plugin-azure-sdk/docs/rules/ts-versioning-semver.md)

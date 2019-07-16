@@ -3,28 +3,20 @@
  * @author Arpan Laha
  */
 
-import { getVerifiers, stripPath } from "../utils/verifiers";
+import { getVerifiers, stripPath } from "../utils";
 import { Rule } from "eslint";
 import { Literal, Property } from "estree";
+import { getRuleMetaData } from "../utils";
 
 //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
 export = {
-  meta: {
-    type: "problem",
-
-    docs: {
-      description:
-        "force package.json's name value to be set to @azure/<service>",
-      category: "Best Practices",
-      recommended: true,
-      url:
-        "https://github.com/Azure/azure-sdk-tools/blob/master/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-name.md"
-    },
-    schema: [] // no options
-  },
+  meta: getRuleMetaData(
+    "ts-package-json-name",
+    "force package.json's name value to be set to @azure/<service>"
+  ),
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     const verifiers = getVerifiers(context, {
       outer: "name"
@@ -45,16 +37,14 @@ export = {
 
             !value.startsWith("@azure/") &&
               context.report({
-                node: node,
+                node: nodeValue,
                 message: "name is not set to @azure/<service>"
               });
 
-            const kebabRegex = /^@azure\/([a-z]+-)*[a-z]+$/;
-
             value.startsWith("@azure/") &&
-              !kebabRegex.test(value) &&
+              !/^@azure\/([a-z]+-)*[a-z]+$/.test(value) &&
               context.report({
-                node: node,
+                node: nodeValue,
                 message:
                   "service name is not in kebab-case (lowercase and separated by hyphens)"
               });

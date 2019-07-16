@@ -1,6 +1,6 @@
 # ts-config-isolatedmodules
 
-Requires `compilerOptions.isolatedModules` in `tsconfig.json` to be set to `true`.
+Recommends `compilerOptions.isolatedModules` in `tsconfig.json` to be set to `true`.
 
 ## Examples
 

@@ -14,6 +14,7 @@ resources:
 variables:
   DotNetCoreVersion: '2.1.503'
   ProjectFile: mgmtci.proj
+  ShouldSign: false # Signing of the binaries in the package is currently broken.
 
 stages:
   - stage: Build
@@ -41,4 +42,5 @@ stages:
             displayName: 'Publish Artifacts'
             inputs:
               ArtifactName: packages
-  - template: pipelines/archetype-sdk-dotnet-release.yml@azure-sdk-build-tools
+  - {{ if ne(variables['System.TeamProject'], 'Public') }}:
+    - template: pipelines/archetype-sdk-dotnet-release.yml@azure-sdk-build-tools

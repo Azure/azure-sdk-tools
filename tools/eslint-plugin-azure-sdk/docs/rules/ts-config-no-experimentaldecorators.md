@@ -8,9 +8,9 @@ Requires `compilerOptions.experimentalDecorators` in `tsconfig.json` to be set t
 
 ```json
 {
-    "compilerOptions": {
-        "experimentalDecorators": false
-    }
+  "compilerOptions": {
+    "experimentalDecorators": false
+  }
 }
 ```
 
@@ -18,15 +18,15 @@ Requires `compilerOptions.experimentalDecorators` in `tsconfig.json` to be set t
 
 ```json
 {
-    "compilerOptions": {
-        "experimentalDecorators": true
-    }
+  "compilerOptions": {
+    "experimentalDecorators": true
+  }
 }
 ```
 
 ```json
 {
-    "compilerOptions": {}
+  "compilerOptions": {}
 }
 ```
 

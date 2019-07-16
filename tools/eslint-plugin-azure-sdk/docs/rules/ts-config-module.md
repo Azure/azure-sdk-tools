@@ -8,9 +8,9 @@ Requires `compilerOptions.module` in `tsconfig.json` to be set to `"es6"`.
 
 ```json
 {
-    "compilerOptions": {
-        "module": "es6"
-    }
+  "compilerOptions": {
+    "module": "es6"
+  }
 }
 ```
 
@@ -18,15 +18,15 @@ Requires `compilerOptions.module` in `tsconfig.json` to be set to `"es6"`.
 
 ```json
 {
-    "compilerOptions": {
-        "module": "es5"
-    }
+  "compilerOptions": {
+    "module": "es5"
+  }
 }
 ```
 
 ```json
 {
-    "compilerOptions": {}
+  "compilerOptions": {}
 }
 ```
 

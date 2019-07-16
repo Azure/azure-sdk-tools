@@ -10,21 +10,21 @@ You'll first need to install [ESLint](http://eslint.org):
 npm i eslint --save-dev
 ```
 
-Next, install `@azuresdktools/eslint-plugin-azure-sdk`:
+Next, install `@azure/eslint-plugin-azure-sdk`:
 
 ```shell
-npm install @azuresdktools/eslint-plugin-azure-sdk --save-dev
+npm install @azure/eslint-plugin-azure-sdk --save-dev
 ```
 
-**Note:** If you installed ESLint globally (using the `-g` flag) then you must also install `@azuresdktools/eslint-plugin-azure-sdk` globally.
+**Note:** If you installed ESLint globally (using the `-g` flag) then you must also install `@azure/eslint-plugin-azure-sdk` globally.
 
 ## Usage
 
-Add `@azuresdktools/azure-sdk` to the `plugins` section of your `.eslintrc` configuration file. You can omit the `eslint-plugin-` prefix:
+Add `@azure/azure-sdk` to the `plugins` section of your `.eslintrc` configuration file. You can omit the `eslint-plugin-` prefix:
 
 ```json
 {
-  "plugins": ["@azuresdktools/azure-sdk"]
+  "plugins": ["@azure/azure-sdk"]
 }
 ```
 
@@ -42,7 +42,7 @@ For all rules to be enforced according to the standards set by the Design Guidel
 
 ```json
 {
-  "extends": ["plugin:@azuresdktools/azure-sdk/recommended"]
+  "extends": ["plugin:@azure/azure-sdk/recommended"]
 }
 ```
 
@@ -51,7 +51,7 @@ If you need to modify or disable specific rules, you can do so in the `rules` se
 ```json
 {
   "rules": {
-    "@azuresdktools/azure-sdk/rule-name": "off"
+    "@azure/azure-sdk/rule-name": "off"
   }
 }
 ```

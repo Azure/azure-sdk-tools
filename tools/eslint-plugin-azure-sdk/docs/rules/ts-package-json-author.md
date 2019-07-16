@@ -8,7 +8,7 @@ Requires `author` in `package.json` to be set to `"Microsoft Corporation"`.
 
 ```json
 {
-    "author": "Microsoft Corporation"
+  "author": "Microsoft Corporation"
 }
 ```
 
@@ -16,7 +16,7 @@ Requires `author` in `package.json` to be set to `"Microsoft Corporation"`.
 
 ```json
 {
-    "author": "Microsoft"
+  "author": "Microsoft"
 }
 ```
 

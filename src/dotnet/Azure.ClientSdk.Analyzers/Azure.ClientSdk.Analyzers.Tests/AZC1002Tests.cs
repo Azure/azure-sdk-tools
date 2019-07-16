@@ -33,7 +33,23 @@ namespace RandomNamespace
 namespace RandomNamespace/*MM*/     
 {
 }
+",          @"
+class C
+{
+    public void Main(int a,/*MM*/
+                     int b){}
+}
+",          @"
+class C
+{
+    public void Main(int a)
+    {
+        a.ToString();/*MM*/
+    }
+}
 ",
+
+
 
         }.Select(s => new object[] { s }).ToArray();
 

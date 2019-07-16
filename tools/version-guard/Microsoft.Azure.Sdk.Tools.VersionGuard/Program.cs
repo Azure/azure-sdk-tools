@@ -1,12 +1,14 @@
 ﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Microsoft.Azure.Sdk.Tools.VersionGuard
 {
-    class Program
+    public class Program
     {
-        static void Main(string[] args)
+        public static async Task<int> Main(string packageName, string packageVersion, CancellationToken cancellationToken)
         {
-            Console.WriteLine("Hello World!");
+            return 0;
         }
     }
 }

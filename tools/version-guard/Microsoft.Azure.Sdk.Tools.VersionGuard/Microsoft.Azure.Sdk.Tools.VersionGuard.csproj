@@ -9,4 +9,8 @@
     <ToolCommandName>version-guard</ToolCommandName>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="System.CommandLine.DragonFruit" Version="0.3.0-alpha.19317.1" />
+  </ItemGroup>
+
 </Project>

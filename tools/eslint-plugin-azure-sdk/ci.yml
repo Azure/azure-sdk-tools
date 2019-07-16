@@ -48,7 +48,7 @@ stages:
               npm pack
               cp *.tgz $(Build.ArtifactStagingDirectory)
             workingDirectory: tools/eslint-plugin-azure-sdk
-            displayName: "Build, test and package"
+            displayName: "Analyze, test, build, and package"
 
           - script: |
               set -e

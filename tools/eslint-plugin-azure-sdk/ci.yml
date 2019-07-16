@@ -63,7 +63,7 @@ stages:
             condition: succeededOrFailed()
 
   # The Prerelease and Release stages are conditioned on whether we are building a pull request and the branch.
-  - ${{if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['Build.SourceBranch'], 'refs/heads/master'))}}:
+  - ${{if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
     - stage: Prerelease
       dependsOn: Build
       jobs:

@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26124.0
 MinimumVisualStudioVersion = 15.0.26124.0
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Azure.Sdk.Tools.VersionGuard", "Microsoft.Azure.Sdk.Tools.VersionGuard\Microsoft.Azure.Sdk.Tools.VersionGuard.csproj", "{ACE99BEA-7554-4BAD-8818-5E9E64669D78}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.Sdk.Tools.VersionGuard", "Azure.Sdk.Tools.VersionGuard\Azure.Sdk.Tools.VersionGuard.csproj", "{ACE99BEA-7554-4BAD-8818-5E9E64669D78}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

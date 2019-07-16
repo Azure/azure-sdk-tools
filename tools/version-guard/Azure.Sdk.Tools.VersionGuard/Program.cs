@@ -2,7 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Microsoft.Azure.Sdk.Tools.VersionGuard
+namespace Azure.Sdk.Tools.VersionGuard
 {
     /// <summary>Program entry point for Version Guard.</summary>
     public class Program

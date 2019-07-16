@@ -45,4 +45,5 @@ stages:
   - ${{ if ne(variables['System.TeamProject'], 'Public') }}:
     - template: pipelines/stages/net-release-blobfeed.yml@azure-sdk-build-tools
       parameters:
-        ShouldSign: false
+        ShouldTag: false  # Disable tagging for now as github is rate limiting us
+        ShouldSign: false # Disable signing for now because the tools package contains a number files we cannot correctly sign

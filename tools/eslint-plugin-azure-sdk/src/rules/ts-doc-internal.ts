@@ -33,8 +33,7 @@ const reportInternal = (
   typeChecker: TypeChecker
 ): void => {
   const tsNode = converter.get(node as TSESTree.Node) as any;
-  const type = typeChecker.getTypeAtLocation(tsNode);
-  const symbol = type.getSymbol();
+  const symbol = typeChecker.getTypeAtLocation(tsNode).getSymbol();
 
   if (
     !context.settings.exported.includes(symbol) &&
@@ -51,9 +50,8 @@ const reportInternal = (
       );
     });
 
-    const internalRegex = /(ignore)|(internal)/;
     TSDocTags.every((TSDocTag: string): boolean => {
-      return !internalRegex.test(TSDocTag);
+      return !/(ignore)|(internal)/.test(TSDocTag);
     }) &&
       context.report({
         node: node,
@@ -86,13 +84,10 @@ export = {
       return {};
     }
 
-    const program = parserServices.program;
-    const typeChecker = program.getTypeChecker();
+    const typeChecker = parserServices.program.getTypeChecker();
     const converter = parserServices.esTreeNodeToTSNodeMap;
 
-    const srcRegex = /src/;
-
-    return srcRegex.test(context.getFilename())
+    return /src/.test(context.getFilename())
       ? {
           // callback functions
           ":matches(TSInterfaceDeclaration, ClassDeclaration, TSModuleDeclaration)": (
@@ -102,8 +97,7 @@ export = {
           },
 
           ":function": (node: Node): void => {
-            const ancestors = context.getAncestors();
-            ancestors.every((ancestor: Node): boolean => {
+            context.getAncestors().every((ancestor: Node): boolean => {
               return ![
                 "ClassBody",
                 "TSInterfaceBody",

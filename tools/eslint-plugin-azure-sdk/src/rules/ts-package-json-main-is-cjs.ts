@@ -41,9 +41,7 @@ export = {
 
             const nodeValue: Literal = node.value as Literal;
 
-            const regex = /^(\.\/)?dist\/index\.js$/;
-
-            !regex.test(nodeValue.value as string) &&
+            !/^(\.\/)?dist\/index\.js$/.test(nodeValue.value as string) &&
               context.report({
                 node: nodeValue,
                 message:

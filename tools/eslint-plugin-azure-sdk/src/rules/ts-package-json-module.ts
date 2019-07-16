@@ -40,16 +40,15 @@ export = {
             }
 
             const nodeValue: Literal = node.value as Literal;
+            const moduleValue = nodeValue.value as string;
 
-            const regex = /^(\.\/)?dist-esm\/src\/index\.js$/;
-
-            !regex.test(nodeValue.value as string) &&
+            !/^(\.\/)?dist-esm\/src\/index\.js$/.test(moduleValue) &&
               context.report({
                 node: nodeValue,
                 message:
                   "module is set to {{ identifier }} when it should be set to dist-esm/src/index.js",
                 data: {
-                  identifier: nodeValue.value as string
+                  identifier: moduleValue
                 }
               });
           }

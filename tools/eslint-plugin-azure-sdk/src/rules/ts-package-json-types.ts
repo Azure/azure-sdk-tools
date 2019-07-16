@@ -40,8 +40,7 @@ export = {
               });
             const nodeValue: Literal = node.value as Literal;
 
-            const pattern = /\.d\.ts$/; // filename ending in '.d.ts'
-            !pattern.test(nodeValue.value as string) &&
+            !/\.d\.ts$/.test(nodeValue.value as string) && // filename ending in '.d.ts'
               context.report({
                 node: nodeValue,
                 message:

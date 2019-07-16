@@ -65,10 +65,9 @@ const getTypeOfParam = (
   converter: ParserWeakMap<TSESTree.Node, TSNode>,
   typeChecker: TypeChecker
 ): Type => {
-  const identifier = getParamAsIdentifier(param);
-  const tsNode = converter.get(identifier as TSESTree.Node);
-
-  const type = typeChecker.getTypeAtLocation(tsNode) as TypeReference;
+  const type = typeChecker.getTypeAtLocation(
+    converter.get(getParamAsIdentifier(param) as TSESTree.Node)
+  ) as TypeReference;
   const typeNode = typeChecker.typeToTypeNode(type);
   if (typeNode !== undefined && isArrayTypeNode(typeNode)) {
     const elementTypeReference = typeNode.elementType as TypeReferenceNode;
@@ -97,9 +96,7 @@ const addSeenSymbols = (
   const declaration: PropertySignature = symbol.valueDeclaration as PropertySignature;
   if (declaration !== undefined) {
     isOptional = declaration.questionToken !== undefined;
-    const sourceFile = declaration.getSourceFile();
-    const externalRegex = /node_modules/;
-    isExternal = externalRegex.test(sourceFile.fileName);
+    isExternal = /node_modules/.test(declaration.getSourceFile().fileName);
   }
   if (isExternal || isOptional) {
     return;
@@ -143,8 +140,7 @@ const getSymbolsUsedInParam = (
   typeChecker: TypeChecker
 ): Symbol[] => {
   const symbols: Symbol[] = [];
-  const type = getTypeOfParam(param, converter, typeChecker);
-  const symbol = type.getSymbol();
+  const symbol = getTypeOfParam(param, converter, typeChecker).getSymbol();
   if (symbol !== undefined) {
     addSeenSymbols(symbol, symbols, typeChecker);
   }
@@ -222,14 +218,15 @@ const evaluateOverloads = (
     return;
   }
 
-  const type = getTypeOfParam(param, converter, typeChecker);
   const identifier = getParamAsIdentifier(param);
   context.report({
     node: identifier,
     message:
       "type {{ type }} of parameter {{ param }} of function {{ func }} is a class or contains a class as a member",
     data: {
-      type: typeChecker.typeToString(type),
+      type: typeChecker.typeToString(
+        getTypeOfParam(param, converter, typeChecker)
+      ),
       param: identifier.name,
       func: name
     }
@@ -271,8 +268,9 @@ export = {
       "MethodDefinition > FunctionExpression": (
         node: FunctionExpression
       ): void => {
-        const ancestors = context.getAncestors().reverse();
-        const parent: MethodDefinition = ancestors[0] as MethodDefinition;
+        const parent: MethodDefinition = context
+          .getAncestors()
+          .reverse()[0] as MethodDefinition;
         const key: Identifier = parent.key as Identifier;
         const name = key.name;
 
@@ -284,8 +282,7 @@ export = {
           return;
         }
 
-        const tsFunction = converter.get(node as TSESTree.Node);
-        const modifiers = tsFunction.modifiers;
+        const modifiers = converter.get(node as TSESTree.Node).modifiers;
         if (
           modifiers !== undefined &&
           modifiers.some((modifier: Modifier): boolean => {
@@ -297,9 +294,9 @@ export = {
 
         node.params.forEach((param: Pattern): void => {
           if (!isValidParam(param, converter, typeChecker)) {
-            const tsNode = converter.get(node as TSESTree.Node);
-            const type = typeChecker.getTypeAtLocation(tsNode);
-            const symbol = type.getSymbol();
+            const symbol = typeChecker
+              .getTypeAtLocation(converter.get(node as TSESTree.Node))
+              .getSymbol();
             const overloads =
               symbol !== undefined
                 ? symbol.declarations.map(
@@ -337,9 +334,9 @@ export = {
 
         node.params.forEach((param: Pattern): void => {
           if (!isValidParam(param, converter, typeChecker)) {
-            const tsNode = converter.get(node as TSESTree.Node);
-            const type = typeChecker.getTypeAtLocation(tsNode);
-            const symbol = type.getSymbol();
+            const symbol = typeChecker
+              .getTypeAtLocation(converter.get(node as TSESTree.Node))
+              .getSymbol();
             const overloads =
               symbol !== undefined
                 ? symbol.declarations.map(

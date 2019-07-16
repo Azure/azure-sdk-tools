@@ -32,12 +32,11 @@ export = {
           "ExpressionStatement > ObjectExpression > Property[key.value='homepage']": (
             node: Property
           ): void => {
-            const regex = /^https:\/\/github.com\/Azure\/azure-sdk-for-js\/blob\/master\/sdk\/(([a-z]+-)*[a-z]+\/)+(README\.md)?$/;
-
             const nodeValue: Literal = node.value as Literal;
-            const value: string = nodeValue.value as string;
 
-            !regex.test(value) &&
+            !/^https:\/\/github.com\/Azure\/azure-sdk-for-js\/blob\/master\/sdk\/(([a-z]+-)*[a-z]+\/)+(README\.md)?$/.test(
+              nodeValue.value as string
+            ) &&
               context.report({
                 node: nodeValue,
                 message:

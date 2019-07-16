@@ -31,10 +31,9 @@ export = {
       ":function[returnType.typeAnnotation.typeName.name='Promise']": (
         node: any
       ): void => {
-        const name = node.returnType.typeAnnotation;
-        const tsNode = converter.get(name);
-        const type = typeChecker.getTypeAtLocation(tsNode);
-        const symbol = type.getSymbol();
+        const symbol = typeChecker
+          .getTypeAtLocation(converter.get(node.returnType.typeAnnotation))
+          .getSymbol();
         if (symbol === undefined) {
           return;
         }
@@ -42,8 +41,7 @@ export = {
         if (declaration === undefined) {
           return;
         }
-        const sourceFile = declaration.getSourceFile();
-        isExternalModule(sourceFile) &&
+        isExternalModule(declaration.getSourceFile()) &&
           context.report({
             node: node,
             message:

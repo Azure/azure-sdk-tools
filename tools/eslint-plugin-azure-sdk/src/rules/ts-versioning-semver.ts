@@ -40,28 +40,29 @@ export = {
               return;
             }
             const nodeValue: Literal = node.value as Literal;
+            const version = nodeValue.value as string;
 
             // check for violations specific to semver
             const semverPattern = /^((0|[1-9](\d*))\.){2}(0|[1-9](\d*))(-|$)/;
-            !semverPattern.test(nodeValue.value as string) &&
+            !semverPattern.test(version) &&
               context.report({
                 node: nodeValue,
                 message: "version is not in semver"
               });
 
             // check that if preview is in proper syntax if provided
-            const previewPattern = /^((0|[1-9](\d*))\.){2}(0|[1-9](\d*))(-preview-(0|([1-9](\d*))))?$/;
-            semverPattern.test(nodeValue.value as string) &&
-              !previewPattern.test(nodeValue.value as string) &&
+            semverPattern.test(version) &&
+              !/^((0|[1-9](\d*))\.){2}(0|[1-9](\d*))(-preview-(0|([1-9](\d*))))?$/.test(
+                version
+              ) &&
               context.report({
                 node: nodeValue,
                 message: "preview format is not x.y.z-preview-i"
               });
 
-            // check that major version is not set to 0
-            const major0Pattern = /^0\./;
-            semverPattern.test(nodeValue.value as string) &&
-              major0Pattern.test(nodeValue.value as string) &&
+            // check if major version is 0
+            semverPattern.test(version) &&
+              /^0\./.test(version) &&
               context.report({
                 node: nodeValue,
                 message: "major version should not be set to 0"

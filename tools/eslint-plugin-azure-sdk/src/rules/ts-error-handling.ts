@@ -7,6 +7,10 @@ import { Rule } from "eslint";
 import { Identifier, NewExpression, ThrowStatement } from "estree";
 import { TypeChecker } from "typescript";
 import { getRuleMetaData } from "../utils";
+import {
+  ParserServices,
+  TSESTree
+} from "@typescript-eslint/experimental-utils";
 
 //------------------------------------------------------------------------------
 // Rule Definition
@@ -35,16 +39,22 @@ export = {
         node: ThrowStatement
       ): void => {
         const thrown: Identifier = node.argument as Identifier;
-        const parserServices = context.parserServices;
+        const parserServices: ParserServices = context.parserServices;
+        if (
+          parserServices.program === undefined ||
+          parserServices.esTreeNodeToTSNodeMap === undefined
+        ) {
+          return;
+        }
         const typeChecker: TypeChecker = parserServices.program.getTypeChecker();
-        const TSNode = parserServices.esTreeNodeToTSNodeMap.get(thrown);
+        const TSNode = parserServices.esTreeNodeToTSNodeMap.get(
+          thrown as TSESTree.Node
+        );
         const type = typeChecker.typeToString(
           typeChecker.getTypeAtLocation(TSNode)
         );
 
-        const allowedTypes = ["TypeError", "RangeError", "Error", "any"];
-
-        !allowedTypes.includes(type) &&
+        !["TypeError", "RangeError", "Error", "any"].includes(type) &&
           context.report({
             node: thrown,
             message:
@@ -59,11 +69,10 @@ export = {
       "ThrowStatement[argument.type='NewExpression']": (
         node: ThrowStatement
       ): void => {
-        const allowedTypes = ["TypeError", "RangeError", "Error"];
         const argument = node.argument as NewExpression;
         const callee = argument.callee as Identifier;
 
-        !allowedTypes.includes(callee.name) &&
+        !["TypeError", "RangeError", "Error"].includes(callee.name) &&
           context.report({
             node: callee,
             message:

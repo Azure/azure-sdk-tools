@@ -18,18 +18,15 @@ export = {
   ),
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     // regex checking file ending
-    const sourceFileRegex = /\.ts$/; //*.ts
-
-    return sourceFileRegex.test(context.getFilename())
+    return /\.ts$/.test(context.getFilename())
       ? {
           Program: (node: Node): void => {
-            const sourceCode = context.getSourceCode();
-
-            // gets comments at top of file
-            const headerComments = sourceCode.getCommentsBefore(node);
+            const headerComments = context
+              .getSourceCode()
+              .getCommentsBefore(node);
 
             // check that there are any header comments at all
-            if (!headerComments.length) {
+            if (headerComments.length === 0) {
               context.report({
                 node: node,
                 message: "no copyright header found"
@@ -37,29 +34,19 @@ export = {
               return;
             }
 
-            // expoected copyright header
-            const copyright =
-              "Copyright (c) Microsoft Corporation. All rights reserved.\nLicensed under the MIT License.\n";
-
-            // copyright header line regexes
-            const line1Regex = /Copyright \(c\) Microsoft Corporation\. All rights reserved\./;
-            const line2Regex = /Licensed under the MIT License\./;
-
-            const adheres =
-              headerComments.some((comment: Comment): boolean => {
-                return line1Regex.test(comment.value);
-              }) &&
-              headerComments.some((comment: Comment): boolean => {
-                return line2Regex.test(comment.value);
-              });
-
-            // look for both lines
-            !adheres &&
+            (headerComments.every((comment: Comment): boolean => {
+              return !/Copyright \(c\) Microsoft Corporation\. All rights reserved\./.test(
+                comment.value
+              );
+            }) ||
+              headerComments.every((comment: Comment): boolean => {
+                return !/Licensed under the MIT License\./.test(comment.value);
+              })) &&
               context.report({
                 node: node,
                 message:
                   "copyright header not properly configured - expected value:\n" +
-                  copyright
+                  "Copyright (c) Microsoft Corporation. All rights reserved.\nLicensed under the MIT License.\n"
               });
           }
         }

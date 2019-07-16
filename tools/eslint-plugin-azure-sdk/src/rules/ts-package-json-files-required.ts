@@ -44,27 +44,29 @@ export = {
             const nodeValue: ArrayExpression = node.value as ArrayExpression;
             const elements: Literal[] = nodeValue.elements as Literal[];
 
-            const distPattern = /^(.\/)?((dist\/)|(dist$))/; // looks for 'dist' with optional leading './' and optional trailing '/'
             elements.every((element: Literal): boolean => {
-              return !distPattern.test(element.value as string);
+              // looks for 'dist' with optional leading './' and optional trailing '/'
+              return !/^(.\/)?((dist\/)|(dist$))/.test(element.value as string);
             }) &&
               context.report({
                 node: nodeValue,
                 message: "dist is not included in files"
               });
 
-            const distESMPattern = /^(.\/)?dist-esm\/((src\/)|(src$))/; // looks for 'dist-esm/src' with optional leading './' and optional trailing '/'
             elements.every((element: Literal): boolean => {
-              return !distESMPattern.test(element.value as string);
+              // looks for 'dist-esm/src' with optional leading './' and optional trailing '/'
+              return !/^(.\/)?dist-esm\/((src\/)|(src$))/.test(
+                element.value as string
+              );
             }) &&
               context.report({
                 node: nodeValue,
                 message: "dist-esm/src is not included in files"
               });
 
-            const srcPattern = /^(.\/)?((src\/)|(src$))/; // looks for 'src' with optional leading './' and optional trailing '/ '
             elements.every((element: Literal): boolean => {
-              return !srcPattern.test(element.value as string);
+              // looks for 'src' with optional leading './' and optional trailing '/ '
+              return !/^(.\/)?((src\/)|(src$))/.test(element.value as string);
             }) &&
               context.report({
                 node: nodeValue,

@@ -47,15 +47,16 @@ export = {
             }
 
             const nodeValue: Literal = node.value as Literal;
+            const target = nodeValue.value as string;
 
             // check that target is not set to an invalid EcmaScript standard (ES3 or ESNext)
-            /es3/i.test(nodeValue.value as string) &&
+            /es3/i.test(target) &&
               context.report({
                 node: nodeValue,
                 message: "ES3 is not a valid option for compilerOptions.target"
               });
 
-            /esnext/i.test(nodeValue.value as string) &&
+            /esnext/i.test(target) &&
               context.report({
                 node: nodeValue,
                 message:

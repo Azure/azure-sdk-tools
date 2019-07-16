@@ -279,15 +279,15 @@ ruleTester.run("ts-versioning-semver", rule, {
       filename: "package.json"
     },
     {
-      code: '{"version": "1.1.10-preview-0"}',
+      code: '{"version": "1.1.10-preview.0"}',
       filename: "package.json"
     },
     {
-      code: '{"version": "1.1.10-preview-1"}',
+      code: '{"version": "1.1.10-preview.1"}',
       filename: "package.json"
     },
     {
-      code: '{"version": "1.1.10-preview-10"}',
+      code: '{"version": "1.1.10-preview.10"}',
       filename: "package.json"
     },
     {
@@ -392,16 +392,16 @@ ruleTester.run("ts-versioning-semver", rule, {
       filename: "package.json",
       errors: [
         {
-          message: "preview format is not x.y.z-preview-i"
+          message: "preview format is not x.y.z-preview.i"
         }
       ]
     },
     {
-      code: '{"version": "1.0.0-preview.1"}',
+      code: '{"version": "1.0.0-preview-1"}',
       filename: "package.json",
       errors: [
         {
-          message: "preview format is not x.y.z-preview-i"
+          message: "preview format is not x.y.z-preview.i"
         }
       ]
     },
@@ -410,16 +410,16 @@ ruleTester.run("ts-versioning-semver", rule, {
       filename: "package.json",
       errors: [
         {
-          message: "preview format is not x.y.z-preview-i"
+          message: "preview format is not x.y.z-preview.i"
         }
       ]
     },
     {
-      code: '{"version": "1.0.0-preview-01"}',
+      code: '{"version": "1.0.0-preview.01"}',
       filename: "package.json",
       errors: [
         {
-          message: "preview format is not x.y.z-preview-i"
+          message: "preview format is not x.y.z-preview.i"
         }
       ]
     },
@@ -439,7 +439,7 @@ ruleTester.run("ts-versioning-semver", rule, {
       filename: "package.json",
       errors: [
         {
-          message: "preview format is not x.y.z-preview-i"
+          message: "preview format is not x.y.z-preview.i"
         },
         {
           message: "major version should not be set to 0"

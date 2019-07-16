@@ -16,7 +16,7 @@ Additionally, major versions of `0` are not permitted, preview versions must be 
 
 ```json
 {
-  "version": "1.0.0-preview-1"
+  "version": "1.0.0-preview.1"
 }
 ```
 
@@ -60,13 +60,13 @@ Additionally, major versions of `0` are not permitted, preview versions must be 
 
 ```json
 {
-  "version": "1.0.0-preview-1.0"
+  "version": "1.0.0-preview.1.0"
 }
 ```
 
 ```json
 {
-  "version": "1.0.0-Preview-1"
+  "version": "1.0.0-Preview.1"
 }
 ```
 

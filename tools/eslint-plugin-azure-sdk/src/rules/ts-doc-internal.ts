@@ -67,7 +67,8 @@ export = {
     "require TSDoc comments to include an '@internal' or '@ignore' tag if the object is not public-facing"
   ),
   create: (context: Rule.RuleContext): Rule.RuleListener => {
-    if (!context.settings.exported) {
+    const fileName = context.getFilename();
+    if (/\.ts$/.test(fileName) && !context.settings.exported) {
       const packageExports = getLocalExports(context);
       if (packageExports !== undefined) {
         context.settings.exported = packageExports;
@@ -87,7 +88,7 @@ export = {
     const typeChecker = parserServices.program.getTypeChecker();
     const converter = parserServices.esTreeNodeToTSNodeMap;
 
-    return /src/.test(context.getFilename())
+    return /src/.test(fileName)
       ? {
           // callback functions
           ":matches(TSInterfaceDeclaration, ClassDeclaration, TSModuleDeclaration)": (

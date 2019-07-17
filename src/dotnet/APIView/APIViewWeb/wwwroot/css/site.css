@@ -88,10 +88,13 @@ body {
 
 form.comment {
     display: none;
+    border: 1px solid gray;
+    padding: 12px;
+    border-radius: 10px;
 }
 
 .commentBox {
     border: 1px solid gray;
-    padding: 7px;
-    border-radius: 5px;
+    padding: 12px;
+    border-radius: 10px;
 }

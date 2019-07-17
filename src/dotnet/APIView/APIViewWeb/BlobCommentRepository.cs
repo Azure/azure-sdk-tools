@@ -56,6 +56,7 @@ namespace APIViewWeb
         public async Task UploadCommentAsync(CommentModel commentModel, string assemblyID)
         {
             var guid = Guid.NewGuid().ToString();
+            commentModel.Id = guid;
             var blob = ContainerClient.GetBlockBlobClient(guid);
 
             // Store the JSON serialization of the assembly.

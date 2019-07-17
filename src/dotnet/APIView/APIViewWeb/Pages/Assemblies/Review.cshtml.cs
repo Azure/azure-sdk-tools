@@ -17,6 +17,8 @@ namespace APIViewWeb.Pages.Assemblies
             this.commentRepository = commentRepository;
         }
 
+        public string Id { get; set; }
+
         public string AssemblyModel { get; set; }
 
         [BindProperty]
@@ -24,8 +26,15 @@ namespace APIViewWeb.Pages.Assemblies
 
         public CommentModel[] Comments { get; set; }
 
+        public async Task<ActionResult> OnPostDeleteAsync(string id, string commentId)
+        {
+            await commentRepository.DeleteCommentAsync(commentId);
+            return RedirectToPage(new { id });
+        }
+
         public async Task OnGetAsync(string id)
         {
+            Id = id;
             var assemblyModel = await assemblyRepository.ReadAssemblyContentAsync(id);
             var renderer = new HTMLRendererAPIV();
             AssemblyModel = renderer.Render(assemblyModel.Assembly);

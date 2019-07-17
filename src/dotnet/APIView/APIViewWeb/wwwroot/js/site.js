@@ -7,8 +7,7 @@ $(function () {
         // get the comment form
         var myForm = $("#commentForm");
 
-        var idField = document.getElementById("idBox");
-        idField.innerHTML = this.id;
+        $("#idBox").val(this.id);
 
         // get the current value of the form's display property
         myForm.show();

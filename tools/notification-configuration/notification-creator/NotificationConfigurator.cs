@@ -100,22 +100,18 @@ namespace NotificationConfiguration
         {
             var definitions = await service.GetPipelinesAsync(projectName, projectPath);
 
-            // TODO: Refactor this so it's more friendly
-            IEnumerable<BuildDefinition> resultExpression;
             switch (strategy)
             {
                 case PipelineSelectionStrategy.All:
-                    resultExpression = definitions;
+                    return definitions;
                     break;
                 case PipelineSelectionStrategy.Scheduled:
                 default:
-                    resultExpression = definitions.Where(
+                    return definitions.Where(
                         def => def.Triggers.Any(
                             trigger => trigger.TriggerType == DefinitionTriggerType.Schedule));
                     break;
             }
-
-            return resultExpression;
         }
 
         private async Task EnsureSynchronizedNotificationTeamIsChild(WebApiTeam parent, WebApiTeam child, bool persistChanges)
@@ -182,13 +178,5 @@ namespace NotificationConfiguration
                 }
             }
         }
-
-        // TODO: Break this out
-        //private async Task SyncNotificationsWithGitHubCodeOwners(
-        //    BuildDefinition definition, 
-        //    WebApiTeam team)
-        //{
-            
-        //}
     }
 }

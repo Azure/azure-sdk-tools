@@ -4,12 +4,14 @@ using Microsoft.TeamFoundation.Core.WebApi;
 using Microsoft.VisualStudio.Services.Graph.Client;
 using Microsoft.VisualStudio.Services.WebApi;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.Services.Notifications.WebApi.Clients;
 using Microsoft.VisualStudio.Services.Notifications.WebApi;
 using System;
 using Microsoft.Extensions.Logging;
+using Microsoft.VisualStudio.Services.Common;
+using Microsoft.VisualStudio.Services.Identity.Client;
+using Microsoft.VisualStudio.Services.Identity;
 
 namespace NotificationConfiguration.Services
 {
@@ -18,10 +20,18 @@ namespace NotificationConfiguration.Services
     /// </summary>
     public class AzureDevOpsService
     {
-
         private readonly VssConnection connection;
         private readonly ILogger<AzureDevOpsService> logger;
         private Dictionary<Type, VssHttpClientBase> clientCache = new Dictionary<Type, VssHttpClientBase>();
+
+        public static AzureDevOpsService CreateAzureDevOpsService(string token, string url, ILogger<AzureDevOpsService> logger)
+        {
+            var devOpsCreds = new VssBasicCredential("nobody", token);
+            var devOpsConnection = new VssConnection(new Uri(url), devOpsCreds);
+            var result = new AzureDevOpsService(devOpsConnection, logger);
+
+            return result;
+        }
 
         /// <summary>
         /// Creates a new AzureDevOpsService
@@ -49,23 +59,30 @@ namespace NotificationConfiguration.Services
         }
 
         /// <summary>
-        /// Returns build definitions that have at least one schedule trigger
+        /// Gets build definitions
         /// </summary>
         /// <param name="projectName">Name of the project</param>
         /// <param name="pathPrefix">Prefix of the path in the build folder tree</param>
         /// <returns>IEnumerable of build definitions that satisfy the given criteria</returns>
-        public async Task<IEnumerable<BuildDefinition>> GetScheduledPipelinesAsync(string projectName, string pathPrefix = null)
+        public async Task<IEnumerable<BuildDefinition>> GetPipelinesAsync(string projectName, string pathPrefix = null)
         {
             var client = await GetClientAsync<BuildHttpClient>();
 
             logger.LogInformation("GetScheduledPipelinesAsync ProjectName = {0} PathPrefix = {1}", projectName, pathPrefix);
             var definitions = await client.GetFullDefinitionsAsync2(project: projectName, path: pathPrefix);
 
-            var filteredDefinitions = definitions.Where(
-                def => def.Triggers.Any(
-                    trigger => trigger.TriggerType == DefinitionTriggerType.Schedule));
+            return definitions;
+        }
 
-            return filteredDefinitions;
+        /// <summary>
+        /// Gets a build definition for the given ID
+        /// </summary>
+        /// <param name="pipelineId"></param>
+        /// <returns></returns>
+        public async Task<BuildDefinition> GetPipelineAsync(string projectName, int pipelineId)
+        {
+            var client = await GetClientAsync<BuildHttpClient>();
+            return await client.GetDefinitionAsync(projectName, pipelineId);
         }
 
         /// <summary>
@@ -130,12 +147,70 @@ namespace NotificationConfiguration.Services
         }
 
         /// <summary>
+        /// Gets the descriptor for a given User Principal
+        /// </summary>
+        /// <param name="userPrincipal">User Principal (e.g. alias@contoso.com)</param>
+        /// <returns></returns>
+        public async Task<string> GetDescriptorForPrincipal(string userPrincipal)
+        {
+            var client = await GetClientAsync<GraphHttpClient>();
+
+            logger.LogInformation("GetDescriptorForAlias UserPrincipal = {0}", userPrincipal);
+            var context = new GraphUserPrincipalNameCreationContext()
+            {
+                PrincipalName = userPrincipal,
+            };
+            var user = await client.CreateUserAsync(context);
+
+            return user.Descriptor;
+        }
+
+        /// <summary>
+        /// Gets a list of TeamMembers
+        /// </summary>
+        /// <param name="team">Team</param>
+        /// <returns>List of TeamMembers for the given team</returns>
+        public async Task<List<TeamMember>> GetMembersAsync(WebApiTeam team)
+        {
+            var client = await GetClientAsync<TeamHttpClient>();
+
+            logger.LogInformation("GetMembersAsync TeamId = {0}, TeamName = {1}", team.Id, team.Name);
+            var members = await client.GetTeamMembersWithExtendedPropertiesAsync(
+                team.ProjectId.ToString(), 
+                team.Id.ToString()
+            );
+            return members;
+        }
+        
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public async Task<Identity> GetUserFromId(Guid id)
+        {
+            var client = await GetClientAsync<IdentityHttpClient>();
+
+            logger.LogInformation("GetUserFromId Id = {0}", id);
+            var result = await client.ReadIdentityAsync(id);
+            return result;
+        }
+
+        public async Task RemoveMember(string groupDescriptor, string memberDescriptor)
+        {
+            var client = await GetClientAsync<GraphHttpClient>();
+
+            logger.LogInformation("RemoveMember GroupDescriptor = {0}, MemberDescriptor = {1}");
+            await client.RemoveMembershipAsync(memberDescriptor, groupDescriptor);
+        }
+
+        /// <summary>
         /// Adds a child item to a parent item
         /// </summary>
         /// <param name="parent">Parent descriptor</param>
         /// <param name="child">Child descriptor</param>
         /// <returns>GraphMembership object resulting from adding the child to the parent</returns>
-        public async Task<GraphMembership> AddTeamToTeamAsync(string parent, string child)
+        public async Task<GraphMembership> AddToTeamAsync(string parent, string child)
         {
             var client = await GetClientAsync<GraphHttpClient>();
 

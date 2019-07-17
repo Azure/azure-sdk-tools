@@ -6,6 +6,7 @@ using Microsoft.VisualStudio.Services.WebApi;
 using NotificationConfiguration.Enums;
 using NotificationConfiguration.Models;
 using NotificationConfiguration.Services;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -23,9 +24,13 @@ namespace NotificationConfiguration
             this.logger = logger;
         }
 
-        public async Task ConfigureNotifications(string projectName, string projectPath, bool persistChanges = true)
+        public async Task ConfigureNotifications(
+            string projectName, 
+            string projectPath, 
+            bool persistChanges = true, 
+            PipelineSelectionStrategy strategy = PipelineSelectionStrategy.Scheduled)
         {
-            var pipelines = await service.GetScheduledPipelinesAsync(projectName, projectPath);
+            var pipelines = await GetPipelinesAsync(projectName, projectPath, strategy);
             var teams = await service.GetTeamsAsync(projectName);
 
             foreach (var pipeline in pipelines)
@@ -44,6 +49,8 @@ namespace NotificationConfiguration
 
                     await EnsureSynchronizedNotificationTeamIsChild(parentTeam, childTeam, persistChanges);
                     await EnsureScheduledBuildFailSubscriptionExists(pipeline, parentTeam, persistChanges);
+
+                    // Associate 
                 }
             }
         }
@@ -89,6 +96,28 @@ namespace NotificationConfiguration
             return result;
         }
 
+        private async Task<IEnumerable<BuildDefinition>> GetPipelinesAsync(string projectName, string projectPath, PipelineSelectionStrategy strategy)
+        {
+            var definitions = await service.GetPipelinesAsync(projectName, projectPath);
+
+            // TODO: Refactor this so it's more friendly
+            IEnumerable<BuildDefinition> resultExpression;
+            switch (strategy)
+            {
+                case PipelineSelectionStrategy.All:
+                    resultExpression = definitions;
+                    break;
+                case PipelineSelectionStrategy.Scheduled:
+                default:
+                    resultExpression = definitions.Where(
+                        def => def.Triggers.Any(
+                            trigger => trigger.TriggerType == DefinitionTriggerType.Schedule));
+                    break;
+            }
+
+            return resultExpression;
+        }
+
         private async Task EnsureSynchronizedNotificationTeamIsChild(WebApiTeam parent, WebApiTeam child, bool persistChanges)
         {
             var parentDescriptor = await service.GetDescriptorAsync(parent.Id);
@@ -104,7 +133,7 @@ namespace NotificationConfiguration
 
                 if (persistChanges)
                 {
-                    await service.AddTeamToTeamAsync(parentDescriptor, childDescriptor);
+                    await service.AddToTeamAsync(parentDescriptor, childDescriptor);
                 }
             }
         }
@@ -153,5 +182,13 @@ namespace NotificationConfiguration
                 }
             }
         }
+
+        // TODO: Break this out
+        //private async Task SyncNotificationsWithGitHubCodeOwners(
+        //    BuildDefinition definition, 
+        //    WebApiTeam team)
+        //{
+            
+        //}
     }
 }

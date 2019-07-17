@@ -32,13 +32,16 @@ namespace NotificationConfiguration
         /// <summary>
         /// Returns GitHub contacts for a given file path
         /// </summary>
-        /// <param name="path"></param>
-        /// <returns></returns>
+        /// <param name="path">Path to search in CODEOWNERS</param>
+        /// <returns>A list of contacts at the associated path or an empty list if no contacts are found</returns>
         public List<string> GetContactsForPath(string path)
         {
-            return expressionContacts
-                .LastOrDefault(expr => path.StartsWith(expr.GlobExpression))
-                ?.Contacts;
+            var result = expressionContacts
+                .LastOrDefault(expr => path.StartsWith(expr.GlobExpression));
+
+            return result == default
+                ? new List<string>()
+                : result.Contacts;
         }
 
         /// <summary>

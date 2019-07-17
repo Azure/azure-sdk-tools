@@ -66,7 +66,8 @@ namespace GitHubCodeownerSubscriber
                     Environment.GetEnvironmentVariable(aadTenantVariableName),
                     Environment.GetEnvironmentVariable(kustoUrlVariableName),
                     Environment.GetEnvironmentVariable(kustoDatabaseVariableName),
-                    Environment.GetEnvironmentVariable(kustoTableVariableName)
+                    Environment.GetEnvironmentVariable(kustoTableVariableName),
+                    loggerFactory.CreateLogger<GitHubNameResolver>()
                 );
 
                 var logger = loggerFactory.CreateLogger<Program>();
@@ -102,22 +103,32 @@ namespace GitHubCodeownerSubscriber
                         var managementUrl = new Uri(group.Pipeline.Repository.Properties["manageUrl"]);
                         var codeownersContent = await gitHubService.GetCodeownersFile(managementUrl);
 
+                        if (codeownersContent == default)
+                        {
+                            logger.LogInformation("CODEOWNERS file not found, skipping sync");
+                            continue;
+                        }
+
                         var process = group.Pipeline.Process as YamlProcess;
 
                         // Find matching contacts for the YAML file's path
                         var parser = new CodeOwnersParser(codeownersContent);
                         var matchPath = PathWithoutFilename(process.YamlFilename);
-                        var contacts = parser.GetContactsForPath($"/{matchPath}/");
+                        var searchPath = $"/{matchPath}/";
+                        logger.LogInformation("Searching CODEOWNERS for matching path Path = {0}", searchPath);
+                        var contacts = parser.GetContactsForPath(searchPath);
 
-                        logger.LogInformation("Matching Contacts Path = {0}, NumContacts = {1}", matchPath, contacts.Count);
+                        logger.LogInformation("Matching Contacts Path = {0}, NumContacts = {1}", searchPath, contacts.Count);
 
                         // Get set of team members in the CODEOWNERS file
                         var contactResolutionTasks = contacts
                             .Where(contact => contact.StartsWith("@"))
-                            .Select(contact => githubNameResolver.GetInternalAlias(contact.Substring(1)));
-                        var codeownersAliases = await Task.WhenAll(contactResolutionTasks);
+                            .Select(contact => githubNameResolver.GetInternalUserPrincipal(contact.Substring(1)));
+                        var codeownerPrincipals = await Task.WhenAll(contactResolutionTasks);
 
-                        var codeownersDescriptorsTasks = codeownersAliases.Select(userPrincipal => devOpsService.GetDescriptorForPrincipal(userPrincipal));
+                        var codeownersDescriptorsTasks = codeownerPrincipals
+                            .Where(userPrincipal => !string.IsNullOrEmpty(userPrincipal))
+                            .Select(userPrincipal => devOpsService.GetDescriptorForPrincipal(userPrincipal));
                         var codeownersDescriptors = await Task.WhenAll(codeownersDescriptorsTasks);
                         var codeownersSet = new HashSet<string>(codeownersDescriptors);
 
@@ -164,7 +175,10 @@ namespace GitHubCodeownerSubscriber
         /// <returns></returns>
         private static string PathWithoutFilename(string path)
         {
-            var splitPath = path.Split("/").ToList();
+            var splitPath = path
+                .Split("/", options: StringSplitOptions.RemoveEmptyEntries)
+                .ToList();
+
             return string.Join("/", splitPath.Take(splitPath.Count - 1));
         }
     }

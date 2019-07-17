@@ -55,5 +55,8 @@ namespace Azure.ClientSdk.Analyzers
         public static DiagnosticDescriptor AZC1002 = new DiagnosticDescriptor(
             "AZC1002", "Avoid whitespace in the end of the line",
             "Avoid whitespace in the end of the line", "Usage", DiagnosticSeverity.Warning, true);
+        public static DiagnosticDescriptor AZC1003 = new DiagnosticDescriptor(
+            "AZC1003", "File name differs from the type name",
+            "File name differs from the type name. File name should contain '{0}'", "Usage", DiagnosticSeverity.Warning, true);
     }
 }

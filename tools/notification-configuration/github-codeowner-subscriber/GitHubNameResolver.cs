@@ -1,6 +1,7 @@
 ﻿using Kusto.Data;
 using Kusto.Data.Common;
 using Kusto.Data.Net.Client;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using System;
 using System.Threading.Tasks;
@@ -14,6 +15,7 @@ namespace GitHubCodeownerSubscriber
     {
         private readonly ICslQueryProvider client;
         private readonly string kustoTable;
+        private readonly ILogger<GitHubNameResolver> logger;
 
         private static ICslQueryProvider GetKustoClient(
             string aadAppId,
@@ -44,16 +46,19 @@ namespace GitHubCodeownerSubscriber
         /// <param name="kustoUrl">Kusto URL</param>
         /// <param name="kustoDatabaseName">Kusto DB Name</param>
         /// <param name="kustoTable">Kusto Table Name</param>
+        /// <param name="logger">Logger</param>
         public GitHubNameResolver(
             string aadAppId, 
             string aadAppSecret, 
             string aadTenant, 
             string kustoUrl, 
             string kustoDatabaseName, 
-            string kustoTable)
+            string kustoTable,
+            ILogger<GitHubNameResolver> logger)
         {
             this.client = GetKustoClient(aadAppId, aadAppSecret, aadTenant, kustoUrl, kustoDatabaseName);
             this.kustoTable = kustoTable;
+            this.logger = logger;
         }
 
         /// <summary>
@@ -61,15 +66,20 @@ namespace GitHubCodeownerSubscriber
         /// </summary>
         /// <param name="githubUserName">GitHub alias</param>
         /// <returns>Internal alias or null if no internal user found</returns>
-        public Task<string> GetInternalAlias(string githubUserName)
+        public async Task<string> GetInternalUserPrincipal(string githubUserName)
         {
             var query = $"{kustoTable} | where githubUserName == '{githubUserName}' | project aadUpn | limit 1;";
 
             // TODO: Figure out how to make this async
             using (var reader = client.ExecuteQuery(query))
             {
-                var result = reader.Read() ? reader.GetString(0) : null;
-                return Task.FromResult(result);
+                if (reader.Read())
+                {
+                    return reader.GetString(0);
+                }
+
+                logger.LogWarning("Could Not Resolve GitHub User Username = {0}", githubUserName);
+                return default;
             }
         }
 

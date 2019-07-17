@@ -10,7 +10,6 @@
     <PackageReference Include="Microsoft.TeamFoundationServer.ExtendedClient" Version="16.153.0-preview" />
     <PackageReference Include="Microsoft.VisualStudio.Services.Notifications.WebApi" Version="16.153.0-preview" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
-    <PackageReference Include="Octokit" Version="0.32.0" />
     <PackageReference Include="YamlDotNet" Version="6.1.1" />
   </ItemGroup>
 

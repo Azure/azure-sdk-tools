@@ -126,14 +126,6 @@ export = {
   ),
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     const fileName = context.getFilename();
-    const parserServices = context.parserServices as ParserServices;
-    if (
-      parserServices.program === undefined ||
-      parserServices.esTreeNodeToTSNodeMap === undefined ||
-      parserServices.tsNodeToESTreeNodeMap === undefined
-    ) {
-      return {};
-    }
 
     if (context.settings.exported === undefined && /\.ts$/.test(fileName)) {
       const packageExports = getLocalExports(context);
@@ -143,6 +135,14 @@ export = {
         context.settings.exported = [];
         return {};
       }
+    }
+
+    const parserServices = context.parserServices as ParserServices;
+    if (
+      parserServices.program === undefined ||
+      parserServices.esTreeNodeToTSNodeMap === undefined
+    ) {
+      return {};
     }
 
     const typeChecker = parserServices.program.getTypeChecker();

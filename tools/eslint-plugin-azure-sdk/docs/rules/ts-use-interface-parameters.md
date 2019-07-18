@@ -1,10 +1,12 @@
 # ts-use-interface-parameters
 
-Recommends the usage of interfaces instead of classes as function parameters.
+Recommends the usage of interfaces instead of classes as function parameters in source files.
 
 This includes arrays and member properties of parameter types.
 
 However, exceptions are made for private class methods, overloads where at least one function signature does not contain and violating parameters, optional parameters, and class types which originate from another library.
+
+Source files are defined as files in the `src` directory.
 
 ## Examples
 

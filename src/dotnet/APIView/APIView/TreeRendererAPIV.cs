@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.Design;
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.Design;
 using System.Linq;
 using System.Text;
 
@@ -14,15 +16,17 @@ namespace APIView
             }
         }
 
-        public string Render(AssemblyAPIV assembly)
+        public LineAPIV[] Render(AssemblyAPIV assembly)
         {
-            StringBuilder returnString = new StringBuilder();
-            Render(assembly.GlobalNamespace, returnString);
-            return returnString.ToString();
+            var list = new List<LineAPIV>();
+            Render(assembly.GlobalNamespace, list);
+            return list.ToArray();
         }
 
-        public void Render(AttributeAPIV a, StringBuilder builder)
+        public void Render(AttributeAPIV a, List<LineAPIV> list, int indents = 0)
         {
+            var builder = new StringBuilder();
+            AppendIndents(builder, indents);
             builder.Append("[");
             Render(a.Type, builder);
 
@@ -44,12 +48,13 @@ namespace APIView
             }
 
             builder.Append("]");
+            list.Add(new LineAPIV(builder.ToString()));
         }
 
-        public void Render(EventAPIV e, StringBuilder builder, int indents = 0)
+        public void Render(EventAPIV e, List<LineAPIV> list, int indents = 0)
         {
+            var builder = new StringBuilder();
             AppendIndents(builder, indents);
-            //TODO: determine whether event is EventHandler or other type - and if it has type parameter(s)
             RenderKeyword(builder, e.Accessibility);
             builder.Append(" ");
             RenderKeyword(builder, "event");
@@ -58,10 +63,12 @@ namespace APIView
             builder.Append(" ");
             RenderName(builder, e.Name);
             builder.Append(";");
+            list.Add(new LineAPIV(builder.ToString()));
         }
 
-        public void Render(FieldAPIV f, StringBuilder builder, int indents = 0)
+        public void Render(FieldAPIV f, List<LineAPIV> list, int indents = 0)
         {
+            var builder = new StringBuilder();
             AppendIndents(builder, indents);
             RenderKeyword(builder, f.Accessibility);
             builder.Append(" ");
@@ -103,20 +110,22 @@ namespace APIView
             }
 
             builder.Append(";");
+            list.Add(new LineAPIV(builder.ToString()));
         }
 
-        public void Render(MethodAPIV m, StringBuilder builder, int indents = 0)
+        public void Render(MethodAPIV m, List<LineAPIV> list, int indents = 0)
         {
-            AppendIndents(builder, indents);
             if (m.Attributes.Any())
             {
                 foreach (var attribute in m.Attributes)
                 {
-                    Render(attribute, builder);
-                    RenderNewline(builder);
-                    AppendIndents(builder, indents);
+                    Render(attribute, list, indents);
+                    //RenderNewline(builder);
                 }
             }
+
+            var builder = new StringBuilder();
+            AppendIndents(builder, indents);
 
             if (!m.IsInterfaceMethod)
             {
@@ -155,7 +164,7 @@ namespace APIView
                 builder.Append(" ");
             }
 
-            if (m.ReturnType != null) //(m.ReturnType.Type != TypeReference.TypeName.NullType)
+            if (m.ReturnType != null)
             {
                 Render(m.ReturnType, builder);
                 builder.Append(" ");
@@ -193,10 +202,15 @@ namespace APIView
                 builder.Append(");");
             else
                 builder.Append(") { }");
+            if (!m.IsConstructor)
+                list.Add(new LineAPIV(builder.ToString(), m.Id));
+            else
+                list.Add(new LineAPIV(builder.ToString()));
         }
 
-        public void Render(NamedTypeAPIV nt, StringBuilder builder, int indents = 0)
+        public void Render(NamedTypeAPIV nt, List<LineAPIV> list, int indents = 0)
         {
+            var builder = new StringBuilder();
             AppendIndents(builder, indents);
             RenderKeyword(builder, nt.Accessibility);
             builder.Append(" ");
@@ -218,19 +232,24 @@ namespace APIView
                         builder.Append(" ");
                     }
                     builder.Append("{");
-                    RenderNewline(builder);
+                    //RenderNewline(builder);
+                    list.Add(new LineAPIV(builder.ToString(), nt.NavigationID));
 
                     foreach (FieldAPIV f in nt.Fields)
                     {
+                        builder = new StringBuilder();
                         AppendIndents(builder, indents);
                         builder.Append(f.Name).Append(" = ");
                         RenderValue(builder, f.Value.ToString());
                         builder.Append(",");
-                        RenderNewline(builder);
+                        //RenderNewline(builder);
+                        list.Add(new LineAPIV(builder.ToString()));
                     }
 
+                    builder = new StringBuilder();
                     AppendIndents(builder, indents - 1);
                     builder.Append("}");
+                    list.Add(new LineAPIV(builder.ToString()));
                     break;
 
                 case ("delegate"):
@@ -255,6 +274,7 @@ namespace APIView
                         }
                     }
                     builder.Append(") { }");
+                    list.Add(new LineAPIV(builder.ToString(), nt.NavigationID));
                     break;
 
                 default:
@@ -288,43 +308,47 @@ namespace APIView
                         builder.Append(" ");
                     }
                     builder.Append("{");
-                    RenderNewline(builder);
+                    //RenderNewline(builder);
+                    list.Add(new LineAPIV(builder.ToString(), nt.NavigationID));
 
                     // add any types declared in this type's body
                     foreach (FieldAPIV f in nt.Fields)
                     {
-                        Render(f, builder, indents);
-                        RenderNewline(builder);
+                        Render(f, list, indents);
+                        //RenderNewline(builder);
                     }
                     foreach (PropertyAPIV p in nt.Properties)
                     {
-                        Render(p, builder, indents);
-                        RenderNewline(builder);
+                        Render(p, list, indents);
+                        //RenderNewline(builder);
                     }
                     foreach (EventAPIV e in nt.Events)
                     {
-                        Render(e, builder, indents);
-                        RenderNewline(builder);
+                        Render(e, list, indents);
+                        //RenderNewline(builder);
                     }
                     foreach (MethodAPIV m in nt.Methods)
                     {
-                        Render(m, builder, indents);
-                        RenderNewline(builder);
+                        Render(m, list, indents);
+                        //RenderNewline(builder);
                     }
                     foreach (NamedTypeAPIV n in nt.NamedTypes)
                     {
-                        Render(n, builder, indents);
-                        RenderNewline(builder);
+                        Render(n, list, indents);
+                        //RenderNewline(builder);
                     }
 
+                    builder = new StringBuilder();
                     AppendIndents(builder, indents - 1);
                     builder.Append("}");
+                    list.Add(new LineAPIV(builder.ToString()));
                     break;
             }
         }
 
-        public void Render(NamespaceAPIV ns, StringBuilder builder, int indents = 0)
+        public void Render(NamespaceAPIV ns, List<LineAPIV> list, int indents = 0)
         {
+            var builder = new StringBuilder();
             if (ns.Name != "<global namespace>")
             {
                 AppendIndents(builder, indents);
@@ -332,32 +356,36 @@ namespace APIView
                 builder.Append(" ");
                 RenderNamespace(builder, ns);
                 builder.Append(" {");
-                RenderNewline(builder);
+                //RenderNewline(builder);
+                list.Add(new LineAPIV(builder.ToString()));
             }
 
             foreach (NamedTypeAPIV nt in ns.NamedTypes)
             {
-                Render(nt, builder, indents + 1);
-                RenderNewline(builder);
+                Render(nt, list, indents + 1);
+                //RenderNewline(builder);
             }
+
             foreach (NamespaceAPIV n in ns.Namespaces)
             {
                 if (ns.Name.Any())
                 {
-                    Render(n, builder, indents + 1);
-                    RenderNewline(builder);
+                    Render(n, list, indents + 1);
+                    //RenderNewline(builder);
                 }
                 else
                 {
-                    Render(n, builder, indents);
-                    RenderNewline(builder);
+                    Render(n, list, indents);
+                    //RenderNewline(builder);
                 }
             }
 
             if (ns.Name != "<global namespace>")
             {
+                builder = new StringBuilder();
                 AppendIndents(builder, indents);
                 builder.Append("}");
+                list.Add(new LineAPIV(builder.ToString()));
             }
         }
 
@@ -407,8 +435,9 @@ namespace APIView
             }
         }
 
-        public void Render(PropertyAPIV p, StringBuilder builder, int indents = 0)
+        public void Render(PropertyAPIV p, List<LineAPIV> list, int indents = 0)
         {
+            var builder = new StringBuilder();
             AppendIndents(builder, indents);
             RenderKeyword(builder, p.Accessibility);
             builder.Append(" ");
@@ -426,6 +455,7 @@ namespace APIView
             }
 
             builder.Append("}");
+            list.Add(new LineAPIV(builder.ToString()));
         }
 
         public void Render(TypeParameterAPIV tp, StringBuilder builder, int indents = 0)

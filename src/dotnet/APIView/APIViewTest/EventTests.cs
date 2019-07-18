@@ -2,6 +2,8 @@
 using APIView;
 using Xunit;
 using System.Text;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace APIViewTest
 {
@@ -34,11 +36,11 @@ namespace APIViewTest
                 Name = "TestEvent",
                 Type = new TypeReferenceAPIV(new TokenAPIV[] { new TokenAPIV() })
             };
-            var builder = new StringBuilder();
             var renderer = new HTMLRendererAPIV();
-            renderer.Render(e, builder);
+            var list = new List<LineAPIV>();
+            renderer.Render(e, list);
             Assert.Equal("<span class=\"keyword\">public</span> <span class=\"keyword\">event</span> " +
-                "<span class=\"keyword\"></span> <span class=\"name\">TestEvent</span>;", builder.ToString());
+                "<span class=\"keyword\"></span> <span class=\"name\">TestEvent</span>;", list.First().DisplayString);
         }
     }
 }

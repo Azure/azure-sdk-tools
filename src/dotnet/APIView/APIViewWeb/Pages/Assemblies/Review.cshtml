@@ -4,7 +4,14 @@
     ViewData["Title"] = "Review";
 }
 
-<pre>@Html.Raw(Model.AssemblyModel)</pre>
+<table class="codeWindow">
+    <tbody>
+        @foreach (var line in Model.AssemblyModel)
+        {
+            <tr><td>@Html.Raw(line.DisplayString)</td></tr>
+        }
+    </tbody>
+</table>
 
 <div>
     <h3>Comments</h3>

@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Text;
+using System.Threading.Tasks;
 using APIView;
 using APIViewWeb.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -19,7 +20,7 @@ namespace APIViewWeb.Pages.Assemblies
 
         public string Id { get; set; }
 
-        public string AssemblyModel { get; set; }
+        public LineAPIV[] AssemblyModel { get; set; }
 
         [BindProperty]
         public CommentModel Comment { get; set; }

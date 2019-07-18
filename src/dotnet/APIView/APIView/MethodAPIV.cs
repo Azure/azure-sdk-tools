@@ -1,5 +1,6 @@
 ﻿using Microsoft.CodeAnalysis;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace APIView
@@ -87,10 +88,17 @@ namespace APIView
 
         public override string ToString()
         {
-            var returnString = new StringBuilder();
             var renderer = new TextRendererAPIV();
-            renderer.Render(this, returnString);
-            return returnString.ToString();
+            var list = new List<LineAPIV>();
+            renderer.Render(this, list);
+
+            var builder = new StringBuilder();
+            foreach (var line in list)
+            {
+                builder.Append(line.DisplayString);
+                builder.AppendLine();
+            }
+            return builder.ToString();
         }
     }
 }

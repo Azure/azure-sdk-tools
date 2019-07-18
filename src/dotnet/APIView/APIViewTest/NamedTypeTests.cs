@@ -4,6 +4,7 @@ using Xunit;
 using System;
 using System.Text;
 using TestLibrary;
+using System.Collections.Generic;
 
 namespace APIViewTest
 {
@@ -139,7 +140,7 @@ namespace APIViewTest
             var namedTypeSymbol = (INamedTypeSymbol)TestResource.GetTestMember("TestLibrary.publicDelegate");
             NamedTypeAPIV publicDelegate = new NamedTypeAPIV(namedTypeSymbol);
 
-            Assert.Equal("public delegate int publicDelegate(int num = 10) { }", publicDelegate.ToString());
+            Assert.Equal("public delegate int publicDelegate(int num = 10) { }", publicDelegate.ToString().Replace(Environment.NewLine, ""));
         }
         
         [Fact]
@@ -200,10 +201,15 @@ namespace APIViewTest
             };
             var builder = new StringBuilder();
             var renderer = new HTMLRendererAPIV();
-            renderer.Render(nt, builder);
+            var list = new List<LineAPIV>();
+            renderer.Render(nt, list);
+            foreach(var line in list)
+            {
+                builder.Append(line.DisplayString);
+            }
             Assert.Equal("<span class=\"keyword\">public</span> <span class=\"keyword\">class</span> <a href=\"#\" id=\"ImplementingClass\" class=\"class commentable\">ImplementingClass</a> : " +
-                "<a href=\"#\" class=\"class\">BaseClass</a> {<br />    <span class=\"keyword\">protected</span> <span class=\"keyword\">string</span> <span class" +
-                "=\"name\">TestProperty</span> { <span class=\"keyword\">get</span>; <span class=\"keyword\">set</span>; }<br />}", builder.ToString());
+                "<a href=\"#\" class=\"class\">BaseClass</a> {    <span class=\"keyword\">protected</span> <span class=\"keyword\">string</span> <span class" +
+                "=\"name\">TestProperty</span> { <span class=\"keyword\">get</span>; <span class=\"keyword\">set</span>; }}", builder.ToString());
         }
 
         [Fact]
@@ -231,9 +237,14 @@ namespace APIViewTest
             };
             var builder = new StringBuilder();
             var renderer = new HTMLRendererAPIV();
-            renderer.Render(nt, builder);
+            var list = new List<LineAPIV>();
+            renderer.Render(nt, list);
+            foreach (var line in list)
+            {
+                builder.Append(line.DisplayString);
+            }
             Assert.Equal("<span class=\"keyword\">public</span> <span class=\"keyword\">interface</span> <a href=\"#\" id=\"TestInterface\" class=\"class commentable\">TestInterface</a>&lt;" +
-                "<a href=\"#T\" class=\"type\">T</a>&gt; {<br />}", builder.ToString());
+                "<a href=\"#T\" class=\"type\">T</a>&gt; {}", builder.ToString());
         }
     }
 }

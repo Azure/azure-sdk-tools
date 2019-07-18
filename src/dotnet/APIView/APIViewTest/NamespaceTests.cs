@@ -1,4 +1,6 @@
 ﻿using APIView;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using Xunit;
 
@@ -55,8 +57,13 @@ namespace APIViewTest
             };
             var builder = new StringBuilder();
             var renderer = new HTMLRendererAPIV();
-            renderer.Render(ns, builder);
-            Assert.Equal("<span class=\"keyword\">namespace</span> <span id=\"\" class=\"name\">TestNamespace</span> {<br />}", builder.ToString());
+            var list = new List<LineAPIV>();
+            renderer.Render(ns, list);
+            foreach (var line in list)
+            {
+                builder.Append(line.DisplayString);
+            }
+            Assert.Equal("<span class=\"keyword\">namespace</span> <span id=\"\" class=\"name\">TestNamespace</span> {}", builder.ToString());
         }
     }
 }

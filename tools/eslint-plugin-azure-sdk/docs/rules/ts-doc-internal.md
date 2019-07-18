@@ -2,7 +2,7 @@
 
 Requires any TSDoc comments on internal objects to include either an `@internal` or an `@ignore` tag.
 
-Internal objects are defined as classes, interfaces, or standalone functions that are not exported from the main entrypoint to the package and are not members of any exports from the main entrypoint (defined recursively).
+Internal objects are defined as classes, interfaces, or standalone functions that are not exported from the main entrypoint to the package and are not members of any exports from the main entrypoint (defined recursively). **Files that are specified as excluded in a `typedoc.json` file are ignored by this rule.**
 
 By default, the main entrypoint is assumed to be `src/index.ts`. However, if your package's main entrypoint is elsewhere, you'll need to specify so in your `.eslintrc` configuration file as follows (for example, if the entrypoint is `index.ts`):
 

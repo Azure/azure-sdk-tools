@@ -125,16 +125,16 @@
     </MSBuild>
   </Target>
 
-  <Target Name="ExecuteTests" Condition=" '$(SkipTests)' != 'true' ">
+    <Target Name="ExecuteTests" Condition=" '$(SkipTests)' != 'true' ">
     <Message Text="Target ==> ExecuteTests Initiated....." Importance="Low" />
     <ItemGroup>
       <ExecuteTestSuite Include="@(TestToBeRun)" />
     </ItemGroup>
 
-    <Message Text="Running .NET Core Tests .... %(ExecuteTestSuite.Identity)" Condition=" '@(ExecuteTestSuite)' != '' " />
-    <Message Text="Running .NET Core Tests .... %(ExecuteTestSuite.PlatformSpecificFx)" Condition=" '@(ExecuteTestSuite)' != '' " />
+    <Message Text="Running Tests .... %(ExecuteTestSuite.Identity)" Condition=" '@(ExecuteTestSuite)' != '' " />
+    <Message Text="Running Tests .... %(ExecuteTestSuite.PlatformSpecificFx)" Condition=" '@(ExecuteTestSuite)' != '' " />
     
-    <Exec Command="dotnet test %(ExecuteTestSuite.Identity) -f %(ExecuteTestSuite.PlatformSpecificFx) -l trx;LogFileName=$(pkg_root_RepoTestResultsDir)\%(ExecuteTestSuite.PlatformSpecificFx)\%(ExecuteTestSuite.Filename).trx" 
+    <Exec Command="dotnet test --no-restore --no-build %(ExecuteTestSuite.Identity) -f %(ExecuteTestSuite.PlatformSpecificFx) -l trx;LogFileName=$(pkg_root_RepoTestResultsDir)\%(ExecuteTestSuite.PlatformSpecificFx)\%(ExecuteTestSuite.Filename).trx" 
           Condition="( ('@(ExecuteTestSuite)' != '') AND ('$(WhatIf)' != 'true') )" ContinueOnError="false" WorkingDirectory="%(ExecuteTestSuite.RootDir)%(ExecuteTestSuite.Directory)" />
   </Target>
 

@@ -7,6 +7,7 @@ $(function () {
         var myForm = $("#commentForm");
         $("#idBox").val(this.id);
         myForm.show();
-        document.location.href = "#commentThread";
+        $("#commentThread").focus();
+        return false;
     });
 });

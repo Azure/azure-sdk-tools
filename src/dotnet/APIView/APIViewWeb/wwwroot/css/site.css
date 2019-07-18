@@ -66,11 +66,11 @@ body {
 }
 
 .enum {
-    color: #8700BD !important;
+    color: #8700BD;
 }
 
 .class {
-    color: #00B8B1 !important;
+    color: #00B8B1;
 }
 
 .specialName {

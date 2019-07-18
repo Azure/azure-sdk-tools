@@ -51,87 +51,113 @@ ruleTester.run("ts-use-interface-parameters", rule, {
     // single parameter
     {
       // function declaration
-      code: example + "function func3(b: B): void { console.log(b); }"
+      code: example + "function func3(b: B): void { console.log(b); }",
+      filename: "src/test.ts"
     },
     {
       // class method
-      code: example + "class C { method1(b: B): void { console.log(b); } }"
+      code: example + "class C { method1(b: B): void { console.log(b); } }",
+      filename: "src/test.ts"
     },
     // multiple parameters
     {
       // function declaration
-      code: example + "function func6(b1: B, b2: B): void { console.log(b); }"
+      code: example + "function func6(b1: B, b2: B): void { console.log(b); }",
+      filename: "src/test.ts"
     },
     {
       // class method
       code:
-        example + "class C { method2(b1: B, b2: B): void { console.log(b); } }"
+        example + "class C { method2(b1: B, b2: B): void { console.log(b); } }",
+      filename: "src/test.ts"
     },
     // overloads
     {
       // class methods
       code:
         example +
-        "class C { overloadMethod(a: A): void { console.log(a); }; overloadMethod(b: B): void { console.log(b); }; }"
+        "class C { overloadMethod(a: A): void { console.log(a); }; overloadMethod(b: B): void { console.log(b); }; }",
+      filename: "src/test.ts"
     },
     {
       // function declaration
       code:
         example +
-        "function overloadDeclaration(a: A): void { console.log(a); }; function overloadDeclaration(b: B): void { console.log(b); }"
+        "function overloadDeclaration(a: A): void { console.log(a); }; function overloadDeclaration(b: B): void { console.log(b); }",
+      filename: "src/test.ts"
     },
     // nested objects
     {
       // class methods
       code:
-        example + "class C { nestedMethod(b: B2): void { console.log(b); }; }"
+        example + "class C { nestedMethod(b: B2): void { console.log(b); }; }",
+      filename: "src/test.ts"
     },
     {
       // function declaration
       code:
-        example + "function nestedDeclaration(b: B2): void { console.log(b); }"
+        example + "function nestedDeclaration(b: B2): void { console.log(b); }",
+      filename: "src/test.ts"
     },
     // optional parameters
     {
       // class methods
       code:
         example +
-        "class C { nestedMethod(b: B, a?: A): void { console.log(b); a && console.log(a); }; }"
+        "class C { nestedMethod(b: B, a?: A): void { console.log(b); a && console.log(a); }; }",
+      filename: "src/test.ts"
     },
     {
       // function declaration
       code:
         example +
-        "function nestedDeclaration(b: B, a?: A): void { console.log(b); a && console.log(a); }"
+        "function nestedDeclaration(b: B, a?: A): void { console.log(b); a && console.log(a); }",
+      filename: "src/test.ts"
     },
     // array parameters []
     {
       // class method
       code:
-        example + "class C { arrayMethod(b: B[]): void { console.log(b); }; }"
+        example + "class C { arrayMethod(b: B[]): void { console.log(b); }; }",
+      filename: "src/test.ts"
     },
     {
       // function declaration
       code:
-        example + "function arrayDeclaration(b: B[]): void { console.log(b); }"
+        example + "function arrayDeclaration(b: B[]): void { console.log(b); }",
+      filename: "src/test.ts"
     },
     // array parameters Array<>
     {
       // class method
       code:
         example +
-        "class C { array2Method(b: Array<B>): void { console.log(b); }; }"
+        "class C { array2Method(b: Array<B>): void { console.log(b); }; }",
+      filename: "src/test.ts"
     },
     {
       // function declaration
       code:
         example +
-        "function array2Declaration(b: Array<B>): void { console.log(b); }"
+        "function array2Declaration(b: Array<B>): void { console.log(b); }",
+      filename: "src/test.ts"
     },
     // private method
     {
       code:
-        example + "class { private pMethod(a: A): void { console.log(a); } }"
+        example + "class { private pMethod(a: A): void { console.log(a); } }",
+      filename: "src/test.ts"
+    },
+    // not in src
+    {
+      // function declaration
+      code: example + "function func3(a: A): void { console.log(a); }",
+      filename: "tests/test.ts"
+    },
+    {
+      // class method
+      code: example + "class C { method1(b: A): void { console.log(a); } }",
+      filename: "tests/test.ts"
     }
   ],
   invalid: [
@@ -139,6 +165,7 @@ ruleTester.run("ts-use-interface-parameters", rule, {
     {
       // function declaration
       code: example + "function func9(a: A): void { console.log(a); }",
+      filename: "src/test.ts",
       errors: [
         {
           message:
@@ -149,6 +176,7 @@ ruleTester.run("ts-use-interface-parameters", rule, {
     {
       // class method
       code: example + "class { method3(a: A): void { console.log(a); } }",
+      filename: "src/test.ts",
       errors: [
         {
           message:
@@ -161,6 +189,7 @@ ruleTester.run("ts-use-interface-parameters", rule, {
       // function declaration
       code:
         example + "function func12(a: A, b: B): void { console.log(a, b); }",
+      filename: "src/test.ts",
       errors: [
         {
           message:
@@ -172,6 +201,7 @@ ruleTester.run("ts-use-interface-parameters", rule, {
       // class method
       code:
         example + "class { method4(a: A, b: B): void { console.log(a, b); } }",
+      filename: "src/test.ts",
       errors: [
         {
           message:
@@ -185,6 +215,7 @@ ruleTester.run("ts-use-interface-parameters", rule, {
       code:
         example +
         "function func15(a1: A, a2: A): void { console.log(a1, a2); }",
+      filename: "src/test.ts",
       errors: [
         {
           message:
@@ -201,6 +232,7 @@ ruleTester.run("ts-use-interface-parameters", rule, {
       code:
         example +
         "class { method3(a1: A, a2: A): void { console.log(a1, a2); } }",
+      filename: "src/test.ts",
       errors: [
         {
           message:
@@ -218,6 +250,7 @@ ruleTester.run("ts-use-interface-parameters", rule, {
       code:
         example +
         "class C { overloadMethodBad(a: A): void { console.log(a); } overloadMethodBad(a1: A, a2: A): void { console.log(a1, a2); }; }",
+      filename: "src/test.ts",
       errors: [
         {
           message:
@@ -238,6 +271,7 @@ ruleTester.run("ts-use-interface-parameters", rule, {
       code:
         example +
         "function overloadDeclarationBad(a: A): void { console.log(a); } function overloadDeclarationBad(a1: A, a2: A): void { console.log(a1, a2); }",
+      filename: "src/test.ts",
       errors: [
         {
           message:
@@ -259,6 +293,7 @@ ruleTester.run("ts-use-interface-parameters", rule, {
       code:
         example +
         "class C { nestedMethodBad(b: B3): void { console.log(b); }; }",
+      filename: "src/test.ts",
       errors: [
         {
           message:
@@ -271,6 +306,7 @@ ruleTester.run("ts-use-interface-parameters", rule, {
       code:
         example +
         "function nestedDeclarationBad(b: B3): void { console.log(b); }",
+      filename: "src/test.ts",
       errors: [
         {
           message:
@@ -284,6 +320,7 @@ ruleTester.run("ts-use-interface-parameters", rule, {
       code:
         example +
         "class C { arrayMethodBad(a: A[]): void { console.log(a); }; }",
+      filename: "src/test.ts",
       errors: [
         {
           message:
@@ -296,6 +333,7 @@ ruleTester.run("ts-use-interface-parameters", rule, {
       code:
         example +
         "function arrayDeclarationBad(a: A[]): void { console.log(a); }",
+      filename: "src/test.ts",
       errors: [
         {
           message:
@@ -309,6 +347,7 @@ ruleTester.run("ts-use-interface-parameters", rule, {
       code:
         example +
         "class C { nestedArrayMethodBad(a: B4): void { console.log(a); }; }",
+      filename: "src/test.ts",
       errors: [
         {
           message:
@@ -321,6 +360,7 @@ ruleTester.run("ts-use-interface-parameters", rule, {
       code:
         example +
         "function nestedArrayDeclarationBad(a: B4): void { console.log(a); }",
+      filename: "src/test.ts",
       errors: [
         {
           message:
@@ -334,6 +374,7 @@ ruleTester.run("ts-use-interface-parameters", rule, {
       code:
         example +
         "class C { array2MethodBad(a: Array<A>): void { console.log(a); }; }",
+      filename: "src/test.ts",
       errors: [
         {
           message:
@@ -346,6 +387,7 @@ ruleTester.run("ts-use-interface-parameters", rule, {
       code:
         example +
         "function array2DeclarationBad(a: Array<A>): void { console.log(a); }",
+      filename: "src/test.ts",
       errors: [
         {
           message:
@@ -359,6 +401,7 @@ ruleTester.run("ts-use-interface-parameters", rule, {
       code:
         example +
         "class C { nestedArray2MethodBad(a: B5): void { console.log(a); }; }",
+      filename: "src/test.ts",
       errors: [
         {
           message:
@@ -371,6 +414,7 @@ ruleTester.run("ts-use-interface-parameters", rule, {
       code:
         example +
         "function nestedArray2DeclarationBad(a: B5): void { console.log(a); }",
+      filename: "src/test.ts",
       errors: [
         {
           message:

@@ -6,13 +6,28 @@
 import { Rule } from "eslint";
 import { getLocalExports } from "../utils";
 import { Node } from "estree";
-import { Node as TSNode, TypeChecker } from "typescript";
+import {
+  ArrayLiteralExpression,
+  createCompilerHost,
+  JsonObjectExpressionStatement,
+  JsonSourceFile,
+  Node as TSNode,
+  NodeArray,
+  ObjectLiteralExpression,
+  PropertyAssignment,
+  ScriptTarget,
+  StringLiteral,
+  TypeChecker
+} from "typescript";
 import { ParserWeakMap } from "@typescript-eslint/typescript-estree/dist/parser-options";
 import {
   ParserServices,
   TSESTree
 } from "@typescript-eslint/experimental-utils";
 import { getRuleMetaData } from "../utils";
+// @ts-ignore
+import { relative } from "path";
+import { sync } from "glob";
 
 //------------------------------------------------------------------------------
 // Rule Definition
@@ -61,6 +76,49 @@ const reportInternal = (
   }
 };
 
+/**
+ * Determine whether this rule should examine a given file
+ * @param fileName the filename of the file in question
+ * @param exclude the list of files excluded by TypeDoc (other than those in node_modues)
+ * @returns false if not in src or is excluded by TypeDoc
+ */
+const shouldExamineFile = (fileName: string, exclude: string[]): boolean => {
+  if (!/src/.test(fileName)) {
+    return false;
+  }
+  const relativePath = relative("", fileName).replace(/\\/g, "/");
+  return !exclude.includes(relativePath);
+};
+
+let exclude: string[] = [];
+const JSONHost = createCompilerHost({});
+const typeDoc = JSONHost.getSourceFile("typedoc.json", ScriptTarget.JSON) as
+  | JsonSourceFile
+  | undefined;
+
+if (typeDoc !== undefined) {
+  typeDoc.statements.forEach(
+    (statement: JsonObjectExpressionStatement): void => {
+      const expression = statement.expression as ObjectLiteralExpression;
+      const properties = expression.properties as NodeArray<PropertyAssignment>;
+      properties.forEach((property: PropertyAssignment): void => {
+        const name = property.name as StringLiteral;
+        if (name.text === "exclude") {
+          const initializer = property.initializer as ArrayLiteralExpression;
+          const elements = initializer.elements as NodeArray<StringLiteral>;
+          elements.forEach((element: StringLiteral): void => {
+            exclude = exclude.concat(
+              sync(element.text).filter((excludeFile: string): boolean => {
+                return !/node_modules/.test(excludeFile);
+              })
+            );
+          });
+        }
+      });
+    }
+  );
+}
+
 export = {
   meta: getRuleMetaData(
     "ts-doc-internal",
@@ -68,7 +126,8 @@ export = {
   ),
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     const fileName = context.getFilename();
-    if (/\.ts$/.test(fileName) && !context.settings.exported) {
+
+    if (context.settings.exported === undefined && /\.ts$/.test(fileName)) {
       const packageExports = getLocalExports(context);
       if (packageExports !== undefined) {
         context.settings.exported = packageExports;
@@ -77,7 +136,8 @@ export = {
         return {};
       }
     }
-    const parserServices: ParserServices = context.parserServices as ParserServices;
+
+    const parserServices = context.parserServices as ParserServices;
     if (
       parserServices.program === undefined ||
       parserServices.esTreeNodeToTSNodeMap === undefined
@@ -88,7 +148,7 @@ export = {
     const typeChecker = parserServices.program.getTypeChecker();
     const converter = parserServices.esTreeNodeToTSNodeMap;
 
-    return /src/.test(fileName)
+    return shouldExamineFile(fileName, exclude)
       ? {
           // callback functions
           ":matches(TSInterfaceDeclaration, ClassDeclaration, TSModuleDeclaration)": (

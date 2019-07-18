@@ -264,101 +264,103 @@ export = {
     const verifiedMethods: string[] = [];
     const verifiedDeclarations: string[] = [];
 
-    return {
-      "MethodDefinition > FunctionExpression": (
-        node: FunctionExpression
-      ): void => {
-        const parent: MethodDefinition = context
-          .getAncestors()
-          .reverse()[0] as MethodDefinition;
-        const key: Identifier = parent.key as Identifier;
-        const name = key.name;
+    return /src/.test(context.getFilename())
+      ? ({
+          "MethodDefinition > FunctionExpression": (
+            node: FunctionExpression
+          ): void => {
+            const parent: MethodDefinition = context
+              .getAncestors()
+              .reverse()[0] as MethodDefinition;
+            const key: Identifier = parent.key as Identifier;
+            const name = key.name;
 
-        if (
-          name !== undefined &&
-          name !== "" &&
-          verifiedMethods.includes(name)
-        ) {
-          return;
-        }
+            if (
+              name !== undefined &&
+              name !== "" &&
+              verifiedMethods.includes(name)
+            ) {
+              return;
+            }
 
-        const modifiers = converter.get(node as TSESTree.Node).modifiers;
-        if (
-          modifiers !== undefined &&
-          modifiers.some((modifier: Modifier): boolean => {
-            return modifier.kind === SyntaxKind.PrivateKeyword;
-          })
-        ) {
-          return;
-        }
+            const modifiers = converter.get(node as TSESTree.Node).modifiers;
+            if (
+              modifiers !== undefined &&
+              modifiers.some((modifier: Modifier): boolean => {
+                return modifier.kind === SyntaxKind.PrivateKeyword;
+              })
+            ) {
+              return;
+            }
 
-        node.params.forEach((param: Pattern): void => {
-          if (!isValidParam(param, converter, typeChecker)) {
-            const symbol = typeChecker
-              .getTypeAtLocation(converter.get(node as TSESTree.Node))
-              .getSymbol();
-            const overloads =
-              symbol !== undefined
-                ? symbol.declarations.map(
-                    (declaration: Declaration): FunctionExpression => {
-                      const method: MethodDefinition = reverter.get(
-                        declaration as TSNode
-                      ) as MethodDefinition;
-                      return method.value;
-                    }
-                  )
-                : [];
-            evaluateOverloads(
-              overloads,
-              converter,
-              typeChecker,
-              verifiedMethods,
-              name,
-              param,
-              context
-            );
+            node.params.forEach((param: Pattern): void => {
+              if (!isValidParam(param, converter, typeChecker)) {
+                const symbol = typeChecker
+                  .getTypeAtLocation(converter.get(node as TSESTree.Node))
+                  .getSymbol();
+                const overloads =
+                  symbol !== undefined
+                    ? symbol.declarations.map(
+                        (declaration: Declaration): FunctionExpression => {
+                          const method: MethodDefinition = reverter.get(
+                            declaration as TSNode
+                          ) as MethodDefinition;
+                          return method.value;
+                        }
+                      )
+                    : [];
+                evaluateOverloads(
+                  overloads,
+                  converter,
+                  typeChecker,
+                  verifiedMethods,
+                  name,
+                  param,
+                  context
+                );
+              }
+            });
+          },
+
+          FunctionDeclaration: (node: FunctionDeclaration): void => {
+            const id: Identifier = node.id as Identifier;
+            const name = id.name;
+            if (
+              name !== undefined &&
+              name !== "" &&
+              verifiedDeclarations.includes(name)
+            ) {
+              return;
+            }
+
+            node.params.forEach((param: Pattern): void => {
+              if (!isValidParam(param, converter, typeChecker)) {
+                const symbol = typeChecker
+                  .getTypeAtLocation(converter.get(node as TSESTree.Node))
+                  .getSymbol();
+                const overloads =
+                  symbol !== undefined
+                    ? symbol.declarations.map(
+                        (declaration: Declaration): FunctionDeclaration => {
+                          return reverter.get(
+                            declaration as TSNode
+                          ) as FunctionDeclaration;
+                        }
+                      )
+                    : [];
+                evaluateOverloads(
+                  overloads,
+                  converter,
+                  typeChecker,
+                  verifiedDeclarations,
+                  name,
+                  param,
+                  context
+                );
+              }
+            });
           }
-        });
-      },
-
-      FunctionDeclaration: (node: FunctionDeclaration): void => {
-        const id: Identifier = node.id as Identifier;
-        const name = id.name;
-        if (
-          name !== undefined &&
-          name !== "" &&
-          verifiedDeclarations.includes(name)
-        ) {
-          return;
-        }
-
-        node.params.forEach((param: Pattern): void => {
-          if (!isValidParam(param, converter, typeChecker)) {
-            const symbol = typeChecker
-              .getTypeAtLocation(converter.get(node as TSESTree.Node))
-              .getSymbol();
-            const overloads =
-              symbol !== undefined
-                ? symbol.declarations.map(
-                    (declaration: Declaration): FunctionDeclaration => {
-                      return reverter.get(
-                        declaration as TSNode
-                      ) as FunctionDeclaration;
-                    }
-                  )
-                : [];
-            evaluateOverloads(
-              overloads,
-              converter,
-              typeChecker,
-              verifiedDeclarations,
-              name,
-              param,
-              context
-            );
-          }
-        });
-      }
-    } as Rule.RuleListener;
+        } as Rule.RuleListener)
+      : {};
   }
 };

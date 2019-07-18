@@ -72,6 +72,31 @@ namespace APIView
             builder.Append("<span class=\"specialName\">").Append(EscapeHTML(word)).Append("</span>");
         }
 
+        protected override void RenderToken(StringBuilder builder, TokenAPIV t)
+        {
+            switch (t.Type)
+            {
+                case TypeReferenceAPIV.TokenType.BuiltInType:
+                    RenderKeyword(builder, t.DisplayString);
+                    break;
+                case TypeReferenceAPIV.TokenType.ClassType:
+                    RenderClass(builder, t);
+                    break;
+                case TypeReferenceAPIV.TokenType.EnumType:
+                    RenderEnum(builder, t);
+                    break;
+                case TypeReferenceAPIV.TokenType.TypeArgument:
+                    RenderType(builder, t.DisplayString);
+                    break;
+                case TypeReferenceAPIV.TokenType.ValueType:
+                    RenderValue(builder, t.DisplayString);
+                    break;
+                default:
+                    RenderPunctuation(builder, t.DisplayString);
+                    break;
+            }
+        }
+
         protected override void RenderType(StringBuilder builder, string word)
         {
             var shortName = word.Substring(word.LastIndexOf(".") + 1);

@@ -4,12 +4,9 @@
 // Write your Javascript code.
 $(function () {
     $(".commentable").click(function () {
-        // get the comment form
         var myForm = $("#commentForm");
-
         $("#idBox").val(this.id);
-
-        // get the current value of the form's display property
         myForm.show();
+        document.location.href = "#commentThread";
     });
 });

@@ -197,7 +197,7 @@ namespace APIViewTest
             var renderer = new HTMLRendererAPIV();
             renderer.Render(m, builder);
             Assert.Equal("[<a href=\"#\" class=\"class\">TestAttribute</a>(<span class=\"value\">Test</span>, <span class=\"value\">\"String\"</span>)]<br />" +
-                "<span class=\"keyword\">public</span> <span class=\"keyword\">void</span> <span class=\"name\">TestMethod</span>() { }", builder.ToString());
+                "<span class=\"keyword\">public</span> <span class=\"keyword\">void</span> <a id=\"\" class=\"name commentable\">TestMethod</a>() { }", builder.ToString());
         }
     }
 }

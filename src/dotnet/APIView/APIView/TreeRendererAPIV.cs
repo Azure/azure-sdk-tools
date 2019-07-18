@@ -354,7 +354,7 @@ namespace APIView
                 }
             }
 
-            if (ns.Name.Any())
+            if (ns.Name != "<global namespace>")
             {
                 AppendIndents(builder, indents);
                 builder.Append("}");

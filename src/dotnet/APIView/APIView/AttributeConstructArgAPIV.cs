@@ -19,13 +19,13 @@ namespace APIView
                 this.Value = value.Value.ToString();
         }
 
-        public AttributeConstructArgAPIV(KeyValuePair<string, TypedConstant> pair)
+        public AttributeConstructArgAPIV(string name, TypedConstant value)
         {
-            this.Name = pair.Key;
-            if (pair.Value.Type.SpecialType == SpecialType.System_String)
-                this.Value = "\"" + pair.Value.Value.ToString() + "\"";
+            this.Name = name;
+            if (value.Type.SpecialType == SpecialType.System_String)
+                this.Value = "\"" + value.Value.ToString() + "\"";
             else
-                this.Value = pair.Value.Value.ToString();
+                this.Value = value.Value.ToString();
         }
     }
 }

@@ -66,11 +66,11 @@ body {
 }
 
 .enum {
-    color: #8700BD;
+    color: #8700BD !important;
 }
 
 .class {
-    color: #00B8B1;
+    color: #00B8B1 !important;
 }
 
 .specialName {
@@ -97,4 +97,8 @@ form.comment {
     border: 1px solid gray;
     padding: 12px;
     border-radius: 10px;
+}
+
+.commentable {
+    cursor: pointer;
 }

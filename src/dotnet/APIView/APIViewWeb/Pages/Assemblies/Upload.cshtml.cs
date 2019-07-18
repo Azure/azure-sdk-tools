@@ -31,7 +31,7 @@ namespace APIViewWeb.Pages.Assemblies
             {
                 AssemblyModel assemblyModel = new AssemblyModel(file.OpenReadStream(), file.FileName);
                 var id = await assemblyRepository.UploadAssemblyAsync(assemblyModel, file.FileName);
-                return RedirectToPage("./Review", new { id });
+                return RedirectToPage("Review", new { id });
             }
 
             return RedirectToPage("./Index");

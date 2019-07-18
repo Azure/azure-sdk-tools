@@ -39,7 +39,7 @@ namespace APIViewWeb.Pages.Assemblies
             var renderer = new HTMLRendererAPIV();
             AssemblyModel = renderer.Render(assemblyModel.Assembly);
 
-            this.Comments = await commentRepository.FetchCommentsAsync(id);
+            Comments = await commentRepository.FetchCommentsAsync(id);
         }
 
         public async Task<ActionResult> OnPostAsync(string id)

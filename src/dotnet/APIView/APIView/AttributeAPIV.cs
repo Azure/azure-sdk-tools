@@ -27,7 +27,7 @@ namespace APIView
             }
             foreach (var arg in attributeData.NamedArguments)
             {
-                args.Add(new AttributeConstructArgAPIV(arg));
+                args.Add(new AttributeConstructArgAPIV(arg.Key, arg.Value));
             }
             this.ConstructorArgs = args.ToArray();
         }

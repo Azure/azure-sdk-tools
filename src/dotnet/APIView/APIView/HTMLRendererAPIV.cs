@@ -7,14 +7,14 @@ namespace APIView
     {
         protected override void RenderClassDefinition(StringBuilder builder, NamedTypeAPIV nt)
         {
-            builder.Append("<span id=\"").Append(EscapeHTML(nt.NavigationID)).Append("\" class=\"class\">")
-                .Append(EscapeHTML(nt.Name)).Append("</span>");
+            builder.Append("<a href=\"#\" id=\"").Append(EscapeHTML(nt.NavigationID)).Append("\" class=\"class commentable\">").
+                Append(EscapeHTML(nt.Name)).Append("</a>");
         }
 
         protected override void RenderEnumDefinition(StringBuilder builder, NamedTypeAPIV nt)
         {
-            builder.Append("<span id=\"").Append(nt.NavigationID).Append("\" class=\"enum\">")
-                .Append(EscapeHTML(nt.Name)).Append("</span>");
+            builder.Append("<a href=\"#\" id=\"").Append(nt.NavigationID).Append("\" class=\"enum commentable\">").
+                Append(EscapeHTML(nt.Name)).Append("</a>");
         }
 
         protected override void RenderPunctuation(StringBuilder builder, string word)
@@ -45,6 +45,12 @@ namespace APIView
             builder.Append("<span class=\"keyword\">").Append(EscapeHTML(word)).Append("</span>");
         }
 
+        protected override void RenderMethod(StringBuilder builder, MethodAPIV m)
+        {
+            builder.Append("<a id=\"").Append(m.Id).Append("\" class=\"name commentable\">").
+                Append(m.Name).Append("</a>");
+        }
+
         protected override void RenderName(StringBuilder builder, string word)
         {
             builder.Append("<span class=\"name\">").Append(EscapeHTML(word)).Append("</span>");
@@ -64,6 +70,31 @@ namespace APIView
         protected override void RenderSpecialName(StringBuilder builder, string word)
         {
             builder.Append("<span class=\"specialName\">").Append(EscapeHTML(word)).Append("</span>");
+        }
+
+        protected override void RenderToken(StringBuilder builder, TokenAPIV t)
+        {
+            switch (t.Type)
+            {
+                case TypeReferenceAPIV.TokenType.BuiltInType:
+                    RenderKeyword(builder, t.DisplayString);
+                    break;
+                case TypeReferenceAPIV.TokenType.ClassType:
+                    RenderClass(builder, t);
+                    break;
+                case TypeReferenceAPIV.TokenType.EnumType:
+                    RenderEnum(builder, t);
+                    break;
+                case TypeReferenceAPIV.TokenType.TypeArgument:
+                    RenderType(builder, t.DisplayString);
+                    break;
+                case TypeReferenceAPIV.TokenType.ValueType:
+                    RenderValue(builder, t.DisplayString);
+                    break;
+                default:
+                    RenderPunctuation(builder, t.DisplayString);
+                    break;
+            }
         }
 
         protected override void RenderType(StringBuilder builder, string word)

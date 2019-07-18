@@ -85,3 +85,20 @@ body {
 .value {
     color: #00B80F;
 }
+
+form.comment {
+    display: none;
+    border: 1px solid gray;
+    padding: 12px;
+    border-radius: 10px;
+}
+
+.commentBox {
+    border: 1px solid gray;
+    padding: 12px;
+    border-radius: 10px;
+}
+
+.commentable {
+    cursor: pointer;
+}

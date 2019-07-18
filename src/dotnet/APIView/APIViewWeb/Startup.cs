@@ -34,6 +34,7 @@ namespace APIViewWeb
             });
 
             services.AddSingleton<BlobAssemblyRepository>();
+            services.AddSingleton<BlobCommentRepository>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

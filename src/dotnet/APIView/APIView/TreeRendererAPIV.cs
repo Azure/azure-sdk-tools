@@ -164,7 +164,7 @@ namespace APIView
             if (m.IsConstructor)
                 RenderConstructor(builder, m);
             else
-                RenderName(builder, m.Name);
+                RenderMethod(builder, m);
 
             if (m.TypeParameters.Any())
             {
@@ -325,7 +325,7 @@ namespace APIView
 
         public void Render(NamespaceAPIV ns, StringBuilder builder, int indents = 0)
         {
-            if (ns.Name.Any())
+            if (ns.Name != "<global namespace>")
             {
                 AppendIndents(builder, indents);
                 RenderKeyword(builder, "namespace");
@@ -354,7 +354,7 @@ namespace APIView
                 }
             }
 
-            if (ns.Name.Any())
+            if (ns.Name != "<global namespace>")
             {
                 AppendIndents(builder, indents);
                 builder.Append("}");
@@ -428,31 +428,6 @@ namespace APIView
             builder.Append("}");
         }
 
-        public void Render(TokenAPIV token, StringBuilder builder)
-        {
-            switch (token.Type)
-            {
-                case TypeReferenceAPIV.TokenType.BuiltInType:
-                    RenderKeyword(builder, token.DisplayString);
-                    break;
-                case TypeReferenceAPIV.TokenType.ClassType:
-                    RenderClass(builder, token);
-                    break;
-                case TypeReferenceAPIV.TokenType.EnumType:
-                    RenderEnum(builder, token);
-                    break;
-                case TypeReferenceAPIV.TokenType.TypeArgument:
-                    RenderType(builder, token.DisplayString);
-                    break;
-                case TypeReferenceAPIV.TokenType.ValueType:
-                    RenderValue(builder, token.DisplayString);
-                    break;
-                default:
-                    RenderPunctuation(builder, token.DisplayString);
-                    break;
-            }
-        }
-
         public void Render(TypeParameterAPIV tp, StringBuilder builder, int indents = 0)
         {
             if (tp.Attributes.Any())
@@ -478,7 +453,7 @@ namespace APIView
                 return;
             foreach (var token in type.Tokens)
             {
-                Render(token, builder);
+                RenderToken(builder, token);
             }
         }
 
@@ -496,6 +471,8 @@ namespace APIView
 
         protected abstract void RenderKeyword(StringBuilder builder, string word);
 
+        protected abstract void RenderMethod(StringBuilder builder, MethodAPIV m);
+
         protected abstract void RenderName(StringBuilder builder, string word);
 
         protected abstract void RenderNamespace(StringBuilder builder, NamespaceAPIV ns);
@@ -503,6 +480,8 @@ namespace APIView
         protected abstract void RenderNewline(StringBuilder builder);
 
         protected abstract void RenderSpecialName(StringBuilder builder, string word);
+
+        protected abstract void RenderToken(StringBuilder builder, TokenAPIV t);
 
         protected abstract void RenderType(StringBuilder builder, string word);
 

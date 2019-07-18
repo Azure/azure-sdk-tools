@@ -30,7 +30,8 @@ namespace APIViewWeb.Pages.Assemblies
             if (file.Length > 0)
             {
                 AssemblyModel assemblyModel = new AssemblyModel(file.OpenReadStream(), file.FileName);
-                await assemblyRepository.UploadAssemblyAsync(assemblyModel, file.FileName);
+                var id = await assemblyRepository.UploadAssemblyAsync(assemblyModel, file.FileName);
+                return RedirectToPage("Review", new { id });
             }
 
             return RedirectToPage("./Index");

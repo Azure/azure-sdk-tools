@@ -2,3 +2,12 @@
 // for details on configuring this project to bundle and minify static web assets.
 
 // Write your Javascript code.
+$(function () {
+    $(".commentable").click(function () {
+        var myForm = $("#commentForm");
+        $("#idBox").val(this.id);
+        myForm.show();
+        $("#commentThread").focus();
+        return false;
+    });
+});

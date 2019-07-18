@@ -201,7 +201,7 @@ namespace APIViewTest
             var builder = new StringBuilder();
             var renderer = new HTMLRendererAPIV();
             renderer.Render(nt, builder);
-            Assert.Equal("<span class=\"keyword\">public</span> <span class=\"keyword\">class</span> <span id=\"ImplementingClass\" class=\"class\">ImplementingClass</span> : " +
+            Assert.Equal("<span class=\"keyword\">public</span> <span class=\"keyword\">class</span> <a href=\"#\" id=\"ImplementingClass\" class=\"class commentable\">ImplementingClass</a> : " +
                 "<a href=\"#\" class=\"class\">BaseClass</a> {<br />    <span class=\"keyword\">protected</span> <span class=\"keyword\">string</span> <span class" +
                 "=\"name\">TestProperty</span> { <span class=\"keyword\">get</span>; <span class=\"keyword\">set</span>; }<br />}", builder.ToString());
         }
@@ -232,7 +232,7 @@ namespace APIViewTest
             var builder = new StringBuilder();
             var renderer = new HTMLRendererAPIV();
             renderer.Render(nt, builder);
-            Assert.Equal("<span class=\"keyword\">public</span> <span class=\"keyword\">interface</span> <span id=\"TestInterface\" class=\"class\">TestInterface</span>&lt;" +
+            Assert.Equal("<span class=\"keyword\">public</span> <span class=\"keyword\">interface</span> <a href=\"#\" id=\"TestInterface\" class=\"class commentable\">TestInterface</a>&lt;" +
                 "<a href=\"#T\" class=\"type\">T</a>&gt; {<br />}", builder.ToString());
         }
     }

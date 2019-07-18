@@ -1,6 +1,49 @@
-﻿@page
+﻿@page "{id?}"
 @model APIViewWeb.Pages.Assemblies.ReviewModel
 @{
     ViewData["Title"] = "Review";
 }
+
 <pre>@Html.Raw(Model.AssemblyModel)</pre>
+
+<div>
+    <h3>Comments</h3>
+    <br />
+
+    @if (Model.Comments != null && Model.Comments.Any())
+    {
+        @foreach (var comment in Model.Comments)
+        {
+            <div class="commentBox">
+                <b>Element: </b><a href="#@comment.ElementId">@comment.ElementId</a>
+                <br /><br />
+                <span>@comment.Comment</span>
+                <br /><br />
+
+                <form asp-page-handler="delete" method="post" asp-route-id="@Model.Id">
+                    <input type="hidden" name="commentId" value=@comment.Id>
+                    <button class="btn btn-outline-dark">Delete</button>
+                </form>
+            </div>
+            <br />
+        }
+    }
+    else
+    {
+        <span>Click on a named type or method definition to leave a comment.</span>
+    }
+</div>
+
+<br />
+
+<form id="commentForm" class="comment" method="post" asp-route-id="@Model.Id">
+    <div class="form-group">
+        <label>ID:</label>
+        <input type="text" readonly id="idBox" asp-for="Comment.ElementId" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Comment:</label>
+        <textarea id="commentThread" asp-for="Comment.Comment" class="form-control" rows="3"></textarea>
+    </div>
+    <button type="submit" id="submitButton" class="btn btn-outline-dark">Add Comment</button>
+</form>

@@ -1,5 +1,5 @@
 /**
- * @fileoverview Helper methods for rules pertaining to object structure
+ * @fileoverview Helper methods for rules pertaining to JSON object structure
  * @author Arpan Laha
  */
 

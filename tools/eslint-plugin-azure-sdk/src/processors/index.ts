@@ -5,7 +5,14 @@
 
 import { Linter } from "eslint";
 
+/**
+ * An object containing processors used by the plugin
+ */
 export = {
+  /**
+   * The processor for JSON files
+   * Ignores the no-unused-expressions ESLint rule
+   */
   ".json": {
     preprocess: (text: string): string[] => {
       return [text];

@@ -7,12 +7,15 @@
 // Requirements
 //------------------------------------------------------------------------------
 
-import rules from "./rules";
-import processors from "./processors";
 import configs from "./configs";
+import processors from "./processors";
+import rules from "./rules";
 
 //------------------------------------------------------------------------------
 // Plugin Definition
 //------------------------------------------------------------------------------
 
-export = { rules, processors, configs };
+/**
+ * The elements making up the plugin
+ */
+export = { configs, processors, rules };

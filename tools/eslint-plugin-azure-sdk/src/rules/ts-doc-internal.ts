@@ -7,17 +7,18 @@ import { Rule } from "eslint";
 import { getLocalExports } from "../utils";
 import { Node } from "estree";
 import {
-  ArrayLiteralExpression,
-  createCompilerHost,
-  JsonObjectExpressionStatement,
-  JsonSourceFile,
+  //ArrayLiteralExpression,
+  //createCompilerHost,
+  //JsonObjectExpressionStatement,
+  //JsonSourceFile,
   Node as TSNode,
-  NodeArray,
-  ObjectLiteralExpression,
-  PropertyAssignment,
-  ScriptTarget,
-  StringLiteral,
+  //NodeArray,
+  //ObjectLiteralExpression,
+  //PropertyAssignment,
+  //ScriptTarget,
+  //StringLiteral,
   TypeChecker
+  //TypePredicateKind
 } from "typescript";
 import { ParserWeakMap } from "@typescript-eslint/typescript-estree/dist/parser-options";
 import {
@@ -28,6 +29,7 @@ import { getRuleMetaData } from "../utils";
 // @ts-ignore
 import { relative } from "path";
 import { sync } from "glob";
+import { readFileSync } from "fs";
 
 //------------------------------------------------------------------------------
 // Rule Definition
@@ -50,10 +52,12 @@ const reportInternal = (
   const tsNode = converter.get(node as TSESTree.Node) as any;
   const symbol = typeChecker.getTypeAtLocation(tsNode).getSymbol();
 
+  // if type is internal and has a TSDoc
   if (
     !context.settings.exported.includes(symbol) &&
     tsNode.jsDoc !== undefined
   ) {
+    // fetc all tags
     let TSDocTags: string[] = [];
     tsNode.jsDoc.forEach((TSDocComment: any): void => {
       TSDocTags = TSDocTags.concat(
@@ -65,6 +69,7 @@ const reportInternal = (
       );
     });
 
+    // see if any match ignore or internal
     TSDocTags.every((TSDocTag: string): boolean => {
       return !/(ignore)|(internal)/.test(TSDocTag);
     }) &&
@@ -91,33 +96,18 @@ const shouldExamineFile = (fileName: string, exclude: string[]): boolean => {
 };
 
 let exclude: string[] = [];
-const JSONHost = createCompilerHost({});
-const typeDoc = JSONHost.getSourceFile("typedoc.json", ScriptTarget.JSON) as
-  | JsonSourceFile
-  | undefined;
-
-if (typeDoc !== undefined) {
-  typeDoc.statements.forEach(
-    (statement: JsonObjectExpressionStatement): void => {
-      const expression = statement.expression as ObjectLiteralExpression;
-      const properties = expression.properties as NodeArray<PropertyAssignment>;
-      properties.forEach((property: PropertyAssignment): void => {
-        const name = property.name as StringLiteral;
-        if (name.text === "exclude") {
-          const initializer = property.initializer as ArrayLiteralExpression;
-          const elements = initializer.elements as NodeArray<StringLiteral>;
-          elements.forEach((element: StringLiteral): void => {
-            exclude = exclude.concat(
-              sync(element.text).filter((excludeFile: string): boolean => {
-                return !/node_modules/.test(excludeFile);
-              })
-            );
-          });
-        }
-      });
-    }
-  );
-}
+try {
+  const typeDocText = readFileSync("typedoc.json", "utf8");
+  const typeDoc = JSON.parse(typeDocText);
+  typeDoc.exclude &&
+    typeDoc.exclude.forEach((excludedGlob: string): void => {
+      exclude = exclude.concat(
+        sync(excludedGlob).filter((excludeFile: string): boolean => {
+          return !/node_modules/.test(excludeFile);
+        })
+      );
+    });
+} catch (err) {}
 
 export = {
   meta: getRuleMetaData(

@@ -5,10 +5,8 @@
 
 import { Rule } from "eslint";
 import { ExportDefaultDeclaration } from "estree";
-import { getRuleMetaData } from "../utils";
-
-// @ts-ignore (path has no typings)
 import { normalize, relative } from "path";
+import { getRuleMetaData } from "../utils";
 
 //------------------------------------------------------------------------------
 // Rule Definition

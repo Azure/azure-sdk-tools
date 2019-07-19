@@ -12,11 +12,9 @@ import { Rule } from "eslint";
 import { Node } from "estree";
 import { readFileSync } from "fs";
 import { sync } from "glob";
+import { relative } from "path";
 import { Node as TSNode, TypeChecker } from "typescript";
 import { getLocalExports, getRuleMetaData } from "../utils";
-
-// @ts-ignore
-import { relative } from "path";
 
 //------------------------------------------------------------------------------
 // Rule Definition

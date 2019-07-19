@@ -44,7 +44,6 @@
   },
   "dependencies": {
     "glob": "^7.1.4",
-    "path": "^0.12.7",
     "typescript": "^3.4.5"
   },
   "devDependencies": {
@@ -63,7 +62,7 @@
     "chai": "^4.2.0",
     "eslint": "^5.16.0",
     "markdownlint-cli": "^0.17.0",
-    "mocha": "^6.1.4",
+    "mocha": "^6.2.0",
     "prettier": "^1.18.2"
   },
   "peerDependencies": {

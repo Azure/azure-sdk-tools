@@ -2,7 +2,7 @@
 
 Requires `version` in `package.json` to be in [SemVer](https://semver.org/).
 
-Additionally, major versions of `0` are not permitted, preview versions must be in the format `<version>-preview-<preview-version>`, where `preview-version` is an integer.
+Additionally, major versions of `0` are not permitted, preview versions must be in the format `<version>-preview.<preview-version>`, where `preview-version` is an integer.
 
 ## Examples
 

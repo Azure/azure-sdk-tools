@@ -8,9 +8,9 @@ By default, the main entrypoint is assumed to be `src/index.ts`. However, if you
 
 ```json
 {
-    "settings": {
-        "main": "index.ts"
-    }
+  "settings": {
+    "main": "index.ts"
+  }
 }
 ```
 

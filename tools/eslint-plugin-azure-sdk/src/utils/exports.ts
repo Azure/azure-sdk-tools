@@ -8,7 +8,7 @@ import { ParserServices } from "@typescript-eslint/experimental-utils";
  * @returns a list of Symbols containing type information for all top-level exports, or undefined if improperly configured
  */
 const getExports = (context: Rule.RuleContext): TSSymbol[] | undefined => {
-  const parserServices: ParserServices = context.parserServices;
+  const parserServices = context.parserServices as ParserServices;
   if (parserServices.program === undefined) {
     return undefined;
   }
@@ -55,7 +55,7 @@ export const isExternal = (symbol: TSSymbol): boolean => {
     if (!parentSymbol.parent) {
       return true;
     }
-    const parent: TSSymbol = parentSymbol.parent as TSSymbol;
+    const parent = parentSymbol.parent as TSSymbol;
     return externalRegex.test(parent.escapedName as string);
   }
 };

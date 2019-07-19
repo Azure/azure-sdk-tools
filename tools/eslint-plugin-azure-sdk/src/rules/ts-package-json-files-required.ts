@@ -41,8 +41,8 @@ export = {
               return;
             }
 
-            const nodeValue: ArrayExpression = node.value as ArrayExpression;
-            const elements: Literal[] = nodeValue.elements as Literal[];
+            const nodeValue = node.value as ArrayExpression;
+            const elements = nodeValue.elements as Literal[];
 
             elements.every((element: Literal): boolean => {
               // looks for 'dist' with optional leading './' and optional trailing '/'

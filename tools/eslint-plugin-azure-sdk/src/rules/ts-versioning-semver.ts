@@ -39,7 +39,7 @@ export = {
               });
               return;
             }
-            const nodeValue: Literal = node.value as Literal;
+            const nodeValue = node.value as Literal;
             const version = nodeValue.value as string;
 
             // check for violations specific to semver

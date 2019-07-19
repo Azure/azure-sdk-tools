@@ -46,7 +46,7 @@ export = {
               return;
             }
 
-            const nodeValue: Literal = node.value as Literal;
+            const nodeValue = node.value as Literal;
             const target = nodeValue.value as string;
 
             // check that target is not set to an invalid EcmaScript standard (ES3 or ESNext)

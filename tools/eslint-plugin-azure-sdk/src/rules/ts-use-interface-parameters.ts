@@ -47,7 +47,7 @@ type FunctionType = FunctionExpression | FunctionDeclaration;
 const getParamAsIdentifier = (param: Pattern): Identifier => {
   let identifier = param;
   if (param.type === "AssignmentPattern") {
-    const assignmentPattern: AssignmentPattern = param as AssignmentPattern;
+    const assignmentPattern = param as AssignmentPattern;
     identifier = assignmentPattern.left;
   }
   return identifier as Identifier;
@@ -93,7 +93,7 @@ const addSeenSymbols = (
 ): void => {
   let isExternal = false;
   let isOptional = false;
-  const declaration: PropertySignature = symbol.valueDeclaration as PropertySignature;
+  const declaration = symbol.valueDeclaration as PropertySignature;
   if (declaration !== undefined) {
     isOptional = declaration.questionToken !== undefined;
     isExternal = /node_modules/.test(declaration.getSourceFile().fileName);
@@ -159,7 +159,7 @@ const isValidParam = (
   converter: ParserWeakMap<TSESTree.Node, TSNode>,
   typeChecker: TypeChecker
 ): boolean => {
-  const tsIdentifier: TSESTree.Identifier = param as TSESTree.Identifier;
+  const tsIdentifier = param as TSESTree.Identifier;
   if (tsIdentifier.optional) {
     return true;
   }
@@ -244,7 +244,7 @@ export = {
   ),
 
   create: (context: Rule.RuleContext): Rule.RuleListener => {
-    const parserServices: ParserServices = context.parserServices;
+    const parserServices = context.parserServices as ParserServices;
     if (
       parserServices.program === undefined ||
       parserServices.esTreeNodeToTSNodeMap === undefined
@@ -269,10 +269,10 @@ export = {
           "MethodDefinition > FunctionExpression": (
             node: FunctionExpression
           ): void => {
-            const parent: MethodDefinition = context
+            const parent = context
               .getAncestors()
               .reverse()[0] as MethodDefinition;
-            const key: Identifier = parent.key as Identifier;
+            const key = parent.key as Identifier;
             const name = key.name;
 
             if (
@@ -302,7 +302,7 @@ export = {
                   symbol !== undefined
                     ? symbol.declarations.map(
                         (declaration: Declaration): FunctionExpression => {
-                          const method: MethodDefinition = reverter.get(
+                          const method = reverter.get(
                             declaration as TSNode
                           ) as MethodDefinition;
                           return method.value;
@@ -323,7 +323,7 @@ export = {
           },
 
           FunctionDeclaration: (node: FunctionDeclaration): void => {
-            const id: Identifier = node.id as Identifier;
+            const id = node.id as Identifier;
             const name = id.name;
             if (
               name !== undefined &&

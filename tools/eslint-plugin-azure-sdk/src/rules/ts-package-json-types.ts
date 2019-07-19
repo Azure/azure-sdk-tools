@@ -38,7 +38,7 @@ export = {
                 node: node.value,
                 message: "types is not set to a string"
               });
-            const nodeValue: Literal = node.value as Literal;
+            const nodeValue = node.value as Literal;
 
             !/\.d\.ts$/.test(nodeValue.value as string) && // filename ending in '.d.ts'
               context.report({

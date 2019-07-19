@@ -3,6 +3,11 @@
  * @author Arpan Laha
  */
 
+import {
+  ParserServices,
+  TSESTree
+} from "@typescript-eslint/experimental-utils";
+import { ParserWeakMap } from "@typescript-eslint/typescript-estree/dist/parser-options";
 import { Rule } from "eslint";
 import {
   AssignmentPattern,
@@ -26,11 +31,6 @@ import {
   Modifier,
   SyntaxKind
 } from "typescript";
-import {
-  ParserServices,
-  TSESTree
-} from "@typescript-eslint/experimental-utils";
-import { ParserWeakMap } from "@typescript-eslint/typescript-estree/dist/parser-options";
 import { getRuleMetaData } from "../utils";
 
 //------------------------------------------------------------------------------

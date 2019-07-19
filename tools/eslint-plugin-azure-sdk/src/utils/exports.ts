@@ -3,9 +3,9 @@
  * @author Arpan Laha
  */
 
+import { ParserServices } from "@typescript-eslint/experimental-utils";
 import { Rule } from "eslint";
 import { SourceFile, Symbol as TSSymbol } from "typescript";
-import { ParserServices } from "@typescript-eslint/experimental-utils";
 
 /**
  * Gets all Symbols of Types of all top-level exports from a package.

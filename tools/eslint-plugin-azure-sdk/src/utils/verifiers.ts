@@ -4,7 +4,7 @@
  */
 
 import { Rule } from "eslint";
-import { Property, ObjectExpression, Literal, ArrayExpression } from "estree";
+import { ArrayExpression, Literal, ObjectExpression, Property } from "estree";
 
 interface StructureData {
   outer: string;

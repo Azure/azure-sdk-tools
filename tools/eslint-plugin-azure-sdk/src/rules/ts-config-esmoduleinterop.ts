@@ -5,9 +5,8 @@
 
 "use strict";
 
-import { getVerifiers, stripPath } from "../utils";
 import { Rule } from "eslint";
-import { getRuleMetaData } from "../utils";
+import { getRuleMetaData, getVerifiers, stripPath } from "../utils";
 
 //------------------------------------------------------------------------------
 // Rule Definition

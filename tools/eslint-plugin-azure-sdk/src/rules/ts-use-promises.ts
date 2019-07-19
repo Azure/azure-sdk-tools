@@ -3,8 +3,8 @@
  * @author Arpan Laha
  */
 
-import { Rule } from "eslint";
 import { ParserServices } from "@typescript-eslint/experimental-utils";
+import { Rule } from "eslint";
 import { isExternalModule } from "typescript";
 import { getRuleMetaData } from "../utils";
 

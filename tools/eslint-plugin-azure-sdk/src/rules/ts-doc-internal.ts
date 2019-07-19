@@ -3,33 +3,20 @@
  * @author Arpan Laha
  */
 
-import { Rule } from "eslint";
-import { getLocalExports } from "../utils";
-import { Node } from "estree";
-import {
-  //ArrayLiteralExpression,
-  //createCompilerHost,
-  //JsonObjectExpressionStatement,
-  //JsonSourceFile,
-  Node as TSNode,
-  //NodeArray,
-  //ObjectLiteralExpression,
-  //PropertyAssignment,
-  //ScriptTarget,
-  //StringLiteral,
-  TypeChecker
-  //TypePredicateKind
-} from "typescript";
-import { ParserWeakMap } from "@typescript-eslint/typescript-estree/dist/parser-options";
 import {
   ParserServices,
   TSESTree
 } from "@typescript-eslint/experimental-utils";
-import { getRuleMetaData } from "../utils";
+import { ParserWeakMap } from "@typescript-eslint/typescript-estree/dist/parser-options";
+import { Rule } from "eslint";
+import { Node } from "estree";
+import { readFileSync } from "fs";
+import { sync } from "glob";
+import { Node as TSNode, TypeChecker } from "typescript";
+import { getLocalExports, getRuleMetaData } from "../utils";
+
 // @ts-ignore
 import { relative } from "path";
-import { sync } from "glob";
-import { readFileSync } from "fs";
 
 //------------------------------------------------------------------------------
 // Rule Definition

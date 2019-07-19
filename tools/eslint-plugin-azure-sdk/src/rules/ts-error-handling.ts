@@ -3,13 +3,13 @@
  * @author Arpan Laha
  */
 
-import { Rule } from "eslint";
-import { Identifier, NewExpression, ThrowStatement } from "estree";
-import { getRuleMetaData } from "../utils";
 import {
   ParserServices,
   TSESTree
 } from "@typescript-eslint/experimental-utils";
+import { Rule } from "eslint";
+import { Identifier, NewExpression, ThrowStatement } from "estree";
+import { getRuleMetaData } from "../utils";
 
 //------------------------------------------------------------------------------
 // Rule Definition

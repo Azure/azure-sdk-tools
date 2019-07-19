@@ -34,6 +34,7 @@ export = {
         });
       },
 
+      // if throwing an identifier
       "ThrowStatement[argument.type='Identifier']": (
         node: ThrowStatement
       ): void => {
@@ -64,7 +65,7 @@ export = {
           });
       },
 
-      // check to see that thrown error is valid type
+      // if throwing new object
       "ThrowStatement[argument.type='NewExpression']": (
         node: ThrowStatement
       ): void => {

@@ -20,6 +20,9 @@ export = {
     // regex checking file ending
     return /\.ts$/.test(context.getFilename())
       ? {
+          // callback functions
+
+          // check top-level node
           Program: (node: Node): void => {
             const headerComments = context
               .getSourceCode()
@@ -34,6 +37,7 @@ export = {
               return;
             }
 
+            // check for existence of both lines
             (headerComments.every((comment: Comment): boolean => {
               return !/Copyright \(c\) Microsoft Corporation\. All rights reserved\./.test(
                 comment.value

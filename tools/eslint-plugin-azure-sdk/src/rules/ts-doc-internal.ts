@@ -99,6 +99,8 @@ let exclude: string[] = [];
 try {
   const typeDocText = readFileSync("typedoc.json", "utf8");
   const typeDoc = JSON.parse(typeDocText);
+
+  // if typeDoc.exclude exists, add all files matching the glob patterns to exclude
   typeDoc.exclude &&
     typeDoc.exclude.forEach((excludedGlob: string): void => {
       exclude = exclude.concat(
@@ -107,7 +109,9 @@ try {
         })
       );
     });
-} catch (err) {}
+} catch (err) {
+  exclude = [];
+}
 
 export = {
   meta: getRuleMetaData(
@@ -117,6 +121,7 @@ export = {
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     const fileName = context.getFilename();
 
+    // on the first run, if on a .ts file (program.getSourceFile is file-type dependent)
     if (context.settings.exported === undefined && /\.ts$/.test(fileName)) {
       const packageExports = getLocalExports(context);
       if (packageExports !== undefined) {
@@ -141,12 +146,15 @@ export = {
     return shouldExamineFile(fileName, exclude)
       ? {
           // callback functions
+
+          // container declarations
           ":matches(TSInterfaceDeclaration, ClassDeclaration, TSModuleDeclaration)": (
             node: Node
           ): void => {
             reportInternal(node, context, converter, typeChecker);
           },
 
+          // standalone functions
           ":function": (node: Node): void => {
             context.getAncestors().every((ancestor: Node): boolean => {
               return ![

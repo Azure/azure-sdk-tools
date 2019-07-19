@@ -38,7 +38,7 @@ export = {
             node: Property
           ): void => {
             if (node.value.hasOwnProperty("elements")) {
-              const nodeValue: ArrayExpression = node.value as ArrayExpression;
+              const nodeValue = node.value as ArrayExpression;
               nodeValue.elements.length !== 0 &&
                 context.report({
                   node: nodeValue,

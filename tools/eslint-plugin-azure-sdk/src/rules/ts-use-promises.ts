@@ -37,10 +37,12 @@ export = {
         if (symbol === undefined) {
           return;
         }
+
         const declaration = symbol.valueDeclaration;
         if (declaration === undefined) {
           return;
         }
+
         isExternalModule(declaration.getSourceFile()) &&
           context.report({
             node: node,

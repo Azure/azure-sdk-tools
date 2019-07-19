@@ -17,7 +17,7 @@ import {
   isArrayTypeNode,
   Node as TSNode,
   PropertySignature,
-  Symbol,
+  Symbol as TSSymbol,
   SymbolFlags,
   Type,
   TypeChecker,
@@ -46,10 +46,13 @@ type FunctionType = FunctionExpression | FunctionDeclaration;
  */
 const getParamAsIdentifier = (param: Pattern): Identifier => {
   let identifier = param;
+
+  // if assignment pattern, get identifier from left side
   if (param.type === "AssignmentPattern") {
     const assignmentPattern = param as AssignmentPattern;
     identifier = assignmentPattern.left;
   }
+
   return identifier as Identifier;
 };
 
@@ -68,6 +71,8 @@ const getTypeOfParam = (
   const type = typeChecker.getTypeAtLocation(
     converter.get(getParamAsIdentifier(param) as TSESTree.Node)
   ) as TypeReference;
+
+  // if array, extract type from array
   const typeNode = typeChecker.typeToTypeNode(type);
   if (typeNode !== undefined && isArrayTypeNode(typeNode)) {
     const elementTypeReference = typeNode.elementType as TypeReferenceNode;
@@ -76,10 +81,10 @@ const getTypeOfParam = (
       return typeChecker.getDeclaredTypeOfSymbol(typeName.symbol);
     }
   }
+
   return type;
 };
 
-/* eslint-disable @typescript-eslint/ban-types */
 /**
  * Recursive helper method to track the types seen in a parameter (including member types)
  * @param symbol The Symbol being inspected for member types
@@ -87,12 +92,14 @@ const getTypeOfParam = (
  * @param typeChecker the TypeScript language typechecker
  */
 const addSeenSymbols = (
-  symbol: Symbol,
-  symbols: Symbol[],
+  symbol: TSSymbol,
+  symbols: TSSymbol[],
   typeChecker: TypeChecker
 ): void => {
   let isExternal = false;
   let isOptional = false;
+
+  // check to see if parameter is either external or optional (in which case it would be ignored)
   const declaration = symbol.valueDeclaration as PropertySignature;
   if (declaration !== undefined) {
     isOptional = declaration.questionToken !== undefined;
@@ -101,15 +108,22 @@ const addSeenSymbols = (
   if (isExternal || isOptional) {
     return;
   }
+
   symbols.push(symbol);
+
+  // recurse on properties of parameter
   typeChecker
     .getPropertiesOfType(typeChecker.getDeclaredTypeOfSymbol(symbol))
-    .forEach((element: Symbol): void => {
+    .forEach((element: TSSymbol): void => {
       const memberType = typeChecker.getTypeAtLocation(
         element.valueDeclaration
       );
       const memberTypeNode = typeChecker.typeToTypeNode(memberType);
-      let memberSymbol: Symbol | undefined;
+
+      // extract type of member
+      let memberSymbol: TSSymbol | undefined;
+
+      // get type from array if parameter is array
       if (memberTypeNode !== undefined && isArrayTypeNode(memberTypeNode)) {
         const elementTypeReference = memberTypeNode.elementType as TypeReferenceNode;
         const typeName = elementTypeReference.typeName as any;
@@ -118,6 +132,7 @@ const addSeenSymbols = (
         memberSymbol = memberType.getSymbol();
       }
       if (memberSymbol !== undefined) {
+        // if type is class/interface and hasn't been seen yet
         [SymbolFlags.Class, SymbolFlags.Interface].includes(
           memberSymbol.getFlags()
         ) &&
@@ -138,8 +153,8 @@ const getSymbolsUsedInParam = (
   param: Pattern,
   converter: ParserWeakMap<TSESTree.Node, TSNode>,
   typeChecker: TypeChecker
-): Symbol[] => {
-  const symbols: Symbol[] = [];
+): TSSymbol[] => {
+  const symbols: TSSymbol[] = [];
   const symbol = getTypeOfParam(param, converter, typeChecker).getSymbol();
   if (symbol !== undefined) {
     addSeenSymbols(symbol, symbols, typeChecker);
@@ -164,12 +179,11 @@ const isValidParam = (
     return true;
   }
   return getSymbolsUsedInParam(param, converter, typeChecker).every(
-    (symbol: Symbol): boolean => {
+    (symbol: TSSymbol): boolean => {
       return symbol === undefined || symbol.getFlags() !== SymbolFlags.Class;
     }
   );
 };
-/* eslint-enable @typescript-eslint/ban-types */
 
 /**
  * Finds if an a function is valid
@@ -275,6 +289,7 @@ export = {
             const key = parent.key as Identifier;
             const name = key.name;
 
+            // ignore if name seen already
             if (
               name !== undefined &&
               name !== "" &&
@@ -283,6 +298,7 @@ export = {
               return;
             }
 
+            // ignore if private methoc
             const modifiers = converter.get(node as TSESTree.Node).modifiers;
             if (
               modifiers !== undefined &&
@@ -293,6 +309,7 @@ export = {
               return;
             }
 
+            // iterate over parameters
             node.params.forEach((param: Pattern): void => {
               if (!isValidParam(param, converter, typeChecker)) {
                 const symbol = typeChecker
@@ -325,6 +342,8 @@ export = {
           FunctionDeclaration: (node: FunctionDeclaration): void => {
             const id = node.id as Identifier;
             const name = id.name;
+
+            // ignore if name seen already
             if (
               name !== undefined &&
               name !== "" &&
@@ -333,6 +352,7 @@ export = {
               return;
             }
 
+            // iterate over parameters
             node.params.forEach((param: Pattern): void => {
               if (!isValidParam(param, converter, typeChecker)) {
                 const symbol = typeChecker

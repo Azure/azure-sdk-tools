@@ -1,12 +1,7 @@
 ﻿using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Console;
-using Microsoft.TeamFoundation.Build.WebApi;
-using Microsoft.TeamFoundation.Core.WebApi;
-using Microsoft.VisualStudio.Services.Common;
-using Microsoft.VisualStudio.Services.ServiceEndpoints.WebApi;
-using Microsoft.VisualStudio.Services.WebApi;
+using PipelineGenerator.Conventions;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -53,6 +48,7 @@ namespace PipelineGenerator
             var projectOption = app.Option("--project <project>", "The name of the Azure DevOps project.", CommandOptionType.SingleValue).IsRequired();
             var prefixOption = app.Option("--prefix <prefix>", "The prefix to append to the pipeline name.", CommandOptionType.SingleValue).IsRequired();
             var pathOption = app.Option("--path <path>", "The directory from which to scan for components", CommandOptionType.SingleValue).IsRequired();
+            var devOpsPathOption = app.Option("--devopspath <path>", "The DevOps directory for created pipelines", CommandOptionType.SingleValue);
             var patvarOption = app.Option("--patvar <env>", "Name of an environment variable which contains a PAT.", CommandOptionType.SingleValue).IsRequired();
             var endpointOption = app.Option("--endpoint <endpoint>", "Name of the service endpoint to configure repositories with.", CommandOptionType.SingleValue).IsRequired();
             var repositoryOption = app.Option("--repository <repository>", "Name of the GitHub repo in the form [org]/[repo].", CommandOptionType.SingleValue).IsRequired();
@@ -81,6 +77,7 @@ namespace PipelineGenerator
                     agentpoolOption.Value(),
                     conventionOption.Value(),
                     variablegroupsOption.Values.ToArray(),
+                    devOpsPathOption.Value(),
                     whatifOption.HasValue(),
                     openOption.HasValue(),
                     destroyOption.HasValue(),
@@ -134,6 +131,7 @@ namespace PipelineGenerator
             string agentPool,
             string convention,
             string[] variableGroups,
+            string devOpsPath,
             bool whatIf,
             bool open,
             bool destroy,
@@ -142,6 +140,11 @@ namespace PipelineGenerator
             try
             {
                 logger.LogDebug("Creating context.");
+
+                // Fall back to a form of prefix if DevOps path is not specified
+                var devOpsPathValue = string.IsNullOrEmpty(devOpsPath) ? $"\\{prefix}" : devOpsPath;
+
+
                 var context = new PipelineGenerationContext(
                     organization,
                     project,
@@ -151,6 +154,7 @@ namespace PipelineGenerator
                     branch,
                     agentPool,
                     variableGroups,
+                    devOpsPathValue,
                     prefix,
                     whatIf
                     );
@@ -178,19 +182,7 @@ namespace PipelineGenerator
 
                         if (open)
                         {
-                            if (open && Environment.OSVersion.Platform == PlatformID.Win32NT)
-                            {
-                                logger.LogDebug("Launching browser window for: {0}", definition.GetWebUrl());
-
-                                var processStartInfo = new ProcessStartInfo()
-                                {
-                                    FileName = definition.GetWebUrl(),
-                                    UseShellExecute = true
-                                };
-                                
-                                // TODO: Need to test this on macOS and Linux.
-                                System.Diagnostics.Process.Start(processStartInfo);
-                            }
+                            OpenBrowser(definition.GetWebUrl());
                         }
                     }
                 }
@@ -203,6 +195,26 @@ namespace PipelineGenerator
                 logger.LogCritical(ex, "BOOM! Something went wrong, try running with --debug.");
                 return ExitCondition.Exception;
             }
+        }
+
+        private void OpenBrowser(string url)
+        {
+            if (Environment.OSVersion.Platform != PlatformID.Win32NT)
+            {
+                return;
+            }
+
+
+            logger.LogDebug("Launching browser window for: {0}", url);
+
+            var processStartInfo = new ProcessStartInfo()
+            {
+                FileName = url,
+                UseShellExecute = true,
+            };
+
+            // TODO: Need to test this on macOS and Linux.
+            System.Diagnostics.Process.Start(processStartInfo);
         }
 
         private IEnumerable<SdkComponent> ScanForComponents(string path, string searchPattern)

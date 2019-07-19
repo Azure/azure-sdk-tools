@@ -3,10 +3,9 @@
  * @author Arpan Laha
  */
 
-import { getVerifiers, stripPath } from "../utils";
 import { Rule } from "eslint";
 import { Literal, Property } from "estree";
-import { getRuleMetaData } from "../utils";
+import { getRuleMetaData, getVerifiers, stripPath } from "../utils";
 
 //------------------------------------------------------------------------------
 // Rule Definition
@@ -39,15 +38,16 @@ export = {
               });
             }
 
-            const nodeValue: Literal = node.value as Literal;
+            const nodeValue = node.value as Literal;
+            const main = nodeValue.value as string;
 
-            !/^(\.\/)?dist\/index\.js$/.test(nodeValue.value as string) &&
+            !/^(\.\/)?dist\/index\.js$/.test(main) &&
               context.report({
                 node: nodeValue,
                 message:
                   "main is set to {{ identifier }} when it should be set to dist/index.js",
                 data: {
-                  identifier: nodeValue.value as string
+                  identifier: main
                 }
               });
           }

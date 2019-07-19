@@ -1,6 +1,11 @@
+/**
+ * @fileoverview Utilities for analyzing the exports of a package
+ * @author Arpan Laha
+ */
+
+import { ParserServices } from "@typescript-eslint/experimental-utils";
 import { Rule } from "eslint";
 import { SourceFile, Symbol as TSSymbol } from "typescript";
-import { ParserServices } from "@typescript-eslint/experimental-utils";
 
 /**
  * Gets all Symbols of Types of all top-level exports from a package.
@@ -8,7 +13,7 @@ import { ParserServices } from "@typescript-eslint/experimental-utils";
  * @returns a list of Symbols containing type information for all top-level exports, or undefined if improperly configured
  */
 const getExports = (context: Rule.RuleContext): TSSymbol[] | undefined => {
-  const parserServices: ParserServices = context.parserServices;
+  const parserServices = context.parserServices as ParserServices;
   if (parserServices.program === undefined) {
     return undefined;
   }
@@ -31,6 +36,7 @@ const getExports = (context: Rule.RuleContext): TSSymbol[] | undefined => {
       return typeChecker.getDeclaredTypeOfSymbol(packageExport).getSymbol();
     })
     .filter((exportSymbol: TSSymbol | undefined): boolean => {
+      // exports don't necessarily have symbols
       return exportSymbol !== undefined;
     }) as TSSymbol[];
   return exportSymbols;
@@ -42,12 +48,15 @@ const getExports = (context: Rule.RuleContext): TSSymbol[] | undefined => {
  * @returns if the Symbol originates from a dependency
  */
 export const isExternal = (symbol: TSSymbol): boolean => {
+  // use /node_modules/ to find if a Symbol originated from an external location
   const externalRegex = /node_modules/;
   if (symbol.valueDeclaration !== undefined) {
+    // iterate up until the parent chain until no longer possible
     let parent = symbol.valueDeclaration.parent;
     while (parent.parent !== undefined) {
       parent = parent.parent;
     }
+
     const sourceFile = parent as SourceFile;
     return externalRegex.test(sourceFile.fileName);
   } else {
@@ -55,7 +64,7 @@ export const isExternal = (symbol: TSSymbol): boolean => {
     if (!parentSymbol.parent) {
       return true;
     }
-    const parent: TSSymbol = parentSymbol.parent as TSSymbol;
+    const parent = parentSymbol.parent as TSSymbol;
     return externalRegex.test(parent.escapedName as string);
   }
 };
@@ -69,6 +78,7 @@ const addToSeenLocalExports = (
   exportSymbol: TSSymbol,
   localExports: TSSymbol[]
 ): void => {
+  // skip if it's external or seen already
   if (isExternal(exportSymbol) || localExports.includes(exportSymbol)) {
     return;
   }
@@ -92,6 +102,8 @@ export const getLocalExports = (
 
   exportSymbols.forEach((exportSymbol: TSSymbol): void => {
     addToSeenLocalExports(exportSymbol, localExports);
+    // members exist in both the 'exports' and 'members' fields
+
     if (exportSymbol.exports !== undefined) {
       exportSymbol.exports.forEach((exportedSymbol: TSSymbol): void => {
         addToSeenLocalExports(exportedSymbol, localExports);

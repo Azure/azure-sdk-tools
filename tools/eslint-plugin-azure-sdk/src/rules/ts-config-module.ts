@@ -3,10 +3,9 @@
  * @author Arpan Laha
  */
 
-import { getVerifiers, stripPath } from "../utils";
 import { Rule } from "eslint";
 import { Literal, Property } from "estree";
-import { getRuleMetaData } from "../utils";
+import { getRuleMetaData, getVerifiers, stripPath } from "../utils";
 
 //------------------------------------------------------------------------------
 // Rule Definition
@@ -45,16 +44,17 @@ export = {
                   "compilerOptions.module is not set to a literal (string | boolean | null | number | RegExp)"
               });
 
-            const nodeValue: Literal = node.value as Literal;
+            const nodeValue = node.value as Literal;
 
             // check that module is set to es6
-            !/^es6$/i.test(nodeValue.value as string) &&
+            const module = nodeValue.value as string;
+            !/^es6$/i.test(module) &&
               context.report({
                 node: node,
                 message:
                   "compilerOptions.module is set to {{ identifier }} when it should be set to ES6",
                 data: {
-                  identifier: nodeValue.value as string
+                  identifier: module
                 }
               });
           }

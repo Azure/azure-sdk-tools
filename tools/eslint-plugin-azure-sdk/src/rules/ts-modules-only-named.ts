@@ -5,9 +5,10 @@
 
 import { Rule } from "eslint";
 import { ExportDefaultDeclaration } from "estree";
+import { getRuleMetaData } from "../utils";
+
 // @ts-ignore (path has no typings)
 import { normalize, relative } from "path";
-import { getRuleMetaData } from "../utils";
 
 //------------------------------------------------------------------------------
 // Rule Definition
@@ -19,12 +20,14 @@ export = {
     "force there to be only named exports at the top level"
   ),
   create: (context: Rule.RuleContext): Rule.RuleListener => {
-    return !relative(
+    return relative(
       normalize(context.getFilename()),
       normalize(context.settings.main)
-    )
+    ) === ""
       ? ({
           // callback functions
+
+          // throw error if an export default declaration is seen
           ExportDefaultDeclaration: (node: ExportDefaultDeclaration): void => {
             context.report({
               node: node,

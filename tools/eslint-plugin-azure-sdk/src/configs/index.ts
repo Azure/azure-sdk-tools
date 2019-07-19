@@ -3,7 +3,13 @@
  * @author Arpan Laha
  */
 
+/**
+ * An object containing configurations available for the plugin
+ */
 export = {
+  /**
+   * The recommended (default) configuration
+   */
   recommended: {
     plugins: ["@azure/azure-sdk"],
     env: {

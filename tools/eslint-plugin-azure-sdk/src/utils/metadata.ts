@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Utilities relating to ESLint Rule metadata
+ * @author Arpan Laha
+ */
+
 import { Rule } from "eslint";
 
 export const getRuleMetaData = (

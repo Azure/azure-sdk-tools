@@ -3,14 +3,13 @@
  * @author Arpan Laha
  */
 
-import { Rule } from "eslint";
-import { Identifier, NewExpression, ThrowStatement } from "estree";
-import { TypeChecker } from "typescript";
-import { getRuleMetaData } from "../utils";
 import {
   ParserServices,
   TSESTree
 } from "@typescript-eslint/experimental-utils";
+import { Rule } from "eslint";
+import { Identifier, NewExpression, ThrowStatement } from "estree";
+import { getRuleMetaData } from "../utils";
 
 //------------------------------------------------------------------------------
 // Rule Definition
@@ -35,18 +34,19 @@ export = {
         });
       },
 
+      // if throwing an identifier
       "ThrowStatement[argument.type='Identifier']": (
         node: ThrowStatement
       ): void => {
-        const thrown: Identifier = node.argument as Identifier;
-        const parserServices: ParserServices = context.parserServices;
+        const thrown = node.argument as Identifier;
+        const parserServices = context.parserServices as ParserServices;
         if (
           parserServices.program === undefined ||
           parserServices.esTreeNodeToTSNodeMap === undefined
         ) {
           return;
         }
-        const typeChecker: TypeChecker = parserServices.program.getTypeChecker();
+        const typeChecker = parserServices.program.getTypeChecker();
         const TSNode = parserServices.esTreeNodeToTSNodeMap.get(
           thrown as TSESTree.Node
         );
@@ -65,7 +65,7 @@ export = {
           });
       },
 
-      // check to see that thrown error is valid type
+      // if throwing new object
       "ThrowStatement[argument.type='NewExpression']": (
         node: ThrowStatement
       ): void => {

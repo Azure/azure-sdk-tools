@@ -17,6 +17,9 @@ export = {
   ),
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     return {
+      // callback functions
+
+      // check Enum to make sure it doesn't have a const keyword
       TSEnumDeclaration: (node: any): void => {
         node.const &&
           context.report({

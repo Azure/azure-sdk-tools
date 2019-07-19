@@ -3,10 +3,9 @@
  * @author Arpan Laha
  */
 
-import { getVerifiers, stripPath } from "../utils";
 import { Rule } from "eslint";
 import { ArrayExpression, Property } from "estree";
-import { getRuleMetaData } from "../utils";
+import { getRuleMetaData, getVerifiers, stripPath } from "../utils";
 
 //------------------------------------------------------------------------------
 // Rule Definition
@@ -38,7 +37,7 @@ export = {
             node: Property
           ): void => {
             if (node.value.hasOwnProperty("elements")) {
-              const nodeValue: ArrayExpression = node.value as ArrayExpression;
+              const nodeValue = node.value as ArrayExpression;
               nodeValue.elements.length !== 0 &&
                 context.report({
                   node: nodeValue,

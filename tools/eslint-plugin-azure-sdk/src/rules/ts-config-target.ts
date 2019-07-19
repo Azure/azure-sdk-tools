@@ -3,10 +3,9 @@
  * @author Arpan Laha
  */
 
-import { getVerifiers, stripPath } from "../utils";
 import { Rule } from "eslint";
 import { Literal, Property } from "estree";
-import { getRuleMetaData } from "../utils";
+import { getRuleMetaData, getVerifiers, stripPath } from "../utils";
 
 //------------------------------------------------------------------------------
 // Rule Definition
@@ -46,7 +45,7 @@ export = {
               return;
             }
 
-            const nodeValue: Literal = node.value as Literal;
+            const nodeValue = node.value as Literal;
             const target = nodeValue.value as string;
 
             // check that target is not set to an invalid EcmaScript standard (ES3 or ESNext)

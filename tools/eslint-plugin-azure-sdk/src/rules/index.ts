@@ -40,6 +40,9 @@ import tsUseInterfaceParameters from "./ts-use-interface-parameters";
 import tsUsePromises from "./ts-use-promises";
 import tsVersioningSemver from "./ts-versioning-semver";
 
+/**
+ * An object containing all rules defined by the plugin
+ */
 export = {
   "github-source-headers": githubSourceHeaders,
   "ts-config-allowsyntheticdefaultimports": tsConfigAllowSyntheticDefaultImports,

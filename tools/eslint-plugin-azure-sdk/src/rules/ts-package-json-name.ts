@@ -3,10 +3,9 @@
  * @author Arpan Laha
  */
 
-import { getVerifiers, stripPath } from "../utils";
 import { Rule } from "eslint";
 import { Literal, Property } from "estree";
-import { getRuleMetaData } from "../utils";
+import { getRuleMetaData, getVerifiers, stripPath } from "../utils";
 
 //------------------------------------------------------------------------------
 // Rule Definition
@@ -32,17 +31,17 @@ export = {
           "ExpressionStatement > ObjectExpression > Property[key.value='name']": (
             node: Property
           ): void => {
-            const nodeValue: Literal = node.value as Literal;
-            const value: string = nodeValue.value as string;
+            const nodeValue = node.value as Literal;
+            const name = nodeValue.value as string;
 
-            !value.startsWith("@azure/") &&
+            !name.startsWith("@azure/") &&
               context.report({
                 node: nodeValue,
                 message: "name is not set to @azure/<service>"
               });
 
-            value.startsWith("@azure/") &&
-              !/^@azure\/([a-z]+-)*[a-z]+$/.test(value) &&
+            name.startsWith("@azure/") &&
+              !/^@azure\/([a-z]+-)*[a-z]+$/.test(name) &&
               context.report({
                 node: nodeValue,
                 message:

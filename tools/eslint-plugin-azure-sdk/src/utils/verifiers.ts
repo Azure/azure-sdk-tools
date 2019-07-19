@@ -1,10 +1,10 @@
 /**
- * @fileoverview Helper methods for rules pertaining to object structure
+ * @fileoverview Helper methods for rules pertaining to JSON object structure
  * @author Arpan Laha
  */
 
 import { Rule } from "eslint";
-import { Property, ObjectExpression, Literal, ArrayExpression } from "estree";
+import { ArrayExpression, Literal, ObjectExpression, Property } from "estree";
 
 interface StructureData {
   outer: string;
@@ -48,7 +48,7 @@ export const getVerifiers = (
     existsInFile: (node: ObjectExpression): void => {
       const outer = data.outer;
 
-      const properties: Property[] = node.properties as Property[];
+      const properties = node.properties as Property[];
 
       properties.every((property: Property): boolean => {
         const key = property.key as Literal;
@@ -78,7 +78,7 @@ export const getVerifiers = (
             " is not set to a literal (string | boolean | null | number | RegExp)"
         });
 
-      const nodeValue: Literal = node.value as Literal;
+      const nodeValue = node.value as Literal;
 
       // check node value against expected value
       nodeValue.value !== expected &&
@@ -103,8 +103,8 @@ export const getVerifiers = (
       const outer = data.outer;
       const inner = data.inner;
 
-      const value: ObjectExpression = node.value as ObjectExpression;
-      const properties: Property[] = value.properties as Property[];
+      const value = node.value as ObjectExpression;
+      const properties = value.properties as Property[];
 
       properties.every((property: Property): boolean => {
         const key = property.key as Literal;
@@ -137,7 +137,7 @@ export const getVerifiers = (
             " is not set to a literal (string | boolean | null | number | RegExp)"
         });
 
-      const nodeValue: Literal = node.value as Literal;
+      const nodeValue = node.value as Literal;
 
       // check node value against expected value
       nodeValue.value !== expected &&
@@ -170,7 +170,7 @@ export const getVerifiers = (
           message: outer + " is not set to an array"
         });
 
-      const nodeValue: ArrayExpression = node.value as ArrayExpression;
+      const nodeValue = node.value as ArrayExpression;
 
       const nonLiteral = nodeValue.elements.find((element: any): boolean => {
         return element.type !== "Literal";
@@ -184,7 +184,7 @@ export const getVerifiers = (
             " contains non-literal (string | boolean | null | number | RegExp) elements"
         });
 
-      const candidateArray: Literal[] = nodeValue.elements as Literal[];
+      const candidateArray = nodeValue.elements as Literal[];
 
       if (expected instanceof Array) {
         expected.forEach((value: unknown): void => {

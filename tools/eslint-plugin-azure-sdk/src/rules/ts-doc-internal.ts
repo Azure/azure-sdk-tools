@@ -3,31 +3,20 @@
  * @author Arpan Laha
  */
 
-import { Rule } from "eslint";
-import { getLocalExports } from "../utils";
-import { Node } from "estree";
-import {
-  ArrayLiteralExpression,
-  createCompilerHost,
-  JsonObjectExpressionStatement,
-  JsonSourceFile,
-  Node as TSNode,
-  NodeArray,
-  ObjectLiteralExpression,
-  PropertyAssignment,
-  ScriptTarget,
-  StringLiteral,
-  TypeChecker
-} from "typescript";
-import { ParserWeakMap } from "@typescript-eslint/typescript-estree/dist/parser-options";
 import {
   ParserServices,
   TSESTree
 } from "@typescript-eslint/experimental-utils";
-import { getRuleMetaData } from "../utils";
+import { ParserWeakMap } from "@typescript-eslint/typescript-estree/dist/parser-options";
+import { Rule } from "eslint";
+import { Node } from "estree";
+import { readFileSync } from "fs";
+import { sync } from "glob";
+import { Node as TSNode, TypeChecker } from "typescript";
+import { getLocalExports, getRuleMetaData } from "../utils";
+
 // @ts-ignore
 import { relative } from "path";
-import { sync } from "glob";
 
 //------------------------------------------------------------------------------
 // Rule Definition
@@ -50,10 +39,12 @@ const reportInternal = (
   const tsNode = converter.get(node as TSESTree.Node) as any;
   const symbol = typeChecker.getTypeAtLocation(tsNode).getSymbol();
 
+  // if type is internal and has a TSDoc
   if (
     !context.settings.exported.includes(symbol) &&
     tsNode.jsDoc !== undefined
   ) {
+    // fetc all tags
     let TSDocTags: string[] = [];
     tsNode.jsDoc.forEach((TSDocComment: any): void => {
       TSDocTags = TSDocTags.concat(
@@ -65,6 +56,7 @@ const reportInternal = (
       );
     });
 
+    // see if any match ignore or internal
     TSDocTags.every((TSDocTag: string): boolean => {
       return !/(ignore)|(internal)/.test(TSDocTag);
     }) &&
@@ -91,32 +83,21 @@ const shouldExamineFile = (fileName: string, exclude: string[]): boolean => {
 };
 
 let exclude: string[] = [];
-const JSONHost = createCompilerHost({});
-const typeDoc = JSONHost.getSourceFile("typedoc.json", ScriptTarget.JSON) as
-  | JsonSourceFile
-  | undefined;
+try {
+  const typeDocText = readFileSync("typedoc.json", "utf8");
+  const typeDoc = JSON.parse(typeDocText);
 
-if (typeDoc !== undefined) {
-  typeDoc.statements.forEach(
-    (statement: JsonObjectExpressionStatement): void => {
-      const expression = statement.expression as ObjectLiteralExpression;
-      const properties = expression.properties as NodeArray<PropertyAssignment>;
-      properties.forEach((property: PropertyAssignment): void => {
-        const name = property.name as StringLiteral;
-        if (name.text === "exclude") {
-          const initializer = property.initializer as ArrayLiteralExpression;
-          const elements = initializer.elements as NodeArray<StringLiteral>;
-          elements.forEach((element: StringLiteral): void => {
-            exclude = exclude.concat(
-              sync(element.text).filter((excludeFile: string): boolean => {
-                return !/node_modules/.test(excludeFile);
-              })
-            );
-          });
-        }
-      });
-    }
-  );
+  // if typeDoc.exclude exists, add all files matching the glob patterns to exclude
+  typeDoc.exclude &&
+    typeDoc.exclude.forEach((excludedGlob: string): void => {
+      exclude = exclude.concat(
+        sync(excludedGlob).filter((excludeFile: string): boolean => {
+          return !/node_modules/.test(excludeFile);
+        })
+      );
+    });
+} catch (err) {
+  exclude = [];
 }
 
 export = {
@@ -127,6 +108,7 @@ export = {
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     const fileName = context.getFilename();
 
+    // on the first run, if on a .ts file (program.getSourceFile is file-type dependent)
     if (context.settings.exported === undefined && /\.ts$/.test(fileName)) {
       const packageExports = getLocalExports(context);
       if (packageExports !== undefined) {
@@ -151,12 +133,15 @@ export = {
     return shouldExamineFile(fileName, exclude)
       ? {
           // callback functions
+
+          // container declarations
           ":matches(TSInterfaceDeclaration, ClassDeclaration, TSModuleDeclaration)": (
             node: Node
           ): void => {
             reportInternal(node, context, converter, typeChecker);
           },
 
+          // standalone functions
           ":function": (node: Node): void => {
             context.getAncestors().every((ancestor: Node): boolean => {
               return ![

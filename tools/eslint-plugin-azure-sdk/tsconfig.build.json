@@ -1,8 +1,4 @@
 {
   "extends": "./tsconfig.json",
-  "exclude": ["tests"],
-  "compilerOptions": {
-    "types": []
-  },
-  "outDir": "./dist"
+  "include": ["src"]
 }

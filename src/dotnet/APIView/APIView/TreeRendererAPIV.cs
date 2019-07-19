@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.Design;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
@@ -120,7 +118,6 @@ namespace APIView
                 foreach (var attribute in m.Attributes)
                 {
                     Render(attribute, list, indents);
-                    //RenderNewline(builder);
                 }
             }
 
@@ -232,7 +229,6 @@ namespace APIView
                         builder.Append(" ");
                     }
                     builder.Append("{");
-                    //RenderNewline(builder);
                     list.Add(new LineAPIV(builder.ToString(), nt.NavigationID));
 
                     foreach (FieldAPIV f in nt.Fields)
@@ -242,7 +238,6 @@ namespace APIView
                         builder.Append(f.Name).Append(" = ");
                         RenderValue(builder, f.Value.ToString());
                         builder.Append(",");
-                        //RenderNewline(builder);
                         list.Add(new LineAPIV(builder.ToString()));
                     }
 
@@ -308,34 +303,28 @@ namespace APIView
                         builder.Append(" ");
                     }
                     builder.Append("{");
-                    //RenderNewline(builder);
                     list.Add(new LineAPIV(builder.ToString(), nt.NavigationID));
 
                     // add any types declared in this type's body
                     foreach (FieldAPIV f in nt.Fields)
                     {
                         Render(f, list, indents);
-                        //RenderNewline(builder);
                     }
                     foreach (PropertyAPIV p in nt.Properties)
                     {
                         Render(p, list, indents);
-                        //RenderNewline(builder);
                     }
                     foreach (EventAPIV e in nt.Events)
                     {
                         Render(e, list, indents);
-                        //RenderNewline(builder);
                     }
                     foreach (MethodAPIV m in nt.Methods)
                     {
                         Render(m, list, indents);
-                        //RenderNewline(builder);
                     }
                     foreach (NamedTypeAPIV n in nt.NamedTypes)
                     {
                         Render(n, list, indents);
-                        //RenderNewline(builder);
                     }
 
                     builder = new StringBuilder();
@@ -349,38 +338,35 @@ namespace APIView
         public void Render(NamespaceAPIV ns, List<LineAPIV> list, int indents = 0)
         {
             var builder = new StringBuilder();
-            if (ns.Name != "<global namespace>")
+            var isGlobalNamespace = ns.Name == "<global namespace>";
+            if (!isGlobalNamespace)
             {
                 AppendIndents(builder, indents);
                 RenderKeyword(builder, "namespace");
                 builder.Append(" ");
                 RenderNamespace(builder, ns);
                 builder.Append(" {");
-                //RenderNewline(builder);
                 list.Add(new LineAPIV(builder.ToString()));
             }
 
             foreach (NamedTypeAPIV nt in ns.NamedTypes)
             {
                 Render(nt, list, indents + 1);
-                //RenderNewline(builder);
             }
 
             foreach (NamespaceAPIV n in ns.Namespaces)
             {
-                if (ns.Name.Any())
+                if (!isGlobalNamespace)
                 {
                     Render(n, list, indents + 1);
-                    //RenderNewline(builder);
                 }
                 else
                 {
                     Render(n, list, indents);
-                    //RenderNewline(builder);
                 }
             }
 
-            if (ns.Name != "<global namespace>")
+            if (!isGlobalNamespace)
             {
                 builder = new StringBuilder();
                 AppendIndents(builder, indents);

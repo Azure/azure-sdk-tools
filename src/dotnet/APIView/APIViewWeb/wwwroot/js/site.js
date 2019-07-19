@@ -4,10 +4,10 @@
 // Write your Javascript code.
 $(function () {
     $(".commentable").click(function () {
-        var myForm = $("#commentForm");
-        $("#idBox").val(this.id);
+        var myForm = $("#comment-form");
+        $("#id-box").val(this.id);
         myForm.show();
-        $("#commentThread").focus();
+        $("#comment-thread").focus();
         return false;
     });
 });

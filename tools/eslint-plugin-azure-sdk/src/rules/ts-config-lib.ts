@@ -38,11 +38,12 @@ export = {
           ): void => {
             if (node.value.hasOwnProperty("elements")) {
               const nodeValue = node.value as ArrayExpression;
-              nodeValue.elements.length !== 0 &&
+              if (nodeValue.elements.length !== 0) {
                 context.report({
                   node: nodeValue,
                   message: "compilerOptions.lib is not set to an empty array"
                 });
+              }
             } else {
               context.report({
                 node: node.value,

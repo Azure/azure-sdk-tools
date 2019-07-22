@@ -30,16 +30,15 @@ const getExports = (context: Rule.RuleContext): TSSymbol[] | undefined => {
     return undefined;
   }
 
-  const packageExports = typeChecker.getExportsOfModule(symbol);
-  const exportSymbols = packageExports
-    .map((packageExport: TSSymbol): TSSymbol | undefined => {
-      return typeChecker.getDeclaredTypeOfSymbol(packageExport).getSymbol();
-    })
-    .filter((exportSymbol: TSSymbol | undefined): boolean => {
-      // exports don't necessarily have symbols
-      return exportSymbol !== undefined;
-    }) as TSSymbol[];
-  return exportSymbols;
+  return typeChecker
+    .getExportsOfModule(symbol)
+    .map((packageExport: TSSymbol): TSSymbol | undefined =>
+      typeChecker.getDeclaredTypeOfSymbol(packageExport).getSymbol()
+    )
+    .filter(
+      (exportSymbol: TSSymbol | undefined): boolean =>
+        exportSymbol !== undefined
+    ) as TSSymbol[];
 };
 
 /**
@@ -59,14 +58,13 @@ export const isExternal = (symbol: TSSymbol): boolean => {
 
     const sourceFile = parent as SourceFile;
     return externalRegex.test(sourceFile.fileName);
-  } else {
-    const parentSymbol = symbol as any;
-    if (!parentSymbol.parent) {
-      return true;
-    }
-    const parent = parentSymbol.parent as TSSymbol;
-    return externalRegex.test(parent.escapedName as string);
   }
+  const parentSymbol = symbol as any;
+  if (!parentSymbol.parent) {
+    return true;
+  }
+  const parent = parentSymbol.parent as TSSymbol;
+  return externalRegex.test(parent.escapedName as string);
 };
 
 /**
@@ -105,14 +103,14 @@ export const getLocalExports = (
     // members exist in both the 'exports' and 'members' fields
 
     if (exportSymbol.exports !== undefined) {
-      exportSymbol.exports.forEach((exportedSymbol: TSSymbol): void => {
-        addToSeenLocalExports(exportedSymbol, localExports);
-      });
+      exportSymbol.exports.forEach((exportedSymbol: TSSymbol): void =>
+        addToSeenLocalExports(exportedSymbol, localExports)
+      );
     }
     if (exportSymbol.members !== undefined) {
-      exportSymbol.members.forEach((memberSymbol: TSSymbol): void => {
-        addToSeenLocalExports(memberSymbol, localExports);
-      });
+      exportSymbol.members.forEach((memberSymbol: TSSymbol): void =>
+        addToSeenLocalExports(memberSymbol, localExports)
+      );
     }
   });
 

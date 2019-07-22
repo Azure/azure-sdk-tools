@@ -21,31 +21,39 @@ ruleTester.run("ts-error-handling", rule, {
   valid: [
     // different valid errors
     {
-      code: 'throw new TypeError("test")'
+      code: 'throw new TypeError("test")',
+      filename: "src/test.ts"
     },
     {
-      code: 'throw new RangeError("test")'
+      code: 'throw new RangeError("test")',
+      filename: "src/test.ts"
     },
     {
-      code: 'throw new Error("test")'
+      code: 'throw new Error("test")',
+      filename: "src/test.ts"
     },
     {
-      code: 'const err = new TypeError("test"); throw err'
+      code: 'const err = new TypeError("test"); throw err',
+      filename: "src/test.ts"
     },
     {
-      code: 'const err = new RangeError("test"); throw err'
+      code: 'const err = new RangeError("test"); throw err',
+      filename: "src/test.ts"
     },
     {
-      code: 'const err = new Error("test"); throw err'
+      code: 'const err = new Error("test"); throw err',
+      filename: "src/test.ts"
     },
     {
-      code: 'try { console.log("test"); } catch(err) { throw err; }'
+      code: 'try { console.log("test"); } catch(err) { throw err; }',
+      filename: "src/test.ts"
     }
   ],
   invalid: [
     // string-value exception
     {
       code: 'throw "test"',
+      filename: "src/test.ts",
       errors: [
         {
           message: "statement is throwing a literal"
@@ -55,6 +63,7 @@ ruleTester.run("ts-error-handling", rule, {
     // integer-value exception
     {
       code: "throw 1",
+      filename: "src/test.ts",
       errors: [
         {
           message: "statement is throwing a literal"
@@ -65,6 +74,7 @@ ruleTester.run("ts-error-handling", rule, {
     {
       code:
         'function UserException(message) { this.message = message; this.name = "UserException";}; throw new UserException("test")',
+      filename: "src/test.ts",
       errors: [
         {
           message:
@@ -75,6 +85,7 @@ ruleTester.run("ts-error-handling", rule, {
     {
       code:
         'class TestError extends Error { constructor(m: string) { super(m); }; } const err = new TestError("test"); throw err',
+      filename: "src/test.ts",
       errors: [
         {
           message:

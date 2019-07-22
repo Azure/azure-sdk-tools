@@ -41,7 +41,7 @@ export = {
             const nodeValue = node.value as Literal;
             const main = nodeValue.value as string;
 
-            !/^(\.\/)?dist\/index\.js$/.test(main) &&
+            if (!/^(\.\/)?dist\/index\.js$/.test(main)) {
               context.report({
                 node: nodeValue,
                 message:
@@ -50,6 +50,7 @@ export = {
                   identifier: main
                 }
               });
+            }
           }
         } as Rule.RuleListener)
       : {};

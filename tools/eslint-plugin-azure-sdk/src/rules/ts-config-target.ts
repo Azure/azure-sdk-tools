@@ -4,7 +4,7 @@
  */
 
 import { Rule } from "eslint";
-import { Literal, Property } from "estree";
+import { Property } from "estree";
 import { getRuleMetaData, getVerifiers, stripPath } from "../utils";
 
 //------------------------------------------------------------------------------
@@ -45,22 +45,24 @@ export = {
               return;
             }
 
-            const nodeValue = node.value as Literal;
+            const nodeValue = node.value;
             const target = nodeValue.value as string;
 
             // check that target is not set to an invalid EcmaScript standard (ES3 or ESNext)
-            /es3/i.test(target) &&
+            if (/es3/i.test(target)) {
               context.report({
                 node: nodeValue,
                 message: "ES3 is not a valid option for compilerOptions.target"
               });
+            }
 
-            /esnext/i.test(target) &&
+            if (/esnext/i.test(target)) {
               context.report({
                 node: nodeValue,
                 message:
                   "ESNext is not a valid option for compilerOptions.target"
               });
+            }
           }
         } as Rule.RuleListener)
       : {};

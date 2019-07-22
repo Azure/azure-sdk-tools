@@ -34,19 +34,21 @@ export = {
             const nodeValue = node.value as Literal;
             const name = nodeValue.value as string;
 
-            !name.startsWith("@azure/") &&
+            if (!name.startsWith("@azure/")) {
               context.report({
                 node: nodeValue,
                 message: "name is not set to @azure/<service>"
               });
+              return;
+            }
 
-            name.startsWith("@azure/") &&
-              !/^@azure\/([a-z]+-)*[a-z]+$/.test(name) &&
+            if (!/^@azure\/([a-z]+-)*[a-z]+$/.test(name)) {
               context.report({
                 node: nodeValue,
                 message:
                   "service name is not in kebab-case (lowercase and separated by hyphens)"
               });
+            }
           }
         } as Rule.RuleListener)
       : {};

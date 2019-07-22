@@ -21,8 +21,17 @@
   "parser": "@typescript-eslint/parser",
   "rules": {
     "@typescript-eslint/indent": "off",
+    "@typescript-eslint/no-magic-numbers": ["error", { "ignore": [0] }],
     "@typescript-eslint/no-explicit-any": "off",
-    "indent": "off",
-    "no-useless-escape": "off"
+    "@typescript-eslint/no-non-null-assertion": "off",
+    "arrow-body-style": ["error", "as-needed"],
+    "curly": "error",
+    "eqeqeq": "error",
+    "no-duplicate-imports": "error",
+    "no-else-return": "error",
+    "no-multi-spaces": "error",
+    "no-redeclare": "error",
+    "no-useless-escape": "off",
+    "prefer-template": "error"
   }
 }

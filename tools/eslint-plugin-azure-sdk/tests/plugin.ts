@@ -57,13 +57,13 @@ const ruleList = [
  */
 const testRule = (ruleName: string, rules: any): void => {
   describe(ruleName, (): void => {
-    it(ruleName + " should be a member of rules", (): void => {
-      assert.property(rules, ruleName, ruleName + " is not a member of rules");
+    it(`${ruleName} should be a member of rules`, (): void => {
+      assert.property(rules, ruleName, `${ruleName} is not a member of rules`);
     });
     const rule = rules[ruleName];
     describe("meta", (): void => {
-      it("meta should be a member of " + ruleName, (): void => {
-        assert.property(rule, "meta", "meta is not a member of " + ruleName);
+      it(`meta should be a member of ${ruleName}`, (): void => {
+        assert.property(rule, "meta", `meta is not a member of ${ruleName}`);
       });
       const meta = rule.meta;
       describe("docs", (): void => {
@@ -131,11 +131,11 @@ const testRule = (ruleName: string, rules: any): void => {
       });
     });
     describe("create", (): void => {
-      it("create should be a member of " + ruleName, (): void => {
+      it(`create should be a member of ${ruleName}`, (): void => {
         assert.property(
           rule,
           "create",
-          "create is not a member of " + ruleName
+          `create is not a member of ${ruleName}`
         );
       });
       const create = rule.create;
@@ -278,8 +278,8 @@ describe("plugin", (): void => {
           ruleList.forEach((rule: string): void => {
             assert.property(
               rules,
-              "@azure/azure-sdk/" + rule,
-              "rules does not contain a setting for " + rule
+              `@azure/azure-sdk/${rule}`,
+              `rules does not contain a setting for ${rule}`
             );
           });
         });

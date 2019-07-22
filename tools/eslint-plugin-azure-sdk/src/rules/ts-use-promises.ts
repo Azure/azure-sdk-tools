@@ -43,12 +43,13 @@ export = {
           return;
         }
 
-        isExternalModule(declaration.getSourceFile()) &&
+        if (isExternalModule(declaration.getSourceFile())) {
           context.report({
             node: node,
             message:
               "promises should use the in-built Promise type, not libraries or polyfills"
           });
+        }
       }
     };
   }

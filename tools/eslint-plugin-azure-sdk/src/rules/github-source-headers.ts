@@ -16,9 +16,8 @@ export = {
     "github-source-headers",
     "require copyright headers in every source file"
   ),
-  create: (context: Rule.RuleContext): Rule.RuleListener => {
-    // regex checking file ending
-    return /\.ts$/.test(context.getFilename())
+  create: (context: Rule.RuleContext): Rule.RuleListener =>
+    /\.ts$/.test(context.getFilename())
       ? {
           // callback functions
 
@@ -38,22 +37,26 @@ export = {
             }
 
             // check for existence of both lines
-            (headerComments.every((comment: Comment): boolean => {
-              return !/Copyright \(c\) Microsoft Corporation\. All rights reserved\./.test(
-                comment.value
-              );
-            }) ||
-              headerComments.every((comment: Comment): boolean => {
-                return !/Licensed under the MIT License\./.test(comment.value);
-              })) &&
+            if (
+              headerComments.every(
+                (comment: Comment): boolean =>
+                  !/Copyright \(c\) Microsoft Corporation\. All rights reserved\./.test(
+                    comment.value
+                  ) ||
+                  headerComments.every(
+                    (comment: Comment): boolean =>
+                      !/Licensed under the MIT License\./.test(comment.value)
+                  )
+              )
+            ) {
               context.report({
                 node: node,
                 message:
                   "copyright header not properly configured - expected value:\n" +
                   "Copyright (c) Microsoft Corporation. All rights reserved.\nLicensed under the MIT License.\n"
               });
+            }
           }
         }
-      : {};
-  }
+      : {}
 };

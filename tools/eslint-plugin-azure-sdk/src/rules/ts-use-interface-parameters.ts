@@ -10,7 +10,6 @@ import {
 import { ParserWeakMap } from "@typescript-eslint/typescript-estree/dist/parser-options";
 import { Rule } from "eslint";
 import {
-  AssignmentPattern,
   FunctionDeclaration,
   FunctionExpression,
   Identifier,
@@ -44,17 +43,8 @@ type FunctionType = FunctionExpression | FunctionDeclaration;
  * @param param the parameter node
  * @return the identifier node associated with the parameter
  */
-const getParamAsIdentifier = (param: Pattern): Identifier => {
-  let identifier = param;
-
-  // if assignment pattern, get identifier from left side
-  if (param.type === "AssignmentPattern") {
-    const assignmentPattern = param as AssignmentPattern;
-    identifier = assignmentPattern.left;
-  }
-
-  return identifier as Identifier;
-};
+const getParamAsIdentifier = (param: Pattern): Identifier =>
+  (param.type === "AssignmentPattern" ? param.left! : param) as Identifier;
 
 /**
  * Gets the type of a paramter
@@ -131,13 +121,14 @@ const addSeenSymbols = (
       } else {
         memberSymbol = memberType.getSymbol();
       }
-      if (memberSymbol !== undefined) {
-        // if type is class/interface and hasn't been seen yet
+      if (
+        memberSymbol !== undefined &&
         [SymbolFlags.Class, SymbolFlags.Interface].includes(
           memberSymbol.getFlags()
         ) &&
-          !symbols.includes(memberSymbol) &&
-          addSeenSymbols(memberSymbol, symbols, typeChecker);
+        !symbols.includes(memberSymbol)
+      ) {
+        addSeenSymbols(memberSymbol, symbols, typeChecker);
       }
     });
 };
@@ -179,9 +170,8 @@ const isValidParam = (
     return true;
   }
   return getSymbolsUsedInParam(param, converter, typeChecker).every(
-    (symbol: TSSymbol): boolean => {
-      return symbol === undefined || symbol.getFlags() !== SymbolFlags.Class;
-    }
+    (symbol: TSSymbol): boolean =>
+      symbol === undefined || symbol.getFlags() !== SymbolFlags.Class
   );
 };
 
@@ -196,13 +186,12 @@ const isValidOverload = (
   overloads: FunctionType[],
   converter: ParserWeakMap<TSESTree.Node, TSNode>,
   typeChecker: TypeChecker
-): boolean => {
-  return overloads.some((overload: FunctionType): boolean => {
-    return overload.params.every((overloadParam: Pattern): boolean => {
-      return isValidParam(overloadParam, converter, typeChecker);
-    });
-  });
-};
+): boolean =>
+  overloads.some((overload: FunctionType): boolean =>
+    overload.params.every((overloadParam: Pattern): boolean =>
+      isValidParam(overloadParam, converter, typeChecker)
+    )
+  );
 
 /**
  * Evaluates the overloads found for a function
@@ -302,9 +291,10 @@ export = {
             const modifiers = converter.get(node as TSESTree.Node).modifiers;
             if (
               modifiers !== undefined &&
-              modifiers.some((modifier: Modifier): boolean => {
-                return modifier.kind === SyntaxKind.PrivateKeyword;
-              })
+              modifiers.some(
+                (modifier: Modifier): boolean =>
+                  modifier.kind === SyntaxKind.PrivateKeyword
+              )
             ) {
               return;
             }
@@ -361,11 +351,10 @@ export = {
                 const overloads =
                   symbol !== undefined
                     ? symbol.declarations.map(
-                        (declaration: Declaration): FunctionDeclaration => {
-                          return reverter.get(
+                        (declaration: Declaration): FunctionDeclaration =>
+                          reverter.get(
                             declaration as TSNode
-                          ) as FunctionDeclaration;
-                        }
+                          ) as FunctionDeclaration
                       )
                     : [];
                 evaluateOverloads(

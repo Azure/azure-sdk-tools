@@ -24,12 +24,14 @@ const ruleTester = new RuleTester({
 ruleTester.run("ts-no-const-enums", rule, {
   valid: [
     {
-      code: "enum Enum { a = 1 }"
+      code: "enum Enum { a = 1 }",
+      filename: "src/test.ts"
     }
   ],
   invalid: [
     {
       code: "const enum Enum { a = 1 }",
+      filename: "src/test.ts",
       errors: [
         {
           message: "const enums should not be used"

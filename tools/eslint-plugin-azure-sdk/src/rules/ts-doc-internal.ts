@@ -11,7 +11,7 @@ import { ParserWeakMap } from "@typescript-eslint/typescript-estree/dist/parser-
 import { Rule } from "eslint";
 import { Node } from "estree";
 import { readFileSync } from "fs";
-import { sync } from "glob";
+import { sync as globSync } from "glob";
 import { relative } from "path";
 import { Node as TSNode, TypeChecker } from "typescript";
 import { getLocalExports, getRuleMetaData } from "../utils";
@@ -47,22 +47,25 @@ const reportInternal = (
     tsNode.jsDoc.forEach((TSDocComment: any): void => {
       TSDocTags = TSDocTags.concat(
         TSDocComment.tags !== undefined
-          ? TSDocComment.tags.map((TSDocTag: any): string => {
-              return TSDocTag.tagName.escapedText;
-            })
+          ? TSDocComment.tags.map(
+              (TSDocTag: any): string => TSDocTag.tagName.escapedText
+            )
           : []
       );
     });
 
     // see if any match ignore or internal
-    TSDocTags.every((TSDocTag: string): boolean => {
-      return !/(ignore)|(internal)/.test(TSDocTag);
-    }) &&
+    if (
+      TSDocTags.every(
+        (TSDocTag: string): boolean => !/(ignore)|(internal)/.test(TSDocTag)
+      )
+    ) {
       context.report({
         node: node,
         message:
           "internal items with TSDoc comments should include an @internal or @ignore tag"
       });
+    }
   }
 };
 
@@ -86,14 +89,15 @@ try {
   const typeDoc = JSON.parse(typeDocText);
 
   // if typeDoc.exclude exists, add all files matching the glob patterns to exclude
-  typeDoc.exclude &&
+  if (typeDoc.exclude !== undefined) {
     typeDoc.exclude.forEach((excludedGlob: string): void => {
       exclude = exclude.concat(
-        sync(excludedGlob).filter((excludeFile: string): boolean => {
-          return !/node_modules/.test(excludeFile);
-        })
+        globSync(excludedGlob).filter(
+          (excludeFile: string): boolean => !/node_modules/.test(excludeFile)
+        )
       );
     });
+  }
 } catch (err) {
   exclude = [];
 }
@@ -135,19 +139,22 @@ export = {
           // container declarations
           ":matches(TSInterfaceDeclaration, ClassDeclaration, TSModuleDeclaration)": (
             node: Node
-          ): void => {
-            reportInternal(node, context, converter, typeChecker);
-          },
+          ): void => reportInternal(node, context, converter, typeChecker),
 
           // standalone functions
           ":function": (node: Node): void => {
-            context.getAncestors().every((ancestor: Node): boolean => {
-              return ![
-                "ClassBody",
-                "TSInterfaceBody",
-                "TSModuleBlock"
-              ].includes(ancestor.type);
-            }) && reportInternal(node, context, converter, typeChecker);
+            if (
+              context
+                .getAncestors()
+                .every(
+                  (ancestor: Node): boolean =>
+                    !["ClassBody", "TSInterfaceBody", "TSModuleBlock"].includes(
+                      ancestor.type
+                    )
+                )
+            ) {
+              reportInternal(node, context, converter, typeChecker);
+            }
           }
         }
       : {};

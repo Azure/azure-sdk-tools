@@ -22,7 +22,7 @@ export = {
 
           // check Enum to make sure it doesn't have a const keyword
           TSEnumDeclaration: (node: any): void => {
-            if (node.const) {
+            if (node.const !== undefined) {
               context.report({
                 node: node,
                 message: "const enums should not be used"

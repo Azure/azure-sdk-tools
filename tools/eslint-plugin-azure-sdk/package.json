@@ -40,7 +40,6 @@
     "format:check": "prettier --check \"./**/*.{ts,json,md}\"",
     "format:dist": "prettier --write dist/**/*.{js,json,md}",
     "lint": "eslint src tests --ext .ts && markdownlint README.md docs",
-    "lint-print": "eslint --print-config *.ts",
     "test": "npm run clean && tsc -p tsconfig.json && mocha --timeout 10000 --recursive dist/tests"
   },
   "dependencies": {

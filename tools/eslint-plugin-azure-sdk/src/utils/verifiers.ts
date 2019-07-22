@@ -25,9 +25,8 @@ interface Verifiers {
  * @param pathOrFileName the input path or file name
  * @return the filename and extension
  */
-export const stripPath = (pathOrFileName: string): string => {
-  return pathOrFileName.replace(/^.*[\\\/]/, "");
-};
+export const stripPath = (pathOrFileName: string): string =>
+  pathOrFileName.replace(/^.*[\\\/]/, "");
 
 /**
  * Returns structural verifiers given input
@@ -38,191 +37,189 @@ export const stripPath = (pathOrFileName: string): string => {
 export const getVerifiers = (
   context: Rule.RuleContext,
   data: StructureData
-): Verifiers => {
-  return {
-    /**
-     * check to see if if the outer key exists at the outermost level
-     * @param node the ObjectExpression node we check to see if it contains data.outer as a key
-     * @throws an ESLint report if node does not contain data.outer as a key
-     */
-    existsInFile: (node: ObjectExpression): void => {
-      const outer = data.outer;
+): Verifiers => ({
+  /**
+   * check to see if if the outer key exists at the outermost level
+   * @param node the ObjectExpression node we check to see if it contains data.outer as a key
+   * @throws an ESLint report if node does not contain data.outer as a key
+   */
+  existsInFile: (node: ObjectExpression): void => {
+    const outer = data.outer;
 
-      const properties = node.properties as Property[];
+    const properties = node.properties as Property[];
 
-      if (
-        properties.every((property: Property): boolean => {
-          const key = property.key as Literal;
-          return key.value !== outer;
-        })
-      ) {
-        context.report({
-          node: node,
-          message: outer + " does not exist at the outermost level"
-        });
-      }
-    },
+    if (
+      properties.every((property: Property): boolean => {
+        const key = property.key as Literal;
+        return key.value !== outer;
+      })
+    ) {
+      context.report({
+        node: node,
+        message: outer + " does not exist at the outermost level"
+      });
+    }
+  },
 
-    /**
-     * check to see if the value of the outer key matches the expected value
-     * @param node the Property node we want to check
-     * @throws an ESlint report if node.value is not a literal or is not the expected value
-     */
-    outerMatchesExpected: (node: Property): void => {
-      const outer = data.outer;
-      const expected = data.expected;
+  /**
+   * check to see if the value of the outer key matches the expected value
+   * @param node the Property node we want to check
+   * @throws an ESlint report if node.value is not a literal or is not the expected value
+   */
+  outerMatchesExpected: (node: Property): void => {
+    const outer = data.outer;
+    const expected = data.expected;
 
-      // check to see that node value is a Literal before casting
-      if (node.value.type !== "Literal") {
-        context.report({
-          node: node.value,
-          message:
-            outer +
-            " is not set to a literal (string | boolean | null | number | RegExp)"
-        });
-      }
+    // check to see that node value is a Literal before casting
+    if (node.value.type !== "Literal") {
+      context.report({
+        node: node.value,
+        message:
+          outer +
+          " is not set to a literal (string | boolean | null | number | RegExp)"
+      });
+    }
 
-      const nodeValue = node.value as Literal;
+    const nodeValue = node.value as Literal;
 
-      // check node value against expected value
-      if (nodeValue.value !== expected) {
-        context.report({
-          node: nodeValue,
-          message:
-            outer +
-            " is set to {{ identifier }} when it should be set to " +
-            expected,
-          data: {
-            identifier: nodeValue.value as string
-          }
-        });
-      }
-    },
+    // check node value against expected value
+    if (nodeValue.value !== expected) {
+      context.report({
+        node: nodeValue,
+        message:
+          outer +
+          " is set to {{ identifier }} when it should be set to " +
+          expected,
+        data: {
+          identifier: nodeValue.value as string
+        }
+      });
+    }
+  },
 
-    /**
-     * check that the inner key is a member of the outer key
-     * @param node the Property node corresponding to the outer key
-     * @throws an ESLint report if the inner key is not a member of the outer key's value
-     */
-    isMemberOf: (node: Property): void => {
-      const outer = data.outer;
-      const inner = data.inner;
+  /**
+   * check that the inner key is a member of the outer key
+   * @param node the Property node corresponding to the outer key
+   * @throws an ESLint report if the inner key is not a member of the outer key's value
+   */
+  isMemberOf: (node: Property): void => {
+    const outer = data.outer;
+    const inner = data.inner;
 
-      const value = node.value as ObjectExpression;
-      const properties = value.properties as Property[];
+    const value = node.value as ObjectExpression;
+    const properties = value.properties as Property[];
 
-      if (
-        properties.every((property: Property): boolean => {
-          const key = property.key as Literal;
-          return key.value !== inner;
-        })
-      ) {
-        context.report({
-          node: value,
-          message: inner + " is not a member of " + outer
-        });
-      }
-    },
+    if (
+      properties.every((property: Property): boolean => {
+        const key = property.key as Literal;
+        return key.value !== inner;
+      })
+    ) {
+      context.report({
+        node: value,
+        message: inner + " is not a member of " + outer
+      });
+    }
+  },
 
-    /**
-     * check the node corresponding to the inner value to see if it is set to the expected value
-     * @param node the Property node corresponding to the inner key
-     * @throws an ESLint report if the inner value is not a literal or does not match the expected value
-     */
-    innerMatchesExpected: (node: Property): void => {
-      const outer = data.outer;
-      const inner = data.inner;
-      const expected = data.expected;
+  /**
+   * check the node corresponding to the inner value to see if it is set to the expected value
+   * @param node the Property node corresponding to the inner key
+   * @throws an ESLint report if the inner value is not a literal or does not match the expected value
+   */
+  innerMatchesExpected: (node: Property): void => {
+    const outer = data.outer;
+    const inner = data.inner;
+    const expected = data.expected;
 
-      // check to see that node value is a Literal before casting
-      if (node.value.type !== "Literal") {
-        context.report({
-          node: node.value,
-          message:
-            outer +
-            "." +
-            inner +
-            " is not set to a literal (string | boolean | null | number | RegExp)"
-        });
-      }
+    // check to see that node value is a Literal before casting
+    if (node.value.type !== "Literal") {
+      context.report({
+        node: node.value,
+        message:
+          outer +
+          "." +
+          inner +
+          " is not set to a literal (string | boolean | null | number | RegExp)"
+      });
+    }
 
-      const nodeValue = node.value as Literal;
+    const nodeValue = node.value as Literal;
 
-      // check node value against expected value
-      if (nodeValue.value !== expected) {
-        context.report({
-          node: nodeValue,
-          message:
-            outer +
-            "." +
-            inner +
-            " is set to {{ identifier }} when it should be set to " +
-            expected,
-          data: {
-            identifier: nodeValue.value as string
-          }
-        });
-      }
-    },
+    // check node value against expected value
+    if (nodeValue.value !== expected) {
+      context.report({
+        node: nodeValue,
+        message:
+          outer +
+          "." +
+          inner +
+          " is set to {{ identifier }} when it should be set to " +
+          expected,
+        data: {
+          identifier: nodeValue.value as string
+        }
+      });
+    }
+  },
 
-    /**
-     * check the node corresponding to the inner value to see if it contains the expected value
-     * @param node the Property node corresponding to the outer key
-     * @throws an ESLint repot of the node's value is not an array of literals or does not contain the expectec value(s)
-     */
-    outerContainsExpected: (node: Property): void => {
-      const outer = data.outer;
-      const expected = data.expected;
+  /**
+   * check the node corresponding to the inner value to see if it contains the expected value
+   * @param node the Property node corresponding to the outer key
+   * @throws an ESLint repot of the node's value is not an array of literals or does not contain the expectec value(s)
+   */
+  outerContainsExpected: (node: Property): void => {
+    const outer = data.outer;
+    const expected = data.expected;
 
-      if (node.value.type !== "ArrayExpression") {
-        context.report({
-          node: node.value,
-          message: outer + " is not set to an array"
-        });
-      }
+    if (node.value.type !== "ArrayExpression") {
+      context.report({
+        node: node.value,
+        message: outer + " is not set to an array"
+      });
+    }
 
-      const nodeValue = node.value as ArrayExpression;
+    const nodeValue = node.value as ArrayExpression;
 
-      const nonLiteral = nodeValue.elements.find(
-        (element: any): boolean => element.type !== "Literal"
-      );
+    const nonLiteral = nodeValue.elements.find(
+      (element: any): boolean => element.type !== "Literal"
+    );
 
-      if (nonLiteral !== undefined) {
-        context.report({
-          node: nonLiteral,
-          message:
-            outer +
-            " contains non-literal (string | boolean | null | number | RegExp) elements"
-        });
-      }
+    if (nonLiteral !== undefined) {
+      context.report({
+        node: nonLiteral,
+        message:
+          outer +
+          " contains non-literal (string | boolean | null | number | RegExp) elements"
+      });
+    }
 
-      const candidateArray = nodeValue.elements as Literal[];
+    const candidateArray = nodeValue.elements as Literal[];
 
-      if (expected instanceof Array) {
-        expected.forEach((value: unknown): void => {
-          if (
-            candidateArray.every(
-              (candidate: Literal): boolean => candidate.value !== value
-            )
-          ) {
-            context.report({
-              node: nodeValue,
-              message: outer + " does not contain " + value
-            });
-          }
-        });
-      } else {
+    if (expected instanceof Array) {
+      expected.forEach((value: unknown): void => {
         if (
           candidateArray.every(
-            (candidate: Literal): boolean => candidate.value !== expected
+            (candidate: Literal): boolean => candidate.value !== value
           )
         ) {
           context.report({
             node: nodeValue,
-            message: outer + " does not contain " + expected
+            message: outer + " does not contain " + value
           });
         }
+      });
+    } else {
+      if (
+        candidateArray.every(
+          (candidate: Literal): boolean => candidate.value !== expected
+        )
+      ) {
+        context.report({
+          node: nodeValue,
+          message: outer + " does not contain " + expected
+        });
       }
     }
-  };
-};
+  }
+});

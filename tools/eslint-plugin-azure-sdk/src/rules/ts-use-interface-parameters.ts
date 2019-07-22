@@ -180,9 +180,8 @@ const isValidParam = (
     return true;
   }
   return getSymbolsUsedInParam(param, converter, typeChecker).every(
-    (symbol: TSSymbol): boolean => {
-      return symbol === undefined || symbol.getFlags() !== SymbolFlags.Class;
-    }
+    (symbol: TSSymbol): boolean =>
+      symbol === undefined || symbol.getFlags() !== SymbolFlags.Class
   );
 };
 
@@ -197,13 +196,12 @@ const isValidOverload = (
   overloads: FunctionType[],
   converter: ParserWeakMap<TSESTree.Node, TSNode>,
   typeChecker: TypeChecker
-): boolean => {
-  return overloads.some((overload: FunctionType): boolean => {
-    return overload.params.every((overloadParam: Pattern): boolean => {
-      return isValidParam(overloadParam, converter, typeChecker);
-    });
-  });
-};
+): boolean =>
+  overloads.some((overload: FunctionType): boolean =>
+    overload.params.every((overloadParam: Pattern): boolean =>
+      isValidParam(overloadParam, converter, typeChecker)
+    )
+  );
 
 /**
  * Evaluates the overloads found for a function

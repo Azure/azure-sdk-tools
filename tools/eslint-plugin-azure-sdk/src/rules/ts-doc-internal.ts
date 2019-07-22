@@ -47,9 +47,9 @@ const reportInternal = (
     tsNode.jsDoc.forEach((TSDocComment: any): void => {
       TSDocTags = TSDocTags.concat(
         TSDocComment.tags !== undefined
-          ? TSDocComment.tags.map((TSDocTag: any): string => {
-              return TSDocTag.tagName.escapedText;
-            })
+          ? TSDocComment.tags.map(
+              (TSDocTag: any): string => TSDocTag.tagName.escapedText
+            )
           : []
       );
     });
@@ -139,19 +139,21 @@ export = {
           // container declarations
           ":matches(TSInterfaceDeclaration, ClassDeclaration, TSModuleDeclaration)": (
             node: Node
-          ): void => {
-            reportInternal(node, context, converter, typeChecker);
-          },
+          ): void => reportInternal(node, context, converter, typeChecker),
 
           // standalone functions
           ":function": (node: Node): void => {
-            context.getAncestors().every((ancestor: Node): boolean => {
-              return ![
-                "ClassBody",
-                "TSInterfaceBody",
-                "TSModuleBlock"
-              ].includes(ancestor.type);
-            }) && reportInternal(node, context, converter, typeChecker);
+            if (
+              context.getAncestors().every((ancestor: Node): boolean => {
+                return ![
+                  "ClassBody",
+                  "TSInterfaceBody",
+                  "TSModuleBlock"
+                ].includes(ancestor.type);
+              })
+            ) {
+              reportInternal(node, context, converter, typeChecker);
+            }
           }
         }
       : {};

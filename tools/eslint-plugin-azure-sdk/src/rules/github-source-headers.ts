@@ -16,9 +16,8 @@ export = {
     "github-source-headers",
     "require copyright headers in every source file"
   ),
-  create: (context: Rule.RuleContext): Rule.RuleListener => {
-    // regex checking file ending
-    return /\.ts$/.test(context.getFilename())
+  create: (context: Rule.RuleContext): Rule.RuleListener =>
+    /\.ts$/.test(context.getFilename())
       ? {
           // callback functions
 
@@ -59,6 +58,5 @@ export = {
             }
           }
         }
-      : {};
-  }
+      : {}
 };

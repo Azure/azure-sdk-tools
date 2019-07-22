@@ -37,18 +37,19 @@ export = {
             node: Property
           ): void => {
             // check to see that node value is a Literal before casting
-            node.value.type !== "Literal" &&
+            if (node.value.type !== "Literal") {
               context.report({
                 node: node.value,
                 message:
                   "compilerOptions.module is not set to a literal (string | boolean | null | number | RegExp)"
               });
+            }
 
             const nodeValue = node.value as Literal;
 
             // check that module is set to es6
             const module = nodeValue.value as string;
-            !/^es6$/i.test(module) &&
+            if (!/^es6$/i.test(module)) {
               context.report({
                 node: node,
                 message:
@@ -57,6 +58,7 @@ export = {
                   identifier: module
                 }
               });
+            }
           }
         } as Rule.RuleListener)
       : {};

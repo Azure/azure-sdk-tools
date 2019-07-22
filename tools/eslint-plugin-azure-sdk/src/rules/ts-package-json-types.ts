@@ -32,19 +32,21 @@ export = {
           "ExpressionStatement > ObjectExpression > Property[key.value='types']": (
             node: Property
           ): void => {
-            node.value.type !== "Literal" &&
+            if (node.value.type !== "Literal") {
               context.report({
                 node: node.value,
                 message: "types is not set to a string"
               });
+            }
             const nodeValue = node.value as Literal;
-
-            !/\.d\.ts$/.test(nodeValue.value as string) && // filename ending in '.d.ts'
+            // filename ending in '.d.ts'
+            if (!/\.d\.ts$/.test(nodeValue.value as string)) {
               context.report({
                 node: nodeValue,
                 message:
                   "provided types path is not a TypeScript declaration file"
               });
+            }
           }
         } as Rule.RuleListener)
       : {};

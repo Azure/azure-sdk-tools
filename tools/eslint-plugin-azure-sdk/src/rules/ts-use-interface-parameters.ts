@@ -131,13 +131,14 @@ const addSeenSymbols = (
       } else {
         memberSymbol = memberType.getSymbol();
       }
-      if (memberSymbol !== undefined) {
-        // if type is class/interface and hasn't been seen yet
+      if (
+        memberSymbol !== undefined &&
         [SymbolFlags.Class, SymbolFlags.Interface].includes(
           memberSymbol.getFlags()
         ) &&
-          !symbols.includes(memberSymbol) &&
-          addSeenSymbols(memberSymbol, symbols, typeChecker);
+        !symbols.includes(memberSymbol)
+      ) {
+        addSeenSymbols(memberSymbol, symbols, typeChecker);
       }
     });
 };
@@ -302,9 +303,10 @@ export = {
             const modifiers = converter.get(node as TSESTree.Node).modifiers;
             if (
               modifiers !== undefined &&
-              modifiers.some((modifier: Modifier): boolean => {
-                return modifier.kind === SyntaxKind.PrivateKeyword;
-              })
+              modifiers.some(
+                (modifier: Modifier): boolean =>
+                  modifier.kind === SyntaxKind.PrivateKeyword
+              )
             ) {
               return;
             }

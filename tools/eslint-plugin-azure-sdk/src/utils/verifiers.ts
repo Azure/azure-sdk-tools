@@ -50,14 +50,17 @@ export const getVerifiers = (
 
       const properties = node.properties as Property[];
 
-      properties.every((property: Property): boolean => {
-        const key = property.key as Literal;
-        return key.value !== outer;
-      }) &&
+      if (
+        properties.every((property: Property): boolean => {
+          const key = property.key as Literal;
+          return key.value !== outer;
+        })
+      ) {
         context.report({
           node: node,
           message: outer + " does not exist at the outermost level"
         });
+      }
     },
 
     /**
@@ -70,18 +73,19 @@ export const getVerifiers = (
       const expected = data.expected;
 
       // check to see that node value is a Literal before casting
-      node.value.type !== "Literal" &&
+      if (node.value.type !== "Literal") {
         context.report({
           node: node.value,
           message:
             outer +
             " is not set to a literal (string | boolean | null | number | RegExp)"
         });
+      }
 
       const nodeValue = node.value as Literal;
 
       // check node value against expected value
-      nodeValue.value !== expected &&
+      if (nodeValue.value !== expected) {
         context.report({
           node: nodeValue,
           message:
@@ -92,6 +96,7 @@ export const getVerifiers = (
             identifier: nodeValue.value as string
           }
         });
+      }
     },
 
     /**
@@ -106,14 +111,17 @@ export const getVerifiers = (
       const value = node.value as ObjectExpression;
       const properties = value.properties as Property[];
 
-      properties.every((property: Property): boolean => {
-        const key = property.key as Literal;
-        return key.value !== inner;
-      }) &&
+      if (
+        properties.every((property: Property): boolean => {
+          const key = property.key as Literal;
+          return key.value !== inner;
+        })
+      ) {
         context.report({
           node: value,
           message: inner + " is not a member of " + outer
         });
+      }
     },
 
     /**
@@ -127,7 +135,7 @@ export const getVerifiers = (
       const expected = data.expected;
 
       // check to see that node value is a Literal before casting
-      node.value.type !== "Literal" &&
+      if (node.value.type !== "Literal") {
         context.report({
           node: node.value,
           message:
@@ -136,11 +144,12 @@ export const getVerifiers = (
             inner +
             " is not set to a literal (string | boolean | null | number | RegExp)"
         });
+      }
 
       const nodeValue = node.value as Literal;
 
       // check node value against expected value
-      nodeValue.value !== expected &&
+      if (nodeValue.value !== expected) {
         context.report({
           node: nodeValue,
           message:
@@ -153,6 +162,7 @@ export const getVerifiers = (
             identifier: nodeValue.value as string
           }
         });
+      }
     },
 
     /**
@@ -164,46 +174,54 @@ export const getVerifiers = (
       const outer = data.outer;
       const expected = data.expected;
 
-      node.value.type !== "ArrayExpression" &&
+      if (node.value.type !== "ArrayExpression") {
         context.report({
           node: node.value,
           message: outer + " is not set to an array"
         });
+      }
 
       const nodeValue = node.value as ArrayExpression;
 
-      const nonLiteral = nodeValue.elements.find((element: any): boolean => {
-        return element.type !== "Literal";
-      });
+      const nonLiteral = nodeValue.elements.find(
+        (element: any): boolean => element.type !== "Literal"
+      );
 
-      nonLiteral !== undefined &&
+      if (nonLiteral !== undefined) {
         context.report({
           node: nonLiteral,
           message:
             outer +
             " contains non-literal (string | boolean | null | number | RegExp) elements"
         });
+      }
 
       const candidateArray = nodeValue.elements as Literal[];
 
       if (expected instanceof Array) {
         expected.forEach((value: unknown): void => {
-          candidateArray.every((candidate: Literal): boolean => {
-            return candidate.value !== value;
-          }) &&
+          if (
+            candidateArray.every(
+              (candidate: Literal): boolean => candidate.value !== value
+            )
+          ) {
             context.report({
               node: nodeValue,
               message: outer + " does not contain " + value
             });
+          }
         });
       } else {
-        candidateArray.every((candidate: Literal): boolean => {
-          return candidate.value !== expected;
-        }) &&
+        if (
+          candidateArray.every(
+            (candidate: Literal): boolean => candidate.value !== expected
+          )
+        ) {
           context.report({
             node: nodeValue,
             message: outer + " does not contain " + expected
           });
+        }
       }
     }
   };

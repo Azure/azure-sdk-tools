@@ -41,7 +41,7 @@ export = {
             const nodeValue = node.value as Literal;
             const module = nodeValue.value as string;
 
-            !/^(\.\/)?dist-esm\/src\/index\.js$/.test(module) &&
+            if (!/^(\.\/)?dist-esm\/src\/index\.js$/.test(module)) {
               context.report({
                 node: nodeValue,
                 message:
@@ -50,6 +50,7 @@ export = {
                   identifier: module
                 }
               });
+            }
           }
         } as Rule.RuleListener)
       : {};

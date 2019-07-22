@@ -54,7 +54,7 @@ export = {
           typeChecker.getTypeAtLocation(TSNode)
         );
 
-        !["TypeError", "RangeError", "Error", "any"].includes(type) &&
+        if (!["TypeError", "RangeError", "Error", "any"].includes(type)) {
           context.report({
             node: thrown,
             message:
@@ -63,6 +63,7 @@ export = {
               type: type
             }
           });
+        }
       },
 
       // if throwing new object
@@ -72,7 +73,7 @@ export = {
         const argument = node.argument as NewExpression;
         const callee = argument.callee as Identifier;
 
-        !["TypeError", "RangeError", "Error"].includes(callee.name) &&
+        if (!["TypeError", "RangeError", "Error"].includes(callee.name)) {
           context.report({
             node: callee,
             message:
@@ -81,6 +82,7 @@ export = {
               type: callee.name
             }
           });
+        }
       }
     } as Rule.RuleListener;
   }

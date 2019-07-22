@@ -33,14 +33,17 @@ export = {
           ): void => {
             const nodeValue = node.value as Literal;
 
-            !/^https:\/\/github.com\/Azure\/azure-sdk-for-js\/blob\/master\/sdk\/(([a-z]+-)*[a-z]+\/)+(README\.md)?$/.test(
-              nodeValue.value as string
-            ) &&
+            if (
+              !/^https:\/\/github.com\/Azure\/azure-sdk-for-js\/blob\/master\/sdk\/(([a-z]+-)*[a-z]+\/)+(README\.md)?$/.test(
+                nodeValue.value as string
+              )
+            ) {
               context.report({
                 node: nodeValue,
                 message:
                   "homepage is not a URL pointing to your library's readme inside the git repo"
               });
+            }
           }
         } as Rule.RuleListener)
       : {};

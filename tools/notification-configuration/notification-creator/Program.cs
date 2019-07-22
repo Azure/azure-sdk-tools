@@ -15,7 +15,7 @@ namespace NotificationConfiguration
         /// <param name="organization">Azure DevOps Organization</param>
         /// <param name="project">Name of the DevOps project</param>
         /// <param name="pathPrefix">Path prefix to include pipelines (e.g. "\net")</param>
-        /// <param name="tokenVaraibleName">Environment variable token name (e.g. "SYSTEM_ACCESSTOKEN")</param>
+        /// <param name="tokenVariableName">Environment variable token name (e.g. "SYSTEM_ACCESSTOKEN")</param>
         /// <param name="selectionStrategy">Pipeline selection strategy</param>
         /// <param name="dryRun">Prints changes but does not alter any objects</param>
         /// <returns></returns>
@@ -23,11 +23,11 @@ namespace NotificationConfiguration
             string organization,
             string project,
             string pathPrefix,
-            string tokenVaraibleName,
+            string tokenVariableName,
             PipelineSelectionStrategy selectionStrategy = PipelineSelectionStrategy.Scheduled,
             bool dryRun = false)
         {
-            var devOpsToken = Environment.GetEnvironmentVariable(tokenVaraibleName);
+            var devOpsToken = Environment.GetEnvironmentVariable(tokenVariableName);
             var devOpsCreds = new VssBasicCredential("nobody", devOpsToken);
             var devOpsConnection = new VssConnection(new Uri($"https://dev.azure.com/{organization}/"), devOpsCreds);
 

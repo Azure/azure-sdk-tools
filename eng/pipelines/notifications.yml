@@ -19,6 +19,9 @@ stages:
         Java:
           PathPrefix: 'java'
 
+      # Prevent Kusto throttles beyond a certain threshold
+      maxParallel: 1
+
     pool:
       vmImage: ubuntu-16.04
 

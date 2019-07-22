@@ -4,7 +4,7 @@ stages:
 - stage: Run
 
   variables:
-  - template: ./variables/templates/globals.yml
+  - template: ./templates/variables/globals.yml
 
   jobs:
   - job: Run

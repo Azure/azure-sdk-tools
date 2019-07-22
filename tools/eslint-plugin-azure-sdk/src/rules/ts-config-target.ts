@@ -4,7 +4,7 @@
  */
 
 import { Rule } from "eslint";
-import { Literal, Property } from "estree";
+import { Property } from "estree";
 import { getRuleMetaData, getVerifiers, stripPath } from "../utils";
 
 //------------------------------------------------------------------------------
@@ -45,7 +45,7 @@ export = {
               return;
             }
 
-            const nodeValue = node.value as Literal;
+            const nodeValue = node.value;
             const target = nodeValue.value as string;
 
             // check that target is not set to an invalid EcmaScript standard (ES3 or ESNext)

@@ -46,7 +46,7 @@ export const getVerifiers = (
   existsInFile: (node: ObjectExpression): void => {
     const outer = data.outer;
 
-    const properties = node.properties as Property[];
+    const properties = node.properties;
 
     if (
       properties.every((property: Property): boolean => {
@@ -99,7 +99,7 @@ export const getVerifiers = (
     const inner = data.inner;
 
     const value = node.value as ObjectExpression;
-    const properties = value.properties as Property[];
+    const properties = value.properties;
 
     if (
       properties.every((property: Property): boolean => {

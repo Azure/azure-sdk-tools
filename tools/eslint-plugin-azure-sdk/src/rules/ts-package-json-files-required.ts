@@ -4,7 +4,7 @@
  */
 
 import { Rule } from "eslint";
-import { ArrayExpression, Literal, Property } from "estree";
+import { Literal, Property } from "estree";
 import { getRuleMetaData, getVerifiers, stripPath } from "../utils";
 
 //------------------------------------------------------------------------------
@@ -40,7 +40,7 @@ export = {
               return;
             }
 
-            const nodeValue = node.value as ArrayExpression;
+            const nodeValue = node.value;
             const elements = nodeValue.elements as Literal[];
 
             // looks for 'dist' with optional leading './' and optional trailing '/'

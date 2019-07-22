@@ -4,7 +4,7 @@
  */
 
 import { Rule } from "eslint";
-import { Literal, Property } from "estree";
+import { Property } from "estree";
 import { getRuleMetaData, getVerifiers, stripPath } from "../utils";
 
 //------------------------------------------------------------------------------
@@ -38,7 +38,7 @@ export = {
               });
               return;
             }
-            const nodeValue = node.value as Literal;
+            const nodeValue = node.value;
             const version = nodeValue.value as string;
 
             // check for violations specific to semver

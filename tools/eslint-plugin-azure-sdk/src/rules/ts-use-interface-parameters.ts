@@ -10,7 +10,6 @@ import {
 import { ParserWeakMap } from "@typescript-eslint/typescript-estree/dist/parser-options";
 import { Rule } from "eslint";
 import {
-  AssignmentPattern,
   FunctionDeclaration,
   FunctionExpression,
   Identifier,
@@ -44,17 +43,8 @@ type FunctionType = FunctionExpression | FunctionDeclaration;
  * @param param the parameter node
  * @return the identifier node associated with the parameter
  */
-const getParamAsIdentifier = (param: Pattern): Identifier => {
-  let identifier = param;
-
-  // if assignment pattern, get identifier from left side
-  if (param.type === "AssignmentPattern") {
-    const assignmentPattern = param as AssignmentPattern;
-    identifier = assignmentPattern.left;
-  }
-
-  return identifier as Identifier;
-};
+const getParamAsIdentifier = (param: Pattern): Identifier =>
+  (param.type === "AssignmentPattern" ? param.left! : param) as Identifier;
 
 /**
  * Gets the type of a paramter

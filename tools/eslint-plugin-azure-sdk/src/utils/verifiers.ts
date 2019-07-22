@@ -56,7 +56,7 @@ export const getVerifiers = (
     ) {
       context.report({
         node: node,
-        message: outer + " does not exist at the outermost level"
+        message: `${outer} does not exist at the outermost level`
       });
     }
   },
@@ -74,9 +74,7 @@ export const getVerifiers = (
     if (node.value.type !== "Literal") {
       context.report({
         node: node.value,
-        message:
-          outer +
-          " is not set to a literal (string | boolean | null | number | RegExp)"
+        message: `${outer} is not set to a literal (string | boolean | null | number | RegExp)`
       });
     }
 
@@ -86,13 +84,7 @@ export const getVerifiers = (
     if (nodeValue.value !== expected) {
       context.report({
         node: nodeValue,
-        message:
-          outer +
-          " is set to {{ identifier }} when it should be set to " +
-          expected,
-        data: {
-          identifier: nodeValue.value as string
-        }
+        message: `${outer} is set to ${nodeValue.value} when it should be set to ${expected}`
       });
     }
   },
@@ -117,7 +109,7 @@ export const getVerifiers = (
     ) {
       context.report({
         node: value,
-        message: inner + " is not a member of " + outer
+        message: `${inner} is not a member of ${outer}`
       });
     }
   },
@@ -136,11 +128,7 @@ export const getVerifiers = (
     if (node.value.type !== "Literal") {
       context.report({
         node: node.value,
-        message:
-          outer +
-          "." +
-          inner +
-          " is not set to a literal (string | boolean | null | number | RegExp)"
+        message: `${outer}.${inner} is not set to a literal (string | boolean | null | number | RegExp)`
       });
     }
 
@@ -150,15 +138,7 @@ export const getVerifiers = (
     if (nodeValue.value !== expected) {
       context.report({
         node: nodeValue,
-        message:
-          outer +
-          "." +
-          inner +
-          " is set to {{ identifier }} when it should be set to " +
-          expected,
-        data: {
-          identifier: nodeValue.value as string
-        }
+        message: `${outer}.${inner} is set to ${nodeValue.value} when it should be set to ${expected}`
       });
     }
   },
@@ -175,7 +155,7 @@ export const getVerifiers = (
     if (node.value.type !== "ArrayExpression") {
       context.report({
         node: node.value,
-        message: outer + " is not set to an array"
+        message: `${outer} is not set to an array`
       });
     }
 
@@ -188,9 +168,7 @@ export const getVerifiers = (
     if (nonLiteral !== undefined) {
       context.report({
         node: nonLiteral,
-        message:
-          outer +
-          " contains non-literal (string | boolean | null | number | RegExp) elements"
+        message: `${outer} contains non-literal (string | boolean | null | number | RegExp) elements`
       });
     }
 
@@ -205,7 +183,7 @@ export const getVerifiers = (
         ) {
           context.report({
             node: nodeValue,
-            message: outer + " does not contain " + value
+            message: `${outer} does not contain ${value}`
           });
         }
       });
@@ -217,7 +195,7 @@ export const getVerifiers = (
       ) {
         context.report({
           node: nodeValue,
-          message: outer + " does not contain " + expected
+          message: `${outer} does not contain ${expected}`
         });
       }
     }

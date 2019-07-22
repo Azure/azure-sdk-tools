@@ -58,14 +58,13 @@ export const isExternal = (symbol: TSSymbol): boolean => {
 
     const sourceFile = parent as SourceFile;
     return externalRegex.test(sourceFile.fileName);
-  } else {
-    const parentSymbol = symbol as any;
-    if (!parentSymbol.parent) {
-      return true;
-    }
-    const parent = parentSymbol.parent as TSSymbol;
-    return externalRegex.test(parent.escapedName as string);
   }
+  const parentSymbol = symbol as any;
+  if (!parentSymbol.parent) {
+    return true;
+  }
+  const parent = parentSymbol.parent as TSSymbol;
+  return externalRegex.test(parent.escapedName as string);
 };
 
 /**

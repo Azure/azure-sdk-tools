@@ -144,13 +144,14 @@ export = {
           // standalone functions
           ":function": (node: Node): void => {
             if (
-              context.getAncestors().every((ancestor: Node): boolean => {
-                return ![
-                  "ClassBody",
-                  "TSInterfaceBody",
-                  "TSModuleBlock"
-                ].includes(ancestor.type);
-              })
+              context
+                .getAncestors()
+                .every(
+                  (ancestor: Node): boolean =>
+                    !["ClassBody", "TSInterfaceBody", "TSModuleBlock"].includes(
+                      ancestor.type
+                    )
+                )
             ) {
               reportInternal(node, context, converter, typeChecker);
             }

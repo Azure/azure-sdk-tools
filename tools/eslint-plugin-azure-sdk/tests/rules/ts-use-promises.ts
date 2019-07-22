@@ -40,7 +40,7 @@ ruleTester.run("ts-use-promises", rule, {
   ],
   invalid: [
     {
-      code: "import Promise from 'bluebird'; " + example,
+      code: `import Promise from 'bluebird';${example}`,
       errors: [
         {
           message:

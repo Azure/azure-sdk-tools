@@ -361,11 +361,10 @@ export = {
                 const overloads =
                   symbol !== undefined
                     ? symbol.declarations.map(
-                        (declaration: Declaration): FunctionDeclaration => {
-                          return reverter.get(
+                        (declaration: Declaration): FunctionDeclaration =>
+                          reverter.get(
                             declaration as TSNode
-                          ) as FunctionDeclaration;
-                        }
+                          ) as FunctionDeclaration
                       )
                     : [];
                 evaluateOverloads(

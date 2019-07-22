@@ -8,15 +8,16 @@ stages:
 
   jobs:
   - job: Run
-    matrix:
-      NET:
-        PathPrefix: 'net'
-      Python:
-        PathPrefix: 'python'
-      JS:
-        PathPrefix: 'js'
-      Java:
-        PathPrefix: 'java'
+    strategy:
+      matrix:
+        NET:
+          PathPrefix: 'net'
+        Python:
+          PathPrefix: 'python'
+        JS:
+          PathPrefix: 'js'
+        Java:
+          PathPrefix: 'java'
 
     pool:
       vmImage: ubuntu-16.04

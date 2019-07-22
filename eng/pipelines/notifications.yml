@@ -43,7 +43,7 @@ stages:
           DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
           DOTNET_CLI_TELEMETRY_OPTOUT: 1
           DOTNET_MULTILEVEL_LOOKUP: 0
-          DEVOPS_TOKEN: $(notification-devops-token)
+          DEVOPS_TOKEN: $(azure-sdk-notification-tools-pat)
 
       # TODO: Publish package to a private feed so we don't have to build from source
       # TODO: Remove dry-run
@@ -54,10 +54,10 @@ stages:
           DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
           DOTNET_CLI_TELEMETRY_OPTOUT: 1
           DOTNET_MULTILEVEL_LOOKUP: 0
-          DEVOPS_TOKEN: $(notification-devops-token)
-          APP_ID:
-          APP_SECRET:
-          AAD_TENANT:
-          KUSTO_URL:
-          KUSTO_DB_NAME:
-          KUSTO_TABLE:
+          DEVOPS_TOKEN: $(azure-sdk-notification-tools-pat)
+          APP_ID: $(notification-aad-app-id)
+          APP_SECRET: $(notification-aad-secret)
+          AAD_TENANT: $(notification-aad-tenant)
+          KUSTO_URL: $(notification-kusto-url)
+          KUSTO_DB_NAME: $(notification-kusto-db)
+          KUSTO_TABLE: $(notification-kusto-table)

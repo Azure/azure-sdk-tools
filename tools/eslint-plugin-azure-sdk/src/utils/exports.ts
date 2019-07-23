@@ -117,20 +117,20 @@ export const getLocalExports = (
   return localExports;
 };
 
-/**
- * Get Symbols corresponding to all service client classes
- * @param context the ESLint runtime context
- * @returns a list of Symbols belonging to all local exports with names suffixed with "Client"
- */
-export const getClientSymbols = (
-  context: Rule.RuleContext
-): TSSymbol[] | undefined => {
-  const localExports = getLocalExports(context);
-  return localExports === undefined
-    ? localExports
-    : localExports.filter(
-        (exportSymbol: TSSymbol): boolean =>
-          /Client$/.test(exportSymbol.escapedName as string) &&
-          exportSymbol.getFlags() === SymbolFlags.Class
-      );
-};
+// /**
+//  * Get Symbols corresponding to all service client classes
+//  * @param context the ESLint runtime context
+//  * @returns a list of Symbols belonging to all local exported classes with names suffixed with "Client"
+//  */
+// export const getClientSymbols = (
+//   context: Rule.RuleContext
+// ): TSSymbol[] | undefined => {
+//   const localExports = getLocalExports(context);
+//   return localExports === undefined
+//     ? localExports
+//     : localExports.filter(
+//         (exportSymbol: TSSymbol): boolean =>
+//           /Client$/.test(exportSymbol.escapedName as string) &&
+//           exportSymbol.getFlags() === SymbolFlags.Class
+//       );
+// };

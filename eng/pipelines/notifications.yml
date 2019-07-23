@@ -1,7 +1,4 @@
 # Configure notifications in Azure DevOps
-# Queue Time Variables
-# Organization -- the Azure DevOps organziation you're targeting (e.g. azure-sdk)
-# Project -- the Azure DevOps project you're targeting (e.g. internal)
 
 trigger: none
 pr: none
@@ -27,6 +24,10 @@ stages:
 
     pool:
       vmImage: ubuntu-16.04
+
+    variables:
+      Organization: azure-sdk
+      Project: internal
 
     steps:
 

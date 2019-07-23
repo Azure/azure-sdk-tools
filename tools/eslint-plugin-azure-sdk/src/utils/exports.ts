@@ -5,7 +5,7 @@
 
 import { ParserServices } from "@typescript-eslint/experimental-utils";
 import { Rule } from "eslint";
-import { SourceFile, Symbol as TSSymbol } from "typescript";
+import { SourceFile, Symbol as TSSymbol, SymbolFlags } from "typescript";
 
 /**
  * Gets all Symbols of Types of all top-level exports from a package.
@@ -115,4 +115,22 @@ export const getLocalExports = (
   });
 
   return localExports;
+};
+
+/**
+ * Get Symbols corresponding to all service client classes
+ * @param context the ESLint runtime context
+ * @returns a list of Symbols belonging to all local exports with names suffixed with "Client"
+ */
+export const getClientSymbols = (
+  context: Rule.RuleContext
+): TSSymbol[] | undefined => {
+  const localExports = getLocalExports(context);
+  return localExports === undefined
+    ? localExports
+    : localExports.filter(
+        (exportSymbol: TSSymbol): boolean =>
+          /Client$/.test(exportSymbol.escapedName as string) &&
+          exportSymbol.getFlags() === SymbolFlags.Class
+      );
 };

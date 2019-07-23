@@ -1,0 +1,82 @@
+# Configure notifications in Azure DevOps
+
+trigger: none
+pr: none
+
+stages:
+- stage: Run
+
+  variables:
+  - template: ./templates/variables/globals.yml
+
+  jobs:
+  - job: Run
+    strategy:
+      matrix:
+        NET:
+          PathPrefix: 'net'
+        Python:
+          PathPrefix: 'python'
+        JS:
+          PathPrefix: 'js'
+        Java:
+          PathPrefix: 'java'
+
+    pool:
+      vmImage: ubuntu-16.04
+
+    variables:
+      Organization: azure-sdk
+      Project: internal
+
+    steps:
+
+      - task: DotNetCoreInstaller@0
+        displayName: 'Use .NET Core sdk $(DotNetCoreVersion)'
+        inputs:
+          version: '$(DotNetCoreVersion)'
+
+      # TODO: Publish package to a private feed so we don't have to build from source
+      - script: "dotnet run --
+          --organization $(Organization)
+          --project $(Project)
+          --path-prefix \"\\$(PathPrefix)\"
+          --token-variable-name DEVOPS_TOKEN
+          --selection-strategy Scheduled
+          $(AdditionalParameters)"
+
+        displayName: 'Run Team/Notification Creator'
+        workingDirectory: $(Build.SourcesDirectory)/tools/notification-configuration/notification-creator/
+        env:
+          DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+          DOTNET_CLI_TELEMETRY_OPTOUT: 1
+          DOTNET_MULTILEVEL_LOOKUP: 0
+          DEVOPS_TOKEN: $(azure-sdk-notification-tools-pat)
+
+      # TODO: Publish package to a private feed so we don't have to build from source
+      - script: "dotnet run --
+          --organization $(Organization)
+          --project $(Project)
+          --path-prefix \"\\$(PathPrefix)\"
+          --dev-ops-token-var DEVOPS_TOKEN
+          --aad-app-id-var APP_ID
+          --aad-app-secret-var APP_SECRET
+          --aad-tenant-var AAD_TENANT
+          --kusto-url-var KUSTO_URL
+          --kusto-database-var KUSTO_DB
+          --kusto-table-var KUSTO_TABLE
+          $(AdditionalParameters)"
+
+        displayName: 'Run GitHub CODEOWNER Subscriber'
+        workingDirectory: $(Build.SourcesDirectory)/tools/notification-configuration/github-codeowner-subscriber
+        env:
+          DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+          DOTNET_CLI_TELEMETRY_OPTOUT: 1
+          DOTNET_MULTILEVEL_LOOKUP: 0
+          DEVOPS_TOKEN: $(azure-sdk-notification-tools-pat)
+          APP_ID: $(notification-aad-app-id)
+          APP_SECRET: $(notification-aad-secret)
+          AAD_TENANT: $(notification-aad-tenant)
+          KUSTO_URL: $(notification-kusto-url)
+          KUSTO_DB: $(notification-kusto-db)
+          KUSTO_TABLE: $(notification-kusto-table)

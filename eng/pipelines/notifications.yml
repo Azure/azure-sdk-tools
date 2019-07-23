@@ -45,7 +45,7 @@ stages:
           --path-prefix \"\\$(PathPrefix)\"
           --token-variable-name DEVOPS_TOKEN
           --selection-strategy Scheduled
-          --dry-run $(AdditionalParameters)"
+          $(AdditionalParameters)"
 
         displayName: 'Run Team/Notification Creator'
         workingDirectory: $(Build.SourcesDirectory)/tools/notification-configuration/notification-creator/
@@ -68,7 +68,7 @@ stages:
           --kusto-url-var KUSTO_URL
           --kusto-database-var KUSTO_DB
           --kusto-table-var KUSTO_TABLE
-          --dry-run $(AdditionalParameters)"
+          $(AdditionalParameters)"
 
         displayName: 'Run GitHub CODEOWNER Subscriber'
         workingDirectory: $(Build.SourcesDirectory)/tools/notification-configuration/github-codeowner-subscriber

@@ -4,42 +4,44 @@
 // Write your Javascript code.
 $(function () {
     $(".commentable").click(function () {
-        var formExists = $($(this).parents(".code-line")[0].nextElementSibling).find("#comment-form").length > 0;
+        var nextRow = $(this).parents(".code-line").first().next();
+        var formExists = nextRow.find(".comment-form").length > 0;
 
         if (!formExists) {
-            let myForm = $("#comment-form");
+            let myForm = $(".comment-form");
             let clone = myForm.clone();
-            clone[0].querySelector("#id-box").setAttribute("value", this.id);
+            clone.first().find(".id-box").val(this.id);
             let stringRep = clone[0].outerHTML;
 
-            var thread = $($(this).parents(".code-line")[0].nextElementSibling).find(".comment-thread-contents");
+            var thread = nextRow.find(".comment-thread-contents");
             if (thread.length > 0) {
                 thread.after(stringRep);
-                $($(this).parents(".code-line")[0].nextElementSibling).find(".review-thread-reply").hide();
+                nextRow.find(".review-thread-reply").hide();
             }
             else {
                 $(this).parents(".code-line").after("<tr><td>" + stringRep + "</td></tr>");
+                nextRow = $(this).parents(".code-line").first().next();
             }
         }
-        $($(this).parents(".code-line")[0].nextElementSibling).find(".comment").show();
-        $($(this).parents(".code-line")[0].nextElementSibling).find("#new-thread-comment-text").focus();
+        nextRow.find(".comment").show();
+        nextRow.find(".new-thread-comment-text").focus();
         return false;
     });
 });
 
 $(function () {
     $(".review-thread-reply-button").click(function () {
-        $($(this).parents(".comment-box")[0]).prev()[0].querySelector(".commentable").click();
+        $(this).parents(".comment-box").first().prev().first().find(".commentable").click();
     });
 });
-
+/*
 $(function () {
     $("#cancel-button").click(function () {
-        $($($(this).parents(".comment-box")[0]).querySelector("#comment-form")).remove();
-        $($(this).parents(".comment-box")[0]).querySelector(".review-thread-reply").show();
+        $($(this).parents(".comment-box")[0].querySelector("#comment-form")).remove();
+        $($(this).parents(".comment-box")[0].querySelector(".review-thread-reply")).show();
     });
 });
-
+*/
 /*
 <form id="comment-form" class="comment" method="post" asp-route-id="@Model.Id">
     <div class="form-group">

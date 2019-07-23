@@ -4,10 +4,10 @@ namespace APIView
 {
     public class TokenAPIV
     {
+        public string Id { get; set; }
         public string DisplayString { get; set; }
         public bool IsNavigable { get; set; }
         
-        public string NavigationID { get; set; }
         public TypeReferenceAPIV.TokenType Type { get; set; }
 
         public TokenAPIV()
@@ -20,14 +20,14 @@ namespace APIView
             this.DisplayString = part.ToString();
             this.IsNavigable = false;
             if (part.Symbol == null)
-                this.NavigationID = "";
+                this.Id = "";
             else
             {
                 var typeParamIndex = part.Symbol.ToDisplayString().LastIndexOf("<");
                 if (typeParamIndex > 0)
-                    this.NavigationID = part.Symbol.ToDisplayString().Remove(typeParamIndex);
+                    this.Id = part.Symbol.ToDisplayString().Remove(typeParamIndex);
                 else
-                    this.NavigationID = part.Symbol.ToDisplayString();
+                    this.Id = part.Symbol.ToDisplayString();
             }
             
             switch (part.Kind)

@@ -59,7 +59,7 @@ namespace APIView
             builder.Append(" ");
             Render(e.Type, builder);
             builder.Append(" ");
-            RenderEvent(builder, e);
+            RenderCommentable(builder, e.Id, e.Name);
             builder.Append(";");
             list.Add(new LineAPIV(builder.ToString(), e.Id));
         }
@@ -94,7 +94,7 @@ namespace APIView
 
             Render(f.Type, builder);
             builder.Append(" ");
-            RenderField(builder, f);
+            RenderCommentable(builder, f.Id, f.Name);
 
             if (f.IsConstant)
             {
@@ -170,7 +170,7 @@ namespace APIView
             if (m.IsConstructor)
                 RenderConstructor(builder, m);
             else
-                RenderMethod(builder, m);
+                RenderCommentable(builder, m.Id, m.Name);
 
             if (m.TypeParameters.Any())
             {
@@ -229,7 +229,7 @@ namespace APIView
                         builder.Append(" ");
                     }
                     builder.Append("{");
-                    list.Add(new LineAPIV(builder.ToString(), nt.NavigationID));
+                    list.Add(new LineAPIV(builder.ToString(), nt.Id));
 
                     foreach (FieldAPIV f in nt.Fields)
                     {
@@ -269,7 +269,7 @@ namespace APIView
                         }
                     }
                     builder.Append(") { }");
-                    list.Add(new LineAPIV(builder.ToString(), nt.NavigationID));
+                    list.Add(new LineAPIV(builder.ToString(), nt.Id));
                     break;
 
                 default:
@@ -303,7 +303,7 @@ namespace APIView
                         builder.Append(" ");
                     }
                     builder.Append("{");
-                    list.Add(new LineAPIV(builder.ToString(), nt.NavigationID));
+                    list.Add(new LineAPIV(builder.ToString(), nt.Id));
 
                     // add any types declared in this type's body
                     foreach (FieldAPIV f in nt.Fields)
@@ -344,9 +344,9 @@ namespace APIView
                 AppendIndents(builder, indents);
                 RenderKeyword(builder, "namespace");
                 builder.Append(" ");
-                RenderNamespace(builder, ns);
+                RenderCommentable(builder, ns.Id, ns.Name);
                 builder.Append(" {");
-                list.Add(new LineAPIV(builder.ToString(), ns.NavigationID));
+                list.Add(new LineAPIV(builder.ToString(), ns.Id));
             }
 
             foreach (NamedTypeAPIV nt in ns.NamedTypes)
@@ -429,7 +429,7 @@ namespace APIView
             builder.Append(" ");
             Render(p.Type, builder);
             builder.Append(" ");
-            RenderProperty(builder, p);
+            RenderCommentable(builder, p.Id, p.Name);
             builder.Append(" { ");
             RenderKeyword(builder, "get");
             builder.Append("; ");
@@ -483,23 +483,15 @@ namespace APIView
 
         protected abstract void RenderClass(StringBuilder builder, TokenAPIV t);
 
+        protected abstract void RenderCommentable(StringBuilder builder, string id, string name);
+
         protected abstract void RenderConstructor(StringBuilder builder, MethodAPIV m);
-
-        protected abstract void RenderEvent(StringBuilder builder, EventAPIV e);
-
-        protected abstract void RenderField(StringBuilder builder, FieldAPIV f);
 
         protected abstract void RenderKeyword(StringBuilder builder, string word);
 
-        protected abstract void RenderMethod(StringBuilder builder, MethodAPIV m);
-
         protected abstract void RenderName(StringBuilder builder, string word);
 
-        protected abstract void RenderNamespace(StringBuilder builder, NamespaceAPIV ns);
-
         protected abstract void RenderNewline(StringBuilder builder);
-
-        protected abstract void RenderProperty(StringBuilder builder, PropertyAPIV p);
 
         protected abstract void RenderSpecialName(StringBuilder builder, string word);
 

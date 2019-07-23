@@ -46,13 +46,13 @@
 
 <br />
 
-<div id="comment-form" class="new-thread-comment">
-    <form id="new-thread-comment-form" class="comment" method="post" asp-route-id="@Model.Id">
-        <input type="hidden" asp-for="Comment.ElementId" readonly id="id-box" />
+<div class="comment-form new-thread-comment">
+    <form class="new-thread-comment-form comment" method="post" asp-route-id="@Model.Id">
+        <input type="hidden" asp-for="Comment.ElementId" class="id-box" />
         <div class="new-comment-content">
-            <textarea id="new-thread-comment-text" class="form-control" asp-for="Comment.Comment" rows="3"></textarea>
+            <textarea class="new-thread-comment-text form-control" asp-for="Comment.Comment" rows="3"></textarea>
         </div>
-        <button type="submit" id="submit-button" name="submit" value="Submit" class="thread-comment-submit btn btn-outline-dark">Add Comment</button>
-        <button type="submit" id="cancel-button" name="cancel" value="Cancel" class="comment-cancel-button btn btn-outline-dark">Cancel</button>
+        <button type="submit" name="submit" value="Submit" class="thread-comment-submit btn btn-outline-dark">Add Comment</button>
+        <button type="submit" name="cancel" value="Cancel" class="comment-cancel-button btn btn-outline-dark">Cancel</button>
     </form>
 </div>

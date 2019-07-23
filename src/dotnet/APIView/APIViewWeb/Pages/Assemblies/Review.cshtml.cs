@@ -46,7 +46,6 @@ namespace APIViewWeb.Pages.Assemblies
             var comments = await commentRepository.FetchCommentsAsync(id);
 
             Comments = new Dictionary<string, List<CommentModel>>();
-            _ = new List<CommentModel>();
             foreach (var comment in comments)
             {
                 if (!Comments.TryGetValue(comment.ElementId, out List<CommentModel> list))

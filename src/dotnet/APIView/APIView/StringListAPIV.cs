@@ -3,7 +3,7 @@ using System.Text;
 
 namespace APIView
 {
-    class StringListAPIV : List<LineAPIV>
+    public class StringListAPIV : List<LineAPIV>
     {
         public override string ToString()
         {

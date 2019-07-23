@@ -76,14 +76,8 @@ namespace APIView
         public override string ToString()
         {
             var renderer = new TextRendererAPIV();
-            var builder = new StringBuilder();
             var lines = renderer.Render(this);
-            foreach (var line in lines)
-            {
-                builder.Append(line.DisplayString);
-                builder.AppendLine();
-            }
-            return builder.ToString();
+            return lines.ToString();
         }
     }
 }

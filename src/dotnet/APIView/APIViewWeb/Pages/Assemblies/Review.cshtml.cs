@@ -42,7 +42,7 @@ namespace APIViewWeb.Pages.Assemblies
             Id = id;
             var assemblyModel = await assemblyRepository.ReadAssemblyContentAsync(id);
             var renderer = new HTMLRendererAPIV();
-            AssemblyModel = renderer.Render(assemblyModel.Assembly);
+            AssemblyModel = renderer.Render(assemblyModel.Assembly).ToArray();
             var comments = await commentRepository.FetchCommentsAsync(id);
 
             Comments = new Dictionary<string, List<CommentModel>>();

@@ -14,11 +14,11 @@ namespace APIView
             }
         }
 
-        public LineAPIV[] Render(AssemblyAPIV assembly)
+        public StringListAPIV Render(AssemblyAPIV assembly)
         {
-            var list = new List<LineAPIV>();
+            var list = new StringListAPIV();
             Render(assembly.GlobalNamespace, list);
-            return list.ToArray();
+            return list;
         }
 
         public void Render(AttributeAPIV a, List<LineAPIV> list, int indents = 0)

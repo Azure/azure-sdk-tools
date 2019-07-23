@@ -49,6 +49,7 @@ export = {
               (method: MethodDefinition): boolean => {
                 const TSMethod = method as TSESTree.MethodDefinition;
                 return (
+                  method.type === "MethodDefinition" &&
                   TSMethod.accessibility !== "private" &&
                   method.value.id !== null &&
                   method.value.id !== undefined

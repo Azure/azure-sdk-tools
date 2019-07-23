@@ -4,6 +4,7 @@
  */
 
 import githubSourceHeaders from "./github-source-headers";
+import tsApisurfaceStandardizedVerbs from "./ts-apisurface-standardized-verbs";
 import tsConfigAllowSyntheticDefaultImports from "./ts-config-allowsyntheticdefaultimports";
 import tsConfigDeclaration from "./ts-config-declaration";
 import tsConfigEsModuleInterop from "./ts-config-esmoduleinterop";
@@ -45,6 +46,7 @@ import tsVersioningSemver from "./ts-versioning-semver";
  */
 export = {
   "github-source-headers": githubSourceHeaders,
+  "ts-apisurface-standardized-verbs": tsApisurfaceStandardizedVerbs,
   "ts-config-allowsyntheticdefaultimports": tsConfigAllowSyntheticDefaultImports,
   "ts-config-declaration": tsConfigDeclaration,
   "ts-config-esmoduleinterop": tsConfigEsModuleInterop,

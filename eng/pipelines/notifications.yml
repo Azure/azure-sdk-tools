@@ -42,13 +42,14 @@ stages:
 
       # TODO: Publish package to a private feed so we don't have to build from source
       # TODO: Remove dry-run
-      - script: 'dotnet run --
-        >- --organization $(Organization)
-        >- --project $(Project)
-        >- --path-prefix "\$(PathPrefix)"
-        >- --token-variable-name DEVOPS_TOKEN
-        >- --selection-strategy Scheduled
-        >- --dry-run $(AdditionalParameters)'
+      - script: "dotnet run --
+          --organization $(Organization)
+          --project $(Project)
+          --path-prefix \"\\$(PathPrefix)\"
+          --token-variable-name DEVOPS_TOKEN
+          --selection-strategy Scheduled
+          --dry-run $(AdditionalParameters)"
+
         displayName: 'Run Team/Notification Creator'
         workingDirectory: $(Build.SourcesDirectory)/tools/notification-configuration/notification-creator/
         env:
@@ -59,18 +60,19 @@ stages:
 
       # TODO: Publish package to a private feed so we don't have to build from source
       # TODO: Remove dry-run
-      - script: 'dotnet run --
-        >- --organization $(Organization)
-        >- --project $(Project)
-        >- --path-prefix "\$(PathPrefix)"
-        >- --dev-ops-token-var DEVOPS_TOKEN
-        >- --aad-app-id-var APP_ID
-        >- --aad-app-secret-var APP_SECRET
-        >- --aad-tenant-var AAD_TENANT
-        >- --kusto-url-var KUSTO_URL
-        >- --kusto-database-var KUSTO_DB
-        >- --kusto-table-var KUSTO_TABLE
-        >- --dry-run $(AdditionalParameters)'
+      - script: "dotnet run --
+          --organization $(Organization)
+          --project $(Project)
+          --path-prefix \"\\$(PathPrefix)\"
+          --dev-ops-token-var DEVOPS_TOKEN
+          --aad-app-id-var APP_ID
+          --aad-app-secret-var APP_SECRET
+          --aad-tenant-var AAD_TENANT
+          --kusto-url-var KUSTO_URL
+          --kusto-database-var KUSTO_DB
+          --kusto-table-var KUSTO_TABLE
+          --dry-run $(AdditionalParameters)"
+
         displayName: 'Run GitHub CODEOWNER Subscriber'
         workingDirectory: $(Build.SourcesDirectory)/tools/notification-configuration/github-codeowner-subscriber
         env:

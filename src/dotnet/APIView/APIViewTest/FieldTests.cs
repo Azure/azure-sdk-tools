@@ -103,7 +103,7 @@ namespace APIViewTest
             var list = new List<LineAPIV>();
             renderer.Render(f, list);
             Assert.Equal("<span class=\"keyword\">public</span> <span class=\"keyword\">static</span> <span class=\"keyword\">const</span> <span class=\"keyword\">string</span>" +
-                " <span class=\"name\">publicString</span> = <span class=\"value\">\"constant string\"</span>;", list.First().DisplayString);
+                " <a id=\"\" class=\"name commentable\">publicString</a> = <span class=\"value\">\"constant string\"</span>;", list.First().DisplayString);
         }
     }
 }

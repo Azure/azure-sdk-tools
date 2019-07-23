@@ -208,8 +208,8 @@ namespace APIViewTest
                 builder.Append(line.DisplayString);
             }
             Assert.Equal("<span class=\"keyword\">public</span> <span class=\"keyword\">class</span> <a href=\"#\" id=\"ImplementingClass\" class=\"class commentable\">ImplementingClass</a> : " +
-                "<a href=\"#\" class=\"class\">BaseClass</a> {    <span class=\"keyword\">protected</span> <span class=\"keyword\">string</span> <span class" +
-                "=\"name\">TestProperty</span> { <span class=\"keyword\">get</span>; <span class=\"keyword\">set</span>; }}", builder.ToString());
+                "<a href=\"#\" class=\"class\">BaseClass</a> {    <span class=\"keyword\">protected</span> <span class=\"keyword\">string</span> <a id=\"\" class" +
+                "=\"name commentable\">TestProperty</a> { <span class=\"keyword\">get</span>; <span class=\"keyword\">set</span>; }}", builder.ToString());
         }
 
         [Fact]

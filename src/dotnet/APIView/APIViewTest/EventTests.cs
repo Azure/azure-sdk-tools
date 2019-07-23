@@ -40,7 +40,7 @@ namespace APIViewTest
             var list = new List<LineAPIV>();
             renderer.Render(e, list);
             Assert.Equal("<span class=\"keyword\">public</span> <span class=\"keyword\">event</span> " +
-                "<span class=\"keyword\"></span> <span class=\"name\">TestEvent</span>;", list.First().DisplayString);
+                "<span class=\"keyword\"></span> <a id=\"\" class=\"name commentable\">TestEvent</a>;", list.First().DisplayString);
         }
     }
 }

@@ -63,7 +63,7 @@ namespace APIViewTest
             {
                 builder.Append(line.DisplayString);
             }
-            Assert.Equal("<span class=\"keyword\">namespace</span> <span id=\"\" class=\"name\">TestNamespace</span> {}", builder.ToString());
+            Assert.Equal("<span class=\"keyword\">namespace</span> <a id=\"\" class=\"name commentable\">TestNamespace</a> {}", builder.ToString());
         }
     }
 }

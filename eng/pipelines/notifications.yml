@@ -1,5 +1,8 @@
 # Configure notifications in Azure DevOps
 
+trigger: none
+pr: none
+
 stages:
 - stage: Run
 

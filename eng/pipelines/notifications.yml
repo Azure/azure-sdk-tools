@@ -1,4 +1,7 @@
 # Configure notifications in Azure DevOps
+# Queue Time Variables
+# Organization -- the Azure DevOps organziation you're targeting (e.g. azure-sdk)
+# Project -- the Azure DevOps project you're targeting (e.g. internal)
 
 trigger: none
 pr: none
@@ -25,11 +28,6 @@ stages:
     pool:
       vmImage: ubuntu-16.04
 
-    variables:
-      # TODO: Make these queue time variables probably
-      Organization: azure-sdk
-      Project: internal
-
     steps:
 
       - task: DotNetCoreInstaller@0
@@ -38,7 +36,6 @@ stages:
           version: '$(DotNetCoreVersion)'
 
       # TODO: Publish package to a private feed so we don't have to build from source
-      # TODO: Remove dry-run
       - script: "dotnet run --
           --organization $(Organization)
           --project $(Project)
@@ -56,7 +53,6 @@ stages:
           DEVOPS_TOKEN: $(azure-sdk-notification-tools-pat)
 
       # TODO: Publish package to a private feed so we don't have to build from source
-      # TODO: Remove dry-run
       - script: "dotnet run --
           --organization $(Organization)
           --project $(Project)

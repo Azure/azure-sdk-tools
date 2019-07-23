@@ -40,6 +40,18 @@ namespace APIView
                 .Append(EscapeHTML(m.Name)).Append("</a>");
         }
 
+        protected override void RenderEvent(StringBuilder builder, EventAPIV e)
+        {
+            builder.Append("<a id=\"").Append(e.Id).Append("\" class=\"name commentable\">").
+                Append(e.Name).Append("</a>");
+        }
+
+        protected override void RenderField(StringBuilder builder, FieldAPIV f)
+        {
+            builder.Append("<a id=\"").Append(f.Id).Append("\" class=\"name commentable\">").
+                Append(f.Name).Append("</a>");
+        }
+
         protected override void RenderKeyword(StringBuilder builder, string word)
         {
             builder.Append("<span class=\"keyword\">").Append(EscapeHTML(word)).Append("</span>");
@@ -58,13 +70,19 @@ namespace APIView
 
         protected override void RenderNamespace(StringBuilder builder, NamespaceAPIV ns)
         {
-            builder.Append("<span id=\"").Append(ns.NavigationID).Append("\" class=\"name\">")
-                .Append(EscapeHTML(ns.Name)).Append("</span>");
+            builder.Append("<a id=\"").Append(ns.NavigationID).Append("\" class=\"name commentable\">").
+                Append(ns.Name).Append("</a>");
         }
 
         protected override void RenderNewline(StringBuilder builder)
         {
             builder.Append("<br />");
+        }
+
+        protected override void RenderProperty(StringBuilder builder, PropertyAPIV p)
+        {
+            builder.Append("<a id=\"").Append(p.Id).Append("\" class=\"name commentable\">").
+                Append(p.Name).Append("</a>");
         }
 
         protected override void RenderSpecialName(StringBuilder builder, string word)

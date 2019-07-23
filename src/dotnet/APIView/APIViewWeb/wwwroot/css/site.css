@@ -88,9 +88,7 @@ body {
 
 form.comment {
     display: none;
-    border: 1px solid gray;
     padding: 12px;
-    border-radius: 10px;
 }
 
 .comment-box {
@@ -107,6 +105,10 @@ form.comment {
 
 .comment-holder {
     max-width: 780px;
+}
+
+.comment-timestamp {
+    float: right;
 }
 
 .review-comment {
@@ -131,7 +133,6 @@ form.comment {
     border-spacing: 0;
     padding-top: 8px;
     padding-bottom: 8px;
-    background-color: #F8F9FA;
 }
 
 .code-line {
@@ -174,4 +175,23 @@ code-inner {
     min-height: 28px;
     padding: 3px 8px;
     width: 100%;
+}
+
+.new-thread-comment {
+    border-radius: 3px;
+}
+
+.comment-thread-contents.new-thread-comment {
+    background-color: #FFF;
+    border: 0;
+    margin: -8px -16px;
+}
+
+.new-comment-content {
+    position: relative;
+    margin: 0 4px 8px;
+}
+
+.thread-comment-submit {
+    margin: 0 4px 0;
 }

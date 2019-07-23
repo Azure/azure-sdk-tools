@@ -1,7 +1,6 @@
 ﻿using Microsoft.CodeAnalysis;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace APIView
 {
@@ -12,6 +11,7 @@ namespace APIView
     /// </summary>
     public class EventAPIV
     {
+        public string Id { get; set; }
         public string Name { get; set; }
         public string Accessibility { get; set; }
         public TypeReferenceAPIV Type { get; set; }
@@ -24,6 +24,7 @@ namespace APIView
         /// <param name="symbol">The symbol representing the event.</param>
         public EventAPIV(IEventSymbol symbol)
         {
+            this.Id = symbol.ToDisplayString();
             this.Name = symbol.Name;
             this.Accessibility = symbol.DeclaredAccessibility.ToString().ToLower();
             this.Type = new TypeReferenceAPIV(symbol.Type);

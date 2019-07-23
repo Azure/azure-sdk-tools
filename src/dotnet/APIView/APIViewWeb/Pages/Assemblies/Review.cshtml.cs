@@ -1,4 +1,8 @@
-﻿using System.Text;
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using APIView;
 using APIViewWeb.Models;
@@ -25,7 +29,7 @@ namespace APIViewWeb.Pages.Assemblies
         [BindProperty]
         public CommentModel Comment { get; set; }
 
-        public CommentModel[] Comments { get; set; }
+        public Dictionary<string, List<CommentModel>> Comments { get; set; }
 
         public async Task<ActionResult> OnPostDeleteAsync(string id, string commentId)
         {
@@ -39,15 +43,23 @@ namespace APIViewWeb.Pages.Assemblies
             var assemblyModel = await assemblyRepository.ReadAssemblyContentAsync(id);
             var renderer = new HTMLRendererAPIV();
             AssemblyModel = renderer.Render(assemblyModel.Assembly);
-            Comments = await commentRepository.FetchCommentsAsync(id);
-            if (Comments == null)
-                Comments = new CommentModel[] { };
+            var comments = await commentRepository.FetchCommentsAsync(id);
+
+            Comments = new Dictionary<string, List<CommentModel>>();
+            _ = new List<CommentModel>();
+            foreach (var comment in comments)
+            {
+                if (!Comments.TryGetValue(comment.ElementId, out List<CommentModel> list))
+                    Comments[comment.ElementId] = new List<CommentModel>() { comment };
+                else
+                    Comments[comment.ElementId].Add(comment);
+            }
         }
 
-        public async Task<ActionResult> OnPostAsync(string id)
+        public async Task<ActionResult> OnPostAsync(string id, string cancel)
         {
-            await commentRepository.UploadCommentAsync(Comment, id);
-
+            if (cancel == null)
+                await commentRepository.UploadCommentAsync(Comment, id);
             return RedirectToPage(new { id });
         }
     }

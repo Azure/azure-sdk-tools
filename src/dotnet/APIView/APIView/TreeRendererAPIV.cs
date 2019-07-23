@@ -59,9 +59,9 @@ namespace APIView
             builder.Append(" ");
             Render(e.Type, builder);
             builder.Append(" ");
-            RenderName(builder, e.Name);
+            RenderEvent(builder, e);
             builder.Append(";");
-            list.Add(new LineAPIV(builder.ToString()));
+            list.Add(new LineAPIV(builder.ToString(), e.Id));
         }
 
         public void Render(FieldAPIV f, List<LineAPIV> list, int indents = 0)
@@ -94,7 +94,7 @@ namespace APIView
 
             Render(f.Type, builder);
             builder.Append(" ");
-            RenderName(builder, f.Name);
+            RenderField(builder, f);
 
             if (f.IsConstant)
             {
@@ -108,7 +108,7 @@ namespace APIView
             }
 
             builder.Append(";");
-            list.Add(new LineAPIV(builder.ToString()));
+            list.Add(new LineAPIV(builder.ToString(), f.Id));
         }
 
         public void Render(MethodAPIV m, List<LineAPIV> list, int indents = 0)
@@ -346,7 +346,7 @@ namespace APIView
                 builder.Append(" ");
                 RenderNamespace(builder, ns);
                 builder.Append(" {");
-                list.Add(new LineAPIV(builder.ToString()));
+                list.Add(new LineAPIV(builder.ToString(), ns.NavigationID));
             }
 
             foreach (NamedTypeAPIV nt in ns.NamedTypes)
@@ -429,7 +429,7 @@ namespace APIView
             builder.Append(" ");
             Render(p.Type, builder);
             builder.Append(" ");
-            RenderName(builder, p.Name);
+            RenderProperty(builder, p);
             builder.Append(" { ");
             RenderKeyword(builder, "get");
             builder.Append("; ");
@@ -441,7 +441,7 @@ namespace APIView
             }
 
             builder.Append("}");
-            list.Add(new LineAPIV(builder.ToString()));
+            list.Add(new LineAPIV(builder.ToString(), p.Id));
         }
 
         public void Render(TypeParameterAPIV tp, StringBuilder builder, int indents = 0)
@@ -485,6 +485,10 @@ namespace APIView
 
         protected abstract void RenderConstructor(StringBuilder builder, MethodAPIV m);
 
+        protected abstract void RenderEvent(StringBuilder builder, EventAPIV e);
+
+        protected abstract void RenderField(StringBuilder builder, FieldAPIV f);
+
         protected abstract void RenderKeyword(StringBuilder builder, string word);
 
         protected abstract void RenderMethod(StringBuilder builder, MethodAPIV m);
@@ -494,6 +498,8 @@ namespace APIView
         protected abstract void RenderNamespace(StringBuilder builder, NamespaceAPIV ns);
 
         protected abstract void RenderNewline(StringBuilder builder);
+
+        protected abstract void RenderProperty(StringBuilder builder, PropertyAPIV p);
 
         protected abstract void RenderSpecialName(StringBuilder builder, string word);
 

@@ -34,6 +34,16 @@ namespace APIView
             builder.Append(m.Name);
         }
 
+        protected override void RenderEvent(StringBuilder builder, EventAPIV e)
+        {
+            builder.Append(e.Name);
+        }
+
+        protected override void RenderField(StringBuilder builder, FieldAPIV f)
+        {
+            builder.Append(f.Name);
+        }
+
         protected override void RenderKeyword(StringBuilder builder, string word)
         {
             builder.Append(word);
@@ -57,6 +67,11 @@ namespace APIView
         protected override void RenderNewline(StringBuilder builder)
         {
             builder.AppendLine();
+        }
+
+        protected override void RenderProperty(StringBuilder builder, PropertyAPIV p)
+        {
+            builder.Append(p.Name);
         }
 
         protected override void RenderSpecialName(StringBuilder builder, string word)

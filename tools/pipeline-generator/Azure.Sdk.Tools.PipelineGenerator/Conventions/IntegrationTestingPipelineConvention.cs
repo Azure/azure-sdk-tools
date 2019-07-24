@@ -10,6 +10,11 @@ namespace PipelineGenerator.Conventions
     public class IntegrationTestingPipelineConvention : PipelineConvention
     {
         /// <summary>
+        /// Key in repository properties dictionary for reporting build status
+        /// </summary>
+        private const string ReportBuildStatusKey = "reportBuildStatus";
+
+        /// <summary>
         /// Start hour (3AM)
         /// </summary>
         private const int StartHourOffset = 3;
@@ -90,6 +95,12 @@ namespace PipelineGenerator.Conventions
                 hasChanges = true;
             }
 
+            // Ensure "Report Build Status" is set
+            if (EnsureReportBuildStatus(definition))
+            {
+                hasChanges = true;
+            }
+
             return Task.FromResult(hasChanges);
         }
 
@@ -160,6 +171,27 @@ namespace PipelineGenerator.Conventions
             var groupsToAdd = idsToAdd.Select(id => new VariableGroup { Id = id });
 
             definition.VariableGroups.AddRange(groupsToAdd);
+
+            return hasChanges;
+        }
+
+        private bool EnsureReportBuildStatus(BuildDefinition definition)
+        {
+            var hasChanges = false;
+
+            if (definition.Repository.Properties.TryGetValue(ReportBuildStatusKey, out var reportBuildStatusString))
+            {
+                if (!bool.TryParse(reportBuildStatusString, out var reportBuildStatusValue) || !reportBuildStatusValue)
+                {
+                    definition.Repository.Properties[ReportBuildStatusKey] = "true";
+                    hasChanges = true;
+                }
+            }
+            else
+            {
+                definition.Repository.Properties.Add(ReportBuildStatusKey, "true");
+                hasChanges = true;
+            }
 
             return hasChanges;
         }

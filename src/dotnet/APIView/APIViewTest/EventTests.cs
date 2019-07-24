@@ -1,7 +1,6 @@
 ﻿using Microsoft.CodeAnalysis;
 using APIView;
 using Xunit;
-using System.Text;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -37,10 +36,10 @@ namespace APIViewTest
                 Type = new TypeReferenceAPIV(new TokenAPIV[] { new TokenAPIV() })
             };
             var renderer = new HTMLRendererAPIV();
-            var list = new List<LineAPIV>();
+            var list = new StringListAPIV();
             renderer.Render(e, list);
             Assert.Equal("<span class=\"keyword\">public</span> <span class=\"keyword\">event</span> " +
-                "<span class=\"keyword\"></span> <a id=\"\" class=\"name commentable\">TestEvent</a>;", list.First().DisplayString);
+                "<span class=\"keyword\"></span> <a id=\"\" class=\"name commentable\">TestEvent</a>;", list.ToString());
         }
     }
 }

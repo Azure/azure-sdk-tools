@@ -199,17 +199,12 @@ namespace APIViewTest
                 Properties = new PropertyAPIV[] { p },
                 TypeParameters = new TypeParameterAPIV[] { }
             };
-            var builder = new StringBuilder();
             var renderer = new HTMLRendererAPIV();
-            var list = new List<LineAPIV>();
+            var list = new StringListAPIV();
             renderer.Render(nt, list);
-            foreach(var line in list)
-            {
-                builder.Append(line.DisplayString);
-            }
             Assert.Equal("<span class=\"keyword\">public</span> <span class=\"keyword\">class</span> <a href=\"#\" id=\"ImplementingClass\" class=\"class commentable\">ImplementingClass</a> : " +
-                "<a href=\"#\" class=\"class\">BaseClass</a> {    <span class=\"keyword\">protected</span> <span class=\"keyword\">string</span> <a id=\"\" class" +
-                "=\"name commentable\">TestProperty</a> { <span class=\"keyword\">get</span>; <span class=\"keyword\">set</span>; }}", builder.ToString());
+                "<a href=\"#\" class=\"class\">BaseClass</a> {" + Environment.NewLine + "    <span class=\"keyword\">protected</span> <span class=\"keyword\">string</span> <a id=\"\" class" +
+                "=\"name commentable\">TestProperty</a> { <span class=\"keyword\">get</span>; <span class=\"keyword\">set</span>; }" + Environment.NewLine + "}", list.ToString());
         }
 
         [Fact]
@@ -235,16 +230,11 @@ namespace APIViewTest
                 Properties = new PropertyAPIV[] { },
                 TypeParameters = new TypeParameterAPIV[] { tp }
             };
-            var builder = new StringBuilder();
             var renderer = new HTMLRendererAPIV();
-            var list = new List<LineAPIV>();
+            var list = new StringListAPIV();
             renderer.Render(nt, list);
-            foreach (var line in list)
-            {
-                builder.Append(line.DisplayString);
-            }
             Assert.Equal("<span class=\"keyword\">public</span> <span class=\"keyword\">interface</span> <a href=\"#\" id=\"TestInterface\" class=\"class commentable\">TestInterface</a>&lt;" +
-                "<a href=\"#T\" class=\"type\">T</a>&gt; {}", builder.ToString());
+                "<a href=\"#T\" class=\"type\">T</a>&gt; {" + Environment.NewLine + "}", list.ToString());
         }
     }
 }

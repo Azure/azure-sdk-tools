@@ -3,55 +3,46 @@
 
 // Write your Javascript code.
 $(function () {
-    $(".commentable").click(function () {
-        var nextRow = $(this).parents(".code-line").first().next();
-        var formExists = nextRow.find(".comment-form").length > 0;
+    let commentFormTemplate = $("#comment-form-template");
 
-        if (!formExists) {
-            let myForm = $(".comment-form");
-            let clone = myForm.clone();
-            clone.first().find(".id-box").val(this.id);
-            let stringRep = clone[0].outerHTML;
+    function hideCommentBox(id) {
+        var thisRow = $(document.getElementById(id)).parents(".code-line").first();
+        var nextRow = thisRow.next();
+        nextRow.find(".review-thread-reply").show();
+        nextRow.find(".comment-form").hide();
+    }
+
+    function showCommentBox(id) {
+        var thisRow = $(document.getElementById(id)).parents(".code-line").first();
+        var nextRow = thisRow.next();
+        var commentForm = nextRow.find(".comment-form");
+
+        if (commentForm.length == 0) {
+            commentForm = commentFormTemplate.children().clone();
 
             var thread = nextRow.find(".comment-thread-contents");
             if (thread.length > 0) {
-                thread.after(stringRep);
-                nextRow.find(".review-thread-reply").hide();
+                thread.after(commentForm);
             }
             else {
-                $(this).parents(".code-line").after("<tr><td>" + stringRep + "</td></tr>");
-                nextRow = $(this).parents(".code-line").first().next();
+                commentForm.insertAfter(thisRow).wrap("<tr>").wrap("<td>");
             }
         }
-        nextRow.find(".comment").show();
-        nextRow.find(".new-thread-comment-text").focus();
-        return false;
-    });
-});
 
-$(function () {
+        commentForm.show();
+        commentForm.find(".id-box").val(id);
+        commentForm.find(".new-thread-comment-text").focus();
+        commentForm.find(".comment-cancel-button").click(function () { hideCommentBox(id); });
+
+        nextRow.find(".review-thread-reply").hide();
+        return false;
+    }
+
+    $(".commentable").click(function () {
+        showCommentBox(this.id);
+    });
+
     $(".review-thread-reply-button").click(function () {
-        $(this).parents(".comment-box").first().prev().first().find(".commentable").click();
+        showCommentBox($(this).data("element-id"));
     });
 });
-/*
-$(function () {
-    $("#cancel-button").click(function () {
-        $($(this).parents(".comment-box")[0].querySelector("#comment-form")).remove();
-        $($(this).parents(".comment-box")[0].querySelector(".review-thread-reply")).show();
-    });
-});
-*/
-/*
-<form id="comment-form" class="comment" method="post" asp-route-id="@Model.Id">
-    <div class="form-group">
-        <label>ID:</label>
-        <input type="text" readonly id="id-box" asp-for="Comment.ElementId" class="form-control" />
-    </div>
-    <div class="form-group">
-        <label>Comment:</label>
-        <textarea id="comment-thread" asp-for="Comment.Comment" class="form-control" rows="3"></textarea>
-    </div>
-    <button type="submit" id="submit-button" class="btn btn-outline-dark">Add Comment</button>
-</form>
-*/

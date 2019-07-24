@@ -21,7 +21,7 @@ namespace APIView
             return list;
         }
 
-        public void Render(AttributeAPIV a, List<LineAPIV> list, int indents = 0)
+        public void Render(AttributeAPIV a, StringListAPIV list, int indents = 0)
         {
             var builder = new StringBuilder();
             AppendIndents(builder, indents);
@@ -49,7 +49,7 @@ namespace APIView
             list.Add(new LineAPIV(builder.ToString()));
         }
 
-        public void Render(EventAPIV e, List<LineAPIV> list, int indents = 0)
+        public void Render(EventAPIV e, StringListAPIV list, int indents = 0)
         {
             var builder = new StringBuilder();
             AppendIndents(builder, indents);
@@ -64,7 +64,7 @@ namespace APIView
             list.Add(new LineAPIV(builder.ToString(), e.Id));
         }
 
-        public void Render(FieldAPIV f, List<LineAPIV> list, int indents = 0)
+        public void Render(FieldAPIV f, StringListAPIV list, int indents = 0)
         {
             var builder = new StringBuilder();
             AppendIndents(builder, indents);
@@ -111,7 +111,7 @@ namespace APIView
             list.Add(new LineAPIV(builder.ToString(), f.Id));
         }
 
-        public void Render(MethodAPIV m, List<LineAPIV> list, int indents = 0)
+        public void Render(MethodAPIV m, StringListAPIV list, int indents = 0)
         {
             if (m.Attributes.Any())
             {
@@ -205,7 +205,7 @@ namespace APIView
                 list.Add(new LineAPIV(builder.ToString()));
         }
 
-        public void Render(NamedTypeAPIV nt, List<LineAPIV> list, int indents = 0)
+        public void Render(NamedTypeAPIV nt, StringListAPIV list, int indents = 0)
         {
             var builder = new StringBuilder();
             AppendIndents(builder, indents);
@@ -335,7 +335,7 @@ namespace APIView
             }
         }
 
-        public void Render(NamespaceAPIV ns, List<LineAPIV> list, int indents = 0)
+        public void Render(NamespaceAPIV ns, StringListAPIV list, int indents = 0)
         {
             var builder = new StringBuilder();
             var isGlobalNamespace = ns.Name == "<global namespace>";
@@ -421,7 +421,7 @@ namespace APIView
             }
         }
 
-        public void Render(PropertyAPIV p, List<LineAPIV> list, int indents = 0)
+        public void Render(PropertyAPIV p, StringListAPIV list, int indents = 0)
         {
             var builder = new StringBuilder();
             AppendIndents(builder, indents);

@@ -1,7 +1,5 @@
 ﻿using APIView;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System;
 using Xunit;
 
 namespace APIViewTest
@@ -55,15 +53,11 @@ namespace APIViewTest
                 NamedTypes = new NamedTypeAPIV[] { },
                 Namespaces = new NamespaceAPIV[] { }
             };
-            var builder = new StringBuilder();
             var renderer = new HTMLRendererAPIV();
-            var list = new List<LineAPIV>();
+            var list = new StringListAPIV();
             renderer.Render(ns, list);
-            foreach (var line in list)
-            {
-                builder.Append(line.DisplayString);
-            }
-            Assert.Equal("<span class=\"keyword\">namespace</span> <a id=\"\" class=\"name commentable\">TestNamespace</a> {}", builder.ToString());
+            Assert.Equal("<span class=\"keyword\">namespace</span> <a id=\"\" class=\"name commentable\">TestNamespace</a> {" 
+                + Environment.NewLine + "}", list.ToString());
         }
     }
 }

@@ -7,12 +7,22 @@ namespace APIView
     {
         public override string ToString()
         {
+            bool isFirst = true;
+
             var builder = new StringBuilder();
             foreach (var line in this)
             {
+                if (isFirst)
+                {
+                    isFirst = false;
+                }
+                else
+                {
+                    builder.AppendLine();
+                }
                 builder.Append(line.DisplayString);
-                builder.AppendLine();
             }
+            
             return builder.ToString();
         }
     }

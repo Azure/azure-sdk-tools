@@ -87,8 +87,11 @@ body {
 }
 
 form.comment {
-    display: none;
     padding: 12px;
+}
+
+#comment-form-template {
+    display: none;
 }
 
 .comment-box {

@@ -152,16 +152,11 @@ namespace APIViewTest
                 Parameters = new ParameterAPIV[] { p },
                 TypeParameters = new TypeParameterAPIV[] { }
             };
-            var builder = new StringBuilder();
             var renderer = new HTMLRendererAPIV();
-            var list = new List<LineAPIV>();
+            var list = new StringListAPIV();
             renderer.Render(m, list);
-            foreach (var line in list)
-            {
-                builder.Append(line.DisplayString);
-            }
             Assert.Equal("<span class=\"keyword\">public</span> <a href=\"#TestClass\" class=\"class\">TestClass</a>(<span class=\"keyword\">int</span> num" +
-                " = <span class=\"value\">2</span>) { }", builder.ToString());
+                " = <span class=\"value\">2</span>) { }", list.ToString());
         }
 
         [Fact]
@@ -200,16 +195,11 @@ namespace APIViewTest
                 Parameters = new ParameterAPIV[] { },
                 TypeParameters = new TypeParameterAPIV[] { }
             };
-            var builder = new StringBuilder();
             var renderer = new HTMLRendererAPIV();
-            var list = new List<LineAPIV>();
+            var list = new StringListAPIV();
             renderer.Render(m, list);
-            foreach (var line in list)
-            {
-                builder.Append(line.DisplayString);
-            }
-            Assert.Equal("[<a href=\"#\" class=\"class\">TestAttribute</a>(<span class=\"value\">Test</span>, <span class=\"value\">\"String\"</span>)]" +
-                "<span class=\"keyword\">public</span> <span class=\"keyword\">void</span> <a id=\"\" class=\"name commentable\">TestMethod</a>() { }", builder.ToString());
+            Assert.Equal("[<a href=\"#\" class=\"class\">TestAttribute</a>(<span class=\"value\">Test</span>, <span class=\"value\">\"String\"</span>)]" + Environment.NewLine +
+                "<span class=\"keyword\">public</span> <span class=\"keyword\">void</span> <a id=\"\" class=\"name commentable\">TestMethod</a>() { }", list.ToString());
         }
     }
 }

@@ -43,7 +43,7 @@ namespace APIView
         public override string ToString()
         {
             var renderer = new TextRendererAPIV();
-            var list = new List<LineAPIV>();
+            var list = new StringListAPIV();
             renderer.Render(this, list);
             return list.First().DisplayString;
         }

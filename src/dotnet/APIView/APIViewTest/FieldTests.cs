@@ -100,10 +100,10 @@ namespace APIViewTest
             };
             f.Type.IsString = true;
             var renderer = new HTMLRendererAPIV();
-            var list = new List<LineAPIV>();
+            var list = new StringListAPIV();
             renderer.Render(f, list);
             Assert.Equal("<span class=\"keyword\">public</span> <span class=\"keyword\">static</span> <span class=\"keyword\">const</span> <span class=\"keyword\">string</span>" +
-                " <a id=\"\" class=\"name commentable\">publicString</a> = <span class=\"value\">\"constant string\"</span>;", list.First().DisplayString);
+                " <a id=\"\" class=\"name commentable\">publicString</a> = <span class=\"value\">\"constant string\"</span>;", list.ToString());
         }
     }
 }

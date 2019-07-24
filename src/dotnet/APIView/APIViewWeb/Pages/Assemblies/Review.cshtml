@@ -32,7 +32,7 @@
                         </div>
                         }
                         <div class="review-thread-reply">
-                            <button type="button" class="review-thread-reply-button text-muted text-left form-control">Reply...</button>
+                            <button data-element-id="@line.ElementId" type="button" class="review-thread-reply-button text-muted text-left form-control">Reply...</button>
                         </div>
                     </div>
                 </div>
@@ -45,14 +45,15 @@
 </table>
 
 <br />
-
-<div class="comment-form new-thread-comment">
-    <form class="new-thread-comment-form comment" method="post" asp-route-id="@Model.Id">
-        <input type="hidden" asp-for="Comment.ElementId" class="id-box" />
-        <div class="new-comment-content">
-            <textarea class="new-thread-comment-text form-control" asp-for="Comment.Comment" rows="3"></textarea>
-        </div>
-        <button type="submit" name="submit" value="Submit" class="thread-comment-submit btn btn-outline-dark">Add Comment</button>
-        <button type="submit" name="cancel" value="Cancel" class="comment-cancel-button btn btn-outline-dark">Cancel</button>
-    </form>
+<div id="comment-form-template">
+    <div class="comment-form new-thread-comment">
+        <form class="new-thread-comment-form comment" method="post" asp-route-id="@Model.Id">
+            <input type="hidden" asp-for="Comment.ElementId" class="id-box" />
+            <div class="new-comment-content">
+                <textarea class="new-thread-comment-text form-control" asp-for="Comment.Comment" rows="3"></textarea>
+            </div>
+            <button type="submit" name="submit" value="Submit" class="thread-comment-submit btn btn-outline-dark">Add Comment</button>
+            <button type="button" name="cancel" value="Cancel" class="comment-cancel-button btn btn-outline-dark">Cancel</button>
+        </form>
+    </div>
 </div>

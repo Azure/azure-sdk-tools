@@ -10,5 +10,6 @@ namespace APIViewWeb.Models
         public string Id { get; set; }
         public string ElementId { get; set; }
         public string Comment { get; set; }
+        public string Username { get; set; }
     }
 }

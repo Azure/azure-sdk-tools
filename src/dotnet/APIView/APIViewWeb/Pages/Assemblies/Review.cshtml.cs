@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 using APIView;
@@ -31,6 +32,8 @@ namespace APIViewWeb.Pages.Assemblies
 
         public Dictionary<string, List<CommentModel>> Comments { get; set; }
 
+        public string Username { get; set; }
+
         public async Task<ActionResult> OnPostDeleteAsync(string id, string commentId)
         {
             await commentRepository.DeleteCommentAsync(commentId);
@@ -53,6 +56,11 @@ namespace APIViewWeb.Pages.Assemblies
                 else
                     Comments[comment.ElementId].Add(comment);
             }
+
+            if (User.Identity.IsAuthenticated)
+                Username = User.FindFirst(c => c.Type == "urn:github:login")?.Value;
+            else
+                Username = "Anonymous";
         }
 
         public async Task<ActionResult> OnPostAsync(string id, string cancel)

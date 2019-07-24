@@ -20,7 +20,7 @@
                         {
                         <div class="review-comment">
                             <div class="unminimized-comment">
-                                <h4><strong class="author">Anonymous</strong></h4>
+                                <h4><strong class="author">@comment.Username</strong></h4>
                                 <div class="comment-body">
                                     <p>@comment.Comment</p>
                                 </div>
@@ -48,6 +48,7 @@
 <div id="comment-form-template">
     <div class="comment-form new-thread-comment">
         <form class="new-thread-comment-form comment" method="post" asp-route-id="@Model.Id">
+            <input type="hidden" asp-for="Comment.Username" value="@Model.Username" />
             <input type="hidden" asp-for="Comment.ElementId" class="id-box" />
             <div class="new-comment-content">
                 <textarea class="new-thread-comment-text form-control" asp-for="Comment.Comment" rows="3"></textarea>

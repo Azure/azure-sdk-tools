@@ -18,23 +18,23 @@ const ruleTester = new RuleTester({
 });
 
 const valid = `
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License.
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 console.log("hello")`;
 
 const invalid1 = `
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
+// Copyright (c) Microsoft.
+// Licensed under the MIT license.
 console.log("hello")`;
 
 const invalid2 = `
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the Apache 2.0 License.
+// Copyright (c) Microsoft Corporation.
+// Licensed under the Apache 2.0 license.
 console.log("hello")`;
 
 const configError = `copyright header not properly configured - expected value:
-Copyright (c) Microsoft Corporation. All rights reserved.
-Licensed under the MIT License.
+Copyright (c) Microsoft Corporation.
+Licensed under the MIT license.
 `;
 
 ruleTester.run("github-source-headers", rule, {

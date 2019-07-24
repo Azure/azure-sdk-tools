@@ -40,7 +40,7 @@ export = {
             if (
               headerComments.every(
                 (comment: Comment): boolean =>
-                  !/Copyright \(c\) Microsoft Corporation\. All rights reserved\./.test(
+                  !/Copyright \(c\) Microsoft Corporation\./.test(
                     comment.value
                   ) ||
                   headerComments.every(
@@ -53,7 +53,7 @@ export = {
                 node: node,
                 message:
                   "copyright header not properly configured - expected value:\n" +
-                  "Copyright (c) Microsoft Corporation. All rights reserved.\nLicensed under the MIT License.\n"
+                  "Copyright (c) Microsoft Corporation.\nLicensed under the MIT License.\n"
               });
             }
           }

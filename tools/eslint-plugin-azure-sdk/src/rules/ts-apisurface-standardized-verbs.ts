@@ -57,9 +57,9 @@ export = {
         publicMethods.forEach((method: MethodDefinition): void => {
           const key = method.key as Identifier;
           if (
-            verbRegexes.every((verbRegex: RegExp): boolean => {
-              return !verbRegex.test(key.name);
-            })
+            verbRegexes.every(
+              (verbRegex: RegExp): boolean => !verbRegex.test(key.name)
+            )
           ) {
             context.report({
               node: method,

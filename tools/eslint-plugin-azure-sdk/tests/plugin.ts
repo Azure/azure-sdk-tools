@@ -30,6 +30,7 @@ const ruleList = [
   "ts-doc-internal",
   "ts-error-handling",
   "ts-modules-only-named",
+  "ts-naming-drop-noun",
   "ts-no-const-enums",
   "ts-package-json-author",
   "ts-package-json-bugs",

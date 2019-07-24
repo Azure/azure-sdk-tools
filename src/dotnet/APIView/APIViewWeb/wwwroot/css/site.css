@@ -87,18 +87,119 @@ body {
 }
 
 form.comment {
-    display: none;
-    border: 1px solid gray;
     padding: 12px;
-    border-radius: 10px;
 }
 
-.commentBox {
+#comment-form-template {
+    display: none;
+}
+
+.comment-box {
     border: 1px solid gray;
-    padding: 12px;
-    border-radius: 10px;
+    border-spacing: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: white;
+}
+
+.comment-cell {
+    padding: 10px;
+    vertical-align: top;
+}
+
+.comment-holder {
+    max-width: 780px;
+}
+
+.comment-timestamp {
+    float: right;
+}
+
+.review-comment {
+    padding: 8px 16px;
+    position: relative;
+}
+
+.review-comment:first-child {
+    padding-top: 3px;
 }
 
 .commentable {
     cursor: pointer;
+}
+
+.code-window {
+    font-size: 14px;
+    line-height: 1.5;
+    border-collapse: separate;
+    width: 100%;
+    tab-size: 8;
+    border-spacing: 0;
+    padding-top: 8px;
+    padding-bottom: 8px;
+}
+
+.code-line {
+    white-space: pre;
+    font-family: monospace;
+}
+
+.code {
+    line-height: 20px;
+    padding-left: 10px;
+    padding-right: 10px;
+    position: relative;
+    vertical-align: top;
+}
+
+code-inner {
+    color: #24292E;
+    overflow: visible;
+    word-wrap: normal;
+}
+
+.rounded-1 {
+    border-radius: 3px !important;
+}
+
+.author {
+    font-size: 14px;
+}
+
+.review-thread-reply {
+    background-color: #F6F8FA;
+    border-radius: 0 0 3px 3px;
+    border-top: 1px solid #E1E4E8;
+    padding: 8px 16px;
+}
+
+.review-thread-reply-button {
+    cursor: text;
+    display: inline-block;
+    min-height: 28px;
+    padding: 3px 8px;
+    width: 100%;
+}
+
+.new-thread-comment {
+    border-radius: 3px;
+    font-size: 12px;
+    line-height: 1.5;
+    border-collapse: separate;
+    tab-size: 8;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.comment-thread-contents.new-thread-comment {
+    background-color: #FFF;
+    border: 0;
+    margin: -8px -16px;
+}
+
+.new-comment-content {
+    position: relative;
+    margin: 0 4px 8px;
+}
+
+.thread-comment-submit {
+    margin: 0 4px 0;
 }

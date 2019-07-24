@@ -22,26 +22,26 @@ namespace GitHubCodeownerSubscriber
         /// </summary>
         /// <param name="organization">Azure DevOps organization name</param>
         /// <param name="project">Azure DevOps project name</param>
-        /// <param name="devOpsTokenVariableName">Personal Access Token environment variable name</param>
-        /// <param name="aadAppIdVariableName">AAD App ID environment variable name (Kusto access)</param>
-        /// <param name="aadAppSecretVariableName">AAD App Secret environment variable name (Kusto access)</param>
-        /// <param name="aadTenantVariableName">AAD Tenant environment variable name (Kusto access)</param>
-        /// <param name="kustoUrlVariableName">Kusto URL</param>
-        /// <param name="kustoDatabaseVariableName">Kusto DB Name</param>
-        /// <param name="kustoTableVariableName">Kusto Table Name</param>
+        /// <param name="devOpsTokenVar">Personal Access Token environment variable name</param>
+        /// <param name="aadAppIdVar">AAD App ID environment variable name (Kusto access)</param>
+        /// <param name="aadAppSecretVar">AAD App Secret environment variable name (Kusto access)</param>
+        /// <param name="aadTenantVar">AAD Tenant environment variable name (Kusto access)</param>
+        /// <param name="kustoUrlVar">Kusto URL environment variable name</param>
+        /// <param name="kustoDatabaseVar">Kusto DB environment variable name</param>
+        /// <param name="kustoTableVar">Kusto Table environment variable name</param>
         /// <param name="pathPrefix">Azure DevOps path prefix (e.g. "\net")</param>
         /// <param name="dryRun">Do not persist changes</param>
         /// <returns></returns>
         public static async Task Main(
             string organization,
             string project,
-            string devOpsTokenVariableName,
-            string aadAppIdVariableName,
-            string aadAppSecretVariableName,
-            string aadTenantVariableName,
-            string kustoUrlVariableName,
-            string kustoDatabaseVariableName,
-            string kustoTableVariableName,
+            string devOpsTokenVar,
+            string aadAppIdVar,
+            string aadAppSecretVar,
+            string aadTenantVar,
+            string kustoUrlVar,
+            string kustoDatabaseVar,
+            string kustoTableVar,
             string pathPrefix = "",
             bool dryRun = false
             )
@@ -52,7 +52,7 @@ namespace GitHubCodeownerSubscriber
 #pragma warning restore CS0618 // Type or member is obsolete
             {
                 var devOpsService = AzureDevOpsService.CreateAzureDevOpsService(
-                    Environment.GetEnvironmentVariable(devOpsTokenVariableName),
+                    Environment.GetEnvironmentVariable(devOpsTokenVar),
                     $"https://dev.azure.com/{organization}/",
                     loggerFactory.CreateLogger<AzureDevOpsService>()
                 );
@@ -61,12 +61,12 @@ namespace GitHubCodeownerSubscriber
                 var gitHubService = new GitHubService(gitHubServiceLogger);
 
                 var githubNameResolver = new GitHubNameResolver(
-                    Environment.GetEnvironmentVariable(aadAppIdVariableName),
-                    Environment.GetEnvironmentVariable(aadAppSecretVariableName),
-                    Environment.GetEnvironmentVariable(aadTenantVariableName),
-                    Environment.GetEnvironmentVariable(kustoUrlVariableName),
-                    Environment.GetEnvironmentVariable(kustoDatabaseVariableName),
-                    Environment.GetEnvironmentVariable(kustoTableVariableName),
+                    Environment.GetEnvironmentVariable(aadAppIdVar),
+                    Environment.GetEnvironmentVariable(aadAppSecretVar),
+                    Environment.GetEnvironmentVariable(aadTenantVar),
+                    Environment.GetEnvironmentVariable(kustoUrlVar),
+                    Environment.GetEnvironmentVariable(kustoDatabaseVar),
+                    Environment.GetEnvironmentVariable(kustoTableVar),
                     loggerFactory.CreateLogger<GitHubNameResolver>()
                 );
 

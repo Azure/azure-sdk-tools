@@ -1,5 +1,4 @@
-﻿using System.Linq;
-using System.Text;
+﻿using System.Text;
 
 namespace APIView
 {
@@ -7,13 +6,13 @@ namespace APIView
     {
         protected override void RenderClassDefinition(StringBuilder builder, NamedTypeAPIV nt)
         {
-            builder.Append("<a href=\"#\" id=\"").Append(EscapeHTML(nt.NavigationID)).Append("\" class=\"class commentable\">").
+            builder.Append("<a href=\"#\" id=\"").Append(EscapeHTML(nt.Id)).Append("\" class=\"class commentable\">").
                 Append(EscapeHTML(nt.Name)).Append("</a>");
         }
 
         protected override void RenderEnumDefinition(StringBuilder builder, NamedTypeAPIV nt)
         {
-            builder.Append("<a href=\"#\" id=\"").Append(nt.NavigationID).Append("\" class=\"enum commentable\">").
+            builder.Append("<a href=\"#\" id=\"").Append(nt.Id).Append("\" class=\"enum commentable\">").
                 Append(EscapeHTML(nt.Name)).Append("</a>");
         }
 
@@ -24,14 +23,20 @@ namespace APIView
 
         protected override void RenderEnum(StringBuilder builder, TokenAPIV t)
         {
-            builder.Append("<a href=\"#").Append(t.NavigationID).Append("\" class=\"enum\">")
+            builder.Append("<a href=\"#").Append(t.Id).Append("\" class=\"enum\">")
                 .Append(EscapeHTML(t.DisplayString)).Append("</a>");
         }
 
         protected override void RenderClass(StringBuilder builder, TokenAPIV t)
         {
-            builder.Append("<a href=\"#").Append(t.NavigationID).Append("\" class=\"class\">")
+            builder.Append("<a href=\"#").Append(t.Id).Append("\" class=\"class\">")
                 .Append(EscapeHTML(t.DisplayString)).Append("</a>");
+        }
+
+        protected override void RenderCommentable(StringBuilder builder, string id, string name)
+        {
+            builder.Append("<a id=\"").Append(id).Append("\" class=\"name commentable\">").
+                Append(name).Append("</a>");
         }
 
         protected override void RenderConstructor(StringBuilder builder, MethodAPIV m)
@@ -45,21 +50,9 @@ namespace APIView
             builder.Append("<span class=\"keyword\">").Append(EscapeHTML(word)).Append("</span>");
         }
 
-        protected override void RenderMethod(StringBuilder builder, MethodAPIV m)
-        {
-            builder.Append("<a id=\"").Append(m.Id).Append("\" class=\"name commentable\">").
-                Append(m.Name).Append("</a>");
-        }
-
         protected override void RenderName(StringBuilder builder, string word)
         {
             builder.Append("<span class=\"name\">").Append(EscapeHTML(word)).Append("</span>");
-        }
-
-        protected override void RenderNamespace(StringBuilder builder, NamespaceAPIV ns)
-        {
-            builder.Append("<span id=\"").Append(ns.NavigationID).Append("\" class=\"name\">")
-                .Append(EscapeHTML(ns.Name)).Append("</span>");
         }
 
         protected override void RenderNewline(StringBuilder builder)

@@ -13,11 +13,11 @@ namespace APIView
     /// </summary>
     public class NamedTypeAPIV
     {
+        public string Id { get; set; }
         public string Name { get; set; }
         public string TypeKind { get; set; }
         public TypeReferenceAPIV EnumUnderlyingType { get; set; }
         public string Accessibility { get; set; }
-        public string NavigationID { get; set; }
 
         public EventAPIV[]  Events { get; set; }
         public FieldAPIV[] Fields { get; set; }
@@ -41,7 +41,7 @@ namespace APIView
                 this.EnumUnderlyingType = new TypeReferenceAPIV(symbol.EnumUnderlyingType);
             this.Accessibility = symbol.DeclaredAccessibility.ToString().ToLower();
 
-            this.NavigationID = symbol.ConstructedFrom.ToDisplayString();
+            this.Id = symbol.ConstructedFrom.ToDisplayString();
 
             var events = new List<EventAPIV>();
             var fields = new List<FieldAPIV>();
@@ -112,10 +112,10 @@ namespace APIView
 
         public override string ToString()
         {
-            var returnString = new StringBuilder();
             var renderer = new TextRendererAPIV();
-            renderer.Render(this, returnString);
-            return returnString.ToString();
+            var list = new StringListAPIV();
+            renderer.Render(this, list);
+            return list.ToString();
         }
     }
 }

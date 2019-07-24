@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
@@ -39,7 +40,7 @@ namespace APIViewWeb
             var segment = await ContainerClient.ListBlobsFlatSegmentAsync(options: new BlobsSegmentOptions() { Details = new BlobListingDetails() { Metadata = true } });
 
             var comments = new List<CommentModel>();
-            foreach (var item in segment.Value.BlobItems)
+            foreach (var item in segment.Value.BlobItems.OrderBy(blob => blob.Properties.CreationTime))
             {
                 foreach (var pair in item.Metadata)
                 {

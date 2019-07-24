@@ -1,5 +1,6 @@
 ﻿using Microsoft.CodeAnalysis;
-using System.Text;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace APIView
 {
@@ -10,6 +11,7 @@ namespace APIView
     /// </summary>
     public class PropertyAPIV
     {
+        public string Id { get; set; }
         public string Name { get; set; }
         public TypeReferenceAPIV Type { get; set; }
         public string Accessibility { get; set; }
@@ -26,6 +28,7 @@ namespace APIView
         /// <param name="symbol">The symbol representing the property.</param>
         public PropertyAPIV(IPropertySymbol symbol)
         {
+            this.Id = symbol.ToDisplayString();
             this.Name = symbol.Name;
             this.Type = new TypeReferenceAPIV(symbol.Type);
             this.Accessibility = symbol.DeclaredAccessibility.ToString().ToLower();
@@ -39,10 +42,10 @@ namespace APIView
 
         public override string ToString()
         {
-            var returnString = new StringBuilder();
             var renderer = new TextRendererAPIV();
-            renderer.Render(this, returnString);
-            return returnString.ToString();
+            var list = new StringListAPIV();
+            renderer.Render(this, list);
+            return list.First().DisplayString;
         }
     }
 }

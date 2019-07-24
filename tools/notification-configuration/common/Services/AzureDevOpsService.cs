@@ -12,6 +12,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.Services.Common;
 using Microsoft.VisualStudio.Services.Identity.Client;
 using Microsoft.VisualStudio.Services.Identity;
+using System.Threading;
 
 namespace NotificationConfiguration.Services
 {
@@ -23,6 +24,7 @@ namespace NotificationConfiguration.Services
         private readonly VssConnection connection;
         private readonly ILogger<AzureDevOpsService> logger;
         private Dictionary<Type, VssHttpClientBase> clientCache = new Dictionary<Type, VssHttpClientBase>();
+        private SemaphoreSlim clientCacheSemaphore = new SemaphoreSlim(1);
 
         public static AzureDevOpsService CreateAzureDevOpsService(string token, string url, ILogger<AzureDevOpsService> logger)
         {
@@ -48,13 +50,20 @@ namespace NotificationConfiguration.Services
             where T : VssHttpClientBase
         {
             var type = typeof(T);
+            T result;
+            await clientCacheSemaphore.WaitAsync();
             if (clientCache.ContainsKey(type))
             {
-                return (T)clientCache[type];
+                
+                result = (T)clientCache[type];
+            }
+            else
+            {
+                result = await connection.GetClientAsync<T>();
+                clientCache.Add(type, result);
             }
 
-            var result = await connection.GetClientAsync<T>();
-            clientCache.Add(type, result);
+            clientCacheSemaphore.Release();
             return result;
         }
 

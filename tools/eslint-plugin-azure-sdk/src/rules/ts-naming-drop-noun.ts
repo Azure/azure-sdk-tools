@@ -53,7 +53,7 @@ export = {
             if (typeIdentifier.name === className) {
               const methodIdentifier = method.key as Identifier;
               const methodName = methodIdentifier.name;
-              const serviceName = methodName.substring(
+              const serviceName = className.substring(
                 0,
                 className.indexOf("Client")
               );
@@ -61,7 +61,7 @@ export = {
               if (regex.test(methodName)) {
                 context.report({
                   node: method,
-                  message: `${className}'s method ${methodName} returns an object of type ${className} and thus shouldn't include ${serviceName} in its name`
+                  message: `${className}'s method ${methodName} returns an instance of ${className} and shouldn't include ${serviceName} in its name`
                 });
               }
             }

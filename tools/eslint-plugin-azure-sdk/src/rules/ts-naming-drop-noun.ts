@@ -45,7 +45,7 @@ export = {
           const TSFunction = method.value as TSESTree.FunctionExpression;
           if (
             TSFunction.returnType !== undefined &&
-            TSFunction.returnType.typeAnnotation.type ==
+            TSFunction.returnType.typeAnnotation.type ===
               AST_NODE_TYPES.TSTypeReference
           ) {
             const typeIdentifier = TSFunction.returnType.typeAnnotation

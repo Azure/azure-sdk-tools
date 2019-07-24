@@ -44,7 +44,7 @@ class Class {
   /* source code here */
 }
 // Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License.
+// Licensed under the MIT license.
 ```
 
 ## [Source](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#github-source-headers)

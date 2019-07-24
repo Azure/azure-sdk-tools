@@ -4,46 +4,56 @@
     ViewData["Title"] = "Review";
 }
 
-<pre>@Html.Raw(Model.AssemblyModel)</pre>
-
-<div>
-    <h3>Comments</h3>
-    <br />
-
-    @if (Model.Comments != null && Model.Comments.Any())
-    {
-        @foreach (var comment in Model.Comments)
+<table class="code-window border rounded-1">
+    <tbody>
+        @foreach (var line in Model.AssemblyModel)
         {
-            <div class="commentBox">
-                <b>Element: </b><a href="#@comment.ElementId">@comment.ElementId</a>
-                <br /><br />
-                <span>@comment.Comment</span>
-                <br /><br />
-
-                <form asp-page-handler="delete" method="post" asp-route-id="@Model.Id">
-                    <input type="hidden" name="commentId" value=@comment.Id>
-                    <button class="btn btn-outline-dark">Delete</button>
-                </form>
-            </div>
-            <br />
+        <tr class="code-line"><td class="code"><span class="code-inner">@Html.Raw(line.DisplayString)</span></td></tr>
+        @foreach (var elementId in Model.Comments.Keys)
+        {
+        @if (elementId == line.ElementId) {
+        <tr class="comment-box">
+            <td class="comment-cell border-top border-bottom" colspan="4">
+                <div class="border comment-holder rounded-1">
+                    <div class="comment-thread-contents">
+                        @foreach (var comment in Model.Comments[elementId]) 
+                        {
+                        <div class="review-comment">
+                            <div class="unminimized-comment">
+                                <h4><strong class="author">Anonymous</strong></h4>
+                                <div class="comment-body">
+                                    <p>@comment.Comment</p>
+                                </div>
+                                <form class="comment-delete-button" asp-page-handler="delete" method="post" asp-route-id="@Model.Id">
+                                    <input type="hidden" name="commentId" value=@comment.Id>
+                                    <button class="btn btn-outline-dark">Delete</button>
+                                </form>
+                            </div>
+                        </div>
+                        }
+                        <div class="review-thread-reply">
+                            <button data-element-id="@line.ElementId" type="button" class="review-thread-reply-button text-muted text-left form-control">Reply...</button>
+                        </div>
+                    </div>
+                </div>
+            </td>
+        </tr>
         }
-    }
-    else
-    {
-        <span>Click on a named type or method definition to leave a comment.</span>
-    }
-</div>
+        }
+        }
+    </tbody>
+</table>
 
 <br />
-
-<form id="commentForm" class="comment" method="post" asp-route-id="@Model.Id">
-    <div class="form-group">
-        <label>ID:</label>
-        <input type="text" readonly id="idBox" asp-for="Comment.ElementId" class="form-control" />
+<div id="comment-form-template">
+    <div class="comment-form new-thread-comment">
+        <form class="new-thread-comment-form comment" method="post" asp-route-id="@Model.Id">
+            <input type="hidden" asp-for="Comment.ElementId" class="id-box" />
+            <div class="new-comment-content">
+                <textarea class="new-thread-comment-text form-control" asp-for="Comment.Comment" rows="3"></textarea>
+            </div>
+            <button type="submit" name="submit" value="Submit" class="thread-comment-submit btn btn-outline-dark">Add Comment</button>
+            <button type="button" name="cancel" value="Cancel" class="comment-cancel-button btn btn-outline-dark">Cancel</button>
+        </form>
     </div>
-    <div class="form-group">
-        <label>Comment:</label>
-        <textarea id="commentThread" asp-for="Comment.Comment" class="form-control" rows="3"></textarea>
-    </div>
-    <button type="submit" id="submitButton" class="btn btn-outline-dark">Add Comment</button>
-</form>
+</div>

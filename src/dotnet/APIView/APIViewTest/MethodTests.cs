@@ -4,6 +4,8 @@ using Xunit;
 using System;
 using System.Text;
 using System.Reflection;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace APIViewTest
 {
@@ -35,7 +37,7 @@ namespace APIViewTest
             var methodSymbol = (IMethodSymbol)TestResource.GetTestMember("TestLibrary.PublicInterface`1", "TypeParamParamsMethod");
             MethodAPIV method = new MethodAPIV(methodSymbol);
 
-            Assert.Equal("int TypeParamParamsMethod<T>(T param, string str = \"hello\");", method.ToString());
+            Assert.Equal("int TypeParamParamsMethod<T>(T param, string str = \"hello\");", method.ToString().Replace(Environment.NewLine, ""));
         }
 
         [Fact]
@@ -150,11 +152,11 @@ namespace APIViewTest
                 Parameters = new ParameterAPIV[] { p },
                 TypeParameters = new TypeParameterAPIV[] { }
             };
-            var builder = new StringBuilder();
             var renderer = new HTMLRendererAPIV();
-            renderer.Render(m, builder);
+            var list = new StringListAPIV();
+            renderer.Render(m, list);
             Assert.Equal("<span class=\"keyword\">public</span> <a href=\"#TestClass\" class=\"class\">TestClass</a>(<span class=\"keyword\">int</span> num" +
-                " = <span class=\"value\">2</span>) { }", builder.ToString());
+                " = <span class=\"value\">2</span>) { }", list.ToString());
         }
 
         [Fact]
@@ -193,11 +195,11 @@ namespace APIViewTest
                 Parameters = new ParameterAPIV[] { },
                 TypeParameters = new TypeParameterAPIV[] { }
             };
-            var builder = new StringBuilder();
             var renderer = new HTMLRendererAPIV();
-            renderer.Render(m, builder);
-            Assert.Equal("[<a href=\"#\" class=\"class\">TestAttribute</a>(<span class=\"value\">Test</span>, <span class=\"value\">\"String\"</span>)]<br />" +
-                "<span class=\"keyword\">public</span> <span class=\"keyword\">void</span> <a id=\"\" class=\"name commentable\">TestMethod</a>() { }", builder.ToString());
+            var list = new StringListAPIV();
+            renderer.Render(m, list);
+            Assert.Equal("[<a href=\"#\" class=\"class\">TestAttribute</a>(<span class=\"value\">Test</span>, <span class=\"value\">\"String\"</span>)]" + Environment.NewLine +
+                "<span class=\"keyword\">public</span> <span class=\"keyword\">void</span> <a id=\"\" class=\"name commentable\">TestMethod</a>() { }", list.ToString());
         }
     }
 }

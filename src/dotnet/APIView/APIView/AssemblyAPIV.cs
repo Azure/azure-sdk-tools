@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
@@ -75,7 +76,8 @@ namespace APIView
         public override string ToString()
         {
             var renderer = new TextRendererAPIV();
-            return renderer.Render(this);
+            var lines = renderer.Render(this);
+            return lines.ToString();
         }
     }
 }

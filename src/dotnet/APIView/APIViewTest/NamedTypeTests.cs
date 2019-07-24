@@ -4,6 +4,7 @@ using Xunit;
 using System;
 using System.Text;
 using TestLibrary;
+using System.Collections.Generic;
 
 namespace APIViewTest
 {
@@ -139,7 +140,7 @@ namespace APIViewTest
             var namedTypeSymbol = (INamedTypeSymbol)TestResource.GetTestMember("TestLibrary.publicDelegate");
             NamedTypeAPIV publicDelegate = new NamedTypeAPIV(namedTypeSymbol);
 
-            Assert.Equal("public delegate int publicDelegate(int num = 10) { }", publicDelegate.ToString());
+            Assert.Equal("public delegate int publicDelegate(int num = 10) { }", publicDelegate.ToString().Replace(Environment.NewLine, ""));
         }
         
         [Fact]
@@ -189,7 +190,7 @@ namespace APIViewTest
                 Name = "ImplementingClass",
                 TypeKind = "class",
                 Accessibility = "public",
-                NavigationID = "ImplementingClass",
+                Id = "ImplementingClass",
                 Events = new EventAPIV[] { },
                 Fields = new FieldAPIV[] { },
                 Implementations = new TypeReferenceAPIV[] { new TypeReferenceAPIV(new TokenAPIV[] { new TokenAPIV("BaseClass", TypeReferenceAPIV.TokenType.ClassType) }) },
@@ -198,12 +199,12 @@ namespace APIViewTest
                 Properties = new PropertyAPIV[] { p },
                 TypeParameters = new TypeParameterAPIV[] { }
             };
-            var builder = new StringBuilder();
             var renderer = new HTMLRendererAPIV();
-            renderer.Render(nt, builder);
+            var list = new StringListAPIV();
+            renderer.Render(nt, list);
             Assert.Equal("<span class=\"keyword\">public</span> <span class=\"keyword\">class</span> <a href=\"#\" id=\"ImplementingClass\" class=\"class commentable\">ImplementingClass</a> : " +
-                "<a href=\"#\" class=\"class\">BaseClass</a> {<br />    <span class=\"keyword\">protected</span> <span class=\"keyword\">string</span> <span class" +
-                "=\"name\">TestProperty</span> { <span class=\"keyword\">get</span>; <span class=\"keyword\">set</span>; }<br />}", builder.ToString());
+                "<a href=\"#\" class=\"class\">BaseClass</a> {" + Environment.NewLine + "    <span class=\"keyword\">protected</span> <span class=\"keyword\">string</span> <a id=\"\" class" +
+                "=\"name commentable\">TestProperty</a> { <span class=\"keyword\">get</span>; <span class=\"keyword\">set</span>; }" + Environment.NewLine + "}", list.ToString());
         }
 
         [Fact]
@@ -220,7 +221,7 @@ namespace APIViewTest
                 Name = "TestInterface",
                 TypeKind = "interface",
                 Accessibility = "public",
-                NavigationID = "TestInterface",
+                Id = "TestInterface",
                 Events = new EventAPIV[] { },
                 Fields = new FieldAPIV[] { },
                 Implementations = new TypeReferenceAPIV[] { },
@@ -229,11 +230,11 @@ namespace APIViewTest
                 Properties = new PropertyAPIV[] { },
                 TypeParameters = new TypeParameterAPIV[] { tp }
             };
-            var builder = new StringBuilder();
             var renderer = new HTMLRendererAPIV();
-            renderer.Render(nt, builder);
+            var list = new StringListAPIV();
+            renderer.Render(nt, list);
             Assert.Equal("<span class=\"keyword\">public</span> <span class=\"keyword\">interface</span> <a href=\"#\" id=\"TestInterface\" class=\"class commentable\">TestInterface</a>&lt;" +
-                "<a href=\"#T\" class=\"type\">T</a>&gt; {<br />}", builder.ToString());
+                "<a href=\"#T\" class=\"type\">T</a>&gt; {" + Environment.NewLine + "}", list.ToString());
         }
     }
 }

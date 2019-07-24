@@ -13,8 +13,8 @@ namespace APIView
     /// </summary>
     public class NamespaceAPIV
     {
+        public string Id { get; set; }
         public string Name { get; set; }
-        public string NavigationID { get; set; }
 
         public NamedTypeAPIV[] NamedTypes { get; set; }
         public NamespaceAPIV[] Namespaces { get; set; }
@@ -28,7 +28,7 @@ namespace APIView
         public NamespaceAPIV(INamespaceSymbol symbol)
         {
             this.Name = symbol.ToDisplayString();
-            this.NavigationID = symbol.ToDisplayString();
+            this.Id = symbol.ToDisplayString();
 
             List<NamedTypeAPIV> namedTypes = new List<NamedTypeAPIV>();
             List<NamespaceAPIV> namespaces = new List<NamespaceAPIV>();
@@ -48,10 +48,10 @@ namespace APIView
 
         public override string ToString()
         {
-            var returnString = new StringBuilder();
             var renderer = new TextRendererAPIV();
-            renderer.Render(this, returnString);
-            return returnString.ToString();
+            var list = new StringListAPIV();
+            renderer.Render(this, list);
+            return list.ToString();
         }
     }
 }

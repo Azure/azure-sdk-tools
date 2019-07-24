@@ -29,6 +29,11 @@ namespace APIView
             builder.Append(t.DisplayString);
         }
 
+        protected override void RenderCommentable(StringBuilder builder, string id, string name)
+        {
+            builder.Append(name);
+        }
+
         protected override void RenderConstructor(StringBuilder builder, MethodAPIV m)
         {
             builder.Append(m.Name);
@@ -39,19 +44,9 @@ namespace APIView
             builder.Append(word);
         }
 
-        protected override void RenderMethod(StringBuilder builder, MethodAPIV m)
-        {
-            builder.Append(m.Name);
-        }
-
         protected override void RenderName(StringBuilder builder, string word)
         {
             builder.Append(word);
-        }
-
-        protected override void RenderNamespace(StringBuilder builder, NamespaceAPIV ns)
-        {
-            builder.Append(ns.Name);
         }
 
         protected override void RenderNewline(StringBuilder builder)

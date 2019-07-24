@@ -2,6 +2,8 @@
 using APIView;
 using Xunit;
 using System.Text;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace APIViewTest
 {
@@ -97,11 +99,11 @@ namespace APIViewTest
                 Name = "publicString"
             };
             f.Type.IsString = true;
-            var builder = new StringBuilder();
             var renderer = new HTMLRendererAPIV();
-            renderer.Render(f, builder);
+            var list = new StringListAPIV();
+            renderer.Render(f, list);
             Assert.Equal("<span class=\"keyword\">public</span> <span class=\"keyword\">static</span> <span class=\"keyword\">const</span> <span class=\"keyword\">string</span>" +
-                " <span class=\"name\">publicString</span> = <span class=\"value\">\"constant string\"</span>;", builder.ToString());
+                " <a id=\"\" class=\"name commentable\">publicString</a> = <span class=\"value\">\"constant string\"</span>;", list.ToString());
         }
     }
 }

@@ -36,6 +36,7 @@ export = {
       "@azure/azure-sdk/ts-doc-internal": "error",
       "@azure/azure-sdk/ts-error-handling": "off",
       "@azure/azure-sdk/ts-modules-only-named": "error",
+      "@azure/azure-sdk/ts-naming-drop-noun": "warn",
       "@azure/azure-sdk/ts-no-const-enums": "warn",
       "@azure/azure-sdk/ts-package-json-author": "error",
       "@azure/azure-sdk/ts-package-json-bugs": "error",

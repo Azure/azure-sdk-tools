@@ -26,43 +26,44 @@ The list of approved verbs and their uses is as follows:
 ```ts
 // ignore parameter and return types for the purposes of this rule
 class ServiceClient {
-    createItem(): void {};
-    upsertItem(): void {};
-    setItem(): void {};
-    updateItem(): void {};
-    replaceItem(): void {};
-    appendItem(): void {};
-    addItem(): void {};
-    getItem(): void {};
-    listItems(): void {};
-    itemExists(): void {};
-    deleteItem(): void {};
-    removeItem(): void {};
+  createItem(): void {}
+  upsertItem(): void {}
+  setItem(): void {}
+  updateItem(): void {}
+  replaceItem(): void {}
+  appendItem(): void {}
+  addItem(): void {}
+  getItem(): void {}
+  listItems(): void {}
+  itemExists(): void {}
+  deleteItem(): void {}
+  removeItem(): void {}
 }
 ```
 
 ```ts
 // not all verbs are required, but all methods must use an approved verb
 class ServiceClient {
-    createItem(): void {};
-    upsertItem(): void {};
-    setItem(): void {};
-    updateItem(): void {};
-    replaceItem(): void {};
-    appendItem(): void {};
+  createItem(): void {}
+  upsertItem(): void {}
+  setItem(): void {}
+  updateItem(): void {}
+  replaceItem(): void {}
+  appendItem(): void {}
+}
 ```
 
 ```ts
 // private methods are ignored
 class ServiceClient {
-    private moveItem(): void {}
+  private moveItem(): void {}
 }
 ```
 
 ```ts
 // classes not suffixed with "Client" are ignored
 class ServiceItem {
-    moveItem(): void {}
+  moveItem(): void {}
 }
 ```
 
@@ -70,7 +71,7 @@ class ServiceItem {
 
 ```ts
 class ServiceClient {
-    moveItem(): void {}
+  moveItem(): void {}
 }
 ```
 

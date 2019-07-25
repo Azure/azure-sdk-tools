@@ -8,7 +8,9 @@
     <div class="col-md-12">
         @if (!User.Identity.IsAuthenticated)
         {
-            <a asp-action="Login" asp-controller="Account" class="btn btn-outline-dark">Log In with GitHub</a>
+            <p class="info-text">You're currently not logged into a GitHub account. You can still view assemblies and read comments, but cannot make edits.</p>
+            <p class="info-text">In order to upload and comment on assemblies, please log in by clicking the button below.</p>
+            <a asp-action="Login" asp-controller="Account" class="login-button btn btn-outline-dark">Log in with GitHub</a>
         }
         else
         {

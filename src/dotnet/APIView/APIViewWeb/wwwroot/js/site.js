@@ -25,7 +25,7 @@ $(function () {
                 thread.after(commentForm);
             }
             else {
-                commentForm.insertAfter(thisRow).wrap("<tr>").wrap("<td>");
+                commentForm.insertAfter(thisRow).wrap("<tr>").wrap("<td class=\"new-thread\">");
             }
         }
 

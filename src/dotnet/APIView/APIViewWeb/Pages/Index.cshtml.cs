@@ -15,8 +15,6 @@ namespace APIViewWeb.Pages
 
         public string GitHubUrl { get; set; }
 
-        public IReadOnlyList<Repository> Repositories { get; set; }
-
         public void OnGetAsync()
         {
             if (User.Identity.IsAuthenticated)

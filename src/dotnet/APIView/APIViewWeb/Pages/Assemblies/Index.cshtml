@@ -13,9 +13,12 @@
         <td>
             <a asp-page="./Review" asp-route-id="@assembly.id">Review</a>
         </td>
-        <td>
-            <a asp-page="./Delete" asp-route-id="@assembly.id">Delete</a>
-        </td>
+        @if (User.Identity.IsAuthenticated)
+        {
+            <td>
+                <a asp-page="./Delete" asp-route-id="@assembly.id">Delete</a>
+            </td>
+        }
     </tr>
     <br />
 }

@@ -27,6 +27,8 @@ namespace APIViewWeb.Pages.Assemblies
 
         public LineAPIV[] AssemblyModel { get; set; }
 
+        public string AvatarUrl { get; set; }
+
         [BindProperty]
         public CommentModel Comment { get; set; }
 
@@ -58,9 +60,15 @@ namespace APIViewWeb.Pages.Assemblies
             }
 
             if (User.Identity.IsAuthenticated)
+            {
                 Username = User.FindFirst(c => c.Type == "urn:github:login")?.Value;
+                AvatarUrl = "https://github.com/" + Username + ".png";
+            }
             else
-                Username = "Anonymous";
+            {
+                Username = "anonymous";
+                AvatarUrl = "https://s3.amazonaws.com/spoonflower/public/design_thumbnails/0803/3797/dusty-rose_mirror.png";
+            }
         }
 
         public async Task<ActionResult> OnPostAsync(string id, string cancel)

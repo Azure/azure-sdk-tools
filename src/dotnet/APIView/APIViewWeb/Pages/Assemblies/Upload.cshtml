@@ -4,23 +4,26 @@
     ViewData["Title"] = "Upload";
 }
 
-<h1>Upload a DLL</h1>
-<div class="row">
-    <section>
-        <form method="post" enctype="multipart/form-data">
-            <div class="form-group">
-                <div class="col-md-10">
-                    <p>Upload an API assembly for review using this form:</p>
-                    <input type="file" name="file" />
+@if (User.Identity.IsAuthenticated)
+{
+    <h1>Upload a DLL</h1>
+    <div class="row">
+        <section>
+            <form method="post" enctype="multipart/form-data">
+                <div class="form-group">
+                    <div class="col-md-10">
+                        <p>Upload an API assembly for review using this form:</p>
+                        <input type="file" name="file" />
+                    </div>
                 </div>
-            </div>
-            <div class="form-group">
-                <div class="col-md-10">
-                    <input type="submit" value="Upload" />
+                <div class="form-group">
+                    <div class="col-md-10">
+                        <input type="submit" value="Upload" />
+                    </div>
                 </div>
-            </div>
-        </form>
-    </section>
-</div>
-<hr />
+            </form>
+        </section>
+    </div>
+    <hr />
+}
 

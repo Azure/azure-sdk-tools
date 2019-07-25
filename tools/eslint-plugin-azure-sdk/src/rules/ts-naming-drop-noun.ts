@@ -9,7 +9,7 @@ import {
 } from "@typescript-eslint/experimental-utils";
 import { Rule } from "eslint";
 import { ClassDeclaration, MethodDefinition, Identifier } from "estree";
-import { getRuleMetaData } from "../utils";
+import { getPublicMethods, getRuleMetaData } from "../utils";
 
 //------------------------------------------------------------------------------
 // Rule Definition
@@ -31,17 +31,7 @@ export = {
 
         const className = node.id.name;
 
-        const publicMethods = node.body.body.filter(
-          (method: MethodDefinition): boolean => {
-            const TSMethod = method as TSESTree.MethodDefinition;
-            return (
-              method.type === "MethodDefinition" &&
-              TSMethod.accessibility !== "private"
-            );
-          }
-        );
-        publicMethods.forEach((method: MethodDefinition): void => {
-          //const key = method.key as Identifier;
+        getPublicMethods(node).forEach((method: MethodDefinition): void => {
           const TSFunction = method.value as TSESTree.FunctionExpression;
           if (
             TSFunction.returnType !== undefined &&

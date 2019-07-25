@@ -3,9 +3,13 @@
  * @author Arpan Laha
  */
 
-import { ParserServices } from "@typescript-eslint/experimental-utils";
+import {
+  ParserServices,
+  TSESTree
+} from "@typescript-eslint/experimental-utils";
 import { Rule } from "eslint";
 import { SourceFile, Symbol as TSSymbol } from "typescript";
+import { ClassDeclaration, MethodDefinition } from "estree";
 
 /**
  * Gets all Symbols of Types of all top-level exports from a package.
@@ -116,3 +120,11 @@ export const getLocalExports = (
 
   return localExports;
 };
+
+export const getPublicMethods = (node: ClassDeclaration): MethodDefinition[] =>
+  node.body.body.filter((method: MethodDefinition): boolean => {
+    const TSMethod = method as TSESTree.MethodDefinition;
+    return (
+      method.type === "MethodDefinition" && TSMethod.accessibility !== "private"
+    );
+  });

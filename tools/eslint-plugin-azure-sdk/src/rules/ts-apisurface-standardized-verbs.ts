@@ -3,10 +3,9 @@
  * @author Arpan Laha
  */
 
-import { TSESTree } from "@typescript-eslint/experimental-utils";
 import { Rule } from "eslint";
 import { ClassDeclaration, Identifier, MethodDefinition } from "estree";
-import { getRuleMetaData } from "../utils";
+import { getPublicMethods, getRuleMetaData } from "../utils";
 
 //------------------------------------------------------------------------------
 // Rule Definition
@@ -45,16 +44,7 @@ export = {
           return;
         }
 
-        const publicMethods = node.body.body.filter(
-          (method: MethodDefinition): boolean => {
-            const TSMethod = method as TSESTree.MethodDefinition;
-            return (
-              method.type === "MethodDefinition" &&
-              TSMethod.accessibility !== "private"
-            );
-          }
-        );
-        publicMethods.forEach((method: MethodDefinition): void => {
+        getPublicMethods(node).forEach((method: MethodDefinition): void => {
           const key = method.key as Identifier;
           if (
             verbRegexes.every(

@@ -40,7 +40,8 @@
     "format:check": "prettier --check \"./**/*.{ts,json,md}\"",
     "format:dist": "prettier --write dist/**/*.{js,json,md}",
     "lint": "eslint src tests --ext .ts && markdownlint README.md docs",
-    "test": "npm run clean && tsc -p tsconfig.json && mocha --timeout 10000 --recursive dist/tests"
+    "test": "npm run clean && tsc -p tsconfig.json && mocha --timeout 10000 --recursive dist/tests",
+    "test-temp": "npm run clean && tsc -p tsconfig.json && mocha --timeout 10000 dist/tests/rules/ts-naming-subclients.js"
   },
   "dependencies": {
     "glob": "^7.1.4",

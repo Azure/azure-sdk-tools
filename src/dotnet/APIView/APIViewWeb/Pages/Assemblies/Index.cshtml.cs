@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
+using APIViewWeb.Models;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace APIViewWeb.Pages.Assemblies
@@ -13,7 +14,7 @@ namespace APIViewWeb.Pages.Assemblies
             this.assemblyRepository = assemblyRepository;
         }
 
-        public List<(string id, string name)> Assemblies { get; set; }
+        public List<AssemblyModel> Assemblies { get; set; }
 
         public async Task OnGetAsync()
         {

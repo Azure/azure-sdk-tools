@@ -34,12 +34,15 @@ namespace APIViewWeb.Pages.Assemblies
 
         public async Task<IActionResult> OnPostAsync(string id)
         {
-            if (id == null)
+            if (User.Identity.IsAuthenticated)
             {
-                return NotFound();
-            }
+                if (id == null)
+                {
+                    return NotFound();
+                }
 
-            await assemblyRepository.DeleteAssemblyAsync(id);
+                await assemblyRepository.DeleteAssemblyAsync(id);
+            }
 
             return RedirectToPage("./Index");
         }

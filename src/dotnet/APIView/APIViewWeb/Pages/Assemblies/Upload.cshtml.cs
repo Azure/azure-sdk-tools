@@ -22,16 +22,20 @@ namespace APIViewWeb.Pages.Assemblies
 
         public async Task<IActionResult> OnPostAsync(IFormFile file)
         {
-            if (!ModelState.IsValid)
+            if (User.Identity.IsAuthenticated)
             {
-                return Page();
-            }
+                if (!ModelState.IsValid)
+                {
+                    return Page();
+                }
 
-            if (file.Length > 0)
-            {
-                AssemblyModel assemblyModel = new AssemblyModel(file.OpenReadStream(), file.FileName);
-                var id = await assemblyRepository.UploadAssemblyAsync(assemblyModel, file.FileName);
-                return RedirectToPage("Review", new { id });
+                if (file.Length > 0)
+                {
+                    AssemblyModel assemblyModel = new AssemblyModel(file.OpenReadStream(), file.FileName);
+                    assemblyModel.Author = User.FindFirst(c => c.Type == "urn:github:login")?.Value;
+                    var id = await assemblyRepository.UploadAssemblyAsync(assemblyModel);
+                    return RedirectToPage("Review", new { id });
+                }
             }
 
             return RedirectToPage("./Index");

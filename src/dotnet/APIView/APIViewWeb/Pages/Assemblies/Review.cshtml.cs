@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Security.Claims;
-using System.Text;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using APIView;
 using APIViewWeb.Models;
@@ -73,8 +68,12 @@ namespace APIViewWeb.Pages.Assemblies
 
         public async Task<ActionResult> OnPostAsync(string id, string cancel)
         {
-            if (cancel == null)
-                await commentRepository.UploadCommentAsync(Comment, id);
+            if (User.Identity.IsAuthenticated)
+            {
+                if (cancel == null)
+                    await commentRepository.UploadCommentAsync(Comment, id);
+            }
+            
             return RedirectToPage(new { id });
         }
     }

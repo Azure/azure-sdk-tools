@@ -24,12 +24,9 @@ export = {
     ({
       // callback functions
 
-      ClassDeclaration: (node: ClassDeclaration): void => {
-        if (node.id === null || !/Client$/.test(node.id.name)) {
-          return;
-        }
-
-        const className = node.id.name;
+      // call on Client classes
+      "ClassDeclaration[id.name=/Client$/]": (node: ClassDeclaration): void => {
+        const className = node.id!.name;
 
         getPublicMethods(node).forEach((method: MethodDefinition): void => {
           const TSFunction = method.value as TSESTree.FunctionExpression;

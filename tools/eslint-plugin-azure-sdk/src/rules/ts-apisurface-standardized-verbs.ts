@@ -39,11 +39,7 @@ export = {
     ({
       // callback functions
 
-      ClassDeclaration: (node: ClassDeclaration): void => {
-        if (node.id === null || !/Client$/.test(node.id.name)) {
-          return;
-        }
-
+      "ClassDeclaration[id.name=/Client$/]": (node: ClassDeclaration): void => {
         getPublicMethods(node).forEach((method: MethodDefinition): void => {
           const key = method.key as Identifier;
           if (

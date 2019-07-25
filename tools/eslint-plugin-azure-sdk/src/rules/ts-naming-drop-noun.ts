@@ -30,6 +30,8 @@ export = {
 
         getPublicMethods(node).forEach((method: MethodDefinition): void => {
           const TSFunction = method.value as TSESTree.FunctionExpression;
+
+          // check for proper return type configuration
           if (
             TSFunction.returnType !== undefined &&
             TSFunction.returnType.typeAnnotation.type ===
@@ -37,6 +39,8 @@ export = {
           ) {
             const typeIdentifier = TSFunction.returnType.typeAnnotation
               .typeName as Identifier;
+
+            // if return type is the class
             if (typeIdentifier.name === className) {
               const methodIdentifier = method.key as Identifier;
               const methodName = methodIdentifier.name;
@@ -45,6 +49,8 @@ export = {
                 className.indexOf("Client")
               );
               const regex = new RegExp(serviceName, "i");
+
+              // report if method name contains the non-client portion of the class name
               if (regex.test(methodName)) {
                 context.report({
                   node: method,

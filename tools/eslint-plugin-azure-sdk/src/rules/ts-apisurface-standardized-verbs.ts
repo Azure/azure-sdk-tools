@@ -39,17 +39,21 @@ export = {
     ({
       // callback functions
 
+      // call on Client classes
       "ClassDeclaration[id.name=/Client$/]": (node: ClassDeclaration): void => {
         getPublicMethods(node).forEach((method: MethodDefinition): void => {
           const key = method.key as Identifier;
+          const methodName = key.name;
+
+          // report if no matches
           if (
             verbRegexes.every(
-              (verbRegex: RegExp): boolean => !verbRegex.test(key.name)
+              (verbRegex: RegExp): boolean => !verbRegex.test(methodName)
             )
           ) {
             context.report({
               node: method,
-              message: `method name ${key.name} does not include one of the approved verb prefixes or suffixes`
+              message: `method name ${methodName} does not include one of the approved verb prefixes or suffixes`
             });
           }
         });

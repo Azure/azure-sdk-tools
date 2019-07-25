@@ -8,7 +8,7 @@ import {
   AST_NODE_TYPES
 } from "@typescript-eslint/experimental-utils";
 import { Rule } from "eslint";
-import { ClassDeclaration, MethodDefinition, Identifier } from "estree";
+import { ClassDeclaration, Identifier, MethodDefinition } from "estree";
 import { getPublicMethods, getRuleMetaData } from "../utils";
 
 //------------------------------------------------------------------------------

@@ -91,7 +91,18 @@ namespace NotificationConfiguration.Services
         public async Task<BuildDefinition> GetPipelineAsync(string projectName, int pipelineId)
         {
             var client = await GetClientAsync<BuildHttpClient>();
-            return await client.GetDefinitionAsync(projectName, pipelineId);
+            BuildDefinition result;
+            try
+            {
+                result = await client.GetDefinitionAsync(projectName, pipelineId);
+            }
+            catch (DefinitionNotFoundException)
+            {
+                result = default;
+            }
+
+
+            return result;
         }
 
         /// <summary>

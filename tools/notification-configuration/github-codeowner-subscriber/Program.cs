@@ -86,7 +86,7 @@ namespace GitHubCodeownerSubscriber
                     });
 
                 var pipelineGroups = await Task.WhenAll(pipelineGroupTasks);
-                var filteredGroups = pipelineGroups.Where(group => group.Pipeline.Path.StartsWith(pathPrefix));
+                var filteredGroups = pipelineGroups.Where(group => group.Pipeline != default && group.Pipeline.Path.StartsWith(pathPrefix));
 
                 foreach (var group in filteredGroups)
                 {

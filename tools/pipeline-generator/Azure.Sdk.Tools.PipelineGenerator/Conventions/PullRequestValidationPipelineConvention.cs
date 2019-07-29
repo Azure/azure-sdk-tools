@@ -6,10 +6,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PipelineGenerator
+namespace PipelineGenerator.Conventions
 {
     public class PullRequestValidationPipelineConvention : PipelineConvention
     {
+        private const string ReportBuildStatusKey = "reportBuildStatus";
+
         public override string SearchPattern => "ci.yml";
 
         public PullRequestValidationPipelineConvention(ILogger logger, PipelineGenerationContext context) : base(logger, context)
@@ -79,6 +81,20 @@ namespace PipelineGenerator
                     prTrigger.Forks.Enabled = true;
                     hasChanges = true;
                 }
+            }
+
+            if (definition.Repository.Properties.TryGetValue(ReportBuildStatusKey, out var reportBuildStatusString))
+            {
+                if (!bool.TryParse(reportBuildStatusString, out var reportBuildStatusValue) || !reportBuildStatusValue)
+                {
+                    definition.Repository.Properties[ReportBuildStatusKey] = "true";
+                    hasChanges = true;
+                }
+            }
+            else
+            {
+                definition.Repository.Properties.Add(ReportBuildStatusKey, "true");
+                hasChanges = true;
             }
 
             return Task.FromResult(hasChanges);

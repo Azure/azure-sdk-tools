@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace PipelineGenerator
+namespace PipelineGenerator.Conventions
 {
     public abstract class PipelineConvention
     {
@@ -110,6 +110,7 @@ namespace PipelineGenerator
             var definitionReferences = await buildClient.GetDefinitionsAsync(
                 project: projectReference.Id,
                 name: definitionName,
+                path: Context.DevOpsPath,
                 repositoryId: sourceRepository.Id,
                 repositoryType: "github"
                 );
@@ -166,6 +167,7 @@ namespace PipelineGenerator
             {
                 Name = definitionName,
                 Project = projectReference,
+                Path = Context.DevOpsPath,
                 Repository = buildRepository,
                 Process = new YamlProcess()
                 {

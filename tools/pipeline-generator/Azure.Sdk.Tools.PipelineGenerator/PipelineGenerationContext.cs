@@ -22,9 +22,21 @@ namespace PipelineGenerator
         private string endpoint;
         private string repository;
         private string agentPool;
-        private string[] variableGroups;
+        private int[] variableGroups;
+        private string devOpsPath;
 
-        public PipelineGenerationContext(string organization, string project, string patvar, string endpoint, string repository, string branch, string agentPool, string[] variableGroups, string prefix, bool whatIf)
+        public PipelineGenerationContext(
+            string organization, 
+            string project, 
+            string patvar, 
+            string endpoint, 
+            string repository, 
+            string branch, 
+            string agentPool, 
+            string[] variableGroups,
+            string devOpsPath,
+            string prefix, 
+            bool whatIf)
         {
             this.organization = organization;
             this.project = project;
@@ -33,7 +45,8 @@ namespace PipelineGenerator
             this.repository = repository;
             this.Branch = branch;
             this.agentPool = agentPool;
-            this.variableGroups = variableGroups;
+            this.variableGroups = ParseIntArray(variableGroups);
+            this.devOpsPath = devOpsPath;
             this.Prefix = prefix;
             this.WhatIf = whatIf;
         }
@@ -41,6 +54,11 @@ namespace PipelineGenerator
         public string Branch { get; }
         public string Prefix { get; }
         public bool WhatIf { get; }
+        public int[] VariableGroups => this.variableGroups;
+        public string DevOpsPath => this.devOpsPath;
+
+        private int[] ParseIntArray(string[] strs) 
+            => strs.Select(str => int.Parse(str)).ToArray();
 
         private VssConnection cachedConnection;
 

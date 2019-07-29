@@ -2,11 +2,13 @@
 using System.Threading.Tasks;
 using APIView;
 using APIViewWeb.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace APIViewWeb.Pages.Assemblies
 {
+    [Authorize]
     public class ReviewModel : PageModel
     {
         private readonly BlobAssemblyRepository assemblyRepository;
@@ -54,26 +56,15 @@ namespace APIViewWeb.Pages.Assemblies
                     Comments[comment.ElementId].Add(comment);
             }
 
-            if (User.Identity.IsAuthenticated)
-            {
-                Username = User.FindFirst(c => c.Type == "urn:github:login")?.Value;
-                AvatarUrl = "https://github.com/" + Username + ".png";
-            }
-            else
-            {
-                Username = "anonymous";
-                AvatarUrl = "https://s3.amazonaws.com/spoonflower/public/design_thumbnails/0803/3797/dusty-rose_mirror.png";
-            }
+            Username = User.FindFirst(c => c.Type == "urn:github:login")?.Value;
+            AvatarUrl = "https://github.com/" + Username + ".png";
         }
 
         public async Task<ActionResult> OnPostAsync(string id, string cancel)
         {
-            if (User.Identity.IsAuthenticated)
-            {
-                if (cancel == null)
-                    await commentRepository.UploadCommentAsync(Comment, id);
-            }
-            
+            if (cancel == null)
+                await commentRepository.UploadCommentAsync(Comment, id);
+
             return RedirectToPage(new { id });
         }
     }

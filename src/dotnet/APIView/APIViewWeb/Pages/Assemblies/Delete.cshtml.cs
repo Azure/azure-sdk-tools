@@ -1,9 +1,11 @@
 ﻿using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace APIViewWeb.Pages.Assemblies
 {
+    [Authorize]
     public class DeleteModel : PageModel
     {
         private readonly BlobAssemblyRepository assemblyRepository;
@@ -34,15 +36,12 @@ namespace APIViewWeb.Pages.Assemblies
 
         public async Task<IActionResult> OnPostAsync(string id)
         {
-            if (User.Identity.IsAuthenticated)
+            if (id == null)
             {
-                if (id == null)
-                {
-                    return NotFound();
-                }
-
-                await assemblyRepository.DeleteAssemblyAsync(id);
+                return NotFound();
             }
+
+            await assemblyRepository.DeleteAssemblyAsync(id);
 
             return RedirectToPage("./Index");
         }

@@ -1,10 +1,12 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using APIViewWeb.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace APIViewWeb.Pages.Assemblies
 {
+    [Authorize]
     public class IndexModel : PageModel
     {
         private readonly BlobAssemblyRepository assemblyRepository;

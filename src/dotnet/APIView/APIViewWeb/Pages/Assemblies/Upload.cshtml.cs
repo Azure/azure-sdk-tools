@@ -1,11 +1,13 @@
 ﻿using System.Threading.Tasks;
 using APIViewWeb.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace APIViewWeb.Pages.Assemblies
 {
+    [Authorize]
     public class UploadModel : PageModel
     {
         private readonly BlobAssemblyRepository assemblyRepository;
@@ -22,20 +24,17 @@ namespace APIViewWeb.Pages.Assemblies
 
         public async Task<IActionResult> OnPostAsync(IFormFile file)
         {
-            if (User.Identity.IsAuthenticated)
+            if (!ModelState.IsValid)
             {
-                if (!ModelState.IsValid)
-                {
-                    return Page();
-                }
+                return Page();
+            }
 
-                if (file.Length > 0)
-                {
-                    AssemblyModel assemblyModel = new AssemblyModel(file.OpenReadStream(), file.FileName);
-                    assemblyModel.Author = User.FindFirst(c => c.Type == "urn:github:login")?.Value;
-                    var id = await assemblyRepository.UploadAssemblyAsync(assemblyModel);
-                    return RedirectToPage("Review", new { id });
-                }
+            if (file.Length > 0)
+            {
+                AssemblyModel assemblyModel = new AssemblyModel(file.OpenReadStream(), file.FileName);
+                assemblyModel.Author = User.FindFirst(c => c.Type == "urn:github:login")?.Value;
+                var id = await assemblyRepository.UploadAssemblyAsync(assemblyModel);
+                return RedirectToPage("Review", new { id });
             }
 
             return RedirectToPage("./Index");

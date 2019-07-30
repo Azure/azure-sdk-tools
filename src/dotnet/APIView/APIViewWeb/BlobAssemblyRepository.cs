@@ -29,40 +29,39 @@ namespace APIViewWeb
         {
             var result = await ContainerClient.GetBlockBlobClient(id).DownloadAsync();
 
-            // Return a rendering of the AssemblyAPIV object deserialized from JSON.
             using (StreamReader reader = new StreamReader(result.Value.Content))
             {
-                AssemblyAPIV assembly = JsonSerializer.Parse<AssemblyAPIV>(reader.ReadToEnd());
-                return new AssemblyModel(assembly, result.Value.Properties.Metadata.Values.First());
+                return JsonSerializer.Parse<AssemblyModel>(reader.ReadToEnd());
             }
         }
 
-        public async Task<List<(string id, string name)>> FetchAssembliesAsync()
+        public async Task<List<AssemblyModel>> FetchAssembliesAsync()
         {
             var segment = await ContainerClient.ListBlobsFlatSegmentAsync(options: new BlobsSegmentOptions() { Details = new BlobListingDetails() { Metadata = true } });
 
-            var assemblies = new List<(string id, string name)>();
-            foreach (var item in segment.Value.BlobItems)
+            var assemblies = new List<AssemblyModel>();
+            foreach (var item in segment.Value.BlobItems.OrderByDescending(blob => blob.Properties.CreationTime))
             {
                 foreach (var pair in item.Metadata)
                 {
-                    assemblies.Add((id: item.Name, name: pair.Value));
+                    AssemblyModel assembly = await ReadAssemblyContentAsync(pair.Value);
+                    assemblies.Add(assembly);
                 }
             }
             return assemblies;
         }
 
-        public async Task<string> UploadAssemblyAsync(AssemblyModel assemblyModel, string fileName)
+        public async Task<string> UploadAssemblyAsync(AssemblyModel assemblyModel)
         {
             var guid = Guid.NewGuid().ToString();
+            assemblyModel.Id = guid;
             var blob = ContainerClient.GetBlockBlobClient(guid);
 
-            // Store the JSON serialization of the assembly.
-            using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(JsonSerializer.ToString(assemblyModel.Assembly)))) {
+            using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(JsonSerializer.ToString(assemblyModel)))) {
                 await blob.UploadAsync(stream);
             }
             blob = ContainerClient.GetBlockBlobClient(guid);
-            await blob.SetMetadataAsync(new Dictionary<string, string>() { { "name", fileName } });
+            await blob.SetMetadataAsync(new Dictionary<string, string>() { { "id", guid } });
             return guid;
         }
 

@@ -1,5 +1,7 @@
 ﻿using System.Threading.Tasks;
 using APIViewWeb.Models;
+using APIViewWeb.ExtensionMethods;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -30,7 +32,8 @@ namespace APIViewWeb.Pages.Assemblies
             if (file.Length > 0)
             {
                 AssemblyModel assemblyModel = new AssemblyModel(file.OpenReadStream(), file.FileName);
-                var id = await assemblyRepository.UploadAssemblyAsync(assemblyModel, file.FileName);
+                assemblyModel.Author = User.GetGitHubLogin();
+                var id = await assemblyRepository.UploadAssemblyAsync(assemblyModel);
                 return RedirectToPage("Review", new { id });
             }
 

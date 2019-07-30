@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using APIView;
+using APIViewWeb.ExtensionMethods;
 using APIViewWeb.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -23,13 +20,11 @@ namespace APIViewWeb.Pages.Assemblies
         }
 
         public string Id { get; set; }
-
         public LineAPIV[] AssemblyModel { get; set; }
-
         [BindProperty]
         public CommentModel Comment { get; set; }
-
         public Dictionary<string, List<CommentModel>> Comments { get; set; }
+        public string Username { get; set; }
 
         public async Task<ActionResult> OnPostDeleteAsync(string id, string commentId)
         {
@@ -53,12 +48,15 @@ namespace APIViewWeb.Pages.Assemblies
                 else
                     Comments[comment.ElementId].Add(comment);
             }
+
+            Username = User.GetGitHubLogin();
         }
 
         public async Task<ActionResult> OnPostAsync(string id, string cancel)
         {
             if (cancel == null)
                 await commentRepository.UploadCommentAsync(Comment, id);
+
             return RedirectToPage(new { id });
         }
     }

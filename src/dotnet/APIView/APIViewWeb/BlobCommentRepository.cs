@@ -27,7 +27,6 @@ namespace APIViewWeb
         {
             var result = await ContainerClient.GetBlockBlobClient(id).DownloadAsync();
 
-            // Return a rendering of the AssemblyAPIV object deserialized from JSON.
             using (StreamReader reader = new StreamReader(result.Value.Content))
             {
                 CommentModel comment = JsonSerializer.Parse<CommentModel>(reader.ReadToEnd());
@@ -60,7 +59,6 @@ namespace APIViewWeb
             commentModel.Id = guid;
             var blob = ContainerClient.GetBlockBlobClient(guid);
 
-            // Store the JSON serialization of the assembly.
             using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(JsonSerializer.ToString(commentModel))))
             {
                 await blob.UploadAsync(stream);

@@ -35,11 +35,11 @@ $(function () {
         commentForm.find(".comment-cancel-button").click(function () { hideCommentBox(id); });
 
         nextRow.find(".review-thread-reply").hide();
-        return false;
     }
 
     $(".commentable").click(function () {
         showCommentBox(this.id);
+        return false;
     });
 
     $(".review-thread-reply-button").click(function () {

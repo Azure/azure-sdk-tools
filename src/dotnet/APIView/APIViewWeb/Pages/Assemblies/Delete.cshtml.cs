@@ -13,7 +13,7 @@ namespace APIViewWeb.Pages.Assemblies
             this.assemblyRepository = assemblyRepository;
         }
 
-        public string AssemblyContent { get; set; }
+        public string AssemblyName { get; set; }
 
         public async Task<IActionResult> OnGetAsync(string id)
         {
@@ -23,9 +23,9 @@ namespace APIViewWeb.Pages.Assemblies
             }
 
             var assemblyModel = await assemblyRepository.ReadAssemblyContentAsync(id);
-            AssemblyContent = assemblyModel.Assembly.ToString();
+            AssemblyName = assemblyModel.Name.ToString();
 
-            if (AssemblyContent == null)
+            if (AssemblyName == null)
             {
                 return NotFound();
             }

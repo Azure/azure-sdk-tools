@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace APIViewWeb.Pages.Assemblies
 {
-    [Authorize]
     public class UploadModel : PageModel
     {
         private readonly BlobAssemblyRepository assemblyRepository;

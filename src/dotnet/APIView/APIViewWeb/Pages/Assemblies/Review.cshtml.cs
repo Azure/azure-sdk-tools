@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace APIViewWeb.Pages.Assemblies
 {
-    [Authorize]
     public class ReviewModel : PageModel
     {
         private readonly BlobAssemblyRepository assemblyRepository;

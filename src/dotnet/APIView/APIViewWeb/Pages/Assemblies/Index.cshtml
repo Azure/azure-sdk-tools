@@ -1,7 +1,7 @@
 ﻿@page
 @model APIViewWeb.Pages.Assemblies.IndexModel
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Home page";
 }
 
 <table class="table table-hover">
@@ -9,7 +9,6 @@
         <tr>
             <th scope="col">Name</th>
             <th scope="col">Uploader</th>
-            <th scope="col">Upload Time</th>
             <th></th>
             <th></th>
         </tr>
@@ -19,7 +18,7 @@
         {
             <tr>
                 <td>
-                    @Html.Raw(assembly.Name)
+                    <a asp-page="./Review" asp-route-id="@assembly.Id">@assembly.Name</a>
                 </td>
                 <td>
                     @{string url = "https://github.com/" + assembly.Author;}
@@ -47,9 +46,6 @@
                 {
                     <td>@Html.Raw(weeksAgo) weeks ago</td>
                 }
-                <td>
-                    <a asp-page="./Review" asp-route-id="@assembly.Id">Review</a>
-                </td>
                 @if (User.Identity.IsAuthenticated)
                 {
                     <td>

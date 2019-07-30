@@ -1,11 +1,9 @@
 ﻿using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace APIViewWeb.Pages.Assemblies
 {
-    [Authorize]
     public class DeleteModel : PageModel
     {
         private readonly BlobAssemblyRepository assemblyRepository;
@@ -15,7 +13,7 @@ namespace APIViewWeb.Pages.Assemblies
             this.assemblyRepository = assemblyRepository;
         }
 
-        public string AssemblyContent { get; set; }
+        public string AssemblyName { get; set; }
 
         public async Task<IActionResult> OnGetAsync(string id)
         {
@@ -25,9 +23,9 @@ namespace APIViewWeb.Pages.Assemblies
             }
 
             var assemblyModel = await assemblyRepository.ReadAssemblyContentAsync(id);
-            AssemblyContent = assemblyModel.Assembly.ToString();
+            AssemblyName = assemblyModel.Name.ToString();
 
-            if (AssemblyContent == null)
+            if (AssemblyName == null)
             {
                 return NotFound();
             }

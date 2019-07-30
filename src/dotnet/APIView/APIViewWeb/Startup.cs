@@ -36,9 +36,10 @@ namespace APIViewWeb
             services.AddMvc()
                 .SetCompatibilityVersion(CompatibilityVersion.Version_2_1)
                 .AddRazorPagesOptions(options =>
-            {
-                options.Conventions.AddPageRoute("/Pages/Index", "");
-            });
+                {
+                    options.Conventions.AddPageRoute("/Assemblies/Index", "");
+                    options.Conventions.AuthorizeFolder("/Assemblies");
+                });
 
             services.AddSingleton<BlobAssemblyRepository>();
             services.AddSingleton<BlobCommentRepository>();
@@ -47,9 +48,9 @@ namespace APIViewWeb
                 {
                     options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                     options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                    options.DefaultChallengeScheme = "GitHub";
+                    options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 })
-                .AddCookie()
+                .AddCookie(options => options.LoginPath = "/Unauthorized")
                 .AddOAuth("GitHub", options =>
                 {
                     options.ClientId = Configuration.GetValue<string>("APIVIEW_CLIENT_ID");

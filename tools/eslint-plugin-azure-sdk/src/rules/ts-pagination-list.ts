@@ -26,14 +26,16 @@ export = {
 
       // call on Client classes
       "ClassDeclaration[id.name=/Client$/]": (node: ClassDeclaration): void => {
-        const listMethods = getPublicMethods(node).filter(
+        // look for method matching approved list syntax
+        const listMethod = getPublicMethods(node).find(
           (method: MethodDefinition): boolean => {
             const key = method.key as Identifier;
             return !/^list($|([A-Z][a-zA-Z]*s$))/.test(key.name);
           }
         );
 
-        if (listMethods.length === 0) {
+        // report if none found
+        if (listMethod === undefined) {
           context.report({
             node: node,
             message: "no list method found"
@@ -41,24 +43,27 @@ export = {
           return;
         }
 
+        // check for return type existence
+        const TSFunction = listMethod.value as TSESTree.FunctionExpression;
         if (
-          listMethods.every((listMethod: MethodDefinition): boolean => {
-            const TSFunction = listMethod.value as TSESTree.FunctionExpression;
-            if (
-              TSFunction.returnType === undefined ||
-              TSFunction.returnType.typeAnnotation.type !==
-                AST_NODE_TYPES.TSTypeReference
-            ) {
-              return true;
-            }
-            const typeIdentifier = TSFunction.returnType.typeAnnotation
-              .typeName as Identifier;
-            return typeIdentifier.name !== "PagedAsyncIterableIterator";
-          })
+          TSFunction.returnType === undefined ||
+          TSFunction.returnType.typeAnnotation.type !==
+            AST_NODE_TYPES.TSTypeReference
         ) {
           context.report({
-            node: node,
-            message: "list methods do not return a PagedAsyncIterableIterator"
+            node: listMethod,
+            message: "list method does not have a return type"
+          });
+          return;
+        }
+
+        // report if return type is not PagedAsyncIterableIterator
+        const typeIdentifier = TSFunction.returnType.typeAnnotation
+          .typeName as Identifier;
+        if (typeIdentifier.name !== "PagedAsyncIterableIterator") {
+          context.report({
+            node: listMethod,
+            message: "list method does not return a PagedAsyncIterableIterator"
           });
         }
       }

@@ -30,21 +30,12 @@ ruleTester.run("ts-pagination-list", rule, {
     }
   ],
   invalid: [
-    // no list method
-    {
-      code: "class ExampleClient { };",
-      errors: [
-        {
-          message: "ExampleClient does not have a list method"
-        }
-      ]
-    },
     // no return type
     {
       code: "class ExampleClient { listItems() {} };",
       errors: [
         {
-          message: "ExampleClient's list method does not have a return type"
+          message: "list method does not have a return type"
         }
       ]
     },
@@ -53,8 +44,7 @@ ruleTester.run("ts-pagination-list", rule, {
       code: "class ExampleClient { listItems(): PagedIterableIterator {} };",
       errors: [
         {
-          message:
-            "ExampleClient's list method does not return a PagedAsyncIterableIterator"
+          message: "list method does not return a PagedAsyncIterableIterator"
         }
       ]
     }

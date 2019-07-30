@@ -1,6 +1,6 @@
 # ts-pagination-list
 
-Requires clients to include a `list` method that returns a `PagedAsyncIterableIterator`.
+Requires client `list` methods to return a `PagedAsyncIterableIterator`.
 
 ## Examples
 
@@ -15,11 +15,6 @@ class ServiceClient {
 ```
 
 ### Bad
-
-```ts
-// no list method
-class ServiceClient {}
-```
 
 ```ts
 // no return type

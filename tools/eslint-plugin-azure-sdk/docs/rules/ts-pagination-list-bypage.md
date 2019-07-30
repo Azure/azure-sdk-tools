@@ -11,7 +11,7 @@ class ServiceClient {
   listItems(): PagedAsyncIterableIterator<Item> {
     return {
       byPage(continuationToken, maxPageSize) {}
-    }
+    };
   }
 }
 ```
@@ -22,7 +22,7 @@ class ServiceClient {
 // no byPage function
 class ServiceClient {
   listItems(): PagedAsyncIterableIterator<Item> {
-    return {}
+    return {};
   }
 }
 ```
@@ -33,7 +33,7 @@ class ServiceClient {
   listItems(): PagedAsyncIterableIterator<Item> {
     return {
       byPage() {}
-    }
+    };
   }
 }
 ```

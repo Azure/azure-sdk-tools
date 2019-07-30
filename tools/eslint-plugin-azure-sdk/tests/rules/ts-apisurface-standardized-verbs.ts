@@ -43,36 +43,36 @@ ruleTester.run("ts-apifurface-standardized-verbs", rule, {
     },
     // private
     {
-      code: "class ExampleClient { private moveItem(): void {}; };"
+      code: "class ExampleClient { private makeItem(): void {}; };"
     },
     // not client
     {
-      code: "class Example { moveItem(): void {}; };"
+      code: "class Example { makeItem(): void {}; };"
     }
   ],
   invalid: [
     // single error
     {
-      code: "class ExampleClient { moveItem(): void {}; };",
+      code: "class ExampleClient { makeItem(): void {}; };",
       errors: [
         {
           message:
-            "method name moveItem does not include one of the approved verb prefixes or suffixes"
+            "method makeItem uses the banned prefix make, use one of the approved prefixes instead"
         }
       ]
     },
     // mutliple errors
     {
       code:
-        "class ExampleClient { moveItem(): void {}; makeItem(): void {}; };",
+        "class ExampleClient { makeItem(): void {}; eraseItem(): void {}; };",
       errors: [
         {
           message:
-            "method name moveItem does not include one of the approved verb prefixes or suffixes"
+            "method makeItem uses the banned prefix make, use one of the approved prefixes instead"
         },
         {
           message:
-            "method name makeItem does not include one of the approved verb prefixes or suffixes"
+            "method eraseItem uses the banned prefix erase, use one of the approved prefixes instead"
         }
       ]
     }

@@ -1,6 +1,6 @@
 # ts-apisurface-standardized-verbs
 
-Requires all public-facing client methods to use a verb from the approved list of prefixes and suffixes.
+Requires all public-facing client methods to use a verb from the approved list of prefixes and suffixes where possible.
 
 The list of approved verbs and their uses is as follows:
 
@@ -18,6 +18,17 @@ The list of approved verbs and their uses is as follows:
 | `\<noun>Exists`  | key               | `bool`                                     | Return true if the item exists.                                                                              |
 | `delete\<Noun>`  | key               | None                                       | Delete an existing item. Will succeed even if item didn't exist.                                             |
 | `remove\<Noun>`  | key               | None or removed item                       | Remove item from a collection.                                                                               |
+
+In usage, this rule forbids the usage of synonyms of these approved verb prefixes and suffixes, with the following prefixes being the current banned set:
+
+- `erase`
+- `fetch`
+- `getAll`
+- `insertOrUpdate`
+- `make`
+- `pop`
+- `push`
+- `updateOrInsert`
 
 ## Examples
 
@@ -42,28 +53,16 @@ class ServiceClient {
 ```
 
 ```ts
-// not all verbs are required, but all methods must use an approved verb
-class ServiceClient {
-  createItem(): void {}
-  upsertItem(): void {}
-  setItem(): void {}
-  updateItem(): void {}
-  replaceItem(): void {}
-  appendItem(): void {}
-}
-```
-
-```ts
 // private methods are ignored
 class ServiceClient {
-  private moveItem(): void {}
+  private makeItem(): void {}
 }
 ```
 
 ```ts
 // classes not suffixed with "Client" are ignored
 class ServiceItem {
-  moveItem(): void {}
+  makeItem(): void {}
 }
 ```
 
@@ -71,7 +70,7 @@ class ServiceItem {
 
 ```ts
 class ServiceClient {
-  moveItem(): void {}
+  makeItem(): void {}
 }
 ```
 

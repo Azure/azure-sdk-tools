@@ -1,5 +1,5 @@
 /**
- * @fileoverview Rule to require client methods to use standardized verb prefixes and suffixes.
+ * @fileoverview Rule to require client methods to use standardized verb prefixes and suffixes where possible.
  * @author Arpan Laha
  */
 
@@ -12,28 +12,25 @@ import { getPublicMethods, getRuleMetaData } from "../utils";
 //------------------------------------------------------------------------------
 
 /**
- * A list of regexes corresponding to approved verb prefixes and suffixes
+ * A list of regexes corresponding to banned verb prefixes
  * Needs updating as definitions change
  */
-const verbRegexes = [
-  /^create($|([A-Z]))/,
-  /^upsert($|([A-Z]))/,
-  /^set($|([A-Z]))/,
-  /^update($|([A-Z]))/,
-  /^replace($|([A-Z]))/,
-  /^append($|([A-Z]))/,
-  /^add($|([A-Z]))/,
-  /^get($|([A-Z]))/,
-  /^list($|([A-Z][a-zA-Z]*s$))/,
-  /((^e)|E)xists$/,
-  /^delete($|([A-Z]))/,
-  /^remove($|([A-Z]))/
+
+const bannedPrefixes = [
+  "make",
+  "updateOrInsert",
+  "insertOrUpdate",
+  "push",
+  "pop",
+  "getAll",
+  "erase",
+  "fetch"
 ];
 
 export = {
   meta: getRuleMetaData(
     "ts-apisurface-standardized-verbs",
-    "require client methods to use standardized verb prefixes and suffixes"
+    "require client methods to use standardized verb prefixes and suffixes where possible"
   ),
   create: (context: Rule.RuleContext): Rule.RuleListener =>
     ({
@@ -45,15 +42,15 @@ export = {
           const key = method.key as Identifier;
           const methodName = key.name;
 
-          // report if no matches
-          if (
-            verbRegexes.every(
-              (verbRegex: RegExp): boolean => !verbRegex.test(methodName)
-            )
-          ) {
+          // look for if any of the banned prefixes are used
+          const usedPrefix = bannedPrefixes.find(
+            (bannedPrefix: string): boolean =>
+              methodName.startsWith(bannedPrefix)
+          );
+          if (usedPrefix !== undefined) {
             context.report({
               node: method,
-              message: `method name ${methodName} does not include one of the approved verb prefixes or suffixes`
+              message: `method ${methodName} uses the banned prefix ${usedPrefix}, use one of the approved prefixes instead`
             });
           }
         });

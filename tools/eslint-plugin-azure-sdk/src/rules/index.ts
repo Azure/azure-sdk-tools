@@ -25,6 +25,7 @@ import tsModulesOnlyNamed from "./ts-modules-only-named";
 import tsNamingDropNoun from "./ts-naming-drop-noun";
 import tsNamingSubclients from "./ts-naming-subclients";
 import tsNoConstEnums from "./ts-no-const-enums";
+import tsNoNamespaces from "./ts-no-namespaces";
 import tsPackageJsonAuthor from "./ts-package-json-author";
 import tsPackageJsonBugs from "./ts-package-json-bugs";
 import tsPackageJsonEngineIsPresent from "./ts-package-json-engine-is-present";
@@ -71,6 +72,7 @@ export = {
   "ts-naming-drop-noun": tsNamingDropNoun,
   "ts-naming-subclients": tsNamingSubclients,
   "ts-no-const-enums": tsNoConstEnums,
+  "ts-no-namespaces": tsNoNamespaces,
   "ts-package-json-author": tsPackageJsonAuthor,
   "ts-package-json-bugs": tsPackageJsonBugs,
   "ts-package-json-engine-is-present": tsPackageJsonEngineIsPresent,

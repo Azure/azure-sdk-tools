@@ -26,11 +26,13 @@ export = {
 
       // call on Client classes
       "ClassDeclaration[id.name=/Client$/]": (node: ClassDeclaration): void => {
+        const className = node.id!.name;
+
         // look for method matching approved list syntax
         const listMethod = getPublicMethods(node).find(
           (method: MethodDefinition): boolean => {
             const key = method.key as Identifier;
-            return !/^list($|([A-Z][a-zA-Z]*s$))/.test(key.name);
+            return /^list($|([A-Z][a-zA-Z]*s$))/.test(key.name);
           }
         );
 
@@ -38,7 +40,7 @@ export = {
         if (listMethod === undefined) {
           context.report({
             node: node,
-            message: "no list method found"
+            message: `${className} does not have a list method`
           });
           return;
         }
@@ -52,7 +54,7 @@ export = {
         ) {
           context.report({
             node: listMethod,
-            message: "list method does not have a return type"
+            message: `${className}'s list method does not have a return type`
           });
           return;
         }
@@ -63,7 +65,7 @@ export = {
         if (typeIdentifier.name !== "PagedAsyncIterableIterator") {
           context.report({
             node: listMethod,
-            message: "list method does not return a PagedAsyncIterableIterator"
+            message: `${className}'s list method does not return a PagedAsyncIterableIterator`
           });
         }
       }

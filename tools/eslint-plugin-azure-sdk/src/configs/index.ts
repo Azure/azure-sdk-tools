@@ -54,6 +54,7 @@ export = {
       "@azure/azure-sdk/ts-package-json-sideeffects": "error",
       "@azure/azure-sdk/ts-package-json-types": "error",
       "@azure/azure-sdk/ts-pagination-list": "error",
+      "@azure/azure-sdk/ts-pagination-list-bypage": "error",
       "@azure/azure-sdk/ts-use-interface-parameters": "warn",
       "@azure/azure-sdk/ts-use-promises": "error",
       "@azure/azure-sdk/ts-versioning-semver": "error"

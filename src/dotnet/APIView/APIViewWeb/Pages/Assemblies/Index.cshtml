@@ -21,31 +21,11 @@
                     <a asp-page="./Review" asp-route-id="@assembly.Id">@assembly.Name</a>
                 </td>
                 <td>
-                    @{string url = "https://github.com/" + assembly.Author;}
-                    <a href="@url">@assembly.Author</a>
+                    <a user-link username="@assembly.Author">@assembly.Author</a>
                 </td>
-                @{var timeDifference = DateTime.Now.Subtract(assembly.TimeStamp.ToLocalTime());}
-                @{int secondsAgo = (int)timeDifference.TotalSeconds;}
-                @{int minutesAgo = (int)timeDifference.TotalMinutes;}
-                @{int hoursAgo = (int)(minutesAgo / 60);}
-                @{int daysAgo = (int)timeDifference.TotalDays;}
-                @{int weeksAgo = (int)(daysAgo / 7);}
-                @if (minutesAgo == 0)
-                {
-                    <td>@Html.Raw(secondsAgo) seconds ago</td>
-                } else if (hoursAgo == 0)
-                {
-                    <td>@Html.Raw(minutesAgo) minutes ago</td>
-                } else if (daysAgo == 0)
-                {
-                    <td>@Html.Raw(hoursAgo) hours ago</td>
-                } else if (weeksAgo == 0)
-                {
-                    <td>@Html.Raw(daysAgo) days ago</td>
-                } else
-                {
-                    <td>@Html.Raw(weeksAgo) weeks ago</td>
-                }
+                <td>
+                    <span time-stamp date="@assembly.TimeStamp.ToLocalTime()"></span>
+                </td>
                 @if (User.Identity.IsAuthenticated)
                 {
                     <td>

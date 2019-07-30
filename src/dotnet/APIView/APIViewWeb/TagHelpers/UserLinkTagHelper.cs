@@ -2,15 +2,15 @@
 
 namespace APIViewWeb.TagHelpers
 {
-    [HtmlTargetElement("img", Attributes = "username")]
-    public class AvatarTagHelper : TagHelper
+    [HtmlTargetElement("a", Attributes = "username")]
+    public class UserLinkTagHelper : TagHelper
     {
         public string Username { get; set; }
 
         public override void Process(TagHelperContext context, TagHelperOutput output)
         {
-            string url = "https://github.com/" +  Username + ".png";
-            output.Attributes.SetAttribute("src", url);
+            string url = "https://github.com/" + Username;
+            output.Attributes.SetAttribute("href", url);
         }
     }
 }

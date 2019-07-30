@@ -133,6 +133,7 @@ form.comment {
 .comment-header {
     margin-bottom: 0px;
     line-height: 0.8 !important;
+    display: inline;
 }
 
 .comment-holder {
@@ -155,6 +156,8 @@ form.comment {
 
 .comment-timestamp {
     float: right;
+    padding-top: 6px;
+    font-size: 12px;
 }
 
 .review-comment {

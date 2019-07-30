@@ -39,6 +39,7 @@ import tsPackageJsonRepo from "./ts-package-json-repo";
 import tsPackageJsonRequiredScripts from "./ts-package-json-required-scripts";
 import tsPackageJsonSideEffects from "./ts-package-json-sideeffects";
 import tsPackageJsonTypes from "./ts-package-json-types";
+import tsPaginationList from "./ts-pagination-list";
 import tsUseInterfaceParameters from "./ts-use-interface-parameters";
 import tsUsePromises from "./ts-use-promises";
 import tsVersioningSemver from "./ts-versioning-semver";
@@ -83,6 +84,7 @@ export = {
   "ts-package-json-required-scripts": tsPackageJsonRequiredScripts,
   "ts-package-json-sideeffects": tsPackageJsonSideEffects,
   "ts-package-json-types": tsPackageJsonTypes,
+  "ts-pagination-list": tsPaginationList,
   "ts-use-interface-parameters": tsUseInterfaceParameters,
   "ts-use-promises": tsUsePromises,
   "ts-versioning-semver": tsVersioningSemver

@@ -4,14 +4,11 @@
     ViewData["Title"] = "Delete";
 }
 
-@if (User.Identity.IsAuthenticated)
-{
-    <h3>Are you sure you want to delete @Model.AssemblyName?</h3>
-    <br />
-    <form method="post">
-        <input type="hidden" />
-        <input type="submit" value="Delete" class="btn btn-danger" /> |
-        <a asp-page="./Index">Back to List</a>
-    </form>
-}
+<h3>Are you sure you want to delete @Model.AssemblyName?</h3>
+<br />
+<form method="post">
+    <input type="hidden" />
+    <input type="submit" value="Delete" class="btn btn-danger" /> |
+    <a asp-page="./Index">Back to List</a>
+</form>
 

@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using APIView;
+using APIViewWeb.ExtensionMethods;
 using APIViewWeb.Models;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -20,16 +20,10 @@ namespace APIViewWeb.Pages.Assemblies
         }
 
         public string Id { get; set; }
-
         public LineAPIV[] AssemblyModel { get; set; }
-
-        public string AvatarUrl { get; set; }
-
         [BindProperty]
         public CommentModel Comment { get; set; }
-
         public Dictionary<string, List<CommentModel>> Comments { get; set; }
-
         public string Username { get; set; }
 
         public async Task<ActionResult> OnPostDeleteAsync(string id, string commentId)
@@ -55,8 +49,7 @@ namespace APIViewWeb.Pages.Assemblies
                     Comments[comment.ElementId].Add(comment);
             }
 
-            Username = User.FindFirst(c => c.Type == "urn:github:login")?.Value;
-            AvatarUrl = "https://github.com/" + Username + ".png";
+            Username = User.GetGitHubLogin();
         }
 
         public async Task<ActionResult> OnPostAsync(string id, string cancel)

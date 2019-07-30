@@ -6,11 +6,11 @@ namespace APIViewWeb.TagHelpers
     [HtmlTargetElement("span", Attributes = "date")]
     public class TimeStampTagHelper : TagHelper
     {
-        public DateTime date { get; set; }
+        public DateTime Date { get; set; }
 
         public override void Process(TagHelperContext context, TagHelperOutput output)
         {
-            var timeDifference = DateTime.Now.Subtract(date);
+            var timeDifference = DateTime.Now.Subtract(Date);
             int secondsAgo = (int)timeDifference.TotalSeconds;
             int minutesAgo = (int)timeDifference.TotalMinutes;
             int hoursAgo = (int)(minutesAgo / 60);

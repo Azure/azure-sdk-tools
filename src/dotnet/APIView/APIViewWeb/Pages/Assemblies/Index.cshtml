@@ -21,21 +21,15 @@
                     <a asp-page="./Review" asp-route-id="@assembly.Id">@assembly.Name</a>
                 </td>
                 <td>
-                    <a user-link username="@assembly.Author">@assembly.Author</a>
+                    <a username="@assembly.Author">@assembly.Author</a>
                 </td>
                 <td>
-                    <span time-stamp date="@assembly.TimeStamp.ToLocalTime()"></span>
+                    <span date="@assembly.TimeStamp.ToLocalTime()"></span>
                 </td>
-                @if (User.Identity.IsAuthenticated)
-                {
-                    <td>
-                        <a asp-page="./Delete" asp-route-id="@assembly.Id">Delete</a>
-                    </td>
-                }
-                else
-                {
-                    <td></td>
-                }
+                <td>
+                    <a asp-page="./Delete" asp-route-id="@assembly.Id">Delete</a>
+                </td>
+                <td></td>
             </tr>
         }
     </tbody>

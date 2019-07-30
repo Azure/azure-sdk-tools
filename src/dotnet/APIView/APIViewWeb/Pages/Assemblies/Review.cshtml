@@ -2,7 +2,6 @@
 @model APIViewWeb.Pages.Assemblies.ReviewModel
 @{
     ViewData["Title"] = "Review";
-    string user = User.FindFirst(c => c.Type == "urn:github:login")?.Value;
 }
 
 <table class="code-window border rounded-1">
@@ -43,7 +42,7 @@
                                     }
                                     <div class="review-thread-reply">
                                         <div class="reply-cell align-middle">
-                                            <img avatar username="@user" class="comment-icon" height="28" width="28" />
+                                            <img avatar username="@Model.Username" class="comment-icon" height="28" width="28" />
                                         </div>
                                         <div class="reply-cell col-12">
                                             <button data-element-id="@line.ElementId" type="button" class="review-thread-reply-button text-muted text-left form-control">Reply...</button>

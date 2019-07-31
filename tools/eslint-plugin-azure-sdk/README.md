@@ -80,6 +80,7 @@ For example, if you are not targeting Node, disable `ts-config-moduleresolution`
 
 - [github-source-headers](/tools/eslint-plugin-azure-sdk/docs/rules/github-source-headers.md)
 - [ts-apisurface-standardized-verbs](/tools/eslint-plugin-azure-sdk/docs/rules/ts-apisurface-standardized-verbs.md)
+- [ts-apisurface-supportcancellation](/tools/eslint-plugin-azure-sdk/docs/rules/ts-apisurface-supportcancellation.md)
 - [ts-config-allowsyntheticdefaultimports](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-allowsyntheticdefaultimports.md)
 - [ts-config-declaration](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-declaration.md)
 - [ts-config-esmoduleinterop](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-esmoduleinterop.md)

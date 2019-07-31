@@ -19,6 +19,7 @@ export = {
     rules: {
       "@azure/azure-sdk/github-source-headers": "error",
       "@azure/azure-sdk/ts-apisurface-standardized-verbs": "error",
+      "@azure/azure-sdk/ts-apisurface-supportcancellation": "error",
       "@azure/azure-sdk/ts-config-allowsyntheticdefaultimports": "error",
       "@azure/azure-sdk/ts-config-declaration": "error",
       "@azure/azure-sdk/ts-config-esmoduleinterop": "error",

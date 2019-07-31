@@ -31,6 +31,7 @@ const ruleList = [
   "ts-error-handling",
   "ts-modules-only-named",
   "ts-naming-drop-noun",
+  "ts-naming-options",
   "ts-naming-subclients",
   "ts-no-const-enums",
   "ts-no-namespaces",

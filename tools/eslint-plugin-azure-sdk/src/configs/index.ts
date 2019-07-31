@@ -37,6 +37,7 @@ export = {
       "@azure/azure-sdk/ts-error-handling": "off",
       "@azure/azure-sdk/ts-modules-only-named": "error",
       "@azure/azure-sdk/ts-naming-drop-noun": "error",
+      "@azure/azure-sdk/ts-naming-options": "error",
       "@azure/azure-sdk/ts-naming-subclients": "error",
       "@azure/azure-sdk/ts-no-const-enums": "warn",
       "@azure/azure-sdk/ts-no-namespaces": "error",

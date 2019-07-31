@@ -23,6 +23,7 @@ import tsDocInternal from "./ts-doc-internal";
 import tsErrorHandling from "./ts-error-handling";
 import tsModulesOnlyNamed from "./ts-modules-only-named";
 import tsNamingDropNoun from "./ts-naming-drop-noun";
+import tsNamingOptions from "./ts-naming-options";
 import tsNamingSubclients from "./ts-naming-subclients";
 import tsNoConstEnums from "./ts-no-const-enums";
 import tsNoNamespaces from "./ts-no-namespaces";
@@ -70,6 +71,7 @@ export = {
   "ts-error-handling": tsErrorHandling,
   "ts-modules-only-named": tsModulesOnlyNamed,
   "ts-naming-drop-noun": tsNamingDropNoun,
+  "ts-naming-options": tsNamingOptions,
   "ts-naming-subclients": tsNamingSubclients,
   "ts-no-const-enums": tsNoConstEnums,
   "ts-no-namespaces": tsNoNamespaces,

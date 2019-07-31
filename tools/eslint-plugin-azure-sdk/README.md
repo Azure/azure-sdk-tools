@@ -98,6 +98,7 @@ For example, if you are not targeting Node, disable `ts-config-moduleresolution`
 - [ts-error-handling](/tools/eslint-plugin-azure-sdk/docs/rules/ts-error-handling.md)
 - [ts-modules-only-named](/tools/eslint-plugin-azure-sdk/docs/rules/ts-modules-only-named.md)
 - [ts-naming-drop-noun](/tools/eslint-plugin-azure-sdk/docs/rules/ts-naming-drop-noun.md)
+- [ts-naming-options](/tools/eslint-plugin-azure-sdk/docs/rules/ts-naming-options.md)
 - [ts-naming-subclients](/tools/eslint-plugin-azure-sdk/docs/rules/ts-naming-subclients.md)
 - [ts-no-const-enums](/tools/eslint-plugin-azure-sdk/docs/rules/ts-no-const-enums.md)
 - [ts-no-namespaces](/tools/eslint-plugin-azure-sdk/docs/rules/ts-no-namespaces.md)

@@ -25,7 +25,7 @@ $(function () {
                 thread.after(commentForm);
             }
             else {
-                commentForm.insertAfter(thisRow).wrap("<tr>").wrap("<td>");
+                commentForm.insertAfter(thisRow).wrap("<tr>").wrap("<td colspan=\"2\">");
             }
         }
 
@@ -44,5 +44,10 @@ $(function () {
 
     $(".review-thread-reply-button").click(function () {
         showCommentBox($(this).data("element-id"));
+    });
+
+    $(".code-line").hover(function () {
+        var button = $(this).find(".line-comment-button");
+        button.toggleClass("is-hovered");
     });
 });

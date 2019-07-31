@@ -8,7 +8,14 @@
     <tbody>
         @foreach (var line in Model.AssemblyModel)
         {
-            <tr class="code-line"><td class="code"><span class="code-inner">@Html.Raw(line.DisplayString)</span></td></tr>
+            <tr class="code-line">
+                <td class="line-comment-button-cell">
+                    <button class="btn-link line-comment-button" type="button">
+                        <img src="http://pluspng.com/img-png/free-png-plus-sign-plus-icon-512.png" height="16" width="16" />
+                    </button>
+                </td>
+                <td class="code"><span class="code-inner">@Html.Raw(line.DisplayString)</span></td>
+            </tr>
             @foreach (var elementId in Model.Comments.Keys)
             {
                 @if (elementId == line.ElementId)
@@ -24,7 +31,11 @@
                                                 <div class="comment-actions">
                                                     <form class="comment-delete-button align-top" asp-page-handler="delete" method="post" asp-route-id="@Model.Id">
                                                         <input type="hidden" name="commentId" value=@comment.Id>
+                                                        @if (comment.Username == Model.Username) {
                                                         <button class="btn align-top"><span class="comment-delete-text align-top">Delete</span></button>
+                                                        } else {
+                                                        <button disabled class="btn align-top"><span class="comment-delete-text align-top">Delete</span></button>
+                                                        }
                                                     </form>
                                                 </div>
                                                 <div class="media">
@@ -34,7 +45,7 @@
                                                             <h4 class="mt-0 comment-header"><strong class="author align-top">@comment.Username</strong></h4>
                                                             <span date="@comment.TimeStamp.ToLocalTime()" class="comment-timestamp align-top"></span>
                                                         </div>
-                                                        @comment.Comment
+                                                        <p class="comment-contents">@comment.Comment</p>
                                                     </div>
                                                 </div>
                                             </div>

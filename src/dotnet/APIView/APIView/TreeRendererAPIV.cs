@@ -46,7 +46,7 @@ namespace APIView
             }
 
             builder.Append("]");
-            list.Add(new LineAPIV(builder.ToString()));
+            list.Add(new LineAPIV(builder.ToString(), a.Id));
         }
 
         public void Render(EventAPIV e, StringListAPIV list, int indents = 0)
@@ -199,10 +199,7 @@ namespace APIView
                 builder.Append(");");
             else
                 builder.Append(") { }");
-            if (!m.IsConstructor)
-                list.Add(new LineAPIV(builder.ToString(), m.Id));
-            else
-                list.Add(new LineAPIV(builder.ToString()));
+            list.Add(new LineAPIV(builder.ToString(), m.Id));
         }
 
         public void Render(NamedTypeAPIV nt, StringListAPIV list, int indents = 0)
@@ -211,6 +208,15 @@ namespace APIView
             AppendIndents(builder, indents);
             RenderKeyword(builder, nt.Accessibility);
             builder.Append(" ");
+            if (nt.IsStatic) {
+                RenderKeyword(builder, "static");
+                builder.Append(" ");
+            }
+            if (nt.IsSealed)
+            {
+                RenderKeyword(builder, "sealed");
+                builder.Append(" ");
+            }
             RenderKeyword(builder, nt.TypeKind);
             builder.Append(" ");
 

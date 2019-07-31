@@ -18,6 +18,8 @@ namespace APIView
         public string TypeKind { get; set; }
         public TypeReferenceAPIV EnumUnderlyingType { get; set; }
         public string Accessibility { get; set; }
+        public bool IsSealed { get; set; }
+        public bool IsStatic { get; set; }
 
         public EventAPIV[]  Events { get; set; }
         public FieldAPIV[] Fields { get; set; }
@@ -40,7 +42,8 @@ namespace APIView
             if (symbol.EnumUnderlyingType != null)
                 this.EnumUnderlyingType = new TypeReferenceAPIV(symbol.EnumUnderlyingType);
             this.Accessibility = symbol.DeclaredAccessibility.ToString().ToLower();
-
+            this.IsSealed = symbol.IsSealed;
+            this.IsStatic = symbol.IsStatic;
             this.Id = symbol.ConstructedFrom.ToDisplayString();
 
             var events = new List<EventAPIV>();

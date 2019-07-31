@@ -298,13 +298,13 @@ code-inner {
     color: #FFF;
     cursor: pointer;
     float: left;
-    height: 18px;
+    height: 20px;
     line-height: 0px;
-    margin: -2px -10px -2px 0px;
+    margin: -2px -10px -2px -24px;
     position: center;
     text-align: center;
     text-indent: 0;
-    width: 18px;
+    width: 20px;
 }
 
 .btn-link {

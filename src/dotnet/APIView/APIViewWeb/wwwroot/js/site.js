@@ -50,4 +50,9 @@ $(function () {
         var button = $(this).find(".line-comment-button");
         button.toggleClass("is-hovered");
     });
+
+    $(".line-comment-button").click(function () {
+        showCommentBox($(this).data("element-id"));
+        return false;
+    });
 });

@@ -41,7 +41,7 @@ namespace APIView
 
         protected override void RenderConstructor(StringBuilder builder, MethodAPIV m)
         {
-            builder.Append("<a href=\"#").Append(EscapeHTML(m.ClassNavigationID)).Append("\" class=\"class\">")
+            builder.Append("<a href=\"#\" id=\"").Append(EscapeHTML(m.Id)).Append("\" class=\"class commentable\">")
                 .Append(EscapeHTML(m.Name)).Append("</a>");
         }
 

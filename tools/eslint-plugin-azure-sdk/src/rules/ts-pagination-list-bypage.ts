@@ -8,15 +8,11 @@ import {
   FunctionExpression,
   ArrowFunctionExpression,
   Identifier,
-  ObjectExpression,
+  ObjectPattern,
   Pattern,
   Property
-  //ReturnStatement,
-  //Program
 } from "estree";
 import { getRuleMetaData } from "../utils";
-
-//import { inspect } from "util";
 
 //------------------------------------------------------------------------------
 // Rule Definition
@@ -25,48 +21,42 @@ import { getRuleMetaData } from "../utils";
 export = {
   meta: getRuleMetaData(
     "ts-pagination-list",
-    "require byPage methods returned in client list methods to contain continuationToken and maxPageSize option"
+    "require byPage methods returned in client list methods to contain continuationToken and maxPageSize options"
   ),
   create: (context: Rule.RuleContext): Rule.RuleListener =>
     ({
       // callback functions
 
       // call on return statements returning objects from client list methods
-      "ClassDeclaration[id.name=/Client$/] MethodDefinition[key.name=/^list($|([A-Z][a-zA-Z]*s$))/] ReturnStatement > ObjectExpression": (
-        node: ObjectExpression
+      "ClassDeclaration[id.name=/Client$/] MethodDefinition[key.name=/^list($|([A-Z][a-zA-Z]*s$))/] ReturnStatement > ObjectExpression > Property[key.name=byPage]": (
+        node: Property
       ): void => {
-        // look for byPage function in returned object
-        const byPageProperty = node.properties.find(
-          (property: Property): boolean =>
-            property.key.type === "Identifier" &&
-            property.key.name === "byPage" &&
-            ["FunctionExpression", "ArrowFunctionExpression"].includes(
-              property.value.type
-            )
-        );
-
-        // report if none found
-        if (byPageProperty === undefined) {
-          context.report({
-            node: node,
-            message: "returned object does not contain a byPage function"
-          });
-          return;
-        }
-
-        const byPage = byPageProperty.value as
+        const byPage = node.value as
           | ArrowFunctionExpression
           | FunctionExpression;
 
         // look for continuationToken and maxPageSize options
         ["continuationToken", "maxPageSize"].forEach(
           (expectedName: string): void => {
-            const identifierParams = byPage.params.filter(
-              (param: Pattern): boolean => param.type === "Identifier"
-            ) as Identifier[];
+            const objectParams = byPage.params.filter(
+              (param: Pattern): boolean => param.type === "ObjectPattern"
+            ) as ObjectPattern[];
+
+            // report if no object params or every object doesn't have the excected name as a property
             if (
-              identifierParams.every(
-                (param: Identifier): boolean => param.name !== expectedName
+              objectParams.length === 0 ||
+              objectParams.every(
+                (objectParam: ObjectPattern): boolean =>
+                  !objectParam.properties
+                    .filter(
+                      (property: Property): boolean =>
+                        property.key.type === "Identifier"
+                    )
+                    .map((property: Property): string => {
+                      const identifier = property.key as Identifier;
+                      return identifier.name;
+                    })
+                    .includes(expectedName)
               )
             ) {
               context.report({

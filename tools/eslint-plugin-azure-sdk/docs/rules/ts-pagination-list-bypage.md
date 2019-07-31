@@ -1,6 +1,8 @@
 # ts-pagination-list-bypage
 
-Requires the returned object in a client's `list` method to contain a `byPage` function with `continuationToken` and `maxPageSize` tokens.
+Requires the returned object in a client's `list` method to contain a `byPage` function with `continuationToken` and `maxPageSize` options.
+
+Specifically, these options should be wrapped in an object matching the `PageSettings` interface from `@azure/core-paging`.
 
 ## Examples
 
@@ -10,7 +12,7 @@ Requires the returned object in a client's `list` method to contain a `byPage` f
 class ServiceClient {
   listItems(): PagedAsyncIterableIterator<Item> {
     return {
-      byPage(continuationToken, maxPageSize) {}
+      byPage({ continuationToken, maxPageSize }) {}
     };
   }
 }
@@ -19,10 +21,12 @@ class ServiceClient {
 ### Bad
 
 ```ts
-// no byPage function
+// missing parameter
 class ServiceClient {
   listItems(): PagedAsyncIterableIterator<Item> {
-    return {};
+    return {
+      byPage({ continuationToken }) {}
+    };
   }
 }
 ```
@@ -33,6 +37,17 @@ class ServiceClient {
   listItems(): PagedAsyncIterableIterator<Item> {
     return {
       byPage() {}
+    };
+  }
+}
+```
+
+```ts
+// not wrapped in an object
+class ServiceClient {
+  listItems(): PagedAsyncIterableIterator<Item> {
+    return {
+      byPage(continuationToken, maxPageSize) {}
     };
   }
 }

@@ -50,7 +50,6 @@ const ruleList = [
   "ts-package-json-sideeffects",
   "ts-package-json-types",
   "ts-pagination-list",
-  "ts-pagination-list-bypage",
   "ts-use-interface-parameters",
   "ts-use-promises",
   "ts-versioning-semver"

@@ -49,7 +49,7 @@ export = {
           ) {
             context.report({
               node: method,
-              message: `method ${key.name} should accept an AbortSignalLike parameter`
+              message: `async method ${key.name} should accept an AbortSignalLike parameter`
             });
           }
         });

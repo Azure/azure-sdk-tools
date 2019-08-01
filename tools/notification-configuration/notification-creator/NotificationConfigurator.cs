@@ -78,7 +78,7 @@ namespace NotificationConfiguration
                 var teamMetadata = new TeamMetadata
                 {
                     PipelineId = pipeline.Id,
-                    Purpose = TeamPurpose.ParentNotificationTeam,
+                    Purpose = purpose,
                 };
                 var newTeam = new WebApiTeam
                 {

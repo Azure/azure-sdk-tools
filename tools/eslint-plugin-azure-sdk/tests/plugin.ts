@@ -20,7 +20,6 @@ const ruleList = [
   "ts-config-exclude",
   "ts-config-forceconsistentcasinginfilenames",
   "ts-config-importhelpers",
-  "ts-config-isolatedmodules",
   "ts-config-lib",
   "ts-config-module",
   "ts-config-moduleresolution",

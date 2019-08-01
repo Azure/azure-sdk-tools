@@ -12,7 +12,6 @@ import tsConfigEsModuleInterop from "./ts-config-esmoduleinterop";
 import tsConfigExclude from "./ts-config-exclude";
 import tsConfigForceConsistentCasingInFileNames from "./ts-config-forceconsistentcasinginfilenames";
 import tsConfigImportHelpers from "./ts-config-importhelpers";
-import tsConfigIsolatedModules from "./ts-config-isolatedmodules";
 import tsConfigLib from "./ts-config-lib";
 import tsConfigModule from "./ts-config-module";
 import tsConfigModuleResolution from "./ts-config-moduleresolution";
@@ -60,7 +59,6 @@ export = {
   "ts-config-exclude": tsConfigExclude,
   "ts-config-forceconsistentcasinginfilenames": tsConfigForceConsistentCasingInFileNames,
   "ts-config-importhelpers": tsConfigImportHelpers,
-  "ts-config-isolatedmodules": tsConfigIsolatedModules,
   "ts-config-lib": tsConfigLib,
   "ts-config-module": tsConfigModule,
   "ts-config-moduleresolution": tsConfigModuleResolution,

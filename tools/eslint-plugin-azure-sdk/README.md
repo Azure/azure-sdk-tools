@@ -87,7 +87,6 @@ For example, if you are not targeting Node, disable `ts-config-moduleresolution`
 - [ts-config-exclude](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-exclude.md)
 - [ts-config-forceconsistentcasinginfilenames](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-forceconsistentcasinginfilenames.md)
 - [ts-config-importhelpers](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-importhelpers.md)
-- [ts-config-isolatedmodules](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-isolatedmodules.md)
 - [ts-config-lib](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-lib.md)
 - [ts-config-module](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-module.md)
 - [ts-config-moduleresolution](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-moduleresolution.md)

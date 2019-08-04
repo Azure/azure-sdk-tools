@@ -1,4 +1,5 @@
 from setuptools import setup, find_packages
+import os, re
 
 PACKAGE_NAME = "tox-monorepo"
 
@@ -18,6 +19,7 @@ with open("README.md", encoding="utf-8") as f:
 setup(
     name=PACKAGE_NAME,
     description=DESCRIPTION,
+    version=version,
     long_description=long_description,
     long_description_content_type='text/markdown',
     url="https://github.com/Azure/azure-sdk-tools/",

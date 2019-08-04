@@ -3,4 +3,4 @@ __version__ = VERSION
 
 from .monorepo import *
 
-__all__ = ["monorepo"]
+__all__ = ["monorepo", "__version__"]

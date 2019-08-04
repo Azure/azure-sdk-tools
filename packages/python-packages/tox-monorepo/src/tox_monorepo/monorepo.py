@@ -1,7 +1,8 @@
 import pluggy
 from tox.reporter import verbosity0
-import pdb;
-import os 
+import pdb
+import os
+
 hookimpl = pluggy.HookimplMarker("tox")
 
 
@@ -20,9 +21,9 @@ def tox_addoption(parser):
 @hookimpl
 def tox_configure(config):
     verbosity0(config)
-    
+
     config.toxinidir = os.getcwd()
-    
+
     """Access your option during configuration"""
     verbosity0("flag magic is: {}".format(config.option.magic))
 

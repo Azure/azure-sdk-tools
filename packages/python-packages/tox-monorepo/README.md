@@ -37,25 +37,32 @@ tox -c <otherpath>/to/tox.ini
 Note that all the `.tox` folder + any environments are now created _relative to the directory that executed tox_. 
 
 
+## Complete Set of Updated Config Values
 
-### Complete Set of Updated Config Values
+### Base Config Values:
 
 ```
 {toxinidir}
-{sdistsrc}
 {toxworkdir}
-{tempdir}
+{temp_dir}
 {setupdir}
 {distdir}
-{logdir}
 {sdistsrc}
+{changedir}
 
 ```
 
-### Methodology
+### Env-Specific Config Values
 
-The method through which `tox-monorepo` actually replaces these config values is actually fairly bruteforce. First, it locations `invocationcwd` and `toxinidir` configuration values. Once that's found, `tox-monorepo` walks every surface-level string property within the config object and replaces any found instance of `toxinidir` with `invocationcwd`. 
+```
+{commands}
+{commands_pre}
+{commands_post}
+{envdir}
+{changedir}
+{envtmpdir}
 
+```
 
 Contributing
 ------------

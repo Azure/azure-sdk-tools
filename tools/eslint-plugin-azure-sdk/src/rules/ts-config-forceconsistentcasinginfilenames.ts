@@ -13,7 +13,8 @@ import { getRuleMetaData, getVerifiers, stripPath } from "../utils";
 export = {
   meta: getRuleMetaData(
     "ts-config-forceconsistentcasinginfilenames",
-    "force tsconfig.json's compilerOptions.forceConsistentCasingInFileNames value to be true"
+    "force tsconfig.json's compilerOptions.forceConsistentCasingInFileNames value to be true",
+    "code"
   ),
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     const verifiers = getVerifiers(context, {

@@ -13,7 +13,8 @@ import { getRuleMetaData, getVerifiers, stripPath } from "../utils";
 export = {
   meta: getRuleMetaData(
     "ts-config-no-experimentaldecorators",
-    "force tsconfig.json's compilerOptions.experimentalDecorators value to be false"
+    "force tsconfig.json's compilerOptions.experimentalDecorators value to be false",
+    "code"
   ),
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     const verifiers = getVerifiers(context, {

@@ -14,7 +14,8 @@ import { getRuleMetaData, getVerifiers, stripPath } from "../utils";
 export = {
   meta: getRuleMetaData(
     "ts-config-sourcemap",
-    "force tsconfig.json's compilerOptions.sourceMap and compilerOptions.declarationMap values to both be true"
+    "force tsconfig.json's compilerOptions.sourceMap and compilerOptions.declarationMap values to both be true",
+    "code"
   ),
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     const sourceMapVerifiers = getVerifiers(context, {

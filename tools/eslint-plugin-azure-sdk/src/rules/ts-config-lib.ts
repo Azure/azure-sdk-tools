@@ -14,7 +14,8 @@ import { getRuleMetaData, getVerifiers, stripPath } from "../utils";
 export = {
   meta: getRuleMetaData(
     "ts-config-lib",
-    "force tsconfig.json's compilerOptions.lib value to be an empty array"
+    "force tsconfig.json's compilerOptions.lib value to be an empty array",
+    "code"
   ),
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     const verifiers = getVerifiers(context, {
@@ -41,13 +42,17 @@ export = {
               if (nodeValue.elements.length !== 0) {
                 context.report({
                   node: nodeValue,
-                  message: "compilerOptions.lib is not set to an empty array"
+                  message: "compilerOptions.lib is not set to an empty array",
+                  fix: (fixer: Rule.RuleFixer): Rule.Fix =>
+                    fixer.replaceText(nodeValue, "[]")
                 });
               }
             } else {
               context.report({
                 node: node.value,
-                message: "compilerOptions.lib is not set to an empty array"
+                message: "compilerOptions.lib is not set to an empty array",
+                fix: (fixer: Rule.RuleFixer): Rule.Fix =>
+                  fixer.replaceText(node.value, "[]")
               });
             }
           }

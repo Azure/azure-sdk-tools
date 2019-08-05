@@ -14,7 +14,8 @@ import { getRuleMetaData, getVerifiers, stripPath } from "../utils";
 export = {
   meta: getRuleMetaData(
     "ts-package-json-module",
-    "force package.json's module value to be the ES6 entrypoint to the application"
+    "force package.json's module value to be the ES6 entrypoint to the application",
+    "code"
   ),
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     const verifiers = getVerifiers(context, {
@@ -39,16 +40,14 @@ export = {
             }
 
             const nodeValue = node.value as Literal;
-            const module = nodeValue.value as string;
+            const moduleValue = nodeValue.value as string;
 
-            if (!/^(\.\/)?dist-esm\/src\/index\.js$/.test(module)) {
+            if (!/^(\.\/)?dist-esm\/src\/index\.js$/.test(moduleValue)) {
               context.report({
                 node: nodeValue,
-                message:
-                  "module is set to {{ identifier }} when it should be set to dist-esm/src/index.js",
-                data: {
-                  identifier: module
-                }
+                message: `module is set to ${moduleValue} when it should be set to dist-esm/src/index.js`,
+                fix: (fixer: Rule.RuleFixer): Rule.Fix =>
+                  fixer.replaceText(nodeValue, `"dist-esm/src/index.js"`)
               });
             }
           }

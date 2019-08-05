@@ -197,11 +197,10 @@ export const getVerifiers = (
           context.report({
             node: nodeValue,
             message: `${outer} does not contain ${value}`,
-            fix: (fixer: Rule.RuleFixer): Rule.Fix =>
-              fixer.replaceText(
-                nodeValue,
-                [...candidateValues, value].toString()
-              )
+            fix: (fixer: Rule.RuleFixer): Rule.Fix => {
+              candidateValues.push(value);
+              return fixer.replaceText(nodeValue, candidateValues.toString());
+            }
           });
         }
       });
@@ -210,11 +209,10 @@ export const getVerifiers = (
         context.report({
           node: nodeValue,
           message: `${outer} does not contain ${expected}`,
-          fix: (fixer: Rule.RuleFixer): Rule.Fix =>
-            fixer.replaceText(
-              nodeValue,
-              [...candidateValues, expected].toString()
-            )
+          fix: (fixer: Rule.RuleFixer): Rule.Fix => {
+            candidateValues.push(expected);
+            return fixer.replaceText(nodeValue, candidateValues.toString());
+          }
         });
       }
     }

@@ -14,7 +14,8 @@ import { getRuleMetaData, getVerifiers, stripPath } from "../utils";
 export = {
   meta: getRuleMetaData(
     "ts-package-json-files-required",
-    "requires package.json's files value to contain paths to the package contents"
+    "requires package.json's files value to contain paths to the package contents",
+    "code"
   ),
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     const verifiers = getVerifiers(context, {
@@ -42,6 +43,9 @@ export = {
 
             const nodeValue = node.value;
             const elements = nodeValue.elements as Literal[];
+            const elementValues = elements.map(
+              (element: Literal): unknown => element.value
+            );
 
             // looks for 'dist' with optional leading './' and optional trailing '/'
             if (
@@ -52,7 +56,11 @@ export = {
             ) {
               context.report({
                 node: nodeValue,
-                message: "dist is not included in files"
+                message: "dist is not included in files",
+                fix: (fixer: Rule.RuleFixer): Rule.Fix => {
+                  elementValues.push("dist");
+                  return fixer.replaceText(nodeValue, elementValues.toString());
+                }
               });
             }
 
@@ -67,7 +75,11 @@ export = {
             ) {
               context.report({
                 node: nodeValue,
-                message: "dist-esm/src is not included in files"
+                message: "dist-esm/src is not included in files",
+                fix: (fixer: Rule.RuleFixer): Rule.Fix => {
+                  elementValues.push("dist/src");
+                  return fixer.replaceText(nodeValue, elementValues.toString());
+                }
               });
             }
 
@@ -80,7 +92,11 @@ export = {
             ) {
               context.report({
                 node: nodeValue,
-                message: "src is not included in files"
+                message: "src is not included in files",
+                fix: (fixer: Rule.RuleFixer): Rule.Fix => {
+                  elementValues.push("src");
+                  return fixer.replaceText(nodeValue, elementValues.toString());
+                }
               });
             }
           }

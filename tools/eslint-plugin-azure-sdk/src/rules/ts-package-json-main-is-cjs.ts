@@ -14,7 +14,8 @@ import { getRuleMetaData, getVerifiers, stripPath } from "../utils";
 export = {
   meta: getRuleMetaData(
     "ts-package-json-main-is-cjs",
-    "force package.json's main value to point to a CommonJS or UMD module"
+    "force package.json's main value to point to a CommonJS or UMD module",
+    "code"
   ),
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     const verifiers = getVerifiers(context, {
@@ -44,11 +45,9 @@ export = {
             if (!/^(\.\/)?dist\/index\.js$/.test(main)) {
               context.report({
                 node: nodeValue,
-                message:
-                  "main is set to {{ identifier }} when it should be set to dist/index.js",
-                data: {
-                  identifier: main
-                }
+                message: `main is set to ${main} when it should be set to dist/index.js`,
+                fix: (fixer: Rule.RuleFixer): Rule.Fix =>
+                  fixer.replaceText(nodeValue, `"dist/index.js"`)
               });
             }
           }

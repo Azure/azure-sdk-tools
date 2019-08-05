@@ -44,7 +44,7 @@ export = {
                 message:
                   "compilerOptions.module is not set to a literal (string | boolean | null | number | RegExp)",
                 fix: (fixer: Rule.RuleFixer): Rule.Fix =>
-                  fixer.replaceText(node.value, "es6")
+                  fixer.replaceText(node.value, `"es6"`)
               });
             }
 
@@ -57,7 +57,7 @@ export = {
                 node: node,
                 message: `compilerOptions.module is set to ${module} when it should be set to ES6`,
                 fix: (fixer: Rule.RuleFixer): Rule.Fix =>
-                  fixer.replaceText(nodeValue, "es6")
+                  fixer.replaceText(nodeValue, `"es6"`)
               });
             }
           }

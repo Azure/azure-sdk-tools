@@ -1,0 +1,6 @@
+[packaging]
+auto_update = false
+package_name = "tox-monorepo"
+package_pprint_name = "tox-monorepo"
+is_stable = false
+is_arm = false

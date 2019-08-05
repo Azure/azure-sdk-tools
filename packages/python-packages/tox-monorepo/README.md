@@ -7,6 +7,7 @@ Features
 
 Once installed, `tox-monorepo` will actively post-process the loaded `tox config` and replace all instances of `{toxinidir}` with a reference to the **current working directory.**
 
+Note that if there are any out-of-ordinary changes present within your tox config, it is highly likely that this plugin has not been tested with them. Reference `Contributing` section for how to reach out if issues crop up.
 
 Requirements
 ------------
@@ -36,16 +37,35 @@ tox -c <otherpath>/to/tox.ini
 Note that all the `.tox` folder + any environments are now created _relative to the directory that executed tox_. 
 
 
+
+### Complete Set of Updated Config Values
+
+```
+{toxinidir}
+{sdistsrc}
+{toxworkdir}
+{tempdir}
+{setupdir}
+{distdir}
+{logdir}
+{sdistsrc}
+
+```
+
+### Methodology
+
+The method through which `tox-monorepo` actually replaces these config values is actually fairly bruteforce. First, it locations `invocationcwd` and `toxinidir` configuration values. Once that's found, `tox-monorepo` walks every surface-level string property within the config object and replaces any found instance of `toxinidir` with `invocationcwd`. 
+
+
 Contributing
 ------------
-Contributions are very welcome, though the plugin is _extremely_ straightforward and shouldn't really require updates. Just submit a PR or an Issue!
+Contributions are very welcome, though the plugin is _extremely_ straightforward and shouldn't really require updates. Just submit a PR or an Issue on the the current repo!
 
 License
 -------
 
 Distributed under the terms of the **MIT** license, `tox-monorepo` is
 free and open source software.
-
 
 Issues
 ------

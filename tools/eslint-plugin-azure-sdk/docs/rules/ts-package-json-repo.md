@@ -2,6 +2,8 @@
 
 Requires `repository` in `package.json` to be set to `"github:Azure/azure-sdk-for-js"`.
 
+This rule is fixable using the `--fix` option.
+
 ## Examples
 
 ### Good

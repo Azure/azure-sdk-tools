@@ -13,7 +13,8 @@ import { getRuleMetaData, getVerifiers, stripPath } from "../utils";
 export = {
   meta: getRuleMetaData(
     "ts-config-exclude",
-    "force tsconfig.json's compilerOptions.exclude value to at least contain 'node_modules'"
+    "force tsconfig.json's compilerOptions.exclude value to at least contain 'node_modules'",
+    "code"
   ),
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     const verifiers = getVerifiers(context, {

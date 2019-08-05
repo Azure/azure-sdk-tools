@@ -13,7 +13,8 @@ import { getRuleMetaData, getVerifiers, stripPath } from "../utils";
 export = {
   meta: getRuleMetaData(
     "ts-packge-json-license",
-    "force package.json's license value to be 'MIT'"
+    "force package.json's license value to be 'MIT'",
+    "code"
   ),
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     const verifiers = getVerifiers(context, {

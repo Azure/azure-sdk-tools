@@ -2,6 +2,8 @@
 
 Requires `license` in `package.json` to be set to `"MIT"`.
 
+This rule is fixable using the `--fix` option.
+
 ## Examples
 
 ### Good

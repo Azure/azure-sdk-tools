@@ -224,15 +224,11 @@ const evaluateOverloads = (
   const identifier = getParamAsIdentifier(param);
   context.report({
     node: identifier,
-    message:
-      "type {{ type }} of parameter {{ param }} of function {{ func }} is a class or contains a class as a member",
-    data: {
-      type: typeChecker.typeToString(
-        getTypeOfParam(param, converter, typeChecker)
-      ),
-      param: identifier.name,
-      func: name
-    }
+    message: `type ${typeChecker.typeToString(
+      getTypeOfParam(param, converter, typeChecker)
+    )} of parameter ${
+      identifier.name
+    } of function ${name} is a class or contains a class as a member`
   });
 };
 

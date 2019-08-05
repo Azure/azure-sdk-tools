@@ -2,6 +2,8 @@
 
 Requires `author` in `package.json` to be set to `"Microsoft Corporation"`.
 
+This rule is fixable using the `--fix` option.
+
 ## Examples
 
 ### Good

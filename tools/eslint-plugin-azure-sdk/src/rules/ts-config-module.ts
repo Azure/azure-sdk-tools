@@ -14,7 +14,8 @@ import { getRuleMetaData, getVerifiers, stripPath } from "../utils";
 export = {
   meta: getRuleMetaData(
     "ts-config-module",
-    "force tsconfig.json's compilerOptions.module value to be set to 'es6'"
+    "force tsconfig.json's compilerOptions.module value to be set to 'es6'",
+    "code"
   ),
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     const verifiers = getVerifiers(context, {
@@ -41,7 +42,9 @@ export = {
               context.report({
                 node: node.value,
                 message:
-                  "compilerOptions.module is not set to a literal (string | boolean | null | number | RegExp)"
+                  "compilerOptions.module is not set to a literal (string | boolean | null | number | RegExp)",
+                fix: (fixer: Rule.RuleFixer): Rule.Fix =>
+                  fixer.replaceText(node.value, `"es6"`)
               });
             }
 
@@ -52,11 +55,9 @@ export = {
             if (!/^es6$/i.test(module)) {
               context.report({
                 node: node,
-                message:
-                  "compilerOptions.module is set to {{ identifier }} when it should be set to ES6",
-                data: {
-                  identifier: module
-                }
+                message: `compilerOptions.module is set to ${module} when it should be set to ES6`,
+                fix: (fixer: Rule.RuleFixer): Rule.Fix =>
+                  fixer.replaceText(nodeValue, `"es6"`)
               });
             }
           }

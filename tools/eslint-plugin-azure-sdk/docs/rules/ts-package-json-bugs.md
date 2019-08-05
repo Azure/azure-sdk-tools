@@ -2,6 +2,8 @@
 
 Requires `bugs` in `package.json` to be set to `"https://github.com/Azure/azure-sdk-for-js/issues"`.
 
+This rule is fixable using the `--fix` option.
+
 ## Examples
 
 ### Good

@@ -11,10 +11,14 @@ import { getRuleMetaData } from "../utils";
 // Rule Definition
 //------------------------------------------------------------------------------
 
+const expectedComments =
+  "// Copyright (c) Microsoft Corporation.\n// Licensed under the MIT license.";
+
 export = {
   meta: getRuleMetaData(
     "github-source-headers",
-    "require copyright headers in every source file"
+    "require copyright headers in every source file",
+    "code"
   ),
   create: (context: Rule.RuleContext): Rule.RuleListener =>
     /\.ts$/.test(context.getFilename())
@@ -31,7 +35,9 @@ export = {
             if (headerComments.length === 0) {
               context.report({
                 node: node,
-                message: "no copyright header found"
+                message: "no copyright header found",
+                fix: (fixer: Rule.RuleFixer): Rule.Fix =>
+                  fixer.insertTextBefore(node, expectedComments)
               });
               return;
             }
@@ -53,7 +59,9 @@ export = {
                 node: node,
                 message:
                   "copyright header not properly configured - expected value:\n" +
-                  "Copyright (c) Microsoft Corporation.\nLicensed under the MIT license.\n"
+                  "Copyright (c) Microsoft Corporation.\nLicensed under the MIT license.\n",
+                fix: (fixer: Rule.RuleFixer): Rule.Fix =>
+                  fixer.insertTextBefore(node, expectedComments)
               });
             }
           }

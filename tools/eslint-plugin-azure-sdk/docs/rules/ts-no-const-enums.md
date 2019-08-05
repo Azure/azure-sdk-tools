@@ -2,6 +2,8 @@
 
 Recommends against the usage of TypeScript's const enums.
 
+This rule is fixable using the `--fix` option.
+
 ## Examples
 
 ### Good

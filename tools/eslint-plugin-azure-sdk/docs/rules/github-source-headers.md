@@ -9,6 +9,8 @@ Copyright (c) Microsoft Corporation.
 Licensed under the MIT license.
 ```
 
+This rule is fixable using the `--fix` option.
+
 ## Examples
 
 ### Good

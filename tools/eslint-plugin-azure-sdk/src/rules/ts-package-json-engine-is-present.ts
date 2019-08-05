@@ -13,7 +13,8 @@ import { getRuleMetaData, getVerifiers, stripPath } from "../utils";
 export = {
   meta: getRuleMetaData(
     "ts-package-json-engine-is-present",
-    "force Node support for all LTS versions"
+    "force Node support for all LTS versions",
+    "code"
   ),
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     /**

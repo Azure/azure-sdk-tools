@@ -2,6 +2,8 @@
 
 Requires `sideEffects` in `package.json` to be set to `false`.
 
+This rule is fixable using the `--fix` option.
+
 ## Examples
 
 ### Good

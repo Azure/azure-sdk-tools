@@ -4,8 +4,8 @@
  */
 
 import {
-  TSESTree,
-  ParserServices
+  ParserServices,
+  TSESTree
 } from "@typescript-eslint/experimental-utils";
 import { Rule } from "eslint";
 import { ClassDeclaration, Identifier, MethodDefinition } from "estree";

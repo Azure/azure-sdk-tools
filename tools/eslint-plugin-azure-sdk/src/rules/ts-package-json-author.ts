@@ -13,7 +13,8 @@ import { getRuleMetaData, getVerifiers, stripPath } from "../utils";
 export = {
   meta: getRuleMetaData(
     "ts-package-json-author",
-    "force package.json's author value to be 'Microsoft Corporation'"
+    "force package.json's author value to be 'Microsoft Corporation'",
+    "code"
   ),
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     const verifiers = getVerifiers(context, {

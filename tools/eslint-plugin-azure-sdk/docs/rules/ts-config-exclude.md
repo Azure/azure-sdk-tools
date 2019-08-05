@@ -2,6 +2,8 @@
 
 Requires `compilerOptions.exclude` in `tsconfig.json` to include `node_modules`.
 
+This rule is fixable using the `--fix` option.
+
 ## Examples
 
 ### Good

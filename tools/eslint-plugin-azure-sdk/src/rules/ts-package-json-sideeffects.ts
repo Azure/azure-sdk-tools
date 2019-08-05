@@ -13,7 +13,8 @@ import { getRuleMetaData, getVerifiers, stripPath } from "../utils";
 export = {
   meta: getRuleMetaData(
     "ts-package-json-sideeffects",
-    "force package.json's sideEffects value to be false"
+    "force package.json's sideEffects value to be false",
+    "code"
   ),
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     const verifiers = getVerifiers(context, {

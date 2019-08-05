@@ -13,7 +13,8 @@ import { getRuleMetaData, getVerifiers, stripPath } from "../utils";
 export = {
   meta: getRuleMetaData(
     "ts-package-json-bugs",
-    "force package.json's bugs.url value to be 'https://github.com/Azure/azure-sdk-for-js/issues'"
+    "force package.json's bugs.url value to be 'https://github.com/Azure/azure-sdk-for-js/issues'",
+    "code"
   ),
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     const verifiers = getVerifiers(context, {

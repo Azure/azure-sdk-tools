@@ -13,7 +13,8 @@ import { getRuleMetaData, getVerifiers, stripPath } from "../utils";
 export = {
   meta: getRuleMetaData(
     "ts-config-importhelpers",
-    "force tsconfig.json's compilerOptions.importHelpers value to be true"
+    "force tsconfig.json's compilerOptions.importHelpers value to be true",
+    "code"
   ),
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     const verifiers = getVerifiers(context, {

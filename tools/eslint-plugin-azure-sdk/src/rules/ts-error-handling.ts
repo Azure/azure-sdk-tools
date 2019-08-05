@@ -58,11 +58,7 @@ export = {
             if (!["TypeError", "RangeError", "Error", "any"].includes(type)) {
               context.report({
                 node: thrown,
-                message:
-                  "type {{ type }} of thrown error is not one of the allowed error types: TypeError, RangeError, Error",
-                data: {
-                  type: type
-                }
+                message: `type ${type} of thrown error is not one of the allowed error types: TypeError, RangeError, Error`
               });
             }
           },
@@ -77,11 +73,7 @@ export = {
             if (!["TypeError", "RangeError", "Error"].includes(callee.name)) {
               context.report({
                 node: callee,
-                message:
-                  "type {{ type }} of thrown error is not one of the allowed error types: TypeError, RangeError, Error",
-                data: {
-                  type: callee.name
-                }
+                message: `type ${callee.name} of thrown error is not one of the allowed error types: TypeError, RangeError, Error`
               });
             }
           }

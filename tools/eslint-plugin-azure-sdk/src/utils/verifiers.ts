@@ -84,7 +84,14 @@ export const getVerifiers = (
     if (nodeValue.value !== expected) {
       context.report({
         node: nodeValue,
-        message: `${outer} is set to ${nodeValue.value} when it should be set to ${expected}`
+        message: `${outer} is set to ${nodeValue.value} when it should be set to ${expected}`,
+        fix: (fixer: Rule.RuleFixer): Rule.Fix =>
+          fixer.replaceText(
+            nodeValue,
+            typeof expected === "string"
+              ? `"${expected}"`
+              : (expected as string)
+          )
       });
     }
   },
@@ -138,7 +145,14 @@ export const getVerifiers = (
     if (nodeValue.value !== expected) {
       context.report({
         node: nodeValue,
-        message: `${outer}.${inner} is set to ${nodeValue.value} when it should be set to ${expected}`
+        message: `${outer}.${inner} is set to ${nodeValue.value} when it should be set to ${expected}`,
+        fix: (fixer: Rule.RuleFixer): Rule.Fix =>
+          fixer.replaceText(
+            nodeValue,
+            typeof expected === "string"
+              ? `"${expected}"`
+              : (expected as string)
+          )
       });
     }
   },
@@ -173,29 +187,34 @@ export const getVerifiers = (
     }
 
     const candidateArray = nodeValue.elements as Literal[];
+    const candidateValues = candidateArray.map(
+      (candidate: Literal): unknown => candidate.value
+    );
 
     if (expected instanceof Array) {
       expected.forEach((value: unknown): void => {
-        if (
-          candidateArray.every(
-            (candidate: Literal): boolean => candidate.value !== value
-          )
-        ) {
+        if (!candidateValues.includes(value)) {
           context.report({
             node: nodeValue,
-            message: `${outer} does not contain ${value}`
+            message: `${outer} does not contain ${value}`,
+            fix: (fixer: Rule.RuleFixer): Rule.Fix =>
+              fixer.replaceText(
+                nodeValue,
+                [...candidateValues, value].toString()
+              )
           });
         }
       });
     } else {
-      if (
-        candidateArray.every(
-          (candidate: Literal): boolean => candidate.value !== expected
-        )
-      ) {
+      if (!candidateValues.includes(expected)) {
         context.report({
           node: nodeValue,
-          message: `${outer} does not contain ${expected}`
+          message: `${outer} does not contain ${expected}`,
+          fix: (fixer: Rule.RuleFixer): Rule.Fix =>
+            fixer.replaceText(
+              nodeValue,
+              [...candidateValues, expected].toString()
+            )
         });
       }
     }

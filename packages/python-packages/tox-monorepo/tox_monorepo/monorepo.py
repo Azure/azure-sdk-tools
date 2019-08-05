@@ -44,22 +44,35 @@ def tox_configure(config):
     invocationcwd = config.invocationcwd.strpath
     original_toxinipath = config.toxinidir.strpath
 
-    # surface values
-    toxinidir = invocationcwd
-    toxworkdir = "{toxinidir}/.tox".format(toxinidir=toxinidir)
-    temp_dir = "{toxworkdir}/.tmp".format(toxworkdir=toxworkdir)
-    setupdir = "{toxinidir}".format(toxinidir=toxinidir)
-    distdir = "{toxworkdir}/dist".format(toxworkdir=toxworkdir)
-    sdistsrc = "{toxworkdir}/dist".format(toxworkdir=toxworkdir)
-    changedir = "{toxinidir}".format(toxinidir=toxinidir)
+    if config.toxinidir:
+        config.toxinidir = py.path.local(
+            config.toxinidir.strpath.replace(original_toxinipath, invocationcwd)
+        )
 
-    config.toxinidir = py.path.local(toxinidir)
-    config.toxworkdir = py.path.local(toxworkdir)
-    config.temp_dir = py.path.local(temp_dir)
-    config.setupdir = py.path.local(setupdir)
-    config.distdir = py.path.local(distdir)
-    config.sdistsrc = py.path.local(sdistsrc)
-    config.changedir = py.path.local(changedir)
+    if config.toxworkdir:
+        config.toxworkdir = py.path.local(
+            config.toxworkdir.strpath.replace(original_toxinipath, invocationcwd)
+        )
+
+    if config.temp_dir:
+        config.temp_dir = py.path.local(
+            config.temp_dir.strpath.replace(original_toxinipath, invocationcwd)
+        )
+
+    if config.setupdir:
+        config.setupdir = py.path.local(
+            config.setupdir.strpath.replace(original_toxinipath, invocationcwd)
+        )
+
+    if config.distdir:
+        config.distdir = py.path.local(
+            config.distdir.strpath.replace(original_toxinipath, invocationcwd)
+        )
+
+    if config.sdistsrc:
+        config.sdistsrc = py.path.local(
+            config.sdistsrc.strpath.replace(original_toxinipath, invocationcwd)
+        )
 
     for environment_name, environment_config in config.envconfigs.items():
         update_env(original_toxinipath, invocationcwd, environment_config)

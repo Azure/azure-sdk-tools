@@ -2,6 +2,8 @@
 
 Requires `compilerOptions.sourceMap` and `compilerOptions.declarationMap` in `tsconfig.json` to be set to `true`.
 
+This rule is fixable using the `--fix` option.
+
 ## Examples
 
 ### Good

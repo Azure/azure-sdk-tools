@@ -2,6 +2,8 @@
 
 Requires `compilerOptions.moduleResolution` in `tsconfig.json` to be set to `"node"`.
 
+This rule is fixable using the `--fix` option.
+
 ## Examples
 
 ### Good

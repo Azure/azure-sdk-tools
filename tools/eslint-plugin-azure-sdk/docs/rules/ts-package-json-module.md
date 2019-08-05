@@ -2,6 +2,8 @@
 
 Requires `module` in `package.json` to be set to the ES6 entrypoint of the package. It is assumed that this is `"dist-esm/src/index.js"`.
 
+This rule is fixable using the `--fix` option.
+
 ## Examples
 
 ### Good

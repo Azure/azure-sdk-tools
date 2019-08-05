@@ -2,6 +2,8 @@
 
 Requires `main` in `package.json` to be point to a CommonJS or UMD module. In this case, its assumed that it points to `"dist/index.js"`.
 
+This rule is fixable using the `--fix` option.
+
 ## Examples
 
 ### Good

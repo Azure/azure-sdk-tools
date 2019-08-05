@@ -4,6 +4,8 @@ Requires support for all Node LTS version.
 
 Currently, this requires `engine` in `package.json` to be set to `">=8.0.0"`.
 
+This rule is fixable using the `--fix` option.
+
 ## Examples
 
 ### Good

@@ -2,6 +2,8 @@
 
 Requires `compilerOptions.esModuleInterop` in `tsconfig.json` to be set to `true`.
 
+This rule is fixable using the `--fix` option.
+
 ## Examples
 
 ### Good

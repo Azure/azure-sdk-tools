@@ -2,6 +2,8 @@
 
 Requires `compilerOptions.lib` in `tsconfig.json` to be set to an empty array.
 
+This rule is fixable using the `--fix` option.
+
 ## Examples
 
 ### Good

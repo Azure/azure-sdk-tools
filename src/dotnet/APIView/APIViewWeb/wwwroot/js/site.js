@@ -13,9 +13,9 @@ $(function () {
     }
 
     function showCommentBox(id) {
-        var thisRow = $(document.getElementById(id)).parents(".code-line").first();
-        var nextRow = thisRow.next();
-        var commentForm = nextRow.find(".comment-form");
+        let thisRow = $(document.getElementById(id)).parents(".code-line").first();
+        let nextRow = thisRow.next();
+        let commentForm = nextRow.find(".comment-form");
 
         if (commentForm.length == 0) {
             commentForm = commentFormTemplate.children().clone();
@@ -33,6 +33,18 @@ $(function () {
         commentForm.find(".id-box").val(id);
         commentForm.find(".new-thread-comment-text").focus();
         commentForm.find(".comment-cancel-button").click(function () { hideCommentBox(id); });
+        commentForm.find(".comment-submit-button").click(function () {
+            $.ajax({
+                type: "POST",
+                data: commentForm.find("form").serialize()
+            }).done(function (partialViewResult) {
+                thisRow.next().replaceWith(partialViewResult);
+                thisRow.next().find(".review-thread-reply-button").click(function () {
+                    showCommentBox($(this).data("element-id"));
+                });
+            });
+            return false;
+        });
 
         nextRow.find(".review-thread-reply").hide();
     }

@@ -1,6 +1,6 @@
 ﻿using System.Security.Claims;
 
-namespace APIViewWeb.ExtensionMethods
+namespace APIViewWeb
 {
     public static class GitHubUserExtension
     {

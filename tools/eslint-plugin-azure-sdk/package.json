@@ -39,8 +39,7 @@
     "format": "prettier --write \"./**/*.{ts,json,md}\"",
     "format:check": "prettier --check \"./**/*.{ts,json,md}\"",
     "lint": "eslint src tests --ext .ts && markdownlint README.md docs",
-    "test": "npm run clean && tsc -p tsconfig.json && mocha --timeout 10000 --recursive dist/tests",
-    "test-temp": "npm run clean && tsc -p tsconfig.json && mocha --timeout 10000 --recursive dist/tests/rules/ts-config-declaration.js"
+    "test": "npm run clean && tsc -p tsconfig.json && mocha --timeout 10000 --recursive dist/tests"
   },
   "dependencies": {
     "glob": "^7.1.4",

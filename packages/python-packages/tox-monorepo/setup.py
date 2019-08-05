@@ -5,7 +5,7 @@ PACKAGE_NAME = "tox-monorepo"
 
 DESCRIPTION = "A tox plugin built to allow sharing of a common tox.ini file across repositories with high package counts."
 
-with open(os.path.join("src/tox_monorepo", "version.py"), "r") as fd:
+with open(os.path.join("tox_monorepo", "version.py"), "r") as fd:
     version = re.search(
         r'^VERSION\s*=\s*[\'"]([^\'"]*)[\'"]', fd.read(), re.MULTILINE
     ).group(1)
@@ -27,6 +27,9 @@ setup(
     author_email="azuresdkengsysadmins@microsoft.com",
     license="MIT License",
     packages=find_packages(),
+    install_requires = [
+        'tox >= 3.12.0'
+    ],
     entry_points={"tox": ["monorepo=tox_monorepo:monorepo"]},
     classifiers=[
         "Framework:: tox",

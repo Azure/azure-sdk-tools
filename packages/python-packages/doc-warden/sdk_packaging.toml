@@ -1,5 +1,5 @@
 [packaging]
-auto_update = true
+auto_update = false
 package_name = "doc-warden"
 package_pprint_name = "Doc Warden"
 is_stable = false

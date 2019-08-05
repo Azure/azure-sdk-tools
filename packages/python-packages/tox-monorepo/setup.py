@@ -21,7 +21,7 @@ setup(
     description=DESCRIPTION,
     version=version,
     long_description=long_description,
-    long_description_content_type='text/markdown',
+    long_description_content_type="text/markdown",
     url="https://github.com/Azure/azure-sdk-tools/",
     author="Microsoft Corporation",
     author_email="azuresdkengsysadmins@microsoft.com",

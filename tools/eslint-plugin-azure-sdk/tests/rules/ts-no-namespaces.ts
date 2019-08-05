@@ -1,9 +1,9 @@
 /**
- * @fileoverview Testing the ts-no-const-enums rule.
+ * @fileoverview Testing the ts-no-namespaces rule.
  * @author Arpan Laha
  */
 
-import rule from "../../src/rules/ts-no-const-enums";
+import rule from "../../src/rules/ts-no-namespaces";
 import { RuleTester } from "eslint";
 
 //------------------------------------------------------------------------------
@@ -21,20 +21,22 @@ const ruleTester = new RuleTester({
   }
 });
 
-ruleTester.run("ts-no-const-enums", rule, {
-  valid: [
-    {
-      code: "enum Enum { a = 1 }",
-      filename: "src/test.ts"
-    }
-  ],
+ruleTester.run("ts-no-namespaces", rule, {
+  valid: [],
   invalid: [
     {
-      code: "const enum Enum { a = 1 }",
-      filename: "src/test.ts",
+      code: "namespace Test {}",
       errors: [
         {
-          message: "const enums should not be used"
+          message: "TypeScript namespaces should not be used"
+        }
+      ]
+    },
+    {
+      code: "module Test {}",
+      errors: [
+        {
+          message: "TypeScript namespaces should not be used"
         }
       ]
     }

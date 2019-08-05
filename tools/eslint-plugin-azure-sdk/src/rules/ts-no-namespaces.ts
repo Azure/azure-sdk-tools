@@ -1,5 +1,5 @@
 /**
- * @fileoverview Rule to forbid usage of TypeScript's const enums.
+ * @fileoverview Rule to forbid usage of TypeScript namespaces.
  * @author Arpan Laha
  */
 
@@ -12,21 +12,19 @@ import { getRuleMetaData } from "../utils";
 
 export = {
   meta: getRuleMetaData(
-    "ts-no-const-enums",
-    "forbid usage of TypeScript's const enums"
+    "ts-no-namespaces",
+    "forbid usage of TypeScript namespaces"
   ),
   create: (context: Rule.RuleContext): Rule.RuleListener =>
     ({
       // callback functions
 
-      // check Enum to make sure it doesn't have a const keyword
-      TSEnumDeclaration: (node: any): void => {
-        if (node.const !== undefined) {
-          context.report({
-            node: node,
-            message: "const enums should not be used"
-          });
-        }
+      // report on any TSModuleDeclarations
+      TSModuleDeclaration: (node: any): void => {
+        context.report({
+          node: node,
+          message: "TypeScript namespaces should not be used"
+        });
       }
     } as Rule.RuleListener)
 };

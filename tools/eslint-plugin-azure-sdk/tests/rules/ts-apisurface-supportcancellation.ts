@@ -19,10 +19,15 @@ const ruleTester = new RuleTester({
 
 ruleTester.run("ts-apifurface-supportcancellation", rule, {
   valid: [
-    // single method
+    // parameter
     {
       code:
         "class ExampleClient { async createItem(cancelToken: AbortSignalLike): void {}; };"
+    },
+    //option
+    {
+      code:
+        "interface ExampleOptions { cancelToken: AbortSignalLike }; class ExampleClient { async createItem(options: ExampleOptions): void {}; };"
     },
     // sync
     {
@@ -43,7 +48,7 @@ ruleTester.run("ts-apifurface-supportcancellation", rule, {
       errors: [
         {
           message:
-            "async method createItem should accept an AbortSignalLike parameter"
+            "async method createItem should accept an AbortSignalLike parameter or option"
         }
       ]
     }

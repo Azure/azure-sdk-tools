@@ -3,10 +3,14 @@
  * @author Arpan Laha
  */
 
-import { TSESTree } from "@typescript-eslint/typescript-estree";
+import {
+  TSESTree,
+  ParserServices
+} from "@typescript-eslint/experimental-utils";
 import { Rule } from "eslint";
 import { ClassDeclaration, Identifier, MethodDefinition } from "estree";
 import { getPublicMethods, getRuleMetaData } from "../utils";
+import { Symbol as TSSymbol, SymbolFlags } from "typescript";
 
 //------------------------------------------------------------------------------
 // Rule Definition
@@ -17,8 +21,17 @@ export = {
     "ts-apisurface-supportcancellation",
     "require async client methods to accept an AbortSignalLike parameter"
   ),
-  create: (context: Rule.RuleContext): Rule.RuleListener =>
-    ({
+  create: (context: Rule.RuleContext): Rule.RuleListener => {
+    const parserServices = context.parserServices as ParserServices;
+    if (
+      parserServices.program === undefined ||
+      parserServices.esTreeNodeToTSNodeMap === undefined
+    ) {
+      return {};
+    }
+    const typeChecker = parserServices.program.getTypeChecker();
+    const converter = parserServices.esTreeNodeToTSNodeMap;
+    return {
       // callback functions
 
       // call on Client classes
@@ -41,7 +54,30 @@ export = {
                   typeAnnotation.type === "TSTypeReference" &&
                   typeAnnotation.typeName.type === "Identifier"
                 ) {
-                  return typeAnnotation.typeName.name !== "AbortSignalLike";
+                  if (typeAnnotation.typeName.name === "AbortSignalLike") {
+                    return false;
+                  }
+                  // check for if param is an interface
+                  const type = typeChecker.getTypeAtLocation(
+                    converter.get(param)
+                  );
+                  const symbol = type.getSymbol();
+                  if (
+                    symbol === undefined ||
+                    symbol.flags !== SymbolFlags.Interface
+                  ) {
+                    return true;
+                  }
+                  // check interface property type names for AbortSignalLike
+                  return typeChecker
+                    .getPropertiesOfType(type)
+                    .every((memberSymbol: TSSymbol): boolean => {
+                      const memberDeclaration = memberSymbol.valueDeclaration as any;
+                      const memberType = memberDeclaration.type as any;
+                      return (
+                        memberType.typeName.escapedText !== "AbortSignalLike"
+                      );
+                    });
                 }
               }
               return true;
@@ -49,10 +85,11 @@ export = {
           ) {
             context.report({
               node: method,
-              message: `async method ${key.name} should accept an AbortSignalLike parameter`
+              message: `async method ${key.name} should accept an AbortSignalLike parameter or option`
             });
           }
         });
       }
-    } as Rule.RuleListener)
+    } as Rule.RuleListener;
+  }
 };

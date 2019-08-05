@@ -1,6 +1,6 @@
 # ts-apisurface-supportcancellation
 
-Requires all asynchronous public-facing client methods to accept an `AbortSignalLike` option.
+Requires all asynchronous public-facing client methods to accept an `AbortSignalLike` parameter or option.
 
 ## Examples
 
@@ -9,6 +9,16 @@ Requires all asynchronous public-facing client methods to accept an `AbortSignal
 ```ts
 class ServiceClient {
   async createItem(cancelToken: AbortSignalLike);
+}
+```
+
+```ts
+interface ServiceOptions {
+  cancelToken: AbortSignalLike;
+}
+
+class ServiceClient {
+  async createItem(options: ServiceOptions);
 }
 ```
 

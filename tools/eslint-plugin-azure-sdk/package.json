@@ -34,11 +34,10 @@
     "dist"
   ],
   "scripts": {
-    "build": "npm run clean && tsc -p tsconfig.build.json && npm run format:dist",
+    "build": "npm run clean && tsc -p tsconfig.build.json && prettier --write dist/**/*.{js,json,md}",
     "clean": "rimraf dist/",
     "format": "prettier --write \"./**/*.{ts,json,md}\"",
     "format:check": "prettier --check \"./**/*.{ts,json,md}\"",
-    "format:dist": "prettier --write dist/**/*.{js,json,md}",
     "lint": "eslint src tests --ext .ts && markdownlint README.md docs",
     "test": "npm run clean && tsc -p tsconfig.json && mocha --timeout 10000 --recursive dist/tests"
   },

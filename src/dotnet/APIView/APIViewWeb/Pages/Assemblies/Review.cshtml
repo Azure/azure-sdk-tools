@@ -8,20 +8,20 @@
     <tbody>
         @foreach (var line in Model.AssemblyModel)
         {
-            <tr class="code-line">
-                <td class="line-comment-button-cell">
-                    @if (line.ElementId != null)
-                    {
-                        <button data-element-id="@line.ElementId" class="btn-link line-comment-button" type="button" style="text-decoration:none;">+</button>
-                    }
-                </td>
-                <td class="code"><span class="code-inner">@Html.Raw(line.DisplayString)</span></td>
-            </tr>
+        <tr class="code-line">
+            <td class="line-comment-button-cell">
+                @if (line.ElementId != null)
+                {
+                <button data-element-id="@line.ElementId" class="btn-link line-comment-button" type="button" style="text-decoration:none;">+</button>
+                }
+            </td>
+            <td class="code"><span class="code-inner">@Html.Raw(line.DisplayString)</span></td>
+        </tr>
             @foreach (var elementId in Model.Comments.Keys)
             {
                 @if (elementId == line.ElementId)
                 {
-                    <partial name="_CommentThreadPartial" model="@new APIViewWeb.Models.PartialViewModel() { AssemblyId = Model.Id, Comments = Model.Comments[elementId], LineId = elementId }" />
+                <partial name="_CommentThreadPartial" model="@new APIViewWeb.Models.PartialViewModel() { AssemblyId = Model.Id, Comments = Model.Comments[elementId], LineId = elementId }" />
                 }
             }
         }

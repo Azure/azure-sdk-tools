@@ -38,16 +38,42 @@ $(function () {
                 type: "POST",
                 data: commentForm.find("form").serialize()
             }).done(function (partialViewResult) {
-                thisRow.next().replaceWith(partialViewResult);
-                thisRow.next().find(".review-thread-reply-button").click(function () {
-                    showCommentBox($(this).data("element-id"));
-                });
+                updateCommentThread(thisRow.next(), partialViewResult);
             });
             return false;
         });
 
         nextRow.find(".review-thread-reply").hide();
     }
+
+    function updateCommentThread(commentBox, partialViewResult) {
+        partialViewResult = $.parseHTML(partialViewResult);
+        $(commentBox).replaceWith(partialViewResult);
+        $(partialViewResult).find(".review-thread-reply-button").click(function () {
+            showCommentBox($(this).data("element-id"));
+        });
+        $(partialViewResult).find(".comment-delete-button-enabled").click(function () {
+            deleteComment(this.id);
+            return false;
+        });
+    }
+
+    function deleteComment(id) {
+        let button = document.getElementById(id);
+        let commentBox = $(button).parents(".comment-box").first();
+        $.ajax({
+            type: "POST",
+            url: "?handler=delete",
+            data: $(button).parents("form").serialize()
+        }).done(function (partialViewResult) {
+            updateCommentThread(commentBox, partialViewResult);
+        });
+    }
+
+    $(".comment-delete-button-enabled").click(function () {
+        deleteComment(this.id);
+        return false;
+    });
 
     $(".commentable").click(function () {
         showCommentBox(this.id);

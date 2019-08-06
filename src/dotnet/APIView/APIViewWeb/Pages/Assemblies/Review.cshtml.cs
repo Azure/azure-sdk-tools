@@ -28,10 +28,24 @@ namespace APIViewWeb.Pages.Assemblies
         public Dictionary<string, List<CommentModel>> Comments { get; set; }
         public string Username { get; set; }
 
-        public async Task<ActionResult> OnPostDeleteAsync(string id, string commentId)
+        public async Task<ActionResult> OnPostDeleteAsync(string id, string commentId, string elementId)
         {
             await commentRepository.DeleteCommentAsync(commentId);
-            return RedirectToPage(new { id });
+            var commentArray = await commentRepository.FetchCommentsAsync(id);
+            List<CommentModel> comments = commentArray.Where(comment => comment.ElementId == elementId).ToList();
+
+            PartialViewModel partialModel = new PartialViewModel()
+            {
+                AssemblyId = id,
+                Comments = comments,
+                LineId = Comment.ElementId
+            };
+
+            return new PartialViewResult
+            {
+                ViewName = "_CommentThreadPartial",
+                ViewData = new ViewDataDictionary<PartialViewModel>(ViewData, partialModel)
+            };
         }
 
         public async Task OnGetAsync(string id)

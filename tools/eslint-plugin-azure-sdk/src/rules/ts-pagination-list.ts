@@ -3,10 +3,7 @@
  * @author Arpan Laha
  */
 
-import {
-  TSESTree,
-  AST_NODE_TYPES
-} from "@typescript-eslint/experimental-utils";
+import { TSESTree } from "@typescript-eslint/experimental-utils";
 import { Rule } from "eslint";
 import { Identifier, MethodDefinition } from "estree";
 import { getRuleMetaData } from "../utils";
@@ -32,8 +29,7 @@ export = {
         const TSFunction = node.value as TSESTree.FunctionExpression;
         if (
           TSFunction.returnType === undefined ||
-          TSFunction.returnType.typeAnnotation.type !==
-            AST_NODE_TYPES.TSTypeReference
+          TSFunction.returnType.typeAnnotation.type !== "TSTypeReference"
         ) {
           context.report({
             node: node,

@@ -32,7 +32,7 @@ setup(
     ],
     entry_points={"tox": ["monorepo=tox_monorepo:monorepo"]},
     classifiers=[
-        "Framework:: tox",
+        "Framework :: tox",
         "Development Status :: 3 - Alpha",
         "Programming Language :: Python",
         "Programming Language :: Python :: 2.7",

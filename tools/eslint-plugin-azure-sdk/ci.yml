@@ -88,7 +88,7 @@ stages:
                       workingDir: '$(Pipeline.Workspace)/packages'
                       customCommand: 'publish $(Package.Archive)'
                       customRegistry: 'useFeed'
-                      customFeed: '29ec6040-b234-4e31-b139-33dc4287b756/8bea7e97-84ed-4421-9a37-2bbf3200662b'
+                      customFeed: '29ec6040-b234-4e31-b139-33dc4287b756/12354d14-c9a7-4f21-97dc-d3b97f89d71d'
                     displayName: 'Publish package to azure-sdk public feed'
 
     - stage: Release

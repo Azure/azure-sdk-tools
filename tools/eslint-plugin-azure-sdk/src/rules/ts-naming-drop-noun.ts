@@ -3,10 +3,7 @@
  * @author Arpan Laha
  */
 
-import {
-  TSESTree,
-  AST_NODE_TYPES
-} from "@typescript-eslint/experimental-utils";
+import { TSESTree } from "@typescript-eslint/experimental-utils";
 import { Rule } from "eslint";
 import { ClassDeclaration, Identifier, MethodDefinition } from "estree";
 import { getPublicMethods, getRuleMetaData } from "../utils";
@@ -34,8 +31,7 @@ export = {
           // check for proper return type configuration
           if (
             TSFunction.returnType !== undefined &&
-            TSFunction.returnType.typeAnnotation.type ===
-              AST_NODE_TYPES.TSTypeReference
+            TSFunction.returnType.typeAnnotation.type === "TSTypeReference"
           ) {
             const typeIdentifier = TSFunction.returnType.typeAnnotation
               .typeName as Identifier;

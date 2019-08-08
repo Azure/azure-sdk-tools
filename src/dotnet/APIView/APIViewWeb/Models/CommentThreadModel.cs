@@ -2,7 +2,7 @@
 
 namespace APIViewWeb.Models
 {
-    public class PartialViewModel
+    public class CommentThreadModel
     {
         public string AssemblyId { get; set; }
         public List<CommentModel> Comments { get; set; }

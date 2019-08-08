@@ -4,6 +4,47 @@
 // Write your Javascript code.
 $(function () {
     let commentFormTemplate = $("#comment-form-template");
+    attachEventHandlers(document);
+
+    function attachEventHandlers(element, id=null) {
+        let thisRow = $(document.getElementById(id)).parents(".code-line").first();
+
+        $(element).find(".commentable").off().click(function () {
+            showCommentBox(this.id);
+            return false;
+        });
+        $(element).find(".code-line").hover(function () {
+            var button = $(this).find(".line-comment-button");
+            button.toggleClass("is-hovered");
+        });
+        $(element).find(".line-comment-button").click(function () {
+            showCommentBox($(this).data("element-id"));
+            return false;
+        });
+
+        $(element).find(".comment-cancel-button").click(function () {
+            hideCommentBox(id);
+            return false;
+        });
+        $(element).find(".comment-submit-button").off().click(function () {
+            $.ajax({
+                type: "POST",
+                data: element.find("form").serialize()
+            }).done(function (partialViewResult) {
+                updateCommentThread(thisRow.next(), partialViewResult);
+            });
+            return false;
+        });
+
+        $(element).find(".review-thread-reply-button").click(function () {
+            showCommentBox($(this).data("element-id"));
+        });
+
+        $(element).find(".comment-delete-button-enabled").click(function () {
+            deleteComment(this.id);
+            return false;
+        });
+    }
 
     function hideCommentBox(id) {
         var thisRow = $(document.getElementById(id)).parents(".code-line").first();
@@ -32,34 +73,16 @@ $(function () {
         commentForm.show();
         commentForm.find(".id-box").val(id);
         commentForm.find(".new-thread-comment-text").focus();
-        commentForm.find(".comment-cancel-button").click(function () { hideCommentBox(id); });
-        commentForm.find(".comment-submit-button").click(function () {
-            $.ajax({
-                type: "POST",
-                data: commentForm.find("form").serialize()
-            }).done(function (partialViewResult) {
-                updateCommentThread(thisRow.next(), partialViewResult);
-            });
-            return false;
-        });
-
+        attachEventHandlers(commentForm, id);
         nextRow.find(".review-thread-reply").hide();
+        return false;
     }
 
     function updateCommentThread(commentBox, partialViewResult) {
         partialViewResult = $.parseHTML(partialViewResult);
-        if ($(partialViewResult).find(".review-comment").length === 0) {
-            $(commentBox).remove();
-        } else {
-            $(commentBox).replaceWith(partialViewResult);
-            $(partialViewResult).find(".review-thread-reply-button").click(function () {
-                showCommentBox($(this).data("element-id"));
-            });
-            $(partialViewResult).find(".comment-delete-button-enabled").click(function () {
-                deleteComment(this.id);
-                return false;
-            });
-        }
+        $(commentBox).replaceWith(partialViewResult);
+        attachEventHandlers(partialViewResult);
+        return false;
     }
 
     function deleteComment(id) {
@@ -73,28 +96,4 @@ $(function () {
             updateCommentThread(commentBox, partialViewResult);
         });
     }
-
-    $(".comment-delete-button-enabled").click(function () {
-        deleteComment(this.id);
-        return false;
-    });
-
-    $(".commentable").click(function () {
-        showCommentBox(this.id);
-        return false;
-    });
-
-    $(".review-thread-reply-button").click(function () {
-        showCommentBox($(this).data("element-id"));
-    });
-
-    $(".code-line").hover(function () {
-        var button = $(this).find(".line-comment-button");
-        button.toggleClass("is-hovered");
-    });
-
-    $(".line-comment-button").click(function () {
-        showCommentBox($(this).data("element-id"));
-        return false;
-    });
 });

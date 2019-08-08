@@ -21,7 +21,7 @@
             {
                 @if (elementId == line.ElementId)
                 {
-                <partial name="_CommentThreadPartial" model="@new APIViewWeb.Models.PartialViewModel() { AssemblyId = Model.Id, Comments = Model.Comments[elementId], LineId = elementId }" />
+                <partial name="_CommentThreadPartial" model="@new APIViewWeb.Models.CommentThreadModel() { AssemblyId = Model.Id, Comments = Model.Comments[elementId], LineId = elementId }" />
                 }
             }
         }

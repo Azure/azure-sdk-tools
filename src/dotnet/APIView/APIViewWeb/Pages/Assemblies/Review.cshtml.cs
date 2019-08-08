@@ -34,7 +34,7 @@ namespace APIViewWeb.Pages.Assemblies
             var commentArray = await commentRepository.FetchCommentsAsync(id);
             List<CommentModel> comments = commentArray.Where(comment => comment.ElementId == elementId).ToList();
 
-            PartialViewModel partialModel = new PartialViewModel()
+            CommentThreadModel partialModel = new CommentThreadModel()
             {
                 AssemblyId = id,
                 Comments = comments,
@@ -44,7 +44,7 @@ namespace APIViewWeb.Pages.Assemblies
             return new PartialViewResult
             {
                 ViewName = "_CommentThreadPartial",
-                ViewData = new ViewDataDictionary<PartialViewModel>(ViewData, partialModel)
+                ViewData = new ViewDataDictionary<CommentThreadModel>(ViewData, partialModel)
             };
         }
 
@@ -74,7 +74,7 @@ namespace APIViewWeb.Pages.Assemblies
             var commentArray = await commentRepository.FetchCommentsAsync(id);
             List<CommentModel> comments = commentArray.Where(comment => comment.ElementId == Comment.ElementId).ToList();
 
-            PartialViewModel partialModel = new PartialViewModel()
+            CommentThreadModel partialModel = new CommentThreadModel()
             {
                 AssemblyId = id,
                 Comments = comments,
@@ -84,7 +84,7 @@ namespace APIViewWeb.Pages.Assemblies
             return new PartialViewResult
             {
                 ViewName = "_CommentThreadPartial",
-                ViewData = new ViewDataDictionary<PartialViewModel>(ViewData, partialModel)
+                ViewData = new ViewDataDictionary<CommentThreadModel>(ViewData, partialModel)
             };
         }
     }

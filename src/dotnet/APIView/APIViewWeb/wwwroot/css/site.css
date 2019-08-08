@@ -196,6 +196,25 @@ form.comment {
     line-height: 20px;
 }
 
+.line-comment-button {
+    background-color: lightgray;
+    border-radius: 3px;
+    color: #FFF;
+    cursor: pointer;
+    float: left;
+    height: 20px;
+    line-height: 0px;
+    margin: -2px -10px -2px -24px;
+    position: center;
+    text-align: center;
+    text-indent: 0;
+    width: 20px;
+}
+
+.code-line:hover .line-comment-button {
+    opacity: 1;
+}
+
 .code {
     line-height: 20px;
     padding-left: 10px;
@@ -292,21 +311,6 @@ code-inner {
     width: 0;
 }
 
-.line-comment-button {
-    background-color: lightgray;
-    border-radius: 3px;
-    color: #FFF;
-    cursor: pointer;
-    float: left;
-    height: 20px;
-    line-height: 0px;
-    margin: -2px -10px -2px -24px;
-    position: center;
-    text-align: center;
-    text-indent: 0;
-    width: 20px;
-}
-
 .btn-link {
     border: 0;
     opacity: 0;
@@ -314,8 +318,4 @@ code-inner {
     text-decoration: none;
     user-select: none;
     white-space: nowrap;
-}
-
-.is-hovered {
-    opacity: 1;
 }

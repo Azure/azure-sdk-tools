@@ -13,10 +13,6 @@ $(function () {
             showCommentBox(this.id);
             return false;
         });
-        $(element).find(".code-line").hover(function () {
-            var button = $(this).find(".line-comment-button");
-            button.toggleClass("is-hovered");
-        });
         $(element).find(".line-comment-button").click(function () {
             showCommentBox($(this).data("element-id"));
             return false;

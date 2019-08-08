@@ -61,13 +61,18 @@ $(function () {
     function deleteComment(id) {
         let button = document.getElementById(id);
         let commentBox = $(button).parents(".comment-box").first();
+        let gotResponse = false;
         $.ajax({
             type: "POST",
             url: "?handler=delete",
             data: $(button).parents("form").serialize()
         }).done(function (partialViewResult) {
+            gotResponse = true;
             updateCommentThread(commentBox, partialViewResult);
         });
+        if (!gotResponse) {
+            commentBox.remove();
+        }
     }
 
     $(".comment-delete-button-enabled").click(function () {

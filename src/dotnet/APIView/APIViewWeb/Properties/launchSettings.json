@@ -19,9 +19,7 @@
       "commandName": "Project",
       "launchBrowser": true,
       "environmentVariables": {
-        "APIVIEW_CLIENT_ID": "3fe1995775d22cc213d4",
-        "ASPNETCORE_ENVIRONMENT": "Development",
-        "APIVIEW_CLIENT_SECRET": "b01eeb9ed74e59e627882a28e1ff2713f2912386"
+        "ASPNETCORE_ENVIRONMENT": "Development"
       },
       "applicationUrl": "http://localhost:5000"
     }

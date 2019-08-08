@@ -48,31 +48,30 @@ $(function () {
 
     function updateCommentThread(commentBox, partialViewResult) {
         partialViewResult = $.parseHTML(partialViewResult);
-        $(commentBox).replaceWith(partialViewResult);
-        $(partialViewResult).find(".review-thread-reply-button").click(function () {
-            showCommentBox($(this).data("element-id"));
-        });
-        $(partialViewResult).find(".comment-delete-button-enabled").click(function () {
-            deleteComment(this.id);
-            return false;
-        });
+        if ($(partialViewResult).find(".review-comment").length === 0) {
+            $(commentBox).remove();
+        } else {
+            $(commentBox).replaceWith(partialViewResult);
+            $(partialViewResult).find(".review-thread-reply-button").click(function () {
+                showCommentBox($(this).data("element-id"));
+            });
+            $(partialViewResult).find(".comment-delete-button-enabled").click(function () {
+                deleteComment(this.id);
+                return false;
+            });
+        }
     }
 
     function deleteComment(id) {
         let button = document.getElementById(id);
         let commentBox = $(button).parents(".comment-box").first();
-        let gotResponse = false;
         $.ajax({
             type: "POST",
             url: "?handler=delete",
             data: $(button).parents("form").serialize()
         }).done(function (partialViewResult) {
-            gotResponse = true;
             updateCommentThread(commentBox, partialViewResult);
         });
-        if (!gotResponse) {
-            commentBox.remove();
-        }
     }
 
     $(".comment-delete-button-enabled").click(function () {

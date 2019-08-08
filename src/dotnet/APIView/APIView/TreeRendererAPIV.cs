@@ -206,15 +206,15 @@ namespace APIView
         {
             var builder = new StringBuilder();
             AppendIndents(builder, indents);
+            if (nt.IsSealed)
+            {
+                RenderKeyword(builder, "sealed");
+                builder.Append(" ");
+            }
             RenderKeyword(builder, nt.Accessibility);
             builder.Append(" ");
             if (nt.IsStatic) {
                 RenderKeyword(builder, "static");
-                builder.Append(" ");
-            }
-            if (nt.IsSealed)
-            {
-                RenderKeyword(builder, "sealed");
                 builder.Append(" ");
             }
             RenderKeyword(builder, nt.TypeKind);

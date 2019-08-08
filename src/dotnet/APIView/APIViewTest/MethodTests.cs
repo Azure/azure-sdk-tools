@@ -155,7 +155,7 @@ namespace APIViewTest
             var renderer = new HTMLRendererAPIV();
             var list = new StringListAPIV();
             renderer.Render(m, list);
-            Assert.Equal("<span class=\"keyword\">public</span> <a href=\"#\" class=\"class commentable\">TestClass</a>(<span class=\"keyword\">int</span> num" +
+            Assert.Equal("<span class=\"keyword\">public</span> <a href=\"#\" id=\"TestClass\" class=\"class commentable\">TestClass</a>(<span class=\"keyword\">int</span> num" +
                 " = <span class=\"value\">2</span>) { }", list.ToString());
         }
 

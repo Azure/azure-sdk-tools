@@ -33,10 +33,6 @@ namespace APIViewWeb.Pages.Assemblies
             await commentRepository.DeleteCommentAsync(commentId);
             var commentArray = await commentRepository.FetchCommentsAsync(id);
             List<CommentModel> comments = commentArray.Where(comment => comment.ElementId == elementId).ToList();
-            if (!comments.Any())
-            {
-                return null;
-            }
 
             PartialViewModel partialModel = new PartialViewModel()
             {

@@ -4,6 +4,44 @@
 // Write your Javascript code.
 $(function () {
     let commentFormTemplate = $("#comment-form-template");
+    attachEventHandlers(document);
+
+    $(document).find(".commentable").click(function () {
+        showCommentBox(this.id);
+        return false;
+    });
+
+    $(document).find(".line-comment-button").click(function () {
+        showCommentBox($(this).data("element-id"));
+        return false;
+    });
+
+    function attachEventHandlers(element, id=null) {
+        let thisRow = $(document.getElementById(id)).parents(".code-line").first();
+
+        $(element).find(".comment-cancel-button").click(function () {
+            hideCommentBox(id);
+            return false;
+        });
+        $(element).find(".comment-submit-button").off().click(function () {
+            $.ajax({
+                type: "POST",
+                data: element.find("form").serialize()
+            }).done(function (partialViewResult) {
+                updateCommentThread(thisRow.next(), partialViewResult);
+            });
+            return false;
+        });
+
+        $(element).find(".review-thread-reply-button").click(function () {
+            showCommentBox($(this).data("element-id"));
+        });
+
+        $(element).find(".comment-delete-button-enabled").click(function () {
+            deleteComment(this.id);
+            return false;
+        });
+    }
 
     function hideCommentBox(id) {
         var thisRow = $(document.getElementById(id)).parents(".code-line").first();
@@ -13,9 +51,9 @@ $(function () {
     }
 
     function showCommentBox(id) {
-        var thisRow = $(document.getElementById(id)).parents(".code-line").first();
-        var nextRow = thisRow.next();
-        var commentForm = nextRow.find(".comment-form");
+        let thisRow = $(document.getElementById(id)).parents(".code-line").first();
+        let nextRow = thisRow.next();
+        let commentForm = nextRow.find(".comment-form");
 
         if (commentForm.length == 0) {
             commentForm = commentFormTemplate.children().clone();
@@ -25,24 +63,34 @@ $(function () {
                 thread.after(commentForm);
             }
             else {
-                commentForm.insertAfter(thisRow).wrap("<tr>").wrap("<td>");
+                commentForm.insertAfter(thisRow).wrap("<tr>").wrap("<td colspan=\"2\">");
             }
         }
 
         commentForm.show();
         commentForm.find(".id-box").val(id);
         commentForm.find(".new-thread-comment-text").focus();
-        commentForm.find(".comment-cancel-button").click(function () { hideCommentBox(id); });
-
+        attachEventHandlers(commentForm, id);
         nextRow.find(".review-thread-reply").hide();
+        return false;
     }
 
-    $(".commentable").click(function () {
-        showCommentBox(this.id);
+    function updateCommentThread(commentBox, partialViewResult) {
+        partialViewResult = $.parseHTML(partialViewResult);
+        $(commentBox).replaceWith(partialViewResult);
+        attachEventHandlers(partialViewResult);
         return false;
-    });
+    }
 
-    $(".review-thread-reply-button").click(function () {
-        showCommentBox($(this).data("element-id"));
-    });
+    function deleteComment(id) {
+        let button = document.getElementById(id);
+        let commentBox = $(button).parents(".comment-box").first();
+        $.ajax({
+            type: "POST",
+            url: "?handler=delete",
+            data: $(button).parents("form").serialize()
+        }).done(function (partialViewResult) {
+            updateCommentThread(commentBox, partialViewResult);
+        });
+    }
 });

@@ -100,7 +100,7 @@ namespace APIViewTest
             NamedTypeAPIV publicEnum = new NamedTypeAPIV(namedTypeSymbol);
 
             string stringRep = publicEnum.ToString().Replace(Environment.NewLine, "");
-            Assert.Equal("public enum PublicEnum {    One = 0,    Two = 1,    Three = 2,}", stringRep);
+            Assert.Equal("sealed public enum PublicEnum {    One = 0,    Two = 1,    Three = 2,}", stringRep);
         }
         
         [Fact]
@@ -121,7 +121,7 @@ namespace APIViewTest
             NamedTypeAPIV publicEnum = new NamedTypeAPIV(namedTypeSymbol);
 
             string stringRep = publicEnum.ToString().Replace(Environment.NewLine, "");
-            Assert.Equal("public enum PublicEnum : long {    One = 1,    Two = 2,    Three = 3,}", stringRep);
+            Assert.Equal("sealed public enum PublicEnum : long {    One = 1,    Two = 2,    Three = 3,}", stringRep);
         }
         
         [Fact]
@@ -140,7 +140,7 @@ namespace APIViewTest
             var namedTypeSymbol = (INamedTypeSymbol)TestResource.GetTestMember("TestLibrary.publicDelegate");
             NamedTypeAPIV publicDelegate = new NamedTypeAPIV(namedTypeSymbol);
 
-            Assert.Equal("public delegate int publicDelegate(int num = 10) { }", publicDelegate.ToString().Replace(Environment.NewLine, ""));
+            Assert.Equal("sealed public delegate int publicDelegate(int num = 10) { }", publicDelegate.ToString().Replace(Environment.NewLine, ""));
         }
         
         [Fact]

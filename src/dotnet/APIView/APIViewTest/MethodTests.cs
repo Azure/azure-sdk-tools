@@ -139,7 +139,7 @@ namespace APIViewTest
                 Name = "TestClass",
                 ReturnType = null,
                 Accessibility = "public",
-                ClassNavigationID = "TestClass",
+                Id = "TestClass",
                 IsConstructor = true,
                 IsInterfaceMethod = false,
                 IsStatic = false,
@@ -155,7 +155,7 @@ namespace APIViewTest
             var renderer = new HTMLRendererAPIV();
             var list = new StringListAPIV();
             renderer.Render(m, list);
-            Assert.Equal("<span class=\"keyword\">public</span> <a href=\"#TestClass\" class=\"class\">TestClass</a>(<span class=\"keyword\">int</span> num" +
+            Assert.Equal("<span class=\"keyword\">public</span> <a href=\"#\" id=\"TestClass\" class=\"class commentable\">TestClass</a>(<span class=\"keyword\">int</span> num" +
                 " = <span class=\"value\">2</span>) { }", list.ToString());
         }
 
@@ -182,7 +182,7 @@ namespace APIViewTest
                 Name = "TestMethod",
                 ReturnType = new TypeReferenceAPIV(new TokenAPIV[] { new TokenAPIV("void", TypeReferenceAPIV.TokenType.BuiltInType) }),
                 Accessibility = "public",
-                ClassNavigationID = "",
+                Id = "TestMethod",
                 IsConstructor = false,
                 IsInterfaceMethod = false,
                 IsStatic = false,
@@ -199,7 +199,7 @@ namespace APIViewTest
             var list = new StringListAPIV();
             renderer.Render(m, list);
             Assert.Equal("[<a href=\"#\" class=\"class\">TestAttribute</a>(<span class=\"value\">Test</span>, <span class=\"value\">\"String\"</span>)]" + Environment.NewLine +
-                "<span class=\"keyword\">public</span> <span class=\"keyword\">void</span> <a id=\"\" class=\"name commentable\">TestMethod</a>() { }", list.ToString());
+                "<span class=\"keyword\">public</span> <span class=\"keyword\">void</span> <a id=\"TestMethod\" class=\"name commentable\">TestMethod</a>() { }", list.ToString());
         }
     }
 }

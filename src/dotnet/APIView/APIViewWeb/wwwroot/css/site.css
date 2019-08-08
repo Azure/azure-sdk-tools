@@ -120,12 +120,18 @@ form.comment {
     vertical-align: top;
 }
 
+.comment-contents {
+    max-width: 592px;
+    margin-bottom: 3px;
+    overflow-wrap: break-word;
+}
+
 .comment-delete-button {
     margin-left: 44px;
 }
 
 .comment-delete-text {
-    color: grey;
+    color: #B93D3D;
     font-size: 12px;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
@@ -187,6 +193,26 @@ form.comment {
 .code-line {
     white-space: pre;
     font-family: monospace;
+    line-height: 20px;
+}
+
+.line-comment-button {
+    background-color: lightgray;
+    border-radius: 3px;
+    color: #FFF;
+    cursor: pointer;
+    float: left;
+    height: 20px;
+    line-height: 0px;
+    margin: -2px -10px -2px -24px;
+    position: center;
+    text-align: center;
+    text-indent: 0;
+    width: 20px;
+}
+
+.code-line:hover .line-comment-button {
+    opacity: 1;
 }
 
 .code {
@@ -271,4 +297,25 @@ code-inner {
 .info-text {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     font-size: 14px;
+}
+
+.line-comment-button-cell {
+    user-select: none;
+    width: 1em;
+    white-space: normal;
+}
+
+.line-comment-button-cell::before {
+    display: block;
+    height: 0;
+    width: 0;
+}
+
+.btn-link {
+    border: 0;
+    opacity: 0;
+    padding: 0;
+    text-decoration: none;
+    user-select: none;
+    white-space: nowrap;
 }

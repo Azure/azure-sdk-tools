@@ -11,13 +11,15 @@ namespace APIView
     /// </summary>
     public class AttributeAPIV
     {
+        public string Id { get; set; }
         public TypeReferenceAPIV Type { get; set; }
         public AttributeConstructArgAPIV[] ConstructorArgs { get; set; }
 
         public AttributeAPIV() { }
 
-        public AttributeAPIV(AttributeData attributeData)
+        public AttributeAPIV(AttributeData attributeData, string id)
         {
+            this.Id = id;
             this.Type = new TypeReferenceAPIV(attributeData.AttributeClass);
 
             var args = new List<AttributeConstructArgAPIV>();

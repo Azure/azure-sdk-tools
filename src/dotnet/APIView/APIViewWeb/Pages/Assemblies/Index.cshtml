@@ -1,5 +1,6 @@
 ﻿@page
 @model APIViewWeb.Pages.Assemblies.IndexModel
+@using APIViewWeb
 @{
     ViewData["Title"] = "Home page";
 }
@@ -26,10 +27,13 @@
                 <td>
                     <span date="@assembly.TimeStamp.ToLocalTime()"></span>
                 </td>
+                @if (assembly.Author == User.GetGitHubLogin()) {
                 <td>
                     <a asp-page="./Delete" asp-route-id="@assembly.Id">Delete</a>
                 </td>
+                } else {
                 <td></td>
+                }
             </tr>
         }
     </tbody>

@@ -8,50 +8,20 @@
     <tbody>
         @foreach (var line in Model.AssemblyModel)
         {
-            <tr class="code-line"><td class="code"><span class="code-inner">@Html.Raw(line.DisplayString)</span></td></tr>
+        <tr class="code-line">
+            <td class="line-comment-button-cell">
+                @if (line.ElementId != null)
+                {
+                <button data-element-id="@line.ElementId" class="btn-link line-comment-button" type="button" style="text-decoration:none;">+</button>
+                }
+            </td>
+            <td class="code"><span class="code-inner">@Html.Raw(line.DisplayString)</span></td>
+        </tr>
             @foreach (var elementId in Model.Comments.Keys)
             {
                 @if (elementId == line.ElementId)
                 {
-                    <tr class="comment-box">
-                        <td class="comment-cell border-top border-bottom" colspan="4">
-                            <div class="border comment-holder rounded-1">
-                                <div class="comment-thread-contents">
-                                    @foreach (var comment in Model.Comments[elementId])
-                                    {
-                                        <div class="review-comment">
-                                            <div class="unminimized-comment">
-                                                <div class="comment-actions">
-                                                    <form class="comment-delete-button align-top" asp-page-handler="delete" method="post" asp-route-id="@Model.Id">
-                                                        <input type="hidden" name="commentId" value=@comment.Id>
-                                                        <button class="btn align-top"><span class="comment-delete-text align-top">Delete</span></button>
-                                                    </form>
-                                                </div>
-                                                <div class="media">
-                                                    <img username="@comment.Username" class="comment-icon align-self-start mr-3" height="28" width="28" />
-                                                    <div class="media-body">
-                                                        <div>
-                                                            <h4 class="mt-0 comment-header"><strong class="author align-top">@comment.Username</strong></h4>
-                                                            <span date="@comment.TimeStamp.ToLocalTime()" class="comment-timestamp align-top"></span>
-                                                        </div>
-                                                        @comment.Comment
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    }
-                                    <div class="review-thread-reply">
-                                        <div class="reply-cell align-middle">
-                                            <img avatar username="@Model.Username" class="comment-icon" height="28" width="28" />
-                                        </div>
-                                        <div class="reply-cell col-12">
-                                            <button data-element-id="@line.ElementId" type="button" class="review-thread-reply-button text-muted text-left form-control">Reply...</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </td>
-                    </tr>
+                <partial name="_CommentThreadPartial" model="@new APIViewWeb.Models.CommentThreadModel() { AssemblyId = Model.Id, Comments = Model.Comments[elementId], LineId = elementId }" />
                 }
             }
         }

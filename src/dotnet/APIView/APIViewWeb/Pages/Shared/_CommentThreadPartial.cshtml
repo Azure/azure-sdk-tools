@@ -1,0 +1,57 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@using APIViewWeb.Models
+@using System.Linq
+@model CommentThreadModel
+
+@if (Model.Comments.Any())
+{
+    <tr class="comment-box">
+        <td class="comment-cell border-top border-bottom" colspan="4">
+            <div class="border comment-holder rounded-1">
+                <div class="comment-thread-contents">
+                    @foreach (var comment in Model.Comments)
+                    {
+                        <div class="review-comment">
+                            <div class="unminimized-comment">
+                                <div class="comment-actions">
+                                    <form class="comment-delete-button align-top" asp-page-handler="delete" method="post" asp-route-id="@Model.AssemblyId">
+                                        <input type="hidden" name="commentId" value="@comment.Id" />
+                                        <input type="hidden" name="elementId" value="@Model.LineId" />
+                                        @if (comment.Username == @User.GetGitHubLogin())
+                                        {
+                                            <button id="@comment.Id" class="comment-delete-button-enabled btn align-top"><span class="comment-delete-text align-top">Delete</span></button>
+                                        }
+                                        else
+                                        {
+                                            <button disabled class="btn align-top"><span class="comment-delete-text align-top">Delete</span></button>
+                                        }
+                                    </form>
+                                </div>
+                                <div class="media">
+                                    <img username="@comment.Username" class="comment-icon align-self-start mr-3" height="28" width="28" />
+                                    <div class="media-body">
+                                        <div>
+                                            <h4 class="mt-0 comment-header"><strong class="author align-top">@comment.Username</strong></h4>
+                                            <span date="@comment.TimeStamp.ToLocalTime()" class="comment-timestamp align-top"></span>
+                                        </div>
+                                        <p class="comment-contents">@comment.Comment</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    <div class="review-thread-reply">
+                        <div class="reply-cell align-middle">
+                            <img avatar username="@User.GetGitHubLogin()" class="comment-icon" height="28" width="28" />
+                        </div>
+                        <div class="reply-cell col-12">
+                            <button data-element-id="@Model.LineId" type="button" class="review-thread-reply-button text-muted text-left form-control">Reply...</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </td>
+    </tr>
+}

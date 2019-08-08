@@ -1,10 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using APIView;
-using APIViewWeb.ExtensionMethods;
 using APIViewWeb.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 
 namespace APIViewWeb.Pages.Assemblies
 {
@@ -26,10 +28,24 @@ namespace APIViewWeb.Pages.Assemblies
         public Dictionary<string, List<CommentModel>> Comments { get; set; }
         public string Username { get; set; }
 
-        public async Task<ActionResult> OnPostDeleteAsync(string id, string commentId)
+        public async Task<ActionResult> OnPostDeleteAsync(string id, string commentId, string elementId)
         {
             await commentRepository.DeleteCommentAsync(commentId);
-            return RedirectToPage(new { id });
+            var commentArray = await commentRepository.FetchCommentsAsync(id);
+            List<CommentModel> comments = commentArray.Where(comment => comment.ElementId == elementId).ToList();
+
+            CommentThreadModel partialModel = new CommentThreadModel()
+            {
+                AssemblyId = id,
+                Comments = comments,
+                LineId = Comment.ElementId
+            };
+
+            return new PartialViewResult
+            {
+                ViewName = "_CommentThreadPartial",
+                ViewData = new ViewDataDictionary<CommentThreadModel>(ViewData, partialModel)
+            };
         }
 
         public async Task OnGetAsync(string id)
@@ -52,12 +68,24 @@ namespace APIViewWeb.Pages.Assemblies
             Username = User.GetGitHubLogin();
         }
 
-        public async Task<ActionResult> OnPostAsync(string id, string cancel)
+        public async Task<ActionResult> OnPostAsync(string id)
         {
-            if (cancel == null)
-                await commentRepository.UploadCommentAsync(Comment, id);
+            await commentRepository.UploadCommentAsync(Comment, id);
+            var commentArray = await commentRepository.FetchCommentsAsync(id);
+            List<CommentModel> comments = commentArray.Where(comment => comment.ElementId == Comment.ElementId).ToList();
 
-            return RedirectToPage(new { id });
+            CommentThreadModel partialModel = new CommentThreadModel()
+            {
+                AssemblyId = id,
+                Comments = comments,
+                LineId = Comment.ElementId
+            };
+
+            return new PartialViewResult
+            {
+                ViewName = "_CommentThreadPartial",
+                ViewData = new ViewDataDictionary<CommentThreadModel>(ViewData, partialModel)
+            };
         }
     }
 }

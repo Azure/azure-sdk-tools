@@ -6,17 +6,18 @@ $(function () {
     let commentFormTemplate = $("#comment-form-template");
     attachEventHandlers(document);
 
+    $(document).find(".commentable").click(function () {
+        showCommentBox(this.id);
+        return false;
+    });
+
+    $(document).find(".line-comment-button").click(function () {
+        showCommentBox($(this).data("element-id"));
+        return false;
+    });
+
     function attachEventHandlers(element, id=null) {
         let thisRow = $(document.getElementById(id)).parents(".code-line").first();
-
-        $(element).find(".commentable").off().click(function () {
-            showCommentBox(this.id);
-            return false;
-        });
-        $(element).find(".line-comment-button").click(function () {
-            showCommentBox($(this).data("element-id"));
-            return false;
-        });
 
         $(element).find(".comment-cancel-button").click(function () {
             hideCommentBox(id);

@@ -135,9 +135,10 @@ export = {
           // report if async and no parameter of type AbortSignalLike
           if (
             TSFunction.async &&
-            TSFunction.params.every((param: TSESTree.Parameter): boolean => {
-              return !isValidParam(param, typeChecker, converter);
-            })
+            TSFunction.params.every(
+              (param: TSESTree.Parameter): boolean =>
+                !isValidParam(param, typeChecker, converter)
+            )
           ) {
             context.report({
               node: method,

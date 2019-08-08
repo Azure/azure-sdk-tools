@@ -7,14 +7,106 @@ import {
   ParserServices,
   TSESTree
 } from "@typescript-eslint/experimental-utils";
+import { ParserWeakMap } from "@typescript-eslint/typescript-estree/dist/parser-options";
 import { Rule } from "eslint";
 import { ClassDeclaration, Identifier, MethodDefinition } from "estree";
+import {
+  Node,
+  Symbol as TSSymbol,
+  Type,
+  TypeChecker,
+  TypeFlags
+} from "typescript";
 import { getPublicMethods, getRuleMetaData } from "../utils";
-import { Symbol as TSSymbol, SymbolFlags } from "typescript";
 
 //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/**
+ * Fetches a defined Type from a union Type.
+ * @param type the input Type.
+ * @returns the first encountered defined Type from a union, or the Type itself.
+ */
+const getDefinedType = (type: any): Type => {
+  if (type.types === undefined) {
+    return type;
+  }
+  const nonUndefinedType = type.types.find(
+    (candidate: Type): boolean => candidate.getFlags() !== TypeFlags.Undefined
+  );
+  return nonUndefinedType !== undefined ? nonUndefinedType : type;
+};
+
+/**
+ * Determines if a Symbol is or contains AbortSignalLike.
+ * @param symbol the Symbol in question.
+ * @param typeChecker a TypeScript TypeChecker.
+ * @returns if the Symbol is or contains AbortSignalLike.
+ */
+const isValidSymbol = (symbol: TSSymbol, typeChecker: TypeChecker): boolean => {
+  const type = getDefinedType(
+    typeChecker.getTypeAtLocation(symbol.valueDeclaration)
+  );
+  const typeSymbol = type.getSymbol();
+  if (typeSymbol === undefined) {
+    return false;
+  }
+  if (typeSymbol.getEscapedName() === "AbortSignalLike") {
+    return true;
+  }
+  if (typeSymbol.members === undefined) {
+    return false;
+  }
+  let foundValidMember = false;
+  typeSymbol.members.forEach((memberSymbol: TSSymbol): void => {
+    if (isValidSymbol(memberSymbol, typeChecker)) {
+      foundValidMember = true;
+    }
+  });
+  return foundValidMember;
+};
+
+/**
+ * Determines whether a parameter contains or is AbortSignalLike.
+ * @param param the parameter in question.
+ * @param typeChecker a TypeScript TypeChecker.
+ * @param converter a map from TSESTree nodes to TSNodes.
+ * @returns whether a parameter contains or is AbortSignalLike.
+ */
+const isValidParam = (
+  param: TSESTree.Parameter,
+  typeChecker: TypeChecker,
+  converter: ParserWeakMap<TSESTree.Node, Node>
+): boolean => {
+  if (param.type !== "Identifier" || param.typeAnnotation === undefined) {
+    return false;
+  }
+
+  const typeAnnotation = param.typeAnnotation.typeAnnotation;
+  if (
+    typeAnnotation.type !== "TSTypeReference" ||
+    typeAnnotation.typeName.type !== "Identifier"
+  ) {
+    return false;
+  }
+
+  const typeName = typeAnnotation.typeName.name;
+
+  if (typeName === "AbortSignalLike") {
+    return true;
+  }
+
+  // check property type names for AbortSignalLike
+  return (
+    /Options$/.test(typeName) &&
+    getDefinedType(typeChecker.getTypeAtLocation(converter.get(param)))
+      .getProperties()
+      .some((property: TSSymbol): boolean =>
+        isValidSymbol(property, typeChecker)
+      )
+  );
+};
 
 export = {
   meta: getRuleMetaData(
@@ -43,45 +135,10 @@ export = {
           // report if async and no parameter of type AbortSignalLike
           if (
             TSFunction.async &&
-            TSFunction.params.every((param: TSESTree.Parameter): boolean => {
-              // validate param type
-              if (
-                param.type === "Identifier" &&
-                param.typeAnnotation !== undefined
-              ) {
-                const typeAnnotation = param.typeAnnotation.typeAnnotation;
-                if (
-                  typeAnnotation.type === "TSTypeReference" &&
-                  typeAnnotation.typeName.type === "Identifier"
-                ) {
-                  if (typeAnnotation.typeName.name === "AbortSignalLike") {
-                    return false;
-                  }
-                  // check for if param is an interface
-                  const type = typeChecker.getTypeAtLocation(
-                    converter.get(param)
-                  );
-                  const symbol = type.getSymbol();
-                  if (
-                    symbol === undefined ||
-                    symbol.flags !== SymbolFlags.Interface
-                  ) {
-                    return true;
-                  }
-                  // check interface property type names for AbortSignalLike
-                  return typeChecker
-                    .getPropertiesOfType(type)
-                    .every((memberSymbol: TSSymbol): boolean => {
-                      const memberDeclaration = memberSymbol.valueDeclaration as any;
-                      const memberType = memberDeclaration.type as any;
-                      return (
-                        memberType.typeName.escapedText !== "AbortSignalLike"
-                      );
-                    });
-                }
-              }
-              return true;
-            })
+            TSFunction.params.every(
+              (param: TSESTree.Parameter): boolean =>
+                !isValidParam(param, typeChecker, converter)
+            )
           ) {
             context.report({
               node: method,

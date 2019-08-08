@@ -24,11 +24,6 @@ ruleTester.run("ts-apifurface-supportcancellation", rule, {
       code:
         "class ExampleClient { async createItem(cancelToken: AbortSignalLike): void {}; };"
     },
-    //option
-    {
-      code:
-        "interface ExampleOptions { cancelToken: AbortSignalLike }; class ExampleClient { async createItem(options: ExampleOptions): void {}; };"
-    },
     // sync
     {
       code: "class ExampleClient { createItem(): void {}; };"

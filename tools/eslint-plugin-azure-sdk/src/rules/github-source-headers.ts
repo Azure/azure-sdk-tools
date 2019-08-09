@@ -12,7 +12,7 @@ import { getRuleMetaData } from "../utils";
 //------------------------------------------------------------------------------
 
 const expectedComments =
-  "// Copyright (c) Microsoft Corporation.\n// Licensed under the MIT license.";
+  "// Copyright (c) Microsoft Corporation.\n// Licensed under the MIT license.\n";
 
 export = {
   meta: getRuleMetaData(

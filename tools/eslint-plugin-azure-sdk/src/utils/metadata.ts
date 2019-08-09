@@ -11,6 +11,7 @@ export const getRuleMetaData = (
   fix?: "code" | "whitespace"
 ): Rule.RuleMetaData => {
   const required = {
+    type: "suggestion",
     docs: {
       description: ruleDescription,
       category: "Best Practices",
@@ -19,5 +20,5 @@ export const getRuleMetaData = (
     },
     schema: []
   };
-  return fix !== undefined ? { ...required, fixable: fix } : { ...required };
+  return fix !== undefined ? { ...required, fixable: fix } : required;
 };

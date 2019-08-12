@@ -15,12 +15,6 @@ namespace APIViewWeb.Models
             this.Comments = new CommentModel[] { };
         }
 
-        public AssemblyCommentsModel(string assemblyId, CommentModel commentModel)
-        {
-            this.AssemblyId = assemblyId;
-            this.Comments = new CommentModel[] { commentModel };
-        }
-
         public void AddComment(CommentModel comment)
         {
             Comments = Comments.Append(comment).ToArray();

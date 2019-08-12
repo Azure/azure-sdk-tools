@@ -62,13 +62,7 @@ namespace APIViewWeb
             commentModel.Id = Guid.NewGuid().ToString();
 
             AssemblyCommentsModel assemblyComments = await FetchCommentsAsync(assemblyId);
-            if (assemblyComments.AssemblyId == null)
-            {
-                assemblyComments = new AssemblyCommentsModel(assemblyId, commentModel);
-            } else
-            {
-                assemblyComments.AddComment(commentModel);
-            }
+            assemblyComments.AddComment(commentModel);
             await UploadAssemblyCommentsAsync(assemblyComments);
         }
 

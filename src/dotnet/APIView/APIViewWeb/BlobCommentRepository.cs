@@ -1,11 +1,8 @@
 ﻿using APIViewWeb.Models;
 using Azure.Storage.Blobs;
-using Azure.Storage.Blobs.Models;
 using Microsoft.Extensions.Configuration;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
@@ -23,53 +20,73 @@ namespace APIViewWeb
 
         private BlobContainerClient ContainerClient { get; }
 
-        public async Task<CommentModel> ReadCommentContentAsync(string id)
+        /// <summary>
+        /// Return all comments written for review of the assembly with the provided ID.
+        /// </summary>
+        /// <param name="assemblyId">The ID of the assembly to have its comments read.</param>
+        /// <returns>The comments existing for the specified assembly if it exists, or null if no assembly has the specified ID.</returns>
+        public async Task<AssemblyCommentsModel> FetchCommentsAsync(string assemblyId)
         {
-            var result = await ContainerClient.GetBlockBlobClient(id).DownloadAsync();
+            var result = await ContainerClient.GetBlobClient(assemblyId).DownloadAsync();
 
             using (StreamReader reader = new StreamReader(result.Value.Content))
             {
-                CommentModel comment = JsonSerializer.Parse<CommentModel>(reader.ReadToEnd());
-                return comment;
+                AssemblyCommentsModel comments = JsonSerializer.Parse<AssemblyCommentsModel>(reader.ReadToEnd());
+                return comments;
             }
         }
 
-        public async Task<CommentModel[]> FetchCommentsAsync(string assemblyID)
+        /// <summary>
+        /// Upload the comments existing for an assembly review.
+        /// </summary>
+        /// <param name="assemblyComments">The comments in the review.</param>
+        /// <returns></returns>
+        public async Task UploadAssemblyCommentsAsync(AssemblyCommentsModel assemblyComments)
         {
-            var segment = await ContainerClient.ListBlobsFlatSegmentAsync(options: new BlobsSegmentOptions() { Details = new BlobListingDetails() { Metadata = true } });
+            var blob = ContainerClient.GetBlobClient(assemblyComments.AssemblyId);
 
-            var comments = new List<CommentModel>();
-            foreach (var item in segment.Value.BlobItems.OrderBy(blob => blob.Properties.CreationTime))
-            {
-                foreach (var pair in item.Metadata)
-                {
-                    if (pair.Value == assemblyID)
-                    {
-                        var comment = await ReadCommentContentAsync(item.Name);
-                        comments.Add(comment);
-                    }
-                }
-            }
-            return comments.ToArray();
-        }
-
-        public async Task UploadCommentAsync(CommentModel commentModel, string assemblyID)
-        {
-            var guid = Guid.NewGuid().ToString();
-            commentModel.Id = guid;
-            var blob = ContainerClient.GetBlockBlobClient(guid);
-
-            using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(JsonSerializer.ToString(commentModel))))
+            using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(JsonSerializer.ToString(assemblyComments))))
             {
                 await blob.UploadAsync(stream);
             }
-            blob = ContainerClient.GetBlockBlobClient(guid);
-            await blob.SetMetadataAsync(new Dictionary<string, string>() { { "assembly", assemblyID } });
         }
 
-        public async Task DeleteCommentAsync(string id)
+        /// <summary>
+        /// Upload a single comment added to the review of an assembly with the specified ID.
+        /// </summary>
+        /// <param name="commentModel">The comment being added to the review.</param>
+        /// <param name="assemblyId">The ID of the assembly being commented on.</param>
+        /// <returns></returns>
+        public async Task UploadCommentAsync(CommentModel commentModel, string assemblyId)
         {
-            await ContainerClient.GetBlockBlobClient(id).DeleteAsync();
+            commentModel.Id = Guid.NewGuid().ToString();
+
+            AssemblyCommentsModel assemblyComments = await FetchCommentsAsync(assemblyId);
+            assemblyComments.AddComment(commentModel);
+            await UploadAssemblyCommentsAsync(assemblyComments);
+        }
+
+        /// <summary>
+        /// Delete the blob containing comments for an assembly with the specified ID.
+        /// </summary>
+        /// <param name="assemblyId">The ID of the assembly having its comments blob deleted.</param>
+        /// <returns></returns>
+        public async Task DeleteAssemblyCommentsAsync(string assemblyId)
+        {
+            await ContainerClient.GetBlobClient(assemblyId).DeleteAsync();
+        }
+
+        /// <summary>
+        /// Delete a single comment from the review of an assembly with the specified ID.
+        /// </summary>
+        /// <param name="assemblyId">The ID of the assembly from which a comment is being deleted.</param>
+        /// <param name="commentId">The ID of the comment being deleted.</param>
+        /// <returns></returns>
+        public async Task DeleteCommentAsync(string assemblyId, string commentId)
+        {
+            var assemblyComments = await FetchCommentsAsync(assemblyId);
+            assemblyComments.DeleteComment(commentId);
+            await UploadAssemblyCommentsAsync(assemblyComments);
         }
     }
 }

@@ -30,9 +30,9 @@ namespace APIViewWeb.Pages.Assemblies
 
         public async Task<ActionResult> OnPostDeleteAsync(string id, string commentId, string elementId)
         {
-            await commentRepository.DeleteCommentAsync(commentId);
+            await commentRepository.DeleteCommentAsync(id, commentId);
             var commentArray = await commentRepository.FetchCommentsAsync(id);
-            List<CommentModel> comments = commentArray.Where(comment => comment.ElementId == elementId).ToList();
+            List<CommentModel> comments = commentArray.Comments.Where(comment => comment.ElementId == elementId).ToList();
 
             CommentThreadModel partialModel = new CommentThreadModel()
             {
@@ -54,9 +54,11 @@ namespace APIViewWeb.Pages.Assemblies
             var assemblyModel = await assemblyRepository.ReadAssemblyContentAsync(id);
             var renderer = new HTMLRendererAPIV();
             AssemblyModel = renderer.Render(assemblyModel.Assembly).ToArray();
-            var comments = await commentRepository.FetchCommentsAsync(id);
-
             Comments = new Dictionary<string, List<CommentModel>>();
+
+            var assemblyComments = await commentRepository.FetchCommentsAsync(id);
+            var comments = assemblyComments.Comments;
+
             foreach (var comment in comments)
             {
                 if (!Comments.TryGetValue(comment.ElementId, out List<CommentModel> list))
@@ -70,8 +72,11 @@ namespace APIViewWeb.Pages.Assemblies
 
         public async Task<ActionResult> OnPostAsync(string id)
         {
+            Comment.TimeStamp = DateTime.UtcNow;
+            Comment.Username = User.GetGitHubLogin();
             await commentRepository.UploadCommentAsync(Comment, id);
-            var commentArray = await commentRepository.FetchCommentsAsync(id);
+            var assemblyComments = await commentRepository.FetchCommentsAsync(id);
+            var commentArray = assemblyComments.Comments;
             List<CommentModel> comments = commentArray.Where(comment => comment.ElementId == Comment.ElementId).ToList();
 
             CommentThreadModel partialModel = new CommentThreadModel()

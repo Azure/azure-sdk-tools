@@ -57,17 +57,14 @@ namespace APIViewWeb.Pages.Assemblies
             Comments = new Dictionary<string, List<CommentModel>>();
 
             var assemblyComments = await commentRepository.FetchCommentsAsync(id);
-            if (assemblyComments != null)
-            {
-                var comments = assemblyComments.Comments;
+            var comments = assemblyComments.Comments;
 
-                foreach (var comment in comments)
-                {
-                    if (!Comments.TryGetValue(comment.ElementId, out List<CommentModel> list))
-                        Comments[comment.ElementId] = new List<CommentModel>() { comment };
-                    else
-                        Comments[comment.ElementId].Add(comment);
-                }
+            foreach (var comment in comments)
+            {
+                if (!Comments.TryGetValue(comment.ElementId, out List<CommentModel> list))
+                    Comments[comment.ElementId] = new List<CommentModel>() { comment };
+                else
+                    Comments[comment.ElementId].Add(comment);
             }
 
             Username = User.GetGitHubLogin();

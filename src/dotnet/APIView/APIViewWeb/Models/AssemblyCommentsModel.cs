@@ -6,15 +6,19 @@ namespace APIViewWeb.Models
     {
         public string AssemblyId { get; set; }
         public CommentModel[] Comments { get; set; }
-        public string Id { get; set; }
 
         public AssemblyCommentsModel() { }
 
-        public AssemblyCommentsModel(string assemblyId, CommentModel commentModel, string id)
+        public AssemblyCommentsModel(string assemblyId)
+        {
+            this.AssemblyId = assemblyId;
+            this.Comments = new CommentModel[] { };
+        }
+
+        public AssemblyCommentsModel(string assemblyId, CommentModel commentModel)
         {
             this.AssemblyId = assemblyId;
             this.Comments = new CommentModel[] { commentModel };
-            this.Id = id;
         }
 
         public void AddComment(CommentModel comment)

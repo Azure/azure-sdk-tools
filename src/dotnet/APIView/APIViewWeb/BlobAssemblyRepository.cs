@@ -31,12 +31,12 @@ namespace APIViewWeb
         /// Return the blobs contained in the assemblies blob container.
         /// </summary>
         /// <returns>A collection of the blobs in the container.</returns>
-        public async Task<List<BlobItem>> FetchBlobsAsync()
+        public List<BlobItem> FetchBlobs()
         {
-            var segment = ContainerClient.GetBlobsAsync(new GetBlobsOptions() { IncludeMetadata = true });
+            var segment = ContainerClient.GetBlobs(new GetBlobsOptions() { IncludeMetadata = true });
 
             var blobs = new List<BlobItem>();
-            await foreach (var item in segment)
+            foreach (var item in segment)
             {
                 blobs.Add(item);
             }
@@ -49,16 +49,13 @@ namespace APIViewWeb
         /// <returns>A collection of the assemblies available for review.</returns>
         public async Task<List<AssemblyModel>> FetchAssembliesAsync()
         {
-            var blobs = await FetchBlobsAsync();
+            var blobs = FetchBlobs();
 
             var assemblies = new List<AssemblyModel>();
             foreach (var item in blobs.OrderByDescending(blob => blob.Properties.CreationTime))
             {
-                foreach (var pair in item.Metadata)
-                {
-                    AssemblyModel assembly = await ReadAssemblyContentAsync(pair.Value);
-                    assemblies.Add(assembly);
-                }
+                AssemblyModel assembly = await ReadAssemblyContentAsync(item.Name);
+                assemblies.Add(assembly);
             }
             return assemblies;
         }
@@ -87,6 +84,8 @@ namespace APIViewWeb
         {
             var guid = Guid.NewGuid().ToString();
             assemblyModel.Id = guid;
+            var assemblyComments = new AssemblyCommentsModel(guid);
+            await commentRepository.UploadAssemblyCommentsAsync(assemblyComments);
             var blob = ContainerClient.GetBlobClient(guid);
 
             using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(JsonSerializer.ToString(assemblyModel)))) {

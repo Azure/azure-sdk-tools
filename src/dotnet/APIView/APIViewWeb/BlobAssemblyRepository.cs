@@ -27,17 +27,11 @@ namespace APIViewWeb
 
         private BlobContainerClient ContainerClient { get; }
 
-        public async Task<AssemblyModel> ReadAssemblyContentAsync(string id)
-        {
-            var result = await ContainerClient.GetBlobClient(id).DownloadAsync();
-
-            using (StreamReader reader = new StreamReader(result.Value.Content))
-            {
-                return JsonSerializer.Parse<AssemblyModel>(reader.ReadToEnd());
-            }
-        }
-
-        public async Task<List<AssemblyModel>> FetchAssembliesAsync()
+        /// <summary>
+        /// Return the blobs contained in the assemblies blob container.
+        /// </summary>
+        /// <returns>A collection of the blobs in the container.</returns>
+        public async Task<List<BlobItem>> FetchBlobsAsync()
         {
             var segment = ContainerClient.GetBlobsAsync(new GetBlobsOptions() { IncludeMetadata = true });
 
@@ -46,7 +40,17 @@ namespace APIViewWeb
             {
                 blobs.Add(item);
             }
-            
+            return blobs;
+        }
+
+        /// <summary>
+        /// Return all assemblies available for review.
+        /// </summary>
+        /// <returns>A collection of the assemblies available for review.</returns>
+        public async Task<List<AssemblyModel>> FetchAssembliesAsync()
+        {
+            var blobs = await FetchBlobsAsync();
+
             var assemblies = new List<AssemblyModel>();
             foreach (var item in blobs.OrderByDescending(blob => blob.Properties.CreationTime))
             {
@@ -59,6 +63,26 @@ namespace APIViewWeb
             return assemblies;
         }
 
+        /// <summary>
+        /// Return the contents contained in the assembly blob with the provided ID.
+        /// </summary>
+        /// <param name="id">The ID of the assembly blob to have its comments read.</param>
+        /// <returns>The contents of the specified assembly blob.</returns>
+        public async Task<AssemblyModel> ReadAssemblyContentAsync(string id)
+        {
+            var result = await ContainerClient.GetBlobClient(id).DownloadAsync();
+
+            using (StreamReader reader = new StreamReader(result.Value.Content))
+            {
+                return JsonSerializer.Parse<AssemblyModel>(reader.ReadToEnd());
+            }
+        }
+
+        /// <summary>
+        /// Upload a single assembly for review.
+        /// </summary>
+        /// <param name="assemblyModel">The assembly being uploaded.</param>
+        /// <returns>The ID assigned to the assembly in the database.</returns>
         public async Task<string> UploadAssemblyAsync(AssemblyModel assemblyModel)
         {
             var guid = Guid.NewGuid().ToString();
@@ -73,6 +97,11 @@ namespace APIViewWeb
             return guid;
         }
 
+        /// <summary>
+        /// Delete a single assembly from the database.
+        /// </summary>
+        /// <param name="id">The ID of the assembly being deleted.</param>
+        /// <returns></returns>
         public async Task DeleteAssemblyAsync(string id)
         {
             await ContainerClient.GetBlobClient(id).DeleteAsync();

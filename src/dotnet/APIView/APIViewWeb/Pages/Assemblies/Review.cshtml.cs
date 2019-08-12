@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using APIView;
@@ -74,6 +75,8 @@ namespace APIViewWeb.Pages.Assemblies
 
         public async Task<ActionResult> OnPostAsync(string id)
         {
+            Comment.TimeStamp = DateTime.UtcNow;
+            Comment.Username = User.GetGitHubLogin();
             await commentRepository.UploadCommentAsync(Comment, id);
             var assemblyComments = await commentRepository.FetchCommentsAsync(id);
             var commentArray = assemblyComments.Comments;

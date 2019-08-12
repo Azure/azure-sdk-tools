@@ -1,7 +1,6 @@
 ﻿using APIViewWeb.Models;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
@@ -23,23 +22,6 @@ namespace APIViewWeb
         }
 
         private BlobContainerClient ContainerClient { get; }
-
-        /// <summary>
-        /// Return the comments contained in the blob with the provided ID.
-        /// </summary>
-        /// <param name="id">The ID of the blob to have its comments read.</param>
-        /// <returns>The comments existing in the specified blob.</returns>
-        public async Task<AssemblyCommentsModel> ReadBlobContentAsync(string id)
-        {
-            var result = await ContainerClient.GetBlobClient(id).DownloadAsync();
-            //result.Value.Properties.ETag   Can use this to check if version of assembly comments is up to date
-
-            using (StreamReader reader = new StreamReader(result.Value.Content))
-            {
-                AssemblyCommentsModel comments = JsonSerializer.Parse<AssemblyCommentsModel>(reader.ReadToEnd());
-                return comments;
-            }
-        }
 
         /// <summary>
         /// Return the blobs contained in the comments blob container.
@@ -78,6 +60,39 @@ namespace APIViewWeb
                 }
             }
             return null;
+        }
+
+        /// <summary>
+        /// Return the comments contained in the blob with the provided ID.
+        /// </summary>
+        /// <param name="id">The ID of the blob to have its comments read.</param>
+        /// <returns>The comments existing in the specified blob.</returns>
+        public async Task<AssemblyCommentsModel> ReadBlobContentAsync(string id)
+        {
+            var result = await ContainerClient.GetBlobClient(id).DownloadAsync();
+            //result.Value.Properties.ETag   Can use this to check if version of assembly comments is up to date
+
+            using (StreamReader reader = new StreamReader(result.Value.Content))
+            {
+                AssemblyCommentsModel comments = JsonSerializer.Parse<AssemblyCommentsModel>(reader.ReadToEnd());
+                return comments;
+            }
+        }
+
+        /// <summary>
+        /// Upload the comments existing for an assembly review.
+        /// </summary>
+        /// <param name="assemblyComments">The comments in the review.</param>
+        /// <returns></returns>
+        public async Task UploadAssemblyCommentsAsync(AssemblyCommentsModel assemblyComments)
+        {
+            var blob = ContainerClient.GetBlobClient(assemblyComments.Id);
+            using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(JsonSerializer.ToString(assemblyComments))))
+            {
+                await blob.UploadAsync(stream);
+            }
+            blob = ContainerClient.GetBlobClient(assemblyComments.Id);
+            await blob.SetMetadataAsync(new Dictionary<string, string>() { { "assembly", assemblyComments.AssemblyId } });
         }
 
         /// <summary>
@@ -131,22 +146,6 @@ namespace APIViewWeb
             var assemblyComments = await FetchCommentsAsync(assemblyId);
             assemblyComments.DeleteComment(commentId);
             await UploadAssemblyCommentsAsync(assemblyComments);
-        }
-
-        /// <summary>
-        /// Upload the comments existing for an assembly review.
-        /// </summary>
-        /// <param name="assemblyComments">The comments in the review.</param>
-        /// <returns></returns>
-        public async Task UploadAssemblyCommentsAsync(AssemblyCommentsModel assemblyComments)
-        {
-            var blob = ContainerClient.GetBlobClient(assemblyComments.Id);
-            using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(JsonSerializer.ToString(assemblyComments))))
-            {
-                await blob.UploadAsync(stream);
-            }
-            blob = ContainerClient.GetBlobClient(assemblyComments.Id);
-            await blob.SetMetadataAsync(new Dictionary<string, string>() { { "assembly", assemblyComments.AssemblyId } });
         }
     }
 }

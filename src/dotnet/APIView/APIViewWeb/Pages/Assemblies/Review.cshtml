@@ -31,8 +31,6 @@
 <div id="comment-form-template">
     <div class="comment-form border-top new-thread-comment">
         <form class="new-thread-comment-form comment" method="post" asp-route-id="@Model.Id">
-            <input type="hidden" asp-for="Comment.TimeStamp" value="@DateTime.UtcNow" />
-            <input type="hidden" asp-for="Comment.Username" value="@Model.Username" />
             <input type="hidden" asp-for="Comment.ElementId" class="id-box" />
             <div class="new-comment-content">
                 <textarea class="new-thread-comment-text form-control" asp-for="Comment.Comment" rows="3"></textarea>

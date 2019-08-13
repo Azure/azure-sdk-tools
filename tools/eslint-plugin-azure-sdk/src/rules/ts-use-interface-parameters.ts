@@ -246,7 +246,8 @@ export = {
     const parserServices = context.parserServices as ParserServices;
     if (
       parserServices.program === undefined ||
-      parserServices.esTreeNodeToTSNodeMap === undefined
+      parserServices.esTreeNodeToTSNodeMap === undefined ||
+      parserServices.tsNodeToESTreeNodeMap === undefined
     ) {
       return {};
     }
@@ -255,10 +256,7 @@ export = {
     const reverter: ParserWeakMap<
       TSNode,
       TSESTree.Node
-    > = parserServices.tsNodeToESTreeNodeMap as ParserWeakMap<
-      TSNode,
-      TSESTree.Node
-    >;
+    > = parserServices.tsNodeToESTreeNodeMap;
 
     const verifiedMethods: string[] = [];
     const verifiedDeclarations: string[] = [];

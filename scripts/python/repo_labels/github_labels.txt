@@ -50,6 +50,7 @@ Devtestlab
 Docs
 Event Grid
 Event Hub
+Functions
 Graph
 HDInsight
 Import Export
@@ -57,8 +58,10 @@ Intune
 Insights
 IotHub
 KeyVault
+Kusto
 Lab Services 
 Logic App
+Managed Identity
 Machine Learning
 Machine Learning Compute
 Machine Learning Experimentation
@@ -84,6 +87,7 @@ Network - Load Balancer
 Network - Watcher
 Network - DNS
 Network - Traffic Manager
+Network - VPN
 Notification Hubs
 Operational Insights
 Operations Management
@@ -113,6 +117,7 @@ Storage
 Storsimple
 Stream Analytics
 Subscription
+Tables
 TimeseriesInsights
 Visual Studio
 vFXT

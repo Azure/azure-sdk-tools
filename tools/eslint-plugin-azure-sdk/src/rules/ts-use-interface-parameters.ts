@@ -253,10 +253,8 @@ export = {
     }
     const typeChecker = parserServices.program.getTypeChecker();
     const converter = parserServices.esTreeNodeToTSNodeMap;
-    const reverter: ParserWeakMap<
-      TSNode,
-      TSESTree.Node
-    > = parserServices.tsNodeToESTreeNodeMap;
+    const reverter: ParserWeakMap<TSNode, TSESTree.Node> =
+      parserServices.tsNodeToESTreeNodeMap;
 
     const verifiedMethods: string[] = [];
     const verifiedDeclarations: string[] = [];

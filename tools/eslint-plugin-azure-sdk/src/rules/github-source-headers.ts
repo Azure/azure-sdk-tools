@@ -55,10 +55,10 @@ export = {
             if (
               headerComments.every(
                 (comment: Comment): boolean =>
-                  comment.value !== expectedLine1 ||
+                  !comment.value.includes(expectedLine1) ||
                   headerComments.every(
                     (comment: Comment): boolean =>
-                      comment.value !== expectedLine2
+                      !comment.value.includes(expectedLine2)
                   )
               )
             ) {

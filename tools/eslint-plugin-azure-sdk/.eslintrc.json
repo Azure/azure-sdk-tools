@@ -27,6 +27,7 @@
     "arrow-body-style": ["error", "as-needed"],
     "curly": "error",
     "eqeqeq": "error",
+    "no-console": "error",
     "no-duplicate-imports": "error",
     "no-else-return": "error",
     "no-multi-spaces": "error",

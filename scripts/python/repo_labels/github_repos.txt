@@ -1,6 +1,7 @@
 Azure/azure-sdk-for-js
 Azure/azure-sdk-for-net
 Azure/azure-sdk-for-python
+<<<<<<< HEAD
 Azure/azure-sdk-for-java
 Azure/azure-powershell
 Azure/azure-cli
@@ -10,3 +11,6 @@ Azure/azure-libraries-for-java
 Azure/azure-cli-extensions
 Azure/azure-sdk-for-ruby
 Azure/azure-sdk-for-go
+=======
+Azure/azure-sdk-for-java
+>>>>>>> 5a5f0cf5537b32b71d3d5a1090a6bd957f5eb5f7

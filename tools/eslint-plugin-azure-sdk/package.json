@@ -42,7 +42,6 @@
     "test": "npm run clean && tsc -p tsconfig.json && mocha --timeout 10000 --recursive dist/tests"
   },
   "dependencies": {
-    "@types/fast-levenshtein": "0.0.1",
     "fast-levenshtein": "^2.0.6",
     "glob": "^7.1.4",
     "typescript": "^3.4.5"
@@ -52,6 +51,7 @@
     "@types/chai": "^4.1.7",
     "@types/eslint": "^4.16.6",
     "@types/estree": "0.0.39",
+    "@types/fast-levenshtein": "0.0.1",
     "@types/glob": "^7.1.1",
     "@types/mocha": "^5.2.7",
     "@types/node": "^12.6.9",

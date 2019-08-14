@@ -1,5 +1,5 @@
 /**
- * @fileoverview Testing the ts-naming-drop-noun rule.
+ * @file Testing the ts-naming-drop-noun rule.
  * @author Arpan Laha
  */
 

@@ -1,5 +1,5 @@
 /**
- * @fileoverview Rule to force the inclusion of type declarations in the package.
+ * @file Rule to force the inclusion of type declarations in the package.
  * @author Arpan Laha
  */
 

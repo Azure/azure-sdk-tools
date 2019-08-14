@@ -1,5 +1,5 @@
 /**
- * @fileoverview Rule to force adherence to SemVer guidelines.
+ * @file Rule to force adherence to SemVer guidelines.
  * @author Arpan Laha
  */
 

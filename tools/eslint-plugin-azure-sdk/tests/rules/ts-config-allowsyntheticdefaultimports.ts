@@ -1,5 +1,5 @@
 /**
- * @fileoverview Testing the ts-config-allowsyntheticdefaultimports rule.
+ * @file Testing the ts-config-allowsyntheticdefaultimports rule.
  * @author Arpan Laha
  */
 

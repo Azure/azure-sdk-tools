@@ -1,5 +1,5 @@
 /**
- * @fileoverview Rule to force tsconfig.json's compilerOptions.sourceMap and compilerOptions.declarationMap values to both be true.
+ * @file Rule to force tsconfig.json's compilerOptions.sourceMap and compilerOptions.declarationMap values to both be true.
  * @author Arpan Laha
  */
 

@@ -1,5 +1,5 @@
 /**
- * @fileoverview Testing the ts-config-exclude rule.
+ * @file Testing the ts-config-exclude rule.
  * @author Arpan Laha
  */
 

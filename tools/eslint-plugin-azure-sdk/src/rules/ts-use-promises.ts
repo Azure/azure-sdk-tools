@@ -1,5 +1,5 @@
 /**
- * @fileoverview Rule to force usage of built-in promises over external ones.
+ * @file Rule to force usage of built-in promises over external ones.
  * @author Arpan Laha
  */
 

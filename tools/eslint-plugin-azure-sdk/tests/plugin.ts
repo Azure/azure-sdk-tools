@@ -1,5 +1,5 @@
 /**
- * @fileoverview Ensuring the plugin is properly structured
+ * @file Ensuring the plugin is properly structured
  * @author Arpan Laha
  */
 

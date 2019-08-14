@@ -1,5 +1,5 @@
 /**
- * @fileoverview Rule to force tsconfig.json's compilerOptions.declaration value to be true.
+ * @file Rule to force tsconfig.json's compilerOptions.declaration value to be true.
  * @author Arpan Laha
  */
 

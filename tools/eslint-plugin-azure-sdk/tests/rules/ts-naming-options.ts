@@ -1,5 +1,5 @@
 /**
- * @fileoverview Testing the ts-naming-options rule.
+ * @file Testing the ts-naming-options rule.
  * @author Arpan Laha
  */
 

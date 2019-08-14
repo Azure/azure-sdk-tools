@@ -1,5 +1,5 @@
 /**
- * @fileoverview Rule to force package.json's bugs.url value to be "https://github.com/Azure/azure-sdk-for-js/issues".
+ * @file Rule to force package.json's bugs.url value to be "https://github.com/Azure/azure-sdk-for-js/issues".
  * @author Arpan Laha
  */
 

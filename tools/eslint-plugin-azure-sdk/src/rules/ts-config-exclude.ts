@@ -1,5 +1,5 @@
 /**
- * @fileoverview Rule to force tsconfig.json's "exclude" value to at least contain "node_modules"
+ * @file Rule to force tsconfig.json's "exclude" value to at least contain "node_modules"
  * @author Arpan Laha
  */
 

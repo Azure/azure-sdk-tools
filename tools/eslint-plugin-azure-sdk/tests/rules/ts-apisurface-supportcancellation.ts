@@ -1,5 +1,5 @@
 /**
- * @fileoverview Testing the ts-apisurface-supportcancellation rule.
+ * @file Testing the ts-apisurface-supportcancellation rule.
  * @author Arpan Laha
  */
 

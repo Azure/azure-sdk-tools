@@ -1,5 +1,5 @@
 /**
- * @fileoverview Testing the ts-config-importhelpers rule.
+ * @file Testing the ts-config-importhelpers rule.
  * @author Arpan Laha
  */
 

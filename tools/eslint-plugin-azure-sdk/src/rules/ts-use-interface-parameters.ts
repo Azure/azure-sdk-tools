@@ -1,5 +1,5 @@
 /**
- * @fileoverview Rule to encourage usage of interfaces over classes as function parameters.
+ * @file Rule to encourage usage of interfaces over classes as function parameters.
  * @author Arpan Laha
  */
 

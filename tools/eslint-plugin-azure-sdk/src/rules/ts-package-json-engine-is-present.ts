@@ -1,5 +1,5 @@
 /**
- * @fileoverview Rule to force Node support for all LTS versions.
+ * @file Rule to force Node support for all LTS versions.
  * @author Arpan Laha
  */
 

@@ -1,5 +1,5 @@
 /**
- * @fileoverview Testing the ts-no-namespaces rule.
+ * @file Testing the ts-no-namespaces rule.
  * @author Arpan Laha
  */
 

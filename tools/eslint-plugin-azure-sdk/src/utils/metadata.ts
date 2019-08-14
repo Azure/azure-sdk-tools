@@ -1,5 +1,5 @@
 /**
- * @fileoverview Utilities relating to ESLint Rule metadata
+ * @file Utilities relating to ESLint Rule metadata
  * @author Arpan Laha
  */
 

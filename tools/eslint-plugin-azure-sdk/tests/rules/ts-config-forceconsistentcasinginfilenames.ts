@@ -1,5 +1,5 @@
 /**
- * @fileoverview Testing the ts-config-forceconsistentcasinginfilenames rule.
+ * @file Testing the ts-config-forceconsistentcasinginfilenames rule.
  * @author Arpan Laha
  */
 

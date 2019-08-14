@@ -1,5 +1,5 @@
 /**
- * @fileoverview Testing the ts-config-module rule.
+ * @file Testing the ts-config-module rule.
  * @author Arpan Laha
  */
 

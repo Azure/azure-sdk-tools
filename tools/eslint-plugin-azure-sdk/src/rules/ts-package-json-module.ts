@@ -1,5 +1,5 @@
 /**
- * @fileoverview Rule to force module to be the ES6 entrypoint to the application.
+ * @file Rule to force module to be the ES6 entrypoint to the application.
  * @author Arpan Laha
  */
 

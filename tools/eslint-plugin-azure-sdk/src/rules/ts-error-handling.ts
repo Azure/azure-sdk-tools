@@ -1,5 +1,5 @@
 /**
- * @fileoverview Rule to limit thrown errors to ECMAScript built-in error types (TypeError, RangeError, Error).
+ * @file Rule to limit thrown errors to ECMAScript built-in error types (TypeError, RangeError, Error).
  * @author Arpan Laha
  */
 

@@ -1,5 +1,5 @@
 /**
- * @fileoverview All rules
+ * @file All rules
  * @author Arpan Laha
  */
 

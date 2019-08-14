@@ -1,5 +1,5 @@
 /**
- * @fileoverview Testing the ts-package-json-files-required rule.
+ * @file Testing the ts-package-json-files-required rule.
  * @author Arpan Laha
  */
 

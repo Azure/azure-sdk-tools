@@ -1,5 +1,5 @@
 /**
- * @fileoverview Rule to force package.json's sideEffects value to be set to false.
+ * @file Rule to force package.json's sideEffects value to be set to false.
  * @author Arpan Laha
  */
 

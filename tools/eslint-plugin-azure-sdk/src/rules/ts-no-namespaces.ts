@@ -1,5 +1,5 @@
 /**
- * @fileoverview Rule to forbid usage of TypeScript namespaces.
+ * @file Rule to forbid usage of TypeScript namespaces.
  * @author Arpan Laha
  */
 

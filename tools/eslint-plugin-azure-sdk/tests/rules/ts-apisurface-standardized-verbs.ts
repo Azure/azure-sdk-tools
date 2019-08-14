@@ -1,5 +1,5 @@
 /**
- * @fileoverview Testing the ts-apisurface-standardized-verbs rule.
+ * @file Testing the ts-apisurface-standardized-verbs rule.
  * @author Arpan Laha
  */
 

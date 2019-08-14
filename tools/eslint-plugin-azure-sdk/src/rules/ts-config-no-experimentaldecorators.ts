@@ -1,5 +1,5 @@
 /**
- * @fileoverview Rule to force tsconfig.json's compilerOptions.experimentalDecorators value to be false.
+ * @file Rule to force tsconfig.json's compilerOptions.experimentalDecorators value to be false.
  * @author Arpan Laha
  */
 

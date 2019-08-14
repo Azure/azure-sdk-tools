@@ -1,5 +1,5 @@
 /**
- * @fileoverview Utilities for analyzing the exports of a package
+ * @file Utilities for analyzing the exports of a package
  * @author Arpan Laha
  */
 

@@ -1,5 +1,5 @@
 /**
- * @fileoverview Testing the github-source-headers rule.
+ * @file Testing the github-source-headers rule.
  * @author Arpan Laha
  */
 

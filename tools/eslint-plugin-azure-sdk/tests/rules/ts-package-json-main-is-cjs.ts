@@ -1,5 +1,5 @@
 /**
- * @fileoverview Testing the ts-package-json-main-is-cjs rule.
+ * @file Testing the ts-package-json-main-is-cjs rule.
  * @author Arpan Laha
  */
 

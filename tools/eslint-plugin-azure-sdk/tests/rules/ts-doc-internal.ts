@@ -1,5 +1,5 @@
 /**
- * @fileoverview Testing the ts-doc-internal rule.
+ * @file Testing the ts-doc-internal rule.
  * @author Arpan Laha
  */
 

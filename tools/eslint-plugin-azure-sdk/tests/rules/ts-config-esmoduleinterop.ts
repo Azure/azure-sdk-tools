@@ -1,5 +1,5 @@
 /**
- * @fileoverview Testing the ts-config-esmoduleinterop rule.
+ * @file Testing the ts-config-esmoduleinterop rule.
  * @author Arpan Laha
  */
 

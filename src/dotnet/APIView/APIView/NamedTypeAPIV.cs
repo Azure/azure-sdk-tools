@@ -10,9 +10,18 @@ namespace ApiView
     /// </summary>
     public class NamedTypeApiv
     {
+        /// <summary>
+        /// A unique identifier of this named type within the scope of the containing assembly.
+        /// </summary>
         public string Id { get; set; }
         public string Name { get; set; }
+        /// <summary>
+        /// The type of the named type - class, interface, enum, etc.
+        /// </summary>
         public string TypeKind { get; set; }
+        /// <summary>
+        /// The underlying type of the enum, if the named type is one. Otherwise, null.
+        /// </summary>
         public TypeReferenceApiv EnumUnderlyingType { get; set; }
         public string Accessibility { get; set; }
         public bool IsSealed { get; set; }
@@ -39,7 +48,10 @@ namespace ApiView
             if (symbol.EnumUnderlyingType != null)
                 this.EnumUnderlyingType = new TypeReferenceApiv(symbol.EnumUnderlyingType);
             this.Accessibility = symbol.DeclaredAccessibility.ToString().ToLower();
-            this.IsSealed = symbol.IsSealed;
+            if (this.TypeKind == "class")
+                this.IsSealed = symbol.IsSealed;
+            else
+                this.IsSealed = false;
             this.IsStatic = symbol.IsStatic;
             this.Id = symbol.ConstructedFrom.ToDisplayString();
 

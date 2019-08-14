@@ -344,7 +344,7 @@ namespace ApiView
         {
             var builder = new StringBuilder();
             var isGlobalNamespace = ns.Name == "<global namespace>";
-            if (!isGlobalNamespace)
+            if (!isGlobalNamespace && ns.NamedTypes.Any())
             {
                 AppendIndents(builder, indents);
                 RenderKeyword(builder, "namespace");
@@ -359,24 +359,17 @@ namespace ApiView
                 Render(nt, list, indents + 1);
             }
 
-            foreach (NamespaceApiv n in ns.Namespaces)
-            {
-                if (!isGlobalNamespace)
-                {
-                    Render(n, list, indents + 1);
-                }
-                else
-                {
-                    Render(n, list, indents);
-                }
-            }
-
-            if (!isGlobalNamespace)
+            if (!isGlobalNamespace && ns.NamedTypes.Any())
             {
                 builder = new StringBuilder();
                 AppendIndents(builder, indents);
                 builder.Append("}");
                 list.Add(new LineApiv(builder.ToString()));
+            }
+
+            foreach (NamespaceApiv n in ns.Namespaces)
+            {
+                Render(n, list, indents);
             }
         }
 

@@ -21,6 +21,9 @@ const expectedLine2 = "Licensed under the MIT license.";
 const noCaseRegex1 = /Copyright \(c\) Microsoft Corporation\./i;
 const noCaseRegex2 = /Licensed under the MIT license\./i;
 
+/**
+ * Arbitrary Levenshtein distance cutoff.
+ */
 const levenshteinCutoff = 10;
 
 export = {
@@ -55,11 +58,11 @@ export = {
             if (
               headerComments.every(
                 (comment: Comment): boolean =>
-                  !comment.value.includes(expectedLine1) ||
-                  headerComments.every(
-                    (comment: Comment): boolean =>
-                      !comment.value.includes(expectedLine2)
-                  )
+                  !comment.value.includes(expectedLine1)
+              ) ||
+              headerComments.every(
+                (comment: Comment): boolean =>
+                  !comment.value.includes(expectedLine2)
               )
             ) {
               context.report({
@@ -68,20 +71,30 @@ export = {
                   "copyright header not properly configured - expected value:\n" +
                   "Copyright (c) Microsoft Corporation.\nLicensed under the MIT license.\n",
                 fix: (fixer: Rule.RuleFixer): Rule.Fix => {
+                  // iterate over comments and replace with proper value if close enough
                   for (const comment of headerComments) {
+                    const value = comment.value;
                     if (
-                      noCaseRegex1.test(comment.value) ||
-                      getLevenshteinDistance(expectedLine1, comment.value) <
-                        levenshteinCutoff
+                      !value.includes(expectedLine1) &&
+                      (noCaseRegex1.test(value) ||
+                        getLevenshteinDistance(expectedLine1, value) <
+                          levenshteinCutoff)
                     ) {
-                      return fixer.replaceText(comment as any, expectedLine1);
+                      return fixer.replaceText(
+                        comment as any,
+                        `// ${expectedLine1}`
+                      );
                     }
                     if (
-                      noCaseRegex2.test(comment.value) ||
-                      getLevenshteinDistance(expectedLine2, comment.value) <
-                        levenshteinCutoff
+                      !value.includes(expectedLine2) &&
+                      (noCaseRegex2.test(value) ||
+                        getLevenshteinDistance(expectedLine2, value) <
+                          levenshteinCutoff)
                     ) {
-                      return fixer.replaceText(comment as any, expectedLine2);
+                      return fixer.replaceText(
+                        comment as any,
+                        `// ${expectedLine2}`
+                      );
                     }
                   }
                   return fixer.insertTextBefore(node, expectedComments);

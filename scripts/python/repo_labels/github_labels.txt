@@ -21,6 +21,7 @@ Azure Cloud Shell
 Batch
 BatchAI
 Billing
+Blueprint
 Bot Services
 CDN
 Cloud Shell
@@ -52,6 +53,7 @@ Event Grid
 Event Hub
 Functions
 Graph
+Guest Configuration
 HDInsight
 Import Export
 Intune
@@ -65,6 +67,7 @@ Managed Identity
 Machine Learning
 Machine Learning Compute
 Machine Learning Experimentation
+ManagedServices
 Marketplace Ordering
 Media Services
 Migrate
@@ -81,13 +84,14 @@ Monitor - ApplicationInsights
 MySQL
 Network
 Network - Application Gateway
+Network - DNS
 Network - Express Routes
 Network - Gateways
 Network - Load Balancer
-Network - Watcher
-Network - DNS
+Network - SDN
 Network - Traffic Manager
 Network - VPN
+Network - Watcher
 Notification Hubs
 Operational Insights
 Operations Management
@@ -112,6 +116,7 @@ Server Management
 Service Bus
 Service Fabric
 Service Map
+SignalR
 SQL
 Storage
 Storsimple
@@ -121,3 +126,4 @@ Tables
 TimeseriesInsights
 Visual Studio
 vFXT
+Web Apps

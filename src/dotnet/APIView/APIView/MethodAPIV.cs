@@ -22,6 +22,7 @@ namespace ApiView
         public bool IsSealed { get; set; }
         public bool IsOverride { get; set; }
         public bool IsAbstract { get; set; }
+        public bool IsExtensionMethod { get; set; }
         public bool IsExtern { get; set; }
 
         public AttributeApiv[] Attributes { get; set; }
@@ -56,6 +57,7 @@ namespace ApiView
             this.IsSealed = symbol.IsSealed;
             this.IsOverride = symbol.IsOverride;
             this.IsAbstract = symbol.IsAbstract;
+            this.IsExtensionMethod = symbol.IsExtensionMethod;
             this.IsExtern = symbol.IsExtern;
 
             List<AttributeApiv> attributes = new List<AttributeApiv>();

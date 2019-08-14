@@ -186,12 +186,23 @@ namespace ApiView
             builder.Append("(");
             if (m.Parameters.Any())
             {
+                bool isFirst = true;
                 foreach (ParameterApiv p in m.Parameters)
                 {
+                    if (isFirst)
+                    {
+                        isFirst = false;
+                        if (m.IsExtensionMethod)
+                        {
+                            RenderKeyword(builder, "this");
+                            builder.Append(" ");
+                        }
+                    } else
+                    {
+                        builder.Append(", ");
+                    }
                     Render(p, builder);
-                    builder.Append(", ");
                 }
-                builder.Length -= 2;
             }
 
             if (m.IsInterfaceMethod || m.IsAbstract)

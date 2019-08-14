@@ -22,7 +22,7 @@ Batch
 BatchAI
 Billing
 Blueprint
-Bot Services
+Bot Service
 CDN
 Cloud Shell
 Cognitive Services
@@ -34,7 +34,7 @@ Compute - Managed Disks
 Compute - VM
 Compute - VMSS
 Consumption
-Container Instance
+Container Instances
 Container Registry
 Cosmos
 Customer Insights
@@ -92,7 +92,7 @@ Network - SDN
 Network - Traffic Manager
 Network - VPN
 Network - Watcher
-Notification Hubs
+Notification Hub
 Operational Insights
 Operations Management
 Policy

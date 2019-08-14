@@ -17,7 +17,6 @@ Authentication
 Authorization
 Automation
 Azure Stack
-Azure Cloud Shell
 Batch
 BatchAI
 Billing
@@ -107,7 +106,6 @@ Relay
 Reservations
 Resource Authorization
 Resource Graph
-Resource Manager
 Resource Health
 Search
 Security

@@ -20,5 +20,7 @@ export const getRuleMetaData = (
     },
     schema: []
   };
-  return fix !== undefined ? { ...required, fixable: fix } : required;
+  return (fix !== undefined
+    ? { ...required, fixable: fix }
+    : required) as Rule.RuleMetaData;
 };

@@ -5,6 +5,7 @@
 
 import { Rule } from "eslint";
 import { Comment, Node } from "estree";
+import { get as getLevenshteinDistance } from "fast-levenshtein";
 import { getRuleMetaData } from "../utils";
 
 //------------------------------------------------------------------------------
@@ -13,6 +14,14 @@ import { getRuleMetaData } from "../utils";
 
 const expectedComments =
   "// Copyright (c) Microsoft Corporation.\n// Licensed under the MIT license.\n";
+
+const expectedLine1 = "Copyright (c) Microsoft Corporation.";
+const expectedLine2 = "Licensed under the MIT license.";
+
+const noCaseRegex1 = /Copyright \(c\) Microsoft Corporation\./i;
+const noCaseRegex2 = /Licensed under the MIT license\./i;
+
+const levenshteinCutoff = 10;
 
 export = {
   meta: getRuleMetaData(
@@ -46,12 +55,10 @@ export = {
             if (
               headerComments.every(
                 (comment: Comment): boolean =>
-                  !/Copyright \(c\) Microsoft Corporation\./.test(
-                    comment.value
-                  ) ||
+                  !comment.value.includes(expectedLine1) ||
                   headerComments.every(
                     (comment: Comment): boolean =>
-                      !/Licensed under the MIT license\./.test(comment.value)
+                      !comment.value.includes(expectedLine2)
                   )
               )
             ) {
@@ -60,8 +67,25 @@ export = {
                 message:
                   "copyright header not properly configured - expected value:\n" +
                   "Copyright (c) Microsoft Corporation.\nLicensed under the MIT license.\n",
-                fix: (fixer: Rule.RuleFixer): Rule.Fix =>
-                  fixer.insertTextBefore(node, expectedComments)
+                fix: (fixer: Rule.RuleFixer): Rule.Fix => {
+                  for (const comment of headerComments) {
+                    if (
+                      noCaseRegex1.test(comment.value) ||
+                      getLevenshteinDistance(expectedLine1, comment.value) <
+                        levenshteinCutoff
+                    ) {
+                      return fixer.replaceText(comment as any, expectedLine1);
+                    }
+                    if (
+                      noCaseRegex2.test(comment.value) ||
+                      getLevenshteinDistance(expectedLine2, comment.value) <
+                        levenshteinCutoff
+                    ) {
+                      return fixer.replaceText(comment as any, expectedLine2);
+                    }
+                  }
+                  return fixer.insertTextBefore(node, expectedComments);
+                }
               });
             }
           }

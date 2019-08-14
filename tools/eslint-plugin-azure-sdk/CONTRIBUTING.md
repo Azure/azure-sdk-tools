@@ -15,9 +15,7 @@ According to ESLint conventions, each rule has three files dedicated to it, one 
 This file contains a verbal description of the rule. Generally, the structure is as follows:
 
 - Description
-- Examples
-  - Good
-  - Bad
+- Examples (good & bad)
 - Source
 
 The description is intended to cover a brief overview of the rule, with more specifics behind reasoning left to the guideline website. However, if the rule takes any creative license with interpretations of the guidelines or is only able to enforce a subset of the source guideline, this should be explicitly detailed in the description.

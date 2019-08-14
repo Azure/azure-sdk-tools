@@ -54,7 +54,7 @@ If your listener function parameters are anything other than `any` or `Node`, yo
 
 ### `tests/rules`
 
-Currently, all rules are tested through the [`RuleTester`](https://eslint.org/docs/developer-guide/nodejs-api#ruletester) framework. You'll need to initialize as follows to properly process your test cases:
+Currently, all rules are tested through the [`RuleTester`](https://eslint.org/docs/developer-guide/nodejs-api#ruletester) framework. You'll need to initialize the RuleTester instance as follows to properly process your test cases:
 
 ```ts
 const ruleTester = new RuleTester({

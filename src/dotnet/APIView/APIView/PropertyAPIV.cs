@@ -2,35 +2,33 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace APIView
+namespace ApiView
 {
     /// <summary>
     /// Class representing a C# property.
-    /// 
-    /// PropertyAPIV is an immutable, thread-safe type.
     /// </summary>
-    public class PropertyAPIV
+    public class PropertyApiv
     {
         public string Id { get; set; }
         public string Name { get; set; }
-        public TypeReferenceAPIV Type { get; set; }
+        public TypeReferenceApiv Type { get; set; }
         public string Accessibility { get; set; }
 
         public bool IsAbstract { get; set; }
         public bool IsVirtual { get; set; }
         public bool HasSetMethod { get; set; }
 
-        public PropertyAPIV() { }
+        public PropertyApiv() { }
 
         /// <summary>
-        /// Construct a new PropertyAPIV instance, represented by the provided symbol.
+        /// Construct a new PropertyApiv instance, represented by the provided symbol.
         /// </summary>
         /// <param name="symbol">The symbol representing the property.</param>
-        public PropertyAPIV(IPropertySymbol symbol)
+        public PropertyApiv(IPropertySymbol symbol)
         {
             this.Id = symbol.ToDisplayString();
             this.Name = symbol.Name;
-            this.Type = new TypeReferenceAPIV(symbol.Type);
+            this.Type = new TypeReferenceApiv(symbol.Type);
             this.Accessibility = symbol.DeclaredAccessibility.ToString().ToLower();
 
             this.IsAbstract = symbol.IsAbstract;
@@ -42,8 +40,8 @@ namespace APIView
 
         public override string ToString()
         {
-            var renderer = new TextRendererAPIV();
-            var list = new StringListAPIV();
+            var renderer = new TextRendererApiv();
+            var list = new StringListApiv();
             renderer.Render(this, list);
             return list.First().DisplayString;
         }

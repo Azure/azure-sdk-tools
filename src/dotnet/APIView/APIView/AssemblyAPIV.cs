@@ -1,35 +1,32 @@
 ﻿using System;
 using System.IO;
-using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
-namespace APIView
+namespace ApiView
 {
     /// <summary>
     /// Class representing a C# assembly. Each assembly has a name and global namespace, 
     /// which may or may not contain further types.
-    /// 
-    /// AssemblyAPIV is an immutable, thread-safe type.
     /// </summary>
-    public class AssemblyAPIV
+    public class AssemblyApiv
     {
         public string Name { get; set; }
-        public NamespaceAPIV GlobalNamespace { get; set; }
+        public NamespaceApiv GlobalNamespace { get; set; }
 
-        public AssemblyAPIV() { }
+        public AssemblyApiv() { }
 
         /// <summary>
-        /// Construct a new AssemblyAPIV instance, represented by the provided symbol.
+        /// Construct a new AssemblyApiv instance, represented by the provided symbol.
         /// </summary>
         /// <param name="symbol">The symbol representing the assembly.</param>
-        public AssemblyAPIV(IAssemblySymbol symbol)
+        public AssemblyApiv(IAssemblySymbol symbol)
         {
             this.Name = symbol.Name;
-            this.GlobalNamespace = new NamespaceAPIV(symbol.GlobalNamespace);
+            this.GlobalNamespace = new NamespaceApiv(symbol.GlobalNamespace);
         }
 
-        public static AssemblyAPIV AssemblyFromFile(string dllPath)
+        public static AssemblyApiv AssemblyFromFile(string dllPath)
         {
             using (var fileStream = File.OpenRead(dllPath))
             {
@@ -37,11 +34,11 @@ namespace APIView
             }
         }
 
-        public static AssemblyAPIV AssemblyFromStream(Stream stream)
+        public static AssemblyApiv AssemblyFromStream(Stream stream)
         {
             var compilation = GetCompilation(stream);
 
-            return new AssemblyAPIV(compilation);
+            return new AssemblyApiv(compilation);
         }
 
         public static IAssemblySymbol GetCompilation(string dllPath)
@@ -75,7 +72,7 @@ namespace APIView
 
         public override string ToString()
         {
-            var renderer = new TextRendererAPIV();
+            var renderer = new TextRendererApiv();
             var lines = renderer.Render(this);
             return lines.ToString();
         }

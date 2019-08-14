@@ -1,21 +1,21 @@
 ﻿using Microsoft.CodeAnalysis;
 
-namespace APIView
+namespace ApiView
 {
-    public class TokenAPIV
+    public class TokenApiv
     {
         public string Id { get; set; }
         public string DisplayString { get; set; }
         public bool IsNavigable { get; set; }
         
-        public TypeReferenceAPIV.TokenType Type { get; set; }
+        public TypeReferenceApiv.TokenType Type { get; set; }
 
-        public TokenAPIV()
+        public TokenApiv()
         {
             this.DisplayString = "";
         }
 
-        public TokenAPIV(SymbolDisplayPart part)
+        public TokenApiv(SymbolDisplayPart part)
         {
             this.DisplayString = part.ToString();
             this.IsNavigable = false;
@@ -36,27 +36,27 @@ namespace APIView
                 case SymbolDisplayPartKind.ErrorTypeName:
                 case SymbolDisplayPartKind.InterfaceName:
                 case SymbolDisplayPartKind.StructName:
-                    this.Type = TypeReferenceAPIV.TokenType.ClassType;
+                    this.Type = TypeReferenceApiv.TokenType.ClassType;
                     this.IsNavigable = true;
                     break;
                 case SymbolDisplayPartKind.EnumName:
-                    this.Type = TypeReferenceAPIV.TokenType.EnumType;
+                    this.Type = TypeReferenceApiv.TokenType.EnumType;
                     this.IsNavigable = true;
                     break;
                 case SymbolDisplayPartKind.Punctuation:
                 case SymbolDisplayPartKind.Space:
-                    this.Type = TypeReferenceAPIV.TokenType.Punctuation;
+                    this.Type = TypeReferenceApiv.TokenType.Punctuation;
                     break;
                 case SymbolDisplayPartKind.Keyword:
-                    this.Type = TypeReferenceAPIV.TokenType.BuiltInType;
+                    this.Type = TypeReferenceApiv.TokenType.BuiltInType;
                     break;
                 default:
-                    this.Type = TypeReferenceAPIV.TokenType.TypeArgument;
+                    this.Type = TypeReferenceApiv.TokenType.TypeArgument;
                     break;
             }
         }
         
-        public TokenAPIV(string displayString, TypeReferenceAPIV.TokenType type)
+        public TokenApiv(string displayString, TypeReferenceApiv.TokenType type)
         {
             this.DisplayString = displayString;
             this.Type = type;

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace APIView
+namespace ApiView
 {
     class Program
     {
@@ -8,8 +8,8 @@ namespace APIView
         {
             try
             {
-                var renderer = new TextRendererAPIV();
-                Console.WriteLine(renderer.Render(AssemblyAPIV.AssemblyFromFile(args[0])));
+                var renderer = new TextRendererApiv();
+                Console.WriteLine(renderer.Render(AssemblyApiv.AssemblyFromFile(args[0])));
 
             }
             catch (Exception e)

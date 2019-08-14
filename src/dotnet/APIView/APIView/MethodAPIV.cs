@@ -2,17 +2,17 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace APIView
+namespace ApiView
 {
     /// <summary>
     /// Class representing a C# method. Each method includes a name, return type, attributes, 
     /// modifiers, type parameters, and parameters.
     /// </summary>
-    public class MethodAPIV
+    public class MethodApiv
     {
         public string Id { get; set; }
         public string Name { get; set; }
-        public TypeReferenceAPIV ReturnType { get; set; }
+        public TypeReferenceApiv ReturnType { get; set; }
         public string Accessibility { get; set; }
 
         public bool IsConstructor { get; set; }
@@ -24,17 +24,17 @@ namespace APIView
         public bool IsAbstract { get; set; }
         public bool IsExtern { get; set; }
 
-        public AttributeAPIV[] Attributes { get; set; }
-        public ParameterAPIV[] Parameters { get; set; }
-        public TypeParameterAPIV[] TypeParameters { get; set; }
+        public AttributeApiv[] Attributes { get; set; }
+        public ParameterApiv[] Parameters { get; set; }
+        public TypeParameterApiv[] TypeParameters { get; set; }
 
-        public MethodAPIV() { }
+        public MethodApiv() { }
 
         /// <summary>
         /// Construct a new MethodAPIV instance, represented by the provided symbol.
         /// </summary>
         /// <param name="symbol">The symbol representing the method.</param>
-        public MethodAPIV(IMethodSymbol symbol)
+        public MethodApiv(IMethodSymbol symbol)
         {
             this.Id = symbol.ToDisplayString();
             this.IsConstructor = false;
@@ -46,7 +46,7 @@ namespace APIView
             else
             {
                 this.Name = symbol.Name;
-                this.ReturnType = new TypeReferenceAPIV(symbol.ReturnType);
+                this.ReturnType = new TypeReferenceApiv(symbol.ReturnType);
             }
             this.Accessibility = symbol.DeclaredAccessibility.ToString().ToLower();
 
@@ -58,23 +58,23 @@ namespace APIView
             this.IsAbstract = symbol.IsAbstract;
             this.IsExtern = symbol.IsExtern;
 
-            List<AttributeAPIV> attributes = new List<AttributeAPIV>();
-            List<TypeParameterAPIV> typeParameters = new List<TypeParameterAPIV>();
-            List<ParameterAPIV> parameters = new List<ParameterAPIV>();
+            List<AttributeApiv> attributes = new List<AttributeApiv>();
+            List<TypeParameterApiv> typeParameters = new List<TypeParameterApiv>();
+            List<ParameterApiv> parameters = new List<ParameterApiv>();
 
             foreach (AttributeData attribute in symbol.GetAttributes())
             {
                 if (attribute.AttributeClass.DeclaredAccessibility == Microsoft.CodeAnalysis.Accessibility.Public || 
                     attribute.AttributeClass.DeclaredAccessibility == Microsoft.CodeAnalysis.Accessibility.Protected)
-                attributes.Add(new AttributeAPIV(attribute, this.Id));
+                attributes.Add(new AttributeApiv(attribute, this.Id));
             }
             foreach (ITypeParameterSymbol typeParam in symbol.TypeParameters)
             {
-                typeParameters.Add(new TypeParameterAPIV(typeParam));
+                typeParameters.Add(new TypeParameterApiv(typeParam));
             }
             foreach (IParameterSymbol param in symbol.Parameters)
             {
-                parameters.Add(new ParameterAPIV(param));
+                parameters.Add(new ParameterApiv(param));
             }
 
             this.Attributes = attributes.ToArray();
@@ -84,8 +84,8 @@ namespace APIView
 
         public override string ToString()
         {
-            var renderer = new TextRendererAPIV();
-            var list = new StringListAPIV();
+            var renderer = new TextRendererApiv();
+            var list = new StringListApiv();
             renderer.Render(this, list);
             return list.ToString();
         }

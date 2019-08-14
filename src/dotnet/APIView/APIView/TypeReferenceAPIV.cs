@@ -2,27 +2,27 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace APIView
+namespace ApiView
 {
-    public class TypeReferenceAPIV
+    public class TypeReferenceApiv
     {
         public bool IsString { get; set; }
-        public TokenAPIV[] Tokens { get; set; }
+        public TokenApiv[] Tokens { get; set; }
 
-        public TypeReferenceAPIV() { }
+        public TypeReferenceApiv() { }
 
-        public TypeReferenceAPIV(TokenAPIV[] tokens)
+        public TypeReferenceApiv(TokenApiv[] tokens)
         {
             this.Tokens = tokens;
             this.IsString = false;
         }
 
-        public TypeReferenceAPIV(ISymbol symbol)
+        public TypeReferenceApiv(ISymbol symbol)
         {
-            var tokens = new List<TokenAPIV>();
+            var tokens = new List<TokenApiv>();
             foreach (var part in symbol.ToDisplayParts())
             {
-                tokens.Add(new TokenAPIV(part));
+                tokens.Add(new TokenApiv(part));
             }
             this.Tokens = tokens.ToArray();
             this.IsString = (symbol is ITypeSymbol typeSymbol) && typeSymbol.SpecialType == SpecialType.System_String;
@@ -36,7 +36,7 @@ namespace APIView
         public string ToDisplayString()
         {
             var returnString = new StringBuilder();
-            var renderer = new TextRendererAPIV();
+            var renderer = new TextRendererApiv();
             renderer.Render(this, returnString);
             return returnString.ToString();
         }

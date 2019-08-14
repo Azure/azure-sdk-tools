@@ -1,5 +1,5 @@
 /**
- * @fileoverview Testing the ts-naming-subclients rule.
+ * @file Testing the ts-naming-subclients rule.
  * @author Arpan Laha
  */
 

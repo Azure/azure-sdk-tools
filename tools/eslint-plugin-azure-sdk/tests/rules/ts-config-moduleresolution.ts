@@ -1,5 +1,5 @@
 /**
- * @fileoverview Testing the ts-config-moduleResolution rule.
+ * @file Testing the ts-config-moduleResolution rule.
  * @author Arpan Laha
  */
 

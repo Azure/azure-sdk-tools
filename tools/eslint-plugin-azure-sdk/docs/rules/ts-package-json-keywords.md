@@ -38,4 +38,4 @@ This rule is fixable using the `--fix` option.
 {}
 ```
 
-## [Source](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-package-json-keywords)
+## [Source](https://azure.github.io/azure-sdk/typescript_implementation.html#ts-package-json-keywords)

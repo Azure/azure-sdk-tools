@@ -1,5 +1,5 @@
 /**
- * @fileoverview Definition of configs
+ * @file Definition of configs
  * @author Arpan Laha
  */
 

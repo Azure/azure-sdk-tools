@@ -34,4 +34,4 @@ class ServiceClient {
 }
 ```
 
-## [Source](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-pagination-list)
+## [Source](https://azure.github.io/azure-sdk/typescript_design.html#ts-pagination-list)

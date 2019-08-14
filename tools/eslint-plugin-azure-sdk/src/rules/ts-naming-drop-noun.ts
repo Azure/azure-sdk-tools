@@ -1,5 +1,5 @@
 /**
- * @fileoverview Rule to require client methods returning an instance of the client to not include the client name in the method name.
+ * @file Rule to require client methods returning an instance of the client to not include the client name in the method name.
  * @author Arpan Laha
  */
 

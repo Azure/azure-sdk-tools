@@ -1,5 +1,5 @@
 /**
- * @fileoverview Rule to force tsconfig.json's compilerOptions.moduleResolution value to be set to 'node'.
+ * @file Rule to force tsconfig.json's compilerOptions.moduleResolution value to be set to 'node'.
  * @author Arpan Laha
  */
 

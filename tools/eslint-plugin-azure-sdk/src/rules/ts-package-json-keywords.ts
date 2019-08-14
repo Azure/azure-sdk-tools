@@ -1,5 +1,5 @@
 /**
- * @fileoverview Rule to force package.json's keywords value to contain at least "Azure" and "cloud".
+ * @file Rule to force package.json's keywords value to contain at least "Azure" and "cloud".
  * @author Arpan Laha
  */
 

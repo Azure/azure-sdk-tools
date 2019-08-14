@@ -1,5 +1,5 @@
 /**
- * @fileoverview Rule to force package.json's name value to be set to @azure/<service>.
+ * @file Rule to force package.json's name value to be set to @azure/<service>.
  * @author Arpan Laha
  */
 

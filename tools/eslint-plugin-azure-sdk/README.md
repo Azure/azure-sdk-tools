@@ -1,6 +1,6 @@
 # eslint-plugin-azure-sdk
 
-An ESLint plugin enforcing [design guidelines for the JavaScript/TypeScript Azure SDK](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html).
+An ESLint plugin enforcing [design guidelines for the JavaScript/TypeScript Azure SDK](https://azure.github.io/azure-sdk/typescript_introduction.html).
 
 ## Installation
 
@@ -56,17 +56,7 @@ If the main TypeScript entrypoint to your package is not in `src/index.ts`, set 
 }
 ```
 
-If you need to modify or disable specific rules, you can do so in the `rules` section of your `.eslintrc` configuration file:
-
-```json
-{
-  "rules": {
-    "@azure/azure-sdk/rule-name": "off"
-  }
-}
-```
-
-For example, if you are not targeting Node, disable `ts-config-moduleresolution` as follows:
+If you need to modify or disable specific rules, you can do so in the `rules` section of your `.eslintrc` configuration file. For example, if you are not targeting Node, disable `ts-config-moduleresolution` as follows:
 
 ```json
 {
@@ -76,51 +66,64 @@ For example, if you are not targeting Node, disable `ts-config-moduleresolution`
 }
 ```
 
-Some rules (see table below) are fixable using the `--fix` ESLint option.
+Some rules (see table below) are fixable using the `--fix` ESLint option (added in `1.3.0`).
 
 ## Supported Rules
 
-| Rule                                                                                                                                  | Fixable |
-| ------------------------------------------------------------------------------------------------------------------------------------- | ------- |
-| [github-source-headers](/tools/eslint-plugin-azure-sdk/docs/rules/github-source-headers.md)                                           | Yes     |
-| [ts-apisurface-standardized-verbs](/tools/eslint-plugin-azure-sdk/docs/rules/ts-apisurface-standardized-verbs.md)                     | No      |
-| [ts-apisurface-supportcancellation](/tools/eslint-plugin-azure-sdk/docs/rules/ts-apisurface-supportcancellation.md)                   | No      |
-| [ts-config-allowsyntheticdefaultimports](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-allowsyntheticdefaultimports.md)         | Yes     |
-| [ts-config-declaration](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-declaration.md)                                           | Yes     |
-| [ts-config-esmoduleinterop](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-esmoduleinterop.md)                                   | Yes     |
-| [ts-config-exclude](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-exclude.md)                                                   | Yes     |
-| [ts-config-forceconsistentcasinginfilenames](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-forceconsistentcasinginfilenames.md) | Yes     |
-| [ts-config-importhelpers](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-importhelpers.md)                                       | Yes     |
-| [ts-config-lib](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-lib.md)                                                           | Yes     |
-| [ts-config-module](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-module.md)                                                     | Yes     |
-| [ts-config-moduleresolution](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-moduleresolution.md)                                 | Yes     |
-| [ts-config-no-experimentaldecorators](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-no-experimentaldecorators.md)               | Yes     |
-| [ts-config-sourcemap](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-sourcemap.md)                                               | Yes     |
-| [ts-config-strict](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-strict.md)                                                     | Yes     |
-| [ts-config-target](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-target.md)                                                     | No      |
-| [ts-doc-internal](/tools/eslint-plugin-azure-sdk/docs/rules/ts-doc-internal.md)                                                       | No      |
-| [ts-error-handling](/tools/eslint-plugin-azure-sdk/docs/rules/ts-error-handling.md)                                                   | No      |
-| [ts-modules-only-named](/tools/eslint-plugin-azure-sdk/docs/rules/ts-modules-only-named.md)                                           | No      |
-| [ts-naming-drop-noun](/tools/eslint-plugin-azure-sdk/docs/rules/ts-naming-drop-noun.md)                                               | No      |
-| [ts-naming-options](/tools/eslint-plugin-azure-sdk/docs/rules/ts-naming-options.md)                                                   | No      |
-| [ts-naming-subclients](/tools/eslint-plugin-azure-sdk/docs/rules/ts-naming-subclients.md)                                             | No      |
-| [ts-no-const-enums](/tools/eslint-plugin-azure-sdk/docs/rules/ts-no-const-enums.md)                                                   | Yes     |
-| [ts-no-namespaces](/tools/eslint-plugin-azure-sdk/docs/rules/ts-no-namespaces.md)                                                     | No      |
-| [ts-package-json-author](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-author.md)                                         | Yes     |
-| [ts-package-json-bugs](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-bugs.md)                                             | Yes     |
-| [ts-package-json-engine-is-present](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-engine-is-present.md)                   | Yes     |
-| [ts-package-json-files-required](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-files-required.md)                         | Yes     |
-| [ts-package-json-homepage](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-homepage.md)                                     | No      |
-| [ts-package-json-keywords](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-keywords.md)                                     | Yes     |
-| [ts-package-json-license](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-license.md)                                       | Yes     |
-| [ts-package-json-main-is-cjs](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-main-is-cjs.md)                               | Yes     |
-| [ts-package-json-module](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-module.md)                                         | Yes     |
-| [ts-package-json-name](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-name.md)                                             | No      |
-| [ts-package-json-repo](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-repo.md)                                             | Yes     |
-| [ts-package-json-required-scripts](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-required-scripts.md)                     | No      |
-| [ts-package-json-sideeffects](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-sideeffects.md)                               | Yes     |
-| [ts-package-json-types](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-types.md)                                           | No      |
-| [ts-pagination-list](/tools/eslint-plugin-azure-sdk/docs/rules/ts-pagination-list.md)                                                 | No      |
-| [ts-use-interface-parameters](/tools/eslint-plugin-azure-sdk/docs/rules/ts-use-interface-parameters.md)                               | No      |
-| [ts-use-promises](/tools/eslint-plugin-azure-sdk/docs/rules/ts-use-promises.md)                                                       | No      |
-| [ts-versioning-semver](/tools/eslint-plugin-azure-sdk/docs/rules/ts-versioning-semver.md)                                             | No      |
+### Key
+
+| Symbol                    | Meaning                                                 |
+| ------------------------- | ------------------------------------------------------- |
+| :triangular_flag_on_post: | Error                                                   |
+| :warning:                 | Warning                                                 |
+| :heavy_multiplication_x:  | Off                                                     |
+| :heavy_check_mark:        | Fixable and autofix-enabled                             |
+| :soon:                    | Fixable but autofix-disabled (pending ESLint 6 support) |
+| :x:                       | Not fixable                                             |
+
+### Rules
+
+| Rule                                                                                                                                      | Default                   | Fixable            | Release |
+| ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- | ------------------ | ------- |
+| [**github-source-headers**](/tools/eslint-plugin-azure-sdk/docs/rules/github-source-headers.md)                                           | :triangular_flag_on_post: | :heavy_check_mark: | `1.1.0` |
+| [**ts-apisurface-standardized-verbs**](/tools/eslint-plugin-azure-sdk/docs/rules/ts-apisurface-standardized-verbs.md)                     | :triangular_flag_on_post: | :x:                | `1.2.0` |
+| [**ts-apisurface-supportcancellation**](/tools/eslint-plugin-azure-sdk/docs/rules/ts-apisurface-supportcancellation.md)                   | :triangular_flag_on_post: | :x:                | `1.2.0` |
+| [**ts-config-allowsyntheticdefaultimports**](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-allowsyntheticdefaultimports.md)         | :triangular_flag_on_post: | :soon:             | `1.0.0` |
+| [**ts-config-declaration**](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-declaration.md)                                           | :triangular_flag_on_post: | :soon:             | `1.0.0` |
+| [**ts-config-esmoduleinterop**](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-esmoduleinterop.md)                                   | :triangular_flag_on_post: | :soon:             | `1.0.0` |
+| [**ts-config-exclude**](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-exclude.md)                                                   | :triangular_flag_on_post: | :soon:             | `1.0.0` |
+| [**ts-config-forceconsistentcasinginfilenames**](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-forceconsistentcasinginfilenames.md) | :triangular_flag_on_post: | :soon:             | `1.0.0` |
+| [**ts-config-importhelpers**](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-importhelpers.md)                                       | :triangular_flag_on_post: | :soon:             | `1.0.0` |
+| [**ts-config-lib**](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-lib.md)                                                           | :triangular_flag_on_post: | :soon:             | `1.0.0` |
+| [**ts-config-module**](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-module.md)                                                     | :triangular_flag_on_post: | :soon:             | `1.0.0` |
+| [**ts-config-moduleresolution**](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-moduleresolution.md)                                 | :triangular_flag_on_post: | :soon:             | `1.1.0` |
+| [**ts-config-no-experimentaldecorators**](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-no-experimentaldecorators.md)               | :triangular_flag_on_post: | :soon:             | `1.0.0` |
+| [**ts-config-sourcemap**](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-sourcemap.md)                                               | :triangular_flag_on_post: | :soon:             | `1.0.0` |
+| [**ts-config-strict**](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-strict.md)                                                     | :triangular_flag_on_post: | :soon:             | `1.0.0` |
+| [**ts-config-target**](/tools/eslint-plugin-azure-sdk/docs/rules/ts-config-target.md)                                                     | :triangular_flag_on_post: | :x:                | `1.1.0` |
+| [**ts-doc-internal**](/tools/eslint-plugin-azure-sdk/docs/rules/ts-doc-internal.md)                                                       | :triangular_flag_on_post: | :x:                | `1.1.0` |
+| [**ts-error-handling**](/tools/eslint-plugin-azure-sdk/docs/rules/ts-error-handling.md)                                                   | :heavy_multiplication_x:  | :x:                | `1.1.0` |
+| [**ts-modules-only-named**](/tools/eslint-plugin-azure-sdk/docs/rules/ts-modules-only-named.md)                                           | :triangular_flag_on_post: | :x:                | `1.1.0` |
+| [**ts-naming-drop-noun**](/tools/eslint-plugin-azure-sdk/docs/rules/ts-naming-drop-noun.md)                                               | :triangular_flag_on_post: | :x:                | `1.2.0` |
+| [**ts-naming-options**](/tools/eslint-plugin-azure-sdk/docs/rules/ts-naming-options.md)                                                   | :triangular_flag_on_post: | :x:                | `1.2.0` |
+| [**ts-naming-subclients**](/tools/eslint-plugin-azure-sdk/docs/rules/ts-naming-subclients.md)                                             | :triangular_flag_on_post: | :x:                | `1.2.0` |
+| [**ts-no-const-enums**](/tools/eslint-plugin-azure-sdk/docs/rules/ts-no-const-enums.md)                                                   | :warning:                 | :heavy_check_mark: | `1.1.0` |
+| [**ts-no-namespaces**](/tools/eslint-plugin-azure-sdk/docs/rules/ts-no-namespaces.md)                                                     | :triangular_flag_on_post: | :x:                | `1.2.0` |
+| [**ts-package-json-author**](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-author.md)                                         | :triangular_flag_on_post: | :soon:             | `1.0.0` |
+| [**ts-package-json-bugs**](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-bugs.md)                                             | :triangular_flag_on_post: | :soon:             | `1.0.0` |
+| [**ts-package-json-engine-is-present**](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-engine-is-present.md)                   | :triangular_flag_on_post: | :soon:             | `1.1.0` |
+| [**ts-package-json-files-required**](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-files-required.md)                         | :triangular_flag_on_post: | :soon:             | `1.1.0` |
+| [**ts-package-json-homepage**](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-homepage.md)                                     | :triangular_flag_on_post: | :x:                | `1.0.0` |
+| [**ts-package-json-keywords**](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-keywords.md)                                     | :triangular_flag_on_post: | :soon:             | `1.0.0` |
+| [**ts-package-json-license**](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-license.md)                                       | :triangular_flag_on_post: | :soon:             | `1.0.0` |
+| [**ts-package-json-main-is-cjs**](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-main-is-cjs.md)                               | :triangular_flag_on_post: | :soon:             | `1.1.0` |
+| [**ts-package-json-module**](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-module.md)                                         | :triangular_flag_on_post: | :soon:             | `1.1.0` |
+| [**ts-package-json-name**](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-name.md)                                             | :triangular_flag_on_post: | :x:                | `1.0.0` |
+| [**ts-package-json-repo**](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-repo.md)                                             | :triangular_flag_on_post: | :soon:             | `1.0.0` |
+| [**ts-package-json-required-scripts**](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-required-scripts.md)                     | :triangular_flag_on_post: | :x:                | `1.0.0` |
+| [**ts-package-json-sideeffects**](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-sideeffects.md)                               | :triangular_flag_on_post: | :soon:             | `1.0.0` |
+| [**ts-package-json-types**](/tools/eslint-plugin-azure-sdk/docs/rules/ts-package-json-types.md)                                           | :triangular_flag_on_post: | :x:                | `1.1.0` |
+| [**ts-pagination-list**](/tools/eslint-plugin-azure-sdk/docs/rules/ts-pagination-list.md)                                                 | :triangular_flag_on_post: | :x:                | `1.2.0` |
+| [**ts-use-interface-parameters**](/tools/eslint-plugin-azure-sdk/docs/rules/ts-use-interface-parameters.md)                               | :warning:                 | :x:                | `1.1.0` |
+| [**ts-use-promises**](/tools/eslint-plugin-azure-sdk/docs/rules/ts-use-promises.md)                                                       | :triangular_flag_on_post: | :x:                | `1.1.0` |
+| [**ts-versioning-semver**](/tools/eslint-plugin-azure-sdk/docs/rules/ts-versioning-semver.md)                                             | :triangular_flag_on_post: | :x:                | `1.1.0` |

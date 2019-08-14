@@ -1,5 +1,5 @@
 /**
- * @fileoverview Testing the ts-config-sourcemap rule.
+ * @file Testing the ts-config-sourcemap rule.
  * @author Arpan Laha
  */
 

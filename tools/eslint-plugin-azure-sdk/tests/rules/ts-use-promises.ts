@@ -1,5 +1,5 @@
 /**
- * @fileoverview Testing the ts-use-promises rule.
+ * @file Testing the ts-use-promises rule.
  * @author Arpan Laha
  */
 

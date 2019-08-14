@@ -28,4 +28,4 @@ const enum Directions {
 }
 ```
 
-## [Source](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-no-const-enums)
+## [Source](https://azure.github.io/azure-sdk/typescript_design.html#ts-no-const-enums)

@@ -52,4 +52,4 @@ A valid ECMAScript standard is defined as any ECMASCript standard other than ES3
 {}
 ```
 
-## [Source](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-config-target)
+## [Source](https://azure.github.io/azure-sdk/typescript_design.html#ts-config-target)

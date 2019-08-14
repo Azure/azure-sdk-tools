@@ -1,5 +1,5 @@
 /**
- * @fileoverview Testing the ts-config-declaration rule.
+ * @file Testing the ts-config-declaration rule.
  * @author Arpan Laha
  */
 

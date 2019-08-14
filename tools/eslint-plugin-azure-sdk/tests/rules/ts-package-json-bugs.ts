@@ -1,5 +1,5 @@
 /**
- * @fileoverview Testing the ts-package-json-bugs rule.
+ * @file Testing the ts-package-json-bugs rule.
  * @author Arpan Laha
  */
 

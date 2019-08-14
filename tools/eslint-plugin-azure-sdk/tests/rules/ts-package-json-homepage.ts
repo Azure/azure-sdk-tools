@@ -1,5 +1,5 @@
 /**
- * @fileoverview Testing the ts-package-json-homepage rule.
+ * @file Testing the ts-package-json-homepage rule.
  * @author Arpan Laha
  */
 

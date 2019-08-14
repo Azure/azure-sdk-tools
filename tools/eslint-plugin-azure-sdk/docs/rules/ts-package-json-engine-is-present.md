@@ -34,6 +34,6 @@ This rule is fixable using the `--fix` option.
 {}
 ```
 
-## [Source](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-package-json-engine-is-present)
+## [Source](https://azure.github.io/azure-sdk/typescript_implementation.html#ts-package-json-engine-is-present)
 
-Also encompasses [ts-node-support](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-node-support), as the rules are similar enough to not exist separately for linting purposes.
+Also encompasses [ts-node-support](https://azure.github.io/azure-sdk/typescript_design.html#ts-node-support), as the rules are similar enough to not exist separately for linting purposes.

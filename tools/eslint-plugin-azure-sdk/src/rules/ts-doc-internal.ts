@@ -1,5 +1,5 @@
 /**
- * @fileoverview Rule to require TSDoc comments to include internal or ignore tags if the object is internal.
+ * @file Rule to require TSDoc comments to include internal or ignore tags if the object is internal.
  * @author Arpan Laha
  */
 

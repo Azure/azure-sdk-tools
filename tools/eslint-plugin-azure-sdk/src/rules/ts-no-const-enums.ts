@@ -1,5 +1,5 @@
 /**
- * @fileoverview Rule to forbid usage of TypeScript's const enums.
+ * @file Rule to forbid usage of TypeScript's const enums.
  * @author Arpan Laha
  */
 

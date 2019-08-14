@@ -1,5 +1,5 @@
 /**
- * @fileoverview All utility definitions
+ * @file All utility definitions
  * @author Arpan Laha
  */
 

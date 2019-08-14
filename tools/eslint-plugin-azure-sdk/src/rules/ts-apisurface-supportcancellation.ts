@@ -1,5 +1,5 @@
 /**
- * @fileoverview Rule to require async client methods to accept an AbortSignalLike parameter.
+ * @file Rule to require async client methods to accept an AbortSignalLike parameter.
  * @author Arpan Laha
  */
 

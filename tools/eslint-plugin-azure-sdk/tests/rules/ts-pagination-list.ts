@@ -1,5 +1,5 @@
 /**
- * @fileoverview Testing the ts-pagination-list rule.
+ * @file Testing the ts-pagination-list rule.
  * @author Arpan Laha
  */
 

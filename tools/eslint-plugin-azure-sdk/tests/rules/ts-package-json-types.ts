@@ -1,5 +1,5 @@
 /**
- * @fileoverview Testing the ts-package-json-types rule.
+ * @file Testing the ts-package-json-types rule.
  * @author Arpan Laha
  */
 

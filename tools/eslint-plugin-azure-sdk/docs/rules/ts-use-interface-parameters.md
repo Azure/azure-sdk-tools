@@ -94,4 +94,4 @@ class Example {
 }
 ```
 
-## [Source](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-use-interface-parameters)
+## [Source](https://azure.github.io/azure-sdk/typescript_design.html#ts-use-interface-parameters)

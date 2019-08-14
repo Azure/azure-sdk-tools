@@ -1,5 +1,5 @@
 /**
- * @fileoverview Rule to force package.json's license value to be set to "MIT".
+ * @file Rule to force package.json's license value to be set to "MIT".
  * @license Arpan Laha
  */
 

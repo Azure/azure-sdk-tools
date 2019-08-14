@@ -1,5 +1,5 @@
 /**
- * @fileoverview Rule to force package.json's files value to contain paths to the package contents.
+ * @file Rule to force package.json's files value to contain paths to the package contents.
  * @author Arpan Laha
  */
 

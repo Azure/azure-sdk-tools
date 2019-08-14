@@ -1,5 +1,5 @@
 /**
- * @fileoverview Testing the ts-config-target rule.
+ * @file Testing the ts-config-target rule.
  * @author Arpan Laha
  */
 

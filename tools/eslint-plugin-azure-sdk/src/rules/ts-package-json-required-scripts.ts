@@ -1,5 +1,5 @@
 /**
- * @fileoverview Rule to force package.json's scripts value to at least contain build and test.
+ * @file Rule to force package.json's scripts value to at least contain build and test.
  * @author Arpan Laha
  */
 

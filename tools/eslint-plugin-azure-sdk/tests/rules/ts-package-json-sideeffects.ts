@@ -1,5 +1,5 @@
 /**
- * @fileoverview Testing the ts-package-json-sideeffects rule.
+ * @file Testing the ts-package-json-sideeffects rule.
  * @author Arpan Laha
  */
 

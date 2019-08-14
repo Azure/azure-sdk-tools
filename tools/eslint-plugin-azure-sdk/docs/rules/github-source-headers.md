@@ -49,4 +49,4 @@ class Class {
 // Licensed under the MIT license.
 ```
 
-## [Source](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#github-source-headers)
+## [Source](https://azure.github.io/azure-sdk/policies_opensource.html#github-source-headers)

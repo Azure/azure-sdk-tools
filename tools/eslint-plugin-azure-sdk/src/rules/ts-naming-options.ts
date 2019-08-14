@@ -1,5 +1,5 @@
 /**
- * @fileoverview Rule to require client method option parameter type names to be suffixed with Options and prefixed with the method name.
+ * @file Rule to require client method option parameter type names to be suffixed with Options and prefixed with the method name.
  * @author Arpan Laha
  */
 

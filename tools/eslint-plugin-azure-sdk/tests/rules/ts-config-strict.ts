@@ -1,5 +1,5 @@
 /**
- * @fileoverview Testing the ts-config-strict rule.
+ * @file Testing the ts-config-strict rule.
  * @author Arpan Laha
  */
 

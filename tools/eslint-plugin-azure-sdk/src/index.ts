@@ -1,5 +1,5 @@
 /**
- * @fileoverview Linting rules for the JavaScript/TypeScript Azure SDK
+ * @file Linting rules for the JavaScript/TypeScript Azure SDK
  * @author Arpan Laha
  */
 

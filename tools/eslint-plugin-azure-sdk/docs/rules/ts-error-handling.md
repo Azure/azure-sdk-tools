@@ -47,4 +47,4 @@ try {
 }
 ```
 
-## [Source](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-error-handling)
+## [Source](https://azure.github.io/azure-sdk/typescript_implementation.html#ts-error-handling)

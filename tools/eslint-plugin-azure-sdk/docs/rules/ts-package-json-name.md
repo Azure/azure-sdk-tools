@@ -36,4 +36,4 @@ Requires `name` in `package.json` to be set to `"@azure/<service-name>"`, with t
 {}
 ```
 
-## [Source](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-package-json-name)
+## [Source](https://azure.github.io/azure-sdk/typescript_implementation.html#ts-package-json-name)

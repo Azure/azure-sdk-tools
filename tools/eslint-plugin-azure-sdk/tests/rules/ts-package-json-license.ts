@@ -1,5 +1,5 @@
 /**
- * @fileoverview Testing the ts-package-json-license rule.
+ * @file Testing the ts-package-json-license rule.
  * @author Arpan Laha
  */
 

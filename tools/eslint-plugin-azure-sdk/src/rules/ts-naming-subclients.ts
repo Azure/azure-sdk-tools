@@ -1,5 +1,5 @@
 /**
- * @fileoverview Rule to require client methods returning a subclient to have names prefixed suffixed with "get" and suffixed with "client".
+ * @file Rule to require client methods returning a subclient to have names prefixed suffixed with "get" and suffixed with "client".
  * @author Arpan Laha
  */
 

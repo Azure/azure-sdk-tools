@@ -1,5 +1,5 @@
 /**
- * @fileoverview Testing the ts-package-json-author rule.
+ * @file Testing the ts-package-json-author rule.
  * @author Arpan Laha
  */
 

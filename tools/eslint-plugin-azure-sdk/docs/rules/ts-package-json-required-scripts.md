@@ -45,4 +45,4 @@ Requires `scripts` in `package.json` to be contain `"build"` and `"test"`.
 {}
 ```
 
-## [Source](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-package-json-required-scripts)
+## [Source](https://azure.github.io/azure-sdk/typescript_implementation.html#ts-package-json-required-scripts)

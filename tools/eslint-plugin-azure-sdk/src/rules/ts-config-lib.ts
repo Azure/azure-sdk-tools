@@ -1,5 +1,5 @@
 /**
- * @fileoverview Rule to force tsconfig.json's compilerOptions.lib value to be an empty array.
+ * @file Rule to force tsconfig.json's compilerOptions.lib value to be an empty array.
  * @author Arpan Laha
  */
 

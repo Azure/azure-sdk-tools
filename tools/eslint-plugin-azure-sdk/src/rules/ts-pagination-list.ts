@@ -1,5 +1,5 @@
 /**
- * @fileoverview Rule to require client list methods to return a PagedAsyncIterableIterator.
+ * @file Rule to require client list methods to return a PagedAsyncIterableIterator.
  * @author Arpan Laha
  */
 

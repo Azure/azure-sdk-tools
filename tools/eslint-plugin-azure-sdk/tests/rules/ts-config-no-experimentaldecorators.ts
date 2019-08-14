@@ -1,5 +1,5 @@
 /**
- * @fileoverview Testing the ts-config-no-experimentaldecorators rule.
+ * @file Testing the ts-config-no-experimentaldecorators rule.
  * @author Arpan Laha
  */
 

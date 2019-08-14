@@ -1,5 +1,5 @@
 /**
- * @fileoverview Rule to require copyright headers in every source file.
+ * @file Rule to require copyright headers in every source file.
  * @author Arpan Laha
  */
 

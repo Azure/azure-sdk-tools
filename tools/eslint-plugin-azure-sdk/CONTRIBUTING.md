@@ -78,7 +78,7 @@ While these are the files dedicated to specific rules, if you add a rule, you'll
 
 ## ESLint 6 migration
 
-Enabling autofixes on configuration rules (`package.json` and `tsconfig.json`) requires `eslint >= 6.0.0` - however, the SDK libraries currently use `5.16.0`, which is the latest `5.x.x` release. 
+Enabling autofixes on configuration rules (`package.json` and `tsconfig.json`) requires `eslint >= 6.0.0` - however, the SDK libraries currently use `5.16.0`, which is the latest `5.x.x` release.
 
 [Migrating to `6.0.0`](https://eslint.org/docs/user-guide/migrating-to-6.0.0) will likely not require changes on the SDK side, but will require changes to the plugin.
 

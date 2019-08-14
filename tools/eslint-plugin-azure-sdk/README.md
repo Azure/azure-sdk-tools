@@ -56,17 +56,7 @@ If the main TypeScript entrypoint to your package is not in `src/index.ts`, set 
 }
 ```
 
-If you need to modify or disable specific rules, you can do so in the `rules` section of your `.eslintrc` configuration file:
-
-```json
-{
-  "rules": {
-    "@azure/azure-sdk/rule-name": "off"
-  }
-}
-```
-
-For example, if you are not targeting Node, disable `ts-config-moduleresolution` as follows:
+If you need to modify or disable specific rules, you can do so in the `rules` section of your `.eslintrc` configuration file. For example, if you are not targeting Node, disable `ts-config-moduleresolution` as follows:
 
 ```json
 {

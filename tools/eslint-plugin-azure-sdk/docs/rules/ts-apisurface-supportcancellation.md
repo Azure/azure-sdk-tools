@@ -37,4 +37,4 @@ class ServiceClient {
 }
 ```
 
-## [Source](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-apisurface-supportcancellation)
+## [Source](https://azure.github.io/azure-sdk/typescript_design.html#ts-apisurface-supportcancellation)

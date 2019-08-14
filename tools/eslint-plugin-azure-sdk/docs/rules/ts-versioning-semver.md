@@ -74,6 +74,6 @@ Additionally, major versions of `0` are not permitted, preview versions must be 
 {}
 ```
 
-## [Source](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-versioning-semver)
+## [Source](https://azure.github.io/azure-sdk/typescript_implementation.html#ts-versioning-semver)
 
-Also encompasses [ts-versioning-no-version-0](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-versioning-no-version-0), as the rules are similar enough to not exist separately for linting purposes.
+Also encompasses [ts-versioning-no-version-0](https://azure.github.io/azure-sdk/typescript_implementation.html#ts-versioning-no-version-0), as the rules are similar enough to not exist separately for linting purposes.

@@ -14,4 +14,4 @@ namespace Example {}
 module Example {}
 ```
 
-## [Source](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-no-namespaces)
+## [Source](https://azure.github.io/azure-sdk/typescript_design.html#ts-no-namespaces)

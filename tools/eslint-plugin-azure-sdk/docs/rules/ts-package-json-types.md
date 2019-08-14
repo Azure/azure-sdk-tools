@@ -26,4 +26,4 @@ In practice, this means `types` in `package.json` must be set to a path pointing
 {}
 ```
 
-## [Source](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-package-json-types)
+## [Source](https://azure.github.io/azure-sdk/typescript_implementation.html#ts-package-json-types)

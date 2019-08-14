@@ -74,7 +74,7 @@ This rule is fixable using the `--fix` option.
 {}
 ```
 
-## [Source](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-package-json-files-required)
+## [Source](https://azure.github.io/azure-sdk/typescript_implementation.html#ts-package-json-files-required)
 
-Also encompasses [ts-include-cjs](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-include-cjs), [ts-include-esm](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-include-esm), and [ts-include-original-source](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-include-original-source)
+Also encompasses [ts-include-cjs](https://azure.github.io/azure-sdk/typescript_implementation.html#ts-include-cjs), [ts-include-esm](https://azure.github.io/azure-sdk/typescript_implementation.html#ts-include-esm), and [ts-include-original-source](https://azure.github.io/azure-sdk/typescript_implementation.html#ts-include-original-source)
 , as the rules are similar enough to not exist separately for linting purposes.

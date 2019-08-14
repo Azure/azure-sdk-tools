@@ -36,4 +36,4 @@ This rule is fixable using the `--fix` option.
 {}
 ```
 
-## [Source](https://azuresdkspecs.z5.web.core.windows.net/TypeScriptSpec.html#ts-config-strict)
+## [Source](https://azure.github.io/azure-sdk/typescript_design.html#ts-config-strict)

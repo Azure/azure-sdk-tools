@@ -299,14 +299,19 @@ export = {
                   .getSymbol();
                 const overloads =
                   symbol !== undefined
-                    ? symbol.declarations.map(
-                        (declaration: Declaration): FunctionExpression => {
-                          const method = reverter.get(
-                            declaration as TSNode
-                          ) as MethodDefinition;
-                          return method.value;
-                        }
-                      )
+                    ? symbol.declarations
+                        .filter(
+                          (declaration: Declaration): boolean =>
+                            reverter.get(declaration as TSNode) !== undefined
+                        )
+                        .map(
+                          (declaration: Declaration): FunctionExpression => {
+                            const method = reverter.get(
+                              declaration as TSNode
+                            ) as MethodDefinition;
+                            return method.value;
+                          }
+                        )
                     : [];
                 evaluateOverloads(
                   overloads,

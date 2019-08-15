@@ -66,8 +66,11 @@ namespace ApiView
 
             foreach (AttributeData attribute in symbol.GetAttributes())
             {
-                if (attribute.AttributeClass.DeclaredAccessibility == Microsoft.CodeAnalysis.Accessibility.Public || 
-                    attribute.AttributeClass.DeclaredAccessibility == Microsoft.CodeAnalysis.Accessibility.Protected)
+                if ((attribute.AttributeClass.DeclaredAccessibility == Microsoft.CodeAnalysis.Accessibility.Public || 
+                    attribute.AttributeClass.DeclaredAccessibility == Microsoft.CodeAnalysis.Accessibility.Protected) &&
+                    attribute.AttributeClass.Name != "AsyncStateMachineAttribute" &&
+                    attribute.AttributeClass.Name != "DebuggerStepThroughAttribute" &&
+                    !attribute.AttributeClass.IsImplicitlyDeclared)
                 attributes.Add(new AttributeApiv(attribute, this.Id));
             }
             foreach (ITypeParameterSymbol typeParam in symbol.TypeParameters)

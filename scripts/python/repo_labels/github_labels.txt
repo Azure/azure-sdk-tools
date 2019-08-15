@@ -83,6 +83,7 @@ Monitor - ApplicationInsights
 MySQL
 Network
 Network - Application Gateway
+Network - DDOS
 Network - DNS
 Network - Express Routes
 Network - Gateways
@@ -116,6 +117,12 @@ Service Fabric
 Service Map
 SignalR
 SQL
+SQL - VM
+SQL - Backup & Restore
+SQL - Data Security
+SQL - Elastic Jobs
+SQL - Managed Instance
+SQL - Replication & Failover
 Storage
 Storsimple
 Stream Analytics

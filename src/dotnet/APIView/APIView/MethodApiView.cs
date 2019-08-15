@@ -64,14 +64,16 @@ namespace ApiView
             List<TypeParameterApiView> typeParameters = new List<TypeParameterApiView>();
             List<ParameterApiView> parameters = new List<ParameterApiView>();
 
+            List<string> ignoredAttributeNames = new List<string>() { "AsyncStateMachineAttribute", "DebuggerStepThroughAttribute" };
             foreach (AttributeData attribute in symbol.GetAttributes())
             {
                 if ((attribute.AttributeClass.DeclaredAccessibility == Microsoft.CodeAnalysis.Accessibility.Public || 
                     attribute.AttributeClass.DeclaredAccessibility == Microsoft.CodeAnalysis.Accessibility.Protected) &&
-                    attribute.AttributeClass.Name != "AsyncStateMachineAttribute" &&
-                    attribute.AttributeClass.Name != "DebuggerStepThroughAttribute" &&
+                    !ignoredAttributeNames.Contains(attribute.AttributeClass.Name) &&
                     !attribute.AttributeClass.IsImplicitlyDeclared)
-                attributes.Add(new AttributeApiView(attribute, this.Id));
+                {
+                    attributes.Add(new AttributeApiView(attribute, this.Id));
+                }
             }
             foreach (ITypeParameterSymbol typeParam in symbol.TypeParameters)
             {

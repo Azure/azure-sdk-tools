@@ -43,7 +43,7 @@ namespace APIViewWeb
                 .AddRazorPagesOptions(options =>
                 {
                     options.Conventions.AddPageRoute("/Assemblies/Index", "");
-                    options.Conventions.AuthorizeFolder("/Assemblies", "RequireOrgAzure");
+                    options.Conventions.AuthorizeFolder("/Assemblies", "RequireOrganization");
                 });
 
             services.AddSingleton<BlobAssemblyRepository>();
@@ -117,8 +117,10 @@ namespace APIViewWeb
                 });
 
             services.AddAuthorization(options => {
-                options.AddPolicy("RequireOrgAzure", policy => 
-                    policy.RequireOrganizationRequirement("Azure"));
+                options.AddPolicy("RequireOrganization", policy => {
+                    policy.RequireClaim("urn:github:orgs");
+                    policy.AddRequirements(new OrganizationRequirement(Configuration.GetValue<string>("APIVIEW_REQUIRED_ORGANIZATION")));
+                });
             });
 
             services.AddSingleton<IAuthorizationHandler, OrganizationRequirementHandler>();

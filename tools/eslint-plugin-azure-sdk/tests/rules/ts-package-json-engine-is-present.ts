@@ -243,9 +243,10 @@ const examplePackageBad = `{
 //------------------------------------------------------------------------------
 
 const ruleTester = new RuleTester({
-  parser: "@typescript-eslint/parser",
+  parser: require.resolve("@typescript-eslint/parser"),
   parserOptions: {
-    project: "./package.json"
+    createDefaultProgram: true,
+    project: "./tsconfig.json"
   }
 });
 
@@ -306,7 +307,8 @@ ruleTester.run("ts-package-json-engine-is-present", rule, {
           message:
             "engines.node is set to >=6.0.0 when it should be set to >=8.0.0"
         }
-      ]
+      ],
+      output: '{"engines": { "node": ">=8.0.0" }}'
     },
     {
       // example file with engines.node set to >=6.0.0
@@ -317,7 +319,8 @@ ruleTester.run("ts-package-json-engine-is-present", rule, {
           message:
             "engines.node is set to >=6.0.0 when it should be set to >=8.0.0"
         }
-      ]
+      ],
+      output: examplePackageGood
     }
   ]
 });

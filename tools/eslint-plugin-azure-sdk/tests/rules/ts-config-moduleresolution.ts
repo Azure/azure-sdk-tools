@@ -95,8 +95,9 @@ const exampleTsconfigBad = `{
 //------------------------------------------------------------------------------
 
 const ruleTester = new RuleTester({
-  parser: "@typescript-eslint/parser",
+  parser: require.resolve("@typescript-eslint/parser"),
   parserOptions: {
+    createDefaultProgram: true,
     project: "./tsconfig.json"
   }
 });
@@ -158,7 +159,8 @@ ruleTester.run("ts-config-moduleresolution", rule, {
           message:
             "compilerOptions.moduleResolution is set to classic when it should be set to node"
         }
-      ]
+      ],
+      output: '{"compilerOptions": { "moduleResolution": "node" }}'
     },
     {
       // example file with compilerOptions.moduleResolution set to 'classic'
@@ -169,7 +171,8 @@ ruleTester.run("ts-config-moduleresolution", rule, {
           message:
             "compilerOptions.moduleResolution is set to classic when it should be set to node"
         }
-      ]
+      ],
+      output: exampleTsconfigGood
     }
   ]
 });

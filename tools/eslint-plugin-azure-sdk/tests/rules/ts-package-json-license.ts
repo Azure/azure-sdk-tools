@@ -241,8 +241,9 @@ const examplePackageBad = `{
 //------------------------------------------------------------------------------
 
 const ruleTester = new RuleTester({
-  parser: "@typescript-eslint/parser",
+  parser: require.resolve("@typescript-eslint/parser"),
   parserOptions: {
+    createDefaultProgram: true,
     project: "./tsconfig.json"
   }
 });
@@ -293,7 +294,8 @@ ruleTester.run("ts-package-json-license", rule, {
         {
           message: "license is set to Apache when it should be set to MIT"
         }
-      ]
+      ],
+      output: '{"license": "MIT"}'
     },
     {
       // example file with license set to Apache
@@ -303,7 +305,8 @@ ruleTester.run("ts-package-json-license", rule, {
         {
           message: "license is set to Apache when it should be set to MIT"
         }
-      ]
+      ],
+      output: examplePackageGood
     }
   ]
 });

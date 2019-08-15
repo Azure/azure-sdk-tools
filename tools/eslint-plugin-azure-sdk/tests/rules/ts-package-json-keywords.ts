@@ -20,9 +20,7 @@ const examplePackageGood = `{
   "repository": "github:Azure/azure-sdk-for-js",
   "keywords": [
     "Azure",
-    "cloud",
-    "service bus",
-    "AMQP"
+    "cloud"
   ],
   "bugs": {
     "url": "https://github.com/azure/azure-sdk-for-js/issues"
@@ -236,8 +234,9 @@ const examplePackageBad = `{
 //------------------------------------------------------------------------------
 
 const ruleTester = new RuleTester({
-  parser: "@typescript-eslint/parser",
+  parser: require.resolve("@typescript-eslint/parser"),
   parserOptions: {
+    createDefaultProgram: true,
     project: "./tsconfig.json"
   }
 });
@@ -291,7 +290,8 @@ ruleTester.run("ts-package-json-keywords", rule, {
         {
           message: "keywords does not contain cloud"
         }
-      ]
+      ],
+      output: '{"keywords": ["Azure"]}'
     },
     {
       // Azure missing
@@ -301,7 +301,8 @@ ruleTester.run("ts-package-json-keywords", rule, {
         {
           message: "keywords does not contain Azure"
         }
-      ]
+      ],
+      output: '{"keywords": ["cloud", "Azure"]}'
     },
     {
       // cloud missing
@@ -311,7 +312,8 @@ ruleTester.run("ts-package-json-keywords", rule, {
         {
           message: "keywords does not contain cloud"
         }
-      ]
+      ],
+      output: '{"keywords": ["Azure", "cloud"]}'
     },
     {
       // example file with keywords not containing Azure or cloud

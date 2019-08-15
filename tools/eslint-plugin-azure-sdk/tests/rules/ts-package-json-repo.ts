@@ -241,8 +241,9 @@ const examplePackageBad = `{
 //------------------------------------------------------------------------------
 
 const ruleTester = new RuleTester({
-  parser: "@typescript-eslint/parser",
+  parser: require.resolve("@typescript-eslint/parser"),
   parserOptions: {
+    createDefaultProgram: true,
     project: "./tsconfig.json"
   }
 });
@@ -294,7 +295,8 @@ ruleTester.run("ts-package-json-repo", rule, {
           message:
             "repository is set to github:Azure/azure-sdk-for-java when it should be set to github:Azure/azure-sdk-for-js"
         }
-      ]
+      ],
+      output: '{"repository": "github:Azure/azure-sdk-for-js"}'
     },
     {
       // example file with repository set to false
@@ -305,7 +307,8 @@ ruleTester.run("ts-package-json-repo", rule, {
           message:
             "repository is set to github:Azure/azure-sdk-for-java when it should be set to github:Azure/azure-sdk-for-js"
         }
-      ]
+      ],
+      output: examplePackageGood
     }
   ]
 });

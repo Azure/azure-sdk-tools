@@ -97,8 +97,9 @@ const exampleTsconfigBad = `{
 //------------------------------------------------------------------------------
 
 const ruleTester = new RuleTester({
-  parser: "@typescript-eslint/parser",
+  parser: require.resolve("@typescript-eslint/parser"),
   parserOptions: {
+    createDefaultProgram: true,
     project: "./tsconfig.json"
   }
 });
@@ -162,7 +163,8 @@ ruleTester.run("ts-config-allowsyntheticdefaultimports", rule, {
           message:
             "compilerOptions.allowSyntheticDefaultImports is set to false when it should be set to true"
         }
-      ]
+      ],
+      output: '{"compilerOptions": { "allowSyntheticDefaultImports": true }}'
     },
     {
       // example file with compilerOptions.allowSyntheticDefaultImports set to false
@@ -173,7 +175,8 @@ ruleTester.run("ts-config-allowsyntheticdefaultimports", rule, {
           message:
             "compilerOptions.allowSyntheticDefaultImports is set to false when it should be set to true"
         }
-      ]
+      ],
+      output: exampleTsconfigGood
     }
   ]
 });

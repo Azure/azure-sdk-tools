@@ -95,8 +95,9 @@ const exampleTsconfigBad = `{
 //------------------------------------------------------------------------------
 
 const ruleTester = new RuleTester({
-  parser: "@typescript-eslint/parser",
+  parser: require.resolve("@typescript-eslint/parser"),
   parserOptions: {
+    createDefaultProgram: true,
     project: "./tsconfig.json"
   }
 });
@@ -158,7 +159,8 @@ ruleTester.run("ts-config-esmoduleinterop", rule, {
           message:
             "compilerOptions.esModuleInterop is set to false when it should be set to true"
         }
-      ]
+      ],
+      output: '{"compilerOptions": { "esModuleInterop": true }}'
     },
     {
       // example file with compilerOptions.esModuleInterop set to false
@@ -169,7 +171,8 @@ ruleTester.run("ts-config-esmoduleinterop", rule, {
           message:
             "compilerOptions.esModuleInterop is set to false when it should be set to true"
         }
-      ]
+      ],
+      output: exampleTsconfigGood
     }
   ]
 });

@@ -241,8 +241,9 @@ const examplePackageBad = `{
 //------------------------------------------------------------------------------
 
 const ruleTester = new RuleTester({
-  parser: "@typescript-eslint/parser",
+  parser: require.resolve("@typescript-eslint/parser"),
   parserOptions: {
+    createDefaultProgram: true,
     project: "./tsconfig.json"
   }
 });
@@ -309,7 +310,9 @@ ruleTester.run("ts-package-json-bugs", rule, {
           message:
             "bugs.url is set to https://github.com/Azure/azure-sdk-for-java/issues when it should be set to https://github.com/Azure/azure-sdk-for-js/issues"
         }
-      ]
+      ],
+      output:
+        '{"bugs": { "url": "https://github.com/Azure/azure-sdk-for-js/issues" }}'
     },
     {
       // example file with compilerOptions.strict set to false
@@ -320,7 +323,8 @@ ruleTester.run("ts-package-json-bugs", rule, {
           message:
             "bugs.url is set to https://github.com/Azure/azure-sdk-for-java/issues when it should be set to https://github.com/Azure/azure-sdk-for-js/issues"
         }
-      ]
+      ],
+      output: examplePackageGood
     }
   ]
 });

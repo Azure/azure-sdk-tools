@@ -241,8 +241,9 @@ const examplePackageBad = `{
 //------------------------------------------------------------------------------
 
 const ruleTester = new RuleTester({
-  parser: "@typescript-eslint/parser",
+  parser: require.resolve("@typescript-eslint/parser"),
   parserOptions: {
+    createDefaultProgram: true,
     project: "./tsconfig.json"
   }
 });
@@ -293,7 +294,8 @@ ruleTester.run("ts-package-json-sideeffects", rule, {
         {
           message: "sideEffects is set to true when it should be set to false"
         }
-      ]
+      ],
+      output: '{"sideEffects": false}'
     },
     {
       // example file with sideEffects set to Not Microsoft Corporation
@@ -303,7 +305,8 @@ ruleTester.run("ts-package-json-sideeffects", rule, {
         {
           message: "sideEffects is set to true when it should be set to false"
         }
-      ]
+      ],
+      output: examplePackageGood
     }
   ]
 });

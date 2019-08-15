@@ -11,24 +11,22 @@ import { RuleTester } from "eslint";
 //------------------------------------------------------------------------------
 
 const ruleTester = new RuleTester({
-  parser: "@typescript-eslint/parser",
+  parser: require.resolve("@typescript-eslint/parser"),
   parserOptions: {
+    createDefaultProgram: true,
     project: "./tsconfig.json"
   }
 });
 
-const valid = `
-// Copyright (c) Microsoft Corporation.
+const valid = `// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 console.log("hello")`;
 
-const invalid1 = `
-// Copyright (c) Microsoft.
+const invalid1 = `// Copyright (c) Microsoft.
 // Licensed under the MIT license.
 console.log("hello")`;
 
-const invalid2 = `
-// Copyright (c) Microsoft Corporation.
+const invalid2 = `// Copyright (c) Microsoft Corporation.
 // Licensed under the Apache 2.0 license.
 console.log("hello")`;
 
@@ -59,7 +57,8 @@ ruleTester.run("github-source-headers", rule, {
         {
           message: "no copyright header found"
         }
-      ]
+      ],
+      output: valid
     },
     // wrong headers
     {
@@ -69,7 +68,8 @@ ruleTester.run("github-source-headers", rule, {
         {
           message: configError
         }
-      ]
+      ],
+      output: valid
     },
     {
       code: invalid2,
@@ -78,7 +78,8 @@ ruleTester.run("github-source-headers", rule, {
         {
           message: configError
         }
-      ]
+      ],
+      output: valid
     }
   ]
 });

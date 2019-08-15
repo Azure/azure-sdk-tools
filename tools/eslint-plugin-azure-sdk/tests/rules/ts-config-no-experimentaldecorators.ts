@@ -43,7 +43,8 @@ const exampleTsconfigGood = `{
     /* Other options */
     "newLine": "LF" /*	Use the specified end of line sequence to be used when emitting files: "crlf" (windows) or "lf" (unix).”*/,
     "allowJs": false /* Don't allow JavaScript files to be compiled.*/,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "experimentalDecorators": false
   },
   "compileOnSave": true,
   "exclude": ["node_modules", "typings/**", "./samples/**/*.ts"],
@@ -96,8 +97,9 @@ const exampleTsconfigBad = `{
 //------------------------------------------------------------------------------
 
 const ruleTester = new RuleTester({
-  parser: "@typescript-eslint/parser",
+  parser: require.resolve("@typescript-eslint/parser"),
   parserOptions: {
+    createDefaultProgram: true,
     project: "./tsconfig.json"
   }
 });
@@ -155,7 +157,8 @@ ruleTester.run("ts-config-no-experimentaldecorators", rule, {
           message:
             "compilerOptions.experimentalDecorators is set to true when it should be set to false"
         }
-      ]
+      ],
+      output: '{"compilerOptions": { "experimentalDecorators": false }}'
     },
     {
       // example file with compilerOptions.experimentalDecorators set to true
@@ -166,7 +169,8 @@ ruleTester.run("ts-config-no-experimentaldecorators", rule, {
           message:
             "compilerOptions.experimentalDecorators is set to true when it should be set to false"
         }
-      ]
+      ],
+      output: exampleTsconfigGood
     }
   ]
 });

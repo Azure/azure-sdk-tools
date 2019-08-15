@@ -95,8 +95,9 @@ const exampleTsconfigBad = `{
 //------------------------------------------------------------------------------
 
 const ruleTester = new RuleTester({
-  parser: "@typescript-eslint/parser",
+  parser: require.resolve("@typescript-eslint/parser"),
   parserOptions: {
+    createDefaultProgram: true,
     project: "./tsconfig.json"
   }
 });
@@ -162,7 +163,9 @@ ruleTester.run("ts-config-forceconsistentcasinginfilenames", rule, {
           message:
             "compilerOptions.forceConsistentCasingInFileNames is set to false when it should be set to true"
         }
-      ]
+      ],
+      output:
+        '{"compilerOptions": { "forceConsistentCasingInFileNames": true }}'
     },
     {
       // example file with compilerOptions.forceConsistentCasingInFileNames set to false
@@ -173,7 +176,8 @@ ruleTester.run("ts-config-forceconsistentcasinginfilenames", rule, {
           message:
             "compilerOptions.forceConsistentCasingInFileNames is set to false when it should be set to true"
         }
-      ]
+      ],
+      output: exampleTsconfigGood
     }
   ]
 });

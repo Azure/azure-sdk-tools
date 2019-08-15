@@ -5,4 +5,4 @@
 
 export { getLocalExports, getPublicMethods, isExternal } from "./exports";
 export { getRuleMetaData } from "./metadata";
-export { getVerifiers, stripPath } from "./verifiers";
+export { arrayToString, getVerifiers, stripPath } from "./verifiers";

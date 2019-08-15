@@ -11,8 +11,9 @@ import { RuleTester } from "eslint";
 //------------------------------------------------------------------------------
 
 const ruleTester = new RuleTester({
-  parser: "@typescript-eslint/parser",
+  parser: require.resolve("@typescript-eslint/parser"),
   parserOptions: {
+    createDefaultProgram: true,
     project: "./tsconfig.json",
     sourceType: "module"
   },
@@ -36,7 +37,8 @@ ruleTester.run("ts-no-const-enums", rule, {
         {
           message: "const enums should not be used"
         }
-      ]
+      ],
+      output: "enum Enum { a = 1 }"
     }
   ]
 });

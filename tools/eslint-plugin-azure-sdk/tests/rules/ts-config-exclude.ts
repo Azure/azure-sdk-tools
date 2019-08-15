@@ -46,7 +46,7 @@ const exampleTsconfigGood = `{
     "resolveJsonModule": true
   },
   "compileOnSave": true,
-  "exclude": ["node_modules", "typings/**", "./samples/**/*.ts"],
+  "exclude": ["typings/**", "./samples/**/*.ts", "node_modules"],
   "include": ["./src/**/*.ts", "./test/**/*.ts"]
 }`;
 
@@ -95,8 +95,9 @@ const exampleTsconfigBad = `{
 //------------------------------------------------------------------------------
 
 const ruleTester = new RuleTester({
-  parser: "@typescript-eslint/parser",
+  parser: require.resolve("@typescript-eslint/parser"),
   parserOptions: {
+    createDefaultProgram: true,
     project: "./tsconfig.json"
   }
 });
@@ -147,7 +148,8 @@ ruleTester.run("ts-config-exclude", rule, {
         {
           message: "exclude does not contain node_modules"
         }
-      ]
+      ],
+      output: '{"exclude": ["node_modules"]}'
     },
     {
       // example file with exclude not containing node_modules
@@ -157,7 +159,8 @@ ruleTester.run("ts-config-exclude", rule, {
         {
           message: "exclude does not contain node_modules"
         }
-      ]
+      ],
+      output: exampleTsconfigGood
     }
   ]
 });

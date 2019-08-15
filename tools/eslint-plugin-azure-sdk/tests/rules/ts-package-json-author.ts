@@ -241,8 +241,9 @@ const examplePackageBad = `{
 //------------------------------------------------------------------------------
 
 const ruleTester = new RuleTester({
-  parser: "@typescript-eslint/parser",
+  parser: require.resolve("@typescript-eslint/parser"),
   parserOptions: {
+    createDefaultProgram: true,
     project: "./tsconfig.json"
   }
 });
@@ -294,7 +295,8 @@ ruleTester.run("ts-package-json-author", rule, {
           message:
             "author is set to Not Microsoft Corporation when it should be set to Microsoft Corporation"
         }
-      ]
+      ],
+      output: '{"author": "Microsoft Corporation"}'
     },
     {
       // example file with author set to Not Microsoft Corporation
@@ -305,7 +307,8 @@ ruleTester.run("ts-package-json-author", rule, {
           message:
             "author is set to Not Microsoft Corporation when it should be set to Microsoft Corporation"
         }
-      ]
+      ],
+      output: examplePackageGood
     }
   ]
 });

@@ -27,7 +27,7 @@ const examplePackageGood = `{
   "bugs": {
     "url": "https://github.com/azure/azure-sdk-for-js/issues"
   },
-  "main": "./dist/index.js",
+  "main": "dist/index.js",
   "module": "dist-esm/src/index.js",
   "browser": {
     "./dist/index.js": "./browser/service-bus.js",

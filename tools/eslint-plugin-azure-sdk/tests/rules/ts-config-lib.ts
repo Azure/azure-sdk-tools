@@ -160,7 +160,8 @@ ruleTester.run("ts-config-lib", rule, {
         {
           message: "compilerOptions.lib is not set to an empty array"
         }
-      ]
+      ],
+      output: '{"compilerOptions": { "lib": [] }}'
     },
     {
       // example file with compilerOptions.strict set to false
@@ -170,7 +171,8 @@ ruleTester.run("ts-config-lib", rule, {
         {
           message: "compilerOptions.lib is not set to an empty array"
         }
-      ]
+      ],
+      output: exampleTsconfigGood
     }
   ]
 });

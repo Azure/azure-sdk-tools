@@ -20,9 +20,7 @@ const examplePackageGood = `{
   "repository": "github:Azure/azure-sdk-for-js",
   "keywords": [
     "Azure",
-    "cloud",
-    "service bus",
-    "AMQP"
+    "cloud"
   ],
   "bugs": {
     "url": "https://github.com/azure/azure-sdk-for-js/issues"
@@ -292,7 +290,8 @@ ruleTester.run("ts-package-json-keywords", rule, {
         {
           message: "keywords does not contain cloud"
         }
-      ]
+      ],
+      output: '{"keywords": ["Azure"]}'
     },
     {
       // Azure missing
@@ -302,7 +301,8 @@ ruleTester.run("ts-package-json-keywords", rule, {
         {
           message: "keywords does not contain Azure"
         }
-      ]
+      ],
+      output: '{"keywords": ["cloud", "Azure"]}'
     },
     {
       // cloud missing
@@ -312,7 +312,8 @@ ruleTester.run("ts-package-json-keywords", rule, {
         {
           message: "keywords does not contain cloud"
         }
-      ]
+      ],
+      output: '{"keywords": ["Azure", "cloud"]}'
     },
     {
       // example file with keywords not containing Azure or cloud

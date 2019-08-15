@@ -159,7 +159,8 @@ ruleTester.run("ts-config-moduleresolution", rule, {
           message:
             "compilerOptions.moduleResolution is set to classic when it should be set to node"
         }
-      ]
+      ],
+      output: '{"compilerOptions": { "moduleResolution": "node" }}'
     },
     {
       // example file with compilerOptions.moduleResolution set to 'classic'
@@ -170,7 +171,8 @@ ruleTester.run("ts-config-moduleresolution", rule, {
           message:
             "compilerOptions.moduleResolution is set to classic when it should be set to node"
         }
-      ]
+      ],
+      output: exampleTsconfigGood
     }
   ]
 });

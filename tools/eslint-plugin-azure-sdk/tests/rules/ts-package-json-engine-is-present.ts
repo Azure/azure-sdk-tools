@@ -307,7 +307,8 @@ ruleTester.run("ts-package-json-engine-is-present", rule, {
           message:
             "engines.node is set to >=6.0.0 when it should be set to >=8.0.0"
         }
-      ]
+      ],
+      output: '{"engines": { "node": ">=8.0.0" }}'
     },
     {
       // example file with engines.node set to >=6.0.0
@@ -318,7 +319,8 @@ ruleTester.run("ts-package-json-engine-is-present", rule, {
           message:
             "engines.node is set to >=6.0.0 when it should be set to >=8.0.0"
         }
-      ]
+      ],
+      output: examplePackageGood
     }
   ]
 });

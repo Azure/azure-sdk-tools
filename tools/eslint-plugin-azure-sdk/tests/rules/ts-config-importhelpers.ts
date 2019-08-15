@@ -161,7 +161,8 @@ ruleTester.run("ts-config-importhelpers", rule, {
           message:
             "compilerOptions.importHelpers is set to false when it should be set to true"
         }
-      ]
+      ],
+      output: '{"compilerOptions": { "importHelpers": true }}'
     },
     {
       // example file with compilerOptions.importHelpers set to false
@@ -172,7 +173,8 @@ ruleTester.run("ts-config-importhelpers", rule, {
           message:
             "compilerOptions.importHelpers is set to false when it should be set to true"
         }
-      ]
+      ],
+      output: exampleTsconfigGood
     }
   ]
 });

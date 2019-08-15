@@ -300,7 +300,8 @@ ruleTester.run("ts-package-json-module", rule, {
           message:
             "module is set to dist-esm/src//index.js when it should be set to dist-esm/src/index.js"
         }
-      ]
+      ],
+      output: '{"module": "dist-esm/src/index.js"}'
     },
     {
       code: '{"module": ".dist-esm/src/index.js"}',
@@ -310,7 +311,8 @@ ruleTester.run("ts-package-json-module", rule, {
           message:
             "module is set to .dist-esm/src/index.js when it should be set to dist-esm/src/index.js"
         }
-      ]
+      ],
+      output: '{"module": "dist-esm/src/index.js"}'
     },
     {
       code: '{"module": "/dist-esm/src/index.js"}',
@@ -320,7 +322,8 @@ ruleTester.run("ts-package-json-module", rule, {
           message:
             "module is set to /dist-esm/src/index.js when it should be set to dist-esm/src/index.js"
         }
-      ]
+      ],
+      output: '{"module": "dist-esm/src/index.js"}'
     },
     // other errors
     {
@@ -331,7 +334,8 @@ ruleTester.run("ts-package-json-module", rule, {
           message:
             "module is set to dist-esm/src when it should be set to dist-esm/src/index.js"
         }
-      ]
+      ],
+      output: '{"module": "dist-esm/src/index.js"}'
     },
     {
       code: '{"module": "index.js"}',
@@ -341,7 +345,8 @@ ruleTester.run("ts-package-json-module", rule, {
           message:
             "module is set to index.js when it should be set to dist-esm/src/index.js"
         }
-      ]
+      ],
+      output: '{"module": "dist-esm/src/index.js"}'
     },
     {
       code: '{"module": "dist/src/index.js"}',
@@ -351,7 +356,8 @@ ruleTester.run("ts-package-json-module", rule, {
           message:
             "module is set to dist/src/index.js when it should be set to dist-esm/src/index.js"
         }
-      ]
+      ],
+      output: '{"module": "dist-esm/src/index.js"}'
     },
     {
       // example file with module set to esm/src/index.js
@@ -362,7 +368,8 @@ ruleTester.run("ts-package-json-module", rule, {
           message:
             "module is set to esm/src/index.js when it should be set to dist-esm/src/index.js"
         }
-      ]
+      ],
+      output: examplePackageGood
     }
   ]
 });

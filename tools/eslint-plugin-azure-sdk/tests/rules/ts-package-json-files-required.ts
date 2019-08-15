@@ -114,11 +114,11 @@ const examplePackageGood = `{
     "ws": "^6.2.1"
   },
   "files": [
-    "dist/",
-    "dist-esm/src/",
-    "src/",
     "typings/service-bus.d.ts",
-    "tsconfig.json"
+    "tsconfig.json",
+    "dist",
+    "dist-esm/src",
+    "src"
   ],
   "sideEffects": false
 }`;
@@ -309,7 +309,8 @@ ruleTester.run("ts-package-json-files-required", rule, {
         {
           message: "src is not included in files"
         }
-      ]
+      ],
+      output: '{"files": ["dist", "dist-esm/src", "src"]}'
     },
     {
       code: '{"files": ["dist", "src"]}',
@@ -318,7 +319,8 @@ ruleTester.run("ts-package-json-files-required", rule, {
         {
           message: "dist-esm/src is not included in files"
         }
-      ]
+      ],
+      output: '{"files": ["dist", "src", "dist-esm/src"]}'
     },
     {
       code: '{"files": ["src", "dist-esm/src"]}',
@@ -327,7 +329,8 @@ ruleTester.run("ts-package-json-files-required", rule, {
         {
           message: "dist is not included in files"
         }
-      ]
+      ],
+      output: '{"files": ["src", "dist-esm/src", "dist"]}'
     },
     {
       code: '{"files": ["dist"]}',
@@ -339,7 +342,8 @@ ruleTester.run("ts-package-json-files-required", rule, {
         {
           message: "src is not included in files"
         }
-      ]
+      ],
+      output: '{"files": ["dist", "dist-esm/src"]}'
     },
     {
       code: '{"files": ["dist-esm/src"]}',
@@ -351,7 +355,8 @@ ruleTester.run("ts-package-json-files-required", rule, {
         {
           message: "src is not included in files"
         }
-      ]
+      ],
+      output: '{"files": ["dist-esm/src", "dist"]}'
     },
     {
       code: '{"files": ["src"]}',
@@ -363,10 +368,11 @@ ruleTester.run("ts-package-json-files-required", rule, {
         {
           message: "dist-esm/src is not included in files"
         }
-      ]
+      ],
+      output: '{"files": ["src", "dist"]}'
     },
     {
-      code: '{"files": [""]}',
+      code: '{"files": []}',
       filename: "package.json",
       errors: [
         {
@@ -378,7 +384,8 @@ ruleTester.run("ts-package-json-files-required", rule, {
         {
           message: "src is not included in files"
         }
-      ]
+      ],
+      output: '{"files": ["dist"]}'
     },
     // test regex
     {
@@ -388,7 +395,8 @@ ruleTester.run("ts-package-json-files-required", rule, {
         {
           message: "src is not included in files"
         }
-      ]
+      ],
+      output: '{"files": ["src1", "dist", "dist-esm/src", "src"]}'
     },
     {
       code: '{"files": ["1src", "dist", "dist-esm/src"]}',
@@ -397,7 +405,8 @@ ruleTester.run("ts-package-json-files-required", rule, {
         {
           message: "src is not included in files"
         }
-      ]
+      ],
+      output: '{"files": ["1src", "dist", "dist-esm/src", "src"]}'
     },
     {
       code: '{"files": ["/src", "dist", "dist-esm/src"]}',
@@ -406,7 +415,8 @@ ruleTester.run("ts-package-json-files-required", rule, {
         {
           message: "src is not included in files"
         }
-      ]
+      ],
+      output: '{"files": ["/src", "dist", "dist-esm/src", "src"]}'
     },
     {
       code: '{"files": [".src", "dist", "dist-esm/src"]}',
@@ -415,7 +425,8 @@ ruleTester.run("ts-package-json-files-required", rule, {
         {
           message: "src is not included in files"
         }
-      ]
+      ],
+      output: '{"files": [".src", "dist", "dist-esm/src", "src"]}'
     },
     {
       code: '{"files": ["lib/src", "dist", "dist-esm/src"]}',
@@ -424,7 +435,8 @@ ruleTester.run("ts-package-json-files-required", rule, {
         {
           message: "src is not included in files"
         }
-      ]
+      ],
+      output: '{"files": ["lib/src", "dist", "dist-esm/src", "src"]}'
     },
     {
       // example file with src not in files

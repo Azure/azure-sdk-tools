@@ -310,7 +310,9 @@ ruleTester.run("ts-package-json-bugs", rule, {
           message:
             "bugs.url is set to https://github.com/Azure/azure-sdk-for-java/issues when it should be set to https://github.com/Azure/azure-sdk-for-js/issues"
         }
-      ]
+      ],
+      output:
+        '{"bugs": { "url": "https://github.com/Azure/azure-sdk-for-js/issues" }}'
     },
     {
       // example file with compilerOptions.strict set to false
@@ -321,7 +323,8 @@ ruleTester.run("ts-package-json-bugs", rule, {
           message:
             "bugs.url is set to https://github.com/Azure/azure-sdk-for-java/issues when it should be set to https://github.com/Azure/azure-sdk-for-js/issues"
         }
-      ]
+      ],
+      output: examplePackageGood
     }
   ]
 });

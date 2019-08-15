@@ -294,7 +294,8 @@ ruleTester.run("ts-package-json-sideeffects", rule, {
         {
           message: "sideEffects is set to true when it should be set to false"
         }
-      ]
+      ],
+      output: '{"sideEffects": false}'
     },
     {
       // example file with sideEffects set to Not Microsoft Corporation
@@ -304,7 +305,8 @@ ruleTester.run("ts-package-json-sideeffects", rule, {
         {
           message: "sideEffects is set to true when it should be set to false"
         }
-      ]
+      ],
+      output: examplePackageGood
     }
   ]
 });

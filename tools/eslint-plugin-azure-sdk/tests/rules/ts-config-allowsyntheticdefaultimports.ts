@@ -163,7 +163,8 @@ ruleTester.run("ts-config-allowsyntheticdefaultimports", rule, {
           message:
             "compilerOptions.allowSyntheticDefaultImports is set to false when it should be set to true"
         }
-      ]
+      ],
+      output: '{"compilerOptions": { "allowSyntheticDefaultImports": true }}'
     },
     {
       // example file with compilerOptions.allowSyntheticDefaultImports set to false
@@ -174,7 +175,8 @@ ruleTester.run("ts-config-allowsyntheticdefaultimports", rule, {
           message:
             "compilerOptions.allowSyntheticDefaultImports is set to false when it should be set to true"
         }
-      ]
+      ],
+      output: exampleTsconfigGood
     }
   ]
 });

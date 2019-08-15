@@ -37,7 +37,8 @@ ruleTester.run("ts-no-const-enums", rule, {
         {
           message: "const enums should not be used"
         }
-      ]
+      ],
+      output: "enum Enum { a = 1 }"
     }
   ]
 });

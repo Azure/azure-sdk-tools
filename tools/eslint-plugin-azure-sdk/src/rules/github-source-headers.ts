@@ -24,7 +24,7 @@ const noCaseRegex2 = /Licensed under the MIT license\./i;
 /**
  * Arbitrary Levenshtein distance cutoff.
  */
-const levenshteinCutoff = 10;
+const levenshteinCutoff = 20;
 
 export = {
   meta: getRuleMetaData(

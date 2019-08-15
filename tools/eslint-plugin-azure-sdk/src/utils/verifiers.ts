@@ -29,6 +29,14 @@ export const stripPath = (pathOrFileName: string): string =>
   pathOrFileName.replace(/^.*[\\\/]/, "");
 
 /**
+ * Converts an array to its literal string representation.
+ * @param array the array in question.
+ * @returns the array's string representation.
+ */
+export const arrayToString = (array: any[]): string =>
+  JSON.stringify(array).replace(/,/g, ", ");
+
+/**
  * Returns structural verifiers given input
  * @param context provided ESLint context object
  * @param data matches StructureData interface, contains outer and optional inner and expected values
@@ -201,7 +209,7 @@ export const getVerifiers = (
               candidateValues.push(value);
               return fixer.replaceText(
                 nodeValue,
-                JSON.stringify(candidateValues)
+                arrayToString(candidateValues)
               );
             }
           });
@@ -214,10 +222,7 @@ export const getVerifiers = (
           message: `${outer} does not contain ${expected}`,
           fix: (fixer: Rule.RuleFixer): Rule.Fix => {
             candidateValues.push(expected);
-            return fixer.replaceText(
-              nodeValue,
-              JSON.stringify(candidateValues)
-            );
+            return fixer.replaceText(nodeValue, arrayToString(candidateValues));
           }
         });
       }

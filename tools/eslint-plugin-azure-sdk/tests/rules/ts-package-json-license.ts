@@ -294,7 +294,8 @@ ruleTester.run("ts-package-json-license", rule, {
         {
           message: "license is set to Apache when it should be set to MIT"
         }
-      ]
+      ],
+      output: '{"license": "MIT"}'
     },
     {
       // example file with license set to Apache
@@ -304,7 +305,8 @@ ruleTester.run("ts-package-json-license", rule, {
         {
           message: "license is set to Apache when it should be set to MIT"
         }
-      ]
+      ],
+      output: examplePackageGood
     }
   ]
 });

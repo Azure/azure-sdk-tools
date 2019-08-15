@@ -5,7 +5,12 @@
 
 import { Rule } from "eslint";
 import { Literal, Property } from "estree";
-import { getRuleMetaData, getVerifiers, stripPath } from "../utils";
+import {
+  arrayToString,
+  getRuleMetaData,
+  getVerifiers,
+  stripPath
+} from "../utils";
 
 //------------------------------------------------------------------------------
 // Rule Definition
@@ -61,7 +66,7 @@ export = {
                   elementValues.push("dist");
                   return fixer.replaceText(
                     nodeValue,
-                    JSON.stringify(elementValues)
+                    arrayToString(elementValues)
                   );
                 }
               });
@@ -80,10 +85,10 @@ export = {
                 node: nodeValue,
                 message: "dist-esm/src is not included in files",
                 fix: (fixer: Rule.RuleFixer): Rule.Fix => {
-                  elementValues.push("dist/src");
+                  elementValues.push("dist-esm/src");
                   return fixer.replaceText(
                     nodeValue,
-                    JSON.stringify(elementValues)
+                    arrayToString(elementValues)
                   );
                 }
               });
@@ -103,7 +108,7 @@ export = {
                   elementValues.push("src");
                   return fixer.replaceText(
                     nodeValue,
-                    JSON.stringify(elementValues)
+                    arrayToString(elementValues)
                   );
                 }
               });

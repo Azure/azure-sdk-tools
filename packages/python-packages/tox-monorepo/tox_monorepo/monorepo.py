@@ -38,6 +38,11 @@ def update_env(old_path, new_path, environment_config):
         environment_config.envtmpdir.strpath.replace(old_path, new_path)
     )
 
+    # update the cachedir
+    environment_config.setenv["TOX_ENV_DIR"] = environment_config.setenv[
+        "TOX_ENV_DIR"
+    ].replace(old_path, new_path)
+
 
 @hookimpl
 def tox_configure(config):

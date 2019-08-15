@@ -1,6 +1,5 @@
 ﻿using Microsoft.CodeAnalysis;
 using System.Collections.Generic;
-using System.Text;
 
 namespace ApiView
 {
@@ -28,6 +27,8 @@ namespace ApiView
         public AttributeApiView[] Attributes { get; set; }
         public ParameterApiView[] Parameters { get; set; }
         public TypeParameterApiView[] TypeParameters { get; set; }
+
+        static readonly List<string> ignoredAttributeNames = new List<string>() { "AsyncStateMachineAttribute", "DebuggerStepThroughAttribute" };
 
         public MethodApiView() { }
 
@@ -64,7 +65,6 @@ namespace ApiView
             List<TypeParameterApiView> typeParameters = new List<TypeParameterApiView>();
             List<ParameterApiView> parameters = new List<ParameterApiView>();
 
-            List<string> ignoredAttributeNames = new List<string>() { "AsyncStateMachineAttribute", "DebuggerStepThroughAttribute" };
             foreach (AttributeData attribute in symbol.GetAttributes())
             {
                 if ((attribute.AttributeClass.DeclaredAccessibility == Microsoft.CodeAnalysis.Accessibility.Public || 

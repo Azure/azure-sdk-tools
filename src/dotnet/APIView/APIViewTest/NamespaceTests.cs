@@ -45,7 +45,7 @@ namespace APIViewTest
         }
 
         [Fact]
-        public void NamespaceTestImplementingHTMLRender()
+        public void NamespaceTestEmptyImplementingHTMLRender()
         {
             var ns = new NamespaceApiv
             {
@@ -56,7 +56,40 @@ namespace APIViewTest
             var renderer = new HTMLRendererApiv();
             var list = new StringListApiv();
             renderer.Render(ns, list);
+            Assert.Equal("", list.ToString());
+        }
+
+        [Fact]
+        public void NamespaceTestImplementingHTMLRender()
+        {
+            var ns = new NamespaceApiv
+            {
+                Name = "TestNamespace",
+                NamedTypes = new NamedTypeApiv[] {
+                    new NamedTypeApiv() {
+                        Accessibility = "public",
+                        Events = new EventApiv[] { },
+                        Fields = new FieldApiv[] { },
+                        Id = "",
+                        Implementations = new TypeReferenceApiv[] { },
+                        IsSealed = false,
+                        IsStatic = false,
+                        Methods = new MethodApiv[] { },
+                        Name = "TestNamedType",
+                        NamedTypes = new NamedTypeApiv[] { },
+                        Properties = new PropertyApiv[] { },
+                        TypeKind = "class",
+                        TypeParameters = new TypeParameterApiv[] { }
+                    } 
+                },
+                Namespaces = new NamespaceApiv[] { }
+            };
+            var renderer = new HTMLRendererApiv();
+            var list = new StringListApiv();
+            renderer.Render(ns, list);
             Assert.Equal("<span class=\"keyword\">namespace</span> <a id=\"\" class=\"name commentable\">TestNamespace</a> {" 
+                + Environment.NewLine + "    <span class=\"keyword\">public</span> <span class=\"keyword\">class</span> <a h"
+                + "ref=\"#\" id=\"\" class=\"class commentable\">TestNamedType</a> {" + Environment.NewLine + "    }" 
                 + Environment.NewLine + "}", list.ToString());
         }
     }

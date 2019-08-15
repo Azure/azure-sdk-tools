@@ -59,7 +59,10 @@ export = {
                 message: "dist is not included in files",
                 fix: (fixer: Rule.RuleFixer): Rule.Fix => {
                   elementValues.push("dist");
-                  return fixer.replaceText(nodeValue, elementValues.toString());
+                  return fixer.replaceText(
+                    nodeValue,
+                    JSON.stringify(elementValues)
+                  );
                 }
               });
             }
@@ -78,7 +81,10 @@ export = {
                 message: "dist-esm/src is not included in files",
                 fix: (fixer: Rule.RuleFixer): Rule.Fix => {
                   elementValues.push("dist/src");
-                  return fixer.replaceText(nodeValue, elementValues.toString());
+                  return fixer.replaceText(
+                    nodeValue,
+                    JSON.stringify(elementValues)
+                  );
                 }
               });
             }
@@ -95,7 +101,10 @@ export = {
                 message: "src is not included in files",
                 fix: (fixer: Rule.RuleFixer): Rule.Fix => {
                   elementValues.push("src");
-                  return fixer.replaceText(nodeValue, elementValues.toString());
+                  return fixer.replaceText(
+                    nodeValue,
+                    JSON.stringify(elementValues)
+                  );
                 }
               });
             }

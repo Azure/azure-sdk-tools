@@ -199,7 +199,10 @@ export const getVerifiers = (
             message: `${outer} does not contain ${value}`,
             fix: (fixer: Rule.RuleFixer): Rule.Fix => {
               candidateValues.push(value);
-              return fixer.replaceText(nodeValue, candidateValues.toString());
+              return fixer.replaceText(
+                nodeValue,
+                JSON.stringify(candidateValues)
+              );
             }
           });
         }
@@ -211,7 +214,10 @@ export const getVerifiers = (
           message: `${outer} does not contain ${expected}`,
           fix: (fixer: Rule.RuleFixer): Rule.Fix => {
             candidateValues.push(expected);
-            return fixer.replaceText(nodeValue, candidateValues.toString());
+            return fixer.replaceText(
+              nodeValue,
+              JSON.stringify(candidateValues)
+            );
           }
         });
       }

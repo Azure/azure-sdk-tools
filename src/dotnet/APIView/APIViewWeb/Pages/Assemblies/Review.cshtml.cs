@@ -22,7 +22,7 @@ namespace APIViewWeb.Pages.Assemblies
         }
 
         public string Id { get; set; }
-        public LineApiv[] AssemblyModel { get; set; }
+        public LineApiView[] AssemblyModel { get; set; }
         [BindProperty]
         public CommentModel Comment { get; set; }
         public Dictionary<string, List<CommentModel>> Comments { get; set; }
@@ -52,7 +52,7 @@ namespace APIViewWeb.Pages.Assemblies
         {
             Id = id;
             var assemblyModel = await assemblyRepository.ReadAssemblyContentAsync(id);
-            var renderer = new HTMLRendererApiv();
+            var renderer = new HTMLRendererApiView();
             AssemblyModel = renderer.Render(assemblyModel.Assembly).ToArray();
             Comments = new Dictionary<string, List<CommentModel>>();
 

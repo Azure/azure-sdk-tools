@@ -10,7 +10,7 @@ namespace APIViewTest
         public void AssemblyTestAssemblyFromSymbol()
         {
             IAssemblySymbol assemblySymbol = TestResource.GetAssemblySymbol();
-            AssemblyApiv assembly = new AssemblyApiv(assemblySymbol);
+            AssemblyApiView assembly = new AssemblyApiView(assemblySymbol);
             
             Assert.Equal("TestLibrary", assembly.Name);
 
@@ -20,10 +20,10 @@ namespace APIViewTest
         [Fact]
         public void AssemblyTestAssembliesFromFile()
         {
-            AssemblyApiv assembly = AssemblyApiv.AssemblyFromFile("TestLibrary.dll");
+            AssemblyApiView assembly = AssemblyApiView.AssemblyFromFile("TestLibrary.dll");
             Assert.Equal("TestLibrary", assembly.Name);
 
-            NamespaceApiv globalNamespace = assembly.GlobalNamespace;
+            NamespaceApiView globalNamespace = assembly.GlobalNamespace;
             Assert.Single(globalNamespace.Namespaces);
         }
     }

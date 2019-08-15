@@ -8,7 +8,7 @@ namespace ApiView
     /// A named type can have a name, type, enum underlying type, events, fields, implemented 
     /// classes/interfaces, methods, properties, type parameters, and/or other named types.
     /// </summary>
-    public class NamedTypeApiv
+    public class NamedTypeApiView
     {
         /// <summary>
         /// A unique identifier of this named type within the scope of the containing assembly.
@@ -22,31 +22,31 @@ namespace ApiView
         /// <summary>
         /// The underlying type of the enum, if the named type is one. Otherwise, null.
         /// </summary>
-        public TypeReferenceApiv EnumUnderlyingType { get; set; }
+        public TypeReferenceApiView EnumUnderlyingType { get; set; }
         public string Accessibility { get; set; }
         public bool IsSealed { get; set; }
         public bool IsStatic { get; set; }
 
-        public EventApiv[]  Events { get; set; }
-        public FieldApiv[] Fields { get; set; }
-        public TypeReferenceApiv[] Implementations { get; set; }
-        public MethodApiv[] Methods { get; set; }
-        public NamedTypeApiv[] NamedTypes { get; set; }
-        public PropertyApiv[] Properties { get; set; }
-        public TypeParameterApiv[] TypeParameters { get; set; }
+        public EventApiView[]  Events { get; set; }
+        public FieldApiView[] Fields { get; set; }
+        public TypeReferenceApiView[] Implementations { get; set; }
+        public MethodApiView[] Methods { get; set; }
+        public NamedTypeApiView[] NamedTypes { get; set; }
+        public PropertyApiView[] Properties { get; set; }
+        public TypeParameterApiView[] TypeParameters { get; set; }
 
-        public NamedTypeApiv() { }
+        public NamedTypeApiView() { }
 
         /// <summary>
-        /// Construct a new NamedTypeApiv instance, represented by the provided symbol.
+        /// Construct a new NamedTypeApiView instance, represented by the provided symbol.
         /// </summary>
         /// <param name="symbol">The symbol representing the named type.</param>
-        public NamedTypeApiv(INamedTypeSymbol symbol)
+        public NamedTypeApiView(INamedTypeSymbol symbol)
         {
             this.Name = symbol.Name;
             this.TypeKind = symbol.TypeKind.ToString().ToLower();
             if (symbol.EnumUnderlyingType != null)
-                this.EnumUnderlyingType = new TypeReferenceApiv(symbol.EnumUnderlyingType);
+                this.EnumUnderlyingType = new TypeReferenceApiView(symbol.EnumUnderlyingType);
             this.Accessibility = symbol.DeclaredAccessibility.ToString().ToLower();
             if (this.TypeKind == "class")
                 this.IsSealed = symbol.IsSealed;
@@ -55,13 +55,13 @@ namespace ApiView
             this.IsStatic = symbol.IsStatic;
             this.Id = symbol.ConstructedFrom.ToDisplayString();
 
-            var events = new List<EventApiv>();
-            var fields = new List<FieldApiv>();
-            var implementations = new List<TypeReferenceApiv>();
-            var methods = new List<MethodApiv>();
-            var namedTypes = new List<NamedTypeApiv>();
-            var properties = new List<PropertyApiv>();
-            var typeParameters = new List<TypeParameterApiv>();
+            var events = new List<EventApiView>();
+            var fields = new List<FieldApiView>();
+            var implementations = new List<TypeReferenceApiView>();
+            var methods = new List<MethodApiView>();
+            var namedTypes = new List<NamedTypeApiView>();
+            var properties = new List<PropertyApiView>();
+            var typeParameters = new List<TypeParameterApiView>();
 
             // add any types declared in the body of this type to lists
             foreach (var memberSymbol in symbol.GetMembers())
@@ -72,11 +72,11 @@ namespace ApiView
                     switch (memberSymbol)
                     {
                         case IEventSymbol e:
-                            events.Add(new EventApiv(e));
+                            events.Add(new EventApiView(e));
                             break;
 
                         case IFieldSymbol f:
-                            fields.Add(new FieldApiv(f));
+                            fields.Add(new FieldApiView(f));
                             break;
 
                         case IMethodSymbol m:
@@ -85,32 +85,32 @@ namespace ApiView
                                 autoMethod = (m.AssociatedSymbol.Kind == SymbolKind.Event) || (m.AssociatedSymbol.Kind == SymbolKind.Property);
 
                             if (!((m.MethodKind == MethodKind.Constructor && m.Parameters.Length == 0) || autoMethod))
-                                methods.Add(new MethodApiv(m));
+                                methods.Add(new MethodApiView(m));
                             break;
 
                         case INamedTypeSymbol n:
-                            namedTypes.Add(new NamedTypeApiv(n));
+                            namedTypes.Add(new NamedTypeApiView(n));
                             break;
 
                         case IPropertySymbol p:
-                            properties.Add(new PropertyApiv(p));
+                            properties.Add(new PropertyApiView(p));
                             break;
                     }
                 }
             }
 
             if (symbol.BaseType != null && !(symbol.BaseType.SpecialType == SpecialType.System_Object || symbol.BaseType.SpecialType == SpecialType.System_ValueType))
-                implementations.Add(new TypeReferenceApiv(symbol.BaseType));
+                implementations.Add(new TypeReferenceApiView(symbol.BaseType));
 
             // add a string representation of each implemented type to list
             foreach (var i in symbol.Interfaces)
             {
-                implementations.Add(new TypeReferenceApiv(i));
+                implementations.Add(new TypeReferenceApiView(i));
             }
 
             foreach (var t in symbol.TypeParameters)
             {
-                typeParameters.Add(new TypeParameterApiv(t));
+                typeParameters.Add(new TypeParameterApiView(t));
             }
 
             this.Events = events.ToArray();
@@ -124,8 +124,8 @@ namespace ApiView
 
         public override string ToString()
         {
-            var renderer = new TextRendererApiv();
-            var list = new StringListApiv();
+            var renderer = new TextRendererApiView();
+            var list = new StringListApiView();
             renderer.Render(this, list);
             return list.ToString();
         }

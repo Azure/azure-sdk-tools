@@ -13,7 +13,7 @@ namespace APIViewTest
         public void FieldTestReadOnly()
         {
             var fieldSymbol = (IFieldSymbol)TestResource.GetTestMember("TestLibrary.PublicClass", "publicField");
-            FieldApiv field = new FieldApiv(fieldSymbol);
+            FieldApiView field = new FieldApiView(fieldSymbol);
             
             Assert.Equal("publicField", field.Name);
             Assert.Equal("int", field.Type.Tokens[0].DisplayString);
@@ -29,7 +29,7 @@ namespace APIViewTest
         public void FieldTestReadOnlyStringRep()
         {
             var fieldSymbol = (IFieldSymbol)TestResource.GetTestMember("TestLibrary.PublicClass", "publicField");
-            FieldApiv field = new FieldApiv(fieldSymbol);
+            FieldApiView field = new FieldApiView(fieldSymbol);
 
             Assert.Equal("public readonly int publicField;", field.ToString());
         }
@@ -38,7 +38,7 @@ namespace APIViewTest
         public void FieldTestConstant()
         {
             var fieldSymbol = (IFieldSymbol)TestResource.GetTestMember("TestLibrary.PublicClass", "publicString");
-            FieldApiv field = new FieldApiv(fieldSymbol);
+            FieldApiView field = new FieldApiView(fieldSymbol);
 
             Assert.Equal("publicString", field.Name);
             Assert.Equal("string", field.Type.Tokens[0].DisplayString);
@@ -54,7 +54,7 @@ namespace APIViewTest
         public void FieldTestConstantStringRep()
         {
             var fieldSymbol = (IFieldSymbol)TestResource.GetTestMember("TestLibrary.PublicClass", "publicString");
-            FieldApiv field = new FieldApiv(fieldSymbol);
+            FieldApiView field = new FieldApiView(fieldSymbol);
 
             Assert.Equal("public static const string publicString = \"constant string\";", field.ToString());
         }
@@ -63,7 +63,7 @@ namespace APIViewTest
         public void FieldTestProtected()
         {
             var fieldSymbol = (IFieldSymbol)TestResource.GetTestMember("TestLibrary.PublicClass", "protectedField");
-            FieldApiv field = new FieldApiv(fieldSymbol);
+            FieldApiView field = new FieldApiView(fieldSymbol);
 
             Assert.Equal("protectedField", field.Name);
             Assert.Equal("int", field.Type.Tokens[0].DisplayString);
@@ -79,7 +79,7 @@ namespace APIViewTest
         public void FieldTestProtectedStringRep()
         {
             var fieldSymbol = (IFieldSymbol)TestResource.GetTestMember("TestLibrary.PublicClass", "protectedField");
-            FieldApiv field = new FieldApiv(fieldSymbol);
+            FieldApiView field = new FieldApiView(fieldSymbol);
 
             Assert.Equal("protected int protectedField;", field.ToString());
         }
@@ -87,10 +87,10 @@ namespace APIViewTest
         [Fact]
         public void FieldTestHTMLRender()
         {
-            var f = new FieldApiv
+            var f = new FieldApiView
             {
                 Accessibility = "public",
-                Type = new TypeReferenceApiv(new TokenApiv[] { new TokenApiv("string", TypeReferenceApiv.TokenType.BuiltInType) }),
+                Type = new TypeReferenceApiView(new TokenApiView[] { new TokenApiView("string", TypeReferenceApiView.TokenType.BuiltInType) }),
                 IsConstant = true,
                 IsReadOnly = false,
                 IsStatic = true,
@@ -99,8 +99,8 @@ namespace APIViewTest
                 Name = "publicString"
             };
             f.Type.IsString = true;
-            var renderer = new HTMLRendererApiv();
-            var list = new StringListApiv();
+            var renderer = new HTMLRendererApiView();
+            var list = new StringListApiView();
             renderer.Render(f, list);
             Assert.Equal("<span class=\"keyword\">public</span> <span class=\"keyword\">static</span> <span class=\"keyword\">const</span> <span class=\"keyword\">string</span>" +
                 " <a id=\"\" class=\"name commentable\">publicString</a> = <span class=\"value\">\"constant string\"</span>;", list.ToString());

@@ -8,11 +8,11 @@ namespace ApiView
     /// Class representing a C# method. Each method includes a name, return type, attributes, 
     /// modifiers, type parameters, and parameters.
     /// </summary>
-    public class MethodApiv
+    public class MethodApiView
     {
         public string Id { get; set; }
         public string Name { get; set; }
-        public TypeReferenceApiv ReturnType { get; set; }
+        public TypeReferenceApiView ReturnType { get; set; }
         public string Accessibility { get; set; }
 
         public bool IsConstructor { get; set; }
@@ -25,17 +25,17 @@ namespace ApiView
         public bool IsExtensionMethod { get; set; }
         public bool IsExtern { get; set; }
 
-        public AttributeApiv[] Attributes { get; set; }
-        public ParameterApiv[] Parameters { get; set; }
-        public TypeParameterApiv[] TypeParameters { get; set; }
+        public AttributeApiView[] Attributes { get; set; }
+        public ParameterApiView[] Parameters { get; set; }
+        public TypeParameterApiView[] TypeParameters { get; set; }
 
-        public MethodApiv() { }
+        public MethodApiView() { }
 
         /// <summary>
         /// Construct a new MethodAPIV instance, represented by the provided symbol.
         /// </summary>
         /// <param name="symbol">The symbol representing the method.</param>
-        public MethodApiv(IMethodSymbol symbol)
+        public MethodApiView(IMethodSymbol symbol)
         {
             this.Id = symbol.ToDisplayString();
             this.IsConstructor = false;
@@ -47,7 +47,7 @@ namespace ApiView
             else
             {
                 this.Name = symbol.Name;
-                this.ReturnType = new TypeReferenceApiv(symbol.ReturnType);
+                this.ReturnType = new TypeReferenceApiView(symbol.ReturnType);
             }
             this.Accessibility = symbol.DeclaredAccessibility.ToString().ToLower();
 
@@ -60,9 +60,9 @@ namespace ApiView
             this.IsExtensionMethod = symbol.IsExtensionMethod;
             this.IsExtern = symbol.IsExtern;
 
-            List<AttributeApiv> attributes = new List<AttributeApiv>();
-            List<TypeParameterApiv> typeParameters = new List<TypeParameterApiv>();
-            List<ParameterApiv> parameters = new List<ParameterApiv>();
+            List<AttributeApiView> attributes = new List<AttributeApiView>();
+            List<TypeParameterApiView> typeParameters = new List<TypeParameterApiView>();
+            List<ParameterApiView> parameters = new List<ParameterApiView>();
 
             foreach (AttributeData attribute in symbol.GetAttributes())
             {
@@ -71,15 +71,15 @@ namespace ApiView
                     attribute.AttributeClass.Name != "AsyncStateMachineAttribute" &&
                     attribute.AttributeClass.Name != "DebuggerStepThroughAttribute" &&
                     !attribute.AttributeClass.IsImplicitlyDeclared)
-                attributes.Add(new AttributeApiv(attribute, this.Id));
+                attributes.Add(new AttributeApiView(attribute, this.Id));
             }
             foreach (ITypeParameterSymbol typeParam in symbol.TypeParameters)
             {
-                typeParameters.Add(new TypeParameterApiv(typeParam));
+                typeParameters.Add(new TypeParameterApiView(typeParam));
             }
             foreach (IParameterSymbol param in symbol.Parameters)
             {
-                parameters.Add(new ParameterApiv(param));
+                parameters.Add(new ParameterApiView(param));
             }
 
             this.Attributes = attributes.ToArray();
@@ -89,8 +89,8 @@ namespace ApiView
 
         public override string ToString()
         {
-            var renderer = new TextRendererApiv();
-            var list = new StringListApiv();
+            var renderer = new TextRendererApiView();
+            var list = new StringListApiView();
             renderer.Render(this, list);
             return list.ToString();
         }

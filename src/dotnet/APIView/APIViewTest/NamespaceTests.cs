@@ -9,10 +9,10 @@ namespace APIViewTest
         [Fact]
         public void NamespaceTestGlobalNoNamedTypesSomenamespaces()
         {
-            AssemblyApiv assembly = new AssemblyApiv(TestResource.GetAssemblySymbol());
+            AssemblyApiView assembly = new AssemblyApiView(TestResource.GetAssemblySymbol());
             Assert.Equal("TestLibrary", assembly.Name);
 
-            NamespaceApiv globalNamespace = assembly.GlobalNamespace;
+            NamespaceApiView globalNamespace = assembly.GlobalNamespace;
             Assert.Empty(globalNamespace.NamedTypes);
             Assert.Single(globalNamespace.Namespaces);
         }
@@ -20,11 +20,11 @@ namespace APIViewTest
         [Fact]
         public void NamespaceTestNonGlobalSomeNamedTypesNonamespaces()
         {
-            AssemblyApiv assembly = new AssemblyApiv(TestResource.GetAssemblySymbol());
+            AssemblyApiView assembly = new AssemblyApiView(TestResource.GetAssemblySymbol());
             Assert.Equal("TestLibrary", assembly.Name);
 
-            NamespaceApiv globalNamespace = assembly.GlobalNamespace;
-            NamespaceApiv nestedNamespace = globalNamespace.Namespaces[0];
+            NamespaceApiView globalNamespace = assembly.GlobalNamespace;
+            NamespaceApiView nestedNamespace = globalNamespace.Namespaces[0];
 
             Assert.Equal("TestLibrary", nestedNamespace.Name);
 
@@ -35,11 +35,11 @@ namespace APIViewTest
         [Fact]
         public void NamespaceTestNonGlobalSomeNamedTypesNonamespacesStringRep()
         {
-            AssemblyApiv assembly = new AssemblyApiv(TestResource.GetAssemblySymbol());
+            AssemblyApiView assembly = new AssemblyApiView(TestResource.GetAssemblySymbol());
             Assert.Equal("TestLibrary", assembly.Name);
 
-            NamespaceApiv globalNamespace = assembly.GlobalNamespace;
-            NamespaceApiv nestedNamespace = globalNamespace.Namespaces[0];
+            NamespaceApiView globalNamespace = assembly.GlobalNamespace;
+            NamespaceApiView nestedNamespace = globalNamespace.Namespaces[0];
 
             Assert.Contains("namespace TestLibrary {", nestedNamespace.ToString());
         }
@@ -47,14 +47,14 @@ namespace APIViewTest
         [Fact]
         public void NamespaceTestEmptyImplementingHTMLRender()
         {
-            var ns = new NamespaceApiv
+            var ns = new NamespaceApiView
             {
                 Name = "TestNamespace",
-                NamedTypes = new NamedTypeApiv[] { },
-                Namespaces = new NamespaceApiv[] { }
+                NamedTypes = new NamedTypeApiView[] { },
+                Namespaces = new NamespaceApiView[] { }
             };
-            var renderer = new HTMLRendererApiv();
-            var list = new StringListApiv();
+            var renderer = new HTMLRendererApiView();
+            var list = new StringListApiView();
             renderer.Render(ns, list);
             Assert.Equal("", list.ToString());
         }
@@ -62,30 +62,30 @@ namespace APIViewTest
         [Fact]
         public void NamespaceTestImplementingHTMLRender()
         {
-            var ns = new NamespaceApiv
+            var ns = new NamespaceApiView
             {
                 Name = "TestNamespace",
-                NamedTypes = new NamedTypeApiv[] {
-                    new NamedTypeApiv() {
+                NamedTypes = new NamedTypeApiView[] {
+                    new NamedTypeApiView() {
                         Accessibility = "public",
-                        Events = new EventApiv[] { },
-                        Fields = new FieldApiv[] { },
+                        Events = new EventApiView[] { },
+                        Fields = new FieldApiView[] { },
                         Id = "",
-                        Implementations = new TypeReferenceApiv[] { },
+                        Implementations = new TypeReferenceApiView[] { },
                         IsSealed = false,
                         IsStatic = false,
-                        Methods = new MethodApiv[] { },
+                        Methods = new MethodApiView[] { },
                         Name = "TestNamedType",
-                        NamedTypes = new NamedTypeApiv[] { },
-                        Properties = new PropertyApiv[] { },
+                        NamedTypes = new NamedTypeApiView[] { },
+                        Properties = new PropertyApiView[] { },
                         TypeKind = "class",
-                        TypeParameters = new TypeParameterApiv[] { }
+                        TypeParameters = new TypeParameterApiView[] { }
                     } 
                 },
-                Namespaces = new NamespaceApiv[] { }
+                Namespaces = new NamespaceApiView[] { }
             };
-            var renderer = new HTMLRendererApiv();
-            var list = new StringListApiv();
+            var renderer = new HTMLRendererApiView();
+            var list = new StringListApiView();
             renderer.Render(ns, list);
             Assert.Equal("<span class=\"keyword\">namespace</span> <a id=\"\" class=\"name commentable\">TestNamespace</a> {" 
                 + Environment.NewLine + "    <span class=\"keyword\">public</span> <span class=\"keyword\">class</span> <a h"

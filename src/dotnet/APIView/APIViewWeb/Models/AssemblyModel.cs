@@ -6,7 +6,7 @@ namespace APIViewWeb.Models
 {
     public class AssemblyModel
     {
-        public AssemblyApiv Assembly { get; set; }
+        public AssemblyApiView Assembly { get; set; }
         public string Author { get; set; }
         public string Id { get; set; }
         public string Name { get; set; }
@@ -19,12 +19,12 @@ namespace APIViewWeb.Models
 
         public AssemblyModel(Stream stream, string fileName)
         {
-            this.Assembly = AssemblyApiv.AssemblyFromStream(stream);
+            this.Assembly = AssemblyApiView.AssemblyFromStream(stream);
             this.Name = fileName;
             this.TimeStamp = DateTime.UtcNow;
         }
 
-        public AssemblyModel(AssemblyApiv assembly, string fileName)
+        public AssemblyModel(AssemblyApiView assembly, string fileName)
         {
             this.Assembly = assembly;
             this.Name = fileName;

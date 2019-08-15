@@ -4,25 +4,25 @@ using System.Text;
 
 namespace ApiView
 {
-    public class TypeReferenceApiv
+    public class TypeReferenceApiView
     {
         public bool IsString { get; set; }
-        public TokenApiv[] Tokens { get; set; }
+        public TokenApiView[] Tokens { get; set; }
 
-        public TypeReferenceApiv() { }
+        public TypeReferenceApiView() { }
 
-        public TypeReferenceApiv(TokenApiv[] tokens)
+        public TypeReferenceApiView(TokenApiView[] tokens)
         {
             this.Tokens = tokens;
             this.IsString = false;
         }
 
-        public TypeReferenceApiv(ISymbol symbol)
+        public TypeReferenceApiView(ISymbol symbol)
         {
-            var tokens = new List<TokenApiv>();
+            var tokens = new List<TokenApiView>();
             foreach (var part in symbol.ToDisplayParts())
             {
-                tokens.Add(new TokenApiv(part));
+                tokens.Add(new TokenApiView(part));
             }
             this.Tokens = tokens.ToArray();
             this.IsString = (symbol is ITypeSymbol typeSymbol) && typeSymbol.SpecialType == SpecialType.System_String;
@@ -36,7 +36,7 @@ namespace ApiView
         public string ToDisplayString()
         {
             var returnString = new StringBuilder();
-            var renderer = new TextRendererApiv();
+            var renderer = new TextRendererApiView();
             renderer.Render(this, returnString);
             return returnString.ToString();
         }

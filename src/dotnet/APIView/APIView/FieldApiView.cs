@@ -6,11 +6,11 @@ namespace ApiView
     /// <summary>
     /// Class representing a field in a C# class/interface.
     /// </summary>
-    public class FieldApiv
+    public class FieldApiView
     {
         public string Id { get; set; }
         public string Name { get; set; }
-        public TypeReferenceApiv Type { get; set; }
+        public TypeReferenceApiView Type { get; set; }
         public string Accessibility { get; set; }
 
         public bool IsConstant { get; set; }
@@ -20,17 +20,17 @@ namespace ApiView
 
         public object Value { get; set; }
 
-        public FieldApiv() { }
+        public FieldApiView() { }
 
         /// <summary>
-        /// Construct a new FieldApiv instance, represented by the provided symbol.
+        /// Construct a new FieldApiView instance, represented by the provided symbol.
         /// </summary>
         /// <param name="symbol">The symbol representing the field.</param>
-        public FieldApiv(IFieldSymbol symbol)
+        public FieldApiView(IFieldSymbol symbol)
         {
             this.Id = symbol.ToDisplayString();
             this.Name = symbol.Name;
-            this.Type = new TypeReferenceApiv(symbol.Type);
+            this.Type = new TypeReferenceApiView(symbol.Type);
             this.Accessibility = symbol.DeclaredAccessibility.ToString().ToLower();
 
             this.IsConstant = symbol.HasConstantValue;
@@ -44,8 +44,8 @@ namespace ApiView
 
         public override string ToString()
         {
-            var renderer = new TextRendererApiv();
-            var list = new StringListApiv();
+            var renderer = new TextRendererApiView();
+            var list = new StringListApiView();
             renderer.Render(this, list);
             return list.First().DisplayString;
         }

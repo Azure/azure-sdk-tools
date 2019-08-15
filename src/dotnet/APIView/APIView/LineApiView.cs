@@ -1,16 +1,16 @@
 ﻿namespace ApiView
 {
-    public class LineApiv
+    public class LineApiView
     {
         public string DisplayString { get; set; }
         public string ElementId { get; set; }
 
-        public LineApiv(string html)
+        public LineApiView(string html)
         {
             this.DisplayString = html;
         }
 
-        public LineApiv(string html, string id)
+        public LineApiView(string html, string id)
         {
             this.DisplayString = html;
             this.ElementId = id;

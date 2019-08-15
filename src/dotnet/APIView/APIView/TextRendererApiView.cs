@@ -2,14 +2,14 @@
 
 namespace ApiView
 {
-    public class TextRendererApiv : TreeRendererApiv
+    public class TextRendererApiView : TreeRendererApiView
     {
-        protected override void RenderClassDefinition(StringBuilder builder, NamedTypeApiv nt)
+        protected override void RenderClassDefinition(StringBuilder builder, NamedTypeApiView nt)
         {
             builder.Append(nt.Name);
         }
 
-        protected override void RenderEnumDefinition(StringBuilder builder, NamedTypeApiv nt)
+        protected override void RenderEnumDefinition(StringBuilder builder, NamedTypeApiView nt)
         {
             builder.Append(nt.Name);
         }
@@ -19,12 +19,12 @@ namespace ApiView
             builder.Append(word.Replace("&lt;", "<").Replace("&gt;", ">"));
         }
 
-        protected override void RenderEnum(StringBuilder builder, TokenApiv t)
+        protected override void RenderEnum(StringBuilder builder, TokenApiView t)
         {
             builder.Append(t.DisplayString);
         }
 
-        protected override void RenderClass(StringBuilder builder, TokenApiv t)
+        protected override void RenderClass(StringBuilder builder, TokenApiView t)
         {
             builder.Append(t.DisplayString);
         }
@@ -34,7 +34,7 @@ namespace ApiView
             builder.Append(name);
         }
 
-        protected override void RenderConstructor(StringBuilder builder, MethodApiv m)
+        protected override void RenderConstructor(StringBuilder builder, MethodApiView m)
         {
             builder.Append(m.Name);
         }
@@ -59,7 +59,7 @@ namespace ApiView
             builder.Append(word);
         }
 
-        protected override void RenderToken(StringBuilder builder, TokenApiv t)
+        protected override void RenderToken(StringBuilder builder, TokenApiView t)
         {
             builder.Append(t.DisplayString);
         }

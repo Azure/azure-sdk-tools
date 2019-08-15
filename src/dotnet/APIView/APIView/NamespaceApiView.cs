@@ -8,35 +8,35 @@ namespace ApiView
     /// Class representing a C# namespace. Each namespace can contain named types 
     /// and/or other namespaces.
     /// </summary>
-    public class NamespaceApiv
+    public class NamespaceApiView
     {
         public string Id { get; set; }
         public string Name { get; set; }
 
-        public NamedTypeApiv[] NamedTypes { get; set; }
-        public NamespaceApiv[] Namespaces { get; set; }
+        public NamedTypeApiView[] NamedTypes { get; set; }
+        public NamespaceApiView[] Namespaces { get; set; }
 
-        public NamespaceApiv() { }
+        public NamespaceApiView() { }
 
         /// <summary>
-        /// Construct a new NamespaceApiv instance, represented by the provided symbol.
+        /// Construct a new NamespaceApiView instance, represented by the provided symbol.
         /// </summary>
         /// <param name="symbol">The symbol representing the namespace.</param>
-        public NamespaceApiv(INamespaceSymbol symbol)
+        public NamespaceApiView(INamespaceSymbol symbol)
         {
             this.Name = symbol.ToDisplayString();
             this.Id = symbol.ToDisplayString();
 
-            List<NamedTypeApiv> namedTypes = new List<NamedTypeApiv>();
-            List<NamespaceApiv> namespaces = new List<NamespaceApiv>();
+            List<NamedTypeApiView> namedTypes = new List<NamedTypeApiView>();
+            List<NamespaceApiView> namespaces = new List<NamespaceApiView>();
 
             foreach (var memberSymbol in symbol.GetMembers().OfType<INamespaceOrTypeSymbol>())
             {
                 if (memberSymbol.DeclaredAccessibility != Accessibility.Public) continue;
 
-                if (memberSymbol is INamedTypeSymbol nt) namedTypes.Add(new NamedTypeApiv(nt));
+                if (memberSymbol is INamedTypeSymbol nt) namedTypes.Add(new NamedTypeApiView(nt));
 
-                else if (memberSymbol is INamespaceSymbol ns) namespaces.Add(new NamespaceApiv(ns));
+                else if (memberSymbol is INamespaceSymbol ns) namespaces.Add(new NamespaceApiView(ns));
             }
 
             this.NamedTypes = namedTypes.ToArray();
@@ -45,8 +45,8 @@ namespace ApiView
 
         public override string ToString()
         {
-            var renderer = new TextRendererApiv();
-            var list = new StringListApiv();
+            var renderer = new TextRendererApiView();
+            var list = new StringListApiView();
             renderer.Render(this, list);
             return list.ToString();
         }

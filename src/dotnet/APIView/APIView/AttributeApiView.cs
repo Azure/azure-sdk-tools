@@ -8,36 +8,36 @@ namespace ApiView
     /// Class representing a C# attribute. Each attribute has a type and a 
     /// possible set of constructor arguments.
     /// </summary>
-    public class AttributeApiv
+    public class AttributeApiView
     {
         public string Id { get; set; }
-        public TypeReferenceApiv Type { get; set; }
-        public AttributeConstructArgApiv[] ConstructorArgs { get; set; }
+        public TypeReferenceApiView Type { get; set; }
+        public AttributeConstructArgApiView[] ConstructorArgs { get; set; }
 
-        public AttributeApiv() { }
+        public AttributeApiView() { }
 
-        public AttributeApiv(AttributeData attributeData, string id)
+        public AttributeApiView(AttributeData attributeData, string id)
         {
             this.Id = id;
-            this.Type = new TypeReferenceApiv(attributeData.AttributeClass);
+            this.Type = new TypeReferenceApiView(attributeData.AttributeClass);
 
-            var args = new List<AttributeConstructArgApiv>();
+            var args = new List<AttributeConstructArgApiView>();
 
             foreach (var arg in attributeData.ConstructorArguments)
             {
-                args.Add(new AttributeConstructArgApiv(arg));
+                args.Add(new AttributeConstructArgApiView(arg));
             }
             foreach (var arg in attributeData.NamedArguments)
             {
-                args.Add(new AttributeConstructArgApiv(arg.Key, arg.Value));
+                args.Add(new AttributeConstructArgApiView(arg.Key, arg.Value));
             }
             this.ConstructorArgs = args.ToArray();
         }
 
         public override string ToString()
         {
-            var renderer = new TextRendererApiv();
-            var list = new StringListApiv();
+            var renderer = new TextRendererApiView();
+            var list = new StringListApiView();
             renderer.Render(this, list);
             return list.First().DisplayString;
         }

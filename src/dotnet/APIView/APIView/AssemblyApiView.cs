@@ -9,24 +9,24 @@ namespace ApiView
     /// Class representing a C# assembly. Each assembly has a name and global namespace, 
     /// which may or may not contain further types.
     /// </summary>
-    public class AssemblyApiv
+    public class AssemblyApiView
     {
         public string Name { get; set; }
-        public NamespaceApiv GlobalNamespace { get; set; }
+        public NamespaceApiView GlobalNamespace { get; set; }
 
-        public AssemblyApiv() { }
+        public AssemblyApiView() { }
 
         /// <summary>
-        /// Construct a new AssemblyApiv instance, represented by the provided symbol.
+        /// Construct a new AssemblyApiView instance, represented by the provided symbol.
         /// </summary>
         /// <param name="symbol">The symbol representing the assembly.</param>
-        public AssemblyApiv(IAssemblySymbol symbol)
+        public AssemblyApiView(IAssemblySymbol symbol)
         {
             this.Name = symbol.Name;
-            this.GlobalNamespace = new NamespaceApiv(symbol.GlobalNamespace);
+            this.GlobalNamespace = new NamespaceApiView(symbol.GlobalNamespace);
         }
 
-        public static AssemblyApiv AssemblyFromFile(string dllPath)
+        public static AssemblyApiView AssemblyFromFile(string dllPath)
         {
             using (var fileStream = File.OpenRead(dllPath))
             {
@@ -34,11 +34,11 @@ namespace ApiView
             }
         }
 
-        public static AssemblyApiv AssemblyFromStream(Stream stream)
+        public static AssemblyApiView AssemblyFromStream(Stream stream)
         {
             var compilation = GetCompilation(stream);
 
-            return new AssemblyApiv(compilation);
+            return new AssemblyApiView(compilation);
         }
 
         public static IAssemblySymbol GetCompilation(string dllPath)
@@ -72,7 +72,7 @@ namespace ApiView
 
         public override string ToString()
         {
-            var renderer = new TextRendererApiv();
+            var renderer = new TextRendererApiView();
             var lines = renderer.Render(this);
             return lines.ToString();
         }

@@ -12,7 +12,7 @@ namespace APIViewTest
         public void EventTestCreation()
         {
             var eventSymbol = (IEventSymbol)TestResource.GetTestMember("TestLibrary.PublicClass", "PublicEvent");
-            var e = new EventApiv(eventSymbol);
+            var e = new EventApiView(eventSymbol);
 
             Assert.Equal("PublicEvent", e.Name);
         }
@@ -21,7 +21,7 @@ namespace APIViewTest
         public void EventTestStringRep()
         {
             var eventSymbol = (IEventSymbol)TestResource.GetTestMember("TestLibrary.PublicClass", "PublicEvent");
-            var e = new EventApiv(eventSymbol);
+            var e = new EventApiView(eventSymbol);
 
             Assert.Equal("public event System.EventHandler PublicEvent;", e.ToString());
         }
@@ -29,14 +29,14 @@ namespace APIViewTest
         [Fact]
         public void EventTestHTMLRender()
         {
-            var e = new EventApiv
+            var e = new EventApiView
             {
                 Accessibility = "public",
                 Name = "TestEvent",
-                Type = new TypeReferenceApiv(new TokenApiv[] { new TokenApiv() })
+                Type = new TypeReferenceApiView(new TokenApiView[] { new TokenApiView() })
             };
-            var renderer = new HTMLRendererApiv();
-            var list = new StringListApiv();
+            var renderer = new HTMLRendererApiView();
+            var list = new StringListApiView();
             renderer.Render(e, list);
             Assert.Equal("<span class=\"keyword\">public</span> <span class=\"keyword\">event</span> " +
                 "<span class=\"keyword\"></span> <a id=\"\" class=\"name commentable\">TestEvent</a>;", list.ToString());

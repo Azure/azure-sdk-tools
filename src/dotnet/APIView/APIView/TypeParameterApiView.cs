@@ -7,18 +7,18 @@ namespace ApiView
     /// <summary>
     /// Class representing a C# type parameter.
     /// </summary>
-    public class TypeParameterApiv
+    public class TypeParameterApiView
     {
         public string Name { get; set; }
         public string[] Attributes { get; set; }
 
-        public TypeParameterApiv() { }
+        public TypeParameterApiView() { }
 
         /// <summary>
-        /// Construct a new TypeParameterApiv instance, represented by the provided symbol.
+        /// Construct a new TypeParameterApiView instance, represented by the provided symbol.
         /// </summary>
         /// <param name="symbol">The symbol representing the type parameter.</param>
-        public TypeParameterApiv(ITypeParameterSymbol symbol)
+        public TypeParameterApiView(ITypeParameterSymbol symbol)
         {
             this.Name = symbol.ToString();
 
@@ -33,7 +33,7 @@ namespace ApiView
         public override string ToString()
         {
             var builder = new StringBuilder();
-            var renderer = new TextRendererApiv();
+            var renderer = new TextRendererApiView();
             renderer.Render(this, builder);
             return builder.ToString();
         }

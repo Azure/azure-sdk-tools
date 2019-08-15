@@ -7,28 +7,28 @@ namespace ApiView
     /// <summary>
     /// Class representing a C# property.
     /// </summary>
-    public class PropertyApiv
+    public class PropertyApiView
     {
         public string Id { get; set; }
         public string Name { get; set; }
-        public TypeReferenceApiv Type { get; set; }
+        public TypeReferenceApiView Type { get; set; }
         public string Accessibility { get; set; }
 
         public bool IsAbstract { get; set; }
         public bool IsVirtual { get; set; }
         public bool HasSetMethod { get; set; }
 
-        public PropertyApiv() { }
+        public PropertyApiView() { }
 
         /// <summary>
-        /// Construct a new PropertyApiv instance, represented by the provided symbol.
+        /// Construct a new PropertyApiView instance, represented by the provided symbol.
         /// </summary>
         /// <param name="symbol">The symbol representing the property.</param>
-        public PropertyApiv(IPropertySymbol symbol)
+        public PropertyApiView(IPropertySymbol symbol)
         {
             this.Id = symbol.ToDisplayString();
             this.Name = symbol.Name;
-            this.Type = new TypeReferenceApiv(symbol.Type);
+            this.Type = new TypeReferenceApiView(symbol.Type);
             this.Accessibility = symbol.DeclaredAccessibility.ToString().ToLower();
 
             this.IsAbstract = symbol.IsAbstract;
@@ -40,8 +40,8 @@ namespace ApiView
 
         public override string ToString()
         {
-            var renderer = new TextRendererApiv();
-            var list = new StringListApiv();
+            var renderer = new TextRendererApiView();
+            var list = new StringListApiView();
             renderer.Render(this, list);
             return list.First().DisplayString;
         }

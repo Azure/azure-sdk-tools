@@ -2,15 +2,15 @@
 
 namespace ApiView
 {
-    public class AttributeConstructArgApiv
+    public class AttributeConstructArgApiView
     {
         public bool IsNamed => Name != null;
         public string Name { get; set; }
         public string Value { get; set; }
 
-        public AttributeConstructArgApiv() { }
+        public AttributeConstructArgApiView() { }
 
-        public AttributeConstructArgApiv(TypedConstant value)
+        public AttributeConstructArgApiView(TypedConstant value)
         {
             if (value.Type.SpecialType == SpecialType.System_String)
                 this.Value = "\"" + value.Value.ToString() + "\"";
@@ -18,7 +18,7 @@ namespace ApiView
                 this.Value = value.Value.ToString();
         }
 
-        public AttributeConstructArgApiv(string name, TypedConstant value)
+        public AttributeConstructArgApiView(string name, TypedConstant value)
         {
             this.Name = name;
             if (value.Type.SpecialType == SpecialType.System_String)

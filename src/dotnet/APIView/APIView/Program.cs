@@ -8,8 +8,8 @@ namespace ApiView
         {
             try
             {
-                var renderer = new TextRendererApiv();
-                Console.WriteLine(renderer.Render(AssemblyApiv.AssemblyFromFile(args[0])));
+                var renderer = new TextRendererApiView();
+                Console.WriteLine(renderer.Render(AssemblyApiView.AssemblyFromFile(args[0])));
 
             }
             catch (Exception e)

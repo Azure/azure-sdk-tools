@@ -38,6 +38,12 @@ def update_env(old_path, new_path, environment_config):
         environment_config.envtmpdir.strpath.replace(old_path, new_path)
     )
 
+#     (Pdb) windowsconfig.setenv
+# SetenvDict: {'PYTHONHASHSEED': '973', 'TOX_ENV_NAME': 'windows-wheel_tests', 'TOX_ENV_DIR': 'C:\\repo\\sdk-for-python\\eng\\tox\\.tox\\windows-wheel_tests'}
+
+    # update the cachedir
+    environment_config.setenv['TOX_ENV_DIR'] = environment_config.setenv['TOX_ENV_DIR'].replace(old_path, new_path)
+
 
 @hookimpl
 def tox_configure(config):

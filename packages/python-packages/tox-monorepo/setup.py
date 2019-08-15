@@ -27,9 +27,7 @@ setup(
     author_email="azuresdkengsysadmins@microsoft.com",
     license="MIT License",
     packages=find_packages(),
-    install_requires = [
-        'tox >= 3.12.0'
-    ],
+    install_requires=["tox >= 3.12.0"],
     entry_points={"tox": ["monorepo=tox_monorepo:monorepo"]},
     classifiers=[
         "Framework :: tox",

@@ -16,8 +16,6 @@ Next, install `@azure/eslint-plugin-azure-sdk`:
 npm install @azure/eslint-plugin-azure-sdk --save-dev
 ```
 
-**Note:** If you installed ESLint globally (using the `-g` flag) then you must also install `@azure/eslint-plugin-azure-sdk` globally.
-
 ## Usage
 
 Add `@azure/azure-sdk` to the `plugins` section of your `.eslintrc` configuration file. You can omit the `eslint-plugin-` prefix:

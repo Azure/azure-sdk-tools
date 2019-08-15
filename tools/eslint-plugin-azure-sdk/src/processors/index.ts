@@ -20,6 +20,6 @@ export = {
         (message: Linter.LintMessage): boolean =>
           message.ruleId !== "no-unused-expressions"
       ),
-    supportsAutofix: true // TODO enable when ESLint is bumped to 6.x.x
+    supportsAutofix: true
   }
 };

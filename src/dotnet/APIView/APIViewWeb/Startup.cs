@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OAuth;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -8,9 +9,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json.Linq;
+using Octokit;
+using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Claims;
+using System.Text;
 
 namespace APIViewWeb
 {
@@ -38,7 +43,7 @@ namespace APIViewWeb
                 .AddRazorPagesOptions(options =>
                 {
                     options.Conventions.AddPageRoute("/Assemblies/Index", "");
-                    options.Conventions.AuthorizeFolder("/Assemblies");
+                    options.Conventions.AuthorizeFolder("/Assemblies", "RequireOrganization");
                 });
 
             services.AddSingleton<BlobAssemblyRepository>();
@@ -81,11 +86,44 @@ namespace APIViewWeb
                             response.EnsureSuccessStatusCode();
 
                             var user = JObject.Parse(await response.Content.ReadAsStringAsync());
-
                             context.RunClaimActions(user);
+
+                            request = new HttpRequestMessage(HttpMethod.Get, user["organizations_url"].ToString());
+                            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", context.AccessToken);
+
+                            response = await context.Backchannel.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, context.HttpContext.RequestAborted);
+                            response.EnsureSuccessStatusCode();
+
+                            var orgs = JArray.Parse(await response.Content.ReadAsStringAsync());
+                            var orgNames = new StringBuilder();
+
+                            bool isFirst = true;
+                            foreach (var org in orgs)
+                            {
+                                if (isFirst)
+                                {
+                                    isFirst = false;
+                                } else
+                                {
+                                    orgNames.Append(",");
+                                }
+                                orgNames.Append(org["login"].ToString());
+                            }
+
+                            context.Identity.AddClaim(new Claim("urn:github:orgs", orgNames.ToString()));
                         }
                     };
                 });
+
+            services.AddAuthorization(options => {
+                options.AddPolicy("RequireOrganization", policy => {
+                    policy.RequireClaim("urn:github:orgs");
+                    policy.AddRequirements(new OrganizationRequirement(Configuration.GetValue<string>("APIVIEW_REQUIRED_ORGANIZATION")));
+                });
+            });
+
+            services.AddSingleton<IAuthorizationHandler, OrganizationRequirementHandler>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

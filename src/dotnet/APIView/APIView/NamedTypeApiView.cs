@@ -1,58 +1,67 @@
 ﻿using Microsoft.CodeAnalysis;
 using System.Collections.Generic;
-using System.Text;
 
-namespace APIView
+namespace ApiView
 {
     /// <summary>
     /// Class representing a C# named type (class, interface, delegate, enum, or struct). 
     /// A named type can have a name, type, enum underlying type, events, fields, implemented 
     /// classes/interfaces, methods, properties, type parameters, and/or other named types.
-    /// 
-    /// NamedTypeAPIV is an immutable, thread-safe type.
     /// </summary>
-    public class NamedTypeAPIV
+    public class NamedTypeApiView
     {
+        /// <summary>
+        /// A unique identifier of this named type within the scope of the containing assembly.
+        /// </summary>
         public string Id { get; set; }
         public string Name { get; set; }
+        /// <summary>
+        /// The type of the named type - class, interface, enum, etc.
+        /// </summary>
         public string TypeKind { get; set; }
-        public TypeReferenceAPIV EnumUnderlyingType { get; set; }
+        /// <summary>
+        /// The underlying type of the enum, if the named type is one. Otherwise, null.
+        /// </summary>
+        public TypeReferenceApiView EnumUnderlyingType { get; set; }
         public string Accessibility { get; set; }
         public bool IsSealed { get; set; }
         public bool IsStatic { get; set; }
 
-        public EventAPIV[]  Events { get; set; }
-        public FieldAPIV[] Fields { get; set; }
-        public TypeReferenceAPIV[] Implementations { get; set; }
-        public MethodAPIV[] Methods { get; set; }
-        public NamedTypeAPIV[] NamedTypes { get; set; }
-        public PropertyAPIV[] Properties { get; set; }
-        public TypeParameterAPIV[] TypeParameters { get; set; }
+        public EventApiView[]  Events { get; set; }
+        public FieldApiView[] Fields { get; set; }
+        public TypeReferenceApiView[] Implementations { get; set; }
+        public MethodApiView[] Methods { get; set; }
+        public NamedTypeApiView[] NamedTypes { get; set; }
+        public PropertyApiView[] Properties { get; set; }
+        public TypeParameterApiView[] TypeParameters { get; set; }
 
-        public NamedTypeAPIV() { }
+        public NamedTypeApiView() { }
 
         /// <summary>
-        /// Construct a new NamedTypeAPIV instance, represented by the provided symbol.
+        /// Construct a new NamedTypeApiView instance, represented by the provided symbol.
         /// </summary>
         /// <param name="symbol">The symbol representing the named type.</param>
-        public NamedTypeAPIV(INamedTypeSymbol symbol)
+        public NamedTypeApiView(INamedTypeSymbol symbol)
         {
             this.Name = symbol.Name;
             this.TypeKind = symbol.TypeKind.ToString().ToLower();
             if (symbol.EnumUnderlyingType != null)
-                this.EnumUnderlyingType = new TypeReferenceAPIV(symbol.EnumUnderlyingType);
+                this.EnumUnderlyingType = new TypeReferenceApiView(symbol.EnumUnderlyingType);
             this.Accessibility = symbol.DeclaredAccessibility.ToString().ToLower();
-            this.IsSealed = symbol.IsSealed;
+            if (this.TypeKind == "class")
+                this.IsSealed = symbol.IsSealed;
+            else
+                this.IsSealed = false;
             this.IsStatic = symbol.IsStatic;
             this.Id = symbol.ConstructedFrom.ToDisplayString();
 
-            var events = new List<EventAPIV>();
-            var fields = new List<FieldAPIV>();
-            var implementations = new List<TypeReferenceAPIV>();
-            var methods = new List<MethodAPIV>();
-            var namedTypes = new List<NamedTypeAPIV>();
-            var properties = new List<PropertyAPIV>();
-            var typeParameters = new List<TypeParameterAPIV>();
+            var events = new List<EventApiView>();
+            var fields = new List<FieldApiView>();
+            var implementations = new List<TypeReferenceApiView>();
+            var methods = new List<MethodApiView>();
+            var namedTypes = new List<NamedTypeApiView>();
+            var properties = new List<PropertyApiView>();
+            var typeParameters = new List<TypeParameterApiView>();
 
             // add any types declared in the body of this type to lists
             foreach (var memberSymbol in symbol.GetMembers())
@@ -63,11 +72,11 @@ namespace APIView
                     switch (memberSymbol)
                     {
                         case IEventSymbol e:
-                            events.Add(new EventAPIV(e));
+                            events.Add(new EventApiView(e));
                             break;
 
                         case IFieldSymbol f:
-                            fields.Add(new FieldAPIV(f));
+                            fields.Add(new FieldApiView(f));
                             break;
 
                         case IMethodSymbol m:
@@ -76,32 +85,32 @@ namespace APIView
                                 autoMethod = (m.AssociatedSymbol.Kind == SymbolKind.Event) || (m.AssociatedSymbol.Kind == SymbolKind.Property);
 
                             if (!((m.MethodKind == MethodKind.Constructor && m.Parameters.Length == 0) || autoMethod))
-                                methods.Add(new MethodAPIV(m));
+                                methods.Add(new MethodApiView(m));
                             break;
 
                         case INamedTypeSymbol n:
-                            namedTypes.Add(new NamedTypeAPIV(n));
+                            namedTypes.Add(new NamedTypeApiView(n));
                             break;
 
                         case IPropertySymbol p:
-                            properties.Add(new PropertyAPIV(p));
+                            properties.Add(new PropertyApiView(p));
                             break;
                     }
                 }
             }
 
             if (symbol.BaseType != null && !(symbol.BaseType.SpecialType == SpecialType.System_Object || symbol.BaseType.SpecialType == SpecialType.System_ValueType))
-                implementations.Add(new TypeReferenceAPIV(symbol.BaseType));
+                implementations.Add(new TypeReferenceApiView(symbol.BaseType));
 
             // add a string representation of each implemented type to list
             foreach (var i in symbol.Interfaces)
             {
-                implementations.Add(new TypeReferenceAPIV(i));
+                implementations.Add(new TypeReferenceApiView(i));
             }
 
             foreach (var t in symbol.TypeParameters)
             {
-                typeParameters.Add(new TypeParameterAPIV(t));
+                typeParameters.Add(new TypeParameterApiView(t));
             }
 
             this.Events = events.ToArray();
@@ -115,8 +124,8 @@ namespace APIView
 
         public override string ToString()
         {
-            var renderer = new TextRendererAPIV();
-            var list = new StringListAPIV();
+            var renderer = new TextRendererApiView();
+            var list = new StringListApiView();
             renderer.Render(this, list);
             return list.ToString();
         }

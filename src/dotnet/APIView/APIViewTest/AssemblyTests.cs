@@ -1,5 +1,5 @@
 using Microsoft.CodeAnalysis;
-using APIView;
+using ApiView;
 using Xunit;
 
 namespace APIViewTest
@@ -10,7 +10,7 @@ namespace APIViewTest
         public void AssemblyTestAssemblyFromSymbol()
         {
             IAssemblySymbol assemblySymbol = TestResource.GetAssemblySymbol();
-            AssemblyAPIV assembly = new AssemblyAPIV(assemblySymbol);
+            AssemblyApiView assembly = new AssemblyApiView(assemblySymbol);
             
             Assert.Equal("TestLibrary", assembly.Name);
 
@@ -20,10 +20,10 @@ namespace APIViewTest
         [Fact]
         public void AssemblyTestAssembliesFromFile()
         {
-            AssemblyAPIV assembly = AssemblyAPIV.AssemblyFromFile("TestLibrary.dll");
+            AssemblyApiView assembly = AssemblyApiView.AssemblyFromFile("TestLibrary.dll");
             Assert.Equal("TestLibrary", assembly.Name);
 
-            NamespaceAPIV globalNamespace = assembly.GlobalNamespace;
+            NamespaceApiView globalNamespace = assembly.GlobalNamespace;
             Assert.Single(globalNamespace.Namespaces);
         }
     }

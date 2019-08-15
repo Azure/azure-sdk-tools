@@ -1,35 +1,32 @@
 ﻿using System;
 using System.IO;
-using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
-namespace APIView
+namespace ApiView
 {
     /// <summary>
     /// Class representing a C# assembly. Each assembly has a name and global namespace, 
     /// which may or may not contain further types.
-    /// 
-    /// AssemblyAPIV is an immutable, thread-safe type.
     /// </summary>
-    public class AssemblyAPIV
+    public class AssemblyApiView
     {
         public string Name { get; set; }
-        public NamespaceAPIV GlobalNamespace { get; set; }
+        public NamespaceApiView GlobalNamespace { get; set; }
 
-        public AssemblyAPIV() { }
+        public AssemblyApiView() { }
 
         /// <summary>
-        /// Construct a new AssemblyAPIV instance, represented by the provided symbol.
+        /// Construct a new AssemblyApiView instance, represented by the provided symbol.
         /// </summary>
         /// <param name="symbol">The symbol representing the assembly.</param>
-        public AssemblyAPIV(IAssemblySymbol symbol)
+        public AssemblyApiView(IAssemblySymbol symbol)
         {
             this.Name = symbol.Name;
-            this.GlobalNamespace = new NamespaceAPIV(symbol.GlobalNamespace);
+            this.GlobalNamespace = new NamespaceApiView(symbol.GlobalNamespace);
         }
 
-        public static AssemblyAPIV AssemblyFromFile(string dllPath)
+        public static AssemblyApiView AssemblyFromFile(string dllPath)
         {
             using (var fileStream = File.OpenRead(dllPath))
             {
@@ -37,11 +34,11 @@ namespace APIView
             }
         }
 
-        public static AssemblyAPIV AssemblyFromStream(Stream stream)
+        public static AssemblyApiView AssemblyFromStream(Stream stream)
         {
             var compilation = GetCompilation(stream);
 
-            return new AssemblyAPIV(compilation);
+            return new AssemblyApiView(compilation);
         }
 
         public static IAssemblySymbol GetCompilation(string dllPath)
@@ -75,7 +72,7 @@ namespace APIView
 
         public override string ToString()
         {
-            var renderer = new TextRendererAPIV();
+            var renderer = new TextRendererApiView();
             var lines = renderer.Render(this);
             return lines.ToString();
         }

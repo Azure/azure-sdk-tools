@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Text;
 
-namespace APIView
+namespace ApiView
 {
-    public class StringListAPIV : List<LineAPIV>
+    public class StringListApiView : List<LineApiView>
     {
         public override string ToString()
         {

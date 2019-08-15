@@ -1,20 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace APIView
+﻿namespace ApiView
 {
-    public class LineAPIV
+    public class LineApiView
     {
         public string DisplayString { get; set; }
         public string ElementId { get; set; }
 
-        public LineAPIV(string html)
+        public LineApiView(string html)
         {
             this.DisplayString = html;
         }
 
-        public LineAPIV(string html, string id)
+        public LineApiView(string html, string id)
         {
             this.DisplayString = html;
             this.ElementId = id;

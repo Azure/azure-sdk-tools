@@ -1,17 +1,16 @@
 ﻿using Microsoft.CodeAnalysis;
-using System.Collections.Generic;
 
-namespace APIView
+namespace ApiView
 {
-    public class AttributeConstructArgAPIV
+    public class AttributeConstructArgApiView
     {
         public bool IsNamed => Name != null;
         public string Name { get; set; }
         public string Value { get; set; }
 
-        public AttributeConstructArgAPIV() { }
+        public AttributeConstructArgApiView() { }
 
-        public AttributeConstructArgAPIV(TypedConstant value)
+        public AttributeConstructArgApiView(TypedConstant value)
         {
             if (value.Type.SpecialType == SpecialType.System_String)
                 this.Value = "\"" + value.Value.ToString() + "\"";
@@ -19,7 +18,7 @@ namespace APIView
                 this.Value = value.Value.ToString();
         }
 
-        public AttributeConstructArgAPIV(string name, TypedConstant value)
+        public AttributeConstructArgApiView(string name, TypedConstant value)
         {
             this.Name = name;
             if (value.Type.SpecialType == SpecialType.System_String)

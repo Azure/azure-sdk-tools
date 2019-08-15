@@ -1,5 +1,5 @@
 ﻿using Microsoft.CodeAnalysis;
-using APIView;
+using ApiView;
 using Xunit;
 
 namespace APIViewTest
@@ -10,7 +10,7 @@ namespace APIViewTest
         public void PropertyTestNoSetter()
         {
             var propertySymbol = (IPropertySymbol)TestResource.GetTestMember("TestLibrary.PublicClass", "propertyGet");
-            PropertyAPIV property = new PropertyAPIV(propertySymbol);
+            PropertyApiView property = new PropertyApiView(propertySymbol);
             
             Assert.Equal("propertyGet", property.Name);
             Assert.Equal("uint", property.Type.Tokens[0].DisplayString);
@@ -21,7 +21,7 @@ namespace APIViewTest
         public void PropertyTestNoSetterStringRep()
         {
             var propertySymbol = (IPropertySymbol)TestResource.GetTestMember("TestLibrary.PublicClass", "propertyGet");
-            PropertyAPIV property = new PropertyAPIV(propertySymbol);
+            PropertyApiView property = new PropertyApiView(propertySymbol);
 
             Assert.Equal("public uint propertyGet { get; }", property.ToString());
         }
@@ -30,7 +30,7 @@ namespace APIViewTest
         public void PropertyTestHasSetter()
         {
             var propertySymbol = (IPropertySymbol)TestResource.GetTestMember("TestLibrary.PublicClass", "propertyBoth");
-            PropertyAPIV property = new PropertyAPIV(propertySymbol);
+            PropertyApiView property = new PropertyApiView(propertySymbol);
             
             Assert.Equal("propertyBoth", property.Name);
             Assert.Equal("int", property.Type.Tokens[0].DisplayString);
@@ -41,7 +41,7 @@ namespace APIViewTest
         public void PropertyTestHasSetterStringRep()
         {
             var propertySymbol = (IPropertySymbol)TestResource.GetTestMember("TestLibrary.PublicClass", "propertyBoth");
-            PropertyAPIV property = new PropertyAPIV(propertySymbol);
+            PropertyApiView property = new PropertyApiView(propertySymbol);
 
             Assert.Equal("public int propertyBoth { get; set; }", property.ToString());
         }

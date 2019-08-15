@@ -1,16 +1,16 @@
 ﻿using System.Text;
 
-namespace APIView
+namespace ApiView
 {
-    public class HTMLRendererAPIV : TreeRendererAPIV
+    public class HTMLRendererApiView : TreeRendererApiView
     {
-        protected override void RenderClassDefinition(StringBuilder builder, NamedTypeAPIV nt)
+        protected override void RenderClassDefinition(StringBuilder builder, NamedTypeApiView nt)
         {
             builder.Append("<a href=\"#\" id=\"").Append(EscapeHTML(nt.Id)).Append("\" class=\"class commentable\">").
                 Append(EscapeHTML(nt.Name)).Append("</a>");
         }
 
-        protected override void RenderEnumDefinition(StringBuilder builder, NamedTypeAPIV nt)
+        protected override void RenderEnumDefinition(StringBuilder builder, NamedTypeApiView nt)
         {
             builder.Append("<a href=\"#\" id=\"").Append(nt.Id).Append("\" class=\"enum commentable\">").
                 Append(EscapeHTML(nt.Name)).Append("</a>");
@@ -21,13 +21,13 @@ namespace APIView
             builder.Append(EscapeHTML(word));
         }
 
-        protected override void RenderEnum(StringBuilder builder, TokenAPIV t)
+        protected override void RenderEnum(StringBuilder builder, TokenApiView t)
         {
             builder.Append("<a href=\"#").Append(t.Id).Append("\" class=\"enum\">")
                 .Append(EscapeHTML(t.DisplayString)).Append("</a>");
         }
 
-        protected override void RenderClass(StringBuilder builder, TokenAPIV t)
+        protected override void RenderClass(StringBuilder builder, TokenApiView t)
         {
             builder.Append("<a href=\"#").Append(t.Id).Append("\" class=\"class\">")
                 .Append(EscapeHTML(t.DisplayString)).Append("</a>");
@@ -39,7 +39,7 @@ namespace APIView
                 Append(name).Append("</a>");
         }
 
-        protected override void RenderConstructor(StringBuilder builder, MethodAPIV m)
+        protected override void RenderConstructor(StringBuilder builder, MethodApiView m)
         {
             builder.Append("<a href=\"#\" id=\"").Append(EscapeHTML(m.Id)).Append("\" class=\"class commentable\">")
                 .Append(EscapeHTML(m.Name)).Append("</a>");
@@ -65,23 +65,23 @@ namespace APIView
             builder.Append("<span class=\"specialName\">").Append(EscapeHTML(word)).Append("</span>");
         }
 
-        protected override void RenderToken(StringBuilder builder, TokenAPIV t)
+        protected override void RenderToken(StringBuilder builder, TokenApiView t)
         {
             switch (t.Type)
             {
-                case TypeReferenceAPIV.TokenType.BuiltInType:
+                case TypeReferenceApiView.TokenType.BuiltInType:
                     RenderKeyword(builder, t.DisplayString);
                     break;
-                case TypeReferenceAPIV.TokenType.ClassType:
+                case TypeReferenceApiView.TokenType.ClassType:
                     RenderClass(builder, t);
                     break;
-                case TypeReferenceAPIV.TokenType.EnumType:
+                case TypeReferenceApiView.TokenType.EnumType:
                     RenderEnum(builder, t);
                     break;
-                case TypeReferenceAPIV.TokenType.TypeArgument:
+                case TypeReferenceApiView.TokenType.TypeArgument:
                     RenderType(builder, t.DisplayString);
                     break;
-                case TypeReferenceAPIV.TokenType.ValueType:
+                case TypeReferenceApiView.TokenType.ValueType:
                     RenderValue(builder, t.DisplayString);
                     break;
                 default:

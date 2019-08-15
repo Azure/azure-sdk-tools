@@ -2,25 +2,23 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace APIView
+namespace ApiView
 {
     /// <summary>
     /// Class representing a C# type parameter.
-    /// 
-    /// TypeParameterAPIV is an immutable, thread-safe type.
     /// </summary>
-    public class TypeParameterAPIV
+    public class TypeParameterApiView
     {
         public string Name { get; set; }
         public string[] Attributes { get; set; }
 
-        public TypeParameterAPIV() { }
+        public TypeParameterApiView() { }
 
         /// <summary>
-        /// Construct a new TypeParameterAPIV instance, represented by the provided symbol.
+        /// Construct a new TypeParameterApiView instance, represented by the provided symbol.
         /// </summary>
         /// <param name="symbol">The symbol representing the type parameter.</param>
-        public TypeParameterAPIV(ITypeParameterSymbol symbol)
+        public TypeParameterApiView(ITypeParameterSymbol symbol)
         {
             this.Name = symbol.ToString();
 
@@ -35,7 +33,7 @@ namespace APIView
         public override string ToString()
         {
             var builder = new StringBuilder();
-            var renderer = new TextRendererAPIV();
+            var renderer = new TextRendererApiView();
             renderer.Render(this, builder);
             return builder.ToString();
         }

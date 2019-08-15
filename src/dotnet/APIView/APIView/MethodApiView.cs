@@ -1,18 +1,17 @@
 ﻿using Microsoft.CodeAnalysis;
 using System.Collections.Generic;
-using System.Text;
 
-namespace APIView
+namespace ApiView
 {
     /// <summary>
     /// Class representing a C# method. Each method includes a name, return type, attributes, 
     /// modifiers, type parameters, and parameters.
     /// </summary>
-    public class MethodAPIV
+    public class MethodApiView
     {
         public string Id { get; set; }
         public string Name { get; set; }
-        public TypeReferenceAPIV ReturnType { get; set; }
+        public TypeReferenceApiView ReturnType { get; set; }
         public string Accessibility { get; set; }
 
         public bool IsConstructor { get; set; }
@@ -22,19 +21,22 @@ namespace APIView
         public bool IsSealed { get; set; }
         public bool IsOverride { get; set; }
         public bool IsAbstract { get; set; }
+        public bool IsExtensionMethod { get; set; }
         public bool IsExtern { get; set; }
 
-        public AttributeAPIV[] Attributes { get; set; }
-        public ParameterAPIV[] Parameters { get; set; }
-        public TypeParameterAPIV[] TypeParameters { get; set; }
+        public AttributeApiView[] Attributes { get; set; }
+        public ParameterApiView[] Parameters { get; set; }
+        public TypeParameterApiView[] TypeParameters { get; set; }
 
-        public MethodAPIV() { }
+        static readonly List<string> ignoredAttributeNames = new List<string>() { "AsyncStateMachineAttribute", "DebuggerStepThroughAttribute" };
+
+        public MethodApiView() { }
 
         /// <summary>
         /// Construct a new MethodAPIV instance, represented by the provided symbol.
         /// </summary>
         /// <param name="symbol">The symbol representing the method.</param>
-        public MethodAPIV(IMethodSymbol symbol)
+        public MethodApiView(IMethodSymbol symbol)
         {
             this.Id = symbol.ToDisplayString();
             this.IsConstructor = false;
@@ -46,7 +48,7 @@ namespace APIView
             else
             {
                 this.Name = symbol.Name;
-                this.ReturnType = new TypeReferenceAPIV(symbol.ReturnType);
+                this.ReturnType = new TypeReferenceApiView(symbol.ReturnType);
             }
             this.Accessibility = symbol.DeclaredAccessibility.ToString().ToLower();
 
@@ -56,25 +58,30 @@ namespace APIView
             this.IsSealed = symbol.IsSealed;
             this.IsOverride = symbol.IsOverride;
             this.IsAbstract = symbol.IsAbstract;
+            this.IsExtensionMethod = symbol.IsExtensionMethod;
             this.IsExtern = symbol.IsExtern;
 
-            List<AttributeAPIV> attributes = new List<AttributeAPIV>();
-            List<TypeParameterAPIV> typeParameters = new List<TypeParameterAPIV>();
-            List<ParameterAPIV> parameters = new List<ParameterAPIV>();
+            List<AttributeApiView> attributes = new List<AttributeApiView>();
+            List<TypeParameterApiView> typeParameters = new List<TypeParameterApiView>();
+            List<ParameterApiView> parameters = new List<ParameterApiView>();
 
             foreach (AttributeData attribute in symbol.GetAttributes())
             {
-                if (attribute.AttributeClass.DeclaredAccessibility == Microsoft.CodeAnalysis.Accessibility.Public || 
-                    attribute.AttributeClass.DeclaredAccessibility == Microsoft.CodeAnalysis.Accessibility.Protected)
-                attributes.Add(new AttributeAPIV(attribute, this.Id));
+                if ((attribute.AttributeClass.DeclaredAccessibility == Microsoft.CodeAnalysis.Accessibility.Public || 
+                    attribute.AttributeClass.DeclaredAccessibility == Microsoft.CodeAnalysis.Accessibility.Protected) &&
+                    !ignoredAttributeNames.Contains(attribute.AttributeClass.Name) &&
+                    !attribute.AttributeClass.IsImplicitlyDeclared)
+                {
+                    attributes.Add(new AttributeApiView(attribute, this.Id));
+                }
             }
             foreach (ITypeParameterSymbol typeParam in symbol.TypeParameters)
             {
-                typeParameters.Add(new TypeParameterAPIV(typeParam));
+                typeParameters.Add(new TypeParameterApiView(typeParam));
             }
             foreach (IParameterSymbol param in symbol.Parameters)
             {
-                parameters.Add(new ParameterAPIV(param));
+                parameters.Add(new ParameterApiView(param));
             }
 
             this.Attributes = attributes.ToArray();
@@ -84,8 +91,8 @@ namespace APIView
 
         public override string ToString()
         {
-            var renderer = new TextRendererAPIV();
-            var list = new StringListAPIV();
+            var renderer = new TextRendererApiView();
+            var list = new StringListApiView();
             renderer.Render(this, list);
             return list.ToString();
         }

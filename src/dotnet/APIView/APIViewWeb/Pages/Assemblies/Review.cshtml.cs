@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using APIView;
+using ApiView;
 using APIViewWeb.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -22,7 +22,7 @@ namespace APIViewWeb.Pages.Assemblies
         }
 
         public string Id { get; set; }
-        public LineAPIV[] AssemblyModel { get; set; }
+        public LineApiView[] AssemblyModel { get; set; }
         [BindProperty]
         public CommentModel Comment { get; set; }
         public Dictionary<string, List<CommentModel>> Comments { get; set; }
@@ -52,7 +52,7 @@ namespace APIViewWeb.Pages.Assemblies
         {
             Id = id;
             var assemblyModel = await assemblyRepository.ReadAssemblyContentAsync(id);
-            var renderer = new HTMLRendererAPIV();
+            var renderer = new HTMLRendererApiView();
             AssemblyModel = renderer.Render(assemblyModel.Assembly).ToArray();
             Comments = new Dictionary<string, List<CommentModel>>();
 

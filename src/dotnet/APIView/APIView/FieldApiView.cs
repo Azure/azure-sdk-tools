@@ -1,19 +1,16 @@
 ﻿using Microsoft.CodeAnalysis;
-using System.Collections.Generic;
 using System.Linq;
 
-namespace APIView
+namespace ApiView
 {
     /// <summary>
     /// Class representing a field in a C# class/interface.
-    /// 
-    /// FieldAPIV is an immutable, thread-safe type.
     /// </summary>
-    public class FieldAPIV
+    public class FieldApiView
     {
         public string Id { get; set; }
         public string Name { get; set; }
-        public TypeReferenceAPIV Type { get; set; }
+        public TypeReferenceApiView Type { get; set; }
         public string Accessibility { get; set; }
 
         public bool IsConstant { get; set; }
@@ -23,17 +20,17 @@ namespace APIView
 
         public object Value { get; set; }
 
-        public FieldAPIV() { }
+        public FieldApiView() { }
 
         /// <summary>
-        /// Construct a new FieldAPIV instance, represented by the provided symbol.
+        /// Construct a new FieldApiView instance, represented by the provided symbol.
         /// </summary>
         /// <param name="symbol">The symbol representing the field.</param>
-        public FieldAPIV(IFieldSymbol symbol)
+        public FieldApiView(IFieldSymbol symbol)
         {
             this.Id = symbol.ToDisplayString();
             this.Name = symbol.Name;
-            this.Type = new TypeReferenceAPIV(symbol.Type);
+            this.Type = new TypeReferenceApiView(symbol.Type);
             this.Accessibility = symbol.DeclaredAccessibility.ToString().ToLower();
 
             this.IsConstant = symbol.HasConstantValue;
@@ -47,8 +44,8 @@ namespace APIView
 
         public override string ToString()
         {
-            var renderer = new TextRendererAPIV();
-            var list = new StringListAPIV();
+            var renderer = new TextRendererApiView();
+            var list = new StringListApiView();
             renderer.Render(this, list);
             return list.First().DisplayString;
         }

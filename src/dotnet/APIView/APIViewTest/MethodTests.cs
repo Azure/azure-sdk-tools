@@ -1,5 +1,5 @@
 ﻿using Microsoft.CodeAnalysis;
-using APIView;
+using ApiView;
 using Xunit;
 using System;
 using System.Text;
@@ -15,7 +15,7 @@ namespace APIViewTest
         public void MethodTestNoAttributesOneTypeParamMultipleParams()
         {
             var methodSymbol = (IMethodSymbol)TestResource.GetTestMember("TestLibrary.PublicInterface`1", "TypeParamParamsMethod");
-            MethodAPIV method = new MethodAPIV(methodSymbol);
+            MethodApiView method = new MethodApiView(methodSymbol);
 
             Assert.True(method.IsInterfaceMethod);
             Assert.False(method.IsStatic);
@@ -35,7 +35,7 @@ namespace APIViewTest
         public void MethodTestNoAttributesOneTypeParamMultipleParamsStringRep()
         {
             var methodSymbol = (IMethodSymbol)TestResource.GetTestMember("TestLibrary.PublicInterface`1", "TypeParamParamsMethod");
-            MethodAPIV method = new MethodAPIV(methodSymbol);
+            MethodApiView method = new MethodApiView(methodSymbol);
 
             Assert.Equal("int TypeParamParamsMethod<T>(T param, string str = \"hello\");", method.ToString().Replace(Environment.NewLine, ""));
         }
@@ -44,7 +44,7 @@ namespace APIViewTest
         public void MethodTestOneAttributeNoTypeParamsOneParam()
         {
             var methodSymbol = (IMethodSymbol)TestResource.GetTestMember("TestLibrary.PublicClass", "StaticVoid");
-            MethodAPIV method = new MethodAPIV(methodSymbol);
+            MethodApiView method = new MethodApiView(methodSymbol);
 
             Assert.False(method.IsInterfaceMethod);
             Assert.True(method.IsStatic);
@@ -72,7 +72,7 @@ namespace APIViewTest
         public void MethodTestOneAttributeNoTypeParamsOneParamStringRep()
         {
             var methodSymbol = (IMethodSymbol)TestResource.GetTestMember("TestLibrary.PublicClass", "StaticVoid");
-            MethodAPIV method = new MethodAPIV(methodSymbol);
+            MethodApiView method = new MethodApiView(methodSymbol);
 
             string stringRep = method.ToString().Replace(Environment.NewLine, "");
             Assert.Equal("[System.Diagnostics.ConditionalAttribute(\"DEBUG\")]public static void StaticVoid(string[] args) { }", stringRep);
@@ -82,7 +82,7 @@ namespace APIViewTest
         public void MethodTestMultipleAttributesMultipleTypeParamsNoParams()
         {
             var methodSymbol = (IMethodSymbol)TestResource.GetTestMember("TestLibrary.PublicInterface`1", "AttributesTypeParamsMethod");
-            MethodAPIV method = new MethodAPIV(methodSymbol);
+            MethodApiView method = new MethodApiView(methodSymbol);
 
             Assert.True(method.IsInterfaceMethod);
             Assert.False(method.IsStatic);
@@ -116,7 +116,7 @@ namespace APIViewTest
         public void MethodTestMultipleAttributesMultipleTypeParamsNoParamsStringRep()
         {
             var methodSymbol = (IMethodSymbol)TestResource.GetTestMember("TestLibrary.PublicInterface`1", "AttributesTypeParamsMethod");
-            MethodAPIV method = new MethodAPIV(methodSymbol);
+            MethodApiView method = new MethodApiView(methodSymbol);
 
             string stringRep = method.ToString().Replace(Environment.NewLine, "");
             Assert.Equal("[TestLibrary.CustomAttribute(\"Test\", Named = \"Param\")][TestLibrary.NewAttribute]int AttributesTypeParamsMethod<T, R>();", stringRep);
@@ -125,16 +125,16 @@ namespace APIViewTest
         [Fact]
         public void MethodTestConstructorHTMLRender()
         {
-            var p = new ParameterAPIV
+            var p = new ParameterApiView
             {
-                Type = new TypeReferenceAPIV(new TokenAPIV[] { new TokenAPIV("int", TypeReferenceAPIV.TokenType.BuiltInType) }),
+                Type = new TypeReferenceApiView(new TokenApiView[] { new TokenApiView("int", TypeReferenceApiView.TokenType.BuiltInType) }),
                 Name = "num",
                 HasExplicitDefaultValue = true,
                 ExplicitDefaultValue = 2,
                 Attributes = new string[] { }
             };
 
-            var m = new MethodAPIV
+            var m = new MethodApiView
             {
                 Name = "TestClass",
                 ReturnType = null,
@@ -148,12 +148,12 @@ namespace APIViewTest
                 IsOverride = false,
                 IsAbstract = false,
                 IsExtern = false,
-                Attributes = new AttributeAPIV[] { },
-                Parameters = new ParameterAPIV[] { p },
-                TypeParameters = new TypeParameterAPIV[] { }
+                Attributes = new AttributeApiView[] { },
+                Parameters = new ParameterApiView[] { p },
+                TypeParameters = new TypeParameterApiView[] { }
             };
-            var renderer = new HTMLRendererAPIV();
-            var list = new StringListAPIV();
+            var renderer = new HTMLRendererApiView();
+            var list = new StringListApiView();
             renderer.Render(m, list);
             Assert.Equal("<span class=\"keyword\">public</span> <a href=\"#\" id=\"TestClass\" class=\"class commentable\">TestClass</a>(<span class=\"keyword\">int</span> num" +
                 " = <span class=\"value\">2</span>) { }", list.ToString());
@@ -162,25 +162,25 @@ namespace APIViewTest
         [Fact]
         public void MethodTestAttributesHTMLRender()
         {
-            var arg1 = new AttributeConstructArgAPIV
+            var arg1 = new AttributeConstructArgApiView
             {
                 Value = "Test"
             };
-            var arg2 = new AttributeConstructArgAPIV
+            var arg2 = new AttributeConstructArgApiView
             {
                 Value = "\"String\""
             };
 
-            var a = new AttributeAPIV
+            var a = new AttributeApiView
             {
-                Type = new TypeReferenceAPIV(new TokenAPIV[] { new TokenAPIV("TestAttribute", TypeReferenceAPIV.TokenType.ClassType) }),
-                ConstructorArgs = new AttributeConstructArgAPIV[] { arg1, arg2 }
+                Type = new TypeReferenceApiView(new TokenApiView[] { new TokenApiView("TestAttribute", TypeReferenceApiView.TokenType.ClassType) }),
+                ConstructorArgs = new AttributeConstructArgApiView[] { arg1, arg2 }
             };
 
-            var m = new MethodAPIV
+            var m = new MethodApiView
             {
                 Name = "TestMethod",
-                ReturnType = new TypeReferenceAPIV(new TokenAPIV[] { new TokenAPIV("void", TypeReferenceAPIV.TokenType.BuiltInType) }),
+                ReturnType = new TypeReferenceApiView(new TokenApiView[] { new TokenApiView("void", TypeReferenceApiView.TokenType.BuiltInType) }),
                 Accessibility = "public",
                 Id = "TestMethod",
                 IsConstructor = false,
@@ -191,12 +191,12 @@ namespace APIViewTest
                 IsOverride = false,
                 IsAbstract = false,
                 IsExtern = false,
-                Attributes = new AttributeAPIV[] { a },
-                Parameters = new ParameterAPIV[] { },
-                TypeParameters = new TypeParameterAPIV[] { }
+                Attributes = new AttributeApiView[] { a },
+                Parameters = new ParameterApiView[] { },
+                TypeParameters = new TypeParameterApiView[] { }
             };
-            var renderer = new HTMLRendererAPIV();
-            var list = new StringListAPIV();
+            var renderer = new HTMLRendererApiView();
+            var list = new StringListApiView();
             renderer.Render(m, list);
             Assert.Equal("[<a href=\"#\" class=\"class\">TestAttribute</a>(<span class=\"value\">Test</span>, <span class=\"value\">\"String\"</span>)]" + Environment.NewLine +
                 "<span class=\"keyword\">public</span> <span class=\"keyword\">void</span> <a id=\"TestMethod\" class=\"name commentable\">TestMethod</a>() { }", list.ToString());

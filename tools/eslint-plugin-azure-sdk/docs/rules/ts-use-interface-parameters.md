@@ -94,4 +94,8 @@ class Example {
 }
 ```
 
+## When to turn off
+
+Only if the rule breaks (more likely for this rule).
+
 ## [Source](https://azure.github.io/azure-sdk/typescript_design.html#ts-use-interface-parameters)

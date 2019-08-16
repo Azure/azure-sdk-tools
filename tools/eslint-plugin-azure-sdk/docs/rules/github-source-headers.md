@@ -49,4 +49,8 @@ class Class {
 // Licensed under the MIT license.
 ```
 
+## When to turn off
+
+Only if rule breaks.
+
 ## [Source](https://azure.github.io/azure-sdk/policies_opensource.html#github-source-headers)

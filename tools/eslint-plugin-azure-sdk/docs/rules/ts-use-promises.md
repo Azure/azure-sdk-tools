@@ -22,4 +22,8 @@ const promise = (): Promise<string> => {
 };
 ```
 
+## When to turn off
+
+Only if the rule breaks.
+
 ## [Source](https://azure.github.io/azure-sdk/typescript_design.html#ts-use-promises)

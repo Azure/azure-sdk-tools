@@ -69,6 +69,10 @@ interface ExampleInterface {}
 function exampleFunction(): void {}
 ```
 
+## When to turn off
+
+If you are not using TypeDoc.
+
 ## Source
 
 Suggestion by [@chradek](https://github.com/chradek).

@@ -42,4 +42,8 @@ Requires `homepage` in `package.json` to be set to the library's readme.
 {}
 ```
 
+## When to turn off
+
+Only if the rule breaks.
+
 ## [Source](https://azure.github.io/azure-sdk/typescript_implementation.html#ts-package-json-homepage)

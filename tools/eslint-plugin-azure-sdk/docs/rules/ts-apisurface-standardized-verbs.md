@@ -74,4 +74,8 @@ class ServiceClient {
 }
 ```
 
+## When to turn off
+
+Only if rule breaks.
+
 ## [Source](https://azure.github.io/azure-sdk/typescript_design.html#ts-apisurface-standardized-verbs)

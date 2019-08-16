@@ -47,4 +47,8 @@ try {
 }
 ```
 
+## When to turn off
+
+If you have good reason to include other error types.
+
 ## [Source](https://azure.github.io/azure-sdk/typescript_implementation.html#ts-error-handling)

@@ -26,4 +26,8 @@ In practice, this means `types` in `package.json` must be set to a path pointing
 {}
 ```
 
+## When to turn off
+
+Only if the rule breaks.
+
 ## [Source](https://azure.github.io/azure-sdk/typescript_implementation.html#ts-package-json-types)

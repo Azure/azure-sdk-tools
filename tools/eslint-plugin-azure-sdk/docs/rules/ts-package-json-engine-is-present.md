@@ -34,6 +34,10 @@ This rule is fixable using the `--fix` option.
 {}
 ```
 
+## When to turn off
+
+Only if the rule breaks.
+
 ## [Source](https://azure.github.io/azure-sdk/typescript_implementation.html#ts-package-json-engine-is-present)
 
 Also encompasses [ts-node-support](https://azure.github.io/azure-sdk/typescript_design.html#ts-node-support), as the rules are similar enough to not exist separately for linting purposes.

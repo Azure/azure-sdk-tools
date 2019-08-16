@@ -40,6 +40,10 @@ export default {
 };
 ```
 
+## When to turn off
+
+Only if the rule breaks.
+
 ## [Source](https://azure.github.io/azure-sdk/typescript_implementation.html#ts-modules-only-named)
 
 Also encompasses [ts-config-no-default](https://azure.github.io/azure-sdk/typescript_implementation.html#ts-modules-no-default), as the rules are similar enough to not exist separately for linting purposes.

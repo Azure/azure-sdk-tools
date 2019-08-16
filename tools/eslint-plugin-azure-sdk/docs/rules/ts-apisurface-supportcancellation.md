@@ -37,4 +37,8 @@ class ServiceClient {
 }
 ```
 
+## When to turn off
+
+If your SDK doesn't intend to support cancellation.
+
 ## [Source](https://azure.github.io/azure-sdk/typescript_design.html#ts-apisurface-supportcancellation)

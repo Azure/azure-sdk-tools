@@ -18,29 +18,17 @@ npm install @azure/eslint-plugin-azure-sdk --save-dev
 
 ## Usage
 
-Add `@azure/azure-sdk` to the `plugins` section of your `.eslintrc` configuration file. You can omit the `eslint-plugin-` prefix:
+The `azure-sdk-for-js` repository contains a base `.eslintrc.json` file at the root of the `sdk` directory.
+
+To enable `@azure/eslint-plugin-azure-sdk`, you'll need to add another `.eslintrc.json` file at the same location as your `package.json` file as follows: (note that the path to the base `.eslintrc.json` file may be different)
 
 ```json
 {
-  "plugins": ["@azure/azure-sdk"]
-}
-```
-
-Make sure to set your `.eslintrc` configuration file's `parserOptions.project` field to point to the tsconfig file at the root of your project as follows:
-
-```json
-{
+  "plugins": ["@azure/azure-sdk"],
+  "extends": ["../../.eslintrc.json", "plugin:@azure/azure-sdk/recommended"],
   "parserOptions": {
-    "project": "./tsconfig.json"
+    "createDefaultProgram": true
   }
-}
-```
-
-For all rules to be enforced according to the standards set by the Design Guidelines, add this plugin's `recommended` configuration to the `extends` section of your `.eslintrc` configuration file as follows:
-
-```json
-{
-  "extends": ["plugin:@azure/azure-sdk/recommended"]
 }
 ```
 
@@ -48,6 +36,11 @@ If the main TypeScript entrypoint to your package is not in `src/index.ts`, set 
 
 ```json
 {
+  "plugins": ["@azure/azure-sdk"],
+  "extends": ["../../.eslintrc.json", "plugin:@azure/azure-sdk/recommended"],
+  "parserOptions": {
+    "createDefaultProgram": true
+  },
   "settings": {
     "main": "index.ts"
   }
@@ -58,6 +51,11 @@ If you need to modify or disable specific rules, you can do so in the `rules` se
 
 ```json
 {
+  "plugins": ["@azure/azure-sdk"],
+  "extends": ["../../.eslintrc.json", "plugin:@azure/azure-sdk/recommended"],
+  "parserOptions": {
+    "createDefaultProgram": true
+  },
   "rules": {
     "@azure/azure-sdk/ts-config-moduleresolution": "off"
   }

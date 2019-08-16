@@ -36,6 +36,11 @@ If the main TypeScript entrypoint to your package is not in `src/index.ts`, set 
 
 ```json
 {
+  "plugins": ["@azure/azure-sdk"],
+  "extends": ["../../.eslintrc.json", "plugin:@azure/azure-sdk/recommended"],
+  "parserOptions": {
+    "createDefaultProgram": true
+  },
   "settings": {
     "main": "index.ts"
   }
@@ -46,6 +51,11 @@ If you need to modify or disable specific rules, you can do so in the `rules` se
 
 ```json
 {
+  "plugins": ["@azure/azure-sdk"],
+  "extends": ["../../.eslintrc.json", "plugin:@azure/azure-sdk/recommended"],
+  "parserOptions": {
+    "createDefaultProgram": true
+  },
   "rules": {
     "@azure/azure-sdk/ts-config-moduleresolution": "off"
   }

@@ -30,6 +30,7 @@ Compute
 Compute - Extensions
 Compute - Images
 Compute - Managed Disks
+Compute - RDFE
 Compute - VM
 Compute - VMSS
 Consumption

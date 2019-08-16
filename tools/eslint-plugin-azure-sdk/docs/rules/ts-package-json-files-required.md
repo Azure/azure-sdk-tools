@@ -74,6 +74,10 @@ This rule is fixable using the `--fix` option.
 {}
 ```
 
+## When to turn off
+
+Only if the rule breaks.
+
 ## [Source](https://azure.github.io/azure-sdk/typescript_implementation.html#ts-package-json-files-required)
 
 Also encompasses [ts-include-cjs](https://azure.github.io/azure-sdk/typescript_implementation.html#ts-include-cjs), [ts-include-esm](https://azure.github.io/azure-sdk/typescript_implementation.html#ts-include-esm), and [ts-include-original-source](https://azure.github.io/azure-sdk/typescript_implementation.html#ts-include-original-source)

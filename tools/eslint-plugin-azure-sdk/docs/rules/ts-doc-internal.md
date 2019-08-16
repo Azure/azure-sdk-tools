@@ -69,6 +69,9 @@ interface ExampleInterface {}
 function exampleFunction(): void {}
 ```
 
+## When to turn off
+
+
 ## Source
 
 Suggestion by [@chradek](https://github.com/chradek).

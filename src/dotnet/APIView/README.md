@@ -48,11 +48,9 @@ The addition of tests for web application behaviors would be a welcome addition 
 
 APIView is an ASP.NET Core project that uses a mix of Razor pages and MVC. User authentication and authorization is done through GitHub, so the application is registered as a GitHub app as well.
 
-#### Configuration
-
-The web application requires a decent bit of configuration to work properly. 
-
 #### GitHub app/authentication
+
+APIView is registered as a GitHub app in order to allow authentication through the site.
 
 ### Azure hosting
 
@@ -62,7 +60,18 @@ APIView is hosted by Azure App Services, under the "APIView" app service in the 
 
 Each API in the app is stored as a single blob, and is associated with a separate blob containing all comments on that API. API blobs are stored in a container called "assemblies", and comment blobs are in a container called "comments" - by storing APIs and their comments in separate containers, their blob names can be identical without conflict and make fetching blobs for API review pages simpler.
 
-#### App service
+#### Configuration
+
+There are a number of environment variables that must be configured in the Configuration tab of the app service's settings:
+
+- APIVIEW_CLIENT_ID: The client ID of the GitHub app
+- APIVIEW_CLIENT_SECRET: The client secret of the GitHub app
+- APIVIEW_COMMENT_CONTAINER: "comments" - the name of the comment container in the storage account
+- APIVIEW_REQUIRED_ORGANIZATION: The name of the GitHub organization to which users must belong in order to use the application
+- APIVIEW_STORAGE: The connection string to the storage account
+- APIVIEW_STORAGE_CONTAINER: "assemblies" - the name of the API container in the storage account
+
+The same environment variables will need to be set up on the user's machine in order to spin up the application properly.
 
 ## Areas for future development
 

@@ -28,11 +28,21 @@ Code analysis of uploaded files is done using the Microsoft.CodeAnalysis library
 
 All types to represent code symbols can be found under the SymbolTypes folder of the APIView project. These types each have a number of properties that record information necessary to properly re-render code: accessibility, return type, parameter(s), etc. 
 
-Additionally, there is an `Id` property for `NamespaceApiView`, `NamedTypeApiView`, `MethodApiView`, and `AttributeApiView` types. In the case of `NamespaceApiView` and `NamedTypeApiView` types, this ID is used to generate HTML anchors for click-based navigation. The others use this ID to link to anchors or commentable tokens: `MethodApiView` types carry the ID of their containing named type if they're constructors for navigation, and `AttributeApiView` types carry the ID of the symbol they're applied to, which will be targeted for comments upon clicking.
+Additionally, there is an `Id` property for `EventApiView`, `FieldApiView`, `NamedTypeApiView`, `NamespaceApiView`, `PropertyApiView`, `TokenApiView`, `MethodApiView`, and `AttributeApiView` types. With the exception of the `MethodApiView` and `AttributeApiView` types, this ID is used to generate HTML anchors for click-based navigation. The others use this ID to link to anchors or commentable tokens: `MethodApiView` types carry the ID of their containing named type if they're constructors for navigation, and `AttributeApiView` types carry the ID of the symbol they're applied to, which will be targeted for comments upon clicking.
 
 #### Rendering
 
+There are also types that are used explicitly for rendering purposes, which can be found under the Rendering folder of the APIView project.
+
+`TreeRendererApiView` is a base type that walks down the tree of assembly types and calls the appropriate rendering method for each symbol. `HtmlRendererApiView` and `TextRendererApiView` inherit from this base type and implement the rendering methods to render types into HTML or plain text strings, respectively.
+
+To allow for greater ease when inserting HTML between lines of code on API review pages, each line of code is rendered as an independent string through the use of the `LineApiView` class. Each line contains a display string as well as a potential `ElementId` property, which would be populated with the ID of the commentable symbol existing on that line (each line contains a maximum of one commentable symbol). The `StringListApiView` class inherits from `List<LineApiView>` to allow for simplified rendering of multiple code lines.
+
 #### Testing
+
+In the APIViewTest project are a number of unit tests, divided into symbol type. These tests generally test three aspects of the code model - generation, plain text representation, and HTML rendering - under a variety of circumstances.
+
+The addition of tests for web application behaviors would be a welcome addition to the test suite in future developments of the project.
 
 ### Web application
 
@@ -46,12 +56,16 @@ The web application requires a decent bit of configuration to work properly.
 
 ### Azure hosting
 
-APIView is hosted by Azure App Services, under the "APIView" app service in the Azure SDK Developer Playground. For data storage, the project has a storage account - "mcpatdemo" - in the same "t-mcpat" resource group. The app uses Azure blob storage for maintaining its database of APIs and comments, which will be further elaborated on below.
+APIView is hosted by Azure App Services, under the "APIView" app service in the Azure SDK Developer Playground. For data storage, the project has a storage account - "apiview" - in the same "apiview-rg" resource group. The app uses Azure blob storage for maintaining its database of APIs and comments, which will be further elaborated on below.
 
 #### Storage scheme
 
-Each API in the app is stored as a single blob, and is associated with a separate blob containing all comments on that API. API blobs are stored in a container called "hello", and comment blobs are in a container called "comments" - by storing APIs and their comments in separate containers, their blob names can be identical without conflict and make fetching blobs for API review pages simpler.
+Each API in the app is stored as a single blob, and is associated with a separate blob containing all comments on that API. API blobs are stored in a container called "assemblies", and comment blobs are in a container called "comments" - by storing APIs and their comments in separate containers, their blob names can be identical without conflict and make fetching blobs for API review pages simpler.
 
 #### App service
 
 ## Areas for future development
+
+There are a number of ways this project can be built upon going forward. An [issue](https://github.com/Azure/azure-sdk-tools/issues/65) on the [azure-sdk-tools](https://github.com/Azure/azure-sdk-tools) repository lists some of these, though many more features could be pursued.
+
+The most significant future improvement to note is the addition of support for other languages, such as Python, Java, and TypeScript. Supporting non-C# languages would require structural changes to the code representation used for this project, as the current types are designed to be specific to C#. This could, however, likely be achieved by more broadly making use of the `TokenApiView` type and making it a base type for all code symbols.

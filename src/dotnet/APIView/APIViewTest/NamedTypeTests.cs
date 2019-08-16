@@ -199,7 +199,7 @@ namespace APIViewTest
                 Properties = new PropertyApiView[] { p },
                 TypeParameters = new TypeParameterApiView[] { }
             };
-            var renderer = new HTMLRendererApiView();
+            var renderer = new HtmlRendererApiView();
             var list = new StringListApiView();
             renderer.Render(nt, list);
             Assert.Equal("<span class=\"keyword\">public</span> <span class=\"keyword\">class</span> <a href=\"#\" id=\"ImplementingClass\" class=\"class commentable\">ImplementingClass</a> : " +
@@ -230,7 +230,7 @@ namespace APIViewTest
                 Properties = new PropertyApiView[] { },
                 TypeParameters = new TypeParameterApiView[] { tp }
             };
-            var renderer = new HTMLRendererApiView();
+            var renderer = new HtmlRendererApiView();
             var list = new StringListApiView();
             renderer.Render(nt, list);
             Assert.Equal("<span class=\"keyword\">public</span> <span class=\"keyword\">interface</span> <a href=\"#\" id=\"TestInterface\" class=\"class commentable\">TestInterface</a>&lt;" +

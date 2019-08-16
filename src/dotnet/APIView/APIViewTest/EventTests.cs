@@ -35,7 +35,7 @@ namespace APIViewTest
                 Name = "TestEvent",
                 Type = new TypeReferenceApiView(new TokenApiView[] { new TokenApiView() })
             };
-            var renderer = new HTMLRendererApiView();
+            var renderer = new HtmlRendererApiView();
             var list = new StringListApiView();
             renderer.Render(e, list);
             Assert.Equal("<span class=\"keyword\">public</span> <span class=\"keyword\">event</span> " +

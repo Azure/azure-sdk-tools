@@ -152,7 +152,7 @@ namespace APIViewTest
                 Parameters = new ParameterApiView[] { p },
                 TypeParameters = new TypeParameterApiView[] { }
             };
-            var renderer = new HTMLRendererApiView();
+            var renderer = new HtmlRendererApiView();
             var list = new StringListApiView();
             renderer.Render(m, list);
             Assert.Equal("<span class=\"keyword\">public</span> <a href=\"#\" id=\"TestClass\" class=\"class commentable\">TestClass</a>(<span class=\"keyword\">int</span> num" +
@@ -195,7 +195,7 @@ namespace APIViewTest
                 Parameters = new ParameterApiView[] { },
                 TypeParameters = new TypeParameterApiView[] { }
             };
-            var renderer = new HTMLRendererApiView();
+            var renderer = new HtmlRendererApiView();
             var list = new StringListApiView();
             renderer.Render(m, list);
             Assert.Equal("[<a href=\"#\" class=\"class\">TestAttribute</a>(<span class=\"value\">Test</span>, <span class=\"value\">\"String\"</span>)]" + Environment.NewLine +

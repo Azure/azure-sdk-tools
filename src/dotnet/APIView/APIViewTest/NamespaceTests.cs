@@ -53,7 +53,7 @@ namespace APIViewTest
                 NamedTypes = new NamedTypeApiView[] { },
                 Namespaces = new NamespaceApiView[] { }
             };
-            var renderer = new HTMLRendererApiView();
+            var renderer = new HtmlRendererApiView();
             var list = new StringListApiView();
             renderer.Render(ns, list);
             Assert.Equal("", list.ToString());
@@ -84,7 +84,7 @@ namespace APIViewTest
                 },
                 Namespaces = new NamespaceApiView[] { }
             };
-            var renderer = new HTMLRendererApiView();
+            var renderer = new HtmlRendererApiView();
             var list = new StringListApiView();
             renderer.Render(ns, list);
             Assert.Equal("<span class=\"keyword\">namespace</span> <a id=\"\" class=\"name commentable\">TestNamespace</a> {" 

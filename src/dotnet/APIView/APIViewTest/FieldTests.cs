@@ -99,7 +99,7 @@ namespace APIViewTest
                 Name = "publicString"
             };
             f.Type.IsString = true;
-            var renderer = new HTMLRendererApiView();
+            var renderer = new HtmlRendererApiView();
             var list = new StringListApiView();
             renderer.Render(f, list);
             Assert.Equal("<span class=\"keyword\">public</span> <span class=\"keyword\">static</span> <span class=\"keyword\">const</span> <span class=\"keyword\">string</span>" +

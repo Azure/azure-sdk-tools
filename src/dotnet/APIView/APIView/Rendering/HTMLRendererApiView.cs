@@ -2,7 +2,7 @@
 
 namespace ApiView
 {
-    public class HTMLRendererApiView : TreeRendererApiView
+    public class HtmlRendererApiView : TreeRendererApiView
     {
         protected override void RenderClassDefinition(StringBuilder builder, NamedTypeApiView nt)
         {

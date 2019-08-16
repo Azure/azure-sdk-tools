@@ -22,11 +22,15 @@ The details of how APIs are represented, presented for review, and handled on th
 
 ### Code analyzer
 
-Code analysis of uploaded files is done using the Microsoft.CodeAnalysis library.
+Code analysis of uploaded files is done using the Microsoft.CodeAnalysis library. An uploaded API's semantic model is traversed, and custom types are generated at each symbol node of the tree to capture attributes pertinent to review. These types are then rendered in a regular code format (with the exclusion of method bodies) when an API is under review.
 
-#### Code symbol types
+#### Symbol types
 
-#### Code rendering
+All types to represent code symbols can be found under the SymbolTypes folder of the APIView project. These types each have a number of properties that record information necessary to properly re-render code: accessibility, return type, parameter(s), etc. 
+
+Additionally, there is an `Id` property for `NamespaceApiView`, `NamedTypeApiView`, `MethodApiView`, and `AttributeApiView` types. In the case of `NamespaceApiView` and `NamedTypeApiView` types, this ID is used to generate HTML anchors for click-based navigation. The others use this ID to link to anchors or commentable tokens: `MethodApiView` types carry the ID of their containing named type if they're constructors for navigation, and `AttributeApiView` types carry the ID of the symbol they're applied to, which will be targeted for comments upon clicking.
+
+#### Rendering
 
 #### Testing
 

@@ -38,6 +38,6 @@ This rule is fixable using the `--fix` option.
 
 ## When to turn off
 
-Only if the rule breaks.
+If you aren't targeting Node.
 
 ## [Source](https://azure.github.io/azure-sdk/typescript_design.html#ts-config-moduleresolution)

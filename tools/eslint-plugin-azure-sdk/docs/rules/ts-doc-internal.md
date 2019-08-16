@@ -71,6 +71,7 @@ function exampleFunction(): void {}
 
 ## When to turn off
 
+If you are not using TypeDoc.
 
 ## Source
 

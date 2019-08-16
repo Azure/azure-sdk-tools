@@ -49,6 +49,6 @@ try {
 
 ## When to turn off
 
-Only if the rule breaks.
+If you have good reason to include other error types.
 
 ## [Source](https://azure.github.io/azure-sdk/typescript_implementation.html#ts-error-handling)

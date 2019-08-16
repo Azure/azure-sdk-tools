@@ -19,4 +19,8 @@ APIView is meant to streamline the API design review process by concisely displa
 
 ### Web application
 
+APIView is hosted by Azure App Services, under the "APIView" app service in the Azure SDK Developer Playground. For data storage, the project has a storage account - "mcpatdemo" - in the same "t-mcpat" resource group. The app uses Azure blob storage for maintaining its database of APIs and comments, which will be further elaborated on below.
+
+#### Storage scheme
+
 ## Areas for future development

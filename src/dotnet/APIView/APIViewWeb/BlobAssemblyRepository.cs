@@ -9,6 +9,7 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using System.Linq;
+using System.Text.Json;
 
 namespace APIViewWeb
 {
@@ -19,8 +20,8 @@ namespace APIViewWeb
 
         public BlobAssemblyRepository(IConfiguration configuration, BlobCommentRepository commentRepository)
         {
-            var connectionString = configuration.GetValue<string>("APIVIEW_STORAGE");
-            var container = configuration.GetValue<string>("APIVIEW_STORAGE_CONTAINER");
+            var connectionString = configuration["APIVIEW_STORAGE"] ?? configuration["Reviews:ConnectionString"];
+            var container = configuration["APIVIEW_STORAGE_CONTAINER"] ?? configuration["Reviews:Container"];
             ContainerClient = new BlobContainerClient(connectionString, container);
             this.commentRepository = commentRepository;
         }
@@ -71,7 +72,7 @@ namespace APIViewWeb
 
             using (StreamReader reader = new StreamReader(result.Value.Content))
             {
-                return JsonSerializer.Parse<AssemblyModel>(reader.ReadToEnd());
+                return JsonSerializer.Deserialize<AssemblyModel>(reader.ReadToEnd());
             }
         }
 
@@ -88,7 +89,7 @@ namespace APIViewWeb
             await commentRepository.UploadAssemblyCommentsAsync(assemblyComments);
             var blob = ContainerClient.GetBlobClient(guid);
 
-            using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(JsonSerializer.ToString(assemblyModel)))) {
+            using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(assemblyModel)))) {
                 await blob.UploadAsync(stream);
             }
             blob = ContainerClient.GetBlobClient(guid);

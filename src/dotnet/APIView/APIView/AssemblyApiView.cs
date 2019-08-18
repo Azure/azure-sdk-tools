@@ -6,8 +6,9 @@ using Microsoft.CodeAnalysis.CSharp;
 namespace ApiView
 {
     /// <summary>
-    /// Class representing a C# assembly. Each assembly has a name and global namespace, 
+    /// Class representing a C# assembly. Each assembly has a name and global namespace,
     /// which may or may not contain further types.
+    /// 
     /// </summary>
     public class AssemblyApiView
     {

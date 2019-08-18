@@ -8,14 +8,14 @@ namespace ApiView
         {
             try
             {
-                var renderer = new TextRendererApiView();
-                Console.WriteLine(renderer.Render(AssemblyApiView.AssemblyFromFile(args[0])));
-
+                var assemblySymbol = AssemblyApiView.GetCompilation(args[0]);
+                var renderer = new CodeFileRenderer();
+                var codeNode = new CodeFileBuilder().Build(assemblySymbol);
+                Console.WriteLine(renderer.Render(codeNode));
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
-                Console.WriteLine(e.StackTrace);
+                Console.WriteLine(e.ToString());
             }
         }
     }

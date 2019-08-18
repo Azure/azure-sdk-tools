@@ -4,6 +4,7 @@
     <TargetFramework>netcoreapp2.1</TargetFramework>
     <RootNamespace>APIViewWeb</RootNamespace>
     <AssemblyName>APIViewWeb</AssemblyName>
+    <UserSecretsId>79cceff6-d533-4370-a0ee-f3321a343907</UserSecretsId>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -18,7 +19,7 @@
     <PackageReference Include="Microsoft.CodeAnalysis" Version="3.2.0-beta3-final" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="2.1.9" />
     <PackageReference Include="Octokit" Version="0.32.0" />
-    <PackageReference Include="System.Text.Json" Version="4.6.0-preview6.19303.8" />
+    <PackageReference Include="System.Text.Json" Version="4.6.0-preview8.19405.3" />
   </ItemGroup>
 
 

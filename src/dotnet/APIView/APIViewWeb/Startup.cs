@@ -58,8 +58,8 @@ namespace APIViewWeb
                 .AddCookie(options => options.LoginPath = "/Unauthorized")
                 .AddOAuth("GitHub", options =>
                 {
-                    options.ClientId = Configuration.GetValue<string>("APIVIEW_CLIENT_ID");
-                    options.ClientSecret = Configuration.GetValue<string>("APIVIEW_CLIENT_SECRET");
+                    options.ClientId = Configuration.GetValue<string>("APIVIEW_CLIENT_ID") ?? Configuration["Github:ClientId"];
+                    options.ClientSecret = Configuration.GetValue<string>("APIVIEW_CLIENT_SECRET")?? Configuration["Github:ClientSecret"];
                     options.CallbackPath = new PathString("/signin-github");
 
                     options.AuthorizationEndpoint = "https://github.com/login/oauth/authorize";
@@ -104,7 +104,8 @@ namespace APIViewWeb
                                 if (isFirst)
                                 {
                                     isFirst = false;
-                                } else
+                                }
+                                else
                                 {
                                     orgNames.Append(",");
                                 }
@@ -116,10 +117,12 @@ namespace APIViewWeb
                     };
                 });
 
-            services.AddAuthorization(options => {
-                options.AddPolicy("RequireOrganization", policy => {
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("RequireOrganization", policy =>
+                {
                     policy.RequireClaim("urn:github:orgs");
-                    policy.AddRequirements(new OrganizationRequirement(Configuration.GetValue<string>("APIVIEW_REQUIRED_ORGANIZATION")));
+                    policy.AddRequirements(new OrganizationRequirement(Configuration["APIVIEW_REQUIRED_ORGANIZATION"] ?? Configuration["Github:RequiredOrganization"]));
                 });
             });
 
@@ -139,7 +142,6 @@ namespace APIViewWeb
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
-
 
             app.UseHttpsRedirection();
             app.UseStaticFiles();

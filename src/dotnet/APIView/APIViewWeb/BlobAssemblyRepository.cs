@@ -21,7 +21,7 @@ namespace APIViewWeb
         public BlobAssemblyRepository(IConfiguration configuration, BlobCommentRepository commentRepository)
         {
             var connectionString = configuration["APIVIEW_STORAGE"] ?? configuration["Reviews:ConnectionString"];
-            ContainerClient = new BlobContainerClient(connectionString, "reviews");
+            ContainerClient = new BlobContainerClient(connectionString, "assemblies");
             OriginalsContainer = new BlobContainerClient(connectionString, "originals");
             this.commentRepository = commentRepository;
         }

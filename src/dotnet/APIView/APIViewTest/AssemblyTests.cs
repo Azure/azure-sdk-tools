@@ -4,6 +4,11 @@ using Xunit;
 
 namespace APIViewTest
 {
+    public class NodeBuilderTests
+    {
+
+    }
+
     public class AssemblyTests
     {
         [Fact]
@@ -11,7 +16,7 @@ namespace APIViewTest
         {
             IAssemblySymbol assemblySymbol = TestResource.GetAssemblySymbol();
             AssemblyApiView assembly = new AssemblyApiView(assemblySymbol);
-            
+
             Assert.Equal("TestLibrary", assembly.Name);
 
             Assert.Single(assembly.GlobalNamespace.Namespaces);

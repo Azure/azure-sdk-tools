@@ -7,6 +7,7 @@ namespace APIViewWeb.Models
     public class AssemblyModel
     {
         public AssemblyApiView Assembly { get; set; }
+        public CodeFile AssemblyNode { get; set; }
         public string Author { get; set; }
         public string Id { get; set; }
         public string Name { get; set; }
@@ -19,7 +20,7 @@ namespace APIViewWeb.Models
 
         public AssemblyModel(Stream stream, string fileName)
         {
-            this.Assembly = AssemblyApiView.AssemblyFromStream(stream);
+            this.AssemblyNode = new CodeFileBuilder().Build(AssemblyApiView.GetCompilation(stream));
             this.Name = fileName;
             this.TimeStamp = DateTime.UtcNow;
         }

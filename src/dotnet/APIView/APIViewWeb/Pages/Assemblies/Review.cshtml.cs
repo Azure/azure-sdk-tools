@@ -52,8 +52,15 @@ namespace APIViewWeb.Pages.Assemblies
         {
             Id = id;
             var assemblyModel = await assemblyRepository.ReadAssemblyContentAsync(id);
-            var renderer = new HTMLRendererApiView();
-            AssemblyModel = renderer.Render(assemblyModel.Assembly).ToArray();
+            if (assemblyModel.AssemblyNode != null)
+            {
+                AssemblyModel = new CodeFileHtmlRenderer().Render(assemblyModel.AssemblyNode).ToArray();
+            }
+            else
+            {
+            	var renderer = new HTMLRendererApiView();
+                AssemblyModel = renderer.Render(assemblyModel.Assembly).ToArray();
+            }
             Comments = new Dictionary<string, List<CommentModel>>();
 
             var assemblyComments = await commentRepository.FetchCommentsAsync(id);

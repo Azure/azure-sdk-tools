@@ -4,14 +4,14 @@ namespace APIView
 {
     public enum CodeFileTokenKind
     {
-        Text,
-        Newline,
-        Whitespace,
-        Punctuation,
-        Keyword,
-        LineIdMarker,
-        TypeName,
-        MemberName,
-        StringLiteral
+        Text = 0,
+        Newline = 1,
+        Whitespace = 2,
+        Punctuation = 3,
+        Keyword = 4,
+        LineIdMarker = 5,
+        TypeName = 6,
+        MemberName = 7,
+        StringLiteral = 8
     }
 }

@@ -5,22 +5,16 @@
 }
 
 <h1>Upload a DLL</h1>
-<div class="row">
-    <section>
-        <form method="post" enctype="multipart/form-data">
-            <div class="form-group">
-                <div class="col-md-10">
-                    <p>Upload an API assembly for review using this form:</p>
-                    <input type="file" name="file" />
-                </div>
-            </div>
-            <div class="form-group">
-                <div class="col-md-10">
-                    <input type="submit" value="Upload" />
-                </div>
-            </div>
-        </form>
-    </section>
-</div>
-<hr />
-
+<form method="post" enctype="multipart/form-data">
+    <div class="form-group">
+        <label for="file">Upload an API assembly for review using this form:</label>
+        <input id="file" class="form-control-file"  type="file" name="file"/>
+    </div>
+    <div class="form-check">
+        <input class="form-check-input" asp-for="KeepOriginal" checked>
+        <label class="form-check-label">
+            Keep original
+        </label>
+    </div>
+    <button type="submit" class="btn btn-primary">Upload</button>
+</form>

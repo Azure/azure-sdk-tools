@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using ApiView;
 using APIViewWeb.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
@@ -22,7 +23,13 @@ namespace APIViewWeb.Pages.Assemblies
         }
 
         public string Id { get; set; }
-        public LineApiView[] AssemblyModel { get; set; }
+        public LineApiView[] Lines { get; set; }
+        public AssemblyModel AssemblyModel { get; set; }
+
+        public bool UpdateAvailable => AssemblyModel?.AssemblyNode != null &&
+                                       AssemblyModel.HasOriginal &&
+                                       AssemblyModel.AssemblyNode.Version != CodeFile.CurrentVersion &&
+                                       AssemblyModel.Author == User.GetGitHubLogin();
         [BindProperty]
         public CommentModel Comment { get; set; }
         public Dictionary<string, List<CommentModel>> Comments { get; set; }
@@ -51,15 +58,15 @@ namespace APIViewWeb.Pages.Assemblies
         public async Task OnGetAsync(string id)
         {
             Id = id;
-            var assemblyModel = await assemblyRepository.ReadAssemblyContentAsync(id);
-            if (assemblyModel.AssemblyNode != null)
+            AssemblyModel = await assemblyRepository.ReadAssemblyContentAsync(id);
+            if (AssemblyModel.AssemblyNode != null)
             {
-                AssemblyModel = new CodeFileHtmlRenderer().Render(assemblyModel.AssemblyNode).ToArray();
+                Lines = new CodeFileHtmlRenderer().Render(AssemblyModel.AssemblyNode).ToArray();
             }
             else
             {
             	var renderer = new HTMLRendererApiView();
-                AssemblyModel = renderer.Render(assemblyModel.Assembly).ToArray();
+                Lines = renderer.Render(AssemblyModel.Assembly).ToArray();
             }
             Comments = new Dictionary<string, List<CommentModel>>();
 
@@ -98,6 +105,17 @@ namespace APIViewWeb.Pages.Assemblies
                 ViewName = "_CommentThreadPartial",
                 ViewData = new ViewDataDictionary<CommentThreadModel>(ViewData, partialModel)
             };
+        }
+
+        public async Task<ActionResult> OnPostRefreshModelAsync(string id)
+        {
+            var assemblyModel = await assemblyRepository.ReadAssemblyContentAsync(id);
+            if (assemblyModel.HasOriginal)
+            {
+                assemblyModel.BuildFromStream(await assemblyRepository.GetOriginalAsync(id));
+                await assemblyRepository.UpdateAsync(assemblyModel);
+            }
+            return RedirectToPage(new { id = id });
         }
     }
 }

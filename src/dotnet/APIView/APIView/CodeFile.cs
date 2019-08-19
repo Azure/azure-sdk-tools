@@ -8,6 +8,10 @@ namespace ApiView
 {
     public class CodeFile
     {
+        public const int CurrentVersion = 2;
+
+        public int Version { get; set; }
+
         public CodeFileToken[] Tokens { get; set; } = Array.Empty<CodeFileToken>();
 
         public override string ToString()

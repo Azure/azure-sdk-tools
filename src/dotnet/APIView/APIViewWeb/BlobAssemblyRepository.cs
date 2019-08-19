@@ -21,20 +21,21 @@ namespace APIViewWeb
         public BlobAssemblyRepository(IConfiguration configuration, BlobCommentRepository commentRepository)
         {
             var connectionString = configuration["APIVIEW_STORAGE"] ?? configuration["Reviews:ConnectionString"];
-            var container = configuration["APIVIEW_STORAGE_CONTAINER"] ?? configuration["Reviews:Container"];
-            ContainerClient = new BlobContainerClient(connectionString, container);
+            ContainerClient = new BlobContainerClient(connectionString, "assemblies");
+            OriginalsContainer = new BlobContainerClient(connectionString, "originals");
             this.commentRepository = commentRepository;
         }
 
         private BlobContainerClient ContainerClient { get; }
+        private BlobContainerClient OriginalsContainer { get; }
 
         /// <summary>
         /// Return the blobs contained in the assemblies blob container.
         /// </summary>
         /// <returns>A collection of the blobs in the container.</returns>
-        public List<BlobItem> FetchBlobs()
+        private List<BlobItem> FetchBlobs()
         {
-            var segment = ContainerClient.GetBlobs(new GetBlobsOptions() { IncludeMetadata = true });
+            var segment = ContainerClient.GetBlobs();
 
             var blobs = new List<BlobItem>();
             foreach (var item in segment)
@@ -81,19 +82,23 @@ namespace APIViewWeb
         /// </summary>
         /// <param name="assemblyModel">The assembly being uploaded.</param>
         /// <returns>The ID assigned to the assembly in the database.</returns>
-        public async Task<string> UploadAssemblyAsync(AssemblyModel assemblyModel)
+        public async Task<string> UploadAssemblyAsync(AssemblyModel assemblyModel, Stream original)
         {
             var guid = Guid.NewGuid().ToString();
             assemblyModel.Id = guid;
+            assemblyModel.HasOriginal = original != null;
             var assemblyComments = new AssemblyCommentsModel(guid);
             await commentRepository.UploadAssemblyCommentsAsync(assemblyComments);
             var blob = ContainerClient.GetBlobClient(guid);
+            
+            await blob.UploadAsync(new MemoryStream(JsonSerializer.SerializeToUtf8Bytes(assemblyModel)));
 
-            using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(assemblyModel)))) {
-                await blob.UploadAsync(stream);
+            if (original != null)
+            {
+                var originalBlob = OriginalsContainer.GetBlobClient(guid);
+                await originalBlob.UploadAsync(original);
             }
-            blob = ContainerClient.GetBlobClient(guid);
-            await blob.SetMetadataAsync(new Dictionary<string, string>() { { "id", guid } });
+
             return guid;
         }
 
@@ -106,6 +111,18 @@ namespace APIViewWeb
         {
             await ContainerClient.GetBlobClient(id).DeleteAsync();
             await commentRepository.DeleteAssemblyCommentsAsync(id);
+        }
+
+        public async Task<Stream> GetOriginalAsync(string id)
+        {
+            var originalBlob = OriginalsContainer.GetBlobClient(id);
+            return (await originalBlob.DownloadAsync()).Value.Content;
+        }
+
+        public async Task UpdateAsync(AssemblyModel assemblyModel)
+        {
+            var blob = ContainerClient.GetBlobClient(assemblyModel.Id);
+            await blob.UploadAsync(new MemoryStream(JsonSerializer.SerializeToUtf8Bytes(assemblyModel)));
         }
     }
 }

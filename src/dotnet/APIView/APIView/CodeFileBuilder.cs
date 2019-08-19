@@ -93,7 +93,8 @@ namespace ApiView
             }
             var node = new CodeFile()
             {
-                Tokens = builder.Tokens.ToArray()
+                Tokens = builder.Tokens.ToArray(),
+                Version = CodeFile.CurrentVersion
             };
             return node;
         }

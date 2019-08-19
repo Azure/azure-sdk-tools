@@ -12,24 +12,18 @@ namespace APIViewWeb.Models
         public string Id { get; set; }
         public string Name { get; set; }
         public DateTime TimeStamp { get; set; }
+        public bool HasOriginal { get; set; }
+        public string OriginalFileName { get; set; }
 
         public AssemblyModel()
         {
-            this.Name = "Empty Assembly";
         }
 
-        public AssemblyModel(Stream stream, string fileName)
+        public void BuildFromStream(Stream stream)
         {
-            this.AssemblyNode = new CodeFileBuilder().Build(AssemblyApiView.GetCompilation(stream));
-            this.Name = fileName;
-            this.TimeStamp = DateTime.UtcNow;
-        }
-
-        public AssemblyModel(AssemblyApiView assembly, string fileName)
-        {
-            this.Assembly = assembly;
-            this.Name = fileName;
-            this.TimeStamp = DateTime.UtcNow;
+            var assemblySymbol = AssemblyApiView.GetCompilation(stream);
+            this.AssemblyNode = new CodeFileBuilder().Build(assemblySymbol);
+            this.Name = assemblySymbol.Name;
         }
     }
 }

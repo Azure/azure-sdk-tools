@@ -311,7 +311,7 @@ code-inner {
     width: 0;
 }
 
-.btn-link {
+.btn-link.line-comment-button {
     border: 0;
     opacity: 0;
     padding: 0;

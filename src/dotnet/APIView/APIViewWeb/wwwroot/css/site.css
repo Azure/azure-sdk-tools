@@ -319,3 +319,33 @@ code-inner {
     user-select: none;
     white-space: nowrap;
 }
+
+.namespace-view-panel {
+    vertical-align: top;
+    font-family: 'Lucida Console';
+    font-size: 12px;
+    margin-left: 0px;
+
+}
+
+.namespace-view {
+    margin-right: 30px;
+}
+
+.nav_list {
+    list-style-type:none;
+    padding-left: 0px;
+}
+
+.nav_list_children {
+    list-style-type: none;
+    padding-left: 23px;
+}
+
+.nav_expanded {
+}
+
+
+.container {
+    max-width: none;
+}

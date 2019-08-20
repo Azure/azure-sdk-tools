@@ -36,7 +36,7 @@
                                             <h4 class="mt-0 comment-header"><strong class="author align-top">@comment.Username</strong></h4>
                                             <span date="@comment.TimeStamp.ToLocalTime()" class="comment-timestamp align-top"></span>
                                         </div>
-                                        <p class="comment-contents">@comment.Comment</p>
+                                        <p class="comment-contents">@Html.FormatAsMarkdown(@comment.Comment)</p>
                                     </div>
                                 </div>
                             </div>

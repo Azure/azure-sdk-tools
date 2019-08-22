@@ -86,7 +86,7 @@ namespace ApiView
 
                 foreach(INamedTypeSymbol type in namespaceSymbol.GetTypeMembers())
                 {
-                    if (type.DeclaredAccessibility == Accessibility.Public | type.DeclaredAccessibility == Accessibility.Protected)
+                    if (IsAccessible(type))
                     {
                         nspace.Add(type.Name);
                     }

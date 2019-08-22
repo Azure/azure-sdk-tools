@@ -19,16 +19,18 @@
         <td class="namespace-view-panel">
             <div class="namespace-view">
                 <ul class="nav_list">
-                @foreach (var ns in Model.AssemblyModel.AssemblyNode.Navigation) {
-                    <li>
-                        <div><img src="~/icons/down.png"> <b>@ns.Text</b> </div>
-                        <ul class="nav_list_children">
-                            @foreach (var type in ns.Children) {
-                                <li><img src="~/icons/type.png"> @type</li>
-                            }
-                        </ul>
-                    </li>
+                @if(Model.AssemblyModel.AssemblyNode != null) {
+                    @foreach (var ns in Model.AssemblyModel.AssemblyNode.Navigation) {
+                        <li>
+                            <div><img src="~/icons/down.png"> <b>@ns.Text</b> </div>
+                            <ul class="nav_list_children">
+                                @foreach (var type in ns.Children) {
+                                    <li><img src="~/icons/type.png"> @type</li>
+                                }
+                            </ul>
+                        </li>
 
+                    }
                 }
                 </ul>
             </div>

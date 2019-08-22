@@ -84,7 +84,7 @@ namespace ApiView
                 nspace.Text = namespaceSymbol.ContainingNamespace + "." + namespaceSymbol.Name;
                 nav.Add(nspace);
 
-                foreach(INamedTypeSymbol type in namespaceSymbol.GetTypeMembers())
+                foreach (INamedTypeSymbol type in SortTypes(namespaceSymbol.GetTypeMembers()))
                 {
                     if (IsAccessible(type))
                     {
@@ -93,7 +93,7 @@ namespace ApiView
                 }
                 if (namespaceSymbol.IsGlobalNamespace)
                 {
-                    foreach (var namedTypeSymbol in namespaceSymbol.GetTypeMembers())
+                    foreach (var namedTypeSymbol in SortTypes(namespaceSymbol.GetTypeMembers()))
                     {
                         Build(builder, namedTypeSymbol);
                     }
@@ -167,12 +167,12 @@ namespace ApiView
             builder.IncrementIndent();
             builder.NewLine();
 
-            foreach (var namedTypeSymbol in namedType.GetTypeMembers())
+            foreach (var namedTypeSymbol in SortTypes(namedType.GetTypeMembers()))
             {
                 Build(builder, namedTypeSymbol);
             }
 
-            foreach (var member in namedType.GetMembers())
+            foreach (var member in SortMembers(namedType.GetMembers()))
             {
                 if (member.Kind == SymbolKind.NamedType || member.IsImplicitlyDeclared || !IsAccessible(member)) continue;
                 if (member is IMethodSymbol method)
@@ -220,6 +220,66 @@ namespace ApiView
             }
             
             builder.NewLine();
+        }
+        
+        private IEnumerable<T> SortTypes<T>(IEnumerable<T> symbols) where T: ITypeSymbol
+        {
+            return symbols.OrderBy(t => (GetTypeOrder(t), t.DeclaredAccessibility != Accessibility.Public, t.Name));
+        }
+
+        private IEnumerable<ISymbol> SortMembers(IEnumerable<ISymbol> members)
+        {
+            return members.OrderBy(t => (GetMemberOrder(t), t.DeclaredAccessibility != Accessibility.Public, t.Name));
+        }
+
+        private static int GetTypeOrder(ITypeSymbol typeSymbol)
+        {
+            if (typeSymbol.Name.EndsWith("Client"))
+            {
+                return -1;
+            }
+
+            if (typeSymbol.Name.EndsWith("Extensions"))
+            {
+                return 1;
+            }
+
+            if (typeSymbol.Name.EndsWith("Exception"))
+            {
+                return 2;
+            }
+
+            // Nested type
+            if (typeSymbol.ContainingType != null)
+            {
+                return 3;
+            }
+            
+            return 0;
+        }
+
+        private static int GetMemberOrder(ISymbol symbol)
+        {
+            switch (symbol)
+            {
+                case IFieldSymbol fieldSymbol when fieldSymbol.ContainingType.TypeKind == TypeKind.Enum:
+                    return Convert.ToInt32(fieldSymbol.ConstantValue);
+                
+                case IMethodSymbol methodSymbol when methodSymbol.MethodKind == MethodKind.Constructor:
+                    return -10;
+
+                case IMethodSymbol methodSymbol when (methodSymbol.OverriddenMethod?.ContainingType?.SpecialType == SpecialType.System_Object ||
+                                                      methodSymbol.OverriddenMethod?.ContainingType?.SpecialType == SpecialType.System_ValueType):
+                    return 5;
+                case IMethodSymbol methodSymbol when methodSymbol.IsStatic:
+                    return -4;
+                case IPropertySymbol _:
+                    return -5;
+                case IFieldSymbol _:
+                    return -6;
+                default:
+                    return 0;
+            }
         }
 
         private void NodeFromSymbol(CodeFileTokensBuilder builder, ISymbol symbol,  bool prependVisibility = false)

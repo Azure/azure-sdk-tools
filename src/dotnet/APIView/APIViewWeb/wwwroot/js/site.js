@@ -16,6 +16,18 @@ $(function () {
         return false;
     });
 
+    $(document).find(".nav-img").click(function () {
+        let list = $(document.getElementById("list-"+this.id));
+        if (this.src.endsWith("down.png")) {
+            this.src = "/icons/right.png";
+            list.hide();
+        }
+        else {
+            this.src = "/icons/down.png";
+            list.show();
+        }
+    });
+
     function attachEventHandlers(element, id=null) {
         let thisRow = $(document.getElementById(id)).parents(".code-line").first();
 

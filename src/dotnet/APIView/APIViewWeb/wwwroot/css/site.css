@@ -325,7 +325,7 @@ code-inner {
     font-family: 'Lucida Console';
     font-size: 12px;
     margin-left: 0px;
-
+    min-width: 300px;
 }
 
 .namespace-view {

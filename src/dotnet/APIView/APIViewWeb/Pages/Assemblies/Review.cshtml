@@ -18,12 +18,12 @@
     <tr>
         <td class="namespace-view-panel">
             <div class="namespace-view">
-                <ul class="nav_list">
+                <ul class="nav-list">
                 @if(Model.AssemblyModel.AssemblyNode != null) {
                     @foreach (var ns in Model.AssemblyModel.AssemblyNode.Navigation) {
-                        <li>
-                            <div><img src="~/icons/down.png"> <b>@ns.Text</b> </div>
-                            <ul class="nav_list_children">
+                        <li class="nav-list-group">
+                            <span class="nav-list-toggle">@ns.Text</span>
+                            <ul class="nav-list-children">
                                 @foreach (var type in ns.Children) {
                                     <li><img src="~/icons/type.png"> @type</li>
                                 }

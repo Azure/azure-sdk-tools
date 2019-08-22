@@ -332,14 +332,27 @@ code-inner {
     margin-right: 30px;
 }
 
-.nav_list {
+.nav-list {
     list-style-type:none;
     padding-left: 0px;
 }
 
-.nav_list_children {
+.nav-list-children {
     list-style-type: none;
     padding-left: 23px;
+}
+
+.nav-list-toggle {
+    padding-left: 14px;
+    background: url(/icons/down.png) center left no-repeat;
+}
+
+.nav-list-collapsed > .nav-list-toggle {
+    background: url(/icons/right.png) center left no-repeat;
+}
+
+.nav-list-collapsed > .nav-list-children {
+    display: none;
 }
 
 .container {

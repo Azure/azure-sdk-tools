@@ -6,6 +6,10 @@ $(function () {
     let commentFormTemplate = $("#comment-form-template");
     attachEventHandlers(document);
 
+    $(document).find(".nav-list-toggle").click(function() {
+        $(this).parents(".nav-list-group").first().toggleClass("nav-list-collapsed");
+    });
+    
     $(document).find(".commentable").click(function () {
         showCommentBox(this.id);
         return false;

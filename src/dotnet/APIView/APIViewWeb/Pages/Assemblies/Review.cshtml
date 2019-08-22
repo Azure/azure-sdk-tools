@@ -25,7 +25,7 @@
                             <div><img src="~/icons/down.png" class="nav-img" id="@ns.Text"> <b>@ns.Text</b> </div>
                             <ul class="nav_list_children" id="list-@ns.Text">
                                 @foreach (var type in ns.Children) {
-                                    <li><img src="~/icons/type.png"> @type</li>
+                                    <li><img src="~/icons/type.png"> <a href="#@ns.Text.@type">@type</a></li>
                                 }
                             </ul>
                         </li>

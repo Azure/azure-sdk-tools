@@ -76,9 +76,21 @@ namespace ApiView
         }
         public CodeFile Build(IAssemblySymbol assemblySymbol)
         {
+            var nav = new List<NavigationItem>();
             var builder = new CodeFileTokensBuilder();
             foreach (var namespaceSymbol in EnumerateNamespaces(assemblySymbol))
             {
+                var nspace = new NavigationItem();
+                nspace.Text = namespaceSymbol.ContainingNamespace + "." + namespaceSymbol.Name;
+                nav.Add(nspace);
+
+                foreach(INamedTypeSymbol type in namespaceSymbol.GetTypeMembers())
+                {
+                    if (IsAccessible(type))
+                    {
+                        nspace.Add(type.Name);
+                    }
+                }
                 if (namespaceSymbol.IsGlobalNamespace)
                 {
                     foreach (var namedTypeSymbol in namespaceSymbol.GetTypeMembers())
@@ -94,7 +106,8 @@ namespace ApiView
             var node = new CodeFile()
             {
                 Tokens = builder.Tokens.ToArray(),
-                Version = CodeFile.CurrentVersion
+                Version = CodeFile.CurrentVersion,
+                Navigation = nav,
             };
             return node;
         }

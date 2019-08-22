@@ -320,16 +320,9 @@ code-inner {
     white-space: nowrap;
 }
 
-.namespace-view-panel {
-    vertical-align: top;
-    font-family: 'Lucida Console';
-    font-size: 12px;
-    margin-left: 0px;
-
-}
-
 .namespace-view {
-    margin-right: 30px;
+    font-size: 12px;
+    font-family: monospace;
 }
 
 .nav-list {
@@ -340,6 +333,12 @@ code-inner {
 .nav-list-children {
     list-style-type: none;
     padding-left: 23px;
+    text-overflow: ellipsis;
+}
+.nav-list-children > li {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .nav-list-toggle {
@@ -353,8 +352,4 @@ code-inner {
 
 .nav-list-collapsed > .nav-list-children {
     display: none;
-}
-
-.container {
-    max-width: none;
 }

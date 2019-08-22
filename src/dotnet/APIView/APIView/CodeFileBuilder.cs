@@ -76,43 +76,33 @@ namespace ApiView
         }
         public CodeFile Build(IAssemblySymbol assemblySymbol)
         {
-            var nav = new List<NavigationItem>();
+            var assemblyItems = new List<NavigationItem>();
             var builder = new CodeFileTokensBuilder();
             foreach (var namespaceSymbol in EnumerateNamespaces(assemblySymbol))
             {
-                var nspace = new NavigationItem();
-                nspace.Text = namespaceSymbol.ContainingNamespace + "." + namespaceSymbol.Name;
-                nav.Add(nspace);
-
-                foreach (INamedTypeSymbol type in SortTypes(namespaceSymbol.GetTypeMembers()))
-                {
-                    if (IsAccessible(type))
-                    {
-                        nspace.Add(type.Name);
-                    }
-                }
                 if (namespaceSymbol.IsGlobalNamespace)
                 {
                     foreach (var namedTypeSymbol in SortTypes(namespaceSymbol.GetTypeMembers()))
                     {
-                        Build(builder, namedTypeSymbol);
+                        BuildType(builder, namedTypeSymbol, assemblyItems);
                     }
                 }
                 else
                 {
-                    Build(builder, namespaceSymbol);
+                    Build(builder, namespaceSymbol, assemblyItems);
                 }
             }
+
             var node = new CodeFile()
             {
                 Tokens = builder.Tokens.ToArray(),
                 Version = CodeFile.CurrentVersion,
-                Navigation = nav,
+                Navigation = assemblyItems,
             };
             return node;
         }
 
-        private void Build(CodeFileTokensBuilder builder, INamespaceSymbol namespaceSymbol)
+        private void Build(CodeFileTokensBuilder builder, INamespaceSymbol namespaceSymbol, List<NavigationItem> navigationBuilder)
         {
             builder.Keyword(SyntaxKind.NamespaceKeyword);
             builder.Space();
@@ -123,12 +113,21 @@ namespace ApiView
             builder.IncrementIndent();
             builder.NewLine();
 
+            List<NavigationItem> namespaceItems = new List<NavigationItem>();
             foreach (var namedTypeSymbol in namespaceSymbol.GetTypeMembers())
             {
-                Build(builder, namedTypeSymbol);
+                BuildType(builder, namedTypeSymbol, namespaceItems);
             }
 
             CloseBrace(builder);
+            
+            var namespaceItem = new NavigationItem()
+            {
+                NavigationId = GetId(namespaceSymbol),
+                Text = namespaceSymbol.ToDisplayString(),
+                ChildItems = namespaceItems.ToArray()
+            };
+            navigationBuilder.Add(namespaceItem);
         }
 
         private void BuildNamespaceName(CodeFileTokensBuilder builder, INamespaceSymbol namespaceSymbol)
@@ -146,12 +145,18 @@ namespace ApiView
             return subNamespaceSymbol.GetTypeMembers().Any(t => IsAccessible(t));
         }
 
-        private void Build(CodeFileTokensBuilder builder, INamedTypeSymbol namedType)
+        private void BuildType(CodeFileTokensBuilder builder, INamedTypeSymbol namedType, List<NavigationItem> navigationBuilder)
         {
             if (!IsAccessible(namedType))
             {
                 return;
             }
+
+            navigationBuilder.Add(new NavigationItem()
+            {
+                NavigationId = GetId(namedType),
+                Text = namedType.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat)
+            });
 
             builder.WriteIndent();
             NodeFromSymbol(builder, namedType, true);
@@ -169,7 +174,7 @@ namespace ApiView
 
             foreach (var namedTypeSymbol in SortTypes(namedType.GetTypeMembers()))
             {
-                Build(builder, namedTypeSymbol);
+                BuildType(builder, namedTypeSymbol, navigationBuilder);
             }
 
             foreach (var member in SortMembers(namedType.GetMembers()))
@@ -186,7 +191,7 @@ namespace ApiView
                         continue;
                     }
                 }
-                Build(builder, member);
+                BuildMember(builder, member);
             }
 
             CloseBrace(builder);
@@ -200,7 +205,7 @@ namespace ApiView
             builder.NewLine();
         }
 
-        private void Build(CodeFileTokensBuilder builder, ISymbol member)
+        private void BuildMember(CodeFileTokensBuilder builder, ISymbol member)
         {
             builder.WriteIndent();
             NodeFromSymbol(builder, member);

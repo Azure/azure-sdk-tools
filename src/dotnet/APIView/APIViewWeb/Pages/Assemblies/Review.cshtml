@@ -23,7 +23,7 @@
                         <span class="nav-list-toggle"></span><a href="#@ns.NavigationId">@ns.Text</a>
                         <ul class="nav-list-children">
                             @foreach (var type in ns.ChildItems) {
-                                <li><img src="~/icons/type.png"> <a href="#@type.NavigationId">@type.Text</a></li>
+                                <li><span class="@type.Tags.GetValueOrDefault("TypeKind")">&nbsp;&nbsp;</span> <a href="#@type.NavigationId">@type.Text</a></li>
                             }
                         </ul>
                     </li>

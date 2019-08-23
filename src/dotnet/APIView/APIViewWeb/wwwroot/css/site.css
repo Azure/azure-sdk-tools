@@ -377,3 +377,9 @@ code-inner {
 .type_unknown {
     background: url(/icons/type.png) center left no-repeat;
 }
+
+.assembly_view {
+    font-size: 14px;
+    font-weight: bold;
+    font-family: monospace;
+}

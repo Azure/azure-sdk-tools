@@ -19,22 +19,22 @@
         <ul class="nav-list">
             @if (Model.AssemblyModel.AssemblyNode != null) {
                 @foreach (var ns in Model.AssemblyModel.AssemblyNode.Navigation) {
-                    <li class="nav-list-group">
-                        <span class="nav-list-toggle"></span><a href="#@ns.NavigationId">@ns.Text</a>
-                        <ul class="nav-list-children">
-                            @foreach (var type in ns.ChildItems) {
-                            <li>
-                                @if (type.Tags != null && type.Tags.ContainsKey("TypeKind")) {
-                                    <span class="@type.Tags.GetValueOrDefault("TypeKind")">&nbsp;&nbsp;</span>
-                                }
-                                else {
-                                    <span class="type_unknown">&nbsp;&nbsp;</span>
-                                }
-                                <a href="#@type.NavigationId">@type.Text</a>
-                            </li>
+            <li class="nav-list-group">
+                <span class="nav-list-toggle"></span><img src="~/icons/namespace.png" />&nbsp;<a href="#@ns.NavigationId">@ns.Text</a>
+                <ul class="nav-list-children">
+                    @foreach (var type in ns.ChildItems) {
+                        <li>
+                            @if (type.Tags != null && type.Tags.ContainsKey("TypeKind")) {
+                                <span class="@type.Tags.GetValueOrDefault("TypeKind")">&nbsp;&nbsp;</span>
                             }
-                        </ul>
-                    </li>
+                            else {
+                                <span class="type_unknown">&nbsp;&nbsp;</span>
+                            }
+                            <a href="#@type.NavigationId">@type.Text</a>
+                        </li>
+                    }
+                </ul>
+            </li>
                 }
             }
             </ul>

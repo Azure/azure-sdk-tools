@@ -373,3 +373,7 @@ code-inner {
 .type_delegate {
     background: url(/icons/delegate.png) center left no-repeat;
 }
+
+.type_unknown {
+    background: url(/icons/type.png) center left no-repeat;
+}

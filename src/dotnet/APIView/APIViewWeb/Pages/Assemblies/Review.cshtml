@@ -24,7 +24,7 @@
                         <ul class="nav-list-children">
                             @foreach (var type in ns.ChildItems) {
                             <li>
-                                @if (type.Tags != null) {
+                                @if (type.Tags != null && type.Tags.ContainsKey("TypeKind")) {
                                     <span class="@type.Tags.GetValueOrDefault("TypeKind")">&nbsp;&nbsp;</span>
                                 }
                                 else {

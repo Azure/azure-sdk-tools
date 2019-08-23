@@ -353,3 +353,27 @@ code-inner {
 .nav-list-collapsed > .nav-list-children {
     display: none;
 }
+
+.type_class {
+    background: url(/icons/class.png) center left no-repeat;
+}
+
+.type_interface {
+    background: url(/icons/interface.png) center left no-repeat;
+}
+
+.type_struct {
+    background: url(/icons/struct.png) center left no-repeat;
+}
+
+.type_enum {
+    background: url(/icons/enum.png) center left no-repeat;
+}
+
+.type_delegate {
+    background: url(/icons/delegate.png) center left no-repeat;
+}
+
+.type_unknown {
+    background: url(/icons/type.png) center left no-repeat;
+}

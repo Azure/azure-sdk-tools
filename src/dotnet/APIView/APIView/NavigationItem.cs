@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace APIView
 {
@@ -7,7 +8,9 @@ namespace APIView
         public string Text { get; set; }
         public string NavigationId { get; set; }
         public NavigationItem[] ChildItems { get; set; } = Array.Empty<NavigationItem>();
-        
+
+        public Dictionary<string, string> Tags { get; set; } = new Dictionary<string, string>(0);
+
         public override string ToString() => Text;
     }
 }

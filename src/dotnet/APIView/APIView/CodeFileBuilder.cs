@@ -152,11 +152,13 @@ namespace ApiView
                 return;
             }
 
-            navigationBuilder.Add(new NavigationItem()
+            var navigationItem = new NavigationItem()
             {
                 NavigationId = GetId(namedType),
-                Text = namedType.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat)
-            });
+                Text = namedType.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat),                
+            };
+            navigationBuilder.Add(navigationItem);
+            navigationItem.Tags.Add("TypeKind", "type_"+namedType.TypeKind.ToString().ToLowerInvariant());
 
             builder.WriteIndent();
             NodeFromSymbol(builder, namedType, true);

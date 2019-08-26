@@ -114,7 +114,7 @@ namespace ApiView
             builder.NewLine();
 
             List<NavigationItem> namespaceItems = new List<NavigationItem>();
-            foreach (var namedTypeSymbol in namespaceSymbol.GetTypeMembers())
+            foreach (var namedTypeSymbol in SortTypes(namespaceSymbol.GetTypeMembers()))
             {
                 BuildType(builder, namedTypeSymbol, namespaceItems);
             }
@@ -243,7 +243,11 @@ namespace ApiView
         {
             if (typeSymbol.Name.EndsWith("Client"))
             {
-                return -1;
+                return -100;
+            }
+
+            if (typeSymbol.Name.EndsWith("Options")) {
+                return -20;
             }
 
             if (typeSymbol.Name.EndsWith("Extensions"))
@@ -251,9 +255,18 @@ namespace ApiView
                 return 1;
             }
 
+            if (typeSymbol.TypeKind == TypeKind.Interface) {
+                return -1;
+            }
+            if (typeSymbol.TypeKind == TypeKind.Enum) {
+                return 90;
+            }
+            if (typeSymbol.TypeKind == TypeKind.Delegate) {
+                return 99;
+            }
             if (typeSymbol.Name.EndsWith("Exception"))
             {
-                return 2;
+                return 100;
             }
 
             // Nested type
@@ -270,7 +283,7 @@ namespace ApiView
             switch (symbol)
             {
                 case IFieldSymbol fieldSymbol when fieldSymbol.ContainingType.TypeKind == TypeKind.Enum:
-                    return Convert.ToInt32(fieldSymbol.ConstantValue);
+                    return (int)Convert.ToInt64(fieldSymbol.ConstantValue);
                 
                 case IMethodSymbol methodSymbol when methodSymbol.MethodKind == MethodKind.Constructor:
                     return -10;

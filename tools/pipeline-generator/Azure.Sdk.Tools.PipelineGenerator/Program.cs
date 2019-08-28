@@ -111,6 +111,10 @@ namespace PipelineGenerator
                     var ciLogger = serviceProvider.GetService<ILogger<PullRequestValidationPipelineConvention>>();
                     return new PullRequestValidationPipelineConvention(ciLogger, context);
 
+                case "up":
+                    var upLogger = serviceProvider.GetService<ILogger<UnifiedPipelineConvention>>();
+                    return new UnifiedPipelineConvention(upLogger, context);
+
                 case "tests":
                     var testLogger = serviceProvider.GetService<ILogger<IntegrationTestingPipelineConvention>>();
                     return new IntegrationTestingPipelineConvention(testLogger, context);
@@ -143,7 +147,6 @@ namespace PipelineGenerator
 
                 // Fall back to a form of prefix if DevOps path is not specified
                 var devOpsPathValue = string.IsNullOrEmpty(devOpsPath) ? $"\\{prefix}" : devOpsPath;
-
 
                 var context = new PipelineGenerationContext(
                     organization,

@@ -55,10 +55,15 @@ namespace PipelineGenerator.Conventions
                 definition.Triggers.Add(new PullRequestTrigger()
                 {
                     SettingsSourceType = 2, // HACK: See above.
+                    IsCommentRequiredForPullRequest = true,
+                    BranchFilters = new List<string>()
+                    {
+                        $"+{Context.Branch}"
+                    },
                     Forks = new Forks()
                     {
-                        AllowSecrets = false,
-                        Enabled = true,
+                        AllowSecrets = true,
+                        Enabled = true
                     }
                 });
                 hasChanges = true;
@@ -66,10 +71,19 @@ namespace PipelineGenerator.Conventions
             else
             {
                 // TODO: We should probably be more complete here.
-                if (prTrigger.SettingsSourceType != 2 || prTrigger.Forks.AllowSecrets != false || prTrigger.Forks.Enabled != true)
+                if (prTrigger.SettingsSourceType != 2 ||
+                    prTrigger.IsCommentRequiredForPullRequest != true ||
+                    prTrigger.BranchFilters.All(bf => bf == $"+{Context.Branch}") ||
+                    prTrigger.Forks.AllowSecrets != false ||
+                    prTrigger.Forks.Enabled != true)
                 {
                     prTrigger.SettingsSourceType = 2;
-                    prTrigger.Forks.AllowSecrets = false;
+                    prTrigger.IsCommentRequiredForPullRequest = true;
+                    prTrigger.BranchFilters = new List<string>()
+                    {
+                        $"+{Context.Branch}"
+                    };
+                    prTrigger.Forks.AllowSecrets = true;
                     prTrigger.Forks.Enabled = true;
                     hasChanges = true;
                 }

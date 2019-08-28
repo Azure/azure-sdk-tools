@@ -2,7 +2,6 @@
 {
     public struct CodeFileToken
     {
-
         public CodeFileToken(string value, CodeFileTokenKind kind)
         {
             Value = value;
@@ -15,5 +14,10 @@
         public string NavigateToId { get; set; }
         public string Value { get; set; }
         public CodeFileTokenKind Kind { get; set; }
+
+        public override string ToString()
+        {
+            return $"{Value} ({Kind})";
+        }
     }
 }

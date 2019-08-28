@@ -1,6 +1,6 @@
 ﻿using ApiView;
+using APIView;
 using System;
-using System.Collections.ObjectModel;
 using System.IO;
 
 namespace APIViewWeb.Models
@@ -20,11 +20,14 @@ namespace APIViewWeb.Models
         {
         }
 
-        public void BuildFromStream(Stream stream)
+        public AnalysisResult[] BuildFromStream(Stream assemblyStream)
         {
-            var assemblySymbol = AssemblyApiView.GetCompilation(stream);
-            this.AssemblyNode = new CodeFileBuilder().Build(assemblySymbol);
+            var assemblySymbol = AssemblyApiView.GetCompilation(assemblyStream);
+            AnalysisResult[] staticAnalysisResults;
+            (this.AssemblyNode, staticAnalysisResults) = new CodeFileBuilder().Build(assemblySymbol);
             this.Name = assemblySymbol.Name;
+
+            return staticAnalysisResults;
         }
     }
 }

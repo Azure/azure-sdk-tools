@@ -10,7 +10,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace Azure.ClientSdk.Analyzers
 {
-    public abstract class ClientAnalyzerBase : DiagnosticAnalyzer
+    public abstract class ClientAnalyzerBase : DiagnosticAnalyzer, IHostedAnalyzer
     {
         protected const string ClientSuffix = "Client";
 
@@ -33,8 +33,12 @@ namespace Azure.ClientSdk.Analyzers
                 });
         }
 
-        protected abstract void AnalyzeClientType(SymbolAnalysisContext context);
-
+        protected void AnalyzeClientType(SymbolAnalysisContext context)
+        {
+            var typeSymbol = (INamedTypeSymbol)context.Symbol;
+            var host = new AnalysisHost(context);
+            Analyze(typeSymbol, host);
+        }
 
         protected class ParameterEquivalenceComparer: IEqualityComparer<IParameterSymbol>
         {
@@ -71,5 +75,13 @@ namespace Azure.ClientSdk.Analyzers
                 return allButLast.SequenceEqual(parameters, ParameterEquivalenceComparer.Default) && lastParameter(symbol.Parameters.Last());
             });
         }
+
+        public void Analyze(INamedTypeSymbol type, IAnalysisHost host)
+        {
+            if (!type.Name.EndsWith(ClientSuffix)) return;
+            AnalyzeCore(type, host);
+        }
+
+        public abstract void AnalyzeCore(INamedTypeSymbol type, IAnalysisHost host);
     }
 }

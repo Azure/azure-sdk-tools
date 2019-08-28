@@ -14,28 +14,52 @@ namespace Azure.ClientSdk.Analyzers
             "Namespace '{0}' shouldn't contain public types. " + AZC0001Title, "Usage", DiagnosticSeverity.Warning, true);
 
         public static DiagnosticDescriptor AZC0002 = new DiagnosticDescriptor(
-            "AZC0002", "Client method should have cancellationToken as the last optional parameter",
-            "Client method should have cancellationToken as the last optional parameter (both name and it being optional matters)", "Usage", DiagnosticSeverity.Warning, true);
+            "AZC0002", 
+            "DO ensure all service methods, both asynchronous and synchronous, take an optional CancellationToken parameter called cancellationToken.",
+            "Client method should have cancellationToken as the last optional parameter (both name and it being optional matters)", 
+            "Usage", DiagnosticSeverity.Warning, isEnabledByDefault: true, description: null, 
+            "https://azure.github.io/azure-sdk/dotnet_introduction.html#dotnet-service-methods-cancellation"
+        );
 
         public static DiagnosticDescriptor AZC0003 = new DiagnosticDescriptor(
-            "AZC0003", "Client methods should be virtual",
-            "Client methods should be virtual", "Usage", DiagnosticSeverity.Warning, true);
+            "AZC0003", 
+            "DO make service methods virtual.",
+            "Virtual methods are used to support mocking.", 
+            "Usage", DiagnosticSeverity.Warning, isEnabledByDefault: true, description: null,
+            "https://azure.github.io/azure-sdk/dotnet_introduction.html#dotnet-service-methods-virtual"
+        );
 
         public static DiagnosticDescriptor AZC0004 = new DiagnosticDescriptor(
-            "AZC0004", "Async client method should have sync alternative with same arguments",
-            "Async client method should have sync alternative with same arguments", "Usage", DiagnosticSeverity.Warning, true);
+            "AZC0004",
+            "DO provide both asynchronous and synchronous variants for all service methods.",
+            "DO provide both asynchronous and synchronous variants for all service methods.",
+            "Usage", DiagnosticSeverity.Warning, isEnabledByDefault: true, description: null,
+            "https://azure.github.io/azure-sdk/dotnet_introduction.html#dotnet-service-methods-sync-and-async"
+        );
 
         public static DiagnosticDescriptor AZC0005 = new DiagnosticDescriptor(
-            "AZC0005", "Client type should have protected parameterless constructor",
-            "Client type should have protected parameterless constructor", "Usage", DiagnosticSeverity.Warning, true);
+            "AZC0005", 
+            "DO provide protected parameterless constructor for mocking.",
+            "Client type should have protected parameterless constructor", 
+            "Usage", DiagnosticSeverity.Warning, isEnabledByDefault: true, description: null,
+            "https://azure.github.io/azure-sdk/dotnet_introduction.html#dotnet-client-constructor-for-mocking"
+        );
 
         public static DiagnosticDescriptor AZC0006 = new DiagnosticDescriptor(
-            "AZC0006", "Client type should have public constructor with equivalent parameters taking client options",
-            "Client type should have public constructor with equivalent parameters taking '{0}' as last argument", "Usage", DiagnosticSeverity.Warning, true);
+            "AZC0006",
+            "DO provide constructor overloads that allow specifying additional options.",
+            "Client type should have public constructor with equivalent parameters taking '{0}' as last argument", 
+            "Usage", DiagnosticSeverity.Warning, isEnabledByDefault: true, description: null,
+            "https://azure.github.io/azure-sdk/dotnet_introduction.html#dotnet-client-constructor-overloads"
+        );
 
         public static DiagnosticDescriptor AZC0007 = new DiagnosticDescriptor(
-            "AZC0007", "Client type should have public constructor with equivalent parameters not taking client options",
-            "Client type should have public constructor with equivalent parameters not taking '{0}' as last argument", "Usage", DiagnosticSeverity.Warning, true);
+            "AZC0007", 
+            "DO provide a minimal constructor that takes only the parameters required to connect to the service.",
+            "Client type should have public constructor with equivalent parameters not taking '{0}' as last argument", 
+            "Usage", DiagnosticSeverity.Warning, isEnabledByDefault: true, description: null,
+            "https://azure.github.io/azure-sdk/dotnet_introduction.html#dotnet-client-constructor-minimal"
+        );
 
         public static DiagnosticDescriptor AZC0008 = new DiagnosticDescriptor(
             "AZC0008", "ClientOptions should have a nested enum called ServiceVersion",

@@ -23,6 +23,11 @@ namespace PipelineGenerator.Conventions
 
             var hasChanges = false;
 
+            if (EnsureVariableGroups(definition))
+            {
+                hasChanges = true;
+            }
+
             if (definition.Path != $"\\{this.Context.Prefix}")
             {
                 definition.Path = $"\\{this.Context.Prefix}";

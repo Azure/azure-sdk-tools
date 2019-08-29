@@ -196,6 +196,28 @@ namespace PipelineGenerator.Conventions
             return definition;
         }
 
+        protected bool EnsureVariableGroups(BuildDefinition definition)
+        {
+            var hasChanges = false;
+
+            var definitionVariableGroupSet = definition.VariableGroups
+                .Select(group => group.Id)
+                .ToHashSet();
+
+            var parameterGroupSet = this.Context.VariableGroups.ToHashSet();
+
+            var idsToAdd = parameterGroupSet.Except(definitionVariableGroupSet);
+            if (idsToAdd.Any())
+            {
+                hasChanges = true;
+            }
+            var groupsToAdd = idsToAdd.Select(id => new VariableGroup { Id = id });
+
+            definition.VariableGroups.AddRange(groupsToAdd);
+
+            return hasChanges;
+        }
+
         protected abstract Task<bool> ApplyConventionAsync(BuildDefinition definition, SdkComponent component);
     }
 }

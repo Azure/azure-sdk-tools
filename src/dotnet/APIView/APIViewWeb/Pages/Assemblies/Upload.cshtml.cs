@@ -22,7 +22,10 @@ namespace APIViewWeb.Pages.Assemblies
         }
 
         [BindProperty]
-        public bool KeepOriginal { get; set; } 
+        public bool KeepOriginal { get; set; }
+
+        [BindProperty]
+        public bool RunAnalysis { get; set; }
 
         public IActionResult OnGet()
         {
@@ -49,19 +52,7 @@ namespace APIViewWeb.Pages.Assemblies
                     assemblyModel.HasOriginal = true;
                     assemblyModel.OriginalFileName = file.FileName;
                     assemblyModel.TimeStamp = DateTime.UtcNow;
-                    AnalysisResult[] analysisResults = assemblyModel.BuildFromStream(memoryStream);
-
-                    AssemblyCommentsModel analysisComments = new AssemblyCommentsModel();
-                    analysisComments.Comments = Array.Empty<CommentModel>();
-                    foreach (var result in analysisResults) {
-                        var comment = new CommentModel();
-                        comment.Comment = FormatComment(result);
-                        comment.ElementId = result.TargetId;
-                        comment.Id = Guid.NewGuid().ToString();
-                        comment.TimeStamp = DateTime.UtcNow;
-                        comment.Username = "dotnet-bot";
-                        analysisComments.AddComment(comment);                    
-                    }
+                    AnalysisResult[] analysisResults = assemblyModel.BuildFromStream(memoryStream, RunAnalysis);
 
                     memoryStream.Position = 0;
 
@@ -69,9 +60,24 @@ namespace APIViewWeb.Pages.Assemblies
 
                     var id = await assemblyRepository.UploadAssemblyAsync(assemblyModel, originalStream);
 
-                    analysisComments.AssemblyId = id;
-                    await comments.UploadCommentsAsync(analysisComments);
-
+                    AssemblyCommentsModel analysisComments = new AssemblyCommentsModel();
+                    analysisComments.Comments = Array.Empty<CommentModel>();
+                    if (RunAnalysis)
+                    {
+                        foreach (var result in analysisResults)
+                        {
+                            var comment = new CommentModel();
+                            comment.Comment = FormatComment(result);
+                            comment.ElementId = result.TargetId;
+                            comment.Id = Guid.NewGuid().ToString();
+                            comment.TimeStamp = DateTime.UtcNow;
+                            comment.Username = "dotnet-bot";
+                            analysisComments.AddComment(comment);
+                        }
+                        analysisComments.AssemblyId = id;
+                        await comments.UploadCommentsAsync(analysisComments);
+                    }
+                    
                     return RedirectToPage("Review", new { id });
                 }
             }

@@ -83,7 +83,7 @@ namespace ApiView
                 }
             }
         }
-        public (CodeFile, AnalysisResult[]) Build(IAssemblySymbol assemblySymbol)
+        public (CodeFile, AnalysisResult[]) Build(IAssemblySymbol assemblySymbol, bool runAnalysis)
         {
             var navigationItems = new List<NavigationItem>();
             var analyzer = new Analyzer(assemblySymbol);
@@ -96,7 +96,10 @@ namespace ApiView
                     foreach (var namedTypeSymbol in SortTypes(namespaceSymbol.GetTypeMembers()))
                     {
                         var typeId = BuildType(builder, namedTypeSymbol, navigationItems);
-                        analyzer.Analyze(namedTypeSymbol);
+                        if (runAnalysis)
+                        {
+                            analyzer.Analyze(namedTypeSymbol);
+                        }
                     }
                 }
                 else

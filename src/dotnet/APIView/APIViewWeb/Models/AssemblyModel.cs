@@ -20,11 +20,11 @@ namespace APIViewWeb.Models
         {
         }
 
-        public AnalysisResult[] BuildFromStream(Stream assemblyStream)
+        public AnalysisResult[] BuildFromStream(Stream assemblyStream, bool runAnalysis)
         {
             var assemblySymbol = AssemblyApiView.GetCompilation(assemblyStream);
             AnalysisResult[] staticAnalysisResults;
-            (this.AssemblyNode, staticAnalysisResults) = new CodeFileBuilder().Build(assemblySymbol);
+            (this.AssemblyNode, staticAnalysisResults) = new CodeFileBuilder().Build(assemblySymbol, runAnalysis);
             this.Name = assemblySymbol.Name;
 
             return staticAnalysisResults;

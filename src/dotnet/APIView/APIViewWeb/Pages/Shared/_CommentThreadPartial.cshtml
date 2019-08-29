@@ -19,7 +19,7 @@
                                     <form class="comment-delete-button align-top" asp-page-handler="delete" method="post" asp-route-id="@Model.AssemblyId">
                                         <input type="hidden" name="commentId" value="@comment.Id" />
                                         <input type="hidden" name="elementId" value="@Model.LineId" />
-                                        @if (comment.Username == @User.GetGitHubLogin())
+                                        @if (comment.Username == @User.GetGitHubLogin() || comment.Username == "dotnet-bot")
                                         {
                                             <button id="@comment.Id" class="comment-delete-button-enabled btn align-top"><span class="comment-delete-text align-top">Delete</span></button>
                                         }

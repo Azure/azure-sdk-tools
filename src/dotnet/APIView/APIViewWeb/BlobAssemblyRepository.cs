@@ -88,7 +88,7 @@ namespace APIViewWeb
             assemblyModel.Id = guid;
             assemblyModel.HasOriginal = original != null;
             var assemblyComments = new AssemblyCommentsModel(guid);
-            await commentRepository.UploadAssemblyCommentsAsync(assemblyComments);
+            await commentRepository.UploadCommentsAsync(assemblyComments);
             var blob = ContainerClient.GetBlobClient(guid);
             
             await blob.UploadAsync(new MemoryStream(JsonSerializer.SerializeToUtf8Bytes(assemblyModel)));

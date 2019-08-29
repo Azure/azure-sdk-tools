@@ -8,12 +8,18 @@
 <form method="post" enctype="multipart/form-data">
     <div class="form-group">
         <label for="file">Upload an API assembly for review using this form:</label>
-        <input id="file" class="form-control-file"  type="file" name="file"/>
+        <input id="file" class="form-control-file" type="file" name="file" />
     </div>
     <div class="form-check">
         <input class="form-check-input" asp-for="KeepOriginal" checked>
         <label class="form-check-label">
             Keep original
+        </label>
+    </div>
+    <div class="form-check">
+        <input class="form-check-input" asp-for="RunAnalysis" checked>
+        <label class="form-check-label">
+            Run static analysis
         </label>
     </div>
     <button type="submit" class="btn btn-primary">Upload</button>

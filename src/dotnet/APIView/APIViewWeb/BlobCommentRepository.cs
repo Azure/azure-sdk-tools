@@ -41,7 +41,7 @@ namespace APIViewWeb
         /// </summary>
         /// <param name="assemblyComments">The comments in the review.</param>
         /// <returns></returns>
-        public async Task UploadAssemblyCommentsAsync(AssemblyCommentsModel assemblyComments)
+        public async Task UploadCommentsAsync(AssemblyCommentsModel assemblyComments)
         {
             var blob = ContainerClient.GetBlobClient(assemblyComments.AssemblyId);
 
@@ -63,7 +63,7 @@ namespace APIViewWeb
 
             AssemblyCommentsModel assemblyComments = await FetchCommentsAsync(assemblyId);
             assemblyComments.AddComment(commentModel);
-            await UploadAssemblyCommentsAsync(assemblyComments);
+            await UploadCommentsAsync(assemblyComments);
         }
 
         /// <summary>
@@ -86,7 +86,7 @@ namespace APIViewWeb
         {
             var assemblyComments = await FetchCommentsAsync(assemblyId);
             assemblyComments.DeleteComment(commentId);
-            await UploadAssemblyCommentsAsync(assemblyComments);
+            await UploadCommentsAsync(assemblyComments);
         }
     }
 }

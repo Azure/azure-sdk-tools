@@ -72,7 +72,7 @@ namespace PipelineGenerator.Conventions
                 if (prTrigger.SettingsSourceType != 1 ||
                     prTrigger.IsCommentRequiredForPullRequest != true ||
                     prTrigger.BranchFilters.All(bf => bf == $"+{Context.Branch}") ||
-                    prTrigger.Forks.AllowSecrets != false ||
+                    prTrigger.Forks.AllowSecrets != true ||
                     prTrigger.Forks.Enabled != true)
                 {
                     prTrigger.SettingsSourceType = 1;

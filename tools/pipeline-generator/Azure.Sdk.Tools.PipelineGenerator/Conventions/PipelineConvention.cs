@@ -18,6 +18,8 @@ namespace PipelineGenerator.Conventions
             Context = context;
         }
 
+        private const string ReportBuildStatusKey = "reportBuildStatus";
+
         protected ILogger Logger { get; }
         protected PipelineGenerationContext Context { get; }
 
@@ -218,6 +220,62 @@ namespace PipelineGenerator.Conventions
             return hasChanges;
         }
 
-        protected abstract Task<bool> ApplyConventionAsync(BuildDefinition definition, SdkComponent component);
+        private bool EnsureReportBuildStatus(BuildDefinition definition)
+        {
+            var hasChanges = false;
+
+            if (definition.Repository.Properties.TryGetValue(ReportBuildStatusKey, out var reportBuildStatusString))
+            {
+                if (!bool.TryParse(reportBuildStatusString, out var reportBuildStatusValue) || !reportBuildStatusValue)
+                {
+                    definition.Repository.Properties[ReportBuildStatusKey] = "true";
+                    hasChanges = true;
+                }
+            }
+            else
+            {
+                definition.Repository.Properties.Add(ReportBuildStatusKey, "true");
+                hasChanges = true;
+            }
+
+            return hasChanges;
+        }
+
+        protected virtual Task<bool> ApplyConventionAsync(BuildDefinition definition, SdkComponent component)
+        {
+            bool hasChanges = true;
+
+            if (EnsureVariableGroups(definition))
+            {
+                hasChanges = true;
+            }
+
+            if (EnsureReportBuildStatus(definition))
+            {
+                hasChanges = true;
+            }
+
+            if (definition.Path != $"\\{this.Context.DevOpsPath}")
+            {
+                definition.Path = $"\\{this.Context.DevOpsPath}";
+                hasChanges = true;
+            }
+
+            if (definition.Repository.Properties.TryGetValue(ReportBuildStatusKey, out var reportBuildStatusString))
+            {
+                if (!bool.TryParse(reportBuildStatusString, out var reportBuildStatusValue) || !reportBuildStatusValue)
+                {
+                    definition.Repository.Properties[ReportBuildStatusKey] = "true";
+                    hasChanges = true;
+                }
+            }
+            else
+            {
+                definition.Repository.Properties.Add(ReportBuildStatusKey, "true");
+                hasChanges = true;
+            }
+
+            return Task.FromResult(hasChanges);
+        }
     }
 }

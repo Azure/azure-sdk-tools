@@ -55,7 +55,7 @@ namespace PipelineGenerator
         public string Prefix { get; }
         public bool WhatIf { get; }
         public int[] VariableGroups => this.variableGroups;
-        public string DevOpsPath => this.devOpsPath;
+        public string DevOpsPath => string.IsNullOrEmpty(this.devOpsPath) ? Prefix : this.devOpsPath;
 
         private int[] ParseIntArray(string[] strs) 
             => strs.Select(str => int.Parse(str)).ToArray();

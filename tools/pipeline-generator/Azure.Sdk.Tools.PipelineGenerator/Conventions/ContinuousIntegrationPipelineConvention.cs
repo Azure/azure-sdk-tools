@@ -10,29 +10,16 @@ namespace PipelineGenerator.Conventions
 {
     public abstract class ContinuousIntegrationPipelineConvention : PipelineConvention
     {
-        private const string ReportBuildStatusKey = "reportBuildStatus";
-
         public ContinuousIntegrationPipelineConvention(ILogger logger, PipelineGenerationContext context) : base(logger, context)
         {
         }
 
-        protected override Task<bool> ApplyConventionAsync(BuildDefinition definition, SdkComponent component)
+        protected override async Task<bool> ApplyConventionAsync(BuildDefinition definition, SdkComponent component)
         {
             // NOTE: Not happy with this code at all, I'm going to look for a reasonable
             // API that can do equality comparisons (without having to do all the checks myself).
 
-            var hasChanges = false;
-
-            if (EnsureVariableGroups(definition))
-            {
-                hasChanges = true;
-            }
-
-            if (definition.Path != $"\\{this.Context.Prefix}")
-            {
-                definition.Path = $"\\{this.Context.Prefix}";
-                hasChanges = true;
-            }
+            var hasChanges = await ApplyConventionAsync(definition, component);
 
             var ciTrigger = definition.Triggers.OfType<ContinuousIntegrationTrigger>().SingleOrDefault();
 
@@ -72,7 +59,9 @@ namespace PipelineGenerator.Conventions
             else
             {
                 // TODO: We should probably be more complete here.
-                if (prTrigger.SettingsSourceType != 2 || prTrigger.Forks.AllowSecrets != false || prTrigger.Forks.Enabled != true)
+                if (prTrigger.SettingsSourceType != 2 ||
+                    prTrigger.Forks.AllowSecrets != false ||
+                    prTrigger.Forks.Enabled != true)
                 {
                     prTrigger.SettingsSourceType = 2;
                     prTrigger.Forks.AllowSecrets = false;
@@ -81,21 +70,7 @@ namespace PipelineGenerator.Conventions
                 }
             }
 
-            if (definition.Repository.Properties.TryGetValue(ReportBuildStatusKey, out var reportBuildStatusString))
-            {
-                if (!bool.TryParse(reportBuildStatusString, out var reportBuildStatusValue) || !reportBuildStatusValue)
-                {
-                    definition.Repository.Properties[ReportBuildStatusKey] = "true";
-                    hasChanges = true;
-                }
-            }
-            else
-            {
-                definition.Repository.Properties.Add(ReportBuildStatusKey, "true");
-                hasChanges = true;
-            }
-
-            return Task.FromResult(hasChanges);
+            return hasChanges;
         }
     }
 }

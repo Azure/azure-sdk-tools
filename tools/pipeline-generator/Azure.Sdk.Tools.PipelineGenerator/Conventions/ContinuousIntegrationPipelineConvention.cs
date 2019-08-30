@@ -19,7 +19,7 @@ namespace PipelineGenerator.Conventions
             // NOTE: Not happy with this code at all, I'm going to look for a reasonable
             // API that can do equality comparisons (without having to do all the checks myself).
 
-            var hasChanges = await ApplyConventionAsync(definition, component);
+            var hasChanges = await base.ApplyConventionAsync(definition, component);
 
             var ciTrigger = definition.Triggers.OfType<ContinuousIntegrationTrigger>().SingleOrDefault();
 

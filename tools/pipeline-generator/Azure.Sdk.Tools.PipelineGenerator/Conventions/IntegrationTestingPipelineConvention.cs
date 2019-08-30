@@ -36,16 +36,9 @@ namespace PipelineGenerator.Conventions
             return $"{Context.Prefix} - {component.Name} - tests";
         }
 
-        protected override Task<bool> ApplyConventionAsync(BuildDefinition definition, SdkComponent component)
+        protected override async Task<bool> ApplyConventionAsync(BuildDefinition definition, SdkComponent component)
         {
-            var hasChanges = false;
-
-            // Ensure Path
-            if (definition.Path != this.Context.DevOpsPath)
-            {
-                definition.Path = this.Context.DevOpsPath;
-                hasChanges = true;
-            }
+            var hasChanges = await base.ApplyConventionAsync(definition, component);
 
             // Ensure Schedule Trigger
             var scheduleTriggers = definition.Triggers.OfType<ScheduleTrigger>();
@@ -89,19 +82,7 @@ namespace PipelineGenerator.Conventions
                 }
             }
 
-            // Ensure Variable Group
-            if(EnsureVariableGroups(definition))
-            {
-                hasChanges = true;
-            }
-
-            // Ensure "Report Build Status" is set
-            if (EnsureReportBuildStatus(definition))
-            {
-                hasChanges = true;
-            }
-
-            return Task.FromResult(hasChanges);
+            return hasChanges;
         }
 
         private int HashBucket(string pipelineName)
@@ -147,49 +128,6 @@ namespace PipelineGenerator.Conventions
             if (!target.IsCommentRequiredForPullRequest)
             {
                 target.IsCommentRequiredForPullRequest = true;
-                hasChanges = true;
-            }
-
-            return hasChanges;
-        }
-
-        private bool EnsureVariableGroups(BuildDefinition definition)
-        {
-            var hasChanges = false; 
-
-            var definitionVariableGroupSet = definition.VariableGroups
-                .Select(group => group.Id)
-                .ToHashSet();
-
-            var parameterGroupSet = this.Context.VariableGroups.ToHashSet();
-
-            var idsToAdd = parameterGroupSet.Except(definitionVariableGroupSet);
-            if (idsToAdd.Any())
-            {
-                hasChanges = true; 
-            }
-            var groupsToAdd = idsToAdd.Select(id => new VariableGroup { Id = id });
-
-            definition.VariableGroups.AddRange(groupsToAdd);
-
-            return hasChanges;
-        }
-
-        private bool EnsureReportBuildStatus(BuildDefinition definition)
-        {
-            var hasChanges = false;
-
-            if (definition.Repository.Properties.TryGetValue(ReportBuildStatusKey, out var reportBuildStatusString))
-            {
-                if (!bool.TryParse(reportBuildStatusString, out var reportBuildStatusValue) || !reportBuildStatusValue)
-                {
-                    definition.Repository.Properties[ReportBuildStatusKey] = "true";
-                    hasChanges = true;
-                }
-            }
-            else
-            {
-                definition.Repository.Properties.Add(ReportBuildStatusKey, "true");
                 hasChanges = true;
             }
 

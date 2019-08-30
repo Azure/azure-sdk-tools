@@ -8,15 +8,15 @@ using System.Threading.Tasks;
 
 namespace PipelineGenerator.Conventions
 {
-    public class PullRequestValidationPipelineConvention : ContinuousIntegrationPipelineConvention
+    public class UnifiedPipelineConvention : ContinuousIntegrationPipelineConvention
     {
-        public PullRequestValidationPipelineConvention(ILogger logger, PipelineGenerationContext context) : base(logger, context)
+        public UnifiedPipelineConvention(ILogger logger, PipelineGenerationContext context) : base(logger, context)
         {
         }
 
         protected override string GetDefinitionName(SdkComponent component)
         {
-            return $"{Context.Prefix} - {component.Name} - ci";
+            return $"{Context.Prefix} - {component.Name}";
         }
 
         public override string SearchPattern => "ci.yml";
@@ -51,13 +51,17 @@ namespace PipelineGenerator.Conventions
 
             if (prTrigger == null)
             {
-                // TODO: We should probably be more complete here.
                 definition.Triggers.Add(new PullRequestTrigger()
                 {
-                    SettingsSourceType = 2, // HACK: See above.
+                    SettingsSourceType = 1, // HACK: See above.
+                    IsCommentRequiredForPullRequest = true,
+                    BranchFilters = new List<string>()
+                    {
+                        $"+{Context.Branch}"
+                    },
                     Forks = new Forks()
                     {
-                        AllowSecrets = false,
+                        AllowSecrets = true,
                         Enabled = true
                     }
                 });
@@ -65,11 +69,19 @@ namespace PipelineGenerator.Conventions
             }
             else
             {
-                // TODO: We should probably be more complete here.
-                if (prTrigger.SettingsSourceType != 2 || prTrigger.Forks.AllowSecrets != false || prTrigger.Forks.Enabled != true)
+                if (prTrigger.SettingsSourceType != 1 ||
+                    prTrigger.IsCommentRequiredForPullRequest != true ||
+                    prTrigger.BranchFilters.All(bf => bf == $"+{Context.Branch}") ||
+                    prTrigger.Forks.AllowSecrets != true ||
+                    prTrigger.Forks.Enabled != true)
                 {
-                    prTrigger.SettingsSourceType = 2;
-                    prTrigger.Forks.AllowSecrets = false;
+                    prTrigger.SettingsSourceType = 1;
+                    prTrigger.IsCommentRequiredForPullRequest = true;
+                    prTrigger.BranchFilters = new List<string>()
+                    {
+                        $"+{Context.Branch}"
+                    };
+                    prTrigger.Forks.AllowSecrets = true;
                     prTrigger.Forks.Enabled = true;
                     hasChanges = true;
                 }

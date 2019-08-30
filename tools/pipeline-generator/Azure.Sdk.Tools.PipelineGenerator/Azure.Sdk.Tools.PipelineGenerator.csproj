@@ -8,6 +8,8 @@
     <ToolCommandName>pipeline-generator</ToolCommandName>
 
     <VersionPrefix>1.0.1</VersionPrefix>
+
+    <AssemblyName>Azure.Sdk.Tools.PipelineGenerator</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>

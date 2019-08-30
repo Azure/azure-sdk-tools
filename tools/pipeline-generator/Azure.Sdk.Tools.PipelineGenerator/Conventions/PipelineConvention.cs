@@ -18,6 +18,8 @@ namespace PipelineGenerator.Conventions
             Context = context;
         }
 
+        private const string ReportBuildStatusKey = "reportBuildStatus";
+
         protected ILogger Logger { get; }
         protected PipelineGenerationContext Context { get; }
 
@@ -196,6 +198,84 @@ namespace PipelineGenerator.Conventions
             return definition;
         }
 
-        protected abstract Task<bool> ApplyConventionAsync(BuildDefinition definition, SdkComponent component);
+        protected bool EnsureVariableGroups(BuildDefinition definition)
+        {
+            var hasChanges = false;
+
+            var definitionVariableGroupSet = definition.VariableGroups
+                .Select(group => group.Id)
+                .ToHashSet();
+
+            var parameterGroupSet = this.Context.VariableGroups.ToHashSet();
+
+            var idsToAdd = parameterGroupSet.Except(definitionVariableGroupSet);
+            if (idsToAdd.Any())
+            {
+                hasChanges = true;
+            }
+            var groupsToAdd = idsToAdd.Select(id => new VariableGroup { Id = id });
+
+            definition.VariableGroups.AddRange(groupsToAdd);
+
+            return hasChanges;
+        }
+
+        private bool EnsureReportBuildStatus(BuildDefinition definition)
+        {
+            var hasChanges = false;
+
+            if (definition.Repository.Properties.TryGetValue(ReportBuildStatusKey, out var reportBuildStatusString))
+            {
+                if (!bool.TryParse(reportBuildStatusString, out var reportBuildStatusValue) || !reportBuildStatusValue)
+                {
+                    definition.Repository.Properties[ReportBuildStatusKey] = "true";
+                    hasChanges = true;
+                }
+            }
+            else
+            {
+                definition.Repository.Properties.Add(ReportBuildStatusKey, "true");
+                hasChanges = true;
+            }
+
+            return hasChanges;
+        }
+
+        protected virtual Task<bool> ApplyConventionAsync(BuildDefinition definition, SdkComponent component)
+        {
+            bool hasChanges = true;
+
+            if (EnsureVariableGroups(definition))
+            {
+                hasChanges = true;
+            }
+
+            if (EnsureReportBuildStatus(definition))
+            {
+                hasChanges = true;
+            }
+
+            if (definition.Path != $"\\{this.Context.DevOpsPath}")
+            {
+                definition.Path = $"\\{this.Context.DevOpsPath}";
+                hasChanges = true;
+            }
+
+            if (definition.Repository.Properties.TryGetValue(ReportBuildStatusKey, out var reportBuildStatusString))
+            {
+                if (!bool.TryParse(reportBuildStatusString, out var reportBuildStatusValue) || !reportBuildStatusValue)
+                {
+                    definition.Repository.Properties[ReportBuildStatusKey] = "true";
+                    hasChanges = true;
+                }
+            }
+            else
+            {
+                definition.Repository.Properties.Add(ReportBuildStatusKey, "true");
+                hasChanges = true;
+            }
+
+            return Task.FromResult(hasChanges);
+        }
     }
 }

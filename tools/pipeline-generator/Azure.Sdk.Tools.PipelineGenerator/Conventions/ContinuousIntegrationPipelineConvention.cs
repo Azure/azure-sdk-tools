@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.Build.WebApi;
 using System;
 using System.Collections.Generic;
@@ -8,25 +8,18 @@ using System.Threading.Tasks;
 
 namespace PipelineGenerator.Conventions
 {
-    public class PullRequestValidationPipelineConvention : ContinuousIntegrationPipelineConvention
+    public abstract class ContinuousIntegrationPipelineConvention : PipelineConvention
     {
-        public PullRequestValidationPipelineConvention(ILogger logger, PipelineGenerationContext context) : base(logger, context)
+        public ContinuousIntegrationPipelineConvention(ILogger logger, PipelineGenerationContext context) : base(logger, context)
         {
         }
-
-        protected override string GetDefinitionName(SdkComponent component)
-        {
-            return $"{Context.Prefix} - {component.Name} - ci";
-        }
-
-        public override string SearchPattern => "ci.yml";
 
         protected override async Task<bool> ApplyConventionAsync(BuildDefinition definition, SdkComponent component)
         {
             // NOTE: Not happy with this code at all, I'm going to look for a reasonable
             // API that can do equality comparisons (without having to do all the checks myself).
 
-            var hasChanges = await base.ApplyConventionAsync(definition, component);
+            var hasChanges = await ApplyConventionAsync(definition, component);
 
             var ciTrigger = definition.Triggers.OfType<ContinuousIntegrationTrigger>().SingleOrDefault();
 
@@ -66,7 +59,9 @@ namespace PipelineGenerator.Conventions
             else
             {
                 // TODO: We should probably be more complete here.
-                if (prTrigger.SettingsSourceType != 2 || prTrigger.Forks.AllowSecrets != false || prTrigger.Forks.Enabled != true)
+                if (prTrigger.SettingsSourceType != 2 ||
+                    prTrigger.Forks.AllowSecrets != false ||
+                    prTrigger.Forks.Enabled != true)
                 {
                     prTrigger.SettingsSourceType = 2;
                     prTrigger.Forks.AllowSecrets = false;

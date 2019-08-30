@@ -55,7 +55,7 @@ namespace PipelineGenerator
             var branchOption = app.Option("--branch <branch>", "Typically refs/heads/master.", CommandOptionType.SingleValue).IsRequired();
             var agentpoolOption = app.Option("--agentpool <agentpool>", "Name of the agent pool to use when pool isn't speciifed.", CommandOptionType.SingleValue).IsRequired();
             var conventionOption = app.Option("--convention <convention>", "What convention are you building pipelines for?", CommandOptionType.SingleValue).IsRequired();
-            var variablegroupsOption = app.Option("--variablegroups <variablegroup>", "Comma seperated list of variable groups.", CommandOptionType.MultipleValue);
+            var variablegroupsOption = app.Option("--variablegroup <variablegroup>", "Comma seperated list of variable groups.", CommandOptionType.MultipleValue);
             var whatifOption = app.Option("--whatif", "Use this to understand what will happen, but don't change anything.", CommandOptionType.NoValue);
             var openOption = app.Option("--open", "Open a browser window to the definitions that are created.", CommandOptionType.NoValue);
             var destroyOption = app.Option("--destroy", "Use this switch to delete the pipelines instead (DANGER!)", CommandOptionType.NoValue);
@@ -111,6 +111,10 @@ namespace PipelineGenerator
                     var ciLogger = serviceProvider.GetService<ILogger<PullRequestValidationPipelineConvention>>();
                     return new PullRequestValidationPipelineConvention(ciLogger, context);
 
+                case "up":
+                    var upLogger = serviceProvider.GetService<ILogger<UnifiedPipelineConvention>>();
+                    return new UnifiedPipelineConvention(upLogger, context);
+
                 case "tests":
                     var testLogger = serviceProvider.GetService<ILogger<IntegrationTestingPipelineConvention>>();
                     return new IntegrationTestingPipelineConvention(testLogger, context);
@@ -143,7 +147,6 @@ namespace PipelineGenerator
 
                 // Fall back to a form of prefix if DevOps path is not specified
                 var devOpsPathValue = string.IsNullOrEmpty(devOpsPath) ? $"\\{prefix}" : devOpsPath;
-
 
                 var context = new PipelineGenerationContext(
                     organization,

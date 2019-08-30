@@ -7,7 +7,7 @@
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>pipeline-generator</ToolCommandName>
 
-    <VersionPrefix>1.0.1</VersionPrefix>
+    <VersionPrefix>1.0.2</VersionPrefix>
 
     <AssemblyName>Azure.Sdk.Tools.PipelineGenerator</AssemblyName>
   </PropertyGroup>

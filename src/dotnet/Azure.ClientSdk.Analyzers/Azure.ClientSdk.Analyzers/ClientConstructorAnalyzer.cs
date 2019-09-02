@@ -20,42 +20,6 @@ namespace Azure.ClientSdk.Analyzers
             Descriptors.AZC0007
         });
 
-        protected override void AnalyzeClientType(SymbolAnalysisContext context)
-        {
-            var typeSymbol = (INamedTypeSymbol)context.Symbol;
-            if (!typeSymbol.Constructors.Any(c => (c.DeclaredAccessibility == Accessibility.Protected || c.DeclaredAccessibility == Accessibility.Public) && c.Parameters.Length == 0))
-            {
-                context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0005, typeSymbol.Locations.First()));
-            }
-
-            foreach (var constructor in typeSymbol.Constructors)
-            {
-                if (constructor.DeclaredAccessibility == Accessibility.Public)
-                {
-                    if (IsClientOptionsParameter(constructor.Parameters.LastOrDefault()))
-                    {
-                        var nonOptionsMethod = FindMethod(
-                            typeSymbol.Constructors, constructor.Parameters.RemoveAt(constructor.Parameters.Length - 1));
-
-                        if (nonOptionsMethod == null || nonOptionsMethod.DeclaredAccessibility != Accessibility.Public)
-                        {
-                            context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0006, constructor.Locations.First(), GetOptionsTypeName(typeSymbol)));
-                        }
-                    }
-                    else
-                    {
-                        var optionsMethod = FindMethod(
-                            typeSymbol.Constructors, constructor.Parameters, IsClientOptionsParameter);
-
-                        if (optionsMethod == null || optionsMethod.DeclaredAccessibility != Accessibility.Public)
-                        {
-                            context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0007, constructor.Locations.First(), GetOptionsTypeName(typeSymbol)));
-                        }
-                    }
-                }
-            }
-        }
-
         private bool IsClientOptionsParameter(IParameterSymbol symbol)
         {
             if (symbol == null)
@@ -69,6 +33,41 @@ namespace Azure.ClientSdk.Analyzers
         private static string GetOptionsTypeName(INamedTypeSymbol symbol)
         {
             return symbol.Name + "Options";
+        }
+
+        public override void AnalyzeCore(INamedTypeSymbol type, IAnalysisHost host)
+        {
+            if (!type.Constructors.Any(c => (c.DeclaredAccessibility == Accessibility.Protected || c.DeclaredAccessibility == Accessibility.Public) && c.Parameters.Length == 0))
+            {
+                host.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0005, type.Locations.First()), type);
+            }
+
+            foreach (var constructor in type.Constructors)
+            {
+                if (constructor.DeclaredAccessibility == Accessibility.Public)
+                {
+                    if (IsClientOptionsParameter(constructor.Parameters.LastOrDefault()))
+                    {
+                        var nonOptionsMethod = FindMethod(
+                            type.Constructors, constructor.Parameters.RemoveAt(constructor.Parameters.Length - 1));
+
+                        if (nonOptionsMethod == null || nonOptionsMethod.DeclaredAccessibility != Accessibility.Public)
+                        {
+                            host.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0006, constructor.Locations.First(), GetOptionsTypeName(type)), constructor);
+                        }
+                    }
+                    else
+                    {
+                        var optionsMethod = FindMethod(
+                            type.Constructors, constructor.Parameters, IsClientOptionsParameter);
+
+                        if (optionsMethod == null || optionsMethod.DeclaredAccessibility != Accessibility.Public)
+                        {
+                            host.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0007, constructor.Locations.First(), GetOptionsTypeName(type)), constructor);
+                        }
+                    }
+                }
+            }
         }
     }
 }

@@ -9,22 +9,6 @@ namespace PipelineGenerator.Conventions
 {
     public class IntegrationTestingPipelineConvention : PipelineConvention
     {
-        /// <summary>
-        /// Key in repository properties dictionary for reporting build status
-        /// </summary>
-        private const string ReportBuildStatusKey = "reportBuildStatus";
-
-        /// <summary>
-        /// Start hour (3AM)
-        /// </summary>
-        private const int StartHourOffset = 3;
-
-        /// <summary>
-        /// Number of buckets for hour hashing
-        /// </summary>
-        private const int HourBuckets = 3;
-
-
         public override string SearchPattern => "tests.yml";
 
         public IntegrationTestingPipelineConvention(ILogger logger, PipelineGenerationContext context) : base(logger, context)
@@ -83,11 +67,6 @@ namespace PipelineGenerator.Conventions
             }
 
             return hasChanges;
-        }
-
-        private int HashBucket(string pipelineName)
-        {
-            return pipelineName.GetHashCode() % HourBuckets;
         }
 
         private PullRequestTrigger GetDefaultPrTrigger()

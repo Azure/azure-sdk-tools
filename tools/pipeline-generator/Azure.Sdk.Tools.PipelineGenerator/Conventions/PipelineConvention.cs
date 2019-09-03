@@ -241,6 +241,21 @@ namespace PipelineGenerator.Conventions
             return hasChanges;
         }
 
+        /// <summary>
+        /// Start hour (3AM)
+        /// </summary>
+        protected const int StartHourOffset = 3;
+
+        /// <summary>
+        /// Number of buckets for hour hashing
+        /// </summary>
+        protected const int HourBuckets = 3;
+
+        protected int HashBucket(string pipelineName)
+        {
+            return pipelineName.GetHashCode() % HourBuckets;
+        }
+
         protected virtual Task<bool> ApplyConventionAsync(BuildDefinition definition, SdkComponent component)
         {
             bool hasChanges = true;

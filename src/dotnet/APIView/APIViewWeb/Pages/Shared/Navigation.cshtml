@@ -1,0 +1,26 @@
+﻿@model IEnumerable<APIView.NavigationItem>
+
+<ul class="nav-list-children">
+        @foreach (var item in Model)
+        {
+            <li class="nav-list-group">
+                @if (item.ChildItems.Any())
+                {
+                    <span class="nav-list-toggle"></span>
+                }
+
+                @if (item.Tags != null && item.Tags.ContainsKey("TypeKind"))
+                {
+                    <span class="type_@item.Tags.GetValueOrDefault("TypeKind")">&nbsp;&nbsp;</span>
+                }
+                else
+                {
+                    <span class="type_unknown">&nbsp;&nbsp;</span>
+                }
+
+                <a href="#@item.NavigationId" title="@item.Text">@item.Text</a>
+
+                <partial name="Shared/Navigation" model="item.ChildItems"/>
+            </li>
+        }
+</ul>

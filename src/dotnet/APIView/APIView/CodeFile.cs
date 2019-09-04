@@ -9,7 +9,7 @@ namespace ApiView
 {
     public class CodeFile
     {
-        public const int CurrentVersion = 5;
+        public const int CurrentVersion = 6;
 
         public int Version { get; set; }
 

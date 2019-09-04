@@ -85,10 +85,10 @@ namespace ApiView
         }
         public (CodeFile, AnalysisResult[]) Build(IAssemblySymbol assemblySymbol, bool runAnalysis)
         {
-            var navigationItems = new List<NavigationItem>();
             var analyzer = new Analyzer(assemblySymbol);
 
             var builder = new CodeFileTokensBuilder();
+            var navigationItems = new List<NavigationItem>();
             foreach (var namespaceSymbol in EnumerateNamespaces(assemblySymbol))
             {
                 if (namespaceSymbol.IsGlobalNamespace)
@@ -108,12 +108,20 @@ namespace ApiView
                 }
             }
 
+            NavigationItem assemblyNavigationItem = new NavigationItem()
+            {
+                Text = assemblySymbol.Name + ".dll",
+                ChildItems = navigationItems.ToArray(),
+                Tags = { {"TypeKind", "assembly"} }
+            };
+
             var node = new CodeFile()
             {
                 Tokens = builder.Tokens.ToArray(),
                 Version = CodeFile.CurrentVersion,
-                Navigation = navigationItems,
+                Navigation = new List<NavigationItem>() { assemblyNavigationItem },
             };
+
             return (node, analyzer.CreateResults());
         }
 
@@ -136,7 +144,7 @@ namespace ApiView
             }
 
             CloseBrace(builder);
-            
+
             var namespaceItem = new NavigationItem()
             {
                 NavigationId = namespaceSymbol.GetId(),
@@ -172,10 +180,10 @@ namespace ApiView
             var navigationItem = new NavigationItem()
             {
                 NavigationId = namedType.GetId(),
-                Text = namedType.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat),                
+                Text = namedType.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat),
             };
             navigationBuilder.Add(navigationItem);
-            navigationItem.Tags.Add("TypeKind", "type_"+namedType.TypeKind.ToString().ToLowerInvariant());
+            navigationItem.Tags.Add("TypeKind", namedType.TypeKind.ToString().ToLowerInvariant());
 
             builder.WriteIndent();
             NodeFromSymbol(builder, namedType, true);
@@ -243,10 +251,10 @@ namespace ApiView
             {
                 builder.Punctuation(SyntaxKind.SemicolonToken);
             }
-            
+
             builder.NewLine();
         }
-        
+
         private IEnumerable<T> SortTypes<T>(IEnumerable<T> symbols) where T: ITypeSymbol
         {
             return symbols.OrderBy(t => (GetTypeOrder(t), t.DeclaredAccessibility != Accessibility.Public, t.Name));
@@ -292,7 +300,7 @@ namespace ApiView
             {
                 return 3;
             }
-            
+
             return 0;
         }
 
@@ -302,7 +310,7 @@ namespace ApiView
             {
                 case IFieldSymbol fieldSymbol when fieldSymbol.ContainingType.TypeKind == TypeKind.Enum:
                     return (int)Convert.ToInt64(fieldSymbol.ConstantValue);
-                
+
                 case IMethodSymbol methodSymbol when methodSymbol.MethodKind == MethodKind.Constructor:
                     return -10;
 

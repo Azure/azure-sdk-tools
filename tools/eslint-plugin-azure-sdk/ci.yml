@@ -75,5 +75,5 @@ stages:
         DependsOn: Build
         ArtifactName: packages
         Artifacts:
-          - name: azure-eslink-plugin-azure-sdk
-            safeName: azureeslinkpluginazuresdk
+          - name: azure-eslint-plugin-azure-sdk
+            safeName: azureeslintpluginazuresdk

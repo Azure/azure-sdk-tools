@@ -13,7 +13,7 @@ steps:
         import os
         import sys
 
-        source_directory = "${{ parameters.SourceDirectory }}"
+        source_directory = r'${{ parameters.SourceDirectory }}'
         longest_file_path = ''
         longest_file_path_length = 0
         longest_dir_path = ''

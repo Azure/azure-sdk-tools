@@ -1,3 +1,9 @@
+resources:
+  repositories:
+    - repository: azure-sdk-build-tools
+      type: git
+      name: internal/azure-sdk-build-tools
+      
 trigger:
   branches:
     include:
@@ -64,55 +70,10 @@ stages:
 
   # The Prerelease and Release stages are conditioned on whether we are building a pull request and the branch.
   - ${{if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
-    - stage: Prerelease
-      dependsOn: Build
-      jobs:
-        - deployment: PublishPackage
-          environment: azure-sdk
-          
-          pool:
-            vmImage: ubuntu-16.04
-
-          strategy:
-            runOnce:
-              deploy:
-                steps:
-                  - script: |
-                      export DETECTED_PACKAGE_NAME=`ls $(Pipeline.Workspace)/packages/*.tgz`
-                      echo "##vso[task.setvariable variable=Package.Archive]$DETECTED_PACKAGE_NAME"
-                    displayName: Detecting package archive
-
-                  - task: Npm@1
-                    inputs:
-                      command: 'custom'
-                      workingDir: '$(Pipeline.Workspace)/packages'
-                      customCommand: 'publish $(Package.Archive)'
-                      customRegistry: 'useFeed'
-                      customFeed: '29ec6040-b234-4e31-b139-33dc4287b756/12354d14-c9a7-4f21-97dc-d3b97f89d71d'
-                    displayName: 'Publish package to azure-sdk public feed'
-
-    - stage: Release
-      dependsOn: Prerelease
-      jobs:
-        - deployment: PublishPackage
-          environment: npm
-          
-          pool:
-            vmImage: ubuntu-16.04
-
-          strategy:
-            runOnce:
-              deploy:
-                steps:
-                  - script: |
-                      export DETECTED_PACKAGE_NAME=`ls $(Pipeline.Workspace)/packages/*.tgz`
-                      echo "##vso[task.setvariable variable=Package.Archive]$DETECTED_PACKAGE_NAME"
-                    displayName: Detecting package archive
-
-                  - task: Npm@1
-                    inputs:
-                      command: 'custom'
-                      workingDir: '$(Pipeline.Workspace)/packages'
-                      customCommand: 'publish $(Package.Archive) --access=public'
-                      customEndpoint: 'NPM @azure'
-                    displayName: 'Publish to npmjs.org'
+    - template: pipelines/stages/archetype-js-release.yml@azure-sdk-build-tools
+      parameters:
+        DependsOn: Build
+        ArtifactName: packages
+        Artifacts:
+          - name: azure-eslink-plugin-azure-sdk
+            safeName: azureeslinkpluginazuresdk

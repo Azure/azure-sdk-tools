@@ -37,11 +37,14 @@ namespace NotificationConfiguration
         public List<string> GetContactsForPath(string path)
         {
             var result = expressionContacts
-                .LastOrDefault(expr => path.StartsWith(expr.GlobExpression));
+                .Where(expr => path.StartsWith(expr.GlobExpression))
+                .SelectMany(item => item.Contacts)
+                .ToHashSet()
+                .ToList();
 
             return result == default
                 ? new List<string>()
-                : result.Contacts;
+                : result;
         }
 
         /// <summary>

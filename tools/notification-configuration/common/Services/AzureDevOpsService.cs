@@ -109,13 +109,15 @@ namespace NotificationConfiguration.Services
         /// Returns teams in the given project
         /// </summary>
         /// <param name="projectName">Name of the project</param>
+        /// <param name="skip">Number of entries to skip</param>
+        /// <param name="top">Maximum number of entries to return</param>
         /// <returns>Teams that satisfy given criteria</returns>
-        public async Task<IEnumerable<WebApiTeam>> GetTeamsAsync(string projectName)
+        public async Task<IEnumerable<WebApiTeam>> GetTeamsAsync(string projectName, int skip = 0, int top = int.MaxValue)
         {
             var client = await GetClientAsync<TeamHttpClient>();
 
             logger.LogInformation("GetTeamsAsync ProjectName = {0}", projectName);
-            var teams = await client.GetTeamsAsync(projectName);
+            var teams = await client.GetTeamsAsync(projectName, skip: skip, top: top);
 
             return teams;
         }

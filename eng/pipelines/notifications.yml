@@ -12,6 +12,8 @@ stages:
   jobs:
   - job: Run
     strategy:
+      # Running all entries simultaneously causes "Service Unavailable" errors
+      maxParallel: 2
       matrix:
         NET:
           PathPrefix: 'net'

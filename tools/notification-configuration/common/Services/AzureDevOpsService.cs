@@ -115,7 +115,7 @@ namespace NotificationConfiguration.Services
             var client = await GetClientAsync<TeamHttpClient>();
 
             logger.LogInformation("GetTeamsAsync ProjectName = {0}", projectName);
-            var teams = await client.GetTeamsAsync(projectName);
+            var teams = await client.GetTeamsAsync(projectName, top: int.MaxValue);
 
             return teams;
         }

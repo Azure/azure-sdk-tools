@@ -4,10 +4,7 @@
         @foreach (var item in Model)
         {
             <li class="nav-list-group">
-                @if (item.ChildItems.Any())
-                {
-                    <span class="nav-list-toggle"></span>
-                }
+                <span class="nav-list-toggle @(item.ChildItems.Any() ? "":"invisible")"></span>
 
                 @if (item.Tags != null && item.Tags.ContainsKey("TypeKind"))
                 {

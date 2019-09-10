@@ -117,6 +117,7 @@ namespace ApiView
 
             var node = new CodeFile()
             {
+                Name = assemblySymbol.Name,
                 Tokens = builder.Tokens.ToArray(),
                 Version = CodeFile.CurrentVersion,
                 Navigation = new List<NavigationItem>() { assemblyNavigationItem },

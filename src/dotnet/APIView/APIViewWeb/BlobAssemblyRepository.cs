@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Linq;
 using System.Text.Json;
+using Azure;
 
 namespace APIViewWeb
 {
@@ -71,10 +72,7 @@ namespace APIViewWeb
         {
             var result = await ContainerClient.GetBlobClient(id).DownloadAsync();
 
-            using (StreamReader reader = new StreamReader(result.Value.Content))
-            {
-                return JsonSerializer.Deserialize<AssemblyModel>(reader.ReadToEnd());
-            }
+            return await AssemblyModel.DeserializeAsync(result.Value.Content);
         }
 
         /// <summary>
@@ -90,8 +88,11 @@ namespace APIViewWeb
             var assemblyComments = new AssemblyCommentsModel(guid);
             await commentRepository.UploadCommentsAsync(assemblyComments);
             var blob = ContainerClient.GetBlobClient(guid);
-            
-            await blob.UploadAsync(new MemoryStream(JsonSerializer.SerializeToUtf8Bytes(assemblyModel)));
+
+            var stream = new MemoryStream();
+            await assemblyModel.SerializeAsync(stream);
+            stream.Position = 0;
+            await blob.UploadAsync(stream);
 
             if (original != null)
             {
@@ -111,6 +112,14 @@ namespace APIViewWeb
         {
             await ContainerClient.GetBlobClient(id).DeleteAsync();
             await commentRepository.DeleteAssemblyCommentsAsync(id);
+            var originalBlob = OriginalsContainer.GetBlobClient(id);
+            try
+            {
+                await originalBlob.DeleteAsync();
+            }
+            catch (RequestFailedException)
+            {
+            }
         }
 
         public async Task<Stream> GetOriginalAsync(string id)

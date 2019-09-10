@@ -44,7 +44,7 @@ namespace APIViewWeb.Pages.Assemblies
                 using (var memoryStream = new MemoryStream())
                 {
                     await file.CopyToAsync(memoryStream);
-                    
+
                     memoryStream.Position = 0;
 
                     AssemblyModel assemblyModel = new AssemblyModel();
@@ -52,7 +52,19 @@ namespace APIViewWeb.Pages.Assemblies
                     assemblyModel.HasOriginal = true;
                     assemblyModel.OriginalFileName = file.FileName;
                     assemblyModel.TimeStamp = DateTime.UtcNow;
-                    AnalysisResult[] analysisResults = assemblyModel.BuildFromStream(memoryStream, RunAnalysis);
+
+                    AnalysisResult[] analysisResults = null;
+                    if (file.FileName.EndsWith(".json"))
+                    {
+                        await assemblyModel.BuildFromJsonAsync(memoryStream);
+                        // Original and analysis doesn't matter
+                        KeepOriginal = false;
+                        RunAnalysis = false;
+                    }
+                    else
+                    {
+                        analysisResults = assemblyModel.BuildFromStream(memoryStream, RunAnalysis);
+                    }
 
                     memoryStream.Position = 0;
 
@@ -77,7 +89,7 @@ namespace APIViewWeb.Pages.Assemblies
                         analysisComments.AssemblyId = id;
                         await comments.UploadCommentsAsync(analysisComments);
                     }
-                    
+
                     return RedirectToPage("Review", new { id });
                 }
             }

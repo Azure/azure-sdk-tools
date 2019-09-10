@@ -23,12 +23,8 @@ namespace APIViewWeb.Pages.Assemblies
             }
 
             var assemblyModel = await assemblyRepository.ReadAssemblyContentAsync(id);
-            AssemblyName = assemblyModel.Name.ToString();
+            AssemblyName = assemblyModel.Name;
 
-            if (AssemblyName == null)
-            {
-                return NotFound();
-            }
             return Page();
         }
 

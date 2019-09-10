@@ -150,7 +150,8 @@ namespace ApiView
             {
                 NavigationId = namespaceSymbol.GetId(),
                 Text = namespaceSymbol.ToDisplayString(),
-                ChildItems = namespaceItems.ToArray()
+                ChildItems = namespaceItems.ToArray(),
+                Tags = { {"TypeKind", "namespace"} }
             };
             navigationItems.Add(namespaceItem);
             return namespaceItem.NavigationId;

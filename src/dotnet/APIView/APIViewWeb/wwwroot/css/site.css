@@ -381,3 +381,7 @@ code-inner {
 .type_assembly {
     background: url(/icons/assembly.png) center left no-repeat;
 }
+
+.type_namespace {
+    background: url(/icons/namespace.png) center left no-repeat;
+}

@@ -7,15 +7,20 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using Microsoft.Extensions.Primitives;
-using System.Reflection.Metadata.Ecma335;
 using Octokit;
 using Octokit.Internal;
-using GitHubJwt;
-using Azure.Sdk.Tools.CheckEnforcer.Integrations.GitHubJwt;
 using System.Collections;
 using System.Collections.Generic;
+using Azure.Security.KeyVault.Keys;
+using Azure.Identity;
+using System.Threading;
+using Azure.Security.KeyVault.Keys.Cryptography;
+using System.Security.Cryptography.X509Certificates;
+using System.IdentityModel.Tokens.Jwt;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using System.Security.Cryptography;
 
 namespace Azure.Sdk.Tools.CheckEnforcer
 {
@@ -24,38 +29,83 @@ namespace Azure.Sdk.Tools.CheckEnforcer
         private const string ApplicationName = "check-enforcer";
         private const string GitHubEventHeader = "X-GitHub-Event";
 
-        private static IPrivateKeySource GetPrivateKeySource()
-        {
-            var privateKeySource = new KeyVaultPrivateKeySource();
-            return privateKeySource;
-        }
-
         private static int GetApplicationID()
         {
             return 40233;
         }
 
-        private static async Task<string> GetEncodedJwtToken()
+        private static async Task<string> GetTokenAsync(CancellationToken cancellationToken)
         {
-            // TODO: Need to introduce caching here so that each
-            //       webhook doesn't hit KeyVault.
-            var generator = new GitHubJwtFactory(
-                GetPrivateKeySource(),
-                new GitHubJwtFactoryOptions()
-                {
-                    AppIntegrationId = GetApplicationID(),
-                    ExpirationSeconds = 600
-                }
-            );
+            try
+            {
+                var credential = new DefaultAzureCredential();
 
-            var token = generator.CreateEncodedJwtToken();
+                // TODO: Consider replacing these explicit environment variables with
+                //       a call to Azure App config service which is identifier based
+                //       on some kind of environmental convention.
+                var keyVaultUriEnvironmentVariable = Environment.GetEnvironmentVariable("KEYVAULT_URI");
+                var keyVaultUri = new Uri(keyVaultUriEnvironmentVariable);
+                var keyClient = new KeyClient(keyVaultUri, credential);
 
-            return token;
+                var keyVaultGitHubKeyName = Environment.GetEnvironmentVariable("KEYVAULT_GITHUBAPP_KEY_NAME");
+
+                var keyResponse = await keyClient.GetKeyAsync(
+                    keyVaultGitHubKeyName,
+                    cancellationToken: cancellationToken
+                    );
+
+                var key = keyResponse.Value;
+
+                var cryptographyClient = new CryptographyClient(key.Id, credential);
+
+                var jwtHeader = new JwtHeader();
+                jwtHeader["alg"] = "RS256";
+
+                var jwtPayload = new JwtPayload(
+                    issuer: GetApplicationID().ToString(),
+                    audience: null,
+                    claims: null,
+                    notBefore: DateTime.UtcNow,
+                    expires: DateTime.UtcNow.AddMinutes(10),
+                    issuedAt: DateTime.UtcNow
+                    );
+
+                var jwtToken = new JwtSecurityToken(jwtHeader, jwtPayload);
+
+                var headerAndPayloadString = $"{jwtToken.EncodedHeader}.{jwtToken.EncodedPayload}";
+
+                var headerAndPayloadBytes = Encoding.UTF8.GetBytes(headerAndPayloadString);
+
+                var sha256 = new SHA256CryptoServiceProvider();
+                var digest = sha256.ComputeHash(headerAndPayloadBytes);
+
+
+                var signResult = await cryptographyClient.SignAsync(
+                    SignatureAlgorithm.RS256,
+                    digest,
+                    cancellationToken
+                    );
+
+                // TODO: We need to compute the SHA256 hash here to pass in as the digest, otherwise KeyVault
+                //       will reject it!
+
+                var encodedSignature = Base64UrlEncoder.Encode(signResult.Signature);
+
+                var encodedToken = $"{headerAndPayloadString}.{encodedSignature}";
+
+                return encodedToken;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
         }
 
-        private static async Task<GitHubClient> GetApplicationClientAsync()
+        private static async Task<GitHubClient> GetApplicationClientAsync(CancellationToken cancellationToken)
         {
-            var token = await GetEncodedJwtToken();
+            //var token = await GetEncodedJwtToken();
+
+            var token = await GetTokenAsync(cancellationToken);
 
             var appClient = new GitHubClient(new ProductHeaderValue(ApplicationName))
             {
@@ -65,9 +115,9 @@ namespace Azure.Sdk.Tools.CheckEnforcer
             return appClient;
         }
 
-        private static async Task<AccessToken> GetInstallationTokenAsync(long installationId)
+        private static async Task<AccessToken> GetInstallationTokenAsync(long installationId, CancellationToken cancellationToken)
         {
-            var appClient = await GetApplicationClientAsync();
+            var appClient = await GetApplicationClientAsync(cancellationToken);
 
             // TODO: Need to introduce token caching here since we don't want
             //       to get rate limited hitting this API.
@@ -75,9 +125,9 @@ namespace Azure.Sdk.Tools.CheckEnforcer
             return installationToken;
         }
 
-        private static async Task<GitHubClient> GetInstallationClientAsync(long installationId)
+        private static async Task<GitHubClient> GetInstallationClientAsync(long installationId, CancellationToken cancellationToken)
         {
-            var installationToken = await GetInstallationTokenAsync(installationId);
+            var installationToken = await GetInstallationTokenAsync(installationId, cancellationToken);
             var installationClient = new GitHubClient(new ProductHeaderValue($"{ApplicationName}-{installationId}"))
             {
                 Credentials = new Credentials(installationToken.Token)
@@ -100,7 +150,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
         [FunctionName("webhook")]
         public static async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req,
-            ILogger log)
+            ILogger log, CancellationToken cancellationToken)
         {
             if (req.Headers.TryGetValue(GitHubEventHeader, out StringValues checkSuiteEvent) && checkSuiteEvent == "check_suite")
             {
@@ -109,7 +159,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
                 var repositoryId = payload.Repository.Id;
                 var sha = payload.CheckSuite.HeadSha;
 
-                var installationClient = await GetInstallationClientAsync(installationId);
+                var installationClient = await GetInstallationClientAsync(installationId, cancellationToken);
 
                 var runsResponse = await installationClient.Check.Run.GetAllForReference(repositoryId, sha);
                 var runs = runsResponse.CheckRuns;

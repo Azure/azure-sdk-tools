@@ -15,7 +15,7 @@ namespace APIViewWeb
         {
             try
             {
-                return new HtmlString(Markdown.ToHtml(text, MarkdownPipeline));
+                return new HtmlString(Markdown.ToHtml(helper.Encode(text), MarkdownPipeline));
             }
             catch
             {

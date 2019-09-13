@@ -101,7 +101,7 @@ namespace APIViewWeb.Pages.Assemblies
         {
             var builder = new StringBuilder();
             if (result.Text.StartsWith("DO")) {
-                builder.Append("<font color=\"green\">✅</font><strong>DO</strong>");
+                builder.Append("✅ **DO**");
                 builder.Append(result.Text.Substring(2));
             }
             else {
@@ -109,7 +109,7 @@ namespace APIViewWeb.Pages.Assemblies
             }
 
             if (!string.IsNullOrEmpty(result.HelpLinkUri)) {
-                builder.Append($" [<a href={result.HelpLinkUri}>details</a>]");
+                builder.Append($" [details]({result.HelpLinkUri})");
             }
             return builder.ToString();
         }

@@ -28,6 +28,8 @@ namespace Azure.Sdk.Tools.CheckEnforcer
 {
     public static class GitHubWebhookFunction
     {
+        private static IConfigurationStore configurationStore = new HardcodedConfigurationStore();
+        private static GitHubClientFactory clientFactory = new GitHubClientFactory(configurationStore);
 
         [FunctionName("webhook")]
         public static async Task<IActionResult> Run(
@@ -36,7 +38,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
         {
             try
             {
-                var processor = new GitHubWebhookProcessor();
+                var processor = new GitHubWebhookProcessor(configurationStore, clientFactory);
                 await processor.ProcessWebhookAsync(req, log, cancellationToken);
                 return new OkResult();
             }

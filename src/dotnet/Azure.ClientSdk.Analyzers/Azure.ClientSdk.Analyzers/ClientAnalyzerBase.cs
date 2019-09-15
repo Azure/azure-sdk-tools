@@ -21,7 +21,7 @@ namespace Azure.ClientSdk.Analyzers
             var typeSymbol = (INamedTypeSymbol)context.Symbol;
             if (typeSymbol.TypeKind != TypeKind.Class || !typeSymbol.Name.EndsWith(ClientSuffix) || typeSymbol.DeclaredAccessibility != Accessibility.Public)
             {
-            //    return;
+                return;
             }
 
             AnalyzeCore(context);

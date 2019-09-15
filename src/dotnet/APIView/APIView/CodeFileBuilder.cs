@@ -83,9 +83,14 @@ namespace ApiView
                 }
             }
         }
-        public (CodeFile, AnalysisResult[]) Build(IAssemblySymbol assemblySymbol, bool runAnalysis)
+        public CodeFile Build(IAssemblySymbol assemblySymbol, bool runAnalysis)
         {
-            var analyzer = new Analyzer(assemblySymbol);
+            var analyzer = new Analyzer();
+
+            if (runAnalysis)
+            {
+                analyzer.VisitAssembly(assemblySymbol);
+            }
 
             var builder = new CodeFileTokensBuilder();
             var navigationItems = new List<NavigationItem>();
@@ -95,16 +100,12 @@ namespace ApiView
                 {
                     foreach (var namedTypeSymbol in SortTypes(namespaceSymbol.GetTypeMembers()))
                     {
-                        var typeId = BuildType(builder, namedTypeSymbol, navigationItems);
-                        if (runAnalysis)
-                        {
-                            analyzer.Analyze(namedTypeSymbol);
-                        }
+                        BuildType(builder, namedTypeSymbol, navigationItems);
                     }
                 }
                 else
                 {
-                    var namespaceId = Build(builder, namespaceSymbol, navigationItems, analyzer);
+                    Build(builder, namespaceSymbol, navigationItems);
                 }
             }
 
@@ -118,15 +119,17 @@ namespace ApiView
             var node = new CodeFile()
             {
                 Name = assemblySymbol.Name,
+                Language = "C#",
                 Tokens = builder.Tokens.ToArray(),
                 Version = CodeFile.CurrentVersion,
-                Navigation = new List<NavigationItem>() { assemblyNavigationItem },
+                Navigation = new [] { assemblyNavigationItem },
+                Diagnostics = analyzer.Results.ToArray()
             };
 
-            return (node, analyzer.CreateResults());
+            return node;
         }
 
-        private string Build(CodeFileTokensBuilder builder, INamespaceSymbol namespaceSymbol, List<NavigationItem> navigationItems, Analyzer analyser)
+        private void Build(CodeFileTokensBuilder builder, INamespaceSymbol namespaceSymbol, List<NavigationItem> navigationItems)
         {
             builder.Keyword(SyntaxKind.NamespaceKeyword);
             builder.Space();
@@ -140,8 +143,7 @@ namespace ApiView
             List<NavigationItem> namespaceItems = new List<NavigationItem>();
             foreach (var namedTypeSymbol in SortTypes(namespaceSymbol.GetTypeMembers()))
             {
-                var typeId = BuildType(builder, namedTypeSymbol, namespaceItems);
-                analyser.Analyze(namedTypeSymbol);
+                BuildType(builder, namedTypeSymbol, namespaceItems);
             }
 
             CloseBrace(builder);
@@ -154,7 +156,6 @@ namespace ApiView
                 Tags = { {"TypeKind", "namespace"} }
             };
             navigationItems.Add(namespaceItem);
-            return namespaceItem.NavigationId;
         }
 
         private void BuildNamespaceName(CodeFileTokensBuilder builder, INamespaceSymbol namespaceSymbol)
@@ -172,11 +173,11 @@ namespace ApiView
             return subNamespaceSymbol.GetTypeMembers().Any(t => IsAccessible(t));
         }
 
-        private string BuildType(CodeFileTokensBuilder builder, INamedTypeSymbol namedType, List<NavigationItem> navigationBuilder)
+        private void BuildType(CodeFileTokensBuilder builder, INamedTypeSymbol namedType, List<NavigationItem> navigationBuilder)
         {
             if (!IsAccessible(namedType))
             {
-                return null;
+                return;
             }
 
             var navigationItem = new NavigationItem()
@@ -193,7 +194,6 @@ namespace ApiView
             {
                 builder.Punctuation(SyntaxKind.SemicolonToken);
                 builder.NewLine();
-                return navigationItem.NavigationId;
             }
 
             builder.Space();
@@ -224,7 +224,6 @@ namespace ApiView
             }
 
             CloseBrace(builder);
-            return navigationItem.NavigationId;
         }
 
         private static void CloseBrace(CodeFileTokensBuilder builder)

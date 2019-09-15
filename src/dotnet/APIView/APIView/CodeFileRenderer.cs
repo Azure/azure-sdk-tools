@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using APIView;
 
@@ -12,11 +13,11 @@ namespace ApiView
         public StringListApiView Render(CodeFile file)
         {
             var list = new StringListApiView();
-            Render(list, file.Tokens);
+            Render(list, file.Tokens, file.Diagnostics);
             return list;
         }
 
-        private void Render(StringListApiView list, IEnumerable<CodeFileToken> node)
+        private void Render(StringListApiView list, IEnumerable<CodeFileToken> node, CodeDiagnostic[] fileDiagnostics)
         {
             var stringBuilder = new StringBuilder();
             string currentId = null;
@@ -24,7 +25,10 @@ namespace ApiView
             {
                 if (token.Kind == CodeFileTokenKind.Newline)
                 {
-                    list.Add(new LineApiView(stringBuilder.ToString(), currentId));
+                    list.Add(new LineApiView(stringBuilder.ToString(), currentId)
+                    {
+                        Diagnostics = fileDiagnostics.Where(d => d.TargetId == currentId).ToArray()
+                    });
                     currentId = null;
                     stringBuilder.Clear();
                 }
@@ -44,7 +48,7 @@ namespace ApiView
         {
             if (token.Value != null)
             {
-                stringBuilder.Append(token.Value);           
+                stringBuilder.Append(token.Value);
             }
         }
     }

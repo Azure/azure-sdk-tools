@@ -36,6 +36,18 @@
                     </td>
                     <td class="code"><span class="code-inner">@Html.Raw(line.DisplayString)</span></td>
                 </tr>
+                @if (line.Diagnostics.Any())
+                {
+                    <tr>
+                        <td></td>
+                        <td class="code-diagnostics">
+                            @foreach (var lineDiagnostic in line.Diagnostics)
+                            {
+                                <p>@lineDiagnostic.Text <a href="@lineDiagnostic.HelpLinkUri">Details</a></p>
+                            }
+                        </td>
+                    </tr>
+                }
                 @foreach (var elementId in Model.Comments.Keys) {
                     @if (elementId == line.ElementId) {
                         <partial name="_CommentThreadPartial" model="@new APIViewWeb.Models.CommentThreadModel() { AssemblyId = Model.Id, Comments = Model.Comments[elementId], LineId = elementId }" />

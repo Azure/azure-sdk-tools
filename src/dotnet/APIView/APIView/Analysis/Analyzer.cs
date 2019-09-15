@@ -63,7 +63,7 @@ namespace APIView.Analysis
 
             public void ReportDiagnostic(Diagnostic diagnostic, ISymbol symbol)
             {
-                _results.Add(new CodeDiagnostic(symbol.GetId(), diagnostic.GetMessage(), diagnostic.Descriptor.HelpLinkUri));
+                _results.Add(new CodeDiagnostic(diagnostic.Id, symbol.GetId(), diagnostic.GetMessage(), diagnostic.Descriptor.HelpLinkUri));
             }
         }
     }

@@ -9,12 +9,15 @@ namespace APIView
         {
         }
 
-        public CodeDiagnostic(string targetId, string text, string helpLinkUri)
+        public CodeDiagnostic(string diagnosticId, string targetId, string text, string helpLinkUri)
         {
+            DiagnosticId = diagnosticId;
             Text = text;
             TargetId = targetId;
             HelpLinkUri = helpLinkUri;
         }
+
+        public string DiagnosticId { get; set; }
 
         public string Text { get; set; }
 

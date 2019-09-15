@@ -1,8 +1,6 @@
 ﻿using System;
 using System.IO;
-using System.Text;
 using System.Threading.Tasks;
-using APIView;
 using APIViewWeb.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -74,23 +72,6 @@ namespace APIViewWeb.Pages.Assemblies
             }
 
             return RedirectToPage("./Index");
-        }
-
-        private string FormatComment(CodeDiagnostic result)
-        {
-            var builder = new StringBuilder();
-            if (result.Text.StartsWith("DO")) {
-                builder.Append("✅ **DO**");
-                builder.Append(result.Text.Substring(2));
-            }
-            else {
-                builder.Append(result.Text);
-            }
-
-            if (!string.IsNullOrEmpty(result.HelpLinkUri)) {
-                builder.Append($" [details]({result.HelpLinkUri})");
-            }
-            return builder.ToString();
         }
     }
 }

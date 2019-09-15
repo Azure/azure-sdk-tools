@@ -112,7 +112,7 @@ namespace APIViewWeb.Pages.Assemblies
             var assemblyModel = await assemblyRepository.ReadAssemblyContentAsync(id);
             if (assemblyModel.HasOriginal)
             {
-                assemblyModel.BuildFromStream(await assemblyRepository.GetOriginalAsync(id), false);
+                assemblyModel.BuildFromStream(await assemblyRepository.GetOriginalAsync(id), assemblyModel.RunAnalysis);
                 await assemblyRepository.UpdateAsync(assemblyModel);
             }
             return RedirectToPage(new { id = id });

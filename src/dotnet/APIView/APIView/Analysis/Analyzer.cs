@@ -5,7 +5,6 @@ using ApiView;
 using Azure.ClientSdk.Analyzers;
 using Microsoft.CodeAnalysis;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 
 namespace APIView.Analysis
@@ -20,6 +19,7 @@ namespace APIView.Analysis
         {
             _analyzers.Add(new ClientMethodsAnalyzer());
             _analyzers.Add(new ClientConstructorAnalyzer());
+            _analyzers.Add(new ClientOptionsAnalyzer());
         }
 
         public override void VisitAssembly(IAssemblySymbol symbol)

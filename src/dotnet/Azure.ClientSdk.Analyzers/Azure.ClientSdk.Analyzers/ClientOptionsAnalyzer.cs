@@ -8,7 +8,7 @@ using System.Linq;
 namespace Azure.ClientSdk.Analyzers
 {
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
-    public class ClientOptionsAnalyzer : DiagnosticAnalyzer
+    public class ClientOptionsAnalyzer : SymbolAnalyzerBase
     {
         protected const string ClientOptionsSuffix = "ClientOptions";
         protected const string ServiceVersionName = "ServiceVersion";
@@ -20,27 +20,20 @@ namespace Azure.ClientSdk.Analyzers
             Descriptors.AZC0010
         });
 
-        public override void Initialize(AnalysisContext context)
+        public override SymbolKind[] SymbolKinds => new[] { SymbolKind.NamedType };
+
+        public override void Analyze(ISymbolAnalysisContext symbolAnalysisContext)
         {
-            context.EnableConcurrentExecution();
+            var typeSymbol = (INamedTypeSymbol)symbolAnalysisContext.Symbol;
+            if (typeSymbol.TypeKind != TypeKind.Class || !typeSymbol.Name.EndsWith(ClientOptionsSuffix) || typeSymbol.DeclaredAccessibility != Accessibility.Public)
+            {
+                return;
+            }
 
-            context.RegisterCompilationStartAction(
-                analysisContext =>
-                {
-                    analysisContext.RegisterSymbolAction(symbolAnalysisContext =>
-                    {
-                        var typeSymbol = (INamedTypeSymbol)symbolAnalysisContext.Symbol;
-                        if (typeSymbol.TypeKind != TypeKind.Class || !typeSymbol.Name.EndsWith(ClientOptionsSuffix) || typeSymbol.DeclaredAccessibility != Accessibility.Public)
-                        {
-                            return;
-                        }
-
-                        AnalyzeClientOptionsType(symbolAnalysisContext);
-                    }, SymbolKind.NamedType);
-                });
+            AnalyzeClientOptionsType(symbolAnalysisContext);
         }
 
-        private void AnalyzeClientOptionsType(SymbolAnalysisContext context)
+        private void AnalyzeClientOptionsType(ISymbolAnalysisContext context)
         {
             var typeSymbol = (INamedTypeSymbol)context.Symbol;
 
@@ -48,7 +41,7 @@ namespace Azure.ClientSdk.Analyzers
             var serviceVersionEnum = serviceVersion.SingleOrDefault(member => member.TypeKind == TypeKind.Enum);
             if (serviceVersionEnum == null)
             {
-                context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0008, typeSymbol.Locations.First()));
+                context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0008, typeSymbol.Locations.First()), typeSymbol);
                 return;
             }
 
@@ -58,21 +51,21 @@ namespace Azure.ClientSdk.Analyzers
                 {
                     if (constructor.Parameters == null || constructor.Parameters.Length == 0)
                     {
-                        context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0009, constructor.Locations.First()));
+                        context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0009, constructor.Locations.First()), typeSymbol);
                         continue;
                     }
 
                     var firstParam = constructor.Parameters.FirstOrDefault();
                     if (!IsServiceVersionParameter(firstParam))
                     {
-                        context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0009, firstParam.Locations.First()));
+                        context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0009, firstParam.Locations.First()), typeSymbol);
                         continue;
                     }
 
                     var maxVersion = serviceVersionEnum.GetMembers().Where(m => m.Kind == SymbolKind.Field).Max(m => ((IFieldSymbol)m).ConstantValue);
                     if (!firstParam.HasExplicitDefaultValue || firstParam.ExplicitDefaultValue != maxVersion)
                     {
-                        context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0010, firstParam.Locations.First()));
+                        context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0010, firstParam.Locations.First()), typeSymbol);
                     }
                 }
             }

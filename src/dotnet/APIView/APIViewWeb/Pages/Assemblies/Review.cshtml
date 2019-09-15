@@ -43,7 +43,17 @@
                         <td class="code-diagnostics">
                             @foreach (var lineDiagnostic in line.Diagnostics)
                             {
-                                <p>@lineDiagnostic.Text <a href="@lineDiagnostic.HelpLinkUri">Details</a></p>
+                            <p>
+                                @if (lineDiagnostic.Text.StartsWith("DO"))
+                                {
+                                    @:✅ <b>DO</b> @lineDiagnostic.Text.Substring(2)
+                                }
+                                else
+                                {
+                                    @lineDiagnostic.Text
+                                }
+                                <a href="@lineDiagnostic.HelpLinkUri">Details</a>
+                            </p>
                             }
                         </td>
                     </tr>

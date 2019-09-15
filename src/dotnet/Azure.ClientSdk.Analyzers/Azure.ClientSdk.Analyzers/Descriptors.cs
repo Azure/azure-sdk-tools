@@ -14,17 +14,17 @@ namespace Azure.ClientSdk.Analyzers
             "Namespace '{0}' shouldn't contain public types. " + AZC0001Title, "Usage", DiagnosticSeverity.Warning, true);
 
         public static DiagnosticDescriptor AZC0002 = new DiagnosticDescriptor(
-            "AZC0002", 
+            "AZC0002",
             "DO ensure all service methods, both asynchronous and synchronous, take an optional CancellationToken parameter called cancellationToken.",
-            "Client method should have cancellationToken as the last optional parameter (both name and it being optional matters)", 
-            "Usage", DiagnosticSeverity.Warning, isEnabledByDefault: true, description: null, 
+            "Client method should have cancellationToken as the last optional parameter (both name and it being optional matters)",
+            "Usage", DiagnosticSeverity.Warning, isEnabledByDefault: true, description: null,
             "https://azure.github.io/azure-sdk/dotnet_introduction.html#dotnet-service-methods-cancellation"
         );
 
         public static DiagnosticDescriptor AZC0003 = new DiagnosticDescriptor(
-            "AZC0003", 
+            "AZC0003",
             "DO make service methods virtual.",
-            "Virtual methods are used to support mocking.", 
+            "DO make service methods virtual.",
             "Usage", DiagnosticSeverity.Warning, isEnabledByDefault: true, description: null,
             "https://azure.github.io/azure-sdk/dotnet_introduction.html#dotnet-service-methods-virtual"
         );
@@ -38,9 +38,9 @@ namespace Azure.ClientSdk.Analyzers
         );
 
         public static DiagnosticDescriptor AZC0005 = new DiagnosticDescriptor(
-            "AZC0005", 
+            "AZC0005",
             "DO provide protected parameterless constructor for mocking.",
-            "Client type should have protected parameterless constructor", 
+            "DO provide protected parameterless constructor for mocking.",
             "Usage", DiagnosticSeverity.Warning, isEnabledByDefault: true, description: null,
             "https://azure.github.io/azure-sdk/dotnet_introduction.html#dotnet-client-constructor-for-mocking"
         );
@@ -48,15 +48,15 @@ namespace Azure.ClientSdk.Analyzers
         public static DiagnosticDescriptor AZC0006 = new DiagnosticDescriptor(
             "AZC0006",
             "DO provide constructor overloads that allow specifying additional options.",
-            "Client type should have public constructor with equivalent parameters taking '{0}' as last argument", 
+            "Client type should have public constructor with equivalent parameters taking '{0}' as last argument",
             "Usage", DiagnosticSeverity.Warning, isEnabledByDefault: true, description: null,
             "https://azure.github.io/azure-sdk/dotnet_introduction.html#dotnet-client-constructor-overloads"
         );
 
         public static DiagnosticDescriptor AZC0007 = new DiagnosticDescriptor(
-            "AZC0007", 
+            "AZC0007",
             "DO provide a minimal constructor that takes only the parameters required to connect to the service.",
-            "Client type should have public constructor with equivalent parameters not taking '{0}' as last argument", 
+            "Client type should have public constructor with equivalent parameters not taking '{0}' as last argument",
             "Usage", DiagnosticSeverity.Warning, isEnabledByDefault: true, description: null,
             "https://azure.github.io/azure-sdk/dotnet_introduction.html#dotnet-client-constructor-minimal"
         );

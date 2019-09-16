@@ -42,9 +42,9 @@ namespace Azure.Sdk.Tools.CheckEnforcer
                 await processor.ProcessWebhookAsync(req, log, cancellationToken);
                 return new OkResult();
             }
-            catch (GitHubWebhookHandlerNotRegisteredException ex)
+            catch (GitHubWebhookProcessorUnsupportedEventException ex)
             {
-                log.LogWarning(ex, "Handler was not found.");
+                log.LogWarning(ex, "An error occured because the event is not supported.");
                 return new BadRequestResult();
             }
             catch (Exception ex)

@@ -9,7 +9,7 @@ $(function () {
     $(document).find(".nav-list-toggle").click(function() {
         $(this).parents(".nav-list-group").first().toggleClass("nav-list-collapsed");
     });
-    
+
     $(document).find(".commentable").click(function () {
         showCommentBox(this.id);
         return false;
@@ -22,6 +22,8 @@ $(function () {
 
     function attachEventHandlers(element, id=null) {
         let thisRow = $(document.getElementById(id)).parents(".code-line").first();
+        let diagnosticsRow = thisRow.next();
+        let commentsRow = diagnosticsRow.next();
 
         $(element).find(".comment-cancel-button").click(function () {
             hideCommentBox(id);
@@ -32,7 +34,7 @@ $(function () {
                 type: "POST",
                 data: element.find("form").serialize()
             }).done(function (partialViewResult) {
-                updateCommentThread(thisRow.next(), partialViewResult);
+                updateCommentThread(commentsRow, partialViewResult);
             });
             return false;
         });
@@ -56,25 +58,26 @@ $(function () {
 
     function showCommentBox(id) {
         let thisRow = $(document.getElementById(id)).parents(".code-line").first();
-        let nextRow = thisRow.next();
-        let commentForm = nextRow.find(".comment-form");
+        let diagnosticsRow = thisRow.next();
+        let nextRow = diagnosticsRow.next();
+        let commentsRow = nextRow.find(".comment-form");
 
-        if (commentForm.length == 0) {
-            commentForm = commentFormTemplate.children().clone();
+        if (commentsRow.length == 0) {
+            commentsRow = commentFormTemplate.children().clone();
 
             var thread = nextRow.find(".comment-thread-contents");
             if (thread.length > 0) {
-                thread.after(commentForm);
+                thread.after(commentsRow);
             }
             else {
-                commentForm.insertAfter(thisRow).wrap("<tr>").wrap("<td colspan=\"2\">");
+                commentsRow.insertAfter(thisRow).wrap("<tr>").wrap("<td colspan=\"2\">");
             }
         }
 
-        commentForm.show();
-        commentForm.find(".id-box").val(id);
-        commentForm.find(".new-thread-comment-text").focus();
-        attachEventHandlers(commentForm, id);
+        commentsRow.show();
+        commentsRow.find(".id-box").val(id);
+        commentsRow.find(".new-thread-comment-text").focus();
+        attachEventHandlers(commentsRow, id);
         nextRow.find(".review-thread-reply").hide();
         return false;
     }

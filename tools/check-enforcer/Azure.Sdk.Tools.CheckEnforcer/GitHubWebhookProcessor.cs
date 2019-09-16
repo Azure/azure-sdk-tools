@@ -169,7 +169,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
                 }
                 else
                 {
-                    throw new GitHubWebhookHandlerNotRegisteredException(eventName);
+                    throw new GitHubWebhookProcessorUnsupportedEventException(eventName);
                 }
             }
             else

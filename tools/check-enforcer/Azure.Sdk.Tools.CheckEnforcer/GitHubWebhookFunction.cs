@@ -39,8 +39,8 @@ namespace Azure.Sdk.Tools.CheckEnforcer
         {
             try
             {
-                var processor = new GitHubWebhookProcessor(clientFactory, configurationStore);
-                await processor.ProcessWebhookAsync(req, log, cancellationToken);
+                var processor = new GitHubWebhookProcessor(log, clientFactory, configurationStore);
+                await processor.ProcessWebhookAsync(req, cancellationToken);
                 return new OkResult();
             }
             catch (CheckEnforcerUnsupportedEventException ex)

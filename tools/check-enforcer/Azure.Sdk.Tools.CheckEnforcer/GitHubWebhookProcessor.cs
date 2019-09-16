@@ -24,12 +24,14 @@ namespace Azure.Sdk.Tools.CheckEnforcer
 {
     public class GitHubWebhookProcessor
     {
-        public GitHubWebhookProcessor(GitHubClientFactory gitHubClientFactory, ConfigurationStore configurationStore)
+        public GitHubWebhookProcessor(ILogger log, GitHubClientFactory gitHubClientFactory, ConfigurationStore configurationStore)
         {
+            this.Log = log;
             this.ClientFactory = gitHubClientFactory;
             this.ConfigurationStore = configurationStore;
         }
 
+        public ILogger Log { get; private set; }
 
         public GitHubClientFactory ClientFactory { get; private set; }
 
@@ -44,6 +46,9 @@ namespace Azure.Sdk.Tools.CheckEnforcer
                 var payloadString = await reader.ReadToEndAsync();
                 var serializer = new SimpleJsonSerializer();
                 var payload = serializer.Deserialize<TEvent>(payloadString);
+
+                this.Log.LogDebug("Deserialized payload.");
+
                 return payload;
             }
         }
@@ -146,39 +151,36 @@ namespace Azure.Sdk.Tools.CheckEnforcer
             }
         }
 
-        public async Task ProcessWebhookAsync(HttpRequest request, ILogger log, CancellationToken cancellationToken)
+        public async Task ProcessWebhookAsync(HttpRequest request, CancellationToken cancellationToken)
         {
             if (request.Headers.TryGetValue(GitHubEventHeader, out StringValues eventName))
             {
-                long installationId;
-                long repositoryId;
-                string headSha;
+                if (eventName == "check_run")
+                {
+                    Log.LogDebug("Received check_run event (length was {0}", request.Body.Length);
 
-                // TODO: Consider something more elegant here.
-                if (eventName == "check_suite" )
-                {
-                    var payload = await DeserializePayloadAsync<CheckSuiteEventPayload>(request.Body);
-                    installationId = payload.Installation.Id;
-                    repositoryId = payload.Repository.Id;
-                    headSha = payload.CheckSuite.HeadSha;
-                }
-                else if (eventName == "check_run")
-                {
                     var payload = await DeserializePayloadAsync<CheckRunEventPayload>(request.Body);
-                    installationId = payload.Installation.Id;
-                    repositoryId = payload.Repository.Id;
-                    headSha = payload.CheckRun.CheckSuite.HeadSha;
+
+                    var installationId = payload.Installation.Id;
+                    var repositoryId = payload.Repository.Id;
+                    var headSha = payload.CheckRun.CheckSuite.HeadSha;
+
+                    Log.LogInformation(
+                        "Fetching repository configuration for installation {0} for repository {1} (head SHA {2}).",
+                        installationId,
+                        repositoryId,
+                        headSha
+                        );
+                    var configuration = await this.ConfigurationStore.GetRepositoryConfigurationAsync(installationId, repositoryId, cancellationToken);
+
+                    if (configuration.IsEnabled)
+                    {
+                        await EvaluateAndUpdateCheckEnforcerRunStatusAsync(configuration, installationId, repositoryId, headSha, cancellationToken);
+                    }
                 }
                 else
                 {
                     throw new CheckEnforcerUnsupportedEventException(eventName);
-                }
-
-                var configuration = await this.ConfigurationStore.GetRepositoryConfigurationAsync(installationId, repositoryId, cancellationToken);
-
-                if (configuration.IsEnabled)
-                {
-                    await EvaluateAndUpdateCheckEnforcerRunStatusAsync(configuration, installationId, repositoryId, headSha, cancellationToken);
                 }
             }
             else

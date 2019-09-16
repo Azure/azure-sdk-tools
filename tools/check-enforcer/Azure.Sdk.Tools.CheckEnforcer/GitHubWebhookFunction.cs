@@ -23,13 +23,14 @@ using System.Text;
 using System.Security.Cryptography;
 using Azure.Core;
 using System.Web.Http;
+using System.Runtime.CompilerServices;
 
 namespace Azure.Sdk.Tools.CheckEnforcer
 {
     public static class GitHubWebhookFunction
     {
-        private static IConfigurationStore configurationStore = new HardcodedConfigurationStore();
-        private static GitHubClientFactory clientFactory = new GitHubClientFactory(configurationStore);
+        private static GitHubClientFactory clientFactory = new GitHubClientFactory();
+        private static ConfigurationStore configurationStore = new ConfigurationStore(clientFactory);
 
         [FunctionName("webhook")]
         public static async Task<IActionResult> Run(
@@ -38,11 +39,11 @@ namespace Azure.Sdk.Tools.CheckEnforcer
         {
             try
             {
-                var processor = new GitHubWebhookProcessor(configurationStore, clientFactory);
+                var processor = new GitHubWebhookProcessor(clientFactory, configurationStore);
                 await processor.ProcessWebhookAsync(req, log, cancellationToken);
                 return new OkResult();
             }
-            catch (GitHubWebhookProcessorUnsupportedEventException ex)
+            catch (CheckEnforcerUnsupportedEventException ex)
             {
                 log.LogWarning(ex, "An error occured because the event is not supported.");
                 return new BadRequestResult();

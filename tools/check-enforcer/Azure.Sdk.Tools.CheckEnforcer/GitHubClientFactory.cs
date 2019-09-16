@@ -16,16 +16,9 @@ namespace Azure.Sdk.Tools.CheckEnforcer
 {
     public class GitHubClientFactory
     {
-        public GitHubClientFactory() : this(null)
+        public GitHubClientFactory()
         {
         }
-
-        public GitHubClientFactory(IConfigurationStore configurationStore)
-        {
-            this.ConfigurationStore = configurationStore;
-        }
-
-        public IConfigurationStore ConfigurationStore { get; private set; }
 
         private Tuple<DateTimeOffset, string> cachedApplicationToken;
 
@@ -48,7 +41,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
 
                 // Let's get a token a full minute before it times out.
                 cachedApplicationToken = new Tuple<DateTimeOffset, string>(
-                    DateTimeOffset.UtcNow.AddMinutes(this.ConfigurationStore.ApplicationTokenLifetimeInMinutes - 1),
+                    DateTimeOffset.UtcNow.AddMinutes(Constants.ApplicationTokenLifetimeInMinutes - 1),
                     token
                     );
             }
@@ -89,11 +82,11 @@ namespace Azure.Sdk.Tools.CheckEnforcer
             jwtHeader["alg"] = "RS256";
 
             var jwtPayload = new JwtPayload(
-                issuer: this.ConfigurationStore.ApplicationID.ToString(),
+                issuer: Constants.ApplicationID.ToString(),
                 audience: null,
                 claims: null,
                 notBefore: DateTime.UtcNow,
-                expires: DateTime.UtcNow.AddMinutes(this.ConfigurationStore.ApplicationTokenLifetimeInMinutes),
+                expires: DateTime.UtcNow.AddMinutes(Constants.ApplicationTokenLifetimeInMinutes),
                 issuedAt: DateTime.UtcNow
                 );
 
@@ -160,7 +153,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
         {
             var token = await GetTokenAsync(cancellationToken);
 
-            var appClient = new GitHubClient(new ProductHeaderValue(this.ConfigurationStore.ApplicationName))
+            var appClient = new GitHubClient(new ProductHeaderValue(Constants.ApplicationName))
             {
                 Credentials = new Credentials(token, AuthenticationType.Bearer)
             };
@@ -189,7 +182,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
         public async Task<GitHubClient> GetInstallationClientAsync(long installationId, CancellationToken cancellationToken)
         {
             var installationToken = await GetInstallationTokenAsync(installationId, cancellationToken);
-            var installationClient = new GitHubClient(new ProductHeaderValue($"{this.ConfigurationStore.ApplicationName}-{installationId}"))
+            var installationClient = new GitHubClient(new ProductHeaderValue($"{Constants.ApplicationName}-{installationId}"))
             {
                 Credentials = new Credentials(installationToken)
             };

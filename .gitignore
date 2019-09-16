@@ -464,3 +464,6 @@ src/dotnet/Mgmt.CI.BuildTools/NugetToolsPackage/CI.Tools.Package/build/tasks/net
 
 # Visual Studio launch settings (frequently user-specific)
 launchSettings.json
+
+# Azure Functions
+local.settings.json

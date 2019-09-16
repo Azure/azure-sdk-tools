@@ -51,7 +51,8 @@ $(function () {
 
     function hideCommentBox(id) {
         var thisRow = $(document.getElementById(id)).parents(".code-line").first();
-        var nextRow = thisRow.next();
+        let diagnosticsRow = thisRow.next();
+        let nextRow = diagnosticsRow.next();
         nextRow.find(".review-thread-reply").show();
         nextRow.find(".comment-form").hide();
     }
@@ -60,24 +61,24 @@ $(function () {
         let thisRow = $(document.getElementById(id)).parents(".code-line").first();
         let diagnosticsRow = thisRow.next();
         let nextRow = diagnosticsRow.next();
-        let commentsRow = nextRow.find(".comment-form");
+        let commentBox = nextRow.find(".comment-form");
 
-        if (commentsRow.length == 0) {
-            commentsRow = commentFormTemplate.children().clone();
+        if (commentBox.length == 0) {
+            commentBox = commentFormTemplate.children().clone();
 
             var thread = nextRow.find(".comment-thread-contents");
             if (thread.length > 0) {
-                thread.after(commentsRow);
+                thread.after(commentBox);
             }
             else {
-                commentsRow.insertAfter(thisRow).wrap("<tr>").wrap("<td colspan=\"2\">");
+                commentBox.insertAfter(diagnosticsRow).wrap("<tr>").wrap("<td colspan=\"2\">");
             }
         }
 
-        commentsRow.show();
-        commentsRow.find(".id-box").val(id);
-        commentsRow.find(".new-thread-comment-text").focus();
-        attachEventHandlers(commentsRow, id);
+        commentBox.show();
+        commentBox.find(".id-box").val(id);
+        commentBox.find(".new-thread-comment-text").focus();
+        attachEventHandlers(commentBox, id);
         nextRow.find(".review-thread-reply").hide();
         return false;
     }

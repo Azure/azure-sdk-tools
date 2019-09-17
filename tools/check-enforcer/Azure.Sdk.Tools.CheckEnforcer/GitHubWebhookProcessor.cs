@@ -142,7 +142,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
 
                     Log.LogDebug("Fetching repository configuration.");
                     var configuration = await this.ConfigurationStore.GetRepositoryConfigurationAsync(installationId, repositoryId, cancellationToken);
-                    Log.LogDebug("Repository configuration: {configuration}", configuration);
+                    Log.LogDebug("Repository configuration: {configuration}", configuration.ToString());
 
                     if (configuration.IsEnabled)
                     {

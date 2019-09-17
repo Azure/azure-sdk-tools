@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using YamlDotNet.Serialization;
@@ -20,5 +21,11 @@ namespace Azure.Sdk.Tools.CheckEnforcer
 
         [YamlMember(Alias = "format")]
         public string Format { get; internal set; }
+
+        public override string ToString()
+        {
+            var json = JsonConvert.SerializeObject(this);
+            return json;
+        }
     }
 }

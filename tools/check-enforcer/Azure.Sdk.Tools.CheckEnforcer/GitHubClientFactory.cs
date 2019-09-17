@@ -5,6 +5,7 @@ using Azure.Security.KeyVault.Keys.Cryptography;
 using Microsoft.IdentityModel.Tokens;
 using Octokit;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Cryptography;
@@ -161,22 +162,24 @@ namespace Azure.Sdk.Tools.CheckEnforcer
             return appClient;
         }
 
-        private Dictionary<long, Octokit.AccessToken> cachedInstallationTokens = new Dictionary<long, Octokit.AccessToken>();
+        private ConcurrentDictionary<long, Octokit.AccessToken> cachedInstallationTokens = new ConcurrentDictionary<long, Octokit.AccessToken>();
 
         private async Task<string> GetInstallationTokenAsync(long installationId, CancellationToken cancellationToken)
         {
-            if (!cachedInstallationTokens.ContainsKey(installationId) || cachedInstallationTokens[installationId].ExpiresAt < DateTimeOffset.UtcNow)
+            cachedInstallationTokens.TryGetValue(installationId, out Octokit.AccessToken accessToken);
+
+            if (accessToken == null || accessToken.ExpiresAt < DateTimeOffset.UtcNow)
             {
                 // NOTE: There is a possible cache stampeed here as well. We'll see in time
                 //       if we need to do anything about it. If there is a problem it will
                 //       manifest as exceptions being thrown out of this method.
                 var appClient = await GetApplicationClientAsync(cancellationToken);
-                var accessToken = await appClient.GitHubApps.CreateInstallationToken(installationId);
+                accessToken = await appClient.GitHubApps.CreateInstallationToken(installationId);
+
                 cachedInstallationTokens[installationId] = accessToken;
             }
 
-            var installationToken = cachedInstallationTokens[installationId];
-            return installationToken.Token;
+            return accessToken.Token;
         }
 
         public async Task<GitHubClient> GetInstallationClientAsync(long installationId, CancellationToken cancellationToken)

@@ -135,7 +135,6 @@ namespace Azure.Sdk.Tools.CheckEnforcer
                     var rawPayload = request.Body;
                     var payload = await DeserializePayloadAsync<CheckRunEventPayload>(rawPayload);
 
-
                     var installationId = payload.Installation.Id;
                     var repositoryId = payload.Repository.Id;
                     var headSha = payload.CheckRun.CheckSuite.HeadSha;

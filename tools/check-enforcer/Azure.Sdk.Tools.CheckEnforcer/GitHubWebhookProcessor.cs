@@ -157,6 +157,18 @@ namespace Azure.Sdk.Tools.CheckEnforcer
                         Log.LogInformation("Repository was not enabled for Check Enforcer.");
                     }
                 }
+                else if (eventName == "check_suite")
+                {
+                    // HACK: We swallow check_suite events. Technically we could register
+                    //       the check enforcer check run earlier (before the PR is even created)
+                    //       but at this point we don't know the target branch for sure so we
+                    //       can't potentially cache the configuration entry.
+                    //
+                    //       However - we can't opt out of receiving this event even then check suite
+                    //       is unchecked in the app's event setup. So rather than returning a 400
+                    //       for this event we just swallow it to eliminate the noise.
+                    return;
+                }
                 else
                 {
                     throw new CheckEnforcerUnsupportedEventException(eventName);

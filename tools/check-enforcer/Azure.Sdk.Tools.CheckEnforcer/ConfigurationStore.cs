@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
 using Octokit;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.IO;
@@ -25,17 +26,10 @@ namespace Azure.Sdk.Tools.CheckEnforcer
 
         private GitHubClientFactory clientFactory;
 
+        private ConcurrentDictionary<string, IRepositoryConfiguration> cachedConfigurations = new ConcurrentDictionary<string, IRepositoryConfiguration>();
 
-        public async Task<RepositoryConfiguration> GetRepositoryConfigurationAsync(long installationId, long repositoryId, CancellationToken cancellationToken)
+        public async Task<IRepositoryConfiguration> GetRepositoryConfigurationAsync(long installationId, long repositoryId, string pullRequestSha, CancellationToken cancellationToken)
         {
-            // TODO: Need to figure out a good way to cache all of this. Effectively we hit this file on every single event
-            //       because we need to know whether to drop the event. We could do a time based cache with a low expiry
-            //       or we could try to tie cache entries to the SHA of the base reference. Unfortunately check suite 
-            //       request events don't contain a target SHA because at that point in the workflow the target
-            //       branch selected, but the check-enforcer does create a run at that point. We could also opt to defer
-            //       check enforcer run creation until another check-run appears. Either way at scale this particular
-            //       bit of code could cause throttling.
-
             try
             {
                 var client = await clientFactory.GetInstallationClientAsync(installationId, cancellationToken);
@@ -45,6 +39,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
 
                 var builder = new DeserializerBuilder().Build();
                 var configuration = builder.Deserialize<RepositoryConfiguration>(configurationFile.Content);
+
                 return configuration;
             }
             catch (NotFoundException) // OK, we just disable if it isn't configured.

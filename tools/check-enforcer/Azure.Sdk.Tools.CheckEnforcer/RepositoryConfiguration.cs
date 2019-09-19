@@ -11,6 +11,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
         public RepositoryConfiguration()
         {
             MinimumCheckRuns = 1;
+            IsEnabled = true;
         }
 
         [YamlMember(Alias = "minimumCheckRuns")]

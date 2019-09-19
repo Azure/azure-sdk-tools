@@ -33,7 +33,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
             try
             {
                 var client = await clientFactory.GetInstallationClientAsync(installationId, cancellationToken);
-                var searchResults = await client.Repository.Content.GetAllContents(repositoryId, "CHECKENFORCER");
+                var searchResults = await client.Repository.Content.GetAllContents(repositoryId, "eng/CHECKENFORCER");
                 var configurationFile = searchResults.Single();
                 ThrowIfInvalidFormat(configurationFile);
 

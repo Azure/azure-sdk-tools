@@ -130,48 +130,51 @@ namespace Azure.Sdk.Tools.CheckEnforcer
         {
             if (request.Headers.TryGetValue(GitHubEventHeader, out StringValues eventName))
             {
+                long installationId;
+                long repositoryId;
+                string pullRequestSha;
+
                 if (eventName == "check_run")
                 {
                     var rawPayload = request.Body;
                     var payload = await DeserializePayloadAsync<CheckRunEventPayload>(rawPayload);
 
-                    var installationId = payload.Installation.Id;
-                    var repositoryId = payload.Repository.Id;
-                    var pullRequestSha = payload.CheckRun.CheckSuite.HeadSha;
-
-                    Log.LogDebug("Fetching repository configuration.");
-                    var configuration = await this.ConfigurationStore.GetRepositoryConfigurationAsync(installationId, repositoryId, pullRequestSha, cancellationToken);
-                    Log.LogDebug("Repository configuration: {configuration}", configuration.ToString());
-
-                    if (configuration.IsEnabled)
-                    {
-                        Log.LogDebug("Repository was enabled for Check Enforcer.",
-                            installationId,
-                            repositoryId,
-                            pullRequestSha
-                            );
-                        await EvaluateAndUpdateCheckEnforcerRunStatusAsync(configuration, installationId, repositoryId, pullRequestSha, cancellationToken);
-                    }
-                    else
-                    {
-                        Log.LogInformation("Repository was not enabled for Check Enforcer.");
-                    }
+                    // Extract critical info for payload.
+                    installationId = payload.Installation.Id;
+                    repositoryId = payload.Repository.Id;
+                    pullRequestSha = payload.CheckRun.CheckSuite.HeadSha;
                 }
                 else if (eventName == "check_suite")
                 {
-                    // HACK: We swallow check_suite events. Technically we could register
-                    //       the check enforcer check run earlier (before the PR is even created)
-                    //       but at this point we don't know the target branch for sure so we
-                    //       can't potentially cache the configuration entry.
-                    //
-                    //       However - we can't opt out of receiving this event even then check suite
-                    //       is unchecked in the app's event setup. So rather than returning a 400
-                    //       for this event we just swallow it to eliminate the noise.
-                    return;
+                    var rawPayload = request.Body;
+                    var payload = await DeserializePayloadAsync<CheckSuiteEventPayload>(rawPayload);
+
+                    // Extract critical info for payload.
+                    installationId = payload.Installation.Id;
+                    repositoryId = payload.Repository.Id;
+                    pullRequestSha = payload.CheckSuite.HeadSha;
                 }
                 else
                 {
                     throw new CheckEnforcerUnsupportedEventException(eventName);
+                }
+
+                Log.LogDebug("Fetching repository configuration.");
+                var configuration = await this.ConfigurationStore.GetRepositoryConfigurationAsync(installationId, repositoryId, pullRequestSha, cancellationToken);
+                Log.LogDebug("Repository configuration: {configuration}", configuration.ToString());
+
+                if (configuration.IsEnabled)
+                {
+                    Log.LogDebug("Repository was enabled for Check Enforcer.",
+                        installationId,
+                        repositoryId,
+                        pullRequestSha
+                        );
+                    await EvaluateAndUpdateCheckEnforcerRunStatusAsync(configuration, installationId, repositoryId, pullRequestSha, cancellationToken);
+                }
+                else
+                {
+                    Log.LogInformation("Repository was not enabled for Check Enforcer.");
                 }
             }
             else

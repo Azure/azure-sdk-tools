@@ -99,6 +99,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
             if (totalOtherRuns >= configuration.MinimumCheckRuns && totalOutstandingOtherRuns == 0)
             {
                 Log.LogDebug("Check Enforcer criteria met, marking check successful.");
+
                 await client.Check.Run.Update(repositoryId, checkEnforcerRun.Id, new CheckRunUpdate()
                 {
                     Conclusion = new StringEnum<CheckConclusion>(CheckConclusion.Success)
@@ -153,6 +154,26 @@ namespace Azure.Sdk.Tools.CheckEnforcer
                     installationId = payload.Installation.Id;
                     repositoryId = payload.Repository.Id;
                     pullRequestSha = payload.CheckSuite.HeadSha;
+                }
+                else if (eventName == "issue_comment")
+                {
+                    var rawPayload = request.Body;
+                    var payload = await DeserializePayloadAsync<IssueCommentPayload>(rawPayload);
+                    var comment = payload.Comment.Body.ToLower();
+
+                    if (payload.Action == "created" && payload.Comment.Body.ToLower() == "/check-enforcer evaluate")
+                    {
+                        installationId = payload.Installation.Id;
+                        repositoryId = payload.Repository.Id;
+
+                        var installationClient = await ClientFactory.GetInstallationClientAsync(installationId, cancellationToken);
+                        var pullRequest = await installationClient.PullRequest.Get(repositoryId, payload.Issue.Number);
+                        pullRequestSha = pullRequest.Head.Sha;
+                    }
+                    else
+                    {
+                        return;
+                    }
                 }
                 else
                 {

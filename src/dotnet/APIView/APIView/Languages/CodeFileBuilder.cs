@@ -48,6 +48,8 @@ namespace ApiView
                           SymbolDisplayLocalOptions.IncludeType
         );
 
+        private IAssemblySymbol _assembly;
+
         public ICodeFileBuilderSymbolOrderProvider SymbolOrderProvider { get; set; } = new CodeFileBuilderSymbolOrderProvider();
 
         private IEnumerable<INamespaceSymbol> EnumerateNamespaces(IAssemblySymbol assemblySymbol)
@@ -66,8 +68,10 @@ namespace ApiView
                 }
             }
         }
+
         public CodeFile Build(IAssemblySymbol assemblySymbol, bool runAnalysis)
         {
+            _assembly = assemblySymbol;
             var analyzer = new Analyzer();
 
             if (runAnalysis)
@@ -202,14 +206,48 @@ namespace ApiView
             {
                 builder.Punctuation(SyntaxKind.SemicolonToken);
                 builder.NewLine();
+                return;
             }
 
-            bool first = true;
             builder.Space();
 
+            BuildBaseType(builder, namedType);
+
+            builder.Punctuation(SyntaxKind.OpenBraceToken);
+            builder.IncrementIndent();
+            builder.NewLine();
+
+            foreach (var namedTypeSymbol in SymbolOrderProvider.OrderTypes(namedType.GetTypeMembers()))
+            {
+                BuildType(builder, namedTypeSymbol, navigationBuilder);
+            }
+
+            foreach (var member in SymbolOrderProvider.OrderMembers(namedType.GetMembers()))
+            {
+                if (member.Kind == SymbolKind.NamedType || member.IsImplicitlyDeclared || !IsAccessible(member)) continue;
+                if (member is IMethodSymbol method)
+                {
+                    if (method.MethodKind == MethodKind.PropertyGet ||
+                        method.MethodKind == MethodKind.PropertySet ||
+                        method.MethodKind == MethodKind.EventAdd ||
+                        method.MethodKind == MethodKind.EventRemove ||
+                        method.MethodKind == MethodKind.EventRaise)
+                    {
+                        continue;
+                    }
+                }
+                BuildMember(builder, member);
+            }
+
+            CloseBrace(builder);
+        }
+
+        private void BuildBaseType(CodeFileTokensBuilder builder, INamedTypeSymbol namedType)
+        {
+            bool first = true;
+
             if (namedType.BaseType != null &&
-                namedType.BaseType.SpecialType != SpecialType.System_ValueType &&
-                namedType.BaseType.SpecialType != SpecialType.System_Object)
+                namedType.BaseType.SpecialType == SpecialType.None)
             {
                 builder.Punctuation(SyntaxKind.ColonToken);
                 builder.Space();
@@ -239,34 +277,6 @@ namespace ApiView
             {
                 builder.Space();
             }
-
-            builder.Punctuation(SyntaxKind.OpenBraceToken);
-            builder.IncrementIndent();
-            builder.NewLine();
-
-            foreach (var namedTypeSymbol in SymbolOrderProvider.OrderTypes(namedType.GetTypeMembers()))
-            {
-                BuildType(builder, namedTypeSymbol, navigationBuilder);
-            }
-
-            foreach (var member in SymbolOrderProvider.OrderMembers(namedType.GetMembers()))
-            {
-                if (member.Kind == SymbolKind.NamedType || member.IsImplicitlyDeclared || !IsAccessible(member)) continue;
-                if (member is IMethodSymbol method)
-                {
-                    if (method.MethodKind == MethodKind.PropertyGet ||
-                        method.MethodKind == MethodKind.PropertySet ||
-                        method.MethodKind == MethodKind.EventAdd ||
-                        method.MethodKind == MethodKind.EventRemove ||
-                        method.MethodKind == MethodKind.EventRaise)
-                    {
-                        continue;
-                    }
-                }
-                BuildMember(builder, member);
-            }
-
-            CloseBrace(builder);
         }
 
         private static void CloseBrace(CodeFileTokensBuilder builder)
@@ -409,7 +419,7 @@ namespace ApiView
                 DefinitionId = symbol.GetId(),
                 Kind = CodeFileTokenKind.LineIdMarker
             });
-            DisplayName(builder, symbol);
+            DisplayName(builder, symbol, symbol);
         }
 
         private void BuildVisibility(CodeFileTokensBuilder builder, ISymbol symbol)
@@ -418,15 +428,15 @@ namespace ApiView
             builder.Space();
         }
 
-        private void DisplayName(CodeFileTokensBuilder builder, ISymbol symbol)
+        private void DisplayName(CodeFileTokensBuilder builder, ISymbol symbol, ISymbol definedSymbol = null)
         {
             foreach (var symbolDisplayPart in symbol.ToDisplayParts(_defaultDisplayFormat))
             {
-                builder.Append(MapToken(symbol, symbolDisplayPart));
+                builder.Append(MapToken(definedSymbol, symbolDisplayPart));
             }
         }
 
-        private CodeFileToken MapToken(ISymbol containingSymbol, SymbolDisplayPart symbolDisplayPart)
+        private CodeFileToken MapToken(ISymbol definedSymbol, SymbolDisplayPart symbolDisplayPart)
         {
             CodeFileTokenKind kind;
 
@@ -477,15 +487,15 @@ namespace ApiView
             var symbol = symbolDisplayPart.Symbol;
 
             if (symbol is INamedTypeSymbol &&
-                !containingSymbol.Equals(symbol) &&
-                containingSymbol.ContainingAssembly.Equals(symbol.ContainingAssembly))
+                (definedSymbol == null || !definedSymbol.Equals(symbol)) &&
+                _assembly.Equals(symbol.ContainingAssembly))
             {
                 navigateToId = symbol.GetId();
             }
 
             return new CodeFileToken()
             {
-                DefinitionId =  containingSymbol.Equals(symbol) ? containingSymbol.GetId() : null,
+                DefinitionId = definedSymbol?.Equals(symbol) == true ? definedSymbol.GetId() : null,
                 NavigateToId = navigateToId,
                 Value = symbolDisplayPart.ToString(),
                 Kind =  kind

@@ -1,7 +1,6 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using APIView;
@@ -11,27 +10,6 @@ using Microsoft.CodeAnalysis.CSharp;
 
 namespace ApiView
 {
-    public static class SymbolExtensions
-    {
-        static SymbolDisplayFormat _idFormat = new SymbolDisplayFormat(
-            SymbolDisplayGlobalNamespaceStyle.Omitted,
-            SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
-            SymbolDisplayGenericsOptions.IncludeTypeParameters,
-            SymbolDisplayMemberOptions.IncludeContainingType | SymbolDisplayMemberOptions.IncludeParameters,
-            SymbolDisplayDelegateStyle.NameAndParameters,
-            SymbolDisplayExtensionMethodStyle.StaticMethod,
-            SymbolDisplayParameterOptions.IncludeType,
-            SymbolDisplayPropertyStyle.NameOnly,
-            SymbolDisplayLocalOptions.None,
-            SymbolDisplayKindOptions.None,
-            SymbolDisplayMiscellaneousOptions.None);
-
-        public static string GetId(this ISymbol namedType)
-        {
-            return namedType.ToDisplayString(_idFormat);
-        }
-    }
-
     public class CodeFileBuilder
     {
         SymbolDisplayFormat _defaultDisplayFormat = new SymbolDisplayFormat(
@@ -67,6 +45,8 @@ namespace ApiView
                           SymbolDisplayLocalOptions.IncludeType
         );
 
+        public ICodeFileBuilderSymbolOrderProvider SymbolOrderProvider { get; set; } = new CodeFileBuilderSymbolOrderProvider();
+
         private IEnumerable<INamespaceSymbol> EnumerateNamespaces(IAssemblySymbol assemblySymbol)
         {
             var stack = new Stack<INamespaceSymbol>();
@@ -98,7 +78,7 @@ namespace ApiView
             {
                 if (namespaceSymbol.IsGlobalNamespace)
                 {
-                    foreach (var namedTypeSymbol in SortTypes(namespaceSymbol.GetTypeMembers()))
+                    foreach (var namedTypeSymbol in SymbolOrderProvider.OrderTypes(namespaceSymbol.GetTypeMembers()))
                     {
                         BuildType(builder, namedTypeSymbol, navigationItems);
                     }
@@ -141,7 +121,7 @@ namespace ApiView
             builder.NewLine();
 
             List<NavigationItem> namespaceItems = new List<NavigationItem>();
-            foreach (var namedTypeSymbol in SortTypes(namespaceSymbol.GetTypeMembers()))
+            foreach (var namedTypeSymbol in SymbolOrderProvider.OrderTypes(namespaceSymbol.GetTypeMembers()))
             {
                 BuildType(builder, namedTypeSymbol, namespaceItems);
             }
@@ -201,12 +181,12 @@ namespace ApiView
             builder.IncrementIndent();
             builder.NewLine();
 
-            foreach (var namedTypeSymbol in SortTypes(namedType.GetTypeMembers()))
+            foreach (var namedTypeSymbol in SymbolOrderProvider.OrderTypes(namedType.GetTypeMembers()))
             {
                 BuildType(builder, namedTypeSymbol, navigationBuilder);
             }
 
-            foreach (var member in SortMembers(namedType.GetMembers()))
+            foreach (var member in SymbolOrderProvider.OrderMembers(namedType.GetMembers()))
             {
                 if (member.Kind == SymbolKind.NamedType || member.IsImplicitlyDeclared || !IsAccessible(member)) continue;
                 if (member is IMethodSymbol method)
@@ -254,79 +234,6 @@ namespace ApiView
             }
 
             builder.NewLine();
-        }
-
-        private IEnumerable<T> SortTypes<T>(IEnumerable<T> symbols) where T: ITypeSymbol
-        {
-            return symbols.OrderBy(t => (GetTypeOrder(t), t.DeclaredAccessibility != Accessibility.Public, t.Name));
-        }
-
-        private IEnumerable<ISymbol> SortMembers(IEnumerable<ISymbol> members)
-        {
-            return members.OrderBy(t => (GetMemberOrder(t), t.DeclaredAccessibility != Accessibility.Public, t.Name));
-        }
-
-        private static int GetTypeOrder(ITypeSymbol typeSymbol)
-        {
-            if (typeSymbol.Name.EndsWith("Client"))
-            {
-                return -100;
-            }
-
-            if (typeSymbol.Name.EndsWith("Options")) {
-                return -20;
-            }
-
-            if (typeSymbol.Name.EndsWith("Extensions"))
-            {
-                return 1;
-            }
-
-            if (typeSymbol.TypeKind == TypeKind.Interface) {
-                return -1;
-            }
-            if (typeSymbol.TypeKind == TypeKind.Enum) {
-                return 90;
-            }
-            if (typeSymbol.TypeKind == TypeKind.Delegate) {
-                return 99;
-            }
-            if (typeSymbol.Name.EndsWith("Exception"))
-            {
-                return 100;
-            }
-
-            // Nested type
-            if (typeSymbol.ContainingType != null)
-            {
-                return 3;
-            }
-
-            return 0;
-        }
-
-        private static int GetMemberOrder(ISymbol symbol)
-        {
-            switch (symbol)
-            {
-                case IFieldSymbol fieldSymbol when fieldSymbol.ContainingType.TypeKind == TypeKind.Enum:
-                    return (int)Convert.ToInt64(fieldSymbol.ConstantValue);
-
-                case IMethodSymbol methodSymbol when methodSymbol.MethodKind == MethodKind.Constructor:
-                    return -10;
-
-                case IMethodSymbol methodSymbol when (methodSymbol.OverriddenMethod?.ContainingType?.SpecialType == SpecialType.System_Object ||
-                                                      methodSymbol.OverriddenMethod?.ContainingType?.SpecialType == SpecialType.System_ValueType):
-                    return 5;
-                case IMethodSymbol methodSymbol when methodSymbol.IsStatic:
-                    return -4;
-                case IPropertySymbol _:
-                    return -5;
-                case IFieldSymbol _:
-                    return -6;
-                default:
-                    return 0;
-            }
         }
 
         private void NodeFromSymbol(CodeFileTokensBuilder builder, ISymbol symbol,  bool prependVisibility = false)

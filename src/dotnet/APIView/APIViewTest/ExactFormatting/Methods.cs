@@ -6,5 +6,6 @@
         public virtual void M2(string s = "s") {}
         public void M3(string s, int m = 3) {}
         public Class M3(string s, int m = 3) {/*-*/return null;/*-*/}
+        public void M4<T>() {}
     }
 }

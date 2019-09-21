@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using ApiView;
 using Azure.ClientSdk.Analyzers.Tests;
+using Microsoft.CodeAnalysis;
 using Xunit;
 
 namespace APIViewTest
@@ -40,10 +41,26 @@ namespace APIViewTest
         {
             var project = DiagnosticProject.Create(typeof(CodeFileBuilderTests).Assembly, new[] { code });
             var compilation = await project.GetCompilationAsync();
-            var codeModel = new CodeFileBuilder().Build(compilation.Assembly, false);
+            var codeModel = new CodeFileBuilder()
+            {
+                SymbolOrderProvider = new NameSymbolOrderProvider()
+            }.Build(compilation.Assembly, false);
             var formattedModel = new CodeFileRenderer().Render(codeModel);
             var formattedString = formattedModel.ToString();
             Assert.Equal(formatted, formattedString);
+        }
+
+        public class NameSymbolOrderProvider : ICodeFileBuilderSymbolOrderProvider
+        {
+            public IEnumerable<T> OrderTypes<T>(IEnumerable<T> symbols) where T : ITypeSymbol
+            {
+                return symbols.OrderBy(s => s.Name);
+            }
+
+            public IEnumerable<ISymbol> OrderMembers(IEnumerable<ISymbol> members)
+            {
+                return members.OrderBy(s => s.Name);
+            }
         }
     }
 }

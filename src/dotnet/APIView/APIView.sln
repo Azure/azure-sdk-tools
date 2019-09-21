@@ -9,8 +9,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "APIViewTest", "APIViewTest\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "APIViewWeb", "APIViewWeb\APIViewWeb.csproj", "{F604E06C-B8E7-49EF-960C-F2CF87E2C1A5}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestLibrary", "TestLibrary\TestLibrary.csproj", "{E7483C46-8FE8-4CF0-BFC6-A290599D0EB9}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.ClientSdk.Analyzers", "..\Azure.ClientSdk.Analyzers\Azure.ClientSdk.Analyzers\Azure.ClientSdk.Analyzers.csproj", "{E42C626D-4037-4AEB-96FB-5E58BF99FE9B}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.ClientSdk.Analyzers.Tests", "..\Azure.ClientSdk.Analyzers\Azure.ClientSdk.Analyzers.Tests\Azure.ClientSdk.Analyzers.Tests.csproj", "{09661CDE-E40B-4892-86DC-6DD79A279220}"
@@ -33,10 +31,6 @@ Global
 		{F604E06C-B8E7-49EF-960C-F2CF87E2C1A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F604E06C-B8E7-49EF-960C-F2CF87E2C1A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F604E06C-B8E7-49EF-960C-F2CF87E2C1A5}.Release|Any CPU.Build.0 = Release|Any CPU
-		{E7483C46-8FE8-4CF0-BFC6-A290599D0EB9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E7483C46-8FE8-4CF0-BFC6-A290599D0EB9}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E7483C46-8FE8-4CF0-BFC6-A290599D0EB9}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E7483C46-8FE8-4CF0-BFC6-A290599D0EB9}.Release|Any CPU.Build.0 = Release|Any CPU
 		{E42C626D-4037-4AEB-96FB-5E58BF99FE9B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{E42C626D-4037-4AEB-96FB-5E58BF99FE9B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E42C626D-4037-4AEB-96FB-5E58BF99FE9B}.Release|Any CPU.ActiveCfg = Release|Any CPU

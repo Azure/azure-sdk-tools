@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,7 +14,7 @@ namespace ApiView
         public StringListApiView Render(CodeFile file)
         {
             var list = new StringListApiView();
-            Render(list, file.Tokens, file.Diagnostics);
+            Render(list, file.Tokens, file.Diagnostics ?? Array.Empty<CodeDiagnostic>());
             return list;
         }
 

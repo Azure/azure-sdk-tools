@@ -24,7 +24,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\APIView\APIView.csproj" />
-    <ProjectReference Include="..\TestLibrary\TestLibrary.csproj" />
   </ItemGroup>
 
 </Project>

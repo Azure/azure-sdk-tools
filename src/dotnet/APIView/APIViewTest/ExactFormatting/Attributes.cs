@@ -24,7 +24,6 @@ namespace A {
         [Public("s", Property = "a")]
         [Public(null, Property = null)]
         public void M1() {}
-        public void M2(int a);
     }
     [AttributeUsage(AttributeTargets.All, AllowMultiple = true)]
     public class PublicAttribute : Attribute {

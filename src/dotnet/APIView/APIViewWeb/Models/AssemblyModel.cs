@@ -16,7 +16,6 @@ namespace APIViewWeb.Models
             ReadCommentHandling = JsonCommentHandling.Skip
         };
 
-        public AssemblyApiView Assembly { get; set; }
         public CodeFile AssemblyNode { get; set; }
         public string Author { get; set; }
         public string Id { get; set; }
@@ -32,7 +31,7 @@ namespace APIViewWeb.Models
 
         public void BuildFromStream(Stream assemblyStream, bool runAnalysis)
         {
-            var assemblySymbol = AssemblyApiView.GetCompilation(assemblyStream);
+            var assemblySymbol = CompilationFactory.GetCompilation(assemblyStream);
             this.AssemblyNode = new CodeFileBuilder().Build(assemblySymbol, runAnalysis);
             this.Name = AssemblyNode.Name;
         }

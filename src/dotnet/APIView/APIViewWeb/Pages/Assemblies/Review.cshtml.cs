@@ -55,19 +55,15 @@ namespace APIViewWeb.Pages.Assemblies
             };
         }
 
-        public async Task OnGetAsync(string id)
+        public async Task<IActionResult> OnGetAsync(string id)
         {
             Id = id;
             AssemblyModel = await assemblyRepository.ReadAssemblyContentAsync(id);
-            if (AssemblyModel.AssemblyNode != null)
+            if (AssemblyModel.AssemblyNode == null)
             {
-                Lines = new CodeFileHtmlRenderer().Render(AssemblyModel.AssemblyNode).ToArray();
+                return RedirectToPage("LegacyReview", new { id = id });
             }
-            else
-            {
-            	var renderer = new HTMLRendererApiView();
-                Lines = renderer.Render(AssemblyModel.Assembly).ToArray();
-            }
+            Lines = new CodeFileHtmlRenderer().Render(AssemblyModel.AssemblyNode).ToArray();
             Comments = new Dictionary<string, List<CommentModel>>();
 
             var assemblyComments = await commentRepository.FetchCommentsAsync(id);
@@ -75,13 +71,14 @@ namespace APIViewWeb.Pages.Assemblies
 
             foreach (var comment in comments)
             {
-                if (!Comments.TryGetValue(comment.ElementId, out List<CommentModel> list))
+                if (!Comments.TryGetValue(comment.ElementId, out _))
                     Comments[comment.ElementId] = new List<CommentModel>() { comment };
                 else
                     Comments[comment.ElementId].Add(comment);
             }
 
             Username = User.GetGitHubLogin();
+            return Page();
         }
 
         public async Task<ActionResult> OnPostAsync(string id)

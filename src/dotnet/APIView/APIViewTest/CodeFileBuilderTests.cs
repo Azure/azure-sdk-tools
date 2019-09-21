@@ -8,12 +8,20 @@ using Azure.ClientSdk.Analyzers.Tests;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace APIViewTest
 {
     public class CodeFileBuilderTests
     {
-        private Regex _stripRegex = new Regex(@"/\*-\*/(.*?)/\*-\*/");
+        private readonly ITestOutputHelper _testOutputHelper;
+
+        public CodeFileBuilderTests(ITestOutputHelper testOutputHelper)
+        {
+            _testOutputHelper = testOutputHelper;
+        }
+
+        private Regex _stripRegex = new Regex(@"/\*-\*/(.*?)/\*-\*/", RegexOptions.Singleline);
 
         public static IEnumerable<object[]> ExactFormattingFiles
         {
@@ -40,7 +48,7 @@ namespace APIViewTest
             await AssertFormattingAsync(code, formatted);
         }
 
-        public static async Task AssertFormattingAsync(string code, string formatted)
+        public async Task AssertFormattingAsync(string code, string formatted)
         {
             var project = DiagnosticProject.Create(typeof(CodeFileBuilderTests).Assembly, new[] { code });
             project = project.WithCompilationOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
@@ -52,6 +60,7 @@ namespace APIViewTest
             }.Build(compilation.Assembly, false);
             var formattedModel = new CodeFileRenderer().Render(codeModel);
             var formattedString = formattedModel.ToString();
+            _testOutputHelper.WriteLine(formattedString);
             Assert.Equal(formatted, formattedString);
         }
 

@@ -1,12 +1,16 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using APIView;
 using APIView.Analysis;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.PooledObjects;
+using Microsoft.CodeAnalysis.SymbolDisplay;
 
 namespace ApiView
 {
@@ -22,8 +26,7 @@ namespace ApiView
                                   SymbolDisplayMiscellaneousOptions.RemoveAttributeSuffix |
                                   SymbolDisplayMiscellaneousOptions.UseSpecialTypes |
                                   SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier,
-            kindOptions: SymbolDisplayKindOptions.IncludeMemberKeyword |
-                         SymbolDisplayKindOptions.IncludeTypeKeyword,
+            kindOptions: SymbolDisplayKindOptions.IncludeMemberKeyword,
             parameterOptions: SymbolDisplayParameterOptions.IncludeDefaultValue |
                               SymbolDisplayParameterOptions.IncludeExtensionThis |
                               SymbolDisplayParameterOptions.IncludeName |
@@ -168,15 +171,75 @@ namespace ApiView
             navigationBuilder.Add(navigationItem);
             navigationItem.Tags.Add("TypeKind", namedType.TypeKind.ToString().ToLowerInvariant());
 
+            BuildAttributes(builder, namedType.GetAttributes());
+
             builder.WriteIndent();
-            NodeFromSymbol(builder, namedType, true);
+            BuildVisibility(builder, namedType);
+
+            switch (namedType.TypeKind)
+            {
+                case TypeKind.Class:
+                    builder.Keyword(SyntaxKind.ClassKeyword);
+                    break;
+                case TypeKind.Delegate:
+                    builder.Keyword(SyntaxKind.DelegateKeyword);
+                    break;
+                case TypeKind.Enum:
+                    builder.Keyword(SyntaxKind.EnumKeyword);
+                    break;
+                case TypeKind.Interface:
+                    builder.Keyword(SyntaxKind.InterfaceKeyword);
+                    break;
+                case TypeKind.Struct:
+                    builder.Keyword(SyntaxKind.StructKeyword);
+                    break;
+            }
+
+            builder.Space();
+
+            NodeFromSymbol(builder, namedType);
             if (namedType.TypeKind == TypeKind.Delegate)
             {
                 builder.Punctuation(SyntaxKind.SemicolonToken);
                 builder.NewLine();
             }
 
+            bool first = true;
             builder.Space();
+
+            if (namedType.BaseType != null &&
+                namedType.BaseType.SpecialType != SpecialType.System_ValueType &&
+                namedType.BaseType.SpecialType != SpecialType.System_Object)
+            {
+                builder.Punctuation(SyntaxKind.ColonToken);
+                builder.Space();
+                first = false;
+
+                DisplayName(builder, namedType.BaseType);
+            }
+
+            foreach (var typeInterface in namedType.Interfaces)
+            {
+                if (!first)
+                {
+                    builder.Punctuation(SyntaxKind.CommaToken);
+                    builder.Space();
+                }
+                else
+                {
+                    builder.Punctuation(SyntaxKind.ColonToken);
+                    builder.Space();
+                    first = false;
+                }
+
+                DisplayName(builder, typeInterface);
+            }
+
+            if (!first)
+            {
+                builder.Space();
+            }
+
             builder.Punctuation(SyntaxKind.OpenBraceToken);
             builder.IncrementIndent();
             builder.NewLine();
@@ -216,20 +279,15 @@ namespace ApiView
 
         private void BuildMember(CodeFileTokensBuilder builder, ISymbol member)
         {
+            BuildAttributes(builder, member.GetAttributes());
+
             builder.WriteIndent();
             NodeFromSymbol(builder, member);
-            if (member.Kind == SymbolKind.Method)
+            if (member.Kind == SymbolKind.Method && member.ContainingType.TypeKind != TypeKind.Interface)
             {
-                if (member.ContainingType.TypeKind == TypeKind.Interface)
-                {
-                    builder.Punctuation(SyntaxKind.SemicolonToken);
-                }
-                else
-                {
-                    builder.Space();
-                    builder.Punctuation(SyntaxKind.OpenBraceToken);
-                    builder.Punctuation(SyntaxKind.CloseBraceToken);
-                }
+                builder.Space();
+                builder.Punctuation(SyntaxKind.OpenBraceToken);
+                builder.Punctuation(SyntaxKind.CloseBraceToken);
             }
             else if (member.Kind == SymbolKind.Field && member.ContainingType.TypeKind == TypeKind.Enum)
             {
@@ -243,18 +301,125 @@ namespace ApiView
             builder.NewLine();
         }
 
-        private void NodeFromSymbol(CodeFileTokensBuilder builder, ISymbol symbol,  bool prependVisibility = false)
+        private void BuildAttributes(CodeFileTokensBuilder builder, ImmutableArray<AttributeData> attributes)
+        {
+            const string attributeSuffix = "Attribute";
+            foreach (var attribute in attributes)
+            {
+                if (!IsAccessible(attribute.AttributeClass) || IsSkippedAttribute(attribute.AttributeClass))
+                {
+                    continue;
+                }
+                builder.WriteIndent();
+                builder.Punctuation(SyntaxKind.OpenBracketToken);
+                var name = attribute.AttributeClass.Name;
+                if (name.EndsWith(attributeSuffix))
+                {
+                    name = name.Substring(0, name.Length - attributeSuffix.Length);
+                }
+                builder.Append(name, CodeFileTokenKind.TypeName);
+                if (attribute.ConstructorArguments.Any())
+                {
+                    builder.Punctuation(SyntaxKind.OpenParenToken);
+                    bool first = true;
+
+                    foreach (var argument in attribute.ConstructorArguments)
+                    {
+                        if (!first)
+                        {
+                            builder.Punctuation(SyntaxKind.CommaToken);
+                            builder.Space();
+                        }
+                        else
+                        {
+                            first = false;
+                        }
+                        BuildTypedConstant(builder, argument);
+                    }
+
+                    foreach (var argument in attribute.NamedArguments)
+                    {
+                        if (!first)
+                        {
+                            builder.Punctuation(SyntaxKind.CommaToken);
+                            builder.Space();
+                        }
+                        else
+                        {
+                            first = false;
+                        }
+                        builder.Append(argument.Key, CodeFileTokenKind.Text);
+                        builder.Space();
+                        builder.Punctuation(SyntaxKind.EqualsToken);
+                        builder.Space();
+                        BuildTypedConstant(builder, argument.Value);
+                    }
+
+                    builder.Punctuation(SyntaxKind.CloseParenToken);
+                }
+                builder.Punctuation(SyntaxKind.CloseBracketToken);
+                builder.NewLine();
+            }
+        }
+
+        private bool IsSkippedAttribute(INamedTypeSymbol attributeAttributeClass)
+        {
+            switch (attributeAttributeClass.Name)
+            {
+                case "DebuggerStepThroughAttribute":
+                case "AsyncStateMachineAttribute":
+                case "EditorBrowsableAttribute":
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        private void BuildTypedConstant(CodeFileTokensBuilder builder, TypedConstant typedConstant)
+        {
+            if (typedConstant.IsNull)
+            {
+                builder.Keyword(SyntaxKind.NullKeyword);
+            }
+            else if (typedConstant.Kind == TypedConstantKind.Enum)
+            {
+                new CodeFileBuilderEnumFormatter(builder).Format(typedConstant.Type, typedConstant.Value);
+            }
+            else
+            {
+                if (typedConstant.Value is string s)
+                {
+                    builder.Append(
+                        ObjectDisplay.FormatLiteral(s, ObjectDisplayOptions.UseQuotes | ObjectDisplayOptions.EscapeNonPrintableCharacters),
+                        CodeFileTokenKind.StringLiteral);
+                }
+                else
+                {
+                    builder.Append(
+                        ObjectDisplay.FormatPrimitive(typedConstant.Value, ObjectDisplayOptions.None),
+                        CodeFileTokenKind.Literal);
+                }
+            }
+        }
+
+        private void NodeFromSymbol(CodeFileTokensBuilder builder, ISymbol symbol)
         {
             builder.Append(new CodeFileToken()
             {
                 DefinitionId = symbol.GetId(),
                 Kind = CodeFileTokenKind.LineIdMarker
             });
-            if (prependVisibility)
-            {
-                builder.Keyword(SyntaxFacts.GetText(ToEffectiveAccessibility(symbol.DeclaredAccessibility)));
-                builder.Space();
-            }
+            DisplayName(builder, symbol);
+        }
+
+        private void BuildVisibility(CodeFileTokensBuilder builder, ISymbol symbol)
+        {
+            builder.Keyword(SyntaxFacts.GetText(ToEffectiveAccessibility(symbol.DeclaredAccessibility)));
+            builder.Space();
+        }
+
+        private void DisplayName(CodeFileTokensBuilder builder, ISymbol symbol)
+        {
             foreach (var symbolDisplayPart in symbol.ToDisplayParts(_defaultDisplayFormat))
             {
                 builder.Append(MapToken(symbol, symbolDisplayPart));
@@ -350,6 +515,53 @@ namespace ApiView
                     return true;
                 default:
                     return false;
+            }
+        }
+
+        internal class CodeFileBuilderEnumFormatter : AbstractSymbolDisplayVisitor
+        {
+            private readonly CodeFileTokensBuilder _builder;
+
+            public CodeFileBuilderEnumFormatter(CodeFileTokensBuilder builder) : base(null, SymbolDisplayFormat.FullyQualifiedFormat, false, null, 0, false)
+            {
+                _builder = builder;
+            }
+
+            protected override AbstractSymbolDisplayVisitor MakeNotFirstVisitor(bool inNamespaceOrType = false)
+            {
+                return this;
+            }
+
+            protected override void AddLiteralValue(SpecialType type, object value)
+            {
+                _builder.Append(ObjectDisplay.FormatPrimitive(value, ObjectDisplayOptions.None), CodeFileTokenKind.Literal);
+            }
+
+            protected override void AddExplicitlyCastedLiteralValue(INamedTypeSymbol namedType, SpecialType type, object value)
+            {
+                _builder.Append(ObjectDisplay.FormatPrimitive(value, ObjectDisplayOptions.None), CodeFileTokenKind.Literal);
+            }
+
+            protected override void AddSpace()
+            {
+                _builder.Space();
+            }
+
+            protected override void AddBitwiseOr()
+            {
+                _builder.Punctuation(SyntaxKind.BarToken);
+            }
+
+            public override void VisitField(IFieldSymbol symbol)
+            {
+                _builder.Append(symbol.Type.Name, CodeFileTokenKind.TypeName);
+                _builder.Punctuation(SyntaxKind.DotToken);
+                _builder.Append(symbol.Name, CodeFileTokenKind.MemberName);
+            }
+
+            public void Format(ITypeSymbol type, object typedConstantValue)
+            {
+                AddNonNullConstantValue(type, typedConstantValue);
             }
         }
     }

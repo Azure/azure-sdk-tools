@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using ApiView;
 using Azure.ClientSdk.Analyzers.Tests;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Xunit;
 
 namespace APIViewTest
@@ -21,26 +22,30 @@ namespace APIViewTest
                 var assembly = typeof(CodeFileBuilderTests).Assembly;
                 return assembly.GetManifestResourceNames()
                     .Where(r => r.Contains("ExactFormatting"))
-                    .Select(r => new object [] { r } )
+                    .Select(r => new object[] { r })
                     .ToArray();
             }
         }
 
         [Theory]
         [MemberData(nameof(ExactFormattingFiles))]
-        public async Task TestMethod(string name)
+        public async Task VerifyFormatted(string name)
         {
             var manifestResourceStream = typeof(CodeFileBuilderTests).Assembly.GetManifestResourceStream(name);
             var streamReader = new StreamReader(manifestResourceStream);
-            var code = streamReader.ReadToEnd().Trim(' ', '\t', '\r', '\n');
+            var code = streamReader.ReadToEnd();
+            code = code.Trim(' ', '\t', '\r', '\n');
             var formatted = _stripRegex.Replace(code, string.Empty);
+            formatted = formatted.Trim(' ', '\t', '\r', '\n');
             await AssertFormattingAsync(code, formatted);
         }
 
         public static async Task AssertFormattingAsync(string code, string formatted)
         {
             var project = DiagnosticProject.Create(typeof(CodeFileBuilderTests).Assembly, new[] { code });
+            project = project.WithCompilationOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
             var compilation = await project.GetCompilationAsync();
+            Assert.Empty(compilation.GetDiagnostics().Where(d => d.Severity > DiagnosticSeverity.Warning));
             var codeModel = new CodeFileBuilder()
             {
                 SymbolOrderProvider = new NameSymbolOrderProvider()

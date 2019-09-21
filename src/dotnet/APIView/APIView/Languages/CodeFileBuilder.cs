@@ -220,9 +220,16 @@ namespace ApiView
             NodeFromSymbol(builder, member);
             if (member.Kind == SymbolKind.Method)
             {
-                builder.Space();
-                builder.Punctuation(SyntaxKind.OpenBraceToken);
-                builder.Punctuation(SyntaxKind.CloseBraceToken);
+                if (member.ContainingType.TypeKind == TypeKind.Interface)
+                {
+                    builder.Punctuation(SyntaxKind.SemicolonToken);
+                }
+                else
+                {
+                    builder.Space();
+                    builder.Punctuation(SyntaxKind.OpenBraceToken);
+                    builder.Punctuation(SyntaxKind.CloseBraceToken);
+                }
             }
             else if (member.Kind == SymbolKind.Field && member.ContainingType.TypeKind == TypeKind.Enum)
             {

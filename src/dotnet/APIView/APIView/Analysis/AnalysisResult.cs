@@ -1,22 +1,28 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
 
 namespace APIView
 {
-    public struct AnalysisResult
+    public class CodeDiagnostic
     {
-        public AnalysisResult(string targetId, string text, string helpLinkUri = default)
+        public CodeDiagnostic()
         {
+        }
+
+        public CodeDiagnostic(string diagnosticId, string targetId, string text, string helpLinkUri)
+        {
+            DiagnosticId = diagnosticId;
             Text = text;
             TargetId = targetId;
             HelpLinkUri = helpLinkUri;
         }
 
-        public string Text { get; }
+        public string DiagnosticId { get; set; }
 
-        public string HelpLinkUri { get; }
+        public string Text { get; set; }
 
-        public string TargetId { get; }
+        public string HelpLinkUri { get; set; }
+
+        public string TargetId { get; set; }
     }
 }

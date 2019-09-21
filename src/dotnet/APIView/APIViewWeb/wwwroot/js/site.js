@@ -9,7 +9,7 @@ $(function () {
     $(document).find(".nav-list-toggle").click(function() {
         $(this).parents(".nav-list-group").first().toggleClass("nav-list-collapsed");
     });
-    
+
     $(document).find(".commentable").click(function () {
         showCommentBox(this.id);
         return false;
@@ -22,6 +22,8 @@ $(function () {
 
     function attachEventHandlers(element, id=null) {
         let thisRow = $(document.getElementById(id)).parents(".code-line").first();
+        let diagnosticsRow = thisRow.next();
+        let commentsRow = diagnosticsRow.next();
 
         $(element).find(".comment-cancel-button").click(function () {
             hideCommentBox(id);
@@ -32,7 +34,7 @@ $(function () {
                 type: "POST",
                 data: element.find("form").serialize()
             }).done(function (partialViewResult) {
-                updateCommentThread(thisRow.next(), partialViewResult);
+                updateCommentThread(commentsRow, partialViewResult);
             });
             return false;
         });
@@ -49,32 +51,34 @@ $(function () {
 
     function hideCommentBox(id) {
         var thisRow = $(document.getElementById(id)).parents(".code-line").first();
-        var nextRow = thisRow.next();
+        let diagnosticsRow = thisRow.next();
+        let nextRow = diagnosticsRow.next();
         nextRow.find(".review-thread-reply").show();
         nextRow.find(".comment-form").hide();
     }
 
     function showCommentBox(id) {
         let thisRow = $(document.getElementById(id)).parents(".code-line").first();
-        let nextRow = thisRow.next();
-        let commentForm = nextRow.find(".comment-form");
+        let diagnosticsRow = thisRow.next();
+        let nextRow = diagnosticsRow.next();
+        let commentBox = nextRow.find(".comment-form");
 
-        if (commentForm.length == 0) {
-            commentForm = commentFormTemplate.children().clone();
+        if (commentBox.length == 0) {
+            commentBox = commentFormTemplate.children().clone();
 
             var thread = nextRow.find(".comment-thread-contents");
             if (thread.length > 0) {
-                thread.after(commentForm);
+                thread.after(commentBox);
             }
             else {
-                commentForm.insertAfter(thisRow).wrap("<tr>").wrap("<td colspan=\"2\">");
+                commentBox.insertAfter(diagnosticsRow).wrap("<tr>").wrap("<td colspan=\"2\">");
             }
         }
 
-        commentForm.show();
-        commentForm.find(".id-box").val(id);
-        commentForm.find(".new-thread-comment-text").focus();
-        attachEventHandlers(commentForm, id);
+        commentBox.show();
+        commentBox.find(".id-box").val(id);
+        commentBox.find(".new-thread-comment-text").focus();
+        attachEventHandlers(commentBox, id);
         nextRow.find(".review-thread-reply").hide();
         return false;
     }

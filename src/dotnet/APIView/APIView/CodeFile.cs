@@ -18,15 +18,19 @@ namespace ApiView
             ReadCommentHandling = JsonCommentHandling.Skip
         };
 
-        public const int CurrentVersion = 7;
+        public const int CurrentVersion = 8;
 
         public int Version { get; set; }
 
         public string Name { get; set; }
 
+        public string Language { get; set; }
+
         public CodeFileToken[] Tokens { get; set; } = Array.Empty<CodeFileToken>();
 
-        public List<NavigationItem> Navigation { get; set; } = new List<NavigationItem>();
+        public NavigationItem[] Navigation { get; set; }
+
+        public CodeDiagnostic[] Diagnostics { get; set; }
 
         public override string ToString()
         {

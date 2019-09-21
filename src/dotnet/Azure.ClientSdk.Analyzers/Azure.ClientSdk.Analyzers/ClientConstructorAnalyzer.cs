@@ -1,8 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using Microsoft.CodeAnalysis;
@@ -35,11 +33,12 @@ namespace Azure.ClientSdk.Analyzers
             return symbol.Name + "Options";
         }
 
-        public override void AnalyzeCore(INamedTypeSymbol type, IAnalysisHost host)
+        public override void AnalyzeCore(ISymbolAnalysisContext context)
         {
+            var type = (INamedTypeSymbol)context.Symbol;
             if (!type.Constructors.Any(c => (c.DeclaredAccessibility == Accessibility.Protected || c.DeclaredAccessibility == Accessibility.Public) && c.Parameters.Length == 0))
             {
-                host.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0005, type.Locations.First()), type);
+                context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0005, type.Locations.First()), type);
             }
 
             foreach (var constructor in type.Constructors)
@@ -53,7 +52,7 @@ namespace Azure.ClientSdk.Analyzers
 
                         if (nonOptionsMethod == null || nonOptionsMethod.DeclaredAccessibility != Accessibility.Public)
                         {
-                            host.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0006, constructor.Locations.First(), GetOptionsTypeName(type)), constructor);
+                            context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0006, constructor.Locations.First(), GetOptionsTypeName(type)), constructor);
                         }
                     }
                     else
@@ -63,7 +62,7 @@ namespace Azure.ClientSdk.Analyzers
 
                         if (optionsMethod == null || optionsMethod.DeclaredAccessibility != Accessibility.Public)
                         {
-                            host.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0007, constructor.Locations.First(), GetOptionsTypeName(type)), constructor);
+                            context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0007, constructor.Locations.First(), GetOptionsTypeName(type)), constructor);
                         }
                     }
                 }

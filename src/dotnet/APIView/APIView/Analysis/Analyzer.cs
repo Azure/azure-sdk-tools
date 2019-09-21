@@ -1,40 +1,70 @@
-﻿using ApiView;
+﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
+using ApiView;
 using Azure.ClientSdk.Analyzers;
 using Microsoft.CodeAnalysis;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace APIView.Analysis
 {
-    class Analyzer : IAnalysisHost
+    internal class Analyzer: SymbolVisitor
     {
-        List<AnalysisResult> _results = new List<AnalysisResult>();
-        List<IHostedAnalyzer> _analyzers = new List<IHostedAnalyzer>();
+        public List<CodeDiagnostic> Results { get; } = new List<CodeDiagnostic>();
 
-        public Analyzer(IAssemblySymbol assembly)
+        private readonly List<SymbolAnalyzerBase> _analyzers = new List<SymbolAnalyzerBase>();
+
+        public Analyzer()
         {
-            if (assembly.Name.StartsWith("Azure")) {
-                _analyzers.Add(new ClientMethodsAnalyzer());
-                _analyzers.Add(new ClientConstructorAnalyzer());
+            _analyzers.Add(new ClientMethodsAnalyzer());
+            _analyzers.Add(new ClientConstructorAnalyzer());
+            _analyzers.Add(new ClientOptionsAnalyzer());
+        }
+
+        public override void VisitAssembly(IAssemblySymbol symbol)
+        {
+            if (symbol.Name.StartsWith("Azure"))
+            {
+                Visit(symbol.GlobalNamespace);
             }
         }
 
-        public void Analyze(INamedTypeSymbol type)
+        public override void VisitNamespace(INamespaceSymbol symbol)
+        {
+            foreach (var namespaceOrTypeSymbol in symbol.GetMembers())
+            {
+                Visit(namespaceOrTypeSymbol);
+            }
+        }
+
+        public override void DefaultVisit(ISymbol symbol)
         {
             foreach (var rule in _analyzers)
             {
-                rule.Analyze(type, this);
+                if (rule.SymbolKinds.Contains(symbol.Kind))
+                {
+                    rule.Analyze(new Context(symbol, Results));
+                }
             }
         }
 
-        public AnalysisResult[] CreateResults()
+        private class Context : ISymbolAnalysisContext
         {
-            return _results.ToArray();
-        }
+            private readonly List<CodeDiagnostic> _results;
 
-        public void ReportDiagnostic(Diagnostic diagnostic, ISymbol symbol)
-        {
-            var result = new AnalysisResult(symbol.GetId(), diagnostic.Descriptor.Title.ToString(), diagnostic.Descriptor.HelpLinkUri);
-            _results.Add(result);
+            public Context(ISymbol symbol, List<CodeDiagnostic> results)
+            {
+                Symbol = symbol;
+                _results = results;
+            }
+
+            public ISymbol Symbol { get; }
+
+            public void ReportDiagnostic(Diagnostic diagnostic, ISymbol symbol)
+            {
+                _results.Add(new CodeDiagnostic(diagnostic.Id, symbol.GetId(), diagnostic.GetMessage(), diagnostic.Descriptor.HelpLinkUri));
+            }
         }
     }
 }

@@ -1,0 +1,10 @@
+﻿namespace A {
+    public class Class {
+        public static void K() {}
+        public void M0(string s) {}
+        public void M1(string s = null) {}
+        public virtual void M2(string s = "s") {}
+        public void M3(string s, int m = 3) {}
+        public Class M3(string s, int m = 3) {/*-*/return null;/*-*/}
+    }
+}

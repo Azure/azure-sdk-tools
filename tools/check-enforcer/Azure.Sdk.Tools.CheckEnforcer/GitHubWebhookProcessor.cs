@@ -76,7 +76,8 @@ namespace Azure.Sdk.Tools.CheckEnforcer
 
             var runsResponse = await client.Check.Run.GetAllForReference(repositoryId, pullRequestSha);
             var runs = runsResponse.CheckRuns;
-            var checkEnforcerRun = runs.Single(r => r.Name == Constants.ApplicationName);
+
+            var checkEnforcerRun = await CreateCheckEnforcerRunAsync(client, repositoryId, pullRequestSha, false);
 
             var otherRuns = from run in runs
                             where run.Name != Constants.ApplicationName

@@ -11,9 +11,9 @@ namespace APIViewWeb.Pages.Assemblies
 {
     public class LegacyReview: PageModel
     {
-        private readonly BlobCommentRepository commentRepository;
+        private readonly CosmosCommentsRepository commentRepository;
 
-        public LegacyReview(BlobCommentRepository commentRepository)
+        public LegacyReview(CosmosCommentsRepository commentRepository)
         {
             this.commentRepository = commentRepository;
         }
@@ -27,10 +27,9 @@ namespace APIViewWeb.Pages.Assemblies
             Id = id;
             Comments = new Dictionary<string, List<CommentModel>>();
 
-            var assemblyComments = await commentRepository.FetchCommentsAsync(id);
-            var comments = assemblyComments.Comments;
+            var assemblyComments = await commentRepository.GetCommentsAsync(id);
 
-            foreach (var comment in comments)
+            foreach (var comment in assemblyComments)
             {
                 if (!Comments.TryGetValue(comment.ElementId, out _))
                     Comments[comment.ElementId] = new List<CommentModel>() { comment };

@@ -6,11 +6,24 @@ namespace APIViewWeb.Pages.Assemblies
 {
     public class DeleteModel : PageModel
     {
-        private readonly BlobAssemblyRepository assemblyRepository;
+        private readonly BlobCodeFileRepository _codeFileRepository;
 
-        public DeleteModel(BlobAssemblyRepository assemblyRepository)
+        private readonly BlobOriginalsRepository _originalsRepository;
+
+        private readonly CosmosReviewRepository _reviewRepository;
+
+        private readonly CosmosCommentsRepository _commentsRepository;
+
+        public DeleteModel(BlobCodeFileRepository codeFileRepository,
+            BlobOriginalsRepository originalsRepository,
+            CosmosReviewRepository reviewRepository,
+            CosmosCommentsRepository commentsRepository
+            )
         {
-            this.assemblyRepository = assemblyRepository;
+            _codeFileRepository = codeFileRepository;
+            _originalsRepository = originalsRepository;
+            _reviewRepository = reviewRepository;
+            _commentsRepository = commentsRepository;
         }
 
         public string AssemblyName { get; set; }
@@ -22,8 +35,8 @@ namespace APIViewWeb.Pages.Assemblies
                 return NotFound();
             }
 
-            var assemblyModel = await assemblyRepository.ReadAssemblyContentAsync(id);
-            AssemblyName = assemblyModel.Name;
+            var reviewModel = await _reviewRepository.GetReviewAsync(id);
+            AssemblyName = reviewModel.Name;
 
             return Page();
         }
@@ -35,7 +48,19 @@ namespace APIViewWeb.Pages.Assemblies
                 return NotFound();
             }
 
-            await assemblyRepository.DeleteAssemblyAsync(id);
+            var reviewModel = await _reviewRepository.GetReviewAsync(id);
+            await _reviewRepository.DeleteReviewAsync(reviewModel);
+
+            foreach (var reviewCodeFileModel in reviewModel.Files)
+            {
+                if (reviewCodeFileModel.HasOriginal)
+                {
+                    await _originalsRepository.DeleteOriginalAsync(reviewCodeFileModel.ReviewFileId);
+                }
+                await _codeFileRepository.DeleteCodeFileAsync(reviewCodeFileModel.ReviewFileId);
+            }
+
+            await _commentsRepository.DeleteCommentsAsync(id);
 
             return RedirectToPage("./Index");
         }

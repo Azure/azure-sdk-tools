@@ -45,8 +45,10 @@ namespace APIViewWeb
                     options.Conventions.AuthorizeFolder("/Assemblies", "RequireOrganization");
                 });
 
-            services.AddSingleton<BlobAssemblyRepository>();
-            services.AddSingleton<BlobCommentRepository>();
+            services.AddSingleton<BlobCodeFileRepository>();
+            services.AddSingleton<BlobOriginalsRepository>();
+            services.AddSingleton<CosmosReviewRepository>();
+            services.AddSingleton<CosmosCommentsRepository>();
 
             services.AddAuthentication(options =>
                 {
@@ -57,8 +59,8 @@ namespace APIViewWeb
                 .AddCookie(options => options.LoginPath = "/Unauthorized")
                 .AddOAuth("GitHub", options =>
                 {
-                    options.ClientId = Configuration.GetValue<string>("APIVIEW_CLIENT_ID") ?? Configuration["Github:ClientId"];
-                    options.ClientSecret = Configuration.GetValue<string>("APIVIEW_CLIENT_SECRET")?? Configuration["Github:ClientSecret"];
+                    options.ClientId = Configuration["Github:ClientId"];
+                    options.ClientSecret = Configuration["Github:ClientSecret"];
                     options.CallbackPath = new PathString("/signin-github");
 
                     options.AuthorizationEndpoint = "https://github.com/login/oauth/authorize";
@@ -121,7 +123,7 @@ namespace APIViewWeb
                 options.AddPolicy("RequireOrganization", policy =>
                 {
                     policy.RequireClaim("urn:github:orgs");
-                    policy.AddRequirements(new OrganizationRequirement(Configuration["APIVIEW_REQUIRED_ORGANIZATION"] ?? Configuration["Github:RequiredOrganization"]));
+                    policy.AddRequirements(new OrganizationRequirement(Configuration["Github:RequiredOrganization"]));
                 });
             });
 

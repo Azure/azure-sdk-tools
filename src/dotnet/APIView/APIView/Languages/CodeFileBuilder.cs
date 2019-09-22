@@ -180,9 +180,12 @@ namespace ApiView
             builder.WriteIndent();
             BuildVisibility(builder, namedType);
 
+            builder.Space();
+
             switch (namedType.TypeKind)
             {
                 case TypeKind.Class:
+                    BuildClassModifiers(builder, namedType);
                     builder.Keyword(SyntaxKind.ClassKeyword);
                     break;
                 case TypeKind.Delegate:
@@ -242,6 +245,27 @@ namespace ApiView
             CloseBrace(builder);
         }
 
+        private static void BuildClassModifiers(CodeFileTokensBuilder builder, INamedTypeSymbol namedType)
+        {
+            if (namedType.IsAbstract)
+            {
+                builder.Keyword(SyntaxKind.AbstractKeyword);
+                builder.Space();
+            }
+
+            if (namedType.IsStatic)
+            {
+                builder.Keyword(SyntaxKind.StaticKeyword);
+                builder.Space();
+            }
+
+            if (namedType.IsSealed)
+            {
+                builder.Keyword(SyntaxKind.SealedKeyword);
+                builder.Space();
+            }
+        }
+
         private void BuildBaseType(CodeFileTokensBuilder builder, INamedTypeSymbol namedType)
         {
             bool first = true;
@@ -293,7 +317,9 @@ namespace ApiView
 
             builder.WriteIndent();
             NodeFromSymbol(builder, member);
-            if (member.Kind == SymbolKind.Method && member.ContainingType.TypeKind != TypeKind.Interface)
+            if (member.Kind == SymbolKind.Method &&
+                !member.IsAbstract &&
+                member.ContainingType.TypeKind != TypeKind.Interface)
             {
                 builder.Space();
                 builder.Punctuation(SyntaxKind.OpenBraceToken);
@@ -425,7 +451,6 @@ namespace ApiView
         private void BuildVisibility(CodeFileTokensBuilder builder, ISymbol symbol)
         {
             builder.Keyword(SyntaxFacts.GetText(ToEffectiveAccessibility(symbol.DeclaredAccessibility)));
-            builder.Space();
         }
 
         private void DisplayName(CodeFileTokensBuilder builder, ISymbol symbol, ISymbol definedSymbol = null)

@@ -2,7 +2,7 @@
 
 namespace APIViewWeb
 {
-    public static class ExtensionMethods
+    public static class ClaimsPrincipalExtension
     {
         public static string GetGitHubLogin(this ClaimsPrincipal user)
         {

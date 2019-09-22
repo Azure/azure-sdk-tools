@@ -42,10 +42,7 @@ namespace ApiView
                            SymbolDisplayMemberOptions.IncludeModifiers |
                            SymbolDisplayMemberOptions.IncludeParameters |
                            SymbolDisplayMemberOptions.IncludeRef |
-                           SymbolDisplayMemberOptions.IncludeType,
-            localOptions: SymbolDisplayLocalOptions.IncludeConstantValue |
-                          SymbolDisplayLocalOptions.IncludeRef |
-                          SymbolDisplayLocalOptions.IncludeType
+                           SymbolDisplayMemberOptions.IncludeType
         );
 
         private IAssemblySymbol _assembly;

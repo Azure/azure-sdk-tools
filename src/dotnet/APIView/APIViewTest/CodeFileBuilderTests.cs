@@ -48,7 +48,7 @@ namespace APIViewTest
             await AssertFormattingAsync(code, formatted);
         }
 
-        public async Task AssertFormattingAsync(string code, string formatted)
+        private async Task AssertFormattingAsync(string code, string formatted)
         {
             var project = DiagnosticProject.Create(typeof(CodeFileBuilderTests).Assembly, new[] { code });
             project = project.WithCompilationOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));

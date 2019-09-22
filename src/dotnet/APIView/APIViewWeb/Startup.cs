@@ -45,9 +45,6 @@ namespace APIViewWeb
                     options.Conventions.AuthorizeFolder("/Assemblies", "RequireOrganization");
                 });
 
-            services.AddSingleton<BlobAssemblyRepository>();
-            services.AddSingleton<BlobCommentRepository>();
-
             services.AddSingleton<BlobCodeFileRepository>();
             services.AddSingleton<BlobOriginalsRepository>();
             services.AddSingleton<CosmosReviewRepository>();

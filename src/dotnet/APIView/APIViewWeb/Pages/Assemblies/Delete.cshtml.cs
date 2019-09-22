@@ -12,14 +12,18 @@ namespace APIViewWeb.Pages.Assemblies
 
         private readonly CosmosReviewRepository _reviewRepository;
 
+        private readonly CosmosCommentsRepository _commentsRepository;
+
         public DeleteModel(BlobCodeFileRepository codeFileRepository,
             BlobOriginalsRepository originalsRepository,
-            CosmosReviewRepository reviewRepository
+            CosmosReviewRepository reviewRepository,
+            CosmosCommentsRepository commentsRepository
             )
         {
             _codeFileRepository = codeFileRepository;
             _originalsRepository = originalsRepository;
             _reviewRepository = reviewRepository;
+            _commentsRepository = commentsRepository;
         }
 
         public string AssemblyName { get; set; }
@@ -55,6 +59,8 @@ namespace APIViewWeb.Pages.Assemblies
                 }
                 await _codeFileRepository.DeleteCodeFileAsync(reviewCodeFileModel.ReviewFileId);
             }
+
+            await _commentsRepository.DeleteCommentsAsync(id);
 
             return RedirectToPage("./Index");
         }

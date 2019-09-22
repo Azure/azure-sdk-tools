@@ -10,34 +10,21 @@ using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace Azure.ClientSdk.Analyzers
 {
-    public abstract class ClientAnalyzerBase : DiagnosticAnalyzer, IHostedAnalyzer
+    public abstract class ClientAnalyzerBase : SymbolAnalyzerBase
     {
         protected const string ClientSuffix = "Client";
 
-        public override void Initialize(AnalysisContext context)
-        {
-            context.EnableConcurrentExecution();
+        public override SymbolKind[] SymbolKinds { get; } = new []{ SymbolKind.NamedType};
 
-            context.RegisterCompilationStartAction(
-                analysisContext => {
-                    analysisContext.RegisterSymbolAction(symbolAnalysisContext => {
-
-                        var typeSymbol = (INamedTypeSymbol)symbolAnalysisContext.Symbol;
-                        if (typeSymbol.TypeKind != TypeKind.Class || !typeSymbol.Name.EndsWith(ClientSuffix) || typeSymbol.DeclaredAccessibility != Accessibility.Public)
-                        {
-                            return;
-                        }
-
-                        AnalyzeClientType(symbolAnalysisContext);
-                    }, SymbolKind.NamedType);
-                });
-        }
-
-        protected void AnalyzeClientType(SymbolAnalysisContext context)
+        public override void Analyze(ISymbolAnalysisContext context)
         {
             var typeSymbol = (INamedTypeSymbol)context.Symbol;
-            var host = new AnalysisHost(context);
-            Analyze(typeSymbol, host);
+            if (typeSymbol.TypeKind != TypeKind.Class || !typeSymbol.Name.EndsWith(ClientSuffix) || typeSymbol.DeclaredAccessibility != Accessibility.Public)
+            {
+                return;
+            }
+
+            AnalyzeCore(context);
         }
 
         protected class ParameterEquivalenceComparer: IEqualityComparer<IParameterSymbol>
@@ -76,12 +63,6 @@ namespace Azure.ClientSdk.Analyzers
             });
         }
 
-        public void Analyze(INamedTypeSymbol type, IAnalysisHost host)
-        {
-            if (!type.Name.EndsWith(ClientSuffix)) return;
-            AnalyzeCore(type, host);
-        }
-
-        public abstract void AnalyzeCore(INamedTypeSymbol type, IAnalysisHost host);
+        public abstract void AnalyzeCore(ISymbolAnalysisContext context);
     }
 }

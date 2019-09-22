@@ -17,7 +17,7 @@ namespace ApiView
 
             string elementClass = "";
             string id = token.DefinitionId;
-            
+
             switch (token.Kind)
             {
                 case  CodeFileTokenKind.TypeName:

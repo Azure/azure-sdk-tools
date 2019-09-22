@@ -8,9 +8,9 @@ namespace ApiView
         {
             try
             {
-                var assemblySymbol = AssemblyApiView.GetCompilation(args[0]);
+                var assemblySymbol = CompilationFactory.GetCompilation(args[0]);
                 var renderer = new CodeFileRenderer();
-                var (codeNode, analysisResults) = new CodeFileBuilder().Build(assemblySymbol, false);
+                var codeNode = new CodeFileBuilder().Build(assemblySymbol, false);
                 Console.WriteLine(renderer.Render(codeNode));
             }
             catch (Exception e)

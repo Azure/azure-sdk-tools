@@ -1,24 +1,27 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using APIViewWeb.Models;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace APIViewWeb.Pages.Assemblies
 {
-    public class IndexModel : PageModel
+    public class IndexPageModel : PageModel
     {
-        private readonly BlobAssemblyRepository assemblyRepository;
+        private readonly CosmosReviewRepository _cosmosReviewRepository;
 
-        public IndexModel(BlobAssemblyRepository assemblyRepository)
+        public IndexPageModel(CosmosReviewRepository cosmosReviewRepository)
         {
-            this.assemblyRepository = assemblyRepository;
+            _cosmosReviewRepository = cosmosReviewRepository;
         }
 
-        public List<AssemblyModel> Assemblies { get; set; }
+        public IEnumerable<ReviewModel> Assemblies { get; set; }
 
         public async Task OnGetAsync()
         {
-            Assemblies = await assemblyRepository.FetchAssembliesAsync();
+            Assemblies = await _cosmosReviewRepository.GetReviewsAsync();
         }
     }
 }

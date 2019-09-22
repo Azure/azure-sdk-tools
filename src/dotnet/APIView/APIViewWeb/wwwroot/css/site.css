@@ -325,6 +325,8 @@ code-inner {
     font-family: monospace;
 }
 
+/* NAV */
+
 .nav-list {
     list-style-type:none;
     padding-left: 0px;
@@ -354,6 +356,15 @@ code-inner {
     display: none;
 }
 
+/* DIAGNOSTICS */
+.code-diagnostics {
+    border: 1px solid red;
+    background-color: lightpink;
+}
+.code-diagnostics p {
+    margin: 0;
+}
+/* ICONS */
 .type_class {
     background: url(/icons/class.png) center left no-repeat;
 }

@@ -1,9 +1,13 @@
 ﻿@page
-@model APIViewWeb.Pages.Assemblies.IndexModel
+@model APIViewWeb.Pages.Assemblies.IndexPageModel
 @using APIViewWeb
 @{
     ViewData["Title"] = "Home page";
 }
+@*<form method="post" asp-page-handler="Migrate">
+    <input type="hidden" />
+    <input type="submit" value="Migrate" class="btn btn-danger" />
+</form>*@
 
 <table class="table table-hover">
     <thead>
@@ -19,20 +23,23 @@
         {
             <tr>
                 <td>
-                    <a asp-page="./Review" asp-route-id="@assembly.Id">@assembly.Name</a>
+                    <a asp-page="./Review" asp-route-id="@assembly.ReviewId">@assembly.Name</a>
                 </td>
                 <td>
                     <a username="@assembly.Author">@assembly.Author</a>
                 </td>
                 <td>
-                    <span date="@assembly.TimeStamp.ToLocalTime()"></span>
+                    <span date="@assembly.CreationDate.ToLocalTime()"></span>
                 </td>
-                @if (assembly.Author == User.GetGitHubLogin()) {
-                <td>
-                    <a asp-page="./Delete" asp-route-id="@assembly.Id">Delete</a>
-                </td>
-                } else {
-                <td></td>
+                @if (assembly.Author == User.GetGitHubLogin())
+                {
+                    <td>
+                        <a asp-page="./Delete" asp-route-id="@assembly.ReviewId">Delete</a>
+                    </td>
+                }
+                else
+                {
+                    <td></td>
                 }
             </tr>
         }

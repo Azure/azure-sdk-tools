@@ -1,8 +1,7 @@
 ﻿using System;
 using System.IO;
-using System.Text;
 using System.Threading.Tasks;
-using APIView;
+using ApiView;
 using APIViewWeb.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -12,13 +11,19 @@ namespace APIViewWeb.Pages.Assemblies
 {
     public class UploadModel : PageModel
     {
-        private readonly BlobAssemblyRepository assemblyRepository;
-        private readonly BlobCommentRepository comments;
+        private readonly CosmosReviewRepository _reviewsRepository;
 
-        public UploadModel(BlobAssemblyRepository assemblyRepository, BlobCommentRepository comments)
+        private readonly BlobCodeFileRepository _codeFileRepository;
+
+        private readonly BlobOriginalsRepository _originalsRepository;
+
+        public UploadModel(CosmosReviewRepository reviewsRepository,
+            BlobCodeFileRepository codeFileRepository,
+            BlobOriginalsRepository originalsRepository)
         {
-            this.assemblyRepository = assemblyRepository;
-            this.comments = comments;
+            this._reviewsRepository = reviewsRepository;
+            _codeFileRepository = codeFileRepository;
+            _originalsRepository = originalsRepository;
         }
 
         [BindProperty]
@@ -47,71 +52,43 @@ namespace APIViewWeb.Pages.Assemblies
 
                     memoryStream.Position = 0;
 
-                    AssemblyModel assemblyModel = new AssemblyModel();
-                    assemblyModel.Author = User.GetGitHubLogin();
-                    assemblyModel.HasOriginal = true;
-                    assemblyModel.OriginalFileName = file.FileName;
-                    assemblyModel.TimeStamp = DateTime.UtcNow;
+                    ReviewModel reviewModel = new ReviewModel();
+                    reviewModel.Author = User.GetGitHubLogin();
+                    reviewModel.CreationDate = DateTime.UtcNow;
 
-                    AnalysisResult[] analysisResults = null;
+                    var reviewCodeFileModel = new ReviewCodeFileModel();
+                    reviewCodeFileModel.HasOriginal = KeepOriginal;
+                    reviewCodeFileModel.Name = file.Name;
+                    reviewCodeFileModel.RunAnalysis = RunAnalysis;
+
+                    reviewModel.Files = new [] { reviewCodeFileModel };
+
+                    CodeFile codeFile;
                     if (file.FileName.EndsWith(".json"))
                     {
-                        await assemblyModel.BuildFromJsonAsync(memoryStream);
-                        // Original and analysis doesn't matter
-                        KeepOriginal = false;
-                        RunAnalysis = false;
+                        codeFile = await CodeFile.DeserializeAsync(memoryStream);
                     }
                     else
                     {
-                        analysisResults = assemblyModel.BuildFromStream(memoryStream, RunAnalysis);
+                        codeFile = CodeFileBuilder.Build(memoryStream, RunAnalysis);
                     }
 
                     memoryStream.Position = 0;
+                    reviewModel.Name = codeFile.Name;
 
-                    var originalStream = KeepOriginal ? memoryStream : null;
-
-                    var id = await assemblyRepository.UploadAssemblyAsync(assemblyModel, originalStream);
-
-                    AssemblyCommentsModel analysisComments = new AssemblyCommentsModel();
-                    analysisComments.Comments = Array.Empty<CommentModel>();
-                    if (RunAnalysis)
+                    if (KeepOriginal)
                     {
-                        foreach (var result in analysisResults)
-                        {
-                            var comment = new CommentModel();
-                            comment.Comment = FormatComment(result);
-                            comment.ElementId = result.TargetId;
-                            comment.Id = Guid.NewGuid().ToString();
-                            comment.TimeStamp = DateTime.UtcNow;
-                            comment.Username = "dotnet-bot";
-                            analysisComments.AddComment(comment);
-                        }
-                        analysisComments.AssemblyId = id;
-                        await comments.UploadCommentsAsync(analysisComments);
+                        await _originalsRepository.UploadOriginalAsync(reviewCodeFileModel.ReviewFileId, memoryStream);
                     }
 
-                    return RedirectToPage("Review", new { id });
+                    await _codeFileRepository.UpsertCodeFileAsync(reviewCodeFileModel.ReviewFileId, codeFile);
+                    await _reviewsRepository.UpsertReviewAsync(reviewModel);
+
+                    return RedirectToPage("Review", new { id = reviewModel.ReviewId });
                 }
             }
 
             return RedirectToPage("./Index");
-        }
-
-        private string FormatComment(AnalysisResult result)
-        {
-            var builder = new StringBuilder();
-            if (result.Text.StartsWith("DO")) {
-                builder.Append("✅ **DO**");
-                builder.Append(result.Text.Substring(2));
-            }
-            else {
-                builder.Append(result.Text);
-            }
-
-            if (!string.IsNullOrEmpty(result.HelpLinkUri)) {
-                builder.Append($" [details]({result.HelpLinkUri})");
-            }
-            return builder.ToString();
         }
     }
 }

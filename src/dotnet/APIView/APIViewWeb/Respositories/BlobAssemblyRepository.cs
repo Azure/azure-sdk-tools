@@ -9,19 +9,17 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using System.Linq;
-using System.Text.Json;
 using Azure;
 
 namespace APIViewWeb
 {
-
     public class BlobAssemblyRepository
     {
         private readonly BlobCommentRepository commentRepository;
 
         public BlobAssemblyRepository(IConfiguration configuration, BlobCommentRepository commentRepository)
         {
-            var connectionString = configuration["APIVIEW_STORAGE"] ?? configuration["Reviews:ConnectionString"];
+            var connectionString = configuration["Blob:ConnectionString"];
             ContainerClient = new BlobContainerClient(connectionString, "assemblies");
             OriginalsContainer = new BlobContainerClient(connectionString, "originals");
             this.commentRepository = commentRepository;
@@ -73,65 +71,6 @@ namespace APIViewWeb
             var result = await ContainerClient.GetBlobClient(id).DownloadAsync();
 
             return await AssemblyModel.DeserializeAsync(result.Value.Content);
-        }
-
-        /// <summary>
-        /// Upload a single assembly for review.
-        /// </summary>
-        /// <param name="assemblyModel">The assembly being uploaded.</param>
-        /// <returns>The ID assigned to the assembly in the database.</returns>
-        public async Task<string> UploadAssemblyAsync(AssemblyModel assemblyModel, Stream original)
-        {
-            var guid = Guid.NewGuid().ToString();
-            assemblyModel.Id = guid;
-            assemblyModel.HasOriginal = original != null;
-            var assemblyComments = new AssemblyCommentsModel(guid);
-            await commentRepository.UploadCommentsAsync(assemblyComments);
-            var blob = ContainerClient.GetBlobClient(guid);
-
-            var stream = new MemoryStream();
-            await assemblyModel.SerializeAsync(stream);
-            stream.Position = 0;
-            await blob.UploadAsync(stream);
-
-            if (original != null)
-            {
-                var originalBlob = OriginalsContainer.GetBlobClient(guid);
-                await originalBlob.UploadAsync(original);
-            }
-
-            return guid;
-        }
-
-        /// <summary>
-        /// Delete a single assembly from the database.
-        /// </summary>
-        /// <param name="id">The ID of the assembly being deleted.</param>
-        /// <returns></returns>
-        public async Task DeleteAssemblyAsync(string id)
-        {
-            await ContainerClient.GetBlobClient(id).DeleteAsync();
-            await commentRepository.DeleteAssemblyCommentsAsync(id);
-            var originalBlob = OriginalsContainer.GetBlobClient(id);
-            try
-            {
-                await originalBlob.DeleteAsync();
-            }
-            catch (RequestFailedException)
-            {
-            }
-        }
-
-        public async Task<Stream> GetOriginalAsync(string id)
-        {
-            var originalBlob = OriginalsContainer.GetBlobClient(id);
-            return (await originalBlob.DownloadAsync()).Value.Content;
-        }
-
-        public async Task UpdateAsync(AssemblyModel assemblyModel)
-        {
-            var blob = ContainerClient.GetBlobClient(assemblyModel.Id);
-            await blob.UploadAsync(new MemoryStream(JsonSerializer.SerializeToUtf8Bytes(assemblyModel)));
         }
     }
 }

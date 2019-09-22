@@ -21,7 +21,6 @@ namespace APIViewWeb
             WebHost.CreateDefaultBuilder(args)
                 .ConfigureAppConfiguration((hostingContext, config) =>
                 {
-                    // This should add an environment variable containing the Azure blob storage connection string via APIVIEW_STORAGE.
                     config.AddEnvironmentVariables(prefix: "APIVIEW_");
                     config.AddUserSecrets(typeof(Program).Assembly);
                 })

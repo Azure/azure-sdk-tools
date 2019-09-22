@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.IO;
 using System.Linq;
 using APIView;
 using APIView.Analysis;
@@ -595,6 +596,12 @@ namespace ApiView
             {
                 AddNonNullConstantValue(type, typedConstantValue);
             }
+        }
+
+        public static CodeFile Build(Stream stream, bool runAnalysis)
+        {
+            var assemblySymbol = CompilationFactory.GetCompilation(stream);
+            return new CodeFileBuilder().Build(assemblySymbol, runAnalysis);
         }
     }
 }

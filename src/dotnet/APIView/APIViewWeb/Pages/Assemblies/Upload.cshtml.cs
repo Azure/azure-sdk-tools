@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Threading.Tasks;
+using ApiView;
 using APIViewWeb.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -10,13 +11,19 @@ namespace APIViewWeb.Pages.Assemblies
 {
     public class UploadModel : PageModel
     {
-        private readonly BlobAssemblyRepository assemblyRepository;
-        private readonly BlobCommentRepository comments;
+        private readonly CosmosReviewRepository _reviewsRepository;
 
-        public UploadModel(BlobAssemblyRepository assemblyRepository, BlobCommentRepository comments)
+        private readonly BlobCodeFileRepository _codeFileRepository;
+
+        private readonly BlobOriginalsRepository _originalsRepository;
+
+        public UploadModel(CosmosReviewRepository reviewsRepository,
+            BlobCodeFileRepository codeFileRepository,
+            BlobOriginalsRepository originalsRepository)
         {
-            this.assemblyRepository = assemblyRepository;
-            this.comments = comments;
+            this._reviewsRepository = reviewsRepository;
+            _codeFileRepository = codeFileRepository;
+            _originalsRepository = originalsRepository;
         }
 
         [BindProperty]
@@ -45,29 +52,39 @@ namespace APIViewWeb.Pages.Assemblies
 
                     memoryStream.Position = 0;
 
-                    AssemblyModel assemblyModel = new AssemblyModel();
-                    assemblyModel.Author = User.GetGitHubLogin();
-                    assemblyModel.HasOriginal = KeepOriginal;
-                    assemblyModel.OriginalFileName = file.FileName;
-                    assemblyModel.TimeStamp = DateTime.UtcNow;
-                    assemblyModel.RunAnalysis = RunAnalysis;
+                    ReviewModel reviewModel = new ReviewModel();
+                    reviewModel.Author = User.GetGitHubLogin();
+                    reviewModel.CreationDate = DateTime.UtcNow;
 
+                    var reviewCodeFileModel = new ReviewCodeFileModel();
+                    reviewCodeFileModel.HasOriginal = KeepOriginal;
+                    reviewCodeFileModel.Name = file.Name;
+                    reviewCodeFileModel.RunAnalysis = RunAnalysis;
+
+                    reviewModel.Files = new [] { reviewCodeFileModel };
+
+                    CodeFile codeFile;
                     if (file.FileName.EndsWith(".json"))
                     {
-                        await assemblyModel.BuildFromJsonAsync(memoryStream);
+                        codeFile = await CodeFile.DeserializeAsync(memoryStream);
                     }
                     else
                     {
-                        assemblyModel.BuildFromStream(memoryStream, RunAnalysis);
+                        codeFile = CodeFileBuilder.Build(memoryStream, RunAnalysis);
                     }
 
                     memoryStream.Position = 0;
+                    reviewModel.Name = codeFile.Name;
 
-                    var originalStream = KeepOriginal ? memoryStream : null;
+                    if (KeepOriginal)
+                    {
+                        await _originalsRepository.UploadOriginalAsync(reviewCodeFileModel.ReviewFileId, memoryStream);
+                    }
 
-                    var id = await assemblyRepository.UploadAssemblyAsync(assemblyModel, originalStream);
+                    await _codeFileRepository.UpsertCodeFileAsync(reviewCodeFileModel.ReviewFileId, codeFile);
+                    await _reviewsRepository.UpsertReviewAsync(reviewModel);
 
-                    return RedirectToPage("Review", new { id });
+                    return RedirectToPage("Review", new { id = reviewModel.ReviewId });
                 }
             }
 

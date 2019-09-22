@@ -3,10 +3,12 @@ using Azure.Storage.Blobs;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using Azure;
 
 namespace APIViewWeb
 {
@@ -14,7 +16,7 @@ namespace APIViewWeb
     {
         public BlobCommentRepository(IConfiguration configuration)
         {
-            var connectionString = configuration["APIVIEW_STORAGE"] ?? configuration["Comments:ConnectionString"];
+            var connectionString = configuration["Blob:ConnectionString"];
             ContainerClient = new BlobContainerClient(connectionString, "comments");
         }
 
@@ -27,66 +29,20 @@ namespace APIViewWeb
         /// <returns>The comments existing for the specified assembly if it exists, or null if no assembly has the specified ID.</returns>
         public async Task<AssemblyCommentsModel> FetchCommentsAsync(string assemblyId)
         {
-            var result = await ContainerClient.GetBlobClient(assemblyId).DownloadAsync();
-
-            using (StreamReader reader = new StreamReader(result.Value.Content))
+            try
             {
-                AssemblyCommentsModel comments = JsonSerializer.Deserialize<AssemblyCommentsModel>(reader.ReadToEnd());
-                return comments;
+                var result = await ContainerClient.GetBlobClient(assemblyId).DownloadAsync();
+
+                using (StreamReader reader = new StreamReader(result.Value.Content))
+                {
+                    AssemblyCommentsModel comments = JsonSerializer.Deserialize<AssemblyCommentsModel>(reader.ReadToEnd());
+                    return comments;
+                }
             }
-        }
-
-        /// <summary>
-        /// Upload the comments existing for an assembly review.
-        /// </summary>
-        /// <param name="assemblyComments">The comments in the review.</param>
-        /// <returns></returns>
-        public async Task UploadCommentsAsync(AssemblyCommentsModel assemblyComments)
-        {
-            var blob = ContainerClient.GetBlobClient(assemblyComments.AssemblyId);
-
-            using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(assemblyComments))))
+            catch (RequestFailedException e) when (e.Status == 404)
             {
-                await blob.UploadAsync(stream);
+                return new AssemblyCommentsModel(assemblyId);
             }
-        }
-
-        /// <summary>
-        /// Upload a single comment added to the review of an assembly with the specified ID.
-        /// </summary>
-        /// <param name="commentModel">The comment being added to the review.</param>
-        /// <param name="assemblyId">The ID of the assembly being commented on.</param>
-        /// <returns></returns>
-        public async Task UploadCommentAsync(CommentModel commentModel, string assemblyId)
-        {
-            commentModel.Id = Guid.NewGuid().ToString();
-
-            AssemblyCommentsModel assemblyComments = await FetchCommentsAsync(assemblyId);
-            assemblyComments.AddComment(commentModel);
-            await UploadCommentsAsync(assemblyComments);
-        }
-
-        /// <summary>
-        /// Delete the blob containing comments for an assembly with the specified ID.
-        /// </summary>
-        /// <param name="assemblyId">The ID of the assembly having its comments blob deleted.</param>
-        /// <returns></returns>
-        public async Task DeleteAssemblyCommentsAsync(string assemblyId)
-        {
-            await ContainerClient.GetBlobClient(assemblyId).DeleteAsync();
-        }
-
-        /// <summary>
-        /// Delete a single comment from the review of an assembly with the specified ID.
-        /// </summary>
-        /// <param name="assemblyId">The ID of the assembly from which a comment is being deleted.</param>
-        /// <param name="commentId">The ID of the comment being deleted.</param>
-        /// <returns></returns>
-        public async Task DeleteCommentAsync(string assemblyId, string commentId)
-        {
-            var assemblyComments = await FetchCommentsAsync(assemblyId);
-            assemblyComments.DeleteComment(commentId);
-            await UploadCommentsAsync(assemblyComments);
         }
     }
 }

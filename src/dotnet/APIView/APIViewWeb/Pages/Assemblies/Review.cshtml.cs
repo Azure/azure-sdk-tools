@@ -11,25 +11,38 @@ using Microsoft.AspNetCore.Mvc.ViewFeatures;
 
 namespace APIViewWeb.Pages.Assemblies
 {
-    public class ReviewModel : PageModel
+    public class ReviewPageModel : PageModel
     {
-        private readonly BlobAssemblyRepository assemblyRepository;
-        private readonly BlobCommentRepository commentRepository;
+        private readonly BlobCodeFileRepository _codeFileRepository;
 
-        public ReviewModel(BlobAssemblyRepository assemblyRepository, BlobCommentRepository commentRepository)
+        private readonly CosmosReviewRepository _cosmosReviewRepository;
+
+        private readonly BlobOriginalsRepository _originalsRepository;
+
+        private readonly CosmosCommentsRepository _commentRepository;
+
+        public ReviewPageModel(BlobCodeFileRepository codeFileRepository,
+            CosmosReviewRepository cosmosReviewRepository,
+            BlobOriginalsRepository originalsRepository,
+            CosmosCommentsRepository commentRepository)
         {
-            this.assemblyRepository = assemblyRepository;
-            this.commentRepository = commentRepository;
+            _codeFileRepository = codeFileRepository;
+            _cosmosReviewRepository = cosmosReviewRepository;
+            _originalsRepository = originalsRepository;
+            this._commentRepository = commentRepository;
         }
 
         public string Id { get; set; }
         public LineApiView[] Lines { get; set; }
-        public AssemblyModel AssemblyModel { get; set; }
 
-        public bool UpdateAvailable => AssemblyModel?.AssemblyNode != null &&
-                                       AssemblyModel.HasOriginal &&
-                                       AssemblyModel.AssemblyNode.Version != CodeFile.CurrentVersion &&
-                                       AssemblyModel.Author == User.GetGitHubLogin();
+        public ReviewModel Review { get; set; }
+        public ReviewCodeFileModel ReviewCodeFile { get; set; }
+        public CodeFile CodeFile { get; set; }
+
+        public bool UpdateAvailable => CodeFile != null &&
+                                       ReviewCodeFile.HasOriginal &&
+                                       CodeFile.Version != CodeFile.CurrentVersion &&
+                                       Review.Author == User.GetGitHubLogin();
         [BindProperty]
         public CommentModel Comment { get; set; }
         public Dictionary<string, List<CommentModel>> Comments { get; set; }
@@ -37,9 +50,16 @@ namespace APIViewWeb.Pages.Assemblies
 
         public async Task<ActionResult> OnPostDeleteAsync(string id, string commentId, string elementId)
         {
-            await commentRepository.DeleteCommentAsync(id, commentId);
-            var commentArray = await commentRepository.FetchCommentsAsync(id);
-            List<CommentModel> comments = commentArray.Comments.Where(comment => comment.ElementId == elementId).ToList();
+            var comment = await _commentRepository.GetCommentAsync(id, commentId);
+            await _commentRepository.DeleteCommentAsync(comment);
+
+            return await CommentPartialAsync(id, elementId);
+        }
+
+        private async Task<ActionResult> CommentPartialAsync(string id, string elementId)
+        {
+            var commentArray = await _commentRepository.GetCommentsAsync(id);
+            List<CommentModel> comments = commentArray.Where(c => c.ElementId == elementId).ToList();
 
             CommentThreadModel partialModel = new CommentThreadModel()
             {
@@ -58,16 +78,22 @@ namespace APIViewWeb.Pages.Assemblies
         public async Task<IActionResult> OnGetAsync(string id)
         {
             Id = id;
-            AssemblyModel = await assemblyRepository.ReadAssemblyContentAsync(id);
-            if (AssemblyModel.AssemblyNode == null)
+            Review = await _cosmosReviewRepository.GetReviewAsync(id);
+            ReviewCodeFile = Review.Files.SingleOrDefault();
+            if (ReviewCodeFile != null)
+            {
+                CodeFile = await _codeFileRepository.GetCodeFileAsync(ReviewCodeFile.ReviewFileId);
+            }
+            else
             {
                 return RedirectToPage("LegacyReview", new { id = id });
             }
-            Lines = new CodeFileHtmlRenderer().Render(AssemblyModel.AssemblyNode).ToArray();
+
+            Lines = new CodeFileHtmlRenderer().Render(CodeFile).ToArray();
             Comments = new Dictionary<string, List<CommentModel>>();
 
-            var assemblyComments = await commentRepository.FetchCommentsAsync(id);
-            var comments = assemblyComments.Comments;
+            var assemblyComments = await _commentRepository.GetCommentsAsync(id);
+            var comments = assemblyComments;
 
             foreach (var comment in comments)
             {
@@ -85,32 +111,27 @@ namespace APIViewWeb.Pages.Assemblies
         {
             Comment.TimeStamp = DateTime.UtcNow;
             Comment.Username = User.GetGitHubLogin();
-            await commentRepository.UploadCommentAsync(Comment, id);
-            var assemblyComments = await commentRepository.FetchCommentsAsync(id);
-            var commentArray = assemblyComments.Comments;
-            List<CommentModel> comments = commentArray.Where(comment => comment.ElementId == Comment.ElementId).ToList();
+            Comment.ReviewId = id;
 
-            CommentThreadModel partialModel = new CommentThreadModel()
-            {
-                AssemblyId = id,
-                Comments = comments,
-                LineId = Comment.ElementId
-            };
+            await _commentRepository.UpsertCommentAsync(Comment);
 
-            return new PartialViewResult
-            {
-                ViewName = "_CommentThreadPartial",
-                ViewData = new ViewDataDictionary<CommentThreadModel>(ViewData, partialModel)
-            };
+            return await CommentPartialAsync(id, Comment.ElementId);
         }
 
         public async Task<ActionResult> OnPostRefreshModelAsync(string id)
         {
-            var assemblyModel = await assemblyRepository.ReadAssemblyContentAsync(id);
-            if (assemblyModel.HasOriginal)
+            var review = await _cosmosReviewRepository.GetReviewAsync(id);
+            foreach (var file in review.Files)
             {
-                assemblyModel.BuildFromStream(await assemblyRepository.GetOriginalAsync(id), assemblyModel.RunAnalysis);
-                await assemblyRepository.UpdateAsync(assemblyModel);
+                if (!file.HasOriginal)
+                {
+                    continue;
+                }
+
+                var fileOriginal = await _originalsRepository.GetOriginalAsync(file.ReviewFileId);
+
+                var codeFile = ApiView.CodeFileBuilder.Build(fileOriginal, file.RunAnalysis);
+                await _codeFileRepository.UpsertCodeFileAsync(file.ReviewFileId, codeFile);
             }
             return RedirectToPage(new { id = id });
         }

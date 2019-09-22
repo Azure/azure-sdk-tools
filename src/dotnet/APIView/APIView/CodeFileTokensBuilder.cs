@@ -25,9 +25,9 @@ namespace ApiView
 
         public void WriteIndent()
         {
-            Append(new string(' ', _indentation * 4), CodeFileTokenKind.Whitespace); 
+            Append(new string(' ', _indentation * 4), CodeFileTokenKind.Whitespace);
         }
-        
+
         public void Append(CodeFileToken token)
         {
             Tokens.Add(token);

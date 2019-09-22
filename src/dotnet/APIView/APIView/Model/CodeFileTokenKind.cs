@@ -12,6 +12,7 @@ namespace APIView
         LineIdMarker = 5,
         TypeName = 6,
         MemberName = 7,
-        StringLiteral = 8
+        StringLiteral = 8,
+        Literal = 9
     }
 }

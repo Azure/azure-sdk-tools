@@ -24,17 +24,18 @@ namespace Azure.Sdk.Tools.CheckEnforcer
 {
     public class GitHubWebhookProcessor
     {
-        public GitHubWebhookProcessor(ILogger log, GitHubClientFactory gitHubClientFactory, ConfigurationStore configurationStore)
+        public GitHubWebhookProcessor(ILogger log, GitHubClientFactory gitHubClientFactory, ConfigurationStore configurationStore, GlobalConfiguration globalConfiguration)
         {
             this.Log = log;
             this.ClientFactory = gitHubClientFactory;
+            this.GlobalConfiguration = globalConfiguration;
             this.ConfigurationStore = configurationStore;
         }
 
         public ILogger Log { get; private set; }
 
         public GitHubClientFactory ClientFactory { get; private set; }
-
+        public GlobalConfiguration GlobalConfiguration { get; private set; }
         public ConfigurationStore ConfigurationStore { get; private set; }
 
         private const string GitHubEventHeader = "X-GitHub-Event";
@@ -53,16 +54,20 @@ namespace Azure.Sdk.Tools.CheckEnforcer
             }
         }
 
-        private async Task<CheckRun> EnsureCheckEnforcerRunAsync(GitHubClient client, long repositoryId, string headSha, IReadOnlyList<CheckRun> runs, bool recreate)
+        private async Task<CheckRun> CreateCheckEnforcerRunAsync(GitHubClient client, long repositoryId, string headSha, bool recreate)
         {
-            var checkRun = runs.SingleOrDefault(r => r.Name == Constants.ApplicationName);
+            var response = await client.Check.Run.GetAllForReference(repositoryId, headSha);
+            var runs = response.CheckRuns;
+            var checkRun = runs.SingleOrDefault(r => r.Name == this.GlobalConfiguration.GetApplicationName());
 
             if (checkRun == null || recreate)
             {
-                Log.LogDebug("Creating Check Enforcer run.");
                 checkRun = await client.Check.Run.Create(
                     repositoryId,
-                    new NewCheckRun(Constants.ApplicationName, headSha)
+                    new NewCheckRun(this.GlobalConfiguration.GetApplicationName(), headSha)
+                    {
+                        Status = new StringEnum<CheckStatus>(CheckStatus.InProgress)
+                    }
                 );
             }
 
@@ -71,58 +76,36 @@ namespace Azure.Sdk.Tools.CheckEnforcer
 
         private async Task EvaluateAndUpdateCheckEnforcerRunStatusAsync(IRepositoryConfiguration configuration, long installationId, long repositoryId, string pullRequestSha, CancellationToken cancellationToken)
         {
-            Log.LogDebug("Fetching installation client.");
             var client = await this.ClientFactory.GetInstallationClientAsync(installationId, cancellationToken);
 
-            Log.LogDebug("Fetching check runs.");
             var runsResponse = await client.Check.Run.GetAllForReference(repositoryId, pullRequestSha);
             var runs = runsResponse.CheckRuns;
 
-            var checkEnforcerRun = await EnsureCheckEnforcerRunAsync(client, repositoryId, pullRequestSha, runs, false);
+            var checkEnforcerRun = await CreateCheckEnforcerRunAsync(client, repositoryId, pullRequestSha, false);
 
             var otherRuns = from run in runs
-                            where run.Name != Constants.ApplicationName
+                            where run.Name != this.GlobalConfiguration.GetApplicationName()
                             select run;
 
             var totalOtherRuns = otherRuns.Count();
-
 
             var outstandingOtherRuns = from run in otherRuns
                                        where run.Conclusion != new StringEnum<CheckConclusion>(CheckConclusion.Success)
                                        select run;
 
-
             var totalOutstandingOtherRuns = outstandingOtherRuns.Count();
-
-            Log.LogDebug("{totalOutstandingOtherRuns}/{totalOtherRuns} other runs outstanding.", totalOutstandingOtherRuns, totalOtherRuns);
 
             if (totalOtherRuns >= configuration.MinimumCheckRuns && totalOutstandingOtherRuns == 0)
             {
-                Log.LogDebug("Check Enforcer criteria met, marking check successful.");
                 await client.Check.Run.Update(repositoryId, checkEnforcerRun.Id, new CheckRunUpdate()
                 {
                     Conclusion = new StringEnum<CheckConclusion>(CheckConclusion.Success)
                 });
             }
-            else
+            else if (checkEnforcerRun.Conclusion == new StringEnum<CheckConclusion>(CheckConclusion.Success))
             {
-                if (checkEnforcerRun.Conclusion == new StringEnum<CheckConclusion>(CheckConclusion.Success) && totalOutstandingOtherRuns > 0)
-                {
-                    Log.LogDebug("Check Enforcer run was previously marked successful, but there are now outstanding runs. Recreating check.");
-                    await EnsureCheckEnforcerRunAsync(client, repositoryId, pullRequestSha, runs, true);
-                }
-                else
-                {
-                    if (checkEnforcerRun.Status != new StringEnum<CheckStatus>(CheckStatus.InProgress))
-                    {
-                        Log.LogDebug("Updating Check Enforcer status to in-progress.");
-                        await client.Check.Run.Update(repositoryId, checkEnforcerRun.Id, new CheckRunUpdate()
-                        {
-                            Status = new StringEnum<CheckStatus>(CheckStatus.InProgress)
-                        });
-                    }
-                }
-
+                // NOTE: We do this when we need to go back from a conclusion of success to a status of inproress.
+                await CreateCheckEnforcerRunAsync(client, repositoryId, pullRequestSha, true);
             }
         }
 
@@ -130,44 +113,72 @@ namespace Azure.Sdk.Tools.CheckEnforcer
         {
             if (request.Headers.TryGetValue(GitHubEventHeader, out StringValues eventName))
             {
+                long installationId;
+                long repositoryId;
+                string pullRequestSha;
+
                 if (eventName == "check_run")
                 {
                     var rawPayload = request.Body;
                     var payload = await DeserializePayloadAsync<CheckRunEventPayload>(rawPayload);
 
-                    var installationId = payload.Installation.Id;
-                    var repositoryId = payload.Repository.Id;
-                    var pullRequestSha = payload.CheckRun.CheckSuite.HeadSha;
+                    // Extract critical info for payload.
+                    installationId = payload.Installation.Id;
+                    repositoryId = payload.Repository.Id;
+                    pullRequestSha = payload.CheckRun.CheckSuite.HeadSha;
 
-                    Log.LogDebug("Fetching repository configuration.");
-                    var configuration = await this.ConfigurationStore.GetRepositoryConfigurationAsync(installationId, repositoryId, pullRequestSha, cancellationToken);
-                    Log.LogDebug("Repository configuration: {configuration}", configuration.ToString());
+                    var configuration = await ConfigurationStore.GetRepositoryConfigurationAsync(
+                        installationId, repositoryId, pullRequestSha, cancellationToken
+                        );
 
                     if (configuration.IsEnabled)
                     {
-                        Log.LogDebug("Repository was enabled for Check Enforcer.",
-                            installationId,
-                            repositoryId,
-                            pullRequestSha
+                        await EvaluateAndUpdateCheckEnforcerRunStatusAsync(
+                            configuration, installationId, repositoryId, pullRequestSha, cancellationToken
                             );
-                        await EvaluateAndUpdateCheckEnforcerRunStatusAsync(configuration, installationId, repositoryId, pullRequestSha, cancellationToken);
-                    }
-                    else
-                    {
-                        Log.LogInformation("Repository was not enabled for Check Enforcer.");
                     }
                 }
                 else if (eventName == "check_suite")
                 {
-                    // HACK: We swallow check_suite events. Technically we could register
-                    //       the check enforcer check run earlier (before the PR is even created)
-                    //       but at this point we don't know the target branch for sure so we
-                    //       can't potentially cache the configuration entry.
-                    //
-                    //       However - we can't opt out of receiving this event even then check suite
-                    //       is unchecked in the app's event setup. So rather than returning a 400
-                    //       for this event we just swallow it to eliminate the noise.
+                    var rawPayload = request.Body;
+                    var payload = await DeserializePayloadAsync<CheckSuiteEventPayload>(rawPayload);
+
+                    // Extract critical info for payload.
+                    installationId = payload.Installation.Id;
+                    repositoryId = payload.Repository.Id;
+                    pullRequestSha = payload.CheckSuite.HeadSha;
+
+                    var client = await ClientFactory.GetInstallationClientAsync(installationId, cancellationToken);
+                    await CreateCheckEnforcerRunAsync(client, repositoryId, pullRequestSha, true);
                     return;
+                }
+                else if (eventName == "issue_comment")
+                {
+                    var rawPayload = request.Body;
+                    var payload = await DeserializePayloadAsync<IssueCommentPayload>(rawPayload);
+                    var comment = payload.Comment.Body.ToLower();
+
+                    if (payload.Action == "created" && payload.Comment.Body.ToLower() == "/check-enforcer evaluate")
+                    {
+                        installationId = payload.Installation.Id;
+                        repositoryId = payload.Repository.Id;
+
+                        var client = await ClientFactory.GetInstallationClientAsync(installationId, cancellationToken);
+                        var pullRequest = await client.PullRequest.Get(repositoryId, payload.Issue.Number);
+                        pullRequestSha = pullRequest.Head.Sha;
+
+                        var configuration = await this.ConfigurationStore.GetRepositoryConfigurationAsync(installationId, repositoryId, pullRequestSha, cancellationToken);
+
+                        if (configuration.IsEnabled)
+                        {
+                            await CreateCheckEnforcerRunAsync(client, repositoryId, pullRequestSha, false);
+                            await EvaluateAndUpdateCheckEnforcerRunStatusAsync(configuration, installationId, repositoryId, pullRequestSha, cancellationToken);
+                        }
+                    }
+                    else
+                    {
+                        return;
+                    }
                 }
                 else
                 {

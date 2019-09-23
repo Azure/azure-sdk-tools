@@ -147,6 +147,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
                 }
                 else if (eventName == "check_suite")
                 {
+                    Log.LogWarning("We got here!");
                     var rawPayload = request.Body;
                     var payload = await DeserializePayloadAsync<CheckSuiteEventPayload>(rawPayload);
 

@@ -123,7 +123,7 @@ namespace APIViewWeb
                 options.AddPolicy("RequireOrganization", policy =>
                 {
                     policy.RequireClaim("urn:github:orgs");
-                    policy.AddRequirements(new OrganizationRequirement(Configuration["Github:RequiredOrganization"]));
+                    policy.AddRequirements(new OrganizationRequirement(Configuration["Github:RequiredOrganization"].Split(",", StringSplitOptions.RemoveEmptyEntries)));
                 });
             });
 

@@ -79,7 +79,7 @@ namespace ApiView
 
             var builder = new CodeFileTokensBuilder();
             var navigationItems = new List<NavigationItem>();
-            foreach (var namespaceSymbol in EnumerateNamespaces(assemblySymbol))
+            foreach (var namespaceSymbol in SymbolOrderProvider.OrderNamespaces(EnumerateNamespaces(assemblySymbol)))
             {
                 if (namespaceSymbol.IsGlobalNamespace)
                 {

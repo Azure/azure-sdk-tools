@@ -4,11 +4,11 @@ namespace APIViewWeb
 {
     public class OrganizationRequirement : IAuthorizationRequirement
     {
-        public string RequiredOrganization { get; set; }
+        public string[] RequiredOrganizations { get; set; }
 
-        public OrganizationRequirement(string requiredOrganization)
+        public OrganizationRequirement(string[] requiredOrganizations)
         {
-            RequiredOrganization = requiredOrganization;
+            RequiredOrganizations = requiredOrganizations;
         }
     }
 }

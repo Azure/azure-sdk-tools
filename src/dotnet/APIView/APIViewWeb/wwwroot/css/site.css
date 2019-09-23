@@ -167,13 +167,17 @@ form.comment {
 }
 
 .review-comment {
-    padding: 8px 16px;
+    padding: 4px 16px;
     position: relative;
 }
 
     .review-comment:first-child {
         padding-top: 16px;
     }
+
+.review-comment p {
+    margin-bottom: 0;
+}
 
 .commentable {
     cursor: pointer;
@@ -334,8 +338,8 @@ code-inner {
 
 .nav-list-children {
     list-style-type: none;
-    padding-left: 23px;
     text-overflow: ellipsis;
+    padding-left: 0;
 }
 .nav-list-children > li {
     white-space: nowrap;
@@ -356,6 +360,9 @@ code-inner {
     display: none;
 }
 
+.nav-list-group .nav-list-children {
+    padding-left: 14px;
+}
 /* DIAGNOSTICS */
 .code-diagnostics {
     border: 1px solid red;
@@ -365,34 +372,44 @@ code-inner {
     margin: 0;
 }
 /* ICONS */
-.type_class {
+.icon {
+    height: 16px;
+    width: 16px;
+    display: inline-block;
+    vertical-align: middle;
+}
+.icon-class {
     background: url(/icons/class.png) center left no-repeat;
 }
 
-.type_interface {
+.icon-interface {
     background: url(/icons/interface.png) center left no-repeat;
 }
 
-.type_struct {
+.icon-struct {
     background: url(/icons/struct.png) center left no-repeat;
 }
 
-.type_enum {
+.icon-enum {
     background: url(/icons/enum.png) center left no-repeat;
 }
 
-.type_delegate {
+.icon-delegate {
     background: url(/icons/delegate.png) center left no-repeat;
 }
 
-.type_unknown {
+.icon-unknown {
     background: url(/icons/type.png) center left no-repeat;
 }
 
-.type_assembly {
+.icon-assembly {
     background: url(/icons/assembly.png) center left no-repeat;
 }
 
-.type_namespace {
+.icon-namespace {
     background: url(/icons/namespace.png) center left no-repeat;
+}
+
+.icon-package {
+    background: url(/icons/package.png) center left no-repeat;
 }

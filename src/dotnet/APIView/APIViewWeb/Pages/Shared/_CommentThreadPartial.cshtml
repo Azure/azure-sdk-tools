@@ -7,51 +7,51 @@
 
 @if (Model.Comments.Any())
 {
-    <tr class="comment-box">
-        <td class="comment-cell border-top border-bottom" colspan="4">
-            <div class="border comment-holder rounded-1">
-                <div class="comment-thread-contents">
-                    @foreach (var comment in Model.Comments)
+<tr class="comment-box">
+    <td class="comment-cell border-top border-bottom" colspan="4">
+        <div class="border comment-holder rounded-1">
+            <div class="comment-thread-contents">
+                @foreach (var comment in Model.Comments)
                     {
-                        <div class="review-comment">
-                            <div class="unminimized-comment">
-                                <div class="comment-actions">
-                                    <form class="comment-delete-button align-top" asp-page-handler="delete" method="post" asp-route-id="@Model.AssemblyId">
-                                        <input type="hidden" name="commentId" value="@comment.Id" />
-                                        <input type="hidden" name="elementId" value="@Model.LineId" />
-                                        @if (comment.Username == @User.GetGitHubLogin())
+                <div class="review-comment">
+                    <div class="unminimized-comment">
+                        <div class="comment-actions">
+                            <form class="comment-delete-button align-top" asp-page-handler="delete" method="post" asp-route-id="@Model.AssemblyId">
+                                <input type="hidden" name="commentId" value="@comment.Id" />
+                                <input type="hidden" name="elementId" value="@Model.LineId" />
+                                @if (comment.Username == @User.GetGitHubLogin())
                                         {
-                                            <button id="@comment.Id" class="comment-delete-button-enabled btn align-top"><span class="comment-delete-text align-top">Delete</span></button>
+                                <button id="@comment.Id" class="comment-delete-button-enabled btn align-top"><span class="comment-delete-text align-top">Delete</span></button>
                                         }
                                         else
                                         {
-                                            <button disabled class="btn align-top"><span class="comment-delete-text align-top">Delete</span></button>
+                                <button disabled class="btn align-top"><span class="comment-delete-text align-top">Delete</span></button>
                                         }
-                                    </form>
+                            </form>
+                        </div>
+                        <div class="media">
+                            <img username="@comment.Username" class="comment-icon align-self-start mr-3" height="28" width="28" />
+                            <div class="media-body comment-contents">
+                                <div>
+                                    <strong class=" mt-0 comment-header author align-top">@comment.Username</strong>
+                                    <span date="@comment.TimeStamp.ToLocalTime()" class="comment-timestamp align-top"></span>
                                 </div>
-                                <div class="media">
-                                    <img username="@comment.Username" class="comment-icon align-self-start mr-3" height="28" width="28" />
-                                    <div class="media-body comment-contents">
-                                        <div>
-                                            <h4 class="mt-0 comment-header"><strong class="author align-top">@comment.Username</strong></h4>
-                                            <span date="@comment.TimeStamp.ToLocalTime()" class="comment-timestamp align-top"></span>
-                                        </div>
-                                        @Html.FormatAsMarkdown(@comment.Comment)
-                                    </div>
-                                </div>
+                                @Html.FormatAsMarkdown(@comment.Comment)
                             </div>
-                        </div>
-                    }
-                    <div class="review-thread-reply">
-                        <div class="reply-cell align-middle">
-                            <img avatar username="@User.GetGitHubLogin()" class="comment-icon" height="28" width="28" />
-                        </div>
-                        <div class="reply-cell col-12">
-                            <button data-element-id="@Model.LineId" type="button" class="review-thread-reply-button text-muted text-left form-control">Reply...</button>
                         </div>
                     </div>
                 </div>
+                    }
+                <div class="review-thread-reply">
+                    <div class="reply-cell align-middle">
+                        <img avatar username="@User.GetGitHubLogin()" class="comment-icon" height="28" width="28" />
+                    </div>
+                    <div class="reply-cell col-12">
+                        <button data-element-id="@Model.LineId" type="button" class="review-thread-reply-button text-muted text-left form-control">Reply...</button>
+                    </div>
+                </div>
             </div>
-        </td>
-    </tr>
+        </div>
+    </td>
+</tr>
 }

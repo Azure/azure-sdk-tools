@@ -8,11 +8,11 @@
 
                 @if (item.Tags != null && item.Tags.ContainsKey("TypeKind"))
                 {
-                    <span class="type_@item.Tags.GetValueOrDefault("TypeKind")">&nbsp;&nbsp;</span>
+                    <span class="icon icon-@item.Tags.GetValueOrDefault("TypeKind")">&nbsp;&nbsp;</span>
                 }
                 else
                 {
-                    <span class="type_unknown">&nbsp;&nbsp;</span>
+                    <span class="icon icon-unknown">&nbsp;&nbsp;</span>
                 }
 
                 <a href="#@item.NavigationId" title="@item.Text">@item.Text</a>

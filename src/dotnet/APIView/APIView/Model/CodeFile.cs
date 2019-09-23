@@ -18,7 +18,7 @@ namespace ApiView
             ReadCommentHandling = JsonCommentHandling.Skip
         };
 
-        public const int CurrentVersion = 10;
+        public const int CurrentVersion = 11;
 
         public int Version { get; set; }
 

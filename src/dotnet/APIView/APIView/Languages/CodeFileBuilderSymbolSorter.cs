@@ -21,6 +21,11 @@ namespace ApiView
             return members.OrderBy(t => (GetMemberOrder(t), t.DeclaredAccessibility != Accessibility.Public, t.Name));
         }
 
+        public IEnumerable<INamespaceSymbol> OrderNamespaces(IEnumerable<INamespaceSymbol> namespaces)
+        {
+            return namespaces.OrderBy(n => n.Name);
+        }
+
         private static int GetTypeOrder(ITypeSymbol typeSymbol)
         {
             if (typeSymbol.Name.EndsWith("Client"))

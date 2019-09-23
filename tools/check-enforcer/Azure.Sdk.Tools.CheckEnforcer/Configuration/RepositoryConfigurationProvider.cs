@@ -1,4 +1,5 @@
-﻿using Microsoft.Build.Utilities;
+﻿using Azure.Sdk.Tools.CheckEnforcer.Integrations.GitHub;
+using Microsoft.Build.Utilities;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
 using Octokit;
@@ -15,16 +16,16 @@ using YamlDotNet.RepresentationModel;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NodeDeserializers;
 
-namespace Azure.Sdk.Tools.CheckEnforcer
+namespace Azure.Sdk.Tools.CheckEnforcer.Configuration
 {
-    public class ConfigurationStore
+    public class RepositoryConfigurationProvider : IRepositoryConfigurationProvider
     {
-        public ConfigurationStore(GitHubClientFactory clientFactory)
+        public RepositoryConfigurationProvider(IGitHubClientProvider gitHubClientProvider)
         {
-            this.clientFactory = clientFactory;
+            this.gitHubClientProvider = gitHubClientProvider;
         }
 
-        private GitHubClientFactory clientFactory;
+        private IGitHubClientProvider gitHubClientProvider;
 
         private ConcurrentDictionary<string, IRepositoryConfiguration> cachedConfigurations = new ConcurrentDictionary<string, IRepositoryConfiguration>();
 
@@ -32,7 +33,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
         {
             try
             {
-                var client = await clientFactory.GetInstallationClientAsync(installationId, cancellationToken);
+                var client = await gitHubClientProvider.GetInstallationClientAsync(installationId, cancellationToken);
                 var searchResults = await client.Repository.Content.GetAllContents(repositoryId, "eng/CHECKENFORCER");
                 var configurationFile = searchResults.Single();
                 ThrowIfInvalidFormat(configurationFile);

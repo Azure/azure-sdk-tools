@@ -24,14 +24,16 @@ using System.Security.Cryptography;
 using Azure.Core;
 using System.Web.Http;
 using System.Runtime.CompilerServices;
+using Azure.Sdk.Tools.CheckEnforcer.Configuration;
+using Azure.Sdk.Tools.CheckEnforcer.Integrations.GitHub;
 
 namespace Azure.Sdk.Tools.CheckEnforcer
 {
     public static class GitHubWebhookFunction
     {
         private static GlobalConfiguration globalConfiguration = new GlobalConfiguration();
-        private static GitHubClientFactory clientFactory = new GitHubClientFactory(globalConfiguration);
-        private static ConfigurationStore configurationStore = new ConfigurationStore(clientFactory);
+        private static IGitHubClientProvider gitHubClientProvider = new GitHubClientProvider(globalConfiguration);
+        private static IRepositoryConfigurationProvider repositoryConfigurationPrivider = new RepositoryConfigurationProvider(gitHubClientProvider);
 
         [FunctionName("webhook")]
         public static async Task<IActionResult> Run(
@@ -40,7 +42,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
         {
             try
             {
-                var processor = new GitHubWebhookProcessor(log, clientFactory, configurationStore, globalConfiguration);
+                var processor = new GitHubWebhookProcessor(log, gitHubClientProvider, repositoryConfigurationPrivider, globalConfiguration);
                 await processor.ProcessWebhookAsync(req, cancellationToken);
                 return new OkResult();
             }

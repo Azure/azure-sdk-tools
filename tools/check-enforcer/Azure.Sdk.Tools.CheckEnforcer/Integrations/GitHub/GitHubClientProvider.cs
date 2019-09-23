@@ -1,5 +1,7 @@
 ﻿using Azure.Core;
 using Azure.Identity;
+using Azure.Sdk.Tools.CheckEnforcer.Configuration;
+using Azure.Sdk.Tools.CheckEnforcer.Integrations.GitHub;
 using Azure.Security.KeyVault.Keys;
 using Azure.Security.KeyVault.Keys.Cryptography;
 using Microsoft.IdentityModel.Tokens;
@@ -15,9 +17,9 @@ using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.CheckEnforcer
 {
-    public class GitHubClientFactory
+    public class GitHubClientProvider : IGitHubClientProvider
     {
-        public GitHubClientFactory(GlobalConfiguration globalConfiguration)
+        public GitHubClientProvider(GlobalConfiguration globalConfiguration)
         {
             this.globalConfiguration = globalConfiguration;
         }

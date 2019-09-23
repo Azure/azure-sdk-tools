@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Text;
 using YamlDotNet.Serialization;
 
-namespace Azure.Sdk.Tools.CheckEnforcer
+namespace Azure.Sdk.Tools.CheckEnforcer.Configuration
 {
     public class RepositoryConfiguration : IRepositoryConfiguration
     {

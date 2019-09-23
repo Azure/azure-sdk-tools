@@ -1,5 +1,8 @@
 ﻿using Azure.Core;
 using Azure.Identity;
+using Azure.Sdk.Tools.CheckEnforcer.Configuration;
+using Azure.Sdk.Tools.CheckEnforcer.Handlers;
+using Azure.Sdk.Tools.CheckEnforcer.Integrations.GitHub;
 using Azure.Security.KeyVault.Keys;
 using Azure.Security.KeyVault.Keys.Cryptography;
 using Microsoft.AspNetCore.Http;
@@ -24,19 +27,19 @@ namespace Azure.Sdk.Tools.CheckEnforcer
 {
     public class GitHubWebhookProcessor
     {
-        public GitHubWebhookProcessor(ILogger log, GitHubClientFactory gitHubClientFactory, ConfigurationStore configurationStore, GlobalConfiguration globalConfiguration)
+        public GitHubWebhookProcessor(ILogger log, IGitHubClientProvider gitHubClientProvider, IRepositoryConfigurationProvider repositoryConfigurationProvider, GlobalConfiguration globalConfiguration)
         {
             this.Log = log;
-            this.ClientFactory = gitHubClientFactory;
             this.GlobalConfiguration = globalConfiguration;
-            this.ConfigurationStore = configurationStore;
+            this.gitHubClientProvider = gitHubClientProvider;
+            this.repositoryConfigurationProvider = repositoryConfigurationProvider;
         }
 
         public ILogger Log { get; private set; }
 
-        public GitHubClientFactory ClientFactory { get; private set; }
+        public IGitHubClientProvider gitHubClientProvider;
         public GlobalConfiguration GlobalConfiguration { get; private set; }
-        public ConfigurationStore ConfigurationStore { get; private set; }
+        private IRepositoryConfigurationProvider repositoryConfigurationProvider;
 
         private const string GitHubEventHeader = "X-GitHub-Event";
 
@@ -76,7 +79,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
 
         private async Task EvaluateAndUpdateCheckEnforcerRunStatusAsync(IRepositoryConfiguration configuration, long installationId, long repositoryId, string pullRequestSha, CancellationToken cancellationToken)
         {
-            var client = await this.ClientFactory.GetInstallationClientAsync(installationId, cancellationToken);
+            var client = await gitHubClientProvider.GetInstallationClientAsync(installationId, cancellationToken);
 
             var runsResponse = await client.Check.Run.GetAllForReference(repositoryId, pullRequestSha);
             var runs = runsResponse.CheckRuns;
@@ -125,20 +128,23 @@ namespace Azure.Sdk.Tools.CheckEnforcer
                     var rawPayload = request.Body;
                     var payload = await DeserializePayloadAsync<CheckRunEventPayload>(rawPayload);
 
-                    // Extract critical info for payload.
-                    installationId = payload.Installation.Id;
-                    repositoryId = payload.Repository.Id;
-                    pullRequestSha = payload.CheckRun.CheckSuite.HeadSha;
-
-                    var configuration = await ConfigurationStore.GetRepositoryConfigurationAsync(
-                        installationId, repositoryId, pullRequestSha, cancellationToken
-                        );
-
-                    if (configuration.IsEnabled)
+                    if (payload.CheckRun.Name != GlobalConfiguration.GetApplicationName())
                     {
-                        await EvaluateAndUpdateCheckEnforcerRunStatusAsync(
-                            configuration, installationId, repositoryId, pullRequestSha, cancellationToken
+                        // Extract critical info for payload.
+                        installationId = payload.Installation.Id;
+                        repositoryId = payload.Repository.Id;
+                        pullRequestSha = payload.CheckRun.CheckSuite.HeadSha;
+
+                        var configuration = await repositoryConfigurationProvider.GetRepositoryConfigurationAsync(
+                            installationId, repositoryId, pullRequestSha, cancellationToken
                             );
+
+                        if (configuration.IsEnabled)
+                        {
+                            await EvaluateAndUpdateCheckEnforcerRunStatusAsync(
+                                configuration, installationId, repositoryId, pullRequestSha, cancellationToken
+                                );
+                        }
                     }
                 }
                 else if (eventName == "check_suite")
@@ -147,41 +153,26 @@ namespace Azure.Sdk.Tools.CheckEnforcer
                     var rawPayload = request.Body;
                     var payload = await DeserializePayloadAsync<CheckSuiteEventPayload>(rawPayload);
 
-                    // Extract critical info for payload.
-                    installationId = payload.Installation.Id;
-                    repositoryId = payload.Repository.Id;
-                    pullRequestSha = payload.CheckSuite.HeadSha;
+                    if (payload.Action == "requested" || payload.Action == "rerequested")
+                    {
+                        // Extract critical info for payload.
+                        installationId = payload.Installation.Id;
+                        repositoryId = payload.Repository.Id;
+                        pullRequestSha = payload.CheckSuite.HeadSha;
 
-                    var client = await ClientFactory.GetInstallationClientAsync(installationId, cancellationToken);
-                    await CreateCheckEnforcerRunAsync(client, repositoryId, pullRequestSha, true);
+                        var client = await gitHubClientProvider.GetInstallationClientAsync(installationId, cancellationToken);
+                        await CreateCheckEnforcerRunAsync(client, repositoryId, pullRequestSha, true);
+                    }
                     return;
                 }
                 else if (eventName == "issue_comment")
                 {
                     var rawPayload = request.Body;
                     var payload = await DeserializePayloadAsync<IssueCommentPayload>(rawPayload);
-                    var comment = payload.Comment.Body.ToLower();
 
-                    if (payload.Action == "created" && payload.Comment.Body.ToLower() == "/check-enforcer evaluate")
-                    {
-                        installationId = payload.Installation.Id;
-                        repositoryId = payload.Repository.Id;
+                    var handler = new IssueCommentHandler(repositoryConfigurationProvider, gitHubClientProvider, Log);
+                    await handler.HandleAsync(payload, cancellationToken);
 
-                        var client = await ClientFactory.GetInstallationClientAsync(installationId, cancellationToken);
-                        var pullRequest = await client.PullRequest.Get(repositoryId, payload.Issue.Number);
-                        pullRequestSha = pullRequest.Head.Sha;
-
-                        var configuration = await this.ConfigurationStore.GetRepositoryConfigurationAsync(installationId, repositoryId, pullRequestSha, cancellationToken);
-
-                        if (configuration.IsEnabled)
-                        {
-                            await EvaluateAndUpdateCheckEnforcerRunStatusAsync(configuration, installationId, repositoryId, pullRequestSha, cancellationToken);
-                        }
-                    }
-                    else
-                    {
-                        return;
-                    }
                 }
                 else
                 {

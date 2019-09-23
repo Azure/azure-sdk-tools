@@ -24,17 +24,18 @@ namespace Azure.Sdk.Tools.CheckEnforcer
 {
     public class GitHubWebhookProcessor
     {
-        public GitHubWebhookProcessor(ILogger log, GitHubClientFactory gitHubClientFactory, ConfigurationStore configurationStore)
+        public GitHubWebhookProcessor(ILogger log, GitHubClientFactory gitHubClientFactory, ConfigurationStore configurationStore, GlobalConfiguration globalConfiguration)
         {
             this.Log = log;
             this.ClientFactory = gitHubClientFactory;
+            this.GlobalConfiguration = globalConfiguration;
             this.ConfigurationStore = configurationStore;
         }
 
         public ILogger Log { get; private set; }
 
         public GitHubClientFactory ClientFactory { get; private set; }
-
+        public GlobalConfiguration GlobalConfiguration { get; private set; }
         public ConfigurationStore ConfigurationStore { get; private set; }
 
         private const string GitHubEventHeader = "X-GitHub-Event";
@@ -57,13 +58,16 @@ namespace Azure.Sdk.Tools.CheckEnforcer
         {
             var response = await client.Check.Run.GetAllForReference(repositoryId, headSha);
             var runs = response.CheckRuns;
-            var checkRun = runs.SingleOrDefault(r => r.Name == Constants.ApplicationName);
+            var checkRun = runs.SingleOrDefault(r => r.Name == this.GlobalConfiguration.GetApplicationName());
 
-            if (checkRun == null && recreate)
+            if (checkRun == null || recreate)
             {
                 checkRun = await client.Check.Run.Create(
                     repositoryId,
-                    new NewCheckRun(Constants.ApplicationName, headSha)
+                    new NewCheckRun(this.GlobalConfiguration.GetApplicationName(), headSha)
+                    {
+                        Status = new StringEnum<CheckStatus>(CheckStatus.InProgress)
+                    }
                 );
             }
 
@@ -80,20 +84,16 @@ namespace Azure.Sdk.Tools.CheckEnforcer
             var checkEnforcerRun = await CreateCheckEnforcerRunAsync(client, repositoryId, pullRequestSha, false);
 
             var otherRuns = from run in runs
-                            where run.Name != Constants.ApplicationName
+                            where run.Name != this.GlobalConfiguration.GetApplicationName()
                             select run;
 
             var totalOtherRuns = otherRuns.Count();
-
 
             var outstandingOtherRuns = from run in otherRuns
                                        where run.Conclusion != new StringEnum<CheckConclusion>(CheckConclusion.Success)
                                        select run;
 
-
             var totalOutstandingOtherRuns = outstandingOtherRuns.Count();
-
-            Log.LogDebug("{totalOutstandingOtherRuns}/{totalOtherRuns} other runs outstanding.", totalOutstandingOtherRuns, totalOtherRuns);
 
             if (totalOtherRuns >= configuration.MinimumCheckRuns && totalOutstandingOtherRuns == 0)
             {
@@ -102,15 +102,10 @@ namespace Azure.Sdk.Tools.CheckEnforcer
                     Conclusion = new StringEnum<CheckConclusion>(CheckConclusion.Success)
                 });
             }
-            else
+            else if (checkEnforcerRun.Conclusion == new StringEnum<CheckConclusion>(CheckConclusion.Success))
             {
-                if (checkEnforcerRun.Status != new StringEnum<CheckStatus>(CheckStatus.InProgress))
-                {
-                    await client.Check.Run.Update(repositoryId, checkEnforcerRun.Id, new CheckRunUpdate()
-                    {
-                        Status = new StringEnum<CheckStatus>(CheckStatus.InProgress)
-                    });
-                }
+                // NOTE: We do this when we need to go back from a conclusion of success to a status of inproress.
+                await CreateCheckEnforcerRunAsync(client, repositoryId, pullRequestSha, true);
             }
         }
 

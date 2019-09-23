@@ -17,9 +17,12 @@ namespace Azure.Sdk.Tools.CheckEnforcer
 {
     public class GitHubClientFactory
     {
-        public GitHubClientFactory()
+        public GitHubClientFactory(GlobalConfiguration globalConfiguration)
         {
+            this.globalConfiguration = globalConfiguration;
         }
+
+        private GlobalConfiguration globalConfiguration;
 
         private Tuple<DateTimeOffset, string> cachedApplicationToken;
 
@@ -83,7 +86,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
             jwtHeader["alg"] = "RS256";
 
             var jwtPayload = new JwtPayload(
-                issuer: Constants.ApplicationID.ToString(),
+                issuer: globalConfiguration.GetApplicationID(),
                 audience: null,
                 claims: null,
                 notBefore: DateTime.UtcNow,
@@ -154,7 +157,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
         {
             var token = await GetTokenAsync(cancellationToken);
 
-            var appClient = new GitHubClient(new ProductHeaderValue(Constants.ApplicationName))
+            var appClient = new GitHubClient(new ProductHeaderValue(this.globalConfiguration.GetApplicationName()))
             {
                 Credentials = new Credentials(token, AuthenticationType.Bearer)
             };
@@ -185,7 +188,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
         public async Task<GitHubClient> GetInstallationClientAsync(long installationId, CancellationToken cancellationToken)
         {
             var installationToken = await GetInstallationTokenAsync(installationId, cancellationToken);
-            var installationClient = new GitHubClient(new ProductHeaderValue($"{Constants.ApplicationName}-{installationId}"))
+            var installationClient = new GitHubClient(new ProductHeaderValue($"{this.globalConfiguration.GetApplicationName()}-{installationId}"))
             {
                 Credentials = new Credentials(installationToken)
             };

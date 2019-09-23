@@ -14,9 +14,13 @@ namespace APIViewWeb
                 if (requirement is OrganizationRequirement orgRequirement)
                 {
                     var claim = context.User.FindFirst("urn:github:orgs");
-                    if (claim != null && claim.Value.Split(",").Contains(orgRequirement.RequiredOrganization))
+                    if (claim != null)
                     {
-                        context.Succeed(requirement);
+                        var userOrganizations = claim.Value.Split(",");
+                        if (userOrganizations.Any(userOrg => orgRequirement.RequiredOrganizations.Contains(userOrg, StringComparer.OrdinalIgnoreCase)))
+                        {
+                            context.Succeed(requirement);
+                        }
                     }
                 }
             }

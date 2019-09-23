@@ -19,12 +19,12 @@ namespace Azure.Sdk.Tools.CheckEnforcer
 {
     public class GitHubClientProvider : IGitHubClientProvider
     {
-        public GitHubClientProvider(GlobalConfiguration globalConfiguration)
+        public GitHubClientProvider(IGlobalConfigurationProvider globalConfigurationProvider)
         {
-            this.globalConfiguration = globalConfiguration;
+            this.globalConfigurationProvider = globalConfigurationProvider;
         }
 
-        private GlobalConfiguration globalConfiguration;
+        private IGlobalConfigurationProvider globalConfigurationProvider;
 
         private Tuple<DateTimeOffset, string> cachedApplicationToken;
 
@@ -88,7 +88,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
             jwtHeader["alg"] = "RS256";
 
             var jwtPayload = new JwtPayload(
-                issuer: globalConfiguration.GetApplicationID(),
+                issuer: globalConfigurationProvider.GetApplicationID(),
                 audience: null,
                 claims: null,
                 notBefore: DateTime.UtcNow,
@@ -159,7 +159,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
         {
             var token = await GetTokenAsync(cancellationToken);
 
-            var appClient = new GitHubClient(new ProductHeaderValue(this.globalConfiguration.GetApplicationName()))
+            var appClient = new GitHubClient(new ProductHeaderValue(globalConfigurationProvider.GetApplicationName()))
             {
                 Credentials = new Credentials(token, AuthenticationType.Bearer)
             };
@@ -190,7 +190,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
         public async Task<GitHubClient> GetInstallationClientAsync(long installationId, CancellationToken cancellationToken)
         {
             var installationToken = await GetInstallationTokenAsync(installationId, cancellationToken);
-            var installationClient = new GitHubClient(new ProductHeaderValue($"{this.globalConfiguration.GetApplicationName()}-{installationId}"))
+            var installationClient = new GitHubClient(new ProductHeaderValue($"{globalConfigurationProvider.GetApplicationName()}-{installationId}"))
             {
                 Credentials = new Credentials(installationToken)
             };

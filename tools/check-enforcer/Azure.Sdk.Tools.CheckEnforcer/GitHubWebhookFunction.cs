@@ -31,8 +31,8 @@ namespace Azure.Sdk.Tools.CheckEnforcer
 {
     public static class GitHubWebhookFunction
     {
-        private static GlobalConfiguration globalConfiguration = new GlobalConfiguration();
-        private static IGitHubClientProvider gitHubClientProvider = new GitHubClientProvider(globalConfiguration);
+        private static IGlobalConfigurationProvider globalConfigurationProvider = new GlobalConfigurationProvider();
+        private static IGitHubClientProvider gitHubClientProvider = new GitHubClientProvider(globalConfigurationProvider);
         private static IRepositoryConfigurationProvider repositoryConfigurationPrivider = new RepositoryConfigurationProvider(gitHubClientProvider);
 
         [FunctionName("webhook")]
@@ -42,7 +42,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
         {
             try
             {
-                var processor = new GitHubWebhookProcessor(log, gitHubClientProvider, repositoryConfigurationPrivider, globalConfiguration);
+                var processor = new GitHubWebhookProcessor(log, gitHubClientProvider, repositoryConfigurationPrivider, globalConfigurationProvider);
                 await processor.ProcessWebhookAsync(req, cancellationToken);
                 return new OkResult();
             }

@@ -1,12 +1,12 @@
-﻿using System;
+﻿using Azure.Sdk.Tools.CheckEnforcer.Configuration;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace Azure.Sdk.Tools.CheckEnforcer
 {
-    public class GlobalConfiguration
+    public class GlobalConfigurationProvider : IGlobalConfigurationProvider
     {
-
         public string GetApplicationID()
         {
             var id = Environment.GetEnvironmentVariable("GITHUBAPP_ID");
@@ -18,7 +18,5 @@ namespace Azure.Sdk.Tools.CheckEnforcer
             var applicationName = Environment.GetEnvironmentVariable("CHECK_NAME");
             return applicationName;
         }
-
-        public const int ApplicationTokenLifetimeInMinutes = 10;
     }
 }

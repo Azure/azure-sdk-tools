@@ -14,22 +14,24 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
 {
     public class IssueCommentHandler : Handler<IssueCommentPayload>
     {
-        public IssueCommentHandler(IRepositoryConfigurationProvider repositoryConfigurationProvider, IGitHubClientProvider gitHubClientProvider, ILogger logger)
+        public IssueCommentHandler(IGlobalConfigurationProvider globalConfigurationProvider, IGitHubClientProvider gitHubClientProvider, IRepositoryConfigurationProvider repositoryConfigurationProvider, ILogger logger)
         {
-            this.repositoryConfigurationProvider = repositoryConfigurationProvider;
+            this.globalConfigurationProvider = globalConfigurationProvider;
             this.gitHubClientProvider = gitHubClientProvider;
+            this.repositoryConfigurationProvider = repositoryConfigurationProvider;
             this.logger = logger;
         }
 
-        private IRepositoryConfigurationProvider repositoryConfigurationProvider;
+        private IGlobalConfigurationProvider globalConfigurationProvider;
         private IGitHubClientProvider gitHubClientProvider;
+        private IRepositoryConfigurationProvider repositoryConfigurationProvider;
         private ILogger logger;
 
         private async Task SetSuccessAsync(GitHubClient client, long repositoryId, string sha, CancellationToken cancellationToken)
         {
             var response = await client.Check.Run.GetAllForReference(repositoryId, sha);
             var runs = response.CheckRuns;
-            var run = runs.Single(r => r.Name == "check-enforcer-dev"); // HACK!
+            var run = runs.Single(r => r.Name == globalConfigurationProvider.GetApplicationName());
 
             await client.Check.Run.Update(repositoryId, run.Id, new CheckRunUpdate()
             {
@@ -41,7 +43,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
         {
             var response = await client.Check.Run.GetAllForReference(repositoryId, sha);
             var runs = response.CheckRuns;
-            var checkEnforcerRuns = runs.Where(r => r.Name == "check-enforcer-dev"); // HACK!
+            var checkEnforcerRuns = runs.Where(r => r.Name == globalConfigurationProvider.GetApplicationName());
 
             foreach (var checkEnforcerRun in checkEnforcerRuns)
             {
@@ -51,7 +53,34 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
                 });
             }
 
-            await client.Check.Run.Create(repositoryId, new NewCheckRun("check-enforcer-dev", sha));
+            await client.Check.Run.Create(
+                repositoryId,
+                new NewCheckRun(globalConfigurationProvider.GetApplicationName(), sha)
+                );
+        }
+
+        private async Task SetInProgressAsync(GitHubClient client, long repositoryId, string sha, CancellationToken cancellationToken)
+        {
+            var response = await client.Check.Run.GetAllForReference(repositoryId, sha);
+            var runs = response.CheckRuns;
+            var run = runs.Single(r => r.Name == globalConfigurationProvider.GetApplicationName());
+
+            await client.Check.Run.Update(repositoryId, run.Id, new CheckRunUpdate()
+            {
+                Status = new StringEnum<CheckStatus>(CheckStatus.InProgress)
+            }); ;
+        }
+
+        private async Task SetQueuedAsync(GitHubClient client, long repositoryId, string sha, CancellationToken cancellationToken)
+        {
+            var response = await client.Check.Run.GetAllForReference(repositoryId, sha);
+            var runs = response.CheckRuns;
+            var run = runs.Single(r => r.Name == globalConfigurationProvider.GetApplicationName());
+
+            await client.Check.Run.Update(repositoryId, run.Id, new CheckRunUpdate()
+            {
+                Status = new StringEnum<CheckStatus>(CheckStatus.Queued)
+            }); ;
         }
 
         public override async Task HandleAsync(IssueCommentPayload payload, CancellationToken cancellationToken)
@@ -69,16 +98,12 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
             
             switch (comment)
             {
-                case "/check-enforcer evaluate":
-                    logger.LogTrace("Comment command received: {comment}", comment);
-                    break;
-
                 case "/check-enforcer queued":
-                    logger.LogTrace("Comment command received: {comment}", comment);
+                    await SetQueuedAsync(client, repositoryId, sha, cancellationToken);
                     break;
 
                 case "/check-enforcer inprogress":
-                    logger.LogTrace("Comment command received: {comment}", comment);
+                    await SetInProgressAsync(client, repositoryId, sha, cancellationToken);
                     break;
 
                 case "/check-enforcer success":

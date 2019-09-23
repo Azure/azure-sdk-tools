@@ -27,10 +27,10 @@ namespace Azure.Sdk.Tools.CheckEnforcer
 {
     public class GitHubWebhookProcessor
     {
-        public GitHubWebhookProcessor(ILogger log, IGitHubClientProvider gitHubClientProvider, IRepositoryConfigurationProvider repositoryConfigurationProvider, GlobalConfiguration globalConfiguration)
+        public GitHubWebhookProcessor(ILogger log, IGitHubClientProvider gitHubClientProvider, IRepositoryConfigurationProvider repositoryConfigurationProvider, IGlobalConfigurationProvider globalConfigurationProvider)
         {
             this.Log = log;
-            this.GlobalConfiguration = globalConfiguration;
+            this.globalConfigurationProvider = globalConfigurationProvider;
             this.gitHubClientProvider = gitHubClientProvider;
             this.repositoryConfigurationProvider = repositoryConfigurationProvider;
         }
@@ -38,7 +38,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
         public ILogger Log { get; private set; }
 
         public IGitHubClientProvider gitHubClientProvider;
-        public GlobalConfiguration GlobalConfiguration { get; private set; }
+        public IGlobalConfigurationProvider globalConfigurationProvider;
         private IRepositoryConfigurationProvider repositoryConfigurationProvider;
 
         private const string GitHubEventHeader = "X-GitHub-Event";
@@ -61,13 +61,13 @@ namespace Azure.Sdk.Tools.CheckEnforcer
         {
             var response = await client.Check.Run.GetAllForReference(repositoryId, headSha);
             var runs = response.CheckRuns;
-            var checkRun = runs.SingleOrDefault(r => r.Name == this.GlobalConfiguration.GetApplicationName());
+            var checkRun = runs.SingleOrDefault(r => r.Name == globalConfigurationProvider.GetApplicationName());
 
             if (checkRun == null || recreate)
             {
                 checkRun = await client.Check.Run.Create(
                     repositoryId,
-                    new NewCheckRun(this.GlobalConfiguration.GetApplicationName(), headSha)
+                    new NewCheckRun(globalConfigurationProvider.GetApplicationName(), headSha)
                     {
                         Status = new StringEnum<CheckStatus>(CheckStatus.InProgress)
                     }
@@ -88,7 +88,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
             var checkEnforcerRun = await CreateCheckEnforcerRunAsync(client, repositoryId, pullRequestSha, false);
 
             var otherRuns = from run in runs
-                            where run.Name != this.GlobalConfiguration.GetApplicationName()
+                            where run.Name != globalConfigurationProvider.GetApplicationName()
                             select run;
 
             var totalOtherRuns = otherRuns.Count();
@@ -128,7 +128,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
                     var rawPayload = request.Body;
                     var payload = await DeserializePayloadAsync<CheckRunEventPayload>(rawPayload);
 
-                    if (payload.CheckRun.Name != GlobalConfiguration.GetApplicationName())
+                    if (payload.CheckRun.Name != globalConfigurationProvider.GetApplicationName())
                     {
                         // Extract critical info for payload.
                         installationId = payload.Installation.Id;
@@ -170,7 +170,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
                     var rawPayload = request.Body;
                     var payload = await DeserializePayloadAsync<IssueCommentPayload>(rawPayload);
 
-                    var handler = new IssueCommentHandler(repositoryConfigurationProvider, gitHubClientProvider, Log);
+                    var handler = new IssueCommentHandler(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, Log);
                     await handler.HandleAsync(payload, cancellationToken);
 
                 }

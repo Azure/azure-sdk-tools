@@ -123,6 +123,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
                 long repositoryId;
                 string pullRequestSha;
 
+
                 if (eventName == "check_run")
                 {
                     var rawPayload = request.Body;

@@ -81,7 +81,8 @@ namespace Azure.Sdk.Tools.CheckEnforcer
             var runsResponse = await client.Check.Run.GetAllForReference(repositoryId, pullRequestSha);
             var runs = runsResponse.CheckRuns;
 
-            var checkEnforcerRun = await CreateCheckEnforcerRunAsync(client, repositoryId, pullRequestSha, false);
+            // NOTE: If this blows up it means that we didn't receive the check_suite request.
+            var checkEnforcerRun = runs.Single(r => r.Name == GlobalConfiguration.GetApplicationID());
 
             var otherRuns = from run in runs
                             where run.Name != this.GlobalConfiguration.GetApplicationName()
@@ -95,18 +96,23 @@ namespace Azure.Sdk.Tools.CheckEnforcer
 
             var totalOutstandingOtherRuns = outstandingOtherRuns.Count();
 
-            if (totalOtherRuns >= configuration.MinimumCheckRuns && totalOutstandingOtherRuns == 0)
+            if (totalOtherRuns >= configuration.MinimumCheckRuns && totalOutstandingOtherRuns == 0 && checkEnforcerRun.Conclusion != new StringEnum<CheckConclusion>(CheckConclusion.Success))
             {
                 await client.Check.Run.Update(repositoryId, checkEnforcerRun.Id, new CheckRunUpdate()
                 {
-                    Conclusion = new StringEnum<CheckConclusion>(CheckConclusion.Success)
+                    Conclusion = new StringEnum<CheckConclusion>(CheckConclusion.Success),
+                    Status = new StringEnum<CheckStatus>(CheckStatus.Completed)
                 });
             }
-            else if (checkEnforcerRun.Conclusion == new StringEnum<CheckConclusion>(CheckConclusion.Success))
-            {
-                // NOTE: We do this when we need to go back from a conclusion of success to a status of inproress.
-                await CreateCheckEnforcerRunAsync(client, repositoryId, pullRequestSha, true);
-            }
+            // HACK: Removing this as I think it could be introducing a consistency issue. THis means that if
+            //       someone gets check-enforcer to pass then it is always passed, even if the pipelines are
+            //       requeued (less than ideal).
+            //
+            //else if (checkEnforcerRun.Conclusion == new StringEnum<CheckConclusion>(CheckConclusion.Success))
+            //{
+            //    // NOTE: We do this when we need to go back from a conclusion of success to a status of in-progress.
+            //    await CreateCheckEnforcerRunAsync(client, repositoryId, pullRequestSha, true);
+            //}
         }
 
         public async Task ProcessWebhookAsync(HttpRequest request, CancellationToken cancellationToken)
@@ -171,7 +177,6 @@ namespace Azure.Sdk.Tools.CheckEnforcer
 
                         if (configuration.IsEnabled)
                         {
-                            await CreateCheckEnforcerRunAsync(client, repositoryId, pullRequestSha, false);
                             await EvaluateAndUpdateCheckEnforcerRunStatusAsync(configuration, installationId, repositoryId, pullRequestSha, cancellationToken);
                         }
                     }

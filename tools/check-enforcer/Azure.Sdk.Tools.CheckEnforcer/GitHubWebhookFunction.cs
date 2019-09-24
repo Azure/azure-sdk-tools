@@ -33,7 +33,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
     {
         private static IGlobalConfigurationProvider globalConfigurationProvider = new GlobalConfigurationProvider();
         private static IGitHubClientProvider gitHubClientProvider = new GitHubClientProvider(globalConfigurationProvider);
-        private static IRepositoryConfigurationProvider repositoryConfigurationPrivider = new RepositoryConfigurationProvider(gitHubClientProvider);
+        private static IRepositoryConfigurationProvider repositoryConfigurationProvider = new RepositoryConfigurationProvider(gitHubClientProvider);
 
         [FunctionName("webhook")]
         public static async Task<IActionResult> Run(
@@ -42,8 +42,8 @@ namespace Azure.Sdk.Tools.CheckEnforcer
         {
             try
             {
-                var processor = new GitHubWebhookProcessor(log, gitHubClientProvider, repositoryConfigurationPrivider, globalConfigurationProvider);
-                await processor.ProcessWebhookAsync(req, cancellationToken);
+                var processor = new GitHubWebhookProcessor(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider);
+                await processor.ProcessWebhookAsync(req, log, cancellationToken);
                 return new OkResult();
             }
             catch (CheckEnforcerUnsupportedEventException ex)

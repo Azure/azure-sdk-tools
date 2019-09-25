@@ -43,17 +43,27 @@ namespace Azure.Sdk.Tools.CheckEnforcer
         private const string GitHubEventHeader = "X-GitHub-Event";
         private const string GitHubSignatureHeader = "X-Hub-Signature";
 
+        private DateTimeOffset gitHubAppWebhookSecretExpiry = DateTime.MinValue;
+        private string gitHubAppWebhookSecret;
+
         private async Task<string> GetGitHubAppWebhookSecretAsync(CancellationToken cancellationToken)
         {
-            var keyVaultUri = globalConfigurationProvider.GetKeyVaultUri();
-            var gitHubAppWebhookSecretName = globalConfigurationProvider.GetGitHubAppWebhookSecretName();
+            if (gitHubAppWebhookSecretExpiry < DateTimeOffset.UtcNow)
+            { 
+                var keyVaultUri = globalConfigurationProvider.GetKeyVaultUri();
+                var gitHubAppWebhookSecretName = globalConfigurationProvider.GetGitHubAppWebhookSecretName();
 
-            var credential = new DefaultAzureCredential();
-            var client = new SecretClient(new Uri(keyVaultUri), credential);
-            var response = await client.GetAsync(gitHubAppWebhookSecretName, cancellationToken: cancellationToken);
-            var secret = response.Value;
+                var credential = new DefaultAzureCredential();
 
-            return secret.Value;
+                var client = new SecretClient(new Uri(keyVaultUri), credential);
+                var response = await client.GetAsync(gitHubAppWebhookSecretName, cancellationToken: cancellationToken);
+                var secret = response.Value;
+
+                gitHubAppWebhookSecretExpiry = DateTimeOffset.UtcNow.AddSeconds(30);
+                gitHubAppWebhookSecret = secret.Value;
+            }
+            
+            return gitHubAppWebhookSecret;
         }
 
         private async Task<string> ReadAndVerifyBodyAsync(HttpRequest request, CancellationToken cancellationToken)

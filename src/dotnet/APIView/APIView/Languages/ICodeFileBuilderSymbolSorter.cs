@@ -10,5 +10,6 @@ namespace ApiView
     {
         IEnumerable<T> OrderTypes<T>(IEnumerable<T> symbols) where T: ITypeSymbol;
         IEnumerable<ISymbol> OrderMembers(IEnumerable<ISymbol> members);
+        IEnumerable<INamespaceSymbol> OrderNamespaces(IEnumerable<INamespaceSymbol> namespaces);
     }
 }

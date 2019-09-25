@@ -45,25 +45,36 @@ namespace Azure.Sdk.Tools.CheckEnforcer
 
         private DateTimeOffset gitHubAppWebhookSecretExpiry = DateTime.MinValue;
         private string gitHubAppWebhookSecret;
+        private SecretClient secretClient;
 
         private async Task<string> GetGitHubAppWebhookSecretAsync(CancellationToken cancellationToken)
         {
             if (gitHubAppWebhookSecretExpiry < DateTimeOffset.UtcNow)
-            { 
-                var keyVaultUri = globalConfigurationProvider.GetKeyVaultUri();
+            {
                 var gitHubAppWebhookSecretName = globalConfigurationProvider.GetGitHubAppWebhookSecretName();
 
-                var credential = new DefaultAzureCredential();
-
-                var client = new SecretClient(new Uri(keyVaultUri), credential);
+                var client = GetSecretClient();
                 var response = await client.GetAsync(gitHubAppWebhookSecretName, cancellationToken: cancellationToken);
                 var secret = response.Value;
 
                 gitHubAppWebhookSecretExpiry = DateTimeOffset.UtcNow.AddSeconds(30);
                 gitHubAppWebhookSecret = secret.Value;
             }
-            
+
             return gitHubAppWebhookSecret;
+        }
+
+        private SecretClient GetSecretClient()
+        {
+            var keyVaultUri = globalConfigurationProvider.GetKeyVaultUri();
+            var credential = new DefaultAzureCredential();
+
+            if (secretClient == null)
+            {
+                secretClient = new SecretClient(new Uri(keyVaultUri), credential);
+            }
+
+            return secretClient;
         }
 
         private async Task<string> ReadAndVerifyBodyAsync(HttpRequest request, CancellationToken cancellationToken)

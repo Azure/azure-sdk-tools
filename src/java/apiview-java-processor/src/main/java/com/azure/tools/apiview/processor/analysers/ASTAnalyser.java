@@ -590,7 +590,7 @@ public class ASTAnalyser implements Analyser {
             packageNamesToTypesMap.computeIfAbsent(packageName, name -> new ArrayList<>()).add(typeName);
 
             // generate a navigation item for each new package, but we don't add them to the parent yet
-            packageNameToNav.computeIfAbsent(packageName, name -> new ChildItem(packageName));
+            packageNameToNav.computeIfAbsent(packageName, name -> new ChildItem(packageName, TypeKind.NAMESPACE));
 
             knownTypes.put(typeName, makeId(fullQualifiedName));
 

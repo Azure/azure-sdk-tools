@@ -18,14 +18,8 @@ public class ChildItem {
     @JsonProperty("Tags")
     private Tags tags;
 
-    public ChildItem(final String text) {
-        this(null, text);
-    }
-
-    public ChildItem(final String navigationId, final String text) {
-        this.childItems = new ArrayList<>();
-        this.navigationId = navigationId;
-        this.text = text;
+    public ChildItem(final String text, TypeKind typeKind) {
+        this(null, text, typeKind);
     }
 
     public ChildItem(final String navigationId, final String text, TypeKind typeKind) {

@@ -136,7 +136,7 @@ public class ReflectiveAnalyser implements Analyser {
         String inputFileName = inputFile.toString();
 
         // Root Navigation
-        ChildItem rootNavForJar = new ChildItem(inputFile.getName());
+        ChildItem rootNavForJar = new ChildItem(inputFile.getName(), TypeKind.ASSEMBLY);
         apiListing.addChildItem(rootNavForJar);
 
         getClassAPI(scanClass.cls, apiListing, rootNavForJar);

@@ -38,7 +38,8 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
 
             await client.Check.Run.Update(repositoryId, run.Id, new CheckRunUpdate()
             {
-                Conclusion = new StringEnum<CheckConclusion>(CheckConclusion.Success)
+                Conclusion = new StringEnum<CheckConclusion>(CheckConclusion.Success),
+                CompletedAt = DateTimeOffset.UtcNow
             });
         }
 
@@ -51,7 +52,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
             await client.Check.Run.Update(repositoryId, run.Id, new CheckRunUpdate()
             {
                 Status = new StringEnum<CheckStatus>(CheckStatus.InProgress)
-            }); ;
+            });
         }
 
         protected async Task SetQueuedAsync(GitHubClient client, long repositoryId, string sha, CancellationToken cancellationToken)
@@ -63,7 +64,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
             await client.Check.Run.Update(repositoryId, run.Id, new CheckRunUpdate()
             {
                 Status = new StringEnum<CheckStatus>(CheckStatus.Queued)
-            }); ;
+            });
         }
 
         protected async Task<CheckRun> CreateCheckAsync(GitHubClient client, long repositoryId, string headSha, bool recreate, CancellationToken cancellationToken)
@@ -78,7 +79,8 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
                     repositoryId,
                     new NewCheckRun(this.GlobalConfigurationProvider.GetApplicationName(), headSha)
                     {
-                        Status = new StringEnum<CheckStatus>(CheckStatus.InProgress)
+                        Status = new StringEnum<CheckStatus>(CheckStatus.InProgress),
+                        StartedAt = DateTimeOffset.UtcNow
                     }
                 );
             }
@@ -115,7 +117,8 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
                     await client.Check.Run.Update(repositoryId, checkEnforcerRun.Id, new CheckRunUpdate()
                     {
                         Conclusion = new StringEnum<CheckConclusion>(CheckConclusion.Success),
-                        Status = new StringEnum<CheckStatus>(CheckStatus.Completed)
+                        Status = new StringEnum<CheckStatus>(CheckStatus.Completed),
+                        CompletedAt = DateTimeOffset.UtcNow
                     });
                 }
                 else if (checkEnforcerRun.Conclusion == new StringEnum<CheckConclusion>(CheckConclusion.Success))

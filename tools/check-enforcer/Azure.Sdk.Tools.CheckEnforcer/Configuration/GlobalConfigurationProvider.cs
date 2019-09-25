@@ -18,5 +18,23 @@ namespace Azure.Sdk.Tools.CheckEnforcer
             var applicationName = Environment.GetEnvironmentVariable("CHECK_NAME");
             return applicationName;
         }
+
+        public string GetKeyVaultUri()
+        {
+            var keyVaultUri = Environment.GetEnvironmentVariable("KEYVAULT_URI");
+            return keyVaultUri;
+        }
+
+        public string GetGitHubAppPrivateKeyName()
+        {
+            var gitHubAppPrivateKeyName = Environment.GetEnvironmentVariable("KEYVAULT_GITHUBAPP_KEY_NAME");
+            return gitHubAppPrivateKeyName;
+        }
+
+        public string GetGitHubAppWebhookSecretName()
+        {
+            var gitHubAppWebhookSecretName = Environment.GetEnvironmentVariable("GITHUBAPP_WEBHOOK_SECRET");
+            return gitHubAppWebhookSecretName;
+        }
     }
 }

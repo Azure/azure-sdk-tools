@@ -129,23 +129,16 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
             }
         }
 
-        private async Task<T> DeserializePayloadAsync(Stream stream)
+        private T DeserializePayload(string json)
         {
-            using (var reader = new StreamReader(stream))
-            {
-                var rawPayload = await reader.ReadToEndAsync();
-                Logger.LogInformation("Received payload from GitHub: {rawPayload}", rawPayload);
-
-                var serializer = new SimpleJsonSerializer();
-                var payload = serializer.Deserialize<T>(rawPayload);
-
-                return payload;
-            }
+            SimpleJsonSerializer serializer = new SimpleJsonSerializer();
+            var payload = serializer.Deserialize<T>(json);
+            return payload;
         }
 
-        public async Task HandleAsync(Stream payload, CancellationToken cancellationToken)
+        public async Task HandleAsync(string json, CancellationToken cancellationToken)
         {
-            var deserializedPayload = await DeserializePayloadAsync(payload);
+            var deserializedPayload = DeserializePayload(json);
             var installationId = deserializedPayload.Installation.Id;
 
             var client = await this.GitHubClientProvider.GetInstallationClientAsync(installationId, cancellationToken);

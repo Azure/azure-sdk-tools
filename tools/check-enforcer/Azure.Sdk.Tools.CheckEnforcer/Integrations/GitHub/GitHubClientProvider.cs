@@ -129,10 +129,8 @@ namespace Azure.Sdk.Tools.CheckEnforcer
 
         private async Task<Key> GetKey(KeyClient keyClient, CancellationToken cancellationToken)
         {
-            var keyVaultGitHubKeyName = Environment.GetEnvironmentVariable("KEYVAULT_GITHUBAPP_KEY_NAME");
-
             var keyResponse = await keyClient.GetKeyAsync(
-                keyVaultGitHubKeyName,
+                globalConfigurationProvider.GetGitHubAppPrivateKeyName(),
                 cancellationToken: cancellationToken
                 );
 
@@ -142,15 +140,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
 
         private KeyClient GetKeyClient(TokenCredential credential)
         {
-
-            // We need a variable that tells Check Enforcer which KeyVault to talk to,
-            // this is currently done via an environment variable.
-            //
-            //      KEYVAULT_URI
-            //
-            var keyVaultUriEnvironmentVariable = Environment.GetEnvironmentVariable("KEYVAULT_URI");
-
-            var keyVaultUri = new Uri(keyVaultUriEnvironmentVariable);
+            var keyVaultUri = new Uri(globalConfigurationProvider.GetKeyVaultUri());
             var keyClient = new KeyClient(keyVaultUri, credential);
             return keyClient;
         }

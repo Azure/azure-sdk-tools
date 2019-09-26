@@ -467,3 +467,7 @@ launchSettings.json
 
 # Azure Functions
 local.settings.json
+
+# Java tooling
+*.iml
+

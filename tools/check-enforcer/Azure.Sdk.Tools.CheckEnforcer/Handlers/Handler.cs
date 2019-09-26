@@ -72,16 +72,17 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
             var response = await client.Check.Run.GetAllForReference(repositoryId, headSha);
             var runs = response.CheckRuns;
             var checkEnforcerRuns = runs.Where(r => r.Name == this.GlobalConfigurationProvider.GetApplicationName());
-            
+
             if (checkEnforcerRuns.Count() > 1)
             {
-                var serializer = new SimpleJsonSerializer();
-                var serializedRuns = serializer.Serialize(checkEnforcerRuns);
-                Logger.LogWarning("Duplicate check-enforcer runs found: {serializedRuns}", serializedRuns);
+                var firstRun = checkEnforcerRuns.First();
+                SimpleJsonSerializer serializer = new SimpleJsonSerializer();
+                var serializedFirstRun = serializer.Serialize(firstRun);
+
+                Logger.LogTrace("Duplicated run: {serializedFirstRun}", serializedFirstRun);
             }
 
             var checkRun = checkEnforcerRuns.SingleOrDefault();
-
 
             if (checkRun == null || recreate)
             {
@@ -141,6 +142,8 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
 
         private T DeserializePayload(string json)
         {
+            Logger.LogTrace("Payload: {json}", json);
+
             SimpleJsonSerializer serializer = new SimpleJsonSerializer();
             var payload = serializer.Deserialize<T>(json);
             return payload;

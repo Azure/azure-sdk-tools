@@ -22,7 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="f:\Downloads\java-api-listing-1.0.1.jar" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\..\java\apiview-java-processor\target\archive-tmp\apiview-java-processor-1.0.0.jar" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

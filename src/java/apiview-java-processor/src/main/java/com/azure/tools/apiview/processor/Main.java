@@ -47,8 +47,9 @@ public class Main {
                 System.exit(-1);
             }
 
-            String jsonFileName = jarFile.substring(0, jarFile.length() - 4) + ".json";
-            new Main(file, new File(outputDir, jsonFileName));
+            String jsonFileName = file.getName().substring(0, file.getName().length() - 4) + ".json";
+            File outputFile = new File(outputDir, jsonFileName);
+            new Main(file, outputFile);
         }
     }
 

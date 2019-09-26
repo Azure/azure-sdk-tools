@@ -10,14 +10,16 @@ namespace APIViewWeb
 {
     public class CSharpLanguageService : ILanguageService
     {
+        public string Name { get; } = "C#";
+
         public bool IsSupportedExtension(string extension)
         {
             return string.Equals(extension, ".dll", comparisonType: StringComparison.OrdinalIgnoreCase);
         }
 
-        public bool CanUpdate(CodeFile codeFile)
+        public bool CanUpdate(string versionString)
         {
-            return codeFile.Version != CodeFileBuilder.CurrentVersion;
+            return versionString != CodeFileBuilder.CurrentVersion;
         }
 
         public Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis)

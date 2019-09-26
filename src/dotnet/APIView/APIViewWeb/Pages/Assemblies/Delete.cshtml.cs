@@ -1,4 +1,5 @@
 ﻿using System.Threading.Tasks;
+using APIViewWeb.Respositories;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -22,7 +23,7 @@ namespace APIViewWeb.Pages.Assemblies
                 return NotFound();
             }
 
-            var reviewModel = await _manager.GetReviewAsync(id);
+            var reviewModel = await _manager.GetReviewAsync(User, id);
             AssemblyName = reviewModel.Name;
 
             return Page();

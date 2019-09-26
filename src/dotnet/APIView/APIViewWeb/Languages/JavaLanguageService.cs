@@ -11,6 +11,8 @@ namespace APIViewWeb
 {
     public class JavaLanguageService : ILanguageService
     {
+        public string Name { get; } = "Java";
+
         public string JarName = "java-api-listing-1.0.1.jar";
 
         public bool IsSupportedExtension(string extension)
@@ -18,9 +20,9 @@ namespace APIViewWeb
             return string.Equals(extension, ".jar", comparisonType: StringComparison.OrdinalIgnoreCase);
         }
 
-        public bool CanUpdate(CodeFile codeFile)
+        public bool CanUpdate(string versionString)
         {
-            return codeFile.VersionString != JarName;
+            return versionString != JarName;
         }
 
         public async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis)

@@ -9,7 +9,7 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using ApiView;
 
-namespace APIViewWeb.Pages.Assemblies
+namespace APIViewWeb.Respositories
 {
     public class ReviewManager
     {
@@ -65,6 +65,8 @@ namespace APIViewWeb.Pages.Assemblies
                 memoryStream.Position = 0;
                 reviewModel.Name = codeFile.Name;
 
+                InitializeFromCodeFile(reviewCodeFileModel, codeFile);
+
                 await _originalsRepository.UploadOriginalAsync(reviewCodeFileModel.ReviewFileId, memoryStream);
                 await _codeFileRepository.UpsertCodeFileAsync(reviewCodeFileModel.ReviewFileId, codeFile);
                 await _reviewsRepository.UpsertReviewAsync(reviewModel);
@@ -96,9 +98,49 @@ namespace APIViewWeb.Pages.Assemblies
             await _commentsRepository.DeleteCommentsAsync(id);
         }
 
-        public Task<ReviewModel> GetReviewAsync(string id)
+        public async Task<ReviewModel> GetReviewAsync(ClaimsPrincipal user, string id)
         {
-            return _reviewsRepository.GetReviewAsync(id);
+            if (user == null)
+            {
+                throw new UnauthorizedAccessException();
+            }
+
+            var review = await _reviewsRepository.GetReviewAsync(id);
+            review.UpdateAvailable = user.GetGitHubLogin() == review.Author &&
+                                     review.Files.Any(f => f.HasOriginal && GetLanguageService(f.Language).CanUpdate(f.VersionString));
+            return review;
+        }
+
+        internal async Task UpdateReviewAsync(ClaimsPrincipal user, string id)
+        {
+            var review = await GetReviewAsync(user, id);
+            foreach (var file in review.Files)
+            {
+                if (!file.HasOriginal)
+                {
+                    continue;
+                }
+
+                var fileOriginal = await _originalsRepository.GetOriginalAsync(file.ReviewFileId);
+
+                var codeFile = CodeFileBuilder.Build(fileOriginal, file.RunAnalysis);
+                await _codeFileRepository.UpsertCodeFileAsync(file.ReviewFileId, codeFile);
+
+                InitializeFromCodeFile(file, codeFile);
+            }
+
+            await _reviewsRepository.UpsertReviewAsync(review);
+        }
+
+        private void InitializeFromCodeFile(ReviewCodeFileModel file, CodeFile codeFile)
+        {
+            file.Language = codeFile.Language;
+            file.VersionString = codeFile.VersionString;
+        }
+
+        private ILanguageService GetLanguageService(string language)
+        {
+            return _languageServices.Single(service => service.Name == language);
         }
     }
 }

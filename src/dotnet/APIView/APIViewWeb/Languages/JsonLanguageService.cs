@@ -10,12 +10,14 @@ namespace APIViewWeb
 {
     public class JsonLanguageService : ILanguageService
     {
+        public string Name { get; } = "Json";
+
         public bool IsSupportedExtension(string extension)
         {
             return string.Equals(extension, ".json", comparisonType: StringComparison.OrdinalIgnoreCase);
         }
 
-        public bool CanUpdate(CodeFile codeFile)
+        public bool CanUpdate(string codeFile)
         {
             return false;
         }

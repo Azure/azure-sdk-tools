@@ -108,7 +108,7 @@ namespace ApiView
                 Name = assemblySymbol.Name,
                 Language = "C#",
                 Tokens = builder.Tokens.ToArray(),
-                VersionString = CodeFileBuilder.CurrentVersion,
+                VersionString = CurrentVersion,
                 Navigation = new [] { assemblyNavigationItem },
                 Diagnostics = analyzer.Results.ToArray()
             };

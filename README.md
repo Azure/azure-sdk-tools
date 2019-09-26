@@ -11,6 +11,8 @@ This repository contains useful tools that the Azure SDK team utilizes across th
 | pixel insertion tool           | [Readme](scripts/python/readme_tracking/readme.md)      | A tool used to insert the requests for images served by `pixel server`.              | Not Yet Enabled                                                                                                                                                                                                                            |
 | @azure/eslint-plugin-azure-sdk | [Readme](/tools/eslint-plugin-azure-sdk/README.md)      | An ESLint plugin enforcing design guidelines for the JavaScript/TypeScript Azure SDK | [![Build Status](https://dev.azure.com/azure-sdk/public/_apis/build/status/tools/tools%20-%20eslint-plugin-azure-sdk%20-%20ci?branchName=master)](https://dev.azure.com/azure-sdk/public/_build/latest?definitionId=628&branchName=master) |
 
+| Check Enforcer | [Readme](/tools/check-enforcer/README.md)      | Manage GitHub check-runs in a mono-repo. | Not Yet Enabled |
+
 ## Contributing
 
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a

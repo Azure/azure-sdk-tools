@@ -41,7 +41,7 @@ namespace APIViewWeb.Pages.Assemblies
 
         public bool UpdateAvailable => CodeFile != null &&
                                        ReviewCodeFile.HasOriginal &&
-                                       CodeFile.Version != CodeFile.CurrentVersion &&
+                                       true  &&//CodeFile.Version != CodeFile.CurrentVersion &&
                                        Review.Author == User.GetGitHubLogin();
         [BindProperty]
         public CommentModel Comment { get; set; }
@@ -93,9 +93,8 @@ namespace APIViewWeb.Pages.Assemblies
             Comments = new Dictionary<string, List<CommentModel>>();
 
             var assemblyComments = await _commentRepository.GetCommentsAsync(id);
-            var comments = assemblyComments;
 
-            foreach (var comment in comments)
+            foreach (var comment in assemblyComments)
             {
                 if (!Comments.TryGetValue(comment.ElementId, out _))
                     Comments[comment.ElementId] = new List<CommentModel>() { comment };

@@ -1,5 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using APIViewWeb.Models;
@@ -10,18 +10,43 @@ namespace APIViewWeb.Pages.Assemblies
 {
     public class IndexPageModel : PageModel
     {
-        private readonly CosmosReviewRepository _cosmosReviewRepository;
+        private readonly ReviewManager _manager;
 
-        public IndexPageModel(CosmosReviewRepository cosmosReviewRepository)
+        public IndexPageModel(ReviewManager manager)
         {
-            _cosmosReviewRepository = cosmosReviewRepository;
+            _manager = manager;
         }
+
+        [FromForm]
+        public UploadModel Upload { get; set; }
 
         public IEnumerable<ReviewModel> Assemblies { get; set; }
 
         public async Task OnGetAsync()
         {
-            Assemblies = await _cosmosReviewRepository.GetReviewsAsync();
+            Assemblies = await _manager.GetReviewsAsync();
+        }
+
+        public async Task<IActionResult> OnPostUploadAsync()
+        {
+            if (!ModelState.IsValid)
+            {
+                return RedirectToPage();
+            }
+
+            var file = Upload.Files.SingleOrDefault();
+
+            if (file != null)
+            {
+                using (var openReadStream = file.OpenReadStream())
+                {
+                   var reviewModel = await _manager.CreateReviewAsync(User, file.FileName, openReadStream, Upload.RunAnalysis);
+
+                    return RedirectToPage("Review", new { id = reviewModel.ReviewId });
+                }
+            }
+
+            return RedirectToPage();
         }
     }
 }

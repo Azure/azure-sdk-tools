@@ -15,6 +15,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
+using APIViewWeb.Pages.Assemblies;
 
 namespace APIViewWeb
 {
@@ -49,6 +50,12 @@ namespace APIViewWeb
             services.AddSingleton<BlobOriginalsRepository>();
             services.AddSingleton<CosmosReviewRepository>();
             services.AddSingleton<CosmosCommentsRepository>();
+
+            services.AddSingleton<ReviewManager>();
+
+            services.AddSingleton<ILanguageService, JsonLanguageService>();
+            services.AddSingleton<ILanguageService, CSharpLanguageService>();
+            services.AddSingleton<ILanguageService, JavaLanguageService>();
 
             services.AddAuthentication(options =>
                 {

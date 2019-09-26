@@ -101,4 +101,10 @@ $(function () {
             updateCommentThread(commentBox, partialViewResult);
         });
     }
+
+    // Show file name when file is selected
+    $('.custom-file-input').on('change', function() {
+            var fileName = this.files[0].name;
+            $(this).next('.custom-file-label').html(fileName);
+        });
 });

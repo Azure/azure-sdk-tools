@@ -21,6 +21,9 @@
     <PackageReference Include="Markdig.Signed" Version="0.17.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="f:\Downloads\java-api-listing-1.0.1.jar" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\APIView\APIView.csproj" />

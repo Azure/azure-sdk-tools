@@ -11,14 +11,16 @@ namespace APIViewWeb
 {
     public class JavaLanguageService : ILanguageService
     {
+        public string JarName = "java-api-listing-1.0.1.jar";
+
         public bool IsSupportedExtension(string extension)
         {
-            return string.Equals(extension, ".json", comparisonType: StringComparison.OrdinalIgnoreCase);
+            return string.Equals(extension, ".jar", comparisonType: StringComparison.OrdinalIgnoreCase);
         }
 
         public bool CanUpdate(CodeFile codeFile)
         {
-            return false;
+            return codeFile.VersionString != JarName;
         }
 
         public async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis)
@@ -38,8 +40,12 @@ namespace APIViewWeb
 
             try
             {
-                var arguments = $"-jar {JarName} \"{originalFilePath}\" \"{tempDirectory}\"";
+                var jarPath = Path.Combine(
+                    Path.GetDirectoryName(typeof(JavaLanguageService).Assembly.Location),
+                    JarName);
+                var arguments = $"-jar {jarPath} \"{originalName}\" \"{tempDirectory}\"";
                 var processStartInfo = new ProcessStartInfo("java", arguments);
+                processStartInfo.WorkingDirectory = tempDirectory;
                 processStartInfo.RedirectStandardError = true;
                 processStartInfo.RedirectStandardOutput = true;
 
@@ -60,17 +66,15 @@ namespace APIViewWeb
                 using (var codeFileStream = File.OpenRead(jsonFilePath))
                 {
                     var codeFile = await CodeFile.DeserializeAsync(codeFileStream);
-                    codeFile.Version = JarName;
+                    codeFile.VersionString = JarName;
                     codeFile.Language = "Java";
                     return codeFile;
                 }
             }
             finally
             {
-                Directory.Delete(tempDirectory);
+                Directory.Delete(tempDirectory, true);
             }
         }
-
-        public string JarName = "java-api-listing-1.0.0.jar";
     }
 }

@@ -22,12 +22,16 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
 
             if (payload.Action == "requested" || payload.Action == "rerequested")
             {
-                // Extract critical info for payload.
                 var installationId = payload.Installation.Id;
                 var repositoryId = payload.Repository.Id;
                 var sha = payload.CheckSuite.HeadSha;
 
-                await CreateCheckAsync(context.Client, repositoryId, sha, true, cancellationToken);
+                var configuration = await this.RepositoryConfigurationProvider.GetRepositoryConfigurationAsync(installationId, repositoryId, sha, cancellationToken);
+
+                if (configuration.IsEnabled)
+                {
+                    await CreateCheckAsync(context.Client, repositoryId, sha, true, cancellationToken);
+                }
             }
         }
     }

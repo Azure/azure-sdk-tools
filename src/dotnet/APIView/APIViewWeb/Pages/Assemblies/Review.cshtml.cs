@@ -30,7 +30,7 @@ namespace APIViewWeb.Pages.Assemblies
         }
 
         public ReviewModel Review { get; set; }
-        public ReviewCodeFileModel ReviewCodeFile { get; set; }
+        public CodeFile CodeFile { get; set; }
         public LineApiView[] Lines { get; set; }
         public Dictionary<string, List<CommentModel>> Comments { get; set; }
 
@@ -67,20 +67,18 @@ namespace APIViewWeb.Pages.Assemblies
         public async Task<IActionResult> OnGetAsync(string id)
         {
             Review = await _manager.GetReviewAsync(User, id);
-            ReviewCodeFile = Review.Files.SingleOrDefault();
 
-            CodeFile codeFile;
-
-            if (ReviewCodeFile != null)
+            var codeFile = Review.Files.SingleOrDefault();
+            if (codeFile != null)
             {
-                codeFile = await _codeFileRepository.GetCodeFileAsync(ReviewCodeFile.ReviewFileId);
+                CodeFile = await _codeFileRepository.GetCodeFileAsync(codeFile.ReviewFileId);
             }
             else
             {
                 return RedirectToPage("LegacyReview", new { id = id });
             }
 
-            Lines = new CodeFileHtmlRenderer().Render(codeFile).ToArray();
+            Lines = new CodeFileHtmlRenderer().Render(CodeFile).ToArray();
             Comments = new Dictionary<string, List<CommentModel>>();
 
             var assemblyComments = await _commentRepository.GetCommentsAsync(id);

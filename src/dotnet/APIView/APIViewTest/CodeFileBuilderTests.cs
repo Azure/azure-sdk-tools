@@ -78,7 +78,7 @@ namespace APIViewTest
 
             public IEnumerable<INamespaceSymbol> OrderNamespaces(IEnumerable<INamespaceSymbol> namespaces)
             {
-                return namespaces.OrderBy(s => s.Name);
+                return namespaces.OrderBy(s => s.ToDisplayString());
             }
         }
     }

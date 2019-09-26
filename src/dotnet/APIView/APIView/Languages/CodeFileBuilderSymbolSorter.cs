@@ -23,7 +23,7 @@ namespace ApiView
 
         public IEnumerable<INamespaceSymbol> OrderNamespaces(IEnumerable<INamespaceSymbol> namespaces)
         {
-            return namespaces.OrderBy(n => n.Name);
+            return namespaces.OrderBy(n => n.ToDisplayString());
         }
 
         private static int GetTypeOrder(ITypeSymbol typeSymbol)

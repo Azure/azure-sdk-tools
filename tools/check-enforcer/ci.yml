@@ -1,0 +1,42 @@
+resources:
+  repositories:
+    - repository: azure-sdk-build-tools
+      type: git
+      name: internal/azure-sdk-build-tools
+      
+trigger:
+  branches:
+    include:
+      - master
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - tools/check-enforcer
+
+pr:
+  branches:
+    include:
+      - master
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - tools/check-enforcer
+
+variables:
+  skipComponentGovernanceDetection: true
+
+stages:
+  - stage: Build
+    jobs:
+      - job: Build
+
+        pool:
+          vmImage: windows-2019
+
+        steps:
+          - script: |
+              echo Hello world!

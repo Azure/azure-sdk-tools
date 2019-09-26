@@ -4,10 +4,44 @@
 @{
     ViewData["Title"] = "Home page";
 }
-@*<form method="post" asp-page-handler="Migrate">
-    <input type="hidden" />
-    <input type="submit" value="Migrate" class="btn btn-danger" />
-</form>*@
+
+<div class="float-left mb-2">
+    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#uploadModel">Create review</button>
+</div>
+
+<div class="modal fade" id="uploadModel" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form asp-page-handler="Upload" method="post" enctype="multipart/form-data">
+                <div class="modal-header">
+                    <h5 class="modal-title">Create review</h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <div class="custom-file">
+                            <input asp-for="Upload.Files" type="file" class="custom-file-input">
+                            <label asp-for="Upload.Files" class="custom-file-label">Select file to include in API review</label>
+                        </div>
+
+                        <div class="form-check">
+                            <input class="form-check-input" asp-for="Upload.RunAnalysis" checked>
+                            <label class="form-check-label">
+                                Run static analysis
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Upload</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
 <table class="table table-hover">
     <thead>
@@ -21,27 +55,27 @@
     <tbody>
         @foreach (var assembly in Model.Assemblies)
         {
-            <tr>
-                <td>
-                    <a asp-page="./Review" asp-route-id="@assembly.ReviewId">@assembly.Name</a>
-                </td>
-                <td>
-                    <a username="@assembly.Author">@assembly.Author</a>
-                </td>
-                <td>
-                    <span date="@assembly.CreationDate.ToLocalTime()"></span>
-                </td>
-                @if (assembly.Author == User.GetGitHubLogin())
+        <tr>
+            <td>
+                <a asp-page="./Review" asp-route-id="@assembly.ReviewId">@assembly.Name</a>
+            </td>
+            <td>
+                <a username="@assembly.Author">@assembly.Author</a>
+            </td>
+            <td>
+                <span date="@assembly.CreationDate.ToLocalTime()"></span>
+            </td>
+            @if (assembly.Author == User.GetGitHubLogin())
                 {
-                    <td>
-                        <a asp-page="./Delete" asp-route-id="@assembly.ReviewId">Delete</a>
-                    </td>
+            <td>
+                <a asp-page="./Delete" asp-route-id="@assembly.ReviewId">Delete</a>
+            </td>
                 }
                 else
                 {
-                    <td></td>
+            <td></td>
                 }
-            </tr>
+        </tr>
         }
     </tbody>
 </table>

@@ -50,7 +50,7 @@ namespace ApiView
 
         public ICodeFileBuilderSymbolOrderProvider SymbolOrderProvider { get; set; } = new CodeFileBuilderSymbolOrderProvider();
 
-        public const int CurrentVersion = 9;
+        public const string CurrentVersion = "10";
 
         private IEnumerable<INamespaceSymbol> EnumerateNamespaces(IAssemblySymbol assemblySymbol)
         {
@@ -108,7 +108,7 @@ namespace ApiView
                 Name = assemblySymbol.Name,
                 Language = "C#",
                 Tokens = builder.Tokens.ToArray(),
-                Version = CodeFile.CurrentVersion,
+                Version = CodeFileBuilder.CurrentVersion,
                 Navigation = new [] { assemblyNavigationItem },
                 Diagnostics = analyzer.Results.ToArray()
             };

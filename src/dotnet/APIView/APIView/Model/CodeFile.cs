@@ -18,7 +18,7 @@ namespace ApiView
             ReadCommentHandling = JsonCommentHandling.Skip
         };
 
-        public int Version { get; set; }
+        public string Version { get; set; }
 
         public string Name { get; set; }
 

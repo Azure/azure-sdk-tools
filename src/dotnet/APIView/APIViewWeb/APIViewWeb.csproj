@@ -5,6 +5,7 @@
     <RootNamespace>APIViewWeb</RootNamespace>
     <AssemblyName>APIViewWeb</AssemblyName>
     <UserSecretsId>79cceff6-d533-4370-a0ee-f3321a343907</UserSecretsId>
+    <JavaProcessor>..\..\..\java\apiview-java-processor\target\apiview-java-processor-1.0.0.jar</JavaProcessor>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -21,6 +22,9 @@
     <PackageReference Include="Markdig.Signed" Version="0.17.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="$(JavaProcessor)" Condition="Exists($(JavaProcessor))" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\APIView\APIView.csproj" />

@@ -4,10 +4,10 @@
     ViewData["Title"] = "Review";
 }
 
-@if (Model.UpdateAvailable)
+@if (Model.Review.UpdateAvailable)
 {
     <div class="alert alert-warning" role="alert">
-        <form asp-page-handler="RefreshModel" class=".form-inline" method="post" asp-route-id="@Model.Id">
+        <form asp-page-handler="RefreshModel" class=".form-inline" method="post" asp-route-id="@Model.Review.ReviewId">
             Your code review uses older format and can be updated
             <button type="submit" class="btn btn-link">Update model</button>
         </form>
@@ -60,7 +60,7 @@
                 </tr>
                 @foreach (var elementId in Model.Comments.Keys) {
                     @if (elementId == line.ElementId) {
-                        <partial name="_CommentThreadPartial" model="@new APIViewWeb.Models.CommentThreadModel() { AssemblyId = Model.Id, Comments = Model.Comments[elementId], LineId = elementId }" />
+                        <partial name="_CommentThreadPartial" model="@(new Models.CommentThreadModel() { AssemblyId = Model.Review.ReviewId, Comments = Model.Comments[elementId], LineId = elementId })" />
                     }
                 }
             }
@@ -71,7 +71,7 @@
 </div>
 <div id="comment-form-template">
     <div class="comment-form border-top new-thread-comment">
-        <form class="new-thread-comment-form comment" method="post" asp-route-id="@Model.Id">
+        <form class="new-thread-comment-form comment" method="post" asp-route-id="@Model.Review.ReviewId">
             <input type="hidden" asp-for="Comment.ElementId" class="id-box" />
             <div class="new-comment-content">
                 <textarea class="new-thread-comment-text form-control" asp-for="Comment.Comment" rows="3"></textarea>

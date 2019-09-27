@@ -15,5 +15,8 @@ namespace APIViewWeb
         public string Author { get; set; }
         public DateTime CreationDate { get; set; }
         public ReviewCodeFileModel[] Files { get; set; }
+
+        [JsonIgnore]
+        public bool UpdateAvailable { get; set; }
     }
 }

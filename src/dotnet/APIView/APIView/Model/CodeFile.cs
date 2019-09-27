@@ -18,9 +18,18 @@ namespace ApiView
             ReadCommentHandling = JsonCommentHandling.Skip
         };
 
-        public const int CurrentVersion = 11;
+        private string _versionString;
 
+        [Obsolete("This is only for back compat, VersionString should be used")]
         public int Version { get; set; }
+
+        public string VersionString
+        {
+#pragma warning disable 618
+            get => _versionString ?? Version.ToString();
+#pragma warning restore 618
+            set => _versionString = value;
+        }
 
         public string Name { get; set; }
 

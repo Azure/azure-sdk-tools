@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using ApiView;
 using APIViewWeb.Models;
-using Microsoft.AspNetCore.Authorization;
+using APIViewWeb.Respositories;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
@@ -13,40 +13,29 @@ namespace APIViewWeb.Pages.Assemblies
 {
     public class ReviewPageModel : PageModel
     {
+        private readonly ReviewManager _manager;
+
         private readonly BlobCodeFileRepository _codeFileRepository;
-
-        private readonly CosmosReviewRepository _cosmosReviewRepository;
-
-        private readonly BlobOriginalsRepository _originalsRepository;
 
         private readonly CosmosCommentsRepository _commentRepository;
 
-        public ReviewPageModel(BlobCodeFileRepository codeFileRepository,
-            CosmosReviewRepository cosmosReviewRepository,
-            BlobOriginalsRepository originalsRepository,
+        public ReviewPageModel(
+            ReviewManager manager,
+            BlobCodeFileRepository codeFileRepository,
             CosmosCommentsRepository commentRepository)
         {
+            _manager = manager;
             _codeFileRepository = codeFileRepository;
-            _cosmosReviewRepository = cosmosReviewRepository;
-            _originalsRepository = originalsRepository;
-            this._commentRepository = commentRepository;
+            _commentRepository = commentRepository;
         }
 
-        public string Id { get; set; }
-        public LineApiView[] Lines { get; set; }
-
         public ReviewModel Review { get; set; }
-        public ReviewCodeFileModel ReviewCodeFile { get; set; }
         public CodeFile CodeFile { get; set; }
+        public LineApiView[] Lines { get; set; }
+        public Dictionary<string, List<CommentModel>> Comments { get; set; }
 
-        public bool UpdateAvailable => CodeFile != null &&
-                                       ReviewCodeFile.HasOriginal &&
-                                       CodeFile.Version != CodeFile.CurrentVersion &&
-                                       Review.Author == User.GetGitHubLogin();
         [BindProperty]
         public CommentModel Comment { get; set; }
-        public Dictionary<string, List<CommentModel>> Comments { get; set; }
-        public string Username { get; set; }
 
         public async Task<ActionResult> OnPostDeleteAsync(string id, string commentId, string elementId)
         {
@@ -77,12 +66,12 @@ namespace APIViewWeb.Pages.Assemblies
 
         public async Task<IActionResult> OnGetAsync(string id)
         {
-            Id = id;
-            Review = await _cosmosReviewRepository.GetReviewAsync(id);
-            ReviewCodeFile = Review.Files.SingleOrDefault();
-            if (ReviewCodeFile != null)
+            Review = await _manager.GetReviewAsync(User, id);
+
+            var codeFile = Review.Files.SingleOrDefault();
+            if (codeFile != null)
             {
-                CodeFile = await _codeFileRepository.GetCodeFileAsync(ReviewCodeFile.ReviewFileId);
+                CodeFile = await _codeFileRepository.GetCodeFileAsync(codeFile.ReviewFileId);
             }
             else
             {
@@ -102,7 +91,6 @@ namespace APIViewWeb.Pages.Assemblies
                     Comments[comment.ElementId].Add(comment);
             }
 
-            Username = User.GetGitHubLogin();
             return Page();
         }
 
@@ -119,19 +107,8 @@ namespace APIViewWeb.Pages.Assemblies
 
         public async Task<ActionResult> OnPostRefreshModelAsync(string id)
         {
-            var review = await _cosmosReviewRepository.GetReviewAsync(id);
-            foreach (var file in review.Files)
-            {
-                if (!file.HasOriginal)
-                {
-                    continue;
-                }
+            await _manager.UpdateReviewAsync(User, id);
 
-                var fileOriginal = await _originalsRepository.GetOriginalAsync(file.ReviewFileId);
-
-                var codeFile = ApiView.CodeFileBuilder.Build(fileOriginal, file.RunAnalysis);
-                await _codeFileRepository.UpsertCodeFileAsync(file.ReviewFileId, codeFile);
-            }
             return RedirectToPage(new { id = id });
         }
     }

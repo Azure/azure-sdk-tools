@@ -12,6 +12,7 @@ namespace APIViewWeb.Models
         [JsonProperty("id")]
         public string Id { get; set; } = Guid.NewGuid().ToString("N");
         public string ReviewId { get; set; }
+        public string FileId { get; set; }
         public string ElementId { get; set; }
         public string Comment { get; set; }
         public DateTime TimeStamp { get; set; }

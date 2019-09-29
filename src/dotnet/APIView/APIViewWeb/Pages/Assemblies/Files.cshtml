@@ -1,0 +1,56 @@
+﻿@page "{id?}"
+@model APIViewWeb.Pages.Assemblies.FilesPageModel
+@{
+    Layout = "ReviewLayout";
+    ViewData["Title"] = "Files";
+}
+
+<div class="row">
+    <div class="col">
+        <div class="float-right m-2">
+            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#uploadModel">Create review</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="uploadModel" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form asp-page-handler="Upload" method="post" enctype="multipart/form-data">
+                <div class="modal-header">
+                    <h5 class="modal-title">Upload file</h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <div class="custom-file">
+                            <input name="upload" type="file" class="custom-file-input">
+                            <label for="upload" class="custom-file-label">Select file to add</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Upload</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col">
+        <ul class="list-group">
+            @foreach (var reviewCodeFileModel in Model.Review.Files)
+            {
+                <li class="list-group-item">
+                    @reviewCodeFileModel.Name <span class="font-italic" date="@reviewCodeFileModel.CreationDate"></span>
+                    <span class="badge badge-pill">@reviewCodeFileModel.Language</span>
+                    <a class="btn btn-danger btn-sm float-right" href="#">Delete</a>
+                </li>
+            }
+        </ul>
+    </div>
+</div>

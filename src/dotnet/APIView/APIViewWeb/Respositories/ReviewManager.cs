@@ -39,40 +39,19 @@ namespace APIViewWeb.Respositories
 
         public async Task<ReviewModel> CreateReviewAsync(ClaimsPrincipal user, string originalName, Stream fileStream, bool runAnalysis)
         {
-            using (var memoryStream = new MemoryStream())
-            {
-                await fileStream.CopyToAsync(memoryStream);
+            ReviewModel reviewModel = new ReviewModel();
+            reviewModel.Author = user.GetGitHubLogin();
+            reviewModel.CreationDate = DateTime.UtcNow;
+            reviewModel.RunAnalysis = runAnalysis;
 
-                memoryStream.Position = 0;
+            var reviewCodeFileModel = await CreateFileAsync(originalName, fileStream, runAnalysis);
 
-                ReviewModel reviewModel = new ReviewModel();
-                reviewModel.Author = user.GetGitHubLogin();
-                reviewModel.CreationDate = DateTime.UtcNow;
+            reviewModel.Files = new[] { reviewCodeFileModel };
+            reviewModel.Name = reviewCodeFileModel.Name;
 
-                var reviewCodeFileModel = new ReviewCodeFileModel();
-                reviewCodeFileModel.HasOriginal = true;
-                reviewCodeFileModel.Name = originalName;
-                reviewCodeFileModel.RunAnalysis = runAnalysis;
+            await _reviewsRepository.UpsertReviewAsync(reviewModel);
 
-                reviewModel.Files = new [] { reviewCodeFileModel };
-
-                var originalNameExtension = Path.GetExtension(originalName);
-                var languageService = _languageServices.Single(s => s.IsSupportedExtension(originalNameExtension));
-                memoryStream.Position = 0;
-
-                CodeFile codeFile = await languageService.GetCodeFileAsync(originalName, memoryStream, runAnalysis);
-
-                memoryStream.Position = 0;
-                reviewModel.Name = codeFile.Name;
-
-                InitializeFromCodeFile(reviewCodeFileModel, codeFile);
-
-                await _originalsRepository.UploadOriginalAsync(reviewCodeFileModel.ReviewFileId, memoryStream);
-                await _codeFileRepository.UpsertCodeFileAsync(reviewCodeFileModel.ReviewFileId, codeFile);
-                await _reviewsRepository.UpsertReviewAsync(reviewModel);
-
-                return reviewModel;
-            }
+            return reviewModel;
         }
 
         public Task<IEnumerable<ReviewModel>> GetReviewsAsync()
@@ -123,7 +102,7 @@ namespace APIViewWeb.Respositories
 
                 var fileOriginal = await _originalsRepository.GetOriginalAsync(file.ReviewFileId);
 
-                var codeFile = CodeFileBuilder.Build(fileOriginal, file.RunAnalysis);
+                var codeFile = CodeFileBuilder.Build(fileOriginal, review.RunAnalysis);
                 await _codeFileRepository.UpsertCodeFileAsync(file.ReviewFileId, codeFile);
 
                 InitializeFromCodeFile(file, codeFile);
@@ -141,6 +120,40 @@ namespace APIViewWeb.Respositories
         private ILanguageService GetLanguageService(string language)
         {
             return _languageServices.Single(service => service.Name == language);
+        }
+
+        public async Task AddFileAsync(ClaimsPrincipal user, string id, string originalName, Stream fileStream)
+        {
+            var review = await GetReviewAsync(user, id);
+            review.Files = review.Files.Concat(new[] { await CreateFileAsync(originalName, fileStream, review.RunAnalysis) }).ToArray();
+            await _reviewsRepository.UpsertReviewAsync(review);
+        }
+
+        private async Task<ReviewCodeFileModel> CreateFileAsync(string originalName, Stream fileStream, bool runAnalysis)
+        {
+            var originalNameExtension = Path.GetExtension(originalName);
+            var languageService = _languageServices.Single(s => s.IsSupportedExtension(originalNameExtension));
+
+            var reviewCodeFileModel = new ReviewCodeFileModel();
+            reviewCodeFileModel.HasOriginal = true;
+            reviewCodeFileModel.Name = originalName;
+
+            using (var memoryStream = new MemoryStream())
+            {
+                await fileStream.CopyToAsync(memoryStream);
+
+                memoryStream.Position = 0;
+
+                CodeFile codeFile = await languageService.GetCodeFileAsync(originalName, memoryStream, runAnalysis);
+
+                InitializeFromCodeFile(reviewCodeFileModel, codeFile);
+
+                memoryStream.Position = 0;
+                await _originalsRepository.UploadOriginalAsync(reviewCodeFileModel.ReviewFileId, memoryStream);
+                await _codeFileRepository.UpsertCodeFileAsync(reviewCodeFileModel.ReviewFileId, codeFile);
+            }
+
+            return reviewCodeFileModel;
         }
     }
 }

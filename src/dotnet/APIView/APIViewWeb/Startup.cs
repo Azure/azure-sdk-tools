@@ -44,6 +44,7 @@ namespace APIViewWeb
                 .AddRazorPagesOptions(options =>
                 {
                     options.Conventions.AddPageRoute("/Assemblies/Index", "");
+
                     options.Conventions.AuthorizeFolder("/Assemblies", "RequireOrganization");
                 });
 

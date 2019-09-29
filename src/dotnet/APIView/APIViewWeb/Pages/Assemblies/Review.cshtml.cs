@@ -30,6 +30,7 @@ namespace APIViewWeb.Pages.Assemblies
         }
 
         public ReviewModel Review { get; set; }
+        public ReviewCodeFileModel ReviewCodeFile { get; set; }
         public CodeFile CodeFile { get; set; }
         public LineApiView[] Lines { get; set; }
         public Dictionary<string, List<CommentModel>> Comments { get; set; }
@@ -64,14 +65,18 @@ namespace APIViewWeb.Pages.Assemblies
             };
         }
 
-        public async Task<IActionResult> OnGetAsync(string id)
+        public async Task<IActionResult> OnGetAsync(string id, string fileId = null)
         {
-            Review = await _manager.GetReviewAsync(User, id);
+            TempData["Page"] = "api";
 
-            var codeFile = Review.Files.SingleOrDefault();
-            if (codeFile != null)
+            Review = await _manager.GetReviewAsync(User, id);
+            fileId = fileId ?? Review.Files.LastOrDefault()?.ReviewFileId;
+
+            ReviewCodeFile = Review.Files.FirstOrDefault(d => d.ReviewFileId == fileId);
+
+            if (ReviewCodeFile != null)
             {
-                CodeFile = await _codeFileRepository.GetCodeFileAsync(codeFile.ReviewFileId);
+                CodeFile = await _codeFileRepository.GetCodeFileAsync(ReviewCodeFile.ReviewFileId);
             }
             else
             {
@@ -94,11 +99,12 @@ namespace APIViewWeb.Pages.Assemblies
             return Page();
         }
 
-        public async Task<ActionResult> OnPostAsync(string id)
+        public async Task<ActionResult> OnPostAsync(string id, string fileId)
         {
             Comment.TimeStamp = DateTime.UtcNow;
             Comment.Username = User.GetGitHubLogin();
             Comment.ReviewId = id;
+            Comment.FileId = fileId;
 
             await _commentRepository.UpsertCommentAsync(Comment);
 

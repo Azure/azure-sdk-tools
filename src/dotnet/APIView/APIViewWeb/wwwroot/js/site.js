@@ -30,8 +30,10 @@ $(function () {
             return false;
         });
         $(element).find(".comment-submit-button").off().click(function () {
+            let form = element.find("form");
             $.ajax({
                 type: "POST",
+                url: form.prop("action"),
                 data: element.find("form").serialize()
             }).done(function (partialViewResult) {
                 updateCommentThread(commentsRow, partialViewResult);

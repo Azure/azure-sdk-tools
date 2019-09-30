@@ -14,7 +14,7 @@ resources:
 variables:
   DotNetCoreVersion: '2.1.503'
   WebProjectPath: 'src/dotnet/APIView/APIViewWeb/'
-  NodeVersion: '12.x'
+  NodeVersion: '10.x'
 
 stages:
   - stage: 'Build_and_Test'

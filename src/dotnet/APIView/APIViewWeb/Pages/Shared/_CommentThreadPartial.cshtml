@@ -11,7 +11,7 @@
         <td class="comment-cell border-top border-bottom" colspan="4">
             @if (Model.IsResolved)
             {
-                @:This thread is marked resolved by <a username="@Model.ResolvedBy">@Model.ResolvedBy</a> <a href="#" class="toggle-comments">(show)</a>
+                @:This thread is marked resolved by @Model.ResolvedBy <a href="#" class="toggle-comments">(show)</a>
             }
             <div class="border comment-holder rounded-1 @(Model.IsResolved ? "comments-resolved" : "")">
                 <div class="comment-thread-contents">
@@ -23,7 +23,7 @@
                                     <form class="comment-delete-button align-top" asp-page-handler="delete" method="post" asp-route-id="@Model.ReviewId">
                                         <input type="hidden" name="commentId" value="@comment.CommentId" />
                                         <input type="hidden" name="elementId" value="@Model.LineId" />
-                                        @if (comment.Username == @User.GetGitHubLogin())
+                                        @if (comment.Username == User.GetGitHubLogin())
                                         {
                                             <button id="@comment.CommentId" data-post-update="comments" class="btn align-top"><span class="comment-delete-text align-top">Delete</span></button>
                                         }

@@ -149,11 +149,12 @@ public class ASTAnalyser implements Analyser {
             // Get if the declaration is interface or not
             boolean isInterfaceDeclaration = false;
             if (typeDeclaration.isClassOrInterfaceDeclaration()) {
-                isInterfaceDeclaration = typeDeclaration.asClassOrInterfaceDeclaration().isInterface();
+                // could be interface or custom annotation @interface
+                isInterfaceDeclaration = typeDeclaration.asClassOrInterfaceDeclaration().isInterface() || typeDeclaration.isAnnotationDeclaration();
             }
 
             // get fields
-            tokeniseFields(typeDeclaration.getFields(), fullyQualifiedName, tokens);
+            tokeniseFields(isInterfaceDeclaration, typeDeclaration.getFields(), fullyQualifiedName, tokens);
             // get Constructors
             tokeniseConstructorsOrMethods(isInterfaceDeclaration, typeDeclaration.getConstructors(), fullyQualifiedName, tokens);
             // get Methods
@@ -307,11 +308,14 @@ public class ASTAnalyser implements Analyser {
             return false;
         }
 
-        private void tokeniseFields(List<? extends FieldDeclaration> fieldDeclarations, String fullyQualifiedName, List<Token> tokens) {
+        private void tokeniseFields(boolean isInterfaceDeclaration, List<? extends FieldDeclaration> fieldDeclarations, String fullyQualifiedName, List<Token> tokens) {
             indent();
             for (FieldDeclaration fieldDeclaration : fieldDeclarations) {
-                // Skip if it is private or package-private field
-                if (isPrivateOrPackagePrivate(fieldDeclaration.getAccessSpecifier())) {
+                // By default , interface has public abstract methods if there is no access specifier declared
+                if (isInterfaceDeclaration) {
+                    // no-op - we take all methods in the method
+                } else if (isPrivateOrPackagePrivate(fieldDeclaration.getAccessSpecifier())) {
+                    // Skip if not public API
                     continue;
                 }
 
@@ -401,7 +405,7 @@ public class ASTAnalyser implements Analyser {
 
         private void tokeniseInnerClasses(NodeList<BodyDeclaration<?>> bodyDeclarations, List<Token> tokens) {
             for (final BodyDeclaration<?> bodyDeclaration : bodyDeclarations) {
-                if (bodyDeclaration.isEnumDeclaration() || bodyDeclaration.isClassOrInterfaceDeclaration() || bodyDeclaration.isAnnotationDeclaration()) {
+                if (bodyDeclaration.isEnumDeclaration() || bodyDeclaration.isClassOrInterfaceDeclaration()) {
                     indent();
                     new ClassOrInterfaceVisitor(parentNav).visitClassOrInterfaceOrEnumDeclaration(bodyDeclaration.asTypeDeclaration(), tokens);
                     unindent();

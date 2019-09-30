@@ -1,13 +1,35 @@
 trigger:
-  - master
+  branches:
+    include:
+      - master
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - src/dotnet
+      - src/java
+
+pr:
+  branches:
+    include:
+      - master
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - src/dotnet
+      - src/java
 
 variables:
   DotNetCoreVersion: '2.1.503'
   WebProjectPath: 'src/dotnet/APIView/APIViewWeb/'
+  TestProjectPath: 'src/dotnet/APIView/APIViewTests/'
   NodeVersion: '12.x'
 
 stages:
-  - stage: 'Build_and_Test'
+  - stage: 'Main'
     jobs:
       - job: 'Build'
 
@@ -30,7 +52,8 @@ stages:
             displayName: "Install npm 6.9.0"
 
           - script: |
-              npm install $(WebProjectPath)
+              npm install
+            workingDirectory: $(WebProjectPath)
             displayName: "Install npm packages"
 
           - task: Maven@3
@@ -38,7 +61,7 @@ stages:
               mavenPomFile: 'src/java/apiview-java-processor/pom.xml'
               goals: 'clean package'
 
-          - script: 'dotnet pack $(ProjectFile) -o $(Build.ArtifactStagingDirectory) -warnaserror'
+          - script: 'dotnet build $(WebProjectPath) -warnaserror'
             displayName: 'Build and Package'
             env:
               DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
@@ -64,7 +87,7 @@ stages:
               DOTNET_MULTILEVEL_LOOKUP: 0
             inputs:
               command: test
-              projects: '$(ProjectFile)'
+              projects: '$(TestProjectPath)'
               arguments: --logger trx
               publishTestResults: false
 

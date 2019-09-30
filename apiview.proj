@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.Build.Traversal">
+  <ItemGroup>
+    <ProjectReference 
+        Include="src\APIView\**\*.csproj" />
+  </ItemGroup>
+</Project>

@@ -11,32 +11,21 @@ namespace APIViewWeb.Pages.Assemblies
 {
     public class LegacyReview: PageModel
     {
-        private readonly CosmosCommentsRepository commentRepository;
+        private CommentsManager _commentsManager;
 
-        public LegacyReview(CosmosCommentsRepository commentRepository)
+        public LegacyReview(CommentsManager commentsManager)
         {
-            this.commentRepository = commentRepository;
+            _commentsManager = commentsManager;
         }
 
         public string Id { get; set; }
 
-        public Dictionary<string, List<CommentModel>> Comments { get; set; }
+        public ReviewCommentsModel Comments { get; set; }
 
         public async Task<IActionResult> OnGetAsync(string id)
         {
             Id = id;
-            Comments = new Dictionary<string, List<CommentModel>>();
-
-            var assemblyComments = await commentRepository.GetCommentsAsync(id);
-
-            foreach (var comment in assemblyComments)
-            {
-                if (!Comments.TryGetValue(comment.ElementId, out _))
-                    Comments[comment.ElementId] = new List<CommentModel>() { comment };
-                else
-                    Comments[comment.ElementId].Add(comment);
-            }
-
+            Comments = await _commentsManager.GetReviewCommentsAsync(id);
             return Page();
         }
     }

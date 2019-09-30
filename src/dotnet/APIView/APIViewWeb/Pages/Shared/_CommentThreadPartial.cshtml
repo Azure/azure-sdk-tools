@@ -7,51 +7,70 @@
 
 @if (Model.Comments.Any())
 {
-<tr class="comment-box">
-    <td class="comment-cell border-top border-bottom" colspan="4">
-        <div class="border comment-holder rounded-1">
-            <div class="comment-thread-contents">
-                @foreach (var comment in Model.Comments)
+    <tr class="comment-box" data-line-id="@Model.LineId">
+        <td class="comment-cell border-top border-bottom" colspan="4">
+            @if (Model.IsResolved)
+            {
+                @:This thread is marked resolved by @Model.ResolvedBy <a href="#" class="toggle-comments">(show)</a>
+            }
+            <div class="border comment-holder rounded-1 @(Model.IsResolved ? "comments-resolved" : "")">
+                <div class="comment-thread-contents">
+                    @foreach (var comment in Model.Comments)
                     {
-                <div class="review-comment">
-                    <div class="unminimized-comment">
-                        <div class="comment-actions">
-                            <form class="comment-delete-button align-top" asp-page-handler="delete" method="post" asp-route-id="@Model.AssemblyId">
-                                <input type="hidden" name="commentId" value="@comment.Id" />
-                                <input type="hidden" name="elementId" value="@Model.LineId" />
-                                @if (comment.Username == @User.GetGitHubLogin())
+                        <div class="review-comment">
+                            <div class="unminimized-comment">
+                                <div class="comment-actions">
+                                    <form class="comment-delete-button align-top" asp-page-handler="delete" method="post" asp-route-id="@Model.ReviewId">
+                                        <input type="hidden" name="commentId" value="@comment.CommentId" />
+                                        <input type="hidden" name="elementId" value="@Model.LineId" />
+                                        @if (comment.Username == User.GetGitHubLogin())
                                         {
-                                <button id="@comment.Id" class="comment-delete-button-enabled btn align-top"><span class="comment-delete-text align-top">Delete</span></button>
+                                            <button id="@comment.CommentId" data-post-update="comments" class="btn align-top"><span class="comment-delete-text align-top">Delete</span></button>
                                         }
                                         else
                                         {
-                                <button disabled class="btn align-top"><span class="comment-delete-text align-top">Delete</span></button>
+                                            <button disabled class="btn align-top"><span class="comment-delete-text align-top">Delete</span></button>
                                         }
-                            </form>
-                        </div>
-                        <div class="media">
-                            <img username="@comment.Username" class="comment-icon align-self-start mr-3" height="28" width="28" />
-                            <div class="media-body comment-contents">
-                                <div>
-                                    <strong class=" mt-0 comment-header author align-top">@comment.Username</strong>
-                                    <span date="@comment.TimeStamp.ToLocalTime()" class="comment-timestamp align-top"></span>
+                                    </form>
                                 </div>
-                                @Html.FormatAsMarkdown(@comment.Comment)
+                                <div class="media">
+                                    <img username="@comment.Username" class="comment-icon align-self-start mr-3" height="28" width="28" />
+                                    <div class="media-body comment-contents">
+                                        <div>
+                                            <strong class=" mt-0 comment-header author align-top">@comment.Username</strong>
+                                            <span date="@comment.TimeStamp.ToLocalTime()" class="comment-timestamp align-top"></span>
+                                        </div>
+                                        @Html.FormatAsMarkdown(@comment.Comment)
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </div>
                     }
-                <div class="review-thread-reply">
-                    <div class="reply-cell align-middle">
-                        <img avatar username="@User.GetGitHubLogin()" class="comment-icon" height="28" width="28" />
+                    <div class="review-thread-reply">
+                        <div class="reply-cell align-middle">
+                            <img avatar username="@User.GetGitHubLogin()" class="comment-icon" height="28" width="28" />
+                        </div>
+                        <div class="reply-cell col-12">
+                            <button type="button" class="review-thread-reply-button text-muted text-left form-control">Reply...</button>
+                        </div>
                     </div>
-                    <div class="reply-cell col-12">
-                        <button data-element-id="@Model.LineId" type="button" class="review-thread-reply-button text-muted text-left form-control">Reply...</button>
+
+                    <div class="m-2">
+                        @if (Model.IsResolved)
+                        {
+                            <form method="post" asp-page-handler="Unresolve" asp-route-id="@Model.ReviewId">
+                                <button data-post-update="comments" type="submit" name="submit" value="Submit" class="thread-resolve-button btn btn-outline-dark">Unresolve</button>
+                            </form>
+                        }
+                        else
+                        {
+                            <form method="post" asp-page-handler="Resolve" asp-route-id="@Model.ReviewId">
+                                <button data-post-update="comments" type="submit" name="submit" value="Submit" class="thread-resolve-button btn btn-outline-dark">Resolve</button>
+                            </form>
+                        }
                     </div>
                 </div>
             </div>
-        </div>
-    </td>
-</tr>
+        </td>
+    </tr>
 }

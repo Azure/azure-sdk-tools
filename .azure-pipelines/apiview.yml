@@ -2,7 +2,7 @@ trigger:
   - master
 
 variables:
-  DotNetCoreVersion: '3.0.0'
+  DotNetCoreVersion: '2.1.503'
   WebProjectPath: 'src/dotnet/APIView/APIViewWeb/'
   NodeVersion: '12.x'
 

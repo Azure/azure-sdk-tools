@@ -31,7 +31,7 @@
                 <tr class="code-line">
                     <td class="line-comment-button-cell">
                         @if (line.ElementId != null) {
-                            <button data-element-id="@line.ElementId" class="btn-link line-comment-button" type="button" style="text-decoration:none;">+</button>
+                            <button data-line-id="@line.ElementId" class="btn-link line-comment-button" type="button" style="text-decoration:none;">+</button>
                         }
                     </td>
                     <td class="code"><span class="code-inner">@Html.Raw(line.DisplayString)</span></td>
@@ -58,10 +58,9 @@
                     </td>
                 }
                 </tr>
-                @foreach (var elementId in Model.Comments.Keys) {
-                    @if (elementId == line.ElementId) {
-                        <partial name="_CommentThreadPartial" model="@(new Models.CommentThreadModel() { AssemblyId = Model.Review.ReviewId, Comments = Model.Comments[elementId], LineId = elementId })" />
-                    }
+
+                @if (line.ElementId != null && Model.Comments.TryGetThreadForLine(line.ElementId, out var thread)) {
+                    <partial name="_CommentThreadPartial" model="thread" />
                 }
             }
             </tbody>
@@ -72,11 +71,11 @@
 <div id="comment-form-template">
     <div class="comment-form border-top new-thread-comment">
         <form class="new-thread-comment-form comment" method="post" asp-route-id="@Model.Review.ReviewId">
-            <input type="hidden" asp-for="Comment.ElementId" class="id-box" />
+            <input type="hidden" asp-for="Comment.ElementId" class="elementIdInput" />
             <div class="new-comment-content">
                 <textarea class="new-thread-comment-text form-control" asp-for="Comment.Comment" rows="3"></textarea>
             </div>
-            <button type="submit" name="submit" value="Submit" class="comment-submit-button btn btn-outline-dark">Add Comment</button>
+            <button data-post-update="comments" type="submit" name="submit" value="Submit" class="comment-submit-button btn btn-outline-dark">Add Comment</button>
             <button type="button" name="cancel" value="Cancel" class="comment-cancel-button btn btn-outline-dark">Cancel</button>
         </form>
     </div>

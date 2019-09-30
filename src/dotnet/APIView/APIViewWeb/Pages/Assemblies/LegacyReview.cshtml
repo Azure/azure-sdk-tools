@@ -7,8 +7,8 @@
 
 <h2>This review can not be viewed anymore but here are the comments:</h2>
 
-@foreach (var commentThread in Model.Comments)
+@foreach (var commentThread in Model.Comments.Threads)
 {
-    <pre>@commentThread.Key</pre>
-    <partial name="_CommentThreadPartial" model="@new APIViewWeb.Models.CommentThreadModel() { AssemblyId = Model.Id, Comments = commentThread.Value, LineId = commentThread.Key }" />
+    <pre>@commentThread.LineId</pre>
+    <partial name="_CommentThreadPartial" model="@commentThread" />
 }

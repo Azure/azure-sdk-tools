@@ -179,6 +179,10 @@ form.comment {
     margin-bottom: 0;
 }
 
+.comments-resolved {
+    display: none;
+}
+
 .commentable {
     cursor: pointer;
 }
@@ -245,6 +249,7 @@ code-inner {
     background-color: #F6F8FA;
     border-radius: 0 0 3px 3px;
     border-top: 1px solid #E1E4E8;
+    border-bottom: 1px solid #E1E4E8;
     padding: 8px 16px;
     display: table;
     width: 100%;

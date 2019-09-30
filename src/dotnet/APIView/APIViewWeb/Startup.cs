@@ -10,12 +10,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json.Linq;
 using System;
-using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
-using APIViewWeb.Pages.Assemblies;
 using APIViewWeb.Respositories;
 
 namespace APIViewWeb
@@ -53,6 +51,7 @@ namespace APIViewWeb
             services.AddSingleton<CosmosCommentsRepository>();
 
             services.AddSingleton<ReviewManager>();
+            services.AddSingleton<CommentsManager>();
 
             services.AddSingleton<ILanguageService, JsonLanguageService>();
             services.AddSingleton<ILanguageService, CSharpLanguageService>();

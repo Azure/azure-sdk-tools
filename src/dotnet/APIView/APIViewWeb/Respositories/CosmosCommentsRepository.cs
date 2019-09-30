@@ -21,15 +21,7 @@ namespace APIViewWeb
 
         public async Task<IEnumerable<CommentModel>> GetCommentsAsync(string reviewId)
         {
-            var allReviews = new List<CommentModel>();
-            var itemQueryIterator = _commentsContainer.GetItemQueryIterator<CommentModel>($"SELECT * FROM Comments c WHERE c.ReviewId = '{reviewId}'");
-            while (itemQueryIterator.HasMoreResults)
-            {
-                var result = await itemQueryIterator.ReadNextAsync();
-                allReviews.AddRange(result.Resource);
-            }
-
-            return allReviews;
+            return await GetCommentsFromQueryAsync($"SELECT * FROM Comments c WHERE c.ReviewId = '{reviewId}'");
         }
 
         public async Task UpsertCommentAsync(CommentModel commentModel)
@@ -37,9 +29,9 @@ namespace APIViewWeb
             await _commentsContainer.UpsertItemAsync(commentModel, new PartitionKey(commentModel.ReviewId));
         }
 
-        public async Task DeleteCommentAsync(CommentModel reviewModel)
+        public async Task DeleteCommentAsync(CommentModel commentModel)
         {
-            await _commentsContainer.DeleteItemAsync<CommentModel>(reviewModel.Id, new PartitionKey(reviewModel.ReviewId));
+            await _commentsContainer.DeleteItemAsync<CommentModel>(commentModel.CommentId, new PartitionKey(commentModel.ReviewId));
         }
 
         public async Task DeleteCommentsAsync(string reviewId)
@@ -54,5 +46,24 @@ namespace APIViewWeb
         {
             return await _commentsContainer.ReadItemAsync<CommentModel>(commentId, new PartitionKey(reviewId));
         }
+
+        public async Task<IEnumerable<CommentModel>> GetCommentsAsync(string reviewId, string lineId)
+        {
+            return await GetCommentsFromQueryAsync($"SELECT * FROM Comments c WHERE c.ReviewId = '{reviewId}' AND c.ElementId = '{lineId}'");
+        }
+
+        private async Task<IEnumerable<CommentModel>> GetCommentsFromQueryAsync(string query)
+        {
+            var allReviews = new List<CommentModel>();
+            var itemQueryIterator = _commentsContainer.GetItemQueryIterator<CommentModel>(query);
+            while (itemQueryIterator.HasMoreResults)
+            {
+                var result = await itemQueryIterator.ReadNextAsync();
+                allReviews.AddRange(result.Resource);
+            }
+
+            return allReviews;
+        }
+
     }
 }

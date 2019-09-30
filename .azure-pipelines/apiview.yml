@@ -29,7 +29,7 @@ variables:
   NodeVersion: '12.x'
 
 stages:
-  - stage: 'Build_and_Test'
+  - stage: 'Build and test'
     jobs:
       - job: 'Build'
 
@@ -52,7 +52,8 @@ stages:
             displayName: "Install npm 6.9.0"
 
           - script: |
-              npm install $(WebProjectPath)
+              npm install
+            workingDirectory: $(WebProjectPath)
             displayName: "Install npm packages"
 
           - task: Maven@3

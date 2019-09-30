@@ -179,6 +179,15 @@ form.comment {
     margin-bottom: 0;
 }
 
+.review-comment blockquote {
+    padding-left: 14px;
+    padding-right: 14px;
+    border-left-color: #E9E5E2;
+    border-left-style: solid;
+    border-left-width: 3.5px;
+    color: #6A737D;
+}
+
 .comments-resolved {
     display: none;
 }

@@ -217,6 +217,8 @@ public class ASTAnalyser implements Analyser {
                 typeKind = ((ClassOrInterfaceDeclaration)typeDeclaration).isInterface() ? TypeKind.INTERFACE : TypeKind.CLASS;
             } else if (typeDeclaration.isEnumDeclaration()) {
                 typeKind = TypeKind.ENUM;
+            } else if (typeDeclaration.isAnnotationDeclaration()) {
+                typeKind = TypeKind.INTERFACE;
             } else {
                 typeKind = TypeKind.UNKNOWN;
             }
@@ -232,6 +234,10 @@ public class ASTAnalyser implements Analyser {
                 parentNav.addChildItem(classNav);
             }
             parentNav = classNav;
+
+            if (typeDeclaration.isAnnotationDeclaration()) {
+                tokens.add(new Token(KEYWORD, "@"));
+            }
 
             tokens.add(new Token(KEYWORD, typeKind.getName()));
             tokens.add(new Token(WHITESPACE, " "));
@@ -271,6 +277,8 @@ public class ASTAnalyser implements Analyser {
                 final EnumDeclaration enumDeclaration = (EnumDeclaration)typeDeclaration;
                 // Assign implement types
                 implementedTypes = enumDeclaration.getImplementedTypes();
+            } else if (typeDeclaration.isAnnotationDeclaration()) {
+                // no-op
             } else {
                 System.err.println("Not a class, interface or enum declaration");
             }
@@ -393,7 +401,7 @@ public class ASTAnalyser implements Analyser {
 
         private void tokeniseInnerClasses(NodeList<BodyDeclaration<?>> bodyDeclarations, List<Token> tokens) {
             for (final BodyDeclaration<?> bodyDeclaration : bodyDeclarations) {
-                if (bodyDeclaration.isEnumDeclaration() || bodyDeclaration.isClassOrInterfaceDeclaration()) {
+                if (bodyDeclaration.isEnumDeclaration() || bodyDeclaration.isClassOrInterfaceDeclaration() || bodyDeclaration.isAnnotationDeclaration()) {
                     indent();
                     new ClassOrInterfaceVisitor(parentNav).visitClassOrInterfaceOrEnumDeclaration(bodyDeclaration.asTypeDeclaration(), tokens);
                     unindent();

@@ -14,7 +14,7 @@ resources:
 variables:
   DotNetCoreVersion: '2.1.503'
   WebProjectPath: 'src/dotnet/APIView/APIViewWeb/'
-  NodeVersion: '10.x'
+  NodeVersion: '12.x'
 
 stages:
   - stage: 'Build_and_Test'
@@ -32,8 +32,8 @@ stages:
 
           - task: NodeTool@0
             inputs:
-              versionSpec: '12.x'
-            displayName: 'Use NodeJS 12.x'
+              versionSpec: '$(NodeVersion)'
+            displayName: 'Use NodeJS $(NodeVersion)'
 
           - script: |
               npm install -g npm@6.9.0

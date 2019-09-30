@@ -29,7 +29,7 @@ variables:
   NodeVersion: '12.x'
 
 stages:
-  - stage: 'Build and test'
+  - stage: 'Main'
     jobs:
       - job: 'Build'
 

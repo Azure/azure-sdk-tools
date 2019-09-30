@@ -149,11 +149,12 @@ public class ASTAnalyser implements Analyser {
             // Get if the declaration is interface or not
             boolean isInterfaceDeclaration = false;
             if (typeDeclaration.isClassOrInterfaceDeclaration()) {
-                isInterfaceDeclaration = typeDeclaration.asClassOrInterfaceDeclaration().isInterface();
+                // could be interface or custom annotation @interface
+                isInterfaceDeclaration = typeDeclaration.asClassOrInterfaceDeclaration().isInterface() || typeDeclaration.isAnnotationDeclaration();
             }
 
             // get fields
-            tokeniseFields(typeDeclaration.getFields(), fullyQualifiedName, tokens);
+            tokeniseFields(isInterfaceDeclaration, typeDeclaration.getFields(), fullyQualifiedName, tokens);
             // get Constructors
             tokeniseConstructorsOrMethods(isInterfaceDeclaration, typeDeclaration.getConstructors(), fullyQualifiedName, tokens);
             // get Methods
@@ -217,6 +218,8 @@ public class ASTAnalyser implements Analyser {
                 typeKind = ((ClassOrInterfaceDeclaration)typeDeclaration).isInterface() ? TypeKind.INTERFACE : TypeKind.CLASS;
             } else if (typeDeclaration.isEnumDeclaration()) {
                 typeKind = TypeKind.ENUM;
+            } else if (typeDeclaration.isAnnotationDeclaration()) {
+                typeKind = TypeKind.INTERFACE;
             } else {
                 typeKind = TypeKind.UNKNOWN;
             }
@@ -232,6 +235,10 @@ public class ASTAnalyser implements Analyser {
                 parentNav.addChildItem(classNav);
             }
             parentNav = classNav;
+
+            if (typeDeclaration.isAnnotationDeclaration()) {
+                tokens.add(new Token(KEYWORD, "@"));
+            }
 
             tokens.add(new Token(KEYWORD, typeKind.getName()));
             tokens.add(new Token(WHITESPACE, " "));
@@ -271,6 +278,8 @@ public class ASTAnalyser implements Analyser {
                 final EnumDeclaration enumDeclaration = (EnumDeclaration)typeDeclaration;
                 // Assign implement types
                 implementedTypes = enumDeclaration.getImplementedTypes();
+            } else if (typeDeclaration.isAnnotationDeclaration()) {
+                // no-op
             } else {
                 System.err.println("Not a class, interface or enum declaration");
             }
@@ -299,11 +308,14 @@ public class ASTAnalyser implements Analyser {
             return false;
         }
 
-        private void tokeniseFields(List<? extends FieldDeclaration> fieldDeclarations, String fullyQualifiedName, List<Token> tokens) {
+        private void tokeniseFields(boolean isInterfaceDeclaration, List<? extends FieldDeclaration> fieldDeclarations, String fullyQualifiedName, List<Token> tokens) {
             indent();
             for (FieldDeclaration fieldDeclaration : fieldDeclarations) {
-                // Skip if it is private or package-private field
-                if (isPrivateOrPackagePrivate(fieldDeclaration.getAccessSpecifier())) {
+                // By default , interface has public abstract methods if there is no access specifier declared
+                if (isInterfaceDeclaration) {
+                    // no-op - we take all methods in the method
+                } else if (isPrivateOrPackagePrivate(fieldDeclaration.getAccessSpecifier())) {
+                    // Skip if not public API
                     continue;
                 }
 

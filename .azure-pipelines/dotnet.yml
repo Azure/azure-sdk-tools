@@ -13,6 +13,7 @@ resources:
 
 variables:
   DotNetCoreVersion: '2.1.503'
+  WebProjectPath: 'src/dotnet/APIView/APIViewWeb/'
 
 stages:
   - stage: 'Build_and_Test'
@@ -27,6 +28,24 @@ stages:
             displayName: 'Use .NET Core sdk $(DotNetCoreVersion)'
             inputs:
               version: '$(DotNetCoreVersion)'
+
+          - task: NodeTool@0
+            inputs:
+              versionSpec: "$(NodeVersion)"
+            displayName: "Use NodeJS $(NodeVersion)"
+
+          - script: |
+              npm install -g npm@6.9.0
+            displayName: "Install npm 6.9.0"
+
+          - script: |
+              npm install $(WebProjectPath)
+            displayName: "Install npm packages"
+
+          - task: Maven@3
+            inputs:
+              mavenPomFile: 'src/java/apiview-java-processor/pom.xml'
+              goals: 'clean package'
 
           - script: 'dotnet pack $(ProjectFile) -o $(Build.ArtifactStagingDirectory) -warnaserror $(VersioningProps)'
             displayName: 'Build and Package'

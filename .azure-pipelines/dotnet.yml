@@ -5,11 +5,14 @@
 trigger:
   - master
 
+resources:
+  repositories:
+    - repository: azure-sdk-build-tools
+      type: git
+      name: internal/azure-sdk-build-tools
+
 variables:
   DotNetCoreVersion: '2.1.503'
-  WebProjectPath: 'src/dotnet/APIView/APIViewWeb/'
-  TestProjectPath: 'src/dotnet/APIView/APIViewTest/'
-  NodeVersion: '12.x'
 
 stages:
   - stage: 'Build_and_Test'
@@ -25,27 +28,8 @@ stages:
             inputs:
               version: '$(DotNetCoreVersion)'
 
-          - task: NodeTool@0
-            inputs:
-              versionSpec: '$(NodeVersion)'
-            displayName: 'Use NodeJS $(NodeVersion)'
-
-          - script: |
-              npm install -g npm@6.9.0
-            displayName: "Install npm 6.9.0"
-
-          - script: |
-              npm install $(WebProjectPath)
-            displayName: "Install npm packages"
-
-          - task: Maven@3
-            inputs:
-              mavenPomFile: 'src/java/apiview-java-processor/pom.xml'
-              goals: 'clean package'
-            displayName: "Build Java Api processor"
-
-          - script: 'dotnet build $(WebProjectPath) -warnaserror $(VersioningProps)'
-            displayName: 'Build'
+          - script: 'dotnet pack $(ProjectFile) -o $(Build.ArtifactStagingDirectory) -warnaserror $(VersioningProps)'
+            displayName: 'Build and Package'
             env:
               DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
               DOTNET_CLI_TELEMETRY_OPTOUT: 1
@@ -76,7 +60,7 @@ stages:
               DOTNET_MULTILEVEL_LOOKUP: 0
             inputs:
               command: test
-              projects: '$(TestProjectPath)'
+              projects: '$(ProjectFile)'
               arguments: --logger trx
               publishTestResults: false
 
@@ -87,3 +71,6 @@ stages:
               testRunTitle: 'Windows DotNet $(DotNetCoreVersion)'
               testResultsFormat: 'VSTest'
               mergeTestResults: true
+
+  - ${{ if ne(variables['System.TeamProject'], 'Public') }}:
+    - template: pipelines/stages/net-release-blobfeed.yml@azure-sdk-build-tools

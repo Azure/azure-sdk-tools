@@ -466,6 +466,7 @@ public class ASTAnalyser implements Analyser {
                 }
             }
             tokens.add(new Token(PUNCTUATION, ">"));
+            tokens.add(new Token(WHITESPACE, " "));
         }
 
         private void getGenericTypeParameter(TypeParameter typeParameter, List<Token> tokens) {

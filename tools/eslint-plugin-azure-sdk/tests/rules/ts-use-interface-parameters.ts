@@ -35,6 +35,7 @@ interface B5 {
 }
 `;
 
+
 //------------------------------------------------------------------------------
 // Tests
 //------------------------------------------------------------------------------
@@ -280,6 +281,17 @@ ruleTester.run("ts-use-interface-parameters", rule, {
         {
           message:
             "type B3 of parameter b of function nestedDeclarationBad is a class or contains a class as a member"
+        }
+      ]
+    },
+    {
+      // Anonymous function export
+      code: `${example} export default function(b: B3) : void { console.log(b); }`,
+      filename: "src/tests.ts",
+      errors: [
+        {
+          message:
+            "type B3 of parameter b of function <anonymous> is a class or contains a class as a member"
         }
       ]
     },

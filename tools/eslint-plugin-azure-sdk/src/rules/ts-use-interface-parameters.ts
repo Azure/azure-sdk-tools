@@ -209,11 +209,13 @@ const evaluateOverloads = (
   converter: ParserWeakMap<TSESTree.Node, TSNode>,
   typeChecker: TypeChecker,
   verified: string[],
-  name: string,
+  name: string | null,
   param: Pattern,
   context: Rule.RuleContext
 ): void => {
   if (
+    // Ignore anonymous functions
+    name !== null &&
     overloads.length !== 0 &&
     isValidOverload(overloads, converter, typeChecker)
   ) {
@@ -228,7 +230,7 @@ const evaluateOverloads = (
       getTypeOfParam(param, converter, typeChecker)
     )} of parameter ${
       identifier.name
-    } of function ${name} is a class or contains a class as a member`
+    } of function ${name || "<anonymous>"} is a class or contains a class as a member`
   });
 };
 
@@ -327,12 +329,12 @@ export = {
           },
 
           FunctionDeclaration: (node: FunctionDeclaration): void => {
-            const id = node.id as Identifier;
-            const name = id.name;
+            const id = node.id;
+            const name = id && id.name;
 
             // ignore if name seen already
             if (
-              name !== undefined &&
+              name !== null &&
               name !== "" &&
               verifiedDeclarations.includes(name)
             ) {

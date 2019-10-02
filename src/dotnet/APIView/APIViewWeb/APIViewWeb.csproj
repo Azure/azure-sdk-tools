@@ -5,7 +5,7 @@
     <RootNamespace>APIViewWeb</RootNamespace>
     <AssemblyName>APIViewWeb</AssemblyName>
     <UserSecretsId>79cceff6-d533-4370-a0ee-f3321a343907</UserSecretsId>
-    <JavaProcessor>..\..\..\java\apiview-java-processor\target\apiview-java-processor-1.0.0.jar</JavaProcessor>
+    <JavaProcessor>..\..\..\java\apiview-java-processor\target\apiview-java-processor-1.0.1.jar</JavaProcessor>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -31,6 +31,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\APIView\APIView.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Properties\PublishProfiles\" />
   </ItemGroup>
 
 </Project>

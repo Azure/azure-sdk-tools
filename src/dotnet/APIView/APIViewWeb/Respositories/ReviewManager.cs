@@ -122,8 +122,9 @@ namespace APIViewWeb.Respositories
                 }
 
                 var fileOriginal = await _originalsRepository.GetOriginalAsync(file.ReviewFileId);
+                var languageService = GetLanguageService(file.Language);
 
-                var codeFile = CodeFileBuilder.Build(fileOriginal, file.RunAnalysis);
+                var codeFile = await languageService.GetCodeFileAsync(file.Name, fileOriginal, file.RunAnalysis);
                 await _codeFileRepository.UpsertCodeFileAsync(file.ReviewFileId, codeFile);
 
                 InitializeFromCodeFile(file, codeFile);

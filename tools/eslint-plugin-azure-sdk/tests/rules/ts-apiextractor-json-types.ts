@@ -1,6 +1,7 @@
 /**
  * @file Testing the ts-package-json-types rule.
  * @author Arpan Laha
+ * @author Will Temple
  */
 
 import rule from "../../src/rules/ts-apiextractor-json-types";

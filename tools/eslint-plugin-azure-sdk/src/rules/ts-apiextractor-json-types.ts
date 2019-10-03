@@ -1,6 +1,7 @@
 /**
  * @file Rule to force the inclusion of type declarations in the package.
  * @author Arpan Laha
+ * @author Will Temple
  */
 
 import { Rule } from "eslint";
@@ -14,29 +15,31 @@ import { stripFileName } from '../utils/verifiers';
 
 export = {
   meta: getRuleMetaData(
-    "ts-package-json-types",
-    "force package.json to specify types according to package directory"
+    "ts-apiextractor-json-types",
+    "force api-extractor.json to configure types in a consistent way"
   ),
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     const verifiers = getVerifiers(context, {
-      outer: "types",
+      outer: "dtsRollup",
+      inner: "publicTrimmedFilePath",
       expected: false
     });
     const fileName = context.getFilename();
-    return stripPath(fileName) === "package.json"
+    return stripPath(fileName) === "api-extractor.json"
       ? ({
           // callback functions
-          // check to see if types exists at the outermost level
           "ExpressionStatement > ObjectExpression": verifiers.existsInFile,
+          // check to see if dtsRollup.publicTrimmedFilePath is defined
+          "ExpressionStatement > ObjectExpression > Property[key.value='dtsRollup']" : verifiers.isMemberOf,
 
           // check the node corresponding to types to see if its value is a TypeScript declaration file
-          "ExpressionStatement > ObjectExpression > Property[key.value='types']": (
+          "ExpressionStatement > ObjectExpression > Property[key.value='dtsRollup'] > ObjectExpression > Property[key.value='publicTrimmedFilePath']": (
             node: Property
           ): void => {
             if (node.value.type !== "Literal" || typeof node.value.value !== "string") {
               context.report({
                 node: node.value,
-                message: "types is not set to a string"
+                message: ".d.ts rollup path is not set to a string"
               });
             } else if (typeof node.value.value !== "string") {
 
@@ -51,13 +54,13 @@ export = {
               context.report({
                 node: nodeValue,
                 message:
-                  "provided types path is not a TypeScript declaration file"
+                  "provided .d.ts rollup path is not a TypeScript declaration file"
               });
             } else if (typesOutputName !== packageDirectory) {
               context.report({
                 node: nodeValue,
                 message:
-                  `provided types file should be named '${packageDirectory}.d.ts' after the package directory`
+                  `provided .d.ts rollup path should be named '${packageDirectory}.d.ts' after the package directory` 
               })
             }
           }

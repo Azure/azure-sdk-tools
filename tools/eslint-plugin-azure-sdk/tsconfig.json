@@ -14,7 +14,8 @@
     "removeComments": true,
     "strict": true,
     "target": "es2016",
-    "types": ["node"]
+    "types": ["node"],
+    "sourceMap": true
   },
   "include": ["src", "tests"]
 }

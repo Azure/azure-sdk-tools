@@ -345,7 +345,8 @@ ruleTester.run("ts-package-json-name", rule, {
       filename: "not-service-bus/package.json",
       errors: [
         {
-          message: "service should be named '@azure/not-service-bus' or should be moved to a directory called 'service-bus'"
+          message:
+            "service should be named '@azure/not-service-bus' or should be moved to a directory called 'service-bus'"
         }
       ]
     },
@@ -355,10 +356,12 @@ ruleTester.run("ts-package-json-name", rule, {
       filename: "serviceBus/package.json",
       errors: [
         {
-          message: "service name is not in kebab-case (lowercase and separated by hyphens)"
+          message:
+            "service name is not in kebab-case (lowercase and separated by hyphens)"
         },
         {
-          message: "service name matches directory name, but the directory is not kebab case (lowercase and separated by hyphens)"
+          message:
+            "service name matches directory name, but the directory is not kebab case (lowercase and separated by hyphens)"
         }
       ]
     }

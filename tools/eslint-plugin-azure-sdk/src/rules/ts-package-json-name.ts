@@ -6,7 +6,7 @@
 import { Rule } from "eslint";
 import { Literal, Property } from "estree";
 import { getRuleMetaData, getVerifiers, stripPath } from "../utils";
-import { stripFileName } from '../utils/verifiers';
+import { stripFileName } from "../utils/verifiers";
 
 //------------------------------------------------------------------------------
 // Rule Definition
@@ -59,14 +59,13 @@ export = {
                   node: nodeValue,
                   message:
                     "service name matches directory name, but the directory is not kebab case (lowercase and separated by hyphens)"
-                })
+                });
               }
             } else if (name !== `@azure/${packageDirectory}`) {
               context.report({
                 node: nodeValue,
-                message:
-                  `service should be named '@azure/${packageDirectory}' or should be moved to a directory called '${packageBaseName}'`
-              })
+                message: `service should be named '@azure/${packageDirectory}' or should be moved to a directory called '${packageBaseName}'`
+              });
             }
           }
         } as Rule.RuleListener)

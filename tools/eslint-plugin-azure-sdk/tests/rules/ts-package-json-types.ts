@@ -287,6 +287,26 @@ ruleTester.run("ts-package-json-types", rule, {
       ]
     },
     {
+      // Incorrect node type for `types` key (object)
+      code: `{"types": {}}`,
+      filename: "service-bus/package.json",
+      errors: [
+        {
+          message: "types is not set to a string"
+        }
+      ]
+    },
+    {
+      // Incorrect node type for `types` key (regex)
+      code: `{"types": null}`,
+      filename: "service-bus/package.json",
+      errors: [
+        {
+          message: "types is not set to a string"
+        }
+      ]
+    },
+    {
       // only the fields we care about
       code: '{"types": "typings/index.ts"}',
       filename: "service-bus/package.json",
@@ -312,7 +332,8 @@ ruleTester.run("ts-package-json-types", rule, {
       filename: "wrongpackage/package.json",
       errors: [
         {
-          message: "provided types file should be named 'wrongpackage.d.ts' after the package directory"
+          message:
+            "provided types file should be named 'wrongpackage.d.ts' after the package directory"
         }
       ]
     }

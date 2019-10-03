@@ -228,9 +228,8 @@ const evaluateOverloads = (
     node: identifier,
     message: `type ${typeChecker.typeToString(
       getTypeOfParam(param, converter, typeChecker)
-    )} of parameter ${
-      identifier.name
-    } of function ${name || "<anonymous>"} is a class or contains a class as a member`
+    )} of parameter ${identifier.name} of function ${name ||
+      "<anonymous>"} is a class or contains a class as a member`
   });
 };
 

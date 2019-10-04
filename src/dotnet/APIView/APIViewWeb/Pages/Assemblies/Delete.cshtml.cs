@@ -29,14 +29,14 @@ namespace APIViewWeb.Pages.Assemblies
             return Page();
         }
 
-        public async Task<IActionResult> OnPostAsync(string id, string revisionId)
+        public async Task<IActionResult> OnPostAsync(string id)
         {
             if (id == null)
             {
                 return NotFound();
             }
 
-            await _manager.DeleteRevisionAsync(User, id, revisionId);
+            await _manager.DeleteReviewAsync(User, id);
 
             return RedirectToPage("./Index");
         }

@@ -99,8 +99,10 @@ namespace APIViewWeb.Respositories
             }
 
             var review = await _reviewsRepository.GetReviewAsync(id);
-            review.UpdateAvailable = user.GetGitHubLogin() == review.Author &&
-                                     review.Revisions.SelectMany(r=>r.Files).Any(f => f.HasOriginal && GetLanguageService(f.Language).CanUpdate(f.VersionString));
+            review.UpdateAvailable = review.Revisions
+                .SelectMany(r=>r.Files)
+                .Any(f => f.HasOriginal && GetLanguageService(f.Language).CanUpdate(f.VersionString));
+
             // Handle old model
 #pragma warning disable CS0618 // Type or member is obsolete
             if (review.Revisions.Count == 0 && review.Files.Count == 1)

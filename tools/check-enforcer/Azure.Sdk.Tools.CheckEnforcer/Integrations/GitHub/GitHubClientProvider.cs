@@ -1,5 +1,7 @@
 ﻿using Azure.Core;
 using Azure.Identity;
+using Azure.Sdk.Tools.CheckEnforcer.Configuration;
+using Azure.Sdk.Tools.CheckEnforcer.Integrations.GitHub;
 using Azure.Security.KeyVault.Keys;
 using Azure.Security.KeyVault.Keys.Cryptography;
 using Microsoft.IdentityModel.Tokens;
@@ -15,11 +17,14 @@ using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.CheckEnforcer
 {
-    public class GitHubClientFactory
+    public class GitHubClientProvider : IGitHubClientProvider
     {
-        public GitHubClientFactory()
+        public GitHubClientProvider(IGlobalConfigurationProvider globalConfigurationProvider)
         {
+            this.globalConfigurationProvider = globalConfigurationProvider;
         }
+
+        private IGlobalConfigurationProvider globalConfigurationProvider;
 
         private Tuple<DateTimeOffset, string> cachedApplicationToken;
 
@@ -83,7 +88,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
             jwtHeader["alg"] = "RS256";
 
             var jwtPayload = new JwtPayload(
-                issuer: Constants.ApplicationID.ToString(),
+                issuer: globalConfigurationProvider.GetApplicationID(),
                 audience: null,
                 claims: null,
                 notBefore: DateTime.UtcNow,
@@ -124,10 +129,8 @@ namespace Azure.Sdk.Tools.CheckEnforcer
 
         private async Task<Key> GetKey(KeyClient keyClient, CancellationToken cancellationToken)
         {
-            var keyVaultGitHubKeyName = Environment.GetEnvironmentVariable("KEYVAULT_GITHUBAPP_KEY_NAME");
-
             var keyResponse = await keyClient.GetKeyAsync(
-                keyVaultGitHubKeyName,
+                globalConfigurationProvider.GetGitHubAppPrivateKeyName(),
                 cancellationToken: cancellationToken
                 );
 
@@ -137,15 +140,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
 
         private KeyClient GetKeyClient(TokenCredential credential)
         {
-
-            // We need a variable that tells Check Enforcer which KeyVault to talk to,
-            // this is currently done via an environment variable.
-            //
-            //      KEYVAULT_URI
-            //
-            var keyVaultUriEnvironmentVariable = Environment.GetEnvironmentVariable("KEYVAULT_URI");
-
-            var keyVaultUri = new Uri(keyVaultUriEnvironmentVariable);
+            var keyVaultUri = new Uri(globalConfigurationProvider.GetKeyVaultUri());
             var keyClient = new KeyClient(keyVaultUri, credential);
             return keyClient;
         }
@@ -154,7 +149,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
         {
             var token = await GetTokenAsync(cancellationToken);
 
-            var appClient = new GitHubClient(new ProductHeaderValue(Constants.ApplicationName))
+            var appClient = new GitHubClient(new ProductHeaderValue(globalConfigurationProvider.GetApplicationName()))
             {
                 Credentials = new Credentials(token, AuthenticationType.Bearer)
             };
@@ -185,7 +180,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
         public async Task<GitHubClient> GetInstallationClientAsync(long installationId, CancellationToken cancellationToken)
         {
             var installationToken = await GetInstallationTokenAsync(installationId, cancellationToken);
-            var installationClient = new GitHubClient(new ProductHeaderValue($"{Constants.ApplicationName}-{installationId}"))
+            var installationClient = new GitHubClient(new ProductHeaderValue($"{globalConfigurationProvider.GetApplicationName()}-{installationId}"))
             {
                 Credentials = new Credentials(installationToken)
             };

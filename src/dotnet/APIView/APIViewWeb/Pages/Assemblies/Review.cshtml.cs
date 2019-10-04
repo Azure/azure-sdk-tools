@@ -17,47 +17,37 @@ namespace APIViewWeb.Pages.Assemblies
 
         private readonly BlobCodeFileRepository _codeFileRepository;
 
-        private readonly CosmosCommentsRepository _commentRepository;
+        private readonly CommentsManager _commentsManager;
 
         public ReviewPageModel(
             ReviewManager manager,
             BlobCodeFileRepository codeFileRepository,
-            CosmosCommentsRepository commentRepository)
+            CommentsManager commentsManager)
         {
             _manager = manager;
             _codeFileRepository = codeFileRepository;
-            _commentRepository = commentRepository;
+            _commentsManager = commentsManager;
         }
 
         public ReviewModel Review { get; set; }
-        public ReviewCodeFileModel ReviewCodeFile { get; set; }
         public CodeFile CodeFile { get; set; }
         public LineApiView[] Lines { get; set; }
-        public Dictionary<string, List<CommentModel>> Comments { get; set; }
+        public ReviewCommentsModel Comments { get; set; }
 
         [BindProperty]
         public CommentModel Comment { get; set; }
 
         public async Task<ActionResult> OnPostDeleteAsync(string id, string commentId, string elementId)
         {
-            var comment = await _commentRepository.GetCommentAsync(id, commentId);
-            await _commentRepository.DeleteCommentAsync(comment);
+            await _commentsManager.DeleteCommentAsync(User, id, commentId);
 
             return await CommentPartialAsync(id, elementId);
         }
 
         private async Task<ActionResult> CommentPartialAsync(string id, string elementId)
         {
-            var commentArray = await _commentRepository.GetCommentsAsync(id);
-            List<CommentModel> comments = commentArray.Where(c => c.ElementId == elementId).ToList();
-
-            CommentThreadModel partialModel = new CommentThreadModel()
-            {
-                AssemblyId = id,
-                Comments = comments,
-                LineId = Comment.ElementId
-            };
-
+            var comments = await _commentsManager.GetReviewCommentsAsync(id);
+            comments.TryGetThreadForLine(elementId, out var partialModel);
             return new PartialViewResult
             {
                 ViewName = "_CommentThreadPartial",
@@ -70,13 +60,11 @@ namespace APIViewWeb.Pages.Assemblies
             TempData["Page"] = "api";
 
             Review = await _manager.GetReviewAsync(User, id);
-            fileId = fileId ?? Review.Files.LastOrDefault()?.ReviewFileId;
 
-            ReviewCodeFile = Review.Files.FirstOrDefault(d => d.ReviewFileId == fileId);
-
-            if (ReviewCodeFile != null)
+            var codeFile = Review.Files.SingleOrDefault();
+            if (codeFile != null)
             {
-                CodeFile = await _codeFileRepository.GetCodeFileAsync(ReviewCodeFile.ReviewFileId);
+                CodeFile = await _codeFileRepository.GetCodeFileAsync(codeFile.ReviewFileId);
             }
             else
             {
@@ -84,17 +72,7 @@ namespace APIViewWeb.Pages.Assemblies
             }
 
             Lines = new CodeFileHtmlRenderer().Render(CodeFile).ToArray();
-            Comments = new Dictionary<string, List<CommentModel>>();
-
-            var assemblyComments = await _commentRepository.GetCommentsAsync(id);
-
-            foreach (var comment in assemblyComments)
-            {
-                if (!Comments.TryGetValue(comment.ElementId, out _))
-                    Comments[comment.ElementId] = new List<CommentModel>() { comment };
-                else
-                    Comments[comment.ElementId].Add(comment);
-            }
+            Comments = await _commentsManager.GetReviewCommentsAsync(id);
 
             return Page();
         }
@@ -102,13 +80,27 @@ namespace APIViewWeb.Pages.Assemblies
         public async Task<ActionResult> OnPostAsync(string id, string fileId)
         {
             Comment.TimeStamp = DateTime.UtcNow;
-            Comment.Username = User.GetGitHubLogin();
             Comment.ReviewId = id;
             Comment.FileId = fileId;
 
-            await _commentRepository.UpsertCommentAsync(Comment);
+            await _commentsManager.AddCommentAsync(User, Comment);
 
             return await CommentPartialAsync(id, Comment.ElementId);
+        }
+
+
+        public async Task<ActionResult> OnPostResolveAsync(string id, string lineId)
+        {
+            await _commentsManager.ResolveConversation(User, id, lineId);
+
+            return await CommentPartialAsync(id, lineId);
+        }
+
+        public async Task<ActionResult> OnPostUnresolveAsync(string id, string lineId)
+        {
+            await _commentsManager.UnresolveConversation(User, id, lineId);
+
+            return await CommentPartialAsync(id, lineId);
         }
 
         public async Task<ActionResult> OnPostRefreshModelAsync(string id)

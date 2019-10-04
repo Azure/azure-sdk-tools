@@ -1,7 +1,6 @@
 <Project Sdk="Microsoft.Build.Traversal">
   <ItemGroup>
-    <ProjectReference 
-        Include="src\dotnet\**\*.csproj" 
-        Exclude="src\dotnet\Mgmt.CI.BuildTools\**\*.*" />
+    <ProjectReference
+        Include="src\dotnet\Azure.ClientSdk.Analyzers\**\*.csproj"/>
   </ItemGroup>
 </Project>

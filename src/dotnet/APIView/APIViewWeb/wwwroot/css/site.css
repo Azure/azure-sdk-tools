@@ -179,6 +179,19 @@ form.comment {
     margin-bottom: 0;
 }
 
+.review-comment blockquote {
+    padding-left: 14px;
+    padding-right: 14px;
+    border-left-color: #E9E5E2;
+    border-left-style: solid;
+    border-left-width: 3.5px;
+    color: #6A737D;
+}
+
+.comments-resolved {
+    display: none;
+}
+
 .commentable {
     cursor: pointer;
 }
@@ -245,6 +258,7 @@ code-inner {
     background-color: #F6F8FA;
     border-radius: 0 0 3px 3px;
     border-top: 1px solid #E1E4E8;
+    border-bottom: 1px solid #E1E4E8;
     padding: 8px 16px;
     display: table;
     width: 100%;

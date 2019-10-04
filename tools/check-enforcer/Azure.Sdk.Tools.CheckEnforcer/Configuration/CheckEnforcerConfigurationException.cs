@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Azure.Sdk.Tools.CheckEnforcer
+namespace Azure.Sdk.Tools.CheckEnforcer.Configuration
 {
 
     [Serializable]

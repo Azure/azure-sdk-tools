@@ -39,14 +39,18 @@ namespace APIViewWeb.Respositories
 
         public async Task<ReviewModel> CreateReviewAsync(ClaimsPrincipal user, string originalName, Stream fileStream, bool runAnalysis)
         {
+
+
             ReviewModel reviewModel = new ReviewModel();
             reviewModel.Author = user.GetGitHubLogin();
             reviewModel.CreationDate = DateTime.UtcNow;
+
             reviewModel.RunAnalysis = runAnalysis;
 
             var reviewCodeFileModel = await CreateFileAsync(originalName, fileStream, runAnalysis);
 
             reviewModel.Files = new[] { reviewCodeFileModel };
+
             reviewModel.Name = reviewCodeFileModel.Name;
 
             await _reviewsRepository.UpsertReviewAsync(reviewModel);
@@ -101,8 +105,9 @@ namespace APIViewWeb.Respositories
                 }
 
                 var fileOriginal = await _originalsRepository.GetOriginalAsync(file.ReviewFileId);
+                var languageService = GetLanguageService(file.Language);
 
-                var codeFile = CodeFileBuilder.Build(fileOriginal, review.RunAnalysis);
+                var codeFile = await languageService.GetCodeFileAsync(file.Name, fileOriginal, file.RunAnalysis);
                 await _codeFileRepository.UpsertCodeFileAsync(file.ReviewFileId, codeFile);
 
                 InitializeFromCodeFile(file, codeFile);

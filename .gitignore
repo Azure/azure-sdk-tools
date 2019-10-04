@@ -471,3 +471,8 @@ local.settings.json
 # Java tooling
 *.iml
 
+# Typescript output
+src/dotnet/APIView/APIViewWeb/wwwroot/js/*.js*
+
+# npm
+*-lock.json

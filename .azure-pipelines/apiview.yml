@@ -1,0 +1,100 @@
+trigger:
+  branches:
+    include:
+      - master
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - src/dotnet
+      - src/java
+
+pr:
+  branches:
+    include:
+      - master
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - src/dotnet
+      - src/java
+
+variables:
+  DotNetCoreVersion: '2.1.503'
+  WebProjectPath: 'src/dotnet/APIView/APIViewWeb/'
+  TestProjectPath: 'src/dotnet/APIView/APIViewTests/'
+  NodeVersion: '12.x'
+
+stages:
+  - stage: 'Main'
+    jobs:
+      - job: 'Build'
+
+        pool:
+          vmImage: 'vs2017-win2016'
+
+        steps:
+          - task: DotNetCoreInstaller@0
+            displayName: 'Use .NET Core sdk $(DotNetCoreVersion)'
+            inputs:
+              version: '$(DotNetCoreVersion)'
+
+          - task: NodeTool@0
+            inputs:
+              versionSpec: '$(NodeVersion)'
+            displayName: 'Use NodeJS $(NodeVersion)'
+
+          - script: |
+              npm install -g npm@6.9.0
+            displayName: "Install npm 6.9.0"
+
+          - script: |
+              npm install
+            workingDirectory: $(WebProjectPath)
+            displayName: "Install npm packages"
+
+          - task: Maven@3
+            inputs:
+              mavenPomFile: 'src/java/apiview-java-processor/pom.xml'
+              goals: 'clean package'
+
+          - script: 'dotnet build $(WebProjectPath) -warnaserror'
+            displayName: 'Build and Package'
+            env:
+              DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+              DOTNET_CLI_TELEMETRY_OPTOUT: 1
+              DOTNET_MULTILEVEL_LOOKUP: 0
+
+      - job: 'Test'
+
+        pool:
+          vmImage: 'vs2017-win2016'
+
+        steps:
+          - task: DotNetCoreInstaller@0
+            displayName: 'Use .NET Core sdk $(DotNetCoreVersion)'
+            inputs:
+              version: '$(DotNetCoreVersion)'
+
+          - task: DotNetCoreCLI@2
+            displayName: 'Build & Test'
+            env:
+              DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+              DOTNET_CLI_TELEMETRY_OPTOUT: 1
+              DOTNET_MULTILEVEL_LOOKUP: 0
+            inputs:
+              command: test
+              projects: '$(TestProjectPath)'
+              arguments: --logger trx
+              publishTestResults: false
+
+          - task: PublishTestResults@2
+            condition: succeededOrFailed()
+            inputs:
+              testResultsFiles: '**/*.trx'
+              testRunTitle: 'Windows DotNet $(DotNetCoreVersion)'
+              testResultsFormat: 'VSTest'
+              mergeTestResults: true

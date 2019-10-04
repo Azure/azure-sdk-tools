@@ -137,6 +137,8 @@ namespace APIViewWeb
             });
 
             services.AddSingleton<IAuthorizationHandler, OrganizationRequirementHandler>();
+            services.AddSingleton<IAuthorizationHandler, CommentOwnerRequirementHandler>();
+            services.AddSingleton<IAuthorizationHandler, ReviewOwnerRequirementHandler>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

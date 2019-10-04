@@ -7,7 +7,7 @@
 
 @if (Model.Review.UpdateAvailable)
 {
-<div class="alert alert-warning" role="alert">
+<div class="alert alert-warning" role="alert" asp-authorize="">
     <form asp-page-handler="RefreshModel" class=".form-inline" method="post" asp-route-id="@Model.Review.ReviewId">
         Your code review uses older format and can be updated
         <button type="submit" class="btn btn-link">Update model</button>
@@ -18,7 +18,7 @@
     <div class="col">
         <div class="dropdown my-2 d-inline-block">
             <a class="btn btn-sm btn-outline-secondary dropdown-toggle" href="#" role="button" data-toggle="dropdown">
-                @Model.Revision.Files.Single().Name
+                @Model.Revision.Name
             </a>
 
             <div class="dropdown-menu">

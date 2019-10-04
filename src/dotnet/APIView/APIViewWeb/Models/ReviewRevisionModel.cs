@@ -10,16 +10,19 @@ namespace APIViewWeb
 {
     public class ReviewRevisionModel
     {
+        private string _name;
+
         [JsonProperty("id")]
         public string RevisionId { get; set; } = IdHelper.GenerateId();
-
-        public string DisplayName { get; set; }
 
         public List<ReviewCodeFileModel> Files { get; set; } = new List<ReviewCodeFileModel>();
 
         public DateTime CreationDate { get; set; } = DateTime.Now;
 
-        [JsonIgnore]
-        public string Name => Files.Single().Name;
+        public string Name
+        {
+            get => _name ?? Files.FirstOrDefault()?.Name;
+            set => _name = value;
+        }
     }
 }

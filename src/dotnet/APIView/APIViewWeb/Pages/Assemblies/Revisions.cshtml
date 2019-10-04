@@ -5,9 +5,9 @@
     ViewData["Title"] = "Revisions";
 }
 
-<div class="row">
+<div class="row" asp-resource="@Model.Review" asp-requirement="@ReviewOwnerRequirement.Instance">
     <div class="col">
-        <div class="float-right m-2">
+        <div class="my-2" asp-req>
             <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#uploadModel">Add revision</button>
         </div>
     </div>
@@ -47,7 +47,10 @@
             {
                 <li class="list-group-item">
                     @revision.Name <span class="font-italic" date="@revision.CreationDate"></span>
-                    <a class="btn btn-danger btn-sm float-right" href="#">Delete</a>
+                    <form asp-resource="@Model.Review" asp-requirement="@ReviewOwnerRequirement.Instance" class="form-inline float-right" asp-page-handler="Delete" method="post">
+                        <input type="hidden" name="revisionId" value="@revision.RevisionId"/>
+                        <input type="submit" class="btn btn-danger btn-sm" value="Delete" />
+                    </form>
                 </li>
             }
         </ul>

@@ -44,5 +44,12 @@ namespace APIViewWeb.Pages.Assemblies
 
             return RedirectToPage();
         }
+
+        public async Task<IActionResult> OnPostDeleteAsync(string id, string revisionId)
+        {
+            await _manager.DeleteRevisionAsync(User, id, revisionId);
+
+            return RedirectToPage();
+        }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Azure.Sdk.Tools.CheckEnforcer.Configuration;
 using Azure.Sdk.Tools.CheckEnforcer.Integrations.GitHub;
+using Azure.Sdk.Tools.CheckEnforcer.Locking;
 using Microsoft.Extensions.Logging;
 using Octokit;
 using System;
@@ -13,7 +14,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
 {
     public class CheckRunHandler : Handler<CheckRunEventPayload>
     {
-        public CheckRunHandler(IGlobalConfigurationProvider globalConfigurationProvider, IGitHubClientProvider gitHubCLientProvider, IRepositoryConfigurationProvider repositoryConfigurationProvider, ILogger logger) : base(globalConfigurationProvider, gitHubCLientProvider, repositoryConfigurationProvider, logger)
+        public CheckRunHandler(IGlobalConfigurationProvider globalConfigurationProvider, IGitHubClientProvider gitHubCLientProvider, IRepositoryConfigurationProvider repositoryConfigurationProvider, IDistributedLockProvider distributedLockProvider, ILogger logger) : base(globalConfigurationProvider, gitHubCLientProvider, repositoryConfigurationProvider, distributedLockProvider, logger)
         {
         }
 
@@ -29,9 +30,24 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
                 var repositoryId = payload.Repository.Id;
                 var sha = payload.CheckRun.CheckSuite.HeadSha;
 
-                await EvaluatePullRequestAsync(
-                    context.Client, installationId, repositoryId, sha, cancellationToken
-                    );
+                var distributedLockIdentifier = $"{installationId}/{repositoryId}/{sha}";
+
+                var configuration = await this.RepositoryConfigurationProvider.GetRepositoryConfigurationAsync(installationId, repositoryId, sha, cancellationToken);
+
+                if (configuration.IsEnabled)
+                {
+                    using (var distributedLock = DistributedLockProvider.Create(distributedLockIdentifier))
+                    {
+                        await distributedLock.AcquireAsync();
+
+                        await EvaluatePullRequestAsync(
+                            context.Client, installationId, repositoryId, sha, cancellationToken
+                            );
+
+                        await distributedLock.ReleaseAsync();
+                    }
+                }
+
             }
         }
     }

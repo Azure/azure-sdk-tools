@@ -26,6 +26,7 @@ using System.Web.Http;
 using System.Runtime.CompilerServices;
 using Azure.Sdk.Tools.CheckEnforcer.Configuration;
 using Azure.Sdk.Tools.CheckEnforcer.Integrations.GitHub;
+using Azure.Sdk.Tools.CheckEnforcer.Locking;
 
 namespace Azure.Sdk.Tools.CheckEnforcer
 {
@@ -34,7 +35,8 @@ namespace Azure.Sdk.Tools.CheckEnforcer
         private static IGlobalConfigurationProvider globalConfigurationProvider = new GlobalConfigurationProvider();
         private static IGitHubClientProvider gitHubClientProvider = new GitHubClientProvider(globalConfigurationProvider);
         private static IRepositoryConfigurationProvider repositoryConfigurationProvider = new RepositoryConfigurationProvider(gitHubClientProvider);
-        private static GitHubWebhookProcessor gitHubWebhookProcessor = new GitHubWebhookProcessor(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider);
+        private static IDistributedLockProvider distributedLockProvider = new DistributedLockProvider(globalConfigurationProvider);
+        private static GitHubWebhookProcessor gitHubWebhookProcessor = new GitHubWebhookProcessor(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, distributedLockProvider);
 
         [FunctionName("webhook")]
         public static async Task<IActionResult> Run(

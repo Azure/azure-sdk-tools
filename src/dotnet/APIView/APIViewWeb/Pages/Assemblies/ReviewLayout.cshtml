@@ -1,0 +1,20 @@
+﻿@{
+    Layout = "Shared/_Layout";
+}
+<ul class="nav nav-tabs">
+    <li class="nav-item">
+        <a class="nav-link @ActivePageClass("api")" asp-page="Review">API</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link @ActivePageClass("revisions")" asp-page="Revisions">Revisions</a>
+    </li>
+</ul>
+
+@functions
+{
+    string ActivePageClass(string page)
+    {
+        return TempData["page"].Equals(page) ? "active" : "";
+    }
+}
+@RenderBody()

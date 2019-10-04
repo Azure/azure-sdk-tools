@@ -30,6 +30,7 @@ namespace APIViewWeb.Pages.Assemblies
         }
 
         public ReviewModel Review { get; set; }
+        public ReviewRevisionModel Revision { get; set; }
         public CodeFile CodeFile { get; set; }
         public LineApiView[] Lines { get; set; }
         public ReviewCommentsModel Comments { get; set; }
@@ -55,14 +56,20 @@ namespace APIViewWeb.Pages.Assemblies
             };
         }
 
-        public async Task<IActionResult> OnGetAsync(string id)
+        public async Task<IActionResult> OnGetAsync(string id, string revisionId = null)
         {
+            TempData["Page"] = "api";
+
             Review = await _manager.GetReviewAsync(User, id);
 
-            var codeFile = Review.Files.SingleOrDefault();
-            if (codeFile != null)
+            Revision = revisionId != null ?
+                Review.Revisions.Single(r => r.RevisionId == revisionId) :
+                Review.Revisions.Last();
+
+            var reviewFile = Revision.Files.SingleOrDefault();
+            if (reviewFile != null)
             {
-                CodeFile = await _codeFileRepository.GetCodeFileAsync(codeFile.ReviewFileId);
+                CodeFile = await _codeFileRepository.GetCodeFileAsync(Revision.RevisionId, reviewFile.ReviewFileId);
             }
             else
             {
@@ -75,10 +82,11 @@ namespace APIViewWeb.Pages.Assemblies
             return Page();
         }
 
-        public async Task<ActionResult> OnPostAsync(string id)
+        public async Task<ActionResult> OnPostAsync(string id, string revisionId)
         {
             Comment.TimeStamp = DateTime.UtcNow;
             Comment.ReviewId = id;
+            Comment.RevisionId = revisionId;
 
             await _commentsManager.AddCommentAsync(User, Comment);
 

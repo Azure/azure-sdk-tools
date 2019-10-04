@@ -14,6 +14,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
+using APIViewWeb.Pages.Assemblies;
 using APIViewWeb.Respositories;
 
 namespace APIViewWeb
@@ -42,6 +43,7 @@ namespace APIViewWeb
                 .AddRazorPagesOptions(options =>
                 {
                     options.Conventions.AddPageRoute("/Assemblies/Index", "");
+
                     options.Conventions.AuthorizeFolder("/Assemblies", "RequireOrganization");
                 });
 
@@ -135,6 +137,8 @@ namespace APIViewWeb
             });
 
             services.AddSingleton<IAuthorizationHandler, OrganizationRequirementHandler>();
+            services.AddSingleton<IAuthorizationHandler, CommentOwnerRequirementHandler>();
+            services.AddSingleton<IAuthorizationHandler, ReviewOwnerRequirementHandler>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

@@ -5,15 +5,22 @@ using System;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using APIViewWeb.Models;
+using APIViewWeb.Respositories;
+using Microsoft.AspNetCore.Authorization;
 
 namespace APIViewWeb
 {
     public class CommentsManager
     {
+        private readonly IAuthorizationService _authorizationService;
+
         private readonly CosmosCommentsRepository _commentsRepository;
 
-        public CommentsManager(CosmosCommentsRepository commentsRepository)
+        public CommentsManager(
+            IAuthorizationService authorizationService,
+            CosmosCommentsRepository commentsRepository)
         {
+            _authorizationService = authorizationService;
             _commentsRepository = commentsRepository;
         }
 
@@ -35,6 +42,7 @@ namespace APIViewWeb
         public async Task DeleteCommentAsync(ClaimsPrincipal user, string reviewId, string commentId)
         {
             var comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
+            await AssertOwnerAsync(user, comment);
             await _commentsRepository.DeleteCommentAsync(comment);
         }
 
@@ -50,7 +58,6 @@ namespace APIViewWeb
 
         public async Task UnresolveConversation(ClaimsPrincipal user, string reviewId, string lineId)
         {
-
             var comments = await _commentsRepository.GetCommentsAsync(reviewId, lineId);
             foreach (var comment in comments)
             {
@@ -58,6 +65,15 @@ namespace APIViewWeb
                 {
                     await _commentsRepository.DeleteCommentAsync(comment);
                 }
+            }
+        }
+
+        private async Task AssertOwnerAsync(ClaimsPrincipal user, CommentModel commentModel)
+        {
+            var result = await _authorizationService.AuthorizeAsync(user, commentModel, new[] { CommentOwnerRequirement.Instance });
+            if (!result.Succeeded)
+            {
+                throw new AuthorizationFailedException();
             }
         }
     }

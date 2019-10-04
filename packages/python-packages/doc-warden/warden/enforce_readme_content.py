@@ -10,6 +10,7 @@ from .warden_common import check_match, walk_directory_for_pattern, get_omitted_
 from docutils import core
 from docutils.writers.html4css1 import Writer,HTMLTranslator
 import pathlib
+import logging
 
 README_PATTERNS = ['*/readme.md', '*/readme.rst', '*/README.md', '*/README.rst']
 
@@ -43,7 +44,7 @@ def verify_readme_content(config):
 
 # parse rst to html, check for presence of appropriate sections
 def verify_rst_readme(readme, config, section_sorting_dict):
-    with open(readme, 'r') as f:
+    with open(readme, 'r', encoding="utf-8") as f:
         readme_content = f.read()
     html_readme_content = rst_to_html(readme_content)
     html_soup = bs4.BeautifulSoup(html_readme_content, "html.parser")
@@ -55,7 +56,10 @@ def verify_rst_readme(readme, config, section_sorting_dict):
 
 # parse md to html, check for presence of appropriate sections
 def verify_md_readme(readme, config, section_sorting_dict):
-    with open(readme, 'r') as f:
+    if config.verbose_output:
+        print('Examining content in {}'.format(readme))
+
+    with open(readme, 'r', encoding="utf-8") as f:
         readme_content = f.read()
     html_readme_content = markdown2.markdown(readme_content)
     html_soup = bs4.BeautifulSoup(html_readme_content, "html.parser")

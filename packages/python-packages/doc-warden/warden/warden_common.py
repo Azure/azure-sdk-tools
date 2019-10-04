@@ -26,25 +26,48 @@ def check_match(file_path, normalized_target_patterns):
                 for normalized_target_pattern in normalized_target_patterns])
 
 def get_java_package_roots(configuration):
-    return get_file_sets(configuration, JAVA_PACKAGE_DISCOVERY_PATTERN, is_java_pom_package_pom)
+    file_set = get_file_sets(configuration, JAVA_PACKAGE_DISCOVERY_PATTERN, is_java_pom_package_pom)
+    
+    if configuration.verbose_output:
+        print(file_set)
+
+    return file_set
 
 def get_net_package_roots(configuration):
-    return get_file_sets(configuration, NET_PACKAGE_ROOT_DISCOVERY_PATTERN)
+    file_set = get_file_sets(configuration, NET_PACKAGE_ROOT_DISCOVERY_PATTERN)
+    
+    if configuration.verbose_output:
+        print(file_set)
+
+    return file_set
 
 def get_net_packages(configuration):
-    return get_file_sets(configuration, NET_PACKAGE_DISCOVERY_PATTERN, is_net_csproj_package)
+    file_set =  get_file_sets(configuration, NET_PACKAGE_DISCOVERY_PATTERN, is_net_csproj_package)
+    
+    if configuration.verbose_output:
+        print(sets)
 
 def get_python_package_roots(configuration):
-    return get_file_sets(configuration, PYTHON_PACKAGE_DISCOVERY_PATTERN)
-    
+    file_set = get_file_sets(configuration, PYTHON_PACKAGE_DISCOVERY_PATTERN)
+        
+    if configuration.verbose_output:
+        print(file_set)
+
+    return file_set
+
 def get_js_package_roots(configuration):
-    return get_file_sets(configuration, JS_PACKAGE_DISCOVERY_PATTERN)
+    file_set = get_file_sets(configuration, JS_PACKAGE_DISCOVERY_PATTERN)
+
+    if configuration.verbose_output:
+        print(file_set)
+
+    return file_set
 
 # returns the two sets:
     # the set of files where we expect a readme to be present
     # and the set of files that we expect a readme to be present that have been explicitly omitted
 def get_file_sets(configuration, target_pattern, lambda_check = None):
-    expected_locations = walk_directory_for_pattern(configuration.target_directory, [target_pattern], lambda_check)
+    expected_locations = walk_directory_for_pattern(configuration.target_directory, [target_pattern], configuration, lambda_check)
     omitted_files = get_omitted_files(configuration)
 
     return list(set(expected_locations) - set(omitted_files)), list(set(omitted_files).intersection(expected_locations))
@@ -57,7 +80,7 @@ def get_omitted_files(configuration):
 
     # single special case here. if wildcard match at the beginning, do not join, use the pattern as is
     adjusted_dirs = [pattern if pattern.startswith("*") else os.path.join(target_directory, pattern) for pattern in dirs]
-    omitted_paths.extend(walk_directory_for_pattern(target_directory, adjusted_dirs, None))
+    omitted_paths.extend(walk_directory_for_pattern(target_directory, adjusted_dirs, configuration, None))
 
     return omitted_paths
 
@@ -73,7 +96,7 @@ def is_net_csproj_package(file_path):
     
 # Returns a list of files under a target directory. The files included will match any of the
 # target_patterns AND the lambda_check function. 
-def walk_directory_for_pattern(target_directory, target_patterns, lambda_check = None):
+def walk_directory_for_pattern(target_directory, target_patterns, configuration, lambda_check = None):
     expected_locations = []
     target_directory = os.path.normpath(target_directory)
     normalized_target_patterns = [os.path.normpath(pattern) for pattern in target_patterns]
@@ -84,8 +107,12 @@ def walk_directory_for_pattern(target_directory, target_patterns, lambda_check =
     for folder, subfolders, files in os.walk(target_directory): 
         for file in files:
             file_path = os.path.join(folder, file)
-            if check_match(file_path, normalized_target_patterns) and check_function(file_path):
-                expected_locations.append(file_path)
+
+            if check_match(file_path, normalized_target_patterns):
+                if configuration.verbose_output:
+                    print('Pattern matched {}. Running Check Function.'.format(file_path))
+                if check_function(file_path):
+                    expected_locations.append(file_path)
     return expected_locations
 
 # given a file location or folder, check within or alongside for a target file
@@ -176,7 +203,7 @@ def is_java_pom_package_pom(file_path):
 # namespaces in xml really mess with xmlTree: https://bugs.python.org/issue18304
 # this function provides a workaround for both parsing an xml file as well as REMOVING said namespaces
 def parse_pom(file_path):
-    with open(file_path) as f:
+    with open(file_path, 'r', encoding='utf-8') as f:
         xml = f.read()
 
     it = ET.iterparse(StringIO(xml))

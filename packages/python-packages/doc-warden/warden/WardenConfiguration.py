@@ -77,6 +77,7 @@ class WardenConfiguration():
         parser.add_argument(
             '-o',
             '--verbose-output',
+            action="store_true",
             dest = 'verbose_output',
             required = False,
             help = 'Enable or disable verbose output. Defaults false. Overrides .docsettings contents.')

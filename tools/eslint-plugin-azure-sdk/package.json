@@ -34,11 +34,15 @@
     "dist"
   ],
   "scripts": {
-    "build": "npm run clean && tsc -p tsconfig.build.json && prettier --write dist/**/*.{js,json,md}",
+    "build": "tsc -p tsconfig.build.json && prettier --write dist/**/*.{js,json,md}",
     "clean": "rimraf dist/",
     "format": "prettier --write \"./**/*.{ts,json,md}\"",
     "format:check": "prettier --check \"./**/*.{ts,json,md}\"",
     "lint": "eslint src tests --ext .ts && markdownlint README.md docs",
+    "lint:self": "npm run build && npm run lint:selfonly",
+    "lint:selfonly": "eslint -c ./.eslintrc.self.json package.json tsconfig.json src tests --ext ts",
+    "lint:selffix": "eslint -c ./.eslintrc.self.json package.json tsconfig.json src tests --ext ts --fix --fix-type [problem,suggestion]",
+    "prebuild": "npm run clean",
     "test:build": "npm run clean && tsc -p tsconfig.json",
     "test": "npm run test:build && mocha --timeout 10000 --recursive dist/tests"
   },
@@ -63,6 +67,7 @@
     "bluebird": "^3.5.5",
     "chai": "^4.2.0",
     "eslint": "^6.1.0",
+    "eslint-plugin-local": "^1.0.0",
     "markdownlint-cli": "^0.17.0",
     "mocha": "^6.2.0",
     "prettier": "^1.18.2"

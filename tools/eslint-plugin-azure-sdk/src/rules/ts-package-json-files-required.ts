@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Rule to force package.json's files value to contain paths to the package contents.
  * @author Arpan Laha

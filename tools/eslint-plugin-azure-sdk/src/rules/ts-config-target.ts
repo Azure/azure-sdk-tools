@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Rule to force tsconfig.json's compilerOptions.target value to be a valid EcmaScript standard.
  * @author Arpan Laha

@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Rule to require async client methods to accept an AbortSignalLike parameter.
  * @author Arpan Laha

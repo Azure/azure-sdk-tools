@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Utilities relating to ESLint Rule metadata
  * @author Arpan Laha

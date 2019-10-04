@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Rule to forbid usage of TypeScript's const enums.
  * @author Arpan Laha

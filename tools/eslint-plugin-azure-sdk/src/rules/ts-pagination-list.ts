@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Rule to require client list methods to return a PagedAsyncIterableIterator.
  * @author Arpan Laha

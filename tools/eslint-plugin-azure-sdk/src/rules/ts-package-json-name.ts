@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Rule to force package.json's name value to be set to @azure/<service>.
  * @author Arpan Laha

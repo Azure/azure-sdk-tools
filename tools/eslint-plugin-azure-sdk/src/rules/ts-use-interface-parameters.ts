@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Rule to encourage usage of interfaces over classes as function parameters.
  * @author Arpan Laha

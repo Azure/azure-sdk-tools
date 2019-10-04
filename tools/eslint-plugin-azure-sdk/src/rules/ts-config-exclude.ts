@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Rule to force tsconfig.json's "exclude" value to at least contain "node_modules"
  * @author Arpan Laha

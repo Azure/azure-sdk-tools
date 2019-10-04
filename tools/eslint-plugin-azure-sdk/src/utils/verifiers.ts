@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Helper methods for rules pertaining to JSON object structure
  * @author Arpan Laha

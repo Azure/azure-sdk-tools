@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Rule to require TSDoc comments to include internal or ignore tags if the object is internal.
  * @author Arpan Laha

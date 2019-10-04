@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Utilities for analyzing the exports of a package
  * @author Arpan Laha

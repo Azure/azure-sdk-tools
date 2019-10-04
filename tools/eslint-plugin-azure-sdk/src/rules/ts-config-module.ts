@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Rule to force tsconfig.json's compilerOptions.module value to "es6".
  * @author Arpan Laha

@@ -39,20 +39,18 @@ namespace APIViewWeb.Respositories
 
         public async Task<ReviewModel> CreateReviewAsync(ClaimsPrincipal user, string originalName, Stream fileStream, bool runAnalysis)
         {
-
-
             ReviewModel reviewModel = new ReviewModel();
             reviewModel.Author = user.GetGitHubLogin();
             reviewModel.CreationDate = DateTime.UtcNow;
 
             reviewModel.RunAnalysis = runAnalysis;
 
-            var reviewCodeFileModel = await CreateFileAsync(originalName, fileStream, runAnalysis);
-
-            reviewModel.Files = new[] { reviewCodeFileModel };
+            var revision = new ReviewRevisionModel();
+            var reviewCodeFileModel = await CreateFileAsync(revision.RevisionId, originalName, fileStream, runAnalysis);
+            revision.Files.Add(reviewCodeFileModel);
 
             reviewModel.Name = reviewCodeFileModel.Name;
-
+            reviewModel.Revisions.Add(revision);
             await _reviewsRepository.UpsertReviewAsync(reviewModel);
 
             return reviewModel;
@@ -65,17 +63,20 @@ namespace APIViewWeb.Respositories
 
         public async Task DeleteReviewAsync(string id)
         {
-
             var reviewModel = await _reviewsRepository.GetReviewAsync(id);
             await _reviewsRepository.DeleteReviewAsync(reviewModel);
 
-            foreach (var reviewCodeFileModel in reviewModel.Files)
+            foreach (var revision in reviewModel.Revisions)
             {
-                if (reviewCodeFileModel.HasOriginal)
+                foreach (var file in revision.Files)
                 {
-                    await _originalsRepository.DeleteOriginalAsync(reviewCodeFileModel.ReviewFileId);
+                    if (file.HasOriginal)
+                    {
+                        await _originalsRepository.DeleteOriginalAsync(file.ReviewFileId);
+                    }
+
+                    await _codeFileRepository.DeleteCodeFileAsync(revision.RevisionId, file.ReviewFileId);
                 }
-                await _codeFileRepository.DeleteCodeFileAsync(reviewCodeFileModel.ReviewFileId);
             }
 
             await _commentsRepository.DeleteCommentsAsync(id);
@@ -90,27 +91,45 @@ namespace APIViewWeb.Respositories
 
             var review = await _reviewsRepository.GetReviewAsync(id);
             review.UpdateAvailable = user.GetGitHubLogin() == review.Author &&
-                                     review.Files.Any(f => f.HasOriginal && GetLanguageService(f.Language).CanUpdate(f.VersionString));
+                                     review.Revisions.SelectMany(r=>r.Files).Any(f => f.HasOriginal && GetLanguageService(f.Language).CanUpdate(f.VersionString));
+            // Handle old model
+#pragma warning disable CS0612 // Type or member is obsolete
+            if (review.Revisions.Count == 0 && review.Files.Count == 1)
+            {
+                var file = review.Files[0];
+#pragma warning restore CS0612 // Type or member is obsolete
+                review.Revisions.Add(new ReviewRevisionModel()
+                {
+                    RevisionId = file.ReviewFileId,
+                    Files =
+                    {
+                        file
+                    }
+                });
+            }
             return review;
         }
 
         internal async Task UpdateReviewAsync(ClaimsPrincipal user, string id)
         {
             var review = await GetReviewAsync(user, id);
-            foreach (var file in review.Files)
+            foreach (var revision in review.Revisions)
             {
-                if (!file.HasOriginal)
+                foreach (var file in revision.Files)
                 {
-                    continue;
+                    if (!file.HasOriginal)
+                    {
+                        continue;
+                    }
+
+                    var fileOriginal = await _originalsRepository.GetOriginalAsync(file.ReviewFileId);
+                    var languageService = GetLanguageService(file.Language);
+
+                    var codeFile = await languageService.GetCodeFileAsync(file.Name, fileOriginal, review.RunAnalysis);
+                    await _codeFileRepository.UpsertCodeFileAsync(revision.RevisionId, file.ReviewFileId, codeFile);
+
+                    InitializeFromCodeFile(file, codeFile);
                 }
-
-                var fileOriginal = await _originalsRepository.GetOriginalAsync(file.ReviewFileId);
-                var languageService = GetLanguageService(file.Language);
-
-                var codeFile = await languageService.GetCodeFileAsync(file.Name, fileOriginal, file.RunAnalysis);
-                await _codeFileRepository.UpsertCodeFileAsync(file.ReviewFileId, codeFile);
-
-                InitializeFromCodeFile(file, codeFile);
             }
 
             await _reviewsRepository.UpsertReviewAsync(review);
@@ -127,14 +146,17 @@ namespace APIViewWeb.Respositories
             return _languageServices.Single(service => service.Name == language);
         }
 
-        public async Task AddFileAsync(ClaimsPrincipal user, string id, string originalName, Stream fileStream)
+        public async Task AddRevisionAsync(ClaimsPrincipal user, string id, string originalName, Stream fileStream)
         {
             var review = await GetReviewAsync(user, id);
-            review.Files = review.Files.Concat(new[] { await CreateFileAsync(originalName, fileStream, review.RunAnalysis) }).ToArray();
+            var revision = new ReviewRevisionModel();
+            revision.Files.Add(await CreateFileAsync(revision.RevisionId, originalName, fileStream, review.RunAnalysis));
+            review.Revisions.Add(revision);
+
             await _reviewsRepository.UpsertReviewAsync(review);
         }
 
-        private async Task<ReviewCodeFileModel> CreateFileAsync(string originalName, Stream fileStream, bool runAnalysis)
+        private async Task<ReviewCodeFileModel> CreateFileAsync(string revisionId, string originalName, Stream fileStream, bool runAnalysis)
         {
             var originalNameExtension = Path.GetExtension(originalName);
             var languageService = _languageServices.Single(s => s.IsSupportedExtension(originalNameExtension));
@@ -155,7 +177,7 @@ namespace APIViewWeb.Respositories
 
                 memoryStream.Position = 0;
                 await _originalsRepository.UploadOriginalAsync(reviewCodeFileModel.ReviewFileId, memoryStream);
-                await _codeFileRepository.UpsertCodeFileAsync(reviewCodeFileModel.ReviewFileId, codeFile);
+                await _codeFileRepository.UpsertCodeFileAsync(revisionId, reviewCodeFileModel.ReviewFileId, codeFile);
             }
 
             return reviewCodeFileModel;

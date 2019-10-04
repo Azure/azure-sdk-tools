@@ -8,12 +8,11 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace APIViewWeb.Pages.Assemblies
 {
-    public class FilesPageModel : PageModel
+    public class RevisionsPageModel : PageModel
     {
         private readonly ReviewManager _manager;
 
-
-        public FilesPageModel(
+        public RevisionsPageModel(
             ReviewManager manager)
         {
             _manager = manager;
@@ -23,7 +22,7 @@ namespace APIViewWeb.Pages.Assemblies
 
         public async Task<IActionResult> OnGetAsync(string id)
         {
-            TempData["Page"] = "files";
+            TempData["Page"] = "revisions";
 
             Review = await _manager.GetReviewAsync(User, id);
 
@@ -40,7 +39,7 @@ namespace APIViewWeb.Pages.Assemblies
             if (upload != null)
             {
                 var openReadStream = upload.OpenReadStream();
-                await _manager.AddFileAsync(User, id, upload.FileName, openReadStream);
+                await _manager.AddRevisionAsync(User, id, upload.FileName, openReadStream);
             }
 
             return RedirectToPage();

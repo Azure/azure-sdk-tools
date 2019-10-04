@@ -9,7 +9,7 @@ namespace APIViewWeb
     {
         private string _language;
 
-        public string ReviewFileId { get; set; } = Guid.NewGuid().ToString("N");
+        public string ReviewFileId { get; set; } = IdHelper.GenerateId();
         public string Name { get; set; }
 
         public string Language

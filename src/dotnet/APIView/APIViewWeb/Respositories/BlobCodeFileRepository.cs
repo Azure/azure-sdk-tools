@@ -19,28 +19,35 @@ namespace APIViewWeb
             _container = new BlobContainerClient(connectionString, "codefiles");
         }
 
-        public async Task<CodeFile> GetCodeFileAsync(string codeFileId)
+        public async Task<CodeFile> GetCodeFileAsync(string revisionId, string codeFileId)
         {
-            var info = await GetBlobClient(codeFileId).DownloadAsync();
+            var info = await GetBlobClient(revisionId,codeFileId).DownloadAsync();
             return await CodeFile.DeserializeAsync(info.Value.Content);
         }
 
-        private BlobClient GetBlobClient(string codeFileId)
+        private BlobClient GetBlobClient(string revisionId, string codeFileId)
         {
-            return _container.GetBlobClient(codeFileId);
+            if (revisionId == codeFileId)
+            {
+                return _container.GetBlobClient(codeFileId);
+            }
+            else
+            {
+                return _container.GetBlobClient(revisionId + "/" + codeFileId);
+            }
         }
 
-        public async Task UpsertCodeFileAsync(string codeFileId, CodeFile codeFile)
+        public async Task UpsertCodeFileAsync(string revisionId, string codeFileId, CodeFile codeFile)
         {
             var memoryStream = new MemoryStream();
             await codeFile.SerializeAsync(memoryStream);
             memoryStream.Position = 0;
-            await GetBlobClient(codeFileId).UploadAsync(memoryStream);
+            await GetBlobClient(revisionId, codeFileId).UploadAsync(memoryStream);
         }
 
-        public async Task DeleteCodeFileAsync(string codeFileId)
+        public async Task DeleteCodeFileAsync(string revisionId, string codeFileId)
         {
-            await GetBlobClient(codeFileId).DeleteAsync();
+            await GetBlobClient(revisionId, codeFileId).DeleteAsync();
         }
     }
 }

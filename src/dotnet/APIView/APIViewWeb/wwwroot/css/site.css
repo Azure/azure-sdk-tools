@@ -103,7 +103,7 @@ form.comment {
     margin-right: -5px;
 }
 
-.comment-box {
+.comment-row {
     border: 1px solid gray;
     border-spacing: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -124,16 +124,6 @@ form.comment {
     max-width: 592px;
     margin-bottom: 3px;
     overflow-wrap: break-word;
-}
-
-.comment-delete-button {
-    margin-left: 44px;
-}
-
-.comment-delete-text {
-    color: #B93D3D;
-    font-size: 12px;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .comment-header {

@@ -5,9 +5,9 @@
 @using System.Linq
 @model CommentThreadModel
 
-@if (Model.Comments.Any())
+@if (Model != null && Model.Comments.Any())
 {
-    <tr class="comment-box" data-line-id="@Model.LineId">
+    <tr class="comment-row" data-line-id="@Model.LineId">
         <td class="comment-cell border-top border-bottom" colspan="4">
             @if (Model.IsResolved)
             {
@@ -20,18 +20,22 @@
                         <div class="review-comment">
                             <div class="unminimized-comment">
                                 <div class="comment-actions">
-                                    <form class="comment-delete-button align-top" asp-page-handler="delete" method="post" asp-route-id="@Model.ReviewId">
-                                        <input type="hidden" name="commentId" value="@comment.CommentId" />
-                                        <input type="hidden" name="elementId" value="@Model.LineId" />
-                                        @if (comment.Username == User.GetGitHubLogin())
-                                        {
-                                            <button id="@comment.CommentId" data-post-update="comments" class="btn align-top"><span class="comment-delete-text align-top">Delete</span></button>
-                                        }
-                                        else
-                                        {
-                                            <button disabled class="btn align-top"><span class="comment-delete-text align-top">Delete</span></button>
-                                        }
-                                    </form>
+                                    @if (comment.Username == User.GetGitHubLogin())
+                                    {
+                                    <div class="dropdown show">
+                                        <a class="btn btn-sm" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                            ...
+                                        </a>
+
+                                        <div class="dropdown-menu">
+                                            <form asp-page-handler="delete" method="post" asp-route-id="@Model.ReviewId">
+                                                <input type="hidden" name="commentId" value="@comment.CommentId"/>
+                                                <input type="hidden" name="elementId" value="@Model.LineId"/>
+                                                <button id="@comment.CommentId" data-post-update="comments" class="text-danger dropdown-item">Delete</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                    }
                                 </div>
                                 <div class="media">
                                     <img username="@comment.Username" class="comment-icon align-self-start mr-3" height="28" width="28" />
@@ -46,6 +50,7 @@
                             </div>
                         </div>
                     }
+
                     <div class="review-thread-reply">
                         <div class="reply-cell align-middle">
                             <img avatar username="@User.GetGitHubLogin()" class="comment-icon" height="28" width="28" />
@@ -53,7 +58,7 @@
                         <div class="reply-cell col-12">
                             <button type="button" class="review-thread-reply-button text-muted text-left form-control">Reply...</button>
                         </div>
-                        </div>
+                    </div>
 
                     <div class="m-2">
                         @if (Model.IsResolved)

@@ -47,7 +47,7 @@
                 <tr class="code-line" data-line-id="@line.ElementId">
                     <td class="line-comment-button-cell">
                         @if (line.ElementId != null) {
-                        <button class="btn-link line-comment-button" type="button" style="text-decoration:none;">+</button>
+                        <a class="line-comment-button">+</a>
                         }
                     </td>
                     <td class="code"><span class="code-inner">@Html.Raw(line.DisplayString)</span></td>
@@ -55,8 +55,7 @@
                 @if (line.Diagnostics.Any())
                 {
                 <tr class="code-diagnostics" data-line-id="@line.ElementId">
-                    <td></td>
-                    <td class="code-diagnostics">
+                    <td colspan="2">
                         @foreach (var lineDiagnostic in line.Diagnostics)
                         {
                         <p>

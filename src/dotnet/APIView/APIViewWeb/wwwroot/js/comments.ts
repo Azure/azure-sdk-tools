@@ -60,7 +60,7 @@
     }
 
     function getDiagnosticsRow(id) {
-        return $(`.diagnostics[data-line-id='${id}']`);
+        return $(`.code-diagnostics[data-line-id='${id}']`);
     }
 
     function hideCommentBox(id) {

@@ -59,19 +59,17 @@ namespace APIViewWeb.Pages.Assemblies
 
             Review = await _manager.GetReviewAsync(User, id);
 
+            if (!Review.Revisions.Any())
+            {
+                return RedirectToPage("LegacyReview", new { id = id });
+            }
+
             Revision = revisionId != null ?
                 Review.Revisions.Single(r => r.RevisionId == revisionId) :
                 Review.Revisions.Last();
 
-            var reviewFile = Revision.Files.SingleOrDefault();
-            if (reviewFile != null)
-            {
-                CodeFile = await _codeFileRepository.GetCodeFileAsync(Revision.RevisionId, reviewFile.ReviewFileId);
-            }
-            else
-            {
-                return RedirectToPage("LegacyReview", new { id = id });
-            }
+            var reviewFile = Revision.Files.Single();
+            CodeFile = await _codeFileRepository.GetCodeFileAsync(Revision.RevisionId, reviewFile.ReviewFileId);
 
             Lines = new CodeFileHtmlRenderer().Render(CodeFile).ToArray();
             Comments = await _commentsManager.GetReviewCommentsAsync(id);

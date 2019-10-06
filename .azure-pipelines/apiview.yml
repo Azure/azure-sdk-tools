@@ -23,7 +23,7 @@ pr:
       - src/java
 
 variables:
-  DotNetCoreVersion: '2.1.503'
+  DotNetCoreVersion: '3.0'
   WebProjectPath: 'src/dotnet/APIView/APIViewWeb/'
   TestProjectPath: 'src/dotnet/APIView/APIViewTests/'
   NodeVersion: '12.x'

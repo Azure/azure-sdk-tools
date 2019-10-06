@@ -23,7 +23,7 @@ pr:
       - src/java
 
 variables:
-  DotNetCoreVersion: '2.1.503'
+  DotNetCoreVersion: '3.0.100'
   WebProjectPath: 'src/dotnet/APIView/APIViewWeb/'
   TestProjectPath: 'src/dotnet/APIView/APIViewTests/'
   NodeVersion: '12.x'
@@ -37,7 +37,7 @@ stages:
           vmImage: 'vs2017-win2016'
 
         steps:
-          - task: DotNetCoreInstaller@0
+          - task: DotNetCoreInstaller@2
             displayName: 'Use .NET Core sdk $(DotNetCoreVersion)'
             inputs:
               version: '$(DotNetCoreVersion)'
@@ -74,7 +74,7 @@ stages:
           vmImage: 'vs2017-win2016'
 
         steps:
-          - task: DotNetCoreInstaller@0
+          - task: DotNetCoreInstaller@2
             displayName: 'Use .NET Core sdk $(DotNetCoreVersion)'
             inputs:
               version: '$(DotNetCoreVersion)'

@@ -112,6 +112,7 @@ namespace APIViewWeb.Respositories
                 review.Revisions.Add(new ReviewRevisionModel()
                 {
                     RevisionId = file.ReviewFileId,
+                    CreationDate = file.CreationDate,
                     Files =
                     {
                         file

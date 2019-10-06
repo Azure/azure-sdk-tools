@@ -35,9 +35,6 @@ namespace APIViewWeb.Pages.Assemblies
         public LineApiView[] Lines { get; set; }
         public ReviewCommentsModel Comments { get; set; }
 
-        [BindProperty]
-        public CommentModel Comment { get; set; }
-
         public async Task<ActionResult> OnPostDeleteAsync(string id, string commentId, string elementId)
         {
             await _commentsManager.DeleteCommentAsync(User, id, commentId);
@@ -62,19 +59,17 @@ namespace APIViewWeb.Pages.Assemblies
 
             Review = await _manager.GetReviewAsync(User, id);
 
+            if (!Review.Revisions.Any())
+            {
+                return RedirectToPage("LegacyReview", new { id = id });
+            }
+
             Revision = revisionId != null ?
                 Review.Revisions.Single(r => r.RevisionId == revisionId) :
                 Review.Revisions.Last();
 
-            var reviewFile = Revision.Files.SingleOrDefault();
-            if (reviewFile != null)
-            {
-                CodeFile = await _codeFileRepository.GetCodeFileAsync(Revision.RevisionId, reviewFile.ReviewFileId);
-            }
-            else
-            {
-                return RedirectToPage("LegacyReview", new { id = id });
-            }
+            var reviewFile = Revision.Files.Single();
+            CodeFile = await _codeFileRepository.GetCodeFileAsync(Revision.RevisionId, reviewFile.ReviewFileId);
 
             Lines = new CodeFileHtmlRenderer().Render(CodeFile).ToArray();
             Comments = await _commentsManager.GetReviewCommentsAsync(id);
@@ -82,15 +77,18 @@ namespace APIViewWeb.Pages.Assemblies
             return Page();
         }
 
-        public async Task<ActionResult> OnPostAsync(string id, string revisionId)
+        public async Task<ActionResult> OnPostAsync(string id, string revisionId, string elementId, string commentText)
         {
-            Comment.TimeStamp = DateTime.UtcNow;
-            Comment.ReviewId = id;
-            Comment.RevisionId = revisionId;
+            var comment = new CommentModel();
+            comment.TimeStamp = DateTime.UtcNow;
+            comment.ReviewId = id;
+            comment.RevisionId = revisionId;
+            comment.ElementId = elementId;
+            comment.Comment = commentText;
 
-            await _commentsManager.AddCommentAsync(User, Comment);
+            await _commentsManager.AddCommentAsync(User, comment);
 
-            return await CommentPartialAsync(id, Comment.ElementId);
+            return await CommentPartialAsync(id, comment.ElementId);
         }
 
 

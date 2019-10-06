@@ -19,7 +19,7 @@
     $(document).on("click", "[data-post-update='comments']", e => {
         const form = <HTMLFormElement><any>$(e.target).closest("form");
         let lineId = getLineId(e.target);
-        let commentRow = getCommentBox(lineId);
+        let commentRow = getCommentsRow(lineId);
         let serializedForm = form.serializeArray();
         serializedForm.push({ name: "lineId", value: lineId });
 
@@ -48,44 +48,60 @@
     }
 
     function toggleComments(id) {
-        getCommentBox(id).find(".comment-holder").toggle();
+        $(getCommentsRow(id)).find(".comment-holder").toggle();
     }
 
-    function getCommentBox(id) {
-        return $(`.comment-box[data-line-id='${id}']`);
+    function getCommentsRow(id) {
+        return $(`.comment-row[data-line-id='${id}']`);
+    }
+
+    function getCodeRow(id) {
+        return $(`.code-line[data-line-id='${id}']`);
+    }
+
+    function getDiagnosticsRow(id) {
+        return $(`.code-diagnostics[data-line-id='${id}']`);
     }
 
     function hideCommentBox(id) {
-        var thisRow = $(document.getElementById(id)).parents(".code-line").first();
-        let diagnosticsRow = thisRow.next();
-        let nextRow = diagnosticsRow.next();
-        nextRow.find(".review-thread-reply").show();
-        nextRow.find(".comment-form").hide();
+        let commentsRow = getCommentsRow(id);
+        commentsRow.find(".review-thread-reply").show();
+        commentsRow.find(".comment-form").hide();
     }
 
     function showCommentBox(id) {
-        let thisRow = $(document.getElementById(id)).parents(".code-line").first();
-        let diagnosticsRow = thisRow.next();
-        let nextRow = diagnosticsRow.next();
-        let commentBox = nextRow.find(".comment-form");
+        let commentForm;
+        let commentsRow = getCommentsRow(id);
 
-        if (commentBox.length === 0) {
-            commentBox = commentFormTemplate.children().clone();
+        if (commentsRow.length === 0) {
+            commentForm = createCommentForm(id);
+            commentsRow =
+                $(`<tr class="comment-row" data-line-id="${id}">`)
+                    .append($("<td colspan=\"2\">")
+                        .append(commentForm));
 
-            var thread = nextRow.find(".comment-thread-contents");
-            if (thread.length > 0) {
-                thread.after(commentBox);
+            commentsRow.insertAfter(getDiagnosticsRow(id).get(0) || getCodeRow(id).get(0));
+        }
+        else {
+            // there is a comment row - insert form
+            let reply = $(commentsRow).find(".review-thread-reply");
+            commentForm = $(commentsRow).find(".comment-form");
+            if (commentForm.length === 0) {
+                commentForm = $(createCommentForm(id)).insertAfter(reply);
             }
-            else {
-                commentBox.insertAfter(diagnosticsRow).wrap(`<tr class="comment-box" data-line-id="${id}">`).wrap("<td colspan=\"2\">");
-            }
+
+            reply.hide();
+            commentForm.show();
         }
 
-        commentBox.show();
-        commentBox.find(".elementIdInput").val(id);
-        commentBox.find(".new-thread-comment-text").focus();
-        nextRow.find(".review-thread-reply").hide();
-        return false;
+        commentForm.find(".new-thread-comment-text").focus();
+    }
+
+    function createCommentForm(id) {
+
+        let form = commentFormTemplate.children().clone();
+        form.find(".elementIdInput").val(id);
+        return form;
     }
 
     function updateCommentThread(commentBox, partialViewResult) {

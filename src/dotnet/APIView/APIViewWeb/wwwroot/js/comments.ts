@@ -21,7 +21,7 @@
         let lineId = getLineId(e.target);
         let commentRow = getCommentsRow(lineId);
         let serializedForm = form.serializeArray();
-        serializedForm.push({ name: "lineId", value: lineId });
+        serializedForm.push({ name: "elementId", value: lineId });
 
         $.ajax({
             type: "POST",

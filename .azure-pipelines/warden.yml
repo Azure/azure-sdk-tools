@@ -83,17 +83,17 @@ jobs:
     displayName: 'Install doc-warden'
 
   - script: |
-      ward scan -d $(Build.SourcesDirectory)/sdk-for-java  -c $(Build.SourcesDirectory)/sdk-for-java/eng/.docsettings.yml -o True
+      ward scan -d $(Build.SourcesDirectory)/sdk-for-java  -c $(Build.SourcesDirectory)/sdk-for-java/eng/.docsettings.yml -o
     displayName: 'Ensure Java Backwards Compat'
 
   - script: |
-      ward scan -d $(Build.SourcesDirectory)/sdk-for-net  -c $(Build.SourcesDirectory)/sdk-for-net/eng/.docsettings.yml -o True
+      ward scan -d $(Build.SourcesDirectory)/sdk-for-net  -c $(Build.SourcesDirectory)/sdk-for-net/eng/.docsettings.yml -o
     displayName: 'Ensure .NET Backwards Compat'
 
   - script: |
-      ward scan -d $(Build.SourcesDirectory)/sdk-for-python -o True
+      ward scan -d $(Build.SourcesDirectory)/sdk-for-python -o
     displayName: 'Ensure Python Backwards Compat'
 
   - script: |
-      ward scan -d $(Build.SourcesDirectory)/sdk-for-js -o True
+      ward scan -d $(Build.SourcesDirectory)/sdk-for-js -o
     displayName: 'Ensure JS Backwards Compat'

@@ -16,7 +16,7 @@ README_PATTERNS = ['*/readme.md', '*/readme.rst', '*/README.md', '*/README.rst']
 
 # entry point
 def verify_readme_content(config):
-    all_readmes = walk_directory_for_pattern(config.target_directory, README_PATTERNS)
+    all_readmes = walk_directory_for_pattern(config.target_directory, README_PATTERNS, config)
     omitted_readmes = get_omitted_files(config)
     targeted_readmes = [readme for readme in all_readmes if readme not in omitted_readmes]
     known_issue_paths = config.get_known_content_issues()

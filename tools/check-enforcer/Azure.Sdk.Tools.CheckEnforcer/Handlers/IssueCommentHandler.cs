@@ -28,6 +28,9 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
             var comment = payload.Comment.Body.ToLower();
             var issueId = payload.Issue.Number;
 
+            // Bail early if we aren't even a check enforcer comment. Reduces exception noise.
+            if (!comment.StartsWith("/check-enforcer")) return;
+
             var pullRequest = await context.Client.PullRequest.Get(repositoryId, issueId);
             var sha = pullRequest.Head.Sha;
 

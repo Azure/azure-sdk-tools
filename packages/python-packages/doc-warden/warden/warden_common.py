@@ -203,8 +203,12 @@ def is_java_pom_package_pom(file_path):
 # namespaces in xml really mess with xmlTree: https://bugs.python.org/issue18304
 # this function provides a workaround for both parsing an xml file as well as REMOVING said namespaces
 def parse_pom(file_path):
-    with open(file_path, 'r', encoding='utf-8') as f:
-        xml = f.read()
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            xml = f.read()
+    except Exception as ex:
+        print('Invalid XML in {}'.format(file_path))
+        raise ex
 
     it = ET.iterparse(StringIO(xml))
     for _, el in it:

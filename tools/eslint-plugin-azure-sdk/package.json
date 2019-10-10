@@ -47,6 +47,7 @@
     "test": "npm run test:build && mocha --timeout 10000 --recursive dist/tests"
   },
   "dependencies": {
+    "eslint-config-prettier": "^6.4.0",
     "fast-levenshtein": "^2.0.6",
     "glob": "^7.1.4",
     "typescript": "^3.4.5"
@@ -73,10 +74,14 @@
     "prettier": "^1.18.2"
   },
   "peerDependencies": {
+    "@typescript-eslint/eslint-plugin": "^2.0.0",
     "@typescript-eslint/parser": "^2.0.0",
-    "eslint": "^6.1.0"
+    "eslint": ">=6.0.0",
+    "eslint-plugin-no-only-tests": "^2.0.0",
+    "eslint-plugin-promise": "^4.0.0"
   },
   "engines": {
     "node": ">=8.0.0"
-  }
+  },
+  "prettier": "./prettier.json"
 }

@@ -8,6 +8,7 @@ from .index_packages import index_packages, render
 from .WardenConfiguration import WardenConfiguration
 from .PackageInfo import PackageInfo
 import os
+import logging
 
 # CONFIGURATION. ENTRY POINT. EXECUTION.
 def console_entry_point():
@@ -85,8 +86,17 @@ def output_presence_results(missing_readme_paths, config):
 
 # execute both presence and content verification
 def all_operations(config):
+
+    if config.verbose_output:
+        print('Starting Content Examination')
     content_results, ignored_content_results = verify_readme_content(config)
+
+    if config.verbose_output:
+        print('Done Content Examination')
+        print('Starting Presence Examination')
     presence_results, ignored_presence_results = find_missing_readmes(config)
+    if config.verbose_output:
+        print('Done Presence Examination')
 
     output_presence_results(presence_results, config)
     output_content_results(content_results, config)

@@ -1,66 +1,81 @@
-﻿@page "{id?}"
+﻿@page "{id}/{revisionId?}"
 @model APIViewWeb.Pages.Assemblies.ReviewPageModel
 @{
-    ViewData["Title"] = "Review";
+    Layout = "ReviewLayout";
+    ViewData["Title"] = Model.Review.Name;
 }
 
 @if (Model.Review.UpdateAvailable)
 {
-    <div class="alert alert-warning" role="alert">
-        <form asp-page-handler="RefreshModel" class=".form-inline" method="post" asp-route-id="@Model.Review.ReviewId">
-            Your code review uses older format and can be updated
-            <button type="submit" class="btn btn-link">Update model</button>
-        </form>
-    </div>
+<div class="alert alert-warning" role="alert" asp-resource="@Model.Review" asp-requirement="@ReviewOwnerRequirement.Instance">
+    <form asp-page-handler="RefreshModel" class=".form-inline" method="post" asp-route-id="@Model.Review.ReviewId">
+        Your code review uses older format and can be updated
+        <button type="submit" class="btn btn-link">Update model</button>
+    </form>
+</div>
 }
-
-
 <div class="row">
-    <div class="col-2 namespace-view">
+    <div class="col">
+        <div class="dropdown my-2 d-inline-block">
+            <a class="btn btn-sm btn-outline-secondary dropdown-toggle" href="#" role="button" data-toggle="dropdown">
+                @Model.Revision.Name
+            </a>
 
-        @if (Model.CodeFile != null)
-        {
-            <partial name="Shared/Navigation" model=" Model.CodeFile.Navigation"/>
-        }
-     </div>
+            <div class="dropdown-menu">
+                @foreach (var revision in Model.Review.Revisions)
+                {
+                <a class="dropdown-item" asp-route-id="@Model.Review.ReviewId" asp-route-revisionId="@revision.RevisionId">@revision.Name</a>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-2">
+        <div class="namespace-view">
+            @if (Model.CodeFile != null)
+            {
+            <partial name="Shared/Navigation" model=" Model.CodeFile.Navigation" />
+            }
+        </div>
+    </div>
 
     <div class="col-10">
         <table class="code-window border rounded-1">
             <tbody>
-            @foreach (var line in Model.Lines) {
-                <tr class="code-line">
+                @foreach (var line in Model.Lines) {
+                <tr class="code-line" data-line-id="@line.ElementId">
                     <td class="line-comment-button-cell">
                         @if (line.ElementId != null) {
-                            <button data-line-id="@line.ElementId" class="btn-link line-comment-button" type="button" style="text-decoration:none;">+</button>
+                        <a class="line-comment-button">+</a>
                         }
                     </td>
                     <td class="code"><span class="code-inner">@Html.Raw(line.DisplayString)</span></td>
                 </tr>
-                <tr>
                 @if (line.Diagnostics.Any())
                 {
-                    <td></td>
-                    <td class="code-diagnostics">
+                <tr class="code-diagnostics" data-line-id="@line.ElementId">
+                    <td colspan="2">
                         @foreach (var lineDiagnostic in line.Diagnostics)
                         {
                         <p>
                             @if (lineDiagnostic.Text.StartsWith("DO"))
                             {
-                                @:✅ <b>DO</b> @lineDiagnostic.Text.Substring(2)
+                            @:✅ <b>DO</b> @lineDiagnostic.Text.Substring(2)
                             }
                             else
                             {
-                                @lineDiagnostic.Text
+                            @lineDiagnostic.Text
                             }
                             <a href="@lineDiagnostic.HelpLinkUri">Details</a>
                         </p>
                         }
                     </td>
-                }
                 </tr>
+                }
 
                 @if (line.ElementId != null && Model.Comments.TryGetThreadForLine(line.ElementId, out var thread)) {
-                    <partial name="_CommentThreadPartial" model="thread" />
+                <partial name="_CommentThreadPartial" model="thread" />
                 }
             }
             </tbody>
@@ -70,10 +85,9 @@
 </div>
 <div id="comment-form-template">
     <div class="comment-form border-top new-thread-comment">
-        <form class="new-thread-comment-form comment" method="post" asp-route-id="@Model.Review.ReviewId">
-            <input type="hidden" asp-for="Comment.ElementId" class="elementIdInput" />
+        <form class="new-thread-comment-form comment" method="post" asp-controller="Comments" asp-action="Add" asp-route-reviewId="@Model.Review.ReviewId" asp-route-revisionId="@Model.Revision.RevisionId">
             <div class="new-comment-content">
-                <textarea class="new-thread-comment-text form-control" asp-for="Comment.Comment" rows="3"></textarea>
+                <textarea class="new-thread-comment-text form-control" name="commentText" rows="3"></textarea>
             </div>
             <button data-post-update="comments" type="submit" name="submit" value="Submit" class="comment-submit-button btn btn-outline-dark">Add Comment</button>
             <button type="button" name="cancel" value="Cancel" class="comment-cancel-button btn btn-outline-dark">Cancel</button>

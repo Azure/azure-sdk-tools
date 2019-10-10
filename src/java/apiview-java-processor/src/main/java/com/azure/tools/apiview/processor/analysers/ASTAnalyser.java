@@ -2,11 +2,15 @@ package com.azure.tools.apiview.processor.analysers;
 
 import com.github.javaparser.JavaParser;
 import com.github.javaparser.ParseResult;
+import com.github.javaparser.Range;
+import com.github.javaparser.TokenRange;
 import com.github.javaparser.ast.AccessSpecifier;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Modifier;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.NodeList;
+import com.github.javaparser.ast.body.AnnotationDeclaration;
+import com.github.javaparser.ast.body.AnnotationMemberDeclaration;
 import com.github.javaparser.ast.body.BodyDeclaration;
 import com.github.javaparser.ast.body.CallableDeclaration;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
@@ -17,6 +21,7 @@ import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.body.TypeDeclaration;
 import com.github.javaparser.ast.body.VariableDeclarator;
+import com.github.javaparser.ast.expr.AnnotationExpr;
 import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.nodeTypes.NodeWithType;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
@@ -136,6 +141,30 @@ public class ASTAnalyser implements Analyser {
 
         private void visitClassOrInterfaceOrEnumDeclaration(TypeDeclaration<?> typeDeclaration, List<Token> tokens) {
             final String fullyQualifiedName = typeDeclaration.getFullyQualifiedName().orElse("");
+
+            // public custom annotation @interface's annotations
+            if (typeDeclaration.isAnnotationDeclaration() && !isPrivateOrPackagePrivate(typeDeclaration.getAccessSpecifier())) {
+                final AnnotationDeclaration annotationDeclaration = (AnnotationDeclaration) typeDeclaration;
+
+                // Annotations on top of AnnotationDeclaration class, for example
+                // @Retention(RUNTIME)
+                // @Target(PARAMETER)
+                // public @interface BodyParam {}
+                final NodeList<AnnotationExpr> annotations = annotationDeclaration.getAnnotations();
+                for (AnnotationExpr annotation : annotations) {
+                    final Optional<TokenRange> tokenRange = annotation.getTokenRange();
+                    if (!tokenRange.isPresent()) {
+                        continue;
+                    }
+                    final TokenRange annotationTokenRange = tokenRange.get();
+                    // TODO: could be more specified instead of string
+                    final String name = annotationTokenRange.toString();
+                    tokens.add(new Token(KEYWORD, name));
+                    tokens.add(new Token(NEW_LINE, ""));
+                }
+            }
+
+            // Skip if the class is private or package-private
             final boolean isPrivate = getTypeDeclaration(typeDeclaration, fullyQualifiedName, tokens);
             // Skip rest of code if the class, interface, or enum declaration is private or package private
             if (isPrivate) {
@@ -150,7 +179,13 @@ public class ASTAnalyser implements Analyser {
             boolean isInterfaceDeclaration = false;
             if (typeDeclaration.isClassOrInterfaceDeclaration()) {
                 // could be interface or custom annotation @interface
-                isInterfaceDeclaration = typeDeclaration.asClassOrInterfaceDeclaration().isInterface() || typeDeclaration.isAnnotationDeclaration();
+                isInterfaceDeclaration = typeDeclaration.asClassOrInterfaceDeclaration().isInterface();
+            }
+
+            // public custom annotation @interface's members
+            if (typeDeclaration.isAnnotationDeclaration() && !isPrivateOrPackagePrivate(typeDeclaration.getAccessSpecifier())) {
+                final AnnotationDeclaration annotationDeclaration = (AnnotationDeclaration) typeDeclaration;
+                tokeniseAnnotationMember(annotationDeclaration, fullyQualifiedName, tokens);
             }
 
             // get fields
@@ -306,6 +341,44 @@ public class ASTAnalyser implements Analyser {
             tokens.add(new Token(NEW_LINE, ""));
 
             return false;
+        }
+
+        private void tokeniseAnnotationMember(AnnotationDeclaration annotationDeclaration, String fullyQualifiedName, List<Token> tokens) {
+            indent();
+            // Member methods in the annotation declaration
+            NodeList<BodyDeclaration<?>> annotationDeclarationMembers = annotationDeclaration.getMembers();
+            for (BodyDeclaration<?> bodyDeclaration : annotationDeclarationMembers) {
+                Optional<AnnotationMemberDeclaration> annotationMemberDeclarationOptional = bodyDeclaration.toAnnotationMemberDeclaration();
+                if (!annotationMemberDeclarationOptional.isPresent()) {
+                    continue;
+                }
+                final AnnotationMemberDeclaration annotationMemberDeclaration = annotationMemberDeclarationOptional.get();
+
+                tokens.add(makeWhitespace());
+                getClassType(annotationMemberDeclaration.getType(), tokens);
+                tokens.add(new Token(WHITESPACE, " "));
+                final String name = annotationMemberDeclaration.getNameAsString();
+                final String definitionId = makeId(fullyQualifiedName + "." + name);
+                tokens.add(new Token(MEMBER_NAME, name, definitionId));
+                tokens.add(new Token(PUNCTUATION, "("));
+                tokens.add(new Token(PUNCTUATION, ")"));
+
+                // default value
+                final Optional<Expression> defaultValueOptional = annotationMemberDeclaration.getDefaultValue();
+                if (defaultValueOptional.isPresent()) {
+                    tokens.add(new Token(WHITESPACE, " "));
+                    tokens.add(new Token(KEYWORD, "default"));
+                    tokens.add(new Token(WHITESPACE, " "));
+
+                    final Expression defaultValueExpr = defaultValueOptional.get();
+                    final String value = defaultValueExpr.toString();
+                    tokens.add(new Token(KEYWORD, value));
+                }
+
+                tokens.add(new Token(PUNCTUATION, ";"));
+                tokens.add(new Token(NEW_LINE, ""));
+            }
+            unindent();
         }
 
         private void tokeniseFields(boolean isInterfaceDeclaration, List<? extends FieldDeclaration> fieldDeclarations, String fullyQualifiedName, List<Token> tokens) {

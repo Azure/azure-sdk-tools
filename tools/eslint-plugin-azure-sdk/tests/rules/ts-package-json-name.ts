@@ -253,23 +253,23 @@ ruleTester.run("ts-package-json-name", rule, {
     {
       // only the fields we care about
       code: '{"name": "@azure/service-bus"}',
-      filename: "package.json"
+      filename: "service-bus/package.json"
     },
     {
       // a full example package.json (taken from https://github.com/Azure/azure-sdk-for-js/blob/master/sdk/eventhub/event-hubs/package.json with "scripts" removed for testing purposes)
       code: examplePackageGood,
-      filename: "package.json"
+      filename: "service-bus/package.json"
     },
     {
       // incorrect format but in a file we don't care about
       code: '{"name": "service-bus"}',
-      filename: "not_package.json"
+      filename: "service-bus/not_package.json"
     }
   ],
   invalid: [
     {
       code: '{"notName": "@azure/service-bus"}',
-      filename: "package.json",
+      filename: "service-bus/package.json",
       errors: [
         {
           message: "name does not exist at the outermost level"
@@ -279,7 +279,7 @@ ruleTester.run("ts-package-json-name", rule, {
     {
       // name is in a nested object
       code: '{"outer": {"name": "@azure/service-bus"}}',
-      filename: "package.json",
+      filename: "service-bus/package.json",
       errors: [
         {
           message: "name does not exist at the outermost level"
@@ -289,7 +289,7 @@ ruleTester.run("ts-package-json-name", rule, {
     {
       // forgot the @azure/
       code: '{"name": "service-bus"}',
-      filename: "package.json",
+      filename: "service-bus/package.json",
       errors: [
         {
           message: "name is not set to @azure/<service>"
@@ -299,7 +299,7 @@ ruleTester.run("ts-package-json-name", rule, {
     {
       // not kebab-case
       code: '{"name": "@azure/serviceBus"}',
-      filename: "package.json",
+      filename: "service-bus/package.json",
       errors: [
         {
           message:
@@ -310,7 +310,7 @@ ruleTester.run("ts-package-json-name", rule, {
     {
       // not kebab-case
       code: '{"name": "@azure/service_bus"}',
-      filename: "package.json",
+      filename: "service-bus/package.json",
       errors: [
         {
           message:
@@ -321,7 +321,7 @@ ruleTester.run("ts-package-json-name", rule, {
     {
       // not kebab-case
       code: '{"name": "@azure/service-bus-"}',
-      filename: "package.json",
+      filename: "service-bus/package.json",
       errors: [
         {
           message:
@@ -332,10 +332,36 @@ ruleTester.run("ts-package-json-name", rule, {
     {
       // example file with name set to service-bus
       code: examplePackageBad,
-      filename: "package.json",
+      filename: "service-bus/package.json",
       errors: [
         {
           message: "name is not set to @azure/<service>"
+        }
+      ]
+    },
+    {
+      // name does not match package directory
+      code: examplePackageGood,
+      filename: "not-service-bus/package.json",
+      errors: [
+        {
+          message:
+            "service should be named '@azure/not-service-bus' or should be moved to a directory called 'service-bus'"
+        }
+      ]
+    },
+    {
+      // name matches package directory, but both are not in kebab-case
+      code: `{"name": "@azure/serviceBus"}`,
+      filename: "serviceBus/package.json",
+      errors: [
+        {
+          message:
+            "service name is not in kebab-case (lowercase and separated by hyphens)"
+        },
+        {
+          message:
+            "service name matches directory name, but the directory is not kebab case (lowercase and separated by hyphens)"
         }
       ]
     }

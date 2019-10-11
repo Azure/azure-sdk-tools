@@ -12,6 +12,7 @@ import { assert } from "chai";
  */
 const ruleList = [
   "github-source-headers",
+  "ts-apiextractor-json-types",
   "ts-apisurface-standardized-verbs",
   "ts-apisurface-supportcancellation",
   "ts-config-allowsyntheticdefaultimports",

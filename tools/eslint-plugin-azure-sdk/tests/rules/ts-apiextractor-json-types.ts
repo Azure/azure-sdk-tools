@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Testing the ts-package-json-types rule.
  * @author Arpan Laha

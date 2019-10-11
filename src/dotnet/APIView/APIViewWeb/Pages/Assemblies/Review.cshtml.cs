@@ -38,6 +38,8 @@ namespace APIViewWeb.Pages.Assemblies
         /// </summary>
         public int ActiveConversations { get; set; }
 
+        public int TotalActiveConversations { get; set; }
+
         public async Task<IActionResult> OnGetAsync(string id, string revisionId = null)
         {
             TempData["Page"] = "api";
@@ -58,7 +60,8 @@ namespace APIViewWeb.Pages.Assemblies
 
             Lines = new CodeFileHtmlRenderer().Render(CodeFile).ToArray();
             Comments = await _commentsManager.GetReviewCommentsAsync(id);
-            ActiveConversations = ComputeActiveConversations( Lines, Comments);
+            ActiveConversations = ComputeActiveConversations(Lines, Comments);
+            TotalActiveConversations = Comments.Threads.Count(t => !t.IsResolved);
 
             return Page();
         }

@@ -28,7 +28,7 @@
                 }
             </div>
         </div>
-        <div class="float-right">@Model.ActiveConversations active conversation(s).</div>
+        <div class="float-right">@Model.ActiveConversations active revision thread(s). @Model.Comments.Threads.Count(t=>!t.IsResolved) total active thread(s).</div>
     </div>
 </div>
 <div class="row">

@@ -53,8 +53,7 @@ export = {
             if (!/\.d\.ts$/.test(baseName as string)) {
               context.report({
                 node: value,
-                message:
-                  "provided types path is not a TypeScript declaration file"
+                message: "provided types path is not a TypeScript declaration file"
               });
             } else if (typesOutputName !== packageDirectory) {
               context.report({

@@ -25,8 +25,7 @@ ruleTester.run("ts-pagination-list", rule, {
   valid: [
     // simple valid example
     {
-      code:
-        "class ExampleClient { listItems(): PagedAsyncIterableIterator<Item> {}; };"
+      code: "class ExampleClient { listItems(): PagedAsyncIterableIterator<Item> {}; };"
     },
     // not a client
     {

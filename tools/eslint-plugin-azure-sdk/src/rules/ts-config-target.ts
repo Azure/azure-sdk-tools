@@ -62,8 +62,7 @@ export = {
             if (/esnext/i.test(target)) {
               context.report({
                 node: nodeValue,
-                message:
-                  "ESNext is not a valid option for compilerOptions.target"
+                message: "ESNext is not a valid option for compilerOptions.target"
               });
             }
           }

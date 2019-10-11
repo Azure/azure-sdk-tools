@@ -159,8 +159,7 @@ ruleTester.run("ts-config-declaration", rule, {
       filename: "tsconfig.json",
       errors: [
         {
-          message:
-            "compilerOptions.declaration is set to false when it should be set to true"
+          message: "compilerOptions.declaration is set to false when it should be set to true"
         }
       ],
       output: '{"compilerOptions": { "declaration": true }}'
@@ -171,8 +170,7 @@ ruleTester.run("ts-config-declaration", rule, {
       filename: "tsconfig.json",
       errors: [
         {
-          message:
-            "compilerOptions.declaration is set to false when it should be set to true"
+          message: "compilerOptions.declaration is set to false when it should be set to true"
         }
       ],
       output: exampleTsconfigGood

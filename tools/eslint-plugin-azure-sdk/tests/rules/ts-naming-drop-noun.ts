@@ -29,8 +29,7 @@ ruleTester.run("ts-naming-drop-noun", rule, {
     },
     // multiple methods
     {
-      code:
-        "class ExampleClient { create(): ExampleClient {}; upsert(): ExampleClient {}; };"
+      code: "class ExampleClient { create(): ExampleClient {}; upsert(): ExampleClient {}; };"
     },
     // not a client
     {

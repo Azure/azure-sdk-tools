@@ -42,8 +42,7 @@ export = {
         }
 
         // report if return type is not PagedAsyncIterableIterator
-        const typeIdentifier = TSFunction.returnType.typeAnnotation
-          .typeName as Identifier;
+        const typeIdentifier = TSFunction.returnType.typeAnnotation.typeName as Identifier;
         if (typeIdentifier.name !== "PagedAsyncIterableIterator") {
           context.report({
             node: node,

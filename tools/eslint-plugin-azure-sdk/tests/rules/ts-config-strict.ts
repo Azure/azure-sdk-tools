@@ -159,8 +159,7 @@ ruleTester.run("ts-config-strict", rule, {
       filename: "tsconfig.json",
       errors: [
         {
-          message:
-            "compilerOptions.strict is set to false when it should be set to true"
+          message: "compilerOptions.strict is set to false when it should be set to true"
         }
       ],
       output: '{"compilerOptions": { "strict": true }}'
@@ -171,8 +170,7 @@ ruleTester.run("ts-config-strict", rule, {
       filename: "tsconfig.json",
       errors: [
         {
-          message:
-            "compilerOptions.strict is set to false when it should be set to true"
+          message: "compilerOptions.strict is set to false when it should be set to true"
         }
       ],
       output: exampleTsconfigGood

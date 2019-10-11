@@ -57,8 +57,7 @@ export = {
             if (!/\.d\.ts$/.test(baseName)) {
               context.report({
                 node: value,
-                message:
-                  "provided .d.ts rollup path is not a TypeScript declaration file"
+                message: "provided .d.ts rollup path is not a TypeScript declaration file"
               });
             } else if (typesOutputName !== packageDirectory) {
               context.report({

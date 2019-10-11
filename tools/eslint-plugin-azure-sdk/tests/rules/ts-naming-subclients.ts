@@ -49,8 +49,7 @@ ruleTester.run("ts-naming-subclients", rule, {
     },
     // multiple
     {
-      code:
-        "class ExampleClient { get(): SubClient {}; get2(): SubSubClient {}; };",
+      code: "class ExampleClient { get(): SubClient {}; get2(): SubSubClient {}; };",
       errors: [
         {
           message:

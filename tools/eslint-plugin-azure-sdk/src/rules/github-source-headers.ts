@@ -14,19 +14,14 @@ import { getRuleMetaData } from "../utils";
 // Rule Definition
 //------------------------------------------------------------------------------
 
-const expectedLines = [
-  "Copyright (c) Microsoft Corporation.",
-  "Licensed under the MIT license."
-];
+const expectedLines = ["Copyright (c) Microsoft Corporation.", "Licensed under the MIT license."];
 
 const expectedComments = `// ${expectedLines.join("\n// ")}\n\n`;
 
 function isValid(comments: Comment[]): boolean {
   return expectedLines
     .map((l, idx) => ({ expected: l, actual: comments[idx] }))
-    .every(
-      v => v.actual.type === "Line" && v.expected === v.actual.value.trim()
-    );
+    .every((v) => v.actual.type === "Line" && v.expected === v.actual.value.trim());
 }
 
 export = {
@@ -45,10 +40,7 @@ export = {
             const sourceCode = context.getSourceCode();
             const headerComments = sourceCode.getCommentsBefore(node);
 
-            if (
-              headerComments.length < expectedLines.length ||
-              !isValid(headerComments)
-            ) {
+            if (headerComments.length < expectedLines.length || !isValid(headerComments)) {
               context.report({
                 node: (headerComments[0] as any) || node,
                 message: "the file does not have a correct copyright header",

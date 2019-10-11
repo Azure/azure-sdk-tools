@@ -67,8 +67,7 @@ ruleTester.run("ts-apifurface-standardized-verbs", rule, {
     },
     // mutliple errors
     {
-      code:
-        "class ExampleClient { makeItem(): void {}; eraseItem(): void {}; };",
+      code: "class ExampleClient { makeItem(): void {}; eraseItem(): void {}; };",
       errors: [
         {
           message:

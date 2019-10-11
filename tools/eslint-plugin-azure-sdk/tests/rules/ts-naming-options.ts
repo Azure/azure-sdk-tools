@@ -25,8 +25,7 @@ ruleTester.run("ts-naming-options", rule, {
   valid: [
     // single method
     {
-      code:
-        "class ExampleClient { createExample(options: CreateExampleOptions) {}; };"
+      code: "class ExampleClient { createExample(options: CreateExampleOptions) {}; };"
     },
     // multiple methods
     {

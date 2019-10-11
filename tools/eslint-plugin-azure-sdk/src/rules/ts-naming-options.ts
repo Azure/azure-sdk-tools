@@ -6,10 +6,7 @@
  * @author Arpan Laha
  */
 
-import {
-  ParserServices,
-  TSESTree
-} from "@typescript-eslint/experimental-utils";
+import { ParserServices, TSESTree } from "@typescript-eslint/experimental-utils";
 import { Rule } from "eslint";
 import { ClassDeclaration, Identifier, MethodDefinition } from "estree";
 import { getPublicMethods, getRuleMetaData } from "../utils";
@@ -40,10 +37,7 @@ export = {
           // look for parameters with types suffixed with Options
           TSFunction.params.forEach((param: TSESTree.Parameter): void => {
             // checks to validate parameter
-            if (
-              param.type === "Identifier" &&
-              param.typeAnnotation !== undefined
-            ) {
+            if (param.type === "Identifier" && param.typeAnnotation !== undefined) {
               const typeAnnotation = param.typeAnnotation.typeAnnotation;
               if (
                 typeAnnotation.type === "TSTypeReference" &&
@@ -52,15 +46,11 @@ export = {
                 const paramTypeName = typeAnnotation.typeName.name;
                 if (paramTypeName.endsWith("Options")) {
                   // check that parameter is prefixed with method name
-                  const optionsRegex = new RegExp(
-                    `${methodIdentifier.name}Options`,
-                    "i"
-                  );
+                  const optionsRegex = new RegExp(`${methodIdentifier.name}Options`, "i");
                   if (!optionsRegex.test(paramTypeName)) {
                     context.report({
                       node: param,
-                      message:
-                        "options parameter type is not prefixed with the method name"
+                      message: "options parameter type is not prefixed with the method name"
                     });
                   }
                 }

@@ -95,8 +95,7 @@ ruleTester.run("ts-doc-internal", rule, {
       filename: "src/test.ts",
       errors: [
         {
-          message:
-            "internal items with TSDoc comments should include an @internal or @ignore tag"
+          message: "internal items with TSDoc comments should include an @internal or @ignore tag"
         }
       ]
     },
@@ -110,8 +109,7 @@ ruleTester.run("ts-doc-internal", rule, {
       filename: "src/test.ts",
       errors: [
         {
-          message:
-            "internal items with TSDoc comments should include an @internal or @ignore tag"
+          message: "internal items with TSDoc comments should include an @internal or @ignore tag"
         }
       ]
     },
@@ -125,8 +123,7 @@ ruleTester.run("ts-doc-internal", rule, {
       filename: "src/test.ts",
       errors: [
         {
-          message:
-            "internal items with TSDoc comments should include an @internal or @ignore tag"
+          message: "internal items with TSDoc comments should include an @internal or @ignore tag"
         }
       ]
     }

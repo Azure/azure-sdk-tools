@@ -35,8 +35,7 @@ export = {
             TSFunction.returnType !== undefined &&
             TSFunction.returnType.typeAnnotation.type === "TSTypeReference"
           ) {
-            const typeIdentifier = TSFunction.returnType.typeAnnotation
-              .typeName as Identifier;
+            const typeIdentifier = TSFunction.returnType.typeAnnotation.typeName as Identifier;
             const typeName = typeIdentifier.name;
 
             // if type is a client that isn't the class itself

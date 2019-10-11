@@ -37,8 +37,7 @@ export = {
           // callback functions
 
           // check to see if compilerOptions exists at the outermost level
-          "ExpressionStatement > ObjectExpression":
-            sourceMapVerifiers.existsInFile,
+          "ExpressionStatement > ObjectExpression": sourceMapVerifiers.existsInFile,
 
           // check that sourceMap and declarationMap are both members of compilerOptions
           "ExpressionStatement > ObjectExpression > Property[key.value='compilerOptions']": (

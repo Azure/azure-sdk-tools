@@ -14,10 +14,7 @@ import { getRuleMetaData } from "../utils";
 //------------------------------------------------------------------------------
 
 export = {
-  meta: getRuleMetaData(
-    "ts-no-namespaces",
-    "forbid usage of TypeScript namespaces"
-  ),
+  meta: getRuleMetaData("ts-no-namespaces", "forbid usage of TypeScript namespaces"),
   create: (context: Rule.RuleContext): Rule.RuleListener =>
     ({
       // callback functions

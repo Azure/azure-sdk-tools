@@ -161,8 +161,7 @@ ruleTester.run("ts-config-importhelpers", rule, {
       filename: "tsconfig.json",
       errors: [
         {
-          message:
-            "compilerOptions.importHelpers is set to false when it should be set to true"
+          message: "compilerOptions.importHelpers is set to false when it should be set to true"
         }
       ],
       output: '{"compilerOptions": { "importHelpers": true }}'
@@ -173,8 +172,7 @@ ruleTester.run("ts-config-importhelpers", rule, {
       filename: "tsconfig.json",
       errors: [
         {
-          message:
-            "compilerOptions.importHelpers is set to false when it should be set to true"
+          message: "compilerOptions.importHelpers is set to false when it should be set to true"
         }
       ],
       output: exampleTsconfigGood

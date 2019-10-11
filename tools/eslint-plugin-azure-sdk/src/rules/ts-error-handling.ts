@@ -6,10 +6,7 @@
  * @author Arpan Laha
  */
 
-import {
-  ParserServices,
-  TSESTree
-} from "@typescript-eslint/experimental-utils";
+import { ParserServices, TSESTree } from "@typescript-eslint/experimental-utils";
 import { Rule } from "eslint";
 import { Identifier, NewExpression, ThrowStatement } from "estree";
 import { getRuleMetaData } from "../utils";
@@ -29,9 +26,7 @@ export = {
           // callback functions
 
           // if throwing a literal value
-          "ThrowStatement[argument.type='Literal']": (
-            node: ThrowStatement
-          ): void => {
+          "ThrowStatement[argument.type='Literal']": (node: ThrowStatement): void => {
             context.report({
               node: node,
               message: "statement is throwing a literal"
@@ -39,9 +34,7 @@ export = {
           },
 
           // if throwing an identifier
-          "ThrowStatement[argument.type='Identifier']": (
-            node: ThrowStatement
-          ): void => {
+          "ThrowStatement[argument.type='Identifier']": (node: ThrowStatement): void => {
             const thrown = node.argument as Identifier;
             const parserServices = context.parserServices as ParserServices;
             if (
@@ -51,12 +44,8 @@ export = {
               return;
             }
             const typeChecker = parserServices.program.getTypeChecker();
-            const TSNode = parserServices.esTreeNodeToTSNodeMap.get(
-              thrown as TSESTree.Node
-            );
-            const type = typeChecker.typeToString(
-              typeChecker.getTypeAtLocation(TSNode)
-            );
+            const TSNode = parserServices.esTreeNodeToTSNodeMap.get(thrown as TSESTree.Node);
+            const type = typeChecker.typeToString(typeChecker.getTypeAtLocation(TSNode));
 
             if (!["TypeError", "RangeError", "Error", "any"].includes(type)) {
               context.report({
@@ -67,9 +56,7 @@ export = {
           },
 
           // if throwing new object
-          "ThrowStatement[argument.type='NewExpression']": (
-            node: ThrowStatement
-          ): void => {
+          "ThrowStatement[argument.type='NewExpression']": (node: ThrowStatement): void => {
             const argument = node.argument as NewExpression;
             const callee = argument.callee as Identifier;
 

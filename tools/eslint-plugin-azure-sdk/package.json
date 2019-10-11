@@ -31,7 +31,8 @@
   },
   "main": "dist/index.js",
   "files": [
-    "dist"
+    "prettier.json",
+    "dist/"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json && prettier --write dist/**/*.{js,json,md}",

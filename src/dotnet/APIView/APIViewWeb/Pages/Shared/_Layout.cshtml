@@ -1,4 +1,5 @@
 ﻿@using System.Reflection
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -50,7 +51,9 @@
 
     <footer class="border-top footer text-muted">
         <div class="container">
-            &copy; 2019 - APIView - <a href="https://github.com/Azure/azure-sdk-tools/">Feedback</a>  - @(typeof(Startup).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion)
+            &copy; 2019 - APIView
+            - <a href="https://github.com/Azure/azure-sdk-tools/">Feedback</a>
+            - <a href="https://github.com/Azure/azure-sdk-tools/commit/@Startup.VersionHash">@Startup.VersionHash</a>
         </div>
     </footer>
 

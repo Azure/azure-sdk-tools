@@ -150,12 +150,6 @@ form.comment {
     margin: 0 4px 0;
 }
 
-.comment-timestamp {
-    float: right;
-    padding-top: 6px;
-    font-size: 12px;
-}
-
 .review-comment {
     padding: 4px 16px;
     position: relative;

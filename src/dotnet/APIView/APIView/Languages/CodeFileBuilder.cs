@@ -319,9 +319,7 @@ namespace ApiView
                 !member.IsAbstract &&
                 member.ContainingType.TypeKind != TypeKind.Interface)
             {
-                builder.Space();
-                builder.Punctuation(SyntaxKind.OpenBraceToken);
-                builder.Punctuation(SyntaxKind.CloseBraceToken);
+                builder.Punctuation(SyntaxKind.SemicolonToken);
             }
             else if (member.Kind == SymbolKind.Field && member.ContainingType.TypeKind == TypeKind.Enum)
             {

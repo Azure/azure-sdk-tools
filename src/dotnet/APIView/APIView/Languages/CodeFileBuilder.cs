@@ -403,6 +403,7 @@ namespace ApiView
                 case "DebuggerStepThroughAttribute":
                 case "AsyncStateMachineAttribute":
                 case "EditorBrowsableAttribute":
+                case "IteratorStateMachineAttribute":
                     return true;
                 default:
                     return false;

@@ -24,6 +24,7 @@ pr:
 
 variables:
   DotNetCoreVersion: '3.0.100'
+  WebProjectDirectory: 'src/dotnet/APIView/APIViewWeb/'
   WebProjectPath: 'src/dotnet/APIView/APIViewWeb/APIViewWeb.csproj'
   TestProjectPath: 'src/dotnet/APIView/APIViewTest/APIViewTest.csproj'
   NodeVersion: '12.x'
@@ -53,7 +54,7 @@ stages:
 
           - script: |
               npm install
-            workingDirectory: $(WebProjectPath)
+            workingDirectory: $(WebProjectDirectory)
             displayName: "Install npm packages"
 
           - task: Maven@3

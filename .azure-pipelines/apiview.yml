@@ -72,7 +72,7 @@ stages:
             inputs:
               command: 'publish'
               projects: '$(WebProjectPath)'
-              publishWebProjects: true
+              publishWebProjects: false
               zipAfterPublish: true
 
       - job: 'Test'

@@ -50,7 +50,7 @@ namespace APIViewWeb
         {
             await AddCommentAsync(user, new CommentModel()
             {
-                IsResolve = true,
+                IsResolved = true,
                 ReviewId = reviewId,
                 ElementId = lineId
             });
@@ -61,7 +61,7 @@ namespace APIViewWeb
             var comments = await _commentsRepository.GetCommentsAsync(reviewId, lineId);
             foreach (var comment in comments)
             {
-                if (comment.IsResolve)
+                if (comment.IsResolved)
                 {
                     await _commentsRepository.DeleteCommentAsync(comment);
                 }

@@ -24,10 +24,11 @@
             <div class="dropdown-menu">
                 @foreach (var revision in Model.Review.Revisions)
                 {
-                <a class="dropdown-item" asp-route-id="@Model.Review.ReviewId" asp-route-revisionId="@revision.RevisionId">@revision.Name</a>
+                    <a class="dropdown-item" asp-route-id="@Model.Review.ReviewId" asp-route-revisionId="@revision.RevisionId">@revision.Name</a>
                 }
             </div>
         </div>
+        <div class="float-right">@Model.ActiveConversations active revision thread(s). @Model.TotalActiveConversations total active thread(s).</div>
     </div>
 </div>
 <div class="row">

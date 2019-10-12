@@ -13,6 +13,6 @@ namespace APIViewWeb.Models
         public string Comment { get; set; }
         public DateTime TimeStamp { get; set; }
         public string Username { get; set; }
-        public bool IsResolve { get; set; }
+        public bool IsResolved { get; set; }
     }
 }

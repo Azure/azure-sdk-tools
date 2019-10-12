@@ -1,6 +1,6 @@
 {
   "name": "@azure/eslint-plugin-azure-sdk",
-  "version": "2.0.1",
+  "version": "3.0.0",
   "description": "An ESLint plugin enforcing design guidelines for the JavaScript/TypeScript Azure SDK",
   "keywords": [
     "eslint",
@@ -39,7 +39,8 @@
     "format": "prettier --write \"./**/*.{ts,json,md}\"",
     "format:check": "prettier --check \"./**/*.{ts,json,md}\"",
     "lint": "eslint src tests --ext .ts && markdownlint README.md docs",
-    "test": "npm run clean && tsc -p tsconfig.json && mocha --timeout 10000 --recursive dist/tests"
+    "test:build": "npm run clean && tsc -p tsconfig.json",
+    "test": "npm run test:build && mocha --timeout 10000 --recursive dist/tests"
   },
   "dependencies": {
     "fast-levenshtein": "^2.0.6",

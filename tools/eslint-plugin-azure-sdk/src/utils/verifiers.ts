@@ -29,6 +29,14 @@ export const stripPath = (pathOrFileName: string): string =>
   pathOrFileName.replace(/^.*[\\\/]/, "");
 
 /**
+ * Get the directory of a filename
+ * @param pathOrFileName the input path or file name
+ * @return the directory part of the path, with no trailing slash
+ */
+export const stripFileName = (pathOrFileName: string): string =>
+  pathOrFileName.replace(/[\\\/][^\\\/]+$/, "");
+
+/**
  * Converts an array to its literal string representation.
  * @param array the array in question.
  * @returns the array's string representation.

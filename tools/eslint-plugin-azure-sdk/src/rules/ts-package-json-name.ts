@@ -6,6 +6,7 @@
 import { Rule } from "eslint";
 import { Literal, Property } from "estree";
 import { getRuleMetaData, getVerifiers, stripPath } from "../utils";
+import { stripFileName } from "../utils/verifiers";
 
 //------------------------------------------------------------------------------
 // Rule Definition
@@ -20,7 +21,8 @@ export = {
     const verifiers = getVerifiers(context, {
       outer: "name"
     });
-    return stripPath(context.getFilename()) === "package.json"
+    const fileName = context.getFilename();
+    return stripPath(fileName) === "package.json"
       ? ({
           // callback functions
 
@@ -42,11 +44,27 @@ export = {
               return;
             }
 
+            const packageDirectory = stripPath(stripFileName(fileName));
+            const packageBaseName = stripPath(name);
             if (!/^@azure\/([a-z]+-)*[a-z]+$/.test(name)) {
               context.report({
                 node: nodeValue,
                 message:
                   "service name is not in kebab-case (lowercase and separated by hyphens)"
+              });
+
+              // Give a good error report if the non-kebab-case name does match the directory and suggest renaming it as well
+              if (name === `@azure/${packageDirectory}`) {
+                context.report({
+                  node: nodeValue,
+                  message:
+                    "service name matches directory name, but the directory is not kebab case (lowercase and separated by hyphens)"
+                });
+              }
+            } else if (name !== `@azure/${packageDirectory}`) {
+              context.report({
+                node: nodeValue,
+                message: `service should be named '@azure/${packageDirectory}' or should be moved to a directory called '${packageBaseName}'`
               });
             }
           }

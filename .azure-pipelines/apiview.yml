@@ -25,7 +25,7 @@ pr:
 variables:
   DotNetCoreVersion: '3.0.100'
   WebProjectPath: 'src/dotnet/APIView/APIViewWeb/'
-  TestProjectPath: 'src/dotnet/APIView/APIViewTests/APIViewTests.csproj'
+  TestProjectPath: 'src/dotnet/APIView/APIViewTest/'
   NodeVersion: '12.x'
 
 stages:

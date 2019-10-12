@@ -5,6 +5,7 @@
     <RootNamespace>APIViewWeb</RootNamespace>
     <AssemblyName>APIViewWeb</AssemblyName>
     <UserSecretsId>79cceff6-d533-4370-a0ee-f3321a343907</UserSecretsId>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <JavaProcessor>..\..\..\java\apiview-java-processor\target\apiview-java-processor-1.0.1.jar</JavaProcessor>
   </PropertyGroup>
 
@@ -16,11 +17,9 @@
   <ItemGroup>
     <PackageReference Include="Azure.Storage.Blobs" Version="12.0.0-preview.2" />
     <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.2.0" />
-    <PackageReference Include="Microsoft.TypeScript.MSBuild" Version="3.6.3">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="2.1.9" />
+    <PackageReference Include="Microsoft.TypeScript.MSBuild" Version="3.6.3" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="2.1.9" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta2-19367-01" PrivateAssets="All" />
     <PackageReference Include="Markdig.Signed" Version="0.17.1" />
   </ItemGroup>
 

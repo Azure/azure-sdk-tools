@@ -28,6 +28,7 @@ variables:
   WebProjectPath: 'src/dotnet/APIView/APIViewWeb/APIViewWeb.csproj'
   TestProjectPath: 'src/dotnet/APIView/APIViewTest/APIViewTest.csproj'
   NodeVersion: '12.x'
+  BuildConfiguration: 'Release'
 
 stages:
   - stage: 'Main'
@@ -43,6 +44,24 @@ stages:
             inputs:
               version: '$(DotNetCoreVersion)'
 
+          - task: DotNetCoreCLI@2
+            displayName: 'Publish site'
+            env:
+              DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+              DOTNET_CLI_TELEMETRY_OPTOUT: 1
+              DOTNET_MULTILEVEL_LOOKUP: 0
+            inputs:
+              command: 'publish'
+              projects: '$(WebProjectPath)'
+              publishWebProjects: false
+              arguments: '--configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory)'
+              zipAfterPublish: true
+
+          - task: PublishBuildArtifacts@1
+            inputs:
+              pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+              artifactName: 'APIView'
+              
           - task: NodeTool@0
             inputs:
               versionSpec: '$(NodeVersion)'
@@ -68,12 +87,7 @@ stages:
               DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
               DOTNET_CLI_TELEMETRY_OPTOUT: 1
               DOTNET_MULTILEVEL_LOOKUP: 0
-          - task: DotNetCoreCLI@2
-            inputs:
-              command: 'publish'
-              projects: '$(WebProjectPath)'
-              publishWebProjects: false
-              zipAfterPublish: true
+
 
       - job: 'Test'
 

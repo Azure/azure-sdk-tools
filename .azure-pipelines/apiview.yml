@@ -24,9 +24,11 @@ pr:
 
 variables:
   DotNetCoreVersion: '3.0.100'
-  WebProjectPath: 'src/dotnet/APIView/APIViewWeb/'
-  TestProjectPath: 'src/dotnet/APIView/APIViewTests/'
+  WebProjectDirectory: 'src/dotnet/APIView/APIViewWeb/'
+  WebProjectPath: 'src/dotnet/APIView/APIViewWeb/APIViewWeb.csproj'
+  TestProjectPath: 'src/dotnet/APIView/APIViewTest/APIViewTest.csproj'
   NodeVersion: '12.x'
+  BuildConfiguration: 'Release'
 
 stages:
   - stage: 'Main'
@@ -53,7 +55,7 @@ stages:
 
           - script: |
               npm install
-            workingDirectory: $(WebProjectPath)
+            workingDirectory: $(WebProjectDirectory)
             displayName: "Install npm packages"
 
           - task: Maven@3
@@ -67,6 +69,25 @@ stages:
               DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
               DOTNET_CLI_TELEMETRY_OPTOUT: 1
               DOTNET_MULTILEVEL_LOOKUP: 0
+
+          - task: DotNetCoreCLI@2
+            displayName: 'Publish site'
+            env:
+              DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+              DOTNET_CLI_TELEMETRY_OPTOUT: 1
+              DOTNET_MULTILEVEL_LOOKUP: 0
+            inputs:
+              command: 'publish'
+              projects: '$(WebProjectPath)'
+              publishWebProjects: false
+              arguments: '--configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory)'
+              zipAfterPublish: true
+
+          - task: PublishBuildArtifacts@1
+            inputs:
+              pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+              artifactName: 'APIView'
+              
 
       - job: 'Test'
 

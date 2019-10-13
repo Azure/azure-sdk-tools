@@ -28,7 +28,15 @@
                 }
             </div>
         </div>
-        <div class="float-right">@Model.ActiveConversations active revision thread(s). @Model.TotalActiveConversations total active thread(s).</div>
+        <div class="dropdown my-2 d-inline-block float-right">
+            <a class="btn btn-sm btn-outline-secondary dropdown-toggle" href="#" role="button" data-toggle="dropdown">
+                💬 @Model.ActiveConversations / @Model.TotalActiveConversations
+            </a>
+            <div class="dropdown-menu dropdown-menu-right">
+                <span class="dropdown-item"><b>@Model.ActiveConversations</b> active revision threads.</span>
+                <span class="dropdown-item"><b>@Model.TotalActiveConversations</b> total active threads.</span>
+            </div>
+        </div>
     </div>
 </div>
 <div class="row">

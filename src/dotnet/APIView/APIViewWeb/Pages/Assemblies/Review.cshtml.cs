@@ -91,5 +91,12 @@ namespace APIViewWeb.Pages.Assemblies
 
             return RedirectToPage(new { id = id });
         }
+
+        public async Task<ActionResult> OnPostToggleClosedAsync(string id)
+        {
+            await _manager.ToggleIsClosedAsync(User, id);
+
+            return RedirectToPage(new { id = id });
+        }
     }
 }

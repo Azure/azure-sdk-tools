@@ -63,9 +63,9 @@ namespace APIViewWeb.Respositories
             return review;
         }
 
-        public Task<IEnumerable<ReviewModel>> GetReviewsAsync()
+        public Task<IEnumerable<ReviewModel>> GetReviewsAsync(bool closed)
         {
-            return _reviewsRepository.GetReviewsAsync();
+            return _reviewsRepository.GetReviewsAsync(closed);
         }
 
         public async Task DeleteReviewAsync(ClaimsPrincipal user, string id)
@@ -206,6 +206,16 @@ namespace APIViewWeb.Respositories
             }
             review.Revisions.RemoveAll(r => r.RevisionId == revisionId);
             UpdateRevisionNames(review);
+            await _reviewsRepository.UpsertReviewAsync(review);
+        }
+
+        public async Task ToggleIsClosedAsync(ClaimsPrincipal user, string id)
+        {
+            var review = await GetReviewAsync(user, id);
+            await AssertOwnerAsync(user, review);
+
+            review.IsClosed = !review.IsClosed;
+
             await _reviewsRepository.UpsertReviewAsync(review);
         }
 

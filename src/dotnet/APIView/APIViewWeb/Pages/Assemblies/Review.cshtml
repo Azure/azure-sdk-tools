@@ -15,8 +15,8 @@
 </div>
 }
 <div class="row">
-    <div class="col">
-        <div class="dropdown my-2 d-inline-block">
+    <div class="col my-2">
+        <div class="dropdown d-inline-block">
             <a class="btn btn-sm btn-outline-secondary dropdown-toggle" href="#" role="button" data-toggle="dropdown">
                 @Model.Revision.Name
             </a>
@@ -28,7 +28,12 @@
                 }
             </div>
         </div>
-        <div class="dropdown my-2 d-inline-block float-right">
+
+        <form asp-resource="@Model.Review" asp-requirement="@ReviewOwnerRequirement.Instance" class="form-inline float-right ml-2" method="post" asp-page-handler="ToggleClosed">
+            <input type="submit" class="btn btn-sm btn-secondary" value="@(Model.Review.IsClosed ? "Reopen": "Close")" />
+        </form>
+
+        <div class="dropdown d-inline-block float-right">
             <a class="btn btn-sm btn-outline-secondary dropdown-toggle" href="#" role="button" data-toggle="dropdown">
                 💬 @Model.ActiveConversations / @Model.TotalActiveConversations
             </a>

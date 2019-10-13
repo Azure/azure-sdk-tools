@@ -225,6 +225,7 @@ form.comment {
     transition: transform .1s ease-in-out;
     transform: scale(.8);
     user-select: none;
+    text-decoration: none;
 }
 
 .code {

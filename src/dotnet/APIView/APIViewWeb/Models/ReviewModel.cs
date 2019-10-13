@@ -33,5 +33,7 @@ namespace APIViewWeb
 #pragma warning restore 618
             set => _runAnalysis = value;
         }
+
+        public bool IsClosed { get; set; }
     }
 }

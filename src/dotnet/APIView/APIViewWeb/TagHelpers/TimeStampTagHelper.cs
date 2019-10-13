@@ -3,7 +3,7 @@ using System;
 
 namespace APIViewWeb.TagHelpers
 {
-    [HtmlTargetElement("span", Attributes = "date")]
+    [HtmlTargetElement(Attributes = "date")]
     public class TimeStampTagHelper : TagHelper
     {
         public DateTime Date { get; set; }

@@ -9,8 +9,8 @@ namespace APIViewWeb.Models
         {
             ReviewId = reviewId;
             LineId = lineId;
-            Comments = comments.Where(c => !c.IsResolved);
-            var resolveComment = comments.FirstOrDefault(c => c.IsResolved);
+            Comments = comments.Where(c => !c.IsResolve);
+            var resolveComment = comments.FirstOrDefault(c => c.IsResolve);
             IsResolved = resolveComment != null;
             ResolvedBy = resolveComment?.Username;
         }

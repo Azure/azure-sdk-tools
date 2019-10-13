@@ -232,7 +232,6 @@ form.comment {
     transform: scale(.8);
     user-select: none;
     text-decoration: none;
-    content: "+";
 }
 
 .code {

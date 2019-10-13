@@ -7,12 +7,12 @@
 
 @if (Model.Review.UpdateAvailable)
 {
-<div class="alert alert-warning" role="alert" asp-resource="@Model.Review" asp-requirement="@ReviewOwnerRequirement.Instance">
-    <form asp-page-handler="RefreshModel" class=".form-inline" method="post" asp-route-id="@Model.Review.ReviewId">
-        Your code review uses older format and can be updated
-        <button type="submit" class="btn btn-link">Update model</button>
-    </form>
-</div>
+    <div class="alert alert-warning" role="alert" asp-resource="@Model.Review" asp-requirement="@ReviewOwnerRequirement.Instance">
+        <form asp-page-handler="RefreshModel" class=".form-inline" method="post" asp-route-id="@Model.Review.ReviewId">
+            Your code review uses older format and can be updated
+            <button type="submit" class="btn btn-link">Update model</button>
+        </form>
+    </div>
 }
 <div class="row">
     <div class="col my-2">
@@ -41,6 +41,12 @@
                 <span class="dropdown-item"><b>@Model.ActiveConversations</b> active revision threads.</span>
                 <span class="dropdown-item"><b>@Model.TotalActiveConversations</b> total active threads.</span>
             </div>
+            <div class="checkbox">
+                <label class="float-right">
+                    <input type="checkbox" checked="checked" id="show-comments-checkbox">
+                    Show comments
+                </label>
+            </div>
         </div>
     </div>
 </div>
@@ -49,7 +55,7 @@
         <div class="namespace-view">
             @if (Model.CodeFile != null)
             {
-            <partial name="Shared/Navigation" model=" Model.CodeFile.Navigation" />
+                <partial name="Shared/Navigation" model=" Model.CodeFile.Navigation" />
             }
         </div>
     </div>
@@ -57,41 +63,44 @@
     <div class="col-10">
         <table class="code-window border rounded-1">
             <tbody>
-                @foreach (var line in Model.Lines) {
-                <tr class="code-line" data-line-id="@line.ElementId">
-                    <td class="line-comment-button-cell">
-                        @if (line.ElementId != null) {
-                        <a class="line-comment-button">+</a>
-                        }
-                    </td>
-                    <td class="code"><span class="code-inner">@Html.Raw(line.DisplayString)</span></td>
-                </tr>
-                @if (line.Diagnostics.Any())
+                @foreach (var line in Model.Lines)
                 {
-                <tr class="code-diagnostics" data-line-id="@line.ElementId">
-                    <td colspan="2">
-                        @foreach (var lineDiagnostic in line.Diagnostics)
-                        {
-                        <p>
-                            @if (lineDiagnostic.Text.StartsWith("DO"))
+                    <tr class="code-line" data-line-id="@line.ElementId">
+                        <td class="line-comment-button-cell">
+                            @if (line.ElementId != null)
                             {
-                            @:✅ <b>DO</b> @lineDiagnostic.Text.Substring(2)
+                                <a class="line-comment-button">+</a>
                             }
-                            else
-                            {
-                            @lineDiagnostic.Text
-                            }
-                            <a href="@lineDiagnostic.HelpLinkUri">Details</a>
-                        </p>
-                        }
-                    </td>
-                </tr>
-                }
+                        </td>
+                        <td class="code"><span class="code-inner">@Html.Raw(line.DisplayString)</span></td>
+                    </tr>
+                    @if (line.Diagnostics.Any())
+                    {
+                        <tr class="code-diagnostics" data-line-id="@line.ElementId">
+                            <td colspan="2">
+                                @foreach (var lineDiagnostic in line.Diagnostics)
+                                {
+                                    <p>
+                                        @if (lineDiagnostic.Text.StartsWith("DO"))
+                                        {
+                                            @:✅ <b>DO</b> @lineDiagnostic.Text.Substring(2)
+                                        }
+                                        else
+                                        {
+                                            @lineDiagnostic.Text
+                                        }
+                                        <a href="@lineDiagnostic.HelpLinkUri">Details</a>
+                                    </p>
+                                }
+                            </td>
+                        </tr>
+                    }
 
-                @if (line.ElementId != null && Model.Comments.TryGetThreadForLine(line.ElementId, out var thread)) {
-                <partial name="_CommentThreadPartial" model="thread" />
+                    @if (line.ElementId != null && Model.Comments.TryGetThreadForLine(line.ElementId, out var thread))
+                    {
+                        <partial name="_CommentThreadPartial" model="thread" />
+                    }
                 }
-            }
             </tbody>
 
         </table>

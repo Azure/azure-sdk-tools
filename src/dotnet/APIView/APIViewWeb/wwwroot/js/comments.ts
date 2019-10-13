@@ -14,6 +14,10 @@
         e.preventDefault();
     });
 
+    $(document).on("click", "#show-comments-checkbox", e => {
+        toggleCommentsDisplay(e.target);
+    });
+
     $(document).on("click", "[data-post-update='comments']", e => {
         const form = <HTMLFormElement><any>$(e.target).closest("form");
         let lineId = getElementId(e.target);
@@ -146,5 +150,16 @@
         partialViewResult = $.parseHTML(partialViewResult);
         $(commentBox).replaceWith(partialViewResult);
         return false;
+    }
+
+    function toggleCommentsDisplay(element) {
+        if (element.checked) {
+            $(".comment-row").css("display", "");
+            $(".code-diagnostics").css("display", "");
+        }
+        else {
+            $(".comment-row").css("display", "none");
+            $(".code-diagnostics").css("display", "none");
+        }
     }
 });

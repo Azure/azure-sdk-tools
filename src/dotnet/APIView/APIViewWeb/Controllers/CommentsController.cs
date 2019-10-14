@@ -32,6 +32,15 @@ namespace APIViewWeb.Controllers
         }
 
         [HttpPost]
+        public async Task<ActionResult> Update(string reviewId, string commentId, string commentText)
+        {
+            var comment =  await _commentsManager.UpdateCommentAsync(User, reviewId, commentId, commentText);
+
+            return await CommentPartialAsync(reviewId, comment.ElementId);
+        }
+
+
+        [HttpPost]
         public async Task<ActionResult> Resolve(string reviewId, string elementId)
         {
             await _commentsManager.ResolveConversation(User, reviewId, elementId);

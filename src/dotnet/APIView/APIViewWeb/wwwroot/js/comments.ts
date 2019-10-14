@@ -1,27 +1,27 @@
 ﻿$(() => {
-    let commentFormTemplate = $("#comment-form-template");
-
     $(document).on("click", ".commentable", e => {
         showCommentBox(e.target.id);
         e.preventDefault();
     });
 
     $(document).on("click", ".line-comment-button", e => {
-        showCommentBox(getLineId(e.target));
+        showCommentBox(getElementId(e.target));
         e.preventDefault();
     });
 
     $(document).on("click", ".comment-cancel-button", e => {
-        hideCommentBox(getLineId(e.target));
+        hideCommentBox(getElementId(e.target));
         e.preventDefault();
     });
 
     $(document).on("click", "[data-post-update='comments']", e => {
         const form = <HTMLFormElement><any>$(e.target).closest("form");
-        let lineId = getLineId(e.target);
+        let lineId = getElementId(e.target);
         let commentRow = getCommentsRow(lineId);
         let serializedForm = form.serializeArray();
         serializedForm.push({ name: "elementId", value: lineId });
+        serializedForm.push({ name: "reviewId", value: getReviewId(e.target) });
+        serializedForm.push({ name: "revisionId", value: getRevisionId(e.target) });
 
         $.ajax({
             type: "POST",
@@ -34,21 +34,54 @@
     });
 
     $(document).on("click", ".review-thread-reply-button", e => {
-        showCommentBox(getLineId(e.target));
+        showCommentBox(getElementId(e.target));
         e.preventDefault();
     });
 
     $(document).on("click", ".toggle-comments", e => {
-        toggleComments(getLineId(e.target));
+        toggleComments(getElementId(e.target));
         e.preventDefault();
     });
 
-    function getLineId(element) {
-        return $(element).closest("[data-line-id]").data("line-id");
+    $(document).on("click", ".js-edit-comment", e => {
+        editComment(getCommentId(e.target));
+        e.preventDefault();
+    });
+
+
+    function getReviewId(element) {
+        return getParentData(element, "data-review-id");
+    }
+
+    function getRevisionId(element) {
+        return getParentData(element, "data-revision-id");
+    }
+
+    function getElementId(element) {
+        return getParentData(element, "data-line-id");
+    }
+
+    function getCommentId(element) {
+        return getParentData(element, "data-comment-id");
+    }
+
+    function getParentData(element, name) {
+        return $(element).closest(`[${name}]`).attr(name);
     }
 
     function toggleComments(id) {
         $(getCommentsRow(id)).find(".comment-holder").toggle();
+    }
+
+    function editComment(commentId) {
+        let commentElement = $(getCommentElement(commentId));
+        let commentText = commentElement.find(".js-comment-raw").html();
+        let template = createCommentEditForm(commentId, commentText);
+        commentElement.replaceWith(template);
+    }
+
+    function getCommentElement(commentId) {
+        return $(`.review-comment[data-comment-id='${commentId}']`);
     }
 
     function getCommentsRow(id) {
@@ -74,7 +107,7 @@
         let commentsRow = getCommentsRow(id);
 
         if (commentsRow.length === 0) {
-            commentForm = createCommentForm(id);
+            commentForm = createCommentForm();
             commentsRow =
                 $(`<tr class="comment-row" data-line-id="${id}">`)
                     .append($("<td colspan=\"2\">")
@@ -87,7 +120,7 @@
             let reply = $(commentsRow).find(".review-thread-reply");
             commentForm = $(commentsRow).find(".comment-form");
             if (commentForm.length === 0) {
-                commentForm = $(createCommentForm(id)).insertAfter(reply);
+                commentForm = $(createCommentForm()).insertAfter(reply);
             }
 
             reply.hide();
@@ -97,10 +130,15 @@
         commentForm.find(".new-thread-comment-text").focus();
     }
 
-    function createCommentForm(id) {
+    function createCommentForm() {
+        return $("#js-comment-form-template").children().clone();
+    }
 
-        let form = commentFormTemplate.children().clone();
-        form.find(".elementIdInput").val(id);
+    function createCommentEditForm( commentId, text) {
+
+        let form = $("#js-comment-edit-form-template").children().clone();
+        form.find(".js-comment-id").val(commentId);
+        form.find(".new-thread-comment-text").html(text);
         return form;
     }
 

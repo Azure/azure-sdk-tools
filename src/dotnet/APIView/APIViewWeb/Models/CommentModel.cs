@@ -14,5 +14,6 @@ namespace APIViewWeb.Models
         public DateTime TimeStamp { get; set; }
         public string Username { get; set; }
         public bool IsResolve { get; set; }
+        public DateTime? EditedTimeStamp { get; set; }
     }
 }

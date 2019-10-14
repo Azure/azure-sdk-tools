@@ -93,10 +93,6 @@ form.comment {
     padding: 12px;
 }
 
-#comment-form-template {
-    display: none;
-}
-
 .comment-actions {
     float: right;
     margin-left: 10px;

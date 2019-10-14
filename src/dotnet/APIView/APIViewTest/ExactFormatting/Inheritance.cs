@@ -7,6 +7,6 @@
         public abstract void M();
     }
     public class LClass : K, I1, I2<K> {
-        public override sealed void M() {}
+        public override sealed void M()/*-*/{/*-*/;/*-*/}/*-*/
     }
 }

@@ -317,13 +317,7 @@ namespace ApiView
             builder.WriteIndent();
             NodeFromSymbol(builder, member);
 
-            if (member.Kind == SymbolKind.Method &&
-                !member.IsAbstract &&
-                member.ContainingType.TypeKind != TypeKind.Interface)
-            {
-                builder.Punctuation(SyntaxKind.SemicolonToken);
-            }
-            else if (member.Kind == SymbolKind.Field && member.ContainingType.TypeKind == TypeKind.Enum)
+            if (member.Kind == SymbolKind.Field && member.ContainingType.TypeKind == TypeKind.Enum)
             {
                 builder.Punctuation(SyntaxKind.CommaToken);
             }

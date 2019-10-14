@@ -1,17 +1,16 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.CodeAnalysis;
 
 namespace ApiView
 {
     class CodeFileBuilderSymbolOrderProvider : ICodeFileBuilderSymbolOrderProvider
     {
-
-        public IEnumerable<T> OrderTypes<T>(IEnumerable<T> symbols) where T: ITypeSymbol
+        public IEnumerable<T> OrderTypes<T>(IEnumerable<T> symbols) where T : ITypeSymbol
         {
             return symbols.OrderBy(t => (GetTypeOrder(t), t.DeclaredAccessibility != Accessibility.Public, t.Name));
         }
@@ -33,7 +32,8 @@ namespace ApiView
                 return -100;
             }
 
-            if (typeSymbol.Name.EndsWith("Options")) {
+            if (typeSymbol.Name.EndsWith("Options"))
+            {
                 return -20;
             }
 
@@ -42,13 +42,16 @@ namespace ApiView
                 return 1;
             }
 
-            if (typeSymbol.TypeKind == TypeKind.Interface) {
+            if (typeSymbol.TypeKind == TypeKind.Interface)
+            {
                 return -1;
             }
-            if (typeSymbol.TypeKind == TypeKind.Enum) {
+            if (typeSymbol.TypeKind == TypeKind.Enum)
+            {
                 return 90;
             }
-            if (typeSymbol.TypeKind == TypeKind.Delegate) {
+            if (typeSymbol.TypeKind == TypeKind.Delegate)
+            {
                 return 99;
             }
             if (typeSymbol.Name.EndsWith("Exception"))
@@ -88,6 +91,5 @@ namespace ApiView
                     return 0;
             }
         }
-
     }
 }

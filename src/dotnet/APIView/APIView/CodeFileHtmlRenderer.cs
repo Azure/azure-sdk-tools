@@ -1,12 +1,12 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using System.Text;
 using APIView;
+using System.Text;
 
 namespace ApiView
 {
-    public class CodeFileHtmlRenderer: CodeFileRenderer
+    public class CodeFileHtmlRenderer : CodeFileRenderer
     {
         protected override void RenderToken(CodeFileToken token, StringBuilder stringBuilder)
         {
@@ -20,7 +20,7 @@ namespace ApiView
 
             switch (token.Kind)
             {
-                case  CodeFileTokenKind.TypeName:
+                case CodeFileTokenKind.TypeName:
                     elementClass = "class";
                     break;
                 case CodeFileTokenKind.MemberName:

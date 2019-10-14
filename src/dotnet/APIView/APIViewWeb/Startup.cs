@@ -57,7 +57,9 @@ namespace APIViewWeb
                 .Bind(options));
 
             services.AddMvc()
-                .SetCompatibilityVersion(CompatibilityVersion.Latest);
+                .SetCompatibilityVersion(CompatibilityVersion.Latest)
+                .AddRazorRuntimeCompilation();
+
             services.AddRazorPages(options =>
             {
                 options.Conventions.AuthorizeFolder("/Assemblies", "RequireOrganization");

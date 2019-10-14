@@ -17,7 +17,7 @@ namespace APIViewWeb.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> Add(string reviewId, string revisionId, string elementId, string commentText)
+        public async Task<ActionResult> Add(string reviewId, string revisionId, string elementId, string commentId, string commentText)
         {
             var comment = new CommentModel();
             comment.TimeStamp = DateTime.UtcNow;
@@ -30,6 +30,15 @@ namespace APIViewWeb.Controllers
 
             return await CommentPartialAsync(reviewId, comment.ElementId);
         }
+
+        [HttpPost]
+        public async Task<ActionResult> Update(string reviewId, string commentId, string commentText)
+        {
+            var comment =  await _commentsManager.UpdateCommentAsync(User, reviewId, commentId, commentText);
+
+            return await CommentPartialAsync(reviewId, comment.ElementId);
+        }
+
 
         [HttpPost]
         public async Task<ActionResult> Resolve(string reviewId, string elementId)

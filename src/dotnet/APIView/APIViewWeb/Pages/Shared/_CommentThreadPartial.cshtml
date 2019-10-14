@@ -17,7 +17,7 @@
                 <div class="comment-thread-contents">
                     @foreach (var comment in Model.Comments)
                     {
-                        <div id="@comment.CommentId" class="review-comment">
+                        <div id="@comment.CommentId" class="review-comment" data-comment-id="@comment.CommentId">
                             <div class="comment-actions">
                                 @if (comment.Username == User.GetGitHubLogin())
                                 {
@@ -31,6 +31,7 @@
                                                 <input type="hidden" name="commentId" value="@comment.CommentId"/>
                                                 <button id="@comment.CommentId" data-post-update="comments" class="text-danger dropdown-item">Delete</button>
                                             </form>
+                                            <a class="dropdown-item js-edit-comment">Edit</a>
                                         </div>
                                     </div>
                                 }
@@ -42,6 +43,7 @@
                                         <strong class=" mt-0 comment-header author align-top">@comment.Username</strong>
                                         <a date="@comment.TimeStamp.ToLocalTime()" href="#@comment.CommentId" class="small float-right"></a>
                                     </div>
+                                    <textarea class="js-comment-raw d-none">@comment.Comment</textarea>
                                     @Html.FormatAsMarkdown(@comment.Comment)
                                 </div>
                             </div>

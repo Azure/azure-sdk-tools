@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using APIViewWeb.Models;
 using APIViewWeb.Respositories;
 using Microsoft.AspNetCore.Authorization;
-using DateTime = System.DateTime;
 
 namespace APIViewWeb
 {

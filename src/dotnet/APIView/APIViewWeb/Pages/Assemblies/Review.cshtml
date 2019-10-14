@@ -65,32 +65,37 @@
             <tbody>
                 @foreach (var line in Model.Lines)
                 {
-                    <tr class="code-line" data-line-id="@line.ElementId">
-                        <td class="line-comment-button-cell">
-                            @if (line.ElementId != null)
+                <tr class="code-line" data-line-id="@line.ElementId">
+                    <td class="line-comment-button-cell">
+                        @if (line.ElementId != null)
+                        {
+                            <a class="line-comment-button">+</a>
+                            @if (Model.Comments.TryGetThreadForLine(line.ElementId, out var _) || line.Diagnostics.Any())
                             {
-                                <a class="line-comment-button">+</a>
+                                <span class="hidden icon icon-comments">💬</span>
                             }
-                        </td>
-                        <td class="code"><span class="code-inner">@Html.Raw(line.DisplayString)</span></td>
-                    </tr>
+                        }
+                    </td>
+                    <td class="code"><span class="code-inner">@Html.Raw(line.DisplayString)</span></td>
+                </tr>
                     @if (line.Diagnostics.Any())
                     {
                         <tr class="code-diagnostics" data-line-id="@line.ElementId">
                             <td colspan="2">
                                 @foreach (var lineDiagnostic in line.Diagnostics)
                                 {
-                                    <p>
-                                        @if (lineDiagnostic.Text.StartsWith("DO"))
-                                        {
-                                            @:✅ <b>DO</b> @lineDiagnostic.Text.Substring(2)
-                                        }
-                                        else
-                                        {
-                                            @lineDiagnostic.Text
-                                        }
-                                        <a href="@lineDiagnostic.HelpLinkUri">Details</a>
-                                    </p>
+                                <p>
+                                    @if (lineDiagnostic.Text.StartsWith("DO"))
+                                    {
+                                        @:✅ <b>DO</b> @lineDiagnostic.Text.Substring(2)
+                                    }
+                                    else
+                                    {
+                                        @lineDiagnostic.Text
+                                    }
+                                    <a href="@lineDiagnostic.HelpLinkUri">Details</a>
+                                    <button type="submit" name="submit" value="Submit" class="btn btn-outline-secondary hide-diagnostics">Hide</button>
+                                </p>
                                 }
                             </td>
                         </tr>

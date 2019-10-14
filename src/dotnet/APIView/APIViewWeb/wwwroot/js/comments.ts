@@ -1,4 +1,10 @@
 ﻿$(() => {
+    let commentFormTemplate = $("#comment-form-template");
+    const HIDDEN = "hidden";
+    const ICON_COMMENTS_SEL = ".icon-comments";
+    const CODE_DIAGNOSTICS_SEL = ".code-diagnostics";
+    const COMMENT_ROW_SEL = ".comment-row";
+
     $(document).on("click", ".commentable", e => {
         showCommentBox(e.target.id);
         e.preventDefault();
@@ -15,7 +21,22 @@
     });
 
     $(document).on("click", "#show-comments-checkbox", e => {
-        toggleCommentsDisplay(e.target);
+        toggleAllCommentsAndDiagnosticsVisibility(e.target);
+    });
+
+    $(document).on("click", ".icon-comments", e => {
+        showSingleCommentAndDiagnostics(getLineId(e.target));
+        e.preventDefault();
+    });
+
+    $(document).on("click", ".hide-thread", e => {
+        hideSingleComment(getLineId(e.target));
+        e.preventDefault();
+    });
+
+    $(document).on("click", ".hide-diagnostics", e => {
+        hideDiagnostics(getLineId(e.target));
+        e.preventDefault();
     });
 
     $(document).on("click", "[data-post-update='comments']", e => {
@@ -109,6 +130,7 @@
     function showCommentBox(id) {
         let commentForm;
         let commentsRow = getCommentsRow(id);
+        let codeRow = getCodeRow(id);
 
         if (commentsRow.length === 0) {
             commentForm = createCommentForm();
@@ -126,10 +148,23 @@
             if (commentForm.length === 0) {
                 commentForm = $(createCommentForm()).insertAfter(reply);
             }
-
             reply.hide();
             commentForm.show();
+            commentsRow.show(); // ensure that entire comment row isn't being hidden
         }
+
+        $(CODE_DIAGNOSTICS_SEL).show(); // ensure that any code diagnostic for this row is shown in case it was previously hidden
+
+        // icon is added to the DOM on initial load for rows that already have comments. 
+        // For new comments, we add the icon here in hidden state
+        if (codeRow.find(ICON_COMMENTS_SEL).length === 0) {
+            let icon = $(`<span class="icon icon-comments ` + HIDDEN + `">💬</span>`);
+            codeRow.find("td.line-comment-button-cell").append(icon);
+        }
+        else {
+            codeRow.find(ICON_COMMENTS_SEL).addClass(HIDDEN);
+        }
+
 
         commentForm.find(".new-thread-comment-text").focus();
     }
@@ -152,14 +187,34 @@
         return false;
     }
 
-    function toggleCommentsDisplay(element) {
+    function toggleAllCommentsAndDiagnosticsVisibility(element) {
         if (element.checked) {
-            $(".comment-row").css("display", "");
-            $(".code-diagnostics").css("display", "");
+            $(COMMENT_ROW_SEL).show();
+            $(CODE_DIAGNOSTICS_SEL).show();
+            $(ICON_COMMENTS_SEL).addClass(HIDDEN);
         }
         else {
-            $(".comment-row").css("display", "none");
-            $(".code-diagnostics").css("display", "none");
+            $(COMMENT_ROW_SEL).hide();
+            $(CODE_DIAGNOSTICS_SEL).hide();
+            $(ICON_COMMENTS_SEL).removeClass(HIDDEN)
         }
+    }
+
+    function showSingleCommentAndDiagnostics(id) {
+        let $elem = getCommentsRow(id);
+        $elem.show();
+        getCodeRow(id).find(ICON_COMMENTS_SEL).addClass(HIDDEN);
+        getDiagnosticsRow(id).show();
+    }
+
+    function hideSingleComment(id) {
+        let $elem = getCommentsRow(id);
+        $elem.hide();
+        getCodeRow(id).find(ICON_COMMENTS_SEL).removeClass(HIDDEN);
+    }
+
+    function hideDiagnostics(id) {
+        getDiagnosticsRow(id).hide();
+        getCodeRow(id).find(ICON_COMMENTS_SEL).removeClass(HIDDEN);
     }
 });

@@ -16,7 +16,7 @@
     });
 
     $(document).on("click", ".comment-cancel-button", e => {
-        let id = getLineId(e.target);
+        let id = getElementId(e.target);
         hideCommentBox(id);
         // if a comment was added and then cancelled, and there are no other
         // comments for the thread, we should remove the comments icon.
@@ -33,17 +33,17 @@
     });
 
     $(document).on("click", ".icon-comments", e => {
-        showSingleCommentAndDiagnostics(getLineId(e.target));
+        showSingleCommentAndDiagnostics(getElementId(e.target));
         e.preventDefault();
     });
 
     $(document).on("click", ".hide-thread", e => {
-        hideSingleComment(getLineId(e.target));
+        hideSingleComment(getElementId(e.target));
         e.preventDefault();
     });
 
     $(document).on("click", ".hide-diagnostics", e => {
-        hideDiagnostics(getLineId(e.target));
+        hideDiagnostics(getElementId(e.target));
         e.preventDefault();
     });
 
@@ -201,18 +201,18 @@
         $(ICON_COMMENTS_SEL).toggleClass(INVISIBLE, show);
     }
 
-    function showSingleCommentAndDiagnostics(id: string) {
+    function showSingleCommentAndDiagnostics(id) {
         getCommentsRow(id).show();
         getCodeRow(id).find(ICON_COMMENTS_SEL).addClass(INVISIBLE);
         getDiagnosticsRow(id).show();
     }
 
-    function hideSingleComment(id: string) {
+    function hideSingleComment(id) {
         getCommentsRow(id).hide();
         getCodeRow(id).find(ICON_COMMENTS_SEL).removeClass(INVISIBLE);
     }
 
-    function hideDiagnostics(id: string) {
+    function hideDiagnostics(id) {
         getDiagnosticsRow(id).hide();
         getCodeRow(id).find(ICON_COMMENTS_SEL).removeClass(INVISIBLE);
     }

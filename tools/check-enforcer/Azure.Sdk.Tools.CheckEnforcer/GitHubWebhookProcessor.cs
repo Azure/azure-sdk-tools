@@ -57,7 +57,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
                 var gitHubAppWebhookSecretName = globalConfigurationProvider.GetGitHubAppWebhookSecretName();
 
                 var client = GetSecretClient();
-                var response = await client.GetSecretAsync(gitHubAppWebhookSecretName, cancellationToken: cancellationToken);
+                var response = await client.GetAsync(gitHubAppWebhookSecretName, cancellationToken: cancellationToken);
                 var secret = response.Value;
 
                 gitHubAppWebhookSecretExpiry = DateTimeOffset.UtcNow.AddSeconds(30);

@@ -17,7 +17,7 @@ namespace APIViewWeb.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> Add(string reviewId, string revisionId, string elementId, string commentId, string commentText)
+        public async Task<ActionResult> Add(string reviewId, string revisionId, string elementId, string commentText)
         {
             var comment = new CommentModel();
             comment.TimeStamp = DateTime.UtcNow;

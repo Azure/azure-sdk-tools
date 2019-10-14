@@ -39,10 +39,10 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Locking
             var containerClient = client.GetBlobContainerClient(containerName);
 
             // TOOD: Consider replacing these with con
-            var maxRetries = 200;
-            var backoffInterval = TimeSpan.FromMilliseconds(250);
+            var maxRetries = 3;
+            var backoffInterval = TimeSpan.FromMilliseconds(2000);
             var lockDuration = TimeSpan.FromSeconds(20);
-            var acquisitionTimeout = TimeSpan.FromSeconds(60);
+            var acquisitionTimeout = TimeSpan.FromSeconds(10);
 
             var distributedLock = new DistributedLock(
                 containerClient,

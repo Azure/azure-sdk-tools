@@ -31,7 +31,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Locking
             this.acquisitionTimeout = acquisitionTimeout;
         }
 
-        public async Task AcquireAsync()
+        public async Task<bool> AcquireAsync()
         {
             var acquisitionStarted = DateTimeOffset.UtcNow;
 
@@ -45,7 +45,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Locking
                 try
                 {
                     await leaseClient.AcquireAsync(lockDuration);
-                    return;
+                    return true;
                 }
                 catch (StorageRequestFailedException ex) when (ex.ErrorCode == "BlobNotFound")
                 {
@@ -56,8 +56,10 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Locking
                 catch (StorageRequestFailedException ex) when (ex.ErrorCode == "LeaseAlreadyPresent")
                 {
                     // Simple backoff logic.
-                    var immediateMultiplier = random.Next(0, 2);
-                    int delay = immediateMultiplier * attempts * ((int)backoffInterval.TotalMilliseconds);
+                    var tryImmediatelyOrNot = random.Next(0, 3);
+                    var maxBackOffDuration = attempts * (int)backoffInterval.TotalMilliseconds;
+                    var randomBackOff = random.Next(0, maxBackOffDuration);
+                    int delay = tryImmediatelyOrNot * randomBackOff;
                     await Task.Delay(delay);
                 }
                 catch (Exception ex)
@@ -67,7 +69,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Locking
 
             } while (attempts < maxRetries || DateTimeOffset.UtcNow > acquisitionStarted + acquisitionTimeout);
 
-            throw new CheckEnforcerDistributedLockException($"Failed to acquire lock for {lockIdentifier}.");
+            return false;
         }
 
         public async Task ReleaseAsync()

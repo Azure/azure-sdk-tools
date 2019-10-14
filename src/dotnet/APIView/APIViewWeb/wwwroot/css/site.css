@@ -315,12 +315,6 @@ code-inner {
     white-space: normal;
 }
 
-.line-comment-icon-cell {
-    user-select: none;
-    width: 1em;
-    white-space: normal;
-}
-
 .line-comment-button-cell::before {
     display: block;
     height: 0;

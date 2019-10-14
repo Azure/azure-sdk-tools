@@ -16,6 +16,7 @@ namespace A {
         /*-*/
         // Skipped attributes
         [DebuggerStepThrough]
+        [IteratorStateMachine(typeof(Class))]
         [PrivateAttribute]
         [EditorBrowsable(EditorBrowsableState.Never)]
         [AsyncStateMachine(typeof(Class))]

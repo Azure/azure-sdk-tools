@@ -1,9 +1,9 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using System.Collections.Generic;
 using APIView;
 using Microsoft.CodeAnalysis.CSharp;
+using System.Collections.Generic;
 
 namespace ApiView
 {

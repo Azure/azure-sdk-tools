@@ -1,9 +1,9 @@
 ﻿// Copyright (c) Microsoft.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
+using Microsoft.CodeAnalysis;
 using System;
 using System.Diagnostics;
 using System.Reflection;
-using Microsoft.CodeAnalysis;
 
 namespace Roslyn.Utilities
 {
@@ -21,30 +21,21 @@ namespace Roslyn.Utilities
 
             unchecked
             {
-                switch (specialType)
+                return specialType switch
                 {
-                    case SpecialType.System_SByte:
-                        return (ulong)(sbyte)value;
-                    case SpecialType.System_Int16:
-                        return (ulong)(short)value;
-                    case SpecialType.System_Int32:
-                        return (ulong)(int)value;
-                    case SpecialType.System_Int64:
-                        return (ulong)(long)value;
-                    case SpecialType.System_Byte:
-                        return (byte)value;
-                    case SpecialType.System_UInt16:
-                        return (ushort)value;
-                    case SpecialType.System_UInt32:
-                        return (uint)value;
-                    case SpecialType.System_UInt64:
-                        return (ulong)value;
+                    SpecialType.System_SByte => (ulong)(sbyte)value,
+                    SpecialType.System_Int16 => (ulong)(short)value,
+                    SpecialType.System_Int32 => (ulong)(int)value,
+                    SpecialType.System_Int64 => (ulong)(long)value,
+                    SpecialType.System_Byte => (byte)value,
+                    SpecialType.System_UInt16 => (ushort)value,
+                    SpecialType.System_UInt32 => (uint)value,
+                    SpecialType.System_UInt64 => (ulong)value,
 
-                    default:
-                        // not using ExceptionUtilities.UnexpectedValue() because this is used by the Services layer
-                        // which doesn't have those utilities.
-                        throw new InvalidOperationException(string.Format("{0} is not a valid underlying type for an enum", specialType));
-                }
+                    // not using ExceptionUtilities.UnexpectedValue() because this is used by the Services layer
+                    // which doesn't have those utilities.
+                    _ => throw new InvalidOperationException(string.Format("{0} is not a valid underlying type for an enum", specialType)),
+                };
             }
         }
 

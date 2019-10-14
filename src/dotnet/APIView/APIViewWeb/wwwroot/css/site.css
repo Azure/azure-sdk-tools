@@ -93,10 +93,6 @@ form.comment {
     padding: 12px;
 }
 
-#comment-form-template {
-    display: none;
-}
-
 .comment-actions {
     float: right;
     margin-left: 10px;
@@ -148,12 +144,6 @@ form.comment {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     font-size: 14px;
     margin: 0 4px 0;
-}
-
-.comment-timestamp {
-    float: right;
-    padding-top: 6px;
-    font-size: 12px;
 }
 
 .review-comment {
@@ -231,6 +221,7 @@ form.comment {
     transition: transform .1s ease-in-out;
     transform: scale(.8);
     user-select: none;
+    text-decoration: none;
 }
 
 .code {

@@ -22,7 +22,7 @@ namespace ApiView
                 }
                 builder.Append(line.DisplayString);
             }
-            
+
             return builder.ToString();
         }
     }

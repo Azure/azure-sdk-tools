@@ -1,3 +1,4 @@
+using System;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OAuth;
@@ -11,6 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Reflection;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
@@ -22,6 +24,15 @@ namespace APIViewWeb
 {
     public class Startup
     {
+        public static string VersionHash { get; set; }
+
+        static Startup()
+        {
+            var version = typeof(Startup).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
+            var indexOfPlus = version.IndexOf("+", StringComparison.OrdinalIgnoreCase);
+            VersionHash = indexOfPlus == -1 ? "dev" : version.Substring(indexOfPlus + 1);
+        }
+
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
@@ -32,6 +43,8 @@ namespace APIViewWeb
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddApplicationInsightsTelemetry();
+
             services.Configure<CookiePolicyOptions>(options =>
             {
                 // This lambda determines whether user consent for non-essential cookies is needed for a given request.
@@ -44,7 +57,9 @@ namespace APIViewWeb
                 .Bind(options));
 
             services.AddMvc()
-                .SetCompatibilityVersion(CompatibilityVersion.Latest);
+                .SetCompatibilityVersion(CompatibilityVersion.Latest)
+                .AddRazorRuntimeCompilation();
+
             services.AddRazorPages(options =>
             {
                 options.Conventions.AuthorizeFolder("/Assemblies", "RequireOrganization");

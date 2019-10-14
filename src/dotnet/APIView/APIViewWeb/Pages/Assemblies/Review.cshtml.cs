@@ -33,6 +33,13 @@ namespace APIViewWeb.Pages.Assemblies
         public LineApiView[] Lines { get; set; }
         public ReviewCommentsModel Comments { get; set; }
 
+        /// <summary>
+        /// The number of active conversations for this iteration
+        /// </summary>
+        public int ActiveConversations { get; set; }
+
+        public int TotalActiveConversations { get; set; }
+
         public async Task<IActionResult> OnGetAsync(string id, string revisionId = null)
         {
             TempData["Page"] = "api";
@@ -53,13 +60,41 @@ namespace APIViewWeb.Pages.Assemblies
 
             Lines = new CodeFileHtmlRenderer().Render(CodeFile).ToArray();
             Comments = await _commentsManager.GetReviewCommentsAsync(id);
+            ActiveConversations = ComputeActiveConversations(Lines, Comments);
+            TotalActiveConversations = Comments.Threads.Count(t => !t.IsResolved);
 
             return Page();
+        }
+
+        private int ComputeActiveConversations(LineApiView[] lines, ReviewCommentsModel comments)
+        {
+            int activeThreads = 0;
+            foreach (LineApiView line in lines)
+            {
+                if (string.IsNullOrEmpty(line.ElementId))
+                {
+                    continue;
+                }
+
+                // if we have comments for this line and the thread has not been resolved.
+                if (comments.TryGetThreadForLine(line.ElementId, out CommentThreadModel thread) && !thread.IsResolved)
+                {
+                    activeThreads++;
+                }
+            }
+            return activeThreads;
         }
 
         public async Task<ActionResult> OnPostRefreshModelAsync(string id)
         {
             await _manager.UpdateReviewAsync(User, id);
+
+            return RedirectToPage(new { id = id });
+        }
+
+        public async Task<ActionResult> OnPostToggleClosedAsync(string id)
+        {
+            await _manager.ToggleIsClosedAsync(User, id);
 
             return RedirectToPage(new { id = id });
         }

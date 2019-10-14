@@ -1,12 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using ApiView;
+using Azure.ClientSdk.Analyzers.Tests;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using ApiView;
-using Azure.ClientSdk.Analyzers.Tests;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
 using Xunit;
 using Xunit.Abstractions;
 

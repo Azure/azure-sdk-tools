@@ -4,18 +4,11 @@
 }
 <ul class="nav nav-tabs">
     <li class="nav-item">
-        <a class="nav-link @ActivePageClass("api")" asp-page="Review" asp-route-id="@id">API</a>
+        <a class="nav-link" active-if="@TempData["page"].Equals("api")" asp-page="Review" asp-route-id="@id">API</a>
     </li>
     <li class="nav-item">
-        <a class="nav-link @ActivePageClass("revisions")" asp-page="Revisions" asp-route-id="@id">Revisions</a>
+        <a class="nav-link" active-if="@TempData["page"].Equals("revisions")" asp-page="Revisions" asp-route-id="@id">Revisions</a>
     </li>
 </ul>
 
-@functions
-{
-    string ActivePageClass(string page)
-    {
-        return TempData["page"].Equals(page) ? "active" : "";
-    }
-}
 @RenderBody()

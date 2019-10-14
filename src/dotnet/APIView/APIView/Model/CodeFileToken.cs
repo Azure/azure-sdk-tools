@@ -11,8 +11,11 @@
         }
 
         public string DefinitionId { get; set; }
+
         public string NavigateToId { get; set; }
+
         public string Value { get; set; }
+
         public CodeFileTokenKind Kind { get; set; }
 
         public override string ToString()

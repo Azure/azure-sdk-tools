@@ -424,10 +424,6 @@ code-inner {
     cursor: pointer;
 }
 
-.hidden {
-    visibility: hidden;
-}
-
 .inline {
     display: inline;
 }

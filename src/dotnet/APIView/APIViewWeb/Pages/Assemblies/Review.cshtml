@@ -40,12 +40,12 @@
             <div class="dropdown-menu dropdown-menu-right">
                 <span class="dropdown-item"><b>@Model.ActiveConversations</b> active revision threads.</span>
                 <span class="dropdown-item"><b>@Model.TotalActiveConversations</b> total active threads.</span>
-            </div>
-            <div class="checkbox">
-                <label class="float-right">
-                    <input type="checkbox" checked="checked" id="show-comments-checkbox">
-                    Show comments
-                </label>
+                <span class="dropdown-item checkbox">
+                    <label>
+                        <input type="checkbox" checked="checked" id="show-comments-checkbox">
+                        Show comments
+                    </label>
+                </span>
             </div>
         </div>
     </div>
@@ -72,7 +72,7 @@
                             <a class="line-comment-button">+</a>
                             @if (Model.Comments.TryGetThreadForLine(line.ElementId, out var _) || line.Diagnostics.Any())
                             {
-                                <span class="hidden icon icon-comments">💬</span>
+                                <span class="invisible icon icon-comments">💬</span>
                             }
                         }
                     </td>

@@ -1,6 +1,6 @@
 ﻿$(() => {
     let commentFormTemplate = $("#comment-form-template");
-    const HIDDEN = "hidden";
+    const INVISIBLE = "invisible";
     const ICON_COMMENTS_SEL = ".icon-comments";
     const CODE_DIAGNOSTICS_SEL = ".code-diagnostics";
     const COMMENT_ROW_SEL = ".comment-row";
@@ -16,12 +16,20 @@
     });
 
     $(document).on("click", ".comment-cancel-button", e => {
-        hideCommentBox(getElementId(e.target));
+        let id = getLineId(e.target);
+        hideCommentBox(id);
+        // if a comment was added and then cancelled, and there are no other
+        // comments for the thread, we should remove the comments icon.
+        // we may want to also remove the entire comments row in this case.
+        // Not an issue for DELETE as this goes to the server and returns the updated markup
+        if (getCommentsRow(id).find(".comment-holder").length === 0) {
+            getCodeRow(id).find(".icon-comments").remove();
+        }
         e.preventDefault();
     });
 
     $(document).on("click", "#show-comments-checkbox", e => {
-        toggleAllCommentsAndDiagnosticsVisibility(e.target);
+        toggleAllCommentsAndDiagnosticsVisibility(e.target.checked);
     });
 
     $(document).on("click", ".icon-comments", e => {
@@ -155,14 +163,14 @@
 
         $(CODE_DIAGNOSTICS_SEL).show(); // ensure that any code diagnostic for this row is shown in case it was previously hidden
 
-        // icon is added to the DOM on initial load for rows that already have comments. 
+        // icon is added to the DOM on initial load for rows that already have comments in Review.cshtml
         // For new comments, we add the icon here in hidden state
         if (codeRow.find(ICON_COMMENTS_SEL).length === 0) {
-            let icon = $(`<span class="icon icon-comments ` + HIDDEN + `">💬</span>`);
+            let icon = $(`<span class="icon icon-comments ` + INVISIBLE + `">💬</span>`);
             codeRow.find("td.line-comment-button-cell").append(icon);
         }
         else {
-            codeRow.find(ICON_COMMENTS_SEL).addClass(HIDDEN);
+            codeRow.find(ICON_COMMENTS_SEL).addClass(INVISIBLE);
         }
 
 
@@ -187,34 +195,25 @@
         return false;
     }
 
-    function toggleAllCommentsAndDiagnosticsVisibility(element) {
-        if (element.checked) {
-            $(COMMENT_ROW_SEL).show();
-            $(CODE_DIAGNOSTICS_SEL).show();
-            $(ICON_COMMENTS_SEL).addClass(HIDDEN);
-        }
-        else {
-            $(COMMENT_ROW_SEL).hide();
-            $(CODE_DIAGNOSTICS_SEL).hide();
-            $(ICON_COMMENTS_SEL).removeClass(HIDDEN)
-        }
+    function toggleAllCommentsAndDiagnosticsVisibility(show: boolean) {
+        $(COMMENT_ROW_SEL).toggle(show);
+        $(CODE_DIAGNOSTICS_SEL).toggle(show);
+        $(ICON_COMMENTS_SEL).toggleClass(INVISIBLE, show);
     }
 
-    function showSingleCommentAndDiagnostics(id) {
-        let $elem = getCommentsRow(id);
-        $elem.show();
-        getCodeRow(id).find(ICON_COMMENTS_SEL).addClass(HIDDEN);
+    function showSingleCommentAndDiagnostics(id: string) {
+        getCommentsRow(id).show();
+        getCodeRow(id).find(ICON_COMMENTS_SEL).addClass(INVISIBLE);
         getDiagnosticsRow(id).show();
     }
 
-    function hideSingleComment(id) {
-        let $elem = getCommentsRow(id);
-        $elem.hide();
-        getCodeRow(id).find(ICON_COMMENTS_SEL).removeClass(HIDDEN);
+    function hideSingleComment(id: string) {
+        getCommentsRow(id).hide();
+        getCodeRow(id).find(ICON_COMMENTS_SEL).removeClass(INVISIBLE);
     }
 
-    function hideDiagnostics(id) {
+    function hideDiagnostics(id: string) {
         getDiagnosticsRow(id).hide();
-        getCodeRow(id).find(ICON_COMMENTS_SEL).removeClass(HIDDEN);
+        getCodeRow(id).find(ICON_COMMENTS_SEL).removeClass(INVISIBLE);
     }
 });

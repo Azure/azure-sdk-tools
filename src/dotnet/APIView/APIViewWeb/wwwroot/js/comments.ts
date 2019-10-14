@@ -137,12 +137,8 @@
     function createCommentEditForm( commentId, text) {
 
         let form = $("#js-comment-edit-form-template").children().clone();
-        if (commentId !== null) {
-            form.find(".js-comment-id").val(commentId);
-        }
-        if (text !== null) {
-            form.find(".new-thread-comment-text").html(text);
-        }
+        form.find(".js-comment-id").val(commentId);
+        form.find(".new-thread-comment-text").html(text);
         return form;
     }
 

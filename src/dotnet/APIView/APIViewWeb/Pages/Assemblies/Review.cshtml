@@ -44,7 +44,7 @@
         </div>
     </div>
 </div>
-<div class="row">
+<div class="row" data-review-id="@Model.Review.ReviewId" data-revision-id="@Model.Revision.RevisionId">
     <div class="col-lg-2 col">
         <div class="namespace-view">
             @if (Model.CodeFile != null)
@@ -97,13 +97,27 @@
         </table>
     </div>
 </div>
-<div id="comment-form-template">
+<div id="js-comment-form-template" class="d-none">
     <div class="comment-form border-top new-thread-comment">
-        <form class="new-thread-comment-form comment" method="post" asp-controller="Comments" asp-action="Add" asp-route-reviewId="@Model.Review.ReviewId" asp-route-revisionId="@Model.Revision.RevisionId">
+        <form class="new-thread-comment-form comment" method="post" asp-controller="Comments" asp-action="Add">
             <div class="new-comment-content">
                 <textarea class="new-thread-comment-text form-control" name="commentText" rows="3"></textarea>
             </div>
             <button data-post-update="comments" type="submit" name="submit" value="Submit" class="comment-submit-button btn btn-outline-dark">Add Comment</button>
+            <button type="button" name="cancel" value="Cancel" class="comment-cancel-button btn btn-outline-dark">Cancel</button>
+        </form>
+    </div>
+</div>
+
+
+<div id="js-comment-edit-form-template" class="d-none">
+    <div class="comment-form border-top new-thread-comment">
+        <form class="new-thread-comment-form comment" method="post" asp-controller="Comments" asp-action="Update">
+            <div class="new-comment-content">
+                <textarea class="new-thread-comment-text form-control" name="commentText" rows="3"></textarea>
+            </div>
+            <input type="hidden" class="js-comment-id" name="commentId"/>
+            <button data-post-update="comments" type="submit" name="submit" value="Submit" class="comment-submit-button btn btn-outline-dark">Save</button>
             <button type="button" name="cancel" value="Cancel" class="comment-cancel-button btn btn-outline-dark">Cancel</button>
         </form>
     </div>

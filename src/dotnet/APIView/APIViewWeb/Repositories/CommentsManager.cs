@@ -39,6 +39,16 @@ namespace APIViewWeb
             await _commentsRepository.UpsertCommentAsync(comment);
         }
 
+        public async Task<CommentModel> UpdateCommentAsync(ClaimsPrincipal user, string reviewId, string commentId, string commentText)
+        {
+            var comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
+            await AssertOwnerAsync(user, comment);
+            comment.EditedTimeStamp = DateTime.Now;
+            comment.Comment = commentText;
+            await _commentsRepository.UpsertCommentAsync(comment);
+            return comment;
+        }
+
         public async Task DeleteCommentAsync(ClaimsPrincipal user, string reviewId, string commentId)
         {
             var comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);

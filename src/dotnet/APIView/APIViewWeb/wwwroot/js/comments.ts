@@ -1,11 +1,8 @@
 ﻿$(() => {
-    let commentFormTemplate = $("#comment-form-template");
     const INVISIBLE = "invisible";
     const SEL_CODE_DIAG = ".code-diagnostics";
-    const SEL_COMMENT_ROW = ".comment-row";
     const SEL_COMMENT_ICON = ".icon-comments";
     const SEL_COMMENT_CELL = ".comment-cell";
-    const SEL_CODE_LINE = ".code-line";
 
     let MessageIconAddedToDom = false;
 
@@ -131,7 +128,6 @@
     function showCommentBox(id) {
         let commentForm;
         let commentsRow = getCommentsRow(id);
-        let codeRow = getCodeRow(id);
 
         if (commentsRow.length === 0) {
             commentForm = createCommentForm();

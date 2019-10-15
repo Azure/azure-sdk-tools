@@ -419,3 +419,11 @@ code-inner {
 .icon-package {
     background: url(/icons/package.png) center left no-repeat;
 }
+
+.icon-comments {
+    cursor: pointer;
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    z-index: 1;
+}

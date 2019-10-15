@@ -1,4 +1,11 @@
 ﻿$(() => {
+    const INVISIBLE = "invisible";
+    const SEL_CODE_DIAG = ".code-diagnostics";
+    const SEL_COMMENT_ICON = ".icon-comments";
+    const SEL_COMMENT_CELL = ".comment-cell";
+
+    let MessageIconAddedToDom = false;
+
     $(document).on("click", ".commentable", e => {
         showCommentBox(e.target.id);
         e.preventDefault();
@@ -10,7 +17,23 @@
     });
 
     $(document).on("click", ".comment-cancel-button", e => {
-        hideCommentBox(getElementId(e.target));
+        let id = getElementId(e.target);
+        hideCommentBox(id);
+        // if a comment was added and then cancelled, and there are no other
+        // comments for the thread, we should remove the comments icon.
+        if (getCommentsRow(id).find(SEL_COMMENT_CELL).length === 0) {
+            getCodeRow(id).find(SEL_COMMENT_ICON).addClass(INVISIBLE);
+        }
+        e.preventDefault();
+    });
+
+    $(document).on("click", "#show-comments-checkbox", e => {
+        ensureMessageIconInDOM();
+        toggleAllCommentsAndDiagnosticsVisibility(e.target.checked);
+    });
+
+    $(document).on("click", SEL_COMMENT_ICON, e => {
+        toggleSingleCommentAndDiagnostics(getElementId(e.target));
         e.preventDefault();
     });
 
@@ -122,9 +145,16 @@
             if (commentForm.length === 0) {
                 commentForm = $(createCommentForm()).insertAfter(reply);
             }
-
             reply.hide();
             commentForm.show();
+            commentsRow.show(); // ensure that entire comment row isn't being hidden
+        }
+
+        $(getDiagnosticsRow(id)).show(); // ensure that any code diagnostic for this row is shown in case it was previously hidden
+
+        // If comment checkbox is unchecked, show the icon for new comment
+        if (!($("#show-comments-checkbox").prop("checked"))) {
+            toggleCommentIcon(id, true);
         }
 
         commentForm.find(".new-thread-comment-text").focus();
@@ -146,5 +176,30 @@
         partialViewResult = $.parseHTML(partialViewResult);
         $(commentBox).replaceWith(partialViewResult);
         return false;
+    }
+
+    function toggleAllCommentsAndDiagnosticsVisibility(showComments: boolean) {
+        $(SEL_COMMENT_CELL + ", " + SEL_CODE_DIAG).each(function () {
+            var id = getElementId(this);
+            getCommentsRow(id).toggle(showComments);
+            getDiagnosticsRow(id).toggle(showComments);
+            toggleCommentIcon(id, !showComments);
+        });
+    }
+
+    function toggleSingleCommentAndDiagnostics(id) {
+        getCommentsRow(id).toggle();
+        getDiagnosticsRow(id).toggle();
+    }
+
+    function ensureMessageIconInDOM() {
+        if (!MessageIconAddedToDom) {
+            $(".line-comment-button-cell").append(`<span class="icon icon-comments ` + INVISIBLE + `">💬</span>`);
+            MessageIconAddedToDom = true;
+        }
+    }
+
+    function toggleCommentIcon(id, show: boolean) {
+        getCodeRow(id).find(SEL_COMMENT_ICON).toggleClass(INVISIBLE, !show);
     }
 });

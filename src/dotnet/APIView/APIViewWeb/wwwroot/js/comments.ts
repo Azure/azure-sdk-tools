@@ -154,11 +154,11 @@
             commentsRow.show(); // ensure that entire comment row isn't being hidden
         }
 
-        $(codeRow).next(SEL_CODE_DIAG).show(); // ensure that any code diagnostic for this row is shown in case it was previously hidden
+        $(getDiagnosticsRow(id)).show(); // ensure that any code diagnostic for this row is shown in case it was previously hidden
 
         // If comment checkbox is unchecked, show the icon for new comment
-        if (!($("#show-comments-checkbox").get(0) as HTMLInputElement).checked) {
-            codeRow.find(SEL_COMMENT_ICON).removeClass(INVISIBLE);
+        if (!($("#show-comments-checkbox").prop("checked"))) {
+            toggleCommentIcon(id, true);
         }
 
         commentForm.find(".new-thread-comment-text").focus();
@@ -182,15 +182,13 @@
         return false;
     }
 
-    function toggleAllCommentsAndDiagnosticsVisibility(show: boolean) {
-        $(SEL_COMMENT_ROW).toggle(show);
-        $(SEL_CODE_DIAG).toggle(show);
-        let $rows = $(SEL_COMMENT_CELL).parent().add($(SEL_CODE_DIAG)); // gets the row level elements
-        $rows
-            .prevUntil(SEL_CODE_LINE) // prevUntil is exclusive of the until part..
-            .addBack() // so add back the row just processed which will be right after the code-line row
-            .prev() // and call prev again
-            .find(SEL_COMMENT_ICON).toggleClass(INVISIBLE, show); // make the comment icon visible
+    function toggleAllCommentsAndDiagnosticsVisibility(showComments: boolean) {
+        $(SEL_COMMENT_CELL + ", " + SEL_CODE_DIAG).each(function () {
+            var id = getElementId(this);
+            getCommentsRow(id).toggle(showComments);
+            getDiagnosticsRow(id).toggle(showComments);
+            toggleCommentIcon(id, !showComments);
+        });
     }
 
     function toggleSingleCommentAndDiagnostics(id) {
@@ -203,5 +201,9 @@
             $(".line-comment-button-cell").append(`<span class="icon icon-comments ` + INVISIBLE + `">💬</span>`);
             MessageIconAddedToDom = true;
         }
+    }
+
+    function toggleCommentIcon(id, show: boolean) {
+        getCodeRow(id).find(SEL_COMMENT_ICON).toggleClass(INVISIBLE, !show);
     }
 });

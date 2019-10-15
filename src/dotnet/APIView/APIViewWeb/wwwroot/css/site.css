@@ -422,6 +422,10 @@ code-inner {
 
 .icon-comments {
     cursor: pointer;
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    z-index: 1;
 }
 
 .inline {

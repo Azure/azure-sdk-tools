@@ -70,10 +70,6 @@
                         @if (line.ElementId != null)
                         {
                             <a class="line-comment-button">+</a>
-                            @if (Model.Comments.TryGetThreadForLine(line.ElementId, out var _) || line.Diagnostics.Any())
-                            {
-                                <span class="invisible icon icon-comments">💬</span>
-                            }
                         }
                     </td>
                     <td class="code"><span class="code-inner">@Html.Raw(line.DisplayString)</span></td>
@@ -94,7 +90,6 @@
                                         @lineDiagnostic.Text
                                     }
                                     <a href="@lineDiagnostic.HelpLinkUri">Details</a>
-                                    <button type="submit" name="submit" value="Submit" class="btn btn-outline-secondary hide-diagnostics">Hide</button>
                                 </p>
                                 }
                             </td>

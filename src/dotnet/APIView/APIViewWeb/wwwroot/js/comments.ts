@@ -1,9 +1,13 @@
 ﻿$(() => {
     let commentFormTemplate = $("#comment-form-template");
     const INVISIBLE = "invisible";
-    const ICON_COMMENTS_SEL = ".icon-comments";
-    const CODE_DIAGNOSTICS_SEL = ".code-diagnostics";
-    const COMMENT_ROW_SEL = ".comment-row";
+    const SEL_CODE_DIAG = ".code-diagnostics";
+    const SEL_COMMENT_ROW = ".comment-row";
+    const SEL_COMMENT_ICON = ".icon-comments";
+    const SEL_COMMENT_CELL = ".comment-cell";
+    const SEL_CODE_LINE = ".code-line";
+
+    let MessageIconAddedToDom = false;
 
     $(document).on("click", ".commentable", e => {
         showCommentBox(e.target.id);
@@ -20,30 +24,19 @@
         hideCommentBox(id);
         // if a comment was added and then cancelled, and there are no other
         // comments for the thread, we should remove the comments icon.
-        // we may want to also remove the entire comments row in this case.
-        // Not an issue for DELETE as this goes to the server and returns the updated markup
-        if (getCommentsRow(id).find(".comment-holder").length === 0) {
-            getCodeRow(id).find(".icon-comments").remove();
+        if (getCommentsRow(id).find(SEL_COMMENT_CELL).length === 0) {
+            getCodeRow(id).find(SEL_COMMENT_ICON).addClass(INVISIBLE);
         }
         e.preventDefault();
     });
 
     $(document).on("click", "#show-comments-checkbox", e => {
+        ensureMessageIconInDOM();
         toggleAllCommentsAndDiagnosticsVisibility(e.target.checked);
     });
 
-    $(document).on("click", ".icon-comments", e => {
-        showSingleCommentAndDiagnostics(getElementId(e.target));
-        e.preventDefault();
-    });
-
-    $(document).on("click", ".hide-thread", e => {
-        hideSingleComment(getElementId(e.target));
-        e.preventDefault();
-    });
-
-    $(document).on("click", ".hide-diagnostics", e => {
-        hideDiagnostics(getElementId(e.target));
+    $(document).on("click", SEL_COMMENT_ICON, e => {
+        toggleSingleCommentAndDiagnostics(getElementId(e.target));
         e.preventDefault();
     });
 
@@ -161,18 +154,12 @@
             commentsRow.show(); // ensure that entire comment row isn't being hidden
         }
 
-        $(CODE_DIAGNOSTICS_SEL).show(); // ensure that any code diagnostic for this row is shown in case it was previously hidden
+        $(codeRow).next(SEL_CODE_DIAG).show(); // ensure that any code diagnostic for this row is shown in case it was previously hidden
 
-        // icon is added to the DOM on initial load for rows that already have comments in Review.cshtml
-        // For new comments, we add the icon here in hidden state
-        if (codeRow.find(ICON_COMMENTS_SEL).length === 0) {
-            let icon = $(`<span class="icon icon-comments ` + INVISIBLE + `">💬</span>`);
-            codeRow.find("td.line-comment-button-cell").append(icon);
+        // If comment checkbox is unchecked, show the icon for new comment
+        if (!($("#show-comments-checkbox").get(0) as HTMLInputElement).checked) {
+            codeRow.find(SEL_COMMENT_ICON).removeClass(INVISIBLE);
         }
-        else {
-            codeRow.find(ICON_COMMENTS_SEL).addClass(INVISIBLE);
-        }
-
 
         commentForm.find(".new-thread-comment-text").focus();
     }
@@ -196,24 +183,25 @@
     }
 
     function toggleAllCommentsAndDiagnosticsVisibility(show: boolean) {
-        $(COMMENT_ROW_SEL).toggle(show);
-        $(CODE_DIAGNOSTICS_SEL).toggle(show);
-        $(ICON_COMMENTS_SEL).toggleClass(INVISIBLE, show);
+        $(SEL_COMMENT_ROW).toggle(show);
+        $(SEL_CODE_DIAG).toggle(show);
+        let $rows = $(SEL_COMMENT_CELL).parent().add($(SEL_CODE_DIAG)); // gets the row level elements
+        $rows
+            .prevUntil(SEL_CODE_LINE) // prevUntil is exclusive of the until part..
+            .addBack() // so add back the row just processed which will be right after the code-line row
+            .prev() // and call prev again
+            .find(SEL_COMMENT_ICON).toggleClass(INVISIBLE, show); // make the comment icon visible
     }
 
-    function showSingleCommentAndDiagnostics(id) {
-        getCommentsRow(id).show();
-        getCodeRow(id).find(ICON_COMMENTS_SEL).addClass(INVISIBLE);
-        getDiagnosticsRow(id).show();
+    function toggleSingleCommentAndDiagnostics(id) {
+        getCommentsRow(id).toggle();
+        getDiagnosticsRow(id).toggle();
     }
 
-    function hideSingleComment(id) {
-        getCommentsRow(id).hide();
-        getCodeRow(id).find(ICON_COMMENTS_SEL).removeClass(INVISIBLE);
-    }
-
-    function hideDiagnostics(id) {
-        getDiagnosticsRow(id).hide();
-        getCodeRow(id).find(ICON_COMMENTS_SEL).removeClass(INVISIBLE);
+    function ensureMessageIconInDOM() {
+        if (!MessageIconAddedToDom) {
+            $(".line-comment-button-cell").append(`<span class="icon icon-comments ` + INVISIBLE + `">💬</span>`);
+            MessageIconAddedToDom = true;
+        }
     }
 });

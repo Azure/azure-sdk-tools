@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Linting rules for the JavaScript/TypeScript Azure SDK
  * @author Arpan Laha

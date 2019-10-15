@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Rule to forbid usage of TypeScript's const enums.
  * @author Arpan Laha
@@ -11,11 +14,7 @@ import { getRuleMetaData } from "../utils";
 //------------------------------------------------------------------------------
 
 export = {
-  meta: getRuleMetaData(
-    "ts-no-const-enums",
-    "forbid usage of TypeScript's const enums",
-    "code"
-  ),
+  meta: getRuleMetaData("ts-no-const-enums", "forbid usage of TypeScript's const enums", "code"),
   create: (context: Rule.RuleContext): Rule.RuleListener =>
     ({
       // callback functions
@@ -27,10 +26,7 @@ export = {
             node: node,
             message: "const enums should not be used",
             fix: (fixer: Rule.RuleFixer): Rule.Fix =>
-              fixer.removeRange([
-                node.range[0],
-                node.range[0] + "const ".length
-              ])
+              fixer.removeRange([node.range[0], node.range[0] + "const ".length])
           });
         }
       }

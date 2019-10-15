@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Testing the ts-oackage-json-engine-is-present rule.
  * @author Arpan Laha
@@ -304,8 +307,7 @@ ruleTester.run("ts-package-json-engine-is-present", rule, {
       filename: "package.json",
       errors: [
         {
-          message:
-            "engines.node is set to >=6.0.0 when it should be set to >=8.0.0"
+          message: "engines.node is set to >=6.0.0 when it should be set to >=8.0.0"
         }
       ],
       output: '{"engines": { "node": ">=8.0.0" }}'
@@ -316,8 +318,7 @@ ruleTester.run("ts-package-json-engine-is-present", rule, {
       filename: "package.json",
       errors: [
         {
-          message:
-            "engines.node is set to >=6.0.0 when it should be set to >=8.0.0"
+          message: "engines.node is set to >=6.0.0 when it should be set to >=8.0.0"
         }
       ],
       output: examplePackageGood

@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Rule to force package.json's name value to be set to @azure/<service>.
  * @author Arpan Laha
@@ -49,8 +52,7 @@ export = {
             if (!/^@azure\/([a-z]+-)*[a-z]+$/.test(name)) {
               context.report({
                 node: nodeValue,
-                message:
-                  "service name is not in kebab-case (lowercase and separated by hyphens)"
+                message: "service name is not in kebab-case (lowercase and separated by hyphens)"
               });
 
               // Give a good error report if the non-kebab-case name does match the directory and suggest renaming it as well

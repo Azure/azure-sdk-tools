@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Rule to force the inclusion of type declarations in the package.
  * @author Arpan Laha
@@ -50,8 +53,7 @@ export = {
             if (!/\.d\.ts$/.test(baseName as string)) {
               context.report({
                 node: value,
-                message:
-                  "provided types path is not a TypeScript declaration file"
+                message: "provided types path is not a TypeScript declaration file"
               });
             } else if (typesOutputName !== packageDirectory) {
               context.report({

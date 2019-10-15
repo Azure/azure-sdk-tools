@@ -1,12 +1,12 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Rule to encourage usage of interfaces over classes as function parameters.
  * @author Arpan Laha
  */
 
-import {
-  ParserServices,
-  TSESTree
-} from "@typescript-eslint/experimental-utils";
+import { ParserServices, TSESTree } from "@typescript-eslint/experimental-utils";
 import { ParserWeakMap } from "@typescript-eslint/typescript-estree/dist/parser-options";
 import { Rule } from "eslint";
 import {
@@ -81,11 +81,7 @@ const getTypeOfParam = (
  * @param symbols A list of Symbols seen so far
  * @param typeChecker the TypeScript language typechecker
  */
-const addSeenSymbols = (
-  symbol: TSSymbol,
-  symbols: TSSymbol[],
-  typeChecker: TypeChecker
-): void => {
+const addSeenSymbols = (symbol: TSSymbol, symbols: TSSymbol[], typeChecker: TypeChecker): void => {
   let isExternal = false;
   let isOptional = false;
 
@@ -105,9 +101,7 @@ const addSeenSymbols = (
   typeChecker
     .getPropertiesOfType(typeChecker.getDeclaredTypeOfSymbol(symbol))
     .forEach((element: TSSymbol): void => {
-      const memberType = typeChecker.getTypeAtLocation(
-        element.valueDeclaration
-      );
+      const memberType = typeChecker.getTypeAtLocation(element.valueDeclaration);
       const memberTypeNode = typeChecker.typeToTypeNode(memberType);
 
       // extract type of member
@@ -123,9 +117,7 @@ const addSeenSymbols = (
       }
       if (
         memberSymbol !== undefined &&
-        [SymbolFlags.Class, SymbolFlags.Interface].includes(
-          memberSymbol.getFlags()
-        ) &&
+        [SymbolFlags.Class, SymbolFlags.Interface].includes(memberSymbol.getFlags()) &&
         !symbols.includes(memberSymbol)
       ) {
         addSeenSymbols(memberSymbol, symbols, typeChecker);
@@ -170,8 +162,7 @@ const isValidParam = (
     return true;
   }
   return getSymbolsUsedInParam(param, converter, typeChecker).every(
-    (symbol: TSSymbol): boolean =>
-      symbol === undefined || symbol.getFlags() !== SymbolFlags.Class
+    (symbol: TSSymbol): boolean => symbol === undefined || symbol.getFlags() !== SymbolFlags.Class
   );
 };
 
@@ -254,29 +245,20 @@ export = {
     }
     const typeChecker = parserServices.program.getTypeChecker();
     const converter = parserServices.esTreeNodeToTSNodeMap;
-    const reverter: ParserWeakMap<TSNode, TSESTree.Node> =
-      parserServices.tsNodeToESTreeNodeMap;
+    const reverter: ParserWeakMap<TSNode, TSESTree.Node> = parserServices.tsNodeToESTreeNodeMap;
 
     const verifiedMethods: string[] = [];
     const verifiedDeclarations: string[] = [];
 
     return /src/.test(context.getFilename())
       ? ({
-          "MethodDefinition > FunctionExpression": (
-            node: FunctionExpression
-          ): void => {
-            const parent = context
-              .getAncestors()
-              .reverse()[0] as MethodDefinition;
+          "MethodDefinition > FunctionExpression": (node: FunctionExpression): void => {
+            const parent = context.getAncestors().reverse()[0] as MethodDefinition;
             const key = parent.key as Identifier;
             const name = key.name;
 
             // ignore if name seen already
-            if (
-              name !== undefined &&
-              name !== "" &&
-              verifiedMethods.includes(name)
-            ) {
+            if (name !== undefined && name !== "" && verifiedMethods.includes(name)) {
               return;
             }
 
@@ -285,8 +267,7 @@ export = {
             if (
               modifiers !== undefined &&
               modifiers.some(
-                (modifier: Modifier): boolean =>
-                  modifier.kind === SyntaxKind.PrivateKeyword
+                (modifier: Modifier): boolean => modifier.kind === SyntaxKind.PrivateKeyword
               )
             ) {
               return;
@@ -307,9 +288,7 @@ export = {
                         )
                         .map(
                           (declaration: Declaration): FunctionExpression => {
-                            const method = reverter.get(
-                              declaration as TSNode
-                            ) as MethodDefinition;
+                            const method = reverter.get(declaration as TSNode) as MethodDefinition;
                             return method.value;
                           }
                         )
@@ -332,11 +311,7 @@ export = {
             const name = id && id.name;
 
             // ignore if name seen already
-            if (
-              name !== null &&
-              name !== "" &&
-              verifiedDeclarations.includes(name)
-            ) {
+            if (name !== null && name !== "" && verifiedDeclarations.includes(name)) {
               return;
             }
 
@@ -350,9 +325,7 @@ export = {
                   symbol !== undefined
                     ? symbol.declarations.map(
                         (declaration: Declaration): FunctionDeclaration =>
-                          reverter.get(
-                            declaration as TSNode
-                          ) as FunctionDeclaration
+                          reverter.get(declaration as TSNode) as FunctionDeclaration
                       )
                     : [];
                 evaluateOverloads(

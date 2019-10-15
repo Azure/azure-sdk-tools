@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Helper methods for rules pertaining to JSON object structure
  * @author Arpan Laha
@@ -41,8 +44,7 @@ export const stripFileName = (pathOrFileName: string): string =>
  * @param array the array in question.
  * @returns the array's string representation.
  */
-export const arrayToString = (array: any[]): string =>
-  JSON.stringify(array).replace(/,/g, ", ");
+export const arrayToString = (array: any[]): string => JSON.stringify(array).replace(/,/g, ", ");
 
 /**
  * Returns structural verifiers given input
@@ -50,10 +52,7 @@ export const arrayToString = (array: any[]): string =>
  * @param data matches StructureData interface, contains outer and optional inner and expected values
  * @return existsInFile, outerMatchesExpected, isMemberOf, innerMatchesExpected, and outerContainsExpected verifiers
  */
-export const getVerifiers = (
-  context: Rule.RuleContext,
-  data: StructureData
-): Verifiers => ({
+export const getVerifiers = (context: Rule.RuleContext, data: StructureData): Verifiers => ({
   /**
    * check to see if if the outer key exists at the outermost level
    * @param node the ObjectExpression node we check to see if it contains data.outer as a key
@@ -104,9 +103,7 @@ export const getVerifiers = (
         fix: (fixer: Rule.RuleFixer): Rule.Fix =>
           fixer.replaceText(
             nodeValue,
-            typeof expected === "string"
-              ? `"${expected}"`
-              : (expected as string)
+            typeof expected === "string" ? `"${expected}"` : (expected as string)
           )
       });
     }
@@ -165,9 +162,7 @@ export const getVerifiers = (
         fix: (fixer: Rule.RuleFixer): Rule.Fix =>
           fixer.replaceText(
             nodeValue,
-            typeof expected === "string"
-              ? `"${expected}"`
-              : (expected as string)
+            typeof expected === "string" ? `"${expected}"` : (expected as string)
           )
       });
     }
@@ -203,9 +198,7 @@ export const getVerifiers = (
     }
 
     const candidateArray = nodeValue.elements as Literal[];
-    const candidateValues = candidateArray.map(
-      (candidate: Literal): unknown => candidate.value
-    );
+    const candidateValues = candidateArray.map((candidate: Literal): unknown => candidate.value);
 
     if (expected instanceof Array) {
       expected.forEach((value: unknown): void => {
@@ -215,10 +208,7 @@ export const getVerifiers = (
             message: `${outer} does not contain ${value}`,
             fix: (fixer: Rule.RuleFixer): Rule.Fix => {
               candidateValues.push(value);
-              return fixer.replaceText(
-                nodeValue,
-                arrayToString(candidateValues)
-              );
+              return fixer.replaceText(nodeValue, arrayToString(candidateValues));
             }
           });
         }

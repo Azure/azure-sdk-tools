@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Testing the ts-package-json-homepage rule.
  * @author Arpan Laha
@@ -297,8 +300,7 @@ ruleTester.run("ts-package-json-homepage", rule, {
       filename: "package.json",
       errors: [
         {
-          message:
-            "homepage is not a URL pointing to your library's readme inside the git repo"
+          message: "homepage is not a URL pointing to your library's readme inside the git repo"
         }
       ]
     },
@@ -308,8 +310,7 @@ ruleTester.run("ts-package-json-homepage", rule, {
       filename: "package.json",
       errors: [
         {
-          message:
-            "homepage is not a URL pointing to your library's readme inside the git repo"
+          message: "homepage is not a URL pointing to your library's readme inside the git repo"
         }
       ]
     },
@@ -319,8 +320,7 @@ ruleTester.run("ts-package-json-homepage", rule, {
       filename: "package.json",
       errors: [
         {
-          message:
-            "homepage is not a URL pointing to your library's readme inside the git repo"
+          message: "homepage is not a URL pointing to your library's readme inside the git repo"
         }
       ]
     }

@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Testing the ts-package-json-name rule.
  * @author Arpan Laha
@@ -302,8 +305,7 @@ ruleTester.run("ts-package-json-name", rule, {
       filename: "service-bus/package.json",
       errors: [
         {
-          message:
-            "service name is not in kebab-case (lowercase and separated by hyphens)"
+          message: "service name is not in kebab-case (lowercase and separated by hyphens)"
         }
       ]
     },
@@ -313,8 +315,7 @@ ruleTester.run("ts-package-json-name", rule, {
       filename: "service-bus/package.json",
       errors: [
         {
-          message:
-            "service name is not in kebab-case (lowercase and separated by hyphens)"
+          message: "service name is not in kebab-case (lowercase and separated by hyphens)"
         }
       ]
     },
@@ -324,8 +325,7 @@ ruleTester.run("ts-package-json-name", rule, {
       filename: "service-bus/package.json",
       errors: [
         {
-          message:
-            "service name is not in kebab-case (lowercase and separated by hyphens)"
+          message: "service name is not in kebab-case (lowercase and separated by hyphens)"
         }
       ]
     },
@@ -356,8 +356,7 @@ ruleTester.run("ts-package-json-name", rule, {
       filename: "serviceBus/package.json",
       errors: [
         {
-          message:
-            "service name is not in kebab-case (lowercase and separated by hyphens)"
+          message: "service name is not in kebab-case (lowercase and separated by hyphens)"
         },
         {
           message:

@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Ensuring the plugin is properly structured
  * @author Arpan Laha
@@ -80,11 +83,7 @@ const testRule = (ruleName: string, rules: any): void => {
         const docs = meta.docs;
         describe("description", (): void => {
           it("description should be a member of docs", (): void => {
-            assert.property(
-              docs,
-              "description",
-              "description is not a member of docs"
-            );
+            assert.property(docs, "description", "description is not a member of docs");
           });
           const description = docs.description;
           it("description should be a string", (): void => {
@@ -93,11 +92,7 @@ const testRule = (ruleName: string, rules: any): void => {
         });
         describe("category", (): void => {
           it("category should be a member of docs", (): void => {
-            assert.property(
-              docs,
-              "category",
-              "category is not a member of docs"
-            );
+            assert.property(docs, "category", "category is not a member of docs");
           });
           const category = docs.category;
           it("category should be a string", (): void => {
@@ -106,11 +101,7 @@ const testRule = (ruleName: string, rules: any): void => {
         });
         describe("recommended", (): void => {
           it("recommended should be a member of docs", (): void => {
-            assert.property(
-              docs,
-              "recommended",
-              "recommended is not a member of docs"
-            );
+            assert.property(docs, "recommended", "recommended is not a member of docs");
           });
           const recommended = docs.recommended;
           it("recommended should be a boolean", (): void => {
@@ -139,11 +130,7 @@ const testRule = (ruleName: string, rules: any): void => {
     });
     describe("create", (): void => {
       it(`create should be a member of ${ruleName}`, (): void => {
-        assert.property(
-          rule,
-          "create",
-          `create is not a member of ${ruleName}`
-        );
+        assert.property(rule, "create", `create is not a member of ${ruleName}`);
       });
       const create = rule.create;
       it("create should be a function", (): void => {
@@ -172,63 +159,35 @@ describe("plugin", (): void => {
   });
   describe("processors", (): void => {
     it("processors should a member of the plugin", (): void => {
-      assert.property(
-        plugin,
-        "processors",
-        "processors is not a member of the plugin"
-      );
+      assert.property(plugin, "processors", "processors is not a member of the plugin");
     });
     const processors = plugin.processors;
     describe(".json", (): void => {
       it(".json should be a member of processors", (): void => {
-        assert.property(
-          processors,
-          ".json",
-          ".json is not a member of processors"
-        );
+        assert.property(processors, ".json", ".json is not a member of processors");
       });
       const JSONProcessor = processors[".json"];
       it("preprocess should be a member of .json", (): void => {
-        assert.property(
-          JSONProcessor,
-          "preprocess",
-          "preprocess is not a member of .json"
-        );
+        assert.property(JSONProcessor, "preprocess", "preprocess is not a member of .json");
       });
       it("postprocess should be a member of .json", (): void => {
-        assert.property(
-          JSONProcessor,
-          "postprocess",
-          "postprocess is not a member of .json"
-        );
+        assert.property(JSONProcessor, "postprocess", "postprocess is not a member of .json");
       });
     });
   });
   describe("configs", (): void => {
     it("configs should be a member of the plugin", (): void => {
-      assert.property(
-        plugin,
-        "configs",
-        "configs is not a member of the plugin"
-      );
+      assert.property(plugin, "configs", "configs is not a member of the plugin");
     });
     const configs = plugin.configs;
     describe("recommended", (): void => {
       it("recommended should be a member of configs", (): void => {
-        assert.property(
-          configs,
-          "recommended",
-          "recommended is not a member of configs"
-        );
+        assert.property(configs, "recommended", "recommended is not a member of configs");
       });
       const recommended = configs.recommended;
       describe("plugins", (): void => {
         it("plugins should be a member of recommended", (): void => {
-          assert.property(
-            recommended,
-            "plugins",
-            "plugins is not a member of recommended"
-          );
+          assert.property(recommended, "plugins", "plugins is not a member of recommended");
         });
         const plugins = recommended.plugins;
         it("plugins should be an array", (): void => {
@@ -244,11 +203,7 @@ describe("plugin", (): void => {
       });
       describe("env", (): void => {
         it("env should be a member of recommended", (): void => {
-          assert.property(
-            recommended,
-            "env",
-            "env is not a member of recommended"
-          );
+          assert.property(recommended, "env", "env is not a member of recommended");
         });
         const env = recommended.env;
         it("env should be an object", (): void => {
@@ -257,11 +212,7 @@ describe("plugin", (): void => {
       });
       describe("parser", (): void => {
         it("parser should be a member of recommended", (): void => {
-          assert.property(
-            recommended,
-            "parser",
-            "parser is not a member of recommmended"
-          );
+          assert.property(recommended, "parser", "parser is not a member of recommmended");
         });
         const parser = recommended.parser;
         it("parser should be set to '@typescript-eslint/parser'", (): void => {
@@ -274,11 +225,7 @@ describe("plugin", (): void => {
       });
       describe("rules", (): void => {
         it("rules should be a member of recommended", (): void => {
-          assert.property(
-            recommended,
-            "rules",
-            "rules is not a member of recommended"
-          );
+          assert.property(recommended, "rules", "rules is not a member of recommended");
         });
         const rules = recommended.rules;
         it("rules should contain settings for every supported rule", (): void => {
@@ -293,28 +240,16 @@ describe("plugin", (): void => {
       });
       describe("settings", (): void => {
         it("settings should be a member of recommended", (): void => {
-          assert.property(
-            recommended,
-            "settings",
-            "settings is not a member of recommended"
-          );
+          assert.property(recommended, "settings", "settings is not a member of recommended");
         });
         const settings = recommended.settings;
         describe("main", (): void => {
           it("main should be a member of settings", (): void => {
-            assert.property(
-              settings,
-              "main",
-              "main is not a member of settings"
-            );
+            assert.property(settings, "main", "main is not a member of settings");
           });
           const main = settings.main;
           it("main should be set to 'src/index.ts'", (): void => {
-            assert.strictEqual(
-              main,
-              "src/index.ts",
-              "main is not set to 'src/index.ts'"
-            );
+            assert.strictEqual(main, "src/index.ts", "main is not set to 'src/index.ts'");
           });
         });
       });

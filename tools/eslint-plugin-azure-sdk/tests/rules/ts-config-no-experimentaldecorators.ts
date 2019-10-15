@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Testing the ts-config-no-experimentaldecorators rule.
  * @author Arpan Laha
@@ -139,8 +142,7 @@ ruleTester.run("ts-config-no-experimentaldecorators", rule, {
     },
     {
       // commpilerOptions is in a nested object
-      code:
-        '{"outer": {"compilerOptions": { "experimentalDecorators": false }}}',
+      code: '{"outer": {"compilerOptions": { "experimentalDecorators": false }}}',
       filename: "tsconfig.json",
       errors: [
         {

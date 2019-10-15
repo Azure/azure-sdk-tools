@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Testing the ts-pagination-list rule.
  * @author Arpan Laha
@@ -22,8 +25,7 @@ ruleTester.run("ts-pagination-list", rule, {
   valid: [
     // simple valid example
     {
-      code:
-        "class ExampleClient { listItems(): PagedAsyncIterableIterator<Item> {}; };"
+      code: "class ExampleClient { listItems(): PagedAsyncIterableIterator<Item> {}; };"
     },
     // not a client
     {

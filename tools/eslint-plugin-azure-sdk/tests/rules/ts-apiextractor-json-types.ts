@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Testing the ts-package-json-types rule.
  * @author Arpan Laha
@@ -91,8 +94,7 @@ ruleTester.run("ts-package-json-types", rule, {
   valid: [
     {
       // only the fields we care about
-      code:
-        '{"dtsRollup": {"publicTrimmedFilePath": "typings/package-a.d.ts"}}',
+      code: '{"dtsRollup": {"publicTrimmedFilePath": "typings/package-a.d.ts"}}',
       filename: "sdk/package/package-a/api-extractor.json"
     },
     {
@@ -102,8 +104,7 @@ ruleTester.run("ts-package-json-types", rule, {
     },
     {
       // only the fields we care about
-      code:
-        '{"dtsRollup": {"publicTrimmedFilePath": "typings/package-a.d.ts"}}',
+      code: '{"dtsRollup": {"publicTrimmedFilePath": "typings/package-a.d.ts"}}',
       filename: "sdk/package/package-a/not_api-extractor.json"
     }
   ],
@@ -129,8 +130,7 @@ ruleTester.run("ts-package-json-types", rule, {
     },
     {
       // dtsRollup is in a nested object
-      code:
-        '{"outer": {"dtsRollup": {"publicTrimmedFilePath" : "./types/package-a.d.ts"}}}',
+      code: '{"outer": {"dtsRollup": {"publicTrimmedFilePath" : "./types/package-a.d.ts"}}}',
       filename: "sdk/package/package-a/api-extractor.json",
       errors: [
         {
@@ -160,13 +160,11 @@ ruleTester.run("ts-package-json-types", rule, {
     },
     {
       // only the fields we care about
-      code:
-        '{"dtsRollup": {"publicTrimmedFilePath": "./typings/package-a.ts"}}',
+      code: '{"dtsRollup": {"publicTrimmedFilePath": "./typings/package-a.ts"}}',
       filename: "sdk/package/package-a/api-extractor.json",
       errors: [
         {
-          message:
-            "provided .d.ts rollup path is not a TypeScript declaration file"
+          message: "provided .d.ts rollup path is not a TypeScript declaration file"
         }
       ]
     },

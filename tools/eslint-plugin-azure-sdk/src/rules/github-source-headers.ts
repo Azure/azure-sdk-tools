@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Rule to require copyright headers in every source file.
  * @author Arpan Laha
@@ -5,26 +8,21 @@
 
 import { Rule } from "eslint";
 import { Comment, Node } from "estree";
-import { get as getLevenshteinDistance } from "fast-levenshtein";
 import { getRuleMetaData } from "../utils";
 
 //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
-const expectedComments =
-  "// Copyright (c) Microsoft Corporation.\n// Licensed under the MIT license.\n";
+const expectedLines = ["Copyright (c) Microsoft Corporation.", "Licensed under the MIT license."];
 
-const expectedLine1 = "Copyright (c) Microsoft Corporation.";
-const expectedLine2 = "Licensed under the MIT license.";
+const expectedComments = `// ${expectedLines.join("\n// ")}\n\n`;
 
-const noCaseRegex1 = /Copyright \(c\) Microsoft Corporation\./i;
-const noCaseRegex2 = /Licensed under the MIT license\./i;
-
-/**
- * Arbitrary Levenshtein distance cutoff.
- */
-const levenshteinCutoff = 20;
+function isValid(comments: Comment[]): boolean {
+  return expectedLines
+    .map((l, idx) => ({ expected: l, actual: comments[idx] }))
+    .every((v) => v.actual.type === "Line" && v.expected === v.actual.value.trim());
+}
 
 export = {
   meta: getRuleMetaData(
@@ -39,65 +37,19 @@ export = {
 
           // check top-level node
           Program: (node: Node): void => {
-            const headerComments = context
-              .getSourceCode()
-              .getCommentsBefore(node);
+            const sourceCode = context.getSourceCode();
+            const headerComments = sourceCode.getCommentsBefore(node);
 
-            // check that there are any header comments at all
-            if (headerComments.length === 0) {
+            if (headerComments.length < expectedLines.length || !isValid(headerComments)) {
               context.report({
-                node: node,
-                message: "no copyright header found",
-                fix: (fixer: Rule.RuleFixer): Rule.Fix =>
-                  fixer.insertTextBefore(node, expectedComments)
-              });
-              return;
-            }
+                node: (headerComments[0] as any) || node,
+                message: "the file does not have a correct copyright header",
 
-            // check for existence of both lines
-            if (
-              headerComments.every(
-                (comment: Comment): boolean =>
-                  !comment.value.includes(expectedLine1)
-              ) ||
-              headerComments.every(
-                (comment: Comment): boolean =>
-                  !comment.value.includes(expectedLine2)
-              )
-            ) {
-              context.report({
-                node: node,
-                message:
-                  "copyright header not properly configured - expected value:\n" +
-                  "Copyright (c) Microsoft Corporation.\nLicensed under the MIT license.\n",
-                fix: (fixer: Rule.RuleFixer): Rule.Fix => {
-                  // iterate over comments and replace with proper value if close enough
-                  for (const comment of headerComments) {
-                    const value = comment.value;
-                    if (
-                      !value.includes(expectedLine1) &&
-                      (noCaseRegex1.test(value) ||
-                        getLevenshteinDistance(expectedLine1, value) <
-                          levenshteinCutoff)
-                    ) {
-                      return fixer.replaceText(
-                        comment as any,
-                        `// ${expectedLine1}`
-                      );
-                    }
-                    if (
-                      !value.includes(expectedLine2) &&
-                      (noCaseRegex2.test(value) ||
-                        getLevenshteinDistance(expectedLine2, value) <
-                          levenshteinCutoff)
-                    ) {
-                      return fixer.replaceText(
-                        comment as any,
-                        `// ${expectedLine2}`
-                      );
-                    }
-                  }
-                  return fixer.insertTextBefore(node, expectedComments);
+                fix(fixer: Rule.RuleFixer): Rule.Fix {
+                  return fixer.insertTextBefore(
+                    (headerComments[0] as any) || node,
+                    expectedComments
+                  );
                 }
               });
             }

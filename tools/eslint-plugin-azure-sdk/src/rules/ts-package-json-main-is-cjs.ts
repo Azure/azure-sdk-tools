@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Rule to force main to point to a CommonJS or UMD module.
  * @author Arpan Laha

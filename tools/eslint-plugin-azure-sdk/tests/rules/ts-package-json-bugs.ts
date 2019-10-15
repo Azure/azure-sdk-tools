@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Testing the ts-package-json-bugs rule.
  * @author Arpan Laha
@@ -252,8 +255,7 @@ ruleTester.run("ts-package-json-bugs", rule, {
   valid: [
     {
       // only the fields we care about
-      code:
-        '{"bugs": { "url": "https://github.com/Azure/azure-sdk-for-js/issues" }}',
+      code: '{"bugs": { "url": "https://github.com/Azure/azure-sdk-for-js/issues" }}',
       filename: "package.json"
     },
     {
@@ -263,8 +265,7 @@ ruleTester.run("ts-package-json-bugs", rule, {
     },
     {
       // incorrect format but in a file we don't care about
-      code:
-        '{"bugs": { "url": "https://github.com/Azure/azure-sdk-for-java/issues" }}',
+      code: '{"bugs": { "url": "https://github.com/Azure/azure-sdk-for-java/issues" }}',
       filename: "not_package.json"
     }
   ],
@@ -280,8 +281,7 @@ ruleTester.run("ts-package-json-bugs", rule, {
     },
     {
       // commpilerOptions is in a nested object
-      code:
-        '{"outer": {"bugs": { "url": "https://github.com/Azure/azure-sdk-for-js/issues" }}}',
+      code: '{"outer": {"bugs": { "url": "https://github.com/Azure/azure-sdk-for-js/issues" }}}',
       filename: "package.json",
       errors: [
         {
@@ -291,8 +291,7 @@ ruleTester.run("ts-package-json-bugs", rule, {
     },
     {
       // commpilerOptions does not contain strict
-      code:
-        '{"bugs": { "link": "https://github.com/Azure/azure-sdk-for-js/issues" }}',
+      code: '{"bugs": { "link": "https://github.com/Azure/azure-sdk-for-js/issues" }}',
       filename: "package.json",
       errors: [
         {
@@ -302,8 +301,7 @@ ruleTester.run("ts-package-json-bugs", rule, {
     },
     {
       // only the fields we care about
-      code:
-        '{"bugs": { "url": "https://github.com/Azure/azure-sdk-for-java/issues" }}',
+      code: '{"bugs": { "url": "https://github.com/Azure/azure-sdk-for-java/issues" }}',
       filename: "package.json",
       errors: [
         {
@@ -311,8 +309,7 @@ ruleTester.run("ts-package-json-bugs", rule, {
             "bugs.url is set to https://github.com/Azure/azure-sdk-for-java/issues when it should be set to https://github.com/Azure/azure-sdk-for-js/issues"
         }
       ],
-      output:
-        '{"bugs": { "url": "https://github.com/Azure/azure-sdk-for-js/issues" }}'
+      output: '{"bugs": { "url": "https://github.com/Azure/azure-sdk-for-js/issues" }}'
     },
     {
       // example file with compilerOptions.strict set to false

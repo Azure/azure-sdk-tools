@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Testing the ts-apisurface-standardized-verbs rule.
  * @author Arpan Laha
@@ -64,8 +67,7 @@ ruleTester.run("ts-apifurface-standardized-verbs", rule, {
     },
     // mutliple errors
     {
-      code:
-        "class ExampleClient { makeItem(): void {}; eraseItem(): void {}; };",
+      code: "class ExampleClient { makeItem(): void {}; eraseItem(): void {}; };",
       errors: [
         {
           message:

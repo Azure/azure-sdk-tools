@@ -1,12 +1,12 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Utilities for analyzing the exports of a package
  * @author Arpan Laha
  */
 
-import {
-  ParserServices,
-  TSESTree
-} from "@typescript-eslint/experimental-utils";
+import { ParserServices, TSESTree } from "@typescript-eslint/experimental-utils";
 import { Rule } from "eslint";
 import { SourceFile, Symbol as TSSymbol } from "typescript";
 import { ClassDeclaration, MethodDefinition } from "estree";
@@ -40,8 +40,7 @@ const getExports = (context: Rule.RuleContext): TSSymbol[] | undefined => {
       typeChecker.getDeclaredTypeOfSymbol(packageExport).getSymbol()
     )
     .filter(
-      (exportSymbol: TSSymbol | undefined): boolean =>
-        exportSymbol !== undefined
+      (exportSymbol: TSSymbol | undefined): boolean => exportSymbol !== undefined
     ) as TSSymbol[];
 };
 
@@ -76,10 +75,7 @@ export const isExternal = (symbol: TSSymbol): boolean => {
  * @param exportSymbol the current Symbol being examined
  * @param localExports the running list of local export Symbols
  */
-const addToSeenLocalExports = (
-  exportSymbol: TSSymbol,
-  localExports: TSSymbol[]
-): void => {
+const addToSeenLocalExports = (exportSymbol: TSSymbol, localExports: TSSymbol[]): void => {
   // skip if it's external or seen already
   if (isExternal(exportSymbol) || localExports.includes(exportSymbol)) {
     return;
@@ -92,9 +88,7 @@ const addToSeenLocalExports = (
  * @param context the ESLint runtime context
  * @returns a list of Symbols corresponding to Types of exports and members that are defined inside the package
  */
-export const getLocalExports = (
-  context: Rule.RuleContext
-): TSSymbol[] | undefined => {
+export const getLocalExports = (context: Rule.RuleContext): TSSymbol[] | undefined => {
   const localExports: TSSymbol[] = [];
 
   const exportSymbols = getExports(context);
@@ -124,7 +118,5 @@ export const getLocalExports = (
 export const getPublicMethods = (node: ClassDeclaration): MethodDefinition[] =>
   node.body.body.filter((method: MethodDefinition): boolean => {
     const TSMethod = method as TSESTree.MethodDefinition;
-    return (
-      method.type === "MethodDefinition" && TSMethod.accessibility !== "private"
-    );
+    return method.type === "MethodDefinition" && TSMethod.accessibility !== "private";
   });

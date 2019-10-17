@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,6 +18,9 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
 {
     public abstract class Handler<T> where T: ActivityPayload
     {
+        private const int EventIdBase = 1000;
+        private static readonly EventId AcquiringSemaphoreEventId = new EventId(EventIdBase + 0, "Acquring Semaphore");
+
         public Handler(IGlobalConfigurationProvider globalConfiguratoinProvider, IGitHubClientProvider gitHubClientProvider, IRepositoryConfigurationProvider repositoryConfigurationProvider, IDistributedLockProvider distrbutedLockProvider, ILogger logger)
         {
             this.GlobalConfigurationProvider = globalConfiguratoinProvider;
@@ -38,11 +42,13 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
             var runs = response.CheckRuns;
             var run = runs.Single(r => r.Name == this.GlobalConfigurationProvider.GetApplicationName());
 
+            Logger.LogTrace("Setting check-run to success.");
             await client.Check.Run.Update(repositoryId, run.Id, new CheckRunUpdate()
             {
                 Conclusion = new StringEnum<CheckConclusion>(CheckConclusion.Success),
                 CompletedAt = DateTimeOffset.UtcNow
             });
+            Logger.LogTrace("Set check-run to success.");
         }
 
         protected async Task SetInProgressAsync(GitHubClient client, long repositoryId, string sha, CancellationToken cancellationToken)
@@ -51,10 +57,12 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
             var runs = response.CheckRuns;
             var run = runs.Single(r => r.Name == this.GlobalConfigurationProvider.GetApplicationName());
 
+            Logger.LogTrace("Setting check-run to in-progress.");
             await client.Check.Run.Update(repositoryId, run.Id, new CheckRunUpdate()
             {
                 Status = new StringEnum<CheckStatus>(CheckStatus.InProgress)
             });
+            Logger.LogTrace("Set check-run to in in-progress.");
         }
 
         protected async Task SetQueuedAsync(GitHubClient client, long repositoryId, string sha, CancellationToken cancellationToken)
@@ -63,10 +71,12 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
             var runs = response.CheckRuns;
             var run = runs.Single(r => r.Name == this.GlobalConfigurationProvider.GetApplicationName());
 
+            Logger.LogTrace("Setting check-run to queued.");
             await client.Check.Run.Update(repositoryId, run.Id, new CheckRunUpdate()
             {
                 Status = new StringEnum<CheckStatus>(CheckStatus.Queued)
             });
+            Logger.LogTrace("Set check-run to queued.");
         }
 
         protected async Task<CheckRun> CreateCheckAsync(GitHubClient client, long repositoryId, string headSha, bool recreate, CancellationToken cancellationToken)
@@ -77,6 +87,8 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
 
             if (checkRun == null || recreate)
             {
+                Logger.LogTrace("Creating check-run.");
+
                 checkRun = await client.Check.Run.Create(
                     repositoryId,
                     new NewCheckRun(this.GlobalConfigurationProvider.GetApplicationName(), headSha)
@@ -85,6 +97,8 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
                         StartedAt = DateTimeOffset.UtcNow
                     }
                 );
+
+                Logger.LogTrace("Created check-run.");
             }
 
             return checkRun;
@@ -114,12 +128,14 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
 
             if (totalOtherRuns >= configuration.MinimumCheckRuns && totalOutstandingOtherRuns == 0 && checkEnforcerRun.Conclusion != new StringEnum<CheckConclusion>(CheckConclusion.Success))
             {
+                Logger.LogTrace("Updating check-run.");
                 await client.Check.Run.Update(repositoryId, checkEnforcerRun.Id, new CheckRunUpdate()
                 {
                     Conclusion = new StringEnum<CheckConclusion>(CheckConclusion.Success),
                     Status = new StringEnum<CheckStatus>(CheckStatus.Completed),
                     CompletedAt = DateTimeOffset.UtcNow
                 });
+                Logger.LogTrace("Updated check-run.");
             }
             else if (totalOtherRuns < configuration.MinimumCheckRuns || totalOutstandingOtherRuns != 0 && checkEnforcerRun.Status != new StringEnum<CheckStatus>(CheckStatus.InProgress))
             {

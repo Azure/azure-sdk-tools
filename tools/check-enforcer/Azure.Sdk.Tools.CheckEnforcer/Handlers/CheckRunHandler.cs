@@ -15,27 +15,28 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
 {
     public class CheckRunHandler : Handler<CheckRunEventPayload>
     {
-        private static readonly EventId AcquiringSemaphoreEventId = new EventId(0, "Acquring Semaphore");
-        private static readonly EventId AcquiredSemaphoreEventId = new EventId(1, "Acquired Semaphore");
-        private static readonly EventId ReleasingSemaphoreEventId = new EventId(2, "Releasing Semaphore");
-        private static readonly EventId ReleasedSemaphoreEventId = new EventId(3, "Released Semaphore");
-        private static readonly EventId SkippedProcessingTrapSemaphoreEventId = new EventId(4, "Skipped Processing (Trap Semaphore)");
-        private static readonly EventId WaitingOnTrapSemaphoreEventId = new EventId(5, "Waiting on Trap Semaphore");
-        private static readonly EventId WaitOnTrapSemaphoreTimeoutEventId = new EventId(6, "Wait on Trap Semaphore Timeout");
-        private static readonly EventId WaitingOnQueueSemaphoreEventId = new EventId(7, "Waiting on Queue Semaphore");
-        private static readonly EventId WaitOnQueueSemaphoreTimeoutEventId = new EventId(8, "Wait on Queue Semaphore Timeout");
-        private static readonly EventId CheckEnforcerEnabledEventId = new EventId(9, "Check Enforcer Enabled");
-        private static readonly EventId CheckEnforcerDisabledEventId = new EventId(10, "Check Enforcer Disabled");
-        private static readonly EventId AcquiringDistributedLockEventId = new EventId(11, "Acquiring Distributed Lock");
-        private static readonly EventId AcquiredDistributedLockEventId = new EventId(12, "Acquired Distributed Lock");
-        private static readonly EventId ReleasingDistributedLockEventId = new EventId(13, "Releasing Distributed Lock");
-        private static readonly EventId ReleasedDistributedLockEventId = new EventId(14, "Released Distributed Lock");
-        private static readonly EventId EvaluatingCheckRunEventId = new EventId(15, "Evalating Check Run");
-        private static readonly EventId EvaluatedCheckRunEventId = new EventId(16, "Evaluated Check Run");
-        private static readonly EventId CheckRunEventProcessingFailedEventId = new EventId(17, "Check Run Event Processing Failed");
-        private static readonly EventId SkippedProcessingCheckEnforcerCheckRunEventEventId = new EventId(18, "Skipped Processing Check Enforcer Check Run Event");
-        private static readonly EventId SkippedProcessingIncompleteCheckRunEventEventId = new EventId(19, "Skipped Processing Incomplete Check Run Event");
-        private static readonly EventId FailedToAcquiredDistributedLockEventId = new EventId(20, "Failed to acquired distributed lock, giving up.");
+        private const int EventIdBase = 3000;
+        private static readonly EventId AcquiringSemaphoreEventId = new EventId(EventIdBase + 0, "Acquring Semaphore");
+        private static readonly EventId AcquiredSemaphoreEventId = new EventId(EventIdBase + 1, "Acquired Semaphore");
+        private static readonly EventId ReleasingSemaphoreEventId = new EventId(EventIdBase + 2, "Releasing Semaphore");
+        private static readonly EventId ReleasedSemaphoreEventId = new EventId(EventIdBase + 3, "Released Semaphore");
+        private static readonly EventId SkippedProcessingTrapSemaphoreEventId = new EventId(EventIdBase + 4, "Skipped Processing (Trap Semaphore)");
+        private static readonly EventId WaitingOnTrapSemaphoreEventId = new EventId(EventIdBase + 5, "Waiting on Trap Semaphore");
+        private static readonly EventId WaitOnTrapSemaphoreTimeoutEventId = new EventId(EventIdBase + 6, "Wait on Trap Semaphore Timeout");
+        private static readonly EventId WaitingOnQueueSemaphoreEventId = new EventId(EventIdBase + 7, "Waiting on Queue Semaphore");
+        private static readonly EventId WaitOnQueueSemaphoreTimeoutEventId = new EventId(EventIdBase + 8, "Wait on Queue Semaphore Timeout");
+        private static readonly EventId CheckEnforcerEnabledEventId = new EventId(EventIdBase + 9, "Check Enforcer Enabled");
+        private static readonly EventId CheckEnforcerDisabledEventId = new EventId(EventIdBase + 10, "Check Enforcer Disabled");
+        private static readonly EventId AcquiringDistributedLockEventId = new EventId(EventIdBase + 11, "Acquiring Distributed Lock");
+        private static readonly EventId AcquiredDistributedLockEventId = new EventId(EventIdBase + 12, "Acquired Distributed Lock");
+        private static readonly EventId ReleasingDistributedLockEventId = new EventId(EventIdBase + 13, "Releasing Distributed Lock");
+        private static readonly EventId ReleasedDistributedLockEventId = new EventId(EventIdBase + 14, "Released Distributed Lock");
+        private static readonly EventId EvaluatingCheckRunEventId = new EventId(EventIdBase + 15, "Evalating Check Run");
+        private static readonly EventId EvaluatedCheckRunEventId = new EventId(EventIdBase + 16, "Evaluated Check Run");
+        private static readonly EventId CheckRunEventProcessingFailedEventId = new EventId(EventIdBase + 17, "Check Run Event Processing Failed");
+        private static readonly EventId SkippedProcessingCheckEnforcerCheckRunEventEventId = new EventId(EventIdBase + 18, "Skipped Processing Check Enforcer Check Run Event");
+        private static readonly EventId SkippedProcessingIncompleteCheckRunEventEventId = new EventId(EventIdBase + 19, "Skipped Processing Incomplete Check Run Event");
+        private static readonly EventId FailedToAcquiredDistributedLockEventId = new EventId(EventIdBase + 20, "Failed to acquired distributed lock, giving up.");
 
         public CheckRunHandler(IGlobalConfigurationProvider globalConfigurationProvider, IGitHubClientProvider gitHubCLientProvider, IRepositoryConfigurationProvider repositoryConfigurationProvider, IDistributedLockProvider distributedLockProvider, ILogger logger) : base(globalConfigurationProvider, gitHubCLientProvider, repositoryConfigurationProvider, distributedLockProvider, logger)
         {
@@ -45,10 +46,10 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
 
         private SemaphoreSlim GetSemaphore(string semaphoreName)
         {
-            Logger.LogDebug(AcquiringSemaphoreEventId, "Acquiring semaphore: {semaphoreName}.", semaphoreName);
+            Logger.LogTrace(AcquiringSemaphoreEventId, "Acquiring semaphore: {semaphoreName}.", semaphoreName);
             var semaphore = semaphores.GetOrAdd(semaphoreName, new SemaphoreSlim(1, 1));
             var currentCount = semaphore.CurrentCount;
-            Logger.LogDebug(
+            Logger.LogTrace(
                 AcquiredSemaphoreEventId,
                 "Acquired semaphore: {semaphoreName} with current count of: {currentCount}.",
                 semaphoreName,
@@ -70,7 +71,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
             {
                 if (payload.CheckRun.Name == this.GlobalConfigurationProvider.GetApplicationName())
                 {
-                    Logger.LogDebug(
+                    Logger.LogTrace(
                         SkippedProcessingCheckEnforcerCheckRunEventEventId,
                         "Skipping processing event for: {distributedLockIdentifier}",
                         distributedLockIdentifier
@@ -82,7 +83,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
                     {
                         if (payload.CheckRun.Status != new StringEnum<CheckStatus>(CheckStatus.Completed))
                         {
-                            Logger.LogDebug(
+                            Logger.LogTrace(
                                 SkippedProcessingIncompleteCheckRunEventEventId,
                                 "Skipping processing event for: {distributedLockIdentifier}",
                                 distributedLockIdentifier
@@ -95,14 +96,14 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
 
                         if (trapSemaphore.CurrentCount == 0)
                         {
-                            Logger.LogDebug(
+                            Logger.LogTrace(
                                 SkippedProcessingTrapSemaphoreEventId,
                                 "Skipped processing check-run event: {distributedLockIdentifier} because semaphore current count was zero."
                                 );
                             return;
                         }
 
-                        Logger.LogDebug(
+                        Logger.LogTrace(
                             WaitingOnTrapSemaphoreEventId,
                             "Waiting on trap semaphore for: {distributedLockIdentifier}",
                             distributedLockIdentifier
@@ -120,7 +121,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
                             return;
                         }
 
-                        Logger.LogDebug(
+                        Logger.LogTrace(
                             WaitingOnQueueSemaphoreEventId,
                             "Waiting on queue semaphore for: {distributedLockIdentifier}",
                             distributedLockIdentifier
@@ -157,7 +158,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
                             return;
                         }
 
-                        Logger.LogDebug(
+                        Logger.LogTrace(
                             AcquiringDistributedLockEventId,
                             "Acquiring distributed lock for: {distributedLockIdentifier}.",
                             distributedLockIdentifier
@@ -180,7 +181,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
                             return;
                         }
 
-                        Logger.LogDebug(
+                        Logger.LogTrace(
                             ReleasingSemaphoreEventId,
                             "Releasing trap semaphore for: {distributedLockIdentifier}.",
                             distributedLockIdentifier
@@ -188,7 +189,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
 
                         trapSemaphore.Release();
 
-                        Logger.LogDebug(
+                        Logger.LogTrace(
                             ReleasedSemaphoreEventId,
                             "Released trap semaphore for: {distributedLockIdentifier}.",
                             distributedLockIdentifier
@@ -208,7 +209,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
                             distributedLockIdentifier
                             );
 
-                        Logger.LogDebug(
+                        Logger.LogTrace(
                             ReleasingDistributedLockEventId,
                             "Releasing distributed lock for: {distributedLockIdentifier}.",
                             distributedLockIdentifier
@@ -216,13 +217,13 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
 
                         await distributedLock.ReleaseAsync();
 
-                        Logger.LogDebug(
+                        Logger.LogTrace(
                             ReleasedDistributedLockEventId,
                             "Released distributed lock for: {distributedLockIdentifier}.",
                             distributedLockIdentifier
                             );
 
-                        Logger.LogDebug(
+                        Logger.LogTrace(
                             ReleasingSemaphoreEventId,
                             "Releasing queue semaphore for: {distributedLockIdentifier}.",
                             distributedLockIdentifier
@@ -230,7 +231,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
 
                         queueSemaphore.Release();
 
-                        Logger.LogDebug(
+                        Logger.LogTrace(
                             ReleasingSemaphoreEventId,
                             "Released queue semaphore for: {distributedLockIdentifier}.",
                             distributedLockIdentifier

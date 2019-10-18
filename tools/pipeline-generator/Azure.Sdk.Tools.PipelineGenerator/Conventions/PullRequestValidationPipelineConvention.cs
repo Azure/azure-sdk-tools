@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace PipelineGenerator.Conventions
 {
-    public class PullRequestValidationPipelineConvention : ContinuousIntegrationPipelineConvention
+    public class PullRequestValidationPipelineConvention : PipelineConvention
     {
         public PullRequestValidationPipelineConvention(ILogger logger, PipelineGenerationContext context) : base(logger, context)
         {

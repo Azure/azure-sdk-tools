@@ -4,6 +4,8 @@
     const SEL_COMMENT_ICON = ".icon-comments";
     const SEL_COMMENT_CELL = ".comment-cell";
 
+    let MessageIconAddedToDom = false;
+
     $(document).on("click", ".commentable", e => {
         showCommentBox(e.target.id);
         e.preventDefault();
@@ -191,7 +193,10 @@
     }
 
     function ensureMessageIconInDOM() {
-        $(".line-comment-button-cell").append(`<span class="icon icon-comments ` + INVISIBLE + `">💬</span>`);
+        if (!MessageIconAddedToDom) {
+            $(".line-comment-button-cell").append(`<span class="icon icon-comments ` + INVISIBLE + `">💬</span>`);
+            MessageIconAddedToDom = true;
+        }
     }
 
     function toggleCommentIcon(id, show: boolean) {

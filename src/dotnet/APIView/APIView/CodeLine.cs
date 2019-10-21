@@ -12,5 +12,10 @@ namespace ApiView
             this.DisplayString = html;
             this.ElementId = id;
         }
+
+        public override string ToString()
+        {
+            return DisplayString + " [" + ElementId + "]";
+        }
     }
 }

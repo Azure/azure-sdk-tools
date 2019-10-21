@@ -28,19 +28,18 @@ namespace APIView.DIff
                     continue;
                 }
 
-                CatchUpTo(Math.Min(hunk.RemoveStart, hunk.InsertStart));
+                CatchUpTo(hunk.InsertStart);
 
-                foreach (var hu in beforeResults.AsSpan(hunk.RemoveStart, hunk.Removed))
+                foreach (var line in beforeResults.AsSpan(hunk.RemoveStart, hunk.Removed))
                 {
-                    diffs.Add(new InlineDiffLine<TR>(hu, DiffLineKind.Removed));
+                    diffs.Add(new InlineDiffLine<TR>(line, DiffLineKind.Removed));
                 }
 
-                foreach (var hu in afterResults.AsSpan(hunk.InsertStart, hunk.Inserted))
+                foreach (var line in afterResults.AsSpan(hunk.InsertStart, hunk.Inserted))
                 {
-                    diffs.Add(new InlineDiffLine<TR>(hu, DiffLineKind.Added));
+                    currentLine++;
+                    diffs.Add(new InlineDiffLine<TR>(line, DiffLineKind.Added));
                 }
-
-                currentLine = hunk.InsertStart + hunk.Inserted;
             }
 
 

@@ -60,7 +60,7 @@ namespace ApiView
             if (!string.IsNullOrEmpty(elementClass))
             {
                 stringBuilder.Append("<");
-                var a = !string.IsNullOrEmpty(href);
+                var a = !_readOnly && !string.IsNullOrEmpty(href);
 
                 if (a)
                 {
@@ -71,7 +71,7 @@ namespace ApiView
                 {
                     stringBuilder.Append("span");
                 }
-                if (!string.IsNullOrEmpty(id))
+                if (!string.IsNullOrEmpty(id) && !_readOnly)
                 {
                     stringBuilder.Append(" id=\"").Append(id).Append("\"");
                 }

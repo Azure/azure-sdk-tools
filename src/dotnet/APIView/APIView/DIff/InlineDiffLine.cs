@@ -12,5 +12,15 @@ namespace APIView.DIff
 
         public T Line { get; }
         public DiffLineKind Kind { get; }
+
+        public override string ToString()
+        {
+            return Kind switch
+            {
+                DiffLineKind.Added => "+",
+                DiffLineKind.Removed => "-",
+                DiffLineKind.Unchanged => " "
+            } + Line;
+        }
     }
 }

@@ -1,6 +1,6 @@
 ﻿@using ApiView
 @using APIView.DIff
-@model CodeLineModel
+@model APIViewWeb.Models.CodeLineModel
 @{
     bool isRemoved = Model.Kind == DiffLineKind.Removed;
     string lineClass = Model.Kind switch

@@ -4,9 +4,8 @@
 using ApiView;
 using APIView;
 using APIView.DIff;
-using APIViewWeb.Models;
 
-namespace APIViewWeb.Pages.Assemblies
+namespace APIViewWeb.Models
 {
     public readonly struct CodeLineModel
     {

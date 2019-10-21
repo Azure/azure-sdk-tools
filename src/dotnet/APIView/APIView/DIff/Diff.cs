@@ -97,382 +97,383 @@ using System.Collections.Generic;
 
 namespace APIView.DIff
 {
-	/// <summary>
-	/// A DiffHunk represents a single change in a diff between two files.
-	/// </summary>
-	public readonly struct DiffHunk : IEquatable<DiffHunk>
-	{
-		public static readonly DiffHunk Empty = new DiffHunk (0, 0, 0, 0);
+    /// <summary>
+    /// A DiffHunk represents a single change in a diff between two files.
+    /// </summary>
+    public readonly struct DiffHunk : IEquatable<DiffHunk>
+    {
+        public static readonly DiffHunk Empty = new DiffHunk(0, 0, 0, 0);
 
-		/// <summary>
-		/// Gets a value indicating whether this instance is empty.
-		/// </summary>
-		/// <value><c>true</c> if this instance is empty; otherwise, <c>false</c>.</value>
-		public bool IsEmpty {
-			get {
-				return InsertStart < 0;
-			}
-		}
+        /// <summary>
+        /// Gets a value indicating whether this instance is empty.
+        /// </summary>
+        /// <value><c>true</c> if this instance is empty; otherwise, <c>false</c>.</value>
+        public bool IsEmpty
+        {
+            get
+            {
+                return InsertStart < 0;
+            }
+        }
 
-		/// <summary>
-		/// Line number where the insertion starts.
-		/// </summary>
-		public readonly int InsertStart;
+        /// <summary>
+        /// Line number where the insertion starts.
+        /// </summary>
+        public readonly int InsertStart;
 
-		/// <summary>
-		/// Line number where the removal starts.
-		/// </summary>
-		public readonly int RemoveStart;
+        /// <summary>
+        /// Line number where the removal starts.
+        /// </summary>
+        public readonly int RemoveStart;
 
-		/// <summary>
-		/// Number of lines removed.
-		/// </summary>
-		public readonly int Removed;
+        /// <summary>
+        /// Number of lines removed.
+        /// </summary>
+        public readonly int Removed;
 
-		/// <summary>
-		/// Number of lines inserted.
-		/// </summary>
-		public readonly int Inserted;
+        /// <summary>
+        /// Number of lines inserted.
+        /// </summary>
+        public readonly int Inserted;
 
-		public DiffHunk (int removeStart, int insertStart, int removed, int inserted)
-		{
-			this.InsertStart = insertStart;
-			this.RemoveStart = removeStart;
-			this.Removed = removed;
-			this.Inserted = inserted;
-		}
+        public DiffHunk(int removeStart, int insertStart, int removed, int inserted)
+        {
+            this.InsertStart = insertStart;
+            this.RemoveStart = removeStart;
+            this.Removed = removed;
+            this.Inserted = inserted;
+        }
 
         public static bool operator ==(DiffHunk left, DiffHunk right)
-		{
-			return left.InsertStart == right.InsertStart && left.RemoveStart == right.RemoveStart &&
-				left.Removed == right.Removed && left.Inserted == right.Inserted;
-		}
+        {
+            return left.InsertStart == right.InsertStart && left.RemoveStart == right.RemoveStart &&
+                left.Removed == right.Removed && left.Inserted == right.Inserted;
+        }
 
-		public static bool operator !=(DiffHunk left, DiffHunk right)
-		{
-			return !(left == right);
-		}
+        public static bool operator !=(DiffHunk left, DiffHunk right)
+        {
+            return !(left == right);
+        }
 
-		public override bool Equals (object obj)
-		{
-			if (!(obj is DiffHunk))
-				return false;
-			return ((DiffHunk)obj) == this;
-		}
+        public override bool Equals(object obj)
+        {
+            if (!(obj is DiffHunk))
+                return false;
+            return ((DiffHunk)obj) == this;
+        }
 
-		public bool Equals (DiffHunk other)
-		{
-			return this == other;
-		}
+        public bool Equals(DiffHunk other)
+        {
+            return this == other;
+        }
 
-		public override int GetHashCode ()
-		{
-			return InsertStart ^ RemoveStart ^ Inserted ^ Removed;
-		}
+        public override int GetHashCode()
+        {
+            return InsertStart ^ RemoveStart ^ Inserted ^ Removed;
+        }
 
-		public override string ToString ()
-		{
-			if (IsEmpty)
-				return"[Hunk: Empty]";
-			return string.Format ("[Hunk: InsertStart={0}, RemoveStart={1}, Removed={2}, Inserted={3}]", InsertStart, RemoveStart, Removed, Inserted);
-		}
-	}
-
-    public sealed class Diff
-	{
-		/// <summary>
-		/// Shortest Middle Snake Return Data
-		/// </summary>
-		struct SMSRD
-		{
-			internal int x, y;
-		}
-
-		static void Optimize<T> (DiffData<T> data)
-		{
-			int startPos = 0;
-			while (startPos < data.Length) {
-				while (startPos < data.Length && data.Modified[startPos] == false)
-					startPos++;
-				int endPos = startPos;
-				while (endPos < data.Length && data.Modified[endPos] == true)
-					endPos++;
-
-				if (endPos < data.Length && data.Data[startPos].Equals (data.Data[endPos])) {
-					data.Modified[startPos] = false;
-					data.Modified[endPos] = true;
-				} else {
-					startPos = endPos;
-				}
-			}
-		}
-
-		public static IEnumerable<DiffHunk> CharDiff (string left, string right)
-		{
-			return GetDiff (left != null ? left.ToCharArray () : new char[0], right != null ? right.ToCharArray () : new char[0]);
-		}
-
-		public static IEnumerable<DiffHunk> GetDiff<T> (T[] baseArray, T[] changedArray)
-		{
-			// The A-Version of the data (original data) to be compared.
-			var dataA = new DiffData<T> (baseArray);
-
-			// The B-Version of the data (modified data) to be compared.
-			var dataB = new DiffData<T> (changedArray);
-
-			int MAX = dataA.Length + dataB.Length + 1;
-			// vector for the (0,0) to (x,y) search
-			int[] downVector = new int[2 * MAX + 2];
-			// vector for the (u,v) to (N,M) search
-			int[] upVector = new int[2 * MAX + 2];
-
-			LCS (dataA, 0, dataA.Length, dataB, 0, dataB.Length, downVector, upVector);
-			return CreateDiffs (dataA, dataB);
-		}
-
-		/// <summary>Scan the tables of which lines are inserted and deleted,
-		/// producing an edit script in forward order.
-		/// </summary>
-		/// dynamic array
-		static IEnumerable<DiffHunk> CreateDiffs<T> (DiffData<T> baseData, DiffData<T> changedData)
-		{
-			int lineA = 0;
-			int lineB = 0;
-			while (lineA < baseData.Length || lineB < changedData.Length) {
-				if (lineA < baseData.Length && !baseData.Modified[lineA] && lineB < changedData.Length && !changedData.Modified[lineB]) {
-					// equal lines
-					lineA++;
-					lineB++;
-
-				} else {
-					// maybe deleted and/or inserted lines
-					int startA = lineA;
-					int startB = lineB;
-
-					while (lineA < baseData.Length && (lineB >= changedData.Length || baseData.Modified[lineA]))
-						// while (LineA < DataA.Length && DataA.Modified[LineA])
-						lineA++;
-
-					while (lineB < changedData.Length && (lineA >= baseData.Length || changedData.Modified[lineB]))
-						// while (LineB < DataB.Length && DataB.Modified[LineB])
-						lineB++;
-
-					if (startA < lineA || startB < lineB) {
-						// store a new difference-item
-						yield return new DiffHunk (startA, startB, lineA - startA, lineB - startB);
-					}
-					// if
-				}
-				// if
-			}
-			// while
-		}
-
-		/// <summary>
-		/// This is the algorithm to find the Shortest Middle Snake (SMS).
-		/// </summary>
-		/// <param name="dataA">sequence A</param>
-		/// <param name="lowerA">lower bound of the actual range in DataA</param>
-		/// <param name="upperA">upper bound of the actual range in DataA (exclusive)</param>
-		/// <param name="dataB">sequence B</param>
-		/// <param name="lowerB">lower bound of the actual range in DataB</param>
-		/// <param name="upperB">upper bound of the actual range in DataB (exclusive)</param>
-		/// <param name="downVector">a vector for the (0,0) to (x,y) search. Passed as a parameter for speed reasons.</param>
-		/// <param name="upVector">a vector for the (u,v) to (N,M) search. Passed as a parameter for speed reasons.</param>
-		/// <returns>a MiddleSnakeData record containing x,y and u,v</returns>
-		static SMSRD SMS<T> (DiffData<T> dataA, int lowerA, int upperA, DiffData<T> dataB, int lowerB, int upperB, int[] downVector, int[] upVector)
-		{
-			SMSRD ret;
-			int MAX = dataA.Length + dataB.Length + 1;
-
-			int downK = lowerA - lowerB;
-			// the k-line to start the forward search
-			int upK = upperA - upperB;
-			// the k-line to start the reverse search
-			int delta = (upperA - lowerA) - (upperB - lowerB);
-			bool oddDelta = (delta & 1) != 0;
-
-			// The vectors in the publication accepts negative indexes. the vectors implemented here are 0-based
-			// and are access using a specific offset: UpOffset UpVector and DownOffset for DownVektor
-			int downOffset = MAX - downK;
-			int upOffset = MAX - upK;
-
-			int MaxD = ((upperA - lowerA + upperB - lowerB) / 2) + 1;
-
-			// Debug.Write(2, "SMS", String.Format("Search the box: A[{0}-{1}] to B[{2}-{3}]", LowerA, UpperA, LowerB, UpperB));
-
-			// init vectors
-			downVector[downOffset + downK + 1] = lowerA;
-			upVector[upOffset + upK - 1] = upperA;
-
-			for (int D = 0; D <= MaxD; D++) {
-
-				// Extend the forward path.
-				for (int k = downK - D; k <= downK + D; k += 2) {
-					// Debug.Write(0, "SMS", "extend forward path " + k.ToString());
-
-					// find the only or better starting point
-					int x, y;
-					if (k == downK - D) {
-						x = downVector[downOffset + k + 1];
-						// down
-					} else {
-						x = downVector[downOffset + k - 1] + 1;
-						// a step to the right
-						if (k < downK + D && downVector[downOffset + k + 1] >= x)
-							x = downVector[downOffset + k + 1];
-						// down
-					}
-					y = x - k;
-
-					// find the end of the furthest reaching forward D-path in diagonal k.
-					while (x < upperA && y < upperB && dataA.Data[x].Equals (dataB.Data[y])) {
-						x++;
-						y++;
-					}
-					downVector[downOffset + k] = x;
-
-					// overlap ?
-					if (oddDelta && upK - D < k && k < upK + D) {
-						if (upVector[upOffset + k] <= downVector[downOffset + k]) {
-							ret.x = downVector[downOffset + k];
-							ret.y = downVector[downOffset + k] - k;
-							// ret.u = UpVector[UpOffset + k];      // 2002.09.20: no need for 2 points
-							// ret.v = UpVector[UpOffset + k] - k;
-							return (ret);
-						}
-						// if
-					}
-					// if
-				}
-				// for k
-				// Extend the reverse path.
-				for (int k = upK - D; k <= upK + D; k += 2) {
-					// Debug.Write(0, "SMS", "extend reverse path " + k.ToString());
-
-					// find the only or better starting point
-					int x, y;
-					if (k == upK + D) {
-						x = upVector[upOffset + k - 1];
-						// up
-					} else {
-						x = upVector[upOffset + k + 1] - 1;
-						// left
-						if (k > upK - D && upVector[upOffset + k - 1] < x)
-							x = upVector[upOffset + k - 1];
-						// up
-					}
-					// if
-					y = x - k;
-
-					while (x > lowerA && y > lowerB && dataA.Data[x - 1].Equals (dataB.Data[y - 1])) {
-						x--;
-						y--;
-						// diagonal
-					}
-					upVector[upOffset + k] = x;
-
-					// overlap ?
-					if (!oddDelta && downK - D <= k && k <= downK + D) {
-						if (upVector[upOffset + k] <= downVector[downOffset + k]) {
-							ret.x = downVector[downOffset + k];
-							ret.y = downVector[downOffset + k] - k;
-							// ret.u = UpVector[UpOffset + k];     // 2002.09.20: no need for 2 points
-							// ret.v = UpVector[UpOffset + k] - k;
-							return (ret);
-						}
-						// if
-					}
-					// if
-				}
-				// for k
-			}
-			// for D
-			throw new ApplicationException ("the algorithm should never come here.");
-		}
-		// SMS
-
-		/// <summary>
-		/// This is the divide-and-conquer implementation of the longest common-subsequence (LCS)
-		/// algorithm.
-		/// The published algorithm passes recursively parts of the A and B sequences.
-		/// To avoid copying these arrays the lower and upper bounds are passed while the sequences stay constant.
-		/// </summary>
-		/// <param name="dataA">sequence A</param>
-		/// <param name="lowerA">lower bound of the actual range in DataA</param>
-		/// <param name="upperA">upper bound of the actual range in DataA (exclusive)</param>
-		/// <param name="dataB">sequence B</param>
-		/// <param name="lowerB">lower bound of the actual range in DataB</param>
-		/// <param name="upperB">upper bound of the actual range in DataB (exclusive)</param>
-		/// <param name="downVector">a vector for the (0,0) to (x,y) search. Passed as a parameter for speed reasons.</param>
-		/// <param name="upVector">a vector for the (u,v) to (N,M) search. Passed as a parameter for speed reasons.</param>
-		static void LCS<T> (DiffData<T> dataA, int lowerA, int upperA, DiffData<T> dataB, int lowerB, int upperB, int[] downVector, int[] upVector)
-		{
-			// Fast walkthrough equal lines at the start
-			while (lowerA < upperA && lowerB < upperB && dataA.Data[lowerA].Equals (dataB.Data[lowerB])) {
-				lowerA++;
-				lowerB++;
-			}
-
-			// Fast walkthrough equal lines at the end
-			while (lowerA < upperA && lowerB < upperB && dataA.Data[upperA - 1].Equals (dataB.Data[upperB - 1])) {
-				--upperA;
-				--upperB;
-			}
-
-			if (lowerA == upperA) {
-				// mark as inserted lines.
-				while (lowerB < upperB)
-					dataB.Modified[lowerB++] = true;
-
-			} else if (lowerB == upperB) {
-				// mark as deleted lines.
-				while (lowerA < upperA)
-					dataA.Modified[lowerA++] = true;
-
-			} else {
-				// Find the middle snakea and length of an optimal path for A and B
-				SMSRD smsrd = SMS (dataA, lowerA, upperA, dataB, lowerB, upperB, downVector, upVector);
-				// Debug.Write(2, "MiddleSnakeData", String.Format("{0},{1}", smsrd.x, smsrd.y));
-
-				// The path is from LowerX to (x,y) and (x,y) to UpperX
-				LCS (dataA, lowerA, smsrd.x, dataB, lowerB, smsrd.y, downVector, upVector);
-				LCS (dataA, smsrd.x, upperA, dataB, smsrd.y, upperB, downVector, upVector);
-				// 2002.09.20: no need for 2 points
-			}
-		}
-		// LCS()
+        public override string ToString()
+        {
+            if (IsEmpty)
+                return "[Hunk: Empty]";
+            return string.Format("[Hunk: InsertStart={0}, RemoveStart={1}, Removed={2}, Inserted={3}]", InsertStart, RemoveStart, Removed, Inserted);
+        }
     }
 
-	/// <summary>Data on one input file being compared.
-	/// </summary>
-	class DiffData<T>
-	{
-		/// <summary>Number of elements (lines).</summary>
-		public readonly int Length;
+    public sealed class Diff
+    {
+        /// <summary>
+        /// Shortest Middle Snake Return Data
+        /// </summary>
+        struct SMSRD
+        {
+            internal int x, y;
+        }
 
-		/// <summary>Buffer of numbers that will be compared.</summary>
-		public readonly T[] Data;
+        public static IEnumerable<DiffHunk> GetDiff<T>(T[] baseArray, T[] changedArray)
+        {
+            // The A-Version of the data (original data) to be compared.
+            var dataA = new DiffData<T>(baseArray);
 
-		/// <summary>
-		/// Array of booleans that flag for modified data.
-		/// This is the result of the diff.
-		/// This means deletedA in the first Data or inserted in the second Data.
-		/// </summary>
-		public readonly bool[] Modified;
+            // The B-Version of the data (modified data) to be compared.
+            var dataB = new DiffData<T>(changedArray);
 
-		/// <summary>
-		/// Initialize the Diff-Data buffer.
-		/// </summary>
-		/// <param name="initData">reference to the buffer</param>
-		public DiffData (T[] initData)
-		{
-			Data = initData;
-			Length = initData.Length;
-			Modified = new bool[Length + 2];
-		}
-		// DiffData
-	}
-	// class DiffData
+            int MAX = dataA.Length + dataB.Length + 1;
+            // vector for the (0,0) to (x,y) search
+            int[] downVector = new int[2 * MAX + 2];
+            // vector for the (u,v) to (N,M) search
+            int[] upVector = new int[2 * MAX + 2];
+
+            LCS(dataA, 0, dataA.Length, dataB, 0, dataB.Length, downVector, upVector);
+            return CreateDiffs(dataA, dataB);
+        }
+
+        /// <summary>Scan the tables of which lines are inserted and deleted,
+        /// producing an edit script in forward order.
+        /// </summary>
+        /// dynamic array
+        static IEnumerable<DiffHunk> CreateDiffs<T>(DiffData<T> baseData, DiffData<T> changedData)
+        {
+            int lineA = 0;
+            int lineB = 0;
+            while (lineA < baseData.Length || lineB < changedData.Length)
+            {
+                if (lineA < baseData.Length && !baseData.Modified[lineA] && lineB < changedData.Length && !changedData.Modified[lineB])
+                {
+                    // equal lines
+                    lineA++;
+                    lineB++;
+
+                }
+                else
+                {
+                    // maybe deleted and/or inserted lines
+                    int startA = lineA;
+                    int startB = lineB;
+
+                    while (lineA < baseData.Length && (lineB >= changedData.Length || baseData.Modified[lineA]))
+                        // while (LineA < DataA.Length && DataA.Modified[LineA])
+                        lineA++;
+
+                    while (lineB < changedData.Length && (lineA >= baseData.Length || changedData.Modified[lineB]))
+                        // while (LineB < DataB.Length && DataB.Modified[LineB])
+                        lineB++;
+
+                    if (startA < lineA || startB < lineB)
+                    {
+                        // store a new difference-item
+                        yield return new DiffHunk(startA, startB, lineA - startA, lineB - startB);
+                    }
+                    // if
+                }
+                // if
+            }
+            // while
+        }
+
+        /// <summary>
+        /// This is the algorithm to find the Shortest Middle Snake (SMS).
+        /// </summary>
+        /// <param name="dataA">sequence A</param>
+        /// <param name="lowerA">lower bound of the actual range in DataA</param>
+        /// <param name="upperA">upper bound of the actual range in DataA (exclusive)</param>
+        /// <param name="dataB">sequence B</param>
+        /// <param name="lowerB">lower bound of the actual range in DataB</param>
+        /// <param name="upperB">upper bound of the actual range in DataB (exclusive)</param>
+        /// <param name="downVector">a vector for the (0,0) to (x,y) search. Passed as a parameter for speed reasons.</param>
+        /// <param name="upVector">a vector for the (u,v) to (N,M) search. Passed as a parameter for speed reasons.</param>
+        /// <returns>a MiddleSnakeData record containing x,y and u,v</returns>
+        static SMSRD SMS<T>(DiffData<T> dataA, int lowerA, int upperA, DiffData<T> dataB, int lowerB, int upperB, int[] downVector, int[] upVector)
+        {
+            SMSRD ret;
+            int MAX = dataA.Length + dataB.Length + 1;
+
+            int downK = lowerA - lowerB;
+            // the k-line to start the forward search
+            int upK = upperA - upperB;
+            // the k-line to start the reverse search
+            int delta = (upperA - lowerA) - (upperB - lowerB);
+            bool oddDelta = (delta & 1) != 0;
+
+            // The vectors in the publication accepts negative indexes. the vectors implemented here are 0-based
+            // and are access using a specific offset: UpOffset UpVector and DownOffset for DownVektor
+            int downOffset = MAX - downK;
+            int upOffset = MAX - upK;
+
+            int MaxD = ((upperA - lowerA + upperB - lowerB) / 2) + 1;
+
+            // Debug.Write(2, "SMS", String.Format("Search the box: A[{0}-{1}] to B[{2}-{3}]", LowerA, UpperA, LowerB, UpperB));
+
+            // init vectors
+            downVector[downOffset + downK + 1] = lowerA;
+            upVector[upOffset + upK - 1] = upperA;
+
+            for (int D = 0; D <= MaxD; D++)
+            {
+
+                // Extend the forward path.
+                for (int k = downK - D; k <= downK + D; k += 2)
+                {
+                    // Debug.Write(0, "SMS", "extend forward path " + k.ToString());
+
+                    // find the only or better starting point
+                    int x, y;
+                    if (k == downK - D)
+                    {
+                        x = downVector[downOffset + k + 1];
+                        // down
+                    }
+                    else
+                    {
+                        x = downVector[downOffset + k - 1] + 1;
+                        // a step to the right
+                        if (k < downK + D && downVector[downOffset + k + 1] >= x)
+                            x = downVector[downOffset + k + 1];
+                        // down
+                    }
+                    y = x - k;
+
+                    // find the end of the furthest reaching forward D-path in diagonal k.
+                    while (x < upperA && y < upperB && dataA.Data[x].Equals(dataB.Data[y]))
+                    {
+                        x++;
+                        y++;
+                    }
+                    downVector[downOffset + k] = x;
+
+                    // overlap ?
+                    if (oddDelta && upK - D < k && k < upK + D)
+                    {
+                        if (upVector[upOffset + k] <= downVector[downOffset + k])
+                        {
+                            ret.x = downVector[downOffset + k];
+                            ret.y = downVector[downOffset + k] - k;
+                            return (ret);
+                        }
+                        // if
+                    }
+                    // if
+                }
+                // for k
+                // Extend the reverse path.
+                for (int k = upK - D; k <= upK + D; k += 2)
+                {
+                    // Debug.Write(0, "SMS", "extend reverse path " + k.ToString());
+
+                    // find the only or better starting point
+                    int x, y;
+                    if (k == upK + D)
+                    {
+                        x = upVector[upOffset + k - 1];
+                        // up
+                    }
+                    else
+                    {
+                        x = upVector[upOffset + k + 1] - 1;
+                        // left
+                        if (k > upK - D && upVector[upOffset + k - 1] < x)
+                            x = upVector[upOffset + k - 1];
+                        // up
+                    }
+                    // if
+                    y = x - k;
+
+                    while (x > lowerA && y > lowerB && dataA.Data[x - 1].Equals(dataB.Data[y - 1]))
+                    {
+                        x--;
+                        y--;
+                        // diagonal
+                    }
+                    upVector[upOffset + k] = x;
+
+                    // overlap ?
+                    if (!oddDelta && downK - D <= k && k <= downK + D)
+                    {
+                        if (upVector[upOffset + k] <= downVector[downOffset + k])
+                        {
+                            ret.x = downVector[downOffset + k];
+                            ret.y = downVector[downOffset + k] - k;
+                            return (ret);
+                        }
+                        // if
+                    }
+                    // if
+                }
+                // for k
+            }
+            // for D
+            throw new ApplicationException("the algorithm should never come here.");
+        }
+        // SMS
+
+        /// <summary>
+        /// This is the divide-and-conquer implementation of the longest common-subsequence (LCS)
+        /// algorithm.
+        /// The published algorithm passes recursively parts of the A and B sequences.
+        /// To avoid copying these arrays the lower and upper bounds are passed while the sequences stay constant.
+        /// </summary>
+        /// <param name="dataA">sequence A</param>
+        /// <param name="lowerA">lower bound of the actual range in DataA</param>
+        /// <param name="upperA">upper bound of the actual range in DataA (exclusive)</param>
+        /// <param name="dataB">sequence B</param>
+        /// <param name="lowerB">lower bound of the actual range in DataB</param>
+        /// <param name="upperB">upper bound of the actual range in DataB (exclusive)</param>
+        /// <param name="downVector">a vector for the (0,0) to (x,y) search. Passed as a parameter for speed reasons.</param>
+        /// <param name="upVector">a vector for the (u,v) to (N,M) search. Passed as a parameter for speed reasons.</param>
+        static void LCS<T>(DiffData<T> dataA, int lowerA, int upperA, DiffData<T> dataB, int lowerB, int upperB, int[] downVector, int[] upVector)
+        {
+            // Fast walkthrough equal lines at the start
+            while (lowerA < upperA && lowerB < upperB && dataA.Data[lowerA].Equals(dataB.Data[lowerB]))
+            {
+                lowerA++;
+                lowerB++;
+            }
+
+            // Fast walkthrough equal lines at the end
+            while (lowerA < upperA && lowerB < upperB && dataA.Data[upperA - 1].Equals(dataB.Data[upperB - 1]))
+            {
+                --upperA;
+                --upperB;
+            }
+
+            if (lowerA == upperA)
+            {
+                // mark as inserted lines.
+                while (lowerB < upperB)
+                    dataB.Modified[lowerB++] = true;
+
+            }
+            else if (lowerB == upperB)
+            {
+                // mark as deleted lines.
+                while (lowerA < upperA)
+                    dataA.Modified[lowerA++] = true;
+
+            }
+            else
+            {
+                // Find the middle snakea and length of an optimal path for A and B
+                SMSRD smsrd = SMS(dataA, lowerA, upperA, dataB, lowerB, upperB, downVector, upVector);
+                // Debug.Write(2, "MiddleSnakeData", String.Format("{0},{1}", smsrd.x, smsrd.y));
+
+                // The path is from LowerX to (x,y) and (x,y) to UpperX
+                LCS(dataA, lowerA, smsrd.x, dataB, lowerB, smsrd.y, downVector, upVector);
+                LCS(dataA, smsrd.x, upperA, dataB, smsrd.y, upperB, downVector, upVector);
+                // 2002.09.20: no need for 2 points
+            }
+        }
+        // LCS()
+    }
+
+    /// <summary>Data on one input file being compared.
+    /// </summary>
+    class DiffData<T>
+    {
+        /// <summary>Number of elements (lines).</summary>
+        public readonly int Length;
+
+        /// <summary>Buffer of numbers that will be compared.</summary>
+        public readonly T[] Data;
+
+        /// <summary>
+        /// Array of booleans that flag for modified data.
+        /// This is the result of the diff.
+        /// This means deletedA in the first Data or inserted in the second Data.
+        /// </summary>
+        public readonly bool[] Modified;
+
+        /// <summary>
+        /// Initialize the Diff-Data buffer.
+        /// </summary>
+        /// <param name="initData">reference to the buffer</param>
+        public DiffData(T[] initData)
+        {
+            Data = initData;
+            Length = initData.Length;
+            Modified = new bool[Length + 2];
+        }
+        // DiffData
+    }
+    // class DiffData
 }
 // namespace

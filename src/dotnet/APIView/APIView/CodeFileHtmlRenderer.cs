@@ -8,6 +8,16 @@ namespace ApiView
 {
     public class CodeFileHtmlRenderer : CodeFileRenderer
     {
+        private readonly bool _readOnly;
+
+        protected CodeFileHtmlRenderer(bool readOnly)
+        {
+            _readOnly = readOnly;
+        }
+
+        public static CodeFileHtmlRenderer Normal { get; } = new CodeFileHtmlRenderer(false);
+        public static CodeFileHtmlRenderer ReadOnly { get; } = new CodeFileHtmlRenderer(true);
+
         protected override void RenderToken(CodeFileToken token, StringBuilder stringBuilder)
         {
             if (token.Value == null)
@@ -36,7 +46,7 @@ namespace ApiView
 
             string href = null;
 
-            if (token.DefinitionId != null)
+            if (token.DefinitionId != null && !_readOnly)
             {
                 elementClass += " commentable";
                 href = "#";

@@ -5,13 +5,58 @@ using Microsoft.CodeAnalysis.CSharp;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using ApiView;
+using APIView.DIff;
+using Azure.ClientSdk.Analyzers.Tests;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Xunit;
 using Xunit.Abstractions;
 
 namespace APIViewTest
 {
+    public class DiffTests
+    {
+        [Theory]
+        [InlineData("A,B,C", "A,C,C", "A,-B,+C,C")]
+        [InlineData("A", "B", "-A,+B")]
+        [InlineData("A,A", "B,B", "-A,-A,+B,+B")]
+        [InlineData("A,A,A", "B,A,B", "+B,-A,-A,+B")]
+
+        public void DiffWorks(string before, string after, string unified)
+        {
+            var beforeArray = before.Split(',');
+            var afterArray = after.Split(',');
+            var chunks = InlineDiff.Compute(
+                beforeArray,
+                afterArray,
+                beforeArray,
+                afterArray
+                );
+
+            List<string> unifiedList = new List<string>();
+            foreach (var inlineDiff in chunks)
+            {
+                switch (inlineDiff.Kind)
+                {
+                    case DiffLineKind.Unchanged:
+                        unifiedList.Add(inlineDiff.Line);
+                        break;
+                    case DiffLineKind.Added:
+                        unifiedList.Add('+' + inlineDiff.Line);
+                        break;
+                    case DiffLineKind.Removed:
+                        unifiedList.Add('-' + inlineDiff.Line);
+                        break;
+                }
+            }
+
+            Assert.Equal(unified.Split(','), unifiedList.ToArray());
+        }
+    }
     public class CodeFileBuilderTests
     {
         private readonly ITestOutputHelper _testOutputHelper;

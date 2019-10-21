@@ -19,6 +19,12 @@ namespace APIViewWeb
             _container = new BlobContainerClient(connectionString, "codefiles");
         }
 
+
+        public Task<CodeFile> GetCodeFileAsync(ReviewRevisionModel revision)
+        {
+            return GetCodeFileAsync(revision.RevisionId, revision.SingleFile.ReviewFileId);
+        }
+
         public async Task<CodeFile> GetCodeFileAsync(string revisionId, string codeFileId)
         {
             var info = await GetBlobClient(revisionId,codeFileId).DownloadAsync();

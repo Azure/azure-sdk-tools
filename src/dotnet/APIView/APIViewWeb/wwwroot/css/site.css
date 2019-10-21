@@ -427,3 +427,9 @@ code-inner {
     height: 16px;
     z-index: 1;
 }
+.code-added {
+    background-color: #e6ffed;
+}
+.code-removed {
+    background-color: #ffeef0;
+}

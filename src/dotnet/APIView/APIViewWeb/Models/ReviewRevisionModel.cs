@@ -24,5 +24,8 @@ namespace APIViewWeb
             get => _name ?? Files.FirstOrDefault()?.Name;
             set => _name = value;
         }
+
+        [JsonIgnore]
+        public ReviewCodeFileModel SingleFile => Files.Single();
     }
 }

@@ -19,7 +19,7 @@ namespace APIView.DIff
             {
                 DiffLineKind.Added => "+",
                 DiffLineKind.Removed => "-",
-                DiffLineKind.Unchanged => " "
+                _ => " "
             } + Line;
         }
     }

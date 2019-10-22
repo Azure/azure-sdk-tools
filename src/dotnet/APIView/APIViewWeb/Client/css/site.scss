@@ -1,7 +1,5 @@
-﻿/* Please see documentation at https://docs.microsoft.com/aspnet/core/client-side/bundling-and-minification
-for details on configuring this project to bundle and minify static web assets. */
-
-a.navbar-brand {
+﻿a.navbar-brand
+{
     white-space: normal;
     text-align: center;
     word-break: break-all;
@@ -55,7 +53,8 @@ body {
     white-space: nowrap;
     /* Set the fixed height of the footer here */
     height: 60px;
-    line-height: 60px; /* Vertically center the text there */
+    line-height: 60px;
+    /* Vertically center the text there */
 }
 
 /* Code rendering classes
@@ -151,9 +150,9 @@ form.comment {
     position: relative;
 }
 
-    .review-comment:first-child {
-        padding-top: 16px;
-    }
+.review-comment:first-child {
+    padding-top: 16px;
+}
 
 .review-comment p {
     margin-bottom: 0;
@@ -214,9 +213,9 @@ form.comment {
     text-indent: 0;
     cursor: pointer;
     background-color: #0366d6;
-    background-image: linear-gradient(#0372ef,#0366d6);
+    background-image: linear-gradient(#0372ef, #0366d6);
     border-radius: 3px;
-    box-shadow: 0 1px 4px rgba(27,31,35,.15);
+    box-shadow: 0 1px 4px rgba(27, 31, 35, .15);
     opacity: 0;
     transition: transform .1s ease-in-out;
     transform: scale(.8);
@@ -338,7 +337,7 @@ code-inner {
 /* NAV */
 
 .nav-list {
-    list-style-type:none;
+    list-style-type: none;
     padding-left: 0px;
 }
 
@@ -347,7 +346,8 @@ code-inner {
     text-overflow: ellipsis;
     padding-left: 0;
 }
-.nav-list-children > li {
+
+.nav-list-children>li {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -358,25 +358,28 @@ code-inner {
     background: url(/icons/down.png) center left no-repeat;
 }
 
-.nav-list-collapsed > .nav-list-toggle {
+.nav-list-collapsed>.nav-list-toggle {
     background: url(/icons/right.png) center left no-repeat;
 }
 
-.nav-list-collapsed > .nav-list-children {
+.nav-list-collapsed>.nav-list-children {
     display: none;
 }
 
 .nav-list-group .nav-list-children {
     padding-left: 14px;
 }
+
 /* DIAGNOSTICS */
 .code-diagnostics td {
     border: 1px solid red;
     background-color: lightpink;
 }
+
 .code-diagnostics p {
     margin: 0;
 }
+
 /* ICONS */
 .icon {
     height: 16px;
@@ -384,6 +387,7 @@ code-inner {
     display: inline-block;
     vertical-align: middle;
 }
+
 .icon-class {
     background: url(/icons/class.png) center left no-repeat;
 }

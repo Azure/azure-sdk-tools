@@ -7,6 +7,8 @@
     <UserSecretsId>79cceff6-d533-4370-a0ee-f3321a343907</UserSecretsId>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <JavaProcessor>..\..\..\java\apiview-java-processor\target\apiview-java-processor-1.0.1.jar</JavaProcessor>
+    <TypeScriptToolsVersion>latest</TypeScriptToolsVersion>
+    <TypeScriptCompileBlocked>true</TypeScriptCompileBlocked>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -19,7 +21,6 @@
     <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.8.1" />
     <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.2.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="3.0" />
-    <PackageReference Include="Microsoft.TypeScript.MSBuild" Version="3.6.3" PrivateAssets="All" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="2.1.9" PrivateAssets="All" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta2-19367-01" PrivateAssets="All" />
     <PackageReference Include="Markdig.Signed" Version="0.17.1" />
@@ -31,10 +32,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\APIView\APIView.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Properties\PublishProfiles\" />
   </ItemGroup>
 
 </Project>

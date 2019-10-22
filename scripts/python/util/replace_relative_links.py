@@ -17,15 +17,24 @@ def locate_readmes(directory):
 def find_matches(input_string):
     return re.findall(LINK_DISCOVERY_REGEX, input_string)
 
-def is_relative_link(link_value):
-    return link_value.startswith('.') or link_value.startswith('/')
+def is_relative_link(link_value, readme_location):
+    try:
+        return os.path.isfile(os.path.join(os.path.dirname(readme_location), link_value))
+    except:
+        return False
 
-def transfer_content_to_absolute_references(matches, content):
+def transfer_content_to_absolute_references(root_folder, build_sha, repo_id, readme_location, content, matches):
     for match in matches:
-        if is_relative_link(match[1]):
-            print(match)
+        if is_relative_link(match[1], readme_location):
+            # if it is a relative reference, we need to find the path from the root of the repository
+            resource_absolute_path = os.path.abspath(os.path.join(os.path.dirname(readme_location), match[1]))
+            placement_from_root = os.path.relpath(resource_absolute_path, root_folder)
+
+            updated_link = RELATIVE_LINK_REPLACEMENT_SYNTAX.format(repo_id = repo_id, build_sha = build_sha, target_resource_path = placement_from_root)
+            print(updated_link)
         else:
-            print('not a relative reference')
+            print(match[1])
+            
 
 def resolve_relative_path(root_folder, target_resource):
     logging.info(root_folder)
@@ -43,7 +52,7 @@ if __name__ == "__main__":
         help="The target folder that contains a README ",
         # required=True,
 
-        default="C:/repo/sdk-for-python/sdk/core/azure-core"
+        default="C:/repo/bi-reports"
     )
 
     parser.add_argument(
@@ -63,7 +72,7 @@ if __name__ == "__main__":
         help="The root directory of the repository. This gives us the ability to rationalize links in situations where a relative link traverses UPWARDS from the readme.",
         # required=True,
 
-        default="C:/repo/sdk-for-python"
+        default="C:/repo/bi-reports"
         )
 
     parser.add_argument(
@@ -80,16 +89,13 @@ if __name__ == "__main__":
 
     readme_files = locate_readmes(args.target_folder)
 
-    for readme in readme_files:
+    for readme_location in readme_files:
         try: 
-            with open(readme, 'r', encoding="utf-8") as readme_stream:
+            with open(readme_location, 'r', encoding="utf-8") as readme_stream:
                 readme_content = readme_stream.read()
 
-            matches =  find_matches(readme_content)
-            new_content = transfer_content_to_absolute_references(matches, readme_content)
-
-            # with open(readme, 'w') as readme_stream:
-            #     readme_stream.write(new_content)
+            found_links =  find_matches(readme_content)
+            new_content = transfer_content_to_absolute_references(args.root_folder, args.build_sha, args.repo_id, readme_location, readme_content, found_links)
 
         except Exception as e:
             logging.error(e)

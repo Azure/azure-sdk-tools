@@ -28,10 +28,6 @@ def locate_readmes(directory):
     ]
 
 
-def find_matches(input_string):
-    return re.findall(LINK_DISCOVERY_REGEX, input_string)
-
-
 def is_relative_link(link_value, readme_location):
     try:
         return os.path.isfile(
@@ -65,8 +61,6 @@ def replace_relative_link(match, readme_location, root_folder, build_sha, repo_i
 def transfer_content_to_absolute_references(
     root_folder, build_sha, repo_id, readme_location, content
 ):
-    found_links = find_matches(readme_content)
-
     content = re.sub(
         LINK_DISCOVERY_REGEX,
         lambda match, readme_location=readme_location, root_folder=root_folder, build_sha=build_sha, repo_id=repo_id: replace_relative_link(

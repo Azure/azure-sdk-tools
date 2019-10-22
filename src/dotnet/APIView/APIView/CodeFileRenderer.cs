@@ -2,23 +2,23 @@
 // Licensed under the MIT License.
 
 using APIView;
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 
 namespace ApiView
 {
     public class CodeFileRenderer
     {
-        public StringListApiView Render(CodeFile file)
+        public static CodeFileRenderer Instance = new CodeFileRenderer();
+
+        public CodeLine[] Render(CodeFile file)
         {
-            var list = new StringListApiView();
-            Render(list, file.Tokens, file.Diagnostics ?? Array.Empty<CodeDiagnostic>());
-            return list;
+            var list = new List<CodeLine>();
+            Render(list, file.Tokens);
+            return list.ToArray();
         }
 
-        private void Render(StringListApiView list, IEnumerable<CodeFileToken> node, CodeDiagnostic[] fileDiagnostics)
+        private void Render(List<CodeLine> list, IEnumerable<CodeFileToken> node)
         {
             var stringBuilder = new StringBuilder();
             string currentId = null;
@@ -26,10 +26,7 @@ namespace ApiView
             {
                 if (token.Kind == CodeFileTokenKind.Newline)
                 {
-                    list.Add(new LineApiView(stringBuilder.ToString(), currentId)
-                    {
-                        Diagnostics = fileDiagnostics.Where(d => d.TargetId == currentId).ToArray()
-                    });
+                    list.Add(new CodeLine(stringBuilder.ToString(), currentId));
                     currentId = null;
                     stringBuilder.Clear();
                 }

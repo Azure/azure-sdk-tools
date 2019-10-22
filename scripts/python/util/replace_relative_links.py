@@ -16,7 +16,12 @@ def locate_readmes(directory):
 def find_matches(input_string):
     print(input_string)
 
+def is_relative_link(link_value):
+    return link_value.startswith('.') or link_value.startswith('/')
 
+def resolve_relative_path(root_folder, target_resource):
+    logging.info(root_folder)
+    logging.info(target_resource)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(

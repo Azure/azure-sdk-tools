@@ -3,21 +3,29 @@ import sys
 import os
 import logging
 import glob
+import re
 import fnmatch
 
 logging.getLogger().setLevel(logging.INFO)
 
 RELATIVE_LINK_REPLACEMENT_SYNTAX = "https://github.com/{repo_id}/tree/{build_sha}/{target_resource_path}"
-LINK_DISCOVERY_REGEX = "\[([^\]]*)\]\(([^)]*)\)"
+LINK_DISCOVERY_REGEX = r"\[([^\]]*)\]\(([^)]*)\)"
 
 def locate_readmes(directory):
     return [os.path.join(directory, obj) for obj in os.listdir(directory) if obj.lower() == "readme.md"]
 
 def find_matches(input_string):
-    print(input_string)
+    return re.findall(LINK_DISCOVERY_REGEX, input_string)
 
 def is_relative_link(link_value):
     return link_value.startswith('.') or link_value.startswith('/')
+
+def transfer_content_to_absolute_references(matches, content):
+    for match in matches:
+        if is_relative_link(match[1]):
+            print(match)
+        else:
+            print('not a relative reference')
 
 def resolve_relative_path(root_folder, target_resource):
     logging.info(root_folder)
@@ -78,10 +86,10 @@ if __name__ == "__main__":
                 readme_content = readme_stream.read()
 
             matches =  find_matches(readme_content)
-            new_content = resolve_relative_references(readme_content, matches)
+            new_content = transfer_content_to_absolute_references(matches, readme_content)
 
-            with open(readme, 'w') as readme_stream:
-                readme_stream.write(new_content)
+            # with open(readme, 'w') as readme_stream:
+            #     readme_stream.write(new_content)
 
         except Exception as e:
             logging.error(e)

@@ -8,10 +8,16 @@ import fnmatch
 logging.getLogger().setLevel(logging.INFO)
 
 RELATIVE_LINK_REPLACEMENT_SYNTAX = "https://github.com/{repo_id}/tree/{build_sha}/{target_resource_path}"
+LINK_DISCOVERY_REGEX = "\[([^\]]*)\]\(([^)]*)\)"
 
 def locate_readmes(directory):
     return [os.path.join(directory, obj) for obj in os.listdir(directory) if obj.lower() == "readme.md"]
-    
+
+def find_matches(input_string):
+    print(input_string)
+
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Replaces relative links for README.md. Given any discovered relative link, will replace with the provided repoId and SHA."
@@ -62,9 +68,17 @@ if __name__ == "__main__":
     readme_files = locate_readmes(args.target_folder)
 
     for readme in readme_files:
-        with open(readme) as readme_stream:
-            readme_content = readme_stream.read()
+        try: 
+            with open(readme, 'r', encoding="utf-8") as readme_stream:
+                readme_content = readme_stream.read()
 
-        print(readme_content)
+            matches =  find_matches(readme_content)
+            new_content = resolve_relative_references(readme_content, matches)
 
-    exit(1)
+            with open(readme, 'w') as readme_stream:
+                readme_stream.write(new_content)
+
+        except Exception as e:
+            logging.error(e)
+
+    exit(0)

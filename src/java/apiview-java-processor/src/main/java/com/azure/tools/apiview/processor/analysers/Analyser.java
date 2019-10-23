@@ -22,7 +22,6 @@ public interface Analyser {
      *
      * @param allFiles A list of all files from the extracted jar file, some of which won't be relevant and can be
      *      ignored as necessary.
-     * @param apiListing The model class to update that will be written out into JSON once this analysis completes.
      */
-    void analyse(List<Path> allFiles, APIListing apiListing);
+    void analyse(List<Path> allFiles);
 }

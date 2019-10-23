@@ -13,7 +13,7 @@ namespace APIViewWeb
     {
         public string Name { get; } = "Java";
 
-        public string JarName = "apiview-java-processor-1.0.1.jar";
+        public string JarName = "apiview-java-processor-1.1.0.jar";
 
         public bool IsSupportedExtension(string extension)
         {

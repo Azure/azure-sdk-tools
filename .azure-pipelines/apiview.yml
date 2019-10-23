@@ -24,7 +24,7 @@ pr:
 
 variables:
   DotNetCoreVersion: '3.0.100'
-  WebProjectDirectory: 'src/dotnet/APIView/APIViewWeb/'
+  WebClientProjectDirectory: 'src/dotnet/APIView/APIViewWeb/Client'
   WebProjectPath: 'src/dotnet/APIView/APIViewWeb/APIViewWeb.csproj'
   TestProjectPath: 'src/dotnet/APIView/APIViewTest/APIViewTest.csproj'
   NodeVersion: '12.x'
@@ -55,8 +55,13 @@ stages:
 
           - script: |
               npm install
-            workingDirectory: $(WebProjectDirectory)
+            workingDirectory: $(WebClientProjectDirectory)
             displayName: "Install npm packages"
+
+          - script: |
+              npm run-script build
+            workingDirectory: $(WebClientProjectDirectory)
+            displayName: "Build client assets"
 
           - task: Maven@3
             inputs:

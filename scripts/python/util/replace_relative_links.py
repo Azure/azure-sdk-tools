@@ -41,7 +41,7 @@ def is_relative_link(link_value, readme_location):
 
 
 def replace_relative_link(match, readme_location, root_folder, build_sha, repo_id):
-    link_path = match[2]
+    link_path = match.group(2)
 
     if is_relative_link(link_path, readme_location):
         # if it is a relative reference, we need to find the path from the root of the repository
@@ -56,9 +56,9 @@ def replace_relative_link(match, readme_location, root_folder, build_sha, repo_i
             target_resource_path=placement_from_root,
         ).replace("\\", "/")
 
-        return "[{}]({})".format(match[1], updated_link)
+        return "[{}]({})".format(match.group(1), updated_link)
     else:
-        return match[0]
+        return match.group(0)
 
 
 def transfer_content_to_absolute_references(

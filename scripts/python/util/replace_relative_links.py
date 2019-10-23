@@ -10,7 +10,7 @@ import re
 import fnmatch
 
 # This script is intended to be run against a single folder. All readme.md files (regardless of casing) will have the relative links
-# updated with appropriate full reference links.
+# updated with appropriate full reference links. This is a recursive check.
 
 logging.getLogger().setLevel(logging.INFO)
 
@@ -21,12 +21,13 @@ LINK_DISCOVERY_REGEX = r"\[([^\]]*)\]\(([^)]*)\)"
 
 
 def locate_readmes(directory):
-    return [
-        os.path.join(directory, obj)
-        for obj in os.listdir(directory)
-        if obj.lower() == "readme.md"
-    ]
+    readme_set = []
 
+    for root, dirs, files in os.walk(directory):
+        for file in files:
+            if file.lower() == 'readme.md':
+                readme_set.append(os.path.join(root, file))
+    return readme_set
 
 def is_relative_link(link_value, readme_location):
     try:
@@ -119,6 +120,8 @@ if __name__ == "__main__":
 
     for readme_location in readme_files:
         try:
+            logging.info("Running Relative Link Replacement on {}.".format(readme_location))
+
             with open(readme_location, "r", encoding="utf-8") as readme_stream:
                 readme_content = readme_stream.read()
 
@@ -134,5 +137,4 @@ if __name__ == "__main__":
                 readme_stream.write(new_content)
         except Exception as e:
             logging.error(e)
-
-    exit(0)
+            exit(1)

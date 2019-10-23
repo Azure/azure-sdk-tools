@@ -25,9 +25,10 @@ def locate_readmes(directory):
 
     for root, dirs, files in os.walk(directory):
         for file in files:
-            if file.lower() == 'readme.md':
+            if file.lower() == "readme.md":
                 readme_set.append(os.path.join(root, file))
     return readme_set
+
 
 def is_relative_link(link_value, readme_location):
     try:
@@ -83,8 +84,7 @@ if __name__ == "__main__":
         "--target",
         dest="target_folder",
         help="The target folder that contains a README ",
-
-        default = "${{ parameters.TargetFolder }}"
+        default="${{ parameters.TargetFolder }}",
     )
 
     parser.add_argument(
@@ -92,8 +92,7 @@ if __name__ == "__main__":
         "--repoid",
         dest="repo_id",
         help='The target repository used as the base for the path replacement. Full Id, example: "Azure/azure-sdk-for-net"',
-
-        default = "${{ parameters.RootFolder }}"
+        default="${{ parameters.RootFolder }}",
     )
 
     parser.add_argument(
@@ -101,8 +100,7 @@ if __name__ == "__main__":
         "--root",
         dest="root_folder",
         help="The root directory of the repository. This gives us the ability to rationalize links in situations where a relative link traverses UPWARDS from the readme.",
-
-        default = "${{ parameters.BuildSHA }}"
+        default="${{ parameters.BuildSHA }}",
     )
 
     parser.add_argument(
@@ -110,17 +108,18 @@ if __name__ == "__main__":
         "--sha",
         dest="build_sha",
         help="The commit hash associated with this change. Using this will mean that links will never be broken.",
-
-        default = "${{ parameters.RepoId }}"
+        default="${{ parameters.RepoId }}",
     )
-            
+
     args = parser.parse_args()
 
     readme_files = locate_readmes(args.target_folder)
 
     for readme_location in readme_files:
         try:
-            logging.info("Running Relative Link Replacement on {}.".format(readme_location))
+            logging.info(
+                "Running Relative Link Replacement on {}.".format(readme_location)
+            )
 
             with open(readme_location, "r", encoding="utf-8") as readme_stream:
                 readme_content = readme_stream.read()

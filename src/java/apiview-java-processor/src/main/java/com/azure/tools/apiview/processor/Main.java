@@ -61,7 +61,7 @@ public class Main {
         List<Token> tokens = new ArrayList<>();
         apiListing.setTokens(tokens);
 
-        Analyser analyser = new ASTAnalyser();
+        Analyser analyser = new ASTAnalyser(inputFile, apiListing);
 
         // Read all files within the jar file so that we can create a list of files to analyse
         List<Path> allFiles = new ArrayList<>();
@@ -82,7 +82,7 @@ public class Main {
         }
 
         // Do the analysis
-        analyser.analyse(allFiles, apiListing);
+        analyser.analyse(allFiles);
 
         // Write out to the filesystem
         try {

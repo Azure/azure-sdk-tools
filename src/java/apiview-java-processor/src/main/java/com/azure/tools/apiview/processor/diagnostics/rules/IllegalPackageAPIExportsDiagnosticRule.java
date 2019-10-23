@@ -71,10 +71,5 @@ public class IllegalPackageAPIExportsDiagnosticRule implements DiagnosticRule {
                 continue;
             }
         }
-        if (packageName.contains(".implementation")) {
-            listing.addDiagnostic(new Diagnostic(methodId, "API should never expose implementation classes."));
-        } else if (packageName.contains("netty")) {
-            listing.addDiagnostic(new Diagnostic(methodId, "API should never expose Netty classes."));
-        }
     }
 }

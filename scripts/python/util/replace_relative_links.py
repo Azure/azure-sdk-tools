@@ -8,6 +8,7 @@ import logging
 import glob
 import re
 import fnmatch
+from io import open
 
 # This script is intended to be run against a single folder. All readme.md files (regardless of casing) will have the relative links
 # updated with appropriate full reference links. This is a recursive update..

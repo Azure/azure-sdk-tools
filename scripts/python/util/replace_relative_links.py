@@ -10,7 +10,7 @@ import re
 import fnmatch
 
 # This script is intended to be run against a single folder. All readme.md files (regardless of casing) will have the relative links
-# updated with appropriate full reference links. This is a recursive check.
+# updated with appropriate full reference links. This is a recursive update..
 
 logging.getLogger().setLevel(logging.INFO)
 
@@ -75,7 +75,7 @@ def transfer_content_to_absolute_references(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Replaces relative links for README.md. Given any discovered relative link, will replace with the provided repoId and SHA."
+        description="Replaces relative links for any README.md under the target folder. Given any discovered relative link, will replace with the provided repoId and SHA. Case insensitive"
     )
 
     parser.add_argument(
@@ -83,8 +83,8 @@ if __name__ == "__main__":
         "--target",
         dest="target_folder",
         help="The target folder that contains a README ",
-        # required=True,
-        default="C:/repo/bi-reports",
+
+        default = "${{ parameters.TargetFolder }}"
     )
 
     parser.add_argument(
@@ -92,8 +92,8 @@ if __name__ == "__main__":
         "--repoid",
         dest="repo_id",
         help='The target repository used as the base for the path replacement. Full Id, example: "Azure/azure-sdk-for-net"',
-        # required=True,
-        default="Azure/azure-sdk-for-python",
+
+        default = "${{ parameters.RootFolder }}"
     )
 
     parser.add_argument(
@@ -101,8 +101,8 @@ if __name__ == "__main__":
         "--root",
         dest="root_folder",
         help="The root directory of the repository. This gives us the ability to rationalize links in situations where a relative link traverses UPWARDS from the readme.",
-        # required=True,
-        default="C:/repo/bi-reports",
+
+        default = "${{ parameters.BuildSHA }}"
     )
 
     parser.add_argument(
@@ -110,10 +110,10 @@ if __name__ == "__main__":
         "--sha",
         dest="build_sha",
         help="The commit hash associated with this change. Using this will mean that links will never be broken.",
-        # required=True,
-        default="82785eb5aaecd0d135adc8657d54ca1d5d6a2f9b",
-    )
 
+        default = "${{ parameters.RepoId }}"
+    )
+            
     args = parser.parse_args()
 
     readme_files = locate_readmes(args.target_folder)

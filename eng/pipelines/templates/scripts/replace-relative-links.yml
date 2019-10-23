@@ -6,7 +6,7 @@ parameters:
 
 steps:
   - task: PythonScript@0
-    displayName: Verify Agent OS
+    displayName: Replace Relative Readme Links with Absolute References
     inputs:
       scriptSource: inline
       script: |

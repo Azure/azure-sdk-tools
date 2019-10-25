@@ -114,7 +114,7 @@ if __name__ == "__main__":
         "--repoid",
         dest="repo_id",
         help='The target repository used as the base for the path replacement. Full Id, example: "Azure/azure-sdk-for-net"',
-        default="${{ parameters.RootFolder }}",
+        default="${{ parameters.RepoId }}",
     )
 
     parser.add_argument(
@@ -122,7 +122,7 @@ if __name__ == "__main__":
         "--root",
         dest="root_folder",
         help="The root directory of the repository. This gives us the ability to rationalize links in situations where a relative link traverses UPWARDS from the readme.",
-        default="${{ parameters.BuildSHA }}",
+        default="${{ parameters.RootFolder }}",
     )
 
     parser.add_argument(
@@ -130,7 +130,7 @@ if __name__ == "__main__":
         "--sha",
         dest="build_sha",
         help="The commit hash associated with this change. Using this will mean that links will never be broken.",
-        default="${{ parameters.RepoId }}",
+        default="${{ parameters.BuildSHA }}",
     )
 
     args = parser.parse_args()
@@ -154,8 +154,9 @@ if __name__ == "__main__":
                 readme_content,
             )
 
-            with open(readme_location, "w") as readme_stream:
+            with open(readme_location, "w", encoding="utf-8") as readme_stream:
                 readme_stream.write(new_content)
+                
         except Exception as e:
             logging.error(e)
             exit(1)

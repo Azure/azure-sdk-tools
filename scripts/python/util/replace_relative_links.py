@@ -20,7 +20,7 @@ RELATIVE_LINK_REPLACEMENT_SYNTAX = (
 )
 
 LINK_DISCOVERY_REGEX = r"\[([^\]]*)\]\(([^)]*)\)"
-PREDEFINED_LINK_DISCOVERY_REGEX = r"(^\[[^\]]*]\:)(.*)"
+PREDEFINED_LINK_DISCOVERY_REGEX = r"(\[[^\]]*]\:)\s*([^\s]+)"
 
 def locate_readmes(directory):
     readme_set = []
@@ -42,7 +42,7 @@ def is_relative_link(link_value, readme_location):
 
 
 def replace_relative_link(match, readme_location, root_folder, build_sha, repo_id):
-    link_path = match.group(2)
+    link_path = match.group(2).strip()
 
     if is_relative_link(link_path, readme_location):
         # if it is a relative reference, we need to find the path from the root of the repository
@@ -62,7 +62,7 @@ def replace_relative_link(match, readme_location, root_folder, build_sha, repo_i
         return match.group(0)
 
 def replace_prefined_relative_links(match, readme_location, root_folder, build_sha, repo_id):
-    link_path = match.group(2)
+    link_path = match.group(2).strip()
 
     if is_relative_link(link_path, readme_location):
         # if it is a relative reference, we need to find the path from the root of the repository
@@ -77,7 +77,7 @@ def replace_prefined_relative_links(match, readme_location, root_folder, build_s
             target_resource_path=placement_from_root,
         ).replace("\\", "/")
 
-        return "[{}]: {}".format(match.group(1), updated_link)
+        return "{} {}".format(match.group(1), updated_link)
     else:
         return match.group(0)
 

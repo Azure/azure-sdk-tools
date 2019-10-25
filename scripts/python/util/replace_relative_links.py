@@ -18,8 +18,9 @@ logging.getLogger().setLevel(logging.INFO)
 RELATIVE_LINK_REPLACEMENT_SYNTAX = (
     "https://github.com/{repo_id}/tree/{build_sha}/{target_resource_path}"
 )
-LINK_DISCOVERY_REGEX = r"\[([^\]]*)\]\(([^)]*)\)"
 
+LINK_DISCOVERY_REGEX = r"\[([^\]]*)\]\(([^)]*)\)"
+PREDEFINED_LINK_DISCOVERY_REGEX = r"(^\[[^\]]*]\:)(.*)"
 
 def locate_readmes(directory):
     readme_set = []
@@ -34,7 +35,7 @@ def locate_readmes(directory):
 def is_relative_link(link_value, readme_location):
     try:
         return os.path.isfile(
-            os.path.join(os.path.dirname(readme_location), link_value)
+            os.path.abspath(os.path.join(os.path.dirname(readme_location), link_value))
         )
     except:
         return False
@@ -57,6 +58,26 @@ def replace_relative_link(match, readme_location, root_folder, build_sha, repo_i
         ).replace("\\", "/")
 
         return "[{}]({})".format(match.group(1), updated_link)
+    else:
+        return match.group(0)
+
+def replace_prefined_relative_links(match, readme_location, root_folder, build_sha, repo_id):
+    link_path = match.group(2)
+
+    if is_relative_link(link_path, readme_location):
+        # if it is a relative reference, we need to find the path from the root of the repository
+        resource_absolute_path = os.path.abspath(
+            os.path.join(os.path.dirname(readme_location), link_path)
+        )
+        placement_from_root = os.path.relpath(resource_absolute_path, root_folder)
+
+        updated_link = RELATIVE_LINK_REPLACEMENT_SYNTAX.format(
+            repo_id=repo_id,
+            build_sha=build_sha,
+            target_resource_path=placement_from_root,
+        ).replace("\\", "/")
+
+        return "[{}]: {}".format(match.group(1), updated_link)
     else:
         return match.group(0)
 

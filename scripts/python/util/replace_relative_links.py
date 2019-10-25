@@ -93,6 +93,14 @@ def transfer_content_to_absolute_references(
         content,
     )
 
+    content = re.sub(
+        PREDEFINED_LINK_DISCOVERY_REGEX,
+        lambda match, readme_location=readme_location, root_folder=root_folder, build_sha=build_sha, repo_id=repo_id: replace_prefined_relative_links(
+            match, readme_location, root_folder, build_sha, repo_id
+        ),
+        content,
+    )
+
     return content
 
 

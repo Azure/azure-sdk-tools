@@ -9,7 +9,7 @@ namespace APIViewWeb
     {
         private string _language;
 
-        public string ReviewFileId { get; set; } = Guid.NewGuid().ToString("N");
+        public string ReviewFileId { get; set; } = IdHelper.GenerateId();
         public string Name { get; set; }
 
         public string Language
@@ -21,6 +21,10 @@ namespace APIViewWeb
         public string VersionString { get; set; }
 
         public bool HasOriginal { get; set; }
+
+        public DateTime CreationDate { get; set; } = DateTime.Now;
+
+        [Obsolete("Back compat don't use directly")]
         public bool RunAnalysis { get; set; }
     }
 }

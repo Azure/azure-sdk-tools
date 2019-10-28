@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Testing the ts-config-allowsyntheticdefaultimports rule.
  * @author Arpan Laha
@@ -134,8 +137,7 @@ ruleTester.run("ts-config-allowsyntheticdefaultimports", rule, {
     },
     {
       // commpilerOptions is in a nested object
-      code:
-        '{"outer": {"compilerOptions": { "allowSyntheticDefaultImports": true }}}',
+      code: '{"outer": {"compilerOptions": { "allowSyntheticDefaultImports": true }}}',
       filename: "tsconfig.json",
       errors: [
         {
@@ -149,8 +151,7 @@ ruleTester.run("ts-config-allowsyntheticdefaultimports", rule, {
       filename: "tsconfig.json",
       errors: [
         {
-          message:
-            "allowSyntheticDefaultImports is not a member of compilerOptions"
+          message: "allowSyntheticDefaultImports is not a member of compilerOptions"
         }
       ]
     },

@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Rule to force package.json's author value to be set to "Microsoft Corporation".
  * @author Arpan Laha

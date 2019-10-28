@@ -1,12 +1,12 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Rule to require TSDoc comments to include internal or ignore tags if the object is internal.
  * @author Arpan Laha
  */
 
-import {
-  ParserServices,
-  TSESTree
-} from "@typescript-eslint/experimental-utils";
+import { ParserServices, TSESTree } from "@typescript-eslint/experimental-utils";
 import { ParserWeakMap } from "@typescript-eslint/typescript-estree/dist/parser-options";
 import { Rule } from "eslint";
 import { Node } from "estree";
@@ -38,32 +38,22 @@ const reportInternal = (
   const symbol = typeChecker.getTypeAtLocation(tsNode).getSymbol();
 
   // if type is internal and has a TSDoc
-  if (
-    !context.settings.exported.includes(symbol) &&
-    tsNode.jsDoc !== undefined
-  ) {
+  if (!context.settings.exported.includes(symbol) && tsNode.jsDoc !== undefined) {
     // fetc all tags
     let TSDocTags: string[] = [];
     tsNode.jsDoc.forEach((TSDocComment: any): void => {
       TSDocTags = TSDocTags.concat(
         TSDocComment.tags !== undefined
-          ? TSDocComment.tags.map(
-              (TSDocTag: any): string => TSDocTag.tagName.escapedText
-            )
+          ? TSDocComment.tags.map((TSDocTag: any): string => TSDocTag.tagName.escapedText)
           : []
       );
     });
 
     // see if any match ignore or internal
-    if (
-      TSDocTags.every(
-        (TSDocTag: string): boolean => !/(ignore)|(internal)/.test(TSDocTag)
-      )
-    ) {
+    if (TSDocTags.every((TSDocTag: string): boolean => !/(ignore)|(internal)/.test(TSDocTag))) {
       context.report({
         node: node,
-        message:
-          "internal items with TSDoc comments should include an @internal or @ignore tag"
+        message: "internal items with TSDoc comments should include an @internal or @ignore tag"
       });
     }
   }
@@ -148,9 +138,7 @@ export = {
                 .getAncestors()
                 .every(
                   (ancestor: Node): boolean =>
-                    !["ClassBody", "TSInterfaceBody", "TSModuleBlock"].includes(
-                      ancestor.type
-                    )
+                    !["ClassBody", "TSInterfaceBody", "TSModuleBlock"].includes(ancestor.type)
                 )
             ) {
               reportInternal(node, context, converter, typeChecker);

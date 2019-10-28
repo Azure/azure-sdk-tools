@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Testing the ts-config-declaration rule.
  * @author Arpan Laha
@@ -156,8 +159,7 @@ ruleTester.run("ts-config-declaration", rule, {
       filename: "tsconfig.json",
       errors: [
         {
-          message:
-            "compilerOptions.declaration is set to false when it should be set to true"
+          message: "compilerOptions.declaration is set to false when it should be set to true"
         }
       ],
       output: '{"compilerOptions": { "declaration": true }}'
@@ -168,8 +170,7 @@ ruleTester.run("ts-config-declaration", rule, {
       filename: "tsconfig.json",
       errors: [
         {
-          message:
-            "compilerOptions.declaration is set to false when it should be set to true"
+          message: "compilerOptions.declaration is set to false when it should be set to true"
         }
       ],
       output: exampleTsconfigGood

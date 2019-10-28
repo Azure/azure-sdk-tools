@@ -1,3 +1,4 @@
+using System;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OAuth;
@@ -9,17 +10,29 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json.Linq;
-using System;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Reflection;
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json;
 using APIViewWeb.Respositories;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 
 namespace APIViewWeb
 {
     public class Startup
     {
+        public static string VersionHash { get; set; }
+
+        static Startup()
+        {
+            var version = typeof(Startup).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
+            var indexOfPlus = version.IndexOf("+", StringComparison.OrdinalIgnoreCase);
+            VersionHash = indexOfPlus == -1 ? "dev" : version.Substring(indexOfPlus + 1);
+        }
+
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
@@ -30,6 +43,8 @@ namespace APIViewWeb
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddApplicationInsightsTelemetry();
+
             services.Configure<CookiePolicyOptions>(options =>
             {
                 // This lambda determines whether user consent for non-essential cookies is needed for a given request.
@@ -37,13 +52,19 @@ namespace APIViewWeb
                 options.MinimumSameSitePolicy = SameSiteMode.None;
             });
 
+            services.Configure<OrganizationOptions>(options => Configuration
+                .GetSection("Github")
+                .Bind(options));
+
             services.AddMvc()
-                .SetCompatibilityVersion(CompatibilityVersion.Version_2_1)
-                .AddRazorPagesOptions(options =>
-                {
-                    options.Conventions.AddPageRoute("/Assemblies/Index", "");
-                    options.Conventions.AuthorizeFolder("/Assemblies", "RequireOrganization");
-                });
+                .SetCompatibilityVersion(CompatibilityVersion.Latest)
+                .AddRazorRuntimeCompilation();
+
+            services.AddRazorPages(options =>
+            {
+                options.Conventions.AuthorizeFolder("/Assemblies", "RequireOrganization");
+                options.Conventions.AddPageRoute("/Assemblies/Index", "");
+            });
 
             services.AddSingleton<BlobCodeFileRepository>();
             services.AddSingleton<BlobOriginalsRepository>();
@@ -93,52 +114,51 @@ namespace APIViewWeb
                             var response = await context.Backchannel.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, context.HttpContext.RequestAborted);
                             response.EnsureSuccessStatusCode();
 
-                            var user = JObject.Parse(await response.Content.ReadAsStringAsync());
-                            context.RunClaimActions(user);
+                            var user = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
 
-                            request = new HttpRequestMessage(HttpMethod.Get, user["organizations_url"].ToString());
-                            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", context.AccessToken);
-
-                            response = await context.Backchannel.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, context.HttpContext.RequestAborted);
-                            response.EnsureSuccessStatusCode();
-
-                            var orgs = JArray.Parse(await response.Content.ReadAsStringAsync());
-                            var orgNames = new StringBuilder();
-
-                            bool isFirst = true;
-                            foreach (var org in orgs)
+                            context.RunClaimActions(user.RootElement);
+                            if (user.RootElement.TryGetProperty("organizations_url", out var organizationsUrlProperty))
                             {
-                                if (isFirst)
-                                {
-                                    isFirst = false;
-                                }
-                                else
-                                {
-                                    orgNames.Append(",");
-                                }
-                                orgNames.Append(org["login"].ToString());
-                            }
+                                request = new HttpRequestMessage(HttpMethod.Get, organizationsUrlProperty.GetString());
+                                request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", context.AccessToken);
 
-                            context.Identity.AddClaim(new Claim("urn:github:orgs", orgNames.ToString()));
+                                response = await context.Backchannel.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, context.HttpContext.RequestAborted);
+                                response.EnsureSuccessStatusCode();
+
+                                var orgs = JArray.Parse(await response.Content.ReadAsStringAsync());
+                                var orgNames = new StringBuilder();
+
+                                bool isFirst = true;
+                                foreach (var org in orgs)
+                                {
+                                    if (isFirst)
+                                    {
+                                        isFirst = false;
+                                    }
+                                    else
+                                    {
+                                        orgNames.Append(",");
+                                    }
+                                    orgNames.Append(org["login"]);
+                                }
+
+                                context.Identity.AddClaim(new Claim("urn:github:orgs", orgNames.ToString()));
+                            }
                         }
                     };
                 });
 
-            services.AddAuthorization(options =>
-            {
-                options.AddPolicy("RequireOrganization", policy =>
-                {
-                    policy.RequireClaim("urn:github:orgs");
-                    policy.AddRequirements(new OrganizationRequirement(Configuration["Github:RequiredOrganization"].Split(",", StringSplitOptions.RemoveEmptyEntries)));
-                });
-            });
+            services.AddAuthorization();
+            services.AddSingleton<IConfigureOptions<AuthorizationOptions>, ConfigureOrganizationPolicy>();
 
             services.AddSingleton<IAuthorizationHandler, OrganizationRequirementHandler>();
+            services.AddSingleton<IAuthorizationHandler, CommentOwnerRequirementHandler>();
+            services.AddSingleton<IAuthorizationHandler, ReviewOwnerRequirementHandler>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
             {
@@ -153,9 +173,17 @@ namespace APIViewWeb
 
             app.UseHttpsRedirection();
             app.UseStaticFiles();
+
+            app.UseRouting();
+
             app.UseCookiePolicy();
             app.UseAuthentication();
-            app.UseMvc();
+            app.UseAuthorization();
+
+            app.UseEndpoints(endpoints => {
+                endpoints.MapRazorPages();
+                endpoints.MapDefaultControllerRoute();
+            });
         }
     }
 }

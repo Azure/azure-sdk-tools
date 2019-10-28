@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using ApiView;
+using APIView;
+using APIView.DIff;
 using APIViewWeb.Models;
 using APIViewWeb.Respositories;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.Mvc.ViewFeatures;
 
 namespace APIViewWeb.Pages.Assemblies
 {
@@ -30,79 +31,135 @@ namespace APIViewWeb.Pages.Assemblies
         }
 
         public ReviewModel Review { get; set; }
+        public ReviewRevisionModel Revision { get; set; }
+        public ReviewRevisionModel DiffRevision { get; set; }
+        public ReviewRevisionModel[] PreviousRevisions {get; set; }
+
         public CodeFile CodeFile { get; set; }
-        public LineApiView[] Lines { get; set; }
+
+        public CodeLineModel[] Lines { get; set; }
+        public InlineDiffLine<CodeLine>[] DiffLines { get; set; }
         public ReviewCommentsModel Comments { get; set; }
 
-        [BindProperty]
-        public CommentModel Comment { get; set; }
+        /// <summary>
+        /// The number of active conversations for this iteration
+        /// </summary>
+        public int ActiveConversations { get; set; }
 
-        public async Task<ActionResult> OnPostDeleteAsync(string id, string commentId, string elementId)
+        public int TotalActiveConversations { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public string DiffRevisionId { get; set; }
+
+        public async Task<IActionResult> OnGetAsync(string id, string revisionId = null)
         {
-            await _commentsManager.DeleteCommentAsync(User, id, commentId);
+            TempData["Page"] = "api";
 
-            return await CommentPartialAsync(id, elementId);
-        }
-
-        private async Task<ActionResult> CommentPartialAsync(string id, string elementId)
-        {
-            var comments = await _commentsManager.GetReviewCommentsAsync(id);
-            comments.TryGetThreadForLine(elementId, out var partialModel);
-            return new PartialViewResult
-            {
-                ViewName = "_CommentThreadPartial",
-                ViewData = new ViewDataDictionary<CommentThreadModel>(ViewData, partialModel)
-            };
-        }
-
-        public async Task<IActionResult> OnGetAsync(string id)
-        {
             Review = await _manager.GetReviewAsync(User, id);
 
-            var codeFile = Review.Files.SingleOrDefault();
-            if (codeFile != null)
-            {
-                CodeFile = await _codeFileRepository.GetCodeFileAsync(codeFile.ReviewFileId);
-            }
-            else
+            if (!Review.Revisions.Any())
             {
                 return RedirectToPage("LegacyReview", new { id = id });
             }
 
-            Lines = new CodeFileHtmlRenderer().Render(CodeFile).ToArray();
             Comments = await _commentsManager.GetReviewCommentsAsync(id);
+            Revision = revisionId != null ?
+                Review.Revisions.Single(r => r.RevisionId == revisionId) :
+                Review.Revisions.Last();
+            PreviousRevisions = Review.Revisions.TakeWhile(r => r != Revision).ToArray();
+
+            CodeFile = await _codeFileRepository.GetCodeFileAsync(Revision);
+
+            var fileDiagnostics = CodeFile.Diagnostics ?? Array.Empty<CodeDiagnostic>();
+
+            var fileHtmlLines = CodeFileHtmlRenderer.Normal.Render(CodeFile);
+
+            if (DiffRevisionId != null)
+            {
+                DiffRevision = PreviousRevisions.Single(r=>r.RevisionId == DiffRevisionId);
+
+                var previousRevisionFile = await _codeFileRepository.GetCodeFileAsync(DiffRevision);
+
+                var previousHtmlLines = CodeFileHtmlRenderer.ReadOnly.Render(previousRevisionFile);
+                var previousRevisionTextLines = CodeFileRenderer.Instance.Render(previousRevisionFile);
+                var fileTextLines = CodeFileRenderer.Instance.Render(CodeFile);
+
+                var diffLines = InlineDiff.Compute(
+                    previousRevisionTextLines,
+                    fileTextLines,
+                    previousHtmlLines,
+                    fileHtmlLines);
+
+                Lines = CreateLines(fileDiagnostics, diffLines, Comments);
+            }
+            else
+            {
+                Lines = CreateLines(fileDiagnostics, fileHtmlLines, Comments);
+            }
+
+            ActiveConversations = ComputeActiveConversations(fileHtmlLines, Comments);
+            TotalActiveConversations = Comments.Threads.Count(t => !t.IsResolved);
 
             return Page();
         }
 
-        public async Task<ActionResult> OnPostAsync(string id)
+        private CodeLineModel[] CreateLines(CodeDiagnostic[] diagnostics, InlineDiffLine<CodeLine>[] lines, ReviewCommentsModel comments)
         {
-            Comment.TimeStamp = DateTime.UtcNow;
-            Comment.ReviewId = id;
+            return lines.Select(
+                diffLine => new CodeLineModel(
+                    diffLine.Kind,
+                    diffLine.Line,
+                    diffLine.Kind != DiffLineKind.Removed &&
+                    comments.TryGetThreadForLine(diffLine.Line.ElementId, out var thread) ?
+                        thread :
+                        null,
 
-            await _commentsManager.AddCommentAsync(User, Comment);
-
-            return await CommentPartialAsync(id, Comment.ElementId);
+                    diffLine.Kind != DiffLineKind.Removed ?
+                        diagnostics.Where(d => d.TargetId == diffLine.Line.ElementId).ToArray() :
+                        Array.Empty<CodeDiagnostic>()
+                )).ToArray();
         }
 
-
-        public async Task<ActionResult> OnPostResolveAsync(string id, string lineId)
+        private CodeLineModel[] CreateLines(CodeDiagnostic[] diagnostics, CodeLine[] lines, ReviewCommentsModel comments)
         {
-            await _commentsManager.ResolveConversation(User, id, lineId);
-
-            return await CommentPartialAsync(id, lineId);
+            return lines.Select(
+                line => new CodeLineModel(
+                    DiffLineKind.Unchanged,
+                    line,
+                    comments.TryGetThreadForLine(line.ElementId, out var thread) ? thread : null,
+                    diagnostics.Where(d => d.TargetId == line.ElementId).ToArray()
+                )).ToArray();
         }
 
-        public async Task<ActionResult> OnPostUnresolveAsync(string id, string lineId)
+        private int ComputeActiveConversations(CodeLine[] lines, ReviewCommentsModel comments)
         {
-            await _commentsManager.UnresolveConversation(User, id, lineId);
+            int activeThreads = 0;
+            foreach (CodeLine line in lines)
+            {
+                if (string.IsNullOrEmpty(line.ElementId))
+                {
+                    continue;
+                }
 
-            return await CommentPartialAsync(id, lineId);
+                // if we have comments for this line and the thread has not been resolved.
+                if (comments.TryGetThreadForLine(line.ElementId, out CommentThreadModel thread) && !thread.IsResolved)
+                {
+                    activeThreads++;
+                }
+            }
+            return activeThreads;
         }
 
         public async Task<ActionResult> OnPostRefreshModelAsync(string id)
         {
             await _manager.UpdateReviewAsync(User, id);
+
+            return RedirectToPage(new { id = id });
+        }
+
+        public async Task<ActionResult> OnPostToggleClosedAsync(string id)
+        {
+            await _manager.ToggleIsClosedAsync(User, id);
 
             return RedirectToPage(new { id = id });
         }

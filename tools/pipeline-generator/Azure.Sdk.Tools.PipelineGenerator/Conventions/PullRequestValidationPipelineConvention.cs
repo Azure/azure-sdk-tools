@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace PipelineGenerator.Conventions
 {
-    public class PullRequestValidationPipelineConvention : ContinuousIntegrationPipelineConvention
+    public class PullRequestValidationPipelineConvention : PipelineConvention
     {
         public PullRequestValidationPipelineConvention(ILogger logger, PipelineGenerationContext context) : base(logger, context)
         {
@@ -28,21 +28,11 @@ namespace PipelineGenerator.Conventions
 
             var hasChanges = await base.ApplyConventionAsync(definition, component);
 
-            var ciTrigger = definition.Triggers.OfType<ContinuousIntegrationTrigger>().SingleOrDefault();
-
-            if (ciTrigger == null)
+            for (int i = definition.Triggers.Count - 1; i >= 0; i--)
             {
-                definition.Triggers.Add(new ContinuousIntegrationTrigger()
+                if (definition.Triggers[i] is ContinuousIntegrationTrigger)
                 {
-                    SettingsSourceType = 2 // HACK: This is editor invisible, but this is required to inherit branch filters from YAML file.
-                });
-                hasChanges = true;
-            }
-            else
-            {
-                if (ciTrigger.SettingsSourceType != 2)
-                {
-                    ciTrigger.SettingsSourceType = 2;
+                    definition.Triggers.RemoveAt(i);
                     hasChanges = true;
                 }
             }

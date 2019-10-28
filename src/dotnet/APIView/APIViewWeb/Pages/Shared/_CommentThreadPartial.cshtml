@@ -5,9 +5,9 @@
 @using System.Linq
 @model CommentThreadModel
 
-@if (Model.Comments.Any())
+@if (Model != null && Model.Comments.Any())
 {
-    <tr class="comment-box" data-line-id="@Model.LineId">
+    <tr class="comment-row" data-line-id="@Model.LineId">
         <td class="comment-cell border-top border-bottom" colspan="4">
             @if (Model.IsResolved)
             {
@@ -17,35 +17,39 @@
                 <div class="comment-thread-contents">
                     @foreach (var comment in Model.Comments)
                     {
-                        <div class="review-comment">
-                            <div class="unminimized-comment">
-                                <div class="comment-actions">
-                                    <form class="comment-delete-button align-top" asp-page-handler="delete" method="post" asp-route-id="@Model.ReviewId">
-                                        <input type="hidden" name="commentId" value="@comment.CommentId" />
-                                        <input type="hidden" name="elementId" value="@Model.LineId" />
-                                        @if (comment.Username == User.GetGitHubLogin())
-                                        {
-                                            <button id="@comment.CommentId" data-post-update="comments" class="btn align-top"><span class="comment-delete-text align-top">Delete</span></button>
-                                        }
-                                        else
-                                        {
-                                            <button disabled class="btn align-top"><span class="comment-delete-text align-top">Delete</span></button>
-                                        }
-                                    </form>
-                                </div>
-                                <div class="media">
-                                    <img username="@comment.Username" class="comment-icon align-self-start mr-3" height="28" width="28" />
-                                    <div class="media-body comment-contents">
-                                        <div>
-                                            <strong class=" mt-0 comment-header author align-top">@comment.Username</strong>
-                                            <span date="@comment.TimeStamp.ToLocalTime()" class="comment-timestamp align-top"></span>
+                        <div id="@comment.CommentId" class="review-comment" data-comment-id="@comment.CommentId">
+                            <div class="comment-actions">
+                                @if (comment.Username == User.GetGitHubLogin())
+                                {
+                                    <div class="dropdown show">
+                                        <a class="btn btn-sm" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                            ...
+                                        </a>
+
+                                        <div class="dropdown-menu">
+                                            <form asp-controller="Comments" asp-action="Delete" method="post" asp-route-reviewId="@Model.ReviewId">
+                                                <input type="hidden" name="commentId" value="@comment.CommentId"/>
+                                                <button id="@comment.CommentId" data-post-update="comments" class="text-danger dropdown-item">Delete</button>
+                                            </form>
+                                            <a class="dropdown-item js-edit-comment">Edit</a>
                                         </div>
-                                        @Html.FormatAsMarkdown(@comment.Comment)
                                     </div>
+                                }
+                            </div>
+                            <div class="media">
+                                <img username="@comment.Username" class="comment-icon align-self-start mr-3" height="28" width="28" />
+                                <div class="media-body comment-contents">
+                                    <div>
+                                        <strong class=" mt-0 comment-header author align-top">@comment.Username</strong>
+                                        <a date="@comment.TimeStamp.ToLocalTime()" href="#@comment.CommentId" class="small float-right"></a>
+                                    </div>
+                                    <textarea class="js-comment-raw d-none">@comment.Comment</textarea>
+                                    @Html.FormatAsMarkdown(@comment.Comment)
                                 </div>
                             </div>
                         </div>
                     }
+
                     <div class="review-thread-reply">
                         <div class="reply-cell align-middle">
                             <img avatar username="@User.GetGitHubLogin()" class="comment-icon" height="28" width="28" />
@@ -58,14 +62,14 @@
                     <div class="m-2">
                         @if (Model.IsResolved)
                         {
-                            <form method="post" asp-page-handler="Unresolve" asp-route-id="@Model.ReviewId">
-                                <button data-post-update="comments" type="submit" name="submit" value="Submit" class="thread-resolve-button btn btn-outline-dark">Unresolve</button>
+                            <form method="post" asp-controller="Comments" asp-action="Unresolve" asp-route-reviewId="@Model.ReviewId">
+                                <button data-post-update="comments" type="submit" name="submit" value="Submit" class="btn btn-outline-secondary">Unresolve</button>
                             </form>
                         }
                         else
                         {
-                            <form method="post" asp-page-handler="Resolve" asp-route-id="@Model.ReviewId">
-                                <button data-post-update="comments" type="submit" name="submit" value="Submit" class="thread-resolve-button btn btn-outline-dark">Resolve</button>
+                            <form method="post" asp-controller="Comments" asp-action="Resolve"  asp-route-reviewId="@Model.ReviewId">
+                                <button data-post-update="comments" type="submit" name="submit" value="Submit" class="btn btn-outline-secondary">Resolve</button>
                             </form>
                         }
                     </div>

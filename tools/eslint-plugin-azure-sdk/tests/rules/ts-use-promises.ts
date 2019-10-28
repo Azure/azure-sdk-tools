@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Testing the ts-use-promises rule.
  * @author Arpan Laha
@@ -44,8 +47,7 @@ ruleTester.run("ts-use-promises", rule, {
       code: `import Promise from 'bluebird';${example}`,
       errors: [
         {
-          message:
-            "promises should use the in-built Promise type, not libraries or polyfills"
+          message: "promises should use the in-built Promise type, not libraries or polyfills"
         }
       ]
     }

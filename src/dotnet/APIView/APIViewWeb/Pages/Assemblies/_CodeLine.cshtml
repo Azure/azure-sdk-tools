@@ -1,0 +1,48 @@
+﻿@using ApiView
+@using APIView.DIff
+@model APIViewWeb.Models.CodeLineModel
+@{
+    bool isRemoved = Model.Kind == DiffLineKind.Removed;
+    string lineClass = Model.Kind switch
+    {
+        DiffLineKind.Removed => "code-removed",
+        DiffLineKind.Added => "code-added",
+        _ => ""
+    };
+}
+
+<tr class="code-line" data-line-id="@(isRemoved ? string.Empty : Model.CodeLine.ElementId)">
+    <td class="line-comment-button-cell">
+        @if (!isRemoved && Model.CodeLine.ElementId != null)
+        {
+            <a class="line-comment-button">+</a>
+        }
+    </td>
+    <td class="code @lineClass"><span class="code-inner">@Html.Raw(Model.CodeLine.DisplayString)</span></td>
+</tr>
+@if (Model.Diagnostics.Any())
+{
+    <tr class="code-diagnostics" data-line-id="@Model.CodeLine.ElementId">
+        <td colspan="2">
+            @foreach (var lineDiagnostic in Model.Diagnostics)
+            {
+                <p>
+                    @if (lineDiagnostic.Text.StartsWith("DO"))
+                    {
+                        @:✅ <b>DO</b> @lineDiagnostic.Text.Substring(2)
+                    }
+                    else
+                    {
+                        @lineDiagnostic.Text
+                    }
+                    <a href="@lineDiagnostic.HelpLinkUri">Details</a>
+                </p>
+            }
+        </td>
+    </tr>
+}
+
+@if (Model.CommentThread != null)
+{
+    <partial name="_CommentThreadPartial" model="@Model.CommentThread" />
+}

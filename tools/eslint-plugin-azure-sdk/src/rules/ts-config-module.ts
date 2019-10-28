@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Rule to force tsconfig.json's compilerOptions.module value to "es6".
  * @author Arpan Laha
@@ -43,8 +46,7 @@ export = {
                 node: node.value,
                 message:
                   "compilerOptions.module is not set to a literal (string | boolean | null | number | RegExp)",
-                fix: (fixer: Rule.RuleFixer): Rule.Fix =>
-                  fixer.replaceText(node.value, `"es6"`)
+                fix: (fixer: Rule.RuleFixer): Rule.Fix => fixer.replaceText(node.value, `"es6"`)
               });
             }
 
@@ -56,8 +58,7 @@ export = {
               context.report({
                 node: node,
                 message: `compilerOptions.module is set to ${module} when it should be set to ES6`,
-                fix: (fixer: Rule.RuleFixer): Rule.Fix =>
-                  fixer.replaceText(nodeValue, `"es6"`)
+                fix: (fixer: Rule.RuleFixer): Rule.Fix => fixer.replaceText(nodeValue, `"es6"`)
               });
             }
           }

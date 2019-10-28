@@ -1,0 +1,13 @@
+{
+  "extends": "./.eslintrc.json",
+  "plugins": ["local"],
+  "rules": {
+    "local/github-source-headers": "error",
+    "local/ts-config-exclude": "error",
+    "local/ts-config-forceconsistentcasinginfilenames": "error",
+    "local/ts-no-namespaces": "error",
+    "local/ts-package-json-author": "error",
+    "local/ts-package-json-license": "error",
+    "local/ts-versioning-semver": "error"
+  }
+}

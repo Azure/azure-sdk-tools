@@ -1,8 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Threading.Tasks;
-using APIViewWeb.Models;
 using APIViewWeb.Respositories;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -21,11 +19,14 @@ namespace APIViewWeb.Pages.Assemblies
         [FromForm]
         public UploadModel Upload { get; set; }
 
+        [BindProperty(SupportsGet = true)]
+        public bool Closed { get; set; }
+
         public IEnumerable<ReviewModel> Assemblies { get; set; }
 
         public async Task OnGetAsync()
         {
-            Assemblies = await _manager.GetReviewsAsync();
+            Assemblies = await _manager.GetReviewsAsync(Closed);
         }
 
         public async Task<IActionResult> OnPostUploadAsync()

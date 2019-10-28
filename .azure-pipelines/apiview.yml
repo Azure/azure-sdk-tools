@@ -23,10 +23,12 @@ pr:
       - src/java
 
 variables:
-  DotNetCoreVersion: '2.1.503'
-  WebProjectPath: 'src/dotnet/APIView/APIViewWeb/'
-  TestProjectPath: 'src/dotnet/APIView/APIViewTests/'
+  DotNetCoreVersion: '3.0.100'
+  WebClientProjectDirectory: 'src/dotnet/APIView/APIViewWeb/Client'
+  WebProjectPath: 'src/dotnet/APIView/APIViewWeb/APIViewWeb.csproj'
+  TestProjectPath: 'src/dotnet/APIView/APIViewTest/APIViewTest.csproj'
   NodeVersion: '12.x'
+  BuildConfiguration: 'Release'
 
 stages:
   - stage: 'Main'
@@ -37,7 +39,7 @@ stages:
           vmImage: 'vs2017-win2016'
 
         steps:
-          - task: DotNetCoreInstaller@0
+          - task: DotNetCoreInstaller@2
             displayName: 'Use .NET Core sdk $(DotNetCoreVersion)'
             inputs:
               version: '$(DotNetCoreVersion)'
@@ -53,8 +55,13 @@ stages:
 
           - script: |
               npm install
-            workingDirectory: $(WebProjectPath)
+            workingDirectory: $(WebClientProjectDirectory)
             displayName: "Install npm packages"
+
+          - script: |
+              npm run-script build
+            workingDirectory: $(WebClientProjectDirectory)
+            displayName: "Build client assets"
 
           - task: Maven@3
             inputs:
@@ -68,13 +75,32 @@ stages:
               DOTNET_CLI_TELEMETRY_OPTOUT: 1
               DOTNET_MULTILEVEL_LOOKUP: 0
 
+          - task: DotNetCoreCLI@2
+            displayName: 'Publish site'
+            env:
+              DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+              DOTNET_CLI_TELEMETRY_OPTOUT: 1
+              DOTNET_MULTILEVEL_LOOKUP: 0
+            inputs:
+              command: 'publish'
+              projects: '$(WebProjectPath)'
+              publishWebProjects: false
+              arguments: '--configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory)'
+              zipAfterPublish: true
+
+          - task: PublishBuildArtifacts@1
+            inputs:
+              pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+              artifactName: 'APIView'
+              
+
       - job: 'Test'
 
         pool:
           vmImage: 'vs2017-win2016'
 
         steps:
-          - task: DotNetCoreInstaller@0
+          - task: DotNetCoreInstaller@2
             displayName: 'Use .NET Core sdk $(DotNetCoreVersion)'
             inputs:
               version: '$(DotNetCoreVersion)'

@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Rule to force tsconfig.json's compilerOptions.target value to be a valid EcmaScript standard.
  * @author Arpan Laha
@@ -59,8 +62,7 @@ export = {
             if (/esnext/i.test(target)) {
               context.report({
                 node: nodeValue,
-                message:
-                  "ESNext is not a valid option for compilerOptions.target"
+                message: "ESNext is not a valid option for compilerOptions.target"
               });
             }
           }

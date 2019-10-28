@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Rule to forbid usage of TypeScript namespaces.
  * @author Arpan Laha
@@ -11,10 +14,7 @@ import { getRuleMetaData } from "../utils";
 //------------------------------------------------------------------------------
 
 export = {
-  meta: getRuleMetaData(
-    "ts-no-namespaces",
-    "forbid usage of TypeScript namespaces"
-  ),
+  meta: getRuleMetaData("ts-no-namespaces", "forbid usage of TypeScript namespaces"),
   create: (context: Rule.RuleContext): Rule.RuleListener =>
     ({
       // callback functions

@@ -1,17 +1,15 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using System;
-using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.IO;
-using System.Linq;
 using APIView;
 using APIView.Analysis;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.PooledObjects;
 using Microsoft.CodeAnalysis.SymbolDisplay;
+using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.IO;
+using System.Linq;
 
 namespace ApiView
 {
@@ -50,7 +48,7 @@ namespace ApiView
 
         public ICodeFileBuilderSymbolOrderProvider SymbolOrderProvider { get; set; } = new CodeFileBuilderSymbolOrderProvider();
 
-        public const string CurrentVersion = "11";
+        public const string CurrentVersion = "13";
 
         private IEnumerable<INamespaceSymbol> EnumerateNamespaces(IAssemblySymbol assemblySymbol)
         {
@@ -100,7 +98,7 @@ namespace ApiView
             {
                 Text = assemblySymbol.Name + ".dll",
                 ChildItems = navigationItems.ToArray(),
-                Tags = { {"TypeKind", "assembly"} }
+                Tags = { { "TypeKind", "assembly" } }
             };
 
             var node = new CodeFile()
@@ -109,7 +107,7 @@ namespace ApiView
                 Language = "C#",
                 Tokens = builder.Tokens.ToArray(),
                 VersionString = CurrentVersion,
-                Navigation = new [] { assemblyNavigationItem },
+                Navigation = new[] { assemblyNavigationItem },
                 Diagnostics = analyzer.Results.ToArray()
             };
 
@@ -140,7 +138,7 @@ namespace ApiView
                 NavigationId = namespaceSymbol.GetId(),
                 Text = namespaceSymbol.ToDisplayString(),
                 ChildItems = namespaceItems.ToArray(),
-                Tags = { {"TypeKind", "namespace"} }
+                Tags = { { "TypeKind", "namespace" } }
             };
             navigationItems.Add(namespaceItem);
         }
@@ -317,15 +315,8 @@ namespace ApiView
 
             builder.WriteIndent();
             NodeFromSymbol(builder, member);
-            if (member.Kind == SymbolKind.Method &&
-                !member.IsAbstract &&
-                member.ContainingType.TypeKind != TypeKind.Interface)
-            {
-                builder.Space();
-                builder.Punctuation(SyntaxKind.OpenBraceToken);
-                builder.Punctuation(SyntaxKind.CloseBraceToken);
-            }
-            else if (member.Kind == SymbolKind.Field && member.ContainingType.TypeKind == TypeKind.Enum)
+
+            if (member.Kind == SymbolKind.Field && member.ContainingType.TypeKind == TypeKind.Enum)
             {
                 builder.Punctuation(SyntaxKind.CommaToken);
             }
@@ -405,6 +396,7 @@ namespace ApiView
                 case "DebuggerStepThroughAttribute":
                 case "AsyncStateMachineAttribute":
                 case "EditorBrowsableAttribute":
+                case "IteratorStateMachineAttribute":
                     return true;
                 default:
                     return false;
@@ -523,7 +515,7 @@ namespace ApiView
                 DefinitionId = definedSymbol?.Equals(symbol) == true ? definedSymbol.GetId() : null,
                 NavigateToId = navigateToId,
                 Value = symbolDisplayPart.ToString(),
-                Kind =  kind
+                Kind = kind
             };
         }
 

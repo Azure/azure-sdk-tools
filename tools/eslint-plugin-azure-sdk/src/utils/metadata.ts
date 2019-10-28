@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Utilities relating to ESLint Rule metadata
  * @author Arpan Laha
@@ -20,7 +23,5 @@ export const getRuleMetaData = (
     },
     schema: []
   };
-  return (fix !== undefined
-    ? { ...required, fixable: fix }
-    : required) as Rule.RuleMetaData;
+  return (fix !== undefined ? { ...required, fixable: fix } : required) as Rule.RuleMetaData;
 };

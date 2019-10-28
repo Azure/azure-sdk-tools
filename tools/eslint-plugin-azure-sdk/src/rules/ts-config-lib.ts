@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Rule to force tsconfig.json's compilerOptions.lib value to be an empty array.
  * @author Arpan Laha
@@ -43,16 +46,14 @@ export = {
                 context.report({
                   node: nodeValue,
                   message: "compilerOptions.lib is not set to an empty array",
-                  fix: (fixer: Rule.RuleFixer): Rule.Fix =>
-                    fixer.replaceText(nodeValue, "[]")
+                  fix: (fixer: Rule.RuleFixer): Rule.Fix => fixer.replaceText(nodeValue, "[]")
                 });
               }
             } else {
               context.report({
                 node: node.value,
                 message: "compilerOptions.lib is not set to an empty array",
-                fix: (fixer: Rule.RuleFixer): Rule.Fix =>
-                  fixer.replaceText(node.value, "[]")
+                fix: (fixer: Rule.RuleFixer): Rule.Fix => fixer.replaceText(node.value, "[]")
               });
             }
           }

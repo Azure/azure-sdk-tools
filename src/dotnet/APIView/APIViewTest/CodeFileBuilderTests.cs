@@ -1,12 +1,13 @@
-﻿using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+﻿using System;
 using ApiView;
 using Azure.ClientSdk.Analyzers.Tests;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -59,7 +60,7 @@ namespace APIViewTest
                 SymbolOrderProvider = new NameSymbolOrderProvider()
             }.Build(compilation.Assembly, false);
             var formattedModel = new CodeFileRenderer().Render(codeModel);
-            var formattedString = formattedModel.ToString();
+            var formattedString = string.Join(Environment.NewLine, formattedModel.Select(l => l.DisplayString));
             _testOutputHelper.WriteLine(formattedString);
             Assert.Equal(formatted, formattedString);
         }

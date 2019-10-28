@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Testing the ts-config-forceconsistentcasinginfilenames rule.
  * @author Arpan Laha
@@ -116,8 +119,7 @@ ruleTester.run("ts-config-forceconsistentcasinginfilenames", rule, {
     },
     {
       // incorrect format but in a file we don't care about
-      code:
-        '{"compilerOptions": { "forceConsistentCasingInFileNames": false }}',
+      code: '{"compilerOptions": { "forceConsistentCasingInFileNames": false }}',
       filename: "not_tsconfig.json"
     }
   ],
@@ -133,8 +135,7 @@ ruleTester.run("ts-config-forceconsistentcasinginfilenames", rule, {
     },
     {
       // commpilerOptions is in a nested object
-      code:
-        '{"outer": {"compilerOptions": { "forceConsistentCasingInFileNames": true }}}',
+      code: '{"outer": {"compilerOptions": { "forceConsistentCasingInFileNames": true }}}',
       filename: "tsconfig.json",
       errors: [
         {
@@ -148,15 +149,13 @@ ruleTester.run("ts-config-forceconsistentcasinginfilenames", rule, {
       filename: "tsconfig.json",
       errors: [
         {
-          message:
-            "forceConsistentCasingInFileNames is not a member of compilerOptions"
+          message: "forceConsistentCasingInFileNames is not a member of compilerOptions"
         }
       ]
     },
     {
       // only the fields we care about
-      code:
-        '{"compilerOptions": { "forceConsistentCasingInFileNames": false }}',
+      code: '{"compilerOptions": { "forceConsistentCasingInFileNames": false }}',
       filename: "tsconfig.json",
       errors: [
         {
@@ -164,8 +163,7 @@ ruleTester.run("ts-config-forceconsistentcasinginfilenames", rule, {
             "compilerOptions.forceConsistentCasingInFileNames is set to false when it should be set to true"
         }
       ],
-      output:
-        '{"compilerOptions": { "forceConsistentCasingInFileNames": true }}'
+      output: '{"compilerOptions": { "forceConsistentCasingInFileNames": true }}'
     },
     {
       // example file with compilerOptions.forceConsistentCasingInFileNames set to false

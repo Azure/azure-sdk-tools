@@ -86,10 +86,9 @@ def get_omitted_files(configuration):
 
 # convention. omit test projects
 def is_net_csproj_package(file_path):
-    test_proj_exclude = re.compile('.*tests.csproj|.*test.csproj', re.IGNORECASE)
-    sample_project_exclude = re.compile('.*TestProject.csproj', re.IGNORECASE)
+    test_proj_exclude = re.compile(".*\\\\(tests|samples)\\\\.*|.*test[s]?\\.csproj", re.IGNORECASE)
 
-    if test_proj_exclude.match(file_path) or sample_project_exclude.match(file_path):
+    if test_proj_exclude.match(file_path):
         return False
     
     return True

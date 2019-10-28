@@ -3,11 +3,13 @@ using Azure.Identity;
 using Azure.Sdk.Tools.CheckEnforcer.Configuration;
 using Azure.Sdk.Tools.CheckEnforcer.Handlers;
 using Azure.Sdk.Tools.CheckEnforcer.Integrations.GitHub;
+using Azure.Sdk.Tools.CheckEnforcer.Locking;
 using Azure.Security.KeyVault.Keys;
 using Azure.Security.KeyVault.Keys.Cryptography;
 using Azure.Security.KeyVault.Secrets;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
 using Microsoft.IdentityModel.Tokens;
@@ -29,21 +31,22 @@ namespace Azure.Sdk.Tools.CheckEnforcer
 {
     public class GitHubWebhookProcessor
     {
-        public GitHubWebhookProcessor(IGlobalConfigurationProvider globalConfigurationProvider, IGitHubClientProvider gitHubClientProvider, IRepositoryConfigurationProvider repositoryConfigurationProvider)
+        public GitHubWebhookProcessor(IGlobalConfigurationProvider globalConfigurationProvider, IGitHubClientProvider gitHubClientProvider, IRepositoryConfigurationProvider repositoryConfigurationProvider, IDistributedLockProvider distributedLockProvider)
         {
             this.globalConfigurationProvider = globalConfigurationProvider;
             this.gitHubClientProvider = gitHubClientProvider;
             this.repositoryConfigurationProvider = repositoryConfigurationProvider;
+            this.distributedLockProvider = distributedLockProvider;
         }
         
         public IGlobalConfigurationProvider globalConfigurationProvider;
         public IGitHubClientProvider gitHubClientProvider;
         private IRepositoryConfigurationProvider repositoryConfigurationProvider;
-
+        private IDistributedLockProvider distributedLockProvider;
         private const string GitHubEventHeader = "X-GitHub-Event";
         private const string GitHubSignatureHeader = "X-Hub-Signature";
 
-        private DateTimeOffset gitHubAppWebhookSecretExpiry = DateTime.MinValue;
+        private DateTimeOffset gitHubAppWebhookSecretExpiry = DateTimeOffset.MinValue;
         private string gitHubAppWebhookSecret;
         private SecretClient secretClient;
 
@@ -113,17 +116,17 @@ namespace Azure.Sdk.Tools.CheckEnforcer
             {
                 if (eventName == "check_run")
                 {
-                    var handler = new CheckRunHandler(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, logger);
+                    var handler = new CheckRunHandler(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, distributedLockProvider, logger);
                     await handler.HandleAsync(json, cancellationToken);
                 }
                 else if (eventName == "check_suite")
                 {
-                    var handler = new CheckSuiteHandler(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, logger);
+                    var handler = new CheckSuiteHandler(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, distributedLockProvider, logger);
                     await handler.HandleAsync(json, cancellationToken);
                 }
                 else if (eventName == "issue_comment")
                 {
-                    var handler = new IssueCommentHandler(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, logger);
+                    var handler = new IssueCommentHandler(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, distributedLockProvider, logger);
                     await handler.HandleAsync(json, cancellationToken);
                 }
                 else

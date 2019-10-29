@@ -36,7 +36,7 @@ class PackageInfo():
 
     # test a remote URL. True if sucessful
     def test_url(self, configuration):
-        
+
         # leverage test URL if it exists
         if configuration.get_repository_details().get('TestUrl', None):
             url = self.get_formatted_repo_test_url(configuration)
@@ -52,7 +52,7 @@ class PackageInfo():
                 print(err)
         return False
 
-    # get the base template URL from the configuration, then fill in the elements 
+    # get the base template URL from the configuration, then fill in the elements
     # from repository_args if necessary
     def get_formatted_repository_url(self, configuration):
         repo_url_template = configuration.get_repository_details()['URL']
@@ -91,4 +91,9 @@ class PackageInfo():
         return repo_url_template
 
     def get_repository_link_text(self, configuration):
-        return configuration.get_repository_details()['Text']
+        repo_text_template = configuration.get_repository_details()['Text']
+
+        # pull in the package id
+        repo_text_template = repo_text_template.format(package_id = self.package_id, package_version = self.package_version)
+
+        return repo_text_template

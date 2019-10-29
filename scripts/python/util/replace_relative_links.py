@@ -143,6 +143,11 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    logging.info("Root Folder: {}".format(args.root_folder))
+    logging.info("Target Folder: {}".format(args.target_folder))
+    logging.info("Repository Id: {}".format(args.repo_id))
+    logging.info("Build SHA: {}".format(args.build_sha))
+
     readme_files = locate_readmes(args.target_folder)
 
     for readme_location in readme_files:

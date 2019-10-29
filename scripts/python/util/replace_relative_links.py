@@ -34,7 +34,7 @@ def locate_readmes(directory):
 
 def is_relative_link(link_value, readme_location):
     try:
-        return os.path.isfile(
+        return os.path.exists(
             os.path.abspath(os.path.join(os.path.dirname(readme_location), link_value))
         )
     except:
@@ -142,6 +142,11 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
+
+    logging.info("Root Folder: {}".format(args.root_folder))
+    logging.info("Target Folder: {}".format(args.target_folder))
+    logging.info("Repository Id: {}".format(args.repo_id))
+    logging.info("Build SHA: {}".format(args.build_sha))
 
     readme_files = locate_readmes(args.target_folder)
 

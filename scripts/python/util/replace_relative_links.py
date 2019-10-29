@@ -34,7 +34,7 @@ def locate_readmes(directory):
 
 def is_relative_link(link_value, readme_location):
     try:
-        return os.path.isfile(
+        return os.path.exists(
             os.path.abspath(os.path.join(os.path.dirname(readme_location), link_value))
         )
     except:

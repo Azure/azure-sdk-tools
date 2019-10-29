@@ -36,5 +36,17 @@ namespace Azure.Sdk.Tools.CheckEnforcer
             var gitHubAppWebhookSecretName = Environment.GetEnvironmentVariable("GITHUBAPP_WEBHOOK_SECRET");
             return gitHubAppWebhookSecretName;
         }
+
+        public string GetDistributedLockStorageUri()
+        {
+            var distributedLockStorageUri = Environment.GetEnvironmentVariable("DISTRIBUTED_LOCK_STORAGE_URI");
+            return distributedLockStorageUri;
+        }
+
+        public string GetDistributedLockContainerName()
+        {
+            var distributedLockContainerName = Environment.GetEnvironmentVariable("DISTRIBUTED_LOCK_CONTAINER_NAME");
+            return distributedLockContainerName;
+        }
     }
 }

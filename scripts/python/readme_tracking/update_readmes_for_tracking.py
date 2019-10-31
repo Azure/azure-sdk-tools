@@ -11,7 +11,7 @@ HOSTNAME = 'https://azure-sdk-impressions.azurewebsites.net'
 
 README_PATTERNS = ['*/readme.md', '*/readme.rst']
 MARKDOWN_REGEX = r'!\[Impressions\]\([^\)]+\)'
-RST_REGEX = r'\.\. image::  https://' + HOSTNAME + r'/api/impressions/[^\s]+'
+RST_REGEX = r'\.\. image::  ' + HOSTNAME + r'/api/impressions/[^\s]+'
 
 TRACKING_PIXEL_MD_FORMAT_STRING = '![Impressions](' + HOSTNAME + '/api/impressions/{0}{1})'
 TRACKING_PIXEL_RST_FORMAT_STRING = '.. image::  ' + HOSTNAME + '/api/impressions/{0}{1}'
@@ -23,7 +23,7 @@ def walk_directory_for_pattern(target_directory, target_patterns):
     normalized_target_patterns = [os.path.normpath(pattern) for pattern in target_patterns]
 
     # walk the folders, filter to the patterns established
-    for folder, subfolders, files in os.walk(target_directory): 
+    for folder, subfolders, files in os.walk(target_directory):
         for file in files:
             file_path = os.path.join(folder, file)
             if check_match(file_path, normalized_target_patterns):
@@ -33,7 +33,7 @@ def walk_directory_for_pattern(target_directory, target_patterns):
 
 # a set of glob patterns against a single file path
 def check_match(file_path, normalized_target_patterns):
-    return any([fnmatch.fnmatch(file_path, normalized_target_pattern) 
+    return any([fnmatch.fnmatch(file_path, normalized_target_pattern)
                 for normalized_target_pattern in normalized_target_patterns])
 
 # returns all readmes that match either of the readme patterns.
@@ -115,5 +115,6 @@ if __name__ == '__main__':
         required = True)
     args = parser.parse_args()
 
+    args.scan_directory = os.path.abspath(args.scan_directory)
     target_readme_files = get_all_readme_files(args.scan_directory)
     update_readmes_with_tracking(target_readme_files, args.scan_directory, args.repo_id)

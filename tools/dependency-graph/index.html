@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Graph</title>
+<meta charset="utf-8">
+<script src="https://d3js.org/d3.v5.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dagre-d3/0.6.3/dagre-d3.js"></script>
+<style type="text/css">
+body {
+  margin: 0 auto;
+  color: #333;
+  font-weight: 300;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serf;
+}
+
+h1 {
+  font-size: 3em;
+  font-weight: 300;
+}
+
+svg {
+  border: 1px solid #ccc;
+  overflow: hidden;
+  margin: 0 auto;
+}
+
+.node rect {
+  stroke: #333;
+  fill: #fff;
+}
+
+.edgePath path {
+  stroke: #333;
+  fill: #333;
+  stroke-width: 1.5px;
+}
+</style>
+</head>
+<body>
+<h1>Dependency Graph</h1>
+<svg></svg>
+<script src="data.js"></script>
+<script src="render.js"></script>
+</body>
+</html>

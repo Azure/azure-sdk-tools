@@ -1,98 +1,147 @@
 const renderGraph = () => {
-  // Create a new directed graph
-  const g = new dagreD3.graphlib.Graph().setGraph({})
+  const config = {
+    container: document.getElementById('cy'),
+    elements: [],
+    autoungrabify: true,
+    autounselectify: true,
+
+    layout: {
+      name: 'dagre'
+    },
+  
+    style: [
+      {
+        selector: 'node',
+        style: {
+          'width': 'label',
+          'height': 'label',
+          'padding': '8px',
+          'label': 'data(label)',
+          'shape': 'round-rectangle',
+          'background-color': '#fff',
+          'border-width': '1px',
+          'border-color': '#333',
+          'text-wrap': 'wrap',
+          "text-valign": "center",
+          "text-halign": "center"
+        }
+      },
+      {
+        selector: '.internal',
+        style: {
+          'background-color': '#7f7'
+        }
+      },
+      {
+        selector: '.collapsed',
+        style: {
+          'background-color': '#77f'
+        }
+      },
+      {
+        selector: '.hidden',
+        style: {
+          'display': 'none'
+        }
+      },
+      {
+        selector: 'edge',
+        style: {
+          'width': '1.5px',
+          'target-arrow-shape': 'triangle',
+          'line-color': '#333',
+          'target-arrow-color': '#333',
+          'curve-style': 'bezier'
+        }
+      }
+    ]
+  }
 
   // Add the nodes
   for (const pkg of Object.keys(data)) {
     const name = data[pkg].name
     const ver = data[pkg].version
-    const opts = { label: `${name}\n${ver}`, rx: 5, ry: 5 }
-    if (data[pkg].internal) {
-      opts.labelStyle = "font-weight: bold"
-      opts.style = "fill: #7f7"
+    const ele = {
+      data: {
+        id: pkg,
+        label: `${name}\n${ver}`
+      }
     }
-    g.setNode(pkg, opts)
+
+    if (data[pkg].internal) {
+      ele.classes = 'internal'
+    }
+    config.elements.push(ele)
   }
 
   // Add the edges
   for (const pkg of Object.keys(data)) {
-    if (data[pkg].collapsed) { continue }
-
     const deps = data[pkg].deps
     for (const dep of Object.keys(deps)) {
-      const destName = `${dep}:${deps[dep]}`
-      g.setEdge(pkg, destName, { label: '' })
-    }
-  }
-
-
-  let stable
-  do {
-    stable = true
-    for (const src of g.sources()) {
-      console.log(src)
-      if (!data[src].internal) {
-        console.log(`removing ${src}`)
-        g.removeNode(src)
-        stable = false
+      const dest = `${dep}:${deps[dep]}`
+      const edge = {
+        data: {
+          id: `${pkg}:${dest}`,
+          source: pkg,
+          target: dest
+        }
       }
-    }
-  } while (!stable)
-
-  for (const node of g.nodes()) {
-    const nodeObj = g.node(node)
-    if (data[node].collapsed && Object.keys(data[node].deps).length > 0) {
-      nodeObj.label += '\n+'
-    } else if (g.outEdges(node).length > 0) {
-      nodeObj.label += '\n-'
+      config.elements.push(edge)
     }
   }
 
-  // for (const node of g.nodes()) {
-  //   if (data[node].type !== "internal" && g.inEdges(node).length === 0) {
-  //     console.log("orphan " + node)
-  //     g.removeNode(node)
-  //   }
-  // }
-  
-  // Run the renderer. This is what draws the final graph.
-  render(inner, g)
-
-  d3.selectAll('svg g.node').on('click', (e) => {
-    data[e].collapsed = !(data[e].collapsed)
-    renderGraph()
+  const cy = cytoscape(config)
+  cy.on('tap', 'node', e => {
+    if (e.target.outgoers().length === 0) { return }
+    if (e.target.hasClass('collapsed')) {
+      toggleCollapse(e.target, false, cy)
+    } else {
+      toggleCollapse(e.target, true, cy)
+    }
   })
-
-  // Center the graph
-  const initialScale = 1.0
-  svg.call(zoom.transform, d3.zoomIdentity.translate((svg.attr("width") - g.graph().width * initialScale) / 2, 20).scale(initialScale))
 }
 
-// Set up the render target
-var svg = d3.select("svg"),
-    inner = svg.append("g")
+const toggleCollapse = (element, collapse, cy) => {
+  if (collapse) {
+    element.addClass('collapsed')
+  } else {
+    element.removeClass('collapsed')
+  }
 
-// Set up zoom support
-var zoom = d3.zoom().on("zoom", function() {
-  inner.attr("transform", d3.event.transform)
-});
-svg.call(zoom)
+  element.outgoers('edge').forEach(edge => {
+    toggleVisibility(edge, collapse)
+  })
 
-svg.attr('width', Math.max(
-  document.body.scrollWidth,
-  document.documentElement.scrollWidth,
-  document.body.offsetWidth,
-  document.documentElement.offsetWidth,
-  document.documentElement.clientWidth
-) - 2)
+  if (collapse) {
+    const orphans = cy.filter(e => {
+      return e.isNode() && !e.hasClass('internal') && e.incomers('edge:visible').length === 0
+    })
+    orphans.forEach(o => {
+      console.log('orphan ' + o.id())
+      toggleVisibility(o, true)
+      toggleChildVisibility(o, true)
+    })
+  } else {
+    toggleChildVisibility(element, false)
+  }
+}
 
-svg.attr('height', Math.max(
-  document.body.scrollHeight,
-  document.documentElement.scrollHeight,
-  document.body.offsetHeight,
-  document.documentElement.offsetHeight,
-  document.documentElement.clientHeight
-) - svg.node().getBoundingClientRect().y - 6)
+const toggleVisibility = (e, hide) => {
+  if (hide) {
+    e.addClass('hidden')
+  } else {
+    e.removeClass('hidden collapsed')
+  }
+}
 
-var render = new dagreD3.render()
+const toggleChildVisibility = (e, hide) => {
+  e.successors().forEach(s => {
+    if (hide && s.isNode()) {
+      s.addClass('hidden')
+    } else if (!hide) {
+      s.removeClass('hidden collapsed')
+    }
+  })
+}
+
 renderGraph()

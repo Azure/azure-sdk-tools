@@ -91,54 +91,49 @@ const renderGraph = () => {
   }
 
   const cy = cytoscape(config)
-  cy.on('tap', 'node', e => {
-    if (e.target.outgoers().length === 0) { return }
-    if (e.target.hasClass('collapsed')) {
-      toggleCollapse(e.target, false, cy)
+  cy.on('tap', 'node', event => {
+    const element = event.target
+    if (element.outgoers().length === 0) { return }
+    
+    const collapse = !element.hasClass('collapsed')
+    if (collapse) {
+      element.addClass('collapsed')
     } else {
-      toggleCollapse(e.target, true, cy)
+      element.removeClass('collapsed')
+    }
+  
+    element.outgoers('edge').forEach(edge => {
+      toggleElementVisibility(edge, !collapse)
+    })
+  
+    if (collapse) {
+      const orphans = cy.filter(e => {
+        return e.isNode() && !e.hasClass('internal') && e.incomers('edge:visible').length === 0
+      })
+      orphans.forEach(o => {
+        console.log('orphan ' + o.id())
+        toggleElementVisibility(o, false)
+        toggleChildVisibility(o, false)
+      })
+    } else {
+      toggleChildVisibility(element, true)
     }
   })
 }
 
-const toggleCollapse = (element, collapse, cy) => {
-  if (collapse) {
-    element.addClass('collapsed')
-  } else {
-    element.removeClass('collapsed')
-  }
-
-  element.outgoers('edge').forEach(edge => {
-    toggleVisibility(edge, collapse)
-  })
-
-  if (collapse) {
-    const orphans = cy.filter(e => {
-      return e.isNode() && !e.hasClass('internal') && e.incomers('edge:visible').length === 0
-    })
-    orphans.forEach(o => {
-      console.log('orphan ' + o.id())
-      toggleVisibility(o, true)
-      toggleChildVisibility(o, true)
-    })
-  } else {
-    toggleChildVisibility(element, false)
-  }
-}
-
-const toggleVisibility = (e, hide) => {
-  if (hide) {
+const toggleElementVisibility = (e, visible) => {
+  if (!visible) {
     e.addClass('hidden')
   } else {
     e.removeClass('hidden collapsed')
   }
 }
 
-const toggleChildVisibility = (e, hide) => {
+const toggleChildVisibility = (e, visible) => {
   e.successors().forEach(s => {
-    if (hide && s.isNode()) {
+    if (!visible && s.isNode()) {
       s.addClass('hidden')
-    } else if (!hide) {
+    } else if (visible) {
       s.removeClass('hidden collapsed')
     }
   })

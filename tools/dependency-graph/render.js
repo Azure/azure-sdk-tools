@@ -2,11 +2,14 @@ const renderGraph = () => {
   const config = {
     container: document.getElementById('cy'),
     elements: [],
-    autoungrabify: true,
     autounselectify: true,
 
     layout: {
-      name: 'dagre'
+      name: 'dagre',
+      ranker: 'tight-tree',
+      nodeSep: 10,
+      rankSep: 400,
+      padding: 4
     },
   
     style: [
@@ -33,9 +36,22 @@ const renderGraph = () => {
         }
       },
       {
+        selector: '.internalbinary',
+        style: {
+          'background-color': '#fb7'
+        }
+      },
+      {
         selector: '.collapsed',
         style: {
-          'background-color': '#77f'
+          'background-color': '#7bf'
+        }
+      },
+      {
+        selector: 'node.highlight',
+        style: {
+          'border-color': '#f77',
+          'border-width': '4px'
         }
       },
       {
@@ -53,25 +69,27 @@ const renderGraph = () => {
           'target-arrow-color': '#333',
           'curve-style': 'bezier'
         }
+      },
+      {
+        selector: 'edge.highlight',
+        style: {
+          'line-color': '#f77',
+          'target-arrow-color': '#f77',
+          'width': '3px'
+        }
       }
     ]
   }
 
   // Add the nodes
   for (const pkg of Object.keys(data)) {
-    const name = data[pkg].name
-    const ver = data[pkg].version
-    const ele = {
+    config.elements.push({
       data: {
         id: pkg,
-        label: `${name}\n${ver}`
-      }
-    }
-
-    if (data[pkg].internal) {
-      ele.classes = 'internal'
-    }
-    config.elements.push(ele)
+        label: `${data[pkg].name}\n${data[pkg].version}`
+      },
+      classes: data[pkg].type
+    })
   }
 
   // Add the edges
@@ -91,34 +109,75 @@ const renderGraph = () => {
   }
 
   const cy = cytoscape(config)
-  cy.on('tap', 'node', event => {
+
+  cy.on('mouseover', 'node', event => {
     const element = event.target
-    if (element.outgoers().length === 0) { return }
-    
-    const collapse = !element.hasClass('collapsed')
-    if (collapse) {
-      element.addClass('collapsed')
-    } else {
-      element.removeClass('collapsed')
+    element.addClass('highlight')
+    if (!element.hasClass('collapsed')) {
+      element.outgoers().addClass('highlight')
     }
-  
-    element.outgoers('edge').forEach(edge => {
-      toggleElementVisibility(edge, !collapse)
+    element.incomers().forEach(e => {
+      if (!e.hasClass('collapsed')) {
+        e.addClass('highlight')
+      }
     })
-  
-    if (collapse) {
-      const orphans = cy.filter(e => {
-        return e.isNode() && !e.hasClass('internal') && e.incomers('edge:visible').length === 0
+  })
+
+  cy.on('mouseout', 'node', event => {
+    const element = event.target
+    element.removeClass('highlight')
+    element.outgoers().removeClass('highlight')
+    element.incomers().removeClass('highlight')
+  })
+
+  document.addEventListener('keydown', event => {
+    if (event.key === '-') {
+      cy.nodes('.internal').forEach(node => {
+        if (!node.hasClass('collapsed') && !node.hasClass('hidden')) {
+          triggerCollapse(cy, node, true)
+        }
       })
-      orphans.forEach(o => {
-        console.log('orphan ' + o.id())
-        toggleElementVisibility(o, false)
-        toggleChildVisibility(o, false)
+    } else if (event.key === '=') {
+      cy.nodes('.internal').forEach(node => {
+        triggerCollapse(cy, node, false)
       })
-    } else {
-      toggleChildVisibility(element, true)
     }
   })
+
+  cy.on('tap', 'node', event => {
+    const element = event.target
+    const collapse = !element.hasClass('collapsed')
+    triggerCollapse(cy, element, collapse)
+    element.emit('mouseout')
+    element.emit('mouseover')
+  })
+}
+
+const triggerCollapse = (cy, element, collapse) => {
+  if (element.outgoers().length === 0) { return }
+
+  if (collapse) {
+    element.addClass('collapsed')
+  } else {
+    element.removeClass('collapsed')
+  }
+
+  element.outgoers('edge').forEach(edge => {
+    toggleElementVisibility(edge, !collapse)
+  })
+
+  if (collapse) {
+    const orphans = cy.filter(e => {
+      return e.isNode() && !e.hasClass('internal') && e.incomers('edge:visible').length === 0
+    })
+    orphans.forEach(o => {
+      console.log('orphan ' + o.id())
+      toggleElementVisibility(o, false)
+      toggleChildVisibility(o, false)
+    })
+  } else {
+    toggleChildVisibility(element, true)
+  }
 }
 
 const toggleElementVisibility = (e, visible) => {

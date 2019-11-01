@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<title>Graph</title>
+<title>Dependency Graph</title>
 <meta charset="utf-8">
-<script src="https://cdn.jsdelivr.net/npm/cytoscape@3.11.0/dist/cytoscape.umd.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/dagre/0.8.4/dagre.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/cytoscape-dagre@2.2.2/cytoscape-dagre.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/cytoscape@3.11.0/dist/cytoscape.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dagre/0.8.4/dagre.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/cytoscape-dagre@2.2.2/cytoscape-dagre.min.js"></script>
 <style>
   body {
-    margin: 0 auto;
+    margin: 10 auto;
     color: #333;
     font-weight: 300;
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serf;
@@ -17,6 +17,7 @@
   h1 {
     font-size: 3em;
     font-weight: 300;
+    z-index: -2;
   }
 
   #cy {
@@ -25,12 +26,25 @@
     position: absolute;
     left: 0;
     top: 0;
-    z-index: 999;
+    z-index: -1;
+  }
+
+  .search-container {
+    display: inline-block;
+  }
+
+  .search-container div {
+    margin: 4px auto;
   }
 </style>
 </head>
 <body>
 <h1>Dependency Graph</h1>
+<div class="search-container">
+  <label for="search">Search:</label>
+  <input id="search" type="search" autocomplete="off" size="64" />
+  <div id="matches"></div>
+</div>
 <div id="cy"></div>
 <script src="data.js"></script>
 <script src="render.js"></script>

@@ -9,7 +9,7 @@ const renderGraph = () => {
       ranker: 'tight-tree',
       nodeSep: 10,
       rankSep: 400,
-      padding: 4
+      padding: 10
     },
   
     style: [
@@ -30,28 +30,48 @@ const renderGraph = () => {
         }
       },
       {
-        selector: '.internal',
+        selector: 'node.internal',
         style: {
           'background-color': '#7f7'
         }
       },
       {
-        selector: '.internalbinary',
+        selector: 'node.internalbinary',
         style: {
           'background-color': '#fb7'
         }
       },
       {
-        selector: '.collapsed',
+        selector: 'node.collapsed',
         style: {
           'background-color': '#7bf'
         }
       },
       {
+        selector: 'node.search',
+        style: {
+          'background-color': '#ff7',
+          'border-width': '6px'
+        }
+      },
+      {
         selector: 'node.highlight',
         style: {
+          'background-color': '#fff',
           'border-color': '#f77',
-          'border-width': '4px'
+          'border-width': '6px'
+        }
+      },
+      {
+        selector: 'node.highlight.internal',
+        style: {
+          'background-color': '#7f7'
+        }
+      },
+      {
+        selector: 'node.highlight.internalbinary',
+        style: {
+          'background-color': '#fb7'
         }
       },
       {
@@ -75,7 +95,7 @@ const renderGraph = () => {
         style: {
           'line-color': '#f77',
           'target-arrow-color': '#f77',
-          'width': '3px'
+          'width': '6px'
         }
       }
     ]
@@ -131,6 +151,8 @@ const renderGraph = () => {
   })
 
   document.addEventListener('keydown', event => {
+    if (document.activeElement.id === 'search') { return }
+
     if (event.key === '-') {
       cy.nodes('.internal').forEach(node => {
         if (!node.hasClass('collapsed') && !node.hasClass('hidden')) {
@@ -141,6 +163,22 @@ const renderGraph = () => {
       cy.nodes('.internal').forEach(node => {
         triggerCollapse(cy, node, false)
       })
+    }
+  })
+
+  let searchTerm = ''
+  document.getElementById('search').addEventListener('input', event => {
+    const newValue = event.target.value
+    if (searchTerm !== newValue) {
+      searchTerm = newValue
+      cy.nodes().removeClass('search')
+      if (searchTerm.length > 0) {
+        const matches = cy.nodes(`[label *= '${searchTerm}']`)
+        matches.addClass('search')
+        document.getElementById('matches').innerText = `Matches: ${matches.length}`
+      } else {
+        document.getElementById('matches').innerText = ''
+      }
     }
   })
 
@@ -171,7 +209,6 @@ const triggerCollapse = (cy, element, collapse) => {
       return e.isNode() && !e.hasClass('internal') && e.incomers('edge:visible').length === 0
     })
     orphans.forEach(o => {
-      console.log('orphan ' + o.id())
       toggleElementVisibility(o, false)
       toggleChildVisibility(o, false)
     })

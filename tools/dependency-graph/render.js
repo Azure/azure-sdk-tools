@@ -1,4 +1,4 @@
-const renderGraph = () => {
+const renderGraph = (data) => {
   const config = {
     container: document.getElementById('cy'),
     elements: [],
@@ -16,17 +16,17 @@ const renderGraph = () => {
       {
         selector: 'node',
         style: {
-          'width': 'label',
-          'height': 'label',
-          'padding': '8px',
-          'label': 'data(label)',
-          'shape': 'round-rectangle',
           'background-color': '#fff',
-          'border-width': '1px',
           'border-color': '#333',
+          'border-width': '1px',
+          'height': 'label',
+          'label': 'data(label)',
+          'padding': '8px',
+          'shape': 'round-rectangle',
+          'text-halign': 'center',
+          'text-valign': 'center',
           'text-wrap': 'wrap',
-          "text-valign": "center",
-          "text-halign": "center"
+          'width': 'label'
         }
       },
       {
@@ -83,11 +83,11 @@ const renderGraph = () => {
       {
         selector: 'edge',
         style: {
-          'width': '1.5px',
-          'target-arrow-shape': 'triangle',
+          'curve-style': 'bezier',
           'line-color': '#333',
           'target-arrow-color': '#333',
-          'curve-style': 'bezier'
+          'target-arrow-shape': 'triangle',
+          'width': '1.5px'
         }
       },
       {
@@ -234,5 +234,3 @@ const toggleChildVisibility = (e, visible) => {
     }
   })
 }
-
-renderGraph()

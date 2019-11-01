@@ -22,6 +22,12 @@ namespace APIViewWeb
 
         public bool TryGetThreadForLine(string lineId, out CommentThreadModel threadModel)
         {
+            threadModel = null;
+            if (lineId == null)
+            {
+                return false;
+            }
+
             return _threads.TryGetValue(lineId, out threadModel);
         }
     }

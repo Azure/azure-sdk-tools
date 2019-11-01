@@ -26,7 +26,7 @@ class WardenConfiguration():
         },
         'net': { 
             'URL': 'https://www.nuget.org/packages/{package_id}/',
-            'Text': 'Nuget'
+            'Text': '![{package_id}](https://img.shields.io/nuget/vpre/{package_id}.svg)'
         }
     }
 

@@ -84,6 +84,7 @@ const renderGraph = (data) => {
         selector: 'edge',
         style: {
           'curve-style': 'bezier',
+          'label': 'data(label)',
           'line-color': '#333',
           'target-arrow-color': '#333',
           'target-arrow-shape': 'triangle',
@@ -114,15 +115,17 @@ const renderGraph = (data) => {
 
   // Add the edges
   for (const pkg of Object.keys(data)) {
-    const deps = data[pkg].deps
-    for (const dep of Object.keys(deps)) {
-      const dest = `${dep}:${deps[dep]}`
+    for (const dep of data[pkg].deps) {
+      const dest = `${dep.name}:${dep.version}`
       const edge = {
         data: {
           id: `${pkg}:${dest}`,
           source: pkg,
           target: dest
         }
+      }
+      if (dep.label) {
+        edge.data.label = dep.label
       }
       config.elements.push(edge)
     }

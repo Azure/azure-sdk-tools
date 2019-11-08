@@ -150,11 +150,9 @@ const renderGraph = (data) => {
         data: {
           id: `${pkg}:${dest}`,
           source: pkg,
-          target: dest
+          target: dest,
+          label: dep.label || ''
         }
-      }
-      if (dep.label) {
-        edge.data.label = dep.label
       }
       config.elements.push(edge)
     }

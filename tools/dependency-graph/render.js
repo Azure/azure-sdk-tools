@@ -214,7 +214,7 @@ const renderGraph = (data) => {
 
     if (event.key === '-') {
       cy.nodes('.internal').forEach(node => {
-        if (!node.hasClass('collapsed') && !node.hasClass('hidden')) {
+        if (!node.hasClass('hidden')) {
           triggerCollapse(cy, node, true)
         }
       })
@@ -273,6 +273,7 @@ const triggerCollapse = (cy, element, collapse) => {
     })
   } else {
     toggleChildVisibility(element, true)
+    toggleParentVisibility(element, true)
   }
 }
 
@@ -290,6 +291,16 @@ const toggleChildVisibility = (e, visible) => {
       s.addClass('hidden')
     } else if (visible) {
       s.removeClass('hidden collapsed')
+    }
+  })
+}
+
+const toggleParentVisibility = (e, visible) => {
+  e.predecessors().forEach(s => {
+    if (!visible && s.isNode()) {
+      s.addClass('hidden')
+    } else if (visible) {
+      s.removeClass('hidden')
     }
   })
 }

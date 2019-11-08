@@ -58,8 +58,25 @@ const renderGraph = (data) => {
         selector: 'node.highlight',
         style: {
           'background-color': '#fff',
-          'border-color': '#f77',
           'border-width': '6px'
+        }
+      },
+      {
+        selector: 'node.highlight.in',
+        style: {
+          'border-color': '#7bf'
+        }
+      },
+      {
+        selector: 'node.highlight.out',
+        style: {
+          'border-color': '#f77'
+        }
+      },
+      {
+        selector: 'node.highlight.source',
+        style: {
+          'border-color': '#f77'
         }
       },
       {
@@ -94,9 +111,21 @@ const renderGraph = (data) => {
       {
         selector: 'edge.highlight',
         style: {
-          'line-color': '#f77',
-          'target-arrow-color': '#f77',
           'width': '6px'
+        }
+      },
+      {
+        selector: 'edge.highlight.in',
+        style: {
+          'line-color': '#7bf',
+          'target-arrow-color': '#7bf'
+        }
+      },
+      {
+        selector: 'edge.highlight.out',
+        style: {
+          'line-color': '#f77',
+          'target-arrow-color': '#f77'
         }
       }
     ]
@@ -135,22 +164,51 @@ const renderGraph = (data) => {
 
   cy.on('mouseover', 'node', event => {
     const element = event.target
-    element.addClass('highlight')
+    if (element.hasClass('pinned')) { return }
+
+    element.addClass('highlight source')
     if (!element.hasClass('collapsed')) {
-      element.outgoers().addClass('highlight')
+      element.outgoers().addClass('highlight out')
     }
     element.incomers().forEach(e => {
       if (!e.hasClass('collapsed')) {
-        e.addClass('highlight')
+        e.addClass('highlight in')
       }
     })
   })
 
   cy.on('mouseout', 'node', event => {
     const element = event.target
-    element.removeClass('highlight')
-    element.outgoers().removeClass('highlight')
-    element.incomers().removeClass('highlight')
+    if (element.hasClass('pinned')) { return }
+
+    element.removeClass('source')
+    if (!element.hasClass('in') && !element.hasClass('out')) {
+      element.removeClass('highlight')
+    }
+
+    element.outgoers().forEach(e => {
+      e.removeClass('out')
+      if (!e.hasClass('in') && !e.hasClass('source')) {
+        e.removeClass('highlight')
+      }
+    })
+    
+    element.incomers().forEach(e => {
+      e.removeClass('in')
+      if (!e.hasClass('out') && !e.hasClass('source')) {
+        e.removeClass('highlight')
+      }
+    })
+  })
+
+  cy.on('tap', 'node', event => {
+    const element = event.target
+    if (!element.hasClass('pinned')) {
+      element.addClass('pinned')
+
+    } else {
+      element.removeClass('pinned')
+    }
   })
 
   document.addEventListener('keydown', event => {
@@ -185,7 +243,7 @@ const renderGraph = (data) => {
     }
   })
 
-  cy.on('tap', 'node', event => {
+  cy.on('cxttap', 'node', event => {
     const element = event.target
     const collapse = !element.hasClass('collapsed')
     triggerCollapse(cy, element, collapse)

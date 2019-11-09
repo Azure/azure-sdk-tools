@@ -171,14 +171,8 @@ const renderGraph = (data) => {
     if (element.hasClass('pinned')) { return }
 
     element.addClass('highlight source')
-    if (!element.hasClass('collapsed')) {
-      element.outgoers().addClass('highlight out')
-    }
-    element.incomers().forEach(e => {
-      if (!e.hasClass('collapsed')) {
-        e.addClass('highlight in')
-      }
-    })
+    element.outgoers().addClass('highlight out')
+    element.incomers().addClass('highlight in')
   })
 
   cy.on('mouseout', 'node', event => {
@@ -205,7 +199,7 @@ const renderGraph = (data) => {
     })
   })
 
-  cy.on('tap', 'node', event => {
+  cy.on('cxttap', 'node', event => {
     const element = event.target
     if (!element.hasClass('pinned')) {
       element.addClass('pinned')
@@ -247,7 +241,7 @@ const renderGraph = (data) => {
     }
   })
 
-  cy.on('cxttap', 'node', event => {
+  cy.on('tap', 'node', event => {
     const element = event.target
     const collapse = !element.hasClass('collapsed')
     triggerCollapse(cy, element, collapse)

@@ -14,6 +14,12 @@ const renderGraph = (data) => {
   
     style: [
       {
+        selector: '.hidden',
+        style: {
+          'display': 'none'
+        }
+      },
+      {
         selector: 'node',
         style: {
           'background-color': '#fff',
@@ -51,14 +57,16 @@ const renderGraph = (data) => {
         selector: 'node.search',
         style: {
           'background-color': '#ff7',
-          'border-width': '6px'
+          'border-width': '6px',
+          'display': 'element'
         }
       },
       {
         selector: 'node.highlight',
         style: {
           'background-color': '#fff',
-          'border-width': '6px'
+          'border-width': '6px',
+          'display': 'element'
         }
       },
       {
@@ -98,9 +106,9 @@ const renderGraph = (data) => {
         }
       },
       {
-        selector: '.hidden',
+        selector: 'node.highlight.search',
         style: {
-          'display': 'none'
+          'background-color': '#ff7'
         }
       },
       {
@@ -117,6 +125,7 @@ const renderGraph = (data) => {
       {
         selector: 'edge.highlight',
         style: {
+          'display': 'element',
           'width': '6px'
         }
       },
@@ -265,7 +274,9 @@ const triggerCollapse = (cy, element, collapse) => {
 
   if (collapse) {
     const orphans = cy.filter(e => {
-      return e.isNode() && !e.hasClass('internal') && e.incomers('edge:visible').length === 0
+      return e.isNode() &&
+        !e.hasClass('internal') &&
+        !e.incomers('edge').some(g => !g.hasClass('hidden'))
     })
     orphans.forEach(o => {
       toggleElementVisibility(o, false)

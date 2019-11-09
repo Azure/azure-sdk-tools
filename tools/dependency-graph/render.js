@@ -268,50 +268,18 @@ const triggerCollapse = (cy, element, collapse) => {
     element.removeClass('collapsed')
   }
 
-  element.outgoers('edge').forEach(edge => {
-    toggleElementVisibility(edge, !collapse)
-  })
-
   if (collapse) {
+    element.outgoers('edge').addClass('hidden')
     const orphans = cy.filter(e => {
       return e.isNode() &&
         !e.hasClass('internal') &&
         !e.incomers('edge').some(g => !g.hasClass('hidden'))
     })
     orphans.forEach(o => {
-      toggleElementVisibility(o, false)
-      toggleChildVisibility(o, false)
+      o.addClass('hidden')
+      o.successors().addClass('hidden') // no-op when only one tier of external nodes are present
     })
   } else {
-    toggleChildVisibility(element, true)
-    toggleParentVisibility(element, true)
+    element.outgoers().removeClass('hidden')
   }
-}
-
-const toggleElementVisibility = (e, visible) => {
-  if (!visible) {
-    e.addClass('hidden')
-  } else {
-    e.removeClass('hidden collapsed')
-  }
-}
-
-const toggleChildVisibility = (e, visible) => {
-  e.successors().forEach(s => {
-    if (!visible && s.isNode()) {
-      s.addClass('hidden')
-    } else if (visible) {
-      s.removeClass('hidden collapsed')
-    }
-  })
-}
-
-const toggleParentVisibility = (e, visible) => {
-  e.predecessors().forEach(s => {
-    if (!visible && s.isNode()) {
-      s.addClass('hidden')
-    } else if (visible) {
-      s.removeClass('hidden')
-    }
-  })
 }

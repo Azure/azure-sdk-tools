@@ -44,7 +44,7 @@ const renderGraph = (data) => {
       {
         selector: 'node.collapsed',
         style: {
-          'background-color': '#7bf'
+          'background-color': '#b7f'
         }
       },
       {
@@ -89,6 +89,12 @@ const renderGraph = (data) => {
         selector: 'node.highlight.internalbinary',
         style: {
           'background-color': '#fb7'
+        }
+      },
+      {
+        selector: 'node.highlight.collapsed',
+        style: {
+          'background-color': '#b7f'
         }
       },
       {

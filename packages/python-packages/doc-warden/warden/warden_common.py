@@ -45,7 +45,9 @@ def get_net_packages(configuration):
     file_set =  get_file_sets(configuration, NET_PACKAGE_DISCOVERY_PATTERN, is_net_csproj_package)
     
     if configuration.verbose_output:
-        print(sets)
+        print(file_set)
+
+    return file_set
 
 def get_python_package_roots(configuration):
     file_set = get_file_sets(configuration, PYTHON_PACKAGE_DISCOVERY_PATTERN)

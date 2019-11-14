@@ -2,8 +2,8 @@
 # Licensed under the MIT License.
 from __future__ import print_function
 
-from .enforce_readme_presence import find_missing_readmes
-from .enforce_readme_content import verify_readme_content
+from .enforce_file_presence import find_missing_files
+from .enforce_file_content import verify_file_content
 from .index_packages import index_packages, render
 from .WardenConfiguration import WardenConfiguration
 from .PackageInfo import PackageInfo

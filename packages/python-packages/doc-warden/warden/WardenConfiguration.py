@@ -75,6 +75,18 @@ class WardenConfiguration():
             required = False,
             help = 'Enable or disable checking for a readme at the root of the repository. Defaults true. Overrides .docsettings contents.')
         parser.add_argument(
+            '-t',
+            '--target-file',
+            dest = 'target_file',
+            required = False,
+            help = 'The file name to scan for; `readme.md or changelog.md` will default to readme.md')
+        parser.add_argument(
+            '-s',
+            '--required-target-file-sections',
+            dest = 'required_target_file_sections',
+            required = False,
+            help = 'The name of the object in the docsettings file that specifies required sections in target file; will default to required_readme_sections')
+        parser.add_argument(
             '-o',
             '--verbose-output',
             action="store_true",
@@ -91,6 +103,7 @@ class WardenConfiguration():
         self.target_directory = args.scan_directory
         self.yml_location = args.config_location or os.path.join(self.target_directory, '.docsettings.yml')
         self.package_index_output_location = args.package_output_location or os.path.join(self.target_directory, 'packages.md')
+        self.target_files = []
 
         with open(self.yml_location, 'r') as f:
             try:
@@ -114,9 +127,14 @@ class WardenConfiguration():
             self.package_indexing_traversal_stops = []
 
         try:
-            self.required_readme_sections = doc['required_readme_sections'] or []
+            self.required_target_file_sections = doc[args.required_target_file_sections] or doc['required_readme_sections'] or []
         except:
-            self.required_readme_sections = []
+            self.required_target_file_sections = []
+
+        try:
+            self.target_files = target_files.append(args.target_file) if args.target_file else doc['target_files']
+        except:
+            self.target_files = []
 
         try:
             self.known_content_issues = doc['known_content_issues'] or []
@@ -152,7 +170,11 @@ class WardenConfiguration():
         return input_path.replace(os.path.normpath(self.target_directory), '')
 
     def get_known_presence_issues(self):
-        return [os.path.normpath(os.path.join(self.target_directory, exception_tuple[0])) for exception_tuple in self.known_presence_issues]
+        known_issue_paths = []
+        for exception_tuple in self.known_presence_issues:
+            if exception_tuple[0].endswith(self.target_file):
+                known_issue_paths.append(os.path.normpath(os.path.join(self.target_directory, exception_tuple[0])))
+        return known_issue_paths
 
     def get_known_content_issues(self):
         return [os.path.normpath(os.path.join(self.target_directory, exception_tuple[0])) for exception_tuple in self.known_content_issues]
@@ -160,8 +182,8 @@ class WardenConfiguration():
     def get_package_indexing_traversal_stops(self):
         return [os.path.normpath(os.path.join(self.target_directory, traversal_stop)) for traversal_stop in self.package_indexing_traversal_stops]
 
-    def get_readme_sections_dictionary(self):
-        return { key: i for i, key in enumerate(self.required_readme_sections) }
+    def get_target_file_sections_dictionary(self):
+        return { key: i for i, key in enumerate(self.required_target_file_sections) }
 
     def get_repository_details(self):
         return WardenConfiguration.REPOSITORY_SETS[self.scan_language]
@@ -177,7 +199,8 @@ class WardenConfiguration():
             'scan_language': self.scan_language,
             'root_check_enabled': self.root_check_enabled,
             'verbose_output': self.verbose_output,
-            'required_readme_sections': self.required_readme_sections,
+            'target_files' : self.target_files,
+            'required_target_file_sections': self.required_target_file_sections,
             'known_content_issues': self.known_content_issues,
             'known_presence_issues': self.known_presence_issues
         }

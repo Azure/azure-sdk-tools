@@ -3,7 +3,7 @@
 from __future__ import print_function
 
 from .enforce_target_file_presence import find_missing_target_files
-from .enforce_target_file_content import verify_target_file_content
+from .enforce_readme_content import verify_readme_content
 from .index_packages import index_packages, render
 from .WardenConfiguration import WardenConfiguration
 from .PackageInfo import PackageInfo
@@ -62,7 +62,7 @@ def verify_presence(config):
 def output_content_results(readmes_with_issues, config):
     length = len(readmes_with_issues)
     if length:
-        print('{0} {1} at least one missing required section.'.format(length, pluralize('readme has', 'readmes have', length)))
+        print('{0} {1} at least one missing required section.'.format(length, pluralize('target file has', 'target files have', length)))
         for readme_tuple in readmes_with_issues:
             header = '{0} is missing {1} with {2}:'.format(
                         config.get_output_path(readme_tuple[0]), 
@@ -77,10 +77,10 @@ def output_content_results(readmes_with_issues, config):
             print()
 
 # print presence 
-def output_presence_results(missing_readme_paths, config):
-    if len(missing_readme_paths):
-        print('{0} missing readme{1} detected at:'.format(len(missing_readme_paths), 's' if len(missing_readme_paths) > 1 else ''))
-        for path in missing_readme_paths:
+def output_presence_results(missing_target_file_paths, config):
+    if len(missing_target_file_paths):
+        print('{0} missing target file{2} detected at:'.format(len(missing_target_file_paths), 's' if len(missing_target_file_paths) > 1 else ''))
+        for path in missing_target_file_paths:
             print(config.get_output_path(path))
         print()
 
@@ -94,7 +94,7 @@ def all_operations(config):
     if config.verbose_output:
         print('Done Content Examination')
         print('Starting Presence Examination')
-    presence_results, ignored_presence_results = find_missing_readmes(config)
+    presence_results, ignored_presence_results = find_missing_target_files(config)
     if config.verbose_output:
         print('Done Presence Examination')
 

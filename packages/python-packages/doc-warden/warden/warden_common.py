@@ -66,8 +66,8 @@ def get_js_package_roots(configuration):
     return file_set
 
 # returns the two sets:
-    # the set of files where we expect a readme to be present
-    # and the set of files that we expect a readme to be present that have been explicitly omitted
+    # the set of files where we expect a target_file to be present
+    # and the set of files that we expect a target_file to be present that have been explicitly omitted
 def get_file_sets(configuration, target_pattern, lambda_check = None):
     expected_locations = walk_directory_for_pattern(configuration.target_directory, [target_pattern], configuration, lambda_check)
     omitted_files = get_omitted_files(configuration)

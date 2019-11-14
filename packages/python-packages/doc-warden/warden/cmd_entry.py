@@ -2,8 +2,8 @@
 # Licensed under the MIT License.
 from __future__ import print_function
 
-from .enforce_file_presence import find_missing_files
-from .enforce_file_content import verify_file_content
+from .enforce_target_file_presence import find_missing_target_files
+from .enforce_target_file_content import verify_target_file_content
 from .index_packages import index_packages, render
 from .WardenConfiguration import WardenConfiguration
 from .PackageInfo import PackageInfo
@@ -49,9 +49,9 @@ def verify_content(config):
         conclusion_message(config)
         exit(1)
 
-# verify the presence of the readmes only
+# verify the presence of the target_files only
 def verify_presence(config):
-    presence_results, ignored_presence_results = find_missing_readmes(config)
+    presence_results, ignored_presence_results = find_missing_target_files(config)
     output_presence_results(presence_results, config)
 
     if len(presence_results) > 0:

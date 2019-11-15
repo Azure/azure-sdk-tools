@@ -79,7 +79,7 @@ def output_content_results(readmes_with_issues, config):
 # print presence 
 def output_presence_results(missing_target_file_paths, config):
     if len(missing_target_file_paths):
-        print('{0} missing target file{2} detected at:'.format(len(missing_target_file_paths), 's' if len(missing_target_file_paths) > 1 else ''))
+        print('{0} missing target file{1} detected at:'.format(len(missing_target_file_paths), 's' if len(missing_target_file_paths) > 1 else ''))
         for path in missing_target_file_paths:
             print(config.get_output_path(path))
         print()

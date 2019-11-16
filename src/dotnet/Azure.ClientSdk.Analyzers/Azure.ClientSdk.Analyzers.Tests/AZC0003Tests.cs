@@ -68,5 +68,40 @@ namespace RandomNamespace
 
             Assert.Empty(diagnostics);
         }
+
+        [Fact]
+        public async Task AZC0002SkippedForOverrides()
+        {
+            var testSource = TestSource.Read(@"
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace RandomNamespace
+{
+    public class C
+    {
+        public virtual Task GetAsync(CancellationToken cancellationToken = default)
+        {
+            return null;
+        }
+    }
+
+    public class SomeClient: C
+    {
+        public override Task GetAsync(CancellationToken cancellationToken = default)
+        {
+            return null;
+        }
+
+        public virtual void Get(CancellationToken cancellationToken = default)
+        {
+        }
+    }
+}
+");
+            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
+
+            Assert.Empty(diagnostics);
+        }
     }
 }

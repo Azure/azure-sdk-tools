@@ -1,6 +1,7 @@
 ﻿/*-*/using System;/*-*/
 namespace A {
     public class Class {
+        public Class()/*-*/{/*-*/;/*-*/}/*-*/
         public static void K()/*-*/{/*-*/;/*-*/}/*-*/
         public void M0(string s)/*-*/{/*-*/;/*-*/}/*-*/
         public void M1(string s = null)/*-*/{/*-*/;/*-*/}/*-*/

@@ -3,6 +3,8 @@
         public class MyClass {
             public interface IInterface {
             }
+            public MyClass()/*-*/{/*-*/;/*-*/}/*-*/
         }
+        public Class()/*-*/{/*-*/;/*-*/}/*-*/
     }
 }

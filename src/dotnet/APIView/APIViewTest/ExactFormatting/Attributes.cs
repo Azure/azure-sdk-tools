@@ -10,6 +10,7 @@ class PrivateAttribute: Attribute {}
 
 namespace A {
     public class Class {
+        public Class()/*-*/{/*-*/;/*-*/}/*-*/
         [Conditional("string")]
         [Conditional("string2")]
         public void M()/*-*/{/*-*/;/*-*/}/*-*/

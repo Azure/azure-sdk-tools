@@ -10,7 +10,7 @@ import java.util.regex.Pattern;
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.*;
 
 public class PackageNameDiagnosticRule implements DiagnosticRule {
-    final static Pattern regex = Pattern.compile("^com.azure.[a-z0-9]*(\\.[a-z0-9]+)+[0-9a-z]$");
+    final static Pattern regex = Pattern.compile("^com.azure(\\.[a-z0-9]+)+$");
 
     @Override
     public void scan(final CompilationUnit cu, final APIListing listing) {

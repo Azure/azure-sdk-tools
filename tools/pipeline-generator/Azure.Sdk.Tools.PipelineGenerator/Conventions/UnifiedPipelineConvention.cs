@@ -92,13 +92,13 @@ namespace PipelineGenerator.Conventions
             }
             else
             {
-                if (prTrigger.SettingsSourceType != 2 ||
+                if (prTrigger.SettingsSourceType != 1 ||
                     prTrigger.IsCommentRequiredForPullRequest != true ||
                     !prTrigger.BranchFilters.All(bf => bf == $"+{Context.Branch}") ||
                     prTrigger.Forks.AllowSecrets != true ||
                     prTrigger.Forks.Enabled != true)
                 {
-                    prTrigger.SettingsSourceType = 2;
+                    prTrigger.SettingsSourceType = 1;
                     prTrigger.IsCommentRequiredForPullRequest = true;
                     prTrigger.BranchFilters = new List<string>()
                     {

@@ -19,7 +19,8 @@ namespace Azure.ClientSdk.Analyzers
             "Azure.Media",
             "Azure.Messaging",
             "Azure.Security",
-            "Azure.Storage"
+            "Azure.Storage",
+            "Microsoft.Extensions.Azure"
         };
 
         public ClientAssemblyNamespaceAnalyzer()

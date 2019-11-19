@@ -216,3 +216,20 @@ def parse_pom(file_path):
         if '}' in el.tag:
             el.tag = el.tag.split('}', 1)[1]
     return it.root
+
+
+# Parse csproj file to get version property
+def parse_csproj(file_path):
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            xml = f.read()
+    except Exception as ex:
+        print('Invalid XML in {}'.format(file_path))
+        raise ex
+
+    it = ET.iterparse(StringIO(xml))
+    for _, el in it:
+        if el.tag == 'Version':
+            return el.text
+            break
+    return ''

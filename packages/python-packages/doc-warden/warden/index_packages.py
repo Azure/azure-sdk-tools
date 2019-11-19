@@ -3,7 +3,7 @@
 
 from __future__ import print_function
 
-from .warden_common import check_match, walk_directory_for_pattern, get_omitted_files, get_java_package_roots, get_net_packages, get_python_package_roots, get_js_package_roots, find_alongside_file, find_below_file, parse_pom, is_java_pom_package_pom, find_above_file
+from .warden_common import check_match, walk_directory_for_pattern, get_omitted_files, get_java_package_roots, get_net_packages, get_python_package_roots, get_js_package_roots, find_alongside_file, find_below_file, parse_pom, parse_csproj, is_java_pom_package_pom, find_above_file
 from .PackageInfo import PackageInfo
 import json
 import os
@@ -223,6 +223,8 @@ def get_net_packages_info(config):
     pkg_locations, ignored_pkg_locations = get_net_packages(config)
 
     for pkg_file in (pkg_locations + ignored_pkg_locations):
+        pkg_version = parse_csproj(pkg_file)
+
         pkg_name = os.path.splitext(os.path.basename(pkg_file))[0]
         if(pkg_name not in config.package_indexing_exclusion_list):
             changelog = find_above_file('changelog.md', pkg_file, config.get_package_indexing_traversal_stops(), net_early_exit, os.path.normpath(config.target_directory))
@@ -242,7 +244,7 @@ def get_net_packages_info(config):
 
             pkg_list.append(PackageInfo(
                 package_id = pkg_name, 
-                package_version = '', 
+                package_version = pkg_version, 
                 relative_package_location = pkg_location,
                 relative_readme_location = readme_relpath or '',
                 relative_changelog_location = changelog_relpath or '',

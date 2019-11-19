@@ -125,11 +125,7 @@ class WardenConfiguration():
         except:
             self.required_readme_sections = []
 
-        try:
-            settings_target_files = doc['target_files'] 
-        except:
-            settings_target_files = []
-        self.target_files = [args.target_file] if args.target_file else settings_target_files
+        self.target_files = [args.target_file] if args.target_file else ['readme.md', 'readme.rst']
 
         try:
             self.known_content_issues = doc['known_content_issues'] or []
@@ -173,7 +169,11 @@ class WardenConfiguration():
         return known_issue_paths
 
     def get_known_content_issues(self):
-        return [os.path.normpath(os.path.join(self.target_directory, exception_tuple[0])) for exception_tuple in self.known_content_issues]
+        known_issue_paths = []
+        for exception_tuple in self.known_content_issues:
+            if any(exception_tuple[0].lower().endswith(target_file) for target_file in self.target_files):
+                known_issue_paths.append(os.path.normpath(os.path.join(self.target_directory, exception_tuple[0])))
+        return known_issue_paths
 
     def get_package_indexing_traversal_stops(self):
         return [os.path.normpath(os.path.join(self.target_directory, traversal_stop)) for traversal_stop in self.package_indexing_traversal_stops]

@@ -14,6 +14,7 @@
     color: #333;
     font-weight: 300;
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serf;
+    pointer-events: none;
   }
 
   h1 {
@@ -29,20 +30,25 @@
     left: 0;
     top: 0;
     z-index: -1;
+    pointer-events: all;
   }
 
-  .search-container {
+  .panel {
     display: inline-block;
   }
 
-  .search-container div {
+  .panel div {
     margin: 4px auto;
+  }
+
+  .panel input {
+    pointer-events: all;
   }
 </style>
 </head>
 <body>
-<h1>Dependency Graph</h1>
-<div class="search-container">
+<div class="panel">
+  <h1>Dependency Graph</h1>
   <label for="search">Search:</label>
   <input id="search" type="search" autocomplete="off" size="64" />
   <div id="matches"></div>

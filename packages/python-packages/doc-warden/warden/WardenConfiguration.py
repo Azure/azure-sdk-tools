@@ -75,6 +75,12 @@ class WardenConfiguration():
             required = False,
             help = 'Enable or disable checking for a readme at the root of the repository. Defaults true. Overrides .docsettings contents.')
         parser.add_argument(
+            '-s',
+            '--pipeline-stage',
+            dest = 'pipeline_stage',
+            required = False,
+            help = 'Specify the stage of the pipeline. Used to provide conditional functionality depending on the stage of the pipeline')
+        parser.add_argument(
             '-t',
             '--target-file',
             dest = 'target_file',
@@ -126,6 +132,8 @@ class WardenConfiguration():
             self.required_readme_sections = []
 
         self.target_files = [args.target_file] if args.target_file else ['readme.md', 'readme.rst']
+
+        self.pipeline_stage = args.pipeline_stage or ''
 
         try:
             self.known_content_issues = doc['known_content_issues'] or []

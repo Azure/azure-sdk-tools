@@ -19,9 +19,10 @@ def verify_changelog_content(config):
     pkg_list = []
     omitted_changelogs = get_omitted_files(config)
     known_issue_paths = config.get_known_content_issues()
-    ignored_missing_changelog_paths = []
+    missing_changelog = []
+    empty_release_notes = []
     changelog_results = []
-    changelogs_with_issues = []
+
 
     if config.scan_language == 'net':
         pkg_list = get_net_packages_info(config)
@@ -37,22 +38,23 @@ def verify_changelog_content(config):
 
     for pkg in pkg_list:
         changelog_ext = os.path.splitext(pkg.relative_changelog_location)[1]
-        pkg_changelog = os.path.join(os.path.normpath(config.target_directory), pkg.relative_changelog_location)
+        pkg_changelog = os.path.join(os.path.normpath(config.target_directory), os.path.normpath(pkg.relative_changelog_location))
 
         if os.path.isfile(pkg_changelog) and pkg_changelog not in omitted_changelogs:
             if changelog_ext == '.rst':
-                changelog_results.append(verify_rst_changelog(pkg_changelog, config, [pkg.package_version]))
+                changelog_results.append(verify_rst_changelog(pkg_changelog, config, pkg.package_version))
             else:
-                changelog_results.append(verify_md_changelog(pkg_changelog, config, [pkg.package_version]))
+                changelog_results.append(verify_md_changelog(pkg_changelog, config, pkg.package_version))
 
     for changelog_tuple in changelog_results:
-        if changelog_tuple[1]:
-            if changelog_tuple[0] in known_issue_paths:
-                ignored_missing_changelog_paths.append(changelog_tuple)
-            else:
-                changelogs_with_issues.append(changelog_tuple)
+        if changelog_tuple[0] in known_issue_paths:
+            continue
+        if changelog_tuple[1]['curr_pkg_version'] != changelog_tuple[1]['latest_version_entry']:
+            missing_changelog.append(changelog_tuple)
+        elif len(changelog_tuple[1]['latest_release_notes']) == 0:
+            empty_release_notes.append(changelog_tuple)
 
-    return changelogs_with_issues, ignored_missing_changelog_paths
+    return missing_changelog, empty_release_notes
 
 # parse rst to html, check for presence of appropriate version
 def verify_rst_changelog(changelog, config, pkg_version):
@@ -61,11 +63,11 @@ def verify_rst_changelog(changelog, config, pkg_version):
     html_changelog_content = rst_to_html(changelog_content)
     html_soup = bs4.BeautifulSoup(html_changelog_content, "html.parser")
 
-    missed_patterns = find_missed_sections(html_soup, pkg_version)
+    changelog_check_result = verify_latest_section(html_soup, pkg_version)
 
-    return (changelog, missed_patterns)
+    return changelog, changelog_check_result
 
-# parse md to html, check for presence of appropriate version
+# parse md to html, check for presence of the latest version
 def verify_md_changelog(changelog, config, pkg_version):
     if config.verbose_output:
         print('Examining content in {}'.format(changelog))
@@ -75,31 +77,28 @@ def verify_md_changelog(changelog, config, pkg_version):
     html_changelog_content = markdown2.markdown(changelog_content)
     html_soup = bs4.BeautifulSoup(html_changelog_content, "html.parser")
 
-    missed_patterns = find_missed_sections(html_soup, pkg_version)
+    changelog_check_result = verify_latest_section(html_soup, pkg_version)
 
-    return (changelog, missed_patterns)
+    return changelog, changelog_check_result
 
 # within the entire readme, is the current version present
-def find_missed_sections(html_soup, pkg_version):
-    headers = html_soup.find_all(re.compile('^h[1-2]$'))
-    missed_patterns = []
-    observed_patterns = []
+def verify_latest_section(html_soup, pkg_version):
+    changelog_check_result = {
+        'curr_pkg_version' : pkg_version,
+        'latest_version_entry' : html_soup.h2.text,
+        'latest_release_notes' : list()
+    }
 
-    for header in headers:
-        observed_patterns.extend(match_regex_set(header.get_text(), pkg_version))
+    if changelog_check_result['latest_version_entry'] == pkg_version:
+        for sibling in html_soup.h2.next_siblings:
+            if sibling.name == 'h2':
+                break
+            elif sibling.name == 'ul':
+                for child in sibling.children:
+                    if child.name is not None:
+                        changelog_check_result['latest_release_notes'].append(child.text)
 
-    return list(set(pkg_version) - set(observed_patterns))
-
-# checks a header string against a set of configured patterns
-def match_regex_set(header, patterns):
-    matching_patterns = []
-    for pattern in patterns:
-        result = re.search(pattern, header)
-        if result:
-            matching_patterns.append(pattern)
-            break
-
-    return matching_patterns
+    return changelog_check_result
 
 # boilerplate for translating RST
 class HTMLFragmentTranslator(HTMLTranslator):

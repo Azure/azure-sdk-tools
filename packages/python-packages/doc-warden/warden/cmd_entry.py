@@ -49,7 +49,7 @@ def verify_content(config):
         exit_on_readme_content_issues(content_results, config)
 
     if 'changelog' in config.target_files[0]:
-        missing_changelog, empty_release_notes = verify_changelog_content(config)
+        missing_changelog, empty_release_notes, pkg_list = verify_changelog_content(config)
         output_changelog_content_results(missing_changelog, empty_release_notes)
         exit_on_changelog_content_issues(missing_changelog, empty_release_notes, config)
 
@@ -59,23 +59,36 @@ def verify_presence(config):
     output_presence_results(presence_results, config)
 
     if len(presence_results) > 0:
-        conclusion_message(config)
+        conclusion_message()
         exit(1)
+
+# Verify Case of files Present
+def verify_file_case(pkg_list, config):
+    readmes_with_wrong_case = []
+    changelogs_with_wrong_case = []
+    for pkg in pkg_list:
+        if pkg.relative_readme_location.lower().endswith('readme.md'):
+            if not pkg.relative_readme_location.endswith('README.md'):
+                readmes_with_wrong_case.append(os.path.normpath(os.path.join(config.target_directory, pkg.relative_readme_location)))
+        if pkg.relative_changelog_location.lower().endswith('changelog.md'):
+            if not pkg.relative_changelog_location.endswith('CHANGELOG.md'):
+                changelogs_with_wrong_case.append(os.path.normpath(os.path.join(config.target_directory, pkg.relative_changelog_location)))
+    return readmes_with_wrong_case, changelogs_with_wrong_case
 
 # Exit if there are readme content issues
 def exit_on_readme_content_issues(content_results, config):
     if len(content_results) > 0:
-        conclusion_message(config)
+        conclusion_message()
         exit(1)
 
 # Exit if there are changelog content issues
 def exit_on_changelog_content_issues(missing_changelog, empty_release_notes, config):
     if len(missing_changelog) > 0:
-        conclusion_message(config)
+        conclusion_message()
         exit(1)
 
     if config.pipeline_stage == 'release' and len(empty_release_notes) > 0:
-        conclusion_message(config)
+        conclusion_message()
         exit(1)
 
 # print content results for readme
@@ -112,8 +125,6 @@ def output_changelog_content_results(missing_changelog, empty_release_notes):
             print('EMPTY CHANGELOG ENTRY: Latest Version {0} has no release notes in {1}. Consider adding release notes'.format(changelog_tuple[1]['curr_pkg_version'], changelog_tuple[0]))
         print()
 
-
-
 # print presence results
 def output_presence_results(missing_target_file_paths, config):
     if len(missing_target_file_paths):
@@ -122,31 +133,63 @@ def output_presence_results(missing_target_file_paths, config):
             print(config.get_output_path(path))
         print()
 
+# print case issues
+def output_case_results(readmes_with_wrong_case, changelogs_with_wrong_case):
+    if len(readmes_with_wrong_case):
+        print('{0} Readme{1} are wrongly named:'.format(len(readmes_with_wrong_case), 's' if len(readmes_with_wrong_case) > 1 else ''))
+        for path in readmes_with_wrong_case:
+            print(path)
+        print()
+
+    if len(changelogs_with_wrong_case):
+        print('{0} Changelog{1} are wrongly named:'.format(len(changelogs_with_wrong_case), 's' if len(changelogs_with_wrong_case) > 1 else ''))
+        for path in changelogs_with_wrong_case:
+            print(path)
+        print()
+
+
 # execute both presence and content verification
 def all_operations(config):
 
     if config.verbose_output:
-        print('Starting Presence Examination')
-    presence_results, ignored_presence_results = find_missing_target_files(config)
+        print('Starting Readme Presence Examination')
 
+    readme_presence_results, ignored_readme_presence_results = find_missing_target_files(config)
     if config.verbose_output:
-        print('Done with Presence Examination')
-        print('Starting Content Examination')
+        print('Done with Readme Presence Examination')
+        print('Starting Readme Content Examination')
 
-    content_results, ignored_content_results = verify_readme_content(config)
-    missing_changelog, empty_release_notes = verify_changelog_content(config)
-
+    readme_content_results, ignored_readme_content_results = verify_readme_content(config)
     if config.verbose_output:
-        print('Done with Content Examination')
+        print('Done with Readme Content Examination')
 
-    output_presence_results(presence_results, config)
-    output_readme_content_results(content_results, config)
+    output_presence_results(readme_presence_results, config)
+    output_readme_content_results(readme_content_results, config)
+
+    config.target_files = ['changelog.md'] # Switch Config to scan for changelog
+    if config.verbose_output:
+        print('Starting Changelog Presence Examination')
+
+    changelog_presence_results, ignored_changelog_presence_results = find_missing_target_files(config)
+    if config.verbose_output:
+        print('Done with Changelog Presence Examination')
+        print('Starting Changelog Content Examination')
+
+    missing_changelog, empty_release_notes, pkg_list = verify_changelog_content(config)
+    if config.verbose_output:
+        print('Done with Changelog Content Examination')
+
+    readmes_with_wrong_case, changelogs_with_wrong_case = verify_file_case(pkg_list, config)
+
+    output_presence_results(changelog_presence_results, config)
     output_changelog_content_results(missing_changelog, empty_release_notes)
-    exit_on_readme_content_issues(content_results, config)
+    output_case_results(readmes_with_wrong_case, changelogs_with_wrong_case)
+
+    exit_on_readme_content_issues(readme_content_results, config)
     exit_on_changelog_content_issues(missing_changelog, empty_release_notes, config)
 
-    if len(presence_results) > 0:
-        conclusion_message(config)
+    if len(readme_presence_results) > 0 or len(changelog_presence_results) > 0 or readmes_with_wrong_case > 0 or changelogs_with_wrong_case > 0:
+        conclusion_message()
         exit(1)
 
 
@@ -156,5 +199,5 @@ def pluralize(string, plural_string, count):
     return plural_string if count > 1 else string
 
 # final output. Could get longer or pull from a template in the future.
-def conclusion_message(config):
+def conclusion_message():
     print('For a rundown on what you need to do to resolve this breaking issue ASAP, check out aka.ms/azure-sdk-analyze-failed')

@@ -38,7 +38,7 @@ def verify_changelog_content(config):
 
     for pkg in pkg_list:
         changelog_ext = os.path.splitext(pkg.relative_changelog_location)[1]
-        pkg_changelog = os.path.join(os.path.normpath(config.target_directory), os.path.normpath(pkg.relative_changelog_location))
+        pkg_changelog = os.path.normpath(os.path.join(config.target_directory, pkg.relative_changelog_location))
 
         if os.path.isfile(pkg_changelog) and pkg_changelog not in omitted_changelogs:
             if changelog_ext == '.rst':
@@ -54,7 +54,7 @@ def verify_changelog_content(config):
         elif len(changelog_tuple[1]['latest_release_notes']) == 0:
             empty_release_notes.append(changelog_tuple)
 
-    return missing_changelog, empty_release_notes
+    return missing_changelog, empty_release_notes, pkg_list
 
 # parse rst to html, check for presence of appropriate version
 def verify_rst_changelog(changelog, config, pkg_version):

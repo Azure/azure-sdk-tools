@@ -8,7 +8,7 @@ import os
 import glob
 import fnmatch
 import zipfile
-from .warden_common import get_java_package_roots, get_net_package_roots, get_python_package_roots, get_js_package_roots, find_alongside_file
+from .warden_common import get_java_package_roots, get_net_packages, get_python_package_roots, get_js_package_roots, find_alongside_file
 
 # python 3 transitioned StringIO to be part of `io` module. 
 # python 2 needs the old version however
@@ -79,15 +79,16 @@ def check_js_target_files(configuration):
 
 # return all missing target_files for a .NET repostory
 def check_net_target_files(configuration):
-    expected_target_files, omitted_target_files = get_net_package_roots(configuration)
+    expected_target_files, omitted_target_files = get_net_packages(configuration)
     missing_expected_target_file_locations = []
 
     for expected_location in expected_target_files:
+        target_file_location = '\\'.join(expected_location.split('\\')[:-2])
         result = False
         for target_file in configuration.target_files:
-            result = result or find_alongside_file(expected_location, target_file)
+            result = result or find_alongside_file(target_file_location, target_file)
         if not result:
-            missing_expected_target_file_locations.append(os.path.dirname(expected_location))
+            missing_expected_target_file_locations.append(target_file_location)
     return missing_expected_target_file_locations
 
 # returns all missing target_files for a JAVA repo

@@ -43,13 +43,14 @@ def index(config):
 
 # verify the content of readmes or changelogs
 def verify_content(config):
+    packages = index_packages(config)
     if 'readme' in config.target_files[0]:
         content_results, ignored_content_results = verify_readme_content(config)
         output_readme_content_results(content_results, config)
         exit_on_readme_content_issues(content_results, config)
 
     if 'changelog' in config.target_files[0]:
-        missing_changelog, empty_release_notes, pkg_list = verify_changelog_content(config)
+        missing_changelog, empty_release_notes = verify_changelog_content(config, packages)
         output_changelog_content_results(missing_changelog, empty_release_notes)
         exit_on_changelog_content_issues(missing_changelog, empty_release_notes, config)
 
@@ -150,6 +151,7 @@ def output_case_results(readmes_with_wrong_case, changelogs_with_wrong_case):
 
 # execute both presence and content verification
 def all_operations(config):
+    packages = index_packages(config)
 
     if config.verbose_output:
         print('Starting Readme Presence Examination')
@@ -166,7 +168,8 @@ def all_operations(config):
     output_presence_results(readme_presence_results, config)
     output_readme_content_results(readme_content_results, config)
 
-    config.target_files = ['changelog.md'] # Switch Config to scan for changelog
+    config.target_files = ['changelog.md'] if config.target_files[0] == 'readme.md' else ['readme.md']
+
     if config.verbose_output:
         print('Starting Changelog Presence Examination')
 
@@ -175,11 +178,11 @@ def all_operations(config):
         print('Done with Changelog Presence Examination')
         print('Starting Changelog Content Examination')
 
-    missing_changelog, empty_release_notes, pkg_list = verify_changelog_content(config)
+    missing_changelog, empty_release_notes = verify_changelog_content(config, packages)
     if config.verbose_output:
         print('Done with Changelog Content Examination')
 
-    readmes_with_wrong_case, changelogs_with_wrong_case = verify_file_case(pkg_list, config)
+    readmes_with_wrong_case, changelogs_with_wrong_case = verify_file_case(packages, config)
 
     output_presence_results(changelog_presence_results, config)
     output_changelog_content_results(missing_changelog, empty_release_notes)
@@ -188,10 +191,9 @@ def all_operations(config):
     exit_on_readme_content_issues(readme_content_results, config)
     exit_on_changelog_content_issues(missing_changelog, empty_release_notes, config)
 
-    if len(readme_presence_results) > 0 or len(changelog_presence_results) > 0 or readmes_with_wrong_case > 0 or changelogs_with_wrong_case > 0:
+    if len(readme_presence_results) > 0 or len(changelog_presence_results) > 0 or len(readmes_with_wrong_case) > 0 or len(changelogs_with_wrong_case) > 0:
         conclusion_message()
         exit(1)
-
 
 
 # return the plural form of the string given a count > 1

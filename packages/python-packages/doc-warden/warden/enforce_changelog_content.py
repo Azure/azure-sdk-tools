@@ -15,28 +15,15 @@ import logging
 from .index_packages import get_python_package_info, get_js_package_info, get_java_package_info, get_net_packages_info
 
 # entry point
-def verify_changelog_content(config):
-    pkg_list = []
+def verify_changelog_content(config, pkg_list):
     omitted_changelogs = get_omitted_files(config)
     known_issue_paths = config.get_known_content_issues()
     missing_changelog = []
     empty_release_notes = []
     changelog_results = []
 
-
-    if config.scan_language == 'net':
-        pkg_list = get_net_packages_info(config)
-
-    if config.scan_language == 'java':
-        pkg_list = get_java_package_info(config)
-
-    if config.scan_language == 'js':
-        pkg_list = get_js_package_info(config)
-
-    if config.scan_language == 'python':
-        pkg_list = get_python_package_info(config)
-
     for pkg in pkg_list:
+        if pkg.relative_changelog_location == '': continue
         changelog_ext = os.path.splitext(pkg.relative_changelog_location)[1]
         pkg_changelog = os.path.normpath(os.path.join(config.target_directory, pkg.relative_changelog_location))
 
@@ -54,7 +41,7 @@ def verify_changelog_content(config):
         elif len(changelog_tuple[1]['latest_release_notes']) == 0:
             empty_release_notes.append(changelog_tuple)
 
-    return missing_changelog, empty_release_notes, pkg_list
+    return missing_changelog, empty_release_notes
 
 # parse rst to html, check for presence of appropriate version
 def verify_rst_changelog(changelog, config, pkg_version):

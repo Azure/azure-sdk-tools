@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Testing the ts-package-json-main-is-cjs rule.
  * @author Arpan Laha
@@ -297,8 +300,7 @@ ruleTester.run("ts-package-json-main-is-cjs", rule, {
       filename: "package.json",
       errors: [
         {
-          message:
-            "main is set to dist//index.js when it should be set to dist/index.js"
+          message: "main is set to dist//index.js when it should be set to dist/index.js"
         }
       ],
       output: '{"main": "dist/index.js"}'
@@ -308,8 +310,7 @@ ruleTester.run("ts-package-json-main-is-cjs", rule, {
       filename: "package.json",
       errors: [
         {
-          message:
-            "main is set to .dist/index.js when it should be set to dist/index.js"
+          message: "main is set to .dist/index.js when it should be set to dist/index.js"
         }
       ],
       output: '{"main": "dist/index.js"}'
@@ -319,8 +320,7 @@ ruleTester.run("ts-package-json-main-is-cjs", rule, {
       filename: "package.json",
       errors: [
         {
-          message:
-            "main is set to /dist/index.js when it should be set to dist/index.js"
+          message: "main is set to /dist/index.js when it should be set to dist/index.js"
         }
       ],
       output: '{"main": "dist/index.js"}'
@@ -341,8 +341,7 @@ ruleTester.run("ts-package-json-main-is-cjs", rule, {
       filename: "package.json",
       errors: [
         {
-          message:
-            "main is set to index.js when it should be set to dist/index.js"
+          message: "main is set to index.js when it should be set to dist/index.js"
         }
       ],
       output: '{"main": "dist/index.js"}'
@@ -352,8 +351,7 @@ ruleTester.run("ts-package-json-main-is-cjs", rule, {
       filename: "package.json",
       errors: [
         {
-          message:
-            "main is set to dist/src/index.js when it should be set to dist/index.js"
+          message: "main is set to dist/src/index.js when it should be set to dist/index.js"
         }
       ],
       output: '{"main": "dist/index.js"}'
@@ -364,8 +362,7 @@ ruleTester.run("ts-package-json-main-is-cjs", rule, {
       filename: "package.json",
       errors: [
         {
-          message:
-            "main is set to index.js when it should be set to dist/index.js"
+          message: "main is set to index.js when it should be set to dist/index.js"
         }
       ],
       output: examplePackageGood

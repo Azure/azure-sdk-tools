@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Rule to require client methods returning a subclient to have names prefixed suffixed with "get" and suffixed with "client".
  * @author Arpan Laha
@@ -32,8 +35,7 @@ export = {
             TSFunction.returnType !== undefined &&
             TSFunction.returnType.typeAnnotation.type === "TSTypeReference"
           ) {
-            const typeIdentifier = TSFunction.returnType.typeAnnotation
-              .typeName as Identifier;
+            const typeIdentifier = TSFunction.returnType.typeAnnotation.typeName as Identifier;
             const typeName = typeIdentifier.name;
 
             // if type is a client that isn't the class itself

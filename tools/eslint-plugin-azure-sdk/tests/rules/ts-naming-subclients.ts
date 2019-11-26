@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Testing the ts-naming-subclients rule.
  * @author Arpan Laha
@@ -46,8 +49,7 @@ ruleTester.run("ts-naming-subclients", rule, {
     },
     // multiple
     {
-      code:
-        "class ExampleClient { get(): SubClient {}; get2(): SubSubClient {}; };",
+      code: "class ExampleClient { get(): SubClient {}; get2(): SubSubClient {}; };",
       errors: [
         {
           message:

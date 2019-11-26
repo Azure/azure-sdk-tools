@@ -1,9 +1,30 @@
 ﻿@page
 @model APIViewWeb.Pages.UnauthorizedModel
-@*
-    For more information on enabling MVC for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
-*@
+@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+@{
+    ViewData["Title"] = "Unauthorized";
+    var names = string.Join(" or ", Model.Options.RequiredOrganization);
+}
 
-<p>You're currently not logged into a GitHub account.</p>
-<p>In order to use the site, please log into an account associated with the <a href="https://github.com/Microsoft">Microsoft</a> or <a href="https://github.com/Azure">Azure</a> organization by clicking the button below.</p>
-<a class="login-button btn btn-outline-dark" asp-action="Login" asp-controller="Account">Login with GitHub</a> <img height="30" width="30" src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" />
+<p>You're currently not logged into a GitHub account or your GitHub account is not publicly affiliated with @names organizations.</p>
+<p>
+    In order to use the site, please sign into another account - or,
+    request to join one of the following organizations:
+    <ul>
+        @foreach (var organization in Model.Options.RequiredOrganization)
+        {
+            <li>
+                <a href="https://github.com/@organization">@organization</a>
+            </li>
+        }
+    </ul>
+</p>
+<p>
+    If you are a member but can't access the site,
+    find yourself under the "People" tab of the organization page and set your visibility to public.
+</p>
+
+<a class="login-button btn btn-outline-dark" asp-action="Login" asp-controller="Account">
+    <img height="30" width="30" src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" />
+    Login with GitHub
+</a>

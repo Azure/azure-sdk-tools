@@ -1,9 +1,15 @@
 ﻿using Azure.Core;
 using Azure.Identity;
+using Azure.Sdk.Tools.CheckEnforcer.Configuration;
+using Azure.Sdk.Tools.CheckEnforcer.Handlers;
+using Azure.Sdk.Tools.CheckEnforcer.Integrations.GitHub;
+using Azure.Sdk.Tools.CheckEnforcer.Locking;
 using Azure.Security.KeyVault.Keys;
 using Azure.Security.KeyVault.Keys.Cryptography;
+using Azure.Security.KeyVault.Secrets;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
 using Microsoft.IdentityModel.Tokens;
@@ -15,6 +21,7 @@ using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
@@ -24,150 +31,103 @@ namespace Azure.Sdk.Tools.CheckEnforcer
 {
     public class GitHubWebhookProcessor
     {
-        public GitHubWebhookProcessor(ILogger log, GitHubClientFactory gitHubClientFactory, ConfigurationStore configurationStore)
+        public GitHubWebhookProcessor(IGlobalConfigurationProvider globalConfigurationProvider, IGitHubClientProvider gitHubClientProvider, IRepositoryConfigurationProvider repositoryConfigurationProvider, IDistributedLockProvider distributedLockProvider)
         {
-            this.Log = log;
-            this.ClientFactory = gitHubClientFactory;
-            this.ConfigurationStore = configurationStore;
+            this.globalConfigurationProvider = globalConfigurationProvider;
+            this.gitHubClientProvider = gitHubClientProvider;
+            this.repositoryConfigurationProvider = repositoryConfigurationProvider;
+            this.distributedLockProvider = distributedLockProvider;
         }
-
-        public ILogger Log { get; private set; }
-
-        public GitHubClientFactory ClientFactory { get; private set; }
-
-        public ConfigurationStore ConfigurationStore { get; private set; }
-
+        
+        public IGlobalConfigurationProvider globalConfigurationProvider;
+        public IGitHubClientProvider gitHubClientProvider;
+        private IRepositoryConfigurationProvider repositoryConfigurationProvider;
+        private IDistributedLockProvider distributedLockProvider;
         private const string GitHubEventHeader = "X-GitHub-Event";
+        private const string GitHubSignatureHeader = "X-Hub-Signature";
 
-        private async Task<TEvent> DeserializePayloadAsync<TEvent>(Stream stream)
+        private DateTimeOffset gitHubAppWebhookSecretExpiry = DateTimeOffset.MinValue;
+        private string gitHubAppWebhookSecret;
+        private SecretClient secretClient;
+
+        private async Task<string> GetGitHubAppWebhookSecretAsync(CancellationToken cancellationToken)
         {
-            using (var reader = new StreamReader(stream))
+            if (gitHubAppWebhookSecretExpiry < DateTimeOffset.UtcNow)
             {
-                var rawPayload = await reader.ReadToEndAsync();
-                Log.LogInformation("Received payload from GitHub: {rawPayload}", rawPayload);
+                var gitHubAppWebhookSecretName = globalConfigurationProvider.GetGitHubAppWebhookSecretName();
 
-                var serializer = new SimpleJsonSerializer();
-                var payload = serializer.Deserialize<TEvent>(rawPayload);
+                var client = GetSecretClient();
+                var response = await client.GetAsync(gitHubAppWebhookSecretName, cancellationToken: cancellationToken);
+                var secret = response.Value;
 
-                return payload;
+                gitHubAppWebhookSecretExpiry = DateTimeOffset.UtcNow.AddSeconds(30);
+                gitHubAppWebhookSecret = secret.Value;
             }
+
+            return gitHubAppWebhookSecret;
         }
 
-        private async Task<CheckRun> EnsureCheckEnforcerRunAsync(GitHubClient client, long repositoryId, string headSha, IReadOnlyList<CheckRun> runs, bool recreate)
+        private SecretClient GetSecretClient()
         {
-            var checkRun = runs.SingleOrDefault(r => r.Name == Constants.ApplicationName);
+            var keyVaultUri = globalConfigurationProvider.GetKeyVaultUri();
+            var credential = new DefaultAzureCredential();
 
-            if (checkRun == null || recreate)
+            if (secretClient == null)
             {
-                Log.LogDebug("Creating Check Enforcer run.");
-                checkRun = await client.Check.Run.Create(
-                    repositoryId,
-                    new NewCheckRun(Constants.ApplicationName, headSha)
-                );
+                secretClient = new SecretClient(new Uri(keyVaultUri), credential);
             }
 
-            return checkRun;
+            return secretClient;
         }
 
-        private async Task EvaluateAndUpdateCheckEnforcerRunStatusAsync(IRepositoryConfiguration configuration, long installationId, long repositoryId, string pullRequestSha, CancellationToken cancellationToken)
+        private async Task<string> ReadAndVerifyBodyAsync(HttpRequest request, CancellationToken cancellationToken)
         {
-            Log.LogDebug("Fetching installation client.");
-            var client = await this.ClientFactory.GetInstallationClientAsync(installationId, cancellationToken);
-
-            Log.LogDebug("Fetching check runs.");
-            var runsResponse = await client.Check.Run.GetAllForReference(repositoryId, pullRequestSha);
-            var runs = runsResponse.CheckRuns;
-
-            var checkEnforcerRun = await EnsureCheckEnforcerRunAsync(client, repositoryId, pullRequestSha, runs, false);
-
-            var otherRuns = from run in runs
-                            where run.Name != Constants.ApplicationName
-                            select run;
-
-            var totalOtherRuns = otherRuns.Count();
-
-
-            var outstandingOtherRuns = from run in otherRuns
-                                       where run.Conclusion != new StringEnum<CheckConclusion>(CheckConclusion.Success)
-                                       select run;
-
-
-            var totalOutstandingOtherRuns = outstandingOtherRuns.Count();
-
-            Log.LogDebug("{totalOutstandingOtherRuns}/{totalOtherRuns} other runs outstanding.", totalOutstandingOtherRuns, totalOtherRuns);
-
-            if (totalOtherRuns >= configuration.MinimumCheckRuns && totalOutstandingOtherRuns == 0)
+            using (var reader = new StreamReader(request.Body))
             {
-                Log.LogDebug("Check Enforcer criteria met, marking check successful.");
-                await client.Check.Run.Update(repositoryId, checkEnforcerRun.Id, new CheckRunUpdate()
+                var json = await reader.ReadToEndAsync();
+                var jsonBytes = Encoding.UTF8.GetBytes(json);
+
+                if (request.Headers.TryGetValue(GitHubSignatureHeader, out StringValues signature))
                 {
-                    Conclusion = new StringEnum<CheckConclusion>(CheckConclusion.Success)
-                });
-            }
-            else
-            {
-                if (checkEnforcerRun.Conclusion == new StringEnum<CheckConclusion>(CheckConclusion.Success) && totalOutstandingOtherRuns > 0)
-                {
-                    Log.LogDebug("Check Enforcer run was previously marked successful, but there are now outstanding runs. Recreating check.");
-                    await EnsureCheckEnforcerRunAsync(client, repositoryId, pullRequestSha, runs, true);
+                    var secret = await GetGitHubAppWebhookSecretAsync(cancellationToken);
+
+                    var isValid = GitHubWebhookSignatureValidator.IsValid(jsonBytes, signature, secret);
+                    if (isValid)
+                    {
+                        return json;
+                    }
+                    else
+                    {
+                        throw new CheckEnforcerSecurityException("Webhook signature validation failed.");
+                    }
                 }
                 else
                 {
-                    if (checkEnforcerRun.Status != new StringEnum<CheckStatus>(CheckStatus.InProgress))
-                    {
-                        Log.LogDebug("Updating Check Enforcer status to in-progress.");
-                        await client.Check.Run.Update(repositoryId, checkEnforcerRun.Id, new CheckRunUpdate()
-                        {
-                            Status = new StringEnum<CheckStatus>(CheckStatus.InProgress)
-                        });
-                    }
+                    throw new CheckEnforcerSecurityException("Webhook missing event signature.");
                 }
-
             }
         }
 
-        public async Task ProcessWebhookAsync(HttpRequest request, CancellationToken cancellationToken)
+        public async Task ProcessWebhookAsync(HttpRequest request, ILogger logger, CancellationToken cancellationToken)
         {
+            var json = await ReadAndVerifyBodyAsync(request, cancellationToken);
+
             if (request.Headers.TryGetValue(GitHubEventHeader, out StringValues eventName))
             {
                 if (eventName == "check_run")
                 {
-                    var rawPayload = request.Body;
-                    var payload = await DeserializePayloadAsync<CheckRunEventPayload>(rawPayload);
-
-                    var installationId = payload.Installation.Id;
-                    var repositoryId = payload.Repository.Id;
-                    var pullRequestSha = payload.CheckRun.CheckSuite.HeadSha;
-
-                    Log.LogDebug("Fetching repository configuration.");
-                    var configuration = await this.ConfigurationStore.GetRepositoryConfigurationAsync(installationId, repositoryId, pullRequestSha, cancellationToken);
-                    Log.LogDebug("Repository configuration: {configuration}", configuration.ToString());
-
-                    if (configuration.IsEnabled)
-                    {
-                        Log.LogDebug("Repository was enabled for Check Enforcer.",
-                            installationId,
-                            repositoryId,
-                            pullRequestSha
-                            );
-                        await EvaluateAndUpdateCheckEnforcerRunStatusAsync(configuration, installationId, repositoryId, pullRequestSha, cancellationToken);
-                    }
-                    else
-                    {
-                        Log.LogInformation("Repository was not enabled for Check Enforcer.");
-                    }
+                    var handler = new CheckRunHandler(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, distributedLockProvider, logger);
+                    await handler.HandleAsync(json, cancellationToken);
                 }
                 else if (eventName == "check_suite")
                 {
-                    // HACK: We swallow check_suite events. Technically we could register
-                    //       the check enforcer check run earlier (before the PR is even created)
-                    //       but at this point we don't know the target branch for sure so we
-                    //       can't potentially cache the configuration entry.
-                    //
-                    //       However - we can't opt out of receiving this event even then check suite
-                    //       is unchecked in the app's event setup. So rather than returning a 400
-                    //       for this event we just swallow it to eliminate the noise.
-                    return;
+                    var handler = new CheckSuiteHandler(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, distributedLockProvider, logger);
+                    await handler.HandleAsync(json, cancellationToken);
+                }
+                else if (eventName == "issue_comment")
+                {
+                    var handler = new IssueCommentHandler(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, distributedLockProvider, logger);
+                    await handler.HandleAsync(json, cancellationToken);
                 }
                 else
                 {

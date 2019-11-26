@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Testing the ts-package-json-types rule.
  * @author Arpan Laha
@@ -253,23 +256,23 @@ ruleTester.run("ts-package-json-types", rule, {
     {
       // only the fields we care about
       code: '{"types": "typings/index.d.ts"}',
-      filename: "package.json"
+      filename: "index/package.json"
     },
     {
       // a full example package.json (taken from https://github.com/Azure/azure-sdk-for-js/blob/master/sdk/eventhub/event-hubs/package.json with "scripts" removed for testing purposes)
       code: examplePackageGood,
-      filename: "package.json"
+      filename: "service-bus/package.json"
     },
     {
       // incorrect format but in a file we don't care about
       code: '{"types": "typings/index.ts"}',
-      filename: "not_package.json"
+      filename: "service-bus/not_package.json"
     }
   ],
   invalid: [
     {
       code: '{"notTypes": "typings/index.d.ts"}',
-      filename: "package.json",
+      filename: "index/package.json",
       errors: [
         {
           message: "types does not exist at the outermost level"
@@ -279,7 +282,7 @@ ruleTester.run("ts-package-json-types", rule, {
     {
       // types is in a nested object
       code: '{"outer": {"types": "typings/index.d.ts"}}',
-      filename: "package.json",
+      filename: "service-bus/package.json",
       errors: [
         {
           message: "types does not exist at the outermost level"
@@ -287,9 +290,29 @@ ruleTester.run("ts-package-json-types", rule, {
       ]
     },
     {
+      // Incorrect node type for `types` key (object)
+      code: `{"types": {}}`,
+      filename: "service-bus/package.json",
+      errors: [
+        {
+          message: "types is not set to a string"
+        }
+      ]
+    },
+    {
+      // Incorrect node type for `types` key (regex)
+      code: `{"types": null}`,
+      filename: "service-bus/package.json",
+      errors: [
+        {
+          message: "types is not set to a string"
+        }
+      ]
+    },
+    {
       // only the fields we care about
       code: '{"types": "typings/index.ts"}',
-      filename: "package.json",
+      filename: "service-bus/package.json",
       errors: [
         {
           message: "provided types path is not a TypeScript declaration file"
@@ -299,10 +322,21 @@ ruleTester.run("ts-package-json-types", rule, {
     {
       // example file with types set to "typings/index.ts"
       code: examplePackageBad,
-      filename: "package.json",
+      filename: "service-bus/package.json",
       errors: [
         {
           message: "provided types path is not a TypeScript declaration file"
+        }
+      ]
+    },
+    // example file with typings set, but to a non-matching package name
+    {
+      code: examplePackageGood,
+      filename: "wrongpackage/package.json",
+      errors: [
+        {
+          message:
+            "provided types file should be named 'wrongpackage.d.ts' after the package directory"
         }
       ]
     }

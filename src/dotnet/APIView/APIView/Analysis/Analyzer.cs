@@ -9,7 +9,7 @@ using System.Linq;
 
 namespace APIView.Analysis
 {
-    internal class Analyzer: SymbolVisitor
+    internal class Analyzer : SymbolVisitor
     {
         public List<CodeDiagnostic> Results { get; } = new List<CodeDiagnostic>();
 

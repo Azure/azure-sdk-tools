@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Testing the ts-package-json-module rule.
  * @author Arpan Laha
@@ -331,8 +334,7 @@ ruleTester.run("ts-package-json-module", rule, {
       filename: "package.json",
       errors: [
         {
-          message:
-            "module is set to dist-esm/src when it should be set to dist-esm/src/index.js"
+          message: "module is set to dist-esm/src when it should be set to dist-esm/src/index.js"
         }
       ],
       output: '{"module": "dist-esm/src/index.js"}'
@@ -342,8 +344,7 @@ ruleTester.run("ts-package-json-module", rule, {
       filename: "package.json",
       errors: [
         {
-          message:
-            "module is set to index.js when it should be set to dist-esm/src/index.js"
+          message: "module is set to index.js when it should be set to dist-esm/src/index.js"
         }
       ],
       output: '{"module": "dist-esm/src/index.js"}'

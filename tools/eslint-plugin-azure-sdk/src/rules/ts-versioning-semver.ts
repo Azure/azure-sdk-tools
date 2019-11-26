@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Rule to force adherence to SemVer guidelines.
  * @author Arpan Laha
@@ -12,10 +15,7 @@ import { getRuleMetaData, getVerifiers, stripPath } from "../utils";
 //------------------------------------------------------------------------------
 
 export = {
-  meta: getRuleMetaData(
-    "ts-versioning-semver",
-    "force adherence to SemVer guidelines"
-  ),
+  meta: getRuleMetaData("ts-versioning-semver", "force adherence to SemVer guidelines"),
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     const verifiers = getVerifiers(context, {
       outer: "version"
@@ -51,9 +51,7 @@ export = {
             }
             // check that if preview is in proper syntax if provided
             if (
-              !/^((0|[1-9](\d*))\.){2}(0|[1-9](\d*))(-preview\.(0|([1-9](\d*))))?$/.test(
-                version
-              )
+              !/^((0|[1-9](\d*))\.){2}(0|[1-9](\d*))(-preview\.(0|([1-9](\d*))))?$/.test(version)
             ) {
               context.report({
                 node: nodeValue,

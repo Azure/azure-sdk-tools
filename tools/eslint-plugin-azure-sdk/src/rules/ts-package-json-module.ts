@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Rule to force module to be the ES6 entrypoint to the application.
  * @author Arpan Laha

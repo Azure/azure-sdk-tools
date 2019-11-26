@@ -258,7 +258,7 @@ namespace PipelineGenerator.Conventions
 
         protected virtual Task<bool> ApplyConventionAsync(BuildDefinition definition, SdkComponent component)
         {
-            bool hasChanges = true;
+            bool hasChanges = false;
 
             if (EnsureVariableGroups(definition))
             {
@@ -270,9 +270,9 @@ namespace PipelineGenerator.Conventions
                 hasChanges = true;
             }
 
-            if (definition.Path != $"\\{this.Context.DevOpsPath}")
+            if (definition.Path != this.Context.DevOpsPath)
             {
-                definition.Path = $"\\{this.Context.DevOpsPath}";
+                definition.Path = this.Context.DevOpsPath;
                 hasChanges = true;
             }
 

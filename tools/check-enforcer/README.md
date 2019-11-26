@@ -1,7 +1,7 @@
 # Check Enforcer
 
 
-This folder contains the source code for Check Enforcer. Check Enforcer is a service built by the Azure SDK Engineering Systems team which makes it easier to work with GitHub checks in a mono-repository. When you install and configure Check Enforcer in your repository it will add a check each time you create a pull request which will not turn green until all other checks have passed?
+This folder contains the source code for Check Enforcer. Check Enforcer is a service built by the Azure SDK Engineering Systems team which makes it easier to work with GitHub checks in a mono-repository. When you install and configure Check Enforcer in your repository it will add a check each time you create a pull request which will not turn green until all other checks have passed.
 
 ## Why did we create Check Enforcer?
 

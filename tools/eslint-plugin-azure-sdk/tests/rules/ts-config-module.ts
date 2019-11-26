@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Testing the ts-config-module rule.
  * @author Arpan Laha
@@ -158,8 +161,7 @@ ruleTester.run("ts-config-module", rule, {
       filename: "tsconfig.json",
       errors: [
         {
-          message:
-            "compilerOptions.module is set to es5 when it should be set to ES6"
+          message: "compilerOptions.module is set to es5 when it should be set to ES6"
         }
       ],
       output: '{"compilerOptions": { "module": "es6" }}'
@@ -170,8 +172,7 @@ ruleTester.run("ts-config-module", rule, {
       filename: "tsconfig.json",
       errors: [
         {
-          message:
-            "compilerOptions.module is set to es5 when it should be set to ES6"
+          message: "compilerOptions.module is set to es5 when it should be set to ES6"
         }
       ],
       output: exampleTsconfigGood

@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Rule to force tsconfig.json's compilerOptions.sourceMap and compilerOptions.declarationMap values to both be true.
  * @author Arpan Laha
@@ -34,8 +37,7 @@ export = {
           // callback functions
 
           // check to see if compilerOptions exists at the outermost level
-          "ExpressionStatement > ObjectExpression":
-            sourceMapVerifiers.existsInFile,
+          "ExpressionStatement > ObjectExpression": sourceMapVerifiers.existsInFile,
 
           // check that sourceMap and declarationMap are both members of compilerOptions
           "ExpressionStatement > ObjectExpression > Property[key.value='compilerOptions']": (

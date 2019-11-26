@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace PipelineGenerator.Conventions
 {
-    public class UnifiedPipelineConvention : ContinuousIntegrationPipelineConvention
+    public class UnifiedPipelineConvention : PipelineConvention
     {
         public UnifiedPipelineConvention(ILogger logger, PipelineGenerationContext context) : base(logger, context)
         {
@@ -94,7 +94,7 @@ namespace PipelineGenerator.Conventions
             {
                 if (prTrigger.SettingsSourceType != 1 ||
                     prTrigger.IsCommentRequiredForPullRequest != true ||
-                    prTrigger.BranchFilters.All(bf => bf == $"+{Context.Branch}") ||
+                    !prTrigger.BranchFilters.All(bf => bf == $"+{Context.Branch}") ||
                     prTrigger.Forks.AllowSecrets != true ||
                     prTrigger.Forks.Enabled != true)
                 {

@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Rule to force Node support for all LTS versions.
  * @author Arpan Laha

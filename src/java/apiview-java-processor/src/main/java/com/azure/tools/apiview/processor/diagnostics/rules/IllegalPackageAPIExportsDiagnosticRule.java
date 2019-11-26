@@ -1,0 +1,75 @@
+package com.azure.tools.apiview.processor.diagnostics.rules;
+
+import com.azure.tools.apiview.processor.diagnostics.DiagnosticRule;
+import com.azure.tools.apiview.processor.model.APIListing;
+import com.azure.tools.apiview.processor.model.Diagnostic;
+import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.body.Parameter;
+import com.github.javaparser.ast.type.ClassOrInterfaceType;
+import com.github.javaparser.ast.type.Type;
+
+import java.util.Arrays;
+import java.util.List;
+
+import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.*;
+
+/**
+ * A diagnostic rule that ensures our public API does not return or accept as a parameter into it something that has a
+ * fully-qualified type that includes one of the illegal package names passed in as a constructor argument to this class
+ */
+public class IllegalPackageAPIExportsDiagnosticRule implements DiagnosticRule {
+
+    private final List<String> illegalPackages;
+
+    public IllegalPackageAPIExportsDiagnosticRule(String... packageNames) {
+        if (packageNames == null || packageNames.length == 0) {
+            throw new IllegalArgumentException("IllegalPackageAPIExportsDiagnosticRule created with no illegal package names");
+        }
+        this.illegalPackages = Arrays.asList(packageNames);
+    }
+
+    @Override
+    public void scan(final CompilationUnit cu, final APIListing listing) {
+        getPublicOrProtectedMethods(cu)
+                .filter(methodDecl -> methodDecl.getType() instanceof ClassOrInterfaceType)
+                .forEach(methodDecl -> {
+                    final String methodId = makeId(methodDecl);
+                    ClassOrInterfaceType returnType = (ClassOrInterfaceType) methodDecl.getType();
+                    validateType(methodId, returnType, listing);
+
+                    methodDecl.getParameters().stream()
+                            .map(Parameter::getType)
+                            .filter(Type::isClassOrInterfaceType)
+                            .map(Type::asClassOrInterfaceType)
+                            .forEach(parameter -> validateType(methodId, parameter, listing));
+                });
+    }
+
+    private void validateType(String methodName, ClassOrInterfaceType type, final APIListing listing) {
+        String typeAsString = type.getNameAsString();
+
+        if (listing.getTypeToPackageNameMap().containsKey(typeAsString)) {
+            // we know the type based on our previous scans
+            validatePackageName(methodName, listing.getTypeToPackageNameMap().get(typeAsString), listing);
+        } else {
+            // we don't know the type. This is usually because it is a Java class library type, or a generic T type
+        }
+
+        // we must also inspect the generic types
+        type.getTypeArguments().ifPresent(types -> {
+            types.stream()
+                    .filter(Type::isClassOrInterfaceType)
+                    .map(Type::asClassOrInterfaceType)
+                    .forEach(genericType -> validateType(methodName, genericType, listing));
+        });
+    }
+
+    private void validatePackageName(String methodId, String packageName, APIListing listing) {
+        for (String illegalPackage : illegalPackages) {
+            if (packageName.contains(illegalPackage)) {
+                listing.addDiagnostic(new Diagnostic(methodId, "Public API should never expose classes from the " + illegalPackage + " package."));
+                continue;
+            }
+        }
+    }
+}

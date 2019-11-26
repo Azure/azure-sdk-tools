@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Rule to require client methods returning an instance of the client to not include the client name in the method name.
  * @author Arpan Laha
@@ -33,17 +36,13 @@ export = {
             TSFunction.returnType !== undefined &&
             TSFunction.returnType.typeAnnotation.type === "TSTypeReference"
           ) {
-            const typeIdentifier = TSFunction.returnType.typeAnnotation
-              .typeName as Identifier;
+            const typeIdentifier = TSFunction.returnType.typeAnnotation.typeName as Identifier;
 
             // if return type is the class
             if (typeIdentifier.name === className) {
               const methodIdentifier = method.key as Identifier;
               const methodName = methodIdentifier.name;
-              const serviceName = className.substring(
-                0,
-                className.indexOf("Client")
-              );
+              const serviceName = className.substring(0, className.indexOf("Client"));
               const regex = new RegExp(serviceName, "i");
 
               // report if method name contains the non-client portion of the class name

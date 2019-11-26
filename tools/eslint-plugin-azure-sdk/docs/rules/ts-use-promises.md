@@ -8,7 +8,7 @@ Requires the usage of in-built Promises instead of those from libraries or polyf
 
 ```ts
 const promise = (): Promise<string> => {
-  return new Promise(resolve => resolve("hi"));
+  return new Promise((resolve) => resolve("hi"));
 };
 ```
 
@@ -18,7 +18,7 @@ const promise = (): Promise<string> => {
 import Promise from "bluebird"; // or any such library
 
 const promise = (): Promise<string> => {
-  return new Promise(resolve => resolve("example"));
+  return new Promise((resolve) => resolve("example"));
 };
 ```
 

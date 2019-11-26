@@ -1,7 +1,12 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Definition of configs
  * @author Arpan Laha
  */
+
+import rootConfig from "./azure-sdk-base";
 
 /**
  * An object containing configurations available for the plugin
@@ -18,6 +23,7 @@ export = {
     parser: "@typescript-eslint/parser",
     rules: {
       "@azure/azure-sdk/github-source-headers": "error",
+      "@azure/azure-sdk/ts-apiextractor-json-types": "error",
       "@azure/azure-sdk/ts-apisurface-standardized-verbs": "error",
       "@azure/azure-sdk/ts-apisurface-supportcancellation": "error",
       "@azure/azure-sdk/ts-config-allowsyntheticdefaultimports": "error",
@@ -63,5 +69,6 @@ export = {
     settings: {
       main: "src/index.ts"
     }
-  }
+  },
+  "azure-sdk-base": rootConfig
 };

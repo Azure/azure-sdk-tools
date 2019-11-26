@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Rule to force package.json's license value to be set to "MIT".
  * @license Arpan Laha

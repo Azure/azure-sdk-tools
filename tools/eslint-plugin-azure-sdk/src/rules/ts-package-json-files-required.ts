@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Rule to force package.json's files value to contain paths to the package contents.
  * @author Arpan Laha
@@ -5,12 +8,7 @@
 
 import { Rule } from "eslint";
 import { Literal, Property } from "estree";
-import {
-  arrayToString,
-  getRuleMetaData,
-  getVerifiers,
-  stripPath
-} from "../utils";
+import { arrayToString, getRuleMetaData, getVerifiers, stripPath } from "../utils";
 
 //------------------------------------------------------------------------------
 // Rule Definition
@@ -48,9 +46,7 @@ export = {
 
             const nodeValue = node.value;
             const elements = nodeValue.elements as Literal[];
-            const elementValues = elements.map(
-              (element: Literal): unknown => element.value
-            );
+            const elementValues = elements.map((element: Literal): unknown => element.value);
 
             // looks for 'dist' with optional leading './' and optional trailing '/'
             if (
@@ -64,10 +60,7 @@ export = {
                 message: "dist is not included in files",
                 fix: (fixer: Rule.RuleFixer): Rule.Fix => {
                   elementValues.push("dist");
-                  return fixer.replaceText(
-                    nodeValue,
-                    arrayToString(elementValues)
-                  );
+                  return fixer.replaceText(nodeValue, arrayToString(elementValues));
                 }
               });
             }
@@ -76,9 +69,7 @@ export = {
             if (
               elements.every(
                 (element: Literal): boolean =>
-                  !/^(.\/)?dist-esm\/((src\/)|(src$))/.test(
-                    element.value as string
-                  )
+                  !/^(.\/)?dist-esm\/((src\/)|(src$))/.test(element.value as string)
               )
             ) {
               context.report({
@@ -86,10 +77,7 @@ export = {
                 message: "dist-esm/src is not included in files",
                 fix: (fixer: Rule.RuleFixer): Rule.Fix => {
                   elementValues.push("dist-esm/src");
-                  return fixer.replaceText(
-                    nodeValue,
-                    arrayToString(elementValues)
-                  );
+                  return fixer.replaceText(nodeValue, arrayToString(elementValues));
                 }
               });
             }
@@ -106,10 +94,7 @@ export = {
                 message: "src is not included in files",
                 fix: (fixer: Rule.RuleFixer): Rule.Fix => {
                   elementValues.push("src");
-                  return fixer.replaceText(
-                    nodeValue,
-                    arrayToString(elementValues)
-                  );
+                  return fixer.replaceText(nodeValue, arrayToString(elementValues));
                 }
               });
             }

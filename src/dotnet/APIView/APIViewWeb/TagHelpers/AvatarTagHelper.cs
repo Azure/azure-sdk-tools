@@ -9,7 +9,7 @@ namespace APIViewWeb.TagHelpers
 
         public override void Process(TagHelperContext context, TagHelperOutput output)
         {
-            string url = "https://github.com/" +  Username + ".png";
+            string url = "https://github.com/" + Username + ".png";
             output.Attributes.SetAttribute("src", url);
             output.Attributes.SetAttribute("height", "28");
             output.Attributes.SetAttribute("width", "28");

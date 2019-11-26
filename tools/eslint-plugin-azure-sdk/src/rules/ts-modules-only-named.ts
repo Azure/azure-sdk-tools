@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Rule to force there to be only named exports at the top level.
  * @author Arpan Laha
@@ -18,10 +21,7 @@ export = {
     "force there to be only named exports at the top level"
   ),
   create: (context: Rule.RuleContext): Rule.RuleListener =>
-    relative(
-      normalize(context.getFilename()),
-      normalize(context.settings.main)
-    ) === ""
+    relative(normalize(context.getFilename()), normalize(context.settings.main)) === ""
       ? ({
           // callback functions
 

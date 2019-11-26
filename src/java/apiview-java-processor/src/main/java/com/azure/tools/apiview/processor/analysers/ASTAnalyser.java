@@ -179,7 +179,7 @@ public class ASTAnalyser implements Analyser {
 
                 // create a unique id for enum constants
                 final String name = enumConstantDeclaration.getNameAsString();
-                final String definitionId = makeId(fullyQualifiedName + "." + name);
+                final String definitionId = makeId(fullyQualifiedName + "." + name + "." + counter);
                 tokens.add(new Token(MEMBER_NAME, name, definitionId));
 
                 enumConstantDeclaration.getArguments().forEach(expression -> {

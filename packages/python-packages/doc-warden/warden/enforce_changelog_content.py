@@ -50,7 +50,7 @@ def verify_rst_changelog(changelog, config, pkg_version):
     html_changelog_content = rst_to_html(changelog_content)
     html_soup = bs4.BeautifulSoup(html_changelog_content, "html.parser")
 
-    changelog_check_result = verify_latest_section(html_soup, pkg_version)
+    changelog_check_result = verify_latest_rst_section(html_soup, pkg_version)
 
     return changelog, changelog_check_result
 
@@ -64,12 +64,36 @@ def verify_md_changelog(changelog, config, pkg_version):
     html_changelog_content = markdown2.markdown(changelog_content)
     html_soup = bs4.BeautifulSoup(html_changelog_content, "html.parser")
 
-    changelog_check_result = verify_latest_section(html_soup, pkg_version)
+    changelog_check_result = verify_latest_md_section(html_soup, pkg_version)
 
     return changelog, changelog_check_result
 
-# within the entire readme, is the current version present
-def verify_latest_section(html_soup, pkg_version):
+# get details from latest changelog entry
+def verify_latest_rst_section(html_soup, pkg_version):
+    changelog_check_result = {
+        'curr_pkg_version' : pkg_version,
+        'latest_version_entry' : '',
+        'latest_release_notes' : list()
+    }
+
+    latest_entry = html_soup.find('div', id='id1')
+    if latest_entry == None: latest_entry = html_soup.find('div', id='release-history')
+
+    if latest_entry != None:
+        for entry in latest_entry:
+            if entry.name == 'h1' or entry.name == 'h2':
+                changelog_check_result['latest_version_entry'] = entry.text.split(' ')[0]
+            if changelog_check_result['latest_version_entry'] == pkg_version:
+                if entry.name == 'p':
+                    changelog_check_result['latest_release_notes'].append(entry.text)
+                if entry.name == 'ul':
+                    for child in entry.children:
+                        if child.string != '\n': changelog_check_result['latest_release_notes'].append(child.string)
+
+    return changelog_check_result
+
+# get details from latest changelog entry
+def verify_latest_md_section(html_soup, pkg_version):
     changelog_check_result = {
         'curr_pkg_version' : pkg_version,
         'latest_version_entry' : html_soup.h2.text,

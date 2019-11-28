@@ -44,12 +44,12 @@ def index(config):
 # verify the content of readmes or changelogs
 def verify_content(config):
     packages = index_packages(config)
-    if 'readme' in config.target_files[0]:
+    if config.target == 'readme':
         content_results, ignored_content_results = verify_readme_content(config)
         output_readme_content_results(content_results, config)
         exit_on_readme_content_issues(content_results, config)
 
-    if 'changelog' in config.target_files[0]:
+    if config.target == 'changelog':
         missing_changelog, empty_release_notes = verify_changelog_content(config, packages)
         output_changelog_content_results(missing_changelog, empty_release_notes)
         exit_on_changelog_content_issues(missing_changelog, empty_release_notes, config)
@@ -68,12 +68,15 @@ def verify_file_case(pkg_list, config):
     readmes_with_wrong_case = []
     changelogs_with_wrong_case = []
     for pkg in pkg_list:
-        if pkg.relative_readme_location.lower().endswith('readme.md'):
-            if not pkg.relative_readme_location.endswith('README.md'):
-                readmes_with_wrong_case.append(os.path.normpath(os.path.join(config.target_directory, pkg.relative_readme_location)))
-        if pkg.relative_changelog_location.lower().endswith('changelog.md'):
-            if not pkg.relative_changelog_location.endswith('CHANGELOG.md'):
-                changelogs_with_wrong_case.append(os.path.normpath(os.path.join(config.target_directory, pkg.relative_changelog_location)))
+
+        if pkg.relative_readme_location:
+            if os.path.split(pkg.relative_readme_location)[1].split('.')[0].islower():
+                 readmes_with_wrong_case.append(os.path.normpath(os.path.join(config.target_directory, pkg.relative_readme_location)))
+
+        if pkg.relative_changelog_location:
+            if os.path.split(pkg.relative_changelog_location)[1].split('.')[0].islower():
+                 changelogs_with_wrong_case.append(os.path.normpath(os.path.join(config.target_directory, pkg.relative_changelog_location)))
+
     return readmes_with_wrong_case, changelogs_with_wrong_case
 
 # Exit if there are readme content issues
@@ -136,13 +139,13 @@ def output_presence_results(missing_target_file_paths, config):
 
 # print case issues
 def output_case_results(readmes_with_wrong_case, changelogs_with_wrong_case):
-    if len(readmes_with_wrong_case):
+    if readmes_with_wrong_case:
         print('{0} Readme{1} are wrongly named:'.format(len(readmes_with_wrong_case), 's' if len(readmes_with_wrong_case) > 1 else ''))
         for path in readmes_with_wrong_case:
             print(path)
         print()
 
-    if len(changelogs_with_wrong_case):
+    if changelogs_with_wrong_case:
         print('{0} Changelog{1} are wrongly named:'.format(len(changelogs_with_wrong_case), 's' if len(changelogs_with_wrong_case) > 1 else ''))
         for path in changelogs_with_wrong_case:
             print(path)
@@ -168,7 +171,11 @@ def all_operations(config):
     output_presence_results(readme_presence_results, config)
     output_readme_content_results(readme_content_results, config)
 
-    config.target_files = ['changelog.md'] if config.target_files[0] == 'readme.md' else ['readme.md']
+    config.target = 'changelog' if config.target == 'readme' else 'readme'
+    if config.target == 'changelog':
+            config.target_files = ['history.md', 'history.rst'] if config.scan_language == 'python' else ['changelog.md']
+    else:
+        config.target_files = ['readme.md', 'readme.rst'] if config.scan_language == 'python' else ['readme.md']
 
     if config.verbose_output:
         print('Starting Changelog Presence Examination')

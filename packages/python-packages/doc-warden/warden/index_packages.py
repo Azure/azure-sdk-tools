@@ -142,6 +142,7 @@ def get_js_package_info(config):
             readme_relpath = ''
 
         pkg_location = webify_relative_path(os.path.relpath(pkg_file, config.target_directory))
+        print(pkg_file)
 
         if(pkg_json['name'] not in config.package_indexing_exclusion_list):
             pkg_list.append(PackageInfo(

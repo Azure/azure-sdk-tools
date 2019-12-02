@@ -231,7 +231,7 @@ public class ASTAnalyser implements Analyser {
 
                 // create a unique id for enum constants
                 final String name = enumConstantDeclaration.getNameAsString();
-                final String definitionId = makeId(enumDeclaration);
+                final String definitionId = makeId(enumDeclaration.getFullyQualifiedName().get() + "." + counter); 
                 addToken(new Token(MEMBER_NAME, name, definitionId));
 
                 enumConstantDeclaration.getArguments().forEach(expression -> {
@@ -679,32 +679,32 @@ public class ASTAnalyser implements Analyser {
             }
         }
 
-        private void getTypeDeclaration(TypeDeclaration<?> typeDeclaration) {
-            // Skip if the class is private or package-private
-            if (isPrivateOrPackagePrivate(typeDeclaration.getAccessSpecifier())) {
-                return;
-            }
+    private void getTypeDeclaration(TypeDeclaration<?> typeDeclaration) {
+        // Skip if the class is private or package-private
+        if (isPrivateOrPackagePrivate(typeDeclaration.getAccessSpecifier())) {
+            return;
+        }
 
-            if (! (typeDeclaration.isClassOrInterfaceDeclaration() || typeDeclaration.isEnumDeclaration())) {
-                return;
-            }
+        if (! (typeDeclaration.isClassOrInterfaceDeclaration() || typeDeclaration.isEnumDeclaration())) {
+            return;
+        }
 
-            final String fullQualifiedName = typeDeclaration.getFullyQualifiedName().get();
+        final String fullQualifiedName = typeDeclaration.getFullyQualifiedName().get();
 
-            // determine the package name for this class
-            final String typeName = typeDeclaration.getNameAsString();
-            final String packageName = fullQualifiedName.substring(0, fullQualifiedName.lastIndexOf("."));
-            apiListing.addPackageTypeMapping(packageName, typeName);
+        // determine the package name for this class
+        final String typeName = typeDeclaration.getNameAsString();
+        final String packageName = fullQualifiedName.substring(0, fullQualifiedName.lastIndexOf("."));
+        apiListing.addPackageTypeMapping(packageName, typeName);
 
-            // generate a navigation item for each new package, but we don't add them to the parent yet
-            packageNameToNav.computeIfAbsent(packageName, name -> new ChildItem(packageName, TypeKind.NAMESPACE));
+        // generate a navigation item for each new package, but we don't add them to the parent yet
+        packageNameToNav.computeIfAbsent(packageName, name -> new ChildItem(packageName, TypeKind.NAMESPACE));
 
-            apiListing.getKnownTypes().put(typeName, makeId(typeDeclaration));
+        apiListing.getKnownTypes().put(typeName, makeId(typeDeclaration));
 
-            // now do internal types
-            typeDeclaration.getMembers().stream()
-                    .filter(m -> m.isEnumDeclaration() || m.isClassOrInterfaceDeclaration())
-                    .forEach(m -> getTypeDeclaration(m.asTypeDeclaration()));
+        // now do internal types
+        typeDeclaration.getMembers().stream()
+                .filter(m -> m.isEnumDeclaration() || m.isClassOrInterfaceDeclaration())
+                .forEach(m -> getTypeDeclaration(m.asTypeDeclaration()));
     }
 
     private void indent() {

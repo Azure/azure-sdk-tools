@@ -2,6 +2,7 @@ package com.azure.tools.apiview.processor.analysers;
 
 import com.azure.tools.apiview.processor.analysers.util.SourceJarTypeSolver;
 import com.azure.tools.apiview.processor.diagnostics.Diagnostics;
+import com.github.javaparser.ParserConfiguration;
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.TokenRange;
 import com.github.javaparser.ast.CompilationUnit;
@@ -35,7 +36,10 @@ import com.azure.tools.apiview.processor.model.Token;
 import com.azure.tools.apiview.processor.model.TypeKind;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
+import com.github.javaparser.symbolsolver.resolution.typesolvers.JarTypeSolver;
+import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
+import com.github.javaparser.utils.SourceZip;
 
 import java.io.File;
 import java.io.IOException;
@@ -114,13 +118,17 @@ public class ASTAnalyser implements Analyser {
         try {
             // Set up a minimal type solver that only looks at the classes used to run this sample.
             CombinedTypeSolver combinedTypeSolver = new CombinedTypeSolver();
-            combinedTypeSolver.add(new ReflectionTypeSolver());
-//            combinedTypeSolver.add(new SourceJarTypeSolver(inputFile));
+            combinedTypeSolver.add(new ReflectionTypeSolver(false));
+            combinedTypeSolver.add(new SourceJarTypeSolver(inputFile));
+//            combinedTypeSolver.add(new JavaParserTypeSolver(inputFile));
+//            combinedTypeSolver.add(new JarTypeSolver(inputFile));
+
+            ParserConfiguration parserConfiguration = new ParserConfiguration()
+                  .setStoreTokens(true)
+                  .setSymbolResolver(new JavaSymbolSolver(combinedTypeSolver));
 
             // Configure JavaParser to use type resolution
-            StaticJavaParser.getConfiguration()
-                    .setStoreTokens(true)
-                    .setSymbolResolver(new JavaSymbolSolver(combinedTypeSolver));
+            StaticJavaParser.setConfiguration(parserConfiguration);
 
             CompilationUnit compilationUnit = StaticJavaParser.parse(path);
             new ScanForClassTypeVisitor().visit(compilationUnit, null);

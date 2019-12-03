@@ -7,6 +7,7 @@ import com.github.javaparser.ast.body.TypeDeclaration;
 import com.github.javaparser.resolution.UnsolvedSymbolException;
 import com.github.javaparser.resolution.declarations.ResolvedReferenceTypeDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserClassDeclaration;
+import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserEnumDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserInterfaceDeclaration;
 import com.github.javaparser.symbolsolver.model.resolution.SymbolReference;
 import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
@@ -124,10 +125,12 @@ public class SourceJarTypeSolver implements TypeSolver {
 
             for (TypeDeclaration<?> type : cu.getTypes()) {
                 if (type.isClassOrInterfaceDeclaration()) {
-                    ClassOrInterfaceDeclaration classType = (ClassOrInterfaceDeclaration)type;
+                    ClassOrInterfaceDeclaration classType = (ClassOrInterfaceDeclaration) type;
                     return SymbolReference.solved(type.asClassOrInterfaceDeclaration().isInterface() ?
-                              new JavaParserInterfaceDeclaration(classType, this) :
-                              new JavaParserClassDeclaration(classType, this));
+                                                          new JavaParserInterfaceDeclaration(classType, this) :
+                                                          new JavaParserClassDeclaration(classType, this));
+                } else if (type.isEnumDeclaration()) {
+                    return SymbolReference.solved(new JavaParserEnumDeclaration(type.asEnumDeclaration(), this));
                 } else {
                     System.err.println("Can't resolve " + type);
                 }

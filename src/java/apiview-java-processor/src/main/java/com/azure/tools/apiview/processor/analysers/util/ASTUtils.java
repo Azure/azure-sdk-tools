@@ -11,6 +11,10 @@ import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.TypeDeclaration;
 import com.github.javaparser.ast.body.VariableDeclarator;
+import com.github.javaparser.ast.type.ClassOrInterfaceType;
+import com.github.javaparser.ast.type.Type;
+import com.github.javaparser.resolution.types.ResolvedReferenceType;
+import com.github.javaparser.symbolsolver.javaparsermodel.JavaParserFacade;
 
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -35,16 +39,25 @@ public class ASTUtils {
         return cu.getPrimaryTypeName();
     }
 
+    public static Stream<TypeDeclaration<?>> getClasses(CompilationUnit cu) {
+        return cu.getTypes().stream();
+    }
+
     public static Stream<MethodDeclaration> getPublicOrProtectedMethods(CompilationUnit cu) {
         return cu.getTypes().stream()
                        .flatMap(typeDeclaration -> typeDeclaration.getMethods().stream())
-                       .filter(type -> ASTUtils.isPublicOrProtected(type.getAccessSpecifier()));
+                       .filter(type -> isPublicOrProtected(type.getAccessSpecifier()));
+    }
+
+    public static Stream<MethodDeclaration> getPublicOrProtectedMethods(TypeDeclaration<?> typeDeclaration) {
+        return typeDeclaration.getMethods().stream()
+                       .filter(type -> isPublicOrProtected(type.getAccessSpecifier()));
     }
 
     public static Stream<FieldDeclaration> getPublicOrProtectedFields(CompilationUnit cu) {
         return cu.getTypes().stream()
                        .flatMap(typeDeclaration -> typeDeclaration.getFields().stream())
-                       .filter(type -> ASTUtils.isPublicOrProtected(type.getAccessSpecifier()));
+                       .filter(type -> isPublicOrProtected(type.getAccessSpecifier()));
     }
 
     public static boolean isPublicOrProtected(AccessSpecifier accessSpecifier) {

@@ -55,6 +55,10 @@ public class ASTUtils {
         return (accessSpecifier == AccessSpecifier.PRIVATE) || (accessSpecifier == AccessSpecifier.PACKAGE_PRIVATE);
     }
 
+    public static String makeId(CompilationUnit cu) {
+        return makeId(cu.getPrimaryType().get());
+    }
+
     public static String makeId(TypeDeclaration<?> typeDeclaration) {
         return makeId(typeDeclaration.getFullyQualifiedName().get());
     }

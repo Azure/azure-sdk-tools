@@ -70,11 +70,11 @@ def verify_file_case(pkg_list, config):
     for pkg in pkg_list:
 
         if pkg.relative_readme_location:
-            if os.path.split(pkg.relative_readme_location)[1].split('.')[0].islower():
+            if not os.path.split(pkg.relative_readme_location)[1].split('.')[0].isupper():
                  readmes_with_wrong_case.append(os.path.normpath(os.path.join(config.target_directory, pkg.relative_readme_location)))
 
         if pkg.relative_changelog_location:
-            if os.path.split(pkg.relative_changelog_location)[1].split('.')[0].islower():
+            if not os.path.split(pkg.relative_changelog_location)[1].split('.')[0].isupper():
                  changelogs_with_wrong_case.append(os.path.normpath(os.path.join(config.target_directory, pkg.relative_changelog_location)))
 
     return readmes_with_wrong_case, changelogs_with_wrong_case
@@ -173,9 +173,9 @@ def all_operations(config):
 
     config.target = 'changelog' if config.target == 'readme' else 'readme'
     if config.target == 'changelog':
-            config.target_files = ['history.md', 'history.rst'] if config.scan_language == 'python' else ['changelog.md']
+            config.target_files = ['history.rst', 'history.md'] if config.scan_language == 'python' else ['changelog.md']
     else:
-        config.target_files = ['readme.md', 'readme.rst'] if config.scan_language == 'python' else ['readme.md']
+        config.target_files = ['readme.rst', 'readme.md'] if config.scan_language == 'python' else ['readme.md']
 
     if config.verbose_output:
         print('Starting Changelog Presence Examination')

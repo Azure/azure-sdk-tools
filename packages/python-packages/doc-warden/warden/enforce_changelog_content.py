@@ -96,18 +96,21 @@ def verify_latest_rst_section(html_soup, pkg_version):
 def verify_latest_md_section(html_soup, pkg_version):
     changelog_check_result = {
         'curr_pkg_version' : pkg_version,
-        'latest_version_entry' : html_soup.h2.text,
+        'latest_version_entry' : '',
         'latest_release_notes' : list()
     }
 
-    if changelog_check_result['latest_version_entry'] == pkg_version:
-        for sibling in html_soup.h2.next_siblings:
-            if sibling.name == 'h2':
-                break
-            elif sibling.name == 'ul':
-                for child in sibling.children:
-                    if child.name is not None:
-                        changelog_check_result['latest_release_notes'].append(child.text)
+    latest_version_tag = html_soup.find('h1', text=pkg_version)
+    if latest_version_tag is None: return changelog_check_result
+    changelog_check_result['latest_version_entry'] = latest_version_tag.text
+    for sibling in latest_version_tag.next_siblings:
+        if sibling.name == 'h1':
+            break
+        elif sibling.name == 'ul':
+           for child in sibling.children:
+                if child.name is not None: changelog_check_result['latest_release_notes'].append(child.text)
+        else:
+            if sibling.name is not None: changelog_check_result['latest_release_notes'].append(sibling.text)
 
     return changelog_check_result
 

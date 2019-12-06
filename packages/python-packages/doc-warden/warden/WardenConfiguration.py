@@ -77,6 +77,7 @@ class WardenConfiguration():
         parser.add_argument(
             '-s',
             '--pipeline-stage',
+            choices=['release', 'pr', 'ci'],
             dest = 'pipeline_stage',
             required = False,
             help = 'Specify the stage of the pipeline. Used to provide conditional functionality depending on the stage of the pipeline')
@@ -104,7 +105,7 @@ class WardenConfiguration():
         self.target_directory = args.scan_directory
         self.yml_location = args.config_location or os.path.join(self.target_directory, '.docsettings.yml')
         self.package_index_output_location = args.package_output_location or os.path.join(self.target_directory, 'packages.md')
-        self.target = args.target
+        self.target = args.target or 'readme'
         self.target_files = []
 
         with open(self.yml_location, 'r') as f:
@@ -152,9 +153,9 @@ class WardenConfiguration():
             exit(1)
 
         if self.target == 'changelog':
-            self.target_files = ['history.md', 'history.rst'] if self.scan_language == 'python' else ['changelog.md']
+            self.target_files = ['history.rst', 'history.md'] if self.scan_language == 'python' else ['changelog.md']
         else:
-            self.target_files = ['readme.md', 'readme.rst'] if self.scan_language == 'python' else ['readme.md']
+            self.target_files = ['readme.rst', 'readme.md'] if self.scan_language == 'python' else ['readme.md']
 
         try:
             settings_file_root_check = doc['root_check_enabled']

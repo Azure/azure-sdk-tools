@@ -25,8 +25,8 @@ except ImportError:
 # given that all the content fitting on a single line is important, leveraging the format string method makes for a 
 # much simpler to maintain template
 PKGID_COL = ' [`{{ pkg.package_id }}`]( {{ pkg.relative_package_location }} )'
-RM_COL = ' {% if len(pkg.relative_readme_location) > 0 %}[Readme]({{ pkg.relative_readme_location }}){% else %} N/A {% endif %} '
-CL_COL = ' {% if len(pkg.relative_changelog_location) > 0 %}[Changelog]({{ pkg.relative_changelog_location }}){% else %} N/A {% endif %} '
+RM_COL = ' {% if len(pkg.relative_readme_location) > 0 %}[README]({{ pkg.relative_readme_location }}){% else %} N/A {% endif %} '
+CL_COL = ' {% if len(pkg.relative_changelog_location) > 0 %}[CHANGELOG]({{ pkg.relative_changelog_location }}){% else %} N/A {% endif %} '
 GROUPID_COL = ' `{{ pkg.repository_args[0] }}` '
 REPO_COL = ' `[Repo Link]( {{ pkg.relative_package_location }}` )'
 PUBLISH_COL = ' {% if pkg.test_url(config) %}[{{ pkg.get_repository_link_text(config) }}]( {{ pkg.get_formatted_repository_url(config) }} ){% else %} N/A {% endif %} '
@@ -142,7 +142,6 @@ def get_js_package_info(config):
             readme_relpath = ''
 
         pkg_location = webify_relative_path(os.path.relpath(pkg_file, config.target_directory))
-        print(pkg_file)
 
         if(pkg_json['name'] not in config.package_indexing_exclusion_list):
             pkg_list.append(PackageInfo(

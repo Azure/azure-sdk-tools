@@ -6,7 +6,10 @@ Features:
 
 * Enforces Readme Standards
     - Readmes present
-    - Readmes have appropriate contents
+    - Readmes have appropriate content
+* Enforces Changelog Standards
+    - Changelogs Present
+    - Changelogs contain entry and content for the latest package version
 * Generates report for included observed packages
 
 This package is tested on Python 2.7 -> 3.8.
@@ -23,7 +26,7 @@ In addition, `warden` is distributed using `setuptools` and `wheel`, so those pa
 
 ## Usage
 
-Right now, `warden` supports two main purposes. Readme enforcement (`scan`, `content`, `presence`) and package indexing (`index`).  
+Right now, `warden` supports two main purposes. 1. Readme and Changelog enforcement (`scan`, `content`, `presence`), and 2. package indexing (`index`).  
 
 ### Example usage (for any of the above commands):
 
@@ -58,9 +61,9 @@ Currently supports 3 commands. Values: `['scan', 'presence', 'content', `index`]
 * `scan`
     * Run both `content` and `presence` enforcement on the targeted directory.
 * `content`
-    * Run only `content` readme enforcement on the target directory. Ensures content in each matches the regex patterns defined in the .docsettings file.
+    * Run only `content` enforcement on the target directory. Ensures content in each readme matches the regex patterns defined in the .docsettings file, and each changelog contains entry for the latest version.
 * `presence` 
-    * Run only `presence` readme enforcement on the target directory. Ensures readmes exist where they should.
+    * Run only `presence` enforcement on the target directory. Ensures readmes and changelogs exist where they should.
 * `index`
     * Take inventory of the target folder. Attempts to leverage selected docsettings to discover all packages within the directory, and generate a `packages.md` index file.
 
@@ -72,6 +75,12 @@ The target directory `warden` should be scanning. **Required.**
 
 `--config-location`
 By default, `warden` looks for the `.docsettings` file in the root of the repository. However, populating this location will override this behavior and instead pull the file from the location in this parameter. **Optional.**
+
+`--pipeline-stage`
+The stage of the pipeline. can be `pr`, `ci`, or `release`. **Optional.**
+
+`--target`
+Specify what file to run enforcement on `readme` or `changelog`. Used when runing `content` or `presence` verification only. **Optional.**
 
 `--package-output`
 Override the default location that the generated `packages.md` file is dropped to during execution of the `index` command.
@@ -87,12 +96,12 @@ The `-d` argument should be `$(Build.SourcesDirectory)`. This will point `warden
 
 ### Enforcing Readme Presence 
 
-When should we expect a readme to be present?
+When should we expect a readme and/or changelog to be present?
 
 **Always:**
 
-* At the root of the repo
-* Associated with a `package` directory
+* At the root of the repo (Readme only)
+* Associated with a `package` directory (Readme and Changelog)
 
 #### .Net
 
@@ -128,7 +137,11 @@ A package directory is indicated by:
 Other Notes:
 
 * A `section` header is any markdown or RST that will result in a `<h1>` to `<h2>` html tag.
-* `warden` will content verify any `readme.rst` or `readme.md` file found outside the `omitted_paths` in the targeted repo. 
+* `warden` will content verify any `readme.rst` or `readme.md` file found outside the `omitted_paths` in the targeted repo.
+
+### Enforcing Changelog Content
+`doc-warden` checks the latest entry in the changlog file to make sure it matches the latest version of the package. It also checks to make sure that the entry is not empty. 
+
 
 #### Control, the `.docsettings.yml` File, and You
 
@@ -158,9 +171,11 @@ required_readme_sections:
   - "(Client Library for Azure .*|Microsoft Azure SDK for .*)"
   - Getting Started
 known_presence_issues:
-  - ['cognitiveservices/data-plane/language/bingspellcheck', '#2847']
+  - ['cognitiveservices/data-plane/language/bingspellcheck/README.md', '#2847']
+  - ['cognitiveservices/data-plane/language/bingspellcheck/CHANGELOG.md', '#2847']
 known_content_issues:
   - ['sdk/template/azure-sdk-template/README.md','#1368']
+  - ['sdk/template/azure-sdk-template/CHANGELOG.md','#1368']
 ```
 
 The above configuration tells `warden`...

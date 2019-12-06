@@ -48,7 +48,7 @@ Note that all the `.tox` folder + any environments are now created _relative to 
 {setupdir}
 {distdir}
 {sdistsrc}
-{changedir}
+{logdir}
 
 ```
 
@@ -61,6 +61,7 @@ Note that all the `.tox` folder + any environments are now created _relative to 
 {envdir}
 {changedir}
 {envtmpdir}
+{envlogdir}
 
 ```
 

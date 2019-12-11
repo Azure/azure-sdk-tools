@@ -15,7 +15,6 @@ except ImportError:
 
 JS_PACKAGE_DISCOVERY_PATTERN = '*/package.json'
 PYTHON_PACKAGE_DISCOVERY_PATTERN = '*/setup.py'
-NET_PACKAGE_ROOT_DISCOVERY_PATTERN = '*.sln'
 NET_PACKAGE_DISCOVERY_PATTERN = '*.csproj'
 JAVA_PACKAGE_DISCOVERY_PATTERN = '*/pom.xml'
 
@@ -27,14 +26,6 @@ def check_match(file_path, normalized_target_patterns):
 
 def get_java_package_roots(configuration):
     file_set = get_file_sets(configuration, JAVA_PACKAGE_DISCOVERY_PATTERN, is_java_pom_package_pom)
-    
-    if configuration.verbose_output:
-        print(file_set)
-
-    return file_set
-
-def get_net_package_roots(configuration):
-    file_set = get_file_sets(configuration, NET_PACKAGE_ROOT_DISCOVERY_PATTERN)
     
     if configuration.verbose_output:
         print(file_set)

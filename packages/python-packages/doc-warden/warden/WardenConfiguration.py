@@ -178,7 +178,10 @@ class WardenConfiguration():
         known_issue_paths = []
         for exception_tuple in self.known_presence_issues:
             if any(exception_tuple[0].lower().endswith(target_file) for target_file in self.target_files):
-                known_issue_path = '/'.join(exception_tuple[0].split('/')[:-1])
+                if os.path.isdir(exception_tuple[0]):
+                    known_issue_path = exception_tuple[0]
+                else:
+                    known_issue_path = os.path.dirname(exception_tuple[0])
                 known_issue_paths.append(os.path.normpath(os.path.join(self.target_directory, known_issue_path)))
         return known_issue_paths
 

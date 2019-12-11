@@ -61,7 +61,9 @@ Currently supports 3 commands. Values: `['scan', 'presence', 'content', `index`]
 * `scan`
     * Run both `content` and `presence` enforcement on the targeted directory.
 * `content`
-    * Run only `content` enforcement on the target directory. Ensures content in each readme matches the regex patterns defined in the .docsettings file, and each changelog contains entry for the latest version.
+    * Run only `content` enforcement on the target directory. Ensures that:
+      - The content in each readme matches the regex patterns defined in the .docsettings file
+      - Each changelog contains entry for the latest version.
 * `presence` 
     * Run only `presence` enforcement on the target directory. Ensures readmes and changelogs exist where they should.
 * `index`

@@ -8,6 +8,7 @@ import os
 import glob
 import fnmatch
 import zipfile
+from pathlib import Path
 from .warden_common import get_java_package_roots, get_net_packages, get_python_package_roots, get_js_package_roots, find_alongside_file
 
 # python 3 transitioned StringIO to be part of `io` module. 
@@ -83,7 +84,7 @@ def check_net_target_files(configuration):
     missing_expected_target_file_locations = []
 
     for expected_location in expected_target_files:
-        target_file_location = '\\'.join(expected_location.split('\\')[:-2])
+        target_file_location = os.path.normpath(Path(expected_location).parent.parent)
         result = False
         for target_file in configuration.target_files:
             result = result or find_alongside_file(target_file_location, target_file)

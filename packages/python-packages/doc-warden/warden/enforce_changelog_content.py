@@ -100,11 +100,13 @@ def verify_latest_md_section(html_soup, pkg_version):
         'latest_release_notes' : list()
     }
 
-    latest_version_tag = html_soup.find('h1', text=pkg_version)
+    latest_version_pattern = r'{0}.*'.format(pkg_version)
+
+    latest_version_tag = html_soup.find('h2', text=re.compile(latest_version_pattern))
     if latest_version_tag is None: return changelog_check_result
-    changelog_check_result['latest_version_entry'] = latest_version_tag.text
+    changelog_check_result['latest_version_entry'] = latest_version_tag.text.split(' ')[0]
     for sibling in latest_version_tag.next_siblings:
-        if sibling.name == 'h1':
+        if sibling.name == 'h2':
             break
         elif sibling.name == 'ul':
            for child in sibling.children:

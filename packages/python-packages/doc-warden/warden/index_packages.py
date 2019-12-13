@@ -84,7 +84,7 @@ def get_python_package_info(config):
         if pkg_id is None:
             continue
 
-        changelog = find_below_file('changelog.md', pkg_file)
+        changelog = find_below_file('history.md', pkg_file)
         if changelog is None:
             changelog = find_below_file('history.rst', pkg_file)
 

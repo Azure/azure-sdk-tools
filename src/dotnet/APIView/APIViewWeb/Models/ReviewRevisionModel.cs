@@ -28,6 +28,6 @@ namespace APIViewWeb
         [JsonIgnore]
         public ReviewCodeFileModel SingleFile => Files.Single();
 
-        public string Uploader { get; set; }
+        public string Author { get; set; }
     }
 }

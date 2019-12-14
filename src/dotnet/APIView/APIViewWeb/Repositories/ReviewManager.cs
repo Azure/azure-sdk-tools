@@ -63,7 +63,7 @@ namespace APIViewWeb.Respositories
         public async Task DeleteReviewAsync(ClaimsPrincipal user, string id)
         {
             var reviewModel = await _reviewsRepository.GetReviewAsync(id);
-            await AssertOwnerAsync(user, reviewModel);
+            await AssertReviewOwnerAsync(user, reviewModel);
 
             await _reviewsRepository.DeleteReviewAsync(reviewModel);
 
@@ -164,7 +164,7 @@ namespace APIViewWeb.Respositories
                 review.RunAnalysis);
 
             revision.Files.Add(codeFile);
-            revision.Uploader = user.GetGitHubLogin();
+            revision.Author = user.GetGitHubLogin();
 
             review.Revisions.Add(revision);
             UpdateRevisionNames(review);
@@ -211,7 +211,8 @@ namespace APIViewWeb.Respositories
         public async Task DeleteRevisionAsync(ClaimsPrincipal user, string id, string revisionId)
         {
             var review = await GetReviewAsync(user, id);
-            await AssertOwnerAsync(user, review);
+            await AssertRevisionOwner(user, review.Revisions.Single(r => r.RevisionId == revisionId));
+
             if (review.Revisions.Count < 2)
             {
                 return;
@@ -224,7 +225,7 @@ namespace APIViewWeb.Respositories
         public async Task ToggleIsClosedAsync(ClaimsPrincipal user, string id)
         {
             var review = await GetReviewAsync(user, id);
-            await AssertOwnerAsync(user, review);
+            await AssertReviewOwnerAsync(user, review);
 
             review.IsClosed = !review.IsClosed;
 
@@ -242,9 +243,18 @@ namespace APIViewWeb.Respositories
             return _languageServices.Single(service => service.Name == language);
         }
 
-        private async Task AssertOwnerAsync(ClaimsPrincipal user, ReviewModel reviewModel)
+        private async Task AssertReviewOwnerAsync(ClaimsPrincipal user, ReviewModel reviewModel)
         {
             var result = await _authorizationService.AuthorizeAsync(user, reviewModel, new[] { ReviewOwnerRequirement.Instance });
+            if (!result.Succeeded)
+            {
+                throw new AuthorizationFailedException();
+            }
+        }
+
+        private async Task AssertRevisionOwner(ClaimsPrincipal user, ReviewRevisionModel revisionModel)
+        {
+            var result = await _authorizationService.AuthorizeAsync(user, revisionModel, new[] { RevisionOwnerRequirement.Instance });
             if (!result.Succeeded)
             {
                 throw new AuthorizationFailedException();

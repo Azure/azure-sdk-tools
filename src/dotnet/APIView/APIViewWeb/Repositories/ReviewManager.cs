@@ -94,7 +94,7 @@ namespace APIViewWeb.Respositories
             review.UpdateAvailable = review.Revisions
                 .SelectMany(r=>r.Files)
                 .Any(f => f.HasOriginal && GetLanguageService(f.Language).CanUpdate(f.VersionString));
-
+ 
             // Handle old model
 #pragma warning disable CS0618 // Type or member is obsolete
             if (review.Revisions.Count == 0 && review.Files.Count == 1)
@@ -210,14 +210,16 @@ namespace APIViewWeb.Respositories
 
         public async Task DeleteRevisionAsync(ClaimsPrincipal user, string id, string revisionId)
         {
-            var review = await GetReviewAsync(user, id);
-            await AssertRevisionOwner(user, review.Revisions.Single(r => r.RevisionId == revisionId));
+            ReviewModel review = await GetReviewAsync(user, id);
+            ReviewRevisionModel revision = review.Revisions.Single(r => r.RevisionId == revisionId);
+            await AssertRevisionOwner(user, revision, review);
 
             if (review.Revisions.Count < 2)
             {
+                // should we delete the entire review instead?
                 return;
             }
-            review.Revisions.RemoveAll(r => r.RevisionId == revisionId);
+            review.Revisions.Remove(revision);
             UpdateRevisionNames(review);
             await _reviewsRepository.UpsertReviewAsync(review);
         }
@@ -252,9 +254,15 @@ namespace APIViewWeb.Respositories
             }
         }
 
-        private async Task AssertRevisionOwner(ClaimsPrincipal user, ReviewRevisionModel revisionModel)
+        private async Task AssertRevisionOwner(
+            ClaimsPrincipal user,
+            ReviewRevisionModel revisionModel,
+            ReviewModel reviewModel)
         {
-            var result = await _authorizationService.AuthorizeAsync(user, revisionModel, new[] { RevisionOwnerRequirement.Instance });
+            var result = await _authorizationService.AuthorizeAsync(
+                user,
+                Tuple.Create(revisionModel, reviewModel), 
+                new[] { RevisionOwnerRequirement.Instance });
             if (!result.Succeeded)
             {
                 throw new AuthorizationFailedException();

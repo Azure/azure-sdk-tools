@@ -50,7 +50,5 @@ namespace APIViewWeb.TagHelpers
             static string GetLabel(int amount, string unit) =>
             $"{amount} {unit}{(amount > 1 ? "s" : "")} ago";
         }
-
-        
     }
 }

@@ -178,11 +178,9 @@ class WardenConfiguration():
         known_issue_paths = []
         for exception_tuple in self.known_presence_issues:
             if any(exception_tuple[0].lower().endswith(target_file) for target_file in self.target_files):
-                if os.path.isdir(exception_tuple[0]):
-                    known_issue_path = exception_tuple[0]
-                else:
-                    known_issue_path = os.path.dirname(exception_tuple[0])
-                known_issue_paths.append(os.path.normpath(os.path.join(self.target_directory, known_issue_path)))
+                known_issue_paths.append(os.path.normpath(os.path.join(self.target_directory, os.path.dirname(exception_tuple[0]))))
+            elif self.target == 'readme':
+                known_issue_paths.append(os.path.normpath(os.path.join(self.target_directory, exception_tuple[0])))
         return known_issue_paths
 
     def get_known_content_issues(self):

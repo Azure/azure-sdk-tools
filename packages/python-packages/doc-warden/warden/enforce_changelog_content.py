@@ -76,7 +76,8 @@ def verify_latest_rst_section(html_soup, pkg_version):
         'latest_release_notes' : list()
     }
 
-    latest_entry = html_soup.find('div', id='id1')
+    latest_entry = html_soup.find('div', id='unreleased')
+    if latest_entry == None: latest_entry = html_soup.find('div', id='id1')
     if latest_entry == None: latest_entry = html_soup.find('div', id='release-history')
 
     if latest_entry != None:

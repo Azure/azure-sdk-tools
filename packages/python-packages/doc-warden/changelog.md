@@ -1,4 +1,13 @@
-# 2019-04-30 - 0.3.0
+# Release History
+
+## 0.4.0
+- Extended `presence` and `content` functionality to also operate on CHANGELOG.md's
+- Added `--target` argument to control if to the operations run on changelogs or readmes.
+- Extended `known_presence_issues` and `known_content_issues` to function for CHANGELOG.md's
+- Added `--pipeline-stage` argument which allows different functions to be run at different stages of the pipeline. 
+  e.g. verifying the presence of release notes is only enforced when `--pipeline-stage` is set to `release`.
+
+## 0.3.0 (2019-04-30)
 
 New functionality for indexing packages within a repository has been added. Leverage with the `index` positional argument.
 
@@ -20,7 +29,7 @@ Other Changes:
 
  * Reorganization between `enforce_readme_present.py` and `warden_common.py`
 
-# 2019-04-10 - 0.2.6
+## 0.2.6 (2019-04-10)
 
 Versions 0 -> 0.2.6 have all been various iterations on `base warden functionality`.
 
@@ -31,4 +40,4 @@ However, up till now, the following features have been added:
 * Configuration File Parsing 
 * Readme Presence Verification
 * Readme Content Verification
-* Support for exception and scan exclusion lists
+* Support for exception and scan exclusion lists 

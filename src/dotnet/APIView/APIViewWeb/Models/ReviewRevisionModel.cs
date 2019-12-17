@@ -12,6 +12,8 @@ namespace APIViewWeb
     {
         private string _name;
 
+        private string _author;
+
         [JsonProperty("id")]
         public string RevisionId { get; set; } = IdHelper.GenerateId();
 
@@ -28,6 +30,13 @@ namespace APIViewWeb
         [JsonIgnore]
         public ReviewCodeFileModel SingleFile => Files.Single();
 
-        public string Author { get; set; }
+        [JsonIgnore]
+        public ReviewModel Review { get; set; }
+
+        public string Author
+        {
+            get => _author ?? Review.Author;
+            set => _author = value;
+        }
     }
 }

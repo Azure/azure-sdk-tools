@@ -16,10 +16,10 @@ namespace APIViewWeb
             {
                 if (requirement is RevisionOwnerRequirement)
                 {
-                    var revisionAndReview = context.Resource as Tuple<ReviewRevisionModel, ReviewModel>;
+                    var revision = context.Resource as ReviewRevisionModel;
                     var loggedInUser = context.User.GetGitHubLogin();
-                    if (revisionAndReview.Item1.Author == loggedInUser ||
-                        revisionAndReview.Item2.Author == loggedInUser)
+                    if (revision.Author == loggedInUser ||
+                        revision.Review.Author == loggedInUser)
                     {
                         context.Succeed(requirement);
                     }

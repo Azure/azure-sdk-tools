@@ -94,7 +94,7 @@ namespace APIViewWeb.Respositories
             review.UpdateAvailable = review.Revisions
                 .SelectMany(r=>r.Files)
                 .Any(f => f.HasOriginal && GetLanguageService(f.Language).CanUpdate(f.VersionString));
- 
+
             // Handle old model
 #pragma warning disable CS0618 // Type or member is obsolete
             if (review.Revisions.Count == 0 && review.Files.Count == 1)
@@ -212,7 +212,7 @@ namespace APIViewWeb.Respositories
         {
             ReviewModel review = await GetReviewAsync(user, id);
             ReviewRevisionModel revision = review.Revisions.Single(r => r.RevisionId == revisionId);
-            await AssertRevisionOwner(user, revision, review);
+            await AssertRevisionOwner(user, revision);
 
             if (review.Revisions.Count < 2)
             {
@@ -254,14 +254,11 @@ namespace APIViewWeb.Respositories
             }
         }
 
-        private async Task AssertRevisionOwner(
-            ClaimsPrincipal user,
-            ReviewRevisionModel revisionModel,
-            ReviewModel reviewModel)
+        private async Task AssertRevisionOwner(ClaimsPrincipal user, ReviewRevisionModel revisionModel)
         {
             var result = await _authorizationService.AuthorizeAsync(
                 user,
-                Tuple.Create(revisionModel, reviewModel), 
+                revisionModel, 
                 new[] { RevisionOwnerRequirement.Instance });
             if (!result.Succeeded)
             {

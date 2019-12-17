@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using APIViewWeb.Models;
 using Newtonsoft.Json;
 
 namespace APIViewWeb
@@ -12,13 +13,18 @@ namespace APIViewWeb
     {
         private bool _runAnalysis;
 
+        public ReviewModel()
+        {
+            Revisions = new ReviewRevisionModelList(this);
+        }
+
         [JsonProperty("id")]
         public string ReviewId { get; set; } = IdHelper.GenerateId();
 
         public string Name { get; set; }
         public string Author { get; set; }
         public DateTime CreationDate { get; set; }
-        public List<ReviewRevisionModel> Revisions { get; set; } = new List<ReviewRevisionModel>();
+        public ReviewRevisionModelList Revisions { get; set; }
 
         [Obsolete("Back compat")]
         public List<ReviewCodeFileModel> Files { get; set; } = new List<ReviewCodeFileModel>();

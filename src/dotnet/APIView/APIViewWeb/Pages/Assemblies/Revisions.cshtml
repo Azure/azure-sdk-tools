@@ -49,9 +49,9 @@
                     @revision.Name 
                     <span class="font-italic pl-3">
                         <span date="@revision.CreationDate"></span>
-                        <span>by @(!string.IsNullOrEmpty(revision.Author) ? revision.Author : Model.Review.Author)</span>
+                        <span>by @revision.Author</span>
                     </span>
-                    <form asp-resource="@Tuple.Create(revision, Model.Review)" asp-requirement="@RevisionOwnerRequirement.Instance" 
+                    <form asp-resource="@revision" asp-requirement="@RevisionOwnerRequirement.Instance" 
                           class="form-inline float-right" asp-page-handler="Delete" method="post">
                         <input type="hidden" name="revisionId" value="@revision.RevisionId"/>
                         <input type="submit" class="btn btn-danger btn-sm" value="Delete" />

@@ -1,8 +1,8 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace APIViewWeb.Models
 {
@@ -38,47 +38,47 @@ namespace APIViewWeb.Models
 
         public void Clear()
         {
-            ((IList<ReviewRevisionModel>)this._list).Clear();
+            _list.Clear();
         }
 
         public bool Contains(ReviewRevisionModel item)
         {
-            return ((IList<ReviewRevisionModel>)this._list).Contains(item);
+            return _list.Contains(item);
         }
 
         public void CopyTo(ReviewRevisionModel[] array, int arrayIndex)
         {
-            ((IList<ReviewRevisionModel>)this._list).CopyTo(array, arrayIndex);
+           _list.CopyTo(array, arrayIndex);
         }
 
         public IEnumerator<ReviewRevisionModel> GetEnumerator()
         {
-            return ((IList<ReviewRevisionModel>)this._list).GetEnumerator();
+            return _list.GetEnumerator();
         }
 
         public int IndexOf(ReviewRevisionModel item)
         {
-            return ((IList<ReviewRevisionModel>)this._list).IndexOf(item);
+            return _list.IndexOf(item);
         }
 
         public void Insert(int index, ReviewRevisionModel item)
         {
-            ((IList<ReviewRevisionModel>)this._list).Insert(index, item);
+            _list.Insert(index, item);
         }
 
         public bool Remove(ReviewRevisionModel item)
         {
-            return ((IList<ReviewRevisionModel>)this._list).Remove(item);
+            return _list.Remove(item);
         }
 
         public void RemoveAt(int index)
         {
-            ((IList<ReviewRevisionModel>)this._list).RemoveAt(index);
+           _list.RemoveAt(index);
         }
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            return ((IList<ReviewRevisionModel>)this._list).GetEnumerator();
+            return _list.GetEnumerator();
         }
     }
 }

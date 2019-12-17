@@ -22,7 +22,7 @@ namespace APIViewWeb
 
         public bool HasOriginal { get; set; }
 
-        public DateTime CreationDate { get; set; } = DateTime.Now;
+        public DateTime CreationDate { get; set; }
 
         [Obsolete("Back compat don't use directly")]
         public bool RunAnalysis { get; set; }

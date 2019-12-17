@@ -14,18 +14,12 @@ namespace APIViewWeb
 
         private string _author;
 
-        private DateTime _creationDate;
-
         [JsonProperty("id")]
         public string RevisionId { get; set; } = IdHelper.GenerateId();
 
         public List<ReviewCodeFileModel> Files { get; set; } = new List<ReviewCodeFileModel>();
 
-        public DateTime CreationDate 
-        {
-            get => _creationDate == default ? Review.CreationDate : _creationDate;
-            set => _creationDate = value;
-        }
+        public DateTime CreationDate { get; set; } = DateTime.Now;
 
         public string Name
         {

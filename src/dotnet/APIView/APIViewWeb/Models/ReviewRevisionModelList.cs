@@ -16,11 +16,11 @@ namespace APIViewWeb.Models
             _list = new List<ReviewRevisionModel>();
         }
 
-        public ReviewRevisionModel this[int index] { get => ((IList<ReviewRevisionModel>)this._list)[index]; set => ((IList<ReviewRevisionModel>)this._list)[index] = value; }
+        public ReviewRevisionModel this[int index] { get => _list[index]; set => _list[index] = value; }
 
-        public int Count => ((IList<ReviewRevisionModel>)this._list).Count;
+        public int Count => _list.Count;
 
-        public bool IsReadOnly => ((IList<ReviewRevisionModel>)this._list).IsReadOnly;
+        public bool IsReadOnly => ((IList<ReviewRevisionModel>)_list).IsReadOnly;
 
         public void Add(ReviewRevisionModel item)
         {

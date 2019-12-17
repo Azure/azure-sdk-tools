@@ -21,12 +21,16 @@ namespace APIViewWeb.TagHelpers
             int hoursAgo = (int)(minutesAgo / 60);
             int daysAgo = (int)timeDifference.TotalDays;
             int weeksAgo = (int)(daysAgo / 7);
-            string relativeDate = "";
+            string relativeDate;
             if (minutesAgo == 0)
             {
                 if (secondsAgo > 0)
                 {
                     relativeDate = GetLabel(secondsAgo, "second");
+                }
+                else
+                {
+                    relativeDate = "just now";
                 }
             }
             else if (hoursAgo == 0)

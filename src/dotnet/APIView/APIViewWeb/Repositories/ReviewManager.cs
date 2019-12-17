@@ -216,7 +216,6 @@ namespace APIViewWeb.Respositories
 
             if (review.Revisions.Count < 2)
             {
-                // should we delete the entire review instead?
                 return;
             }
             review.Revisions.Remove(revision);

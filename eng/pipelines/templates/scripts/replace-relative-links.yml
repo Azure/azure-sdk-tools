@@ -42,9 +42,13 @@ steps:
 
 
         def is_relative_link(link_value, readme_location):
+            link_without_location = link_value
+            if link_without_location.find('#') > 0:
+                link_without_location = link_without_location[0:link_without_location.find('#')]
+
             try:
                 return os.path.exists(
-                    os.path.abspath(os.path.join(os.path.dirname(readme_location), link_value))
+                    os.path.abspath(os.path.join(os.path.dirname(readme_location), link_without_location))
                 )
             except:
                 return False

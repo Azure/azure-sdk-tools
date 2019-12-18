@@ -73,8 +73,8 @@ jobs:
       mkdir sdk-for-net
 
       git clone https://github.com/Azure/azure-sdk-for-java.git sdk-for-java
-      git clone https://github.com/Azure/azure-sdk-for-python.git sdk-for-python
       git clone https://github.com/Azure/azure-sdk-for-js.git sdk-for-js
+      git clone https://github.com/Azure/azure-sdk-for-python.git sdk-for-python
       git clone https://github.com/Azure/azure-sdk-for-net.git sdk-for-net
     displayName: 'Setup Environment'
 

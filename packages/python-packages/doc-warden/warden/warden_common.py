@@ -35,6 +35,12 @@ def get_java_package_roots(configuration):
 
 def get_net_packages(configuration):
     file_set =  get_file_sets(configuration, NET_PACKAGE_DISCOVERY_PATTERN, is_net_csproj_package)
+
+    for file in file_set[0]:
+        print(file)
+
+    for file in file_set[1]:
+        print(file)
     
     if configuration.verbose_output:
         print(file_set)

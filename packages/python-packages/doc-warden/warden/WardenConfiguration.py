@@ -84,10 +84,10 @@ class WardenConfiguration():
         parser.add_argument(
             '-t',
             '--target',
-            choices=['readme','changelog'],
+            choices=['all','readme','changelog'],
             dest = 'target',
             required = False,
-            help = 'The file name to scan for; "`readme` or `changelog`" will default to `readme`')
+            help = 'The file name to scan for; "`readme` or `changelog`" or specify `all` to scan for both. Will default to `readme`')
         parser.add_argument(
             '-o',
             '--verbose-output',
@@ -105,7 +105,7 @@ class WardenConfiguration():
         self.target_directory = args.scan_directory
         self.yml_location = args.config_location or os.path.join(self.target_directory, '.docsettings.yml')
         self.package_index_output_location = args.package_output_location or os.path.join(self.target_directory, 'packages.md')
-        self.target = args.target or 'readme'
+        self.target = args.target or 'default'
         self.target_files = []
 
         with open(self.yml_location, 'r') as f:
@@ -154,7 +154,7 @@ class WardenConfiguration():
 
         if self.target == 'changelog':
             self.target_files = ['history.rst', 'history.md'] if self.scan_language == 'python' else ['changelog.md']
-        else:
+        elif self.target == 'readme':
             self.target_files = ['readme.rst', 'readme.md'] if self.scan_language == 'python' else ['readme.md']
 
         try:
@@ -179,7 +179,7 @@ class WardenConfiguration():
         for exception_tuple in self.known_presence_issues:
             if any(exception_tuple[0].lower().endswith(target_file) for target_file in self.target_files):
                 known_issue_paths.append(os.path.normpath(os.path.join(self.target_directory, os.path.dirname(exception_tuple[0]))))
-            elif self.target == 'readme':
+            elif any(target_file.startswith('readme') for target_file in self.target_files):
                 known_issue_paths.append(os.path.normpath(os.path.join(self.target_directory, exception_tuple[0])))
         return known_issue_paths
 

@@ -44,6 +44,10 @@ def index(config):
 # verify the content of readmes or changelogs
 def verify_content(config):
     packages = index_packages(config)
+    if config.target == 'all':
+        print('Only use the `all` switch when runing the `scan` command')
+        exit(1)
+
     if config.target == 'readme':
         content_results, ignored_content_results = verify_readme_content(config)
         output_readme_content_results(content_results, config)
@@ -56,28 +60,41 @@ def verify_content(config):
 
 # verify the presence of the target_files (Readme or Changelog)
 def verify_presence(config):
-    presence_results, ignored_presence_results = find_missing_target_files(config)
-    output_presence_results(presence_results, config)
-
-    if len(presence_results) > 0:
-        conclusion_message()
+    if config.target == 'all':
+        print('Only use the `all` switch when runing the `scan` command')
         exit(1)
 
-# Verify Case of files Present
-def verify_file_case(pkg_list, config):
-    readmes_with_wrong_case = []
-    changelogs_with_wrong_case = []
-    for pkg in pkg_list:
+    presence_results, ignored_presence_results = find_missing_target_files(config)
+    output_presence_results(presence_results, config)
+    exit_on_presence_issues(presence_results, config)
 
+# Verify Case of readme files Present
+def verify_file_case_readme(pkg_list, config):
+    readmes_with_wrong_case = []
+    if pkg_list is None:
+        return readmes_with_wrong_case
+    for pkg in pkg_list:
         if pkg.relative_readme_location:
             if not os.path.splitext(os.path.basename(pkg.relative_readme_location))[0].isupper():
                  readmes_with_wrong_case.append(os.path.normpath(os.path.join(config.target_directory, pkg.relative_readme_location)))
 
+    return readmes_with_wrong_case
+
+# Verify Case of changelog files Present
+def verify_file_case_changelog(pkg_list, config):
+    changelogs_with_wrong_case = []
+    for pkg in pkg_list:
         if pkg.relative_changelog_location:
             if not os.path.splitext(os.path.basename(pkg.relative_changelog_location))[0].isupper():
                  changelogs_with_wrong_case.append(os.path.normpath(os.path.join(config.target_directory, pkg.relative_changelog_location)))
 
-    return readmes_with_wrong_case, changelogs_with_wrong_case
+    return changelogs_with_wrong_case
+
+# Exit if there are any presence issues
+def exit_on_presence_issues(presence_results, config):
+    if len(presence_results) > 0:
+        conclusion_message()
+        exit(1)
 
 # Exit if there are readme content issues
 def exit_on_readme_content_issues(content_results, config):
@@ -110,7 +127,6 @@ def output_readme_content_results(readmes_with_issues, config):
 
             for missing_pattern in readme_tuple[1]:
                 print(' * {0}'.format(missing_pattern))
-
             print()
 
 # print content results for changelog
@@ -151,11 +167,9 @@ def output_case_results(readmes_with_wrong_case, changelogs_with_wrong_case):
             print(path)
         print()
 
-
-# execute both presence and content verification
-def all_operations(config):
-    packages = index_packages(config)
-
+# Run both presence and content verification on changelogs
+def all_operations_readme(config, packages):
+    config.target_files = ['readme.rst', 'readme.md'] if config.scan_language == 'python' else ['readme.md']
     if config.verbose_output:
         print('Starting Readme Presence Examination')
 
@@ -168,15 +182,20 @@ def all_operations(config):
     if config.verbose_output:
         print('Done with Readme Content Examination')
 
+    readmes_with_wrong_case = verify_file_case_readme(packages, config)
+
     output_presence_results(readme_presence_results, config)
     output_readme_content_results(readme_content_results, config)
+    output_case_results(readmes_with_wrong_case, None)
 
-    config.target = 'changelog' if config.target == 'readme' else 'readme'
-    if config.target == 'changelog':
-        config.target_files = ['history.rst', 'history.md'] if config.scan_language == 'python' else ['changelog.md']
+    if len(readme_content_results) > 0 or len(readme_presence_results) > 0 or len(readmes_with_wrong_case) > 0:
+        return 1
     else:
-        config.target_files = ['readme.rst', 'readme.md'] if config.scan_language == 'python' else ['readme.md']
+        return 0
 
+# Run both presence and content verification on readmes
+def all_operations_changelog(config, packages):
+    config.target_files = ['history.rst', 'history.md'] if config.scan_language == 'python' else ['changelog.md']
     if config.verbose_output:
         print('Starting Changelog Presence Examination')
 
@@ -189,16 +208,37 @@ def all_operations(config):
     if config.verbose_output:
         print('Done with Changelog Content Examination')
 
-    readmes_with_wrong_case, changelogs_with_wrong_case = verify_file_case(packages, config)
+    changelogs_with_wrong_case = verify_file_case_changelog(packages, config)
 
     output_presence_results(changelog_presence_results, config)
     output_changelog_content_results(missing_changelog, empty_release_notes)
-    output_case_results(readmes_with_wrong_case, changelogs_with_wrong_case)
+    output_case_results(None, changelogs_with_wrong_case)
 
-    exit_on_readme_content_issues(readme_content_results, config)
-    exit_on_changelog_content_issues(missing_changelog, empty_release_notes, config)
+    if len(missing_changelog) > 0 or len(changelog_presence_results) > 0 or len(changelogs_with_wrong_case):
+        return 1
+    elif len(empty_release_notes) > 0 and config.pipeline_stage == 'release':
+        return 1
+    else:
+        return 0
 
-    if len(readme_presence_results) > 0 or len(changelog_presence_results) > 0 or len(readmes_with_wrong_case) > 0 or len(changelogs_with_wrong_case) > 0:
+
+# execute both presence and content verification
+def all_operations(config):
+    packages = index_packages(config)
+    result = 0
+
+    if config.target == 'default':
+        result = all_operations_readme(config, None)
+    elif config.target == 'readme':
+        result = all_operations_readme(config, packages)
+    elif config.target == 'changelog':
+        result = all_operations_changelog(config, packages)
+    elif config.target == 'all':
+        readme_result = all_operations_readme(config, packages)
+        changelog_result = all_operations_changelog(config, packages)
+        result = readme_result or changelog_result
+
+    if result == 1:
         conclusion_message()
         exit(1)
 

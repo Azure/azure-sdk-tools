@@ -3,7 +3,7 @@
 
 from __future__ import print_function
 
-from .warden_common import check_match, walk_directory_for_pattern, get_omitted_files, get_java_package_roots, get_net_packages, get_python_package_roots, get_js_package_roots, find_alongside_file, find_below_file, parse_pom, is_java_pom_package_pom, find_above_file
+from .warden_common import check_match, walk_directory_for_pattern, get_omitted_files, get_java_package_roots, get_net_packages, get_python_package_roots, get_js_package_roots, find_alongside_file, find_below_file, parse_pom, parse_csproj, is_java_pom_package_pom, find_above_file
 from .PackageInfo import PackageInfo
 import json
 import os
@@ -25,8 +25,8 @@ except ImportError:
 # given that all the content fitting on a single line is important, leveraging the format string method makes for a 
 # much simpler to maintain template
 PKGID_COL = ' [`{{ pkg.package_id }}`]( {{ pkg.relative_package_location }} )'
-RM_COL = ' {% if len(pkg.relative_readme_location) > 0 %}[Readme]({{ pkg.relative_readme_location }}){% else %} N/A {% endif %} '
-CL_COL = ' {% if len(pkg.relative_changelog_location) > 0 %}[Changelog]({{ pkg.relative_changelog_location }}){% else %} N/A {% endif %} '
+RM_COL = ' {% if len(pkg.relative_readme_location) > 0 %}[README]({{ pkg.relative_readme_location }}){% else %} N/A {% endif %} '
+CL_COL = ' {% if len(pkg.relative_changelog_location) > 0 %}[CHANGELOG]({{ pkg.relative_changelog_location }}){% else %} N/A {% endif %} '
 GROUPID_COL = ' `{{ pkg.repository_args[0] }}` '
 REPO_COL = ' `[Repo Link]( {{ pkg.relative_package_location }}` )'
 PUBLISH_COL = ' {% if pkg.test_url(config) %}[{{ pkg.get_repository_link_text(config) }}]( {{ pkg.get_formatted_repository_url(config) }} ){% else %} N/A {% endif %} '
@@ -84,7 +84,7 @@ def get_python_package_info(config):
         if pkg_id is None:
             continue
 
-        changelog = find_below_file('changelog.md', pkg_file)
+        changelog = find_below_file('history.md', pkg_file)
         if changelog is None:
             changelog = find_below_file('history.rst', pkg_file)
 
@@ -223,6 +223,8 @@ def get_net_packages_info(config):
     pkg_locations, ignored_pkg_locations = get_net_packages(config)
 
     for pkg_file in (pkg_locations + ignored_pkg_locations):
+        pkg_version = parse_csproj(pkg_file)
+
         pkg_name = os.path.splitext(os.path.basename(pkg_file))[0]
         if(pkg_name not in config.package_indexing_exclusion_list):
             changelog = find_above_file('changelog.md', pkg_file, config.get_package_indexing_traversal_stops(), net_early_exit, os.path.normpath(config.target_directory))
@@ -242,7 +244,7 @@ def get_net_packages_info(config):
 
             pkg_list.append(PackageInfo(
                 package_id = pkg_name, 
-                package_version = '', 
+                package_version = pkg_version, 
                 relative_package_location = pkg_location,
                 relative_readme_location = readme_relpath or '',
                 relative_changelog_location = changelog_relpath or '',

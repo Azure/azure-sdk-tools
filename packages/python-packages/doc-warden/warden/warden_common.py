@@ -35,12 +35,6 @@ def get_java_package_roots(configuration):
 
 def get_net_packages(configuration):
     file_set =  get_file_sets(configuration, NET_PACKAGE_DISCOVERY_PATTERN, is_net_csproj_package)
-
-    for file in file_set[0]:
-        print(file)
-
-    for file in file_set[1]:
-        print(file)
     
     if configuration.verbose_output:
         print(file_set)
@@ -86,7 +80,7 @@ def get_omitted_files(configuration):
 
 # convention. omit test projects
 def is_net_csproj_package(file_path):
-    test_proj_exclude = re.compile(".*\\\\(tests|samples)\\\\.*|.*test[s]?\\.csproj", re.IGNORECASE)
+    test_proj_exclude = re.compile(".*(\\\\|\/)(tests|samples)(\\\\|\/).*|.*test[s]?(\\|\/).csproj", re.IGNORECASE)
 
     if test_proj_exclude.match(file_path):
         return False

@@ -82,7 +82,7 @@ By default, `warden` looks for the `.docsettings` file in the root of the reposi
 The stage of the pipeline. can be `pr`, `ci`, or `release`. **Optional.**
 
 `--target`
-Specify what file to run enforcement on `readme` or `changelog`. Used when runing `content` or `presence` verification only. **Optional.**
+Specify what file to run enforcement on `readme` or `changelog`. Used when running `content` or `presence` verification only. **Optional.**
 
 `--package-output`
 Override the default location that the generated `packages.md` file is dropped to during execution of the `index` command.
@@ -142,7 +142,7 @@ Other Notes:
 * `warden` will content verify any `readme.rst` or `readme.md` file found outside the `omitted_paths` in the targeted repo.
 
 ### Enforcing Changelog Content
-`doc-warden` checks the latest entry in the changlog file to make sure it matches the latest version of the package. It also checks to make sure that the entry is not empty. 
+`doc-warden` checks the latest entry in the changelog file to make sure it matches the latest version of the package. It also checks to make sure that the entry is not empty. 
 
 
 #### Control, the `.docsettings.yml` File, and You

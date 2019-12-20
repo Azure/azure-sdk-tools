@@ -1,5 +1,9 @@
 # Release History
 
+## 0.4.1
+- Added `all` option to `--target` argument.
+- Default to running operations on readmes. When `--target` is set to `changelog` run operations on changelogs, when set to `all` run operations on both readmes and changlogs
+
 ## 0.4.0
 - Extended `presence` and `content` functionality to also operate on CHANGELOG.md's
 - Added `--target` argument to control if to the operations run on changelogs or readmes.

@@ -21,9 +21,9 @@ namespace Azure.ClientSdk.Analyzers.Tests
 
         public DiagnosticAnalyzer Analyzer { get; }
 
-        public Task<Diagnostic[]> GetDiagnosticsAsync(string source)
+        public Task<Diagnostic[]> GetDiagnosticsAsync(string source, LanguageVersion languageVersion = LanguageVersion.Latest)
         {
-            var project = DiagnosticProject.Create(GetType().Assembly, new[] { source });
+            var project = DiagnosticProject.Create(GetType().Assembly, languageVersion, new[] { source });
             return GetDiagnosticsAsync(new [] { project }, Analyzer);
         }
 

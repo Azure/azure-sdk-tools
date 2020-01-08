@@ -12,7 +12,7 @@ resources:
       name: internal/azure-sdk-build-tools
 
 variables:
-  DotNetCoreVersion: '2.1.503'
+  DotNetCoreVersion: '3.1.100'
 
 stages:
   - stage: 'Build_and_Test'

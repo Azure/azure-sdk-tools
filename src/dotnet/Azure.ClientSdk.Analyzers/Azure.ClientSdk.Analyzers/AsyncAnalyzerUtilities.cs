@@ -57,34 +57,25 @@ namespace Azure.ClientSdk.Analyzers
             return false;
         }
 
-        public bool IsAsyncDisposableType(ITypeSymbol type)
+        public bool IsAsyncDisposableType(ITypeSymbol type) 
+            => ImplementsInterface(type as INamedTypeSymbol, AsyncDisposableSymbol);
+
+        public bool IsAsyncEnumerableType(ITypeSymbol type) 
+            => ImplementsInterface(type as INamedTypeSymbol, AsyncEnumerableOfTTypeSymbol);
+
+        private static bool ImplementsInterface(INamedTypeSymbol type, INamedTypeSymbol candidate) 
         {
             if (type == null)
             {
                 return false;
             }
 
-            if (Equals(AsyncDisposableSymbol, type))
+            if (Equals(candidate, type.ConstructedFrom))
             {
                 return true;
             }
 
-            return type.AllInterfaces.Any(candidate => Equals(AsyncDisposableSymbol, candidate));
-        }
-
-        public bool IsAsyncEnumerableType(ITypeSymbol type)
-        {
-            if (type == null)
-            {
-                return false;
-            }
-
-            if (Equals(AsyncEnumerableOfTTypeSymbol, type.OriginalDefinition))
-            {
-                return true;
-            }
-
-            return type.AllInterfaces.Any(candidate => Equals(AsyncEnumerableOfTTypeSymbol, candidate.OriginalDefinition));
+            return type.AllInterfaces.Any(i => Equals(candidate, i.ConstructedFrom));
         }
 
         public bool IsTaskType(ITypeSymbol type)
@@ -99,10 +90,13 @@ namespace Azure.ClientSdk.Analyzers
                 return true;
             }
 
-            var originalDefinition = type.OriginalDefinition;
-            if (Equals(originalDefinition, TaskOfTTypeSymbol) || Equals(originalDefinition, ValueTaskOfTTypeSymbol))
+            if (type is INamedTypeSymbol namedType && namedType.IsGenericType) 
             {
-                return true;
+                var genericType = namedType.ConstructedFrom;
+                if (Equals(genericType, TaskOfTTypeSymbol) || Equals(genericType, ValueTaskOfTTypeSymbol)) 
+                {
+                    return true;
+                }
             }
 
             if (type.TypeKind == TypeKind.Error)

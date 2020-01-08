@@ -22,6 +22,7 @@ namespace Azure.ClientSdk.Analyzers
 
         public override void Initialize(AnalysisContext context)
         {
+            context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.Analyze | GeneratedCodeAnalysisFlags.ReportDiagnostics);
             context.EnableConcurrentExecution();
             context.RegisterCompilationStartAction(CompilationStart);
         }
@@ -37,8 +38,7 @@ namespace Azure.ClientSdk.Analyzers
 
         private void AnalyzeAwaitExpression(SyntaxNodeAnalysisContext context)
         {
-            var invocation = (AwaitExpressionSyntax)context.Node;
-            var operation = context.SemanticModel.GetOperation(invocation, context.CancellationToken);
+            var operation = context.SemanticModel.GetOperation(context.Node, context.CancellationToken);
             if (!(operation is IAwaitOperation awaitOperation)) {
                 return;
             }

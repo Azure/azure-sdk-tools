@@ -37,12 +37,15 @@ def update_env(old_path, new_path, environment_config):
     environment_config.envtmpdir = py.path.local(
         environment_config.envtmpdir.strpath.replace(old_path, new_path)
     )
+    environment_config.envlogdir = py.path.local(
+        environment_config.envlogdir.strpath.replace(old_path, new_path)
+    )
+
 
     # update the cachedir
     environment_config.setenv["TOX_ENV_DIR"] = environment_config.setenv[
         "TOX_ENV_DIR"
     ].replace(old_path, new_path)
-
 
 @hookimpl
 def tox_configure(config):
@@ -77,6 +80,11 @@ def tox_configure(config):
     if config.sdistsrc:
         config.sdistsrc = py.path.local(
             config.sdistsrc.strpath.replace(original_toxinipath, invocationcwd)
+        )
+
+    if config.logdir:
+        config.logdir = py.path.local(
+            config.logdir.strpath.replace(original_toxinipath, invocationcwd)
         )
 
     for environment_name, environment_config in config.envconfigs.items():

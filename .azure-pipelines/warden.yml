@@ -73,8 +73,8 @@ jobs:
       mkdir sdk-for-net
 
       git clone https://github.com/Azure/azure-sdk-for-java.git sdk-for-java
-      git clone https://github.com/Azure/azure-sdk-for-python.git sdk-for-python
       git clone https://github.com/Azure/azure-sdk-for-js.git sdk-for-js
+      git clone https://github.com/Azure/azure-sdk-for-python.git sdk-for-python
       git clone https://github.com/Azure/azure-sdk-for-net.git sdk-for-net
     displayName: 'Setup Environment'
 
@@ -83,12 +83,12 @@ jobs:
     displayName: 'Install doc-warden'
 
   - script: |
-      ward scan -d $(Build.SourcesDirectory)/sdk-for-java  -c $(Build.SourcesDirectory)/sdk-for-java/eng/.docsettings.yml -o
-    displayName: 'Ensure Java Backwards Compat'
+      ward scan -d $(Build.SourcesDirectory)/sdk-for-net  -c $(Build.SourcesDirectory)/sdk-for-net/eng/.docsettings.yml
+    displayName: 'Ensure .NET Backwards Compat'
 
   - script: |
-      ward scan -d $(Build.SourcesDirectory)/sdk-for-net  -c $(Build.SourcesDirectory)/sdk-for-net/eng/.docsettings.yml -o
-    displayName: 'Ensure .NET Backwards Compat'
+      ward scan -d $(Build.SourcesDirectory)/sdk-for-java  -c $(Build.SourcesDirectory)/sdk-for-java/eng/.docsettings.yml -o
+    displayName: 'Ensure Java Backwards Compat'
 
   - script: |
       ward scan -d $(Build.SourcesDirectory)/sdk-for-python -o

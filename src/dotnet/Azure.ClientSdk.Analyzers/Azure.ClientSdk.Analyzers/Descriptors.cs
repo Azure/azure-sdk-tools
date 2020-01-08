@@ -72,6 +72,11 @@ namespace Azure.ClientSdk.Analyzers
         public static DiagnosticDescriptor AZC0010 = new DiagnosticDescriptor(
             nameof(AZC0010), "ClientOptions constructors should default ServiceVersion to latest supported service version",
             "ClientOptions constructors should default ServiceVersion to latest supported service version", "Usage", DiagnosticSeverity.Warning, true);
+        
+        public static DiagnosticDescriptor AZC0021 = new DiagnosticDescriptor(
+            "AZC0011", "Avoid InternalsVisibleTo to non-test assemblies",
+            "Internal visible to product libraries effectively become public API and have to be versioned appropriately", "Usage", DiagnosticSeverity.Warning, true);
+            
 
         public static DiagnosticDescriptor AZC0011 = new DiagnosticDescriptor(
             nameof(AZC0011),

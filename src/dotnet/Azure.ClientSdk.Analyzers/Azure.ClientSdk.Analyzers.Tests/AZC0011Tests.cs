@@ -1,30 +1,19 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace Azure.ClientSdk.Analyzers.Tests 
-{
-    public class AZC0011Tests 
+namespace Azure.ClientSdk.Analyzers.Tests {
+    public class AZC0011Tests
     {
-        private readonly DiagnosticAnalyzerRunner _runner = new DiagnosticAnalyzerRunner(new AddConfigureAwaitAnalyzer());
+        private readonly DiagnosticAnalyzerRunner _runner = new DiagnosticAnalyzerRunner(new ClientAssemblyAttributesAnalyzer());
 
         [Fact]
-        public async Task AZC0011WarningOnTask()
+        public async Task AZC0011ProducedForNonTestIVTs()
         {
             var testSource = TestSource.Read(@"
-namespace RandomNamespace
-{
-    public class MyClass
-    {
-        public static async System.Threading.Tasks.Task Foo()
-        {
-            /*MM*/await System.Threading.Tasks.Task.Run(() => {});
-        }
-    }
-}
+[assembly:/*MM0*/System.Runtime.CompilerServices.InternalsVisibleTo(""Product, PublicKey=..."")]
 ");
             var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
 
@@ -33,193 +22,18 @@ namespace RandomNamespace
             Assert.Equal("AZC0011", diagnostic.Id);
             AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostics[0].Location);
         }
-
+        
         [Fact]
-        public async Task AZC0011WarningOnTaskOfT() 
+        public async Task AZC0011NotProducedForTestAndMoqIVTs()
         {
             var testSource = TestSource.Read(@"
-namespace RandomNamespace
-{
-    public class MyClass
-    {
-        public static async System.Threading.Tasks.Task Foo()
-        {
-            var i = /*MM*/await System.Threading.Tasks.Task.Run(() => 42);
-        }
-    }
-}
-");
+[assembly:System.Runtime.CompilerServices.InternalsVisibleTo(""Product.Test, PublicKey=..."")]
+[assembly:System.Runtime.CompilerServices.InternalsVisibleTo(""Product.Tests, PublicKey=..."")]
+[assembly:System.Runtime.CompilerServices.InternalsVisibleTo(""DynamicProxyGenAssembly2, PublicKey=..."")]
+            ");
             var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
 
-            var diagnostic = Assert.Single(diagnostics);
-
-            Assert.Equal("AZC0011", diagnostic.Id);
-            AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostics[0].Location);
-        }
-
-        [Fact]
-        public async Task AZC0011WarningOnValueTask() 
-        {
-            var testSource = TestSource.Read(@"
-namespace RandomNamespace
-{
-    public class MyClass
-    {
-        private static int _x;
-
-        public static async System.Threading.Tasks.ValueTask Foo()
-        {
-            /*MM*/await RunAsync();
-        }
-
-        private static async System.Threading.Tasks.ValueTask RunAsync()
-        {
-            _x++;
-        }
-    }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-
-            var diagnostic = Assert.Single(diagnostics);
-
-            Assert.Equal("AZC0011", diagnostic.Id);
-            AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostics[0].Location);
-        }
-
-        [Fact]
-        public async Task AZC0011WarningOnValueTaskOfT() 
-        {
-            var testSource = TestSource.Read(@"
-namespace RandomNamespace
-{
-    public class MyClass
-    {
-        public static async System.Threading.Tasks.ValueTask Foo()
-        {
-            var i = /*MM*/await GetValueAsync();
-        }
-
-        private static async System.Threading.Tasks.ValueTask<int> GetValueAsync()
-        {
-            return 0;
-        }
-    }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-
-            var diagnostic = Assert.Single(diagnostics);
-
-            Assert.Equal("AZC0011", diagnostic.Id);
-            AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostics[0].Location);
-        }
-
-        [Fact(Skip = "It isn't clear if ConfigureAwait(true) should be treated as error")]
-        public async Task AZC0011WarningOnExistingConfigureAwaitTrue()
-        {
-            var testSource = TestSource.Read(@"
-namespace RandomNamespace
-{
-    public class MyClass
-    {
-        public static async System.Threading.Tasks.Task Foo()
-        {
-           /*MM*/await System.Threading.Tasks.Task.Run(() => {}).ConfigureAwait(true);
-        }
-    }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-            var diagnostic = Assert.Single(diagnostics);
-
-            Assert.Equal("AZC0011", diagnostic.Id);
-            AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostics[0].Location);
-        }
-
-        [Fact]
-        public async Task AZC0011NoWarningOnExistingConfigureAwaitFalse()
-        {
-            var testSource = TestSource.Read(@"
-namespace RandomNamespace
-{
-    public class MyClass
-    {
-        public static async System.Threading.Tasks.Task Foo()
-        {
-           await System.Threading.Tasks.Task.Run(() => {}).ConfigureAwait(false);
-        }
-    }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
             Assert.Empty(diagnostics);
-        }
-
-        [Fact]
-        public async Task AZC0011WarningOnTaskDelay()
-        {
-            var testSource = TestSource.Read(@"
-namespace RandomNamespace
-{
-    public class MyClass
-    {
-        public static async System.Threading.Tasks.Task Foo()
-        {
-            /*MM*/await System.Threading.Tasks.Task.Delay(42);
-        }
-    }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-
-            var diagnostic = Assert.Single(diagnostics);
-
-            Assert.Equal("AZC0011", diagnostic.Id);
-            AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostics[0].Location);
-        }
-
-        [Fact]
-        public async Task AZC0011NoWarningOnTaskYield()
-        {
-            var testSource = TestSource.Read(@"
-namespace RandomNamespace
-{
-    public class MyClass
-    {
-        public static async System.Threading.Tasks.Task Foo()
-        {
-           await System.Threading.Tasks.Task.Yield();
-        }
-    }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-            Assert.Empty(diagnostics);
-        }
-
-        [Fact]
-        public async Task AZC0011WarningOnVariable()
-        {
-            var testSource = TestSource.Read(@"
-namespace RandomNamespace
-{
-    public class MyClass
-    {
-        public static async System.Threading.Tasks.Task Foo()
-        {
-            var task = System.Threading.Tasks.Task.Run(() => {});
-            /*MM*/await task;
-        }
-    }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-
-            var diagnostic = Assert.Single(diagnostics);
-
-            Assert.Equal("AZC0011", diagnostic.Id);
-            AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostics[0].Location);
         }
     }
 }

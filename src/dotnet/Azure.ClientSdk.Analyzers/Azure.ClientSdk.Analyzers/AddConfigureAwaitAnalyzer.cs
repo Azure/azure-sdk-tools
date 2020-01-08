@@ -2,25 +2,37 @@
 // Licensed under the MIT License.
 
 using System.Collections.Immutable;
-using System.Threading.Tasks;
+using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Operations;
+using Microsoft.CodeAnalysis.Text;
 
 namespace Azure.ClientSdk.Analyzers
 {
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public sealed class AddConfigureAwaitAnalyzer : DiagnosticAnalyzer
     {
+        private AsyncAnalyzerUtilities _asyncUtilities;
+
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
-            ImmutableArray.Create(Descriptors.AZC0011);
+            ImmutableArray.Create(Descriptors.AZC0012, Descriptors.AZC0013);
 
         public override void Initialize(AnalysisContext context)
         {
             context.EnableConcurrentExecution();
+            context.RegisterCompilationStartAction(CompilationStart);
+        }
+
+        private void CompilationStart(CompilationStartAnalysisContext context) 
+        {
+            _asyncUtilities = new AsyncAnalyzerUtilities(context.Compilation);
             context.RegisterSyntaxNodeAction(AnalyzeAwaitExpression, SyntaxKind.AwaitExpression);
+            context.RegisterSyntaxNodeAction(AnalyzeUsingExpression, SyntaxKind.UsingStatement);
+            context.RegisterSyntaxNodeAction(AnalyzeForEachExpression, SyntaxKind.ForEachStatement);
+            context.RegisterSyntaxNodeAction(AnalyzeConfigureAwaitTrue, SyntaxKind.InvocationExpression);
         }
 
         private void AnalyzeAwaitExpression(SyntaxNodeAnalysisContext context)
@@ -31,66 +43,89 @@ namespace Azure.ClientSdk.Analyzers
                 return;
             }
 
-            if (awaitOperation.Operation is IInvocationOperation configureAwaitOperation)
+            if (_asyncUtilities.IsTaskType(awaitOperation.Operation.Type)) 
             {
-                if (IsConfigureAwait(configureAwaitOperation.TargetMethod, context.Compilation))
-                {
-                    return;
-                }
+                ReportConfigureAwaitDiagnostic(context, awaitOperation);
+            }
+        }
 
-                if (!IsTaskType(configureAwaitOperation.Type, context.Compilation))
-                {
-                    return;
-                }
+        private void AnalyzeUsingExpression(SyntaxNodeAnalysisContext context) 
+        {
+            if (!(context.SemanticModel.GetOperation(context.Node, context.CancellationToken) is IUsingOperation usingOperation))
+            {
+                return;
             }
 
+            if (!usingOperation.IsAsynchronous)
+            {
+                return;
+            }
+
+            var resources = usingOperation.Resources;
+            if (_asyncUtilities.IsAsyncDisposableType(resources.Type))
+            {
+                ReportConfigureAwaitDiagnostic(context, resources);
+            }
+        }
+
+        private void AnalyzeForEachExpression(SyntaxNodeAnalysisContext context) 
+        {
+            if (!(context.SemanticModel.GetOperation(context.Node, context.CancellationToken) is IForEachLoopOperation forEachOperation))
+            {
+                return;
+            }
+
+            if (!forEachOperation.IsAsynchronous)
+            {
+                return;
+            }
+
+            var collectionType = forEachOperation.Collection.Type;
+            if (_asyncUtilities.IsAsyncEnumerableType(collectionType)) 
+            {
+                ReportConfigureAwaitDiagnostic(context, forEachOperation.Collection);
+            }
+        }
+
+        private void AnalyzeConfigureAwaitTrue(SyntaxNodeAnalysisContext context)
+        {
+            if (!_asyncUtilities.IsConfigureAwait(context.Node))
+            {
+                return;
+            }
+
+            if (!(context.SemanticModel.GetOperation(context.Node, context.CancellationToken) is IInvocationOperation operation)) 
+            {
+                return;
+            }
+
+            if (!_asyncUtilities.IsConfigureAwait(operation.TargetMethod)) 
+            {
+                return;
+            }
+
+            var constantValue = operation.Arguments.Last().Value?.ConstantValue;
+            if (constantValue != null && constantValue.Value.Value is bool value && value)
+            {
+                ReportConfigureAwaitTrueDiagnostic(context, operation);
+            }
+        }
+
+        private static void ReportConfigureAwaitDiagnostic(SyntaxNodeAnalysisContext context, IOperation awaitOperation) 
+        {
             var location = awaitOperation.Syntax.GetLocation();
-            var diagnostic = Diagnostic.Create(Descriptors.AZC0011, location);
+            var diagnostic = Diagnostic.Create(Descriptors.AZC0012, location);
             context.ReportDiagnostic(diagnostic);
         }
 
-        private static bool IsConfigureAwait(IMethodSymbol method, Compilation compilation) 
-            => method.Name == "ConfigureAwait" && IsTaskType(method.ReceiverType, compilation);
-
-        private static bool IsTaskType(ITypeSymbol type, Compilation compilation) 
+        private static void ReportConfigureAwaitTrueDiagnostic(SyntaxNodeAnalysisContext context, IOperation configureAwaitOperation) 
         {
-            if (type == null) 
-            {
-                return false;
-            }
-
-            var (task, taskOfT, valueTask, valueTaskOfT) = GetTaskTypes(compilation);
-
-            if (task == null || taskOfT == null)
-            {
-                return false;
-            }
-
-            if (type.Equals(task) || type.Equals(valueTask)) 
-            {
-                return true;
-            }
-
-            var originalDefinition = type.OriginalDefinition;
-            if (Equals(originalDefinition, taskOfT) || Equals(originalDefinition, valueTaskOfT)) 
-            {
-                return true;
-            }
-
-            if (type.TypeKind == TypeKind.Error) 
-            {
-                return type.Name.Equals("Task") || type.Name.Equals("ValueTask");
-            }
-
-            return false;
+            var invocation = (InvocationExpressionSyntax)configureAwaitOperation.Syntax;
+            var memberAccess = (MemberAccessExpressionSyntax) invocation.Expression;
+            var start = memberAccess.Name.Span.Start;
+            var end = invocation.Span.End;
+            var diagnostic = Diagnostic.Create(Descriptors.AZC0013, Location.Create(invocation.SyntaxTree, new TextSpan(start, end - start)));
+            context.ReportDiagnostic(diagnostic);
         }
-
-        private static (INamedTypeSymbol task, INamedTypeSymbol taskOfT, INamedTypeSymbol valueTask, INamedTypeSymbol valueTaskOfT) GetTaskTypes(Compilation compilation) =>
-        (
-            compilation.GetTypeByMetadataName(typeof(Task).FullName),
-            compilation.GetTypeByMetadataName(typeof(Task<>).FullName),
-            compilation.GetTypeByMetadataName("System.Threading.Tasks.ValueTask"),
-            compilation.GetTypeByMetadataName("System.Threading.Tasks.ValueTask`1")
-        );
     }
 }

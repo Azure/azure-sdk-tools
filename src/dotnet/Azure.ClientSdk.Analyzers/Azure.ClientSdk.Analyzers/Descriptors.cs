@@ -73,23 +73,23 @@ namespace Azure.ClientSdk.Analyzers
             nameof(AZC0010), "ClientOptions constructors should default ServiceVersion to latest supported service version",
             "ClientOptions constructors should default ServiceVersion to latest supported service version", "Usage", DiagnosticSeverity.Warning, true);
         
-        public static DiagnosticDescriptor AZC0021 = new DiagnosticDescriptor(
+        public static DiagnosticDescriptor AZC0011 = new DiagnosticDescriptor(
             "AZC0011", "Avoid InternalsVisibleTo to non-test assemblies",
             "Internal visible to product libraries effectively become public API and have to be versioned appropriately", "Usage", DiagnosticSeverity.Warning, true);
             
 
-        public static DiagnosticDescriptor AZC0011 = new DiagnosticDescriptor(
-            nameof(AZC0011),
+        public static DiagnosticDescriptor AZC0012 = new DiagnosticDescriptor(
+            nameof(AZC0012),
             "ConfigureAwait(false) must be used.",
             "ConfigureAwait(false) must be used.",
             "Usage",
             DiagnosticSeverity.Warning, true);
 
-        public static DiagnosticDescriptor AZC1001 = new DiagnosticDescriptor(
-            nameof(AZC1001), "Avoid multiple newlines",
-            "Avoid multiple newlines", "Usage", DiagnosticSeverity.Warning, true);
-        public static DiagnosticDescriptor AZC1002 = new DiagnosticDescriptor(
-            nameof(AZC1002), "Avoid whitespace in the end of the line",
-            "Avoid whitespace in the end of the line", "Usage", DiagnosticSeverity.Warning, true);
+        public static DiagnosticDescriptor AZC0013 = new DiagnosticDescriptor(
+            nameof(AZC0013),
+            "Use ConfigureAwait(false) instead of ConfigureAwait(true).",
+            "Use ConfigureAwait(false) instead of ConfigureAwait(true).",
+            "Usage",
+            DiagnosticSeverity.Warning, true);
     }
 }

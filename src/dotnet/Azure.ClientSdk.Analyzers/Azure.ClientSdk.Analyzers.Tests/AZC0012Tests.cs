@@ -186,6 +186,30 @@ namespace RandomNamespace
         }
 
         [Fact]
+        public async Task AZC0012NoWarningOnNested()
+        {
+            var testSource = TestSource.Read(@"
+namespace RandomNamespace
+{
+    using System.Threading.Tasks;
+
+    public class MyClass
+    {
+        public static async Task CallFooAsync()
+        {
+            await FooAsync(await (getFoo()).ConfigureAwait(false)).ConfigureAwait(false);
+        }
+
+        private static async Task FooAsync(bool foo) {}
+        private static async Task<bool> getFoo() => true;
+    }
+}
+");
+            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
+            Assert.Empty(diagnostics);
+        }
+
+        [Fact]
         public async Task AZC0012WarningOnVariable()
         {
             var testSource = TestSource.Read(@"

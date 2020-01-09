@@ -104,6 +104,8 @@ namespace Azure.ClientSdk.Analyzers
                 return;
             }
 
+            // ConfigureAwait is either an instance method with one parameter or a static extension method with two.
+            // We need to check if the last argument is a bool and if it is 'true'
             var constantValue = operation.Arguments.Last().Value?.ConstantValue;
             if (constantValue != null && constantValue.Value.Value is bool value && value)
             {

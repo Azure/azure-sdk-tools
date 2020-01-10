@@ -1,11 +1,16 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.26124.0
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29613.14
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.ClientSdk.Analyzers", "Azure.ClientSdk.Analyzers\Azure.ClientSdk.Analyzers.csproj", "{0C85C003-716E-415A-850F-D0597DACA658}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.ClientSdk.Analyzers.Tests", "Azure.ClientSdk.Analyzers.Tests\Azure.ClientSdk.Analyzers.Tests.csproj", "{53ABAABB-3B1C-493B-88FB-B1E22A95D232}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{65E960CB-422D-47FB-BEFD-A88B3474CD86}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

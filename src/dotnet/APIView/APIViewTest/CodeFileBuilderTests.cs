@@ -51,7 +51,7 @@ namespace APIViewTest
 
         private async Task AssertFormattingAsync(string code, string formatted)
         {
-            var project = DiagnosticProject.Create(typeof(CodeFileBuilderTests).Assembly, new[] { code });
+            var project = DiagnosticProject.Create(typeof(CodeFileBuilderTests).Assembly, LanguageVersion.Default, new[] { code });
             project = project.WithCompilationOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
             var compilation = await project.GetCompilationAsync();
             Assert.Empty(compilation.GetDiagnostics().Where(d => d.Severity > DiagnosticSeverity.Warning));

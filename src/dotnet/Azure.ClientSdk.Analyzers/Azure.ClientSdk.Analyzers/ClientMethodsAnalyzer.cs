@@ -24,7 +24,7 @@ namespace Azure.ClientSdk.Analyzers
 
         private static void CheckClientMethod(ISymbolAnalysisContext context, IMethodSymbol member)
         {
-            if (!member.IsVirtual)
+            if (!member.IsVirtual && !member.IsOverride)
             {
                 context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0003, member.Locations.First()), member);
             }

@@ -280,7 +280,8 @@ def render(config, pkg_list):
         'python': OUTPUT_TEMPLATE,
         'js': OUTPUT_TEMPLATE,
         'java': JAVA_OUTPUT_TEMPLATE,
-        'net': OUTPUT_TEMPLATE
+        'net': OUTPUT_TEMPLATE,
+        'ios': OUTPUT_TEMPLATE
     }
 
     template = language_selector.get(config.scan_language.lower(), unrecognized_option)

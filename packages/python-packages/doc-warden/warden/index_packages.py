@@ -281,6 +281,7 @@ def render(config, pkg_list):
         'js': OUTPUT_TEMPLATE,
         'java': JAVA_OUTPUT_TEMPLATE,
         'net': OUTPUT_TEMPLATE,
+        'android': OUTPUT_TEMPLATE,
         'ios': OUTPUT_TEMPLATE
     }
 

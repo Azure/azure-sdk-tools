@@ -48,6 +48,6 @@ Write-Verbose "Groups to delete: $($toDelete.Length)"
 
 $toDelete | foreach {
     if ($PSCmdlet.ShouldProcess("$($_.Name) (UTC: $($_.tags.DeleteAfter))", "Delete Group")) {
-        az group delete --name $_.Name --yes
+        az group delete --name $_.Name --yes --no-wait
     }
 }

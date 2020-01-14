@@ -15,7 +15,7 @@ stages:
 
     steps:
       - pwsh: >
-          tools/live-test-cleanup/cleanup.ps1
+          ./tools/live-test-cleanup/cleanup.ps1
           -ProvisionerApplicationId "$(provisioner-aad-id)"
           -ProvisionerApplicationSecret "$(provisioner-aad-secret)"
           -ProvisionerApplicationTenantId "$(provisioner-aad-tenant)"

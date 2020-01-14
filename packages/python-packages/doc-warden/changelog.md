@@ -1,5 +1,8 @@
 # Release History
 
+## 0.4.2
+- Update logic for discovering java client and data packages
+
 ## 0.4.1
 - Added `all` option to `--target` argument.
 - Default to running operations on readmes. When `--target` is set to `changelog` run operations on changelogs, when set to `all` run operations on both readmes and changlogs

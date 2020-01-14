@@ -142,11 +142,6 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
                 });
                 Logger.LogTrace("Updated check-run.");
             }
-            else if (totalOtherRuns < configuration.MinimumCheckRuns || totalOutstandingOtherRuns != 0 && checkEnforcerRun.Status != new StringEnum<CheckStatus>(CheckStatus.InProgress))
-            {
-                // NOTE: We do this when we need to go back from a conclusion of success to a status of in-progress.
-                await CreateCheckAsync(client, repositoryId, sha, true, cancellationToken);
-            }
         }
 
         private T DeserializePayload(string json)

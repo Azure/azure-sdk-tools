@@ -31,16 +31,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
 
                 if (configuration.IsEnabled)
                 {
-                    var distributedLockIdentifier = $"{installationId}/{repositoryId}/{sha}";
-
-                    using (var distributedLock = DistributedLockProvider.Create(distributedLockIdentifier))
-                    {
-                        var distributedLockAcquired = await distributedLock.AcquireAsync();
-                        if (!distributedLockAcquired) return;
-
-                        await CreateCheckAsync(context.Client, repositoryId, sha, true, cancellationToken);
-                        await distributedLock.ReleaseAsync();
-                    }
+                    await CreateCheckAsync(context.Client, repositoryId, sha, true, cancellationToken);
                 }
             }
         }

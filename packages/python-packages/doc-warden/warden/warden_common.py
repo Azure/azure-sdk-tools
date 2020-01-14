@@ -26,12 +26,11 @@ def check_match(file_path, normalized_target_patterns):
 
 def get_java_package_roots(configuration):
     file_set = get_file_sets(configuration, JAVA_PACKAGE_DISCOVERY_PATTERN, is_java_pom_package_pom)
-    defined_packages = get_defined_java_packages(configuration)
 
     if configuration.verbose_output:
         print(file_set)
 
-    return list(set(file_set[0]).union(defined_packages)) , file_set[1]
+    return file_set
 
 def get_net_packages(configuration):
     file_set =  get_file_sets(configuration, NET_PACKAGE_DISCOVERY_PATTERN, is_net_csproj_package)
@@ -184,29 +183,13 @@ def check_folder_against_exclusion_list(folder, path_exclusion_list):
 
     return os.path.normpath(folder) in path_exclusion_list
 
-# Get list of pom files as defined in the modules property in pom.client.xml in the java repo
-def get_defined_java_packages(configuration):
-    pom_locations = []
-    root = parse_pom(os.path.join(configuration.target_directory, 'pom.client.xml'))
-    modules = root.find('modules')
-
-    if modules is not None:
-        for module in modules:
-            pom_path = os.path.normpath(os.path.join(configuration.target_directory, module.text, 'pom.xml'))
-            if os.path.isfile(pom_path):
-                pom_locations.append(pom_path)
-
-    return pom_locations
-
-
-
 # given a pom.xml, crack it open and ensure that it is actually a package pom (versus a parent pom)
 def is_java_pom_package_pom(file_path):
     root = parse_pom(file_path)
-    jar_tag = root.find('packaging')
+    artifactIdTag = root.find('parent/artifactId')
 
-    if jar_tag is not None:
-        return jar_tag.text == 'jar'
+    if artifactIdTag is not None:
+        return artifactIdTag.text == 'azure-client-sdk-parent' or artifactIdTag.text == 'azure-data-sdk-parent'
     return False
 
 # namespaces in xml really mess with xmlTree: https://bugs.python.org/issue18304

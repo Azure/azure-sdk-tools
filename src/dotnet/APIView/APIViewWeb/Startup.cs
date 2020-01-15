@@ -19,6 +19,8 @@ using System.Text.Json;
 using APIViewWeb.Respositories;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using System.Linq;
+using APIViewWeb.Repositories;
 
 namespace APIViewWeb
 {
@@ -73,6 +75,7 @@ namespace APIViewWeb
 
             services.AddSingleton<ReviewManager>();
             services.AddSingleton<CommentsManager>();
+            services.AddSingleton<NotificationManager>();
 
             services.AddSingleton<ILanguageService, JsonLanguageService>();
             services.AddSingleton<ILanguageService, CSharpLanguageService>();
@@ -115,7 +118,7 @@ namespace APIViewWeb
                             response.EnsureSuccessStatusCode();
 
                             var user = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-
+                            
                             context.RunClaimActions(user.RootElement);
                             if (user.RootElement.TryGetProperty("organizations_url", out var organizationsUrlProperty))
                             {
@@ -143,6 +146,12 @@ namespace APIViewWeb
                                     orgNames.Append(org["login"]);
                                 }
 
+                                string msEmail = await GetMicrosoftEmailAsync(context);
+                                if (msEmail != null)
+                                {
+                                    context.Identity.AddClaim(
+                                        new Claim("urn:github:email", msEmail));
+                                }
                                 context.Identity.AddClaim(new Claim("urn:github:orgs", orgNames.ToString()));
                             }
                         }
@@ -156,6 +165,25 @@ namespace APIViewWeb
             services.AddSingleton<IAuthorizationHandler, CommentOwnerRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, ReviewOwnerRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, RevisionOwnerRequirementHandler>();
+        }
+
+        private static async System.Threading.Tasks.Task<string> GetMicrosoftEmailAsync(OAuthCreatingTicketContext context)
+        {
+            var message = new HttpRequestMessage(
+                                                HttpMethod.Get,
+                                                "https://api.github.com/user/emails");
+            message.Headers.Authorization = new AuthenticationHeaderValue(
+                "Bearer",
+                context.AccessToken);
+
+            var response = await context.Backchannel.SendAsync(message);
+            var emails = JArray.Parse(await response.Content.ReadAsStringAsync());
+            var msEmail = emails.FirstOrDefault(
+                e => string.Equals(
+                    e["email"]?.Value<string>()?.Split('@')[1],
+                    "microsoft.com",
+                    StringComparison.OrdinalIgnoreCase));
+            return msEmail?["email"].Value<string>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

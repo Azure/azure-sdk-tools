@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using APIViewWeb.Models;
 using Newtonsoft.Json;
 
@@ -41,5 +42,39 @@ namespace APIViewWeb
         }
 
         public bool IsClosed { get; set; }
+
+        public HashSet<string> Subscribers { get; set; } = new HashSet<string>();
+
+        public void Subscribe(ClaimsPrincipal user)
+        {
+            string email = GetUserEmail(user);
+
+            if (email != null && !Subscribers.Contains(email))
+            {
+                Subscribers.Add(email);
+            }
+        }
+
+        public void Unsubscribe(ClaimsPrincipal user)
+        {
+            string email = GetUserEmail(user);
+            if (email != null && Subscribers.Contains(email))
+            {
+                Subscribers.Remove(email);
+            }
+        }
+
+        public bool IsUserSubscribed(ClaimsPrincipal user)
+        {
+            string email = GetUserEmail(user);
+            if (email != null)
+            {
+                return Subscribers.Contains(email);
+            }
+            return false;
+        }
+
+        private static string GetUserEmail(ClaimsPrincipal user) =>
+            user.FindFirstValue("urn:github:email");
     }
 }

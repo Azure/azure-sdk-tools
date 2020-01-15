@@ -50,6 +50,11 @@
                 </div>
             </div>
         }
+        <div class="float-left">
+            <form asp-resource="@Model.Review" asp-requirement="@ReviewOwnerRequirement.Instance" class="form-inline float-left ml-2" method="post" asp-page-handler="ToggleSubscribed">
+                <input type="submit" class="btn btn-sm btn-secondary" value="@(Model.Review.IsUserSubscribed(User) ? "Unsubscribe": "Subscribe")" />
+            </form>
+        </div>
 
         <form asp-resource="@Model.Review" asp-requirement="@ReviewOwnerRequirement.Instance" class="form-inline float-right ml-2" method="post" asp-page-handler="ToggleClosed">
             <input type="submit" class="btn btn-sm btn-secondary" value="@(Model.Review.IsClosed ? "Reopen": "Close")" />

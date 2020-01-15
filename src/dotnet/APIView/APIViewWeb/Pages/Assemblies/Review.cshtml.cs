@@ -16,16 +16,20 @@ namespace APIViewWeb.Pages.Assemblies
     {
         private readonly ReviewManager _manager;
 
+        private readonly CosmosReviewRepository _reviewRepository;
+
         private readonly BlobCodeFileRepository _codeFileRepository;
 
         private readonly CommentsManager _commentsManager;
 
         public ReviewPageModel(
             ReviewManager manager,
+            CosmosReviewRepository reviewRepository,
             BlobCodeFileRepository codeFileRepository,
             CommentsManager commentsManager)
         {
             _manager = manager;
+            _reviewRepository = reviewRepository;
             _codeFileRepository = codeFileRepository;
             _commentsManager = commentsManager;
         }
@@ -161,6 +165,21 @@ namespace APIViewWeb.Pages.Assemblies
         {
             await _manager.ToggleIsClosedAsync(User, id);
 
+            return RedirectToPage(new { id = id });
+        }
+
+        public async Task<ActionResult> OnPostToggleSubscribedAsync(string id)
+        {
+            ReviewModel review = await _manager.GetReviewAsync(User, id);
+            if (review.IsUserSubscribed(User))
+            {
+                review.Unsubscribe(User);
+            }
+            else
+            {
+                review.Subscribe(User);
+            }
+            await _reviewRepository.UpsertReviewAsync(review);
             return RedirectToPage(new { id = id });
         }
     }

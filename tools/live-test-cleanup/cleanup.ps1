@@ -22,7 +22,10 @@ param (
 
     [Parameter(Mandatory = $true)]
     [ValidatePattern('^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$')]
-    [string] $SubscriptionId
+    [string] $SubscriptionId,
+
+    [Parameter()]
+    [switch] $Force
 )
 
 Write-Verbose "Logging in"
@@ -47,7 +50,8 @@ $toDelete = $allGroups |
 Write-Verbose "Groups to delete: $($toDelete.Length)"
 
 $toDelete | foreach {
-    if ($PSCmdlet.ShouldProcess("$($_.Name) (UTC: $($_.tags.DeleteAfter))", "Delete Group")) {
+    if ($Force -or $PSCmdlet.ShouldProcess("$($_.Name) (UTC: $($_.tags.DeleteAfter))", "Delete Group")) {
+        Write-Verbose "Deleting group: $($_.Name)"
         az group delete --name $_.Name --yes --no-wait
     }
 }

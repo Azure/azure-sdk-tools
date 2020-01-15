@@ -39,8 +39,8 @@ $now = [DateTime]::UtcNow
 
 $toDelete = $allGroups |
     where {
-        $parsedTime = [DateTime]::MaxValue;
-        $canParse = [DateTime]::TryParse($_.tags.DeleteAfter, [ref]$parsedTime);
+        $parsedTime = [DateTime]::MaxValue
+        $canParse = [DateTime]::TryParse($_.tags.DeleteAfter, [ref]$parsedTime)
         $canParse -and ($now -gt $parsedTime)
     }
 

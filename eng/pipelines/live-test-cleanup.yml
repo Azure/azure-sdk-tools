@@ -1,0 +1,24 @@
+
+trigger: none
+pr: none
+
+stages:
+- stage: Run
+
+  variables:
+  - template: ./templates/variables/globals.yml
+
+  jobs:
+  - job: Run
+    pool:
+      vmImage: ubuntu-16.04
+
+    steps:
+      - pwsh: >
+          ./tools/live-test-cleanup/cleanup.ps1
+          -ProvisionerApplicationId "$(provisioner-aad-id)"
+          -ProvisionerApplicationSecret "$(provisioner-aad-secret)"
+          -ProvisionerApplicationTenantId "$(provisioner-aad-tenant)"
+          -SubscriptionId "$(provisioner-subscription)"
+          -Verbose
+        displayName: Clean up subscription resources

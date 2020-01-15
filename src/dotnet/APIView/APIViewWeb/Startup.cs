@@ -19,8 +19,8 @@ using System.Text.Json;
 using APIViewWeb.Respositories;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using System.Linq;
 using APIViewWeb.Repositories;
+using System.Threading.Tasks;
 
 namespace APIViewWeb
 {
@@ -118,7 +118,7 @@ namespace APIViewWeb
                             response.EnsureSuccessStatusCode();
 
                             var user = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-                            
+
                             context.RunClaimActions(user.RootElement);
                             if (user.RootElement.TryGetProperty("organizations_url", out var organizationsUrlProperty))
                             {
@@ -167,11 +167,11 @@ namespace APIViewWeb
             services.AddSingleton<IAuthorizationHandler, RevisionOwnerRequirementHandler>();
         }
 
-        private static async System.Threading.Tasks.Task<string> GetMicrosoftEmailAsync(OAuthCreatingTicketContext context)
+        private static async Task<string> GetMicrosoftEmailAsync(OAuthCreatingTicketContext context)
         {
             var message = new HttpRequestMessage(
-                                                HttpMethod.Get,
-                                                "https://api.github.com/user/emails");
+                HttpMethod.Get,
+                "https://api.github.com/user/emails");
             message.Headers.Authorization = new AuthenticationHeaderValue(
                 "Bearer",
                 context.AccessToken);
@@ -180,14 +180,11 @@ namespace APIViewWeb
             var emails = JArray.Parse(await response.Content.ReadAsStringAsync());
             foreach (var email in emails)
             {
-                var addr = new System.Net.Mail.MailAddress(email["email"]?.Value<string>());
-                if (string.Equals(
-                    addr.Host,
-                    "microsoft.com",
-                    StringComparison.OrdinalIgnoreCase))
+                var address = email["email"]?.Value<string>();
+                if (address != null && address.EndsWith("microsoft.com", StringComparison.OrdinalIgnoreCase))
                 {
-                    return addr.Address;
-                } 
+                    return address;
+                }
             }
             return null;
         }

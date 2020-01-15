@@ -17,19 +17,16 @@ namespace APIViewWeb
 
         private readonly CosmosCommentsRepository _commentsRepository;
 
-        private readonly CosmosReviewRepository _reviewRepository;
 
         private readonly NotificationManager _notificationManager;
 
         public CommentsManager(
             IAuthorizationService authorizationService,
             CosmosCommentsRepository commentsRepository,
-            CosmosReviewRepository reviewRepository,
             NotificationManager notificationManager)
         {
             _authorizationService = authorizationService;
             _commentsRepository = commentsRepository;
-            _reviewRepository = reviewRepository;
             _notificationManager = notificationManager;
         }
 
@@ -40,21 +37,13 @@ namespace APIViewWeb
             return new ReviewCommentsModel(reviewId, comments);
         }
 
-        public async Task AddCommentAsync(ClaimsPrincipal user, CommentModel comment, string reviewId)
+        public async Task AddCommentAsync(ClaimsPrincipal user, CommentModel comment)
         {
             comment.Username = user.GetGitHubLogin();
             comment.TimeStamp = DateTime.Now;
 
             await _commentsRepository.UpsertCommentAsync(comment);
-            await SubscribeAndNotify(user, comment, reviewId);
-        }
-
-        public async Task SubscribeAndNotify(ClaimsPrincipal user, CommentModel comment, string reviewId)
-        {
-            ReviewModel review = await _reviewRepository.GetReviewAsync(reviewId);
-            review.Subscribe(user);
-            await _reviewRepository.UpsertReviewAsync(review);
-            await _notificationManager.NotifySubscribersOnCommentAsync(review, comment);
+            await _notificationManager.SubscribeAndNotify(user, comment);
         }
 
         public async Task<CommentModel> UpdateCommentAsync(ClaimsPrincipal user, string reviewId, string commentId, string commentText)
@@ -64,7 +53,7 @@ namespace APIViewWeb
             comment.EditedTimeStamp = DateTime.Now;
             comment.Comment = commentText;
             await _commentsRepository.UpsertCommentAsync(comment);
-            await SubscribeAndNotify(user, comment, reviewId);
+            await _notificationManager.SubscribeAndNotify(user, comment);
             return comment;
         }
 
@@ -82,8 +71,7 @@ namespace APIViewWeb
                 IsResolve = true,
                 ReviewId = reviewId,
                 ElementId = lineId
-            },
-            reviewId);
+            });
         }
 
         public async Task UnresolveConversation(ClaimsPrincipal user, string reviewId, string lineId)

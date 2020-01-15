@@ -26,7 +26,7 @@ namespace APIViewWeb.Controllers
             comment.ElementId = elementId;
             comment.Comment = commentText;
 
-            await _commentsManager.AddCommentAsync(User, comment, reviewId);
+            await _commentsManager.AddCommentAsync(User, comment);
 
             return await CommentPartialAsync(reviewId, comment.ElementId);
         }

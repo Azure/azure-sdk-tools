@@ -1,11 +1,14 @@
-﻿using APIViewWeb.Models;
-using Azure.Storage.Blobs.Models;
+﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
+using APIViewWeb.Models;
 using Microsoft.Extensions.Configuration;
 using SendGrid;
 using SendGrid.Helpers.Mail;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -14,14 +17,28 @@ namespace APIViewWeb.Repositories
     public class NotificationManager
     {
         private readonly string _endpoint;
+        private readonly string _sendGridKey;
+        private readonly CosmosReviewRepository _reviewRepository;
 
-        public NotificationManager(IConfiguration configuration)
+        private const string ENDPOINT_SETTING = "Endpoint";
+        private const string SENDGRID_KEY_SETTING = "SendGrid:Key";
+        private const string FROM_ADDRESS = "apiview-noreply@microsoft.com";
+        private const string FROM_NAME = "Api View";
+
+        public NotificationManager(IConfiguration configuration, CosmosReviewRepository reviewRepository)
         {
-            _endpoint = configuration.GetValue<string>("Endpoint");
+            _sendGridKey = configuration[SENDGRID_KEY_SETTING];
+            _endpoint = configuration.GetValue<string>(ENDPOINT_SETTING);
+            _reviewRepository = reviewRepository;
         }
 
-        public async Task NotifySubscribersOnCommentAsync(ReviewModel review, CommentModel comment) =>
+        public async Task SubscribeAndNotify(ClaimsPrincipal user, CommentModel comment)
+        {
+            ReviewModel review = await _reviewRepository.GetReviewAsync(comment.ReviewId);
+            review.Subscribe(user);
+            await _reviewRepository.UpsertReviewAsync(review);
             await SendEmailsAsync(review, GetPlainTextContent(comment), GetHtmlContent(comment, review));
+        }
 
         private string GetHtmlContent(CommentModel comment, ReviewModel review)
         {
@@ -59,13 +76,16 @@ namespace APIViewWeb.Repositories
         }
         private async Task SendEmailsAsync(ReviewModel review, string plainTextContent, string htmlContent)
         {
-            var apiKey = Environment.GetEnvironmentVariable("API_VIEW", EnvironmentVariableTarget.Machine);
-            var client = new SendGridClient(apiKey);
-            var from = new EmailAddress("apiview-noreply@microsoft.com", "Api View");
+            if (review.Subscribers.Count == 0)
+            {
+                return;
+            }
+            var client = new SendGridClient(_sendGridKey);
+            var from = new EmailAddress(FROM_ADDRESS, FROM_NAME);
             SendGridMessage msg = MailHelper.CreateMultipleEmailsToMultipleRecipients(
                 from,
                 review.Subscribers.ToList().
-                Select(e => new EmailAddress(e)).ToList(),
+                    Select(e => new EmailAddress(e)).ToList(),
                 Enumerable.Repeat(review.Name, review.Subscribers.Count).ToList(),
                 plainTextContent,
                 htmlContent,

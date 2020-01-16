@@ -80,10 +80,11 @@ namespace APIViewWeb.Repositories
             }
             var client = new SendGridClient(_sendGridKey);
             var from = new EmailAddress(FROM_ADDRESS, FROM_NAME);
+            var initiatingUserEmail = GetUserEmail(user);
             SendGridMessage msg = MailHelper.CreateMultipleEmailsToMultipleRecipients(
                 from,
                 review.Subscribers.ToList()
-                    .Where(e => e != GetUserEmail(user))
+                    .Where(e => e != initiatingUserEmail) // don't include the initiating user in the email
                     .Select(e => new EmailAddress(e))
                     .ToList(),
                 Enumerable.Repeat(review.Name, review.Subscribers.Count).ToList(),

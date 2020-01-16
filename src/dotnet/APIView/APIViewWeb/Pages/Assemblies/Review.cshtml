@@ -50,11 +50,23 @@
                 </div>
             </div>
         }
-        <div class="float-left">
+
+        <form asp-resource="@Model.Review" asp-requirement="@ReviewOwnerRequirement.Instance" class="form-inline float-right ml-2" method="post" asp-page-handler="ToggleClosed">
+            <input type="submit" class="btn btn-sm btn-secondary" value="@(Model.Review.IsClosed ? "Reopen": "Close")" />
+        </form>
+
+        <div class="float-right">
             <form asp-resource="@Model.Review" class="form-inline float-left ml-2" method="post" asp-page-handler="ToggleSubscribed">
                 @if (Model.Review.GetUserEmail(User) != null)
                 {
-                    <input type="submit" class="btn btn-sm btn-primary" value="@(Model.Review.IsUserSubscribed(User) ? "Unsubscribe": "Subscribe")" />
+                    if (Model.Review.IsUserSubscribed(User))
+                    {
+                        <input type="submit" class="btn btn-sm btn-outline-secondary" value="Unsubscribe" />
+                    }
+                    else
+                    {
+                        <input type="submit" class="btn btn-sm btn-primary" value="Subscribe" />
+                    }
                 }
                 else
                 {
@@ -62,10 +74,6 @@
                 }
             </form>
         </div>
-
-        <form asp-resource="@Model.Review" asp-requirement="@ReviewOwnerRequirement.Instance" class="form-inline float-right ml-2" method="post" asp-page-handler="ToggleClosed">
-            <input type="submit" class="btn btn-sm btn-secondary" value="@(Model.Review.IsClosed ? "Reopen": "Close")" />
-        </form>
 
         <div class="dropdown d-inline-block float-right">
             <a class="btn btn-sm btn-outline-secondary dropdown-toggle" href="#" role="button" data-toggle="dropdown">

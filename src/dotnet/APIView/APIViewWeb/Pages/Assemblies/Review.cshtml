@@ -52,7 +52,14 @@
         }
         <div class="float-left">
             <form asp-resource="@Model.Review" class="form-inline float-left ml-2" method="post" asp-page-handler="ToggleSubscribed">
-                <input type="submit" class="btn btn-sm btn-secondary" value="@(Model.Review.IsUserSubscribed(User) ? "Unsubscribe": "Subscribe")" />
+                @if (Model.Review.GetUserEmail(User) != null)
+                {
+                    <input type="submit" class="btn btn-sm btn-primary" value="@(Model.Review.IsUserSubscribed(User) ? "Unsubscribe": "Subscribe")" />
+                }
+                else
+                {
+                    <input type="submit" class="btn btn-sm btn-primary" title="Link a microsoft.com email to your Github account to subscribe" disabled value="Subscribe" />
+                }
             </form>
         </div>
 

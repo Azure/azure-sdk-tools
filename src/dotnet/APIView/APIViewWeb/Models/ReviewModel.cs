@@ -74,7 +74,7 @@ namespace APIViewWeb
             return false;
         }
 
-        private static string GetUserEmail(ClaimsPrincipal user) =>
+        public string GetUserEmail(ClaimsPrincipal user) =>
             user.FindFirstValue("urn:github:email");
     }
 }

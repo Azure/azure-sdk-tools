@@ -32,12 +32,10 @@ namespace APIViewWeb.Repositories
             _reviewRepository = reviewRepository;
         }
 
-        public async Task SubscribeAndNotify(ClaimsPrincipal user, CommentModel comment)
+        public async Task NotifySubscribersOnComment(ClaimsPrincipal user, CommentModel comment)
         {
             ReviewModel review = await _reviewRepository.GetReviewAsync(comment.ReviewId);
-            review.Subscribe(user);
-            await _reviewRepository.UpsertReviewAsync(review);
-            await SendEmailsAsync(review, GetPlainTextContent(comment), GetHtmlContent(comment, review));
+            await SendEmailsAsync(review, user, GetPlainTextContent(comment), GetHtmlContent(comment, review));
         }
 
         private string GetHtmlContent(CommentModel comment, ReviewModel review)
@@ -64,7 +62,7 @@ namespace APIViewWeb.Repositories
         private static string GetContentHeading(CommentModel comment, bool includeHtml) =>
             $"{(includeHtml ? $"<b>{comment.Username}</b>" : $"{comment.Username}")} commented on this review at {comment.TimeStamp}";
 
-        public async Task NotifySubscribersOnNewRevisionAsync(ReviewRevisionModel revision)
+        public async Task NotifySubscribersOnNewRevisionAsync(ReviewRevisionModel revision, ClaimsPrincipal user)
         {
             var review = revision.Review;
             var uri = new Uri($"{_endpoint}/Assemblies/Review/{review.ReviewId}");
@@ -72,9 +70,9 @@ namespace APIViewWeb.Repositories
                 $" was uploaded by {revision.Author} at {revision.CreationDate}";
             var htmlContent = $"A new revision, <a href='{uri.ToString()}'>{revision.Name}</a>," +
                 $" was uploaded by <b>{revision.Author}</b> at {revision.CreationDate}";
-            await SendEmailsAsync(review, plainTextContent, htmlContent);
+            await SendEmailsAsync(review, user, plainTextContent, htmlContent);
         }
-        private async Task SendEmailsAsync(ReviewModel review, string plainTextContent, string htmlContent)
+        private async Task SendEmailsAsync(ReviewModel review, ClaimsPrincipal user, string plainTextContent, string htmlContent)
         {
             if (review.Subscribers.Count == 0)
             {
@@ -84,13 +82,21 @@ namespace APIViewWeb.Repositories
             var from = new EmailAddress(FROM_ADDRESS, FROM_NAME);
             SendGridMessage msg = MailHelper.CreateMultipleEmailsToMultipleRecipients(
                 from,
-                review.Subscribers.ToList().
-                    Select(e => new EmailAddress(e)).ToList(),
+                review.Subscribers.ToList()
+                    .Where(e => e != GetUserEmail(user))
+                    .Select(e => new EmailAddress(e))
+                    .ToList(),
                 Enumerable.Repeat(review.Name, review.Subscribers.Count).ToList(),
                 plainTextContent,
                 htmlContent,
                 Enumerable.Repeat(new Dictionary<string, string>(), review.Subscribers.Count).ToList());
             await client.SendEmailAsync(msg);
         }
+
+        public async Task UpsertReviewAsync(ReviewModel review) =>
+            await _reviewRepository.UpsertReviewAsync(review);
+
+        public static string GetUserEmail(ClaimsPrincipal user) =>
+            user.FindFirstValue("urn:github:email");
     }
 }

@@ -6,6 +6,7 @@ using ApiView;
 using APIView;
 using APIView.DIff;
 using APIViewWeb.Models;
+using APIViewWeb.Repositories;
 using APIViewWeb.Respositories;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -16,22 +17,22 @@ namespace APIViewWeb.Pages.Assemblies
     {
         private readonly ReviewManager _manager;
 
-        private readonly CosmosReviewRepository _reviewRepository;
-
         private readonly BlobCodeFileRepository _codeFileRepository;
 
         private readonly CommentsManager _commentsManager;
 
+        private readonly NotificationManager _notificationManager;
+
         public ReviewPageModel(
             ReviewManager manager,
-            CosmosReviewRepository reviewRepository,
             BlobCodeFileRepository codeFileRepository,
-            CommentsManager commentsManager)
+            CommentsManager commentsManager,
+            NotificationManager notificationManager)
         {
             _manager = manager;
-            _reviewRepository = reviewRepository;
             _codeFileRepository = codeFileRepository;
             _commentsManager = commentsManager;
+            _notificationManager = notificationManager;
         }
 
         public ReviewModel Review { get; set; }
@@ -179,7 +180,7 @@ namespace APIViewWeb.Pages.Assemblies
             {
                 review.Subscribe(User);
             }
-            await _reviewRepository.UpsertReviewAsync(review);
+            await _notificationManager.UpsertReviewAsync(review);
             return RedirectToPage(new { id = id });
         }
     }

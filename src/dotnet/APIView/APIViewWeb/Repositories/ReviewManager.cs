@@ -178,7 +178,7 @@ namespace APIViewWeb.Respositories
             review.Subscribe(user);
 
             await _reviewsRepository.UpsertReviewAsync(review);
-            await _notificationManager.NotifySubscribersOnNewRevisionAsync(revision);
+            await _notificationManager.NotifySubscribersOnNewRevisionAsync(revision, user);
         }
 
         private async Task<ReviewCodeFileModel> CreateFileAsync(string revisionId, string originalName, Stream fileStream, bool runAnalysis)

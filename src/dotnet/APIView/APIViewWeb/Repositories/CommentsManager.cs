@@ -17,7 +17,6 @@ namespace APIViewWeb
 
         private readonly CosmosCommentsRepository _commentsRepository;
 
-
         private readonly NotificationManager _notificationManager;
 
         public CommentsManager(
@@ -43,7 +42,7 @@ namespace APIViewWeb
             comment.TimeStamp = DateTime.Now;
 
             await _commentsRepository.UpsertCommentAsync(comment);
-            await _notificationManager.SubscribeAndNotify(user, comment);
+            await _notificationManager.NotifySubscribersOnComment(user, comment);
         }
 
         public async Task<CommentModel> UpdateCommentAsync(ClaimsPrincipal user, string reviewId, string commentId, string commentText)
@@ -53,7 +52,7 @@ namespace APIViewWeb
             comment.EditedTimeStamp = DateTime.Now;
             comment.Comment = commentText;
             await _commentsRepository.UpsertCommentAsync(comment);
-            await _notificationManager.SubscribeAndNotify(user, comment);
+            await _notificationManager.NotifySubscribersOnComment(user, comment);
             return comment;
         }
 

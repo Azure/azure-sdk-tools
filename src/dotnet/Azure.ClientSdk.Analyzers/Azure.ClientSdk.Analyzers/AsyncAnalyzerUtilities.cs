@@ -32,24 +32,32 @@ namespace Azure.ClientSdk.Analyzers
             TaskOfTTypeSymbol = compilation.GetTypeByMetadataName(typeof(Task<>).FullName);
             ValueTaskTypeSymbol = compilation.GetTypeByMetadataName(typeof(ValueTask).FullName);
             ValueTaskOfTTypeSymbol = compilation.GetTypeByMetadataName(typeof(ValueTask<>).FullName);
-            AsyncDisposableSymbol = compilation.GetTypeByMetadataName(typeof(IAsyncDisposable).FullName);
-            AsyncEnumerableOfTTypeSymbol = compilation.GetTypeByMetadataName(typeof(IAsyncEnumerable<>).FullName);
-            TaskAsyncEnumerableExtensionsSymbol = compilation.GetTypeByMetadataName(typeof(TaskAsyncEnumerableExtensions).FullName);
+            AsyncDisposableSymbol = compilation.GetTypeByMetadataName("System.IAsyncDisposable");
+            AsyncEnumerableOfTTypeSymbol = compilation.GetTypeByMetadataName("System.Collections.Generic.IAsyncEnumerable`1");
+            TaskAsyncEnumerableExtensionsSymbol = compilation.GetTypeByMetadataName("System.Threading.Tasks.TaskAsyncEnumerableExtensions");
         }
 
-        public bool IsConfigureAwait(SyntaxNode node) =>
+        public bool IsAwaitLocalDeclaration(SyntaxNode node) =>
+            node is LocalDeclarationStatementSyntax declaration && declaration.AwaitKeyword.Text == "await";
+
+        public bool IsConfigureAwaitInvocation(SyntaxNode node) =>
             node is InvocationExpressionSyntax invocation &&
             invocation.Expression is MemberAccessExpressionSyntax memberAccess &&
             memberAccess.Name.Identifier.Text == nameof(Task.ConfigureAwait);
 
         public bool IsConfigureAwait(IMethodSymbol method)
         {
-            if (method.Name == nameof(Task.ConfigureAwait) && method.Parameters.Length == 1 && IsTaskType(method.ReceiverType))
+            if (method.Name != nameof(Task.ConfigureAwait)) 
+            {
+                return false;
+            }
+
+            if (method.Parameters.Length == 1 && IsTaskType(method.ReceiverType))
             {
                 return true;
             }
 
-            if (method.Name == nameof(TaskAsyncEnumerableExtensions.ConfigureAwait) && method.Parameters.Length == 2 && Equals(method.ReceiverType, TaskAsyncEnumerableExtensionsSymbol))
+            if (method.Parameters.Length == 2 && Equals(method.ReceiverType, TaskAsyncEnumerableExtensionsSymbol))
             {
                 return true;
             }

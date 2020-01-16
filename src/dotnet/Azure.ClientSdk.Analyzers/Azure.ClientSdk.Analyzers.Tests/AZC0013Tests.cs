@@ -33,27 +33,6 @@ namespace RandomNamespace
         }
 
         [Fact]
-        public async Task AZC0013NoWarningOnExistingConfigureAwaitTrue()
-        {
-            var testSource = TestSource.Read(@"
-namespace RandomNamespace
-{
-    public class MyClass
-    {
-        public static async System.Threading.Tasks.Task Foo()
-        {
-#pragma warning disable AZC0013
-            await System.Threading.Tasks.Task.Run(() => {}).ConfigureAwait(true);
-#pragma warning restore AZC0013
-        }
-    }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-            Assert.Empty(diagnostics);
-        }
-
-        [Fact]
         public async Task AZC0013WarningOnAsyncEnumerableExistingConfigureAwaitTrue()
         {
             var testSource = TestSource.Read(@"
@@ -79,34 +58,6 @@ namespace RandomNamespace
 
             Assert.Equal("AZC0013", diagnostic.Id);
             AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostics[0].Location);
-        }
-
-        [Fact]
-        public async Task AZC0013NoWarningOnAsyncEnumerableExistingConfigureAwaitTrue()
-        {
-
-            var testSource = TestSource.Read(@"
-namespace RandomNamespace
-{
-    using System.Collections.Generic;
-    using System.Threading;
-    using System.Threading.Tasks;
-
-    public class MyClass
-    {
-        public static async Task Foo()
-        {
-#pragma warning disable AZC0013
-            await foreach (var x in /*MM*/GetValuesAsync().ConfigureAwait(true)) { }
-#pragma warning restore AZC0013
-        }
-
-        private static async IAsyncEnumerable<int> GetValuesAsync() { yield break; }
-    }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-            Assert.Empty(diagnostics);
         }
 
         [Fact]
@@ -141,9 +92,8 @@ namespace RandomNamespace
         }
 
         [Fact]
-        public async Task AZC0013NoWarningOnAsyncUsingExistingConfigureAwaitTrue()
+        public async Task AZC0013WarningOnAsyncUsingNoBracesExistingConfigureAwaitTrue()
         {
-
             var testSource = TestSource.Read(@"
 namespace RandomNamespace
 {
@@ -155,11 +105,49 @@ namespace RandomNamespace
         public static async Task Foo()
         {
             var ad = new AsyncDisposable();
+            await using var x = ad./*MM*/ConfigureAwait(true);
+        }
+    
+        private class AsyncDisposable : IAsyncDisposable
+        {
+            public ValueTask DisposeAsync() => new ValueTask();
+        }
+    }
+}
+");
+            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
+            var diagnostic = Assert.Single(diagnostics);
+
+            Assert.Equal("AZC0013", diagnostic.Id);
+            AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostics[0].Location);
+        }
+
+        [Fact]
+        public async Task AZC0013DisabledNoWarningOnExistingConfigureAwaitTrue()
+        {
+            var testSource = TestSource.Read(@"
+namespace RandomNamespace
+{
+    using System;
+    using System.Collections.Generic;
+    using System.Threading.Tasks;
+
+    public class MyClass
+    {
+        public static async System.Threading.Tasks.Task Foo()
+        {
+            var ad = new AsyncDisposable();
+
 #pragma warning disable AZC0013
-            await using(ad./*MM*/ConfigureAwait(true)) { }
+            await foreach (var x in GetValuesAsync().ConfigureAwait(true)) { }
+            await System.Threading.Tasks.Task.Run(() => {}).ConfigureAwait(true);
+            await using var y = ad.ConfigureAwait(true);
+            await using(ad.ConfigureAwait(true)) { }
 #pragma warning restore AZC0013
         }
     
+        private static async IAsyncEnumerable<int> GetValuesAsync() { yield break; }
+
         private class AsyncDisposable : IAsyncDisposable
         {
             public ValueTask DisposeAsync() => new ValueTask();

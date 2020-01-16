@@ -34,6 +34,7 @@ namespace Azure.ClientSdk.Analyzers
             context.RegisterSyntaxNodeAction(AnalyzeUsingExpression, SyntaxKind.UsingStatement);
             context.RegisterSyntaxNodeAction(AnalyzeForEachExpression, SyntaxKind.ForEachStatement);
             context.RegisterSyntaxNodeAction(AnalyzeConfigureAwaitTrue, SyntaxKind.InvocationExpression);
+            context.RegisterSyntaxNodeAction(AnalyzeUsingDeclarationExpression, SyntaxKind.LocalDeclarationStatement);
         }
 
         private void AnalyzeAwaitExpression(SyntaxNodeAnalysisContext context)
@@ -68,6 +69,36 @@ namespace Azure.ClientSdk.Analyzers
             }
         }
 
+        private void AnalyzeUsingDeclarationExpression(SyntaxNodeAnalysisContext context) 
+        {
+            if (!_asyncUtilities.IsAwaitLocalDeclaration(context.Node))
+            {
+                return;
+            }
+
+            if (!(context.SemanticModel.GetOperation(context.Node, context.CancellationToken) is IUsingDeclarationOperation usingDeclarationOperation))
+            {
+                return;
+            }
+
+            if (!usingDeclarationOperation.IsAsynchronous)
+            {
+                return;
+            }
+
+            var initializes = usingDeclarationOperation.DeclarationGroup.Declarations
+                .SelectMany(d => d.Declarators)
+                .Select(d => d.Initializer?.Value);
+
+            foreach (var initializer in initializes) 
+            {
+                if (_asyncUtilities.IsAsyncDisposableType(initializer?.Type))
+                {
+                    ReportConfigureAwaitDiagnostic(context, initializer);
+                }
+            }
+        }
+
         private void AnalyzeForEachExpression(SyntaxNodeAnalysisContext context) 
         {
             if (!(context.SemanticModel.GetOperation(context.Node, context.CancellationToken) is IForEachLoopOperation forEachOperation))
@@ -89,7 +120,7 @@ namespace Azure.ClientSdk.Analyzers
 
         private void AnalyzeConfigureAwaitTrue(SyntaxNodeAnalysisContext context)
         {
-            if (!_asyncUtilities.IsConfigureAwait(context.Node))
+            if (!_asyncUtilities.IsConfigureAwaitInvocation(context.Node))
             {
                 return;
             }

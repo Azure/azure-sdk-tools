@@ -103,9 +103,10 @@ namespace APIViewWeb
 
                     options.ClaimActions.MapJsonKey(ClaimTypes.NameIdentifier, "id");
                     options.ClaimActions.MapJsonKey(ClaimTypes.Name, "name");
-                    options.ClaimActions.MapJsonKey("urn:github:login", "login");
-                    options.ClaimActions.MapJsonKey("urn:github:url", "html_url");
-                    options.ClaimActions.MapJsonKey("urn:github:avatar", "avatar_url");
+                    options.ClaimActions.MapJsonKey(ClaimConstants.Login, "login");
+                    options.ClaimActions.MapJsonKey(ClaimConstants.Url, "html_url");
+                    options.ClaimActions.MapJsonKey(ClaimConstants.Avatar, "avatar_url");
+                    options.ClaimActions.MapJsonKey(ClaimConstants.Name, "name");
 
                     options.Events = new OAuthEvents
                     {
@@ -151,9 +152,9 @@ namespace APIViewWeb
                                 if (msEmail != null)
                                 {
                                     context.Identity.AddClaim(
-                                        new Claim("urn:github:email", msEmail));
+                                        new Claim(ClaimConstants.Email, msEmail));
                                 }
-                                context.Identity.AddClaim(new Claim("urn:github:orgs", orgNames.ToString()));
+                                context.Identity.AddClaim(new Claim(ClaimConstants.Orgs, orgNames.ToString()));
                             }
                         }
                     };

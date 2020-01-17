@@ -74,19 +74,21 @@ namespace APIViewWeb.Repositories
         }
         private async Task SendEmailsAsync(ReviewModel review, ClaimsPrincipal user, string plainTextContent, string htmlContent)
         {
-            if (review.Subscribers.Count == 0)
+            string initiatingUserEmail = GetUserEmail(user);
+            var subscribers = review.Subscribers.ToList()
+                    .Where(e => e != initiatingUserEmail) // don't include the initiating user in the email
+                    .Select(e => new EmailAddress(e))
+                    .ToList();
+            if (subscribers.Count == 0)
             {
                 return;
             }
+
             var client = new SendGridClient(_sendGridKey);
-            var from = new EmailAddress(FROM_ADDRESS, FROM_NAME);
-            var initiatingUserEmail = GetUserEmail(user);
+            var from = new EmailAddress(FROM_ADDRESS, GetUserName(user));
             SendGridMessage msg = MailHelper.CreateMultipleEmailsToMultipleRecipients(
                 from,
-                review.Subscribers.ToList()
-                    .Where(e => e != initiatingUserEmail) // don't include the initiating user in the email
-                    .Select(e => new EmailAddress(e))
-                    .ToList(),
+                subscribers,
                 Enumerable.Repeat(review.Name, review.Subscribers.Count).ToList(),
                 plainTextContent,
                 htmlContent,
@@ -129,6 +131,12 @@ namespace APIViewWeb.Repositories
         }
 
         public static string GetUserEmail(ClaimsPrincipal user) =>
-            user.FindFirstValue("urn:github:email");
+            user.FindFirstValue(ClaimConstants.Email);
+
+        private static string GetUserName(ClaimsPrincipal user)
+        {
+            string name = user.FindFirstValue(ClaimConstants.Name);
+            return string.IsNullOrEmpty(name) ? user.FindFirstValue(ClaimConstants.Login) : name;
+        }
     }
 }

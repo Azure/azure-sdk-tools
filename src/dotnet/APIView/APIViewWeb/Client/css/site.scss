@@ -345,6 +345,7 @@ code-inner {
     list-style-type: none;
     text-overflow: ellipsis;
     padding-left: 0;
+    margin-bottom: 0 !important; // prevents flickering in stickySidebar
 }
 
 .nav-list-children>li {

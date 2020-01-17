@@ -175,7 +175,7 @@ namespace APIViewWeb.Respositories
             UpdateRevisionNames(review);
 
             // auto subscribe revision creation user
-            review.Subscribe(user);
+            await _notificationManager.SubscribeAsync(review, user);
 
             await _reviewsRepository.UpsertReviewAsync(review);
             await _notificationManager.NotifySubscribersOnNewRevisionAsync(revision, user);

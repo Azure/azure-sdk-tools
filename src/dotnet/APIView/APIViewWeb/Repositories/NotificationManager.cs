@@ -94,8 +94,39 @@ namespace APIViewWeb.Repositories
             await client.SendEmailAsync(msg);
         }
 
-        public async Task UpsertReviewAsync(ReviewModel review) =>
-            await _reviewRepository.UpsertReviewAsync(review);
+        public async Task ToggleSubscribedAsync(ClaimsPrincipal user, string reviewId)
+        {
+            ReviewModel review = await _reviewRepository.GetReviewAsync(reviewId);
+            if (review.IsUserSubscribed(user))
+            {
+                await UnsubscribeAsync(review, user);
+            }
+            else
+            {
+                await SubscribeAsync(review, user);
+            }
+        }
+
+        public async Task SubscribeAsync(ReviewModel review, ClaimsPrincipal user)
+        {
+            string email = GetUserEmail(user);
+
+            if (email != null && !review.Subscribers.Contains(email))
+            {
+                review.Subscribers.Add(email);
+                await _reviewRepository.UpsertReviewAsync(review);
+            }
+        }
+
+        public async Task UnsubscribeAsync(ReviewModel review, ClaimsPrincipal user)
+        {
+            string email = GetUserEmail(user);
+            if (email != null && review.Subscribers.Contains(email))
+            {
+                review.Subscribers.Remove(email);
+                await _reviewRepository.UpsertReviewAsync(review);
+            }
+        }
 
         public static string GetUserEmail(ClaimsPrincipal user) =>
             user.FindFirstValue("urn:github:email");

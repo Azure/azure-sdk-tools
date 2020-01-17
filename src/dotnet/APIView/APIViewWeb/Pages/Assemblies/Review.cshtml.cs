@@ -171,16 +171,7 @@ namespace APIViewWeb.Pages.Assemblies
 
         public async Task<ActionResult> OnPostToggleSubscribedAsync(string id)
         {
-            ReviewModel review = await _manager.GetReviewAsync(User, id);
-            if (review.IsUserSubscribed(User))
-            {
-                review.Unsubscribe(User);
-            }
-            else
-            {
-                review.Subscribe(User);
-            }
-            await _notificationManager.UpsertReviewAsync(review);
+            await _notificationManager.ToggleSubscribedAsync(User, id);
             return RedirectToPage(new { id = id });
         }
     }

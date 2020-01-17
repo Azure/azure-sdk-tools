@@ -19,6 +19,8 @@ using System.Text.Json;
 using APIViewWeb.Respositories;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using APIViewWeb.Repositories;
+using System.Threading.Tasks;
 
 namespace APIViewWeb
 {
@@ -73,6 +75,7 @@ namespace APIViewWeb
 
             services.AddSingleton<ReviewManager>();
             services.AddSingleton<CommentsManager>();
+            services.AddSingleton<NotificationManager>();
 
             services.AddSingleton<ILanguageService, JsonLanguageService>();
             services.AddSingleton<ILanguageService, CSharpLanguageService>();
@@ -143,6 +146,12 @@ namespace APIViewWeb
                                     orgNames.Append(org["login"]);
                                 }
 
+                                string msEmail = await GetMicrosoftEmailAsync(context);
+                                if (msEmail != null)
+                                {
+                                    context.Identity.AddClaim(
+                                        new Claim("urn:github:email", msEmail));
+                                }
                                 context.Identity.AddClaim(new Claim("urn:github:orgs", orgNames.ToString()));
                             }
                         }
@@ -156,6 +165,28 @@ namespace APIViewWeb
             services.AddSingleton<IAuthorizationHandler, CommentOwnerRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, ReviewOwnerRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, RevisionOwnerRequirementHandler>();
+        }
+
+        private static async Task<string> GetMicrosoftEmailAsync(OAuthCreatingTicketContext context)
+        {
+            var message = new HttpRequestMessage(
+                HttpMethod.Get,
+                "https://api.github.com/user/emails");
+            message.Headers.Authorization = new AuthenticationHeaderValue(
+                "Bearer",
+                context.AccessToken);
+
+            var response = await context.Backchannel.SendAsync(message);
+            var emails = JArray.Parse(await response.Content.ReadAsStringAsync());
+            foreach (var email in emails)
+            {
+                var address = email["email"]?.Value<string>();
+                if (address != null && address.EndsWith("microsoft.com", StringComparison.OrdinalIgnoreCase))
+                {
+                    return address;
+                }
+            }
+            return null;
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

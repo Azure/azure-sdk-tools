@@ -8,6 +8,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using ApiView;
+using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Authorization;
 
 namespace APIViewWeb.Respositories
@@ -26,13 +27,16 @@ namespace APIViewWeb.Respositories
 
         private readonly IEnumerable<ILanguageService> _languageServices;
 
+        private readonly NotificationManager _notificationManager;
+
         public ReviewManager(
             IAuthorizationService authorizationService,
             CosmosReviewRepository reviewsRepository,
             BlobCodeFileRepository codeFileRepository,
             BlobOriginalsRepository originalsRepository,
             CosmosCommentsRepository commentsRepository,
-            IEnumerable<ILanguageService> languageServices)
+            IEnumerable<ILanguageService> languageServices,
+            NotificationManager notificationManager)
         {
             _authorizationService = authorizationService;
             _reviewsRepository = reviewsRepository;
@@ -40,6 +44,7 @@ namespace APIViewWeb.Respositories
             _originalsRepository = originalsRepository;
             _commentsRepository = commentsRepository;
             _languageServices = languageServices;
+            _notificationManager = notificationManager;
         }
 
         public async Task<ReviewModel> CreateReviewAsync(ClaimsPrincipal user, string originalName, Stream fileStream, bool runAnalysis)
@@ -169,7 +174,11 @@ namespace APIViewWeb.Respositories
             review.Revisions.Add(revision);
             UpdateRevisionNames(review);
 
+            // auto subscribe revision creation user
+            await _notificationManager.SubscribeAsync(review, user);
+
             await _reviewsRepository.UpsertReviewAsync(review);
+            await _notificationManager.NotifySubscribersOnNewRevisionAsync(revision, user);
         }
 
         private async Task<ReviewCodeFileModel> CreateFileAsync(string revisionId, string originalName, Stream fileStream, bool runAnalysis)

@@ -181,7 +181,7 @@ namespace APIViewWeb
             foreach (var email in emails)
             {
                 var address = email["email"]?.Value<string>();
-                if (address != null && address.EndsWith("microsoft.com", StringComparison.OrdinalIgnoreCase))
+                if (address != null && address.EndsWith("@microsoft.com", StringComparison.OrdinalIgnoreCase))
                 {
                     return address;
                 }

@@ -93,6 +93,7 @@ namespace APIViewWeb
                     options.ClientId = Configuration["Github:ClientId"];
                     options.ClientSecret = Configuration["Github:ClientSecret"];
                     options.CallbackPath = new PathString("/signin-github");
+                    options.Scope.Add("user:email");
 
                     options.AuthorizationEndpoint = "https://github.com/login/oauth/authorize";
                     options.TokenEndpoint = "https://github.com/login/oauth/access_token";

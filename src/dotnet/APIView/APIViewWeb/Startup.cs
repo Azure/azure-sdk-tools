@@ -178,16 +178,25 @@ namespace APIViewWeb
                 context.AccessToken);
 
             var response = await context.Backchannel.SendAsync(message);
-            var emails = JArray.Parse(await response.Content.ReadAsStringAsync());
-            foreach (var email in emails)
+
+            var respString = await response.Content.ReadAsStringAsync();
+            try
             {
-                var address = email["email"]?.Value<string>();
-                if (address != null && address.EndsWith("@microsoft.com", StringComparison.OrdinalIgnoreCase))
+                var emails = JArray.Parse(respString);
+                foreach (var email in emails)
                 {
-                    return address;
+                    var address = email["email"]?.Value<string>();
+                    if (address != null && address.EndsWith("@microsoft.com", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return address;
+                    }
                 }
+                return null;
             }
-            return null;
+            catch (Exception e)
+            {
+                throw new Exception(respString, e);
+            }
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

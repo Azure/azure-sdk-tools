@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -52,15 +53,20 @@ namespace Azure.ClientSdk.Analyzers
 
         private void AnalyzeUsingExpression(SyntaxNodeAnalysisContext context) 
         {
+            if (!_asyncUtilities.IsAwaitUsingStatement(context.Node))
+            {
+                return;
+            }
+
             if (!(context.SemanticModel.GetOperation(context.Node, context.CancellationToken) is IUsingOperation usingOperation))
             {
                 return;
             }
 
-            if (!usingOperation.IsAsynchronous)
-            {
-                return;
-            }
+            //if (!usingOperation.IsAsynchronous)
+            //{
+            //    return;
+            //}
 
             var resources = usingOperation.Resources;
             if (_asyncUtilities.IsAsyncDisposableType(resources.Type))
@@ -76,21 +82,32 @@ namespace Azure.ClientSdk.Analyzers
                 return;
             }
 
-            if (!(context.SemanticModel.GetOperation(context.Node, context.CancellationToken) is IUsingDeclarationOperation usingDeclarationOperation))
+            //if (!(context.SemanticModel.GetOperation(context.Node, context.CancellationToken) is IUsingDeclarationOperation usingDeclarationOperation))
+            //{
+            //    return;
+            //}
+
+            //if (!usingDeclarationOperation.IsAsynchronous)
+            //{
+            //    return;
+            //}
+
+            var operation = context.SemanticModel.GetOperation(context.Node, context.CancellationToken);
+            if (operation == null || operation is IInvalidOperation)
             {
                 return;
             }
 
-            if (!usingDeclarationOperation.IsAsynchronous)
+            if (!(operation.Children.LastOrDefault() is IVariableDeclarationGroupOperation dg)) 
             {
                 return;
-            }
+            };
 
-            var initializes = usingDeclarationOperation.DeclarationGroup.Declarations
+            var initializes = dg.Declarations
                 .SelectMany(d => d.Declarators)
                 .Select(d => d.Initializer?.Value);
 
-            foreach (var initializer in initializes) 
+            foreach (var initializer in initializes)
             {
                 if (_asyncUtilities.IsAsyncDisposableType(initializer?.Type))
                 {
@@ -101,15 +118,20 @@ namespace Azure.ClientSdk.Analyzers
 
         private void AnalyzeForEachExpression(SyntaxNodeAnalysisContext context) 
         {
-            if (!(context.SemanticModel.GetOperation(context.Node, context.CancellationToken) is IForEachLoopOperation forEachOperation))
+            if (!_asyncUtilities.IsAwaitForEach(context.Node)) 
             {
                 return;
             }
 
-            if (!forEachOperation.IsAsynchronous)
+            if (!(context.SemanticModel.GetOperation(context.Node, context.CancellationToken) is IForEachLoopOperation forEachOperation))
             {
                 return;
             }
+            
+            //if (!forEachOperation.IsAsynchronous)
+            //{
+            //    return;
+            //}
 
             var collectionType = forEachOperation.Collection.Type;
             if (_asyncUtilities.IsAsyncEnumerableType(collectionType)) 

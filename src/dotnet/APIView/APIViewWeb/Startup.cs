@@ -87,7 +87,7 @@ namespace APIViewWeb
                     options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                     options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 })
-                .AddCookie(options => options.LoginPath = "/Unauthorized")
+                .AddCookie(options => options.LoginPath = options.AccessDeniedPath = "/Unauthorized")
                 .AddOAuth("GitHub", options =>
                 {
                     options.ClientId = Configuration["Github:ClientId"];

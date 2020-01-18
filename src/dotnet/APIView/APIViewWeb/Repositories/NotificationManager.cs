@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using APIViewWeb.Models;
+using Markdig;
 using Microsoft.Extensions.Configuration;
 using SendGrid;
 using SendGrid.Helpers.Mail;
@@ -23,7 +24,6 @@ namespace APIViewWeb.Repositories
         private const string ENDPOINT_SETTING = "Endpoint";
         private const string SENDGRID_KEY_SETTING = "SendGrid:Key";
         private const string FROM_ADDRESS = "apiview-noreply@microsoft.com";
-        private const string FROM_NAME = "Api View";
 
         public NotificationManager(IConfiguration configuration, CosmosReviewRepository reviewRepository)
         {
@@ -40,13 +40,13 @@ namespace APIViewWeb.Repositories
 
         private string GetHtmlContent(CommentModel comment, ReviewModel review)
         {
-            var uri = new Uri($"{_endpoint}/Assemblies/Review/{review.ReviewId}#{comment.ElementId}");
+            var uri = new Uri($"{_endpoint}/Assemblies/Review/{review.ReviewId}#{Uri.EscapeUriString(comment.ElementId)}");
             var sb = new StringBuilder();
             sb.Append(GetContentHeading(comment, true));
             sb.Append("<br><br>");
             sb.Append($"In <a href='{uri.ToString()}'>{comment.ElementId}</a>:");
             sb.Append("<br><br>");
-            sb.Append(comment.Comment);
+            sb.Append(CommentMarkdownExtensions.MarkdownAsHtml(comment.Comment));
             return sb.ToString();
         }
 
@@ -55,7 +55,7 @@ namespace APIViewWeb.Repositories
             var sb = new StringBuilder();
             sb.Append(GetContentHeading(comment, false));
             sb.Append("\r\n");
-            sb.Append(comment.Comment);
+            sb.Append(CommentMarkdownExtensions.MarkdownAsPlainText(comment.Comment));
             return sb.ToString();
         }
 

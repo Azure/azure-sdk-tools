@@ -63,10 +63,10 @@ namespace Azure.ClientSdk.Analyzers
                 return;
             }
 
-            //if (!usingOperation.IsAsynchronous)
-            //{
-            //    return;
-            //}
+            if (!usingOperation.IsAsynchronous)
+            {
+                return;
+            }
 
             var resources = usingOperation.Resources;
             if (_asyncUtilities.IsAsyncDisposableType(resources.Type))
@@ -82,28 +82,17 @@ namespace Azure.ClientSdk.Analyzers
                 return;
             }
 
-            //if (!(context.SemanticModel.GetOperation(context.Node, context.CancellationToken) is IUsingDeclarationOperation usingDeclarationOperation))
-            //{
-            //    return;
-            //}
-
-            //if (!usingDeclarationOperation.IsAsynchronous)
-            //{
-            //    return;
-            //}
-
-            var operation = context.SemanticModel.GetOperation(context.Node, context.CancellationToken);
-            if (operation == null || operation is IInvalidOperation)
+            if (!(context.SemanticModel.GetOperation(context.Node, context.CancellationToken) is IUsingDeclarationOperation usingDeclarationOperation))
             {
                 return;
             }
 
-            if (!(operation.Children.LastOrDefault() is IVariableDeclarationGroupOperation dg)) 
+            if (!usingDeclarationOperation.IsAsynchronous)
             {
                 return;
-            };
+            }
 
-            var initializes = dg.Declarations
+            var initializes = usingDeclarationOperation.DeclarationGroup.Declarations
                 .SelectMany(d => d.Declarators)
                 .Select(d => d.Initializer?.Value);
 
@@ -127,11 +116,11 @@ namespace Azure.ClientSdk.Analyzers
             {
                 return;
             }
-            
-            //if (!forEachOperation.IsAsynchronous)
-            //{
-            //    return;
-            //}
+
+            if (!forEachOperation.IsAsynchronous)
+            {
+                return;
+            }
 
             var collectionType = forEachOperation.Collection.Type;
             if (_asyncUtilities.IsAsyncEnumerableType(collectionType)) 

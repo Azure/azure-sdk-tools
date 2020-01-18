@@ -8,6 +8,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Operations;
 
@@ -37,8 +38,14 @@ namespace Azure.ClientSdk.Analyzers
             TaskAsyncEnumerableExtensionsSymbol = compilation.GetTypeByMetadataName("System.Threading.Tasks.TaskAsyncEnumerableExtensions");
         }
 
+        public bool IsAwaitForEach(SyntaxNode node) =>
+            node is ForEachStatementSyntax forEach && forEach.AwaitKeyword.Kind() == SyntaxKind.AwaitKeyword;
+
+        public bool IsAwaitUsingStatement(SyntaxNode node) =>
+            node is UsingStatementSyntax usingStatement && usingStatement.AwaitKeyword.Kind() == SyntaxKind.AwaitKeyword;
+
         public bool IsAwaitLocalDeclaration(SyntaxNode node) =>
-            node is LocalDeclarationStatementSyntax declaration && declaration.AwaitKeyword.Text == "await";
+            node is LocalDeclarationStatementSyntax declaration && declaration.AwaitKeyword.Kind() == SyntaxKind.AwaitKeyword;
 
         public bool IsConfigureAwaitInvocation(SyntaxNode node) =>
             node is InvocationExpressionSyntax invocation &&

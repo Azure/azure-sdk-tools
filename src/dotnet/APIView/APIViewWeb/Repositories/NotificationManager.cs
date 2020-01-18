@@ -55,7 +55,7 @@ namespace APIViewWeb.Repositories
             var sb = new StringBuilder();
             sb.Append(GetContentHeading(comment, false));
             sb.Append("\r\n");
-            sb.Append(Markdown.ToPlainText(comment.Comment));
+            sb.Append(CommentMarkdownExtensions.MarkdownAsPlainText(comment.Comment));
             return sb.ToString();
         }
 

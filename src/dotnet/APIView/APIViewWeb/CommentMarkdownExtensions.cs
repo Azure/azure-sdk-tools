@@ -9,7 +9,7 @@ namespace APIViewWeb
 {
     public static class CommentMarkdownExtensions
     {
-        public static readonly MarkdownPipeline MarkdownPipeline = new MarkdownPipelineBuilder()
+        private static readonly MarkdownPipeline MarkdownPipeline = new MarkdownPipelineBuilder()
             .UseAdvancedExtensions()
             .DisableHtml()
             .Build();
@@ -28,5 +28,8 @@ namespace APIViewWeb
 
         public static string MarkdownAsHtml(string text) =>
             Markdown.ToHtml(text ?? "", MarkdownPipeline);
+
+        public static string MarkdownAsPlainText(string text) =>
+            Markdown.ToPlainText(text ?? "", MarkdownPipeline);
     }
 }

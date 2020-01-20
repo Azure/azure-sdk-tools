@@ -13,6 +13,7 @@ import xml.etree.ElementTree as ET
 import textwrap
 import re
 import fnmatch
+import pathlib
 
 # python 3 transitioned StringIO to be part of `io` module. 
 # python 2 needs the old version however
@@ -72,20 +73,58 @@ def index_packages(configuration):
 
     return language_selector.get(configuration.scan_language.lower(), unrecognized_option)(configuration)
 
+def get_swift_package_id_from_directory(directory):
+    package_id = pathlib.Path(directory).name
+    return package_id
+
 def get_swift_package_info(config):
     pkg_list = []
     pkg_locations, ignored_pkg_locations = get_swift_package_roots(config)
 
     for pkg_file in (pkg_locations + ignored_pkg_locations):
-        # TODOprint("Found *.pbxproj file: {}".format(pkg_file))
-        pkg_list.append(PackageInfo(
-            package_id = 'AzureCore',
-            package_version = '1.0.0-beta.1',
-            relative_package_location = 'x',
-            relative_readme_location = 'y',
-            relative_changelog_location = 'z',
-            repository_args = []
-            ))
+
+        pkg_id = get_swift_package_id_from_directory(pkg_file)
+
+        changelog = os.path.join(pkg_file, 'CHANGELOG.md')
+        changelog_relpath = webify_relative_path(os.path.relpath(changelog, config.target_directory))
+        
+        readme = os.path.join(pkg_file, 'README.md')
+        readme_relpath = webify_relative_path(os.path.relpath(readme, config.target_directory))
+
+        pkg_location = webify_relative_path(os.path.relpath(pkg_file, config.target_directory))
+
+        # The way I am determining the package version is by lifting the marketing version
+        # from the project.pbxproj file. There isn't really a strong notion of semantic version
+        # in XCode projects beyond this marketing version from what I can tell. Perhaps if
+        # SwiftPM becomes more dominant and gets tooling support then that might change.
+        pbxproj_file_path = '{}/{}.xcodeproj/project.pbxproj'.format(pkg_file, pkg_id)
+        with open(pbxproj_file_path) as pbxproj_file:
+            pbxproj_file_contents = pbxproj_file.read()
+
+            # This is a pretty simple expression, it grabs the strings that are
+            # in the form:
+            #
+            #       MARKETING_VERSION = "1.0.0-beta.1"
+            #
+            # It then uses a capture group name to zero in on the version. It
+            # doesn't attempt to validate the format of the version, it just takes
+            # the value between the quotes.
+            version_match_expression = 'MARKETING_VERSION = \"(?P<version>(.*))\"'
+            search_result = re.search(version_match_expression, pbxproj_file_contents)
+            if search_result is None:
+                continue
+            else:
+                version = search_result.group(2)
+
+        if(pkg_id not in config.package_indexing_exclusion_list):
+            pkg_list.append(PackageInfo(
+                package_id = pkg_id, 
+                package_version = version, 
+                relative_package_location = pkg_location,
+                relative_readme_location = readme_relpath or '',
+                relative_changelog_location = changelog_relpath or '',
+                repository_args = []
+                ))
 
 # leverages python AST to parse arguments to `setup.py` and return a list of all indexed packages 
 # within the target directory
@@ -103,7 +142,6 @@ def get_python_package_info(config):
         changelog = find_below_file('history.md', pkg_file)
         if changelog is None:
             changelog = find_below_file('history.rst', pkg_file)
-
 
         readme = find_below_file('readme.md', pkg_file)
         if readme is None:

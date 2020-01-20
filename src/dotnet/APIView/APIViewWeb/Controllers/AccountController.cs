@@ -12,6 +12,10 @@ namespace APIViewWeb.Controllers
         public async Task<IActionResult> Login(string returnUrl = "/")
         {
             await HttpContext.SignOutAsync();
+            if (!Url.IsLocalUrl(returnUrl))
+            {
+                returnUrl = "/";
+            }
             return Challenge(new AuthenticationProperties() { RedirectUri = returnUrl }, "GitHub");
         }
 

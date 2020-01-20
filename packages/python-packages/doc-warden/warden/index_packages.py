@@ -3,7 +3,7 @@
 
 from __future__ import print_function
 
-from .warden_common import check_match, walk_directory_for_pattern, get_omitted_files, get_java_package_roots, get_net_packages, get_python_package_roots, get_js_package_roots, find_alongside_file, find_below_file, parse_pom, parse_csproj, is_java_pom_package_pom, find_above_file
+from .warden_common import check_match, walk_directory_for_pattern, get_omitted_files, get_java_package_roots, get_net_package, get_python_package_roots, get_js_package_roots, find_alongside_file, find_below_file, parse_pom, parse_csproj, is_java_pom_package_pom, find_above_file
 from .PackageInfo import PackageInfo
 import json
 import os
@@ -66,7 +66,7 @@ def index_packages(configuration):
         'python': get_python_package_info,
         'js': get_js_package_info,
         'java': get_java_package_info,
-        'net': get_net_packages_info
+        'net': get_net_package_info
     }
 
     return language_selector.get(configuration.scan_language.lower(), unrecognized_option)(configuration)
@@ -218,9 +218,9 @@ def get_java_package_info(config):
 
 # finds .net packages (non-test CSProjs) and attempts to correlate the packageinfo details
 # returns a list of all `packages` found within the target directory.
-def get_net_packages_info(config):
+def get_net_package_info(config):
     pkg_list = []
-    pkg_locations, ignored_pkg_locations = get_net_packages(config)
+    pkg_locations, ignored_pkg_locations = get_net_package(config)
 
     for pkg_file in (pkg_locations + ignored_pkg_locations):
         pkg_version = parse_csproj(pkg_file)
@@ -280,9 +280,7 @@ def render(config, pkg_list):
         'python': OUTPUT_TEMPLATE,
         'js': OUTPUT_TEMPLATE,
         'java': JAVA_OUTPUT_TEMPLATE,
-        'net': OUTPUT_TEMPLATE,
-        'android': OUTPUT_TEMPLATE,
-        'ios': OUTPUT_TEMPLATE
+        'net': OUTPUT_TEMPLATE
     }
 
     template = language_selector.get(config.scan_language.lower(), unrecognized_option)

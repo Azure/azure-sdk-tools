@@ -33,7 +33,7 @@ def get_java_package_roots(configuration):
 
     return list(set(file_set[0]).union(defined_packages)) , file_set[1]
 
-def get_net_packages(configuration):
+def get_net_package(configuration):
     file_set =  get_file_sets(configuration, NET_PACKAGE_DISCOVERY_PATTERN, is_net_csproj_package)
     
     if configuration.verbose_output:

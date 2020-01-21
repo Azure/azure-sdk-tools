@@ -9,6 +9,9 @@ namespace APIViewWeb.Pages
     {
         public OrganizationOptions Options { get; }
 
+        [BindProperty(SupportsGet = true)]
+        public string ReturnUrl { get; private set; }
+
         public UnauthorizedModel(IOptions<OrganizationOptions> options)
         {
             Options = options.Value;
@@ -17,7 +20,10 @@ namespace APIViewWeb.Pages
         public IActionResult OnGet()
         {
             if (User.Identity.IsAuthenticated)
+            {
                 return RedirectToPage("./Assemblies/Index");
+            }
+            ReturnUrl = Request.Query["returnurl"];
             return Page();
         }
     }

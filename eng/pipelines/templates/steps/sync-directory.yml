@@ -1,0 +1,26 @@
+parameters:
+  Repos: []
+  DirectoryToSync: eng/common
+  CommitMessage: commit-message-not-set
+
+steps:
+
+- ${{ each repo in parameters.Repos }}:
+  - pwsh: |
+      git clone --branch master https://github.com/azure/${{ repo }}
+      $repoPath = "${{ repo }}/${{ parameters.DirectoryToSync }}"
+
+      if (!(Test-Path $repoPath)) { mkdir $repoPath }
+      rm -v -r $repoPath/*.*
+      cp -v -r $(Build.SourcesDirectory)/${{ parameters.DirectoryToSync }}/*.* $repoPath
+      ls -r $repoPath
+
+    displayName: Copy ${{ parameters.DirectoryToSync }} from azure-sdk-tools to ${{ repo }}
+
+  - template: pipelines/steps/create-pull-request.yml@azure-sdk-build-tools
+    parameters:
+      RepoName: ${{ repo }}
+      PRBranchName: sync-${{ parameters.DirectoryToSync }}
+      CommitMsg: ${{ parameters.CommitMessage }}
+      PushArgs: -f
+      WorkingDirectory: $(System.DefaultWorkingDirectory)/${{ repo }}

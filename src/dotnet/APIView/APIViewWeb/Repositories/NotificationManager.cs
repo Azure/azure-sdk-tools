@@ -24,6 +24,8 @@ namespace APIViewWeb.Repositories
         private const string ENDPOINT_SETTING = "Endpoint";
         private const string SENDGRID_KEY_SETTING = "SendGrid:Key";
         private const string FROM_ADDRESS = "apiview-noreply@microsoft.com";
+        private const string REPLY_TO_HEADER = "In-Reply-To";
+        private const string REFERENCES_HEADER = "References";
 
         public NotificationManager(IConfiguration configuration, CosmosReviewRepository reviewRepository)
         {
@@ -93,6 +95,9 @@ namespace APIViewWeb.Repositories
                 plainTextContent,
                 htmlContent,
                 Enumerable.Repeat(new Dictionary<string, string>(), review.Subscribers.Count).ToList());
+            var threadHeader = $"<{review.ReviewId}{FROM_ADDRESS}>";
+            msg.AddHeader(REPLY_TO_HEADER, threadHeader); 
+            msg.AddHeader(REFERENCES_HEADER, threadHeader);
             await client.SendEmailAsync(msg);
         }
 

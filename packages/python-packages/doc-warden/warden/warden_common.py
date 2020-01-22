@@ -5,6 +5,7 @@ import os
 import fnmatch
 import re
 import xml.etree.ElementTree as ET
+import pathlib
 
 # python 3 transitioned StringIO to be part of `io` module. 
 # python 2 needs the old version however
@@ -17,6 +18,7 @@ JS_PACKAGE_DISCOVERY_PATTERN = '*/package.json'
 PYTHON_PACKAGE_DISCOVERY_PATTERN = '*/setup.py'
 NET_PACKAGE_DISCOVERY_PATTERN = '*.csproj'
 JAVA_PACKAGE_DISCOVERY_PATTERN = '*/pom.xml'
+SWIFT_PACKAGE_DISCOVERY_PATTERN = '*/project.pbxproj'
 
 # we want to walk the files as few times as possible. as such, for omitted_files, we provide a SET 
 # of patterns that we want to omit. This function simply checks 
@@ -32,9 +34,32 @@ def get_java_package_roots(configuration):
 
     return file_set
 
-def get_net_packages(configuration):
+def get_net_package(configuration):
     file_set =  get_file_sets(configuration, NET_PACKAGE_DISCOVERY_PATTERN, is_net_csproj_package)
     
+    if configuration.verbose_output:
+        print(file_set)
+
+    return file_set
+
+def get_project_roots_from_pbxproj_paths(pbxproj_file_set):
+    project_roots = []
+    for pbxproj_file in pbxproj_file_set:
+        pbxproj_file_path = pathlib.Path(pbxproj_file)
+        project_root_path = pbxproj_file_path.parents[1]
+        project_roots.append(str(project_root_path))
+
+    return project_roots
+
+
+def get_swift_package_roots(configuration):
+    project_files, omitted_project_files = get_file_sets(configuration, SWIFT_PACKAGE_DISCOVERY_PATTERN)
+
+    project_roots = get_project_roots_from_pbxproj_paths(project_files)
+    omitted_project_roots = get_project_roots_from_pbxproj_paths(omitted_project_files)
+
+    file_set = project_roots, omitted_project_roots
+
     if configuration.verbose_output:
         print(file_set)
 

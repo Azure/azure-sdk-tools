@@ -37,10 +37,12 @@
                                 }
                             </div>
                             <div class="media">
-                                <img username="@comment.Username" class="comment-icon align-self-start mr-3" height="28" width="28" />
+                                <a username="@comment.Username">
+                                    <img username="@comment.Username" class="comment-icon align-self-start mr-3" height="28" width="28" />
+                                </a>
                                 <div class="media-body comment-contents">
                                     <div>
-                                        <strong class=" mt-0 comment-header author align-top">@comment.Username</strong>
+                                        <a username="@comment.Username" class="font-weight-bolder text-dark mt-0 comment-header align-top">@comment.Username</a>
                                         <a date="@comment.TimeStamp.ToLocalTime()" href="#@comment.CommentId" class="small float-right"></a>
                                     </div>
                                     <textarea class="js-comment-raw d-none">@comment.Comment</textarea>

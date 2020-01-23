@@ -9,7 +9,7 @@ namespace APIViewWeb.Pages
         [BindProperty(SupportsGet = true, Name = "returnurl")]
         public string ReturnUrl { get; set; } = "/";
 
-        public async Task<IActionResult> OnGetAsync()
+        public IActionResult OnGetAsync()
         {
             if (User.Identity.IsAuthenticated)
                 return Redirect(ReturnUrl);

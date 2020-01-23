@@ -12,7 +12,7 @@ from docutils.writers.html4css1 import Writer,HTMLTranslator
 import pathlib
 import logging
 
-from .index_packages import get_python_package_info, get_js_package_info, get_java_package_info, get_net_packages_info
+from .index_packages import get_python_package_info, get_js_package_info, get_java_package_info, get_net_package_info
 
 # entry point
 def verify_changelog_content(config, pkg_list):

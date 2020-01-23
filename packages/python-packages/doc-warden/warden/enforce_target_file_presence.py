@@ -9,7 +9,7 @@ import glob
 import fnmatch
 import zipfile
 from pathlib import Path
-from .warden_common import get_java_package_roots, get_net_packages, get_python_package_roots, get_js_package_roots, find_alongside_file
+from .warden_common import get_java_package_roots, get_net_package, get_python_package_roots, get_swift_package_roots, get_js_package_roots, find_alongside_file
 
 # python 3 transitioned StringIO to be part of `io` module. 
 # python 2 needs the old version however
@@ -29,7 +29,8 @@ def find_missing_target_files(configuration):
         'python': check_python_target_files,
         'js': check_js_target_files,
         'java': check_java_target_files,
-        'net': check_net_target_files
+        'net': check_net_target_files,
+        'swift': check_swift_target_files
     }
     missing_target_file_paths = []
     ignored_missing_target_file_paths = []
@@ -51,6 +52,18 @@ def check_repo_root(configuration):
         present_files = [f for f in os.listdir(configuration.target_directory) if os.path.isfile(os.path.join(configuration.target_directory, f))]
         return  any(x in [f.lower() for f in present_files] for x in configuration.target_files)
     return true
+
+def check_swift_target_files(configuration):
+    expected_target_files, omitted_target_files = get_swift_package_roots(configuration)
+    missing_expected_target_file_locations = []
+
+    for expected_location in expected_target_files:
+        result = False
+        for target_file in configuration.target_files:
+            result = result or find_alongside_file(expected_location, target_file)
+        if not result:
+            missing_expected_target_file_locations.append(os.path.dirname(expected_location))
+    return missing_expected_target_file_locations
 
 # return all missing target_files for a PYTHON repostiroy
 def check_python_target_files(configuration):
@@ -80,7 +93,7 @@ def check_js_target_files(configuration):
 
 # return all missing target_files for a .NET repostory
 def check_net_target_files(configuration):
-    expected_target_files, omitted_target_files = get_net_packages(configuration)
+    expected_target_files, omitted_target_files = get_net_package(configuration)
     missing_expected_target_file_locations = []
 
     for expected_location in expected_target_files:

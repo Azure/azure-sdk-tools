@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -52,6 +53,11 @@ namespace Azure.ClientSdk.Analyzers
 
         private void AnalyzeUsingExpression(SyntaxNodeAnalysisContext context) 
         {
+            if (!_asyncUtilities.IsAwaitUsingStatement(context.Node))
+            {
+                return;
+            }
+
             if (!(context.SemanticModel.GetOperation(context.Node, context.CancellationToken) is IUsingOperation usingOperation))
             {
                 return;
@@ -90,7 +96,7 @@ namespace Azure.ClientSdk.Analyzers
                 .SelectMany(d => d.Declarators)
                 .Select(d => d.Initializer?.Value);
 
-            foreach (var initializer in initializes) 
+            foreach (var initializer in initializes)
             {
                 if (_asyncUtilities.IsAsyncDisposableType(initializer?.Type))
                 {
@@ -101,6 +107,11 @@ namespace Azure.ClientSdk.Analyzers
 
         private void AnalyzeForEachExpression(SyntaxNodeAnalysisContext context) 
         {
+            if (!_asyncUtilities.IsAwaitForEach(context.Node)) 
+            {
+                return;
+            }
+
             if (!(context.SemanticModel.GetOperation(context.Node, context.CancellationToken) is IForEachLoopOperation forEachOperation))
             {
                 return;

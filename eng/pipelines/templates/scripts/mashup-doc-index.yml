@@ -44,11 +44,11 @@ steps:
                 logging.info(
                     "Process {}.".format(navtoc_location)
                 )
-                with open(navtoc_location, "r") as navtoc_stream:
+                with open(navtoc_location, "r", encoding="utf8") as navtoc_stream:
                     navtoc_content = navtoc_stream.read()
                 new_navtoc_content = process_navtoc(navtoc_content)
                 logging.info("Process {}.".format(navtoc_content))
-                with open(navtoc_location, "w") as html_stream:
+                with open(navtoc_location, "w", encoding="utf8") as html_stream:
                     html_stream.write(new_navtoc_content)
             except Exception as e:
                 logging.error(e)
@@ -63,11 +63,11 @@ steps:
                     logging.info(
                         "Process {}.".format(html_location)
                     )
-                    with open(html_location, "r") as html_stream:
+                    with open(html_location, "r", encoding="utf8") as html_stream:
                         html_content = html_stream.read()
                     new_content = process_html(html_content)
                     logging.info("Process {}.".format(html_location))
-                    with open(html_location, "w") as html_stream:
+                    with open(html_location, "w", encoding="utf8") as html_stream:
                         html_stream.write(new_content)
                 except Exception as e:
                     logging.error(e)

@@ -24,7 +24,7 @@
     find yourself under the "People" tab of the organization page and set your visibility to public.
 </p>
 
-<a class="login-button btn btn-outline-dark" asp-action="Login" asp-controller="Account">
+<a class="login-button btn btn-outline-dark" asp-action="Login" asp-controller="Account" asp-route-returnUrl="@Model.ReturnUrl">
     <img height="30" width="30" src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" />
     Login with GitHub
 </a>

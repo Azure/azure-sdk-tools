@@ -5,6 +5,7 @@ import os
 import fnmatch
 import re
 import xml.etree.ElementTree as ET
+import pathlib
 
 # python 3 transitioned StringIO to be part of `io` module. 
 # python 2 needs the old version however
@@ -15,9 +16,9 @@ except ImportError:
 
 JS_PACKAGE_DISCOVERY_PATTERN = '*/package.json'
 PYTHON_PACKAGE_DISCOVERY_PATTERN = '*/setup.py'
-NET_PACKAGE_ROOT_DISCOVERY_PATTERN = '*.sln'
 NET_PACKAGE_DISCOVERY_PATTERN = '*.csproj'
 JAVA_PACKAGE_DISCOVERY_PATTERN = '*/pom.xml'
+SWIFT_PACKAGE_DISCOVERY_PATTERN = '*/project.pbxproj'
 
 # we want to walk the files as few times as possible. as such, for omitted_files, we provide a SET 
 # of patterns that we want to omit. This function simply checks 
@@ -27,23 +28,38 @@ def check_match(file_path, normalized_target_patterns):
 
 def get_java_package_roots(configuration):
     file_set = get_file_sets(configuration, JAVA_PACKAGE_DISCOVERY_PATTERN, is_java_pom_package_pom)
-    
+
     if configuration.verbose_output:
         print(file_set)
 
     return file_set
 
-def get_net_package_roots(configuration):
-    file_set = get_file_sets(configuration, NET_PACKAGE_ROOT_DISCOVERY_PATTERN)
-    
-    if configuration.verbose_output:
-        print(file_set)
-
-    return file_set
-
-def get_net_packages(configuration):
+def get_net_package(configuration):
     file_set =  get_file_sets(configuration, NET_PACKAGE_DISCOVERY_PATTERN, is_net_csproj_package)
     
+    if configuration.verbose_output:
+        print(file_set)
+
+    return file_set
+
+def get_project_roots_from_pbxproj_paths(pbxproj_file_set):
+    project_roots = []
+    for pbxproj_file in pbxproj_file_set:
+        pbxproj_file_path = pathlib.Path(pbxproj_file)
+        project_root_path = pbxproj_file_path.parents[1]
+        project_roots.append(str(project_root_path))
+
+    return project_roots
+
+
+def get_swift_package_roots(configuration):
+    project_files, omitted_project_files = get_file_sets(configuration, SWIFT_PACKAGE_DISCOVERY_PATTERN)
+
+    project_roots = get_project_roots_from_pbxproj_paths(project_files)
+    omitted_project_roots = get_project_roots_from_pbxproj_paths(omitted_project_files)
+
+    file_set = project_roots, omitted_project_roots
+
     if configuration.verbose_output:
         print(file_set)
 
@@ -66,8 +82,8 @@ def get_js_package_roots(configuration):
     return file_set
 
 # returns the two sets:
-    # the set of files where we expect a readme to be present
-    # and the set of files that we expect a readme to be present that have been explicitly omitted
+    # the set of files where we expect a target_file to be present
+    # and the set of files that we expect a target_file to be present that have been explicitly omitted
 def get_file_sets(configuration, target_pattern, lambda_check = None):
     expected_locations = walk_directory_for_pattern(configuration.target_directory, [target_pattern], configuration, lambda_check)
     omitted_files = get_omitted_files(configuration)
@@ -88,7 +104,7 @@ def get_omitted_files(configuration):
 
 # convention. omit test projects
 def is_net_csproj_package(file_path):
-    test_proj_exclude = re.compile(".*\\\\(tests|samples)\\\\.*|.*test[s]?\\.csproj", re.IGNORECASE)
+    test_proj_exclude = re.compile(".*(\\\\|\/)(tests|samples)(\\\\|\/).*|.*test[s]?(\\|\/).csproj", re.IGNORECASE)
 
     if test_proj_exclude.match(file_path):
         return False
@@ -195,10 +211,10 @@ def check_folder_against_exclusion_list(folder, path_exclusion_list):
 # given a pom.xml, crack it open and ensure that it is actually a package pom (versus a parent pom)
 def is_java_pom_package_pom(file_path):
     root = parse_pom(file_path)
-    jar_tag = root.find('packaging')
+    artifactIdTag = root.find('parent/artifactId')
 
-    if jar_tag is not None:
-        return jar_tag.text == 'jar'
+    if artifactIdTag is not None:
+        return artifactIdTag.text == 'azure-client-sdk-parent' or artifactIdTag.text == 'azure-data-sdk-parent'
     return False
 
 # namespaces in xml really mess with xmlTree: https://bugs.python.org/issue18304
@@ -216,3 +232,20 @@ def parse_pom(file_path):
         if '}' in el.tag:
             el.tag = el.tag.split('}', 1)[1]
     return it.root
+
+
+# Parse csproj file to get version property
+def parse_csproj(file_path):
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            xml = f.read()
+    except Exception as ex:
+        print('Invalid XML in {}'.format(file_path))
+        raise ex
+
+    it = ET.iterparse(StringIO(xml))
+    for _, el in it:
+        if el.tag == 'Version':
+            return el.text
+            break
+    return ''

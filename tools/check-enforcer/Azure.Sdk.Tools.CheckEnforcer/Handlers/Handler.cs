@@ -111,8 +111,13 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
             var runsResponse = await client.Check.Run.GetAllForReference(repositoryId, sha);
             var runs = runsResponse.CheckRuns;
 
-            // NOTE: If this blows up it means that we didn't receive the check_suite request.
-            var checkEnforcerRun = await CreateCheckAsync(client, repositoryId, sha, false, cancellationToken);
+            var checkEnforcerRun = runs.SingleOrDefault(r => r.Name == this.GlobalConfigurationProvider.GetApplicationName());
+
+            if (checkEnforcerRun == null)
+            {
+                 Logger.LogTrace("Check-run for enforcer doesn't exist.");
+                 return;
+            }
 
             var otherRuns = from run in runs
                             where run.Name != this.GlobalConfigurationProvider.GetApplicationName()

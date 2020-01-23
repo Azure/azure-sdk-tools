@@ -5,7 +5,7 @@
     ViewData["Title"] = "Revisions";
 }
 
-<div class="row" asp-resource="@Model.Review" asp-requirement="@ReviewOwnerRequirement.Instance">
+<div class="row" asp-resource="@Model.Review">
     <div class="col">
         <div class="mt-2">
             <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#uploadModel">Add revision</button>
@@ -46,8 +46,13 @@
             @foreach (var revision in Model.Review.Revisions)
             {
                 <li class="list-group-item">
-                    @revision.Name <span class="font-italic" date="@revision.CreationDate"></span>
-                    <form asp-resource="@Model.Review" asp-requirement="@ReviewOwnerRequirement.Instance" class="form-inline float-right" asp-page-handler="Delete" method="post">
+                    @revision.Name 
+                    <span class="font-italic pl-3">
+                        <span date="@revision.CreationDate"></span>
+                        <span>by @revision.Author</span>
+                    </span>
+                    <form asp-resource="@revision" asp-requirement="@RevisionOwnerRequirement.Instance" 
+                          class="form-inline float-right" asp-page-handler="Delete" method="post">
                         <input type="hidden" name="revisionId" value="@revision.RevisionId"/>
                         <input type="submit" class="btn btn-danger btn-sm" value="Delete" />
                     </form>

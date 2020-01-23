@@ -19,6 +19,8 @@ using System.Text.Json;
 using APIViewWeb.Respositories;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using APIViewWeb.Repositories;
+using System.Threading.Tasks;
 
 namespace APIViewWeb
 {
@@ -73,6 +75,7 @@ namespace APIViewWeb
 
             services.AddSingleton<ReviewManager>();
             services.AddSingleton<CommentsManager>();
+            services.AddSingleton<NotificationManager>();
 
             services.AddSingleton<ILanguageService, JsonLanguageService>();
             services.AddSingleton<ILanguageService, CSharpLanguageService>();
@@ -84,12 +87,13 @@ namespace APIViewWeb
                     options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                     options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 })
-                .AddCookie(options => options.LoginPath = "/Unauthorized")
+                .AddCookie(options => options.LoginPath = options.AccessDeniedPath = "/Unauthorized")
                 .AddOAuth("GitHub", options =>
                 {
                     options.ClientId = Configuration["Github:ClientId"];
                     options.ClientSecret = Configuration["Github:ClientSecret"];
                     options.CallbackPath = new PathString("/signin-github");
+                    options.Scope.Add("user:email");
 
                     options.AuthorizationEndpoint = "https://github.com/login/oauth/authorize";
                     options.TokenEndpoint = "https://github.com/login/oauth/access_token";
@@ -99,9 +103,10 @@ namespace APIViewWeb
 
                     options.ClaimActions.MapJsonKey(ClaimTypes.NameIdentifier, "id");
                     options.ClaimActions.MapJsonKey(ClaimTypes.Name, "name");
-                    options.ClaimActions.MapJsonKey("urn:github:login", "login");
-                    options.ClaimActions.MapJsonKey("urn:github:url", "html_url");
-                    options.ClaimActions.MapJsonKey("urn:github:avatar", "avatar_url");
+                    options.ClaimActions.MapJsonKey(ClaimConstants.Login, "login");
+                    options.ClaimActions.MapJsonKey(ClaimConstants.Url, "html_url");
+                    options.ClaimActions.MapJsonKey(ClaimConstants.Avatar, "avatar_url");
+                    options.ClaimActions.MapJsonKey(ClaimConstants.Name, "name");
 
                     options.Events = new OAuthEvents
                     {
@@ -143,7 +148,13 @@ namespace APIViewWeb
                                     orgNames.Append(org["login"]);
                                 }
 
-                                context.Identity.AddClaim(new Claim("urn:github:orgs", orgNames.ToString()));
+                                string msEmail = await GetMicrosoftEmailAsync(context);
+                                if (msEmail != null)
+                                {
+                                    context.Identity.AddClaim(
+                                        new Claim(ClaimConstants.Email, msEmail));
+                                }
+                                context.Identity.AddClaim(new Claim(ClaimConstants.Orgs, orgNames.ToString()));
                             }
                         }
                     };
@@ -155,6 +166,38 @@ namespace APIViewWeb
             services.AddSingleton<IAuthorizationHandler, OrganizationRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, CommentOwnerRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, ReviewOwnerRequirementHandler>();
+            services.AddSingleton<IAuthorizationHandler, RevisionOwnerRequirementHandler>();
+        }
+
+        private static async Task<string> GetMicrosoftEmailAsync(OAuthCreatingTicketContext context)
+        {
+            var message = new HttpRequestMessage(
+                HttpMethod.Get,
+                "https://api.github.com/user/emails");
+            message.Headers.Authorization = new AuthenticationHeaderValue(
+                "Bearer",
+                context.AccessToken);
+
+            var response = await context.Backchannel.SendAsync(message);
+
+            var respString = await response.Content.ReadAsStringAsync();
+            try
+            {
+                var emails = JArray.Parse(respString);
+                foreach (var email in emails)
+                {
+                    var address = email["email"]?.Value<string>();
+                    if (address != null && address.EndsWith("@microsoft.com", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return address;
+                    }
+                }
+                return null;
+            }
+            catch (Exception e)
+            {
+                throw new Exception(respString, e);
+            }
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

@@ -26,6 +26,8 @@ namespace APIViewWeb
 {
     public class Startup
     {
+        public static string RequireOrganizationPolicy = "RequireOrganization";
+
         public static string VersionHash { get; set; }
 
         static Startup()
@@ -64,7 +66,7 @@ namespace APIViewWeb
 
             services.AddRazorPages(options =>
             {
-                options.Conventions.AuthorizeFolder("/Assemblies", "RequireOrganization");
+                options.Conventions.AuthorizeFolder("/Assemblies", RequireOrganizationPolicy);
                 options.Conventions.AddPageRoute("/Assemblies/Index", "");
             });
 
@@ -87,7 +89,11 @@ namespace APIViewWeb
                     options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                     options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 })
-                .AddCookie(options => options.LoginPath = options.AccessDeniedPath = "/Unauthorized")
+                .AddCookie(options =>
+                {
+                    options.LoginPath = "/Login";
+                    options.AccessDeniedPath = "/Unauthorized";
+                })
                 .AddOAuth("GitHub", options =>
                 {
                     options.ClientId = Configuration["Github:ClientId"];

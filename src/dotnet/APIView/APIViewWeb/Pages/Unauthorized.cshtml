@@ -1,20 +1,20 @@
 ﻿@page
 @model APIViewWeb.Pages.UnauthorizedModel
-@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
 @{
     ViewData["Title"] = "Unauthorized";
     var names = string.Join(" or ", Model.Options.RequiredOrganization);
 }
 
-<p>You're currently not logged into a GitHub account or your GitHub account is not publicly affiliated with @names organizations.</p>
+<p>Your GitHub account is not publicly affiliated with @names organizations.</p>
 <p>
     In order to use the site, please sign into another account - or,
-    request to join one of the following organizations:
+    ensure <b>public</b> membership in one of the following organizations:
     <ul>
         @foreach (var organization in Model.Options.RequiredOrganization)
         {
             <li>
-                <a href="https://github.com/@organization">@organization</a>
+                <a href="https://github.com/orgs/@organization/people?utf8=✓&query=@(User.GetGitHubLogin())#org-members-table">@organization</a>
             </li>
         }
     </ul>
@@ -26,5 +26,5 @@
 
 <a class="login-button btn btn-outline-dark" asp-action="Login" asp-controller="Account" asp-route-returnUrl="@Model.ReturnUrl">
     <img height="30" width="30" src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" />
-    Login with GitHub
+    Refresh GitHub login
 </a>

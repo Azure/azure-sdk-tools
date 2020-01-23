@@ -17,7 +17,7 @@ namespace APIViewWeb
 
         public void Configure(AuthorizationOptions options)
         {
-            options.AddPolicy("RequireOrganization", policy =>
+            options.AddPolicy(Startup.RequireOrganizationPolicy, policy =>
             {
                 policy.AddRequirements(new OrganizationRequirement(_options.Value.RequiredOrganization));
             });

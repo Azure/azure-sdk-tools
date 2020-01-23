@@ -14,7 +14,7 @@
         @foreach (var organization in Model.Options.RequiredOrganization)
         {
             <li>
-                <a href="https://github.com/orgs/@organization/people?utf8=✓&query=@(User.GetGitHubLogin())">@organization</a>
+                <a href="https://github.com/orgs/@organization/people?utf8=✓&query=@(User.GetGitHubLogin())#org-members-table">@organization</a>
             </li>
         }
     </ul>

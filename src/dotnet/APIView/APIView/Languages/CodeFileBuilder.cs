@@ -40,7 +40,6 @@ namespace ApiView
                            SymbolDisplayMemberOptions.IncludeConstantValue |
                            SymbolDisplayMemberOptions.IncludeModifiers |
                            SymbolDisplayMemberOptions.IncludeParameters |
-                           SymbolDisplayMemberOptions.IncludeRef |
                            SymbolDisplayMemberOptions.IncludeType
         );
 
@@ -48,7 +47,7 @@ namespace ApiView
 
         public ICodeFileBuilderSymbolOrderProvider SymbolOrderProvider { get; set; } = new CodeFileBuilderSymbolOrderProvider();
 
-        public const string CurrentVersion = "13";
+        public const string CurrentVersion = "14";
 
         private IEnumerable<INamespaceSymbol> EnumerateNamespaces(IAssemblySymbol assemblySymbol)
         {
@@ -196,6 +195,11 @@ namespace ApiView
                     builder.Keyword(SyntaxKind.InterfaceKeyword);
                     break;
                 case TypeKind.Struct:
+                    if (namedType.IsReadOnly)
+                    {
+                        builder.Keyword(SyntaxKind.ReadOnlyKeyword);
+                        builder.Space();
+                    }
                     builder.Keyword(SyntaxKind.StructKeyword);
                     break;
             }
@@ -397,6 +401,7 @@ namespace ApiView
                 case "AsyncStateMachineAttribute":
                 case "EditorBrowsableAttribute":
                 case "IteratorStateMachineAttribute":
+                case "DefaultMemberAttribute":
                     return true;
                 default:
                     return false;

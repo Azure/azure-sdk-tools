@@ -4,4 +4,8 @@
         public int A;
         public string Str { get; }
     }
+    public readonly struct S1 {
+        public S1(int a)/*-*/{ A = a/*-*/;/*-*/}/*-*/
+        public int? A { get; }
+    }
 }

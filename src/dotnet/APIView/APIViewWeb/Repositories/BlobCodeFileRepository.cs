@@ -48,7 +48,7 @@ namespace APIViewWeb
             var memoryStream = new MemoryStream();
             await codeFile.SerializeAsync(memoryStream);
             memoryStream.Position = 0;
-            await GetBlobClient(revisionId, codeFileId).UploadAsync(memoryStream);
+            await GetBlobClient(revisionId, codeFileId).UploadAsync(memoryStream, overwrite: true);
         }
 
         public async Task DeleteCodeFileAsync(string revisionId, string codeFileId)

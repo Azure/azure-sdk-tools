@@ -23,7 +23,7 @@ namespace APIViewWeb.Controllers
         public async Task<IActionResult> Logout()
         {
             await HttpContext.SignOutAsync();
-            return RedirectToPage("/Unauthorized");
+            return RedirectToPage("/Login");
         }
     }
 }

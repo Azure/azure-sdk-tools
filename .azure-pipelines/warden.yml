@@ -91,9 +91,9 @@ jobs:
     displayName: 'Ensure Java Backwards Compat'
 
   - script: |
-      ward scan -d $(Build.SourcesDirectory)/sdk-for-python -o
+      ward scan -d $(Build.SourcesDirectory)/sdk-for-python -o -c $(Build.SourcesDirectory)/sdk-for-python/eng/.docsettings.yml
     displayName: 'Ensure Python Backwards Compat'
 
   - script: |
-      ward scan -d $(Build.SourcesDirectory)/sdk-for-js -o
+      ward scan -d $(Build.SourcesDirectory)/sdk-for-js -o -c $(Build.SourcesDirectory)/sdk-for-js/eng/.docsettings.yml
     displayName: 'Ensure JS Backwards Compat'

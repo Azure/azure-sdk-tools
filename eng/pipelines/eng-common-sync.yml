@@ -17,7 +17,7 @@ resources:
       name: internal/azure-sdk-build-tools
 
 pool:
-  vmImage: ubuntu-18.04
+  vmImage: windows-2019
 
 jobs:
   - job: SyncEngCommon

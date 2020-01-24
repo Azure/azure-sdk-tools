@@ -90,6 +90,18 @@
         e.preventDefault();
     });
 
+    $(document).on("keydown", ".new-thread-comment-text", e => {
+        if (e.ctrlKey && e.keyCode === 13) {
+            const form = $(e.target).closest("form");
+            if (form) {
+                const button = form.children("[data-post-update='comments']");
+                if (button) {
+                    button.click();
+                }
+            }
+            e.preventDefault();
+        }
+    });
 
     function getReviewId(element: HTMLElement) {
         return getParentData(element, "data-review-id");

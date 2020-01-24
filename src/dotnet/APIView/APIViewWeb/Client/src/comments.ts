@@ -45,8 +45,8 @@
         e.preventDefault();
     });
 
-    $(document).on("click", "[data-post-update='comments']", e => {
-        const form = <HTMLFormElement><any>$(e.target).closest("form");
+    $(document).on("submit", "form.new-thread-comment-form", e => {
+        const form = <HTMLFormElement><any>$(e.target);
         let lineId = getElementId(e.target);
         if (lineId) {
             let commentRow = getCommentsRow(lineId);
@@ -91,13 +91,10 @@
     });
 
     $(document).on("keydown", ".new-thread-comment-text", e => {
-        if (e.ctrlKey && e.keyCode === 13) {
+        if (e.ctrlKey && (e.keyCode === 10 || e.keyCode === 13)) {
             const form = $(e.target).closest("form");
             if (form) {
-                const button = form.children("[data-post-update='comments']");
-                if (button) {
-                    button.click();
-                }
+                form.submit();
             }
             e.preventDefault();
         }

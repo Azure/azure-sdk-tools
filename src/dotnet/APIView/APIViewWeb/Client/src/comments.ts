@@ -45,8 +45,8 @@
         e.preventDefault();
     });
 
-    $(document).on("click", "[data-post-update='comments']", e => {
-        const form = <HTMLFormElement><any>$(e.target).closest("form");
+    $(document).on("submit", "form[data-post-update='comments']", e => {
+        const form = <HTMLFormElement><any>$(e.target);
         let lineId = getElementId(e.target);
         if (lineId) {
             let commentRow = getCommentsRow(lineId);
@@ -90,6 +90,15 @@
         e.preventDefault();
     });
 
+    $(document).on("keydown", ".new-thread-comment-text", e => {
+        if (e.ctrlKey && (e.keyCode === 10 || e.keyCode === 13)) {
+            const form = $(e.target).closest("form");
+            if (form) {
+                form.submit();
+            }
+            e.preventDefault();
+        }
+    });
 
     function getReviewId(element: HTMLElement) {
         return getParentData(element, "data-review-id");

@@ -45,7 +45,7 @@
         e.preventDefault();
     });
 
-    $(document).on("submit", "form.new-thread-comment-form", e => {
+    $(document).on("submit", "form[data-post-update='comments']", e => {
         const form = <HTMLFormElement><any>$(e.target);
         let lineId = getElementId(e.target);
         if (lineId) {

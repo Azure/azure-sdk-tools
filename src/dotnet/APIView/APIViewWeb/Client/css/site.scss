@@ -1,4 +1,21 @@
-﻿a.navbar-brand
+﻿/* Mixins used below
+-------------------------------------------------- */
+@mixin placeholder {
+    ::-webkit-input-placeholder {
+        @content
+    }
+    :-moz-placeholder {
+        @content
+    }
+    ::-moz-placeholder {
+        @content
+    }
+    :-ms-input-placeholder {
+        @content
+    }
+}
+
+a.navbar-brand
 {
     white-space: normal;
     text-align: center;
@@ -173,6 +190,10 @@ form.comment {
 
 .commentable {
     cursor: pointer;
+}
+
+@include placeholder {
+    font-style: italic;
 }
 
 .code-window {

@@ -19,6 +19,17 @@
                     {
                         <div id="@comment.CommentId" class="review-comment" data-comment-id="@comment.CommentId">
                             <div class="comment-actions">
+                                <form data-post-update="comments" asp-controller="Comments" asp-action="ToggleUpvote" method="post" asp-route-reviewId="@Model.ReviewId">
+                                    <input type="hidden" name="commentId" value="@comment.CommentId" />
+                                    <button type="submit" class="btn btn-light btn-sm btn-upvote" title="@string.Join(", ", comment.Upvotes) " active-if="@comment.Upvotes.Contains(User.GetGitHubLogin())">
+                                        @if (comment.Upvotes.Any())
+                                        {
+                                            @comment.Upvotes.Count
+                                        }
+                                        👍
+                                    </button>
+                                </form>
+
                                 @if (comment.Username == User.GetGitHubLogin())
                                 {
                                     <div class="dropdown show">

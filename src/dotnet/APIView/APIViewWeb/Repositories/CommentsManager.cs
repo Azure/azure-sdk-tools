@@ -85,6 +85,17 @@ namespace APIViewWeb
             }
         }
 
+        public async Task ToggleUpvoteAsync(ClaimsPrincipal user, string reviewId, string commentId)
+        {
+            var comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
+
+            if (comment.Upvotes.RemoveAll(u => u == user.GetGitHubLogin()) == 0)
+            {
+                comment.Upvotes.Add(user.GetGitHubLogin());
+            }
+
+            await _commentsRepository.UpsertCommentAsync(comment);
+        }
         private async Task AssertOwnerAsync(ClaimsPrincipal user, CommentModel commentModel)
         {
             var result = await _authorizationService.AuthorizeAsync(user, commentModel, new[] { CommentOwnerRequirement.Instance });

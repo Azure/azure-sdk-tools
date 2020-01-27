@@ -64,6 +64,14 @@ namespace APIViewWeb.Controllers
             return await CommentPartialAsync(reviewId, elementId);
         }
 
+        [HttpPost]
+        public async Task<ActionResult> ToggleUpvote(string reviewId, string commentId, string elementId)
+        {
+            await _commentsManager.ToggleUpvoteAsync(User, reviewId, commentId);
+
+            return await CommentPartialAsync(reviewId, elementId);
+        }
+
         private async Task<ActionResult> CommentPartialAsync(string reviewId, string elementId)
         {
             var comments = await _commentsManager.GetReviewCommentsAsync(reviewId);

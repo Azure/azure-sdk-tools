@@ -14,6 +14,12 @@ param (
 # Unreleased: Default is true. If it is set to false, then today's date will be set in verion title. If it is True then title will show "Unreleased"
 # ReplaceVersion: This is useful when replacing current version title with new title.( Helpful to update the title before package release)
 
+$RELEASE_TITLE_REGEX = "(?<releaseNoteTitle>^\#+.*(?<version>\b\d+\.\d+\.\d+([^0-9\s][^\s:]+)?))"
+
+function Version-Matches($line)
+{
+    return ($line -match $RELEASE_TITLE_REGEX)
+}
 
 function Get-ChangelogPath
 {
@@ -44,10 +50,10 @@ function Get-VersionTitle
         [String]$Unreleased
    )
    # Generate version title
-   $newVersionTitle = "## $Version Unreleased" -join [Environment]::NewLine
+   $newVersionTitle = "## $Version (Unreleased)"
    if ($Unreleased -eq $False){
       $releaseDate = Get-Date -Format "(yyyy-MM-dd)"
-      $newVersionTitle = "## $Version $releaseDate" -join [Environment]::NewLine      
+      $newVersionTitle = "## $Version $releaseDate"
    }
    return $newVersionTitle
 }
@@ -61,9 +67,6 @@ function Get-NewChangeLog
         [String]$Unreleased,
         [String]$ReplaceVersion
    ) 
-
-   # Version Parser module
-   Import-Module $PSScriptRoot/Version-Parser.psm1
 
    # version parameter is to pass new version to add or replace
    # Unreleased parameter can be set to False to set today's date instead of "Unreleased in title"
@@ -83,15 +86,22 @@ function Get-NewChangeLog
    # Generate version title
    $newVersionTitle = Get-VersionTitle -Version $Version -Unreleased $Unreleased
 
+   if( $newVersionTitle -eq $CurrentTitle){
+      Write-Host "Version is already present in change log"
+      exit(0)
+   }
+
+   # if current version tiel already has new version then we should replace title to update it
+   if ($CurrentTitle.Contains($Version) -and $ReplaceVersion -eq $False){
+      Write-Host "Version is already present in title. Updating version title"
+      $ReplaceVersion = $True
+   }
+
    # if version is already found and not replacing then nothing to do
    if ($ReplaceVersion -eq $False){
-      # Check if version is already present in log      
-      if ($CurrentTitle.Contains($Version)){
-         Write-Host "Version is already present in change log. Please set ReplaceVersion parameter if current title needs to be updated"
-         exit(1)
-      }
-      
       Write-Host "Adding version title $newVersionTitle"
+      $ChangelogLines.insert($Index, "")
+      $ChangelogLines.insert($Index, "")
       $ChangelogLines.insert($Index, $newVersionTitle)
    }
    else{

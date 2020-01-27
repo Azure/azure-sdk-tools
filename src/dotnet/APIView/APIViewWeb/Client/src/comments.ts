@@ -83,9 +83,9 @@
     });
 
     $(document).on("click", ".js-edit-comment", e => {
-        let lineId = getElementId(e.target);
-        if (lineId) {
-            editComment(lineId);
+        let commentId = getCommentId(e.target);
+        if (commentId) {
+            editComment(commentId);
         }
         e.preventDefault();
     });

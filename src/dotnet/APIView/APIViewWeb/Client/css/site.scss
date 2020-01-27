@@ -306,6 +306,13 @@ code-inner {
     margin: -8px -16px;
 }
 
+.btn-upvote {
+    filter: grayscale(100%) opacity(30%);
+    &.active {
+        filter: unset;
+    }
+}
+
 .new-comment-content {
     position: relative;
     margin: 0 4px 8px;

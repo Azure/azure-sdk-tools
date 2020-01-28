@@ -1,4 +1,11 @@
 ﻿# Note: This script will add or replace version title in change log
+
+# Parameter description
+# Version : Version to add or replace in change log
+# ChangeLogPath: Path to change log file. If change log path is set to directory then script will probe for change log file in that path 
+# Unreleased: Default is true. If it is set to false, then today's date will be set in verion title. If it is True then title will show "Unreleased"
+# ReplaceVersion: This is useful when replacing current version title with new title.( Helpful to update the title before package release)
+
 param (
   [Parameter(Mandatory = $true)]
   [String]$Version,
@@ -8,11 +15,6 @@ param (
   [String]$ReplaceVersion = $False
 )
 
-# Parameter description
-# Version : Version to add or replace in change log
-# ChangeLogPath: Path to change log file. If change log path is set to directory then script will probe for change log file in that path 
-# Unreleased: Default is true. If it is set to false, then today's date will be set in verion title. If it is True then title will show "Unreleased"
-# ReplaceVersion: This is useful when replacing current version title with new title.( Helpful to update the title before package release)
 
 $RELEASE_TITLE_REGEX = "(?<releaseNoteTitle>^\#+.*(?<version>\b\d+\.\d+\.\d+([^0-9\s][^\s:]+)?))"
 
@@ -21,12 +23,8 @@ function Version-Matches($line)
     return ($line -match $RELEASE_TITLE_REGEX)
 }
 
-function Get-ChangelogPath
-{
-  Param (
-        [String]$Path
-   )
-  
+function Get-ChangelogPath($Path)
+{ 
    # Check if CHANGELOG.md is present in path 
    $ChangeLogPath = Join-Path -Path $Path -ChildPath "CHANGELOG.md"
    if ((Test-Path -Path $ChangeLogPath) -eq $False){
@@ -43,12 +41,8 @@ function Get-ChangelogPath
 }
 
 
-function Get-VersionTitle
+function Get-VersionTitle($Version, $Unreleased)
 {
-   Param (
-        [String]$Version,
-        [String]$Unreleased
-   )
    # Generate version title
    $newVersionTitle = "## $Version (Unreleased)"
    if ($Unreleased -eq $False){
@@ -59,14 +53,8 @@ function Get-VersionTitle
 }
 
 
-function Get-NewChangeLog
+function Get-NewChangeLog( [System.Collections.ArrayList]$ChangelogLines, $Version, $Unreleased, $ReplaceVersion)
 {
-   Param (
-        [System.Collections.ArrayList]$ChangelogLines,
-        [String]$Version,
-        [String]$Unreleased,
-        [String]$ReplaceVersion
-   ) 
 
    # version parameter is to pass new version to add or replace
    # Unreleased parameter can be set to False to set today's date instead of "Unreleased in title"
@@ -91,7 +79,7 @@ function Get-NewChangeLog
       exit(0)
    }
 
-   # if current version tiel already has new version then we should replace title to update it
+   # if current version title already has new version then we should replace title to update it
    if ($CurrentTitle.Contains($Version) -and $ReplaceVersion -eq $False){
       Write-Host "Version is already present in title. Updating version title"
       $ReplaceVersion = $True

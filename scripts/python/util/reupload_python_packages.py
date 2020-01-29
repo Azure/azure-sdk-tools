@@ -18,11 +18,15 @@ from azure.storage.blob import BlobServiceClient
 # Currently, the docs.ms python feeds do not support pulling data from:
 #   1) SDISTS
 #   2) Non tar.gz files
+# In ADDITION there is a new discovered bug as well
+#   - Essentially, if a __unit__.py STARTS with a comment instead of the pkg_resources namespace extension, docs.ms does not render properly
+#     To resolve this, this script will also strip comments from __init__.py files before rezipping the package
 # This script is intended to take in a comma separated list of packages in the form of
 #   azure-core==1.0.0,azure-storage-blob==12.0.0b5
 # The intent is to download the SDIST version of this package, unzip it, rezip it as tar.gz, 
 # and upload to a storage account.
 # This script takes a dependency on azure-storage-blob 12.0.
+# 
 
 logging.getLogger().setLevel(logging.INFO)
 
@@ -49,6 +53,7 @@ def make_tarfile(output_filename, source_dir):
     with tarfile.open(output_filename, "w:gz") as tar:
         tar.add(source_dir, arcname=os.path.basename(source_dir))
 
+
 def download_package(specifier, download_dir):
     logging.info("Downloading {}".format(specifier))
 
@@ -65,6 +70,27 @@ def download_package(specifier, download_dir):
     )
 
 
+def strip_comments_from_inits(start_dir):
+    init_files = []
+
+    for folder, subfolders, files in os.walk(start_dir): 
+        for file in files:
+            if file == "__init__.py":
+                init_files.append(os.path.join(folder, file))
+
+    for located_init in init_files:
+        with open(located_init, 'r') as f:
+            lines = f.readlines()
+
+        print(lines)
+        lines = [line.strip() for line in lines if not line.startswith('#')]
+        print(lines)
+
+
+        with open(located_init, 'w') as f:
+            f.write("\n".join(lines))
+
+
 def repackage_data(download_dir, unzip_directory, upload_directory):
     for sdist in os.listdir(download_dir):
         full_path = os.path.join(download_dir, sdist)
@@ -77,9 +103,12 @@ def repackage_data(download_dir, unzip_directory, upload_directory):
            # Extract all the contents of zip file in current directory
            zipObj.extractall(unzip_directory)
 
+        strip_comments_from_inits(tar_source)
+
         make_tarfile(tar_location, tar_source)
 
         clean_dir(unzip_directory)
+
 
 def upload_data(upload_directory, blob_container_client, endpoint):
     resulting_uris = []
@@ -94,6 +123,7 @@ def upload_data(upload_directory, blob_container_client, endpoint):
         resulting_uris.append(URI_CONSTRUCTOR.format(primary_endpoint=endpoint,container=DESTINATION_CONTAINER, name=targz))
 
     return resulting_uris
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(

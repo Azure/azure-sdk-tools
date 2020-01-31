@@ -82,10 +82,7 @@ def strip_comments_from_inits(start_dir):
         with open(located_init, 'r') as f:
             lines = f.readlines()
 
-        print(lines)
-        lines = [line.strip() for line in lines if not line.startswith('#')]
-        print(lines)
-
+        lines = [line for line in lines if not line.strip().startswith('#')]
 
         with open(located_init, 'w') as f:
             f.write("\n".join(lines))

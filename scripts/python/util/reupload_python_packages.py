@@ -8,10 +8,12 @@ import logging
 import glob
 import shutil
 import tarfile
+import re
 
 from subprocess import check_call
 from zipfile import ZipFile
 from io import open
+
 
 from azure.storage.blob import BlobServiceClient
 
@@ -82,10 +84,8 @@ def strip_comments_from_inits(start_dir):
         with open(located_init, 'r') as f:
             lines = f.readlines()
 
-        print(lines)
-        lines = [line.strip() for line in lines if not line.startswith('#')]
-        print(lines)
-
+        # in case rstrip is necessary re.sub(r'[\s]*\#\stype\:\signore[\s]*', "", line).rstrip()
+        lines = [line.replace('"pkgutil"', "'pkgutil'") for line in lines if not line.strip().startswith('#')]
 
         with open(located_init, 'w') as f:
             f.write("\n".join(lines))

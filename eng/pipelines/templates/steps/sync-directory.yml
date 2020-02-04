@@ -22,5 +22,6 @@ steps:
       RepoName: ${{ repo }}
       PRBranchName: sync-${{ parameters.DirectoryToSync }}
       CommitMsg: ${{ parameters.CommitMessage }}
+      PRTitle: ${{ parameters.CommitMessage }}
       PushArgs: -f
       WorkingDirectory: $(System.DefaultWorkingDirectory)/${{ repo }}

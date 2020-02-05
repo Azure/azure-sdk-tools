@@ -2,24 +2,21 @@
 // Licensed under the MIT License.
 
 using System.Collections.Immutable;
-using System.Diagnostics;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Operations;
-using Microsoft.CodeAnalysis.Text;
 
 namespace Azure.ClientSdk.Analyzers
 {
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
-    public sealed class AddConfigureAwaitAnalyzer : DiagnosticAnalyzer
+    public sealed class AsyncAnalyzer : DiagnosticAnalyzer
     {
         private AsyncAnalyzerUtilities _asyncUtilities;
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
-            ImmutableArray.Create(Descriptors.AZC0012, Descriptors.AZC0013);
+            ImmutableArray.Create(Descriptors.AZC0100, Descriptors.AZC0101, Descriptors.AZC0102, Descriptors.AZC0103, Descriptors.AZC0104, Descriptors.AZC0105, Descriptors.AZC0106, Descriptors.AZC0107, Descriptors.AZC0108);
 
         public override void Initialize(AnalysisContext context)
         {
@@ -31,11 +28,46 @@ namespace Azure.ClientSdk.Analyzers
         private void CompilationStart(CompilationStartAnalysisContext context) 
         {
             _asyncUtilities = new AsyncAnalyzerUtilities(context.Compilation);
+
             context.RegisterSyntaxNodeAction(AnalyzeAwaitExpression, SyntaxKind.AwaitExpression);
             context.RegisterSyntaxNodeAction(AnalyzeUsingExpression, SyntaxKind.UsingStatement);
             context.RegisterSyntaxNodeAction(AnalyzeForEachExpression, SyntaxKind.ForEachStatement);
-            context.RegisterSyntaxNodeAction(AnalyzeConfigureAwaitTrue, SyntaxKind.InvocationExpression);
             context.RegisterSyntaxNodeAction(AnalyzeUsingDeclarationExpression, SyntaxKind.LocalDeclarationStatement);
+            context.RegisterSyntaxNodeAction(AnalyzeArrowExpressionClause, SyntaxKind.ArrowExpressionClause);
+
+            context.RegisterOperationAction(AnalyzeAnonymousFunction, OperationKind.AnonymousFunction);
+            context.RegisterOperationAction(AnalyzeMethodBody, OperationKind.MethodBody);
+        }
+
+        private void AnalyzeArrowExpressionClause(SyntaxNodeAnalysisContext context) 
+        {
+            if (!(context.ContainingSymbol is IMethodSymbol method) || method.MethodKind != MethodKind.PropertyGet) 
+            {
+                return;
+            }
+
+            var operation = context.SemanticModel.GetOperation(context.Node, context.CancellationToken);
+            if (operation is IBlockOperation block && block.Parent == null) 
+            {
+                new  MethodBodyAnalyzer(context.ReportDiagnostic, context.Compilation, _asyncUtilities).Run(method, block);
+            }
+        }
+
+        private void AnalyzeMethodBody(OperationAnalysisContext context) 
+        {
+            var method = (IMethodSymbol) context.ContainingSymbol;
+            var methodBody = (IMethodBodyOperation)context.Operation;
+            new MethodBodyAnalyzer(context.ReportDiagnostic, context.Compilation, _asyncUtilities).Run(method, methodBody.BlockBody ?? methodBody.ExpressionBody);
+        }
+
+        private void AnalyzeAnonymousFunction(OperationAnalysisContext context) 
+        {
+            var operation = (IAnonymousFunctionOperation) context.Operation;
+            var method = operation.Symbol;
+            if (method.ContainingSymbol.Kind != SymbolKind.Method) 
+            {
+                new  MethodBodyAnalyzer(context.ReportDiagnostic, context.Compilation, _asyncUtilities).Run(method, operation.Body);
+            }
         }
 
         private void AnalyzeAwaitExpression(SyntaxNodeAnalysisContext context)
@@ -129,46 +161,10 @@ namespace Azure.ClientSdk.Analyzers
             }
         }
 
-        private void AnalyzeConfigureAwaitTrue(SyntaxNodeAnalysisContext context)
+        private static void ReportConfigureAwaitDiagnostic(SyntaxNodeAnalysisContext context, IOperation operation) 
         {
-            if (!_asyncUtilities.IsConfigureAwaitInvocation(context.Node))
-            {
-                return;
-            }
-
-            if (!(context.SemanticModel.GetOperation(context.Node, context.CancellationToken) is IInvocationOperation operation)) 
-            {
-                return;
-            }
-
-            if (!_asyncUtilities.IsConfigureAwait(operation.TargetMethod)) 
-            {
-                return;
-            }
-
-            // ConfigureAwait is either an instance method with one parameter or a static extension method with two.
-            // We need to check if the last argument is a bool and if it is 'true'
-            var constantValue = operation.Arguments.Last().Value?.ConstantValue;
-            if (constantValue != null && constantValue.Value.Value is bool value && value)
-            {
-                ReportConfigureAwaitTrueDiagnostic(context, operation);
-            }
-        }
-
-        private static void ReportConfigureAwaitDiagnostic(SyntaxNodeAnalysisContext context, IOperation awaitOperation) 
-        {
-            var location = awaitOperation.Syntax.GetLocation();
-            var diagnostic = Diagnostic.Create(Descriptors.AZC0012, location);
-            context.ReportDiagnostic(diagnostic);
-        }
-
-        private static void ReportConfigureAwaitTrueDiagnostic(SyntaxNodeAnalysisContext context, IOperation configureAwaitOperation) 
-        {
-            var invocation = (InvocationExpressionSyntax)configureAwaitOperation.Syntax;
-            var memberAccess = (MemberAccessExpressionSyntax) invocation.Expression;
-            var start = memberAccess.Name.Span.Start;
-            var end = invocation.Span.End;
-            var diagnostic = Diagnostic.Create(Descriptors.AZC0013, Location.Create(invocation.SyntaxTree, new TextSpan(start, end - start)));
+            var location = operation.Syntax.GetLocation();
+            var diagnostic = Diagnostic.Create(Descriptors.AZC0100, location);
             context.ReportDiagnostic(diagnostic);
         }
     }

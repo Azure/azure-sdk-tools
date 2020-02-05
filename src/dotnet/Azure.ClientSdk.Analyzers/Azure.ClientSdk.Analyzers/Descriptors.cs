@@ -78,17 +78,66 @@ namespace Azure.ClientSdk.Analyzers
             "Internal visible to product libraries effectively become public API and have to be versioned appropriately", "Usage", DiagnosticSeverity.Warning, true);
             
 
-        public static DiagnosticDescriptor AZC0012 = new DiagnosticDescriptor(
-            nameof(AZC0012),
+        public static DiagnosticDescriptor AZC0100 = new DiagnosticDescriptor(
+            nameof(AZC0100),
             "ConfigureAwait(false) must be used.",
             "ConfigureAwait(false) must be used.",
             "Usage",
             DiagnosticSeverity.Warning, true);
 
-        public static DiagnosticDescriptor AZC0013 = new DiagnosticDescriptor(
-            nameof(AZC0013),
+        public static DiagnosticDescriptor AZC0101 = new DiagnosticDescriptor(
+            nameof(AZC0101),
             "Use ConfigureAwait(false) instead of ConfigureAwait(true).",
             "Use ConfigureAwait(false) instead of ConfigureAwait(true).",
+            "Usage",
+            DiagnosticSeverity.Warning, true);
+
+        public static DiagnosticDescriptor AZC0102 = new DiagnosticDescriptor(
+            nameof(AZC0102),
+            "Do not use GetAwaiter().GetResult().",
+            "Do not use GetAwaiter().GetResult(). Use TaskExtensions.EnsureCompleted() extension method instead.",
+            "Usage",
+            DiagnosticSeverity.Warning, true);
+
+        public static DiagnosticDescriptor AZC0103 = new DiagnosticDescriptor(
+            nameof(AZC0103),
+            "Do not use EnsureCompleted in asynchronous scope.",
+            "Do not use EnsureCompleted in asynchronous scope. Use await keyword instead.",
+            "Usage",
+            DiagnosticSeverity.Warning, true);
+
+        public static DiagnosticDescriptor AZC0104 = new DiagnosticDescriptor(
+            nameof(AZC0104),
+            "Use EnsureCompleted() directly on asynchronous method return value.",
+            "Don't use EnsureCompleted on the {0}. Call EnsureCompleted() extension method directly on the return value of the asynchronous method that has 'bool async' parameter.",
+            "Usage",
+            DiagnosticSeverity.Warning, true);
+
+        public static DiagnosticDescriptor AZC0105 = new DiagnosticDescriptor(
+            nameof(AZC0105),
+            "DO NOT add 'async' parameter to public methods.",
+            "DO provide both asynchronous and synchronous variants for all service methods instead of one variant with 'async' parameter.",
+            "Usage",
+            DiagnosticSeverity.Warning, true);
+
+        public static DiagnosticDescriptor AZC0106 = new DiagnosticDescriptor(
+            nameof(AZC0106),
+            "Non-public asynchronous method needs 'async' parameter.",
+            "Non-public asynchronous method that is called in synchronous scope should have a boolean 'async' parameter.",
+            "Usage",
+            DiagnosticSeverity.Warning, true);
+
+        public static DiagnosticDescriptor AZC0107 = new DiagnosticDescriptor(
+            nameof(AZC0107),
+            "Incorrect 'async' parameter value.",
+            "In {0} scope 'async' parameter for the '{1}' method call should be '{2}'.",
+            "Usage",
+            DiagnosticSeverity.Warning, true);
+
+        public static DiagnosticDescriptor AZC0108 = new DiagnosticDescriptor(
+            nameof(AZC0108),
+            "Misuse of 'async' parameter.",
+            "'async' parameter in asynchronous method can't be changed and can only be used as an exclusive condition in '?:' operator or conditional statement.",
             "Usage",
             DiagnosticSeverity.Warning, true);
     }

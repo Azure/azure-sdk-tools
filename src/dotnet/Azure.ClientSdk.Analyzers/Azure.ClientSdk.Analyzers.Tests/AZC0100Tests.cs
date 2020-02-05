@@ -9,14 +9,14 @@ using Xunit;
 
 namespace Azure.ClientSdk.Analyzers.Tests 
 {
-    public class AZC0012Tests 
+    public class AZC0100Tests 
     {
-        private readonly DiagnosticAnalyzerRunner _runner = new DiagnosticAnalyzerRunner(new AddConfigureAwaitAnalyzer());
+        private readonly DiagnosticAnalyzerRunner _runner = new DiagnosticAnalyzerRunner(new AsyncAnalyzer());
 
         [Theory]
         [InlineData(LanguageVersion.CSharp7)]
         [InlineData(LanguageVersion.Latest)]
-        public async Task AZC0012WarningOnTask(LanguageVersion version)
+        public async Task AZC0100WarningOnTask(LanguageVersion version)
         {
             var testSource = TestSource.Read(@"
 namespace RandomNamespace
@@ -34,14 +34,14 @@ namespace RandomNamespace
 
             var diagnostic = Assert.Single(diagnostics);
 
-            Assert.Equal("AZC0012", diagnostic.Id);
+            Assert.Equal("AZC0100", diagnostic.Id);
             AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostics[0].Location);
         }
 
         [Theory]
         [InlineData(LanguageVersion.CSharp7)]
         [InlineData(LanguageVersion.Latest)]
-        public async Task AZC0012WarningOnTaskOfT(LanguageVersion version) 
+        public async Task AZC0100WarningOnTaskOfT(LanguageVersion version) 
         {
             var testSource = TestSource.Read(@"
 namespace RandomNamespace
@@ -59,14 +59,14 @@ namespace RandomNamespace
 
             var diagnostic = Assert.Single(diagnostics);
 
-            Assert.Equal("AZC0012", diagnostic.Id);
+            Assert.Equal("AZC0100", diagnostic.Id);
             AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostics[0].Location);
         }
 
         [Theory]
         [InlineData(LanguageVersion.CSharp7)]
         [InlineData(LanguageVersion.Latest)]
-        public async Task AZC0012WarningOnValueTask(LanguageVersion version) 
+        public async Task AZC0100WarningOnValueTask(LanguageVersion version) 
         {
             var testSource = TestSource.Read(@"
 namespace RandomNamespace
@@ -91,14 +91,14 @@ namespace RandomNamespace
 
             var diagnostic = Assert.Single(diagnostics);
 
-            Assert.Equal("AZC0012", diagnostic.Id);
+            Assert.Equal("AZC0100", diagnostic.Id);
             AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostics[0].Location);
         }
 
         [Theory]
         [InlineData(LanguageVersion.CSharp7)]
         [InlineData(LanguageVersion.Latest)]
-        public async Task AZC0012WarningOnValueTaskOfT(LanguageVersion version) 
+        public async Task AZC0100WarningOnValueTaskOfT(LanguageVersion version) 
         {
             var testSource = TestSource.Read(@"
 namespace RandomNamespace
@@ -121,12 +121,12 @@ namespace RandomNamespace
 
             var diagnostic = Assert.Single(diagnostics);
 
-            Assert.Equal("AZC0012", diagnostic.Id);
+            Assert.Equal("AZC0100", diagnostic.Id);
             AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostics[0].Location);
         }
 
         [Fact]
-        public async Task AZC0012NoWarningOnExistingConfigureAwaitFalse()
+        public async Task AZC0100NoWarningOnExistingConfigureAwaitFalse()
         {
             var testSource = TestSource.Read(@"
 namespace RandomNamespace
@@ -145,7 +145,7 @@ namespace RandomNamespace
         }
 
         [Fact]
-        public async Task AZC0012WarningOnTaskDelay()
+        public async Task AZC0100WarningOnTaskDelay()
         {
             var testSource = TestSource.Read(@"
 namespace RandomNamespace
@@ -163,12 +163,12 @@ namespace RandomNamespace
 
             var diagnostic = Assert.Single(diagnostics);
 
-            Assert.Equal("AZC0012", diagnostic.Id);
+            Assert.Equal("AZC0100", diagnostic.Id);
             AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostics[0].Location);
         }
 
         [Fact]
-        public async Task AZC0012NoWarningOnTaskYield()
+        public async Task AZC0100NoWarningOnTaskYield()
         {
             var testSource = TestSource.Read(@"
 namespace RandomNamespace
@@ -187,7 +187,7 @@ namespace RandomNamespace
         }
 
         [Fact]
-        public async Task AZC0012NoWarningOnNested()
+        public async Task AZC0100NoWarningOnNested()
         {
             var testSource = TestSource.Read(@"
 namespace RandomNamespace
@@ -211,7 +211,7 @@ namespace RandomNamespace
         }
 
         [Fact]
-        public async Task AZC0012WarningOnVariable()
+        public async Task AZC0100WarningOnVariable()
         {
             var testSource = TestSource.Read(@"
 namespace RandomNamespace
@@ -230,12 +230,12 @@ namespace RandomNamespace
 
             var diagnostic = Assert.Single(diagnostics);
 
-            Assert.Equal("AZC0012", diagnostic.Id);
+            Assert.Equal("AZC0100", diagnostic.Id);
             AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostics[0].Location);
         }
 
         [Fact]
-        public async Task AZC0012WarningOnAsyncForeach()
+        public async Task AZC0100WarningOnAsyncForeach()
         {
             var testSource = TestSource.Read(@"
 namespace RandomNamespace
@@ -259,12 +259,12 @@ namespace RandomNamespace
 
             var diagnostic = Assert.Single(diagnostics);
 
-            Assert.Equal("AZC0012", diagnostic.Id);
+            Assert.Equal("AZC0100", diagnostic.Id);
             AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostics[0].Location);
         }
 
         [Fact]
-        public async Task AZC0012NoWarningOnAsyncForeachExistingConfigureAwaitFalse()
+        public async Task AZC0100NoWarningOnAsyncForeachExistingConfigureAwaitFalse()
         {
             var testSource = TestSource.Read(@"
 namespace RandomNamespace
@@ -289,7 +289,7 @@ namespace RandomNamespace
         }
 
         [Fact]
-        public async Task AZC0012NoWarningOnForeach()
+        public async Task AZC0100NoWarningOnForeach()
         {
             var testSource = TestSource.Read(@"
 namespace RandomNamespace
@@ -314,7 +314,7 @@ namespace RandomNamespace
         }
 
         [Fact]
-        public async Task AZC0012WarningOnAsyncEnumerableVariable()
+        public async Task AZC0100WarningOnAsyncEnumerableVariable()
         {
             var testSource = TestSource.Read(@"
 namespace RandomNamespace
@@ -339,12 +339,12 @@ namespace RandomNamespace
 
             var diagnostic = Assert.Single(diagnostics);
 
-            Assert.Equal("AZC0012", diagnostic.Id);
+            Assert.Equal("AZC0100", diagnostic.Id);
             AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostics[0].Location);
         }
 
         [Fact]
-        public async Task AZC0012WarningOnAsyncForeachOfCustomEnumerable()
+        public async Task AZC0100WarningOnAsyncForeachOfCustomEnumerable()
         {
             var testSource = TestSource.Read(@"
 namespace RandomNamespace
@@ -372,12 +372,12 @@ namespace RandomNamespace
 
             var diagnostic = Assert.Single(diagnostics);
 
-            Assert.Equal("AZC0012", diagnostic.Id);
+            Assert.Equal("AZC0100", diagnostic.Id);
             AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostics[0].Location);
         }
 
         [Fact]
-        public async Task AZC0012WarningOnAsyncUsingVariable()
+        public async Task AZC0100WarningOnAsyncUsingVariable()
         {
             var testSource = TestSource.Read(@"
 namespace RandomNamespace
@@ -404,12 +404,12 @@ namespace RandomNamespace
 
             var diagnostic = Assert.Single(diagnostics);
 
-            Assert.Equal("AZC0012", diagnostic.Id);
+            Assert.Equal("AZC0100", diagnostic.Id);
             AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostics[0].Location);
         }
 
         [Fact]
-        public async Task AZC0012WarningOnAsyncUsing()
+        public async Task AZC0100WarningOnAsyncUsing()
         {
             var testSource = TestSource.Read(@"
 namespace RandomNamespace
@@ -435,12 +435,12 @@ namespace RandomNamespace
 
             var diagnostic = Assert.Single(diagnostics);
 
-            Assert.Equal("AZC0012", diagnostic.Id);
+            Assert.Equal("AZC0100", diagnostic.Id);
             AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostics[0].Location);
         }
 
         [Fact]
-        public async Task AZC0012WarningOnAsyncUsingNoBraces()
+        public async Task AZC0100WarningOnAsyncUsingNoBraces()
         {
             var testSource = TestSource.Read(@"
 namespace RandomNamespace
@@ -469,14 +469,14 @@ namespace RandomNamespace
 
             Assert.Equal(2, diagnostics.Length);
 
-            Assert.Equal("AZC0012", diagnostics[0].Id);
-            Assert.Equal("AZC0012", diagnostics[1].Id);
+            Assert.Equal("AZC0100", diagnostics[0].Id);
+            Assert.Equal("AZC0100", diagnostics[1].Id);
             AnalyzerAssert.DiagnosticLocation(testSource.MarkerLocations["MM0"], diagnostics[0].Location);
             AnalyzerAssert.DiagnosticLocation(testSource.MarkerLocations["MM1"], diagnostics[1].Location);
         }
 
         [Fact]
-        public async Task AZC0012WarningOnAsyncUsingVariableNoBraces()
+        public async Task AZC0100WarningOnAsyncUsingVariableNoBraces()
         {
             var testSource = TestSource.Read(@"
 namespace RandomNamespace
@@ -503,12 +503,12 @@ namespace RandomNamespace
 
             var diagnostic = Assert.Single(diagnostics);
 
-            Assert.Equal("AZC0012", diagnostic.Id);
+            Assert.Equal("AZC0100", diagnostic.Id);
             AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostics[0].Location);
         }
 
         [Fact]
-        public async Task AZC0012NoWarningOnAsyncUsingExistingConfigureAwaitFalse()
+        public async Task AZC0100NoWarningOnAsyncUsingExistingConfigureAwaitFalse()
         {
             var testSource = TestSource.Read(@"
 namespace RandomNamespace
@@ -536,7 +536,7 @@ namespace RandomNamespace
         }
 
         [Fact]
-        public async Task AZC0012NoWarningOnAsyncUsingNoBracesExistingConfigureAwaitFalse()
+        public async Task AZC0100NoWarningOnAsyncUsingNoBracesExistingConfigureAwaitFalse()
         {
             var testSource = TestSource.Read(@"
 namespace RandomNamespace
@@ -567,7 +567,7 @@ namespace RandomNamespace
         }
 
         [Fact]
-        public async Task AZC0012NoWarningOnUsing()
+        public async Task AZC0100NoWarningOnUsing()
         {
             var testSource = TestSource.Read(@"
 namespace RandomNamespace
@@ -594,7 +594,7 @@ namespace RandomNamespace
         }
 
         [Fact]
-        public async Task AZC0012NoWarningOnUsingNoBraces()
+        public async Task AZC0100NoWarningOnUsingNoBraces()
         {
             var testSource = TestSource.Read(@"
 namespace RandomNamespace
@@ -621,7 +621,7 @@ namespace RandomNamespace
         }
 
         [Fact]
-        public async Task AZC0012NoWarningOnCSharp7() 
+        public async Task AZC0100NoWarningOnCSharp7() 
         {
             var testSource = TestSource.Read(@"
 namespace RandomNamespace
@@ -652,7 +652,7 @@ namespace RandomNamespace
         }
 
         [Fact]
-        public async Task AZC0012NonCompilableCode() 
+        public async Task AZC0100NonCompilableCode() 
         {
             var testSource = TestSource.Read(@"
 namespace RandomNamespace

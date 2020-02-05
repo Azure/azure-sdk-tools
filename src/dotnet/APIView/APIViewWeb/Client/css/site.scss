@@ -200,16 +200,16 @@ form.comment {
     font-size: 14px;
     line-height: 1.5;
     border-collapse: separate;
-    width: 100%;
     tab-size: 8;
     border-spacing: 0;
     padding-top: 8px;
     padding-bottom: 8px;
     background-color: white; // prevents code-window from overlapping stickySidebar
+    table-layout: fixed;
 }
 
 .code-line {
-    white-space: pre;
+    white-space: pre-wrap;
     font-family: monospace;
     line-height: 20px;
 }

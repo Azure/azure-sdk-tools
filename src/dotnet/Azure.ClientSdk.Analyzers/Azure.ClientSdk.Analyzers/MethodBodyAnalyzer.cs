@@ -138,9 +138,10 @@ namespace Azure.ClientSdk.Analyzers
         
         private void AnalyzeGetAwaiter(in MethodAnalysisContext context, IOperation operation) 
         {
-            // There is no reason to call GetAwaiter in async method
-            if (context.Method.IsAsync) 
+            // In async scope in async method, use await keyword instead of GetAwaiter().GetResult()
+            if (context.Method.IsAsync && context.AsyncScope) 
             {
+                ReportDiagnosticOnMember(operation, Descriptors.AZC0103, "GetAwaiter().GetResult()");
                 return;
             }
 
@@ -171,16 +172,17 @@ namespace Azure.ClientSdk.Analyzers
                     ReportDiagnosticOnOperation(propertyReference, Descriptors.AZC0104, "property");
                     return;
                 case IInvocationOperation invocation:
-                    if (context.AsyncScope) 
-                    {
-                        // In async scope, use await keyword instead of EnsureCompleted
-                        ReportDiagnosticOnMember(ensureCompletedInvocation, Descriptors.AZC0103);
-                    } 
-                    else 
+                    if (!context.AsyncScope) 
                     {
                         // In sync scope, pass 'async: false' to the async method
                         AnalyzeAsyncParameterValue(invocation, false);
+                    } 
+                    else if (context.Method.IsAsync)
+                    {
+                        // In async scope in async method, use await keyword instead of EnsureCompleted
+                        ReportDiagnosticOnMember(ensureCompletedInvocation, Descriptors.AZC0103, "EnsureCompleted()");
                     }
+
                     return;
             }
         }
@@ -257,13 +259,13 @@ namespace Azure.ClientSdk.Analyzers
             _reportDiagnostic(diagnostic);
         }
 
-        private void ReportDiagnosticOnMember(IOperation operation, DiagnosticDescriptor diagnosticDescriptor) 
+        private void ReportDiagnosticOnMember(IOperation operation, DiagnosticDescriptor diagnosticDescriptor, params object[] messageArgs) 
         {
             var invocation = (InvocationExpressionSyntax)operation.Syntax;
             var name = invocation.Expression is MemberAccessExpressionSyntax memberAccess ? memberAccess.Name : invocation.Expression;
             var start = name.Span.Start;
             var end = invocation.Span.End;
-            var diagnostic = Diagnostic.Create(diagnosticDescriptor, Location.Create(invocation.SyntaxTree, new TextSpan(start, end - start)));
+            var diagnostic = Diagnostic.Create(diagnosticDescriptor, Location.Create(invocation.SyntaxTree, new TextSpan(start, end - start)), messageArgs);
             _reportDiagnostic(diagnostic);
         }
         

@@ -126,6 +126,38 @@ namespace RandomNamespace
         }
         
         [Fact]
+        public async Task AZC0103WarningInAsyncMethodOnGetAwaiter()
+        {
+            var testSource = TestSource.Read(@"
+namespace RandomNamespace
+{
+    using System.Threading;
+    using System.Threading.Tasks;
+    using Azure.Core.Pipeline;
+    public class MyClass
+    {
+        public async Task Foo()
+        {
+            await Task.Yield();
+            FooImplAsync(true)./*MM*/GetAwaiter().GetResult();
+        }
+
+        private async Task FooImplAsync(bool async, CancellationToken ct = default(CancellationToken)) 
+        {
+            await Task.Yield();
+        }
+    }
+}
+" + TaskExtensionsString);
+
+            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
+            var diagnostic = Assert.Single(diagnostics);
+
+            Assert.Equal("AZC0103", diagnostic.Id);
+            AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostic.Location);
+        }
+
+        [Fact]
         public async Task AZC0103NoWarningInAsyncMethodWithAsyncParameter()
         {
             var testSource = TestSource.Read(@"

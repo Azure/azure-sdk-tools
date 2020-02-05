@@ -101,8 +101,8 @@ namespace Azure.ClientSdk.Analyzers
 
         public static DiagnosticDescriptor AZC0103 = new DiagnosticDescriptor(
             nameof(AZC0103),
-            "Do not use EnsureCompleted in asynchronous scope.",
-            "Do not use EnsureCompleted in asynchronous scope. Use await keyword instead.",
+            "Do not wait synchronously in asynchronous scope.",
+            "Do not use {0} in asynchronous scope. Use await keyword instead.",
             "Usage",
             DiagnosticSeverity.Warning, true);
 

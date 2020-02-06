@@ -18,6 +18,7 @@ steps:
         import re
         import fnmatch
         from io import open
+        from pathlib import Path
 
         # This script is intended to be run against a single folder. All readme.md files (regardless of casing) will have the relative links
         # updated with appropriate full reference links. This is a recursive update..
@@ -30,6 +31,11 @@ steps:
 
         LINK_DISCOVERY_REGEX = r"\[([^\]]*)\]\(([^)]*)\)"
         PREDEFINED_LINK_DISCOVERY_REGEX = r"(\[[^\]]*]\:)\s*([^\s]+)"
+
+        IMAGE_FILE_EXTENSIONS = ['.jpeg', '.jpg', '.png', '.gif', '.tiff']
+        RELATIVE_LINK_REPLACEMENT_SYNTAX_FOR_IMAGE = (
+            "https://github.com/{repo_id}/raw/{build_sha}/{target_resource_path}"
+        )
 
         def locate_readmes(directory):
             readme_set = []
@@ -64,11 +70,19 @@ steps:
                 )
                 placement_from_root = os.path.relpath(resource_absolute_path, root_folder)
 
-                updated_link = RELATIVE_LINK_REPLACEMENT_SYNTAX.format(
-                    repo_id=repo_id,
-                    build_sha=build_sha,
-                    target_resource_path=placement_from_root,
-                ).replace("\\", "/")
+                suffix = Path(placement_from_root).suffix
+                if (suffix in IMAGE_FILE_EXTENSIONS):
+                    updated_link = RELATIVE_LINK_REPLACEMENT_SYNTAX_FOR_IMAGE.format(
+                        repo_id=repo_id,
+                        build_sha=build_sha,
+                        target_resource_path=placement_from_root,
+                    ).replace("\\", "/")
+                else:
+                    updated_link = RELATIVE_LINK_REPLACEMENT_SYNTAX.format(
+                        repo_id=repo_id,
+                        build_sha=build_sha,
+                        target_resource_path=placement_from_root,
+                    ).replace("\\", "/")
 
                 return "[{}]({})".format(match.group(1), updated_link)
             else:
@@ -84,11 +98,19 @@ steps:
                 )
                 placement_from_root = os.path.relpath(resource_absolute_path, root_folder)
 
-                updated_link = RELATIVE_LINK_REPLACEMENT_SYNTAX.format(
-                    repo_id=repo_id,
-                    build_sha=build_sha,
-                    target_resource_path=placement_from_root,
-                ).replace("\\", "/")
+                suffix = Path(placement_from_root).suffix
+                if (suffix in IMAGE_FILE_EXTENSIONS):
+                    updated_link = RELATIVE_LINK_REPLACEMENT_SYNTAX_FOR_IMAGE.format(
+                        repo_id=repo_id,
+                        build_sha=build_sha,
+                        target_resource_path=placement_from_root,
+                    ).replace("\\", "/")
+                else:
+                    updated_link = RELATIVE_LINK_REPLACEMENT_SYNTAX.format(
+                        repo_id=repo_id,
+                        build_sha=build_sha,
+                        target_resource_path=placement_from_root,
+                    ).replace("\\", "/")
 
                 return "{} {}".format(match.group(1), updated_link)
             else:

@@ -90,7 +90,7 @@ namespace Azure.ClientSdk.Analyzers
                     TryPushOperationToStack(context, conditional.WhenTrue, false);
                     return;
                 default:
-                    ReportDiagnosticOnOperation(reference.Parent, Descriptors.AZC0108);
+                    ReportDiagnosticOnOperation(reference.Parent, Descriptors.AZC0109);
                     return;
             }
         }
@@ -192,9 +192,11 @@ namespace Azure.ClientSdk.Analyzers
             var asyncParameterIndex = GetAsyncParameterIndex(invocation.TargetMethod);
             if (asyncParameterIndex == -1) 
             {
-                if (!asyncValue) 
-                {
-                    ReportDiagnosticOnMember(invocation, Descriptors.AZC0106);
+                if (!asyncValue) {
+                    var descriptor = IsPublicMethod(invocation.TargetMethod)
+                        ? Descriptors.AZC0107
+                        : Descriptors.AZC0106;
+                    ReportDiagnosticOnMember(invocation, descriptor);
                 }
             }
             else if (invocation.Arguments[asyncParameterIndex].Value.ConstantValue.Value is bool value && value != asyncValue) 
@@ -202,7 +204,7 @@ namespace Azure.ClientSdk.Analyzers
                 var messageArgs = asyncValue
                     ? new object[] { "asynchronous", invocation.TargetMethod.Name, "true" }
                     : new object[] { "synchronous", invocation.TargetMethod.Name, "false" };
-                ReportDiagnosticOnOperation(invocation.Arguments[asyncParameterIndex], Descriptors.AZC0107, messageArgs);
+                ReportDiagnosticOnOperation(invocation.Arguments[asyncParameterIndex], Descriptors.AZC0108, messageArgs);
             }
         }
         

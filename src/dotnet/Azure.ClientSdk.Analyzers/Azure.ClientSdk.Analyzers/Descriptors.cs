@@ -129,13 +129,20 @@ namespace Azure.ClientSdk.Analyzers
 
         public static DiagnosticDescriptor AZC0107 = new DiagnosticDescriptor(
             nameof(AZC0107),
-            "Incorrect 'async' parameter value.",
-            "In {0} scope 'async' parameter for the '{1}' method call should be '{2}'.",
+            "DO NOT call public asynchronous method in synchronous scope.",
+            "Public asynchronous method shouldn't be called in synchronous scope. Use synchronous version of the method if it is available.",
             "Usage",
             DiagnosticSeverity.Warning, true);
 
         public static DiagnosticDescriptor AZC0108 = new DiagnosticDescriptor(
             nameof(AZC0108),
+            "Incorrect 'async' parameter value.",
+            "In {0} scope 'async' parameter for the '{1}' method call should be '{2}'.",
+            "Usage",
+            DiagnosticSeverity.Warning, true);
+
+        public static DiagnosticDescriptor AZC0109 = new DiagnosticDescriptor(
+            nameof(AZC0109),
             "Misuse of 'async' parameter.",
             "'async' parameter in asynchronous method can't be changed and can only be used as an exclusive condition in '?:' operator or conditional statement.",
             "Usage",

@@ -19,7 +19,7 @@ public class PackageNameDiagnosticRule implements DiagnosticRule {
             getClassName(cu).map(listing.getKnownTypes()::get).ifPresent(typeId -> {
                 if (!regex.matcher(packageName).matches()) {
                     listing.addDiagnostic(new Diagnostic(typeId,
-                            "Package name must start with 'com.azure', and it must be lower-case, with no underscores or hyphens."));
+                            "Package name must start with 'com.azure.<group>.', and it must be lower-case, with no underscores or hyphens."));
                 }
             });
         });

@@ -3,17 +3,16 @@
 
 using System.Threading.Tasks;
 using Xunit;
+using Verifier = Azure.ClientSdk.Analyzers.Tests.AzureAnalyzerVerifier<Azure.ClientSdk.Analyzers.ClientMethodsAnalyzer>;
 
 namespace Azure.ClientSdk.Analyzers.Tests
 {
     public class AZC0003Tests
     {
-        private readonly DiagnosticAnalyzerRunner _runner = new DiagnosticAnalyzerRunner(new ClientMethodsAnalyzer());
-
         [Fact]
-        public async Task AZC0002ProducedForNonVirtualMethods()
+        public async Task AZC0003ProducedForNonVirtualMethods()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -21,31 +20,23 @@ namespace RandomNamespace
 {
     public class SomeClient
     {
-        public Task /*MM0*/GetAsync(CancellationToken cancellationToken = default)
+        public Task [|GetAsync|](CancellationToken cancellationToken = default)
         {
             return null;
         }
 
-        public void /*MM1*/Get(CancellationToken cancellationToken = default)
+        public void [|Get|](CancellationToken cancellationToken = default)
         {
         }
     }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-
-            Assert.Equal(2, diagnostics.Length);
-
-            Assert.Equal("AZC0003", diagnostics[0].Id);
-            Assert.Equal("AZC0003", diagnostics[1].Id);
-            AnalyzerAssert.DiagnosticLocation(testSource.MarkerLocations["MM0"], diagnostics[0].Location);
-            AnalyzerAssert.DiagnosticLocation(testSource.MarkerLocations["MM1"], diagnostics[1].Location);
+}";
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0003");
         }
 
         [Fact]
-        public async Task AZC0002SkippedForPrivateMethods()
+        public async Task AZC0003SkippedForPrivateMethods()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -62,17 +53,14 @@ namespace RandomNamespace
         {
         }
     }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-
-            Assert.Empty(diagnostics);
+}";
+            await Verifier.VerifyAnalyzerAsync(code);
         }
 
         [Fact]
-        public async Task AZC0002SkippedForOverrides()
+        public async Task AZC0003SkippedForOverrides()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -97,11 +85,8 @@ namespace RandomNamespace
         {
         }
     }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-
-            Assert.Empty(diagnostics);
+}";
+            await Verifier.VerifyAnalyzerAsync(code);
         }
     }
 }

@@ -3,48 +3,39 @@
 
 using System.Threading.Tasks;
 using Xunit;
+using Verifier = Azure.ClientSdk.Analyzers.Tests.AzureAnalyzerVerifier<Azure.ClientSdk.Analyzers.ClientMethodsAnalyzer>;
 
 namespace Azure.ClientSdk.Analyzers.Tests
 {
     public class AZC0002Tests
     {
-        private readonly DiagnosticAnalyzerRunner _runner = new DiagnosticAnalyzerRunner(new ClientMethodsAnalyzer());
-
         [Fact]
         public async Task AZC0002ProducedForMethodsWithoutCancellationToken()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 using System.Threading.Tasks;
 
 namespace RandomNamespace
 {
     public class SomeClient
     {
-        public virtual Task /*MM0*/GetAsync()
+        public virtual Task [|GetAsync|]()
         {
             return null;
         }
 
-        public virtual void /*MM1*/Get()
+        public virtual void [|Get|]()
         {
         }
     }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-
-            Assert.Equal(2, diagnostics.Length);
-
-            Assert.Equal("AZC0002", diagnostics[0].Id);
-            Assert.Equal("AZC0002", diagnostics[1].Id);
-            AnalyzerAssert.DiagnosticLocation(testSource.MarkerLocations["MM0"], diagnostics[0].Location);
-            AnalyzerAssert.DiagnosticLocation(testSource.MarkerLocations["MM1"], diagnostics[1].Location);
+}";
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0002");
         }
 
         [Fact]
         public async Task AZC0002ProducedForMethodsWithNonOptionalCancellationToken()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -52,31 +43,23 @@ namespace RandomNamespace
 {
     public class SomeClient
     {
-        public virtual Task /*MM0*/GetAsync(CancellationToken cancellationToken)
+        public virtual Task [|GetAsync|](CancellationToken cancellationToken)
         {
             return null;
         }
 
-        public virtual void /*MM1*/Get(CancellationToken cancellationToken)
+        public virtual void [|Get|](CancellationToken cancellationToken)
         {
         }
     }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-
-            Assert.Equal(2, diagnostics.Length);
-
-            Assert.Equal("AZC0002", diagnostics[0].Id);
-            Assert.Equal("AZC0002", diagnostics[1].Id);
-            AnalyzerAssert.DiagnosticLocation(testSource.MarkerLocations["MM0"], diagnostics[0].Location);
-            AnalyzerAssert.DiagnosticLocation(testSource.MarkerLocations["MM1"], diagnostics[1].Location);
+}";
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0002");
         }
 
         [Fact]
-        public async Task AZC0003ProducedForMethodsWithWrongNameParameter()
+        public async Task AZC0002ProducedForMethodsWithWrongNameParameter()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -84,25 +67,17 @@ namespace RandomNamespace
 {
     public class SomeClient
     {
-        public virtual Task /*MM0*/GetAsync(CancellationToken cancellation = default)
+        public virtual Task [|GetAsync|](CancellationToken cancellation = default)
         {
             return null;
         }
 
-        public virtual void /*MM1*/Get(CancellationToken cancellation = default)
+        public virtual void [|Get|](CancellationToken cancellation = default)
         {
         }
     }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-
-            Assert.Equal(2, diagnostics.Length);
-
-            Assert.Equal("AZC0002", diagnostics[0].Id);
-            Assert.Equal("AZC0002", diagnostics[1].Id);
-            AnalyzerAssert.DiagnosticLocation(testSource.MarkerLocations["MM0"], diagnostics[0].Location);
-            AnalyzerAssert.DiagnosticLocation(testSource.MarkerLocations["MM1"], diagnostics[1].Location);
+}";
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0002");
         }
     }
 }

@@ -19,7 +19,10 @@ namespace Azure.ClientSdk.Analyzers
         private readonly Stack<(IEnumerator<IOperation>, MethodAnalysisContext)> _symbolIteratorsStack;
         private readonly Action<Diagnostic> _reportDiagnostic;
 
-        public MethodBodyAnalyzer(Action<Diagnostic> reportDiagnostic, Compilation compilation, AsyncAnalyzerUtilities utilities) 
+        public static void Run(Action<Diagnostic> reportDiagnostic, Compilation compilation, AsyncAnalyzerUtilities utilities, IMethodSymbol method, IBlockOperation methodBody) 
+            => new MethodBodyAnalyzer(reportDiagnostic, compilation, utilities).Run(method, methodBody);
+
+        private MethodBodyAnalyzer(Action<Diagnostic> reportDiagnostic, Compilation compilation, AsyncAnalyzerUtilities utilities) 
         {
             _reportDiagnostic = reportDiagnostic;
             _asyncUtilities = utilities;
@@ -29,7 +32,7 @@ namespace Azure.ClientSdk.Analyzers
             _symbolIteratorsStack = new Stack<(IEnumerator<IOperation>, MethodAnalysisContext)>();
         }
 
-        public void Run(IMethodSymbol method, IBlockOperation methodBody) 
+        private void Run(IMethodSymbol method, IBlockOperation methodBody) 
         {
             var asyncParameterIndex = GetAsyncParameterIndex(method);
             if (IsPublicMethod(method) && asyncParameterIndex != -1 && methodBody.Parent is IMethodBodyOperation methodBodyOperation) 

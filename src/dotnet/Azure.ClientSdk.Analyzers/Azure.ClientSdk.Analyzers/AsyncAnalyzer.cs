@@ -50,7 +50,7 @@ namespace Azure.ClientSdk.Analyzers
             var operation = context.SemanticModel.GetOperation(context.Node, context.CancellationToken);
             if (operation is IBlockOperation block && block.Parent == null) 
             {
-                new  MethodBodyAnalyzer(context.ReportDiagnostic, context.Compilation, _asyncUtilities).Run(method, block);
+                MethodBodyAnalyzer.Run(context.ReportDiagnostic, context.Compilation, _asyncUtilities, method, block);
             }
         }
 
@@ -58,7 +58,7 @@ namespace Azure.ClientSdk.Analyzers
         {
             var method = (IMethodSymbol) context.ContainingSymbol;
             var methodBody = (IMethodBodyOperation)context.Operation;
-            new MethodBodyAnalyzer(context.ReportDiagnostic, context.Compilation, _asyncUtilities).Run(method, methodBody.BlockBody ?? methodBody.ExpressionBody);
+            MethodBodyAnalyzer.Run(context.ReportDiagnostic, context.Compilation, _asyncUtilities, method, methodBody.BlockBody ?? methodBody.ExpressionBody);
         }
 
         private void AnalyzeAnonymousFunction(OperationAnalysisContext context) 
@@ -67,7 +67,7 @@ namespace Azure.ClientSdk.Analyzers
             var method = operation.Symbol;
             if (method.ContainingSymbol.Kind != SymbolKind.Method) 
             {
-                new  MethodBodyAnalyzer(context.ReportDiagnostic, context.Compilation, _asyncUtilities).Run(method, operation.Body);
+                MethodBodyAnalyzer.Run(context.ReportDiagnostic, context.Compilation, _asyncUtilities, method, operation.Body);
             }
         }
 

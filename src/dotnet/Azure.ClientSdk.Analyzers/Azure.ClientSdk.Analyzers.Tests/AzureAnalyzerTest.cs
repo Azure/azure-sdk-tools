@@ -1,19 +1,24 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using System;
+using System.Collections.Immutable;
 using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Testing;
 using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis.Testing;
 using Microsoft.CodeAnalysis.Testing.Verifiers;
 
 namespace Azure.ClientSdk.Analyzers.Tests 
 {
     public class AzureAnalyzerTest<TAnalyzer> : CSharpAnalyzerTest<TAnalyzer, XUnitVerifier> where TAnalyzer : DiagnosticAnalyzer, new() 
     {
+        private static readonly ReferenceAssemblies DefaultReferenceAssemblies =
+            ReferenceAssemblies.Default.AddPackages(ImmutableArray.Create(
+                new PackageIdentity("Microsoft.Bcl.AsyncInterfaces", "1.1.0"),
+                new PackageIdentity("System.Threading.Tasks.Extensions", "4.5.3")));
+
         public AzureAnalyzerTest(LanguageVersion languageVersion = LanguageVersion.Latest) 
         {
             SolutionTransforms.Add((solution, projectId) =>
@@ -23,8 +28,7 @@ namespace Azure.ClientSdk.Analyzers.Tests
                 return solution.WithProjectParseOptions(projectId, parseOptions.WithLanguageVersion(languageVersion));
             });
 
-            TestState.AdditionalReferences.Add(typeof(ValueTask).Assembly);
-            TestState.AdditionalReferences.Add(typeof(IAsyncDisposable).Assembly);
+            ReferenceAssemblies = DefaultReferenceAssemblies;
         }
 
         public string DescriptorName { get; set; }

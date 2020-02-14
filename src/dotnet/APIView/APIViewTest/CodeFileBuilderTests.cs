@@ -1,6 +1,5 @@
 ﻿using System;
 using ApiView;
-using Azure.ClientSdk.Analyzers.Tests;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using System.Collections.Generic;

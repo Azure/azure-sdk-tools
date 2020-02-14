@@ -3,14 +3,13 @@
 
 using System.Threading.Tasks;
 using Xunit;
+using Verifier = Azure.ClientSdk.Analyzers.Tests.AzureAnalyzerVerifier<Azure.ClientSdk.Analyzers.AsyncAnalyzer>;
 
-namespace Azure.ClientSdk.Analyzers.Tests 
+namespace Azure.ClientSdk.Analyzers.Tests
 {
     public class AZC0109Tests 
     {
-        private readonly DiagnosticAnalyzerRunner _runner = new DiagnosticAnalyzerRunner(new AsyncAnalyzer());
-
-        private const string TaskExtensionsString = @"
+        private const string AzureCorePipelineTaskExtensions = @"
 namespace Azure.Core.Pipeline
 {
     using System.Threading.Tasks;
@@ -27,7 +26,7 @@ namespace Azure.Core.Pipeline
         [Fact]
         public async Task AZC0109WarningOnAssignment()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     using System.Threading;
@@ -42,25 +41,22 @@ namespace RandomNamespace
 
         private static async Task<int> FooImplAsync(bool async, CancellationToken ct = default(CancellationToken)) 
         {
-            /*MM*/async = false;
+            [|async = false|];
             await Task.Yield();
             return 42;
         }
     }
-}
-" + TaskExtensionsString);
-
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-            var diagnostic = Assert.Single(diagnostics);
-
-            Assert.Equal("AZC0109", diagnostic.Id);
-            AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostic.Location);
+}";
+            
+            await Verifier.CreateAnalyzer(code, "AZC0109")
+                .WithSources(AzureCorePipelineTaskExtensions)
+                .RunAsync();
         }
 
         [Fact]
         public async Task AZC0109WarningOnReading()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     using System.Threading;
@@ -75,7 +71,7 @@ namespace RandomNamespace
 
         private static async Task<int> FooImplAsync(bool async, CancellationToken ct = default(CancellationToken)) 
         {
-            var x /*MM*/= async;
+            var x [|= async|];
             if (x)
             {
                 await Task.Yield();
@@ -83,20 +79,17 @@ namespace RandomNamespace
             return 42;
         }
     }
-}
-" + TaskExtensionsString);
-
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-            var diagnostic = Assert.Single(diagnostics);
-
-            Assert.Equal("AZC0109", diagnostic.Id);
-            AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostic.Location);
+}";
+            
+            await Verifier.CreateAnalyzer(code, "AZC0109")
+                .WithSources(AzureCorePipelineTaskExtensions)
+                .RunAsync();
         }
 
         [Fact]
         public async Task AZC0109WarningOnBinaryOperation()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     using System.Threading;
@@ -112,27 +105,24 @@ namespace RandomNamespace
         private static async Task<int> FooImplAsync(bool async, CancellationToken ct = default(CancellationToken)) 
         {
             var x = false;
-            if (/*MM*/async && x)
+            if ([|async && x|])
             {
                 await Task.Yield();
             }
             return 42;
         }
     }
-}
-" + TaskExtensionsString);
-
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-            var diagnostic = Assert.Single(diagnostics);
-
-            Assert.Equal("AZC0109", diagnostic.Id);
-            AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostic.Location);
+}";
+            
+            await Verifier.CreateAnalyzer(code, "AZC0109")
+                .WithSources(AzureCorePipelineTaskExtensions)
+                .RunAsync();
         }
 
         [Fact]
         public async Task AZC0109NoWarningOnUnaryNot()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     using System.Threading;
@@ -156,17 +146,17 @@ namespace RandomNamespace
             return 42;
         }
     }
-}
-" + TaskExtensionsString);
-
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-            Assert.Empty(diagnostics);
+}";
+            
+            await Verifier.CreateAnalyzer(code)
+                .WithSources(AzureCorePipelineTaskExtensions)
+                .RunAsync();
         }
 
         [Fact]
         public async Task AZC0109NoWarningOnTernary()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     using System.Threading;
@@ -182,17 +172,17 @@ namespace RandomNamespace
         private static async Task<int> FooImplAsync(bool async, CancellationToken ct = default(CancellationToken)) 
             => async ? await Task.FromResult(42).ConfigureAwait(false) : 42;
     }
-}
-" + TaskExtensionsString);
-
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-            Assert.Empty(diagnostics);
+}";
+            
+            await Verifier.CreateAnalyzer(code)
+                .WithSources(AzureCorePipelineTaskExtensions)
+                .RunAsync();
         }
 
         [Fact]
-        public async Task AZC0109NoWarningOnConditional()
+        public async Task AZC0109NoWarningOnConditional() 
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     using System.Threading;
@@ -217,11 +207,11 @@ namespace RandomNamespace
             }
         }
     }
-}
-" + TaskExtensionsString);
+}";
 
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-            Assert.Empty(diagnostics);
+            await Verifier.CreateAnalyzer(code)
+                .WithSources(AzureCorePipelineTaskExtensions)
+                .RunAsync();
         }
     }
 }

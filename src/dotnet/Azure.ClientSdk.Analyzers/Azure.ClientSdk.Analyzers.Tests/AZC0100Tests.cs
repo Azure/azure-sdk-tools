@@ -1,74 +1,60 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using System;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.Testing;
 using Xunit;
+using Verifier = Azure.ClientSdk.Analyzers.Tests.AzureAnalyzerVerifier<Azure.ClientSdk.Analyzers.AsyncAnalyzer>;
 
 namespace Azure.ClientSdk.Analyzers.Tests 
 {
     public class AZC0100Tests 
     {
-        private readonly DiagnosticAnalyzerRunner _runner = new DiagnosticAnalyzerRunner(new AsyncAnalyzer());
-
         [Theory]
         [InlineData(LanguageVersion.CSharp7)]
         [InlineData(LanguageVersion.Latest)]
-        public async Task AZC0100WarningOnTask(LanguageVersion version)
+        public async Task AZC0100WarningOnTask(LanguageVersion languageVersion)
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     public class MyClass
     {
         public static async System.Threading.Tasks.Task Foo()
         {
-            /*MM*/await System.Threading.Tasks.Task.Run(() => {});
+            [|await System.Threading.Tasks.Task.Run(() => {})|];
         }
     }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source, version);
-
-            var diagnostic = Assert.Single(diagnostics);
-
-            Assert.Equal("AZC0100", diagnostic.Id);
-            AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostics[0].Location);
+}";
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0100", languageVersion);
         }
 
         [Theory]
         [InlineData(LanguageVersion.CSharp7)]
         [InlineData(LanguageVersion.Latest)]
-        public async Task AZC0100WarningOnTaskOfT(LanguageVersion version) 
+        public async Task AZC0100WarningOnTaskOfT(LanguageVersion languageVersion) 
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     public class MyClass
     {
         public static async System.Threading.Tasks.Task Foo()
         {
-            var i = /*MM*/await System.Threading.Tasks.Task.Run(() => 42);
+            var i = [|await System.Threading.Tasks.Task.Run(() => 42)|];
         }
     }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source, version);
-
-            var diagnostic = Assert.Single(diagnostics);
-
-            Assert.Equal("AZC0100", diagnostic.Id);
-            AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostics[0].Location);
+}";
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0100", languageVersion);
         }
 
         [Theory]
         [InlineData(LanguageVersion.CSharp7)]
         [InlineData(LanguageVersion.Latest)]
-        public async Task AZC0100WarningOnValueTask(LanguageVersion version) 
+        public async Task AZC0100WarningOnValueTask(LanguageVersion languageVersion) 
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     public class MyClass
@@ -77,7 +63,7 @@ namespace RandomNamespace
 
         public static async System.Threading.Tasks.ValueTask Foo()
         {
-            /*MM*/await RunAsync();
+            [|await RunAsync()|];
         }
 
         private static async System.Threading.Tasks.ValueTask RunAsync()
@@ -85,29 +71,23 @@ namespace RandomNamespace
             _x++;
         }
     }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source, version);
-
-            var diagnostic = Assert.Single(diagnostics);
-
-            Assert.Equal("AZC0100", diagnostic.Id);
-            AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostics[0].Location);
+}";
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0100", languageVersion);
         }
 
         [Theory]
         [InlineData(LanguageVersion.CSharp7)]
         [InlineData(LanguageVersion.Latest)]
-        public async Task AZC0100WarningOnValueTaskOfT(LanguageVersion version) 
+        public async Task AZC0100WarningOnValueTaskOfT(LanguageVersion languageVersion) 
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     public class MyClass
     {
         public static async System.Threading.Tasks.ValueTask Foo()
         {
-            var i = /*MM*/await GetValueAsync();
+            var i = [|await GetValueAsync()|];
         }
 
         private static async System.Threading.Tasks.ValueTask<int> GetValueAsync()
@@ -115,20 +95,14 @@ namespace RandomNamespace
             return 0;
         }
     }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source, version);
-
-            var diagnostic = Assert.Single(diagnostics);
-
-            Assert.Equal("AZC0100", diagnostic.Id);
-            AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostics[0].Location);
+}";
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0100", languageVersion);
         }
 
         [Fact]
         public async Task AZC0100NoWarningOnExistingConfigureAwaitFalse()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     public class MyClass
@@ -138,39 +112,31 @@ namespace RandomNamespace
            await System.Threading.Tasks.Task.Run(() => {}).ConfigureAwait(false);
         }
     }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-            Assert.Empty(diagnostics);
+}";
+            await Verifier.VerifyAnalyzerAsync(code);
         }
 
         [Fact]
         public async Task AZC0100WarningOnTaskDelay()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     public class MyClass
     {
         public static async System.Threading.Tasks.Task Foo()
         {
-            /*MM*/await System.Threading.Tasks.Task.Delay(42);
+            [|await System.Threading.Tasks.Task.Delay(42)|];
         }
     }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-
-            var diagnostic = Assert.Single(diagnostics);
-
-            Assert.Equal("AZC0100", diagnostic.Id);
-            AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostics[0].Location);
+}";
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0100");
         }
 
         [Fact]
         public async Task AZC0100NoWarningOnTaskYield()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     public class MyClass
@@ -180,16 +146,14 @@ namespace RandomNamespace
            await System.Threading.Tasks.Task.Yield();
         }
     }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-            Assert.Empty(diagnostics);
+}";
+            await Verifier.VerifyAnalyzerAsync(code);
         }
 
         [Fact]
         public async Task AZC0100NoWarningOnNested()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     using System.Threading.Tasks;
@@ -204,16 +168,14 @@ namespace RandomNamespace
         private static async Task FooAsync(bool foo) {}
         private static async Task<bool> getFoo() => true;
     }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-            Assert.Empty(diagnostics);
+}";
+            await Verifier.VerifyAnalyzerAsync(code);
         }
 
         [Fact]
         public async Task AZC0100WarningOnVariable()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     public class MyClass
@@ -221,23 +183,17 @@ namespace RandomNamespace
         public static async System.Threading.Tasks.Task Foo()
         {
             var task = System.Threading.Tasks.Task.Run(() => {});
-            /*MM*/await task;
+            [|await task|];
         }
     }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-
-            var diagnostic = Assert.Single(diagnostics);
-
-            Assert.Equal("AZC0100", diagnostic.Id);
-            AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostics[0].Location);
+}";
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0100");
         }
 
         [Fact]
         public async Task AZC0100WarningOnAsyncForeach()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     using System.Collections.Generic;
@@ -248,25 +204,19 @@ namespace RandomNamespace
     {
         public static async Task Foo()
         {
-            await foreach (var x in /*MM*/GetValuesAsync()) { }
+            await foreach (var x in [|GetValuesAsync()|]) { }
         }
 
         private static async IAsyncEnumerable<int> GetValuesAsync() { yield break; }
     }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-
-            var diagnostic = Assert.Single(diagnostics);
-
-            Assert.Equal("AZC0100", diagnostic.Id);
-            AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostics[0].Location);
+}";
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0100");
         }
 
         [Fact]
         public async Task AZC0100NoWarningOnAsyncForeachExistingConfigureAwaitFalse()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     using System.Collections.Generic;
@@ -277,21 +227,19 @@ namespace RandomNamespace
     {
         public static async Task Foo()
         {
-            await foreach (var x in /*MM*/GetValuesAsync().ConfigureAwait(false)) { }
+            await foreach (var x in GetValuesAsync().ConfigureAwait(false)) { }
         }
 
         private static async IAsyncEnumerable<int> GetValuesAsync() { yield break; }
     }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-            Assert.Empty(diagnostics);
+}";
+            await Verifier.VerifyAnalyzerAsync(code);
         }
 
         [Fact]
         public async Task AZC0100NoWarningOnForeach()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     using System.Collections.Generic;
@@ -307,16 +255,14 @@ namespace RandomNamespace
 
         private static IEnumerable<int> GetValuesAsync() { yield break; }
     }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-            Assert.Empty(diagnostics);
+}";
+            await Verifier.VerifyAnalyzerAsync(code);
         }
 
         [Fact]
         public async Task AZC0100WarningOnAsyncEnumerableVariable()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     using System.Collections.Generic;
@@ -328,25 +274,19 @@ namespace RandomNamespace
         public static async Task Foo()
         {
             var enumerable = GetValuesAsync();
-            await foreach (var x in /*MM*/enumerable) { }
+            await foreach (var x in [|enumerable|]) { }
         }
 
         private static async IAsyncEnumerable<int> GetValuesAsync() { yield break; }
     }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-
-            var diagnostic = Assert.Single(diagnostics);
-
-            Assert.Equal("AZC0100", diagnostic.Id);
-            AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostics[0].Location);
+}";
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0100");
         }
 
         [Fact]
         public async Task AZC0100WarningOnAsyncForeachOfCustomEnumerable()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     using System.Collections.Generic;
@@ -358,7 +298,7 @@ namespace RandomNamespace
         public static async Task Foo()
         {
             foreach (var y in new List<string>()) { }
-            await foreach (var x in /*MM*/new AsyncEnumerable()) { }
+            await foreach (var x in [|new AsyncEnumerable()|]) { }
         }
 
         private class AsyncEnumerable : IAsyncEnumerable<int> 
@@ -366,20 +306,14 @@ namespace RandomNamespace
             public IAsyncEnumerator<int> GetAsyncEnumerator(CancellationToken cancellationToken = default) => null;
         }
     }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-
-            var diagnostic = Assert.Single(diagnostics);
-
-            Assert.Equal("AZC0100", diagnostic.Id);
-            AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostics[0].Location);
+}";
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0100");
         }
 
         [Fact]
         public async Task AZC0100WarningOnAsyncUsingVariable()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     using System;
@@ -390,7 +324,7 @@ namespace RandomNamespace
         public static async Task Foo()
         {
             var ad = new AsyncDisposable();
-            await using(/*MM*/ad) { }
+            await using([|ad|]) { }
         }
     
         private class AsyncDisposable : IAsyncDisposable
@@ -398,20 +332,14 @@ namespace RandomNamespace
             public ValueTask DisposeAsync() => new ValueTask();
         }
     }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-
-            var diagnostic = Assert.Single(diagnostics);
-
-            Assert.Equal("AZC0100", diagnostic.Id);
-            AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostics[0].Location);
+}";
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0100");
         }
 
         [Fact]
         public async Task AZC0100WarningOnAsyncUsing()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     using System;
@@ -421,7 +349,7 @@ namespace RandomNamespace
     {
         public static async Task Foo()
         {
-            await using(/*MM*/new AsyncDisposable()) { }
+            await using([|new AsyncDisposable()|]) { }
         }
     
         private class AsyncDisposable : IAsyncDisposable
@@ -429,20 +357,14 @@ namespace RandomNamespace
             public ValueTask DisposeAsync() => new ValueTask();
         }
     }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-
-            var diagnostic = Assert.Single(diagnostics);
-
-            Assert.Equal("AZC0100", diagnostic.Id);
-            AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostics[0].Location);
+}";
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0100");
         }
 
         [Fact]
         public async Task AZC0100WarningOnAsyncUsingNoBraces()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     using System;
@@ -452,8 +374,8 @@ namespace RandomNamespace
     {
         public static async Task Foo()
         {
-            await using IAsyncDisposable x = /*MM0*/CreateAsyncDisposable(),
-                                         y = /*MM1*/new AsyncDisposable();
+            await using IAsyncDisposable x = [|CreateAsyncDisposable()|],
+                                         y = [|new AsyncDisposable()|];
         }
 
         private static IAsyncDisposable CreateAsyncDisposable() => new AsyncDisposable();
@@ -463,22 +385,14 @@ namespace RandomNamespace
             public ValueTask DisposeAsync() => new ValueTask();
         }
     }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-
-            Assert.Equal(2, diagnostics.Length);
-
-            Assert.Equal("AZC0100", diagnostics[0].Id);
-            Assert.Equal("AZC0100", diagnostics[1].Id);
-            AnalyzerAssert.DiagnosticLocation(testSource.MarkerLocations["MM0"], diagnostics[0].Location);
-            AnalyzerAssert.DiagnosticLocation(testSource.MarkerLocations["MM1"], diagnostics[1].Location);
+}";
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0100");
         }
 
         [Fact]
         public async Task AZC0100WarningOnAsyncUsingVariableNoBraces()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     using System;
@@ -489,7 +403,7 @@ namespace RandomNamespace
         public static async Task Foo()
         {
             var ad = new AsyncDisposable();
-            await using var _ = /*MM*/ad;
+            await using var _ = [|ad|];
         }
     
         private class AsyncDisposable : IAsyncDisposable
@@ -497,20 +411,14 @@ namespace RandomNamespace
             public ValueTask DisposeAsync() => new ValueTask();
         }
     }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-
-            var diagnostic = Assert.Single(diagnostics);
-
-            Assert.Equal("AZC0100", diagnostic.Id);
-            AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostics[0].Location);
+}";
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0100");
         }
 
         [Fact]
         public async Task AZC0100NoWarningOnAsyncUsingExistingConfigureAwaitFalse()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     using System;
@@ -529,16 +437,14 @@ namespace RandomNamespace
             public ValueTask DisposeAsync() => new ValueTask();
         }
     }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-            Assert.Empty(diagnostics);
+}";
+            await Verifier.VerifyAnalyzerAsync(code);
         }
 
         [Fact]
         public async Task AZC0100NoWarningOnAsyncUsingNoBracesExistingConfigureAwaitFalse()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     using System;
@@ -560,16 +466,14 @@ namespace RandomNamespace
             public ValueTask DisposeAsync() => new ValueTask();
         }
     }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-            Assert.Empty(diagnostics);
+}";
+            await Verifier.VerifyAnalyzerAsync(code);
         }
 
         [Fact]
         public async Task AZC0100NoWarningOnUsing()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     using System;
@@ -587,16 +491,14 @@ namespace RandomNamespace
             public void Dispose() { }
         }
     }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-            Assert.Empty(diagnostics);
+}";
+            await Verifier.VerifyAnalyzerAsync(code);
         }
 
         [Fact]
         public async Task AZC0100NoWarningOnUsingNoBraces()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     using System;
@@ -614,16 +516,14 @@ namespace RandomNamespace
             public void Dispose() { }
         }
     }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-            Assert.Empty(diagnostics);
+}";
+            await Verifier.VerifyAnalyzerAsync(code);
         }
 
         [Fact]
         public async Task AZC0100NoWarningOnCSharp7() 
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     using System;
@@ -645,16 +545,14 @@ namespace RandomNamespace
 
         private static IEnumerable<int> GetValuesAsync() { yield break; }
     }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source, LanguageVersion.CSharp7);
-            Assert.Empty(diagnostics);
+}";
+            await Verifier.VerifyAnalyzerAsync(code, languageVersion: LanguageVersion.CSharp7);
         }
 
         [Fact]
         public async Task AZC0100NonCompilableCode() 
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     using System;
@@ -676,9 +574,13 @@ namespace RandomNamespace
         public static async Task M23() { await using(var ){} }
         public static async Task M24() { await using(var a = ){} }
     }
-}
-");
-            await _runner.GetDiagnosticsAsync(testSource.Source);
+}";
+            await new AzureAnalyzerTest<AsyncAnalyzer>
+            {
+                CompilerDiagnostics = CompilerDiagnostics.None,
+                TestCode = code,
+                TestBehaviors = TestBehaviors.SkipGeneratedCodeCheck
+            }.RunAsync();
         }
     }
 }

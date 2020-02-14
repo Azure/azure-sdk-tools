@@ -1,13 +1,15 @@
-﻿using System.Threading.Tasks;
+﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
+using System.Threading.Tasks;
 using Xunit;
+using Verifier = Azure.ClientSdk.Analyzers.Tests.AzureAnalyzerVerifier<Azure.ClientSdk.Analyzers.AsyncAnalyzer>;
 
 namespace Azure.ClientSdk.Analyzers.Tests
 {
     public class AZC0107Tests 
     {
-        private readonly DiagnosticAnalyzerRunner _runner = new DiagnosticAnalyzerRunner(new AsyncAnalyzer());
-
-        private const string TaskExtensionsString = @"
+        private const string AzureCorePipelineTaskExtensions = @"
 namespace Azure.Core.Pipeline
 {
     using System.Threading.Tasks;
@@ -24,7 +26,7 @@ namespace Azure.Core.Pipeline
         [Fact]
         public async Task AZC0107WarningOnPublicAsyncMethodInSyncMethod()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     using System.Threading;
@@ -34,23 +36,20 @@ namespace RandomNamespace
     {
         private static void Foo()
         {
-            Task./*MM*/Delay(0).EnsureCompleted();
+            Task.[|Delay(0)|].EnsureCompleted();
         }
     }
-}
-" + TaskExtensionsString);
-
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-            var diagnostic = Assert.Single(diagnostics);
-
-            Assert.Equal("AZC0107", diagnostic.Id);
-            AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostic.Location);
+}";
+            
+            await Verifier.CreateAnalyzer(code, "AZC0107")
+                .WithSources(AzureCorePipelineTaskExtensions)
+                .RunAsync();
         }
 
         [Fact]
         public async Task AZC0107WarningOnPublicAsyncMethodInSyncScope()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     using System.Threading;
@@ -66,24 +65,20 @@ namespace RandomNamespace
             }
             else 
             {
-                Task./*MM*/Delay(0).EnsureCompleted();
+                Task.[|Delay(0)|].EnsureCompleted();
             }
         }
     }
-}
-" + TaskExtensionsString);
-
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-            var diagnostic = Assert.Single(diagnostics);
-
-            Assert.Equal("AZC0107", diagnostic.Id);
-            AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostic.Location);
+}";
+            await Verifier.CreateAnalyzer(code, "AZC0107")
+                .WithSources(AzureCorePipelineTaskExtensions)
+                .RunAsync();
         }
 
         [Fact]
         public async Task AZC0107DisabledNoOtherWarningInSyncMethod()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     using System.Threading;
@@ -98,11 +93,11 @@ namespace RandomNamespace
 #pragma warning restore AZC0107
         }
     }
-}
-" + TaskExtensionsString);
+}";
 
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-            Assert.Empty(diagnostics);
+            await Verifier.CreateAnalyzer(code)
+                .WithSources(AzureCorePipelineTaskExtensions)
+                .RunAsync();
         }
     }
 }

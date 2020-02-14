@@ -7,6 +7,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Operations;
+using static Azure.ClientSdk.Analyzers.Descriptors;
 
 namespace Azure.ClientSdk.Analyzers
 {
@@ -16,7 +17,7 @@ namespace Azure.ClientSdk.Analyzers
         private AsyncAnalyzerUtilities _asyncUtilities;
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
-            ImmutableArray.Create(Descriptors.AZC0100, Descriptors.AZC0101, Descriptors.AZC0102, Descriptors.AZC0103, Descriptors.AZC0104, Descriptors.AZC0105, Descriptors.AZC0106, Descriptors.AZC0107, Descriptors.AZC0108, Descriptors.AZC0109);
+            ImmutableArray.Create(AZC0100, AZC0101, AZC0102, AZC0103, AZC0104, AZC0105, AZC0106, AZC0107, AZC0108, AZC0109);
 
         public override void Initialize(AnalysisContext context)
         {

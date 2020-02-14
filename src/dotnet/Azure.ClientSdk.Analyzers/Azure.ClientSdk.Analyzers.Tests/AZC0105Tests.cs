@@ -3,64 +3,52 @@
 
 using System.Threading.Tasks;
 using Xunit;
+using Verifier = Azure.ClientSdk.Analyzers.Tests.AzureAnalyzerVerifier<Azure.ClientSdk.Analyzers.AsyncAnalyzer>;
 
 namespace Azure.ClientSdk.Analyzers.Tests 
 {
     public class AZC0105Tests 
     {
-        private readonly DiagnosticAnalyzerRunner _runner = new DiagnosticAnalyzerRunner(new AsyncAnalyzer());
-
         [Fact]
-        public async Task AZC0105WarningPublicAsyncMethodWithAsyncParameter()
-        {
-            var testSource = TestSource.Read(@"
+        public async Task AZC0105WarningPublicAsyncMethodWithAsyncParameter() {
+            const string code = @"
 namespace RandomNamespace
 {
     using System.Threading;
     using System.Threading.Tasks;
     public class MyClass
     {
-        public static async Task /*MM*/FooAsync(bool async, CancellationToken ct)
+        public static async Task FooAsync([|bool async|], CancellationToken ct)
         {
             await Task.Yield();
         }
     }
-}");
+}";
 
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-
-            var diagnostic = Assert.Single(diagnostics);
-
-            Assert.Equal("AZC0105", diagnostic.Id);
-            AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostic.Location);
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0105");
         }
 
         [Fact]
         public async Task AZC0105WarningPublicSyncMethodWithAsyncParameter()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     using System.Threading;
     using System.Threading.Tasks;
     public class MyClass
     {
-        public static void /*MM*/Foo(bool async, CancellationToken ct) { }
+        public static void Foo([|bool async|], CancellationToken ct) { }
     }
-}");
+}";
 
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-
-            var diagnostic = Assert.Single(diagnostics);
-
-            Assert.Equal("AZC0105", diagnostic.Id);
-            AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostic.Location);
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0105");
         }
 
         [Fact]
         public async Task AZC0105NoWarningInternalAsyncMethodWithAsyncParameter()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     using System.Threading;
@@ -72,16 +60,15 @@ namespace RandomNamespace
             await Task.Yield();
         }
     }
-}");
+}";
 
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-            Assert.Empty(diagnostics);
+            await Verifier.VerifyAnalyzerAsync(code);
         }
 
         [Fact]
         public async Task AZC0105NoWarningPrivateSyncMethodWithAsyncParameter()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     using System.Threading;
@@ -90,10 +77,9 @@ namespace RandomNamespace
     {
         private void Foo(bool async, CancellationToken ct) { }
     }
-}");
+}";
 
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-            Assert.Empty(diagnostics);
+            await Verifier.VerifyAnalyzerAsync(code);
         }
     }
 }

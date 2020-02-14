@@ -3,14 +3,13 @@
 
 using System.Threading.Tasks;
 using Xunit;
+using Verifier = Azure.ClientSdk.Analyzers.Tests.AzureAnalyzerVerifier<Azure.ClientSdk.Analyzers.AsyncAnalyzer>;
 
 namespace Azure.ClientSdk.Analyzers.Tests 
 {
     public class AZC0108Tests 
     {
-        private readonly DiagnosticAnalyzerRunner _runner = new DiagnosticAnalyzerRunner(new AsyncAnalyzer());
-
-        private const string TaskExtensionsString = @"
+        private const string AzureCorePipelineTaskExtensions = @"
 namespace Azure.Core.Pipeline
 {
     using System.Threading.Tasks;
@@ -27,7 +26,7 @@ namespace Azure.Core.Pipeline
         [Fact]
         public async Task AZC0108WarningInAsyncMethodFalseValue()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     using System.Threading;
@@ -37,7 +36,7 @@ namespace RandomNamespace
     {
         public static async Task FooAsync()
         {
-            await FooImplAsync(/*MM*/false).ConfigureAwait(false);
+            await FooImplAsync([|false|]).ConfigureAwait(false);
         }
 
         private static async Task<int> FooImplAsync(bool async, CancellationToken ct = default(CancellationToken)) 
@@ -46,20 +45,17 @@ namespace RandomNamespace
             return 42;
         }
     }
-}
-" + TaskExtensionsString);
+}";
 
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-            var diagnostic = Assert.Single(diagnostics);
-
-            Assert.Equal("AZC0108", diagnostic.Id);
-            AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostic.Location);
+            await Verifier.CreateAnalyzer(code, "AZC0108")
+                .WithSources(AzureCorePipelineTaskExtensions)
+                .RunAsync();
         }
 
         [Fact]
         public async Task AZC0108WarningInAsyncScopeFalseValue()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     using System.Threading;
@@ -71,7 +67,7 @@ namespace RandomNamespace
         {
             if (async)
             {
-                await FooImplAsync(/*MM*/false).ConfigureAwait(false);
+                await FooImplAsync([|false|]).ConfigureAwait(false);
             }
         }
 
@@ -81,20 +77,17 @@ namespace RandomNamespace
             return 42;
         }
     }
-}
-" + TaskExtensionsString);
+}";
 
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-            var diagnostic = Assert.Single(diagnostics);
-
-            Assert.Equal("AZC0108", diagnostic.Id);
-            AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostic.Location);
+            await Verifier.CreateAnalyzer(code, "AZC0108")
+                .WithSources(AzureCorePipelineTaskExtensions)
+                .RunAsync();
         }
 
         [Fact]
         public async Task AZC0108WarningInAsyncLambdaFalseValue()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     using System;
@@ -106,7 +99,7 @@ namespace RandomNamespace
         private static void Foo(bool async)
         {
             Func<Task<int>> fooAsync = async () 
-                => async ? await FooImplAsync(/*MM*/false).ConfigureAwait(false) : 42;
+                => async ? await FooImplAsync([|false|]).ConfigureAwait(false) : 42;
         }
 
         private static async Task<int> FooImplAsync(bool async, CancellationToken ct = default(CancellationToken)) 
@@ -115,20 +108,17 @@ namespace RandomNamespace
             return 42;
         }
     }
-}
-" + TaskExtensionsString);
+}";
 
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-            var diagnostic = Assert.Single(diagnostics);
-
-            Assert.Equal("AZC0108", diagnostic.Id);
-            AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostic.Location);
+            await Verifier.CreateAnalyzer(code, "AZC0108")
+                .WithSources(AzureCorePipelineTaskExtensions)
+                .RunAsync();
         }
 
         [Fact]
         public async Task AZC0108WarningInSyncMethodTrueValue()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     using System.Threading;
@@ -138,7 +128,7 @@ namespace RandomNamespace
     {
         public static void Foo()
         {
-            FooImplAsync(/*MM*/true).EnsureCompleted();
+            FooImplAsync([|true|]).EnsureCompleted();
         }
 
         private static async Task<int> FooImplAsync(bool async, CancellationToken ct = default(CancellationToken)) 
@@ -147,28 +137,26 @@ namespace RandomNamespace
             return 42;
         }
     }
-}
-" + TaskExtensionsString);
+}";
 
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-            var diagnostic = Assert.Single(diagnostics);
-
-            Assert.Equal("AZC0108", diagnostic.Id);
-            AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostic.Location);
+            await Verifier.CreateAnalyzer(code, "AZC0108")
+                .WithSources(AzureCorePipelineTaskExtensions)
+                .RunAsync();
         }
 
         [Fact]
         public async Task AZC0108WarningInSyncPropertyTrueValue()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     using System.Threading;
     using System.Threading.Tasks;
     using Azure.Core.Pipeline;
+
     public class MyClass
     {
-        public static int Foo { get { return FooImplAsync(/*MM*/true).EnsureCompleted(); } }
+        public static int Foo { get { return FooImplAsync([|true|]).EnsureCompleted(); } }
 
         private static async Task<int> FooImplAsync(bool async, CancellationToken ct = default(CancellationToken)) 
         {
@@ -176,28 +164,26 @@ namespace RandomNamespace
             return 42;
         }
     }
-}
-" + TaskExtensionsString);
+}";
 
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-            var diagnostic = Assert.Single(diagnostics);
-
-            Assert.Equal("AZC0108", diagnostic.Id);
-            AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostic.Location);
+            await Verifier.CreateAnalyzer(code, "AZC0108")
+                .WithSources(AzureCorePipelineTaskExtensions)
+                .RunAsync();
         }
 
         [Fact]
         public async Task AZC0108WarningInSyncExpressionPropertyTrueValue()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     using System.Threading;
     using System.Threading.Tasks;
     using Azure.Core.Pipeline;
+
     public class MyClass
     {
-        public static int Foo => FooImplAsync(/*MM*/true).EnsureCompleted();
+        public static int Foo => FooImplAsync([|true|]).EnsureCompleted();
 
         private static async Task<int> FooImplAsync(bool async, CancellationToken ct = default(CancellationToken)) 
         {
@@ -205,32 +191,30 @@ namespace RandomNamespace
             return 42;
         }
     }
-}
-" + TaskExtensionsString);
+}";
 
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-            var diagnostic = Assert.Single(diagnostics);
-
-            Assert.Equal("AZC0108", diagnostic.Id);
-            AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostic.Location);
+            await Verifier.CreateAnalyzer(code, "AZC0108")
+                .WithSources(AzureCorePipelineTaskExtensions)
+                .RunAsync();
         }
 
         [Fact]
         public async Task AZC0108WarningInSyncScopeTrueValue()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     using System.Threading;
     using System.Threading.Tasks;
     using Azure.Core.Pipeline;
+
     public class MyClass
     {
         private static async Task FooAsync(bool async)
         {
             if (!async)
             {
-                FooImplAsync(/*MM*/true).EnsureCompleted();
+                FooImplAsync([|true|]).EnsureCompleted();
             }
             else 
             {
@@ -244,32 +228,30 @@ namespace RandomNamespace
             return 42;
         }
     }
-}
-" + TaskExtensionsString);
+}";
 
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-            var diagnostic = Assert.Single(diagnostics);
-
-            Assert.Equal("AZC0108", diagnostic.Id);
-            AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostic.Location);
+            await Verifier.CreateAnalyzer(code, "AZC0108")
+                .WithSources(AzureCorePipelineTaskExtensions)
+                .RunAsync();
         }
 
         [Fact]
         public async Task AZC0108WarningInSyncLambdaTrueValue()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     using System;
     using System.Threading;
     using System.Threading.Tasks;
     using Azure.Core.Pipeline;
+
     public class MyClass
     {
         private static async Task FooAsync(bool async)
         {
             Func<Task<int>> fooAsync = async () 
-                => async ? await FooImplAsync(true).ConfigureAwait(false) : FooImplAsync(/*MM*/true).EnsureCompleted();
+                => async ? await FooImplAsync(true).ConfigureAwait(false) : FooImplAsync([|true|]).EnsureCompleted();
         }
 
         private static async Task<int> FooImplAsync(bool async, CancellationToken ct = default(CancellationToken)) 
@@ -278,25 +260,23 @@ namespace RandomNamespace
             return 42;
         }
     }
-}
-" + TaskExtensionsString);
+}";
 
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-            var diagnostic = Assert.Single(diagnostics);
-
-            Assert.Equal("AZC0108", diagnostic.Id);
-            AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostic.Location);
+            await Verifier.CreateAnalyzer(code, "AZC0108")
+                .WithSources(AzureCorePipelineTaskExtensions)
+                .RunAsync();
         }
 
         [Fact]
         public async Task AZC0108NoWarningInAsyncMethodTrueValue()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     using System.Threading;
     using System.Threading.Tasks;
     using Azure.Core.Pipeline;
+
     public class MyClass
     {
         public static async Task FooAsync()
@@ -310,22 +290,23 @@ namespace RandomNamespace
             return 42;
         }
     }
-}
-" + TaskExtensionsString);
+}";
 
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-            Assert.Empty(diagnostics);
+            await Verifier.CreateAnalyzer(code)
+                .WithSources(AzureCorePipelineTaskExtensions)
+                .RunAsync();
         }
 
         [Fact]
         public async Task AZC0108NoWarningInAsyncScopeTrueValue()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     using System.Threading;
     using System.Threading.Tasks;
     using Azure.Core.Pipeline;
+
     public class MyClass
     {
         private static async Task FooAsync(bool async)
@@ -342,23 +323,24 @@ namespace RandomNamespace
             return 42;
         }
     }
-}
-" + TaskExtensionsString);
+}";
 
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-            Assert.Empty(diagnostics);
+            await Verifier.CreateAnalyzer(code)
+                .WithSources(AzureCorePipelineTaskExtensions)
+                .RunAsync();
         }
 
         [Fact]
         public async Task AZC0108NoWarningInAsyncLambdaTrueValue()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     using System;
     using System.Threading;
     using System.Threading.Tasks;
     using Azure.Core.Pipeline;
+
     public class MyClass
     {
         private static void Foo(bool async)
@@ -373,17 +355,17 @@ namespace RandomNamespace
             return 42;
         }
     }
-}
-" + TaskExtensionsString);
+}";
 
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-            Assert.Empty(diagnostics);
+            await Verifier.CreateAnalyzer(code)
+                .WithSources(AzureCorePipelineTaskExtensions)
+                .RunAsync();
         }
 
         [Fact]
         public async Task AZC0108NoWarningInSyncMethodFalseValue()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     using System.Threading;
@@ -402,17 +384,17 @@ namespace RandomNamespace
             return 42;
         }
     }
-}
-" + TaskExtensionsString);
+}";
 
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-            Assert.Empty(diagnostics);
+            await Verifier.CreateAnalyzer(code)
+                .WithSources(AzureCorePipelineTaskExtensions)
+                .RunAsync();
         }
 
         [Fact]
         public async Task AZC0108NoWarningInSyncScopeFalseValue()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     using System.Threading;
@@ -438,23 +420,24 @@ namespace RandomNamespace
             return 42;
         }
     }
-}
-" + TaskExtensionsString);
+}";
 
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-            Assert.Empty(diagnostics);
+            await Verifier.CreateAnalyzer(code)
+                .WithSources(AzureCorePipelineTaskExtensions)
+                .RunAsync();
         }
 
         [Fact]
-        public async Task AZC0108NoWarningInSyncLambdaFalseValue()
+        public async Task AZC0108NoWarningInSyncLambdaFalseValue() 
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     using System;
     using System.Threading;
     using System.Threading.Tasks;
     using Azure.Core.Pipeline;
+
     public class MyClass
     {
         private static async Task FooAsync(bool async)
@@ -469,11 +452,11 @@ namespace RandomNamespace
             return 42;
         }
     }
-}
-" + TaskExtensionsString);
+}";
 
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-            Assert.Empty(diagnostics);
+            await Verifier.CreateAnalyzer(code)
+                .WithSources(AzureCorePipelineTaskExtensions)
+                .RunAsync();
         }
     }
 }

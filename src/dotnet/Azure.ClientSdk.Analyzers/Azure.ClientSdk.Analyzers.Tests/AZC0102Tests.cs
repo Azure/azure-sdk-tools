@@ -4,19 +4,18 @@
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.CSharp;
 using Xunit;
+using Verifier = Azure.ClientSdk.Analyzers.Tests.AzureAnalyzerVerifier<Azure.ClientSdk.Analyzers.AsyncAnalyzer>;
 
 namespace Azure.ClientSdk.Analyzers.Tests 
 {
     public class AZC0102Tests 
     {
-        private readonly DiagnosticAnalyzerRunner _runner = new DiagnosticAnalyzerRunner(new AsyncAnalyzer());
-
         [Theory]
         [InlineData(LanguageVersion.CSharp7)]
         [InlineData(LanguageVersion.Latest)]
-        public async Task AZC0102WarningOnTask(LanguageVersion version)
+        public async Task AZC0102WarningOnTask(LanguageVersion languageVersion) 
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     using System.Threading.Tasks;
@@ -25,25 +24,19 @@ namespace RandomNamespace
         public static void Foo()
         {
             Task<int> task = Task.Run(() => 10);
-            task./*MM*/GetAwaiter().GetResult();
+            task.[|GetAwaiter().GetResult()|];
         }
     }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source, version);
-
-            var diagnostic = Assert.Single(diagnostics);
-
-            Assert.Equal("AZC0102", diagnostic.Id);
-            AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostic.Location);
+}";
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0102", languageVersion);
         }
 
         [Theory]
         [InlineData(LanguageVersion.CSharp7)]
         [InlineData(LanguageVersion.Latest)]
-        public async Task AZC0102WarningOnValueTask(LanguageVersion version)
+        public async Task AZC0102WarningOnValueTask(LanguageVersion languageVersion)
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     using System.Threading.Tasks;
@@ -51,23 +44,17 @@ namespace RandomNamespace
     {
         public static void Foo()
         {
-            new ValueTask()./*MM*/GetAwaiter().GetResult();
+            new ValueTask().[|GetAwaiter().GetResult()|];
         }
     }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source, version);
-
-            var diagnostic = Assert.Single(diagnostics);
-
-            Assert.Equal("AZC0102", diagnostic.Id);
-            AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostic.Location);
+}";
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0102", languageVersion);
         }
 
         [Fact]
         public async Task AZC0102WarningOnAwaitable()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     using System;
@@ -78,7 +65,7 @@ namespace RandomNamespace
     {
         public static void Foo()
         {
-            new CustomAwaitable()./*MM*/GetAwaiter().GetResult();
+            new CustomAwaitable().[|GetAwaiter().GetResult()|];
         }
     }
 
@@ -94,20 +81,14 @@ namespace RandomNamespace
         public void OnCompleted(Action continuation) {}
         public void UnsafeOnCompleted(Action continuation) {}
     }  
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-
-            var diagnostic = Assert.Single(diagnostics);
-
-            Assert.Equal("AZC0102", diagnostic.Id);
-            AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostic.Location);
+}";
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0102");
         }
 
         [Fact]
         public async Task AZC0102WarningOnExtension()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     using System;
@@ -118,7 +99,7 @@ namespace RandomNamespace
     {
         public static void Foo()
         {
-            new TestStruct()./*MM*/GetAwaiter().GetResult();
+            new TestStruct().[|GetAwaiter().GetResult()|];
         }
     }
 
@@ -128,20 +109,14 @@ namespace RandomNamespace
     {
         public static TaskAwaiter GetAwaiter(this TestStruct s) => default;
     }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-
-            var diagnostic = Assert.Single(diagnostics);
-
-            Assert.Equal("AZC0102", diagnostic.Id);
-            AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostic.Location);
+}";
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0102");
         }
 
         [Fact]
         public async Task AZC0102NoWarningOnNonAwaiter()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     using System;
@@ -152,7 +127,7 @@ namespace RandomNamespace
     {
         public static void Foo()
         {
-            new CustomAwaitable()./*MM*/GetAwaiter().GetResult();
+            new CustomAwaitable().GetAwaiter().GetResult();
         }
     }
 
@@ -167,16 +142,14 @@ namespace RandomNamespace
         public void GetResult() {}
         public void OnCompleted(Action continuation) {}
     } 
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-            Assert.Empty(diagnostics);
+}";
+            await Verifier.VerifyAnalyzerAsync(code);
         }
 
         [Fact]
         public async Task AZC0102NoWarningOnNonAwaitable()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     using System.Runtime.CompilerServices;
@@ -194,10 +167,8 @@ namespace RandomNamespace
     {
         public TaskAwaiter GetAwaiter(int i = default) => default(TaskAwaiter);
     }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-            Assert.Empty(diagnostics);
+}";
+            await Verifier.VerifyAnalyzerAsync(code);
         }
     }
 }

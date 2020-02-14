@@ -31,12 +31,13 @@ namespace Azure.ClientSdk.Analyzers
 
         public void Run(IMethodSymbol method, IBlockOperation methodBody) 
         {
-            var asyncParameter = GetAsyncParameter(method);
-            if (IsPublicMethod(method) && asyncParameter != null) 
+            var asyncParameterIndex = GetAsyncParameterIndex(method);
+            if (IsPublicMethod(method) && asyncParameterIndex != -1 && methodBody.Parent is IMethodBodyOperation methodBodyOperation) 
             {
-                ReportPublicMethodWithIsAsyncDiagnostic(method);
+                ReportPublicMethodWithIsAsyncDiagnostic(methodBodyOperation, asyncParameterIndex);
             }
 
+            var asyncParameter = asyncParameterIndex == -1 ? null : method.Parameters[asyncParameterIndex];
             _symbolIteratorsStack.Push((methodBody.Children.GetEnumerator(), new MethodAnalysisContext(method, asyncParameter, method.IsAsync)));
 
             while (_symbolIteratorsStack.Any())
@@ -138,17 +139,18 @@ namespace Azure.ClientSdk.Analyzers
         
         private void AnalyzeGetAwaiter(in MethodAnalysisContext context, IOperation operation) 
         {
-            // In async scope in async method, use await keyword instead of GetAwaiter().GetResult()
-            if (context.Method.IsAsync && context.AsyncScope) 
-            {
-                ReportDiagnosticOnMember(operation, Descriptors.AZC0103, "GetAwaiter().GetResult()");
-                return;
-            }
-
             // Only checking for the most common GetAwaiter().GetResult() combination
             if (operation.Parent is IInvocationOperation invocation && _asyncUtilities.IsAwaiterGetResultMethod(invocation.TargetMethod)) 
             {
-                ReportDiagnosticOnMember(operation, Descriptors.AZC0102);
+                // In async scope in async method, use await keyword instead of GetAwaiter().GetResult()
+                if (context.Method.IsAsync && context.AsyncScope) 
+                {
+                    ReportDiagnosticOnGetAwaiterGetResult(operation, Descriptors.AZC0103, "GetAwaiter().GetResult()");
+                } 
+                else 
+                {
+                    ReportDiagnosticOnGetAwaiterGetResult(operation, Descriptors.AZC0102);
+                }
             }
         }
         
@@ -242,15 +244,12 @@ namespace Azure.ClientSdk.Analyzers
             _symbolIteratorsStack.Push((enumerable.GetEnumerator(), context.WithScope(isAsync)));
         }
 
-        private void ReportPublicMethodWithIsAsyncDiagnostic(ISymbol symbol) 
+        private void ReportPublicMethodWithIsAsyncDiagnostic(IMethodBodyOperation methodBody, int asyncParameterIndex) 
         {
-            var diagnostics = symbol.Locations
-                .Where(location => location.IsInSource)
-                .Select(location => Diagnostic.Create(Descriptors.AZC0105, location));
-
-            foreach (var diagnostic in diagnostics)
+            if (methodBody.Syntax is MethodDeclarationSyntax methodDeclaration) 
             {
-                _reportDiagnostic(diagnostic);
+                var parameter = methodDeclaration.ParameterList.Parameters[asyncParameterIndex];
+                _reportDiagnostic(Diagnostic.Create(Descriptors.AZC0105, parameter.GetLocation()));
             }
         }
 
@@ -263,14 +262,30 @@ namespace Azure.ClientSdk.Analyzers
 
         private void ReportDiagnosticOnMember(IOperation operation, DiagnosticDescriptor diagnosticDescriptor, params object[] messageArgs) 
         {
-            var invocation = (InvocationExpressionSyntax)operation.Syntax;
+            var location = Location.Create(operation.Syntax.SyntaxTree, GetMemberTextSpan(operation));
+            var diagnostic = Diagnostic.Create(diagnosticDescriptor, location, messageArgs);
+            _reportDiagnostic(diagnostic);
+        }
+
+        private void ReportDiagnosticOnGetAwaiterGetResult(IOperation operation, DiagnosticDescriptor diagnosticDescriptor, params object[] messageArgs) 
+        {
+            var getAwaiterTextSpan = GetMemberTextSpan(operation);
+            var getResultTextSpan = GetMemberTextSpan(operation.Parent);
+
+            var location = Location.Create(operation.Syntax.SyntaxTree, TextSpan.FromBounds(getAwaiterTextSpan.Start, getResultTextSpan.End));
+            var diagnostic = Diagnostic.Create(diagnosticDescriptor, location, messageArgs);
+            _reportDiagnostic(diagnostic);
+        }
+
+        private static TextSpan GetMemberTextSpan(IOperation operation) 
+        {
+            var invocation = (InvocationExpressionSyntax) operation.Syntax;
             var name = invocation.Expression is MemberAccessExpressionSyntax memberAccess ? memberAccess.Name : invocation.Expression;
             var start = name.Span.Start;
             var end = invocation.Span.End;
-            var diagnostic = Diagnostic.Create(diagnosticDescriptor, Location.Create(invocation.SyntaxTree, new TextSpan(start, end - start)), messageArgs);
-            _reportDiagnostic(diagnostic);
+            return TextSpan.FromBounds(start, end);
         }
-        
+
         private static bool IsPublicMethod(IMethodSymbol method) 
         {
             if (method.DeclaredAccessibility != Accessibility.Public) 

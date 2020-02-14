@@ -29,7 +29,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="..\..\Azure.ClientSdk.Analyzers\Azure.ClientSdk.Analyzers.Tests\DiagnosticProject.cs" />
     <EmbeddedResource Include="ExactFormatting\*.cs" />
     <ProjectReference Include="..\APIView\APIView.csproj" />
   </ItemGroup>

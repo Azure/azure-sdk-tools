@@ -42,8 +42,7 @@ namespace RandomNamespace
         private static async Task<int> FooImplAsync(bool async, CancellationToken ct = default(CancellationToken)) 
         {
             [|async = false|];
-            await Task.Yield();
-            return 42;
+            return async ? await Task.FromResult(42).ConfigureAwait(false) : 42;
         }
     }
 }";
@@ -74,8 +73,9 @@ namespace RandomNamespace
             var x [|= async|];
             if (x)
             {
-                await Task.Yield();
+                return async ? await Task.FromResult(42).ConfigureAwait(false) : 42;
             }
+
             return 42;
         }
     }
@@ -107,7 +107,7 @@ namespace RandomNamespace
             var x = false;
             if ([|async && x|])
             {
-                await Task.Yield();
+                return async ? await Task.FromResult(42).ConfigureAwait(false) : 42;
             }
             return 42;
         }
@@ -135,16 +135,8 @@ namespace RandomNamespace
             FooImplAsync(false).EnsureCompleted();
         }
 
-        private static async Task<int> FooImplAsync(bool async, CancellationToken ct = default(CancellationToken)) 
-        {
-            if (!async)
-            {
-                return 42;
-            }
-
-            await Task.Yield();
-            return 42;
-        }
+        private static async Task<int> FooImplAsync(bool async, CancellationToken ct = default(CancellationToken))
+            => async ? await Task.FromResult(42).ConfigureAwait(false) : 42;
     }
 }";
             

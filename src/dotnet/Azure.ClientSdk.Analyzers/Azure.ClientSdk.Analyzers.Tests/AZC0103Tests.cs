@@ -17,7 +17,7 @@ namespace Azure.Core.Pipeline
     internal static class TaskExtensions
     {
 #pragma warning disable AZC0102
-        public static void EnsureCompleted(this Task task) => task.GetAwaiter().GetResult();
+        public static T EnsureCompleted<T>(this Task<T> task) => task.GetAwaiter().GetResult();
 #pragma warning restore AZC0102
     }
 }
@@ -40,10 +40,8 @@ namespace RandomNamespace
             FooImplAsync(true).[|EnsureCompleted()|];
         }
 
-        private async Task FooImplAsync(bool async, CancellationToken ct = default(CancellationToken)) 
-        {
-            await Task.Yield();
-        }
+        private static async Task<int> FooImplAsync(bool async, CancellationToken ct = default(CancellationToken))
+            => async ? await Task.FromResult(42).ConfigureAwait(false) : 42;
     }
 }";
             
@@ -73,10 +71,8 @@ namespace RandomNamespace
             };
         }
 
-        private async Task FooImplAsync(bool async, CancellationToken ct = default(CancellationToken)) 
-        {
-            await Task.Yield();
-        }
+        private static async Task<int> FooImplAsync(bool async, CancellationToken ct = default(CancellationToken))
+            => async ? await Task.FromResult(42).ConfigureAwait(false) : 42;
     }
 }";
             
@@ -103,10 +99,8 @@ namespace RandomNamespace
             FooImplAsync(true).[|EnsureCompleted()|];
         };
 
-        private static async Task FooImplAsync(bool async, CancellationToken ct = default(CancellationToken)) 
-        {
-            await Task.Yield();
-        }
+        private static async Task<int> FooImplAsync(bool async, CancellationToken ct = default(CancellationToken))
+            => async ? await Task.FromResult(42).ConfigureAwait(false) : 42;
     }
 }";
             
@@ -132,10 +126,8 @@ namespace RandomNamespace
             FooImplAsync(true).[|GetAwaiter().GetResult()|];
         }
 
-        private async Task FooImplAsync(bool async, CancellationToken ct = default(CancellationToken)) 
-        {
-            await Task.Yield();
-        }
+        private static async Task<int> FooImplAsync(bool async, CancellationToken ct = default(CancellationToken))
+            => async ? await Task.FromResult(42).ConfigureAwait(false) : 42;
     }
 }";
             
@@ -157,13 +149,11 @@ namespace RandomNamespace
     {
         private async Task FooAsync(bool async, CancellationToken ct = default(CancellationToken))
         {
-            await FooImplAsync(true, ct).ConfigureAwait(false);
+            await FooImplAsync(async, ct).ConfigureAwait(false);
         }
 
-        private async Task FooImplAsync(bool async, CancellationToken ct = default(CancellationToken)) 
-        {
-            await Task.Yield();
-        }
+        private static async Task<int> FooImplAsync(bool async, CancellationToken ct = default(CancellationToken))
+            => async ? await Task.FromResult(42).ConfigureAwait(false) : 42;
     }
 }";
             
@@ -188,14 +178,12 @@ namespace RandomNamespace
         {
             Func<bool, Task> f = async (async) => 
             {
-                await FooImplAsync(true, ct).ConfigureAwait(false);
+                await FooImplAsync(async, ct).ConfigureAwait(false);
             };
         }
 
-        private async Task FooImplAsync(bool async, CancellationToken ct = default(CancellationToken)) 
-        {
-            await Task.Yield();
-        }
+        private static async Task<int> FooImplAsync(bool async, CancellationToken ct = default(CancellationToken))
+            => async ? await Task.FromResult(42).ConfigureAwait(false) : 42;
     }
 }";
             
@@ -224,13 +212,14 @@ namespace RandomNamespace
                 await FooImplAsync(true, ct).ConfigureAwait(false);
             };
 
-            await f().ConfigureAwait(false);
+            if (async)
+            {
+                await f().ConfigureAwait(false);
+            }
         }
 
-        private async Task FooImplAsync(bool async, CancellationToken ct = default(CancellationToken)) 
-        {
-            await Task.Yield();
-        }
+        private static async Task<int> FooImplAsync(bool async, CancellationToken ct = default(CancellationToken))
+            => async ? await Task.FromResult(42).ConfigureAwait(false) : 42;
     }
 }";
             

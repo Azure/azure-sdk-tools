@@ -168,11 +168,8 @@ namespace RandomNamespace
             FooImplAsync(false).EnsureCompleted();
         }
 
-        private static async Task<int> FooImplAsync(bool async, CancellationToken ct = default(CancellationToken)) 
-        {
-            await Task.Yield();
-            return 42;
-        }
+        private static async Task<int> FooImplAsync(bool async, CancellationToken ct = default(CancellationToken))
+            => async ? await Task.FromResult(42).ConfigureAwait(false) : 42;
     }
 }";
             

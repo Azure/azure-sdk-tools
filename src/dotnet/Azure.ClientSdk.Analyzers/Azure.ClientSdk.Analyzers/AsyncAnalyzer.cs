@@ -17,7 +17,7 @@ namespace Azure.ClientSdk.Analyzers
         private AsyncAnalyzerUtilities _asyncUtilities;
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
-            ImmutableArray.Create(AZC0100, AZC0101, AZC0102, AZC0103, AZC0104, AZC0105, AZC0106, AZC0107, AZC0108, AZC0109);
+            ImmutableArray.Create(AZC0100, AZC0101, AZC0102, AZC0103, AZC0104, AZC0105, AZC0106, AZC0107, AZC0108, AZC0109, AZC0110, AZC0111);
 
         public override void Initialize(AnalysisContext context)
         {

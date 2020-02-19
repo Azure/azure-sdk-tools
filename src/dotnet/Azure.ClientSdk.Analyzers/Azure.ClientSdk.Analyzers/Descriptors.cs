@@ -109,7 +109,7 @@ namespace Azure.ClientSdk.Analyzers
         public static DiagnosticDescriptor AZC0104 = new DiagnosticDescriptor(
             nameof(AZC0104),
             "Use EnsureCompleted() directly on asynchronous method return value.",
-            "Don't use EnsureCompleted on the {0}. Call EnsureCompleted() extension method directly on the return value of the asynchronous method that has 'bool async' parameter.",
+            "Don't use {0}. Call EnsureCompleted() extension method directly on the return value of the asynchronous method that has 'bool async' parameter.",
             "Usage",
             DiagnosticSeverity.Warning, true);
 
@@ -137,7 +137,7 @@ namespace Azure.ClientSdk.Analyzers
         public static DiagnosticDescriptor AZC0108 = new DiagnosticDescriptor(
             nameof(AZC0108),
             "Incorrect 'async' parameter value.",
-            "In {0} scope 'async' parameter for the '{1}' method call should be '{2}'.",
+            "In {0} scope 'async' parameter for the '{1}' method call should {2}.",
             "Usage",
             DiagnosticSeverity.Warning, true);
 
@@ -145,6 +145,20 @@ namespace Azure.ClientSdk.Analyzers
             nameof(AZC0109),
             "Misuse of 'async' parameter.",
             "'async' parameter in asynchronous method can't be changed and can only be used as an exclusive condition in '?:' operator or conditional statement.",
+            "Usage",
+            DiagnosticSeverity.Warning, true);
+
+        public static DiagnosticDescriptor AZC0110 = new DiagnosticDescriptor(
+            nameof(AZC0110),
+            "DO NOT use await keyword in possibly synchronous scope.",
+            "Asynchronous method with `async` parameter can be called from both synchronous and asynchronous scopes. 'await' keyword can be safely used either in guaranteed asynchronous scope (i.e. `if (async) {...}`) or if `async` parameter is passed into awaited method. Awaiting on variables, fields, properties, conditional operators or async methods that don't use `async` parameter isn't allowed outside of the guaranteed asynchronous scope.",
+            "Usage",
+            DiagnosticSeverity.Warning, true);
+
+        public static DiagnosticDescriptor AZC0111 = new DiagnosticDescriptor(
+            nameof(AZC0111),
+            "DO NOT use EnsureCompleted in possibly asynchronous scope.",
+            "Asynchronous method with `async` parameter can be called from both synchronous and asynchronous scopes. 'EnsureCompleted' extension method can be safely used on in guaranteed synchronous scope (i.e. `if (!async) {...}`).",
             "Usage",
             DiagnosticSeverity.Warning, true);
     }

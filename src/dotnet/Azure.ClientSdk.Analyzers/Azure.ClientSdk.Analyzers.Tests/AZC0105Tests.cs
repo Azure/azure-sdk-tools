@@ -18,10 +18,8 @@ namespace RandomNamespace
     using System.Threading.Tasks;
     public class MyClass
     {
-        public static async Task FooAsync([|bool async|], CancellationToken ct)
-        {
-            await Task.Yield();
-        }
+        public static async Task<int> FooAsync([|bool async|], CancellationToken ct)
+            => async ? await Task.FromResult(42).ConfigureAwait(false) : 42;
     }
 }";
 
@@ -55,10 +53,8 @@ namespace RandomNamespace
     using System.Threading.Tasks;
     internal class MyClass
     {
-        public static async Task FooAsync(bool async, CancellationToken ct)
-        {
-            await Task.Yield();
-        }
+        public static async Task<int> FooAsync(bool async, CancellationToken ct)
+            => async ? await Task.FromResult(42).ConfigureAwait(false) : 42;
     }
 }";
 

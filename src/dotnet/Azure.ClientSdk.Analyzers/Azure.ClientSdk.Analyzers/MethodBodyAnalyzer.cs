@@ -34,14 +34,13 @@ namespace Azure.ClientSdk.Analyzers
 
         private void Run(IMethodSymbol method, IBlockOperation methodBody) 
         {
-            var asyncParameterIndex = GetAsyncParameterIndex(method);
-            if (IsPublicMethod(method) && asyncParameterIndex != -1 && methodBody.Parent is IMethodBodyOperation methodBodyOperation) 
+            var asyncParameter = GetAsyncParameter(method);
+            if (IsPublicMethod(method) && asyncParameter != default && methodBody.Parent is IMethodBodyOperation methodBodyOperation) 
             {
-                ReportPublicMethodWithIsAsyncDiagnostic(methodBodyOperation, asyncParameterIndex);
+                ReportPublicMethodWithIsAsyncDiagnostic(methodBodyOperation, method.Parameters.IndexOf(asyncParameter));
             }
 
-            var asyncParameter = asyncParameterIndex == -1 ? null : method.Parameters[asyncParameterIndex];
-            _symbolIteratorsStack.Push((methodBody.Children.GetEnumerator(), new MethodAnalysisContext(method, asyncParameter, method.IsAsync)));
+            _symbolIteratorsStack.Push((methodBody.Children.GetEnumerator(), new MethodAnalysisContext(method, asyncParameter)));
 
             while (_symbolIteratorsStack.Any())
             {
@@ -58,40 +57,52 @@ namespace Azure.ClientSdk.Analyzers
                     continue;
                 }
 
-                switch (current)
+                var analyzeChildren = AnalyzeOperation(current, ref context);
+                if (analyzeChildren) 
                 {
-                    case IParameterReferenceOperation reference when reference.Parameter == context.AsyncParameter:
-                        AnalyzeAsyncParameterReference(context, reference);
-                        continue;
-                    case IAnonymousFunctionOperation function when function.Symbol != null:
-                        context = context.WithNewMethod(function.Symbol, context.AsyncParameter ?? GetAsyncParameter(function.Symbol));
-                        break;
-                    case ILocalFunctionOperation function when function.Symbol != null:
-                        context = context.WithNewMethod(function.Symbol, context.AsyncParameter ?? GetAsyncParameter(function.Symbol));
-                        break;
-                    case IInvocationOperation invocation:
-                        AnalyzeInvocation(context, invocation);
-                        break;
+                    _symbolIteratorsStack.Push((current.Children.GetEnumerator(), context));
                 }
-
-                _symbolIteratorsStack.Push((current.Children.GetEnumerator(), context));
             }
         }
-        
+
+        private bool AnalyzeOperation(IOperation current, ref MethodAnalysisContext context) {
+            switch (current) {
+                case IParameterReferenceOperation reference when reference.Parameter == context.AsyncParameter:
+                    AnalyzeAsyncParameterReference(context, reference);
+                    return false;
+                case IAnonymousFunctionOperation function when function.Symbol != null:
+                    context = context.WithNewMethod(function.Symbol, GetAsyncParameter(function.Symbol));
+                    return true;
+                case ILocalFunctionOperation function when function.Symbol != null:
+                    context = context.WithNewMethod(function.Symbol, GetAsyncParameter(function.Symbol));
+                    return true;
+                case IAwaitOperation awaitOperation when context.Scope == Scope.Unknown:
+                    AnalyzeAwaitableOperationInUnknownScope(awaitOperation, context);
+                    return false;
+                case IInvocationOperation invocation:
+                    AnalyzeInvocation(invocation, context);
+                    return true;
+                default:
+                    return true;
+            }
+        }
+
         private void AnalyzeAsyncParameterReference(in MethodAnalysisContext context, IOperation reference) 
         {
             switch (reference.Parent) 
             {
                 case IConditionalOperation conditional:
                     _symbolIteratorsStack.Pop(); // Remove condition from stack
-                    TryPushOperationToStack(context, conditional.WhenFalse, false);
-                    TryPushOperationToStack(context, conditional.WhenTrue, true);
+                    TryPushOperationToStack(context, conditional.WhenFalse, Scope.Sync);
+                    TryPushOperationToStack(context, conditional.WhenTrue, Scope.Async);
                     return;
                 case IUnaryOperation unary when unary.OperatorKind == UnaryOperatorKind.Not && unary.Parent is IConditionalOperation conditional:
-                    _symbolIteratorsStack.Pop();
-                    _symbolIteratorsStack.Pop();
-                    TryPushOperationToStack(context, conditional.WhenFalse, true);
-                    TryPushOperationToStack(context, conditional.WhenTrue, false);
+                    _symbolIteratorsStack.Pop(); // Remove Not operator from stack
+                    _symbolIteratorsStack.Pop(); // Remove condition from stack
+                    TryPushOperationToStack(context, conditional.WhenFalse, Scope.Async);
+                    TryPushOperationToStack(context, conditional.WhenTrue, Scope.Sync);
+                    return;
+                case IArgumentOperation argument when IsAsyncParameter(argument.Parameter):
                     return;
                 default:
                     ReportDiagnosticOnOperation(reference.Parent, Descriptors.AZC0109);
@@ -99,144 +110,239 @@ namespace Azure.ClientSdk.Analyzers
             }
         }
         
-        private void AnalyzeInvocation(in MethodAnalysisContext context, IInvocationOperation invocation) 
+        // Asynchronous method with `async` parameter can be called from both synchronous and asynchronous scopes.
+        // 'await' keyword is allowed either in guaranteed asynchronous scope (i.e. `if (async) {...}`) or if `async` parameter is passed into awaited method.
+        // Awaiting on variables, fields, properties, conditional operators or async methods that don't use `async` parameter isn't allowed outside of the guaranteed asynchronous scope.
+        private void AnalyzeAwaitableOperationInUnknownScope(in IAwaitOperation awaitOperation, in MethodAnalysisContext context) 
         {
-            var targetMethod = invocation.TargetMethod;
+            var operation = GetAwaitableOperation(awaitOperation.Operation);
 
-            if (_asyncUtilities.IsConfigureAwait(targetMethod)) 
-            {
-                AnalyzeConfigureAwait(context, invocation);
-            }
-            else if (_asyncUtilities.IsGetAwaiter(targetMethod)) 
-            {
-                AnalyzeGetAwaiter(context, invocation);
-            } 
-            else if (IsEnsureCompleted(targetMethod)) 
-            {
-                AnalyzeEnsureCompleted(context, invocation);
-            }
-        }
-
-        private void AnalyzeConfigureAwait(in MethodAnalysisContext context, IInvocationOperation operation)
-        {
-            // There is no reason to call ConfigureAwait in sync method
-            if (!context.Method.IsAsync) 
+            if (operation is IInvocationOperation invocation &&
+                TryGetAsyncArgument(invocation, out var argument) &&
+                IsEqualsToParameter(argument.Value, context.AsyncParameter))
             {
                 return;
             }
-            
-            // ConfigureAwait is either an instance method with one parameter or a static extension method with two.
-            // We need to check if the last argument is a bool and if it is 'true'
-            var constantValue = operation.Arguments.Last().Value?.ConstantValue;
-            if (constantValue != null && constantValue.Value.Value is bool value && value)
-            {
-                ReportDiagnosticOnMember(operation, Descriptors.AZC0101);
-            }
 
-            if (operation.Instance is IInvocationOperation invocation) 
-            {
-                // In async scope, pass 'async: true' to the async method
-                AnalyzeAsyncParameterValue(invocation, true);
-            }
+            ReportDiagnosticOnOperation(operation, Descriptors.AZC0110);
         }
-        
-        private void AnalyzeGetAwaiter(in MethodAnalysisContext context, IOperation operation) 
+
+        private IOperation GetAwaitableOperation(IOperation operation) 
         {
-            // Only checking for the most common GetAwaiter().GetResult() combination
-            if (operation.Parent is IInvocationOperation invocation && _asyncUtilities.IsAwaiterGetResultMethod(invocation.TargetMethod)) 
+            while (operation is IInvocationOperation invocation)
             {
-                // In async scope in async method, use await keyword instead of GetAwaiter().GetResult()
-                if (context.Method.IsAsync && context.AsyncScope) 
+                if (IsExtensionMethodOnInvocation(invocation, out var argumentInvocation)) 
                 {
-                    ReportDiagnosticOnGetAwaiterGetResult(operation, Descriptors.AZC0103, "GetAwaiter().GetResult()");
+                    operation = argumentInvocation;
+                } 
+                else if (invocation.Instance != null && _asyncUtilities.IsTaskType(invocation.Instance.Type))
+                {
+                    operation = invocation.Instance;
                 } 
                 else 
                 {
-                    ReportDiagnosticOnGetAwaiterGetResult(operation, Descriptors.AZC0102);
+                    return operation;
                 }
             }
+            return operation;
         }
-        
-        private void AnalyzeEnsureCompleted(in MethodAnalysisContext context, IInvocationOperation ensureCompletedInvocation) 
-        {
-            // TaskExtensions.EnsureCompleted is an extension method, so use its first argument to find out how it is used.
-            var argumentValue = ensureCompletedInvocation.Arguments[0].Value;
 
-            switch (argumentValue) 
+        private void AnalyzeInvocation(in IInvocationOperation invocation, in MethodAnalysisContext context) 
+        {
+            switch (context.Scope) {
+                case Scope.Unknown:
+                    AnalyzeInvocationUnknownScope(invocation, context);
+                    return;
+                case Scope.Async:
+                    AnalyzeInvocationAsyncScope(invocation, context);
+                    return;
+                case Scope.Sync:
+                    AnalyzeInvocationSyncScope(invocation, context);
+                    return;
+            }
+        }
+
+        private void AnalyzeInvocationUnknownScope(in IInvocationOperation invocation, in MethodAnalysisContext context)
+        {
+            var method = invocation.TargetMethod;
+            if (_asyncUtilities.IsConfigureAwait(method))
             {
-                case IFieldReferenceOperation fieldReference:
-                    ReportDiagnosticOnOperation(fieldReference, Descriptors.AZC0104, "field");
+                AnalyzeConfigureAwait(invocation);
+            } 
+            else if (IsGetAwaiterGetResult(invocation))
+            {
+                ReportDiagnosticOnGetAwaiterGetResult(invocation, Descriptors.AZC0102);
+            } 
+            else if (IsEnsureCompleted(invocation, out var firstArgument))
+            {
+                var operation = GetAwaitableOperation(firstArgument);
+                ReportDiagnosticOnOperation(operation, Descriptors.AZC0111);
+            }
+        }
+
+        private void AnalyzeInvocationAsyncScope(IInvocationOperation invocation, in MethodAnalysisContext context) 
+        {
+            var method = invocation.TargetMethod;
+            // ConfigureAwait is either an instance method with one parameter or a static extension method with two.
+            // Verify that the last argument is a bool and if it is 'true'
+            if (_asyncUtilities.IsConfigureAwait(method))
+            {
+                AnalyzeConfigureAwait(invocation);
+            }
+            else if (IsGetAwaiterGetResult(invocation))
+            {
+                // Use await keyword instead of GetAwaiter().GetResult()
+                ReportDiagnosticOnGetAwaiterGetResult(invocation, Descriptors.AZC0103, "GetAwaiter().GetResult()");
+            } 
+            else if (IsEnsureCompleted(invocation, out _))
+            {
+                // Use await keyword instead of EnsureCompleted()
+                ReportDiagnosticOnMember(invocation, Descriptors.AZC0103, "EnsureCompleted()");
+            }
+            else if (method.IsAsync && !IsPublicMethod(method) && TryGetAsyncArgument(invocation, out var asyncArgument)) 
+            {
+                // Pass 'async: true' to the async method
+                AnalyzeAsyncParameterValue(invocation, context.AsyncParameter, asyncArgument, true);
+            }
+        }
+
+        private void AnalyzeInvocationSyncScope(IInvocationOperation invocation, in MethodAnalysisContext context) 
+        {
+            if (_asyncUtilities.IsConfigureAwait(invocation.TargetMethod))
+            {
+                // ConfigureAwait isn't needed in sync scope
+                ReportDiagnosticOnMember(invocation, Descriptors.AZC0104, "ConfigureAwait in sync scope");
+            }
+            else if (IsGetAwaiterGetResult(invocation))
+            {
+                ReportDiagnosticOnGetAwaiterGetResult(invocation, Descriptors.AZC0102);
+            } 
+            else if (IsEnsureCompleted(invocation, out var firstArgument))
+            {
+                AnalyzeEnsureCompleted(firstArgument, context);
+            }
+        }
+
+        private void AnalyzeConfigureAwait(IInvocationOperation invocation) 
+        {
+            if (IsEqualsToBoolValue(invocation.Arguments.Last().Value, true)) 
+            {
+                ReportDiagnosticOnMember(invocation, Descriptors.AZC0101);
+            }
+        }
+
+        private void AnalyzeEnsureCompleted(in IOperation firstArgument, in MethodAnalysisContext context) 
+        {
+            switch (firstArgument) 
+            {
+                case IFieldReferenceOperation _:
+                    ReportDiagnosticOnOperation(firstArgument, Descriptors.AZC0104, "EnsureCompleted on the field");
                     return;
-                case ILocalReferenceOperation localReference:
-                    ReportDiagnosticOnOperation(localReference, Descriptors.AZC0104, "variable");
+                case ILocalReferenceOperation _:
+                    ReportDiagnosticOnOperation(firstArgument, Descriptors.AZC0104, "EnsureCompleted on the variable");
                     return;
-                case IParameterReferenceOperation parameterReference:
-                    ReportDiagnosticOnOperation(parameterReference, Descriptors.AZC0104, "parameter");
+                case IParameterReferenceOperation _:
+                    ReportDiagnosticOnOperation(firstArgument, Descriptors.AZC0104, "EnsureCompleted on the parameter");
                     return;
-                case IPropertyReferenceOperation propertyReference:
-                    ReportDiagnosticOnOperation(propertyReference, Descriptors.AZC0104, "property");
+                case IPropertyReferenceOperation _:
+                    ReportDiagnosticOnOperation(firstArgument, Descriptors.AZC0104, "EnsureCompleted on the property");
                     return;
                 case IInvocationOperation invocation:
-                    if (!context.AsyncScope) 
-                    {
-                        // In sync scope, pass 'async: false' to the async method
-                        AnalyzeAsyncParameterValue(invocation, false);
-                    } 
-                    else if (context.Method.IsAsync)
-                    {
-                        // In async scope in async method, use await keyword instead of EnsureCompleted
-                        ReportDiagnosticOnMember(ensureCompletedInvocation, Descriptors.AZC0103, "EnsureCompleted()");
-                    }
-
+                    AnalyzeEnsureCompletedOnInvocation(invocation, context);
                     return;
             }
         }
 
-        private void AnalyzeAsyncParameterValue(IInvocationOperation invocation, bool asyncValue) 
+        private void AnalyzeEnsureCompletedOnInvocation(IInvocationOperation invocation, in MethodAnalysisContext context) 
         {
-            var asyncParameterIndex = GetAsyncParameterIndex(invocation.TargetMethod);
-            if (asyncParameterIndex == -1) 
+            while (true) 
             {
-                if (!asyncValue) {
-                    var descriptor = IsPublicMethod(invocation.TargetMethod)
-                        ? Descriptors.AZC0107
-                        : Descriptors.AZC0106;
-                    ReportDiagnosticOnMember(invocation, descriptor);
-                }
-            }
-            else if (invocation.Arguments[asyncParameterIndex].Value.ConstantValue.Value is bool value && value != asyncValue) 
-            {
-                var messageArgs = asyncValue
-                    ? new object[] { "asynchronous", invocation.TargetMethod.Name, "true" }
-                    : new object[] { "synchronous", invocation.TargetMethod.Name, "false" };
-                ReportDiagnosticOnOperation(invocation.Arguments[asyncParameterIndex], Descriptors.AZC0108, messageArgs);
-            }
-        }
-        
-        private IParameterSymbol GetAsyncParameter(IMethodSymbol method) 
-        {
-            var index = GetAsyncParameterIndex(method);
-            return index == -1 ? null : method.Parameters[index];
-        }
-
-        private int GetAsyncParameterIndex(IMethodSymbol method) 
-        {
-            for (var i = 0; i < method.Parameters.Length; i++) 
-            {
-                var parameter = method.Parameters[i];
-                if (parameter.Name == "async" && parameter.Type.Equals(_boolType)) 
+                var method = invocation.TargetMethod;
+                if (TryGetAsyncArgument(invocation, out var asyncArgument)) 
                 {
-                    return i;
+                    // Pass 'async: false' to the async method
+                    AnalyzeAsyncParameterValue(invocation, context.AsyncParameter, asyncArgument, false);
+                    return;
                 }
+
+                if (IsExtensionMethodOnInvocation(invocation, out var argumentInvocation))
+                {
+                    invocation = argumentInvocation;
+                    continue;
+                }
+
+                var descriptor = IsPublicMethod(method) ? Descriptors.AZC0107 : Descriptors.AZC0106;
+                ReportDiagnosticOnMember(invocation, descriptor);
+                return;
+            }
+        }
+        
+        private bool IsExtensionMethodOnInvocation(IInvocationOperation invocation, out IInvocationOperation invocationOperation) 
+        {
+            var method = invocation.TargetMethod;
+            if (method.IsExtensionMethod && invocation.Arguments[0].Value is IInvocationOperation argument && _asyncUtilities.IsTaskType(argument.Type)) 
+            {
+                invocationOperation = argument;
+                return true;
             }
 
-            return -1;
+            invocationOperation = default;
+            return false;
         }
-                
-        private bool IsEnsureCompleted(IMethodSymbol method) 
-            => _azureTaskExtensionsType != null && method.Name == "EnsureCompleted" && method.IsExtensionMethod && method.Parameters.Length == 1 && Equals(method.ReceiverType, _azureTaskExtensionsType);
+
+        private void AnalyzeAsyncParameterValue(IInvocationOperation invocation, IParameterSymbol asyncParameter, IArgumentOperation asyncArgument, bool asyncValue) 
+        {
+            if (IsEqualsToParameter(asyncArgument.Value, asyncParameter) || IsEqualsToBoolValue(asyncArgument.Value, asyncValue)) 
+            {
+                return;
+            }
+
+            var messageArgs = asyncValue
+                ? new object[] {"asynchronous", invocation.TargetMethod.Name, "be 'true'"}
+                : new object[] {"synchronous", invocation.TargetMethod.Name, "be 'false'"};
+
+            ReportDiagnosticOnOperation(asyncArgument, Descriptors.AZC0108, messageArgs);
+        }
+
+        private static bool IsEqualsToBoolValue(IOperation operation, bool value) 
+            => operation != null && operation.ConstantValue.HasValue && operation.ConstantValue.Value is bool boolValue && value == boolValue;
+
+        private static bool IsEqualsToParameter(IOperation operation, IParameterSymbol parameter) 
+            => operation != null && operation is IParameterReferenceOperation reference && reference.Parameter == parameter;
+
+        private IParameterSymbol GetAsyncParameter(IMethodSymbol method) 
+            => method.Parameters.FirstOrDefault(IsAsyncParameter);
+
+        private bool TryGetAsyncArgument(IInvocationOperation invocation, out IArgumentOperation asyncArgument) 
+        {
+            asyncArgument = invocation.Arguments.FirstOrDefault(IsAsyncArgument);
+            return asyncArgument != default;
+        }
+
+        private bool IsAsyncArgument(IArgumentOperation argument) 
+            => IsAsyncParameter(argument.Parameter);
         
-        private void TryPushOperationToStack(in MethodAnalysisContext context, IOperation operation, bool isAsync) 
+        private bool IsAsyncParameter(IParameterSymbol parameter) 
+            => parameter.Name == "async" && parameter.Type.Equals(_boolType);
+        
+        public bool IsGetAwaiterGetResult(IInvocationOperation invocation) 
+            => _asyncUtilities.IsGetAwaiter(invocation.TargetMethod) && invocation.Parent is IInvocationOperation parentInvocation && _asyncUtilities.IsAwaiterGetResultMethod(parentInvocation.TargetMethod);
+
+        private bool IsEnsureCompleted(IInvocationOperation invocation, out IOperation firstArgument) 
+        {
+            var method = invocation.TargetMethod;
+
+            if (_azureTaskExtensionsType != null && method.Name == "EnsureCompleted" && method.IsExtensionMethod && method.Parameters.Length == 1 && Equals(method.ReceiverType, _azureTaskExtensionsType)) 
+            {
+                firstArgument = invocation.Arguments[0].Value;
+                return true;
+            }
+
+            firstArgument = default;
+            return false;
+        }
+
+        private void TryPushOperationToStack(in MethodAnalysisContext context, IOperation operation, Scope scope) 
         {
             if (operation == null) 
             {
@@ -244,7 +350,7 @@ namespace Azure.ClientSdk.Analyzers
             }
 
             IEnumerable<IOperation> enumerable = new[] {operation};
-            _symbolIteratorsStack.Push((enumerable.GetEnumerator(), context.WithScope(isAsync)));
+            _symbolIteratorsStack.Push((enumerable.GetEnumerator(), context.WithScope(scope)));
         }
 
         private void ReportPublicMethodWithIsAsyncDiagnostic(IMethodBodyOperation methodBody, int asyncParameterIndex) 
@@ -317,22 +423,38 @@ namespace Azure.ClientSdk.Analyzers
 
         private readonly struct MethodAnalysisContext 
         {
-            public IMethodSymbol Method { get; }
             public IParameterSymbol AsyncParameter { get; }
-            public bool AsyncScope { get; }
+            public Scope Scope { get; }
 
-            public MethodAnalysisContext(IMethodSymbol method, IParameterSymbol asyncParameter, bool asyncScope) 
+            public MethodAnalysisContext(IMethodSymbol method, IParameterSymbol asyncParameter) 
+                :this(asyncParameter, GetScope(method, asyncParameter)) { }
+
+            private MethodAnalysisContext(IParameterSymbol asyncParameter, Scope scope) 
             {
-                Method = method;
                 AsyncParameter = asyncParameter;
-                AsyncScope = asyncScope;
+                Scope = scope;
             }
 
             public MethodAnalysisContext WithNewMethod(IMethodSymbol method, IParameterSymbol asyncParameter) 
-                => new MethodAnalysisContext(method, AsyncParameter ?? asyncParameter, method.IsAsync);
+                => new MethodAnalysisContext(AsyncParameter ?? asyncParameter, GetScope(method, asyncParameter));
 
-            public MethodAnalysisContext WithScope(bool async) 
-                => new MethodAnalysisContext(Method, AsyncParameter, async);
+            public MethodAnalysisContext WithScope(Scope scope) 
+                => new MethodAnalysisContext(AsyncParameter, Scope == Scope.Sync ? Scope.Sync : scope);
+
+            private static Scope GetScope(IMethodSymbol method, IParameterSymbol asyncParameter) =>
+                method.IsAsync
+                    ? asyncParameter != null ? Scope.Unknown : Scope.Async
+                    : Scope.Sync;
+        }
+
+        private enum Scope 
+        {
+            // Async method with async parameter and outside of checked scope
+            Unknown,
+            // Async method without async parameter or with async parameter inside async checked scope
+            Async,
+            // Sync method or async method with async parameter inside sync checked scope
+            Sync
         }
     }
 }

@@ -24,6 +24,33 @@ namespace Azure.Core.Pipeline
 ";
 
         [Fact]
+        public async Task AZC0104WarningConfigureAwaitInSyncScope()
+        {
+            const string code = @"
+namespace RandomNamespace
+{
+    using System;
+    using System.Threading;
+    using System.Threading.Tasks;
+    using Azure.Core.Pipeline;
+    public class MyClass
+    {
+        public void Foo()
+        {
+            var awaitable = FooImplAsync(false).[|ConfigureAwait(false)|];
+        }
+
+        private static async Task<int> FooImplAsync(bool async, CancellationToken ct = default(CancellationToken))
+            => async ? await Task.FromResult(42).ConfigureAwait(false) : 42;
+    }
+}";
+            
+            await Verifier.CreateAnalyzer(code, "AZC0104")
+                .WithSources(AzureCorePipelineTaskExtensions)
+                .RunAsync();
+        }
+
+        [Fact]
         public async Task AZC0104WarningEnsureCompletedOnField()
         {
             const string code = @"

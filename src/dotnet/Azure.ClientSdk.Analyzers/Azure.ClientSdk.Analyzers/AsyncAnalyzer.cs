@@ -30,14 +30,14 @@ namespace Azure.ClientSdk.Analyzers
         {
             _asyncUtilities = new AsyncAnalyzerUtilities(context.Compilation);
 
-            context.RegisterSyntaxNodeAction(AnalyzeAwaitExpression, SyntaxKind.AwaitExpression);
-            context.RegisterSyntaxNodeAction(AnalyzeUsingExpression, SyntaxKind.UsingStatement);
-            context.RegisterSyntaxNodeAction(AnalyzeForEachExpression, SyntaxKind.ForEachStatement);
-            context.RegisterSyntaxNodeAction(AnalyzeUsingDeclarationExpression, SyntaxKind.LocalDeclarationStatement);
             context.RegisterSyntaxNodeAction(AnalyzeArrowExpressionClause, SyntaxKind.ArrowExpressionClause);
-
+            
+            context.RegisterOperationAction(AnalyzeAwait, OperationKind.Await);
+            context.RegisterOperationAction(AnalyzeUsing, OperationKind.Using);
+            context.RegisterOperationAction(AnalyzeUsingDeclaration, OperationKind.UsingDeclaration);
             context.RegisterOperationAction(AnalyzeAnonymousFunction, OperationKind.AnonymousFunction);
             context.RegisterOperationAction(AnalyzeMethodBody, OperationKind.MethodBody);
+            context.RegisterOperationAction(AnalyzeLoop, OperationKind.Loop);
         }
 
         private void AnalyzeArrowExpressionClause(SyntaxNodeAnalysisContext context) 
@@ -71,31 +71,18 @@ namespace Azure.ClientSdk.Analyzers
             }
         }
 
-        private void AnalyzeAwaitExpression(SyntaxNodeAnalysisContext context)
+        private void AnalyzeAwait(OperationAnalysisContext context)
         {
-            var operation = context.SemanticModel.GetOperation(context.Node, context.CancellationToken);
-            if (!(operation is IAwaitOperation awaitOperation)) {
-                return;
-            }
-
+            var awaitOperation = (IAwaitOperation) context.Operation;
             if (_asyncUtilities.IsTaskType(awaitOperation.Operation.Type)) 
             {
                 ReportConfigureAwaitDiagnostic(context, awaitOperation);
             }
         }
 
-        private void AnalyzeUsingExpression(SyntaxNodeAnalysisContext context) 
+        private void AnalyzeUsing(OperationAnalysisContext context) 
         {
-            if (!_asyncUtilities.IsAwaitUsingStatement(context.Node))
-            {
-                return;
-            }
-
-            if (!(context.SemanticModel.GetOperation(context.Node, context.CancellationToken) is IUsingOperation usingOperation))
-            {
-                return;
-            }
-
+            var usingOperation = (IUsingOperation) context.Operation;
             if (!usingOperation.IsAsynchronous)
             {
                 return;
@@ -108,18 +95,9 @@ namespace Azure.ClientSdk.Analyzers
             }
         }
 
-        private void AnalyzeUsingDeclarationExpression(SyntaxNodeAnalysisContext context) 
+        private void AnalyzeUsingDeclaration(OperationAnalysisContext context) 
         {
-            if (!_asyncUtilities.IsAwaitLocalDeclaration(context.Node))
-            {
-                return;
-            }
-
-            if (!(context.SemanticModel.GetOperation(context.Node, context.CancellationToken) is IUsingDeclarationOperation usingDeclarationOperation))
-            {
-                return;
-            }
-
+            var usingDeclarationOperation = (IUsingDeclarationOperation) context.Operation;
             if (!usingDeclarationOperation.IsAsynchronous)
             {
                 return;
@@ -138,14 +116,9 @@ namespace Azure.ClientSdk.Analyzers
             }
         }
 
-        private void AnalyzeForEachExpression(SyntaxNodeAnalysisContext context) 
+        private void AnalyzeLoop(OperationAnalysisContext context) 
         {
-            if (!_asyncUtilities.IsAwaitForEach(context.Node)) 
-            {
-                return;
-            }
-
-            if (!(context.SemanticModel.GetOperation(context.Node, context.CancellationToken) is IForEachLoopOperation forEachOperation))
+            if (!(context.Operation is IForEachLoopOperation forEachOperation))
             {
                 return;
             }
@@ -162,10 +135,10 @@ namespace Azure.ClientSdk.Analyzers
             }
         }
 
-        private static void ReportConfigureAwaitDiagnostic(SyntaxNodeAnalysisContext context, IOperation operation) 
+        private static void ReportConfigureAwaitDiagnostic(OperationAnalysisContext context, IOperation operation) 
         {
             var location = operation.Syntax.GetLocation();
-            var diagnostic = Diagnostic.Create(Descriptors.AZC0100, location);
+            var diagnostic = Diagnostic.Create(AZC0100, location);
             context.ReportDiagnostic(diagnostic);
         }
     }

@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -14,9 +15,7 @@ namespace Azure.ClientSdk.Analyzers
     internal readonly struct MethodBodyAnalyzer 
     {
         private readonly AsyncAnalyzerUtilities _asyncUtilities;
-        private readonly INamedTypeSymbol _boolType;
-        private readonly INamedTypeSymbol _azureTaskExtensionsType;
-        private readonly Stack<(IEnumerator<IOperation>, MethodAnalysisContext)> _symbolIteratorsStack;
+        private readonly ImmutableArray<(IEnumerator<IOperation>, MethodAnalysisContext)>.Builder _symbolIteratorsStack;
         private readonly Action<Diagnostic> _reportDiagnostic;
 
         public static void Run(Action<Diagnostic> reportDiagnostic, Compilation compilation, AsyncAnalyzerUtilities utilities, IMethodSymbol method, IBlockOperation methodBody) 
@@ -26,10 +25,7 @@ namespace Azure.ClientSdk.Analyzers
         {
             _reportDiagnostic = reportDiagnostic;
             _asyncUtilities = utilities;
-            
-            _boolType = compilation.GetSpecialType(SpecialType.System_Boolean);
-            _azureTaskExtensionsType = compilation.GetTypeByMetadataName("Azure.Core.Pipeline.TaskExtensions");
-            _symbolIteratorsStack = new Stack<(IEnumerator<IOperation>, MethodAnalysisContext)>();
+            _symbolIteratorsStack = ImmutableArray.CreateBuilder<(IEnumerator<IOperation>, MethodAnalysisContext)>();
         }
 
         private void Run(IMethodSymbol method, IBlockOperation methodBody) 
@@ -40,14 +36,15 @@ namespace Azure.ClientSdk.Analyzers
                 ReportPublicMethodWithIsAsyncDiagnostic(methodBodyOperation, method.Parameters.IndexOf(asyncParameter));
             }
 
-            _symbolIteratorsStack.Push((methodBody.Children.GetEnumerator(), new MethodAnalysisContext(method, asyncParameter)));
+            _symbolIteratorsStack.Add((methodBody.Children.GetEnumerator(), new MethodAnalysisContext(method, asyncParameter)));
 
             while (_symbolIteratorsStack.Any())
             {
-                var (enumerator, context) = _symbolIteratorsStack.Peek();
+                var peekIndex = _symbolIteratorsStack.Count - 1;
+                var (enumerator, context) = _symbolIteratorsStack[peekIndex];
                 if (!enumerator.MoveNext())
                 {
-                    _symbolIteratorsStack.Pop();
+                    _symbolIteratorsStack.RemoveAt(peekIndex);
                     continue;
                 }
 
@@ -60,13 +57,15 @@ namespace Azure.ClientSdk.Analyzers
                 var analyzeChildren = AnalyzeOperation(current, ref context);
                 if (analyzeChildren) 
                 {
-                    _symbolIteratorsStack.Push((current.Children.GetEnumerator(), context));
+                    _symbolIteratorsStack.Add((current.Children.GetEnumerator(), context));
                 }
             }
         }
 
-        private bool AnalyzeOperation(IOperation current, ref MethodAnalysisContext context) {
-            switch (current) {
+        private bool AnalyzeOperation(IOperation current, ref MethodAnalysisContext context) 
+        {
+            switch (current) 
+            {
                 case IParameterReferenceOperation reference when reference.Parameter == context.AsyncParameter:
                     AnalyzeAsyncParameterReference(context, reference);
                     return false;
@@ -92,17 +91,17 @@ namespace Azure.ClientSdk.Analyzers
             switch (reference.Parent) 
             {
                 case IConditionalOperation conditional:
-                    _symbolIteratorsStack.Pop(); // Remove condition from stack
+                    _symbolIteratorsStack.RemoveAt(_symbolIteratorsStack.Count - 1); // Remove condition from stack
                     TryPushOperationToStack(context, conditional.WhenFalse, Scope.Sync);
                     TryPushOperationToStack(context, conditional.WhenTrue, Scope.Async);
                     return;
                 case IUnaryOperation unary when unary.OperatorKind == UnaryOperatorKind.Not && unary.Parent is IConditionalOperation conditional:
-                    _symbolIteratorsStack.Pop(); // Remove Not operator from stack
-                    _symbolIteratorsStack.Pop(); // Remove condition from stack
+                    _symbolIteratorsStack.RemoveAt(_symbolIteratorsStack.Count - 1); // Remove Not operator from stack
+                    _symbolIteratorsStack.RemoveAt(_symbolIteratorsStack.Count - 1); // Remove condition from stack
                     TryPushOperationToStack(context, conditional.WhenFalse, Scope.Async);
                     TryPushOperationToStack(context, conditional.WhenTrue, Scope.Sync);
                     return;
-                case IArgumentOperation argument when IsAsyncParameter(argument.Parameter):
+                case IArgumentOperation argument when _asyncUtilities.IsAsyncParameter(argument.Parameter):
                     return;
                 default:
                     ReportDiagnosticOnOperation(reference.Parent, Descriptors.AZC0109);
@@ -311,7 +310,7 @@ namespace Azure.ClientSdk.Analyzers
             => operation != null && operation is IParameterReferenceOperation reference && reference.Parameter == parameter;
 
         private IParameterSymbol GetAsyncParameter(IMethodSymbol method) 
-            => method.Parameters.FirstOrDefault(IsAsyncParameter);
+            => method.Parameters.FirstOrDefault(_asyncUtilities.IsAsyncParameter);
 
         private bool TryGetAsyncArgument(IInvocationOperation invocation, out IArgumentOperation asyncArgument) 
         {
@@ -320,19 +319,14 @@ namespace Azure.ClientSdk.Analyzers
         }
 
         private bool IsAsyncArgument(IArgumentOperation argument) 
-            => IsAsyncParameter(argument.Parameter);
-        
-        private bool IsAsyncParameter(IParameterSymbol parameter) 
-            => parameter.Name == "async" && parameter.Type.Equals(_boolType);
+            => _asyncUtilities.IsAsyncParameter(argument.Parameter);
         
         public bool IsGetAwaiterGetResult(IInvocationOperation invocation) 
             => _asyncUtilities.IsGetAwaiter(invocation.TargetMethod) && invocation.Parent is IInvocationOperation parentInvocation && _asyncUtilities.IsAwaiterGetResultMethod(parentInvocation.TargetMethod);
 
         private bool IsEnsureCompleted(IInvocationOperation invocation, out IOperation firstArgument) 
         {
-            var method = invocation.TargetMethod;
-
-            if (_azureTaskExtensionsType != null && method.Name == "EnsureCompleted" && method.IsExtensionMethod && method.Parameters.Length == 1 && Equals(method.ReceiverType, _azureTaskExtensionsType)) 
+            if (_asyncUtilities.IsEnsureCompleted(invocation.TargetMethod)) 
             {
                 firstArgument = invocation.Arguments[0].Value;
                 return true;
@@ -350,7 +344,7 @@ namespace Azure.ClientSdk.Analyzers
             }
 
             IEnumerable<IOperation> enumerable = new[] {operation};
-            _symbolIteratorsStack.Push((enumerable.GetEnumerator(), context.WithScope(scope)));
+            _symbolIteratorsStack.Add((enumerable.GetEnumerator(), context.WithScope(scope)));
         }
 
         private void ReportPublicMethodWithIsAsyncDiagnostic(IMethodBodyOperation methodBody, int asyncParameterIndex) 

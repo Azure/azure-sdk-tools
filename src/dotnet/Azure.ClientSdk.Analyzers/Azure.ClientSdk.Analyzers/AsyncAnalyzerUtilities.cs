@@ -1,34 +1,29 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Operations;
 
 namespace Azure.ClientSdk.Analyzers 
 {
     internal sealed class AsyncAnalyzerUtilities 
     {
-        public INamedTypeSymbol BooleanTypeSymbol { get; }
-        public INamedTypeSymbol TaskTypeSymbol { get; }
-        public INamedTypeSymbol TaskOfTTypeSymbol { get; }
-        public INamedTypeSymbol ValueTaskTypeSymbol { get; }
-        public INamedTypeSymbol ValueTaskOfTTypeSymbol { get; }
-        public INamedTypeSymbol NotifyCompletionTypeSymbol { get; }
-        public INamedTypeSymbol AsyncDisposableSymbol { get; }
-        public INamedTypeSymbol AsyncEnumerableOfTTypeSymbol { get; }
-        public INamedTypeSymbol TaskAsyncEnumerableExtensionsSymbol { get; }
+        private INamedTypeSymbol BooleanTypeSymbol { get; }
+        private INamedTypeSymbol TaskTypeSymbol { get; }
+        private INamedTypeSymbol TaskOfTTypeSymbol { get; }
+        private INamedTypeSymbol ValueTaskTypeSymbol { get; }
+        private INamedTypeSymbol ValueTaskOfTTypeSymbol { get; }
+        private INamedTypeSymbol NotifyCompletionTypeSymbol { get; }
+        private INamedTypeSymbol AsyncDisposableSymbol { get; }
+        private INamedTypeSymbol AsyncEnumerableOfTTypeSymbol { get; }
+        private INamedTypeSymbol TaskAsyncEnumerableExtensionsSymbol { get; }
+        private INamedTypeSymbol AzureTaskExtensionsType { get; }
 
         public AsyncAnalyzerUtilities(Compilation compilation) 
         {
-            BooleanTypeSymbol = compilation.GetTypeByMetadataName(typeof(bool).FullName);
+            BooleanTypeSymbol = compilation.GetSpecialType(SpecialType.System_Boolean);
             TaskTypeSymbol = compilation.GetTypeByMetadataName(typeof(Task).FullName);
             TaskOfTTypeSymbol = compilation.GetTypeByMetadataName(typeof(Task<>).FullName);
             ValueTaskTypeSymbol = compilation.GetTypeByMetadataName(typeof(ValueTask).FullName);
@@ -37,7 +32,19 @@ namespace Azure.ClientSdk.Analyzers
             AsyncDisposableSymbol = compilation.GetTypeByMetadataName("System.IAsyncDisposable");
             AsyncEnumerableOfTTypeSymbol = compilation.GetTypeByMetadataName("System.Collections.Generic.IAsyncEnumerable`1");
             TaskAsyncEnumerableExtensionsSymbol = compilation.GetTypeByMetadataName("System.Threading.Tasks.TaskAsyncEnumerableExtensions");
+            AzureTaskExtensionsType = compilation.GetTypeByMetadataName("Azure.Core.Pipeline.TaskExtensions");
         }
+
+        public bool IsAsyncParameter(IParameterSymbol parameter) 
+            => parameter.Name == "async" &&
+               parameter.Type.Equals(BooleanTypeSymbol);
+        
+        public bool IsEnsureCompleted(IMethodSymbol method) 
+            => AzureTaskExtensionsType != null &&
+               method.Name == "EnsureCompleted" &&
+               method.IsExtensionMethod &&
+               method.Parameters.Length == 1 &&
+               Equals(method.ReceiverType, AzureTaskExtensionsType);
 
         public bool IsConfigureAwait(IMethodSymbol method)
         {

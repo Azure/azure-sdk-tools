@@ -249,7 +249,7 @@ namespace PipelineGenerator.Conventions
         /// <summary>
         /// Number of buckets for hour hashing
         /// </summary>
-        protected const int HourBuckets = 3;
+        protected const int HourBuckets = 12;
 
         protected int HashBucket(string pipelineName)
         {

@@ -15,7 +15,7 @@ namespace Azure.ClientSdk.Analyzers
     internal readonly struct MethodBodyAnalyzer 
     {
         private readonly AsyncAnalyzerUtilities _asyncUtilities;
-        private readonly ImmutableArray<(IEnumerator<IOperation>, MethodAnalysisContext)>.Builder _symbolIteratorsStack;
+        private readonly Stack<(IEnumerator<IOperation>, MethodAnalysisContext)> _symbolIteratorsStack;
         private readonly Action<Diagnostic> _reportDiagnostic;
 
         public static void Run(Action<Diagnostic> reportDiagnostic, Compilation compilation, AsyncAnalyzerUtilities utilities, IMethodSymbol method, IBlockOperation methodBody) 
@@ -25,7 +25,7 @@ namespace Azure.ClientSdk.Analyzers
         {
             _reportDiagnostic = reportDiagnostic;
             _asyncUtilities = utilities;
-            _symbolIteratorsStack = ImmutableArray.CreateBuilder<(IEnumerator<IOperation>, MethodAnalysisContext)>();
+            _symbolIteratorsStack = new Stack<(IEnumerator<IOperation>, MethodAnalysisContext)>();
         }
 
         private void Run(IMethodSymbol method, IBlockOperation methodBody) 
@@ -36,15 +36,14 @@ namespace Azure.ClientSdk.Analyzers
                 ReportPublicMethodWithIsAsyncDiagnostic(methodBodyOperation, method.Parameters.IndexOf(asyncParameter));
             }
 
-            _symbolIteratorsStack.Add((methodBody.Children.GetEnumerator(), new MethodAnalysisContext(method, asyncParameter)));
+            _symbolIteratorsStack.Push((methodBody.Children.GetEnumerator(), new MethodAnalysisContext(method, asyncParameter)));
 
-            while (_symbolIteratorsStack.Any())
+            while (_symbolIteratorsStack.Count > 0)
             {
-                var peekIndex = _symbolIteratorsStack.Count - 1;
-                var (enumerator, context) = _symbolIteratorsStack[peekIndex];
+                var (enumerator, context) = _symbolIteratorsStack.Peek();
                 if (!enumerator.MoveNext())
                 {
-                    _symbolIteratorsStack.RemoveAt(peekIndex);
+                    _symbolIteratorsStack.Pop();
                     continue;
                 }
 
@@ -57,7 +56,7 @@ namespace Azure.ClientSdk.Analyzers
                 var analyzeChildren = AnalyzeOperation(current, ref context);
                 if (analyzeChildren) 
                 {
-                    _symbolIteratorsStack.Add((current.Children.GetEnumerator(), context));
+                    _symbolIteratorsStack.Push((current.Children.GetEnumerator(), context));
                 }
             }
         }
@@ -91,13 +90,13 @@ namespace Azure.ClientSdk.Analyzers
             switch (reference.Parent) 
             {
                 case IConditionalOperation conditional:
-                    _symbolIteratorsStack.RemoveAt(_symbolIteratorsStack.Count - 1); // Remove condition from stack
+                    _symbolIteratorsStack.Pop(); // Remove condition from stack
                     TryPushOperationToStack(context, conditional.WhenFalse, Scope.Sync);
                     TryPushOperationToStack(context, conditional.WhenTrue, Scope.Async);
                     return;
                 case IUnaryOperation unary when unary.OperatorKind == UnaryOperatorKind.Not && unary.Parent is IConditionalOperation conditional:
-                    _symbolIteratorsStack.RemoveAt(_symbolIteratorsStack.Count - 1); // Remove Not operator from stack
-                    _symbolIteratorsStack.RemoveAt(_symbolIteratorsStack.Count - 1); // Remove condition from stack
+                    _symbolIteratorsStack.Pop(); // Remove Not operator from stack
+                    _symbolIteratorsStack.Pop(); // Remove condition from stack
                     TryPushOperationToStack(context, conditional.WhenFalse, Scope.Async);
                     TryPushOperationToStack(context, conditional.WhenTrue, Scope.Sync);
                     return;
@@ -344,7 +343,7 @@ namespace Azure.ClientSdk.Analyzers
             }
 
             IEnumerable<IOperation> enumerable = new[] {operation};
-            _symbolIteratorsStack.Add((enumerable.GetEnumerator(), context.WithScope(scope)));
+            _symbolIteratorsStack.Push((enumerable.GetEnumerator(), context.WithScope(scope)));
         }
 
         private void ReportPublicMethodWithIsAsyncDiagnostic(IMethodBodyOperation methodBody, int asyncParameterIndex) 

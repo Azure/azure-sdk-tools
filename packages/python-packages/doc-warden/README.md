@@ -167,6 +167,7 @@ The presence of this file allows each repository to customize how enforcement ta
 ```
 omitted_paths:
   - archive/*
+  - sdk/eventhub/
 language: java
 root_check_enabled: True
 required_readme_sections:
@@ -179,12 +180,13 @@ known_content_issues:
   - ['sdk/template/azure-sdk-template/README.md','#1368']
   - ['sdk/template/azure-sdk-template/CHANGELOG.md','#1368']
 ```
-
 The above configuration tells `warden`...
 
 - The language within the repo is `java`
 - To ensure that a `README.md` is present at the root of the repository.
-- To omit any paths under `archive/` from the readme checks.
+- To omit **any** paths under `archive/` from the readme checks.
+- To omit paths found **directly** under `sdk/eventhub/`. 
+   - This means that if there is a readme content issue under `sdk/eventhub/azure-messaging/`, it will still throw an error!
 
 Possible values for `language` right now are `['net', 'java', 'js', 'python']`. Greater than one target language is not currently supported.
 

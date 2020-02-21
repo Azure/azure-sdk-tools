@@ -1,5 +1,11 @@
 # Release History
 
+## 0.5.1
+- Allow omission of individual folders, while still allowing issues BELOW that folder to be detected.
+
+## 0.5.0
+- Added support for verifying changelogs in addition to readmes.
+
 ## 0.4.2
 - Update logic for discovering java client and data packages
 

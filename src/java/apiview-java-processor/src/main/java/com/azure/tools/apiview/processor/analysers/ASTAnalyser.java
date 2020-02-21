@@ -1,5 +1,6 @@
 package com.azure.tools.apiview.processor.analysers;
 
+import com.azure.tools.apiview.processor.analysers.util.ASTUtils;
 import com.azure.tools.apiview.processor.analysers.util.SourceJarTypeSolver;
 import com.azure.tools.apiview.processor.diagnostics.Diagnostics;
 import com.github.javaparser.StaticJavaParser;
@@ -54,7 +55,6 @@ import static com.azure.tools.apiview.processor.model.TokenKind.*;
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.*;
 
 public class ASTAnalyser implements Analyser {
-    private final File inputFile;
     private final APIListing apiListing;
 
     private final Map<String, ChildItem> packageNameToNav;
@@ -62,7 +62,6 @@ public class ASTAnalyser implements Analyser {
     private int indent;
 
     public ASTAnalyser(File inputFile, APIListing apiListing) {
-        this.inputFile = inputFile;
         this.apiListing = apiListing;
         this.indent = 0;
         this.packageNameToNav = new HashMap<>();
@@ -78,20 +77,17 @@ public class ASTAnalyser implements Analyser {
                else if (inputFileName.contains("implementation")) return false;
                else if (inputFileName.contains("package-info.java")) return false;
                else if (inputFileName.contains("module-info.java")) return false;
-               else if (!inputFileName.endsWith(".java")) return false;
-               else return true;
+               else return inputFileName.endsWith(".java");
            }).collect(Collectors.toList());
 
         // then we do a pass to build a map of all known types and package names, and a map of package names to nav items,
         // followed by a pass to tokenise each file
         allFiles.stream()
                 .map(this::scanForTypes)
-                .collect(Collectors.toList())
-                .stream()
                 .filter(Optional::isPresent)
                 .map(Optional::get)
-                .sorted((s1, s2) -> s1.path.compareTo(s2.path))
-                .forEach(scanClass -> processSingleFile(scanClass));
+                .sorted(Comparator.comparing(s -> s.path))
+                .forEach(this::processSingleFile);
 
         // build the navigation
         packageNameToNav.values().stream()
@@ -115,7 +111,6 @@ public class ASTAnalyser implements Analyser {
             // Set up a minimal type solver that only looks at the classes used to run this sample.
             CombinedTypeSolver combinedTypeSolver = new CombinedTypeSolver();
             combinedTypeSolver.add(new ReflectionTypeSolver());
-//            combinedTypeSolver.add(new SourceJarTypeSolver(inputFile));
 
             // Configure JavaParser to use type resolution
             StaticJavaParser.getConfiguration()
@@ -252,8 +247,8 @@ public class ASTAnalyser implements Analyser {
         }
 
         private boolean getTypeDeclaration(TypeDeclaration<?> typeDeclaration) {
-            // Skip if the class is private or package-private
-            if (isPrivateOrPackagePrivate(typeDeclaration.getAccessSpecifier())) {
+            // Skip if the class is private or package-private, unless it is a nested type defined inside a public interface
+            if (!isTypeAPublicAPI(typeDeclaration)) {
                 return true;
             }
 
@@ -676,16 +671,21 @@ public class ASTAnalyser implements Analyser {
                     .forEach(name -> name.getQualifier().ifPresent(packageName -> {
                         apiListing.addPackageTypeMapping(packageName.toString(), name.getIdentifier());
                     }));
-            }
         }
+    }
 
+    /*
+     * This method is only called in relation to building up the types for linking, it does not build up the actual
+     * text output that is displayed to the user.
+     */
     private void getTypeDeclaration(TypeDeclaration<?> typeDeclaration) {
-        // Skip if the class is private or package-private
-        if (isPrivateOrPackagePrivate(typeDeclaration.getAccessSpecifier())) {
+        // Skip if the class is private or package-private, unless it is a nested type defined inside a public interface
+        if (!isTypeAPublicAPI(typeDeclaration)) {
             return;
         }
 
-        if (! (typeDeclaration.isClassOrInterfaceDeclaration() || typeDeclaration.isEnumDeclaration())) {
+        final boolean isInterfaceType = typeDeclaration.isClassOrInterfaceDeclaration();
+        if (! (isInterfaceType || typeDeclaration.isEnumDeclaration())) {
             return;
         }
 

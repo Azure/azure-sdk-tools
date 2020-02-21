@@ -4,12 +4,15 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace PipelineGenerator
 {
     public class SdkComponentScanner
     {
+        private static Regex variantExtractionExpression = new Regex("^ci\\.(?<variant>([a-z]+))\\.yml$");
+
         public SdkComponentScanner(ILogger<SdkComponentScanner> logger)
         {
             Logger = logger;
@@ -49,6 +52,14 @@ namespace PipelineGenerator
                     Path = pipelineYamlFile.Directory,
                     RelativeYamlPath = relativePath
                 };
+
+                // Append variant information.
+                if (variantExtractionExpression.IsMatch(pipelineYamlFile.Name))
+                {
+                    var match = variantExtractionExpression.Match(pipelineYamlFile.Name);
+                    var variant = match.Groups["variant"].Value;
+                    component.Variant = variant;
+                }
 
                 yield return component;
             }

@@ -287,7 +287,7 @@ function ParseCArtifact($pkg, $workingDirectory) {
   $packageInfo = Get-Content -Raw -Path $pkg | ConvertFrom-JSON
   $packageArtifactLocation = (Get-ItemProperty $pkg).Directory.FullName
 
-  $releaseNotes = ExtractReleaseNotes -changeLogLocation @(Get-ChildItem -Path $packageArtifactLocation -Recurse -Include "CHANGELOG.md")[0]
+  $releaseNotes = &"${PSScriptRoot}/../../eng/common/Extract-ReleaseNotes.ps1" -ChangeLogLocation @(Get-ChildItem -Path $packageArtifactLocation -Recurse -Include "CHANGELOG.md")[0]
 
   return New-Object PSObject -Property @{
     PackageId      = $packageInfo.name

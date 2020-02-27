@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.VisualStudio.Services.Common;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -10,6 +11,8 @@ namespace PipelineGenerator.Conventions
     public class IntegrationTestingPipelineConvention : PipelineConvention
     {
         public override string SearchPattern => "tests.yml";
+        public override bool IsScheduled => true;
+
 
         public IntegrationTestingPipelineConvention(ILogger logger, PipelineGenerationContext context) : base(logger, context)
         {
@@ -23,29 +26,6 @@ namespace PipelineGenerator.Conventions
         protected override async Task<bool> ApplyConventionAsync(BuildDefinition definition, SdkComponent component)
         {
             var hasChanges = await base.ApplyConventionAsync(definition, component);
-
-            // Ensure Schedule Trigger
-            var scheduleTriggers = definition.Triggers.OfType<ScheduleTrigger>();
-
-            if (scheduleTriggers == default || !scheduleTriggers.Any())
-            {
-                var schedule = new Schedule
-                {
-                    DaysToBuild = ScheduleDays.All,
-                    ScheduleOnlyWithChanges = false,
-                    StartHours = StartHourOffset + HashBucket(definition.Name),
-                    StartMinutes = 0,
-                    TimeZoneId = "Pacific Standard Time",
-                };
-                schedule.BranchFilters.Add("+master");
-
-                definition.Triggers.Add(new ScheduleTrigger
-                {
-                    Schedules = new List<Schedule> { schedule }
-                });
-
-                hasChanges = true;
-            }
 
             // Ensure PR trigger
             var prTriggers = definition.Triggers.OfType<PullRequestTrigger>();

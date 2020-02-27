@@ -20,6 +20,7 @@ namespace PipelineGenerator.Conventions
         }
 
         public override string SearchPattern => "ci*.yml";
+        public override bool IsScheduled => false;
 
         protected override async Task<bool> ApplyConventionAsync(BuildDefinition definition, SdkComponent component)
         {

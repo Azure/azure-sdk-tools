@@ -7,7 +7,7 @@ param (
   $artifactLocation, # the root of the artifact folder. DevOps $(System.ArtifactsDirectory)
   $workingDirectory, # directory that package artifacts will be extracted into for examination (if necessary)
   $packageRepository, # used to indicate destination against which we will check the existing version.
-  # valid options: PyPI, Nuget, NPM, Maven
+  # valid options: PyPI, Nuget, NPM, Maven, C
   # used by CreateTags
   $releaseSha, # the SHA for the artifacts. DevOps: $(Release.Artifacts.<artifactAlias>.SourceVersion) or $(Build.SourceVersion)
 
@@ -283,6 +283,22 @@ function ParsePyPIPackage($pkg, $workingDirectory) {
   }
 }
 
+function ParseCArtifact($pkg, $workingDirectory) {
+  $packageInfo = Get-Content -Raw -Path $pkg | ConvertFrom-JSON
+  $packageArtifactLocation = (Get-ItemProperty $pkg).Directory.FullName
+
+  $releaseNotes = ExtractReleaseNotes -changeLogLocation @(Get-ChildItem -Path $packageArtifactLocation -Recurse -Include "CHANGELOG.md")[0]
+
+  return New-Object PSObject -Property @{
+    PackageId      = $packageInfo.name
+    PackageVersion = $packageInfo.version
+    # Artifact info is always considered deployable for C becasue it is not
+    # deployed anywhere. Dealing with duplicate tags happens downstream in
+    # CheckArtifactShaAgainstTagsList
+    Deployable     = $true
+    ReleaseNotes   = $releaseNotes
+  }
+}
 
 # Returns the pypi publish status of a package id and version.
 function IsPythonPackageVersionPublished($pkgId, $pkgVersion) {
@@ -320,6 +336,12 @@ function GetExistingTags($apiUrl) {
     Write-Host "Failed to retrieve tags from repository."
     Write-Host "StatusCode:" $statusCode
     Write-Host "StatusDescription:" $statusDescription
+
+    # Return an empty list if there are no tags in the repo
+    if ($statusCode -eq 404) {
+      return @()
+    }
+
     exit(1)
   }
 }
@@ -350,6 +372,10 @@ function VerifyPackages($pkgRepository, $artifactLocation, $workingDirectory, $a
       $ParsePkgInfoFn = "ParsePyPIPackage"
       $packagePattern = "*.zip"
       break
+    }
+    "C" {
+      $ParsePkgInfoFn = "ParseCArtifact"
+      $packagePattern = "*.json"
     }
     default {
       Write-Host "Unrecognized Language: $language"

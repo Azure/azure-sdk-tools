@@ -333,15 +333,15 @@ function GetExistingTags($apiUrl) {
     $statusCode = $_.Exception.Response.StatusCode.value__
     $statusDescription = $_.Exception.Response.StatusDescription
 
-    # Return an empty list if there are no tags in the repo
-    if ($statusCode -eq 404) {
-      Write-Host "No tags found in the repository"
-      return @()
-    }
-
     Write-Host "Failed to retrieve tags from repository."
     Write-Host "StatusCode:" $statusCode
     Write-Host "StatusDescription:" $statusDescription
+
+    # Return an empty list if there are no tags in the repo
+    if ($statusCode -eq 404) {
+      return @()
+    }
+
     exit(1)
   }
 }

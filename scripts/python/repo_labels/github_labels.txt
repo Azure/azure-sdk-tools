@@ -49,6 +49,7 @@ Data Lake Store
 Data Migration
 Devtestlab
 Docs
+Device Provisioning Service
 Event Grid
 Event Hub
 Functions
@@ -58,6 +59,8 @@ HDInsight
 Import Export
 Intune
 Insights
+IotCentral
+IotDPS
 IotHub
 KeyVault
 Kusto

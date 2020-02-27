@@ -244,24 +244,24 @@ namespace PipelineGenerator.Conventions
 
         protected const int FirstSchedulingHour = 0;
         protected const int LastSchedulingHour = 12;
+        protected const int TotalHours = LastSchedulingHour - FirstSchedulingHour;
+        protected const int TotalMinutes = TotalHours * 60;
         protected const int BucketSizeInMinutes = 15;
+        protected const int TotalBuckets = TotalMinutes / BucketSizeInMinutes;
+        protected const int BucketsPerHour = 60 / BucketSizeInMinutes;
 
         protected Schedule CreateScheduleFromDefinition(BuildDefinition definition)
         {
-            var totalHours = LastSchedulingHour - FirstSchedulingHour;
-            var totalMinutes = totalHours * 60;
-            var totalBuckets = totalMinutes / BucketSizeInMinutes;
-
-            var bucket = definition.Id % totalBuckets;
-            var startHours = bucket / 4;
-            var startMinutes = bucket % 4;
+            var bucket = definition.Id % TotalBuckets;
+            var startHours = bucket / BucketsPerHour;
+            var startMinutes = bucket % BucketsPerHour;
 
             var schedule = new Schedule
             {
                 DaysToBuild = ScheduleDays.All,
                 ScheduleOnlyWithChanges = false,
                 StartHours = FirstSchedulingHour + startHours,
-                StartMinutes = startMinutes * 15,
+                StartMinutes = startMinutes * BucketSizeInMinutes,
                 TimeZoneId = "UTC",
             };
             schedule.BranchFilters.Add("+master");

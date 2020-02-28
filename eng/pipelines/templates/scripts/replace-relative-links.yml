@@ -29,8 +29,8 @@ steps:
             "https://github.com/{repo_id}/tree/{build_sha}/{target_resource_path}"
         )
 
-        LINK_DISCOVERY_REGEX = r"\[([^\]]*)\]\(([^)]*)\)"
-        PREDEFINED_LINK_DISCOVERY_REGEX = r"(\[[^\]]*]\:)\s*([^\s]+)"
+        LINK_DISCOVERY_REGEX = r"\[([^\]]*)\]\(([^)]+)\)"
+        PREDEFINED_LINK_DISCOVERY_REGEX = r"(\[[^\]]+]\:)\s*([^\s]+)"
 
         IMAGE_FILE_EXTENSIONS = ['.jpeg', '.jpg', '.png', '.gif', '.tiff']
         RELATIVE_LINK_REPLACEMENT_SYNTAX_FOR_IMAGE = (

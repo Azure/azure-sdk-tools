@@ -3,14 +3,14 @@
 
 using System.Threading.Tasks;
 using Xunit;
-using Verifier = Azure.ClientSdk.Analyzers.Tests.AzureAnalyzerVerifier<Azure.ClientSdk.Analyzers.AddConfigureAwaitAnalyzer>;
+using Verifier = Azure.ClientSdk.Analyzers.Tests.AzureAnalyzerVerifier<Azure.ClientSdk.Analyzers.AsyncAnalyzer>;
 
 namespace Azure.ClientSdk.Analyzers.Tests 
 {
-    public class AZC0013Tests 
+    public class AZC0101Tests 
     {
         [Fact]
-        public async Task AZC0013WarningOnExistingConfigureAwaitTrue()
+        public async Task AZC0101WarningOnExistingConfigureAwaitTrue()
         {
             const string code = @"
 namespace RandomNamespace
@@ -23,11 +23,11 @@ namespace RandomNamespace
         }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0013");
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0101");
         }
 
         [Fact]
-        public async Task AZC0013WarningOnAsyncEnumerableExistingConfigureAwaitTrue()
+        public async Task AZC0101WarningOnAsyncEnumerableExistingConfigureAwaitTrue()
         {
             const string code = @"
 namespace RandomNamespace
@@ -46,11 +46,11 @@ namespace RandomNamespace
         private static async IAsyncEnumerable<int> GetValuesAsync() { yield break; }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0013");
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0101");
         }
 
         [Fact]
-        public async Task AZC0013WarningOnAsyncUsingExistingConfigureAwaitTrue()
+        public async Task AZC0101WarningOnAsyncUsingExistingConfigureAwaitTrue()
         {
             const string code = @"
 namespace RandomNamespace
@@ -72,11 +72,11 @@ namespace RandomNamespace
         }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0013");
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0101");
         }
 
         [Fact]
-        public async Task AZC0013WarningOnAsyncUsingNoBracesExistingConfigureAwaitTrue()
+        public async Task AZC0101WarningOnAsyncUsingNoBracesExistingConfigureAwaitTrue()
         {
             const string code = @"
 namespace RandomNamespace
@@ -98,11 +98,11 @@ namespace RandomNamespace
         }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0013");
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0101");
         }
 
         [Fact]
-        public async Task AZC0013DisabledNoWarningOnExistingConfigureAwaitTrue()
+        public async Task AZC0101DisabledNoWarningOnExistingConfigureAwaitTrue()
         {
             const string code = @"
 namespace RandomNamespace
@@ -117,12 +117,12 @@ namespace RandomNamespace
         {
             var ad = new AsyncDisposable();
 
-#pragma warning disable AZC0013
+#pragma warning disable AZC0101
             await foreach (var x in GetValuesAsync().ConfigureAwait(true)) { }
             await System.Threading.Tasks.Task.Run(() => {}).ConfigureAwait(true);
             await using var y = ad.ConfigureAwait(true);
             await using(ad.ConfigureAwait(true)) { }
-#pragma warning restore AZC0013
+#pragma warning restore AZC0101
         }
     
         private static async IAsyncEnumerable<int> GetValuesAsync() { yield break; }

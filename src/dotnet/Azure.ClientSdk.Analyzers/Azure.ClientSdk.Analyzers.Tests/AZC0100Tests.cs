@@ -5,16 +5,16 @@ using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Testing;
 using Xunit;
-using Verifier = Azure.ClientSdk.Analyzers.Tests.AzureAnalyzerVerifier<Azure.ClientSdk.Analyzers.AddConfigureAwaitAnalyzer>;
+using Verifier = Azure.ClientSdk.Analyzers.Tests.AzureAnalyzerVerifier<Azure.ClientSdk.Analyzers.AsyncAnalyzer>;
 
 namespace Azure.ClientSdk.Analyzers.Tests 
 {
-    public class AZC0012Tests 
+    public class AZC0100Tests 
     {
         [Theory]
         [InlineData(LanguageVersion.CSharp7)]
         [InlineData(LanguageVersion.Latest)]
-        public async Task AZC0012WarningOnTask(LanguageVersion languageVersion)
+        public async Task AZC0100WarningOnTask(LanguageVersion languageVersion)
         {
             const string code = @"
 namespace RandomNamespace
@@ -27,13 +27,13 @@ namespace RandomNamespace
         }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0012", languageVersion);
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0100", languageVersion);
         }
 
         [Theory]
         [InlineData(LanguageVersion.CSharp7)]
         [InlineData(LanguageVersion.Latest)]
-        public async Task AZC0012WarningOnTaskOfT(LanguageVersion languageVersion) 
+        public async Task AZC0100WarningOnTaskOfT(LanguageVersion languageVersion) 
         {
             const string code = @"
 namespace RandomNamespace
@@ -46,13 +46,13 @@ namespace RandomNamespace
         }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0012", languageVersion);
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0100", languageVersion);
         }
 
         [Theory]
         [InlineData(LanguageVersion.CSharp7)]
         [InlineData(LanguageVersion.Latest)]
-        public async Task AZC0012WarningOnValueTask(LanguageVersion languageVersion) 
+        public async Task AZC0100WarningOnValueTask(LanguageVersion languageVersion) 
         {
             const string code = @"
 namespace RandomNamespace
@@ -72,13 +72,13 @@ namespace RandomNamespace
         }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0012", languageVersion);
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0100", languageVersion);
         }
 
         [Theory]
         [InlineData(LanguageVersion.CSharp7)]
         [InlineData(LanguageVersion.Latest)]
-        public async Task AZC0012WarningOnValueTaskOfT(LanguageVersion languageVersion) 
+        public async Task AZC0100WarningOnValueTaskOfT(LanguageVersion languageVersion) 
         {
             const string code = @"
 namespace RandomNamespace
@@ -96,11 +96,11 @@ namespace RandomNamespace
         }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0012", languageVersion);
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0100", languageVersion);
         }
 
         [Fact]
-        public async Task AZC0012NoWarningOnExistingConfigureAwaitFalse()
+        public async Task AZC0100NoWarningOnExistingConfigureAwaitFalse()
         {
             const string code = @"
 namespace RandomNamespace
@@ -117,7 +117,7 @@ namespace RandomNamespace
         }
 
         [Fact]
-        public async Task AZC0012WarningOnTaskDelay()
+        public async Task AZC0100WarningOnTaskDelay()
         {
             const string code = @"
 namespace RandomNamespace
@@ -130,11 +130,11 @@ namespace RandomNamespace
         }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0012");
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0100");
         }
 
         [Fact]
-        public async Task AZC0012NoWarningOnTaskYield()
+        public async Task AZC0100NoWarningOnTaskYield()
         {
             const string code = @"
 namespace RandomNamespace
@@ -151,7 +151,7 @@ namespace RandomNamespace
         }
 
         [Fact]
-        public async Task AZC0012NoWarningOnNested()
+        public async Task AZC0100NoWarningOnNested()
         {
             const string code = @"
 namespace RandomNamespace
@@ -173,7 +173,7 @@ namespace RandomNamespace
         }
 
         [Fact]
-        public async Task AZC0012WarningOnVariable()
+        public async Task AZC0100WarningOnVariable()
         {
             const string code = @"
 namespace RandomNamespace
@@ -187,11 +187,11 @@ namespace RandomNamespace
         }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0012");
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0100");
         }
 
         [Fact]
-        public async Task AZC0012WarningOnAsyncForeach()
+        public async Task AZC0100WarningOnAsyncForeach()
         {
             const string code = @"
 namespace RandomNamespace
@@ -210,11 +210,11 @@ namespace RandomNamespace
         private static async IAsyncEnumerable<int> GetValuesAsync() { yield break; }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0012");
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0100");
         }
 
         [Fact]
-        public async Task AZC0012NoWarningOnAsyncForeachExistingConfigureAwaitFalse()
+        public async Task AZC0100NoWarningOnAsyncForeachExistingConfigureAwaitFalse()
         {
             const string code = @"
 namespace RandomNamespace
@@ -237,7 +237,7 @@ namespace RandomNamespace
         }
 
         [Fact]
-        public async Task AZC0012NoWarningOnForeach()
+        public async Task AZC0100NoWarningOnForeach()
         {
             const string code = @"
 namespace RandomNamespace
@@ -260,7 +260,7 @@ namespace RandomNamespace
         }
 
         [Fact]
-        public async Task AZC0012WarningOnAsyncEnumerableVariable()
+        public async Task AZC0100WarningOnAsyncEnumerableVariable()
         {
             const string code = @"
 namespace RandomNamespace
@@ -280,11 +280,11 @@ namespace RandomNamespace
         private static async IAsyncEnumerable<int> GetValuesAsync() { yield break; }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0012");
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0100");
         }
 
         [Fact]
-        public async Task AZC0012WarningOnAsyncForeachOfCustomEnumerable()
+        public async Task AZC0100WarningOnAsyncForeachOfCustomEnumerable()
         {
             const string code = @"
 namespace RandomNamespace
@@ -307,11 +307,11 @@ namespace RandomNamespace
         }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0012");
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0100");
         }
 
         [Fact]
-        public async Task AZC0012WarningOnAsyncUsingVariable()
+        public async Task AZC0100WarningOnAsyncUsingVariable()
         {
             const string code = @"
 namespace RandomNamespace
@@ -333,11 +333,11 @@ namespace RandomNamespace
         }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0012");
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0100");
         }
 
         [Fact]
-        public async Task AZC0012WarningOnAsyncUsing()
+        public async Task AZC0100WarningOnAsyncUsing()
         {
             const string code = @"
 namespace RandomNamespace
@@ -358,11 +358,11 @@ namespace RandomNamespace
         }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0012");
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0100");
         }
 
         [Fact]
-        public async Task AZC0012WarningOnAsyncUsingNoBraces()
+        public async Task AZC0100WarningOnAsyncUsingNoBraces()
         {
             const string code = @"
 namespace RandomNamespace
@@ -386,11 +386,11 @@ namespace RandomNamespace
         }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0012");
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0100");
         }
 
         [Fact]
-        public async Task AZC0012WarningOnAsyncUsingVariableNoBraces()
+        public async Task AZC0100WarningOnAsyncUsingVariableNoBraces()
         {
             const string code = @"
 namespace RandomNamespace
@@ -412,11 +412,11 @@ namespace RandomNamespace
         }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0012");
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0100");
         }
 
         [Fact]
-        public async Task AZC0012NoWarningOnAsyncUsingExistingConfigureAwaitFalse()
+        public async Task AZC0100NoWarningOnAsyncUsingExistingConfigureAwaitFalse()
         {
             const string code = @"
 namespace RandomNamespace
@@ -442,7 +442,7 @@ namespace RandomNamespace
         }
 
         [Fact]
-        public async Task AZC0012NoWarningOnAsyncUsingNoBracesExistingConfigureAwaitFalse()
+        public async Task AZC0100NoWarningOnAsyncUsingNoBracesExistingConfigureAwaitFalse()
         {
             const string code = @"
 namespace RandomNamespace
@@ -471,7 +471,7 @@ namespace RandomNamespace
         }
 
         [Fact]
-        public async Task AZC0012NoWarningOnUsing()
+        public async Task AZC0100NoWarningOnUsing()
         {
             const string code = @"
 namespace RandomNamespace
@@ -496,7 +496,7 @@ namespace RandomNamespace
         }
 
         [Fact]
-        public async Task AZC0012NoWarningOnUsingNoBraces()
+        public async Task AZC0100NoWarningOnUsingNoBraces()
         {
             const string code = @"
 namespace RandomNamespace
@@ -521,7 +521,7 @@ namespace RandomNamespace
         }
 
         [Fact]
-        public async Task AZC0012NoWarningOnCSharp7() 
+        public async Task AZC0100NoWarningOnCSharp7() 
         {
             const string code = @"
 namespace RandomNamespace
@@ -550,7 +550,7 @@ namespace RandomNamespace
         }
 
         [Fact]
-        public async Task AZC0012NonCompilableCode() 
+        public async Task AZC0100NonCompilableCode() 
         {
             const string code = @"
 namespace RandomNamespace
@@ -575,7 +575,7 @@ namespace RandomNamespace
         public static async Task M24() { await using(var a = ){} }
     }
 }";
-            await new AzureAnalyzerTest<AddConfigureAwaitAnalyzer>
+            await new AzureAnalyzerTest<AsyncAnalyzer>
             {
                 CompilerDiagnostics = CompilerDiagnostics.None,
                 TestCode = code,

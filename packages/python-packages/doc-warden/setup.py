@@ -55,7 +55,7 @@ setup(
         'beautifulsoup4', # parsing of generated html
         'jinja2', # used for generation from template for index_packages
         'requests', # utilized to validate published repository URLs. 
-        'pathlib'
+        'pathlib2'
     ],
     entry_points = {
         'console_scripts': [

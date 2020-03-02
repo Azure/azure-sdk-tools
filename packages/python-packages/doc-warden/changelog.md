@@ -1,5 +1,8 @@
 # Release History
 
+## 0.5.2
+- Update package requirement to pathlib2
+
 ## 0.5.1
 - Allow omission of individual folders, while still allowing issues BELOW that folder to be detected.
 

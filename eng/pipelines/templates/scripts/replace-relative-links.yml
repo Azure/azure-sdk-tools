@@ -210,5 +210,5 @@ steps:
                     exit(1)
 
   - script: |
-        git diff
+        git diff -U0
     displayName: Highlight Readme Updates

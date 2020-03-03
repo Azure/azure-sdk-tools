@@ -22,3 +22,8 @@ tests.
 The `New-TestResources.ps1` script is invoked on each test job to create an
 isolated environment for live tests. Test resource isolation makes it easier to
 parallelize test runs.
+
+## Other
+
+PowerShell markdown documentation created with
+[PlatyPS](https://github.com/PowerShell/platyPS)

@@ -208,3 +208,7 @@ steps:
                 except Exception as e:
                     logging.error(e)
                     exit(1)
+
+  - script: |
+        git diff -U0
+    displayName: Highlight Readme Updates

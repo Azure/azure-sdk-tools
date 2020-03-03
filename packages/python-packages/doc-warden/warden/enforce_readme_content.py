@@ -9,7 +9,6 @@ import re
 from .warden_common import check_match, walk_directory_for_pattern, get_omitted_files
 from docutils import core
 from docutils.writers.html4css1 import Writer,HTMLTranslator
-import pathlib
 import logging
 
 README_PATTERNS = ['*/readme.md', '*/readme.rst', '*/README.md', '*/README.rst']

@@ -13,7 +13,7 @@ import xml.etree.ElementTree as ET
 import textwrap
 import re
 import fnmatch
-import pathlib
+import pathlib2 as pathlib
 
 # python 3 transitioned StringIO to be part of `io` module. 
 # python 2 needs the old version however

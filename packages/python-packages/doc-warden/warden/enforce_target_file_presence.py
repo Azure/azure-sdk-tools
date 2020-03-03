@@ -3,12 +3,11 @@
 
 from __future__ import print_function
 
-import pathlib
 import os
 import glob
 import fnmatch
 import zipfile
-from pathlib import Path
+from pathlib2 import Path
 from .warden_common import get_java_package_roots, get_net_package, get_python_package_roots, get_swift_package_roots, get_js_package_roots, find_alongside_file
 
 # python 3 transitioned StringIO to be part of `io` module. 

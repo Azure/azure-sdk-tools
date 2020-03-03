@@ -5,7 +5,7 @@ import os
 import fnmatch
 import re
 import xml.etree.ElementTree as ET
-import pathlib
+import pathlib2 as pathlib
 
 # python 3 transitioned StringIO to be part of `io` module.
 # python 2 needs the old version however

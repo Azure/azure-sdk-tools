@@ -30,36 +30,37 @@ New-TestResources.ps1 [-BaseName] <String> -ServiceDirectory <String> -TestAppli
 ```
 
 ## DESCRIPTION
-If a service directory contains one or more ARM templates named
-test-resources.json, they will be deployed to Azure.
+Deploys live test resouces specified in test-resources.json files to a resource
+group.
+
+This script searches the directory specified in $ServiceDirectory recursively
+for files named test-resources.json.
+All found test-resources.json files will be
+deployed to the test resource group.
+
+If no test-resources.json files are located the script exits without making
+changes to the Azure environment.
 
 A service principal must first be created before this script is run and passed
 to $TestApplicationId and $TestApplicationSecret.
 Test resources will grant this
 service principal access.
 
-If you are not currently logged into an account in the Az PowerShell module,
-you will be asked to log in with Connect-AzAccount.
-Alternatively, you (or a
-build pipeline) can pass $ProvisionerApplicationId and
-$ProvisionerApplicationSecret to authenticate a service principal with access to
-create resources.
+This script uses credentials already specified in Connect-AzAccount or those
+specified in $ProvisionerApplicationId and $ProvisionerApplicationSecret.
 
 ## EXAMPLES
 
 ### EXAMPLE 1
 ```
+$subscriptionId = "REPLACE_WITH_SUBSCRIPTION_ID"
 Connect-AzAccount -Subscription $subscriptionId
-$provisionerAadApp = New-AzADServicePrincipal -Role Owner -DisplayName 'azure-sdk-provisioner'
-$testAadApp = New-AzADServicePrincipal -Role Contributor -DisplayName 'azure-sdk-live-test-app'
+$testAadApp = New-AzADServicePrincipal -Role Owner -DisplayName 'azure-sdk-live-test-app'
 .\eng\common\LiveTestResources\New-TestResources.ps1 `
     -BaseName 'myalias' `
     -ServiceDirectory 'keyvault' `
     -TestApplicationId $testAadApp.ApplicationId.ToString() `
-    -TestApplicationSecret (ConvertFrom-SecureString $testAadApp.Secret -AsPlainText) `
-    -TestApplicationOid $testAadApp.Id -TenantId (Get-AzTenant).Id `
-    -ProvisionerApplicationId $provisionerAadApp.ApplicationId.ToString() `
-    -ProvisionerApplicationSecret (ConvertFrom-SecureString $provisionerAadApp.Secret -AsPlainText)
+    -TestApplicationSecret (ConvertFrom-SecureString $testAadApp.Secret -AsPlainText)
 ```
 
 Run this in a desktop environment to create new AAD apps and Service Principals

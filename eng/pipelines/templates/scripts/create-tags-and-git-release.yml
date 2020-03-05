@@ -1,0 +1,10 @@
+parameters: 
+  TargetFolder: ''
+
+steps:
+- pwsh: |
+    ../../../../scripts/powershell/azure-sdk-build-tools/scripts/create-tags-and-git-release.ps1 -artifactLocation $(Pipeline.Workspace)/${{artifact.safeName}} -packageRepository Maven -releaseSha $(Build.SourceVersion) -repoId $(Build.Repository.Name)
+  displayName: 'Verify Package Tags and Create Git Releases'
+  timeoutInMinutes: 5
+  env:
+    GH_TOKEN: $(azuresdk-github-pat)

@@ -149,6 +149,32 @@ namespace RandomNamespace
         }
         
         [Fact]
+        public async Task AZC0110NoWarningAsyncLocalFunction()
+        {
+            const string code = @"
+namespace RandomNamespace
+{
+    using System.Threading;
+    using System.Threading.Tasks;
+
+    public class MyClass
+    {
+        internal static async Task FooAsync(bool async)
+        {
+            await FooImplAsync(async).ConfigureAwait(false);
+            
+            static async Task<int> FooImplAsync(bool async)
+            {
+                return async ? await Task.FromResult(42).ConfigureAwait(false) : 42;
+            }
+        }
+    }
+}";
+            
+            await Verifier.VerifyAnalyzerAsync(code);
+        }
+        
+        [Fact]
         public async Task AZC0110NoWarningAwaitOnExtensionMethod()
         {
             const string code = @"

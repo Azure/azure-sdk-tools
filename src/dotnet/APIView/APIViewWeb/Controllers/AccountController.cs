@@ -1,15 +1,21 @@
 ﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 
 namespace APIViewWeb.Controllers
 {
-    [Route("[controller]/[action]")]
+    [AllowAnonymous]
     public class AccountController : Controller
     {
         [HttpGet]
-        public IActionResult Login(string returnUrl = "/")
+        public async Task<IActionResult> Login(string returnUrl = "/")
         {
+            await HttpContext.SignOutAsync();
+            if (!Url.IsLocalUrl(returnUrl))
+            {
+                returnUrl = "/";
+            }
             return Challenge(new AuthenticationProperties() { RedirectUri = returnUrl }, "GitHub");
         }
 
@@ -17,7 +23,7 @@ namespace APIViewWeb.Controllers
         public async Task<IActionResult> Logout()
         {
             await HttpContext.SignOutAsync();
-            return RedirectToPage("/Unauthorized");
+            return RedirectToPage("/Login");
         }
     }
 }

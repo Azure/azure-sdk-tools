@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Testing the ts-naming-options rule.
  * @author Arpan Laha
@@ -22,8 +25,7 @@ ruleTester.run("ts-naming-options", rule, {
   valid: [
     // single method
     {
-      code:
-        "class ExampleClient { createExample(options: CreateExampleOptions) {}; };"
+      code: "class ExampleClient { createExample(options: CreateExampleOptions) {}; };"
     },
     // multiple methods
     {

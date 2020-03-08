@@ -3,135 +3,175 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using ApiView;
+using APIView;
+using APIView.DIff;
 using APIViewWeb.Models;
-using Microsoft.AspNetCore.Authorization;
+using APIViewWeb.Repositories;
+using APIViewWeb.Respositories;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.Mvc.ViewFeatures;
 
 namespace APIViewWeb.Pages.Assemblies
 {
     public class ReviewPageModel : PageModel
     {
+        private readonly ReviewManager _manager;
+
         private readonly BlobCodeFileRepository _codeFileRepository;
 
-        private readonly CosmosReviewRepository _cosmosReviewRepository;
+        private readonly CommentsManager _commentsManager;
 
-        private readonly BlobOriginalsRepository _originalsRepository;
+        private readonly NotificationManager _notificationManager;
 
-        private readonly CosmosCommentsRepository _commentRepository;
-
-        public ReviewPageModel(BlobCodeFileRepository codeFileRepository,
-            CosmosReviewRepository cosmosReviewRepository,
-            BlobOriginalsRepository originalsRepository,
-            CosmosCommentsRepository commentRepository)
+        public ReviewPageModel(
+            ReviewManager manager,
+            BlobCodeFileRepository codeFileRepository,
+            CommentsManager commentsManager,
+            NotificationManager notificationManager)
         {
+            _manager = manager;
             _codeFileRepository = codeFileRepository;
-            _cosmosReviewRepository = cosmosReviewRepository;
-            _originalsRepository = originalsRepository;
-            this._commentRepository = commentRepository;
+            _commentsManager = commentsManager;
+            _notificationManager = notificationManager;
         }
-
-        public string Id { get; set; }
-        public LineApiView[] Lines { get; set; }
 
         public ReviewModel Review { get; set; }
-        public ReviewCodeFileModel ReviewCodeFile { get; set; }
+        public ReviewRevisionModel Revision { get; set; }
+        public ReviewRevisionModel DiffRevision { get; set; }
+        public ReviewRevisionModel[] PreviousRevisions {get; set; }
+
         public CodeFile CodeFile { get; set; }
 
-        public bool UpdateAvailable => CodeFile != null &&
-                                       ReviewCodeFile.HasOriginal &&
-                                       CodeFile.Version != CodeFile.CurrentVersion &&
-                                       Review.Author == User.GetGitHubLogin();
-        [BindProperty]
-        public CommentModel Comment { get; set; }
-        public Dictionary<string, List<CommentModel>> Comments { get; set; }
-        public string Username { get; set; }
+        public CodeLineModel[] Lines { get; set; }
+        public InlineDiffLine<CodeLine>[] DiffLines { get; set; }
+        public ReviewCommentsModel Comments { get; set; }
 
-        public async Task<ActionResult> OnPostDeleteAsync(string id, string commentId, string elementId)
+        /// <summary>
+        /// The number of active conversations for this iteration
+        /// </summary>
+        public int ActiveConversations { get; set; }
+
+        public int TotalActiveConversations { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public string DiffRevisionId { get; set; }
+
+        public async Task<IActionResult> OnGetAsync(string id, string revisionId = null)
         {
-            var comment = await _commentRepository.GetCommentAsync(id, commentId);
-            await _commentRepository.DeleteCommentAsync(comment);
+            TempData["Page"] = "api";
 
-            return await CommentPartialAsync(id, elementId);
-        }
+            Review = await _manager.GetReviewAsync(User, id);
 
-        private async Task<ActionResult> CommentPartialAsync(string id, string elementId)
-        {
-            var commentArray = await _commentRepository.GetCommentsAsync(id);
-            List<CommentModel> comments = commentArray.Where(c => c.ElementId == elementId).ToList();
-
-            CommentThreadModel partialModel = new CommentThreadModel()
-            {
-                AssemblyId = id,
-                Comments = comments,
-                LineId = Comment.ElementId
-            };
-
-            return new PartialViewResult
-            {
-                ViewName = "_CommentThreadPartial",
-                ViewData = new ViewDataDictionary<CommentThreadModel>(ViewData, partialModel)
-            };
-        }
-
-        public async Task<IActionResult> OnGetAsync(string id)
-        {
-            Id = id;
-            Review = await _cosmosReviewRepository.GetReviewAsync(id);
-            ReviewCodeFile = Review.Files.SingleOrDefault();
-            if (ReviewCodeFile != null)
-            {
-                CodeFile = await _codeFileRepository.GetCodeFileAsync(ReviewCodeFile.ReviewFileId);
-            }
-            else
+            if (!Review.Revisions.Any())
             {
                 return RedirectToPage("LegacyReview", new { id = id });
             }
 
-            Lines = new CodeFileHtmlRenderer().Render(CodeFile).ToArray();
-            Comments = new Dictionary<string, List<CommentModel>>();
+            Comments = await _commentsManager.GetReviewCommentsAsync(id);
+            Revision = revisionId != null ?
+                Review.Revisions.Single(r => r.RevisionId == revisionId) :
+                Review.Revisions.Last();
+            PreviousRevisions = Review.Revisions.TakeWhile(r => r != Revision).ToArray();
 
-            var assemblyComments = await _commentRepository.GetCommentsAsync(id);
+            CodeFile = await _codeFileRepository.GetCodeFileAsync(Revision);
 
-            foreach (var comment in assemblyComments)
+            var fileDiagnostics = CodeFile.Diagnostics ?? Array.Empty<CodeDiagnostic>();
+
+            var fileHtmlLines = CodeFileHtmlRenderer.Normal.Render(CodeFile);
+
+            if (DiffRevisionId != null)
             {
-                if (!Comments.TryGetValue(comment.ElementId, out _))
-                    Comments[comment.ElementId] = new List<CommentModel>() { comment };
-                else
-                    Comments[comment.ElementId].Add(comment);
+                DiffRevision = PreviousRevisions.Single(r=>r.RevisionId == DiffRevisionId);
+
+                var previousRevisionFile = await _codeFileRepository.GetCodeFileAsync(DiffRevision);
+
+                var previousHtmlLines = CodeFileHtmlRenderer.ReadOnly.Render(previousRevisionFile);
+                var previousRevisionTextLines = CodeFileRenderer.Instance.Render(previousRevisionFile);
+                var fileTextLines = CodeFileRenderer.Instance.Render(CodeFile);
+
+                var diffLines = InlineDiff.Compute(
+                    previousRevisionTextLines,
+                    fileTextLines,
+                    previousHtmlLines,
+                    fileHtmlLines);
+
+                Lines = CreateLines(fileDiagnostics, diffLines, Comments);
+            }
+            else
+            {
+                Lines = CreateLines(fileDiagnostics, fileHtmlLines, Comments);
             }
 
-            Username = User.GetGitHubLogin();
+            ActiveConversations = ComputeActiveConversations(fileHtmlLines, Comments);
+            TotalActiveConversations = Comments.Threads.Count(t => !t.IsResolved);
+
             return Page();
         }
 
-        public async Task<ActionResult> OnPostAsync(string id)
+        private CodeLineModel[] CreateLines(CodeDiagnostic[] diagnostics, InlineDiffLine<CodeLine>[] lines, ReviewCommentsModel comments)
         {
-            Comment.TimeStamp = DateTime.UtcNow;
-            Comment.Username = User.GetGitHubLogin();
-            Comment.ReviewId = id;
+            return lines.Select(
+                diffLine => new CodeLineModel(
+                    diffLine.Kind,
+                    diffLine.Line,
+                    diffLine.Kind != DiffLineKind.Removed &&
+                    comments.TryGetThreadForLine(diffLine.Line.ElementId, out var thread) ?
+                        thread :
+                        null,
 
-            await _commentRepository.UpsertCommentAsync(Comment);
-
-            return await CommentPartialAsync(id, Comment.ElementId);
+                    diffLine.Kind != DiffLineKind.Removed ?
+                        diagnostics.Where(d => d.TargetId == diffLine.Line.ElementId).ToArray() :
+                        Array.Empty<CodeDiagnostic>()
+                )).ToArray();
         }
 
-        public async Task<ActionResult> OnPostRefreshModelAsync(string id)
+        private CodeLineModel[] CreateLines(CodeDiagnostic[] diagnostics, CodeLine[] lines, ReviewCommentsModel comments)
         {
-            var review = await _cosmosReviewRepository.GetReviewAsync(id);
-            foreach (var file in review.Files)
+            return lines.Select(
+                line => new CodeLineModel(
+                    DiffLineKind.Unchanged,
+                    line,
+                    comments.TryGetThreadForLine(line.ElementId, out var thread) ? thread : null,
+                    diagnostics.Where(d => d.TargetId == line.ElementId).ToArray()
+                )).ToArray();
+        }
+
+        private int ComputeActiveConversations(CodeLine[] lines, ReviewCommentsModel comments)
+        {
+            int activeThreads = 0;
+            foreach (CodeLine line in lines)
             {
-                if (!file.HasOriginal)
+                if (string.IsNullOrEmpty(line.ElementId))
                 {
                     continue;
                 }
 
-                var fileOriginal = await _originalsRepository.GetOriginalAsync(file.ReviewFileId);
-
-                var codeFile = ApiView.CodeFileBuilder.Build(fileOriginal, file.RunAnalysis);
-                await _codeFileRepository.UpsertCodeFileAsync(file.ReviewFileId, codeFile);
+                // if we have comments for this line and the thread has not been resolved.
+                if (comments.TryGetThreadForLine(line.ElementId, out CommentThreadModel thread) && !thread.IsResolved)
+                {
+                    activeThreads++;
+                }
             }
+            return activeThreads;
+        }
+
+        public async Task<ActionResult> OnPostRefreshModelAsync(string id)
+        {
+            await _manager.UpdateReviewAsync(User, id);
+
+            return RedirectToPage(new { id = id });
+        }
+
+        public async Task<ActionResult> OnPostToggleClosedAsync(string id)
+        {
+            await _manager.ToggleIsClosedAsync(User, id);
+
+            return RedirectToPage(new { id = id });
+        }
+
+        public async Task<ActionResult> OnPostToggleSubscribedAsync(string id)
+        {
+            await _notificationManager.ToggleSubscribedAsync(User, id);
             return RedirectToPage(new { id = id });
         }
     }

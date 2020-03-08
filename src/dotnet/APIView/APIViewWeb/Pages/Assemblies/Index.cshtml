@@ -2,12 +2,22 @@
 @model APIViewWeb.Pages.Assemblies.IndexPageModel
 @using APIViewWeb
 @{
-    ViewData["Title"] = "Home page";
+    ViewData["Title"] = "Reviews";
 }
 
-<div class="float-left mb-2">
-    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#uploadModel">Create review</button>
+<div class="row">
+    <div class="col my-2">
+        <div class="float-left mb-2">
+            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#uploadModel">Create review</button>
+        </div>
+
+        <div class="btn-group float-right">
+            <a class="btn btn-secondary" active-if="!@Model.Closed" asp-route-closed="false">Open</a>
+            <a class="btn btn-secondary" active-if="@Model.Closed" asp-route-closed="true">Closed</a>
+        </div>
+    </div>
 </div>
+
 
 <div class="modal fade" id="uploadModel" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">

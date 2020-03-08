@@ -24,6 +24,7 @@ namespace PipelineGenerator.Conventions
         protected PipelineGenerationContext Context { get; }
 
         public abstract string SearchPattern { get; }
+        public abstract bool IsScheduled { get; }
 
         protected abstract string GetDefinitionName(SdkComponent component);
 
@@ -241,24 +242,36 @@ namespace PipelineGenerator.Conventions
             return hasChanges;
         }
 
-        /// <summary>
-        /// Start hour (3AM)
-        /// </summary>
-        protected const int StartHourOffset = 3;
+        protected const int FirstSchedulingHour = 0;
+        protected const int LastSchedulingHour = 12;
+        protected const int TotalHours = LastSchedulingHour - FirstSchedulingHour;
+        protected const int TotalMinutes = TotalHours * 60;
+        protected const int BucketSizeInMinutes = 15;
+        protected const int TotalBuckets = TotalMinutes / BucketSizeInMinutes;
+        protected const int BucketsPerHour = 60 / BucketSizeInMinutes;
 
-        /// <summary>
-        /// Number of buckets for hour hashing
-        /// </summary>
-        protected const int HourBuckets = 3;
-
-        protected int HashBucket(string pipelineName)
+        protected Schedule CreateScheduleFromDefinition(BuildDefinition definition)
         {
-            return pipelineName.GetHashCode() % HourBuckets;
+            var bucket = definition.Id % TotalBuckets;
+            var startHours = bucket / BucketsPerHour;
+            var startMinutes = bucket % BucketsPerHour;
+
+            var schedule = new Schedule
+            {
+                DaysToBuild = ScheduleDays.All,
+                ScheduleOnlyWithChanges = false,
+                StartHours = FirstSchedulingHour + startHours,
+                StartMinutes = startMinutes * BucketSizeInMinutes,
+                TimeZoneId = "UTC",
+            };
+            schedule.BranchFilters.Add("+master");
+
+            return schedule;
         }
 
         protected virtual Task<bool> ApplyConventionAsync(BuildDefinition definition, SdkComponent component)
         {
-            bool hasChanges = true;
+            bool hasChanges = false;
 
             if (EnsureVariableGroups(definition))
             {
@@ -270,9 +283,32 @@ namespace PipelineGenerator.Conventions
                 hasChanges = true;
             }
 
-            if (definition.Path != $"\\{this.Context.DevOpsPath}")
+
+            if (IsScheduled)
             {
-                definition.Path = $"\\{this.Context.DevOpsPath}";
+                var scheduleTriggers = definition.Triggers.OfType<ScheduleTrigger>();
+                var computedSchedule = CreateScheduleFromDefinition(definition);
+
+                // Here we are basically say that if you don't have any triggers, or the triggers are empty or if it doesn't
+                // match what we computed, then recreate it. This will force consistency but only require an update IF it
+                // doesn't match what we want it to be.
+                if (scheduleTriggers == default
+                        || !scheduleTriggers.Any()
+                        || (scheduleTriggers.First().Schedules[0].StartHours != computedSchedule.StartHours
+                            || scheduleTriggers.First().Schedules[0].StartMinutes != computedSchedule.StartMinutes))
+                {
+                    definition.Triggers.Add(new ScheduleTrigger
+                    {
+                        Schedules = new List<Schedule> { computedSchedule }
+                    });
+
+                    hasChanges = true;
+                }
+            }
+
+            if (definition.Path != this.Context.DevOpsPath)
+            {
+                definition.Path = this.Context.DevOpsPath;
                 hasChanges = true;
             }
 
@@ -294,3 +330,4 @@ namespace PipelineGenerator.Conventions
         }
     }
 }
+

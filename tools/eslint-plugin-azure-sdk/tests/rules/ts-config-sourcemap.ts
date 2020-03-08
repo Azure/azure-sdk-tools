@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Testing the ts-config-sourcemap rule.
  * @author Arpan Laha
@@ -106,8 +109,7 @@ ruleTester.run("ts-config-sourcemap", rule, {
   valid: [
     {
       // only the fields we care about
-      code:
-        '{"compilerOptions": { "sourceMap": true, "declarationMap": true }}',
+      code: '{"compilerOptions": { "sourceMap": true, "declarationMap": true }}',
       filename: "tsconfig.json"
     },
     {
@@ -117,8 +119,7 @@ ruleTester.run("ts-config-sourcemap", rule, {
     },
     {
       // incorrect format but in a file we don't care about
-      code:
-        '{"compilerOptions": { "sourceMap": false, "declarationMap": false }}',
+      code: '{"compilerOptions": { "sourceMap": false, "declarationMap": false }}',
       filename: "not_tsconfig.json"
     }
   ],
@@ -134,8 +135,7 @@ ruleTester.run("ts-config-sourcemap", rule, {
     },
     {
       // commpilerOptions is in a nested object
-      code:
-        '{"outer": {"compilerOptions": { "sourceMap": true, "declarationMap": true }}}',
+      code: '{"outer": {"compilerOptions": { "sourceMap": true, "declarationMap": true }}}',
       filename: "tsconfig.json",
       errors: [
         {
@@ -178,49 +178,39 @@ ruleTester.run("ts-config-sourcemap", rule, {
     },
     {
       // both sourceMap and declarationMap are set to false
-      code:
-        '{"compilerOptions": { "sourceMap": false, "declarationMap": false }}',
+      code: '{"compilerOptions": { "sourceMap": false, "declarationMap": false }}',
       filename: "tsconfig.json",
       errors: [
         {
-          message:
-            "compilerOptions.sourceMap is set to false when it should be set to true"
+          message: "compilerOptions.sourceMap is set to false when it should be set to true"
         },
         {
-          message:
-            "compilerOptions.declarationMap is set to false when it should be set to true"
+          message: "compilerOptions.declarationMap is set to false when it should be set to true"
         }
       ],
-      output:
-        '{"compilerOptions": { "sourceMap": true, "declarationMap": true }}'
+      output: '{"compilerOptions": { "sourceMap": true, "declarationMap": true }}'
     },
     {
       // only sourceMap is set to false
-      code:
-        '{"compilerOptions": { "sourceMap": false, "declarationMap": true }}',
+      code: '{"compilerOptions": { "sourceMap": false, "declarationMap": true }}',
       filename: "tsconfig.json",
       errors: [
         {
-          message:
-            "compilerOptions.sourceMap is set to false when it should be set to true"
+          message: "compilerOptions.sourceMap is set to false when it should be set to true"
         }
       ],
-      output:
-        '{"compilerOptions": { "sourceMap": true, "declarationMap": true }}'
+      output: '{"compilerOptions": { "sourceMap": true, "declarationMap": true }}'
     },
     {
       // only declarationMap is set to false
-      code:
-        '{"compilerOptions": { "sourceMap": true, "declarationMap": false }}',
+      code: '{"compilerOptions": { "sourceMap": true, "declarationMap": false }}',
       filename: "tsconfig.json",
       errors: [
         {
-          message:
-            "compilerOptions.declarationMap is set to false when it should be set to true"
+          message: "compilerOptions.declarationMap is set to false when it should be set to true"
         }
       ],
-      output:
-        '{"compilerOptions": { "sourceMap": true, "declarationMap": true }}'
+      output: '{"compilerOptions": { "sourceMap": true, "declarationMap": true }}'
     },
     {
       // example file with both set to false
@@ -228,12 +218,10 @@ ruleTester.run("ts-config-sourcemap", rule, {
       filename: "tsconfig.json",
       errors: [
         {
-          message:
-            "compilerOptions.declarationMap is set to false when it should be set to true"
+          message: "compilerOptions.declarationMap is set to false when it should be set to true"
         },
         {
-          message:
-            "compilerOptions.sourceMap is set to false when it should be set to true"
+          message: "compilerOptions.sourceMap is set to false when it should be set to true"
         }
       ],
       output: exampleTsconfigGood

@@ -1,9 +1,13 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file All rules
  * @author Arpan Laha
  */
 
 import githubSourceHeaders from "./github-source-headers";
+import tsApiExtractorPublicTypes from "./ts-apiextractor-json-types";
 import tsApisurfaceStandardizedVerbs from "./ts-apisurface-standardized-verbs";
 import tsApisurfaceSupportcancellation from "./ts-apisurface-supportcancellation";
 import tsConfigAllowSyntheticDefaultImports from "./ts-config-allowsyntheticdefaultimports";
@@ -51,6 +55,7 @@ import tsVersioningSemver from "./ts-versioning-semver";
  */
 export = {
   "github-source-headers": githubSourceHeaders,
+  "ts-apiextractor-json-types": tsApiExtractorPublicTypes,
   "ts-apisurface-standardized-verbs": tsApisurfaceStandardizedVerbs,
   "ts-apisurface-supportcancellation": tsApisurfaceSupportcancellation,
   "ts-config-allowsyntheticdefaultimports": tsConfigAllowSyntheticDefaultImports,

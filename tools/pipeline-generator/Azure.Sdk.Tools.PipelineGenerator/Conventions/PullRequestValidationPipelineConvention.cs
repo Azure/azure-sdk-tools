@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace PipelineGenerator.Conventions
 {
-    public class PullRequestValidationPipelineConvention : ContinuousIntegrationPipelineConvention
+    public class PullRequestValidationPipelineConvention : PipelineConvention
     {
         public PullRequestValidationPipelineConvention(ILogger logger, PipelineGenerationContext context) : base(logger, context)
         {
@@ -16,10 +16,11 @@ namespace PipelineGenerator.Conventions
 
         protected override string GetDefinitionName(SdkComponent component)
         {
-            return $"{Context.Prefix} - {component.Name} - ci";
+            return component.Variant == null ? $"{Context.Prefix} - {component.Name} - ci" : $"{Context.Prefix} - {component.Name} - ci.{component.Variant}";
         }
 
-        public override string SearchPattern => "ci.yml";
+        public override string SearchPattern => "ci*.yml";
+        public override bool IsScheduled => false;
 
         protected override async Task<bool> ApplyConventionAsync(BuildDefinition definition, SdkComponent component)
         {
@@ -28,21 +29,11 @@ namespace PipelineGenerator.Conventions
 
             var hasChanges = await base.ApplyConventionAsync(definition, component);
 
-            var ciTrigger = definition.Triggers.OfType<ContinuousIntegrationTrigger>().SingleOrDefault();
-
-            if (ciTrigger == null)
+            for (int i = definition.Triggers.Count - 1; i >= 0; i--)
             {
-                definition.Triggers.Add(new ContinuousIntegrationTrigger()
+                if (definition.Triggers[i] is ContinuousIntegrationTrigger)
                 {
-                    SettingsSourceType = 2 // HACK: This is editor invisible, but this is required to inherit branch filters from YAML file.
-                });
-                hasChanges = true;
-            }
-            else
-            {
-                if (ciTrigger.SettingsSourceType != 2)
-                {
-                    ciTrigger.SettingsSourceType = 2;
+                    definition.Triggers.RemoveAt(i);
                     hasChanges = true;
                 }
             }

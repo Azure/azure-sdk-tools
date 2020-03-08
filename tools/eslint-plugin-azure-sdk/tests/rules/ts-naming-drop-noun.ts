@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Testing the ts-naming-drop-noun rule.
  * @author Arpan Laha
@@ -26,8 +29,7 @@ ruleTester.run("ts-naming-drop-noun", rule, {
     },
     // multiple methods
     {
-      code:
-        "class ExampleClient { create(): ExampleClient {}; upsert(): ExampleClient {}; };"
+      code: "class ExampleClient { create(): ExampleClient {}; upsert(): ExampleClient {}; };"
     },
     // not a client
     {

@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Rule to force usage of built-in promises over external ones.
  * @author Arpan Laha
@@ -13,10 +16,7 @@ import { getRuleMetaData } from "../utils";
 //------------------------------------------------------------------------------
 
 export = {
-  meta: getRuleMetaData(
-    "ts-use-promises",
-    "force usage of built-in promises over external ones"
-  ),
+  meta: getRuleMetaData("ts-use-promises", "force usage of built-in promises over external ones"),
   create: (context: Rule.RuleContext): Rule.RuleListener => {
     const parserServices: ParserServices = context.parserServices;
     if (
@@ -28,9 +28,7 @@ export = {
     const typeChecker = parserServices.program.getTypeChecker();
     const converter = parserServices.esTreeNodeToTSNodeMap;
     return {
-      ":function[returnType.typeAnnotation.typeName.name='Promise']": (
-        node: any
-      ): void => {
+      ":function[returnType.typeAnnotation.typeName.name='Promise']": (node: any): void => {
         const symbol = typeChecker
           .getTypeAtLocation(converter.get(node.returnType.typeAnnotation))
           .getSymbol();
@@ -46,8 +44,7 @@ export = {
         if (isExternalModule(declaration.getSourceFile())) {
           context.report({
             node: node,
-            message:
-              "promises should use the in-built Promise type, not libraries or polyfills"
+            message: "promises should use the in-built Promise type, not libraries or polyfills"
           });
         }
       }

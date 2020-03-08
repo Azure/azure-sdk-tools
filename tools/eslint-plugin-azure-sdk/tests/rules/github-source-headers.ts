@@ -1,7 +1,5 @@
-/**
- * @file Testing the github-source-headers rule.
- * @author Arpan Laha
- */
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 import rule from "../../src/rules/github-source-headers";
 import { RuleTester } from "eslint";
@@ -18,22 +16,27 @@ const ruleTester = new RuleTester({
   }
 });
 
+const goodHeader = `// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
+`;
+
 const valid = `// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
+
 console.log("hello")`;
 
-const invalid1 = `// Copyright (c) Microsoft.
-// Licensed under the MIT license.
+const invalid1 = `// Module
 console.log("hello")`;
 
-const invalid2 = `// Copyright (c) Microsoft Corporation.
-// Licensed under the Apache 2.0 license.
+const invalid2 = `/*
+ * Module description
+ * @author Someone
+ */
+
 console.log("hello")`;
 
-const configError = `copyright header not properly configured - expected value:
-Copyright (c) Microsoft Corporation.
-Licensed under the MIT license.
-`;
+const configError = `the file does not have a correct copyright header`;
 
 ruleTester.run("github-source-headers", rule, {
   valid: [
@@ -55,7 +58,7 @@ ruleTester.run("github-source-headers", rule, {
       filename: "test.ts",
       errors: [
         {
-          message: "no copyright header found"
+          message: configError
         }
       ],
       output: valid
@@ -69,7 +72,7 @@ ruleTester.run("github-source-headers", rule, {
           message: configError
         }
       ],
-      output: valid
+      output: goodHeader + invalid1
     },
     {
       code: invalid2,
@@ -79,7 +82,7 @@ ruleTester.run("github-source-headers", rule, {
           message: configError
         }
       ],
-      output: valid
+      output: goodHeader + invalid2
     }
   ]
 });

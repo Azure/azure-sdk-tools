@@ -24,24 +24,34 @@ using System.Security.Cryptography;
 using Azure.Core;
 using System.Web.Http;
 using System.Runtime.CompilerServices;
+using Azure.Sdk.Tools.CheckEnforcer.Configuration;
+using Azure.Sdk.Tools.CheckEnforcer.Integrations.GitHub;
+using Azure.Sdk.Tools.CheckEnforcer.Locking;
 
 namespace Azure.Sdk.Tools.CheckEnforcer
 {
     public static class GitHubWebhookFunction
     {
-        private static GitHubClientFactory clientFactory = new GitHubClientFactory();
-        private static ConfigurationStore configurationStore = new ConfigurationStore(clientFactory);
+        private static IGlobalConfigurationProvider globalConfigurationProvider = new GlobalConfigurationProvider();
+        private static IGitHubClientProvider gitHubClientProvider = new GitHubClientProvider(globalConfigurationProvider);
+        private static IRepositoryConfigurationProvider repositoryConfigurationProvider = new RepositoryConfigurationProvider(gitHubClientProvider);
+        private static IDistributedLockProvider distributedLockProvider = new DistributedLockProvider(globalConfigurationProvider);
+        private static GitHubWebhookProcessor gitHubWebhookProcessor = new GitHubWebhookProcessor(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, distributedLockProvider);
 
         [FunctionName("webhook")]
         public static async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req,
+            [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequest req,
             ILogger log, CancellationToken cancellationToken)
         {
             try
             {
-                var processor = new GitHubWebhookProcessor(log, clientFactory, configurationStore);
-                await processor.ProcessWebhookAsync(req, cancellationToken);
+                await gitHubWebhookProcessor.ProcessWebhookAsync(req, log, cancellationToken);
                 return new OkResult();
+            }
+            catch (CheckEnforcerSecurityException ex)
+            {
+                log.LogError(ex, "Webhook failed to pass security checks.");
+                return new BadRequestResult();
             }
             catch (CheckEnforcerUnsupportedEventException ex)
             {

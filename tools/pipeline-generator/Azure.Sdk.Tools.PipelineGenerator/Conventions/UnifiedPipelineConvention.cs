@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace PipelineGenerator.Conventions
 {
-    public class UnifiedPipelineConvention : ContinuousIntegrationPipelineConvention
+    public class UnifiedPipelineConvention : PipelineConvention
     {
         public UnifiedPipelineConvention(ILogger logger, PipelineGenerationContext context) : base(logger, context)
         {
@@ -16,10 +16,11 @@ namespace PipelineGenerator.Conventions
 
         protected override string GetDefinitionName(SdkComponent component)
         {
-            return $"{Context.Prefix} - {component.Name}";
+            return component.Variant == null ? $"{Context.Prefix} - {component.Name}" : $"{Context.Prefix} - {component.Name} - {component.Variant}";
         }
 
-        public override string SearchPattern => "ci.yml";
+        public override string SearchPattern => "ci*.yml";
+        public override bool IsScheduled => true;
 
         protected override async Task<bool> ApplyConventionAsync(BuildDefinition definition, SdkComponent component)
         {
@@ -27,29 +28,6 @@ namespace PipelineGenerator.Conventions
             // API that can do equality comparisons (without having to do all the checks myself).
 
             var hasChanges = await base.ApplyConventionAsync(definition, component);
-
-            // Ensure Schedule Trigger
-            var scheduleTriggers = definition.Triggers.OfType<ScheduleTrigger>();
-
-            if (scheduleTriggers == default || !scheduleTriggers.Any())
-            {
-                var schedule = new Schedule
-                {
-                    DaysToBuild = ScheduleDays.All,
-                    ScheduleOnlyWithChanges = false,
-                    StartHours = StartHourOffset + HashBucket(definition.Name),
-                    StartMinutes = 0,
-                    TimeZoneId = "Pacific Standard Time",
-                };
-                schedule.BranchFilters.Add("+master");
-
-                definition.Triggers.Add(new ScheduleTrigger
-                {
-                    Schedules = new List<Schedule> { schedule }
-                });
-
-                hasChanges = true;
-            }
 
             var ciTrigger = definition.Triggers.OfType<ContinuousIntegrationTrigger>().SingleOrDefault();
 
@@ -94,7 +72,7 @@ namespace PipelineGenerator.Conventions
             {
                 if (prTrigger.SettingsSourceType != 1 ||
                     prTrigger.IsCommentRequiredForPullRequest != true ||
-                    prTrigger.BranchFilters.All(bf => bf == $"+{Context.Branch}") ||
+                    !prTrigger.BranchFilters.All(bf => bf == $"+{Context.Branch}") ||
                     prTrigger.Forks.AllowSecrets != true ||
                     prTrigger.Forks.Enabled != true)
                 {

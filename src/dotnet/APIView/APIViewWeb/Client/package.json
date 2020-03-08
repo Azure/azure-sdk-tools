@@ -1,0 +1,63 @@
+{
+  "name": "apiview",
+  "version": "0.1.0",
+  "private": true,
+  "target": "lib",
+  "publicPath": "../wwwroot/",
+  "outputDir": "../wwwroot/",
+  "scripts": {
+    "build": "webpack --config webpack.config.js --mode=production",
+    "watch": "webpack --watch"
+  },
+  "dependencies": {
+    "core-js": "^3.3.2",
+    "jquery": "3.4.1",
+    "vue": "^2.6.10",
+    "vue-class-component": "^7.0.2",
+    "vue-property-decorator": "^8.3.0",
+    "vuex": "^3.0.1"
+  },
+  "devDependencies": {
+    "@types/jquery": "3.3.31",
+    "@types/webpack-env": "^1.14.1",
+    "@typescript-eslint/parser": "2.5.0",
+    "css-loader": "^3.2.0",
+    "eslint": "^5.16.0",
+    "eslint-plugin-vue": "^5.0.0",
+    "mini-css-extract-plugin": "^0.8.0",
+    "sass": "^1.19.0",
+    "sass-loader": "^8.0.0",
+    "ts-loader": "^6.2.0",
+    "typescript": "^3.5.3",
+    "vue-loader": "^15.7.1",
+    "vue-style-loader": "^4.1.2",
+    "vue-template-compiler": "^2.6.10",
+    "webpack": "^4.41.2",
+    "webpack-cli": "^3.3.9"
+  },
+  "eslintConfig": {
+    "root": true,
+    "env": {
+      "node": true
+    },
+    "extends": [
+      "plugin:vue/essential",
+      "@vue/standard",
+      "@vue/typescript"
+    ],
+    "rules": {},
+    "parserOptions": {
+      "parser": "@typescript-eslint/parser"
+    }
+  },
+  "postcss": {
+    "plugins": {
+      "autoprefixer": {}
+    }
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions"
+  ],
+  "parallel": false
+}

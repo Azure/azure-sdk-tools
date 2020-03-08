@@ -14,7 +14,10 @@
     "removeComments": true,
     "strict": true,
     "target": "es2016",
-    "types": ["node"]
+    "types": ["node"],
+    "sourceMap": true,
+    "resolveJsonModule": true
   },
-  "include": ["src", "tests"]
+  "include": ["src", "tests"],
+  "exclude": ["node_modules"]
 }

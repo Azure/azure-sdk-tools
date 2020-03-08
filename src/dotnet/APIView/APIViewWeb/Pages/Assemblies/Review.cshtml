@@ -1,82 +1,140 @@
-﻿@page "{id?}"
+﻿@page "{id}/{revisionId?}"
 @model APIViewWeb.Pages.Assemblies.ReviewPageModel
 @{
-    ViewData["Title"] = "Review";
+    Layout = "ReviewLayout";
+    ViewData["Title"] = Model.Review.Name;
 }
 
-@if (Model.UpdateAvailable)
+@if (Model.Review.UpdateAvailable)
 {
-    <div class="alert alert-warning" role="alert">
-        <form asp-page-handler="RefreshModel" class=".form-inline" method="post" asp-route-id="@Model.Id">
+    <div class="alert alert-warning" role="alert" asp-resource="@Model.Review" asp-requirement="@ReviewOwnerRequirement.Instance">
+        <form asp-page-handler="RefreshModel" class=".form-inline" method="post" asp-route-id="@Model.Review.ReviewId">
             Your code review uses older format and can be updated
             <button type="submit" class="btn btn-link">Update model</button>
         </form>
     </div>
 }
-
-
 <div class="row">
-    <div class="col-2 namespace-view">
+    <div class="col my-2">
+        <div class="dropdown float-left mr-2">
+            <a class="btn btn-sm btn-outline-secondary dropdown-toggle" href="#" role="button" data-toggle="dropdown">
+                @Model.Revision.Name
+            </a>
 
-        @if (Model.CodeFile != null)
+            <div class="dropdown-menu">
+                @foreach (var revision in Model.Review.Revisions)
+                {
+                    <a class="dropdown-item" asp-route-id="@Model.Review.ReviewId" asp-route-revisionId="@revision.RevisionId">@revision.Name</a>
+                }
+            </div>
+        </div>
+
+        @if (Model.PreviousRevisions.Any())
         {
-            <partial name="Shared/Navigation" model=" Model.CodeFile.Navigation"/>
+            <div class="btn-group float-left">
+                @if (Model.DiffRevisionId != null)
+                {
+                    <a class="btn btn-sm btn-outline-secondary active" asp-route-diffRevisionId="">Diff with @Model.DiffRevision?.Name</a>
+                }
+                else
+                {
+                    <a class="btn btn-sm btn-outline-secondary" asp-route-diffRevisionId="@Model.PreviousRevisions.Last().RevisionId">Diff</a>
+                }
+                <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
+
+                <div class="dropdown-menu">
+                    @foreach (var revision in Model.PreviousRevisions)
+                    {
+                        <a class="dropdown-item" asp-route-diffRevisionId="@revision.RevisionId" active-if="@(Model.DiffRevisionId == revision.RevisionId)">@revision.Name</a>
+                    }
+                </div>
+            </div>
         }
-     </div>
+
+        <form asp-resource="@Model.Review" asp-requirement="@ReviewOwnerRequirement.Instance" class="form-inline float-right ml-2" method="post" asp-page-handler="ToggleClosed">
+            <input type="submit" class="btn btn-sm btn-secondary" value="@(Model.Review.IsClosed ? "Reopen": "Close")" />
+        </form>
+
+        <div class="float-right">
+            <form asp-resource="@Model.Review" class="form-inline float-left ml-2" method="post" asp-page-handler="ToggleSubscribed">
+                @if (Model.Review.GetUserEmail(User) != null)
+                {
+                    if (Model.Review.IsUserSubscribed(User))
+                    {
+                        <input type="submit" class="btn btn-sm btn-outline-secondary" value="Unsubscribe" />
+                    }
+                    else
+                    {
+                        <input type="submit" class="btn btn-sm btn-primary" value="Subscribe" />
+                    }
+                }
+                else
+                {
+                    <input type="submit" class="btn btn-sm btn-primary" title="Link a microsoft.com email to your Github account to subscribe" disabled value="Subscribe" />
+                }
+            </form>
+        </div>
+
+        <div class="dropdown d-inline-block float-right">
+            <a class="btn btn-sm btn-outline-secondary dropdown-toggle" href="#" role="button" data-toggle="dropdown">
+                💬 @Model.ActiveConversations / @Model.TotalActiveConversations
+            </a>
+            <div class="dropdown-menu dropdown-menu-right">
+                <span class="dropdown-item"><b>@Model.ActiveConversations</b> active revision threads.</span>
+                <span class="dropdown-item"><b>@Model.TotalActiveConversations</b> total active threads.</span>
+                <span class="dropdown-item checkbox">
+                    <label>
+                        <input type="checkbox" checked="checked" id="show-comments-checkbox">
+                        Show comments
+                    </label>
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row" data-review-id="@Model.Review.ReviewId" data-revision-id="@Model.Revision.RevisionId">
+    <div class="col-lg-2 col">
+        <div class="namespace-view">
+            @if (Model.CodeFile != null)
+            {
+                <partial name="Shared/Navigation" model=" Model.CodeFile.Navigation" />
+            }
+        </div>
+    </div>
 
     <div class="col-10">
         <table class="code-window border rounded-1">
             <tbody>
-            @foreach (var line in Model.Lines) {
-                <tr class="code-line">
-                    <td class="line-comment-button-cell">
-                        @if (line.ElementId != null) {
-                            <button data-element-id="@line.ElementId" class="btn-link line-comment-button" type="button" style="text-decoration:none;">+</button>
-                        }
-                    </td>
-                    <td class="code"><span class="code-inner">@Html.Raw(line.DisplayString)</span></td>
-                </tr>
-                <tr>
-                @if (line.Diagnostics.Any())
+                @foreach (var line in Model.Lines)
                 {
-                    <td></td>
-                    <td class="code-diagnostics">
-                        @foreach (var lineDiagnostic in line.Diagnostics)
-                        {
-                        <p>
-                            @if (lineDiagnostic.Text.StartsWith("DO"))
-                            {
-                                @:✅ <b>DO</b> @lineDiagnostic.Text.Substring(2)
-                            }
-                            else
-                            {
-                                @lineDiagnostic.Text
-                            }
-                            <a href="@lineDiagnostic.HelpLinkUri">Details</a>
-                        </p>
-                        }
-                    </td>
+                    <partial name="_CodeLine" model="@line" />
                 }
-                </tr>
-                @foreach (var elementId in Model.Comments.Keys) {
-                    @if (elementId == line.ElementId) {
-                        <partial name="_CommentThreadPartial" model="@new APIViewWeb.Models.CommentThreadModel() { AssemblyId = Model.Id, Comments = Model.Comments[elementId], LineId = elementId }" />
-                    }
-                }
-            }
             </tbody>
 
         </table>
     </div>
 </div>
-<div id="comment-form-template">
+<div id="js-comment-form-template" class="d-none">
     <div class="comment-form border-top new-thread-comment">
-        <form class="new-thread-comment-form comment" method="post" asp-route-id="@Model.Id">
-            <input type="hidden" asp-for="Comment.ElementId" class="id-box" />
+        <form data-post-update="comments" class="new-thread-comment-form comment" method="post" asp-controller="Comments" asp-action="Add">
             <div class="new-comment-content">
-                <textarea class="new-thread-comment-text form-control" asp-for="Comment.Comment" rows="3"></textarea>
+                <textarea class="new-thread-comment-text form-control" name="commentText" rows="3" placeholder="Click Add Comment or press Ctrl+Enter to add your comment."></textarea>
             </div>
             <button type="submit" name="submit" value="Submit" class="comment-submit-button btn btn-outline-dark">Add Comment</button>
+            <button type="button" name="cancel" value="Cancel" class="comment-cancel-button btn btn-outline-dark">Cancel</button>
+        </form>
+    </div>
+</div>
+
+
+<div id="js-comment-edit-form-template" class="d-none">
+    <div class="comment-form border-top new-thread-comment">
+        <form data-post-update="comments" class="new-thread-comment-form comment" method="post" asp-controller="Comments" asp-action="Update">
+            <div class="new-comment-content">
+                <textarea class="new-thread-comment-text form-control" name="commentText" rows="3" placeholder="Click Save or press Ctrl+Enter to update your comment."></textarea>
+            </div>
+            <input type="hidden" class="js-comment-id" name="commentId" />
+            <button type="submit" name="submit" value="Submit" class="comment-submit-button btn btn-outline-dark">Save</button>
             <button type="button" name="cancel" value="Cancel" class="comment-cancel-button btn btn-outline-dark">Cancel</button>
         </form>
     </div>

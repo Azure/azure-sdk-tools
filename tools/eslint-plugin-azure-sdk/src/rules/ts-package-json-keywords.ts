@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Rule to force package.json's keywords value to contain at least "Azure" and "cloud".
  * @author Arpan Laha

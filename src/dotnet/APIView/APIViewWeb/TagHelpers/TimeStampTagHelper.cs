@@ -3,12 +3,17 @@ using System;
 
 namespace APIViewWeb.TagHelpers
 {
-    [HtmlTargetElement("span", Attributes = "date")]
+    [HtmlTargetElement(Attributes = "date")]
     public class TimeStampTagHelper : TagHelper
     {
         public DateTime Date { get; set; }
 
         public override void Process(TagHelperContext context, TagHelperOutput output)
+        {
+            output.Content.SetContent(GetDateLabel());
+        }
+
+        private string GetDateLabel()
         {
             var timeDifference = DateTime.Now.Subtract(Date);
             int secondsAgo = (int)timeDifference.TotalSeconds;
@@ -16,42 +21,38 @@ namespace APIViewWeb.TagHelpers
             int hoursAgo = (int)(minutesAgo / 60);
             int daysAgo = (int)timeDifference.TotalDays;
             int weeksAgo = (int)(daysAgo / 7);
-
+            string relativeDate;
             if (minutesAgo == 0)
             {
-                if (secondsAgo == 1)
-                    output.Content.SetContent(secondsAgo + " second ago");
+                if (secondsAgo > 0)
+                {
+                    relativeDate = GetLabel(secondsAgo, "second");
+                }
                 else
-                    output.Content.SetContent(secondsAgo + " seconds ago");
+                {
+                    relativeDate = "just now";
+                }
             }
             else if (hoursAgo == 0)
             {
-                if (minutesAgo == 1)
-                    output.Content.SetContent(minutesAgo + " minute ago");
-                else
-                    output.Content.SetContent(minutesAgo + " minutes ago");
+                relativeDate = GetLabel(minutesAgo, "minute");
             }
             else if (daysAgo == 0)
             {
-                if (hoursAgo == 1)
-                    output.Content.SetContent(hoursAgo + " hour ago");
-                else
-                    output.Content.SetContent(hoursAgo + " hours ago");
+                relativeDate = GetLabel(hoursAgo, "hour");
             }
             else if (weeksAgo == 0)
             {
-                if (daysAgo == 1)
-                    output.Content.SetContent(daysAgo + " day ago");
-                else
-                    output.Content.SetContent(daysAgo + " days ago");
+                relativeDate = GetLabel(daysAgo, "day");
             }
             else
             {
-                if (weeksAgo == 1)
-                    output.Content.SetContent(weeksAgo + " week ago");
-                else
-                    output.Content.SetContent(weeksAgo + " weeks ago");
+                relativeDate = GetLabel(weeksAgo, "week");
             }
+            return relativeDate;
+
+            static string GetLabel(int amount, string unit) =>
+            $"{amount} {unit}{(amount > 1 ? "s" : "")} ago";
         }
     }
 }

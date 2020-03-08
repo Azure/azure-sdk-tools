@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Rule to force package.json's homepage value to be a URL pointing to your library's readme inside the git repo.
  * @author Arpan Laha

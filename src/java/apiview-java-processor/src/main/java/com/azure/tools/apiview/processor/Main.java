@@ -47,8 +47,9 @@ public class Main {
                 System.exit(-1);
             }
 
-            String jsonFileName = jarFile.substring(0, jarFile.length() - 4) + ".json";
-            new Main(file, new File(outputDir, jsonFileName));
+            String jsonFileName = file.getName().substring(0, file.getName().length() - 4) + ".json";
+            File outputFile = new File(outputDir, jsonFileName);
+            new Main(file, outputFile);
         }
     }
 
@@ -60,7 +61,7 @@ public class Main {
         List<Token> tokens = new ArrayList<>();
         apiListing.setTokens(tokens);
 
-        Analyser analyser = new ASTAnalyser();
+        Analyser analyser = new ASTAnalyser(inputFile, apiListing);
 
         // Read all files within the jar file so that we can create a list of files to analyse
         List<Path> allFiles = new ArrayList<>();
@@ -81,7 +82,7 @@ public class Main {
         }
 
         // Do the analysis
-        analyser.analyse(allFiles, apiListing);
+        analyser.analyse(allFiles);
 
         // Write out to the filesystem
         try {

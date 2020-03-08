@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - APIView</title>
+    <title>@ViewData["Title"] - apiview.dev</title>
 
     <environment include="Development">
         <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.css" />
@@ -15,13 +15,13 @@
               crossorigin="anonymous"
               integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" />
     </environment>
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/site.css" asp-append-version="true" />
 </head>
 <body>
     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-light border-bottom mb-3">
             <div class="container-fluid">
-                <span class="navbar-brand">APIView</span>
+                <a href="/" class="navbar-brand">apiview.dev</a>
                 <button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                         aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
@@ -49,12 +49,16 @@
 
     <footer class="border-top footer text-muted">
         <div class="container">
-            &copy; 2019 - APIView - <a href="https://github.com/Azure/azure-sdk-tools/">Feedback</a>
+            &copy; @DateTime.Now.Year - apiview.dev
+            - <a href="https://github.com/Azure/azure-sdk-tools/">Feedback</a>
+            - <a href="https://github.com/Azure/azure-sdk-tools/commit/@Startup.VersionHash">@Startup.VersionHash</a>
         </div>
     </footer>
 
     <environment include="Development">
         <script src="~/lib/jquery/dist/jquery.js"></script>
+        <script src="~/lib/jquery/dist/jquery.sticky-sidebar.js"></script>
+        <script src="~/lib/ResizeSensor/dist/ResizeSensor.js"></script>
         <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.js"></script>
     </environment>
     <environment exclude="Development">
@@ -64,6 +68,13 @@
                 crossorigin="anonymous"
                 integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=">
         </script>
+        <script src="https://cdn.jsdelivr.net/npm/sticky-sidebar@3.3.1/dist/jquery.sticky-sidebar.min.js"
+                crossorigin="anonymous">
+        </script>
+        @*The ResizeSensor is used by the sticky-sidebar to handle resizing content.*@
+        <script src="https://cdn.jsdelivr.net/npm/resize-sensor@0.0.6/ResizeSensor.min.js"
+                crossorigin="anonymous">
+        </script>
         <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.bundle.min.js"
                 asp-fallback-src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"
                 asp-fallback-test="window.jQuery && window.jQuery.fn && window.jQuery.fn.modal"
@@ -71,7 +82,7 @@
                 integrity="sha384-xrRywqdh3PHs8keKZN+8zzc5TX0GRTLCcmivcbNJWm2rs5C8PRhcEn3czEjhAO9o">
         </script>
     </environment>
-    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/site.js" asp-append-version="true"></script>
 
     @RenderSection("Scripts", required: false)
 </body>

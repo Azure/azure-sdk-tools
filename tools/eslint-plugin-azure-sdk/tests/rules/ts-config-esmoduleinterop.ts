@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Testing the ts-config-esmoduleinterop rule.
  * @author Arpan Laha
@@ -156,8 +159,7 @@ ruleTester.run("ts-config-esmoduleinterop", rule, {
       filename: "tsconfig.json",
       errors: [
         {
-          message:
-            "compilerOptions.esModuleInterop is set to false when it should be set to true"
+          message: "compilerOptions.esModuleInterop is set to false when it should be set to true"
         }
       ],
       output: '{"compilerOptions": { "esModuleInterop": true }}'
@@ -168,8 +170,7 @@ ruleTester.run("ts-config-esmoduleinterop", rule, {
       filename: "tsconfig.json",
       errors: [
         {
-          message:
-            "compilerOptions.esModuleInterop is set to false when it should be set to true"
+          message: "compilerOptions.esModuleInterop is set to false when it should be set to true"
         }
       ],
       output: exampleTsconfigGood

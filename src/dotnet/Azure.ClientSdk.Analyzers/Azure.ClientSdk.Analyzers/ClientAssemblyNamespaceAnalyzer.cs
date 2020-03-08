@@ -12,15 +12,15 @@ namespace Azure.ClientSdk.Analyzers
     {
         internal static readonly string[] AllowedNamespacePrefix = new[]
         {
-            "Azure.ApplicationModel",
+            "Azure.AI",
             "Azure.Analytics",
             "Azure.Data",
             "Azure.Iot",
             "Azure.Media",
             "Azure.Messaging",
-            "Azure.ML",
             "Azure.Security",
-            "Azure.Storage"
+            "Azure.Storage",
+            "Microsoft.Extensions.Azure"
         };
 
         public ClientAssemblyNamespaceAnalyzer()
@@ -35,6 +35,7 @@ namespace Azure.ClientSdk.Analyzers
 
         public override void Initialize(AnalysisContext context)
         {
+            context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.Analyze | GeneratedCodeAnalysisFlags.ReportDiagnostics);
             context.EnableConcurrentExecution();
 
             context.RegisterCompilationStartAction(

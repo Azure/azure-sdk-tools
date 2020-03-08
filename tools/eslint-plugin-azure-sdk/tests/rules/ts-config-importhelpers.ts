@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Testing the ts-config-importhelpers rule.
  * @author Arpan Laha
@@ -158,8 +161,7 @@ ruleTester.run("ts-config-importhelpers", rule, {
       filename: "tsconfig.json",
       errors: [
         {
-          message:
-            "compilerOptions.importHelpers is set to false when it should be set to true"
+          message: "compilerOptions.importHelpers is set to false when it should be set to true"
         }
       ],
       output: '{"compilerOptions": { "importHelpers": true }}'
@@ -170,8 +172,7 @@ ruleTester.run("ts-config-importhelpers", rule, {
       filename: "tsconfig.json",
       errors: [
         {
-          message:
-            "compilerOptions.importHelpers is set to false when it should be set to true"
+          message: "compilerOptions.importHelpers is set to false when it should be set to true"
         }
       ],
       output: exampleTsconfigGood

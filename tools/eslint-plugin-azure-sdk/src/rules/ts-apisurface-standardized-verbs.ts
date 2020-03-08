@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 /**
  * @file Rule to require client methods to use standardized verb prefixes and suffixes where possible.
  * @author Arpan Laha
@@ -43,9 +46,8 @@ export = {
           const methodName = key.name;
 
           // look for if any of the banned prefixes are used
-          const usedPrefix = bannedPrefixes.find(
-            (bannedPrefix: string): boolean =>
-              methodName.startsWith(bannedPrefix)
+          const usedPrefix = bannedPrefixes.find((bannedPrefix: string): boolean =>
+            methodName.startsWith(bannedPrefix)
           );
           if (usedPrefix !== undefined) {
             context.report({

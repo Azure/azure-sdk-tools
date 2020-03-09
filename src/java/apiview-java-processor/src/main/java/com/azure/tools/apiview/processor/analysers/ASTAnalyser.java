@@ -17,6 +17,7 @@ import com.github.javaparser.ast.body.AnnotationMemberDeclaration;
 import com.github.javaparser.ast.body.BodyDeclaration;
 import com.github.javaparser.ast.body.CallableDeclaration;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
+import com.github.javaparser.ast.body.ConstructorDeclaration;
 import com.github.javaparser.ast.body.EnumConstantDeclaration;
 import com.github.javaparser.ast.body.EnumDeclaration;
 import com.github.javaparser.ast.body.FieldDeclaration;
@@ -47,6 +48,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.getPackageName;
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.isPrivateOrPackagePrivate;
@@ -206,7 +208,13 @@ public class ASTAnalyser implements Analyser {
             tokeniseFields(isInterfaceDeclaration, typeDeclaration);
 
             // get Constructors
-            tokeniseConstructorsOrMethods(isInterfaceDeclaration, typeDeclaration.getConstructors());
+            final List<ConstructorDeclaration> constructors = typeDeclaration.getConstructors();
+            if (constructors.isEmpty()) {
+                // add default constructor if there is no constructor at all
+                addDefaultConstructor(typeDeclaration);
+            } else {
+                tokeniseConstructorsOrMethods(isInterfaceDeclaration, constructors);
+            }
 
             // get Methods
             tokeniseConstructorsOrMethods(isInterfaceDeclaration, typeDeclaration.getMethods());
@@ -462,10 +470,19 @@ public class ASTAnalyser implements Analyser {
 
         private void tokeniseConstructorsOrMethods(boolean isInterfaceDeclaration, List<? extends CallableDeclaration<?>> callableDeclarations) {
             indent();
+
+            boolean isAllPrivateOrPackagePrivate = callableDeclarations.stream()
+                    .filter(BodyDeclaration::isConstructorDeclaration)
+                    .allMatch(callableDeclaration -> isPrivateOrPackagePrivate(callableDeclaration.getAccessSpecifier()));
+
             for (final CallableDeclaration<?> callableDeclaration : callableDeclarations) {
                 // By default , interface has public abstract methods if there is no access specifier declared
                 if (isInterfaceDeclaration) {
                     // no-op - we take all methods in the method
+                } else if (callableDeclaration.isConstructorDeclaration()) {
+                    if (!isAllPrivateOrPackagePrivate && isPrivateOrPackagePrivate(callableDeclaration.getAccessSpecifier())) {
+                        continue;
+                    }
                 } else if (isPrivateOrPackagePrivate(callableDeclaration.getAccessSpecifier())) {
                     // Skip if not public API
                     continue;
@@ -664,6 +681,27 @@ public class ASTAnalyser implements Analyser {
                     }
                 }
             }
+        }
+
+        private void addDefaultConstructor(TypeDeclaration<?> typeDeclaration) {
+            indent();
+
+            addToken(makeWhitespace());
+            addToken(new Token(KEYWORD, "public"));
+            addToken(new Token(WHITESPACE, " "));
+            final String name = typeDeclaration.getNameAsString();
+            final String definitionId = makeId(typeDeclaration.getNameAsString());
+            addToken(new Token(MEMBER_NAME, name, definitionId));
+            addToken(new Token(PUNCTUATION, "("));
+            addToken(new Token(PUNCTUATION, ")"));
+            addToken(new Token(WHITESPACE, " "));
+
+            // close statements
+            addToken(new Token(PUNCTUATION, "{"));
+            addToken(new Token(PUNCTUATION, "}"));
+            addToken(new Token(NEW_LINE, ""));
+
+            unindent();
         }
     }
 

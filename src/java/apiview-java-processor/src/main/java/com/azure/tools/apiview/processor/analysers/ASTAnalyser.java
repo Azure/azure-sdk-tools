@@ -1,8 +1,10 @@
 package com.azure.tools.apiview.processor.analysers;
 
-import com.azure.tools.apiview.processor.analysers.util.ASTUtils;
-import com.azure.tools.apiview.processor.analysers.util.SourceJarTypeSolver;
 import com.azure.tools.apiview.processor.diagnostics.Diagnostics;
+import com.azure.tools.apiview.processor.model.APIListing;
+import com.azure.tools.apiview.processor.model.ChildItem;
+import com.azure.tools.apiview.processor.model.Token;
+import com.azure.tools.apiview.processor.model.TypeKind;
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.TokenRange;
 import com.github.javaparser.ast.CompilationUnit;
@@ -30,10 +32,6 @@ import com.github.javaparser.ast.type.ReferenceType;
 import com.github.javaparser.ast.type.Type;
 import com.github.javaparser.ast.type.TypeParameter;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
-import com.azure.tools.apiview.processor.model.APIListing;
-import com.azure.tools.apiview.processor.model.ChildItem;
-import com.azure.tools.apiview.processor.model.Token;
-import com.azure.tools.apiview.processor.model.TypeKind;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
@@ -50,9 +48,17 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import static com.azure.tools.apiview.processor.model.TokenKind.*;
-
-import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.*;
+import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.getPackageName;
+import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.isPrivateOrPackagePrivate;
+import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.isTypeAPublicAPI;
+import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.makeId;
+import static com.azure.tools.apiview.processor.model.TokenKind.KEYWORD;
+import static com.azure.tools.apiview.processor.model.TokenKind.MEMBER_NAME;
+import static com.azure.tools.apiview.processor.model.TokenKind.NEW_LINE;
+import static com.azure.tools.apiview.processor.model.TokenKind.PUNCTUATION;
+import static com.azure.tools.apiview.processor.model.TokenKind.TEXT;
+import static com.azure.tools.apiview.processor.model.TokenKind.TYPE_NAME;
+import static com.azure.tools.apiview.processor.model.TokenKind.WHITESPACE;
 
 public class ASTAnalyser implements Analyser {
     private final APIListing apiListing;
@@ -197,7 +203,7 @@ public class ASTAnalyser implements Analyser {
             }
 
             // get fields
-            tokeniseFields(isInterfaceDeclaration, typeDeclaration.getFields());
+            tokeniseFields(isInterfaceDeclaration, typeDeclaration);
 
             // get Constructors
             tokeniseConstructorsOrMethods(isInterfaceDeclaration, typeDeclaration.getConstructors());
@@ -394,7 +400,10 @@ public class ASTAnalyser implements Analyser {
             unindent();
         }
 
-        private void tokeniseFields(boolean isInterfaceDeclaration, List<? extends FieldDeclaration> fieldDeclarations) {
+        private void tokeniseFields(boolean isInterfaceDeclaration, TypeDeclaration<?> typeDeclaration) {
+            final List<? extends FieldDeclaration> fieldDeclarations = typeDeclaration.getFields();
+            final String fullPathName = typeDeclaration.getFullyQualifiedName().get();
+
             indent();
             for (FieldDeclaration fieldDeclaration : fieldDeclarations) {
                 // By default , interface has public abstract methods if there is no access specifier declared
@@ -421,7 +430,7 @@ public class ASTAnalyser implements Analyser {
 
                     for (VariableDeclarator variableDeclarator : variableDeclarators) {
                         final String name = variableDeclarator.getNameAsString();
-                        final String definitionId = makeId(variableDeclarator);
+                        final String definitionId = makeId(fullPathName + "." + variableDeclarator.getName());
                         addToken(new Token(MEMBER_NAME, name, definitionId));
                         addToken(new Token(PUNCTUATION, ","));
                         addToken(new Token(WHITESPACE, " "));
@@ -432,7 +441,7 @@ public class ASTAnalyser implements Analyser {
                     getType(fieldDeclaration);
                     final VariableDeclarator variableDeclarator = variableDeclarators.get(0);
                     final String name = variableDeclarator.getNameAsString();
-                    final String definitionId = makeId(variableDeclarator);
+                    final String definitionId = makeId(fullPathName + "." + variableDeclarator.getName());
                     addToken(new Token(MEMBER_NAME, name, definitionId));
 
                     final Optional<Expression> variableDeclaratorOption = variableDeclarator.getInitializer();

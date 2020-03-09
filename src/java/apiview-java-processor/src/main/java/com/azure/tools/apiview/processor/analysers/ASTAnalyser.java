@@ -479,6 +479,7 @@ public class ASTAnalyser implements Analyser {
                 if (isInterfaceDeclaration) {
                     // no-op - we take all methods in the method
                 } else if (callableDeclaration.isConstructorDeclaration()) {
+                    // if there is at least one public constructor, only explore the public but skip all private constructors
                     if (!isAllPrivateOrPackagePrivate && isPrivateOrPackagePrivate(callableDeclaration.getAccessSpecifier())) {
                         continue;
                     }

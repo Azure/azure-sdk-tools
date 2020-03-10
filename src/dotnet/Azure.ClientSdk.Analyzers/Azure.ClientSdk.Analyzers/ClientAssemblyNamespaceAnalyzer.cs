@@ -20,6 +20,7 @@ namespace Azure.ClientSdk.Analyzers
             "Azure.Messaging",
             "Azure.Security",
             "Azure.Storage",
+            "Azure.Identity",
             "Microsoft.Extensions.Azure"
         };
 

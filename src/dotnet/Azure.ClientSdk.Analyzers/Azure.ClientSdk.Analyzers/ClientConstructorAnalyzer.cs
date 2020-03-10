@@ -24,14 +24,9 @@ namespace Azure.ClientSdk.Analyzers
             {
                 return false;
             }
-            var clientOptionsType = GetOptionsTypeName(symbol.ContainingType);
-            return symbol.Type.Name == clientOptionsType;
+            return symbol.Type.Name.EndsWith(ClientOptionsAnalyzer.ClientOptionsSuffix);
         }
 
-        private static string GetOptionsTypeName(INamedTypeSymbol symbol)
-        {
-            return symbol.Name + "Options";
-        }
 
         public override void AnalyzeCore(ISymbolAnalysisContext context)
         {
@@ -45,14 +40,19 @@ namespace Azure.ClientSdk.Analyzers
             {
                 if (constructor.DeclaredAccessibility == Accessibility.Public)
                 {
-                    if (IsClientOptionsParameter(constructor.Parameters.LastOrDefault()))
+                    var lastParameter = constructor.Parameters.LastOrDefault();
+
+                    if (IsClientOptionsParameter(lastParameter))
                     {
+                        // Allow optional options parameters
+                        if (lastParameter.IsOptional) continue;
+
                         var nonOptionsMethod = FindMethod(
-                            type.Constructors, constructor.Parameters.RemoveAt(constructor.Parameters.Length - 1));
+                            type.Constructors, constructor.TypeParameters, constructor.Parameters.RemoveAt(constructor.Parameters.Length - 1));
 
                         if (nonOptionsMethod == null || nonOptionsMethod.DeclaredAccessibility != Accessibility.Public)
                         {
-                            context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0006, constructor.Locations.First(), GetOptionsTypeName(type)), constructor);
+                            context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0006, constructor.Locations.First()), constructor);
                         }
                     }
                     else
@@ -62,7 +62,7 @@ namespace Azure.ClientSdk.Analyzers
 
                         if (optionsMethod == null || optionsMethod.DeclaredAccessibility != Accessibility.Public)
                         {
-                            context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0007, constructor.Locations.First(), GetOptionsTypeName(type)), constructor);
+                            context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0007, constructor.Locations.First()), constructor);
                         }
                     }
                 }

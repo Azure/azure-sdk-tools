@@ -47,7 +47,7 @@ namespace Azure.ClientSdk.Analyzers
 
                     var syncMemberName = member.Name.Substring(0, member.Name.Length - AsyncSuffix.Length);
 
-                    var syncMember = FindMethod(type.GetMembers(syncMemberName).OfType<IMethodSymbol>(), methodSymbol.Parameters);
+                    var syncMember = FindMethod(type.GetMembers(syncMemberName).OfType<IMethodSymbol>(), methodSymbol.TypeParameters, methodSymbol.Parameters);
 
                     if (syncMember == null)
                     {

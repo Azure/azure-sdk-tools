@@ -10,7 +10,7 @@ namespace Azure.ClientSdk.Analyzers
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public class ClientOptionsAnalyzer : SymbolAnalyzerBase
     {
-        protected const string ClientOptionsSuffix = "ClientOptions";
+        internal const string ClientOptionsSuffix = "ClientOptions";
         protected const string ServiceVersionName = "ServiceVersion";
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(new[]

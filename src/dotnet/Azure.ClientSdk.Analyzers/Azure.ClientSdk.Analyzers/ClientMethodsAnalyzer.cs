@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Immutable;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using Microsoft.CodeAnalysis;
@@ -24,16 +25,51 @@ namespace Azure.ClientSdk.Analyzers
 
         private static void CheckClientMethod(ISymbolAnalysisContext context, IMethodSymbol member)
         {
+            static bool IsCancellationTokenParameter(IParameterSymbol parameterSymbol)
+            {
+                return parameterSymbol.Name == "cancellationToken" && parameterSymbol.Type.Name == "CancellationToken";
+            }
+
             if (!member.IsVirtual && !member.IsOverride)
             {
                 context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0003, member.Locations.First()), member);
             }
 
             var lastArgument = member.Parameters.LastOrDefault();
-            if (lastArgument == null || lastArgument.Name != "cancellationToken" || lastArgument.Type.Name != "CancellationToken" || !lastArgument.HasExplicitDefaultValue)
+            if (lastArgument == null)
             {
-                context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0002, member.Locations.FirstOrDefault()), member);
+                var overloadWithCancellationToken = FindMethod(
+                    member.ContainingType.GetMembers(member.Name).OfType<IMethodSymbol>(),
+                    member.TypeParameters,
+                    member.Parameters,
+                    p => IsCancellationTokenParameter(p));
+
+                if (overloadWithCancellationToken != null)
+                {
+                    // Skip methods that have overloads with cancellation tokens
+                    return;
+                }
             }
+            else if (IsCancellationTokenParameter(lastArgument))
+            {
+                if (lastArgument.IsOptional)
+                {
+                    return;
+                }
+
+                var overloadWithCancellationToken = FindMethod(
+                    member.ContainingType.GetMembers(member.Name).OfType<IMethodSymbol>(),
+                    member.TypeParameters,
+                    member.Parameters.RemoveAt(member.Parameters.Length - 1));
+
+                if (overloadWithCancellationToken != null)
+                {
+                    // Skip methods that have non-optional cancellation token if overload exists without one
+                    return;
+                }
+            }
+
+            context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0002, member.Locations.FirstOrDefault()), member);
         }
 
         public override void AnalyzeCore(ISymbolAnalysisContext context)

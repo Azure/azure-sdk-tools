@@ -58,7 +58,7 @@ namespace Azure.ClientSdk.Analyzers
                     else
                     {
                         var optionsMethod = FindMethod(
-                            type.Constructors, constructor.Parameters, IsClientOptionsParameter);
+                            type.Constructors, constructor.TypeParameters, constructor.Parameters, IsClientOptionsParameter);
 
                         if (optionsMethod == null || optionsMethod.DeclaredAccessibility != Accessibility.Public)
                         {

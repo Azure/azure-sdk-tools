@@ -52,19 +52,19 @@ namespace Azure.ClientSdk.Analyzers
             }
         }
 
-        protected IMethodSymbol FindMethod(IEnumerable<IMethodSymbol> methodSymbols, ImmutableArray<ITypeParameterSymbol> genericParameters, ImmutableArray<IParameterSymbol> parameters)
+        protected static IMethodSymbol FindMethod(IEnumerable<IMethodSymbol> methodSymbols, ImmutableArray<ITypeParameterSymbol> genericParameters, ImmutableArray<IParameterSymbol> parameters)
         {
             return methodSymbols.SingleOrDefault(symbol =>
                 genericParameters.SequenceEqual(symbol.TypeParameters, ParameterEquivalenceComparer.Default) &&
                 parameters.SequenceEqual(symbol.Parameters, ParameterEquivalenceComparer.Default));
         }
 
-        protected IMethodSymbol FindMethod(IEnumerable<IMethodSymbol> methodSymbols, ImmutableArray<IParameterSymbol> parameters, Func<IParameterSymbol, bool> lastParameter)
+        protected static IMethodSymbol FindMethod(IEnumerable<IMethodSymbol> methodSymbols, ImmutableArray<ITypeParameterSymbol> genericParameters, ImmutableArray<IParameterSymbol> parameters, Func<IParameterSymbol, bool> lastParameter)
         {
 
             return methodSymbols.SingleOrDefault(symbol => {
 
-                if (!symbol.Parameters.Any())
+                if (!symbol.Parameters.Any() || !genericParameters.SequenceEqual(symbol.TypeParameters, ParameterEquivalenceComparer.Default))
                 {
                     return false;
                 }

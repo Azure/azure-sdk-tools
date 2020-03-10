@@ -1,0 +1,26 @@
+trigger:
+  branches:
+    include:
+      - master
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - tools/CreateRuleFabricBot
+
+pr:
+  branches:
+    include:
+      - master
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - tools/CreateRuleFabricBot
+
+stages:
+  - template: ../../eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
+    parameters:
+      ToolDirectory: CreateRuleFabricBot

@@ -36,7 +36,9 @@ namespace Azure.ClientSdk.Analyzers
             }
 
             var lastArgument = member.Parameters.LastOrDefault();
-            if (lastArgument == null)
+            var isCancellationTokenParameter = lastArgument != null && IsCancellationTokenParameter(lastArgument);
+
+            if (!isCancellationTokenParameter)
             {
                 var overloadWithCancellationToken = FindMethod(
                     member.ContainingType.GetMembers(member.Name).OfType<IMethodSymbol>(),
@@ -49,14 +51,11 @@ namespace Azure.ClientSdk.Analyzers
                     // Skip methods that have overloads with cancellation tokens
                     return;
                 }
-            }
-            else if (IsCancellationTokenParameter(lastArgument))
-            {
-                if (lastArgument.IsOptional)
-                {
-                    return;
-                }
 
+                context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0002, member.Locations.FirstOrDefault()), member);
+            }
+            else if (!lastArgument.IsOptional)
+            {
                 var overloadWithCancellationToken = FindMethod(
                     member.ContainingType.GetMembers(member.Name).OfType<IMethodSymbol>(),
                     member.TypeParameters,
@@ -67,9 +66,9 @@ namespace Azure.ClientSdk.Analyzers
                     // Skip methods that have non-optional cancellation token if overload exists without one
                     return;
                 }
-            }
 
-            context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0002, member.Locations.FirstOrDefault()), member);
+                context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0002, member.Locations.FirstOrDefault()), member);
+            }
         }
 
         public override void AnalyzeCore(ISymbolAnalysisContext context)

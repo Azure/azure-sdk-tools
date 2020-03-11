@@ -6,7 +6,7 @@
     <NoWarn>CS8002;NU5105</NoWarn>
 
     <PackAsTool>true</PackAsTool>
-    <ToolCommandName>create-fabricbot-rule</ToolCommandName>
+    <ToolCommandName>dotnet-createRuleFabricBot</ToolCommandName>
     <VersionPrefix>1.0.0</VersionPrefix>
   </PropertyGroup>
 

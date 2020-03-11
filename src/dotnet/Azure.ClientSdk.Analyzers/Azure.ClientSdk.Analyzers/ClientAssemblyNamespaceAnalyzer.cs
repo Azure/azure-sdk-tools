@@ -18,8 +18,10 @@ namespace Azure.ClientSdk.Analyzers
             "Azure.Iot",
             "Azure.Media",
             "Azure.Messaging",
+            "Azure.Search",
             "Azure.Security",
             "Azure.Storage",
+            "Azure.Template",
             "Azure.Identity",
             "Microsoft.Extensions.Azure"
         };

@@ -7,7 +7,7 @@ namespace Azure.ClientSdk.Analyzers
 {
     internal class Descriptors
     {
-        private static readonly string AZC0001Title = "Use one of the following pre-approved namespace groups: " + string.Join(", ", ClientAssemblyNamespaceAnalyzer.AllowedNamespacePrefix);
+        private static readonly string AZC0001Title = "Use one of the following pre-approved namespace groups (https://azure.github.io/azure-sdk/registered_namespaces.html): " + string.Join(", ", ClientAssemblyNamespaceAnalyzer.AllowedNamespacePrefix);
 
         public static DiagnosticDescriptor AZC0001 = new DiagnosticDescriptor(
             nameof(AZC0001), AZC0001Title,

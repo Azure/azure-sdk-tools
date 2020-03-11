@@ -94,5 +94,25 @@ namespace RandomNamespace
 }";
             await Verifier.VerifyAnalyzerAsync(code);
         }
+        [Fact]
+        public async Task AZC0010NotProducedForClientOptionsCtorWithMaxServiceVersion2()
+        {
+            const string code = @"
+namespace RandomNamespace
+{
+    public class SomeClientOptions { 
+        public enum ServiceVersion
+        {
+            V2019_02_02 = 1,
+            V2019_07_07 = 2,
+        }
+
+        public SomeClientOptions(ServiceVersion version = ServiceVersion.V2019_07_07)
+        {
+        }
+    }
+}";
+            await Verifier.VerifyAnalyzerAsync(code);
+        }
     }
 }

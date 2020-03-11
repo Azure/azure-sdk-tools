@@ -28,5 +28,34 @@ namespace RandomNamespace
 }";
             await Verifier.VerifyAnalyzerAsync(code, "AZC0004");
         }
+
+        [Fact]
+        public async Task AZC0004ProducedForGenericMethodsWithoutSyncAlternative()
+        {
+            const string code = @"
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace RandomNamespace
+{
+    public class SomeClient
+    {
+        public virtual Task GetAsync(CancellationToken cancellationToken = default)
+        {
+            return null;
+        }
+
+        public virtual void Get(CancellationToken cancellationToken = default)
+        {
+        }
+        
+        public virtual Task [|GetAsync|]<T>(CancellationToken cancellationToken = default)
+        {
+            return null;
+        }
+    }
+}";
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0004");
+        }
     }
 }

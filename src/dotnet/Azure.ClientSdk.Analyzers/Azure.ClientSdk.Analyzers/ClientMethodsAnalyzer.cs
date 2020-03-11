@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Immutable;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using Microsoft.CodeAnalysis;
@@ -24,14 +25,48 @@ namespace Azure.ClientSdk.Analyzers
 
         private static void CheckClientMethod(ISymbolAnalysisContext context, IMethodSymbol member)
         {
+            static bool IsCancellationTokenParameter(IParameterSymbol parameterSymbol)
+            {
+                return parameterSymbol.Name == "cancellationToken" && parameterSymbol.Type.Name == "CancellationToken";
+            }
+
             if (!member.IsVirtual && !member.IsOverride)
             {
                 context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0003, member.Locations.First()), member);
             }
 
             var lastArgument = member.Parameters.LastOrDefault();
-            if (lastArgument == null || lastArgument.Name != "cancellationToken" || lastArgument.Type.Name != "CancellationToken" || !lastArgument.HasExplicitDefaultValue)
+            var isCancellationTokenParameter = lastArgument != null && IsCancellationTokenParameter(lastArgument);
+
+            if (!isCancellationTokenParameter)
             {
+                var overloadWithCancellationToken = FindMethod(
+                    member.ContainingType.GetMembers(member.Name).OfType<IMethodSymbol>(),
+                    member.TypeParameters,
+                    member.Parameters,
+                    p => IsCancellationTokenParameter(p));
+
+                if (overloadWithCancellationToken != null)
+                {
+                    // Skip methods that have overloads with cancellation tokens
+                    return;
+                }
+
+                context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0002, member.Locations.FirstOrDefault()), member);
+            }
+            else if (!lastArgument.IsOptional)
+            {
+                var overloadWithCancellationToken = FindMethod(
+                    member.ContainingType.GetMembers(member.Name).OfType<IMethodSymbol>(),
+                    member.TypeParameters,
+                    member.Parameters.RemoveAt(member.Parameters.Length - 1));
+
+                if (overloadWithCancellationToken != null)
+                {
+                    // Skip methods that have non-optional cancellation token if overload exists without one
+                    return;
+                }
+
                 context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0002, member.Locations.FirstOrDefault()), member);
             }
         }
@@ -47,7 +82,7 @@ namespace Azure.ClientSdk.Analyzers
 
                     var syncMemberName = member.Name.Substring(0, member.Name.Length - AsyncSuffix.Length);
 
-                    var syncMember = FindMethod(type.GetMembers(syncMemberName).OfType<IMethodSymbol>(), methodSymbol.Parameters);
+                    var syncMember = FindMethod(type.GetMembers(syncMemberName).OfType<IMethodSymbol>(), methodSymbol.TypeParameters, methodSymbol.Parameters);
 
                     if (syncMember == null)
                     {

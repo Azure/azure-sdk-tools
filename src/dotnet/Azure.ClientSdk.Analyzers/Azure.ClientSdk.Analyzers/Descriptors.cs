@@ -7,7 +7,7 @@ namespace Azure.ClientSdk.Analyzers
 {
     internal class Descriptors
     {
-        private static readonly string AZC0001Title = "Use one of the following pre-approved namespace groups: " + string.Join(", ", ClientAssemblyNamespaceAnalyzer.AllowedNamespacePrefix);
+        private static readonly string AZC0001Title = "Use one of the following pre-approved namespace groups (https://azure.github.io/azure-sdk/registered_namespaces.html): " + string.Join(", ", ClientAssemblyNamespaceAnalyzer.AllowedNamespacePrefix);
 
         public static DiagnosticDescriptor AZC0001 = new DiagnosticDescriptor(
             nameof(AZC0001), AZC0001Title,
@@ -48,7 +48,7 @@ namespace Azure.ClientSdk.Analyzers
         public static DiagnosticDescriptor AZC0006 = new DiagnosticDescriptor(
             nameof(AZC0006),
             "DO provide constructor overloads that allow specifying additional options.",
-            "Client type should have public constructor with equivalent parameters taking '{0}' as last argument",
+            "Client type should have public constructor with equivalent parameters taking a ClientOptions type as last argument",
             "Usage", DiagnosticSeverity.Warning, isEnabledByDefault: true, description: null,
             "https://azure.github.io/azure-sdk/dotnet_introduction.html#dotnet-client-constructor-overloads"
         );
@@ -56,7 +56,7 @@ namespace Azure.ClientSdk.Analyzers
         public static DiagnosticDescriptor AZC0007 = new DiagnosticDescriptor(
             nameof(AZC0007),
             "DO provide a minimal constructor that takes only the parameters required to connect to the service.",
-            "Client type should have public constructor with equivalent parameters not taking '{0}' as last argument",
+            "Client type should have public constructor with equivalent parameters not taking ClientOptions type as last argument",
             "Usage", DiagnosticSeverity.Warning, isEnabledByDefault: true, description: null,
             "https://azure.github.io/azure-sdk/dotnet_introduction.html#dotnet-client-constructor-minimal"
         );
@@ -72,11 +72,11 @@ namespace Azure.ClientSdk.Analyzers
         public static DiagnosticDescriptor AZC0010 = new DiagnosticDescriptor(
             nameof(AZC0010), "ClientOptions constructors should default ServiceVersion to latest supported service version",
             "ClientOptions constructors should default ServiceVersion to latest supported service version", "Usage", DiagnosticSeverity.Warning, true);
-        
+
         public static DiagnosticDescriptor AZC0011 = new DiagnosticDescriptor(
             nameof(AZC0011), "Avoid InternalsVisibleTo to non-test assemblies",
             "Internal visible to product libraries effectively become public API and have to be versioned appropriately", "Usage", DiagnosticSeverity.Warning, true);
-            
+
 
         public static DiagnosticDescriptor AZC0100 = new DiagnosticDescriptor(
             nameof(AZC0100),

@@ -36,10 +36,7 @@ import com.github.javaparser.ast.type.TypeParameter;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
-import com.github.javaparser.symbolsolver.resolution.typesolvers.JarTypeSolver;
-import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
-import com.github.javaparser.utils.SourceZip;
 
 import java.io.File;
 import java.io.IOException;
@@ -122,7 +119,7 @@ public class ASTAnalyser implements Analyser {
             // Set up a minimal type solver that only looks at the classes used to run this sample.
             CombinedTypeSolver combinedTypeSolver = new CombinedTypeSolver();
             combinedTypeSolver.add(new ReflectionTypeSolver(false));
-            combinedTypeSolver.add(new SourceJarTypeSolver(inputFile));
+//            combinedTypeSolver.add(new SourceJarTypeSolver(inputFile));
           
             ParserConfiguration parserConfiguration = new ParserConfiguration()
                   .setStoreTokens(true)
@@ -217,7 +214,11 @@ public class ASTAnalyser implements Analyser {
             final List<ConstructorDeclaration> constructors = typeDeclaration.getConstructors();
             if (constructors.isEmpty()) {
                 // add default constructor if there is no constructor at all
-                addDefaultConstructor(typeDeclaration);
+                if (!isInterfaceDeclaration) {
+                    addDefaultConstructor(typeDeclaration);
+                } else {
+                    // skip and do nothing if there is no constructor in the interface.
+                }
             } else {
                 tokeniseConstructorsOrMethods(isInterfaceDeclaration, constructors);
             }

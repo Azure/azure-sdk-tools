@@ -10,7 +10,7 @@ namespace Azure.ClientSdk.Analyzers
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public class ClientOptionsAnalyzer : SymbolAnalyzerBase
     {
-        protected const string ClientOptionsSuffix = "ClientOptions";
+        internal const string ClientOptionsSuffix = "ClientOptions";
         protected const string ServiceVersionName = "ServiceVersion";
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(new[]
@@ -63,7 +63,7 @@ namespace Azure.ClientSdk.Analyzers
                     }
 
                     var maxVersion = serviceVersionEnum.GetMembers().Where(m => m.Kind == SymbolKind.Field).Max(m => ((IFieldSymbol)m).ConstantValue);
-                    if (!firstParam.HasExplicitDefaultValue || firstParam.ExplicitDefaultValue != maxVersion)
+                    if (!firstParam.HasExplicitDefaultValue || (int)firstParam.ExplicitDefaultValue != (int)maxVersion)
                     {
                         context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0010, firstParam.Locations.First()), typeSymbol);
                     }

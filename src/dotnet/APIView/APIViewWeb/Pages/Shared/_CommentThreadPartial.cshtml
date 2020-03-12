@@ -19,6 +19,17 @@
                     {
                         <div id="@comment.CommentId" class="review-comment" data-comment-id="@comment.CommentId">
                             <div class="comment-actions">
+                                <form data-post-update="comments" asp-controller="Comments" asp-action="ToggleUpvote" method="post" asp-route-reviewId="@Model.ReviewId">
+                                    <input type="hidden" name="commentId" value="@comment.CommentId" />
+                                    <button type="submit" class="btn btn-light btn-sm btn-upvote" title="@string.Join(", ", comment.Upvotes) " active-if="@comment.Upvotes.Contains(User.GetGitHubLogin())">
+                                        @if (comment.Upvotes.Any())
+                                        {
+                                            @comment.Upvotes.Count
+                                        }
+                                        👍
+                                    </button>
+                                </form>
+
                                 @if (comment.Username == User.GetGitHubLogin())
                                 {
                                     <div class="dropdown show">
@@ -27,9 +38,9 @@
                                         </a>
 
                                         <div class="dropdown-menu">
-                                            <form asp-controller="Comments" asp-action="Delete" method="post" asp-route-reviewId="@Model.ReviewId">
+                                            <form data-post-update="comments" asp-controller="Comments" asp-action="Delete" method="post" asp-route-reviewId="@Model.ReviewId">
                                                 <input type="hidden" name="commentId" value="@comment.CommentId"/>
-                                                <button id="@comment.CommentId" data-post-update="comments" class="text-danger dropdown-item">Delete</button>
+                                                <button id="@comment.CommentId" type="submit" class="text-danger dropdown-item">Delete</button>
                                             </form>
                                             <a class="dropdown-item js-edit-comment">Edit</a>
                                         </div>
@@ -37,10 +48,12 @@
                                 }
                             </div>
                             <div class="media">
-                                <img username="@comment.Username" class="comment-icon align-self-start mr-3" height="28" width="28" />
+                                <a username="@comment.Username">
+                                    <img username="@comment.Username" class="comment-icon align-self-start mr-3" height="28" width="28" />
+                                </a>
                                 <div class="media-body comment-contents">
                                     <div>
-                                        <strong class=" mt-0 comment-header author align-top">@comment.Username</strong>
+                                        <a username="@comment.Username" class="font-weight-bolder text-dark mt-0 comment-header align-top">@comment.Username</a>
                                         <a date="@comment.TimeStamp.ToLocalTime()" href="#@comment.CommentId" class="small float-right"></a>
                                     </div>
                                     <textarea class="js-comment-raw d-none">@comment.Comment</textarea>
@@ -62,14 +75,14 @@
                     <div class="m-2">
                         @if (Model.IsResolved)
                         {
-                            <form method="post" asp-controller="Comments" asp-action="Unresolve" asp-route-reviewId="@Model.ReviewId">
-                                <button data-post-update="comments" type="submit" name="submit" value="Submit" class="btn btn-outline-secondary">Unresolve</button>
+                            <form data-post-update="comments" method="post" asp-controller="Comments" asp-action="Unresolve" asp-route-reviewId="@Model.ReviewId">
+                                <button type="submit" name="submit" value="Submit" class="btn btn-outline-secondary">Unresolve</button>
                             </form>
                         }
                         else
                         {
-                            <form method="post" asp-controller="Comments" asp-action="Resolve"  asp-route-reviewId="@Model.ReviewId">
-                                <button data-post-update="comments" type="submit" name="submit" value="Submit" class="btn btn-outline-secondary">Resolve</button>
+                            <form data-post-update="comments" method="post" asp-controller="Comments" asp-action="Resolve"  asp-route-reviewId="@Model.ReviewId">
+                                <button type="submit" name="submit" value="Submit" class="btn btn-outline-secondary">Resolve</button>
                             </form>
                         }
                     </div>

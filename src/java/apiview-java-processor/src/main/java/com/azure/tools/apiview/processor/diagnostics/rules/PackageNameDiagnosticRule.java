@@ -10,7 +10,7 @@ import java.util.regex.Pattern;
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.*;
 
 public class PackageNameDiagnosticRule implements DiagnosticRule {
-    final static Pattern regex = Pattern.compile("^com.azure.[a-z0-9]*(\\.[a-z0-9]+)+[0-9a-z]$");
+    final static Pattern regex = Pattern.compile("^com.azure(\\.[a-z0-9]+)+$");
 
     @Override
     public void scan(final CompilationUnit cu, final APIListing listing) {
@@ -19,7 +19,7 @@ public class PackageNameDiagnosticRule implements DiagnosticRule {
             getClassName(cu).map(listing.getKnownTypes()::get).ifPresent(typeId -> {
                 if (!regex.matcher(packageName).matches()) {
                     listing.addDiagnostic(new Diagnostic(typeId,
-                            "Package name must start with 'com.azure', and it must be lower-case, with no underscores or hyphens."));
+                            "Package name must start with 'com.azure.<group>.', and it must be lower-case, with no underscores or hyphens."));
                 }
             });
         });

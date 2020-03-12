@@ -1,6 +1,5 @@
 ﻿using System;
 using ApiView;
-using Azure.ClientSdk.Analyzers.Tests;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using System.Collections.Generic;
@@ -51,14 +50,21 @@ namespace APIViewTest
 
         private async Task AssertFormattingAsync(string code, string formatted)
         {
-            var project = DiagnosticProject.Create(typeof(CodeFileBuilderTests).Assembly, new[] { code });
+            var project = DiagnosticProject.Create(typeof(CodeFileBuilderTests).Assembly, LanguageVersion.Latest, new[] { code });
             project = project.WithCompilationOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+
             var compilation = await project.GetCompilationAsync();
             Assert.Empty(compilation.GetDiagnostics().Where(d => d.Severity > DiagnosticSeverity.Warning));
+
+            var memoryStream = new MemoryStream();
+            compilation.Emit(memoryStream);
+            memoryStream.Position = 0;
+
+            var compilationFromDll = CompilationFactory.GetCompilation(memoryStream);
             var codeModel = new CodeFileBuilder()
             {
                 SymbolOrderProvider = new NameSymbolOrderProvider()
-            }.Build(compilation.Assembly, false);
+            }.Build(compilationFromDll, false);
             var formattedModel = new CodeFileRenderer().Render(codeModel);
             var formattedString = string.Join(Environment.NewLine, formattedModel.Select(l => l.DisplayString));
             _testOutputHelper.WriteLine(formattedString);

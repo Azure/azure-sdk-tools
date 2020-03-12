@@ -3,17 +3,16 @@
 
 using System.Threading.Tasks;
 using Xunit;
+using Verifier = Azure.ClientSdk.Analyzers.Tests.AzureAnalyzerVerifier<Azure.ClientSdk.Analyzers.ClientConstructorAnalyzer>;
 
 namespace Azure.ClientSdk.Analyzers.Tests
 {
     public class AZC0006Tests
     {
-        private readonly DiagnosticAnalyzerRunner _runner = new DiagnosticAnalyzerRunner(new ClientConstructorAnalyzer());
-
         [Fact]
         public async Task AZC0006ProducedForClientsWithoutOptionsCtor()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     public class SomeClientOptions { }
@@ -21,22 +20,16 @@ namespace RandomNamespace
     public class SomeClient
     {
         protected SomeClient() {}
-        public /*MM*/SomeClient(SomeClientOptions options) {}
+        public [|SomeClient|](SomeClientOptions options) {}
     }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-
-            var diagnostic = Assert.Single(diagnostics);
-
-            Assert.Equal("AZC0006", diagnostic.Id);
-            AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostics[0].Location);
+}";
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0006");
         }
 
         [Fact]
         public async Task AZC0006ProducedForClientsWithoutOptionsCtorWithArguments()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     public class SomeClientOptions { }
@@ -44,16 +37,44 @@ namespace RandomNamespace
     public class SomeClient
     {
         protected SomeClient() {}
-        public /*MM*/SomeClient(string connectionString, SomeClientOptions options) {}
+        public [|SomeClient|](string connectionString, SomeClientOptions options) {}
     }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
+}";
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0006");
+        }
 
-            var diagnostic = Assert.Single(diagnostics);
+        [Fact]
+        public async Task AZC0006NotProducedForClientsWithoutOptionsCtorWithArguments()
+        {
+            const string code = @"
+namespace RandomNamespace
+{
+    public class SomeClientOptions { }
 
-            Assert.Equal("AZC0006", diagnostic.Id);
-            AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostics[0].Location);
+    public class SomeClient
+    {
+        protected SomeClient() {}
+        public SomeClient(string connectionString, SomeClientOptions options = null) {}
+    }
+}";
+            await Verifier.VerifyAnalyzerAsync(code);
+        }
+
+        [Fact]
+        public async Task AZC0006NotProducedForSharedClientOptions()
+        {
+            const string code = @"
+namespace RandomNamespace
+{
+    public class SharedClientOptions { }
+
+    public class SomeClient
+    {
+        protected SomeClient() {}
+        public SomeClient(string connectionString, SharedClientOptions options = null) {}
+    }
+}";
+            await Verifier.VerifyAnalyzerAsync(code);
         }
     }
 }

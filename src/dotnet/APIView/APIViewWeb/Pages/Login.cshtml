@@ -1,0 +1,13 @@
+﻿@page
+@model LoginModel
+@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+@{
+    ViewData["Title"] = "Login";
+}
+
+<p>Please login using your GitHub account</p>
+
+<a class="login-button btn btn-outline-dark" asp-action="Login" asp-controller="Account" asp-route-returnUrl="@Model.ReturnUrl">
+    <img height="30" width="30" src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" />
+    Login with GitHub
+</a>

@@ -18,12 +18,18 @@ namespace APIViewWeb
         {
             try
             {
-                return new HtmlString(Markdown.ToHtml(text ?? "", MarkdownPipeline));
+                return new HtmlString(MarkdownAsHtml(text));
             }
             catch
             {
                 return new HtmlString(helper.Encode(text));
             }
         }
+
+        public static string MarkdownAsHtml(string text) =>
+            Markdown.ToHtml(text ?? "", MarkdownPipeline);
+
+        public static string MarkdownAsPlainText(string text) =>
+            Markdown.ToPlainText(text ?? "", MarkdownPipeline);
     }
 }

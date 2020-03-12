@@ -18,5 +18,10 @@
     <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)AzureSDKToolsKey.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
+  <!-- Add Package Icon -->
+  <ItemGroup>
+    <None Include="$(RepoEngPath)/images/pkgicon.png" Pack="true" PackagePath=""/>
+  </ItemGroup>
+
   <Import Project="Versioning.targets" />
 </Project>

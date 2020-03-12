@@ -105,4 +105,30 @@ public class ASTUtils {
             return "";
         }
     }
+
+    /**
+     * Returns true if the type is public or protected, or it the type is an interface that is defined within another
+     * public interface.
+     */
+    public static boolean isTypeAPublicAPI(TypeDeclaration type) {
+        final boolean isInterfaceType = type.isClassOrInterfaceDeclaration();
+        final boolean isNestedType = type.isNestedType();
+
+        // Skip if the class is private or package-private, unless it is a nested type defined inside a public interface
+        if (isPrivateOrPackagePrivate(type.getAccessSpecifier())) {
+            if (isNestedType && isInterfaceType) {
+                boolean isInPublicParent = type.getParentNode()
+                       .filter(parentNode -> parentNode instanceof ClassOrInterfaceDeclaration)
+                       .map(parentNode -> isPublicOrProtected(((ClassOrInterfaceDeclaration)parentNode).getAccessSpecifier()))
+                       .orElse(false);
+
+                if (! isInPublicParent) {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        }
+        return true;
+    }
 }

@@ -2,17 +2,16 @@
 // Licensed under the MIT License.
 using System.Threading.Tasks;
 using Xunit;
+using Verifier = Azure.ClientSdk.Analyzers.Tests.AzureAnalyzerVerifier<Azure.ClientSdk.Analyzers.ClientOptionsAnalyzer>;
 
 namespace Azure.ClientSdk.Analyzers.Tests
 {
     public class AZC0010Tests
     {
-        private readonly DiagnosticAnalyzerRunner _runner = new DiagnosticAnalyzerRunner(new ClientOptionsAnalyzer());
-
         [Fact]
         public async Task AZC0010ProducedForClientOptionsCtorWithNoServiceVersionDefault()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     public class SomeClientOptions { 
@@ -22,24 +21,18 @@ namespace RandomNamespace
             V2018_11_09 = 0
         }
 
-        public SomeClientOptions(ServiceVersion /*MM*/version)
+        public SomeClientOptions(ServiceVersion [|version|])
         {
         }
     }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-
-            var diagnostic = Assert.Single(diagnostics);
-
-            Assert.Equal("AZC0010", diagnostic.Id);
-            AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostics[0].Location);
+}";
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0010");
         }
 
         [Fact]
         public async Task AZC0010ProducedForClientOptionsCtorWithNonMaxVersionExplicit()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     public class SomeClientOptions { 
@@ -50,24 +43,18 @@ namespace RandomNamespace
             V2019_03_20 = 1
         }
 
-        public SomeClientOptions(ServiceVersion /*MM*/version = ServiceVersion.V2018_11_09)
+        public SomeClientOptions(ServiceVersion [|version|] = ServiceVersion.V2018_11_09)
         {
         }
     }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-
-            var diagnostic = Assert.Single(diagnostics);
-
-            Assert.Equal("AZC0010", diagnostic.Id);
-            AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostics[0].Location);
+}";
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0010");
         }
 
         [Fact]
         public async Task AZC0010ProducedForClientOptionsCtorWithNonMaxVersionImplicit()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     public class SomeClientOptions { 
@@ -78,24 +65,18 @@ namespace RandomNamespace
             V2019_03_20
         }
 
-        public SomeClientOptions(ServiceVersion /*MM*/version = ServiceVersion.V2018_11_09)
+        public SomeClientOptions(ServiceVersion [|version|] = ServiceVersion.V2018_11_09)
         {
         }
     }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-
-            var diagnostic = Assert.Single(diagnostics);
-
-            Assert.Equal("AZC0010", diagnostic.Id);
-            AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostics[0].Location);
+}";
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0010");
         }
 
         [Fact]
         public async Task AZC0010NotProducedForClientOptionsCtorWithMaxServiceVersionDefault()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     public class SomeClientOptions { 
@@ -110,10 +91,28 @@ namespace RandomNamespace
         {
         }
     }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-            Assert.Empty(diagnostics);
+}";
+            await Verifier.VerifyAnalyzerAsync(code);
+        }
+        [Fact]
+        public async Task AZC0010NotProducedForClientOptionsCtorWithMaxServiceVersion2()
+        {
+            const string code = @"
+namespace RandomNamespace
+{
+    public class SomeClientOptions { 
+        public enum ServiceVersion
+        {
+            V2019_02_02 = 1,
+            V2019_07_07 = 2,
+        }
+
+        public SomeClientOptions(ServiceVersion version = ServiceVersion.V2019_07_07)
+        {
+        }
+    }
+}";
+            await Verifier.VerifyAnalyzerAsync(code);
         }
     }
 }

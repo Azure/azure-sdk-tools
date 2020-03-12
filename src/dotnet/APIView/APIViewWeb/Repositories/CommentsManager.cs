@@ -5,6 +5,7 @@ using System;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using APIViewWeb.Models;
+using APIViewWeb.Repositories;
 using APIViewWeb.Respositories;
 using Microsoft.AspNetCore.Authorization;
 
@@ -16,12 +17,16 @@ namespace APIViewWeb
 
         private readonly CosmosCommentsRepository _commentsRepository;
 
+        private readonly NotificationManager _notificationManager;
+
         public CommentsManager(
             IAuthorizationService authorizationService,
-            CosmosCommentsRepository commentsRepository)
+            CosmosCommentsRepository commentsRepository,
+            NotificationManager notificationManager)
         {
             _authorizationService = authorizationService;
             _commentsRepository = commentsRepository;
+            _notificationManager = notificationManager;
         }
 
         public async Task<ReviewCommentsModel> GetReviewCommentsAsync(string reviewId)
@@ -37,6 +42,7 @@ namespace APIViewWeb
             comment.TimeStamp = DateTime.Now;
 
             await _commentsRepository.UpsertCommentAsync(comment);
+            await _notificationManager.NotifySubscribersOnComment(user, comment);
         }
 
         public async Task<CommentModel> UpdateCommentAsync(ClaimsPrincipal user, string reviewId, string commentId, string commentText)
@@ -46,6 +52,7 @@ namespace APIViewWeb
             comment.EditedTimeStamp = DateTime.Now;
             comment.Comment = commentText;
             await _commentsRepository.UpsertCommentAsync(comment);
+            await _notificationManager.NotifySubscribersOnComment(user, comment);
             return comment;
         }
 
@@ -78,6 +85,17 @@ namespace APIViewWeb
             }
         }
 
+        public async Task ToggleUpvoteAsync(ClaimsPrincipal user, string reviewId, string commentId)
+        {
+            var comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
+
+            if (comment.Upvotes.RemoveAll(u => u == user.GetGitHubLogin()) == 0)
+            {
+                comment.Upvotes.Add(user.GetGitHubLogin());
+            }
+
+            await _commentsRepository.UpsertCommentAsync(comment);
+        }
         private async Task AssertOwnerAsync(ClaimsPrincipal user, CommentModel commentModel)
         {
             var result = await _authorizationService.AuthorizeAsync(user, commentModel, new[] { CommentOwnerRequirement.Instance });

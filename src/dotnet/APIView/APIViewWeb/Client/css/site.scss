@@ -1,4 +1,21 @@
-﻿a.navbar-brand
+﻿/* Mixins used below
+-------------------------------------------------- */
+@mixin placeholder {
+    ::-webkit-input-placeholder {
+        @content
+    }
+    :-moz-placeholder {
+        @content
+    }
+    ::-moz-placeholder {
+        @content
+    }
+    :-ms-input-placeholder {
+        @content
+    }
+}
+
+a.navbar-brand
 {
     white-space: normal;
     text-align: center;
@@ -175,19 +192,24 @@ form.comment {
     cursor: pointer;
 }
 
+@include placeholder {
+    font-style: italic;
+}
+
 .code-window {
     font-size: 14px;
     line-height: 1.5;
     border-collapse: separate;
-    width: 100%;
     tab-size: 8;
     border-spacing: 0;
     padding-top: 8px;
     padding-bottom: 8px;
+    background-color: white; // prevents code-window from overlapping stickySidebar
+    table-layout: fixed;
 }
 
 .code-line {
-    white-space: pre;
+    white-space: pre-wrap;
     font-family: monospace;
     line-height: 20px;
 }
@@ -241,10 +263,6 @@ code-inner {
     border-radius: 3px !important;
 }
 
-.author {
-    font-size: 14px;
-}
-
 .review-thread-reply {
     background-color: #F6F8FA;
     border-radius: 0 0 3px 3px;
@@ -287,6 +305,13 @@ code-inner {
     background-color: #FFF;
     border: 0;
     margin: -8px -16px;
+}
+
+.btn-upvote {
+    filter: grayscale(100%) opacity(30%);
+    &.active {
+        filter: unset;
+    }
 }
 
 .new-comment-content {
@@ -345,6 +370,7 @@ code-inner {
     list-style-type: none;
     text-overflow: ellipsis;
     padding-left: 0;
+    margin-bottom: 0 !important; // prevents flickering in stickySidebar
 }
 
 .nav-list-children>li {

@@ -6,6 +6,7 @@ using ApiView;
 using APIView;
 using APIView.DIff;
 using APIViewWeb.Models;
+using APIViewWeb.Repositories;
 using APIViewWeb.Respositories;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -20,14 +21,18 @@ namespace APIViewWeb.Pages.Assemblies
 
         private readonly CommentsManager _commentsManager;
 
+        private readonly NotificationManager _notificationManager;
+
         public ReviewPageModel(
             ReviewManager manager,
             BlobCodeFileRepository codeFileRepository,
-            CommentsManager commentsManager)
+            CommentsManager commentsManager,
+            NotificationManager notificationManager)
         {
             _manager = manager;
             _codeFileRepository = codeFileRepository;
             _commentsManager = commentsManager;
+            _notificationManager = notificationManager;
         }
 
         public ReviewModel Review { get; set; }
@@ -161,6 +166,12 @@ namespace APIViewWeb.Pages.Assemblies
         {
             await _manager.ToggleIsClosedAsync(User, id);
 
+            return RedirectToPage(new { id = id });
+        }
+
+        public async Task<ActionResult> OnPostToggleSubscribedAsync(string id)
+        {
+            await _notificationManager.ToggleSubscribedAsync(User, id);
             return RedirectToPage(new { id = id });
         }
     }

@@ -18,8 +18,11 @@ namespace Azure.ClientSdk.Analyzers
             "Azure.Iot",
             "Azure.Media",
             "Azure.Messaging",
+            "Azure.Search",
             "Azure.Security",
             "Azure.Storage",
+            "Azure.Template",
+            "Azure.Identity",
             "Microsoft.Extensions.Azure"
         };
 
@@ -35,6 +38,7 @@ namespace Azure.ClientSdk.Analyzers
 
         public override void Initialize(AnalysisContext context)
         {
+            context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.Analyze | GeneratedCodeAnalysisFlags.ReportDiagnostics);
             context.EnableConcurrentExecution();
 
             context.RegisterCompilationStartAction(

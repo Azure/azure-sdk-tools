@@ -16,10 +16,11 @@ namespace PipelineGenerator.Conventions
 
         protected override string GetDefinitionName(SdkComponent component)
         {
-            return $"{Context.Prefix} - {component.Name} - ci";
+            return component.Variant == null ? $"{Context.Prefix} - {component.Name} - ci" : $"{Context.Prefix} - {component.Name} - ci.{component.Variant}";
         }
 
-        public override string SearchPattern => "ci.yml";
+        public override string SearchPattern => "ci*.yml";
+        public override bool IsScheduled => false;
 
         protected override async Task<bool> ApplyConventionAsync(BuildDefinition definition, SdkComponent component)
         {

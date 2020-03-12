@@ -27,7 +27,7 @@ namespace Azure.ClientSdk.Analyzers
             AnalyzeCore(context);
         }
 
-        protected class ParameterEquivalenceComparer: IEqualityComparer<IParameterSymbol>
+        protected class ParameterEquivalenceComparer: IEqualityComparer<IParameterSymbol>, IEqualityComparer<ITypeParameterSymbol>
         {
             public static ParameterEquivalenceComparer Default { get; } = new ParameterEquivalenceComparer();
 
@@ -40,19 +40,31 @@ namespace Azure.ClientSdk.Analyzers
             {
                 return obj.Type.GetHashCode() ^ obj.Name.GetHashCode();
             }
+
+            public bool Equals(ITypeParameterSymbol x, ITypeParameterSymbol y)
+            {
+                return x.Name.Equals(y.Name);
+            }
+
+            public int GetHashCode(ITypeParameterSymbol obj)
+            {
+                return obj.Name.GetHashCode();
+            }
         }
 
-        protected IMethodSymbol FindMethod(IEnumerable<IMethodSymbol> methodSymbols, ImmutableArray<IParameterSymbol> parameters)
+        protected static IMethodSymbol FindMethod(IEnumerable<IMethodSymbol> methodSymbols, ImmutableArray<ITypeParameterSymbol> genericParameters, ImmutableArray<IParameterSymbol> parameters)
         {
-            return methodSymbols.SingleOrDefault(symbol => parameters.SequenceEqual(symbol.Parameters, ParameterEquivalenceComparer.Default));
+            return methodSymbols.SingleOrDefault(symbol =>
+                genericParameters.SequenceEqual(symbol.TypeParameters, ParameterEquivalenceComparer.Default) &&
+                parameters.SequenceEqual(symbol.Parameters, ParameterEquivalenceComparer.Default));
         }
 
-        protected IMethodSymbol FindMethod(IEnumerable<IMethodSymbol> methodSymbols, ImmutableArray<IParameterSymbol> parameters, Func<IParameterSymbol, bool> lastParameter)
+        protected static IMethodSymbol FindMethod(IEnumerable<IMethodSymbol> methodSymbols, ImmutableArray<ITypeParameterSymbol> genericParameters, ImmutableArray<IParameterSymbol> parameters, Func<IParameterSymbol, bool> lastParameter)
         {
 
             return methodSymbols.SingleOrDefault(symbol => {
 
-                if (!symbol.Parameters.Any())
+                if (!symbol.Parameters.Any() || !genericParameters.SequenceEqual(symbol.TypeParameters, ParameterEquivalenceComparer.Default))
                 {
                     return false;
                 }

@@ -4,6 +4,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
+using APIViewWeb.Models;
+using APIViewWeb.Repositories;
 using Newtonsoft.Json;
 
 namespace APIViewWeb
@@ -12,13 +15,18 @@ namespace APIViewWeb
     {
         private bool _runAnalysis;
 
+        public ReviewModel()
+        {
+            Revisions = new ReviewRevisionModelList(this);
+        }
+
         [JsonProperty("id")]
         public string ReviewId { get; set; } = IdHelper.GenerateId();
 
         public string Name { get; set; }
         public string Author { get; set; }
         public DateTime CreationDate { get; set; }
-        public List<ReviewRevisionModel> Revisions { get; set; } = new List<ReviewRevisionModel>();
+        public ReviewRevisionModelList Revisions { get; set; }
 
         [Obsolete("Back compat")]
         public List<ReviewCodeFileModel> Files { get; set; } = new List<ReviewCodeFileModel>();
@@ -35,5 +43,20 @@ namespace APIViewWeb
         }
 
         public bool IsClosed { get; set; }
+
+        public HashSet<string> Subscribers { get; set; } = new HashSet<string>();
+
+        public bool IsUserSubscribed(ClaimsPrincipal user)
+        {
+            string email = GetUserEmail(user);
+            if (email != null)
+            {
+                return Subscribers.Contains(email);
+            }
+            return false;
+        }
+
+        public string GetUserEmail(ClaimsPrincipal user) =>
+            NotificationManager.GetUserEmail(user);
     }
 }

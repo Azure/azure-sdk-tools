@@ -1,0 +1,40 @@
+# Mirror the eng/common folder to all subscribed langauge repos.
+
+trigger:
+  branches:
+    include:
+      - master
+  paths:
+    include:
+      - eng/common
+
+pr: none
+
+resources:
+  repositories:
+    - repository: azure-sdk-build-tools
+      type: git
+      name: internal/azure-sdk-build-tools
+
+pool:
+  vmImage: windows-2019
+
+jobs:
+  - job: SyncEngCommon
+    displayName: Sync eng/common Directory
+
+    steps:
+    - template: tools/clone-buildtools/clone-buildtools.yml@azure-sdk-build-tools
+    - template: ./templates/steps/sync-directory.yml
+      parameters:
+        CommitMessage: Sync eng/common directory with azure-sdk-tools repository
+        DirectoryToSync: eng/common
+        Repos:
+          - azure-sdk-for-android
+          - azure-sdk-for-c
+          - azure-sdk-for-go
+          - azure-sdk-for-ios
+          - azure-sdk-for-java
+          - azure-sdk-for-js
+          - azure-sdk-for-net
+          - azure-sdk-for-python

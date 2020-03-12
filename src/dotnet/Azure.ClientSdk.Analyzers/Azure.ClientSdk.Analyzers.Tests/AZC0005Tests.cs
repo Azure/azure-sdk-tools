@@ -3,34 +3,27 @@
 
 using System.Threading.Tasks;
 using Xunit;
+using Verifier = Azure.ClientSdk.Analyzers.Tests.AzureAnalyzerVerifier<Azure.ClientSdk.Analyzers.ClientConstructorAnalyzer>;
 
 namespace Azure.ClientSdk.Analyzers.Tests
 {
     public class AZC0005Tests
     {
-        private readonly DiagnosticAnalyzerRunner _runner = new DiagnosticAnalyzerRunner(new ClientConstructorAnalyzer());
-
         [Fact]
         public async Task AZC0005ProducedForClientTypesWithoutProtectedCtor()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     public class SomeClientOptions { }
 
-    public class /*MM*/SomeClient
+    public class [|SomeClient|]
     {
         public SomeClient(string connectionString) {}
         public SomeClient(string connectionString, SomeClientOptions options) {}
     }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-
-            var diagnostic = Assert.Single(diagnostics);
-
-            Assert.Equal("AZC0005", diagnostic.Id);
-            AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostics[0].Location);
+}";
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0005");
         }
     }
 }

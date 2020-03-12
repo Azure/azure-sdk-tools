@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using Microsoft.CodeAnalysis;
@@ -11,7 +11,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 
-namespace Azure.ClientSdk.Analyzers.Tests
+namespace APIViewTest
 {
     public class DiagnosticProject
     {
@@ -27,7 +27,7 @@ namespace Azure.ClientSdk.Analyzers.Tests
 
         private static readonly Dictionary<Assembly, Solution> _solutionCache = new Dictionary<Assembly, Solution>();
 
-        public static Project Create(Assembly testAssembly, string[] sources)
+        public static Project Create(Assembly testAssembly, LanguageVersion languageVersion, string[] sources)
         {
             Solution solution;
             lock (_solutionCache)
@@ -38,7 +38,7 @@ namespace Azure.ClientSdk.Analyzers.Tests
                     solution = new AdhocWorkspace()
                         .CurrentSolution
                         .AddProject(projectId, TestProjectName, TestProjectName, LanguageNames.CSharp)
-                        .WithProjectParseOptions(projectId, new CSharpParseOptions(LanguageVersion.Latest));
+                        .WithProjectParseOptions(projectId, new CSharpParseOptions(languageVersion));
 
                     foreach (var defaultCompileLibrary in DependencyContext.Load(testAssembly).CompileLibraries)
                     {

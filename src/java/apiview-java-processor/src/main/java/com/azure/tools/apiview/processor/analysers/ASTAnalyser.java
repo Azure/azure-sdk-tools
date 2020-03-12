@@ -1,7 +1,10 @@
 package com.azure.tools.apiview.processor.analysers;
 
-import com.azure.tools.apiview.processor.analysers.util.SourceJarTypeSolver;
 import com.azure.tools.apiview.processor.diagnostics.Diagnostics;
+import com.azure.tools.apiview.processor.model.APIListing;
+import com.azure.tools.apiview.processor.model.ChildItem;
+import com.azure.tools.apiview.processor.model.Token;
+import com.azure.tools.apiview.processor.model.TypeKind;
 import com.github.javaparser.ParserConfiguration;
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.TokenRange;
@@ -15,6 +18,7 @@ import com.github.javaparser.ast.body.AnnotationMemberDeclaration;
 import com.github.javaparser.ast.body.BodyDeclaration;
 import com.github.javaparser.ast.body.CallableDeclaration;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
+import com.github.javaparser.ast.body.ConstructorDeclaration;
 import com.github.javaparser.ast.body.EnumConstantDeclaration;
 import com.github.javaparser.ast.body.EnumDeclaration;
 import com.github.javaparser.ast.body.FieldDeclaration;
@@ -30,10 +34,6 @@ import com.github.javaparser.ast.type.ReferenceType;
 import com.github.javaparser.ast.type.Type;
 import com.github.javaparser.ast.type.TypeParameter;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
-import com.azure.tools.apiview.processor.model.APIListing;
-import com.azure.tools.apiview.processor.model.ChildItem;
-import com.azure.tools.apiview.processor.model.Token;
-import com.azure.tools.apiview.processor.model.TypeKind;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.JarTypeSolver;
@@ -53,12 +53,19 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import static com.azure.tools.apiview.processor.model.TokenKind.*;
-
-import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.*;
+import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.getPackageName;
+import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.isPrivateOrPackagePrivate;
+import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.isTypeAPublicAPI;
+import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.makeId;
+import static com.azure.tools.apiview.processor.model.TokenKind.KEYWORD;
+import static com.azure.tools.apiview.processor.model.TokenKind.MEMBER_NAME;
+import static com.azure.tools.apiview.processor.model.TokenKind.NEW_LINE;
+import static com.azure.tools.apiview.processor.model.TokenKind.PUNCTUATION;
+import static com.azure.tools.apiview.processor.model.TokenKind.TEXT;
+import static com.azure.tools.apiview.processor.model.TokenKind.TYPE_NAME;
+import static com.azure.tools.apiview.processor.model.TokenKind.WHITESPACE;
 
 public class ASTAnalyser implements Analyser {
-    private final File inputFile;
     private final APIListing apiListing;
 
     private final Map<String, ChildItem> packageNameToNav;
@@ -66,7 +73,6 @@ public class ASTAnalyser implements Analyser {
     private int indent;
 
     public ASTAnalyser(File inputFile, APIListing apiListing) {
-        this.inputFile = inputFile;
         this.apiListing = apiListing;
         this.indent = 0;
         this.packageNameToNav = new HashMap<>();
@@ -82,20 +88,17 @@ public class ASTAnalyser implements Analyser {
                else if (inputFileName.contains("implementation")) return false;
                else if (inputFileName.contains("package-info.java")) return false;
                else if (inputFileName.contains("module-info.java")) return false;
-               else if (!inputFileName.endsWith(".java")) return false;
-               else return true;
+               else return inputFileName.endsWith(".java");
            }).collect(Collectors.toList());
 
         // then we do a pass to build a map of all known types and package names, and a map of package names to nav items,
         // followed by a pass to tokenise each file
         allFiles.stream()
                 .map(this::scanForTypes)
-                .collect(Collectors.toList())
-                .stream()
                 .filter(Optional::isPresent)
                 .map(Optional::get)
-                .sorted((s1, s2) -> s1.path.compareTo(s2.path))
-                .forEach(scanClass -> processSingleFile(scanClass));
+                .sorted(Comparator.comparing(s -> s.path))
+                .forEach(this::processSingleFile);
 
         // build the navigation
         packageNameToNav.values().stream()
@@ -120,9 +123,7 @@ public class ASTAnalyser implements Analyser {
             CombinedTypeSolver combinedTypeSolver = new CombinedTypeSolver();
             combinedTypeSolver.add(new ReflectionTypeSolver(false));
             combinedTypeSolver.add(new SourceJarTypeSolver(inputFile));
-//            combinedTypeSolver.add(new JavaParserTypeSolver(inputFile));
-//            combinedTypeSolver.add(new JarTypeSolver(inputFile));
-
+          
             ParserConfiguration parserConfiguration = new ParserConfiguration()
                   .setStoreTokens(true)
                   .setSymbolResolver(new JavaSymbolSolver(combinedTypeSolver));
@@ -210,10 +211,16 @@ public class ASTAnalyser implements Analyser {
             }
 
             // get fields
-            tokeniseFields(isInterfaceDeclaration, typeDeclaration.getFields());
+            tokeniseFields(isInterfaceDeclaration, typeDeclaration);
 
             // get Constructors
-            tokeniseConstructorsOrMethods(isInterfaceDeclaration, typeDeclaration.getConstructors());
+            final List<ConstructorDeclaration> constructors = typeDeclaration.getConstructors();
+            if (constructors.isEmpty()) {
+                // add default constructor if there is no constructor at all
+                addDefaultConstructor(typeDeclaration);
+            } else {
+                tokeniseConstructorsOrMethods(isInterfaceDeclaration, constructors);
+            }
 
             // get Methods
             tokeniseConstructorsOrMethods(isInterfaceDeclaration, typeDeclaration.getMethods());
@@ -239,7 +246,7 @@ public class ASTAnalyser implements Analyser {
 
                 // create a unique id for enum constants
                 final String name = enumConstantDeclaration.getNameAsString();
-                final String definitionId = makeId(enumDeclaration.getFullyQualifiedName().get() + "." + counter); 
+                final String definitionId = makeId(enumDeclaration.getFullyQualifiedName().get() + "." + counter);
                 addToken(new Token(MEMBER_NAME, name, definitionId));
 
                 enumConstantDeclaration.getArguments().forEach(expression -> {
@@ -260,8 +267,8 @@ public class ASTAnalyser implements Analyser {
         }
 
         private boolean getTypeDeclaration(TypeDeclaration<?> typeDeclaration) {
-            // Skip if the class is private or package-private
-            if (isPrivateOrPackagePrivate(typeDeclaration.getAccessSpecifier())) {
+            // Skip if the class is private or package-private, unless it is a nested type defined inside a public interface
+            if (!isTypeAPublicAPI(typeDeclaration)) {
                 return true;
             }
 
@@ -407,7 +414,10 @@ public class ASTAnalyser implements Analyser {
             unindent();
         }
 
-        private void tokeniseFields(boolean isInterfaceDeclaration, List<? extends FieldDeclaration> fieldDeclarations) {
+        private void tokeniseFields(boolean isInterfaceDeclaration, TypeDeclaration<?> typeDeclaration) {
+            final List<? extends FieldDeclaration> fieldDeclarations = typeDeclaration.getFields();
+            final String fullPathName = typeDeclaration.getFullyQualifiedName().get();
+
             indent();
             for (FieldDeclaration fieldDeclaration : fieldDeclarations) {
                 // By default , interface has public abstract methods if there is no access specifier declared
@@ -434,7 +444,7 @@ public class ASTAnalyser implements Analyser {
 
                     for (VariableDeclarator variableDeclarator : variableDeclarators) {
                         final String name = variableDeclarator.getNameAsString();
-                        final String definitionId = makeId(variableDeclarator);
+                        final String definitionId = makeId(fullPathName + "." + variableDeclarator.getName());
                         addToken(new Token(MEMBER_NAME, name, definitionId));
                         addToken(new Token(PUNCTUATION, ","));
                         addToken(new Token(WHITESPACE, " "));
@@ -445,7 +455,7 @@ public class ASTAnalyser implements Analyser {
                     getType(fieldDeclaration);
                     final VariableDeclarator variableDeclarator = variableDeclarators.get(0);
                     final String name = variableDeclarator.getNameAsString();
-                    final String definitionId = makeId(variableDeclarator);
+                    final String definitionId = makeId(fullPathName + "." + variableDeclarator.getName());
                     addToken(new Token(MEMBER_NAME, name, definitionId));
 
                     final Optional<Expression> variableDeclaratorOption = variableDeclarator.getInitializer();
@@ -466,10 +476,20 @@ public class ASTAnalyser implements Analyser {
 
         private void tokeniseConstructorsOrMethods(boolean isInterfaceDeclaration, List<? extends CallableDeclaration<?>> callableDeclarations) {
             indent();
+
+            boolean isAllPrivateOrPackagePrivate = callableDeclarations.stream()
+                    .filter(BodyDeclaration::isConstructorDeclaration)
+                    .allMatch(callableDeclaration -> isPrivateOrPackagePrivate(callableDeclaration.getAccessSpecifier()));
+
             for (final CallableDeclaration<?> callableDeclaration : callableDeclarations) {
                 // By default , interface has public abstract methods if there is no access specifier declared
                 if (isInterfaceDeclaration) {
                     // no-op - we take all methods in the method
+                } else if (callableDeclaration.isConstructorDeclaration()) {
+                    // if there is at least one public constructor, only explore the public but skip all private constructors
+                    if (!isAllPrivateOrPackagePrivate && isPrivateOrPackagePrivate(callableDeclaration.getAccessSpecifier())) {
+                        continue;
+                    }
                 } else if (isPrivateOrPackagePrivate(callableDeclaration.getAccessSpecifier())) {
                     // Skip if not public API
                     continue;
@@ -669,6 +689,27 @@ public class ASTAnalyser implements Analyser {
                 }
             }
         }
+
+        private void addDefaultConstructor(TypeDeclaration<?> typeDeclaration) {
+            indent();
+
+            addToken(makeWhitespace());
+            addToken(new Token(KEYWORD, "public"));
+            addToken(new Token(WHITESPACE, " "));
+            final String name = typeDeclaration.getNameAsString();
+            final String definitionId = makeId(typeDeclaration.getNameAsString());
+            addToken(new Token(MEMBER_NAME, name, definitionId));
+            addToken(new Token(PUNCTUATION, "("));
+            addToken(new Token(PUNCTUATION, ")"));
+            addToken(new Token(WHITESPACE, " "));
+
+            // close statements
+            addToken(new Token(PUNCTUATION, "{"));
+            addToken(new Token(PUNCTUATION, "}"));
+            addToken(new Token(NEW_LINE, ""));
+
+            unindent();
+        }
     }
 
     private class ScanForClassTypeVisitor extends VoidVisitorAdapter<Map<String, String>> {
@@ -684,16 +725,21 @@ public class ASTAnalyser implements Analyser {
                     .forEach(name -> name.getQualifier().ifPresent(packageName -> {
                         apiListing.addPackageTypeMapping(packageName.toString(), name.getIdentifier());
                     }));
-            }
         }
+    }
 
+    /*
+     * This method is only called in relation to building up the types for linking, it does not build up the actual
+     * text output that is displayed to the user.
+     */
     private void getTypeDeclaration(TypeDeclaration<?> typeDeclaration) {
-        // Skip if the class is private or package-private
-        if (isPrivateOrPackagePrivate(typeDeclaration.getAccessSpecifier())) {
+        // Skip if the class is private or package-private, unless it is a nested type defined inside a public interface
+        if (!isTypeAPublicAPI(typeDeclaration)) {
             return;
         }
 
-        if (! (typeDeclaration.isClassOrInterfaceDeclaration() || typeDeclaration.isEnumDeclaration())) {
+        final boolean isInterfaceType = typeDeclaration.isClassOrInterfaceDeclaration();
+        if (! (isInterfaceType || typeDeclaration.isEnumDeclaration())) {
             return;
         }
 

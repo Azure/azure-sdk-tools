@@ -1,38 +1,31 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
-using System.Linq;
+
 using System.Threading.Tasks;
 using Xunit;
+using Verifier = Azure.ClientSdk.Analyzers.Tests.AzureAnalyzerVerifier<Azure.ClientSdk.Analyzers.ClientOptionsAnalyzer>;
 
 namespace Azure.ClientSdk.Analyzers.Tests
 {
     public class AZC0008Tests
     {
-        private readonly DiagnosticAnalyzerRunner _runner = new DiagnosticAnalyzerRunner(new ClientOptionsAnalyzer());
-
         [Fact]
         public async Task AZC0008ProducedForClientOptionsWithoutServiceVersionEnum()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
-    public class /*MM*/SomeClientOptions { 
+    public class [|SomeClientOptions|] { 
 
     }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-
-            var diagnostic = Assert.Single(diagnostics);
-
-            Assert.Equal("AZC0008", diagnostic.Id);
-            AnalyzerAssert.DiagnosticLocation(testSource.DefaultMarkerLocation, diagnostics[0].Location);
+}";
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0008");
         }
 
         [Fact]
         public async Task AZC0008NotProducedForClientOptionsWithServiceVersionEnum()
         {
-            var testSource = TestSource.Read(@"
+            const string code = @"
 namespace RandomNamespace
 {
     public class SomeClientOptions { 
@@ -42,10 +35,10 @@ namespace RandomNamespace
             V2018_11_09 = 0
         }
     }
-}
-");
-            var diagnostics = await _runner.GetDiagnosticsAsync(testSource.Source);
-            Assert.Empty(diagnostics.Where(d => d.Id == "AZC0008"));
+}";
+            await Verifier.CreateAnalyzer(code)
+                .WithDisabledDiagnostics("AZC0009")
+                .RunAsync();
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Newtonsoft.Json;
 
 namespace APIViewWeb.Models
@@ -15,5 +16,6 @@ namespace APIViewWeb.Models
         public string Username { get; set; }
         public bool IsResolve { get; set; }
         public DateTime? EditedTimeStamp { get; set; }
+        public List<string> Upvotes { get; set; } = new List<string>();
     }
 }

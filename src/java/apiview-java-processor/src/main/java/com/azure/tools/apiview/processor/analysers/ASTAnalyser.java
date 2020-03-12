@@ -5,6 +5,7 @@ import com.azure.tools.apiview.processor.model.APIListing;
 import com.azure.tools.apiview.processor.model.ChildItem;
 import com.azure.tools.apiview.processor.model.Token;
 import com.azure.tools.apiview.processor.model.TypeKind;
+import com.github.javaparser.ParserConfiguration;
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.TokenRange;
 import com.github.javaparser.ast.CompilationUnit;
@@ -35,7 +36,10 @@ import com.github.javaparser.ast.type.TypeParameter;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
+import com.github.javaparser.symbolsolver.resolution.typesolvers.JarTypeSolver;
+import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
+import com.github.javaparser.utils.SourceZip;
 
 import java.io.File;
 import java.io.IOException;
@@ -117,12 +121,15 @@ public class ASTAnalyser implements Analyser {
         try {
             // Set up a minimal type solver that only looks at the classes used to run this sample.
             CombinedTypeSolver combinedTypeSolver = new CombinedTypeSolver();
-            combinedTypeSolver.add(new ReflectionTypeSolver());
+            combinedTypeSolver.add(new ReflectionTypeSolver(false));
+            combinedTypeSolver.add(new SourceJarTypeSolver(inputFile));
+          
+            ParserConfiguration parserConfiguration = new ParserConfiguration()
+                  .setStoreTokens(true)
+                  .setSymbolResolver(new JavaSymbolSolver(combinedTypeSolver));
 
             // Configure JavaParser to use type resolution
-            StaticJavaParser.getConfiguration()
-                    .setStoreTokens(true)
-                    .setSymbolResolver(new JavaSymbolSolver(combinedTypeSolver));
+            StaticJavaParser.setConfiguration(parserConfiguration);
 
             CompilationUnit compilationUnit = StaticJavaParser.parse(path);
             new ScanForClassTypeVisitor().visit(compilationUnit, null);

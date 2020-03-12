@@ -18,8 +18,13 @@ public class Diagnostic {
     private String targetId;
 
     public Diagnostic(String targetId, String text) {
+        this(targetId, text, null);
+    }
+
+    public Diagnostic(String targetId, String text, String helpLinkUri) {
         this.diagnosticId = "AZ_JAVA_" + diagnosticIdCounter++;
         this.targetId = targetId;
         this.text = text;
+        this.helpLinkUri = helpLinkUri;
     }
 }

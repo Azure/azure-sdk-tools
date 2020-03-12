@@ -1,6 +1,10 @@
 package com.azure.tools.apiview.processor;
 
 import com.azure.tools.apiview.processor.analysers.Analyser;
+import com.azure.tools.apiview.processor.model.ChildItem;
+import com.azure.tools.apiview.processor.model.Diagnostic;
+import com.azure.tools.apiview.processor.model.TokenKind;
+import com.azure.tools.apiview.processor.model.TypeKind;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.azure.tools.apiview.processor.analysers.ASTAnalyser;
 import com.azure.tools.apiview.processor.model.APIListing;
@@ -49,11 +53,11 @@ public class Main {
 
             String jsonFileName = file.getName().substring(0, file.getName().length() - 4) + ".json";
             File outputFile = new File(outputDir, jsonFileName);
-            new Main(file, outputFile);
+            processFile(file, outputFile);
         }
     }
 
-    public Main(File inputFile, File outputFile) {
+    private static void processFile(File inputFile, File outputFile) {
         APIListing apiListing = new APIListing();
         apiListing.setName(inputFile.getName());
 
@@ -61,28 +65,35 @@ public class Main {
         List<Token> tokens = new ArrayList<>();
         apiListing.setTokens(tokens);
 
-        Analyser analyser = new ASTAnalyser(inputFile, apiListing);
+        if (inputFile.getName().endsWith("-sources.jar")) {
+            Analyser analyser = new ASTAnalyser(inputFile, apiListing);
 
-        // Read all files within the jar file so that we can create a list of files to analyse
-        List<Path> allFiles = new ArrayList<>();
-        try {
-            FileSystems.newFileSystem(inputFile.toPath(), getClass().getClassLoader())
-                    .getRootDirectories()
-                    .forEach(root -> {
-                        try {
-                            Files.walk(root).forEach(allFiles::add);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                            System.exit(-1);
-                        }
-                    });
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.exit(-1);
+            // Read all files within the jar file so that we can create a list of files to analyse
+            List<Path> allFiles = new ArrayList<>();
+            try {
+                FileSystems.newFileSystem(inputFile.toPath(), Main.class.getClassLoader())
+                        .getRootDirectories()
+                        .forEach(root -> {
+                            try {
+                                Files.walk(root).forEach(allFiles::add);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                                System.exit(-1);
+                            }
+                        });
+            } catch (IOException e) {
+                e.printStackTrace();
+                System.exit(-1);
+            }
+
+            // Do the analysis
+            analyser.analyse(allFiles);
+        } else {
+            apiListing.getTokens().add(new Token(LINE_ID_MARKER, "Error!", "error"));
+            apiListing.addDiagnostic(new Diagnostic("error", "Uploaded files should end with '-sources.jar', " +
+                    "as the APIView tool only works with source jar files, not compiled jar files. The uploaded file " +
+                    "that was submitted to APIView was named " + inputFile.getName()));
         }
-
-        // Do the analysis
-        analyser.analyse(allFiles);
 
         // Write out to the filesystem
         try {

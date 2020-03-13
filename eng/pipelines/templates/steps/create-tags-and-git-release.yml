@@ -11,7 +11,7 @@ steps:
   inputs:
     targetType: filePath
     filePath: eng/common/scripts/create-tags-and-git-release.ps1
-    arguments: -artifactLocation ${{parameters.ArtifactLocation}} -packageRepository ${{parameters.PackageRepository}} -releaseSha ${{parameters.ReleaseSha}} -repoId ${{parameters.RepoId}} -workingDirectory ${{parameters.WorkingDirectory}}
+    arguments: -artifactLocation ${{parameters.ArtifactLocation}} -packageRepository ${{parameters.PackageRepository}} -releaseSha ${{parameters.ReleaseSha}} -repoId ${{parameters.RepoId}} -workingDirectory '${{parameters.WorkingDirectory}}'
     pwsh: true
   timeoutInMinutes: 5
   env:

@@ -15,8 +15,7 @@ class NameSpaceNode(NodeEntityBase):
     """NameSpaceNode represents module level node and all it's children
     """
     def __init__(self, namespace, module):
-        super().__init__(module)
-        self.namespace = namespace
+        super().__init__(namespace, None, module)
         self._inspect()
 
 
@@ -32,8 +31,9 @@ class NameSpaceNode(NodeEntityBase):
             if name not in public_entities:
                 continue
             if inspect.isclass(member_obj):
-                self.child_nodes.append(ClassNode(member_obj))
+                self.child_nodes.append(ClassNode(self.namespace, self, member_obj))
             if inspect.ismethod(member_obj) or inspect.isfunction(member_obj):
-                self.child_nodes.append(FunctionNode(member_obj))
+                self.child_nodes.append(FunctionNode(self.namespace,  self, member_obj))
+                
 
 

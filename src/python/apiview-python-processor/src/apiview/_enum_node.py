@@ -11,8 +11,8 @@ logging.getLogger().setLevel(logging.INFO)
 class EnumNode(NodeEntityBase):
     """Enum node represents any Enum value
     """
-    def __init__(self, obj):
-        super().__init__(obj)
+    def __init__(self, namespace, parent_node, obj):
+        super().__init__(namespace, parent_node, obj)
         self.name = obj.name
         self.value = obj.value
 

@@ -88,7 +88,7 @@ def strip_comments_from_inits(start_dir):
         lines = [line.replace('"pkgutil"', "'pkgutil'") for line in lines if not line.strip().startswith('#')]
 
         with open(located_init, 'w') as f:
-            f.write("\n".join(lines))
+            f.write("".join(lines))
 
 
 def repackage_data(download_dir, unzip_directory, upload_directory):

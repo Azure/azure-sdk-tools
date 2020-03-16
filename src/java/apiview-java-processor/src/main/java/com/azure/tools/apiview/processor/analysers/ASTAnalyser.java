@@ -581,7 +581,6 @@ public class ASTAnalyser implements Analyser {
                 }
             }
             addToken(new Token(PUNCTUATION, ">"));
-            addToken(new Token(WHITESPACE, " "));
         }
 
         private void getGenericTypeParameter(TypeParameter typeParameter) {

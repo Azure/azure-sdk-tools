@@ -3,7 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp2.1</TargetFramework>
-    <NoWarn>CS8002;NU5105</NoWarn>
+    <NoWarn>$(NoWarn);CS8002;NU5105</NoWarn>
 
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>dotnet-createRuleFabricBot</ToolCommandName>

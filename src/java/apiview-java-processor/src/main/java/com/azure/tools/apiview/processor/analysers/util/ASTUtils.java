@@ -11,10 +11,6 @@ import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.TypeDeclaration;
 import com.github.javaparser.ast.body.VariableDeclarator;
-import com.github.javaparser.ast.type.ClassOrInterfaceType;
-import com.github.javaparser.ast.type.Type;
-import com.github.javaparser.resolution.types.ResolvedReferenceType;
-import com.github.javaparser.symbolsolver.javaparsermodel.JavaParserFacade;
 
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -111,7 +107,7 @@ public class ASTUtils {
      * public interface.
      */
     public static boolean isTypeAPublicAPI(TypeDeclaration type) {
-        final boolean isInterfaceType = type.isClassOrInterfaceDeclaration();
+        final boolean isInterfaceType = isInterfaceType(type);
         final boolean isNestedType = type.isNestedType();
 
         // Skip if the class is private or package-private, unless it is a nested type defined inside a public interface
@@ -130,5 +126,15 @@ public class ASTUtils {
             }
         }
         return true;
+    }
+
+    /**
+     * Returns true if the type is a public interface.
+     */
+    public static boolean isInterfaceType(TypeDeclaration type) {
+        if (type.isClassOrInterfaceDeclaration()) {
+            return type.asClassOrInterfaceDeclaration().isInterface();
+        }
+        return false;
     }
 }

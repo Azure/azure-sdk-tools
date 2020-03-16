@@ -51,6 +51,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.getPackageName;
+import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.isInterfaceType;
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.isPrivateOrPackagePrivate;
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.isTypeAPublicAPI;
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.makeId;
@@ -195,11 +196,7 @@ public class ASTAnalyser implements Analyser {
             }
 
             // Get if the declaration is interface or not
-            boolean isInterfaceDeclaration = false;
-            if (typeDeclaration.isClassOrInterfaceDeclaration()) {
-                // could be interface or custom annotation @interface
-                isInterfaceDeclaration = typeDeclaration.asClassOrInterfaceDeclaration().isInterface();
-            }
+            boolean isInterfaceDeclaration = isInterfaceType(typeDeclaration);
 
             // public custom annotation @interface's members
             if (typeDeclaration.isAnnotationDeclaration() && !isPrivateOrPackagePrivate(typeDeclaration.getAccessSpecifier())) {
@@ -581,7 +578,6 @@ public class ASTAnalyser implements Analyser {
                 }
             }
             addToken(new Token(PUNCTUATION, ">"));
-            addToken(new Token(WHITESPACE, " "));
         }
 
         private void getGenericTypeParameter(TypeParameter typeParameter) {

@@ -4,9 +4,6 @@ trigger:
   branches:
     include:
       - master
-  paths:
-    include:
-      - eng/common
 
 pr: none
 

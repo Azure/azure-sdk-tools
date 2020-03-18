@@ -157,7 +157,15 @@ $resourceGroupName = if ($CI) {
     $BaseName = 't' + (New-Guid).ToString('n').Substring(0, 16)
     Write-Verbose "Generated base name '$BaseName' for CI build"
 
-    "rg-{0}-$BaseName" -f ($ServiceDirectory -replace '[\\\/:]', '-').Substring(0, [Math]::Min($ServiceDirectory.Length, 90 - $BaseName.Length - 4)).Trim('-')
+    # If the ServiceDirectory is an absolute path use the last directory name
+    # (e.g. D:\foo\bar\ -> bar)
+    $serviceName = if (Split-Path -IsAbsolute  $ServiceDirectory) {
+        Split-Path -Leaf $ServiceDirectory
+    } else {
+        $ServiceDirectory
+    }
+
+    "rg-{0}-$BaseName" -f ($serviceName -replace '[\\\/:]', '-').Substring(0, [Math]::Min($serviceName.Length, 90 - $BaseName.Length - 4)).Trim('-')
 } else {
     "rg-$BaseName"
 }

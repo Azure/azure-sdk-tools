@@ -35,6 +35,10 @@ param (
     [string] $ProvisionerApplicationSecret,
 
     [Parameter()]
+    [ValidateNotNullOrEmpty()]
+    [string] $Environment = 'AzureCloud',
+
+    [Parameter()]
     [switch] $Force
 )
 
@@ -87,7 +91,7 @@ if ($ProvisionerApplicationId) {
     $provisionerSecret = ConvertTo-SecureString -String $ProvisionerApplicationSecret -AsPlainText -Force
     $provisionerCredential = [System.Management.Automation.PSCredential]::new($ProvisionerApplicationId, $provisionerSecret)
     $provisionerAccount = Retry {
-        Connect-AzAccount -Tenant $TenantId -Credential $provisionerCredential -ServicePrincipal
+        Connect-AzAccount -Tenant $TenantId -Credential $provisionerCredential -ServicePrincipal -Environment $Environment
     }
 
     $exitActions += {
@@ -102,7 +106,7 @@ if (!$ResourceGroupName) {
 }
 
 Log "Deleting resource group '$ResourceGroupName'"
-if (Retry { Remove-AzResourceGroup -Name "$ResourceGroupName" -Force:$Force }) {
+if (Retry { Remove-AzResourceGroup -Name "$ResourceGroupName" -DefaultProfile $provisionerAccount.Context -Force:$Force }) {
     Write-Verbose "Successfully deleted resource group '$ResourceGroupName'"
 }
 
@@ -137,6 +141,10 @@ A service principal ID to provision test resources when a provisioner is specifi
 
 .PARAMETER ProvisionerApplicationSecret
 A service principal secret (password) to provision test resources when a provisioner is specified.
+
+.PARAMETER Environment
+Name of the cloud environment. The default is the Azure Public Cloud
+('PublicCloud')
 
 .PARAMETER Force
 Force removal of resource group without asking for user confirmation

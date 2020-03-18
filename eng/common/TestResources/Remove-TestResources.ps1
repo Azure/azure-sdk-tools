@@ -106,7 +106,7 @@ if (!$ResourceGroupName) {
 }
 
 Log "Deleting resource group '$ResourceGroupName'"
-if (Retry { Remove-AzResourceGroup -Name "$ResourceGroupName" -DefaultProfile $provisionerAccount.Context -Force:$Force }) {
+if (Retry { Remove-AzResourceGroup -Name "$ResourceGroupName" -Force:$Force }) {
     Write-Verbose "Successfully deleted resource group '$ResourceGroupName'"
 }
 

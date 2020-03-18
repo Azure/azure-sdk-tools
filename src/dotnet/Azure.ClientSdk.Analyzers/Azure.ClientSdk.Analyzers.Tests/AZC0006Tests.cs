@@ -42,5 +42,39 @@ namespace RandomNamespace
 }";
             await Verifier.VerifyAnalyzerAsync(code, "AZC0006");
         }
+
+        [Fact]
+        public async Task AZC0006NotProducedForClientsWithoutOptionsCtorWithArguments()
+        {
+            const string code = @"
+namespace RandomNamespace
+{
+    public class SomeClientOptions { }
+
+    public class SomeClient
+    {
+        protected SomeClient() {}
+        public SomeClient(string connectionString, SomeClientOptions options = null) {}
+    }
+}";
+            await Verifier.VerifyAnalyzerAsync(code);
+        }
+
+        [Fact]
+        public async Task AZC0006NotProducedForSharedClientOptions()
+        {
+            const string code = @"
+namespace RandomNamespace
+{
+    public class SharedClientOptions { }
+
+    public class SomeClient
+    {
+        protected SomeClient() {}
+        public SomeClient(string connectionString, SharedClientOptions options = null) {}
+    }
+}";
+            await Verifier.VerifyAnalyzerAsync(code);
+        }
     }
 }

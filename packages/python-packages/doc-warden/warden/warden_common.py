@@ -5,7 +5,7 @@ import os
 import fnmatch
 import re
 import xml.etree.ElementTree as ET
-import pathlib
+import pathlib2
 
 # python 3 transitioned StringIO to be part of `io` module.
 # python 2 needs the old version however
@@ -62,7 +62,7 @@ def get_net_package(configuration):
 def get_project_roots_from_pbxproj_paths(pbxproj_file_set):
     project_roots = []
     for pbxproj_file in pbxproj_file_set:
-        pbxproj_file_path = pathlib.Path(pbxproj_file)
+        pbxproj_file_path = pathlib2.Path(pbxproj_file)
         project_root_path = pbxproj_file_path.parents[1]
         project_roots.append(str(project_root_path))
 

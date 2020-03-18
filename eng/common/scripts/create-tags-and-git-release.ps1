@@ -109,7 +109,7 @@ function ParseMavenPackage($pkg, $workingDirectory) {
     return $null
   }
 
-  $releaseNotes = &"${PSScriptRoot}/../../eng/common/Extract-ReleaseNotes.ps1" -ChangeLogLocation @(Get-ChildItem -Path $pkg.DirectoryName -Recurse -Include "$($pkg.Basename)-changelog.md")[0]
+  $releaseNotes = &"${PSScriptRoot}/../Extract-ReleaseNotes.ps1" -ChangeLogLocation @(Get-ChildItem -Path $pkg.DirectoryName -Recurse -Include "$($pkg.Basename)-changelog.md")[0]
 
   return New-Object PSObject -Property @{
     PackageId      = $pkgId
@@ -172,7 +172,7 @@ function ParseNPMPackage($pkg, $workingDirectory) {
   tar -xzf $pkg
 
   $packageJSON = ResolvePkgJson -workFolder $workFolder | Get-Content | ConvertFrom-Json
-  $releaseNotes = &"${PSScriptRoot}/../../eng/common/Extract-ReleaseNotes.ps1" -ChangeLogLocation @(Get-ChildItem -Path $workFolder -Recurse -Include "CHANGELOG.md")[0]
+  $releaseNotes = &"${PSScriptRoot}/../Extract-ReleaseNotes.ps1" -ChangeLogLocation @(Get-ChildItem -Path $workFolder -Recurse -Include "CHANGELOG.md")[0]
 
   cd $origFolder
   Remove-Item $workFolder -Force  -Recurse -ErrorAction SilentlyContinue
@@ -219,7 +219,7 @@ function ParseNugetPackage($pkg, $workingDirectory) {
   Copy-Item -Path $pkg -Destination $zipFileLocation
   Expand-Archive -Path $zipFileLocation -DestinationPath $workFolder
   [xml] $packageXML = Get-ChildItem -Path "$workFolder/*.nuspec" | Get-Content
-  $releaseNotes = &"${PSScriptRoot}/../../eng/common/Extract-ReleaseNotes.ps1" -ChangeLogLocation @(Get-ChildItem -Path $workFolder -Recurse -Include "CHANGELOG.md")[0]
+  $releaseNotes = &"${PSScriptRoot}/../Extract-ReleaseNotes.ps1" -ChangeLogLocation @(Get-ChildItem -Path $workFolder -Recurse -Include "CHANGELOG.md")[0]
 
   Remove-Item $workFolder -Force  -Recurse -ErrorAction SilentlyContinue
   $pkgId = $packageXML.package.metadata.id
@@ -272,7 +272,7 @@ function ParsePyPIPackage($pkg, $workingDirectory) {
   mkdir $workFolder
 
   Expand-Archive -Path $pkg -DestinationPath $workFolder
-  $releaseNotes = &"${PSScriptRoot}/../../eng/common/Extract-ReleaseNotes.ps1" -ChangeLogLocation @(Get-ChildItem -Path $workFolder -Recurse -Include "CHANGELOG.md")[0]
+  $releaseNotes = &"${PSScriptRoot}/../Extract-ReleaseNotes.ps1" -ChangeLogLocation @(Get-ChildItem -Path $workFolder -Recurse -Include "CHANGELOG.md")[0]
   Remove-Item $workFolder -Force  -Recurse -ErrorAction SilentlyContinue
 
   return New-Object PSObject -Property @{

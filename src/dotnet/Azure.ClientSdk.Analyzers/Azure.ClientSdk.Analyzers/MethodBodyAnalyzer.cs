@@ -429,7 +429,7 @@ namespace Azure.ClientSdk.Analyzers
             }
 
             public MethodAnalysisContext WithNewMethod(IMethodSymbol method, IParameterSymbol asyncParameter) 
-                => new MethodAnalysisContext(AsyncParameter ?? asyncParameter, GetScope(method, asyncParameter));
+                => new MethodAnalysisContext(asyncParameter ?? AsyncParameter, GetScope(method, asyncParameter));
 
             public MethodAnalysisContext WithScope(Scope scope) 
                 => new MethodAnalysisContext(AsyncParameter, Scope == Scope.Sync ? Scope.Sync : scope);

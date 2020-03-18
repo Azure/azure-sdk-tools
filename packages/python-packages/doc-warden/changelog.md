@@ -1,5 +1,8 @@
 # Release History
 
+## 0.5.3
+- Update namespace reference to pathlib2
+
 ## 0.5.2
 - Update package requirement to pathlib2
 

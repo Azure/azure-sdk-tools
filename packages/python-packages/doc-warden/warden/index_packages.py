@@ -13,7 +13,7 @@ import xml.etree.ElementTree as ET
 import textwrap
 import re
 import fnmatch
-import pathlib
+import pathlib2
 
 # python 3 transitioned StringIO to be part of `io` module. 
 # python 2 needs the old version however
@@ -74,7 +74,7 @@ def index_packages(configuration):
     return language_selector.get(configuration.scan_language.lower(), unrecognized_option)(configuration)
 
 def get_swift_package_id_from_directory(directory):
-    package_id = pathlib.Path(directory).name
+    package_id = pathlib2.Path(directory).name
     return package_id
 
 def get_swift_package_info(config):

@@ -35,16 +35,25 @@ public class ASTUtils {
         return cu.getPrimaryTypeName();
     }
 
+    public static Stream<TypeDeclaration<?>> getClasses(CompilationUnit cu) {
+        return cu.getTypes().stream();
+    }
+
     public static Stream<MethodDeclaration> getPublicOrProtectedMethods(CompilationUnit cu) {
         return cu.getTypes().stream()
                        .flatMap(typeDeclaration -> typeDeclaration.getMethods().stream())
-                       .filter(type -> ASTUtils.isPublicOrProtected(type.getAccessSpecifier()));
+                       .filter(type -> isPublicOrProtected(type.getAccessSpecifier()));
+    }
+
+    public static Stream<MethodDeclaration> getPublicOrProtectedMethods(TypeDeclaration<?> typeDeclaration) {
+        return typeDeclaration.getMethods().stream()
+                       .filter(type -> isPublicOrProtected(type.getAccessSpecifier()));
     }
 
     public static Stream<FieldDeclaration> getPublicOrProtectedFields(CompilationUnit cu) {
         return cu.getTypes().stream()
                        .flatMap(typeDeclaration -> typeDeclaration.getFields().stream())
-                       .filter(type -> ASTUtils.isPublicOrProtected(type.getAccessSpecifier()));
+                       .filter(type -> isPublicOrProtected(type.getAccessSpecifier()));
     }
 
     public static boolean isPublicOrProtected(AccessSpecifier accessSpecifier) {
@@ -53,6 +62,10 @@ public class ASTUtils {
 
     public static boolean isPrivateOrPackagePrivate(AccessSpecifier accessSpecifier) {
         return (accessSpecifier == AccessSpecifier.PRIVATE) || (accessSpecifier == AccessSpecifier.PACKAGE_PRIVATE);
+    }
+
+    public static String makeId(CompilationUnit cu) {
+        return makeId(cu.getPrimaryType().get());
     }
 
     public static String makeId(TypeDeclaration<?> typeDeclaration) {
@@ -94,7 +107,7 @@ public class ASTUtils {
      * public interface.
      */
     public static boolean isTypeAPublicAPI(TypeDeclaration type) {
-        final boolean isInterfaceType = type.isClassOrInterfaceDeclaration();
+        final boolean isInterfaceType = isInterfaceType(type);
         final boolean isNestedType = type.isNestedType();
 
         // Skip if the class is private or package-private, unless it is a nested type defined inside a public interface
@@ -113,5 +126,15 @@ public class ASTUtils {
             }
         }
         return true;
+    }
+
+    /**
+     * Returns true if the type is a public interface.
+     */
+    public static boolean isInterfaceType(TypeDeclaration type) {
+        if (type.isClassOrInterfaceDeclaration()) {
+            return type.asClassOrInterfaceDeclaration().isInterface();
+        }
+        return false;
     }
 }

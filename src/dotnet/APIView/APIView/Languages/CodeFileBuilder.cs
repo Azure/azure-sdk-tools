@@ -47,7 +47,7 @@ namespace ApiView
 
         public ICodeFileBuilderSymbolOrderProvider SymbolOrderProvider { get; set; } = new CodeFileBuilderSymbolOrderProvider();
 
-        public const string CurrentVersion = "14";
+        public const string CurrentVersion = "15";
 
         private IEnumerable<INamespaceSymbol> EnumerateNamespaces(IAssemblySymbol assemblySymbol)
         {
@@ -284,6 +284,8 @@ namespace ApiView
 
             foreach (var typeInterface in namedType.Interfaces)
             {
+                if (!IsAccessible(typeInterface)) continue;
+
                 if (!first)
                 {
                     builder.Punctuation(SyntaxKind.CommaToken);

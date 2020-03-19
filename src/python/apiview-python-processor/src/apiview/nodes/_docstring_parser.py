@@ -1,0 +1,93 @@
+import re
+import logging
+from inspect import Parameter
+from ._base_node import ArgType
+
+from _token import Token
+from _token_kind import TokenKind
+
+logging.getLogger().setLevel(logging.INFO)
+
+find_arg_regex = "(?<!:):{}\s+([\w]*):(?!:)"
+find_arg_and_type_regex = "(?<!:):{}\s+([~\w.]*[\[?[~\w.]*,?\s?[~\w.]*\]?]?)\s+([\w]*):(?!:)"
+find_single_type_regex = "(?<!:):{0}\s?{1}:[\s]+([\S]+\s?[\S]+)(?!:)"
+find_multi_type_regex = "(?<!:):{0}\s?{1}:[\s]+([\S]+\s?[\S]+)\sor\s+([\S]+\s?[\S]+)*(?!:)"
+find_return_type = "(?<!:):(rtype|return)\s?:\s+([^:\n]+)(?!:)"
+
+docstring_types = ["param", "type", "paramtype", "keyword", "rtype"]
+
+
+class Docstring:
+    """This represents a parsed doc string which has list of positional and keyword arguements and return type
+    """
+
+    def __init__(self, docstring):
+        super().__init__()        
+        self.pos_args = []
+        self.kw_args = []
+        self.ret_type = None
+        self.docstring = docstring
+
+
+    def find_type(self, type_name = "type", var_name = ""):
+        # This method will find argument type or return type from docstring
+        single_type_regex = re.compile(find_single_type_regex.format(type_name, var_name))
+        multi_type_regex = re.compile(find_multi_type_regex.format(type_name, var_name))
+
+        # some params takes two types of params and some takes only one type
+        # search for type strings with multiple type like below e.g.
+        # :type <var_name>: <type1> or <type2>
+        type_groups = multi_type_regex.search(self.docstring)
+        if type_groups:
+            return "Union[{}]".format(", ".join(type_groups.groups()[-2:]))
+
+        # Check for single type param
+        # type e.g. :type <var_name>: <type1>
+        type_groups = single_type_regex.search(self.docstring)
+        if type_groups:
+            return type_groups.groups()[-1]
+        
+        return None
+
+
+    def find_return_type(self):
+        type_regex = re.compile(find_return_type)
+        ret_type = type_regex.search(self.docstring)
+        if ret_type:
+            return ret_type.groups()[-1]
+        return None
+
+
+    def find_args(self, arg_type = "param"):
+        # This method will find positional or kw arguement
+        # find docstring that has both type and arg name in same docstring
+        arg_type_regex = re.compile(find_arg_and_type_regex.format(arg_type))
+        args = arg_type_regex.findall(self.docstring)
+        params = [ArgType(x[1].strip(), x[0].strip()) if x[1].strip() else ArgType(x[0].strip()) for x in args]
+
+        # fin param or keyword args that ddoesn't type in same docstring
+        arg_regex = re.compile(find_arg_regex.format(arg_type))
+        args = arg_regex.findall(self.docstring)
+        params.extend([ArgType(x.strip()) for x in args])
+
+        # Get type if it is missing
+        for p in params:
+            if not p.argtype:
+                p.argtype = self.find_type("(type|keywordtype|paramtype)", p.argname)
+        return params
+
+
+
+    def parse(self):
+        """Returns a parsed docstring object
+        """        
+        if not self.docstring:
+            logging.error("Docstring is empty to parse")
+            return
+
+        self.pos_args = self.find_args("param")
+        self.kw_args = self.find_args("keyword")
+        self.ret_type = self.find_return_type()
+
+
+        

@@ -6,11 +6,12 @@ import types
 import astroid
 import operator
 
-from ._base_node import NodeEntityBase, ArgType, get_qualified_name, get_navigation_id
+from ._base_node import NodeEntityBase
 from ._function_node import FunctionNode
 from ._enum_node import EnumNode
 from ._property_node import PropertyNode
 from ._docstring_parser import Docstring
+from ._variable_node import VariableNode
 from _token import Token
 from _token_kind import TokenKind
 
@@ -18,8 +19,8 @@ logging.getLogger().setLevel(logging.INFO)
 
 find_props = lambda x: isinstance(x, PropertyNode)
 find_instancefunc = lambda x: isinstance(x, FunctionNode) and not x.is_class_method and not x.name.startswith("__")
-find_attr = lambda x: isinstance(x, ArgType)
 find_enum = lambda x: isinstance(x, EnumNode)
+find_var = lambda x: isinstance(x, VariableNode)
 find_classfunc = lambda x: isinstance(x, FunctionNode) and x.is_class_method
 find_dunder_func = lambda x: isinstance(x, FunctionNode) and x.name.startswith("__")
 
@@ -30,13 +31,16 @@ class ClassNode(NodeEntityBase):
     def __init__(self, namespace, parent_node, obj):
         super().__init__(namespace, parent_node, obj)            
         self.base_class_names = []
+        self.errors = []
         self.namespace_id = self.generate_id()   
-        self._inspect()        
+        self._inspect()
+        self._sort_elements()
         
     
     def _should_include_function(self, func_obj):
-        """Method or Function member should only be included if it is defined in same package
-        """
+        # Method or Function member should only be included if it is defined in same package.
+        # So this check will filter any methods defined in parent class if parent class is in non-azure package
+        # for e.g. as_dict method in msrest
         if not (inspect.ismethod(func_obj) or inspect.isfunction(func_obj)) or inspect.isbuiltin(func_obj):
             return False
         if hasattr(func_obj, '__module__'):
@@ -49,12 +53,14 @@ class ClassNode(NodeEntityBase):
     def _inspect(self):
         """Inspect current class and it's members recursively
         """
-        
         # get base classes
         self.base_class_names = self._get_base_classes()
         self.display_name = self._generate_display_name()
         # Is enum class
         self.is_enum = Enum in self.obj.__mro__
+         # Find any ivar from docstring
+        self._parse_ivars()
+
         # find members in node 
         for name, child_obj in inspect.getmembers(self.obj):
             if inspect.isbuiltin(child_obj):
@@ -64,44 +70,52 @@ class ClassNode(NodeEntityBase):
                 if not name.startswith("_") or name.startswith("__"):
                     self.child_nodes.append(FunctionNode(self.namespace, self, child_obj)) 
             elif self.is_enum and isinstance(child_obj, self.obj):
+                # Enum values will be of parent instance type
                 child_obj.__name__ = name
                 self.child_nodes.append(EnumNode(self.namespace, self, child_obj))
             elif isinstance(child_obj, property):
+                # Add instance properties
                 self.child_nodes.append(PropertyNode(self.namespace, self, child_obj))
-        
-        # Find any ivar from docstring
-        if hasattr(self.obj, "__doc__"):
-            docstring = getattr(self.obj, "__doc__")
-            if docstring:
-                docstring_parser = Docstring(docstring)
-                try:
-                    self.child_nodes.extend(docstring_parser.find_args("ivar"))
-                except:
-                    self.errors.append("Failed to parse instance variables from docstring for class {}".format(self.name))
-                    
+            elif not name.startswith("_") and (isinstance(child_obj, str) or isinstance(child_obj, int)):
+                # Add any public class level variables(cvar)
+                self.child_nodes.append((VariableNode(self.namespace, self, name, child_obj, False )))
+
+
+    def _parse_ivars(self):
+        # This method will add instance variables by parsing docstring
+        if not hasattr(self.obj, "__doc__"):
+            return
+        docstring = getattr(self.obj, "__doc__")
+        if docstring:
+            docstring_parser = Docstring(docstring)
+            for var in docstring_parser.find_args("ivar"):
+                ivar_node = VariableNode(self.namespace, self, var.argname, var.argtype, True)
+                self.child_nodes.append(ivar_node)
+
+
+    def _sort_elements(self):
+        # Sort elements in following order
+        # properties, variables, Enums, dunder methods, class functions and instance methods
+        # sort all elements based on name firstand then group them
+        self.child_nodes.sort(key=operator.attrgetter('name'))
+        sorted_children = list(filter(find_props, self.child_nodes))
+        sorted_children.extend(filter(find_var, self.child_nodes))
+        sorted_children.extend(filter(find_enum, self.child_nodes))
+        sorted_children.extend(filter(find_dunder_func, self.child_nodes))
+        sorted_children.extend(filter(find_classfunc, self.child_nodes))
+        sorted_children.extend(filter(find_instancefunc, self.child_nodes))
+        self.child_nodes = sorted_children
+
 
     def dump(self, delim):
         space = ' ' * delim
         print("\n{0}{1}".format(space, self.display_name))
         methods = [m for m in self.child_nodes if isinstance(m, FunctionNode)]
-        props = [p for p in self.child_nodes if isinstance(p, PropertyNode)]
-        vars = [v for v in self.child_nodes if isinstance(v, ArgType)]
-        enums = [e for e in self.child_nodes if isinstance(e, EnumNode)]
-
-        for c in enums:
-            c.dump(delim + 4)
-
-        if vars:
-            print("{}Variables:".format(' ' * (delim +4)))
-            for c in vars:
-                c.dump(delim + 8)
-        if props:
-            print("{}Properties:".format(' ' * (delim +4)))
-            for c in props:
-                c.dump(delim + 8)
-
-        for c in methods:
-            c.dump(delim + 4)
+        non_method_members = [p for p in self.child_nodes if not isinstance(p, FunctionNode)]
+        for mem in non_method_members:
+            mem.dump(delim + 4)
+        for mem in methods:
+            mem.dump(delim + 4)
 
 
     def _get_base_classes(self):
@@ -130,17 +144,18 @@ class ClassNode(NodeEntityBase):
         """Generates token for the node and it's children recursively and add it to apiview
         :param ApiView: apiview
         """
+        # Generate class name line
         apiview.add_whitespace()
         apiview.add_line_marker(self.namespace_id)
         apiview.add_keyword("class")
         apiview.add_space()
-        apiview.add_text(self.namespace_id, self.name)
+        apiview.add_text(self.namespace_id, self.namespace_id)
+
         # Add inherited base classes
         if self.base_class_names:
             apiview.add_punctuation("(")
             for index in range(len(self.base_class_names)):
-                bname = self.base_class_names[index]
-                apiview.add_type(bname, get_navigation_id(bname))
+                apiview.add_type(self.base_class_names[index])
                 # Add punctuation betwen types
                 if index < len(self.base_class_names)-1:
                     apiview.add_punctuation(",")
@@ -151,36 +166,16 @@ class ClassNode(NodeEntityBase):
         # Add members and methods
         if self.child_nodes:
             apiview.add_new_line()
-            apiview.begin_group()
-            
+            apiview.begin_group()            
 
-            for prop in filter(find_props, self.child_nodes):
-                prop.generate_tokens(apiview)
-                apiview.add_new_line()
-
-            for e in filter(find_enum, self.child_nodes):
+            for e in [p for p in self.child_nodes if not isinstance(p, FunctionNode)]:
                 apiview.add_whitespace()
                 e.generate_tokens(apiview)
                 apiview.add_new_line()
+            apiview.add_new_line(1)
 
-            for attr in filter(find_attr, self.child_nodes):
-                attr.generate_tokens(apiview)
-                apiview.add_new_line()
-            
-            instance_functions = list(filter(find_instancefunc, self.child_nodes))
-            class_functions = list(filter(find_classfunc, self.child_nodes))
-            dunder_functions = list(filter(find_dunder_func, self.child_nodes))
-
-            for func in dunder_functions:
+            for func in [x for x in self.child_nodes if isinstance(x, FunctionNode)]:
                 func.generate_tokens(apiview)
-                apiview.add_new_line()
-
-            for func in class_functions:
-                func.generate_tokens(apiview)
-                apiview.add_new_line()
-
-            for func in instance_functions:
-                func.generate_tokens(apiview)
-                apiview.add_new_line()
+                apiview.add_new_line(1)
                 
             apiview.end_group()

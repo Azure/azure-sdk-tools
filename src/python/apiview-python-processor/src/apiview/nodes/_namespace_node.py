@@ -3,11 +3,12 @@ import inspect
 import ast
 import io
 import importlib
+import operator
 
 from ._base_node import NodeEntityBase
 from ._class_node import ClassNode
 from ._function_node import FunctionNode
-from _apiview import ApiView
+from _apiview import ApiView, Navigation, Kind, NavigationTag
 
 
 logging.getLogger().setLevel(logging.INFO)
@@ -18,9 +19,10 @@ filter_class = lambda x: isinstance(x, ClassNode)
 class NameSpaceNode(NodeEntityBase):
     """NameSpaceNode represents module level node and all it's children
     """
-    def __init__(self, namespace, module):
+    def __init__(self, namespace, module, nodeindex):
         super().__init__(namespace, None, module)
         self.namespace_id = self.generate_id()
+        self.nodeindex = nodeindex
         self._inspect()       
 
 
@@ -36,9 +38,18 @@ class NameSpaceNode(NodeEntityBase):
             if name not in public_entities:
                 continue
             if inspect.isclass(member_obj):
-                self.child_nodes.append(ClassNode(self.namespace, self, member_obj))
+                class_node = ClassNode(self.namespace, self, member_obj)
+                key = "{0}.{1}".format(self.namespace, class_node.name)
+                self.nodeindex.add(key, class_node)
+                self.child_nodes.append(class_node)
             if inspect.ismethod(member_obj) or inspect.isfunction(member_obj):
-                self.child_nodes.append(FunctionNode(self.namespace,  self, member_obj))
+                func_node = FunctionNode(self.namespace,  self, member_obj, True)
+                key = "{0}.{1}".format(self.namespace, func_node.name)
+                self.nodeindex.add(key, func_node)
+                self.child_nodes.append(func_node)
+
+        # sort classes and functions
+        self.child_nodes.sort(key=operator.attrgetter('name'))
 
             
 
@@ -47,15 +58,31 @@ class NameSpaceNode(NodeEntityBase):
         :param ApiView: apiview
         """
         if self.child_nodes:
-            apiview.add_line_marker(self.namespace_id)
-            apiview.add_text(self.namespace_id, self.display_name)
-            apiview.begin_group()
             # Add name space level functions first
-            for c in filter(filter_function, self.child_nodes):
-                apiview.add_new_line()
+            for c in filter(filter_function, self.child_nodes):                
                 c.generate_tokens(apiview)
+                apiview.add_new_line(2)
+
             # Add classes
             for c in filter(filter_class, self.child_nodes):
-                apiview.add_new_line()
                 c.generate_tokens(apiview)
-            apiview.end_group()
+                apiview.add_new_line(1)
+            
+
+    def get_navigation(self):
+        """Generate navigation tree recursively by generating Navigation obejct for classes and functions in name space
+        """
+        if self.child_nodes:
+            navigation = Navigation(self.namespace_id, self.namespace_id)
+            navigation.set_tag(NavigationTag(Kind.type_module))
+            # Generate child navigation for each child nodes
+            for c in filter(filter_function, self.child_nodes):
+                child_nav = Navigation(c.name, c.namespace_id)
+                child_nav.set_tag(NavigationTag(Kind.type_method))
+                navigation.add_child(child_nav)
+            
+            for c in filter(filter_class, self.child_nodes):
+                child_nav = Navigation(c.name, c.namespace_id)
+                child_nav.set_tag(NavigationTag(Kind.type_class))
+                navigation.add_child(child_nav)
+            return navigation

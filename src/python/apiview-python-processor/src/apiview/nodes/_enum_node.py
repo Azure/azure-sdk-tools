@@ -25,9 +25,9 @@ class EnumNode(NodeEntityBase):
     def generate_tokens(self, apiview):
         """Generates token for the node and it's children recursively and add it to apiview
         :param ApiView: apiview
-        """        
-        apiview.add_whitespace()
-        apiview.add_keyword(self.name)
+        """
+        apiview.add_line_marker(self.namespace_id)
+        apiview.add_text(self.namespace_id, self.name)
         apiview.add_space()
         apiview.add_punctuation("=")
         apiview.add_space()

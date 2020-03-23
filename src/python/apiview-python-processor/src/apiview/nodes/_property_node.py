@@ -2,7 +2,7 @@ import logging
 import re
 from inspect import Parameter
 
-from ._base_node import NodeEntityBase, get_navigation_id
+from ._base_node import NodeEntityBase
 from ._docstring_parser import Docstring
 
 logging.getLogger().setLevel(logging.INFO)
@@ -18,9 +18,9 @@ class PropertyNode(NodeEntityBase):
         self.read_only = True
         self.type = "(Not found)"
         self.errors = []
-        self.namespace_id = self.generate_id() 
         self._inspect()
-              
+        # Generate ID using name found by inspect
+        self.namespace_id = self.generate_id()
 
 
     def _inspect(self):
@@ -50,12 +50,6 @@ class PropertyNode(NodeEntityBase):
             self.display_name += "   # Read-only"
 
 
-    def generate_id(self):
-        self.namespace_id = self.namespace
-        if self.parent_node:
-            self.namespace_id = "{0}:{1}".format(self.parent_node.namespace_id, self.name)
-
-
     def dump(self, delim):
         space = ' ' * delim
         print("{0}{1}".format(space, self.display_name))
@@ -65,13 +59,13 @@ class PropertyNode(NodeEntityBase):
         """Generates token for the node and it's children recursively and add it to apiview
         :param ApiView: apiview
         """        
-        apiview.add_whitespace()
-        apiview.add_literal("Property")
+        apiview.add_keyword("property")
         apiview.add_space()
-        apiview.add_keyword(self.name)
+        apiview.add_line_marker(self.namespace_id)
+        apiview.add_text(self.namespace_id, self.name)
         apiview.add_punctuation(":")
         apiview.add_space()
-        apiview.add_type(self.type, get_navigation_id(self.type))  #todo Pass navigation ID if it is internal type
+        apiview.add_type(self.type)  #todo Pass navigation ID if it is internal type
         if self.read_only:
             apiview.add_whitespace()
             apiview.add_literal("# Read-only")

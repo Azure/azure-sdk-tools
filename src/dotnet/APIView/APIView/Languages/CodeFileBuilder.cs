@@ -47,7 +47,7 @@ namespace ApiView
 
         public ICodeFileBuilderSymbolOrderProvider SymbolOrderProvider { get; set; } = new CodeFileBuilderSymbolOrderProvider();
 
-        public const string CurrentVersion = "15";
+        public const string CurrentVersion = "16";
 
         private IEnumerable<INamespaceSymbol> EnumerateNamespaces(IAssemblySymbol assemblySymbol)
         {

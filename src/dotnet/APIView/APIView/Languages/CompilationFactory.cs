@@ -4,12 +4,18 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace ApiView
 {
     public static class CompilationFactory
     {
+        private static HashSet<string> AllowedAssemblies = new HashSet<string>(new []
+        {
+            "Microsoft.Bcl.AsyncInterfaces"
+        }, StringComparer.InvariantCultureIgnoreCase);
+
         public static IAssemblySymbol GetCompilation(string file)
         {
             using (var stream = File.OpenRead(file))
@@ -31,6 +37,7 @@ namespace ApiView
             }
             var compilation = CSharpCompilation.Create(null).AddReferences(reference);
             var corlibLocation = typeof(object).Assembly.Location;
+
             var runtimeFolder = Path.GetDirectoryName(corlibLocation);
 
             compilation = compilation.AddReferences(MetadataReference.CreateFromFile(corlibLocation));
@@ -38,7 +45,7 @@ namespace ApiView
             var trustedAssemblies = ((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")).Split(Path.PathSeparator);
             foreach (var tpl in trustedAssemblies)
             {
-                if (tpl.StartsWith(runtimeFolder))
+                if (tpl.StartsWith(runtimeFolder) || AllowedAssemblies.Contains(Path.GetFileNameWithoutExtension(tpl)))
                 {
                     compilation = compilation.AddReferences(MetadataReference.CreateFromFile(tpl));
                 }

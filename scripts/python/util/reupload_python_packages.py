@@ -85,7 +85,7 @@ def strip_comments_from_inits(start_dir):
             lines = f.readlines()
 
         # in case rstrip is necessary re.sub(r'[\s]*\#\stype\:\signore[\s]*', "", line).rstrip()
-        lines = [line.replace('"pkgutil"', "'pkgutil'") for line in lines if not line.strip().startswith('#')]
+        lines = [line.replace('"pkgutil"', "'pkgutil'").rstrip() for line in lines if not line.strip().startswith('#')]
 
         with open(located_init, 'w') as f:
             f.write("".join(lines))

@@ -11,7 +11,6 @@ parameters:
   PushArgs:
   WorkingDirectory: $(System.DefaultWorkingDirectory)
   PRTitle: not-specified
-  BuildToolsPath: not-specified
 
 steps:
 
@@ -36,7 +35,7 @@ steps:
   ignoreLASTEXITCODE: true
 
 - pwsh: |
-    ${{ parameters.BuildToolsPath }}/scripts/git-branch-push.ps1 `
+    eng/common/scripts/git-branch-push.ps1 `
       -PRBranchName "${{ parameters.PRBranchName }}" `
       -CommitMsg "${{ parameters.CommitMsg }}" `
       -GitUrl "https://$(azuresdk-github-pat)@github.com/${{ parameters.PROwner }}/${{ parameters.RepoName }}.git" `
@@ -47,7 +46,7 @@ steps:
   condition: and(succeeded(), eq(variables['HasChanges'], 'true'))
 
 - pwsh: |
-    ${{ parameters.BuildToolsPath }}/scripts/Submit-PullRequest.ps1 `
+    eng/common/scripts/Submit-PullRequest.ps1 `
       -RepoOwner "${{ parameters.RepoOwner }}" `
       -RepoName "${{ parameters.RepoName }}" `
       -BaseBranch "${{ parameters.BaseBranchName }}" `

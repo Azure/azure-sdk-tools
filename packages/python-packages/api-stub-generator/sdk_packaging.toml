@@ -1,0 +1,6 @@
+[packaging]
+auto_update = false
+package_name = "api-stub-generator"
+package_pprint_name = "API stub generator"
+is_stable = false
+is_arm = false

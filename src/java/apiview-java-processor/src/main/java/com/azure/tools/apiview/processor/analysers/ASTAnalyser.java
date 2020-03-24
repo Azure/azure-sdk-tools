@@ -501,6 +501,11 @@ public class ASTAnalyser implements Analyser {
                 // type parameters of methods
                 getTypeParameters(callableDeclaration.getTypeParameters());
 
+                // if type parameters of method is not empty, we need to add an space before adding type name
+                if (!callableDeclaration.getTypeParameters().isEmpty()) {
+                    addToken(new Token(WHITESPACE, " "));
+                }
+
                 // type name
                 if (callableDeclaration instanceof MethodDeclaration) {
                     getType(callableDeclaration);

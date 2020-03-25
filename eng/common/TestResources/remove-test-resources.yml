@@ -1,6 +1,9 @@
 # Removes resources from a cloud type specified by the variable (not parameter)
 # 'CloudType'. Use this as part of a matrix to remove resources from a
-# particular cloud instance.
+# particular cloud instance. Normally we would use template variables instead of
+# parameters but matrix variables are not available during template expansion
+# so any benefits of parameters are lost.
+
 # Assumes steps in deploy-test-resources.yml was run previously. Requires
 # environment variable: AZURE_RESOURCEGROUP_NAME and Az PowerShell module
 
@@ -14,8 +17,8 @@ steps:
       -Environment 'AzureCloud'
       -Force
       -Verbose
-    displayName: Remove test resources (public)
-    condition: and(ne(variables['AZURE_RESOURCEGROUP_NAME'], ''), eq(variables['CloudType'], 'public'))
+    displayName: Remove test resources (AzureCloud)
+    condition: and(ne(variables['AZURE_RESOURCEGROUP_NAME'], ''), eq(variables['CloudType'], 'AzureCloud'))
     continueOnError: true
 
   - pwsh: >
@@ -27,8 +30,8 @@ steps:
       -Environment 'AzureUSGovernment'
       -Force
       -Verbose
-    displayName: Remove test resources (gov)
-    condition: and(ne(variables['AZURE_RESOURCEGROUP_NAME'], ''), eq(variables['CloudType'], 'gov'))
+    displayName: Remove test resources (AzureUSGovernment)
+    condition: and(ne(variables['AZURE_RESOURCEGROUP_NAME'], ''), eq(variables['CloudType'], 'AzureUSGovernment'))
     continueOnError: true
 
   - pwsh: >
@@ -40,6 +43,6 @@ steps:
       -Environment 'AzureChinaCloud'
       -Force
       -Verbose
-    displayName: Remove test resources (cn)
-    condition: and(ne(variables['AZURE_RESOURCEGROUP_NAME'], ''), eq(variables['CloudType'], 'cn'))
+    displayName: Remove test resources (AzureChinaCloud)
+    condition: and(ne(variables['AZURE_RESOURCEGROUP_NAME'], ''), eq(variables['CloudType'], 'AzureChinaCloud'))
     continueOnError: true

@@ -136,7 +136,7 @@ if (!$Location) {
         $Location = $defaultLocations[$Environment]
     }
 
-    Write-Verbose "Location was not set using location: '$Location'"
+    Write-Verbose "Location was not set. Using default location for environment: '$Location'"
 }
 
 # Log in if requested; otherwise, the user is expected to already be authenticated via Connect-AzAccount.

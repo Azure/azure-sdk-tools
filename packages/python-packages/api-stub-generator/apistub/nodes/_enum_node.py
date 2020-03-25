@@ -27,7 +27,7 @@ class EnumNode(NodeEntityBase):
         apiview.add_space()
         apiview.add_punctuation("=")
         apiview.add_space()
-        if self.value.isdigit():
+        if isinstance(self.value, str) and self.value.isdigit():
             apiview.add_literal(self.value)
         else:
             apiview.add_stringliteral(self.value)

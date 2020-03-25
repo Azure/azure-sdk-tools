@@ -76,7 +76,8 @@ class ClassNode(NodeEntityBase):
                 self.child_nodes.append(PropertyNode(self.namespace, self, child_obj))
             elif not name.startswith("_") and (isinstance(child_obj, str) or isinstance(child_obj, int)):
                 # Add any public class level variables(cvar)
-                self.child_nodes.append((VariableNode(self.namespace, self, name, child_obj, False )))
+                # Assumption here is that class level variables are either str or int constants
+                self.child_nodes.append((VariableNode(self.namespace, self, name, str(child_obj), False )))
 
 
     def _parse_ivars(self):

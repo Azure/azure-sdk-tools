@@ -42,7 +42,7 @@ class ArgType:
             # Add string literal or numeric literal based on the content within default
             # Ideally this should be based on arg type. But type is not available for all args
             # We should refer to arg type instead of content when all args have type
-            if isinstance(self.default, str) and self.default.isdigit():
+            if  self.default == "None" or (isinstance(self.default, str) and self.default.isdigit()):
                 apiview.add_literal(self.default)
             else:
                 apiview.add_stringliteral(self.default)

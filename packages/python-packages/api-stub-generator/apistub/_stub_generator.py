@@ -9,16 +9,16 @@ import glob
 import sys
 import os
 import argparse
-import logging
+import astroid
 import inspect
-import ast
 import io
 import importlib
-import astroid
 import json
 import logging
 import shutil
+from subprocess import check_call
 import zipfile
+
 
 from ._apiview import ApiView, APIViewEncoder, Navigation, Kind, NavigationTag
 
@@ -71,6 +71,8 @@ class StubGenerator:
     def _generate_tokens(self, pkg_root_path, package_name, version):
         """This method returns a dictionary of namespace and all public classes in each namespace
         """
+        # Import ModuleNode since it needs NodeIndex.
+        # Importing it globaly can cause circular dependency
         from apistub.nodes._module_node import ModuleNode
         module_dict = {}
         nodeindex = NodeIndex()
@@ -143,18 +145,31 @@ class StubGenerator:
         return pkg_name, version
 
 
+    def _install_package(self):
+        # Force install the package to parse so inspect can get members in package
+        commands = [sys.executable, "-m", "pip", "install", "--force-reinstall", self.pkg_path]
+        check_call(commands)
+
+
     def generate_tokens(self):
         # Extract package to temp directory
+        logging.info("Extracting package to temp path")
         pkg_root_path = self._extract_wheel()
         pkg_name, version = self._parse_pkg_name()
+        logging.info("package name: {0}, version:{1}".format(pkg_name, version))
+
+        logging.info("Installing package from {}".format(self.pkg_path))
+        self._install_package()
+        logging.info("Generating tokens")
         apiview = self._generate_tokens(pkg_root_path, pkg_name, version)
 
         json_out_file_name = "{0}_{1}.json".format(pkg_name, version)
         out_file_path = os.path.join(pkg_root_path, json_out_file_name)
+        logging.info("Generated tokens. Serializing tokens into JSON")
         self._serialize_tokens(apiview, out_file_path)
         logging.info("Completed parsing package and generating tokens")
 
-
+    
     def __init__(self):
         parser = argparse.ArgumentParser(description="Parse a python package and generate json token file to be supplied to API review tool")
         parser.add_argument(

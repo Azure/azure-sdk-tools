@@ -52,6 +52,7 @@ class FunctionNode(NodeEntityBase):
         
         # Find signature to find positional args and return type
         sig = inspect.signature(self.obj)
+        logging.info("Processing function {0}{1}".format(self.name, str(sig)))
         params = sig.parameters
         self.kw_arg = None
         for argname in params:
@@ -132,6 +133,7 @@ class FunctionNode(NodeEntityBase):
         if use_multi_line:
             apiview.add_new_line()
             apiview.end_group()
+            apiview.add_whitespace()
             apiview.add_punctuation(")")
             apiview.end_group()
         else:

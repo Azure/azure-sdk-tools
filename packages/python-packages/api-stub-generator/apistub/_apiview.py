@@ -80,6 +80,12 @@ class ApiView:
     def _generate_type_tokens(self, type_name, prefix_type):
         # Generate tokens for multiple data types
         # for e.g. Union[type1, type2,] or dict(type1, type2)
+        # For some args, type is given as just "dict"
+        # We should not process further if type name is same as prefix(In above e.g. dict)
+        if prefix_type == type_name:
+            self.add_keyword(prefix_type)
+            return
+            
         prefix_len = len(prefix_type)
         type_names = type_name[prefix_len+1:-1]
         if type_names:

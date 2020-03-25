@@ -32,6 +32,7 @@ jobs:
         Repos:
           - azure-sdk-for-android
           - azure-sdk-for-c
+          - azure-sdk-for-cpp
           - azure-sdk-for-go
           - azure-sdk-for-ios
           - azure-sdk-for-java

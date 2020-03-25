@@ -58,7 +58,7 @@ class FunctionNode(NodeEntityBase):
         for argname in params:
             arg = ArgType(argname, get_qualified_name(params[argname].annotation))
             if params[argname].default != Parameter.empty:
-                arg.default = params[argname].default
+                arg.default = str(params[argname].default)
 
             # Store handle to kwarg object to replace it later
             if params[argname].kind in [Parameter.VAR_KEYWORD, Parameter.KEYWORD_ONLY]:
@@ -111,7 +111,7 @@ class FunctionNode(NodeEntityBase):
     def _generate_signature_token(self, apiview):
         apiview.add_punctuation("(")
         args_count = len(self.args)
-        use_multi_line = args_count > 4
+        use_multi_line = args_count > 5
         # Show args in individual line if method has more than 4 args and use two tabs to properly aign them
         if use_multi_line:
             apiview.begin_group()

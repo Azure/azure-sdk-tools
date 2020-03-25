@@ -147,7 +147,7 @@ class StubGenerator:
 
     def _install_package(self):
         # Force install the package to parse so inspect can get members in package
-        commands = [sys.executable, "-m", "pip", "install", "--force-reinstall", self.pkg_path]
+        commands = [sys.executable, "-m", "pip", "install", "--force-reinstall", "--user", self.pkg_path]
         check_call(commands)
 
 

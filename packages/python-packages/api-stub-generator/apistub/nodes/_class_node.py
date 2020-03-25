@@ -156,6 +156,6 @@ class ClassNode(NodeEntityBase):
 
             for func in [x for x in self.child_nodes if isinstance(x, FunctionNode)]:
                 func.generate_tokens(apiview)
-                apiview.add_new_line(1)
+                apiview.add_new_line()
                 
             apiview.end_group()

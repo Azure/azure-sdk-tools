@@ -82,7 +82,7 @@ class DocstringParser:
         for p in params:
             # Show kwarg is optional by setting default to "..."
             if arg_type == "keyword":
-                p.default = "..."
+                p.default = "(...)"
 
             if not p.argtype:
                 p.argtype = self.find_type("(type|keywordtype|paramtype)", p.argname)

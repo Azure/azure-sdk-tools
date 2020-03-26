@@ -36,6 +36,7 @@ class ModuleNode(NodeEntityBase):
         # find class and function nodes in module
         for name, member_obj in inspect.getmembers(self.obj):
             if name not in public_entities:
+                logging.info("Skipping object {}".format(name))
                 continue
             if inspect.isclass(member_obj):
                 class_node = ClassNode(self.namespace, self, member_obj)

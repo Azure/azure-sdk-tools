@@ -30,6 +30,10 @@ class FunctionNode(NodeEntityBase):
         # We cannot do "startswith" check here due to annotations or decorators present for functions
         self.is_async = code.__contains__("async def")
         self.def_key = "async def" if self.is_async else "def"
+        # Update namespace ID to reflect async status. Otherwise ID will conflict between sync and async methods
+        if self.is_async:
+            self.namespace_id += ":async"
+
         # Find decorators and any annotations
         node = astroid.extract_node(inspect.getsource(self.obj))
         if node.decorators:
@@ -124,7 +128,7 @@ class FunctionNode(NodeEntityBase):
                 apiview.add_new_line()
                 apiview.add_whitespace()
 
-            self.args[index].generate_tokens(apiview, True)
+            self.args[index].generate_tokens(apiview, self.namespace_id, use_multi_line, True)
             # Add punctuation betwen types except for last one
             if index < args_count-1:
                 apiview.add_punctuation(",")
@@ -161,5 +165,7 @@ class FunctionNode(NodeEntityBase):
         # Add parameters
         self._generate_signature_token(apiview)
         if self.return_type:
+            apiview.add_space()
             apiview.add_punctuation("->")
+            apiview.add_space()
             apiview.add_type(self.return_type)

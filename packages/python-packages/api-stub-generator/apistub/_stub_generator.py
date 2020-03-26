@@ -61,10 +61,17 @@ class StubGenerator:
             for d in dirs_to_skip:
                 subdirs.remove(d)
 
+            # Add current path as module name if _init.py is present
             if INIT_PY_FILE in files:
                 module_path = root.replace(pkg_root_path, "")
                 module_name= module_path.replace(os.path.sep, ".")[1:]
                 modules.append(module_name)
+
+                # Add any public py file names as modules
+                sub_modules = [os.path.splitext(os.path.basename(f))[0] for f in files if f.endswith(".py") and not os.path.basename(f).startswith('_')]
+                modules.extend(["{0}.{1}".format(module_name, x) for x in sub_modules])
+
+        logging.info("Modules in package: {}".format(modules))
         return modules
 
 
@@ -145,9 +152,12 @@ class StubGenerator:
         return pkg_name, version
 
 
-    def _install_package(self):
-        # Force install the package to parse so inspect can get members in package
-        commands = [sys.executable, "-m", "pip", "install", "--force-reinstall", "--user", self.pkg_path]
+    def _install_package(self, pkg_name):
+        # Uninstall the package and reinstall it to parse so inspect can get members in package
+        # We don't want to force reinstall to avoid reinstalling other dependent packages
+        commands = [sys.executable, "-m", "pip", "uninstall", pkg_name, "--yes"]
+        check_call(commands)
+        commands = [sys.executable, "-m", "pip", "install", self.pkg_path]
         check_call(commands)
 
 
@@ -159,7 +169,7 @@ class StubGenerator:
         logging.info("package name: {0}, version:{1}".format(pkg_name, version))
 
         logging.info("Installing package from {}".format(self.pkg_path))
-        self._install_package()
+        self._install_package(pkg_name)
         logging.info("Generating tokens")
         apiview = self._generate_tokens(pkg_root_path, pkg_name, version)
 

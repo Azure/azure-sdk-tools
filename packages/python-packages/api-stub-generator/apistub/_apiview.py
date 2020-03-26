@@ -85,7 +85,7 @@ class ApiView:
         if prefix_type == type_name:
             self.add_keyword(prefix_type)
             return
-            
+
         prefix_len = len(prefix_type)
         type_names = type_name[prefix_len+1:-1]
         if type_names:
@@ -118,11 +118,8 @@ class ApiView:
 
     def _add_type_token(self, type_name):
         token = Token(type_name, TokenKind.TypeName)
-        type_full_name = type_name
-        if type_full_name and type_full_name.startswith("~"):
-            type_full_name = type_full_name[1:]
-            token.set_value(type_full_name.split(".")[-1])
-
+        type_full_name = type_name[1:] if type_name.startswith("~") else type_name
+        token.set_value(type_full_name.split(".")[-1])
         navigate_to_id = self.nodeindex.get_id(type_full_name)
         if navigate_to_id:
             token.NavigateToId = navigate_to_id

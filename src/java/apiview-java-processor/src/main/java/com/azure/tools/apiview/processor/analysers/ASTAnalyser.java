@@ -210,8 +210,8 @@ public class ASTAnalyser implements Analyser {
             // get Constructors
             final List<ConstructorDeclaration> constructors = typeDeclaration.getConstructors();
             if (constructors.isEmpty()) {
-                // add default constructor if there is no constructor at all
-                if (!isInterfaceDeclaration) {
+                // add default constructor if there is no constructor at all, except interface and enum
+                if (!isInterfaceDeclaration && !typeDeclaration.isEnumDeclaration()) {
                     addDefaultConstructor(typeDeclaration);
                 } else {
                     // skip and do nothing if there is no constructor in the interface.
@@ -500,6 +500,11 @@ public class ASTAnalyser implements Analyser {
 
                 // type parameters of methods
                 getTypeParameters(callableDeclaration.getTypeParameters());
+
+                // if type parameters of method is not empty, we need to add an space before adding type name
+                if (!callableDeclaration.getTypeParameters().isEmpty()) {
+                    addToken(new Token(WHITESPACE, " "));
+                }
 
                 // type name
                 if (callableDeclaration instanceof MethodDeclaration) {

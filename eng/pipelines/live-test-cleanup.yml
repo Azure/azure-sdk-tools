@@ -1,6 +1,14 @@
+schedules:
+# At minute 15 past every hour
+- cron: "15 */1 * * *"
+  displayName: Hourly
+  branches:
+    include:
+    - master
+  always: true
 
-trigger: none
 pr: none
+trigger: none
 
 stages:
 - stage: Run

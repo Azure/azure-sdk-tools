@@ -26,6 +26,7 @@ class FunctionNode(NodeEntityBase):
 
 
     def _inspect(self):
+        logging.info("Processing function {0}".format(self.name))
         code = inspect.getsource(self.obj).strip()
         # We cannot do "startswith" check here due to annotations or decorators present for functions
         self.is_async = code.__contains__("async def")
@@ -35,10 +36,17 @@ class FunctionNode(NodeEntityBase):
             self.namespace_id += ":async"
 
         # Find decorators and any annotations
-        node = astroid.extract_node(inspect.getsource(self.obj))
-        if node.decorators:
-            self.annotations = ["@{}".format(x.name) for x in node.decorators.nodes if hasattr(x, "name")]
-            self.is_class_method = "@classmethod" in self.annotations
+        try:
+            node = astroid.extract_node(inspect.getsource(self.obj))
+            if node.decorators:
+                self.annotations = ["@{}".format(x.name) for x in node.decorators.nodes if hasattr(x, "name")]
+        except:
+            # todo Update exception details in error
+            error_message = "Error in parsing decorators for function {}".format(self.name)
+            self.errors.append(error_message)
+            logging.error(error_message)
+
+        self.is_class_method = "@classmethod" in self.annotations
         self._parse_function()
 
     
@@ -56,7 +64,6 @@ class FunctionNode(NodeEntityBase):
         
         # Find signature to find positional args and return type
         sig = inspect.signature(self.obj)
-        logging.info("Processing function {0}{1}".format(self.name, str(sig)))
         params = sig.parameters
         self.kw_arg = None
         for argname in params:

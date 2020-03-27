@@ -84,6 +84,6 @@ class ModuleNode(NodeEntityBase):
             
             for c in filter(filter_class, self.child_nodes):
                 child_nav = Navigation(c.name, c.namespace_id)
-                child_nav.set_tag(NavigationTag(Kind.type_class))
+                child_nav.set_tag(NavigationTag(Kind.type_enum if c.is_enum else Kind.type_class))
                 navigation.add_child(child_nav)
             return navigation

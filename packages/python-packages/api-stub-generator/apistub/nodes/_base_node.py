@@ -26,6 +26,7 @@ class NodeEntityBase:
             self.name = obj.__name__
         self.display_name = self.name        
         self.child_nodes = []
+        self.errors = []
         
 
     def generate_id(self):

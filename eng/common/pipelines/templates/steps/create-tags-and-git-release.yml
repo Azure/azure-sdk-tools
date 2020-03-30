@@ -11,7 +11,7 @@ steps:
   displayName: 'Verify Package Tags and Create Git Releases'
   inputs:
     targetType: filePath
-    filePath: ${{ ScriptDirectory }}/create-tags-and-git-release.ps1
+    filePath: ${{ parameters.ScriptDirectory }}/create-tags-and-git-release.ps1
     arguments: -artifactLocation ${{parameters.ArtifactLocation}} -packageRepository ${{parameters.PackageRepository}} -releaseSha ${{parameters.ReleaseSha}} -repoId ${{parameters.RepoId}} -workingDirectory '${{parameters.WorkingDirectory}}'
     pwsh: true
   timeoutInMinutes: 5

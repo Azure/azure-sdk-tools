@@ -1,6 +1,6 @@
 schedules:
-# At minute 15 past every hour
-- cron: "15 */1 * * *"
+# At 12:00 every day
+- cron: "0 12 * * *"
   displayName: Hourly
   branches:
     include:

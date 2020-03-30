@@ -1,17 +1,21 @@
 import re
+import inspect
 import logging
 from ._argtype import ArgType
-from ._variable_node import VariableNode
 
 
 logging.getLogger().setLevel(logging.INFO)
 
+# REGEX to parse docstring
 find_arg_regex = "(?<!:):{}\s+([\w]*):(?!:)"
 find_arg_and_type_regex = "(?<!:):{}\s+([~\w.]*[\[?[~\w.]*,?\s?[~\w.]*\]?]?)\s+([\w]*):(?!:)"
 find_single_type_regex = "(?<!:):{0}\s?{1}:[\s]*([\S]+)(?!:)"
 find_union_type_regex = "(?<!:):{0}\s?{1}:[\s]*([\w]*((\[[^\[\]]+\])|(\([^\(\)]+\))))(?!:)"
 find_multi_type_regex = "(?<!:):({0})\s?{1}:([\s]*([\S]+)(\s+or\s+[\S]+)+)(?!:)"
-find_return_type = "(?<!:):{}\s?:\s+([^:\n]+)(?!:)"
+find_docstring_return_type = "(?<!:):rtype\s?:\s+([^:\n]+)(?!:)"
+
+# Regex to parse type hints
+find_type_hint_ret_type = "(?<!#)#\stype:[\w\s\(\),]*\s->\s([\w]*)"
 
 docstring_types = ["param", "type", "paramtype", "keyword", "rtype"]
 
@@ -59,8 +63,7 @@ class DocstringParser:
 
     def find_return_type(self):
         # Find return type from docstring
-        type_regex = re.compile(find_return_type.format("rtype"))
-        ret_type = type_regex.search(self.docstring)
+        ret_type = re.search(find_docstring_return_type, self.docstring)
         if ret_type:
             return ret_type.groups()[-1]
         return None
@@ -82,7 +85,7 @@ class DocstringParser:
         for p in params:
             # Show kwarg is optional by setting default to "..."
             if arg_type == "keyword":
-                p.default = "(...)"
+                p.default = "..."
 
             if not p.argtype:
                 p.argtype = self.find_type("(type|keywordtype|paramtype)", p.argname)
@@ -102,4 +105,18 @@ class DocstringParser:
         self.ret_type = self.find_return_type()
 
 
-        
+
+class TypeHintParser:
+    def __init__(self, obj):
+        self.obj = obj
+        self.code = inspect.getsource(obj)
+
+
+    def find_return_type(self):
+        if not self.code:
+            return None
+
+        # Find return type from type hint
+        ret_type = re.search(find_type_hint_ret_type, self.code)
+        if ret_type and ret_type != "None":
+            return ret_type.groups()[-1]

@@ -3,13 +3,13 @@ import inspect
 import astroid
 import operator
 from inspect import Parameter
-from ._docstring_parser import DocstringParser
+from ._docstring_parser import DocstringParser, TypeHintParser
 from ._base_node import NodeEntityBase, get_qualified_name
 from ._argtype import ArgType
 
 logging.getLogger().setLevel(logging.INFO)
 
-
+KW_ARG_NAME =  "**kwargs"
     
 class FunctionNode(NodeEntityBase):
     """Function node to represent parsed function and method nodes
@@ -20,8 +20,14 @@ class FunctionNode(NodeEntityBase):
         self.args = []
         self.return_type = None
         self.namespace_id = self.generate_id()
+        # Set name space level ID as full name
+        # Name space ID will be later updated for async methods
+        self.full_name = self.namespace_id
         self.is_class_method = False
         self.is_module_level  = is_module_level
+        # Some of the methods wont be listed in API review
+        # For e.g. ABC methods if class implements all ABC methods
+        self.hidden = False
         self._inspect()        
 
 
@@ -57,6 +63,7 @@ class FunctionNode(NodeEntityBase):
         1. Identify args, types, default and ret type using inspect
         2. Parse type annotations if inspect doesn't have complete info
         3. Parse docstring to find keyword arguements
+        4. Parse type hints
         """
         # Add cls as first arg for class methods in API review tool
         if "@classmethod" in self.annotations:
@@ -65,41 +72,42 @@ class FunctionNode(NodeEntityBase):
         # Find signature to find positional args and return type
         sig = inspect.signature(self.obj)
         params = sig.parameters
-        self.kw_arg = None
         for argname in params:
             arg = ArgType(argname, get_qualified_name(params[argname].annotation))
+            # set default value if available
             if params[argname].default != Parameter.empty:
                 arg.default = str(params[argname].default)
-
             # Store handle to kwarg object to replace it later
             if params[argname].kind in [Parameter.VAR_KEYWORD, Parameter.KEYWORD_ONLY]:
-                arg.argname = "**kwargs"
-                self.kw_arg = arg
-
+                arg.argname = KW_ARG_NAME
             self.args.append(arg)
 
         if sig.return_annotation:
             self.return_type = get_qualified_name(sig.return_annotation)
 
-        # Parse docstring to get list of keyword args, type and default value for both positional and kw args and return type( if not already found in signature)
+        # parse docstring
+        self._parse_docstring()            
+        # parse type hints
+        self._parse_typehint()
+
+
+    def _parse_docstring(self):
+        # Parse docstring to get list of keyword args, type and default value for both positional and 
+        # kw args and return type( if not already found in signature)
         docstring = ""
-        # Refer docstring at class if this is constructor
-        if self.name == "__init__":
-            # docstring at __init__ method should be preferred first
-            # if docstring is missing at __init__ method then use class level docstring for __init__
-            if hasattr(self.obj, "__doc__"):
-                docstring = self.obj.__doc__
-            if not docstring and hasattr(self.parent_node.obj, "__doc__"):
-                docstring = self.parent_node.obj.__doc__
-        else:
-            docstring = self.obj.__doc__
+        if hasattr(self.obj, "__doc__"):
+            docstring = getattr(self.obj, "__doc__")
+        # Refer docstring at class if this is constructor and docstring is missing for __init__
+        if not docstring and self.name == "__init__" and hasattr(self.parent_node.obj, "__doc__"):
+            docstring = getattr(self.parent_node.obj, "__doc__")
 
         if docstring:
             #  Parse doc string to find missing types, kwargs and return type
             parsed_docstring = DocstringParser(docstring)
             parsed_docstring.parse()
-            # Copy missing types and kwargs and return type
+            # Set return type if not already set
             if not self.return_type and parsed_docstring.ret_type:
+                logging.info("Setting return type from docstring for method {}".format(self.name))
                 self.return_type = parsed_docstring.ret_type
 
             # Update arg type from docstring if available and if argtype is missing from signatrue parsing
@@ -108,16 +116,27 @@ class FunctionNode(NodeEntityBase):
                 if not pos_arg.argtype:
                     pos_arg.argtype = arg_type_dict.get(pos_arg.argname, pos_arg.argtype)
             
+            # add keyword args
             if parsed_docstring.kw_args:                              
                 # Add seperator to differentiate pos_arg and keyword args
                 self.args.append(ArgType("*"))
                 parsed_docstring.kw_args.sort(key=operator.attrgetter('argname'))
                 self.args.extend(parsed_docstring.kw_args)
-                if self.kw_arg in self.args:
-                    # Remove kwarg from list and add it at the end
-                    self.args.remove(self.kw_arg)
-                    self.args.append(self.kw_arg)
-            
+                # remove arg with name "**kwarg and add at the end"
+                kwargs = [x for x in self.args if x.argname == KW_ARG_NAME]
+                if kwargs:
+                    kw_arg = kwargs[0]
+                    self.args.remove(kw_arg)
+                    self.args.append(kw_arg)
+
+
+    def _parse_typehint(self):
+        # Parse type hint to get return type and types for positional args
+        typehint_parser = TypeHintParser(self.obj)
+        # Find return type from type hint if return type is not already set
+        if not self.return_type:
+            typehint_parser.find_return_type()
+
 
     def _generate_signature_token(self, apiview):
         apiview.add_punctuation("(")
@@ -168,7 +187,7 @@ class FunctionNode(NodeEntityBase):
 
         apiview.add_keyword("def")
         apiview.add_space()
-        apiview.add_text(self.namespace_id, self.namespace_id if self.is_module_level else self.name)
+        apiview.add_text(self.namespace_id, self.full_name if self.is_module_level else self.name)
         # Add parameters
         self._generate_signature_token(apiview)
         if self.return_type:

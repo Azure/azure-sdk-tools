@@ -10,12 +10,13 @@ logging.getLogger().setLevel(logging.INFO)
 class PropertyNode(NodeEntityBase):
     """Property node represents property defined in a class
     """
-    def __init__(self, namespace, parent_node, obj):
+    def __init__(self, namespace, parent_node, name, obj):
         super().__init__(namespace, parent_node, obj)
         self.obj = obj
         self.read_only = True
         self.type = "Any"
         self.errors = []
+        self.name = name
         self._inspect()
         # Generate ID using name found by inspect
         self.namespace_id = self.generate_id()
@@ -24,7 +25,6 @@ class PropertyNode(NodeEntityBase):
     def _inspect(self):
         """Identify property name, type and readonly property
         """
-        self.name = getattr(self.obj, "fget").__name__
         if getattr(self.obj, "fset"):
             self.read_only = False
         

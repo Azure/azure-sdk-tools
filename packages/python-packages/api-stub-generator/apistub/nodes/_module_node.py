@@ -29,30 +29,48 @@ class ModuleNode(NodeEntityBase):
     def _inspect(self):
         """Imports module, identify public entities in module and inspect them recursively
         """     
-        public_entities = []   
+        # Parse public entities only if __all is present. Otherwise all Classes and Functions not starting with "_" can be included.
+        public_entities = []
         if hasattr(self.obj, "__all__"):
-            public_entities = getattr(self.obj, "__all__")
+            public_entities = getattr(self.obj, "__all__")        
 
         # find class and function nodes in module
         for name, member_obj in inspect.getmembers(self.obj):
-            if name not in public_entities:
-                logging.info("Skipping object {}".format(name))
+            if self._should_skip_parsing(name, member_obj, public_entities):
                 continue
+
+            logging.info("{0} - {1} - {2}".format(name, type(member_obj), member_obj))
             if inspect.isclass(member_obj):
                 class_node = ClassNode(self.namespace, self, member_obj)
                 key = "{0}.{1}".format(self.namespace, class_node.name)
                 self.nodeindex.add(key, class_node)
                 self.child_nodes.append(class_node)
-            if inspect.ismethod(member_obj) or inspect.isfunction(member_obj):
+            elif inspect.isroutine(member_obj):
                 func_node = FunctionNode(self.namespace,  self, member_obj, True)
                 key = "{0}.{1}".format(self.namespace, func_node.name)
                 self.nodeindex.add(key, func_node)
                 self.child_nodes.append(func_node)
+            else:
+                logging.info("Skipping unknown type member in module: {}".format(name))
 
-        # sort classes and functions
-        self.child_nodes.sort(key=operator.attrgetter('name'))
-
+    
+    def _should_skip_parsing(self, name, member_obj, public_entities):
+        # If module has list of published entities ( __all__) then include only those members
+        if public_entities and name not in public_entities:
+            logging.info("Object is not listed in __all__. Skipping object {}".format(name))
+            return True
             
+        # Skip any private members
+        if name.startswith("_"):
+            logging.info("Skipping object {}".format(name))
+            return True
+
+        # Skip any member in module level that is defined in external or built in package
+        if hasattr(member_obj, "__module__"):
+            return not getattr(member_obj, "__module__").startswith("azure.")
+        # Don't skip member if module name is not available. This is just to be on safer side
+        return False
+
 
     def generate_tokens(self, apiview):
         """Generates token for the node and it's children recursively and add it to apiview

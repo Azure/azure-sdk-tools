@@ -22,6 +22,18 @@ find_var = lambda x: isinstance(x, VariableNode)
 find_classfunc = lambda x: isinstance(x, FunctionNode) and x.is_class_method
 find_dunder_func = lambda x: isinstance(x, FunctionNode) and x.name.startswith("__")
 
+ABSTRACT_CLASS_METHODS = {
+    "ContextManager": ["__enter__", "__exit__"],
+    "AsyncContextManager": ["__aenter__", "__aexit__"],
+    "Iterator": ["__next__", "__iter__"],
+    "Collection": ["__contains__", "__iter__", "__len__"],
+    "Mapping": ["__getitem__", "__len__", "__eq__", "__ne__", "keys", "items", "values", "get"],
+    "AsyncIterable": ["__anext__", "__aiter__"],
+    "AsyncIterator": ["__anext__", "__aiter__"],
+    "Awaitable": ["__await__"],
+    #"StringFormator": ["__str__", "__repr__"]
+}
+
 
 class ClassNode(NodeEntityBase):
     """Class node to represent parsed class node and children
@@ -30,11 +42,40 @@ class ClassNode(NodeEntityBase):
         super().__init__(namespace, parent_node, obj)            
         self.base_class_names = []
         self.errors = []
-        self.namespace_id = self.generate_id()   
+        self.namespace_id = self.generate_id()
+        self.full_name = self.namespace_id
+        self.implements = []
         self._inspect()
+        self._set_abc_implements()
         self._sort_elements()
         
-    
+
+    def _set_abc_implements(self):
+        """ Check if class adher to any abstract class implementation.
+            If class has implementation for all required abstract methods then tag this class
+            as implementing that abstract class. For e.g. if class has both __iter__ and __next__
+            then this class implements Iterator
+        """
+        instance_functions = [x for x in self.child_nodes if isinstance(x, FunctionNode)]
+        instance_function_names = [ x.name for x in instance_functions]
+
+        is_implemented = lambda func: func in instance_function_names
+        for c in ABSTRACT_CLASS_METHODS:
+            logging.info("Checking if class implements {}".format(c))
+            if all(map(is_implemented, ABSTRACT_CLASS_METHODS[c])):
+                logging.info("Class {0} implements {1}".format(self.name, c))
+                self.implements.append(c)
+        
+        # Hide all methods for implemented ABC classes/ implements
+        methods_to_hide = []
+        for abc_class in self.implements:
+            methods_to_hide.extend(ABSTRACT_CLASS_METHODS[abc_class])
+        # Hide abc methods for ABC implementations
+        for method in instance_functions:
+            if method.name in methods_to_hide:
+                method.hidden = True
+            
+
     def _should_include_function(self, func_obj):
         # Method or Function member should only be included if it is defined in same package.
         # So this check will filter any methods defined in parent class if parent class is in non-azure package
@@ -54,7 +95,7 @@ class ClassNode(NodeEntityBase):
         logging.info("Inspecting class {}".format(self.name))
         # get base classes
         self.base_class_names = self._get_base_classes()
-        # Is enum class
+        # Check if Enum is in Base class hierarchy
         self.is_enum = Enum in self.obj.__mro__
          # Find any ivar from docstring
         self._parse_ivars()
@@ -73,11 +114,11 @@ class ClassNode(NodeEntityBase):
                 self.child_nodes.append(EnumNode(self.namespace, self, child_obj))
             elif isinstance(child_obj, property):
                 # Add instance properties
-                self.child_nodes.append(PropertyNode(self.namespace, self, child_obj))
+                self.child_nodes.append(PropertyNode(self.namespace, self, name, child_obj))
             elif not name.startswith("_") and (isinstance(child_obj, str) or isinstance(child_obj, int)):
                 # Add any public class level variables(cvar)
                 # Assumption here is that class level variables are either str or int constants
-                self.child_nodes.append((VariableNode(self.namespace, self, name, str(child_obj), False )))
+                self.child_nodes.append((VariableNode(self.namespace, self, name, None, str(child_obj), False )))
 
 
     def _parse_ivars(self):
@@ -88,7 +129,7 @@ class ClassNode(NodeEntityBase):
         if docstring:
             docstring_parser = DocstringParser(docstring)
             for var in docstring_parser.find_args("ivar"):
-                ivar_node = VariableNode(self.namespace, self, var.argname, var.argtype, True)
+                ivar_node = VariableNode(self.namespace, self, var.argname, var.argtype,None, True)
                 self.child_nodes.append(ivar_node)
 
 
@@ -107,8 +148,7 @@ class ClassNode(NodeEntityBase):
 
 
     def _get_base_classes(self):
-        """Find base classes
-        """
+        # Find base classes
         base_classes = []
         if hasattr(self.obj, "__bases__"):            
             for cl in [c for c in self.obj.__bases__ if c is not object]:
@@ -119,7 +159,7 @@ class ClassNode(NodeEntityBase):
                     base_classes.append(cl.__name__)
         return base_classes
 
-
+           
     def generate_tokens(self, apiview):
         """Generates token for the node and it's children recursively and add it to apiview
         :param ApiView: apiview
@@ -129,33 +169,48 @@ class ClassNode(NodeEntityBase):
         apiview.add_line_marker(self.namespace_id)
         apiview.add_keyword("class")
         apiview.add_space()
-        apiview.add_text(self.namespace_id, self.namespace_id)
+        apiview.add_text(self.namespace_id, self.full_name)
 
         # Add inherited base classes
         if self.base_class_names:
             apiview.add_punctuation("(")
-            for index in range(len(self.base_class_names)):
-                apiview.add_type(self.base_class_names[index])
-                # Add punctuation betwen types
-                if index < len(self.base_class_names)-1:
-                    apiview.add_punctuation(",")
-                    apiview.add_space()
+            _generate_token_for_collection(self.base_class_names, apiview)
             apiview.add_punctuation(")")
         apiview.add_punctuation(":")
 
-        # Add members and methods
+        # Add any ABC implementation list
+        if self.implements:
+            apiview.add_space()
+            apiview.add_keyword("implements")
+            apiview.add_space()
+            _generate_token_for_collection(self.implements, apiview)
+
+        # Generate token for child nodes
         if self.child_nodes:
+            self._generate_child_tokens(apiview)
+
+
+    def _generate_child_tokens(self, apiview):
+        # Add members and methods
+        apiview.add_new_line()
+        apiview.begin_group()
+        for e in [p for p in self.child_nodes if not isinstance(p, FunctionNode)]:
+            apiview.add_whitespace()
+            e.generate_tokens(apiview)
             apiview.add_new_line()
-            apiview.begin_group()            
-
-            for e in [p for p in self.child_nodes if not isinstance(p, FunctionNode)]:
-                apiview.add_whitespace()
-                e.generate_tokens(apiview)
-                apiview.add_new_line()
+        apiview.add_new_line(1)
+        for func in [x for x in self.child_nodes if isinstance(x, FunctionNode) and x.hidden == False]:
+            func.generate_tokens(apiview)
             apiview.add_new_line(1)
+        apiview.end_group()
 
-            for func in [x for x in self.child_nodes if isinstance(x, FunctionNode)]:
-                func.generate_tokens(apiview)
-                apiview.add_new_line(1)
-                
-            apiview.end_group()
+
+def _generate_token_for_collection(values, apiview):
+    # Helper method to concatenate list of values and generate tokens
+    list_len = len(values)
+    for index in range(list_len):
+        apiview.add_type(values[index])
+        # Add punctuation betwen types
+        if index < list_len-1:
+            apiview.add_punctuation(",")
+            apiview.add_space()

@@ -18,7 +18,7 @@ steps:
     displayName: Copy ${{ parameters.DirectoryToSync }} from azure-sdk-tools to ${{ repo }}
     workingDirectory: $(System.DefaultWorkingDirectory)
 
-  - template: pipelines/steps/create-pull-request.yml@azure-sdk-build-tools
+  - template: eng/common/pipelines/templates/steps/create-pull-request.yml
     parameters:
       RepoName: ${{ repo }}
       PRBranchName: sync-${{ parameters.DirectoryToSync }}
@@ -26,3 +26,4 @@ steps:
       PRTitle: ${{ parameters.CommitMessage }}
       PushArgs: -f
       WorkingDirectory: $(System.DefaultWorkingDirectory)/${{ repo }}
+      ScriptDirectory: $(System.DefaultWorkingDirectory)/eng/common/scripts

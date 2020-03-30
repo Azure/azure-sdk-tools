@@ -10,12 +10,6 @@ trigger:
 
 pr: none
 
-resources:
-  repositories:
-    - repository: azure-sdk-build-tools
-      type: git
-      name: internal/azure-sdk-build-tools
-
 pool:
   vmImage: windows-2019
 
@@ -24,7 +18,6 @@ jobs:
     displayName: Sync eng/common Directory
 
     steps:
-    - template: tools/clone-buildtools/clone-buildtools.yml@azure-sdk-build-tools
     - template: ./templates/steps/sync-directory.yml
       parameters:
         CommitMessage: Sync eng/common directory with azure-sdk-tools repository

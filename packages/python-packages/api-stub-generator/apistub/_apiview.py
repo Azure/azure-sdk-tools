@@ -179,7 +179,7 @@ class NavigationTag:
 class Kind:
     type_class = "class"
     type_enum = "enum"
-    type_method = "function"
+    type_method = "method"
     type_module = "namespace"
     type_package = "assembly"
 

@@ -10,7 +10,7 @@ namespace Azure.ClientSdk.Analyzers.Tests
     public class AZC0012Tests
     {
         [Fact]
-        public async Task AZC0001ProducedForSingleWordTypeNames()
+        public async Task AZC0012ProducedForSingleWordTypeNames()
         {
             const string code = @"
 namespace Azure.Data
@@ -22,7 +22,7 @@ namespace Azure.Data
         }
 
         [Fact]
-        public async Task AZC0001NotProducedForNonPublicTypes()
+        public async Task AZC0012NotProducedForNonPublicTypes()
         {
             const string code = @"
 namespace Azure.Data
@@ -33,7 +33,7 @@ namespace Azure.Data
         }
 
         [Fact]
-        public async Task AZC0001NotProducedForMultiWordTypes()
+        public async Task AZC0012NotProducedForMultiWordTypes()
         {
             const string code = @"
 namespace Azure.Data

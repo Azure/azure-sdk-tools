@@ -22,6 +22,18 @@ namespace Azure.Data
         }
 
         [Fact]
+        public async Task AZC0012ProducedForSingleWordInterfaceNames()
+        {
+            const string code = @"
+namespace Azure.Data
+{
+    public interface [|IProgram|] { }
+}";
+
+            await Verifier.VerifyAnalyzerAsync(code);
+        }
+
+        [Fact]
         public async Task AZC0012NotProducedForNonPublicTypes()
         {
             const string code = @"

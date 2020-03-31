@@ -17,8 +17,10 @@ namespace Azure.ClientSdk.Analyzers
         {
             var namedTypeSymbol = (INamedTypeSymbol)context.Symbol;
 
+            // Account for an `I` prefix in the interfaces.
+            var minimumWordCount = namedTypeSymbol.TypeKind == TypeKind.Interface ? 2 : 1;
             if (namedTypeSymbol.DeclaredAccessibility == Accessibility.Public &&
-                IsSingleWord(namedTypeSymbol.Name))
+                CountWords(namedTypeSymbol.Name) <= minimumWordCount)
             {
                 foreach (var location in namedTypeSymbol.Locations)
                 {
@@ -27,7 +29,7 @@ namespace Azure.ClientSdk.Analyzers
             }
         }
 
-        private bool IsSingleWord(string name)
+        private int CountWords(string name)
         {
             int i = 0;
             foreach (var c in name)
@@ -36,14 +38,9 @@ namespace Azure.ClientSdk.Analyzers
                 {
                     i++;
                 }
-
-                if (i > 1)
-                {
-                    return false;
-                }
             }
 
-            return true;
+            return i;
         }
     }
 }

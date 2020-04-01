@@ -57,8 +57,12 @@ class ApiView:
             self.add_token(Token("", TokenKind.Newline))
 
 
-    def add_punctuation(self, value):
+    def add_punctuation(self, value, prefix_space = False, postfix_space = False):
+        if prefix_space:
+            self.add_space()
         self.add_token(Token(value, TokenKind.Punctuation))
+        if postfix_space:
+            self.add_space()
     
 
     def add_line_marker(self, text):
@@ -73,8 +77,12 @@ class ApiView:
         self.add_token(token)
 
     
-    def add_keyword(self, keyword):
+    def add_keyword(self, keyword, prefix_space = False, postfix_space = False):
+        if prefix_space:
+            self.add_space()
         self.add_token(Token(keyword, TokenKind.Keyword))
+        if postfix_space:
+            self.add_space()
 
 
     def _generate_type_tokens(self, type_name, prefix_type):
@@ -98,12 +106,11 @@ class ApiView:
                 self._add_type_token(types[index].strip())
                 # Add seperator between types
                 if index < type_count -1:
-                    self.add_punctuation(",")
-                    self.add_space()
+                    self.add_punctuation(",", False, True)
             self.add_punctuation(type_name[-1])
 
 
-    def add_type(self, type_name):
+    def add_type(self, type_name, id = None):
         # This method replace full qualified internal types to short name and generate tokens
         if not type_name:
             return

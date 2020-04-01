@@ -22,6 +22,8 @@ find_var = lambda x: isinstance(x, VariableNode)
 find_classfunc = lambda x: isinstance(x, FunctionNode) and x.is_class_method
 find_dunder_func = lambda x: isinstance(x, FunctionNode) and x.name.startswith("__")
 
+# This static dict will be used to identify if a class implements a specific ABC class
+# and tag class as implementing corresponding ABC class instead of showing these dunder methods
 ABSTRACT_CLASS_METHODS = {
     "ContextManager": ["__enter__", "__exit__"],
     "AsyncContextManager": ["__aenter__", "__aexit__"],
@@ -31,7 +33,6 @@ ABSTRACT_CLASS_METHODS = {
     "AsyncIterable": ["__anext__", "__aiter__"],
     "AsyncIterator": ["__anext__", "__aiter__"],
     "Awaitable": ["__await__"],
-    #"StringFormator": ["__str__", "__repr__"]
 }
 
 
@@ -51,11 +52,10 @@ class ClassNode(NodeEntityBase):
         
 
     def _set_abc_implements(self):
-        """ Check if class adher to any abstract class implementation.
-            If class has implementation for all required abstract methods then tag this class
-            as implementing that abstract class. For e.g. if class has both __iter__ and __next__
-            then this class implements Iterator
-        """
+        # Check if class adher to any abstract class implementation.
+        # If class has implementation for all required abstract methods then tag this class
+        # as implementing that abstract class. For e.g. if class has both __iter__ and __next__
+        # then this class implements Iterator
         instance_functions = [x for x in self.child_nodes if isinstance(x, FunctionNode)]
         instance_function_names = [ x.name for x in instance_functions]
 
@@ -90,9 +90,8 @@ class ClassNode(NodeEntityBase):
         
         
     def _inspect(self):
-        """Inspect current class and it's members recursively
-        """
-        logging.info("Inspecting class {}".format(self.name))
+        # Inspect current class and it's members recursively
+        logging.info("Inspecting class {}".format(self.full_name))
         # get base classes
         self.base_class_names = self._get_base_classes()
         # Check if Enum is in Base class hierarchy
@@ -167,8 +166,7 @@ class ClassNode(NodeEntityBase):
         # Generate class name line
         apiview.add_whitespace()
         apiview.add_line_marker(self.namespace_id)
-        apiview.add_keyword("class")
-        apiview.add_space()
+        apiview.add_keyword("class", False, True)
         apiview.add_text(self.namespace_id, self.full_name)
 
         # Add inherited base classes
@@ -180,9 +178,7 @@ class ClassNode(NodeEntityBase):
 
         # Add any ABC implementation list
         if self.implements:
-            apiview.add_space()
-            apiview.add_keyword("implements")
-            apiview.add_space()
+            apiview.add_keyword("implements", True, True)
             _generate_token_for_collection(self.implements, apiview)
 
         # Generate token for child nodes
@@ -212,5 +208,4 @@ def _generate_token_for_collection(values, apiview):
         apiview.add_type(values[index])
         # Add punctuation betwen types
         if index < list_len-1:
-            apiview.add_punctuation(",")
-            apiview.add_space()
+            apiview.add_punctuation(",", False, True)

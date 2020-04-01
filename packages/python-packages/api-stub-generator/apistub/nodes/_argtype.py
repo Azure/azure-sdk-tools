@@ -2,7 +2,8 @@ import logging
 
 logging.getLogger().setLevel(logging.INFO)
 
-SPECIAL_DEFAULT_VALUES = ["None", "(...)"]
+# Special default values that should not be treated as string literal
+SPECIAL_DEFAULT_VALUES = ["None", "..."]
 
 class ArgType:
     """Represents Argument type
@@ -38,15 +39,12 @@ class ArgType:
         apiview.add_text(id, self.argname)
         # add arg type
         if self.argtype:
-            apiview.add_punctuation(":")
-            apiview.add_space()
+            apiview.add_punctuation(":", False, True)
             apiview.add_type(self.argtype)
 
         # add arg default value
         if include_default and self.default:
-            apiview.add_space()
-            apiview.add_punctuation("=")
-            apiview.add_space()
+            apiview.add_punctuation("=", True, True)
             # Add string literal or numeric literal based on the content within default
             # Ideally this should be based on arg type. But type is not available for all args
             # We should refer to arg type instead of content when all args have type

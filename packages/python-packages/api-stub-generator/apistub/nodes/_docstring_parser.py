@@ -107,16 +107,24 @@ class DocstringParser:
 
 
 class TypeHintParser:
+    """TypeHintParser helps to find return type from type hint is type hint is available
+    :param object: obj
+    """
     def __init__(self, obj):
         self.obj = obj
         self.code = inspect.getsource(obj)
 
 
     def find_return_type(self):
+        """Returns return type is type hint is available
+        """
         if not self.code:
             return None
 
         # Find return type from type hint
         ret_type = re.search(find_type_hint_ret_type, self.code)
+        # Don't return None as string literal
         if ret_type and ret_type != "None":
             return ret_type.groups()[-1]
+        else:
+            return None

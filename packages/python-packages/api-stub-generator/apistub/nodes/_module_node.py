@@ -18,6 +18,9 @@ filter_class = lambda x: isinstance(x, ClassNode)
 
 class ModuleNode(NodeEntityBase):
     """ModuleNode represents module level node and all it's children
+    :param str: namespace
+    :param module: module
+    :param dict: nodeindex
     """
     def __init__(self, namespace, module, nodeindex):
         super().__init__(namespace, None, module)

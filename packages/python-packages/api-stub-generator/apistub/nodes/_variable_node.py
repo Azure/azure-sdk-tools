@@ -23,19 +23,15 @@ class VariableNode(NodeEntityBase):
         """Generates token for the node
         :param ApiView: apiview
         """        
-        apiview.add_keyword("ivar" if self.is_ivar else "cvar")
-        apiview.add_space()
+        apiview.add_keyword("ivar" if self.is_ivar else "cvar", False, True)
         apiview.add_line_marker(self.namespace_id)
         apiview.add_text(self.namespace_id, self.name)
         # Add type
         if self.type:
-            apiview.add_punctuation(":")
-            apiview.add_space()
+            apiview.add_punctuation(":", False, True)
             apiview.add_type(self.type)
 
         if self.value:
-            apiview.add_space()
-            apiview.add_punctuation("=")
-            apiview.add_space()
+            apiview.add_punctuation("=", True, True)
             add_value = apiview.add_string_literal if self.type == 'str' else apiview.add_literal
             add_value(self.value)

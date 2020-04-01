@@ -12,7 +12,12 @@ logging.getLogger().setLevel(logging.INFO)
 KW_ARG_NAME =  "**kwargs"
     
 class FunctionNode(NodeEntityBase):
-    """Function node to represent parsed function and method nodes
+    """Function node class represents parsed function signature.
+    Keyword args will be parsed and added to signature if docstring is available.
+    :param str: namespace
+    :param NodeEntityBase: parent_node
+    :param function: obj
+    :param bool: is_module_level
     """
     def __init__(self, namespace, parent_node, obj, is_module_level = False):
         super().__init__(namespace, parent_node, obj)
@@ -157,8 +162,7 @@ class FunctionNode(NodeEntityBase):
             self.args[index].generate_tokens(apiview, self.namespace_id, use_multi_line, True)
             # Add punctuation betwen types except for last one
             if index < args_count-1:
-                apiview.add_punctuation(",")
-                apiview.add_space()
+                apiview.add_punctuation(",", False, True)
 
         if use_multi_line:
             apiview.add_new_line()
@@ -171,8 +175,9 @@ class FunctionNode(NodeEntityBase):
 
 
     def generate_tokens(self, apiview):
-        """Generates token function"""
-
+        """Generates token for function signature
+        :param ApiView: apiview
+        """
         # Add tokens for annotations
         for annot in self.annotations:
             apiview.add_whitespace()
@@ -182,16 +187,17 @@ class FunctionNode(NodeEntityBase):
         apiview.add_whitespace()
         apiview.add_line_marker(self.namespace_id)
         if self.is_async:
-            apiview.add_keyword("async")
-            apiview.add_space()
+            apiview.add_keyword("async", False, True)
 
-        apiview.add_keyword("def")
-        apiview.add_space()
+        apiview.add_keyword("def", False, True)
+        # Show fully qualified name for module level function and short name for instance functions
         apiview.add_text(self.namespace_id, self.full_name if self.is_module_level else self.name)
         # Add parameters
         self._generate_signature_token(apiview)
         if self.return_type:
-            apiview.add_space()
-            apiview.add_punctuation("->")
-            apiview.add_space()
+            apiview.add_punctuation("->", True, True)
+            # Add line marker id if signature is displayed in multi lines
+            if len(self.args) > 4:
+                line_id = "{}.returntype".format(self.namespace_id)
+                apiview.add_line_marker(line_id)
             apiview.add_type(self.return_type)

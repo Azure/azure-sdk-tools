@@ -3,7 +3,6 @@ import inspect
 import astroid
 from inspect import Parameter
 
-logging.getLogger().setLevel(logging.INFO)
 
               
 class NodeEntityBase:
@@ -11,13 +10,12 @@ class NodeEntityBase:
     :param str: namespace
         module name of the underlying object within this node
     :param: parant_node
-        Parent of current node. For e.g. Class Ndoe in case instance member is current node
+        Parent of current node. For e.g. Class Node in case instance member is current node
     :param: obj
         Python object that is represented by current node. For e.g. class, function, property
     """
     
     def __init__(self, namespace, parent_node, obj):
-        super().__init__()
         self.namespace = namespace
         self.parent_node = parent_node
         self.obj = obj
@@ -50,7 +48,7 @@ class NodeEntityBase:
                 c.generate_tokens(apiview)
             apiview.end_group()
 
-    
+
 def get_qualified_name(obj):
     """Generate and return fully qualified name of object with module name for internal types.
        If module name is not available for the object then it will return name

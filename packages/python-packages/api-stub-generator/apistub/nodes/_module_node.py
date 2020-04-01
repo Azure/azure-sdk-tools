@@ -10,9 +10,6 @@ from ._class_node import ClassNode
 from ._function_node import FunctionNode
 from apistub import Navigation, Kind, NavigationTag
 
-
-logging.getLogger().setLevel(logging.INFO)
-
 filter_function = lambda x: isinstance(x, FunctionNode)
 filter_class = lambda x: isinstance(x, ClassNode)
 

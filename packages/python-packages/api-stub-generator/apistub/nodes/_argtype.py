@@ -1,7 +1,5 @@
 import logging
 
-logging.getLogger().setLevel(logging.INFO)
-
 # Special default values that should not be treated as string literal
 SPECIAL_DEFAULT_VALUES = ["None", "..."]
 

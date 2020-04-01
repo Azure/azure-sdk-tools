@@ -4,8 +4,6 @@ import logging
 from ._argtype import ArgType
 
 
-logging.getLogger().setLevel(logging.INFO)
-
 # REGEX to parse docstring
 find_arg_regex = "(?<!:):{}\s+([\w]*):(?!:)"
 find_arg_and_type_regex = "(?<!:):{}\s+([~\w.]*[\[?[~\w.]*,?\s?[~\w.]*\]?]?)\s+([\w]*):(?!:)"

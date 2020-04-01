@@ -13,7 +13,6 @@ from ._property_node import PropertyNode
 from ._docstring_parser import DocstringParser
 from ._variable_node import VariableNode
 
-logging.getLogger().setLevel(logging.INFO)
 
 find_props = lambda x: isinstance(x, PropertyNode)
 find_instancefunc = lambda x: isinstance(x, FunctionNode) and not x.is_class_method and not x.name.startswith("__")

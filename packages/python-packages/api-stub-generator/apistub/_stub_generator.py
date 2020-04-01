@@ -25,27 +25,43 @@ from ._apiview import ApiView, APIViewEncoder, Navigation, Kind, NavigationTag
 
 INIT_PY_FILE = "__init__.py"
 
-logging.getLogger().setLevel(logging.INFO)
+logging.getLogger().setLevel(logging.ERROR)
 
-class NodeIndex:
-    """Maintains name to navigation ID"""
-    index = {}
-
-    def add(self, name, node):
-        if name in self.index:
-            raise ValueError("Index already has {} node".format(name))
-        self.index[name] = node
-
-    def get(self, name):
-        return self.index.get(name, None)
-
-    def get_id(self, name):
-        node = self.get(name)
-        if node and hasattr(node, "namespace_id"):
-            return node.namespace_id
-        return None
 
 class StubGenerator:
+
+    def __init__(self):
+        parser = argparse.ArgumentParser(description="Parse a python package and generate json token file to be supplied to API review tool")
+        parser.add_argument(
+            "--pkg-path", required=True, help=("Package root path"),
+        )
+        parser.add_argument(
+            "--temp-path", required=True, help=("Temp path to extract package"),
+        )
+        parser.add_argument(
+            "--out-path", required=True, help=("Path to generate json file with parsed tokens"),
+        )
+        parser.add_argument(
+            "--verbose", help=("Enable verbose logging"),
+        )
+
+        args = parser.parse_args()
+        if not os.path.exists(args.pkg_path):
+            logging.error("Package path [{}] is invalid".format(args.pkg_path))
+            exit(1)
+        elif not os.path.exists(args.temp_path):
+            logging.error("Temp path [{0}] is invalid".format(args.temp_path))
+            exit(1)        
+        elif not os.path.exists(args.out_path):
+            logging.error("Output path [{}] is invalid".format(args.out_path))
+            exit(1)
+
+        self.pkg_path = args.pkg_path
+        self.temp_path = args.temp_path
+        self.out_path = args.out_path
+        if args.verbose:
+            logging.getLogger().setLevel(logging.INFO)
+
 
     def _find_modules(self, pkg_root_path):
         """Find modules within the package to import and parse
@@ -180,31 +196,22 @@ class StubGenerator:
         self._serialize_tokens(apiview, out_file_path)
         logging.info("Completed parsing package and generating tokens")
 
-    
-    def __init__(self):
-        parser = argparse.ArgumentParser(description="Parse a python package and generate json token file to be supplied to API review tool")
-        parser.add_argument(
-            "--pkg-path", required=True, help=("Package root path"),
-        )
-        parser.add_argument(
-            "--temp-path", required=True, help=("Temp path to extract package"),
-        )
-        parser.add_argument(
-            "--out-path", required=True, help=("Path to generate json file with parsed tokens"),
-        )
 
-        args = parser.parse_args()
-        if not os.path.exists(args.pkg_path):
-            logging.error("Package path [{}] is invalid".format(args.pkg_path))
-            exit(1)
-        elif not os.path.exists(args.temp_path):
-            logging.error("Temp path [{0}] is invalid".format(args.temp_path))
-            exit(1)        
-        elif not os.path.exists(args.out_path):
-            logging.error("Output path [{}] is invalid".format(args.out_path))
-            exit(1)
+class NodeIndex:
+    """Maintains name to navigation ID"""
+    index = {}
 
-        self.pkg_path = args.pkg_path
-        self.temp_path = args.temp_path
-        self.out_path = args.out_path
+    def add(self, name, node):
+        if name in self.index:
+            raise ValueError("Index already has {} node".format(name))
+        self.index[name] = node
+
+    def get(self, name):
+        return self.index.get(name, None)
+
+    def get_id(self, name):
+        node = self.get(name)
+        if node and hasattr(node, "namespace_id"):
+            return node.namespace_id
+        return None
         

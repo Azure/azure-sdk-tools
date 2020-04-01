@@ -3,9 +3,6 @@ import re
 
 from ._base_node import NodeEntityBase
 
-logging.getLogger().setLevel(logging.INFO)
-
-
 
 class VariableNode(NodeEntityBase):
     """Variable node represents class and instance variable defined in a class

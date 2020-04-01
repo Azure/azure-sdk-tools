@@ -5,8 +5,6 @@ import astroid
 from ._base_node import NodeEntityBase
 
 
-logging.getLogger().setLevel(logging.INFO)
-
 
 class EnumNode(NodeEntityBase):
     """Enum node represents any Enum value

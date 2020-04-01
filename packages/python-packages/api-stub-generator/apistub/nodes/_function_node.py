@@ -7,7 +7,6 @@ from ._docstring_parser import DocstringParser, TypeHintParser
 from ._base_node import NodeEntityBase, get_qualified_name
 from ._argtype import ArgType
 
-logging.getLogger().setLevel(logging.INFO)
 
 KW_ARG_NAME =  "**kwargs"
     

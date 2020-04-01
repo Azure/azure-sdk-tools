@@ -4,8 +4,6 @@ import re
 from ._base_node import NodeEntityBase
 from ._docstring_parser import DocstringParser
 
-logging.getLogger().setLevel(logging.INFO)
-
 
 class PropertyNode(NodeEntityBase):
     """Property node represents property defined in a class

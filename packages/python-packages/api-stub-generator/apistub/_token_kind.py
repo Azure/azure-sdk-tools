@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class TokenKind(Enum):
     Text = 0
     Newline = 1

@@ -8,8 +8,9 @@ from ._base_node import NodeEntityBase, get_qualified_name
 from ._argtype import ArgType
 
 
-KW_ARG_NAME =  "**kwargs"
-    
+KW_ARG_NAME = "**kwargs"
+
+
 class FunctionNode(NodeEntityBase):
     """Function node class represents parsed function signature.
     Keyword args will be parsed and added to signature if docstring is available.
@@ -18,7 +19,8 @@ class FunctionNode(NodeEntityBase):
     :param function: obj
     :param bool: is_module_level
     """
-    def __init__(self, namespace, parent_node, obj, is_module_level = False):
+
+    def __init__(self, namespace, parent_node, obj, is_module_level=False):
         super().__init__(namespace, parent_node, obj)
         self.annotations = []
         self.args = []
@@ -28,15 +30,14 @@ class FunctionNode(NodeEntityBase):
         # Name space ID will be later updated for async methods
         self.full_name = self.namespace_id
         self.is_class_method = False
-        self.is_module_level  = is_module_level
+        self.is_module_level = is_module_level
         # Some of the methods wont be listed in API review
         # For e.g. ABC methods if class implements all ABC methods
         self.hidden = False
-        self._inspect()        
-
+        self._inspect()
 
     def _inspect(self):
-        logging.info("Processing function {0}".format(self.name))
+        logging.debug("Processing function {0}".format(self.name))
         code = inspect.getsource(self.obj).strip()
         # We cannot do "startswith" check here due to annotations or decorators present for functions
         self.is_async = code.__contains__("async def")
@@ -49,17 +50,22 @@ class FunctionNode(NodeEntityBase):
         try:
             node = astroid.extract_node(inspect.getsource(self.obj))
             if node.decorators:
-                self.annotations = ["@{}".format(x.name) for x in node.decorators.nodes if hasattr(x, "name")]
+                self.annotations = [
+                    "@{}".format(x.name)
+                    for x in node.decorators.nodes
+                    if hasattr(x, "name")
+                ]
         except:
             # todo Update exception details in error
-            error_message = "Error in parsing decorators for function {}".format(self.name)
+            error_message = "Error in parsing decorators for function {}".format(
+                self.name
+            )
             self.errors.append(error_message)
             logging.error(error_message)
 
         self.is_class_method = "@classmethod" in self.annotations
         self._parse_function()
 
-    
     def _parse_function(self):
         """
         Find positional and keyword arguements, type and default value and return type of method
@@ -72,7 +78,7 @@ class FunctionNode(NodeEntityBase):
         # Add cls as first arg for class methods in API review tool
         if "@classmethod" in self.annotations:
             self.args.append(ArgType("cls"))
-        
+
         # Find signature to find positional args and return type
         sig = inspect.signature(self.obj)
         params = sig.parameters
@@ -90,19 +96,22 @@ class FunctionNode(NodeEntityBase):
             self.return_type = get_qualified_name(sig.return_annotation)
 
         # parse docstring
-        self._parse_docstring()            
+        self._parse_docstring()
         # parse type hints
         self._parse_typehint()
 
-
     def _parse_docstring(self):
-        # Parse docstring to get list of keyword args, type and default value for both positional and 
+        # Parse docstring to get list of keyword args, type and default value for both positional and
         # kw args and return type( if not already found in signature)
         docstring = ""
         if hasattr(self.obj, "__doc__"):
             docstring = getattr(self.obj, "__doc__")
         # Refer docstring at class if this is constructor and docstring is missing for __init__
-        if not docstring and self.name == "__init__" and hasattr(self.parent_node.obj, "__doc__"):
+        if (
+            not docstring
+            and self.name == "__init__"
+            and hasattr(self.parent_node.obj, "__doc__")
+        ):
             docstring = getattr(self.parent_node.obj, "__doc__")
 
         if docstring:
@@ -111,20 +120,26 @@ class FunctionNode(NodeEntityBase):
             parsed_docstring.parse()
             # Set return type if not already set
             if not self.return_type and parsed_docstring.ret_type:
-                logging.info("Setting return type from docstring for method {}".format(self.name))
+                logging.debug(
+                    "Setting return type from docstring for method {}".format(self.name)
+                )
                 self.return_type = parsed_docstring.ret_type
 
             # Update arg type from docstring if available and if argtype is missing from signatrue parsing
-            arg_type_dict = dict([(x.argname, x.argtype) for x in parsed_docstring.pos_args])
+            arg_type_dict = dict(
+                [(x.argname, x.argtype) for x in parsed_docstring.pos_args]
+            )
             for pos_arg in self.args:
                 if not pos_arg.argtype:
-                    pos_arg.argtype = arg_type_dict.get(pos_arg.argname, pos_arg.argtype)
-            
+                    pos_arg.argtype = arg_type_dict.get(
+                        pos_arg.argname, pos_arg.argtype
+                    )
+
             # add keyword args
-            if parsed_docstring.kw_args:                              
+            if parsed_docstring.kw_args:
                 # Add seperator to differentiate pos_arg and keyword args
                 self.args.append(ArgType("*"))
-                parsed_docstring.kw_args.sort(key=operator.attrgetter('argname'))
+                parsed_docstring.kw_args.sort(key=operator.attrgetter("argname"))
                 self.args.extend(parsed_docstring.kw_args)
                 # remove arg with name "**kwarg and add at the end"
                 kwargs = [x for x in self.args if x.argname == KW_ARG_NAME]
@@ -133,14 +148,12 @@ class FunctionNode(NodeEntityBase):
                     self.args.remove(kw_arg)
                     self.args.append(kw_arg)
 
-
     def _parse_typehint(self):
         # Parse type hint to get return type and types for positional args
         typehint_parser = TypeHintParser(self.obj)
         # Find return type from type hint if return type is not already set
         if not self.return_type:
             typehint_parser.find_return_type()
-
 
     def _generate_signature_token(self, apiview):
         apiview.add_punctuation("(")
@@ -158,9 +171,11 @@ class FunctionNode(NodeEntityBase):
                 apiview.add_new_line()
                 apiview.add_whitespace()
 
-            self.args[index].generate_tokens(apiview, self.namespace_id, use_multi_line, True)
+            self.args[index].generate_tokens(
+                apiview, self.namespace_id, use_multi_line, True
+            )
             # Add punctuation betwen types except for last one
-            if index < args_count-1:
+            if index < args_count - 1:
                 apiview.add_punctuation(",", False, True)
 
         if use_multi_line:
@@ -171,7 +186,6 @@ class FunctionNode(NodeEntityBase):
             apiview.end_group()
         else:
             apiview.add_punctuation(")")
-
 
     def generate_tokens(self, apiview):
         """Generates token for function signature
@@ -190,7 +204,9 @@ class FunctionNode(NodeEntityBase):
 
         apiview.add_keyword("def", False, True)
         # Show fully qualified name for module level function and short name for instance functions
-        apiview.add_text(self.namespace_id, self.full_name if self.is_module_level else self.name)
+        apiview.add_text(
+            self.namespace_id, self.full_name if self.is_module_level else self.name
+        )
         # Add parameters
         self._generate_signature_token(apiview)
         if self.return_type:

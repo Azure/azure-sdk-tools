@@ -4,7 +4,6 @@ import astroid
 from inspect import Parameter
 
 
-              
 class NodeEntityBase:
     """This is the base class for all node types
     :param str: namespace
@@ -14,7 +13,7 @@ class NodeEntityBase:
     :param: obj
         Python object that is represented by current node. For e.g. class, function, property
     """
-    
+
     def __init__(self, namespace, parent_node, obj):
         self.namespace = namespace
         self.parent_node = parent_node
@@ -22,10 +21,9 @@ class NodeEntityBase:
         self.name = ""
         if hasattr(obj, "__name__"):
             self.name = obj.__name__
-        self.display_name = self.name        
+        self.display_name = self.name
         self.child_nodes = []
         self.errors = []
-        
 
     def generate_id(self):
         """Generates ID for current object using parent object's ID and name
@@ -34,7 +32,6 @@ class NodeEntityBase:
         if self.parent_node:
             namespace_id = "{0}.{1}".format(self.parent_node.namespace_id, self.name)
         return namespace_id
-
 
     def generate_tokens(self, apiview):
         """Generates token for the node and it's children recursively and add it to apiview
@@ -67,8 +64,7 @@ def get_qualified_name(obj):
     module_name = ""
     if hasattr(obj, "__module__"):
         module_name = getattr(obj, "__module__")
-    if module_name and module_name.startswith('azure'):
+    if module_name and module_name.startswith("azure"):
         return "{0}.{1}".format(module_name, name)
 
     return name
-

@@ -1,4 +1,4 @@
-__path__ = __import__('pkgutil').extend_path(__path__, __name__)  # type: ignore
+__path__ = __import__("pkgutil").extend_path(__path__, __name__)  # type: ignore
 
 from ._argtype import ArgType
 from ._base_node import NodeEntityBase, get_qualified_name
@@ -21,5 +21,5 @@ __all__ = [
     "FunctionNode",
     "ModuleNode",
     "PropertyNode",
-    "VariableNode"
+    "VariableNode",
 ]

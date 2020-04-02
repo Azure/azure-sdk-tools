@@ -3,6 +3,7 @@ import logging
 # Special default values that should not be treated as string literal
 SPECIAL_DEFAULT_VALUES = ["None", "..."]
 
+
 class ArgType:
     """Represents Argument type
     :param str: name
@@ -13,14 +14,15 @@ class ArgType:
         Default value for the argument, If any
     """
 
-    def __init__(self, name, argtype = None, default = None):
+    def __init__(self, name, argtype=None, default=None):
         super().__init__()
         self.argname = name
         self.argtype = argtype
         self.default = default
-            
 
-    def generate_tokens(self, apiview, function_id, add_line_marker, include_default = True):
+    def generate_tokens(
+        self, apiview, function_id, add_line_marker, include_default=True
+    ):
         """Generates token for the node and it's children recursively and add it to apiview
         :param ApiView: apiview
         :param str: function_id
@@ -46,7 +48,7 @@ class ArgType:
             # Add string literal or numeric literal based on the content within default
             # Ideally this should be based on arg type. But type is not available for all args
             # We should refer to arg type instead of content when all args have type
-            if  self.default in SPECIAL_DEFAULT_VALUES or self.argtype != 'str':
+            if self.default in SPECIAL_DEFAULT_VALUES or self.argtype != "str":
                 apiview.add_literal(self.default)
             else:
                 apiview.add_stringliteral(self.default)

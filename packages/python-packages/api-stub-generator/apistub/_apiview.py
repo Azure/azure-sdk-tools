@@ -3,9 +3,11 @@ from json import JSONEncoder
 
 from ._token import Token
 from ._token_kind import TokenKind
+from ._version import VERSION
 
 JSON_FIELDS = ["Name", "Version", "VersionString", "Navigation", "Tokens"]
 
+HEADER_TEXT = "# Package is parsed using api-stub-generator(version:{})".format(VERSION)
 
 class ApiView:
     """Entity class that holds API view for all namespaces within a package
@@ -23,6 +25,8 @@ class ApiView:
         self.Navigation = []
         self.indent = 0
         self.nodeindex = nodeindex
+        self.add_literal(HEADER_TEXT)
+        self.add_new_line(2)
 
     def add_token(self, token):
         self.Tokens.append(token)

@@ -3,7 +3,6 @@ import inspect
 import enum
 from enum import Enum
 import types
-import astroid
 import operator
 
 from ._base_node import NodeEntityBase

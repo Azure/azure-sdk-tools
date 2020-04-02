@@ -121,16 +121,20 @@ class ApiView:
             token.NavigateToId = navigate_to_id
         self.add_token(token)
 
+
     def add_member(self, name, id):
         token = Token(name, TokenKind.MemberName)
         token.DefinitionId = id
         self.add_token(token)
 
+
     def add_stringliteral(self, value):
         self.add_token(Token("\u0022{}\u0022".format(value), TokenKind.StringLiteral))
 
+
     def add_literal(self, value):
         self.add_token(Token(value, TokenKind.Literal))
+
 
     def add_navigation(self, navigation):
         self.Navigation.append(navigation)

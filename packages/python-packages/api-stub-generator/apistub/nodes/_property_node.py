@@ -1,6 +1,3 @@
-import logging
-import re
-
 from ._base_node import NodeEntityBase
 from ._docstring_parser import DocstringParser
 

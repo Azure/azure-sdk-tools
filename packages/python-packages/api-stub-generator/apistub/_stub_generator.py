@@ -21,6 +21,7 @@ import textwrap
 import io
 import re
 import typing
+import tempfile
 from subprocess import check_call
 import zipfile
 
@@ -41,11 +42,13 @@ class StubGenerator:
             "--pkg-path", required=True, help=("Package root path"),
         )
         parser.add_argument(
-            "--temp-path", required=True, help=("Temp path to extract package"),
+            "--temp-path", 
+            help=("Temp path to extract package"),
+            default=tempfile.gettempdir(),
         )
         parser.add_argument(
             "--out-path",
-            required=True,
+            default=os.getcwd(),
             help=("Path to generate json file with parsed tokens"),
         )
         parser.add_argument(

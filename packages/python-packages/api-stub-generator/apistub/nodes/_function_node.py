@@ -88,7 +88,7 @@ class FunctionNode(NodeEntityBase):
             if params[argname].default != Parameter.empty:
                 arg.default = str(params[argname].default)
             # Store handle to kwarg object to replace it later
-            if params[argname].kind in [Parameter.VAR_KEYWORD, Parameter.KEYWORD_ONLY]:
+            if params[argname].kind == Parameter.VAR_KEYWORD:
                 arg.argname = KW_ARG_NAME
             self.args.append(arg)
 
@@ -130,10 +130,9 @@ class FunctionNode(NodeEntityBase):
                 [(x.argname, x.argtype) for x in parsed_docstring.pos_args]
             )
             for pos_arg in self.args:
-                if not pos_arg.argtype:
-                    pos_arg.argtype = arg_type_dict.get(
-                        pos_arg.argname, pos_arg.argtype
-                    )
+                pos_arg.argtype = arg_type_dict.get(
+                    pos_arg.argname, pos_arg.argtype
+                )
 
             # add keyword args
             if parsed_docstring.kw_args:
@@ -158,7 +157,7 @@ class FunctionNode(NodeEntityBase):
     def _generate_signature_token(self, apiview):
         apiview.add_punctuation("(")
         args_count = len(self.args)
-        use_multi_line = args_count > 5
+        use_multi_line = args_count > 2
         # Show args in individual line if method has more than 4 args and use two tabs to properly aign them
         if use_multi_line:
             apiview.begin_group()
@@ -212,7 +211,7 @@ class FunctionNode(NodeEntityBase):
         if self.return_type:
             apiview.add_punctuation("->", True, True)
             # Add line marker id if signature is displayed in multi lines
-            if len(self.args) > 4:
+            if len(self.args) > 2:
                 line_id = "{}.returntype".format(self.namespace_id)
                 apiview.add_line_marker(line_id)
             apiview.add_type(self.return_type)

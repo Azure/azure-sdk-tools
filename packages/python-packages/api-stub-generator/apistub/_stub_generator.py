@@ -9,12 +9,18 @@ import glob
 import sys
 import os
 import argparse
+
 import inspect
 import io
 import importlib
 import json
 import logging
 import shutil
+import ast
+import textwrap
+import io
+import re
+import typing
 from subprocess import check_call
 import zipfile
 
@@ -67,10 +73,16 @@ class StubGenerator:
             logging.getLogger().setLevel(logging.DEBUG)
 
     def generate_tokens(self):
-        # Extract package to temp directory
-        logging.info("Extracting package to temp path")
-        pkg_root_path = self._extract_wheel()
-        pkg_name, version = self._parse_pkg_name()
+        # Extract package to temp directory if it is wheel or sdist
+        if self.pkg_path.endswith(".whl") or self.pkg_path.endswith(".zip"):
+            logging.info("Extracting package to temp path")
+            pkg_root_path = self._extract_wheel()
+            pkg_name, version = self._parse_pkg_name()
+        else:
+            # package root is passed as arg to parse
+            pkg_root_path = self.pkg_path
+            pkg_name, version = parse_setup_py(pkg_root_path)
+
         logging.debug("package name: {0}, version:{1}".format(pkg_name, version))
 
         logging.debug("Installing package from {}".format(self.pkg_path))
@@ -80,11 +92,13 @@ class StubGenerator:
         logging.info("Completed parsing package and generating tokens")
         return apiview
 
+
     def serialize(self, apiview, encoder=APIViewEncoder):
         # Serialize tokens into JSON
         logging.debug("Serializing tokens into json")
         json_apiview = encoder().encode(apiview)
         return json_apiview
+
 
     def _find_modules(self, pkg_root_path):
         """Find modules within the package to import and parse
@@ -214,3 +228,39 @@ class NodeIndex:
         if node and hasattr(node, "namespace_id"):
             return node.namespace_id
         return None
+
+
+def parse_setup_py(setup_path):
+    """Parses setup.py and finds package name and version"""
+    setup_filename = os.path.join(setup_path, "setup.py")
+    mock_setup = textwrap.dedent(
+        """\
+    def setup(*args, **kwargs):
+        __setup_calls__.append((args, kwargs))
+    """
+    )
+    parsed_mock_setup = ast.parse(mock_setup, filename=setup_filename)
+    with io.open(setup_filename, "r", encoding="utf-8-sig") as setup_file:
+        parsed = ast.parse(setup_file.read())
+        for index, node in enumerate(parsed.body[:]):
+            if (
+                not isinstance(node, ast.Expr)
+                or not isinstance(node.value, ast.Call)
+                or not hasattr(node.value.func, "id")
+                or node.value.func.id != "setup"
+            ):
+                continue
+            parsed.body[index:index] = parsed_mock_setup.body
+            break
+
+    fixed = ast.fix_missing_locations(parsed)
+    codeobj = compile(fixed, setup_filename, "exec")
+    local_vars = {}
+    global_vars = {"__setup_calls__": []}
+    current_dir = os.getcwd()
+    working_dir = os.path.dirname(setup_filename)
+    os.chdir(working_dir)
+    exec(codeobj, global_vars, local_vars)
+    os.chdir(current_dir)
+    _, kwargs = global_vars["__setup_calls__"][0]
+    return kwargs["name"], kwargs["version"]

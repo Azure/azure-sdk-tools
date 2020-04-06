@@ -1,5 +1,8 @@
 # Release History
 
+## 0.5.4
+- Handle crashing setup.py in Python Index Packages implementation. 
+
 ## 0.5.3
 - Update namespace reference to pathlib2
 

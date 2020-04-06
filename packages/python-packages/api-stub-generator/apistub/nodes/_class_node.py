@@ -36,6 +36,9 @@ ABSTRACT_CLASS_METHODS = {
         "__len__",
         "__eq__",
         "__ne__",
+        "__contains__",
+        "__iter__",
+        "__len__",
         "keys",
         "items",
         "values",
@@ -207,6 +210,7 @@ class ClassNode(NodeEntityBase):
         # Generate token for child nodes
         if self.child_nodes:
             self._generate_child_tokens(apiview)
+
 
     def _generate_child_tokens(self, apiview):
         # Add members and methods

@@ -6,29 +6,21 @@ SPECIAL_DEFAULT_VALUES = ["None", "..."]
 
 class ArgType:
     """Represents Argument type
-    :param str: name
-        Name of the argument
-    :param str: argtype
-        Type of the argument. for e.g. str, int, BlobBlock
-    :param str: default
-        Default value for the argument, If any
+    :param str name: Name of the argument
+    :param str argtype: Type of the argument. for e.g. str, int, BlobBlock
+    :param str default: Default value for the argument, If any
     """
 
     def __init__(self, name, argtype=None, default=None):
-        super().__init__()
         self.argname = name
         self.argtype = argtype
         self.default = default
 
-    def generate_tokens(
-        self, apiview, function_id, add_line_marker, include_default=True
-    ):
+    def generate_tokens(self, apiview, function_id, add_line_marker):
         """Generates token for the node and it's children recursively and add it to apiview
-        :param ApiView: apiview
-        :param str: function_id
-            Module level Unique ID created for function 
-        :param bool: include_default
-            Optional flag to indicate to include/exclude default value in tokens
+        :param ~ApiVersion apiview: The ApiView
+        :param str function_id: Module level Unique ID created for function 
+        :param bool include_default: Optional flag to indicate to include/exclude default value in tokens
         """
         # Add arg name
         id = None
@@ -43,7 +35,7 @@ class ArgType:
             apiview.add_type(self.argtype)
 
         # add arg default value
-        if include_default and self.default:
+        if self.default:
             apiview.add_punctuation("=", True, True)
             # Add string literal or numeric literal based on the content within default
             # Ideally this should be based on arg type. But type is not available for all args

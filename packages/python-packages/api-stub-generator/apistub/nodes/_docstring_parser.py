@@ -27,7 +27,6 @@ class DocstringParser:
     """
 
     def __init__(self, docstring):
-        super().__init__()
         self.pos_args = []
         self.kw_args = []
         self.ret_type = None

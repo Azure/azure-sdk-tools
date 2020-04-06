@@ -40,7 +40,7 @@ class FunctionNode(NodeEntityBase):
         logging.debug("Processing function {0}".format(self.name))
         code = inspect.getsource(self.obj).strip()
         # We cannot do "startswith" check here due to annotations or decorators present for functions
-        self.is_async = code.__contains__("async def")
+        self.is_async = "async def" in code
         self.def_key = "async def" if self.is_async else "def"
         # Update namespace ID to reflect async status. Otherwise ID will conflict between sync and async methods
         if self.is_async:

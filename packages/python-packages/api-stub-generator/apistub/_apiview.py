@@ -11,9 +11,10 @@ HEADER_TEXT = "# Package is parsed using api-stub-generator(version:{})".format(
 
 class ApiView:
     """Entity class that holds API view for all namespaces within a package
-        :param str: package_name
-        :param str: pkg_version
-        :param str: versionstring
+    :param NodeIndex: nodeindex
+    :param str: pkg_name
+    :param str: pkg_version
+    :param str: ver_string
     """
 
     def __init__(self, nodeindex, pkg_name="", pkg_version=0, ver_string=""):

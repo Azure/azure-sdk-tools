@@ -84,7 +84,7 @@ class StubGenerator:
         else:
             # package root is passed as arg to parse
             pkg_root_path = self.pkg_path
-            pkg_name, version = parse_setup_py(pkg_root_path)
+            pkg_name, version, _ = parse_setup_py(pkg_root_path)
 
         logging.debug("package name: {0}, version:{1}".format(pkg_name, version))
 
@@ -110,11 +110,10 @@ class StubGenerator:
         :rtype: list
         """
         modules = []
-        azure_root_path = os.path.join(pkg_root_path, "azure")
-        for root, subdirs, files in os.walk(azure_root_path):
+        for root, subdirs, files in os.walk(pkg_root_path):
             # Ignore any modules with name starts with "_"
             # For e.g. _generated, _shared etc
-            dirs_to_skip = [x for x in subdirs if x.startswith("_")]
+            dirs_to_skip = [x for x in subdirs if x.startswith("_") or x.startswith(".")]
             for d in dirs_to_skip:
                 subdirs.remove(d)
 
@@ -216,8 +215,6 @@ class StubGenerator:
 class NodeIndex:
     """Maintains name to navigation ID"""
 
-    index = {}
-
     def add(self, name, node):
         if name in self.index:
             raise ValueError("Index already has {} node".format(name))
@@ -266,4 +263,12 @@ def parse_setup_py(setup_path):
     exec(codeobj, global_vars, local_vars)
     os.chdir(current_dir)
     _, kwargs = global_vars["__setup_calls__"][0]
-    return kwargs["name"], kwargs["version"]
+    package_name = kwargs["name"]
+    name_space = package_name.replace('-', '.')
+    if "packages" in kwargs.keys():
+        packages = kwargs["packages"]
+        if packages:
+            name_space = packages[0]
+            logging.info("Namespaces found for package {0}: {1}".format(package_name, packages))
+
+    return package_name, kwargs["version"], name_space

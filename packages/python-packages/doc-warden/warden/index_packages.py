@@ -393,7 +393,14 @@ def parse_setup(config, setup_filename):
     current_dir = os.getcwd()
     working_dir = os.path.dirname(setup_filename)
     os.chdir(working_dir)
-    exec(codeobj, global_vars, local_vars)
+
+    try:
+        exec(codeobj, global_vars, local_vars)
+    except:
+        if config.verbose_output:
+            print('{} ran into an exception during exec'.format(setup_filename))
+        return None, None
+
     os.chdir(current_dir)
     try:
         _, kwargs = global_vars['__setup_calls__'][0]

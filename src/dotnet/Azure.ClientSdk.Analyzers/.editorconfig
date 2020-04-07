@@ -1,4 +1,0 @@
-﻿[*.cs]
-
-# RS1024: Compare symbols correctly
-dotnet_diagnostic.RS1024.severity = none

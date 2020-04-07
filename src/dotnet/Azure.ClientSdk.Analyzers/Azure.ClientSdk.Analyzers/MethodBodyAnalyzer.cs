@@ -65,7 +65,7 @@ namespace Azure.ClientSdk.Analyzers
         {
             switch (current) 
             {
-                case IParameterReferenceOperation reference when reference.Parameter == context.AsyncParameter:
+                case IParameterReferenceOperation reference when SymbolEqualityComparer.Default.Equals(reference.Parameter, context.AsyncParameter):
                     AnalyzeAsyncParameterReference(context, reference);
                     return false;
                 case IAnonymousFunctionOperation function when function.Symbol != null:
@@ -306,7 +306,7 @@ namespace Azure.ClientSdk.Analyzers
             => operation != null && operation.ConstantValue.HasValue && operation.ConstantValue.Value is bool boolValue && value == boolValue;
 
         private static bool IsEqualsToParameter(IOperation operation, IParameterSymbol parameter) 
-            => operation != null && operation is IParameterReferenceOperation reference && reference.Parameter == parameter;
+            => operation != null && operation is IParameterReferenceOperation reference && SymbolEqualityComparer.Default.Equals(reference.Parameter, parameter);
 
         private IParameterSymbol GetAsyncParameter(IMethodSymbol method) 
             => method.Parameters.FirstOrDefault(_asyncUtilities.IsAsyncParameter);

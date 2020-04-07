@@ -15,6 +15,7 @@ steps:
       -SubscriptionId '$(azure-subscription-id)'
       -ProvisionerApplicationId '$(aad-azure-sdk-test-client-id)'
       -ProvisionerApplicationSecret '$(aad-azure-sdk-test-client-secret)'
+      -SubscriptionId '$(subscription-id)'
       -Environment 'AzureCloud'
       -Force
       -Verbose
@@ -29,6 +30,7 @@ steps:
       -SubscriptionId '$(azure-subscription-id)'
       -ProvisionerApplicationId '$(aad-azure-sdk-test-client-id-gov)'
       -ProvisionerApplicationSecret '$(aad-azure-sdk-test-client-secret-gov)'
+      -SubscriptionId '$(subscription-id-gov)'
       -Environment 'AzureUSGovernment'
       -Force
       -Verbose
@@ -43,6 +45,7 @@ steps:
       -SubscriptionId '$(azure-subscription-id)'
       -ProvisionerApplicationId '$(aad-azure-sdk-test-client-id-cn)'
       -ProvisionerApplicationSecret '$(aad-azure-sdk-test-client-secret-cn)'
+      -SubscriptionId '$(subscription-id-cn)'
       -Environment 'AzureChinaCloud'
       -Force
       -Verbose

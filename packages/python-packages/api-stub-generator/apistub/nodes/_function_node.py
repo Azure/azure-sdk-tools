@@ -171,7 +171,7 @@ class FunctionNode(NodeEntityBase):
                 apiview.add_whitespace()
 
             self.args[index].generate_tokens(
-                apiview, self.namespace_id, use_multi_line, True
+                apiview, self.namespace_id, use_multi_line
             )
             # Add punctuation betwen types except for last one
             if index < args_count - 1:
@@ -214,4 +214,5 @@ class FunctionNode(NodeEntityBase):
             if len(self.args) > 2:
                 line_id = "{}.returntype".format(self.namespace_id)
                 apiview.add_line_marker(line_id)
+            logging.debug("Method: {0}, Return type: {1}".format(self.name, self.return_type))
             apiview.add_type(self.return_type)

@@ -1,5 +1,7 @@
 import json
 from json import JSONEncoder
+import logging
+import re
 
 from ._token import Token
 from ._token_kind import TokenKind
@@ -8,6 +10,7 @@ from ._version import VERSION
 JSON_FIELDS = ["Name", "Version", "VersionString", "Navigation", "Tokens"]
 
 HEADER_TEXT = "# Package is parsed using api-stub-generator(version:{})".format(VERSION)
+COMPLEX_DATA_TYPE_PATTERN = re.compile("([a-zA-Z]+)(\[|\()[^\]\)]+(\]|\))")
 
 class ApiView:
     """Entity class that holds API view for all namespaces within a package
@@ -99,7 +102,7 @@ class ApiView:
             types = type_names.split(",")
             type_count = len(types)
             for index in range(type_count):
-                self._add_type_token(types[index].strip())
+                self.add_type(types[index].strip())
                 # Add seperator between types
                 if index < type_count - 1:
                     self.add_punctuation(",", False, True)
@@ -110,10 +113,11 @@ class ApiView:
         if not type_name:
             return
 
-        if type_name.startswith("Union"):
-            self._generate_type_tokens(type_name, "Union")
-        elif type_name.startswith("dict"):
-            self._generate_type_tokens(type_name, "dict")
+        # Check if type is multi value types like Union, Dict, list etc
+        # Those types needs to be recursively processed
+        multi_types = re.search(COMPLEX_DATA_TYPE_PATTERN,type_name)
+        if multi_types:
+            self._generate_type_tokens(type_name, multi_types.groups()[0])
         else:
             self._add_type_token(type_name)
 
@@ -150,13 +154,13 @@ class APIViewEncoder(JSONEncoder):
     """
 
     def default(self, obj):
+        obj_dict = {}
         if (
             isinstance(obj, ApiView)
             or isinstance(obj, Token)
             or isinstance(obj, Navigation)
             or isinstance(obj, NavigationTag)
-        ):
-            obj_dict = {}
+        ):            
             # Remove fields in APIview that are not required in json
             if isinstance(obj, ApiView):
                 for key in JSON_FIELDS:
@@ -164,6 +168,7 @@ class APIViewEncoder(JSONEncoder):
                         obj_dict[key] = obj.__dict__[key]
             elif isinstance(obj, Token):
                 obj_dict = obj.__dict__
+                # Remove properties from serialization to reduce size if property is not set
                 if not obj.DefinitionId:
                     del obj_dict["DefinitionId"]
                 if not obj.NavigateToId:
@@ -175,7 +180,11 @@ class APIViewEncoder(JSONEncoder):
         elif isinstance(obj, TokenKind) or isinstance(obj, Kind):
             return obj.value  # {"__enum__": obj.value}
         else:
-            JSONEncoder.default(self, obj)
+            try:
+                JSONEncoder.default(self, obj)
+            except:
+                logging.error("Failed to serialize using default serialization for {}. Serializing using object dict.".format(obj))
+                return obj_dict
 
 
 class NavigationTag:

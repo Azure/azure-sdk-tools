@@ -17,7 +17,7 @@ find_multi_type_regex = "(?<!:):({0})\s?{1}:([\s]*([\S]+)(\s+or\s+[\S]+)+)(?!:)"
 find_docstring_return_type = "(?<!:):rtype\s?:\s+([^:\n]+)(?!:)"
 
 # Regex to parse type hints
-find_type_hint_ret_type = "(?<!#)#\stype:[\w\s\(\),]*\s->\s([\w]*)"
+find_type_hint_ret_type = "(?<!#)#\stype:[\w\s\(\),]*\s->\s([^\n]*)"
 
 docstring_types = ["param", "type", "paramtype", "keyword", "rtype"]
 
@@ -93,7 +93,7 @@ class DocstringParser:
                 p.default = "..."
 
             if not p.argtype:
-                p.argtype = self.find_type("(type|keywordtype|paramtype)", p.argname)
+                p.argtype = self.find_type("(type|keywordtype|paramtype|vartype)", p.argname)
         return params
 
     def parse(self):

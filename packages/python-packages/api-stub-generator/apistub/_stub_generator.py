@@ -15,6 +15,7 @@ import io
 import importlib
 import json
 import logging
+import pkgutil
 import shutil
 import ast
 import textwrap
@@ -134,6 +135,7 @@ class StubGenerator:
         logging.debug("Modules in package: {}".format(modules))
         return modules
 
+
     def _generate_tokens(self, pkg_root_path, package_name, version):
         """This method returns a dictionary of namespace and all public classes in each namespace
         """
@@ -150,8 +152,11 @@ class StubGenerator:
         # load all modules and parse them recursively
         for m in modules:
             logging.debug("Importing module {}".format(m))
-            module_obj = importlib.import_module(m)
-            module_dict[m] = ModuleNode(m, module_obj, nodeindex)
+            try:
+                module_obj = importlib.import_module(m)
+                module_dict[m] = ModuleNode(m, module_obj, nodeindex)
+            except:
+                logging.error("Failed to import {}".format(m))
 
         # Create navigation info to navigate within APIreview tool
         navigation = Navigation(package_name, None)
@@ -214,6 +219,8 @@ class StubGenerator:
 
 class NodeIndex:
     """Maintains name to navigation ID"""
+    def __init__(self):
+        self.index = {}
 
     def add(self, name, node):
         if name in self.index:

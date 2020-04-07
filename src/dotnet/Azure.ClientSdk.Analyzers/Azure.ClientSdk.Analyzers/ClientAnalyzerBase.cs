@@ -33,7 +33,7 @@ namespace Azure.ClientSdk.Analyzers
 
             public bool Equals(IParameterSymbol x, IParameterSymbol y)
             {
-                return x.Type.Equals(y.Type) && x.Name.Equals(y.Name);
+                return SymbolEqualityComparer.Default.Equals(x.Type, y.Type) && x.Name.Equals(y.Name);
             }
 
             public int GetHashCode(IParameterSymbol obj)

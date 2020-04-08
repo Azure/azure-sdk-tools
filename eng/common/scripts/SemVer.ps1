@@ -2,9 +2,6 @@
 .DESCRIPTION
 Parses a semver version string into its components and supports operations around it that we use for versioning our packages.
 
-By default enforces prerelease label semantics:
-     If a prerelease label exists, it must be 'preview', and similar semantics used in our release guidelines
-
 See https://azure.github.io/azure-sdk/policies_releases.html#package-versioning
 
 Example: 1.2.3-preview.4
@@ -22,22 +19,18 @@ class AzureEngSemanticVersion {
     [bool] $IsPrerelease
     [string] $RawVersion
 
-    AzureEngSemanticVersion(
-        [string] $versionString
-    ){
-        $this.Init($versionString, $true)
+    
+    static [AzureEngSemanticVersion] ParseVersionString([string] $versionString)
+    {
+        try {
+            return [AzureEngSemanticVersion]::new($versionString)
+        }
+        catch {
+            return $null
+        }
     }
-    AzureEngSemanticVersion(
-        [string] $versionString,
-        [bool] $enforcePrereleaseLabelSemantics # enforces, if a prerelease label exists, it must be 'preview', and similar semantics used in our release guidelines
-    ){        
-        $this.Init($versionString, $enforcePrereleaseLabelSemantics)
-    }
-
-    hidden Init(
-        [string] $versionString,
-        [bool] $enforcePrereleaseLabelSemantics
-    ){
+    
+    AzureEngSemanticVersion([string] $versionString){
         # Regex inspired but simplifie from https://semver.org/#is-there-a-suggested-regular-expression-regex-to-check-a-semver-string
         $SEMVER_REGEX = "^(?<major>0|[1-9]\d*)\.(?<minor>0|[1-9]\d*)\.(?<patch>0|[1-9]\d*)(?:-?(?<prelabel>[a-zA-Z-]*)(?:\.?(?<prenumber>0|[1-9]\d*)))?$"
         
@@ -52,16 +45,6 @@ class AzureEngSemanticVersion {
                 $prelabel = $matches["prelabel"]
                 $prenumber = [int]$matches["prenumber"]
                 $isPre = $true;
-            
-                if ($enforcePrereleaseLabelSemantics -eq $true){
-                    if ($prelabel -ne 'preview') {
-                        throw "Unexpected pre-release identifier '$prelabel', should be 'preview'"
-                    }
-                    if ($prenumber -lt 1)
-                    {
-                        throw "Unexpected pre-release version '$prenumber', should be >= '1'"
-                    }
-                }
             }
 
             $this.Major = [int]$matches.Major
@@ -76,6 +59,23 @@ class AzureEngSemanticVersion {
         {
             throw "Invalid version string: '$versionString'"
         }
+    }
+
+    # If a prerelease label exists, it must be 'preview', and similar semantics used in our release guidelines
+    # See https://azure.github.io/azure-sdk/policies_releases.html#package-versioning
+    [bool] HasValidPrereleaseLabel(){
+        if ($this.IsPrerelease -eq $true) {
+            if ($this.PrereleaseLabel -ne 'preview') {
+                Write-Error "Unexpected pre-release identifier '$this.PrereleaseLabel', should be 'preview'"
+                return $false;
+            }
+            if ($this.PrereleaseNumber -lt 1)
+            {
+                Write-Error "Unexpected pre-release version '$this.PrereleaseNumber', should be >= '1'"
+                return $false;
+            }
+        }
+        return $true;
     }
 
     [string] ToString(){
@@ -104,4 +104,5 @@ class AzureEngSemanticVersion {
             $this.PrereleaseNumber++
         }
     }
+
 }

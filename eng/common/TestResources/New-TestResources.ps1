@@ -143,11 +143,6 @@ if (!$Location) {
 if ($ProvisionerApplicationId) {
     $null = Disable-AzContextAutosave -Scope Process
 
-    # Use the given subscription ID if provided.
-    $subscriptionArgs = if ($SubscriptionId) {
-        @{SubscriptionId = $SubscriptionId}
-    }
-
     Log "Logging into service principal '$ProvisionerApplicationId'"
     $provisionerSecret = ConvertTo-SecureString -String $ProvisionerApplicationSecret -AsPlainText -Force
     $provisionerCredential = [System.Management.Automation.PSCredential]::new($ProvisionerApplicationId, $provisionerSecret)

@@ -130,22 +130,28 @@ class ClassNode(NodeEntityBase):
                 child_obj.__name__ = name
                 self.child_nodes.append(EnumNode(self.namespace, self, child_obj))
             elif isinstance(child_obj, property):
-                # Add instance properties
-                self.child_nodes.append(
-                    PropertyNode(self.namespace, self, name, child_obj)
-                )
+                if not name.startswith("_"):
+                    # Add instance properties
+                    self.child_nodes.append(
+                        PropertyNode(self.namespace, self, name, child_obj)
+                    )
             elif not name.startswith("_") and (
                 isinstance(child_obj, str) or isinstance(child_obj, int)
             ):
-                # Add any public class level variables(cvar)
-                # Assumption here is that class level variables are either str or int constants
-                self.child_nodes.append(
-                    (
-                        VariableNode(
-                            self.namespace, self, name, None, str(child_obj), False
+                # Add any public class level variables
+                # if variable is already present  in parsed list then just update the value
+                var_nodes = [v for v in self.child_nodes if isinstance(v, VariableNode) and v.name == name]
+                if var_nodes:
+                    var_nodes[0].value = str(child_obj)
+                else:
+                    # Assumption here is that class level variables are either str or int constants
+                    self.child_nodes.append(
+                        (
+                            VariableNode(
+                                self.namespace, self, name, None, str(child_obj), False
+                            )
                         )
                     )
-                )
 
     def _parse_ivars(self):
         # This method will add instance variables by parsing docstring

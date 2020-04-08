@@ -30,7 +30,7 @@ class VariableNode(NodeEntityBase):
         if self.value:
             apiview.add_punctuation("=", True, True)
             add_value = (
-                apiview.add_string_literal
+                apiview.add_stringliteral
                 if self.type == "str"
                 else apiview.add_literal
             )

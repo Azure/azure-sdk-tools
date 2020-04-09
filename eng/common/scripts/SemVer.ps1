@@ -104,5 +104,4 @@ class AzureEngSemanticVersion {
             $this.PrereleaseNumber++
         }
     }
-
 }

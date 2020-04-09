@@ -9,6 +9,7 @@ import glob
 import shutil
 import tarfile
 import re
+import pdb
 
 from subprocess import check_call
 from zipfile import ZipFile
@@ -32,7 +33,7 @@ from azure.storage.blob import BlobServiceClient
 
 logging.getLogger().setLevel(logging.INFO)
 
-DESTINATION_CONTAINER = "generation"
+DESTINATION_CONTAINER = "repackaged"
 # https://scbeddscratch.blob.core.windows.net/generation/azure-appconfiguration-1.0.0b5.tar.gz
 URI_CONSTRUCTOR = "{primary_endpoint}{container}/{name}"
 
@@ -88,7 +89,7 @@ def strip_comments_from_inits(start_dir):
         lines = [line.replace('"pkgutil"', "'pkgutil'").rstrip() for line in lines if not line.strip().startswith('#')]
 
         with open(located_init, 'w') as f:
-            f.write("".join(lines))
+            f.write("\n".join(lines))
 
 
 def repackage_data(download_dir, unzip_directory, upload_directory):
@@ -104,6 +105,8 @@ def repackage_data(download_dir, unzip_directory, upload_directory):
            zipObj.extractall(unzip_directory)
 
         strip_comments_from_inits(tar_source)
+
+        pdb.set_trace()
 
         make_tarfile(tar_location, tar_source)
 
@@ -166,9 +169,9 @@ if __name__ == "__main__":
     logging.info("Targeted Working Directory: {}".format(working_directory))
 
     logging.info("Prepping Working Environment")
-    prep_env([download_dir, unzip_directory, upload_directory])
+    # prep_env([download_dir, unzip_directory, upload_directory])
 
-    # download the sdist format
+    # # download the sdist format
     for specifier in all_packages:
         download_package(specifier, download_dir)
     

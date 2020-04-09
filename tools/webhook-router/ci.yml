@@ -7,7 +7,7 @@ trigger:
         - hotfix/*
     paths:
       include:
-        - tools/pipeline-generator
+        - tools/webhook-router
   
 pr:
 branches:
@@ -18,7 +18,7 @@ branches:
     - hotfix/*
 paths:
     include:
-    - tools/pipeline-generator
+    - tools/webhook-router
   
 extends:
     template: ../../eng/pipelines/templates/stages/archetype-sdk-tool-azure-function.yml

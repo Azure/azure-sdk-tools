@@ -40,10 +40,9 @@ class DocstringParser:
         multi_type_regex = re.compile(find_multi_type_regex.format(type_name, var_name))
         type_groups = multi_type_regex.search(self.docstring)
         if type_groups:
-            type_string = type_groups.groups()[2]
-            types = [x.replace("\n", "").strip() for x in type_string.split()]
-            types = [x for x in types if x != "or"]
-            return "Union[{}]".format(", ".join(types))
+            type_string = type_groups.groups()[2].replace("\n", "").strip()
+            logging.debug("variable name: {0}, type from docstring: {1}".format(var_name, type_string))
+            return type_string
 
         # Check for Union type
         union_type_regex = re.compile(find_union_type_regex.format(type_name, var_name))

@@ -2,6 +2,7 @@ import json
 from json import JSONEncoder
 import logging
 import re
+import importlib
 
 from ._token import Token
 from ._token_kind import TokenKind
@@ -89,6 +90,7 @@ class ApiView:
         # for e.g. Union[type1, type2,] or dict(type1, type2)
         # For some args, type is given as just "dict"
         # We should not process further if type name is same as prefix(In above e.g. dict)
+        logging.debug("Generating tokens for type: {}".format(type_name))
         if prefix_type == type_name:
             self.add_keyword(prefix_type)
             return
@@ -108,6 +110,7 @@ class ApiView:
                     self.add_punctuation(",", False, True)
             self.add_punctuation(type_name[-1])
 
+
     def add_type(self, type_name, id=None):
         # This method replace full qualified internal types to short name and generate tokens
         if not type_name:
@@ -119,7 +122,14 @@ class ApiView:
         if multi_types:
             self._generate_type_tokens(type_name, multi_types.groups()[0])
         else:
-            self._add_type_token(type_name)
+            # Encode mutliple types with or seperator into Union
+            types = [t for t in type_name.split() if t != 'or']
+            if len(types) > 1:
+                # Make a Union of types if multiple types are present
+                self._generate_type_tokens("Union[{}]".format(", ".join(types)), "Union")
+            else:
+                self._add_type_token(types[0])
+
 
     def _add_type_token(self, type_name):
         token = Token(type_name, TokenKind.TypeName)

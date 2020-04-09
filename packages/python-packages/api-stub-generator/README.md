@@ -6,6 +6,44 @@ Azure SDK API review tool is used to review all published Azure SDK APIs and thi
     - Instance methods
     - Class and Instance variables
     - Properties
-    
+
+
+## Steps to create API review
+Following are the steps to create an API review request for python package.
+1. Generate stub file tokens
+2. Upload stub file tikens into API review portal
+
+### Generate stub File
+`api-stub-generator` package is used to generate stub file tokens from either source code repo or from prebuilt wheel package. Following are the steps to generate stub file token.
+
+- Install `api-stub-generator` package
+- Run apistubgen command with source repo or whl package as parameter and this will generate a token stub file. 
+
+#### Help for apistubgen
+```
+apistubgen --pkg-path <path to package root>
+```
+
+This also takes additional optional paramater to mention output path where json token file will be generated. If out-path is not given then file will be generated in current working directory.
+
+```
+apistubgen --pkg-path <path to package root> --out-path <Outpath path>
+```
+
+Sample:
+```
+apistubgen --pkg-path C:\git\azure-sdk-for-python\sdk\core\azure-core
+apistubgen --pkg-path C:\git\azure-sdk-for-python\sdk\core\azure-core --out-path C:\out
+```
+
+Token file will be created with a naming convention `<package-name>_python.json'
+
+
+### Upload token file to API review portal
+- Go to ``https://apiview.dev``
+- Click on `Create review`
+- Select generated token file and upload
+
+
 
 

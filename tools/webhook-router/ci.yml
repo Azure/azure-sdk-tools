@@ -10,15 +10,15 @@ trigger:
         - tools/webhook-router
   
 pr:
-branches:
-    include:
-    - master
-    - feature/*
-    - release/*
-    - hotfix/*
-paths:
-    include:
-    - tools/webhook-router
+    branches:
+        include:
+        - master
+        - feature/*
+        - release/*
+        - hotfix/*
+    paths:
+        include:
+        - tools/webhook-router
   
 extends:
     template: ../../eng/pipelines/templates/stages/archetype-sdk-tool-azure-function.yml

@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 
 using System.Threading.Tasks;
-using Microsoft.CodeAnalysis.Testing;
 using Xunit;
 using Verifier = Azure.ClientSdk.Analyzers.Tests.AzureAnalyzerVerifier<Azure.ClientSdk.Analyzers.ClientAssemblyNamespaceAnalyzer>;
 
@@ -21,7 +20,7 @@ namespace RandomNamespace
 
             var diagnostic = Verifier.Diagnostic("AZC0001")
                 .WithMessage("Namespace 'RandomNamespace' shouldn't contain public types. Use one of the following pre-approved namespace groups (https://azure.github.io/azure-sdk/registered_namespaces.html):" +
-                             " Azure.AI, Azure.Analytics, Azure.Data, Azure.Iot, Azure.Media, Azure.Messaging, Azure.Search, Azure.Security, Azure.Storage, Azure.Template, Azure.Identity, Microsoft.Extensions.Azure")
+                             " Azure.AI, Azure.Analytics, Azure.Data, Azure.Iot, Azure.Media, Azure.Management, Azure.Messaging, Azure.Search, Azure.Security, Azure.Storage, Azure.Template, Azure.Identity, Microsoft.Extensions.Azure")
                 .WithSpan(2, 11, 2, 26);
 
             await Verifier.VerifyAnalyzerAsync(code, diagnostic);

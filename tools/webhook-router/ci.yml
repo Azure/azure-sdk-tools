@@ -26,3 +26,5 @@ extends:
     ToolName: webhook-router
     FunctionProject: Azure.Sdk.Tools.WebhookRouter
     TestProject: Azure.Sdk.Tools.WebhookRouter.Tests
+    ProductionEnvironmentName: webhookrouterprod
+    StagingEnvironmentName: webhookrouterstaging

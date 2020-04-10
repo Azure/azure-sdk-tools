@@ -14,9 +14,6 @@ namespace Azure.ClientSdk.Analyzers
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public sealed class TaskCompletionSourceAnalyzer : DiagnosticAnalyzer
     {
-        private INamedTypeSymbol _taskCompletionSourceOfTTypeSymbol;
-        private INamedTypeSymbol _taskCreationOptionsTypeSymbol;
-
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(Descriptors.AZC0013);
 
         public override void Initialize(AnalysisContext context) 
@@ -28,50 +25,61 @@ namespace Azure.ClientSdk.Analyzers
 
         private void CompilationStart(CompilationStartAnalysisContext context)
         {
-            _taskCompletionSourceOfTTypeSymbol = context.Compilation.GetTypeByMetadataName(typeof(TaskCompletionSource<>).FullName);
-            _taskCreationOptionsTypeSymbol = context.Compilation.GetTypeByMetadataName(typeof(TaskCreationOptions).FullName);
-            context.RegisterOperationAction(AnalyzeObjectCreation, OperationKind.ObjectCreation);
+            var oca = new ObjectCreationAnalyzer(context.Compilation);
+            context.RegisterOperationAction(oca.Analyze, OperationKind.ObjectCreation);
         }
 
-        private void AnalyzeObjectCreation(OperationAnalysisContext context) 
+        private class ObjectCreationAnalyzer 
         {
-            var objectCreation = (IObjectCreationOperation) context.Operation;
-            if (!SymbolEqualityComparer.Default.Equals(_taskCompletionSourceOfTTypeSymbol, objectCreation.Type.OriginalDefinition)) 
+            private readonly INamedTypeSymbol _taskCompletionSourceOfTTypeSymbol;
+            private readonly INamedTypeSymbol _taskCreationOptionsTypeSymbol;
+
+            public ObjectCreationAnalyzer(Compilation compilation) 
             {
-                return;
+                _taskCompletionSourceOfTTypeSymbol = compilation.GetTypeByMetadataName(typeof(TaskCompletionSource<>).FullName);
+                _taskCreationOptionsTypeSymbol = compilation.GetTypeByMetadataName(typeof(TaskCreationOptions).FullName);
             }
 
-            if (objectCreation.Arguments.Length == 0) 
+            public void Analyze(OperationAnalysisContext context) 
             {
-                ReportDiagnostics(context, objectCreation.Syntax.Span);
-                return;
-            }
+                var objectCreation = (IObjectCreationOperation) context.Operation;
+                if (!SymbolEqualityComparer.Default.Equals(_taskCompletionSourceOfTTypeSymbol, objectCreation.Type.OriginalDefinition)) 
+                {
+                    return;
+                }
 
-            var arguments = objectCreation.Arguments;
-            var argument = arguments.FirstOrDefault(a => SymbolEqualityComparer.Default.Equals(a.Parameter.Type, _taskCreationOptionsTypeSymbol));
-            if (argument == null) 
-            {
-                var textSpan = TextSpan.FromBounds(arguments.First().Syntax.Span.Start, arguments.Last().Syntax.Span.End);
-                ReportDiagnostics(context, textSpan);
-                return;
-            } 
+                if (objectCreation.Arguments.Length == 0) 
+                {
+                    ReportDiagnostics(context, objectCreation.Syntax.Span);
+                    return;
+                }
+
+                var arguments = objectCreation.Arguments;
+                var argument = arguments.FirstOrDefault(a => SymbolEqualityComparer.Default.Equals(a.Parameter.Type, _taskCreationOptionsTypeSymbol));
+                if (argument == null) 
+                {
+                    var textSpan = TextSpan.FromBounds(arguments.First().Syntax.Span.Start, arguments.Last().Syntax.Span.End);
+                    ReportDiagnostics(context, textSpan);
+                    return;
+                } 
             
-            if (argument.Value is IFieldReferenceOperation fieldReference)
-            {
-                if (!IsRunContinuationsAsynchronously(fieldReference)) 
+                if (argument.Value is IFieldReferenceOperation fieldReference)
+                {
+                    if (!IsRunContinuationsAsynchronously(fieldReference)) 
+                    {
+                        ReportDiagnostics(context, argument.Syntax.Span);
+                    }
+                    return;
+                }
+
+                if (!HasRunContinuationsAsynchronously(argument.Value)) 
                 {
                     ReportDiagnostics(context, argument.Syntax.Span);
                 }
-                return;
-            }
-
-            if (!HasRunContinuationsAsynchronously(argument.Value)) 
-            {
-                ReportDiagnostics(context, argument.Syntax.Span);
             }
         }
 
-        private bool HasRunContinuationsAsynchronously(IOperation operation) 
+        private static bool HasRunContinuationsAsynchronously(IOperation operation) 
             => operation.Descendants().OfType<IFieldReferenceOperation>().Any(IsRunContinuationsAsynchronously);
 
         private static bool IsRunContinuationsAsynchronously(IFieldReferenceOperation fieldReference) 

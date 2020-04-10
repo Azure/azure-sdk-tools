@@ -79,7 +79,16 @@ namespace Azure.ClientSdk.Analyzers
 
         public static DiagnosticDescriptor AZC0012 = new DiagnosticDescriptor(
             nameof(AZC0012), "Avoid single word type names",
-            "Single word class names are too generic and have high chance of collision with BCL types or types from other libraries", "Usage", DiagnosticSeverity.Warning, true);
+            "Single word class names are too generic and have high chance of collision with BCL types or types from other libraries",
+            "Usage",
+            DiagnosticSeverity.Warning, true);
+
+        public static DiagnosticDescriptor AZC0013 = new DiagnosticDescriptor(
+            nameof(AZC0013),
+            "Use TaskCreationOptions.RunContinuationsAsynchronously when instantiating TaskCompletionSource",
+            "All the task’s continuations are executed synchronously unless TaskCreationOptions.RunContinuationsAsynchronously option is specified. This may cause deadlocks and other threading issues if all \"async\" continuations have to run in the thread that sets the result of a task.",
+            "Usage",
+            DiagnosticSeverity.Warning, true);
 
         public static DiagnosticDescriptor AZC0100 = new DiagnosticDescriptor(
             nameof(AZC0100),

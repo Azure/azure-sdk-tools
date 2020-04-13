@@ -11,6 +11,11 @@ scenarios as well as on hosted agents for continuous integration testing.
 * [New-TestResources.ps1][] - Creates new test resources for a given service.
 * [Remove-TestResources.ps1][] - Deletes previously created resources.
 
+## Prerequisites
+
+1. Install [PowerShell][] version 7.0 or newer.
+2. Install the [Azure PowerShell][PowerShellAz].
+
 ## On the Desktop
 
 To set up your Azure account to run live tests, you'll need to log into Azure,
@@ -68,11 +73,18 @@ setx AZURE_SEARCH_STORAGE_KEY $env:AZURE_SEARCH_STORAGE_KEY
 ```
 
 After running or recording live tests, if you do not plan on further testing
-you can remove the test resources you created above by running
+you can remove the test resources you created above by running:
 [Remove-TestResources.ps1][]:
 
 ```powershell
 Remove-TestResources.ps1 -BaseName 'myusername' -Force
+```
+
+If you created a new service principal as shown above, you might also remove it:
+
+```powershell
+Remove-AzADServicePrincipal -ApplicationId $sp.ApplicationId -Force
+
 ```
 
 If you persisted environment variables, you should also remove those as well.
@@ -109,4 +121,6 @@ PowerShell markdown documentation created with [platyPS][].
 
   [New-TestResources.ps1]: ./New-TestResources.ps1.md
   [Remove-TestResources.ps1]: ./Remove-TestResources.ps1.md
+  [PowerShell]: https://github.com/PowerShell/PowerShell
+  [PowerShellAz]: https://docs.microsoft.com/powershell/azure/install-az-ps
   [platyPS]: https://github.com/PowerShell/platyPS

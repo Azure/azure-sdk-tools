@@ -1,0 +1,26 @@
+trigger:
+  branches:
+    include:
+      - master
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - tools/github-issues
+
+pr:
+  branches:
+    include:
+      - master
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - tools/github-issues
+
+stages:
+  - template: ../../eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
+    parameters:
+      ToolDirectory: github-issues

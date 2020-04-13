@@ -1,7 +1,7 @@
 # Live Test Resource Management
 
 Running and recording live tests often requires first creating some resources
-in Azure. Service directories that include a test-resources.yml file require
+in Azure. Service directories that include a test-resources.json file require
 running [New-TestResources.ps1][] to create these resources and output
 environment variables you must set.
 

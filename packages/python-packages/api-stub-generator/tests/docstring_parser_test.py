@@ -19,11 +19,17 @@ Dummy docstring to verify standard return types and param types
 docstring_Union_return_type2 = """
 Dummy docstring to verify standard return types and param types
 :rtype: Union(str, int)
+Dummy string at new line
 """
 
 docstring_union_return_type3 = """
 Dummy docstring to verify standard return types and param types
 :rtype: union[str, int]
+"""
+
+docstring_multi_ret_type = """
+Dummy docstring to verify standard return types and param types
+:rtype: str or ~azure.test.testclass or None
 """
 
 class TestDocStringParser:
@@ -59,3 +65,6 @@ class TestDocStringParser:
 
     def test_return_union_lower_case_return_type(self):
         self._test_return_type(docstring_union_return_type3, "union[str, int]")
+
+    def test_multi_return_type(self):
+        self._test_return_type(docstring_multi_ret_type, "str or ~azure.test.testclass or None")

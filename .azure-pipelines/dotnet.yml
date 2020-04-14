@@ -3,7 +3,26 @@
 # VersioningProps - A collection of extra msbuild versioning properties like OfficialBuildId, PreReleaseVersionLabel, and DotNetFinalVersionKind
 
 trigger:
-  - master
+  branches:
+    include:
+      - master
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - src/Azure.ClientSdk.Analyzers
+
+pr:
+  branches:
+    include:
+      - master
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - src/Azure.ClientSdk.Analyzers
 
 resources:
   repositories:

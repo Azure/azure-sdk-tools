@@ -7,8 +7,8 @@ trigger:
       - hotfix/*
   paths:
     include:
-      - src/dotnet
-      - src/java
+      - src/dotnet/APIView
+      - src/java/apiview-java-processor
 
 pr:
   branches:
@@ -19,8 +19,8 @@ pr:
       - hotfix/*
   paths:
     include:
-      - src/dotnet
-      - src/java
+      - src/dotnet/APIView
+      - src/java/apiview-java-processor
 
 variables:
   DotNetCoreVersion: '3.0.100'

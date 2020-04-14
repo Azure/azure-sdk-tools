@@ -1,14 +1,9 @@
 parameters:
 - name: ToolName
-  type: string
 - name: FunctionProject
-  type: string
 - name: TestProject
-  type: string
 - name: ProductionEnvironmentName
-  type: string
 - name: StagingEnvironmentName
-  type: string
 
 stages:
     - stage: Build
@@ -17,23 +12,20 @@ stages:
       jobs:
       - job: BuildPackage
         pool:
-          vmImage: ubuntu-16.04
+          vmImage: ubuntu-18.04
         steps:
           - task: UseDotNet@2
             displayName: Tools
             inputs:
               version: '3.1.201'
           - pwsh: |
-              dotnet restore tools/${{ parameters.ToolName }}
-            displayName: Restore
-          - pwsh: |
-              dotnet build tools/${{ parameters.ToolName }} --configuration Release --no-restore
+              dotnet build tools/${{ parameters.ToolName }} --configuration Release
             displayName: Build
           - pwsh: |
               dotnet test tools/${{ parameters.ToolName }}/${{ parameters.TestProject }} --configuration Release
             displayName: Test
           - pwsh: |
-              dotnet publish tools/${{ parameters.ToolName }}/${{ parameters.FunctionProject }} --configuration Release --no-restore --output $(Build.ArtifactStagingDirectory)/app
+              dotnet publish tools/${{ parameters.ToolName }}/${{ parameters.FunctionProject }} --configuration Release --output $(Build.ArtifactStagingDirectory)/app
             displayName: Publish
           - publish: $(Build.ArtifactStagingDirectory)
             displayName: Upload
@@ -47,7 +39,7 @@ stages:
         - deployment: PublishFunction
           environment: ${{ parameters.StagingEnvironmentName }}
           pool:
-            vmImage: ubuntu-16.04
+            vmImage: ubuntu-18.04
           strategy:
             runOnce:
               deploy:
@@ -73,7 +65,7 @@ stages:
         - deployment: PublishFunction
           environment: ${{ parameters.ProductionEnvironmentName }}
           pool:
-            vmImage: ubuntu-16.04
+            vmImage: ubuntu-18.04
           strategy:
             runOnce:
                 deploy:

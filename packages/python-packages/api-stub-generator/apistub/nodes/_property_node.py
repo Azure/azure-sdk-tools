@@ -60,3 +60,10 @@ class PropertyNode(NodeEntityBase):
         if self.read_only:
             apiview.add_whitespace()
             apiview.add_literal("# Read-only")
+
+
+    def print_errors(self):
+        if self.errors:
+            print("property: {}".format(self.name))
+            for e in self.errors:
+                print("    {}".format(e))

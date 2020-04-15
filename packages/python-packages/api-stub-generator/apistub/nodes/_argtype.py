@@ -6,7 +6,7 @@ SPECIAL_DEFAULT_VALUES = ["None", "..."]
 # Lint warnings
 TYPE_NOT_AVAILABLE = "Type is not available for {0}"
 
-TYPE_NOT_REQUIRED = ["**kwargs", "self", "cls"]
+TYPE_NOT_REQUIRED = ["**kwargs", "self", "cls", "*", ]
 
 class ArgType:
     """Represents Argument type
@@ -15,10 +15,17 @@ class ArgType:
     :param str default: Default value for the argument, If any
     """
 
-    def __init__(self, name, argtype=None, default=None):
+    def __init__(self, name, argtype=None, default=None, func_node = None):
         self.argname = name
         self.argtype = argtype
         self.default = default
+        self.function_node = func_node
+
+
+    def set_function_node(self, func_node):
+        # Function node which is parent node can set it's refernce once docstring parser creates Argtype objects
+        # This function node will be used to report any error found in arg while generating token.
+        self.function_node = func_node
 
 
     def generate_tokens(self, apiview, function_id, add_line_marker):
@@ -40,7 +47,10 @@ class ArgType:
             apiview.add_type(self.argtype, self.id)
         elif self.argname not in (TYPE_NOT_REQUIRED):
             # Type is not available. Add lint error in review
-            apiview.add_diagnostic(TYPE_NOT_AVAILABLE.format(self.argname), self.id)            
+            error_msg = TYPE_NOT_AVAILABLE.format(self.argname)
+            apiview.add_diagnostic(error_msg, self.id)
+            if self.function_node:
+                self.function_node.add_error(error_msg)
 
         # add arg default value
         if self.default:

@@ -106,3 +106,8 @@ class ModuleNode(NodeEntityBase):
                 )
                 navigation.add_child(child_nav)
             return navigation
+
+
+    def print_errors(self):
+        for c in self.child_nodes:
+            c.print_errors()

@@ -60,9 +60,7 @@ class TestDocStringParser:
 
     def _test_return_type(self, docstring, expected):
         docstring_parser = DocstringParser(docstring)
-        print(docstring_parser.find_return_type())
         assert expected == docstring_parser.find_return_type()
-
 
     def _test_variable_type(self, docstring, varname, expected):
         docstring_parser = DocstringParser(docstring)
@@ -73,10 +71,8 @@ class TestDocStringParser:
         expected = {}
         for arg in expected_args:
             expected[arg.argname] = arg
-
         for arg in parser.find_args('keyword' if is_keyword else 'param'):
             assert arg.argname in expected and arg.argtype == expected[arg.argname].argtype
-            
             
     def test_return_builtin_return_type(self):
         self._test_return_type(docstring_standard_return_type, "str")

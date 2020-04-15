@@ -3,6 +3,10 @@ import logging
 # Special default values that should not be treated as string literal
 SPECIAL_DEFAULT_VALUES = ["None", "..."]
 
+# Lint warnings
+TYPE_NOT_AVAILABLE = "Type is not available for {0}"
+
+TYPE_NOT_REQUIRED = ["**kwargs", "self", "cls"]
 
 class ArgType:
     """Represents Argument type
@@ -16,6 +20,7 @@ class ArgType:
         self.argtype = argtype
         self.default = default
 
+
     def generate_tokens(self, apiview, function_id, add_line_marker):
         """Generates token for the node and it's children recursively and add it to apiview
         :param ~ApiVersion apiview: The ApiView
@@ -23,16 +28,19 @@ class ArgType:
         :param bool include_default: Optional flag to indicate to include/exclude default value in tokens
         """
         # Add arg name
-        id = None
+        self.id = function_id
         if add_line_marker:
-            id = "{0}.param({1}".format(function_id, self.argname)
-            apiview.add_line_marker(id)
+            self.id = "{0}.param({1}".format(function_id, self.argname)
+            apiview.add_line_marker(self.id)
 
-        apiview.add_text(id, self.argname)
+        apiview.add_text(self.id, self.argname)
         # add arg type
         if self.argtype:
             apiview.add_punctuation(":", False, True)
-            apiview.add_type(self.argtype)
+            apiview.add_type(self.argtype, self.id)
+        elif self.argname not in (TYPE_NOT_REQUIRED):
+            # Type is not available. Add lint error in review
+            apiview.add_diagnostic(TYPE_NOT_AVAILABLE.format(self.argname), self.id)            
 
         # add arg default value
         if self.default:

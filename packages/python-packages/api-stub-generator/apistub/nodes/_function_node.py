@@ -36,6 +36,7 @@ class FunctionNode(NodeEntityBase):
         self.hidden = False
         self._inspect()
 
+
     def _inspect(self):
         logging.debug("Processing function {0}".format(self.name))
         code = inspect.getsource(self.obj).strip()
@@ -65,6 +66,7 @@ class FunctionNode(NodeEntityBase):
 
         self.is_class_method = "@classmethod" in self.annotations
         self._parse_function()
+
 
     def _parse_function(self):
         """
@@ -99,6 +101,9 @@ class FunctionNode(NodeEntityBase):
         self._parse_docstring()
         # parse type hints
         self._parse_typehint()
+        if not self.return_type:
+            self.errors.append("Return type is missing in both typehint and docstring")
+
 
     def _parse_docstring(self):
         # Parse docstring to get list of keyword args, type and default value for both positional and
@@ -146,13 +151,26 @@ class FunctionNode(NodeEntityBase):
                     kw_arg = kwargs[0]
                     self.args.remove(kw_arg)
                     self.args.append(kw_arg)
+            elif [x for x in self.args if x.argname == KW_ARG_NAME]:
+                # if kw arg details are not available in docstring and function has kwarg then flag it as error
+                self.errors.append("Keyword arg info is not available. Please ensure docstring has type info for all keyword args")
+
 
     def _parse_typehint(self):
         # Parse type hint to get return type and types for positional args
         typehint_parser = TypeHintParser(self.obj)
         # Find return type from type hint if return type is not already set
+        type_hint_ret_type = typehint_parser.find_return_type()
         if not self.return_type:
-            typehint_parser.find_return_type()
+            self.return_type = type_hint_ret_type
+        elif type_hint_ret_type:
+            # Verify return type is same in docstring and typehint if typehint is available
+            short_return_type = self.return_type.split(".")[-1]
+            long_ret_type = self.return_type
+            if long_ret_type != type_hint_ret_type and short_return_type != type_hint_ret_type:
+                error_message = "Return type in type hint is not matching return type in docstring"
+                self.errors.append(error_message)
+
 
     def _generate_signature_token(self, apiview):
         apiview.add_punctuation("(")
@@ -186,10 +204,12 @@ class FunctionNode(NodeEntityBase):
         else:
             apiview.add_punctuation(")")
 
+
     def generate_tokens(self, apiview):
         """Generates token for function signature
         :param ApiView: apiview
         """
+        logging.info("Processing method {0} in class {1}".format(self.name, self.parent_node.namespace_id))
         # Add tokens for annotations
         for annot in self.annotations:
             apiview.add_whitespace()
@@ -214,5 +234,8 @@ class FunctionNode(NodeEntityBase):
             if len(self.args) > 2:
                 line_id = "{}.returntype".format(self.namespace_id)
                 apiview.add_line_marker(line_id)
-            logging.debug("Method: {0}, Return type: {1}".format(self.name, self.return_type))
             apiview.add_type(self.return_type)
+
+        if self.errors:
+            for e in self.errors:
+                apiview.add_diagnostic(e, self.namespace_id)

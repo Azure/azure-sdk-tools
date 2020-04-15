@@ -4,6 +4,7 @@ from ._stub_generator import StubGenerator
 from ._token import Token
 from ._token_kind import TokenKind
 from ._apiview import ApiView, Navigation, NavigationTag, Kind
+from ._diagnostic import Diagnostic
 
 __version__ = VERSION
 
@@ -15,6 +16,7 @@ __all__ = [
     "Navigation",
     "NavigationTag",
     "Kind",
+    "Diagnostic",
 ]
 
 

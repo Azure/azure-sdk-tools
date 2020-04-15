@@ -93,7 +93,10 @@ class StubGenerator:
         self._install_package(pkg_name)
         logging.debug("Generating tokens")
         apiview = self._generate_tokens(pkg_root_path, pkg_name, version)
-        logging.info("Completed parsing package and generating tokens")
+        if apiview.Diagnostics:
+            logging.info("*************** Completed parsing package with errors ***************")
+        else:
+            logging.info("*************** Completed parsing package and generating tokens ***************")
         return apiview
 
 

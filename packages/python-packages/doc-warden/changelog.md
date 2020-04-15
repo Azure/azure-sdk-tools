@@ -1,5 +1,8 @@
 # Release History
 
+## 1.0.0 
+- **Breaking change**, support for `sub-heading` verification. Consumption of `sub-heading` yml crashes on less than version `1.0.0`.
+
 ## 0.5.4
 - Handle crashing setup.py in Python Index Packages implementation. 
 

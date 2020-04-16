@@ -149,7 +149,7 @@ def generate_header_index(header_constructs, patterns):
 
         # h1 < h2 == we need to traverse up
         if current_level < current_parent.level:
-            current_parent = current_parent.parent
+            current_parent = current_parent.get_parent_by_level(current_level)
             current_header = HeaderConstruct(header, current_parent, patterns)
 
         # h2 > h1 == we need to indent, add the current as a child, and set parent to current
@@ -167,8 +167,7 @@ def generate_header_index(header_constructs, patterns):
         # we just need to add it as a child to our current header
         else: 
             if previous_node_level > current_parent.level:
-                current_parent = current_parent.parent
-
+                current_parent = current_parent.get_parent_by_level(current_level)
             current_header = HeaderConstruct(header, current_parent, patterns)
 
         previous_node_level = current_level

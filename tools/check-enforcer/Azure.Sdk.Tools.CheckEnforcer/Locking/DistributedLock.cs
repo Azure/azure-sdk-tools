@@ -18,7 +18,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Locking
         private TimeSpan lockDuration;
         private TimeSpan acquisitionTimeout;
         private int attempts;
-        private LeaseClient leaseClient;
+        private BlobLeaseClient leaseClient;
         private static Random random = new Random();
 
         public DistributedLock(BlobContainerClient containerClient, string lockIdentifier, int maxRetries, TimeSpan backoffInterval, TimeSpan lockDuration, TimeSpan acquisitionTimeout)
@@ -31,6 +31,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Locking
             this.acquisitionTimeout = acquisitionTimeout;
         }
 
+
         public async Task<bool> AcquireAsync()
         {
             var acquisitionStarted = DateTimeOffset.UtcNow;
@@ -40,20 +41,22 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Locking
                 attempts++;
 
                 var blobClient = containerClient.GetBlobClient(lockIdentifier);
-                leaseClient = blobClient.GetLeaseClient();
+                var leaseClient = blobClient.GetBlobLeaseClient();
 
                 try
                 {
                     await leaseClient.AcquireAsync(lockDuration);
                     return true;
+
+                    
                 }
-                catch (StorageRequestFailedException ex) when (ex.ErrorCode == "BlobNotFound")
+                catch (RequestFailedException ex) when (ex.ErrorCode == "BlobNotFound")
                 {
                     var contentBytes = Encoding.UTF8.GetBytes(lockIdentifier);
                     var contentStream = new MemoryStream(contentBytes);
                     await blobClient.UploadAsync(contentStream);
                 }
-                catch (StorageRequestFailedException ex) when (ex.ErrorCode == "LeaseAlreadyPresent")
+                catch (RequestFailedException ex) when (ex.ErrorCode == "LeaseAlreadyPresent")
                 {
                     // Simple backoff logic.
                     var tryImmediatelyOrNot = random.Next(0, 3);

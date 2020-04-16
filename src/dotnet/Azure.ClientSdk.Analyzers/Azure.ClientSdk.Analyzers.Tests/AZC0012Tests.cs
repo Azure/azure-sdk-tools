@@ -54,5 +54,18 @@ namespace Azure.Data
 }";
             await Verifier.VerifyAnalyzerAsync(code);
         }
+
+        [Fact]
+        public async Task AZC0012NotProducedForNestedTypes()
+        {
+            const string code = @"
+namespace Azure.Data
+{
+    public class NiceProgram {
+        public class MuchWow { }
+    }
+}";
+            await Verifier.VerifyAnalyzerAsync(code);
+        }
     }
 }

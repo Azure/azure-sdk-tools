@@ -8,7 +8,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 namespace Azure.ClientSdk.Analyzers
 {
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
-    public class ClientAssemblyNamespaceAnalyzer : DiagnosticAnalyzer
+    public class ClientAssemblyNamespaceAnalyzer : SymbolAnalyzerBase
     {
         internal static readonly string[] AllowedNamespacePrefix = new[]
         {
@@ -37,20 +37,11 @@ namespace Azure.ClientSdk.Analyzers
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; }
 
-        public override void Initialize(AnalysisContext context)
-        {
-            context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.Analyze | GeneratedCodeAnalysisFlags.ReportDiagnostics);
-            context.EnableConcurrentExecution();
+        public override SymbolKind[] SymbolKinds { get; } = new[] { SymbolKind.Namespace };
 
-            context.RegisterCompilationStartAction(
-                analysisContext => {
-                    analysisContext.RegisterSymbolAction(symbolAnalysisContext => AnalyzeNamespace(symbolAnalysisContext), SymbolKind.Namespace);
-                });
-        }
-
-        private void AnalyzeNamespace(SymbolAnalysisContext symbolAnalysisContext)
+        public override void Analyze(ISymbolAnalysisContext context)
         {
-            var namespaceSymbol = (INamespaceSymbol)symbolAnalysisContext.Symbol;
+            var namespaceSymbol = (INamespaceSymbol)context.Symbol;
             bool hasPublicTypes = false;
             foreach (var member in namespaceSymbol.GetMembers())
             {
@@ -77,7 +68,7 @@ namespace Azure.ClientSdk.Analyzers
 
             foreach (var namespaceSymbolLocation in namespaceSymbol.Locations)
             {
-                symbolAnalysisContext.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0001, namespaceSymbolLocation, displayString));
+                context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0001, namespaceSymbolLocation, displayString), namespaceSymbol);
             }
         }
     }

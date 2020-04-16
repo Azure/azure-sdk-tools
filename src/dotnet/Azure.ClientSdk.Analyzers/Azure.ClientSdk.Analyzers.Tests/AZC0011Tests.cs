@@ -16,7 +16,7 @@ namespace Azure.ClientSdk.Analyzers.Tests
 ";
             await Verifier.VerifyAnalyzerAsync(code, "AZC0011");
         }
-        
+
         [Fact]
         public async Task AZC0011NotProducedForTestAndMoqIVTs()
         {

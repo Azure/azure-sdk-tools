@@ -20,6 +20,7 @@ namespace Azure.ClientSdk.Analyzers
             // Account for an `I` prefix in the interfaces.
             var minimumWordCount = namedTypeSymbol.TypeKind == TypeKind.Interface ? 2 : 1;
             if (namedTypeSymbol.DeclaredAccessibility == Accessibility.Public &&
+                namedTypeSymbol.ContainingType == null &&
                 CountWords(namedTypeSymbol.Name) <= minimumWordCount)
             {
                 foreach (var location in namedTypeSymbol.Locations)

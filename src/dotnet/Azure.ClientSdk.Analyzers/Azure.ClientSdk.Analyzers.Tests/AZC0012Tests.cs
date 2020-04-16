@@ -62,7 +62,20 @@ namespace Azure.Data
 namespace Azure.Data
 {
     public class NiceProgram {
-        public class MuchWow { }
+        public class Wow { }
+    }
+}";
+            await Verifier.VerifyAnalyzerAsync(code);
+        }
+
+        [Fact]
+        public async Task AZC0012NotProducedForNestedInterfaces()
+        {
+            const string code = @"
+namespace Azure.Data
+{
+    public class NiceProgram {
+        public interface IWow { }
     }
 }";
             await Verifier.VerifyAnalyzerAsync(code);

@@ -126,8 +126,11 @@ def output_readme_content_results(readmes_with_issues, config):
             print(header)
 
             for missing_pattern in readme_tuple[1]:
-                print(' * {0}'.format(missing_pattern))
+                print(' * {0}'.format(format_header_path(missing_pattern)))
             print()
+
+def format_header_path(pattern):
+    return " -> ".join(pattern)
 
 # print content results for changelog
 def output_changelog_content_results(missing_changelog, empty_release_notes):

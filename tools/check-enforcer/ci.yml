@@ -23,7 +23,7 @@ pr:
 extends:
   template: ../../eng/pipelines/templates/stages/archetype-sdk-tool-azure-function.yml
   parameters:
-    ToolName: github-issues
+    ToolName: check-enforcer
     FunctionProject: Azure.Sdk.Tools.CheckEnforcer
     TestProject: Azure.Sdk.Tools.CheckEnforcer.Tests
     ProductionEnvironmentName: checkenforcerprod

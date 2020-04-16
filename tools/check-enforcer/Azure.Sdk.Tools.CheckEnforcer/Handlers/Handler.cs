@@ -1,6 +1,5 @@
 ﻿using Azure.Sdk.Tools.CheckEnforcer.Configuration;
 using Azure.Sdk.Tools.CheckEnforcer.Integrations.GitHub;
-using Azure.Sdk.Tools.CheckEnforcer.Locking;
 using Microsoft.Extensions.Logging;
 using Octokit;
 using Octokit.Internal;
@@ -21,19 +20,17 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
         private const int EventIdBase = 1000;
         private static readonly EventId AcquiringSemaphoreEventId = new EventId(EventIdBase + 0, "Acquring Semaphore");
 
-        public Handler(IGlobalConfigurationProvider globalConfiguratoinProvider, IGitHubClientProvider gitHubClientProvider, IRepositoryConfigurationProvider repositoryConfigurationProvider, IDistributedLockProvider distrbutedLockProvider, ILogger logger)
+        public Handler(IGlobalConfigurationProvider globalConfiguratoinProvider, IGitHubClientProvider gitHubClientProvider, IRepositoryConfigurationProvider repositoryConfigurationProvider, ILogger logger)
         {
             this.GlobalConfigurationProvider = globalConfiguratoinProvider;
             this.GitHubClientProvider = gitHubClientProvider;
             this.RepositoryConfigurationProvider = repositoryConfigurationProvider;
-            this.DistributedLockProvider = distrbutedLockProvider;
             this.Logger = logger;
         }
 
         protected IGlobalConfigurationProvider GlobalConfigurationProvider { get; private set; }
         protected IGitHubClientProvider GitHubClientProvider { get; private set; }
         protected IRepositoryConfigurationProvider RepositoryConfigurationProvider { get; private set; }
-        public IDistributedLockProvider DistributedLockProvider { get; }
         protected ILogger Logger { get; private set; }
 
         protected async Task SetSuccessAsync(GitHubClient client, long repositoryId, string sha, CancellationToken cancellationToken)

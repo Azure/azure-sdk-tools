@@ -519,7 +519,7 @@ namespace ApiView
 
             return new CodeFileToken()
             {
-                DefinitionId = SymbolEqualityComparer.Default.Equals(definedSymbol, symbol) ? definedSymbol.GetId() : null,
+                DefinitionId = (definedSymbol != null && SymbolEqualityComparer.Default.Equals(definedSymbol, symbol)) ? definedSymbol.GetId() : null,
                 NavigateToId = navigateToId,
                 Value = symbolDisplayPart.ToString(),
                 Kind = kind

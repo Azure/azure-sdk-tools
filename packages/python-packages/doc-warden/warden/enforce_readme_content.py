@@ -12,8 +12,6 @@ from docutils import core
 from docutils.writers.html4css1 import Writer,HTMLTranslator
 import logging
 
-import pdb
-
 README_PATTERNS = ['*/readme.md', '*/readme.rst', '*/README.md', '*/README.rst']
 
 # entry point
@@ -73,13 +71,15 @@ def verify_md_readme(readme, config, section_sorting_dict):
 def find_missed_sections(html_soup, patterns):
     header_list = html_soup.find_all(re.compile('^h[1-4]$'))
 
-    flattened_patterns = flatten(patterns)
-    header_web, node_index = generate_web(header_list, flattened_patterns)
-    observed_failing_patterns = recursive_header_search(node_index, patterns, [])
+    flattened_patterns = flatten_pattern_config(patterns)
+    header_index = generate_header_index(header_list, flattened_patterns)
+    observed_failing_patterns = recursive_header_search(header_index, patterns, [])
 
     return observed_failing_patterns
 
-def flatten(patterns):
+# gets a distinct set of ALL patterns present in a config. This is
+# important because this allows us to precalculate which patterns a given header tag will match
+def flatten_pattern_config(patterns):
     observed_patterns = []
 
     for pattern in patterns:
@@ -87,7 +87,7 @@ def flatten(patterns):
             parent_pattern, child_patterns =  next(iter(pattern.items()))
 
             if child_patterns:
-                observed_patterns.extend(flatten(child_patterns))
+                observed_patterns.extend(flatten_pattern_config(child_patterns))
             observed_patterns.extend([parent_pattern])
         else:
             observed_patterns.extend([pattern])
@@ -96,7 +96,7 @@ def flatten(patterns):
 
 # recursive solution that walks all the rules and generates rule chains from them to test 
 # that the tree actually contains sets of headers that meet the required sections
-def recursive_header_search(node_index, patterns, parent_chain=[]):
+def recursive_header_search(header_index, patterns, parent_pattern_chain=[]):
     unobserved_patterns = []
 
     if patterns:
@@ -104,14 +104,14 @@ def recursive_header_search(node_index, patterns, parent_chain=[]):
             if isinstance(pattern, dict):
                 parent_pattern, child_patterns =  next(iter(pattern.items()))
 
-                if not match_regex_to_headers(node_index, parent_chain + [parent_pattern]):
-                    unobserved_patterns.append(parent_chain + [parent_pattern])
+                if not match_regex_to_headers(header_index, parent_pattern_chain + [parent_pattern]):
+                    unobserved_patterns.append(parent_pattern_chain + [parent_pattern])
 
-                parent_chain_for_children = parent_chain + [parent_pattern]
-                unobserved_patterns.extend(recursive_header_search(node_index, child_patterns, parent_chain_for_children))
+                parent_chain_for_children = parent_pattern_chain + [parent_pattern]
+                unobserved_patterns.extend(recursive_header_search(header_index, child_patterns, parent_chain_for_children))
             else:
-                if not match_regex_to_headers(node_index, parent_chain + [pattern]):
-                    unobserved_patterns.append((parent_chain + [pattern]))
+                if not match_regex_to_headers(header_index, parent_pattern_chain + [pattern]):
+                    unobserved_patterns.append((parent_pattern_chain + [pattern]))
 
     return unobserved_patterns
 
@@ -132,17 +132,18 @@ def recursive_header_search(node_index, patterns, parent_chain=[]):
 #      h2
 #         h3
 #   h1
-# we will start a search from root every time.
-def generate_web(headers, patterns):
+# this function examines a serial set of <h> tags and generates
+# an index that allows us to interrogate a specific header for it's containing
+# headers.
+def generate_header_index(header_constructs, patterns):
     previous_header_level = 0
     current_header = None
     root = HeaderConstruct(None, None)
     current_parent = root
-    node_index = []
-    num_run = 0
+    header_index = []
     previous_node_level = 0
 
-    for index, header in enumerate(headers):
+    for index, header in enumerate(header_constructs):
         # evaluate the level
         current_level = int(header.name.replace('h', ''))
 
@@ -150,18 +151,16 @@ def generate_web(headers, patterns):
         if current_level < current_parent.level:
             current_parent = current_parent.parent
             current_header = HeaderConstruct(header, current_parent, patterns)
-            current_parent.add_child(current_header)
 
         # h2 > h1 == we need to indent, add the current as a child, and set parent to current
-        # for the forthcoming ones headers
+        # for the forthcoming headers
         elif current_level > current_parent.level:
             current_header = HeaderConstruct(header, current_parent, patterns)
-            current_parent.add_child(current_header)
 
             # only set current_parent if there are children below, which NECESSITATES that 
             # the very next header must A) exist and B) be > current_level
-            if index + 1 < len(headers):
-                if int(headers[index+1].name.replace('h', '')) > current_level:
+            if index + 1 < len(header_constructs):
+                if int(header_constructs[index+1].name.replace('h', '')) > current_level:
                     current_parent = current_header
 
         # current_header.level == current_parent.level
@@ -171,23 +170,21 @@ def generate_web(headers, patterns):
                 current_parent = current_parent.parent
 
             current_header = HeaderConstruct(header, current_parent, patterns)
-            current_parent.add_child(current_header)
 
         previous_node_level = current_level
 
         # always add the header to the node index, we will use it later
-        node_index.append(current_header)
-        num_run = num_run + 1
+        header_index.append(current_header)
 
-    return root, node_index
+    return header_index
 
-# checks multiple header strings against a single configured pattern set
-def match_regex_to_headers(node_index, target_patterns):
+# checks the node index for a specific pattern or chain
+# [^Getting started$, Install Package] is an example of a required set
+def match_regex_to_headers(header_index, target_patterns):
     # we should only be firing this for a "leaf" aka the END of the chain we're looking for, so the last element
     # will always get popped first before we recurse across the rest
-
     current_target = target_patterns.pop()
-    matching_headers = [header for header in node_index if current_target in header.matching_patterns]
+    matching_headers = [header for header in header_index if current_target in header.matching_patterns]
 
     # check all the leaf node parents for the matches. we don't want to artificially constrain though
     # so we have to assume that a rule can match multiple children
@@ -204,6 +201,13 @@ def match_regex_to_headers(node_index, target_patterns):
 
     return None
 
+# recursively ensure that a header_construct has parents that match the required headers
+# the search ALLOWS GAPS, so a match will still be found if
+#
+# h1
+#    h2 (matching header)
+#        h3 (unmatched parent header, but this is ok)
+#           h4 (matching header)
 def check_header_parents(header_construct, required_parent_headers):
     if required_parent_headers:
         target_parent = required_parent_headers.pop()
@@ -219,8 +223,6 @@ def check_header_parents(header_construct, required_parent_headers):
             return False
     else:
         return False
-
-
 
 # checks a header string against a set of configured patterns
 def match_regex_set(header, patterns):

@@ -41,22 +41,6 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
         {
         }
 
-        private static ConcurrentDictionary<string, SemaphoreSlim> semaphores = new ConcurrentDictionary<string, SemaphoreSlim>();
-
-        private SemaphoreSlim GetSemaphore(string semaphoreName)
-        {
-            Logger.LogTrace(AcquiringSemaphoreEventId, "Acquiring semaphore: {semaphoreName}.", semaphoreName);
-            var semaphore = semaphores.GetOrAdd(semaphoreName, new SemaphoreSlim(1, 1));
-            var currentCount = semaphore.CurrentCount;
-            Logger.LogTrace(
-                AcquiredSemaphoreEventId,
-                "Acquired semaphore: {semaphoreName} with current count of: {currentCount}.",
-                semaphoreName,
-                currentCount
-                );
-            return semaphore;
-        }
-
         protected override async Task HandleCoreAsync(HandlerContext<CheckRunEventPayload> context, CancellationToken cancellationToken)
         {
             var payload = context.Payload;

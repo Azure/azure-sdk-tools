@@ -9,6 +9,7 @@ trigger:
     include:
       - tools/github-issues
   
+  
 pr:
   branches:
     include:

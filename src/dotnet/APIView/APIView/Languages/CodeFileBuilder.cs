@@ -511,15 +511,15 @@ namespace ApiView
             var symbol = symbolDisplayPart.Symbol;
 
             if (symbol is INamedTypeSymbol &&
-                (definedSymbol == null || !definedSymbol.Equals(symbol)) &&
-                _assembly.Equals(symbol.ContainingAssembly))
+                (definedSymbol == null || !SymbolEqualityComparer.Default.Equals(definedSymbol, symbol)) &&
+                SymbolEqualityComparer.Default.Equals(_assembly, symbol.ContainingAssembly))
             {
                 navigateToId = symbol.GetId();
             }
 
             return new CodeFileToken()
             {
-                DefinitionId = definedSymbol?.Equals(symbol) == true ? definedSymbol.GetId() : null,
+                DefinitionId = (definedSymbol != null && SymbolEqualityComparer.Default.Equals(definedSymbol, symbol)) ? definedSymbol.GetId() : null,
                 NavigateToId = navigateToId,
                 Value = symbolDisplayPart.ToString(),
                 Kind = kind

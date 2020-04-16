@@ -73,32 +73,46 @@ def verify_md_readme(readme, config, section_sorting_dict):
 
 # within the entire readme, are there any missing sections that are expected?
 def find_missed_sections(html_soup, patterns):
-    header_list = html_soup.find_all(re.compile('^h[1-2]$'))
+    header_list = html_soup.find_all(re.compile('^h[1-4]$'))
 
-    observed_failing_patterns = recursive_header_search(header_list, patterns, [])
+    flattened_patterns = flatten(patterns)
+    header_web, node_index = generate_web(header_list, flattened_patterns)
+    observed_failing_patterns = recursive_header_search(node_index, patterns, [])
 
-    exit(1)
     return observed_failing_patterns
 
-# within the entire readme, are there any missing sections that are expected?
-def recursive_header_search(header_list, patterns, parent_chain=[]):
+def flatten(patterns):
+    observed_patterns = []
+
+    for pattern in patterns:
+        if isinstance(pattern, dict):
+            parent_pattern, child_patterns =  next(iter(pattern.items()))
+
+            observed_patterns.extend([parent_pattern])
+            observed_patterns.extend(flatten(child_patterns))
+        else:
+            observed_patterns.extend([pattern])
+
+    return list(set(observed_patterns))
+
+# recursive solution that walks all the rules and generates rule chains from them to test 
+# that the tree actually contains sets of headers that meet the required sections
+def recursive_header_search(node_index, patterns, parent_chain=[]):
     unobserved_patterns = []
 
     for pattern in patterns:
         if isinstance(pattern, dict):
             parent_pattern, child_patterns =  next(iter(pattern.items()))
-            matching_headers_for_pattern = match_regex_to_headers(header_list, parent_pattern, parent_chain)
 
-            if matching_headers_for_pattern:
+            if match_regex_to_headers(node_index, parent_chain + [parent_pattern]):
                 print('pattern match')
             else:
                 unobserved_patterns.extend((parent_pattern, parent_chain))
 
             parent_chain_for_children = parent_chain + [parent_pattern]
-            unobserved_patterns.extend(recursive_header_search(header_list, child_patterns, parent_chain_for_children))
+            unobserved_patterns.extend(recursive_header_search(node_index, child_patterns, parent_chain_for_children))
         else:
-            matching_headers_for_pattern = match_regex_to_headers(header_list, pattern, parent_chain)
-            if matching_headers_for_pattern:
+            if match_regex_to_headers(node_index, parent_chain + [pattern]):
                 print('pattern match')
             else:
                 unobserved_patterns.extend((pattern, parent_chain))
@@ -123,76 +137,101 @@ def recursive_header_search(header_list, patterns, parent_chain=[]):
 #         h3
 #   h1
 # we will start a search from root every time.
-def generate_web(headers):
+def generate_web(headers, patterns):
     previous_header_level = 0
     current_header = None
     root = HeaderConstruct(None, None)
     current_parent = root
+    node_index = []
+    num_run = 0
+    previous_node_level = 0
 
-    for header in headers:
+    for index, header in enumerate(headers):
         # evaluate the level
         current_level = int(header.name.replace('h', ''))
 
         # h1 < h2 == we need to traverse up
         if current_level < current_parent.level:
-            # print("On iteration {}: {} < {}".format(numRun, current_level, current_parent.level))
+            #print("On iteration {}: {} < {}.".format(num_run, current_level, current_parent.level))
+            #print("resetting parent to {}".format(current_parent.parent))
             current_parent = current_parent.parent
-            current_header = HeaderConstruct(header, current_parent)
+            current_header = HeaderConstruct(header, current_parent, patterns)
             current_parent.add_child(current_header)
 
         # h2 > h1 == we need to indent, add the current as a child, and set parent to current
         # for the forthcoming ones headers
         elif current_level > current_parent.level:
-            # print("On iteration {}: {} > {}".format(numRun, current_level, current_parent.level))
-            current_header = HeaderConstruct(header, current_parent)
+            #print("On iteration {}: {} > {}".format(num_run, current_level, current_parent.level))
+            current_header = HeaderConstruct(header, current_parent, patterns)
             current_parent.add_child(current_header)
-            current_parent = current_header
+
+            # only set current_parent if there are children below, which NECESSITATES that 
+            # the very next header must A) exist and B) be > current_level
+            if index + 1 < len(headers):
+                if int(headers[index+1].name.replace('h', '')) > current_level:
+                    current_parent = current_header
+                    #print("Setting current_parent to {}".format(current_header))
+
         # current_header.level == current_parent.level
         # we just need to add it as a child to our current header
         else: 
-            # print("On iteration {}: {} == {}".format(numRun, current_level, current_parent.level))
-            current_header = HeaderConstruct(header, current_parent)
+            #print("On iteration {}: {} == {}".format(num_run, current_level, current_parent.level))
+            if previous_node_level > current_parent.level:
+                #print("resetting parent to {}".format(current_parent.parent))
+                current_parent = current_parent.parent
+
+            current_header = HeaderConstruct(header, current_parent, patterns)
             current_parent.add_child(current_header)
 
-    pdb.set_trace()
-    
-    return root
+        print(current_header.matching_patterns)
+        previous_node_level = current_level
+        # always add the header to the node index, we will use it later
+        node_index.append(current_header)
+        num_run = num_run + 1
 
-# checks multiple header strings against a single configured pattern
-def match_regex_to_headers(headers, pattern, parent_chain):
-    # example
-    # pattern = D
-    # parent_chain = A B 
-    # we're looking for a header set that follows A -> B -> D 
-    # time to do a search!
-    target_headers = parent_chain + [ pattern ]
-    header_web = generate_web(headers)
-    available_headers = header_web.children
-    
-    print("Available Headers = {}".format(available_headers))
+    return root, node_index
 
-    while(target_headers and available_headers):
-        current_target = target_headers[0]
-        target_headers.remove(target_headers[0])
+# checks multiple header strings against a single configured pattern set
+def match_regex_to_headers(node_index, target_patterns):
+    # we should only be firing this for a "leaf" aka the END of the chain we're looking for, so the last element
+    # will always get popped first before we recurse across the rest
 
-        print("Current target {}".format(current_target))
+    current_target = target_patterns.pop()
+    print("match regex to headers: {}. remaining in chain: {}".format(current_target,len(target_patterns)))
+    matching_headers = [header for header in node_index if current_target in header.matching_patterns]
 
-        # check each of the available nodes (on start, it'll be children of root)
-        for header in available_headers:
-            print("evaluating {} against regex {}".format(header.tag.get_text(), current_target))
-            match = re.search(current_target, header.tag.get_text())
-            print(match)
+    # check all the leaf node parents for the matches. we don't want to artificially constrain though
+    # so we have to assume that a rule can match multiple children
+    for matching_leaf_header in matching_headers:
+        if target_patterns:
+            result = check_header_parents(matching_leaf_header, target_patterns[:])
+        else:
+            return re.search(current_target, matching_leaf_header.get_tag_text())
 
-            if match:
-                # if we have more to go
-                if target_headers:
-                    available_headers.extend(header.children)
-                    continue
-                else:
-                    return header # it doesn't really matter what we return here
-                    # given that we're only really testing that it exists
+        if result:
+            return matching_leaf_header
+        else:
+            continue
 
-    return []
+    return None
+
+def check_header_parents(header_construct, required_parent_headers):
+    if required_parent_headers:
+        target_parent = required_parent_headers.pop()
+
+        new_parent = header_construct.check_parents_for_pattern(target_parent)
+
+        if new_parent:
+            if required_parent_headers:
+                check_header_parents(header_construct, required_parent_headers)
+            else:
+                return True
+        else:
+            return False
+    else:
+        return False
+
+
 
 # checks a header string against a set of configured patterns
 def match_regex_set(header, patterns):

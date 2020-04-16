@@ -8,7 +8,6 @@ class HeaderConstruct():
         self.matching_patterns = []
 
         if tag:
-            self.tag = tag
             self.level = int(tag.name.replace('h', ''))
 
         for pattern in patterns[:]:
@@ -30,9 +29,6 @@ class HeaderConstruct():
             if result:
                 return current_parent
             else:
-                if current_parent.parent:
-                    current_parent = current_parent.parent
-                else:
-                    return None
+                current_parent = current_parent.parent
 
         return None

@@ -173,6 +173,9 @@ root_check_enabled: True
 required_readme_sections:
   - "(Client Library for Azure .*|Microsoft Azure SDK for .*)"
   - Getting Started
+    - Install Package
+    - Prerequisites
+    - Authenticate the Client
 known_presence_issues:
   - ['cognitiveservices/data-plane/language/bingspellcheck/README.md', '#2847']
   - ['cognitiveservices/data-plane/language/bingspellcheck/CHANGELOG.md', '#2847']
@@ -191,11 +194,15 @@ The above configuration tells `warden`...
 Possible values for `language` right now are `['net', 'java', 'js', 'python']`. Greater than one target language is not currently supported.
 
 ##### `required_readme_sections` Configuration
-This section instructs `warden` to verify that there is at least one matching section title for each provided `section` pattern in any discovered readme. Regex is fully supported.
+This section instructs `warden` to verify that there is at least one matching section title for each provided `section` pattern in any discovered readme. Notice that **nested** specifications are supported. Regex is fully supported.
 
 The two items listed from the example `.docsettings` file will:
+
 - Match a header matched by a simple regex expression
 - Match a header exactly titled "Getting Started"
+      - Under the header "Getting Started" validate that 3 additional headings are present.
+      - `doc-warden` will search up to the next header of equivalent importantance for the sub-headings. 
+        - This means that when searching under header `# Getting Started`, doc-warden will scan up to the next `H1` header.
 
 Note that the regex is surrounded by quotation marks where the regex will break `yml` parsing of the configuration file.
 

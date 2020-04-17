@@ -116,7 +116,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
             var runsResponse = await client.Check.Run.GetAllForReference(repositoryId, sha);
             var runs = runsResponse.CheckRuns;
 
-            Logger.LogInformation("Check-suite for: {runIdentifier} has {runs.Count}.", runIdentifier);
+            Logger.LogInformation("Check-suite for: {runIdentifier} has {runs.Count}.", runIdentifier, runs.Count);
 
             var checkEnforcerRun = runs.SingleOrDefault(r => r.Name == this.GlobalConfigurationProvider.GetApplicationName());
 

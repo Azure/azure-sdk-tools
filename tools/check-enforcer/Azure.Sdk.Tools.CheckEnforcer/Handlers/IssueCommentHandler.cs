@@ -1,6 +1,5 @@
 ﻿using Azure.Sdk.Tools.CheckEnforcer.Configuration;
 using Azure.Sdk.Tools.CheckEnforcer.Integrations.GitHub;
-using Azure.Sdk.Tools.CheckEnforcer.Locking;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
 using Microsoft.Identity.Client;
@@ -16,7 +15,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
 {
     public class IssueCommentHandler : Handler<IssueCommentPayload>
     {
-        public IssueCommentHandler(IGlobalConfigurationProvider globalConfigurationProvider, IGitHubClientProvider gitHubClientProvider, IRepositoryConfigurationProvider repositoryConfigurationProvider, IDistributedLockProvider distributedLockProvider, ILogger logger) : base(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, distributedLockProvider, logger)
+        public IssueCommentHandler(IGlobalConfigurationProvider globalConfigurationProvider, IGitHubClientProvider gitHubClientProvider, IRepositoryConfigurationProvider repositoryConfigurationProvider, ILogger logger) : base(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, logger)
         {
         }
 
@@ -34,40 +33,31 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
             var pullRequest = await context.Client.PullRequest.Get(repositoryId, issueId);
             var sha = pullRequest.Head.Sha;
 
-            var distributedLockIdentifier = $"{installationId}/{repositoryId}/{sha}";
-
-            using (var distributedLock = DistributedLockProvider.Create(distributedLockIdentifier))
+            switch (comment)
             {
-                var distributedLockAcquired = await distributedLock.AcquireAsync();
-                if (!distributedLockAcquired) return;
+                case "/check-enforcer queued":
+                    await SetQueuedAsync(context.Client, repositoryId, sha, cancellationToken);
+                    break;
 
-                switch (comment)
-                {
-                    case "/check-enforcer queued":
-                        await SetQueuedAsync(context.Client, repositoryId, sha, cancellationToken);
-                        break;
+                case "/check-enforcer inprogress":
+                    await SetInProgressAsync(context.Client, repositoryId, sha, cancellationToken);
+                    break;
 
-                    case "/check-enforcer inprogress":
-                        await SetInProgressAsync(context.Client, repositoryId, sha, cancellationToken);
-                        break;
+                case "/check-enforcer success":
+                    await SetSuccessAsync(context.Client, repositoryId, sha, cancellationToken);
+                    break;
 
-                    case "/check-enforcer success":
-                        await SetSuccessAsync(context.Client, repositoryId, sha, cancellationToken);
-                        break;
+                case "/check-enforcer reset":
+                    await CreateCheckAsync(context.Client, installationId, repositoryId, sha, true, cancellationToken);
+                    break;
 
-                    case "/check-enforcer reset":
-                        await CreateCheckAsync(context.Client, repositoryId, sha, true, cancellationToken);
-                        break;
+                case "/check-enforcer evaluate":
+                    await EvaluatePullRequestAsync(context.Client, installationId, repositoryId, sha, cancellationToken);
+                    break;
 
-                    case "/check-enforcer evaluate":
-                        await EvaluatePullRequestAsync(context.Client, installationId, repositoryId, sha, cancellationToken);
-                        break;
-
-                    default:
-                        this.Logger.LogTrace("Unrecognized command: {comment}", comment);
-                        break;
-                }
-                await distributedLock.ReleaseAsync();
+                default:
+                    this.Logger.LogInformation("Unrecognized command: {comment}", comment);
+                    break;
             }
         }
     }

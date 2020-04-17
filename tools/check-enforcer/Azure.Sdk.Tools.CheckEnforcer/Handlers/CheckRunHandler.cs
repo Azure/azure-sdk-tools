@@ -1,6 +1,5 @@
 ﻿using Azure.Sdk.Tools.CheckEnforcer.Configuration;
 using Azure.Sdk.Tools.CheckEnforcer.Integrations.GitHub;
-using Azure.Sdk.Tools.CheckEnforcer.Locking;
 using Microsoft.Extensions.Logging;
 using Octokit;
 using System;
@@ -38,24 +37,8 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
         private static readonly EventId SkippedProcessingIncompleteCheckRunEventEventId = new EventId(EventIdBase + 19, "Skipped Processing Incomplete Check Run Event");
         private static readonly EventId FailedToAcquiredDistributedLockEventId = new EventId(EventIdBase + 20, "Failed to acquired distributed lock, giving up.");
 
-        public CheckRunHandler(IGlobalConfigurationProvider globalConfigurationProvider, IGitHubClientProvider gitHubCLientProvider, IRepositoryConfigurationProvider repositoryConfigurationProvider, IDistributedLockProvider distributedLockProvider, ILogger logger) : base(globalConfigurationProvider, gitHubCLientProvider, repositoryConfigurationProvider, distributedLockProvider, logger)
+        public CheckRunHandler(IGlobalConfigurationProvider globalConfigurationProvider, IGitHubClientProvider gitHubCLientProvider, IRepositoryConfigurationProvider repositoryConfigurationProvider, ILogger logger) : base(globalConfigurationProvider, gitHubCLientProvider, repositoryConfigurationProvider, logger)
         {
-        }
-
-        private static ConcurrentDictionary<string, SemaphoreSlim> semaphores = new ConcurrentDictionary<string, SemaphoreSlim>();
-
-        private SemaphoreSlim GetSemaphore(string semaphoreName)
-        {
-            Logger.LogTrace(AcquiringSemaphoreEventId, "Acquiring semaphore: {semaphoreName}.", semaphoreName);
-            var semaphore = semaphores.GetOrAdd(semaphoreName, new SemaphoreSlim(1, 1));
-            var currentCount = semaphore.CurrentCount;
-            Logger.LogTrace(
-                AcquiredSemaphoreEventId,
-                "Acquired semaphore: {semaphoreName} with current count of: {currentCount}.",
-                semaphoreName,
-                currentCount
-                );
-            return semaphore;
         }
 
         protected override async Task HandleCoreAsync(HandlerContext<CheckRunEventPayload> context, CancellationToken cancellationToken)
@@ -65,16 +48,16 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
             var installationId = payload.Installation.Id;
             var repositoryId = payload.Repository.Id;
             var sha = payload.CheckRun.CheckSuite.HeadSha;
-            var distributedLockIdentifier = $"{installationId}/{repositoryId}/{sha}";
+            var runIdentifier = $"{installationId}/{repositoryId}/{sha}";
 
-            using (var scope = Logger.BeginScope("Processing check-run event on: {distributedLockIdentifier}", distributedLockIdentifier))
+            using (var scope = Logger.BeginScope("Processing check-run event on: {runIdentifier}", runIdentifier))
             {
                 if (payload.CheckRun.Name == this.GlobalConfigurationProvider.GetApplicationName())
                 {
-                    Logger.LogTrace(
+                    Logger.LogInformation(
                         SkippedProcessingCheckEnforcerCheckRunEventEventId,
-                        "Skipping processing event for: {distributedLockIdentifier}",
-                        distributedLockIdentifier
+                        "Skipping processing event for: {runIdentifier} because appplication name match.",
+                        runIdentifier
                         );
                 }
                 else
@@ -83,58 +66,10 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
                     {
                         if (payload.CheckRun.Status != new StringEnum<CheckStatus>(CheckStatus.Completed))
                         {
-                            Logger.LogTrace(
+                            Logger.LogInformation(
                                 SkippedProcessingIncompleteCheckRunEventEventId,
-                                "Skipping processing event for: {distributedLockIdentifier}",
-                                distributedLockIdentifier
-                                );
-                            return;
-                        }
-
-                        var trapSemaphore = GetSemaphore($"trap/{distributedLockIdentifier}");
-                        var queueSemaphore = GetSemaphore($"queue/{distributedLockIdentifier}");
-
-                        if (trapSemaphore.CurrentCount == 0)
-                        {
-                            Logger.LogTrace(
-                                SkippedProcessingTrapSemaphoreEventId,
-                                "Skipped processing check-run event: {distributedLockIdentifier} because semaphore current count was zero."
-                                );
-                            return;
-                        }
-
-                        Logger.LogTrace(
-                            WaitingOnTrapSemaphoreEventId,
-                            "Waiting on trap semaphore for: {distributedLockIdentifier}",
-                            distributedLockIdentifier
-                            );
-
-                        var trapWaitSuccessful = await trapSemaphore.WaitAsync(10000, cancellationToken);
-
-                        if (!trapWaitSuccessful)
-                        {
-                            Logger.LogWarning(
-                                WaitOnTrapSemaphoreTimeoutEventId,
-                                "Timed out waiting in trap semaphore for: {distributedLockIdentifier}.",
-                                distributedLockIdentifier
-                                );
-                            return;
-                        }
-
-                        Logger.LogTrace(
-                            WaitingOnQueueSemaphoreEventId,
-                            "Waiting on queue semaphore for: {distributedLockIdentifier}",
-                            distributedLockIdentifier
-                            );
-
-                        var queueWaitSuccessful = await queueSemaphore.WaitAsync(10000, cancellationToken);
-
-                        if (!queueWaitSuccessful)
-                        {
-                            Logger.LogWarning(
-                                WaitOnQueueSemaphoreTimeoutEventId,
-                                "Timed out waiting in queue semaphore for: {distributedLockIdentifier}.",
-                                distributedLockIdentifier
+                                "Skipping processing event for: {runIdentifier} check-run status not completed.",
+                                runIdentifier
                                 );
                             return;
                         }
@@ -144,97 +79,32 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
                         {
                             Logger.LogInformation(
                                 CheckEnforcerEnabledEventId,
-                                "Check Enforcer was enabled for: {distributedLockIdentifier}.",
-                                distributedLockIdentifier
+                                "Check Enforcer was enabled for: {runIdentifier}.",
+                                runIdentifier
                                 );
                         }
                         else
                         {
                             Logger.LogInformation(
                                 CheckEnforcerDisabledEventId,
-                                "Check Enforcer was disabled for: {distributedLockIdentifier}.",
-                                distributedLockIdentifier
+                                "Check Enforcer was disabled for: {runIdentifier}.",
+                                runIdentifier
                                 );
                             return;
                         }
-
-                        Logger.LogTrace(
-                            AcquiringDistributedLockEventId,
-                            "Acquiring distributed lock for: {distributedLockIdentifier}.",
-                            distributedLockIdentifier
-                            );
-
-                        var distributedLock = this.DistributedLockProvider.Create(distributedLockIdentifier);
-                        var distributedLockAquired = await distributedLock.AcquireAsync();
-
-                        if (!distributedLockAquired)
-                        {
-                            Logger.LogWarning(
-                                FailedToAcquiredDistributedLockEventId,
-                                "Failed to acquire distributed lock for: {distributedLockIdentifier}.",
-                                distributedLockIdentifier
-                                );
-
-                            // Quickly clean up and get out of here.
-                            trapSemaphore.Release();
-                            queueSemaphore.Release();
-                            return;
-                        }
-
-                        Logger.LogTrace(
-                            ReleasingSemaphoreEventId,
-                            "Releasing trap semaphore for: {distributedLockIdentifier}.",
-                            distributedLockIdentifier
-                            );
-
-                        trapSemaphore.Release();
-
-                        Logger.LogTrace(
-                            ReleasedSemaphoreEventId,
-                            "Released trap semaphore for: {distributedLockIdentifier}.",
-                            distributedLockIdentifier
-                            );
 
                         Logger.LogInformation(
                             EvaluatingCheckRunEventId,
-                            "Evaluating check-run for: {distributedLockIdentifier}.",
-                            distributedLockIdentifier
+                            "Evaluating check-run for: {runIdentifier}.",
+                            runIdentifier
                             );
 
                         await EvaluatePullRequestAsync(context.Client, installationId, repositoryId, sha, cancellationToken);
 
                         Logger.LogInformation(
                             EvaluatedCheckRunEventId,
-                            "Evaluated check-run for: {distributedLockIdentifier}.",
-                            distributedLockIdentifier
-                            );
-
-                        Logger.LogTrace(
-                            ReleasingDistributedLockEventId,
-                            "Releasing distributed lock for: {distributedLockIdentifier}.",
-                            distributedLockIdentifier
-                            );
-
-                        await distributedLock.ReleaseAsync();
-
-                        Logger.LogTrace(
-                            ReleasedDistributedLockEventId,
-                            "Released distributed lock for: {distributedLockIdentifier}.",
-                            distributedLockIdentifier
-                            );
-
-                        Logger.LogTrace(
-                            ReleasingSemaphoreEventId,
-                            "Releasing queue semaphore for: {distributedLockIdentifier}.",
-                            distributedLockIdentifier
-                            );
-
-                        queueSemaphore.Release();
-
-                        Logger.LogTrace(
-                            ReleasingSemaphoreEventId,
-                            "Released queue semaphore for: {distributedLockIdentifier}.",
-                            distributedLockIdentifier
+                            "Evaluated check-run for: {runIdentifier}.",
+                            runIdentifier
                             );
                     }
                     catch (Exception ex)
@@ -242,13 +112,9 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
                         Logger.LogError(
                             CheckRunEventProcessingFailedEventId,
                             ex,
-                            "Failed to process check-run event for: {distributedLockIdentifier}",
-                            distributedLockIdentifier
+                            "Failed to process check-run event for: {runIdentifier}",
+                            runIdentifier
                             );
-
-                        // Clear the semaphores.
-                        semaphores.TryRemove($"trap/{distributedLockIdentifier}", out SemaphoreSlim _);
-                        semaphores.TryRemove($"queue/{distributedLockIdentifier}", out SemaphoreSlim _);
 
                         throw ex;
                     }

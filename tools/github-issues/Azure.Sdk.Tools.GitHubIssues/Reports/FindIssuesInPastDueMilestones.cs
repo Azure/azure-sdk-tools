@@ -28,7 +28,7 @@ namespace GitHubIssues.Reports
                 {
                     // send the email
                     EmailSender.SendEmail(_cmdLine.EmailToken, _cmdLine.FromEmail, emailBody.GetContent(), repositoryConfig.ToEmail, repositoryConfig.CcEmail,
-                        $"Issues in old milestone for {repositoryConfig.Repo}");
+                        $"Issues in old milestone for {repositoryConfig.Repo}", _log);
                 }
             }
         }

@@ -27,7 +27,7 @@ namespace GitHubIssues.Reports
                 {
                     // send the email
                     EmailSender.SendEmail(_cmdLine.EmailToken, _cmdLine.FromEmail, emailBody.GetContent(), repositoryConfig.ToEmail, repositoryConfig.CcEmail,
-                        $"Pull Requests older than 3 months in {repositoryConfig.Repo}");
+                        $"Pull Requests older than 3 months in {repositoryConfig.Repo}", _log);
                 }
             }
         }

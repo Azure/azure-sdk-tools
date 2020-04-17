@@ -87,12 +87,12 @@ namespace GitHubIssues.Reports
 
                 _log.LogInformation("Sending email...");
                 // send the email
-                EmailSender.SendEmail(_cmdLine.EmailToken, _cmdLine.FromEmail, emailBody.GetContent(), repositoryConfig.ToEmail, repositoryConfig.CcEmail, $"New issues in the {repo} repo as of {to.ToShortDateString()}");
+                EmailSender.SendEmail(_cmdLine.EmailToken, _cmdLine.FromEmail, emailBody.GetContent(), repositoryConfig.ToEmail, repositoryConfig.CcEmail, $"New issues in the {repo} repo as of {to.ToShortDateString()}", _log);
 
                 _log.LogInformation("Email sent...");
 
                 bc.Upload(StreamHelpers.GetStreamForString(to.ToUniversalTime().ToString()), overwrite: true);
-                _log.LogInformation("Persisted last event time for {0} as {1}", repositoryConfig, to);
+                _log.LogInformation($"Persisted last event time for {repositoryConfig.Owner}\\{repositoryConfig.Repo} as {to}");
             }
         }
 

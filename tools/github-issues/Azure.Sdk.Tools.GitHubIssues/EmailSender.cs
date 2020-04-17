@@ -1,11 +1,14 @@
-﻿using SendGrid;
+﻿using Microsoft.Extensions.Logging;
+using SendGrid;
 
 namespace GitHubIssues
 {
     internal static class EmailSender
     {
-        public static void SendEmail(string emailToken, string template, string from, string[] to, string[] cc, string title)
+        public static void SendEmail(string emailToken, string from, string template, string[] to, string[] cc, string title, ILogger log)
         {
+            log.LogInformation($"Sending email from {from} with title: {title}");
+
             SendGrid.SendGridClient client = new SendGrid.SendGridClient(emailToken);
 
             SendGrid.Helpers.Mail.SendGridMessage message = new SendGrid.Helpers.Mail.SendGridMessage();

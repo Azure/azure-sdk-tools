@@ -28,7 +28,7 @@ namespace GitHubIssues.Reports
                 {
                     // send the email
                     EmailSender.SendEmail(_cmdLine.EmailToken, _cmdLine.FromEmail, emailBody.GetContent(), repositoryConfig.ToEmail, repositoryConfig.CcEmail,
-                        $"Customer reported issues in invalid state in repo {repositoryConfig.Repo}");
+                        $"Customer reported issues in invalid state in repo {repositoryConfig.Repo}", _log);
                 }
             }
         }

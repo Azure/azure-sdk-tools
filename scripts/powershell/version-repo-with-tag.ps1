@@ -23,8 +23,7 @@ $TagsURL = "$RepoApiURL/git/refs"
 $CurrentDate = Get-Date -Format "yyyyMMdd"
 $TagHead = $RepoName + "_" + $CurrentDate + "."
 
-pushd "$PSScriptRoot/../../eng/common/scripts"
-. ./create-tags-and-git-release.ps1 -repoOwner $RepoOrg -repoName $RepoName
+Import-Module "$PSScriptRoot/../../eng/common/scripts/modules/git-api-calls.psm1"
 
 $CurrentTagsInRepo = GetExistingTags -apiUrl $RepoApiURL
 

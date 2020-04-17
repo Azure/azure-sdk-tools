@@ -16,7 +16,7 @@ jobs:
       inputs:
         targetType: filePath
         filePath: scripts/powershell/version-repo-with-tag.ps1
-        arguments: -RepoName $(ToolsRepoName) -RepoOrg $(ToolsRepoOrg) -RepoType $(ToolsRepoType) -CommitSHA $(CommitSHA)
+        arguments: -RepoName $(ToolsRepoName) -RepoOrg $(ToolsRepoOrg) -RepoType $(ToolsRepoType) $(CommitSHA)
         pwsh: true
       timeoutInMinutes: 5
       env:

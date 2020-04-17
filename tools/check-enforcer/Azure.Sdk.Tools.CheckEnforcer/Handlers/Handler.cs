@@ -76,15 +76,19 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
             Logger.LogTrace("Set check-run to queued.");
         }
 
-        protected async Task<CheckRun> CreateCheckAsync(GitHubClient client, long repositoryId, string headSha, bool recreate, CancellationToken cancellationToken)
+        protected async Task<CheckRun> CreateCheckAsync(GitHubClient client, long installationId, long repositoryId, string headSha, bool recreate, CancellationToken cancellationToken)
         {
+            var runIdentifier = $"{installationId}/{repositoryId}/{headSha}";
+
+            Logger.LogInformation($"Checking for existing check-run for: {runIdentifier}");
+
             var response = await client.Check.Run.GetAllForReference(repositoryId, headSha);
             var runs = response.CheckRuns;
             var checkRun = runs.SingleOrDefault(r => r.Name == this.GlobalConfigurationProvider.GetApplicationName());
 
             if (checkRun == null || recreate)
             {
-                Logger.LogInformation("Creating check-run.");
+                Logger.LogInformation($"Creating check-run for: {runIdentifier}");
 
                 checkRun = await client.Check.Run.Create(
                     repositoryId,
@@ -95,7 +99,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
                     }
                 );
 
-                Logger.LogInformation("Created check-run.");
+                Logger.LogInformation($"Created check-run for: {runIdentifier}");
             }
 
             return checkRun;
@@ -142,7 +146,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
             else if (totalOtherRuns < configuration.MinimumCheckRuns || totalOutstandingOtherRuns != 0 && checkEnforcerRun.Status != new StringEnum<CheckStatus>(CheckStatus.InProgress))
             {
                 // NOTE: We do this when we need to go back from a conclusion of success to a status of in-progress.
-                await CreateCheckAsync(client, repositoryId, sha, true, cancellationToken);
+                await CreateCheckAsync(client, installationId, repositoryId, sha, true, cancellationToken);
             }
         }
 

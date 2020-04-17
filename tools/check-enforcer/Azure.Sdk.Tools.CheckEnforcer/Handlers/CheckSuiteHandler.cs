@@ -30,7 +30,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
 
                 if (configuration.IsEnabled)
                 {
-                    await CreateCheckAsync(context.Client, repositoryId, sha, true, cancellationToken);
+                    await CreateCheckAsync(context.Client, installationId, repositoryId, sha, true, cancellationToken);
                 }
             }
         }

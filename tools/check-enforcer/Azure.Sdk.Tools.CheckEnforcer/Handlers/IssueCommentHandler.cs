@@ -48,7 +48,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
                     break;
 
                 case "/check-enforcer reset":
-                    await CreateCheckAsync(context.Client, repositoryId, sha, true, cancellationToken);
+                    await CreateCheckAsync(context.Client, installationId, repositoryId, sha, true, cancellationToken);
                     break;
 
                 case "/check-enforcer evaluate":
@@ -56,7 +56,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
                     break;
 
                 default:
-                    this.Logger.LogTrace("Unrecognized command: {comment}", comment);
+                    this.Logger.LogInformation("Unrecognized command: {comment}", comment);
                     break;
             }
         }

@@ -28,7 +28,6 @@ param (
 )
 
 Write-Host $MyInvocation.Line
-$ErrorActionPreference = 'Stop'
 
 $RepoApiURL = "https://api.github.com/repos/$RepoOrg/$RepoName"
 $CommitsURL = "$RepoApiURL/commits/$CommitSHA"

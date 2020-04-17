@@ -54,7 +54,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
             {
                 if (payload.CheckRun.Name == this.GlobalConfigurationProvider.GetApplicationName())
                 {
-                    Logger.LogTrace(
+                    Logger.LogInformation(
                         SkippedProcessingCheckEnforcerCheckRunEventEventId,
                         "Skipping processing event for: {runIdentifier}",
                         runIdentifier
@@ -66,7 +66,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
                     {
                         if (payload.CheckRun.Status != new StringEnum<CheckStatus>(CheckStatus.Completed))
                         {
-                            Logger.LogTrace(
+                            Logger.LogInformation(
                                 SkippedProcessingIncompleteCheckRunEventEventId,
                                 "Skipping processing event for: {runIdentifier}",
                                 runIdentifier

@@ -84,7 +84,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
 
             if (checkRun == null || recreate)
             {
-                Logger.LogTrace("Creating check-run.");
+                Logger.LogInformation("Creating check-run.");
 
                 checkRun = await client.Check.Run.Create(
                     repositoryId,
@@ -95,7 +95,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
                     }
                 );
 
-                Logger.LogTrace("Created check-run.");
+                Logger.LogInformation("Created check-run.");
             }
 
             return checkRun;
@@ -112,7 +112,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
 
             if (checkEnforcerRun == null)
             {
-                 Logger.LogTrace("Check-run for enforcer doesn't exist.");
+                 Logger.LogInformation("Check-run for enforcer doesn't exist.");
                  return;
             }
 
@@ -130,14 +130,14 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
 
             if (totalOtherRuns >= configuration.MinimumCheckRuns && totalOutstandingOtherRuns == 0 && checkEnforcerRun.Conclusion != new StringEnum<CheckConclusion>(CheckConclusion.Success))
             {
-                Logger.LogTrace("Updating check-run.");
+                Logger.LogInformation("Updating check-run.");
                 await client.Check.Run.Update(repositoryId, checkEnforcerRun.Id, new CheckRunUpdate()
                 {
                     Conclusion = new StringEnum<CheckConclusion>(CheckConclusion.Success),
                     Status = new StringEnum<CheckStatus>(CheckStatus.Completed),
                     CompletedAt = DateTimeOffset.UtcNow
                 });
-                Logger.LogTrace("Updated check-run.");
+                Logger.LogInformation("Updated check-run.");
             }
             else if (totalOtherRuns < configuration.MinimumCheckRuns || totalOutstandingOtherRuns != 0 && checkEnforcerRun.Status != new StringEnum<CheckStatus>(CheckStatus.InProgress))
             {
@@ -148,7 +148,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
 
         private T DeserializePayload(string json)
         {
-            Logger.LogTrace("Payload: {json}", json);
+            Logger.LogInformation("Payload: {json}", json);
 
             SimpleJsonSerializer serializer = new SimpleJsonSerializer();
             var payload = serializer.Deserialize<T>(json);

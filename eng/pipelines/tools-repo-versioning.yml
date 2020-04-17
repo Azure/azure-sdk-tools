@@ -1,0 +1,23 @@
+# Tag the tools repos (azure-sdk-tools or azure-sdk-build-tools) to create some form of versioning.
+trigger: none
+
+pr: none
+
+pool:
+  vmImage: windows-2019
+
+jobs:
+  - job: TagToolsRepo
+    displayName: Tag $(ToolsRepoName)
+
+    steps:    
+    - task: PowerShell@2
+      displayName: 'Verify and Create Tag on Repo'
+      inputs:
+        targetType: filePath
+        filePath: scripts/powershell/version-repo-with-tag.ps1
+        arguments: -RepoName $(ToolsRepoName) -RepoOrg $(ToolsRepoOrg) -RepoType $(ToolsRepoType) -CommitSHA $(CommitSHA)
+        pwsh: true
+      timeoutInMinutes: 5
+      env:
+        GH_TOKEN: $(azuresdk-github-pat)

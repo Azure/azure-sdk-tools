@@ -56,7 +56,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
                 {
                     Logger.LogInformation(
                         SkippedProcessingCheckEnforcerCheckRunEventEventId,
-                        "Skipping processing event for: {runIdentifier}",
+                        "Skipping processing event for: {runIdentifier} because appplication name match.",
                         runIdentifier
                         );
                 }
@@ -68,7 +68,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
                         {
                             Logger.LogInformation(
                                 SkippedProcessingIncompleteCheckRunEventEventId,
-                                "Skipping processing event for: {runIdentifier}",
+                                "Skipping processing event for: {runIdentifier} check-run status not completed.",
                                 runIdentifier
                                 );
                             return;

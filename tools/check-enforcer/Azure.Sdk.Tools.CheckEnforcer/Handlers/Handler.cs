@@ -80,7 +80,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
         {
             var runIdentifier = $"{installationId}/{repositoryId}/{headSha}";
 
-            Logger.LogInformation($"Checking for existing check-run for: {runIdentifier}");
+            Logger.LogInformation("Checking for existing check-run for: {runIdentifier}", runIdentifier);
 
             var response = await client.Check.Run.GetAllForReference(repositoryId, headSha);
             var runs = response.CheckRuns;
@@ -88,7 +88,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
 
             if (checkRun == null || recreate)
             {
-                Logger.LogInformation($"Creating check-run for: {runIdentifier}");
+                Logger.LogInformation("Creating check-run for: {runIdentifier}", runIdentifier);
 
                 checkRun = await client.Check.Run.Create(
                     repositoryId,
@@ -99,7 +99,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
                     }
                 );
 
-                Logger.LogInformation($"Created check-run for: {runIdentifier}");
+                Logger.LogInformation("Created check-run for: {runIdentifier}", runIdentifier);
             }
 
             return checkRun;
@@ -107,16 +107,22 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
 
         protected async Task EvaluatePullRequestAsync(GitHubClient client, long installationId, long repositoryId, string sha, CancellationToken cancellationToken)
         {
+            var runIdentifier = $"{installationId}/{repositoryId}/{sha}";
+
             var configuration = await this.RepositoryConfigurationProvider.GetRepositoryConfigurationAsync(installationId, repositoryId, sha, cancellationToken);
+
+            Logger.LogInformation("Fetching check-runs for: {runIdentifier} for evaluation.", runIdentifier);
 
             var runsResponse = await client.Check.Run.GetAllForReference(repositoryId, sha);
             var runs = runsResponse.CheckRuns;
+
+            Logger.LogInformation("Check-suite for: {runIdentifier} has {runs.Count}.", runIdentifier);
 
             var checkEnforcerRun = runs.SingleOrDefault(r => r.Name == this.GlobalConfigurationProvider.GetApplicationName());
 
             if (checkEnforcerRun == null)
             {
-                 Logger.LogInformation("Check-run for enforcer doesn't exist.");
+                 Logger.LogInformation("Check-run for: {runIdentifier} doesn't exist.", runIdentifier);
                  return;
             }
 
@@ -134,14 +140,14 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
 
             if (totalOtherRuns >= configuration.MinimumCheckRuns && totalOutstandingOtherRuns == 0 && checkEnforcerRun.Conclusion != new StringEnum<CheckConclusion>(CheckConclusion.Success))
             {
-                Logger.LogInformation("Updating check-run.");
+                Logger.LogInformation("Updating check-run for: {runIdentifier}", runIdentifier);
                 await client.Check.Run.Update(repositoryId, checkEnforcerRun.Id, new CheckRunUpdate()
                 {
                     Conclusion = new StringEnum<CheckConclusion>(CheckConclusion.Success),
                     Status = new StringEnum<CheckStatus>(CheckStatus.Completed),
                     CompletedAt = DateTimeOffset.UtcNow
                 });
-                Logger.LogInformation("Updated check-run.");
+                Logger.LogInformation("Updated check-run for: {runIdentifier}", runIdentifier);
             }
             else if (totalOtherRuns < configuration.MinimumCheckRuns || totalOutstandingOtherRuns != 0 && checkEnforcerRun.Status != new StringEnum<CheckStatus>(CheckStatus.InProgress))
             {

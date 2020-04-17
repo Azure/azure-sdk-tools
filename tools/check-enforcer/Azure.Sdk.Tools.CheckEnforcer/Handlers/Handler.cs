@@ -115,10 +115,9 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
 
             var runsResponse = await client.Check.Run.GetAllForReference(repositoryId, sha);
             var runs = runsResponse.CheckRuns;
-
-            Logger.LogInformation("Check-suite for: {runIdentifier} has {runs.Count} check-enforcer runs (possible race condition?).", runIdentifier, runs.Count);
-
             var checkEnforcerRuns = runs.Where(r => r.Name == this.GlobalConfigurationProvider.GetApplicationName());
+
+            Logger.LogInformation("Check-suite for: {runIdentifier} has {runs.Count} check-enforcer runs (possible race condition?).", runIdentifier, checkEnforcerRuns.Count());
 
             foreach (var duplicatedCheckEnforcerRun in checkEnforcerRuns)
             {

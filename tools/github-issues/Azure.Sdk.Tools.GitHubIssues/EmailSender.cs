@@ -5,7 +5,7 @@ namespace GitHubIssues
 {
     internal static class EmailSender
     {
-        public static void SendEmail(string emailToken, string template, string from, string[] to, string[] cc, string title, ILogger log)
+        public static void SendEmail(string emailToken, string from, string template, string[] to, string[] cc, string title, ILogger log)
         {
             log.LogInformation($"Sending email from {from} with title: {title}");
 

@@ -31,7 +31,8 @@ Write-Host $MyInvocation.Line
 
 $RepoApiURL = "https://api.github.com/repos/$RepoOrg/$RepoName"
 $CommitsURL = "$RepoApiURL/commits/$CommitSHA"
-$TagsURL = "$RepoApiURL/git/refs"
+$RefsURL = "$RepoApiURL/git/refs"
+$TagsURL = "$RefsURL/tags"
 
 $CurrentDate = Get-Date -Format "yyyyMMdd"
 $TagHead = $RepoName + "_" + $CurrentDate + "."
@@ -39,7 +40,7 @@ $TagHead = $RepoName + "_" + $CurrentDate + "."
 Import-Module "$PSScriptRoot/../../eng/common/scripts/modules/git-api-calls.psm1"
 
 try {
-    $CurrentTagsInRepo = GetExistingTags -apiUrl $RepoApiURL
+    $CurrentTagsInRepo = GetExistingTags -apiUrl $RefsURL
 }
 catch {
     Write-Error "$_"
@@ -83,4 +84,4 @@ $headers = @{
     "Authorization" = "token $($env:GH_TOKEN)"
 }
 
-FireAPIRequest -url $TagsURL -body $TagBody -headers $headers -method "Post"
+FireAPIRequest -url $RefsURL -body $TagBody -headers $headers -method "Post"

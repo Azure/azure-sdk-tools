@@ -10,6 +10,9 @@ using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
 {
+
+
+    
     public class CheckSuiteHandler : Handler<CheckSuiteEventPayload>
     {
         public CheckSuiteHandler(IGlobalConfigurationProvider globalConfigurationProvider, IGitHubClientProvider gitHubClientProvider, IRepositoryConfigurationProvider repositoryConfigurationProvider, ILogger logger) : base(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, logger)

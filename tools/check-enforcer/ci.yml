@@ -9,6 +9,9 @@ trigger:
     include:
       - tools/check-enforcer
   
+  
+  
+  
 pr:
   branches:
     include:

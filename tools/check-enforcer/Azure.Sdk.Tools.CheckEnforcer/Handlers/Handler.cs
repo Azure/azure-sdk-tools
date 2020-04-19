@@ -71,6 +71,8 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
             Logger.LogTrace("Setting check-run to queued.");
             await client.Check.Run.Update(repositoryId, run.Id, new CheckRunUpdate()
             {
+
+
                 Status = new StringEnum<CheckStatus>(CheckStatus.Queued)
             });
             Logger.LogTrace("Set check-run to queued.");

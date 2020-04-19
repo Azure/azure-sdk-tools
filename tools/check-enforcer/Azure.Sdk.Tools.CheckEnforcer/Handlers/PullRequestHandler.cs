@@ -35,6 +35,13 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
                 pullRequestNumber,
                 runIdentifier
                 );
+
+            var configuration = await this.RepositoryConfigurationProvider.GetRepositoryConfigurationAsync(installationId, repositoryId, sha, cancellationToken);
+
+            if (configuration.IsEnabled)
+            {
+                await CreateCheckAsync(context.Client, installationId, repositoryId, sha, false, cancellationToken);
+            }
         }
     }
 }

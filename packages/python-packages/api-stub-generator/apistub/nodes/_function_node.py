@@ -139,21 +139,22 @@ class FunctionNode(NodeEntityBase):
                     pos_arg.argname, pos_arg.argtype
                 )
 
+            kwargs = [x for x in self.args if x.argname == KW_ARG_NAME]
             # add keyword args
             if parsed_docstring.kw_args:
-                # Add seperator to differentiate pos_arg and keyword args
+                # Add separator to differentiate pos_arg and keyword args
                 self.args.append(ArgType("*"))
                 parsed_docstring.kw_args.sort(key=operator.attrgetter("argname"))
                 self.args.extend(parsed_docstring.kw_args)
                 # remove arg with name "**kwarg and add at the end"
-                kwargs = [x for x in self.args if x.argname == KW_ARG_NAME]
                 if kwargs:
                     kw_arg = kwargs[0]
                     self.args.remove(kw_arg)
                     self.args.append(kw_arg)
-            elif [x for x in self.args if x.argname == KW_ARG_NAME]:
-                # if kw arg details are not available in docstring and function has kwarg then flag it as error
-                self.errors.append("Keyword arg info is not available. Please ensure docstring has type info for all keyword args")
+
+            # API must have **kwargs. Flag it as an error if it is missing for public API
+            if not kwargs and not self.name.startswith("_"):
+                self.errors.append("Keyword arg (**kwargs) is missing in API {}".format(self.name))
 
 
     def _parse_typehint(self):
@@ -161,9 +162,14 @@ class FunctionNode(NodeEntityBase):
         typehint_parser = TypeHintParser(self.obj)
         # Find return type from type hint if return type is not already set
         type_hint_ret_type = typehint_parser.find_return_type()
+        # Type hint must be present for all APIs. Flag it as an error if typehint is missing
+        if  not type_hint_ret_type:
+            self.errors.append("Typehint is missing for API {}".format(self.name))
+            return
+
         if not self.return_type:
             self.return_type = type_hint_ret_type
-        elif type_hint_ret_type:
+        else:
             # Verify return type is same in docstring and typehint if typehint is available
             short_return_type = self.return_type.split(".")[-1]
             long_ret_type = self.return_type
@@ -191,7 +197,7 @@ class FunctionNode(NodeEntityBase):
             self.args[index].generate_tokens(
                 apiview, self.namespace_id, use_multi_line
             )
-            # Add punctuation betwen types except for last one
+            # Add punctuation between types except for last one
             if index < args_count - 1:
                 apiview.add_punctuation(",", False, True)
 

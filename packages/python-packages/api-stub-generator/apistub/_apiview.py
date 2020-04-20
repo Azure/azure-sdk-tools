@@ -112,7 +112,7 @@ class ApiView:
             type_count = len(types)
             for index in range(type_count):
                 self.add_type(types[index].strip(), line_id)
-                # Add seperator between types
+                # Add separator between types
                 if index < type_count - 1:
                     self.add_punctuation(",", False, True)
             self.add_punctuation(type_name[-1])
@@ -129,7 +129,7 @@ class ApiView:
         if multi_types:
             self._generate_type_tokens(type_name, multi_types.groups()[0], line_id)
         else:
-            # Encode mutliple types with or seperator into Union
+            # Encode mutliple types with or separator into Union
             types = [t for t in type_name.split() if t != 'or']
             if len(types) > 1:
                 # Make a Union of types if multiple types are present

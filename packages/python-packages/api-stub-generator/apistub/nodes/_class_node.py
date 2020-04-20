@@ -243,6 +243,6 @@ class ClassNode(NodeEntityBase):
         list_len = len(values)
         for index in range(list_len):
             apiview.add_type(values[index], self.namespace_id)
-            # Add punctuation betwen types
+            # Add punctuation between types
             if index < list_len - 1:
                 apiview.add_punctuation(",", False, True)

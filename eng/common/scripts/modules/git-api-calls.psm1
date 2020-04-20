@@ -1,7 +1,7 @@
 # Retrieves the list of all tags that exist on the target repository
 function GetExistingTags($apiUrl) {
     try {
-      return (Invoke-RestMethod -Method "GET" -Uri $apiUrl  ) | % { $_.ref.Replace("refs/tags/", "") }
+      return (Invoke-RestMethod -Method "GET" -Uri $apiUrl  ) #| % { $_.ref.Replace("refs/tags/", "") }
     }
     catch {
       $statusCode = $_.Exception.Response.StatusCode.value__

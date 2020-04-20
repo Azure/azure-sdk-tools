@@ -33,15 +33,15 @@ if ($RepoType -eq 'github')
 {
     $RepoApiURL = "https://api.github.com/repos/$RepoOrg/$RepoName"
     $CommitsURL = "$RepoApiURL/commits/$CommitSHA"
-    $RefsURL = "$RepoApiURL/git/refs"
-    $TagsURL = "$RefsURL/tags"
+    $CreateTagRefURL = "$RepoApiURL/git/refs"
+    $ListTagsURL = "$RepoApiURL/git/refs/tags"
 }
 else {
     $APIVersion = "api-version=5.1"
     $RepoApiURL = "https://dev.azure.com/$RepoOrg/$RepoProjectID/_apis/git/repositories/$RepoName"
     $CommitsURL = "$RepoApiURL/commits/$CommitSHA/$APIVersion"
-    $RefsURL = "$RepoApiURL/ref/refs"
-    $TagsURL = "$RefsURL/refs?filter=tags/&$APIVersion"
+    $CreateTagRefURL = "$RepoApiURL/refs?$APIVersion"
+    $ListTagsURL = "$RepoApiURL/refs?filter=tags/&$APIVersion"
 }
 
 
@@ -51,7 +51,7 @@ $TagHead = $RepoName + "_" + $CurrentDate + "."
 Import-Module "$PSScriptRoot/../../eng/common/scripts/modules/git-api-calls.psm1"
 
 try {
-    $CurrentTagsInRepo = GetExistingTags -apiUrl $RefsURL
+    $CurrentTagsInRepo = GetExistingTags -apiUrl $ListTagsURL
 }
 catch {
     Write-Error "$_"
@@ -97,4 +97,4 @@ Write-Host $CurrentTagsInRepo
 #    "Authorization" = "token $($env:GH_TOKEN)"
 #}
 #
-#FireAPIRequest -url $RefsURL -body $TagBody -headers $headers -method "Post"
+#FireAPIRequest -url $CreateTagRefURL -body $TagBody -headers $headers -method "Post"

@@ -65,7 +65,7 @@ def verify_md_readme(readme, config, section_sorting_dict):
     # we need to sanitize to remove the fenced code blocks. The reasoning here is that markdown2 is having issues
     # parsing the pygments style that we use with github.
     sanitized_html_content = re.sub(CODE_FENCE_REGEX, "", readme_content)
-    html_readme_content = markdown2.markdown(readme_content)
+    html_readme_content = markdown2.markdown(sanitized_html_content)
     html_soup = bs4.BeautifulSoup(html_readme_content, "html.parser")
 
     missed_patterns = find_missed_sections(html_soup, config.required_readme_sections)

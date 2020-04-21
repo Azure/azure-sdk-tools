@@ -1,5 +1,8 @@
 # Release History
 
+## 0.6.1
+- `Pygments` style code-fence blocks are parsed badly by `markdown2`. This results in phantom headers that break document hierarchy. Remove these blocks right after reading the readme and before passing to html parsing.
+
 ## 0.6.0 
 - Support for `sub-heading` verification. Consumption of `sub-heading` yml will crash on less than version `0.6.0`.
 

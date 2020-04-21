@@ -36,6 +36,7 @@ class FunctionNode(NodeEntityBase):
         self.hidden = False
         self._inspect()
 
+
     def _inspect(self):
         logging.debug("Processing function {0}".format(self.name))
         code = inspect.getsource(self.obj).strip()
@@ -65,6 +66,7 @@ class FunctionNode(NodeEntityBase):
 
         self.is_class_method = "@classmethod" in self.annotations
         self._parse_function()
+
 
     def _parse_function(self):
         """
@@ -99,6 +101,9 @@ class FunctionNode(NodeEntityBase):
         self._parse_docstring()
         # parse type hints
         self._parse_typehint()
+        if not self.return_type:
+            self.errors.append("Return type is missing in both typehint and docstring")
+
 
     def _parse_docstring(self):
         # Parse docstring to get list of keyword args, type and default value for both positional and
@@ -134,25 +139,44 @@ class FunctionNode(NodeEntityBase):
                     pos_arg.argname, pos_arg.argtype
                 )
 
+            kwargs = [x for x in self.args if x.argname == KW_ARG_NAME]
             # add keyword args
             if parsed_docstring.kw_args:
-                # Add seperator to differentiate pos_arg and keyword args
+                # Add separator to differentiate pos_arg and keyword args
                 self.args.append(ArgType("*"))
                 parsed_docstring.kw_args.sort(key=operator.attrgetter("argname"))
                 self.args.extend(parsed_docstring.kw_args)
                 # remove arg with name "**kwarg and add at the end"
-                kwargs = [x for x in self.args if x.argname == KW_ARG_NAME]
                 if kwargs:
                     kw_arg = kwargs[0]
                     self.args.remove(kw_arg)
                     self.args.append(kw_arg)
 
+            # API must have **kwargs. Flag it as an error if it is missing for public API
+            if not kwargs and not self.name.startswith("_"):
+                self.errors.append("Keyword arg (**kwargs) is missing in API {}".format(self.name))
+
+
     def _parse_typehint(self):
         # Parse type hint to get return type and types for positional args
         typehint_parser = TypeHintParser(self.obj)
         # Find return type from type hint if return type is not already set
+        type_hint_ret_type = typehint_parser.find_return_type()
+        # Type hint must be present for all APIs. Flag it as an error if typehint is missing
+        if  not type_hint_ret_type:
+            self.errors.append("Typehint is missing for API {}".format(self.name))
+            return
+
         if not self.return_type:
-            typehint_parser.find_return_type()
+            self.return_type = type_hint_ret_type
+        else:
+            # Verify return type is same in docstring and typehint if typehint is available
+            short_return_type = self.return_type.split(".")[-1]
+            long_ret_type = self.return_type
+            if long_ret_type != type_hint_ret_type and short_return_type != type_hint_ret_type:
+                error_message = "Return type in type hint is not matching return type in docstring"
+                self.errors.append(error_message)
+
 
     def _generate_signature_token(self, apiview):
         apiview.add_punctuation("(")
@@ -173,7 +197,7 @@ class FunctionNode(NodeEntityBase):
             self.args[index].generate_tokens(
                 apiview, self.namespace_id, use_multi_line
             )
-            # Add punctuation betwen types except for last one
+            # Add punctuation between types except for last one
             if index < args_count - 1:
                 apiview.add_punctuation(",", False, True)
 
@@ -186,10 +210,12 @@ class FunctionNode(NodeEntityBase):
         else:
             apiview.add_punctuation(")")
 
+
     def generate_tokens(self, apiview):
         """Generates token for function signature
         :param ApiView: apiview
         """
+        logging.info("Processing method {0} in class {1}".format(self.name, self.parent_node.namespace_id))
         # Add tokens for annotations
         for annot in self.annotations:
             apiview.add_whitespace()
@@ -214,5 +240,8 @@ class FunctionNode(NodeEntityBase):
             if len(self.args) > 2:
                 line_id = "{}.returntype".format(self.namespace_id)
                 apiview.add_line_marker(line_id)
-            logging.debug("Method: {0}, Return type: {1}".format(self.name, self.return_type))
             apiview.add_type(self.return_type)
+
+        if self.errors:
+            for e in self.errors:
+                apiview.add_diagnostic(e, self.namespace_id)

@@ -29,6 +29,8 @@ param (
 
 Write-Host $MyInvocation.Line
 
+$HttpHeaders = @{}
+
 if ($RepoType -eq 'github')
 {
     $RepoApiURL = "https://api.github.com/repos/$RepoOrg/$RepoName"
@@ -37,31 +39,42 @@ if ($RepoType -eq 'github')
     $ListTagsURL = "$RepoApiURL/git/refs/tags"
 }
 else {
+    # It's an Azure git Repo in DevOps
     $APIVersion = "api-version=5.1"
     $RepoApiURL = "https://dev.azure.com/$RepoOrg/$RepoProjectID/_apis/git/repositories/$RepoName"
-    $CommitsURL = "$RepoApiURL/commits/$CommitSHA/$APIVersion"
+
+    $ItemVersionType = "branch"
+    if ($CommitSHA -ne "master") { $ItemVersionType = "commit" }
+
+    $CommitsURL = "$RepoApiURL/commits?searchCriteria." + '$top' + "=1&searchCriteria.itemVersion.versionType=$ItemVersionType&searchCriteria.itemVersion.version=$CommitSHA&$APIVersion"
+    Write-Host $CommitsURL
     $CreateTagRefURL = "$RepoApiURL/refs?$APIVersion"
     $ListTagsURL = "$RepoApiURL/refs?filter=tags/&$APIVersion"
-}
 
+    # Configure Authorization Header
+    $Encoder = [System.Text.ASCIIEncoding]::new()
+    $Credentials = "Chidozie Ononiwu" + ":" + ""
+    $NoofBytesRequired = $Encoder.GetByteCount($Credentials)
+    $CredentialsEncoded = [System.Byte[]]::new($NoofBytesRequired)
+    $NoOfBytesWriten = $Encoder.GetBytes($Credentials, 0, $CredentialsEncoded.Length, $CredentialsEncoded, 0)
+    $CredentialsBase64 = [System.Convert]::ToBase64String($CredentialsEncoded);
+    $HttpHeaders.Add("Authorization", "Basic $CredentialsBase64")
+}
 
 $CurrentDate = Get-Date -Format "yyyyMMdd"
 $TagHead = $RepoName + "_" + $CurrentDate + "."
 
 Import-Module "$PSScriptRoot/../../eng/common/scripts/modules/git-api-calls.psm1"
 
-try {
-    $CurrentTagsInRepo = GetExistingTags -apiUrl $ListTagsURL
-}
-catch {
-    Write-Error "$_"
-    Write-Error "Ensure that the RepoName and RepoOrg are correct."
-    Exit 1
-}
-
-Write-Host $CurrentTagsInRepo
-
-
+#try {
+#    $CurrentTagsInRepo = GetExistingTags -apiUrl $ListTagsURL -repoType $RepoType -headers $HttpHeaders
+#}
+#catch {
+#    Write-Error "$_"
+#    Write-Error "Ensure that the RepoName and RepoOrg are correct."
+#    Exit 1
+#}
+#
 #$TagsLikeHead = $CurrentTagsInRepo | where { $_ -like "$TagHead*" }
 #$TagVersionNo = 1
 #
@@ -75,18 +88,26 @@ Write-Host $CurrentTagsInRepo
 #}
 #
 #$FullTag = $TagHead + $TagVersionNo
-#
-#try {
-#    $CommitToTag = FireAPIRequest -url $CommitsURL -method "Get"
-#    $CommitToTagSHA = $CommitToTag.sha
-#}
-#catch {
-#    Write-Error "$_"
-#    Write-Error "Ensure that the specified commit SHA exist in the specified repository"
-#    Exit 1
-#}
-#
-#
+
+try {
+    $CommitToTag = FireAPIRequest -url $CommitsURL -method "Get" -headers $HttpHeaders -repoType $RepoType
+    $CommitToTagSHA = $null
+    if ($RepoType -eq 'github')
+    {
+        $CommitToTagSHA = $CommitToTag.sha
+    }
+    else {
+        $CommitToTagSHA = $CommitToTag.value.commitId
+    }
+    Write-Host $CommitToTagSHA
+}
+catch {
+    Write-Error "$_"
+    Write-Error "Ensure that the specified commit SHA exist in the specified repository"
+    Exit 1
+}
+
+
 #$TagBody = ConvertTo-Json @{
 #    ref         = "refs/tags/$FullTag"
 #    sha         = $CommitToTagSHA 

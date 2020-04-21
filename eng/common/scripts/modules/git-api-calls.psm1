@@ -1,7 +1,17 @@
+# Methods for interacting with the github or azure repo APIs
 # Retrieves the list of all tags that exist on the target repository
-function GetExistingTags($apiUrl) {
+# Changes 1: Pass full API URL instead of formulating it within the method
+# Changes 2: Extend method for git Repos
+function GetExistingTags($apiUrl, $repoType = "github", $headers = $null) {
     try {
-      return (Invoke-RestMethod -Method "GET" -Uri $apiUrl  ) #| % { $_.ref.Replace("refs/tags/", "") }
+      if ($repoType -eq "github")
+      {
+        return (Invoke-RestMethod -Method "GET" -Uri $apiUrl  ) | % { $_.ref.Replace("refs/tags/", "") }
+      }
+      else {
+        return (Invoke-RestMethod -Method "GET" -Uri $apiUrl -Headers $headers ) | % { $_.value.name.Replace("refs/tags/", "") }
+      }
+      
     }
     catch {
       $statusCode = $_.Exception.Response.StatusCode.value__
@@ -20,7 +30,7 @@ function GetExistingTags($apiUrl) {
     }
 }
 
-function FireAPIRequest($url, $method, $body = $null, $headers = $null) {
+function FireAPIRequest($url, $method, $body = $null, $headers = $null, $repoType = "github") {
     $attempts = 1
   
     while ($attempts -le 3) {
@@ -36,11 +46,11 @@ function FireAPIRequest($url, $method, $body = $null, $headers = $null) {
         if ($statusCode) {
           Write-Host "API request attempt number $attempts to $url failed with statuscode $statusCode"
           Write-Host $statusDescription
-  
-          Write-Host "Rate Limit Details:"
-          Write-Host "Total: $($response.Headers.GetValues("X-RateLimit-Limit"))"
-          Write-Host "Remaining: $($response.Headers.GetValues("X-RateLimit-Remaining"))"
-          Write-Host "Reset Epoch: $($response.Headers.GetValues("X-RateLimit-Reset"))"
+
+          if ($repoType -eq "github")
+          {
+            GitHubRateLimitInfo
+          }
         }
         else {
           Write-Host "API request attempt number $attempts to $url failed with no statuscode present, exception follows:"
@@ -58,6 +68,13 @@ function FireAPIRequest($url, $method, $body = $null, $headers = $null) {
   
       $attempts += 1
     }
+}
+
+function GitHubRateLimitInfo() {
+  Write-Host "Rate Limit Details:"
+  Write-Host "Total: $($response.Headers.GetValues("X-RateLimit-Limit"))"
+  Write-Host "Remaining: $($response.Headers.GetValues("X-RateLimit-Remaining"))"
+  Write-Host "Reset Epoch: $($response.Headers.GetValues("X-RateLimit-Reset"))"
 }
 
 Export-ModuleMember -Function 'GetExistingTags'

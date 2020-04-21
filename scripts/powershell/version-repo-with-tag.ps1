@@ -1,16 +1,20 @@
 <#
 .DESCRIPTION
-Tags latest or specific commit in the specified Repo.
+Tags latest or a specific commit in the specified Repo.
 Uses a combination of the Repo Name, Current Date and a Version number to create the tag.
 Tag serve as a means of versioning the entire repo.
 .PARAMETER RepoName
 The name of the repository. EG "azure-sdk-tools"
 .PARAMETER RepoOrg
 The owning organization of the repository. EG "Azure"
-.PARAMETER GitUrl
-The GitHub repository URL
 .PARAMETER RepoType
 Should be either a github or git (Azure) repo
+.PARAMETER CommitSHA
+The commitSHA to tag. Defaults to master
+.PARAMETER RepoProjectID
+For git Repos supply the project ID. Default to the internal project ID set by the pipeline
+.PARAMETER PATForAPI
+Personal Access Token for authentication to the Repo
 #>
 param (
     [Parameter(Mandatory = $true)]
@@ -24,7 +28,14 @@ param (
     [string] $RepoType,
 
     [string] $CommitSHA="master",
-    [string] $RepoProjectID="fadad8ea-1e34-4d7a-9016-fd29b14e8b94"
+
+    [Parameter(Mandatory = $true)]
+    [string] $RepoProjectID,
+
+    [Parameter(Mandatory = $true)]
+    [string] $GitHubPAT,
+    [Parameter(Mandatory = $true)]
+    [string] $AzureGitPAT
 )
 
 Write-Host $MyInvocation.Line
@@ -53,7 +64,7 @@ else {
 
     # Configure Authorization Header
     $Encoder = [System.Text.ASCIIEncoding]::new()
-    $Credentials = "Chidozie Ononiwu" + ":" + ""
+    $Credentials = "Chidozie Ononiwu" + ":" + $AzureGitPAT
     $NoofBytesRequired = $Encoder.GetByteCount($Credentials)
     $CredentialsEncoded = [System.Byte[]]::new($NoofBytesRequired)
     $NoOfBytesWriten = $Encoder.GetBytes($Credentials, 0, $CredentialsEncoded.Length, $CredentialsEncoded, 0)
@@ -66,28 +77,28 @@ $TagHead = $RepoName + "_" + $CurrentDate + "."
 
 Import-Module "$PSScriptRoot/../../eng/common/scripts/modules/git-api-calls.psm1"
 
-#try {
-#    $CurrentTagsInRepo = GetExistingTags -apiUrl $ListTagsURL -repoType $RepoType -headers $HttpHeaders
-#}
-#catch {
-#    Write-Error "$_"
-#    Write-Error "Ensure that the RepoName and RepoOrg are correct."
-#    Exit 1
-#}
-#
-#$TagsLikeHead = $CurrentTagsInRepo | where { $_ -like "$TagHead*" }
-#$TagVersionNo = 1
-#
-#foreach ($version in $TagsLikeHead)
-#{
-#    $versionNo = $version.Replace($TagHead, '') -as [int]
-#    if ($versionNo -ge $TagVersionNo)
-#    {
-#        $TagVersionNo = $versionNo + 1
-#    }
-#}
-#
-#$FullTag = $TagHead + $TagVersionNo
+try {
+    $CurrentTagsInRepo = GetExistingTags -apiUrl $ListTagsURL -repoType $RepoType -headers $HttpHeaders
+}
+catch {
+    Write-Error "$_"
+    Write-Error "Ensure that the RepoName and RepoOrg are correct."
+    Exit 1
+}
+
+$TagsLikeHead = $CurrentTagsInRepo | where { $_ -like "$TagHead*" }
+$TagVersionNo = 1
+
+foreach ($version in $TagsLikeHead)
+{
+    $versionNo = $version.Replace($TagHead, '') -as [int]
+    if ($versionNo -ge $TagVersionNo)
+    {
+        $TagVersionNo = $versionNo + 1
+    }
+}
+
+$FullTag = $TagHead + $TagVersionNo
 
 try {
     $CommitToTag = FireAPIRequest -url $CommitsURL -method "Get" -headers $HttpHeaders -repoType $RepoType
@@ -99,7 +110,6 @@ try {
     else {
         $CommitToTagSHA = $CommitToTag.value.commitId
     }
-    Write-Host $CommitToTagSHA
 }
 catch {
     Write-Error "$_"
@@ -107,15 +117,23 @@ catch {
     Exit 1
 }
 
+if ($RepoType -eq 'github')
+{
+    $TagBody = @{}
+    $TagBody.Add("ref", "refs/tags/$FullTag")
+    $TagBody.Add("sha", $CommitToTagSHA)
+    $HttpHeaders.Add("Content-Type", "application/json")
+    $HttpHeaders.Add("Authorization", "token $GitHubPAT")
+}
+else {
+    $TagObj = @{}
+    $TagObj.Add("name", "refs/tags/$FullTag")
+    $TagObj.Add("oldObjectId", "0000000000000000000000000000000000000000")
+    $TagObj.Add("newObjectId", $CommitToTagSHA)
+    $TagBody = @($TagObj)
+    $HttpHeaders.Add("Content-Type", "application/json")
+}
 
-#$TagBody = ConvertTo-Json @{
-#    ref         = "refs/tags/$FullTag"
-#    sha         = $CommitToTagSHA 
-#}
-#
-#$headers = @{
-#    "Content-Type"  = "application/json"
-#    "Authorization" = "token $($env:GH_TOKEN)"
-#}
-#
-#FireAPIRequest -url $CreateTagRefURL -body $TagBody -headers $headers -method "Post"
+$TagBodyJson = ConvertTo-Json $TagBody
+
+$RequestResponse = FireAPIRequest -url $CreateTagRefURL -body $TagBodyJson -headers $HttpHeaders -method "Post" -repoType $RepoType

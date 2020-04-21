@@ -8,16 +8,17 @@ pool:
 
 jobs:
   - job: TagToolsRepo
-    displayName: Tag $(ToolsRepoName)
+    displayName: Version Repo with Git Tag
 
-    steps:    
+    steps:
     - task: PowerShell@2
       displayName: 'Verify and Create Tag on Repo'
       inputs:
         targetType: filePath
         filePath: scripts/powershell/version-repo-with-tag.ps1
-        arguments: -RepoName $(ToolsRepoName) -RepoOrg $(ToolsRepoOrg) -RepoType $(ToolsRepoType) $(CommitSHA)
+        arguments: >
+          -RepoName $(ToolsRepoName) -RepoOrg $(ToolsRepoOrg) -RepoType $(ToolsRepoType)
+          -CommitSHA $(CommitSHA) -RepoProjectID $(RepoProjectID) -GitHubPAT $(GitHubPAT-REPO)
+          -AzureGitPAT $(PAT-FullAccessToAzureRepoSource)
         pwsh: true
       timeoutInMinutes: 5
-      env:
-        GH_TOKEN: $(azuresdk-github-pat)

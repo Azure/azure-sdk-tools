@@ -9,7 +9,7 @@ import static org.junit.Assert.*;
 import org.junit.Test;
 import java.io.File;
 
-public class MyMojoTest
+public class SnippetPluginEntryTest
 {
     @Rule
     public MojoRule rule = new MojoRule()
@@ -36,11 +36,11 @@ public class MyMojoTest
         assertNotNull( pom );
         assertTrue( pom.exists() );
 
-        MyMojo myMojo = ( MyMojo ) rule.lookupConfiguredMojo( pom, "touch" );
-        assertNotNull( myMojo );
-        myMojo.execute();
+        SnippetPluginEntry snippetPluginEntry = (SnippetPluginEntry) rule.lookupConfiguredMojo( pom, "touch" );
+        assertNotNull(snippetPluginEntry);
+        snippetPluginEntry.execute();
 
-        File outputDirectory = ( File ) rule.getVariableValueFromObject( myMojo, "outputDirectory" );
+        File outputDirectory = ( File ) rule.getVariableValueFromObject(snippetPluginEntry, "outputDirectory" );
         assertNotNull( outputDirectory );
         assertTrue( outputDirectory.exists() );
 

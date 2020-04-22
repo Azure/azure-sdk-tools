@@ -16,7 +16,7 @@ import java.io.IOException;
  * Goal which touches a timestamp file.
  */
 @Mojo( name = "touch", defaultPhase = LifecyclePhase.PROCESS_SOURCES )
-public class MyMojo
+public class SnippetPluginEntry
     extends AbstractMojo
 {
     /**
@@ -28,6 +28,8 @@ public class MyMojo
     public void execute()
         throws MojoExecutionException
     {
+        SnippetReplacer replacer = new SnippetReplacer();
+
         File f = outputDirectory;
 
         if ( !f.exists() )

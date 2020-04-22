@@ -59,7 +59,9 @@ HDInsight
 Import Export
 Intune
 Insights
-Iot
+IotCentral
+IotDPS
+IotHub
 KeyVault
 Kusto
 Lab Services 

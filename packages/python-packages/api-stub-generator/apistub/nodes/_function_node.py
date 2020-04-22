@@ -9,6 +9,7 @@ from ._argtype import ArgType
 
 
 KW_ARG_NAME = "**kwargs"
+VALIDATION_REQUIRED_DUNDER = ["__init__",]
 
 
 class FunctionNode(NodeEntityBase):
@@ -85,7 +86,7 @@ class FunctionNode(NodeEntityBase):
         sig = inspect.signature(self.obj)
         params = sig.parameters
         for argname in params:
-            arg = ArgType(argname, get_qualified_name(params[argname].annotation))
+            arg = ArgType(argname, get_qualified_name(params[argname].annotation), "", self)
             # set default value if available
             if params[argname].default != Parameter.empty:
                 arg.default = str(params[argname].default)
@@ -101,7 +102,7 @@ class FunctionNode(NodeEntityBase):
         self._parse_docstring()
         # parse type hints
         self._parse_typehint()
-        if not self.return_type:
+        if not self.return_type and not self.name.startswith("_"):
             self.errors.append("Return type is missing in both typehint and docstring")
 
 
@@ -145,7 +146,11 @@ class FunctionNode(NodeEntityBase):
                 # Add separator to differentiate pos_arg and keyword args
                 self.args.append(ArgType("*"))
                 parsed_docstring.kw_args.sort(key=operator.attrgetter("argname"))
-                self.args.extend(parsed_docstring.kw_args)
+                # Add parsed keyword args to function signature after updating current function node as parent in arg
+                for arg in parsed_docstring.kw_args:
+                    arg.set_function_node(self)
+                    self.args.append(arg)
+
                 # remove arg with name "**kwarg and add at the end"
                 if kwargs:
                     kw_arg = kwargs[0]
@@ -154,7 +159,7 @@ class FunctionNode(NodeEntityBase):
 
             # API must have **kwargs. Flag it as an error if it is missing for public API
             if not kwargs and not self.name.startswith("_"):
-                self.errors.append("Keyword arg (**kwargs) is missing in API {}".format(self.name))
+                self.errors.append("Keyword arg (**kwargs) is missing in method {}".format(self.name))
 
 
     def _parse_typehint(self):
@@ -163,8 +168,8 @@ class FunctionNode(NodeEntityBase):
         # Find return type from type hint if return type is not already set
         type_hint_ret_type = typehint_parser.find_return_type()
         # Type hint must be present for all APIs. Flag it as an error if typehint is missing
-        if  not type_hint_ret_type:
-            self.errors.append("Typehint is missing for API {}".format(self.name))
+        if  not type_hint_ret_type and not self.name.startswith("_"):
+            self.errors.append("Typehint is missing for method {}".format(self.name))
             return
 
         if not self.return_type:
@@ -245,3 +250,17 @@ class FunctionNode(NodeEntityBase):
         if self.errors:
             for e in self.errors:
                 apiview.add_diagnostic(e, self.namespace_id)
+
+
+    def add_error(self, error_msg):
+        # Hide all diagnostics for now for dunder methods
+        # These are well known protocol implementation
+        if not self.name.startswith("_") or self.name in VALIDATION_REQUIRED_DUNDER:
+            self.errors.append(error_msg)
+
+
+    def print_errors(self):
+        if self.errors:
+            print("  method: {}".format(self.name))
+            for e in self.errors:
+                print("      {}".format(e))

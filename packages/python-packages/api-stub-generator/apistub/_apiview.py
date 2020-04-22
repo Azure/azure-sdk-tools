@@ -153,8 +153,6 @@ class ApiView:
 
     def add_diagnostic(self, text, line_id):
         self.Diagnostics.append(Diagnostic(line_id, text))
-        # log diagnostic as error
-        logging.error(text)
 
 
     def add_member(self, name, id):

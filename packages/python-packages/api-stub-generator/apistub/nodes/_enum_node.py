@@ -28,3 +28,9 @@ class EnumNode(NodeEntityBase):
             apiview.add_stringliteral(self.value)
         else:
             apiview.add_literal(str(self.value))
+
+    def print_errors(self):
+        if self.errors:
+            print("enum: {}".format(self.name))
+            for e in self.errors:
+                print("    {}".format(e))

@@ -15,7 +15,7 @@ import java.io.IOException;
 /**
  * Goal which touches a timestamp file.
  */
-@Mojo( name = "report", defaultPhase = LifecyclePhase.PROCESS_SOURCES )
+@Mojo( name = "snippet-engine", defaultPhase = LifecyclePhase.PROCESS_SOURCES )
 public class SnippetPluginEntry
     extends AbstractMojo
 {
@@ -25,14 +25,17 @@ public class SnippetPluginEntry
     @Parameter( property = "report.mode", required = true )
     private String mode;
 
-    @Parameter( property = "report.targetdir", required = true )
-    private File targetdir;
+    @Parameter( defaultValue = "${project.basedir}", property = "report.targetDir", required = true )
+    private File targetDir;
 
     public void execute()
         throws MojoExecutionException
     {
-        SnippetReplacer replacer = new SnippetReplacer(mode, targetdir);
+        SnippetReplacer replacer = new SnippetReplacer(mode, targetDir);
         getLog().info( "Hello, world." );
+
+
         getLog().info(mode);
+        getLog().info(targetDir.getAbsolutePath());
     }
 }

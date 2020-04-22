@@ -15,54 +15,24 @@ import java.io.IOException;
 /**
  * Goal which touches a timestamp file.
  */
-@Mojo( name = "touch", defaultPhase = LifecyclePhase.PROCESS_SOURCES )
+@Mojo( name = "report", defaultPhase = LifecyclePhase.PROCESS_SOURCES )
 public class SnippetPluginEntry
     extends AbstractMojo
 {
     /**
-     * Location of the file.
+     * String to display
      */
-    @Parameter( defaultValue = "${project.build.directory}", property = "outputDir", required = true )
-    private File outputDirectory;
+    @Parameter( property = "report.mode", required = true )
+    private String mode;
+
+    @Parameter( property = "report.targetdir", required = true )
+    private File targetdir;
 
     public void execute()
         throws MojoExecutionException
     {
-        SnippetReplacer replacer = new SnippetReplacer();
-
-        File f = outputDirectory;
-
-        if ( !f.exists() )
-        {
-            f.mkdirs();
-        }
-
-        File touch = new File( f, "touch.txt" );
-
-        FileWriter w = null;
-        try
-        {
-            w = new FileWriter( touch );
-
-            w.write( "touch.txt" );
-        }
-        catch ( IOException e )
-        {
-            throw new MojoExecutionException( "Error creating file " + touch, e );
-        }
-        finally
-        {
-            if ( w != null )
-            {
-                try
-                {
-                    w.close();
-                }
-                catch ( IOException e )
-                {
-                    // ignore
-                }
-            }
-        }
+        SnippetReplacer replacer = new SnippetReplacer(mode, targetdir);
+        getLog().info( "Hello, world." );
+        getLog().info(mode);
     }
 }

@@ -10,6 +10,11 @@ from ._argtype import ArgType
 
 KW_ARG_NAME = "**kwargs"
 VALIDATION_REQUIRED_DUNDER = ["__init__",]
+KWARG_NOT_REQUIRED_METHODS = ["close",]
+
+
+def is_kwarg_mandatory(func_name):
+    return not func_name.startswith("_") and func_name not in KWARG_NOT_REQUIRED_METHODS
 
 
 class FunctionNode(NodeEntityBase):
@@ -158,7 +163,7 @@ class FunctionNode(NodeEntityBase):
                     self.args.append(kw_arg)
 
             # API must have **kwargs. Flag it as an error if it is missing for public API
-            if not kwargs and not self.name.startswith("_"):
+            if not kwargs and is_kwarg_mandatory(self.name):
                 self.errors.append("Keyword arg (**kwargs) is missing in method {}".format(self.name))
 
 

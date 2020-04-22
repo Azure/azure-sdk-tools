@@ -3,6 +3,7 @@ from json import JSONEncoder
 import logging
 import re
 import importlib
+import inspect
 
 from ._token import Token
 from ._token_kind import TokenKind
@@ -27,7 +28,7 @@ class ApiView:
     :param str: ver_string
     """
 
-    def __init__(self, nodeindex, pkg_name="", pkg_version=0, ver_string=""):
+    def __init__(self, nodeindex, pkg_name="", pkg_version=0, ver_string="", namespace = ""):
         self.Name = pkg_name
         self.Version = pkg_version
         self.VersionString = ver_string
@@ -36,6 +37,7 @@ class ApiView:
         self.Navigation = []
         self.Diagnostics = []
         self.indent = 0
+        self.namespace = namespace
         self.nodeindex = nodeindex
         self.add_literal(HEADER_TEXT)
         self.add_new_line(2)
@@ -146,8 +148,12 @@ class ApiView:
         if navigate_to_id:
             token.NavigateToId = navigate_to_id
         elif type_name.startswith("~") and line_id:
-            # if navigation ID is missing for internal type, add diagnostic error
-            self.add_diagnostic(SOURCE_LINK_NOT_AVAILABLE.format(token.Value), line_id)            
+            # Check if type name is importable. If type name is incorrect in docstring then it wont be importable
+            # If type name is importable then it's a valid type name. Source link wont be available if type is from 
+            # different package
+            if not is_valid_type_name(type_full_name):
+                # Navigation ID is missing for internal type, add diagnostic error
+                self.add_diagnostic(SOURCE_LINK_NOT_AVAILABLE.format(token.Value), line_id)            
         self.add_token(token)
 
 
@@ -243,3 +249,16 @@ class Navigation:
 
     def add_child(self, child):
         self.ChildItems.append(child)
+
+
+def is_valid_type_name(type_name):
+    try:
+        module_end_index = type_name.rfind(".")
+        if module_end_index > 0:
+            module_name = type_name[:module_end_index]
+            class_name = type_name[module_end_index+1:]
+            mod = importlib.import_module(module_name)
+            return class_name in [x[0] for x in inspect.getmembers(mod)]
+    except:
+        logging.error("Failed to import {}".format(type_name))    
+    return False

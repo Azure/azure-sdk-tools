@@ -187,7 +187,7 @@ $resourceGroupName = if ($CI) {
 
     "rg-{0}-$BaseName" -f ($serviceName -replace '[\\\/:]', '-').Substring(0, [Math]::Min($serviceName.Length, 90 - $BaseName.Length - 4)).Trim('-')
 } else {
-    "rg-$BaseName"
+    "$BaseName-testresources"
 }
 
 # Tag the resource group to be deleted after a certain number of hours if specified.

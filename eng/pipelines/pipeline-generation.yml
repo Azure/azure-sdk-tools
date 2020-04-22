@@ -1,0 +1,95 @@
+schedules:
+- cron: "1 */1 * * *"
+  displayName: Hourly
+  branches:
+    include:
+    - master
+  always: true
+
+pr: none
+
+trigger: none
+
+variables:
+  skipComponentGovernanceDetection: true
+  PipelineGeneratorToolVersion: 1.0.2-dev.20200218.1
+  AzureSdkPublicFeed: https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk/nuget/v3/index.json
+
+jobs:
+- job: GeneratePipelines
+  pool:
+    vmImage: 'windows-2019'
+  strategy:
+    matrix:
+      Java:
+        RepositoryName: azure-sdk-for-java
+        Branch: master
+        Prefix: java
+        PublicOptions: ''
+        InternalOptions: '--variablegroup 1 --variablegroup 58 --variablegroup 76'
+      Android:
+        RepositoryName: azure-sdk-for-android
+        Branch: dev
+        Prefix: android
+        PublicOptions: ''
+        InternalOptions: '--variablegroup 1 --variablegroup 58 --variablegroup 76'
+      iOS:
+        RepositoryName: azure-sdk-for-ios
+        Branch: dev
+        Prefix: ios
+        PublicOptions: ''
+        InternalOptions: '--variablegroup 1 --variablegroup 58 --variablegroup 76'
+      JavaScript:
+        RepositoryName: azure-sdk-for-js
+        Branch: master
+        Prefix: js
+        PublicOptions: ''
+        InternalOptions: '--variablegroup 24 --variablegroup 58 --variablegroup 76'
+      Python:
+        RepositoryName: azure-sdk-for-python
+        Branch: master
+        Prefix: python
+        PublicOptions: ''
+        InternalOptions: '--variablegroup 58 --variablegroup 76'
+      Net:
+        RepositoryName: azure-sdk-for-net
+        Branch: master
+        Prefix: net
+        PublicOptions: ''
+        InternalOptions: '--variablegroup 13 --variablegroup 58 --variablegroup 76'
+      C:
+        RepositoryName: azure-sdk-for-c
+        Branch: master
+        Prefix: c
+        PublicOptions: ''
+        InternalOptions: '--variablegroup 58 --variablegroup 76'
+      Cpp:
+        RepositoryName: azure-sdk-for-cpp
+        Branch: master
+        Prefix: cpp
+        PublicOptions: ''
+        InternalOptions: '--variablegroup 58 --variablegroup 76'
+  steps:
+  - script: |
+      dotnet tool install Azure.Sdk.Tools.PipelineGenerator --version $(PipelineGeneratorToolVersion) --add-source $(AzureSdkPublicFeed) --global
+    displayName: 'Install pipeline generator tool'
+  - script: |
+      git clone https://github.com/azure/$(RepositoryName) $(Pipeline.Workspace)/$(RepositoryName)
+      cd $(Pipeline.Workspace)/$(RepositoryName)
+      git checkout $(Branch)
+    displayName: 'Clone repository: $(RepositoryName)'
+  - script: |
+      pipeline-generator --organization https://dev.azure.com/azure-sdk --project public --prefix $(Prefix) --path $(Pipeline.Workspace)/$(RepositoryName)/sdk --endpoint Azure --repository Azure/$(RepositoryName) --convention ci --agentpool Hosted --branch refs/heads/$(Branch) --patvar PATVAR --debug $(PublicOptions)
+    displayName: 'Generate public pipelines for: $(RepositoryName)'
+    env:
+      PATVAR: $(TempToken)
+  - script: |
+      pipeline-generator --organization https://dev.azure.com/azure-sdk --project internal --prefix $(Prefix) --path $(Pipeline.Workspace)/$(RepositoryName)/sdk --endpoint Azure --repository Azure/$(RepositoryName) --convention up --agentpool Hosted --branch refs/heads/$(Branch) --patvar PATVAR --debug $(InternalOptions)
+    displayName: 'Generate internal pipelines for: $(RepositoryName)'
+    env:
+      PATVAR: $(TempToken)
+  # - script: |
+  #     pipeline-generator --organization https://dev.azure.com/azure-sdk --project internal --prefix $(Prefix)-pr --devopspath "\$(Prefix)\pr" --path $(Pipeline.Workspace)/$(RepositoryName)/sdk --endpoint Azure --repository Azure/$(RepositoryName)-pr --convention ci --agentpool Hosted --branch refs/heads/ $(Branch) --patvar PATVAR --debug
+  #   displayName: 'Generate internal pipelines for: $(RepositoryName)-pr'
+  #   env:
+  #     PATVAR: $(TempToken)

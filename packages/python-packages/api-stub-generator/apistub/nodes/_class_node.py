@@ -246,3 +246,19 @@ class ClassNode(NodeEntityBase):
             # Add punctuation between types
             if index < list_len - 1:
                 apiview.add_punctuation(",", False, True)
+
+
+    def print_errors(self):
+        has_error = False
+        # Check if atleast one error is present in child nodes
+        for c in self.child_nodes:
+            if hasattr(c, "errors") and c.errors:
+                has_error = True
+                break
+        if has_error:
+            print("-"*150)
+            print("class {}".format(self.full_name))
+            for c in self.child_nodes:
+                c.print_errors()
+
+

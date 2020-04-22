@@ -94,6 +94,10 @@ class StubGenerator:
         logging.debug("Generating tokens")
         apiview = self._generate_tokens(pkg_root_path, pkg_name, version)
         if apiview.Diagnostics:
+            # Show error report in console
+            print("************************** Error Report **************************")
+            for m in self.module_dict.keys():
+                self.module_dict[m].print_errors()
             logging.info("*************** Completed parsing package with errors ***************")
         else:
             logging.info("*************** Completed parsing package and generating tokens ***************")
@@ -146,7 +150,7 @@ class StubGenerator:
         # Importing it globally can cause circular dependency since it needs NodeIndex that is defined in this file
         from .nodes._module_node import ModuleNode
 
-        module_dict = {}
+        self.module_dict = {}
         nodeindex = NodeIndex()
         # todo (Update the version number correctly)
         apiview = ApiView(nodeindex, package_name, 0, version)
@@ -157,7 +161,7 @@ class StubGenerator:
             logging.debug("Importing module {}".format(m))
             try:
                 module_obj = importlib.import_module(m)
-                module_dict[m] = ModuleNode(m, module_obj, nodeindex)
+                self.module_dict[m] = ModuleNode(m, module_obj, nodeindex)
             except:
                 logging.error("Failed to import {}".format(m))
 
@@ -167,13 +171,13 @@ class StubGenerator:
         apiview.add_navigation(navigation)
 
         # Generate tokens
-        modules = module_dict.keys()
+        modules = self.module_dict.keys()
         for m in modules:
             # Generate and add token to APIView
             logging.debug("Generating tokens for module {}".format(m))
-            module_dict[m].generate_tokens(apiview)
+            self.module_dict[m].generate_tokens(apiview)
             # Add navigation info for this modules. navigation info is used to build tree panel in API tool
-            module_nav = module_dict[m].get_navigation()
+            module_nav = self.module_dict[m].get_navigation()
             if module_nav:
                 navigation.add_child(module_nav)
         return apiview
@@ -214,9 +218,9 @@ class StubGenerator:
     def _install_package(self, pkg_name):
         # Uninstall the package and reinstall it to parse so inspect can get members in package
         # We don't want to force reinstall to avoid reinstalling other dependent packages
-        commands = [sys.executable, "-m", "pip", "uninstall", pkg_name, "--yes"]
+        commands = [sys.executable, "-m", "pip", "uninstall", pkg_name, "--yes", "-q"]
         check_call(commands)
-        commands = [sys.executable, "-m", "pip", "install", self.pkg_path]
+        commands = [sys.executable, "-m", "pip", "install", self.pkg_path , "-q"]
         check_call(commands)
 
 

@@ -11,10 +11,15 @@ from ._argtype import ArgType
 KW_ARG_NAME = "**kwargs"
 VALIDATION_REQUIRED_DUNDER = ["__init__",]
 KWARG_NOT_REQUIRED_METHODS = ["close",]
+TYPEHINT_NOT_REQUIRED_METHODS = ["close",]
 
 
 def is_kwarg_mandatory(func_name):
     return not func_name.startswith("_") and func_name not in KWARG_NOT_REQUIRED_METHODS
+
+
+def is_typehint_mandatory(func_name):
+    return not func_name.startswith("_") and func_name not in TYPEHINT_NOT_REQUIRED_METHODS
 
 
 class FunctionNode(NodeEntityBase):
@@ -107,7 +112,7 @@ class FunctionNode(NodeEntityBase):
         self._parse_docstring()
         # parse type hints
         self._parse_typehint()
-        if not self.return_type and not self.name.startswith("_"):
+        if not self.return_type and is_typehint_mandatory(self.name):
             self.errors.append("Return type is missing in both typehint and docstring")
 
 
@@ -168,12 +173,17 @@ class FunctionNode(NodeEntityBase):
 
 
     def _parse_typehint(self):
+
+        # Skip parsing typehint if typehint is not expected for e.g dunder or async methods
+        if not is_typehint_mandatory(self.name) or self.is_async:
+            return
+
         # Parse type hint to get return type and types for positional args
         typehint_parser = TypeHintParser(self.obj)
         # Find return type from type hint if return type is not already set
         type_hint_ret_type = typehint_parser.find_return_type()
         # Type hint must be present for all APIs. Flag it as an error if typehint is missing
-        if  not type_hint_ret_type and not self.name.startswith("_"):
+        if  not type_hint_ret_type:
             self.errors.append("Typehint is missing for method {}".format(self.name))
             return
 

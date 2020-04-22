@@ -126,6 +126,11 @@ namespace Azure.Sdk.Tools.CheckEnforcer
                     var handler = new IssueCommentHandler(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, logger);
                     await handler.HandleAsync(json, cancellationToken);
                 }
+                else if (eventName == "pull_request")
+                {
+                    var handler = new PullRequestHandler(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, logger);
+                    await handler.HandleAsync(json, cancellationToken);
+                }
                 else
                 {
                     throw new CheckEnforcerUnsupportedEventException(eventName);

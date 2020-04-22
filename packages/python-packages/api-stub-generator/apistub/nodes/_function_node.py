@@ -2,6 +2,7 @@ import logging
 import inspect
 import astroid
 import operator
+import re
 from inspect import Parameter
 from ._docstring_parser import DocstringParser, TypeHintParser
 from ._base_node import NodeEntityBase, get_qualified_name
@@ -12,6 +13,8 @@ KW_ARG_NAME = "**kwargs"
 VALIDATION_REQUIRED_DUNDER = ["__init__",]
 KWARG_NOT_REQUIRED_METHODS = ["close",]
 TYPEHINT_NOT_REQUIRED_METHODS = ["close",]
+REGEX_ITEM_PAGED = "~[\w.]*\.([\w]*)"
+PAGED_TYPES = ["ItemPaged", "AsyncItemPaged",]
 
 
 def is_kwarg_mandatory(func_name):
@@ -114,6 +117,8 @@ class FunctionNode(NodeEntityBase):
         self._parse_typehint()
         if not self.return_type and is_typehint_mandatory(self.name):
             self.errors.append("Return type is missing in both typehint and docstring")
+        # Validate return type
+        self._validate_pageable_api()
 
 
     def _parse_docstring(self):
@@ -273,6 +278,21 @@ class FunctionNode(NodeEntityBase):
         if not self.name.startswith("_") or self.name in VALIDATION_REQUIRED_DUNDER:
             self.errors.append(error_msg)
 
+
+    def _validate_pageable_api(self):
+        # If api name starts with "list" and if annotated with "@distributed_trace"
+        # then this method should return ItemPaged or AsyncItemPaged
+        if self.return_type and self.name.startswith("list") and  "@distributed_trace" in self.annotations:
+            tokens = re.search(REGEX_ITEM_PAGED, self.return_type)
+            if tokens:
+                ret_short_type = tokens.groups()[-1]
+                if ret_short_type in PAGED_TYPES:
+                    logging.debug("list API returns valid paged return type")
+                    return
+            error_msg = "list API {0} should return ItemPaged or AsyncItemPaged".format(self.name)
+            logging.error(error_msg)
+            self.add_error(error_msg)                
+        
 
     def print_errors(self):
         if self.errors:

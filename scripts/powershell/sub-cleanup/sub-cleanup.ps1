@@ -34,7 +34,6 @@ if ($args.Count -lt 1)
 $exceptions = @()
 if ($args.Count -eq 2)
 {
-    $exceptionFile = 
     Write-Host "Using exception file $($args[1])"
     $exceptions = Get-Content $args[1]
 }

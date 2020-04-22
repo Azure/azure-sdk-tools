@@ -7,11 +7,17 @@ import importlib
 from ._token import Token
 from ._token_kind import TokenKind
 from ._version import VERSION
+from ._diagnostic import Diagnostic
 
-JSON_FIELDS = ["Name", "Version", "VersionString", "Navigation", "Tokens"]
+JSON_FIELDS = ["Name", "Version", "VersionString", "Navigation", "Tokens", "Diagnostics"]
 
 HEADER_TEXT = "# Package is parsed using api-stub-generator(version:{})".format(VERSION)
 COMPLEX_DATA_TYPE_PATTERN = re.compile("([a-zA-Z]+)(\[|\()[^\]\)]+(\]|\))")
+
+# Lint warnings
+SOURCE_LINK_NOT_AVAILABLE = "Source definition link is not available for [{0}]. Please check and ensure type is fully qualified name in docstring"
+RETURN_TYPE_MISMATCH = "Return type in type hint is not matching return type in docstring"
+
 
 class ApiView:
     """Entity class that holds API view for all namespaces within a package
@@ -28,6 +34,7 @@ class ApiView:
         self.Language = "Python"
         self.Tokens = []
         self.Navigation = []
+        self.Diagnostics = []
         self.indent = 0
         self.nodeindex = nodeindex
         self.add_literal(HEADER_TEXT)
@@ -85,7 +92,7 @@ class ApiView:
         if postfix_space:
             self.add_space()
 
-    def _generate_type_tokens(self, type_name, prefix_type):
+    def _generate_type_tokens(self, type_name, prefix_type, line_id = None):
         # Generate tokens for multiple data types
         # for e.g. Union[type1, type2,] or dict(type1, type2)
         # For some args, type is given as just "dict"
@@ -104,14 +111,14 @@ class ApiView:
             types = type_names.split(",")
             type_count = len(types)
             for index in range(type_count):
-                self.add_type(types[index].strip())
-                # Add seperator between types
+                self.add_type(types[index].strip(), line_id)
+                # Add separator between types
                 if index < type_count - 1:
                     self.add_punctuation(",", False, True)
             self.add_punctuation(type_name[-1])
 
 
-    def add_type(self, type_name, id=None):
+    def add_type(self, type_name, line_id=None):
         # This method replace full qualified internal types to short name and generate tokens
         if not type_name:
             return
@@ -120,25 +127,34 @@ class ApiView:
         # Those types needs to be recursively processed
         multi_types = re.search(COMPLEX_DATA_TYPE_PATTERN,type_name)
         if multi_types:
-            self._generate_type_tokens(type_name, multi_types.groups()[0])
+            self._generate_type_tokens(type_name, multi_types.groups()[0], line_id)
         else:
-            # Encode mutliple types with or seperator into Union
+            # Encode mutliple types with or separator into Union
             types = [t for t in type_name.split() if t != 'or']
             if len(types) > 1:
                 # Make a Union of types if multiple types are present
-                self._generate_type_tokens("Union[{}]".format(", ".join(types)), "Union")
+                self._generate_type_tokens("Union[{}]".format(", ".join(types)), "Union", line_id)
             else:
-                self._add_type_token(types[0])
+                self._add_type_token(types[0], line_id)
 
 
-    def _add_type_token(self, type_name):
+    def _add_type_token(self, type_name, line_id = None):
         token = Token(type_name, TokenKind.TypeName)
         type_full_name = type_name[1:] if type_name.startswith("~") else type_name
         token.set_value(type_full_name.split(".")[-1])
         navigate_to_id = self.nodeindex.get_id(type_full_name)
         if navigate_to_id:
             token.NavigateToId = navigate_to_id
+        elif type_name.startswith("~") and line_id:
+            # if navigation ID is missing for internal type, add diagnostic error
+            self.add_diagnostic(SOURCE_LINK_NOT_AVAILABLE.format(token.Value), line_id)            
         self.add_token(token)
+
+
+    def add_diagnostic(self, text, line_id):
+        self.Diagnostics.append(Diagnostic(line_id, text))
+        # log diagnostic as error
+        logging.error(text)
 
 
     def add_member(self, name, id):
@@ -170,6 +186,7 @@ class APIViewEncoder(JSONEncoder):
             or isinstance(obj, Token)
             or isinstance(obj, Navigation)
             or isinstance(obj, NavigationTag)
+            or isinstance(obj, Diagnostic)
         ):            
             # Remove fields in APIview that are not required in json
             if isinstance(obj, ApiView):
@@ -183,6 +200,10 @@ class APIViewEncoder(JSONEncoder):
                     del obj_dict["DefinitionId"]
                 if not obj.NavigateToId:
                     del obj_dict["NavigateToId"]
+            elif isinstance(obj, Diagnostic):
+                obj_dict = obj.__dict__
+                if not obj.HelpLinkUri:
+                    del obj_dict["HelpLinkUri"]
             else:
                 obj_dict = obj.__dict__
 

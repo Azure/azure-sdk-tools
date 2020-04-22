@@ -195,6 +195,7 @@ class ClassNode(NodeEntityBase):
         """Generates token for the node and it's children recursively and add it to apiview
         :param ApiView: apiview
         """
+        logging.info("Processing class {}".format(self.parent_node.namespace_id))
         # Generate class name line
         apiview.add_whitespace()
         apiview.add_line_marker(self.namespace_id)
@@ -204,14 +205,14 @@ class ClassNode(NodeEntityBase):
         # Add inherited base classes
         if self.base_class_names:
             apiview.add_punctuation("(")
-            _generate_token_for_collection(self.base_class_names, apiview)
+            self._generate_token_for_collection(self.base_class_names, apiview)
             apiview.add_punctuation(")")
         apiview.add_punctuation(":")
 
         # Add any ABC implementation list
         if self.implements:
             apiview.add_keyword("implements", True, True)
-            _generate_token_for_collection(self.implements, apiview)
+            self._generate_token_for_collection(self.implements, apiview)
 
         # Generate token for child nodes
         if self.child_nodes:
@@ -237,11 +238,11 @@ class ClassNode(NodeEntityBase):
         apiview.end_group()
 
 
-def _generate_token_for_collection(values, apiview):
-    # Helper method to concatenate list of values and generate tokens
-    list_len = len(values)
-    for index in range(list_len):
-        apiview.add_type(values[index])
-        # Add punctuation betwen types
-        if index < list_len - 1:
-            apiview.add_punctuation(",", False, True)
+    def _generate_token_for_collection(self, values, apiview):
+        # Helper method to concatenate list of values and generate tokens
+        list_len = len(values)
+        for index in range(list_len):
+            apiview.add_type(values[index], self.namespace_id)
+            # Add punctuation between types
+            if index < list_len - 1:
+                apiview.add_punctuation(",", False, True)

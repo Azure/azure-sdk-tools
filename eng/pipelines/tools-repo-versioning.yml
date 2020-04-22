@@ -1,4 +1,14 @@
 # Tag the tools repos (azure-sdk-tools or azure-sdk-build-tools) to create some form of versioning.
+resources:
+  repositories:
+    - repository: azure-sdk-tools
+      type: github
+      name: chidozieononiwu/azure-sdk-tools
+      endpoint: azure
+    - repository: azure-sdk-build-tools
+      type: git
+      name: playground/azure-sdk-build-tools.chononiw
+
 trigger: none
 
 pr: none
@@ -11,14 +21,16 @@ jobs:
     displayName: Version Repo with Git Tag
 
     steps:
+    - checkout: self
+    - checkout: azure-sdk-build-tools
+
     - task: PowerShell@2
       displayName: 'Verify and Create Tag on Repo'
       inputs:
         targetType: filePath
-        filePath: scripts/powershell/version-repo-with-tag.ps1
+        filePath: $(Agent.BuildDirectory)/s/azure-sdk-tools/scripts/powershell/version-repo-with-tag.ps1
         arguments: >
-          -RepoName $(ToolsRepoName) -RepoOrg $(ToolsRepoOrg) -RepoType $(ToolsRepoType)
-          -CommitSHA $(CommitSHA) -RepoProjectID $(RepoProjectID) -GitHubPAT $(GitHubPAT-REPO)
-          -AzureGitPAT $(PAT-FullAccessToAzureRepoSource)
+          -RepoName $(ToolsRepoName) -SourceDir $(Agent.BuildDirectory)/s
+          -CommitSHA $(CommitSHA) -PATForAPI $(GitHubPAT-REPO) -BuildNumber $(Build.BuildNumber)
         pwsh: true
       timeoutInMinutes: 5

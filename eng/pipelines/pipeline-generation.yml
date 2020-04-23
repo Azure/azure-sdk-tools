@@ -1,18 +1,10 @@
-schedules:
-- cron: "1 */1 * * *"
-  displayName: Hourly
-  branches:
-    include:
-    - master
-  always: true
-
 pr: none
 
 trigger: none
 
 variables:
   skipComponentGovernanceDetection: true
-  PipelineGeneratorToolVersion: 1.0.2-dev.20200218.1
+  PipelineGeneratorToolVersion: 1.0.2-dev.20200423.1
   AzureSdkPublicFeed: https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk/nuget/v3/index.json
 
 jobs:
@@ -82,14 +74,14 @@ jobs:
       pipeline-generator --organization https://dev.azure.com/azure-sdk --project public --prefix $(Prefix) --path $(Pipeline.Workspace)/$(RepositoryName)/sdk --endpoint Azure --repository Azure/$(RepositoryName) --convention ci --agentpool Hosted --branch refs/heads/$(Branch) --patvar PATVAR --debug $(PublicOptions)
     displayName: 'Generate public pipelines for: $(RepositoryName)'
     env:
-      PATVAR: $(TempToken)
+      PATVAR: $(azuresdk-azure-sdk-devops-pipeline-generation-pat)
   - script: |
       pipeline-generator --organization https://dev.azure.com/azure-sdk --project internal --prefix $(Prefix) --path $(Pipeline.Workspace)/$(RepositoryName)/sdk --endpoint Azure --repository Azure/$(RepositoryName) --convention up --agentpool Hosted --branch refs/heads/$(Branch) --patvar PATVAR --debug $(InternalOptions)
     displayName: 'Generate internal pipelines for: $(RepositoryName)'
     env:
-      PATVAR: $(TempToken)
+      PATVAR: $(azuresdk-azure-sdk-devops-pipeline-generation-pat)
   # - script: |
   #     pipeline-generator --organization https://dev.azure.com/azure-sdk --project internal --prefix $(Prefix)-pr --devopspath "\$(Prefix)\pr" --path $(Pipeline.Workspace)/$(RepositoryName)/sdk --endpoint Azure --repository Azure/$(RepositoryName)-pr --convention ci --agentpool Hosted --branch refs/heads/ $(Branch) --patvar PATVAR --debug
   #   displayName: 'Generate internal pipelines for: $(RepositoryName)-pr'
   #   env:
-  #     PATVAR: $(TempToken)
+  #     PATVAR: $(azuresdk-azure-sdk-devops-pipeline-generation-pat)

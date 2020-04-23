@@ -3,6 +3,9 @@ package azuresdk.plugin;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -42,20 +45,23 @@ public class SnippetReplacerTests {
     public void testBasicInsertion()
             throws Exception
     {
+        // arrange
         Path snippetSourceFile = _getPathToResource("../../project-to-test/basic_src_snippet_parse.txt");
         Path codeForReplacement = _getPathToResource("../../project-to-test/basic_src_snippet_insertion_before.txt");
         Path expectedOutCome = _getPathToResource("../../project-to-test/basic_src_snippet_insertion_after.txt");
-
         SnippetReplacer testReplacer =  new SnippetReplacer();
-
         List<String> sourceLines = Files.readAllLines(snippetSourceFile, StandardCharsets.UTF_8);
-        HashMap<String, List<String>> foundSnippets = testReplacer.GrepSnippets(sourceLines);
         List<String> testLines = Files.readAllLines(codeForReplacement, StandardCharsets.UTF_8);
+        String expectedString = Files.readString(expectedOutCome, StandardCharsets.UTF_8);
 
-
+        // act
+        HashMap<String, List<String>> foundSnippets = testReplacer.GrepSnippets(sourceLines);
         StringBuilder result = testReplacer.UpdateSnippets(testLines, foundSnippets, "<pre>", "</pre>", 1, "* ");
 
+        // should properly parse and return non null
         assertTrue(result != null);
 
+        // ensure generated snippets matches the expected
+        assertTrue(result.toString() == expectedString);
     }
 }

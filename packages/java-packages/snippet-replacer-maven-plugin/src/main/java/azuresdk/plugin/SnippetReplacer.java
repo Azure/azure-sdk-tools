@@ -17,8 +17,8 @@ import java.io.IOException;
 public class SnippetReplacer {
     private static Pattern SNIPPET_DEF_BEGIN = Pattern.compile("\\s*\\/\\/\\s*BEGIN\\:\\s+([a-zA-Z0-9\\.\\#\\-\\_]*)\\s*");
     private static Pattern SNIPPET_DEF_END = Pattern.compile("\\s*\\/\\/\\s*END\\:\\s+([a-zA-Z0-9\\.\\#\\-\\_]*)\\s*");
-    private static Pattern SNIPPET_CALL_BEGIN   = Pattern.compile("(\\s*)\\*?\\s*<!--\\s+(src_embed)\\s+([a-zA-Z0-9\\.\\#\\-\\_]*)\\s*-->");
-    private static Pattern SNIPPET_CALL_END   = Pattern.compile("(\\s*)\\*?\\s*<!--\\s+(end)\\s+([a-zA-Z0-9\\.\\#\\-\\_]*)\\s*-->");
+    private static Pattern SNIPPET_CALL_BEGIN   = Pattern.compile("(\\s*)\\*?\\s*<!--\\s+src_embed\\s+([a-zA-Z0-9\\.\\#\\-\\_]*)\\s*-->");
+    private static Pattern SNIPPET_CALL_END   = Pattern.compile("(\\s*)\\*?\\s*<!--\\s+end\\s+([a-zA-Z0-9\\.\\#\\-\\_]*)\\s*-->");
     private static Pattern WHITESPACE_EXTRACTION = Pattern.compile("(\\s*)(.*)");
     private static String SAMPLE_PATH_GLOB       = "**/src/samples/java/**";
     private static HashMap REPLACEMENT_SET = new HashMap(){{
@@ -77,7 +77,7 @@ public class SnippetReplacer {
                 if(leadSpaceMatch.matches()){
                     String leadSpace = leadSpaceMatch.group(1);
 
-                    if(leadSpace.length() < minWhitespace.length())
+                    if(minWhitespace == null || leadSpace.length() < minWhitespace.length())
                         minWhitespace = leadSpace;
                 }
             }
@@ -137,6 +137,7 @@ public class SnippetReplacer {
         StringBuilder modifiedLines = new StringBuilder();
         boolean inSnippet = false;
         boolean needsAmend = false;
+        String lineSep = System.lineSeparator();
 
         for(String line: lines){
             Matcher begin = SNIPPET_CALL_BEGIN.matcher(line);
@@ -144,7 +145,7 @@ public class SnippetReplacer {
             String current_snippet_id = "";
 
             if(begin.matches()){
-                modifiedLines.append(line);
+                modifiedLines.append(line + lineSep);
                 current_snippet_id = begin.group(2);
                 inSnippet = true;
             }
@@ -157,14 +158,15 @@ public class SnippetReplacer {
 
                 for(String snippet: this._respaceLines(newSnippets)){
                     // TODO: leverage the escape table here.
-                    modifiedSnippets.add(linePrefix + snippet);
+                    modifiedSnippets.add(linePrefix + snippet + lineSep);
                 }
 
-                modifiedLines.append(linePrefix + preFence);
+                modifiedLines.append(linePrefix + preFence + lineSep);
                 modifiedLines.append(String.join("", modifiedSnippets));
-                modifiedLines.append(linePrefix + postFence);
-                modifiedLines.append(line);
+                modifiedLines.append(linePrefix + postFence + lineSep);
+                modifiedLines.append(line + lineSep);
                 needsAmend = true;
+                inSnippet = false;
             }
             else {
                 if(inSnippet){
@@ -172,7 +174,7 @@ public class SnippetReplacer {
                     // we'd do a comparison here if we were verifying
                 }
                 else {
-                    modifiedLines.append(line);
+                    modifiedLines.append(line + lineSep);
                 }
             }
         }

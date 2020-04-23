@@ -23,6 +23,12 @@ namespace GitHubIssues
         {
             _log = log;
 
+            var websiteResourceGroupEnvironmentVariable = Environment.GetEnvironmentVariable("WEBSITE_RESOURCE_GROUP");
+            _log.LogInformation(
+                "Detected resource group is: {websiteResourceGroupEnvironmentVariable}",
+                websiteResourceGroupEnvironmentVariable
+                );
+
             _log.LogInformation($"C# Timer trigger function executed at: {DateTime.Now}");
             if (!Parser.TryParse(new string[0], out _cmdLine, s_parserOptions))
             {

@@ -2,8 +2,10 @@ package azuresdk.plugin;
 import java.io.FileWriter;
 import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.PathMatcher;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.*;
@@ -17,12 +19,15 @@ import java.io.IOException;
 public class SnippetReplacer {
     private static Pattern SNIPPET_DEF_BEGIN = Pattern.compile("\\s*\\/\\/\\s*BEGIN\\:\\s+([a-zA-Z0-9\\.\\#\\-\\_]*)\\s*");
     private static Pattern SNIPPET_DEF_END = Pattern.compile("\\s*\\/\\/\\s*END\\:\\s+([a-zA-Z0-9\\.\\#\\-\\_]*)\\s*");
-    private static Pattern SNIPPET_CALL_BEGIN   = Pattern.compile("(\\s*)\\*?\\s*<!--\\s+src_embed\\s+([a-zA-Z0-9\\.\\#\\-\\_]*)\\s*-->");
-    private static Pattern SNIPPET_CALL_END   = Pattern.compile("(\\s*)\\*?\\s*<!--\\s+end\\s+([a-zA-Z0-9\\.\\#\\-\\_]*)\\s*-->");
+    private static Pattern SNIPPET_CALL_BEGIN = Pattern.compile("(\\s*)\\*?\\s*<!--\\s+src_embed\\s+([a-zA-Z0-9\\.\\#\\-\\_]*)\\s*-->");
+    private static Pattern SNIPPET_CALL_END = Pattern.compile("(\\s*)\\*?\\s*<!--\\s+end\\s+([a-zA-Z0-9\\.\\#\\-\\_]*)\\s*-->");
     private static Pattern WHITESPACE_EXTRACTION = Pattern.compile("(\\s*)(.*)");
-    private static String SAMPLE_PATH_GLOB       = "**/src/samples/java/**";
-    private static HashMap REPLACEMENT_SET = new HashMap(){{
-        put('"', "&quot;");
+
+    private static PathMatcher SAMPLE_PATH_GLOB = FileSystems.getDefault().getPathMatcher("glob:**/src/samples/java/**/*.java");
+    private static PathMatcher JAVA_GLOB = FileSystems.getDefault().getPathMatcher("glob:**/*.java");
+
+    private static HashMap<String, String> REPLACEMENT_SET = new HashMap<String, String>(){{
+        put("\"", "&quot;");
         put(">", "&#62;");
         put("<", "&#60;");
         put("@", "{@literal @}");
@@ -133,6 +138,16 @@ public class SnippetReplacer {
         }
     }
 
+    private String _escapeString(String target){
+        if(target != null && target.trim().length() > 0){
+            for(String key: this.REPLACEMENT_SET.keySet()){
+                target = target.replace(key, REPLACEMENT_SET.get(key));
+            }
+        }
+
+        return target;
+    }
+
     public StringBuilder UpdateSnippets(List<String> lines, HashMap<String, List<String>> snippetMap, String preFence, String postFence, int prefixGroupNum, String additionalLinePrefix){
         StringBuilder modifiedLines = new StringBuilder();
         boolean inSnippet = false;
@@ -158,7 +173,7 @@ public class SnippetReplacer {
 
                 for(String snippet: this._respaceLines(newSnippets)){
                     // TODO: leverage the escape table here.
-                    modifiedSnippets.add(linePrefix + snippet + lineSep);
+                    modifiedSnippets.add(linePrefix + this._escapeString(snippet) + lineSep);
                 }
 
                 modifiedLines.append(linePrefix + preFence + lineSep);
@@ -185,6 +200,10 @@ public class SnippetReplacer {
         else{
             return null;
         }
+    }
+
+    private List<Path> _getPathsFromBaseDir(File baseDir, String glob_pattern){
+        return new ArrayList<Path>();
     }
 
     /*

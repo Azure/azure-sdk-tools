@@ -36,11 +36,12 @@ public final class ConfigurationClient {
      *
      * <p>Add a setting with the key "prodDBConnection", label "westUS" and value "db_connection".</p>
      *
-     * <!-- src_embed com.azure.data.appconfiguration.ConfigurationClient.addConfigurationSetting#String-String-Stringinstantiation -->
+     * <!-- src_embed com.azure.data.appconfiguration.ConfigurationClient.addConfigurationSetting#String-String-String -->
      * <pre>
      *  This is actually some BS. This should no longer exist after the codesnippet replacement.
      * </pre>
      * <!-- end com.azure.data.appconfiguration.ConfigurationClient.addConfigurationSetting#String-String-String -->
+     *
      * @param key The key of the configuration setting to add.
      * @param label The label of the configuration setting to create. If {@code null} no label will be used.
      * @param value The value associated with this configuration setting key.

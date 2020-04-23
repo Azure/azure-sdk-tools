@@ -243,7 +243,7 @@ namespace PipelineGenerator.Conventions
         }
 
         protected const int FirstSchedulingHour = 0;
-        protected const int LastSchedulingHour = 12;
+        protected const int LastSchedulingHour = 24;
         protected const int TotalHours = LastSchedulingHour - FirstSchedulingHour;
         protected const int TotalMinutes = TotalHours * 60;
         protected const int BucketSizeInMinutes = 15;
@@ -258,11 +258,11 @@ namespace PipelineGenerator.Conventions
 
             var schedule = new Schedule
             {
-                DaysToBuild = ScheduleDays.All,
-                ScheduleOnlyWithChanges = false,
+                DaysToBuild = (ScheduleDays)31, // Schedule M-F
+                ScheduleOnlyWithChanges = true,
                 StartHours = FirstSchedulingHour + startHours,
                 StartMinutes = startMinutes * BucketSizeInMinutes,
-                TimeZoneId = "UTC",
+                TimeZoneId = "Pacific Standard Time",
             };
             schedule.BranchFilters.Add("+master");
 
@@ -287,16 +287,12 @@ namespace PipelineGenerator.Conventions
             if (IsScheduled)
             {
                 var scheduleTriggers = definition.Triggers.OfType<ScheduleTrigger>();
-                var computedSchedule = CreateScheduleFromDefinition(definition);
 
-                // Here we are basically say that if you don't have any triggers, or the triggers are empty or if it doesn't
-                // match what we computed, then recreate it. This will force consistency but only require an update IF it
-                // doesn't match what we want it to be.
-                if (scheduleTriggers == default
-                        || !scheduleTriggers.Any()
-                        || (scheduleTriggers.First().Schedules[0].StartHours != computedSchedule.StartHours
-                            || scheduleTriggers.First().Schedules[0].StartMinutes != computedSchedule.StartMinutes))
+                // Only add the schedule trigger if one doesn't exist. 
+                if (scheduleTriggers == default || !scheduleTriggers.Any())
                 {
+                    var computedSchedule = CreateScheduleFromDefinition(definition);
+
                     definition.Triggers.Add(new ScheduleTrigger
                     {
                         Schedules = new List<Schedule> { computedSchedule }

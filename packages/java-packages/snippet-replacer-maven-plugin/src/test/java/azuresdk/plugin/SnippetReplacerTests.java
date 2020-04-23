@@ -31,13 +31,24 @@ public class SnippetReplacerTests {
         Path testFile = _getPathToResource("../../project-to-test/basic_src_snippet_parse.txt");
 
         List<String> lines = Files.readAllLines(testFile, StandardCharsets.UTF_8);
-
-        SnippetReplacer replacer = new SnippetReplacer();
-
-        HashMap<String, List<String>> foundSnippets = replacer.GrepSnippets(lines);
+        HashMap<String, List<String>> foundSnippets = new SnippetReplacer().GrepSnippets(lines);
 
         assertTrue(foundSnippets.size() == 2);
         assertTrue(foundSnippets.get("com.azure.data.applicationconfig.configurationclient.pipeline.instantiation").size() == 9);
         assertTrue(foundSnippets.get("com.azure.data.appconfiguration.ConfigurationClient.addConfigurationSetting#String-String-String").size() == 3);
+    }
+
+    @Test
+    public void testBasicInsertion()
+            throws Exception
+    {
+        Path snippetSourceFile = _getPathToResource("../../project-to-test/basic_src_snippet_parse.txt");
+        Path codeForReplacement = _getPathToResource("../../project-to-test/basic_src_snippet_insertion_before.txt");
+        Path expectedOutCome = _getPathToResource("../../project-to-test/basic_src_snippet_insertion_after.txt");
+
+        List<String> sourceLines = Files.readAllLines(snippetSourceFile, StandardCharsets.UTF_8);
+        HashMap<String, List<String>> foundSnippets = new SnippetReplacer().GrepSnippets(sourceLines);
+
+
     }
 }

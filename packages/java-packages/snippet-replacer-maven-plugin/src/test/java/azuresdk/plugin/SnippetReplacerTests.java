@@ -50,8 +50,10 @@ public class SnippetReplacerTests {
 
         List<String> sourceLines = Files.readAllLines(snippetSourceFile, StandardCharsets.UTF_8);
         HashMap<String, List<String>> foundSnippets = testReplacer.GrepSnippets(sourceLines);
+        List<String> testLines = Files.readAllLines(codeForReplacement, StandardCharsets.UTF_8);
 
-        StringBuilder result = testReplacer.UpdateSnippets(sourceLines, foundSnippets, "<pre>", "</pre>", 1, "* ");
+
+        StringBuilder result = testReplacer.UpdateSnippets(testLines, foundSnippets, "<pre>", "</pre>", 1, "* ");
 
         assertTrue(result != null);
 

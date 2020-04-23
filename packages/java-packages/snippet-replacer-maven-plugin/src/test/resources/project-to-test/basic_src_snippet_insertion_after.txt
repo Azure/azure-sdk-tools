@@ -8,11 +8,13 @@ import java.time.OffsetDateTime;
  *
  * <p><strong>Instantiating a synchronous Configuration Client</strong></p>
  *
+ * <!-- src_embed com.azure.data.applicationconfig.configurationclient.instantiation -->
  * <pre>
  * ConfigurationClient configurationClient = new ConfigurationClientBuilder&#40;&#41;
  *     .connectionString&#40;connectionString&#41;
  *     .buildClient&#40;&#41;;
  * </pre>
+ * <!-- end com.azure.data.applicationconfig.configurationclient.instantiation -->
  *
  * <p>View {@link ConfigurationClientBuilder this} for additional ways to construct the client.</p>
  *
@@ -39,11 +41,13 @@ public final class ConfigurationClient {
      *
      * <p>Add a setting with the key "prodDBConnection", label "westUS" and value "db_connection".</p>
      *
+     * <!-- src_embed com.azure.data.appconfiguration.ConfigurationClient.addConfigurationSetting#String-String-String -->
      * <pre>
      * ConfigurationSetting result = configurationClient
      *     .addConfigurationSetting&#40;&quot;prodDBConnection&quot;, &quot;westUS&quot;, &quot;db_connection&quot;&#41;;
      * System.out.printf&#40;&quot;Key: %s, Label: %s, Value: %s&quot;, result.getKey&#40;&#41;, result.getLabel&#40;&#41;, result.getValue&#40;&#41;&#41;;
      * </pre>
+     * <!-- end com.azure.data.appconfiguration.ConfigurationClient.addConfigurationSetting#String-String-String -->
      *
      * @param key The key of the configuration setting to add.
      * @param label The label of the configuration setting to create. If {@code null} no label will be used.

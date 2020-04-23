@@ -7,7 +7,7 @@ Once you have the value of the connection string you can create the configuratio
 ConfigurationClient configurationClient = new ConfigurationClientBuilder()
     .connectionString(connectionString)
     .buildClient();
-    RANDOM CONTENT THAT SHOULDN'T EXIST AFTER WE GENERATE.
+    SOME UNRELATED CONTENT THAT SHOULDN'T BE PRESENT ANYMORE WHEN WE RUN UPDATE SNIPPETS
 ```
 <!-- end ./src/samples/java/com/azure/data/appconfiguration/ReadmeSamples.java#L46-L48 -->
 

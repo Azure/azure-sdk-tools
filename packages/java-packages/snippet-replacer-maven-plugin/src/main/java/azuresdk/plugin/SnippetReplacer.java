@@ -93,7 +93,7 @@ public class SnippetReplacer {
 
     public void UpdateReadmeSnippets(Path file, HashMap<String, List<String>> snippetMap) throws IOException {
         List<String> lines = Files.readAllLines(file, StandardCharsets.UTF_8); //TODO: stream this and save mem
-        StringBuilder modifiedLines = this.UpdateSnippets(lines, snippetMap, "```Java", "```");
+        StringBuilder modifiedLines = this.UpdateSnippets(lines, snippetMap, "```Java", "```", 0, "");
 
         if(modifiedLines != null) {
             try {
@@ -111,7 +111,7 @@ public class SnippetReplacer {
      */
     public void UpdateSrcSnippets(Path file, HashMap<String, List<String>> snippetMap) throws IOException {
         List<String> lines = Files.readAllLines(file, StandardCharsets.UTF_8); //TODO: stream this and save mem
-        StringBuilder modifiedLines = this.UpdateSnippets(lines, snippetMap, "<pre>", "</pre>");
+        StringBuilder modifiedLines = this.UpdateSnippets(lines, snippetMap, "<pre>", "</pre>",1, "* ");
 
         if(modifiedLines != null) {
             try {

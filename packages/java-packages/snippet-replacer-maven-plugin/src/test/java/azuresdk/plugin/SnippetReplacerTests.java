@@ -21,8 +21,6 @@ public class SnippetReplacerTests {
         return Path.of(pathToTestFile);
     }
 
-    private String[]
-
     /**
      * @throws Exception if any
      */
@@ -53,7 +51,9 @@ public class SnippetReplacerTests {
         List<String> sourceLines = Files.readAllLines(snippetSourceFile, StandardCharsets.UTF_8);
         HashMap<String, List<String>> foundSnippets = testReplacer.GrepSnippets(sourceLines);
 
-        StringBuilder result = testReplacer.UpdateSnippets(sourceLines, foundSnippets, "<pre>", "</pre>");
+        StringBuilder result = testReplacer.UpdateSnippets(sourceLines, foundSnippets, "<pre>", "</pre>", 1, "* ");
+
+        assertTrue(result != null);
 
     }
 }

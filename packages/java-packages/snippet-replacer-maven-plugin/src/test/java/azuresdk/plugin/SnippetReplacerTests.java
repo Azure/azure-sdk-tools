@@ -21,6 +21,8 @@ public class SnippetReplacerTests {
         return Path.of(pathToTestFile);
     }
 
+    private String[]
+
     /**
      * @throws Exception if any
      */
@@ -46,9 +48,12 @@ public class SnippetReplacerTests {
         Path codeForReplacement = _getPathToResource("../../project-to-test/basic_src_snippet_insertion_before.txt");
         Path expectedOutCome = _getPathToResource("../../project-to-test/basic_src_snippet_insertion_after.txt");
 
-        List<String> sourceLines = Files.readAllLines(snippetSourceFile, StandardCharsets.UTF_8);
-        HashMap<String, List<String>> foundSnippets = new SnippetReplacer().GrepSnippets(sourceLines);
+        SnippetReplacer testReplacer =  new SnippetReplacer();
 
+        List<String> sourceLines = Files.readAllLines(snippetSourceFile, StandardCharsets.UTF_8);
+        HashMap<String, List<String>> foundSnippets = testReplacer.GrepSnippets(sourceLines);
+
+        StringBuilder result = testReplacer.UpdateSnippets(sourceLines, foundSnippets, "<pre>", "</pre>");
 
     }
 }

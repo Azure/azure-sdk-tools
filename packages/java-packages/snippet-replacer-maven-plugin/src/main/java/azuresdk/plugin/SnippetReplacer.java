@@ -83,7 +83,7 @@ public class SnippetReplacer {
             }
         }
 
-        // apply the extraction
+        // respace the lines and pass them back.
         for(String snippetLine: snippetText) {
             modifiedStrings.add(snippetLine.replaceFirst(minWhitespace, ""));
         }
@@ -91,11 +91,49 @@ public class SnippetReplacer {
         return modifiedStrings;
     }
 
+    public void UpdateReadmeSnippets(Path file, HashMap<String, List<String>> snippetMap) throws IOException {
+        List<String> lines = Files.readAllLines(file, StandardCharsets.UTF_8); //TODO: stream this and save mem
+        StringBuilder modifiedLines = this.UpdateSnippets(lines, snippetMap, "```Java", "```");
+
+        if(modifiedLines != null) {
+            try {
+                FileWriter modificationWriter = new FileWriter(Files.readString(file), StandardCharsets.UTF_8);
+                modificationWriter.write(modifiedLines.toString());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+
     /*
         Update a file on disk with matched codesnippet definitions.
      */
     public void UpdateSrcSnippets(Path file, HashMap<String, List<String>> snippetMap) throws IOException {
         List<String> lines = Files.readAllLines(file, StandardCharsets.UTF_8); //TODO: stream this and save mem
+        StringBuilder modifiedLines = this.UpdateSnippets(lines, snippetMap, "<pre>", "</pre>");
+
+        if(modifiedLines != null) {
+            try {
+                FileWriter modificationWriter = new FileWriter(Files.readString(file), StandardCharsets.UTF_8);
+                modificationWriter.write(modifiedLines.toString());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private String _prefixFunction(Matcher match, int groupNum, String additionalPrefix){
+        // if we pass -1 as the matcher groupNum, we don't want any prefix at all
+        if(match == null || groupNum < 1) {
+            return "";
+        }
+        else{
+            return match.group(groupNum) + additionalPrefix;
+        }
+    }
+
+    public StringBuilder UpdateSnippets(List<String> lines, HashMap<String, List<String>> snippetMap, String preFence, String postFence, int prefixGroupNum, String additionalLinePrefix){
         StringBuilder modifiedLines = new StringBuilder();
         boolean inSnippet = false;
         boolean needsAmend = false;
@@ -112,16 +150,19 @@ public class SnippetReplacer {
             }
             else if(end.matches()){
                 List<String> newSnippets = snippetMap.getOrDefault(end.group(2), new ArrayList<String>());
-                String linePrefix = end.group(1) + "* ";
+                // We use this additional prefix because in src snippet cases we need to prespace
+                // for readme snippet cases we DONT need the prespace at all.
+                String linePrefix = this._prefixFunction(end, prefixGroupNum, additionalLinePrefix);
                 List<String> modifiedSnippets = new ArrayList<String>();
 
                 for(String snippet: this._respaceLines(newSnippets)){
+                    // TODO: leverage the escape table here.
                     modifiedSnippets.add(linePrefix + snippet);
                 }
 
-                modifiedLines.append(linePrefix + "<pre>");
+                modifiedLines.append(linePrefix + preFence);
                 modifiedLines.append(String.join("", modifiedSnippets));
-                modifiedLines.append(linePrefix + "</pre>");
+                modifiedLines.append(linePrefix + postFence);
                 modifiedLines.append(line);
                 needsAmend = true;
             }
@@ -136,16 +177,13 @@ public class SnippetReplacer {
             }
         }
 
-        if(needsAmend) {
-            try {
-                FileWriter modificationWriter = new FileWriter(Files.readString(file), StandardCharsets.UTF_8);
-                modificationWriter.write(modifiedLines.toString());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        if(needsAmend){
+            return modifiedLines;
+        }
+        else{
+            return null;
         }
     }
-
 
     /*
         Scans a readme file, ensures that contents of snippets match their sources

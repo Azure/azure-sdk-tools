@@ -2,10 +2,8 @@ package azuresdk.plugin;
 import java.io.FileWriter;
 import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.PathMatcher;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.*;
@@ -17,11 +15,11 @@ import java.util.HashMap;
 import java.io.IOException;
 
 public class SnippetReplacer {
-    private static Pattern SNIPPET_DEF_BEGIN = Pattern.compile("\\s*\\/\\/\\s*BEGIN\\:\\s+([a-zA-Z0-9\\.\\#\\-\\_]*)\\s*");
-    private static Pattern SNIPPET_DEF_END = Pattern.compile("\\s*\\/\\/\\s*END\\:\\s+([a-zA-Z0-9\\.\\#\\-\\_]*)\\s*");
-    private static Pattern SNIPPET_CALL_BEGIN = Pattern.compile("(\\s*)\\*?\\s*<!--\\s+src_embed\\s+([a-zA-Z0-9\\.\\#\\-\\_]*)\\s*-->");
-    private static Pattern SNIPPET_CALL_END = Pattern.compile("(\\s*)\\*?\\s*<!--\\s+end\\s+([a-zA-Z0-9\\.\\#\\-\\_]*)\\s*-->");
-    private static Pattern WHITESPACE_EXTRACTION = Pattern.compile("(\\s*)(.*)");
+    private final static Pattern SNIPPET_DEF_BEGIN = Pattern.compile("\\s*\\/\\/\\s*BEGIN\\:\\s+([a-zA-Z0-9\\.\\#\\-\\_]*)\\s*");
+    private final static Pattern SNIPPET_DEF_END = Pattern.compile("\\s*\\/\\/\\s*END\\:\\s+([a-zA-Z0-9\\.\\#\\-\\_]*)\\s*");
+    private final static Pattern SNIPPET_CALL_BEGIN = Pattern.compile("(\\s*)\\*?\\s*<!--\\s+src_embed\\s+([a-zA-Z0-9\\.\\#\\-\\_]*)\\s*-->");
+    private final static Pattern SNIPPET_CALL_END = Pattern.compile("(\\s*)\\*?\\s*<!--\\s+end\\s+([a-zA-Z0-9\\.\\#\\-\\_]*)\\s*-->");
+    private final static Pattern WHITESPACE_EXTRACTION = Pattern.compile("(\\s*)(.*)");
 
     private static PathMatcher SAMPLE_PATH_GLOB = FileSystems.getDefault().getPathMatcher("glob:**/src/samples/java/**/*.java");
     private static PathMatcher JAVA_GLOB = FileSystems.getDefault().getPathMatcher("glob:**/*.java");
@@ -41,11 +39,10 @@ public class SnippetReplacer {
 
     public SnippetReplacer(){}
 
-    public SnippetReplacer(String mode, File folderToVerify) throws MojoExecutionException {
+    public SnippetReplacer(String mode, File folderToVerify) throws MojoExecutionException, IOException {
         switch (mode) {
             case "update":
                 this.RunUpdate(folderToVerify);
-
                 break;
             case "verify":
                 this.RunVerification(folderToVerify);
@@ -55,15 +52,38 @@ public class SnippetReplacer {
         }
     }
 
-    public List<VerifyResult> RunVerification(File folderToVerify){
-        // get all files
+
+
+    public List<VerifyResult> RunVerification(File folderToVerify) throws IOException{
+        List<Path> allLocatedJavaFiles = _glob(folderToVerify.toPath(), JAVA_GLOB);
+        List<Path> snippetSources = _globFiles(allLocatedJavaFiles, SAMPLE_PATH_GLOB);
+
+
+
+
         return new ArrayList<VerifyResult>();
     }
 
-    public void RunUpdate(File folderToVerify){
-        // find all files that we care about
+    public void RunUpdate(File folderToVerify) throws IOException{
+        List<Path> allLocatedJavaFiles = _glob(folderToVerify.toPath(), JAVA_GLOB);
+        List<Path> snippetSources = _globFiles(allLocatedJavaFiles, SAMPLE_PATH_GLOB);
+        HashMap<String, List<String>> foundSnippets = new HashMap<String, List<String>>();
 
-        // for each of the found files, extract content, grep snippets
+        // scan the sample files for all the snippet files
+        for(Path samplePath: snippetSources){
+            List<String> sourceLines = Files.readAllLines(samplePath, StandardCharsets.UTF_8);
+            foundSnippets.putAll(this.GrepSnippets(sourceLines));
+        };
+
+        // walk across all the java files, run UpdateSrcSnippets
+        for(Path sourcePath: allLocatedJavaFiles){
+            this.UpdateSrcSnippets(sourcePath, foundSnippets);
+        }
+
+        // now find folderToVerify/README.md
+        // run Update ReadmeSnippets on that
+        File readmeInBaseDir = new File(folderToVerify, "README.md");
+        this.UpdateReadmeSnippets(readmeInBaseDir.toPath(), foundSnippets);
     }
 
     public void UpdateReadmeSnippets(Path file, HashMap<String, List<String>> snippetMap) throws IOException {
@@ -81,7 +101,7 @@ public class SnippetReplacer {
     }
 
     public void UpdateSrcSnippets(Path file, HashMap<String, List<String>> snippetMap) throws IOException {
-        List<String> lines = Files.readAllLines(file, StandardCharsets.UTF_8); //TODO: stream this and save mem?
+        List<String> lines = Files.readAllLines(file, StandardCharsets.UTF_8);
         StringBuilder modifiedLines = this.UpdateSnippets(lines, snippetMap, "<pre>", "</pre>",1, "* ");
 
         if(modifiedLines != null) {
@@ -248,5 +268,37 @@ public class SnippetReplacer {
         }
 
         return target;
+    }
+
+    private List<Path> _glob(Path rootFolder, PathMatcher pathMatcher) throws IOException{
+        List<Path> locatedPaths = new ArrayList<Path>();
+
+        Files.walkFileTree(rootFolder, new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                if (pathMatcher.matches(file)) {
+                    locatedPaths.add(file);
+                }
+                return FileVisitResult.CONTINUE;
+            }
+            @Override
+            public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+                return FileVisitResult.CONTINUE;
+            }
+        });
+
+        return locatedPaths;
+    }
+
+    private List<Path> _globFiles(List<Path> paths, PathMatcher pathMatcher) throws IOException{
+        List<Path> locatedPaths = new ArrayList<Path>();
+
+        for(Path path: paths) {
+            if (pathMatcher.matches(path)) {
+                locatedPaths.add(path);
+            }
+        };
+
+        return locatedPaths;
     }
 }

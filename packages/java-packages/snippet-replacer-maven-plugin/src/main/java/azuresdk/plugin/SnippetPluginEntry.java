@@ -31,6 +31,5 @@ public class SnippetPluginEntry
             getLog().error(e);
             return;
         }
-
     }
 }

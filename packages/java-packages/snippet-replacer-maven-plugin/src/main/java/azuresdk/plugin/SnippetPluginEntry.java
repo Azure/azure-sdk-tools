@@ -12,16 +12,10 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
-/**
- * Goal which touches a timestamp file.
- */
 @Mojo( name = "snippet-engine", defaultPhase = LifecyclePhase.PROCESS_SOURCES )
 public class SnippetPluginEntry
     extends AbstractMojo
 {
-    /**
-     * String to display
-     */
     @Parameter( property = "report.mode", required = true )
     private String mode;
 

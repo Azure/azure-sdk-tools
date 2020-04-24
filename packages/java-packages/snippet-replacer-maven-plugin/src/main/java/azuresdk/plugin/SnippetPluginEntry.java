@@ -29,13 +29,14 @@ public class SnippetPluginEntry
     private File targetDir;
 
     public void execute()
-        throws MojoExecutionException
     {
-        SnippetReplacer replacer = new SnippetReplacer(mode, targetDir);
-        getLog().info( "Hello, world." );
+        try {
+            SnippetReplacer replacer = new SnippetReplacer(mode, targetDir);
+        }
+        catch(Exception e){
+            getLog().error(e);
+            return;
+        }
 
-
-        getLog().info(mode);
-        getLog().info(targetDir.getAbsolutePath());
     }
 }

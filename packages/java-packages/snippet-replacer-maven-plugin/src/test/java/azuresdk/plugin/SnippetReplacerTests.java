@@ -42,7 +42,7 @@ public class SnippetReplacerTests {
     }
 
     @Test
-    public void testBasicInsertion()
+    public void testBasicSrcInsertion()
             throws Exception
     {
         // arrange
@@ -58,9 +58,7 @@ public class SnippetReplacerTests {
         HashMap<String, List<String>> foundSnippets = testReplacer.GrepSnippets(sourceLines);
         StringBuilder result = testReplacer.UpdateSnippets(testLines, foundSnippets, "<pre>", "</pre>", 1, "* ");
 
-        String resultString = result.toString();
-
         assertTrue(result != null);
-        assertTrue(resultString.equals(expectedString));
+        assertTrue(result.toString().equals(expectedString));
     }
 }

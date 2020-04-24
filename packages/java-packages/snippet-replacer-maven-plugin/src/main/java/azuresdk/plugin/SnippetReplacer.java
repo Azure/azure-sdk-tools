@@ -48,6 +48,7 @@ public class SnippetReplacer {
         switch (mode) {
             case "update":
                 this.RunUpdate(folderToVerify);
+
                 break;
             case "verify":
                 this.RunVerification(folderToVerify);
@@ -88,7 +89,6 @@ public class SnippetReplacer {
             }
         }
 
-        // respace the lines and pass them back.
         for(String snippetLine: snippetText) {
             modifiedStrings.add(snippetLine.replaceFirst(minWhitespace, ""));
         }
@@ -110,12 +110,11 @@ public class SnippetReplacer {
         }
     }
 
-
     /*
         Update a file on disk with matched codesnippet definitions.
      */
     public void UpdateSrcSnippets(Path file, HashMap<String, List<String>> snippetMap) throws IOException {
-        List<String> lines = Files.readAllLines(file, StandardCharsets.UTF_8); //TODO: stream this and save mem
+        List<String> lines = Files.readAllLines(file, StandardCharsets.UTF_8); //TODO: stream this and save mem?
         StringBuilder modifiedLines = this.UpdateSnippets(lines, snippetMap, "<pre>", "</pre>",1, "* ");
 
         if(modifiedLines != null) {
@@ -172,7 +171,6 @@ public class SnippetReplacer {
                 List<String> modifiedSnippets = new ArrayList<String>();
 
                 for(String snippet: this._respaceLines(newSnippets)){
-                    // TODO: leverage the escape table here.
                     modifiedSnippets.add(linePrefix + this._escapeString(snippet) + lineSep);
                 }
 

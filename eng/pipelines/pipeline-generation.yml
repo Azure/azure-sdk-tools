@@ -19,6 +19,7 @@ jobs:
         Prefix: java
         PublicOptions: ''
         InternalOptions: '--variablegroup 1 --variablegroup 58 --variablegroup 76'
+        TestOptions: '--variablegroup 64'
       Android:
         RepositoryName: azure-sdk-for-android
         Branch: dev
@@ -43,12 +44,14 @@ jobs:
         Prefix: python
         PublicOptions: ''
         InternalOptions: '--variablegroup 58 --variablegroup 76'
+        TestOptions: '--variablegroup 64'
       Net:
         RepositoryName: azure-sdk-for-net
         Branch: master
         Prefix: net
         PublicOptions: ''
         InternalOptions: '--variablegroup 13 --variablegroup 58 --variablegroup 76'
+        TestOptions: '--variablegroup 64'
       C:
         RepositoryName: azure-sdk-for-c
         Branch: master
@@ -80,6 +83,13 @@ jobs:
     displayName: 'Generate internal pipelines for: $(RepositoryName)'
     env:
       PATVAR: $(azuresdk-azure-sdk-devops-pipeline-generation-pat)
+  - script: |
+      pipeline-generator --organization https://dev.azure.com/azure-sdk --project internal --prefix $(Prefix) --path $(Pipeline.Workspace)/$(RepositoryName)/sdk --endpoint Azure --repository Azure/$(RepositoryName) --convention tests --agentpool Hosted --branch refs/heads/$(Branch) --patvar PATVAR --debug $(TestOptions)
+    displayName: 'Generate test pipelines for: $(RepositoryName)'
+    condition: ne(variables['TestOptions'],'')
+    env:
+      PATVAR: $(azuresdk-azure-sdk-devops-pipeline-generation-pat)
+
   # - script: |
   #     pipeline-generator --organization https://dev.azure.com/azure-sdk --project internal --prefix $(Prefix)-pr --devopspath "\$(Prefix)\pr" --path $(Pipeline.Workspace)/$(RepositoryName)/sdk --endpoint Azure --repository Azure/$(RepositoryName)-pr --convention ci --agentpool Hosted --branch refs/heads/ $(Branch) --patvar PATVAR --debug
   #   displayName: 'Generate internal pipelines for: $(RepositoryName)-pr'

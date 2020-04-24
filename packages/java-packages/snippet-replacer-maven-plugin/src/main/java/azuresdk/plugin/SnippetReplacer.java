@@ -5,9 +5,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.*;
 
+import com.google.common.base.Verify;
 import org.apache.maven.plugin.MojoExecutionException;
 
 import java.io.File;
@@ -66,19 +68,19 @@ public class SnippetReplacer {
 
         // walk across all the java files, run UpdateSrcSnippets
         for(Path sourcePath: allLocatedJavaFiles){
-            this.VerifySnippets(sourcePath, foundSnippets);
+            discoveredIssues.addAll(this.VerifySrcSnippets(sourcePath, foundSnippets));
         }
 
         // now find folderToVerify/README.md
         // run Update ReadmeSnippets on that
         File readmeInBaseDir = new File(folderToVerify, "README.md");
-        this.VerifySnippets(readmeInBaseDir.toPath(), foundSnippets);
+        discoveredIssues.addAll(this.VerifyReadmeSnippets(readmeInBaseDir.toPath(), foundSnippets));
 
         if(discoveredIssues.size() > 0){
             for(VerifyResult result: discoveredIssues){
-                System.out.println(String.format("Snippets need update in %s.", Files.readString(result.ReadmeLocation)));
+                System.out.println(String.format("SnippetId %s needs update in file %s.", result.SnippetWithIssues, Files.readString(result.ReadmeLocation)));
             }
-            throw new MojoExecutionException("Discovered snippets in need of updating. Run this plugin with update mode.");
+            throw new MojoExecutionException("Discovered snippets in need of updating. Please run this plugin in update mode and commit the changes.");
         }
     }
 
@@ -105,7 +107,7 @@ public class SnippetReplacer {
     }
 
     public void UpdateReadmeSnippets(Path file, HashMap<String, List<String>> snippetMap) throws IOException {
-        List<String> lines = Files.readAllLines(file, StandardCharsets.UTF_8); //TODO: stream this and save mem
+        List<String> lines = Files.readAllLines(file, StandardCharsets.UTF_8);
         StringBuilder modifiedLines = this.UpdateSnippets(lines, snippetMap, "```Java", "```", 0, "");
 
         if(modifiedLines != null) {
@@ -141,11 +143,11 @@ public class SnippetReplacer {
         for(String line: lines){
             Matcher begin = SNIPPET_CALL_BEGIN.matcher(line);
             Matcher end = SNIPPET_CALL_END.matcher(line);
-            String current_snippet_id = "";
+            String currentSnippetId = "";
 
             if(begin.matches()){
                 modifiedLines.append(line + lineSep);
-                current_snippet_id = begin.group(2);
+                currentSnippetId = begin.group(2);
                 inSnippet = true;
             }
             else if(end.matches()){
@@ -186,20 +188,31 @@ public class SnippetReplacer {
         }
     }
 
-    public List<VerifyResult> VerifySnippets(List<String> lines, HashMap<String, List<String>> snippetMap, String preFence, String postFence, int prefixGroupNum, String additionalLinePrefix){
-        StringBuilder modifiedLines = new StringBuilder();
+    public List<VerifyResult> VerifyReadmeSnippets(Path file, HashMap<String, List<String>> snippetMap) throws IOException {
+        List<String> lines = Files.readAllLines(file, StandardCharsets.UTF_8);
+        return this.VerifySnippets(file, lines, snippetMap, "```Java", "```", 0, "");
+    }
+
+    public List<VerifyResult> VerifySrcSnippets(Path file, HashMap<String, List<String>> snippetMap) throws IOException {
+        List<String> lines = Files.readAllLines(file, StandardCharsets.UTF_8);
+        return this.VerifySnippets(file, lines, snippetMap, "<pre>", "</pre>", 1, "* ");
+    }
+
+    public List<VerifyResult> VerifySnippets(Path currentPath, List<String> lines, HashMap<String, List<String>> snippetMap, String preFence, String postFence, int prefixGroupNum, String additionalLinePrefix){
         boolean inSnippet = false;
         String lineSep = System.lineSeparator();
+        List<String> currentSnippetSet = null;
+        List<VerifyResult> foundIssues = new ArrayList<VerifyResult>();
 
         for(String line: lines){
             Matcher begin = SNIPPET_CALL_BEGIN.matcher(line);
             Matcher end = SNIPPET_CALL_END.matcher(line);
-            String current_snippet_id = "";
+            String currentSnippetId = "";
 
             if(begin.matches()){
-                modifiedLines.append(line + lineSep);
-                current_snippet_id = begin.group(2);
+                currentSnippetId = begin.group(2);
                 inSnippet = true;
+                currentSnippetSet = new ArrayList<String>();
             }
             else if(end.matches()){
                 List<String> newSnippets = snippetMap.getOrDefault(end.group(2), new ArrayList<String>());
@@ -213,23 +226,29 @@ public class SnippetReplacer {
                     modifiedSnippets.add(linePrefix + this._escapeString(snippet) + lineSep);
                 }
 
-                modifiedLines.append(linePrefix + preFence + lineSep);
-                modifiedLines.append(String.join("", modifiedSnippets));
-                modifiedLines.append(linePrefix + postFence + lineSep);
-                modifiedLines.append(line + lineSep);
-                needsAmend = true;
+                // add the fences
+                modifiedSnippets.add(0, linePrefix + preFence + lineSep);
+                modifiedSnippets.add(linePrefix + postFence + lineSep);
+
+                Collections.sort(modifiedSnippets);
+                Collections.sort(currentSnippetSet);
+
+                if(!modifiedSnippets.equals(currentSnippetSet))
+                {
+                    foundIssues.add(new VerifyResult(currentPath, currentSnippetId));
+                }
+
                 inSnippet = false;
+                currentSnippetSet = null;
             }
             else {
                 if(inSnippet){
-                    // do nothing. we'll write everything at the end,
-                    // we'd do a comparison here if we were verifying
-                }
-                else {
-                    modifiedLines.append(line + lineSep);
+                    currentSnippetSet.add(line + lineSep);
                 }
             }
         }
+
+        return foundIssues;
     }
 
     public HashMap<String, List<String>> GrepSnippets(List<String> fileContent){
@@ -347,6 +366,8 @@ public class SnippetReplacer {
             }
         });
 
+        System.out.println("Located Paths:");
+        System.out.println(locatedPaths.size());
         return locatedPaths;
     }
 

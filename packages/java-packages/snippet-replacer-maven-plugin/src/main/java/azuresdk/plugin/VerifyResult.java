@@ -5,11 +5,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class VerifyResult {
-    public List<String> SnippetsNeedingUpdate = new ArrayList<String>();
+    public String SnippetWithIssues;
     public Path ReadmeLocation;
 
-    public VerifyResult(Path readmeLocation, List<String> snippetsWithIssues){
+    public VerifyResult(Path readmeLocation, String snippetIdWithIssues){
         this.ReadmeLocation = readmeLocation;
-        this.SnippetsNeedingUpdate = snippetsWithIssues;
+        this.SnippetWithIssues = snippetIdWithIssues;
     }
 }

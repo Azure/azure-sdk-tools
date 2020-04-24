@@ -111,8 +111,7 @@ public class SnippetReplacer {
         StringBuilder modifiedLines = this.UpdateSnippets(lines, snippetMap, "```Java", "```", 0, "");
 
         if(modifiedLines != null) {
-            try {
-                FileWriter modificationWriter = new FileWriter(Files.readString(file), StandardCharsets.UTF_8);
+            try (FileWriter modificationWriter = new FileWriter(file.toAbsolutePath().toString(), StandardCharsets.UTF_8)) {
                 modificationWriter.write(modifiedLines.toString());
             } catch (IOException e) {
                 e.printStackTrace();
@@ -125,8 +124,7 @@ public class SnippetReplacer {
         StringBuilder modifiedLines = this.UpdateSnippets(lines, snippetMap, "<pre>", "</pre>",1, "* ");
 
         if(modifiedLines != null) {
-            try {
-                FileWriter modificationWriter = new FileWriter(Files.readString(file), StandardCharsets.UTF_8);
+            try (FileWriter modificationWriter = new FileWriter(file.toAbsolutePath().toString(), StandardCharsets.UTF_8)) {
                 modificationWriter.write(modifiedLines.toString());
             } catch (IOException e) {
                 e.printStackTrace();

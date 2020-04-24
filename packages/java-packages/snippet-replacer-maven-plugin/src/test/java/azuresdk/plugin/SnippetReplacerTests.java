@@ -58,10 +58,10 @@ public class SnippetReplacerTests {
         HashMap<String, List<String>> foundSnippets = testReplacer.GrepSnippets(sourceLines);
         StringBuilder result = testReplacer.UpdateSnippets(testLines, foundSnippets, "<pre>", "</pre>", 1, "* ");
 
-        // should properly parse and return non null
-        assertTrue(result != null);
+        String resultString = result.toString();
 
-        // ensure generated snippets matches the expected
-        assertTrue(result.toString() == expectedString);
+        assertTrue(result != null);
+        assertTrue(resultString.length() == expectedString.length());
+        assertTrue(resultString.equals(expectedString));
     }
 }

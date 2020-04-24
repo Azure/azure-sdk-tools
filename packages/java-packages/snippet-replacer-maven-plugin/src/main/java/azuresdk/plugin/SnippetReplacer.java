@@ -52,16 +52,34 @@ public class SnippetReplacer {
         }
     }
 
-
-
-    public List<VerifyResult> RunVerification(File folderToVerify) throws IOException{
+    public void RunVerification(File folderToVerify) throws IOException, MojoExecutionException{
         List<Path> allLocatedJavaFiles = _glob(folderToVerify.toPath(), JAVA_GLOB);
         List<Path> snippetSources = _globFiles(allLocatedJavaFiles, SAMPLE_PATH_GLOB);
+        List<VerifyResult> discoveredIssues = new ArrayList<VerifyResult>();
+        HashMap<String, List<String>> foundSnippets = new HashMap<String, List<String>>();
 
+        // scan the sample files for all the snippet files
+        for(Path samplePath: snippetSources){
+            List<String> sourceLines = Files.readAllLines(samplePath, StandardCharsets.UTF_8);
+            foundSnippets.putAll(this.GrepSnippets(sourceLines));
+        };
 
+        // walk across all the java files, run UpdateSrcSnippets
+        for(Path sourcePath: allLocatedJavaFiles){
+            this.VerifySnippets(sourcePath, foundSnippets);
+        }
 
+        // now find folderToVerify/README.md
+        // run Update ReadmeSnippets on that
+        File readmeInBaseDir = new File(folderToVerify, "README.md");
+        this.VerifySnippets(readmeInBaseDir.toPath(), foundSnippets);
 
-        return new ArrayList<VerifyResult>();
+        if(discoveredIssues.size() > 0){
+            for(VerifyResult result: discoveredIssues){
+                System.out.println(String.format("Snippets need update in %s.", Files.readString(result.ReadmeLocation)));
+            }
+            throw new MojoExecutionException("Discovered snippets in need of updating. Run this plugin with update mode.");
+        }
     }
 
     public void RunUpdate(File folderToVerify) throws IOException{
@@ -168,9 +186,50 @@ public class SnippetReplacer {
         }
     }
 
-    public List<VerifyResult> VerifySnippets(Path file, HashMap<String, List<String>> snippetMap){
+    public List<VerifyResult> VerifySnippets(List<String> lines, HashMap<String, List<String>> snippetMap, String preFence, String postFence, int prefixGroupNum, String additionalLinePrefix){
+        StringBuilder modifiedLines = new StringBuilder();
+        boolean inSnippet = false;
+        String lineSep = System.lineSeparator();
 
-        return new ArrayList<VerifyResult>();
+        for(String line: lines){
+            Matcher begin = SNIPPET_CALL_BEGIN.matcher(line);
+            Matcher end = SNIPPET_CALL_END.matcher(line);
+            String current_snippet_id = "";
+
+            if(begin.matches()){
+                modifiedLines.append(line + lineSep);
+                current_snippet_id = begin.group(2);
+                inSnippet = true;
+            }
+            else if(end.matches()){
+                List<String> newSnippets = snippetMap.getOrDefault(end.group(2), new ArrayList<String>());
+                List<String> modifiedSnippets = new ArrayList<String>();
+
+                // We use this additional prefix because in src snippet cases we need to prespace
+                // for readme snippet cases we DONT need the prespace at all.
+                String linePrefix = this._prefixFunction(end, prefixGroupNum, additionalLinePrefix);
+
+                for(String snippet: this._respaceLines(newSnippets)){
+                    modifiedSnippets.add(linePrefix + this._escapeString(snippet) + lineSep);
+                }
+
+                modifiedLines.append(linePrefix + preFence + lineSep);
+                modifiedLines.append(String.join("", modifiedSnippets));
+                modifiedLines.append(linePrefix + postFence + lineSep);
+                modifiedLines.append(line + lineSep);
+                needsAmend = true;
+                inSnippet = false;
+            }
+            else {
+                if(inSnippet){
+                    // do nothing. we'll write everything at the end,
+                    // we'd do a comparison here if we were verifying
+                }
+                else {
+                    modifiedLines.append(line + lineSep);
+                }
+            }
+        }
     }
 
     public HashMap<String, List<String>> GrepSnippets(List<String> fileContent){

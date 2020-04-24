@@ -61,7 +61,6 @@ public class SnippetReplacerTests {
         String resultString = result.toString();
 
         assertTrue(result != null);
-        assertTrue(resultString.length() == expectedString.length());
         assertTrue(resultString.equals(expectedString));
     }
 }

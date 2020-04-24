@@ -147,10 +147,6 @@ public class SnippetReplacer {
         }
     }
 
-    private List<Path> _getPathsFromBaseDir(File baseDir, String glob_pattern){
-        return new ArrayList<Path>();
-    }
-
     public List<VerifyResult> VerifySnippets(Path file, HashMap<String, List<String>> snippetMap){
 
         return new ArrayList<VerifyResult>();
@@ -191,6 +187,10 @@ public class SnippetReplacer {
     public HashMap<String, List<String>> GrepSnippets(File fileWithContent) throws IOException{
         List<String> lines = Files.readAllLines(fileWithContent.toPath(), StandardCharsets.UTF_8);
         return this.GrepSnippets(lines);
+    }
+
+    private List<Path> _getPathsFromBaseDir(File baseDir, String glob_pattern){
+        return new ArrayList<Path>();
     }
 
     private List<String> _respaceLines(List<String> snippetText){

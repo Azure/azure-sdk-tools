@@ -132,10 +132,11 @@ public class SnippetReplacer {
             }
             else if(end.matches()){
                 List<String> newSnippets = snippetMap.getOrDefault(end.group(2), new ArrayList<String>());
+                List<String> modifiedSnippets = new ArrayList<String>();
+
                 // We use this additional prefix because in src snippet cases we need to prespace
                 // for readme snippet cases we DONT need the prespace at all.
                 String linePrefix = this._prefixFunction(end, prefixGroupNum, additionalLinePrefix);
-                List<String> modifiedSnippets = new ArrayList<String>();
 
                 for(String snippet: this._respaceLines(newSnippets)){
                     modifiedSnippets.add(linePrefix + this._escapeString(snippet) + lineSep);

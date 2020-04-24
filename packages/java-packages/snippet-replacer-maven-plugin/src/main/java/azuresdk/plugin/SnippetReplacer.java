@@ -41,9 +41,6 @@ public class SnippetReplacer {
 
     public SnippetReplacer(){}
 
-    /*
-        Constructor for use directly from the Mojo entrypoint.
-     */
     public SnippetReplacer(String mode, File folderToVerify) throws MojoExecutionException {
         switch (mode) {
             case "update":
@@ -69,33 +66,6 @@ public class SnippetReplacer {
         // for each of the found files, extract content, grep snippets
     }
 
-    private List<String> _respaceLines(List<String> snippetText){
-        // get List of all the the leading whitespace in the sample
-        // toss out lines that are empty (as they shouldn't mess with the minimum)
-        String minWhitespace = null;
-        List<String> modifiedStrings = new ArrayList<String>();
-
-        for(String snippetLine: snippetText){
-            // only look at non-whitespace only strings for the min indent
-            if(snippetLine.trim().length() != 0) {
-                Matcher leadSpaceMatch = WHITESPACE_EXTRACTION.matcher(snippetLine);
-
-                if(leadSpaceMatch.matches()){
-                    String leadSpace = leadSpaceMatch.group(1);
-
-                    if(minWhitespace == null || leadSpace.length() < minWhitespace.length())
-                        minWhitespace = leadSpace;
-                }
-            }
-        }
-
-        for(String snippetLine: snippetText) {
-            modifiedStrings.add(snippetLine.replaceFirst(minWhitespace, ""));
-        }
-
-        return modifiedStrings;
-    }
-
     public void UpdateReadmeSnippets(Path file, HashMap<String, List<String>> snippetMap) throws IOException {
         List<String> lines = Files.readAllLines(file, StandardCharsets.UTF_8); //TODO: stream this and save mem
         StringBuilder modifiedLines = this.UpdateSnippets(lines, snippetMap, "```Java", "```", 0, "");
@@ -110,9 +80,6 @@ public class SnippetReplacer {
         }
     }
 
-    /*
-        Update a file on disk with matched codesnippet definitions.
-     */
     public void UpdateSrcSnippets(Path file, HashMap<String, List<String>> snippetMap) throws IOException {
         List<String> lines = Files.readAllLines(file, StandardCharsets.UTF_8); //TODO: stream this and save mem?
         StringBuilder modifiedLines = this.UpdateSnippets(lines, snippetMap, "<pre>", "</pre>",1, "* ");
@@ -125,26 +92,6 @@ public class SnippetReplacer {
                 e.printStackTrace();
             }
         }
-    }
-
-    private String _prefixFunction(Matcher match, int groupNum, String additionalPrefix){
-        // if we pass -1 as the matcher groupNum, we don't want any prefix at all
-        if(match == null || groupNum < 1) {
-            return "";
-        }
-        else{
-            return match.group(groupNum) + additionalPrefix;
-        }
-    }
-
-    private String _escapeString(String target){
-        if(target != null && target.trim().length() > 0){
-            for(String key: this.REPLACEMENT_SET.keySet()){
-                target = target.replace(key, REPLACEMENT_SET.get(key));
-            }
-        }
-
-        return target;
     }
 
     public StringBuilder UpdateSnippets(List<String> lines, HashMap<String, List<String>> snippetMap, String preFence, String postFence, int prefixGroupNum, String additionalLinePrefix){
@@ -204,17 +151,11 @@ public class SnippetReplacer {
         return new ArrayList<Path>();
     }
 
-    /*
-        Scans a readme file, ensures that contents of snippets match their sources
-     */
     public List<VerifyResult> VerifySnippets(Path file, HashMap<String, List<String>> snippetMap){
 
         return new ArrayList<VerifyResult>();
     }
 
-    /*
-        Scans through a file content array, finds all code snippet definitions.
-     */
     public HashMap<String, List<String>> GrepSnippets(List<String> fileContent){
         HashMap foundSnippets = new HashMap();
         SnippetDictionary snippetReader = new SnippetDictionary();
@@ -252,7 +193,34 @@ public class SnippetReplacer {
         return this.GrepSnippets(lines);
     }
 
-    private int GetEndIndex(List<String> lines, int startIndex){
+    private List<String> _respaceLines(List<String> snippetText){
+        // get List of all the the leading whitespace in the sample
+        // toss out lines that are empty (as they shouldn't mess with the minimum)
+        String minWhitespace = null;
+        List<String> modifiedStrings = new ArrayList<String>();
+
+        for(String snippetLine: snippetText){
+            // only look at non-whitespace only strings for the min indent
+            if(snippetLine.trim().length() != 0) {
+                Matcher leadSpaceMatch = WHITESPACE_EXTRACTION.matcher(snippetLine);
+
+                if(leadSpaceMatch.matches()){
+                    String leadSpace = leadSpaceMatch.group(1);
+
+                    if(minWhitespace == null || leadSpace.length() < minWhitespace.length())
+                        minWhitespace = leadSpace;
+                }
+            }
+        }
+
+        for(String snippetLine: snippetText) {
+            modifiedStrings.add(snippetLine.replaceFirst(minWhitespace, ""));
+        }
+
+        return modifiedStrings;
+    }
+
+    private int _getEndIndex(List<String> lines, int startIndex){
         for(int i = startIndex; i < lines.size(); i++){
             Matcher end = SNIPPET_CALL_END.matcher(lines.get(i));
             if(end.matches())
@@ -260,5 +228,25 @@ public class SnippetReplacer {
         }
 
         return -1;
+    }
+
+    private String _prefixFunction(Matcher match, int groupNum, String additionalPrefix){
+        // if we pass -1 as the matcher groupNum, we don't want any prefix at all
+        if(match == null || groupNum < 1) {
+            return "";
+        }
+        else{
+            return match.group(groupNum) + additionalPrefix;
+        }
+    }
+
+    private String _escapeString(String target){
+        if(target != null && target.trim().length() > 0){
+            for(String key: this.REPLACEMENT_SET.keySet()){
+                target = target.replace(key, REPLACEMENT_SET.get(key));
+            }
+        }
+
+        return target;
     }
 }

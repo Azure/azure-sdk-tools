@@ -24,9 +24,6 @@ public class SnippetReplacerTests {
         return Path.of(pathToTestFile);
     }
 
-    /**
-     * @throws Exception if any
-     */
     @Test
     public void testBasicSrcParse()
             throws Exception

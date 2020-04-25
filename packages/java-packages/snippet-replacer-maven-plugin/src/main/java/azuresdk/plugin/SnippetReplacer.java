@@ -108,8 +108,6 @@ public class SnippetReplacer {
         if(modifiedLines != null) {
             try (FileWriter modificationWriter = new FileWriter(file.toAbsolutePath().toString(), StandardCharsets.UTF_8)) {
                 modificationWriter.write(modifiedLines.toString());
-            } catch (IOException e) {
-                e.printStackTrace();
             }
         }
     }
@@ -121,8 +119,6 @@ public class SnippetReplacer {
         if(modifiedLines != null) {
             try (FileWriter modificationWriter = new FileWriter(file.toAbsolutePath().toString(), StandardCharsets.UTF_8)) {
                 modificationWriter.write(modifiedLines.toString());
-            } catch (IOException e) {
-                e.printStackTrace();
             }
         }
     }

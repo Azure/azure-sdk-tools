@@ -3,9 +3,6 @@ package azuresdk.plugin;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -25,13 +22,13 @@ public class SnippetReplacerTests {
     }
 
     @Test
-    public void testBasicSrcParse()
+    public void srcParse()
             throws Exception
     {
         Path testFile = _getPathToResource("../../project-to-test/basic_src_snippet_parse.txt");
 
         List<String> lines = Files.readAllLines(testFile, StandardCharsets.UTF_8);
-        HashMap<String, List<String>> foundSnippets = new SnippetReplacer().GrepSnippets(lines);
+        HashMap<String, List<String>> foundSnippets = new SnippetReplacer().grepSnippets(lines);
 
         assertTrue(foundSnippets.size() == 2);
         assertTrue(foundSnippets.get("com.azure.data.applicationconfig.configurationclient.instantiation").size() == 3);
@@ -39,7 +36,7 @@ public class SnippetReplacerTests {
     }
 
     @Test
-    public void testBasicSrcInsertion()
+    public void srcInsertion()
             throws Exception
     {
         Path snippetSourceFile = _getPathToResource("../../project-to-test/basic_src_snippet_parse.txt");
@@ -50,10 +47,40 @@ public class SnippetReplacerTests {
         List<String> testLines = Files.readAllLines(codeForReplacement, StandardCharsets.UTF_8);
         String expectedString = Files.readString(expectedOutCome, StandardCharsets.UTF_8);
 
-        HashMap<String, List<String>> foundSnippets = testReplacer.GrepSnippets(sourceLines);
-        StringBuilder result = testReplacer.UpdateSnippets(testLines, foundSnippets, "<pre>", "</pre>", 1, "* ");
+        HashMap<String, List<String>> foundSnippets = testReplacer.grepSnippets(sourceLines);
+        StringBuilder result = testReplacer.updateSnippets(testLines, foundSnippets, "<pre>", "</pre>", 1, "* ");
 
         assertTrue(result != null);
         assertTrue(result.toString().equals(expectedString));
+    }
+
+    @Test
+    public void readmeParse(){
+
+    }
+
+    @Test
+    public void readmeInsertion(){
+
+    }
+
+    @Test
+    public void emptySnippetWorks(){
+
+    }
+
+    @Test
+    public void snippetsEncodeHTML(){
+
+    }
+
+    @Test
+    public void notFoundSnippetCrashes(){
+
+    }
+
+    @Test
+    public void duplicateSnippetCrashes(){
+
     }
 }

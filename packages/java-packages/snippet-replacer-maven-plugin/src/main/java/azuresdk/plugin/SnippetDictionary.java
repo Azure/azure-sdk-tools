@@ -12,24 +12,24 @@ public class SnippetDictionary {
 
     }
 
-    public boolean IsActive(){
+    public boolean isActive(){
         return !_snippetDictionary.isEmpty();
     }
 
-    public void BeginSnippet(String key) {
+    public void beginSnippet(String key) {
         if(!this._snippetDictionary.containsKey((key)))
         {
             this._snippetDictionary.put(key, new ArrayList<String>());
         }
     }
 
-    public void ProcessLine(String line){
+    public void processLine(String line){
         for (Map.Entry<String, List<String>> entry : this._snippetDictionary.entrySet() ){
             entry.getValue().add(line);
         }
     }
 
-    public List<String> FinalizeSnippet(String key){
+    public List<String> finalizeSnippet(String key){
         List<String> value = this._snippetDictionary.get(key);
         this._snippetDictionary.remove(key);
 

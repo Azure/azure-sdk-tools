@@ -1,19 +1,14 @@
 package azuresdk.plugin;
 import java.io.FileWriter;
-import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.regex.*;
 
-import com.google.common.base.Verify;
 import org.apache.maven.plugin.MojoExecutionException;
 
 import java.io.File;
-import java.util.HashMap;
 import java.io.IOException;
 
 public class SnippetReplacer {
@@ -44,37 +39,37 @@ public class SnippetReplacer {
     public SnippetReplacer(String mode, File folderToVerify) throws MojoExecutionException, IOException {
         switch (mode) {
             case "update":
-                this.RunUpdate(folderToVerify);
+                this.runUpdate(folderToVerify);
                 break;
             case "verify":
-                this.RunVerification(folderToVerify);
+                this.runVerification(folderToVerify);
                 break;
             default:
                 throw new MojoExecutionException(String.format("Unrecognized snippet-replacer mode: %s.", mode));
         }
     }
 
-    public void RunVerification(File folderToVerify) throws IOException, MojoExecutionException{
-        List<Path> allLocatedJavaFiles = _glob(folderToVerify.toPath(), JAVA_GLOB);
-        List<Path> snippetSources = _globFiles(allLocatedJavaFiles, SAMPLE_PATH_GLOB);
+    public void runVerification(File folderToVerify) throws IOException, MojoExecutionException{
+        List<Path> allLocatedJavaFiles = glob(folderToVerify.toPath(), JAVA_GLOB);
+        List<Path> snippetSources = globFiles(allLocatedJavaFiles, SAMPLE_PATH_GLOB);
         List<VerifyResult> discoveredIssues = new ArrayList<VerifyResult>();
         HashMap<String, List<String>> foundSnippets = new HashMap<String, List<String>>();
 
         // scan the sample files for all the snippet files
         for(Path samplePath: snippetSources){
             List<String> sourceLines = Files.readAllLines(samplePath, StandardCharsets.UTF_8);
-            foundSnippets.putAll(this.GrepSnippets(sourceLines));
+            foundSnippets.putAll(this.grepSnippets(sourceLines));
         };
 
         // walk across all the java files, run UpdateSrcSnippets
         for(Path sourcePath: allLocatedJavaFiles){
-            discoveredIssues.addAll(this.VerifySrcSnippets(sourcePath, foundSnippets));
+            discoveredIssues.addAll(this.verifySrcSnippets(sourcePath, foundSnippets));
         }
 
         // now find folderToVerify/README.md
         // run Update ReadmeSnippets on that
         File readmeInBaseDir = new File(folderToVerify, "README.md");
-        discoveredIssues.addAll(this.VerifyReadmeSnippets(readmeInBaseDir.toPath(), foundSnippets));
+        discoveredIssues.addAll(this.verifyReadmeSnippets(readmeInBaseDir.toPath(), foundSnippets));
 
         if(discoveredIssues.size() > 0){
             for(VerifyResult result: discoveredIssues){
@@ -84,31 +79,31 @@ public class SnippetReplacer {
         }
     }
 
-    public void RunUpdate(File folderToVerify) throws IOException{
-        List<Path> allLocatedJavaFiles = _glob(folderToVerify.toPath(), JAVA_GLOB);
-        List<Path> snippetSources = _globFiles(allLocatedJavaFiles, SAMPLE_PATH_GLOB);
+    public void runUpdate(File folderToVerify) throws IOException{
+        List<Path> allLocatedJavaFiles = glob(folderToVerify.toPath(), JAVA_GLOB);
+        List<Path> snippetSources = globFiles(allLocatedJavaFiles, SAMPLE_PATH_GLOB);
         HashMap<String, List<String>> foundSnippets = new HashMap<String, List<String>>();
 
         // scan the sample files for all the snippet files
         for(Path samplePath: snippetSources){
             List<String> sourceLines = Files.readAllLines(samplePath, StandardCharsets.UTF_8);
-            foundSnippets.putAll(this.GrepSnippets(sourceLines));
+            foundSnippets.putAll(this.grepSnippets(sourceLines));
         };
 
         // walk across all the java files, run UpdateSrcSnippets
         for(Path sourcePath: allLocatedJavaFiles){
-            this.UpdateSrcSnippets(sourcePath, foundSnippets);
+            this.updateSrcSnippets(sourcePath, foundSnippets);
         }
 
         // now find folderToVerify/README.md
         // run Update ReadmeSnippets on that
         File readmeInBaseDir = new File(folderToVerify, "README.md");
-        this.UpdateReadmeSnippets(readmeInBaseDir.toPath(), foundSnippets);
+        this.updateReadmeSnippets(readmeInBaseDir.toPath(), foundSnippets);
     }
 
-    public void UpdateReadmeSnippets(Path file, HashMap<String, List<String>> snippetMap) throws IOException {
+    public void updateReadmeSnippets(Path file, HashMap<String, List<String>> snippetMap) throws IOException {
         List<String> lines = Files.readAllLines(file, StandardCharsets.UTF_8);
-        StringBuilder modifiedLines = this.UpdateSnippets(lines, snippetMap, "```Java", "```", 0, "");
+        StringBuilder modifiedLines = this.updateSnippets(lines, snippetMap, "```Java", "```", 0, "");
 
         if(modifiedLines != null) {
             try (FileWriter modificationWriter = new FileWriter(file.toAbsolutePath().toString(), StandardCharsets.UTF_8)) {
@@ -119,9 +114,9 @@ public class SnippetReplacer {
         }
     }
 
-    public void UpdateSrcSnippets(Path file, HashMap<String, List<String>> snippetMap) throws IOException {
+    public void updateSrcSnippets(Path file, HashMap<String, List<String>> snippetMap) throws IOException {
         List<String> lines = Files.readAllLines(file, StandardCharsets.UTF_8);
-        StringBuilder modifiedLines = this.UpdateSnippets(lines, snippetMap, "<pre>", "</pre>",1, "* ");
+        StringBuilder modifiedLines = this.updateSnippets(lines, snippetMap, "<pre>", "</pre>",1, "* ");
 
         if(modifiedLines != null) {
             try (FileWriter modificationWriter = new FileWriter(file.toAbsolutePath().toString(), StandardCharsets.UTF_8)) {
@@ -132,7 +127,7 @@ public class SnippetReplacer {
         }
     }
 
-    public StringBuilder UpdateSnippets(List<String> lines, HashMap<String, List<String>> snippetMap, String preFence, String postFence, int prefixGroupNum, String additionalLinePrefix){
+    public StringBuilder updateSnippets(List<String> lines, HashMap<String, List<String>> snippetMap, String preFence, String postFence, int prefixGroupNum, String additionalLinePrefix){
         StringBuilder modifiedLines = new StringBuilder();
         boolean inSnippet = false;
         boolean needsAmend = false;
@@ -154,10 +149,10 @@ public class SnippetReplacer {
 
                 // We use this additional prefix because in src snippet cases we need to prespace
                 // for readme snippet cases we DONT need the prespace at all.
-                String linePrefix = this._prefixFunction(end, prefixGroupNum, additionalLinePrefix);
+                String linePrefix = this.prefixFunction(end, prefixGroupNum, additionalLinePrefix);
 
-                for(String snippet: this._respaceLines(newSnippets)){
-                    modifiedSnippets.add(linePrefix + this._escapeString(snippet) + lineSep);
+                for(String snippet: this.respaceLines(newSnippets)){
+                    modifiedSnippets.add(linePrefix + this.escapeString(snippet) + lineSep);
                 }
 
                 modifiedLines.append(linePrefix + preFence + lineSep);
@@ -186,17 +181,17 @@ public class SnippetReplacer {
         }
     }
 
-    public List<VerifyResult> VerifyReadmeSnippets(Path file, HashMap<String, List<String>> snippetMap) throws IOException {
+    public List<VerifyResult> verifyReadmeSnippets(Path file, HashMap<String, List<String>> snippetMap) throws IOException {
         List<String> lines = Files.readAllLines(file, StandardCharsets.UTF_8);
-        return this.VerifySnippets(file, lines, snippetMap, "```Java", "```", 0, "");
+        return this.verifySnippets(file, lines, snippetMap, "```Java", "```", 0, "");
     }
 
-    public List<VerifyResult> VerifySrcSnippets(Path file, HashMap<String, List<String>> snippetMap) throws IOException {
+    public List<VerifyResult> verifySrcSnippets(Path file, HashMap<String, List<String>> snippetMap) throws IOException {
         List<String> lines = Files.readAllLines(file, StandardCharsets.UTF_8);
-        return this.VerifySnippets(file, lines, snippetMap, "<pre>", "</pre>", 1, "* ");
+        return this.verifySnippets(file, lines, snippetMap, "<pre>", "</pre>", 1, "* ");
     }
 
-    public List<VerifyResult> VerifySnippets(Path currentPath, List<String> lines, HashMap<String, List<String>> snippetMap, String preFence, String postFence, int prefixGroupNum, String additionalLinePrefix){
+    public List<VerifyResult> verifySnippets(Path currentPath, List<String> lines, HashMap<String, List<String>> snippetMap, String preFence, String postFence, int prefixGroupNum, String additionalLinePrefix){
         boolean inSnippet = false;
         String lineSep = System.lineSeparator();
         List<String> currentSnippetSet = null;
@@ -218,10 +213,10 @@ public class SnippetReplacer {
 
                 // We use this additional prefix because in src snippet cases we need to prespace
                 // for readme snippet cases we DONT need the prespace at all.
-                String linePrefix = this._prefixFunction(end, prefixGroupNum, additionalLinePrefix);
+                String linePrefix = this.prefixFunction(end, prefixGroupNum, additionalLinePrefix);
 
-                for(String snippet: this._respaceLines(newSnippets)){
-                    modifiedSnippets.add(linePrefix + this._escapeString(snippet) + lineSep);
+                for(String snippet: this.respaceLines(newSnippets)){
+                    modifiedSnippets.add(linePrefix + this.escapeString(snippet) + lineSep);
                 }
 
                 // add the fences
@@ -249,7 +244,7 @@ public class SnippetReplacer {
         return foundIssues;
     }
 
-    public HashMap<String, List<String>> GrepSnippets(List<String> fileContent){
+    public HashMap<String, List<String>> grepSnippets(List<String> fileContent){
         HashMap foundSnippets = new HashMap();
         SnippetDictionary snippetReader = new SnippetDictionary();
         int counter = 0;
@@ -262,17 +257,19 @@ public class SnippetReplacer {
             {
 
                 String id_beginning = begin.group(1);
-                snippetReader.BeginSnippet((id_beginning));
+                snippetReader.beginSnippet((id_beginning));
             }
             else if(end.matches())
             {
                 String id_ending = end.group(1);
-                List<String> snippetContent = snippetReader.FinalizeSnippet((id_ending));
-                foundSnippets.put(id_ending, snippetContent);
+                List<String> snippetContent = snippetReader.finalizeSnippet((id_ending));
+                if(!foundSnippets.containsKey((id_ending))){
+                    foundSnippets.put(id_ending, snippetContent);
+                }
             }
-            else if(snippetReader.IsActive())
+            else if(snippetReader.isActive())
             {
-                snippetReader.ProcessLine(line);
+                snippetReader.processLine(line);
             }
 
             counter++;
@@ -281,16 +278,16 @@ public class SnippetReplacer {
         return foundSnippets;
     }
 
-    public HashMap<String, List<String>> GrepSnippets(File fileWithContent) throws IOException{
+    public HashMap<String, List<String>> grepSnippets(File fileWithContent) throws IOException{
         List<String> lines = Files.readAllLines(fileWithContent.toPath(), StandardCharsets.UTF_8);
-        return this.GrepSnippets(lines);
+        return this.grepSnippets(lines);
     }
 
-    private List<Path> _getPathsFromBaseDir(File baseDir, String glob_pattern){
+    private List<Path> getPathsFromBaseDir(File baseDir, String glob_pattern){
         return new ArrayList<Path>();
     }
 
-    private List<String> _respaceLines(List<String> snippetText){
+    private List<String> respaceLines(List<String> snippetText){
         // get List of all the the leading whitespace in the sample
         // toss out lines that are empty (as they shouldn't mess with the minimum)
         String minWhitespace = null;
@@ -317,7 +314,7 @@ public class SnippetReplacer {
         return modifiedStrings;
     }
 
-    private int _getEndIndex(List<String> lines, int startIndex){
+    private int getEndIndex(List<String> lines, int startIndex){
         for(int i = startIndex; i < lines.size(); i++){
             Matcher end = SNIPPET_CALL_END.matcher(lines.get(i));
             if(end.matches())
@@ -327,7 +324,7 @@ public class SnippetReplacer {
         return -1;
     }
 
-    private String _prefixFunction(Matcher match, int groupNum, String additionalPrefix){
+    private String prefixFunction(Matcher match, int groupNum, String additionalPrefix){
         // if we pass -1 as the matcher groupNum, we don't want any prefix at all
         if(match == null || groupNum < 1) {
             return "";
@@ -337,7 +334,7 @@ public class SnippetReplacer {
         }
     }
 
-    private String _escapeString(String target){
+    private String escapeString(String target){
         if(target != null && target.trim().length() > 0){
             for(String key: this.REPLACEMENT_SET.keySet()){
                 target = target.replace(key, REPLACEMENT_SET.get(key));
@@ -347,7 +344,7 @@ public class SnippetReplacer {
         return target;
     }
 
-    private List<Path> _glob(Path rootFolder, PathMatcher pathMatcher) throws IOException{
+    private List<Path> glob(Path rootFolder, PathMatcher pathMatcher) throws IOException{
         List<Path> locatedPaths = new ArrayList<Path>();
 
         Files.walkFileTree(rootFolder, new SimpleFileVisitor<Path>() {
@@ -369,7 +366,7 @@ public class SnippetReplacer {
         return locatedPaths;
     }
 
-    private List<Path> _globFiles(List<Path> paths, PathMatcher pathMatcher) throws IOException{
+    private List<Path> globFiles(List<Path> paths, PathMatcher pathMatcher) throws IOException{
         List<Path> locatedPaths = new ArrayList<Path>();
 
         for(Path path: paths) {

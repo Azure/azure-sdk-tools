@@ -9,6 +9,7 @@ trigger:
     include:
       - src/dotnet/APIView
       - src/java/apiview-java-processor
+      - packages/python-packages/api-stub-generator
 
 pr:
   branches:
@@ -21,6 +22,7 @@ pr:
     include:
       - src/dotnet/APIView
       - src/java/apiview-java-processor
+      - packages/python-packages/api-stub-generator
 
 variables:
   DotNetCoreVersion: '3.0.100'
@@ -29,6 +31,7 @@ variables:
   TestProjectPath: 'src/dotnet/APIView/APIViewTest/APIViewTest.csproj'
   NodeVersion: '12.x'
   BuildConfiguration: 'Release'
+  PythonParserPackagePath: 'packages/python-packages/api-stub-generator'
 
 stages:
   - stage: 'Main'
@@ -39,6 +42,12 @@ stages:
           vmImage: 'vs2017-win2016'
 
         steps:
+
+          - task: UsePythonVersion@0
+            displayName: 'Use Python 3.6'
+            inputs:
+              versionSpec: 3.6
+
           - task: DotNetCoreInstaller@2
             displayName: 'Use .NET Core sdk $(DotNetCoreVersion)'
             inputs:
@@ -75,6 +84,13 @@ stages:
               DOTNET_CLI_TELEMETRY_OPTOUT: 1
               DOTNET_MULTILEVEL_LOOKUP: 0
 
+          - script: |
+              cd $(Build.SourcesDirectory)/$(PythonParserPackagePath)
+              pip install wheel
+              python setup.py bdist_wheel --dist $(Build.ArtifactStagingDirectory)
+              cd $(Build.SourcesDirectory)
+            displayName: 'Build Python API Parser'
+
           - task: DotNetCoreCLI@2
             displayName: 'Publish site'
             env:
@@ -95,11 +111,21 @@ stages:
               
 
       - job: 'Test'
+        condition: succeededOrFailed()
+
+        dependsOn:
+          - 'Build'
 
         pool:
           vmImage: 'vs2017-win2016'
 
         steps:
+
+          - task: UsePythonVersion@0
+            displayName: 'Use Python 3.6'
+            inputs:
+              versionSpec: 3.6
+
           - task: DotNetCoreInstaller@2
             displayName: 'Use .NET Core sdk $(DotNetCoreVersion)'
             inputs:
@@ -116,6 +142,13 @@ stages:
               projects: '$(TestProjectPath)'
               arguments: --logger trx
               publishTestResults: false
+
+          - script: |
+              cd $(Build.SourcesDirectory)/$(PythonParserPackagePath)
+              pip install tox
+              tox
+              cd $(Build.SourcesDirectory)
+            displayName: 'Test Python package parser'
 
           - task: PublishTestResults@2
             condition: succeededOrFailed()

@@ -111,7 +111,6 @@ stages:
               
 
       - job: 'Test'
-        condition: succeededOrFailed()
 
         dependsOn:
           - 'Build'

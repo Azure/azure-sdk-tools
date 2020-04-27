@@ -48,7 +48,7 @@ public class SnippetReplacerTests {
         String expectedString = Files.readString(expectedOutCome, StandardCharsets.UTF_8);
 
         HashMap<String, List<String>> foundSnippets = testReplacer.grepSnippets(sourceLines);
-        StringBuilder result = testReplacer.updateSnippets(testLines, foundSnippets, "<pre>", "</pre>", 1, "* ");
+        StringBuilder result = testReplacer.updateSnippets(codeForReplacement, testLines, foundSnippets, "<pre>", "</pre>", 1, "* ");
 
         assertTrue(result != null);
         assertTrue(result.toString().equals(expectedString));

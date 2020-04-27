@@ -74,13 +74,13 @@ public class SnippetReplacer {
 
         if(discoveredIssues.size() > 0){
             for(VerifyResult result: discoveredIssues){
-                logger.error(String.format("SnippetId %s needs update in file %s.", result.SnippetWithIssues, Files.readString(result.ReadmeLocation)));
+                logger.error(String.format("SnippetId %s needs update in file %s.", result.SnippetWithIssues, result.ReadmeLocation.toString()));
             }
             throw new MojoExecutionException("Discovered snippets in need of updating. Please run this plugin in update mode and commit the changes.");
         }
     }
 
-    public void runUpdate(File folderToVerify) throws IOException{
+    public void runUpdate(File folderToVerify) throws IOException, MojoExecutionException {
         List<Path> allLocatedJavaFiles = glob(folderToVerify.toPath(), JAVA_GLOB);
         List<Path> snippetSources = globFiles(allLocatedJavaFiles, SAMPLE_PATH_GLOB);
         HashMap<String, List<String>> foundSnippets = new HashMap<String, List<String>>();
@@ -102,9 +102,9 @@ public class SnippetReplacer {
         this.updateReadmeSnippets(readmeInBaseDir.toPath(), foundSnippets);
     }
 
-    public void updateReadmeSnippets(Path file, HashMap<String, List<String>> snippetMap) throws IOException {
+    public void updateReadmeSnippets(Path file, HashMap<String, List<String>> snippetMap) throws IOException, MojoExecutionException {
         List<String> lines = Files.readAllLines(file, StandardCharsets.UTF_8);
-        StringBuilder modifiedLines = this.updateSnippets(lines, snippetMap, "```Java", "```", 0, "");
+        StringBuilder modifiedLines = this.updateSnippets(file, lines, snippetMap, "```Java", "```", 0, "");
 
         if(modifiedLines != null) {
             try (FileWriter modificationWriter = new FileWriter(file.toAbsolutePath().toString(), StandardCharsets.UTF_8)) {
@@ -113,9 +113,9 @@ public class SnippetReplacer {
         }
     }
 
-    public void updateSrcSnippets(Path file, HashMap<String, List<String>> snippetMap) throws IOException {
+    public void updateSrcSnippets(Path file, HashMap<String, List<String>> snippetMap) throws IOException, MojoExecutionException {
         List<String> lines = Files.readAllLines(file, StandardCharsets.UTF_8);
-        StringBuilder modifiedLines = this.updateSnippets(lines, snippetMap, "<pre>", "</pre>",1, "* ");
+        StringBuilder modifiedLines = this.updateSnippets(file, lines, snippetMap, "<pre>", "</pre>",1, "* ");
 
         if(modifiedLines != null) {
             try (FileWriter modificationWriter = new FileWriter(file.toAbsolutePath().toString(), StandardCharsets.UTF_8)) {
@@ -124,7 +124,7 @@ public class SnippetReplacer {
         }
     }
 
-    public StringBuilder updateSnippets(List<String> lines, HashMap<String, List<String>> snippetMap, String preFence, String postFence, int prefixGroupNum, String additionalLinePrefix){
+    public StringBuilder updateSnippets(Path file, List<String> lines, HashMap<String, List<String>> snippetMap, String preFence, String postFence, int prefixGroupNum, String additionalLinePrefix) throws MojoExecutionException {
         StringBuilder modifiedLines = new StringBuilder();
         boolean inSnippet = false;
         boolean needsAmend = false;
@@ -141,7 +141,12 @@ public class SnippetReplacer {
                 inSnippet = true;
             }
             else if(end.matches()){
-                List<String> newSnippets = snippetMap.getOrDefault(end.group(2), new ArrayList<String>());
+                List<String> newSnippets = null;
+                try {
+                    newSnippets = snippetMap.get(end.group(2));
+                } catch (Exception e){
+                    throw new MojoExecutionException(String.format("Unable to locate snippet with Id of %s. Reference in %s", end.group(2), file.toString()));
+                }
                 List<String> modifiedSnippets = new ArrayList<String>();
 
                 // We use this additional prefix because in src snippet cases we need to prespace
@@ -178,17 +183,17 @@ public class SnippetReplacer {
         }
     }
 
-    public List<VerifyResult> verifyReadmeSnippets(Path file, HashMap<String, List<String>> snippetMap) throws IOException {
+    public List<VerifyResult> verifyReadmeSnippets(Path file, HashMap<String, List<String>> snippetMap) throws IOException, MojoExecutionException {
         List<String> lines = Files.readAllLines(file, StandardCharsets.UTF_8);
         return this.verifySnippets(file, lines, snippetMap, "```Java", "```", 0, "");
     }
 
-    public List<VerifyResult> verifySrcSnippets(Path file, HashMap<String, List<String>> snippetMap) throws IOException {
+    public List<VerifyResult> verifySrcSnippets(Path file, HashMap<String, List<String>> snippetMap) throws IOException, MojoExecutionException {
         List<String> lines = Files.readAllLines(file, StandardCharsets.UTF_8);
         return this.verifySnippets(file, lines, snippetMap, "<pre>", "</pre>", 1, "* ");
     }
 
-    public List<VerifyResult> verifySnippets(Path currentPath, List<String> lines, HashMap<String, List<String>> snippetMap, String preFence, String postFence, int prefixGroupNum, String additionalLinePrefix){
+    public List<VerifyResult> verifySnippets(Path currentPath, List<String> lines, HashMap<String, List<String>> snippetMap, String preFence, String postFence, int prefixGroupNum, String additionalLinePrefix) throws MojoExecutionException {
         boolean inSnippet = false;
         String lineSep = System.lineSeparator();
         List<String> currentSnippetSet = null;
@@ -205,7 +210,12 @@ public class SnippetReplacer {
                 currentSnippetSet = new ArrayList<String>();
             }
             else if(end.matches()){
-                List<String> newSnippets = snippetMap.getOrDefault(end.group(2), new ArrayList<String>());
+                List<String> newSnippets;
+                try {
+                    newSnippets = snippetMap.get(end.group(2));
+                } catch (Exception e){
+                    throw new MojoExecutionException(String.format("Unable to locate snippet with Id of %s. Reference in %s", end.group(2), currentPath.toString()));
+                }
                 List<String> modifiedSnippets = new ArrayList<String>();
 
                 // We use this additional prefix because in src snippet cases we need to prespace

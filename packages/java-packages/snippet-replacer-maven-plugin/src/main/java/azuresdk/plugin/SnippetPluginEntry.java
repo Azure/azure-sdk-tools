@@ -25,7 +25,7 @@ public class SnippetPluginEntry
     public void execute()
     {
         try {
-            SnippetReplacer replacer = new SnippetReplacer(mode, targetDir);
+            SnippetReplacer replacer = new SnippetReplacer(mode, targetDir, getLog());
             getLog().info("Completed Execution for Snippet Replacer");
         }
         catch(Exception e){

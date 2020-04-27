@@ -7,6 +7,7 @@ import java.util.*;
 import java.util.regex.*;
 
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.logging.Log;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,20 +37,20 @@ public class SnippetReplacer {
 
     public SnippetReplacer(){}
 
-    public SnippetReplacer(String mode, File folderToVerify) throws MojoExecutionException, IOException {
+    public SnippetReplacer(String mode, File folderToVerify, Log logger) throws MojoExecutionException, IOException {
         switch (mode) {
             case "update":
                 this.runUpdate(folderToVerify);
                 break;
             case "verify":
-                this.runVerification(folderToVerify);
+                this.runVerification(folderToVerify, logger);
                 break;
             default:
                 throw new MojoExecutionException(String.format("Unrecognized snippet-replacer mode: %s.", mode));
         }
     }
 
-    public void runVerification(File folderToVerify) throws IOException, MojoExecutionException{
+    public void runVerification(File folderToVerify, Log logger) throws IOException, MojoExecutionException{
         List<Path> allLocatedJavaFiles = glob(folderToVerify.toPath(), JAVA_GLOB);
         List<Path> snippetSources = globFiles(allLocatedJavaFiles, SAMPLE_PATH_GLOB);
         List<VerifyResult> discoveredIssues = new ArrayList<VerifyResult>();
@@ -73,7 +74,7 @@ public class SnippetReplacer {
 
         if(discoveredIssues.size() > 0){
             for(VerifyResult result: discoveredIssues){
-                System.out.println(String.format("SnippetId %s needs update in file %s.", result.SnippetWithIssues, Files.readString(result.ReadmeLocation)));
+                logger.error(String.format("SnippetId %s needs update in file %s.", result.SnippetWithIssues, Files.readString(result.ReadmeLocation)));
             }
             throw new MojoExecutionException("Discovered snippets in need of updating. Please run this plugin in update mode and commit the changes.");
         }
@@ -357,8 +358,6 @@ public class SnippetReplacer {
             }
         });
 
-        System.out.println("Located Paths:");
-        System.out.println(locatedPaths.size());
         return locatedPaths;
     }
 

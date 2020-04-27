@@ -33,7 +33,7 @@ public class SnippetReplacerTests {
         Path testFile = _getPathToResource("../../project-to-test/basic_src_snippet_parse.txt");
         HashMap<String, List<String>> foundSnippets = new SnippetReplacer().getAllSnippets(new ArrayList<Path>(Arrays.asList(testFile.toAbsolutePath())));
 
-        assertTrue(foundSnippets.size() == 2);
+        assertTrue(foundSnippets.size() == 3);
         assertTrue(foundSnippets.get("com.azure.data.applicationconfig.configurationclient.instantiation").size() == 3);
         assertTrue(foundSnippets.get("com.azure.data.appconfiguration.ConfigurationClient.addConfigurationSetting#String-String-String").size() == 3);
     }
@@ -70,8 +70,14 @@ public class SnippetReplacerTests {
     }
 
     @Test
-    public void emptySnippetWorks(){
+    public void emptySnippetWorks() throws Exception{
+        Path single = _getPathToResource("../../project-to-test/empty_snippet_def.txt");
 
+        List<Path> srcs = new ArrayList<Path>(Arrays.asList(single.toAbsolutePath()));
+        HashMap<String, List<String>> foundSnippets = new SnippetReplacer().getAllSnippets(srcs);
+
+        assertTrue(foundSnippets.keySet().size() == 1);
+        assertTrue(foundSnippets.containsKey("com.azure.data.applicationconfig.configurationclient.testEmpty"));
     }
 
     @Test

@@ -3,11 +3,11 @@ resources:
   repositories:
     - repository: azure-sdk-tools
       type: github
-      name: chidozieononiwu/azure-sdk-tools
+      name: Azure/azure-sdk-tools
       endpoint: azure
     - repository: azure-sdk-build-tools
       type: git
-      name: playground/azure-sdk-build-tools.chononiw
+      name: internal/azure-sdk-build-tools
 
 trigger: none
 
@@ -21,16 +21,24 @@ jobs:
     displayName: Version Repo with Git Tag
 
     steps:
-    - checkout: self
+    - checkout: azure-sdk-tools
     - checkout: azure-sdk-build-tools
 
-    - task: PowerShell@2
-      displayName: 'Verify and Create Tag on Repo'
-      inputs:
-        targetType: filePath
-        filePath: $(Agent.BuildDirectory)/s/azure-sdk-tools/scripts/powershell/version-repo-with-tag.ps1
-        arguments: >
-          -RepoName $(ToolsRepoName) -SourceDir $(Agent.BuildDirectory)/s
-          -CommitSHA $(CommitSHA) -PATForAPI $(GitHubPAT-REPO) -BuildNumber $(Build.BuildNumber)
-        pwsh: true
-      timeoutInMinutes: 5
+    - pwsh: |
+        if ("$(RepoType)" -eq "github")
+        {
+          $PushURL = "https://$(GitHubPAT-REPO)@github.com/$(RepoOrg)/$(RepoName).git"
+          Write-Host $PushURL
+        }
+        else
+        {
+          $PushURL = "https://azure-sdk:$(PAT-FullAccessToAzureRepoSource)@dev.azure.com/azure-sdk/$(ProjectName)/_git/$(RepoName)"
+          Write-Host $PushURL
+        }
+        $tag = "$(RepoName)_$(Build.BuildNumber)"
+        pushd "$(Build.SourcesDirectory)\$(RepoName)"
+        Write-Host "Tagging $(RepoName) with $tag"
+        git -c user.name="azure-sdk" -c user.email="azuresdk@microsoft.com" tag -a $tag -m "Append version tag: $tag to $(RepoName)"
+        git push $PushURL origin/master $tag
+      displayName: Create and Push Version Tag
+      workingDirectory: $(Build.SourcesDirectory)

@@ -2,12 +2,10 @@
 
 Once you have the value of the connection string you can create the configuration client:
 
-<!-- src_embed ./src/samples/java/com/azure/data/appconfiguration/ReadmeSamples.java#L46-L48 -->
-```Java
+```Java com.azure.data.applicationconfig.configurationclient.instantiation
 ConfigurationClient configurationClient = new ConfigurationClientBuilder()
     .connectionString(connectionString)
     .buildClient();
 ```
-<!-- end ./src/samples/java/com/azure/data/appconfiguration/ReadmeSamples.java#L46-L48 -->
 
 or

@@ -27,8 +27,8 @@ public class SnippetReplacer {
 
     private static HashMap<String, String> REPLACEMENT_SET = new HashMap<String, String>(){{
         put("\"", "&quot;");
-        put(">", "&#62;");
-        put("<", "&#60;");
+        put(">", "&gt;");
+        put("<", "&lt;");
         put("@", "{@literal @}");
         put("{", "&#123;");
         put("}", "&#125;");
@@ -139,11 +139,13 @@ public class SnippetReplacer {
             }
             else if(end.matches()){
                 List<String> newSnippets = null;
-                try {
+                if (snippetMap.containsKey(end.group(2))) {
                     newSnippets = snippetMap.get(end.group(2));
-                } catch (Exception e){
+                }
+                else {
                     throw new MojoExecutionException(String.format("Unable to locate snippet with Id of %s. Reference in %s", end.group(2), file.toString()));
                 }
+
                 List<String> modifiedSnippets = new ArrayList<String>();
 
                 // We use this additional prefix because in src snippet cases we need to prespace
@@ -151,7 +153,8 @@ public class SnippetReplacer {
                 String linePrefix = this.prefixFunction(end, prefixGroupNum, additionalLinePrefix);
 
                 for(String snippet: this.respaceLines(newSnippets)){
-                    modifiedSnippets.add(linePrefix + this.escapeString(snippet) + lineSep);
+                    String moddedSnippet = this.escapeString(snippet);
+                    modifiedSnippets.add((moddedSnippet.length() > 0 ? linePrefix : linePrefix.stripTrailing()) + moddedSnippet + lineSep);
                 }
 
                 modifiedLines.append(linePrefix + preFence + lineSep);
@@ -220,7 +223,8 @@ public class SnippetReplacer {
                 String linePrefix = this.prefixFunction(end, prefixGroupNum, additionalLinePrefix);
 
                 for(String snippet: this.respaceLines(newSnippets)){
-                    modifiedSnippets.add(linePrefix + this.escapeString(snippet) + lineSep);
+                    String moddedSnippet = this.escapeString(snippet);
+                    modifiedSnippets.add((moddedSnippet.length() > 0 ? linePrefix : linePrefix.stripTrailing()) + moddedSnippet + lineSep);
                 }
 
                 // add the fences
@@ -230,8 +234,7 @@ public class SnippetReplacer {
                 Collections.sort(modifiedSnippets);
                 Collections.sort(currentSnippetSet);
 
-                if(!modifiedSnippets.equals(currentSnippetSet))
-                {
+                if(!modifiedSnippets.equals(currentSnippetSet)){
                     foundIssues.add(new VerifyResult(currentPath, currentSnippetId));
                 }
 
@@ -356,16 +359,16 @@ public class SnippetReplacer {
 
     private String prefixFunction(Matcher match, int groupNum, String additionalPrefix){
         // if we pass -1 as the matcher groupNum, we don't want any prefix at all
-        if(match == null || groupNum < 1) {
+        if (match == null || groupNum < 1) {
             return "";
         }
-        else{
+        else {
             return match.group(groupNum) + additionalPrefix;
         }
     }
 
     private String escapeString(String target){
-        if(target != null && target.trim().length() > 0){
+        if (target != null && target.trim().length() > 0){
             for(String key: this.REPLACEMENT_SET.keySet()){
                 target = target.replace(key, REPLACEMENT_SET.get(key));
             }
@@ -397,7 +400,7 @@ public class SnippetReplacer {
     private List<Path> globFiles(List<Path> paths, PathMatcher pathMatcher) throws IOException{
         List<Path> locatedPaths = new ArrayList<Path>();
 
-        for(Path path: paths) {
+        for (Path path: paths) {
             if (pathMatcher.matches(path)) {
                 locatedPaths.add(path);
             }

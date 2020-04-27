@@ -1,6 +1,8 @@
 package azuresdk.plugin;
 
 import static org.junit.Assert.*;
+
+import org.apache.maven.plugin.MojoExecutionException;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -40,6 +42,9 @@ public class SnippetReplacerTests {
     public void srcInsertion()
             throws Exception
     {
+        /*
+            Ensures html encoding, empty and populated snippets replacement
+         */
         Path snippetSourceFile = _getPathToResource("../../project-to-test/basic_src_snippet_parse.txt");
         Path codeForReplacement = _getPathToResource("../../project-to-test/basic_src_snippet_insertion_before.txt");
         Path expectedOutCome = _getPathToResource("../../project-to-test/basic_src_snippet_insertion_after.txt");
@@ -70,7 +75,7 @@ public class SnippetReplacerTests {
     }
 
     @Test
-    public void duplicateSnippetsCrashSingleFile(){
+    public void duplicateSnippetsCrashWithSingleFile(){
         try {
             Path single = _getPathToResource("../../project-to-test/duplicate_snippet_src.txt");
 
@@ -83,7 +88,7 @@ public class SnippetReplacerTests {
     }
 
     @Test
-    public void duplicateSnippetsCrashMultipleFiles(){
+    public void duplicateSnippetsCrashWithMultipleFiles(){
         try {
             Path single = _getPathToResource("../../project-to-test/duplicate_snippet_src.txt");
             Path multiple = _getPathToResource("../../project-to-test/duplicate_snippet_src_multiple.txt");
@@ -99,17 +104,16 @@ public class SnippetReplacerTests {
     }
 
     @Test
-    public void snippetsEncodeHTML(){
-
-    }
-
-    @Test
     public void notFoundSnippetCrashes(){
+        try {
+            HashMap<String, List<String>> emptyMap = new HashMap<String, List<String>>();
 
-    }
+            Path codeForReplacement = _getPathToResource("../../project-to-test/basic_src_snippet_insertion_before.txt");
+            List<String> testLines = Files.readAllLines(codeForReplacement, StandardCharsets.UTF_8);
 
-    @Test
-    public void duplicateSnippetCrashes(){
-
+            StringBuilder result = new SnippetReplacer().updateSnippets(codeForReplacement, testLines, emptyMap, "<pre>", "</pre>", 1, "* ");
+        } catch (Exception e){
+            assertTrue(e instanceof MojoExecutionException);
+        }
     }
 }

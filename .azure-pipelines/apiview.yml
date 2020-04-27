@@ -77,19 +77,19 @@ stages:
               mavenPomFile: 'src/java/apiview-java-processor/pom.xml'
               goals: 'clean package'
 
+          - script: |
+              cd $(Build.SourcesDirectory)/$(PythonParserPackagePath)
+              pip install wheel
+              python setup.py bdist_wheel
+              cd $(Build.SourcesDirectory)
+            displayName: 'Build Python API Parser'
+
           - script: 'dotnet build $(WebProjectPath) -warnaserror'
             displayName: 'Build and Package'
             env:
               DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
               DOTNET_CLI_TELEMETRY_OPTOUT: 1
               DOTNET_MULTILEVEL_LOOKUP: 0
-
-          - script: |
-              cd $(Build.SourcesDirectory)/$(PythonParserPackagePath)
-              pip install wheel
-              python setup.py bdist_wheel --dist $(Build.ArtifactStagingDirectory)
-              cd $(Build.SourcesDirectory)
-            displayName: 'Build Python API Parser'
 
           - task: DotNetCoreCLI@2
             displayName: 'Publish site'

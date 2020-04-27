@@ -3,6 +3,7 @@ package azuresdk.plugin;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -70,12 +71,31 @@ public class SnippetReplacerTests {
 
     @Test
     public void duplicateSnippetsCrashSingleFile(){
+        try {
+            Path single = _getPathToResource("../../project-to-test/duplicate_snippet_src.txt");
 
+            List<Path> srcs = new ArrayList<Path>(Arrays.asList(single.toAbsolutePath()));
+            HashMap<String, List<String>> foundSnippets = new SnippetReplacer().getAllSnippets(srcs);
+        } catch (Exception e){
+            // check for snippet id in string
+            assertTrue(e.toString().contains("com.azure.data.applicationconfig.configurationclient.instantiation"));
+        }
     }
 
     @Test
     public void duplicateSnippetsCrashMultipleFiles(){
+        try {
+            Path single = _getPathToResource("../../project-to-test/duplicate_snippet_src.txt");
+            Path multiple = _getPathToResource("../../project-to-test/duplicate_snippet_src_multiple.txt");
 
+            List<Path> srcs = new ArrayList<Path>(Arrays.asList(single.toAbsolutePath(), multiple.toAbsolutePath()));
+            HashMap<String, List<String>> foundSnippets = new SnippetReplacer().getAllSnippets(srcs);
+        } catch (Exception e){
+            // check for snippet id in string
+            assertTrue(e.toString().contains("com.azure.data.applicationconfig.configurationclient.instantiation"));
+            // should be one duplicate message from each file
+            assertTrue((e.toString().split("Duplicate snippetId", -1).length - 1) == 2);
+        }
     }
 
     @Test

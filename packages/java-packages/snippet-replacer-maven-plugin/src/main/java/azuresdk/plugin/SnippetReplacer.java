@@ -6,12 +6,14 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.regex.*;
 
+import com.google.common.base.Verify;
 import org.apache.maven.plugin.Mojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.stream.Collectors;
 
 public class SnippetReplacer {
     private final static Pattern SNIPPET_DEF_BEGIN = Pattern.compile("\\s*\\/\\/\\s*BEGIN\\:\\s+([a-zA-Z0-9\\.\\#\\-\\_]*)\\s*");
@@ -246,66 +248,73 @@ public class SnippetReplacer {
         return foundIssues;
     }
 
-    public HashMap<String, List<String>> grepSnippets(Path sourceFile, List<String> fileContent) throws MojoExecutionException {
-        HashMap foundSnippets = new HashMap();
-        SnippetDictionary snippetReader = new SnippetDictionary();
-        int counter = 0;
-
-        for(String line: fileContent){
-            Matcher begin = SNIPPET_DEF_BEGIN.matcher(line);
-            Matcher end = SNIPPET_DEF_END.matcher(line);
-
-            if(begin.matches())
-            {
-
-                String id_beginning = begin.group(1);
-                snippetReader.beginSnippet((id_beginning));
-            }
-            else if(end.matches())
-            {
-                String id_ending = end.group(1);
-                List<String> snippetContent = snippetReader.finalizeSnippet((id_ending));
-                if(!foundSnippets.containsKey((id_ending))){
-                    foundSnippets.put(id_ending, snippetContent);
-                }
-                else{
-                    throw new MojoExecutionException(String.format("Duplicate snippet Id %s discovered in in file %s", id_ending,sourceFile.toString()));
-                }
-            }
-            else if(snippetReader.isActive())
-            {
-                snippetReader.processLine(line);
-            }
-
-            counter++;
-        }
-
-        return foundSnippets;
-    }
-
     public HashMap<String, List<String>> getAllSnippets(List<Path> snippetSources) throws IOException, MojoExecutionException {
-        HashMap<String, List<String>> foundSnippets = new HashMap<String, List<String>>();
+        HashMap<String, List<String>> locatedSnippets = new HashMap<String, List<String>>();
+        List<VerifyResult> detectedIssues = new ArrayList<VerifyResult>();
 
         for(Path samplePath: snippetSources){
-            HashMap<String, List<String>> tempSnippetMap = this.grepSnippets(samplePath);
+            List<String> fileContent = Files.readAllLines(samplePath, StandardCharsets.UTF_8);
+            HashMap<String, List<String>> tempSnippetMap = new HashMap<String, List<String>>();
+            SnippetDictionary snippetReader = new SnippetDictionary();
+            int counter = 0;
+
+            for(String line: fileContent){
+                Matcher begin = SNIPPET_DEF_BEGIN.matcher(line);
+                Matcher end = SNIPPET_DEF_END.matcher(line);
+
+                if(begin.matches())
+                {
+
+                    String id_beginning = begin.group(1);
+                    snippetReader.beginSnippet((id_beginning));
+                }
+                else if(end.matches())
+                {
+                    String id_ending = end.group(1);
+                    List<String> snippetContent = snippetReader.finalizeSnippet((id_ending));
+                    if(!tempSnippetMap.containsKey((id_ending))){
+                        tempSnippetMap.put(id_ending, snippetContent);
+                    }
+                    else{
+                        // detect duplicate in file
+                        detectedIssues.add(new VerifyResult(samplePath, id_ending));
+                    }
+                }
+                else if(snippetReader.isActive())
+                {
+                    snippetReader.processLine(line);
+                }
+
+                counter++;
+            }
 
             // we need to examine them individually, as we want to get a complete list of all the duplicates in a run
             for(String snippetId: tempSnippetMap.keySet()){
-                if(!foundSnippets.containsKey(snippetId)){
-                    foundSnippets.put(snippetId, tempSnippetMap.get(snippetId));
+                if(!locatedSnippets.containsKey(snippetId)){
+                    locatedSnippets.put(snippetId, tempSnippetMap.get(snippetId));
                 }
                 else {
-                    throw new MojoExecutionException(String.format("Duplicate snippet Id %s discovered in in file %s", snippetId, samplePath.toString()));
+                    // detect duplicate across multiple files
+                    detectedIssues.add(new VerifyResult(samplePath, snippetId));
                 }
             }
         };
 
-        return foundSnippets;
+        if(detectedIssues.size() > 0){
+            throw new MojoExecutionException("Duplicate Snippet Definitions Detected. " + System.lineSeparator() + this.getErrorString(detectedIssues));
+        }
+
+        return locatedSnippets;
     }
 
-    public HashMap<String, List<String>> grepSnippets(Path fileWithContent) throws IOException, MojoExecutionException {
-        List<String> lines = Files.readAllLines(fileWithContent, StandardCharsets.UTF_8);
-        return this.grepSnippets(fileWithContent, lines);
+    private String getErrorString(List<VerifyResult> errors){
+        StringBuilder results = new StringBuilder();
+
+        for(VerifyResult result: errors){
+            results.append(String.format("Duplicate snippetId %s detected in %s.", result.SnippetWithIssues, result.ReadmeLocation.toString()) + System.lineSeparator());
+        }
+
+        return results.toString();
     }
 
     private List<String> respaceLines(List<String> snippetText){

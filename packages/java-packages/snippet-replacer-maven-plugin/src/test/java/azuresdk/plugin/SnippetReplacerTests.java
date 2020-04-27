@@ -6,6 +6,8 @@ import org.junit.Test;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -26,7 +28,7 @@ public class SnippetReplacerTests {
             throws Exception
     {
         Path testFile = _getPathToResource("../../project-to-test/basic_src_snippet_parse.txt");
-        HashMap<String, List<String>> foundSnippets = new SnippetReplacer().grepSnippets(testFile);
+        HashMap<String, List<String>> foundSnippets = new SnippetReplacer().getAllSnippets(new ArrayList<Path>(Arrays.asList(testFile.toAbsolutePath())));
 
         assertTrue(foundSnippets.size() == 2);
         assertTrue(foundSnippets.get("com.azure.data.applicationconfig.configurationclient.instantiation").size() == 3);
@@ -44,7 +46,7 @@ public class SnippetReplacerTests {
         List<String> testLines = Files.readAllLines(codeForReplacement, StandardCharsets.UTF_8);
         String expectedString = Files.readString(expectedOutCome, StandardCharsets.UTF_8);
 
-        HashMap<String, List<String>> foundSnippets = testReplacer.grepSnippets(snippetSourceFile);
+        HashMap<String, List<String>> foundSnippets = testReplacer.getAllSnippets(new ArrayList<Path>(Arrays.asList(snippetSourceFile.toAbsolutePath())));
         StringBuilder result = testReplacer.updateSnippets(codeForReplacement, testLines, foundSnippets, "<pre>", "</pre>", 1, "* ");
 
         assertTrue(result != null);
@@ -63,6 +65,16 @@ public class SnippetReplacerTests {
 
     @Test
     public void emptySnippetWorks(){
+
+    }
+
+    @Test
+    public void duplicateSnippetsCrashSingleFile(){
+
+    }
+
+    @Test
+    public void duplicateSnippetsCrashMultipleFiles(){
 
     }
 

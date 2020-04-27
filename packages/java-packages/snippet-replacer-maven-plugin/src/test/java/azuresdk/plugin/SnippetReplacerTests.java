@@ -26,9 +26,7 @@ public class SnippetReplacerTests {
             throws Exception
     {
         Path testFile = _getPathToResource("../../project-to-test/basic_src_snippet_parse.txt");
-
-        List<String> lines = Files.readAllLines(testFile, StandardCharsets.UTF_8);
-        HashMap<String, List<String>> foundSnippets = new SnippetReplacer().grepSnippets(lines);
+        HashMap<String, List<String>> foundSnippets = new SnippetReplacer().grepSnippets(testFile);
 
         assertTrue(foundSnippets.size() == 2);
         assertTrue(foundSnippets.get("com.azure.data.applicationconfig.configurationclient.instantiation").size() == 3);
@@ -43,11 +41,10 @@ public class SnippetReplacerTests {
         Path codeForReplacement = _getPathToResource("../../project-to-test/basic_src_snippet_insertion_before.txt");
         Path expectedOutCome = _getPathToResource("../../project-to-test/basic_src_snippet_insertion_after.txt");
         SnippetReplacer testReplacer =  new SnippetReplacer();
-        List<String> sourceLines = Files.readAllLines(snippetSourceFile, StandardCharsets.UTF_8);
         List<String> testLines = Files.readAllLines(codeForReplacement, StandardCharsets.UTF_8);
         String expectedString = Files.readString(expectedOutCome, StandardCharsets.UTF_8);
 
-        HashMap<String, List<String>> foundSnippets = testReplacer.grepSnippets(sourceLines);
+        HashMap<String, List<String>> foundSnippets = testReplacer.grepSnippets(snippetSourceFile);
         StringBuilder result = testReplacer.updateSnippets(codeForReplacement, testLines, foundSnippets, "<pre>", "</pre>", 1, "* ");
 
         assertTrue(result != null);

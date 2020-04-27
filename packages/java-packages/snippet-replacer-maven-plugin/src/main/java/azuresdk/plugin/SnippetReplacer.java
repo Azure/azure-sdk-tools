@@ -6,6 +6,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.regex.*;
 
+import org.apache.maven.plugin.Mojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
 
@@ -57,10 +58,7 @@ public class SnippetReplacer {
         HashMap<String, List<String>> foundSnippets = new HashMap<String, List<String>>();
 
         // scan the sample files for all the snippet files
-        for(Path samplePath: snippetSources){
-            List<String> sourceLines = Files.readAllLines(samplePath, StandardCharsets.UTF_8);
-            foundSnippets.putAll(this.grepSnippets(sourceLines));
-        };
+        foundSnippets = this.getAllSnippets(snippetSources);
 
         // walk across all the java files, run UpdateSrcSnippets
         for(Path sourcePath: allLocatedJavaFiles){
@@ -86,10 +84,7 @@ public class SnippetReplacer {
         HashMap<String, List<String>> foundSnippets = new HashMap<String, List<String>>();
 
         // scan the sample files for all the snippet files
-        for(Path samplePath: snippetSources){
-            List<String> sourceLines = Files.readAllLines(samplePath, StandardCharsets.UTF_8);
-            foundSnippets.putAll(this.grepSnippets(sourceLines));
-        };
+        foundSnippets = this.getAllSnippets(snippetSources);
 
         // walk across all the java files, run UpdateSrcSnippets
         for(Path sourcePath: allLocatedJavaFiles){
@@ -251,7 +246,7 @@ public class SnippetReplacer {
         return foundIssues;
     }
 
-    public HashMap<String, List<String>> grepSnippets(List<String> fileContent){
+    public HashMap<String, List<String>> grepSnippets(Path sourceFile, List<String> fileContent) throws MojoExecutionException {
         HashMap foundSnippets = new HashMap();
         SnippetDictionary snippetReader = new SnippetDictionary();
         int counter = 0;
@@ -273,6 +268,9 @@ public class SnippetReplacer {
                 if(!foundSnippets.containsKey((id_ending))){
                     foundSnippets.put(id_ending, snippetContent);
                 }
+                else{
+                    throw new MojoExecutionException(String.format("Duplicate snippet Id %s discovered in in file %s", id_ending,sourceFile.toString()));
+                }
             }
             else if(snippetReader.isActive())
             {
@@ -285,13 +283,29 @@ public class SnippetReplacer {
         return foundSnippets;
     }
 
-    public HashMap<String, List<String>> grepSnippets(File fileWithContent) throws IOException{
-        List<String> lines = Files.readAllLines(fileWithContent.toPath(), StandardCharsets.UTF_8);
-        return this.grepSnippets(lines);
+    public HashMap<String, List<String>> getAllSnippets(List<Path> snippetSources) throws IOException, MojoExecutionException {
+        HashMap<String, List<String>> foundSnippets = new HashMap<String, List<String>>();
+
+        for(Path samplePath: snippetSources){
+            HashMap<String, List<String>> tempSnippetMap = this.grepSnippets(samplePath);
+
+            // we need to examine them individually, as we want to get a complete list of all the duplicates in a run
+            for(String snippetId: tempSnippetMap.keySet()){
+                if(!foundSnippets.containsKey(snippetId)){
+                    foundSnippets.put(snippetId, tempSnippetMap.get(snippetId));
+                }
+                else {
+                    throw new MojoExecutionException(String.format("Duplicate snippet Id %s discovered in in file %s", snippetId, samplePath.toString()));
+                }
+            }
+        };
+
+        return foundSnippets;
     }
 
-    private List<Path> getPathsFromBaseDir(File baseDir, String glob_pattern){
-        return new ArrayList<Path>();
+    public HashMap<String, List<String>> grepSnippets(Path fileWithContent) throws IOException, MojoExecutionException {
+        List<String> lines = Files.readAllLines(fileWithContent, StandardCharsets.UTF_8);
+        return this.grepSnippets(fileWithContent, lines);
     }
 
     private List<String> respaceLines(List<String> snippetText){

@@ -1,14 +1,4 @@
-# Tag the tools repos (azure-sdk-tools or azure-sdk-build-tools) to create some form of versioning.
-resources:
-  repositories:
-    - repository: azure-sdk-tools
-      type: github
-      name: Azure/azure-sdk-tools
-      endpoint: azure
-    - repository: azure-sdk-build-tools
-      type: git
-      name: internal/azure-sdk-build-tools
-
+# Tag the (azure-sdk-tools) repo to create some form of versioning.
 trigger: none
 
 pr: none
@@ -18,27 +8,14 @@ pool:
 
 jobs:
   - job: TagToolsRepo
-    displayName: Version Repo with Git Tag
+    displayName: Version azure-sdk-tools with Git Tag
 
     steps:
-    - checkout: azure-sdk-tools
-    - checkout: azure-sdk-build-tools
-
     - pwsh: |
-        if ("$(RepoType)" -eq "github")
-        {
-          $PushURL = "https://$(GitHubPAT-REPO)@github.com/$(RepoOrg)/$(RepoName).git"
-          Write-Host $PushURL
-        }
-        else
-        {
-          $PushURL = "https://azure-sdk:$(PAT-FullAccessToAzureRepoSource)@dev.azure.com/azure-sdk/$(ProjectName)/_git/$(RepoName)"
-          Write-Host $PushURL
-        }
-        $tag = "$(RepoName)_$(Build.BuildNumber)"
-        pushd "$(Build.SourcesDirectory)\$(RepoName)"
-        Write-Host "Tagging $(RepoName) with $tag"
-        git -c user.name="azure-sdk" -c user.email="azuresdk@microsoft.com" tag -a $tag -m "Append version tag: $tag to $(RepoName)"
-        git push $PushURL origin/master $tag
+        $PushURL = "$(Build.Repository.Uri)".Replace("https://", "https://$(azuresdk-github-pat)@") + ".git"
+        $Tag = "$(Build.Repository.Name)".SubString("$(Build.Repository.Name)".IndexOf('/') + 1) + "_$(Build.BuildNumber)"
+        Write-Host "Tagging Repo with $Tag"
+        git -c user.name="azure-sdk" -c user.email="azuresdk@microsoft.com" tag -a $tag -m "Release tools version $Tag"
+        git push $PushURL $tag
       displayName: Create and Push Version Tag
       workingDirectory: $(Build.SourcesDirectory)

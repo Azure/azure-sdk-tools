@@ -10,3 +10,6 @@ ConfigurationClient configurationClient = new ConfigurationClientBuilder()
 ```
 
 or
+
+``` Java com.azure.core.http.rest.pagedflux.instantiation
+```

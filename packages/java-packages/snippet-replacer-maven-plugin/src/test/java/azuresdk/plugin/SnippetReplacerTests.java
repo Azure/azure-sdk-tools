@@ -27,7 +27,7 @@ public class SnippetReplacerTests {
     }
 
     @Test
-    public void srcParse()
+    public void testRrcParse()
             throws Exception
     {
         Path testFile = _getPathToResource("../../project-to-test/basic_src_snippet_parse.txt");
@@ -39,7 +39,7 @@ public class SnippetReplacerTests {
     }
 
     @Test
-    public void srcInsertion()
+    public void testSrcInsertion()
             throws Exception
     {
         /*
@@ -60,12 +60,17 @@ public class SnippetReplacerTests {
     }
 
     @Test
-    public void readmeParse(){
+    public void testReadmeInsertion(){
 
     }
 
     @Test
-    public void readmeInsertion(){
+    public void testReadmeVerification(){
+
+    }
+
+    @Test
+    public void testSrcVerification(){
 
     }
 

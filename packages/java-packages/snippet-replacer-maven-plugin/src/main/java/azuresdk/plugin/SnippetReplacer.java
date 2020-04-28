@@ -101,7 +101,7 @@ public class SnippetReplacer {
 
     public void updateReadmeSnippets(Path file, HashMap<String, List<String>> snippetMap) throws IOException, MojoExecutionException {
         List<String> lines = Files.readAllLines(file, StandardCharsets.UTF_8);
-        StringBuilder modifiedLines = this.updateSnippets(file, lines, snippetMap, "```Java", "```", 0, "");
+        StringBuilder modifiedLines = this.updateSnippets(file, lines, snippetMap, "", "", 0, "");
 
         if (modifiedLines != null) {
             try (FileWriter modificationWriter = new FileWriter(file.toAbsolutePath().toString(), StandardCharsets.UTF_8)) {
@@ -157,9 +157,16 @@ public class SnippetReplacer {
                     modifiedSnippets.add((moddedSnippet.length() > 0 ? linePrefix : linePrefix.stripTrailing()) + moddedSnippet + lineSep);
                 }
 
-                modifiedLines.append(linePrefix + preFence + lineSep);
+                if (preFence != null && preFence.length() > 0) {
+                    modifiedLines.append(linePrefix + preFence + lineSep);
+                }
+
                 modifiedLines.append(String.join("", modifiedSnippets));
-                modifiedLines.append(linePrefix + postFence + lineSep);
+
+                if (postFence != null && postFence.length() > 0) {
+                    modifiedLines.append(linePrefix + postFence + lineSep);
+                }
+
                 modifiedLines.append(line + lineSep);
                 needsAmend = true;
                 inSnippet = false;
@@ -228,10 +235,6 @@ public class SnippetReplacer {
                     modifiedSnippets.add((moddedSnippet.length() > 0 ? linePrefix : linePrefix.stripTrailing()) + moddedSnippet + lineSep);
                 }
 
-                // add the fences
-                modifiedSnippets.add(0, linePrefix + preFence + lineSep);
-                modifiedSnippets.add(linePrefix + postFence + lineSep);
-
                 Collections.sort(modifiedSnippets);
                 Collections.sort(currentSnippetSet);
 
@@ -244,7 +247,9 @@ public class SnippetReplacer {
             }
             else {
                 if (inSnippet) {
-                    currentSnippetSet.add(line + lineSep);
+                    // need to ensure not to grab the pre or post fence
+                    if (!line.contains(preFence) && !line.contains(postFence))
+                        currentSnippetSet.add(line + lineSep);
                 }
             }
         }

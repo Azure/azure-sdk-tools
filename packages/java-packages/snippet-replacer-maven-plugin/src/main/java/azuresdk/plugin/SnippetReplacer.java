@@ -6,21 +6,20 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.regex.*;
 
-import com.google.common.base.Verify;
-import org.apache.maven.plugin.Mojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.stream.Collectors;
 
 public class SnippetReplacer {
-    private final static Pattern SNIPPET_DEF_BEGIN = Pattern.compile("\\s*\\/\\/\\s*BEGIN\\:\\s+([a-zA-Z0-9\\.\\#\\-\\_]*)\\s*");
-    private final static Pattern SNIPPET_DEF_END = Pattern.compile("\\s*\\/\\/\\s*END\\:\\s+([a-zA-Z0-9\\.\\#\\-\\_]*)\\s*");
-    private final static Pattern SNIPPET_CALL_BEGIN = Pattern.compile("(\\s*)\\*?\\s*<!--\\s+src_embed\\s+([a-zA-Z0-9\\.\\#\\-\\_]*)\\s*-->");
-    private final static Pattern SNIPPET_CALL_END = Pattern.compile("(\\s*)\\*?\\s*<!--\\s+end\\s+([a-zA-Z0-9\\.\\#\\-\\_]*)\\s*-->");
-    private final static Pattern WHITESPACE_EXTRACTION = Pattern.compile("(\\s*)(.*)");
+    public final static Pattern SNIPPET_DEF_BEGIN = Pattern.compile("\\s*\\/\\/\\s*BEGIN\\:\\s+([a-zA-Z0-9\\.\\#\\-\\_]*)\\s*");
+    public final static Pattern SNIPPET_DEF_END = Pattern.compile("\\s*\\/\\/\\s*END\\:\\s+([a-zA-Z0-9\\.\\#\\-\\_]*)\\s*");
+    public final static Pattern SNIPPET_SRC_CALL_BEGIN = Pattern.compile("(\\s*)\\*?\\s*<!--\\s+src_embed\\s+([a-zA-Z0-9\\.\\#\\-\\_]*)\\s*-->");
+    public final static Pattern SNIPPET_SRC_CALL_END = Pattern.compile("(\\s*)\\*?\\s*<!--\\s+end\\s+([a-zA-Z0-9\\.\\#\\-\\_]*)\\s*-->");
+    public final static Pattern SNIPPET_README_CALL_BEGIN = Pattern.compile("```(\\s*)?Java\\s+([a-zA-Z0-9\\.\\#\\-\\_]*)\\s*");
+    public final static Pattern SNIPPET_README_CALL_END = Pattern.compile("```");
+    public final static Pattern WHITESPACE_EXTRACTION = Pattern.compile("(\\s*)(.*)");
 
     private static PathMatcher SAMPLE_PATH_GLOB = FileSystems.getDefault().getPathMatcher("glob:**/src/samples/java/**/*.java");
     private static PathMatcher JAVA_GLOB = FileSystems.getDefault().getPathMatcher("glob:**/*.java");
@@ -101,7 +100,7 @@ public class SnippetReplacer {
 
     public void updateReadmeSnippets(Path file, HashMap<String, List<String>> snippetMap) throws IOException, MojoExecutionException {
         List<String> lines = Files.readAllLines(file, StandardCharsets.UTF_8);
-        StringBuilder modifiedLines = this.updateSnippets(file, lines, snippetMap, "", "", 0, "");
+        StringBuilder modifiedLines = this.updateSnippets(file, lines, SNIPPET_README_CALL_BEGIN, SNIPPET_README_CALL_END, snippetMap,"", "", 0, "", true);
 
         if (modifiedLines != null) {
             try (FileWriter modificationWriter = new FileWriter(file.toAbsolutePath().toString(), StandardCharsets.UTF_8)) {
@@ -112,7 +111,7 @@ public class SnippetReplacer {
 
     public void updateSrcSnippets(Path file, HashMap<String, List<String>> snippetMap) throws IOException, MojoExecutionException {
         List<String> lines = Files.readAllLines(file, StandardCharsets.UTF_8);
-        StringBuilder modifiedLines = this.updateSnippets(file, lines, snippetMap, "<pre>", "</pre>",1, "* ");
+        StringBuilder modifiedLines = this.updateSnippets(file, lines, SNIPPET_SRC_CALL_BEGIN, SNIPPET_SRC_CALL_END, snippetMap, "<pre>", "</pre>",1, "* ", false);
 
         if (modifiedLines != null) {
             try (FileWriter modificationWriter = new FileWriter(file.toAbsolutePath().toString(), StandardCharsets.UTF_8)) {
@@ -121,16 +120,18 @@ public class SnippetReplacer {
         }
     }
 
-    public StringBuilder updateSnippets(Path file, List<String> lines, HashMap<String, List<String>> snippetMap, String preFence, String postFence, int prefixGroupNum, String additionalLinePrefix) throws MojoExecutionException {
+    public StringBuilder updateSnippets(Path file, List<String> lines, Pattern beginRegex, Pattern endRegex, HashMap<String, List<String>> snippetMap,
+        String preFence, String postFence, int prefixGroupNum, String additionalLinePrefix, boolean disableEscape) throws MojoExecutionException {
+
         StringBuilder modifiedLines = new StringBuilder();
         boolean inSnippet = false;
         boolean needsAmend = false;
         String lineSep = System.lineSeparator();
+        String currentSnippetId = "";
 
         for (String line : lines) {
-            Matcher begin = SNIPPET_CALL_BEGIN.matcher(line);
-            Matcher end = SNIPPET_CALL_END.matcher(line);
-            String currentSnippetId = "";
+            Matcher begin = beginRegex.matcher(line);
+            Matcher end = endRegex.matcher(line);
 
             if (begin.matches()) {
                 modifiedLines.append(line + lineSep);
@@ -138,38 +139,39 @@ public class SnippetReplacer {
                 inSnippet = true;
             }
             else if (end.matches()) {
-                List<String> newSnippets = null;
-                if (snippetMap.containsKey(end.group(2))) {
-                    newSnippets = snippetMap.get(end.group(2));
+                if (inSnippet) {
+                    List<String> newSnippets = null;
+                    if (snippetMap.containsKey(currentSnippetId)) {
+                        newSnippets = snippetMap.get(currentSnippetId);
+                    } else {
+                        throw new MojoExecutionException(String.format("Unable to locate snippet with Id of %s. Reference in %s", currentSnippetId, file.toString()));
+                    }
+
+                    List<String> modifiedSnippets = new ArrayList<>();
+
+                    // We use this additional prefix because in src snippet cases we need to prespace
+                    // for readme snippet cases we DONT need the prespace at all.
+                    String linePrefix = this.prefixFunction(end, prefixGroupNum, additionalLinePrefix);
+
+                    for (String snippet : this.respaceLines(newSnippets)) {
+                        String moddedSnippet = disableEscape ? snippet : this.escapeString(snippet);
+                        modifiedSnippets.add((moddedSnippet.length() > 0 ? linePrefix : linePrefix.stripTrailing()) + moddedSnippet + lineSep);
+                    }
+
+                    if (preFence != null && preFence.length() > 0) {
+                        modifiedLines.append(linePrefix + preFence + lineSep);
+                    }
+
+                    modifiedLines.append(String.join("", modifiedSnippets));
+
+                    if (postFence != null && postFence.length() > 0) {
+                        modifiedLines.append(linePrefix + postFence + lineSep);
+                    }
+
+                    modifiedLines.append(line + lineSep);
+                    needsAmend = true;
+                    inSnippet = false;
                 }
-                else {
-                    throw new MojoExecutionException(String.format("Unable to locate snippet with Id of %s. Reference in %s", end.group(2), file.toString()));
-                }
-
-                List<String> modifiedSnippets = new ArrayList<>();
-
-                // We use this additional prefix because in src snippet cases we need to prespace
-                // for readme snippet cases we DONT need the prespace at all.
-                String linePrefix = this.prefixFunction(end, prefixGroupNum, additionalLinePrefix);
-
-                for (String snippet : this.respaceLines(newSnippets)) {
-                    String moddedSnippet = this.escapeString(snippet);
-                    modifiedSnippets.add((moddedSnippet.length() > 0 ? linePrefix : linePrefix.stripTrailing()) + moddedSnippet + lineSep);
-                }
-
-                if (preFence != null && preFence.length() > 0) {
-                    modifiedLines.append(linePrefix + preFence + lineSep);
-                }
-
-                modifiedLines.append(String.join("", modifiedSnippets));
-
-                if (postFence != null && postFence.length() > 0) {
-                    modifiedLines.append(linePrefix + postFence + lineSep);
-                }
-
-                modifiedLines.append(line + lineSep);
-                needsAmend = true;
-                inSnippet = false;
             }
             else {
                 if (inSnippet) {
@@ -192,24 +194,27 @@ public class SnippetReplacer {
 
     public List<VerifyResult> verifyReadmeSnippets(Path file, HashMap<String, List<String>> snippetMap) throws IOException, MojoExecutionException {
         List<String> lines = Files.readAllLines(file, StandardCharsets.UTF_8);
-        return this.verifySnippets(file, lines, snippetMap, "```Java", "```", 0, "");
+        return this.verifySnippets(file, lines, SNIPPET_README_CALL_BEGIN, SNIPPET_README_CALL_END, snippetMap, "", "", 0, "", true);
     }
 
     public List<VerifyResult> verifySrcSnippets(Path file, HashMap<String, List<String>> snippetMap) throws IOException, MojoExecutionException {
         List<String> lines = Files.readAllLines(file, StandardCharsets.UTF_8);
-        return this.verifySnippets(file, lines, snippetMap, "<pre>", "</pre>", 1, "* ");
+        return this.verifySnippets(file, lines, SNIPPET_SRC_CALL_BEGIN, SNIPPET_SRC_CALL_END, snippetMap, "<pre>", "</pre>", 1, "* ", false);
     }
 
-    public List<VerifyResult> verifySnippets(Path file, List<String> lines, HashMap<String, List<String>> snippetMap, String preFence, String postFence, int prefixGroupNum, String additionalLinePrefix) throws MojoExecutionException {
+    public List<VerifyResult> verifySnippets(Path file, List<String> lines, Pattern beginRegex, Pattern endRegex,
+        HashMap<String, List<String>> snippetMap, String preFence, String postFence, int prefixGroupNum,
+        String additionalLinePrefix, boolean disableEscape) throws MojoExecutionException {
+
         boolean inSnippet = false;
         String lineSep = System.lineSeparator();
         List<String> currentSnippetSet = null;
         List<VerifyResult> foundIssues = new ArrayList<>();
+        String currentSnippetId = "";
 
         for (String line : lines) {
-            Matcher begin = SNIPPET_CALL_BEGIN.matcher(line);
-            Matcher end = SNIPPET_CALL_END.matcher(line);
-            String currentSnippetId = "";
+            Matcher begin = beginRegex.matcher(line);
+            Matcher end = endRegex.matcher(line);
 
             if (begin.matches()) {
                 currentSnippetId = begin.group(2);
@@ -217,39 +222,45 @@ public class SnippetReplacer {
                 currentSnippetSet = new ArrayList<>();
             }
             else if (end.matches()) {
-                List<String> newSnippets;
-                if (snippetMap.containsKey(end.group(2))) {
-                    newSnippets = snippetMap.get(end.group(2));
+                if (inSnippet) {
+                    List<String> newSnippets;
+                    if (snippetMap.containsKey(currentSnippetId)) {
+                        newSnippets = snippetMap.get(currentSnippetId);
+                    } else {
+                        throw new MojoExecutionException(String.format("Unable to locate snippet with Id of %s. Reference in %s", currentSnippetId, file.toString()));
+                    }
+                    List<String> modifiedSnippets = new ArrayList<>();
+
+                    // We use this additional prefix because in src snippet cases we need to prespace
+                    // for readme snippet cases we DONT need the prespace at all.
+                    String linePrefix = this.prefixFunction(end, prefixGroupNum, additionalLinePrefix);
+
+                    for (String snippet : this.respaceLines(newSnippets)) {
+                        String moddedSnippet = disableEscape ? snippet : this.escapeString(snippet);
+                        modifiedSnippets.add((moddedSnippet.length() > 0 ? linePrefix : linePrefix.stripTrailing()) + moddedSnippet + lineSep);
+                    }
+
+                    Collections.sort(modifiedSnippets);
+                    Collections.sort(currentSnippetSet);
+
+                    if (!modifiedSnippets.equals(currentSnippetSet)) {
+                        foundIssues.add(new VerifyResult(file, currentSnippetId));
+                    }
+
+                    inSnippet = false;
+                    currentSnippetSet = null;
                 }
-                else {
-                    throw new MojoExecutionException(String.format("Unable to locate snippet with Id of %s. Reference in %s", end.group(2), file.toString()));
-                }
-                List<String> modifiedSnippets = new ArrayList<>();
-
-                // We use this additional prefix because in src snippet cases we need to prespace
-                // for readme snippet cases we DONT need the prespace at all.
-                String linePrefix = this.prefixFunction(end, prefixGroupNum, additionalLinePrefix);
-
-                for (String snippet : this.respaceLines(newSnippets)) {
-                    String moddedSnippet = this.escapeString(snippet);
-                    modifiedSnippets.add((moddedSnippet.length() > 0 ? linePrefix : linePrefix.stripTrailing()) + moddedSnippet + lineSep);
-                }
-
-                Collections.sort(modifiedSnippets);
-                Collections.sort(currentSnippetSet);
-
-                if (!modifiedSnippets.equals(currentSnippetSet)) {
-                    foundIssues.add(new VerifyResult(file, currentSnippetId));
-                }
-
-                inSnippet = false;
-                currentSnippetSet = null;
             }
             else {
                 if (inSnippet) {
-                    // need to ensure not to grab the pre or post fence
-                    if (!line.contains(preFence) && !line.contains(postFence))
+                    if (preFence.length() > 0 && postFence.length() > 0) {
+                        if (!line.contains(preFence) && !line.contains(postFence)) {
+                            currentSnippetSet.add(line + lineSep);
+                        }
+                    }
+                    else {
                         currentSnippetSet.add(line + lineSep);
+                    }
                 }
             }
         }
@@ -351,7 +362,7 @@ public class SnippetReplacer {
 
     private int getEndIndex(List<String> lines, int startIndex) {
         for (int i = startIndex; i < lines.size(); i++) {
-            Matcher end = SNIPPET_CALL_END.matcher(lines.get(i));
+            Matcher end = SNIPPET_SRC_CALL_END.matcher(lines.get(i));
             if (end.matches())
                 return i;
         }

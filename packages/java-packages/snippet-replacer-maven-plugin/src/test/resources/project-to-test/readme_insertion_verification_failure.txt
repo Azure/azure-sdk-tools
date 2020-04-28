@@ -11,13 +11,10 @@ ConfigurationClient configurationClient = new ConfigurationClientBuilder()
 or
 
 ``` Java com.azure.core.http.rest.pagedflux.instantiation
-// A supplier that fetches the first page of data from source/service
 Supplier<Mono<PagedResponse<Integer>>> firstPageRetriever = () -> getFirstPage();
 
 // A function that fetches subsequent pages of data from source/service given a continuation token
 Function<String, Mono<PagedResponse<Integer>>> nextPageRetriever =
     continuationToken -> getNextPage(continuationToken);
 
-PagedFlux<Integer> pagedFlux = new PagedFlux<>(firstPageRetriever,
-    nextPageRetriever);
 ```

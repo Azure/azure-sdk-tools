@@ -146,7 +146,7 @@ public class SnippetReplacer {
                     throw new MojoExecutionException(String.format("Unable to locate snippet with Id of %s. Reference in %s", end.group(2), file.toString()));
                 }
 
-                List<String> modifiedSnippets = new ArrayList<String>();
+                List<String> modifiedSnippets = new ArrayList<>();
 
                 // We use this additional prefix because in src snippet cases we need to prespace
                 // for readme snippet cases we DONT need the prespace at all.

@@ -35,18 +35,6 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
 
             switch (comment)
             {
-                case "/check-enforcer queued":
-                    await SetQueuedAsync(context.Client, repositoryId, sha, cancellationToken);
-                    break;
-
-                case "/check-enforcer inprogress":
-                    await SetInProgressAsync(context.Client, repositoryId, sha, cancellationToken);
-                    break;
-
-                case "/check-enforcer success":
-                    await SetSuccessAsync(context.Client, repositoryId, sha, cancellationToken);
-                    break;
-
                 case "/check-enforcer reset":
                     await CreateCheckAsync(context.Client, installationId, repositoryId, sha, true, cancellationToken);
                     break;

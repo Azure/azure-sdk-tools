@@ -39,7 +39,7 @@ param (
     [Parameter(ParameterSetName = 'ResourceGroup+Provisioner', Mandatory = $true)]
     [string] $ProvisionerApplicationSecret,
     
-    [Parameter(Mandatory = $false)]
+    [Parameter()]
     [string] $ServiceDirectory,
 
     [Parameter()]

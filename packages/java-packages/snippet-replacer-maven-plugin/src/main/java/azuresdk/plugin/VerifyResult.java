@@ -8,7 +8,7 @@ public class VerifyResult {
     public String SnippetWithIssues;
     public Path ReadmeLocation;
 
-    public VerifyResult(Path readmeLocation, String snippetIdWithIssues){
+    public VerifyResult(Path readmeLocation, String snippetIdWithIssues) {
         this.ReadmeLocation = readmeLocation;
         this.SnippetWithIssues = snippetIdWithIssues;
     }

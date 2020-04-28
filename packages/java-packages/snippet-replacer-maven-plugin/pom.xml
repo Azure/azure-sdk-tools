@@ -4,13 +4,12 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>com.microsoft.azure.tools</groupId>
+  <groupId>com.azure.tools</groupId>
   <artifactId>snippet-replacer-maven-plugin</artifactId>
   <version>1.0.0-SNAPSHOT</version>
   <packaging>maven-plugin</packaging>
   <name>snippet-replacer-maven-plugin Maven Plugin</name>
 
-  <!-- FIXME change it to the project's website -->
   <url>https://github.com/azure/azure-sdk-tools</url>
 
   <prerequisites>
@@ -19,8 +18,8 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.compiler.source>11</maven.compiler.source>
-    <maven.compiler.target>11</maven.compiler.target>
+    <maven.compiler.source>8</maven.compiler.source>
+    <maven.compiler.target>8</maven.compiler.target>
     <maven.version>3.3.9</maven.version>
   </properties>
 

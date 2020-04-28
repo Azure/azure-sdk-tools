@@ -352,13 +352,12 @@ foreach ($templateFile in $templateFiles) {
                 Write-Host ($shellExportFormat -f $key, $value)
             }
         }
-    }
 
-
-    if ($key) {
-        # Isolate the environment variables for easy reading.
-        Write-Host "`n"
-        $key = $null
+        if ($key) {
+            # Isolate the environment variables for easy reading.
+            Write-Host "`n"
+            $key = $null
+        }
     }
 
     $postDeploymentScript = $templateFile | Split-Path | Join-Path -ChildPath 'test-resources-post.ps1'

@@ -9,7 +9,7 @@
 
 parameters:
   ServiceDirectory: ''
-  
+
 steps:
   - pwsh: >
       eng/common/TestResources/Remove-TestResources.ps1
@@ -18,7 +18,7 @@ steps:
       -SubscriptionId '$(azure-subscription-id)'
       -ProvisionerApplicationId '$(aad-azure-sdk-test-client-id)'
       -ProvisionerApplicationSecret '$(aad-azure-sdk-test-client-secret)'
-      -ServiceDirectory ${{ parameters.ServiceDirectory }}
+      -ServiceDirectory '${{ parameters.ServiceDirectory }}'
       -Environment 'AzureCloud'
       -Force
       -Verbose
@@ -33,7 +33,7 @@ steps:
       -SubscriptionId '$(azure-subscription-id-gov)'
       -ProvisionerApplicationId '$(aad-azure-sdk-test-client-id-gov)'
       -ProvisionerApplicationSecret '$(aad-azure-sdk-test-client-secret-gov)'
-      -ServiceDirectory ${{ parameters.ServiceDirectory }}
+      -ServiceDirectory '${{ parameters.ServiceDirectory }}'
       -Environment 'AzureUSGovernment'
       -Force
       -Verbose
@@ -48,7 +48,7 @@ steps:
       -SubscriptionId '$(azure-subscription-id-cn)'
       -ProvisionerApplicationId '$(aad-azure-sdk-test-client-id-cn)'
       -ProvisionerApplicationSecret '$(aad-azure-sdk-test-client-secret-cn)'
-      -ServiceDirectory ${{ parameters.ServiceDirectory }}
+      -ServiceDirectory '${{ parameters.ServiceDirectory }}'
       -Environment 'AzureChinaCloud'
       -Force
       -Verbose

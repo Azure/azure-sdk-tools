@@ -119,11 +119,13 @@ if (!$ResourceGroupName) {
     $ResourceGroupName = "rg-$BaseName"
 }
 
-$root = [System.IO.Path]::Combine("$PSScriptRoot/../../../sdk", $ServiceDirectory) | Resolve-Path
-$preRemovalScript = Join-Path -Path $root -ChildPath 'remove-test-resources-pre.ps1'
-if (Test-Path $preRemovalScript) {
-    Log "Invoking pre resource removal script '$preRemovalScript'"
-    &$preRemovalScript -ResourceGroupName $ResourceGroupName @PSBoundParameters
+if (![string]::IsNullOrWhiteSpace($ServiceDirectory)) {
+    $root = [System.IO.Path]::Combine("$PSScriptRoot/../../../sdk", $ServiceDirectory) | Resolve-Path
+    $preRemovalScript = Join-Path -Path $root -ChildPath 'remove-test-resources-pre.ps1'
+    if (Test-Path $preRemovalScript) {
+        Log "Invoking pre resource removal script '$preRemovalScript'"
+        &$preRemovalScript -ResourceGroupName $ResourceGroupName @PSBoundParameters
+    }
 }
 
 Log "Deleting resource group '$ResourceGroupName'"

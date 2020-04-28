@@ -1,5 +1,5 @@
 package azuresdk.plugin;
-import java.io.FileWriter;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -8,9 +8,6 @@ import java.util.regex.*;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
-
-import java.io.File;
-import java.io.IOException;
 
 public class SnippetReplacer {
     public final static Pattern SNIPPET_DEF_BEGIN = Pattern.compile("\\s*\\/\\/\\s*BEGIN\\:\\s+([a-zA-Z0-9\\.\\#\\-\\_]*)\\s*");
@@ -103,8 +100,8 @@ public class SnippetReplacer {
         StringBuilder modifiedLines = this.updateSnippets(file, lines, SNIPPET_README_CALL_BEGIN, SNIPPET_README_CALL_END, snippetMap,"", "", 0, "", true);
 
         if (modifiedLines != null) {
-            try (FileWriter modificationWriter = new FileWriter(file.toAbsolutePath().toString(), StandardCharsets.UTF_8)) {
-                modificationWriter.write(modifiedLines.toString());
+            try (BufferedWriter writer = Files.newBufferedWriter(file, StandardCharsets.UTF_8)) {
+                writer.write(modifiedLines.toString());
             }
         }
     }
@@ -114,8 +111,8 @@ public class SnippetReplacer {
         StringBuilder modifiedLines = this.updateSnippets(file, lines, SNIPPET_SRC_CALL_BEGIN, SNIPPET_SRC_CALL_END, snippetMap, "<pre>", "</pre>",1, "* ", false);
 
         if (modifiedLines != null) {
-            try (FileWriter modificationWriter = new FileWriter(file.toAbsolutePath().toString(), StandardCharsets.UTF_8)) {
-                modificationWriter.write(modifiedLines.toString());
+            try (BufferedWriter writer = Files.newBufferedWriter(file, StandardCharsets.UTF_8)) {
+                writer.write(modifiedLines.toString());
             }
         }
     }
@@ -155,7 +152,9 @@ public class SnippetReplacer {
 
                     for (String snippet : this.respaceLines(newSnippets)) {
                         String moddedSnippet = disableEscape ? snippet : this.escapeString(snippet);
-                        modifiedSnippets.add((moddedSnippet.length() > 0 ? linePrefix : linePrefix.stripTrailing()) + moddedSnippet + lineSep);
+                        modifiedSnippets.add(moddedSnippet.length() == 0
+                                ? linePrefix.replaceAll("[\\s]+$", "") + lineSep
+                                : linePrefix + moddedSnippet + lineSep);
                     }
 
                     if (preFence != null && preFence.length() > 0) {
@@ -237,7 +236,9 @@ public class SnippetReplacer {
 
                     for (String snippet : this.respaceLines(newSnippets)) {
                         String moddedSnippet = disableEscape ? snippet : this.escapeString(snippet);
-                        modifiedSnippets.add((moddedSnippet.length() > 0 ? linePrefix : linePrefix.stripTrailing()) + moddedSnippet + lineSep);
+                        modifiedSnippets.add(moddedSnippet.length() == 0
+                                ? linePrefix.replaceAll("[\\s]+$", "") + lineSep
+                                : linePrefix + moddedSnippet + lineSep);
                     }
 
                     Collections.sort(modifiedSnippets);

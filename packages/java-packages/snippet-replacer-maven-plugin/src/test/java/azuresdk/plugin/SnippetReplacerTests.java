@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -23,7 +24,7 @@ public class SnippetReplacerTests {
             pathToTestFile = pathToTestFile.substring(1);
         }
 
-        return Path.of(pathToTestFile);
+        return Paths.get(pathToTestFile);
     }
 
     @Test
@@ -54,7 +55,8 @@ public class SnippetReplacerTests {
         Path expectedOutCome = _getPathToResource("../../project-to-test/basic_src_snippet_insertion_after.txt");
         SnippetReplacer testReplacer =  new SnippetReplacer();
         List<String> testLines = Files.readAllLines(codeForReplacement, StandardCharsets.UTF_8);
-        String expectedString = Files.readString(expectedOutCome, StandardCharsets.UTF_8);
+        byte[] rawBytes = Files.readAllBytes(expectedOutCome);
+        String expectedString = new String(rawBytes, StandardCharsets.UTF_8);
 
         HashMap<String, List<String>> foundSnippets = testReplacer.getAllSnippets(
                 new ArrayList<Path>(Arrays.asList(snippetSourceFile.toAbsolutePath())));
@@ -77,7 +79,8 @@ public class SnippetReplacerTests {
         Path expectedOutCome = _getPathToResource("../../project-to-test/basic_readme_insertion_after.txt");
         SnippetReplacer testReplacer =  new SnippetReplacer();
         List<String> testLines = Files.readAllLines(codeForReplacement, StandardCharsets.UTF_8);
-        String expectedString = Files.readString(expectedOutCome, StandardCharsets.UTF_8);
+        byte[] rawBytes = Files.readAllBytes(expectedOutCome);
+        String expectedString = new String(rawBytes, StandardCharsets.UTF_8);
 
         HashMap<String, List<String>> foundSnippets = testReplacer.getAllSnippets(
                 new ArrayList<Path>(Arrays.asList(snippetSourceFile.toAbsolutePath())));

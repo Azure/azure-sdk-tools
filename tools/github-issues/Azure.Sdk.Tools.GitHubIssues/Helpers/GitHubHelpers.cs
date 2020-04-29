@@ -31,7 +31,7 @@ namespace GitHubIssues.Helpers
 
                 searchresults = s_gitHub.Search.SearchIssues(issueQuery).Result;
 
-                foreach (var item in searchresults.Items)
+                foreach (Issue item in searchresults.Items)
                 {
                     totalIssues.Add(item);
                     Colorizer.WriteLine($"Found issue '[Cyan!{item.HtmlUrl}]' in GitHub.");
@@ -52,7 +52,7 @@ namespace GitHubIssues.Helpers
         {
             MilestonesClient ms = new MilestonesClient(new ApiConnection(s_gitHub.Connection));
 
-            return (await ms.GetAllForRepository(repo.Owner, repo.Repo)).ToList();
+            return (await ms.GetAllForRepository(repo.Owner, repo.Name)).ToList();
         }
     }
 }

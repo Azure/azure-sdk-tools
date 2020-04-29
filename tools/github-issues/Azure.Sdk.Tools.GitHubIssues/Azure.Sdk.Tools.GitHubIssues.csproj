@@ -24,4 +24,7 @@
   <ItemGroup>
     <Content Remove="excluded_folder\**" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\.editorconfig" Link=".editorconfig" />
+  </ItemGroup>
 </Project>

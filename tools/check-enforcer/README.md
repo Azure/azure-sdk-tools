@@ -34,6 +34,22 @@ enabled: false
 minimumCheckRuns: 2
 ```
 
+## PR Comment Commands
+
+Check Enforcer supports a limited number of commands which can by issued via PR comments. For example if Check Enforcer appears to be stuck you can add a comment as follows to reset the state of Check Enforcer on the PR:
+
+```
+/check-enforcer reset
+```
+
+Check Enforcer will revert to an "in-progress" state. You can then trigger Check Enforcer to re-evaluate the pull request using the following PR comment:
+
+```
+/check-enforcer evaluate
+```
+
+These are the only commands that Check Enforcer supports at this time.
+
 ## Need Help?
 
 Check Enforcer is built primarily for use by the Azure SDK Engineering Systems teams for use within their mono-repositories. But we are happy for others to pick it up and start using it. If you have any issues feel free to log an issue on this GitHub repository and we'll do our best to help you out.

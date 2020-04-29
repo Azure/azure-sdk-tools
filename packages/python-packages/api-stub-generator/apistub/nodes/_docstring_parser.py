@@ -114,7 +114,11 @@ class TypeHintParser:
 
     def __init__(self, obj):
         self.obj = obj
-        self.code = inspect.getsource(obj)
+        try:
+            self.code = inspect.getsource(obj)
+        except:
+            self.code = None
+            logging.error("Failed to get source of object {}".format(obj))
 
     def find_return_type(self):
         """Returns return type is type hint is available

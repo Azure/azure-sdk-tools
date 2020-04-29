@@ -38,9 +38,7 @@ namespace GitHubIssues.Reports
             _log.LogInformation("Storage account accessed");
 
             DateTime to = DateTime.UtcNow;
-            DateTime fromTwoDaysBack = DateTime.UtcNow.AddDays(-2);
-
-            foreach (var repositoryConfig in _cmdLine.RepositoriesList)
+            foreach (RepositoryConfig repositoryConfig in _cmdLine.RepositoriesList)
             {
                 // retrieve the last accessed time for this repository
                 BlobClient bc = bcc.GetBlobClient($"{repositoryConfig.Owner}_{repositoryConfig.Name}");
@@ -64,24 +62,11 @@ namespace GitHubIssues.Reports
 
                 HtmlPageCreator emailBody = new HtmlPageCreator($"New items in {repo}");
 
-                SearchIssuesRequest requestOptions = new SearchIssuesRequest()
-                {
-#pragma warning disable CS0618 // Type or member is obsolete
-                    Created = DateRange.Between(fromTwoDaysBack, to),
-#pragma warning restore CS0618 // Type or member is obsolete
-                    Order = SortDirection.Descending,
-                    Repos = new RepositoryCollection()
-                };
-
-                requestOptions.Repos.Add(owner, repo);
-
                 // get the issues
-                requestOptions.Is = new[] { IssueIsQualifier.Open, IssueIsQualifier.Issue };
-                RetrieveItemsFromGitHub(requestOptions, lastDateRun, emailBody, "New issues");
+                RetrieveNewItems(CreateQuery(repositoryConfig, IssueIsQualifier.Issue), lastDateRun, emailBody, "New issues");
 
                 // get the PRs
-                requestOptions.Is = new[] { IssueIsQualifier.Open, IssueIsQualifier.PullRequest };
-                RetrieveItemsFromGitHub(requestOptions, lastDateRun, emailBody, "New PRs");
+                RetrieveNewItems(CreateQuery(repositoryConfig, IssueIsQualifier.PullRequest), lastDateRun, emailBody, "New PRs");
 
                 emailBody.AddContent($"<p>Last checked range: {lastDateRun} -> {to} </p>");
 
@@ -96,7 +81,7 @@ namespace GitHubIssues.Reports
             }
         }
 
-        private bool RetrieveItemsFromGitHub(SearchIssuesRequest requestOptions, DateTime from, HtmlPageCreator emailBody, string header)
+        private bool RetrieveNewItems(SearchIssuesRequest requestOptions, DateTime from, HtmlPageCreator emailBody, string header)
         {
             TableCreator tc = new TableCreator(header);
             tc.DefineTableColumn("Title", TableCreator.Templates.Title);
@@ -106,7 +91,7 @@ namespace GitHubIssues.Reports
 
             Colorizer.WriteLine("Retrieving issues");
             List<ReportIssue> issues = new List<ReportIssue>();
-            foreach (var issue in _gitHub.SearchForGitHubIssues(requestOptions))
+            foreach (Issue issue in _gitHub.SearchForGitHubIssues(requestOptions))
             {
                 if (issue.CreatedAt.ToUniversalTime() >= from.ToUniversalTime())
                 {
@@ -117,6 +102,26 @@ namespace GitHubIssues.Reports
             emailBody.AddContent(tc.GetContent(issues));
 
             return issues.Any();
+        }
+
+        private SearchIssuesRequest CreateQuery(RepositoryConfig repoInfo, IssueIsQualifier issueType)
+        {
+            DateTime to = DateTime.UtcNow;
+            DateTime fromTwoDaysBack = DateTime.UtcNow.AddDays(-2);
+
+            SearchIssuesRequest requestOptions = new SearchIssuesRequest()
+            {
+#pragma warning disable CS0618 // Type or member is obsolete
+                Created = DateRange.Between(fromTwoDaysBack, to),
+#pragma warning restore CS0618 // Type or member is obsolete
+                Order = SortDirection.Descending,
+                Is = new[] { IssueIsQualifier.Open, issueType },
+                Repos = new RepositoryCollection()
+            };
+
+            requestOptions.Repos.Add(repoInfo.Owner, repoInfo.Name);
+
+            return requestOptions;
         }
     }
 }

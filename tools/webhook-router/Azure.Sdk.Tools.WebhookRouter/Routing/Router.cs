@@ -53,7 +53,7 @@ namespace Azure.Sdk.Tools.WebhookRouter.Routing
                 settings.Add(relativeSettingKey, setting.Value);
             }
 
-            if (settings.ContainsKey("payload-type") && settings.ContainsKey("eventhubs-namespace") && settings.ContainsKey("eventhub-name"))
+            if (!settings.ContainsKey("payload-type") && !settings.ContainsKey("eventhubs-namespace") && !settings.ContainsKey("eventhub-name"))
             {
                 throw new RouterException($"Critical settings for route {route} not present.");
             }

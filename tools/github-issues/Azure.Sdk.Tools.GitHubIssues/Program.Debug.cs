@@ -13,7 +13,7 @@ namespace FindNewItems
         {
             if (!hasExecuted)
             {
-                new FindNeedsAttentionIssues(log).Execute();
+                new FindNewGitHubIssuesAndPRs(log).Execute();
                 hasExecuted = true;
             }
             else

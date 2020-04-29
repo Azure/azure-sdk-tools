@@ -62,11 +62,14 @@ namespace GitHubIssues.Reports
 
                 HtmlPageCreator emailBody = new HtmlPageCreator($"New items in {repo}");
 
-                // get the issues
-                RetrieveNewItems(CreateQuery(repositoryConfig, IssueIsQualifier.Issue), lastDateRun, emailBody, "New issues");
+                // get needs attention issues
+                RetrieveNeedsAttentionIssues(repositoryConfig, emailBody);
 
-                // get the PRs
-                RetrieveNewItems(CreateQuery(repositoryConfig, IssueIsQualifier.PullRequest), lastDateRun, emailBody, "New PRs");
+                // get new issues
+                RetrieveNewItems(CreateQueryForNewItems(repositoryConfig, IssueIsQualifier.Issue), lastDateRun, emailBody, "New issues");
+
+                // get new PRs
+                RetrieveNewItems(CreateQueryForNewItems(repositoryConfig, IssueIsQualifier.PullRequest), lastDateRun, emailBody, "New PRs");
 
                 emailBody.AddContent($"<p>Last checked range: {lastDateRun} -> {to} </p>");
 
@@ -104,7 +107,31 @@ namespace GitHubIssues.Reports
             return issues.Any();
         }
 
-        private SearchIssuesRequest CreateQuery(RepositoryConfig repoInfo, IssueIsQualifier issueType)
+        private bool RetrieveNeedsAttentionIssues(RepositoryConfig repositoryConfig, HtmlPageCreator emailBody)
+        {
+            TableCreator tc = new TableCreator("Issues that need attention");
+            tc.DefineTableColumn("Title", TableCreator.Templates.Title);
+            tc.DefineTableColumn("Labels", TableCreator.Templates.Labels);
+            tc.DefineTableColumn("Author", TableCreator.Templates.Author);
+            tc.DefineTableColumn("Assigned", TableCreator.Templates.Assigned);
+
+            List<ReportIssue> issues = new List<ReportIssue>();
+
+            foreach (Issue issue in _gitHub.SearchForGitHubIssues(CreateQueryForNeedsAttentionItems(repositoryConfig)))
+            {
+                issues.Add(new ReportIssue()
+                {
+                    Issue = issue,
+                    Milestone = issue.Milestone,
+                    Note = string.Empty
+                });
+            }
+
+            emailBody.AddContent(tc.GetContent(issues));
+            return issues.Any();
+        }
+
+        private SearchIssuesRequest CreateQueryForNewItems(RepositoryConfig repoInfo, IssueIsQualifier issueType)
         {
             DateTime to = DateTime.UtcNow;
             DateTime fromTwoDaysBack = DateTime.UtcNow.AddDays(-2);
@@ -117,6 +144,24 @@ namespace GitHubIssues.Reports
                 Order = SortDirection.Descending,
                 Is = new[] { IssueIsQualifier.Open, issueType },
                 Repos = new RepositoryCollection()
+            };
+
+            requestOptions.Repos.Add(repoInfo.Owner, repoInfo.Name);
+
+            return requestOptions;
+        }
+
+        private SearchIssuesRequest CreateQueryForNeedsAttentionItems(RepositoryConfig repoInfo)
+        {
+            // Find all open issues
+            //  That are marked with 'needs-attention'
+
+            SearchIssuesRequest requestOptions = new SearchIssuesRequest()
+            {
+                Repos = new RepositoryCollection(),
+                Labels = new string[] { Constants.Labels.NeedsAttention },
+                Is = new[] { IssueIsQualifier.Issue },
+                State = ItemState.Open
             };
 
             requestOptions.Repos.Add(repoInfo.Owner, repoInfo.Name);

@@ -13,7 +13,7 @@ namespace FindNewItems
         {
             if (!hasExecuted)
             {
-                new FindIssuesInBacklogMilestones(log).Execute();
+                new FindNeedsAttentionIssues(log).Execute();
                 hasExecuted = true;
             }
             else

@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Azure.Identity;
 using Azure.Data.AppConfiguration;
+using Azure.Sdk.Tools.WebhookRouter.Routing;
 
 namespace Azure.Sdk.Tools.WebhookRouter.Functions
 {
@@ -18,23 +19,13 @@ namespace Azure.Sdk.Tools.WebhookRouter.Functions
         public async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = "route/{route}")] HttpRequest req,
             ILogger log,
-            string route)
+            Guid route)
         {
-            var credential = new DefaultAzureCredential();
-            var client = new ConfigurationClient(new Uri("https://webhookrouterstaging.azconfig.io/"), credential);
-
-            var selector = new SettingSelector()
-            {
-                KeyFilter = "webhookrouter/routes/test/*"
-            };
-
-            var settings = client.GetConfigurationSettingsAsync(selector);
-
-            await foreach (var setting in settings)
-            {
-                log.LogInformation("Setting {key} has value {value}.", setting.Key, setting.Value);
-            }
-
+            var router = new Router();
+            var rule = await router.GetRuleAsync(route);
+            var payload = await rule.ParseRequestAsync(req);
+            await router.RouteAsync(rule, payload);
+            
             return new OkResult();
         }
     }

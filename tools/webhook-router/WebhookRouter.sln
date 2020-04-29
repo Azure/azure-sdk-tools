@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.30002.166
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Sdk.Tools.WebhookRouter.Tests", "Azure.Sdk.Tools.WebhookRouter.Tests\Azure.Sdk.Tools.WebhookRouter.Tests.csproj", "{642112FB-3EB1-4C2A-A1B0-0F1168702D86}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.Sdk.Tools.WebhookRouter", "Azure.Sdk.Tools.WebhookRouter\Azure.Sdk.Tools.WebhookRouter.csproj", "{256BE93C-B7D7-4D91-9E98-9AF09E3AF962}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Sdk.Tools.WebhookRouter", "Azure.Sdk.Tools.WebhookRouter\Azure.Sdk.Tools.WebhookRouter.csproj", "{256BE93C-B7D7-4D91-9E98-9AF09E3AF962}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

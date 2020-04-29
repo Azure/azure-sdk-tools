@@ -17,7 +17,7 @@ namespace GitHubIssues.Helpers
 
         public static string GetContentAsString(Stream s)
         {
-            using var sr = new StreamReader(s);
+            using StreamReader sr = new StreamReader(s);
             return sr.ReadToEnd();
         }
     }

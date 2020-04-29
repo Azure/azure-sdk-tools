@@ -18,7 +18,7 @@ namespace GitHubIssues.Reports
 
         public override void Execute()
         {
-            foreach (var repositoryConfig in _cmdLine.RepositoriesList)
+            foreach (RepositoryConfig repositoryConfig in _cmdLine.RepositoriesList)
             {
                 HtmlPageCreator emailBody = new HtmlPageCreator($"Pull Requests older than 3 months in {repositoryConfig.Name}");
                 bool hasFoundPRs = FindStalePRsInRepo(repositoryConfig, emailBody);
@@ -42,7 +42,7 @@ namespace GitHubIssues.Reports
 
             _log.LogInformation($"Retrieving PR information for repo {repositoryConfig.Name}");
             List<ReportIssue> oldPrs = new List<ReportIssue>();
-            foreach (var issue in _gitHub.SearchForGitHubIssues(CreateQuery(repositoryConfig)))
+            foreach (Issue issue in _gitHub.SearchForGitHubIssues(CreateQuery(repositoryConfig)))
             {
                 _log.LogInformation($"Found stale PR  {issue.Number}");
                 oldPrs.Add(new ReportIssue() { Issue = issue, Note = string.Empty, Milestone = null });

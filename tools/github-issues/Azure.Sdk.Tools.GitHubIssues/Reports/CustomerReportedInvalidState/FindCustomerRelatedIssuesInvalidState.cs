@@ -19,7 +19,7 @@ namespace GitHubIssues.Reports
 
         public override void Execute()
         {
-            foreach (var repositoryConfig in _cmdLine.RepositoriesList)
+            foreach (RepositoryConfig repositoryConfig in _cmdLine.RepositoriesList)
             {
                 HtmlPageCreator emailBody = new HtmlPageCreator($"Customer reported issues with invalid state in {repositoryConfig.Name}");
                 bool hasFoundIssues = ValidateCustomerReportedIssues(repositoryConfig, emailBody);
@@ -43,7 +43,7 @@ namespace GitHubIssues.Reports
             tc.DefineTableColumn("Issues Found", i => i.Note);
 
             List<ReportIssue> issuesWithNotes = new List<ReportIssue>();
-            foreach (var issue in _gitHub.SearchForGitHubIssues(CreateQuery(repositoryConfig)))
+            foreach (Issue issue in _gitHub.SearchForGitHubIssues(CreateQuery(repositoryConfig)))
             {
                 if (!ValidateIssue(issue, out string issuesFound))
                 {

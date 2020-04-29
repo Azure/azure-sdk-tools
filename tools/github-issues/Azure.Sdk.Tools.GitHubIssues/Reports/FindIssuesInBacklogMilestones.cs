@@ -18,7 +18,7 @@ namespace GitHubIssues.Reports
 
         public override void Execute()
         {
-            foreach (var repositoryConfig in _cmdLine.RepositoriesList)
+            foreach (RepositoryConfig repositoryConfig in _cmdLine.RepositoriesList)
             {
                 HtmlPageCreator emailBody = new HtmlPageCreator($"Issues in expired milestones for {repositoryConfig.Name}");
                 bool hasFoundIssues = GetIssuesInBacklogMilestones(repositoryConfig, emailBody);
@@ -38,7 +38,7 @@ namespace GitHubIssues.Reports
             IEnumerable<Milestone> milestones = _gitHub.ListMilestones(repositoryConfig).GetAwaiter().GetResult();
 
             List<Milestone> backlogMilestones = new List<Milestone>();
-            foreach (var item in milestones)
+            foreach (Milestone item in milestones)
             {
                 if (item.DueOn == null)
                 {
@@ -52,11 +52,11 @@ namespace GitHubIssues.Reports
 
             _log.LogInformation($"Found {backlogMilestones.Count} past due milestones with active issues");
             List<ReportIssue> issuesInBacklogMilestones = new List<ReportIssue>();
-            foreach (var item in backlogMilestones)
+            foreach (Milestone item in backlogMilestones)
             {
                 _log.LogInformation($"Retrieve issues for milestone {item.Title}");
 
-                foreach (var issue in _gitHub.SearchForGitHubIssues(CreateQuery(repositoryConfig, item)))
+                foreach (Issue issue in _gitHub.SearchForGitHubIssues(CreateQuery(repositoryConfig, item)))
                 {
                     issuesInBacklogMilestones.Add(new ReportIssue()
                     {
@@ -72,7 +72,7 @@ namespace GitHubIssues.Reports
             // > 6months
             // 0-6months
 
-            var groups = issuesInBacklogMilestones.GroupBy(i =>
+            IEnumerable<IGrouping<string, ReportIssue>> groups = issuesInBacklogMilestones.GroupBy(i =>
                                                     i.Issue.CreatedAt > DateTime.Now.AddMonths(-6) ?
                                                         "C. Issues created in the last 6 months" :
                                                         i.Issue.CreatedAt <= DateTime.Now.AddMonths(-6) && i.Issue.CreatedAt > DateTime.Now.AddMonths(-12) ?

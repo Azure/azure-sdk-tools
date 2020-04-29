@@ -20,7 +20,7 @@ namespace GitHubIssues.Reports
         {
             foreach (var repositoryConfig in _cmdLine.RepositoriesList)
             {
-                HtmlPageCreator emailBody = new HtmlPageCreator($"Issues in expired milestones for {repositoryConfig.Repo}");
+                HtmlPageCreator emailBody = new HtmlPageCreator($"Issues in expired milestones for {repositoryConfig.Name}");
 
                 bool hasFoundIssues = FindIssuesInPastDuesMilestones(repositoryConfig, emailBody);
 
@@ -28,7 +28,7 @@ namespace GitHubIssues.Reports
                 {
                     // send the email
                     EmailSender.SendEmail(_cmdLine.EmailToken, _cmdLine.FromEmail, emailBody.GetContent(), repositoryConfig.ToEmail, repositoryConfig.CcEmail,
-                        $"Issues in old milestone for {repositoryConfig.Repo}", _log);
+                        $"Issues in old milestone for {repositoryConfig.Name}", _log);
                 }
             }
         }
@@ -42,7 +42,7 @@ namespace GitHubIssues.Reports
             tc.DefineTableColumn("Author", TableCreator.Templates.Author);
             tc.DefineTableColumn("Assigned", TableCreator.Templates.Assigned);
                 
-            _log.LogInformation($"Retrieving milestone information for repo {repositoryConfig.Repo}");
+            _log.LogInformation($"Retrieving milestone information for repo {repositoryConfig.Name}");
             IEnumerable<Milestone> milestones = _gitHub.ListMilestones(repositoryConfig).GetAwaiter().GetResult();
 
             List<Milestone> pastDueMilestones = new List<Milestone>();
@@ -93,7 +93,7 @@ namespace GitHubIssues.Reports
                 Milestone = milestone.Title
             };
 
-            requestOptions.Repos.Add(repoInfo.Owner, repoInfo.Repo);
+            requestOptions.Repos.Add(repoInfo.Owner, repoInfo.Name);
 
             return requestOptions;
         }

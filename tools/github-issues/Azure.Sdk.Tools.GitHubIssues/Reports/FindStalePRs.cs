@@ -20,14 +20,14 @@ namespace GitHubIssues.Reports
         {
             foreach (var repositoryConfig in _cmdLine.RepositoriesList)
             {
-                HtmlPageCreator emailBody = new HtmlPageCreator($"Pull Requests older than 3 months in {repositoryConfig.Repo}");
+                HtmlPageCreator emailBody = new HtmlPageCreator($"Pull Requests older than 3 months in {repositoryConfig.Name}");
                 bool hasFoundPRs = FindStalePRsInRepo(repositoryConfig, emailBody);
 
                 if (hasFoundPRs)
                 {
                     // send the email
                     EmailSender.SendEmail(_cmdLine.EmailToken, _cmdLine.FromEmail, emailBody.GetContent(), repositoryConfig.ToEmail, repositoryConfig.CcEmail,
-                        $"Pull Requests older than 3 months in {repositoryConfig.Repo}", _log);
+                        $"Pull Requests older than 3 months in {repositoryConfig.Name}", _log);
                 }
             }
         }
@@ -40,7 +40,7 @@ namespace GitHubIssues.Reports
             tc.DefineTableColumn("Author", TableCreator.Templates.Author);
             tc.DefineTableColumn("Assigned", TableCreator.Templates.Assigned);
 
-            _log.LogInformation($"Retrieving PR information for repo {repositoryConfig.Repo}");
+            _log.LogInformation($"Retrieving PR information for repo {repositoryConfig.Name}");
             List<ReportIssue> oldPrs = new List<ReportIssue>();
             foreach (var issue in _gitHub.SearchForGitHubIssues(CreateQuery(repositoryConfig)))
             {
@@ -68,7 +68,7 @@ namespace GitHubIssues.Reports
                 Is = new[] { IssueIsQualifier.PullRequest }
             };
 
-            requestOptions.Repos.Add(repoInfo.Owner, repoInfo.Repo);
+            requestOptions.Repos.Add(repoInfo.Owner, repoInfo.Name);
 
             return requestOptions;
         }

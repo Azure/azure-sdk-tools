@@ -43,7 +43,7 @@ namespace GitHubIssues.Reports
             foreach (var repositoryConfig in _cmdLine.RepositoriesList)
             {
                 // retrieve the last accessed time for this repository
-                BlobClient bc = bcc.GetBlobClient($"{repositoryConfig.Owner}_{repositoryConfig.Repo}");
+                BlobClient bc = bcc.GetBlobClient($"{repositoryConfig.Owner}_{repositoryConfig.Name}");
                 DateTime lastDateRun = DateTime.UtcNow.AddDays(-1);
 
                 try
@@ -58,7 +58,7 @@ namespace GitHubIssues.Reports
                 _log.LogInformation("Last processed date for {0} is {1}", repositoryConfig, lastDateRun);
 
                 string owner = repositoryConfig.Owner;
-                string repo = repositoryConfig.Repo;
+                string repo = repositoryConfig.Name;
 
                 _log.LogInformation("Processing repository {0}\\{1}", owner, repo);
 
@@ -92,7 +92,7 @@ namespace GitHubIssues.Reports
                 _log.LogInformation("Email sent...");
 
                 bc.Upload(StreamHelpers.GetStreamForString(to.ToUniversalTime().ToString()), overwrite: true);
-                _log.LogInformation($"Persisted last event time for {repositoryConfig.Owner}\\{repositoryConfig.Repo} as {to}");
+                _log.LogInformation($"Persisted last event time for {repositoryConfig.Owner}\\{repositoryConfig.Name} as {to}");
             }
         }
 

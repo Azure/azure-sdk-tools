@@ -52,7 +52,7 @@ namespace GitHubIssues.Helpers
         {
             MilestonesClient ms = new MilestonesClient(new ApiConnection(s_gitHub.Connection));
 
-            return (await ms.GetAllForRepository(repo.Owner, repo.Repo)).ToList();
+            return (await ms.GetAllForRepository(repo.Owner, repo.Name)).ToList();
         }
     }
 }

@@ -113,11 +113,17 @@ function ParseMavenPackage($pkg, $workingDirectory) {
 
   $releaseNotes = &"${PSScriptRoot}/../Extract-ReleaseNotes.ps1" -ChangeLogLocation @(Get-ChildItem -Path $pkg.DirectoryName -Recurse -Include "$($pkg.Basename)-changelog.md")[0]
 
+  $readmeContentLoc = @(Get-ChildItem -Path $pkg.DirectoryName -Recurse -Include "$($pkg.Basename)-readme.md")[0]
+  if (Test-Path -Path $readmeContentLoc) {
+    $readmeContent = Get-Content -Raw $readmeContentLoc
+  }
+
   return New-Object PSObject -Property @{
     PackageId      = $pkgId
     PackageVersion = $pkgVersion
     Deployable     = $forceCreate -or !(IsMavenPackageVersionPublished -pkgId $pkgId -pkgVersion $pkgVersion -groupId $groupId.Replace(".", "/"))
     ReleaseNotes   = $releaseNotes
+    ReadmeContent  = $readmeContent
   }
 }
 
@@ -175,6 +181,10 @@ function ParseNPMPackage($pkg, $workingDirectory) {
 
   $packageJSON = ResolvePkgJson -workFolder $workFolder | Get-Content | ConvertFrom-Json
   $releaseNotes = &"${PSScriptRoot}/../Extract-ReleaseNotes.ps1" -ChangeLogLocation @(Get-ChildItem -Path $workFolder -Recurse -Include "CHANGELOG.md")[0]
+  $readmeContentLoc = @(Get-ChildItem -Path $workFolder -Recurse -Include "README.md")[0]
+  if (Test-Path -Path $readmeContentLoc) {
+    $readmeContent = Get-Content -Raw $readmeContentLoc
+  }
 
   cd $origFolder
   Remove-Item $workFolder -Force  -Recurse -ErrorAction SilentlyContinue
@@ -187,6 +197,7 @@ function ParseNPMPackage($pkg, $workingDirectory) {
     PackageVersion = $pkgVersion
     Deployable     = $forceCreate -or !(IsNPMPackageVersionPublished -pkgId $pkgId -pkgVersion $pkgVersion)
     ReleaseNotes   = $releaseNotes
+    ReadmeContent  = $readmeContent
   }
 
   return $resultObj
@@ -223,6 +234,11 @@ function ParseNugetPackage($pkg, $workingDirectory) {
   [xml] $packageXML = Get-ChildItem -Path "$workFolder/*.nuspec" | Get-Content
   $releaseNotes = &"${PSScriptRoot}/../Extract-ReleaseNotes.ps1" -ChangeLogLocation @(Get-ChildItem -Path $workFolder -Recurse -Include "CHANGELOG.md")[0]
 
+  $readmeContentLoc = @(Get-ChildItem -Path $workFolder -Recurse -Include "README.md")[0]
+  if (Test-Path -Path $readmeContentLoc) {
+    $readmeContent = Get-Content -Raw $readmeContentLoc
+  }
+
   Remove-Item $workFolder -Force  -Recurse -ErrorAction SilentlyContinue
   $pkgId = $packageXML.package.metadata.id
   $pkgVersion = $packageXML.package.metadata.version
@@ -232,6 +248,7 @@ function ParseNugetPackage($pkg, $workingDirectory) {
     PackageVersion = $pkgVersion
     Deployable     = $forceCreate -or !(IsNugetPackageVersionPublished -pkgId $pkgId -pkgVersion $pkgVersion)
     ReleaseNotes   = $releaseNotes
+    ReadmeContent  = $readmeContent
   }
 }
 
@@ -275,6 +292,10 @@ function ParsePyPIPackage($pkg, $workingDirectory) {
 
   Expand-Archive -Path $pkg -DestinationPath $workFolder
   $releaseNotes = &"${PSScriptRoot}/../Extract-ReleaseNotes.ps1" -ChangeLogLocation @(Get-ChildItem -Path $workFolder -Recurse -Include "CHANGELOG.md")[0]
+  $readmeContentLoc = @(Get-ChildItem -Path $workFolder -Recurse -Include "README.md")[0]
+  if (Test-Path -Path $readmeContentLoc) {
+    $readmeContent = Get-Content -Raw $readmeContentLoc
+  }
   Remove-Item $workFolder -Force  -Recurse -ErrorAction SilentlyContinue
 
   return New-Object PSObject -Property @{
@@ -282,6 +303,7 @@ function ParsePyPIPackage($pkg, $workingDirectory) {
     PackageVersion = $pkgVersion
     Deployable     = $forceCreate -or !(IsPythonPackageVersionPublished -pkgId $pkgId -pkgVersion $pkgVersion)
     ReleaseNotes   = $releaseNotes
+    ReadmeContent  = $readmeContent
   }
 }
 
@@ -291,6 +313,11 @@ function ParseCArtifact($pkg, $workingDirectory) {
 
   $releaseNotes = ExtractReleaseNotes -changeLogLocation @(Get-ChildItem -Path $packageArtifactLocation -Recurse -Include "CHANGELOG.md")[0]
 
+  $readmeContentLoc = @(Get-ChildItem -Path $packageArtifactLocation -Recurse -Include "README.md")[0]
+  if (Test-Path -Path $readmeContentLoc) {
+    $readmeContent = Get-Content -Raw $readmeContentLoc
+  }
+
   return New-Object PSObject -Property @{
     PackageId      = $packageInfo.name
     PackageVersion = $packageInfo.version
@@ -299,6 +326,7 @@ function ParseCArtifact($pkg, $workingDirectory) {
     # CheckArtifactShaAgainstTagsList
     Deployable     = $true
     ReleaseNotes   = $releaseNotes
+    ReadmeContent  = $readmeContent
   }
 }
 

@@ -20,7 +20,7 @@ param (
 
 Write-Host  $MyInvocation.Line
 
-. $PSScriptRoot/package-parsing.ps1
+. (Join-Path $PSScriptRoot package-parsing.ps1)
 
 $apiUrl = "https://api.github.com/repos/$repoId"
 Write-Host "Using API URL $apiUrl"

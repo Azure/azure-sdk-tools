@@ -15,13 +15,19 @@ namespace Azure.Sdk.Tools.WebhookRouter.Functions
 {
     public class RouteWebhookFunction
     {
+        public RouteWebhookFunction(IRouter router)
+        {
+            this.router = router;
+        }
+
+        private IRouter router;
+
         [FunctionName("route")]
         public async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = "route/{route}")] HttpRequest req,
             ILogger log,
             Guid route)
         {
-            var router = new Router();
             var rule = await router.GetRuleAsync(route);
             var payload = await rule.ParseRequestAsync(req);
             await router.RouteAsync(rule, payload);

@@ -17,35 +17,50 @@ param (
 . (Join-Path $PSScriptRoot artifact-metadata-parsing.ps1)
 . (Join-Path $PSScriptRoot SemVer.ps1)
 
+function _execute($command, $hardErr = $True){
+  try {
+    & $command
+    if ($LastExitCode -ne 0) {
+      Write-Host 
+    }
+  }
+  catch {
+    Write-Host $_
+    if ($hardErr) {
+      exit 1
+    }
+  } 
+}
+
 function SyncDocRepo($docRepo, $workingDirectory, $sourceBranch) {
   # get the doc repo, looking for the rdm branch if it exists
   $docRepo = "https://github.com/$docRepo"
   $repoRoot = (Join-Path $workingDirectory "repo/" )
   $prBranch = "$sourceBranch-rdme"
-  $prBranchExists = (git show-ref --verify --quiet refs/heads/$prBranch)
-  $sourceBranchExists = (git show-ref --verify --quiet refs/heads/$sourceBranch)
 
   Write-Host "Docrepo $docRepo"
   Write-Host "Where to clone $repoRoot"
 
-  git clone $docRepo $repoRoot
-
-  Push-Location $repoRoot
+  _execute("git clone $docRepo $repoRoot")
 
   try {
+    Push-Location $repoRoot
+
+    $prBranchExists = (git show-ref --verify --quiet refs/heads/$prBranch)
+    $sourceBranchExists = (git show-ref --verify --quiet refs/heads/$sourceBranch)
     if ($prBranchExists) {
       # already exists, so just grab it
-      git checkout $sourceBranchExists
+        _execute("git checkout $sourceBranchExists")
     }
     else {
-      if (sourceBranchExists) {
+      if ($sourceBranchExists) {
         # there is an existing smoke-test branch we can base off of
-        git checkout $sourceBranch
-        git checkout -b $prBranch
+          _execute("git checkout $sourceBranch")
+          _execute("git checkout -b $prBranch")
       }
       else {
         # smoke-test branch doesn't exist, so default to base off of master (this is the safe option)
-        git checkout -b $prBranch 
+          _execute("git checkout -b $prBranch")
       }
     }
   } finally {
@@ -86,9 +101,12 @@ function GetAdjustedReadmeContent($pkgInfo, $lang){
     $date = Get-Date -Format "MM/dd/yyyy"
     $service = ""
 
+    # the packageId is not present for js.
+    $pkgId = $pkgInfo.PackageId.Replace("@azure/", "")
+
     try {
       $metadata = GetMetaData -lang $lang 
-      $service = $metadata | ? 
+      $service = $metadata | ? { $_.Package -eq $pkgId }
 
       if ($service) {
         $service = "$service,"
@@ -99,16 +117,18 @@ function GetAdjustedReadmeContent($pkgInfo, $lang){
       Write-Host "Unable to retrieve service metadata for packageId $($pkgInfo.PackageId)"
     }
 
-    # figure out which service we're dealing within
-    $($pkgInfo.PackageId)
-    $($pkgInfo.PackageId)
+    $headerContentMatch = $pkgInfo.ReadmeContent -Match 'Azure .+? (client|plugin|shared) library for (JavaScript|Java|Python|\.NET|C)'
 
-    $fileMatch = (Select-String -InputObject $fileContent -Pattern 'Azure .+? (client|plugin|shared) library for (JavaScript|Java|Python|\.NET|C)').Matches[0]
-    $header = "---`r`ntitle: $fileMatch`r`nkeywords: Azure, $lang, SDK, API, $service $($pkgInfo.PackageId)`r`nauthor: maggiepint`r`nms.author: magpint`r`nms.date: $date`r`nms.topic: article`r`nms.prod: azure`r`nms.technology: azure`r`nms.devlang: $lang`r`nms.service: $service`r`n---`r`n"
+    if ($headerContentMatch){
+      $header = "---`r`ntitle: $headerContentMatch`r`nkeywords: Azure, $lang, SDK, API, $service $($pkgInfo.PackageId)`r`nauthor: maggiepint`r`nms.author: magpint`r`nms.date: $date`r`nms.topic: article`r`nms.prod: azure`r`nms.technology: azure`r`nms.devlang: $lang`r`nms.service: $service`r`n---`r`n"
+      $fileContent = $fileContent -replace $fileMatch, "$fileMatch - Version $($pkgInfo.PackageVersion) `r`n"
+      return "$header $fileContent"
+    }
+    else {
+      return ""
+    }
 
-    $fileContent = $fileContent -replace $fileMatch, "$fileMatch - Version $($pkgInfo.PackageVersion) `r`n"
 
-    return "$header $fileContent"
 }
 
 $apiUrl = "https://api.github.com/repos/$repoId"
@@ -117,7 +137,8 @@ $pkgs = VerifyPackages -pkgRepository $Repository -artifactLocation $ArtifactLoc
 # ensure the working directory is clean for the doc repo clone
 if ($pkgs) {
   Write-Host "Given the visible artifacts, readmes will be copied for the following packages"
-  Write-Host ($pkgs | % { return $_.PackageId })
+  Write-Host ($pkgs | % { return $_ })
+
 
   foreach ($packageInfo in $pkgs) {
     Remove-Item -Recurse -Force "$WorkDirectory/*"
@@ -128,29 +149,37 @@ if ($pkgs) {
     if ($semVer.IsPreRelease) {
       $targetDocBranch = $PreviewBranch
     }
+    $repoLocation = SyncDocRepo -docRepo $TargetDocRepo -workingDirectory $WorkDirectory -sourceBranch $targetDocBranch
 
-    $repoLocation = SyncDocRepo -docRepo $TargetDocRepo -workingDirectory $WorkDirectory -sourceBranch $sourceBranch
+    Write-Host "Selected Branch is $targetDocBranch"
+    Write-Host "Output from Sync Repo is $repoLocation"
+
     $readmeName = "$($packageInfo.PackageId.Replace('azure-','').Replace('Azure.', '').ToLower())-readme.md"
     $readmeLocation = Join-Path $repoLocation $DocRepoContentLocation $readmeName
     $adjustedContent = GetAdjustedReadmeContent -pkgInfo $packageInfo -lang $Language
 
+    if ($adjustedContent) {
+      Push-Location $repoLocation
+      Set-Content -Path $readmeLocation -Value $adjustedContent -Force
+
+      Write-Host "git add -A ."
+      Write-Host "git commit -m `"Updating readme with release $($pkgInfo.PackageId) of version $($pkgInfo.PackageVersion)`""
+      Write-Host "git push"
+
+      try {
+        # attempt the PR submit pullrequest
+        # ./Submit-PullRequest.ps1 
+
+      } catch {
+        Write-Host $_
+      } finally {
+        Pop-Location
+      }
+    } else {
+      Write-Host "Unable to parse a header out of the readmecontent for PackageId $($packageInfo.PackageId)"
+    }
 
 
-    Push-Location $repoLocation
-    Set-Content -Path $readmeLocation -Value $adjustedContent -Force
-
-    Write-Host "git add -A ."
-    Write-Host "git commit -m `"Updating readme with release $($pkgInfo.PackageId) of version $($pkgInfo.PackageVersion)`""
-
-    # try {
-    #   # attempt the PR submit pullrequest
-    #   # ./Submit-PullRequest.ps1 
-
-    # } catch {
-    #   Write-Host $_
-    # } finally {
-    #   Pop-Location
-    # }
   }
 }
 else {

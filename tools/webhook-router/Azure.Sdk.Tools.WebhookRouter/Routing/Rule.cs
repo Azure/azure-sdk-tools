@@ -26,10 +26,8 @@ namespace Azure.Sdk.Tools.WebhookRouter.Routing
 
         public async Task<Payload> ParseRequestAsync(HttpRequest request)
         {
-            //Using a dummy payload for local testing.
-            //var json = await JsonDocument.ParseAsync(request.Body);
-            var json = JsonDocument.Parse("{}");
-            var payload = new Payload(json);
+            var body = await JsonDocument.ParseAsync(request.Body);
+            var payload = new Payload(request.Headers, body.RootElement);
             return payload;
         }
     }

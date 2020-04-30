@@ -5,6 +5,7 @@ using Azure.Messaging.EventHubs.Producer;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.WebhookRouter.Routing
@@ -68,11 +69,15 @@ namespace Azure.Sdk.Tools.WebhookRouter.Routing
             return rule;
         }
 
-
-
         public async Task RouteAsync(Rule rule, Payload payload)
         {
-            var @event = new EventData(new byte[] { 0, 1, 2, 3, 4 });
+            var payloadString = JsonSerializer.Serialize(payload, new JsonSerializerOptions()
+            {
+                WriteIndented = true
+            });
+
+            var payloadBytes = Encoding.UTF8.GetBytes(payloadString);
+            var @event = new EventData(payloadBytes);
 
             var fullyQualifiedEventHubsNamespace = $"{rule.EventHubsNamespace}.servicebus.windows.net";
             var credential = new DefaultAzureCredential();

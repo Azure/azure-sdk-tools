@@ -12,15 +12,15 @@ param (
   $DocRepoContentLocation = "docs-ref-services/" # within the doc repo, where does our readme go?
 )
 
-Write-Host (Join-Path $PSScriptRoot package-parsing.ps1)
-. (Join-Path $PSScriptRoot package-parsing.ps1)
+. (Join-Path $PSScriptRoot artifact-metadata-parsing.ps1)
+
 
 $date = Get-Date -Format "MM/dd/yyyy"
 $apiUrl = "https://api.github.com/repos/$repoId"
 
 $pkgs = VerifyPackages -pkgRepository $Repository -artifactLocation $ArtifactLocation -workingDirectory $WorkDirectory -apiUrl $apiUrl -releaseSha $ReleaseSHA -exitOnError $False
 
-if ($pkgList) {
+if ($pkgs) {
   Write-Host "Given the visible artifacts, readmes will be copied for the following packages"
 
   foreach ($packageInfo in $pkgList) {

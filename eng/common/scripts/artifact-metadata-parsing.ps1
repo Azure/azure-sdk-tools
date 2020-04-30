@@ -423,13 +423,16 @@ function VerifyPackages($pkgRepository, $artifactLocation, $workingDirectory, $a
     }
   }
 
-  $results = ([array]$pkgList | Sort-Object -Property Tag -uniq)
+  $results = @([array]$pkgList | Sort-Object -Property Tag -uniq)
 
   $existingTags = GetExistingTags($apiUrl)
+  
+  Write-Host $results
+
   $intersect = $results | % { $_.Tag } | ? { $existingTags -contains $_ }
 
-  if ($intersect.Length -gt 0) {
-    CheckArtifactShaAgainstTagsList -priorExistingTagList $intersect -releaseSha $releaseSha -apiUrl $apiUrl
+  if ($intersect.Length -gt 0 -and $exitOnError) {
+    CheckArtifactShaAgainstTagsList -priorExistingTagList $intersect -releaseSha $releaseSha -apiUrl $apiUrl -exitOnError $exitOnError
 
     # all the tags are clean. remove them from the list of releases we will publish.
     $results = $results | ? { -not ($intersect -contains $_.Tag ) }
@@ -441,7 +444,7 @@ function VerifyPackages($pkgRepository, $artifactLocation, $workingDirectory, $a
 # given a set of tags that we want to release, we need to ensure that if they already DO exist.
 # if they DO exist, quietly exit if the commit sha of the artifact matches that of the tag
 # if the commit sha does not match, exit with error and report both problem shas
-function CheckArtifactShaAgainstTagsList($priorExistingTagList, $releaseSha, $apiUrl) {
+function CheckArtifactShaAgainstTagsList($priorExistingTagList, $releaseSha, $apiUrl, $exitOnError) {
   $headers = @{
     "Content-Type"  = "application/json"
     "Authorization" = "token $($env:GH_TOKEN)"
@@ -463,7 +466,7 @@ function CheckArtifactShaAgainstTagsList($priorExistingTagList, $releaseSha, $ap
     }
   }
 
-  if ($unmatchedTags.Length -gt 0) {
+  if ($unmatchedTags.Length -gt 0 -and $exitOnError) {
     Write-Host "Tags already existing with different SHA versions. Exiting."
     exit(1)
   }

@@ -393,8 +393,6 @@ function VerifyPackages($pkgRepository, $artifactLocation, $workingDirectory, $a
 
   $pkgs = (Get-ChildItem -Path $artifactLocation -Include $packagePattern -Recurse -File)
 
-  Write-Host $pkgs
-
   foreach ($pkg in $pkgs) {
     try {
       $parsedPackage = &$ParsePkgInfoFn -pkg $pkg -workingDirectory $workingDirectory

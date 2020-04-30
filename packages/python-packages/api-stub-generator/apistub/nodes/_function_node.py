@@ -13,7 +13,7 @@ KW_ARG_NAME = "**kwargs"
 VALIDATION_REQUIRED_DUNDER = ["__init__",]
 KWARG_NOT_REQUIRED_METHODS = ["close",]
 TYPEHINT_NOT_REQUIRED_METHODS = ["close",]
-REGEX_ITEM_PAGED = "~[\w.]*\.([\w]*)"
+REGEX_ITEM_PAGED = "~[\w.]*\.([\w]*)\s?[\[\(][\w]*[\]\)]"
 PAGED_TYPES = ["ItemPaged", "AsyncItemPaged",]
 
 

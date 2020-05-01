@@ -73,9 +73,7 @@ class StubGenerator:
         elif not os.path.exists(args.temp_path):
             logging.error("Temp path [{0}] is invalid".format(args.temp_path))
             exit(1)
-        elif not os.path.exists(args.out_path):
-            logging.error("Output path [{}] is invalid".format(args.out_path))
-            exit(1)
+
 
         self.pkg_path = args.pkg_path
         self.temp_path = args.temp_path

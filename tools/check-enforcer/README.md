@@ -48,6 +48,12 @@ Check Enforcer will revert to an "in-progress" state. You can then trigger Check
 /check-enforcer evaluate
 ```
 
+From time to time Check Enforcer may be blocking a merge because no-check runs are appropriate for the PR, in these cases you can use the following command Check Enforcer rules and park the commit as successful (note, in future warnings and notifications will be sent when this occurs):
+
+```
+/check-enforcer override
+```
+
 These are the only commands that Check Enforcer supports at this time.
 
 ## Need Help?

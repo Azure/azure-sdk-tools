@@ -21,6 +21,7 @@ namespace PipelineGenerator.Conventions
 
         public override string SearchPattern => "ci*.yml";
         public override bool IsScheduled => true;
+        public override bool RemoveCITriggers => false;
 
         protected override async Task<bool> ApplyConventionAsync(BuildDefinition definition, SdkComponent component)
         {
@@ -29,32 +30,13 @@ namespace PipelineGenerator.Conventions
 
             var hasChanges = await base.ApplyConventionAsync(definition, component);
 
-            var ciTrigger = definition.Triggers.OfType<ContinuousIntegrationTrigger>().SingleOrDefault();
-
-            if (ciTrigger == null)
-            {
-                definition.Triggers.Add(new ContinuousIntegrationTrigger()
-                {
-                    SettingsSourceType = 2 // HACK: This is editor invisible, but this is required to inherit branch filters from YAML file.
-                });
-                hasChanges = true;
-            }
-            else
-            {
-                if (ciTrigger.SettingsSourceType != 2)
-                {
-                    ciTrigger.SettingsSourceType = 2;
-                    hasChanges = true;
-                }
-            }
-
             var prTrigger = definition.Triggers.OfType<PullRequestTrigger>().SingleOrDefault();
 
             if (prTrigger == null)
             {
                 definition.Triggers.Add(new PullRequestTrigger()
                 {
-                    SettingsSourceType = 1, // HACK: See above.
+                    SettingsSourceType = 1,
                     IsCommentRequiredForPullRequest = true,
                     BranchFilters = new List<string>()
                     {

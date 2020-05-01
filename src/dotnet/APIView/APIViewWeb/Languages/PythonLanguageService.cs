@@ -84,28 +84,6 @@ namespace APIViewWeb
                 Directory.Delete(tempDirectory, true);
             }
         }
-
-        private void InstallParser()
-        {
-            try
-            {
-                var assemblyPath = Path.GetDirectoryName(typeof(PythonLanguageService).Assembly.Location);
-                var whlPath = Path.Combine(assemblyPath, whlName);
-                var arguments = $"-m pip install {whlPath}";
-                var processStartInfo = new ProcessStartInfo("python", arguments);
-                processStartInfo.WorkingDirectory = assemblyPath;
-                processStartInfo.RedirectStandardError = true;
-                processStartInfo.RedirectStandardOutput = true;
-                processStartInfo.UseShellExecute = false;
-
-                var process = Process.Start(processStartInfo);
-                process.WaitForExit();
-                //Todo: Process return status should be handled and show error message once we decide how to hook this install code
-            }
-            catch(Exception ex)
-            {
-                //Todo: Handle exception once we have error reporting available
-            }
-        }
+        
     }
 }

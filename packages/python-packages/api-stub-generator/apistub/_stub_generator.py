@@ -31,7 +31,7 @@ from ._apiview import ApiView, APIViewEncoder, Navigation, Kind, NavigationTag
 
 INIT_PY_FILE = "__init__.py"
 
-logging.getLogger().setLevel(logging.INFO)
+logging.getLogger().setLevel(logging.ERROR)
 
 
 class StubGenerator:
@@ -59,6 +59,13 @@ class StubGenerator:
             action="store_true",
         )
 
+        parser.add_argument(
+            "--show-report",
+            help=("Enable diagnostic report"),
+            default=True,
+            action="store_true",
+        )
+
         args = parser.parse_args()
         if not os.path.exists(args.pkg_path):
             logging.error("Package path [{}] is invalid".format(args.pkg_path))
@@ -73,6 +80,7 @@ class StubGenerator:
         self.pkg_path = args.pkg_path
         self.temp_path = args.temp_path
         self.out_path = args.out_path
+        self.show_report = args.show_report
         if args.verbose:
             logging.getLogger().setLevel(logging.DEBUG)
 
@@ -95,9 +103,10 @@ class StubGenerator:
         apiview = self._generate_tokens(pkg_root_path, pkg_name, version)
         if apiview.Diagnostics:
             # Show error report in console
-            print("************************** Error Report **************************")
-            for m in self.module_dict.keys():
-                self.module_dict[m].print_errors()
+            if self.show_report:
+                print("************************** Error Report **************************")
+                for m in self.module_dict.keys():
+                    self.module_dict[m].print_errors()
             logging.info("*************** Completed parsing package with errors ***************")
         else:
             logging.info("*************** Completed parsing package and generating tokens ***************")

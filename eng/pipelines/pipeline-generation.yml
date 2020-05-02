@@ -4,7 +4,7 @@ trigger: none
 
 variables:
   skipComponentGovernanceDetection: true
-  PipelineGeneratorToolVersion: 1.0.2-dev.20200423.1
+  PipelineGeneratorToolVersion: 1.0.2-dev.20200502.1
   AzureSdkPublicFeed: https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk/nuget/v3/index.json
 
 jobs:

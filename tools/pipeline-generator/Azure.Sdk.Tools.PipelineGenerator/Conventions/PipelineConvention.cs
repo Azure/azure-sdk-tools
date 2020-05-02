@@ -88,6 +88,7 @@ namespace PipelineGenerator.Conventions
                 {
                     Logger.LogInformation("Convention had changes, updating '{0}' definition.", definitionName);
                     var buildClient = await Context.GetBuildHttpClientAsync(cancellationToken);
+                    definition.Comment = "Updated by pipeline generation tool";
                     definition = await buildClient.UpdateDefinitionAsync(
                         definition: definition,
                         cancellationToken: cancellationToken

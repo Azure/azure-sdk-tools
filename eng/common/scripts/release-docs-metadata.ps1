@@ -39,22 +39,38 @@ function _execute($command, $hardErr = $True){
   }
 }
 
-function SyncDocRepo($docRepo, $workingDirectory, $sourceBranch) {
+function SyncDocRepo($docRepo, $workingDirectory, $sourceBranch, $prBranch) {
   # get the doc repo, looking for the rdm branch if it exists
   $docRepo = "https://github.com/$docRepo"
   $repoRoot = (Join-Path $workingDirectory "repo/" )
 
   _execute("git clone $docRepo $repoRoot")
-  $sourceBranchExists = (git show-ref --verify --quiet refs/heads/$sourceBranch)
-  
+
   try {
     Push-Location $repoRoot
-    if ($sourceBranchExists) {
-      # there is an existing smoke-test branch we can base off of
+
+    # 0 if exists, 1 if not
+    git show-ref --verify --quiet refs/heads/$sourceBranch
+    $sourceBranchExists = $LastExitCode
+    git show-ref --verify --quiet refs/heads/$prBranch
+    $prBranchExists = $LastExitCode
+
+    if (-not $prBranchExists) {
+      # already exists, so just grab it
       _execute("git checkout $sourceBranch")
     }
     else {
-      # smoke-test branch doesn't exist, so default to base off of master (this is the safe option)
+      if (-not $sourceBranchExists) {
+        # there is an existing smoke-test branch we can base off of
+        # Write-Host "git checkout $sourceBranch"
+        _execute("git checkout $sourceBranch")
+        # Write-Host "git checkout -b $prBranch"
+        _execute("git checkout -b $prBranch")
+      }
+      else {
+        # smoke-test branch doesn't exist, so default to base off of master (this is the safe option)
+        _execute("git checkout -b $prBranch")
+      }
     }
   } finally {
     Pop-Location
@@ -126,8 +142,8 @@ $apiUrl = "https://api.github.com/repos/$repoId"
 $pushUrl = "https://$($env:GH_TOKEN)@github.com/$TargetDocRepo.git"
 $branchScriptLocation = (Join-Path $PSScriptRoot git-branch-push.ps1)
 $prScriptLocation = (Join-Path $PSScriptRoot Submit-PullRequest.ps1)
-$RepoOwner = $RepoId.split("/")[0]
-$RepoName = $RepoId.split("/")[1]
+$DocRepoOwner = $TargetDocRepo.split("/")[0]
+$DocRepoName = $TargetDocRepo.split("/")[1]
 
 $pkgs = VerifyPackages -pkgRepository $Repository `
   -artifactLocation $ArtifactLocation `
@@ -136,12 +152,12 @@ $pkgs = VerifyPackages -pkgRepository $Repository `
   -releaseSha $ReleaseSHA `
   -exitOnError $False
 
-# ensure the working directory is clean for the doc repo clone
 if ($pkgs) {
   Write-Host "Given the visible artifacts, readmes will be copied for the following packages"
   Write-Host ($pkgs | % { $_.PackageId }) 
 
   foreach ($packageInfo in $pkgs) {
+    # ensure the working directory is clean for the doc repo clone
     Remove-Item -Recurse -Force "$WorkDirectory/*"
     
     # sync the doc repo
@@ -150,8 +166,9 @@ if ($pkgs) {
     if ($semVer.IsPreRelease) {
       $targetDocBranch = $PreviewBranch
     }
-    $repoLocation = SyncDocRepo -docRepo $TargetDocRepo -workingDirectory $WorkDirectory -sourceBranch $targetDocBranch
     $prBranch = "$targetDocBranch-rdme"
+    $repoLocation = SyncDocRepo -docRepo $TargetDocRepo -workingDirectory $WorkDirectory -sourceBranch $targetDocBranch -prBranch $prBranch
+    
 
     Write-Host "Selected Branch is $targetDocBranch, PRBranch is $prBranch"
 
@@ -167,17 +184,14 @@ if ($pkgs) {
         Write-Host "git add -A ."
         git add -A .
 
-        Write-Host $prBranch
-        Write-Host "Updating for release of $($packageInfo.PackageId) version $($packageInfo.PackageVersion)"
-        Write-Host $pushUrl
-
-
         # commit the changes to the PR Branch. If others have pushed to the target branch we want to rebase off it and commit our changes regardless
-        # & $branchScriptLocation -PRBranchName $prBranch -CommitMsg "Updating for release of $($pkgInfo.PackageId) version $($pkgInfo.PackageVersion)" -GitUrl $pushUrl
+        & $branchScriptLocation -PRBranchName $prBranch `
+          -CommitMsg "Updating for release of $($packageInfo.PackageId) version $($packageInfo.PackageVersion)" `
+          -GitUrl $pushUrl
 
-        # # attempt the PR submit pullrequest
-        # & $prScriptLocation -RepoOwner $RepoOwner -RepoName $RepoName -BaseBranch `
-        #   $targetDocBranch -PROwner -PRBranch $prBranch -AuthToken $($env:GH_TOKEN) -PRTitle "Docs Readme Update"
+        # attempt the PR submit pullrequest
+        & $prScriptLocation -RepoOwner $DocRepoOwner -RepoName $DocRepoName -BaseBranch `
+          $targetDocBranch -PROwner $DocRepoOwner -PRBranch $prBranch -AuthToken $($env:GH_TOKEN) -PRTitle "Docs Readme Update"
       } catch {
         Write-Host $_
       } finally {
@@ -186,8 +200,6 @@ if ($pkgs) {
     } else {
       Write-Host "Unable to parse a header out of the readmecontent for PackageId $($packageInfo.PackageId)"
     }
-
-
   }
 }
 else {

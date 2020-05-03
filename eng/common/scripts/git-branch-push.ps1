@@ -51,9 +51,10 @@ if ($LASTEXITCODE -ne 0)
     exit $LASTEXITCODE
 }
 
-$prBranchExists = (git show-ref --verify --quiet refs/heads/$PRBranchName)
-
-if ($prBranchExists) {
+# 0 if found, false if not
+git show-ref --verify --quiet refs/heads/$PRBranchName
+$prBranchExists = $LASTEXITCODE
+if (-not $prBranchExists) {
     Write-Host "PR Branch Already Exists"
     Write-Host "git checkout $PRBranchName"
     git checkout $PRBranchName
@@ -147,7 +148,6 @@ do
             }
         }
     }
-
 } while($needsRetry -and $tryNumber -le $numberOfRetries)
 
 if ($LASTEXITCODE -ne 0)

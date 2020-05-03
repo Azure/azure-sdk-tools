@@ -162,17 +162,18 @@ if ($pkgs) {
     
     # sync the doc repo
     $semVer = [AzureEngSemanticVersion]::ParseVersionString($packageInfo.PackageVersion)
+    $rdSuffix = ""
     $targetDocBranch = $LatestBranch
     if ($semVer.IsPreRelease) {
       $targetDocBranch = $PreviewBranch
+      $rdSuffix = "-pre"
     }
     $prBranch = "$targetDocBranch-rdme"
     $repoLocation = SyncDocRepo -docRepo $TargetDocRepo -workingDirectory $WorkDirectory -sourceBranch $targetDocBranch -prBranch $prBranch
-    
 
     Write-Host "Selected Branch is $targetDocBranch, PRBranch is $prBranch"
 
-    $readmeName = "$($packageInfo.PackageId.Replace('azure-','').Replace('Azure.', '').Replace('@azure/', '').ToLower())-readme.md"
+    $readmeName = "$($packageInfo.PackageId.Replace('azure-','').Replace('Azure.', '').Replace('@azure/', '').ToLower())-readme$rdSuffix.md"
     $readmeLocation = Join-Path $repoLocation $DocRepoContentLocation $readmeName
     $adjustedContent = GetAdjustedReadmeContent -pkgInfo $packageInfo -lang $Language
 

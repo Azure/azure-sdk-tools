@@ -133,6 +133,7 @@ function GetAdjustedReadmeContent($pkgInfo, $lang){
 }
 
 $apiUrl = "https://api.github.com/repos/$repoId"
+$prUrl = "https://$($env:GH_TOKEN)@github.com/$repoId.git"
 $prScriptLocation = (Join-Path $PSScriptRoot Submit-PullRequest.ps1)
 $pkgs = VerifyPackages -pkgRepository $Repository -artifactLocation $ArtifactLocation -workingDirectory $WorkDirectory -apiUrl $apiUrl -releaseSha $ReleaseSHA -exitOnError $False
 

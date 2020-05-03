@@ -425,8 +425,6 @@ function VerifyPackages($pkgRepository, $artifactLocation, $workingDirectory, $a
 
   $existingTags = GetExistingTags($apiUrl)
   
-  Write-Host $results
-
   $intersect = $results | % { $_.Tag } | ? { $existingTags -contains $_ }
 
   if ($intersect.Length -gt 0 -and $exitOnError) {

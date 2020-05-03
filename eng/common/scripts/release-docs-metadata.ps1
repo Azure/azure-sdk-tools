@@ -4,7 +4,7 @@ param (
   $ArtifactLocation, # the root of the artifact folder. DevOps $(System.ArtifactsDirectory)
   $WorkDirectory, # a clean folder that we can work in
   $Repository, # EG: "Maven", "PyPI", "NPM"
-  $Language,
+  $Language, # EG: js, java, dotnet
   $ReleaseSHA, # the SHA for the artifacts. DevOps: $(Release.Artifacts.<artifactAlias>.SourceVersion) or $(Build.SourceVersion)
   $RepoId, # full repo id. EG azure/azure-sdk-for-net  DevOps: $(Build.Repository.Id)
   $TargetDocRepo, # the repository that we will be writing the readmes to 
@@ -17,19 +17,23 @@ param (
 . (Join-Path $PSScriptRoot artifact-metadata-parsing.ps1)
 . (Join-Path $PSScriptRoot SemVer.ps1)
 
+# normally best case is to stay away from `Invoke-Expression`
+# however, given that we have a few git commands to get through and simplicity of script has a value of it's own
+# this works in this limited context.
 function _execute($command, $hardErr = $True){
   try {
-    & $command
+    Write-Host $command
+    Invoke-Expression "&$command"
     if ($LastExitCode -ne 0) {
-      Write-Host 
+      Write-Host "Command exited with error code $LastExitCode"
     }
   }
   catch {
-    Write-Host $_
+    WriteHost $_
     if ($hardErr) {
-      exit 1
+      exit(1)
     }
-  } 
+  }
 }
 
 function SyncDocRepo($docRepo, $workingDirectory, $sourceBranch) {
@@ -37,9 +41,6 @@ function SyncDocRepo($docRepo, $workingDirectory, $sourceBranch) {
   $docRepo = "https://github.com/$docRepo"
   $repoRoot = (Join-Path $workingDirectory "repo/" )
   $prBranch = "$sourceBranch-rdme"
-
-  Write-Host "Docrepo $docRepo"
-  Write-Host "Where to clone $repoRoot"
 
   _execute("git clone $docRepo $repoRoot")
 
@@ -50,17 +51,19 @@ function SyncDocRepo($docRepo, $workingDirectory, $sourceBranch) {
     $sourceBranchExists = (git show-ref --verify --quiet refs/heads/$sourceBranch)
     if ($prBranchExists) {
       # already exists, so just grab it
-        _execute("git checkout $sourceBranchExists")
+      _execute("git checkout $sourceBranchExists")
     }
     else {
       if ($sourceBranchExists) {
         # there is an existing smoke-test branch we can base off of
-          _execute("git checkout $sourceBranch")
-          _execute("git checkout -b $prBranch")
+        # Write-Host "git checkout $sourceBranch"
+        _execute("git checkout $sourceBranch")
+        # Write-Host "git checkout -b $prBranch"
+        _execute("git checkout -b $prBranch")
       }
       else {
         # smoke-test branch doesn't exist, so default to base off of master (this is the safe option)
-          _execute("git checkout -b $prBranch")
+        _execute("git checkout -b $prBranch")
       }
     }
   } finally {
@@ -72,11 +75,11 @@ function SyncDocRepo($docRepo, $workingDirectory, $sourceBranch) {
 
 function GetMetaData($lang){
   switch ($lang) {
-    "Maven" {
+    "java" {
       $metadataUri = "https://raw.githubusercontent.com/Azure/azure-sdk/master/_data/releases/latest/java-packages.csv"
       break
     }
-    "Nuget" {
+    ".net" {
       $metadataUri = "https://raw.githubusercontent.com/Azure/azure-sdk/master/_data/releases/latest/dotnet-packages.csv"
       break
     }
@@ -101,7 +104,7 @@ function GetAdjustedReadmeContent($pkgInfo, $lang){
     $date = Get-Date -Format "MM/dd/yyyy"
     $service = ""
 
-    # the packageId is not present for js.
+    # the namespace is not expected to be present for js.
     $pkgId = $pkgInfo.PackageId.Replace("@azure/", "")
 
     try {
@@ -117,33 +120,30 @@ function GetAdjustedReadmeContent($pkgInfo, $lang){
       Write-Host "Unable to retrieve service metadata for packageId $($pkgInfo.PackageId)"
     }
 
-    $headerContentMatch = $pkgInfo.ReadmeContent -Match 'Azure .+? (client|plugin|shared) library for (JavaScript|Java|Python|\.NET|C)'
+    $headerContentMatch = (Select-String -InputObject $pkgInfo.ReadmeContent -Pattern 'Azure .+? (client|plugin|shared) library for (JavaScript|Java|Python|\.NET|C)').Matches[0]
 
     if ($headerContentMatch){
       $header = "---`r`ntitle: $headerContentMatch`r`nkeywords: Azure, $lang, SDK, API, $service $($pkgInfo.PackageId)`r`nauthor: maggiepint`r`nms.author: magpint`r`nms.date: $date`r`nms.topic: article`r`nms.prod: azure`r`nms.technology: azure`r`nms.devlang: $lang`r`nms.service: $service`r`n---`r`n"
-      $fileContent = $fileContent -replace $fileMatch, "$fileMatch - Version $($pkgInfo.PackageVersion) `r`n"
+      $fileContent = $pkgInfo.ReadmeContent -replace $headerContentMatch, "$headerContentMatch - Version $($pkgInfo.PackageVersion) `r`n"
       return "$header $fileContent"
     }
     else {
       return ""
     }
-
-
 }
 
 $apiUrl = "https://api.github.com/repos/$repoId"
+$prScriptLocation = (Join-Path $PSScriptRoot Submit-PullRequest.ps1)
 $pkgs = VerifyPackages -pkgRepository $Repository -artifactLocation $ArtifactLocation -workingDirectory $WorkDirectory -apiUrl $apiUrl -releaseSha $ReleaseSHA -exitOnError $False
 
 # ensure the working directory is clean for the doc repo clone
 if ($pkgs) {
   Write-Host "Given the visible artifacts, readmes will be copied for the following packages"
-  Write-Host ($pkgs | % { return $_ })
-
-
+  
   foreach ($packageInfo in $pkgs) {
     Remove-Item -Recurse -Force "$WorkDirectory/*"
     
-    # # sync the doc repo
+    # sync the doc repo
     $semVer = [AzureEngSemanticVersion]::ParseVersionString($packageInfo.PackageVersion)
     $targetDocBranch = $LatestBranch
     if ($semVer.IsPreRelease) {
@@ -152,24 +152,22 @@ if ($pkgs) {
     $repoLocation = SyncDocRepo -docRepo $TargetDocRepo -workingDirectory $WorkDirectory -sourceBranch $targetDocBranch
 
     Write-Host "Selected Branch is $targetDocBranch"
-    Write-Host "Output from Sync Repo is $repoLocation"
 
-    $readmeName = "$($packageInfo.PackageId.Replace('azure-','').Replace('Azure.', '').ToLower())-readme.md"
+    $readmeName = "$($packageInfo.PackageId.Replace('azure-','').Replace('Azure.', '').Replace('@azure/', '').ToLower())-readme.md"
     $readmeLocation = Join-Path $repoLocation $DocRepoContentLocation $readmeName
     $adjustedContent = GetAdjustedReadmeContent -pkgInfo $packageInfo -lang $Language
 
     if ($adjustedContent) {
-      Push-Location $repoLocation
-      Set-Content -Path $readmeLocation -Value $adjustedContent -Force
-
-      Write-Host "git add -A ."
-      Write-Host "git commit -m `"Updating readme with release $($pkgInfo.PackageId) of version $($pkgInfo.PackageVersion)`""
-      Write-Host "git push"
-
       try {
-        # attempt the PR submit pullrequest
-        # ./Submit-PullRequest.ps1 
+        Push-Location $repoLocation
+        Set-Content -Path $readmeLocation -Value $adjustedContent -Force
 
+        # Write-Host "git add -A ."
+        # Write-Host "git commit -m `"Updating readme with release $($pkgInfo.PackageId) of version $($pkgInfo.PackageVersion)`""
+        # Write-Host "git push"
+
+        # # attempt the PR submit pullrequest
+        # $prScriptLocation -
       } catch {
         Write-Host $_
       } finally {

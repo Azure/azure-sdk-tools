@@ -15,11 +15,6 @@ namespace APIViewWeb
 
         public string whlName = "api_stub_generator-0.1.0-py3-none-any.whl";
 
-        public PythonLanguageService()
-        {
-            InstallParser();
-        }
-
         public bool IsSupportedExtension(string extension)
         {
             return string.Equals(extension, ".whl", comparisonType: StringComparison.OrdinalIgnoreCase);
@@ -46,8 +41,14 @@ namespace APIViewWeb
 
             try
             {
-                var arguments = $"--pkg-path {originalFilePath} --temp-path {tempDirectory} --out-path {tempDirectory}";
-                var processStartInfo = new ProcessStartInfo("apistubgen", arguments);
+                var pythonScriptPath = Path.Combine(
+                    Path.GetDirectoryName(typeof(PythonLanguageService).Assembly.Location),
+                    "apistub",
+                    "apistubgen.py"
+                    );
+                var arguments = $"{pythonScriptPath} --pkg-path {originalFilePath} --temp-path {tempDirectory}" +
+                    $" --out-path {jsonFilePath} --hide-report";
+                var processStartInfo = new ProcessStartInfo("python", arguments);
                 processStartInfo.WorkingDirectory = tempDirectory;
                 processStartInfo.RedirectStandardError = true;
                 processStartInfo.RedirectStandardOutput = true;

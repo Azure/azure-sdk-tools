@@ -27,7 +27,7 @@ from subprocess import check_call
 import zipfile
 
 
-from ._apiview import ApiView, APIViewEncoder, Navigation, Kind, NavigationTag
+from apistub import ApiView, APIViewEncoder, Navigation, Kind, NavigationTag
 
 INIT_PY_FILE = "__init__.py"
 
@@ -60,9 +60,9 @@ class StubGenerator:
         )
 
         parser.add_argument(
-            "--show-report",
-            help=("Enable diagnostic report"),
-            default=True,
+            "--hide-report",
+            help=("Hide diagnostic report"),
+            default=False,
             action="store_true",
         )
 
@@ -78,7 +78,7 @@ class StubGenerator:
         self.pkg_path = args.pkg_path
         self.temp_path = args.temp_path
         self.out_path = args.out_path
-        self.show_report = args.show_report
+        self.hide_report = args.hide_report
         if args.verbose:
             logging.getLogger().setLevel(logging.DEBUG)
 
@@ -101,7 +101,7 @@ class StubGenerator:
         apiview = self._generate_tokens(pkg_root_path, pkg_name, version)
         if apiview.Diagnostics:
             # Show error report in console
-            if self.show_report:
+            if not self.hide_report:
                 print("************************** Error Report **************************")
                 for m in self.module_dict.keys():
                     self.module_dict[m].print_errors()
@@ -155,7 +155,7 @@ class StubGenerator:
         """
         # Import ModuleNode.
         # Importing it globally can cause circular dependency since it needs NodeIndex that is defined in this file
-        from .nodes._module_node import ModuleNode
+        from nodes._module_node import ModuleNode
 
         self.module_dict = {}
         nodeindex = NodeIndex()

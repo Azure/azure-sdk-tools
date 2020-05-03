@@ -27,7 +27,7 @@ from subprocess import check_call
 import zipfile
 
 
-from apistub import ApiView, APIViewEncoder, Navigation, Kind, NavigationTag
+from apistub._apiview import ApiView, APIViewEncoder, Navigation, Kind, NavigationTag
 
 INIT_PY_FILE = "__init__.py"
 
@@ -155,7 +155,7 @@ class StubGenerator:
         """
         # Import ModuleNode.
         # Importing it globally can cause circular dependency since it needs NodeIndex that is defined in this file
-        from nodes._module_node import ModuleNode
+        from apistub.nodes._module_node import ModuleNode
 
         self.module_dict = {}
         nodeindex = NodeIndex()

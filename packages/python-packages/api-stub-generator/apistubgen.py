@@ -1,6 +1,6 @@
 
 import os
-from _stub_generator import StubGenerator
+from apistub._stub_generator import StubGenerator
 
 if __name__ == "__main__":
     stub_generator = StubGenerator()

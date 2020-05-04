@@ -128,7 +128,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
                 }
                 else
                 {
-                    throw new CheckEnforcerUnsupportedEventException(eventName);
+                    logger.LogInformation("Received {eventName} event but we don't handle them.");
                 }
             }
             else

@@ -51,11 +51,6 @@ namespace Azure.Sdk.Tools.CheckEnforcer
                 log.LogError(ex, "Webhook failed to pass security checks.");
                 return new BadRequestResult();
             }
-            catch (CheckEnforcerUnsupportedEventException ex)
-            {
-                log.LogWarning(ex, "An error occured because the event is not supported.");
-                return new BadRequestResult();
-            }
             catch (Exception ex)
             {
                 log.LogError(ex, "An error occured processing the webhook.");

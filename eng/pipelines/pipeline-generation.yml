@@ -4,8 +4,6 @@ trigger: none
 
 variables:
   skipComponentGovernanceDetection: true
-  PipelineGeneratorToolVersion: 1.0.2-dev.20200502.1
-  AzureSdkPublicFeed: https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk/nuget/v3/index.json
 
 jobs:
 - job: GeneratePipelines
@@ -65,9 +63,7 @@ jobs:
         PublicOptions: ''
         InternalOptions: '--variablegroup 58 --variablegroup 76'
   steps:
-  - script: |
-      dotnet tool install Azure.Sdk.Tools.PipelineGenerator --version $(PipelineGeneratorToolVersion) --add-source $(AzureSdkPublicFeed) --global
-    displayName: 'Install pipeline generator tool'
+  - template: templates/steps/install-pipeline-generation.yml
   - script: |
       git clone https://github.com/azure/$(RepositoryName) $(Pipeline.Workspace)/$(RepositoryName)
       cd $(Pipeline.Workspace)/$(RepositoryName)

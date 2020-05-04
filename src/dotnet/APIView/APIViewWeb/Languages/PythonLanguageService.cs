@@ -13,7 +13,7 @@ namespace APIViewWeb
     {
         public string Name { get; } = "Python";
 
-        public string whlName = "api_stub_generator-0.1.0-py3-none-any.whl";
+        public string pythonParserVersion = "0.1.1";
 
         public bool IsSupportedExtension(string extension)
         {
@@ -22,7 +22,7 @@ namespace APIViewWeb
 
         public bool CanUpdate(string versionString)
         {
-            return versionString != whlName;
+            return versionString != pythonParserVersion;
         }
 
         public async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis)
@@ -43,7 +43,7 @@ namespace APIViewWeb
             {
                 var pythonScriptPath = Path.Combine(
                     Path.GetDirectoryName(typeof(PythonLanguageService).Assembly.Location),
-                    "apistub",
+                    "api-stub-generator",
                     "apistubgen.py"
                     );
                 var arguments = $"{pythonScriptPath} --pkg-path {originalFilePath} --temp-path {tempDirectory}" +
@@ -70,15 +70,10 @@ namespace APIViewWeb
                 using (var codeFileStream = File.OpenRead(jsonFilePath))
                 {
                     var codeFile = await CodeFile.DeserializeAsync(codeFileStream);
-                    codeFile.VersionString = whlName;
+                    codeFile.VersionString = pythonParserVersion;
                     codeFile.Language = "Python";
                     return codeFile;
                 }
-            }
-            catch(Exception ex)
-            {
-                Console.WriteLine(ex.ToString());
-                throw ex;
             }
             finally
             {

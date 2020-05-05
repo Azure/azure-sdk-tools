@@ -73,7 +73,7 @@ stages:
               goals: 'clean package'
 
           - pwsh: |
-              copy-item -Path $(PythonParserPackagePath) -Destination $(Build.ArtifactStagingDirectory)\APIViewWeb -Recurse -Force
+              copy-item -Path $(PythonParserPackagePath) -Destination $(Build.ArtifactStagingDirectory)/APIViewWeb/api-stub-generator -Recurse -Force
             displayName: 'Bundle Python API Parser'
 
           - script: 'dotnet build $(WebProjectPath) -warnaserror'

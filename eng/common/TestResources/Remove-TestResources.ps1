@@ -124,7 +124,13 @@ if (![string]::IsNullOrWhiteSpace($ServiceDirectory)) {
     $preRemovalScript = Join-Path -Path $root -ChildPath 'remove-test-resources-pre.ps1'
     if (Test-Path $preRemovalScript) {
         Log "Invoking pre resource removal script '$preRemovalScript'"
-        &$preRemovalScript -ResourceGroupName $ResourceGroupName @PSBoundParameters
+        if ($BaseName){
+            &$preRemovalScript -ResourceGroupName $ResourceGroupName @PSBoundParameters
+        }
+        else {
+            &$preRemovalScript @PSBoundParameters
+        }
+        
     }
 }
 

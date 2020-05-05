@@ -117,20 +117,16 @@ if ($ProvisionerApplicationId) {
 if (!$ResourceGroupName) {
     # Format the resource group name like in New-TestResources.ps1.
     $ResourceGroupName = "rg-$BaseName"
+    $PSBoundParameters.Add("ResourceGroupName", $ResourceGroupName);
 }
+
 
 if (![string]::IsNullOrWhiteSpace($ServiceDirectory)) {
     $root = [System.IO.Path]::Combine("$PSScriptRoot/../../../sdk", $ServiceDirectory) | Resolve-Path
     $preRemovalScript = Join-Path -Path $root -ChildPath 'remove-test-resources-pre.ps1'
     if (Test-Path $preRemovalScript) {
         Log "Invoking pre resource removal script '$preRemovalScript'"
-        if ($BaseName){
-            &$preRemovalScript -ResourceGroupName $ResourceGroupName @PSBoundParameters
-        }
-        else {
-            &$preRemovalScript @PSBoundParameters
-        }
-        
+        &$preRemovalScript @PSBoundParameters        
     }
 }
 

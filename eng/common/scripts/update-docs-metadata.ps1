@@ -9,75 +9,14 @@ param (
   $Repository, # EG: "Maven", "PyPI", "NPM"
 
   # arguments necessary to power the docs release
+  $DocRepoLocation, # the location on disk where we have cloned the documentation repository
   $Language, # EG: js, java, dotnet. Used in language for the embedded readme.
-  $TargetDocRepo, # the repository that we will be writing the readmes to 
-  $LatestBranch = "smoke-test", # normally `smoke-test`
-  $PreviewBranch = "smoke-test-preview", # normally `smoke-test-preview`
   $DocRepoContentLocation = "docs-ref-services/" # within the doc repo, where does our readme go?
 )
 
 # import artifact parsing and semver handling
 . (Join-Path $PSScriptRoot artifact-metadata-parsing.ps1)
 . (Join-Path $PSScriptRoot SemVer.ps1)
-
-# normally best case is to stay away from `Invoke-Expression`
-# however, given that we have a few git commands to get through and simplicity of script has a value of it's own
-# this works in this limited context.
-function _execute($command, $hardErr = $True){
-  try {
-    Write-Host $command
-    Invoke-Expression "&$command"
-    if ($LastExitCode -ne 0) {
-      Write-Host "Command exited with error code $LastExitCode"
-    }
-  }
-  catch {
-    WriteHost $_
-    if ($hardErr) {
-      exit(1)
-    }
-  }
-}
-
-function SyncDocRepo($docRepo, $workingDirectory, $sourceBranch, $prBranch) {
-  # get the doc repo, looking for the rdm branch if it exists
-  $docRepo = "https://github.com/$docRepo"
-  $repoRoot = (Join-Path $workingDirectory "repo/" )
-
-  _execute("git clone $docRepo $repoRoot")
-
-  try {
-    Push-Location $repoRoot
-
-    # 0 if exists, 1 if not
-    git show-ref --verify --quiet refs/heads/$sourceBranch
-    $sourceBranchExists = $LastExitCode
-    git show-ref --verify --quiet refs/heads/$prBranch
-    $prBranchExists = $LastExitCode
-
-    if (-not $prBranchExists) {
-      # already exists, so just grab it
-      _execute("git checkout $sourceBranch")
-    }
-    else {
-      if (-not $sourceBranchExists) {
-        # there is an existing smoke-test branch we can base off of
-        # Write-Host "git checkout $sourceBranch"
-        _execute("git checkout $sourceBranch")
-        # Write-Host "git checkout -b $prBranch"
-        _execute("git checkout -b $prBranch")
-      }
-      else {
-        # smoke-test branch doesn't exist, so default to base off of master (this is the safe option)
-        _execute("git checkout -b $prBranch")
-      }
-    }
-  } finally {
-    Pop-Location
-  }
-
-  return $repoRoot
-}
 
 function GetMetaData($lang){
   switch ($lang) {
@@ -93,7 +32,7 @@ function GetMetaData($lang){
       $metadataUri = "https://raw.githubusercontent.com/Azure/azure-sdk/master/_data/releases/latest/python-packages.csv"
       break
     }
-    "js" {
+    "javascript" {
       $metadataUri = "https://raw.githubusercontent.com/Azure/azure-sdk/master/_data/releases/latest/js-packages.csv"
       break
     }
@@ -139,12 +78,6 @@ function GetAdjustedReadmeContent($pkgInfo, $lang){
 }
 
 $apiUrl = "https://api.github.com/repos/$repoId"
-$pushUrl = "https://$($env:GH_TOKEN)@github.com/$TargetDocRepo.git"
-$branchScriptLocation = (Join-Path $PSScriptRoot git-branch-push.ps1)
-$prScriptLocation = (Join-Path $PSScriptRoot Submit-PullRequest.ps1)
-$DocRepoOwner = $TargetDocRepo.split("/")[0]
-$DocRepoName = $TargetDocRepo.split("/")[1]
-
 $pkgs = VerifyPackages -pkgRepository $Repository `
   -artifactLocation $ArtifactLocation `
   -workingDirectory $WorkDirectory `
@@ -157,42 +90,23 @@ if ($pkgs) {
   Write-Host ($pkgs | % { $_.PackageId }) 
 
   foreach ($packageInfo in $pkgs) {
-    # ensure the working directory is clean for the doc repo clone
-    Remove-Item -Recurse -Force "$WorkDirectory/*"
-    
     # sync the doc repo
     $semVer = [AzureEngSemanticVersion]::ParseVersionString($packageInfo.PackageVersion)
     $rdSuffix = ""
-    $targetDocBranch = $LatestBranch
     if ($semVer.IsPreRelease) {
-      $targetDocBranch = $PreviewBranch
       $rdSuffix = "-pre"
     }
-    $prBranch = "$targetDocBranch-rdme"
-    $repoLocation = SyncDocRepo -docRepo $TargetDocRepo -workingDirectory $WorkDirectory -sourceBranch $targetDocBranch -prBranch $prBranch
-
-    Write-Host "Selected Branch is $targetDocBranch, PRBranch is $prBranch"
 
     $readmeName = "$($packageInfo.PackageId.Replace('azure-','').Replace('Azure.', '').Replace('@azure/', '').ToLower())-readme$rdSuffix.md"
-    $readmeLocation = Join-Path $repoLocation $DocRepoContentLocation $readmeName
+    $readmeLocation = Join-Path $DocRepoLocation $DocRepoContentLocation $readmeName
     $adjustedContent = GetAdjustedReadmeContent -pkgInfo $packageInfo -lang $Language
 
     if ($adjustedContent) {
       try {
-        Push-Location $repoLocation
+        Push-Location $DocRepoLocation
         Set-Content -Path $readmeLocation -Value $adjustedContent -Force
 
-        Write-Host "git add -A ."
-        git add -A .
-
-        # commit the changes to the PR Branch. If others have pushed to the target branch we want to rebase off it and commit our changes regardless
-        & $branchScriptLocation -PRBranchName $prBranch `
-          -CommitMsg "Updating for release of $($packageInfo.PackageId) version $($packageInfo.PackageVersion)" `
-          -GitUrl $pushUrl
-
-        # attempt the PR submit pullrequest
-        & $prScriptLocation -RepoOwner $DocRepoOwner -RepoName $DocRepoName -BaseBranch `
-          $targetDocBranch -PROwner $DocRepoOwner -PRBranch $prBranch -AuthToken $($env:GH_TOKEN) -PRTitle "Docs Readme Update"
+        Write-Host "Updated readme for $readmeName."
       } catch {
         Write-Host $_
       } finally {

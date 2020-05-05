@@ -42,7 +42,7 @@ function GetMetaData($lang){
     }
   }
 
-  $metadataResponse = Invoke-WebRequest -Uri $metadataUri | ConvertFrom-Csv
+  $metadataResponse = Invoke-WebRequest-WithHandling -url $metadataUri -method "GET" | ConvertFrom-Csv
 }
 
 function GetAdjustedReadmeContent($pkgInfo, $lang){

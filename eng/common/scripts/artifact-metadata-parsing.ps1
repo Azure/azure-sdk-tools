@@ -1,3 +1,5 @@
+. (Join-Path $PSScriptRoot SemVer.ps1)
+
 $VERSION_REGEX = "(?<major>\d+)(\.(?<minor>\d+))?(\.(?<patch>\d+))?((?<pre>[^0-9][^\s]+))?"
 $SDIST_PACKAGE_REGEX = "^(?<package>.*)\-(?<versionstring>$VERSION_REGEX$)"
 
@@ -32,11 +34,11 @@ function CreateReleases($pkgList, $releaseApiUrl, $releaseSha) {
       "Authorization" = "token $($env:GH_TOKEN)"
     }
 
-    FireAPIRequest -url $url -body $body -headers $headers -method "Post"
+    Invoke-WebRequest-WithHandling -url $url -body $body -headers $headers -method "Post"
   }
 }
 
-function FireAPIRequest($url, $method, $body = $null, $headers = $null) {
+function Invoke-WebRequest-WithHandling($url, $method, $body = $null, $headers = $null) {
   $attempts = 1
 
   while ($attempts -le 3) {
@@ -110,7 +112,7 @@ function IsMavenPackageVersionPublished($pkgId, $pkgVersion, $groupId) {
   try {
 
     $uri = "https://oss.sonatype.org/content/repositories/releases/$groupId/$pkgId/$pkgVersion/$pkgId-$pkgVersion.pom"
-    $pomContent = Invoke-RestMethod -Method "GET" -Uri $uri
+    $pomContent = Invoke-WebRequest-WithHandling -Method "GET" -url $uri
 
     if ($pomContent -ne $null -or $pomContent.Length -eq 0) {
       return $true
@@ -236,7 +238,7 @@ function IsNugetPackageVersionPublished($pkgId, $pkgVersion) {
   $nugetUri = "https://api.nuget.org/v3-flatcontainer/$($pkgId.ToLowerInvariant())/index.json"
 
   try {
-    $nugetVersions = Invoke-RestMethod -Method "GET" -Uri $nugetUri
+    $nugetVersions = Invoke-WebRequest-WithHandling -url $nugetUri -Method "GET"
 
     return $nugetVersions.versions.Contains($pkgVersion)
   }
@@ -311,7 +313,7 @@ function ParseCArtifact($pkg, $workingDirectory) {
 # Returns the pypi publish status of a package id and version.
 function IsPythonPackageVersionPublished($pkgId, $pkgVersion) {
   try {
-    $existingVersion = (Invoke-RestMethod -Method "Get" -Uri "https://pypi.org/pypi/$pkgId/$pkgVersion/json").info.version
+    $existingVersion = (Invoke-WebRequest-WithHandling -Method "Get" -url "https://pypi.org/pypi/$pkgId/$pkgVersion/json").info.version
 
     # if existingVersion exists, then it's already been published
     return $True
@@ -335,7 +337,7 @@ function IsPythonPackageVersionPublished($pkgId, $pkgVersion) {
 # Retrieves the list of all tags that exist on the target repository
 function GetExistingTags($apiUrl) {
   try {
-    return (Invoke-RestMethod -Method "GET" -Uri "$apiUrl/git/refs/tags"  ) | % { $_.ref.Replace("refs/tags/", "") }
+    return (Invoke-WebRequest-WithHandling -Method "GET" -url "$apiUrl/git/refs/tags"  ) | % { $_.ref.Replace("refs/tags/", "") }
   }
   catch {
     $statusCode = $_.Exception.Response.StatusCode.value__
@@ -449,7 +451,7 @@ function CheckArtifactShaAgainstTagsList($priorExistingTagList, $releaseSha, $ap
   $unmatchedTags = @()
 
   foreach ($tag in $priorExistingTagList) {
-    $tagSha = (FireAPIRequest -Method "Get" -Url "$apiUrl/git/refs/tags/$tag" -Headers $headers)."object".sha
+    $tagSha = (Invoke-WebRequest-WithHandling -Method "Get" -Url "$apiUrl/git/refs/tags/$tag" -Headers $headers)."object".sha
 
     if ($tagSha -eq $releaseSha) {
       Write-Host "This package has already been released. The existing tag commit SHA $releaseSha matches the artifact SHA being processed. Skipping release step for this tag."

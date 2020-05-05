@@ -55,4 +55,4 @@ steps:
     RepoName: ${{ parameters.TargetDocRepo }}
     PRBranchName: increment-package-version-${{ parameters.ArtifactName }}-$(Build.BuildId)
     CommitMsg: "Increment package version after release of ${{ parameters.ArtifactName }}"
-    PRTitle: "Increment version for ${{ parameters.ServiceDirectory }} releases"
+    PRTitle: "Increment version for ${{ parameters.ServiceDirectory }} releases."

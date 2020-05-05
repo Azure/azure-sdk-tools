@@ -51,19 +51,8 @@ if ($LASTEXITCODE -ne 0)
     exit $LASTEXITCODE
 }
 
-# 0 if found, false if not
-git show-ref --verify --quiet refs/heads/$PRBranchName
-$prBranchExists = $LASTEXITCODE
-if (-not $prBranchExists) {
-    Write-Host "PR Branch Already Exists"
-    Write-Host "git checkout $PRBranchName"
-    git checkout $PRBranchName
-}
-else {
-    Write-Host "git checkout -b $PRBranchName"
-    git checkout -b $PRBranchName
-}
-
+Write-Host "git checkout -b $PRBranchName"
+git checkout -b $PRBranchName
 if ($LASTEXITCODE -ne 0)
 {
     Write-Error "Unable to create branch LASTEXITCODE=$($LASTEXITCODE), see command output above."

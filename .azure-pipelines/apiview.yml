@@ -72,6 +72,10 @@ stages:
               mavenPomFile: 'src/java/apiview-java-processor/pom.xml'
               goals: 'clean package'
 
+          - pwsh: |
+              copy-item -Path $(PythonParserPackagePath) -Destination $(Build.ArtifactStagingDirectory)\APIViewWeb -Recurse -Force
+            displayName: 'Bundle Python API Parser'
+
           - script: 'dotnet build $(WebProjectPath) -warnaserror'
             displayName: 'Build and Package'
             env:

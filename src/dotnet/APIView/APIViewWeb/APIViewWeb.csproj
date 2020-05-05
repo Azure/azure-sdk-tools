@@ -35,8 +35,5 @@
     <ProjectReference Include="..\APIView\APIView.csproj" />
   </ItemGroup>
 
-  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-    <Exec Command="xcopy &quot;..\..\..\..\packages\python-packages\api-stub-generator&quot; &quot;$(TargetDir)api-stub-generator&quot; /i /a /S /E/Y" />
-  </Target>
 
 </Project>

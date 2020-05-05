@@ -101,13 +101,13 @@ public class SnippetReplacerTests {
 
         HashMap<String, List<String>> foundSnippets = testReplacer.getAllSnippets(
                 new ArrayList<Path>(Arrays.asList(snippetSourceFile.toAbsolutePath())));
-        List<VerifyResult> results = testReplacer.verifySnippets(verification, testLines,
+        SnippetOperationResult<List<VerifyResult>> opResult = testReplacer.verifySnippets(verification, testLines,
                 testReplacer.SNIPPET_README_CALL_BEGIN, testReplacer.SNIPPET_README_CALL_END, foundSnippets,
                 "", "", 0, "", true);
 
-        assertTrue(results != null);
-        assertTrue(results.size() == 1);
-        assertTrue(results.get(0).SnippetWithIssues.equals("com.azure.core.http.rest.pagedflux.instantiation"));
+        assertTrue(opResult.result != null);
+        assertTrue(opResult.result.size() == 1);
+        assertTrue(opResult.result.get(0).SnippetWithIssues.equals("com.azure.core.http.rest.pagedflux.instantiation"));
     }
 
     @Test
@@ -119,14 +119,14 @@ public class SnippetReplacerTests {
 
         HashMap<String, List<String>> foundSnippets = testReplacer.getAllSnippets(
                 new ArrayList<Path>(Arrays.asList(snippetSourceFile.toAbsolutePath())));
-        List<VerifyResult> results = testReplacer.verifySnippets(verification, testLines,
+        SnippetOperationResult<List<VerifyResult>> opResult = testReplacer.verifySnippets(verification, testLines,
                 testReplacer.SNIPPET_SRC_CALL_BEGIN, testReplacer.SNIPPET_SRC_CALL_END, foundSnippets,
                 "<pre>", "</pre>", 1, "* ", false);
 
-        assertTrue(results != null);
-        assertTrue(results.size() == 2);
-        assertTrue(results.get(0).SnippetWithIssues.equals("com.azure.data.applicationconfig.configurationclient.instantiation"));
-        assertTrue(results.get(1).SnippetWithIssues.equals("com.azure.core.http.rest.pagedflux.instantiation"));
+        assertTrue(opResult.result != null);
+        assertTrue(opResult.result.size() == 2);
+        assertTrue(opResult.result.get(0).SnippetWithIssues.equals("com.azure.data.applicationconfig.configurationclient.instantiation"));
+        assertTrue(opResult.result.get(1).SnippetWithIssues.equals("com.azure.core.http.rest.pagedflux.instantiation"));
     }
 
     @Test

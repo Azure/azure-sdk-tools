@@ -6,6 +6,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.regex.*;
 
+import com.google.common.base.Verify;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
 
@@ -49,55 +50,112 @@ public class SnippetReplacer {
         }
     }
 
+    /**
+     * The "verification" operation encapsulated by this function is as follows.
+     *
+     * 1. Scan under the target direction for all discovered code snippet DEFINITIONS
+     * 2. Examine all snippet CALLS, finding where updates are needed.
+     * 3. Report all discovered snippets in need of update as well as all bad snippet calls
+     *
+     * A "bad snippet call" is simply calling for a snippet whose Id has no definition.
+     *
+     * See {@link #runUpdate(File, Log)} for details on actually defining and calling snippets.
+     */
     public void runVerification(File folderToVerify, Log logger) throws IOException, MojoExecutionException {
         List<Path> allLocatedJavaFiles = glob(folderToVerify.toPath(), JAVA_GLOB);
         List<Path> snippetSources = globFiles(allLocatedJavaFiles, SAMPLE_PATH_GLOB);
-        List<VerifyResult> discoveredIssues = new ArrayList<>();
+        List<VerifyResult> snippetsNeedingUpdate = new ArrayList<>();
         HashMap<String, List<String>> foundSnippets = new HashMap<>();
+        List<VerifyResult> badSnippetCalls = new ArrayList<>();
 
         // scan the sample files for all the snippet files
         foundSnippets = this.getAllSnippets(snippetSources);
 
         // walk across all the java files, run UpdateSrcSnippets
         for (Path sourcePath : allLocatedJavaFiles) {
-            discoveredIssues.addAll(this.verifySrcSnippets(sourcePath, foundSnippets));
+            SnippetOperationResult<List<VerifyResult>> verifyResult = this.verifySrcSnippets(sourcePath, foundSnippets);
+            snippetsNeedingUpdate.addAll(verifyResult.result);
+            badSnippetCalls.addAll(verifyResult.errorList);
         }
 
         // now find folderToVerify/README.md
         // run Update ReadmeSnippets on that
         File readmeInBaseDir = new File(folderToVerify, "README.md");
-        discoveredIssues.addAll(this.verifyReadmeSnippets(readmeInBaseDir.toPath(), foundSnippets));
+        SnippetOperationResult<List<VerifyResult>> rdmeResult = this.verifyReadmeSnippets(readmeInBaseDir.toPath(), foundSnippets);
+        snippetsNeedingUpdate.addAll(rdmeResult.result);
+        badSnippetCalls.addAll(rdmeResult.errorList);
 
-        if (discoveredIssues.size() > 0) {
-            for (VerifyResult result : discoveredIssues) {
+        if (snippetsNeedingUpdate.size() > 0 || badSnippetCalls.size() > 0) {
+            for (VerifyResult result : snippetsNeedingUpdate) {
                 logger.error(String.format("SnippetId %s needs update in file %s.", result.SnippetWithIssues, result.ReadmeLocation.toString()));
             }
-            throw new MojoExecutionException("Discovered snippets in need of updating. Please run this plugin in update mode and commit the changes.");
+
+            for (VerifyResult result : badSnippetCalls) {
+                logger.error(String.format("Unable to locate snippet with Id of %s. Reference in %s", result.SnippetWithIssues, result.ReadmeLocation.toString()));
+            }
+
+            throw new MojoExecutionException("Snippet-Replacer has encountered errors, check above output for details.");
         }
     }
 
+    /**
+     * This method encapsulates the "update" lifecycle of the snippet-replacer plugin.
+     *
+     * Given a root folder, the plugin will scan for snippet DEFINITIONS or snippet CALLS. Once a snippet definition
+     * index has been formulated, all java files located under the target directory will have snippet CALLS updated with
+     * the source from the DEFINITIONS.
+     *
+     * <p><strong>Snippet Definition</strong></p>
+     *
+     * A snippet definition is delineated by BEGIN and END comments directly in your java source.
+     * Example:
+     * <pre>
+     * // BEGIN: com.azure.data.applicationconfig.configurationclient.instantiation
+     * ConfigurationClient configurationClient = new ConfigurationClientBuilder&#40;&#41;
+     *     .connectionString&#40;connectionString&#41;
+     *     .buildClient&#40;&#41;;
+     * // END: com.azure.data.applicationconfig.configurationclient.instantiation
+     * </pre>
+     *
+     * <p><strong>Calling a Snippet</strong></p>
+     *
+     * From within a javadoc comment, embed an html comment
+     * &#47;*
+     * &lt;!-- src_embed com.azure.data.applicationconfig.configurationclient.instantiation --&gt;
+     * ConfigurationClient configurationClient = new ConfigurationClientBuilder&#40;&#41;
+     *     .connectionString&#40;connectionString&#41;
+     *     .buildClient&#40;&#41;;
+     * &lt;!-- end com.azure.data.applicationconfig.configurationclient.instantiation --&gt;
+     * Other javadoc details perhaps.
+     * *&#47;
+     * public void myfunction()
+     * </pre>
+     *
+     * After finishing update operations, this function will throw a MojoExecutionException after reporting all snippet
+     * CALLS that have no DEFINITION.
+     */
     public void runUpdate(File folderToVerify, Log logger) throws IOException, MojoExecutionException {
         List<Path> allLocatedJavaFiles = glob(folderToVerify.toPath(), JAVA_GLOB);
         List<Path> snippetSources = globFiles(allLocatedJavaFiles, SAMPLE_PATH_GLOB);
         HashMap<String, List<String>> foundSnippets = new HashMap<String, List<String>>();
-        List<VerifyResult> discoveredIssues = new ArrayList<>();
+        List<VerifyResult> badSnippetCalls = new ArrayList<>();
 
         // scan the sample files for all the snippet files
         foundSnippets = this.getAllSnippets(snippetSources);
 
         // walk across all the java files, run UpdateSrcSnippets
         for (Path sourcePath : allLocatedJavaFiles) {
-            discoveredIssues.addAll(this.updateSrcSnippets(sourcePath, foundSnippets));
+            badSnippetCalls.addAll(this.updateSrcSnippets(sourcePath, foundSnippets));
         }
 
         // now find folderToVerify/README.md
         // run Update ReadmeSnippets on that
         File readmeInBaseDir = new File(folderToVerify, "README.md");
-        discoveredIssues.addAll(this.updateReadmeSnippets(readmeInBaseDir.toPath(), foundSnippets));
+        badSnippetCalls.addAll(this.updateReadmeSnippets(readmeInBaseDir.toPath(), foundSnippets));
 
-        if (discoveredIssues.size() > 0) {
-            for (VerifyResult result : discoveredIssues) {
-                logger.error(String.format("SnippetId %s needs update in file %s.", result.SnippetWithIssues, result.ReadmeLocation.toString()));
+        if (badSnippetCalls.size() > 0) {
+            for (VerifyResult result : badSnippetCalls) {
+                logger.error(String.format("Unable to locate snippet with Id of %s. Reference in %s", result.SnippetWithIssues, result.ReadmeLocation.toString()));
             }
             throw new MojoExecutionException("Discovered snippets in need of updating. Please run this plugin in update mode and commit the changes.");
         }
@@ -150,7 +208,7 @@ public class SnippetReplacer {
     public SnippetOperationResult<StringBuilder> updateSnippets(Path file, List<String> lines, Pattern beginRegex, Pattern endRegex, HashMap<String, List<String>> snippetMap,
         String preFence, String postFence, int prefixGroupNum, String additionalLinePrefix, boolean disableEscape) {
 
-        List<VerifyResult> foundIssues = new ArrayList<>();
+        List<VerifyResult> badSnippetCalls = new ArrayList<>();
         StringBuilder modifiedLines = new StringBuilder();
         boolean inSnippet = false;
         boolean needsAmend = false;
@@ -172,7 +230,7 @@ public class SnippetReplacer {
                     if (snippetMap.containsKey(currentSnippetId)) {
                         newSnippets = snippetMap.get(currentSnippetId);
                     } else {
-                        foundIssues.add(new VerifyResult(file, currentSnippetId));
+                        badSnippetCalls.add(new VerifyResult(file, currentSnippetId));
                         needsAmend = true;
                         inSnippet = false;
                         continue;
@@ -218,31 +276,32 @@ public class SnippetReplacer {
         }
 
         if (needsAmend) {
-            return new SnippetOperationResult<StringBuilder>(modifiedLines, foundIssues);
+            return new SnippetOperationResult<StringBuilder>(modifiedLines, badSnippetCalls);
         }
         else{
             return null;
         }
     }
 
-    public List<VerifyResult> verifyReadmeSnippets(Path file, HashMap<String, List<String>> snippetMap) throws IOException, MojoExecutionException {
+    public SnippetOperationResult<List<VerifyResult>> verifyReadmeSnippets(Path file, HashMap<String, List<String>> snippetMap) throws IOException, MojoExecutionException {
         List<String> lines = Files.readAllLines(file, StandardCharsets.UTF_8);
         return this.verifySnippets(file, lines, SNIPPET_README_CALL_BEGIN, SNIPPET_README_CALL_END, snippetMap, "", "", 0, "", true);
     }
 
-    public List<VerifyResult> verifySrcSnippets(Path file, HashMap<String, List<String>> snippetMap) throws IOException, MojoExecutionException {
+    public SnippetOperationResult<List<VerifyResult>> verifySrcSnippets(Path file, HashMap<String, List<String>> snippetMap) throws IOException, MojoExecutionException {
         List<String> lines = Files.readAllLines(file, StandardCharsets.UTF_8);
         return this.verifySnippets(file, lines, SNIPPET_SRC_CALL_BEGIN, SNIPPET_SRC_CALL_END, snippetMap, "<pre>", "</pre>", 1, "* ", false);
     }
 
-    public List<VerifyResult> verifySnippets(Path file, List<String> lines, Pattern beginRegex, Pattern endRegex,
+    public SnippetOperationResult<List<VerifyResult>> verifySnippets(Path file, List<String> lines, Pattern beginRegex, Pattern endRegex,
         HashMap<String, List<String>> snippetMap, String preFence, String postFence, int prefixGroupNum,
-        String additionalLinePrefix, boolean disableEscape) throws MojoExecutionException {
+        String additionalLinePrefix, boolean disableEscape) {
 
         boolean inSnippet = false;
         String lineSep = System.lineSeparator();
         List<String> currentSnippetSet = null;
         List<VerifyResult> foundIssues = new ArrayList<>();
+        List<VerifyResult> badSnippetCalls = new ArrayList<>();
         String currentSnippetId = "";
 
         for (String line : lines) {
@@ -260,7 +319,10 @@ public class SnippetReplacer {
                     if (snippetMap.containsKey(currentSnippetId)) {
                         newSnippets = snippetMap.get(currentSnippetId);
                     } else {
-                        throw new MojoExecutionException(String.format("Unable to locate snippet with Id of %s. Reference in %s", currentSnippetId, file.toString()));
+                        badSnippetCalls.add(new VerifyResult(file, currentSnippetId));
+                        inSnippet = false;
+                        currentSnippetSet = null;
+                        continue;
                     }
                     List<String> modifiedSnippets = new ArrayList<>();
 
@@ -300,7 +362,7 @@ public class SnippetReplacer {
             }
         }
 
-        return foundIssues;
+        return new SnippetOperationResult<List<VerifyResult>>(foundIssues, badSnippetCalls);
     }
 
     public HashMap<String, List<String>> getAllSnippets(List<Path> snippetSources) throws IOException, MojoExecutionException {

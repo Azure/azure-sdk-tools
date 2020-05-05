@@ -119,7 +119,6 @@ if (!$ResourceGroupName) {
     $ResourceGroupName = "rg-$BaseName"
 }
 
-
 if (![string]::IsNullOrWhiteSpace($ServiceDirectory)) {
     $root = [System.IO.Path]::Combine("$PSScriptRoot/../../../sdk", $ServiceDirectory) | Resolve-Path
     $preRemovalScript = Join-Path -Path $root -ChildPath 'remove-test-resources-pre.ps1'

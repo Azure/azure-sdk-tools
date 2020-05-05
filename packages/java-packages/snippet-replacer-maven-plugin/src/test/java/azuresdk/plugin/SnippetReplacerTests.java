@@ -60,12 +60,12 @@ public class SnippetReplacerTests {
 
         HashMap<String, List<String>> foundSnippets = testReplacer.getAllSnippets(
                 new ArrayList<Path>(Arrays.asList(snippetSourceFile.toAbsolutePath())));
-        StringBuilder result = testReplacer.updateSnippets(codeForReplacement, testLines,
+        SnippetOperationResult<StringBuilder> opResult = testReplacer.updateSnippets(codeForReplacement, testLines,
                 testReplacer.SNIPPET_SRC_CALL_BEGIN, testReplacer.SNIPPET_SRC_CALL_END, foundSnippets,
                 "<pre>", "</pre>", 1, "* ", false);
 
-        assertTrue(result != null);
-        assertTrue(result.toString().equals(expectedString));
+        assertTrue(opResult.result != null);
+        assertEquals(opResult.result.toString(),expectedString);
     }
 
     @Test
@@ -84,12 +84,12 @@ public class SnippetReplacerTests {
 
         HashMap<String, List<String>> foundSnippets = testReplacer.getAllSnippets(
                 new ArrayList<Path>(Arrays.asList(snippetSourceFile.toAbsolutePath())));
-        StringBuilder result = testReplacer.updateSnippets(codeForReplacement, testLines,
+        SnippetOperationResult<StringBuilder> opResult = testReplacer.updateSnippets(codeForReplacement, testLines,
                 testReplacer.SNIPPET_README_CALL_BEGIN, testReplacer.SNIPPET_README_CALL_END, foundSnippets,
                 "", "", 0, "", true);
 
-        assertTrue(result != null);
-        assertTrue(result.toString().equals(expectedString));
+        assertTrue(opResult.result != null);
+        assertTrue(opResult.result.toString().equals(expectedString));
     }
 
     @Test
@@ -170,19 +170,17 @@ public class SnippetReplacerTests {
     }
 
     @Test
-    public void notFoundSnippetCrashes() {
-        try {
-            HashMap<String, List<String>> emptyMap = new HashMap<String, List<String>>();
+    public void notFoundSnippetCrashes() throws IOException{
+        HashMap<String, List<String>> emptyMap = new HashMap<String, List<String>>();
 
-            Path codeForReplacement = _getPathToResource("../../project-to-test/basic_src_snippet_insertion_before.txt");
-            List<String> testLines = Files.readAllLines(codeForReplacement, StandardCharsets.UTF_8);
-            SnippetReplacer testReplacer = new SnippetReplacer();
+        Path codeForReplacement = _getPathToResource("../../project-to-test/basic_src_snippet_insertion_before.txt");
+        List<String> testLines = Files.readAllLines(codeForReplacement, StandardCharsets.UTF_8);
+        SnippetReplacer testReplacer = new SnippetReplacer();
 
-            StringBuilder result = testReplacer.updateSnippets(codeForReplacement, testLines,
-                    testReplacer.SNIPPET_SRC_CALL_BEGIN, testReplacer.SNIPPET_SRC_CALL_END, emptyMap, "<pre>",
-                    "</pre>", 1, "* ", false);
-        } catch (Exception e){
-            assertTrue(e instanceof MojoExecutionException);
-        }
+        SnippetOperationResult<StringBuilder> opResult = testReplacer.updateSnippets(codeForReplacement, testLines,
+                testReplacer.SNIPPET_SRC_CALL_BEGIN, testReplacer.SNIPPET_SRC_CALL_END, emptyMap, "<pre>",
+                "</pre>", 1, "* ", false);
+
+        assertTrue(opResult.errorList.size() == 3);
     }
 }

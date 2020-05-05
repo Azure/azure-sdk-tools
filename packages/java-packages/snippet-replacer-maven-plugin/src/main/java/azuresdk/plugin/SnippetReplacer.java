@@ -39,7 +39,7 @@ public class SnippetReplacer {
     public SnippetReplacer(String mode, File folderToVerify, Log logger) throws MojoExecutionException, IOException {
         switch (mode) {
             case "update":
-                this.runUpdate(folderToVerify);
+                this.runUpdate(folderToVerify, logger);
                 break;
             case "verify":
                 this.runVerification(folderToVerify, logger);
@@ -76,50 +76,81 @@ public class SnippetReplacer {
         }
     }
 
-    public void runUpdate(File folderToVerify) throws IOException, MojoExecutionException {
+    public void runUpdate(File folderToVerify, Log logger) throws IOException, MojoExecutionException {
         List<Path> allLocatedJavaFiles = glob(folderToVerify.toPath(), JAVA_GLOB);
         List<Path> snippetSources = globFiles(allLocatedJavaFiles, SAMPLE_PATH_GLOB);
         HashMap<String, List<String>> foundSnippets = new HashMap<String, List<String>>();
+        List<VerifyResult> discoveredIssues = new ArrayList<>();
 
         // scan the sample files for all the snippet files
         foundSnippets = this.getAllSnippets(snippetSources);
 
         // walk across all the java files, run UpdateSrcSnippets
         for (Path sourcePath : allLocatedJavaFiles) {
-            this.updateSrcSnippets(sourcePath, foundSnippets);
+            discoveredIssues.addAll(this.updateSrcSnippets(sourcePath, foundSnippets));
         }
 
         // now find folderToVerify/README.md
         // run Update ReadmeSnippets on that
         File readmeInBaseDir = new File(folderToVerify, "README.md");
-        this.updateReadmeSnippets(readmeInBaseDir.toPath(), foundSnippets);
-    }
+        discoveredIssues.addAll(this.updateReadmeSnippets(readmeInBaseDir.toPath(), foundSnippets));
 
-    public void updateReadmeSnippets(Path file, HashMap<String, List<String>> snippetMap) throws IOException, MojoExecutionException {
-        List<String> lines = Files.readAllLines(file, StandardCharsets.UTF_8);
-        StringBuilder modifiedLines = this.updateSnippets(file, lines, SNIPPET_README_CALL_BEGIN, SNIPPET_README_CALL_END, snippetMap,"", "", 0, "", true);
-
-        if (modifiedLines != null) {
-            try (BufferedWriter writer = Files.newBufferedWriter(file, StandardCharsets.UTF_8)) {
-                writer.write(modifiedLines.toString());
+        if (discoveredIssues.size() > 0) {
+            for (VerifyResult result : discoveredIssues) {
+                logger.error(String.format("SnippetId %s needs update in file %s.", result.SnippetWithIssues, result.ReadmeLocation.toString()));
             }
+            throw new MojoExecutionException("Discovered snippets in need of updating. Please run this plugin in update mode and commit the changes.");
         }
     }
 
-    public void updateSrcSnippets(Path file, HashMap<String, List<String>> snippetMap) throws IOException, MojoExecutionException {
+    public List<VerifyResult> updateReadmeSnippets(Path file, HashMap<String, List<String>> snippetMap) throws IOException, MojoExecutionException {
         List<String> lines = Files.readAllLines(file, StandardCharsets.UTF_8);
-        StringBuilder modifiedLines = this.updateSnippets(file, lines, SNIPPET_SRC_CALL_BEGIN, SNIPPET_SRC_CALL_END, snippetMap, "<pre>", "</pre>",1, "* ", false);
+        SnippetOperationResult<StringBuilder> opResult = this.updateSnippets(file,
+                lines,
+                SNIPPET_README_CALL_BEGIN,
+                SNIPPET_README_CALL_END,
+                snippetMap,
+                "",
+                "",
+                0,
+                "",
+                true);
 
-        if (modifiedLines != null) {
+        if (opResult.result != null) {
             try (BufferedWriter writer = Files.newBufferedWriter(file, StandardCharsets.UTF_8)) {
-                writer.write(modifiedLines.toString());
+                writer.write(opResult.result.toString());
             }
         }
+
+        return opResult.errorList;
     }
 
-    public StringBuilder updateSnippets(Path file, List<String> lines, Pattern beginRegex, Pattern endRegex, HashMap<String, List<String>> snippetMap,
-        String preFence, String postFence, int prefixGroupNum, String additionalLinePrefix, boolean disableEscape) throws MojoExecutionException {
+    public List<VerifyResult> updateSrcSnippets(Path file, HashMap<String, List<String>> snippetMap) throws IOException, MojoExecutionException {
+        List<String> lines = Files.readAllLines(file, StandardCharsets.UTF_8);
+        SnippetOperationResult<StringBuilder> opResult = this.updateSnippets(file,
+                lines,
+                SNIPPET_SRC_CALL_BEGIN,
+                SNIPPET_SRC_CALL_END,
+                snippetMap,
+                "<pre>",
+                "</pre>",
+                1,
+                "* ",
+                false);
 
+        if (opResult.result != null) {
+            try (BufferedWriter writer = Files.newBufferedWriter(file, StandardCharsets.UTF_8)) {
+                writer.write(opResult.result.toString());
+            }
+        }
+
+        return opResult.errorList;
+    }
+
+    public SnippetOperationResult<StringBuilder> updateSnippets(Path file, List<String> lines, Pattern beginRegex, Pattern endRegex, HashMap<String, List<String>> snippetMap,
+        String preFence, String postFence, int prefixGroupNum, String additionalLinePrefix, boolean disableEscape) {
+
+        List<VerifyResult> foundIssues = new ArrayList<>();
         StringBuilder modifiedLines = new StringBuilder();
         boolean inSnippet = false;
         boolean needsAmend = false;
@@ -141,7 +172,10 @@ public class SnippetReplacer {
                     if (snippetMap.containsKey(currentSnippetId)) {
                         newSnippets = snippetMap.get(currentSnippetId);
                     } else {
-                        throw new MojoExecutionException(String.format("Unable to locate snippet with Id of %s. Reference in %s", currentSnippetId, file.toString()));
+                        foundIssues.add(new VerifyResult(file, currentSnippetId));
+                        needsAmend = true;
+                        inSnippet = false;
+                        continue;
                     }
 
                     List<String> modifiedSnippets = new ArrayList<>();
@@ -184,7 +218,7 @@ public class SnippetReplacer {
         }
 
         if (needsAmend) {
-            return modifiedLines;
+            return new SnippetOperationResult<StringBuilder>(modifiedLines, foundIssues);
         }
         else{
             return null;

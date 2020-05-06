@@ -99,7 +99,7 @@ class FunctionNode(NodeEntityBase):
         sig = inspect.signature(self.obj)
         params = sig.parameters
         # Add all keyword only args here temporarily until docstring is parsed
-        # This is to habdle the scenario is keyword arg typehint (py2 style is present in signature itself)
+        # This is to handle the scenario is keyword arg typehint (py3 style is present in signature itself)
         self.kw_args = []
         for argname in params:
             arg = ArgType(argname, get_qualified_name(params[argname].annotation), "", self)

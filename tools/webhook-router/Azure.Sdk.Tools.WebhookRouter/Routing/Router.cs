@@ -2,8 +2,13 @@
 using Azure.Identity;
 using Azure.Messaging.EventHubs;
 using Azure.Messaging.EventHubs.Producer;
+using Azure.Sdk.Tools.WebhookRouter.Integrations.GitHub;
+using Azure.Security.KeyVault.Secrets;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -12,12 +17,34 @@ namespace Azure.Sdk.Tools.WebhookRouter.Routing
 {
     public class Router : IRouter
     {
+        private Uri GetSecretClientUri()
+        {
+            var websiteResourceGroupEnvironmentVariable = Environment.GetEnvironmentVariable("WEBSITE_RESOURCE_GROUP");
+            var uri = new Uri($"https://{websiteResourceGroupEnvironmentVariable}.vault.azure.net/");
+            return uri;
+        }
 
         private Uri GetConfigurationUri()
         {
             var websiteResourceGroupEnvironmentVariable = Environment.GetEnvironmentVariable("WEBSITE_RESOURCE_GROUP");
-            var uri = new Uri($"https://{websiteResourceGroupEnvironmentVariable}.azconfig.io");
+            var uri = new Uri($"https://{websiteResourceGroupEnvironmentVariable}.azconfig.io/");
             return uri;
+        }
+
+        private SecretClient GetSecretClient()
+        {
+            var uri = GetSecretClientUri();
+            var credential = new DefaultAzureCredential();
+            var client = new SecretClient(uri, credential);
+            return client;
+        }
+
+        private async Task<string> GetSecretAsync(string secretName)
+        {
+            var client = GetSecretClient();
+            var response = await client.GetSecretAsync(secretName);
+            var secret = response.Value.Value; // Urgh!
+            return secret;
         }
 
         private ConfigurationClient GetConfigurationClient()
@@ -62,21 +89,70 @@ namespace Azure.Sdk.Tools.WebhookRouter.Routing
             return settings;
         }
 
-        public async Task<Rule> GetRuleAsync(Guid route)
+        private async Task<Rule> GetRuleAsync(Guid route)
         {
             var settings = await GetSettingsAsync(route);
-            var rule = new Rule(route, settings);
+
+            var payloadType = (PayloadType)Enum.Parse(typeof(PayloadType), settings["payload-type"], true);
+            var eventHubsNamespace = settings["eventhubs-namespace"];
+            var eventHubName = settings["eventhub-name"];
+
+            Rule rule = payloadType switch
+            {
+                PayloadType.GitHub => new GitHubRule(route, eventHubsNamespace, eventHubName, settings["github-webhook-secret"]),
+                PayloadType.AzureDevOps => new AzureDevOpsRule(route, eventHubsNamespace, eventHubName),
+                _ => new GenericRule(route, eventHubsNamespace, eventHubName)
+            };
+
             return rule;
         }
 
-        public async Task RouteAsync(Rule rule, Payload payload)
+        private async Task<byte[]> ReadAndValidateContentFromGitHubAsync(GitHubRule rule, HttpRequest request)
         {
-            var payloadString = JsonSerializer.Serialize(payload, new JsonSerializerOptions()
-            {
-                WriteIndented = true
-            });
+            var payloadContent = await ReadAndValidateContentFromGenericAsync(rule, request);
 
-            var payloadBytes = Encoding.UTF8.GetBytes(payloadString);
+            var secret = await GetSecretAsync(rule.WebhookSecret);
+            var signature = request.Headers[GitHubWebhookSignatureValidator.GitHubWebhookSignatureHeader];
+            bool isValid = GitHubWebhookSignatureValidator.IsValid(payloadContent, signature, secret);
+
+            return payloadContent;
+        }
+
+        private async Task<byte[]> ReadAndValidateContentFromAzureDevOpsAsync(AzureDevOpsRule rule, HttpRequest request)
+        {
+            var payloadContent = await ReadAndValidateContentFromGenericAsync(rule, request);
+            return payloadContent;
+        }
+
+        private async Task<byte[]> ReadAndValidateContentFromGenericAsync(Rule rule, HttpRequest request)
+        {
+            using var stream = new MemoryStream();
+            await request.Body.CopyToAsync(stream);
+            var payloadContent = stream.ToArray();
+            return payloadContent;
+        }
+
+        private async Task<Payload> CreateAndValidatePayloadAsync(Rule rule, HttpRequest request)
+        {
+            var payloadContent = rule switch
+            {
+                GitHubRule gitHubRule => await ReadAndValidateContentFromGitHubAsync(gitHubRule, request),
+                AzureDevOpsRule azureDevopsRule => await ReadAndValidateContentFromAzureDevOpsAsync(azureDevopsRule, request),
+                _ => await ReadAndValidateContentFromGenericAsync(rule, request)
+            };
+
+            var payload = new Payload(request.Headers, payloadContent);
+            return payload;
+        }
+
+        public async Task RouteAsync(Guid route, HttpRequest request)
+        {
+            var rule = await GetRuleAsync(route);
+            var payload = await CreateAndValidatePayloadAsync(rule, request);
+
+            var payloadJson = JsonSerializer.Serialize(payload);
+            var payloadBytes = Encoding.UTF8.GetBytes(payloadJson);
+
             var @event = new EventData(payloadBytes);
 
             var fullyQualifiedEventHubsNamespace = $"{rule.EventHubsNamespace}.servicebus.windows.net";

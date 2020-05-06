@@ -6,6 +6,8 @@ namespace Azure.Sdk.Tools.WebhookRouter.Routing
 {
     public enum PayloadType
     {
-        Raw
+        GitHub,
+        AzureDevOps,
+        Generic
     }
 }

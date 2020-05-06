@@ -10,10 +10,10 @@ namespace Azure.Sdk.Tools.WebhookRouter.Routing
 {
     public class Payload
     {
-        public Payload(IDictionary<string, StringValues> headers, JsonElement content)
+        public Payload(IDictionary<string, StringValues> headers, byte[] content)
         {
             Headers = headers;
-            Content = content;
+            Content = Convert.ToBase64String(content);
         }
 
         [JsonPropertyName("format")]
@@ -23,6 +23,6 @@ namespace Azure.Sdk.Tools.WebhookRouter.Routing
         public IDictionary<string, StringValues> Headers { get; private set; }
 
         [JsonPropertyName("content")]
-        public JsonElement Content { get; private set; }
+        public string Content { get; private set; }
     }
 }

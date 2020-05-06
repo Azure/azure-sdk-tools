@@ -48,6 +48,8 @@ steps:
     CommitMsg: "Increment package version after release of ${{ parameters.ArtifactName }}"
     PRTitle: "Docs.MS Readme Update."
     BaseBranchName: smoke-test
+    WorkingDirectory: ${{parameters.WorkingDirectory}}/repo
+    ScriptDirectory: ${{parameters.WorkingDirectory}}/${{parameters.ScriptDirectory}}
 
 
 

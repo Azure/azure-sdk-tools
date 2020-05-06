@@ -98,6 +98,9 @@ class FunctionNode(NodeEntityBase):
         # Find signature to find positional args and return type
         sig = inspect.signature(self.obj)
         params = sig.parameters
+        # Add all keyword only args here temporarily until docstring is parsed
+        # This is to handle the scenario is keyword arg typehint (py3 style is present in signature itself)
+        self.kw_args = []
         for argname in params:
             arg = ArgType(argname, get_qualified_name(params[argname].annotation), "", self)
             # set default value if available
@@ -106,7 +109,11 @@ class FunctionNode(NodeEntityBase):
             # Store handle to kwarg object to replace it later
             if params[argname].kind == Parameter.VAR_KEYWORD:
                 arg.argname = KW_ARG_NAME
-            self.args.append(arg)
+
+            if params[argname].kind == Parameter.KEYWORD_ONLY:
+                self.kw_args.append(arg)
+            else:
+                self.args.append(arg)
 
         if sig.return_annotation:
             self.return_type = get_qualified_name(sig.return_annotation)
@@ -115,10 +122,36 @@ class FunctionNode(NodeEntityBase):
         self._parse_docstring()
         # parse type hints
         self._parse_typehint()
+        self._copy_kw_args()
+
         if not self.return_type and is_typehint_mandatory(self.name):
             self.errors.append("Return type is missing in both typehint and docstring")
         # Validate return type
         self._validate_pageable_api()
+
+
+    def _copy_kw_args(self):
+        # Copy kw only args from signature and docstring
+        kwargs = [x for x in self.args if x.argname == KW_ARG_NAME]
+        # add keyword args
+        if self.kw_args:
+            # Add separator to differentiate pos_arg and keyword args
+            self.args.append(ArgType("*"))
+            self.kw_args.sort(key=operator.attrgetter("argname"))
+            # Add parsed keyword args to function signature after updating current function node as parent in arg
+            for arg in self.kw_args:
+                arg.set_function_node(self)
+                self.args.append(arg)
+
+            # remove arg with name "**kwarg and add at the end"
+            if kwargs:
+                kw_arg = kwargs[0]
+                self.args.remove(kw_arg)
+                self.args.append(kw_arg)
+
+        # API must have **kwargs for non async methods. Flag it as an error if it is missing for public API
+        if not kwargs and is_kwarg_mandatory(self.name):
+            self.errors.append("Keyword arg (**kwargs) is missing in method {}".format(self.name))
 
 
     def _parse_docstring(self):
@@ -155,26 +188,7 @@ class FunctionNode(NodeEntityBase):
                     pos_arg.argname, pos_arg.argtype
                 )
 
-            kwargs = [x for x in self.args if x.argname == KW_ARG_NAME]
-            # add keyword args
-            if parsed_docstring.kw_args:
-                # Add separator to differentiate pos_arg and keyword args
-                self.args.append(ArgType("*"))
-                parsed_docstring.kw_args.sort(key=operator.attrgetter("argname"))
-                # Add parsed keyword args to function signature after updating current function node as parent in arg
-                for arg in parsed_docstring.kw_args:
-                    arg.set_function_node(self)
-                    self.args.append(arg)
-
-                # remove arg with name "**kwarg and add at the end"
-                if kwargs:
-                    kw_arg = kwargs[0]
-                    self.args.remove(kw_arg)
-                    self.args.append(kw_arg)
-
-            # API must have **kwargs. Flag it as an error if it is missing for public API
-            if not kwargs and is_kwarg_mandatory(self.name):
-                self.errors.append("Keyword arg (**kwargs) is missing in method {}".format(self.name))
+            self.kw_args.extend(parsed_docstring.kw_args)            
 
 
     def _parse_typehint(self):

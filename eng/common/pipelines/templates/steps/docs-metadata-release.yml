@@ -33,9 +33,16 @@ steps:
   inputs:
     targetType: filePath
     filePath: ${{ parameters.ScriptDirectory }}/update-docs-metadata.ps1
-    arguments: -ArtifactLocation ${{parameters.ArtifactLocation}} -Repository ${{parameters.PackageRepository}} -ReleaseSHA ${{parameters.ReleaseSha}} -RepoId ${{parameters.RepoId}} -WorkDirectory '${{parameters.WorkingDirectory}}' -DocRepoLocation "${{parameters.WorkingDirectory}}/repo" -Language "${{parameters.Language}}" -DocRepoContentLocation ${{ parameters.DocRepoDestinationPath }}
+    arguments: > 
+      -ArtifactLocation ${{parameters.ArtifactLocation}} 
+      -Repository ${{parameters.PackageRepository}} 
+      -ReleaseSHA ${{parameters.ReleaseSha}} 
+      -RepoId ${{parameters.RepoId}} 
+      -WorkDirectory '${{parameters.WorkingDirectory}}' 
+      -DocRepoLocation "${{parameters.WorkingDirectory}}/repo" 
+      -Language "${{parameters.Language}}" 
+      -DocRepoContentLocation ${{ parameters.DocRepoDestinationPath }}
     pwsh: true
-  timeoutInMinutes: 5
   env:
     GH_TOKEN: $(azuresdk-github-pat)
 

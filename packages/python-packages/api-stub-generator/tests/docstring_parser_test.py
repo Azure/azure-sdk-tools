@@ -56,6 +56,17 @@ docstring_param_type1 = """
 ~azure.dummy.datastream
 """
 
+docstring_param_typing_optional = """
+:param group: Optional group to check if user exists in.
+:type group: typing.Optional[str]
+"""
+
+docstring_param_nested_union = """
+:param dummyarg: Optional group to check if user exists in.
+:type dummyarg: typing.Union[~azure.eventhub.EventDataBatch, List[~azure.eventhub.EventData]]
+"""
+
+
 class TestDocStringParser:
 
     def _test_return_type(self, docstring, expected):
@@ -105,3 +116,9 @@ class TestDocStringParser:
     def test_param_or_type(self):
         self._test_variable_type(docstring_param_type1, "data", "str or ~azure.dummy.datastream")
         self._test_variable_type(docstring_param_type1, "pipeline", None)
+
+    def test_type_typing_optional(self):
+        self._test_variable_type(docstring_param_typing_optional, "group", "typing.Optional[str]")
+
+    def test_nested_union_type(self):
+        self._test_variable_type(docstring_param_nested_union, "dummyarg", "typing.Union[~azure.eventhub.EventDataBatch, List[~azure.eventhub.EventData]]")

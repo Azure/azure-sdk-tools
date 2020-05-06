@@ -11,7 +11,7 @@ find_arg_and_type_regex = (
 )
 find_single_type_regex = "(?<!:):{0}\s?{1}:[\s]*([\S]+)(?!:)"
 find_union_type_regex = (
-    "(?<!:):{0}\s?{1}:[\s]*([\w]*((\[[^\[\]]+\])|(\([^\(\)]+\))))(?!:)"
+    "(?<!:):{0}\s?{1}:[\s]*([\w.]*((\[[^\n]+\])|(\([^\n]+\))))(?!:)"
 )
 find_multi_type_regex = "(?<!:):({0})\s?{1}:([\s]*([\S]+)(\s+or\s+[\S]+)+)(?!:)"
 find_docstring_return_type = "(?<!:):rtype\s?:\s+([^:\n]+)(?!:)"

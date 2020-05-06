@@ -13,7 +13,7 @@ from ._diagnostic import Diagnostic
 JSON_FIELDS = ["Name", "Version", "VersionString", "Navigation", "Tokens", "Diagnostics"]
 
 HEADER_TEXT = "# Package is parsed using api-stub-generator(version:{})".format(VERSION)
-COMPLEX_DATA_TYPE_PATTERN = re.compile("([a-zA-Z]+)(\[|\()[^\]\)]+(\]|\))")
+COMPLEX_DATA_TYPE_PATTERN = re.compile("([\w.]+)(\[|\()[^\]\)]+(\]|\))")
 
 # Lint warnings
 SOURCE_LINK_NOT_AVAILABLE = "Source definition link is not available for [{0}]. Please check and ensure type is fully qualified name in docstring"
@@ -104,6 +104,7 @@ class ApiView:
             self.add_keyword(prefix_type)
             return
 
+        logging.debug("Processing type {0} and prefix {1}".format(type_name, prefix_type))
         prefix_len = len(prefix_type)
         type_names = type_name[prefix_len + 1 : -1]
         if type_names:
@@ -125,6 +126,7 @@ class ApiView:
         if not type_name:
             return
 
+        logging.debug("Processing type {}".format(type_name))
         # Check if type is multi value types like Union, Dict, list etc
         # Those types needs to be recursively processed
         multi_types = re.search(COMPLEX_DATA_TYPE_PATTERN,type_name)

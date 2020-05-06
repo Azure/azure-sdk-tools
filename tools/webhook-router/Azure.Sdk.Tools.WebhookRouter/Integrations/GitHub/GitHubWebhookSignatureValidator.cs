@@ -9,6 +9,8 @@ namespace Azure.Sdk.Tools.WebhookRouter.Integrations.GitHub
 {
     public static class GitHubWebhookSignatureValidator
     {
+        public const string GitHubWebhookSignatureHeader = "X-Hub-Signature";
+
         public static bool IsValid(byte[] body, string signature, string secret)
         {
             var key = Encoding.UTF8.GetBytes(secret);

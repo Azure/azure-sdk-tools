@@ -8,20 +8,17 @@ using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.WebhookRouter.Routing
 {
-    public class Rule
+    public abstract class Rule
     {
-        public Rule(Guid route, Dictionary<string, string> settings)
+        public Rule(Guid route, string eventHubsNamespace, string eventHubName)
         {
-            this.route = route;
-            this.settings = settings;
+            this.Route = route;
+            this.EventHubsNamespace = eventHubsNamespace;
+            this.EventHubName = eventHubName;
         }
 
-        private Guid route;
-        private Dictionary<string, string> settings;
-
-        public Guid Route => route;
-        public string EventHubsNamespace => settings["eventhubs-namespace"];
-        public string EventHubName => settings["eventhub-name"];
-        public PayloadType PayloadType => (PayloadType)Enum.Parse(typeof(PayloadType), settings["payload-type"]);
+        public Guid Route { get; private set; }
+        public string EventHubsNamespace { get; private set; }
+        public string EventHubName { get; private set; }
     }
 }

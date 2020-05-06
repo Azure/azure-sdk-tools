@@ -2,6 +2,7 @@ import logging
 import inspect
 import astroid
 import operator
+import re
 from inspect import Parameter
 from ._docstring_parser import DocstringParser, TypeHintParser
 from ._base_node import NodeEntityBase, get_qualified_name
@@ -10,6 +11,18 @@ from ._argtype import ArgType
 
 KW_ARG_NAME = "**kwargs"
 VALIDATION_REQUIRED_DUNDER = ["__init__",]
+KWARG_NOT_REQUIRED_METHODS = ["close",]
+TYPEHINT_NOT_REQUIRED_METHODS = ["close",]
+REGEX_ITEM_PAGED = "~[\w.]*\.([\w]*)\s?[\[\(][\w]*[\]\)]"
+PAGED_TYPES = ["ItemPaged", "AsyncItemPaged",]
+
+
+def is_kwarg_mandatory(func_name):
+    return not func_name.startswith("_") and func_name not in KWARG_NOT_REQUIRED_METHODS
+
+
+def is_typehint_mandatory(func_name):
+    return not func_name.startswith("_") and func_name not in TYPEHINT_NOT_REQUIRED_METHODS
 
 
 class FunctionNode(NodeEntityBase):
@@ -102,8 +115,10 @@ class FunctionNode(NodeEntityBase):
         self._parse_docstring()
         # parse type hints
         self._parse_typehint()
-        if not self.return_type and not self.name.startswith("_"):
+        if not self.return_type and is_typehint_mandatory(self.name):
             self.errors.append("Return type is missing in both typehint and docstring")
+        # Validate return type
+        self._validate_pageable_api()
 
 
     def _parse_docstring(self):
@@ -158,17 +173,22 @@ class FunctionNode(NodeEntityBase):
                     self.args.append(kw_arg)
 
             # API must have **kwargs. Flag it as an error if it is missing for public API
-            if not kwargs and not self.name.startswith("_"):
+            if not kwargs and is_kwarg_mandatory(self.name):
                 self.errors.append("Keyword arg (**kwargs) is missing in method {}".format(self.name))
 
 
     def _parse_typehint(self):
+
+        # Skip parsing typehint if typehint is not expected for e.g dunder or async methods
+        if not is_typehint_mandatory(self.name) or self.is_async:
+            return
+
         # Parse type hint to get return type and types for positional args
         typehint_parser = TypeHintParser(self.obj)
         # Find return type from type hint if return type is not already set
         type_hint_ret_type = typehint_parser.find_return_type()
         # Type hint must be present for all APIs. Flag it as an error if typehint is missing
-        if  not type_hint_ret_type and not self.name.startswith("_"):
+        if  not type_hint_ret_type:
             self.errors.append("Typehint is missing for method {}".format(self.name))
             return
 
@@ -258,6 +278,21 @@ class FunctionNode(NodeEntityBase):
         if not self.name.startswith("_") or self.name in VALIDATION_REQUIRED_DUNDER:
             self.errors.append(error_msg)
 
+
+    def _validate_pageable_api(self):
+        # If api name starts with "list" and if annotated with "@distributed_trace"
+        # then this method should return ItemPaged or AsyncItemPaged
+        if self.return_type and self.name.startswith("list") and  "@distributed_trace" in self.annotations:
+            tokens = re.search(REGEX_ITEM_PAGED, self.return_type)
+            if tokens:
+                ret_short_type = tokens.groups()[-1]
+                if ret_short_type in PAGED_TYPES:
+                    logging.debug("list API returns valid paged return type")
+                    return
+            error_msg = "list API {0} should return ItemPaged or AsyncItemPaged".format(self.name)
+            logging.error(error_msg)
+            self.add_error(error_msg)                
+        
 
     def print_errors(self):
         if self.errors:

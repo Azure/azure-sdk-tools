@@ -14,7 +14,7 @@ namespace GitHubIssues
             SendGrid.Helpers.Mail.SendGridMessage message = new SendGrid.Helpers.Mail.SendGridMessage();
             message.SetFrom(from);
 
-            foreach (var item in to)
+            foreach (string item in to)
             {
                 if (!string.IsNullOrEmpty(item))
                 {
@@ -22,7 +22,7 @@ namespace GitHubIssues
                 }
             }
 
-            foreach (var item in cc)
+            foreach (string item in cc)
             {
                 if (!string.IsNullOrEmpty(item))
                 {

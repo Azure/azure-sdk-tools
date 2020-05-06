@@ -35,6 +35,10 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
 
             switch (comment)
             {
+                case "/check-enforcer override":
+                    await SetSuccessAsync(context.Client, repositoryId, sha, cancellationToken);
+                    break;
+
                 case "/check-enforcer reset":
                     await CreateCheckAsync(context.Client, installationId, repositoryId, sha, true, cancellationToken);
                     break;

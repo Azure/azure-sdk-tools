@@ -81,18 +81,18 @@ class StubGenerator:
         if self.pkg_path.endswith(".whl") or self.pkg_path.endswith(".zip"):
             logging.info("Extracting package to temp path")
             pkg_root_path = self._extract_wheel()
-            pkg_name, version = self._parse_pkg_name()
+            pkg_name, version, namespace = self._parse_pkg_name()
         else:
             # package root is passed as arg to parse
             pkg_root_path = self.pkg_path
-            pkg_name, version, _ = parse_setup_py(pkg_root_path)
+            pkg_name, version, namespace = parse_setup_py(pkg_root_path)
 
         logging.debug("package name: {0}, version:{1}".format(pkg_name, version))
 
         logging.debug("Installing package from {}".format(self.pkg_path))
         self._install_package(pkg_name)
         logging.debug("Generating tokens")
-        apiview = self._generate_tokens(pkg_root_path, pkg_name, version)
+        apiview = self._generate_tokens(pkg_root_path, pkg_name, version, namespace)
         if apiview.Diagnostics:
             # Show error report in console
             print("************************** Error Report **************************")
@@ -143,7 +143,7 @@ class StubGenerator:
         return modules
 
 
-    def _generate_tokens(self, pkg_root_path, package_name, version):
+    def _generate_tokens(self, pkg_root_path, package_name, version, namespace):
         """This method returns a dictionary of namespace and all public classes in each namespace
         """
         # Import ModuleNode.
@@ -153,7 +153,7 @@ class StubGenerator:
         self.module_dict = {}
         nodeindex = NodeIndex()
         # todo (Update the version number correctly)
-        apiview = ApiView(nodeindex, package_name, 0, version)
+        apiview = ApiView(nodeindex, package_name, 0, version, namespace)
         modules = self._find_modules(pkg_root_path)
         logging.debug("Modules to generate tokens: {}".format(modules))
         # load all modules and parse them recursively
@@ -213,7 +213,8 @@ class StubGenerator:
         filename_parts = whl_name.split("-")
         pkg_name = filename_parts[0].replace("_", "-")
         version = filename_parts[1]
-        return pkg_name, version
+        name_space = pkg_name.replace('-', '.')
+        return pkg_name, version, name_space
 
     def _install_package(self, pkg_name):
         # Uninstall the package and reinstall it to parse so inspect can get members in package

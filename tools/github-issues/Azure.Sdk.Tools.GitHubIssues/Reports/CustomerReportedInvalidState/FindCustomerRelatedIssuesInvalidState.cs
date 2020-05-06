@@ -19,16 +19,16 @@ namespace GitHubIssues.Reports
 
         public override void Execute()
         {
-            foreach (var repositoryConfig in _cmdLine.RepositoriesList)
+            foreach (RepositoryConfig repositoryConfig in _cmdLine.RepositoriesList)
             {
-                HtmlPageCreator emailBody = new HtmlPageCreator($"Customer reported issues with invalid state in {repositoryConfig.Repo}");
+                HtmlPageCreator emailBody = new HtmlPageCreator($"Customer reported issues with invalid state in {repositoryConfig.Name}");
                 bool hasFoundIssues = ValidateCustomerReportedIssues(repositoryConfig, emailBody);
 
                 if (hasFoundIssues)
                 {
                     // send the email
                     EmailSender.SendEmail(_cmdLine.EmailToken, _cmdLine.FromEmail, emailBody.GetContent(), repositoryConfig.ToEmail, repositoryConfig.CcEmail,
-                        $"Customer reported issues in invalid state in repo {repositoryConfig.Repo}", _log);
+                        $"Customer reported issues in invalid state in repo {repositoryConfig.Name}", _log);
                 }
             }
         }
@@ -43,7 +43,7 @@ namespace GitHubIssues.Reports
             tc.DefineTableColumn("Issues Found", i => i.Note);
 
             List<ReportIssue> issuesWithNotes = new List<ReportIssue>();
-            foreach (var issue in _gitHub.SearchForGitHubIssues(CreateQuery(repositoryConfig)))
+            foreach (Issue issue in _gitHub.SearchForGitHubIssues(CreateQuery(repositoryConfig)))
             {
                 if (!ValidateIssue(issue, out string issuesFound))
                 {
@@ -275,7 +275,7 @@ namespace GitHubIssues.Reports
                 State = ItemState.Open
             };
 
-            requestOptions.Repos.Add(repoInfo.Owner, repoInfo.Repo);
+            requestOptions.Repos.Add(repoInfo.Owner, repoInfo.Name);
 
             return requestOptions;
         }

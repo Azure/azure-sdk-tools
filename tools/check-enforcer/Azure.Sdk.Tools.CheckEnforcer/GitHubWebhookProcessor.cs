@@ -116,11 +116,6 @@ namespace Azure.Sdk.Tools.CheckEnforcer
                     var handler = new CheckRunHandler(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, logger);
                     await handler.HandleAsync(json, cancellationToken);
                 }
-                else if (eventName == "check_suite")
-                {
-                    var handler = new CheckSuiteHandler(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, logger);
-                    await handler.HandleAsync(json, cancellationToken);
-                }
                 else if (eventName == "issue_comment")
                 {
                     var handler = new IssueCommentHandler(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, logger);
@@ -133,7 +128,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
                 }
                 else
                 {
-                    throw new CheckEnforcerUnsupportedEventException(eventName);
+                    logger.LogInformation("Received {eventName} event but we don't handle them.");
                 }
             }
             else

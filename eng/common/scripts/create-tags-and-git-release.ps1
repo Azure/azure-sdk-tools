@@ -18,7 +18,7 @@ param (
   [switch]$forceCreate = $false
 )
 
-Write-Host  $MyInvocation.Line
+Write-Host "> $PSCommandPath $args"
 
 . (Join-Path $PSScriptRoot artifact-metadata-parsing.ps1)
 

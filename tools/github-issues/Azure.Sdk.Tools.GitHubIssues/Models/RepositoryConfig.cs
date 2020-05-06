@@ -4,7 +4,7 @@
     {
         public string Owner { get; set; }
 
-        public string Repo { get; set; }
+        public string Name { get; set; }
 
         public string[] ToEmail { get; set; }
 
@@ -42,7 +42,7 @@
             RepositoryConfig config = new RepositoryConfig
             {
                 Owner = entries[0],
-                Repo = entries[1],
+                Name = entries[1],
                 ToEmail = ParseEmails(to),
                 CcEmail = ParseEmails(cc)
             };

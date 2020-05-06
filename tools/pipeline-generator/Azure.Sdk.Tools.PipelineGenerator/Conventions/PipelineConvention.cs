@@ -26,6 +26,8 @@ namespace PipelineGenerator.Conventions
         public abstract string SearchPattern { get; }
         public abstract bool IsScheduled { get; }
 
+        public abstract bool RemoveCITriggers { get; }
+
         protected abstract string GetDefinitionName(SdkComponent component);
 
         public async Task<BuildDefinition> DeleteDefinitionAsync(SdkComponent component, CancellationToken cancellationToken)
@@ -86,6 +88,7 @@ namespace PipelineGenerator.Conventions
                 {
                     Logger.LogInformation("Convention had changes, updating '{0}' definition.", definitionName);
                     var buildClient = await Context.GetBuildHttpClientAsync(cancellationToken);
+                    definition.Comment = "Updated by pipeline generation tool";
                     definition = await buildClient.UpdateDefinitionAsync(
                         definition: definition,
                         cancellationToken: cancellationToken
@@ -299,6 +302,18 @@ namespace PipelineGenerator.Conventions
                     });
 
                     hasChanges = true;
+                }
+            }
+
+            if (RemoveCITriggers)
+            {
+                for (int i = definition.Triggers.Count - 1; i >= 0; i--)
+                {
+                    if (definition.Triggers[i] is ContinuousIntegrationTrigger)
+                    {
+                        definition.Triggers.RemoveAt(i);
+                        hasChanges = true;
+                    }
                 }
             }
 

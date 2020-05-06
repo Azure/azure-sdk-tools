@@ -12,7 +12,7 @@ namespace APIViewWeb
         public abstract string Extension { get; }
         public abstract string ProcessName { get; }
         public abstract string VersionString { get; }
-        public abstract string GetProccessorArguments(string originalName, string tempDirectory, string jsonPath);        
+        public abstract string GetProccessorArguments(string originalName, string tempDirectory, string jsonPath);
 
         public bool IsSupportedExtension(string extension)
         {

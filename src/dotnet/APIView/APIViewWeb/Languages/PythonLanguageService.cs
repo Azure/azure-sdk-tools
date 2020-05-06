@@ -11,15 +11,11 @@ namespace APIViewWeb
 {
     public class PythonLanguageService : LanguageProcessor
     {
-        public string pythonParserVersion = "0.1.1";
-
         public override string Name { get; } = "Python";
+        public override string Extension { get; } = ".whl";
+        public override string ProcessName { get; } = "python";
+        public override string VersionString { get; } = "0.1.1";
 
-        public override bool IsSupportedExtension(string extension)
-        {
-            return string.Equals(extension, ".whl", comparisonType: StringComparison.OrdinalIgnoreCase);
-        }
-        
         public override string GetProccessorArguments(string originalName, string tempDirectory, string jsonPath)
         {
             var pythonScriptPath = Path.Combine(
@@ -30,21 +26,6 @@ namespace APIViewWeb
             return $"{pythonScriptPath} --pkg-path {originalName} --temp-path {tempDirectory}" +
                 $" --out-path {jsonPath} --hide-report";
         }
-
-        public override string GetLanguage()
-        {
-            return "Python";
-        }
-
-        public override string GetProcessName()
-        {
-            return "python";
-        }
-
-        public override string GetVersionString()
-        {
-            return pythonParserVersion;
-        }
-
+        
     }
 }

@@ -12,35 +12,17 @@ namespace APIViewWeb
     public class JavaLanguageService : LanguageProcessor
     {
         public override string Name { get; } = "Java";
-
-        public string JarName = "apiview-java-processor-1.4.0.jar";
-
-        public override bool IsSupportedExtension(string extension)
-        {
-            return string.Equals(extension, ".jar", comparisonType: StringComparison.OrdinalIgnoreCase);
-        }
+        public override string Extension { get; } = ".jar";
+        public override string ProcessName { get; } = "java";
+        public override string VersionString { get; } = "apiview-java-processor-1.4.0.jar";
 
         public override string GetProccessorArguments(string originalName, string tempDirectory, string jsonPath)
         {
             var jarPath = Path.Combine(
                     Path.GetDirectoryName(typeof(JavaLanguageService).Assembly.Location),
-                    JarName);
+                    VersionString);
             return $"-jar {jarPath} \"{originalName}\" \"{tempDirectory}\"";
         }
 
-        public override string GetLanguage()
-        {
-            return "Java";
-        }
-
-        public override string GetProcessName()
-        {
-            return "java";
-        }
-
-        public override string GetVersionString()
-        {
-            return JarName;
-        }
     }
 }

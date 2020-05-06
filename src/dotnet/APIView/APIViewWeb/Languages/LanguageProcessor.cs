@@ -9,15 +9,19 @@ namespace APIViewWeb
     public abstract class LanguageProcessor: ILanguageService
     {
         public abstract string Name { get; }
-        public abstract bool IsSupportedExtension(string extension);
-        public abstract string GetProccessorArguments(string originalName, string tempDirectory, string jsonPath);
-        public abstract string GetLanguage();
-        public abstract string GetProcessName();
-        public abstract string GetVersionString();
+        public abstract string Extension { get; }
+        public abstract string ProcessName { get; }
+        public abstract string VersionString { get; }
+        public abstract string GetProccessorArguments(string originalName, string tempDirectory, string jsonPath);        
+
+        public bool IsSupportedExtension(string extension)
+        {
+            return string.Equals(extension, Extension, comparisonType: StringComparison.OrdinalIgnoreCase);
+        }
 
         public bool CanUpdate(string versionString)
         {
-            return versionString != GetVersionString();
+            return versionString != VersionString;
         }
 
         public async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis)
@@ -38,7 +42,7 @@ namespace APIViewWeb
             try
             {
                 var arguments = GetProccessorArguments(originalName, tempDirectory, jsonFilePath);
-                var processStartInfo = new ProcessStartInfo(GetProcessName(), arguments);
+                var processStartInfo = new ProcessStartInfo(ProcessName, arguments);
                 processStartInfo.WorkingDirectory = tempDirectory;
                 processStartInfo.RedirectStandardError = true;
                 processStartInfo.RedirectStandardOutput = true;
@@ -60,8 +64,8 @@ namespace APIViewWeb
                 using (var codeFileStream = File.OpenRead(jsonFilePath))
                 {
                     var codeFile = await CodeFile.DeserializeAsync(codeFileStream);
-                    codeFile.VersionString = GetVersionString();
-                    codeFile.Language = GetLanguage();
+                    codeFile.VersionString = VersionString;
+                    codeFile.Language = Name;
                     return codeFile;
                 }
             }

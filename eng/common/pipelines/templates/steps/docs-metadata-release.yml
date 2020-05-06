@@ -11,7 +11,6 @@ parameters:
   PRBranchName: 'smoke-test-rdme'
   ArtifactName: ''
   Language: ''
-  ServiceDirectory: ''
   DocRepoDestinationPath: '' #usually docs-ref-services/
 
 steps:
@@ -45,7 +44,7 @@ steps:
     RepoName: ${{ parameters.TargetDocRepoName }}
     RepoOwner: ${{ parameters.TargetDocRepoOwner }}
     PRBranchName: ${{ parameters.PRBranchName }}
-    CommitMsg: "Increment package version after release of ${{ parameters.ArtifactName }}"
+    CommitMsg: "Update readme content for ${{ parameters.ArtifactName }}"
     PRTitle: "Docs.MS Readme Update."
     BaseBranchName: smoke-test
     WorkingDirectory: ${{parameters.WorkingDirectory}}/repo

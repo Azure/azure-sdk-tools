@@ -2,8 +2,10 @@
 using Azure.Identity;
 using Azure.Messaging.EventHubs;
 using Azure.Messaging.EventHubs.Producer;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -62,21 +64,33 @@ namespace Azure.Sdk.Tools.WebhookRouter.Routing
             return settings;
         }
 
-        public async Task<Rule> GetRuleAsync(Guid route)
+        private async Task<Rule> GetRuleAsync(Guid route)
         {
             var settings = await GetSettingsAsync(route);
             var rule = new Rule(route, settings);
             return rule;
         }
 
-        public async Task RouteAsync(Rule rule, Payload payload)
+        private async Task<Payload> CreateAndValidatePayloadAsync(Rule rule, HttpRequest request)
         {
-            var payloadString = JsonSerializer.Serialize(payload, new JsonSerializerOptions()
-            {
-                WriteIndented = true
-            });
+            using var stream = new MemoryStream();
+            await request.Body.CopyToAsync(stream);
+            var payloadContent = stream.ToArray();
 
-            var payloadBytes = Encoding.UTF8.GetBytes(payloadString);
+            // TODO: Payload validation goes here.
+
+            var payload = new Payload(request.Headers, payloadContent);
+            return payload;
+        }
+
+        public async Task RouteAsync(Guid route, HttpRequest request)
+        {
+            var rule = await GetRuleAsync(route);
+            var payload = await CreateAndValidatePayloadAsync(rule, request);
+
+            var payloadJson = JsonSerializer.Serialize(payload);
+            var payloadBytes = Encoding.UTF8.GetBytes(payloadJson);
+
             var @event = new EventData(payloadBytes);
 
             var fullyQualifiedEventHubsNamespace = $"{rule.EventHubsNamespace}.servicebus.windows.net";
@@ -85,6 +99,10 @@ namespace Azure.Sdk.Tools.WebhookRouter.Routing
             var batch = await producer.CreateBatchAsync();
             batch.TryAdd(@event);
             await producer.SendAsync(batch);
+        }
+
+        public async Task RouteAsync(Rule rule, Payload payload)
+        {
         }
     }
 }

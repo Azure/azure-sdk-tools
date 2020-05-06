@@ -28,7 +28,7 @@ namespace Azure.Sdk.Tools.WebhookRouter.Functions
             ILogger log,
             Guid route)
         {
-            await router.RouteAsync(req);            
+            await router.RouteAsync(route, req);            
             return new OkResult();
         }
     }

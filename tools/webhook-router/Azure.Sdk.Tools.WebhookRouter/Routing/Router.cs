@@ -100,9 +100,5 @@ namespace Azure.Sdk.Tools.WebhookRouter.Routing
             batch.TryAdd(@event);
             await producer.SendAsync(batch);
         }
-
-        public async Task RouteAsync(Rule rule, Payload payload)
-        {
-        }
     }
 }

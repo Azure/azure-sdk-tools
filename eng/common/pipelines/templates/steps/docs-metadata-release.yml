@@ -6,33 +6,23 @@ parameters:
   RepoId: 'not-specified'
   WorkingDirectory: ''
   ScriptDirectory: eng/common/scripts
-  TargetDocRepo: ''
-  TargetDocBranch: 'smoke-test'
-  PRBranchName: 'not-specified'
+  TargetDocRepoName: ''
+  TargetDocRepoOwner: ''
+  PRBranchName: 'smoke-test-rdme'
   ArtifactName: ''
+  Language: ''
   ServiceDirectory: ''
+  DocRepoDestinationPath: '' #usually docs-ref-services/
 
 steps:
 - pwsh: |
-    git clone ${{ TargetDocRepository }} ${{ parameters.WorkingDirectory }}/repo
+    git clone https://github.com/${{ parameters.TargetDocRepoOwner }}/${{ parameters.TargetDocRepoName }} ${{ parameters.WorkingDirectory }}/repo
     
-    $sourceBranch = "${{ parameters.TargetDocBranch }}"
-  
     try {
-      Push-Location {{ parameters.WorkingDirectory }}/repo
+      Push-Location ${{ parameters.WorkingDirectory }}/repo
     
-      # 0 if exists, 1 if not
-      git show-ref --verify --quiet refs/heads/$sourceBranch
-      $sourceBranchExists = $LastExitCode
-
-      if (-not $sourceBranchExists) {
-        # there is an existing smoke-test branch we can base off of
-        Write-Host "git checkout $sourceBranch"
-        git checkout $sourceBranch
-      }
-
-      Write-Host "git checkout -b {{ parameters.PRBranchName }}"
-      git checkout -b ${{ parameters.PRBranchName }}
+      Write-Host "git checkout smoke-test"
+      git checkout smoke-test
     } finally {
       Pop-Location
     }
@@ -43,8 +33,8 @@ steps:
   displayName: 'Apply Documentation Updates From Artifact'
   inputs:
     targetType: filePath
-    filePath: ${{ parameters.ScriptDirectory }}/release-docs-metadata.ps1
-    arguments: -ArtifactLocation ${{parameters.ArtifactLocation}} -Repository ${{parameters.PackageRepository}} -ReleaseSHA ${{parameters.ReleaseSha}} -RepoId ${{parameters.RepoId}} -WorkDirectory '${{parameters.WorkingDirectory}}' -DocRepoLocation "${{parameters.WorkingDirectory}}/repo" -Language "${{parameters.Language}}" -DocRepoContentLocation "docs-ref-services/"
+    filePath: ${{ parameters.ScriptDirectory }}/update-docs-metadata.ps1
+    arguments: -ArtifactLocation ${{parameters.ArtifactLocation}} -Repository ${{parameters.PackageRepository}} -ReleaseSHA ${{parameters.ReleaseSha}} -RepoId ${{parameters.RepoId}} -WorkDirectory '${{parameters.WorkingDirectory}}' -DocRepoLocation "${{parameters.WorkingDirectory}}/repo" -Language "${{parameters.Language}}" -DocRepoContentLocation ${{ parameters.DocRepoDestinationPath }}
     pwsh: true
   timeoutInMinutes: 5
   env:
@@ -52,7 +42,12 @@ steps:
 
 - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
   parameters:
-    RepoName: ${{ parameters.TargetDocRepo }}
-    PRBranchName: increment-package-version-${{ parameters.ArtifactName }}-$(Build.BuildId)
+    RepoName: ${{ parameters.TargetDocRepoName }}
+    RepoOwner: ${{ parameters.TargetDocRepoOwner }}
+    PRBranchName: ${{ parameters.PRBranchName }}
     CommitMsg: "Increment package version after release of ${{ parameters.ArtifactName }}"
-    PRTitle: "Increment version for ${{ parameters.ServiceDirectory }} releases."
+    PRTitle: "Docs.MS Readme Update."
+    BaseBranchName: smoke-test
+
+
+

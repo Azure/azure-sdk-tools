@@ -8,7 +8,7 @@ using Microsoft.CodeAnalysis.CSharp.Testing.XUnit;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Testing;
 
-namespace Azure.ClientSdk.Analyzers.Tests 
+namespace Azure.ClientSdk.Analyzers.Tests
 {
     public static class AzureAnalyzerVerifier<TAnalyzer> where TAnalyzer : DiagnosticAnalyzer, new()
     {
@@ -20,11 +20,11 @@ namespace Azure.ClientSdk.Analyzers.Tests
                 TestBehaviors = TestBehaviors.SkipGeneratedCodeCheck
             };
 
-        public static Task VerifyAnalyzerAsync(string source, string expectedDescriptor = default, LanguageVersion languageVersion = LanguageVersion.Latest) 
+        public static Task VerifyAnalyzerAsync(string source, string expectedDescriptor = default, LanguageVersion languageVersion = LanguageVersion.Latest)
             => CreateAnalyzer(source, expectedDescriptor, languageVersion).RunAsync(CancellationToken.None);
 
         public static Task VerifyAnalyzerAsync(string source, params DiagnosticResult[] diagnostics) {
-            var test = new AzureAnalyzerTest<TAnalyzer> 
+            var test = new AzureAnalyzerTest<TAnalyzer>
             {
                 TestCode = source,
                 TestBehaviors = TestBehaviors.SkipGeneratedCodeCheck

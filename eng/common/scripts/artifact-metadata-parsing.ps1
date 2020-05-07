@@ -155,7 +155,7 @@ function ResolvePkgJson($workFolder) {
 function ParseNPMPackage($pkg, $workingDirectory) {
   $workFolder = "$workingDirectory$($pkg.Basename)"
   $origFolder = Get-Location
-  mkdir $workFolder
+  New-Item -ItemType Directory -Force -Path $workFolder
   cd $workFolder
 
   tar -xzf $pkg
@@ -208,7 +208,7 @@ function ParseNugetPackage($pkg, $workingDirectory) {
   $workFolder = "$workingDirectory$($pkg.Basename)"
   $origFolder = Get-Location
   $zipFileLocation = "$workFolder/$($pkg.Basename).zip"
-  mkdir $workFolder
+  New-Item -ItemType Directory -Force -Path $workFolder
 
   Copy-Item -Path $pkg -Destination $zipFileLocation
   Expand-Archive -Path $zipFileLocation -DestinationPath $workFolder
@@ -269,7 +269,7 @@ function ParsePyPIPackage($pkg, $workingDirectory) {
 
   $workFolder = "$workingDirectory$($pkg.Basename)"
   $origFolder = Get-Location
-  mkdir $workFolder
+  New-Item -ItemType Directory -Force -Path $workFolder
 
   Expand-Archive -Path $pkg -DestinationPath $workFolder
   $releaseNotes = &"${PSScriptRoot}/../Extract-ReleaseNotes.ps1" -ChangeLogLocation @(Get-ChildItem -Path $workFolder -Recurse -Include "CHANGELOG.md")[0]

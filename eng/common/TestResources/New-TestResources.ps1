@@ -130,7 +130,7 @@ if (!$templateFiles) {
 
 # If there is a value for $SubscriptionConfiguration look it up and set
 # script-level variables for subsequent steps.
-if ($PSBoundParameters.ContainsKey('SubscriptionConfiguration')) {
+if ($SubscriptionConfiguration) {
     Write-Verbose "Using subscription configuration $SubscriptionConfiguration from KeyVault $KeyVaultName..."
     $keyVaultSecret = ConvertTo-SecureString -String $KeyVaultAppSecret -AsPlainText -Force
     $keyvaultCredential = [System.Management.Automation.PSCredential]::new($KeyVaultAppId, $keyVaultSecret)
@@ -156,7 +156,7 @@ if ($PSBoundParameters.ContainsKey('SubscriptionConfiguration')) {
     $ProvisionerApplicationSecret = $subscriptionParameters.ProvisionerApplicationSecret
     $Environment = $subscriptionParameters.Environment
 
-    Disconnect-AzAccount -AzureContext $keyVaultAccount.Context
+    $null = Disconnect-AzAccount -AzureContext $keyVaultAccount.Context
 
     Write-Verbose "Subscription parameters set. Using Subscription: $SubscriptionId"
 }

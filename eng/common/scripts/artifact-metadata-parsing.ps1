@@ -1,7 +1,6 @@
 . (Join-Path $PSScriptRoot SemVer.ps1)
 
-$VERSION_REGEX = "(?<major>\d+)(\.(?<minor>\d+))?(\.(?<patch>\d+))?((?<pre>[^0-9][^\s]+))?"
-$SDIST_PACKAGE_REGEX = "^(?<package>.*)\-(?<versionstring>$VERSION_REGEX$)"
+$SDIST_PACKAGE_REGEX = "^(?<package>.*)\-(?<versionstring>$([AzureEngSemanticVersion]::SEMVER_REGEX.Substring(1)))"
 
 # Posts a github release for each item of the pkgList variable. SilentlyContinue
 function CreateReleases($pkgList, $releaseApiUrl, $releaseSha) {
@@ -14,9 +13,11 @@ function CreateReleases($pkgList, $releaseApiUrl, $releaseSha) {
     }
 
     $isPrerelease = $False
-    if ($pkgInfo.PackageVersion -match $VERSION_REGEX) {
-      $preReleaseLabel = $matches["pre"]
-      $isPrerelease = ![string]::IsNullOrEmpty($preReleaseLabel)
+
+    $parsedSemver = [AzureEngSemanticVersion]::ParseVersionString($pkgInfo.PackageVersion)
+
+    if ($parsedSemver) {
+      $isPrerelease = $parsedSemver.IsPrerelease
     }
 
     $url = $releaseApiUrl

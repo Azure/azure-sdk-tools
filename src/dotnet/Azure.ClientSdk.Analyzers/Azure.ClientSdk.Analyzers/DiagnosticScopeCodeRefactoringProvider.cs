@@ -16,8 +16,12 @@ namespace Azure.ClientSdk.Analyzers
     [ExportCodeRefactoringProvider(LanguageNames.CSharp)]
     public class DiagnosticScopeCodeRefactoringProvider : CodeRefactoringProvider
     {
+
         private const string ScopeVariableName = "scope";
         private const string AsyncSuffix = "Async";
+        private const string AzureCorePipelineClientDiagnosticsTypeName = "Azure.Core.Pipeline.ClientDiagnostics";
+        private const string AzureCorePipelineDiagnosticScopeTypeName = "Azure.Core.Pipeline.DiagnosticScope";
+        private const string SystemExceptionTypeName = "System.Exception";
 
         public override async Task ComputeRefactoringsAsync(CodeRefactoringContext context)
         {
@@ -43,9 +47,9 @@ namespace Azure.ClientSdk.Analyzers
                     return;
                 }
 
-                var diagnosticScopeType = semanticModel.Compilation.GetTypeByMetadataName("Azure.Core.Pipeline.DiagnosticScope");
-                var clientDiagnosticsType = semanticModel.Compilation.GetTypeByMetadataName("Azure.Core.Pipeline.ClientDiagnostics");
-                var exceptionType = semanticModel.Compilation.GetTypeByMetadataName("System.Exception");
+                var diagnosticScopeType = semanticModel.Compilation.GetTypeByMetadataName(AzureCorePipelineDiagnosticScopeTypeName);
+                var clientDiagnosticsType = semanticModel.Compilation.GetTypeByMetadataName(AzureCorePipelineClientDiagnosticsTypeName);
+                var exceptionType = semanticModel.Compilation.GetTypeByMetadataName(SystemExceptionTypeName);
 
                 if (diagnosticScopeType == null || clientDiagnosticsType == null || exceptionType == null)
                 {
@@ -93,14 +97,14 @@ namespace Azure.ClientSdk.Analyzers
 
                     foreach (var statement in statements)
                     {
-                        if (mainLogic.Count == 0 &&
-                            IsPrecondition(statement))
+                        if (mainLogic.Count > 0 ||
+                            IncludeInScopeBody(statement))
                         {
-                            preconditions.Add(statement);
+                            mainLogic.Add(statement);
                         }
                         else
                         {
-                            mainLogic.Add(statement);
+                            preconditions.Add(statement);
                         }
                     }
 
@@ -157,22 +161,22 @@ namespace Azure.ClientSdk.Analyzers
                     return Task.FromResult(context.Document.WithSyntaxRoot(tree.ReplaceNode(methodDeclarationSyntax, newMethodDeclaration)));
                 }
 
-                context.RegisterRefactoring(CodeAction.Create("Add diagnostic scope", token => AddDiagnosticScope()));
+                context.RegisterRefactoring(CodeAction.Create("Azure SDK: Add diagnostic scope", token => AddDiagnosticScope()));
             }
         }
 
-        private bool IsPrecondition(StatementSyntax statement)
+        private bool IncludeInScopeBody(StatementSyntax statement)
         {
             foreach (var node in statement.DescendantNodes())
             {
                 // Handle ArgumentExceptions and Argument.* checks
                 if (node is IdentifierNameSyntax identifierNameSyntax && identifierNameSyntax.Identifier.Text.Contains("Argument"))
                 {
-                    return true;
+                    return false;
                 }
             }
 
-            return false;
+            return true;
         }
     }
 }

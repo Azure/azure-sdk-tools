@@ -10,6 +10,7 @@ namespace Azure.ClientSdk.Analyzers.Tests
     public class DiagnosticScopeCodeRefactoringProviderTest
     {
         private static string DiagnosticFramework = @"
+using System;
 namespace Azure.Core.Pipeline
 {
     using System;
@@ -36,10 +37,10 @@ namespace Azure.Core.Pipeline
         public async Task AddsScopeToSyncMethod()
         {
             const string code = @"
+using System;
+using Azure.Core.Pipeline;
 namespace RandomNamespace
 {
-    using System;
-    using Azure.Core.Pipeline;
     public class MyClass
     {
         ClientDiagnostics _clientDiagnostics;
@@ -51,10 +52,10 @@ namespace RandomNamespace
     }
 }";
             const string fixedCode = @"
+using System;
+using Azure.Core.Pipeline;
 namespace RandomNamespace
 {
-    using System;
-    using Azure.Core.Pipeline;
     public class MyClass
     {
         ClientDiagnostics _clientDiagnostics;
@@ -85,10 +86,10 @@ namespace RandomNamespace
         public async Task AddsScopeToExpressionSyncMethod()
         {
             const string code = @"
+using System;
+using Azure.Core.Pipeline;
 namespace RandomNamespace
 {
-    using System;
-    using Azure.Core.Pipeline;
     public class MyClass
     {
         ClientDiagnostics _clientDiagnostics;
@@ -96,10 +97,10 @@ namespace RandomNamespace
     }
 }";
             const string fixedCode = @"
+using System;
+using Azure.Core.Pipeline;
 namespace RandomNamespace
 {
-    using System;
-    using Azure.Core.Pipeline;
     public class MyClass
     {
         ClientDiagnostics _clientDiagnostics;
@@ -129,11 +130,11 @@ namespace RandomNamespace
         public async Task AddsScopeToAsyncMethod()
         {
             const string code = @"
+using System;
+using System.Threading.Tasks;
+using Azure.Core.Pipeline;
 namespace RandomNamespace
 {
-    using System;
-    using System.Threading.Tasks;
-    using Azure.Core.Pipeline;
     public class MyClass
     {
         ClientDiagnostics _clientDiagnostics;

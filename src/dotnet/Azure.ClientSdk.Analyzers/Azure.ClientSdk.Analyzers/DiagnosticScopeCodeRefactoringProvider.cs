@@ -27,142 +27,143 @@ namespace Azure.ClientSdk.Analyzers
         {
             var cancellationToken = context.CancellationToken;
             var semanticModel = await context.Document.GetSemanticModelAsync(cancellationToken);
+            if (semanticModel == null) return;
 
             var tree = await context.Document.GetSyntaxRootAsync(cancellationToken);
-            if (tree == null || semanticModel == null)
+            if (tree == null) return;
+
+            var node = tree.FindNode(context.Span);
+            if (!(node is MethodDeclarationSyntax methodDeclarationSyntax))
             {
                 return;
             }
 
-            var node = tree.FindNode(context.Span);
-            if (node is MethodDeclarationSyntax methodDeclarationSyntax)
+            var method = ModelExtensions.GetDeclaredSymbol(semanticModel, methodDeclarationSyntax) as IMethodSymbol;
+
+            if (method == null ||
+                method.IsStatic ||
+                method.IsAbstract ||
+                method.ContainingType.TypeKind != TypeKind.Class)
             {
-                var method = ModelExtensions.GetDeclaredSymbol(semanticModel, methodDeclarationSyntax) as IMethodSymbol;
+                return;
+            }
 
-                if (method == null ||
-                    method.IsStatic ||
-                    method.IsAbstract ||
-                    method.ContainingType.TypeKind != TypeKind.Class)
+            var diagnosticScopeType = semanticModel.Compilation.GetTypeByMetadataName(AzureCorePipelineDiagnosticScopeTypeName);
+            var clientDiagnosticsType = semanticModel.Compilation.GetTypeByMetadataName(AzureCorePipelineClientDiagnosticsTypeName);
+            var exceptionType = semanticModel.Compilation.GetTypeByMetadataName(SystemExceptionTypeName);
+
+            if (diagnosticScopeType == null ||
+                clientDiagnosticsType == null ||
+                exceptionType == null)
+            {
+                return;
+            }
+
+            string clientDiagnosticsMember = null;
+            foreach (var member in method.ContainingType.GetMembers())
+            {
+                if ((member is IFieldSymbol fieldSymbol && SymbolEqualityComparer.Default.Equals(clientDiagnosticsType, fieldSymbol.Type)) ||
+                    (member is IPropertySymbol propertySymbol && SymbolEqualityComparer.Default.Equals(clientDiagnosticsType, propertySymbol.Type))
+                )
                 {
-                    return;
+                    clientDiagnosticsMember = member.Name;
+                }
+            }
+
+            if (clientDiagnosticsMember == null)
+            {
+                return;
+            }
+
+            Task<Document> AddDiagnosticScope()
+            {
+                var generator = SyntaxGenerator.GetGenerator(context.Document);
+
+                var preconditions = new List<StatementSyntax>();
+                var mainLogic = new List<SyntaxNode>();
+
+                IEnumerable<StatementSyntax> statements;
+
+                if (methodDeclarationSyntax.Body != null)
+                {
+                    statements = methodDeclarationSyntax.Body.Statements;
+                }
+                else if (methodDeclarationSyntax.ExpressionBody != null)
+                {
+                    statements = new [] { (StatementSyntax)generator.ReturnStatement(methodDeclarationSyntax.ExpressionBody.Expression) };
+                }
+                else
+                {
+                    return Task.FromResult(context.Document);
                 }
 
-                var diagnosticScopeType = semanticModel.Compilation.GetTypeByMetadataName(AzureCorePipelineDiagnosticScopeTypeName);
-                var clientDiagnosticsType = semanticModel.Compilation.GetTypeByMetadataName(AzureCorePipelineClientDiagnosticsTypeName);
-                var exceptionType = semanticModel.Compilation.GetTypeByMetadataName(SystemExceptionTypeName);
-
-                if (diagnosticScopeType == null || clientDiagnosticsType == null || exceptionType == null)
+                foreach (var statement in statements)
                 {
-                    return;
-                }
-
-                string clientDiagnosticsMember = null;
-                foreach (var member in method.ContainingType.GetMembers())
-                {
-                    if (
-                        (member is IFieldSymbol fieldSymbol && SymbolEqualityComparer.Default.Equals(clientDiagnosticsType, fieldSymbol.Type)) ||
-                        (member is IPropertySymbol propertySymbol && SymbolEqualityComparer.Default.Equals(clientDiagnosticsType, propertySymbol.Type))
-                    )
+                    if (mainLogic.Count > 0 ||
+                        IncludeInScopeBody(statement))
                     {
-                        clientDiagnosticsMember = member.Name;
-                    }
-                }
-
-                if (clientDiagnosticsMember == null)
-                {
-                    return;
-                }
-
-                Task<Document> AddDiagnosticScope()
-                {
-                    var generator = SyntaxGenerator.GetGenerator(context.Document);
-
-                    var preconditions = new List<StatementSyntax>();
-                    var mainLogic = new List<SyntaxNode>();
-
-                    IEnumerable<StatementSyntax> statements;
-
-                    if (methodDeclarationSyntax.Body != null)
-                    {
-                        statements = methodDeclarationSyntax.Body.Statements;
-                    }
-                    else if (methodDeclarationSyntax.ExpressionBody != null)
-                    {
-                        statements = new [] { (StatementSyntax)generator.ReturnStatement(methodDeclarationSyntax.ExpressionBody.Expression) };
+                        mainLogic.Add(statement);
                     }
                     else
                     {
-                        return Task.FromResult(context.Document);
+                        preconditions.Add(statement);
                     }
-
-                    foreach (var statement in statements)
-                    {
-                        if (mainLogic.Count > 0 ||
-                            IncludeInScopeBody(statement))
-                        {
-                            mainLogic.Add(statement);
-                        }
-                        else
-                        {
-                            preconditions.Add(statement);
-                        }
-                    }
-
-                    // Trim Async off the scope name
-                    var scopeName = method.Name;
-                    if (scopeName.EndsWith(AsyncSuffix))
-                    {
-                        scopeName = scopeName.Substring(0, scopeName.Length - AsyncSuffix.Length);
-                    }
-
-                    // $"{nameof(Type}}.{nameof(Method)}"
-                    var interpolatedStringParts = new InterpolatedStringContentSyntax[]
-                    {
-                        Interpolation((ExpressionSyntax) generator.NameOfExpression(generator.IdentifierName(method.ContainingType.Name))),
-                        InterpolatedStringText(Token(SyntaxTriviaList.Empty, SyntaxKind.InterpolatedStringTextToken, ".", ".", SyntaxTriviaList.Empty)),
-                        Interpolation((ExpressionSyntax) generator.NameOfExpression(generator.IdentifierName(scopeName)))
-                    };
-
-                    var initializer = generator.InvocationExpression(
-                        generator.MemberAccessExpression(generator.IdentifierName(clientDiagnosticsMember), "CreateScope"),
-                        InterpolatedStringExpression(
-                            Token(SyntaxKind.InterpolatedStringStartToken),
-                            List(interpolatedStringParts),
-                            Token(SyntaxKind.InterpolatedStringEndToken)
-                        )
-                    );
-
-                    var declaration = (LocalDeclarationStatementSyntax) generator.LocalDeclarationStatement(diagnosticScopeType, ScopeVariableName, initializer);
-                    declaration = declaration.WithUsingKeyword(Token(SyntaxKind.UsingKeyword));
-
-                    preconditions.Add(declaration);
-                    preconditions.Add(
-                        (StatementSyntax) generator.ExpressionStatement(
-                            generator.InvocationExpression(
-                                generator.MemberAccessExpression(generator.IdentifierName(ScopeVariableName), "Start"))));
-
-                    preconditions.Add(
-                        (StatementSyntax) generator.TryCatchStatement(
-                            mainLogic,
-                            generator.CatchClause(exceptionType, "ex", new[]
-                            {
-                                generator.ExpressionStatement(
-                                    generator.InvocationExpression(
-                                        generator.MemberAccessExpression(generator.IdentifierName(ScopeVariableName), "Failed"),
-                                        generator.Argument(generator.IdentifierName("ex")))),
-                                generator.ThrowStatement()
-                            })
-                        ));
-
-                    var newMethodDeclaration = methodDeclarationSyntax.WithExpressionBody(null)
-                        .WithBody(Block(preconditions))
-                        .WithSemicolonToken(default);
-
-                    return Task.FromResult(context.Document.WithSyntaxRoot(tree.ReplaceNode(methodDeclarationSyntax, newMethodDeclaration)));
                 }
 
-                context.RegisterRefactoring(CodeAction.Create("Azure SDK: Add diagnostic scope", token => AddDiagnosticScope()));
+                // Trim Async off the scope name
+                var scopeName = method.Name;
+                if (scopeName.EndsWith(AsyncSuffix))
+                {
+                    scopeName = scopeName.Substring(0, scopeName.Length - AsyncSuffix.Length);
+                }
+
+                // $"{nameof(Type}}.{nameof(Method)}"
+                var interpolatedStringParts = new InterpolatedStringContentSyntax[]
+                {
+                    Interpolation((ExpressionSyntax) generator.NameOfExpression(generator.IdentifierName(method.ContainingType.Name))),
+                    InterpolatedStringText(Token(SyntaxTriviaList.Empty, SyntaxKind.InterpolatedStringTextToken, ".", ".", SyntaxTriviaList.Empty)),
+                    Interpolation((ExpressionSyntax) generator.NameOfExpression(generator.IdentifierName(scopeName)))
+                };
+
+                var initializer = generator.InvocationExpression(
+                    generator.MemberAccessExpression(generator.IdentifierName(clientDiagnosticsMember), "CreateScope"),
+                    InterpolatedStringExpression(
+                        Token(SyntaxKind.InterpolatedStringStartToken),
+                        List(interpolatedStringParts),
+                        Token(SyntaxKind.InterpolatedStringEndToken)
+                    )
+                );
+
+                var declaration = (LocalDeclarationStatementSyntax) generator.LocalDeclarationStatement(diagnosticScopeType, ScopeVariableName, initializer);
+                declaration = declaration.WithUsingKeyword(Token(SyntaxKind.UsingKeyword));
+
+                preconditions.Add(declaration);
+                preconditions.Add(
+                    (StatementSyntax) generator.ExpressionStatement(
+                        generator.InvocationExpression(
+                            generator.MemberAccessExpression(generator.IdentifierName(ScopeVariableName), "Start"))));
+
+                preconditions.Add(
+                    (StatementSyntax) generator.TryCatchStatement(
+                        mainLogic,
+                        generator.CatchClause(exceptionType, "ex", new[]
+                        {
+                            generator.ExpressionStatement(
+                                generator.InvocationExpression(
+                                    generator.MemberAccessExpression(generator.IdentifierName(ScopeVariableName), "Failed"),
+                                    generator.Argument(generator.IdentifierName("ex")))),
+                            generator.ThrowStatement()
+                        })
+                    ));
+
+                var newMethodDeclaration = methodDeclarationSyntax.WithExpressionBody(null)
+                    .WithBody(Block(preconditions))
+                    .WithSemicolonToken(default);
+
+                return Task.FromResult(context.Document.WithSyntaxRoot(tree.ReplaceNode(methodDeclarationSyntax, newMethodDeclaration)));
             }
+
+            context.RegisterRefactoring(CodeAction.Create("Azure SDK: Add diagnostic scope", token => AddDiagnosticScope()));
         }
 
         private bool IncludeInScopeBody(StatementSyntax statement)

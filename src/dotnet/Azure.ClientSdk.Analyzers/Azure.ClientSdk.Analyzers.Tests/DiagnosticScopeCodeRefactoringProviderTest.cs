@@ -148,11 +148,11 @@ namespace RandomNamespace
     }
 }";
             const string fixedCode = @"
+using System;
+using System.Threading.Tasks;
+using Azure.Core.Pipeline;
 namespace RandomNamespace
 {
-    using System;
-    using System.Threading.Tasks;
-    using Azure.Core.Pipeline;
     public class MyClass
     {
         ClientDiagnostics _clientDiagnostics;

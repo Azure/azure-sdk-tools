@@ -29,9 +29,9 @@ using Azure.Sdk.Tools.CheckEnforcer.Integrations.GitHub;
 
 namespace Azure.Sdk.Tools.CheckEnforcer.Functions
 {
-    public class GitHubWebhookFunction
+    public class GitHubWebhookOverHttpFunction
     {
-        public GitHubWebhookFunction(GitHubWebhookProcessor processor)
+        public GitHubWebhookOverHttpFunction(GitHubWebhookProcessor processor)
         {
             this.processor = processor;
         }

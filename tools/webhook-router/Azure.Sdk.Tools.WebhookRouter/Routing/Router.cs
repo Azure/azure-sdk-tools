@@ -5,6 +5,7 @@ using Azure.Messaging.EventHubs.Producer;
 using Azure.Sdk.Tools.WebhookRouter.Integrations.GitHub;
 using Azure.Security.KeyVault.Secrets;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Caching.Memory;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -17,6 +18,13 @@ namespace Azure.Sdk.Tools.WebhookRouter.Routing
 {
     public class Router : IRouter
     {
+        public Router(IMemoryCache cache)
+        {
+            this.cache = cache;
+        }
+
+        private IMemoryCache cache;
+
         private Uri GetSecretClientUri()
         {
             var websiteResourceGroupEnvironmentVariable = Environment.GetEnvironmentVariable("WEBSITE_RESOURCE_GROUP");
@@ -41,10 +49,19 @@ namespace Azure.Sdk.Tools.WebhookRouter.Routing
 
         private async Task<string> GetSecretAsync(string secretName)
         {
-            var client = GetSecretClient();
-            var response = await client.GetSecretAsync(secretName);
-            var secret = response.Value.Value; // Urgh!
-            return secret;
+            var secretCacheKey = $"{secretName}_secretCacheKey";
+
+            var cachedSecret = await cache.GetOrCreateAsync<string>(secretCacheKey, async (entry) =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(60);
+
+                var client = GetSecretClient();
+                var response = await client.GetSecretAsync(secretName);
+                var secret = response.Value.Value; // Urgh!
+                return secret;
+            });
+
+            return cachedSecret;
         }
 
         private ConfigurationClient GetConfigurationClient()
@@ -62,6 +79,19 @@ namespace Azure.Sdk.Tools.WebhookRouter.Routing
         private const string SettingSelectorKeyPrefixTemplate = "webhookrouter/rules/{0}/";
         
         private async Task<Dictionary<string, string>> GetSettingsAsync(Guid route)
+        {
+            var routeSettingsCacheKey = $"{route}_routeSettingsCacheKey";
+            var cachedSettings = await cache.GetOrCreateAsync<Dictionary<string, string>>(routeSettingsCacheKey, async (entry) =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(15);
+
+                return await GetSettingsFromAppConfigurationService(route);
+            });
+
+            return cachedSettings;
+        }
+
+        private async Task<Dictionary<string, string>> GetSettingsFromAppConfigurationService(Guid route)
         {
             var settingSelectorKeyPrefix = string.Format(SettingSelectorKeyPrefixTemplate, route);
             var settingSelectorKeyFilter = $"{settingSelectorKeyPrefix}*";
@@ -145,6 +175,21 @@ namespace Azure.Sdk.Tools.WebhookRouter.Routing
             return payload;
         }
 
+        private EventHubProducerClient GetEventHubProducerClient(string eventHubsNamespace, string eventHubName)
+        {
+            var eventHubProducerClientCacheKey = $"{eventHubsNamespace}/{eventHubName}_eventHubProducerClientCacheKey";
+
+            var cachedProdocer = cache.GetOrCreate<EventHubProducerClient>(eventHubProducerClientCacheKey, (entry) =>
+            {
+                var fullyQualifiedEventHubsNamespace = $"{eventHubsNamespace}.servicebus.windows.net";
+                var credential = new DefaultAzureCredential();
+                var producer = new EventHubProducerClient(fullyQualifiedEventHubsNamespace, eventHubName, credential);
+                return producer;
+            });
+
+            return cachedProdocer;
+        }
+
         public async Task RouteAsync(Guid route, HttpRequest request)
         {
             var rule = await GetRuleAsync(route);
@@ -155,9 +200,7 @@ namespace Azure.Sdk.Tools.WebhookRouter.Routing
 
             var @event = new EventData(payloadBytes);
 
-            var fullyQualifiedEventHubsNamespace = $"{rule.EventHubsNamespace}.servicebus.windows.net";
-            var credential = new DefaultAzureCredential();
-            var producer = new EventHubProducerClient(fullyQualifiedEventHubsNamespace, rule.EventHubName, credential);
+            var producer = GetEventHubProducerClient(rule.EventHubsNamespace, rule.EventHubName);
             var batch = await producer.CreateBatchAsync();
             batch.TryAdd(@event);
             await producer.SendAsync(batch);

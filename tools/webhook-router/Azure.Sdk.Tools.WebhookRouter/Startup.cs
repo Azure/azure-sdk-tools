@@ -15,6 +15,7 @@ namespace Azure.Sdk.Tools.WebhookRouter
         public override void Configure(IFunctionsHostBuilder builder)
         {
             builder.Services.AddSingleton<IRouter, Router>();
+            builder.Services.AddMemoryCache();
         }
     }
 }

@@ -54,6 +54,23 @@ namespace Azure.ClientSdk.Analyzers
                     return;
                 }
 
+                string clientDiagnosticsMember = null;
+                foreach (var member in method.ContainingType.GetMembers())
+                {
+                    if (
+                        (member is IFieldSymbol fieldSymbol && SymbolEqualityComparer.Default.Equals(clientDiagnosticsType, fieldSymbol.Type)) ||
+                        (member is IPropertySymbol propertySymbol && SymbolEqualityComparer.Default.Equals(clientDiagnosticsType, propertySymbol.Type))
+                    )
+                    {
+                        clientDiagnosticsMember = member.Name;
+                    }
+                }
+
+                if (clientDiagnosticsMember == null)
+                {
+                    return;
+                }
+
                 Task<Document> AddDiagnosticScope()
                 {
                     var generator = SyntaxGenerator.GetGenerator(context.Document);
@@ -74,11 +91,14 @@ namespace Azure.ClientSdk.Analyzers
                         }
                     }
 
+                    // Trim Async off the scope name
                     var scopeName = method.Name;
                     if (scopeName.EndsWith(AsyncSuffix))
                     {
                         scopeName = scopeName.Substring(0, scopeName.Length - AsyncSuffix.Length);
                     }
+
+                    // $"{nameof(Type}}.{nameof(Method)}"
                     var interpolatedStringParts = new InterpolatedStringContentSyntax[]
                     {
                         Interpolation((ExpressionSyntax) generator.NameOfExpression(generator.IdentifierName(method.ContainingType.Name))),
@@ -87,7 +107,7 @@ namespace Azure.ClientSdk.Analyzers
                     };
 
                     var initializer = generator.InvocationExpression(
-                        generator.MemberAccessExpression(generator.IdentifierName("_clientDiagnostics"), "CreateScope"),
+                        generator.MemberAccessExpression(generator.IdentifierName(clientDiagnosticsMember), "CreateScope"),
                         InterpolatedStringExpression(
                             Token(SyntaxKind.InterpolatedStringStartToken),
                             List(interpolatedStringParts),

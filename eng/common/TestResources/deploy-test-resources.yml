@@ -3,19 +3,7 @@ parameters:
   ArmTemplateParameters: '@{}'
   DeleteAfterHours: 24
   Location: ''
-  SubscriptionConfiguration: sub-config-azure-cloud-test-resources
-
-# Format: sub-config-<cloud name>-<subscription name>
-# Subscription configuration includes $Environment
-
-  # SubscriptionId:
-  # TenantId:
-  # TestApplicationId:
-  # TestApplicationSecret:
-  # TestApplicationOid:
-  # ProvisionerApplicationId:
-  # ProvisoinerApplicationSecret:
-  # Environment: AzureCloud, AzureUSGovernment, AzureChinaCloud, AzureStackRedmond
+  SubscriptionConfiguration: $(sub-config-azure-cloud-test-resources)
 
 steps:
   # New-TestResources command requires Az module
@@ -28,19 +16,19 @@ steps:
     condition: and(succeeded(), eq(variables['Agent.OS'], 'Darwin'))
     displayName: Clean out ~/.Azure
 
-  - pwsh: >
-      eng/common/TestResources/New-TestResources.ps1
-      -BaseName 'Generated'
-      -ServiceDirectory ${{ parameters.ServiceDirectory }}
-      -Location '${{ parameters.Location }}'
-      -DeleteAfterHours ${{ parameters.DeleteAfterHours }}
-      -AdditionalParameters ${{ parameters.ArmTemplateParameters }}
-      -SubscriptionConfiguration ${{ parameters.SubscriptionConfiguration }}
-      -KeyVaultName $(provisioner-keyvault-name)
-      -KeyVaultTenantId $(provisioner-aad-tenant)
-      -KeyVaultAppId $(provisioner-aad-id)
-      -KeyVaultAppSecret $(provisioner-aad-secret)
-      -CI
-      -Force
-      -Verbose
+  - pwsh: |
+      $subscriptionConfiguration = @"
+        ${{ parameters.SubscriptionConfiguration }}
+      "@ | ConvertFrom-Json -AsHashtable;
+
+      &eng/common/TestResources/New-TestResources.ps1 `
+        -BaseName 'Generated' `
+        -ServiceDirectory ${{ parameters.ServiceDirectory }} `
+        -Location '${{ parameters.Location }}' `
+        -DeleteAfterHours ${{ parameters.DeleteAfterHours }} `
+        -AdditionalParameters ${{ parameters.ArmTemplateParameters }} `
+        @subscriptionConfiguration `
+        -CI `
+        -Force `
+        -Verbose
     displayName: Deploy test resources

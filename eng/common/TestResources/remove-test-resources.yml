@@ -3,7 +3,7 @@
 
 parameters:
   ServiceDirectory: ''
-  SubscriptionConfiguration: sub-config-azure-cloud-test-resources
+  SubscriptionConfiguration: $(sub-config-azure-cloud-test-resources)
 
 steps:
   # On MacOS there are problems with access to the ~/.Azure folder. This
@@ -12,16 +12,15 @@ steps:
     condition: and(succeeded(), eq(variables['Agent.OS'], 'Darwin'))
     displayName: Clean out ~/.Azure
 
-  - pwsh: >
-      eng/common/TestResources/Remove-TestResources.ps1
-      -ResourceGroupName "${env:AZURE_RESOURCEGROUP_NAME}"
-      -ServiceDirectory '${{ parameters.ServiceDirectory }}'
-      -SubscriptionConfiguration ${{ parameters.SubscriptionConfiguration }}
-      -KeyVaultName $(provisioner-keyvault-name)
-      -KeyVaultTenantId $(provisioner-aad-tenant)
-      -KeyVaultAppId $(provisioner-aad-id)
-      -KeyVaultAppSecret $(provisioner-aad-secret)
-      -Force
-      -Verbose
+  - pwsh: |
+      $subscriptionConfiguration = @"
+        ${{ parameters.SubscriptionConfiguration }}
+      "@ | ConvertFrom-Json -AsHashtable;
+
+      &eng/common/TestResources/Remove-TestResources.ps1 `
+        -ResourceGroupName "${env:AZURE_RESOURCEGROUP_NAME}" `
+        @subscriptionConfiguration `
+        -Force `
+        -Verbose
     displayName: Remove test resources
     continueOnError: true

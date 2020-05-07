@@ -14,18 +14,19 @@ Deploys live test resources defined for a service directory to Azure.
 
 ### Default (Default)
 ```
-New-TestResources.ps1 [-BaseName] <String> -ServiceDirectory <String> [-TestApplicationId <String>]
- [-TestApplicationSecret <String>] [-DeleteAfterHours <Int32>] [-Location <String>] [-Environment <String>]
- [-AdditionalParameters <Hashtable>] [-CI] [-Force] [-OutFile] [-WhatIf] [-Confirm] [<CommonParameters>]
+New-TestResources.ps1 [-BaseName] <String> -ServiceDirectory <String> -TestApplicationId <String>
+ [-TestApplicationSecret <String>] [-TestApplicationOid <String>] [-DeleteAfterHours <Int32>]
+ [-Location <String>] [-Environment <String>] [-AdditionalParameters <Hashtable>] [-CI] [-Force] [-WhatIf]
+ [-Confirm] [<CommonParameters>]
 ```
 
-### SubscriptionConfiguration
+### Provisioner
 ```
-New-TestResources.ps1 [-BaseName] <String> -ServiceDirectory <String> [-TestApplicationId <String>]
- [-TestApplicationSecret <String>] [-DeleteAfterHours <Int32>] [-Location <String>] [-Environment <String>]
- [-AdditionalParameters <Hashtable>] -SubscriptionConfiguration <String> -KeyVaultName <String>
- -KeyVaultTenantId <String> -KeyVaultAppId <String> -KeyVaultAppSecret <String> [-CI] [-Force] [-OutFile]
- [-WhatIf] [-Confirm] [<CommonParameters>]
+New-TestResources.ps1 [-BaseName] <String> -ServiceDirectory <String> -TestApplicationId <String>
+ [-TestApplicationSecret <String>] [-TestApplicationOid <String>] -TenantId <String> [-SubscriptionId <String>]
+ -ProvisionerApplicationId <String> -ProvisionerApplicationSecret <String> [-DeleteAfterHours <Int32>]
+ [-Location <String>] [-Environment <String>] [-AdditionalParameters <Hashtable>] [-CI] [-Force] [-WhatIf]
+ [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -71,15 +72,13 @@ the SecureString to plaintext by another means.
 ```
 New-TestResources.ps1 `
     -BaseName 'Generated' `
-    -ServiceDirectory $(ServiceDirectory) `
-    -Location '$(Location)' `
+    -ServiceDirectory '$(ServiceDirectory)' `
+    -TenantId '$(TenantId)' `
+    -ProvisionerApplicationId '$(ProvisionerId)' `
+    -ProvisionerApplicationSecret '$(ProvisionerSecret)' `
+    -TestApplicationId '$(TestAppId)' `
+    -TestApplicationSecret '$(TestAppSecret)' `
     -DeleteAfterHours 24 `
-    -AdditionalParameters @{ additionalParam1 = 'value'; additionalParam2 = 'value' } `
-    -SubscriptionConfiguration $(SubscriptionConfigurationName) `
-    -KeyVaultName $(KeyVaultName) `
-    -KeyVaultTenantId $(KeyVaultTenantId) `
-    -KeyVaultAppId $(KeyVaultAppId) `
-    -KeyVaultAppSecret $(KeyVaultSecret) `
     -CI `
     -Force `
     -Verbose
@@ -143,7 +142,7 @@ Type: String
 Parameter Sets: (All)
 Aliases:
 
-Required: False
+Required: True
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -165,6 +164,106 @@ Parameter Sets: (All)
 Aliases:
 
 Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -TestApplicationOid
+Service Principal Object ID of the AAD Test application.
+This is used to assign
+permissions to the AAD application so it can access tested features on the live
+test resources (e.g.
+Role Assignments on resources).
+It is passed as to the ARM
+template as 'testApplicationOid'
+
+For more information on the relationship between AAD Applications and Service
+Principals see: https://docs.microsoft.com/en-us/azure/active-directory/develop/app-objects-and-service-principals
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -TenantId
+The tenant ID of a service principal when a provisioner is specified.
+The same
+Tenant ID is used for Test Application and Provisioner Application.
+This value
+is passed to the ARM template as 'tenantId'.
+
+```yaml
+Type: String
+Parameter Sets: Provisioner
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SubscriptionId
+Optional subscription ID to use for new resources when logging in as a
+provisioner.
+You can also use Set-AzContext if not provisioning.
+
+```yaml
+Type: String
+Parameter Sets: Provisioner
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ProvisionerApplicationId
+The AAD Application ID used to provision test resources when a provisioner is
+specified.
+
+If none is specified New-TestResources.ps1 uses the TestApplicationId.
+
+This value is not passed to the ARM template.
+
+```yaml
+Type: String
+Parameter Sets: Provisioner
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ProvisionerApplicationSecret
+A service principal secret (password) used to provision test resources when a
+provisioner is specified.
+
+If none is specified New-TestResources.ps1 uses the TestApplicationSecret.
+
+This value is not passed to the ARM template.
+
+```yaml
+Type: String
+Parameter Sets: Provisioner
+Aliases:
+
+Required: True
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -251,91 +350,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -SubscriptionConfiguration
-Name of a subscription configuration secret in a Key Vault.
-Stored as a JSON
-object with the expected properties:
-    * SubscriptionId
-    * TenantId
-    * TestApplicationId
-    * TestApplicationSecret
-    * TestApplicationOid
-    * ProvisionerApplicationId
-    * ProvisoinerApplicationSecret
-    * Environment
-
-```yaml
-Type: String
-Parameter Sets: SubscriptionConfiguration
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -KeyVaultName
-Name of the Key Vault which holds the subscription configuration
-
-```yaml
-Type: String
-Parameter Sets: SubscriptionConfiguration
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -KeyVaultTenantId
-AAD tenant ID for an app that has access to the Key Vault
-
-```yaml
-Type: String
-Parameter Sets: SubscriptionConfiguration
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -KeyVaultAppId
-AAD app ID for an app that has access to the Key Vault
-
-```yaml
-Type: String
-Parameter Sets: SubscriptionConfiguration
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -KeyVaultAppSecret
-AAD app secret for an app that has access to the Key Vault
-
-```yaml
-Type: String
-Parameter Sets: SubscriptionConfiguration
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -CI
 Indicates the script is run as part of a Continuous Integration / Continuous
 Deployment (CI/CD) build (only Azure Pipelines is currently supported).
@@ -354,24 +368,6 @@ Accept wildcard characters: False
 
 ### -Force
 Force creation of resources instead of being prompted.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: False
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -OutFile
-Save test environment settings into a test-resources.json.env file next to test-resources.json.
-File is protected via DPAPI.
-Supported only on windows.
-The environment file would be scoped to the current repository directory.
 
 ```yaml
 Type: SwitchParameter
@@ -427,5 +423,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## RELATED LINKS
 
-[Remove-TestResources.ps1]()
-
+[Remove-TestResources.ps1](./Remove-TestResources.ps1.md)

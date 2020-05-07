@@ -18,12 +18,31 @@ param (
     [Parameter(Mandatory = $true)]
     [string] $ServiceDirectory,
 
-    [Parameter()]
+    [Parameter(Mandatory = $true)]
     [ValidatePattern('^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$')]
     [string] $TestApplicationId,
 
     [Parameter()]
     [string] $TestApplicationSecret,
+
+    [Parameter()]
+    [ValidatePattern('^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$')]
+    [string] $TestApplicationOid,
+
+    [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
+    [ValidateNotNullOrEmpty()]
+    [string] $TenantId,
+
+    [Parameter(ParameterSetName = 'Provisioner')]
+    [ValidatePattern('^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$')]
+    [string] $SubscriptionId,
+
+    [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
+    [ValidatePattern('^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$')]
+    [string] $ProvisionerApplicationId,
+
+    [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
+    [string] $ProvisionerApplicationSecret,
 
     [Parameter()]
     [ValidateRange(0, [int]::MaxValue)]
@@ -33,29 +52,11 @@ param (
     [string] $Location = '',
 
     [Parameter()]
+    [ValidateSet('AzureCloud', 'AzureUSGovernment', 'AzureChinaCloud')]
     [string] $Environment = 'AzureCloud',
 
     [Parameter()]
     [hashtable] $AdditionalParameters,
-
-    [Parameter(ParameterSetName = 'SubscriptionConfiguration', Mandatory = $true)]
-    [string] $SubscriptionConfiguration = '',
-
-    [Parameter(ParameterSetName = 'SubscriptionConfiguration', Mandatory = $true)]
-    [ValidateNotNullOrEmpty()]
-    [string] $KeyVaultName,
-
-    [Parameter(ParameterSetName = 'SubscriptionConfiguration', Mandatory = $true)]
-    [ValidateNotNullOrEmpty()]
-    [string] $KeyVaultTenantId,
-
-    [Parameter(ParameterSetName = 'SubscriptionConfiguration', Mandatory = $true)]
-    [ValidateNotNullOrEmpty()]
-    [string] $KeyVaultAppId,
-
-    [Parameter(ParameterSetName = 'SubscriptionConfiguration', Mandatory = $true)]
-    [ValidateNotNullOrEmpty()]
-    [string] $KeyVaultAppSecret,
 
     [Parameter()]
     [switch] $CI = ($null -ne $env:SYSTEM_TEAMPROJECTID),
@@ -127,40 +128,6 @@ if (!$templateFiles) {
     Write-Warning -Message "No template files found under '$root'"
     exit
 }
-
-# If there is a value for $SubscriptionConfiguration look it up and set
-# script-level variables for subsequent steps.
-if ($SubscriptionConfiguration) {
-    Write-Verbose "Using subscription configuration $SubscriptionConfiguration from KeyVault $KeyVaultName..."
-    $keyVaultSecret = ConvertTo-SecureString -String $KeyVaultAppSecret -AsPlainText -Force
-    $keyvaultCredential = [System.Management.Automation.PSCredential]::new($KeyVaultAppId, $keyVaultSecret)
-
-    $keyVaultAccount = Retry {
-        Connect-AzAccount -Tenant $KeyVaultTenantId -Credential $keyvaultCredential -ServicePrincipal -Environment $Environment
-    }
-
-    $exitActions += {
-        Write-Verbose "Logging out of service principal '$($keyVaultAccount.Context.Account)'"
-        $null = Disconnect-AzAccount -AzureContext $keyVaultAccount.Context
-    }
-
-    $subscriptionSecret = Get-AzKeyVaultSecret -VaultName $KeyVaultName -Name $SubscriptionConfiguration
-    $subscriptionParameters = ($subscriptionSecret.SecretValueText | ConvertFrom-JSON)
-
-    $SubscriptionId = $subscriptionParameters.SubscriptionId
-    $TenantId = $subscriptionParameters.TenantId
-    $TestApplicationId = $subscriptionParameters.TestApplicationId
-    $TestApplicationSecret = $subscriptionParameters.TestApplicationSecret
-    $TestApplicationOid = $subscriptionParameters.TestApplicationOid
-    $ProvisionerApplicationId = $subscriptionParameters.ProvisionerApplicationId
-    $ProvisionerApplicationSecret = $subscriptionParameters.ProvisionerApplicationSecret
-    $Environment = $subscriptionParameters.Environment
-
-    $null = Disconnect-AzAccount -AzureContext $keyVaultAccount.Context
-
-    Write-Verbose "Subscription parameters set. Using Subscription: $SubscriptionId"
-}
-
 
 # If no location is specified use safe default locations for the given
 # environment. If no matching environment is found $Location remains an empty
@@ -451,6 +418,40 @@ against deployed resources. Passed to the ARM template as
 This application is used by the test runner to execute tests against the
 live test resources.
 
+.PARAMETER TestApplicationOid
+Service Principal Object ID of the AAD Test application. This is used to assign
+permissions to the AAD application so it can access tested features on the live
+test resources (e.g. Role Assignments on resources). It is passed as to the ARM
+template as 'testApplicationOid'
+
+For more information on the relationship between AAD Applications and Service
+Principals see: https://docs.microsoft.com/en-us/azure/active-directory/develop/app-objects-and-service-principals
+
+.PARAMETER TenantId
+The tenant ID of a service principal when a provisioner is specified. The same
+Tenant ID is used for Test Application and Provisioner Application. This value
+is passed to the ARM template as 'tenantId'.
+
+.PARAMETER SubscriptionId
+Optional subscription ID to use for new resources when logging in as a
+provisioner. You can also use Set-AzContext if not provisioning.
+
+.PARAMETER ProvisionerApplicationId
+The AAD Application ID used to provision test resources when a provisioner is
+specified.
+
+If none is specified New-TestResources.ps1 uses the TestApplicationId.
+
+This value is not passed to the ARM template.
+
+.PARAMETER ProvisionerApplicationSecret
+A service principal secret (password) used to provision test resources when a
+provisioner is specified.
+
+If none is specified New-TestResources.ps1 uses the TestApplicationSecret.
+
+This value is not passed to the ARM template.
+
 .PARAMETER DeleteAfterHours
 Optional. Positive integer number of hours from the current time to set the
 'DeleteAfter' tag on the created resource group. The computed value is a
@@ -478,30 +479,6 @@ Name of the cloud environment. The default is the Azure Public Cloud
 
 .PARAMETER AdditionalParameters
 Optional key-value pairs of parameters to pass to the ARM template(s).
-
-.PARAMETER SubscriptionConfiguration
-Name of a subscription configuration secret in a Key Vault. Stored as a JSON
-object with the expected properties:
-    * SubscriptionId
-    * TenantId
-    * TestApplicationId
-    * TestApplicationSecret
-    * TestApplicationOid
-    * ProvisionerApplicationId
-    * ProvisoinerApplicationSecret
-    * Environment
-
-.PARAMETER KeyVaultName
-Name of the Key Vault which holds the subscription configuration
-
-.PARAMETER KeyVaultTenantId
-AAD tenant ID for an app that has access to the Key Vault
-
-.PARAMETER KeyVaultAppId
-AAD app ID for an app that has access to the Key Vault
-
-.PARAMETER KeyVaultAppSecret
-AAD app secret for an app that has access to the Key Vault
 
 .PARAMETER CI
 Indicates the script is run as part of a Continuous Integration / Continuous
@@ -532,15 +509,13 @@ the SecureString to plaintext by another means.
 .EXAMPLE
 New-TestResources.ps1 `
     -BaseName 'Generated' `
-    -ServiceDirectory $(ServiceDirectory) `
-    -Location '$(Location)' `
+    -ServiceDirectory '$(ServiceDirectory)' `
+    -TenantId '$(TenantId)' `
+    -ProvisionerApplicationId '$(ProvisionerId)' `
+    -ProvisionerApplicationSecret '$(ProvisionerSecret)' `
+    -TestApplicationId '$(TestAppId)' `
+    -TestApplicationSecret '$(TestAppSecret)' `
     -DeleteAfterHours 24 `
-    -AdditionalParameters @{ additionalParam1 = 'value'; additionalParam2 = 'value' } `
-    -SubscriptionConfiguration $(SubscriptionConfigurationName) `
-    -KeyVaultName $(KeyVaultName) `
-    -KeyVaultTenantId $(KeyVaultTenantId) `
-    -KeyVaultAppId $(KeyVaultAppId) `
-    -KeyVaultAppSecret $(KeyVaultSecret) `
     -CI `
     -Force `
     -Verbose

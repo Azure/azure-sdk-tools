@@ -12,40 +12,46 @@
 param (
     # Limit $BaseName to enough characters to be under limit plus prefixes, and https://docs.microsoft.com/azure/architecture/best-practices/resource-naming.
     [Parameter(ParameterSetName = 'Default', Mandatory = $true, Position = 0)]
+    [Parameter(ParameterSetName = 'Default+Provisioner', Mandatory = $true, Position = 0)]
     [ValidatePattern('^[-a-zA-Z0-9\.\(\)_]{0,80}(?<=[a-zA-Z0-9\(\)])$')]
     [string] $BaseName,
 
     [Parameter(ParameterSetName = 'ResourceGroup', Mandatory = $true)]
-    [Parameter(ParameterSetName = 'SubscriptionConfiguration', Mandatory = $true)]
+    [Parameter(ParameterSetName = 'ResourceGroup+Provisioner', Mandatory = $true)]
     [string] $ResourceGroupName,
 
+    [Parameter(ParameterSetName = 'Default+Provisioner', Mandatory = $true)]
+    [Parameter(ParameterSetName = 'ResourceGroup+Provisioner', Mandatory = $true)]
+    [ValidateNotNullOrEmpty()]
+    [string] $TenantId,
+
+    [Parameter(ParameterSetName = 'Default+Provisioner')]
+    [Parameter(ParameterSetName = 'ResourceGroup+Provisioner')]
+    [ValidatePattern('^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$')]
+    [string] $SubscriptionId,
+
+    [Parameter(ParameterSetName = 'Default+Provisioner', Mandatory = $true)]
+    [Parameter(ParameterSetName = 'ResourceGroup+Provisioner', Mandatory = $true)]
+    [ValidatePattern('^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$')]
+    [string] $ProvisionerApplicationId,
+
+    [Parameter(ParameterSetName = 'Default+Provisioner', Mandatory = $true)]
+    [Parameter(ParameterSetName = 'ResourceGroup+Provisioner', Mandatory = $true)]
+    [string] $ProvisionerApplicationSecret,
+    
     [Parameter()]
     [string] $ServiceDirectory,
 
     [Parameter()]
+    [ValidateSet('AzureCloud', 'AzureUSGovernment', 'AzureChinaCloud')]
     [string] $Environment = 'AzureCloud',
 
-    [Parameter(ParameterSetName = 'SubscriptionConfiguration', Mandatory = $true)]
-    [string] $SubscriptionConfiguration = '',
-
-    [Parameter(ParameterSetName = 'SubscriptionConfiguration', Mandatory = $true)]
-    [ValidateNotNullOrEmpty()]
-    [string] $KeyVaultName,
-
-    [Parameter(ParameterSetName = 'SubscriptionConfiguration', Mandatory = $true)]
-    [ValidateNotNullOrEmpty()]
-    [string] $KeyVaultTenantId,
-
-    [Parameter(ParameterSetName = 'SubscriptionConfiguration', Mandatory = $true)]
-    [ValidateNotNullOrEmpty()]
-    [string] $KeyVaultAppId,
-
-    [Parameter(ParameterSetName = 'SubscriptionConfiguration', Mandatory = $true)]
-    [ValidateNotNullOrEmpty()]
-    [string] $KeyVaultAppSecret,
-
     [Parameter()]
-    [switch] $Force
+    [switch] $Force,
+
+    # Captures any arguments not declared here (no parameter errors)
+    [Parameter(ValueFromRemainingArguments = $true)]
+    $RemainingArguments
 )
 
 # By default stop for any error.
@@ -90,41 +96,6 @@ trap {
     $exitActions.Invoke()
 }
 
-# If there is a value for $SubscriptionConfiguration look it up and set
-# script-level variables for subsequent steps.
-if ($SubscriptionConfiguration) {
-    Write-Verbose "Using subscription configuration $SubscriptionConfiguration from KeyVault $KeyVaultName..."
-    $keyVaultSecret = ConvertTo-SecureString -String $KeyVaultAppSecret -AsPlainText -Force
-    $keyvaultCredential = [System.Management.Automation.PSCredential]::new($KeyVaultAppId, $keyVaultSecret)
-
-    $keyVaultAccount = Retry {
-        Connect-AzAccount -Tenant $KeyVaultTenantId -Credential $keyvaultCredential -ServicePrincipal -Environment $Environment
-    }
-
-    $exitActions += {
-        Write-Verbose "Logging out of service principal '$($keyVaultAccount.Context.Account)'"
-        $null = Disconnect-AzAccount -AzureContext $keyVaultAccount.Context
-    }
-
-    $subscriptionSecret = Get-AzKeyVaultSecret -VaultName $KeyVaultName -Name $SubscriptionConfiguration
-    $subscriptionParameters = ($subscriptionSecret.SecretValueText | ConvertFrom-JSON)
-
-    $SubscriptionId = $subscriptionParameters.SubscriptionId
-    $TenantId = $subscriptionParameters.TenantId
-    $TestApplicationId = $subscriptionParameters.TestApplicationId
-    $TestApplicationSecret = $subscriptionParameters.TestApplicationSecret
-    $TestApplicationOid = $subscriptionParameters.TestApplicationOid
-    $ProvisionerApplicationId = $subscriptionParameters.ProvisionerApplicationId
-    $ProvisionerApplicationSecret = $subscriptionParameters.ProvisionerApplicationSecret
-    $Environment = $subscriptionParameters.Environment
-
-    $null = Disconnect-AzAccount -AzureContext $keyVaultAccount.Context
-
-    Write-Verbose "Subscription parameters set. Using Subscription: $SubscriptionId"
-}
-
-
-
 if ($ProvisionerApplicationId) {
     $null = Disable-AzContextAutosave -Scope Process
 
@@ -158,12 +129,9 @@ if (![string]::IsNullOrWhiteSpace($ServiceDirectory)) {
     if (Test-Path $preRemovalScript) {
         Log "Invoking pre resource removal script '$preRemovalScript'"
 
-        # Ensure that expected parameters are added
-        $null = $PSBoundParameters.TryAdd('ResourceGroupName', $ResourceGroupName);
-        $null = $PSBoundParameters.TryAdd('SubscriptionId', $SubscriptionId);
-        $null = $PSBoundParameters.TryAdd('TenantId', $TenantId);
-        $null = $PSBoundParameters.TryAdd('ProvisionerApplicationId', $ProvisionerApplicationId);
-        $null = $PSBoundParameters.TryAdd('ProvisionerApplicationSecret', $ProvisionerApplicationSecret);
+        if (!$PSCmdlet.ParameterSetName.StartsWith('ResourceGroup')) {
+            $PSBoundParameters.Add('ResourceGroupName', $ResourceGroupName);
+        }
 
         &$preRemovalScript @PSBoundParameters
     }
@@ -204,25 +172,6 @@ A service principal secret (password) to provision test resources when a provisi
 .PARAMETER ServiceDirectory
 A directory under 'sdk' in the repository root - optionally with subdirectories
 specified - in which to discover pre removal script named 'remove-test-resources-pre.json'.
-.PARAMETER SubscriptionConfiguration
-Name of a subscription configuration secret in a Key Vault. Stored as a JSON
-object with the expected properties:
-    * SubscriptionId
-    * TenantId
-    * TestApplicationId
-    * TestApplicationSecret
-    * TestApplicationOid
-    * ProvisionerApplicationId
-    * ProvisoinerApplicationSecret
-    * Environment
-.PARAMETER KeyVaultName
-Name of the Key Vault which holds the subscription configuration
-.PARAMETER KeyVaultTenantId
-AAD tenant ID for an app that has access to the Key Vault
-.PARAMETER KeyVaultAppId
-AAD app ID for an app that has access to the Key Vault
-.PARAMETER KeyVaultAppSecret
-AAD app secret for an app that has access to the Key Vault
 .PARAMETER Environment
 Name of the cloud environment. The default is the Azure Public Cloud
 ('PublicCloud')
@@ -239,25 +188,10 @@ Remove-TestResources.ps1 `
     -ProvisionerApplicationId '$(AppId)' `
     -ProvisionerApplicationSecret '$(AppSecret)' `
     -Force `
-    -Verbose
+    -Verbose `
 When run in the context of an Azure DevOps pipeline, this script removes the
 resource group whose name is stored in the environment variable
 AZURE_RESOURCEGROUP_NAME.
-.EXAMPLE
-Remove-TestResources.ps1 `
-      -ResourceGroupName "${env:AZURE_RESOURCEGROUP_NAME}" `
-      -ServiceDirectory '$(ServiceDirectory)' `
-      -SubscriptionConfiguration $(SubscriptionConfigurationName) `
-      -KeyVaultName $(SubscriptionConfigurationKeyVaultName) `
-      -KeyVaultTenantId $(AppTenant) `
-      -KeyVaultAppId $(AppId) `
-      -KeyVaultAppSecret $(AppSecret) `
-      -Force `
-      -Verbose
-When run in the context of an Azure DevOps pipeline, this script removes the
-resource group whose name is stored in the environment variable
-AZURE_RESOURCEGROUP_NAME in the cloud and subscription specified in the
-$(SubscriptionConfigurationName).
 .LINK
 New-TestResources.ps1
 #>

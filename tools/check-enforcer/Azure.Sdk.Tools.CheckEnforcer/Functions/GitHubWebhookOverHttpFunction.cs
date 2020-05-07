@@ -27,23 +27,25 @@ using System.Runtime.CompilerServices;
 using Azure.Sdk.Tools.CheckEnforcer.Configuration;
 using Azure.Sdk.Tools.CheckEnforcer.Integrations.GitHub;
 
-namespace Azure.Sdk.Tools.CheckEnforcer
+namespace Azure.Sdk.Tools.CheckEnforcer.Functions
 {
-    public static class GitHubWebhookFunction
+    public class GitHubWebhookOverHttpFunction
     {
-        private static IGlobalConfigurationProvider globalConfigurationProvider = new GlobalConfigurationProvider();
-        private static IGitHubClientProvider gitHubClientProvider = new GitHubClientProvider(globalConfigurationProvider);
-        private static IRepositoryConfigurationProvider repositoryConfigurationProvider = new RepositoryConfigurationProvider(gitHubClientProvider);
-        private static GitHubWebhookProcessor gitHubWebhookProcessor = new GitHubWebhookProcessor(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider);
+        public GitHubWebhookOverHttpFunction(GitHubWebhookProcessor processor)
+        {
+            this.processor = processor;
+        }
+
+        private GitHubWebhookProcessor processor;
 
         [FunctionName("webhook")]
-        public static async Task<IActionResult> Run(
+        public async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequest req,
             ILogger log, CancellationToken cancellationToken)
         {
             try
             {
-                await gitHubWebhookProcessor.ProcessWebhookAsync(req, log, cancellationToken);
+                await processor.ProcessWebhookAsync(req, log, cancellationToken);
                 return new OkResult();
             }
             catch (CheckEnforcerSecurityException ex)

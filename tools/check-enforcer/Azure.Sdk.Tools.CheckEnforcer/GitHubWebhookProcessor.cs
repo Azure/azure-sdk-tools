@@ -41,7 +41,6 @@ namespace Azure.Sdk.Tools.CheckEnforcer
         public IGitHubClientProvider gitHubClientProvider;
         private IRepositoryConfigurationProvider repositoryConfigurationProvider;
         private const string GitHubEventHeader = "X-GitHub-Event";
-        private const string GitHubSignatureHeader = "X-Hub-Signature";
 
         private DateTimeOffset gitHubAppWebhookSecretExpiry = DateTimeOffset.MinValue;
         private string gitHubAppWebhookSecret;
@@ -84,7 +83,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
                 var json = await reader.ReadToEndAsync();
                 var jsonBytes = Encoding.UTF8.GetBytes(json);
 
-                if (request.Headers.TryGetValue(GitHubSignatureHeader, out StringValues signature))
+                if (request.Headers.TryGetValue(GitHubWebhookSignatureValidator.GitHubWebhookSignatureHeader, out StringValues signature))
                 {
                     var secret = await GetGitHubAppWebhookSecretAsync(cancellationToken);
 
@@ -105,31 +104,32 @@ namespace Azure.Sdk.Tools.CheckEnforcer
             }
         }
 
+        public async Task ProcessWebhookAsync(string eventName, string json, ILogger logger, CancellationToken cancellationToken)
+        {
+            if (eventName == "check_run")
+            {
+                var handler = new CheckRunHandler(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, logger);
+                await handler.HandleAsync(json, cancellationToken);
+            }
+            else if (eventName == "issue_comment")
+            {
+                var handler = new IssueCommentHandler(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, logger);
+                await handler.HandleAsync(json, cancellationToken);
+            }
+            else if (eventName == "pull_request")
+            {
+                var handler = new PullRequestHandler(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, logger);
+                await handler.HandleAsync(json, cancellationToken);
+            }
+        }
+
         public async Task ProcessWebhookAsync(HttpRequest request, ILogger logger, CancellationToken cancellationToken)
         {
-            var json = await ReadAndVerifyBodyAsync(request, cancellationToken);
 
             if (request.Headers.TryGetValue(GitHubEventHeader, out StringValues eventName))
             {
-                if (eventName == "check_run")
-                {
-                    var handler = new CheckRunHandler(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, logger);
-                    await handler.HandleAsync(json, cancellationToken);
-                }
-                else if (eventName == "issue_comment")
-                {
-                    var handler = new IssueCommentHandler(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, logger);
-                    await handler.HandleAsync(json, cancellationToken);
-                }
-                else if (eventName == "pull_request")
-                {
-                    var handler = new PullRequestHandler(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, logger);
-                    await handler.HandleAsync(json, cancellationToken);
-                }
-                else
-                {
-                    logger.LogInformation("Received {eventName} event but we don't handle them.");
-                }
+                var json = await ReadAndVerifyBodyAsync(request, cancellationToken);
+                await ProcessWebhookAsync(eventName, json, logger, cancellationToken);
             }
             else
             {

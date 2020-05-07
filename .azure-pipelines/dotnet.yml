@@ -11,7 +11,7 @@ trigger:
       - hotfix/*
   paths:
     include:
-      - src/Azure.ClientSdk.Analyzers
+      - src/dotnet/Azure.ClientSdk.Analyzers
 
 pr:
   branches:
@@ -22,7 +22,7 @@ pr:
       - hotfix/*
   paths:
     include:
-      - src/Azure.ClientSdk.Analyzers
+      - src/dotnet/Azure.ClientSdk.Analyzers
 
 resources:
   repositories:

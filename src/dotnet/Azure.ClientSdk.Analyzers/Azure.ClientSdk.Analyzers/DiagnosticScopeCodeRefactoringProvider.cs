@@ -9,6 +9,7 @@ using Microsoft.CodeAnalysis.CodeRefactorings;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Editing;
+using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace Azure.ClientSdk.Analyzers
 {
@@ -33,10 +34,11 @@ namespace Azure.ClientSdk.Analyzers
             if (node is MethodDeclarationSyntax methodDeclarationSyntax)
             {
                 var method = ModelExtensions.GetDeclaredSymbol(semanticModel, methodDeclarationSyntax) as IMethodSymbol;
-                var body = methodDeclarationSyntax.Body;
+
                 if (method == null ||
                     method.IsStatic ||
-                    body == null)
+                    method.IsAbstract ||
+                    method.ContainingType.TypeKind != TypeKind.Class)
                 {
                     return;
                 }
@@ -74,7 +76,22 @@ namespace Azure.ClientSdk.Analyzers
                     var preconditions = new List<StatementSyntax>();
                     var mainLogic = new List<SyntaxNode>();
 
-                    foreach (var statement in body.Statements)
+                    IEnumerable<StatementSyntax> statements;
+
+                    if (methodDeclarationSyntax.Body != null)
+                    {
+                        statements = methodDeclarationSyntax.Body.Statements;
+                    }
+                    else if (methodDeclarationSyntax.ExpressionBody != null)
+                    {
+                        statements = new [] { (StatementSyntax)generator.ReturnStatement(methodDeclarationSyntax.ExpressionBody.Expression) };
+                    }
+                    else
+                    {
+                        return Task.FromResult(context.Document);
+                    }
+
+                    foreach (var statement in statements)
                     {
                         if (mainLogic.Count == 0 &&
                             IsPrecondition(statement))
@@ -97,22 +114,22 @@ namespace Azure.ClientSdk.Analyzers
                     // $"{nameof(Type}}.{nameof(Method)}"
                     var interpolatedStringParts = new InterpolatedStringContentSyntax[]
                     {
-                        SyntaxFactory.Interpolation((ExpressionSyntax) generator.NameOfExpression(generator.IdentifierName(method.ContainingType.Name))),
-                        SyntaxFactory.InterpolatedStringText(SyntaxFactory.Token(SyntaxTriviaList.Empty, SyntaxKind.InterpolatedStringTextToken, ".", ".", SyntaxTriviaList.Empty)),
-                        SyntaxFactory.Interpolation((ExpressionSyntax) generator.NameOfExpression(generator.IdentifierName(scopeName)))
+                        Interpolation((ExpressionSyntax) generator.NameOfExpression(generator.IdentifierName(method.ContainingType.Name))),
+                        InterpolatedStringText(Token(SyntaxTriviaList.Empty, SyntaxKind.InterpolatedStringTextToken, ".", ".", SyntaxTriviaList.Empty)),
+                        Interpolation((ExpressionSyntax) generator.NameOfExpression(generator.IdentifierName(scopeName)))
                     };
 
                     var initializer = generator.InvocationExpression(
                         generator.MemberAccessExpression(generator.IdentifierName(clientDiagnosticsMember), "CreateScope"),
-                        SyntaxFactory.InterpolatedStringExpression(
-                            SyntaxFactory.Token(SyntaxKind.InterpolatedStringStartToken),
-                            SyntaxFactory.List(interpolatedStringParts),
-                            SyntaxFactory.Token(SyntaxKind.InterpolatedStringEndToken)
+                        InterpolatedStringExpression(
+                            Token(SyntaxKind.InterpolatedStringStartToken),
+                            List(interpolatedStringParts),
+                            Token(SyntaxKind.InterpolatedStringEndToken)
                         )
                     );
 
                     var declaration = (LocalDeclarationStatementSyntax) generator.LocalDeclarationStatement(diagnosticScopeType, ScopeVariableName, initializer);
-                    declaration = declaration.WithUsingKeyword(SyntaxFactory.Token(SyntaxKind.UsingKeyword));
+                    declaration = declaration.WithUsingKeyword(Token(SyntaxKind.UsingKeyword));
 
                     preconditions.Add(declaration);
                     preconditions.Add(
@@ -133,7 +150,11 @@ namespace Azure.ClientSdk.Analyzers
                             })
                         ));
 
-                    return Task.FromResult(context.Document.WithSyntaxRoot(tree.ReplaceNode(body, SyntaxFactory.Block(preconditions))));
+                    var newMethodDeclaration = methodDeclarationSyntax.WithExpressionBody(null)
+                        .WithBody(Block(preconditions))
+                        .WithSemicolonToken(default);
+
+                    return Task.FromResult(context.Document.WithSyntaxRoot(tree.ReplaceNode(methodDeclarationSyntax, newMethodDeclaration)));
                 }
 
                 context.RegisterRefactoring(CodeAction.Create("Add diagnostic scope", token => AddDiagnosticScope()));

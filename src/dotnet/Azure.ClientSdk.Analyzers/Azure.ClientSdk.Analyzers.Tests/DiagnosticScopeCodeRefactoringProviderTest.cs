@@ -82,6 +82,50 @@ namespace RandomNamespace
         }
 
         [Fact]
+        public async Task AddsScopeToExpressionSyncMethod()
+        {
+            const string code = @"
+namespace RandomNamespace
+{
+    using System;
+    using Azure.Core.Pipeline;
+    public class MyClass
+    {
+        ClientDiagnostics _clientDiagnostics;
+        public int [||]Foo(int b) => b + 2;
+    }
+}";
+            const string fixedCode = @"
+namespace RandomNamespace
+{
+    using System;
+    using Azure.Core.Pipeline;
+    public class MyClass
+    {
+        ClientDiagnostics _clientDiagnostics;
+        public int Foo(int b)
+        {
+            using DiagnosticScope scope = _clientDiagnostics.CreateScope($""{nameof(MyClass)}.{nameof(Foo)}"");
+            scope.Start();
+            try
+            {
+                return b + 2;
+            }
+            catch (Exception ex)
+            {
+                scope.Failed(ex);
+                throw;
+            }
+        }
+    }
+}";
+
+            await Verifier.CreateRefactoring(code, fixedCode)
+                .WithSources(DiagnosticFramework)
+                .RunAsync();
+        }
+
+        [Fact]
         public async Task AddsScopeToAsyncMethod()
         {
             const string code = @"

@@ -12,39 +12,37 @@
 param (
     # Limit $BaseName to enough characters to be under limit plus prefixes, and https://docs.microsoft.com/azure/architecture/best-practices/resource-naming.
     [Parameter(ParameterSetName = 'Default', Mandatory = $true, Position = 0)]
-    [Parameter(ParameterSetName = 'Default+Provisioner', Mandatory = $true, Position = 0)]
     [ValidatePattern('^[-a-zA-Z0-9\.\(\)_]{0,80}(?<=[a-zA-Z0-9\(\)])$')]
     [string] $BaseName,
 
     [Parameter(ParameterSetName = 'ResourceGroup', Mandatory = $true)]
-    [Parameter(ParameterSetName = 'ResourceGroup+Provisioner', Mandatory = $true)]
+    [Parameter(ParameterSetName = 'SubscriptionConfiguration', Mandatory = $true)]
     [string] $ResourceGroupName,
 
-    [Parameter(ParameterSetName = 'Default+Provisioner', Mandatory = $true)]
-    [Parameter(ParameterSetName = 'ResourceGroup+Provisioner', Mandatory = $true)]
-    [ValidateNotNullOrEmpty()]
-    [string] $TenantId,
-
-    [Parameter(ParameterSetName = 'Default+Provisioner')]
-    [Parameter(ParameterSetName = 'ResourceGroup+Provisioner')]
-    [ValidatePattern('^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$')]
-    [string] $SubscriptionId,
-
-    [Parameter(ParameterSetName = 'Default+Provisioner', Mandatory = $true)]
-    [Parameter(ParameterSetName = 'ResourceGroup+Provisioner', Mandatory = $true)]
-    [ValidatePattern('^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$')]
-    [string] $ProvisionerApplicationId,
-
-    [Parameter(ParameterSetName = 'Default+Provisioner', Mandatory = $true)]
-    [Parameter(ParameterSetName = 'ResourceGroup+Provisioner', Mandatory = $true)]
-    [string] $ProvisionerApplicationSecret,
-    
     [Parameter()]
     [string] $ServiceDirectory,
 
     [Parameter()]
-    [ValidateSet('AzureCloud', 'AzureUSGovernment', 'AzureChinaCloud')]
     [string] $Environment = 'AzureCloud',
+
+    [Parameter(ParameterSetName = 'SubscriptionConfiguration', Mandatory = $true)]
+    [string] $SubscriptionConfiguration = '',
+
+    [Parameter(ParameterSetName = 'SubscriptionConfiguration', Mandatory = $true)]
+    [ValidateNotNullOrEmpty()]
+    [string] $KeyVaultName,
+
+    [Parameter(ParameterSetName = 'SubscriptionConfiguration', Mandatory = $true)]
+    [ValidateNotNullOrEmpty()]
+    [string] $KeyVaultTenantId,
+
+    [Parameter(ParameterSetName = 'SubscriptionConfiguration', Mandatory = $true)]
+    [ValidateNotNullOrEmpty()]
+    [string] $KeyVaultAppId,
+
+    [Parameter(ParameterSetName = 'SubscriptionConfiguration', Mandatory = $true)]
+    [ValidateNotNullOrEmpty()]
+    [string] $KeyVaultAppSecret,
 
     [Parameter()]
     [switch] $Force
@@ -92,6 +90,41 @@ trap {
     $exitActions.Invoke()
 }
 
+# If there is a value for $SubscriptionConfiguration look it up and set
+# script-level variables for subsequent steps.
+if ($PSBoundParameters.ContainsKey('SubscriptionConfiguration')) {
+    Write-Verbose "Using subscription configuration $SubscriptionConfiguration from KeyVault $KeyVaultName..."
+    $keyVaultSecret = ConvertTo-SecureString -String $KeyVaultAppSecret -AsPlainText -Force
+    $keyvaultCredential = [System.Management.Automation.PSCredential]::new($KeyVaultAppId, $keyVaultSecret)
+
+    $keyVaultAccount = Retry {
+        Connect-AzAccount -Tenant $KeyVaultTenantId -Credential $keyvaultCredential -ServicePrincipal -Environment $Environment
+    }
+
+    $exitActions += {
+        Write-Verbose "Logging out of service principal '$($keyVaultAccount.Context.Account)'"
+        $null = Disconnect-AzAccount -AzureContext $keyVaultAccount.Context
+    }
+
+    $subscriptionSecret = Get-AzKeyVaultSecret -VaultName $KeyVaultName -Name $SubscriptionConfiguration
+    $subscriptionParameters = ($subscriptionSecret.SecretValueText | ConvertFrom-JSON)
+
+    $SubscriptionId = $subscriptionParameters.SubscriptionId
+    $TenantId = $subscriptionParameters.TenantId
+    $TestApplicationId = $subscriptionParameters.TestApplicationId
+    $TestApplicationSecret = $subscriptionParameters.TestApplicationSecret
+    $TestApplicationOid = $subscriptionParameters.TestApplicationOid
+    $ProvisionerApplicationId = $subscriptionParameters.ProvisionerApplicationId
+    $ProvisionerApplicationSecret = $subscriptionParameters.ProvisionerApplicationSecret
+    $Environment = $subscriptionParameters.Environment
+
+    Disconnect-AzAccount -AzureContext $keyVaultAccount.Context
+
+    Write-Verbose "Subscription parameters set. Using Subscription: $SubscriptionId"
+}
+
+
+
 if ($ProvisionerApplicationId) {
     $null = Disable-AzContextAutosave -Scope Process
 
@@ -125,9 +158,12 @@ if (![string]::IsNullOrWhiteSpace($ServiceDirectory)) {
     if (Test-Path $preRemovalScript) {
         Log "Invoking pre resource removal script '$preRemovalScript'"
 
-        if (!$PSCmdlet.ParameterSetName.StartsWith('ResourceGroup')) {
-            $PSBoundParameters.Add('ResourceGroupName', $ResourceGroupName);
-        }
+        # Ensure that expected parameters are added
+        $null = $PSBoundParameters.TryAdd('ResourceGroupName', $ResourceGroupName);
+        $null = $PSBoundParameters.TryAdd('SubscriptionId', $SubscriptionId);
+        $null = $PSBoundParameters.TryAdd('TenantId', $TenantId);
+        $null = $PSBoundParameters.TryAdd('ProvisionerApplicationId', $ProvisionerApplicationId);
+        $null = $PSBoundParameters.TryAdd('ProvisionerApplicationSecret', $ProvisionerApplicationSecret);
 
         &$preRemovalScript @PSBoundParameters
     }
@@ -143,54 +179,59 @@ $exitActions.Invoke()
 <#
 .SYNOPSIS
 Deletes the resource group deployed for a service directory from Azure.
-
 .DESCRIPTION
 Removes a resource group and all its resources previously deployed using
 New-TestResources.ps1.
-
 If you are not currently logged into an account in the Az PowerShell module,
 you will be asked to log in with Connect-AzAccount. Alternatively, you (or a
 build pipeline) can pass $ProvisionerApplicationId and
 $ProvisionerApplicationSecret to authenticate a service principal with access to
 create resources.
-
 .PARAMETER BaseName
 A name to use in the resource group and passed to the ARM template as 'baseName'.
 This will delete the resource group named 'rg-<baseName>'
-
 .PARAMETER ResourceGroupName
 The name of the resource group to delete.
-
 .PARAMETER TenantId
 The tenant ID of a service principal when a provisioner is specified.
-
 .PARAMETER SubscriptionId
 Optional subscription ID to use for new resources when logging in as a
 provisioner. You can also use Set-AzContext if not provisioning.
-
 .PARAMETER ProvisionerApplicationId
 A service principal ID to provision test resources when a provisioner is specified.
-
 .PARAMETER ProvisionerApplicationSecret
 A service principal secret (password) to provision test resources when a provisioner is specified.
-
 .PARAMETER ServiceDirectory
 A directory under 'sdk' in the repository root - optionally with subdirectories
 specified - in which to discover pre removal script named 'remove-test-resources-pre.json'.
-
+.PARAMETER SubscriptionConfiguration
+Name of a subscription configuration secret in a Key Vault. Stored as a JSON
+object with the expected properties:
+    * SubscriptionId
+    * TenantId
+    * TestApplicationId
+    * TestApplicationSecret
+    * TestApplicationOid
+    * ProvisionerApplicationId
+    * ProvisoinerApplicationSecret
+    * Environment
+.PARAMETER KeyVaultName
+Name of the Key Vault which holds the subscription configuration
+.PARAMETER KeyVaultTenantId
+AAD tenant ID for an app that has access to the Key Vault
+.PARAMETER KeyVaultAppId
+AAD app ID for an app that has access to the Key Vault
+.PARAMETER KeyVaultAppSecret
+AAD app secret for an app that has access to the Key Vault
 .PARAMETER Environment
 Name of the cloud environment. The default is the Azure Public Cloud
 ('PublicCloud')
-
 .PARAMETER Force
 Force removal of resource group without asking for user confirmation
-
 .EXAMPLE
 Remove-TestResources.ps1 -BaseName 'uuid123' -Force
-
 Use the currently logged-in account to delete the resource group by the name of
 'rg-uuid123'
-
 .EXAMPLE
 Remove-TestResources.ps1 `
     -ResourceGroupName "${env:AZURE_RESOURCEGROUP_NAME}" `
@@ -198,12 +239,25 @@ Remove-TestResources.ps1 `
     -ProvisionerApplicationId '$(AppId)' `
     -ProvisionerApplicationSecret '$(AppSecret)' `
     -Force `
-    -Verbose `
-
+    -Verbose
 When run in the context of an Azure DevOps pipeline, this script removes the
 resource group whose name is stored in the environment variable
 AZURE_RESOURCEGROUP_NAME.
-
+.EXAMPLE
+Remove-TestResources.ps1 `
+      -ResourceGroupName "${env:AZURE_RESOURCEGROUP_NAME}" `
+      -ServiceDirectory '$(ServiceDirectory)' `
+      -SubscriptionConfiguration $(SubscriptionConfigurationName) `
+      -KeyVaultName $(SubscriptionConfigurationKeyVaultName) `
+      -KeyVaultTenantId $(AppTenant) `
+      -KeyVaultAppId $(AppId) `
+      -KeyVaultAppSecret $(AppSecret) `
+      -Force `
+      -Verbose
+When run in the context of an Azure DevOps pipeline, this script removes the
+resource group whose name is stored in the environment variable
+AZURE_RESOURCEGROUP_NAME in the cloud and subscription specified in the
+$(SubscriptionConfigurationName).
 .LINK
 New-TestResources.ps1
 #>

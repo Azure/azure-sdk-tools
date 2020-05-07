@@ -1,57 +1,27 @@
-# Removes resources from a cloud type specified by the variable (not parameter)
-# 'CloudType'. Use this as part of a matrix to remove resources from a
-# particular cloud instance. Normally we would use template variables instead of
-# parameters but matrix variables are not available during template expansion
-# so any benefits of parameters are lost.
-
 # Assumes steps in deploy-test-resources.yml was run previously. Requires
 # environment variable: AZURE_RESOURCEGROUP_NAME and Az PowerShell module
 
 parameters:
   ServiceDirectory: ''
+  SubscriptionConfiguration: sub-config-azure-cloud-test-resources
 
 steps:
-  - pwsh: >
-      eng/common/TestResources/Remove-TestResources.ps1
-      -ResourceGroupName "${env:AZURE_RESOURCEGROUP_NAME}"
-      -TenantId '$(aad-azure-sdk-test-tenant-id)'
-      -SubscriptionId '$(azure-subscription-id)'
-      -ProvisionerApplicationId '$(aad-azure-sdk-test-client-id)'
-      -ProvisionerApplicationSecret '$(aad-azure-sdk-test-client-secret)'
-      -ServiceDirectory '${{ parameters.ServiceDirectory }}'
-      -Environment 'AzureCloud'
-      -Force
-      -Verbose
-    displayName: Remove test resources (AzureCloud)
-    condition: and(ne(variables['AZURE_RESOURCEGROUP_NAME'], ''), eq(variables['CloudType'], 'AzureCloud'))
-    continueOnError: true
+  # On MacOS there are problems with access to the ~/.Azure folder. This
+  # workaround fixes the problem.
+  - bash: sudo rm -rf ~/.Azure
+    condition: and(succeeded(), eq(variables['Agent.OS'], 'Darwin'))
+    displayName: Clean out ~/.Azure
 
   - pwsh: >
       eng/common/TestResources/Remove-TestResources.ps1
       -ResourceGroupName "${env:AZURE_RESOURCEGROUP_NAME}"
-      -TenantId '$(aad-azure-sdk-test-tenant-id-gov)'
-      -SubscriptionId '$(azure-subscription-id-gov)'
-      -ProvisionerApplicationId '$(aad-azure-sdk-test-client-id-gov)'
-      -ProvisionerApplicationSecret '$(aad-azure-sdk-test-client-secret-gov)'
       -ServiceDirectory '${{ parameters.ServiceDirectory }}'
-      -Environment 'AzureUSGovernment'
+      -SubscriptionConfiguration ${{ parameters.SubscriptionConfiguration }}
+      -KeyVaultName $(provisioner-keyvault-name)
+      -KeyVaultTenantId $(provisioner-aad-tenant)
+      -KeyVaultAppId $(provisioner-aad-id)
+      -KeyVaultAppSecret $(provisioner-aad-secret)
       -Force
       -Verbose
-    displayName: Remove test resources (AzureUSGovernment)
-    condition: and(ne(variables['AZURE_RESOURCEGROUP_NAME'], ''), eq(variables['CloudType'], 'AzureUSGovernment'))
-    continueOnError: true
-
-  - pwsh: >
-      eng/common/TestResources/Remove-TestResources.ps1
-      -ResourceGroupName "${env:AZURE_RESOURCEGROUP_NAME}"
-      -TenantId '$(aad-azure-sdk-test-tenant-id-cn)'
-      -SubscriptionId '$(azure-subscription-id-cn)'
-      -ProvisionerApplicationId '$(aad-azure-sdk-test-client-id-cn)'
-      -ProvisionerApplicationSecret '$(aad-azure-sdk-test-client-secret-cn)'
-      -ServiceDirectory '${{ parameters.ServiceDirectory }}'
-      -Environment 'AzureChinaCloud'
-      -Force
-      -Verbose
-    displayName: Remove test resources (AzureChinaCloud)
-    condition: and(ne(variables['AZURE_RESOURCEGROUP_NAME'], ''), eq(variables['CloudType'], 'AzureChinaCloud'))
+    displayName: Remove test resources
     continueOnError: true

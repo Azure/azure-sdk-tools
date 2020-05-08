@@ -1,6 +1,6 @@
 . (Join-Path $PSScriptRoot SemVer.ps1)
 
-$SDIST_PACKAGE_REGEX = "^(?<package>.*)\-(?<versionstring>$([AzureEngSemanticVersion]::SEMVER_REGEX.Substring(1)))"
+$SDIST_PACKAGE_REGEX = "^(?<package>.*)\-(?<versionstring>$([AzureEngSemanticVersion]::SEMVER_REGEX))"
 
 # Posts a github release for each item of the pkgList variable. SilentlyContinue
 function CreateReleases($pkgList, $releaseApiUrl, $releaseSha) {

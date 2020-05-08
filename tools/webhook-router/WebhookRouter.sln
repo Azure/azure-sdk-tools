@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30002.166
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Sdk.Tools.WebhookRouter.Tests", "Azure.Sdk.Tools.WebhookRouter.Tests\Azure.Sdk.Tools.WebhookRouter.Tests.csproj", "{642112FB-3EB1-4C2A-A1B0-0F1168702D86}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Sdk.Tools.WebhookRouter", "Azure.Sdk.Tools.WebhookRouter\Azure.Sdk.Tools.WebhookRouter.csproj", "{256BE93C-B7D7-4D91-9E98-9AF09E3AF962}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{642112FB-3EB1-4C2A-A1B0-0F1168702D86}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{642112FB-3EB1-4C2A-A1B0-0F1168702D86}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{642112FB-3EB1-4C2A-A1B0-0F1168702D86}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{642112FB-3EB1-4C2A-A1B0-0F1168702D86}.Release|Any CPU.Build.0 = Release|Any CPU
+		{256BE93C-B7D7-4D91-9E98-9AF09E3AF962}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{256BE93C-B7D7-4D91-9E98-9AF09E3AF962}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{256BE93C-B7D7-4D91-9E98-9AF09E3AF962}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{256BE93C-B7D7-4D91-9E98-9AF09E3AF962}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A54FE78A-9A96-455D-B077-5755938600FD}
+	EndGlobalSection
+EndGlobal

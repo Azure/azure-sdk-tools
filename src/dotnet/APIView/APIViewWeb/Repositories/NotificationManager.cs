@@ -62,16 +62,16 @@ namespace APIViewWeb.Repositories
         }
 
         private static string GetContentHeading(CommentModel comment, bool includeHtml) =>
-            $"{(includeHtml ? $"<b>{comment.Username}</b>" : $"{comment.Username}")} commented on this review at {comment.TimeStamp}";
+            $"{(includeHtml ? $"<b>{comment.Username}</b>" : $"{comment.Username}")} commented on this review.";
 
         public async Task NotifySubscribersOnNewRevisionAsync(ReviewRevisionModel revision, ClaimsPrincipal user)
         {
             var review = revision.Review;
             var uri = new Uri($"{_endpoint}/Assemblies/Review/{review.ReviewId}");
             var plainTextContent = $"A new revision, {revision.Name}," +
-                $" was uploaded by {revision.Author} at {revision.CreationDate}";
+                $" was uploaded by {revision.Author}.";
             var htmlContent = $"A new revision, <a href='{uri.ToString()}'>{revision.Name}</a>," +
-                $" was uploaded by <b>{revision.Author}</b> at {revision.CreationDate}";
+                $" was uploaded by <b>{revision.Author}</b>.";
             await SendEmailsAsync(review, user, plainTextContent, htmlContent);
         }
         private async Task SendEmailsAsync(ReviewModel review, ClaimsPrincipal user, string plainTextContent, string htmlContent)

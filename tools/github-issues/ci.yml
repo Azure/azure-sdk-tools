@@ -1,0 +1,30 @@
+trigger:
+  branches:
+    include:
+      - master
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - tools/github-issues
+  
+pr:
+  branches:
+    include:
+      - master
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - tools/github-issues
+  
+extends:
+  template: ../../eng/pipelines/templates/stages/archetype-sdk-tool-azure-function.yml
+  parameters:
+    ToolName: github-issues
+    FunctionProject: Azure.Sdk.Tools.GitHubIssues
+    TestProject: Azure.Sdk.Tools.GitHubIssues.Tests
+    ProductionEnvironmentName: githubissuesprod
+    StagingEnvironmentName: githubissuesstaging

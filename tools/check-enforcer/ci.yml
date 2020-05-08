@@ -1,9 +1,3 @@
-resources:
-  repositories:
-    - repository: azure-sdk-build-tools
-      type: git
-      name: internal/azure-sdk-build-tools
-      
 trigger:
   branches:
     include:
@@ -14,7 +8,7 @@ trigger:
   paths:
     include:
       - tools/check-enforcer
-
+  
 pr:
   branches:
     include:
@@ -25,18 +19,12 @@ pr:
   paths:
     include:
       - tools/check-enforcer
-
-variables:
-  skipComponentGovernanceDetection: true
-
-stages:
-  - stage: Build
-    jobs:
-      - job: Build
-
-        pool:
-          vmImage: windows-2019
-
-        steps:
-          - script: |
-              echo Hello world!
+  
+extends:
+  template: ../../eng/pipelines/templates/stages/archetype-sdk-tool-azure-function.yml
+  parameters:
+    ToolName: check-enforcer
+    FunctionProject: Azure.Sdk.Tools.CheckEnforcer
+    TestProject: Azure.Sdk.Tools.CheckEnforcer.Tests
+    ProductionEnvironmentName: checkenforcerprod
+    StagingEnvironmentName: checkenforcerstaging

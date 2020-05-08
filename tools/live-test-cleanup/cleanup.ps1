@@ -25,10 +25,15 @@ param (
     [string] $SubscriptionId,
 
     [Parameter()]
+    [ValidateNotNullOrEmpty()]
+    $Environment = "AzureCloud",
+
+    [Parameter()]
     [switch] $Force
 )
 
 Write-Verbose "Logging in"
+az cloud set --name $Environment
 az login --service-principal --username=$ProvisionerApplicationId --password=$ProvisionerApplicationSecret --tenant=$ProvisionerApplicationTenantId
 Write-Verbose "Setting account"
 az account set --subscription=$SubscriptionId

@@ -1,0 +1,85 @@
+parameters:
+- name: ToolName
+- name: FunctionProject
+- name: TestProject
+- name: ProductionEnvironmentName
+- name: StagingEnvironmentName
+
+stages:
+    - stage: Build
+      variables:
+      - template: ../variables/globals.yml
+      jobs:
+      - job: BuildPackage
+        pool:
+          vmImage: ubuntu-18.04
+        steps:
+          - task: UseDotNet@2
+            displayName: Tools
+            inputs:
+              version: '3.1.201'
+          - pwsh: |
+              dotnet build tools/${{ parameters.ToolName }} --configuration Release
+            displayName: Build
+          - pwsh: |
+              dotnet test tools/${{ parameters.ToolName }}/${{ parameters.TestProject }} --configuration Release
+            displayName: Test
+          - pwsh: |
+              dotnet publish tools/${{ parameters.ToolName }}/${{ parameters.FunctionProject }} --configuration Release --output $(Build.ArtifactStagingDirectory)/app
+            displayName: Publish
+          - publish: $(Build.ArtifactStagingDirectory)
+            displayName: Upload
+            artifact: artifacts
+            condition: succeededOrFailed()
+
+    - ${{if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
+      - stage: Staging
+        dependsOn: Build
+        jobs:
+        - deployment: PublishFunction
+          environment: ${{ parameters.StagingEnvironmentName }}
+          pool:
+            vmImage: ubuntu-18.04
+          strategy:
+            runOnce:
+              deploy:
+                steps:
+                - task: ArchiveFiles@2
+                  displayName: Archive
+                  inputs:
+                    rootFolderOrFile: $(Pipeline.Workspace)/artifacts/app
+                    includeRootFolder: false
+                    archiveFile: $(Pipeline.Workspace)/artifacts/${{ parameters.ToolName }}-$(Build.BuildID).zip
+                - task: AzureFunctionApp@1
+                  displayName: Deploy
+                  inputs:
+                    azureSubscription: ${{ parameters.StagingEnvironmentName }}
+                    appType: functionApp
+                    appName: ${{ parameters.StagingEnvironmentName }}
+                    package: $(Pipeline.Workspace)/artifacts/${{ parameters.ToolName }}-$(Build.BuildID).zip
+                  
+
+      - stage: Production
+        dependsOn: Staging
+        jobs:
+        - deployment: PublishFunction
+          environment: ${{ parameters.ProductionEnvironmentName }}
+          pool:
+            vmImage: ubuntu-18.04
+          strategy:
+            runOnce:
+                deploy:
+                  steps:
+                    - task: ArchiveFiles@2
+                      displayName: Archive
+                      inputs:
+                        rootFolderOrFile: $(Pipeline.Workspace)/artifacts/app
+                        includeRootFolder: false
+                        archiveFile: $(Pipeline.Workspace)/artifacts/${{ parameters.ToolName }}-$(Build.BuildID).zip
+                    - task: AzureFunctionApp@1
+                      displayName: Deploy
+                      inputs:
+                        azureSubscription: ${{ parameters.ProductionEnvironmentName }}
+                        appType: functionApp
+                        appName: ${{ parameters.ProductionEnvironmentName }}
+                        package: $(Pipeline.Workspace)/artifacts/${{ parameters.ToolName }}-$(Build.BuildID).zip

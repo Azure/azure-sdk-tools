@@ -8,7 +8,6 @@ using Microsoft.IdentityModel.Tokens;
 using Octokit;
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Cryptography;
 using System.Text;
@@ -127,7 +126,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
             return cryptographyClient;
         }
 
-        private async Task<Key> GetKey(KeyClient keyClient, CancellationToken cancellationToken)
+        private async Task<KeyVaultKey> GetKey(KeyClient keyClient, CancellationToken cancellationToken)
         {
             var keyResponse = await keyClient.GetKeyAsync(
                 globalConfigurationProvider.GetGitHubAppPrivateKeyName(),

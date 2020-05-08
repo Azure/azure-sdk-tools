@@ -1,20 +1,13 @@
 ﻿using Azure.Sdk.Tools.CheckEnforcer.Integrations.GitHub;
-using Microsoft.Build.Utilities;
-using Microsoft.Extensions.Options;
-using Microsoft.Extensions.Primitives;
 using Octokit;
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using YamlDotNet.RepresentationModel;
 using YamlDotNet.Serialization;
-using YamlDotNet.Serialization.NodeDeserializers;
 
 namespace Azure.Sdk.Tools.CheckEnforcer.Configuration
 {

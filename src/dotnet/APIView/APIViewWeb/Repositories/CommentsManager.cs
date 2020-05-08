@@ -42,7 +42,10 @@ namespace APIViewWeb
             comment.TimeStamp = DateTime.Now;
 
             await _commentsRepository.UpsertCommentAsync(comment);
-            await _notificationManager.NotifySubscribersOnComment(user, comment);
+            if (!comment.IsResolve)
+            {
+                await _notificationManager.NotifySubscribersOnComment(user, comment);
+            }
         }
 
         public async Task<CommentModel> UpdateCommentAsync(ClaimsPrincipal user, string reviewId, string commentId, string commentText)

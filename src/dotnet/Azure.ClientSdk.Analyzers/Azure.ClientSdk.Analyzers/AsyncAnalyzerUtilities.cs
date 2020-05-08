@@ -36,15 +36,14 @@ namespace Azure.ClientSdk.Analyzers
         }
 
         public bool IsAsyncParameter(IParameterSymbol parameter) 
-            => parameter.Name == "async" &&
-               parameter.Type.Equals(BooleanTypeSymbol);
+            => parameter.Name == "async" && SymbolEqualityComparer.Default.Equals(parameter.Type, BooleanTypeSymbol);
         
         public bool IsEnsureCompleted(IMethodSymbol method) 
             => AzureTaskExtensionsType != null &&
                method.Name == "EnsureCompleted" &&
                method.IsExtensionMethod &&
                method.Parameters.Length == 1 &&
-               Equals(method.ReceiverType, AzureTaskExtensionsType);
+               SymbolEqualityComparer.Default.Equals(method.ReceiverType, AzureTaskExtensionsType);
 
         public bool IsConfigureAwait(IMethodSymbol method)
         {
@@ -58,7 +57,7 @@ namespace Azure.ClientSdk.Analyzers
                 return true;
             }
 
-            if (method.Parameters.Length == 2 && Equals(method.ReceiverType, TaskAsyncEnumerableExtensionsSymbol))
+            if (method.Parameters.Length == 2 && SymbolEqualityComparer.Default.Equals(method.ReceiverType, TaskAsyncEnumerableExtensionsSymbol))
             {
                 return true;
             }
@@ -121,7 +120,7 @@ namespace Azure.ClientSdk.Analyzers
                IsAwaiterAccessibleMember(symbol) &&
                symbol is IPropertySymbol property &&
                property.IsReadOnly &&
-               Equals(property.GetMethod.ReturnType, BooleanTypeSymbol);
+               SymbolEqualityComparer.Default.Equals(property.GetMethod.ReturnType, BooleanTypeSymbol);
 
         private static bool IsAwaiterAccessibleMember(ISymbol symbol) =>
             symbol.DeclaredAccessibility switch {
@@ -138,12 +137,12 @@ namespace Azure.ClientSdk.Analyzers
                 return false;
             }
 
-            if (Equals(candidate, type.ConstructedFrom))
+            if (SymbolEqualityComparer.Default.Equals(candidate, type.ConstructedFrom))
             {
                 return true;
             }
 
-            return type.AllInterfaces.Any(i => Equals(candidate, i.ConstructedFrom));
+            return type.AllInterfaces.Any(i => SymbolEqualityComparer.Default.Equals(candidate, i.ConstructedFrom));
         }
 
         public bool IsTaskType(ITypeSymbol type)
@@ -153,7 +152,7 @@ namespace Azure.ClientSdk.Analyzers
                 return false;
             }
 
-            if (type.Equals(TaskTypeSymbol) || type.Equals(ValueTaskTypeSymbol))
+            if (SymbolEqualityComparer.Default.Equals(type, TaskTypeSymbol) || SymbolEqualityComparer.Default.Equals(type, ValueTaskTypeSymbol))
             {
                 return true;
             }
@@ -161,7 +160,7 @@ namespace Azure.ClientSdk.Analyzers
             if (type is INamedTypeSymbol namedType && namedType.IsGenericType) 
             {
                 var genericType = namedType.ConstructedFrom;
-                if (Equals(genericType, TaskOfTTypeSymbol) || Equals(genericType, ValueTaskOfTTypeSymbol)) 
+                if (SymbolEqualityComparer.Default.Equals(genericType, TaskOfTTypeSymbol) || SymbolEqualityComparer.Default.Equals(genericType, ValueTaskOfTTypeSymbol)) 
                 {
                     return true;
                 }

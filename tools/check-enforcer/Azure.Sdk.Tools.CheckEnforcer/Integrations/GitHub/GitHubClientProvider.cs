@@ -4,6 +4,7 @@ using Azure.Sdk.Tools.CheckEnforcer.Configuration;
 using Azure.Sdk.Tools.CheckEnforcer.Integrations.GitHub;
 using Azure.Security.KeyVault.Keys;
 using Azure.Security.KeyVault.Keys.Cryptography;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.IdentityModel.Tokens;
 using Octokit;
 using System;
@@ -18,40 +19,29 @@ namespace Azure.Sdk.Tools.CheckEnforcer
 {
     public class GitHubClientProvider : IGitHubClientProvider
     {
-        public GitHubClientProvider(IGlobalConfigurationProvider globalConfigurationProvider)
+        public GitHubClientProvider(IGlobalConfigurationProvider globalConfigurationProvider, IMemoryCache cache)
         {
             this.globalConfigurationProvider = globalConfigurationProvider;
+            this.cache = cache;
         }
 
         private IGlobalConfigurationProvider globalConfigurationProvider;
-
-        private Tuple<DateTimeOffset, string> cachedApplicationToken;
+        private IMemoryCache cache;
 
         private async Task<string> GetTokenAsync(CancellationToken cancellationToken)
         {
-            if (cachedApplicationToken == null || cachedApplicationToken.Item1 < DateTimeOffset.UtcNow)
+            var cachedApplicationToken = await cache.GetOrCreateAsync<string>("applicationTokenCacheKey", async (entry) =>
             {
-                // NOTE: There is potential for a cache stampeed issue here, but it may
-                //       not be enough of an issue to worry about it. Will need to evaluate
-                //       once we get some realistic load numbers. If necessary we can switch
-                //       to a sync programming model and use locking.
-                //
-                //       Cache stampeed will be visible in the KeyVault diagostics because
-                //       we'll see a spike in get and sign requests. Stampeed duration will
-                //       be limited in duration.
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(Constants.ApplicationTokenLifetimeInMinutes - 1);
+
                 var headerAndPayloadString = GenerateJwtTokenHeaderAndPayload();
                 var digest = ComputeHeaderAndPayloadDigest(headerAndPayloadString);
                 var encodedSignature = await SignHeaderAndPayloadDigestWithGitHubApplicationKey(digest, cancellationToken);
-                var token = AppendSignatureToHeaderAndPayload(headerAndPayloadString, encodedSignature);
+                var applicationToken = AppendSignatureToHeaderAndPayload(headerAndPayloadString, encodedSignature);
+                return applicationToken;
+            });
 
-                // Let's get a token a full minute before it times out.
-                cachedApplicationToken = new Tuple<DateTimeOffset, string>(
-                    DateTimeOffset.UtcNow.AddMinutes(Constants.ApplicationTokenLifetimeInMinutes - 1),
-                    token
-                    );
-            }
-
-            return cachedApplicationToken.Item2;
+            return cachedApplicationToken;
         }
 
         private string AppendSignatureToHeaderAndPayload(string headerAndPayloadString, string encodedSignature)
@@ -160,20 +150,16 @@ namespace Azure.Sdk.Tools.CheckEnforcer
 
         private async Task<string> GetInstallationTokenAsync(long installationId, CancellationToken cancellationToken)
         {
-            cachedInstallationTokens.TryGetValue(installationId, out Octokit.AccessToken accessToken);
+            var installationTokenCacheKey = $"{installationId}_installationTokenCacheKey";
 
-            if (accessToken == null || accessToken.ExpiresAt < DateTimeOffset.UtcNow)
+            var cachedInstallationToken = await cache.GetOrCreateAsync<Octokit.AccessToken>(installationTokenCacheKey, async (entry) =>
             {
-                // NOTE: There is a possible cache stampeed here as well. We'll see in time
-                //       if we need to do anything about it. If there is a problem it will
-                //       manifest as exceptions being thrown out of this method.
                 var appClient = await GetApplicationClientAsync(cancellationToken);
-                accessToken = await appClient.GitHubApps.CreateInstallationToken(installationId);
+                var installationToken = await appClient.GitHubApps.CreateInstallationToken(installationId);
+                return installationToken;
+            });
 
-                cachedInstallationTokens[installationId] = accessToken;
-            }
-
-            return accessToken.Token;
+            return cachedInstallationToken.Token;
         }
 
         public async Task<GitHubClient> GetInstallationClientAsync(long installationId, CancellationToken cancellationToken)

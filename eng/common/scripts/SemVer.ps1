@@ -24,7 +24,7 @@ class AzureEngSemanticVersion {
     static [AzureEngSemanticVersion] ParseVersionString([string] $versionString)
     {
         try {
-            return [AzureEngSemanticVersion]::new($versionString)
+            return [AzureEngSemanticVersion]::new("^$versionString$")
         }
         catch {
             return $null

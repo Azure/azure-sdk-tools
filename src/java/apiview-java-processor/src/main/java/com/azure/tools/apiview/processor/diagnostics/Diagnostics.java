@@ -41,6 +41,10 @@ public class Diagnostics {
     }
 
     public static void scan(CompilationUnit cu, APIListing listing) {
+        // We do not scan compilation units that are missing any primary type (i.e. they are completely commented out).
+        if (! cu.getPrimaryType().isPresent()) {
+            return;
+        }
         for (DiagnosticRule rule : diagnostics) {
             rule.scan(cu, listing);
         }

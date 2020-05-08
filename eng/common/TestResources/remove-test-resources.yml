@@ -5,6 +5,20 @@ parameters:
   ServiceDirectory: ''
   SubscriptionConfiguration: $(sub-config-azure-cloud-test-resources)
 
+# SubscriptionConfiguration will be splat into the parameters of the test
+# resources script. It should be JSON in the form:
+# {
+#   "SubscriptionId": "<subscription id>",
+#   "TenantId": "<tenant id>",
+#   "TestApplicationId": "<test app id>",
+#   "TestApplicationSecret": "<test app secret>",
+#   "ProvisionerApplicationId": "<provisoner app id>",
+#   "ProvisoinerApplicationSecret": "<provisoner app secert>",
+#   "Environment": "AzureCloud | AzureGov | AzureChina | <other environment>"
+# }
+# The Remove-TestResources.ps1 script accommodates extra parameters so it will
+# not error when parameters are provided which the script doesn't use.
+
 steps:
   # On MacOS there are problems with access to the ~/.Azure folder. This
   # workaround fixes the problem.

@@ -51,7 +51,7 @@ param (
 
     # Captures any arguments not declared here (no parameter errors)
     [Parameter(ValueFromRemainingArguments = $true)]
-    $RemainingArguments
+    $RemoveTestResourcesRemainingArguments
 )
 
 # By default stop for any error.

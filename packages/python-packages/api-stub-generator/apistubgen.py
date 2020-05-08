@@ -1,6 +1,5 @@
 
 import os
-from apistub._stub_generator import StubGenerator
 from apistub import console_entry_point
 
 if __name__ == "__main__":

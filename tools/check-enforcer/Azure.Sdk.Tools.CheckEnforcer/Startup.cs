@@ -19,6 +19,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
             builder.Services.AddSingleton<IGitHubClientProvider, GitHubClientProvider>();
             builder.Services.AddSingleton<IRepositoryConfigurationProvider, RepositoryConfigurationProvider>();
             builder.Services.AddSingleton<GitHubWebhookProcessor>();
+            builder.Services.AddMemoryCache();
         }
     }
 }

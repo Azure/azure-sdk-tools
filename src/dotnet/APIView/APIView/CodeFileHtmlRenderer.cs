@@ -42,6 +42,9 @@ namespace ApiView
                 case CodeFileTokenKind.StringLiteral:
                     elementClass = "value";
                     break;
+                case CodeFileTokenKind.Comment:
+                    elementClass = "code-comment";
+                    break;
             }
 
             string href = null;

@@ -18,6 +18,10 @@ namespace APIViewWeb
                     config.AddEnvironmentVariables(prefix: "APIVIEW_");
                     config.AddUserSecrets(typeof(Program).Assembly);
                 })
+                .ConfigureKestrel(options =>
+                {
+                    options.Limits.MaxRequestBodySize = 100 * 1024 * 1024;
+                })
                 .UseStartup<Startup>();
     }
 }

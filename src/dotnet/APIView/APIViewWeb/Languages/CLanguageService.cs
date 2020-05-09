@@ -16,7 +16,7 @@ namespace APIViewWeb
 {
     public class CLanguageService : ILanguageService
     {
-        private const string CurrentVersion = "2";
+        private const string CurrentVersion = "3";
         private static Regex _typeTokenizer = new Regex("\\w+|[^\\w]+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static HashSet<string> _keywords = new HashSet<string>()
         {
@@ -83,7 +83,7 @@ namespace APIViewWeb
 
 
             CodeFileTokensBuilder builder = new CodeFileTokensBuilder();
-            Dictionary<string, NavigationItem> navigation = new Dictionary<string, NavigationItem>();
+            List<NavigationItem> navigation = new List<NavigationItem>();
 
             foreach (var entry in archive.Entries)
             {
@@ -97,12 +97,12 @@ namespace APIViewWeb
                 Name = originalName,
                 Language = "C",
                 Tokens = builder.Tokens.ToArray(),
-                Navigation = navigation.Values.ToArray(),
+                Navigation = navigation.ToArray(),
                 VersionString = CurrentVersion,
             };
         }
 
-        private static void BuildNodes(CodeFileTokensBuilder builder, Dictionary<string, NavigationItem> navigation, MemoryStream astStream)
+        private static void BuildNodes(CodeFileTokensBuilder builder, List<NavigationItem> navigation, MemoryStream astStream)
         {
             Span<byte> ast = astStream.ToArray();
 
@@ -125,6 +125,9 @@ namespace APIViewWeb
                     }
                 }
 
+                NavigationItem currentFileItem = null;
+                List<NavigationItem> currentFileMembers = new List<NavigationItem>();
+
                 while (queue.TryDequeue(out var node))
                 {
                     if (node.isImplicit == true || node.loc?.includedFrom?.file != null ||
@@ -134,29 +137,24 @@ namespace APIViewWeb
                     }
 
                     var file = node.loc.file;
-                    if (file != null)
+                    if (file != null && currentFileItem == null)
                     {
-                        if (!navigation.TryGetValue(file, out var item))
+                        currentFileItem = new NavigationItem()
                         {
-                            item = new NavigationItem()
-                            {
-                                NavigationId = file,
-                                Text = file,
-                                Tags = { { "TypeKind", "namespace" } }
-                            };
+                            NavigationId = file,
+                            Text = file,
+                            Tags = { { "TypeKind", "namespace" } }
+                        };
 
-                            builder.Append(new CodeFileToken()
-                            {
-                                DefinitionId = file,
-                                Value = "// " + file,
-                                Kind = CodeFileTokenKind.Comment,
-                            });
-                            builder.NewLine();
-                            builder.Space();
-                            builder.NewLine();
-
-                            navigation.Add(file, item);
-                        }
+                        builder.Append(new CodeFileToken()
+                        {
+                            DefinitionId = file,
+                            Value = "// " + file,
+                            Kind = CodeFileTokenKind.Comment,
+                        });
+                        builder.NewLine();
+                        builder.Space();
+                        builder.NewLine();
                     }
 
                     bool TryDequeTypeDef(out CAstNode typedefNode)
@@ -182,6 +180,12 @@ namespace APIViewWeb
                             DefinitionId = name,
                             Kind = CodeFileTokenKind.TypeName,
                             Value = name,
+                        });
+                        currentFileMembers.Add(new NavigationItem()
+                        {
+                            NavigationId = name,
+                            Text = name,
+                            Tags = { { "TypeKind", kind } }
                         });
                     }
 
@@ -222,7 +226,7 @@ namespace APIViewWeb
                                         builder.WriteIndent();
                                         BuildType(builder, parameterNode.type.qualType, types);
                                         builder.Space();
-                                        builder.Text(node.name);
+                                        builder.Text(parameterNode.name);
                                         builder.Punctuation(",");
                                         builder.NewLine();
                                     }
@@ -295,7 +299,7 @@ namespace APIViewWeb
                                 }
 
                                 builder.Space();
-                                BuildDeclaration(node.name, "");
+                                BuildDeclaration(node.name, "class");
                                 builder.Punctuation(";");
                                 builder.NewLine();
                                 break;
@@ -357,6 +361,12 @@ namespace APIViewWeb
 
                     builder.Space();
                     builder.NewLine();
+                }
+
+                if (currentFileItem != null)
+                {
+                    currentFileItem.ChildItems = currentFileMembers.ToArray();
+                    navigation.Add(currentFileItem);
                 }
             }
         }

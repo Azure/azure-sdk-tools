@@ -37,15 +37,25 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
         {
             var response = await client.Check.Run.GetAllForReference(repositoryId, sha);
             var runs = response.CheckRuns;
-            var run = runs.Single(r => r.Name == this.GlobalConfigurationProvider.GetApplicationName());
+            var checkEnforcerRuns = runs.Where(r => r.Name == this.GlobalConfigurationProvider.GetApplicationName());
 
-            Logger.LogTrace("Setting check-run to success.");
-            await client.Check.Run.Update(repositoryId, run.Id, new CheckRunUpdate()
+            Logger.LogInformation(
+                "Found {count} Check Enforcer runs on sha {commitSha} in repository {repository}.",
+                checkEnforcerRuns.Count(),
+                sha,
+                repositoryId
+                );
+
+            foreach (var checkEnforcerRun in checkEnforcerRuns)
             {
-                Conclusion = new StringEnum<CheckConclusion>(CheckConclusion.Success),
-                CompletedAt = DateTimeOffset.UtcNow
-            });
-            Logger.LogTrace("Set check-run to success.");
+                Logger.LogInformation("Setting check-run {checkEnforcerRunId} to success.", checkEnforcerRun.Id);
+                await client.Check.Run.Update(repositoryId, checkEnforcerRun.Id, new CheckRunUpdate()
+                {
+                    Conclusion = new StringEnum<CheckConclusion>(CheckConclusion.Success),
+                    CompletedAt = DateTimeOffset.UtcNow
+                });
+                Logger.LogInformation("Set check-run {checkEnforcerRunId} to success.", checkEnforcerRun.Id);
+            }
         }
 
         protected async Task SetInProgressAsync(GitHubClient client, long repositoryId, string sha, CancellationToken cancellationToken)

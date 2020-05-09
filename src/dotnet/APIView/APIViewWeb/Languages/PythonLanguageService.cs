@@ -11,9 +11,11 @@ namespace APIViewWeb
 {
     public class PythonLanguageService : LanguageProcessor
     {
+        static string pythonhome = Environment.GetEnvironmentVariable("PYTHONHOME");
+
         public override string Name { get; } = "Python";
         public override string Extension { get; } = ".whl";
-        public override string ProcessName { get; } = "python";
+        public override string ProcessName { get; } = Path.Combine(pythonhome, "python");
         public override string VersionString { get; } = "0.1.1";
 
         public override string GetProccessorArguments(string originalName, string tempDirectory, string jsonPath)

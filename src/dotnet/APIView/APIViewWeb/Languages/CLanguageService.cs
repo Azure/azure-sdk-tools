@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -68,24 +69,42 @@ namespace APIViewWeb
 
         public string Name { get; } = "C";
 
-        public bool IsSupportedExtension(string extension) => string.Equals(extension, ".ast", comparisonType: StringComparison.OrdinalIgnoreCase);
+        public bool IsSupportedExtension(string extension) => string.Equals(extension, ".zip", comparisonType: StringComparison.OrdinalIgnoreCase);
 
-        public bool CanUpdate(string versionString) => true;
+        public bool CanUpdate(string versionString) => versionString != CurrentVersion;
 
         public async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis)
         {
             MemoryStream astStream = new MemoryStream();
             await stream.CopyToAsync(astStream);
+            astStream.Position = 0;
 
-            return BuildNodes(originalName, astStream);
-        }
+            var archive = new ZipArchive(astStream);
 
-        private static CodeFile BuildNodes(string originalName, MemoryStream astStream)
-        {
-            Span<byte> ast = astStream.ToArray();
 
             CodeFileTokensBuilder builder = new CodeFileTokensBuilder();
             Dictionary<string, NavigationItem> navigation = new Dictionary<string, NavigationItem>();
+
+            foreach (var entry in archive.Entries)
+            {
+                var entryStream = new MemoryStream();
+                await entry.Open().CopyToAsync(entryStream);
+                BuildNodes(builder, navigation, entryStream);
+            }
+
+            return new CodeFile()
+            {
+                Name = originalName,
+                Language = "C",
+                Tokens = builder.Tokens.ToArray(),
+                Navigation = navigation.Values.ToArray(),
+                VersionString = CurrentVersion,
+            };
+        }
+
+        private static void BuildNodes(CodeFileTokensBuilder builder, Dictionary<string, NavigationItem> navigation, MemoryStream astStream)
+        {
+            Span<byte> ast = astStream.ToArray();
 
             while (ast.Length > 2)
             {
@@ -340,15 +359,6 @@ namespace APIViewWeb
                     builder.NewLine();
                 }
             }
-
-            return new CodeFile()
-            {
-                Name = originalName,
-                Language = "C",
-                Tokens = builder.Tokens.ToArray(),
-                Navigation = navigation.Values.ToArray(),
-                VersionString = CurrentVersion,
-            };
         }
 
         private static void BuildType(CodeFileTokensBuilder builder, string type, HashSet<string> types)

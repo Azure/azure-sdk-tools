@@ -16,7 +16,7 @@ namespace APIViewWeb
 {
     public class CLanguageService : ILanguageService
     {
-        private const string CurrentVersion = "2";
+        private const string CurrentVersion = "3";
         private static Regex _typeTokenizer = new Regex("\\w+|[^\\w]+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static HashSet<string> _keywords = new HashSet<string>()
         {
@@ -222,7 +222,7 @@ namespace APIViewWeb
                                         builder.WriteIndent();
                                         BuildType(builder, parameterNode.type.qualType, types);
                                         builder.Space();
-                                        builder.Text(node.name);
+                                        builder.Text(parameterNode.name);
                                         builder.Punctuation(",");
                                         builder.NewLine();
                                     }

@@ -71,7 +71,7 @@ namespace APIViewWeb
 
         public bool IsSupportedExtension(string extension) => string.Equals(extension, ".zip", comparisonType: StringComparison.OrdinalIgnoreCase);
 
-        public bool CanUpdate(string versionString) => true;
+        public bool CanUpdate(string versionString) => versionString != CurrentVersion;
 
         public async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis)
         {

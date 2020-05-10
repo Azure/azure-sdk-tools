@@ -28,6 +28,7 @@ import com.github.javaparser.ast.body.TypeDeclaration;
 import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.expr.AnnotationExpr;
 import com.github.javaparser.ast.expr.Expression;
+import com.github.javaparser.ast.nodeTypes.NodeWithAnnotations;
 import com.github.javaparser.ast.nodeTypes.NodeWithType;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.type.ReferenceType;
@@ -48,6 +49,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.getPackageName;
@@ -55,6 +57,7 @@ import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.isInterf
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.isPrivateOrPackagePrivate;
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.isTypeAPublicAPI;
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.makeId;
+import static com.azure.tools.apiview.processor.model.TokenKind.COMMENT;
 import static com.azure.tools.apiview.processor.model.TokenKind.KEYWORD;
 import static com.azure.tools.apiview.processor.model.TokenKind.MEMBER_NAME;
 import static com.azure.tools.apiview.processor.model.TokenKind.NEW_LINE;
@@ -217,11 +220,11 @@ public class ASTAnalyser implements Analyser {
                     // skip and do nothing if there is no constructor in the interface.
                 }
             } else {
-                tokeniseConstructorsOrMethods(isInterfaceDeclaration, constructors);
+                tokeniseConstructorsOrMethods(isInterfaceDeclaration, true, constructors);
             }
 
             // get Methods
-            tokeniseConstructorsOrMethods(isInterfaceDeclaration, typeDeclaration.getMethods());
+            tokeniseConstructorsOrMethods(isInterfaceDeclaration, false, typeDeclaration.getMethods());
 
             // get Inner classes
             tokeniseInnerClasses(typeDeclaration.getMembers());
@@ -272,6 +275,8 @@ public class ASTAnalyser implements Analyser {
 
             // public class or interface or enum
             addToken(makeWhitespace());
+
+            getAnnotations(typeDeclaration, true);
 
             // Get modifiers
             getModifiers(typeDeclaration.getModifiers());
@@ -472,28 +477,40 @@ public class ASTAnalyser implements Analyser {
             unindent();
         }
 
-        private void tokeniseConstructorsOrMethods(boolean isInterfaceDeclaration, List<? extends CallableDeclaration<?>> callableDeclarations) {
+        private void tokeniseConstructorsOrMethods(boolean isInterfaceDeclaration, boolean isConstructor, List<? extends CallableDeclaration<?>> callableDeclarations) {
             indent();
 
-            boolean isAllPrivateOrPackagePrivate = callableDeclarations.stream()
-                    .filter(BodyDeclaration::isConstructorDeclaration)
-                    .allMatch(callableDeclaration -> isPrivateOrPackagePrivate(callableDeclaration.getAccessSpecifier()));
+            if (isConstructor) {
+                // determining if we are looking at a set of constructors that are all private, indicating that the
+                // class is unlikely to be instantiable via 'new' calls.
+                // We also must check if there are no constructors, because this indicates that there is the default,
+                // no-args public constructor
+                final boolean isAllPrivateOrPackagePrivate = ! callableDeclarations.isEmpty() && callableDeclarations.stream()
+                     .filter(BodyDeclaration::isConstructorDeclaration)
+                     .allMatch(callableDeclaration -> isPrivateOrPackagePrivate(callableDeclaration.getAccessSpecifier()));
+
+                if (isAllPrivateOrPackagePrivate) {
+                    addToken(makeWhitespace());
+                    addToken(new Token(COMMENT, "// This class does not have any public constructors, and is not able to be instantiated using 'new'"));
+                    addToken(new Token(NEW_LINE, ""));
+                    unindent();
+                    return;
+                }
+            }
 
             for (final CallableDeclaration<?> callableDeclaration : callableDeclarations) {
                 // By default , interface has public abstract methods if there is no access specifier declared
                 if (isInterfaceDeclaration) {
                     // no-op - we take all methods in the method
-                } else if (callableDeclaration.isConstructorDeclaration()) {
-                    // if there is at least one public constructor, only explore the public but skip all private constructors
-                    if (!isAllPrivateOrPackagePrivate && isPrivateOrPackagePrivate(callableDeclaration.getAccessSpecifier())) {
-                        continue;
-                    }
                 } else if (isPrivateOrPackagePrivate(callableDeclaration.getAccessSpecifier())) {
                     // Skip if not public API
                     continue;
                 }
 
                 addToken(makeWhitespace());
+
+                // annotations
+                getAnnotations(callableDeclaration, false);
 
                 // modifiers
                 getModifiers(callableDeclaration.getModifiers());
@@ -533,6 +550,21 @@ public class ASTAnalyser implements Analyser {
                     unindent();
                 }
             }
+        }
+
+        private void getAnnotations(final NodeWithAnnotations<?> nodeWithAnnotations, final boolean addNewline) {
+            Consumer<AnnotationExpr> consumer = annotation -> {
+                addToken(new Token(KEYWORD, "@" + annotation.getName().toString()));
+
+                if (addNewline) {
+                    addToken(new Token(NEW_LINE, ""));
+                } else {
+                    addToken(new Token(WHITESPACE, " "));
+                }
+            };
+
+            // for now we will only include the annotations we care about
+            nodeWithAnnotations.getAnnotationByName("Deprecated").ifPresent(consumer);
         }
 
         private void getModifiers(NodeList<Modifier> modifiers) {

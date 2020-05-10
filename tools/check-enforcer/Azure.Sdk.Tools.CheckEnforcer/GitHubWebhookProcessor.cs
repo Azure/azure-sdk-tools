@@ -14,6 +14,7 @@ using Microsoft.Extensions.Primitives;
 using Microsoft.IdentityModel.Tokens;
 using Octokit;
 using Octokit.Internal;
+using Polly;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -106,21 +107,34 @@ namespace Azure.Sdk.Tools.CheckEnforcer
 
         public async Task ProcessWebhookAsync(string eventName, string json, ILogger logger, CancellationToken cancellationToken)
         {
-            if (eventName == "check_run")
-            {
-                var handler = new CheckRunHandler(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, logger);
-                await handler.HandleAsync(json, cancellationToken);
-            }
-            else if (eventName == "issue_comment")
-            {
-                var handler = new IssueCommentHandler(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, logger);
-                await handler.HandleAsync(json, cancellationToken);
-            }
-            else if (eventName == "pull_request")
-            {
-                var handler = new PullRequestHandler(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, logger);
-                await handler.HandleAsync(json, cancellationToken);
-            }
+            await Policy
+                .Handle<AbuseException>()
+                .RetryAsync(3, async (ex, retryCount) =>
+                {
+                    logger.LogWarning("Abuse exception detected, attempting retry.");
+                    var abuseEx = (AbuseException)ex;
+
+                    logger.LogInformation("Waiting for {seconds} before retrying.", abuseEx.RetryAfterSeconds);
+                    await Task.Delay(TimeSpan.FromSeconds((double)abuseEx.RetryAfterSeconds));
+                })
+                .ExecuteAsync(async () =>
+                {
+                    if (eventName == "check_run")
+                    {
+                        var handler = new CheckRunHandler(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, logger);
+                        await handler.HandleAsync(json, cancellationToken);
+                    }
+                    else if (eventName == "issue_comment")
+                    {
+                        var handler = new IssueCommentHandler(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, logger);
+                        await handler.HandleAsync(json, cancellationToken);
+                    }
+                    else if (eventName == "pull_request")
+                    {
+                        var handler = new PullRequestHandler(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, logger);
+                        await handler.HandleAsync(json, cancellationToken);
+                    }
+                });
         }
 
         public async Task ProcessWebhookAsync(HttpRequest request, ILogger logger, CancellationToken cancellationToken)

@@ -30,11 +30,11 @@
 
   <ItemGroup>
     <Content Include="$(JavaProcessor)" Condition="Exists($(JavaProcessor))" CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="$(PythonProcessor)" Condition="Exists($(PythonProcessor))" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\APIView\APIView.csproj" />
   </ItemGroup>
+
 
 </Project>

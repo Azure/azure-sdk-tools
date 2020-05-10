@@ -81,7 +81,9 @@ namespace APIViewWeb
 
             services.AddSingleton<ILanguageService, JsonLanguageService>();
             services.AddSingleton<ILanguageService, CSharpLanguageService>();
+            services.AddSingleton<ILanguageService, CLanguageService>();
             services.AddSingleton<ILanguageService, JavaLanguageService>();
+            services.AddSingleton<ILanguageService, PythonLanguageService>();
 
             services.AddAuthentication(options =>
                 {

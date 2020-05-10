@@ -43,11 +43,6 @@ stages:
 
         steps:
 
-          - task: UsePythonVersion@0
-            displayName: 'Use Python 3.6'
-            inputs:
-              versionSpec: 3.6
-
           - task: DotNetCoreInstaller@2
             displayName: 'Use .NET Core sdk $(DotNetCoreVersion)'
             inputs:
@@ -77,12 +72,9 @@ stages:
               mavenPomFile: 'src/java/apiview-java-processor/pom.xml'
               goals: 'clean package'
 
-          - script: |
-              cd $(Build.SourcesDirectory)/$(PythonParserPackagePath)
-              pip install wheel
-              python setup.py bdist_wheel
-              cd $(Build.SourcesDirectory)
-            displayName: 'Build Python API Parser'
+          - pwsh: |
+              copy-item -Path $(PythonParserPackagePath) -Destination $(Build.ArtifactStagingDirectory)/APIViewWeb/api-stub-generator -Recurse -Force
+            displayName: 'Bundle Python API Parser'
 
           - script: 'dotnet build $(WebProjectPath) -warnaserror'
             displayName: 'Build and Package'

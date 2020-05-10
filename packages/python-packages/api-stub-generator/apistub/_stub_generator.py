@@ -27,11 +27,11 @@ from subprocess import check_call
 import zipfile
 
 
-from ._apiview import ApiView, APIViewEncoder, Navigation, Kind, NavigationTag
+from apistub._apiview import ApiView, APIViewEncoder, Navigation, Kind, NavigationTag
 
 INIT_PY_FILE = "__init__.py"
 
-logging.getLogger().setLevel(logging.INFO)
+logging.getLogger().setLevel(logging.ERROR)
 
 
 class StubGenerator:
@@ -59,6 +59,13 @@ class StubGenerator:
             action="store_true",
         )
 
+        parser.add_argument(
+            "--hide-report",
+            help=("Hide diagnostic report"),
+            default=False,
+            action="store_true",
+        )
+
         args = parser.parse_args()
         if not os.path.exists(args.pkg_path):
             logging.error("Package path [{}] is invalid".format(args.pkg_path))
@@ -66,13 +73,12 @@ class StubGenerator:
         elif not os.path.exists(args.temp_path):
             logging.error("Temp path [{0}] is invalid".format(args.temp_path))
             exit(1)
-        elif not os.path.exists(args.out_path):
-            logging.error("Output path [{}] is invalid".format(args.out_path))
-            exit(1)
+
 
         self.pkg_path = args.pkg_path
         self.temp_path = args.temp_path
         self.out_path = args.out_path
+        self.hide_report = args.hide_report
         if args.verbose:
             logging.getLogger().setLevel(logging.DEBUG)
 
@@ -95,9 +101,10 @@ class StubGenerator:
         apiview = self._generate_tokens(pkg_root_path, pkg_name, version, namespace)
         if apiview.Diagnostics:
             # Show error report in console
-            print("************************** Error Report **************************")
-            for m in self.module_dict.keys():
-                self.module_dict[m].print_errors()
+            if not self.hide_report:
+                print("************************** Error Report **************************")
+                for m in self.module_dict.keys():
+                    self.module_dict[m].print_errors()
             logging.info("*************** Completed parsing package with errors ***************")
         else:
             logging.info("*************** Completed parsing package and generating tokens ***************")
@@ -148,7 +155,7 @@ class StubGenerator:
         """
         # Import ModuleNode.
         # Importing it globally can cause circular dependency since it needs NodeIndex that is defined in this file
-        from .nodes._module_node import ModuleNode
+        from apistub.nodes._module_node import ModuleNode
 
         self.module_dict = {}
         nodeindex = NodeIndex()

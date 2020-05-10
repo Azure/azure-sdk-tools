@@ -1,5 +1,24 @@
 trigger:
-- master
+  branches:
+    include:
+      - master
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - eng/packages/python-packages/doc-warden
+
+pr:
+  branches:
+    include:
+      - master
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - eng/packages/python-packages/doc-warden
 
 jobs:
 - job: 'Build'

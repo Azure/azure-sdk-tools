@@ -21,6 +21,7 @@ namespace PipelineGenerator.Conventions
 
         public override string SearchPattern => "ci*.yml";
         public override bool IsScheduled => false;
+        public override bool RemoveCITriggers => true;
 
         protected override async Task<bool> ApplyConventionAsync(BuildDefinition definition, SdkComponent component)
         {
@@ -28,15 +29,6 @@ namespace PipelineGenerator.Conventions
             // API that can do equality comparisons (without having to do all the checks myself).
 
             var hasChanges = await base.ApplyConventionAsync(definition, component);
-
-            for (int i = definition.Triggers.Count - 1; i >= 0; i--)
-            {
-                if (definition.Triggers[i] is ContinuousIntegrationTrigger)
-                {
-                    definition.Triggers.RemoveAt(i);
-                    hasChanges = true;
-                }
-            }
 
             var prTrigger = definition.Triggers.OfType<PullRequestTrigger>().SingleOrDefault();
 

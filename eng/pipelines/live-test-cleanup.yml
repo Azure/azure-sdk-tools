@@ -1,6 +1,14 @@
+schedules:
+# At 12:00 every day
+- cron: "0 12 * * *"
+  displayName: Hourly
+  branches:
+    include:
+    - master
+  always: true
 
-trigger: none
 pr: none
+trigger: none
 
 stages:
 - stage: Run
@@ -20,5 +28,26 @@ stages:
           -ProvisionerApplicationSecret "$(provisioner-aad-secret)"
           -ProvisionerApplicationTenantId "$(provisioner-aad-tenant)"
           -SubscriptionId "$(provisioner-subscription)"
+          -Environment 'AzureCloud'
           -Verbose
-        displayName: Clean up subscription resources
+        displayName: Clean up subscription resources (AzureCloud)
+
+      - pwsh: >
+          ./tools/live-test-cleanup/cleanup.ps1
+          -ProvisionerApplicationId "$(provisioner-aad-id-gov)"
+          -ProvisionerApplicationSecret "$(provisioner-aad-secret-gov)"
+          -ProvisionerApplicationTenantId "$(provisioner-aad-tenant-gov)"
+          -SubscriptionId "$(provisioner-subscription-gov)"
+          -Environment 'AzureUSGovernment'
+          -Verbose
+        displayName: Clean up subscription resources (AzureUSGovernment)
+
+      - pwsh: >
+          ./tools/live-test-cleanup/cleanup.ps1
+          -ProvisionerApplicationId "$(provisioner-aad-id-cn)"
+          -ProvisionerApplicationSecret "$(provisioner-aad-secret-cn)"
+          -ProvisionerApplicationTenantId "$(provisioner-aad-tenant-cn)"
+          -SubscriptionId "$(provisioner-subscription-cn)"
+          -Environment 'AzureChinaCloud'
+          -Verbose
+        displayName: Clean up subscription resources (AzureChinaCloud)

@@ -1,0 +1,48 @@
+# Variables defined in pipeline definition
+# DevOpsProject - public, internal
+# Branch - master
+# Prefix - net, python, js, java, <lang>-pr
+# RepositoryName - azure-sdk-for-<lang>
+# DevOpsPath - $(Prefix)\pr
+# ServiceDirectory - "", keyvault, storage, etc.
+# PipelineConvention - ci, up, tests
+# AdditionalOptions - potentially add variablegroups via "--variablegroup x"
+
+pr: none
+
+trigger: none
+
+variables:
+  skipComponentGovernanceDetection: true
+  DevOpsOrg: https://dev.azure.com/azure-sdk
+  PathFilter: $(Pipeline.Workspace)/$(RepositoryName)/sdk/$(ServiceDirectory)
+
+jobs:
+- job: GeneratePipeline
+  pool:
+    vmImage: 'windows-2019'
+  steps:
+  - checkout: none
+  - template: templates/steps/install-pipeline-generation.yml
+  - script: |
+      git clone --filter=blob:none --branch $(Branch) https://$(azuresdk-github-pat)@github.com/azure/$(RepositoryName) $(Pipeline.Workspace)/$(RepositoryName)
+    displayName: 'Clone repository: $(RepositoryName)'
+  - script: >
+      pipeline-generator
+      --organization $(DevOpsOrg)
+      --project $(DevOpsProject)
+      --prefix $(Prefix)
+      --devopspath "$(DevOpsPath)"
+      --path $(PathFilter)
+      --endpoint Azure
+      --repository Azure/$(RepositoryName)
+      --convention $(PipelineConvention)
+      --agentpool Hosted
+      --branch refs/heads/$(Branch)
+      --patvar PATVAR
+      --debug
+      $(AdditionalOptions)
+    displayName: 'Generate pipeline'
+    env:
+      PATVAR: $(azuresdk-azure-sdk-devops-pipeline-generation-pat)
+

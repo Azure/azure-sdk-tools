@@ -1,0 +1,5 @@
+###########
+# Eng Sys
+###########
+/eng/       @azure/azure-sdk-eng
+/eng/common/TestResources/  @heaths @danieljurek @weshaggard

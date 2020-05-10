@@ -193,9 +193,6 @@ class WardenConfiguration():
     def get_package_indexing_traversal_stops(self):
         return [os.path.normpath(os.path.join(self.target_directory, traversal_stop)) for traversal_stop in self.package_indexing_traversal_stops]
 
-    def get_readme_sections_dictionary(self):
-        return { key: i for i, key in enumerate(self.required_readme_sections) }
-
     def get_repository_details(self):
         return WardenConfiguration.REPOSITORY_SETS[self.scan_language]
 

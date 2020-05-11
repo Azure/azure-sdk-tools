@@ -24,7 +24,7 @@ class AzureEngSemanticVersion {
     static [AzureEngSemanticVersion] ParseVersionString([string] $versionString)
     {
         try {
-            return [AzureEngSemanticVersion]::new("^$versionString$")
+            return [AzureEngSemanticVersion]::new($versionString)
         }
         catch {
             return $null
@@ -32,7 +32,7 @@ class AzureEngSemanticVersion {
     }
     
     AzureEngSemanticVersion([string] $versionString){
-        if ($versionString -match [AzureEngSemanticVersion]::SEMVER_REGEX) {
+        if ($versionString -match "^$([AzureEngSemanticVersion]::SEMVER_REGEX)$") {
             if ($null -eq $matches['prelabel']) {
                 # artifically provide these values for non-prereleases to enable easy sorting of them later than prereleases.
                 $prelabel = "zzz"

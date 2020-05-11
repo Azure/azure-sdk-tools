@@ -226,11 +226,9 @@ class StubGenerator:
     def _install_package(self, pkg_name):
         # Uninstall the package and reinstall it to parse so inspect can get members in package
         # We don't want to force reinstall to avoid reinstalling other dependent packages
-        # executable is stubgen. so we need to find path to python using APIVIEW_PYTHON env variable
-        python_executable = os.path.join(os.getenv("APIVIEW_PYTHON", ""), "python")
-        commands = [python_executable, "-m", "pip", "uninstall", pkg_name, "--yes", "-q"]
+        commands = [sys.executable, "-m", "pip", "uninstall", pkg_name, "--yes", "-q"]
         check_call(commands)
-        commands = [python_executable, "-m", "pip", "install", self.pkg_path , "-q"]
+        commands = [sys.executable, "-m", "pip", "install", self.pkg_path , "-q"]
         check_call(commands)
 
 

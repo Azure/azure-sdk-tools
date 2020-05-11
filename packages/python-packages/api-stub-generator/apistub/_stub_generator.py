@@ -7,7 +7,6 @@
 
 import glob
 import sys
-from sys import exit
 import os
 import argparse
 

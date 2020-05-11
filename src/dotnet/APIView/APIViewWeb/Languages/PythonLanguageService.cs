@@ -9,20 +9,18 @@ namespace APIViewWeb
 {
     public class PythonLanguageService : LanguageProcessor
     {
-        private readonly string ApiViewPythonProcessor;
+        private readonly string _apiViewPythonProcessor;
         public override string Name { get; } = "Python";
         public override string Extension { get; } = ".whl";
-        public override string ProcessName
-        {
-            get{ return ApiViewPythonProcessor; }
-        }
+        public override string ProcessName => _apiViewPythonProcessor;
         public override string VersionString { get; } = "0.1.1";
 
         public PythonLanguageService(IConfiguration configuration)
         {
             // apistubgen is located in python's scripts path e.g. <Pythonhome>/Scripts
-            var PythonHome = configuration["APIVIEW_PYTHONHOME"] ?? string.Empty;
-            ApiViewPythonProcessor = Path.Combine(PythonHome, "Scripts", "apistubgen");
+            // Env variable PYTHONPROCESSORPATH is set to <pythonhome>/Scripts where parser is located
+            var processorPath = configuration["PYTHONPROCESSORPATH"] ?? string.Empty;
+            _apiViewPythonProcessor = Path.Combine(processorPath, "apistubgen");
         }
 
         public override string GetProccessorArguments(string originalName, string tempDirectory, string jsonPath)

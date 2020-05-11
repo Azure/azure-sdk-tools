@@ -58,34 +58,6 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
             }
         }
 
-        protected async Task SetInProgressAsync(GitHubClient client, long repositoryId, string sha, CancellationToken cancellationToken)
-        {
-            var response = await client.Check.Run.GetAllForReference(repositoryId, sha);
-            var runs = response.CheckRuns;
-            var run = runs.Single(r => r.Name == this.GlobalConfigurationProvider.GetApplicationName());
-
-            Logger.LogTrace("Setting check-run to in-progress.");
-            await client.Check.Run.Update(repositoryId, run.Id, new CheckRunUpdate()
-            {
-                Status = new StringEnum<CheckStatus>(CheckStatus.InProgress)
-            });
-            Logger.LogTrace("Set check-run to in in-progress.");
-        }
-
-        protected async Task SetQueuedAsync(GitHubClient client, long repositoryId, string sha, CancellationToken cancellationToken)
-        {
-            var response = await client.Check.Run.GetAllForReference(repositoryId, sha);
-            var runs = response.CheckRuns;
-            var run = runs.Single(r => r.Name == this.GlobalConfigurationProvider.GetApplicationName());
-
-            Logger.LogTrace("Setting check-run to queued.");
-            await client.Check.Run.Update(repositoryId, run.Id, new CheckRunUpdate()
-            {
-                Status = new StringEnum<CheckStatus>(CheckStatus.Queued)
-            });
-            Logger.LogTrace("Set check-run to queued.");
-        }
-
         protected async Task<CheckRun> CreateCheckAsync(GitHubClient client, long installationId, long repositoryId, string headSha, bool recreate, CancellationToken cancellationToken)
         {
             var runIdentifier = $"{installationId}/{repositoryId}/{headSha}";
@@ -94,9 +66,12 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
 
             var response = await client.Check.Run.GetAllForReference(repositoryId, headSha);
             var runs = response.CheckRuns;
-            var checkRun = runs.SingleOrDefault(r => r.Name == this.GlobalConfigurationProvider.GetApplicationName());
+            var checkRun = runs
+                .Where(r => r.Name == this.GlobalConfigurationProvider.GetApplicationName())
+                .Where(r => r.Status != new StringEnum<CheckStatus>(CheckStatus.Completed))
+                .FirstOrDefault();
 
-            if (checkRun == null || recreate)
+            if (checkRun != null || recreate)
             {
                 Logger.LogInformation("Creating check-run for: {runIdentifier}", runIdentifier);
 

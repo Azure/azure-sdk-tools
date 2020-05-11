@@ -36,6 +36,8 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
         private static readonly EventId SkippedProcessingCheckEnforcerCheckRunEventEventId = new EventId(EventIdBase + 18, "Skipped Processing Check Enforcer Check Run Event");
         private static readonly EventId SkippedProcessingIncompleteCheckRunEventEventId = new EventId(EventIdBase + 19, "Skipped Processing Incomplete Check Run Event");
         private static readonly EventId FailedToAcquiredDistributedLockEventId = new EventId(EventIdBase + 20, "Failed to acquired distributed lock, giving up.");
+        private static readonly EventId SkippedProcessStaleCheckRunEventEventId = new EventId(EventIdBase + 21, "Skipped Porcessing Stale Check Run Event");
+
 
         public CheckRunHandler(IGlobalConfigurationProvider globalConfigurationProvider, IGitHubClientProvider gitHubCLientProvider, IRepositoryConfigurationProvider repositoryConfigurationProvider, ILogger logger) : base(globalConfigurationProvider, gitHubCLientProvider, repositoryConfigurationProvider, logger)
         {
@@ -58,6 +60,15 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
                         SkippedProcessingCheckEnforcerCheckRunEventEventId,
                         "Skipping processing event for: {runIdentifier} because appplication name match.",
                         runIdentifier
+                        );
+                }
+                else if (payload.CheckRun.StartedAt < DateTimeOffset.UtcNow.Subtract(TimeSpan.FromDays(1)))
+                {
+                    Logger.LogWarning(
+                        SkippedProcessStaleCheckRunEventEventId,
+                        "Skipping stake check-run event for: {runIdentifier} because it started {days} ago.",
+                        runIdentifier,
+                        (DateTimeOffset.UtcNow - payload.CheckRun.StartedAt).Days
                         );
                 }
                 else

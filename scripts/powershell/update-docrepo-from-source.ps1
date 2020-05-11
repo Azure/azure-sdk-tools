@@ -39,8 +39,6 @@ if ($CodeRepo -Match "js"){
   $metadataUri = "https://raw.githubusercontent.com/Azure/azure-sdk/master/_data/releases/latest/js-packages.csv"
 }
 
-
-
 $metadataResponse = Invoke-WebRequest -Uri $metadataUri | ConvertFrom-Csv
 
 if ([string]::IsNullOrWhiteSpace($TargetServices))
@@ -50,7 +48,6 @@ if ([string]::IsNullOrWhiteSpace($TargetServices))
 else {
   $selectedServices = $TargetServices -Split "," | % { return $_.Trim() }
 }
-
 
 foreach($service in $selectedServices){
   $readmePath = Join-Path -Path $CodeRepo  -ChildPath "sdk/$service"

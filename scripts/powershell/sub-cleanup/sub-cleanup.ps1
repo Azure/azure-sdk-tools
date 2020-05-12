@@ -1,7 +1,7 @@
 ﻿# Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-# Requires PowerShell modules Az and RemoteSigned excecution policy
+# Requires PowerShell module Az and RemoteSigned excecution policy
 #
 # Commands to make this happen:
 #   Install-Module -Name Az -AllowClobber
@@ -16,26 +16,20 @@ subscription.  Complient resource groups are named with a
 valid Microsoft alias or using the format: alias-<identifier>
 
 Usage:
-    sub-cleanup.ps1 <subscription Id> <exception file>
+    sub-cleanup.ps1 <subscription Id>
 
 Notes:
-    The optional exception file is a text file listing
-    resource groups to be skipped in the cleanup.
+    You can add the tag CleanupException=true to the resource
+    group to have it skipped as an exception. This can be 
+    done with CLI or in the portal.
 =============================================================
 "@
 }
 
-if ($args.Count -lt 1)
+if ($args.Count -ne 1)
 {
     Print-Help
-}
-
-# Load exceptions file if one was provided
-$exceptions = @()
-if ($args.Count -eq 2)
-{
-    Write-Host "Using exception file $($args[1])"
-    $exceptions = Get-Content $args[1]
+    exit
 }
 
 # Connect and select active subscription
@@ -44,27 +38,27 @@ Connect-AzAccount
 Select-AzSubscription -Subscription $sub
 
 # Loop through the resource groups and delete any with non-compliant names
-$resourceGroups = Get-AzResourceGroup | Sort ResourceGroupName
-foreach ($resourceGroup in $resourceGroups)
+foreach ($resourceGroup in Get-AzResourceGroup | Sort ResourceGroupName)
 {
     # skip exceptions
-    if ($exceptions -contains $resourceGroup.ResourceGroupName)
+    if ($resourceGroup.Tags -and $resourceGroup.Tags["CleanupException"] -eq "true")
     {
-        Write-Host " Skipping exception resource group: $($resourceGroup.ResourceGroupName)"
+        Write-Host " Skipping tagged exception resource group: $($resourceGroup.ResourceGroupName)"
         continue
     }
 
-    # check compliance (formatting then valid alias) and skip if compliant
+    # check compliance (formatting first, then validate alias) and skip if compliant
     if ($resourceGroup.ResourceGroupName -match "^((t-|a-|v-)?[a-z,A-Z]{3,15})(-{1}.*)?$" -and (Get-AzAdUser -UserPrincipalName "$($Matches.1)@microsoft.com"))
     {
         Write-Host " Skipping compliant resource group: $($resourceGroup.ResourceGroupName)"
         continue
     }
 
-    Write-Host "Deleting non-compliant resource group: $($resourceGroup.ResourceGroupName)"
+    Write-Host -ForegroundColor Red -NoNewline "Deleting non-compliant resource group: $($resourceGroup.ResourceGroupName)"
     
     # delete
-    Remove-AzResourceGroup -Name $resourceGroup.ResourceGroupName
+    if (Remove-AzResourceGroup -Name $resourceGroup.ResourceGroupName -Force)
+    {
+        Write-Host " Succeeded."
+    }
 }
-
-

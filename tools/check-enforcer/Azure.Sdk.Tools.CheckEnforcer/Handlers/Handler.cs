@@ -71,7 +71,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
                 .Where(r => r.Status != new StringEnum<CheckStatus>(CheckStatus.Completed))
                 .FirstOrDefault();
 
-            if (checkRun != null || recreate)
+            if (checkRun == null || recreate)
             {
                 Logger.LogInformation("Creating check-run for: {runIdentifier}", runIdentifier);
 

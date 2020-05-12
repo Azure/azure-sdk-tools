@@ -22,12 +22,6 @@ steps:
   - pwsh: Install-Module -Name Az -Scope CurrentUser -AllowClobber -Force -Verbose
     displayName: Install Azure PowerShell module
 
-  # On MacOS there are problems with access to the ~/.Azure folder. This
-  # workaround fixes the problem.
-  - bash: sudo rm -rf ~/.Azure
-    condition: and(succeeded(), eq(variables['Agent.OS'], 'Darwin'))
-    displayName: Clean out ~/.Azure
-
   - pwsh: |
       $subscriptionConfiguration = @"
         ${{ parameters.SubscriptionConfiguration }}

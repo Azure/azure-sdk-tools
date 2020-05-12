@@ -20,12 +20,6 @@ parameters:
 # not error when parameters are provided which the script doesn't use.
 
 steps:
-  # On MacOS there are problems with access to the ~/.Azure folder. This
-  # workaround fixes the problem.
-  - bash: sudo rm -rf ~/.Azure
-    condition: and(succeeded(), eq(variables['Agent.OS'], 'Darwin'))
-    displayName: Clean out ~/.Azure
-
   - pwsh: |
       $subscriptionConfiguration = @"
         ${{ parameters.SubscriptionConfiguration }}

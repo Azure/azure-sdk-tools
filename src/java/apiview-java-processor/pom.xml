@@ -6,7 +6,7 @@
 
     <groupId>com.azure</groupId>
     <artifactId>apiview-java-processor</artifactId>
-    <version>1.4.0</version>
+    <version>1.5.0</version>
 
     <properties>
         <maven.compiler.target>1.8</maven.compiler.target>
@@ -18,7 +18,7 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.9.10.3</version>
+            <version>2.9.10.4</version>
         </dependency>
 
         <dependency>

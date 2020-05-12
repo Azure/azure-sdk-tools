@@ -2,6 +2,7 @@ import logging
 import inspect
 import astroid
 import operator
+import re
 from inspect import Parameter
 from ._docstring_parser import DocstringParser, TypeHintParser
 from ._base_node import NodeEntityBase, get_qualified_name
@@ -10,6 +11,29 @@ from ._argtype import ArgType
 
 KW_ARG_NAME = "**kwargs"
 VALIDATION_REQUIRED_DUNDER = ["__init__",]
+KWARG_NOT_REQUIRED_METHODS = ["close",]
+TYPEHINT_NOT_REQUIRED_METHODS = ["close", "__init__"]
+REGEX_ITEM_PAGED = "~[\w.]*\.([\w]*)\s?[\[\(][^\n]*[\]\)]"
+PAGED_TYPES = ["ItemPaged", "AsyncItemPaged",]
+# Methods that are implementation of known interface should be excluded from lint check
+# for e.g. get, update, keys
+LINT_EXCLUSION_METHODS = [
+    "get",
+    "has_key",
+    "items",
+    "keys",
+    "update",
+    "values",
+    "close",    
+]
+
+
+def is_kwarg_mandatory(func_name):
+    return not func_name.startswith("_") and func_name not in KWARG_NOT_REQUIRED_METHODS
+
+
+def is_typehint_mandatory(func_name):
+    return not func_name.startswith("_") and func_name not in TYPEHINT_NOT_REQUIRED_METHODS
 
 
 class FunctionNode(NodeEntityBase):
@@ -62,7 +86,7 @@ class FunctionNode(NodeEntityBase):
             error_message = "Error in parsing decorators for function {}".format(
                 self.name
             )
-            self.errors.append(error_message)
+            self.add_error(error_message)
             logging.error(error_message)
 
         self.is_class_method = "@classmethod" in self.annotations
@@ -85,6 +109,9 @@ class FunctionNode(NodeEntityBase):
         # Find signature to find positional args and return type
         sig = inspect.signature(self.obj)
         params = sig.parameters
+        # Add all keyword only args here temporarily until docstring is parsed
+        # This is to handle the scenario is keyword arg typehint (py3 style is present in signature itself)
+        self.kw_args = []
         for argname in params:
             arg = ArgType(argname, get_qualified_name(params[argname].annotation), "", self)
             # set default value if available
@@ -93,7 +120,11 @@ class FunctionNode(NodeEntityBase):
             # Store handle to kwarg object to replace it later
             if params[argname].kind == Parameter.VAR_KEYWORD:
                 arg.argname = KW_ARG_NAME
-            self.args.append(arg)
+
+            if params[argname].kind == Parameter.KEYWORD_ONLY:
+                self.kw_args.append(arg)
+            else:
+                self.args.append(arg)
 
         if sig.return_annotation:
             self.return_type = get_qualified_name(sig.return_annotation)
@@ -102,8 +133,36 @@ class FunctionNode(NodeEntityBase):
         self._parse_docstring()
         # parse type hints
         self._parse_typehint()
-        if not self.return_type and not self.name.startswith("_"):
-            self.errors.append("Return type is missing in both typehint and docstring")
+        self._copy_kw_args()
+
+        if not self.return_type and is_typehint_mandatory(self.name):
+            self.add_error("Return type is missing in both typehint and docstring")
+        # Validate return type
+        self._validate_pageable_api()
+
+
+    def _copy_kw_args(self):
+        # Copy kw only args from signature and docstring
+        kwargs = [x for x in self.args if x.argname == KW_ARG_NAME]
+        # add keyword args
+        if self.kw_args:
+            # Add separator to differentiate pos_arg and keyword args
+            self.args.append(ArgType("*"))
+            self.kw_args.sort(key=operator.attrgetter("argname"))
+            # Add parsed keyword args to function signature after updating current function node as parent in arg
+            for arg in self.kw_args:
+                arg.set_function_node(self)
+                self.args.append(arg)
+
+            # remove arg with name "**kwarg and add at the end"
+            if kwargs:
+                kw_arg = kwargs[0]
+                self.args.remove(kw_arg)
+                self.args.append(kw_arg)
+
+        # API must have **kwargs for non async methods. Flag it as an error if it is missing for public API
+        if not kwargs and is_kwarg_mandatory(self.name):
+            self.errors.append("Keyword arg (**kwargs) is missing in method {}".format(self.name))
 
 
     def _parse_docstring(self):
@@ -140,36 +199,23 @@ class FunctionNode(NodeEntityBase):
                     pos_arg.argname, pos_arg.argtype
                 )
 
-            kwargs = [x for x in self.args if x.argname == KW_ARG_NAME]
-            # add keyword args
-            if parsed_docstring.kw_args:
-                # Add separator to differentiate pos_arg and keyword args
-                self.args.append(ArgType("*"))
-                parsed_docstring.kw_args.sort(key=operator.attrgetter("argname"))
-                # Add parsed keyword args to function signature after updating current function node as parent in arg
-                for arg in parsed_docstring.kw_args:
-                    arg.set_function_node(self)
-                    self.args.append(arg)
-
-                # remove arg with name "**kwarg and add at the end"
-                if kwargs:
-                    kw_arg = kwargs[0]
-                    self.args.remove(kw_arg)
-                    self.args.append(kw_arg)
-
-            # API must have **kwargs. Flag it as an error if it is missing for public API
-            if not kwargs and not self.name.startswith("_"):
-                self.errors.append("Keyword arg (**kwargs) is missing in method {}".format(self.name))
+            self.kw_args.extend(parsed_docstring.kw_args)            
 
 
     def _parse_typehint(self):
+
+        # Skip parsing typehint if typehint is not expected for e.g dunder or async methods
+        # and if return type is already found
+        if self.return_type and not is_typehint_mandatory(self.name) or self.is_async:
+            return
+
         # Parse type hint to get return type and types for positional args
         typehint_parser = TypeHintParser(self.obj)
         # Find return type from type hint if return type is not already set
         type_hint_ret_type = typehint_parser.find_return_type()
         # Type hint must be present for all APIs. Flag it as an error if typehint is missing
-        if  not type_hint_ret_type and not self.name.startswith("_"):
-            self.errors.append("Typehint is missing for method {}".format(self.name))
+        if  not type_hint_ret_type:
+            self.add_error("Typehint is missing for method {}".format(self.name))
             return
 
         if not self.return_type:
@@ -180,7 +226,7 @@ class FunctionNode(NodeEntityBase):
             long_ret_type = self.return_type
             if long_ret_type != type_hint_ret_type and short_return_type != type_hint_ret_type:
                 error_message = "Return type in type hint is not matching return type in docstring"
-                self.errors.append(error_message)
+                self.add_error(error_message)
 
 
     def _generate_signature_token(self, apiview):
@@ -253,11 +299,30 @@ class FunctionNode(NodeEntityBase):
 
 
     def add_error(self, error_msg):
+        # Ignore errors for lint check excluded methods
+        if self.name in LINT_EXCLUSION_METHODS:
+            return
+
         # Hide all diagnostics for now for dunder methods
         # These are well known protocol implementation
         if not self.name.startswith("_") or self.name in VALIDATION_REQUIRED_DUNDER:
             self.errors.append(error_msg)
 
+
+    def _validate_pageable_api(self):
+        # If api name starts with "list" and if annotated with "@distributed_trace"
+        # then this method should return ItemPaged or AsyncItemPaged
+        if self.return_type and self.name.startswith("list") and  "@distributed_trace" in self.annotations:
+            tokens = re.search(REGEX_ITEM_PAGED, self.return_type)
+            if tokens:
+                ret_short_type = tokens.groups()[-1]
+                if ret_short_type in PAGED_TYPES:
+                    logging.debug("list API returns valid paged return type")
+                    return
+            error_msg = "list API {0} should return ItemPaged or AsyncItemPaged instead of {1}".format(self.name, self.return_type)
+            logging.error(error_msg)
+            self.add_error(error_msg)                
+        
 
     def print_errors(self):
         if self.errors:

@@ -3,6 +3,7 @@ from json import JSONEncoder
 import logging
 import re
 import importlib
+import inspect
 
 from ._token import Token
 from ._token_kind import TokenKind
@@ -12,7 +13,7 @@ from ._diagnostic import Diagnostic
 JSON_FIELDS = ["Name", "Version", "VersionString", "Navigation", "Tokens", "Diagnostics"]
 
 HEADER_TEXT = "# Package is parsed using api-stub-generator(version:{})".format(VERSION)
-COMPLEX_DATA_TYPE_PATTERN = re.compile("([a-zA-Z]+)(\[|\()[^\]\)]+(\]|\))")
+COMPLEX_DATA_TYPE_PATTERN = re.compile("([\w.]+)(\[|\()[^\]\)]+(\]|\))")
 
 # Lint warnings
 SOURCE_LINK_NOT_AVAILABLE = "Source definition link is not available for [{0}]. Please check and ensure type is fully qualified name in docstring"
@@ -27,7 +28,7 @@ class ApiView:
     :param str: ver_string
     """
 
-    def __init__(self, nodeindex, pkg_name="", pkg_version=0, ver_string=""):
+    def __init__(self, nodeindex, pkg_name="", pkg_version=0, ver_string="", namespace = ""):
         self.Name = pkg_name
         self.Version = pkg_version
         self.VersionString = ver_string
@@ -36,6 +37,7 @@ class ApiView:
         self.Navigation = []
         self.Diagnostics = []
         self.indent = 0
+        self.namespace = namespace
         self.nodeindex = nodeindex
         self.add_literal(HEADER_TEXT)
         self.add_new_line(2)
@@ -102,6 +104,7 @@ class ApiView:
             self.add_keyword(prefix_type)
             return
 
+        logging.debug("Processing type {0} and prefix {1}".format(type_name, prefix_type))
         prefix_len = len(prefix_type)
         type_names = type_name[prefix_len + 1 : -1]
         if type_names:
@@ -123,6 +126,7 @@ class ApiView:
         if not type_name:
             return
 
+        logging.debug("Processing type {}".format(type_name))
         # Check if type is multi value types like Union, Dict, list etc
         # Those types needs to be recursively processed
         multi_types = re.search(COMPLEX_DATA_TYPE_PATTERN,type_name)
@@ -146,8 +150,12 @@ class ApiView:
         if navigate_to_id:
             token.NavigateToId = navigate_to_id
         elif type_name.startswith("~") and line_id:
-            # if navigation ID is missing for internal type, add diagnostic error
-            self.add_diagnostic(SOURCE_LINK_NOT_AVAILABLE.format(token.Value), line_id)            
+            # Check if type name is importable. If type name is incorrect in docstring then it wont be importable
+            # If type name is importable then it's a valid type name. Source link wont be available if type is from 
+            # different package
+            if not is_valid_type_name(type_full_name):
+                # Navigation ID is missing for internal type, add diagnostic error
+                self.add_diagnostic(SOURCE_LINK_NOT_AVAILABLE.format(token.Value), line_id)            
         self.add_token(token)
 
 
@@ -243,3 +251,16 @@ class Navigation:
 
     def add_child(self, child):
         self.ChildItems.append(child)
+
+
+def is_valid_type_name(type_name):
+    try:
+        module_end_index = type_name.rfind(".")
+        if module_end_index > 0:
+            module_name = type_name[:module_end_index]
+            class_name = type_name[module_end_index+1:]
+            mod = importlib.import_module(module_name)
+            return class_name in [x[0] for x in inspect.getmembers(mod)]
+    except:
+        logging.error("Failed to import {}".format(type_name))    
+    return False

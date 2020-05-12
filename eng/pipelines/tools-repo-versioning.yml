@@ -1,0 +1,22 @@
+# Tag the (azure-sdk-tools) repo to create some form of versioning.
+trigger: none
+
+pr: none
+
+pool:
+  vmImage: windows-2019
+
+jobs:
+  - job: TagToolsRepo
+    displayName: Version azure-sdk-tools with Git Tag
+
+    steps:
+    - pwsh: |
+        $PushURL = "$(Build.Repository.Uri)".Replace("https://", "https://$(azuresdk-github-pat)@") + ".git"
+        # Remove Organization name i.e Transform Azure/azure-sdk-tools -> azure-sdk-tools before appending build Number
+        $Tag = "$(Build.Repository.Name)".SubString("$(Build.Repository.Name)".IndexOf('/') + 1) + "_$(Build.BuildNumber)"
+        Write-Host "Tagging Repo with $Tag"
+        git -c user.name="azure-sdk" -c user.email="azuresdk@microsoft.com" tag -a $tag -m "Release tools version $Tag"
+        git push $PushURL $tag
+      displayName: Create and Push Version Tag
+      workingDirectory: $(Build.SourcesDirectory)

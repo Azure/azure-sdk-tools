@@ -13,6 +13,7 @@ namespace APIView
         TypeName = 6,
         MemberName = 7,
         StringLiteral = 8,
-        Literal = 9
+        Literal = 9,
+        Comment = 10
     }
 }

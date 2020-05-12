@@ -27,11 +27,11 @@ from subprocess import check_call
 import zipfile
 
 
-from ._apiview import ApiView, APIViewEncoder, Navigation, Kind, NavigationTag
+from apistub._apiview import ApiView, APIViewEncoder, Navigation, Kind, NavigationTag
 
 INIT_PY_FILE = "__init__.py"
 
-logging.getLogger().setLevel(logging.INFO)
+logging.getLogger().setLevel(logging.ERROR)
 
 
 class StubGenerator:
@@ -59,6 +59,13 @@ class StubGenerator:
             action="store_true",
         )
 
+        parser.add_argument(
+            "--hide-report",
+            help=("Hide diagnostic report"),
+            default=False,
+            action="store_true",
+        )
+
         args = parser.parse_args()
         if not os.path.exists(args.pkg_path):
             logging.error("Package path [{}] is invalid".format(args.pkg_path))
@@ -66,13 +73,12 @@ class StubGenerator:
         elif not os.path.exists(args.temp_path):
             logging.error("Temp path [{0}] is invalid".format(args.temp_path))
             exit(1)
-        elif not os.path.exists(args.out_path):
-            logging.error("Output path [{}] is invalid".format(args.out_path))
-            exit(1)
+
 
         self.pkg_path = args.pkg_path
         self.temp_path = args.temp_path
         self.out_path = args.out_path
+        self.hide_report = args.hide_report
         if args.verbose:
             logging.getLogger().setLevel(logging.DEBUG)
 
@@ -81,23 +87,24 @@ class StubGenerator:
         if self.pkg_path.endswith(".whl") or self.pkg_path.endswith(".zip"):
             logging.info("Extracting package to temp path")
             pkg_root_path = self._extract_wheel()
-            pkg_name, version = self._parse_pkg_name()
+            pkg_name, version, namespace = self._parse_pkg_name()
         else:
             # package root is passed as arg to parse
             pkg_root_path = self.pkg_path
-            pkg_name, version, _ = parse_setup_py(pkg_root_path)
+            pkg_name, version, namespace = parse_setup_py(pkg_root_path)
 
-        logging.debug("package name: {0}, version:{1}".format(pkg_name, version))
+        logging.debug("package name: {0}, version:{1}, namespace:{2}".format(pkg_name, version, namespace))
 
         logging.debug("Installing package from {}".format(self.pkg_path))
         self._install_package(pkg_name)
         logging.debug("Generating tokens")
-        apiview = self._generate_tokens(pkg_root_path, pkg_name, version)
+        apiview = self._generate_tokens(pkg_root_path, pkg_name, version, namespace)
         if apiview.Diagnostics:
             # Show error report in console
-            print("************************** Error Report **************************")
-            for m in self.module_dict.keys():
-                self.module_dict[m].print_errors()
+            if not self.hide_report:
+                print("************************** Error Report **************************")
+                for m in self.module_dict.keys():
+                    self.module_dict[m].print_errors()
             logging.info("*************** Completed parsing package with errors ***************")
         else:
             logging.info("*************** Completed parsing package and generating tokens ***************")
@@ -143,21 +150,31 @@ class StubGenerator:
         return modules
 
 
-    def _generate_tokens(self, pkg_root_path, package_name, version):
+    def _generate_tokens(self, pkg_root_path, package_name, version, namespace):
         """This method returns a dictionary of namespace and all public classes in each namespace
         """
         # Import ModuleNode.
         # Importing it globally can cause circular dependency since it needs NodeIndex that is defined in this file
-        from .nodes._module_node import ModuleNode
+        from apistub.nodes._module_node import ModuleNode
 
         self.module_dict = {}
         nodeindex = NodeIndex()
         # todo (Update the version number correctly)
-        apiview = ApiView(nodeindex, package_name, 0, version)
+        apiview = ApiView(nodeindex, package_name, 0, version, namespace)
         modules = self._find_modules(pkg_root_path)
         logging.debug("Modules to generate tokens: {}".format(modules))
+
+        # find root module name
+        root_module = ""
+        if namespace:
+            root_module = namespace.split(".")[0]
+
         # load all modules and parse them recursively
         for m in modules:
+            if not m.startswith(root_module):
+                logging.debug("Skipping module {0}. Module should start with {1}".format(m, root_module))
+                continue
+
             logging.debug("Importing module {}".format(m))
             try:
                 module_obj = importlib.import_module(m)
@@ -213,7 +230,8 @@ class StubGenerator:
         filename_parts = whl_name.split("-")
         pkg_name = filename_parts[0].replace("_", "-")
         version = filename_parts[1]
-        return pkg_name, version
+        name_space = pkg_name.replace('-', '.')
+        return pkg_name, version, name_space
 
     def _install_package(self, pkg_name):
         # Uninstall the package and reinstall it to parse so inspect can get members in package

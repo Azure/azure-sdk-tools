@@ -1,4 +1,5 @@
 ﻿using Azure.Sdk.Tools.CheckEnforcer.Integrations.GitHub;
+using Microsoft.Extensions.Caching.Memory;
 using Octokit;
 using System;
 using System.Collections.Concurrent;
@@ -13,55 +14,49 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Configuration
 {
     public class RepositoryConfigurationProvider : IRepositoryConfigurationProvider
     {
-        public RepositoryConfigurationProvider(IGitHubClientProvider gitHubClientProvider)
+        public RepositoryConfigurationProvider(IGitHubClientProvider gitHubClientProvider, IMemoryCache cache)
         {
             this.gitHubClientProvider = gitHubClientProvider;
+            this.cache = cache;
         }
 
         private IGitHubClientProvider gitHubClientProvider;
-
-        private ConcurrentDictionary<string, RepositoryConfigurationCacheEntry> cachedConfigurations = new ConcurrentDictionary<string, RepositoryConfigurationCacheEntry>();
+        private IMemoryCache cache;
 
         private const int RepositoryConfigurationCacheDurationInSeconds = 60;
 
         public async Task<IRepositoryConfiguration> GetRepositoryConfigurationAsync(long installationId, long repositoryId, string pullRequestSha, CancellationToken cancellationToken)
         {
-            var cacheKey = $"{installationId}/{repositoryId}"; // HACK: Config is global across all branches at the moment.
-            
-            try
+            var repositoryConfigurationCacheKey = $"{installationId}/{repositoryId}_repositoryConfigurationCacheKey"; // HACK: Config is global across all branches at the moment.
+
+            var configuration = await cache.GetOrCreateAsync<IRepositoryConfiguration>(repositoryConfigurationCacheKey, async (entry) =>
             {
-                cachedConfigurations.TryGetValue(cacheKey, out RepositoryConfigurationCacheEntry cacheEntry);
-                
-                if (cacheEntry?.Fetched.AddSeconds(RepositoryConfigurationCacheDurationInSeconds) > DateTimeOffset.UtcNow)
-                {
-                    return cacheEntry.Configuration;
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(RepositoryConfigurationCacheDurationInSeconds);
+
+                try
+                { 
+                    var client = await gitHubClientProvider.GetInstallationClientAsync(installationId, cancellationToken);
+                    var searchResults = await client.Repository.Content.GetAllContents(repositoryId, "eng/CHECKENFORCER");
+                    var configurationFile = searchResults.Single();
+                    ThrowIfInvalidFormat(configurationFile);
+                 
+                    var builder = new DeserializerBuilder().Build();
+                    var configuration = builder.Deserialize<RepositoryConfiguration>(configurationFile.Content);
+
+                    return configuration;
                 }
-
-                var client = await gitHubClientProvider.GetInstallationClientAsync(installationId, cancellationToken);
-                var searchResults = await client.Repository.Content.GetAllContents(repositoryId, "eng/CHECKENFORCER");
-                var configurationFile = searchResults.Single();
-                ThrowIfInvalidFormat(configurationFile);
-
-                var builder = new DeserializerBuilder().Build();
-                var configuration = builder.Deserialize<RepositoryConfiguration>(configurationFile.Content);
-
-                cacheEntry = new RepositoryConfigurationCacheEntry(DateTimeOffset.UtcNow, configuration);
-                cachedConfigurations.TryAdd(cacheKey, cacheEntry);
-
-                return configuration;
-            }
-            catch (NotFoundException) // OK, we just disable if it isn't configured.
-            {
-                var configuration =  new RepositoryConfiguration()
+                catch (NotFoundException) // OK, we just disable if it isn't configured.
                 {
-                    IsEnabled = false
-                };
+                    var configuration =  new RepositoryConfiguration()
+                    {
+                        IsEnabled = false
+                    };
 
-                var cacheEntry = new RepositoryConfigurationCacheEntry(DateTimeOffset.UtcNow, configuration);
-                cachedConfigurations.TryAdd(cacheKey, cacheEntry);
+                    return configuration;
+                }
+            });
 
-                return configuration;
-            }
+            return configuration;
         }
 
         private static void ThrowIfInvalidFormat(RepositoryContent configurationFile)

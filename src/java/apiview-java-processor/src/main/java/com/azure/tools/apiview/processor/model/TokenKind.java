@@ -14,7 +14,9 @@ public enum TokenKind {
 
     TYPE_NAME(6),
     MEMBER_NAME(7),
-    STRING_LITERAL(8);
+    STRING_LITERAL(8),
+    LITERAL(9),
+    COMMENT(10);
 
     private final int id;
 

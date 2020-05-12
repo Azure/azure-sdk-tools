@@ -1,0 +1,19 @@
+public ConfigurationClient createSyncConfigurationClient() {
+    String connectionString = getConnectionString();
+    // BEGIN: com.azure.data.applicationconfig.configurationclient.instantiation
+    ConfigurationClient configurationClient = new ConfigurationClientBuilder()
+        .connectionString(connectionString)
+        .buildClient();
+    // END: com.azure.data.applicationconfig.configurationclient.instantiation
+    return configurationClient;
+}
+
+public ConfigurationClient createSyncConfigurationClient() {
+    String connectionString = getConnectionString();
+    // BEGIN: com.azure.data.applicationconfig.configurationclient.instantiation
+    ConfigurationClient configurationClient = new ConfigurationClientBuilder()
+        .connectionString(connectionString)
+        .buildClient();
+    // END: com.azure.data.applicationconfig.configurationclient.instantiation
+    return configurationClient;
+}

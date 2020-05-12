@@ -43,6 +43,11 @@ namespace ApiView
             Append(SyntaxFacts.GetText(syntaxKind), CodeFileTokenKind.Punctuation);
         }
 
+        public void Punctuation(string s)
+        {
+            Append(s, CodeFileTokenKind.Punctuation);
+        }
+
         public void NewLine()
         {
             Append(new CodeFileToken(null, CodeFileTokenKind.Newline));
@@ -61,6 +66,11 @@ namespace ApiView
         public void Space()
         {
             Append(" ", CodeFileTokenKind.Whitespace);
+        }
+
+        public void Text(string text)
+        {
+            Append(text, CodeFileTokenKind.Text);
         }
     }
 }

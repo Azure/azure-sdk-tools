@@ -27,7 +27,7 @@ steps:
         ${{ parameters.SubscriptionConfiguration }}
       "@ | ConvertFrom-Json -AsHashtable;
 
-      &eng/common/TestResources/New-TestResources.ps1 `
+      eng/common/TestResources/New-TestResources.ps1 `
         -BaseName 'Generated' `
         -ServiceDirectory ${{ parameters.ServiceDirectory }} `
         -Location '${{ parameters.Location }}' `

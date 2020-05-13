@@ -32,3 +32,4 @@ jobs:
           - azure-sdk-for-js
           - azure-sdk-for-net
           - azure-sdk-for-python
+          - autorest.csharp

@@ -32,7 +32,6 @@ namespace Azure.ClientSdk.Analyzers
 
             public bool Equals(IParameterSymbol x, IParameterSymbol y)
             {
-                //return x.GetType().Equals(y.GetType()) && x.Name.Equals(y.Name);
                 return ((x.Type is ITypeParameterSymbol && y.Type is ITypeParameterSymbol) || SymbolEqualityComparer.Default.Equals(x.Type, y.Type)) && x.Name.Equals(y.Name);
             }
 

@@ -6,9 +6,6 @@
     <VersionPrefix>0.1.1</VersionPrefix>
     <LangVersion>8</LangVersion>
     <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
-    <AssemblyVersion>0.1.1.0</AssemblyVersion>
-    <FileVersion>0.1.1.0</FileVersion>
-    <Version>0.1.1-dev.20200513.1</Version>
   </PropertyGroup>
 
   <ItemGroup>

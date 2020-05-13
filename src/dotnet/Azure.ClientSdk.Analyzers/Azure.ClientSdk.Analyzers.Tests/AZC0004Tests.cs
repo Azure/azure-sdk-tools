@@ -190,7 +190,7 @@ namespace RandomNamespace
 {
     public class SomeClient
     {
-        public virtual Task GetAsync(int sameNameDifferentType, CancellationToken cancellationToken = default)
+        public virtual Task [|GetAsync|](int sameNameDifferentType, CancellationToken cancellationToken = default)
         {
             return null;
         }

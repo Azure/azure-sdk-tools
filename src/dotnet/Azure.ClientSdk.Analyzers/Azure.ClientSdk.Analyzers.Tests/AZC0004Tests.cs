@@ -117,7 +117,7 @@ namespace RandomNamespace
         }
 
         [Fact]
-        public async Task AZC0004ProducedForGenericMethodsTakingGenericArgWithSyncAlternative()
+        public async Task AZC0004ProducedForGenericMethodsTakingGenericArgWithoutSyncAlternative()
         {
             const string code = @"
 using System.Threading;
@@ -177,6 +177,30 @@ namespace RandomNamespace
     }
 }";
             await Verifier.VerifyAnalyzerAsync(code);
+        }
+
+        [Fact]
+        public async Task AZC0004NProducedForMethodsWithoutArgMatchedSyncAlternative()
+        {
+            const string code = @"
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace RandomNamespace
+{
+    public class SomeClient
+    {
+        public virtual Task GetAsync(int sameNameDifferentType, CancellationToken cancellationToken = default)
+        {
+            return null;
+        }
+
+        public virtual void Get(string sameNameDifferentType, CancellationToken cancellationToken = default)
+        {
+        }
+    }
+}";
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0004");
         }
     }
 }

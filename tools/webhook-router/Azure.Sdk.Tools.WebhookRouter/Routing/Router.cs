@@ -6,6 +6,7 @@ using Azure.Sdk.Tools.WebhookRouter.Integrations.GitHub;
 using Azure.Security.KeyVault.Secrets;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -18,23 +19,33 @@ namespace Azure.Sdk.Tools.WebhookRouter.Routing
 {
     public class Router : IRouter
     {
-        public Router(IMemoryCache cache)
+        public Router(IMemoryCache cache, ILogger<IRouter> logger)
         {
             this.cache = cache;
+            this.logger = logger;
         }
 
         private IMemoryCache cache;
+        private ILogger logger;
+
+        private string GetWebsiteResourceGroupEnvironmentVariable()
+        {
+            logger.LogInformation("Fetching WEBSITE_RESOURCE_GROUP environment variable.");
+            var websiteResourceGroupEnvironmentVariable = Environment.GetEnvironmentVariable("WEBSITE_RESOURCE_GROUP");
+            logger.LogInformation("WEBSITE_RESOURCE_GROUP environemnt variable was: {websiteResourceGroupEnvironmentVariable}", websiteResourceGroupEnvironmentVariable);
+            return websiteResourceGroupEnvironmentVariable;
+        }
 
         private Uri GetSecretClientUri()
         {
-            var websiteResourceGroupEnvironmentVariable = Environment.GetEnvironmentVariable("WEBSITE_RESOURCE_GROUP");
+            var websiteResourceGroupEnvironmentVariable = GetWebsiteResourceGroupEnvironmentVariable();
             var uri = new Uri($"https://{websiteResourceGroupEnvironmentVariable}.vault.azure.net/");
             return uri;
         }
 
         private Uri GetConfigurationUri()
         {
-            var websiteResourceGroupEnvironmentVariable = Environment.GetEnvironmentVariable("WEBSITE_RESOURCE_GROUP");
+            var websiteResourceGroupEnvironmentVariable = GetWebsiteResourceGroupEnvironmentVariable();
             var uri = new Uri($"https://{websiteResourceGroupEnvironmentVariable}.azconfig.io/");
             return uri;
         }

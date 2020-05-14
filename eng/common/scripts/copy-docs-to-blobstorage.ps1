@@ -218,18 +218,18 @@ function Upload-Blobs
 
 if ($Language -eq "javascript")
 {
-    $PublishedDocs = Get-ChildItem "$($DocLocation)" | Where-Object -FilterScript {$_.Name.EndsWith(".zip")}
+    $PublishedDocs = Get-ChildItem "$($DocLocation)/documentation" | Where-Object -FilterScript {$_.Name.EndsWith(".zip")}
 
     foreach ($Item in $PublishedDocs) {
         $PkgName = "azure-$($Item.BaseName)"
         Write-Host $PkgName
-        Expand-Archive -Force -Path "$($DocLocation)/$($Item.Name)" -DestinationPath "$($DocLocation)/$($Item.BaseName)"
-        $dirList = Get-ChildItem "$($DocLocation)/$($Item.BaseName)/$($Item.BaseName)" -Attributes Directory
+        Expand-Archive -Force -Path "$($DocLocation)/documentation/$($Item.Name)" -DestinationPath "$($DocLocation)/documentation/$($Item.BaseName)"
+        $dirList = Get-ChildItem "$($DocLocation)/documentation/$($Item.BaseName)/$($Item.BaseName)" -Attributes Directory
 
         if($dirList.Length -eq 1){
             $DocVersion = $dirList[0].Name
             Write-Host "Uploading Doc for $($PkgName) Version:- $($DocVersion)..."
-            Upload-Blobs -DocDir "$($DocLocation)/$($Item.BaseName)/$($Item.BaseName)/$($DocVersion)" -PkgName $PkgName -DocVersion $DocVersion
+            Upload-Blobs -DocDir "$($DocLocation)/documentation/$($Item.BaseName)/$($Item.BaseName)/$($DocVersion)" -PkgName $PkgName -DocVersion $DocVersion
         }
         else{
             Write-Host "found more than 1 folder under the documentation for package - $($Item.Name)"

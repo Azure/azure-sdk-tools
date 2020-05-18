@@ -18,16 +18,16 @@ namespace Azure.Sdk.Tools.PipelineWitness
 {
     public class RunProcessor
     {
-        public RunProcessor(ILogger<RunProcessor> logger, IMemoryCache cache, IHttpClientFactory httpClientFactory)
+        public RunProcessor(ILogger<RunProcessor> logger, IMemoryCache cache, HttpClient httpClient)
         {
             this.logger = logger;
             this.cache = cache;
-            this.httpClientFactory = httpClientFactory;
+            this.httpClient = httpClient;
         }
 
         private ILogger<RunProcessor> logger;
         private IMemoryCache cache;
-        private IHttpClientFactory httpClientFactory;
+        private HttpClient httpClient;
 
         private AuthenticationHeaderValue GetAuthenticationHeader(string azureDevOpsPersonalAccessToken)
         {
@@ -85,8 +85,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
             var azureDevOpsPersonalAccessToken = await GetAzureDevOpsPersonalAccessTokenAsync();
             request.Headers.Authorization = GetAuthenticationHeader(azureDevOpsPersonalAccessToken);
         
-            var client = httpClientFactory.CreateClient();
-            var response = await client.SendAsync(request);
+            var response = await httpClient.SendAsync(request);
 
             var content = await response.Content.ReadAsStringAsync();
             return content;

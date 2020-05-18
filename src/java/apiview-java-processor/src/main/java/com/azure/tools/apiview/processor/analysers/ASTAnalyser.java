@@ -649,7 +649,17 @@ public class ASTAnalyser implements Analyser {
             addToken(new Token(WHITESPACE, " "));
 
             for (int i = 0, max = thrownExceptions.size(); i < max; i++) {
-                addToken(new Token(TYPE_NAME, thrownExceptions.get(i).getElementType().toString()));
+                final String exceptionName = thrownExceptions.get(i).getElementType().toString();
+                final Token throwsToken = new Token(TYPE_NAME, exceptionName);
+
+                // we look up the package name in case it is a custom type in the same library,
+                // so that we can link to it
+                if (apiListing.getTypeToPackageNameMap().containsKey(exceptionName)) {
+                    String fullPath = apiListing.getTypeToPackageNameMap().get(exceptionName);
+                    throwsToken.setNavigateToId(makeId(fullPath + "." + exceptionName));
+                }
+
+                addToken(throwsToken);
                 if (i < max - 1) {
                     addToken(new Token(PUNCTUATION, ","));
                     addToken(new Token(WHITESPACE, " "));

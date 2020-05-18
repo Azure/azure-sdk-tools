@@ -2,35 +2,50 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using Azure.Sdk.Tools.PipelineWitness.Records;
 using Microsoft.Azure.EventHubs;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.Logging;
+using Microsoft.WindowsAzure.Storage.Blob.Protocol;
 
 namespace Azure.Sdk.Tools.PipelineWitness.Functions
 {
     public class RunStateChangedFunction
     {
-        public RunStateChangedFunction(IRecordStore recordStore)
+        public RunStateChangedFunction(ILogger<RunStateChangedFunction> logger, RunProcessor runProcessor)
         {
-            this.recordStore = recordStore;
+            this.logger = logger;
+            this.runProcessor = runProcessor;
         }
 
-        private IRecordStore recordStore;
+        private ILogger logger;
+        private RunProcessor runProcessor;
 
         [FunctionName("RunStateChanged")]
-        public async Task Run([EventHubTrigger("run-state-changed", Connection = "PipelineWitnessEventHubConnectionString", ConsumerGroup = "localdebugging")] EventData @event, ILogger log)
+        public async Task Run([EventHubTrigger("run-state-changed", Connection = "PipelineWitnessEventHubConnectionString", ConsumerGroup = "localdebugging")]EventData @event)
         {
+            logger.LogInformation("Processing run-state-changed event.");
             string messageBody = Encoding.UTF8.GetString(@event.Body.Array, @event.Body.Offset, @event.Body.Count);
+            logger.LogInformation("Message body was: {messageBody}", messageBody);
+
+            logger.LogInformation("Extracting content from message.");
             var message = JsonDocument.Parse(messageBody);
-            var encodedContent = message.RootElement.GetProperty("content").ToString();
-            var contentBytes = Convert.FromBase64String(encodedContent);
-            var content = Encoding.UTF8.GetString(contentBytes);
-            await recordStore.PutRecordAsync<RunStateChangedEventRecord>(content);
+            var base64EncodedJson = message.RootElement.GetProperty("content").ToString();
+            var jsonBytes = Convert.FromBase64String(base64EncodedJson);
+            var json = Encoding.UTF8.GetString(jsonBytes);
+            logger.LogInformation("Payload: {json}", json);
+
+
+            logger.LogInformation("Parsing payload.");
+            var runStateChangedEventPayload = JsonDocument.Parse(json);
+            var runUrl = runStateChangedEventPayload.RootElement.GetProperty("resource").GetProperty("runUrl").GetString();
+            logger.LogInformation("Run URL was: {runUrl}", runUrl);
+
+            await runProcessor.ProcessRunAsync(runUrl);
         }
     }
 }

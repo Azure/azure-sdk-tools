@@ -1,9 +1,11 @@
-﻿using Azure.Sdk.Tools.PipelineWitness;
-using Azure.Sdk.Tools.PipelineWitness.Records;
+﻿using Azure.Cosmos;
+using Azure.Sdk.Tools.PipelineWitness;
 using Microsoft.Azure.Functions.Extensions.DependencyInjection;
+using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
+using System.Net.NetworkInformation;
 using System.Text;
 
 [assembly: FunctionsStartup(typeof(Startup))]
@@ -14,8 +16,10 @@ namespace Azure.Sdk.Tools.PipelineWitness
     {
         public override void Configure(IFunctionsHostBuilder builder)
         {
-            builder.Services.AddSingleton<IRecordStore, RecordStore>();
-            builder.Services.AddSingleton<IRecordHandler<RunStateChangedEventRecord>, RunStateChangedEventRecordHandler>();
+            builder.Services.AddLogging();
+            builder.Services.AddMemoryCache();
+            builder.Services.AddSingleton<RunProcessor>();
+            builder.Services.AddHttpClient();
         }
     }
 }

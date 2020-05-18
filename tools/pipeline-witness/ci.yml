@@ -1,0 +1,30 @@
+trigger:
+  branches:
+    include:
+      - master
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - tools/pipeline-witness
+  
+pr:
+  branches:
+    include:
+      - master
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - tools/pipeline-witness
+  
+extends:
+  template: ../../eng/pipelines/templates/stages/archetype-sdk-tool-azure-function.yml
+  parameters:
+    ToolName: pipeline-witness
+    FunctionProject: Azure.Sdk.Tools.PipelineWitness
+    TestProject: Azure.Sdk.Tools.PipelineWitness.Tests
+    ProductionEnvironmentName: pipelinewitnessprod
+    StagingEnvironmentName: pipelinewitnessstaging

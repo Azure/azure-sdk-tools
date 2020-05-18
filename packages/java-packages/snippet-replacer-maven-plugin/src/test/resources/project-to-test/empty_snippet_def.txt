@@ -1,0 +1,6 @@
+public ConfigurationClient createSyncConfigurationClient() {
+    String connectionString = getConnectionString();
+    // BEGIN: com.azure.data.applicationconfig.configurationclient.testEmpty
+    // END: com.azure.data.applicationconfig.configurationclient.testEmpty
+    return configurationClient;
+}

@@ -1,0 +1,61 @@
+
+/**
+ * This class contains code samples for generating javadocs through doclets for {@link ConfigurationClient}
+ */
+public final class ConfigurationClientJavaDocCodeSnippets {
+
+    private String key1 = "key1";
+    private String key2 = "key2";
+    private String value1 = "val1";
+    private String value2 = "val2";
+
+    /**
+     * Generates code sample for creating a {@link ConfigurationClient}
+     *
+     * @return An instance of {@link ConfigurationClient}
+     * @throws IllegalStateException If configuration credentials cannot be created.
+     */
+    public ConfigurationClient createAsyncConfigurationClientWithPipeline() {
+
+    /**
+     * Generates code sample for creating a {@link ConfigurationClient}
+     *
+     * @return An instance of {@link ConfigurationClient}
+     * @throws IllegalStateException If configuration credentials cannot be created
+     */
+    public ConfigurationClient createSyncConfigurationClient() {
+        String connectionString = getConnectionString();
+        // BEGIN: com.azure.data.applicationconfig.configurationclient.instantiation
+        ConfigurationClient configurationClient = new ConfigurationClientBuilder()
+            .connectionString(connectionString)
+            .buildClient();
+        // END: com.azure.data.applicationconfig.configurationclient.instantiation
+        return configurationClient;
+    }
+
+    /**
+     * Generates code sample for using {@link ConfigurationClient#addConfigurationSetting(String, String, String)}
+     */
+    public void addConfigurationSetting() {
+        ConfigurationClient configurationClient = createSyncConfigurationClient();
+        // BEGIN: com.azure.data.appconfiguration.ConfigurationClient.addConfigurationSetting#String-String-String
+        ConfigurationSetting result = configurationClient
+            .addConfigurationSetting("prodDBConnection", "westUS", "db_connection");
+        System.out.printf("Key: %s, Label: %s, Value: %s", result.getKey(), result.getLabel(), result.getValue());
+        // END: com.azure.data.appconfiguration.ConfigurationClient.addConfigurationSetting#String-String-String
+    }
+
+    public void encodedHtmlWorks(){
+        // BEGIN: com.azure.core.http.rest.pagedflux.instantiation
+        // A supplier that fetches the first page of data from source/service
+        Supplier<Mono<PagedResponse<Integer>>> firstPageRetriever = () -> getFirstPage();
+
+        // A function that fetches subsequent pages of data from source/service given a continuation token
+        Function<String, Mono<PagedResponse<Integer>>> nextPageRetriever =
+            continuationToken -> getNextPage(continuationToken);
+
+        PagedFlux<Integer> pagedFlux = new PagedFlux<>(firstPageRetriever,
+            nextPageRetriever);
+        // END: com.azure.core.http.rest.pagedflux.instantiation
+    }
+}

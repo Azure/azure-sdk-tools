@@ -12,9 +12,20 @@ from ._argtype import ArgType
 KW_ARG_NAME = "**kwargs"
 VALIDATION_REQUIRED_DUNDER = ["__init__",]
 KWARG_NOT_REQUIRED_METHODS = ["close",]
-TYPEHINT_NOT_REQUIRED_METHODS = ["close",]
-REGEX_ITEM_PAGED = "~[\w.]*\.([\w]*)\s?[\[\(][\w]*[\]\)]"
+TYPEHINT_NOT_REQUIRED_METHODS = ["close", "__init__"]
+REGEX_ITEM_PAGED = "~[\w.]*\.([\w]*)\s?[\[\(][^\n]*[\]\)]"
 PAGED_TYPES = ["ItemPaged", "AsyncItemPaged",]
+# Methods that are implementation of known interface should be excluded from lint check
+# for e.g. get, update, keys
+LINT_EXCLUSION_METHODS = [
+    "get",
+    "has_key",
+    "items",
+    "keys",
+    "update",
+    "values",
+    "close",    
+]
 
 
 def is_kwarg_mandatory(func_name):
@@ -75,7 +86,7 @@ class FunctionNode(NodeEntityBase):
             error_message = "Error in parsing decorators for function {}".format(
                 self.name
             )
-            self.errors.append(error_message)
+            self.add_error(error_message)
             logging.error(error_message)
 
         self.is_class_method = "@classmethod" in self.annotations
@@ -125,7 +136,7 @@ class FunctionNode(NodeEntityBase):
         self._copy_kw_args()
 
         if not self.return_type and is_typehint_mandatory(self.name):
-            self.errors.append("Return type is missing in both typehint and docstring")
+            self.add_error("Return type is missing in both typehint and docstring")
         # Validate return type
         self._validate_pageable_api()
 
@@ -194,7 +205,8 @@ class FunctionNode(NodeEntityBase):
     def _parse_typehint(self):
 
         # Skip parsing typehint if typehint is not expected for e.g dunder or async methods
-        if not is_typehint_mandatory(self.name) or self.is_async:
+        # and if return type is already found
+        if self.return_type and not is_typehint_mandatory(self.name) or self.is_async:
             return
 
         # Parse type hint to get return type and types for positional args
@@ -203,7 +215,7 @@ class FunctionNode(NodeEntityBase):
         type_hint_ret_type = typehint_parser.find_return_type()
         # Type hint must be present for all APIs. Flag it as an error if typehint is missing
         if  not type_hint_ret_type:
-            self.errors.append("Typehint is missing for method {}".format(self.name))
+            self.add_error("Typehint is missing for method {}".format(self.name))
             return
 
         if not self.return_type:
@@ -214,7 +226,7 @@ class FunctionNode(NodeEntityBase):
             long_ret_type = self.return_type
             if long_ret_type != type_hint_ret_type and short_return_type != type_hint_ret_type:
                 error_message = "Return type in type hint is not matching return type in docstring"
-                self.errors.append(error_message)
+                self.add_error(error_message)
 
 
     def _generate_signature_token(self, apiview):
@@ -287,6 +299,10 @@ class FunctionNode(NodeEntityBase):
 
 
     def add_error(self, error_msg):
+        # Ignore errors for lint check excluded methods
+        if self.name in LINT_EXCLUSION_METHODS:
+            return
+
         # Hide all diagnostics for now for dunder methods
         # These are well known protocol implementation
         if not self.name.startswith("_") or self.name in VALIDATION_REQUIRED_DUNDER:
@@ -303,7 +319,7 @@ class FunctionNode(NodeEntityBase):
                 if ret_short_type in PAGED_TYPES:
                     logging.debug("list API returns valid paged return type")
                     return
-            error_msg = "list API {0} should return ItemPaged or AsyncItemPaged".format(self.name)
+            error_msg = "list API {0} should return ItemPaged or AsyncItemPaged instead of {1}".format(self.name, self.return_type)
             logging.error(error_msg)
             self.add_error(error_msg)                
         

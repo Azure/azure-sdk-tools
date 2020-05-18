@@ -93,7 +93,7 @@ class StubGenerator:
             pkg_root_path = self.pkg_path
             pkg_name, version, namespace = parse_setup_py(pkg_root_path)
 
-        logging.debug("package name: {0}, version:{1}".format(pkg_name, version))
+        logging.debug("package name: {0}, version:{1}, namespace:{2}".format(pkg_name, version, namespace))
 
         logging.debug("Installing package from {}".format(self.pkg_path))
         self._install_package(pkg_name)
@@ -163,8 +163,18 @@ class StubGenerator:
         apiview = ApiView(nodeindex, package_name, 0, version, namespace)
         modules = self._find_modules(pkg_root_path)
         logging.debug("Modules to generate tokens: {}".format(modules))
+
+        # find root module name
+        root_module = ""
+        if namespace:
+            root_module = namespace.split(".")[0]
+
         # load all modules and parse them recursively
         for m in modules:
+            if not m.startswith(root_module):
+                logging.debug("Skipping module {0}. Module should start with {1}".format(m, root_module))
+                continue
+
             logging.debug("Importing module {}".format(m))
             try:
                 module_obj = importlib.import_module(m)

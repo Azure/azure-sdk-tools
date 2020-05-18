@@ -215,20 +215,14 @@ function Operate-OnPackages ($activePkgList, $serviceName, $repoRoot)
 {
     foreach ($pkg in $activePkgList){
         $pkgProps = Get-PkgProperties -PackageName $pkg["name"] -ServiceName $serviceName -Language "net" -RepoRoot $repoRoot
-        Write-Host "Package Name in ci.yml: " $pkg["name"]
+        $pkgDirectoryName = Split-Path $pkgProps.pkgDirectoryPath -Leaf
         Write-Host ($pkgProps | Format-List | Out-String)
+        if ($_.pkgReadMePath) { $propsForPrint | Add-Member -MemberType Noteproperty -Name Date -Value $($date)}
 
-        $DirectoryName = Split-Path $pkgProps.pkgDirectoryPath -Leaf
-        Write-Host $DirectoryName -ForegroundColor blue
-
-        if ($DirectoryName -eq $pkgProps.pkgName)
+        if ($pkgDirectoryName -ne $pkgProps.pkgName)
         {
-            Write-Host "Directory Name matches Package Name" -ForegroundColor green
-        }
-        else
-        {
-            Write-Host "Directory Name does not match Package Name" -ForegroundColor red
-        }
+            Write-Host "Directory Name does not follow the conventions" -ForegroundColor Yellow
+        } 
     }
 }
 

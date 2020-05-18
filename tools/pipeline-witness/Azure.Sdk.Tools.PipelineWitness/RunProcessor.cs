@@ -38,9 +38,9 @@ namespace Azure.Sdk.Tools.PipelineWitness
             return header;
         }
 
-        public async Task ProcessRunAsync(string runUrl)
+        public async Task ProcessRunAsync(Uri runUri)
         {
-            var content = await GetContentFromAzureDevOpsAsync(runUrl);
+            var content = await GetContentFromAzureDevOpsAsync(runUri);
             var document = JsonDocument.Parse(content);
             var record = new AzurePipelinesRun(document);
 
@@ -71,10 +71,17 @@ namespace Azure.Sdk.Tools.PipelineWitness
             return cosmosDbPrimaryAuthorizationKey;
         }
 
-        private async Task<string> GetContentFromAzureDevOpsAsync(string contentUrl)
+        private bool IsContentUrlValid(Uri contentUri)
         {
+            return contentUri.Host == "dev.azure.com";
+        }
+
+        private async Task<string> GetContentFromAzureDevOpsAsync(Uri contentUri)
+        {
+            if (!IsContentUrlValid(contentUri)) throw new InvalidOperationException($"Invalid contentUrl: {contentUri}");
+
             // TODO: Add content here to cache and archive these payloads.
-            var request = new HttpRequestMessage(HttpMethod.Get, contentUrl);
+            var request = new HttpRequestMessage(HttpMethod.Get, contentUri);
             var azureDevOpsPersonalAccessToken = await GetAzureDevOpsPersonalAccessTokenAsync();
             request.Headers.Authorization = GetAuthenticationHeader(azureDevOpsPersonalAccessToken);
         

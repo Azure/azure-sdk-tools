@@ -26,7 +26,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Functions
         private RunProcessor runProcessor;
 
         [FunctionName("RunStateChanged")]
-        public async Task Run([EventHubTrigger("run-state-changed", Connection = "PipelineWitnessEventHubConnectionString", ConsumerGroup = "localdebugging")]EventData @event)
+        public async Task Run([EventHubTrigger("run-state-changed", Connection = "PipelineWitnessEventHubConnectionString")]EventData @event)
         {
             logger.LogInformation("Processing run-state-changed event.");
             string messageBody = Encoding.UTF8.GetString(@event.Body.Array, @event.Body.Offset, @event.Body.Count);
@@ -43,9 +43,10 @@ namespace Azure.Sdk.Tools.PipelineWitness.Functions
             logger.LogInformation("Parsing payload.");
             var runStateChangedEventPayload = JsonDocument.Parse(json);
             var runUrl = runStateChangedEventPayload.RootElement.GetProperty("resource").GetProperty("runUrl").GetString();
-            logger.LogInformation("Run URL was: {runUrl}", runUrl);
+            var runUri = new Uri(runUrl);
+            logger.LogInformation("Run URI was: {runUri}", runUri);
 
-            await runProcessor.ProcessRunAsync(runUrl);
+            await runProcessor.ProcessRunAsync(runUri);
         }
     }
 }

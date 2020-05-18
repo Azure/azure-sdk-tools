@@ -39,6 +39,8 @@ class PackageProps
     }
 }
 
+Install-Module -Name powershell-yaml -RequiredVersion 0.4.1 -Force -Scope CurrentUser
+
 function Extract-PkgProps ($pkgPath, $pkgName)
 {
     if ($Language -eq "net")
@@ -172,4 +174,70 @@ function Get-PkgProperties
     exit 1
 }
 
+function Show-PkgsProperties
+{
+    Param
+    (
+        [Parameter(Mandatory=$true)]
+        [ValidateSet("net","java","js","python")]
+        [string]$Language,
+        [string]$RepoRoot="${PSScriptRoot}/../../../..",
+        [string]$ServiceName=$null
+    )
+
+    if ([string]::IsNullOrEmpty($ServiceName)) {
+        $searchDir = Join-Path $RepoRoot "sdk"
+
+        foreach ($dir in (Get-ChildItem $searchDir -Directory))
+        {
+            $serviceDir = Join-Path $searchDir $dir.Name
+
+            if (Test-Path (Join-Path $serviceDir "ci.yml"))
+            {
+                $activePkgList = Get-PkgListFromYml -ciYmlPath (Join-Path $serviceDir "ci.yml")
+                Operate-OnPackages -activePkgList $activePkgList -serviceName $dir.Name -repoRoot $RepoRoot
+            }
+        }
+    } else {
+        $serviceDir = Join-Path $RepoRoot "sdk" $ServiceName
+        if (Test-Path (Join-Path $serviceDir "ci.yml"))
+        {
+            $activePkgList = Get-PkgListFromYml -ciYmlPath (Join-Path $serviceDir "ci.yml")
+            Operate-OnPackages -activePkgList $activePkgList -serviceName $ServiceName -repoRoot $RepoRoot
+        }
+    }
+
+
+
+}
+
+function Operate-OnPackages ($activePkgList, $serviceName, $repoRoot)
+{
+    foreach ($pkg in $activePkgList){
+        $pkgProps = Get-PkgProperties -PackageName $pkg["name"] -ServiceName $serviceName -Language "net" -RepoRoot $repoRoot
+        Write-Host "Package Name in ci.yml: " $pkg["name"]
+        Write-Host ($pkgProps | Format-List | Out-String)
+
+        $DirectoryName = Split-Path $pkgProps.pkgDirectoryPath -Leaf
+        Write-Host $DirectoryName -ForegroundColor blue
+
+        if ($DirectoryName -eq $pkgProps.pkgName)
+        {
+            Write-Host "Directory Name matches Package Name" -ForegroundColor green
+        }
+        else
+        {
+            Write-Host "Directory Name does not match Package Name" -ForegroundColor red
+        }
+    }
+}
+
+function Get-PkgListFromYml ($ciYmlPath)
+{
+    $ciYmlContent = Get-Content $ciYmlPath -Raw
+    $ciYmlObj = ConvertFrom-Yaml $ciYmlContent -Ordered
+    return $ciYmlObj["stages"][0]["parameters"]["Artifacts"]
+}
+
 Export-ModuleMember -Function 'Get-PkgProperties'
+Export-ModuleMember -Function 'Show-PkgsProperties'

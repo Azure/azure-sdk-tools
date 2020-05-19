@@ -1,12 +1,3 @@
-schedules:
-# At 12:00 every day
-- cron: "0 12 * * *"
-  displayName: Hourly
-  branches:
-    include:
-    - master
-  always: true
-
 pr: none
 trigger: none
 

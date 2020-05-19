@@ -53,7 +53,7 @@ namespace PipelineGenerator
             var endpointOption = app.Option("--endpoint <endpoint>", "Name of the service endpoint to configure repositories with.", CommandOptionType.SingleValue).IsRequired();
             var repositoryOption = app.Option("--repository <repository>", "Name of the GitHub repo in the form [org]/[repo].", CommandOptionType.SingleValue).IsRequired();
             var branchOption = app.Option("--branch <branch>", "Typically refs/heads/master.", CommandOptionType.SingleValue).IsRequired();
-            var agentpoolOption = app.Option("--agentpool <agentpool>", "Name of the agent pool to use when pool isn't speciifed.", CommandOptionType.SingleValue).IsRequired();
+            var agentpoolOption = app.Option("--agentpool <agentpool>", "Name of the agent pool to use when pool isn't specified.", CommandOptionType.SingleValue).IsRequired();
             var conventionOption = app.Option("--convention <convention>", "What convention are you building pipelines for?", CommandOptionType.SingleValue).IsRequired();
             var variablegroupsOption = app.Option("--variablegroup <variablegroup>", "Variable groups. May specify multiple (e.g. --variablegroup 1 --variablegroup 2)", CommandOptionType.MultipleValue);
             var whatifOption = app.Option("--whatif", "Use this to understand what will happen, but don't change anything.", CommandOptionType.NoValue);

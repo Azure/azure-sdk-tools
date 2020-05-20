@@ -42,7 +42,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Functions
 
             logger.LogInformation("Parsing payload.");
             var runStateChangedEventPayload = JsonDocument.Parse(json);
-            var runState = runStateChangedEventPayload.RootElement.GetProperty("resource").GetProperty("state").GetString();
+            var runState = runStateChangedEventPayload.RootElement.GetProperty("resource").GetProperty("run").GetProperty("state").GetString();
             var runUrl = runStateChangedEventPayload.RootElement.GetProperty("resource").GetProperty("runUrl").GetString();
             var runUri = new Uri(runUrl);
             

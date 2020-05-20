@@ -42,11 +42,19 @@ namespace Azure.Sdk.Tools.PipelineWitness.Functions
 
             logger.LogInformation("Parsing payload.");
             var runStateChangedEventPayload = JsonDocument.Parse(json);
+            var runState = runStateChangedEventPayload.RootElement.GetProperty("state").GetString();
             var runUrl = runStateChangedEventPayload.RootElement.GetProperty("resource").GetProperty("runUrl").GetString();
             var runUri = new Uri(runUrl);
-            logger.LogInformation("Run URI was: {runUri}", runUri);
-
-            await runProcessor.ProcessRunAsync(runUri);
+            
+            if (runState == "completed")
+            {
+                await runProcessor.ProcessRunAsync(runUri);
+            }
+            else
+            {
+                logger.LogInformation($"Skipping incomplete run: {runUri}");
+                return;
+            }
         }
     }
 }

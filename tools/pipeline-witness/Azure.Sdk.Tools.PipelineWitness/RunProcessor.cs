@@ -40,12 +40,23 @@ namespace Azure.Sdk.Tools.PipelineWitness
 
         public async Task ProcessRunAsync(Uri runUri)
         {
-            var content = await GetContentFromAzureDevOpsAsync(runUri);
-            var document = JsonDocument.Parse(content);
-            var record = new AzurePipelinesRun(document);
+            try
+            {
+                logger.LogInformation("Processing run: {runUri}", runUri);
+                var content = await GetContentFromAzureDevOpsAsync(runUri);
+                var document = JsonDocument.Parse(content);
+                var record = new AzurePipelinesRun(document);
 
-            var container = await GetItemContainerAsync("scratch");
-            await container.UpsertItemAsync(record);
+                var container = await GetItemContainerAsync("scratch");
+
+                logger.LogInformation("Upserting run: {runUri}", runUri);
+                await container.UpsertItemAsync(record);
+            }
+            catch (ContentNotFoundException ex)
+            {
+                logger.LogWarning(ex, "Run information was not found, possibly a PR run that was cancelled and removed?");
+                return;
+            }
         }
 
         private async Task<CosmosClient> GetCosmosClientAsync()
@@ -84,11 +95,22 @@ namespace Azure.Sdk.Tools.PipelineWitness
             var request = new HttpRequestMessage(HttpMethod.Get, contentUri);
             var azureDevOpsPersonalAccessToken = await GetAzureDevOpsPersonalAccessTokenAsync();
             request.Headers.Authorization = GetAuthenticationHeader(azureDevOpsPersonalAccessToken);
-        
-            var response = await httpClient.SendAsync(request);
 
-            var content = await response.Content.ReadAsStringAsync();
-            return content;
+            logger.LogInformation("Downloading content from: {contentUri}", contentUri);
+            var response = await httpClient.SendAsync(request);
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                throw new ContentNotFoundException(contentUri);
+            }
+            else if (response.StatusCode != HttpStatusCode.OK)
+            {
+                throw new ContentDownloadException($"Failed to download content (status {response.StatusCode}): {contentUri}");
+            }
+            else
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                return content;
+            }
         }
 
         private string GetWebsiteResourceGroupEnvironmentVariable()
@@ -101,6 +123,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
 
         private async Task<string> GetAzureDevOpsPersonalAccessTokenAsync()
         {
+            logger.LogInformation("Fetching Azure DevOps personal access token from KeyVault.");
             var azureDevOpsPersonalAccessToken = await GetSecretAsync("azure-devops-personal-access-token");
             return azureDevOpsPersonalAccessToken;
         }

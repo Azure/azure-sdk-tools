@@ -101,17 +101,17 @@ namespace PipelineGenerator
             return cachedProjectReference;
         }
 
-        private ServiceEndpointHttpClient cachedSeviceEndpointClient;
+        private ServiceEndpointHttpClient cachedServiceEndpointClient;
 
         private async Task<ServiceEndpointHttpClient> GetServiceEndpointClientAsync(CancellationToken cancellationToken)
         {
-            if (cachedSeviceEndpointClient == null)
+            if (cachedServiceEndpointClient == null)
             {
                 var connection = GetConnection();
-                cachedSeviceEndpointClient = await connection.GetClientAsync<ServiceEndpointHttpClient>(cancellationToken);
+                cachedServiceEndpointClient = await connection.GetClientAsync<ServiceEndpointHttpClient>(cancellationToken);
             }
 
-            return cachedSeviceEndpointClient;
+            return cachedServiceEndpointClient;
         }
 
         private Microsoft.VisualStudio.Services.ServiceEndpoints.WebApi.ServiceEndpoint cachedServiceEndpoint;

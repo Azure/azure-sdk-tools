@@ -4,7 +4,7 @@
     {
         public static class Labels
         {
-            public static string NeedsAttention = "needs-attention";
+            public static string NeedsAttention = "needs-team-attention";
             public static string CustomerReported = "customer-reported";
             public static string Bug = "bug";
             public static string Feature = "feature-request";

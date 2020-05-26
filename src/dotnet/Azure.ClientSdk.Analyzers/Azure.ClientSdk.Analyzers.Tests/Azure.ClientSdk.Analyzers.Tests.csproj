@@ -25,6 +25,9 @@
     <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="3.0.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.4.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="3.4.0" />
+
+    <PackageReference Include="System.Text.Json" Version="4.6.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
   </ItemGroup>
   <ItemGroup Condition="$(TargetFramework.StartsWith('net'))">
     <PackageReference Include="System.Interactive.Async" Version="4.0.0" />

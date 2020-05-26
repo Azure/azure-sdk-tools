@@ -30,7 +30,9 @@ namespace RandomNamespace
         }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0003");
+            await Verifier.CreateAnalyzer(code, "AZC0003")
+                .WithDisabledDiagnostics("AZC0015")
+                .RunAsync();
         }
 
         [Fact]
@@ -54,7 +56,9 @@ namespace RandomNamespace
         }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code);
+            await Verifier.CreateAnalyzer(code, "AZC0003")
+                .WithDisabledDiagnostics("AZC0015")
+                .RunAsync();
         }
 
         [Fact]
@@ -86,7 +90,9 @@ namespace RandomNamespace
         }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code);
+            await Verifier.CreateAnalyzer(code)
+                .WithDisabledDiagnostics("AZC0015")
+                .RunAsync();
         }
     }
 }

@@ -100,7 +100,7 @@ namespace Azure.ClientSdk.Analyzers
         public static DiagnosticDescriptor AZC0015 = new DiagnosticDescriptor(
             nameof(AZC0015),
             "Unexpected client method return type.",
-            "Client methods should return Pageable<T>/AsyncPageable<T>/Operation<T>/Response/Response<T>/Task<Response>/Task<Response<T>> or other client class found {0} instead.",
+            "Client methods should return Pageable<T>/AsyncPageable<T>/Operation<T>/Task<Operation<T>>/Response/Response<T>/Task<Response>/Task<Response<T>> or other client class found {0} instead.",
             "Usage",
             DiagnosticSeverity.Warning, true);
 

@@ -28,6 +28,8 @@ namespace Azure.ClientSdk.Analyzers
                 return parameterSymbol.Name == "cancellationToken" && parameterSymbol.Type.Name == "CancellationToken";
             }
 
+            CheckClientMethodReturnType(context, member);
+
             if (!member.IsVirtual && !member.IsOverride)
             {
                 context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0003, member.Locations.First()), member);
@@ -113,28 +115,21 @@ namespace Azure.ClientSdk.Analyzers
             INamedTypeSymbol type = (INamedTypeSymbol)context.Symbol;
             foreach (var member in type.GetMembers())
             {
-                if (IsPublicApi(member) &&
-                    member is IMethodSymbol methodSymbol &&
-                    methodSymbol.MethodKind == MethodKind.Ordinary)
+                if (member is IMethodSymbol methodSymbol && methodSymbol.Name.EndsWith(AsyncSuffix) && member.DeclaredAccessibility == Accessibility.Public)
                 {
-                    CheckClientMethodReturnType(context, methodSymbol);
+                    CheckClientMethod(context, methodSymbol);
 
-                    if (methodSymbol.Name.EndsWith(AsyncSuffix))
+                    var syncMemberName = member.Name.Substring(0, member.Name.Length - AsyncSuffix.Length);
+
+                    var syncMember = FindMethod(type.GetMembers(syncMemberName).OfType<IMethodSymbol>(), methodSymbol.TypeParameters, methodSymbol.Parameters);
+
+                    if (syncMember == null)
                     {
-                        CheckClientMethod(context, methodSymbol);
-
-                        var syncMemberName = member.Name.Substring(0, member.Name.Length - AsyncSuffix.Length);
-
-                        var syncMember = FindMethod(type.GetMembers(syncMemberName).OfType<IMethodSymbol>(), methodSymbol.TypeParameters, methodSymbol.Parameters);
-
-                        if (syncMember == null)
-                        {
-                            context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0004, member.Locations.First()), member);
-                        }
-                        else
-                        {
-                            CheckClientMethod(context, syncMember);
-                        }
+                        context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0004, member.Locations.First()), member);
+                    }
+                    else
+                    {
+                        CheckClientMethod(context, syncMember);
                     }
                 }
             }

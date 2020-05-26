@@ -10,7 +10,7 @@ namespace Azure.ClientSdk.Analyzers.Tests
     public class AZC0015Tests
     {
         [Theory]
-        [InlineData("public Task<Operation<int>> [|ClientMethodAsync|]() { return default; }")]
+        [InlineData("public Task<AsyncPageable<int>> [|ClientMethodAsync|]() { return default; }")]
         [InlineData("public Task<Pageable<int>> [|ClientMethodAsync|]() { return default; }")]
         [InlineData("public int [|ClientMethodAsync|]() { return default; }")]
         [InlineData("public ValueTask<Response<int>> [|ClientMethodAsync|]() { return default; }")]
@@ -35,6 +35,7 @@ namespace RandomNamespace
         }
 
         [Theory]
+        [InlineData("public Task<Operation<int>> ClientMethodAsync() { return default; }")]
         [InlineData("public Operation<int> ClientMethodAsync() { return default; }")]
         [InlineData("public Pageable<int> ClientMethodAsync() { return default; }")]
         [InlineData("public AsyncPageable<int> ClientMethodAsync() { return default; }")]

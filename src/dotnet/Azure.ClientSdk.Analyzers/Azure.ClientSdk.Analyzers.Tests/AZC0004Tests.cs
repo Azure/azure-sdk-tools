@@ -202,5 +202,57 @@ namespace RandomNamespace
 }";
             await Verifier.VerifyAnalyzerAsync(code, "AZC0004");
         }
+
+        [Fact]
+        public async Task AZC0004NotProducedForGenericMethodsTakingGenericExpressionArgWithSyncAlternative()
+        {
+            const string code = @"
+using System;
+using System.Linq.Expressions;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace RandomNamespace
+{
+    public class SomeClient
+    {
+        public virtual Task QueryAsync<T>(Expression<Func<T, bool>> filter, CancellationToken cancellationToken = default)
+        {
+            return null;
+        }
+
+        public virtual void Query<T>(Expression<Func<T, bool>> filter, CancellationToken cancellationToken = default)
+        {
+        }
+    }
+}";
+            await Verifier.VerifyAnalyzerAsync(code);
+        }
+
+        [Fact]
+        public async Task AZC0004ProducedForGenericMethodsTakingGenericExpressionArgWithoutSyncAlternative()
+        {
+            const string code = @"
+using System;
+using System.Linq.Expressions;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace RandomNamespace
+{
+    public class SomeClient
+    {
+        public virtual Task [|QueryAsync|]<T>(Expression<Func<T, bool>> filter, CancellationToken cancellationToken = default)
+        {
+            return null;
+        }
+
+        public virtual void Query<T>(Expression<Func<T, string, bool>> filter, CancellationToken cancellationToken = default)
+        {
+        }
+    }
+}";
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0004");
+        }
     }
 }

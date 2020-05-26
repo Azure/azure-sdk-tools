@@ -783,7 +783,7 @@ public class ASTAnalyser implements Analyser {
         }
 
         final boolean isInterfaceType = typeDeclaration.isClassOrInterfaceDeclaration();
-        if (! (isInterfaceType || typeDeclaration.isEnumDeclaration())) {
+        if (! (isInterfaceType || typeDeclaration.isEnumDeclaration() || typeDeclaration.isAnnotationDeclaration())) {
             return;
         }
 

@@ -565,6 +565,7 @@ public class ASTAnalyser implements Analyser {
 
             // for now we will only include the annotations we care about
             nodeWithAnnotations.getAnnotationByName("Deprecated").ifPresent(consumer);
+            nodeWithAnnotations.getAnnotationByName("Override").ifPresent(consumer);
         }
 
         private void getModifiers(NodeList<Modifier> modifiers) {

@@ -2,9 +2,11 @@
 using System.Collections.Immutable;
 using System.Linq;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace Azure.ClientSdk.Analyzers
 {
+    [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public sealed class BannedAssembliesAnalyzer : SymbolAnalyzerBase
     {
         private static HashSet<string> BannedAssemblies = new HashSet<string>()

@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Azure.ClientSdk.Analyzers
 {
@@ -32,7 +33,39 @@ namespace Azure.ClientSdk.Analyzers
 
             public bool Equals(IParameterSymbol x, IParameterSymbol y)
             {
-                return ((x.Type is ITypeParameterSymbol && y.Type is ITypeParameterSymbol) || SymbolEqualityComparer.Default.Equals(x.Type, y.Type)) && x.Name.Equals(y.Name);
+                return TypeSymbolEquals(x.Type, y.Type);
+            }
+
+            private bool TypeSymbolEquals(ITypeSymbol x, ITypeSymbol y)
+            {
+                switch(x)
+                {
+                    case INamedTypeSymbol namedX:
+                        var namedY = y as INamedTypeSymbol;
+                        if (namedY == null)
+                            return false;
+                        
+                        if (namedX.IsGenericType && namedY.IsGenericType)
+                        {
+                            if (!namedX.MetadataName.Equals(namedY.MetadataName) || namedX.TypeArguments.Length != namedY.TypeArguments.Length)
+                                return false;
+
+                            for (int i = 0; i < namedX.TypeArguments.Length; i++)
+                            {
+                                var areEqual = TypeSymbolEquals(namedX.TypeArguments[i], namedY.TypeArguments[i]);
+                                if (!areEqual)
+                                    return false;
+                            }
+                            return true;
+                        }
+                        else
+                        {
+                            return SymbolEqualityComparer.Default.Equals(x, y) && x.Name.Equals(y.Name);
+                        }
+
+                    default:
+                        return x.TypeKind == TypeKind.TypeParameter && y.TypeKind == TypeKind.TypeParameter && x.Name.Equals(y.Name);
+                }
             }
 
             public int GetHashCode(IParameterSymbol obj)

@@ -214,7 +214,7 @@ public class ASTAnalyser implements Analyser {
             final List<ConstructorDeclaration> constructors = typeDeclaration.getConstructors();
             if (constructors.isEmpty()) {
                 // add default constructor if there is no constructor at all, except interface and enum
-                if (!isInterfaceDeclaration && !typeDeclaration.isEnumDeclaration()) {
+                if (!isInterfaceDeclaration && !typeDeclaration.isEnumDeclaration() && !typeDeclaration.isAnnotationDeclaration()) {
                     addDefaultConstructor(typeDeclaration);
                 } else {
                     // skip and do nothing if there is no constructor in the interface.

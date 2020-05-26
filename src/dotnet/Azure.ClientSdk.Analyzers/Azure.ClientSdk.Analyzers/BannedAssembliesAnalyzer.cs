@@ -32,7 +32,7 @@ namespace Azure.ClientSdk.Analyzers
 
         public override void Analyze(ISymbolAnalysisContext context)
         {
-            void CheckType(ITypeSymbol type, ISymbol symbol)
+            static void CheckType(ISymbolAnalysisContext context, ITypeSymbol type, ISymbol symbol)
             {
                 if (type is INamedTypeSymbol namedTypeSymbol)
                 {
@@ -45,7 +45,7 @@ namespace Azure.ClientSdk.Analyzers
                     {
                         foreach (var typeArgument in namedTypeSymbol.TypeArguments)
                         {
-                            CheckType(typeArgument, symbol);
+                            CheckType(context, typeArgument, symbol);
                         }
                     }
                 }
@@ -59,29 +59,29 @@ namespace Azure.ClientSdk.Analyzers
             switch (context.Symbol)
             {
                 case IParameterSymbol parameterSymbol:
-                    CheckType(parameterSymbol.Type, parameterSymbol);
+                    CheckType(context, parameterSymbol.Type, parameterSymbol);
                     break;
                 case IMethodSymbol methodSymbol:
                     if (methodSymbol.MethodKind == MethodKind.PropertyGet || methodSymbol.MethodKind == MethodKind.PropertySet)
                     {
                         return;
                     }
-                    CheckType(methodSymbol.ReturnType, methodSymbol);
+                    CheckType(context, methodSymbol.ReturnType, methodSymbol);
                     break;
                 case IEventSymbol eventSymbol:
-                    CheckType(eventSymbol.Type, eventSymbol);
+                    CheckType(context, eventSymbol.Type, eventSymbol);
                     break;
                 case IPropertySymbol propertySymbol:
-                    CheckType(propertySymbol.Type, propertySymbol);
+                    CheckType(context, propertySymbol.Type, propertySymbol);
                     break;
                 case IFieldSymbol fieldSymbol:
-                    CheckType(fieldSymbol.Type, fieldSymbol);
+                    CheckType(context, fieldSymbol.Type, fieldSymbol);
                     break;
                 case INamedTypeSymbol namedTypeSymbol:
-                    CheckType(namedTypeSymbol.BaseType, namedTypeSymbol);
+                    CheckType(context, namedTypeSymbol.BaseType, namedTypeSymbol);
                     foreach (var iface in namedTypeSymbol.Interfaces)
                     {
-                        CheckType(iface, namedTypeSymbol);
+                        CheckType(context, iface, namedTypeSymbol);
                     }
                     break;
             }

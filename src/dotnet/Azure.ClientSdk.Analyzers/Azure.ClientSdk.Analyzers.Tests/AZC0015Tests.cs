@@ -29,9 +29,9 @@ namespace RandomNamespace
         {usage}       
     }}
 }}";
-            var analyzer = Verifier.CreateAnalyzer(code, "AZC0015");
-            analyzer.DisabledDiagnostics.AddRange(new [] { "AZC0002", "AZC0003", "AZC0004" });
-            await analyzer.RunAsync();
+            await Verifier.CreateAnalyzer(code, "AZC0015")
+                .WithDisabledDiagnostics("AZC0002", "AZC0003", "AZC0004")
+                .RunAsync();
         }
 
         [Theory]
@@ -56,10 +56,9 @@ namespace RandomNamespace
         {usage}       
     }}
 }}";
-            var analyzer = Verifier.CreateAnalyzer(code);
-            analyzer.DisabledDiagnostics.AddRange(new [] { "AZC0002", "AZC0003", "AZC0004" });
-            await analyzer.RunAsync();
+            await Verifier.CreateAnalyzer(code, "AZC0015")
+                .WithDisabledDiagnostics("AZC0002", "AZC0003", "AZC0004")
+                .RunAsync();
         }
-
     }
 }

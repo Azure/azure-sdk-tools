@@ -12,6 +12,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.AzureAppConfiguration" Version="3.0.1" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="3.1.4" />
     <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="3.0.6" />
+    <PackageReference Include="Microsoft.TeamFoundationServer.Client" Version="16.169.0-preview" />
   </ItemGroup>
   <ItemGroup>
     <None Update="host.json">

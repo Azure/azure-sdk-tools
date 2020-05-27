@@ -36,12 +36,28 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
                 runIdentifier
                 );
 
-            var configuration = await this.RepositoryConfigurationProvider.GetRepositoryConfigurationAsync(installationId, repositoryId, sha, cancellationToken);
-
-            if (configuration.IsEnabled)
+            if (action == "opened" || action == "reopened")
             {
-                await CreateCheckAsync(context.Client, installationId, repositoryId, sha, false, cancellationToken);
+                var configuration = await this.RepositoryConfigurationProvider.GetRepositoryConfigurationAsync(installationId, repositoryId, sha, cancellationToken);
+
+                if (configuration.IsEnabled)
+                {
+                    await CreateCheckAsync(context.Client, installationId, repositoryId, sha, false, cancellationToken);
+
+                    if (action == "reopened")
+                    {
+                        await EvaluatePullRequestAsync(context.Client, installationId, repositoryId, sha, cancellationToken);
+                    }
+                }
             }
+            else
+            {
+                Logger.LogInformation(
+                    "Ignoring pull request event because action was not 'opened' or 'reopened'. It was {action}.",
+                    action
+                    );
+            }
+
         }
     }
 }

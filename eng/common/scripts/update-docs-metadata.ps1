@@ -63,7 +63,7 @@ function GetAdjustedReadmeContent($pkgInfo, $lang){
       $service = $metadata | ? { $_.Package -eq $pkgId }
 
       if ($service) {
-        $service = "$service,"
+        $service = "$($service.Service)"
       }
     }
     catch {
@@ -71,13 +71,13 @@ function GetAdjustedReadmeContent($pkgInfo, $lang){
       Write-Host "Unable to retrieve service metadata for packageId $($pkgInfo.PackageId)"
     }
 
-    $header = "---`ntitle: $headerContentMatch`nkeywords: Azure, $lang, SDK, API, $service $($pkgInfo.PackageId)`nauthor: maggiepint`nms.author: magpint`nms.date: $date`nms.topic: article`nms.prod: azure`nms.technology: azure`nms.devlang: $lang`nms.service: $service`n---`n"
     $fileContent = $pkgInfo.ReadmeContent
 
     # only replace the version if the formatted header can be found
     $headerContentMatches = (Select-String -InputObject $pkgInfo.ReadmeContent -Pattern 'Azure .+? (client|plugin|shared) library for (JavaScript|Java|Python|\.NET|C)')
     if ($headerContentMatches) {
       $headerContentMatch = $headerContentMatches.Matches[0]
+      $header = "---`ntitle: $headerContentMatch`nkeywords: Azure, $lang, SDK, API, $($pkgInfo.PackageId), $service`nauthor: maggiepint`nms.author: magpint`nms.date: $date`nms.topic: article`nms.prod: azure`nms.technology: azure`nms.devlang: $lang`nms.service: $service`n---`n"
       $fileContent = $pkgInfo.ReadmeContent -replace $headerContentMatch, "$headerContentMatch - Version $($pkgInfo.PackageVersion) `n"
     }
 

@@ -214,7 +214,7 @@ public class ASTAnalyser implements Analyser {
             final List<ConstructorDeclaration> constructors = typeDeclaration.getConstructors();
             if (constructors.isEmpty()) {
                 // add default constructor if there is no constructor at all, except interface and enum
-                if (!isInterfaceDeclaration && !typeDeclaration.isEnumDeclaration()) {
+                if (!isInterfaceDeclaration && !typeDeclaration.isEnumDeclaration() && !typeDeclaration.isAnnotationDeclaration()) {
                     addDefaultConstructor(typeDeclaration);
                 } else {
                     // skip and do nothing if there is no constructor in the interface.
@@ -565,6 +565,7 @@ public class ASTAnalyser implements Analyser {
 
             // for now we will only include the annotations we care about
             nodeWithAnnotations.getAnnotationByName("Deprecated").ifPresent(consumer);
+            nodeWithAnnotations.getAnnotationByName("Override").ifPresent(consumer);
         }
 
         private void getModifiers(NodeList<Modifier> modifiers) {
@@ -783,7 +784,7 @@ public class ASTAnalyser implements Analyser {
         }
 
         final boolean isInterfaceType = typeDeclaration.isClassOrInterfaceDeclaration();
-        if (! (isInterfaceType || typeDeclaration.isEnumDeclaration())) {
+        if (! (isInterfaceType || typeDeclaration.isEnumDeclaration() || typeDeclaration.isAnnotationDeclaration())) {
             return;
         }
 

@@ -43,6 +43,11 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
                 if (configuration.IsEnabled)
                 {
                     await CreateCheckAsync(context.Client, installationId, repositoryId, sha, false, cancellationToken);
+
+                    if (action == "reopened")
+                    {
+                        await EvaluatePullRequestAsync(context.Client, installationId, repositoryId, sha, cancellationToken);
+                    }
                 }
             }
             else

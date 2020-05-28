@@ -57,7 +57,7 @@ namespace Azure.ClientSdk.Analyzers
                         return true;
 
                     case ITypeSymbol typeSym when typeSym.TypeKind == TypeKind.TypeParameter:
-                        return x.TypeKind == TypeKind.TypeParameter && y.TypeKind == TypeKind.TypeParameter && x.Name.Equals(y.Name);
+                        return y.TypeKind == TypeKind.TypeParameter && x.Name.Equals(y.Name);
 
                     default:
                         return SymbolEqualityComparer.Default.Equals(x, y) && x.Name.Equals(y.Name);

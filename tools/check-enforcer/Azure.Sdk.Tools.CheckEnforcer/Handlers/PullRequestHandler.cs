@@ -36,7 +36,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
                 runIdentifier
                 );
 
-            if (action == "opened" || action == "reopened")
+            if (action == "opened" || action == "reopened" || action == "synchronize")
             {
                 var configuration = await this.RepositoryConfigurationProvider.GetRepositoryConfigurationAsync(installationId, repositoryId, sha, cancellationToken);
 

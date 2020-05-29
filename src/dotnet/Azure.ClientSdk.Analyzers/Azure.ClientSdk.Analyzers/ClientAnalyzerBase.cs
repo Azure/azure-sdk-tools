@@ -14,7 +14,7 @@ namespace Azure.ClientSdk.Analyzers
     {
         protected const string ClientSuffix = "Client";
 
-        public override SymbolKind[] SymbolKinds { get; } = new []{ SymbolKind.NamedType};
+        public override SymbolKind[] SymbolKinds { get; } = new[] { SymbolKind.NamedType };
 
         public override void Analyze(ISymbolAnalysisContext context)
         {
@@ -27,44 +27,40 @@ namespace Azure.ClientSdk.Analyzers
             AnalyzeCore(context);
         }
 
-        protected class ParameterEquivalenceComparer: IEqualityComparer<IParameterSymbol>, IEqualityComparer<ITypeParameterSymbol>
+        protected class ParameterEquivalenceComparer : IEqualityComparer<IParameterSymbol>, IEqualityComparer<ITypeParameterSymbol>
         {
             public static ParameterEquivalenceComparer Default { get; } = new ParameterEquivalenceComparer();
 
             public bool Equals(IParameterSymbol x, IParameterSymbol y)
             {
-                return TypeSymbolEquals(x.Type, y.Type);
+                return x.Name.Equals(y.Name) && TypeSymbolEquals(x.Type, y.Type);
             }
 
             private bool TypeSymbolEquals(ITypeSymbol x, ITypeSymbol y)
             {
-                switch(x)
+                switch (x)
                 {
-                    case INamedTypeSymbol namedX:
+                    case INamedTypeSymbol namedX when namedX.IsGenericType:
                         var namedY = y as INamedTypeSymbol;
-                        if (namedY == null)
+                        if (namedY == null || !namedY.IsGenericType)
                             return false;
-                        
-                        if (namedX.IsGenericType && namedY.IsGenericType)
-                        {
-                            if (!namedX.MetadataName.Equals(namedY.MetadataName) || namedX.TypeArguments.Length != namedY.TypeArguments.Length)
-                                return false;
 
-                            for (int i = 0; i < namedX.TypeArguments.Length; i++)
-                            {
-                                var areEqual = TypeSymbolEquals(namedX.TypeArguments[i], namedY.TypeArguments[i]);
-                                if (!areEqual)
-                                    return false;
-                            }
-                            return true;
-                        }
-                        else
+                        if (!namedX.MetadataName.Equals(namedY.MetadataName) || namedX.TypeArguments.Length != namedY.TypeArguments.Length)
+                            return false;
+
+                        for (int i = 0; i < namedX.TypeArguments.Length; i++)
                         {
-                            return SymbolEqualityComparer.Default.Equals(x, y) && x.Name.Equals(y.Name);
+                            var areEqual = TypeSymbolEquals(namedX.TypeArguments[i], namedY.TypeArguments[i]);
+                            if (!areEqual)
+                                return false;
                         }
+                        return true;
+
+                    case ITypeSymbol typeSym when typeSym.TypeKind == TypeKind.TypeParameter:
+                        return y.TypeKind == TypeKind.TypeParameter && x.Name.Equals(y.Name);
 
                     default:
-                        return x.TypeKind == TypeKind.TypeParameter && y.TypeKind == TypeKind.TypeParameter && x.Name.Equals(y.Name);
+                        return SymbolEqualityComparer.Default.Equals(x, y) && x.Name.Equals(y.Name);
                 }
             }
 
@@ -94,7 +90,8 @@ namespace Azure.ClientSdk.Analyzers
         protected static IMethodSymbol FindMethod(IEnumerable<IMethodSymbol> methodSymbols, ImmutableArray<ITypeParameterSymbol> genericParameters, ImmutableArray<IParameterSymbol> parameters, Func<IParameterSymbol, bool> lastParameter)
         {
 
-            return methodSymbols.SingleOrDefault(symbol => {
+            return methodSymbols.SingleOrDefault(symbol =>
+            {
 
                 if (!symbol.Parameters.Any() || !genericParameters.SequenceEqual(symbol.TypeParameters, ParameterEquivalenceComparer.Default))
                 {

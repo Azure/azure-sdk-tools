@@ -254,5 +254,91 @@ namespace RandomNamespace
 }";
             await Verifier.VerifyAnalyzerAsync(code, "AZC0004");
         }
+
+        [Fact]
+        public async Task AZC0004NotProducedForArrayTypesWithSyncAlternative()
+        {
+            const string code = @"
+using System;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace RandomNamespace
+{
+    public class SomeClient
+    {
+        public virtual Task AppendAsync(
+            byte[] arr,
+            CancellationToken cancellationToken = default)
+        {
+            return null;
+        }
+
+
+        public virtual void Append(
+            byte[] arr,
+            CancellationToken cancellationToken = default)
+        {
+        }
+    }
+}";
+            await Verifier.VerifyAnalyzerAsync(code);
+        }
+
+        [Fact]
+        public async Task AZC0004ProducedForArrayTypesWithoutSyncAlternative()
+        {
+            const string code = @"
+using System;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace RandomNamespace
+{
+    public class SomeClient
+    {
+        public virtual Task [|AppendAsync|](
+            byte[] arr,
+            CancellationToken cancellationToken = default)
+        {
+            return null;
+        }
+
+
+        public virtual void Append(
+            string[] arr,
+            CancellationToken cancellationToken = default)
+        {
+        }
+    }
+}";
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0004");
+        }
+
+        [Fact]
+        public async Task AZC0004ProducedForMethodsWithoutSyncAlternativeWithMatchingArgNames()
+        {
+            const string code = @"
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace RandomNamespace
+{
+    public class SomeClient
+    {
+        public virtual Task [|GetAsync|](int foo, CancellationToken cancellationToken = default)
+        {
+            return null;
+        }
+
+        public virtual void Get(int differentName, CancellationToken cancellationToken = default)
+        {
+        }
+    }
+}";
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0004");
+        }
     }
 }

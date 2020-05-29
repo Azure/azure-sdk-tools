@@ -9,7 +9,7 @@ steps:
     displayName: Replace Relative Readme Links with Absolute References
     inputs:
       scriptSource: filePath
-      scriptPath: ../scripts/replace-relative-links.ps1
+      scriptPath: ../scripts/replace-relative-links.py
         
   - script: |
         git diff -U0

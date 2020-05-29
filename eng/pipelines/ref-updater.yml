@@ -1,0 +1,61 @@
+# Updates repository Refs on all pipelines
+resources:
+  repositories:
+    - repository: azure-sdk-for-net
+      type: github
+      name: Azure/azure-sdk-for-net
+      endpoint: azure
+    - repository: azure-sdk-for-js
+      type: github
+      name: Azure/azure-sdk-for-js
+      endpoint: azure
+    - repository: azure-sdk-for-java
+      type: github
+      name: Azure/azure-sdk-for-java
+      endpoint: azure
+    - repository: azure-sdk-for-python
+      type: github
+      name: Azure/azure-sdk-for-python
+      endpoint: azure
+    - repository: azure-sdk-build-tools
+      type: git
+      name: internal/azure-sdk-build-tools
+
+trigger: none
+
+pr: none
+
+pool:
+  vmImage: windows-2019
+
+jobs:
+  - job: UpdateRepoResourceRef
+    displayName: Update Repository Resource Ref
+
+    steps:
+    - checkout: self
+    - checkout: azure-sdk-for-net
+    - checkout: azure-sdk-for-js
+    - checkout: azure-sdk-for-java
+    - checkout: azure-sdk-for-python
+    - checkout: azure-sdk-build-tools
+
+
+    - task: Powershell@2
+      inputs:
+        targetType: 'filePath'
+        filePath: $(Build.SourcesDirectory)/azure-sdk-tools/scripts/powershell/ref-updater.ps1
+        arguments: -BuildSourcesDirectory $(Build.SourcesDirectory)
+        pwsh: true
+      displayName: Update Refs
+
+    - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
+      parameters:
+        RepoName: 'azure-sdk-for-net'
+        PRBranchName: UpdateRepositoryRefs
+        CommitMsg: Update Repository Resource Refs in Yaml files
+        PRTitle: Update Repository Resource Refs in Yaml files
+        PushArgs: -f
+        WorkingDirectory: $(Build.SourcesDirectory)/azure-sdk-for-net
+        ScriptDirectory: $(Build.SourcesDirectory)/azure-sdk-tools/eng/common/scripts
+        BaseBranchName: refs/heads/master

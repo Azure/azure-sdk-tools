@@ -316,5 +316,29 @@ namespace RandomNamespace
 }";
             await Verifier.VerifyAnalyzerAsync(code, "AZC0004");
         }
+
+        [Fact]
+        public async Task AZC0004ProducedForMethodsWithoutSyncAlternativeWithMatchingArgNames()
+        {
+            const string code = @"
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace RandomNamespace
+{
+    public class SomeClient
+    {
+        public virtual Task [|GetAsync|](int foo, CancellationToken cancellationToken = default)
+        {
+            return null;
+        }
+
+        public virtual void Get(int differentName, CancellationToken cancellationToken = default)
+        {
+        }
+    }
+}";
+            await Verifier.VerifyAnalyzerAsync(code, "AZC0004");
+        }
     }
 }

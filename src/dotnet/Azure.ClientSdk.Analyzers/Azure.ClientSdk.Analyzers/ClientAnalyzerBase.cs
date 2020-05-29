@@ -33,7 +33,7 @@ namespace Azure.ClientSdk.Analyzers
 
             public bool Equals(IParameterSymbol x, IParameterSymbol y)
             {
-                return TypeSymbolEquals(x.Type, y.Type);
+                return x.Name.Equals(y.Name) && TypeSymbolEquals(x.Type, y.Type);
             }
 
             private bool TypeSymbolEquals(ITypeSymbol x, ITypeSymbol y)

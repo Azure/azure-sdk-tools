@@ -37,6 +37,13 @@ namespace Azure.Sdk.Tools.PipelineWitness.Entities.AzurePipelines
         [JsonPropertyName("pipelineUrl")]
         public Uri PipelineUrl { get; set; }
 
+        [JsonPropertyName("repositoryId")]
+        public string RepositoryId { get; set; }
+
+        [JsonPropertyName("reason")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public RunReason Reason { get; set; }
+
         [JsonPropertyName("result")]
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public RunResult Result { get; set; }

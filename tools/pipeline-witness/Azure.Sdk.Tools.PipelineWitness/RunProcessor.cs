@@ -124,6 +124,15 @@ namespace Azure.Sdk.Tools.PipelineWitness
                     ProjectId = build.Project.Id,
                     ProjectName = build.Project.Name,
                     ProjectUrl = new Uri(((ReferenceLink)project.Links.Links["web"]).Href),
+                    RepositoryId = build.Repository.Id,
+                    Reason = build.Reason switch
+                    {
+                        BuildReason.Manual => RunReason.Manual,
+                        BuildReason.IndividualCI => RunReason.ContinuousIntegration,
+                        BuildReason.Schedule => RunReason.Scheduled,
+                        BuildReason.PullRequest => RunReason.PullRequest,
+                        _ => RunReason.Other
+                    },
                     State = build.Status switch
                     {
                         BuildStatus.None => RunStatus.None,
@@ -152,7 +161,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
                 };
 
                 var container = await GetItemContainerAsync("azure-pipelines-runs");
-                await container.UpsertItemAsync(run);
+                //await container.UpsertItemAsync(run);
             }
             catch (ContentNotFoundException ex)
             {

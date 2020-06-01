@@ -93,7 +93,7 @@
     </div>
 </div>
 <div class="row" data-review-id="@Model.Review.ReviewId" data-revision-id="@Model.Revision.RevisionId">
-    <div class="col-lg-2 col">
+    <div id="review-left" class="col-lg-2 col">
         <div class="namespace-view">
             @if (Model.CodeFile != null)
             {
@@ -102,7 +102,7 @@
         </div>
     </div>
 
-    <div class="col-10">
+    <div id="review-right" class="col-10">
         <table class="code-window border rounded-1">
             <tbody>
                 @foreach (var line in Model.Lines)

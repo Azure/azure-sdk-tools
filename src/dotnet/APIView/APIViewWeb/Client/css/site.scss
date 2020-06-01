@@ -15,6 +15,10 @@
     }
 }
 
+/* Color table
+-------------------------------------------------- */
+$gray-light: #f6f8fa;
+
 a.navbar-brand
 {
     white-space: normal;
@@ -268,7 +272,7 @@ code-inner {
 }
 
 .review-thread-reply {
-    background-color: #F6F8FA;
+    background-color: $gray-light;
     border-radius: 0 0 3px 3px;
     border-top: 1px solid #E1E4E8;
     border-bottom: 1px solid #E1E4E8;
@@ -295,13 +299,13 @@ code-inner {
     border-collapse: separate;
     tab-size: 8;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #F6F8FA;
+    background-color: $gray-light;
 }
 
 .new-thread-comment-text {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     font-size: 14px;
-    background-color: #F6F8FA;
+    background-color: $gray-light;
     max-width: 758px;
 }
 
@@ -361,6 +365,29 @@ code-inner {
 .namespace-view {
     font-size: 14px;
     font-family: monospace;
+}
+
+/* Splitter */
+
+#review-left {
+    // Override values from bootstrap
+    max-width: none;
+    min-width: 130px;
+}
+
+#review-right {
+    // Override values from bootsrap
+    max-width: none;
+}
+
+.gutter {
+    &:hover {
+        background-color: $gray-light;
+    }
+
+    &.gutter-horizontal {
+        cursor: col-resize;
+    }
 }
 
 /* NAV */

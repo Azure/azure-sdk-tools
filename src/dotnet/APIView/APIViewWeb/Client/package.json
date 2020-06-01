@@ -12,6 +12,7 @@
   "dependencies": {
     "core-js": "^3.3.2",
     "jquery": "3.4.1",
+    "split.js": "^1.5.11",
     "vue": "^2.6.10",
     "vue-class-component": "^7.0.2",
     "vue-property-decorator": "^8.3.0",
@@ -19,6 +20,7 @@
   },
   "devDependencies": {
     "@types/jquery": "3.3.31",
+    "@types/split.js": "^1.4.0",
     "@types/webpack-env": "^1.14.1",
     "@typescript-eslint/parser": "2.5.0",
     "css-loader": "^3.2.0",

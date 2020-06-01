@@ -41,9 +41,11 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
 
                 case "/check-enforcer reset":
                     await CreateCheckAsync(context.Client, installationId, repositoryId, sha, true, cancellationToken);
+                    await EvaluatePullRequestAsync(context.Client, installationId, repositoryId, sha, cancellationToken);
                     break;
 
                 case "/check-enforcer evaluate":
+                    await CreateCheckAsync(context.Client, installationId, repositoryId, sha, true, cancellationToken);
                     await EvaluatePullRequestAsync(context.Client, installationId, repositoryId, sha, cancellationToken);
                     break;
 

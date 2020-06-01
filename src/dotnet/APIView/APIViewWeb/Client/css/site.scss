@@ -367,13 +367,26 @@ code-inner {
     font-family: monospace;
 }
 
+/* Splitter */
+
+#review-left {
+    // Override values from bootstrap
+    max-width: none;
+    min-width: 130px;
+}
+
+#review-right {
+    // Override values from bootsrap
+    max-width: none;
+}
+
 .gutter {
     &:hover {
         background-color: $gray-light;
     }
 
     &.gutter-horizontal {
-        cursor: e-resize;
+        cursor: col-resize;
     }
 }
 

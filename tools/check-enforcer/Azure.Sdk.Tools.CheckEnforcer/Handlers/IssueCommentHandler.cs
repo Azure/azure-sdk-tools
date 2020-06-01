@@ -24,7 +24,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
             var payload = context.Payload;
             var installationId = payload.Installation.Id;
             var repositoryId = payload.Repository.Id;
-            var comment = payload.Comment.Body.ToLower();
+            var comment = payload.Comment.Body.ToLower().Trim();
             var issueId = payload.Issue.Number;
 
             // Bail early if we aren't even a check enforcer comment. Reduces exception noise.

@@ -62,14 +62,14 @@ namespace GitHubIssues.Reports
 
                 HtmlPageCreator emailBody = new HtmlPageCreator($"New items in {repo}");
 
-                // get needs attention issues
-                RetrieveNeedsAttentionIssues(repositoryConfig, emailBody);
-
                 // get new issues
                 RetrieveNewItems(CreateQueryForNewItems(repositoryConfig, IssueIsQualifier.Issue), lastDateRun, emailBody, "New issues");
 
                 // get new PRs
                 RetrieveNewItems(CreateQueryForNewItems(repositoryConfig, IssueIsQualifier.PullRequest), lastDateRun, emailBody, "New PRs");
+
+                // get needs attention issues
+                RetrieveNeedsAttentionIssues(repositoryConfig, emailBody);
 
                 emailBody.AddContent($"<p>Last checked range: {lastDateRun} -> {to} </p>");
 

@@ -18,6 +18,18 @@ namespace Azure.ClientSdk.Analyzers
             context.RegisterSymbolAction(c => Analyze(new RoslynSymbolAnalysisContext(c)), SymbolKinds);
         }
 
+        protected bool IsPublicApi(ISymbol symbol)
+        {
+            if (symbol.ContainingSymbol != null && !IsPublicApi(symbol.ContainingSymbol))
+            {
+                return false;
+            }
+
+            return symbol.DeclaredAccessibility == Accessibility.NotApplicable ||
+                   symbol.DeclaredAccessibility == Accessibility.Public ||
+                   symbol.DeclaredAccessibility == Accessibility.Protected;
+        }
+
         class RoslynSymbolAnalysisContext : ISymbolAnalysisContext
         {
             private readonly SymbolAnalysisContext _context;
@@ -28,6 +40,7 @@ namespace Azure.ClientSdk.Analyzers
             }
 
             public ISymbol Symbol => _context.Symbol;
+
             public void ReportDiagnostic(Diagnostic diagnostic, ISymbol symbol)
             {
                 _context.ReportDiagnostic(diagnostic);

@@ -82,7 +82,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
                         Status = new StringEnum<CheckStatus>(CheckStatus.InProgress),
                         StartedAt = DateTimeOffset.UtcNow,
                         Actions = new List<NewCheckRunAction>() {
-                            new NewCheckRunAction("Evaluate", "Evaluate this this pull request using Check Enforcer.", "evaluate")
+                            new NewCheckRunAction("Evaluate", "Evaluate Check Enforcer rules.", "evaluate")
                         }
                     }
                 );

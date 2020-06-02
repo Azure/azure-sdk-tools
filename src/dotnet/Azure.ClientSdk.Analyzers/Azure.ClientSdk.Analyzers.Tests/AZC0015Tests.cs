@@ -43,6 +43,7 @@ namespace RandomNamespace
         [InlineData("public AsyncPageable<int> ClientMethodAsync() { return default; }")]
         [InlineData("public Response<int> ClientMethodAsync() { return default; }")]
         [InlineData("public Response<int[]> ClientMethodAsync() { return default; }")]
+        [InlineData("public Task<Response<int[]>> ClientMethodAsync() { return default; }")]
         [InlineData("public Response ClientMethodAsync() { return default; }")]
         [InlineData("public SomeClient ClientMethod() { return default; }")]
         public async Task AZC0015NotProducedForValidReturnTypes(string usage)

@@ -13,6 +13,8 @@ namespace Azure.ClientSdk.Analyzers.Tests
         [InlineData("public Task<AsyncPageable<int>> [|ClientMethodAsync|]() { return default; }")]
         [InlineData("public Task<Pageable<int>> [|ClientMethodAsync|]() { return default; }")]
         [InlineData("public int [|ClientMethodAsync|]() { return default; }")]
+        [InlineData("public int[] [|ClientMethodAsync|]() { return default; }")]
+        [InlineData("public Task<int[]> [|ClientMethodAsync|]() { return default; }")]
         [InlineData("public ValueTask<Response<int>> [|ClientMethodAsync|]() { return default; }")]
         [InlineData("public string [|ClientMethodAsync|]() { return default; }")]
         public async Task AZC0015ProducedForInvalidClientMethodReturnTypes(string usage)
@@ -40,6 +42,8 @@ namespace RandomNamespace
         [InlineData("public Pageable<int> ClientMethodAsync() { return default; }")]
         [InlineData("public AsyncPageable<int> ClientMethodAsync() { return default; }")]
         [InlineData("public Response<int> ClientMethodAsync() { return default; }")]
+        [InlineData("public Response<int[]> ClientMethodAsync() { return default; }")]
+        [InlineData("public Task<Response<int[]>> ClientMethodAsync() { return default; }")]
         [InlineData("public Response ClientMethodAsync() { return default; }")]
         [InlineData("public SomeClient ClientMethod() { return default; }")]
         public async Task AZC0015NotProducedForValidReturnTypes(string usage)

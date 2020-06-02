@@ -73,40 +73,41 @@ namespace Azure.ClientSdk.Analyzers
 
         private static void CheckClientMethodReturnType(ISymbolAnalysisContext context, IMethodSymbol method)
         {
-            bool IsOrImplements(INamedTypeSymbol namedTypeSymbol, string typeName)
+            bool IsOrImplements(ITypeSymbol typeSymbol, string typeName)
             {
-                if (namedTypeSymbol.Name == typeName)
+                if (typeSymbol.Name == typeName)
                 {
                     return true;
                 }
 
-                if (namedTypeSymbol.BaseType != null)
+                if (typeSymbol.BaseType != null)
                 {
-                    return IsOrImplements(namedTypeSymbol.BaseType, typeName);
+                    return IsOrImplements(typeSymbol.BaseType, typeName);
                 }
 
                 return false;
             }
 
-            if (method.ReturnType is INamedTypeSymbol namedTypeSymbol)
+            ITypeSymbol originalType = method.ReturnType;
+            ITypeSymbol unwrappedType = method.ReturnType;
+
+            if (method.ReturnType is INamedTypeSymbol namedTypeSymbol &&
+                namedTypeSymbol.IsGenericType &&
+                namedTypeSymbol.Name == "Task")
             {
-                INamedTypeSymbol unwrappedType = namedTypeSymbol;
-                if (namedTypeSymbol.IsGenericType && namedTypeSymbol.Name == "Task")
-                {
-                    unwrappedType = (INamedTypeSymbol)namedTypeSymbol.TypeArguments.Single();
-                }
-
-                if (IsOrImplements(unwrappedType, "Response") ||
-                    IsOrImplements(unwrappedType, "Operation") ||
-                    IsOrImplements(namedTypeSymbol, "Pageable") ||
-                    IsOrImplements(namedTypeSymbol, "AsyncPageable") ||
-                    namedTypeSymbol.Name.EndsWith(ClientSuffix))
-                {
-                    return;
-                }
-
-                context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0015, method.Locations.FirstOrDefault(), namedTypeSymbol.ToDisplayString()), method);
+                unwrappedType = namedTypeSymbol.TypeArguments.Single();
             }
+
+            if (IsOrImplements(unwrappedType, "Response") ||
+                IsOrImplements(unwrappedType, "Operation") ||
+                IsOrImplements(originalType, "Pageable") ||
+                IsOrImplements(originalType, "AsyncPageable") ||
+                originalType.Name.EndsWith(ClientSuffix))
+            {
+                return;
+            }
+
+            context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0015, method.Locations.FirstOrDefault(), originalType.ToDisplayString()), method);
 
         }
 

@@ -22,12 +22,13 @@ def filter_children(targeted_ns_list, known_namespaces):
     return amended_list
 
 def amend_href(input_string, repo_location, readme_suffix):
-
     suffix = readme_suffix + ".md"
+
     resolvable_path = os.path.join(repo_location, input_string.replace("~/", ""))
-    possible_target_readme = resolvable_path.splitext()[0] + suffix
+    possible_target_readme = os.path.splitext(resolvable_path)[0] + suffix
 
     if os.path.exists(possible_target_readme):
+
         return input_string.replace(".md", suffix)
 
     return input_string
@@ -96,7 +97,6 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "-s",
         "--suffix",
         help="If possible, find readmes with this suffix.",
         required=False,
@@ -119,8 +119,8 @@ if __name__ == "__main__":
     for ns in sorted(present_in_target):
         print(" |__ " + ns)
 
-    base_reference_toc[0] = filter_toc(base_reference_toc[0], present_in_target)
+    base_reference_toc[0] = filter_toc(base_reference_toc[0], present_in_target, args.docrepo, args.suffix)
     updated_content = yaml.dump(base_reference_toc, default_flow_style=False)
 
     with open(args.target, 'w') as f:
-        f.write(appended_content)
+        f.write(updated_content)

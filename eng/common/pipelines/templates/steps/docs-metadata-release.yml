@@ -50,7 +50,7 @@ steps:
   parameters:
     RepoName: ${{ parameters.TargetDocRepoName }}
     RepoOwner: ${{ parameters.TargetDocRepoOwner }}
-    PRBranchName: ${{ parameters.PRBranchName }}
+    PRBranchName: ${{ parameters.PRBranchName }}-$(Build.BuildId)
     CommitMsg: "Update readme content for ${{ parameters.ArtifactName }}"
     PRTitle: "Docs.MS Readme Update."
     BaseBranchName: smoke-test

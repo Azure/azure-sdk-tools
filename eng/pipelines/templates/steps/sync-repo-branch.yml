@@ -1,0 +1,17 @@
+parameters:
+  Repos: # Provde a list of repos
+
+steps:
+
+- ${{ each repo in parameters.Repos }}:
+  - script: |
+      git clone --filter=blob:none --branch ${{ repo.value.Branch }} https://github.com/${{ repo.key }} ${{ repo.key }}
+    displayName: ${{ repo.key }} - Clone ${{ repo.value.Branch }}
+    continueOnError: true
+
+  - ${{ each target in repo.value.TargetRepos }}:
+    - script: | 
+        git push https://$(azuresdk-github-pat)@github.com/${{ target.key }} ${{ coalesce(target.value.Branch, repo.value.Branch) }}
+      displayName: ${{ target.key }} - Push ${{ coalesce(target.value.Branch, repo.value.Branch) }}
+      workingDirectory: ${{ repo.key }}
+      continueOnError: true

@@ -13,6 +13,7 @@ foreach ($file in $ymlFiles)
 {
     $ymlContent = Get-Content $file.FullName -Raw
     $ymlObj = ConvertFrom-Yaml $ymlContent -Ordered
+    $regex = [Regex]"ref: refs/tags/azure-sdk-tools_\d\d\d\d\d\d\d\d\.\d"
     if ($ymlObj.Contains("resources"))
     {
         $resources = $ymlObj["resources"]
@@ -24,17 +25,15 @@ foreach ($file in $ymlFiles)
             {
                 if ($repository["repository"] -eq $ToolRepo)
                 {
-                    $repository["ref"] = "refs/tags/$Tag"
+                    Write-Host $file.FullName
+                   #if ($repository.Contains("ref"))
+                   #{
+                   #    $regex.Replace($ymlContent, $Tag, 1)
+                   #}
                 }
             }
 
-            $resourcesYml = "resources:`n  " + (ConvertTo-Yaml $resources)
-
-            Write-Host $resourcesYml.GetType()
-            Write-Host $resourcesYml
-
-            $ymlContent = ($ymlContent -replace "(?ms)resources:.*repositories:.*repository.*?name:.*?\n|ref:.*?\n|endpoint:.*?\n|type:.*?\n", $resourcesYml)
-            Set-Content -Path $file.FullName -Value $ymlContent -Force
+            #Set-Content -Path $file.FullName -Value $ymlContent -Force
         }
     }
 }

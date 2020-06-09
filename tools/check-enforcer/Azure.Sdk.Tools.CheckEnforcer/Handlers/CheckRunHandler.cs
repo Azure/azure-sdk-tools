@@ -29,9 +29,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
 
             using (var scope = Logger.BeginScope("Processing check-run event on: {runIdentifier}", runIdentifier))
             {
-                if (payload.CheckRun.Name == this.GlobalConfigurationProvider.GetApplicationName()
-                    && payload.RequestedAction != null
-                    && payload.RequestedAction.Identifier == "evaluate")
+                if (payload.CheckRun.Name == this.GlobalConfigurationProvider.GetApplicationName() && payload.Action == "requested_action" && payload.RequestedAction.Identifier == "evaluate")
                 {
                     Logger.LogInformation(
                         "Responding to check run action button: {identifier}.",
@@ -40,7 +38,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
 
                     await EvaluatePullRequestAsync(context.Client, installationId, repositoryId, sha, cancellationToken);
                 }
-                if (payload.CheckRun.Name == this.GlobalConfigurationProvider.GetApplicationName())
+                else if (payload.CheckRun.Name == this.GlobalConfigurationProvider.GetApplicationName())
                 {
                     Logger.LogInformation(
                         "Skipping processing event for: {runIdentifier} because appplication name match.",

@@ -1,0 +1,121 @@
+trigger: none
+pr: none
+
+# Sync every 2 hours
+schedules:
+  - cron: "0 */2 * * *"
+    branches:
+      include:
+      - master
+    always: true
+
+jobs:
+  - job: MirrorRepo
+    pool:
+      vmImage: 'Ubuntu 18.04'
+    variables:
+      skipComponentGovernanceDetection: true
+
+    steps:
+      - checkout: none
+
+      - template: ./templates/steps/repo-mirror.yml
+        parameters:
+          WORKING_DIRECTORY: $(WORKING_DIRECTORY)
+          SOURCE_REPO: $(SOURCE_REPO)
+          SOURCE_BRANCHES: $(SOURCE_BRANCHES)
+          TARGET_ENDPOINTS: $(TARGET_ENDPOINTS)
+
+    strategy:
+      matrix:
+
+        azure_rest_api_specs:
+          WORKING_DIRECTORY: repos/azure-rest-api-specs
+          SOURCE_REPO: https://github.com/Azure/azure-rest-api-specs
+          SOURCE_BRANCHES: master
+          TARGET_ENDPOINTS: |
+            https://github.com/Azure/azure-rest-api-specs-pr!master
+            https://github.com/test-repo-billy/azure-rest-api-specs-pr!master
+            https://github.com/test-repo-billy/azure-rest-api-specs!master
+            https://github.com/openapi-env-test/azure-rest-api-specs!master
+
+        azure_sdk_for_go:
+          WORKING_DIRECTORY: repos/azure-sdk-for-go
+          SOURCE_REPO: https://github.com/Azure/azure-sdk-for-go
+          SOURCE_BRANCHES: master latest
+          TARGET_ENDPOINTS: |
+            https://github.com/Azure/azure-sdk-for-go-pr!master
+            https://github.com/AzureSDKAutomation/azure-sdk-for-go!master
+            https://github.com/test-repo-billy/azure-sdk-for-go!master
+            https://github.com/openapi-env-test/azure-sdk-for-go!master
+            https://github.com/Azure/azure-sdk-for-go-pr!latest
+            https://github.com/AzureSDKAutomation/azure-sdk-for-go!latest
+            https://github.com/test-repo-billy/azure-sdk-for-go!latest
+            https://github.com/openapi-env-test/azure-sdk-for-go!latest
+
+        azure_sdk_for_js:
+          WORKING_DIRECTORY: repos/azure-sdk-for-js
+          SOURCE_REPO: https://github.com/azure/azure-sdk-for-js
+          SOURCE_BRANCHES: master
+          TARGET_ENDPOINTS: |
+            https://github.com/Azure/azure-sdk-for-js-pr!master
+            https://github.com/azuresdkautomation/azure-sdk-for-js!master
+            https://github.com/test-repo-billy/azure-sdk-for-js!master
+            https://github.com/openapi-env-test/azure-sdk-for-js!master
+
+        azure_sdk_for_net:
+          WORKING_DIRECTORY: repos/azure-sdk-for-net
+          SOURCE_REPO: https://github.com/azure/azure-sdk-for-net
+          SOURCE_BRANCHES: master
+          TARGET_ENDPOINTS: |
+            https://github.com/Azure/azure-sdk-for-net-pr!master
+            https://github.com/azuresdkautomation/azure-sdk-for-net!master
+            https://github.com/test-repo-billy/azure-sdk-for-net!master
+            https://github.com/openapi-env-test/azure-sdk-for-net!master
+
+        azure_sdk_for_python:
+          WORKING_DIRECTORY: repos/azure-sdk-for-python
+          SOURCE_REPO: https://github.com/azure/azure-sdk-for-python
+          SOURCE_BRANCHES: master
+          TARGET_ENDPOINTS: |
+            https://github.com/Azure/azure-sdk-for-python-pr!master
+            https://github.com/azuresdkautomation/azure-sdk-for-python!master
+            https://github.com/test-repo-billy/azure-sdk-for-python!master
+            https://github.com/openapi-env-test/azure-sdk-for-python!master
+
+        azure_sdk_for_java:
+          WORKING_DIRECTORY: repos/azure-sdk-for-java
+          SOURCE_REPO: https://github.com/azure/azure-sdk-for-java
+          SOURCE_BRANCHES: master
+          TARGET_ENDPOINTS: |
+            https://github.com/Azure/azure-sdk-for-java-pr!master
+            https://github.com/test-repo-billy/azure-sdk-for-java!master
+            https://github.com/azuresdkautomation/azure-sdk-for-java!master
+            https://github.com/openapi-env-test/azure-sdk-for-java!master
+
+        azure_cli:
+          WORKING_DIRECTORY: repos/azure-cli
+          SOURCE_REPO: https://github.com/azure/azure-cli
+          SOURCE_BRANCHES: dev
+          TARGET_ENDPOINTS: |
+            https://github.com/Azure/azure-cli-pr!dev
+
+        azure_cli_extensions:
+          WORKING_DIRECTORY: repos/azure-cli-extensions
+          SOURCE_REPO: https://github.com/azure/azure-cli-extensions
+          SOURCE_BRANCHES: master
+          TARGET_ENDPOINTS: |
+            https://github.com/Azure/azure-cli-extensions-pr!master
+            https://github.com/azuresdkautomation/azure-cli-extensions!master
+            https://github.com/openapi-env-test/azure-cli-extensions!master
+
+        terraform_provider_azurerm:
+          WORKING_DIRECTORY: repos/terraform-provider-azurerm
+          SOURCE_REPO: https://github.com/terraform-providers/terraform-provider-azurerm
+          SOURCE_BRANCHES: master
+          TARGET_ENDPOINTS: |
+            https://github.com/microsoft/terraform-provider-azurerm!master
+            https://github.com/Azure/azure-sdk-for-trenton!master
+            https://github.com/Azure/azure-sdk-for-trenton!secondary!master
+            https://github.com/test-repo-billy/azure-sdk-for-trenton!master
+            https://github.com/test-repo-billy/azure-sdk-for-trenton!secondary!master

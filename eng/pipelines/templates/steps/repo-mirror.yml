@@ -1,0 +1,125 @@
+parameters:
+  SOURCE_REPO: $(Build.Repository.Uri)
+  SOURCE_BRANCHES: $(Build.SourceBranchName)
+  TARGET_ENDPOINTS: ''
+  WORKING_DIRECTORY: ''
+
+steps:
+- script: mkdir -p ${{ parameters.WORKING_DIRECTORY }}
+  displayName: mkdir -p ${{ parameters.WORKING_DIRECTORY }}
+  condition: ne('${{ parameters.WORKING_DIRECTORY }}', '')
+- script: |
+    EXIT_CODE=0
+    # On every error signal, set EXIT_CODE to -1 but keep running.
+    function on_error() {
+      EXIT_CODE=-1
+      echo "\##vso[task.logissue type=error]Failed to sync $TARGET"
+    }
+    trap on_error ERR
+
+    # Echo error if GH_TOKEN is empty
+    [ -z "$GH_TOKEN" ] && echo "GH_TOKEN is empty!" && exit -1
+    echo
+
+    # Enable bash verbose logging
+    set -x
+
+    SOURCE_REPO=${{ parameters.SOURCE_REPO }}
+    SOURCE_BRANCHES='${{ parameters.SOURCE_BRANCHES }}'
+    TARGET_ENDPOINTS='${{ parameters.TARGET_ENDPOINTS }}'
+    git init
+    git config user.email "azuresdkci@microsoft.com"
+    git config user.name "azuresdkci"
+    git config credential.helper store
+    echo "https://$GH_TOKEN:x-oauth-basic@github.com" > ~/.git-credentials
+    # Current folder could be in the following state:
+    # 1. Empty folder
+    # 2. Existing (cached) git repo maybe with preconfigured remote.
+    # Every operation will remove/reset and add/fetch back.
+    # " 2> /dev/null || true " to hide output information and dismiss error return code.
+    git reset --hard HEAD 2> /dev/null || true
+    git remote remove source 2> /dev/null || true
+    git remote add source $SOURCE_REPO
+    git fetch --no-tags source $SOURCE_BRANCH
+
+    for SOURCE_BRANCH in $SOURCE_BRANCHES
+    do
+      set -x
+      # Delete source_branch if existed. "--detach" to handle that current branch is source_branch.
+      git checkout --detach source_branch 2> /dev/null && git branch -D source_branch || true
+      # Checkout source_branch
+      git checkout -b source_branch source/$SOURCE_BRANCH || {
+        echo "Branch $SOURCE_BRANCH not exist on $SOURCE_REPO" && on_error
+        continue
+      }
+
+      set +x
+      echo
+
+      for TARGET in $TARGET_ENDPOINTS
+      do
+        # $TARGET is in the format of $REPO!$BRANCH. Here we use "cut" to split them.
+        TARGET_REPO=`echo $TARGET | cut -d! -f 1 -`
+        TARGET_BRANCH=`echo $TARGET | cut -d! -f 2 -`
+        FROM_SOURCE_BRANCH=`echo $TARGET | cut -d! -f 3 -`
+        echo "TARGET_REPO=$TARGET_REPO"
+        echo "TARGET_BRANCH=$TARGET_BRANCH"
+        echo "FROM_SOURCE_BRANCE=$FROM_SOURCE_BRANCE"
+
+        # Skip if branch mismatch
+        if [ ! $FROM_SOURCE_BRANCH ]
+        then
+          if [ $TARGET_BRANCH != $SOURCE_BRANCH ]
+          then
+          echo "Skip syncing branch $TARGET_BRANCH"
+          continue;
+          fi
+        else
+          if [ $FROM_SOURCE_BRANCH != $SOURCE_BRANCH ]
+          then
+          echo "Skip syncing branch from source $FROM_SOURCE_BRANCH to $TARGET_BRANCH"
+          continue;
+          fi
+        fi
+
+        set -x
+
+        # Prepare for target commit to push
+        git checkout source_branch
+        git reset --hard refs/remotes/source/$SOURCE_BRANCH
+        git remote remove target 2> /dev/null || true
+        git remote add target $TARGET_REPO
+
+        git branch -D target_branch 2> /dev/null || true
+        # Checkout target_branch from remote. If not exist, use source_branch as target_branch.
+        ( git fetch --no-tags target $TARGET_BRANCH && git checkout -b target_branch refs/remotes/target/$TARGET_BRANCH ) || {
+          git checkout -b target_branch
+        }
+        # Rebase to reserve customized commits in target repo.
+        git rebase --strategy-option=theirs refs/heads/source_branch || {
+          echo "Failed to rebase!" >&2 && on_error
+          git status
+          git diff
+          git rebase --abort
+          git reset --hard refs/remotes/target/$TARGET_BRANCH
+        }
+        # Push target_branch
+        git push target target_branch:refs/heads/$TARGET_BRANCH || {
+          git push -f target target_branch:refs/heads/$TARGET_BRANCH
+        }
+
+        set +x
+        echo
+      done # for $TARGET_ENDPOINTS
+
+    done # for $SOURCE_BRANCHES
+
+    rm -rf *
+
+    exit $EXIT_CODE
+  env:
+    GH_TOKEN: $(azuresdk-github-pat)
+  workingDirectory: ${{ parameters.WORKING_DIRECTORY }}
+  continueOnError: true
+  displayName: Mirror ${{ parameters.SOURCE_REPO }} -- ${{ parameters.SOURCE_BRANCHES }}
+  timeoutInMinutes: 10

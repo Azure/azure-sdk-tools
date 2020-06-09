@@ -62,13 +62,17 @@ namespace Azure.Sdk.Tools.WebhookRouter.Routing
         {
             var secretCacheKey = $"{secretName}_secretCacheKey";
 
+            logger.LogInformation("Fetching secret with cache key: {secretCacheKey}", secretCacheKey);
+
             var cachedSecret = await cache.GetOrCreateAsync<string>(secretCacheKey, async (entry) =>
             {
+                logger.LogInformation("Cache empty, fetching secret from KeyVault for cache key: {secretCacheKey}", secretCacheKey);
+
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(60);
 
                 var client = GetSecretClient();
-                var response = await client.GetSecretAsync(secretName);
-                var secret = response.Value.Value; // Urgh!
+                KeyVaultSecret response = await client.GetSecretAsync(secretName);
+                var secret = response.Value;
                 return secret;
             });
 
@@ -92,6 +96,7 @@ namespace Azure.Sdk.Tools.WebhookRouter.Routing
         private async Task<Dictionary<string, string>> GetSettingsAsync(Guid route)
         {
             var routeSettingsCacheKey = $"{route}_routeSettingsCacheKey";
+
             var cachedSettings = await cache.GetOrCreateAsync<Dictionary<string, string>>(routeSettingsCacheKey, async (entry) =>
             {
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(15);
@@ -106,6 +111,8 @@ namespace Azure.Sdk.Tools.WebhookRouter.Routing
         {
             var settingSelectorKeyPrefix = string.Format(SettingSelectorKeyPrefixTemplate, route);
             var settingSelectorKeyFilter = $"{settingSelectorKeyPrefix}*";
+
+            logger.LogInformation("Fetching settings for route {route} with filter {filter}", route, settingSelectorKeyFilter);
 
             var settingSelector = new SettingSelector()
             {
@@ -132,11 +139,23 @@ namespace Azure.Sdk.Tools.WebhookRouter.Routing
 
         private async Task<Rule> GetRuleAsync(Guid route)
         {
+            logger.LogInformation("Fetching routing rule for route: {route}", route);
+
             var settings = await GetSettingsAsync(route);
+
+            logger.LogInformation("Route {route} had {dictionaryCount} in settings dictionary.", route, settings.Count);
 
             var payloadType = (PayloadType)Enum.Parse(typeof(PayloadType), settings["payload-type"], true);
             var eventHubsNamespace = settings["eventhubs-namespace"];
             var eventHubName = settings["eventhub-name"];
+
+            logger.LogInformation(
+                "Route {route} points to namespace {namespace} with hub name {hubName} with payload type {payloadType}.",
+                route,
+                eventHubsNamespace,
+                eventHubName,
+                payloadType
+                );
 
             Rule rule = payloadType switch
             {
@@ -170,6 +189,9 @@ namespace Azure.Sdk.Tools.WebhookRouter.Routing
             using var stream = new MemoryStream();
             await request.Body.CopyToAsync(stream);
             var payloadContent = stream.ToArray();
+
+            logger.LogInformation("Payload length was {length} bytes.", payloadContent.Length);
+
             return payloadContent;
         }
 
@@ -190,8 +212,12 @@ namespace Azure.Sdk.Tools.WebhookRouter.Routing
         {
             var eventHubProducerClientCacheKey = $"{eventHubsNamespace}/{eventHubName}_eventHubProducerClientCacheKey";
 
+            logger.LogInformation("Fetching cached EventHubProducerClient for cache key: {cacheKey}", eventHubProducerClientCacheKey);
+
             var cachedProdocer = cache.GetOrCreate<EventHubProducerClient>(eventHubProducerClientCacheKey, (entry) =>
             {
+                logger.LogInformation("Cache empty, populating cache key: {cacheKey}", eventHubProducerClientCacheKey);
+
                 var fullyQualifiedEventHubsNamespace = $"{eventHubsNamespace}.servicebus.windows.net";
                 var credential = new DefaultAzureCredential();
                 var producer = new EventHubProducerClient(fullyQualifiedEventHubsNamespace, eventHubName, credential);
@@ -203,6 +229,8 @@ namespace Azure.Sdk.Tools.WebhookRouter.Routing
 
         public async Task RouteAsync(Guid route, HttpRequest request)
         {
+            logger.LogInformation("Routing request for route: {route}", route);
+
             var rule = await GetRuleAsync(route);
             var payload = await CreateAndValidatePayloadAsync(rule, request);
 
@@ -211,10 +239,24 @@ namespace Azure.Sdk.Tools.WebhookRouter.Routing
 
             var @event = new EventData(payloadBytes);
 
+            logger.LogInformation(
+                "Sending event from route {route} to namespace {namespace} with hub name {hubName}",
+                route,
+                rule.EventHubsNamespace,
+                rule.EventHubName
+                );
+
             var producer = GetEventHubProducerClient(rule.EventHubsNamespace, rule.EventHubName);
             var batch = await producer.CreateBatchAsync();
             batch.TryAdd(@event);
             await producer.SendAsync(batch);
+
+            logger.LogInformation(
+                "Sent event from route {route} to namespace {namespace} with hub name {hubName}",
+                route,
+                rule.EventHubsNamespace,
+                rule.EventHubName
+                );
         }
     }
 }

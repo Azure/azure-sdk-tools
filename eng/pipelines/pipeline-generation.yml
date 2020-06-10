@@ -50,12 +50,6 @@ jobs:
         PublicOptions: ''
         InternalOptions: '--variablegroup 13 --variablegroup 58 --variablegroup 76'
         TestOptions: '--variablegroup 64'
-      C:
-        RepositoryName: azure-sdk-for-c
-        Branch: master
-        Prefix: c
-        PublicOptions: ''
-        InternalOptions: '--variablegroup 58 --variablegroup 76'
       Cpp:
         RepositoryName: azure-sdk-for-cpp
         Branch: master

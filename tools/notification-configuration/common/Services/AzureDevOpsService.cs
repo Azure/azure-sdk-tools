@@ -139,7 +139,7 @@ namespace NotificationConfiguration.Services
         }
 
         /// <summary>
-        /// Checks whether a child is a member of the parent enttiy
+        /// Checks whether a child is a member of the parent entity
         /// </summary>
         /// <param name="parent">Parent descriptor</param>
         /// <param name="child">Child descriptor</param>

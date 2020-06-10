@@ -214,7 +214,7 @@ public class ASTAnalyser implements Analyser {
             final List<ConstructorDeclaration> constructors = typeDeclaration.getConstructors();
             if (constructors.isEmpty()) {
                 // add default constructor if there is no constructor at all, except interface and enum
-                if (!isInterfaceDeclaration && !typeDeclaration.isEnumDeclaration()) {
+                if (!isInterfaceDeclaration && !typeDeclaration.isEnumDeclaration() && !typeDeclaration.isAnnotationDeclaration()) {
                     addDefaultConstructor(typeDeclaration);
                 } else {
                     // skip and do nothing if there is no constructor in the interface.
@@ -565,6 +565,7 @@ public class ASTAnalyser implements Analyser {
 
             // for now we will only include the annotations we care about
             nodeWithAnnotations.getAnnotationByName("Deprecated").ifPresent(consumer);
+            nodeWithAnnotations.getAnnotationByName("Override").ifPresent(consumer);
         }
 
         private void getModifiers(NodeList<Modifier> modifiers) {
@@ -649,7 +650,17 @@ public class ASTAnalyser implements Analyser {
             addToken(new Token(WHITESPACE, " "));
 
             for (int i = 0, max = thrownExceptions.size(); i < max; i++) {
-                addToken(new Token(TYPE_NAME, thrownExceptions.get(i).getElementType().toString()));
+                final String exceptionName = thrownExceptions.get(i).getElementType().toString();
+                final Token throwsToken = new Token(TYPE_NAME, exceptionName);
+
+                // we look up the package name in case it is a custom type in the same library,
+                // so that we can link to it
+                if (apiListing.getTypeToPackageNameMap().containsKey(exceptionName)) {
+                    String fullPath = apiListing.getTypeToPackageNameMap().get(exceptionName);
+                    throwsToken.setNavigateToId(makeId(fullPath + "." + exceptionName));
+                }
+
+                addToken(throwsToken);
                 if (i < max - 1) {
                     addToken(new Token(PUNCTUATION, ","));
                     addToken(new Token(WHITESPACE, " "));
@@ -773,7 +784,7 @@ public class ASTAnalyser implements Analyser {
         }
 
         final boolean isInterfaceType = typeDeclaration.isClassOrInterfaceDeclaration();
-        if (! (isInterfaceType || typeDeclaration.isEnumDeclaration())) {
+        if (! (isInterfaceType || typeDeclaration.isEnumDeclaration() || typeDeclaration.isAnnotationDeclaration())) {
             return;
         }
 

@@ -26,7 +26,9 @@ namespace RandomNamespace
         }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0004");
+            await Verifier.CreateAnalyzer(code, "AZC0004")
+                .WithDisabledDiagnostics("AZC0015")
+                .RunAsync();
         }
 
         [Fact]
@@ -50,7 +52,9 @@ namespace RandomNamespace
         }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code);
+            await Verifier.CreateAnalyzer(code)
+                .WithDisabledDiagnostics("AZC0015")
+                .RunAsync();
         }
 
         [Fact]
@@ -79,7 +83,9 @@ namespace RandomNamespace
         }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0004");
+            await Verifier.CreateAnalyzer(code, "AZC0004")
+                .WithDisabledDiagnostics("AZC0015")
+                .RunAsync();
         }
 
         [Fact]
@@ -113,7 +119,9 @@ namespace RandomNamespace
         }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code);
+            await Verifier.CreateAnalyzer(code)
+                .WithDisabledDiagnostics("AZC0015")
+                .RunAsync();
         }
 
         [Fact]
@@ -142,7 +150,9 @@ namespace RandomNamespace
         }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0004");
+            await Verifier.CreateAnalyzer(code, "AZC0004")
+                .WithDisabledDiagnostics("AZC0015")
+                .RunAsync();
         }
 
         [Fact]
@@ -176,7 +186,9 @@ namespace RandomNamespace
         }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code);
+            await Verifier.CreateAnalyzer(code)
+                .WithDisabledDiagnostics("AZC0015")
+                .RunAsync();
         }
 
         [Fact]
@@ -200,7 +212,157 @@ namespace RandomNamespace
         }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0004");
+            await Verifier.CreateAnalyzer(code, "AZC0004")
+                .WithDisabledDiagnostics("AZC0015")
+                .RunAsync();
+        }
+
+        [Fact]
+        public async Task AZC0004NotProducedForGenericMethodsTakingGenericExpressionArgWithSyncAlternative()
+        {
+            const string code = @"
+using System;
+using System.Linq.Expressions;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace RandomNamespace
+{
+    public class SomeClient
+    {
+        public virtual Task QueryAsync<T>(Expression<Func<T, bool>> filter, CancellationToken cancellationToken = default)
+        {
+            return null;
+        }
+
+        public virtual void Query<T>(Expression<Func<T, bool>> filter, CancellationToken cancellationToken = default)
+        {
+        }
+    }
+}";
+            await Verifier.CreateAnalyzer(code)
+                .WithDisabledDiagnostics("AZC0015")
+                .RunAsync();
+        }
+
+        [Fact]
+        public async Task AZC0004ProducedForGenericMethodsTakingGenericExpressionArgWithoutSyncAlternative()
+        {
+            const string code = @"
+using System;
+using System.Linq.Expressions;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace RandomNamespace
+{
+    public class SomeClient
+    {
+        public virtual Task [|QueryAsync|]<T>(Expression<Func<T, bool>> filter, CancellationToken cancellationToken = default)
+        {
+            return null;
+        }
+
+        public virtual void Query<T>(Expression<Func<T, string, bool>> filter, CancellationToken cancellationToken = default)
+        {
+        }
+    }
+}";
+            await Verifier.CreateAnalyzer(code, "AZC0004")
+                .WithDisabledDiagnostics("AZC0015")
+                .RunAsync();
+        }
+
+        [Fact]
+        public async Task AZC0004NotProducedForArrayTypesWithSyncAlternative()
+        {
+            const string code = @"
+using System;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace RandomNamespace
+{
+    public class SomeClient
+    {
+        public virtual Task AppendAsync(
+            byte[] arr,
+            CancellationToken cancellationToken = default)
+        {
+            return null;
+        }
+
+
+        public virtual void Append(
+            byte[] arr,
+            CancellationToken cancellationToken = default)
+        {
+        }
+    }
+}";
+            await Verifier.CreateAnalyzer(code)
+                .WithDisabledDiagnostics("AZC0015")
+                .RunAsync();
+        }
+
+        [Fact]
+        public async Task AZC0004ProducedForArrayTypesWithoutSyncAlternative()
+        {
+            const string code = @"
+using System;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace RandomNamespace
+{
+    public class SomeClient
+    {
+        public virtual Task [|AppendAsync|](
+            byte[] arr,
+            CancellationToken cancellationToken = default)
+        {
+            return null;
+        }
+
+
+        public virtual void Append(
+            string[] arr,
+            CancellationToken cancellationToken = default)
+        {
+        }
+    }
+}";
+            await Verifier.CreateAnalyzer(code, "AZC0004")
+                .WithDisabledDiagnostics("AZC0015")
+                .RunAsync();
+        }
+
+        [Fact]
+        public async Task AZC0004ProducedForMethodsWithoutSyncAlternativeWithMatchingArgNames()
+        {
+            const string code = @"
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace RandomNamespace
+{
+    public class SomeClient
+    {
+        public virtual Task [|GetAsync|](int foo, CancellationToken cancellationToken = default)
+        {
+            return null;
+        }
+
+        public virtual void Get(int differentName, CancellationToken cancellationToken = default)
+        {
+        }
+    }
+}";
+            await Verifier.CreateAnalyzer(code, "AZC0004")
+                .WithDisabledDiagnostics("AZC0015")
+                .RunAsync();
         }
     }
 }

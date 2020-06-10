@@ -1,11 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using System;
 using System.Collections.Immutable;
-using System.Globalization;
 using System.Linq;
-using System.Threading;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 
@@ -20,7 +17,8 @@ namespace Azure.ClientSdk.Analyzers
         {
             Descriptors.AZC0002,
             Descriptors.AZC0003,
-            Descriptors.AZC0004
+            Descriptors.AZC0004,
+            Descriptors.AZC0015
         });
 
         private static void CheckClientMethod(ISymbolAnalysisContext context, IMethodSymbol member)
@@ -29,6 +27,8 @@ namespace Azure.ClientSdk.Analyzers
             {
                 return parameterSymbol.Name == "cancellationToken" && parameterSymbol.Type.Name == "CancellationToken";
             }
+
+            CheckClientMethodReturnType(context, member);
 
             if (!member.IsVirtual && !member.IsOverride)
             {
@@ -71,12 +71,52 @@ namespace Azure.ClientSdk.Analyzers
             }
         }
 
+        private static void CheckClientMethodReturnType(ISymbolAnalysisContext context, IMethodSymbol method)
+        {
+            bool IsOrImplements(ITypeSymbol typeSymbol, string typeName)
+            {
+                if (typeSymbol.Name == typeName)
+                {
+                    return true;
+                }
+
+                if (typeSymbol.BaseType != null)
+                {
+                    return IsOrImplements(typeSymbol.BaseType, typeName);
+                }
+
+                return false;
+            }
+
+            ITypeSymbol originalType = method.ReturnType;
+            ITypeSymbol unwrappedType = method.ReturnType;
+
+            if (method.ReturnType is INamedTypeSymbol namedTypeSymbol &&
+                namedTypeSymbol.IsGenericType &&
+                namedTypeSymbol.Name == "Task")
+            {
+                unwrappedType = namedTypeSymbol.TypeArguments.Single();
+            }
+
+            if (IsOrImplements(unwrappedType, "Response") ||
+                IsOrImplements(unwrappedType, "Operation") ||
+                IsOrImplements(originalType, "Pageable") ||
+                IsOrImplements(originalType, "AsyncPageable") ||
+                originalType.Name.EndsWith(ClientSuffix))
+            {
+                return;
+            }
+
+            context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0015, method.Locations.FirstOrDefault(), originalType.ToDisplayString()), method);
+
+        }
+
         public override void AnalyzeCore(ISymbolAnalysisContext context)
         {
             INamedTypeSymbol type = (INamedTypeSymbol)context.Symbol;
             foreach (var member in type.GetMembers())
             {
-                if (member is IMethodSymbol methodSymbol && methodSymbol.Name.EndsWith(AsyncSuffix) && methodSymbol.DeclaredAccessibility == Accessibility.Public)
+                if (member is IMethodSymbol methodSymbol && methodSymbol.Name.EndsWith(AsyncSuffix) && member.DeclaredAccessibility == Accessibility.Public)
                 {
                     CheckClientMethod(context, methodSymbol);
 

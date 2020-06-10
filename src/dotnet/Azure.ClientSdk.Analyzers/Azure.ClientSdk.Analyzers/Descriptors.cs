@@ -90,6 +90,20 @@ namespace Azure.ClientSdk.Analyzers
             "Usage",
             DiagnosticSeverity.Warning, true);
 
+        public static DiagnosticDescriptor AZC0014 = new DiagnosticDescriptor(
+            nameof(AZC0014),
+            "Avoid using banned types in public API",
+            "Types from {0} assemblies should not be exposed as part of public API surface.",
+            "Usage",
+            DiagnosticSeverity.Warning, true);
+
+        public static DiagnosticDescriptor AZC0015 = new DiagnosticDescriptor(
+            nameof(AZC0015),
+            "Unexpected client method return type.",
+            "Client methods should return Pageable<T>/AsyncPageable<T>/Operation<T>/Task<Operation<T>>/Response/Response<T>/Task<Response>/Task<Response<T>> or other client class found {0} instead.",
+            "Usage",
+            DiagnosticSeverity.Warning, true);
+
         public static DiagnosticDescriptor AZC0100 = new DiagnosticDescriptor(
             nameof(AZC0100),
             "ConfigureAwait(false) must be used.",

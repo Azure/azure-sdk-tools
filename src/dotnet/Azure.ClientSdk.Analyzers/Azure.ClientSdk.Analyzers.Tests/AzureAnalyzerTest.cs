@@ -10,16 +10,19 @@ using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Testing;
 using Microsoft.CodeAnalysis.Testing.Verifiers;
 
-namespace Azure.ClientSdk.Analyzers.Tests 
+namespace Azure.ClientSdk.Analyzers.Tests
 {
-    public class AzureAnalyzerTest<TAnalyzer> : CSharpAnalyzerTest<TAnalyzer, XUnitVerifier> where TAnalyzer : DiagnosticAnalyzer, new() 
+    public class AzureAnalyzerTest<TAnalyzer> : CSharpAnalyzerTest<TAnalyzer, XUnitVerifier> where TAnalyzer : DiagnosticAnalyzer, new()
     {
         private static readonly ReferenceAssemblies DefaultReferenceAssemblies =
             ReferenceAssemblies.Default.AddPackages(ImmutableArray.Create(
+                new PackageIdentity("Azure.Core", "1.0.0"),
                 new PackageIdentity("Microsoft.Bcl.AsyncInterfaces", "1.1.0"),
+                new PackageIdentity("System.Text.Json", "4.6.0"),
+                new PackageIdentity("Newtonsoft.Json", "12.0.3"),
                 new PackageIdentity("System.Threading.Tasks.Extensions", "4.5.3")));
 
-        public AzureAnalyzerTest(LanguageVersion languageVersion = LanguageVersion.Latest) 
+        public AzureAnalyzerTest(LanguageVersion languageVersion = LanguageVersion.Latest)
         {
             SolutionTransforms.Add((solution, projectId) =>
             {
@@ -33,8 +36,8 @@ namespace Azure.ClientSdk.Analyzers.Tests
 
         public string DescriptorName { get; set; }
 
-        protected override DiagnosticDescriptor GetDefaultDiagnostic(DiagnosticAnalyzer[] analyzers) 
-            => string.IsNullOrWhiteSpace(DescriptorName) 
+        protected override DiagnosticDescriptor GetDefaultDiagnostic(DiagnosticAnalyzer[] analyzers)
+            => string.IsNullOrWhiteSpace(DescriptorName)
                 ? base.GetDefaultDiagnostic(analyzers)
                 : analyzers.SelectMany(a => a.SupportedDiagnostics).FirstOrDefault(d => d.Id == DescriptorName) ?? base.GetDefaultDiagnostic(analyzers);
     }

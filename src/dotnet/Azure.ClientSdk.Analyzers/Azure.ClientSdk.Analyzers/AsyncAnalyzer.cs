@@ -26,12 +26,12 @@ namespace Azure.ClientSdk.Analyzers
             context.RegisterCompilationStartAction(CompilationStart);
         }
 
-        private void CompilationStart(CompilationStartAnalysisContext context) 
+        private void CompilationStart(CompilationStartAnalysisContext context)
         {
             _asyncUtilities = new AsyncAnalyzerUtilities(context.Compilation);
 
             context.RegisterSyntaxNodeAction(AnalyzeArrowExpressionClause, SyntaxKind.ArrowExpressionClause);
-            
+
             context.RegisterOperationAction(AnalyzeAwait, OperationKind.Await);
             context.RegisterOperationAction(AnalyzeUsing, OperationKind.Using);
             context.RegisterOperationAction(AnalyzeUsingDeclaration, OperationKind.UsingDeclaration);
@@ -40,32 +40,32 @@ namespace Azure.ClientSdk.Analyzers
             context.RegisterOperationAction(AnalyzeLoop, OperationKind.Loop);
         }
 
-        private void AnalyzeArrowExpressionClause(SyntaxNodeAnalysisContext context) 
+        private void AnalyzeArrowExpressionClause(SyntaxNodeAnalysisContext context)
         {
-            if (!(context.ContainingSymbol is IMethodSymbol method) || method.MethodKind != MethodKind.PropertyGet) 
+            if (!(context.ContainingSymbol is IMethodSymbol method) || method.MethodKind != MethodKind.PropertyGet)
             {
                 return;
             }
 
             var operation = context.SemanticModel.GetOperation(context.Node, context.CancellationToken);
-            if (operation is IBlockOperation block && block.Parent == null) 
+            if (operation is IBlockOperation block && block.Parent == null)
             {
                 MethodBodyAnalyzer.Run(context.ReportDiagnostic, context.Compilation, _asyncUtilities, method, block);
             }
         }
 
-        private void AnalyzeMethodBody(OperationAnalysisContext context) 
+        private void AnalyzeMethodBody(OperationAnalysisContext context)
         {
             var method = (IMethodSymbol) context.ContainingSymbol;
             var methodBody = (IMethodBodyOperation)context.Operation;
             MethodBodyAnalyzer.Run(context.ReportDiagnostic, context.Compilation, _asyncUtilities, method, methodBody.BlockBody ?? methodBody.ExpressionBody);
         }
 
-        private void AnalyzeAnonymousFunction(OperationAnalysisContext context) 
+        private void AnalyzeAnonymousFunction(OperationAnalysisContext context)
         {
             var operation = (IAnonymousFunctionOperation) context.Operation;
             var method = operation.Symbol;
-            if (method.ContainingSymbol.Kind != SymbolKind.Method) 
+            if (method.ContainingSymbol.Kind != SymbolKind.Method)
             {
                 MethodBodyAnalyzer.Run(context.ReportDiagnostic, context.Compilation, _asyncUtilities, method, operation.Body);
             }
@@ -74,13 +74,13 @@ namespace Azure.ClientSdk.Analyzers
         private void AnalyzeAwait(OperationAnalysisContext context)
         {
             var awaitOperation = (IAwaitOperation) context.Operation;
-            if (_asyncUtilities.IsTaskType(awaitOperation.Operation.Type)) 
+            if (_asyncUtilities.IsTaskType(awaitOperation.Operation.Type))
             {
                 ReportConfigureAwaitDiagnostic(context, awaitOperation);
             }
         }
 
-        private void AnalyzeUsing(OperationAnalysisContext context) 
+        private void AnalyzeUsing(OperationAnalysisContext context)
         {
             var usingOperation = (IUsingOperation) context.Operation;
             if (!usingOperation.IsAsynchronous)
@@ -95,7 +95,7 @@ namespace Azure.ClientSdk.Analyzers
             }
         }
 
-        private void AnalyzeUsingDeclaration(OperationAnalysisContext context) 
+        private void AnalyzeUsingDeclaration(OperationAnalysisContext context)
         {
             var usingDeclarationOperation = (IUsingDeclarationOperation) context.Operation;
             if (!usingDeclarationOperation.IsAsynchronous)
@@ -116,7 +116,7 @@ namespace Azure.ClientSdk.Analyzers
             }
         }
 
-        private void AnalyzeLoop(OperationAnalysisContext context) 
+        private void AnalyzeLoop(OperationAnalysisContext context)
         {
             if (!(context.Operation is IForEachLoopOperation forEachOperation))
             {
@@ -129,13 +129,13 @@ namespace Azure.ClientSdk.Analyzers
             }
 
             var collectionType = forEachOperation.Collection.Type;
-            if (_asyncUtilities.IsAsyncEnumerableType(collectionType)) 
+            if (_asyncUtilities.IsAsyncEnumerableType(collectionType))
             {
                 ReportConfigureAwaitDiagnostic(context, forEachOperation.Collection);
             }
         }
 
-        private static void ReportConfigureAwaitDiagnostic(OperationAnalysisContext context, IOperation operation) 
+        private static void ReportConfigureAwaitDiagnostic(OperationAnalysisContext context, IOperation operation)
         {
             var location = operation.Syntax.GetLocation();
             var diagnostic = Diagnostic.Create(AZC0100, location);

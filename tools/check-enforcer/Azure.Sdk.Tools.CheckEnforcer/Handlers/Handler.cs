@@ -80,7 +80,10 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
                     new NewCheckRun(this.GlobalConfigurationProvider.GetApplicationName(), headSha)
                     {
                         Status = new StringEnum<CheckStatus>(CheckStatus.InProgress),
-                        StartedAt = DateTimeOffset.UtcNow
+                        StartedAt = DateTimeOffset.UtcNow,
+                        Actions = new List<NewCheckRunAction>() {
+                            new NewCheckRunAction("Evaluate", "Evaluate Check Enforcer rules.", "evaluate")
+                        }
                     }
                 );
 

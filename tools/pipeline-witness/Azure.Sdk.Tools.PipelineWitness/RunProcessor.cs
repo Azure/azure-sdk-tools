@@ -164,8 +164,8 @@ namespace Azure.Sdk.Tools.PipelineWitness
                     Failures = await GetFailureClassificationsAsync(build, timeline)
                 };
 
-//                var container = await GetItemContainerAsync("azure-pipelines-runs");
-//                await container.UpsertItemAsync(run);
+                var container = await GetItemContainerAsync("azure-pipelines-runs");
+                await container.UpsertItemAsync(run);
             }
             catch (ContentNotFoundException ex)
             {

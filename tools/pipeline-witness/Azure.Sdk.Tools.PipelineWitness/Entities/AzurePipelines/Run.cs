@@ -69,5 +69,8 @@ namespace Azure.Sdk.Tools.PipelineWitness.Entities.AzurePipelines
 
         [JsonPropertyName("queueDurationInSeconds")]
         public double QueueDurationInSeconds { get; set; }
+
+        [JsonPropertyName("failures")]
+        public Failure[] Failures { get; set; }
     }
 }

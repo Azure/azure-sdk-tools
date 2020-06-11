@@ -63,6 +63,41 @@ namespace Azure.Sdk.Tools.PipelineWitness
             return collectionId;
         }
 
+        private async Task<VssConnection> GetVssConnectionAsync(string organization)
+        {
+            var vssConnectionCacheKey = $"{organization}_vssConnectionCacheKey";
+
+            var connection = await cache.GetOrCreateAsync(vssConnectionCacheKey, async (entry) =>
+            {
+                var azureDevOpsPersonalAccessToken = await GetAzureDevOpsPersonalAccessTokenAsync();
+                var credentials = new VssBasicCredential("nobody", azureDevOpsPersonalAccessToken);
+                var baseUri = new Uri($"https://dev.azure.com/{organization}");
+                var connection = new VssConnection(baseUri, credentials);
+
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(60);
+                return connection;
+            });
+
+            return connection;
+        }
+
+
+        private async Task<T> GetVssClientAsync<T>(string organization) where T: VssHttpClientBase
+        {
+            var vssClientCacheKey = $"{organization}/{typeof(T)}_vssClientCacheKey";
+
+            var client = await cache.GetOrCreateAsync<T>(vssClientCacheKey, async (entry) =>
+            {
+                var connection = await GetVssConnectionAsync(organization);
+                var client = connection.GetClient<T>();
+            
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(60);
+                return client;
+            });
+
+            return client;
+        }
+
         public async Task ProcessRunAsync(Uri runUri)
         {
             try
@@ -79,15 +114,9 @@ namespace Azure.Sdk.Tools.PipelineWitness
                 var pipelineId = int.Parse(runUriPathSegments[5]);
                 var runId = int.Parse(runUriPathSegments[7]);
 
-                var azureDevOpsPersonalAccessToken = await GetAzureDevOpsPersonalAccessTokenAsync();
-                var credentials = new VssBasicCredential("nobody", azureDevOpsPersonalAccessToken);
-
-                var baseUri = new Uri($"https://dev.azure.com/{organization}");
-                var connection = new VssConnection(baseUri, credentials);
-
-                var buildClient = connection.GetClient<BuildHttpClient>();
-                var projectClient = connection.GetClient<ProjectHttpClient>();
-                var organizationClient = connection.GetClient<OrganizationHttpClient>();
+                var buildClient = await GetVssClientAsync<BuildHttpClient>(organization);
+                var projectClient = await GetVssClientAsync<ProjectHttpClient>(organization);
+                var organizationClient = await GetVssClientAsync<OrganizationHttpClient>(organization);
 
                 var build = await buildClient.GetBuildAsync(projectGuid, runId);
                 var project = await projectClient.GetProject(projectGuid.ToString());
@@ -185,11 +214,21 @@ namespace Azure.Sdk.Tools.PipelineWitness
 
         private async Task<CosmosClient> GetCosmosClientAsync()
         {
-            var websiteResourceGroupEnvironmentVariable = GetWebsiteResourceGroupEnvironmentVariable();
-            var accountEndpoint = $"https://{websiteResourceGroupEnvironmentVariable}.documents.azure.com";
-            var cosmosDbPrimaryAuthorizationKey = await GetCosmosDbPrimaryAuthorizationKeyAsync();
-            var cosmosClient = new CosmosClient(accountEndpoint, cosmosDbPrimaryAuthorizationKey);
+            var cosmosClientCacheKey = "cosmosClientCacheKey";
+
+            var cosmosClient = await cache.GetOrCreateAsync(cosmosClientCacheKey, async (entry) =>
+            {
+                var websiteResourceGroupEnvironmentVariable = GetWebsiteResourceGroupEnvironmentVariable();
+                var accountEndpoint = $"https://{websiteResourceGroupEnvironmentVariable}.documents.azure.com";
+                var cosmosDbPrimaryAuthorizationKey = await GetCosmosDbPrimaryAuthorizationKeyAsync();
+                var cosmosClient = new CosmosClient(accountEndpoint, cosmosDbPrimaryAuthorizationKey);
+
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(60);
+                return cosmosClient;
+            });
+
             return cosmosClient;
+
         }
 
         private async Task<CosmosContainer> GetItemContainerAsync(string containerName)
@@ -229,8 +268,8 @@ namespace Azure.Sdk.Tools.PipelineWitness
             var client = GetSecretClient();
             var secret = await cache.GetOrCreateAsync(secretCacheKey, async (entry) =>
             {
-                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(60);
                 KeyVaultSecret secret = await client.GetSecretAsync(secretName);
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(60);
                 return secret.Value;
             });
 
@@ -246,7 +285,9 @@ namespace Azure.Sdk.Tools.PipelineWitness
                 var websiteResourceGroupEnvironmentVariable = GetWebsiteResourceGroupEnvironmentVariable();
                 var uri = new Uri($"https://{websiteResourceGroupEnvironmentVariable}.vault.azure.net/");
                 var credential = new DefaultAzureCredential();
+
                 var client = new SecretClient(uri, credential);
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(60);
                 return client;
             });
 

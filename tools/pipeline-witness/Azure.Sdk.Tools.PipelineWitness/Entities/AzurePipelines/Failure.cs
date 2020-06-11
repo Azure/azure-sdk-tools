@@ -14,6 +14,8 @@ namespace Azure.Sdk.Tools.PipelineWitness.Entities.AzurePipelines
 
         public Failure(string scope, string classification)
         {
+            this.Scope = scope;
+            this.Classification = classification;
         }
 
         public string Scope { get; set; }

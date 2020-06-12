@@ -1,5 +1,6 @@
 ﻿using Azure.Cosmos;
 using Azure.Sdk.Tools.PipelineWitness;
+using Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis;
 using Microsoft.Azure.Functions.Extensions.DependencyInjection;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,6 +21,8 @@ namespace Azure.Sdk.Tools.PipelineWitness
             builder.Services.AddLogging();
             builder.Services.AddMemoryCache();
             builder.Services.AddSingleton<RunProcessor>();
+            builder.Services.AddSingleton<IFailureAnalyzer, FailureAnalyzer>();
+            builder.Services.AddSingleton<IFailureClassifier, CancelledTaskClassifier>();
 
             // POSSIBLE WORKAROUND: The Azure Functions host environment has a health check
             //                      which pulls down the host if it exceeds 300 active outbound

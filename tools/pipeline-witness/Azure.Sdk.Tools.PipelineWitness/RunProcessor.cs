@@ -1,6 +1,7 @@
 ﻿using Azure.Cosmos;
 using Azure.Identity;
 using Azure.Sdk.Tools.PipelineWitness.Entities.AzurePipelines;
+using Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis;
 using Azure.Security.KeyVault.Secrets;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Caching.Memory;
@@ -25,13 +26,15 @@ namespace Azure.Sdk.Tools.PipelineWitness
 {
     public class RunProcessor
     {
-        public RunProcessor(ILogger<RunProcessor> logger, IMemoryCache cache, HttpClient httpClient)
+        public RunProcessor(IFailureAnalyzer failureAnalyzer, ILogger<RunProcessor> logger, IMemoryCache cache, HttpClient httpClient)
         {
+            this.failureAnalyzer = failureAnalyzer;
             this.logger = logger;
             this.cache = cache;
             this.httpClient = httpClient;
         }
 
+        private IFailureAnalyzer failureAnalyzer;
         private ILogger<RunProcessor> logger;
         private IMemoryCache cache;
         private HttpClient httpClient;
@@ -157,7 +160,8 @@ namespace Azure.Sdk.Tools.PipelineWitness
                     StartTime = build.StartTime.Value,
                     FinishTime = build.FinishTime.Value,
                     AgentDurationInSeconds = agentDurationInSeconds,
-                    QueueDurationInSeconds = queueDurationInSeconds
+                    QueueDurationInSeconds = queueDurationInSeconds,
+                    Failures = await GetFailureClassificationsAsync(build, timeline)
                 };
 
                 var container = await GetItemContainerAsync("azure-pipelines-runs");
@@ -168,6 +172,15 @@ namespace Azure.Sdk.Tools.PipelineWitness
                 logger.LogWarning(ex, "Run information was not found, possibly a PR run that was cancelled and removed?");
                 return;
             }
+        }
+
+        public async Task<Failure[]> GetFailureClassificationsAsync(Build build, Timeline timeline)
+        {
+            // If there is no timeline, we can't analyze anything!
+            if (timeline == null) return new Failure[0];
+
+            var failures = await failureAnalyzer.AnalyzeFailureAsync(build, timeline);
+            return failures.ToArray();
         }
 
         private async Task<CosmosClient> GetCosmosClientAsync()

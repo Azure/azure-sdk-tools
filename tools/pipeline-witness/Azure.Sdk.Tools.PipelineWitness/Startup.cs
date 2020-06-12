@@ -23,6 +23,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
             builder.Services.AddSingleton<RunProcessor>();
             builder.Services.AddSingleton<IFailureAnalyzer, FailureAnalyzer>();
             builder.Services.AddSingleton<IFailureClassifier, CancelledTaskClassifier>();
+            builder.Services.AddSingleton<IFailureClassifier, CosmosDbEmulatorStartFailureClassifier>();
             builder.Services.AddSingleton<IFailureClassifier, AzurePipelinesPoolOutageClassifier>();
 
             // POSSIBLE WORKAROUND: The Azure Functions host environment has a health check

@@ -9,8 +9,6 @@ param (
   [String]$TargetServices
 )
 
-Write-Host "> $PSCommandPath $args"
-
 $PACKAGE_README_REGEX = ".*[\/\\]sdk[\\\/][^\/\\]+[\\\/][^\/\\]+[\/\\]README\.md"
 
 Write-Host "repo is $CodeRepo"

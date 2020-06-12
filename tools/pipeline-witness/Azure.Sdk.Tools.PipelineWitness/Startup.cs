@@ -23,6 +23,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
             builder.Services.AddSingleton<RunProcessor>();
             builder.Services.AddSingleton<IFailureAnalyzer, FailureAnalyzer>();
             builder.Services.AddSingleton<IFailureClassifier, CancelledTaskClassifier>();
+            builder.Services.AddSingleton<IFailureClassifier, AzurePipelinesPoolOutageClassifier>();
 
             // POSSIBLE WORKAROUND: The Azure Functions host environment has a health check
             //                      which pulls down the host if it exceeds 300 active outbound

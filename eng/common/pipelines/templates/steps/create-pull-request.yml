@@ -37,10 +37,10 @@ steps:
 
 - task: PowerShell@2
   displayName: Push changes
-  workingDirectory: ${{ parameters.WorkingDirectory }}
   condition: and(succeeded(), eq(variables['HasChanges'], 'true'))
   inputs:
     pwsh: true
+    workingDirectory: ${{ parameters.WorkingDirectory }}
     filePath: ${{ parameters.ScriptDirectory }}/git-branch-push.ps1
     arguments: >
       -PRBranchName "${{ parameters.PRBranchName }}"
@@ -50,10 +50,10 @@ steps:
 
 - task: PowerShell@2
   displayName: Create pull request
-  workingDirectory: ${{ parameters.WorkingDirectory }}
   condition: and(succeeded(), eq(variables['HasChanges'], 'true'))
   inputs:
     pwsh: true
+    workingDirectory: ${{ parameters.WorkingDirectory }}
     filePath: ${{ parameters.ScriptDirectory }}/Submit-PullRequest.ps1
     arguments: >
       -RepoOwner "${{ parameters.RepoOwner }}"

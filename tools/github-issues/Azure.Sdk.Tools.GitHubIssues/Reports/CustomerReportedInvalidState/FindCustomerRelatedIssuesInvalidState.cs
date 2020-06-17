@@ -107,7 +107,9 @@ namespace GitHubIssues.Reports
 
         private bool ValidateIssueAssignee(Issue issue, StringBuilder problemsWithTheIssue)
         {
-            if (issue.Assignee == null)
+            // if the issue is not assigned to anyone AND
+            // the issue is NOT in the backlog milestone (a milestone with no dueOn date)
+            if (issue.Assignee == null && issue.Milestone.DueOn != null)
             {
                 problemsWithTheIssue.Append("The issue must be assigned to an owner. ");
                 return false;

@@ -36,7 +36,7 @@ def amend_href(input_string, repo_location, readme_suffix):
     suffix = "-" + readme_suffix + ".md"
 
     resolvable_path = os.path.join(repo_location, input_string.replace("~/", ""))
-    possible_target_readme = os.path.splitext(resolvable_path)[0] + suffix
+    possible_target_readme = os.path.splitext(resolvable_path)[0] + "-" + suffix
 
     if os.path.exists(possible_target_readme):
 

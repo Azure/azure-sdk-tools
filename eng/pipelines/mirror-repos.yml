@@ -1,0 +1,65 @@
+# Mirror the master branch for each repo folder to all subscribed langauge repos.
+
+trigger: none
+pr: none
+
+pool:
+  vmImage: ubuntu-latest
+
+jobs:
+  - job: SyncRepos
+    displayName: Sync public repos
+
+    steps:
+    - checkout: none
+    - template: ./templates/steps/sync-repo-branch.yml
+      parameters:
+        GH_TOKEN: $(azuresdk-github-pat)
+        Repos:
+
+          Azure/azure-rest-api-specs:
+            Branch: master
+            TargetRepos: 
+              Azure/azure-rest-api-specs-pr:
+              azure-sdk/azure-rest-api-specs:
+
+          Azure/azure-sdk-for-go:
+            Branch: master
+            TargetRepos: 
+              Azure/azure-sdk-for-go-pr:
+              azure-sdk/azure-sdk-for-go:
+
+          Azure/azure-sdk-for-java:
+            Branch: master
+            TargetRepos: 
+              Azure/azure-sdk-for-java-pr:
+              azure-sdk/azure-sdk-for-java:
+
+          Azure/azure-sdk-for-js:
+            Branch: master
+            TargetRepos:
+              Azure/azure-sdk-for-js-pr:
+              azure-sdk/azure-sdk-for-js:
+
+          Azure/azure-sdk-for-net:
+            Branch: master
+            TargetRepos: 
+              Azure/azure-sdk-for-net-pr:
+              azure-sdk/azure-sdk-for-net:
+
+          Azure/azure-sdk-for-python:
+            Branch: master
+            TargetRepos: 
+              Azure/azure-sdk-for-python-pr:
+              azure-sdk/azure-sdk-for-python:
+
+          Azure/azure-cli:
+            Branch: dev
+            TargetRepos: 
+              Azure/azure-cli-pr:
+
+          Azure/azure-cli-extensions:
+            Branch: master
+            TargetRepos: 
+              Azure/azure-cli-extensions-pr:
+              azure-sdk/azure-cli-extensions:

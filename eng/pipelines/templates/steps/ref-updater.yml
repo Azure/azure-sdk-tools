@@ -27,7 +27,7 @@ steps:
   - template: ../../../common/pipelines/templates/steps/create-pull-request.yml
     parameters:
       RepoName: ${{ repo }}
-      PRBranchName: UpdateRepositoryRefs
+      PRBranchName: UpdateRepositoryRefsFor${{ parameters.ToolRepo }}
       CommitMsg: Update ${{ parameters.ToolRepo }} Repository Resource Refs in Yaml files
       PRTitle: Update ${{ parameters.ToolRepo }} Repository Resource Refs in Yaml files
       PushArgs: -f

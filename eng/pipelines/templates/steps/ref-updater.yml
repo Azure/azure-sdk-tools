@@ -17,17 +17,20 @@ steps:
     inputs:
       targetType: 'filePath'
       filePath: ${{ parameters.ToolsRepoPath }}/scripts/powershell/ref-updater.ps1
-      arguments: -RepoRoot $(System.DefaultWorkingDirectory)/${{ repo }} -Tag ${{ parameters.Tag }} -ToolRepo ${{ parameters.ToolRepo }}
+      arguments: >
+        -RepoRoot $(System.DefaultWorkingDirectory)/${{ repo }}
+        -Tag ${{ parameters.Tag }}
+        -ToolRepo ${{ parameters.ToolRepo }}
       pwsh: true
     displayName: Update Refs
 
-  - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
+  - template: ../../../common/pipelines/templates/steps/create-pull-request.yml
     parameters:
       RepoName: ${{ repo }}
       PRBranchName: UpdateRepositoryRefs
-      CommitMsg: Update Repository Resource Refs in Yaml files
-      PRTitle: Update Repository Resource Refs in Yaml files
+      CommitMsg: Update ${{ parameters.ToolRepo }} Repository Resource Refs in Yaml files
+      PRTitle: Update ${{ parameters.ToolRepo }} Repository Resource Refs in Yaml files
       PushArgs: -f
       WorkingDirectory: $(System.DefaultWorkingDirectory)/${{ repo }}
-      ScriptDirectory: $(Build.SourcesDirectory)/eng/common/scripts
+      ScriptDirectory: ${{ parameters.ToolsRepoPath }}/eng/common/scripts
       BaseBranchName: refs/heads/master

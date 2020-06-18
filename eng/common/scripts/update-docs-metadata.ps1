@@ -61,7 +61,7 @@ function GetAdjustedReadmeContent($pkgInfo, $lang){
       $service = $metadata | ? { $_.Package -eq $pkgId }
 
       if ($service) {
-        $service = "$($service.ServiceName)"
+        $service = "$($service.ServiceName)".ToLower().Replace(" ", "")
       }
     }
     catch {

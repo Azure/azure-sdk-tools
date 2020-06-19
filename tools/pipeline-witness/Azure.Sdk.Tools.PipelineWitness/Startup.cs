@@ -32,6 +32,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
             builder.Services.AddSingleton<IFailureClassifier, JavaPipelineTestFailureClassifier>();
             builder.Services.AddSingleton<IFailureClassifier, JsSamplesExecutionFailureClassifier>();
             builder.Services.AddSingleton<IFailureClassifier, JsDevFeedPublishingFailureClassifier>();
+            builder.Services.AddSingleton<IFailureClassifier, DownloadSecretsFailureClassifier>();
 
             // POSSIBLE WORKAROUND: The Azure Functions host environment has a health check
             //                      which pulls down the host if it exceeds 300 active outbound

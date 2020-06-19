@@ -20,11 +20,6 @@ pr:
     include:
       - tools/webhook-router
   
-extends:
-  template: ../../eng/pipelines/templates/stages/archetype-sdk-tool-azure-function.yml
-  parameters:
-    ToolName: webhook-router
-    FunctionProject: Azure.Sdk.Tools.WebhookRouter
-    TestProject: Azure.Sdk.Tools.WebhookRouter.Tests
-    ProductionEnvironmentName: webhookrouterprod
-    StagingEnvironmentName: webhookrouterstaging
+steps:
+- pwsh: |
+    Get-ChildItem Env:

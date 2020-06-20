@@ -53,105 +53,97 @@ namespace Azure.Sdk.Tools.PipelineWitness
 
         public async Task ProcessRunAsync(Uri runUri)
         {
-            try
+            if (!IsValidAzureDevOpsUri(runUri))
             {
-                if (!IsValidAzureDevOpsUri(runUri))
-                {
-                    throw new ArgumentOutOfRangeException("Run URI does not point to the Azure SDK instance of Azure DevOps");
-                }
-
-                var runUriPath = runUri.AbsolutePath;
-                var runUriPathSegments = runUri.PathAndQuery.Split("/");
-                var projectGuid = Guid.Parse(runUriPathSegments[2]);
-                var pipelineId = int.Parse(runUriPathSegments[5]);
-                var runId = int.Parse(runUriPathSegments[7]);
-
-                var buildClient = vssConnection.GetClient<BuildHttpClient>();
-                var projectClient = vssConnection.GetClient<ProjectHttpClient>();
-
-                var build = await buildClient.GetBuildAsync(projectGuid, runId);
-                var project = await projectClient.GetProject(projectGuid.ToString());
-                var pipeline = await buildClient.GetDefinitionAsync(project.Id, build.Definition.Id);
-                var timeline = await buildClient.GetBuildTimelineAsync(projectGuid, runId);
-
-                double agentDurationInSeconds = 0;
-                double queueDurationInSeconds = 0;
-
-                if (timeline != null)
-                {
-                    agentDurationInSeconds = (from record in timeline.Records
-                                              where record.RecordType == "Task"
-                                              where (record.Name == "Initialize job" || record.Name == "Finalize Job") // Love consistency in capitalization!
-                                              group record by record.ParentId into job
-                                              let jobStartTime = job.Min(jobRecord => jobRecord.StartTime)
-                                              let jobFinishTime = job.Max(jobRecord => jobRecord.FinishTime)
-                                              let agentDuration = jobFinishTime - jobStartTime
-                                              select agentDuration.Value.TotalSeconds).Sum();
-
-                    queueDurationInSeconds = (from taskRecord in timeline.Records
-                                              where taskRecord.RecordType == "Task"
-                                              where taskRecord.Name == "Initialize job"
-                                              join jobRecord in timeline.Records on taskRecord.ParentId equals jobRecord.Id
-                                              let queueDuration = taskRecord.StartTime - jobRecord.StartTime
-                                              select queueDuration.Value.TotalSeconds).Sum();
-                }
-
-                var run = new Run()
-                {
-                    RunId = build.Id,
-                    RunName = build.BuildNumber,
-                    RunUrl = new Uri(((ReferenceLink)build.Links.Links["web"]).Href),
-                    PipelineId = pipeline.Id,
-                    PipelineName = pipeline.Name,
-                    PipelineUrl = new Uri(((ReferenceLink)pipeline.Links.Links["web"]).Href),
-                    ProjectId = build.Project.Id,
-                    ProjectName = build.Project.Name,
-                    ProjectUrl = new Uri(((ReferenceLink)project.Links.Links["web"]).Href),
-                    RepositoryId = build.Repository.Id,
-                    Reason = build.Reason switch
-                    {
-                        BuildReason.Manual => RunReason.Manual,
-                        BuildReason.IndividualCI => RunReason.ContinuousIntegration,
-                        BuildReason.Schedule => RunReason.Scheduled,
-                        BuildReason.PullRequest => RunReason.PullRequest,
-                        _ => RunReason.Other
-                    },
-                    State = build.Status switch
-                    {
-                        BuildStatus.None => RunStatus.None,
-                        BuildStatus.Completed => RunStatus.Completed,
-                        BuildStatus.Cancelling => RunStatus.Cancelling,
-                        BuildStatus.InProgress => RunStatus.InProgress,
-                        BuildStatus.NotStarted => RunStatus.NotStarted,
-                        BuildStatus.Postponed => RunStatus.Postponed,
-                        _ => RunStatus.None
-                    },
-                    Result = build.Result switch
-                    {
-                        BuildResult.Canceled => RunResult.Cancelled,
-                        BuildResult.Failed => RunResult.Failed,
-                        BuildResult.None => RunResult.None,
-                        BuildResult.PartiallySucceeded => RunResult.PartiallySucceded,
-                        BuildResult.Succeeded => RunResult.Succeeded,
-                        _ => RunResult.None
-                    },
-                    GitReference = build.SourceBranch,
-                    GitCommitSha = build.SourceVersion,
-                    StartTime = build.StartTime.Value,
-                    FinishTime = build.FinishTime.Value,
-                    AgentDurationInSeconds = agentDurationInSeconds,
-                    QueueDurationInSeconds = queueDurationInSeconds,
-                    Failures = await GetFailureClassificationsAsync(build, timeline)
-                };
-
-                var container = await GetItemContainerAsync("azure-pipelines-runs");
-                await container.UpsertItemAsync(run);
+                throw new ArgumentOutOfRangeException("Run URI does not point to the Azure SDK instance of Azure DevOps");
             }
-            catch (ContentNotFoundException ex)
+
+            var runUriPath = runUri.AbsolutePath;
+            var runUriPathSegments = runUri.PathAndQuery.Split("/");
+            var projectGuid = Guid.Parse(runUriPathSegments[2]);
+            var pipelineId = int.Parse(runUriPathSegments[5]);
+            var runId = int.Parse(runUriPathSegments[7]);
+
+            var buildClient = vssConnection.GetClient<BuildHttpClient>();
+            var projectClient = vssConnection.GetClient<ProjectHttpClient>();
+
+            var build = await buildClient.GetBuildAsync(projectGuid, runId);
+            var project = await projectClient.GetProject(projectGuid.ToString());
+            var pipeline = await buildClient.GetDefinitionAsync(project.Id, build.Definition.Id);
+            var timeline = await buildClient.GetBuildTimelineAsync(projectGuid, runId);
+
+            double agentDurationInSeconds = 0;
+            double queueDurationInSeconds = 0;
+
+            if (timeline != null)
             {
-                logger.LogWarning(ex, "Run information was not found, possibly a PR run that was cancelled and removed?");
-                return;
+                agentDurationInSeconds = (from record in timeline.Records
+                                            where record.RecordType == "Task"
+                                            where (record.Name == "Initialize job" || record.Name == "Finalize Job") // Love consistency in capitalization!
+                                            group record by record.ParentId into job
+                                            let jobStartTime = job.Min(jobRecord => jobRecord.StartTime)
+                                            let jobFinishTime = job.Max(jobRecord => jobRecord.FinishTime)
+                                            let agentDuration = jobFinishTime - jobStartTime
+                                            select agentDuration.Value.TotalSeconds).Sum();
+
+                queueDurationInSeconds = (from taskRecord in timeline.Records
+                                            where taskRecord.RecordType == "Task"
+                                            where taskRecord.Name == "Initialize job"
+                                            join jobRecord in timeline.Records on taskRecord.ParentId equals jobRecord.Id
+                                            let queueDuration = taskRecord.StartTime - jobRecord.StartTime
+                                            select queueDuration.Value.TotalSeconds).Sum();
             }
+
+            var run = new Run()
+            {
+                RunId = build.Id,
+                RunName = build.BuildNumber,
+                RunUrl = new Uri(((ReferenceLink)build.Links.Links["web"]).Href),
+                PipelineId = pipeline.Id,
+                PipelineName = pipeline.Name,
+                PipelineUrl = new Uri(((ReferenceLink)pipeline.Links.Links["web"]).Href),
+                ProjectId = build.Project.Id,
+                ProjectName = build.Project.Name,
+                ProjectUrl = new Uri(((ReferenceLink)project.Links.Links["web"]).Href),
+                RepositoryId = build.Repository.Id,
+                Reason = build.Reason switch
+                {
+                    BuildReason.Manual => RunReason.Manual,
+                    BuildReason.IndividualCI => RunReason.ContinuousIntegration,
+                    BuildReason.Schedule => RunReason.Scheduled,
+                    BuildReason.PullRequest => RunReason.PullRequest,
+                    _ => RunReason.Other
+                },
+                State = build.Status switch
+                {
+                    BuildStatus.None => RunStatus.None,
+                    BuildStatus.Completed => RunStatus.Completed,
+                    BuildStatus.Cancelling => RunStatus.Cancelling,
+                    BuildStatus.InProgress => RunStatus.InProgress,
+                    BuildStatus.NotStarted => RunStatus.NotStarted,
+                    BuildStatus.Postponed => RunStatus.Postponed,
+                    _ => RunStatus.None
+                },
+                Result = build.Result switch
+                {
+                    BuildResult.Canceled => RunResult.Cancelled,
+                    BuildResult.Failed => RunResult.Failed,
+                    BuildResult.None => RunResult.None,
+                    BuildResult.PartiallySucceeded => RunResult.PartiallySucceded,
+                    BuildResult.Succeeded => RunResult.Succeeded,
+                    _ => RunResult.None
+                },
+                GitReference = build.SourceBranch,
+                GitCommitSha = build.SourceVersion,
+                StartTime = build.StartTime.Value,
+                FinishTime = build.FinishTime.Value,
+                AgentDurationInSeconds = agentDurationInSeconds,
+                QueueDurationInSeconds = queueDurationInSeconds,
+                Failures = await GetFailureClassificationsAsync(build, timeline)
+            };
+
+            var container = await GetItemContainerAsync("azure-pipelines-runs");
+            await container.UpsertItemAsync(run);
         }
 
         public async Task<Failure[]> GetFailureClassificationsAsync(Build build, Timeline timeline)

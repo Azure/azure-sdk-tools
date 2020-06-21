@@ -14,7 +14,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
             if (context.Build.Definition.Name.StartsWith("js -"))
             {
                 var failedJobs = from r in context.Timeline.Records
-                                 where r.Name == "Publish packages to daily feed"
+                                 where r.Name == "Publish package to daily feed"
                                  where r.RecordType == "Job"
                                  where r.Result == TaskResult.Failed
                                  select r;

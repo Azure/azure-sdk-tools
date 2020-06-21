@@ -45,7 +45,17 @@ namespace Azure.Sdk.Tools.PipelineWitness
                 // and TCP connection limits in Azure Functions. If this persists
                 // after this refactoring then the next step is to either switch
                 // to gateway mode or limit the direct connections somehow.
-                var cosmosClient = new CosmosClient(accountEndpoint, secret.Value);
+                var cosmosClient = new CosmosClient(
+                    accountEndpoint,
+                    secret.Value,
+                    new CosmosClientOptions()
+                    {
+                        Diagnostics = {
+                            IsLoggingEnabled = false // HACK: https://github.com/Azure/azure-cosmos-dotnet-v3/issues/1592 
+                                                     //       It should be safe to remove these options post 4.0.0-preview.3
+                        }
+                    }
+                    );
                 return cosmosClient;
             });
 

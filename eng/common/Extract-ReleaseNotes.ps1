@@ -2,8 +2,7 @@
 param (
   [Parameter(Mandatory = $true)]
   [String]$ChangeLogLocation,
-  [String]$VersionString,
-  [String]$IncludeTitle
+  [String]$VersionString
 )
 
 $ErrorActionPreference = 'Stop'
@@ -57,10 +56,6 @@ else
   if ($releaseNotes.ContainsKey($VersionString)) 
   {
     $releaseNotesForVersion = $releaseNotes[$VersionString].ReleaseContent
-    if ($IncludeTitle -eq $True)
-    {
-      return $releaseNotesForVersion
-    }
     $processedNotes = $releaseNotesForVersion -Split [Environment]::NewLine | where { $_ -notmatch $RELEASE_TITLE_REGEX }
     return $processedNotes -Join [Environment]::NewLine
   }

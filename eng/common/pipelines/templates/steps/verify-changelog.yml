@@ -15,5 +15,4 @@ steps:
       $Language = "$(Build.Repository.Name)".Substring("$(Build.Repository.Name)".LastIndexOf('-') + 1)
       $PackageProp = Get-PkgProperties -PackageName ${{ parameters.PackageName }} -ServiceName ${{ parameters.ServiceName }} -Language $Language -RepoRoot $(Build.SourcesDirectory)
       Verify-ChangeLog -ChangeLogLocation $PackageProp.pkgChangeLogPath -VersionString $PackageProp.pkgReadMePath -ForRelease ${{ parameters.ForRelease }}
-
     displayName: Verify ChangeLog / Release Notes

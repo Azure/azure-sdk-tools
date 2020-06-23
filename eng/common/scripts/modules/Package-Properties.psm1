@@ -135,13 +135,6 @@ function Extract-JavaPkgProps ($pkgPath, $serviceName, $pkgName)
     return $null
 }
 
-# Return the Repo language using pipeline variables
-# Will only work on DevOps pipeline
-function Get-RunLanguage
-{
-    return "$(Build.Repository.Name)".Substring("$(Build.Repository.Name)".LastIndexOf('-') + 1)
-}
-
 # Takes package name and service Name
 # Returns important properties of the package as related to the language repo
 # Returns a PS Object with properties @ { pkgName, pkgVersion, pkgDirectoryPath, pkgReadMePath, pkgChangeLogPath }

@@ -1,6 +1,6 @@
 param (
   # url to verify links. Can either be a http address or a local file request. Local file paths support md and html files.
-  [string] $url,
+  [string[]] $urls,
   # file that contains a set of links to ignore when verifying
   [string] $ignoreLinksFile = "$PSScriptRoot/ignore-links.txt",
   # switch that will enable devops specific logging for warnings
@@ -16,6 +16,31 @@ param (
 )
 
 $ProgressPreference = "SilentlyContinue"; # Disable invoke-webrequest progress dialog
+
+function NormalizeUrl([string]$url){
+  if (Test-Path $url) {
+    $url = "file://" + (Resolve-Path $url).ToString();
+  }
+
+  $uri = [System.Uri]$url;
+
+  if ($script:baseUrl -eq "") {
+    # for base url default to containing directory
+    $script:baseUrl = (new-object System.Uri($uri, ".")).ToString();
+  }
+
+  if ($script:rootUrl -eq "") {
+    if ($uri.IsFile) { 
+      # for files default to the containing directory
+      $script:rootUrl = $script:baseUrl;
+    }
+    else {
+      # for http links default to the root path
+      $script:rootUrl = new-object System.Uri($uri, "/");
+    }
+  }
+  return $uri
+}
 
 function LogWarning
 {
@@ -156,10 +181,11 @@ function GetLinks([System.Uri]$pageUri)
   return $links;
 }
 
-if ($url -eq "")
-{
-  Write-Host "Usage $($MyInvocation.MyCommand.Name) <url>";
-  exit;
+if ($urls) {
+  if($urls.Count -eq 0) {
+    Write-Host "Usage $($MyInvocation.MyCommand.Name) <urls>";
+    exit;
+  }  
 }
 
 if ($PSVersionTable.PSVersion.Major -lt 6)
@@ -178,34 +204,10 @@ $checkedPages = @{};
 $checkedLinks = @{};
 $pageUrisToCheck = new-object System.Collections.Queue
 
-if (Test-Path $url) {
-  $url = "file://" + (Resolve-Path $url).ToString();
+foreach($url in $urls) {
+  $uri = NormalizeUrl $url  
+  $pageUrisToCheck.Enqueue($uri);
 }
-
-$uri = [System.Uri]$url;
-
-if ($baseUrl -eq "") {
-  # for base url default to containing directory
-  $baseUrl = (new-object System.Uri($uri, ".")).ToString();
-}
-
-if ($rootUrl -eq "") {
-  if ($uri.IsFile) { 
-    # for files default to the containing directory
-    $rootUrl = $baseUrl;
-  }
-  else {
-    # for http links default to the root path
-    $rootUrl = new-object System.Uri($uri, "/");
-  }
-}
-
-Write-Host "Verifying links for $uri"
-if ($recursive) {
-  Write-Host "and recursively verifying links on pages that start with $baseUrl"
-}
-
-$pageUrisToCheck.Enqueue($uri);
 
 while ($pageUrisToCheck.Count -ne 0)
 {

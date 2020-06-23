@@ -56,6 +56,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
                         }
                     }
                     );
+
                 return cosmosClient;
             });
 

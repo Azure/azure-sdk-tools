@@ -1,44 +1,19 @@
 parameters:
-  PackageName: 'not-specified'
-  ServiceName: 'not-specified'
-  ForRelease: ''
+- name: PackageName
+  type: string
+  default: 'not-specified'
+- name: ServiceName
+  type: string
+  default: 'not-specified'
+- name: ForRelease
+  type: boolean
+  default: false
 
 steps:
   - pwsh: |
       Import-Module "$(Build.SourcesDirectory)/eng/common/scripts/modules/common-manifest.psd1"
       $Language = "$(Build.Repository.Name)".Substring("$(Build.Repository.Name)".LastIndexOf('-') + 1)
       $PackageProp = Get-PkgProperties -PackageName ${{ parameters.PackageName }} -ServiceName ${{ parameters.ServiceName }} -Language $Language -RepoRoot $(Build.SourcesDirectory)
-
-      $ReleaseNotes = (& "$(Build.SourcesDirectory)/eng/common/Extract-ReleaseNotes.ps1" -ChangeLogLocation $PackageProp.pkgChangeLogPath -VersionString $PackageProp.pkgVersion -IncludeTitle $true) -Split [Environment]::NewLine
-
-      # Verify Header Has Unreleased or an has accurate date
-      $ReleaseTitle = $ReleaseNotes[0] -Split ' '
-
-      if ($ReleaseTitle.Length -ne 3)
-      {
-        Write-Host ("##[error]Changelog '{0}' has wrong release note title" -f $PackageProp.pkgChangeLogPath)
-        Write-Host "##[info]Ensure the release date is included i.e. (yyyy-MM-dd) or (Unreleased) if not yet released"
-        exit 1
-      }
-
-      if ('${{ parameters.ForRelease }}' -eq 'true')
-      {
-        
-        $CurrentDate = Get-Date -Format "yyyy-MM-dd"
-        if ($ReleaseTitle[2] -ne "($CurrentDate)")
-        {
-          Write-Host ("##[warning]Incorrect Date: Please use the current date in the Changelog '{0}' before releasing the package" -f $PackageProp.pkgChangeLogPath)
-          exit 1
-        }
-
-        if ($ReleaseNotes.Length -le 2)
-        {
-          Write-Host ("##[error]Empty Release Notes for '{0}' in '{1}'" -f $PackageProp.pkgVersion, $PackageProp.pkgChangeLogPath)
-          Write-Host "##[info]Please ensure there is a release notes entry before releasing the package."
-          exit 1
-        }
-      }
-
-      Write-Host ($ReleaseNotes | Format-Table | Out-String)
+      Verify-ChangeLog -ChangeLogLocation $PackageProp.pkgChangeLogPath -VersionString $PackageProp.pkgReadMePath -ForRelease ${{ parameters.ForRelease }}
 
     displayName: Verify ChangeLog / Release Notes

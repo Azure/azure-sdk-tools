@@ -1,6 +1,6 @@
 # Common Changelog Operations
 
-$RELEASE_TITLE_REGEX = "(?<releaseNoteTitle>^\#+.*(?<version>\b\d+\.\d+\.\d+([^0-9\s][^\s:]+)?))"
+$RELEASE_TITLE_REGEX = "(?<releaseNoteTitle>^\#+.*(?<version>\b\d+\.\d+\.\d+([^0-9\s][^\s:]+)?)\s(?<releaseStatus>\(Unreleased\)|\(\d{4}-\d{2}-\d{2}\)))"
 
 function Version-Matches($line)
 {
@@ -111,7 +111,8 @@ function Extract-ReleaseNotes {
     param (
         [Parameter(Mandatory = $true)]
         [String]$ChangeLogLocation,
-        [String]$VersionString
+        [String]$VersionString,
+        [String]$IncludeTitle
     )
     
     $ErrorActionPreference = 'Stop'
@@ -162,9 +163,13 @@ function Extract-ReleaseNotes {
     {
         if ($releaseNotes.ContainsKey($VersionString)) 
         {
-        $releaseNotesForVersion = $releaseNotes[$VersionString].ReleaseContent
-        $processedNotes = $releaseNotesForVersion -Split [Environment]::NewLine | where { $_ -notmatch $RELEASE_TITLE_REGEX }
-        return $processedNotes -Join [Environment]::NewLine
+            $releaseNotesForVersion = $releaseNotes[$VersionString].ReleaseContent
+            if ($IncludeTitle -eq $True)
+            {
+               return $releaseNotesForVersion
+            }
+            $processedNotes = $releaseNotesForVersion -Split [Environment]::NewLine | where { $_ -notmatch $RELEASE_TITLE_REGEX }
+            return $processedNotes -Join [Environment]::NewLine
         }
         Write-Error "Release Notes for the Specified version ${VersionString} was not found"
         exit 1
@@ -209,6 +214,55 @@ function Update-ChangeLog {
     Write-Host "Version is added/updated in change log"
 }
 
+function Verify-ChangeLog {
+   param (
+      [Parameter(Mandatory = $true)]
+      [String]$PackageName,
+      [Parameter(Mandatory = $true)]
+      [String]$ServiceName,
+      [String]$Language,
+      [String]$ForRelease=$False
+   )
 
+   if ([string]::IsNullOrEmpty($Language))
+   {
+         $Language = Get-RunLanguage
+   }
+
+   $PackageProp = Get-PkgProperties -PackageName $PackageName -ServiceName $ServiceName -Language $Language -RepoRoot $(Build.SourcesDirectory)
+
+   $ReleaseNotes = (Extract-ReleaseNotes -ChangeLogLocation $PackageProp.pkgChangeLogPath -VersionString $PackageProp.pkgVersion -IncludeTitle $true) -Split [Environment]::NewLine
+
+   # Verify Header Has Unreleased or an has accurate date
+   $ReleaseTitle = $ReleaseNotes[0]
+
+   if ($ReleaseTitle -notmatch $RELEASE_TITLE_REGEX)
+   {
+      Write-Host ("##[error]Changelog '{0}' has wrong release note title" -f $PackageProp.pkgChangeLogPath)
+      Write-Host "##[info]Ensure the release date is included i.e. (yyyy-MM-dd) or (Unreleased) if not yet released"
+      exit 1
+   }
+
+   if ($ForRelease -eq $True)
+   {
+      $CurrentDate = Get-Date -Format "yyyy-MM-dd"
+      if ($ReleaseTitle -Split ' ' | $_[2] -ne "($CurrentDate)")
+      {
+         Write-Host ("##[warning]Incorrect Date: Please use the current date in the Changelog '{0}' before releasing the package" -f $PackageProp.pkgChangeLogPath)
+         exit 1
+      }
+
+      if ($ReleaseNotes.Length -le 2)
+      {
+         Write-Host ("##[error]Empty Release Notes for '{0}' in '{1}'" -f $PackageProp.pkgVersion, $PackageProp.pkgChangeLogPath)
+         Write-Host "##[info]Please ensure there is a release notes entry before releasing the package."
+         exit 1
+      }
+   }
+
+   Write-Host ($ReleaseNotes | Format-Table | Out-String)
+}
+ 
 Export-ModuleMember -Function 'Extract-ReleaseNotes'
 Export-ModuleMember -Function 'Update-ChangeLog'
+Export-ModuleMember -Function 'Verify-ChangeLog'

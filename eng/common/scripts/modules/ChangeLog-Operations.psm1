@@ -1,6 +1,7 @@
 # Common Changelog Operations
 
-$RELEASE_TITLE_REGEX = "(?<releaseNoteTitle>^\#+.*(?<version>\b\d+\.\d+\.\d+([^0-9\s][^\s:]+)?)\s(?<releaseStatus>\(Unreleased\)|\(\d{4}-\d{2}-\d{2}\)))"
+$RELEASE_TITLE_REGEX = "(?<releaseNoteTitle>^\#+.*(?<version>\b\d+\.\d+\.\d+([^0-9\s][^\s:]+)?))"
+$RELEASE_TITLE_REGEX_WITH_STATUS = "(?<releaseNoteTitle>^\#+.*(?<version>\b\d+\.\d+\.\d+([^0-9\s][^\s:]+)?)\s(?<releaseStatus>\(Unreleased\)|\(\d{4}-\d{2}-\d{2}\)))"
 
 function Version-Matches($line)
 {
@@ -112,7 +113,7 @@ function Extract-ReleaseNotes {
         [Parameter(Mandatory = $true)]
         [String]$ChangeLogLocation,
         [String]$VersionString,
-        [String]$IncludeTitle
+        [boolean]$IncludeTitle=$False
     )
     
     $ErrorActionPreference = 'Stop'
@@ -133,10 +134,9 @@ function Extract-ReleaseNotes {
         foreach($line in $contents){
             if ($line -match $RELEASE_TITLE_REGEX)
             {
-            $version = $matches["version"]
-            $contentArrays[$version] = @()
+               $version = $matches["version"]
+               $contentArrays[$version] = @()
             }
-    
             $contentArrays[$version] += $line
         }
     
@@ -217,44 +217,51 @@ function Update-ChangeLog {
 function Verify-ChangeLog {
    param (
       [Parameter(Mandatory = $true)]
-      [String]$PackageName,
+      [String]$ChangeLogLocation,
       [Parameter(Mandatory = $true)]
-      [String]$ServiceName,
-      [String]$Language,
-      [String]$ForRelease=$False
+      [String]$VersionString,
+      [boolean]$ForRelease=$false
    )
 
-   if ([string]::IsNullOrEmpty($Language))
-   {
-         $Language = Get-RunLanguage
-   }
-
-   $PackageProp = Get-PkgProperties -PackageName $PackageName -ServiceName $ServiceName -Language $Language -RepoRoot $(Build.SourcesDirectory)
-
-   $ReleaseNotes = (Extract-ReleaseNotes -ChangeLogLocation $PackageProp.pkgChangeLogPath -VersionString $PackageProp.pkgVersion -IncludeTitle $true) -Split [Environment]::NewLine
+   $ReleaseNotes = (Extract-ReleaseNotes -ChangeLogLocation $ChangeLogLocation -VersionString $VersionString -IncludeTitle $true) -Split [Environment]::NewLine
 
    # Verify Header Has Unreleased or an has accurate date
    $ReleaseTitle = $ReleaseNotes[0]
 
-   if ($ReleaseTitle -notmatch $RELEASE_TITLE_REGEX)
+   if ($ReleaseTitle -notmatch $RELEASE_TITLE_REGEX_WITH_STATUS)
    {
-      Write-Host ("##[error]Changelog '{0}' has wrong release note title" -f $PackageProp.pkgChangeLogPath)
+      Write-Host ("##[error]Changelog '{0}' has wrong release note title" -f $ChangeLogLocation)
       Write-Host "##[info]Ensure the release date is included i.e. (yyyy-MM-dd) or (Unreleased) if not yet released"
-      exit 1
+      #exit 1
    }
 
    if ($ForRelease -eq $True)
    {
       $CurrentDate = Get-Date -Format "yyyy-MM-dd"
-      if ($ReleaseTitle -Split ' ' | $_[2] -ne "($CurrentDate)")
+      $ReleaseTitle =  $ReleaseTitle -Split ' '
+      if ($ReleaseTitle[2] -ne "($CurrentDate)")
       {
-         Write-Host ("##[warning]Incorrect Date: Please use the current date in the Changelog '{0}' before releasing the package" -f $PackageProp.pkgChangeLogPath)
-         exit 1
+         Write-Host ("##[warning]Incorrect Date: Please use the current date in the Changelog '{0}' before releasing the package" -f $ChangeLogLocation)
+         #exit 1
       }
 
-      if ($ReleaseNotes.Length -le 2)
+      $EmptyReleaseNotes = $True
+
+      for ($i = 1; $i -lt $ReleaseNotes.Length; $i++)
       {
-         Write-Host ("##[error]Empty Release Notes for '{0}' in '{1}'" -f $PackageProp.pkgVersion, $PackageProp.pkgChangeLogPath)
+         if ([System.String]::IsNullOrEmpty($ReleaseNotes[$i]))
+         { 
+            continue 
+         }
+         else 
+         {
+            $EmptyReleaseNotes = $False 
+         }
+      }
+
+      if ($EmptyReleaseNotes)
+      {
+         Write-Host ("##[error]Empty Release Notes for '{0}' in '{1}'" -f $VersionString, $ChangeLogLocation)
          Write-Host "##[info]Please ensure there is a release notes entry before releasing the package."
          exit 1
       }

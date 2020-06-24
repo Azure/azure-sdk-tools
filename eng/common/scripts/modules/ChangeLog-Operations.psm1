@@ -3,11 +3,10 @@
 $RELEASE_TITLE_REGEX = "(?<releaseNoteTitle>^\#+.*(?<version>\b\d+\.\d+\.\d+([^0-9\s][^\s:]+)?)(\s(?<releaseStatus>\(Unreleased\)|\(\d{4}-\d{2}-\d{2}\)))?)"
 
 # given a CHANGELOG.md file, extract the relevant info we need to decorate a release
-function Extract-ReleaseNotes {
+function Get-ReleaseNotes {
     param (
         [Parameter(Mandatory = $true)]
-        [String]$ChangeLogLocation,
-        [String]$VersionString
+        [String]$ChangeLogLocation
     )
     
     $ErrorActionPreference = 'Stop'
@@ -47,23 +46,28 @@ function Extract-ReleaseNotes {
         Write-Host "Error parsing $ChangeLogLocation."
         Write-Host $_.Exception.Message
     }
-    
-    if ([System.String]::IsNullOrEmpty($VersionString)) 
-    {
-        return $releaseNotes
-    }
-    else 
-    {
-        if ($releaseNotes.ContainsKey($VersionString)) 
-        {
-            return $releaseNotes[$VersionString]
-        }
-        Write-Error "Release Notes for the Specified version ${VersionString} was not found"
-        exit 1
-    }
+    return $releaseNotes
 }
 
-function Verify-ChangeLog {
+function Get-ReleaseNote {
+   param (
+      [Parameter(Mandatory = $true)]
+      [String]$ChangeLogLocation,
+      [Parameter(Mandatory = $true)]
+      [String]$VersionString
+   )
+
+   $releaseNotes = Get-ReleaseNotes -ChangeLogLocation $ChangeLogLocation
+
+   if ($releaseNotes.ContainsKey($VersionString)) 
+   {
+         return $releaseNotes[$VersionString]
+   }
+   Write-Error "Release Notes for the Specified version ${VersionString} was not found"
+   exit 1
+}
+
+function Confirm-ChangeLog {
    param (
       [Parameter(Mandatory = $true)]
       [String]$ChangeLogLocation,
@@ -72,7 +76,7 @@ function Verify-ChangeLog {
       [boolean]$ForRelease=$false
    )
 
-   $ReleaseNotes = Extract-ReleaseNotes -ChangeLogLocation $ChangeLogLocation -VersionString $VersionString
+   $ReleaseNotes = Get-ReleaseNote -ChangeLogLocation $ChangeLogLocation -VersionString $VersionString
 
    if ([System.String]::IsNullOrEmpty($ReleaseNotes.ReleaseStatus))
    {
@@ -90,7 +94,7 @@ function Verify-ChangeLog {
          exit 1
       }
 
-      if ([System.String]::IsNullOrWhiteSpace($ReleaseNotes.ReleaseNotesEntry))
+      if ([System.String]::IsNullOrWhiteSpace($ReleaseNotes.ReleaseContent))
       {
          Write-Host ("##[error]Empty Release Notes for '{0}' in '{1}'" -f $VersionString, $ChangeLogLocation)
          Write-Host "##[info]Please ensure there is a release notes entry before releasing the package."
@@ -101,5 +105,6 @@ function Verify-ChangeLog {
    Write-Host ($ReleaseNotes | Format-Table | Out-String)
 }
  
-Export-ModuleMember -Function 'Extract-ReleaseNotes'
-Export-ModuleMember -Function 'Verify-ChangeLog'
+Export-ModuleMember -Function 'Get-ReleaseNotes'
+Export-ModuleMember -Function 'Get-ReleaseNote'
+Export-ModuleMember -Function 'Confirm-ChangeLog'

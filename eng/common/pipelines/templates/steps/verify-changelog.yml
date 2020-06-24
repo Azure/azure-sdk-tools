@@ -10,9 +10,16 @@ parameters:
   default: false
 
 steps:
-  - pwsh: |
-      Import-Module "$(Build.SourcesDirectory)/eng/common/scripts/modules/common-manifest.psd1"
-      $Language = "$(Build.Repository.Name)".Substring("$(Build.Repository.Name)".LastIndexOf('-') + 1)
-      $PackageProp = Get-PkgProperties -PackageName ${{ parameters.PackageName }} -ServiceName ${{ parameters.ServiceName }} -Language $Language -RepoRoot $(Build.SourcesDirectory)
-      Verify-ChangeLog -ChangeLogLocation $PackageProp.pkgChangeLogPath -VersionString $PackageProp.pkgReadMePath -ForRelease ${{ parameters.ForRelease }}
+  - task: Powershell@2
+    inputs:
+      filePath: /eng/common/scripts/Verify-ChangeLog.ps1
+      arguments: >
+        -PackageName ${{ parameters.PackageName }}
+        -ServiceName ${{ parameters.ServiceName }}
+        -RepoRoot $(Build.SourcesDirectory)
+        -RepoName $(Build.Repository.Name)
+        -ForRelease ${{ parameters.ForRelease }}
+      pwsh: true
+      workingDirectory: $(Pipeline.Workspace)
     displayName: Verify ChangeLog / Release Notes
+    continueOnError: false

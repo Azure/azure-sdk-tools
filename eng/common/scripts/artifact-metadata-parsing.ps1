@@ -9,7 +9,9 @@ function CreateReleases($pkgList, $releaseApiUrl, $releaseSha) {
 
     $releaseNotes = ""
     if ($pkgInfo.ReleaseNotes[$pkgInfo.PackageVersion].ReleaseContent -ne $null) {
-      $releaseNotes = $pkgInfo.ReleaseNotes[$pkgInfo.PackageVersion].ReleaseContent
+      [string]$releaseNotesTitle = $pkgInfo.ReleaseNotes[$pkgInfo.PackageVersion].ReleaseTitle
+      [string]$releaseNotesContent = $pkgInfo.ReleaseNotes[$pkgInfo.PackageVersion].ReleaseContent -Join [Environment]::NewLine
+      $releaseNotes = $releaseNotesTitle, $releaseNotesContent -Join [Environment]::NewLine
     }
 
     $isPrerelease = $False
@@ -96,7 +98,7 @@ function ParseMavenPackage($pkg, $workingDirectory) {
 
   $changeLogLoc = @(Get-ChildItem -Path $pkg.DirectoryName -Recurse -Include "$($pkg.Basename)-changelog.md")[0]
   if ($changeLogLoc) {
-    $releaseNotes = &"${PSScriptRoot}/../Extract-ReleaseNotes.ps1" -ChangeLogLocation $changeLogLoc
+    $releaseNotes = &"${PSScriptRoot}/Extract-ReleaseNotes.ps1" -ChangeLogLocation $changeLogLoc
   }
 
   $readmeContentLoc = @(Get-ChildItem -Path $pkg.DirectoryName -Recurse -Include "$($pkg.Basename)-readme.md")[0]
@@ -172,7 +174,7 @@ function ParseNPMPackage($pkg, $workingDirectory) {
 
   $changeLogLoc = @(Get-ChildItem -Path $workFolder -Recurse -Include "CHANGELOG.md")[0]
   if ($changeLogLoc) {
-    $releaseNotes = &"${PSScriptRoot}/../Extract-ReleaseNotes.ps1" -ChangeLogLocation $changeLogLoc
+    $releaseNotes = &"${PSScriptRoot}/Extract-ReleaseNotes.ps1" -ChangeLogLocation $changeLogLoc
   }
 
   $readmeContentLoc = @(Get-ChildItem -Path $workFolder -Recurse -Include "README.md")[0]
@@ -232,7 +234,7 @@ function ParseNugetPackage($pkg, $workingDirectory) {
 
   $changeLogLoc = @(Get-ChildItem -Path $workFolder -Recurse -Include "CHANGELOG.md")[0]
   if ($changeLogLoc) {
-    $releaseNotes = &"${PSScriptRoot}/../Extract-ReleaseNotes.ps1" -ChangeLogLocation $changeLogLoc
+    $releaseNotes = &"${PSScriptRoot}/Extract-ReleaseNotes.ps1" -ChangeLogLocation $changeLogLoc
   }
 
   $readmeContentLoc = @(Get-ChildItem -Path $workFolder -Recurse -Include "README.md")[0]
@@ -297,7 +299,7 @@ function ParsePyPIPackage($pkg, $workingDirectory) {
 
   $changeLogLoc = @(Get-ChildItem -Path $workFolder -Recurse -Include "CHANGELOG.md")[0]
   if ($changeLogLoc) {
-    $releaseNotes = &"${PSScriptRoot}/../Extract-ReleaseNotes.ps1" -ChangeLogLocation $changeLogLoc
+    $releaseNotes = &"${PSScriptRoot}/Extract-ReleaseNotes.ps1" -ChangeLogLocation $changeLogLoc
   }
 
   $readmeContentLoc = @(Get-ChildItem -Path $workFolder -Recurse -Include "README.md")[0]
@@ -324,7 +326,7 @@ function ParseCArtifact($pkg, $workingDirectory) {
   $changeLogLoc = @(Get-ChildItem -Path $packageArtifactLocation -Recurse -Include "CHANGELOG.md")[0]
   if ($changeLogLoc)
   {
-    $releaseNotes = &"${PSScriptRoot}/../Extract-ReleaseNotes.ps1" -ChangeLogLocation $changeLogLoc
+    $releaseNotes = &"${PSScriptRoot}/Extract-ReleaseNotes.ps1" -ChangeLogLocation $changeLogLoc
   }
   
   $readmeContentLoc = @(Get-ChildItem -Path $packageArtifactLocation -Recurse -Include "README.md")[0]

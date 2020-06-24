@@ -17,6 +17,7 @@ namespace Azure.ClientSdk.Analyzers
             "Azure.Data",
             "Azure.DigitalTwins",
             "Azure.Iot",
+            "Azure.Learn",
             "Azure.Media",
             "Azure.Management",
             "Azure.Messaging",

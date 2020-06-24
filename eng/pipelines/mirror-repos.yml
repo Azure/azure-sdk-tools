@@ -63,3 +63,14 @@ jobs:
             TargetRepos: 
               Azure/azure-cli-extensions-pr:
               azure-sdk/azure-cli-extensions:
+
+    - template: ./templates/steps/sync-repo-branch.yml
+      parameters:
+        GH_TOKEN: $(azuresdk-github-pat)
+        Repos:
+
+          Azure/azure-sdk-for-python:
+            Branch: release/v3
+            TargetRepos: 
+              Azure/azure-sdk-for-python-pr:
+              azure-sdk/azure-sdk-for-python:

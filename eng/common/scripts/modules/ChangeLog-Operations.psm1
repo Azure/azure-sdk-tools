@@ -1,6 +1,6 @@
 # Common Changelog Operations
 
-$RELEASE_TITLE_REGEX = "(?<releaseNoteTitle>^\#+.*(?<version>\b\d+\.\d+\.\d+([^0-9\s][^\s:]+)?)\s(?<releaseStatus>\(Unreleased\)|\(\d{4}-\d{2}-\d{2}\))?)"
+$RELEASE_TITLE_REGEX = "(?<releaseNoteTitle>^\#+.*(?<version>\b\d+\.\d+\.\d+([^0-9\s][^\s:]+)?)(\s(?<releaseStatus>\(Unreleased\)|\(\d{4}-\d{2}-\d{2}\)))?)"
 
 # given a CHANGELOG.md file, extract the relevant info we need to decorate a release
 function Extract-ReleaseNotes {
@@ -21,30 +21,26 @@ function Extract-ReleaseNotes {
     try 
     {
         $contents = Get-Content $ChangeLogLocation
-    
         # walk the document, finding where the version specifiers are and creating lists
-        $version = ""
+        $releaseNotesEntry = $null
         foreach($line in $contents){
             if ($line -match $RELEASE_TITLE_REGEX)
             {
-               if ($version -ne "")
-               {
-                  $releaseNotes[$version].ReleaseContent = $releaseContentBuilder -join [Environment]::NewLine
-                  $releaseNotes[$version].ReleaseNotesEntry = $releaseContentBuilder[1..($releaseContentBuilder.Length - 1)] -join [Environment]::NewLine
-               }
-               $version = $matches["version"]
-               $releaseContentBuilder = @()
-               $releaseNotes[$version] = New-Object PSObject -Property @{
-                  ReleaseVersion = $version
+               $releaseNotesEntry = [pscustomobject]@{ 
+                  ReleaseVersion = $matches["version"]
                   ReleaseStatus = $matches["releaseStatus"]
-                  ReleaseContent = ""
-                  ReleaseNotesEntry = "" # Release content without the version title
+                  ReleaseTitle = $line
+                  ReleaseContent = @() # Release content without the version title
+               }
+               $releaseNotes[$releaseNotesEntry.ReleaseVersion] = $releaseNotesEntry
+            }
+            else
+            {
+               if ($releaseNotesEntry) {
+                  $releaseNotesEntry.ReleaseContent += $line
                }
             }
-            $releaseContentBuilder += $line
         }
-        $releaseNotes[$version].ReleaseContent = $releaseContentBuilder -join [Environment]::NewLine
-        $releaseNotes[$version].ReleaseNotesEntry = $releaseContentBuilder[1..($releaseContentBuilder.Length - 1)] -join [Environment]::NewLine
     }
     catch
     {

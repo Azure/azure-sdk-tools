@@ -97,7 +97,7 @@ function ParseMavenPackage($pkg, $workingDirectory) {
 
   $changeLogLoc = @(Get-ChildItem -Path $pkg.DirectoryName -Recurse -Include "$($pkg.Basename)-changelog.md")[0]
   if ($changeLogLoc) {
-    $releaseNotes = Get-ReleaseNoteAsString -ChangeLogLocation $changeLogLoc -VersionString $pkgVersion
+    $releaseNotes = Get-ChangeLogEntryAsString -ChangeLogLocation $changeLogLoc -VersionString $pkgVersion
   }
 
   $readmeContentLoc = @(Get-ChildItem -Path $pkg.DirectoryName -Recurse -Include "$($pkg.Basename)-readme.md")[0]
@@ -175,7 +175,7 @@ function ParseNPMPackage($pkg, $workingDirectory) {
 
   $changeLogLoc = @(Get-ChildItem -Path $workFolder -Recurse -Include "CHANGELOG.md")[0]
   if ($changeLogLoc) {
-    $releaseNotes = Get-ReleaseNoteAsString -ChangeLogLocation $changeLogLoc -VersionString $pkgVersion
+    $releaseNotes = Get-ChangeLogEntryAsString -ChangeLogLocation $changeLogLoc -VersionString $pkgVersion
   }
 
   $readmeContentLoc = @(Get-ChildItem -Path $workFolder -Recurse -Include "README.md")[0]
@@ -234,7 +234,7 @@ function ParseNugetPackage($pkg, $workingDirectory) {
 
   $changeLogLoc = @(Get-ChildItem -Path $workFolder -Recurse -Include "CHANGELOG.md")[0]
   if ($changeLogLoc) {
-    $releaseNotes = Get-ReleaseNoteAsString -ChangeLogLocation $changeLogLoc -VersionString $pkgVersion
+    $releaseNotes = Get-ChangeLogEntryAsString -ChangeLogLocation $changeLogLoc -VersionString $pkgVersion
   }
 
   $readmeContentLoc = @(Get-ChildItem -Path $workFolder -Recurse -Include "README.md")[0]
@@ -297,7 +297,7 @@ function ParsePyPIPackage($pkg, $workingDirectory) {
 
   $changeLogLoc = @(Get-ChildItem -Path $workFolder -Recurse -Include "CHANGELOG.md")[0]
   if ($changeLogLoc) {
-    $releaseNotes = Get-ReleaseNoteAsString -ChangeLogLocation $changeLogLoc -VersionString $pkgVersion
+    $releaseNotes = Get-ChangeLogEntryAsString -ChangeLogLocation $changeLogLoc -VersionString $pkgVersion
   }
 
   $readmeContentLoc = @(Get-ChildItem -Path $workFolder -Recurse -Include "README.md")[0]
@@ -326,7 +326,7 @@ function ParseCArtifact($pkg, $workingDirectory) {
   $changeLogLoc = @(Get-ChildItem -Path $packageArtifactLocation -Recurse -Include "CHANGELOG.md")[0]
   if ($changeLogLoc)
   {
-    $releaseNotes = Get-ReleaseNoteAsString -ChangeLogLocation $changeLogLoc -VersionString $pkgVersion
+    $releaseNotes = Get-ChangeLogEntryAsString -ChangeLogLocation $changeLogLoc -VersionString $pkgVersion
   }
   
   $readmeContentLoc = @(Get-ChildItem -Path $packageArtifactLocation -Recurse -Include "README.md")[0]

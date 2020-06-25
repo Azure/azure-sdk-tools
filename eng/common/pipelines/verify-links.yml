@@ -1,9 +1,0 @@
-parameters:
-  Directory: 'not-specified'
-
-steps:
-- pwsh: |
-    $directory = Join-Path $(Build.SourcesDirectory) "${{ parameters.Directory }}"
-    Write-Host "directory = $directory"
-    $(Build.SourcesDirectory)/eng/common/scripts/Verify-Links.ps1 -urls $(dir $directory -r -i *.md)
-  displayName: 'Link verification check'

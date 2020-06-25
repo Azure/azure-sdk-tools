@@ -1,5 +1,5 @@
 param (
-  # url to verify links. Can either be a http address or a local file request. Local file paths support md and html files.
+  # url list to verify links. Can either be a http address or a local file request. Local file paths support md and html files.
   [string[]] $urls,
   # file that contains a set of links to ignore when verifying
   [string] $ignoreLinksFile = "$PSScriptRoot/ignore-links.txt",
@@ -12,7 +12,9 @@ param (
   # path to the root of the site for resolving rooted relative links, defaults to host root for http and file directory for local files
   [string] $rootUrl = "",
   # list of http status codes count as broken links. Defaults to 404. 
-  [array] $errorStatusCodes = @(404)
+  [array] $errorStatusCodes = @(404),
+  # flag to allow resolving relative paths or not
+  [bool] $resolveRelativeLinks = $true
 )
 
 $ProgressPreference = "SilentlyContinue"; # Disable invoke-webrequest progress dialog
@@ -56,15 +58,23 @@ function LogWarning
 
 function ResolveUri ([System.Uri]$referralUri, [string]$link)
 {
-  $linkUri = [System.Uri]$link;
+  # If the link is mailto, skip it.
+  if ($link.StartsWith("mailto:")) {
+    Write-Verbose "Skipping $link because it is a mailto link."
+    return $null
+  }
 
-  if (!$linkUri.IsAbsoluteUri) {
+  $linkUri = [System.Uri]$link;
+  if($resolveRelativeLinks){
+    if (!$linkUri.IsAbsoluteUri) {
     # For rooted paths resolve from the baseUrl
-    if ($link.StartsWith("/")) {
-      $linkUri = new-object System.Uri([System.Uri]$rootUrl, ".$link");
-    }
-    else {
-      $linkUri = new-object System.Uri($referralUri, $link);
+      if ($link.StartsWith("/")) {
+        echo "rooturl = $rootUrl"
+        $linkUri = new-object System.Uri([System.Uri]$rootUrl, ".$link");
+      }
+      else {
+        $linkUri = new-object System.Uri($referralUri, $link);
+      }
     }
   }
 
@@ -182,7 +192,7 @@ function GetLinks([System.Uri]$pageUri)
 }
 
 if ($urls) {
-  if($urls.Count -eq 0) {
+  if ($urls.Count -eq 0) {
     Write-Host "Usage $($MyInvocation.MyCommand.Name) <urls>";
     exit;
   }  
@@ -204,7 +214,7 @@ $checkedPages = @{};
 $checkedLinks = @{};
 $pageUrisToCheck = new-object System.Collections.Queue
 
-foreach($url in $urls) {
+foreach ($url in $urls) {
   $uri = NormalizeUrl $url  
   $pageUrisToCheck.Enqueue($uri);
 }

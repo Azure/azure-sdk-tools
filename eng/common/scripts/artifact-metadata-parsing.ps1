@@ -175,7 +175,7 @@ function ParseNPMPackage($pkg, $workingDirectory) {
     $releaseNotes = &"${PSScriptRoot}/../Extract-ReleaseNotes.ps1" -ChangeLogLocation $changeLogLoc
   }
 
-  $readmeContentLoc = @(Get-ChildItem -Path $workFolder -Recurse -Include "README.md")[0]
+  $readmeContentLoc = @(Get-ChildItem -Path $workFolder -Recurse -Include "README.md") | Select-Object -Last 1
   if ($readmeContentLoc) {
     $readmeContent = Get-Content -Raw $readmeContentLoc
   }
@@ -300,10 +300,12 @@ function ParsePyPIPackage($pkg, $workingDirectory) {
     $releaseNotes = &"${PSScriptRoot}/../Extract-ReleaseNotes.ps1" -ChangeLogLocation $changeLogLoc
   }
 
-  $readmeContentLoc = @(Get-ChildItem -Path $workFolder -Recurse -Include "README.md")[0]
+  $readmeContentLoc = @(Get-ChildItem -Path $workFolder -Recurse -Include "README.md") | Select-Object -Last 1
+
   if ($readmeContentLoc) {
     $readmeContent = Get-Content -Raw $readmeContentLoc
   }
+
   Remove-Item $workFolder -Force  -Recurse -ErrorAction SilentlyContinue
 
   return New-Object PSObject -Property @{

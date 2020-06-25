@@ -7,6 +7,7 @@ import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.PackageDeclaration;
 import com.github.javaparser.ast.body.CallableDeclaration;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
+import com.github.javaparser.ast.body.ConstructorDeclaration;
 import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.TypeDeclaration;
@@ -37,6 +38,12 @@ public class ASTUtils {
 
     public static Stream<TypeDeclaration<?>> getClasses(CompilationUnit cu) {
         return cu.getTypes().stream();
+    }
+
+    public static Stream<ConstructorDeclaration> getPublicOrProtectedConstructors(CompilationUnit cu) {
+        return cu.getTypes().stream()
+                       .flatMap(typeDeclaration -> typeDeclaration.getConstructors().stream())
+                       .filter(type -> isPublicOrProtected(type.getAccessSpecifier()));
     }
 
     public static Stream<MethodDeclaration> getPublicOrProtectedMethods(CompilationUnit cu) {

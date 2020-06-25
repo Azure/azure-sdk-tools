@@ -2,7 +2,7 @@
 
 $RELEASE_TITLE_REGEX = "(?<releaseNoteTitle>^\#+.*(?<version>\b\d+\.\d+\.\d+([^0-9\s][^\s:]+)?)(\s(?<releaseStatus>\(Unreleased\)|\(\d{4}-\d{2}-\d{2}\)))?)"
 
-# given a CHANGELOG.md file, extract the relevant info we need to decorate a release
+# Returns a Collection of ReleaseNotes object containing changelog info for all version present in the gived CHANGELOG
 function Get-ReleaseNotes {
     param (
         [Parameter(Mandatory = $true)]
@@ -49,6 +49,7 @@ function Get-ReleaseNotes {
     return $releaseNotes
 }
 
+# Returns single ReleaseNotes object containing the ChangeLog for a particular version
 function Get-ReleaseNote {
    param (
       [Parameter(Mandatory = $true)]
@@ -65,6 +66,21 @@ function Get-ReleaseNote {
    }
    Write-Error "Release Notes for the Specified version ${VersionString} was not found"
    exit 1
+}
+
+#Returns the changelog for a particular version as string
+function Get-ReleaseNoteAsString {
+   param (
+      [Parameter(Mandatory = $true)]
+      [String]$ChangeLogLocation,
+      [Parameter(Mandatory = $true)]
+      [String]$VersionString
+   )
+
+   $releaseNotes = Get-ReleaseNote -ChangeLogLocation $ChangeLogLocation -VersionString $VersionString
+   [string]$releaseNotesTitle = $releaseNotes.ReleaseTitle
+   [string]$releaseNotesContent = $releaseNotes.ReleaseContent -Join [Environment]::NewLine
+   return $releaseNotesTitle, $releaseNotesContent -Join [Environment]::NewLine
 }
 
 function Confirm-ChangeLog {
@@ -107,4 +123,5 @@ function Confirm-ChangeLog {
  
 Export-ModuleMember -Function 'Get-ReleaseNotes'
 Export-ModuleMember -Function 'Get-ReleaseNote'
+Export-ModuleMember -Function 'Get-ReleaseNoteAsString'
 Export-ModuleMember -Function 'Confirm-ChangeLog'

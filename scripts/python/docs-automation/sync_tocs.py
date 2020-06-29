@@ -35,9 +35,8 @@ def filter_children(targeted_ns_list, known_namespaces):
 # the doc builds have the capability to reference readmes from external repos (they resolve during publishing)
 # this means that we can't simply check the href values for existence. If they are an href that STARTS with one of the
 # "dependent repositories" than we should leave them exactly as is.
-#
-
-# amend_href is the core of the logic for handling referenced files and disambiguates
+# amend_href is the core of the logic for handling referenced files and ensures that we cannot refer to the same readme twice
+# from two different reference ymls
 def amend_href(toc_dict, repo_location, readme_suffix, excluded_href_paths):
     suffix = "-" + readme_suffix + ".md" if readme_suffix else  ".md"
     input_string = toc_dict["href"]

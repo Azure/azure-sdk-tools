@@ -1,0 +1,30 @@
+trigger:
+  branches:
+    include:
+      - master
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - tools/pull-request-labeler
+  
+pr:
+  branches:
+    include:
+      - master
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - tools/pull-request-labeler
+  
+extends:
+  template: ../../eng/pipelines/templates/stages/archetype-sdk-tool-azure-function.yml
+  parameters:
+    ToolName: pull-request-labeler
+    FunctionProject: Azure.Sdk.Tools.PullRequestLabeler
+    TestProject: Azure.Sdk.Tools.PullRequestLabeler.Tests
+    ProductionEnvironmentName: prlabelerprod
+    StagingEnvironmentName: prlabelerstaging

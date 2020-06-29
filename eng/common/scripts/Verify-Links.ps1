@@ -194,7 +194,7 @@ function GetLinks([System.Uri]$pageUri)
 if ($urls) {
   if ($urls.Count -eq 0) {
     Write-Host "Usage $($MyInvocation.MyCommand.Name) <urls>";
-    exit;
+    exit 1;
   }  
 }
 

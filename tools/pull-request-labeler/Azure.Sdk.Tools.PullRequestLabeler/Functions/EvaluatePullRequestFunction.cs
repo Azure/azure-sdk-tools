@@ -14,6 +14,7 @@ namespace Azure.Sdk.Tools.PullRequestLabeler
         [FunctionName("evaluate-pull-request")]
         public async Task Run([EventHubTrigger("webhooks", Connection = "PullRequestLabelerEventHubConnectionString")] EventData @event, ILogger log)
         {
+            log.LogInformation($"Blah! {Environment.TickCount}");
         }
     }
 }

@@ -19,7 +19,8 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
             {
                 foreach (var task in tasks)
                 {
-                    context.AddFailure(task, "Git Checkout");
+                    context.AddFailure(task
+                        , "Git Checkout");
                 }
             }
         }

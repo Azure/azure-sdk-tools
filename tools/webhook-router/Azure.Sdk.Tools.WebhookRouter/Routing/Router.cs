@@ -236,7 +236,7 @@ namespace Azure.Sdk.Tools.WebhookRouter.Routing
 
             var payloadJson = JsonSerializer.Serialize(payload);
 
-            logger.LogInformation("Payload: {payloadJson}", payloadJson);
+            logger.LogInformation("Payload Content: {payloadContent}", payload.Content);
 
             var payloadBytes = Encoding.UTF8.GetBytes(payloadJson);
 

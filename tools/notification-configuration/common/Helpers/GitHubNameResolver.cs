@@ -85,13 +85,13 @@ namespace NotificationConfiguration.Helpers
         }
 
         /// <summary>
-        /// Queries Kusto for mapping information present in githubemployeelink. 
+        /// Queries Kusto for mapping information present in a target table. Assumes githubemployeelink. 
         /// </summary>
         /// <param name="aadName">Full name in AAD. EG: "Scott Beddall". Can be sourced from devops variable $(Build.QueuedBy).</param>
         /// <returns>Internal alias or null if no internal user found</returns>
         public async Task<IdentityDetail> GetMappingInformationFromAADName(string aadName)
         {
-            var query = $"githubemployeelink | where aadName startswith '{aadName}' | project githubUserName, aadId, aadName, aadAlias, aadUpn | limit 1;";
+            var query = $"{kustoTable} | where aadName startswith '{aadName}' | project githubUserName, aadId, aadName, aadAlias, aadUpn | limit 1;";
 
             // TODO: Figure out how to make this async
             using (var reader = client.ExecuteQuery(query))

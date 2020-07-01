@@ -15,14 +15,14 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
             var failedTasks = from r in context.Timeline.Records
                               where r.RecordType == "Task"
                               where r.Result == TaskResult.Failed
-                              where r.Name.StartsWith("Download secrets")
+                              where r.Name.Contains("Download secrets")
                               select r;
 
             if (failedTasks.Count() > 0)
             {
                 foreach (var failedTask in failedTasks)
                 {
-                    context.AddFailure(failedTask, "Secerts Failure");
+                    context.AddFailure(failedTask, "Secrets Failure");
                 }
             }
         }

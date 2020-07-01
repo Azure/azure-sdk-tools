@@ -33,7 +33,7 @@ param (
 
   # arguments specific to each language follow
   # Java
-  $MonikerIdentifier
+  $MonikerIdentifier,
 
   # C# 
   $PathToConfigFile,
@@ -93,9 +93,10 @@ function UpdateCSVBasedCI($pkgs, $pat, $ciRepo, $locationInDocRepo){
 # a "package.json configures target packages for all the monikers in a Repository, it also has a slightly different
 # schema than the moniker-specific json config
 function UpdatePackageJson($pkgs, $pat, $ciRepo, $locationInDocRepo, $monikerId){
-  $pkgJsonLoc = Join-Path $ciRepo $locationInDocRepo
+  Write-Host (Join-Path -Path $ciRepo -ChildPath $locationInDocRepo)
+  $pkgJsonLoc = (Join-Path -Path $ciRepo -ChildPath $locationInDocRepo)
   
-  if (-not Test-Path $pkg){
+  if (-not (Test-Path $pkgJsonLoc)) {
     Write-Error "Unable to locate package json at location $pkgJsonLoc, exiting."
     exit(1)
   }
@@ -155,28 +156,27 @@ if ($pkgs) {
   Write-Host "Given the visible artifacts, CI updates will be processed for the following packages."
   Write-Host ($pkgs | % { $_.PackageId + " " + $_.PackageVersion })
 
-  foreach ($packageInfo in $pkgs) {
-    switch ($Repository) {
-      "Nuget" {
-        Write-Host "Process C# CI for $packageInfo"
-        break
-      }
-      "NPM" {
-        Write-Host "Process Javascript CI for $packageInfo"
-        break
-      }
-      "PyPI" {
-        Write-Host "Process Python CI for $packageInfo"
-        break
-      }
-      "Maven" {
-        Write-Host "Process Java CI for $packageInfo"
-        break
-      }
-      default {
-        Write-Host "Unrecognized Language: $language"
-        exit(1)
-      }
+  switch ($Repository) {
+    "Nuget" {
+      Write-Host "Process C# CI for $packageInfo"
+      break
+    }
+    "NPM" {
+      Write-Host "Process Javascript CI for $packageInfo"
+      break
+    }
+    "PyPI" {
+      Write-Host "Process Python CI for $packageInfo"
+      break
+    }
+    "Maven" {
+      Write-Host "Process Java CI for $packageInfo"
+      UpdatePackageJson -pkgs $pkgs -pat $ConfigurationCIPAT -ciRepo $CIRepository -locationInDocRepo $PathToConfigFile -monikerId $MonikerIdentifier 
+      break
+    }
+    default {
+      Write-Host "Unrecognized Language: $language"
+      exit(1)
     }
   }
 }

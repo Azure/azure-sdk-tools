@@ -12,6 +12,7 @@ parameters:
   WorkingDirectory: $(System.DefaultWorkingDirectory)
   PRTitle: not-specified
   ScriptDirectory: eng/common/scripts
+  GithubReviewer: ''
 
 steps:
 
@@ -63,3 +64,17 @@ steps:
       -PRBranch "${{ parameters.PRBranchName }}"
       -AuthToken "$(azuresdk-github-pat)"
       -PRTitle "${{ parameters.PRTitle }}"
+
+
+- task: PowerShell@2
+  displayName: Create pull request
+  inputs:
+    pwsh: true
+    workingDirectory: ${{ parameters.WorkingDirectory }}
+    filePath: ${{ parameters.ScriptDirectory }}/tag-reviewer.ps1
+    arguments: >
+      -RepoOwner "${{ parameters.RepoOwner }}"
+      -RepoName "${{ parameters.RepoName }}"
+      -AuthToken "$(azuresdk-github-pat)"
+      -GitHubUser "${{ parameters.GithubReviewer }}"
+      -PRNumber "variables['Submitted.PullRequest.Number']"

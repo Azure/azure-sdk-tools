@@ -67,7 +67,7 @@ steps:
 
 
 - task: PowerShell@2
-  displayName: Create pull request
+  displayName: Tag a Reviewer on PR
   inputs:
     pwsh: true
     workingDirectory: ${{ parameters.WorkingDirectory }}

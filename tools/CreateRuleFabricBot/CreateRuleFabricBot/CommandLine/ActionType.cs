@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace CreateRuleFabricBot.CommandLine
+﻿namespace CreateRuleFabricBot.CommandLine
 {
     public enum TaskType
     {

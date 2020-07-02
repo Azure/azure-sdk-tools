@@ -23,7 +23,7 @@ namespace CreateRuleFabricBot.CommandLine
 
         [ArgumentGroup(nameof(ActionToTake.create))]
         [ArgumentGroup(nameof(ActionToTake.update))]
-        [OptionalArgument(null, "inputDataFile", "File with additional data. For IssueRouting: Structure for the table Labels: Column1, Handles: Column3. For PullRequestLabel: CODEOWNERS file")]
+        [OptionalArgument(null, "additionalData", "File with additional data. For IssueRouting: Structure for the table Labels: Column1, Handles: Column3. For PullRequestLabel: CODEOWNERS file")]
         public string InputDataFile { get; set; }
 
         [ArgumentGroup(nameof(ActionToTake.delete))]

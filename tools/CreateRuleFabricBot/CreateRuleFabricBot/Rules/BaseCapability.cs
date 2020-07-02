@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace CreateRuleFabricBot.Rules
+﻿namespace CreateRuleFabricBot.Rules
 {
     public abstract class BaseCapability
     {

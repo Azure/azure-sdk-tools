@@ -12,9 +12,6 @@ namespace identity_resolver
         /// <summary>
         /// Synchronizes CODEOWNERS contacts to appropriate DevOps groups
         /// </summary>
-        /// <param name="organization">Azure DevOps organization name</param>
-        /// <param name="project">Azure DevOps project name</param>
-        /// <param name="devOpsTokenVar">Personal Access Token environment variable name</param>
         /// <param name="aadAppIdVar">AAD App ID environment variable name (Kusto access)</param>
         /// <param name="aadAppSecretVar">AAD App Secret environment variable name (Kusto access)</param>
         /// <param name="aadTenantVar">AAD Tenant environment variable name (Kusto access)</param>
@@ -24,9 +21,6 @@ namespace identity_resolver
         /// <param name="identity">The full name of the employee</param>
         /// <returns></returns>
         public static async Task Main(
-            string organization,
-            string project,
-            string devOpsTokenVar,
             string aadAppIdVar,
             string aadAppSecretVar,
             string aadTenantVar,

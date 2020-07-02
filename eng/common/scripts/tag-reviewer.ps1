@@ -15,6 +15,11 @@ param(
     $AuthToken
 )
 
+if (-not $GitHubUser) {
+  Write-Host "No user provided for addition, exiting."
+  exit(0)
+}
+
 $headers = @{
   Authorization = "bearer $AuthToken"
 }

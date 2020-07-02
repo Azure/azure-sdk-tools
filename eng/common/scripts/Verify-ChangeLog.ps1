@@ -27,10 +27,5 @@ else
     }
 
     $PackageProp = Get-PkgProperties -PackageName $PackageName -ServiceName $ServiceName -Language $Language -RepoRoot $RepoRoot
-    # Some of the python nspkg doesn't have CHANGELOG files. Temporarily skipping this check if changelog path is null
-    # This will need to be revisited after July 2020 release.
-    if (-not([System.String]::IsNullOrEmpty($VersionString)))
-    {
-        Confirm-ChangeLogEntry -ChangeLogLocation $PackageProp.pkgChangeLogPath -VersionString $PackageProp.pkgVersion -ForRelease $ForRelease
-    }
+    Confirm-ChangeLogEntry -ChangeLogLocation $PackageProp.pkgChangeLogPath -VersionString $PackageProp.pkgVersion -ForRelease $ForRelease
 }

@@ -518,7 +518,7 @@ public class ASTAnalyser implements Analyser {
                 // type parameters of methods
                 getTypeParameters(callableDeclaration.getTypeParameters());
 
-                // if type parameters of method is not empty, we need to add an space before adding type name
+                // if type parameters of method is not empty, we need to add a space before adding type name
                 if (!callableDeclaration.getTypeParameters().isEmpty()) {
                     addToken(new Token(WHITESPACE, " "));
                 }
@@ -575,7 +575,7 @@ public class ASTAnalyser implements Analyser {
         }
 
         private void getDeclarationNameAndParameters(CallableDeclaration callableDeclaration, NodeList<Parameter> parameters) {
-            // create a unique definition id
+            // create an unique definition id
             final String name = callableDeclaration.getNameAsString();
             final String definitionId = makeId(callableDeclaration);
             addToken(new Token(MEMBER_NAME, name, definitionId));

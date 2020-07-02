@@ -393,7 +393,7 @@ public class ASTAnalyser implements Analyser {
                 addToken(new Token(WHITESPACE, " "));
 
                 final String name = annotationMemberDeclaration.getNameAsString();
-                final String definitionId = makeId(annotationDeclaration);
+                final String definitionId = makeId(annotationDeclaration.getFullyQualifiedName().get() + "." + name);
 
                 addToken(new Token(MEMBER_NAME, name, definitionId));
                 addToken(new Token(PUNCTUATION, "("));

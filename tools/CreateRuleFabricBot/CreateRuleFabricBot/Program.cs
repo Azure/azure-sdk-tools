@@ -1,12 +1,15 @@
 ﻿using CommandLine;
 using CreateRuleFabricBot.CommandLine;
 using CreateRuleFabricBot.Markdown;
+using CreateRuleFabricBot.Rules;
 using CreateRuleFabricBot.Rules.IssueRouting;
 using CreateRuleFabricBot.Service;
 using OutputColorizer;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace CreateRuleFabricBot
 {
@@ -28,39 +31,9 @@ namespace CreateRuleFabricBot
                 return;
             }
 
-            FabricBotClient rs = new FabricBotClient(s_options.Owner, s_options.Repo, s_options.CookieToken);
-            IssueRoutingCapability irc = new IssueRoutingCapability(s_options.Owner, s_options.Repo);
-
-            string payload = string.Empty;
-
-            if (s_options.Action == ActionToTake.create || s_options.Action == ActionToTake.update)
-            {
-                Colorizer.Write("Parsing service table... ");
-                MarkdownTable table = MarkdownTable.Parse(s_options.ServicesFile);
-                Colorizer.WriteLine("[Green!done].");
-
-                foreach (var row in table.Rows)
-                {
-                    if (!string.IsNullOrEmpty(row[2].Trim()))
-                    {
-                        // the row at position 0 is the label to use on top of 'Service Attention'
-                        string[] labels = new string[] { "Service Attention", row[0] };
-
-                        // The row at position 2 is the set of mentionees to ping on the issue.
-                        IEnumerable<string> mentionees = row[2].Split(',').Select(x => x.Replace("@", "").Trim());
-
-                        //add the service
-                        irc.AddService(labels, mentionees);
-                    }
-                }
-
-                payload = irc.ToJson();
-                Colorizer.WriteLine("Found [Yellow!{0}] service routes.", irc.RouteCount);
-            }
-
             if (s_options.Prompt)
             {
-                Colorizer.WriteLine("Proceed with [Cyan!{0}] for repo [Yellow!{1}\\{2}] (y/n)? ", s_options.Action, s_options.Owner, s_options.Repo);
+                Colorizer.Write("Proceed with [Cyan!{0}] for repo [Yellow!{1}\\{2}] (y/n)? ", s_options.Action, s_options.Owner, s_options.Repo);
                 var key = Console.ReadKey();
 
                 if (key.Key != ConsoleKey.Y)
@@ -68,6 +41,21 @@ namespace CreateRuleFabricBot
                     Colorizer.WriteLine("No action taken.");
                     return;
                 }
+                Colorizer.WriteLine("");
+            }
+
+            FabricBotClient rs = new FabricBotClient(s_options.Owner, s_options.Repo, s_options.CookieToken);
+
+            string payload = string.Empty;
+            string taskId = string.Empty;
+
+            // for Create and update, construct the payload and taskId 
+            if (s_options.Action == ActionToTake.create || s_options.Action == ActionToTake.update)
+            {
+                // Instantiate the object based on the TaskType 
+                BaseCapability capability = CreateCapabilityObject(s_options);
+                payload = capability.GetPayload();
+                taskId = capability.GetTaskId();
             }
 
             try
@@ -78,7 +66,7 @@ namespace CreateRuleFabricBot
                         rs.CreateTask(payload);
                         break;
                     case ActionToTake.update:
-                        rs.UpdateTask(IssueRoutingCapability.GetTaskId(s_options.Owner, s_options.Repo), payload);
+                        rs.UpdateTask(taskId, payload);
                         break;
                     case ActionToTake.delete:
                         rs.DeleteTask(s_options.TaskId);
@@ -103,6 +91,19 @@ namespace CreateRuleFabricBot
             {
                 Colorizer.WriteLine("[Red!Error]: {0}", e.Message);
             }
+        }
+
+        private static BaseCapability CreateCapabilityObject(CommandLineArgs s_options)
+        {
+            switch (s_options.TaskType)
+            {
+                case TaskType.IssueRouting:
+                    return new IssueRoutingCapability(s_options.Owner, s_options.Repo, s_options.InputDataFile);
+                case TaskType.PullRequestLabel:
+                    return new PullRequestLabelFolderCapability(s_options.Owner, s_options.Repo, s_options.InputDataFile);
+            }
+
+            throw new InvalidOperationException("Unknown task type " + s_options.TaskType);
         }
     }
 }

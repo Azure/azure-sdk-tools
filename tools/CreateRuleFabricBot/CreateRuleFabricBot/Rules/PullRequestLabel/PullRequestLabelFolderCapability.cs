@@ -55,7 +55,7 @@ namespace CreateRuleFabricBot.Rules.IssueRouting
             for (int i = 0; i < entries.Count; i++)
             {
                 // Entries with wildcards are not yet supported
-                if (entries[i].IsRegex)
+                if (entries[i].ContainsWildcard)
                 {
                     // log a warning there
 

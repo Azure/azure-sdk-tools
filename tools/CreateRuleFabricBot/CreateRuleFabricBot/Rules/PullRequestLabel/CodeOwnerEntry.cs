@@ -7,7 +7,7 @@ namespace CreateRuleFabricBot.Rules.PullRequestLabel
     {
         public string PathExpression { get; set; }
         
-        public bool IsRegex { get; set; }
+        public bool ContainsWildcard { get; set; }
 
         public List<string> Owners { get; set; } = new List<string>();
 
@@ -35,7 +35,7 @@ namespace CreateRuleFabricBot.Rules.PullRequestLabel
             {
                 // the first entry is the path/regex
                 PathExpression = entries[0].Trim(),
-                IsRegex = entries[0].Contains('*')
+                ContainsWildcard = entries[0].Contains('*')
             };
 
             // remove the '/' from the path
@@ -64,7 +64,7 @@ namespace CreateRuleFabricBot.Rules.PullRequestLabel
 
         public override string ToString()
         {
-            return $"RegEx:{IsRegex} Expression:{PathExpression} Owners:{string.Join(',', Owners)}  Labels:{string.Join(',', Labels)}";
+            return $"RegEx:{ContainsWildcard} Expression:{PathExpression} Owners:{string.Join(',', Owners)}  Labels:{string.Join(',', Labels)}";
         }
     }
 }

@@ -61,7 +61,7 @@ namespace CreateRuleFabricBot.Rules.IssueRouting
 
                     if (entries[i].Labels.Any())
                     {
-                        Colorizer.WriteLine("[Yellow!Warning]: The expression '{0}' contains a wildcard and a label '{1}' which is not supported!", entries[i].PathExpression, string.Join(',', entries[i].Labels));
+                        Colorizer.WriteLine("[Yellow!Warning]: The path '[Cyan!{0}]' contains a wildcard and a label '[Magenta!{1}]' which is not supported!", entries[i].PathExpression, string.Join(',', entries[i].Labels));
                     }
 
                     continue; //TODO: regex expressions are not yet supported
@@ -70,7 +70,13 @@ namespace CreateRuleFabricBot.Rules.IssueRouting
                 // Entries with more than one label are not yet supported.
                 if (entries[i].Labels.Count > 1)
                 {
-                    Colorizer.WriteLine("[Yellow!Warning]: Multiple labels for the same path are not yet supported");
+                    Colorizer.WriteLine("[Yellow!Warning]: Multiple labels for the same path '[Cyan!{0}]' are not yet supported", entries[i].PathExpression);
+                    continue;
+                }
+
+                if (entries[i].Labels.Count==0)
+                {
+                    Colorizer.WriteLine("[Yellow!Warning]: The path '[Cyan!{0}]' does not contain a label.", entries[i].PathExpression, string.Join(',', entries[i].Labels));
                     continue;
                 }
 

@@ -750,11 +750,14 @@ public class ASTAnalyser implements Analyser {
                 // '<' is the punctuation character that is required.
                 if (i == 1) {
                     // If a node has children, it implies it is a class or interface type. so it is safe to cast.
-                    ((ClassOrInterfaceType) node).getTypeArguments().ifPresentOrElse(
-                            // type arguments
-                            (NodeList<Type> values) -> addToken(new Token(PUNCTUATION, "<")),
-                            // full-package type name
-                            () -> addToken(new Token(PUNCTUATION, ".")));
+                    Optional<NodeList<Type>> nodeList = ((ClassOrInterfaceType) node).getTypeArguments();
+                    if (nodeList.isPresent()) {
+                        // type arguments
+                        addToken(new Token(PUNCTUATION, "<"));
+                    } else {
+                        // full-package type name
+                        addToken(new Token(PUNCTUATION, "."));
+                    }
                 }
 
                 // Recursion

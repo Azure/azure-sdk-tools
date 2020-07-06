@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
 namespace CreateRuleFabricBot.Rules.PullRequestLabel
@@ -76,7 +75,7 @@ namespace CreateRuleFabricBot.Rules.PullRequestLabel
             {
                 if (line[i] == '@' || line[i] == '%')
                 {
-                    yield return line.Substring(previousSplit, i - previousSplit ).Trim();
+                    yield return line.Substring(previousSplit, i - previousSplit).Trim();
                     previousSplit = i;
                 }
             }

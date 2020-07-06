@@ -53,6 +53,9 @@ namespace CreateRuleFabricBot.Rules.IssueRouting
 
             StringBuilder configPayload = new StringBuilder();
 
+            List<CodeOwnerEntry> entriesToCreate = new List<CodeOwnerEntry>();
+
+            // Filter our the list of entries that we want to create.
             for (int i = 0; i < entries.Count; i++)
             {
                 // Entries with wildcards are not yet supported
@@ -81,17 +84,29 @@ namespace CreateRuleFabricBot.Rules.IssueRouting
                     continue;
                 }
 
+                entriesToCreate.Add(entries[i]);
+            }
+
+            Colorizer.WriteLine("Found the following rules:");
+
+            // Create the payload.
+            foreach (var entry in entriesToCreate)
+            {
                 // get the payload
-                string entryPayload = ToConfigString(entries[i]);
+                string entryPayload = ToConfigString(entry);
 
-                Colorizer.WriteLine("Found path '[Cyan!{0}]' with label '[Magenta!{1}]'", entries[i].PathExpression, entries[i].Labels.FirstOrDefault());
+                Colorizer.WriteLine("[Cyan!{0}] => [Magenta!{1}]", entry.PathExpression, entry.Labels.FirstOrDefault());
 
-                configPayload.Append(ToConfigString(entries[i]));
+                configPayload.Append(ToConfigString(entry));
                 configPayload.Append(',');
             }
 
+
             // remove the trailing ','
             configPayload.Remove(configPayload.Length - 1, 1);
+
+            // Log the set of paths we are creating.
+
 
             // create the payload from the template
             return s_template

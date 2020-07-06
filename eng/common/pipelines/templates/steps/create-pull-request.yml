@@ -71,7 +71,7 @@ steps:
   inputs:
     pwsh: true
     workingDirectory: ${{ parameters.WorkingDirectory }}
-    filePath: ${{ parameters.ScriptDirectory }}/tag-reviewer.ps1
+    filePath: ${{ parameters.ScriptDirectory }}/add-pullrequest-reviewer.ps1
     arguments: >
       -RepoOwner "${{ parameters.RepoOwner }}"
       -RepoName "${{ parameters.RepoName }}"

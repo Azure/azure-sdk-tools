@@ -692,14 +692,25 @@ public class ASTAnalyser implements Analyser {
         }
 
         private void getClassType(Type type) {
-            if (type.isArrayType()) {
-                getClassType(type.getElementType());
-                //TODO: need to correct int[][] scenario
-                addToken(new Token(PUNCTUATION, "[]"));
-            } else if (type.isPrimitiveType() || type.isVoidType()) {
+            if (type.isPrimitiveType() || type.isVoidType()) {
                 addToken(new Token(TYPE_NAME, type.toString()));
-            } else if (type.isReferenceType() || type.isTypeParameter() || type.isWildcardType()) {
-                getTypeDFS(type);
+            } else if (type.isReferenceType()) {
+                // Array Type
+                type.ifArrayType(arrayType -> {
+                    getClassType(arrayType.getComponentType());
+                    addToken(new Token(PUNCTUATION, "[]"));
+                });
+                // Class or Interface type
+                type.ifClassOrInterfaceType(classOrInterfaceType -> {
+                    getTypeDFS(classOrInterfaceType);
+                });
+
+            } else if (type.isWildcardType()) {
+                // TODO: add wild card type implementation, #756
+            } else if (type.isUnionType()) {
+                // TODO: add union type implementation, #756
+            } else if (type.isIntersectionType()) {
+                // TODO: add intersection type implementation, #756
             } else {
                 System.err.println("Unknown type");
             }
@@ -708,6 +719,7 @@ public class ASTAnalyser implements Analyser {
         private void getTypeDFS(Node node) {
             final List<Node> nodes = node.getChildNodes();
             final int childrenSize = nodes.size();
+            // Recursion's base case: leaf node
             if (childrenSize <= 1) {
                 final String typeName = node.toString();
                 final Token token = new Token(TYPE_NAME, typeName);
@@ -718,22 +730,45 @@ public class ASTAnalyser implements Analyser {
                 return;
             }
 
+            /*
+             * A type, "Map<String, Map<Integer, Double>>", will be treated as three nodes at the same level and has
+             * two type arguments, String and Map<Integer, Double>:
+             *
+             * node one = "Map", node two = "String", and node three = "Map<Integer, Double>"
+             * node three, "Map<Integer, Double>", has two type arguments: Integer and Double.
+             *
+             * But a type with full package name will be treated as two nodes and has no type arguments:
+             *
+             * E.x., "com.azure.example.TypeA", it has two node,
+             * node one = "com.azure.example", node two = "TypeA"
+             * Further more, node one has two children: "com.azure" and "example".
+             */
             for (int i = 0; i < childrenSize; i++) {
-                final Node currentNode = nodes.get(i);
-
+                final Node childNode = nodes.get(i);
+                // Opening punctuation character:
+                // Second node, need to add a punctuation character right after first node such as 'Set<String>' where
+                // '<' is the punctuation character that is required.
                 if (i == 1) {
-                    addToken(new Token(PUNCTUATION, "<"));
+                    // If a node has children, it implies it is a class or interface type. so it is safe to cast.
+                    ((ClassOrInterfaceType) node).getTypeArguments().ifPresentOrElse(
+                            // type arguments
+                            (NodeList<Type> values) -> addToken(new Token(PUNCTUATION, "<")),
+                            // full-package type name
+                            () -> addToken(new Token(PUNCTUATION, ".")));
                 }
 
-                getTypeDFS(currentNode);
+                // Recursion
+                getTypeDFS(childNode);
 
-                if (i != 0) {
-                    if (i == childrenSize - 1) {
-                        addToken(new Token(PUNCTUATION, ">"));
-                    } else {
-                        addToken(new Token(PUNCTUATION, ","));
-                        addToken(new Token(WHITESPACE, " "));
-                    }
+                // Closing punctuation character
+                if (i == 0) {
+                    continue;
+                } else if (i == childrenSize - 1) {
+                    ((ClassOrInterfaceType) node).getTypeArguments().ifPresent(
+                            (NodeList<Type> values) -> addToken(new Token(PUNCTUATION, ">")));
+                } else {
+                    addToken(new Token(PUNCTUATION, ","));
+                    addToken(new Token(WHITESPACE, " "));
                 }
             }
         }

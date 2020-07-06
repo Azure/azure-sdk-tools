@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Encodings.Web;
 
 namespace CreateRuleFabricBot.Rules.IssueRouting
 {
@@ -86,6 +87,7 @@ namespace CreateRuleFabricBot.Rules.IssueRouting
                 Colorizer.WriteLine("Found path '[Cyan!{0}]' with label '[Magenta!{1}]'", entries[i].PathExpression, entries[i].Labels.FirstOrDefault());
 
                 configPayload.Append(ToConfigString(entries[i]));
+                configPayload.Append(',');
             }
 
             // remove the trailing ','

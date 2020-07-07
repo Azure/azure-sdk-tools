@@ -53,6 +53,18 @@ jobs:
               Azure/azure-sdk-for-python-pr:
               azure-sdk/azure-sdk-for-python:
 
+          Azure/azure-sdk-for-ios:
+            Branch: master
+            TargetRepos: 
+              Azure/azure-sdk-for-ios-pr:
+              azure-sdk/azure-sdk-for-ios:
+
+          Azure/azure-sdk-for-android:
+            Branch: master
+            TargetRepos: 
+              Azure/azure-sdk-for-android-pr:
+              azure-sdk/azure-sdk-for-android:
+
           Azure/azure-cli:
             Branch: dev
             TargetRepos: 
@@ -68,9 +80,16 @@ jobs:
       parameters:
         GH_TOKEN: $(azuresdk-github-pat)
         Repos:
-
+        
           Azure/azure-sdk-for-python:
             Branch: release/v3
             TargetRepos: 
               Azure/azure-sdk-for-python-pr:
               azure-sdk/azure-sdk-for-python:
+
+          Azure/azure-sdk-for-android:
+            Branch: dev
+            TargetRepos: 
+              Azure/azure-sdk-for-android-pr:
+              azure-sdk/azure-sdk-for-android:
+

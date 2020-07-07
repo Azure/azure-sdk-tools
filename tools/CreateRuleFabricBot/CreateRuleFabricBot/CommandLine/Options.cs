@@ -18,8 +18,13 @@ namespace CreateRuleFabricBot.CommandLine
 
         [ArgumentGroup(nameof(ActionToTake.create))]
         [ArgumentGroup(nameof(ActionToTake.update))]
-        [RequiredArgument(2, "servicesFile", "The file containing the service table. Structure for the table Labels: Column1, Handles: Column3")]
-        public string ServicesFile { get; set; }
+        [RequiredArgument(2, "taskType", "The type of the task that you want to create/update.")]
+        public TaskType TaskType{ get; set; }
+
+        [ArgumentGroup(nameof(ActionToTake.create))]
+        [ArgumentGroup(nameof(ActionToTake.update))]
+        [OptionalArgument(null, "additionalData", "File with additional data. For IssueRouting: Structure for the table Labels: Column1, Handles: Column3. For PullRequestLabel: CODEOWNERS file")]
+        public string InputDataFile { get; set; }
 
         [ArgumentGroup(nameof(ActionToTake.delete))]
         [RequiredArgument(2, "task", "The task id to delete.")]

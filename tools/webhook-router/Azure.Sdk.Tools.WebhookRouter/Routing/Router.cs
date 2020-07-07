@@ -235,6 +235,9 @@ namespace Azure.Sdk.Tools.WebhookRouter.Routing
             var payload = await CreateAndValidatePayloadAsync(rule, request);
 
             var payloadJson = JsonSerializer.Serialize(payload);
+
+            logger.LogInformation("Payload Content: {payloadContent}", payload.Content);
+
             var payloadBytes = Encoding.UTF8.GetBytes(payloadJson);
 
             var @event = new EventData(payloadBytes);

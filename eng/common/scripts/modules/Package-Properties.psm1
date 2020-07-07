@@ -3,7 +3,7 @@
 class PackageProps
 {
     [string]$pkgName
-    [AzureEngSemanticVersion]$pkgVersion
+    [string]$pkgVersion
     [string]$pkgDirectoryPath
     [string]$pkgServiceName
     [string]$pkgReadMePath
@@ -18,8 +18,12 @@ class PackageProps
     )
     {
         $this.pkgName = $pkgName
-        $this.pkgVersion = [AzureEngSemanticVersion]::ParseVersionString($pkgVersion)
-        if ($this.pkgVersion -eq $null)
+        $parsedVersion = [AzureEngSemanticVersion]::ParseVersionString($pkgVersion)
+        if ($parsedVersion -ne $null)
+        {
+            $this.pkgVersion = $parsedVersion.RawVersion
+        }
+        else
         {
             Write-Error "Invalid version in $pkgDirectoryPath"
         }

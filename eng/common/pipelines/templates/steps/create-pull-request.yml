@@ -12,7 +12,8 @@ parameters:
   WorkingDirectory: $(System.DefaultWorkingDirectory)
   PRTitle: not-specified
   ScriptDirectory: eng/common/scripts
-  GithubReviewer: ''
+  GithubReviewers: ''
+  GithubTeamReviewers: ''
 
 steps:
 
@@ -71,10 +72,11 @@ steps:
   inputs:
     pwsh: true
     workingDirectory: ${{ parameters.WorkingDirectory }}
-    filePath: ${{ parameters.ScriptDirectory }}/add-pullrequest-reviewer.ps1
+    filePath: ${{ parameters.ScriptDirectory }}/add-pullrequest-reviewers.ps1
     arguments: >
       -RepoOwner "${{ parameters.RepoOwner }}"
       -RepoName "${{ parameters.RepoName }}"
       -AuthToken "$(azuresdk-github-pat)"
-      -GitHubUser "${{ parameters.GithubReviewer }}"
+      -GitHubUser "${{ parameters.GithubReviewers }}"
+      -GitHubUser "${{ parameters.GithubTeamReviewers }}"
       -PRNumber "variables['Submitted.PullRequest.Number']"

@@ -5,8 +5,11 @@ param(
     [Parameter(Mandatory = $true)]
     $RepoName,
 
-    [Parameter(Mandatory = $true)]
-    $GitHubUser,
+    [Parameter(Mandatory = $false)]
+    $GitHubUsers = "",
+
+    [Parameter(Mandatory = $false)]
+    $GitHubTeams = "",
 
     [Parameter(Mandatory = $true)]
     $PRNumber,
@@ -15,10 +18,31 @@ param(
     $AuthToken
 )
 
-if (-not $GitHubUser) {
+function CombineArrays($ExistingIds, $NewIds) {
+  if ($ExistingIds -and $ExistingIds.Length > 0) {
+    $results = $ExistingIds.Clone()
+  }
+  else {
+    $results = @()
+  }
+
+  foreach ($id in $NewIds) {
+    if (-not $results.Contains($id)) {
+      $results += $id
+    }
+  }
+
+  return ,$results
+}
+
+# at least one of these needs to be populated
+if (-not $GitHubUsers -and -not $GitHubTeams) {
   Write-Host "No user provided for addition, exiting."
   exit 0
 }
+
+$userAdditions = @($GitHubUsers.Split(",") | % { $_.Trim() } | ? { return $_ })
+$teamAdditions = @($GitHubTeams.Split(",") | % { $_.Trim() } | ? { return $_ })
 
 $headers = @{
   Authorization = "bearer $AuthToken"
@@ -38,24 +62,34 @@ catch {
 $userReviewers = @($resp.users | % { return $_.login })
 $teamReviewers = @($resp.teams | % { return $_.slug })
 
-if (-not $userReviewers.Contains($GitHubUser)){
-  $userReviewers += $GitHubUser
+$modifiedUserReviewers = CombineArrays -ExistingIds $userReviewers -NewIds $userAdditions
+$modifiedTeamReviewers = CombineArrays -ExistingIds $teamReviewers -NewIds $teamAdditions
 
-  $postResp = @{
-    reviewers = $userReviewers
-    team_reviewers = $teamReviewers
-  } | ConvertTo-Json
+Write-Host 
+
+$detectedUserDiffs = Compare-Object -ReferenceObject $userReviewers -DifferenceObject $modifiedUserReviewers
+$detectedTeamDiffs = Compare-Object -ReferenceObject $teamReviewers -DifferenceObject $modifiedTeamReviewers
+
+# Compare-Object returns values when there is a difference between the comparied objects.
+# we only want to run the update if there IS a difference.
+if ($detectedUserDiffs -or $detectedTeamDiffs) {
+  $postResp = @{}
+
+  if ($modifiedUserReviewers) { $postResp["reviewers"] = $modifiedUserReviewers }
+  if ($modifiedTeamReviewers) { $postResp["team_reviewers"] = $modifiedTeamReviewers }
+
+  $postResp = $postResp | ConvertTo-Json
 
   try {
     $resp = Invoke-RestMethod -Method Post -Headers $headers -Body $postResp -Uri $uri -MaximumRetryCount 3
     $resp | Write-Verbose
   }
   catch {
-    Write-Error "Unable to add reviewer."
-    Write-Error $_
+    Write-Error "Unable to update PR reviewers. `n$_"
   }
 }
 else {
-  Write-Host "Reviewer $GitHubUser already added. Exiting."
+  $results = $GitHubUsers + $GitHubTeams
+  Write-Host "Reviewers $results already added. Exiting."
   exit(0)
 }

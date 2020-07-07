@@ -8,6 +8,7 @@ class PackageProps
     [string]$pkgServiceName
     [string]$pkgReadMePath
     [string]$pkgChangeLogPath
+    [string]$pkgGroupId
 
     PackageProps(
         [string]$pkgName,
@@ -42,6 +43,17 @@ class PackageProps
         {
             $this.pkgChangeLogPath = $null
         }
+    }
+    PackageProps(
+        [string]$pkgName,
+        [string]$pkgVersion,
+        [string]$pkgDirectoryPath,
+        [string]$pkgServiceName,
+        [string]$pkgGroupId
+    )
+    {
+        $this.PackageProps($pkgName, $pkgVersion, $pkgDirectoryPath, $pkgServiceName)
+        $this.pkgGroupId = $pkgGroupId
     }
 }
 
@@ -127,10 +139,11 @@ function Extract-JavaPkgProps ($pkgPath, $serviceName, $pkgName)
         $projectData.load($projectPath)
         $projectPkgName = $projectData.project.artifactId
         $pkgVersion = $projectData.project.version
+        $pkgGroupId = $projectData.project.groupId
 
         if ($projectPkgName -eq $pkgName)
         {
-            return [PackageProps]::new($pkgName, $pkgVersion.ToString(), $pkgPath, $serviceName)
+            return [PackageProps]::new($pkgName, $pkgVersion.ToString(), $pkgPath, $serviceName, $pkgGroupId)
         }
     }
     return $null

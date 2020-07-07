@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Encodings.Web;
 
 namespace CreateRuleFabricBot.Rules.IssueRouting
 {
@@ -52,6 +53,9 @@ namespace CreateRuleFabricBot.Rules.IssueRouting
 
             StringBuilder configPayload = new StringBuilder();
 
+            List<CodeOwnerEntry> entriesToCreate = new List<CodeOwnerEntry>();
+
+            // Filter our the list of entries that we want to create.
             for (int i = 0; i < entries.Count; i++)
             {
                 // Entries with wildcards are not yet supported
@@ -61,7 +65,7 @@ namespace CreateRuleFabricBot.Rules.IssueRouting
 
                     if (entries[i].Labels.Any())
                     {
-                        Colorizer.WriteLine("[Yellow!Warning]: The expression '{0}' contains a wildcard and a label '{1}' which is not supported!", entries[i].PathExpression, string.Join(',', entries[i].Labels));
+                        Colorizer.WriteLine("[Yellow!Warning]: The path '[Cyan!{0}]' contains a wildcard and a label '[Magenta!{1}]' which is not supported!", entries[i].PathExpression, string.Join(',', entries[i].Labels));
                     }
 
                     continue; //TODO: regex expressions are not yet supported
@@ -70,20 +74,39 @@ namespace CreateRuleFabricBot.Rules.IssueRouting
                 // Entries with more than one label are not yet supported.
                 if (entries[i].Labels.Count > 1)
                 {
-                    Colorizer.WriteLine("[Yellow!Warning]: Multiple labels for the same path are not yet supported");
+                    Colorizer.WriteLine("[Yellow!Warning]: Multiple labels for the same path '[Cyan!{0}]' are not yet supported", entries[i].PathExpression);
                     continue;
                 }
 
-                // get the payload
-                string entryPayload = ToConfigString(entries[i]);
+                if (entries[i].Labels.Count==0)
+                {
+                    Colorizer.WriteLine("[Yellow!Warning]: The path '[Cyan!{0}]' does not contain a label.", entries[i].PathExpression, string.Join(',', entries[i].Labels));
+                    continue;
+                }
 
-                Colorizer.WriteLine("Found path '[Cyan!{0}]' with label '[Magenta!{1}]'", entries[i].PathExpression, entries[i].Labels.FirstOrDefault());
-
-                configPayload.Append(ToConfigString(entries[i]));
+                entriesToCreate.Add(entries[i]);
             }
+
+            Colorizer.WriteLine("Found the following rules:");
+
+            // Create the payload.
+            foreach (var entry in entriesToCreate)
+            {
+                // get the payload
+                string entryPayload = ToConfigString(entry);
+
+                Colorizer.WriteLine("[Cyan!{0}] => [Magenta!{1}]", entry.PathExpression, entry.Labels.FirstOrDefault());
+
+                configPayload.Append(ToConfigString(entry));
+                configPayload.Append(',');
+            }
+
 
             // remove the trailing ','
             configPayload.Remove(configPayload.Length - 1, 1);
+
+            // Log the set of paths we are creating.
+
 
             // create the payload from the template
             return s_template

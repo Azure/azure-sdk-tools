@@ -1,12 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace CreateRuleFabricBot.Rules.PullRequestLabel
 {
     internal class CodeOwnerEntry
     {
         public string PathExpression { get; set; }
-        
+
         public bool ContainsWildcard { get; set; }
 
         public List<string> Owners { get; set; } = new List<string>();
@@ -18,15 +18,19 @@ namespace CreateRuleFabricBot.Rules.PullRequestLabel
             // The format for the Codeowners File will be:
             // <path> @<owner> ... @<owner> %<label> ... %<label>
 
-            if (string.IsNullOrEmpty(line) || line.TrimStart().StartsWith('#'))
+            // get rid of tabs
+            line = line.Replace('\t', ' ');
+            // trim the line to get rid of whitespace before and after.
+            line = line.Trim();
+
+            if (string.IsNullOrEmpty(line) || line.StartsWith('#'))
             {
                 return null;
             }
 
-            line = line.Replace('\t', ' ');
-            string[] entries = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            List<string> entries = SplitLine(line).ToList();
 
-            if (entries.Length == 0)
+            if (!entries.Any())
             {
                 return null;
             }
@@ -34,7 +38,7 @@ namespace CreateRuleFabricBot.Rules.PullRequestLabel
             CodeOwnerEntry coe = new CodeOwnerEntry
             {
                 // the first entry is the path/regex
-                PathExpression = entries[0].Trim(),
+                PathExpression = entries[0],
                 ContainsWildcard = entries[0].Contains('*')
             };
 
@@ -44,7 +48,7 @@ namespace CreateRuleFabricBot.Rules.PullRequestLabel
                 coe.PathExpression = coe.PathExpression.Substring(1);
             }
 
-            for (int i = 1; i < entries.Length; i++)
+            for (int i = 1; i < entries.Count; i++)
             {
                 string entry = entries[i].Trim();
 
@@ -60,6 +64,24 @@ namespace CreateRuleFabricBot.Rules.PullRequestLabel
             }
 
             return coe;
+        }
+
+        private static IEnumerable<string> SplitLine(string line)
+        {
+            // Split the line into segments that are delimited by '@', '%' and the end of the string.
+
+            int previousSplit = 0;
+            for (int i = 0; i < line.Length; i++)
+            {
+                if (line[i] == '@' || line[i] == '%')
+                {
+                    yield return line.Substring(previousSplit, i - previousSplit).Trim();
+                    previousSplit = i;
+                }
+            }
+
+            // add the last entry
+            yield return line.Substring(previousSplit, line.Length - previousSplit).Trim();
         }
 
         public override string ToString()

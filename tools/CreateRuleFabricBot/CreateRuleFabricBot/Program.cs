@@ -31,19 +31,6 @@ namespace CreateRuleFabricBot
                 return;
             }
 
-            if (s_options.Prompt)
-            {
-                Colorizer.Write("Proceed with [Cyan!{0}] for repo [Yellow!{1}\\{2}] (y/n)? ", s_options.Action, s_options.Owner, s_options.Repo);
-                var key = Console.ReadKey();
-
-                if (key.Key != ConsoleKey.Y)
-                {
-                    Colorizer.WriteLine("No action taken.");
-                    return;
-                }
-                Colorizer.WriteLine("");
-            }
-
             FabricBotClient rs = new FabricBotClient(s_options.Owner, s_options.Repo, s_options.CookieToken);
 
             string payload = string.Empty;
@@ -56,6 +43,19 @@ namespace CreateRuleFabricBot
                 BaseCapability capability = CreateCapabilityObject(s_options);
                 payload = capability.GetPayload();
                 taskId = capability.GetTaskId();
+            }
+
+            if (s_options.Prompt)
+            {
+                Colorizer.Write("Proceed with [Cyan!{0}] for repo [Yellow!{1}\\{2}] (y/n)? ", s_options.Action, s_options.Owner, s_options.Repo);
+                var key = Console.ReadKey();
+
+                if (key.Key != ConsoleKey.Y)
+                {
+                    Colorizer.WriteLine("No action taken.");
+                    return;
+                }
+                Colorizer.WriteLine("");
             }
 
             try

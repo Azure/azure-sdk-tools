@@ -97,7 +97,7 @@ function Get-NewChangeLog( [System.Collections.ArrayList]$ChangelogLines, $Versi
 
    
 
-   if (($ReplaceVersion -eq $True) -and ($Unreleased -eq $False) -and (-not $CurrentTitle.Contains($UNRELEASED_TAG))){
+   if (($ReplaceVersion -eq $True) -and ($Unreleased -eq $False) -and $CurrentTitle.Contains($version) -and (-not $CurrentTitle.Contains($UNRELEASED_TAG))){
       Write-Host "Version is already present in change log with a release date."
       exit(0)
    }
@@ -139,6 +139,7 @@ if (Test-Path -Path $ChangeLogPath -PathType Container)
 
 # Read current change logs and add/update version
 $ChangelogLines = [System.Collections.ArrayList](Get-Content -Path $ChangeLogPath)
+if ($null -eq $ChangelogLines) { $ChangelogLines = @() }
 $NewContents = Get-NewChangeLog -ChangelogLines $ChangelogLines -Version $Version -Unreleased $Unreleased -ReplaceVersion $ReplaceVersion
 
 Write-Host "Writing change log to file [$ChangeLogPath]"

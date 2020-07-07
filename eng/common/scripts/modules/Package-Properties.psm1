@@ -45,6 +45,7 @@ class PackageProps
     }
 }
 
+$ProgressPreference = SilentlyContinue
 Install-Module -Name powershell-yaml -RequiredVersion 0.4.1 -Force -Scope CurrentUser
 
 function Extract-PkgProps ($pkgPath, $serviceName, $pkgName, $lang)
@@ -243,7 +244,8 @@ function Get-PkgListFromYml ($ciYmlPath)
     {
       $artifactsInCI = $ciYmlObj["stages"][0]["parameters"]["Artifacts"]
     }
-    elseif ($ciYmlObj.Contains("extends")) {
+    elseif ($ciYmlObj.Contains("extends")) 
+    {
       $artifactsInCI = $ciYmlObj["extends"]["parameters"]["Artifacts"]
     }
     if ($artifactsInCI -eq $null)

@@ -11,7 +11,7 @@ param (
     [boolean]$ForRelease=$False
 )
 
-$ProgressPreference = SilentlyContinue
+$ProgressPreference = "SilentlyContinue"
 . (Join-Path $PSScriptRoot SemVer.ps1)
 Import-Module (Join-Path $PSScriptRoot modules ChangeLog-Operations.psm1)
 

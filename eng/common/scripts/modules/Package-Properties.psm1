@@ -45,7 +45,7 @@ class PackageProps
     }
 }
 
-$ProgressPreference = SilentlyContinue
+$ProgressPreference = "SilentlyContinue"
 Install-Module -Name powershell-yaml -RequiredVersion 0.4.1 -Force -Scope CurrentUser
 
 function Extract-PkgProps ($pkgPath, $serviceName, $pkgName, $lang)

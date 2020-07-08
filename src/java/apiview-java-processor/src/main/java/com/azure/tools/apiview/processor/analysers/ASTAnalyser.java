@@ -393,7 +393,7 @@ public class ASTAnalyser implements Analyser {
                 addToken(new Token(WHITESPACE, " "));
 
                 final String name = annotationMemberDeclaration.getNameAsString();
-                final String definitionId = makeId(annotationDeclaration);
+                final String definitionId = makeId(annotationDeclaration.getFullyQualifiedName().get() + "." + name);
 
                 addToken(new Token(MEMBER_NAME, name, definitionId));
                 addToken(new Token(PUNCTUATION, "("));
@@ -432,6 +432,9 @@ public class ASTAnalyser implements Analyser {
                 }
 
                 addToken(makeWhitespace());
+
+                // Add annotation for field declaration
+                getAnnotations(fieldDeclaration, false);
 
                 final NodeList<Modifier> fieldModifiers = fieldDeclaration.getModifiers();
                 // public, protected, static, final
@@ -518,7 +521,7 @@ public class ASTAnalyser implements Analyser {
                 // type parameters of methods
                 getTypeParameters(callableDeclaration.getTypeParameters());
 
-                // if type parameters of method is not empty, we need to add an space before adding type name
+                // if type parameters of method is not empty, we need to add a space before adding type name
                 if (!callableDeclaration.getTypeParameters().isEmpty()) {
                     addToken(new Token(WHITESPACE, " "));
                 }
@@ -575,7 +578,7 @@ public class ASTAnalyser implements Analyser {
         }
 
         private void getDeclarationNameAndParameters(CallableDeclaration callableDeclaration, NodeList<Parameter> parameters) {
-            // create a unique definition id
+            // create an unique definition id
             final String name = callableDeclaration.getNameAsString();
             final String definitionId = makeId(callableDeclaration);
             addToken(new Token(MEMBER_NAME, name, definitionId));
@@ -689,14 +692,25 @@ public class ASTAnalyser implements Analyser {
         }
 
         private void getClassType(Type type) {
-            if (type.isArrayType()) {
-                getClassType(type.getElementType());
-                //TODO: need to correct int[][] scenario
-                addToken(new Token(PUNCTUATION, "[]"));
-            } else if (type.isPrimitiveType() || type.isVoidType()) {
+            if (type.isPrimitiveType() || type.isVoidType()) {
                 addToken(new Token(TYPE_NAME, type.toString()));
-            } else if (type.isReferenceType() || type.isTypeParameter() || type.isWildcardType()) {
-                getTypeDFS(type);
+            } else if (type.isReferenceType()) {
+                // Array Type
+                type.ifArrayType(arrayType -> {
+                    getClassType(arrayType.getComponentType());
+                    addToken(new Token(PUNCTUATION, "[]"));
+                });
+                // Class or Interface type
+                type.ifClassOrInterfaceType(classOrInterfaceType -> {
+                    getTypeDFS(classOrInterfaceType);
+                });
+
+            } else if (type.isWildcardType()) {
+                // TODO: add wild card type implementation, #756
+            } else if (type.isUnionType()) {
+                // TODO: add union type implementation, #756
+            } else if (type.isIntersectionType()) {
+                // TODO: add intersection type implementation, #756
             } else {
                 System.err.println("Unknown type");
             }
@@ -705,6 +719,7 @@ public class ASTAnalyser implements Analyser {
         private void getTypeDFS(Node node) {
             final List<Node> nodes = node.getChildNodes();
             final int childrenSize = nodes.size();
+            // Recursion's base case: leaf node
             if (childrenSize <= 1) {
                 final String typeName = node.toString();
                 final Token token = new Token(TYPE_NAME, typeName);
@@ -715,22 +730,48 @@ public class ASTAnalyser implements Analyser {
                 return;
             }
 
+            /*
+             * A type, "Map<String, Map<Integer, Double>>", will be treated as three nodes at the same level and has
+             * two type arguments, String and Map<Integer, Double>:
+             *
+             * node one = "Map", node two = "String", and node three = "Map<Integer, Double>"
+             * node three, "Map<Integer, Double>", has two type arguments: Integer and Double.
+             *
+             * But a type with full package name will be treated as two nodes and has no type arguments:
+             *
+             * E.x., "com.azure.example.TypeA", it has two node,
+             * node one = "com.azure.example", node two = "TypeA"
+             * Further more, node one has two children: "com.azure" and "example".
+             */
             for (int i = 0; i < childrenSize; i++) {
-                final Node currentNode = nodes.get(i);
-
+                final Node childNode = nodes.get(i);
+                // Opening punctuation character:
+                // Second node, need to add a punctuation character right after first node such as 'Set<String>' where
+                // '<' is the punctuation character that is required.
                 if (i == 1) {
-                    addToken(new Token(PUNCTUATION, "<"));
+                    // If a node has children, it implies it is a class or interface type. so it is safe to cast.
+                    Optional<NodeList<Type>> nodeList = ((ClassOrInterfaceType) node).getTypeArguments();
+                    if (nodeList.isPresent()) {
+                        // type arguments
+                        addToken(new Token(PUNCTUATION, "<"));
+                    } else {
+                        // full-package type name
+                        addToken(new Token(PUNCTUATION, "."));
+                    }
                 }
 
-                getTypeDFS(currentNode);
+                // Recursion
+                getTypeDFS(childNode);
 
-                if (i != 0) {
-                    if (i == childrenSize - 1) {
-                        addToken(new Token(PUNCTUATION, ">"));
-                    } else {
-                        addToken(new Token(PUNCTUATION, ","));
-                        addToken(new Token(WHITESPACE, " "));
-                    }
+                // Closing punctuation character
+                if (i == 0) {
+                    continue;
+                } else if (i == childrenSize - 1) {
+                    ((ClassOrInterfaceType) node).getTypeArguments().ifPresent(
+                            (NodeList<Type> values) -> addToken(new Token(PUNCTUATION, ">")));
+                } else {
+                    addToken(new Token(PUNCTUATION, ","));
+                    addToken(new Token(WHITESPACE, " "));
                 }
             }
         }

@@ -8,9 +8,19 @@ class PackageProps
     [string]$pkgServiceName
     [string]$pkgReadMePath
     [string]$pkgChangeLogPath
-    [string]$pkgGroupId
+    [string]$pkgGroup
 
-    PackageProps(
+    PackageProps([string]$pkgName,[string]$pkgVersion,[string]$pkgDirectoryPath,[string]$pkgServiceName)
+    {
+        $this.Initialize($pkgName, $pkgVersion, $pkgDirectoryPath, $pkgServiceName)
+    }
+
+    PackageProps([string]$pkgName,[string]$pkgVersion,[string]$pkgDirectoryPath,[string]$pkgServiceName,[string]$pkgGroup="")
+    {
+        $this.Initialize($pkgName, $pkgVersion, $pkgDirectoryPath, $pkgServiceName, $pkgGroup)
+    }
+
+    hidden [void]Initialize(
         [string]$pkgName,
         [string]$pkgVersion,
         [string]$pkgDirectoryPath,
@@ -18,15 +28,7 @@ class PackageProps
     )
     {
         $this.pkgName = $pkgName
-        $parsedVersion = [AzureEngSemanticVersion]::ParseVersionString($pkgVersion)
-        if ($parsedVersion -ne $null)
-        {
-            $this.pkgVersion = $parsedVersion.RawVersion
-        }
-        else
-        {
-            Write-Error "Invalid version in $pkgDirectoryPath"
-        }
+        $this.pkgVersion = $pkgVersion
         $this.pkgDirectoryPath = $pkgDirectoryPath
         $this.pkgServiceName = $pkgServiceName
 
@@ -48,16 +50,17 @@ class PackageProps
             $this.pkgChangeLogPath = $null
         }
     }
-    PackageProps(
+
+    hidden [void]Initialize(
         [string]$pkgName,
         [string]$pkgVersion,
         [string]$pkgDirectoryPath,
         [string]$pkgServiceName,
-        [string]$pkgGroupId
+        [string]$pkgGroup
     )
     {
-        $this.PackageProps($pkgName, $pkgVersion, $pkgDirectoryPath, $pkgServiceName)
-        $this.pkgGroupId = $pkgGroupId
+        $this.Initialize($pkgName, $pkgVersion, $pkgDirectoryPath, $pkgServiceName)
+        $this.pkgGroup = $pkgGroup
     }
 }
 
@@ -143,11 +146,11 @@ function Extract-JavaPkgProps ($pkgPath, $serviceName, $pkgName)
         $projectData.load($projectPath)
         $projectPkgName = $projectData.project.artifactId
         $pkgVersion = $projectData.project.version
-        $pkgGroupId = $projectData.project.groupId
+        $pkgGroup = $projectData.project.groupId
 
         if ($projectPkgName -eq $pkgName)
         {
-            return [PackageProps]::new($pkgName, $pkgVersion.ToString(), $pkgPath, $serviceName, $pkgGroupId)
+            return [PackageProps]::new($pkgName, $pkgVersion.ToString(), $pkgPath, $serviceName, $pkgGroup)
         }
     }
     return $null

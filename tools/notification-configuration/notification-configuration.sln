@@ -7,7 +7,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "notification-creator", "not
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "common", "common\common.csproj", "{7D97E43B-D184-4F45-B740-204577ACB0C8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "github-codeowner-subscriber", "github-codeowner-subscriber\github-codeowner-subscriber.csproj", "{70BE6FEC-1AE2-44B1-B7D4-824A4A7C3BBD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "github-codeowner-subscriber", "github-codeowner-subscriber\github-codeowner-subscriber.csproj", "{70BE6FEC-1AE2-44B1-B7D4-824A4A7C3BBD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "identity-resolver", "identity-resolver\identity-resolver.csproj", "{104DCF1B-E0B2-4BB3-B3EF-31BFCF09D21B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,6 +29,10 @@ Global
 		{70BE6FEC-1AE2-44B1-B7D4-824A4A7C3BBD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{70BE6FEC-1AE2-44B1-B7D4-824A4A7C3BBD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{70BE6FEC-1AE2-44B1-B7D4-824A4A7C3BBD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{104DCF1B-E0B2-4BB3-B3EF-31BFCF09D21B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{104DCF1B-E0B2-4BB3-B3EF-31BFCF09D21B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{104DCF1B-E0B2-4BB3-B3EF-31BFCF09D21B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{104DCF1B-E0B2-4BB3-B3EF-31BFCF09D21B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,0 +1,26 @@
+trigger:
+  branches:
+    include:
+      - master
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - tools/notification-configuration
+
+pr:
+  branches:
+    include:
+      - master
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - tools/notification-configuration
+
+stages:
+  - template: ../../eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
+    parameters:
+      ToolDirectory: notification-configuration

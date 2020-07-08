@@ -77,6 +77,6 @@ steps:
       -RepoOwner "${{ parameters.RepoOwner }}"
       -RepoName "${{ parameters.RepoName }}"
       -AuthToken "$(azuresdk-github-pat)"
-      -GitHubUsers "variables['${{ parameters.GHReviewersVariable }}']"
-      -GitHubTeams "variables['${{ parameters.GHTeamReviewersVariable }}']"
+      -GitHubUsers "$(${{ parameters.GHReviewersVariable }})"
+      -GitHubTeams "$(${{ parameters.GHTeamReviewersVariable }})"
       -PRNumber "$(Submitted.PullRequest.Number)"

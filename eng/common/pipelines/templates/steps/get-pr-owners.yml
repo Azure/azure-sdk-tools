@@ -1,13 +1,13 @@
 parameters: 
   TargetVariable: ''
+  ServiceDirectory: ''
 
 steps:
-  # pull down identity-resolver here.
   - pwsh: |
       git clone https://github.com/Azure/azure-sdk-tools.git $(Build.SourcesDirectory)/tools_repo
       cd $(Build.SourcesDirectory)/tools_repo
-      git checkout feature/identity-resolver
-    displayName: Get Appropriate Build Tools
+      git checkout 
+    displayName: Setup Identity Resolver
 
   - pwsh: |
       $result = dotnet run -v q -- `
@@ -23,7 +23,7 @@ steps:
       Write-Host $resolvedIdentity
 
       Write-Output "##vso[task.setvariable variable=${{ parameters.TargetVariable }}]$($resolvedIdentity.GithubUserName)"
-    displayName: 'Run Identity Resolver'
+    displayName: 'Resolving Queuing User'
     workingDirectory: $(Build.SourcesDirectory)/tools_repo/tools/notification-configuration/identity-resolver
     env:
       APP_ID: $(notification-aad-app-id)
@@ -32,3 +32,9 @@ steps:
       KUSTO_URL: $(notification-kusto-url)
       KUSTO_DB: $(notification-kusto-db)
       KUSTO_TABLE: $(notification-kusto-table)
+
+  - pwsh: |
+      $originalValue = $(${{ parameters.TargetVariable }})
+      $result = $(Build.SourcesDirectory)/eng/common/get-codeowners.ps1 -TargetDirectory sdk/ServiceDirectory -RepoRoot $(Build.SourcesDirectory)
+      Write-Output "##vso[task.setvariable variable=${{ parameters.TargetVariable }}]$originalValue,$result"
+    displayName: Add CodeOwners if Present

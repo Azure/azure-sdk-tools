@@ -25,6 +25,7 @@ foreach ($contentLine in $codeOwnersContent) {
   if (-not $contentLine.StartsWith("#") -and $contentLine){
     $splitLine = $contentLine -split "\s" | ? { return $_ }
     
+    # in the codeowners file, gh aliases start with @. we don't want that when passing them to the API
     $ownedFolders[$splitLine[0].ToLower()] = ($splitLine[1..$($splitLine.Length)] | % { return $_.substring(1) }) -join ","
   }
 }
@@ -32,7 +33,7 @@ foreach ($contentLine in $codeOwnersContent) {
 $results = $ownedFolders[$TargetDirectory.ToLower()]
 
 if ($results) {
-  Write-Host "Discovered code owners for path $TargetDirectory are $discvoeredResults"
+  Write-Host "Discovered code owners for path $TargetDirectory are $results."
   return $results -join ","
 }
 else {

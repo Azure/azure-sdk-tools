@@ -3,7 +3,7 @@ param (
   $RootDirectory # ideally $(Build.SourcesDirectory)
 )
 
-$codeOwnersLocation = @(Get-ChildItem -R -Path $RootDirectory -Filter "CODEOWNERS")
+$codeOwnersLocation = @(Get-ChildItem -R -Force -Path $RootDirectory -Filter "CODEOWNERS")
 
 if ($codeOwnersLocation.Length -eq 0) {
   Write-Host "Unable to find CODEOWNERS file in target directory $RootDirectory"

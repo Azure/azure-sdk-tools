@@ -34,8 +34,12 @@ steps:
       KUSTO_TABLE: $(notification-kusto-table)
 
   - pwsh: |
+      Remove-Item -Force -Recurse $(Build.SourcesDirectory)/tools_repo
+    displayName: Clean Up Cloned Tools Repo
+
+  - pwsh: |
       $originalValue = "$(${{ parameters.TargetVariable }})"
-      $result = $(Build.SourcesDirectory)/eng/common/get-codeowners.ps1 -TargetDirectory /sdk/${{ parameters.ServiceDirectory }}/ -RepoRoot $(Build.SourcesDirectory)
+      $result = $(Build.SourcesDirectory)/eng/common/scripts/get-codeowners.ps1 -TargetDirectory /sdk/${{ parameters.ServiceDirectory }}/ -RootDirectory $(Build.SourcesDirectory)
       if ($result) {
         Write-Output "##vso[task.setvariable variable=${{ parameters.TargetVariable }}]$originalValue,$result"
       }

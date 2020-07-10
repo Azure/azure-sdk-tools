@@ -23,10 +23,11 @@ $ownedFolders = @{}
 
 foreach ($contentLine in $codeOwnersContent) {
   if (-not $contentLine.StartsWith("#") -and $contentLine){
-    $splitLine = $contentLine -split "\s" | ? { return $_ }
+    $splitLine = $contentLine -split "\s+"
     
-    # in the codeowners file, gh aliases start with @. we don't want that when passing them to the API
-    $ownedFolders[$splitLine[0].ToLower()] = ($splitLine[1..$($splitLine.Length)] | % { return $_.substring(1) }) -join ","
+    $ownedFolders[$splitLine[0].ToLower()] = ($splitLine[1..$($splitLine.Length)] `
+      | ? { $_.StartsWith("@") } ` # CODEOWNERS file can also have labels present after the owner aliases
+      | % { return $_.substring(1) }) -join ","     # gh aliases start with @ in codeowners. don't pass on to API calls
   }
 }
 
@@ -34,10 +35,11 @@ $results = $ownedFolders[$TargetDirectory.ToLower()]
 
 if ($results) {
   Write-Host "Discovered code owners for path $TargetDirectory are $results."
-  return $results -join ","
+  return $results
 }
 else {
   Write-Host "Unable to match path $TargetDirectory in CODEOWNERS file located at $codeOwnersLocation."
+  Write-Host $ownedFolders | ConvertTo-Json
   return ""
 }
 

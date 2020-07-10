@@ -22,7 +22,7 @@ foreach ($contentLine in $codeOwnersContent) {
     # gh aliases start with @ in codeowners. don't pass on to API calls
     $ownedFolders[$splitLine[0].ToLower()] = ($splitLine[1..$($splitLine.Length)] `
       | ? { $_.StartsWith("@") } `
-      | % { return $_.substring(1) }) -join "," 
+      | % { return $_.substring(1) }) -join ","
   }
 }
 

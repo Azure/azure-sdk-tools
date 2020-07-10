@@ -6,7 +6,7 @@ steps:
   - pwsh: |
       git clone https://github.com/Azure/azure-sdk-tools.git $(Build.SourcesDirectory)/tools_repo
       cd $(Build.SourcesDirectory)/tools_repo
-      git checkout 
+      git checkout 564ad63ae72d18422533fa1da9d396e7703c1cb5
     displayName: Setup Identity Resolver
 
   - pwsh: |
@@ -34,7 +34,9 @@ steps:
       KUSTO_TABLE: $(notification-kusto-table)
 
   - pwsh: |
-      $originalValue = $(${{ parameters.TargetVariable }})
-      $result = $(Build.SourcesDirectory)/eng/common/get-codeowners.ps1 -TargetDirectory sdk/ServiceDirectory -RepoRoot $(Build.SourcesDirectory)
-      Write-Output "##vso[task.setvariable variable=${{ parameters.TargetVariable }}]$originalValue,$result"
+      $originalValue = "$(${{ parameters.TargetVariable }})"
+      $result = $(Build.SourcesDirectory)/eng/common/get-codeowners.ps1 -TargetDirectory sdk/${{ parameters.ServiceDirectory }} -RepoRoot $(Build.SourcesDirectory)
+      if ($result) {
+        Write-Output "##vso[task.setvariable variable=${{ parameters.TargetVariable }}]$originalValue,$result"
+      }
     displayName: Add CodeOwners if Present

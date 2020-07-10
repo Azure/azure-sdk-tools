@@ -18,23 +18,6 @@ param(
     $AuthToken
 )
 
-function CombineArrays($ExistingIds, $NewIds) {
-  if ($ExistingIds -and $ExistingIds.Length > 0) {
-    $results = $ExistingIds.Clone()
-  }
-  else {
-    $results = @()
-  }
-
-  foreach ($id in $NewIds) {
-    if (-not $results.Contains($id)) {
-      $results += $id
-    }
-  }
-
-  return ,$results
-}
-
 # at least one of these needs to be populated
 if (-not $GitHubUsers -and -not $GitHubTeams) {
   Write-Host "No user provided for addition, exiting."
@@ -62,10 +45,11 @@ catch {
 $userReviewers = @($resp.users | % { return $_.login })
 $teamReviewers = @($resp.teams | % { return $_.slug })
 
-$modifiedUserReviewers = CombineArrays -ExistingIds $userReviewers -NewIds $userAdditions
-$modifiedTeamReviewers = CombineArrays -ExistingIds $teamReviewers -NewIds $teamAdditions
+if (!$usersReviewers) { $modifiedUserReviewers = @() } else { $modifiedUserReviewers = $usersReviewers.Clone() }
+$modifiedUserReviewers += ($modifiedUserReviewers | ? { !$usersReviews.Contains($_) })
 
-Write-Host 
+if ($teamReviewers) { $modifiedTeamReviewers = @() } else { $modifiedTeamReviewers = $teamReviewers.Clone() }
+$modifiedTeamReviewers += ($modifiedUserReviewers | ? { !$teamReviewers.Contains($_) })
 
 $detectedUserDiffs = Compare-Object -ReferenceObject $userReviewers -DifferenceObject $modifiedUserReviewers
 $detectedTeamDiffs = Compare-Object -ReferenceObject $teamReviewers -DifferenceObject $modifiedTeamReviewers

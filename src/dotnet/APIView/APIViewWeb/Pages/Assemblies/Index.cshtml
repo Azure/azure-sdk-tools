@@ -88,13 +88,15 @@
                             <input asp-for="Upload.Files" type="file" class="custom-file-input">
                             <label asp-for="Upload.Files" class="custom-file-label">Select file to include in API review</label>
                         </div>
-
                         <div class="form-check">
                             <input class="form-check-input" asp-for="Upload.RunAnalysis" checked>
                             <label class="form-check-label">
                                 Run static analysis
                             </label>
                         </div>
+                    </div>
+                    <div>
+                        <input asp-for="Label" class="form-control" type="text" placeholder="Enter an optional label for the review">
                     </div>
                 </div>
                 <div class="modal-footer">

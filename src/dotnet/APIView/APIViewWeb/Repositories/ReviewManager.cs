@@ -47,16 +47,16 @@ namespace APIViewWeb.Respositories
             _notificationManager = notificationManager;
         }
 
-        public async Task<ReviewModel> CreateReviewAsync(ClaimsPrincipal user, string originalName, Stream fileStream, bool runAnalysis)
+        public async Task<ReviewModel> CreateReviewAsync(ClaimsPrincipal user, string originalName, string label, Stream fileStream, bool runAnalysis)
         {
             ReviewModel review = new ReviewModel
             {
                 Author = user.GetGitHubLogin(),
                 CreationDate = DateTime.UtcNow,
                 RunAnalysis = runAnalysis,
-                Name = originalName
+                Name = label != null ? $"{label} - {originalName}" : originalName
             };
-            await AddRevisionAsync(user, review, originalName, null, fileStream);
+            await AddRevisionAsync(user, review, originalName, label, fileStream);
             return review;
         }
 

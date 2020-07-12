@@ -55,9 +55,9 @@ namespace APIViewWeb.Pages.Assemblies
             return RedirectToPage();
         }
 
-        public async Task<IActionResult> OnPostRenameAsync(string id, string revisionId, string newName)
+        public async Task<IActionResult> OnPostRenameAsync(string id, string revisionId, string newLabel)
         {
-            await _manager.UpdateRevisionNameAsync(User, id, revisionId, newName);
+            await _manager.UpdateRevisionLabelAsync(User, id, revisionId, newLabel);
 
             return RedirectToPage();
         }

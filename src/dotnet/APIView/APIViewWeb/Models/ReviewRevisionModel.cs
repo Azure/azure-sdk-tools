@@ -56,8 +56,12 @@ namespace APIViewWeb
                 }
                 // New model where revision number is calculated on demand. This makes
                 // the feature to allow for editing revision names cleaner.
-                else return $"rev {Review.Revisions.IndexOf(this)} - {Name}"; 
+                else return Label != null ?
+                        $"rev {Review.Revisions.IndexOf(this)} - {Label} - {Name}" :
+                        $"rev {Review.Revisions.IndexOf(this)} - {Name}";
             }
         }
+
+        public string Label { get; set; }
     }
 }

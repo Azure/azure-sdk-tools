@@ -53,10 +53,10 @@
                     <form asp-resource="@revision"
                           class="form-inline float-left revision-rename-form"  
                           asp-page-handler="Rename" asp-requirement="@RevisionOwnerRequirement.Instance" method="post">
-                        <span class="clickable revision-rename-icon pr-2">✎</span>
+                        <span class="revision-rename-icon pr-2 clickable">✎</span>
                         <input type="hidden" name="revisionId" value="@revision.RevisionId" />
-                        <span class="revision-name-input form-group-lg w-100" style="display:none">
-                            <input type="text" class="form-control w-75" name="newName" value="@revision.Name" />
+                        <span class="revision-name-input form-group-lg" style="display:none">
+                            <input type="text" class="form-control" name="newLabel" value="@revision.Label" placeholder="Enter a label for this revision" />
                             <span class="submit-revision-rename clickable">✔️</span>
                             <span class="cancel-revision-rename clickable">❌</span>
                         </span>

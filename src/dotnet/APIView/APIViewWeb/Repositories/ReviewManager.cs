@@ -167,12 +167,12 @@ namespace APIViewWeb.Respositories
             ReviewCodeFileModel codeFile = await CreateFileAsync(
                 revision.RevisionId,
                 name,
-                label,
                 fileStream,
                 review.RunAnalysis);
 
             revision.Files.Add(codeFile);
             revision.Author = user.GetGitHubLogin();
+            revision.Label = label;
 
             review.Revisions.Add(revision);
 
@@ -186,7 +186,6 @@ namespace APIViewWeb.Respositories
         private async Task<ReviewCodeFileModel> CreateFileAsync(
             string revisionId, 
             string originalName,
-            string label,
             Stream fileStream,
             bool runAnalysis)
         {
@@ -209,7 +208,6 @@ namespace APIViewWeb.Respositories
                     originalName,
                     memoryStream,
                     runAnalysis);
-                codeFile.Name = label != null ? $"{label} - {codeFile.Name}" : codeFile.Name;
 
                 InitializeFromCodeFile(reviewCodeFileModel, codeFile);
 
@@ -235,12 +233,12 @@ namespace APIViewWeb.Respositories
             await _reviewsRepository.UpsertReviewAsync(review);
         }
 
-        public async Task UpdateRevisionNameAsync(ClaimsPrincipal user, string id, string revisionId, string name)
+        public async Task UpdateRevisionLabelAsync(ClaimsPrincipal user, string id, string revisionId, string label)
         {
             ReviewModel review = await GetReviewAsync(user, id);
             ReviewRevisionModel revision = review.Revisions.Single(r => r.RevisionId == revisionId);
             await AssertRevisionOwner(user, revision);
-            revision.Name = name;
+            revision.Label = label;
             await _reviewsRepository.UpsertReviewAsync(review);
         }
 

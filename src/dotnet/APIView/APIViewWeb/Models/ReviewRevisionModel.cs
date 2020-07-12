@@ -38,5 +38,26 @@ namespace APIViewWeb
             get => _author ?? Review.Author;
             set => _author = value;
         }
+
+        [JsonIgnore]
+        public string DisplayName
+        {
+            get
+            {
+                // really old model before revisions were restricted to one file
+                if (Files.Count > 1)
+                {
+                    return Name;
+                }
+                // old model where revision number was stored directly on Name
+                else if (!SingleFile.RevisionNumberSeparateFromName)
+                {
+                    return Name;
+                }
+                // New model where revision number is calculated on demand. This makes
+                // the feature to allow for editing revision names cleaner.
+                else return $"rev {Review.Revisions.IndexOf(this)} - {Name}"; 
+            }
+        }
     }
 }

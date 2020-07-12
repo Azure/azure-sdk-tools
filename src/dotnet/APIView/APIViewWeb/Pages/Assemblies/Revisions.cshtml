@@ -30,6 +30,9 @@
                             <label for="upload" class="custom-file-label">Select file to add</label>
                         </div>
                     </div>
+                    <div>
+                        <input asp-for="Label" class="form-control" type="text" placeholder="Enter a label for the revision">
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
@@ -46,7 +49,18 @@
             @foreach (var revision in Model.Review.Revisions.Reverse())
             {
                 <li class="list-group-item">
-                    @revision.Name 
+                    <span class="revision-name-label">@revision.DisplayName</span>
+                    <form asp-resource="@revision"
+                          class="form-inline float-left revision-rename-form"  
+                          asp-page-handler="Rename" asp-requirement="@RevisionOwnerRequirement.Instance" method="post">
+                        <span class="clickable revision-rename-icon pr-2">✎</span>
+                        <input type="hidden" name="revisionId" value="@revision.RevisionId" />
+                        <span class="revision-name-input form-group-lg w-100" style="display:none">
+                            <input type="text" class="form-control w-75" name="newName" value="@revision.Name" />
+                            <span class="submit-revision-rename clickable">✔️</span>
+                            <span class="cancel-revision-rename clickable">❌</span>
+                        </span>
+                    </form>
                     <span class="font-italic pl-3">
                         <span date="@revision.CreationDate"></span>
                         <span>by @revision.Author</span>

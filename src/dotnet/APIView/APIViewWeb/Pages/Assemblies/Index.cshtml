@@ -96,6 +96,9 @@
                             </label>
                         </div>
                     </div>
+                    <div>
+                        <input asp-for="Label" class="form-control" type="text" placeholder="Enter an optional review label">
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
@@ -120,7 +123,7 @@
         {
         <tr>
             <td>
-                <a asp-page="./Review" asp-route-id="@assembly.ReviewId">@assembly.Name</a>
+                <a asp-page="./Review" asp-route-id="@assembly.ReviewId">@assembly.DisplayName</a>
             </td>
             <td>
                 <a username="@assembly.Author">@assembly.Author</a>

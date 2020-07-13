@@ -19,6 +19,9 @@ namespace APIViewWeb.Pages.Assemblies
         [FromForm]
         public UploadModel Upload { get; set; }
 
+        [FromForm]
+        public string Label { get; set; }
+
         [BindProperty(SupportsGet = true)]
         public bool Closed { get; set; }
 
@@ -42,7 +45,7 @@ namespace APIViewWeb.Pages.Assemblies
             {
                 using (var openReadStream = file.OpenReadStream())
                 {
-                   var reviewModel = await _manager.CreateReviewAsync(User, file.FileName, openReadStream, Upload.RunAnalysis);
+                   var reviewModel = await _manager.CreateReviewAsync(User, file.FileName, Label, openReadStream, Upload.RunAnalysis);
 
                     return RedirectToPage("Review", new { id = reviewModel.ReviewId });
                 }

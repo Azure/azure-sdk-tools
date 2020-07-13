@@ -2,7 +2,7 @@
 @model APIViewWeb.Pages.Assemblies.ReviewPageModel
 @{
     Layout = "ReviewLayout";
-    ViewData["Title"] = Model.Review.Name;
+    ViewData["Title"] = Model.Review.DisplayName;
 }
 
 @if (Model.Review.UpdateAvailable)
@@ -18,13 +18,13 @@
     <div class="col my-2">
         <div class="dropdown float-left mr-2">
             <a class="btn btn-sm btn-outline-secondary dropdown-toggle" href="#" role="button" data-toggle="dropdown">
-                @Model.Revision.Name
+                @Model.Revision.DisplayName
             </a>
 
             <div class="dropdown-menu">
                 @foreach (var revision in Model.Review.Revisions.Reverse())
                 {
-                    <a class="dropdown-item" asp-route-id="@Model.Review.ReviewId" asp-route-revisionId="@revision.RevisionId">@revision.Name</a>
+                    <a class="dropdown-item" asp-route-id="@Model.Review.ReviewId" asp-route-revisionId="@revision.RevisionId">@revision.DisplayName</a>
                 }
             </div>
         </div>

@@ -48,17 +48,17 @@ namespace APIViewWeb
             get
             {
                 string name;
-                // old model where revision number was stored directly on Name
                 if (s_oldRevisionStyle.IsMatch(Name))
                 {
+                    // old model where revision number was stored directly on Name
                     name = Name.Substring(Name.IndexOf('-') + 1);
                 }
                 else
                 {
+                    // New model where revision number is calculated on demand. This makes
+                    // the feature to allow for editing revision names cleaner.
                     name = Name;
                 }
-                // New model where revision number is calculated on demand. This makes
-                // the feature to allow for editing revision names cleaner.
                 return Label != null ?
                     $"rev {Review.Revisions.IndexOf(this)} - {Label} - {name}" :
                     $"rev {Review.Revisions.IndexOf(this)} - {name}";

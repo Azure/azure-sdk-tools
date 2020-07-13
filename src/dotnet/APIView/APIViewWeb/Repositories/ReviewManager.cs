@@ -195,7 +195,6 @@ namespace APIViewWeb.Respositories
             var reviewCodeFileModel = new ReviewCodeFileModel
             {
                 HasOriginal = true,
-                RevisionNumberSeparateFromName = true
             };
 
             using (var memoryStream = new MemoryStream())

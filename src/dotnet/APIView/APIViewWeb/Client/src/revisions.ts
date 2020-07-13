@@ -13,12 +13,7 @@
   });
 
   function toggleNameField(renameIcon: JQuery) {
-    
     renameIcon.toggle();
-
-    // Toggle the visibility of the input field and label.
-    // Only one of these should ever be visibile at a time per revision.
-    renameIcon.parent().siblings(".revision-name-label").toggle();
     renameIcon.siblings(".revision-name-input").toggle();
   }
 });

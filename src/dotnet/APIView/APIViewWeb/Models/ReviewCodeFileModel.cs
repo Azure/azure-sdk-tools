@@ -26,11 +26,5 @@ namespace APIViewWeb
 
         [Obsolete("Back compat don't use directly")]
         public bool RunAnalysis { get; set; }
-
-        /// <summary>
-        /// This property marks revisions that were created
-        /// after the revision number was separated off from the name.
-        /// </summary>
-        public bool RevisionNumberSeparateFromName { get; set; }
     }
 }

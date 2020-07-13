@@ -196,10 +196,6 @@ form.comment {
     display: none;
 }
 
-.commentable, .clickable {
-    cursor: pointer;
-}
-
 @include placeholder {
     font-style: italic;
 }

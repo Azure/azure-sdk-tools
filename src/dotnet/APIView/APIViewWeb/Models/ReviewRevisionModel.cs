@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Newtonsoft.Json;
 
 namespace APIViewWeb
@@ -13,6 +14,8 @@ namespace APIViewWeb
         private string _name;
 
         private string _author;
+
+        private static readonly Regex s_oldRevisionStyle = new Regex("rev \\d+ -");
 
         [JsonProperty("id")]
         public string RevisionId { get; set; } = IdHelper.GenerateId();
@@ -44,21 +47,21 @@ namespace APIViewWeb
         {
             get
             {
-                // really old model before revisions were restricted to one file
-                if (Files.Count > 1)
-                {
-                    return Name;
-                }
+                string name;
                 // old model where revision number was stored directly on Name
-                else if (!SingleFile.RevisionNumberSeparateFromName)
+                if (s_oldRevisionStyle.IsMatch(Name))
                 {
-                    return Name;
+                    name = Name.Substring(Name.IndexOf('-') + 1);
+                }
+                else
+                {
+                    name = Name;
                 }
                 // New model where revision number is calculated on demand. This makes
                 // the feature to allow for editing revision names cleaner.
-                else return Label != null ?
-                        $"rev {Review.Revisions.IndexOf(this)} - {Label} - {Name}" :
-                        $"rev {Review.Revisions.IndexOf(this)} - {Name}";
+                return Label != null ?
+                    $"rev {Review.Revisions.IndexOf(this)} - {Label} - {name}" :
+                    $"rev {Review.Revisions.IndexOf(this)} - {name}";
             }
         }
 

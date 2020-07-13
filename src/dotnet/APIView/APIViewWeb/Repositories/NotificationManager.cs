@@ -91,7 +91,7 @@ namespace APIViewWeb.Repositories
             SendGridMessage msg = MailHelper.CreateMultipleEmailsToMultipleRecipients(
                 from,
                 subscribers,
-                Enumerable.Repeat(review.Name, review.Subscribers.Count).ToList(),
+                Enumerable.Repeat(review.DisplayName, review.Subscribers.Count).ToList(),
                 plainTextContent,
                 htmlContent,
                 Enumerable.Repeat(new Dictionary<string, string>(), review.Subscribers.Count).ToList());

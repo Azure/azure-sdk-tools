@@ -54,7 +54,8 @@ namespace APIViewWeb.Respositories
                 Author = user.GetGitHubLogin(),
                 CreationDate = DateTime.UtcNow,
                 RunAnalysis = runAnalysis,
-                Name = label != null ? $"{label} - {originalName}" : originalName
+                Name = originalName,
+                Label = label
             };
             await AddRevisionAsync(user, review, originalName, label, fileStream);
             return review;

@@ -2,7 +2,7 @@
 @model APIViewWeb.Pages.Assemblies.ReviewPageModel
 @{
     Layout = "ReviewLayout";
-    ViewData["Title"] = Model.Review.Name;
+    ViewData["Title"] = Model.Review.DisplayName;
 }
 
 @if (Model.Review.UpdateAvailable)

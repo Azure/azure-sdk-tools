@@ -102,7 +102,7 @@ namespace ApiView
 
             var node = new CodeFile()
             {
-                Name = assemblySymbol.Name,
+                Name = $"{assemblySymbol.Name} ({assemblySymbol.Identity.Version})",
                 Language = "C#",
                 Tokens = builder.Tokens.ToArray(),
                 VersionString = CurrentVersion,

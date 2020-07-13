@@ -20,6 +20,9 @@ namespace APIViewWeb.Pages.Assemblies
 
         public ReviewModel Review { get; set; }
 
+        [FromForm]
+        public string Label { get; set; }
+
         public async Task<IActionResult> OnGetAsync(string id)
         {
             TempData["Page"] = "revisions";
@@ -39,7 +42,7 @@ namespace APIViewWeb.Pages.Assemblies
             if (upload != null)
             {
                 var openReadStream = upload.OpenReadStream();
-                await _manager.AddRevisionAsync(User, id, upload.FileName, openReadStream);
+                await _manager.AddRevisionAsync(User, id, upload.FileName, Label, openReadStream);
             }
 
             return RedirectToPage();
@@ -48,6 +51,13 @@ namespace APIViewWeb.Pages.Assemblies
         public async Task<IActionResult> OnPostDeleteAsync(string id, string revisionId)
         {
             await _manager.DeleteRevisionAsync(User, id, revisionId);
+
+            return RedirectToPage();
+        }
+
+        public async Task<IActionResult> OnPostRenameAsync(string id, string revisionId, string newLabel)
+        {
+            await _manager.UpdateRevisionLabelAsync(User, id, revisionId, newLabel);
 
             return RedirectToPage();
         }

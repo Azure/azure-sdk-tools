@@ -34,7 +34,7 @@
             <div class="btn-group float-left">
                 @if (Model.DiffRevisionId != null)
                 {
-                    <a class="btn btn-sm btn-outline-secondary active" asp-route-diffRevisionId="">Diff with @Model.DiffRevision?.Name</a>
+                    <a class="btn btn-sm btn-outline-secondary active" asp-route-diffRevisionId="">Diff with @Model.DiffRevision?.DisplayName</a>
                 }
                 else
                 {
@@ -45,7 +45,7 @@
                 <div class="dropdown-menu">
                     @foreach (var revision in Model.PreviousRevisions.Reverse())
                     {
-                        <a class="dropdown-item" asp-route-diffRevisionId="@revision.RevisionId" active-if="@(Model.DiffRevisionId == revision.RevisionId)">@revision.Name</a>
+                        <a class="dropdown-item" asp-route-diffRevisionId="@revision.RevisionId" active-if="@(Model.DiffRevisionId == revision.RevisionId)">@revision.DisplayName</a>
                     }
                 </div>
             </div>

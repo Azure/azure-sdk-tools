@@ -34,7 +34,7 @@
             <div class="btn-group float-left">
                 @if (Model.DiffRevisionId != null)
                 {
-                    <a class="btn btn-sm btn-outline-secondary active" asp-route-diffRevisionId="">Diff with @Model.DiffRevision?.Name</a>
+                    <a class="btn btn-sm btn-outline-secondary active" asp-route-diffRevisionId="">Diff with @Model.DiffRevision?.DisplayName</a>
                 }
                 else
                 {

@@ -59,7 +59,7 @@ def verify_md_readme(readme, config, section_sorting_dict):
     if config.verbose_output:
         print('Examining content in {}'.format(readme))
 
-    with open(readme, 'r', encoding="utf-8") as f:
+    with open(readme, 'r', encoding="utf-8-sig") as f:
         readme_content = f.read()
         
     # we need to sanitize to remove the fenced code blocks. The reasoning here is that markdown2 is having issues

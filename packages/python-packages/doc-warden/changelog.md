@@ -1,5 +1,8 @@
 # Release History
 
+## 0.7.0
+- Fixed an issue where `doc-warden` ignored the very first h1 element. This is due to a BOM not being handled properly. Dropped support for py2.7.
+
 ## 0.6.1
 - `Pygments` style code-fence blocks are parsed badly by `markdown2`. This results in phantom headers that break document hierarchy. Remove these blocks right after reading the readme and before passing to html parsing.
 

@@ -12,7 +12,7 @@ Features:
     - Changelogs contain entry and content for the latest package version
 * Generates report for included observed packages
 
-This package is tested on Python 2.7 -> 3.8.
+This package is tested on Python 3.4 -> 3.8. This package went python3-only starting with `0.7.0`.
 
 ## Prerequisites
 This package is intended to be run as part of a pipeline within Azure DevOps. As such, [Python](https://www.python.org/downloads/) must be installed prior to attempting to install or use `Doc-Warden.` While `pip` comes pre-installed on most modern Python installs, if `pip` is an unrecognized command when attempting to install `warden`, run the following command **after** your Python installation is complete.

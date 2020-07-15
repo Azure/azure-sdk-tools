@@ -92,21 +92,7 @@ public class ASTUtils {
     }
 
     public static String makeId(String fullPath) {
-        return fullPath.replaceAll(" ", "-");
-    }
-
-    private static String getNodeFullyQualifiedName(Optional<Node> nodeOptional) {
-        if (!nodeOptional.isPresent()) {
-            return "";
-        }
-
-        Node node = nodeOptional.get();
-        if (node instanceof ClassOrInterfaceDeclaration) {
-            ClassOrInterfaceDeclaration type = (ClassOrInterfaceDeclaration)node;
-            return type.getFullyQualifiedName().get();
-        } else {
-            return "";
-        }
+        return fullPath.replaceAll("\"| ", "-");
     }
 
     /**
@@ -143,5 +129,19 @@ public class ASTUtils {
             return type.asClassOrInterfaceDeclaration().isInterface();
         }
         return false;
+    }
+
+    private static String getNodeFullyQualifiedName(Optional<Node> nodeOptional) {
+        if (!nodeOptional.isPresent()) {
+            return "";
+        }
+
+        Node node = nodeOptional.get();
+        if (node instanceof ClassOrInterfaceDeclaration) {
+            ClassOrInterfaceDeclaration type = (ClassOrInterfaceDeclaration)node;
+            return type.getFullyQualifiedName().get();
+        } else {
+            return "";
+        }
     }
 }

@@ -68,9 +68,9 @@ namespace APIViewWeb.Repositories
         {
             var review = revision.Review;
             var uri = new Uri($"{_endpoint}/Assemblies/Review/{review.ReviewId}");
-            var plainTextContent = $"A new revision, {revision.Name}," +
+            var plainTextContent = $"A new revision, {revision.DisplayName}," +
                 $" was uploaded by {revision.Author}.";
-            var htmlContent = $"A new revision, <a href='{uri.ToString()}'>{revision.Name}</a>," +
+            var htmlContent = $"A new revision, <a href='{uri.ToString()}'>{revision.DisplayName}</a>," +
                 $" was uploaded by <b>{revision.Author}</b>.";
             await SendEmailsAsync(review, user, plainTextContent, htmlContent);
         }
@@ -91,7 +91,7 @@ namespace APIViewWeb.Repositories
             SendGridMessage msg = MailHelper.CreateMultipleEmailsToMultipleRecipients(
                 from,
                 subscribers,
-                Enumerable.Repeat(review.Name, review.Subscribers.Count).ToList(),
+                Enumerable.Repeat(review.DisplayName, review.Subscribers.Count).ToList(),
                 plainTextContent,
                 htmlContent,
                 Enumerable.Repeat(new Dictionary<string, string>(), review.Subscribers.Count).ToList());

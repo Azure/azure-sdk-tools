@@ -11,8 +11,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="CommandLine.Net" Version="2.1.1" />
-    <PackageReference Include="System.Text.Json" Version="4.7.1" />
+    <PackageReference Include="CommandLine.Net" Version="2.2.1" />
+    <PackageReference Include="System.Text.Json" Version="4.7.2" />
   </ItemGroup>
 
 </Project>

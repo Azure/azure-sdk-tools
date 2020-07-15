@@ -5,11 +5,12 @@ using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using System;
 using System.Threading.Tasks;
+using NotificationConfiguration.Models;
 
-namespace GitHubCodeownerSubscriber
+namespace NotificationConfiguration.Helpers
 {
     /// <summary>
-    /// Resolve GitHub aliases to Microsoft contact information using Kusto
+    /// Class used to enable the retrieval of github<->aad mapping questions
     /// </summary>
     public class GitHubNameResolver : IDisposable
     {
@@ -62,7 +63,7 @@ namespace GitHubCodeownerSubscriber
         }
 
         /// <summary>
-        /// Queries Kuto for an internal alias from a given GitHub alias
+        /// Queries Kusto for an internal alias from a given GitHub alias
         /// </summary>
         /// <param name="githubUserName">GitHub alias</param>
         /// <returns>Internal alias or null if no internal user found</returns>
@@ -79,6 +80,34 @@ namespace GitHubCodeownerSubscriber
                 }
 
                 logger.LogWarning("Could Not Resolve GitHub User Username = {0}", githubUserName);
+                return default;
+            }
+        }
+
+        /// <summary>
+        /// Queries Kusto for mapping information present in a target table. Assumes githubemployeelink. 
+        /// </summary>
+        /// <param name="aadName">Full name in AAD. EG: "Scott Beddall". Can be sourced from devops variable $(Build.QueuedBy).</param>
+        /// <returns>Internal alias or null if no internal user found</returns>
+        public async Task<IdentityDetail> GetMappingInformationFromAADName(string aadName)
+        {
+            var query = $"{kustoTable} | where aadName startswith '{aadName}' | project githubUserName, aadId, aadName, aadAlias, aadUpn | limit 1;";
+
+            // TODO: Figure out how to make this async
+            using (var reader = client.ExecuteQuery(query))
+            {
+                if (reader.Read())
+                {
+                    return new IdentityDetail(){
+                        GithubUserName = reader.GetString(0),
+                        AadId = reader.GetString(1),
+                        Name = reader.GetString(2),
+                        Alias = reader.GetString(3),
+                        AadUpn = reader.GetString(4)
+                    };
+                }
+
+                logger.LogWarning("Could Not Resolve Identity of Name = {0}", aadName);
                 return default;
             }
         }

@@ -40,6 +40,9 @@
                         <li class="nav-item">
                             <a class="nav-link" id="profile-tab" data-toggle="tab" href="#c-help">C</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="profile-tab" data-toggle="tab" href="#python-help">Python</a>
+                        </li>
                     </ul>
 
                     <!-- Tab panes -->
@@ -63,6 +66,21 @@
                                 </li>
                             </ol>
                         </div>
+                        <div class="tab-pane" id="python-help">
+                            <ol>
+                                <li>
+                                    Install apistubgen.
+                                    <code>pip install git+"https://github.com/Azure/azure-sdk-tools.git#subdirectory=packages/python-packages/api-stub-generator&egg=api-stub-generator"</code>
+                                </li>
+                                <li>
+                                    Run apistubgen command with source repo or whl package as parameter to generate a json file with tokens
+                                    <code>apistubgen --pkg-path [path to package root]</code>
+                                </li>
+                                <li>
+                                    Upload generated json file
+                                </li>
+                            </ol>
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -77,6 +95,9 @@
                                 Run static analysis
                             </label>
                         </div>
+                    </div>
+                    <div>
+                        <input asp-for="Label" class="form-control" type="text" placeholder="Enter an optional review label">
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -102,7 +123,7 @@
         {
         <tr>
             <td>
-                <a asp-page="./Review" asp-route-id="@assembly.ReviewId">@assembly.Name</a>
+                <a asp-page="./Review" asp-route-id="@assembly.ReviewId">@assembly.DisplayName</a>
             </td>
             <td>
                 <a username="@assembly.Author">@assembly.Author</a>

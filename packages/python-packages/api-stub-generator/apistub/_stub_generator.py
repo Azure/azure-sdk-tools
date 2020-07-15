@@ -176,11 +176,8 @@ class StubGenerator:
                 continue
 
             logging.debug("Importing module {}".format(m))
-            try:
-                module_obj = importlib.import_module(m)
-                self.module_dict[m] = ModuleNode(m, module_obj, nodeindex)
-            except:
-                logging.error("Failed to import {}".format(m))
+            module_obj = importlib.import_module(m)
+            self.module_dict[m] = ModuleNode(m, module_obj, nodeindex)
 
         # Create navigation info to navigate within APIreview tool
         navigation = Navigation(package_name, None)

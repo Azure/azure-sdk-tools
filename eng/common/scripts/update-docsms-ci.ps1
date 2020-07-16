@@ -35,13 +35,8 @@ param (
   # Java
   $MonikerIdentifier,
 
-  # C# 
+  # C#, JS, Python
   $PathToConfigFile,
-  
-  # JS and Python only
-  $ApiUrl,
-  $BuildId,
-  $TargetVariable="params" # standard template CI deployments will use "params" as the name of the variable
 )
 
 # import artifact parsing and semver handling

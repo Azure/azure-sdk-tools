@@ -24,19 +24,17 @@ param (
   [Parameter(Mandatory = $true)]
   $CIRepository,
 
-  [Parameter(Mandatory = $true)]
-  $CIAccessPAT,
-
   [Parameter(Mandatory = $false)]
   [ValidateSet("Latest","Preview")]
   $Mode,
 
-  # arguments specific to each language follow
-  # Java
+  # Java leverage a single config file, with a path to the moniker specific config
+  # this argument is used as that path.
   $MonikerIdentifier,
 
-  # C#, JS, Python
-  $PathToConfigFile,
+  # C#, JS, Python leverage a config file per moniker. need to update multiple
+  # paths for preview vs latest
+  $PathToConfigFile
 )
 
 # import artifact parsing and semver handling
@@ -44,40 +42,133 @@ param (
 . (Join-Path $PSScriptRoot SemVer.ps1)
 
 
-# for JavaScript and Python, the onboarded packages are targeted in a params.json present
-# as a build variable. Example Schema:
+
+
 # {
-#   "target_repo": {
-#     "url": "https://github.com/MicrosoftDocs/azure-docs-sdk-python",
-#     "branch": "smoke-test-preview",
-#     "folder": "preview"
+#   "package_info": {
+#     "prefer_source_distribution": "true"
+#     "install_type": "pypi",
+#     "name": "azure-storage-blob"
 #   },
-#   "packages": [
-#     {
-#       "package_info": {
-#         "install_type": "dist_file",
-#         "name": "azure-core-tracing-opencensus",
-#         "version": ">=1.0.0b4",
-#         "location": "https://docsupport.blob.core.windows.net/repackaged/azure-core-tracing-opencensus-1.0.0b6.zip"
-#       },
-#       "exclude_path": [
-#         "test*",
-#         "example*",
-#         "sample*",
-#         "doc*"
-#       ]
-#     },
-#     ...
+#   "exclude_path": [
+#     "test*",
+#     "example*",
+#     "sample*",
+#     "doc*"
 #   ]
-# }
-function UpdateJSCI($pkgs, $pat, $ciRepo, $locationInDocRepo, $ApiUrl, $BuildId, $TargetVariable){
-  # access key is values["packages"] -> package list
-}
+# },
 
-function UpdatePythonCI($pkgs, $pat, $ciRepo, $locationInDocRepo, $ApiUrl, $BuildId, $TargetVariable){
+function UpdateParamsJsonPython($pkgs, $pat, $ciRepo, $locationInDocRepo, $repository){
+  Write-Host (Join-Path -Path $ciRepo -ChildPath $locationInDocRepo)
+  $pkgJsonLoc = (Join-Path -Path $ciRepo -ChildPath $locationInDocRepo)
   
+  if (-not (Test-Path $pkgJsonLoc)) {
+    Write-Error "Unable to locate package json at location $pkgJsonLoc, exiting."
+    exit(1)
+  }
+
+  $allJson  = Get-Content $pkgJsonLoc | ConvertFrom-Json
+  $targetData = $allJson.packages
+
+  $visibleInCI = @{}
+
+  # first pull what's already available
+  for ($i=0; $i -lt $targetData.packages.Length; $i++) {
+    $pkgDef = $targetData.packages[$i]
+    $visibleInCI[$pkgDef.name] = $i
+  }
+
+  foreach ($releasingPkg in $pkgs) {
+    if ($visibleInCI.ContainsKey($releasingPkg.PackageId)) {
+      $packagesIndex = $visibleInCI[$releasingPkg.PackageId]
+      $existingPackageDef = $targetData.packages[$packagesIndex]
+      $existingPackageDef.packageVersion = $releasingPkg.PackageVersion
+    }
+    else {
+      $newItem = $null
+
+      switch ($repository) {
+        "NPM" {
+          $newItem = New-Object PSObject -Property @{ 
+            packageDownloadUrl = "https://repo1.maven.org/maven2"
+            packageGroupId = $releasingPkg.GroupId
+            packageArtifactId = $releasingPkg.PackageId
+            packageVersion = $releasingPkg.PackageVersion
+            inputPath = @()
+            excludePath = @()
+          }
+          break
+        }
+        "PyPI" {
+          $newItem = New-Object PSObject -Property @{ 
+            packageDownloadUrl = "https://repo1.maven.org/maven2"
+            packageGroupId = $releasingPkg.GroupId
+            packageArtifactId = $releasingPkg.PackageId
+            packageVersion = $releasingPkg.PackageVersion
+            inputPath = @()
+            excludePath = @()
+          }
+          break
+        }
+        default {
+          Write-Host "Unrecognized Language: $language"
+          exit(1)
+        }
+      }
+
+      if ($newItem) { $targetData.packages.Append($newItem) }
+    }
+  }
+
+  # update repo content
+  Set-Content -Path $pkgJsonLoc -Value ($allJsonData | ConvertTo-Json -Depth 10 | % {$_ -replace "(?m)  (?<=^(?:  )*)", "    " })
 }
 
+function UpdateParamsJsonJS($pkgs, $pat, $ciRepo, $locationInDocRepo, $repository){
+  Write-Host (Join-Path -Path $ciRepo -ChildPath $locationInDocRepo)
+  $pkgJsonLoc = (Join-Path -Path $ciRepo -ChildPath $locationInDocRepo)
+  
+  if (-not (Test-Path $pkgJsonLoc)) {
+    Write-Error "Unable to locate package json at location $pkgJsonLoc, exiting."
+    exit(1)
+  }
+
+  $allJson  = Get-Content $pkgJsonLoc | ConvertFrom-Json
+  $targetData = $allJson.npm_package_sources
+
+  $visibleInCI = @{}
+
+  # first pull what's already available
+  for ($i=0; $i -lt $targetData.Length; $i++) {
+    $pkgDef = $targetData[$i]
+    $accessor = ($pkgDef.name).Replace("`@next", "")
+    $visibleInCI[$accessor] = $i
+  }
+
+  foreach ($releasingPkg in $pkgs) {
+    $name = $releasingPkg.PackageId
+
+    if ([AzureEngSemanticVersion]::ParseVersionString($releasingPkg.PackageVersion).IsPrerelease) {
+      $name += "`@next"
+    }
+
+    if ($visibleInCI.ContainsKey($releasingPkg.PackageId)) {
+      $packagesIndex = $visibleInCI[$releasingPkg.PackageId]
+      $existingPackageDef = $targetData[$packagesIndex]
+      $existingPackageDef.name = $name
+    }
+    else {
+      $newItem = New-Object PSObject -Property @{ 
+        name = $name
+      }
+
+      if ($newItem) { $targetData.Append($newItem) }
+    }
+  }
+
+  # update repo content
+  Set-Content -Path $pkgJsonLoc -Value ($allJson | ConvertTo-Json -Depth 10 | % {$_ -replace "(?m)  (?<=^(?:  )*)", "  " })
+}
 
 # details on CSV schema can be found here:
 # https://review.docs.microsoft.com/en-us/help/onboard/admin/reference/dotnet/documenting-nuget?branch=master#set-up-the-ci-job
@@ -87,7 +178,7 @@ function UpdateCSVBasedCI($pkgs, $pat, $ciRepo, $locationInDocRepo){
 
 # a "package.json configures target packages for all the monikers in a Repository, it also has a slightly different
 # schema than the moniker-specific json config
-function UpdatePackageJson($pkgs, $pat, $ciRepo, $locationInDocRepo, $monikerId){
+function UpdatePackageJson($pkgs, $ciRepo, $locationInDocRepo, $monikerId){
   Write-Host (Join-Path -Path $ciRepo -ChildPath $locationInDocRepo)
   $pkgJsonLoc = (Join-Path -Path $ciRepo -ChildPath $locationInDocRepo)
   
@@ -137,14 +228,13 @@ $pkgs = VerifyPackages -pkgRepository $Repository `
   -artifactLocation $ArtifactLocation `
   -workingDirectory $WorkDirectory `
   -apiUrl $apiUrl `
-  -releaseSha $ReleaseSHA `
   -continueOnError $True 
 
 # filter package set
 if($Mode) {
   if ($Mode -eq "Preview") { $includePreview = $true } else { $includePreview = $false }
 
-  $pkgs = $pkgs | ? { $_.isPrerelease -eq $includePreview}
+  $pkgs = $pkgs | ? { [AzureEngSemanticVersion]::ParseVersionString($_.PackageVersion).IsPrerelease -eq $includePreview}
 }
 
 if ($pkgs) {
@@ -153,20 +243,20 @@ if ($pkgs) {
 
   switch ($Repository) {
     "Nuget" {
-      Write-Host "Process C# CI for $packageInfo"
+      Write-Host "Process C# CI"
       break
     }
     "NPM" {
-      Write-Host "Process Javascript CI for $packageInfo"
+      UpdateParamsJsonJS -pkgs $pkgs -ciRepo $CIRepository -locationInDocRepo $PathToConfigFile -repository $Repository
       break
     }
     "PyPI" {
-      Write-Host "Process Python CI for $packageInfo"
+      Write-Host "Process Python CI"
       break
     }
     "Maven" {
-      Write-Host "Process Java CI for $packageInfo"
-      UpdatePackageJson -pkgs $pkgs -pat $ConfigurationCIPAT -ciRepo $CIRepository -locationInDocRepo $PathToConfigFile -monikerId $MonikerIdentifier 
+      Write-Host "Process Java CI"
+      UpdatePackageJson -pkgs $pkgs -ciRepo $CIRepository -locationInDocRepo $PathToConfigFile -monikerId $MonikerIdentifier 
       break
     }
     default {

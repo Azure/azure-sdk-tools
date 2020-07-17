@@ -1,0 +1,87 @@
+# intended to be used as part of a release process
+parameters:
+  ArtifactLocation: 'not-specified'
+  PackageRepository: 'not-specified'
+  ReleaseSha: 'not-specified'
+  RepoId: 'not-specified'
+  WorkingDirectory: ''
+  ScriptDirectory: eng/common/scripts
+  TargetDocRepoName: ''
+  TargetDocRepoOwner: ''
+  PRBranchName: 'smoke-test-rdme'
+  SourceBranchName: 'smoke-test' # should be master for .NET
+  ArtifactName: ''
+  Language: ''
+  DocRepoDestinationPath: '' #usually docs-ref-services/
+
+  CIConfigRepo: ''
+
+  # for java we need to pass additional args. these will be passed to monikerId
+  PreviewConfigLoc: ''
+  PreviewConfigArgs: ''
+  LatestConfigLoc: ''
+  LatestConfigArgs: ''
+
+  GHReviewersVariable: '' 
+  GHTeamReviewersVariable: '' # externally set, as eng-common does not have the identity-resolver. Run as pre-step
+
+steps:
+- pwsh: |
+    # can be VSTS or github
+    git clone ${{ parameters.CIConfigRepo }} ${{ parameters.WorkingDirectory }}/repo
+
+    try {
+      Push-Location ${{ parameters.WorkingDirectory }}/repo
+
+      Write-Host "git checkout smoke-test"
+      git checkout ${{ parameters.SourceBranchName }}
+    } finally {
+      Pop-Location
+    }
+
+    if ("${{ parameters.CIConfigRepo }}".Contains("github")) {
+      Write-Host "##vso[task.setvariable variable=Release.Targeting.IsVS]$false"
+      Write-Host "Release.Targeting.IsVS set to FALSE"
+    }
+    else {
+      Write-Host "##vso[task.setvariable variable=Release.Targeting.IsVS]$true"
+      Write-Host "Release.Targeting.IsVS set to TRUE"
+    }
+  displayName: Clone Target Documentation Repository
+  ignoreLASTEXITCODE: false
+
+- task: PowerShell@2
+  displayName: 'Update Onboarded GA Packages'
+  inputs:
+    targetType: filePath
+    filePath: ${{ parameters.ScriptDirectory }}/update-docsms-ci.ps1
+    arguments: >
+      -ArtifactLocation ${{ parameters.ArtifactLocation }}
+      -WorkDirectory "${{ parameters.WorkingDirectory }}"
+      -ReleaseSHA ${{ parameters.ReleaseSha }}
+      -Repository ${{ parameters.PackageRepository }}
+      -RepoId ${{ parameters.RepoId }}
+      -CIConfigRepo "${{ parameters.WorkingDirectory }}/repo"
+      -Language "${{parameters.Language}}"
+      -DocRepoContentLocation ${{ parameters.DocRepoDestinationPath }}
+    pwsh: true
+  env:
+    GH_TOKEN: $(azuresdk-github-pat)
+
+- task: PowerShell@2
+  displayName: 'Update Onboarded Preview Packages'
+  inputs:
+    targetType: filePath
+    filePath: ${{ parameters.ScriptDirectory }}/update-docsms-ci.ps1
+    arguments: >
+      -ArtifactLocation ${{ parameters.ArtifactLocation }}
+      -WorkDirectory "${{ parameters.WorkingDirectory }}"
+      -ReleaseSHA ${{ parameters.ReleaseSha }}
+      -Repository ${{ parameters.PackageRepository }}
+      -RepoId ${{ parameters.RepoId }}
+      -CIConfigRepo "${{ parameters.WorkingDirectory }}/repo"
+      -Language "${{parameters.Language}}"
+      -DocRepoContentLocation ${{ parameters.DocRepoDestinationPath }}
+    pwsh: true
+  env:
+    GH_TOKEN: $(azuresdk-github-pat)

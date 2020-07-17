@@ -7,37 +7,27 @@ param (
   [string]$RepoRoot,
   [ValidateSet("net", "java", "js", "python")]
   [string]$Language,
-  [string]$RepoName,
-  [boolean]$ForRelease = $False
+  [ValidateSet("True", "False", "true", "false")]
+  [string]$ForRelease = 'false'
 )
 
 $ProgressPreference = "SilentlyContinue"
 . (Join-Path $PSScriptRoot SemVer.ps1)
 Import-Module (Join-Path $PSScriptRoot modules ChangeLog-Operations.psm1)
 
+[Boolean]$forRelease = [System.Convert]::ToBoolean($ForRelease)
+
 $validChangeLog = $false
 if ($ChangeLogLocation -and $VersionString) 
 {
-  $validChangeLog = Confirm-ChangeLogEntry -ChangeLogLocation $ChangeLogLocation -VersionString $VersionString -ForRelease $ForRelease
+  $validChangeLog = Confirm-ChangeLogEntry -ChangeLogLocation $ChangeLogLocation -VersionString $VersionString -ForRelease $forRelease
 }
 else
 {
   Import-Module (Join-Path $PSScriptRoot modules Package-Properties.psm1)
-  if ([System.String]::IsNullOrEmpty($Language))
-  {
-    if ($RepoName -match "azure-sdk-for-(?<lang>[^-]+)")
-    {
-      $Language = $matches["lang"]
-    }
-    else
-    {
-      Write-Error "Failed to set Language automatically. Please pass the appropriate Language as a parameter."
-      exit 1
-    }
-  }
-
+ 
   $PackageProp = Get-PkgProperties -PackageName $PackageName -ServiceName $ServiceName -Language $Language -RepoRoot $RepoRoot
-  $validChangeLog = Confirm-ChangeLogEntry -ChangeLogLocation $PackageProp.pkgChangeLogPath -VersionString $PackageProp.pkgVersion -ForRelease $ForRelease
+  $validChangeLog = Confirm-ChangeLogEntry -ChangeLogLocation $PackageProp.pkgChangeLogPath -VersionString $PackageProp.pkgVersion -ForRelease $forRelease
 }
 
 if (!$validChangeLog)

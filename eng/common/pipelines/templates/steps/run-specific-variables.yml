@@ -1,0 +1,34 @@
+# Add Run Specific variables such as Language and release intent
+# $Language = "net", "java", "js", "python"
+# $IsReleaseRun = "true", "false"
+
+steps:
+  - pwsh: |
+      # Determine Intent of the run i.e. if it is intended for release
+      $isForRelease = $False
+      if ('$(Build.Reason)' -eq 'Manual' -and '$(System.TeamProject)' -eq 'internal')
+      {
+        $isForRelease = $True
+      }
+      # Determine Repo language from the Repo Name
+      if ('$(Build.Repository.Name)' -match "azure-sdk-for-(?<lang>[^-]+)")
+      {
+        $language = $matches["lang"]
+      }
+      else
+      {
+        Write-Error "Failed to retrieve Language automatically."
+        exit 1
+      }
+      # Set variables for later steps in the build
+      echo "##vso[task.setvariable variable=IsReleaseRun]$isForRelease"
+      Write-Host "Added variable IsReleaseRun with value "$isForRelease
+      echo "##vso[task.setvariable variable=Language]$language"
+      Write-Host "Added variable Language with value "$language
+    displayName: Add Run specific variables
+  - pwsh: |
+      $isForRelease = $False
+      echo "##vso[task.setvariable variable=IsReleaseRun]$isForRelease"
+      Write-Host "Set variable $IsReleaseRun to value "$isForRelease
+    displayName: Apply Run intent Override
+    condition: eq(variables['Skip.Release'], 'true')

@@ -58,6 +58,7 @@ param (
 #   ]
 # },
 
+
 function UpdateParamsJsonPython($pkgs, $pat, $ciRepo, $locationInDocRepo, $repository){
   Write-Host (Join-Path -Path $ciRepo -ChildPath $locationInDocRepo)
   $pkgJsonLoc = (Join-Path -Path $ciRepo -ChildPath $locationInDocRepo)
@@ -73,50 +74,46 @@ function UpdateParamsJsonPython($pkgs, $pat, $ciRepo, $locationInDocRepo, $repos
   $visibleInCI = @{}
 
   # first pull what's already available
-  for ($i=0; $i -lt $targetData.packages.Length; $i++) {
-    $pkgDef = $targetData.packages[$i]
-    $visibleInCI[$pkgDef.name] = $i
+  for ($i=0; $i -lt $targetData.Length; $i++) {
+    $pkgDef = $targetData[$i]
+    $visibleInCI[$pkgDef.package_info.name] = $i
   }
+
+  Write-Host $targetData
 
   foreach ($releasingPkg in $pkgs) {
     if ($visibleInCI.ContainsKey($releasingPkg.PackageId)) {
       $packagesIndex = $visibleInCI[$releasingPkg.PackageId]
-      $existingPackageDef = $targetData.packages[$packagesIndex]
-      $existingPackageDef.packageVersion = $releasingPkg.PackageVersion
+      $existingPackageDef = $targetData[$packagesIndex]
+
+      if ([AzureEngSemanticVersion]::ParseVersionString($releasingPkg.PackageVersion).IsPrerelease) {
+        # the member MIGHT NOT exist
+        if ($existingPackageDef.package_info.version) {
+
+        }
+        # add it if it doesn't exist
+        else {
+          $existingPackageDef.package_info | Add-Member -NotePropertyName version
+        }
+
+        $existingPackageDef.package_info.version = ">=$($releasingPkg.PackageVersion)"
+      }
+      else {
+        $def.PSObject.Properties.Remove('version')
+      }
     }
     else {
-      $newItem = $null
-
-      switch ($repository) {
-        "NPM" {
-          $newItem = New-Object PSObject -Property @{ 
-            packageDownloadUrl = "https://repo1.maven.org/maven2"
-            packageGroupId = $releasingPkg.GroupId
-            packageArtifactId = $releasingPkg.PackageId
-            packageVersion = $releasingPkg.PackageVersion
-            inputPath = @()
-            excludePath = @()
+      $newItem = `
+        New-Object PSObject -Property @{ 
+          package_info = New-Object PSObject -Property @{ 
+            prefer_source_distribution = "true"
+            install_type = "pypi"
+            name=""
           }
-          break
+          excludePath = @("test*","example*","sample*","doc*")
         }
-        "PyPI" {
-          $newItem = New-Object PSObject -Property @{ 
-            packageDownloadUrl = "https://repo1.maven.org/maven2"
-            packageGroupId = $releasingPkg.GroupId
-            packageArtifactId = $releasingPkg.PackageId
-            packageVersion = $releasingPkg.PackageVersion
-            inputPath = @()
-            excludePath = @()
-          }
-          break
-        }
-        default {
-          Write-Host "Unrecognized Language: $language"
-          exit(1)
-        }
-      }
 
-      if ($newItem) { $targetData.packages.Append($newItem) }
+      $targetData.packages.Append($newItem)
     }
   }
 
@@ -247,7 +244,7 @@ if ($pkgs) {
       break
     }
     "NPM" {
-      UpdateParamsJsonJS -pkgs $pkgs -ciRepo $CIRepository -locationInDocRepo $PathToConfigFile -repository $Repository
+      UpdateParamsJsonJS -pkgs $pkgs -ciRepo $CIRepository -locationInDocRepo $PathToConfigFile
       break
     }
     "PyPI" {

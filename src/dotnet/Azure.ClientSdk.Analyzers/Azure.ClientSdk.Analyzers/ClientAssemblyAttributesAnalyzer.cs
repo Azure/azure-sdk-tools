@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Immutable;
-using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 
@@ -13,7 +12,9 @@ namespace Azure.ClientSdk.Analyzers
         {
             "Test",
             "Tests",
-            "DynamicProxyGenAssembly2"
+            "DynamicProxyGenAssembly2",
+            "Benchmarks",
+            "Performance"
         };
 
         public override void Initialize(AnalysisContext context)

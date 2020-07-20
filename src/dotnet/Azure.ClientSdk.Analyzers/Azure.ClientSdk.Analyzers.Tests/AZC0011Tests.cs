@@ -27,5 +27,15 @@ namespace Azure.ClientSdk.Analyzers.Tests
 ";
             await Verifier.VerifyAnalyzerAsync(code);
         }
+
+        [Fact]
+        public async Task AZC0011NotProducedForBenchmarkIVTs()
+        {
+            const string code = @"
+[assembly:System.Runtime.CompilerServices.InternalsVisibleTo(""Product.Benchmarks, PublicKey=..."")]
+[assembly:System.Runtime.CompilerServices.InternalsVisibleTo(""Product.Performance, PublicKey=..."")]
+";
+            await Verifier.VerifyAnalyzerAsync(code);
+        }
     }
 }

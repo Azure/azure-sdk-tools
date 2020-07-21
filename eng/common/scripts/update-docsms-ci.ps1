@@ -149,9 +149,50 @@ function UpdateParamsJsonJS($pkgs, $pat, $ciRepo, $locationInDocRepo, $repositor
   Set-Content -Path $pkgJsonLoc -Value ($allJson | ConvertTo-Json -Depth 10 | % {$_ -replace "(?m)  (?<=^(?:  )*)", "  " })
 }
 
-# details on CSV schema can be found here:
+# details on CSV schema can be found here
+# https://review.docs.microsoft.com/en-us/help/onboard/admin/reference/dotnet/documenting-nuget?branch=master#set-up-the-ci-job
 function UpdateCSVBasedCI($pkgs, $pat, $ciRepo, $locationInDocRepo){
+  Write-Host (Join-Path -Path $ciRepo -ChildPath $locationInDocRepo)
+  $csvLoc = (Join-Path -Path $ciRepo -ChildPath $locationInDocRepo)
+  
+  if (-not (Test-Path $csvLoc)) {
+    Write-Error "Unable to locate package csv at location $csvLoc, exiting."
+    exit(1)
+  }
 
+  $allCSVRows = Get-Content $csvLoc
+  $visibleInCI = @{}
+
+  # first pull what's already available
+  for ($i=0; $i -lt $allCSVRows.Length; $i++) {
+    $pkgDef = $allCSVRows[$i]
+
+    # get rid of the modifiers to get just the package id
+    $id = $pkgDef.split(",")[1] -replace "\[.*?\]", ""
+
+    $visibleInCI[$id] = $i
+  }
+
+  foreach ($releasingPkg in $pkgs) {
+    $installModifiers = "tfm=netstandard2.0"
+    if ([AzureEngSemanticVersion]::ParseVersionString($releasingPkg.PackageVersion).IsPrerelease) {
+      $installModifiers += ";isPrerelease=true"
+    }
+    $lineId = $releasingPkg.PackageId.Replace(".","").ToLower()
+
+    if ($visibleInCI.ContainsKey($releasingPkg.PackageId)) {
+      $packagesIndex = $visibleInCI[$releasingPkg.PackageId]
+      $existingPackageDef = $targetData[$packagesIndex]
+      $existingPackageDef = "$($lineId)[$installModifiers]$($releasingPkg.PackageId)"
+    }
+    else {
+      $newItem = "$($lineId)[$installModifiers]$($releasingPkg.PackageId)"
+
+      $targetData.Append($newItem)
+    }
+  }
+
+  Set-Content -Path $csvLoc -Value $targetData
 }
 
 # a "package.json configures target packages for all the monikers in a Repository, it also has a slightly different

@@ -42,8 +42,7 @@ param (
 . (Join-Path $PSScriptRoot SemVer.ps1)
 
 # updates json docs.ms CI config for the Python doc repositories
-function UpdateParamsJsonPython($pkgs, $pat, $ciRepo, $locationInDocRepo, $repository){
-  Write-Host (Join-Path -Path $ciRepo -ChildPath $locationInDocRepo)
+function UpdateParamsJsonPython($pkgs, $ciRepo, $locationInDocRepo, $repository){
   $pkgJsonLoc = (Join-Path -Path $ciRepo -ChildPath $locationInDocRepo)
   
   if (-not (Test-Path $pkgJsonLoc)) {
@@ -104,8 +103,7 @@ function UpdateParamsJsonPython($pkgs, $pat, $ciRepo, $locationInDocRepo, $repos
 }
 
 # similar to python CI update. still sets target versions, but is intended for NPM-targeted json
-function UpdateParamsJsonJS($pkgs, $pat, $ciRepo, $locationInDocRepo, $repository){
-  Write-Host (Join-Path -Path $ciRepo -ChildPath $locationInDocRepo)
+function UpdateParamsJsonJS($pkgs, $ciRepo, $locationInDocRepo, $repository){
   $pkgJsonLoc = (Join-Path -Path $ciRepo -ChildPath $locationInDocRepo)
   
   if (-not (Test-Path $pkgJsonLoc)) {
@@ -151,8 +149,7 @@ function UpdateParamsJsonJS($pkgs, $pat, $ciRepo, $locationInDocRepo, $repositor
 
 # details on CSV schema can be found here
 # https://review.docs.microsoft.com/en-us/help/onboard/admin/reference/dotnet/documenting-nuget?branch=master#set-up-the-ci-job
-function UpdateCSVBasedCI($pkgs, $pat, $ciRepo, $locationInDocRepo){
-  Write-Host (Join-Path -Path $ciRepo -ChildPath $locationInDocRepo)
+function UpdateCSVBasedCI($pkgs, $ciRepo, $locationInDocRepo){
   $csvLoc = (Join-Path -Path $ciRepo -ChildPath $locationInDocRepo)
   
   if (-not (Test-Path $csvLoc)) {
@@ -181,18 +178,18 @@ function UpdateCSVBasedCI($pkgs, $pat, $ciRepo, $locationInDocRepo){
     $lineId = $releasingPkg.PackageId.Replace(".","").ToLower()
 
     if ($visibleInCI.ContainsKey($releasingPkg.PackageId)) {
+      Write-Host "Updating"
       $packagesIndex = $visibleInCI[$releasingPkg.PackageId]
-      $existingPackageDef = $targetData[$packagesIndex]
-      $existingPackageDef = "$($lineId)[$installModifiers]$($releasingPkg.PackageId)"
+      $allCSVRows[$packagesIndex] = "$($lineId),[$installModifiers]$($releasingPkg.PackageId)"
     }
     else {
-      $newItem = "$($lineId)[$installModifiers]$($releasingPkg.PackageId)"
-
-      $targetData.Append($newItem)
+      Write-Host "Appending"
+      $newItem = "$($lineId),[$installModifiers]$($releasingPkg.PackageId)"
+      $allCSVRows += ($newItem)
     }
   }
 
-  Set-Content -Path $csvLoc -Value $targetData
+  Set-Content -Path $csvLoc -Value $allCSVRows
 }
 
 # a "package.json configures target packages for all the monikers in a Repository, it also has a slightly different
@@ -262,6 +259,7 @@ if ($pkgs) {
   switch ($Repository) {
     "Nuget" {
       Write-Host "Process C# CI"
+      UpdateCSVBasedCI -pkgs $pkgs -ciRepo $CIRepository -locationInDocRepo $PathToConfigFile
       break
     }
     "NPM" {

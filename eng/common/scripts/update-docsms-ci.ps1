@@ -41,24 +41,7 @@ param (
 . (Join-Path $PSScriptRoot artifact-metadata-parsing.ps1)
 . (Join-Path $PSScriptRoot SemVer.ps1)
 
-
-
-
-# {
-#   "package_info": {
-#     "prefer_source_distribution": "true"
-#     "install_type": "pypi",
-#     "name": "azure-storage-blob"
-#   },
-#   "exclude_path": [
-#     "test*",
-#     "example*",
-#     "sample*",
-#     "doc*"
-#   ]
-# },
-
-
+# updates json docs.ms CI config for the Python doc repositories
 function UpdateParamsJsonPython($pkgs, $pat, $ciRepo, $locationInDocRepo, $repository){
   Write-Host (Join-Path -Path $ciRepo -ChildPath $locationInDocRepo)
   $pkgJsonLoc = (Join-Path -Path $ciRepo -ChildPath $locationInDocRepo)
@@ -76,35 +59,34 @@ function UpdateParamsJsonPython($pkgs, $pat, $ciRepo, $locationInDocRepo, $repos
   # first pull what's already available
   for ($i=0; $i -lt $targetData.Length; $i++) {
     $pkgDef = $targetData[$i]
-    $visibleInCI[$pkgDef.package_info.name] = $i
-  }
 
-  Write-Host $targetData
+    if ($pkgDef.package_info.name) {
+      $visibleInCI[$pkgDef.package_info.name] = $i
+    }
+  }
 
   foreach ($releasingPkg in $pkgs) {
     if ($visibleInCI.ContainsKey($releasingPkg.PackageId)) {
+      Write-Host "$($releasingPkg.PackageId) is visible in CI"
+      Write-Host $targetData[$packagesIndex]
       $packagesIndex = $visibleInCI[$releasingPkg.PackageId]
       $existingPackageDef = $targetData[$packagesIndex]
 
       if ([AzureEngSemanticVersion]::ParseVersionString($releasingPkg.PackageVersion).IsPrerelease) {
-        # the member MIGHT NOT exist
-        if ($existingPackageDef.package_info.version) {
-
-        }
-        # add it if it doesn't exist
-        else {
-          $existingPackageDef.package_info | Add-Member -NotePropertyName version
+        if (-not $existingPackageDef.package_info.version) {
+          $existingPackageDef.package_info | Add-Member -NotePropertyName version -NotePropertyValue ""
         }
 
         $existingPackageDef.package_info.version = ">=$($releasingPkg.PackageVersion)"
       }
       else {
-        $def.PSObject.Properties.Remove('version')
+        if ($def.version) {
+          $def.PSObject.Properties.Remove('version')  
+        }
       }
     }
     else {
-      $newItem = `
-        New-Object PSObject -Property @{ 
+      $newItem = New-Object PSObject -Property @{ 
           package_info = New-Object PSObject -Property @{ 
             prefer_source_distribution = "true"
             install_type = "pypi"
@@ -112,15 +94,16 @@ function UpdateParamsJsonPython($pkgs, $pat, $ciRepo, $locationInDocRepo, $repos
           }
           excludePath = @("test*","example*","sample*","doc*")
         }
+      Write-Host $targetData
 
-      $targetData.packages.Append($newItem)
+      $targetData.Append($newItem)
     }
   }
 
-  # update repo content
-  Set-Content -Path $pkgJsonLoc -Value ($allJsonData | ConvertTo-Json -Depth 10 | % {$_ -replace "(?m)  (?<=^(?:  )*)", "    " })
+  Set-Content -Path $pkgJsonLoc -Value ($allJson | ConvertTo-Json -Depth 10 | % {$_ -replace "(?m)  (?<=^(?:  )*)", "  " })
 }
 
+# similar to python CI update. still sets target versions, but is intended for NPM-targeted json
 function UpdateParamsJsonJS($pkgs, $pat, $ciRepo, $locationInDocRepo, $repository){
   Write-Host (Join-Path -Path $ciRepo -ChildPath $locationInDocRepo)
   $pkgJsonLoc = (Join-Path -Path $ciRepo -ChildPath $locationInDocRepo)
@@ -163,18 +146,16 @@ function UpdateParamsJsonJS($pkgs, $pat, $ciRepo, $locationInDocRepo, $repositor
     }
   }
 
-  # update repo content
   Set-Content -Path $pkgJsonLoc -Value ($allJson | ConvertTo-Json -Depth 10 | % {$_ -replace "(?m)  (?<=^(?:  )*)", "  " })
 }
 
 # details on CSV schema can be found here:
-# https://review.docs.microsoft.com/en-us/help/onboard/admin/reference/dotnet/documenting-nuget?branch=master#set-up-the-ci-job
 function UpdateCSVBasedCI($pkgs, $pat, $ciRepo, $locationInDocRepo){
 
 }
 
 # a "package.json configures target packages for all the monikers in a Repository, it also has a slightly different
-# schema than the moniker-specific json config
+# schema than the moniker-specific json config that is seen in python and js
 function UpdatePackageJson($pkgs, $ciRepo, $locationInDocRepo, $monikerId){
   Write-Host (Join-Path -Path $ciRepo -ChildPath $locationInDocRepo)
   $pkgJsonLoc = (Join-Path -Path $ciRepo -ChildPath $locationInDocRepo)
@@ -216,7 +197,6 @@ function UpdatePackageJson($pkgs, $ciRepo, $locationInDocRepo, $monikerId){
     }
   }
 
-  # update repo content
   Set-Content -Path $pkgJsonLoc -Value ($allJsonData | ConvertTo-Json -Depth 10 | % {$_ -replace "(?m)  (?<=^(?:  )*)", "    " })
 }
 
@@ -244,11 +224,13 @@ if ($pkgs) {
       break
     }
     "NPM" {
+      Write-Host "Process NPM CI"
       UpdateParamsJsonJS -pkgs $pkgs -ciRepo $CIRepository -locationInDocRepo $PathToConfigFile
       break
     }
     "PyPI" {
       Write-Host "Process Python CI"
+      UpdateParamsJsonPython -pkgs $pkgs -ciRepo $CIRepository -locationInDocRepo $PathToConfigFile
       break
     }
     "Maven" {

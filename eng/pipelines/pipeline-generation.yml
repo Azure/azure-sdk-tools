@@ -26,7 +26,7 @@ jobs:
         InternalOptions: '--variablegroup 1 --variablegroup 58 --variablegroup 76'
       iOS:
         RepositoryName: azure-sdk-for-ios
-        Branch: dev
+        Branch: master
         Prefix: ios
         PublicOptions: ''
         InternalOptions: '--variablegroup 1 --variablegroup 58 --variablegroup 76'

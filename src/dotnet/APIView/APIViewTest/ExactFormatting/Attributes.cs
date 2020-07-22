@@ -19,12 +19,12 @@ namespace A {
         [DebuggerStepThrough]
         [IteratorStateMachine(typeof(Class))]
         [PrivateAttribute]
-        [EditorBrowsable(EditorBrowsableState.Never)]
         [AsyncStateMachine(typeof(Class))]
         /*-*/[Public(1)]
         [Public("s")]
         [Public("s", Property = "a")]
         [Public(null, Property = null)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public void M1()/*-*/{/*-*/;/*-*/}/*-*/
     }
     [AttributeUsage(AttributeTargets.All, AllowMultiple = true)]

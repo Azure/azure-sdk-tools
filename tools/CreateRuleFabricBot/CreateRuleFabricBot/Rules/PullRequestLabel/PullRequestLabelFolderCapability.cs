@@ -9,11 +9,11 @@ using System.Text.Encodings.Web;
 
 namespace CreateRuleFabricBot.Rules.IssueRouting
 {
-	public class PullRequestLabelFolderCapability : BaseCapability
-	{
-		internal const string LabelMoniker = "PRLabel";
+    public class PullRequestLabelFolderCapability : BaseCapability
+    {
+        internal const string LabelMoniker = "PRLabel";
 
-		private static readonly string s_template = @"
+        private static readonly string s_template = @"
 {
       ""taskType"": ""trigger"",
       ""capabilityId"": ""PrAutoLabel"",
@@ -29,7 +29,7 @@ namespace CreateRuleFabricBot.Rules.IssueRouting
     }
 ";
 
-		private static readonly string s_configTemplate = @"
+        private static readonly string s_configTemplate = @"
           {
             ""label"": ""###label###"",
             ""pathFilter"": [ ###srcFolders### ],
@@ -37,150 +37,150 @@ namespace CreateRuleFabricBot.Rules.IssueRouting
           }
 ";
 
-		private readonly string _repo;
-		private readonly string _owner;
-		private readonly string _codeownersFile;
+        private readonly string _repo;
+        private readonly string _owner;
+        private readonly string _codeownersFile;
 
-		public PullRequestLabelFolderCapability(string org, string name, string codeownersFile)
-		{
-			_repo = org;
-			_owner = name;
-			_codeownersFile = codeownersFile;
-		}
+        public PullRequestLabelFolderCapability(string org, string name, string codeownersFile)
+        {
+            _repo = org;
+            _owner = name;
+            _codeownersFile = codeownersFile;
+        }
 
-		public override string GetPayload()
-		{
-			Colorizer.Write("Parsing CODEOWNERS table... ");
-			List<CodeOwnerEntry> entries = ReadOwnersFromFile();
-			Colorizer.WriteLine("[Green!Done]");
+        public override string GetPayload()
+        {
+            Colorizer.Write("Parsing CODEOWNERS table... ");
+            List<CodeOwnerEntry> entries = ReadOwnersFromFile();
+            Colorizer.WriteLine("[Green!Done]");
 
-			StringBuilder configPayload = new StringBuilder();
+            StringBuilder configPayload = new StringBuilder();
 
-			List<CodeOwnerEntry> entriesToCreate = new List<CodeOwnerEntry>();
+            List<CodeOwnerEntry> entriesToCreate = new List<CodeOwnerEntry>();
 
-			// Filter our the list of entries that we want to create.
-			for (int i = 0; i < entries.Count; i++)
-			{
-				// Entries with wildcards are not yet supported
-				if (entries[i].ContainsWildcard)
-				{
-					// log a warning there
+            // Filter our the list of entries that we want to create.
+            for (int i = 0; i < entries.Count; i++)
+            {
+                // Entries with wildcards are not yet supported
+                if (entries[i].ContainsWildcard)
+                {
+                    // log a warning there
 
-					if (entries[i].Labels.Any())
-					{
-						Colorizer.WriteLine("[Yellow!Warning]: The path '[Cyan!{0}]' contains a wildcard and a label '[Magenta!{1}]' which is not supported!", entries[i].PathExpression, string.Join(',', entries[i].Labels));
-					}
+                    if (entries[i].Labels.Any())
+                    {
+                        Colorizer.WriteLine("[Yellow!Warning]: The path '[Cyan!{0}]' contains a wildcard and a label '[Magenta!{1}]' which is not supported!", entries[i].PathExpression, string.Join(',', entries[i].Labels));
+                    }
 
-					continue; //TODO: regex expressions are not yet supported
-				}
+                    continue; //TODO: regex expressions are not yet supported
+                }
 
-				// Entries with more than one label are not yet supported.
-				if (entries[i].Labels.Count > 1)
-				{
-					Colorizer.WriteLine("[Yellow!Warning]: Multiple labels for the same path '[Cyan!{0}]' are not yet supported", entries[i].PathExpression);
-					continue;
-				}
+                // Entries with more than one label are not yet supported.
+                if (entries[i].Labels.Count > 1)
+                {
+                    Colorizer.WriteLine("[Yellow!Warning]: Multiple labels for the same path '[Cyan!{0}]' are not yet supported", entries[i].PathExpression);
+                    continue;
+                }
 
-				if (entries[i].Labels.Count == 0)
-				{
-					Colorizer.WriteLine("[Yellow!Warning]: The path '[Cyan!{0}]' does not contain a label.", entries[i].PathExpression, string.Join(',', entries[i].Labels));
-					continue;
-				}
+                if (entries[i].Labels.Count == 0)
+                {
+                    Colorizer.WriteLine("[Yellow!Warning]: The path '[Cyan!{0}]' does not contain a label.", entries[i].PathExpression, string.Join(',', entries[i].Labels));
+                    continue;
+                }
 
-				entriesToCreate.Add(entries[i]);
-			}
+                entriesToCreate.Add(entries[i]);
+            }
 
-			Colorizer.WriteLine("Found the following rules:");
+            Colorizer.WriteLine("Found the following rules:");
 
-			// Create the payload.
-			foreach (var entry in entriesToCreate)
-			{
-				// get the payload
-				string entryPayload = ToConfigString(entry);
+            // Create the payload.
+            foreach (var entry in entriesToCreate)
+            {
+                // get the payload
+                string entryPayload = ToConfigString(entry);
 
-				Colorizer.WriteLine("[Cyan!{0}] => [Magenta!{1}]", entry.PathExpression, entry.Labels.FirstOrDefault());
+                Colorizer.WriteLine("[Cyan!{0}] => [Magenta!{1}]", entry.PathExpression, entry.Labels.FirstOrDefault());
 
-				configPayload.Append(ToConfigString(entry));
-				configPayload.Append(',');
-			}
-
-
-			// remove the trailing ','
-			configPayload.Remove(configPayload.Length - 1, 1);
-
-			// Log the set of paths we are creating.
+                configPayload.Append(ToConfigString(entry));
+                configPayload.Append(',');
+            }
 
 
-			// create the payload from the template
-			return s_template
-				.Replace("###taskId###", GetTaskId())
-				.Replace("###labelConfig###", configPayload.ToString());
-		}
+            // remove the trailing ','
+            configPayload.Remove(configPayload.Length - 1, 1);
 
-		private string ToConfigString(CodeOwnerEntry entry)
-		{
-			string result = s_configTemplate;
+            // Log the set of paths we are creating.
 
-			result = result.Replace("###label###", entry.Labels.First());
-			result = result.Replace("###srcFolders###", $"\"{entry.PathExpression}\"");
 
-			return result;
-		}
+            // create the payload from the template
+            return s_template
+                .Replace("###taskId###", GetTaskId())
+                .Replace("###labelConfig###", configPayload.ToString());
+        }
 
-		private List<CodeOwnerEntry> ReadOwnersFromFile()
-		{
-			List<CodeOwnerEntry> entries = new List<CodeOwnerEntry>();
-			string line;
-			using (StreamReader sr = new StreamReader(_codeownersFile))
-			{
-				while ((line = sr.ReadLine()) != null)
-				{
-					// Does the line start with '# PRLabel: "label1", "label2"
+        private string ToConfigString(CodeOwnerEntry entry)
+        {
+            string result = s_configTemplate;
 
-					// Remove tabs and trim extra whitespace
-					line = line.Replace('\t', ' ');
-					line = line.Trim();
+            result = result.Replace("###label###", entry.Labels.First());
+            result = result.Replace("###srcFolders###", $"\"{entry.PathExpression}\"");
 
-					// Empty line, move on
-					if (string.IsNullOrEmpty(line))
-					{
-						continue;
-					}
+            return result;
+        }
 
-					CodeOwnerEntry entry = new CodeOwnerEntry();
+        private List<CodeOwnerEntry> ReadOwnersFromFile()
+        {
+            List<CodeOwnerEntry> entries = new List<CodeOwnerEntry>();
+            string line;
+            using (StreamReader sr = new StreamReader(_codeownersFile))
+            {
+                while ((line = sr.ReadLine()) != null)
+                {
+                    // Does the line start with '# PRLabel: "label1", "label2"
 
-					// if we have the moniker in the line, parse the labels
-					if (line.IndexOf(LabelMoniker, System.StringComparison.OrdinalIgnoreCase) >= 0)
-					{
-						CodeOwnerEntry.ParseLabels(entry, line);
+                    // Remove tabs and trim extra whitespace
+                    line = line.Replace('\t', ' ');
+                    line = line.Trim();
 
-						// We need to read the next line
-						line = sr.ReadLine();
+                    // Empty line, move on
+                    if (string.IsNullOrEmpty(line))
+                    {
+                        continue;
+                    }
 
-						if (line == null)
-						{
-							break;
-						}
-					}
+                    CodeOwnerEntry entry = new CodeOwnerEntry();
 
-					// If this is not a comment line.
-					if (line.IndexOf('#') == -1)
-					{
-						CodeOwnerEntry.ParseOwnersAndPath(entry, line);
-					}
+                    // if we have the moniker in the line, parse the labels
+                    if (line.IndexOf(LabelMoniker, System.StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        CodeOwnerEntry.ParseLabels(entry, line);
 
-					if (entry.IsValid)
-					{
-						entries.Add(entry);
-					}
-				}
-			}
-			return entries;
-		}
+                        // We need to read the next line
+                        line = sr.ReadLine();
 
-		public override string GetTaskId()
-		{
-			return $"AzureSDKPullRequestLabelFolder_{_owner}_{_repo}";
-		}
-	}
+                        if (line == null)
+                        {
+                            break;
+                        }
+                    }
+
+                    // If this is not a comment line.
+                    if (line.IndexOf('#') == -1)
+                    {
+                        CodeOwnerEntry.ParseOwnersAndPath(entry, line);
+                    }
+
+                    if (entry.IsValid)
+                    {
+                        entries.Add(entry);
+                    }
+                }
+            }
+            return entries;
+        }
+
+        public override string GetTaskId()
+        {
+            return $"AzureSDKPullRequestLabelFolder_{_owner}_{_repo}";
+        }
+    }
 }

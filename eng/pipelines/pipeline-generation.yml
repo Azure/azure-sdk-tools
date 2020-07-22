@@ -24,12 +24,6 @@ jobs:
         Prefix: android
         PublicOptions: ''
         InternalOptions: '--variablegroup 1 --variablegroup 58 --variablegroup 76'
-      iOS:
-        RepositoryName: azure-sdk-for-ios
-        Branch: master
-        Prefix: ios
-        PublicOptions: ''
-        InternalOptions: '--variablegroup 1 --variablegroup 58 --variablegroup 76'
       JavaScript:
         RepositoryName: azure-sdk-for-js
         Branch: master

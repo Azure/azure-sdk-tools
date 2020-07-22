@@ -460,6 +460,7 @@ function VerifyPackages($pkgRepository, $artifactLocation, $workingDirectory, $a
         Tag            = $tag
         ReleaseNotes   = $parsedPackage.ReleaseNotes
         ReadmeContent  = $parsedPackage.ReadmeContent
+        IsPrerelease   = [AzureEngSemanticVersion]::ParseVersionString($parsedPackage.PackageVersion).IsPrerelease
       }
     }
     catch {

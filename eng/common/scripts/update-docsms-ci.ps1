@@ -1,9 +1,14 @@
 # Note, due to how `Expand-Archive` is leveraged in this script,
 # powershell core is a requirement for successful execution.
 
+# This script is intended to  update docs.ms CI configuration (currently supports Java, Python, C#, JS)
+# as part of the azure-sdk release. For details on calling, check `archtype-<language>-release` in each azure-sdk
+# repository.
 
+# Where possible, this script adds as few changes as possible to the target config. We only 
+# specifically mark a version for Python Preview and Java. This script is intended to be invoked 
+# multiple times. Once for each moniker. Currently only supports "latest" and "preview" artifact selection however.
 param (
-  # arguments leveraged to parse and identify artifacts
   [Parameter(Mandatory = $true)]
   $ArtifactLocation, # the root of the artifact folder. DevOps $(System.ArtifactsDirectory)
   
@@ -20,20 +25,19 @@ param (
   [ValidateSet("Nuget","NPM","PyPI","Maven")]
   $Repository, # EG: "Maven", "PyPI", "NPM"
 
-  # Used for All Languages
   [Parameter(Mandatory = $true)]
   $CIRepository,
 
-  [Parameter(Mandatory = $false)]
+  [Parameter(Mandatory = $true)]
   [ValidateSet("Latest","Preview")]
   $Mode,
 
-  # Java leverage a single config file, with a path to the moniker specific config
-  # this argument is used as that path.
+  # Java leverage a single config file, CI does not support anywhere but default location
+  # instead, the moniker ID (really just an index) tells the script which part of the json to update
   $MonikerIdentifier,
 
   # C#, JS, Python leverage a config file per moniker. need to update multiple
-  # paths for preview vs latest
+  # a file for each moniker. 
   $PathToConfigFile
 )
 
@@ -41,8 +45,10 @@ param (
 . (Join-Path $PSScriptRoot artifact-metadata-parsing.ps1)
 . (Join-Path $PSScriptRoot SemVer.ps1)
 
-# updates json docs.ms CI config for the Python doc repositories
-function UpdateParamsJsonPython($pkgs, $ciRepo, $locationInDocRepo, $repository){
+# Updates a python CI configuration json.
+# For "latest", the version attribute is cleared, as default behavior is to pull latest "non-preview".
+# For "preview", we update to >= the target releasing package version.
+function UpdateParamsJsonPython($pkgs, $ciRepo, $locationInDocRepo){
   $pkgJsonLoc = (Join-Path -Path $ciRepo -ChildPath $locationInDocRepo)
   
   if (-not (Test-Path $pkgJsonLoc)) {
@@ -66,18 +72,18 @@ function UpdateParamsJsonPython($pkgs, $ciRepo, $locationInDocRepo, $repository)
 
   foreach ($releasingPkg in $pkgs) {
     if ($visibleInCI.ContainsKey($releasingPkg.PackageId)) {
-      Write-Host "$($releasingPkg.PackageId) is visible in CI"
-      Write-Host $targetData[$packagesIndex]
       $packagesIndex = $visibleInCI[$releasingPkg.PackageId]
       $existingPackageDef = $targetData[$packagesIndex]
 
-      if ([AzureEngSemanticVersion]::ParseVersionString($releasingPkg.PackageVersion).IsPrerelease) {
+      # if prerelease add version attribute 
+      if ($releasingPkg.IsPrerelease) {
         if (-not $existingPackageDef.package_info.version) {
           $existingPackageDef.package_info | Add-Member -NotePropertyName version -NotePropertyValue ""
         }
 
         $existingPackageDef.package_info.version = ">=$($releasingPkg.PackageVersion)"
       }
+      # otherwise ensure we clean it
       else {
         if ($def.version) {
           $def.PSObject.Properties.Remove('version')  
@@ -93,8 +99,6 @@ function UpdateParamsJsonPython($pkgs, $ciRepo, $locationInDocRepo, $repository)
           }
           excludePath = @("test*","example*","sample*","doc*")
         }
-      Write-Host $targetData
-
       $targetData.Append($newItem)
     }
   }
@@ -102,8 +106,10 @@ function UpdateParamsJsonPython($pkgs, $ciRepo, $locationInDocRepo, $repository)
   Set-Content -Path $pkgJsonLoc -Value ($allJson | ConvertTo-Json -Depth 10 | % {$_ -replace "(?m)  (?<=^(?:  )*)", "  " })
 }
 
-# similar to python CI update. still sets target versions, but is intended for NPM-targeted json
-function UpdateParamsJsonJS($pkgs, $ciRepo, $locationInDocRepo, $repository){
+# Updates a js CI configuration json.
+# For "latest", we simply set a target package name
+# For "preview", we add @next to the target package name
+function UpdateParamsJsonJS($pkgs, $ciRepo, $locationInDocRepo){
   $pkgJsonLoc = (Join-Path -Path $ciRepo -ChildPath $locationInDocRepo)
   
   if (-not (Test-Path $pkgJsonLoc)) {
@@ -126,7 +132,7 @@ function UpdateParamsJsonJS($pkgs, $ciRepo, $locationInDocRepo, $repository){
   foreach ($releasingPkg in $pkgs) {
     $name = $releasingPkg.PackageId
 
-    if ([AzureEngSemanticVersion]::ParseVersionString($releasingPkg.PackageVersion).IsPrerelease) {
+    if ($releasingPkg.IsPrerelease) {
       $name += "`@next"
     }
 
@@ -172,18 +178,16 @@ function UpdateCSVBasedCI($pkgs, $ciRepo, $locationInDocRepo){
 
   foreach ($releasingPkg in $pkgs) {
     $installModifiers = "tfm=netstandard2.0"
-    if ([AzureEngSemanticVersion]::ParseVersionString($releasingPkg.PackageVersion).IsPrerelease) {
+    if ($releasingPkg.IsPrerelease) {
       $installModifiers += ";isPrerelease=true"
     }
     $lineId = $releasingPkg.PackageId.Replace(".","").ToLower()
 
     if ($visibleInCI.ContainsKey($releasingPkg.PackageId)) {
-      Write-Host "Updating"
       $packagesIndex = $visibleInCI[$releasingPkg.PackageId]
       $allCSVRows[$packagesIndex] = "$($lineId),[$installModifiers]$($releasingPkg.PackageId)"
     }
     else {
-      Write-Host "Appending"
       $newItem = "$($lineId),[$installModifiers]$($releasingPkg.PackageId)"
       $allCSVRows += ($newItem)
     }
@@ -195,7 +199,6 @@ function UpdateCSVBasedCI($pkgs, $ciRepo, $locationInDocRepo){
 # a "package.json configures target packages for all the monikers in a Repository, it also has a slightly different
 # schema than the moniker-specific json config that is seen in python and js
 function UpdatePackageJson($pkgs, $ciRepo, $locationInDocRepo, $monikerId){
-  Write-Host (Join-Path -Path $ciRepo -ChildPath $locationInDocRepo)
   $pkgJsonLoc = (Join-Path -Path $ciRepo -ChildPath $locationInDocRepo)
   
   if (-not (Test-Path $pkgJsonLoc)) {
@@ -209,7 +212,6 @@ function UpdatePackageJson($pkgs, $ciRepo, $locationInDocRepo, $monikerId){
 
   $visibleInCI = @{}
 
-  # first pull what's already available
   for ($i=0; $i -lt $targetData.packages.Length; $i++) {
     $pkgDef = $targetData.packages[$i]
     $visibleInCI[$pkgDef.packageArtifactId] = $i
@@ -246,11 +248,8 @@ $pkgs = VerifyPackages -pkgRepository $Repository `
   -continueOnError $True 
 
 # filter package set
-if($Mode) {
-  if ($Mode -eq "Preview") { $includePreview = $true } else { $includePreview = $false }
-
-  $pkgs = $pkgs | ? { [AzureEngSemanticVersion]::ParseVersionString($_.PackageVersion).IsPrerelease -eq $includePreview}
-}
+if ($Mode -eq "Preview") { $includePreview = $true } else { $includePreview = $false }
+$pkgs = $pkgs | ? { $_.IsPrerelease -eq $includePreview}
 
 if ($pkgs) {
   Write-Host "Given the visible artifacts, CI updates will be processed for the following packages."
@@ -258,22 +257,18 @@ if ($pkgs) {
 
   switch ($Repository) {
     "Nuget" {
-      Write-Host "Process C# CI"
       UpdateCSVBasedCI -pkgs $pkgs -ciRepo $CIRepository -locationInDocRepo $PathToConfigFile
       break
     }
     "NPM" {
-      Write-Host "Process NPM CI"
       UpdateParamsJsonJS -pkgs $pkgs -ciRepo $CIRepository -locationInDocRepo $PathToConfigFile
       break
     }
     "PyPI" {
-      Write-Host "Process Python CI"
       UpdateParamsJsonPython -pkgs $pkgs -ciRepo $CIRepository -locationInDocRepo $PathToConfigFile
       break
     }
     "Maven" {
-      Write-Host "Process Java CI"
       UpdatePackageJson -pkgs $pkgs -ciRepo $CIRepository -locationInDocRepo $PathToConfigFile -monikerId $MonikerIdentifier 
       break
     }

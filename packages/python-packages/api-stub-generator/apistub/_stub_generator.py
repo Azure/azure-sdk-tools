@@ -164,15 +164,10 @@ class StubGenerator:
         modules = self._find_modules(pkg_root_path)
         logging.debug("Modules to generate tokens: {}".format(modules))
 
-        # find root module name
-        root_module = ""
-        if namespace:
-            root_module = namespace.split(".")[0]
-
         # load all modules and parse them recursively
         for m in modules:
-            if not m.startswith(root_module):
-                logging.debug("Skipping module {0}. Module should start with {1}".format(m, root_module))
+            if not m.startswith(namespace):
+                logging.debug("Skipping module {0}. Module should start with {1}".format(m, namespace))
                 continue
 
             logging.debug("Importing module {}".format(m))

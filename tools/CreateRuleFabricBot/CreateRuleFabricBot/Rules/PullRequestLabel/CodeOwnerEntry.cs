@@ -21,62 +21,6 @@ namespace CreateRuleFabricBot.Rules.PullRequestLabel
 				return !string.IsNullOrEmpty(PathExpression);
 			}
 		}
-
-		//public static CodeOwnerEntry Parse(CodeOwnerEntry entry, string line)
-		//{
-		//	// The format for the Codeowners File will be:
-		//	// # PRLabel: %label, %label
-		//	// <path> @<owner> ... @<owner>
-
-		//	// get rid of tabs
-		//	line = line.Replace('\t', ' ');
-		//	// trim the line to get rid of whitespace before and after.
-		//	line = line.Trim();
-
-		//	if (string.IsNullOrEmpty(line) || line.StartsWith('#'))
-		//	{
-		//		return null;
-		//	}
-
-		//	// At this point, we know the line does not start with '#'
-		//	List<string> entries = SplitLine(line).ToList();
-
-		//	if (!entries.Any())
-		//	{
-		//		return null;
-		//	}
-
-		//	CodeOwnerEntry coe = new CodeOwnerEntry
-		//	{
-		//		// the first entry is the path/regex
-		//		PathExpression = entries[0],
-		//		ContainsWildcard = entries[0].Contains('*')
-		//	};
-
-		//	// remove the '/' from the path
-		//	if (coe.PathExpression.StartsWith("/"))
-		//	{
-		//		coe.PathExpression = coe.PathExpression.Substring(1);
-		//	}
-
-		//	for (int i = 1; i < entries.Count; i++)
-		//	{
-		//		string entry = entries[i].Trim();
-
-		//		if (entry[0] == '@')
-		//		{
-		//			coe.Owners.Add(entry.Substring(1));
-		//		}
-
-		//		if (entry[0] == '%')
-		//		{
-		//			coe.Labels.Add(entry.Substring(1));
-		//		}
-		//	}
-
-		//	return coe;
-		//}
-
 		private static IEnumerable<string> SplitLine(string line)
 		{
 			// Split the line into segments that are delimited by '@', '%' and the end of the string.

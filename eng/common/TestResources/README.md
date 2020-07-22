@@ -23,7 +23,7 @@ create a service principal, and set up your resources defined in
 test-resources.json as shown in the following example using Azure Search.
 
 Note that `-Subscription` is an optional parameter but recommended if your account
-is a member of multiple subscriptions.
+is a member of multiple subscriptions. 
 
 ```powershell
 Connect-AzAccount -Subscription 'YOUR SUBSCRIPTION ID'

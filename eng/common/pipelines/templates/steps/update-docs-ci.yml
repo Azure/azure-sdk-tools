@@ -14,6 +14,7 @@ parameters:
   Language: ''
   DocRepoDestinationPath: '' #usually docs-ref-services/
 
+  # repository
   CIConfigRepo: ''
 
   # for java we need to pass additional args. these will be passed to monikerId
@@ -22,8 +23,9 @@ parameters:
   LatestConfigLoc: ''
   LatestConfigArgs: ''
 
+  # externally set, as eng-common does not have the identity-resolver. Run as pre-step
   GHReviewersVariable: '' 
-  GHTeamReviewersVariable: '' # externally set, as eng-common does not have the identity-resolver. Run as pre-step
+  GHTeamReviewersVariable: '' 
 
 steps:
 - pwsh: |

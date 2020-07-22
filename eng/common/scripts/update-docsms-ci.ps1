@@ -61,7 +61,6 @@ function UpdateParamsJsonPython($pkgs, $ciRepo, $locationInDocRepo){
 
   $visibleInCI = @{}
 
-  # first pull what's already available
   for ($i=0; $i -lt $targetData.Length; $i++) {
     $pkgDef = $targetData[$i]
 
@@ -75,7 +74,6 @@ function UpdateParamsJsonPython($pkgs, $ciRepo, $locationInDocRepo){
       $packagesIndex = $visibleInCI[$releasingPkg.PackageId]
       $existingPackageDef = $targetData[$packagesIndex]
 
-      # if prerelease add version attribute 
       if ($releasingPkg.IsPrerelease) {
         if (-not $existingPackageDef.package_info.version) {
           $existingPackageDef.package_info | Add-Member -NotePropertyName version -NotePropertyValue ""
@@ -83,7 +81,6 @@ function UpdateParamsJsonPython($pkgs, $ciRepo, $locationInDocRepo){
 
         $existingPackageDef.package_info.version = ">=$($releasingPkg.PackageVersion)"
       }
-      # otherwise ensure we clean it
       else {
         if ($def.version) {
           $def.PSObject.Properties.Remove('version')  
@@ -122,7 +119,6 @@ function UpdateParamsJsonJS($pkgs, $ciRepo, $locationInDocRepo){
 
   $visibleInCI = @{}
 
-  # first pull what's already available
   for ($i=0; $i -lt $targetData.Length; $i++) {
     $pkgDef = $targetData[$i]
     $accessor = ($pkgDef.name).Replace("`@next", "")
@@ -247,7 +243,6 @@ $pkgs = VerifyPackages -pkgRepository $Repository `
   -apiUrl $apiUrl `
   -continueOnError $True 
 
-# filter package set
 if ($Mode -eq "Preview") { $includePreview = $true } else { $includePreview = $false }
 $pkgs = $pkgs | ? { $_.IsPrerelease -eq $includePreview}
 
@@ -273,7 +268,7 @@ if ($pkgs) {
       break
     }
     default {
-      Write-Host "Unrecognized Language: $language"
+      Write-Host "Unrecognized target: $Repository"
       exit(1)
     }
   }

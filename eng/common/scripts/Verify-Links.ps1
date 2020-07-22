@@ -124,28 +124,34 @@ function CheckLink ([System.Uri]$linkUri)
     }
   }
   else {
+     $headRequestSucceeded = $true
     try {
-      $response = Invoke-WebRequest -Uri $linkUri
-      $statusCode = $response.StatusCode
-      if ($statusCode -ne 200) {
-        Write-Host "[$statusCode] while requesting $linkUri"
-      }
+      # Attempt HEAD request first
+      $response = Invoke-WebRequest -Uri $linkUri -Method HEAD
     }
     catch {
-      $statusCode = $_.Exception.Response.StatusCode.value__
-
-      if ($statusCode -in $errorStatusCodes) {
-        LogWarning "[$statusCode] broken link $linkUri"
-        $script:badLinks += $linkUri 
+      $headRequestSucceeded = $false
+      }
+    if (!$headRequestSucceeded) {
+      # Attempt a GET request if the HEAD request failed.
+      $response = Invoke-WebRequest -Uri $linkUri -Method GET
+    }
+    $statusCode = $response.StatusCode
+    if ($statusCode -ne 200) {
+      Write-Host "[$statusCode] while requesting $linkUri"
+    }
+    $statusCode = $_.Exception.Response.StatusCode.value__
+    if ($statusCode -in $errorStatusCodes) {
+      LogWarning "[$statusCode] broken link $linkUri"
+      $script:badLinks += $linkUri 
+    }
+    else {
+      if ($null -ne $statusCode) {
+        Write-Host "[$statusCode] while requesting $linkUri"
       }
       else {
-        if ($null -ne $statusCode) {
-          Write-Host "[$statusCode] while requesting $linkUri"
-        }
-        else {
-          Write-Host "Exception while requesting $linkUri"
-          Write-Host $_.Exception.ToString()
-        }
+        Write-Host "Exception while requesting $linkUri"
+        Write-Host $_.Exception.ToString()
       }
     }
   }

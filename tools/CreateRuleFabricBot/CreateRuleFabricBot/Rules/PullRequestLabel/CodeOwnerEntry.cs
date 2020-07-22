@@ -30,7 +30,6 @@ namespace CreateRuleFabricBot.Rules.PullRequestLabel
             {
                 if (line[i] == '@' || line[i] == '%')
                 {
-
                     if (previousSplit != -1)
                     {
                         yield return line.Substring(previousSplit, i - previousSplit).Trim();
@@ -77,25 +76,7 @@ namespace CreateRuleFabricBot.Rules.PullRequestLabel
                 return;
             }
 
-            // Get the start of the owner in the string
-            int ownerStartPosition = line.IndexOf('@');
-            if (ownerStartPosition == -1)
-            {
-                return;
-            }
-
-            string path = line.Substring(0, ownerStartPosition).Trim();
-            // the first entry is the path/regex
-            entry.PathExpression = path;
-            entry.ContainsWildcard = path.Contains('*');
-            // remove the '/' from the path
-            if (entry.PathExpression.StartsWith("/"))
-            {
-                entry.PathExpression = entry.PathExpression.Substring(1);
-            }
-
-            // remove the path from the string.
-            line = line.Substring(ownerStartPosition);
+            line = ParsePath(line, entry);
 
             // At this point, we know the line does not start with '#'
             List<string> entries = SplitLine(line).ToList();
@@ -109,6 +90,29 @@ namespace CreateRuleFabricBot.Rules.PullRequestLabel
                     entry.Owners.Add(author.Substring(1));
                 }
             }
+        }
+
+        private static string ParsePath(string line, CodeOwnerEntry entry)
+        {
+            // Get the start of the owner in the string
+            int ownerStartPosition = line.IndexOf('@');
+            if (ownerStartPosition == -1)
+            {
+                return line;
+            }
+
+            string path = line.Substring(0, ownerStartPosition).Trim();
+            // the first entry is the path/regex
+            entry.PathExpression = path;
+            entry.ContainsWildcard = path.Contains('*');
+            // remove the '/' from the path
+            if (entry.PathExpression.StartsWith("/"))
+            {
+                entry.PathExpression = entry.PathExpression.Substring(1);
+            }
+
+            // remove the path from the string.
+            return line.Substring(ownerStartPosition);
         }
     }
 }

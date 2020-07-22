@@ -40,7 +40,7 @@ steps:
   displayName: 'Update Targeted GA Packages'
   inputs:
     targetType: filePath
-    filePath: ${{ parameters.ScriptDirectory }}/update-docsms-ci.ps1
+    filePath: ${{ parameters.ScriptDirectory }}/update-docs-ci.ps1
     arguments: >
       -ArtifactLocation ${{ parameters.ArtifactLocation }}
       -WorkDirectory "${{ parameters.WorkingDirectory }}"
@@ -59,7 +59,7 @@ steps:
   displayName: 'Update Targeted Preview Packages'
   inputs:
     targetType: filePath
-    filePath: ${{ parameters.ScriptDirectory }}/update-docsms-ci.ps1
+    filePath: ${{ parameters.ScriptDirectory }}/update-docs-ci.ps1
     arguments: >
       -ArtifactLocation ${{ parameters.ArtifactLocation }}
       -WorkDirectory "${{ parameters.WorkingDirectory }}"

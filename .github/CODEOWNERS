@@ -3,3 +3,6 @@
 ###########
 /eng/       @azure/azure-sdk-eng
 /eng/common/TestResources/  @heaths @danieljurek @weshaggard
+
+/tools/CreateRuleFabricBot/ @alexghiondea @mitchdenny #%Fabric Bot
+/tools/github-issues/ @alexghiondea @mitchdenny #%GitHub Issues

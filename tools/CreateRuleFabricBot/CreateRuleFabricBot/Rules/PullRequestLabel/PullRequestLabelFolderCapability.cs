@@ -11,8 +11,6 @@ namespace CreateRuleFabricBot.Rules.IssueRouting
 {
     public class PullRequestLabelFolderCapability : BaseCapability
     {
-        internal const string LabelMoniker = "PRLabel";
-
         private static readonly string s_template = @"
 {
       ""taskType"": ""trigger"",
@@ -122,6 +120,12 @@ namespace CreateRuleFabricBot.Rules.IssueRouting
             string result = s_configTemplate;
 
             result = result.Replace("###label###", entry.Labels.First());
+
+            // at this point we should remove the leading '/' if any
+            if (entry.PathExpression.StartsWith("/"))
+            {
+                entry.PathExpression = entry.PathExpression.Substring(1);
+            }
             result = result.Replace("###srcFolders###", $"\"{entry.PathExpression}\"");
 
             return result;
@@ -150,9 +154,9 @@ namespace CreateRuleFabricBot.Rules.IssueRouting
                     CodeOwnerEntry entry = new CodeOwnerEntry();
 
                     // if we have the moniker in the line, parse the labels
-                    if (line.IndexOf(LabelMoniker, System.StringComparison.OrdinalIgnoreCase) >= 0)
+                    if (line.IndexOf(CodeOwnerEntry.LabelMoniker, System.StringComparison.OrdinalIgnoreCase) >= 0)
                     {
-                        CodeOwnerEntry.ParseLabels(entry, line);
+                        entry.ParseLabels(line);
 
                         // We need to read the next line
                         line = sr.ReadLine();
@@ -166,7 +170,7 @@ namespace CreateRuleFabricBot.Rules.IssueRouting
                     // If this is not a comment line.
                     if (line.IndexOf('#') == -1)
                     {
-                        CodeOwnerEntry.ParseOwnersAndPath(entry, line);
+                        entry.ParseOwnersAndPath(line);
                     }
 
                     if (entry.IsValid)

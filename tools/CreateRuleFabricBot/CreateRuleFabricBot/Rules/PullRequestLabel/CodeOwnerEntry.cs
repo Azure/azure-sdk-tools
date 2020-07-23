@@ -2,11 +2,27 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Emit;
 
 namespace CreateRuleFabricBot.Rules.PullRequestLabel
 {
-    internal class CodeOwnerEntry
+    public class CodeOwnerEntry
     {
+        const char LabelSeparator = '%';
+        const char OwnerSeparator = '@';
+        internal const string LabelMoniker = "PRLabel";
+
+        public CodeOwnerEntry(string entryLine, string labelsLine)
+        {
+            ParseLabels(labelsLine);
+            ParseOwnersAndPath(entryLine);
+        }
+
+        public CodeOwnerEntry()
+        {
+
+        }
+
         public string PathExpression { get; set; }
 
         public bool ContainsWildcard { get; set; }
@@ -21,25 +37,10 @@ namespace CreateRuleFabricBot.Rules.PullRequestLabel
                 return !string.IsNullOrEmpty(PathExpression);
             }
         }
-        private static IEnumerable<string> SplitLine(string line)
+
+        private static string[] SplitLine(string line, char splitOn)
         {
-            // Split the line into segments that are delimited by '@', '%' and the end of the string.
-
-            int previousSplit = -1;
-            for (int i = 0; i < line.Length; i++)
-            {
-                if (line[i] == '@' || line[i] == '%')
-                {
-                    if (previousSplit != -1)
-                    {
-                        yield return line.Substring(previousSplit, i - previousSplit).Trim();
-                    }
-                    previousSplit = i;
-                }
-            }
-
-            // add the last entry
-            yield return line.Substring(previousSplit, line.Length - previousSplit).Trim();
+            return line.Split(splitOn, StringSplitOptions.RemoveEmptyEntries);
         }
 
         public override string ToString()
@@ -47,9 +48,13 @@ namespace CreateRuleFabricBot.Rules.PullRequestLabel
             return $"HasWildcard:{ContainsWildcard} Expression:{PathExpression} Owners:{string.Join(',', Owners)}  Labels:{string.Join(',', Labels)}";
         }
 
-        internal static void ParseLabels(CodeOwnerEntry entry, string line)
+        public void ParseLabels(string line)
         {
             // Parse a line that looks like # PRLabel: %Label, %Label
+            if (line.IndexOf(LabelMoniker, StringComparison.OrdinalIgnoreCase) == -1)
+            {
+                return;
+            }
 
             // If we don't have a ':', nothing to do
             int colonPosition = line.IndexOf(':');
@@ -59,40 +64,34 @@ namespace CreateRuleFabricBot.Rules.PullRequestLabel
             }
 
             line = line.Substring(colonPosition + 1).Trim();
-            foreach (string label in SplitLine(line).ToList())
+            foreach (string label in SplitLine(line, LabelSeparator).ToList())
             {
-                if (label[0] == '%')
+                if (!string.IsNullOrWhiteSpace(label))
                 {
-                    entry.Labels.Add(label.Substring(1));
+                    Labels.Add(label.Trim());
                 }
-
             }
         }
 
-        internal static void ParseOwnersAndPath(CodeOwnerEntry entry, string line)
+        public void ParseOwnersAndPath(string line)
         {
             if (string.IsNullOrEmpty(line) || line.StartsWith('#'))
             {
                 return;
             }
 
-            line = ParsePath(line, entry);
+            line = ParsePath(line);
 
-            // At this point, we know the line does not start with '#'
-            List<string> entries = SplitLine(line).ToList();
-
-            for (int i = 0; i < entries.Count; i++)
+            foreach (string author in SplitLine(line, OwnerSeparator).ToList())
             {
-                string author = entries[i].Trim();
-
-                if (author[0] == '@')
+                if (!string.IsNullOrWhiteSpace(author))
                 {
-                    entry.Owners.Add(author.Substring(1));
+                    Owners.Add(author.Trim());
                 }
             }
         }
 
-        private static string ParsePath(string line, CodeOwnerEntry entry)
+        private string ParsePath(string line)
         {
             // Get the start of the owner in the string
             int ownerStartPosition = line.IndexOf('@');
@@ -103,13 +102,8 @@ namespace CreateRuleFabricBot.Rules.PullRequestLabel
 
             string path = line.Substring(0, ownerStartPosition).Trim();
             // the first entry is the path/regex
-            entry.PathExpression = path;
-            entry.ContainsWildcard = path.Contains('*');
-            // remove the '/' from the path
-            if (entry.PathExpression.StartsWith("/"))
-            {
-                entry.PathExpression = entry.PathExpression.Substring(1);
-            }
+            PathExpression = path;
+            ContainsWildcard = path.Contains('*');
 
             // remove the path from the string.
             return line.Substring(ownerStartPosition);

@@ -44,7 +44,7 @@ namespace CreateRuleFabricBot.Rules.PullRequestLabel
 
         public override string ToString()
         {
-            return $"RegEx:{ContainsWildcard} Expression:{PathExpression} Owners:{string.Join(',', Owners)}  Labels:{string.Join(',', Labels)}";
+            return $"HasWildcard:{ContainsWildcard} Expression:{PathExpression} Owners:{string.Join(',', Owners)}  Labels:{string.Join(',', Labels)}";
         }
 
         internal static void ParseLabels(CodeOwnerEntry entry, string line)

@@ -46,8 +46,6 @@ namespace APIViewWeb
 
         public HashSet<string> Subscribers { get; set; } = new HashSet<string>();
 
-        public string Label { get; set; }
-
         public bool IsUserSubscribed(ClaimsPrincipal user)
         {
             string email = GetUserEmail(user);
@@ -66,8 +64,9 @@ namespace APIViewWeb
         {
             get
             {
-                return Label != null ?
-                    $"{Name} - {Label}" :
+                var label = Revisions.FirstOrDefault()?.Label;
+                return label != null ?
+                    $"{Name} - {label}" :
                     Name;
             }
         }

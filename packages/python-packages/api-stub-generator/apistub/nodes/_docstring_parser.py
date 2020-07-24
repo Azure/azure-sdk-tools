@@ -13,7 +13,7 @@ find_single_type_regex = "(?<!:):{0}\s?{1}:[\s]*([\S]+)(?!:)"
 find_union_type_regex = (
     "(?<!:):{0}\s?{1}:[\s]*([\w.]*((\[[^\n]+\])|(\([^\n]+\))))(?!:)"
 )
-find_multi_type_regex = "(?<!:):({0})\s?{1}:([\s]*([\S]+)(\s+or\s+[\S]+)+)(?!:)"
+find_multi_type_regex = "(?<!:):({0})\s?{1}:([^:]+)(?!:)"
 find_docstring_return_type = "(?<!:):rtype\s?:\s+([^:\n]+)(?!:)"
 
 # Regex to parse type hints

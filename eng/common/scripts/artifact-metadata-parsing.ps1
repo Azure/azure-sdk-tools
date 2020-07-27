@@ -36,11 +36,11 @@ function CreateReleases($pkgList, $releaseApiUrl, $releaseSha) {
       "Authorization" = "token $($env:GH_TOKEN)"
     }
 
-    Invoke-WebRequest-WithHandling -url $url -body $body -headers $headers -method "Post"
+    Invoke-RestMethod-WithHandling -url $url -body $body -headers $headers -method "Post"
   }
 }
 
-function Invoke-WebRequest-WithHandling($url, $method, $body = $null, $headers = $null) {
+function Invoke-RestMethod-WithHandling($url, $method, $body = $null, $headers = $null) {
   $attempts = 1
 
   while ($attempts -le 3) {
@@ -531,7 +531,7 @@ function CheckArtifactShaAgainstTagsList($priorExistingTagList, $releaseSha, $ap
   $unmatchedTags = @()
 
   foreach ($tag in $priorExistingTagList) {
-    $tagSha = (Invoke-WebRequest-WithHandling -Method "Get" -Url "$apiUrl/git/refs/tags/$tag" -Headers $headers)."object".sha
+    $tagSha = (Invoke-RestMethod-WithHandling -Method "Get" -Url "$apiUrl/git/refs/tags/$tag" -Headers $headers)."object".sha
 
     if ($tagSha -eq $releaseSha) {
       Write-Host "This package has already been released. The existing tag commit SHA $releaseSha matches the artifact SHA being processed. Skipping release step for this tag."

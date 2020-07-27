@@ -24,7 +24,7 @@ namespace GitHubIssues.Reports
         private static string ContainerName = "lastaccessed";
 #endif
 
-        public override void Execute()
+        protected override void ExecuteCore()
         {
             _log.LogInformation($"Started function execution: {DateTime.Now}");
 

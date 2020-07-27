@@ -165,6 +165,10 @@ namespace CreateRuleFabricBot.Rules.IssueRouting
                         {
                             break;
                         }
+
+                        // Remove tabs and trim extra whitespace
+                        line = line.Replace('\t', ' ');
+                        line = line.Trim();
                     }
 
                     // If this is not a comment line.

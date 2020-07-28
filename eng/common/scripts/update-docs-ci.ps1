@@ -29,16 +29,7 @@ param (
   $CIRepository,
 
   [Parameter(Mandatory = $true)]
-  [ValidateSet("Latest","Preview")]
-  $Mode,
-
-  # Java leverage a single config file, CI does not support anywhere but default location
-  # instead, the moniker ID (really just an index) tells the script which part of the json to update
-  $MonikerIdentifier,
-
-  # C#, JS, Python leverage a config file per moniker. need to update multiple
-  # a file for each moniker. 
-  $PathToConfigFile
+  $Configs
 )
 
 # import artifact parsing and semver handling
@@ -50,19 +41,17 @@ param (
 # For "preview", we update to >= the target releasing package version.
 function UpdateParamsJsonPython($pkgs, $ciRepo, $locationInDocRepo){
   $pkgJsonLoc = (Join-Path -Path $ciRepo -ChildPath $locationInDocRepo)
-  
+
   if (-not (Test-Path $pkgJsonLoc)) {
     Write-Error "Unable to locate package json at location $pkgJsonLoc, exiting."
     exit(1)
   }
 
   $allJson  = Get-Content $pkgJsonLoc | ConvertFrom-Json
-  $targetData = $allJson.packages
-
   $visibleInCI = @{}
 
-  for ($i=0; $i -lt $targetData.Length; $i++) {
-    $pkgDef = $targetData[$i]
+  for ($i=0; $i -lt $allJson.packages.Length; $i++) {
+    $pkgDef = $allJson.packages[$i]
 
     if ($pkgDef.package_info.name) {
       $visibleInCI[$pkgDef.package_info.name] = $i
@@ -92,11 +81,11 @@ function UpdateParamsJsonPython($pkgs, $ciRepo, $locationInDocRepo){
           package_info = New-Object PSObject -Property @{ 
             prefer_source_distribution = "true"
             install_type = "pypi"
-            name=""
+            name=$releasingPkg.PackageId
           }
           excludePath = @("test*","example*","sample*","doc*")
         }
-      $targetData.Append($newItem)
+      $allJson.packages += $newItem
     }
   }
 
@@ -115,12 +104,11 @@ function UpdateParamsJsonJS($pkgs, $ciRepo, $locationInDocRepo){
   }
 
   $allJson  = Get-Content $pkgJsonLoc | ConvertFrom-Json
-  $targetData = $allJson.npm_package_sources
 
   $visibleInCI = @{}
 
-  for ($i=0; $i -lt $targetData.Length; $i++) {
-    $pkgDef = $targetData[$i]
+  for ($i=0; $i -lt $allJson.npm_package_sources.Length; $i++) {
+    $pkgDef = $allJson.npm_package_sources[$i]
     $accessor = ($pkgDef.name).Replace("`@next", "")
     $visibleInCI[$accessor] = $i
   }
@@ -134,7 +122,7 @@ function UpdateParamsJsonJS($pkgs, $ciRepo, $locationInDocRepo){
 
     if ($visibleInCI.ContainsKey($releasingPkg.PackageId)) {
       $packagesIndex = $visibleInCI[$releasingPkg.PackageId]
-      $existingPackageDef = $targetData[$packagesIndex]
+      $existingPackageDef = $allJson.npm_package_sources[$packagesIndex]
       $existingPackageDef.name = $name
     }
     else {
@@ -142,7 +130,7 @@ function UpdateParamsJsonJS($pkgs, $ciRepo, $locationInDocRepo){
         name = $name
       }
 
-      if ($newItem) { $targetData.Append($newItem) }
+      if ($newItem) { $allJson.npm_package_sources += $newItem }
     }
   }
 
@@ -236,6 +224,14 @@ function UpdatePackageJson($pkgs, $ciRepo, $locationInDocRepo, $monikerId){
   Set-Content -Path $pkgJsonLoc -Value ($allJsonData | ConvertTo-Json -Depth 10 | % {$_ -replace "(?m)  (?<=^(?:  )*)", "    " })
 }
 
+$targets = ($Configs | ConvertFrom-Json).targets
+
+#{
+# path_to_config:
+# mode:
+# monikerid
+#}
+
 $apiUrl = "https://api.github.com/repos/$repoId"
 $pkgs = VerifyPackages -pkgRepository $Repository `
   -artifactLocation $ArtifactLocation `
@@ -243,33 +239,37 @@ $pkgs = VerifyPackages -pkgRepository $Repository `
   -apiUrl $apiUrl `
   -continueOnError $True 
 
-if ($Mode -eq "Preview") { $includePreview = $true } else { $includePreview = $false }
-$pkgs = $pkgs | ? { $_.IsPrerelease -eq $includePreview}
+Write-Host "Before: $pkgs"
 
-if ($pkgs) {
-  Write-Host "Given the visible artifacts, CI updates will be processed for the following packages."
-  Write-Host ($pkgs | % { $_.PackageId + " " + $_.PackageVersion })
+foreach ($config in $targets) {
+  if ($config.mode -eq "Preview") { $includePreview = $true } else { $includePreview = $false }
+  $pkgsFiltered = $pkgs | ? { $_.IsPrerelease -eq $includePreview}
 
-  switch ($Repository) {
-    "Nuget" {
-      UpdateCSVBasedCI -pkgs $pkgs -ciRepo $CIRepository -locationInDocRepo $PathToConfigFile
-      break
-    }
-    "NPM" {
-      UpdateParamsJsonJS -pkgs $pkgs -ciRepo $CIRepository -locationInDocRepo $PathToConfigFile
-      break
-    }
-    "PyPI" {
-      UpdateParamsJsonPython -pkgs $pkgs -ciRepo $CIRepository -locationInDocRepo $PathToConfigFile
-      break
-    }
-    "Maven" {
-      UpdatePackageJson -pkgs $pkgs -ciRepo $CIRepository -locationInDocRepo $PathToConfigFile -monikerId $MonikerIdentifier 
-      break
-    }
-    default {
-      Write-Host "Unrecognized target: $Repository"
-      exit(1)
+  if ($pkgs) {
+    Write-Host "Given the visible artifacts, CI updates against $($config.path_to_config) will be processed for the following packages."
+    Write-Host ($pkgsFiltered | % { $_.PackageId + " " + $_.PackageVersion })
+
+    switch ($Repository) {
+      "Nuget" {
+        UpdateCSVBasedCI -pkgs $pkgsFiltered -ciRepo $CIRepository -locationInDocRepo $config.path_to_config
+        break
+      }
+      "NPM" {
+        UpdateParamsJsonJS -pkgs $pkgsFiltered -ciRepo $CIRepository -locationInDocRepo $config.path_to_config
+        break
+      }
+      "PyPI" {
+        UpdateParamsJsonPython -pkgs $pkgsFiltered -ciRepo $CIRepository -locationInDocRepo $config.path_to_config
+        break
+      }
+      "Maven" {
+        UpdatePackageJson -pkgs $pkgsFiltered -ciRepo $CIRepository -locationInDocRepo $config.path_to_config -monikerId $config.monikerid
+        break
+      }
+      default {
+        Write-Host "Unrecognized target: $Repository"
+        exit(1)
+      }
     }
   }
 }

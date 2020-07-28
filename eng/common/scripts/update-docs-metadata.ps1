@@ -40,7 +40,7 @@ function GetMetaData($lang){
     }
   }
 
-  $metadataResponse = Invoke-RestMethod -Uri $metadataUri -method "GET" | ConvertFrom-Csv
+  $metadataResponse = Invoke-RestMethod -Uri $metadataUri -MaximumRetryCount 3 -RetryIntervalSec 10 -Method "GET" | ConvertFrom-Csv
 
   return $metadataResponse
 }

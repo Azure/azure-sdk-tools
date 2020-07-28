@@ -1,6 +1,7 @@
 ﻿using CreateRuleFabricBot.Rules.PullRequestLabel;
 using OutputColorizer;
 using System.Collections.Generic;
+using System.Data;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -78,7 +79,7 @@ namespace CreateRuleFabricBot.Rules.IssueRouting
                     continue;
                 }
 
-                if (entries[i].Labels.Count==0)
+                if (entries[i].Labels.Count == 0)
                 {
                     Colorizer.WriteLine("[Yellow!Warning]: The path '[Cyan!{0}]' does not contain a label.", entries[i].PathExpression, string.Join(',', entries[i].Labels));
                     continue;
@@ -119,6 +120,12 @@ namespace CreateRuleFabricBot.Rules.IssueRouting
             string result = s_configTemplate;
 
             result = result.Replace("###label###", entry.Labels.First());
+
+            // at this point we should remove the leading '/' if any
+            if (entry.PathExpression.StartsWith("/"))
+            {
+                entry.PathExpression = entry.PathExpression.Substring(1);
+            }
             result = result.Replace("###srcFolders###", $"\"{entry.PathExpression}\"");
 
             return result;
@@ -132,14 +139,56 @@ namespace CreateRuleFabricBot.Rules.IssueRouting
             {
                 while ((line = sr.ReadLine()) != null)
                 {
-                    CodeOwnerEntry entry = CodeOwnerEntry.Parse(line);
-                    if (entry != null)
+                    // Does the line start with '# PRLabel: "label1", "label2"
+
+                    // Remove tabs and trim extra whitespace
+                    line = NormalizeLine(line);
+
+                    // Empty line, move on
+                    if (string.IsNullOrEmpty(line))
+                    {
+                        continue;
+                    }
+
+                    CodeOwnerEntry entry = new CodeOwnerEntry();
+
+                    // if we have the moniker in the line, parse the labels
+                    if (line.StartsWith('#') &&                        
+                        line.IndexOf(CodeOwnerEntry.LabelMoniker, System.StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        entry.ParseLabels(line);
+
+                        // We need to read the next line
+                        line = sr.ReadLine();
+
+                        if (line == null)
+                        {
+                            break;
+                        }
+
+                        // Remove tabs and trim extra whitespace
+                        line = NormalizeLine(line);
+                    }
+
+                    // If this is not a comment line.
+                    if (line.IndexOf('#') == -1)
+                    {
+                        entry.ParseOwnersAndPath(line);
+                    }
+
+                    if (entry.IsValid)
                     {
                         entries.Add(entry);
                     }
                 }
             }
             return entries;
+        }
+
+        private static string NormalizeLine(string line)
+        {
+            // Remove tabs and trim extra whitespace
+            return line.Replace('\t', ' ').Trim();
         }
 
         public override string GetTaskId()

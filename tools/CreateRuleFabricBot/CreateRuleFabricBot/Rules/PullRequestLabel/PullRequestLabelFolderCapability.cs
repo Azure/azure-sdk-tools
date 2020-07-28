@@ -142,8 +142,7 @@ namespace CreateRuleFabricBot.Rules.IssueRouting
                     // Does the line start with '# PRLabel: "label1", "label2"
 
                     // Remove tabs and trim extra whitespace
-                    line = line.Replace('\t', ' ');
-                    line = line.Trim();
+                    line = NormalizeLine(line);
 
                     // Empty line, move on
                     if (string.IsNullOrEmpty(line))
@@ -154,7 +153,8 @@ namespace CreateRuleFabricBot.Rules.IssueRouting
                     CodeOwnerEntry entry = new CodeOwnerEntry();
 
                     // if we have the moniker in the line, parse the labels
-                    if (line.IndexOf(CodeOwnerEntry.LabelMoniker, System.StringComparison.OrdinalIgnoreCase) >= 0)
+                    if (line.StartsWith('#') &&                        
+                        line.IndexOf(CodeOwnerEntry.LabelMoniker, System.StringComparison.OrdinalIgnoreCase) >= 0)
                     {
                         entry.ParseLabels(line);
 
@@ -167,8 +167,7 @@ namespace CreateRuleFabricBot.Rules.IssueRouting
                         }
 
                         // Remove tabs and trim extra whitespace
-                        line = line.Replace('\t', ' ');
-                        line = line.Trim();
+                        line = NormalizeLine(line);
                     }
 
                     // If this is not a comment line.
@@ -184,6 +183,12 @@ namespace CreateRuleFabricBot.Rules.IssueRouting
                 }
             }
             return entries;
+        }
+
+        private static string NormalizeLine(string line)
+        {
+            // Remove tabs and trim extra whitespace
+            return line.Replace('\t', ' ').Trim();
         }
 
         public override string GetTaskId()

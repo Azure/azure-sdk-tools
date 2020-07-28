@@ -24,7 +24,7 @@ steps:
     try {
       Push-Location ${{ parameters.WorkingDirectory }}/repo
 
-      Write-Host "git checkout smoke-test"
+      Write-Host "git checkout ${{ parameters.SourceBranchName }}"
       git checkout smoke-test
     } finally {
       Pop-Location

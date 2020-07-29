@@ -192,19 +192,17 @@ function UpdatePackageJson($pkgs, $ciRepo, $locationInDocRepo, $monikerId){
 
   $allJsonData = Get-Content $pkgJsonLoc | ConvertFrom-Json
 
-  $targetData = $allJsonData[$monikerId]
-
   $visibleInCI = @{}
 
-  for ($i=0; $i -lt $targetData.packages.Length; $i++) {
-    $pkgDef = $targetData.packages[$i]
+  for ($i=0; $i -lt $allJsonData[$monikerId].packages.Length; $i++) {
+    $pkgDef = $allJsonData[$monikerId].packages[$i]
     $visibleInCI[$pkgDef.packageArtifactId] = $i
   }
 
   foreach ($releasingPkg in $pkgs) {
     if ($visibleInCI.ContainsKey($releasingPkg.PackageId)) {
       $packagesIndex = $visibleInCI[$releasingPkg.PackageId]
-      $existingPackageDef = $targetData.packages[$packagesIndex]
+      $existingPackageDef = $allJsonData[$monikerId].packages[$packagesIndex]
       $existingPackageDef.packageVersion = $releasingPkg.PackageVersion
     }
     else {
@@ -217,7 +215,7 @@ function UpdatePackageJson($pkgs, $ciRepo, $locationInDocRepo, $monikerId){
         excludePath = @()
       }
 
-      $targetData.packages.Append($newItem)
+      $allJsonData[$monikerId].packages += $newItem
     }
   }
 

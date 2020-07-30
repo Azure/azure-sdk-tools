@@ -104,7 +104,7 @@ class ApiView:
         type_name = type_name.replace(":class:", "")
         logging.debug("Processing type {}".format(type_name))
         # Check if multiple types are listed with 'or' seperator
-        # Encode mutliple types with or separator into Union
+        # Encode multiple types with or separator into Union
         if TYPE_OR_SEPERATOR in type_name:
             types = [t.strip() for t in type_name.split(TYPE_OR_SEPERATOR) if t != TYPE_OR_SEPERATOR]
             # Make a Union of types if multiple types are present

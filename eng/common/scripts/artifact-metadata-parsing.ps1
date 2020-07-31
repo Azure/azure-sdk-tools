@@ -491,7 +491,7 @@ function CheckArtifactShaAgainstTagsList($priorExistingTagList, $releaseSha, $ap
   $unmatchedTags = @()
 
   foreach ($tag in $priorExistingTagList) {
-    $tagSha = (Invoke-RestMethod -Method "Get" -Uri -MaximumRetryCount 3 -RetryIntervalSec 10 "$apiUrl/git/refs/tags/$tag" -Headers $headers)."object".sha
+    $tagSha = (Invoke-RestMethod -Method "Get" -Uri "$apiUrl/git/refs/tags/$tag" -Headers $headers -MaximumRetryCount 3 -RetryIntervalSec 10)."object".sha
 
     if ($tagSha -eq $releaseSha) {
       Write-Host "This package has already been released. The existing tag commit SHA $releaseSha matches the artifact SHA being processed. Skipping release step for this tag."

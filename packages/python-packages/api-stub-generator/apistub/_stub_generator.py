@@ -66,6 +66,12 @@ class StubGenerator:
             action="store_true",
         )
 
+        parser.add_argument(
+            "--filter-namespace",
+            help=("Generate Api view only for a specific namespace"),
+        )
+        
+
         args = parser.parse_args()
         if not os.path.exists(args.pkg_path):
             logging.error("Package path [{}] is invalid".format(args.pkg_path))
@@ -82,6 +88,11 @@ class StubGenerator:
         if args.verbose:
             logging.getLogger().setLevel(logging.DEBUG)
 
+        self.filter_namespace = ''
+        if args.filter_namespace:
+            self.filter_namespace = args.filter_namespace
+            
+
     def generate_tokens(self):
         # Extract package to temp directory if it is wheel or sdist
         if self.pkg_path.endswith(".whl") or self.pkg_path.endswith(".zip"):
@@ -97,6 +108,11 @@ class StubGenerator:
 
         logging.debug("Installing package from {}".format(self.pkg_path))
         self._install_package(pkg_name)
+        
+        if self.filter_namespace:
+            logging.info("Namespace filter is passed. Filtering modules within namespace :{}".format(self.filter_namespace))
+            namespace = self.filter_namespace
+
         logging.debug("Generating tokens")
         apiview = self._generate_tokens(pkg_root_path, pkg_name, version, namespace)
         if apiview.Diagnostics:

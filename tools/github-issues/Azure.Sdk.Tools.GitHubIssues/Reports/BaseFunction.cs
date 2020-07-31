@@ -3,7 +3,9 @@ using Creator;
 using GitHubIssues.Helpers;
 using Microsoft.Extensions.Logging;
 using Octokit;
+using Polly;
 using System;
+using System.Threading;
 
 namespace GitHubIssues
 {
@@ -36,6 +38,20 @@ namespace GitHubIssues
             log.LogInformation("Created GitHub client");
         }
 
-        public abstract void Execute();
+        public void Execute()
+        {
+            Policy.Handle<RateLimitExceededException>()
+                .Retry(3, (ex, retryCount) =>
+                {
+                    _log.LogWarning("GitHub rate limit exceeded, retrying after 30 seconds.");
+                    Thread.Sleep(30000);
+                })
+                .Execute(() =>
+                {
+                    ExecuteCore();
+                });
+        }
+
+        protected abstract void ExecuteCore();
     }
 }

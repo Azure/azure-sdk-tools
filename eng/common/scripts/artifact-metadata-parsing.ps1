@@ -367,7 +367,7 @@ function IsPythonPackageVersionPublished($pkgId, $pkgVersion) {
 # Retrieves the list of all tags that exist on the target repository
 function GetExistingTags($apiUrl) {
   try {
-    return (Invoke-RestMethod -Method "GET" -Uri "$apiUrl/git/refs/tags"  -MaximumRetryCount 3 -RetryIntervalSec 10) | % { $_.ref.Replace("refs/tags/", "") }
+    return (Invoke-RestMethod -Method "GET" -Uri "$apiUrl/git/refs/tags" -MaximumRetryCount 3 -RetryIntervalSec 10) | % { $_.ref.Replace("refs/tags/", "") }
   }
   catch {
     Write-Host $_

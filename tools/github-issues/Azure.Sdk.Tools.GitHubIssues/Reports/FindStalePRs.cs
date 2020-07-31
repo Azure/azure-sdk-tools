@@ -16,7 +16,7 @@ namespace GitHubIssues.Reports
 
         }
 
-        public override void Execute()
+        protected override void ExecuteCore()
         {
             foreach (RepositoryConfig repositoryConfig in _cmdLine.RepositoriesList)
             {

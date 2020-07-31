@@ -87,7 +87,9 @@ function UpdateParamsJsonPython($pkgs, $ciRepo, $locationInDocRepo){
     }
   }
 
-  Set-Content -Path $pkgJsonLoc -Value ($allJson | ConvertTo-Json -Depth 10 | % {$_ -replace "(?m)  (?<=^(?:  )*)", "  " })
+  $jsonContent = $allJson | ConvertTo-Json -Depth 10 | % {$_ -replace "(?m)  (?<=^(?:  )*)", "  " }
+
+  Set-Content -Path $pkgJsonLoc -Value $jsonContent
 }
 
 # Updates a js CI configuration json.
@@ -132,7 +134,9 @@ function UpdateParamsJsonJS($pkgs, $ciRepo, $locationInDocRepo){
     }
   }
 
-  Set-Content -Path $pkgJsonLoc -Value ($allJson | ConvertTo-Json -Depth 10 | % {$_ -replace "(?m)  (?<=^(?:  )*)", "  " })
+  $jsonContent = $allJson | ConvertTo-Json -Depth 10 | % {$_ -replace "(?m)  (?<=^(?:  )*)", "  " }
+
+  Set-Content -Path $pkgJsonLoc -Value $jsonContent
 }
 
 # details on CSV schema can be found here
@@ -217,7 +221,9 @@ function UpdatePackageJson($pkgs, $ciRepo, $locationInDocRepo, $monikerId){
     }
   }
 
-  Set-Content -Path $pkgJsonLoc -Value ($allJsonData | ConvertTo-Json -Depth 10 | % {$_ -replace "(?m)  (?<=^(?:  )*)", "    " })
+  $jsonContent = $allJsonData | ConvertTo-Json -Depth 10 | % {$_ -replace "(?m)  (?<=^(?:  )*)", "    " }
+
+  Set-Content -Path $pkgJsonLoc -Value $jsonContent
 }
 
 $targets = ($Configs | ConvertFrom-Json).targets
@@ -234,8 +240,6 @@ $pkgs = VerifyPackages -pkgRepository $Repository `
   -workingDirectory $WorkDirectory `
   -apiUrl $apiUrl `
   -continueOnError $True 
-
-Write-Host "Before: $pkgs"
 
 foreach ($config in $targets) {
   if ($config.mode -eq "Preview") { $includePreview = $true } else { $includePreview = $false }

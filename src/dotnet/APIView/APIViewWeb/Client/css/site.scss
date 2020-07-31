@@ -222,6 +222,24 @@ form.comment {
     opacity: 1;
 }
 
+@keyframes glow {
+    0% {
+        background-color: rgba(0,0,0,0)
+    }
+
+    25% {
+        background-color: #fff6b3
+    }
+
+    100% {
+        background-color: rgba(0,0,0,0)
+    }
+}
+
+.code-line.active {
+    animation: glow normal 1.5s ease-in-out;
+}
+
 .line-comment-button:hover {
     transform: scale(1);
 }

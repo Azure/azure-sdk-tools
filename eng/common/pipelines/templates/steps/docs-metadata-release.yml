@@ -86,7 +86,7 @@ steps:
   - pwsh: |
       Push-Location ${{ parameters.WorkingDirectory }}/repo
 
-      git reset --hard origin/${{ parameters.SourceBranchName }}
+      git reset --hard HEAD
       git remote rm azure-sdk-fork
       git checkout ${{ parameters.OnboardingBranch}}
     displayName: Reset Docs Repo, Checkout Onboarding Branch

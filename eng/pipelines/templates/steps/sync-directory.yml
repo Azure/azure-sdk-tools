@@ -2,6 +2,7 @@ parameters:
   Repos: []
   DirectoryToSync: eng/common
   CommitMessage: commit-message-not-set
+  PRBranchName: branch-name-not-set
 
 steps:
 
@@ -21,7 +22,7 @@ steps:
   - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
     parameters:
       RepoName: ${{ repo }}
-      PRBranchName: sync-${{ parameters.DirectoryToSync }}
+      PRBranchName: ${{ parameters.PRBranchName }}
       CommitMsg: ${{ parameters.CommitMessage }}
       PRTitle: ${{ parameters.CommitMessage }}
       PushArgs: -f

@@ -8,7 +8,7 @@ addEventListener("load", () => {
 
 $(() => {
     /* 992px matches bootstrap col-lg min-width */
-    ($('.namespace-view') as any).stickySidebar({ minWidth: 992 });   
+    ($('.namespace-view') as any).stickySidebar({ minWidth: 992 });
 
     /* Split left and right review panes using split.js */
     const rl = $('#review-left');

@@ -54,6 +54,10 @@ stages:
             displayName: 'Use NodeJS $(NodeVersion)'
 
           - script: |
+              npm install -g npm@6.14.6
+            displayName: "Install npm 6.14.6"
+
+          - script: |
               npm install
             workingDirectory: $(WebClientProjectDirectory)
             displayName: "Install npm packages"

@@ -86,6 +86,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
             builder.Services.AddSingleton<IFailureClassifier, DownloadSecretsFailureClassifier>();
             builder.Services.AddSingleton<IFailureClassifier, GitCheckoutFailureClassifier>();
             builder.Services.AddSingleton<IFailureClassifier, AzurePowerShellModuleInstallationFailureClassifier>();
+            builder.Services.AddSingleton<IFailureClassifier, MavenBrokenPipeFailureClassifier>();
         }
     }
 }

@@ -20,7 +20,7 @@ jobs:
         TestOptions: '--variablegroup 64'
       Android:
         RepositoryName: azure-sdk-for-android
-        Branch: dev
+        Branch: master
         Prefix: android
         PublicOptions: ''
         InternalOptions: '--variablegroup 1 --variablegroup 58 --variablegroup 76'

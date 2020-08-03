@@ -1,0 +1,78 @@
+﻿@page "{id?}"
+@model APIViewWeb.Pages.Assemblies.SummaryModel
+@{
+    Layout = "ReviewLayout";
+    ViewData["Title"] = "Summary";
+}
+<div class="row">
+    <div class="col">
+        @if (@Model.Comments.Threads.FirstOrDefault() == null)
+        {
+            <div class="p-2 text-muted">There are no comments in the review.</div>
+        }
+        else
+        {
+            <div class="p-3">
+                <div class="card border-primary">
+                    @for (int i = 0; i < 2; i++)
+                    {
+                        string threadDisplay = "";
+                        string divId = "";
+                        IOrderedEnumerable<KeyValuePair<ReviewRevisionModel, List<APIViewWeb.Models.CommentThreadModel>>> threads;
+                        if (i == 0)
+                        {
+                            threadDisplay = $"{Model.Comments.Threads.Where(t => !t.IsResolved).Count()} unresolved threads";
+                            divId = "unresolved";
+                            threads = Model.UnresolvedThreads;
+                        }
+                        else
+                        {
+                            threadDisplay = $"{Model.Comments.Threads.Where(t => t.IsResolved).Count()} resolved threads";
+                            divId = "resolved";
+                            threads = Model.ResolvedThreads;
+                        }
+
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <button class="btn btn-link ml-n3" data-toggle="collapse" data-target="#@divId" aria-expanded="true" aria-controls=@divId>
+                                    @threadDisplay
+                                </button>
+                            </h5>
+                        </div>
+                        <div id=@divId class="collapse show">
+                            <ul class="list-group">
+                                @foreach (var revision in @threads)
+                                {
+                                    <il class="list-group-item-heading p-2 pl-3"><h4>@revision.Key.DisplayName</h4></il>
+                                    @foreach (var thread in revision.Value)
+                                    {
+                                        var elementId = @thread.Comments.First().ElementId;
+                                        var uri = new Uri($"{Model.Endpoint}/Assemblies/Review/{Model.Review.ReviewId}/{revision.Key.RevisionId}#{Uri.EscapeUriString(elementId)}");
+                                        <il class="list-group-item border-left-0">
+                                            <ul class="list-group">
+                                                <il class="list-group-item-heading" data-toggle="collapse" data-target="#@divId" aria-expanded="true" aria-controls=@divId>@elementId</il>
+                                                <il class="list-group-item-flush">
+                                                    <ul class="list-group">
+                                                        @foreach (var comment in thread.Comments)
+                                                        {
+                                                            <il class="list-group-item-sm">
+                                                                <a href="@uri.ToString()" target="_blank">
+                                                                    @comment.Comment <span class="font-italic">by @comment.Username at @comment.TimeStamp</span>
+                                                                </a>
+                                                            </il>
+                                                        }
+                                                    </ul>
+                                                </il>
+                                            </ul>
+                                        </il>
+                                    }
+                                }
+                            </ul>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>
+

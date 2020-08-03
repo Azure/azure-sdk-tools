@@ -60,11 +60,13 @@ namespace APIViewWeb
                     name = Name;
                 }
                 return Label != null ?
-                    $"rev {Review.Revisions.IndexOf(this)} - {Label} - {name}" :
-                    $"rev {Review.Revisions.IndexOf(this)} - {name}";
+                    $"rev {RevisionNumber} - {Label} - {name}" :
+                    $"rev {RevisionNumber} - {name}";
             }
         }
 
         public string Label { get; set; }
+
+        public int RevisionNumber => Review.Revisions.IndexOf(this);
     }
 }

@@ -88,6 +88,7 @@ namespace GitHubIssues.Reports
         {
             TableCreator tc = new TableCreator(header);
             tc.DefineTableColumn("Title", TableCreator.Templates.Title);
+            tc.DefineTableColumn("State", i => i.Issue.State.ToString());
             tc.DefineTableColumn("Labels", TableCreator.Templates.Labels);
             tc.DefineTableColumn("Author", TableCreator.Templates.Author);
             tc.DefineTableColumn("Assigned", TableCreator.Templates.Assigned);
@@ -102,7 +103,8 @@ namespace GitHubIssues.Reports
                 }
             }
 
-            emailBody.AddContent(tc.GetContent(issues));
+            //sort the issues by state, descending becasue Open should show up before Closed
+            emailBody.AddContent(tc.GetContent(issues.OrderByDescending(i => i.Issue.State.ToString())));
 
             return issues.Any();
         }

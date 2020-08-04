@@ -1,38 +1,42 @@
-﻿using GitHubIssues.Helpers;
+﻿using Azure.Sdk.Tools.GitHubIssues.Email;
+using Azure.Sdk.Tools.GitHubIssues.Services.Configuration;
+using Azure.Security.KeyVault.Secrets;
+using GitHubIssues.Helpers;
 using GitHubIssues.Html;
-using GitHubIssues.Models;
 using Microsoft.Extensions.Logging;
 using Octokit;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 
-namespace GitHubIssues.Reports
+namespace Azure.Sdk.Tools.GitHubIssues.Reports
 {
-    internal class FindStalePRs : BaseFunction
+    public class FindStalePRs : BaseReport
     {
-        public FindStalePRs(ILogger log) : base(log)
+        public FindStalePRs(IConfigurationService configurationService) : base(configurationService)
         {
 
         }
 
-        protected override void ExecuteCore()
+        protected override async Task ExecuteCoreAsync(ReportExecutionContext context)
         {
-            foreach (RepositoryConfig repositoryConfig in _cmdLine.RepositoriesList)
+            foreach (RepositoryConfiguration repositoryConfiguration in context.RepositoryConfigurations)
             {
-                HtmlPageCreator emailBody = new HtmlPageCreator($"Pull Requests older than 3 months in {repositoryConfig.Name}");
-                bool hasFoundPRs = FindStalePRsInRepo(repositoryConfig, emailBody);
+                HtmlPageCreator emailBody = new HtmlPageCreator($"Pull Requests older than 3 months in {repositoryConfiguration.Name}");
+                bool hasFoundPRs = FindStalePRsInRepo(context, repositoryConfiguration, emailBody);
 
                 if (hasFoundPRs)
                 {
                     // send the email
-                    EmailSender.SendEmail(_cmdLine.EmailToken, _cmdLine.FromEmail, emailBody.GetContent(), repositoryConfig.ToEmail, repositoryConfig.CcEmail,
-                        $"Pull Requests older than 3 months in {repositoryConfig.Name}", _log);
+                    EmailSender.SendEmail(context.SendGridToken, context.FromAddress, emailBody.GetContent(), repositoryConfiguration.ToEmail, repositoryConfiguration.CcEmail,
+                        $"Pull Requests older than 3 months in {repositoryConfiguration.Name}", context.Log);
                 }
             }
         }
 
-        private bool FindStalePRsInRepo(RepositoryConfig repositoryConfig, HtmlPageCreator emailBody)
+        private bool FindStalePRsInRepo(ReportExecutionContext context, RepositoryConfiguration repositoryConfig, HtmlPageCreator emailBody)
         {
             TableCreator tc = new TableCreator($"Pull Requests older than {DateTime.Now.AddMonths(-3).ToShortDateString()}");
             tc.DefineTableColumn("Title", TableCreator.Templates.Title);
@@ -40,11 +44,11 @@ namespace GitHubIssues.Reports
             tc.DefineTableColumn("Author", TableCreator.Templates.Author);
             tc.DefineTableColumn("Assigned", TableCreator.Templates.Assigned);
 
-            _log.LogInformation($"Retrieving PR information for repo {repositoryConfig.Name}");
+            context.Log.LogInformation($"Retrieving PR information for repo {repositoryConfig.Name}");
             List<ReportIssue> oldPrs = new List<ReportIssue>();
-            foreach (Issue issue in _gitHub.SearchForGitHubIssues(CreateQuery(repositoryConfig)))
+            foreach (Issue issue in context.GitHubClient.SearchForGitHubIssues(CreateQuery(repositoryConfig)))
             {
-                _log.LogInformation($"Found stale PR  {issue.Number}");
+                context.Log.LogInformation($"Found stale PR  {issue.Number}");
                 oldPrs.Add(new ReportIssue() { Issue = issue, Note = string.Empty, Milestone = null });
             }
 
@@ -52,7 +56,7 @@ namespace GitHubIssues.Reports
             return oldPrs.Any();
         }
 
-        private SearchIssuesRequest CreateQuery(RepositoryConfig repoInfo)
+        private SearchIssuesRequest CreateQuery(RepositoryConfiguration repoInfo)
         {
             // Find all open PRs
             //  That were created more than 3 months ago

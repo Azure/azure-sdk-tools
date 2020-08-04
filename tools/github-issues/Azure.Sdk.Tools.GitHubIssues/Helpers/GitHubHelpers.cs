@@ -1,5 +1,5 @@
-﻿using Octokit;
-using OutputColorizer;
+﻿using Azure.Sdk.Tools.GitHubIssues.Services.Configuration;
+using Octokit;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -8,15 +8,6 @@ namespace GitHubIssues.Helpers
 {
     internal static class GitHubHelpers
     {
-        public static GitHubClient CreateGitHubClient(string token)
-        {
-            GitHubClient ghClient = new GitHubClient(new ProductHeaderValue("github-issues"))
-            {
-                Credentials = new Credentials(token)
-            };
-            return ghClient;
-        }
-
         public static IEnumerable<Issue> SearchForGitHubIssues(this GitHubClient s_gitHub, SearchIssuesRequest issueQuery)
         {
             List<Issue> totalIssues = new List<Issue>();
@@ -34,8 +25,6 @@ namespace GitHubIssues.Helpers
                 foreach (Issue item in searchresults.Items)
                 {
                     totalIssues.Add(item);
-                    Colorizer.WriteLine($"Found issue '[Cyan!{item.HtmlUrl}]' in GitHub.");
-                    Colorizer.WriteLine($"   Labels: '[Green!{string.Join(",", item.Labels.Select(x => x.Name).OrderBy(s => s))}]'.");
                 }
 
                 // if this is the first call, setup the totalpages stuff
@@ -48,7 +37,7 @@ namespace GitHubIssues.Helpers
             return totalIssues;
         }
 
-        public static async Task<IEnumerable<Milestone>> ListMilestones(this GitHubClient s_gitHub, RepositoryConfig repo)
+        public static async Task<IEnumerable<Milestone>> ListMilestones(this GitHubClient s_gitHub, RepositoryConfiguration repo)
         {
             MilestonesClient ms = new MilestonesClient(new ApiConnection(s_gitHub.Connection));
 

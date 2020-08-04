@@ -16,40 +16,40 @@ jobs:
         Branch: master
         Prefix: java
         PublicOptions: ''
-        InternalOptions: '--variablegroup 1 --variablegroup 58 --variablegroup 76'
+        InternalOptions: '--variablegroup 1 --variablegroup 58 --variablegroup 76 --variablegroup 56'
         TestOptions: '--variablegroup 64'
       Android:
         RepositoryName: azure-sdk-for-android
         Branch: master
         Prefix: android
         PublicOptions: ''
-        InternalOptions: '--variablegroup 1 --variablegroup 58 --variablegroup 76'
+        InternalOptions: '--variablegroup 1 --variablegroup 58 --variablegroup 76 --variablegroup 56'
       JavaScript:
         RepositoryName: azure-sdk-for-js
         Branch: master
         Prefix: js
         PublicOptions: ''
-        InternalOptions: '--variablegroup 24 --variablegroup 58 --variablegroup 76'
+        InternalOptions: '--variablegroup 24 --variablegroup 58 --variablegroup 76 --variablegroup 56'
       Python:
         RepositoryName: azure-sdk-for-python
         Branch: master
         Prefix: python
         PublicOptions: ''
-        InternalOptions: '--variablegroup 58 --variablegroup 76'
+        InternalOptions: '--variablegroup 58 --variablegroup 76 --variablegroup 56'
         TestOptions: '--variablegroup 64'
       Net:
         RepositoryName: azure-sdk-for-net
         Branch: master
         Prefix: net
         PublicOptions: ''
-        InternalOptions: '--variablegroup 13 --variablegroup 58 --variablegroup 76'
+        InternalOptions: '--variablegroup 13 --variablegroup 58 --variablegroup 76 --variablegroup 56'
         TestOptions: '--variablegroup 64'
       Cpp:
         RepositoryName: azure-sdk-for-cpp
         Branch: master
         Prefix: cpp
         PublicOptions: ''
-        InternalOptions: '--variablegroup 58 --variablegroup 76'
+        InternalOptions: '--variablegroup 58 --variablegroup 76 --variablegroup 56'
   steps:
   - template: templates/steps/install-pipeline-generation.yml
   - script: |

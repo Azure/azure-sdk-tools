@@ -13,7 +13,8 @@ from ._diagnostic import Diagnostic
 JSON_FIELDS = ["Name", "Version", "VersionString", "Navigation", "Tokens", "Diagnostics"]
 
 HEADER_TEXT = "# Package is parsed using api-stub-generator(version:{})".format(VERSION)
-COMPLEX_DATA_TYPE_PATTERN = re.compile("([\w.]+)(\[|\()[^\]\)]+(\]|\))")
+TYPE_NAME_REGEX = re.compile("(~?[a-zA-Z\d.]+)")
+TYPE_OR_SEPERATOR = " or "
 
 # Lint warnings
 SOURCE_LINK_NOT_AVAILABLE = "Source definition link is not available for [{0}]. Please check and ensure type is fully qualified name in docstring"
@@ -94,55 +95,26 @@ class ApiView:
         if postfix_space:
             self.add_space()
 
-    def _generate_type_tokens(self, type_name, prefix_type, line_id = None):
-        # Generate tokens for multiple data types
-        # for e.g. Union[type1, type2,] or dict(type1, type2)
-        # For some args, type is given as just "dict"
-        # We should not process further if type name is same as prefix(In above e.g. dict)
-        logging.debug("Generating tokens for type: {}".format(type_name))
-        if prefix_type == type_name:
-            self.add_keyword(prefix_type)
-            return
-
-        logging.debug("Processing type {0} and prefix {1}".format(type_name, prefix_type))
-        prefix_len = len(prefix_type)
-        type_names = type_name[prefix_len + 1 : -1]
-        if type_names:
-            self.add_keyword(prefix_type)
-            self.add_punctuation(type_name[prefix_len])
-            # Split types and add individual types
-            types = type_names.split(",")
-            type_count = len(types)
-            for index in range(type_count):
-                self.add_type(types[index].strip(), line_id)
-                # Add separator between types
-                if index < type_count - 1:
-                    self.add_punctuation(",", False, True)
-            self.add_punctuation(type_name[-1])
-
 
     def add_type(self, type_name, line_id=None):
         # This method replace full qualified internal types to short name and generate tokens
         if not type_name:
             return
 
+        type_name = type_name.replace(":class:", "")
         logging.debug("Processing type {}".format(type_name))
-        # Check if type is multi value types like Union, Dict, list etc
-        # Those types needs to be recursively processed
-        multi_types = re.search(COMPLEX_DATA_TYPE_PATTERN,type_name)
-        if multi_types:
-            self._generate_type_tokens(type_name, multi_types.groups()[0], line_id)
-        else:
-            # Encode mutliple types with or separator into Union
-            types = [t for t in type_name.split() if t != 'or']
-            if len(types) > 1:
-                # Make a Union of types if multiple types are present
-                self._generate_type_tokens("Union[{}]".format(", ".join(types)), "Union", line_id)
-            else:
-                self._add_type_token(types[0], line_id)
+        # Check if multiple types are listed with 'or' seperator
+        # Encode multiple types with or separator into Union
+        if TYPE_OR_SEPERATOR in type_name:
+            types = [t.strip() for t in type_name.split(TYPE_OR_SEPERATOR) if t != TYPE_OR_SEPERATOR]
+            # Make a Union of types if multiple types are present
+            type_name = "Union[{}]".format(", ".join(types))
+
+        self._add_type_token(type_name, line_id)
 
 
-    def _add_type_token(self, type_name, line_id = None):
+    def _add_token_for_type_name(self, type_name, line_id = None):
+        logging.debug("Generating tokens for type name {}".format(type_name))
         token = Token(type_name, TokenKind.TypeName)
         type_full_name = type_name[1:] if type_name.startswith("~") else type_name
         token.set_value(type_full_name.split(".")[-1])
@@ -157,6 +129,29 @@ class ApiView:
                 # Navigation ID is missing for internal type, add diagnostic error
                 self.add_diagnostic(SOURCE_LINK_NOT_AVAILABLE.format(token.Value), line_id)            
         self.add_token(token)
+
+
+    def _add_type_token(self, type_name, line_id = None):
+        # parse to get individual type name
+        logging.debug("Generating tokens for type {}".format(type_name))
+        types = re.search(TYPE_NAME_REGEX, type_name)
+        if types:
+            # Generate token for the prefix before internal type
+            # process internal type
+            # process post fix of internal type recursively to find replace more internal types
+            parsed_type = types.groups()[0]
+            index = type_name.find(parsed_type)
+            prefix = type_name[:index]
+            if prefix:
+                self.add_punctuation(prefix)
+            # process parsed type name. internal or built in
+            self._add_token_for_type_name(parsed_type)
+            postfix = type_name[index + len(parsed_type):]
+            # process remaining string in type recursively
+            self._add_type_token(postfix, line_id)
+        else:
+            # This is required group ending punctuations
+            self.add_punctuation(type_name)        
 
 
     def add_diagnostic(self, text, line_id):

@@ -66,6 +66,37 @@ docstring_param_nested_union = """
 :type dummyarg: typing.Union[~azure.eventhub.EventDataBatch, List[~azure.eventhub.EventData]]
 """
 
+docstring_multi_complex_type = """
+        :param documents: The set of documents to process as part of this batch.
+            If you wish to specify the ID and country_hint on a per-item basis you must
+            use as input a list[:class:`~azure.ai.textanalytics.DetectLanguageInput`] or a list of
+            dict representations of :class:`~azure.ai.textanalytics.DetectLanguageInput`, like
+            `{"id": "1", "country_hint": "us", "text": "hello world"}`.
+        :type documents:
+            list[str] or list[~azure.ai.textanalytics.DetectLanguageInput] or list[dict[str, str]]
+        :keyword str country_hint: A country hint for the entire batch. Accepts two
+            letter country codes specified by ISO 3166-1 alpha-2. Per-document
+            country hints will take precedence over whole batch hints. Defaults to
+            "US". If you don't want to use a country hint, pass the string "none".
+        :keyword str model_version: This value indicates which model will
+            be used for scoring, e.g. "latest", "2019-10-01". If a model-version
+            is not specified, the API will default to the latest, non-preview version.
+        :keyword bool show_stats: If set to true, response will contain document
+            level statistics.
+        :return: The combined list of :class:`~azure.ai.textanalytics.DetectLanguageResult` and
+            :class:`~azure.ai.textanalytics.DocumentError` in the order the original documents were
+            passed in.
+        :rtype: list[~azure.ai.textanalytics.DetectLanguageResult,
+            ~azure.ai.textanalytics.DocumentError]
+        :raises ~azure.core.exceptions.HttpResponseError or TypeError or ValueError:
+        .. admonition:: Example:
+            .. literalinclude:: ../samples/sample_detect_language.py
+                :start-after: [START batch_detect_language]
+                :end-before: [END batch_detect_language]
+                :language: python
+                :dedent: 8
+                :caption: Detecting language in a batch of documents.
+"""
 
 class TestDocStringParser:
 
@@ -122,3 +153,6 @@ class TestDocStringParser:
 
     def test_nested_union_type(self):
         self._test_variable_type(docstring_param_nested_union, "dummyarg", "typing.Union[~azure.eventhub.EventDataBatch, List[~azure.eventhub.EventData]]")
+
+    def test_multi_text_analytics_type(self):
+        self._test_variable_type(docstring_multi_complex_type, "documents", "list[str] or list[~azure.ai.textanalytics.DetectLanguageInput] or list[dict[str, str]]")

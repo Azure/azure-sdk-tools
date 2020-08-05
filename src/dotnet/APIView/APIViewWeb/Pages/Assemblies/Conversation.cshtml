@@ -26,15 +26,27 @@
                                 </h5>
                             </div>
                             <div id=@divId class="collapse show" data-revision-id=@revision.Key.RevisionId aria-labelledby="header-@revision.Key.RevisionId">
-                                @foreach (var thread in revision.Value)
-                                {
-                                    var elementId = @thread.Comments.First().ElementId;
-                                    var uri = new Uri($"{Model.Endpoint}/Assemblies/Review/{Model.Review.ReviewId}/{revision.Key.RevisionId}#{Uri.EscapeUriString(elementId)}");
-                                    <a href="@uri.ToString()" target="_blank" class="p-3">@elementId</a>
-                                    <table class="code-window">
+                                <table class="code-window">
+                                    @foreach (var thread in revision.Value)
+                                    {
+                                        <tr>
+                                            <td class="p-2">
+                                                @{
+                                                    var parms = new Dictionary<string, string>
+                                                    {
+                                                        { "id", Model.Review.ReviewId },
+                                                        { "revisionId", revision.Key.RevisionId }
+                                                    };
+                                                    var elementId = @thread.LineId;
+                                                }
+                                                <a asp-page="Review"
+                                                   asp-all-route-data="parms"
+                                                   asp-fragment=@Uri.EscapeUriString(elementId)>@elementId</a>
+                                            </td>
+                                        </tr>
                                         <partial name="_CommentThreadPartial" model="@thread" />
-                                    </table>
-                                }
+                                    }
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -43,5 +55,5 @@
         }
     </div>
 </div>
-<partial name="_CommentFormPartial"/>
+<partial name="_CommentFormPartial" />
 

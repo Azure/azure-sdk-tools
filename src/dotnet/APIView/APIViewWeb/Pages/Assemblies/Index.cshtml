@@ -129,7 +129,7 @@
                 <a username="@assembly.Author">@assembly.Author</a>
             </td>
             <td>
-                <span date="@assembly.CreationDate.ToLocalTime()"></span>
+                <span date="@assembly.LastUpdated.ToLocalTime()"></span>
             </td>
             @if (assembly.Author == User.GetGitHubLogin())
                 {

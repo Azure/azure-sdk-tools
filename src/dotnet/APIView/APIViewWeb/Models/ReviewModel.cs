@@ -70,5 +70,8 @@ namespace APIViewWeb
                     Name;
             }
         }
+
+        [JsonIgnore]
+        public DateTime LastUpdated => Revisions.LastOrDefault()?.CreationDate ?? CreationDate;
     }
 }

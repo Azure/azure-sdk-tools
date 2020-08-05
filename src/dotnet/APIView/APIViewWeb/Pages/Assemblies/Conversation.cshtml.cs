@@ -58,7 +58,12 @@ namespace APIViewWeb.Pages.Assemblies
                     {
                         continue;
                     }
-                    ReviewRevisionModel commentRevision = Review.Revisions.Single(r => r.RevisionId == comment.RevisionId);
+                    ReviewRevisionModel commentRevision = Review.Revisions.SingleOrDefault(r => r.RevisionId == comment.RevisionId);
+                    if (commentRevision == null)
+                    {
+                        // if revision that comment was added in has been deleted
+                        continue;
+                    }
                     var commentRevisionIndex = commentRevision.RevisionNumber;
                     // Group each thread under the last revision where a comment was added for it. 
                     if (commentRevisionIndex >= lastRevision)

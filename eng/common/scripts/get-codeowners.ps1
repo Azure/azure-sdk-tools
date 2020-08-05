@@ -2,22 +2,6 @@ param (
   $TargetDirectory, # should be in relative form from root of repo. EG: sdk/servicebus
   $RootDirectory # ideally $(Build.SourcesDirectory)
 )
-
-function Get-Longest-Match($path, $codeOwnersIndex) {
-  $matchedLength = 0
-  $matchedPath = "" 
-
-  foreach($key in $codeOwnersIndex.keys) {
-    $keyLength = $key.Length
-    if ($path.startsWith($key) -and $keyLength -ge $matchedLength) {
-      $matchedLength = $keyLength
-      $matchedPath = $key
-    }
-  }
-
-  return $matchedPath
-}
-
 $target = $TargetDirectory.ToLower()
 $codeOwnersLocation = Join-Path $RootDirectory -ChildPath ".github/CODEOWNERS"
 $ownedFolders = @{}
@@ -41,13 +25,15 @@ foreach ($contentLine in $codeOwnersContent) {
   }
 }
 
-$results = $ownedFolders[$target]
-$looseMatch = Get-Longest-Match -path $target -codeOwnersIndex $ownedFolders
+$matchedKey = $ownedFolders.keys `
+  | ? { $target.StartsWith($_) } `
+  | Sort-Object -Property Length -Descending `
+  | Select-Object -First 1
 
-if ($looseMatch) {
-  Write-Host "Found a folder $looseMatch to match $target"
+if ($matchedKey) {
+  Write-Host "Found a folder $matchedKey to match $target"
 
-  return $ownedFolders[$looseMatch]
+  return $ownedFolders[$matchedKey]
 }
 else {
   Write-Host "Unable to match path $target in CODEOWNERS file located at $codeOwnersLocation."

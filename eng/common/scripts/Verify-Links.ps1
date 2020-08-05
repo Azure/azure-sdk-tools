@@ -145,7 +145,7 @@ function CheckLink ([System.Uri]$linkUri)
     catch {
       $statusCode = $_.Exception.Response.StatusCode.value__
 
-      if(!$statusCode){
+      if(!$statusCode) {
         $statusCode = $_.Exception.InnerException.ErrorCode
       }
 

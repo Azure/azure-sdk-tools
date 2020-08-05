@@ -1,0 +1,47 @@
+﻿@page "{id?}"
+@model APIViewWeb.Pages.Assemblies.ConversationModel
+@{
+    Layout = "ReviewLayout";
+    ViewData["Title"] = "Conversation";
+}
+<div class="row">
+    <div class="col" data-review-id=@Model.Review.ReviewId>
+        @if (@Model.Comments.Threads.FirstOrDefault() == null)
+        {
+            <div class="p-2 text-muted">There are no comments in the review.</div>
+        }
+        else
+        {
+            <div class="p-3">
+                @foreach (var revision in Model.Threads)
+                {
+                    var divId = $"rev-{revision.Key.RevisionId}";
+                    <div class="p-1">
+                        <div class="card">
+                            <div class="card-header" id="header-@revision.Key.RevisionId">
+                                <h5 class="mb-0">
+                                    <button class="btn btn-link ml-n3" data-toggle="collapse" data-target="#@divId" aria-expanded="true" aria-controls=@divId>
+                                        @revision.Key.DisplayName
+                                    </button>
+                                </h5>
+                            </div>
+                            <div id=@divId class="collapse show" data-revision-id=@revision.Key.RevisionId aria-labelledby="header-@revision.Key.RevisionId">
+                                @foreach (var thread in revision.Value)
+                                {
+                                    var elementId = @thread.Comments.First().ElementId;
+                                    var uri = new Uri($"{Model.Endpoint}/Assemblies/Review/{Model.Review.ReviewId}/{revision.Key.RevisionId}#{Uri.EscapeUriString(elementId)}");
+                                    <a href="@uri.ToString()" target="_blank" class="p-3">@elementId</a>
+                                    <table class="code-window">
+                                        <partial name="_CommentThreadPartial" model="@thread" />
+                                    </table>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+<partial name="_CommentFormPartial"/>
+

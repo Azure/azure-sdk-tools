@@ -10,24 +10,26 @@ using Microsoft.Extensions.Configuration;
 
 namespace APIViewWeb.Pages.Assemblies
 {
-    public class SummaryModel : PageModel
+    public class ConversationModel : PageModel
     {
         private readonly CommentsManager _commentsManager;
         private readonly ReviewManager _reviewManager;
         private const string ENDPOINT_SETTING = "Endpoint";
+        private readonly BlobCodeFileRepository _codeFileRepository;
 
         public string Endpoint { get; }
         public ReviewModel Review { get; private set; }
         public ReviewCommentsModel Comments { get; private set; }
 
-        public IOrderedEnumerable<KeyValuePair<ReviewRevisionModel, List<CommentThreadModel>>> UnresolvedThreads { get; set; }
-        public IOrderedEnumerable<KeyValuePair<ReviewRevisionModel, List<CommentThreadModel>>> ResolvedThreads { get; set; }
+        public IOrderedEnumerable<KeyValuePair<ReviewRevisionModel, List<CommentThreadModel>>> Threads { get; set; }
 
-        public SummaryModel(
+        public ConversationModel(
             IConfiguration configuration,
+            BlobCodeFileRepository codeFileRepository,
             CommentsManager commentsManager,
             ReviewManager reviewManager)
         {
+            _codeFileRepository = codeFileRepository;
             _commentsManager = commentsManager;
             _reviewManager = reviewManager;
             Endpoint = configuration.GetValue<string>(ENDPOINT_SETTING);
@@ -35,11 +37,10 @@ namespace APIViewWeb.Pages.Assemblies
 
         public async Task<IActionResult> OnGetAsync(string id)
         {
-            TempData["Page"] = "summary";
+            TempData["Page"] = "conversation";
             Review = await _reviewManager.GetReviewAsync(User, id);
             Comments = await _commentsManager.GetReviewCommentsAsync(id);
-            UnresolvedThreads = ParseThreads(Comments.Threads.Where(t => !t.IsResolved));
-            ResolvedThreads = ParseThreads(Comments.Threads.Where(t => t.IsResolved));
+            Threads = ParseThreads(Comments.Threads);
             return Page();
         }
 
@@ -53,6 +54,10 @@ namespace APIViewWeb.Pages.Assemblies
                 int lastRevision = 0;
                 foreach (var comment in thread.Comments)
                 {
+                    if (comment.RevisionId == null)
+                    {
+                        continue;
+                    }
                     ReviewRevisionModel commentRevision = Review.Revisions.Single(r => r.RevisionId == comment.RevisionId);
                     var commentRevisionIndex = commentRevision.RevisionNumber;
                     // Group each thread under the last revision where a comment was added for it. 
@@ -62,13 +67,17 @@ namespace APIViewWeb.Pages.Assemblies
                         lastRevisionForThread = commentRevision;
                     }
                 }
+                if (lastRevisionForThread == null)
+                {
+                    continue;
+                }
                 if (!threadDict.ContainsKey(lastRevisionForThread))
                 {
                     threadDict.Add(lastRevisionForThread, new List<CommentThreadModel>());
                 }
                 threadDict[lastRevisionForThread].Add(thread);
             }
-            return threadDict.OrderBy(kvp => Review.Revisions.IndexOf(kvp.Key));
+            return threadDict.OrderByDescending(kvp => Review.Revisions.IndexOf(kvp.Key));
         }
     }
 }

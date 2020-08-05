@@ -29,18 +29,12 @@
                                 <table class="code-window">
                                     @foreach (var thread in revision.Value)
                                     {
+                                        var elementId = thread.LineId;
                                         <tr>
                                             <td class="p-2">
-                                                @{
-                                                    var parms = new Dictionary<string, string>
-                                                    {
-                                                        { "id", Model.Review.ReviewId },
-                                                        { "revisionId", revision.Key.RevisionId }
-                                                    };
-                                                    var elementId = @thread.LineId;
-                                                }
                                                 <a asp-page="Review"
-                                                   asp-all-route-data="parms"
+                                                   asp-route-id=@Model.Review.ReviewId
+                                                   asp-route-revisionId=@revision.Key.RevisionId
                                                    asp-fragment=@Uri.EscapeUriString(elementId)>@elementId</a>
                                             </td>
                                         </tr>

@@ -3,7 +3,24 @@ param (
   $RootDirectory # ideally $(Build.SourcesDirectory)
 )
 
+function Get-Longest-Match($path, $codeOwnersIndex) {
+  $matchedLength = 0
+  $matchedPath = "" 
+
+  foreach($key in $codeOwnersIndex.keys) {
+    $keyLength = $key.Length
+    if ($path.startsWith($key) -and $keyLength -ge $matchedLength) {
+      $matchedLength = $keyLength
+      $matchedPath = $key
+    }
+  }
+
+  return $matchedPath
+}
+
+$target = $TargetDirectory.ToLower()
 $codeOwnersLocation = Join-Path $RootDirectory -ChildPath ".github/CODEOWNERS"
+$ownedFolders = @{}
 
 if (!(Test-Path $codeOwnersLocation)) {
   Write-Host "Unable to find CODEOWNERS file in target directory $RootDirectory"
@@ -11,8 +28,6 @@ if (!(Test-Path $codeOwnersLocation)) {
 }
 
 $codeOwnersContent = Get-Content $codeOwnersLocation
-
-$ownedFolders = @{}
 
 foreach ($contentLine in $codeOwnersContent) {
   if (-not $contentLine.StartsWith("#") -and $contentLine){
@@ -26,15 +41,17 @@ foreach ($contentLine in $codeOwnersContent) {
   }
 }
 
-$results = $ownedFolders[$TargetDirectory.ToLower()]
+$results = $ownedFolders[$target]
+$looseMatch = Get-Longest-Match -path $target -codeOwnersIndex $ownedFolders
 
-if ($results) {
-  Write-Host "Discovered code owners for path $TargetDirectory are $results."
-  return $results
+if ($looseMatch) {
+  Write-Host "Found a folder $looseMatch to match $target"
+
+  return $ownedFolders[$looseMatch]
 }
 else {
-  Write-Host "Unable to match path $TargetDirectory in CODEOWNERS file located at $codeOwnersLocation."
-  Write-Host $ownedFolders | ConvertTo-Json
+  Write-Host "Unable to match path $target in CODEOWNERS file located at $codeOwnersLocation."
+  Write-Host ($ownedFolders | ConvertTo-Json)
   return ""
 }
 

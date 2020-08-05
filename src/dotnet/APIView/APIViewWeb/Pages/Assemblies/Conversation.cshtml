@@ -6,7 +6,7 @@
 }
 <div class="row">
     <div class="col" data-review-id=@Model.Review.ReviewId>
-        @if (@Model.Comments.Threads.FirstOrDefault() == null)
+        @if (!Model.Threads.Any())
         {
             <div class="p-2 text-muted">There are no comments in the review.</div>
         }

@@ -19,7 +19,6 @@ namespace APIViewWeb.Pages.Assemblies
 
         public string Endpoint { get; }
         public ReviewModel Review { get; private set; }
-        public ReviewCommentsModel Comments { get; private set; }
 
         public IOrderedEnumerable<KeyValuePair<ReviewRevisionModel, List<CommentThreadModel>>> Threads { get; set; }
 
@@ -39,8 +38,8 @@ namespace APIViewWeb.Pages.Assemblies
         {
             TempData["Page"] = "conversation";
             Review = await _reviewManager.GetReviewAsync(User, id);
-            Comments = await _commentsManager.GetReviewCommentsAsync(id);
-            Threads = ParseThreads(Comments.Threads);
+            var comments = await _commentsManager.GetReviewCommentsAsync(id);
+            Threads = ParseThreads(comments.Threads);
             return Page();
         }
 

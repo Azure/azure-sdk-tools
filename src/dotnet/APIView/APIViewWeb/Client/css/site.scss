@@ -206,10 +206,9 @@ form.comment {
     border-collapse: separate;
     tab-size: 8;
     border-spacing: 0;
-    padding-top: 8px;
-    padding-bottom: 8px;
     background-color: white; // prevents code-window from overlapping stickySidebar
     table-layout: fixed;
+    width: 100%;
 }
 
 .code-line {
@@ -273,6 +272,7 @@ form.comment {
     padding-right: 10px;
     position: relative;
     vertical-align: top;
+    width: 100%;
 }
 
 code-inner {

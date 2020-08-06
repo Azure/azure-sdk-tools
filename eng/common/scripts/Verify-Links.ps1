@@ -146,7 +146,7 @@ function CheckLink ([System.Uri]$linkUri)
       $statusCode = $_.Exception.Response.StatusCode.value__
 
       if(!$statusCode) {
-        #Pulling the error code from the inner socket exception
+        # Try to pull the error code from any inner SocketException we might hit
         $statusCode = $_.Exception.InnerException.ErrorCode
       }
 

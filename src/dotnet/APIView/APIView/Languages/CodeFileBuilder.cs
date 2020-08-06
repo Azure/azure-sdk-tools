@@ -47,7 +47,7 @@ namespace ApiView
 
         public ICodeFileBuilderSymbolOrderProvider SymbolOrderProvider { get; set; } = new CodeFileBuilderSymbolOrderProvider();
 
-        public const string CurrentVersion = "17";
+        public const string CurrentVersion = "18";
 
         private IEnumerable<INamespaceSymbol> EnumerateNamespaces(IAssemblySymbol assemblySymbol)
         {
@@ -418,6 +418,29 @@ namespace ApiView
             else if (typedConstant.Kind == TypedConstantKind.Enum)
             {
                 new CodeFileBuilderEnumFormatter(builder).Format(typedConstant.Type, typedConstant.Value);
+            }
+            else if (typedConstant.Kind == TypedConstantKind.Array)
+            {
+                builder.Keyword(SyntaxKind.NewKeyword);
+                builder.Punctuation("[] {");
+
+                bool first = true;
+
+                foreach (var value in typedConstant.Values)
+                {
+                    if (!first)
+                    {
+                        builder.Punctuation(SyntaxKind.CommaToken);
+                        builder.Space();
+                    }
+                    else
+                    {
+                        first = false;
+                    }
+
+                    BuildTypedConstant(builder, value);
+                }
+                builder.Punctuation("}");
             }
             else
             {

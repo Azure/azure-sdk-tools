@@ -14,22 +14,21 @@ Deploys live test resources defined for a service directory to Azure.
 ## SYNTAX
 
 ### Default (Default)
-
-```text
-New-TestResources.ps1 [-BaseName] <String> -ServiceDirectory <String> -TestApplicationId <String>
- [-TestApplicationSecret <String>] [-TestApplicationOid <String>] [-DeleteAfterHours <Int32>]
- [-Location <String>] [-Environment <String>] [-AdditionalParameters <Hashtable>] [-CI] [-Force] [-WhatIf]
- [-Confirm] [<CommonParameters>]
+```
+New-TestResources.ps1 [-BaseName] <String> [-ResourceGroupName <String>] -ServiceDirectory <String>
+ -TestApplicationId <String> [-TestApplicationSecret <String>] [-TestApplicationOid <String>]
+ [-DeleteAfterHours <Int32>] [-Location <String>] [-Environment <String>] [-AdditionalParameters <Hashtable>]
+ [-CI] [-Force] [-OutFile] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ### Provisioner
-
-```text
-New-TestResources.ps1 [-BaseName] <String> -ServiceDirectory <String> -TestApplicationId <String>
- [-TestApplicationSecret <String>] [-TestApplicationOid <String>] -TenantId <String> [-SubscriptionId <String>]
- -ProvisionerApplicationId <String> -ProvisionerApplicationSecret <String> [-DeleteAfterHours <Int32>]
- [-Location <String>] [-Environment <String>] [-AdditionalParameters <Hashtable>] [-CI] [-Force] [-WhatIf]
- [-Confirm] [<CommonParameters>]
+```
+New-TestResources.ps1 [-BaseName] <String> [-ResourceGroupName <String>] -ServiceDirectory <String>
+ -TestApplicationId <String> [-TestApplicationSecret <String>] [-TestApplicationOid <String>]
+ -TenantId <String> [-SubscriptionId <String>] -ProvisionerApplicationId <String>
+ -ProvisionerApplicationSecret <String> [-DeleteAfterHours <Int32>] [-Location <String>]
+ [-Environment <String>] [-AdditionalParameters <Hashtable>] [-CI] [-Force] [-OutFile] [-WhatIf] [-Confirm]
+ [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -114,6 +113,22 @@ Aliases:
 
 Required: True
 Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ResourceGroupName
+Set this value to deploy directly to a Resource Group that has already been
+created.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -402,8 +417,25 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -WhatIf
+### -OutFile
+Save test environment settings into a test-resources.json.env file next to test-resources.json.
+File is protected via DPAPI.
+Supported only on windows.
+The environment file would be scoped to the current repository directory.
 
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
 Shows what would happen if the cmdlet runs.
 The cmdlet is not run.
 
@@ -420,31 +452,12 @@ Accept wildcard characters: False
 ```
 
 ### -Confirm
-
 Prompts you for confirmation before running the cmdlet.
 
 ```yaml
 Type: SwitchParameter
 Parameter Sets: (All)
 Aliases: cf
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -OutFile
-
-save test environment settings into a test-resources.json.env file next to test-resources.json.
-The file is protected via DPAPI. The environment file would be scoped to the current repository directory.
-Note: Supported only on Windows.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
 
 Required: False
 Position: Named
@@ -465,4 +478,5 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## RELATED LINKS
 
-[Remove-TestResources.ps1](./Remove-TestResources.ps1.md)
+[Remove-TestResources.ps1]()
+

@@ -8,21 +8,20 @@ using ApiView;
 
 namespace APIViewWeb
 {
-    public class JsonLanguageService : ILanguageService
+    public class JsonLanguageService : LanguageService
     {
-        public string Name { get; } = "Json";
+        public override string Name { get; } = "Json";
+        public override string Extension { get; } = ".json";
 
-        public bool IsSupportedExtension(string extension)
+        public override bool CanUpdate(string versionString) => false;
+
+        public override bool IsSupportedFile(string name)
         {
-            return string.Equals(extension, ".json", comparisonType: StringComparison.OrdinalIgnoreCase);
+            // Skip JS uploads
+            return base.IsSupportedFile(name) && !name.EndsWith(".api.json", StringComparison.OrdinalIgnoreCase);
         }
 
-        public bool CanUpdate(string codeFile)
-        {
-            return false;
-        }
-
-        public async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis)
+        public override async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis)
         {
             return await CodeFile.DeserializeAsync(stream);
         }

@@ -14,7 +14,7 @@ using APIView;
 
 namespace APIViewWeb
 {
-    public class CLanguageService : ILanguageService
+    public class CLanguageService : LanguageService
     {
         private const string CurrentVersion = "3";
         private static Regex _typeTokenizer = new Regex("\\w+|[^\\w]+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
@@ -67,13 +67,13 @@ namespace APIViewWeb
             "_Thread_local"
         };
 
-        public string Name { get; } = "C";
+        public override string Name { get; } = "C";
 
-        public bool IsSupportedExtension(string extension) => string.Equals(extension, ".zip", comparisonType: StringComparison.OrdinalIgnoreCase);
+        public override string Extension { get; } = ".zip";
 
-        public bool CanUpdate(string versionString) => versionString != CurrentVersion;
+        public override bool CanUpdate(string versionString) => versionString != CurrentVersion;
 
-        public async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis)
+        public override async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis)
         {
             MemoryStream astStream = new MemoryStream();
             await stream.CopyToAsync(astStream);

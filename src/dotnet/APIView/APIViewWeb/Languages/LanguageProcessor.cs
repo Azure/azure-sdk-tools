@@ -6,25 +6,18 @@ using ApiView;
 
 namespace APIViewWeb
 {
-    public abstract class LanguageProcessor: ILanguageService
+    public abstract class LanguageProcessor: LanguageService
     {
-        public abstract string Name { get; }
-        public abstract string Extension { get; }
         public abstract string ProcessName { get; }
         public abstract string VersionString { get; }
-        public abstract string GetProccessorArguments(string originalName, string tempDirectory, string jsonPath);
+        public abstract string GetProcessorArguments(string originalName, string tempDirectory, string jsonPath);
 
-        public bool IsSupportedExtension(string extension)
-        {
-            return string.Equals(extension, Extension, comparisonType: StringComparison.OrdinalIgnoreCase);
-        }
-
-        public bool CanUpdate(string versionString)
+        public override bool CanUpdate(string versionString)
         {
             return versionString != VersionString;
         }
 
-        public async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis)
+        public override async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis)
         {
             var tempPath = Path.GetTempPath();
             var randomSegment = Guid.NewGuid().ToString("N");
@@ -41,7 +34,7 @@ namespace APIViewWeb
 
             try
             {
-                var arguments = GetProccessorArguments(originalName, tempDirectory, jsonFilePath);
+                var arguments = GetProcessorArguments(originalName, tempDirectory, jsonFilePath);
                 var processStartInfo = new ProcessStartInfo(ProcessName, arguments);
                 processStartInfo.WorkingDirectory = tempDirectory;
                 processStartInfo.RedirectStandardError = true;

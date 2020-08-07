@@ -32,6 +32,7 @@ variables:
   NodeVersion: '12.x'
   BuildConfiguration: 'Release'
   PythonParserPackagePath: 'packages/python-packages/api-stub-generator'
+  TypeScriptGeneratorDirectory: 'src/ts/ts-genapi'
 
 stages:
   - stage: 'Main'
@@ -66,6 +67,16 @@ stages:
               npm run-script build
             workingDirectory: $(WebClientProjectDirectory)
             displayName: "Build client assets"
+
+          - script: |
+              npm install
+            workingDirectory: $(TypeScriptGeneratorDirectory)
+            displayName: "Install npm packages typescript generator"
+
+          - script: |
+              npm run-script build
+            workingDirectory: $(TypeScriptGeneratorDirectory)
+            displayName: "Build typescript generator"
 
           - task: Maven@3
             inputs:

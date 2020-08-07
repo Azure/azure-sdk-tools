@@ -1,11 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using System;
-using System.Diagnostics;
 using System.IO;
-using System.Threading.Tasks;
-using ApiView;
 
 namespace APIViewWeb
 {
@@ -16,7 +12,7 @@ namespace APIViewWeb
         public override string ProcessName { get; } = "java";
         public override string VersionString { get; } = "apiview-java-processor-1.9.0.jar";
 
-        public override string GetProccessorArguments(string originalName, string tempDirectory, string jsonPath)
+        public override string GetProcessorArguments(string originalName, string tempDirectory, string jsonPath)
         {
             var jarPath = Path.Combine(
                     Path.GetDirectoryName(typeof(JavaLanguageService).Assembly.Location),

@@ -8,6 +8,7 @@
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <JavaProcessor>..\..\..\java\apiview-java-processor\target\apiview-java-processor-1.9.0.jar</JavaProcessor>
     <PythonProcessor>..\..\..\..\packages\python-packages\api-stub-generator\dist\api_stub_generator-0.1.0-py3-none-any.whl</PythonProcessor>
+    <JavaScriptProcessor>..\..\..\ts\ts-genapi\</JavaScriptProcessor>
     <TypeScriptToolsVersion>latest</TypeScriptToolsVersion>
     <TypeScriptCompileBlocked>true</TypeScriptCompileBlocked>
   </PropertyGroup>
@@ -30,6 +31,7 @@
 
   <ItemGroup>
     <Content Include="$(JavaProcessor)" Condition="Exists($(JavaProcessor))" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="$(JavaScriptProcessor)\**\*" Condition="Exists($(JavaScriptProcessor))" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

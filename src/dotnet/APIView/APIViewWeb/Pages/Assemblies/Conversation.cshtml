@@ -5,49 +5,38 @@
     ViewData["Title"] = "Conversation";
 }
 <div class="row">
-    <div class="col" data-review-id=@Model.Review.ReviewId>
+    <div class="col p-2" data-review-id=@Model.Review.ReviewId>
         @if (!Model.Threads.Any())
         {
-            <div class="p-2 text-muted">There are no comments in the review.</div>
+            <div class="text-muted">There are no comments in the review.</div>
         }
         else
         {
-            <div class="p-3">
+            <div class="border">
                 @foreach (var revision in Model.Threads)
                 {
                     var divId = $"rev-{revision.Key.RevisionId}";
-                    <div class="p-1">
-                        <div class="card">
-                            <div class="card-header" id="header-@revision.Key.RevisionId">
-                                <h5 class="mb-0">
-                                    <button class="btn btn-link ml-n3" data-toggle="collapse" data-target="#@divId" aria-expanded="true" aria-controls=@divId>
-                                        @revision.Key.DisplayName
-                                    </button>
-                                </h5>
-                            </div>
-                            <div id=@divId class="collapse show" data-revision-id=@revision.Key.RevisionId aria-labelledby="header-@revision.Key.RevisionId">
-                                <table class="code-window">
-                                    @foreach (var thread in revision.Value)
-                                    {
-                                        var elementId = thread.LineId;
-                                        <tr>
-                                            <td class="p-2">
-                                                <a asp-page="Review"
-                                                   asp-route-id=@Model.Review.ReviewId
-                                                   asp-route-revisionId=@revision.Key.RevisionId
-                                                   asp-fragment=@Uri.EscapeUriString(elementId)>@elementId</a>
-                                            </td>
-                                        </tr>
-                                        <partial name="_CommentThreadPartial" model="@thread" />
-                                    }
-                                </table>
-                            </div>
-                        </div>
+
+                    <div class="card-header p-2 text-black-50" id="header-@revision.Key.RevisionId" data-toggle="collapse" data-target="#@divId">
+                            @revision.Key.DisplayName
+                    </div>
+                    <div id=@divId class="collapse show" data-revision-id=@revision.Key.RevisionId aria-labelledby="header-@revision.Key.RevisionId">
+                        <table class="code-window">
+                            @foreach (var thread in revision.Value)
+                            {
+                                var elementId = thread.LineId;
+                                <tr class="code-line"><td class="code p-2"><a asp-page="Review"
+                                           asp-route-id=@Model.Review.ReviewId
+                                           asp-route-revisionId=@revision.Key.RevisionId
+                                           asp-fragment=@Uri.EscapeUriString(elementId)>@elementId</a></td></tr>
+                                <partial name="_CommentThreadPartial" model="@thread" />
+                            }
+                        </table>
                     </div>
                 }
             </div>
         }
-    </div>
+
 </div>
 <partial name="_CommentFormPartial" />
 

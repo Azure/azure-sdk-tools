@@ -26,6 +26,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
                               where r.Result == TaskResult.Failed
                               where r.RecordType == "Task"
                               where r.Task.Name == "Maven"
+                              where r.Log != null
                               select r;
 
             foreach (var failedTask in failedTasks)

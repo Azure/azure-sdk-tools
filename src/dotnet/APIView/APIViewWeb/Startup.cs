@@ -79,11 +79,12 @@ namespace APIViewWeb
             services.AddSingleton<CommentsManager>();
             services.AddSingleton<NotificationManager>();
 
-            services.AddSingleton<ILanguageService, JsonLanguageService>();
-            services.AddSingleton<ILanguageService, CSharpLanguageService>();
-            services.AddSingleton<ILanguageService, CLanguageService>();
-            services.AddSingleton<ILanguageService, JavaLanguageService>();
-            services.AddSingleton<ILanguageService, PythonLanguageService>();
+            services.AddSingleton<LanguageService, JsonLanguageService>();
+            services.AddSingleton<LanguageService, CSharpLanguageService>();
+            services.AddSingleton<LanguageService, CLanguageService>();
+            services.AddSingleton<LanguageService, JavaLanguageService>();
+            services.AddSingleton<LanguageService, PythonLanguageService>();
+            services.AddSingleton<LanguageService, JavaScriptLanguageService>();
 
             services.AddAuthentication(options =>
                 {

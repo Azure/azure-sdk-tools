@@ -25,7 +25,7 @@ namespace APIViewWeb.Respositories
 
         private readonly CosmosCommentsRepository _commentsRepository;
 
-        private readonly IEnumerable<ILanguageService> _languageServices;
+        private readonly IEnumerable<LanguageService> _languageServices;
 
         private readonly NotificationManager _notificationManager;
 
@@ -35,7 +35,7 @@ namespace APIViewWeb.Respositories
             BlobCodeFileRepository codeFileRepository,
             BlobOriginalsRepository originalsRepository,
             CosmosCommentsRepository commentsRepository,
-            IEnumerable<ILanguageService> languageServices,
+            IEnumerable<LanguageService> languageServices,
             NotificationManager notificationManager)
         {
             _authorizationService = authorizationService;
@@ -184,13 +184,12 @@ namespace APIViewWeb.Respositories
         }
 
         private async Task<ReviewCodeFileModel> CreateFileAsync(
-            string revisionId, 
+            string revisionId,
             string originalName,
             Stream fileStream,
             bool runAnalysis)
         {
-            var originalNameExtension = Path.GetExtension(originalName);
-            var languageService = _languageServices.Single(s => s.IsSupportedExtension(originalNameExtension));
+            var languageService = _languageServices.Single(s => s.IsSupportedFile(originalName));
 
             var reviewCodeFileModel = new ReviewCodeFileModel
             {
@@ -258,7 +257,7 @@ namespace APIViewWeb.Respositories
             file.Name = codeFile.Name;
         }
 
-        private ILanguageService GetLanguageService(string language)
+        private LanguageService GetLanguageService(string language)
         {
             return _languageServices.Single(service => service.Name == language);
         }
@@ -276,7 +275,7 @@ namespace APIViewWeb.Respositories
         {
             var result = await _authorizationService.AuthorizeAsync(
                 user,
-                revisionModel, 
+                revisionModel,
                 new[] { RevisionOwnerRequirement.Instance });
             if (!result.Succeeded)
             {

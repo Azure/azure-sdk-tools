@@ -16,7 +16,7 @@ function appendMembers(builder: TokensBuilder, navigation: IApiViewNavItem[], it
     builder.lineId(item.canonicalReference.toString());
     builder.indent();
     if (item instanceof ApiDeclaredItem) {
-        item.excerptTokens.forEach(token => {
+        for (const token of item.excerptTokens) {
             if (token.kind === ExcerptTokenKind.Reference)
             {
                 builder.typeReference(token.canonicalReference.toString(), token.text);
@@ -25,7 +25,7 @@ function appendMembers(builder: TokensBuilder, navigation: IApiViewNavItem[], it
             {
                 builder.splitAppend(token.text, item.canonicalReference.toString(), item.displayName);
             }
-        });
+        }
     }
 
     var navigationItem: IApiViewNavItem;
@@ -65,9 +65,9 @@ function appendMembers(builder: TokensBuilder, navigation: IApiViewNavItem[], it
                 .newline()
                 .incIndent()
     
-            item.members.forEach(member => {
+            for (const member of item.members) {
                 appendMembers(builder,navigationItem.ChildItems, member);
-            });
+            }
 
             builder
                 .decIndent()
@@ -96,11 +96,13 @@ apiModel.loadPackage(process.argv[2]);
 var navigation: IApiViewNavItem[] = [];
 var builder = new TokensBuilder();
 
-apiModel.packages.forEach(p => 
-    p.entryPoints.forEach(e => 
-        e.members.forEach(m => appendMembers(builder, navigation, m))
-        )
-);
+for (const modelPackage of apiModel.packages) {    
+    for (const entryPoint of modelPackage.entryPoints) {
+        for (const member of entryPoint.members) {
+            appendMembers(builder, navigation, member);
+        }
+    }
+}
 
 var apiViewFile: IApiViewFile = {
     Name: apiModel.packages[0].name,

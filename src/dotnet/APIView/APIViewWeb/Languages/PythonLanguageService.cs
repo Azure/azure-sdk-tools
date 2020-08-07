@@ -22,7 +22,7 @@ namespace APIViewWeb
             _apiViewPythonProcessor = configuration["PYTHONPROCESSORPATH"] ?? string.Empty;
         }
 
-        public override string GetProccessorArguments(string originalName, string tempDirectory, string jsonPath)
+        public override string GetProcessorArguments(string originalName, string tempDirectory, string jsonPath)
         {
             return $"--pkg-path {originalName} --temp-path {tempDirectory}" +
                 $" --out-path {jsonPath} --hide-report";

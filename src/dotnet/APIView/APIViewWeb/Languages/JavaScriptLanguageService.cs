@@ -13,7 +13,7 @@ namespace APIViewWeb
         public override string ProcessName { get; } = "node";
         public override string VersionString { get; } = "1";
 
-        public override string GetProccessorArguments(string originalName, string tempDirectory, string jsonFilePath)
+        public override string GetProcessorArguments(string originalName, string tempDirectory, string jsonFilePath)
         {
             var jsPath = Path.Combine(
                     Path.GetDirectoryName(typeof(JavaLanguageService).Assembly.Location),

@@ -10,7 +10,7 @@ namespace APIViewWeb
     {
         public abstract string ProcessName { get; }
         public abstract string VersionString { get; }
-        public abstract string GetProccessorArguments(string originalName, string tempDirectory, string jsonPath);
+        public abstract string GetProcessorArguments(string originalName, string tempDirectory, string jsonPath);
 
         public override bool CanUpdate(string versionString)
         {
@@ -34,7 +34,7 @@ namespace APIViewWeb
 
             try
             {
-                var arguments = GetProccessorArguments(originalName, tempDirectory, jsonFilePath);
+                var arguments = GetProcessorArguments(originalName, tempDirectory, jsonFilePath);
                 var processStartInfo = new ProcessStartInfo(ProcessName, arguments);
                 processStartInfo.WorkingDirectory = tempDirectory;
                 processStartInfo.RedirectStandardError = true;

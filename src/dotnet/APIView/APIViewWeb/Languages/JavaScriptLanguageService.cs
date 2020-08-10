@@ -16,7 +16,7 @@ namespace APIViewWeb
         public override string GetProcessorArguments(string originalName, string tempDirectory, string jsonFilePath)
         {
             var jsPath = Path.Combine(
-                    Path.GetDirectoryName(typeof(JavaLanguageService).Assembly.Location),
+                    Path.GetDirectoryName(typeof(JavaScriptLanguageService).Assembly.Location),
                     "export.js");
 
             return $"{jsPath} \"{originalName}\" \"{jsonFilePath}\"";

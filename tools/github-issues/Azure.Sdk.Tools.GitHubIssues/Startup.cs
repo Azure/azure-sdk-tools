@@ -24,8 +24,11 @@ namespace Azure.Sdk.Tools.GitHubIssues
         {
             var websiteResourceGroupEnvironmentVariable = GetWebsiteResourceGroupEnvironmentVariable();
 
+            var credential = new DefaultAzureCredential();
+
             builder.Services.AddAzureClients(builder =>
             {
+                builder.UseCredential(credential);
                 var keyVaultUri = new Uri($"https://{websiteResourceGroupEnvironmentVariable}.vault.azure.net/");
                 builder.AddSecretClient(keyVaultUri);
             });
@@ -33,7 +36,7 @@ namespace Azure.Sdk.Tools.GitHubIssues
             builder.Services.AddSingleton<ConfigurationClient>((provider) =>
             {
                 var appConfigurationUri = new Uri($"https://{websiteResourceGroupEnvironmentVariable}.azconfig.io/");
-                var configurationClient = new ConfigurationClient(appConfigurationUri, new DefaultAzureCredential());
+                var configurationClient = new ConfigurationClient(appConfigurationUri, credential);
                 return configurationClient;
             });
 

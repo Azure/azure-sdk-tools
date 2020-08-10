@@ -1,6 +1,6 @@
-﻿namespace GitHubIssues
+﻿namespace Azure.Sdk.Tools.GitHubIssues.Services.Configuration
 {
-    internal class RepositoryConfig
+    public class RepositoryConfiguration
     {
         public string Owner { get; set; }
 
@@ -10,7 +10,7 @@
 
         public string[] CcEmail { get; set; }
 
-        public static RepositoryConfig Create(string entry)
+        public static RepositoryConfiguration Create(string entry)
         {
             // the entry looks like:
             // repo\owner\to:alias,alias#cc:alias
@@ -39,7 +39,7 @@
                 }
             }
 
-            RepositoryConfig config = new RepositoryConfig
+            RepositoryConfiguration config = new RepositoryConfiguration
             {
                 Owner = entries[0],
                 Name = entries[1],

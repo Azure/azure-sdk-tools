@@ -1,6 +1,6 @@
 ﻿using Octokit;
 
-namespace GitHubIssues.Models
+namespace Azure.Sdk.Tools.GitHubIssues.Reports
 {
     public class ReportIssue
     {

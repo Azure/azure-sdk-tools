@@ -14,7 +14,7 @@ param (
   # list of http status codes count as broken links. Defaults to 400, 401, 404, SocketError.HostNotFound = 11001, SocketError.NoData = 11004
   [array] $errorStatusCodes = @(400, 401, 404, 11001, 11004),
   # flag to allow checking against azure sdk link guidance.
-  [bool] $linkGuidance = $true
+  [bool] $linkGuidanceEnabled = $true
 )
 
 $ProgressPreference = "SilentlyContinue"; # Disable invoke-webrequest progress dialog
@@ -67,7 +67,7 @@ function ResolveUri ([System.Uri]$referralUri, [string]$link)
   }
 
   $linkUri = [System.Uri]$link;
-  if($linkGuidance){
+  if($linkGuidanceEnabled){
     if (!$linkUri.IsAbsoluteUri) {
     # For rooted paths resolve from the baseUrl
       if ($link.StartsWith("/")) {
@@ -121,7 +121,7 @@ function CheckLink ([System.Uri]$linkUri)
   Write-Verbose "Checking link $linkUri..."
 
   # Check if link uri includes locale info.
-  if ($linkGuidance) {
+  if ($linkGuidanceEnabled) {
     foreach ($locale in $locales) {
       if ($linkUri -match $locale) {
         LogWarning "DO NOT include locale $locale information in links: $linkUri."

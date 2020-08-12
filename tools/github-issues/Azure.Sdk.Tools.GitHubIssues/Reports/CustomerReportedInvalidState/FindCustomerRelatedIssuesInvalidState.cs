@@ -1,39 +1,43 @@
-﻿using GitHubIssues.Helpers;
+﻿using Azure.Sdk.Tools.GitHubIssues.Email;
+using Azure.Sdk.Tools.GitHubIssues.Services.Configuration;
+using GitHubIssues.Helpers;
 using GitHubIssues.Html;
-using GitHubIssues.Models;
 using Microsoft.Extensions.Logging;
 using Octokit;
+using Polly;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
+using System.Threading.Tasks;
 
-namespace GitHubIssues.Reports
+namespace Azure.Sdk.Tools.GitHubIssues.Reports
 {
-    internal partial class FindCustomerRelatedIssuesInvalidState : BaseFunction
+    public partial class FindCustomerRelatedIssuesInvalidState : BaseReport
     {
-        public FindCustomerRelatedIssuesInvalidState(ILogger log) : base(log)
+        public FindCustomerRelatedIssuesInvalidState(IConfigurationService configurationService) : base(configurationService)
         {
 
         }
 
-        protected override void ExecuteCore()
+        protected override async Task ExecuteCoreAsync(ReportExecutionContext context)
         {
-            foreach (RepositoryConfig repositoryConfig in _cmdLine.RepositoriesList)
+            foreach (RepositoryConfiguration repositoryConfiguration in context.RepositoryConfigurations)
             {
-                HtmlPageCreator emailBody = new HtmlPageCreator($"Customer reported issues with invalid state in {repositoryConfig.Name}");
-                bool hasFoundIssues = ValidateCustomerReportedIssues(repositoryConfig, emailBody);
+                HtmlPageCreator emailBody = new HtmlPageCreator($"Customer reported issues with invalid state in {repositoryConfiguration.Name}");
+                bool hasFoundIssues = ValidateCustomerReportedIssues(context, repositoryConfiguration, emailBody);
 
                 if (hasFoundIssues)
                 {
                     // send the email
-                    EmailSender.SendEmail(_cmdLine.EmailToken, _cmdLine.FromEmail, emailBody.GetContent(), repositoryConfig.ToEmail, repositoryConfig.CcEmail,
-                        $"Customer reported issues in invalid state in repo {repositoryConfig.Name}", _log);
+                    EmailSender.SendEmail(context.SendGridToken, context.FromAddress, emailBody.GetContent(), repositoryConfiguration.ToEmail, repositoryConfiguration.CcEmail,
+                        $"Customer reported issues in invalid state in repo {repositoryConfiguration.Name}", context.Log);
                 }
             }
         }
 
-        private bool ValidateCustomerReportedIssues(RepositoryConfig repositoryConfig, HtmlPageCreator emailBody)
+        private bool ValidateCustomerReportedIssues(ReportExecutionContext context, RepositoryConfiguration repositoryConfig, HtmlPageCreator emailBody)
         {
             TableCreator tc = new TableCreator("Customer reported issues");
             tc.DefineTableColumn("Title", TableCreator.Templates.Title);
@@ -43,12 +47,12 @@ namespace GitHubIssues.Reports
             tc.DefineTableColumn("Issues Found", i => i.Note);
 
             List<ReportIssue> issuesWithNotes = new List<ReportIssue>();
-            foreach (Issue issue in _gitHub.SearchForGitHubIssues(CreateQuery(repositoryConfig)))
+            foreach (Issue issue in context.GitHubClient.SearchForGitHubIssues(CreateQuery(repositoryConfig)))
             {
                 if (!ValidateIssue(issue, out string issuesFound))
                 {
                     issuesWithNotes.Add(new ReportIssue() { Issue = issue, Note = issuesFound });
-                    _log.LogWarning($"{issue.Number}: {issuesFound}");
+                    context.Log.LogWarning($"{issue.Number}: {issuesFound}");
                 }
             }
 
@@ -265,7 +269,7 @@ namespace GitHubIssues.Reports
             return area;
         }
 
-        private SearchIssuesRequest CreateQuery(RepositoryConfig repoInfo)
+        private SearchIssuesRequest CreateQuery(RepositoryConfiguration repoInfo)
         {
             // Find all open issues
             //  That are marked as customer reported

@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using SendGrid;
+using System.IO;
 
 namespace Azure.Sdk.Tools.GitHubIssues.Email
 {
@@ -33,7 +34,11 @@ namespace Azure.Sdk.Tools.GitHubIssues.Email
             message.SetSubject($"GitHub Report: {title}");
             message.AddContent(MimeType.Html, template);
 
+#if !DEBUG
             var emailResult = client.SendEmailAsync(message).GetAwaiter().GetResult();
+#else
+            File.WriteAllText("output.html", template);
+#endif
         }
     }
 }

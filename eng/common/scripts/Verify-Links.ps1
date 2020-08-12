@@ -6,18 +6,20 @@ param (
   # switch that will enable devops specific logging for warnings
   [switch] $devOpsLogging = $false,
   # check the links recurisvely based on recursivePattern
-  [switch] $recursive = $true,
+  [switch] $recursive,
   # recusiving check links for all links verified that begin with this baseUrl, defaults to the folder the url is contained in
   [string] $baseUrl = "",
   # path to the root of the site for resolving rooted relative links, defaults to host root for http and file directory for local files
   [string] $rootUrl = "",
   # list of http status codes count as broken links. Defaults to 400, 401, 404, SocketError.HostNotFound = 11001, SocketError.NoData = 11004
   [array] $errorStatusCodes = @(400, 401, 404, 11001, 11004),
-  # flag to allow resolving relative paths or not
-  [bool] $resolveRelativeLinks = $true
+  # flag to allow checking against azure sdk link guidance.
+  [bool] $linkGuidance = $true
 )
 
 $ProgressPreference = "SilentlyContinue"; # Disable invoke-webrequest progress dialog
+# list of locale keywords
+[array] $locales = @("/en-us/")
 
 function NormalizeUrl([string]$url){
   if (Test-Path $url) {
@@ -65,11 +67,11 @@ function ResolveUri ([System.Uri]$referralUri, [string]$link)
   }
 
   $linkUri = [System.Uri]$link;
-  if($resolveRelativeLinks){
+  if($linkGuidance){
     if (!$linkUri.IsAbsoluteUri) {
     # For rooted paths resolve from the baseUrl
       if ($link.StartsWith("/")) {
-        echo "rooturl = $rootUrl"
+        Write-Verbose "rooturl = $rootUrl"
         $linkUri = new-object System.Uri([System.Uri]$rootUrl, ".$link");
       }
       else {
@@ -117,6 +119,18 @@ function CheckLink ([System.Uri]$linkUri)
   if ($checkedLinks.ContainsKey($linkUri)) { return }
 
   Write-Verbose "Checking link $linkUri..."
+
+  # Check if link uri includes locale info.
+  if ($linkGuidance) {
+    foreach ($locale in $locales) {
+      if ($linkUri -match $locale) {
+        LogWarning "DO NOT include locale $locale information in links: $linkUri."
+        $script:badLinks += $linkUri
+      }
+    }
+  }
+  
+
   if ($linkUri.IsFile) {
     if (!(Test-Path $linkUri.LocalPath)) {
       LogWarning "Link to file does not exist $($linkUri.LocalPath)"
@@ -124,6 +138,7 @@ function CheckLink ([System.Uri]$linkUri)
     }
   }
   else {
+
     try {
       $headRequestSucceeded = $true
       try {

@@ -23,10 +23,7 @@ namespace Azure.Sdk.Tools.GitHubIssues.Reports
 
         public async Task ExecuteAsync(ILogger log)
         {
-            Task<IEnumerable<RepositoryConfiguration>> pendingRepositoryConfigurations = ConfigurationService.GetRepositoryConfigurationsAsync();
             Task<string> pendingGitHubPersonalAccessToken = ConfigurationService.GetGitHubPersonalAccessTokenAsync();
-            Task<string> pendingSendGridToken = ConfigurationService.GetSendGridTokenAsync();
-            Task<string> pendingFromAddress = ConfigurationService.GetFromAddressAsync();
 
             var gitHubClient = new GitHubClient(new ProductHeaderValue("github-issues"))
             {
@@ -35,10 +32,10 @@ namespace Azure.Sdk.Tools.GitHubIssues.Reports
 
             var context = new ReportExecutionContext(
                 log,
-                await pendingFromAddress,
-                await pendingSendGridToken,
+                await ConfigurationService.GetFromAddressAsync(),
+                await ConfigurationService.GetSendGridTokenAsync(),
                 await pendingGitHubPersonalAccessToken,
-                await pendingRepositoryConfigurations,
+                await ConfigurationService.GetRepositoryConfigurationsAsync(),
                 gitHubClient
                 );
 

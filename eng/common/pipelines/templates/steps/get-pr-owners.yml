@@ -31,6 +31,7 @@ steps:
         Write-Host "Unable to locate a github user for identity $(Build.QueuedBy)"
       }
     displayName: 'Resolving Queuing User'
+    continueOnError: true
     workingDirectory: $(Build.SourcesDirectory)/tools_repo/tools/notification-configuration/identity-resolver
     env:
       APP_ID: $(notification-aad-app-id)

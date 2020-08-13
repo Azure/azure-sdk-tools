@@ -10,9 +10,9 @@ if ($scanLocation.PSIsContainer -ne $true)
 }
 
 Write-Host "Scanning path: $scanLocation"
-$yamlFiles = Get-ChildItem -Path $Path -Filter ci.yml -Recurse
+$yamlFiles = Get-ChildItem -Path $Path -Filter "ci*.yml" -Recurse
 
-Write-Host "Found $($yamlFiles.Length) ci.yml files under: $scanLocation"
+Write-Host "Found $($yamlFiles.Length) ci.*.yml files under: $scanLocation"
 
 foreach ($yamlFile in $yamlFiles)
 {

@@ -33,11 +33,10 @@ foreach ($yamlFile in $yamlFiles)
         }
         else {
             Write-Host "Adding: $line"
+            $skipComments = $false
             $linesWithoutHeader += $line
         }
     }
 
     Set-Content -Path $yamlFile -Value $linesWithoutHeader
 }
-
-# $yamlFiles | % { Write-Output $_.FullName }

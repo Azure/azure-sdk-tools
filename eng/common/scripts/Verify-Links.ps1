@@ -6,7 +6,7 @@ param (
   # switch that will enable devops specific logging for warnings
   [switch] $devOpsLogging = $false,
   # check the links recurisvely based on recursivePattern
-  [switch] $recursive = $true,
+  [switch] $recursive,
   # recusiving check links for all links verified that begin with this baseUrl, defaults to the folder the url is contained in
   [string] $baseUrl = "",
   # path to the root of the site for resolving rooted relative links, defaults to host root for http and file directory for local files

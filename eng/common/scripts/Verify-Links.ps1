@@ -117,15 +117,14 @@ function ParseLinks([string]$baseUri, [string]$htmlContent)
 function CheckLink ([System.Uri]$linkUri)
 {
   if ($checkedLinks.ContainsKey($linkUri)) { return }
-  $linkValid = $true;
-
+  $checkedLinks[$linkUri] = $true;
   Write-Verbose "Checking link $linkUri..."  
 
   if ($linkUri.IsFile) {
     if (!(Test-Path $linkUri.LocalPath)) {
       LogWarning "Link to file does not exist $($linkUri.LocalPath)"
       $script:badLinks += $linkUri
-      $linkValid = $false;
+      $checkedLinks[$linkUri] = $false;
     }
   }
   else {
@@ -158,7 +157,7 @@ function CheckLink ([System.Uri]$linkUri)
       if ($statusCode -in $errorStatusCodes) {
         LogWarning "[$statusCode] broken link $linkUri"
         $script:badLinks += $linkUri 
-        $linkValid = $false
+        $checkedLinks[$linkUri] = $false
       }
       else {
         if ($null -ne $statusCode) {
@@ -175,12 +174,10 @@ function CheckLink ([System.Uri]$linkUri)
   # Check if link uri includes locale info.
   if ($checkLinkGuidance -and ($linkUri -match $locale)) {
     LogWarning "DO NOT include locale 'en-us' information in links: $linkUri."
-    if ($linkValid) {
+    if ($checkedLinks[$linkUri]) {
       $script:badLinks += $linkUri
     }
   }
-
-  $checkedLinks[$linkUri] = $linkValid;
 }
 
 function GetLinks([System.Uri]$pageUri)

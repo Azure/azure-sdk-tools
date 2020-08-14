@@ -18,7 +18,7 @@ param (
 )
 
 $ProgressPreference = "SilentlyContinue"; # Disable invoke-webrequest progress dialog
-# list of locale keywords
+# Regex of the locale keywords.
 $locale = "/en-us/"
 
 function NormalizeUrl([string]$url){

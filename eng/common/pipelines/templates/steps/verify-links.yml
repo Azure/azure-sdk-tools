@@ -15,6 +15,6 @@ steps:
         -rootUrl "file://$(Build.SourcesDirectory)/${{ parameters.Directory }}" 
         -recursive:$false 
         -ignoreLinksFile: ${{ parameters.IgnoreLinksFile }}
-        -branchReplaceRegex: ($(System.PullRequest.sourceRepositoryUri)/blob/)(master)(/.*)
+        -branchReplaceRegex: "($(System.PullRequest.sourceRepositoryUri)/blob/)(master)(/.*)"
         -branchReplacementName: $(system.pullRequest.sourceCommitId)
         

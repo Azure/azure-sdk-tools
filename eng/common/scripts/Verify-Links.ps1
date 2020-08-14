@@ -127,7 +127,6 @@ function CheckLink ([System.Uri]$linkUri)
   if ($linkUri.IsFile) {
     if (!(Test-Path $linkUri.LocalPath)) {
       LogWarning "Link to file does not exist $($linkUri.LocalPath)"
-      $script:badLinks += $linkUri
       $linkValid = $false
     }
   }
@@ -160,7 +159,6 @@ function CheckLink ([System.Uri]$linkUri)
 
       if ($statusCode -in $errorStatusCodes) {
         LogWarning "[$statusCode] broken link $linkUri"
-        $script:badLinks += $linkUri 
         $linkValid = $false
       }
       else {
@@ -179,7 +177,6 @@ function CheckLink ([System.Uri]$linkUri)
   if ($checkLinkGuidance -and ($linkUri -match $locale)) {
     LogWarning "DO NOT include locale $locale information in links: $linkUri."
     if ($linkValid) {
-      $script:badLinks += $linkUri
       $linkValid = $false
     }
   }
@@ -237,7 +234,6 @@ if ($PSVersionTable.PSVersion.Major -lt 6)
 {
   LogWarning "Some web requests will not work in versions of PS earlier then 6. You are running version $($PSVersionTable.PSVersion)."
 }
-
 $badLinks = @();
 $ignoreLinks = @();
 if (Test-Path $ignoreLinksFile)
@@ -265,6 +261,9 @@ while ($pageUrisToCheck.Count -ne 0)
   
   foreach ($linkUri in $linkUris) {
     $isLinkValid = CheckLink $linkUri
+    if (!linkUri) {
+      $script:badLinks += $linkUri
+    }
     if ($recursive -and $isLinkValid) {
       if ($linkUri.ToString().StartsWith($baseUrl) -and !$checkedPages.ContainsKey($linkUri)) {
         $pageUrisToCheck.Enqueue($linkUri);

@@ -18,6 +18,8 @@ param(
     $AuthToken
 )
 
+$errorOccurred = $false
+
 function AddMembers($memberName, $additionSet) {
   $headers = @{
     Authorization = "bearer $AuthToken"
@@ -35,7 +37,8 @@ function AddMembers($memberName, $additionSet) {
       $resp | Write-Verbose
     }
     catch {
-      Write-Error "Error attempting to add $user `n$_"
+      Write-Host "Error attempting to add $user `n$_"
+      $errorOccurred = $true
     }
   }
 }
@@ -51,3 +54,7 @@ $teamAdditions = @($GitHubTeams.Split(",") | % { $_.Trim() } | ? { return $_ })
 
 AddMembers -memberName "reviewers" -additionSet $userAdditions
 AddMembers -memberName "team_reviewers" -additionSet $teamAdditions
+
+if ($errorOccurred) {
+  exit 1
+}

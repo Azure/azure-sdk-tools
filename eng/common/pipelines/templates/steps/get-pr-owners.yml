@@ -20,12 +20,12 @@ steps:
         --identity "$(Build.QueuedBy)"
 
       $resolvedIdentity = ""
-      try { $resolvedIdentity = $result[-1] | ConvertFrom-Json } catch { $null}
+      try { $resolvedIdentity = $result[-1] | ConvertFrom-Json } catch {}
 
       if($resolvedIdentity) {
         Write-Host $resolvedIdentity
 
-        Write-Output "##vso[task.setvariable variable=${{ parameters.TargetVariable }}]$($resolvedIdentity.GithubUserName)"
+        Write-Host "##vso[task.setvariable variable=${{ parameters.TargetVariable }}]$($resolvedIdentity.GithubUserName)"
       }
       else {
         Write-Host "Unable to locate a github user for identity $(Build.QueuedBy)"
@@ -49,6 +49,6 @@ steps:
       $originalValue = "$(${{ parameters.TargetVariable }})"
       $result = $(Build.SourcesDirectory)/eng/common/scripts/get-codeowners.ps1 -TargetDirectory /sdk/${{ parameters.ServiceDirectory }}/ -RootDirectory $(Build.SourcesDirectory)
       if ($result) {
-        Write-Output "##vso[task.setvariable variable=${{ parameters.TargetVariable }}]$originalValue,$result"
+        Write-Host "##vso[task.setvariable variable=${{ parameters.TargetVariable }}]$originalValue,$result"
       }
     displayName: Add CodeOwners if Present

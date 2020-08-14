@@ -15,9 +15,9 @@ param (
   [array] $errorStatusCodes = @(400, 401, 404, 11001, 11004),
   # flag to allow resolving relative paths or not
   [bool] $resolveRelativeLinks = $true,
-  # development repo owner from pr
-  [string] $branchReplaceRegex = "",
-  # development repo branch from pr
+  # regex to check if the link needs to be replaced
+  [string] $branchReplaceRegex = "(https://github.com/.*/blob/)master(/.*)",
+  # the substitute branch name or SHA commit
   [string] $branchReplacementName = ""
 )
 
@@ -171,7 +171,7 @@ function CheckLink ([System.Uri]$linkUri)
   }
   $checkedLinks[$linkUri] = $true;
 }
-$ReplacementPattern = "`${1}$branchReplacementName`$3"
+$ReplacementPattern = "`${1}$branchReplacementName`$2"
 function ReplaceGithubLink([string]$originLink) {
   if ($branchReplacementName -eq "") {
     return $originLink

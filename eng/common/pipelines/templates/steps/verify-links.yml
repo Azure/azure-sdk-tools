@@ -13,8 +13,8 @@ steps:
       arguments: >
         -urls $(dir -r -i *.md) 
         -rootUrl "file://$(Build.SourcesDirectory)/${{ parameters.Directory }}" 
-        -recursive:$false 
-        -ignoreLinksFile: ${{ parameters.IgnoreLinksFile }}
-        -branchReplaceRegex: "($(System.PullRequest.sourceRepositoryUri)/blob/)(master)(/.*)"
-        -branchReplacementName: $(system.pullRequest.sourceCommitId)
+        -recursive $false 
+        -ignoreLinksFile ${{ parameters.IgnoreLinksFile }}
+        -branchReplaceRegex "($(System.PullRequest.sourceRepositoryUri)/blob/)(master)(/.*)"
+        -branchReplacementName $(system.pullRequest.sourceCommitId)
         

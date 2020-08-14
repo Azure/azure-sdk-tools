@@ -264,8 +264,8 @@ while ($pageUrisToCheck.Count -ne 0)
   Write-Host "Found $($linkUris.Count) links on page $pageUri";
   
   foreach ($linkUri in $linkUris) {
-    CheckLink $linkUri
-    if ($recursive) {
+    $isLinkValid = CheckLink $linkUri
+    if ($recursive -and $isLinkValid) {
       if ($linkUri.ToString().StartsWith($baseUrl) -and !$checkedPages.ContainsKey($linkUri)) {
         $pageUrisToCheck.Enqueue($linkUri);
       }

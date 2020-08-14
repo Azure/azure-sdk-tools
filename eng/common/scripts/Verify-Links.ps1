@@ -19,7 +19,7 @@ param (
 
 $ProgressPreference = "SilentlyContinue"; # Disable invoke-webrequest progress dialog
 # list of locale keywords
-$locales = "/en-us/"
+$locale = "/en-us/"
 
 function NormalizeUrl([string]$url){
   if (Test-Path $url) {
@@ -117,7 +117,7 @@ function ParseLinks([string]$baseUri, [string]$htmlContent)
 function CheckLink ([System.Uri]$linkUri)
 {
   if ($checkedLinks.ContainsKey($linkUri)) { return }
-  $badLinkEnabled = $false;
+  $linkValid = $true;
 
   Write-Verbose "Checking link $linkUri..."  
 
@@ -125,11 +125,10 @@ function CheckLink ([System.Uri]$linkUri)
     if (!(Test-Path $linkUri.LocalPath)) {
       LogWarning "Link to file does not exist $($linkUri.LocalPath)"
       $script:badLinks += $linkUri
-      $badLinkEnabled = $true
+      $linkValid = $false;
     }
   }
   else {
-
     try {
       $headRequestSucceeded = $true
       try {
@@ -159,7 +158,7 @@ function CheckLink ([System.Uri]$linkUri)
       if ($statusCode -in $errorStatusCodes) {
         LogWarning "[$statusCode] broken link $linkUri"
         $script:badLinks += $linkUri 
-        $badLinkEnabled = $true
+        $linkValid = $false
       }
       else {
         if ($null -ne $statusCode) {
@@ -174,14 +173,14 @@ function CheckLink ([System.Uri]$linkUri)
   }
   
   # Check if link uri includes locale info.
-  if ($checkLinkGuidance -and $linkUri -match $locale) {
-    LogWarning "DO NOT include locale $locale information in links: $linkUri."
-    if (-Not $badLinkEnabled) {
+  if ($checkLinkGuidance -and ($linkUri -match $locale)) {
+    LogWarning "DO NOT include locale 'en-us' information in links: $linkUri."
+    if ($linkValid) {
       $script:badLinks += $linkUri
     }
   }
 
-  $checkedLinks[$linkUri] = $true;
+  $checkedLinks[$linkUri] = $linkValid;
 }
 
 function GetLinks([System.Uri]$pageUri)

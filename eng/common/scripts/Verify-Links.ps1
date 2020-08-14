@@ -67,7 +67,10 @@ function ResolveUri ([System.Uri]$referralUri, [string]$link)
   }
 
   $linkUri = [System.Uri]$link;
-  if(-Not $checkLinkGuidance) {
+  # Relative link check is gated by flag $checkLinkGuidance. 
+  # Allows to use relative link by default for backward compatibility.
+  # TODO: Need to disallow relative links in accordance with new sdk guidance.
+  if(!$checkLinkGuidance) {
     if (!$linkUri.IsAbsoluteUri) {
     # For rooted paths resolve from the baseUrl
       if ($link.StartsWith("/")) {
@@ -116,15 +119,16 @@ function ParseLinks([string]$baseUri, [string]$htmlContent)
 
 function CheckLink ([System.Uri]$linkUri)
 {
-  if ($checkedLinks.ContainsKey($linkUri)) { return }
-  $checkedLinks[$linkUri] = $true;
+  if ($checkedLinks.ContainsKey($linkUri)) { return $checkedLinks[$linkUri]}
+
+  $linkValid = $true
   Write-Verbose "Checking link $linkUri..."  
 
   if ($linkUri.IsFile) {
     if (!(Test-Path $linkUri.LocalPath)) {
       LogWarning "Link to file does not exist $($linkUri.LocalPath)"
       $script:badLinks += $linkUri
-      $checkedLinks[$linkUri] = $false;
+      $linkValid = $false
     }
   }
   else {
@@ -157,7 +161,7 @@ function CheckLink ([System.Uri]$linkUri)
       if ($statusCode -in $errorStatusCodes) {
         LogWarning "[$statusCode] broken link $linkUri"
         $script:badLinks += $linkUri 
-        $checkedLinks[$linkUri] = $false
+        $linkValid = $false
       }
       else {
         if ($null -ne $statusCode) {
@@ -176,8 +180,11 @@ function CheckLink ([System.Uri]$linkUri)
     LogWarning "DO NOT include locale 'en-us' information in links: $linkUri."
     if ($checkedLinks[$linkUri]) {
       $script:badLinks += $linkUri
+      $linkValid = $false
     }
   }
+  $checkedLinks[$linkUri] = $linkValid
+  return $linkValid
 }
 
 function GetLinks([System.Uri]$pageUri)

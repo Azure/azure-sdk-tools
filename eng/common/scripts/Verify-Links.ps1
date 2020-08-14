@@ -171,9 +171,9 @@ function CheckLink ([System.Uri]$linkUri)
   }
   $checkedLinks[$linkUri] = $true;
 }
-$ReplacementPattern = "`${1}$sourceCommit`$3"
+$ReplacementPattern = "`${1}$branchReplacementName`$3"
 function ReplaceGithubLink([string]$originLink) {
-  if ($sourceCommit -eq "") {
+  if ($branchReplacementName -eq "") {
     return $originLink
   }
   return $originLink -replace $branchReplaceRegex, $ReplacementPattern

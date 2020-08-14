@@ -93,15 +93,11 @@
                             <div class="tab-pane" id="python-help">
                                 <ol>
                                     <li>
-                                        Install apistubgen.
-                                        <code>pip install git+"https://github.com/Azure/azure-sdk-tools.git#subdirectory=packages/python-packages/api-stub-generator&egg=api-stub-generator"</code>
+                                        Generate wheel for the package.
+                                        <code>python setup.py bdist_wheel -d [dest_folder]</code>
                                     </li>
                                     <li>
-                                        Run apistubgen command with source repo or whl package as parameter to generate a json file with tokens
-                                        <code>apistubgen --pkg-path [path to package root]</code>
-                                    </li>
-                                    <li>
-                                        Upload generated json file
+                                        Upload generated whl file
                                     </li>
                                 </ol>
                             </div>

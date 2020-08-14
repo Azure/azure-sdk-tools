@@ -13,25 +13,18 @@ namespace APIViewWeb
         public override string Extension { get; } = ".whl";
         public override string VersionString { get; } = "0.1.3";
 
-        private readonly string _python3ProcessName;
-        public override string ProcessName => _python3ProcessName;
+        private readonly string _apiViewPythonProcessor;
+        public override string ProcessName => _apiViewPythonProcessor;
 
         public PythonLanguageService(IConfiguration configuration)
         {
-            // Default python version in azure web app is py 2.7 and python3 is not used by default
-            // when running script using python process.
-            // We need to run the script using full path to python3
-            _python3ProcessName = configuration["PYTHON3HOME"] ?? "python";
+            // apistubgen is located in python's scripts path e.g. <Pythonhome>/Scripts/apistubgen
+            // Env variable PYTHONPROCESSORPATH is set to <pythonhome>/Scripts/apistubgen where parser is located
+            _apiViewPythonProcessor = configuration["PYTHONPROCESSORPATH"] ?? string.Empty;
         }
         public override string GetProcessorArguments(string originalName, string tempDirectory, string jsonPath)
         {
-            var pythonScriptPath = Path.Combine(
-                    Path.GetDirectoryName(typeof(PythonLanguageService).Assembly.Location),
-                    "api-stub-generator",
-                    "apistubgen.py"
-                    );
-
-            return $"{pythonScriptPath} --pkg-path {originalName} --temp-path {tempDirectory}" +
+            return $"--pkg-path {originalName} --temp-path {tempDirectory}" +
                 $" --out-path {jsonPath} --hide-report";
         }
     }

@@ -171,7 +171,7 @@ function CheckLink ([System.Uri]$linkUri)
   }
   $checkedLinks[$linkUri] = $true;
 }
-$GithubRegex = "($sourceRepoUrl/blob/)(\w+)(/.*)"
+$GithubRegex = "($sourceRepoUrl/blob/)([a-zA-Z0-9/-/_]+)(/.*)"
 $ReplacementPattern = "`${1}$sourceCommit`$3"
 function ReplaceGithubLink([string]$originLink) {
   return $originLink -replace $GithubRegex, $ReplacementPattern

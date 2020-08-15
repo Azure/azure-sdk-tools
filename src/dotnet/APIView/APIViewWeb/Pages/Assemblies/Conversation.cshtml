@@ -17,7 +17,7 @@
                 {
                     var divId = $"rev-{revision.Key.RevisionId}";
 
-                    <div class="card-header p-2 text-black-50" id="header-@revision.Key.RevisionId" data-toggle="collapse" data-target="#@divId">
+                    <div class="card-header p-2 text-black-50 clickable" id="header-@revision.Key.RevisionId" data-toggle="collapse" data-target="#@divId">
                             @revision.Key.DisplayName
                     </div>
                     <div id=@divId class="collapse show" data-revision-id=@revision.Key.RevisionId aria-labelledby="header-@revision.Key.RevisionId">

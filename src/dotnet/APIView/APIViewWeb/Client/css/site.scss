@@ -441,6 +441,10 @@ code-inner {
     padding-left: 14px;
 }
 
+.clickable {
+    cursor: pointer;
+}
+
 /* DIAGNOSTICS */
 .code-diagnostics td {
     border: 1px solid red;

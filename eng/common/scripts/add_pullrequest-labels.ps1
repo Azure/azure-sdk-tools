@@ -22,6 +22,10 @@ if ($PRLabel -ne "") {
         maintainer_can_modify = $true
         labels                = $PRLabel
     }
+    $headers = @{
+        Authorization = "bearer $AuthToken"
+    }
+      
     try {
         $resp = Invoke-RestMethod -Method PATCH -Headers $headers $uri -Body ($data | ConvertTo-Json)
     }
@@ -31,8 +35,8 @@ if ($PRLabel -ne "") {
     }
 
     $resp | Write-Verbose
-    Write-Host -f green "Label added to pull request: https://github.com/$RepoOwner/$RepoName/pull/$($resp.number)"
+    Write-Host -f green "Label added to pull request: https://github.com/$RepoOwner/$RepoName/pull/($PRNumber)"
 
     # setting variable to reference the pull request by number
-    Write-Host "##vso[task.setvariable variable=Submitted.PullRequest.Number]$($resp.number)"                                                                       
+    Write-Host "##vso[task.setvariable variable=Submitted.PullRequest.Number]$PRNumber"                                                                       
 }

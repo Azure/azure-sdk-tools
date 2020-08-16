@@ -1,8 +1,13 @@
-﻿using System.Collections.Generic;
+﻿using CreateRuleFabricBot.CommandLine;
+using CreateRuleFabricBot.Markdown;
+using OutputColorizer;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace CreateRuleFabricBot.Rules.IssueRouting
 {
-    public class IssueRoutingCapability
+    public class IssueRoutingCapability : BaseCapability
     {
         private static readonly string s_template = @"
 {
@@ -17,22 +22,24 @@ namespace CreateRuleFabricBot.Rules.IssueRouting
     ""replyTemplate"": ""Thanks for the feedback! We are routing this to the appropriate team for follow-up. cc ${mentionees}."",
     ""taskName"" :""Triage issues to the service team""
   },
-  ""id"": ""###repo###""
+  ""id"": ""###taskId###""
 }";
 
         private readonly string _repo;
         private readonly string _owner;
+        private readonly string _servicesFile;
+
         private List<TriageConfig> _triageConfig = new List<TriageConfig>();
 
-        public int RouteCount { get { return _triageConfig.Count; } }
+        private int RouteCount { get { return _triageConfig.Count; } }
 
-        public IssueRoutingCapability(string owner, string repo)
+        public IssueRoutingCapability(string org, string repo, string servicesFile)
         {
             _repo = repo;
-            _owner = owner;
+            _owner = org;
+            _servicesFile = servicesFile;
         }
-
-        public void AddService(IEnumerable<string> labels, IEnumerable<string> mentionees)
+        private void AddService(IEnumerable<string> labels, IEnumerable<string> mentionees)
         {
             var tc = new TriageConfig();
             tc.Labels.AddRange(labels);
@@ -40,16 +47,37 @@ namespace CreateRuleFabricBot.Rules.IssueRouting
             _triageConfig.Add(tc);
         }
 
-        public static string GetTaskId(string owner, string repo)
+        public override string GetPayload()
         {
-            return $"AzureSDKTriage_{owner}_{repo}";
+            Colorizer.Write("Parsing service table... ");
+            MarkdownTable table = MarkdownTable.Parse(_servicesFile);
+            Colorizer.WriteLine("[Green!done].");
+
+            foreach (var row in table.Rows)
+            {
+                if (!string.IsNullOrEmpty(row[2].Trim()))
+                {
+                    // the row at position 0 is the label to use on top of 'Service Attention'
+                    string[] labels = new string[] { "Service Attention", row[0] };
+
+                    // The row at position 2 is the set of mentionees to ping on the issue.
+                    IEnumerable<string> mentionees = row[2].Split(',').Select(x => x.Replace("@", "").Trim());
+
+                    //add the service
+                    AddService(labels, mentionees);
+                }
+            }
+
+            Colorizer.WriteLine("Found [Yellow!{0}] service routes.", RouteCount);
+
+            return s_template
+                .Replace("###repo###", GetTaskId())
+                .Replace("###labelsAndMentions###", string.Join(",", _triageConfig));
         }
 
-        public string ToJson()
+        public override string GetTaskId()
         {
-            return s_template
-                .Replace("###repo###", GetTaskId(_owner, _repo))
-                .Replace("###labelsAndMentions###", string.Join(",", _triageConfig));
+            return $"AzureSDKTriage_{_owner}_{_repo}";
         }
     }
 }

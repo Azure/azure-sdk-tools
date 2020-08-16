@@ -58,5 +58,20 @@ namespace APIViewWeb
 
         public string GetUserEmail(ClaimsPrincipal user) =>
             NotificationManager.GetUserEmail(user);
+
+        [JsonIgnore]
+        public string DisplayName
+        {
+            get
+            {
+                var label = Revisions.FirstOrDefault()?.Label;
+                return label != null ?
+                    $"{Name} - {label}" :
+                    Name;
+            }
+        }
+
+        [JsonIgnore]
+        public DateTime LastUpdated => Revisions.LastOrDefault()?.CreationDate ?? CreationDate;
     }
 }

@@ -1,19 +1,21 @@
-﻿using Azure.Storage.Blobs;
+﻿using Azure.Sdk.Tools.GitHubIssues.Email;
+using Azure.Sdk.Tools.GitHubIssues.Services.Configuration;
+using Azure.Security.KeyVault.Secrets;
+using Azure.Storage.Blobs;
 using GitHubIssues.Helpers;
 using GitHubIssues.Html;
-using GitHubIssues.Models;
 using Microsoft.Extensions.Logging;
 using Octokit;
-using OutputColorizer;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
-namespace GitHubIssues.Reports
+namespace Azure.Sdk.Tools.GitHubIssues.Reports
 {
-    internal class FindNewGitHubIssuesAndPRs : BaseFunction
+    public class FindNewGitHubIssuesAndPRs : BaseReport
     {
-        public FindNewGitHubIssuesAndPRs(ILogger log) : base(log)
+        public FindNewGitHubIssuesAndPRs(IConfigurationService configurationService) : base(configurationService)
         {
 
         }
@@ -24,9 +26,9 @@ namespace GitHubIssues.Reports
         private static string ContainerName = "lastaccessed";
 #endif
 
-        public override void Execute()
+        protected override async Task ExecuteCoreAsync(ReportExecutionContext context)
         {
-            _log.LogInformation($"Started function execution: {DateTime.Now}");
+            context.Log.LogInformation($"Started function execution: {DateTime.Now}");
 
             var storageConnString = Environment.GetEnvironmentVariable("AzureWebJobsStorage");
             BlobServiceClient bsc = new BlobServiceClient(storageConnString);
@@ -35,13 +37,13 @@ namespace GitHubIssues.Reports
             // create the container
             bcc.CreateIfNotExists();
 
-            _log.LogInformation("Storage account accessed");
+            context.Log.LogInformation("Storage account accessed");
 
             DateTime to = DateTime.UtcNow;
-            foreach (RepositoryConfig repositoryConfig in _cmdLine.RepositoriesList)
+            foreach (RepositoryConfiguration repositoryConfiguration in context.RepositoryConfigurations)
             {
                 // retrieve the last accessed time for this repository
-                BlobClient bc = bcc.GetBlobClient($"{repositoryConfig.Owner}_{repositoryConfig.Name}");
+                BlobClient bc = bcc.GetBlobClient($"{repositoryConfiguration.Owner}_{repositoryConfiguration.Name}");
                 DateTime lastDateRun = DateTime.UtcNow.AddDays(-1);
 
                 try
@@ -53,48 +55,48 @@ namespace GitHubIssues.Reports
                 {
                 }
 
-                _log.LogInformation("Last processed date for {0} is {1}", repositoryConfig, lastDateRun);
+                context.Log.LogInformation("Last processed date for {0} is {1}", repositoryConfiguration, lastDateRun);
 
-                string owner = repositoryConfig.Owner;
-                string repo = repositoryConfig.Name;
+                string owner = repositoryConfiguration.Owner;
+                string repo = repositoryConfiguration.Name;
 
-                _log.LogInformation("Processing repository {0}\\{1}", owner, repo);
+                context.Log.LogInformation("Processing repository {0}\\{1}", owner, repo);
 
                 HtmlPageCreator emailBody = new HtmlPageCreator($"New items in {repo}");
 
                 // get new issues
-                RetrieveNewItems(CreateQueryForNewItems(repositoryConfig, IssueIsQualifier.Issue), lastDateRun, emailBody, "New issues");
+                RetrieveNewItems(context, CreateQueryForNewItems(repositoryConfiguration, IssueIsQualifier.Issue), lastDateRun, emailBody, "New issues");
 
                 // get new PRs
-                RetrieveNewItems(CreateQueryForNewItems(repositoryConfig, IssueIsQualifier.PullRequest), lastDateRun, emailBody, "New PRs");
+                RetrieveNewItems(context, CreateQueryForNewItems(repositoryConfiguration, IssueIsQualifier.PullRequest), lastDateRun, emailBody, "New PRs");
 
                 // get needs attention issues
-                RetrieveNeedsAttentionIssues(repositoryConfig, emailBody);
+                RetrieveNeedsAttentionIssues(context, repositoryConfiguration, emailBody);
 
                 emailBody.AddContent($"<p>Last checked range: {lastDateRun} -> {to} </p>");
 
-                _log.LogInformation("Sending email...");
+                context.Log.LogInformation("Sending email...");
                 // send the email
-                EmailSender.SendEmail(_cmdLine.EmailToken, _cmdLine.FromEmail, emailBody.GetContent(), repositoryConfig.ToEmail, repositoryConfig.CcEmail, $"New issues in the {repo} repo as of {to.ToShortDateString()}", _log);
+                EmailSender.SendEmail(context.SendGridToken, context.FromAddress, emailBody.GetContent(), repositoryConfiguration.ToEmail, repositoryConfiguration.CcEmail, $"New issues in the {repo} repo as of {to.ToShortDateString()}", context.Log);
 
-                _log.LogInformation("Email sent...");
+                context.Log.LogInformation("Email sent...");
 
                 bc.Upload(StreamHelpers.GetStreamForString(to.ToUniversalTime().ToString()), overwrite: true);
-                _log.LogInformation($"Persisted last event time for {repositoryConfig.Owner}\\{repositoryConfig.Name} as {to}");
+                context.Log.LogInformation($"Persisted last event time for {repositoryConfiguration.Owner}\\{repositoryConfiguration.Name} as {to}");
             }
         }
 
-        private bool RetrieveNewItems(SearchIssuesRequest requestOptions, DateTime from, HtmlPageCreator emailBody, string header)
+        private bool RetrieveNewItems(ReportExecutionContext context, SearchIssuesRequest requestOptions, DateTime from, HtmlPageCreator emailBody, string header)
         {
             TableCreator tc = new TableCreator(header);
             tc.DefineTableColumn("Title", TableCreator.Templates.Title);
+            tc.DefineTableColumn("State", i => i.Issue.State.ToString());
             tc.DefineTableColumn("Labels", TableCreator.Templates.Labels);
             tc.DefineTableColumn("Author", TableCreator.Templates.Author);
             tc.DefineTableColumn("Assigned", TableCreator.Templates.Assigned);
 
-            Colorizer.WriteLine("Retrieving issues");
             List<ReportIssue> issues = new List<ReportIssue>();
-            foreach (Issue issue in _gitHub.SearchForGitHubIssues(requestOptions))
+            foreach (Issue issue in context.GitHubClient.SearchForGitHubIssues(requestOptions))
             {
                 if (issue.CreatedAt.ToUniversalTime() >= from.ToUniversalTime())
                 {
@@ -102,12 +104,13 @@ namespace GitHubIssues.Reports
                 }
             }
 
-            emailBody.AddContent(tc.GetContent(issues));
+            //sort the issues by state, descending becasue Open should show up before Closed
+            emailBody.AddContent(tc.GetContent(issues.OrderByDescending(i => i.Issue.State.ToString())));
 
             return issues.Any();
         }
 
-        private bool RetrieveNeedsAttentionIssues(RepositoryConfig repositoryConfig, HtmlPageCreator emailBody)
+        private bool RetrieveNeedsAttentionIssues(ReportExecutionContext context, RepositoryConfiguration repositoryConfig, HtmlPageCreator emailBody)
         {
             TableCreator tc = new TableCreator("Issues that need attention");
             tc.DefineTableColumn("Title", TableCreator.Templates.Title);
@@ -117,7 +120,7 @@ namespace GitHubIssues.Reports
 
             List<ReportIssue> issues = new List<ReportIssue>();
 
-            foreach (Issue issue in _gitHub.SearchForGitHubIssues(CreateQueryForNeedsAttentionItems(repositoryConfig)))
+            foreach (Issue issue in context.GitHubClient.SearchForGitHubIssues(CreateQueryForNeedsAttentionItems(repositoryConfig)))
             {
                 issues.Add(new ReportIssue()
                 {
@@ -131,7 +134,7 @@ namespace GitHubIssues.Reports
             return issues.Any();
         }
 
-        private SearchIssuesRequest CreateQueryForNewItems(RepositoryConfig repoInfo, IssueIsQualifier issueType)
+        private SearchIssuesRequest CreateQueryForNewItems(RepositoryConfiguration repoInfo, IssueIsQualifier issueType)
         {
             DateTime to = DateTime.UtcNow;
             DateTime fromTwoDaysBack = DateTime.UtcNow.AddDays(-2);
@@ -151,7 +154,7 @@ namespace GitHubIssues.Reports
             return requestOptions;
         }
 
-        private SearchIssuesRequest CreateQueryForNeedsAttentionItems(RepositoryConfig repoInfo)
+        private SearchIssuesRequest CreateQueryForNeedsAttentionItems(RepositoryConfiguration repoInfo)
         {
             // Find all open issues
             //  That are marked with 'needs-attention'

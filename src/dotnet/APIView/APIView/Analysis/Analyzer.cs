@@ -21,6 +21,7 @@ namespace APIView.Analysis
             _analyzers.Add(new ClientConstructorAnalyzer());
             _analyzers.Add(new ClientOptionsAnalyzer());
             _analyzers.Add(new ClientAssemblyNamespaceAnalyzer());
+            _analyzers.Add(new BannedAssembliesAnalyzer());
             _analyzers.Add(new TypeNameAnalyzer());
         }
 

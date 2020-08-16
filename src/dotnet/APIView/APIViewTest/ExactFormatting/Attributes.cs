@@ -4,11 +4,14 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
-class PrivateAttribute: Attribute {}
+class PrivateAttribute : Attribute { }
 
 /*-*/
 
 namespace A {
+    public class ArrayAttribute : Attribute {
+        public ArrayAttribute(int[] arr)/*-*/{/*-*/;/*-*/}/*-*/
+    }
     public class Class {
         public Class()/*-*/{/*-*/;/*-*/}/*-*/
         [Conditional("string")]
@@ -19,12 +22,13 @@ namespace A {
         [DebuggerStepThrough]
         [IteratorStateMachine(typeof(Class))]
         [PrivateAttribute]
-        [EditorBrowsable(EditorBrowsableState.Never)]
         [AsyncStateMachine(typeof(Class))]
         /*-*/[Public(1)]
         [Public("s")]
         [Public("s", Property = "a")]
         [Public(null, Property = null)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        [Array(new[] {1, 2, 3})]
         public void M1()/*-*/{/*-*/;/*-*/}/*-*/
     }
     [AttributeUsage(AttributeTargets.All, AllowMultiple = true)]

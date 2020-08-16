@@ -1,0 +1,97 @@
+parameters:
+  # Provde a list of repos
+  # Example:
+  #   Azure/azure-rest-api-specs:
+  #     Branch: master
+  #     TargetRepos: 
+  #       Azure/azure-rest-api-specs-pr:
+  #       azure-sdk/azure-rest-api-specs:
+  #         Branch: dev
+  #         Rebase: true
+  #   Azure/azure-sdk-for-go:
+  #     Branch: master
+  #     TargetRepos: 
+  #       Azure/azure-sdk-for-go-pr:
+  - name: Repos
+    type: object
+  # Github PAT
+  - name: GH_TOKEN
+    type: string
+
+steps:
+
+- ${{ each repo in parameters.Repos }}:
+  - pwsh: |
+      Set-PsDebug -Trace 1
+      $SourceRepo = '${{ repo.key }}'
+      $SourceBranch = '${{ repo.value.Branch }}'
+
+      if (-not (Test-Path ${{ repo.key }})) {
+        New-Item -Path ${{ repo.key }} -ItemType Directory -Force
+        Set-Location $SourceRepo
+        git init
+        git remote add Source "https://${{ parameters.GH_TOKEN }}@github.com/${SourceRepo}.git"
+      } else {
+        Set-Location $SourceRepo
+      }
+
+      git fetch --no-tags Source $SourceBranch
+      if ($LASTEXITCODE -ne 0) {
+        Write-Host "#`#vso[task.logissue type=error]Failed to fetch ${SourceRepo}:${SourceBranch}"
+        exit 1
+      }
+
+      git checkout -B source_branch "refs/remotes/Source/${SourceBranch}"
+
+      Set-PsDebug -Off
+
+    displayName: ${{ repo.key }} - Clone ${{ repo.value.Branch }}
+    continueOnError: true
+
+  - ${{ each target in repo.value.TargetRepos }}:
+    - pwsh: |
+        Set-PsDebug -Trace 1
+        $SourceBranch = '${{ repo.value.Branch }}'
+        $TargetRepo = '${{ target.key }}'
+        $TargetBranch = '${{ coalesce(target.value.Branch, repo.value.Branch) }}'
+
+        Function FailOnError([string]$ErrorMessage, $CleanUpScripts = 0) {
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "#`#vso[task.logissue type=error]$ErrorMessage"
+            if ($CleanUpScripts -ne 0) { Invoke-Command $CleanUpScripts }
+            exit 1
+          }
+        }
+
+        try {
+          git remote add Target "https://${{ parameters.GH_TOKEN }}@github.com/${TargetRepo}.git"
+
+          if (-not '${{ target.value.Rebase }}') {
+            git checkout -B target_branch source_branch
+            git push Target "target_branch:refs/heads/${TargetBranch}"
+            FailOnError "Failed to push to ${TargetRepo}:${TargetBranch}"
+
+          } else {
+            git fetch --no-tags Target $TargetBranch
+            FailOnError "Failed to fetch TargetBranch ${TargetBranch}."
+
+            git checkout -B target_branch "refs/remotes/Target/${TargetBranch}"
+            git -c user.name="azure-sdk" -c user.email="azuresdk@microsoft.com" rebase --strategy-option=theirs source_branch
+            FailOnError "Failed to rebase for ${TargetRepo}:${TargetBranch}" {
+              git status
+              git diff
+              git rebase --abort
+            }
+
+            git push --force Target "target_branch:refs/heads/${TargetBranch}"
+            FailOnError "Failed to push to ${TargetRepo}:${TargetBranch}"
+          }
+        } finally {
+          git remote remove Target
+        }
+
+        Set-PsDebug -Off
+
+      displayName: ${{ target.key }} - Push ${{ coalesce(target.value.Branch, repo.value.Branch) }}
+      workingDirectory: ${{ repo.key }}
+      continueOnError: true

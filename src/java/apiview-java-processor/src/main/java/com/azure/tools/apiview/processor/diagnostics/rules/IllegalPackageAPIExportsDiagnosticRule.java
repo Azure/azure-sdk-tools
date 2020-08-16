@@ -30,12 +30,25 @@ public class IllegalPackageAPIExportsDiagnosticRule implements DiagnosticRule {
 
     @Override
     public void scan(final CompilationUnit cu, final APIListing listing) {
-        getPublicOrProtectedMethods(cu)
-                .filter(methodDecl -> methodDecl.getType() instanceof ClassOrInterfaceType)
+        getPublicOrProtectedConstructors(cu)
                 .forEach(methodDecl -> {
                     final String methodId = makeId(methodDecl);
-                    ClassOrInterfaceType returnType = (ClassOrInterfaceType) methodDecl.getType();
-                    validateType(methodId, returnType, listing);
+
+                    methodDecl.getParameters().stream()
+                            .map(Parameter::getType)
+                            .filter(Type::isClassOrInterfaceType)
+                            .map(Type::asClassOrInterfaceType)
+                            .forEach(parameter -> validateType(methodId, parameter, listing));
+                });
+
+        getPublicOrProtectedMethods(cu)
+                .forEach(methodDecl -> {
+                    final String methodId = makeId(methodDecl);
+
+                    if (methodDecl.getType() instanceof ClassOrInterfaceType) {
+                        ClassOrInterfaceType returnType = (ClassOrInterfaceType) methodDecl.getType();
+                        validateType(methodId, returnType, listing);
+                    }
 
                     methodDecl.getParameters().stream()
                             .map(Parameter::getType)

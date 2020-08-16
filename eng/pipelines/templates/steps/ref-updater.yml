@@ -1,0 +1,36 @@
+# Updates repository Refs on all pipelines
+parameters:
+  Tag: ''
+  ToolRepo: ''
+  ToolsRepoPath: ''
+  Repos: []
+
+steps:
+
+- ${{ each repo in parameters.Repos }}:
+  - pwsh: |
+      git clone --branch master https://github.com/azure/${{ repo }}
+    displayName: Clone ${{ repo }}
+    workingDirectory: $(System.DefaultWorkingDirectory)
+
+  - task: Powershell@2
+    inputs:
+      targetType: 'filePath'
+      filePath: ${{ parameters.ToolsRepoPath }}/scripts/powershell/ref-updater.ps1
+      arguments: >
+        -RepoRoot $(System.DefaultWorkingDirectory)/${{ repo }}
+        -Tag ${{ parameters.Tag }}
+        -ToolRepo ${{ parameters.ToolRepo }}
+      pwsh: true
+    displayName: Update Refs
+
+  - template: ../../../common/pipelines/templates/steps/create-pull-request.yml
+    parameters:
+      RepoName: ${{ repo }}
+      PRBranchName: UpdateRepositoryRefsFor${{ parameters.ToolRepo }}
+      CommitMsg: Update ${{ parameters.ToolRepo }} Repository Resource Refs in Yaml files
+      PRTitle: Update ${{ parameters.ToolRepo }} Repository Resource Refs in Yaml files
+      PushArgs: -f
+      WorkingDirectory: $(System.DefaultWorkingDirectory)/${{ repo }}
+      ScriptDirectory: ${{ parameters.ToolsRepoPath }}/eng/common/scripts
+      BaseBranchName: refs/heads/master

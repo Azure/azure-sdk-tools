@@ -196,10 +196,6 @@ form.comment {
     display: none;
 }
 
-.commentable {
-    cursor: pointer;
-}
-
 @include placeholder {
     font-style: italic;
 }
@@ -210,20 +206,37 @@ form.comment {
     border-collapse: separate;
     tab-size: 8;
     border-spacing: 0;
-    padding-top: 8px;
-    padding-bottom: 8px;
     background-color: white; // prevents code-window from overlapping stickySidebar
     table-layout: fixed;
+    width: 100%;
 }
 
 .code-line {
     white-space: pre-wrap;
-    font-family: monospace;
+    font-family: Consolas, monospace;
     line-height: 20px;
 }
 
 .code-line:hover .line-comment-button {
     opacity: 1;
+}
+
+@keyframes glow {
+    0% {
+        background-color: rgba(0,0,0,0)
+    }
+
+    25% {
+        background-color: #fff6b3
+    }
+
+    100% {
+        background-color: rgba(0,0,0,0)
+    }
+}
+
+.code-line.active {
+    animation: glow normal 1.5s ease-in-out;
 }
 
 .line-comment-button:hover {
@@ -259,6 +272,7 @@ form.comment {
     padding-right: 10px;
     position: relative;
     vertical-align: top;
+    width: 100%;
 }
 
 code-inner {
@@ -425,6 +439,10 @@ code-inner {
 
 .nav-list-group .nav-list-children {
     padding-left: 14px;
+}
+
+.clickable {
+    cursor: pointer;
 }
 
 /* DIAGNOSTICS */

@@ -30,6 +30,9 @@
                             <label for="upload" class="custom-file-label">Select file to add</label>
                         </div>
                     </div>
+                    <div>
+                        <input asp-for="Label" class="form-control" type="text" placeholder="Enter an optional revision label">
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
@@ -46,14 +49,25 @@
             @foreach (var revision in Model.Review.Revisions.Reverse())
             {
                 <li class="list-group-item">
-                    @revision.Name 
-                    <span class="font-italic pl-3">
-                        <span date="@revision.CreationDate"></span>
-                        <span>by @revision.Author</span>
-                    </span>
-                    <form asp-resource="@revision" asp-requirement="@RevisionOwnerRequirement.Instance" 
+                    <form class="form-inline revision-rename-form float-left" asp-page-handler="Rename" method="post">
+                        <span asp-resource="@revision" asp-requirement="@RevisionOwnerRequirement.Instance">
+                            <a href="#" class="text-decoration-none revision-rename-icon pr-2">✎</a>
+                            <input type="hidden" name="revisionId" value="@revision.RevisionId" />
+                            <span class="revision-name-input form-group-lg pr-2" style="display:none">
+                                <input type="text" class="form-control" name="newLabel" value="@revision.Label" placeholder="Enter a revision label" />
+                                <a href="#" class="text-decoration-none submit-revision-rename">✔️</a>
+                                <a href="#" class="text-decoration-none cancel-revision-rename">❌</a>
+                            </span>
+                        </span>
+                        <span class="revision-name-label">@revision.DisplayName</span>
+                        <span class="font-italic pl-3">
+                            <span date="@revision.CreationDate"></span>
+                            <span>by @revision.Author</span>
+                        </span>
+                    </form>
+                    <form asp-resource="@revision" asp-requirement="@RevisionOwnerRequirement.Instance"
                           class="form-inline float-right" asp-page-handler="Delete" method="post">
-                        <input type="hidden" name="revisionId" value="@revision.RevisionId"/>
+                        <input type="hidden" name="revisionId" value="@revision.RevisionId" />
                         <input type="submit" class="btn btn-danger btn-sm" value="Delete" />
                     </form>
                 </li>

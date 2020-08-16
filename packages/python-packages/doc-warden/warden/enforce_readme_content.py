@@ -13,7 +13,7 @@ from docutils.writers.html4css1 import Writer,HTMLTranslator
 import logging
 
 README_PATTERNS = ['*/readme.md', '*/readme.rst', '*/README.md', '*/README.rst']
-CODE_FENCE_REGEX = r"```[\s\S]*?```"
+CODE_FENCE_REGEX = r"\`\`\`([\s\S\n]*?)\`\`\`"
 
 # entry point
 def verify_readme_content(config):
@@ -59,12 +59,12 @@ def verify_md_readme(readme, config, section_sorting_dict):
     if config.verbose_output:
         print('Examining content in {}'.format(readme))
 
-    with open(readme, 'r', encoding="utf-8") as f:
+    with open(readme, 'r', encoding="utf-8-sig") as f:
         readme_content = f.read()
         
     # we need to sanitize to remove the fenced code blocks. The reasoning here is that markdown2 is having issues
     # parsing the pygments style that we use with github.
-    sanitized_html_content = re.sub(CODE_FENCE_REGEX, "", readme_content)
+    sanitized_html_content = re.sub(CODE_FENCE_REGEX, "", readme_content, flags=re.MULTILINE)
     html_readme_content = markdown2.markdown(sanitized_html_content)
     html_soup = bs4.BeautifulSoup(html_readme_content, "html.parser")
 

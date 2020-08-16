@@ -100,6 +100,23 @@
         }
     });
 
+    addEventListener("hashchange", e => {
+      highlightCurrentRow();
+    });
+
+    addEventListener("load", e => {
+      highlightCurrentRow();
+    });
+
+    function highlightCurrentRow() {
+        if (location.hash.length < 1) return;
+        var row = getCodeRow(location.hash.substring(1));
+        row.addClass("active");
+        row.on("animationend", () => {
+          row.removeClass("active");
+        });
+    }
+
     function getReviewId(element: HTMLElement) {
         return getParentData(element, "data-review-id");
     }

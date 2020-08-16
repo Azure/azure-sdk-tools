@@ -1,8 +1,8 @@
 ﻿using System;
 
-namespace GitHubIssues.Reports
+namespace Azure.Sdk.Tools.GitHubIssues.Reports
 {
-    internal partial class FindCustomerRelatedIssuesInvalidState
+    public partial class FindCustomerRelatedIssuesInvalidState
     {
         [Flags]
         private enum ImpactArea

@@ -27,32 +27,32 @@ namespace Tests
         [Test]
         public void CreateUpdateDeleteRule()
         {
-            IssueRoutingCapability irc = new IssueRoutingCapability(_org, _repo);
+            IssueRoutingCapability irc = new IssueRoutingCapability(_org, _repo, "");
 
-            _requestSender.CreateTask(irc.ToJson());
+            _requestSender.CreateTask(irc.GetPayload());
             // delay for the service to react
             Thread.Sleep(3000);
 
             var ids = _requestSender.GetTaskIds();
-            Assert.Contains(IssueRoutingCapability.GetTaskId(_org, _repo), ids);
+            Assert.Contains(irc.GetTaskId(), ids);
             // delay for the service to react
             Thread.Sleep(3000);
 
-            _requestSender.UpdateTask(IssueRoutingCapability.GetTaskId(_org, _repo), irc.ToJson());
-            // delay for the service to react
-            Thread.Sleep(3000);
-
-            ids = _requestSender.GetTaskIds();
-            Assert.Contains(IssueRoutingCapability.GetTaskId(_org, _repo), ids);
-            // delay for the service to react
-            Thread.Sleep(3000);
-
-            _requestSender.DeleteTask(IssueRoutingCapability.GetTaskId(_org, _repo));
+            _requestSender.UpdateTask(irc.GetTaskId(), irc.GetPayload());
             // delay for the service to react
             Thread.Sleep(3000);
 
             ids = _requestSender.GetTaskIds();
-            Assert.False(ids.Any(x => x == IssueRoutingCapability.GetTaskId(_org, _repo)));
+            Assert.Contains(irc.GetTaskId(), ids);
+            // delay for the service to react
+            Thread.Sleep(3000);
+
+            _requestSender.DeleteTask(irc.GetTaskId());
+            // delay for the service to react
+            Thread.Sleep(3000);
+
+            ids = _requestSender.GetTaskIds();
+            Assert.False(ids.Any(x => x == irc.GetTaskId()));
         }
     }
 }

@@ -33,7 +33,7 @@ namespace APIViewWeb
                 allReviews.AddRange(result.Resource);
             }
 
-            return allReviews.OrderByDescending(r => r.CreationDate);
+            return allReviews.OrderByDescending(r => r.LastUpdated);
         }
 
         public async Task UpsertReviewAsync(ReviewModel reviewModel)

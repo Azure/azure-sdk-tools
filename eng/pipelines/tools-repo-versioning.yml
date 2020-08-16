@@ -16,7 +16,24 @@ jobs:
         # Remove Organization name i.e Transform Azure/azure-sdk-tools -> azure-sdk-tools before appending build Number
         $Tag = "$(Build.Repository.Name)".SubString("$(Build.Repository.Name)".IndexOf('/') + 1) + "_$(Build.BuildNumber)"
         Write-Host "Tagging Repo with $Tag"
+        echo "##vso[task.setvariable variable=Tag]$Tag"
         git -c user.name="azure-sdk" -c user.email="azuresdk@microsoft.com" tag -a $tag -m "Release tools version $Tag"
         git push $PushURL $tag
       displayName: Create and Push Version Tag
       workingDirectory: $(Build.SourcesDirectory)
+
+    - template: /eng/pipelines/templates/steps/ref-updater.yml
+      parameters:
+        Tag: $(Tag)
+        ToolRepo: azure-sdk-tools
+        ToolsRepoPath: $(Build.SourcesDirectory)
+        Repos:
+#          - azure-sdk-for-android
+#          - azure-sdk-for-c
+#          - azure-sdk-for-cpp
+#          - azure-sdk-for-go
+#          - azure-sdk-for-ios
+          - azure-sdk-for-java
+          - azure-sdk-for-js
+          - azure-sdk-for-net
+#          - azure-sdk-for-python

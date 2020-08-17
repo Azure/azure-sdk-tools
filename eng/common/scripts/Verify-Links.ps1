@@ -260,7 +260,7 @@ while ($pageUrisToCheck.Count -ne 0)
   
   foreach ($linkUri in $linkUris) {
     $isLinkValid = CheckLink $linkUri
-    if (!linkUri) {
+    if (!$isLinkValid) {
       $script:badLinks += $linkUri
     }
     if ($recursive -and $isLinkValid) {

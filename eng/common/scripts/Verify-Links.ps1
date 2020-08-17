@@ -119,7 +119,9 @@ function ParseLinks([string]$baseUri, [string]$htmlContent)
 
 function CheckLink ([System.Uri]$linkUri)
 {
-  if ($checkedLinks.ContainsKey($linkUri)) { return $checkedLinks[$linkUri]}
+  if ($checkedLinks.ContainsKey($linkUri)) { 
+    return $checkedLinks[$linkUri] 
+  }
 
   $linkValid = $true
   Write-Verbose "Checking link $linkUri..."  

@@ -67,9 +67,8 @@ function ResolveUri ([System.Uri]$referralUri, [string]$link)
   }
 
   $linkUri = [System.Uri]$link;
-  # Relative link check is gated by flag $checkLinkGuidance. 
-  # Allows to use relative link by default for backward compatibility.
-  # TODO: Need to disallow relative links in accordance with new sdk guidance.
+  # Our link guidelines do not allow relative links so only resolve them when we are not
+  # validating links against our link guidelines (i.e. !$checkLinkGuideance)
   if(!$checkLinkGuidance) {
     if (!$linkUri.IsAbsoluteUri) {
     # For rooted paths resolve from the baseUrl

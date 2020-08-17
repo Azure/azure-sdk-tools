@@ -50,6 +50,33 @@ $headers = @{
 
 $query = "state=open&head=${PROwner}:${PRBranch}&base=${BaseBranch}"
 
+function AddLabels([int] $prNumber)
+{
+  # Adding labels to the pr.
+  if (-not $PRLabel) {
+    Write-Verbose "There are no labels added to the PR."
+    exit 0
+  }
+
+  # Parse the labels from string to array
+  $prLabels = @($PRLabel.Split(",") | % { $_.Trim() } | ? { return $_ })
+  $prLabelUri = "https://api.github.com/repos/$RepoOwner/$RepoName/issues/$prNumber"
+  $labelRequestData = @{
+    maintainer_can_modify = $true
+    labels                = $prLabels
+  }
+  try {
+    $resp = Invoke-RestMethod -Method PATCH -Headers $headers $prLabelUri -Body ($labelRequestData | ConvertTo-Json)
+  }
+  catch {
+      Write-Error "Invoke-RestMethod $prLabelUri failed with exception:`n$_"
+      exit 1
+  }
+
+  $resp | Write-Verbose
+  Write-Host -f green "Label added to pull request: https://github.com/$RepoOwner/$RepoName/pull/$prNumber"
+}
+
 try {
   $resp = Invoke-RestMethod -Headers $headers "https://api.github.com/repos/$RepoOwner/$RepoName/pulls?$query"
 }
@@ -64,6 +91,7 @@ if ($resp.Count -gt 0) {
 
     # setting variable to reference the pull request by number
     Write-Host "##vso[task.setvariable variable=Submitted.PullRequest.Number]$($resp[0].number)"
+    AddLabels $resp[0].number
 }
 else {
   $data = @{
@@ -90,27 +118,5 @@ else {
   # setting variable to reference the pull request by number
   Write-Host "##vso[task.setvariable variable=Submitted.PullRequest.Number]$($resp.number)"
 
-  # Adding labels to the pr.
-  if (-not $PRLabel) {
-    Write-Verbose "There are no labels added to the PR."
-    exit 0
-  }
-
-  # Parse the labels from string to array
-  $prLabels = @($PRLabel.Split(",") | % { $_.Trim() } | ? { return $_ })
-  $prLabelUri = "https://api.github.com/repos/$RepoOwner/$RepoName/issues/$PRNumber"
-  $labelRequestData = @{
-    maintainer_can_modify = $true
-    labels                = $prLabels
-  }
-  try {
-    $resp = Invoke-RestMethod -Method PATCH -Headers $headers $prLabelUri -Body ($labelRequestData | ConvertTo-Json)
-  }
-  catch {
-      Write-Error "Invoke-RestMethod $prLabelUri failed with exception:`n$_"
-      exit 1
-  }
-
-  $resp | Write-Verbose
-  Write-Host -f green "Label added to pull request: https://github.com/$RepoOwner/$RepoName/pull/$PRNumber"
+  AddLabelsAddLabels $resp[0].number
 }

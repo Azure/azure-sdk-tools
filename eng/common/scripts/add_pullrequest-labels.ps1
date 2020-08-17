@@ -16,7 +16,7 @@ param(
 )
 
 # Add labels to the pull request
-if ($PRLabel -ne "") {
+if ($null -ne $PRLabel -and  "" -ne $PRLabel) {
     $uri = "https://api.github.com/repos/$RepoOwner/$RepoName/issues/$PRNumber"
     $data = @{
         maintainer_can_modify = $true

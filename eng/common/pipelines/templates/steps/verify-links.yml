@@ -13,5 +13,5 @@ steps:
       arguments: >
         -urls $(dir -r -i *.md) 
         -rootUrl "file://$(Build.SourcesDirectory)/${{ parameters.Directory }}" 
-        -recursive $false 
+        -recursive: $false 
         -ignoreLinksFile ${{ parameters.IgnoreLinksFile }}

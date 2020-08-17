@@ -67,9 +67,8 @@ function ResolveUri ([System.Uri]$referralUri, [string]$link)
   }
 
   $linkUri = [System.Uri]$link;
-  # Relative link check is gated by flag $checkLinkGuidance. 
-  # Allows to use relative link by default for backward compatibility.
-  # TODO: Need to disallow relative links in accordance with new sdk guidance.
+  # Our link guidelines do not allow relative links so only resolve them when we are not
+  # validating links against our link guidelines (i.e. !$checkLinkGuideance)
   if(!$checkLinkGuidance) {
     if (!$linkUri.IsAbsoluteUri) {
     # For rooted paths resolve from the baseUrl
@@ -119,7 +118,9 @@ function ParseLinks([string]$baseUri, [string]$htmlContent)
 
 function CheckLink ([System.Uri]$linkUri)
 {
-  if ($checkedLinks.ContainsKey($linkUri)) { return $checkedLinks[$linkUri]}
+  if ($checkedLinks.ContainsKey($linkUri)) { 
+    return $checkedLinks[$linkUri] 
+  }
 
   $linkValid = $true
   Write-Verbose "Checking link $linkUri..."  
@@ -176,9 +177,7 @@ function CheckLink ([System.Uri]$linkUri)
   # Check if link uri includes locale info.
   if ($checkLinkGuidance -and ($linkUri -match $locale)) {
     LogWarning "DO NOT include locale $locale information in links: $linkUri."
-    if ($linkValid) {
-      $linkValid = $false
-    }
+    $linkValid = $false
   }
   $checkedLinks[$linkUri] = $linkValid
   return $linkValid
@@ -261,7 +260,7 @@ while ($pageUrisToCheck.Count -ne 0)
   
   foreach ($linkUri in $linkUris) {
     $isLinkValid = CheckLink $linkUri
-    if (!linkUri) {
+    if (!$isLinkValid) {
       $script:badLinks += $linkUri
     }
     if ($recursive -and $isLinkValid) {

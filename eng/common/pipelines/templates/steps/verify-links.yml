@@ -7,6 +7,7 @@ steps:
     try {
       echo "##vso[task.setvariable variable=replacedBranch]$(system.pullRequest.sourceCommitId)"
     } catch {
+      echo "##vso[task.setvariable variable=replacedBranch]''"
       echo "It is not a pr triggered build."
     }
 

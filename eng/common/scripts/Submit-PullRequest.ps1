@@ -90,13 +90,13 @@ else {
   # setting variable to reference the pull request by number
   Write-Host "##vso[task.setvariable variable=Submitted.PullRequest.Number]$($resp.number)"
 
-  // Adding labels to the pr.
+  # Adding labels to the pr.
   if (-not $PRLabel) {
     Write-Verbose "There are no labels added to the PR."
     exit 0
   }
 
-  // Parse the labels from string to array
+  # Parse the labels from string to array
   $prLabels = @($PRLabel.Split(",") | % { $_.Trim() } | ? { return $_ })
   $prLabelUri = "https://api.github.com/repos/$RepoOwner/$RepoName/issues/$PRNumber"
   $labelRequestData = @{

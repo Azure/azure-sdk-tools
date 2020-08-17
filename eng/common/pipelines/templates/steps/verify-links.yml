@@ -1,8 +1,9 @@
+pr:
+  -master
 parameters:
   Directory: 'not-specified'
   IgnoreLinksFile: "$(Build.SourcesDirectory)/eng/ignore-links.txt"
   
-
 steps:
   - task: PowerShell@2
     displayName: Link verification check
@@ -16,3 +17,4 @@ steps:
         -recursive $false 
         -ignoreLinksFile ${{ parameters.IgnoreLinksFile }}
         -branchReplaceRegex "(https://github.com/.*/blob/)master(/.*)"
+        -branchReplacementName "$(system.pullRequest.sourceCommitId)"

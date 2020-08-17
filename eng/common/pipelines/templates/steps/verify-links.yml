@@ -11,7 +11,7 @@ steps:
       echo "It is not a pr triggered build."
     }
 
-  displayName: Check for PR
+  displayName: Triggered by PR check
   workingDirectory: ${{ parameters.WorkingDirectory }}
   ignoreLASTEXITCODE: true
 - task: PowerShell@2

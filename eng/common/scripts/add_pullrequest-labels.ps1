@@ -14,18 +14,18 @@ param(
     [Parameter(Mandatory = $false)]
     $PRLabel
 )
-
 # at least one of label needs to be populated
-if (-not $PRLabel ) {
+if (-not $PRLabel) {
     Write-Host "No labels provided for addition, exiting."
     exit 0
-  }
+}
 
 # Add labels to the pull request
+$prLabels = @($PRLabel.Split(",") | % { $_.Trim() } | ? { return $_ })
 $uri = "https://api.github.com/repos/$RepoOwner/$RepoName/issues/$PRNumber"
 $data = @{
     maintainer_can_modify = $true
-    labels                = $PRLabel
+    labels                = $prLabels
 }
 $headers = @{
     Authorization = "bearer $AuthToken"

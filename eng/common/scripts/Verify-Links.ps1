@@ -176,9 +176,7 @@ function CheckLink ([System.Uri]$linkUri)
   # Check if link uri includes locale info.
   if ($checkLinkGuidance -and ($linkUri -match $locale)) {
     LogWarning "DO NOT include locale $locale information in links: $linkUri."
-    if ($linkValid) {
-      $linkValid = $false
-    }
+    $linkValid = $false
   }
   $checkedLinks[$linkUri] = $linkValid
   return $linkValid

@@ -13,7 +13,10 @@ public class APIListing {
     private List<ChildItem> childItems;
 
     @JsonProperty("Name")
-    private String Name;
+    private String name;
+
+    @JsonProperty("Language")
+    private String language;
 
     @JsonProperty("Tokens")
     private List<Token> tokens;
@@ -56,11 +59,19 @@ public class APIListing {
     }
 
     public String getName() {
-        return Name;
+        return name;
     }
 
     public void setName(String Name) {
-        this.Name = Name;
+        this.name = Name;
+    }
+
+    public String getLanguage() {
+        return language;
+    }
+
+    public void setLanguage(final String language) {
+        this.language = language;
     }
 
     public List<Token> getTokens() {
@@ -73,7 +84,7 @@ public class APIListing {
 
     @Override
     public String toString() {
-        return "APIListing [childItems = "+childItems+", Name = "+Name+", Tokens = "+tokens+"]";
+        return "APIListing [childItems = "+childItems+", Name = "+ name +", Tokens = "+tokens+"]";
     }
 
     /**

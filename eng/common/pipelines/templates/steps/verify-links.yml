@@ -15,4 +15,4 @@ steps:
         -rootUrl "file://$(Build.SourcesDirectory)/${{ parameters.Directory }}" 
         -recursive $false 
         -ignoreLinksFile ${{ parameters.IgnoreLinksFile }}
-        -branchReplaceRegex "(https://github.com/.*/blob/)link_replace_test(/.*)"
+        -branchReplaceRegex "(https://github.com/.*/blob/)master(/.*)"

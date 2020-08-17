@@ -14,7 +14,11 @@ param (
   # list of http status codes count as broken links. Defaults to 400, 401, 404, SocketError.HostNotFound = 11001, SocketError.NoData = 11004
   [array] $errorStatusCodes = @(400, 401, 404, 11001, 11004),
   # flag to allow resolving relative paths or not
-  [bool] $resolveRelativeLinks = $true
+  [bool] $resolveRelativeLinks = $true,
+  # regex to check if the link needs to be replaced
+  [string] $branchReplaceRegex = "(https://github.com/.*/blob/)master(/.*)",
+  # the substitute branch name or SHA commit
+  [string] $branchReplacementName = ""
 )
 
 $ProgressPreference = "SilentlyContinue"; # Disable invoke-webrequest progress dialog
@@ -168,6 +172,22 @@ function CheckLink ([System.Uri]$linkUri)
   $checkedLinks[$linkUri] = $true;
 }
 
+function ReplaceGithubLink([string]$originLink) {
+  if (-not $branchReplacementName) {
+    try {
+      $branchReplacementName = $(system.pullRequest.sourceCommitId)
+      if (-not $branchReplacementName) {
+        $ReplacementPattern = "`${1}$branchReplacementName`$2"
+        return $originLink -replace $branchReplaceRegex, $ReplacementPattern 
+      }
+    } 
+    catch {
+      Write-Verbose "It is not triggered by pull request. Skip the replace link steps."
+    }
+  }
+  return $originLink
+}
+
 function GetLinks([System.Uri]$pageUri)
 {
   if ($pageUri.Scheme.StartsWith("http")) {
@@ -245,6 +265,8 @@ while ($pageUrisToCheck.Count -ne 0)
   Write-Host "Found $($linkUris.Count) links on page $pageUri";
   
   foreach ($linkUri in $linkUris) {
+    $linkUri = ReplaceGithubLink $linkUri
+
     CheckLink $linkUri
     if ($recursive) {
       if ($linkUri.ToString().StartsWith($baseUrl) -and !$checkedPages.ContainsKey($linkUri)) {

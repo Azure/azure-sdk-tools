@@ -40,7 +40,7 @@ catch {
 }
 
 $resp | Write-Verbose
-Write-Host -f green "Label added to pull request: https://github.com/$RepoOwner/$RepoName/pull/($PRNumber)"
+Write-Host -f green "Label added to pull request: https://github.com/$RepoOwner/$RepoName/pull/$PRNumber"
 
 # setting variable to reference the pull request by number
 Write-Host "##vso[task.setvariable variable=Submitted.PullRequest.Number]$PRNumber"                                                                       

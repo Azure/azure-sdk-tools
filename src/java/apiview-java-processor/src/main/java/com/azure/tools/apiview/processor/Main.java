@@ -70,6 +70,9 @@ public class Main {
     }
 
     private static String getReviewName(File inputFile) {
+        String artifactId = "";
+        String version = "";
+
         // we will firstly try to get the artifact ID from the maven file inside the jar file...if it exists
         try (final JarFile jarFile = new JarFile(inputFile)) {
             final Enumeration<JarEntry> enumOfJar = jarFile.entries();
@@ -85,36 +88,42 @@ public class Main {
                     DocumentBuilder builder = builderFactory.newDocumentBuilder();
                     Document xmlDocument = builder.parse(jarIS);
                     XPath xPath = XPathFactory.newInstance().newXPath();
-                    String expression = "/project/artifactId";
-                    Node node = (Node) xPath.compile(expression).evaluate(xmlDocument, XPathConstants.NODE);
-                    final String reviewName = node.getTextContent();
 
-                    System.out.println("  Using '" + reviewName + "' for the review name (from the source pom.xml file)");
+                    String artifactIdExpression = "/project/artifactId";
+                    Node artifactIdNode = (Node) xPath.compile(artifactIdExpression).evaluate(xmlDocument, XPathConstants.NODE);
+                    artifactId = artifactIdNode.getTextContent();
 
-                    return reviewName;
+                    String versionExpression = "/project/version";
+                    Node versionNode = (Node) xPath.compile(versionExpression).evaluate(xmlDocument, XPathConstants.NODE);
+                    version = versionNode.getTextContent();
                 }
             }
         } catch (IOException | ParserConfigurationException | SAXException | XPathExpressionException e) {
             e.printStackTrace();
         }
 
-        // we failed to read it from the maven pom file, we will just take the file name without any version numbering
-        final String filename = inputFile.getName();
-        int i = 0;
-        while (i < filename.length() && !Character.isDigit(filename.charAt(i))) {
-            i++;
+        if (artifactId == null || artifactId.isEmpty()) {
+            // we failed to read it from the maven pom file, we will just take the file name without any extension
+            final String filename = inputFile.getName();
+            int i = 0;
+            while (i < filename.length() && !Character.isDigit(filename.charAt(i))) {
+                i++;
+            }
+
+            artifactId = filename.substring(0, i - 1);
+            version = filename.substring(i, filename.indexOf("-sources.jar"));
         }
 
-        // we subtract one to exclude the previous dash which we assume exists
-        final String reviewName = filename.substring(0, i - 1);
-        System.out.println("  Using '" + reviewName + "' for the review name (from the source jar filename)");
+        final String reviewName = artifactId + " (version " + version + ")";
+        System.out.println("  Using '" + reviewName + "' for the review name");
+
         return reviewName;
     }
 
     private static void processFile(File inputFile, File outputFile) {
         APIListing apiListing = new APIListing();
         apiListing.setLanguage("Java");
-        apiListing.setName(getReviewName(inputFile) + ".jar");
+        apiListing.setName(getReviewName(inputFile));
 
         // empty tokens list that we will fill as we process each class file
         List<Token> tokens = new ArrayList<>();

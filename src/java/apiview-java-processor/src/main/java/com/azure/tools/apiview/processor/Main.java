@@ -114,7 +114,7 @@ public class Main {
     private static void processFile(File inputFile, File outputFile) {
         APIListing apiListing = new APIListing();
         apiListing.setLanguage("Java");
-        apiListing.setName(getReviewName(inputFile));
+        apiListing.setName(getReviewName(inputFile) + ".jar");
 
         // empty tokens list that we will fill as we process each class file
         List<Token> tokens = new ArrayList<>();

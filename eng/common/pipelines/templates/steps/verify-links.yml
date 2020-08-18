@@ -3,17 +3,6 @@ parameters:
   IgnoreLinksFile: "$(Build.SourcesDirectory)/eng/ignore-links.txt"
   
 steps:
-- pwsh: |
-    try {
-      echo "##vso[task.setvariable variable=replacedBranch]$(system.pullRequest.sourceCommitId)"
-    } catch {
-      echo "##vso[task.setvariable variable=replacedBranch]''"
-      echo "It is not a pr triggered build."
-    }
-
-  displayName: Triggered by PR check
-  workingDirectory: ${{ parameters.WorkingDirectory }}
-  ignoreLASTEXITCODE: true
 - task: PowerShell@2
   displayName: Link verification check
   inputs:
@@ -26,4 +15,4 @@ steps:
       -recursive $false 
       -ignoreLinksFile ${{ parameters.IgnoreLinksFile }}
       -branchReplaceRegex "(https://github.com/.*/blob/)master(/.*)"
-      -branchReplacementName $(replacedBranch)
+      -branchReplacementName $env:SYSTEM_PULLREQUEST_SOURCECOMMITID

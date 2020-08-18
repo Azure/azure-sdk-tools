@@ -19,29 +19,29 @@ A personal access token
 [CmdletBinding(SupportsShouldProcess = $true)]
 param(
   [Parameter(Mandatory = $true)]
-  $RepoOwner,
+  [string]$RepoOwner,
 
   [Parameter(Mandatory = $true)]
-  $RepoName,
+  [string]$RepoName,
 
   [Parameter(Mandatory = $true)]
-  $BaseBranch,
+  [string]$BaseBranch,
 
   [Parameter(Mandatory = $true)]
-  $PROwner,
+  [string]$PROwner,
 
   [Parameter(Mandatory = $true)]
-  $PRBranch,
+  [string]$PRBranch,
 
   [Parameter(Mandatory = $true)]
-  $AuthToken,
+  [string]$AuthToken,
 
   [Parameter(Mandatory = $true)]
-  $PRTitle,
+  [string]$PRTitle,
   $PRBody = $PRTitle,
 
   [Parameter(Mandatory = $false)]
-  $PRLabel
+  [string]$PRLabels
 )
 
 $headers = @{
@@ -50,16 +50,16 @@ $headers = @{
 
 $query = "state=open&head=${PROwner}:${PRBranch}&base=${BaseBranch}"
 
-function AddLabels([int] $prNumber)
+function AddLabels([int] $prNumber, [string] $prLabelString)
 {
   # Adding labels to the pr.
-  if (-not $PRLabel) {
+  if (-not $prLabelString) {
     Write-Verbose "There are no labels added to the PR."
-    exit 0
+    return
   }
 
   # Parse the labels from string to array
-  $prLabels = @($PRLabel.Split(",") | % { $_.Trim() } | ? { return $_ })
+  $prLabels = @($prLabelString.Split(",") | % { $_.Trim() } | ? { return $_ })
   $prLabelUri = "https://api.github.com/repos/$RepoOwner/$RepoName/issues/$prNumber"
   $labelRequestData = @{
     maintainer_can_modify = $true
@@ -91,7 +91,7 @@ if ($resp.Count -gt 0) {
 
     # setting variable to reference the pull request by number
     Write-Host "##vso[task.setvariable variable=Submitted.PullRequest.Number]$($resp[0].number)"
-    AddLabels $resp[0].number
+    AddLabels $resp[0].number $PRLabels
 }
 else {
   $data = @{
@@ -118,5 +118,5 @@ else {
   # setting variable to reference the pull request by number
   Write-Host "##vso[task.setvariable variable=Submitted.PullRequest.Number]$($resp.number)"
 
-  AddLabelsAddLabels $resp[0].number
+  AddLabelsAddLabels $resp[0].number $PRLabels
 }

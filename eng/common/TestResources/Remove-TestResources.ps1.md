@@ -14,40 +14,53 @@ Deletes the resource group deployed for a service directory from Azure.
 ## SYNTAX
 
 ### Default (Default)
+<<<<<<< HEAD
 
 ```text
 Remove-TestResources.ps1 [-BaseName] <String> [-Environment <String>] [-Force] [-WhatIf] [-Confirm]
  [<CommonParameters>]
+=======
+```
+Remove-TestResources.ps1 [-BaseName] <String> [-ServiceDirectory <String>] [-Environment <String>] [-Force]
+ [-RemoveTestResourcesRemainingArguments <Object>] [-WhatIf] [-Confirm] [<CommonParameters>]
+>>>>>>> 7ac0f68... Update Remove-TestResources.ps1.md
 ```
 
 ### Default+Provisioner
 
 ```text
 Remove-TestResources.ps1 [-BaseName] <String> -TenantId <String> [-SubscriptionId <String>]
- -ProvisionerApplicationId <String> -ProvisionerApplicationSecret <String> [-Environment <String>] [-Force]
- [-WhatIf] [-Confirm] [<CommonParameters>]
+ -ProvisionerApplicationId <String> -ProvisionerApplicationSecret <String> [-ServiceDirectory <String>]
+ [-Environment <String>] [-Force] [-RemoveTestResourcesRemainingArguments <Object>] [-WhatIf] [-Confirm]
+ [<CommonParameters>]
 ```
 
 ### ResourceGroup+Provisioner
 
 ```text
 Remove-TestResources.ps1 -ResourceGroupName <String> -TenantId <String> [-SubscriptionId <String>]
- -ProvisionerApplicationId <String> -ProvisionerApplicationSecret <String> [-Environment <String>] [-Force]
- [-WhatIf] [-Confirm] [<CommonParameters>]
+ -ProvisionerApplicationId <String> -ProvisionerApplicationSecret <String> [-ServiceDirectory <String>]
+ [-Environment <String>] [-Force] [-RemoveTestResourcesRemainingArguments <Object>] [-WhatIf] [-Confirm]
+ [<CommonParameters>]
 ```
 
 ### ResourceGroup
+<<<<<<< HEAD
 
 ```text
 Remove-TestResources.ps1 -ResourceGroupName <String> [-Environment <String>] [-Force] [-WhatIf] [-Confirm]
  [<CommonParameters>]
+=======
+```
+Remove-TestResources.ps1 -ResourceGroupName <String> [-ServiceDirectory <String>] [-Environment <String>]
+ [-Force] [-RemoveTestResourcesRemainingArguments <Object>] [-WhatIf] [-Confirm] [<CommonParameters>]
+>>>>>>> 7ac0f68... Update Remove-TestResources.ps1.md
 ```
 
 ## DESCRIPTION
 
 Removes a resource group and all its resources previously deployed using
 New-TestResources.ps1.
-
 If you are not currently logged into an account in the Az PowerShell module,
 you will be asked to log in with Connect-AzAccount.
 Alternatively, you (or a
@@ -61,10 +74,9 @@ create resources.
 
 ```text
 Remove-TestResources.ps1 -BaseName 'uuid123' -Force
-```
-
 Use the currently logged-in account to delete the resource group by the name of
 'rg-uuid123'
+```
 
 ### EXAMPLE 2
 
@@ -76,11 +88,10 @@ Remove-TestResources.ps1 `
     -ProvisionerApplicationSecret '$(AppSecret)' `
     -Force `
     -Verbose `
-```
-
 When run in the context of an Azure DevOps pipeline, this script removes the
 resource group whose name is stored in the environment variable
 AZURE_RESOURCEGROUP_NAME.
+```
 
 ## PARAMETERS
 
@@ -186,7 +197,7 @@ Accept wildcard characters: False
 ### -ServiceDirectory
 
 A directory under 'sdk' in the repository root - optionally with subdirectories
-specified - specified - in which to discover pre removal script named 'remove-test-resources-pre.json'.
+specified - in which to discover pre removal script named 'remove-test-resources-pre.json'.
 
 ```yaml
 Type: String
@@ -230,6 +241,21 @@ Aliases:
 Required: False
 Position: Named
 Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -RemoveTestResourcesRemainingArguments
+Captures any arguments not declared here (no parameter errors)
+
+```yaml
+Type: Object
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

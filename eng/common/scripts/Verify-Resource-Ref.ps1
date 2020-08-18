@@ -40,4 +40,4 @@ if ($affectedRepos.Count -gt 0)
     exit 1
 }
 
-Write-Information "All repository resources in yaml files reference a valid tag"
+Write-Information "All repository resources in yaml files reference a valid tag.."

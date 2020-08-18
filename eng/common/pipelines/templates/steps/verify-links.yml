@@ -12,7 +12,7 @@ steps:
     arguments: >
       -urls $(dir -r -i *.md) 
       -rootUrl "file://$(Build.SourcesDirectory)/${{ parameters.Directory }}" 
-      -recursive $false 
+      -recursive: $false 
       -ignoreLinksFile ${{ parameters.IgnoreLinksFile }}
       -branchReplaceRegex "(https://github.com/.*/blob/)master(/.*)"
       -branchReplacementName $env:SYSTEM_PULLREQUEST_SOURCECOMMITID

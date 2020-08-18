@@ -23,6 +23,7 @@ jobs:
         CommitMessage: "Sync eng/common directory with azure-sdk-tools repository for Tools PR https://github.com/Azure/azure-sdk-tools/pull/$(System.PullRequest.PullRequestNumber)"
         DirectoryToSync: "eng/common"
         PRBranchName: "sync-eng-common-$(System.PullRequest.SourceBranch)-$(System.PullRequest.PullRequestNumber)"
+        PRTitle: "Sync eng/common directory with azure-sdk-tools for PR $(System.PullRequest.PullRequestNumber)"
         Repos:
           - azure-sdk-for-android
           - azure-sdk-for-c

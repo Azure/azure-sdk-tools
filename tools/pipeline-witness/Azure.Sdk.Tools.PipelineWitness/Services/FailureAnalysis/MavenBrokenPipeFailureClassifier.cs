@@ -23,11 +23,12 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
         public async Task ClassifyAsync(FailureAnalyzerContext context)
         {
             var failedTasks = from r in context.Timeline.Records
-                              where r.Result == TaskResult.Failed
-                              where r.RecordType == "Task"
-                              where r.Task.Name == "Maven"
-                              where r.Log != null
-                              select r;
+                                where r.Result == TaskResult.Failed
+                                where r.RecordType == "Task"
+                                where r.Task != null
+                                where r.Task.Name == "Maven"
+                                where r.Log != null
+                                select r;
 
             foreach (var failedTask in failedTasks)
             {

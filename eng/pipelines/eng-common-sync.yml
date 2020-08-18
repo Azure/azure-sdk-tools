@@ -1,14 +1,14 @@
 # Mirror the eng/common folder to all subscribed langauge repos.
 
-trigger:
+trigger: none
+
+pr:
   branches:
     include:
       - master
   paths:
     include:
       - eng/common
-
-pr: none
 
 pool:
   vmImage: windows-2019
@@ -20,8 +20,9 @@ jobs:
     steps:
     - template: ./templates/steps/sync-directory.yml
       parameters:
-        CommitMessage: Sync eng/common directory with azure-sdk-tools repository
-        DirectoryToSync: eng/common
+        CommitMessage: "Sync eng/common directory with azure-sdk-tools repository for Tools PR #$(System.PullRequest.PullRequestNumber)"
+        DirectoryToSync: "eng/common"
+        PRBranchName: "sync-eng-common-$(System.PullRequest.SourceBranch)-$(System.PullRequest.PullRequestNumber)"
         Repos:
           - azure-sdk-for-android
           - azure-sdk-for-c

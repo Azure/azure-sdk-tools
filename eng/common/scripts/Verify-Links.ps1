@@ -69,16 +69,18 @@ function ResolveUri ([System.Uri]$referralUri, [string]$link)
   $linkUri = [System.Uri]$link;
   # Our link guidelines do not allow relative links so only resolve them when we are not
   # validating links against our link guidelines (i.e. !$checkLinkGuideance)
-  if(!$checkLinkGuidance) {
-    if (!$linkUri.IsAbsoluteUri) {
-    # For rooted paths resolve from the baseUrl
-      if ($link.StartsWith("/")) {
-        Write-Verbose "rooturl = $rootUrl"
-        $linkUri = new-object System.Uri([System.Uri]$rootUrl, ".$link");
-      }
-      else {
-        $linkUri = new-object System.Uri($referralUri, $link);
-      }
+  if ($checkLinkGuidance -and !$linkUri.IsAbsoluteUri) {
+    return $linkUri
+  }
+
+  # For rooted paths resolve from the baseUrl
+  if (!$linkUri.IsAbsoluteUri) {
+    if ($link.StartsWith("/")) {
+      Write-Verbose "rooturl = $rootUrl"
+      $linkUri = new-object System.Uri([System.Uri]$rootUrl, ".$link");
+    }
+    else {
+      $linkUri = new-object System.Uri($referralUri, $link);
     }
   }
 
@@ -120,6 +122,12 @@ function CheckLink ([System.Uri]$linkUri)
 {
   if ($checkedLinks.ContainsKey($linkUri)) { 
     return $checkedLinks[$linkUri] 
+  }
+
+  if ($checkLinkGuidance -and !$linkUri.IsAbsoluteUri) {
+    LogWarning "DO NOT use relative link $linkUri. Please use absolute link instead.s"
+    $checkedLinks[$linkUri] = $false
+    return $false
   }
 
   $linkValid = $true
@@ -243,7 +251,6 @@ if (Test-Path $ignoreLinksFile)
 $checkedPages = @{};
 $checkedLinks = @{};
 $pageUrisToCheck = new-object System.Collections.Queue
-
 foreach ($url in $urls) {
   $uri = NormalizeUrl $url  
   $pageUrisToCheck.Enqueue($uri);

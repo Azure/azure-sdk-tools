@@ -3,12 +3,13 @@ parameters:
   DirectoryToSync: eng/common
   CommitMessage: commit-message-not-set
   PRBranchName: branch-name-not-set
+  BaseBranchName: master
 
 steps:
 
 - ${{ each repo in parameters.Repos }}:
   - pwsh: |
-      git clone --branch master https://github.com/azure/${{ repo }}
+      git clone --branch ${{ parameters.BaseBranchName }} https://github.com/azure/${{ repo }}
       $repoPath = "${{ repo }}/${{ parameters.DirectoryToSync }}"
 
       if (!(Test-Path $repoPath)) { mkdir $repoPath }
@@ -23,6 +24,7 @@ steps:
     parameters:
       RepoName: ${{ repo }}
       PRBranchName: ${{ parameters.PRBranchName }}
+      BaseBranchName: ${{ parameters.BaseBranchName }}
       CommitMsg: ${{ parameters.CommitMessage }}
       PRTitle: ${{ parameters.CommitMessage }}
       PushArgs: -f

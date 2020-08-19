@@ -1,3 +1,3 @@
-module apireview
+module apiview
 
 go 1.14

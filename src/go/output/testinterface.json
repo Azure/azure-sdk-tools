@@ -70,8 +70,8 @@
   {
    "DefinitionId": null,
    "NavigateToId": null,
-   "Value": "int64",
-   "Kind": 4
+   "Value": "bar",
+   "Kind": 6
   },
   {
    "DefinitionId": null,

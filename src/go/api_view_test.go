@@ -1,4 +1,4 @@
-package apireview
+package apiview
 
 import (
 	"encoding/json"
@@ -20,7 +20,7 @@ func TestFuncDecl(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(p.Tokens) != 24 {
+	if len(p.Tokens) != 32 {
 		t.Fatal("unexpected token length, signals a change in the output")
 	}
 	if p.Name != "testfuncdecl" {
@@ -71,7 +71,7 @@ func TestStruct(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(p.Tokens) != 50 {
+	if len(p.Tokens) != 52 {
 		t.Fatal("unexpected token length, signals a change in the output")
 	}
 	if p.Name != "teststruct" {

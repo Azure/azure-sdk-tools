@@ -1,4 +1,4 @@
-package apireview
+package apiview
 
 import (
 	"go/ast"
@@ -87,32 +87,3 @@ type PackageReview struct {
 	Tokens     []Token      `json:"Tokens"`
 	Navigation []Navigation `json:"Navigation"`
 }
-
-/*
-"Navigation": [
-        {
-            "Text": "ClassLibrary1.dll",
-            "NavigationId": null,
-            "ChildItems": [
-                {
-                    "Text": "ClassLibrary1",
-                    "NavigationId": "ClassLibrary1",
-                    "ChildItems": [
-                        {
-                            "Text": "Class1",
-                            "NavigationId": "ClassLibrary1.Class1",
-                            "ChildItems": [],
-                            "Tags": {
-                                "TypeKind": "class" // used to figure out the icon, availible list class, interface, struct, enum, delegate, unknown, assembly
-                            }
-                        }
-                    ],
-                    "Tags": {}
-                }
-            ],
-            "Tags": {
-                "TypeKind": "assembly"
-            }
-        }
-    ]
-*/

@@ -20,7 +20,7 @@
    "Kind": 1
   },
   {
-   "DefinitionId": null,
+   "DefinitionId": "string",
    "NavigateToId": null,
    "Value": "const",
    "Kind": 4
@@ -206,7 +206,7 @@
    "Kind": 1
   },
   {
-   "DefinitionId": null,
+   "DefinitionId": "string",
    "NavigateToId": null,
    "Value": "const",
    "Kind": 4
@@ -312,7 +312,24 @@
   {
    "Text": "testconst",
    "NavigationId": null,
-   "ChildItems": [],
+   "ChildItems": [
+    {
+     "Text": "const - SomeChoice",
+     "NavigationId": "string",
+     "ChildItems": [],
+     "Tags": {
+      "TypeKind": "struct"
+     }
+    },
+    {
+     "Text": "const - string",
+     "NavigationId": "string",
+     "ChildItems": [],
+     "Tags": {
+      "TypeKind": "struct"
+     }
+    }
+   ],
    "Tags": null
   }
  ]

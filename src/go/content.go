@@ -1,4 +1,4 @@
-package apireview
+package apiview
 
 import (
 	"fmt"

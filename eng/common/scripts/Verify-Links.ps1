@@ -289,7 +289,7 @@ while ($pageUrisToCheck.Count -ne 0)
   }
 }
 
-Write-Host "Found $($checkedLinks.Count) links with $($badLinks.Count) pages broken."
+LogError "Found $($checkedLinks.Count) links with $($badLinks.Count) pages broken."
 foreach ($pageLink in $badLinks.Keys) {
   LogError "  '$pageLink' has $($badLinks[$pageLink].Count) broken link(s)`:"
   foreach ($brokenLink in $badLinks[$pageLink].Keys) {

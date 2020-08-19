@@ -436,7 +436,7 @@ public class ASTAnalyser implements Analyser {
                 addToken(makeWhitespace());
 
                 // Add annotation for field declaration
-                getAnnotations(fieldDeclaration, false,false);
+                getAnnotations(fieldDeclaration, false, false);
 
                 final NodeList<Modifier> fieldModifiers = fieldDeclaration.getModifiers();
                 // public, protected, static, final

@@ -1,6 +1,7 @@
 package com.azure.tools.apiview.processor.diagnostics;
 
 import com.azure.tools.apiview.processor.diagnostics.rules.BadPrefixesDiagnosticRule;
+import com.azure.tools.apiview.processor.diagnostics.rules.FluentSetterReturnTypeDiagnosticRule;
 import com.azure.tools.apiview.processor.diagnostics.rules.IllegalPackageAPIExportsDiagnosticRule;
 import com.azure.tools.apiview.processor.diagnostics.rules.ImportsDiagnosticRule;
 import com.azure.tools.apiview.processor.diagnostics.rules.MissingAnnotationsDiagnosticRule;
@@ -38,6 +39,7 @@ public class Diagnostics {
             .add("retryPolicy", new ExactTypeNameCheckFunction("HttpPipelinePolicy"))
             .add("serviceVersion", new DirectSubclassCheckFunction("ServiceVersion")));
         diagnostics.add(new MissingAnnotationsDiagnosticRule());
+        diagnostics.add(new FluentSetterReturnTypeDiagnosticRule());
     }
 
     public static void scan(CompilationUnit cu, APIListing listing) {

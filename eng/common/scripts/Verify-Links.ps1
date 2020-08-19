@@ -4,7 +4,7 @@ param (
   # file that contains a set of links to ignore when verifying
   [string] $ignoreLinksFile = "$PSScriptRoot/ignore-links.txt",
   # switch that will enable devops specific logging for warnings
-  [switch] $devOpsLogging = $false,
+  [switch] $devOpsLogging = $true,
   # check the links recurisvely based on recursivePattern
   [switch] $recursive = $true,
   # recusiving check links for all links verified that begin with this baseUrl, defaults to the folder the url is contained in
@@ -51,6 +51,18 @@ function LogWarning
   if ($devOpsLogging)
   {
     Write-Host "##vso[task.LogIssue type=warning;]$args"
+  }
+  else
+  {
+    Write-Warning "$args"
+  }
+}
+
+function LogError
+{
+  if ($devOpsLogging)
+  {
+    Write-Host "##vso[task.logissue type=error]$args"
   }
   else
   {
@@ -119,6 +131,9 @@ function ParseLinks([string]$baseUri, [string]$htmlContent)
 function CheckLink ([System.Uri]$linkUri)
 {
   if ($checkedLinks.ContainsKey($linkUri)) { 
+    if (!$checkedLinks[$linkUri]) {
+      LogWarning "broken link $linkUri"
+    }
     return $checkedLinks[$linkUri] 
   }
 
@@ -233,7 +248,6 @@ if ($PSVersionTable.PSVersion.Major -lt 6)
 {
   LogWarning "Some web requests will not work in versions of PS earlier then 6. You are running version $($PSVersionTable.PSVersion)."
 }
-$badLinks = @();
 $ignoreLinks = @();
 if (Test-Path $ignoreLinksFile)
 {
@@ -242,6 +256,7 @@ if (Test-Path $ignoreLinksFile)
 
 $checkedPages = @{};
 $checkedLinks = @{};
+$badLinks = @{};
 $pageUrisToCheck = new-object System.Collections.Queue
 
 foreach ($url in $urls) {
@@ -257,11 +272,11 @@ while ($pageUrisToCheck.Count -ne 0)
 
   $linkUris = GetLinks $pageUri
   Write-Host "Found $($linkUris.Count) links on page $pageUri";
-  
+  $badLinksPerPage = @{};
   foreach ($linkUri in $linkUris) {
     $isLinkValid = CheckLink $linkUri
-    if (!$isLinkValid) {
-      $script:badLinks += $linkUri
+    if (!$isLinkValid -and !$badLinksPerPage.ContainsKey($linkUri)) {
+      $badLinksPerPage[$linkUri] = $true
     }
     if ($recursive -and $isLinkValid) {
       if ($linkUri.ToString().StartsWith($baseUrl) -and !$checkedPages.ContainsKey($linkUri)) {
@@ -269,9 +284,17 @@ while ($pageUrisToCheck.Count -ne 0)
       }
     }
   }
+  if ($badLinksPerPage.Count -gt 0) {
+    $badLinks[$pageUri] = $badLinksPerPage
+  }
 }
 
-Write-Host "Found $($checkedLinks.Count) links with $($badLinks.Count) broken"
-$badLinks | ForEach-Object { Write-Host "  $_" }
+Write-Host "Found $($checkedLinks.Count) links with $($badLinks.Count) pages broken."
+foreach ($pageLink in $badLinks.Keys) {
+  LogError "  '$pageLink' has $($badLinks[$pageLink].Count) broken link(s)`:"
+  foreach ($brokenLink in $badLinks[$pageLink].Keys) {
+    LogError "      $brokenLink"
+  }
+}
 
 exit $badLinks.Count

@@ -13,8 +13,6 @@ param (
   [string] $rootUrl = "",
   # list of http status codes count as broken links. Defaults to 400, 401, 404, SocketError.HostNotFound = 11001, SocketError.NoData = 11004
   [array] $errorStatusCodes = @(400, 401, 404, 11001, 11004),
-  # flag to allow resolving relative paths or not
-  [bool] $resolveRelativeLinks = $true,
   # regex to check if the link needs to be replaced
   [string] $branchReplaceRegex = "(https://github.com/.*/blob/)master(/.*)",
   # the substitute branch name or SHA commit

@@ -8,7 +8,6 @@ schema: 2.0.0
 # New-TestResources.ps1
 
 ## SYNOPSIS
-
 Deploys live test resources defined for a service directory to Azure.
 
 ## SYNTAX
@@ -32,8 +31,7 @@ New-TestResources.ps1 [-BaseName] <String> [-ResourceGroupName <String>] -Servic
 ```
 
 ## DESCRIPTION
-
-Deploys live test resources specified in test-resources.json files to a resource
+Deploys live test resouces specified in test-resources.json files to a resource
 group.
 
 This script searches the directory specified in $ServiceDirectory recursively
@@ -55,8 +53,7 @@ specified in $ProvisionerApplicationId and $ProvisionerApplicationSecret.
 ## EXAMPLES
 
 ### EXAMPLE 1
-
-```text
+```
 Connect-AzAccount -Subscription "REPLACE_WITH_SUBSCRIPTION_ID"
 $testAadApp = New-AzADServicePrincipal -Role Owner -DisplayName 'azure-sdk-live-test-app'
 New-TestResources.ps1 `
@@ -73,8 +70,7 @@ Requires PowerShell 7 to use ConvertFrom-SecureString -AsPlainText or convert
 the SecureString to plaintext by another means.
 
 ### EXAMPLE 2
-
-```text
+```
 New-TestResources.ps1 `
     -BaseName 'Generated' `
     -ServiceDirectory '$(ServiceDirectory)' `
@@ -89,7 +85,7 @@ New-TestResources.ps1 `
     -Verbose
 ```
 
-Run this in an Azure DevOps CI (with appropriate variables configured) before
+Run this in an Azure DevOps CI (with approrpiate variables configured) before
 executing live tests.
 The script will output variables as secrets (to enable
 log redaction).
@@ -97,13 +93,12 @@ log redaction).
 ## PARAMETERS
 
 ### -BaseName
-
 A name to use in the resource group and passed to the ARM template as 'baseName'.
 Limit $BaseName to enough characters to be under limit plus prefixes specified in
 the ARM template.
 See also https://docs.microsoft.com/azure/architecture/best-practices/resource-naming
 
-Note: The value specified for this parameter will be overridden and generated
+Note: The value specified for this parameter will be overriden and generated
 by New-TestResources.ps1 if $CI is specified.
 
 ```yaml
@@ -135,7 +130,6 @@ Accept wildcard characters: False
 ```
 
 ### -ServiceDirectory
-
 A directory under 'sdk' in the repository root - optionally with subdirectories
 specified - in which to discover ARM templates named 'test-resources.json'.
 This can also be an absolute path or specify parent directories.
@@ -153,7 +147,6 @@ Accept wildcard characters: False
 ```
 
 ### -TestApplicationId
-
 The AAD Application ID to authenticate the test runner against deployed
 resources.
 Passed to the ARM template as 'testApplicationId'.
@@ -174,7 +167,6 @@ Accept wildcard characters: False
 ```
 
 ### -TestApplicationSecret
-
 Optional service principal secret (password) to authenticate the test runner
 against deployed resources.
 Passed to the ARM template as
@@ -196,7 +188,6 @@ Accept wildcard characters: False
 ```
 
 ### -TestApplicationOid
-
 Service Principal Object ID of the AAD Test application.
 This is used to assign
 permissions to the AAD application so it can access tested features on the live
@@ -221,7 +212,6 @@ Accept wildcard characters: False
 ```
 
 ### -TenantId
-
 The tenant ID of a service principal when a provisioner is specified.
 The same
 Tenant ID is used for Test Application and Provisioner Application.
@@ -241,7 +231,6 @@ Accept wildcard characters: False
 ```
 
 ### -SubscriptionId
-
 Optional subscription ID to use for new resources when logging in as a
 provisioner.
 You can also use Set-AzContext if not provisioning.
@@ -259,7 +248,6 @@ Accept wildcard characters: False
 ```
 
 ### -ProvisionerApplicationId
-
 The AAD Application ID used to provision test resources when a provisioner is
 specified.
 
@@ -280,7 +268,6 @@ Accept wildcard characters: False
 ```
 
 ### -ProvisionerApplicationSecret
-
 A service principal secret (password) used to provision test resources when a
 provisioner is specified.
 
@@ -301,7 +288,6 @@ Accept wildcard characters: False
 ```
 
 ### -DeleteAfterHours
-
 Optional.
 Positive integer number of hours from the current time to set the
 'DeleteAfter' tag on the created resource group.
@@ -314,7 +300,7 @@ created resource group.
 An optional cleanup process can delete resource groups whose "DeleteAfter"
 timestamp is less than the current time.
 
-This is used for CI automation.
+This isused for CI automation.
 
 ```yaml
 Type: Int32
@@ -329,7 +315,6 @@ Accept wildcard characters: False
 ```
 
 ### -Location
-
 Optional location where resources should be created.
 If left empty, the default
 is based on the cloud to which the template is being deployed:
@@ -351,7 +336,6 @@ Accept wildcard characters: False
 ```
 
 ### -Environment
-
 Name of the cloud environment.
 The default is the Azure Public Cloud
 ('PublicCloud')
@@ -369,7 +353,6 @@ Accept wildcard characters: False
 ```
 
 ### -AdditionalParameters
-
 Optional key-value pairs of parameters to pass to the ARM template(s).
 
 ```yaml
@@ -385,7 +368,6 @@ Accept wildcard characters: False
 ```
 
 ### -CI
-
 Indicates the script is run as part of a Continuous Integration / Continuous
 Deployment (CI/CD) build (only Azure Pipelines is currently supported).
 
@@ -402,7 +384,6 @@ Accept wildcard characters: False
 ```
 
 ### -Force
-
 Force creation of resources instead of being prompted.
 
 ```yaml
@@ -467,7 +448,6 @@ Accept wildcard characters: False
 ```
 
 ### CommonParameters
-
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS

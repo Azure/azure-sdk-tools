@@ -39,7 +39,7 @@ func makeStructTokens(name *string, anonFields []string, fields map[string]strin
 			makeToken(nil, nil, addTab(), whitespace, list)
 			makeToken(&k1, nil, k1, typeName, list)
 			makeToken(nil, nil, " ", whitespace, list)
-			makeToken(nil, nil, v1, getTypeClassification(v1), list)
+			makeToken(nil, nil, v1, memberName, list)
 		}
 	}
 	if anonFields == nil && fields == nil {
@@ -75,8 +75,10 @@ func makeInterfaceTokens(name *string, methods map[string]Func, list *[]Token) {
 	makeToken(nil, nil, "", newline, list)
 }
 
+// interface method definitions vary from regular method definitions slightly so they have their own independent generation function
 func makeIntFuncTokens(name *string, funcs Func, list *[]Token) {
 	makeToken(nil, nil, addTab(), whitespace, list)
+	// interface method definitions vary from regular method definitions slightly so they have their own independent generation function
 	makeIntMethodTokens(name, funcs.Params, funcs.Returns, list)
 }
 
@@ -96,7 +98,7 @@ func makeFuncTokens(name *string, params, results *string, returnCount int, list
 			temp := strings.Split(i, " ")
 			makeToken(nil, nil, temp[0], typeName, list)
 			makeToken(nil, nil, " ", whitespace, list)
-			makeToken(nil, nil, temp[1], getTypeClassification(temp[1]), list)
+			makeToken(nil, nil, temp[1], memberName, list)
 			if id < len(tok)-1 {
 				makeToken(nil, nil, ",", punctuation, list)
 				makeToken(nil, nil, " ", whitespace, list)
@@ -113,9 +115,7 @@ func makeFuncTokens(name *string, params, results *string, returnCount int, list
 		}
 		for id, i := range tok {
 			temp := strings.Split(i, " ")
-			makeToken(nil, nil, temp[0], getTypeClassification(temp[0]), list)
-			// makeToken(nil, nil, " ",  whitespace, list)
-			// makeToken(nil, nil, temp[1],  keyword, list)
+			makeToken(nil, nil, temp[0], memberName, list)
 			if id < len(tok)-1 {
 				makeToken(nil, nil, ",", punctuation, list)
 				makeToken(nil, nil, " ", whitespace, list)
@@ -136,12 +136,12 @@ func makeMethodTokens(receiverVar, receiver string, isPointer bool, name string,
 	makeToken(nil, nil, "func", keyword, list)
 	makeToken(nil, nil, " ", whitespace, list)
 	makeToken(nil, nil, "(", punctuation, list)
-	makeToken(nil, nil, receiverVar, typeName, list)
+	makeToken(nil, nil, receiverVar, memberName, list)
 	makeToken(nil, nil, " ", whitespace, list)
 	if isPointer {
-		makeToken(nil, nil, "*", punctuation, list)
+		makeToken(nil, nil, "*", memberName, list)
 	}
-	makeToken(nil, nil, receiver, typeName, list)
+	makeToken(nil, nil, receiver, memberName, list)
 	makeToken(nil, nil, ")", punctuation, list)
 	makeToken(nil, nil, " ", whitespace, list)
 	makeToken(&name, nil, name, typeName, list)
@@ -172,7 +172,7 @@ func makeMethodTokens(receiverVar, receiver string, isPointer bool, name string,
 		}
 		for id, i := range tok {
 			temp := strings.Split(i, " ")
-			makeToken(nil, nil, temp[0], getTypeClassification(temp[0]), list)
+			makeToken(nil, nil, temp[0], memberName, list)
 			if id < len(tok)-1 {
 				makeToken(nil, nil, ",", punctuation, list)
 				makeToken(nil, nil, " ", whitespace, list)
@@ -186,6 +186,7 @@ func makeMethodTokens(receiverVar, receiver string, isPointer bool, name string,
 	makeToken(nil, nil, "", newline, list)
 }
 
+// interface method definitions vary from regular method definitions slightly so they have their own independent generation function
 func makeIntMethodTokens(name *string, params, results *string, list *[]Token) {
 	n := *name
 	makeToken(&n, nil, *name, typeName, list)
@@ -241,7 +242,7 @@ func makeConstTokens(name *string, c Const, list *[]Token) {
 	makeToken(nil, nil, addTab(), whitespace, list)
 	makeToken(&n, nil, *name, typeName, list)
 	makeToken(nil, nil, " ", whitespace, list)
-	makeToken(nil, nil, c.Type, getTypeClassification(c.Type), list)
+	makeToken(nil, nil, c.Type, memberName, list)
 	makeToken(nil, nil, " ", whitespace, list)
 	makeToken(nil, nil, "=", punctuation, list)
 	makeToken(nil, nil, " ", whitespace, list)
@@ -251,6 +252,7 @@ func makeConstTokens(name *string, c Const, list *[]Token) {
 	makeToken(nil, nil, "", newline, list)
 }
 
+// getTypeClassification will return the token type for the text that is passed in
 func getTypeClassification(s string) int {
 	if strings.HasPrefix(s, "*") {
 		s = s[1:]

@@ -61,10 +61,19 @@ func CreateAPIView(pkgDir, outputDir string) error {
 	tokenList := &[]Token{}
 	c := newContent()
 	c = inspectAST(pkg)
+	// create the tokens for the Go package declaration
+	makeToken(nil, nil, "package", memberName, tokenList)
+	makeToken(nil, nil, " ", whitespace, tokenList)
+	makeToken(&pkg.p.Name, nil, pkg.p.Name, typeName, tokenList)
+	makeToken(nil, nil, "", newline, tokenList)
+	makeToken(nil, nil, " ", whitespace, tokenList)
+	makeToken(nil, nil, "", newline, tokenList)
+	// work through consts, interfaces, structs and funcs sequentially adding tokens
 	c.parseConst(tokenList)
 	c.parseInterface(tokenList)
 	c.parseStruct(tokenList)
 	c.parseFunc(tokenList)
+	// generate navigation items for each top level Go component
 	navItems := c.generateNavChildItems()
 	review := PackageReview{
 		Name:   pkg.p.Name,

@@ -24,6 +24,9 @@ jobs:
         DirectoryToSync: "eng/common"
         PRBranchName: "sync-eng-common-$(System.PullRequest.SourceBranch)-$(System.PullRequest.PullRequestNumber)"
         PRTitle: "Sync eng/common directory with azure-sdk-tools for PR $(System.PullRequest.PullRequestNumber)"
+        PRBody: >- 
+          Sync eng/common directory with azure-sdk-tools for PR https://github.com/Azure/azure-sdk-tools/pull/$(System.PullRequest.PullRequestNumber) <br>
+          See [eng/common workflow](https://github.com/Azure/azure-sdk-tools/blob/master/eng/common/README.md#workflow)
         Repos:
           - azure-sdk-for-android
           - azure-sdk-for-c

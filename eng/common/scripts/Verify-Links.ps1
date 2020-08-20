@@ -304,7 +304,7 @@ while ($pageUrisToCheck.Count -ne 0)
 }
 
 $errorMsg = ""
-if ($badLinks.Count -gt 1) {
+if ($badLinks.Count -gt 0) {
   $errorMsg += "Found $($checkedLinks.Count) links with $($badLinks.Count) page(s) broken.`n"
 } 
 else {

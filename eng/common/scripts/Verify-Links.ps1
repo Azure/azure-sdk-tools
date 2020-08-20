@@ -188,7 +188,7 @@ function CheckLink ([System.Uri]$linkUri)
 }
 
 function ReplaceGithubLink([string]$originLink) {
-  if (-not $branchReplacementName) {
+  if (!$branchReplacementName) {
     return $originLink
   }
   $ReplacementPattern = "`${1}$branchReplacementName`$2"

@@ -4,7 +4,7 @@ param (
   # file that contains a set of links to ignore when verifying
   [string] $ignoreLinksFile = "$PSScriptRoot/ignore-links.txt",
   # switch that will enable devops specific logging for warnings
-  [switch] $devOpsLogging = $true,
+  [switch] $devOpsLogging = $false,
   # check the links recurisvely based on recursivePattern
   [switch] $recursive = $true,
   # recusiving check links for all links verified that begin with this baseUrl, defaults to the folder the url is contained in
@@ -66,7 +66,7 @@ function LogError
   }
   else
   {
-    Write-Warning "$args"
+    Write-Error "$args"
   }
 }
 
@@ -288,8 +288,12 @@ while ($pageUrisToCheck.Count -ne 0)
     $badLinks[$pageUri] = $badLinksPerPage
   }
 }
-
-LogError "Found $($checkedLinks.Count) links with $($badLinks.Count) pages broken."
+if ($badLinks.Count -gt 1) {
+  LogError "Found $($checkedLinks.Count) links with $($badLinks.Count) page(s) broken."
+} 
+else {
+  Write-Host "Found $($checkedLinks.Count) links. No broken links found."
+}
 foreach ($pageLink in $badLinks.Keys) {
   LogError "  '$pageLink' has $($badLinks[$pageLink].Count) broken link(s)`:"
   foreach ($brokenLink in $badLinks[$pageLink].Keys) {

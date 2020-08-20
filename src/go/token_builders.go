@@ -94,7 +94,7 @@ func makeFuncTokens(name *string, params, results *string, returnCount int, list
 		tok := strings.Split(p, ",")
 		for id, i := range tok {
 			temp := strings.Split(i, " ")
-			makeToken(nil, nil, temp[0], getTypeClassification(temp[0]), list)
+			makeToken(nil, nil, temp[0], typeName, list)
 			makeToken(nil, nil, " ", whitespace, list)
 			makeToken(nil, nil, temp[1], getTypeClassification(temp[1]), list)
 			if id < len(tok)-1 {
@@ -151,7 +151,7 @@ func makeMethodTokens(receiverVar, receiver string, isPointer bool, name string,
 		tok := strings.Split(p, ",")
 		for id, i := range tok {
 			temp := strings.Split(i, " ")
-			makeToken(nil, nil, temp[0], getTypeClassification(temp[0]), list)
+			makeToken(nil, nil, temp[0], typeName, list)
 			if len(temp) == 2 {
 				makeToken(nil, nil, " ", whitespace, list)
 				makeToken(nil, nil, temp[1], getTypeClassification(temp[1]), list)
@@ -195,8 +195,11 @@ func makeIntMethodTokens(name *string, params, results *string, list *[]Token) {
 		tok := strings.Split(p, ",")
 		for id, i := range tok {
 			temp := strings.Split(i, " ")
-
-			makeToken(nil, nil, temp[0], getTypeClassification(temp[0]), list)
+			tokenType := typeName
+			if len(temp) == 2 {
+				tokenType = getTypeClassification(temp[0])
+			}
+			makeToken(nil, nil, temp[0], tokenType, list)
 			if len(temp) == 2 {
 				makeToken(nil, nil, " ", whitespace, list)
 				makeToken(nil, nil, temp[1], getTypeClassification(temp[1]), list)

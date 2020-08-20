@@ -102,10 +102,11 @@ func (c *content) parseConst(tokenList *[]Token) {
 		for _, t := range types {
 			// this token parsing is performed so that const declarations of different types are declared
 			// in their own const block to make them easier to click on
+			n := t
 			makeToken(nil, nil, "", 1, tokenList)
 			makeToken(nil, nil, " ", whitespace, tokenList)
 			makeToken(nil, nil, "", 1, tokenList)
-			makeToken(nil, &t, "const", keyword, tokenList)
+			makeToken(&n, nil, "const", keyword, tokenList)
 			makeToken(nil, nil, " ", whitespace, tokenList)
 			makeToken(nil, nil, "(", punctuation, tokenList)
 			makeToken(nil, nil, "", 1, tokenList)
@@ -213,6 +214,9 @@ func (c *content) searchForMethods(s string, tokenList *[]Token) {
 			makeMethodTokens(v, n, isPointer, getMethodName(i), f.Params, f.Returns, f.ReturnsNum, tokenList)
 			delete(c.Funcs, i)
 		}
+		if isOnUnexportedMember(i) || isExampleOrTest(i) {
+			delete(c.Funcs, i)
+		}
 	}
 }
 
@@ -281,6 +285,9 @@ func (c *content) parseFunc(tokenList *[]Token) {
 		}
 	}
 	for _, k := range keys {
+		makeToken(nil, nil, "", newline, tokenList)
+		makeToken(nil, nil, " ", whitespace, tokenList)
+		makeToken(nil, nil, "", newline, tokenList)
 		makeFuncTokens(&k, c.Funcs[k].Params, c.Funcs[k].Returns, c.Funcs[k].ReturnsNum, tokenList)
 	}
 }
@@ -303,7 +310,7 @@ func (c *content) generateNavChildItems() []Navigation {
 				NavigationId: &temp,
 				ChildItems:   []Navigation{},
 				Tags: &map[string]string{
-					"TypeKind": "struct",
+					"TypeKind": "enum",
 				},
 			})
 		}
@@ -332,7 +339,21 @@ func (c *content) generateNavChildItems() []Navigation {
 			NavigationId: &keys[k],
 			ChildItems:   []Navigation{},
 			Tags: &map[string]string{
-				"TypeKind": "class",
+				"TypeKind": "struct",
+			},
+		})
+	}
+	keys = []string{}
+	for i := range c.Funcs {
+		keys = append(keys, i)
+	}
+	for k := range keys {
+		childItems = append(childItems, Navigation{
+			Text:         &keys[k],
+			NavigationId: &keys[k],
+			ChildItems:   []Navigation{},
+			Tags: &map[string]string{
+				"TypeKind": "unknown",
 			},
 		})
 	}

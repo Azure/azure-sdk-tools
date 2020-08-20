@@ -13,6 +13,10 @@ param (
   [string] $rootUrl = "",
   # list of http status codes count as broken links. Defaults to 400, 401, 404, SocketError.HostNotFound = 11001, SocketError.NoData = 11004
   [array] $errorStatusCodes = @(400, 401, 404, 11001, 11004),
+  # regex to check if the link needs to be replaced
+  [string] $branchReplaceRegex = "(https://github.com/.*/blob/)master(/.*)",
+  # the substitute branch name or SHA commit
+  [string] $branchReplacementName = "",
   # flag to allow checking against azure sdk link guidance.
   [bool] $checkLinkGuidance = $false
 )
@@ -198,6 +202,14 @@ function CheckLink ([System.Uri]$linkUri)
   return $linkValid
 }
 
+function ReplaceGithubLink([string]$originLink) {
+  if (!$branchReplacementName) {
+    return $originLink
+  }
+  $ReplacementPattern = "`${1}$branchReplacementName`$2"
+  return $originLink -replace $branchReplaceRegex, $ReplacementPattern 
+}
+
 function GetLinks([System.Uri]$pageUri)
 {
   if ($pageUri.Scheme.StartsWith("http")) {
@@ -274,6 +286,8 @@ while ($pageUrisToCheck.Count -ne 0)
   Write-Host "Found $($linkUris.Count) links on page $pageUri";
   $badLinksPerPage = @{};
   foreach ($linkUri in $linkUris) {
+    $linkUri = ReplaceGithubLink $linkUri
+
     $isLinkValid = CheckLink $linkUri
     if (!$isLinkValid -and !$badLinksPerPage.ContainsKey($linkUri)) {
       $badLinksPerPage[$linkUri] = $true
@@ -288,17 +302,19 @@ while ($pageUrisToCheck.Count -ne 0)
     $badLinks[$pageUri] = $badLinksPerPage
   }
 }
+
+$errorMsg = ""
 if ($badLinks.Count -gt 1) {
-  LogError "Found $($checkedLinks.Count) links with $($badLinks.Count) page(s) broken."
+  $errorMsg += "Found $($checkedLinks.Count) links with $($badLinks.Count) page(s) broken.`n"
 } 
 else {
   Write-Host "Found $($checkedLinks.Count) links. No broken links found."
 }
 foreach ($pageLink in $badLinks.Keys) {
-  LogError "  '$pageLink' has $($badLinks[$pageLink].Count) broken link(s)`:"
+  $errorMsg += "  '$pageLink' has $($badLinks[$pageLink].Count) broken link(s)`:`n"
   foreach ($brokenLink in $badLinks[$pageLink].Keys) {
-    LogError "      $brokenLink"
+    $errorMsg += "      $brokenLink`n"
   }
 }
-
+LogError $errorMsg
 exit $badLinks.Count

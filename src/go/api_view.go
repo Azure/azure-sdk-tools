@@ -17,9 +17,9 @@ const (
 	newline       = 1
 	whitespace    = 2
 	punctuation   = 3
-	keyword       = 4
+	keyword       = 6
 	lineIDMarker  = 5
-	typeName      = 6
+	typeName      = 4
 	memberName    = 7
 	stringLiteral = 8
 	literal       = 9
@@ -47,6 +47,7 @@ var (
 		"uint64":     true,
 		"complex64":  true,
 		"complex128": true,
+		"error":      true,
 	}
 )
 

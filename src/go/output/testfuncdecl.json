@@ -1,0 +1,205 @@
+{
+ "Name": "testfuncdecl",
+ "Tokens": [
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "func",
+   "Kind": 6
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": "DoSomething",
+   "NavigateToId": null,
+   "Value": "DoSomething",
+   "Kind": 4
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "(",
+   "Kind": 3
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "s",
+   "Kind": 9
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "string",
+   "Kind": 4
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": ",",
+   "Kind": 3
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "i",
+   "Kind": 9
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "int",
+   "Kind": 4
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": ",",
+   "Kind": 3
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "b",
+   "Kind": 9
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "bool",
+   "Kind": 4
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": ",",
+   "Kind": 3
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "f1",
+   "Kind": 9
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "float32",
+   "Kind": 4
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": ")",
+   "Kind": 3
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "(",
+   "Kind": 3
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "string",
+   "Kind": 4
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": ",",
+   "Kind": 3
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "error",
+   "Kind": 4
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": ")",
+   "Kind": 3
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "",
+   "Kind": 1
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "",
+   "Kind": 1
+  }
+ ],
+ "Navigation": [
+  {
+   "Text": "testfuncdecl",
+   "NavigationId": null,
+   "ChildItems": [],
+   "Tags": null
+  }
+ ]
+}

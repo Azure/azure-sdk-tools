@@ -105,7 +105,7 @@ func (c *content) parseConst(tokenList *[]Token) {
 			makeToken(nil, nil, "", 1, tokenList)
 			makeToken(nil, nil, " ", whitespace, tokenList)
 			makeToken(nil, nil, "", 1, tokenList)
-			makeToken(&t, nil, "const", keyword, tokenList)
+			makeToken(nil, &t, "const", keyword, tokenList)
 			makeToken(nil, nil, " ", whitespace, tokenList)
 			makeToken(nil, nil, "(", punctuation, tokenList)
 			makeToken(nil, nil, "", 1, tokenList)
@@ -175,8 +175,13 @@ func (c *content) addStruct(pkg pkg, name string, s *ast.StructType) {
 
 // adds the specified struct type to the exports list.
 func (c *content) parseStruct(tokenList *[]Token) {
-	for k, v := range c.Structs {
-		makeStructTokens(&k, v.AnonymousFields, v.Fields, tokenList)
+	keys := make([]string, 0, len(c.Structs))
+	for k := range c.Structs {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		makeStructTokens(&k, c.Structs[k].AnonymousFields, c.Structs[k].Fields, tokenList)
 		c.searchForCtors(k, tokenList)
 		c.searchForMethods(k, tokenList)
 	}
@@ -188,7 +193,6 @@ func (c *content) searchForCtors(s string, tokenList *[]Token) {
 	for i, f := range c.Funcs {
 		n := getCtorName(i)
 		if s == n {
-			makeToken(nil, nil, addTab(), whitespace, tokenList)
 			makeFuncTokens(&i, f.Params, f.Returns, f.ReturnsNum, tokenList)
 			delete(c.Funcs, i)
 			return
@@ -206,7 +210,6 @@ func (c *content) searchForMethods(s string, tokenList *[]Token) {
 			isPointer = true
 		}
 		if s == n {
-			makeToken(nil, nil, addTab(), whitespace, tokenList)
 			makeMethodTokens(v, n, isPointer, getMethodName(i), f.Params, f.Returns, f.ReturnsNum, tokenList)
 			delete(c.Funcs, i)
 		}
@@ -294,10 +297,10 @@ func (c *content) generateNavChildItems() []Navigation {
 	for _, s := range c.Consts {
 		if !includesType(types, s.Type) {
 			types = append(types, s.Type)
-			temp := "const - " + s.Type
+			temp := s.Type
 			childItems = append(childItems, Navigation{
 				Text:         &temp,
-				NavigationId: &s.Type,
+				NavigationId: &temp,
 				ChildItems:   []Navigation{},
 				Tags: &map[string]string{
 					"TypeKind": "struct",

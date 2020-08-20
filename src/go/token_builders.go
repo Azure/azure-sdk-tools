@@ -169,8 +169,10 @@ func makeMethodTokens(receiverVar, receiver string, isPointer bool, name string,
 		for id, i := range tok {
 			temp := strings.Split(i, " ")
 			makeToken(nil, nil, temp[0], getTypeClassification(temp[0]), list)
-			makeToken(nil, nil, " ", whitespace, list)
-			makeToken(nil, nil, temp[1], getTypeClassification(temp[1]), list)
+			if len(temp) == 2 {
+				makeToken(nil, nil, " ", whitespace, list)
+				makeToken(nil, nil, temp[1], getTypeClassification(temp[1]), list)
+			}
 			if id < len(tok)-1 {
 				makeToken(nil, nil, ",", punctuation, list)
 				makeToken(nil, nil, " ", whitespace, list)
@@ -215,8 +217,10 @@ func makeIntMethodTokens(name *string, params, results *string, list *[]Token) {
 			temp := strings.Split(i, " ")
 
 			makeToken(nil, nil, temp[0], getTypeClassification(temp[0]), list)
-			// makeToken(nil, nil, " ",  whitespace, list)
-			// makeToken(nil, nil, temp[1],  keyword, list)
+			if len(temp) == 2 {
+				makeToken(nil, nil, " ", whitespace, list)
+				makeToken(nil, nil, temp[1], getTypeClassification(temp[1]), list)
+			}
 			if id < len(tok)-1 {
 				makeToken(nil, nil, ",", punctuation, list)
 				makeToken(nil, nil, " ", whitespace, list)
@@ -235,8 +239,6 @@ func makeIntMethodTokens(name *string, params, results *string, list *[]Token) {
 		for id, i := range tok {
 			temp := strings.Split(i, " ")
 			makeToken(nil, nil, temp[0], getTypeClassification(temp[0]), list)
-			// makeToken(nil, nil, " ",  whitespace, list)
-			// makeToken(nil, nil, temp[1],  keyword, list)
 			if id < len(tok)-1 {
 				makeToken(nil, nil, ",", punctuation, list)
 				makeToken(nil, nil, " ", whitespace, list)
@@ -271,7 +273,7 @@ func getTypeClassification(s string) int {
 		s = s[1:]
 	}
 	if reservedNames[s] {
-		return 4
+		return keyword
 	}
-	return 6
+	return literal
 }

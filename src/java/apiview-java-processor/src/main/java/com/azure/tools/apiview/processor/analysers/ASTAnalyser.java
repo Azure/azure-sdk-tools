@@ -28,6 +28,8 @@ import com.github.javaparser.ast.body.TypeDeclaration;
 import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.expr.AnnotationExpr;
 import com.github.javaparser.ast.expr.Expression;
+import com.github.javaparser.ast.expr.MemberValuePair;
+import com.github.javaparser.ast.expr.NormalAnnotationExpr;
 import com.github.javaparser.ast.nodeTypes.NodeWithAnnotations;
 import com.github.javaparser.ast.nodeTypes.NodeWithType;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
@@ -276,7 +278,7 @@ public class ASTAnalyser implements Analyser {
             // public class or interface or enum
             addToken(makeWhitespace());
 
-            getAnnotations(typeDeclaration, true);
+            getAnnotations(typeDeclaration, true, true);
 
             // Get modifiers
             getModifiers(typeDeclaration.getModifiers());
@@ -434,7 +436,7 @@ public class ASTAnalyser implements Analyser {
                 addToken(makeWhitespace());
 
                 // Add annotation for field declaration
-                getAnnotations(fieldDeclaration, false);
+                getAnnotations(fieldDeclaration, false, false);
 
                 final NodeList<Modifier> fieldModifiers = fieldDeclaration.getModifiers();
                 // public, protected, static, final
@@ -513,7 +515,7 @@ public class ASTAnalyser implements Analyser {
                 addToken(makeWhitespace());
 
                 // annotations
-                getAnnotations(callableDeclaration, false);
+                getAnnotations(callableDeclaration, false,false);
 
                 // modifiers
                 getModifiers(callableDeclaration.getModifiers());
@@ -555,9 +557,32 @@ public class ASTAnalyser implements Analyser {
             }
         }
 
-        private void getAnnotations(final NodeWithAnnotations<?> nodeWithAnnotations, final boolean addNewline) {
+        private void getAnnotations(final NodeWithAnnotations<?> nodeWithAnnotations,
+                                    final boolean showAnnotationProperties,
+                                    final boolean addNewline) {
             Consumer<AnnotationExpr> consumer = annotation -> {
-                addToken(new Token(KEYWORD, "@" + annotation.getName().toString()));
+                addToken(new Token(TYPE_NAME, "@" + annotation.getName().toString()));
+                if (showAnnotationProperties) {
+                    if (annotation instanceof NormalAnnotationExpr) {
+                        addToken(new Token(PUNCTUATION, "("));
+                        NodeList<MemberValuePair> pairs = ((NormalAnnotationExpr) annotation).getPairs();
+                        for (int i = 0; i < pairs.size(); i++) {
+                            MemberValuePair pair = pairs.get(i);
+
+                            addToken(new Token(TEXT, pair.getNameAsString()));
+                            addToken(new Token(PUNCTUATION, " = "));
+
+                            Expression valueExpr = pair.getValue();
+                            processAnnotationValueExpression(valueExpr);
+
+                            if (i < pairs.size() - 1) {
+                                addToken(new Token(PUNCTUATION, ", "));
+                            }
+                        }
+
+                        addToken(new Token(PUNCTUATION, ")"));
+                    }
+                }
 
                 if (addNewline) {
                     addToken(new Token(NEW_LINE, ""));
@@ -569,6 +594,44 @@ public class ASTAnalyser implements Analyser {
             // for now we will only include the annotations we care about
             nodeWithAnnotations.getAnnotationByName("Deprecated").ifPresent(consumer);
             nodeWithAnnotations.getAnnotationByName("Override").ifPresent(consumer);
+            nodeWithAnnotations.getAnnotationByName("ServiceClient").ifPresent(consumer);
+            nodeWithAnnotations.getAnnotationByName("ServiceClientBuilder").ifPresent(consumer);
+            // nodeWithAnnotations.getAnnotationByName("ServiceMethod").ifPresent(consumer);
+            nodeWithAnnotations.getAnnotationByName("Fluent").ifPresent(consumer);
+            nodeWithAnnotations.getAnnotationByName("Immutable").ifPresent(consumer);
+        }
+
+        private void processAnnotationValueExpression(Expression valueExpr) {
+            if (valueExpr.isClassExpr()) {
+                // lookup to see if the type is known about, if so, make it a link, otherwise leave it as text
+                String typeName = valueExpr.getChildNodes().get(0).toString();
+                if (apiListing.getKnownTypes().containsKey(typeName)) {
+                    final Token token = new Token(TYPE_NAME, typeName);
+                    token.setNavigateToId(apiListing.getKnownTypes().get(typeName));
+                    addToken(token);
+                    return;
+                }
+            } else if (valueExpr.isArrayInitializerExpr()) {
+                addToken(new Token(PUNCTUATION, "{ "));
+                for (int i = 0; i < valueExpr.getChildNodes().size(); i++) {
+                    Node n = valueExpr.getChildNodes().get(i);
+
+                    if (n instanceof Expression) {
+                        processAnnotationValueExpression((Expression) n);
+                    } else {
+                        addToken(new Token(TEXT, valueExpr.toString()));
+                    }
+
+                    if (i < valueExpr.getChildNodes().size() - 1) {
+                        addToken(new Token(PUNCTUATION, ", "));
+                    }
+                }
+                addToken(new Token(PUNCTUATION, " }"));
+                return;
+            }
+
+            // if we fall through to here, just treat it as a string
+            addToken(new Token(TEXT, valueExpr.toString()));
         }
 
         private void getModifiers(NodeList<Modifier> modifiers) {

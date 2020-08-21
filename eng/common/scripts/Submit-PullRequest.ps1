@@ -76,7 +76,7 @@ function AddLabels([int] $prNumber, [string] $prLabelString)
   }
 
   $resp | Write-Verbose
-  Write-Host -f green "Label added to pull request: https://github.com/$RepoOwner/$RepoName/pull/$prNumber"
+  Write-Host -f green "Label(s) [$prLabels] added to pull request: https://github.com/$RepoOwner/$RepoName/pull/$prNumber"
 }
 
 try {
@@ -120,5 +120,5 @@ else {
   # setting variable to reference the pull request by number
   Write-Host "##vso[task.setvariable variable=Submitted.PullRequest.Number]$($resp.number)"
 
-  AddLabels $resp[0].number $PRLabels
+  AddLabels $resp.number $PRLabels
 }

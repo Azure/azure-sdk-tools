@@ -71,7 +71,6 @@ steps:
       -PRTitle "${{ parameters.PRTitle }}"
       -PRLabels "${{ parameters.PRLabels}}"
       -PRBody "${{ parameters.PRBody }}"
-      -PRDataArtifactPath "${{ parameters.PRDataArtifactPath }}"
 
 - task: PowerShell@2
   displayName: Tag a Reviewer on PR

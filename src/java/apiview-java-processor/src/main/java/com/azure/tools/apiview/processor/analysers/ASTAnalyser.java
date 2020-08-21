@@ -261,7 +261,7 @@ public class ASTAnalyser implements Analyser {
                         addToken(new Token(WHITESPACE, " "));
                     }
 
-                    addToken(new Token(TYPE_NAME, d.getNameAsString()));
+                    addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId("module-info-" + d.getNameAsString())));
                     addToken(new Token(PUNCTUATION, ";"));
                     addToken(new Token(NEW_LINE, ""));
                 });
@@ -269,7 +269,7 @@ public class ASTAnalyser implements Analyser {
                 moduleDirective.ifModuleExportsStmt(d -> {
                     addToken(new Token(KEYWORD, "exports"));
                     addToken(new Token(WHITESPACE, " "));
-                    addToken(new Token(TYPE_NAME, d.getNameAsString()));
+                    addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId("module-info-" + d.getNameAsString())));
 
                     NodeList<Name> names = d.getModuleNames();
 
@@ -295,7 +295,7 @@ public class ASTAnalyser implements Analyser {
                 moduleDirective.ifModuleOpensStmt(d -> {
                     addToken(new Token(KEYWORD, "opens"));
                     addToken(new Token(WHITESPACE, " "));
-                    addToken(new Token(TYPE_NAME, d.getNameAsString()));
+                    addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId("module-info-" + d.getNameAsString())));
                     addToken(new Token(WHITESPACE, " "));
                     addToken(new Token(KEYWORD, "to"));
                     addToken(new Token(WHITESPACE, " "));
@@ -317,7 +317,7 @@ public class ASTAnalyser implements Analyser {
                 moduleDirective.ifModuleUsesStmt(d -> {
                     addToken(new Token(KEYWORD, "uses"));
                     addToken(new Token(WHITESPACE, " "));
-                    addToken(new Token(TYPE_NAME, d.getNameAsString()));
+                    addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId("module-info-" + d.getNameAsString())));
                     addToken(new Token(PUNCTUATION, ";"));
                     addToken(new Token(NEW_LINE, ""));
                 });
@@ -325,7 +325,7 @@ public class ASTAnalyser implements Analyser {
                 moduleDirective.ifModuleProvidesStmt(d -> {
                     addToken(new Token(KEYWORD, "provides"));
                     addToken(new Token(WHITESPACE, " "));
-                    addToken(new Token(TYPE_NAME, d.getNameAsString()));
+                    addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId("module-info-" + d.getNameAsString())));
                     addToken(new Token(WHITESPACE, " "));
                     addToken(new Token(KEYWORD, "with"));
                     addToken(new Token(WHITESPACE, " "));

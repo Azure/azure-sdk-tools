@@ -312,7 +312,7 @@ else {
 }
 foreach ($pageLink in $badLinks.Keys) {
   $errorMsg += "  '$pageLink' has $($badLinks[$pageLink].Count) broken link(s)`:`n"
-  foreach ($brokenLink in $badLinks[$pageLink].Keys) {
+  foreach ($brokenLink in $badLinks[$pageLink]) {
     $errorMsg += "      $brokenLink`n"
   }
 }

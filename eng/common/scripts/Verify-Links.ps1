@@ -303,18 +303,19 @@ while ($pageUrisToCheck.Count -ne 0)
   }
 }
 
-$errorMsg = ""
+
+foreach ($pageLink in $badLinks.Keys) {
+  Write-Host "  '$pageLink' has $($badLinks[$pageLink].Count) broken link(s)`:`n"
+  foreach ($brokenLink in $badLinks[$pageLink].Keys) {
+    Write-Host "      $brokenLink`n"
+  }
+}
+
 if ($badLinks.Count -gt 0) {
-  $errorMsg += "Found $($checkedLinks.Count) links with $($badLinks.Count) page(s) broken.`n"
+  LogError "Found $($checkedLinks.Count) links with $($badLinks.Count) page(s) broken.`n"
 } 
 else {
   Write-Host "Found $($checkedLinks.Count) links. No broken links found."
 }
-foreach ($pageLink in $badLinks.Keys) {
-  $errorMsg += "  '$pageLink' has $($badLinks[$pageLink].Count) broken link(s)`:`n"
-  foreach ($brokenLink in $badLinks[$pageLink].Keys) {
-    $errorMsg += "      $brokenLink`n"
-  }
-}
-LogError $errorMsg
+
 exit $badLinks.Count

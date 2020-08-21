@@ -66,15 +66,21 @@ stages:
         displayName: Verify and Merge Sync PRs
         environment: github
 
-        steps:
-          - download: current
-            artifact: ${{parameters.ArtifactName}}
-            timeoutInMinutes: 5
-          
-          - pwsh: |
-              $PRData = Get-Content $(Pipeline.Workspace)/${{parameters.ArtifactName}}/${{ parameters.PRDataFileName }}
-              foreach ($line in $PRData)
-              {
-                Write-Output $line
-              }
-            displayName: View Created PR Data
+        pool:
+          vmImage: windows-2019
+
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+
+                - download: current
+                  artifact: ${{parameters.ArtifactName}}
+                  displayName: Download ${{ parameters.PRDataFileName }}
+
+                - pwsh: >
+                    $(Build.SourcesDirectory)/scripts/powershell/Verify-And-Merge-PRs.ps1
+                    -AuthToken "$(azuresdk-github-pat)"
+                    -PRDataArtifactPath "$(Pipeline.Workspace)/${{parameters.ArtifactName}}/${{ parameters.PRDataFileName }}"
+                  displayName: Verify then Merge Pull Requests

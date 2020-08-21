@@ -15,7 +15,6 @@ parameters:
   ScriptDirectory: eng/common/scripts
   GHReviewersVariable: '' 
   GHTeamReviewersVariable: ''
-  PRDataArtifactPath: 'not-specified'
 
 steps:
 
@@ -68,7 +67,6 @@ steps:
       -AuthToken "$(azuresdk-github-pat)"
       -PRTitle "${{ parameters.PRTitle }}"
       -PRBody "${{ parameters.PRBody }}"
-      -PRDataArtifactPath "${{ parameters.PRDataArtifactPath }}"
 
 - task: PowerShell@2
   displayName: Tag a Reviewer on PR

@@ -127,5 +127,10 @@ public class RequiredBuilderMethodsDiagnosticRule implements DiagnosticRule {
             }
             return false;
         }
+
+        @Override
+        public String toString() {
+            return "[" + Arrays.toString(allowedTypes) + "]";
+        }
     }
 }

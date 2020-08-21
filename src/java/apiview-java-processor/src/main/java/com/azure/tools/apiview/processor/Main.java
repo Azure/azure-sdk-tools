@@ -66,7 +66,6 @@ public class Main {
             File outputFile = new File(outputDir, jsonFileName);
             processFile(file, outputFile);
         }
-
     }
 
     private static String getReviewName(File inputFile) {
@@ -121,9 +120,8 @@ public class Main {
     }
 
     private static void processFile(File inputFile, File outputFile) {
-        APIListing apiListing = new APIListing();
+        APIListing apiListing = new APIListing(getReviewName(inputFile));
         apiListing.setLanguage("Java");
-        apiListing.setName(getReviewName(inputFile));
 
         // empty tokens list that we will fill as we process each class file
         List<Token> tokens = new ArrayList<>();

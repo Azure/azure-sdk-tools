@@ -74,7 +74,7 @@ function AddLabels([int] $prNumber, [string] $prLabelString)
   }
 
   $resp | Write-Verbose
-  Write-Host -f green "Label added to pull request: https://github.com/$RepoOwner/$RepoName/pull/$prNumber"
+  Write-Host -f green "Label(s) [$prLabels] added to pull request: https://github.com/$RepoOwner/$RepoName/pull/$prNumber"
 }
 
 try {

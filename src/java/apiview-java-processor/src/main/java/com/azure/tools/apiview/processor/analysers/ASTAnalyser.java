@@ -29,7 +29,9 @@ import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.expr.AnnotationExpr;
 import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.MemberValuePair;
+import com.github.javaparser.ast.expr.Name;
 import com.github.javaparser.ast.expr.NormalAnnotationExpr;
+import com.github.javaparser.ast.modules.ModuleDeclaration;
 import com.github.javaparser.ast.nodeTypes.NodeWithAnnotations;
 import com.github.javaparser.ast.nodeTypes.NodeWithType;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
@@ -90,7 +92,6 @@ public class ASTAnalyser implements Analyser {
                if (Files.isDirectory(path)) return false;
                else if (inputFileName.contains("implementation")) return false;
                else if (inputFileName.contains("package-info.java")) return false;
-               else if (inputFileName.contains("module-info.java")) return false;
                else return inputFileName.endsWith(".java");
            }).collect(Collectors.toList());
 
@@ -100,7 +101,6 @@ public class ASTAnalyser implements Analyser {
                 .map(this::scanForTypes)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
-                .sorted(Comparator.comparing(s -> s.path))
                 .forEach(this::processSingleFile);
 
         // build the navigation
@@ -129,7 +129,8 @@ public class ASTAnalyser implements Analyser {
           
             ParserConfiguration parserConfiguration = new ParserConfiguration()
                   .setStoreTokens(true)
-                  .setSymbolResolver(new JavaSymbolSolver(combinedTypeSolver));
+                  .setSymbolResolver(new JavaSymbolSolver(combinedTypeSolver))
+                  .setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_11);
 
             // Configure JavaParser to use type resolution
             StaticJavaParser.setConfiguration(parserConfiguration);
@@ -158,6 +159,8 @@ public class ASTAnalyser implements Analyser {
 
         @Override
         public void visit(CompilationUnit compilationUnit, Void args) {
+            compilationUnit.getModule().ifPresent(this::visitModuleDeclaration);
+
             NodeList<TypeDeclaration<?>> types = compilationUnit.getTypes();
             for (final TypeDeclaration<?> typeDeclaration : types) {
                 visitClassOrInterfaceOrEnumDeclaration(typeDeclaration);
@@ -232,6 +235,119 @@ public class ASTAnalyser implements Analyser {
             tokeniseInnerClasses(typeDeclaration.getMembers());
 
             // close class
+            addToken(makeWhitespace());
+            addToken(new Token(PUNCTUATION, "}"));
+            addToken(new Token(NEW_LINE, ""));
+        }
+
+        private void visitModuleDeclaration(ModuleDeclaration moduleDeclaration) {
+            addToken(new Token(KEYWORD, "module"));
+            addToken(new Token(WHITESPACE, " "));
+            addToken(new Token(TYPE_NAME, "module-info", "module-info"));
+            addToken(new Token(WHITESPACE, " "));
+            addToken(new Token(PUNCTUATION, "{"));
+            addToken(new Token(NEW_LINE, ""));
+
+            moduleDeclaration.getDirectives().forEach(moduleDirective -> {
+                indent();
+                addToken(makeWhitespace());
+
+                moduleDirective.ifModuleRequiresStmt(d -> {
+                    addToken(new Token(KEYWORD, "requires"));
+                    addToken(new Token(WHITESPACE, " "));
+
+                    if (d.isTransitive()) {
+                        addToken(new Token(KEYWORD, "transitive"));
+                        addToken(new Token(WHITESPACE, " "));
+                    }
+
+                    addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId("module-info-" + d.getNameAsString())));
+                    addToken(new Token(PUNCTUATION, ";"));
+                    addToken(new Token(NEW_LINE, ""));
+                });
+
+                moduleDirective.ifModuleExportsStmt(d -> {
+                    addToken(new Token(KEYWORD, "exports"));
+                    addToken(new Token(WHITESPACE, " "));
+                    addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId("module-info-" + d.getNameAsString())));
+
+                    NodeList<Name> names = d.getModuleNames();
+
+                    if (!names.isEmpty()) {
+                        addToken(new Token(WHITESPACE, " "));
+                        addToken(new Token(KEYWORD, "to"));
+                        addToken(new Token(WHITESPACE, " "));
+
+                        for (int i = 0; i < names.size(); i++) {
+                            addToken(new Token(TYPE_NAME, names.get(i).toString()));
+
+                            if (i < names.size() - 1) {
+                                addToken(new Token(PUNCTUATION, ","));
+                                addToken(new Token(WHITESPACE, " "));
+                            }
+                        }
+                    }
+
+                    addToken(new Token(PUNCTUATION, ";"));
+                    addToken(new Token(NEW_LINE, ""));
+                });
+
+                moduleDirective.ifModuleOpensStmt(d -> {
+                    addToken(new Token(KEYWORD, "opens"));
+                    addToken(new Token(WHITESPACE, " "));
+                    addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId("module-info-" + d.getNameAsString())));
+                    addToken(new Token(WHITESPACE, " "));
+                    addToken(new Token(KEYWORD, "to"));
+                    addToken(new Token(WHITESPACE, " "));
+
+                    NodeList<Name> names = d.getModuleNames();
+                    for (int i = 0; i < names.size(); i++) {
+                        addToken(new Token(TYPE_NAME, names.get(i).toString()));
+
+                        if (i < names.size() - 1) {
+                            addToken(new Token(PUNCTUATION, ","));
+                            addToken(new Token(WHITESPACE, " "));
+                        }
+                    }
+
+                    addToken(new Token(PUNCTUATION, ";"));
+                    addToken(new Token(NEW_LINE, ""));
+                });
+
+                moduleDirective.ifModuleUsesStmt(d -> {
+                    addToken(new Token(KEYWORD, "uses"));
+                    addToken(new Token(WHITESPACE, " "));
+                    addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId("module-info-" + d.getNameAsString())));
+                    addToken(new Token(PUNCTUATION, ";"));
+                    addToken(new Token(NEW_LINE, ""));
+                });
+
+                moduleDirective.ifModuleProvidesStmt(d -> {
+                    addToken(new Token(KEYWORD, "provides"));
+                    addToken(new Token(WHITESPACE, " "));
+                    addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId("module-info-" + d.getNameAsString())));
+                    addToken(new Token(WHITESPACE, " "));
+                    addToken(new Token(KEYWORD, "with"));
+                    addToken(new Token(WHITESPACE, " "));
+
+                    NodeList<Name> names = d.getWith();
+                    for (int i = 0; i < names.size(); i++) {
+                        addToken(new Token(TYPE_NAME, names.get(i).toString()));
+
+                        if (i < names.size() - 1) {
+                            addToken(new Token(PUNCTUATION, ","));
+                            addToken(new Token(WHITESPACE, " "));
+                        }
+                    }
+
+                    addToken(new Token(PUNCTUATION, ";"));
+                    addToken(new Token(NEW_LINE, ""));
+                });
+
+                unindent();
+            });
+
+            // close module
             addToken(makeWhitespace());
             addToken(new Token(PUNCTUATION, "}"));
             addToken(new Token(NEW_LINE, ""));
@@ -864,6 +980,10 @@ public class ASTAnalyser implements Analyser {
     private class ScanForClassTypeVisitor extends VoidVisitorAdapter<Map<String, String>> {
         @Override
         public void visit(CompilationUnit compilationUnit, Map<String, String> arg) {
+            compilationUnit.getModule().ifPresent(moduleDeclaration -> {
+                apiListing.addChildItem(new ChildItem("module-info", "module-info", TypeKind.CLASS));
+            });
+
             for (final TypeDeclaration<?> typeDeclaration : compilationUnit.getTypes()) {
                 getTypeDeclaration(typeDeclaration);
             }

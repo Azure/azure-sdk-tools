@@ -10,7 +10,10 @@ import java.util.Map;
 
 public class APIListing {
     @JsonProperty("Navigation")
-    private List<ChildItem> childItems;
+    private List<ChildItem> navigation;
+
+    @JsonIgnore
+    private ChildItem rootNav;
 
     @JsonProperty("Name")
     private String name;
@@ -40,36 +43,24 @@ public class APIListing {
     @JsonIgnore
     private final Map<String, String> typeToPackageNameMap;
 
-    public APIListing() {
-        this.childItems = new ArrayList<>();
+    public APIListing(String reviewName) {
+        this.name = reviewName;
         this.diagnostics = new ArrayList<>();
         this.knownTypes = new HashMap<>();
         this.packageNamesToTypesMap = new HashMap<>();
         this.typeToPackageNameMap = new HashMap<>();
-    }
 
-    public List<ChildItem> getNavigation() {
-        return childItems;
+        this.navigation = new ArrayList<>();
+        this.rootNav = new ChildItem(name, TypeKind.ASSEMBLY);
+        this.navigation.add(rootNav);
     }
 
     public void addChildItem(ChildItem childItem) {
-        this.childItems.add(childItem);
+        this.rootNav.addChildItem(childItem);
     }
 
     public void addDiagnostic(Diagnostic diagnostic) {
         this.diagnostics.add(diagnostic);
-    }
-
-    public void setNavigation(List<ChildItem> childItems) {
-        this.childItems = childItems;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String Name) {
-        this.name = Name;
     }
 
     public String getLanguage() {
@@ -90,7 +81,7 @@ public class APIListing {
 
     @Override
     public String toString() {
-        return "APIListing [childItems = "+childItems+", Name = "+ name +", Tokens = "+tokens+"]";
+        return "APIListing [rootNav = "+rootNav+", Name = "+ name +", Tokens = "+tokens+"]";
     }
 
     /**

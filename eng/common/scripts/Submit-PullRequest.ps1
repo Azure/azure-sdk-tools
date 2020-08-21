@@ -15,6 +15,8 @@ The owner of the branch we want to create a pull request for.
 The branch which we want to create a pull request for.
 .PARAMETER AuthToken
 A personal access token
+.PARAMETER PRLabels
+The labels added to the PRs. Multple labels seperated by comma, e.g "bug, service"
 #>
 [CmdletBinding(SupportsShouldProcess = $true)]
 param(
@@ -59,11 +61,11 @@ function AddLabels([int] $prNumber, [string] $prLabelString)
   }
 
   # Parse the labels from string to array
-  $prLabels = @($prLabelString.Split(",") | % { $_.Trim() } | ? { return $_ })
+  $prLabelArray = @($prLabelString.Split(",") | % { $_.Trim() } | ? { return $_ })
   $prLabelUri = "https://api.github.com/repos/$RepoOwner/$RepoName/issues/$prNumber"
   $labelRequestData = @{
     maintainer_can_modify = $true
-    labels                = $prLabels
+    labels                = $prLabelArray
   }
   try {
     $resp = Invoke-RestMethod -Method PATCH -Headers $headers $prLabelUri -Body ($labelRequestData | ConvertTo-Json)

@@ -71,7 +71,6 @@ function AddLabels([int] $prNumber, [string] $prLabelString)
   }
   catch {
       Write-Error "Invoke-RestMethod $prLabelUri failed with exception:`n$_"
-      exit 1
   }
 
   $resp | Write-Verbose

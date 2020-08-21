@@ -284,13 +284,13 @@ while ($pageUrisToCheck.Count -ne 0)
 
   $linkUris = GetLinks $pageUri
   Write-Host "Found $($linkUris.Count) links on page $pageUri";
-  $badLinksPerPage = @{};
+  $badLinksPerPage = @();
   foreach ($linkUri in $linkUris) {
     $linkUri = ReplaceGithubLink $linkUri
 
     $isLinkValid = CheckLink $linkUri
-    if (!$isLinkValid -and !$badLinksPerPage.ContainsKey($linkUri)) {
-      $badLinksPerPage[$linkUri] = $true
+    if (!$isLinkValid -and !$badLinksPerPage.Contains($linkUri)) {
+      $badLinksPerPage += $linkUri
     }
     if ($recursive -and $isLinkValid) {
       if ($linkUri.ToString().StartsWith($baseUrl) -and !$checkedPages.ContainsKey($linkUri)) {

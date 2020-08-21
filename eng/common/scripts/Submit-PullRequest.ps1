@@ -64,7 +64,6 @@ function AddLabels([int] $prNumber, [string] $prLabelString)
   $prLabelArray = @($prLabelString.Split(",") | % { $_.Trim() } | ? { return $_ })
   $prLabelUri = "https://api.github.com/repos/$RepoOwner/$RepoName/issues/$prNumber"
   $labelRequestData = @{
-    maintainer_can_modify = $true
     labels                = $prLabelArray
   }
   try {

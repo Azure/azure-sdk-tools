@@ -19,6 +19,8 @@ import java.util.List;
 import static com.azure.tools.apiview.processor.diagnostics.rules.RequiredBuilderMethodsDiagnosticRule.ExactTypeNameCheckFunction;
 import static com.azure.tools.apiview.processor.diagnostics.rules.RequiredBuilderMethodsDiagnosticRule.DirectSubclassCheckFunction;
 
+import static com.azure.tools.apiview.processor.diagnostics.rules.RequiredBuilderMethodsDiagnosticRule.ParameterAllowedTypes;
+
 public class Diagnostics {
     private static final List<DiagnosticRule> diagnostics = new ArrayList<>();
     static {
@@ -31,7 +33,7 @@ public class Diagnostics {
         diagnostics.add(new RequiredBuilderMethodsDiagnosticRule()
             .add("addPolicy", new ExactTypeNameCheckFunction("HttpPipelinePolicy"))
             .add("configuration", new ExactTypeNameCheckFunction("Configuration"))
-            .add("credential", new ExactTypeNameCheckFunction("TokenCredential"))
+            .add("credential", new ExactTypeNameCheckFunction(new ParameterAllowedTypes("TokenCredential", "AzureKeyCredential")))
             .add("connectionString", new ExactTypeNameCheckFunction("String"))
             .add("endpoint", new ExactTypeNameCheckFunction("String"))
             .add("httpClient", new ExactTypeNameCheckFunction("HttpClient"))

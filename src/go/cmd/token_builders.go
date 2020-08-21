@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-package main
+package cmd
 
 import (
 	"strings"
@@ -45,7 +45,7 @@ func makeStructTokens(name *string, anonFields []string, fields map[string]strin
 	if anonFields == nil && fields == nil {
 		makeToken(nil, nil, "", newline, list)
 		makeToken(nil, nil, addTab(), whitespace, list)
-		makeToken(nil, nil, "// All fields are unexported", comment, list)
+		makeToken(nil, nil, "// no exported fields", comment, list)
 		makeToken(nil, nil, "", newline, list)
 	}
 	makeToken(nil, nil, "", newline, list)

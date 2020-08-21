@@ -46,6 +46,9 @@ param(
 
   [Parameter(Mandatory = $false)]
   [string]$PRLabels
+  $PRBody=$PRTitle,
+
+  $PRDataArtifactPath
 )
 
 $headers = @{
@@ -116,6 +119,11 @@ else {
 
   $resp | Write-Verbose
   Write-Host -f green "Pull request created https://github.com/$RepoOwner/$RepoName/pull/$($resp.number)"
+  if (Test-Path $PRDataArtifactPath)
+  {
+    $PRData = "$RepoOwner;$RepoName;$($resp.number)"
+    Add-Content -Path $PRDataArtifactPath -Value $PRData
+  }
 
   # setting variable to reference the pull request by number
   Write-Host "##vso[task.setvariable variable=Submitted.PullRequest.Number]$($resp.number)"

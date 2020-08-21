@@ -17,6 +17,7 @@ parameters:
   GHTeamReviewersVariable: ''
   # Multiple labels seperated by comma, e.g. "bug, APIView"
   PRLabels: ''
+  PRDataArtifactPath: 'not-specified'
 
 steps:
 
@@ -70,6 +71,7 @@ steps:
       -PRTitle "${{ parameters.PRTitle }}"
       -PRLabels "${{ parameters.PRLabels}}"
       -PRBody "${{ parameters.PRBody }}"
+      -PRDataArtifactPath "${{ parameters.PRDataArtifactPath }}"
 
 - task: PowerShell@2
   displayName: Tag a Reviewer on PR

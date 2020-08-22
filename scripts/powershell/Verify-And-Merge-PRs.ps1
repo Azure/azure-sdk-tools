@@ -44,11 +44,13 @@ function Merge-PRs()
         exit 1
     }
 
+    Write-Output "Will merge the Following PRs"
     foreach ($obj in $OpenAndCleanPRs)
     {
         $APIUrl = "${GitHubAPIUrlBase}$($obj.RepoOwner)/$($obj.RepoName)/pulls/$($obj.PRNumber)/merge"
         Write-Output "Will merge the Following PRs"
-        Write-Output "`thttps://github.com/$($obj.RepoOwner)/$($obj.RepoName)/pull/$($obj.PRNumber)"
+        Write-Output ($obj | Format-Table | Out-String)
+        #Write-Output "`thttps://github.com/$($obj.RepoOwner)/$($obj.RepoName)/pull/$($obj.PRNumber)"
     }
 
 }
@@ -77,7 +79,8 @@ function Confirm-Mergability()
                 }
                 elseif ($response.mergeable -and ($response.mergeable_state -eq "clean"))
                 {
-                    [void]$OpenButDirtyPRs.Add($obj)
+                    $obj | Add-Member -MemberType NoteProperty -Name "HeadSHA" -Value $response.head.sha
+                    [void]$OpenAndCleanPRs.Add($obj)
                 }
                 else 
                 {
@@ -103,7 +106,6 @@ function Get-PRDataFromFile()
             RepoName = $PRDetails[1]
             PRNumber = $PRDetails[2]
         }
-        Write-Output ($PRDataObj | Format-Table | Out-String)
         [void]$PRObjs.Add($PRDataObj)
     }
 }

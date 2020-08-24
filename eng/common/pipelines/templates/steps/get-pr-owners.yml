@@ -19,8 +19,8 @@ steps:
         --kusto-table-var KUSTO_TABLE `
         --identity "$(Build.QueuedBy)"
         --vsoVariable "${{ parameters.TargetVariable }}"
-      $resolvedIdentity = $result[-1] | ConvertFrom-Json
     displayName: 'Resolving Queuing User'
+    continueOnError: true
     workingDirectory: $(Build.SourcesDirectory)/tools_repo/tools/notification-configuration/identity-resolver
     env:
       APP_ID: $(notification-aad-app-id)
@@ -38,6 +38,6 @@ steps:
       $originalValue = "$(${{ parameters.TargetVariable }})"
       $result = $(Build.SourcesDirectory)/eng/common/scripts/get-codeowners.ps1 -TargetDirectory /sdk/${{ parameters.ServiceDirectory }}/ -RootDirectory $(Build.SourcesDirectory)
       if ($result) {
-        Write-Output "##vso[task.setvariable variable=${{ parameters.TargetVariable }}]$originalValue,$result"
+        Write-Host "##vso[task.setvariable variable=${{ parameters.TargetVariable }}]$originalValue,$result"
       }
     displayName: Add CodeOwners if Present

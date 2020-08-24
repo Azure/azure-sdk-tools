@@ -23,6 +23,8 @@ stages:
           PathPrefix: 'js'
         Java:
           PathPrefix: 'java'
+        C:
+          PathPrefix: 'c'
 
     pool:
       vmImage: ubuntu-16.04

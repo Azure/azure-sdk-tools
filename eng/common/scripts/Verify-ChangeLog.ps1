@@ -31,7 +31,7 @@ else
     }
     else
     {
-      Write-Error "Failed to set Language automatically. Please pass the appropriate Language as a parameter."
+      Write-Error "Failed to set Language automatically. Please pass the appropriate Language as a parameter.."
       exit 1
     }
   }

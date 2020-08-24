@@ -72,7 +72,7 @@ function AddLabels([int] $prNumber, [string] $prLabelString)
     $resp = Invoke-RestMethod -Method PATCH -Headers $headers $prLabelUri -Body ($labelRequestData | ConvertTo-Json)
   }
   catch {
-      Write-Error "Invoke-RestMethod $prLabelUri failed with exception:`n$_"
+    Write-Error "Invoke-RestMethod $prLabelUri failed with exception:`n$_"
   }
 
   $resp | Write-Verbose

@@ -5,6 +5,7 @@ parameters:
   PRBranchName: branch-name-not-set
   BaseBranchName: master
   PRTitle: pr-title-not-set
+  PRBody: pr-body-not-set
 
 steps:
 
@@ -28,6 +29,7 @@ steps:
       BaseBranchName: ${{ parameters.BaseBranchName }}
       CommitMsg: ${{ parameters.CommitMessage }}
       PRTitle: ${{ parameters.PRTitle }}
+      PRBody: ${{ parameters.PRBody }}
       PushArgs: -f
       WorkingDirectory: $(System.DefaultWorkingDirectory)/${{ repo }}
       ScriptDirectory: $(System.DefaultWorkingDirectory)/eng/common/scripts

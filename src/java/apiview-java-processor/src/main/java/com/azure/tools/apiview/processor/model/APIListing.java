@@ -10,10 +10,22 @@ import java.util.Map;
 
 public class APIListing {
     @JsonProperty("Navigation")
-    private List<ChildItem> childItems;
+    private List<ChildItem> navigation;
+
+    @JsonIgnore
+    private ChildItem rootNav;
 
     @JsonProperty("Name")
-    private String Name;
+    private String name;
+
+//    @JsonProperty("Language")
+    @JsonIgnore
+    private String language;
+
+    // This string is taken from here:
+    // https://github.com/Azure/azure-sdk-tools/blob/master/src/dotnet/APIView/APIView/Languages/CodeFileBuilder.cs#L50
+    @JsonProperty("VersionString")
+    private final String versionString = "18";
 
     @JsonProperty("Tokens")
     private List<Token> tokens;
@@ -31,36 +43,32 @@ public class APIListing {
     @JsonIgnore
     private final Map<String, String> typeToPackageNameMap;
 
-    public APIListing() {
-        this.childItems = new ArrayList<>();
+    public APIListing(String reviewName) {
+        this.name = reviewName;
         this.diagnostics = new ArrayList<>();
         this.knownTypes = new HashMap<>();
         this.packageNamesToTypesMap = new HashMap<>();
         this.typeToPackageNameMap = new HashMap<>();
-    }
 
-    public List<ChildItem> getNavigation() {
-        return childItems;
+        this.navigation = new ArrayList<>();
+        this.rootNav = new ChildItem(name, TypeKind.ASSEMBLY);
+        this.navigation.add(rootNav);
     }
 
     public void addChildItem(ChildItem childItem) {
-        this.childItems.add(childItem);
+        this.rootNav.addChildItem(childItem);
     }
 
     public void addDiagnostic(Diagnostic diagnostic) {
         this.diagnostics.add(diagnostic);
     }
 
-    public void setNavigation(List<ChildItem> childItems) {
-        this.childItems = childItems;
+    public String getLanguage() {
+        return language;
     }
 
-    public String getName() {
-        return Name;
-    }
-
-    public void setName(String Name) {
-        this.Name = Name;
+    public void setLanguage(final String language) {
+        this.language = language;
     }
 
     public List<Token> getTokens() {
@@ -73,7 +81,7 @@ public class APIListing {
 
     @Override
     public String toString() {
-        return "APIListing [childItems = "+childItems+", Name = "+Name+", Tokens = "+tokens+"]";
+        return "APIListing [rootNav = "+rootNav+", Name = "+ name +", Tokens = "+tokens+"]";
     }
 
     /**

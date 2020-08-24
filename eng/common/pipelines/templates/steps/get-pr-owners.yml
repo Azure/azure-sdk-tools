@@ -18,11 +18,8 @@ steps:
         --kusto-database-var KUSTO_DB `
         --kusto-table-var KUSTO_TABLE `
         --identity "$(Build.QueuedBy)"
+        --vsoVariable "${{ parameters.TargetVariable }}"
       $resolvedIdentity = $result[-1] | ConvertFrom-Json
-
-      Write-Host $resolvedIdentity
-
-      Write-Output "##vso[task.setvariable variable=${{ parameters.TargetVariable }}]$($resolvedIdentity.GithubUserName)"
     displayName: 'Resolving Queuing User'
     workingDirectory: $(Build.SourcesDirectory)/tools_repo/tools/notification-configuration/identity-resolver
     env:

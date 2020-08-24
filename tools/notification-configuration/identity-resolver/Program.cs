@@ -19,6 +19,7 @@ namespace identity_resolver
         /// <param name="kustoDatabaseVar">Kusto DB environment variable name</param>
         /// <param name="kustoTableVar">Kusto Table environment variable name</param>
         /// <param name="identity">The full name of the employee</param>
+        /// <param name="vsoVariable">The name of DevOps output variable.</param>
         /// <returns></returns>
         public static async Task Main(
             string aadAppIdVar,
@@ -27,7 +28,8 @@ namespace identity_resolver
             string kustoUrlVar,
             string kustoDatabaseVar,
             string kustoTableVar,
-            string identity
+            string identity,
+            string vsoVariable
             )
         {
 
@@ -47,6 +49,11 @@ namespace identity_resolver
 
                 var result = await githubNameResolver.GetMappingInformationFromAADName(identity);
 
+
+                if (!String.IsNullOrEmpty(vsoVariable))
+                {
+                    Console.Write(String.Format("##vso[task.setvariable variable={0};]{1}", vsoVariable, result.GithubUserName));
+                }
                 Console.Write(JsonConvert.SerializeObject(result));
             }
         }

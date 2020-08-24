@@ -73,12 +73,11 @@ function Merge-PRs()
         # Merge Pull Request
         try 
         {
-            #$response = Invoke-RestMethod -Method Put -Headers $Headers $MergeAPIUrl -Body ($data | ConvertTo-Json)
-            Write-Host $MergeAPIUrl
-            ($data | Format-Table | Write-Output)
+            $response = Invoke-RestMethod -Method Put -Headers $Headers $MergeAPIUrl -Body ($data | ConvertTo-Json)
         }
         catch 
         {
+            Write-Output "Could not merge https://github.com/$($obj.RepoOwner)/$($obj.RepoName)/pull/$($obj.PRNumber)"
             Write-Error "Invoke-RestMethod [$MergeAPIUrl] failed with exception:`n$_"
             exit 1
         }

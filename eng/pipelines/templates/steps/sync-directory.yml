@@ -40,7 +40,12 @@ steps:
         ScriptDirectory: $(System.DefaultWorkingDirectory)/eng/common/scripts
 
     - pwsh: |
-        $PRData = "Azure;${{ repo }};"$(Submitted.PullRequest.Number)""
+        $PRData = "Azure;${{ repo }};$(Submitted.PullRequest.Number)"
         Add-Content -Path ${{ parameters.PRDataArtifactPath }} -Value $PRData
-      displayName: Create PRData Artifact
+      displayName: Write Sync PR Data to Artifact File
+
+  - pwsh: |
+      $PRData = "Azure;azure-sdk-tools;$(System.PullRequest.PullRequestNumber)"
+      Add-Content -Path ${{ parameters.PRDataArtifactPath }} -Value $PRData
+    displayName: Write Tools PR Data to Artifact File
 

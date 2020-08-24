@@ -64,7 +64,7 @@ function AddLabels([int] $prNumber, [string] $prLabelString)
   $prLabelArray = @($prLabelString.Split(",") | % { $_.Trim() } | ? { return $_ })
   $prLabelUri = "https://api.github.com/repos/$RepoOwner/$RepoName/issues/$prNumber"
   $labelRequestData = @{
-    labels                = $prLabelArray
+    labels = $prLabelArray
   }
   try {
     $resp = Invoke-RestMethod -Method PATCH -Headers $headers $prLabelUri -Body ($labelRequestData | ConvertTo-Json)

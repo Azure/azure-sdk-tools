@@ -306,7 +306,7 @@ while ($pageUrisToCheck.Count -ne 0)
 }
 
 foreach ($pageLink in $badLinks.Keys) {
-  Write-Host "  '$pageLink' has $($badLinks[$pageLink].Count) broken link(s)`:`n"
+  Write-Host "'$pageLink' has $($badLinks[$pageLink].Count) broken link(s)`:"
   foreach ($brokenLink in $badLinks[$pageLink]) {
     Write-Host "      $brokenLink`n"
   }

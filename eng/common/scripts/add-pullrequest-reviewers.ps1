@@ -18,13 +18,12 @@ param(
     $AuthToken
 )
 
-$errorOccurred = $false
-
 function AddMembers($memberName, $additionSet) {
   $headers = @{
     Authorization = "bearer $AuthToken"
   }
   $uri = "https://api.github.com/repos/$RepoOwner/$RepoName/pulls/$PRNumber/requested_reviewers"
+  $errorOccurred = $false
 
   foreach ($id in $additionSet) {
     try {
@@ -41,6 +40,8 @@ function AddMembers($memberName, $additionSet) {
       $errorOccurred = $true
     }
   }
+
+  return $errorOccurred
 }
 
 # at least one of these needs to be populated
@@ -52,9 +53,9 @@ if (-not $GitHubUsers -and -not $GitHubTeams) {
 $userAdditions = @($GitHubUsers.Split(",") | % { $_.Trim() } | ? { return $_ })
 $teamAdditions = @($GitHubTeams.Split(",") | % { $_.Trim() } | ? { return $_ })
 
-AddMembers -memberName "reviewers" -additionSet $userAdditions
-AddMembers -memberName "team_reviewers" -additionSet $teamAdditions
+$errorsOccurredAddingUsers = AddMembers -memberName "reviewers" -additionSet $userAdditions
+$errorsOccurredAddingTeams = AddMembers -memberName "team_reviewers" -additionSet $teamAdditions
 
-if ($errorOccurred) {
+if ($errorsOccurredAddingUsers -or $errorsOccurredAddingTeams) {
   exit 1
 }

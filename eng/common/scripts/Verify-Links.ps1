@@ -286,7 +286,7 @@ while ($pageUrisToCheck.Count -ne 0)
   Write-Host "Found $($linkUris.Count) links on page $pageUri";
   $badLinksPerPage = @();
   foreach ($linkUri in $linkUris) {
-    $linkUri = ReplaceGithubLink $linkUri\
+    $linkUri = ReplaceGithubLink $linkUri
     $isLinkValid = CheckLink $linkUri
     if (!$isLinkValid -and !$badLinksPerPage.Contains($linkUri)) {
       $badLinksPerPage += $linkUri
@@ -306,7 +306,7 @@ if ($badLinks.Count -gt 0) {
   Write-Host "Summary of broken links:"
 }
 foreach ($pageLink in $badLinks.Keys) {
-  Write-Host "'$pageLink' has $($badLinks[$pageLink].Count) broken link(s)`:"
+  Write-Host "'$pageLink' has $($badLinks[$pageLink].Count) broken link(s):"
   foreach ($brokenLink in $badLinks[$pageLink]) {
     Write-Host "  $brokenLink"
   }

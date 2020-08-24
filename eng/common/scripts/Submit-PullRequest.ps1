@@ -107,7 +107,7 @@ else {
   try {
     $resp = Invoke-RestMethod -Method POST -Headers $headers `
                               "https://api.github.com/repos/$RepoOwner/$RepoName/pulls" `
-                              -Body ($data | ConvertTo-Json)     
+                              -Body ($data | ConvertTo-Json)
   }
   catch {
     Write-Error "Invoke-RestMethod [https://api.github.com/repos/$RepoOwner/$RepoName/pulls] failed with exception:`n$_"

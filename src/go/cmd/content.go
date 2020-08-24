@@ -54,6 +54,10 @@ func (c *content) addConst(pkg pkg, g *ast.GenDecl) {
 				// const FooConst = FooType("value")
 				co.Type = pkg.getText(ce.Fun.Pos(), ce.Fun.End())
 				v = pkg.getText(ce.Args[0].Pos(), ce.Args[0].End())
+			} else if ce, ok := vs.Values[0].(*ast.BinaryExpr); ok {
+				// const FooConst = "value" + Bar
+				co.Type = ""
+				v = pkg.getText(ce.X.Pos(), ce.Y.End())
 			} else {
 				panic("unhandled case for adding constant")
 			}
@@ -142,9 +146,11 @@ func (c *content) addInterface(pkg pkg, name string, i *ast.InterfaceType) {
 	in := Interface{Methods: map[string]Func{}}
 	if i.Methods != nil {
 		for _, m := range i.Methods.List {
-			n := m.Names[0].Name
-			f := pkg.buildFunc(m.Type.(*ast.FuncType))
-			in.Methods[n] = f
+			if len(m.Names) > 0 {
+				n := m.Names[0].Name
+				f := pkg.buildFunc(m.Type.(*ast.FuncType))
+				in.Methods[n] = f
+			}
 		}
 	}
 	c.Interfaces[name] = in

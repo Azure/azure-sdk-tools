@@ -313,7 +313,7 @@ foreach ($pageLink in $badLinks.Keys) {
 }
 
 if ($badLinks.Count -gt 0) {
-  LogError "Found $($checkedLinks.Count) links with $($badLinks.Count) page(s) broken.`n"
+  LogError "Found $($checkedLinks.Count) links with $($badLinks.Count) page(s) broken."
 } 
 else {
   Write-Host "Found $($checkedLinks.Count) links. No broken links found."

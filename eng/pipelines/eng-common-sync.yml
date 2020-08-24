@@ -6,6 +6,9 @@ parameters:
 - name: ArtifactName
   type: string
   default: pullrequestdata
+- name: DirectoryToSync
+  type: string
+  default: eng/common
 
 trigger: none
 
@@ -29,13 +32,22 @@ stages:
         steps:
         - template: ./templates/steps/sync-directory.yml
           parameters:
-            CommitMessage: "Sync eng/common directory with azure-sdk-tools repository for Tools PR $(System.PullRequest.PullRequestNumber)"
-            DirectoryToSync: "eng/common"
-            PRBranchName: "sync-eng-common-$(System.PullRequest.SourceBranch)-$(System.PullRequest.PullRequestNumber)"
-            PRTitle: "Sync eng/common directory with azure-sdk-tools for PR $(System.PullRequest.PullRequestNumber)"
-            PRBody: >- 
-              Sync eng/common directory with azure-sdk-tools for PR https://github.com/Azure/azure-sdk-tools/pull/$(System.PullRequest.PullRequestNumber) <br>
-              See [eng/common workflow](https://github.com/Azure/azure-sdk-tools/blob/master/eng/common/README.md#workflow)
+            ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
+              CommitMessage: "Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools repository for Tools PR $(System.PullRequest.PullRequestNumber)"
+              DirectoryToSync: ${{ parameters.DirectoryToSync }}
+              PRBranchName: "sync-${{ parameters.DirectoryToSync }}-$(System.PullRequest.SourceBranch)-$(System.PullRequest.PullRequestNumber)"
+              PRTitle: "Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools for PR $(System.PullRequest.PullRequestNumber)"
+              PRBody: >
+                Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools for PR https://github.com/Azure/azure-sdk-tools/pull/$(System.PullRequest.PullRequestNumber)<br>
+                See [eng/common workflow](https://github.com/Azure/azure-sdk-tools/blob/master/eng/common/README.md#workflow)
+            ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+              CommitMessage: Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools repository
+              DirectoryToSync: ${{ parameters.DirectoryToSync }}
+              PRBranchName: "sync-${{ parameters.DirectoryToSync }}"
+              PRTitle: Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools repository
+              PRBody: >
+                Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools repository.<br>
+                See [eng/common workflow](https://github.com/Azure/azure-sdk-tools/blob/master/eng/common/README.md#workflow)
             PRDataArtifactPath: $(Build.ArtifactStagingDirectory)/${{ parameters.PRDataFileName }}
             Repos:
               - azure-sdk-for-android
@@ -73,8 +85,13 @@ stages:
                   artifact: ${{parameters.ArtifactName}}
                   displayName: Download ${{ parameters.PRDataFileName }}
 
-                - pwsh: >
-                    $(Build.SourcesDirectory)/scripts/powershell/Verify-And-Merge-PRs.ps1
-                    -AuthToken "$(azuresdk-github-pat)"
-                    -PRDataArtifactPath "$(Pipeline.Workspace)/${{parameters.ArtifactName}}/${{ parameters.PRDataFileName }}"
-                  displayName: Verify then Merge Pull Requests
+                - task: PowerShell@2
+                  displayName: 'Verify then Merge Pull Requests'
+                  inputs:
+                    targetType: filePath
+                    filePath: $(Build.SourcesDirectory)/scripts/powershell/Verify-And-Merge-PRs.ps1
+                    arguments: >
+                      -AuthToken "$(azuresdk-github-pat)"
+                      -PRDataArtifactPath "$(Pipeline.Workspace)/${{parameters.ArtifactName}}/${{ parameters.PRDataFileName }}"
+                      -devOpsLogging true
+                    pwsh: true

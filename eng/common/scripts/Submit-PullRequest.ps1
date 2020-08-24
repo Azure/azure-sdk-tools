@@ -46,9 +46,7 @@ param(
   $PRBody = $PRTitle,
 
   [Parameter(Mandatory = $false)]
-  [string]$PRLabels,
-
-  $PRDataArtifactPath
+  [string]$PRLabels
 )
 
 $headers = @{

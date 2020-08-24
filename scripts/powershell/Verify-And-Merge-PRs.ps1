@@ -47,12 +47,42 @@ function Merge-PRs()
     Write-Output "Will merge the Following PRs"
     foreach ($obj in $OpenAndCleanPRs)
     {
-        $APIUrl = "${GitHubAPIUrlBase}$($obj.RepoOwner)/$($obj.RepoName)/pulls/$($obj.PRNumber)/merge"
-        Write-Output "Will merge the Following PRs"
-        Write-Output ($obj | Format-Table | Out-String)
-        #Write-Output "`thttps://github.com/$($obj.RepoOwner)/$($obj.RepoName)/pull/$($obj.PRNumber)"
-    }
+        $MergeAPIUrl = "${GitHubAPIUrlBase}$($obj.RepoOwner)/$($obj.RepoName)/pulls/$($obj.PRNumber)/merge"
+        $CommitsAPIUrl = "${GitHubAPIUrlBase}$($obj.RepoOwner)/$($obj.RepoName)/pulls/$($obj.PRNumber)/commits"
 
+        $data = @{
+            commit_title = ""
+            commit_message = ""
+            sha = $obj.HeadSHA
+            merge_method = "squash"
+        }
+
+        # Get latest Commit of the pull request
+        try 
+        {
+            $response = Invoke-RestMethod -Method Get -Headers $Headers $CommitsAPIUrl
+            $data.commit_message = $response[$response.Count - 1].commit.message # last commit message of the pull request
+            $data.commit_title = "Merge pull request #$($obj.PRNumber) from $($obj.HeadLabel)"
+        }
+        catch 
+        {
+            Write-Error "Invoke-RestMethod [$CommitsAPIUrl] failed with exception:`n$_"
+            exit 1
+        }
+
+        # Merge Pull Request
+        try 
+        {
+            #$response = Invoke-RestMethod -Method Put -Headers $Headers $MergeAPIUrl -Body ($data | ConvertTo-Json)
+            Write-Host $MergeAPIUrl
+            ($data | Format-Table | Write-Output)
+        }
+        catch 
+        {
+            Write-Error "Invoke-RestMethod [$MergeAPIUrl] failed with exception:`n$_"
+            exit 1
+        }
+    }
 }
 
 function Confirm-Mergability()
@@ -80,6 +110,7 @@ function Confirm-Mergability()
                 elseif ($response.mergeable -and ($response.mergeable_state -eq "clean"))
                 {
                     $obj | Add-Member -MemberType NoteProperty -Name "HeadSHA" -Value $response.head.sha
+                    $obj | Add-Member -MemberType NoteProperty -Name "HeadLabel" -Value $response.head.label
                     [void]$OpenAndCleanPRs.Add($obj)
                 }
                 else 

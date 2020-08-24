@@ -15,6 +15,8 @@ The owner of the branch we want to create a pull request for.
 The branch which we want to create a pull request for.
 .PARAMETER AuthToken
 A personal access token
+.PARAMETER PRTitle
+The title of the pull request.
 .PARAMETER PRLabels
 The labels added to the PRs. Multple labels seperated by comma, e.g "bug, service"
 #>

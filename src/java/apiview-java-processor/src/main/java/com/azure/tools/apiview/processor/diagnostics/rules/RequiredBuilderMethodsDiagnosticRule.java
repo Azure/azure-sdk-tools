@@ -51,11 +51,12 @@ public class RequiredBuilderMethodsDiagnosticRule implements DiagnosticRule {
                     }
                 });
 
-                if (count.get() < builderMethods.size()) {
-                    listing.addDiagnostic(new Diagnostic(makeId(cu),
-                            "Not all expected builder methods are present.",
-                            "https://azure.github.io/azure-sdk/java_design.html#java-service-client-builder-consistency"));
-                }
+                // TODO replace with suggestions about methods that are not existing that the user might want to consider
+//                if (count.get() < builderMethods.size()) {
+//                    listing.addDiagnostic(new Diagnostic(makeId(cu),
+//                            "Not all expected builder methods are present.",
+//                            "https://azure.github.io/azure-sdk/java_design.html#java-service-client-builder-consistency"));
+//                }
             }
         });
     }

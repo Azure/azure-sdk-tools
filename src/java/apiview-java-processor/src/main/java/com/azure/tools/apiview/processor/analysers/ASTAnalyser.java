@@ -288,7 +288,7 @@ public class ASTAnalyser implements Analyser {
             addToken(makeWhitespace());
             addToken(new Token(KEYWORD, "module"));
             addToken(new Token(WHITESPACE, " "));
-            addToken(new Token(TYPE_NAME, "module-info", "module-info"));
+            addToken(new Token(TYPE_NAME, moduleDeclaration.getNameAsString(), "module-info"));
             addToken(new Token(WHITESPACE, " "));
             addToken(new Token(PUNCTUATION, "{"));
             addToken(new Token(NEW_LINE, ""));

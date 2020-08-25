@@ -1,6 +1,7 @@
 param (
   $TargetDirectory, # should be in relative form from root of repo. EG: sdk/servicebus
-  $RootDirectory # ideally $(Build.SourcesDirectory)
+  $RootDirectory, # ideally $(Build.SourcesDirectory)
+  $VsoVariable = "" # target devops output variable
 )
 $target = $TargetDirectory.ToLower().Trim("/")
 $codeOwnersLocation = Join-Path $RootDirectory -ChildPath ".github/CODEOWNERS"
@@ -29,6 +30,12 @@ $results = $ownedFolders[$target]
 
 if ($results) {
   Write-Host "Found a folder $results to match $target"
+  $alreadyPresent = [System.Environment]::GetEnvironmentVariable('$VsoVariable')
+
+  if ($VsoVariable) {
+    Write-Host "##vso[task.setvariable variable=$VsoVariable;]$results,$alreadyPresent"
+  }
+
   return $results
 }
 else {

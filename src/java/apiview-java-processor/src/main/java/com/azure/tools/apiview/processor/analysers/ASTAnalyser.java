@@ -101,7 +101,8 @@ public class ASTAnalyser implements Analyser {
                 .map(this::scanForTypes)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
-                .forEach(this::processSingleFile);
+                .collect(Collectors.groupingBy(ScanClass::getPackageName))
+                .forEach(this::processPackage);
 
         // build the navigation
         packageNameToNav.values().stream()
@@ -111,12 +112,28 @@ public class ASTAnalyser implements Analyser {
     }
 
     private static class ScanClass {
-        private CompilationUnit compilationUnit;
-        private Path path;
+        private final CompilationUnit compilationUnit;
+        private final Path path;
+        private String packageName = "";
 
         public ScanClass(Path path, CompilationUnit compilationUnit) {
             this.compilationUnit = compilationUnit;
             this.path = path;
+            compilationUnit.getPackageDeclaration().ifPresent(packageDeclaration -> {
+                packageName = packageDeclaration.getNameAsString();
+            });
+        }
+
+        public CompilationUnit getCompilationUnit() {
+            return compilationUnit;
+        }
+
+        public Path getPath() {
+            return path;
+        }
+
+        public String getPackageName() {
+            return packageName;
         }
     }
 
@@ -142,6 +159,32 @@ public class ASTAnalyser implements Analyser {
             e.printStackTrace();
             return Optional.empty();
         }
+    }
+
+    private void processPackage(String packageName, List<ScanClass> scanClasses) {
+        addToken(new Token(KEYWORD, "package"));
+        addToken(new Token(WHITESPACE, " "));
+
+        Token packageToken;
+        if (packageName.isEmpty()) {
+            packageToken = new Token(TEXT, "<root package>");
+        } else {
+            packageToken = new Token(TYPE_NAME, packageName, packageName);
+            packageToken.setNavigateToId(packageName);
+        }
+        addToken(packageToken);
+        addToken(new Token(WHITESPACE, " "));
+        addToken(new Token(PUNCTUATION, "{"));
+        addToken(new Token(NEW_LINE, ""));
+
+        indent();
+
+        scanClasses.stream().forEach(this::processSingleFile);
+
+        unindent();
+
+        addToken(new Token(PUNCTUATION, "}"));
+        addToken(new Token(NEW_LINE, ""));
     }
 
     private void processSingleFile(ScanClass scanClass) {
@@ -187,6 +230,7 @@ public class ASTAnalyser implements Analyser {
                     final TokenRange annotationTokenRange = tokenRange.get();
                     // TODO: could be more specified instead of string
                     final String name = annotationTokenRange.toString();
+                    addToken(makeWhitespace());
                     addToken(new Token(KEYWORD, name));
                     addToken(new Token(NEW_LINE, ""));
                 }
@@ -241,6 +285,7 @@ public class ASTAnalyser implements Analyser {
         }
 
         private void visitModuleDeclaration(ModuleDeclaration moduleDeclaration) {
+            addToken(makeWhitespace());
             addToken(new Token(KEYWORD, "module"));
             addToken(new Token(WHITESPACE, " "));
             addToken(new Token(TYPE_NAME, "module-info", "module-info"));
@@ -392,11 +437,10 @@ public class ASTAnalyser implements Analyser {
             }
 
             // public class or interface or enum
-            addToken(makeWhitespace());
-
             getAnnotations(typeDeclaration, true, true);
 
             // Get modifiers
+            addToken(makeWhitespace());
             getModifiers(typeDeclaration.getModifiers());
 
             // Get type kind
@@ -677,6 +721,10 @@ public class ASTAnalyser implements Analyser {
                                     final boolean showAnnotationProperties,
                                     final boolean addNewline) {
             Consumer<AnnotationExpr> consumer = annotation -> {
+                if (addNewline) {
+                    addToken(makeWhitespace());
+                }
+
                 addToken(new Token(TYPE_NAME, "@" + annotation.getName().toString()));
                 if (showAnnotationProperties) {
                     if (annotation instanceof NormalAnnotationExpr) {
@@ -1020,7 +1068,7 @@ public class ASTAnalyser implements Analyser {
         apiListing.addPackageTypeMapping(packageName, typeName);
 
         // generate a navigation item for each new package, but we don't add them to the parent yet
-        packageNameToNav.computeIfAbsent(packageName, name -> new ChildItem(packageName, TypeKind.NAMESPACE));
+        packageNameToNav.computeIfAbsent(packageName, name -> new ChildItem(packageName, packageName, TypeKind.NAMESPACE));
 
         apiListing.getKnownTypes().put(typeName, makeId(typeDeclaration));
 

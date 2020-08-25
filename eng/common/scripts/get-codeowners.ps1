@@ -30,10 +30,14 @@ $results = $ownedFolders[$target]
 
 if ($results) {
   Write-Host "Found a folder $results to match $target"
-  $alreadyPresent = [System.Environment]::GetEnvironmentVariable('$VsoVariable')
-
+  
   if ($VsoVariable) {
-    Write-Host "##vso[task.setvariable variable=$VsoVariable;]$results,$alreadyPresent"
+    $alreadyPresent = [System.Environment]::GetEnvironmentVariable($VsoVariable)
+
+    if ($alreadyPresent) { 
+      $results += ",$alreadyPresent"
+    }
+    Write-Host "##vso[task.setvariable variable=$VsoVariable;]$results"
   }
 
   return $results

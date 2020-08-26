@@ -52,6 +52,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -101,7 +102,7 @@ public class ASTAnalyser implements Analyser {
                 .map(this::scanForTypes)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
-                .collect(Collectors.groupingBy(ScanClass::getPackageName))
+                .collect(Collectors.groupingBy(ScanClass::getPackageName, TreeMap::new, Collectors.toList()))
                 .forEach(this::processPackage);
 
         // build the navigation
@@ -111,7 +112,7 @@ public class ASTAnalyser implements Analyser {
                 .forEach(apiListing::addChildItem);
     }
 
-    private static class ScanClass {
+    private static class ScanClass implements Comparable<ScanClass> {
         private final CompilationUnit compilationUnit;
         private final Path path;
         private String packageName = "";
@@ -134,6 +135,11 @@ public class ASTAnalyser implements Analyser {
 
         public String getPackageName() {
             return packageName;
+        }
+
+        @Override
+        public int compareTo(final ScanClass o) {
+            return packageName.compareTo(o.packageName);
         }
     }
 

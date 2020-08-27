@@ -27,7 +27,7 @@ stages:
   - stage: CreateSync
     jobs:
       - job: SyncEngCommon
-        displayName: Sync eng/common Directory
+        displayName: Sync ${{ parameters.DirectoryToSync }} Directory
 
         steps:
         - template: ./templates/steps/sync-directory.yml

@@ -44,3 +44,4 @@ steps:
         $PRData = "Azure;${{ repo }};$(Submitted.PullRequest.Number)"
         Add-Content -Path ${{ parameters.PRDataArtifactPath }} -Value $PRData
       displayName: Write Sync PR Data to Artifact File
+      condition: and(succeeded(), eq(variables['HasChanges'], 'true'))

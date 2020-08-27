@@ -59,8 +59,7 @@ foreach ($prDataLine in $PRData)
     elseif ($response.mergeable -and $response.mergeable_state -eq "clean") {
       Write-Host "${prApiUrl} is ready to merge."
 
-      $prApiUrl | Add-Member -MemberType NoteProperty -Name "HeadSHA" -Value $response.head.sha
-      $mergablePRs += $prApiUrl
+      $mergablePRs += @{ Url = $prApiUrl; HeadSHA = $response.head.sha }
     }
     elseif ($response.mergeable_state -ne "clean") {
       LogWarning "${prApiUrl} is blocked ($($response.mergeable_state)). Please ensure all checks are green and reviewers have approved."
@@ -86,12 +85,14 @@ if (!$ReadyForMerge) {
 if ($ReadyForMerge -and $ShouldMerge)
 {
   # Merge Pull Requests
-  foreach ($mergablePR in $mergablePRs)
+  foreach ($mergablePRObj in $mergablePRs)
   {
-    $mergeApiUrl = $mergablePr + "/merge"
+    $mergablePR = $mergablePRObj.Url
+    $mergeApiUrl = $mergablePR + "/merge"
 
+    Write-Host $mergablePRObj.HeadSHA
     $data = @{
-      sha = $mergablePR.HeadSHA
+      sha = $mergablePRObj.HeadSHA
       merge_method = "squash"
     }
 

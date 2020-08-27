@@ -93,5 +93,5 @@ stages:
                     arguments: >
                       -AuthToken "$(azuresdk-github-pat)"
                       -PRDataArtifactPath "$(Pipeline.Workspace)/${{parameters.ArtifactName}}/${{ parameters.PRDataFileName }}"
-                      -devOpsLogging true
+                      -devOpsLogging
                     pwsh: true

@@ -1,4 +1,14 @@
 # Mirror the eng/common folder to all subscribed langauge repos.
+parameters:
+- name: PRDataFileName
+  type: string
+  default: PRsCreated.txt
+- name: ArtifactName
+  type: string
+  default: pullrequestdata
+- name: DirectoryToSync
+  type: string
+  default: eng/common
 
 trigger: none
 
@@ -13,27 +23,75 @@ pr:
 pool:
   vmImage: windows-2019
 
-jobs:
-  - job: SyncEngCommon
-    displayName: Sync eng/common Directory
+stages:
+  - stage: CreateSync
+    jobs:
+      - job: SyncEngCommon
+        displayName: Sync ${{ parameters.DirectoryToSync }} Directory
 
-    steps:
-    - template: ./templates/steps/sync-directory.yml
-      parameters:
-        CommitMessage: "Sync eng/common directory with azure-sdk-tools repository for Tools PR https://github.com/Azure/azure-sdk-tools/pull/$(System.PullRequest.PullRequestNumber)"
-        DirectoryToSync: "eng/common"
-        PRBranchName: "sync-eng-common-$(System.PullRequest.SourceBranch)-$(System.PullRequest.PullRequestNumber)"
-        PRTitle: "Sync eng/common directory with azure-sdk-tools for PR $(System.PullRequest.PullRequestNumber)"
-        PRBody: >- 
-          Sync eng/common directory with azure-sdk-tools for PR https://github.com/Azure/azure-sdk-tools/pull/$(System.PullRequest.PullRequestNumber) <br>
-          See [eng/common workflow](https://github.com/Azure/azure-sdk-tools/blob/master/eng/common/README.md#workflow)
-        Repos:
-          - azure-sdk-for-android
-          - azure-sdk-for-c
-          - azure-sdk-for-cpp
-          - azure-sdk-for-go
-          - azure-sdk-for-ios
-          - azure-sdk-for-java
-          - azure-sdk-for-js
-          - azure-sdk-for-net
-          - azure-sdk-for-python
+        steps:
+        - template: ./templates/steps/sync-directory.yml
+          parameters:
+            ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
+              CommitMessage: "Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools repository for Tools PR $(System.PullRequest.PullRequestNumber)"
+              DirectoryToSync: ${{ parameters.DirectoryToSync }}
+              PRBranchName: "sync-${{ parameters.DirectoryToSync }}-$(System.PullRequest.SourceBranch)-$(System.PullRequest.PullRequestNumber)"
+              PRTitle: "Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools for PR $(System.PullRequest.PullRequestNumber)"
+              PRBody: >
+                Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools for PR https://github.com/Azure/azure-sdk-tools/pull/$(System.PullRequest.PullRequestNumber)<br>
+                See [eng/common workflow](https://github.com/Azure/azure-sdk-tools/blob/master/eng/common/README.md#workflow)
+            ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+              CommitMessage: Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools repository
+              DirectoryToSync: ${{ parameters.DirectoryToSync }}
+              PRBranchName: "sync-${{ parameters.DirectoryToSync }}"
+              PRTitle: Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools repository
+              PRBody: >
+                Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools repository.<br>
+                See [eng/common workflow](https://github.com/Azure/azure-sdk-tools/blob/master/eng/common/README.md#workflow)
+            PRDataArtifactPath: $(Build.ArtifactStagingDirectory)/${{ parameters.PRDataFileName }}
+            Repos:
+              - azure-sdk-for-android
+              - azure-sdk-for-c
+              - azure-sdk-for-cpp
+              - azure-sdk-for-go
+              - azure-sdk-for-ios
+              - azure-sdk-for-java
+              - azure-sdk-for-js
+              - azure-sdk-for-net
+              - azure-sdk-for-python
+
+        - task: PublishPipelineArtifact@1
+          condition: succeeded()
+          inputs:
+            artifactName: ${{ parameters.ArtifactName }}
+            path: $(Build.ArtifactStagingDirectory)/${{ parameters.PRDataFileName }}
+ 
+  - stage: VerifyAndMerge
+    jobs:
+      - deployment: VerifyandMergeSyncPrs
+        displayName: Verify and Merge Sync PRs
+        environment: github
+
+        pool:
+          vmImage: windows-2019
+
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+
+                - download: current
+                  artifact: ${{parameters.ArtifactName}}
+                  displayName: Download ${{ parameters.PRDataFileName }}
+
+                - task: PowerShell@2
+                  displayName: 'Verify then Merge Pull Requests'
+                  inputs:
+                    targetType: filePath
+                    filePath: $(Build.SourcesDirectory)/scripts/powershell/Verify-And-Merge-PRs.ps1
+                    arguments: >
+                      -AuthToken "$(azuresdk-github-pat)"
+                      -PRDataArtifactPath "$(Pipeline.Workspace)/${{parameters.ArtifactName}}/${{ parameters.PRDataFileName }}"
+                      -devOpsLogging
+                    pwsh: true

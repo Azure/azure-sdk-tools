@@ -6,30 +6,42 @@ parameters:
   BaseBranchName: master
   PRTitle: pr-title-not-set
   PRBody: pr-body-not-set
+  PRDataArtifactPath: pr-data-artifact-path-not-set
 
 steps:
-
-- ${{ each repo in parameters.Repos }}:
   - pwsh: |
-      git clone --branch ${{ parameters.BaseBranchName }} https://github.com/azure/${{ repo }}
-      $repoPath = "${{ repo }}/${{ parameters.DirectoryToSync }}"
+      New-Item -Path ${{ parameters.PRDataArtifactPath }} -ItemType File
+    displayName: Create PRData Artifact
 
-      if (!(Test-Path $repoPath)) { mkdir $repoPath }
-      Remove-Item -v -r $repoPath
-      Copy-Item -v -r $(Build.SourcesDirectory)/${{ parameters.DirectoryToSync }} $repoPath
-      Get-ChildItem -r $repoPath
+  - ${{ each repo in parameters.Repos }}:
+    - pwsh: |
+        git clone --branch ${{ parameters.BaseBranchName }} https://github.com/azure/${{ repo }}
+        $repoPath = "${{ repo }}/${{ parameters.DirectoryToSync }}"
 
-    displayName: Copy ${{ parameters.DirectoryToSync }} from azure-sdk-tools to ${{ repo }}
-    workingDirectory: $(System.DefaultWorkingDirectory)
+        if (!(Test-Path $repoPath)) { mkdir $repoPath }
+        Remove-Item -v -r $repoPath
+        Copy-Item -v -r $(Build.SourcesDirectory)/${{ parameters.DirectoryToSync }} $repoPath
+        Get-ChildItem -r $repoPath
 
-  - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
-    parameters:
-      RepoName: ${{ repo }}
-      PRBranchName: ${{ parameters.PRBranchName }}
-      BaseBranchName: ${{ parameters.BaseBranchName }}
-      CommitMsg: ${{ parameters.CommitMessage }}
-      PRTitle: ${{ parameters.PRTitle }}
-      PRBody: ${{ parameters.PRBody }}
-      PushArgs: -f
-      WorkingDirectory: $(System.DefaultWorkingDirectory)/${{ repo }}
-      ScriptDirectory: $(System.DefaultWorkingDirectory)/eng/common/scripts
+      displayName: Copy ${{ parameters.DirectoryToSync }} from azure-sdk-tools to ${{ repo }}
+      workingDirectory: $(System.DefaultWorkingDirectory)
+
+    - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
+      parameters:
+        RepoName: ${{ repo }}
+        RepoOwner: Azure
+        PRBranchName: ${{ parameters.PRBranchName }}
+        BaseBranchName: ${{ parameters.BaseBranchName }}
+        CommitMsg: ${{ parameters.CommitMessage }}
+        PRTitle: ${{ parameters.PRTitle }}
+        PRBody: ${{ parameters.PRBody }}
+        PRLabels: "EngSys"
+        PushArgs: -f
+        WorkingDirectory: $(System.DefaultWorkingDirectory)/${{ repo }}
+        ScriptDirectory: $(System.DefaultWorkingDirectory)/eng/common/scripts
+
+    - pwsh: |
+        $PRData = "Azure;${{ repo }};$(Submitted.PullRequest.Number)"
+        Add-Content -Path ${{ parameters.PRDataArtifactPath }} -Value $PRData
+      displayName: Write Sync PR Data to Artifact File
+      condition: and(succeeded(), eq(variables['HasChanges'], 'true'))

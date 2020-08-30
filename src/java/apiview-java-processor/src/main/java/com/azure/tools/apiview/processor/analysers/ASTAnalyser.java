@@ -72,6 +72,8 @@ import static com.azure.tools.apiview.processor.model.TokenKind.TYPE_NAME;
 import static com.azure.tools.apiview.processor.model.TokenKind.WHITESPACE;
 
 public class ASTAnalyser implements Analyser {
+    public static final String MODULE_INFO_KEY = "module-info";
+
     private final APIListing apiListing;
 
     private final Map<String, ChildItem> packageNameToNav;
@@ -115,6 +117,7 @@ public class ASTAnalyser implements Analyser {
     private static class ScanClass implements Comparable<ScanClass> {
         private final CompilationUnit compilationUnit;
         private final Path path;
+        private String primaryTypeName;
         private String packageName = "";
 
         public ScanClass(Path path, CompilationUnit compilationUnit) {
@@ -123,6 +126,7 @@ public class ASTAnalyser implements Analyser {
             compilationUnit.getPackageDeclaration().ifPresent(packageDeclaration -> {
                 packageName = packageDeclaration.getNameAsString();
             });
+            compilationUnit.getPrimaryTypeName().ifPresent(name -> primaryTypeName = name);
         }
 
         public CompilationUnit getCompilationUnit() {
@@ -185,7 +189,9 @@ public class ASTAnalyser implements Analyser {
 
         indent();
 
-        scanClasses.stream().forEach(this::processSingleFile);
+        scanClasses.stream()
+                .sorted(Comparator.comparing(s -> s.primaryTypeName))
+                .forEach(this::processSingleFile);
 
         unindent();
 
@@ -294,7 +300,7 @@ public class ASTAnalyser implements Analyser {
             addToken(makeWhitespace());
             addToken(new Token(KEYWORD, "module"));
             addToken(new Token(WHITESPACE, " "));
-            addToken(new Token(TYPE_NAME, moduleDeclaration.getNameAsString(), "module-info"));
+            addToken(new Token(TYPE_NAME, moduleDeclaration.getNameAsString(), MODULE_INFO_KEY));
             addToken(new Token(WHITESPACE, " "));
             addToken(new Token(PUNCTUATION, "{"));
             addToken(new Token(NEW_LINE, ""));
@@ -312,7 +318,7 @@ public class ASTAnalyser implements Analyser {
                         addToken(new Token(WHITESPACE, " "));
                     }
 
-                    addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId("module-info-" + d.getNameAsString())));
+                    addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId(MODULE_INFO_KEY + "-" + d.getNameAsString())));
                     addToken(new Token(PUNCTUATION, ";"));
                     addToken(new Token(NEW_LINE, ""));
                 });
@@ -320,7 +326,7 @@ public class ASTAnalyser implements Analyser {
                 moduleDirective.ifModuleExportsStmt(d -> {
                     addToken(new Token(KEYWORD, "exports"));
                     addToken(new Token(WHITESPACE, " "));
-                    addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId("module-info-" + d.getNameAsString())));
+                    addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId(MODULE_INFO_KEY + "-" + d.getNameAsString())));
 
                     NodeList<Name> names = d.getModuleNames();
 
@@ -346,18 +352,21 @@ public class ASTAnalyser implements Analyser {
                 moduleDirective.ifModuleOpensStmt(d -> {
                     addToken(new Token(KEYWORD, "opens"));
                     addToken(new Token(WHITESPACE, " "));
-                    addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId("module-info-" + d.getNameAsString())));
-                    addToken(new Token(WHITESPACE, " "));
-                    addToken(new Token(KEYWORD, "to"));
-                    addToken(new Token(WHITESPACE, " "));
+                    addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId(MODULE_INFO_KEY + "-" + d.getNameAsString())));
 
                     NodeList<Name> names = d.getModuleNames();
-                    for (int i = 0; i < names.size(); i++) {
-                        addToken(new Token(TYPE_NAME, names.get(i).toString()));
+                    if (names.size() > 0) {
+                        addToken(new Token(WHITESPACE, " "));
+                        addToken(new Token(KEYWORD, "to"));
+                        addToken(new Token(WHITESPACE, " "));
 
-                        if (i < names.size() - 1) {
-                            addToken(new Token(PUNCTUATION, ","));
-                            addToken(new Token(WHITESPACE, " "));
+                        for (int i = 0; i < names.size(); i++) {
+                            addToken(new Token(TYPE_NAME, names.get(i).toString()));
+
+                            if (i < names.size() - 1) {
+                                addToken(new Token(PUNCTUATION, ","));
+                                addToken(new Token(WHITESPACE, " "));
+                            }
                         }
                     }
 
@@ -368,7 +377,7 @@ public class ASTAnalyser implements Analyser {
                 moduleDirective.ifModuleUsesStmt(d -> {
                     addToken(new Token(KEYWORD, "uses"));
                     addToken(new Token(WHITESPACE, " "));
-                    addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId("module-info-" + d.getNameAsString())));
+                    addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId(MODULE_INFO_KEY + "-" + d.getNameAsString())));
                     addToken(new Token(PUNCTUATION, ";"));
                     addToken(new Token(NEW_LINE, ""));
                 });
@@ -376,7 +385,7 @@ public class ASTAnalyser implements Analyser {
                 moduleDirective.ifModuleProvidesStmt(d -> {
                     addToken(new Token(KEYWORD, "provides"));
                     addToken(new Token(WHITESPACE, " "));
-                    addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId("module-info-" + d.getNameAsString())));
+                    addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId(MODULE_INFO_KEY + "-" + d.getNameAsString())));
                     addToken(new Token(WHITESPACE, " "));
                     addToken(new Token(KEYWORD, "with"));
                     addToken(new Token(WHITESPACE, " "));
@@ -706,8 +715,6 @@ public class ASTAnalyser implements Analyser {
                 getThrowException(callableDeclaration);
 
                 // close statements
-                addToken(new Token(PUNCTUATION, "{"));
-                addToken(new Token(PUNCTUATION, "}"));
                 addToken(new Token(NEW_LINE, ""));
             }
             unindent();
@@ -1023,8 +1030,6 @@ public class ASTAnalyser implements Analyser {
             addToken(new Token(WHITESPACE, " "));
 
             // close statements
-            addToken(new Token(PUNCTUATION, "{"));
-            addToken(new Token(PUNCTUATION, "}"));
             addToken(new Token(NEW_LINE, ""));
 
             unindent();
@@ -1035,7 +1040,7 @@ public class ASTAnalyser implements Analyser {
         @Override
         public void visit(CompilationUnit compilationUnit, Map<String, String> arg) {
             compilationUnit.getModule().ifPresent(moduleDeclaration -> {
-                apiListing.addChildItem(new ChildItem("module-info", "module-info", TypeKind.CLASS));
+                apiListing.addChildItem(new ChildItem(MODULE_INFO_KEY, MODULE_INFO_KEY, TypeKind.CLASS));
             });
 
             for (final TypeDeclaration<?> typeDeclaration : compilationUnit.getTypes()) {

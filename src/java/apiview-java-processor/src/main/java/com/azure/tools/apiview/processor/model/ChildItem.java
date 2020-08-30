@@ -1,13 +1,15 @@
 package com.azure.tools.apiview.processor.model;
 
+import com.azure.tools.apiview.processor.analysers.ASTAnalyser;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
-public class ChildItem {
+public class ChildItem implements Comparable<ChildItem> {
     @JsonProperty("ChildItems")
-    private List<ChildItem> childItems;
+    private Set<ChildItem> childItems;
 
     @JsonProperty("NavigationId")
     private String navigationId;
@@ -23,22 +25,18 @@ public class ChildItem {
     }
 
     public ChildItem(final String navigationId, final String text, TypeKind typeKind) {
-        this.childItems = new ArrayList<>();
+        this.childItems = new TreeSet<>();
         this.navigationId = navigationId;
         this.tags = new Tags(typeKind);
         this.text = text;
     }
 
-    public List<ChildItem> getChildItem() {
+    public Set<ChildItem> getChildItem() {
         return childItems;
     }
 
     public void addChildItem(ChildItem childItem) {
         this.childItems.add(childItem);
-    }
-
-    public void setChildItems (List<ChildItem> childItems) {
-        this.childItems = childItems;
     }
 
     public String getNavigationId() {
@@ -63,6 +61,14 @@ public class ChildItem {
 
     public void setTags(Tags tags) {
         this.tags = tags;
+    }
+
+    @Override
+    public int compareTo(ChildItem o) {
+        // we special case the module-info file so it appears at the top
+        if (ASTAnalyser.MODULE_INFO_KEY.equals(text)) return -1;
+        else if (ASTAnalyser.MODULE_INFO_KEY.equals(o.text)) return 1;
+        else return text.compareTo(o.text);
     }
 
     @Override

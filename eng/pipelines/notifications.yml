@@ -25,6 +25,8 @@ stages:
           PathPrefix: 'java'
         C:
           PathPrefix: 'c'
+        CPP:
+          PathPrefix: 'cpp'
 
     pool:
       vmImage: ubuntu-16.04

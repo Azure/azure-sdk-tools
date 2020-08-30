@@ -55,6 +55,7 @@ import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.getPackageName;
@@ -281,11 +282,11 @@ public class ASTAnalyser implements Analyser {
                     // skip and do nothing if there is no constructor in the interface.
                 }
             } else {
-                tokeniseConstructorsOrMethods(isInterfaceDeclaration, true, constructors);
+                tokeniseConstructorsOrMethods(typeDeclaration, isInterfaceDeclaration, true, constructors);
             }
 
             // get Methods
-            tokeniseConstructorsOrMethods(isInterfaceDeclaration, false, typeDeclaration.getMethods());
+            tokeniseConstructorsOrMethods(typeDeclaration, isInterfaceDeclaration, false, typeDeclaration.getMethods());
 
             // get Inner classes
             tokeniseInnerClasses(typeDeclaration.getMembers());
@@ -657,7 +658,10 @@ public class ASTAnalyser implements Analyser {
             unindent();
         }
 
-        private void tokeniseConstructorsOrMethods(boolean isInterfaceDeclaration, boolean isConstructor, List<? extends CallableDeclaration<?>> callableDeclarations) {
+        private void tokeniseConstructorsOrMethods(final TypeDeclaration<?> typeDeclaration,
+                                                   final boolean isInterfaceDeclaration,
+                                                   final boolean isConstructor,
+                                                   final List<? extends CallableDeclaration<?>> callableDeclarations) {
             indent();
 
             if (isConstructor) {
@@ -671,53 +675,141 @@ public class ASTAnalyser implements Analyser {
 
                 if (isAllPrivateOrPackagePrivate) {
                     addToken(makeWhitespace());
-                    addToken(new Token(COMMENT, "// This class does not have any public constructors, and is not able to be instantiated using 'new'"));
+                    addToken(new Token(COMMENT, "// This class does not have any public constructors, and is not able to be instantiated using 'new'."));
                     addToken(new Token(NEW_LINE, ""));
                     unindent();
                     return;
                 }
             }
 
-            for (final CallableDeclaration<?> callableDeclaration : callableDeclarations) {
-                // By default , interface has public abstract methods if there is no access specifier declared
-                if (isInterfaceDeclaration) {
-                    // no-op - we take all methods in the method
-                } else if (isPrivateOrPackagePrivate(callableDeclaration.getAccessSpecifier())) {
-                    // Skip if not public API
-                    continue;
+            // if the class we are looking at is annotated with @ServiceClient, we will break up the methods that are
+            // displayed into service methods and non-service methods
+            final boolean showGroupings = !isConstructor && typeDeclaration.isAnnotationPresent("ServiceClient");
+            Collector<CallableDeclaration<?>, ?, Map<String, List<CallableDeclaration<?>>>> collector = Collectors.groupingBy((CallableDeclaration<?> cd) -> {
+                if (showGroupings) {
+                    if (cd.isAnnotationPresent("ServiceMethod")) {
+                        return "Service Methods";
+                    } else {
+                        return "Non-Service Methods";
+                    }
+                } else {
+                    return "";
                 }
+            });
 
-                addToken(makeWhitespace());
+            callableDeclarations.stream()
+                    .filter(callableDeclaration -> {
+                        if (isInterfaceDeclaration) {
+                            // By default , interface has public abstract methods if there is no access specifier declared.
+                            // we take all methods in the interface.
+                            return true;
+                        } else if (isPrivateOrPackagePrivate(callableDeclaration.getAccessSpecifier())) {
+                            // Skip if not public API
+                            return false;
+                        }
+                        return true;
+                    })
+                    .sorted(this::sortMethods)
+                    .collect(collector)
+                    .forEach((groupName, group) -> {
+                        if (showGroupings && !group.isEmpty()) {
+                            // we group inside the APIView each of the groups, so that we can visualise their operations
+                            // more clearly
+                            addToken(makeWhitespace());
+                            addToken(new Token(COMMENT, "// " + groupName + ":"));
+                            addToken(new Token(NEW_LINE, ""));
+                        }
 
-                // annotations
-                getAnnotations(callableDeclaration, false,false);
+                        group.forEach(callableDeclaration -> {
+                            addToken(makeWhitespace());
 
-                // modifiers
-                getModifiers(callableDeclaration.getModifiers());
+                            // annotations
+                            getAnnotations(callableDeclaration, false, false);
 
-                // type parameters of methods
-                getTypeParameters(callableDeclaration.getTypeParameters());
+                            // modifiers
+                            getModifiers(callableDeclaration.getModifiers());
 
-                // if type parameters of method is not empty, we need to add a space before adding type name
-                if (!callableDeclaration.getTypeParameters().isEmpty()) {
-                    addToken(new Token(WHITESPACE, " "));
-                }
+                            // type parameters of methods
+                            getTypeParameters(callableDeclaration.getTypeParameters());
 
-                // type name
-                if (callableDeclaration instanceof MethodDeclaration) {
-                    getType(callableDeclaration);
-                }
+                            // if type parameters of method is not empty, we need to add a space before adding type name
+                            if (!callableDeclaration.getTypeParameters().isEmpty()) {
+                                addToken(new Token(WHITESPACE, " "));
+                            }
 
-                // method name and parameters
-                getDeclarationNameAndParameters(callableDeclaration, callableDeclaration.getParameters());
+                            // type name
+                            if (callableDeclaration instanceof MethodDeclaration) {
+                                getType(callableDeclaration);
+                            }
 
-                // throw exceptions
-                getThrowException(callableDeclaration);
+                            // method name and parameters
+                            getDeclarationNameAndParameters(callableDeclaration, callableDeclaration.getParameters());
 
-                // close statements
-                addToken(new Token(NEW_LINE, ""));
-            }
+                            // throw exceptions
+                            getThrowException(callableDeclaration);
+
+                            // close statements
+                            addToken(new Token(NEW_LINE, ""));
+                        });
+                    });
+
             unindent();
+        }
+
+        private int sortMethods(CallableDeclaration<?> c1, CallableDeclaration<?> c2) {
+            // we try our best to sort the callable methods using the following rules:
+            //  * If the method starts with 'set', 'get', or 'is', we strip off the prefix for the sake of comparison
+            //  * We do all comparisons in a case-insensitive manner
+            //  * Constructors always go at the top
+            //  * build* methods always go at the bottom
+
+            final int methodParamCountCompare = Integer.compare(c1.getParameters().size(), c2.getParameters().size());
+
+            if (c1.isConstructorDeclaration()) {
+                if (c2.isConstructorDeclaration()) {
+                    // if both are constructors, we sort in order of the number of arguments
+                    return methodParamCountCompare;
+                } else {
+                    // only c1 is a constructor, so it goes first
+                    return -1;
+                }
+            } else if (c2.isConstructorDeclaration()) {
+                // only c2 is a constructor, so it goes first
+                return 1;
+            }
+
+            final String fullName1 = c1.getNameAsString();
+            String s1 = (fullName1.startsWith("set") || fullName1.startsWith("get") ? fullName1.substring(3)
+                    : fullName1.startsWith("is") ? fullName1.substring(2) : fullName1).toLowerCase();
+
+            final String fullName2 = c2.getNameAsString();
+            String s2 = (fullName2.startsWith("set") || fullName2.startsWith("get") ? fullName2.substring(3)
+                    : fullName2.startsWith("is") ? fullName2.substring(2) : fullName2).toLowerCase();
+
+            if (s1.startsWith("build")) {
+                if (s2.startsWith("build")) {
+                    // two 'build' methods, sort alphabetically
+                    return s1.compareTo(s2);
+                } else {
+                    // only s1 is a build method, so it goes last
+                    return 1;
+                }
+            } else if (s2.startsWith("build")) {
+                // only s2 is a build method, so it goes last
+                return -1;
+            }
+
+            int methodNameCompare = s1.compareTo(s2);
+            if (methodNameCompare == 0) {
+                // they have the same name, so here we firstly compare by the full name (including prefix), and then
+                // we compare by number of args
+                methodNameCompare = fullName1.compareTo(fullName2);
+                if (methodNameCompare == 0) {
+                    // compare by number of args
+                    return methodParamCountCompare;
+                }
+            }
+            return methodNameCompare;
         }
 
         private void tokeniseInnerClasses(NodeList<BodyDeclaration<?>> bodyDeclarations) {

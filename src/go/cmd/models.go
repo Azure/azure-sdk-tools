@@ -71,10 +71,10 @@ type Struct struct {
 
 // Token ...
 type Token struct {
-	DefinitionID *string `json:"DefinitionId"`
-	NavigateToID *string `json:"NavigateToId"`
-	Value        string  `json:"Value"`
-	Kind         int     `json:"Kind"`
+	DefinitionID *string   `json:"DefinitionId"`
+	NavigateToID *string   `json:"NavigateToId"`
+	Value        string    `json:"Value"`
+	Kind         TokenType `json:"Kind"`
 }
 
 type Navigation struct {

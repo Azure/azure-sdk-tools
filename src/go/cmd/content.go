@@ -56,15 +56,11 @@ func (c *content) addConst(pkg pkg, g *ast.GenDecl) {
 				v = pkg.getText(ce.Args[0].Pos(), ce.Args[0].End())
 			} else if ce, ok := vs.Values[0].(*ast.BinaryExpr); ok {
 				// const FooConst = "value" + Bar
-				co.Type = ""
+				co.Type = "*ast.BinaryExpr"
 				v = pkg.getText(ce.X.Pos(), ce.Y.End())
 			} else {
 				panic("unhandled case for adding constant")
 			}
-		}
-		// remove any surrounding quotes
-		if v[0] == '"' {
-			v = v[1 : len(v)-1]
 		}
 		co.Value = v
 		c.Consts[vs.Names[0].Name] = co
@@ -107,6 +103,9 @@ func (c *content) parseConst(tokenList *[]Token) {
 			// this token parsing is performed so that const declarations of different types are declared
 			// in their own const block to make them easier to click on
 			n := t
+			if n == "*ast.BinaryExpr" {
+				n = "const"
+			}
 			makeToken(nil, nil, "", 1, tokenList)
 			makeToken(nil, nil, " ", whitespace, tokenList)
 			makeToken(nil, nil, "", 1, tokenList)
@@ -311,6 +310,9 @@ func (c *content) generateNavChildItems() []Navigation {
 		if !includesType(types, s.Type) {
 			types = append(types, s.Type)
 			temp := s.Type
+			if temp == "*ast.BinaryExpr" {
+				temp = "const"
+			}
 			childItems = append(childItems, Navigation{
 				Text:         &temp,
 				NavigationId: &temp,

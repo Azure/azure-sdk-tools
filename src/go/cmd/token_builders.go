@@ -7,11 +7,14 @@ import (
 	"strings"
 )
 
-func addTab() string {
-	return "     "
-}
-
-func makeToken(defID, navID *string, val string, kind int, list *[]Token) {
+// makeToken builds the Token to be added to the Token slice that is passed in as a parameter.
+// defID and navID components can be passed in as nil to indicate that there is no definition ID or
+// navigation ID that is related to that token.
+// val is the value of the token and it was will be visible in the API view tool.
+// kind is the TokenType that will be assigned to the value and will determine how the value is
+// represented in the API view tool.
+// list is the slice of tokens that will be parsed in the API view tool, the new token will be appended to list.
+func makeToken(defID, navID *string, val string, kind TokenType, list *[]Token) {
 	tok := Token{DefinitionID: defID, NavigateToID: navID, Value: val, Kind: kind}
 	*list = append(*list, tok)
 }
@@ -31,12 +34,12 @@ func makeStructTokens(name *string, anonFields []string, fields map[string]strin
 	if anonFields != nil || fields != nil {
 		for _, v1 := range anonFields {
 			makeToken(nil, nil, "", newline, list)
-			makeToken(nil, nil, addTab(), whitespace, list)
+			makeToken(nil, nil, "\t", whitespace, list)
 			makeToken(&v1, nil, v1, typeName, list)
 		}
 		for k1, v1 := range fields {
 			makeToken(nil, nil, "", newline, list)
-			makeToken(nil, nil, addTab(), whitespace, list)
+			makeToken(nil, nil, "\t", whitespace, list)
 			makeToken(&k1, nil, k1, typeName, list)
 			makeToken(nil, nil, " ", whitespace, list)
 			makeToken(nil, nil, v1, memberName, list)
@@ -44,7 +47,7 @@ func makeStructTokens(name *string, anonFields []string, fields map[string]strin
 	}
 	if anonFields == nil && fields == nil {
 		makeToken(nil, nil, "", newline, list)
-		makeToken(nil, nil, addTab(), whitespace, list)
+		makeToken(nil, nil, "\t", whitespace, list)
 		makeToken(nil, nil, "// no exported fields", comment, list)
 		makeToken(nil, nil, "", newline, list)
 	}
@@ -77,7 +80,7 @@ func makeInterfaceTokens(name *string, methods map[string]Func, list *[]Token) {
 
 // interface method definitions vary from regular method definitions slightly so they have their own independent generation function
 func makeIntFuncTokens(name *string, funcs Func, list *[]Token) {
-	makeToken(nil, nil, addTab(), whitespace, list)
+	makeToken(nil, nil, "\t", whitespace, list)
 	// interface method definitions vary from regular method definitions slightly so they have their own independent generation function
 	makeIntMethodTokens(name, funcs.Params, funcs.Returns, list)
 }
@@ -237,27 +240,30 @@ func makeIntMethodTokens(name *string, params, results *string, list *[]Token) {
 	makeToken(nil, nil, "", newline, list)
 }
 
+// TODO can improve how BinaryExpr consts are represented with different colors
 func makeConstTokens(name *string, c Const, list *[]Token) {
 	n := *name
-	makeToken(nil, nil, addTab(), whitespace, list)
+	makeToken(nil, nil, "\t", whitespace, list)
 	makeToken(&n, nil, *name, typeName, list)
 	makeToken(nil, nil, " ", whitespace, list)
-	makeToken(nil, nil, c.Type, memberName, list)
+	if c.Type == "*ast.BinaryExpr" {
+		makeToken(nil, nil, "", memberName, list)
+	} else {
+		makeToken(nil, nil, c.Type, memberName, list)
+	}
 	makeToken(nil, nil, " ", whitespace, list)
 	makeToken(nil, nil, "=", punctuation, list)
 	makeToken(nil, nil, " ", whitespace, list)
-	makeToken(nil, nil, "\"", stringLiteral, list)
 	makeToken(nil, nil, c.Value, stringLiteral, list)
-	makeToken(nil, nil, "\"", stringLiteral, list)
 	makeToken(nil, nil, "", newline, list)
 }
 
 // getTypeClassification will return the token type for the text that is passed in
-func getTypeClassification(s string) int {
+func getTypeClassification(s string) TokenType {
 	if strings.HasPrefix(s, "*") {
 		s = s[1:]
 	}
-	if reservedNames[s] {
+	if reservedNames[s] != struct{}{} {
 		return keyword
 	}
 	return literal

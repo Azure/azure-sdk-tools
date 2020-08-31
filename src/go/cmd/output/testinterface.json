@@ -4,6 +4,42 @@
   {
    "DefinitionId": null,
    "NavigateToId": null,
+   "Value": "package",
+   "Kind": 7
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": "testinterface",
+   "NavigateToId": null,
+   "Value": "testinterface",
+   "Kind": 4
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "",
+   "Kind": 1
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "",
+   "Kind": 1
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
    "Value": "type",
    "Kind": 6
   },
@@ -52,7 +88,7 @@
   {
    "DefinitionId": null,
    "NavigateToId": null,
-   "Value": "     ",
+   "Value": "\t",
    "Kind": 2
   },
   {
@@ -83,7 +119,7 @@
    "DefinitionId": null,
    "NavigateToId": null,
    "Value": "int64",
-   "Kind": 4
+   "Kind": 9
   },
   {
    "DefinitionId": null,
@@ -101,7 +137,7 @@
    "DefinitionId": null,
    "NavigateToId": null,
    "Value": "*bool",
-   "Kind": 4
+   "Kind": 9
   },
   {
    "DefinitionId": null,

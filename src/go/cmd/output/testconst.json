@@ -4,6 +4,24 @@
   {
    "DefinitionId": null,
    "NavigateToId": null,
+   "Value": "package",
+   "Kind": 7
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": "testconst",
+   "NavigateToId": null,
+   "Value": "testconst",
+   "Kind": 4
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
    "Value": "",
    "Kind": 1
   },
@@ -20,7 +38,25 @@
    "Kind": 1
   },
   {
-   "DefinitionId": "string",
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "",
+   "Kind": 1
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "",
+   "Kind": 1
+  },
+  {
+   "DefinitionId": "const",
    "NavigateToId": null,
    "Value": "const",
    "Kind": 6
@@ -46,7 +82,115 @@
   {
    "DefinitionId": null,
    "NavigateToId": null,
-   "Value": "     ",
+   "Value": "\t",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": "Agent",
+   "NavigateToId": null,
+   "Value": "Agent",
+   "Kind": 4
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "",
+   "Kind": 7
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "=",
+   "Kind": 3
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "\"foo/\" + Version",
+   "Kind": 8
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "",
+   "Kind": 1
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": ")",
+   "Kind": 3
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "",
+   "Kind": 1
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "",
+   "Kind": 1
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "",
+   "Kind": 1
+  },
+  {
+   "DefinitionId": "SomeChoice",
+   "NavigateToId": null,
+   "Value": "const",
+   "Kind": 6
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "(",
+   "Kind": 3
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "",
+   "Kind": 1
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "\t",
    "Kind": 2
   },
   {
@@ -65,7 +209,7 @@
    "DefinitionId": null,
    "NavigateToId": null,
    "Value": "SomeChoice",
-   "Kind": 9
+   "Kind": 7
   },
   {
    "DefinitionId": null,
@@ -88,19 +232,7 @@
   {
    "DefinitionId": null,
    "NavigateToId": null,
-   "Value": "\"",
-   "Kind": 8
-  },
-  {
-   "DefinitionId": null,
-   "NavigateToId": null,
    "Value": "1",
-   "Kind": 8
-  },
-  {
-   "DefinitionId": null,
-   "NavigateToId": null,
-   "Value": "\"",
    "Kind": 8
   },
   {
@@ -112,7 +244,7 @@
   {
    "DefinitionId": null,
    "NavigateToId": null,
-   "Value": "     ",
+   "Value": "\t",
    "Kind": 2
   },
   {
@@ -131,7 +263,7 @@
    "DefinitionId": null,
    "NavigateToId": null,
    "Value": "SomeChoice",
-   "Kind": 9
+   "Kind": 7
   },
   {
    "DefinitionId": null,
@@ -154,19 +286,7 @@
   {
    "DefinitionId": null,
    "NavigateToId": null,
-   "Value": "\"",
-   "Kind": 8
-  },
-  {
-   "DefinitionId": null,
-   "NavigateToId": null,
    "Value": "2",
-   "Kind": 8
-  },
-  {
-   "DefinitionId": null,
-   "NavigateToId": null,
-   "Value": "\"",
    "Kind": 8
   },
   {
@@ -232,7 +352,7 @@
   {
    "DefinitionId": null,
    "NavigateToId": null,
-   "Value": "     ",
+   "Value": "\t",
    "Kind": 2
   },
   {
@@ -251,7 +371,7 @@
    "DefinitionId": null,
    "NavigateToId": null,
    "Value": "string",
-   "Kind": 4
+   "Kind": 7
   },
   {
    "DefinitionId": null,
@@ -274,19 +394,61 @@
   {
    "DefinitionId": null,
    "NavigateToId": null,
-   "Value": "\"",
+   "Value": "\"somestring\"",
    "Kind": 8
   },
   {
    "DefinitionId": null,
    "NavigateToId": null,
-   "Value": "somestring",
-   "Kind": 8
+   "Value": "",
+   "Kind": 1
   },
   {
    "DefinitionId": null,
    "NavigateToId": null,
-   "Value": "\"",
+   "Value": "\t",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": "Version",
+   "NavigateToId": null,
+   "Value": "Version",
+   "Kind": 4
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "string",
+   "Kind": 7
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "=",
+   "Kind": 3
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "\"0.1.0\"",
    "Kind": 8
   },
   {
@@ -314,11 +476,11 @@
    "NavigationId": null,
    "ChildItems": [
     {
-     "Text": "string",
-     "NavigationId": "string",
+     "Text": "SomeChoice",
+     "NavigationId": "SomeChoice",
      "ChildItems": [],
      "Tags": {
-      "TypeKind": "struct"
+      "TypeKind": "enum"
      }
     },
     {
@@ -326,7 +488,15 @@
      "NavigationId": "string",
      "ChildItems": [],
      "Tags": {
-      "TypeKind": "struct"
+      "TypeKind": "enum"
+     }
+    },
+    {
+     "Text": "const",
+     "NavigationId": "const",
+     "ChildItems": [],
+     "Tags": {
+      "TypeKind": "enum"
      }
     }
    ],

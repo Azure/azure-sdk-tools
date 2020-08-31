@@ -12,42 +12,44 @@ import (
 	"io/ioutil"
 )
 
+type TokenType int
+
 const (
-	text          = 0
-	newline       = 1
-	whitespace    = 2
-	punctuation   = 3
-	keyword       = 6
-	lineIDMarker  = 5
-	typeName      = 4
-	memberName    = 7
-	stringLiteral = 8
-	literal       = 9
-	comment       = 10
+	text          TokenType = 0
+	newline       TokenType = 1
+	whitespace    TokenType = 2
+	punctuation   TokenType = 3
+	keyword       TokenType = 6
+	lineIDMarker  TokenType = 5
+	typeName      TokenType = 4
+	memberName    TokenType = 7
+	stringLiteral TokenType = 8
+	literal       TokenType = 9
+	comment       TokenType = 10
 )
 
 var (
-	reservedNames = map[string]bool{
-		"string":     true,
-		"byte":       true,
-		"int":        true,
-		"int8":       true,
-		"int16":      true,
-		"int32":      true,
-		"int64":      true,
-		"float32":    true,
-		"float64":    true,
-		"rune":       true,
-		"bool":       true,
-		"map":        true,
-		"uint":       true,
-		"uint8":      true,
-		"uint16":     true,
-		"uint32":     true,
-		"uint64":     true,
-		"complex64":  true,
-		"complex128": true,
-		"error":      true,
+	reservedNames = map[string]struct{}{
+		"string":     {},
+		"byte":       {},
+		"int":        {},
+		"int8":       {},
+		"int16":      {},
+		"int32":      {},
+		"int64":      {},
+		"float32":    {},
+		"float64":    {},
+		"rune":       {},
+		"bool":       {},
+		"map":        {},
+		"uint":       {},
+		"uint8":      {},
+		"uint16":     {},
+		"uint32":     {},
+		"uint64":     {},
+		"complex64":  {},
+		"complex128": {},
+		"error":      {},
 	}
 )
 

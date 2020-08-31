@@ -5,9 +5,19 @@ package teststruct
 
 import "net/http"
 
+type someStruct struct {
+	Foo *string
+	bar int
+}
+
 type SomeStruct struct {
 	Foo  *bool
 	Resp *http.Response
+	t    string
+}
+
+func NewSomeStruct() *SomeStruct {
+	return nil
 }
 
 func NewStruct() *SomeStruct {

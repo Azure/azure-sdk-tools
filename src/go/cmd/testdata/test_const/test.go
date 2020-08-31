@@ -13,3 +13,8 @@ const (
 const (
 	SomeConst string = "somestring"
 )
+
+const (
+	Agent   = "foo/" + Version
+	Version = "0.1.0"
+)

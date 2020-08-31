@@ -23,7 +23,7 @@ func TestFuncDecl(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(p.Tokens) != 32 {
+	if len(p.Tokens) != 41 {
 		t.Fatal("unexpected token length, signals a change in the output")
 	}
 	if p.Name != "testfuncdecl" {
@@ -32,7 +32,9 @@ func TestFuncDecl(t *testing.T) {
 	if len(p.Navigation) != 1 {
 		t.Fatal("nagivation slice length should only be one for one package")
 	}
-	// TODO add check for ChildItems for stand-alone function declarations
+	if len(p.Navigation[0].ChildItems) != 1 {
+		t.Fatal("unexpected number of child items")
+	}
 }
 
 func TestInterface(t *testing.T) {
@@ -49,7 +51,7 @@ func TestInterface(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(p.Tokens) != 22 {
+	if len(p.Tokens) != 30 {
 		t.Fatal("unexpected token length, signals a change in the output")
 	}
 	if p.Name != "testinterface" {
@@ -74,7 +76,7 @@ func TestStruct(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(p.Tokens) != 52 {
+	if len(p.Tokens) != 69 {
 		t.Fatal("unexpected token length, signals a change in the output")
 	}
 	if p.Name != "teststruct" {
@@ -83,8 +85,8 @@ func TestStruct(t *testing.T) {
 	if len(p.Navigation) != 1 {
 		t.Fatal("nagivation slice length should only be one for one package")
 	}
-	if len(p.Navigation[0].ChildItems) != 1 {
-		t.Fatal("nagivation slice length should only be one for the struct definition")
+	if len(p.Navigation[0].ChildItems) != 2 {
+		t.Fatal("nagivation slice length should include link for ctor and struct")
 	}
 }
 
@@ -102,7 +104,7 @@ func TestConst(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(p.Tokens) != 51 {
+	if len(p.Tokens) != 78 {
 		t.Fatal("unexpected token length, signals a change in the output")
 	}
 	if p.Name != "testconst" {
@@ -111,5 +113,7 @@ func TestConst(t *testing.T) {
 	if len(p.Navigation) != 1 {
 		t.Fatal("nagivation slice length should only be one for one package")
 	}
-	// TODO add ChildItem check when that functionality is added
+	if len(p.Navigation[0].ChildItems) != 3 {
+		t.Fatal("unexpected child navigation items length")
+	}
 }

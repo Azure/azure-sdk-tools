@@ -4,6 +4,42 @@
   {
    "DefinitionId": null,
    "NavigateToId": null,
+   "Value": "package",
+   "Kind": 7
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": "teststruct",
+   "NavigateToId": null,
+   "Value": "teststruct",
+   "Kind": 4
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "",
+   "Kind": 1
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "",
+   "Kind": 1
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
    "Value": "",
    "Kind": 1
   },
@@ -70,7 +106,7 @@
   {
    "DefinitionId": null,
    "NavigateToId": null,
-   "Value": "     ",
+   "Value": "\t",
    "Kind": 2
   },
   {
@@ -89,7 +125,7 @@
    "DefinitionId": null,
    "NavigateToId": null,
    "Value": "*bool",
-   "Kind": 4
+   "Kind": 7
   },
   {
    "DefinitionId": null,
@@ -100,7 +136,7 @@
   {
    "DefinitionId": null,
    "NavigateToId": null,
-   "Value": "     ",
+   "Value": "\t",
    "Kind": 2
   },
   {
@@ -119,7 +155,7 @@
    "DefinitionId": null,
    "NavigateToId": null,
    "Value": "*http.Response",
-   "Kind": 9
+   "Kind": 7
   },
   {
    "DefinitionId": null,
@@ -142,8 +178,56 @@
   {
    "DefinitionId": null,
    "NavigateToId": null,
-   "Value": "     ",
+   "Value": "func",
+   "Kind": 6
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
    "Kind": 2
+  },
+  {
+   "DefinitionId": "NewSomeStruct",
+   "NavigateToId": null,
+   "Value": "NewSomeStruct",
+   "Kind": 4
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "(",
+   "Kind": 3
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": ")",
+   "Kind": 3
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "*SomeStruct",
+   "Kind": 7
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "",
+   "Kind": 1
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "",
+   "Kind": 1
   },
   {
    "DefinitionId": null,
@@ -167,7 +251,7 @@
    "DefinitionId": null,
    "NavigateToId": null,
    "Value": "c",
-   "Kind": 4
+   "Kind": 7
   },
   {
    "DefinitionId": null,
@@ -179,13 +263,13 @@
    "DefinitionId": null,
    "NavigateToId": null,
    "Value": "*",
-   "Kind": 3
+   "Kind": 7
   },
   {
    "DefinitionId": null,
    "NavigateToId": null,
    "Value": "SomeStruct",
-   "Kind": 4
+   "Kind": 7
   },
   {
    "DefinitionId": null,
@@ -215,7 +299,7 @@
    "DefinitionId": null,
    "NavigateToId": null,
    "Value": "resp",
-   "Kind": 9
+   "Kind": 4
   },
   {
    "DefinitionId": null,
@@ -245,13 +329,31 @@
    "DefinitionId": null,
    "NavigateToId": null,
    "Value": "error",
-   "Kind": 4
+   "Kind": 7
   },
   {
    "DefinitionId": null,
    "NavigateToId": null,
    "Value": "",
    "Kind": 1
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "",
+   "Kind": 1
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "",
+   "Kind": 1
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
   },
   {
    "DefinitionId": null,
@@ -299,7 +401,7 @@
    "DefinitionId": null,
    "NavigateToId": null,
    "Value": "*SomeStruct",
-   "Kind": 9
+   "Kind": 7
   },
   {
    "DefinitionId": null,
@@ -324,7 +426,15 @@
      "NavigationId": "SomeStruct",
      "ChildItems": [],
      "Tags": {
-      "TypeKind": "class"
+      "TypeKind": "struct"
+     }
+    },
+    {
+     "Text": "NewStruct",
+     "NavigationId": "NewStruct",
+     "ChildItems": [],
+     "Tags": {
+      "TypeKind": "unknown"
      }
     }
    ],

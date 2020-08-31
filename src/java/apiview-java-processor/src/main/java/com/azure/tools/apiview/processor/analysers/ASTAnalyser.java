@@ -1,5 +1,6 @@
 package com.azure.tools.apiview.processor.analysers;
 
+import com.azure.tools.apiview.processor.analysers.util.MiscUtils;
 import com.azure.tools.apiview.processor.diagnostics.Diagnostics;
 import com.azure.tools.apiview.processor.model.APIListing;
 import com.azure.tools.apiview.processor.model.ChildItem;
@@ -47,6 +48,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -73,6 +75,8 @@ import static com.azure.tools.apiview.processor.model.TokenKind.TYPE_NAME;
 import static com.azure.tools.apiview.processor.model.TokenKind.WHITESPACE;
 
 public class ASTAnalyser implements Analyser {
+    private static final boolean SHOW_JAVADOC = false;
+    
     public static final String MODULE_INFO_KEY = "module-info";
 
     private final APIListing apiListing;
@@ -721,6 +725,17 @@ public class ASTAnalyser implements Analyser {
                         }
 
                         group.forEach(callableDeclaration -> {
+                            if (SHOW_JAVADOC) {
+                                // print the JavaDoc above each method / constructor
+                                callableDeclaration.getJavadocComment().ifPresent(jd -> {
+                                    Arrays.stream(jd.toString().split("\n")).forEach(line -> {
+                                        addToken(makeWhitespace());
+                                        addToken(new Token(COMMENT, MiscUtils.escapeHTML(line)));
+                                        addToken(new Token(NEW_LINE, ""));
+                                    });
+                                });
+                            }
+
                             addToken(makeWhitespace());
 
                             // annotations

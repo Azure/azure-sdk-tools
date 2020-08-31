@@ -31,34 +31,37 @@ namespace Azure.Sdk.Tools.CheckEnforcer
 {
     public class GitHubWebhookProcessor
     {
-        public GitHubWebhookProcessor(IGlobalConfigurationProvider globalConfigurationProvider, IGitHubClientProvider gitHubClientProvider, IRepositoryConfigurationProvider repositoryConfigurationProvider)
+        public GitHubWebhookProcessor(IGlobalConfigurationProvider globalConfigurationProvider, IGitHubClientProvider gitHubClientProvider, IRepositoryConfigurationProvider repositoryConfigurationProvider, SecretClient secretClient)
         {
             this.globalConfigurationProvider = globalConfigurationProvider;
             this.gitHubClientProvider = gitHubClientProvider;
             this.repositoryConfigurationProvider = repositoryConfigurationProvider;
+            this.secretClient = secretClient;
         }
         
         public IGlobalConfigurationProvider globalConfigurationProvider;
         public IGitHubClientProvider gitHubClientProvider;
         private IRepositoryConfigurationProvider repositoryConfigurationProvider;
-        private const string GitHubEventHeader = "X-GitHub-Event";
-
-        private DateTimeOffset gitHubAppWebhookSecretExpiry = DateTimeOffset.MinValue;
-        private string gitHubAppWebhookSecret;
         private SecretClient secretClient;
 
-        private async Task<string> GetGitHubAppWebhookSecretAsync(CancellationToken cancellationToken)
+        private const string GitHubEventHeader = "X-GitHub-Event";
+
+        private string gitHubAppWebhookSecret;
+        private object gitHubAppWebhookSecretLock = new object();
+
+        private string GetGitHubAppWebhookSecret()
         {
-            if (gitHubAppWebhookSecretExpiry < DateTimeOffset.UtcNow)
+            if (gitHubAppWebhookSecret == null)
             {
-                var gitHubAppWebhookSecretName = globalConfigurationProvider.GetGitHubAppWebhookSecretName();
-
-                var client = GetSecretClient();
-                var response = await client.GetSecretAsync(gitHubAppWebhookSecretName, cancellationToken: cancellationToken);
-                var secret = response.Value;
-
-                gitHubAppWebhookSecretExpiry = DateTimeOffset.UtcNow.AddSeconds(30);
-                gitHubAppWebhookSecret = secret.Value;
+                lock (gitHubAppWebhookSecretLock)
+                {
+                    if (gitHubAppWebhookSecret == null)
+                    {
+                        var gitHubAppWebhookSecretName = globalConfigurationProvider.GetGitHubAppWebhookSecretName();
+                        KeyVaultSecret secret = secretClient.GetSecret(gitHubAppWebhookSecretName);
+                        gitHubAppWebhookSecret = secret.Value;
+                    }
+                }
             }
 
             return gitHubAppWebhookSecret;
@@ -86,7 +89,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
 
                 if (request.Headers.TryGetValue(GitHubWebhookSignatureValidator.GitHubWebhookSignatureHeader, out StringValues signature))
                 {
-                    var secret = await GetGitHubAppWebhookSecretAsync(cancellationToken);
+                    var secret = GetGitHubAppWebhookSecret();
 
                     var isValid = GitHubWebhookSignatureValidator.IsValid(jsonBytes, signature, secret);
                     if (isValid)
@@ -135,20 +138,6 @@ namespace Azure.Sdk.Tools.CheckEnforcer
                         await handler.HandleAsync(json, cancellationToken);
                     }
                 });
-        }
-
-        public async Task ProcessWebhookAsync(HttpRequest request, ILogger logger, CancellationToken cancellationToken)
-        {
-
-            if (request.Headers.TryGetValue(GitHubEventHeader, out StringValues eventName))
-            {
-                var json = await ReadAndVerifyBodyAsync(request, cancellationToken);
-                await ProcessWebhookAsync(eventName, json, logger, cancellationToken);
-            }
-            else
-            {
-                throw new CheckEnforcerException($"Could not find header '{GitHubEventHeader}'.");
-            }
         }
     }
 }

@@ -9,44 +9,27 @@ namespace Azure.Sdk.Tools.CheckEnforcer
     {
         public string GetApplicationID()
         {
-            var id = Environment.GetEnvironmentVariable("GITHUBAPP_ID");
-            return id;
+            return "61253";
         }
 
         public string GetApplicationName()
         {
-            var applicationName = Environment.GetEnvironmentVariable("CHECK_NAME");
-            return applicationName;
+            return "check-enforcer";
         }
 
         public string GetKeyVaultUri()
         {
-            var keyVaultUri = Environment.GetEnvironmentVariable("KEYVAULT_URI");
-            return keyVaultUri;
+            return "https://checkenforcerstaging.vault.azure.net/";
         }
 
         public string GetGitHubAppPrivateKeyName()
         {
-            var gitHubAppPrivateKeyName = Environment.GetEnvironmentVariable("KEYVAULT_GITHUBAPP_KEY_NAME");
-            return gitHubAppPrivateKeyName;
+            return "github-app-private-key";
         }
 
         public string GetGitHubAppWebhookSecretName()
         {
-            var gitHubAppWebhookSecretName = Environment.GetEnvironmentVariable("GITHUBAPP_WEBHOOK_SECRET");
-            return gitHubAppWebhookSecretName;
-        }
-
-        public string GetDistributedLockStorageUri()
-        {
-            var distributedLockStorageUri = Environment.GetEnvironmentVariable("DISTRIBUTED_LOCK_STORAGE_URI");
-            return distributedLockStorageUri;
-        }
-
-        public string GetDistributedLockContainerName()
-        {
-            var distributedLockContainerName = Environment.GetEnvironmentVariable("DISTRIBUTED_LOCK_CONTAINER_NAME");
-            return distributedLockContainerName;
+            return "github-app-webhook-secret";
         }
     }
 }

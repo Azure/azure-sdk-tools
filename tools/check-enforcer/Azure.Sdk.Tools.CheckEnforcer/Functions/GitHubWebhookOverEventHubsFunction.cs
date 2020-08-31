@@ -22,7 +22,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Functions
         private GitHubWebhookProcessor processor;
 
         [FunctionName("webhook-eventhubs")]
-        public async Task Run([EventHubTrigger("github-webhooks", Connection = "CheckEnforcerEventHubConnectionString")] EventData eventData, ILogger log, CancellationToken cancellationToken)
+        public async Task Run([EventHubTrigger("github-webhooks", Connection = "CheckEnforcerEventHubConnectionString", ConsumerGroup = "localdebugging")] EventData eventData, ILogger log, CancellationToken cancellationToken)
         {
             var message = GetMessage(eventData);
             var eventName = GetEventName(message);

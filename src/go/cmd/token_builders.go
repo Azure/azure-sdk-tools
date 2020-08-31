@@ -14,6 +14,7 @@ import (
 // kind is the TokenType that will be assigned to the value and will determine how the value is
 // represented in the API view tool.
 // list is the slice of tokens that will be parsed in the API view tool, the new token will be appended to list.
+// TODO improve makeToken and make more similar to append
 func makeToken(defID, navID *string, val string, kind TokenType, list *[]Token) {
 	tok := Token{DefinitionID: defID, NavigateToID: navID, Value: val, Kind: kind}
 	*list = append(*list, tok)

@@ -27,6 +27,7 @@ import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.body.TypeDeclaration;
 import com.github.javaparser.ast.body.VariableDeclarator;
+import com.github.javaparser.ast.comments.JavadocComment;
 import com.github.javaparser.ast.expr.AnnotationExpr;
 import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.MemberValuePair;
@@ -76,7 +77,7 @@ import static com.azure.tools.apiview.processor.model.TokenKind.WHITESPACE;
 
 public class ASTAnalyser implements Analyser {
     private static final boolean SHOW_JAVADOC = false;
-    
+
     public static final String MODULE_INFO_KEY = "module-info";
 
     private final APIListing apiListing;
@@ -230,6 +231,8 @@ public class ASTAnalyser implements Analyser {
         }
 
         private void visitClassOrInterfaceOrEnumDeclaration(TypeDeclaration<?> typeDeclaration) {
+            visitJavaDoc(typeDeclaration.getJavadocComment());
+
             // public custom annotation @interface's annotations
             if (typeDeclaration.isAnnotationDeclaration() && !isPrivateOrPackagePrivate(typeDeclaration.getAccessSpecifier())) {
                 final AnnotationDeclaration annotationDeclaration = (AnnotationDeclaration) typeDeclaration;
@@ -426,6 +429,8 @@ public class ASTAnalyser implements Analyser {
             AtomicInteger counter = new AtomicInteger();
 
             enumConstantDeclarations.forEach(enumConstantDeclaration -> {
+                visitJavaDoc(enumConstantDeclaration.getJavadocComment());
+
                 addToken(makeWhitespace());
 
                 // create a unique id for enum constants
@@ -613,6 +618,8 @@ public class ASTAnalyser implements Analyser {
                     continue;
                 }
 
+                visitJavaDoc(fieldDeclaration.getJavadocComment());
+
                 addToken(makeWhitespace());
 
                 // Add annotation for field declaration
@@ -725,16 +732,8 @@ public class ASTAnalyser implements Analyser {
                         }
 
                         group.forEach(callableDeclaration -> {
-                            if (SHOW_JAVADOC) {
-                                // print the JavaDoc above each method / constructor
-                                callableDeclaration.getJavadocComment().ifPresent(jd -> {
-                                    Arrays.stream(jd.toString().split("\n")).forEach(line -> {
-                                        addToken(makeWhitespace());
-                                        addToken(new Token(COMMENT, MiscUtils.escapeHTML(line)));
-                                        addToken(new Token(NEW_LINE, ""));
-                                    });
-                                });
-                            }
+                           // print the JavaDoc above each method / constructor
+                            visitJavaDoc(callableDeclaration.getJavadocComment());
 
                             addToken(makeWhitespace());
 
@@ -769,6 +768,19 @@ public class ASTAnalyser implements Analyser {
                     });
 
             unindent();
+        }
+
+        private void visitJavaDoc(Optional<JavadocComment> javadocComment) {
+            if (!SHOW_JAVADOC) {
+                return;
+            }
+            javadocComment.ifPresent(jd -> {
+                Arrays.stream(jd.toString().split("\n")).forEach(line -> {
+                    addToken(makeWhitespace());
+                    addToken(new Token(COMMENT, MiscUtils.escapeHTML(line)));
+                    addToken(new Token(NEW_LINE, ""));
+                });
+            });
         }
 
         private int sortMethods(CallableDeclaration<?> c1, CallableDeclaration<?> c2) {

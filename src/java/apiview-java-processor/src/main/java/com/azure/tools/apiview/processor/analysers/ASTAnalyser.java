@@ -27,6 +27,7 @@ import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.body.TypeDeclaration;
 import com.github.javaparser.ast.body.VariableDeclarator;
+import com.github.javaparser.ast.comments.Comment;
 import com.github.javaparser.ast.comments.JavadocComment;
 import com.github.javaparser.ast.expr.AnnotationExpr;
 import com.github.javaparser.ast.expr.Expression;
@@ -83,6 +84,7 @@ public class ASTAnalyser implements Analyser {
     private final APIListing apiListing;
 
     private final Map<String, ChildItem> packageNameToNav;
+    private final Map<String, JavadocComment> packageNameToPackageInfoJavaDoc;
 
     private int indent;
 
@@ -90,19 +92,19 @@ public class ASTAnalyser implements Analyser {
         this.apiListing = apiListing;
         this.indent = 0;
         this.packageNameToNav = new HashMap<>();
+        this.packageNameToPackageInfoJavaDoc = new HashMap<>();
     }
 
     @Override
     public void analyse(List<Path> allFiles) {
         // firstly we filter out the files we don't care about
         allFiles = allFiles.stream()
-           .filter(path -> {
-               String inputFileName = path.toString();
-               if (Files.isDirectory(path)) return false;
-               else if (inputFileName.contains("implementation")) return false;
-               else if (inputFileName.contains("package-info.java")) return false;
-               else return inputFileName.endsWith(".java");
-           }).collect(Collectors.toList());
+                .filter(path -> {
+                    String inputFileName = path.toString();
+                    if (Files.isDirectory(path)) return false;
+                    else if (inputFileName.contains("implementation")) return false;
+                    else return inputFileName.endsWith(".java");
+                }).collect(Collectors.toList());
 
         // then we do a pass to build a map of all known types and package names, and a map of package names to nav items,
         // followed by a pass to tokenise each file
@@ -159,18 +161,31 @@ public class ASTAnalyser implements Analyser {
             CombinedTypeSolver combinedTypeSolver = new CombinedTypeSolver();
             combinedTypeSolver.add(new ReflectionTypeSolver(false));
 //            combinedTypeSolver.add(new SourceJarTypeSolver(inputFile));
-          
+
             ParserConfiguration parserConfiguration = new ParserConfiguration()
-                  .setStoreTokens(true)
-                  .setSymbolResolver(new JavaSymbolSolver(combinedTypeSolver))
-                  .setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_11);
+                    .setStoreTokens(true)
+                    .setSymbolResolver(new JavaSymbolSolver(combinedTypeSolver))
+                    .setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_11);
 
             // Configure JavaParser to use type resolution
             StaticJavaParser.setConfiguration(parserConfiguration);
 
             CompilationUnit compilationUnit = StaticJavaParser.parse(path);
             new ScanForClassTypeVisitor().visit(compilationUnit, null);
-            return Optional.of(new ScanClass(path, compilationUnit));
+
+            if (path.endsWith("package-info.java")) {
+                compilationUnit.getPackageDeclaration().ifPresent(pd -> {
+                    compilationUnit.getAllComments().stream()
+                            .filter(Comment::isJavadocComment)
+                            .map(Comment::asJavadocComment)
+                            .findFirst()
+                            .ifPresent(comment -> packageNameToPackageInfoJavaDoc.put(pd.getNameAsString(), comment));
+                });
+
+                return Optional.empty();
+            } else {
+                return Optional.of(new ScanClass(path, compilationUnit));
+            }
         } catch (IOException e) {
             e.printStackTrace();
             return Optional.empty();
@@ -178,6 +193,11 @@ public class ASTAnalyser implements Analyser {
     }
 
     private void processPackage(String packageName, List<ScanClass> scanClasses) {
+        // lets see if we have javadoc for this packageName
+        if (packageNameToPackageInfoJavaDoc.containsKey(packageName)) {
+            visitJavaDoc(packageNameToPackageInfoJavaDoc.get(packageName));
+        }
+
         addToken(new Token(KEYWORD, "package"));
         addToken(new Token(WHITESPACE, " "));
 
@@ -212,7 +232,9 @@ public class ASTAnalyser implements Analyser {
     private class ClassOrInterfaceVisitor extends VoidVisitorAdapter<Void> {
         private ChildItem parentNav;
 
-        ClassOrInterfaceVisitor() {   }
+        ClassOrInterfaceVisitor() {
+            this(null);
+        }
 
         ClassOrInterfaceVisitor(ChildItem parentNav) {
             this.parentNav = parentNav;
@@ -681,8 +703,8 @@ public class ASTAnalyser implements Analyser {
                 // We also must check if there are no constructors, because this indicates that there is the default,
                 // no-args public constructor
                 final boolean isAllPrivateOrPackagePrivate = ! callableDeclarations.isEmpty() && callableDeclarations.stream()
-                     .filter(BodyDeclaration::isConstructorDeclaration)
-                     .allMatch(callableDeclaration -> isPrivateOrPackagePrivate(callableDeclaration.getAccessSpecifier()));
+                        .filter(BodyDeclaration::isConstructorDeclaration)
+                        .allMatch(callableDeclaration -> isPrivateOrPackagePrivate(callableDeclaration.getAccessSpecifier()));
 
                 if (isAllPrivateOrPackagePrivate) {
                     addToken(makeWhitespace());
@@ -732,7 +754,7 @@ public class ASTAnalyser implements Analyser {
                         }
 
                         group.forEach(callableDeclaration -> {
-                           // print the JavaDoc above each method / constructor
+                            // print the JavaDoc above each method / constructor
                             visitJavaDoc(callableDeclaration.getJavadocComment());
 
                             addToken(makeWhitespace());
@@ -768,19 +790,6 @@ public class ASTAnalyser implements Analyser {
                     });
 
             unindent();
-        }
-
-        private void visitJavaDoc(Optional<JavadocComment> javadocComment) {
-            if (!SHOW_JAVADOC) {
-                return;
-            }
-            javadocComment.ifPresent(jd -> {
-                Arrays.stream(jd.toString().split("\n")).forEach(line -> {
-                    addToken(makeWhitespace());
-                    addToken(new Token(COMMENT, MiscUtils.escapeHTML(line)));
-                    addToken(new Token(NEW_LINE, ""));
-                });
-            });
         }
 
         private int sortMethods(CallableDeclaration<?> c1, CallableDeclaration<?> c2) {
@@ -1206,6 +1215,21 @@ public class ASTAnalyser implements Analyser {
         typeDeclaration.getMembers().stream()
                 .filter(m -> m.isEnumDeclaration() || m.isClassOrInterfaceDeclaration())
                 .forEach(m -> getTypeDeclaration(m.asTypeDeclaration()));
+    }
+
+    private void visitJavaDoc(Optional<JavadocComment> javadocComment) {
+        javadocComment.ifPresent(this::visitJavaDoc);
+    }
+
+    private void visitJavaDoc(JavadocComment jd) {
+        if (!SHOW_JAVADOC) {
+            return;
+        }
+        Arrays.stream(jd.toString().split("\n")).forEach(line -> {
+            addToken(makeWhitespace());
+            addToken(new Token(COMMENT, MiscUtils.escapeHTML(line)));
+            addToken(new Token(NEW_LINE, ""));
+        });
     }
 
     private void indent() {

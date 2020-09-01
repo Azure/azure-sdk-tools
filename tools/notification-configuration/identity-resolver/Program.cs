@@ -52,9 +52,9 @@ namespace identity_resolver
 
                 if (!String.IsNullOrEmpty(vsoVariable))
                 {
-                    Console.Write(String.Format("##vso[task.setvariable variable={0};]{1}", vsoVariable, result.GithubUserName));
+                    Console.WriteLine(String.Format("##vso[task.setvariable variable={0};]{1}", vsoVariable, result.GithubUserName));
                 }
-                Console.Write(JsonConvert.SerializeObject(result));
+                Console.WriteLine(JsonConvert.SerializeObject(result));
             }
         }
     }

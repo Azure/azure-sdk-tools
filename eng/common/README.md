@@ -21,7 +21,6 @@ The 'Sync eng/common directory' PRs will be created in the language repositories
 4. Once satisfied with the changes;
     - First make sure all checks in the **Sync PRs** are green and approved. The **Tools PR** contains links to all the **Sync PRs**.
     - Next merge all the **Sync PRs** by approving the Review gate on the `azure-sdk-tools - sync - eng-common` run for the **Tools PR**. You can get to this by clicking on `Details` -> `View more details on Azure Pipelines`. You need EngSys permissions to reach the `azure-sdk-tools - sync - eng-common` pipeline.
-    - In the `azure-sdk-tools - sync - eng-common` run for you **Tools PR** click on `Review` -> `Approve`. This will cause all the **Sync PRs** to be merged.
     - Finally merge the **Tools PR**. Each **Sync PR** contains the link to the corresponding **Tools PR**. 
 
 See [detailed eng/common Workflow](https://dev.azure.com/azure-sdk/internal/_wiki/wikis/internal.wiki/281/Engineering-Systems-Tools?anchor=eng%2Fcommon-workflow)

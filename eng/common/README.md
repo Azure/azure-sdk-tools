@@ -20,7 +20,7 @@ The 'Sync eng/common directory' PRs will be created in the language repositories
 3. More changes pushed to the **Tools PR**, will automatically triggered new pipeline runs in the respective **Sync PRs**. The **Sync PRs** are used to make sure the changes would not break any of the connected pipelines.
 4. Once satisfied with the changes;
     - First make sure all checks in the **Sync PRs** are green and approved. The **Tools PR** contains links to all the **Sync PRs**. If for some reason the PRs is blocked by a CI gate get someone with permission to override and manually merge the PR. 
-    - Next merge all the **Sync PRs** by approving the Review gate on the `azure-sdk-tools - sync - eng-common` run for the **Tools PR**. You can get to this by clicking on `Details` -> `View more details on Azure Pipelines`. You need EngSys permissions to reach the `azure-sdk-tools - sync - eng-common` pipeline.
+    - Next approve the `VerifyAndMerge` job for the `azure-sdk-tools - sync - eng-common` pipeline triggered by your **Tools PR** which will automatically merge all the **Sync PRs**.  You need `azure-sdk` devops contributor permissions to reach the `azure-sdk-tools - sync - eng-common` pipeline.
     - Finally merge the **Tools PR**. 
 
 See [detailed eng/common Workflow](https://dev.azure.com/azure-sdk/internal/_wiki/wikis/internal.wiki/281/Engineering-Systems-Tools?anchor=eng%2Fcommon-workflow)

@@ -28,6 +28,7 @@ jobs:
         ToolRepo: azure-sdk-tools
         ToolsRepoPath: $(Build.SourcesDirectory)
         Repos:
+          - azure-sdk
           - azure-sdk-for-android
           - azure-sdk-for-c
           - azure-sdk-for-cpp

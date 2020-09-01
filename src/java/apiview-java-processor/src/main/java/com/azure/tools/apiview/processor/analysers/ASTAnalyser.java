@@ -83,7 +83,6 @@ public class ASTAnalyser implements Analyser {
 
     private final APIListing apiListing;
 
-    private final Map<String, ChildItem> packageNameToNav;
     private final Map<String, JavadocComment> packageNameToPackageInfoJavaDoc;
 
     private int indent;
@@ -91,7 +90,6 @@ public class ASTAnalyser implements Analyser {
     public ASTAnalyser(File inputFile, APIListing apiListing) {
         this.apiListing = apiListing;
         this.indent = 0;
-        this.packageNameToNav = new HashMap<>();
         this.packageNameToPackageInfoJavaDoc = new HashMap<>();
     }
 
@@ -106,7 +104,7 @@ public class ASTAnalyser implements Analyser {
                     else return inputFileName.endsWith(".java");
                 }).collect(Collectors.toList());
 
-        // then we do a pass to build a map of all known types and package names, and a map of package names to nav items,
+        // then we do a pass to build a map of all known types and package names and a map of package names to nav items,
         // followed by a pass to tokenise each file
         allFiles.stream()
                 .map(this::scanForTypes)
@@ -114,14 +112,10 @@ public class ASTAnalyser implements Analyser {
                 .map(Optional::get)
                 .collect(Collectors.groupingBy(ScanClass::getPackageName, TreeMap::new, Collectors.toList()))
                 .forEach(this::processPackage);
-
-        // build the navigation
-        packageNameToNav.values().stream()
-                .filter(childItem -> !childItem.getChildItem().isEmpty())
-                .sorted(Comparator.comparing(ChildItem::getText))
-                .forEach(apiListing::addChildItem);
     }
 
+    // This class represents a class that is going to go through the analysis pipeline, and it collects
+    // together all useful properties that were identified so that they can form part of the analysis.
     private static class ScanClass implements Comparable<ScanClass> {
         private final CompilationUnit compilationUnit;
         private final Path path;
@@ -508,7 +502,7 @@ public class ASTAnalyser implements Analyser {
             final String classId = makeId(typeDeclaration);
             ChildItem classNav = new ChildItem(classId, className, typeKind);
             if (parentNav == null) {
-                packageNameToNav.get(packageName).addChildItem(classNav);
+                apiListing.addChildItem(packageName, classNav);
             } else {
                 parentNav.addChildItem(classNav);
             }
@@ -1172,7 +1166,7 @@ public class ASTAnalyser implements Analyser {
             });
 
             for (final TypeDeclaration<?> typeDeclaration : compilationUnit.getTypes()) {
-                getTypeDeclaration(typeDeclaration);
+                buildTypeHierarchyForNavigation(typeDeclaration);
             }
 
             // we build up a map between types and the packages they are in, for use in our diagnostic rules
@@ -1188,7 +1182,7 @@ public class ASTAnalyser implements Analyser {
      * This method is only called in relation to building up the types for linking, it does not build up the actual
      * text output that is displayed to the user.
      */
-    private void getTypeDeclaration(TypeDeclaration<?> typeDeclaration) {
+    private void buildTypeHierarchyForNavigation(TypeDeclaration<?> typeDeclaration) {
         // Skip if the class is private or package-private, unless it is a nested type defined inside a public interface
         if (!isTypeAPublicAPI(typeDeclaration)) {
             return;
@@ -1206,15 +1200,12 @@ public class ASTAnalyser implements Analyser {
         final String packageName = fullQualifiedName.substring(0, fullQualifiedName.lastIndexOf("."));
         apiListing.addPackageTypeMapping(packageName, typeName);
 
-        // generate a navigation item for each new package, but we don't add them to the parent yet
-        packageNameToNav.computeIfAbsent(packageName, name -> new ChildItem(packageName, packageName, TypeKind.NAMESPACE));
-
         apiListing.getKnownTypes().put(typeName, makeId(typeDeclaration));
 
         // now do internal types
         typeDeclaration.getMembers().stream()
                 .filter(m -> m.isEnumDeclaration() || m.isClassOrInterfaceDeclaration())
-                .forEach(m -> getTypeDeclaration(m.asTypeDeclaration()));
+                .forEach(m -> buildTypeHierarchyForNavigation(m.asTypeDeclaration()));
     }
 
     private void visitJavaDoc(Optional<JavadocComment> javadocComment) {

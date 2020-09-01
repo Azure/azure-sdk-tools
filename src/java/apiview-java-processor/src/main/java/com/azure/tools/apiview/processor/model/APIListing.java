@@ -59,6 +59,10 @@ public class APIListing {
         this.rootNav.addChildItem(childItem);
     }
 
+    public void addChildItem(String packageName, ChildItem childItem) {
+        this.rootNav.addChildItem(packageName, childItem);
+    }
+
     public void addDiagnostic(Diagnostic diagnostic) {
         this.diagnostics.add(diagnostic);
     }

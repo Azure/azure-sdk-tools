@@ -107,7 +107,7 @@ public class ASTAnalyser implements Analyser {
                     else return inputFileName.endsWith(".java");
                 }).collect(Collectors.toList());
 
-        // then we do a pass to build a map of all known types and package names and a map of package names to nav items,
+        // then we do a pass to build a map of all known types and package names, and a map of package names to nav items,
         // followed by a pass to tokenise each file
         allFiles.stream()
                 .map(this::scanForTypes)
@@ -1160,6 +1160,21 @@ public class ASTAnalyser implements Analyser {
         }
         Arrays.stream(jd.toString().split("\n")).forEach(line -> {
             addToken(INDENT, new Token(COMMENT, MiscUtils.escapeHTML(line)), NEWLINE);
+        });
+    }
+
+    private void visitJavaDoc(Optional<JavadocComment> javadocComment) {
+        javadocComment.ifPresent(this::visitJavaDoc);
+    }
+
+    private void visitJavaDoc(JavadocComment jd) {
+        if (!SHOW_JAVADOC) {
+            return;
+        }
+        Arrays.stream(jd.toString().split("\n")).forEach(line -> {
+            addToken(makeWhitespace());
+            addToken(new Token(COMMENT, MiscUtils.escapeHTML(line)));
+            addToken(new Token(NEW_LINE, ""));
         });
     }
 

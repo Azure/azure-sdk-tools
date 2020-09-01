@@ -1159,19 +1159,6 @@ public class ASTAnalyser implements Analyser {
             return;
         }
         Arrays.stream(jd.toString().split("\n")).forEach(line -> {
-            addToken(INDENT, new Token(COMMENT, MiscUtils.escapeHTML(line)), NEWLINE);
-        });
-    }
-
-    private void visitJavaDoc(Optional<JavadocComment> javadocComment) {
-        javadocComment.ifPresent(this::visitJavaDoc);
-    }
-
-    private void visitJavaDoc(JavadocComment jd) {
-        if (!SHOW_JAVADOC) {
-            return;
-        }
-        Arrays.stream(jd.toString().split("\n")).forEach(line -> {
             addToken(makeWhitespace());
             addToken(new Token(COMMENT, MiscUtils.escapeHTML(line)));
             addToken(new Token(NEW_LINE, ""));

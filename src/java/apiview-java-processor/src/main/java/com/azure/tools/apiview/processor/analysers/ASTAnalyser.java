@@ -1,6 +1,7 @@
 package com.azure.tools.apiview.processor.analysers;
 
 import com.azure.tools.apiview.processor.analysers.util.MiscUtils;
+import com.azure.tools.apiview.processor.analysers.util.TokenModifier;
 import com.azure.tools.apiview.processor.diagnostics.Diagnostics;
 import com.azure.tools.apiview.processor.model.APIListing;
 import com.azure.tools.apiview.processor.model.ChildItem;
@@ -75,6 +76,8 @@ import static com.azure.tools.apiview.processor.model.TokenKind.PUNCTUATION;
 import static com.azure.tools.apiview.processor.model.TokenKind.TEXT;
 import static com.azure.tools.apiview.processor.model.TokenKind.TYPE_NAME;
 import static com.azure.tools.apiview.processor.model.TokenKind.WHITESPACE;
+
+import static com.azure.tools.apiview.processor.analysers.util.TokenModifier.*;
 
 public class ASTAnalyser implements Analyser {
     private static final boolean SHOW_JAVADOC = false;
@@ -192,8 +195,7 @@ public class ASTAnalyser implements Analyser {
             visitJavaDoc(packageNameToPackageInfoJavaDoc.get(packageName));
         }
 
-        addToken(new Token(KEYWORD, "package"));
-        addToken(new Token(WHITESPACE, " "));
+        addToken(new Token(KEYWORD, "package"), SPACE);
 
         Token packageToken;
         if (packageName.isEmpty()) {
@@ -202,10 +204,8 @@ public class ASTAnalyser implements Analyser {
             packageToken = new Token(TYPE_NAME, packageName, packageName);
             packageToken.setNavigateToId(packageName);
         }
-        addToken(packageToken);
-        addToken(new Token(WHITESPACE, " "));
-        addToken(new Token(PUNCTUATION, "{"));
-        addToken(new Token(NEW_LINE, ""));
+        addToken(packageToken, SPACE);
+        addToken(new Token(PUNCTUATION, "{"), NEWLINE);
 
         indent();
 
@@ -215,8 +215,7 @@ public class ASTAnalyser implements Analyser {
 
         unindent();
 
-        addToken(new Token(PUNCTUATION, "}"));
-        addToken(new Token(NEW_LINE, ""));
+        addToken(new Token(PUNCTUATION, "}"), NEWLINE);
     }
 
     private void processSingleFile(ScanClass scanClass) {
@@ -266,9 +265,7 @@ public class ASTAnalyser implements Analyser {
                     final TokenRange annotationTokenRange = tokenRange.get();
                     // TODO: could be more specified instead of string
                     final String name = annotationTokenRange.toString();
-                    addToken(makeWhitespace());
-                    addToken(new Token(KEYWORD, name));
-                    addToken(new Token(NEW_LINE, ""));
+                    addToken(INDENT, new Token(KEYWORD, name), NEWLINE);
                 }
             }
 
@@ -316,125 +313,101 @@ public class ASTAnalyser implements Analyser {
 
             // close class
             addToken(makeWhitespace());
-            addToken(new Token(PUNCTUATION, "}"));
-            addToken(new Token(NEW_LINE, ""));
+            addToken(new Token(PUNCTUATION, "}"), NEWLINE);
         }
 
         private void visitModuleDeclaration(ModuleDeclaration moduleDeclaration) {
             addToken(makeWhitespace());
-            addToken(new Token(KEYWORD, "module"));
-            addToken(new Token(WHITESPACE, " "));
-            addToken(new Token(TYPE_NAME, moduleDeclaration.getNameAsString(), MODULE_INFO_KEY));
-            addToken(new Token(WHITESPACE, " "));
-            addToken(new Token(PUNCTUATION, "{"));
-            addToken(new Token(NEW_LINE, ""));
+            addToken(new Token(KEYWORD, "module"), SPACE);
+            addToken(new Token(TYPE_NAME, moduleDeclaration.getNameAsString(), MODULE_INFO_KEY), SPACE);
+            addToken(new Token(PUNCTUATION, "{"), NEWLINE);
 
             moduleDeclaration.getDirectives().forEach(moduleDirective -> {
                 indent();
                 addToken(makeWhitespace());
 
                 moduleDirective.ifModuleRequiresStmt(d -> {
-                    addToken(new Token(KEYWORD, "requires"));
-                    addToken(new Token(WHITESPACE, " "));
+                    addToken(new Token(KEYWORD, "requires"), SPACE);
 
                     if (d.isTransitive()) {
-                        addToken(new Token(KEYWORD, "transitive"));
-                        addToken(new Token(WHITESPACE, " "));
+                        addToken(new Token(KEYWORD, "transitive"), SPACE);
                     }
 
                     addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId(MODULE_INFO_KEY + "-" + d.getNameAsString())));
-                    addToken(new Token(PUNCTUATION, ";"));
-                    addToken(new Token(NEW_LINE, ""));
+                    addToken(new Token(PUNCTUATION, ";"), NEWLINE);
                 });
 
                 moduleDirective.ifModuleExportsStmt(d -> {
-                    addToken(new Token(KEYWORD, "exports"));
-                    addToken(new Token(WHITESPACE, " "));
+                    addToken(new Token(KEYWORD, "exports"), SPACE);
                     addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId(MODULE_INFO_KEY + "-" + d.getNameAsString())));
 
                     NodeList<Name> names = d.getModuleNames();
 
                     if (!names.isEmpty()) {
                         addToken(new Token(WHITESPACE, " "));
-                        addToken(new Token(KEYWORD, "to"));
-                        addToken(new Token(WHITESPACE, " "));
+                        addToken(new Token(KEYWORD, "to"), SPACE);
 
                         for (int i = 0; i < names.size(); i++) {
                             addToken(new Token(TYPE_NAME, names.get(i).toString()));
 
                             if (i < names.size() - 1) {
-                                addToken(new Token(PUNCTUATION, ","));
-                                addToken(new Token(WHITESPACE, " "));
+                                addToken(new Token(PUNCTUATION, ","), SPACE);
                             }
                         }
                     }
 
-                    addToken(new Token(PUNCTUATION, ";"));
-                    addToken(new Token(NEW_LINE, ""));
+                    addToken(new Token(PUNCTUATION, ";"), NEWLINE);
                 });
 
                 moduleDirective.ifModuleOpensStmt(d -> {
-                    addToken(new Token(KEYWORD, "opens"));
-                    addToken(new Token(WHITESPACE, " "));
+                    addToken(new Token(KEYWORD, "opens"), SPACE);
                     addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId(MODULE_INFO_KEY + "-" + d.getNameAsString())));
 
                     NodeList<Name> names = d.getModuleNames();
                     if (names.size() > 0) {
                         addToken(new Token(WHITESPACE, " "));
-                        addToken(new Token(KEYWORD, "to"));
-                        addToken(new Token(WHITESPACE, " "));
+                        addToken(new Token(KEYWORD, "to"), SPACE);
 
                         for (int i = 0; i < names.size(); i++) {
                             addToken(new Token(TYPE_NAME, names.get(i).toString()));
 
                             if (i < names.size() - 1) {
-                                addToken(new Token(PUNCTUATION, ","));
-                                addToken(new Token(WHITESPACE, " "));
+                                addToken(new Token(PUNCTUATION, ","), SPACE);
                             }
                         }
                     }
 
-                    addToken(new Token(PUNCTUATION, ";"));
-                    addToken(new Token(NEW_LINE, ""));
+                    addToken(new Token(PUNCTUATION, ";"), NEWLINE);
                 });
 
                 moduleDirective.ifModuleUsesStmt(d -> {
-                    addToken(new Token(KEYWORD, "uses"));
-                    addToken(new Token(WHITESPACE, " "));
+                    addToken(new Token(KEYWORD, "uses"), SPACE);
                     addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId(MODULE_INFO_KEY + "-" + d.getNameAsString())));
-                    addToken(new Token(PUNCTUATION, ";"));
-                    addToken(new Token(NEW_LINE, ""));
+                    addToken(new Token(PUNCTUATION, ";"), NEWLINE);
                 });
 
                 moduleDirective.ifModuleProvidesStmt(d -> {
-                    addToken(new Token(KEYWORD, "provides"));
-                    addToken(new Token(WHITESPACE, " "));
-                    addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId(MODULE_INFO_KEY + "-" + d.getNameAsString())));
-                    addToken(new Token(WHITESPACE, " "));
-                    addToken(new Token(KEYWORD, "with"));
-                    addToken(new Token(WHITESPACE, " "));
+                    addToken(new Token(KEYWORD, "provides"), SPACE);
+                    addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId(MODULE_INFO_KEY + "-" + d.getNameAsString())), SPACE);
+                    addToken(new Token(KEYWORD, "with"), SPACE);
 
                     NodeList<Name> names = d.getWith();
                     for (int i = 0; i < names.size(); i++) {
                         addToken(new Token(TYPE_NAME, names.get(i).toString()));
 
                         if (i < names.size() - 1) {
-                            addToken(new Token(PUNCTUATION, ","));
-                            addToken(new Token(WHITESPACE, " "));
+                            addToken(new Token(PUNCTUATION, ","), SPACE);
                         }
                     }
 
-                    addToken(new Token(PUNCTUATION, ";"));
-                    addToken(new Token(NEW_LINE, ""));
+                    addToken(new Token(PUNCTUATION, ";"), NEWLINE);
                 });
 
                 unindent();
             });
 
             // close module
-            addToken(makeWhitespace());
-            addToken(new Token(PUNCTUATION, "}"));
-            addToken(new Token(NEW_LINE, ""));
+            addToken(INDENT, new Token(PUNCTUATION, "}"), NEWLINE);
         }
 
         private void getEnumEntries(EnumDeclaration enumDeclaration) {
@@ -512,8 +485,7 @@ public class ASTAnalyser implements Analyser {
                 addToken(new Token(KEYWORD, "@"));
             }
 
-            addToken(new Token(KEYWORD, typeKind.getName()));
-            addToken(new Token(WHITESPACE, " "));
+            addToken(new Token(KEYWORD, typeKind.getName()), SPACE);
             addToken(new Token(TYPE_NAME, className, classId));
 
             NodeList<ClassOrInterfaceType> implementedTypes = null;
@@ -527,9 +499,7 @@ public class ASTAnalyser implements Analyser {
                 // Extends a class
                 final NodeList<ClassOrInterfaceType> extendedTypes = classOrInterfaceDeclaration.getExtendedTypes();
                 if (!extendedTypes.isEmpty()) {
-                    addToken(new Token(WHITESPACE, " "));
-                    addToken(new Token(KEYWORD, "extends"));
-                    addToken(new Token(WHITESPACE, " "));
+                    addToken(SPACE, new Token(KEYWORD, "extends"), SPACE);
 
                     // Java only extends one class if it is class, but can extends multiple interfaces if it is interface itself
                     if (extendedTypes.isNonEmpty()) {
@@ -538,8 +508,7 @@ public class ASTAnalyser implements Analyser {
                             getType(extendedType);
 
                             if (i < max - 1) {
-                                addToken(new Token(PUNCTUATION, ","));
-                                addToken(new Token(WHITESPACE, " "));
+                                addToken(new Token(PUNCTUATION, ","), SPACE);
                             }
                         }
                     }
@@ -558,9 +527,7 @@ public class ASTAnalyser implements Analyser {
 
             // implements interfaces
             if (implementedTypes != null && !implementedTypes.isEmpty()) {
-                addToken(new Token(WHITESPACE, " "));
-                addToken(new Token(KEYWORD, "implements"));
-                addToken(new Token(WHITESPACE, " "));
+                addToken(SPACE, new Token(KEYWORD, "implements"), SPACE);
 
                 for (final ClassOrInterfaceType implementedType : implementedTypes) {
                     getType(implementedType);
@@ -573,9 +540,7 @@ public class ASTAnalyser implements Analyser {
                 }
             }
             // open ClassOrInterfaceDeclaration
-            addToken(new Token(WHITESPACE, " "));
-            addToken(new Token(PUNCTUATION, "{"));
-            addToken(new Token(NEW_LINE, ""));
+            addToken(SPACE, new Token(PUNCTUATION, "{"), NEWLINE);
 
             return false;
         }
@@ -605,17 +570,14 @@ public class ASTAnalyser implements Analyser {
                 // default value
                 final Optional<Expression> defaultValueOptional = annotationMemberDeclaration.getDefaultValue();
                 if (defaultValueOptional.isPresent()) {
-                    addToken(new Token(WHITESPACE, " "));
-                    addToken(new Token(KEYWORD, "default"));
-                    addToken(new Token(WHITESPACE, " "));
+                    addToken(SPACE, new Token(KEYWORD, "default"), SPACE);
 
                     final Expression defaultValueExpr = defaultValueOptional.get();
                     final String value = defaultValueExpr.toString();
                     addToken(new Token(KEYWORD, value));
                 }
 
-                addToken(new Token(PUNCTUATION, ";"));
-                addToken(new Token(NEW_LINE, ""));
+                addToken(new Token(PUNCTUATION, ";"), NEWLINE);
             }
             unindent();
         }
@@ -657,8 +619,7 @@ public class ASTAnalyser implements Analyser {
                         final String name = variableDeclarator.getNameAsString();
                         final String definitionId = makeId(fullPathName + "." + variableDeclarator.getName());
                         addToken(new Token(MEMBER_NAME, name, definitionId));
-                        addToken(new Token(PUNCTUATION, ","));
-                        addToken(new Token(WHITESPACE, " "));
+                        addToken(new Token(PUNCTUATION, ","), SPACE);
                     }
                     apiListing.getTokens().remove(apiListing.getTokens().size() - 1);
                     apiListing.getTokens().remove(apiListing.getTokens().size() - 1);
@@ -671,16 +632,13 @@ public class ASTAnalyser implements Analyser {
 
                     final Optional<Expression> variableDeclaratorOption = variableDeclarator.getInitializer();
                     if (variableDeclaratorOption.isPresent()) {
-                        addToken(new Token(WHITESPACE, " "));
-                        addToken(new Token(PUNCTUATION, "="));
-                        addToken(new Token(WHITESPACE, " "));
+                        addToken(SPACE, new Token(PUNCTUATION, "="), SPACE);
                         addToken(new Token(TEXT, variableDeclaratorOption.get().toString()));
                     }
                 }
 
                 // close the variable declaration
-                addToken(new Token(PUNCTUATION, ";"));
-                addToken(new Token(NEW_LINE, ""));
+                addToken(new Token(PUNCTUATION, ";"), NEWLINE);
             }
             unindent();
         }
@@ -701,9 +659,9 @@ public class ASTAnalyser implements Analyser {
                         .allMatch(callableDeclaration -> isPrivateOrPackagePrivate(callableDeclaration.getAccessSpecifier()));
 
                 if (isAllPrivateOrPackagePrivate) {
-                    addToken(makeWhitespace());
-                    addToken(new Token(COMMENT, "// This class does not have any public constructors, and is not able to be instantiated using 'new'."));
-                    addToken(new Token(NEW_LINE, ""));
+                    addToken(INDENT,
+                            new Token(COMMENT, "// This class does not have any public constructors, and is not able to be instantiated using 'new'."),
+                            NEWLINE);
                     unindent();
                     return;
                 }
@@ -742,9 +700,7 @@ public class ASTAnalyser implements Analyser {
                         if (showGroupings && !group.isEmpty()) {
                             // we group inside the APIView each of the groups, so that we can visualise their operations
                             // more clearly
-                            addToken(makeWhitespace());
-                            addToken(new Token(COMMENT, "// " + groupName + ":"));
-                            addToken(new Token(NEW_LINE, ""));
+                            addToken(INDENT, new Token(COMMENT, "// " + groupName + ":"), NEWLINE);
                         }
 
                         group.forEach(callableDeclaration -> {
@@ -955,15 +911,13 @@ public class ASTAnalyser implements Analyser {
                     addToken(new Token(TEXT, parameter.getNameAsString()));
 
                     if (i < max - 1) {
-                        addToken(new Token(PUNCTUATION, ","));
-                        addToken(new Token(WHITESPACE, " "));
+                        addToken(new Token(PUNCTUATION, ","), SPACE);
                     }
                 }
             }
 
             // close declaration
-            addToken(new Token(PUNCTUATION, ")"));
-            addToken(new Token(WHITESPACE, " "));
+            addToken(new Token(PUNCTUATION, ")"), SPACE);
         }
 
         private void getTypeParameters(NodeList<TypeParameter> typeParameters) {
@@ -976,8 +930,7 @@ public class ASTAnalyser implements Analyser {
                 final TypeParameter typeParameter = typeParameters.get(i);
                 getGenericTypeParameter(typeParameter);
                 if (i != size - 1) {
-                    addToken(new Token(PUNCTUATION, ","));
-                    addToken(new Token(WHITESPACE, " "));
+                    addToken(new Token(PUNCTUATION, ","), SPACE);
                 }
             }
             addToken(new Token(PUNCTUATION, ">"));
@@ -996,9 +949,7 @@ public class ASTAnalyser implements Analyser {
             final NodeList<ClassOrInterfaceType> typeBounds = typeParameter.getTypeBound();
             final int size = typeBounds.size();
             if (size != 0) {
-                addToken(new Token(WHITESPACE, " "));
-                addToken(new Token(KEYWORD, "extends"));
-                addToken(new Token(WHITESPACE, " "));
+                addToken(SPACE, new Token(KEYWORD, "extends"), SPACE);
                 for (int i = 0; i < size; i++) {
                     getType(typeBounds.get(i));
                 }
@@ -1011,8 +962,7 @@ public class ASTAnalyser implements Analyser {
                 return;
             }
 
-            addToken(new Token(KEYWORD, "throws"));
-            addToken(new Token(WHITESPACE, " "));
+            addToken(new Token(KEYWORD, "throws"), SPACE);
 
             for (int i = 0, max = thrownExceptions.size(); i < max; i++) {
                 final String exceptionName = thrownExceptions.get(i).getElementType().toString();
@@ -1027,8 +977,7 @@ public class ASTAnalyser implements Analyser {
 
                 addToken(throwsToken);
                 if (i < max - 1) {
-                    addToken(new Token(PUNCTUATION, ","));
-                    addToken(new Token(WHITESPACE, " "));
+                    addToken(new Token(PUNCTUATION, ","), SPACE);
                 }
             }
             addToken(new Token(WHITESPACE, " "));
@@ -1132,8 +1081,7 @@ public class ASTAnalyser implements Analyser {
                     ((ClassOrInterfaceType) node).getTypeArguments().ifPresent(
                             (NodeList<Type> values) -> addToken(new Token(PUNCTUATION, ">")));
                 } else {
-                    addToken(new Token(PUNCTUATION, ","));
-                    addToken(new Token(WHITESPACE, " "));
+                    addToken(new Token(PUNCTUATION, ","), SPACE);
                 }
             }
         }
@@ -1141,18 +1089,12 @@ public class ASTAnalyser implements Analyser {
         private void addDefaultConstructor(TypeDeclaration<?> typeDeclaration) {
             indent();
 
-            addToken(makeWhitespace());
-            addToken(new Token(KEYWORD, "public"));
-            addToken(new Token(WHITESPACE, " "));
+            addToken(INDENT, new Token(KEYWORD, "public"), SPACE);
             final String name = typeDeclaration.getNameAsString();
             final String definitionId = makeId(typeDeclaration.getNameAsString());
             addToken(new Token(MEMBER_NAME, name, definitionId));
             addToken(new Token(PUNCTUATION, "("));
-            addToken(new Token(PUNCTUATION, ")"));
-            addToken(new Token(WHITESPACE, " "));
-
-            // close statements
-            addToken(new Token(NEW_LINE, ""));
+            addToken(new Token(PUNCTUATION, ")"), NEWLINE);
 
             unindent();
         }
@@ -1217,9 +1159,7 @@ public class ASTAnalyser implements Analyser {
             return;
         }
         Arrays.stream(jd.toString().split("\n")).forEach(line -> {
-            addToken(makeWhitespace());
-            addToken(new Token(COMMENT, MiscUtils.escapeHTML(line)));
-            addToken(new Token(NEW_LINE, ""));
+            addToken(INDENT, new Token(COMMENT, MiscUtils.escapeHTML(line)), NEWLINE);
         });
     }
 
@@ -1240,6 +1180,25 @@ public class ASTAnalyser implements Analyser {
     }
 
     private void addToken(Token token) {
+        addToken(token, NOTHING);
+    }
+
+    private void addToken(Token token, TokenModifier suffix) {
+        addToken(NOTHING, token, suffix);
+    }
+
+    private void addToken(TokenModifier prefix, Token token, TokenModifier suffix) {
+        handleTokenModifier(prefix);
         apiListing.getTokens().add(token);
+        handleTokenModifier(suffix);
+    }
+
+    private void handleTokenModifier(TokenModifier modifier) {
+        switch (modifier) {
+            case INDENT: addToken(makeWhitespace()); break;
+            case SPACE: addToken(new Token(WHITESPACE, " ")); break;
+            case NEWLINE: addToken(new Token(NEW_LINE, "")); break;
+            case NOTHING: break;
+        }
     }
 }

@@ -8,11 +8,7 @@ steps:
       cd $(Build.SourcesDirectory)/tools_repo
       git checkout 564ad63ae72d18422533fa1da9d396e7703c1cb5
     displayName: Setup Identity Resolver
-
-  - pwsh: |
-      Write-Host "##vso[task.setvariable variable=${{ parameters.TargetVariable }}]"
-    displayName: 'Ensure Target Variable Is Populated'
-
+  
   - pwsh: |
       $result = dotnet run -v q -- `
         --aad-app-id-var APP_ID `
@@ -22,7 +18,7 @@ steps:
         --kusto-database-var KUSTO_DB `
         --kusto-table-var KUSTO_TABLE `
         --identity "$(Build.QueuedBy)" `
-        --vsoVariable "${{ parameters.TargetVariable }}"
+        --vso-variable "${{ parameters.TargetVariable }}"
     displayName: 'Resolving Queuing User'
     continueOnError: true
     workingDirectory: $(Build.SourcesDirectory)/tools_repo/tools/notification-configuration/identity-resolver

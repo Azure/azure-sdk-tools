@@ -6,9 +6,9 @@ steps:
   - pwsh: |
       git clone https://github.com/Azure/azure-sdk-tools.git $(Build.SourcesDirectory)/tools_repo
       cd $(Build.SourcesDirectory)/tools_repo
-      git checkout a7f38c84325424bd7f8be8c7661213995ebe8adb
+      git checkout 35ad98f821913eb0e8872f861ee60589b563c865
     displayName: Setup Identity Resolver
-  
+
   - pwsh: |
       dotnet run -v q -- `
         --aad-app-id-var APP_ID `
@@ -18,7 +18,7 @@ steps:
         --kusto-database-var KUSTO_DB `
         --kusto-table-var KUSTO_TABLE `
         --identity "$(Build.QueuedBy)" `
-        --vso-variable "${{ parameters.TargetVariable }}"
+        --targetvar "${{ parameters.TargetVariable }}"
     displayName: 'Resolving Queuing User'
     continueOnError: true
     workingDirectory: $(Build.SourcesDirectory)/tools_repo/tools/notification-configuration/identity-resolver

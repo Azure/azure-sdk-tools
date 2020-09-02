@@ -214,6 +214,9 @@ function Upload-Blobs
             }
         }
     } 
+    else {
+        Write-Warning "Not able to do the master link replacement, since no release tag found for the release. Please manually check."
+    } 
    
     Write-Host "Uploading $($PkgName)/$($DocVersion) to $($DocDest)..."
     & $($AzCopy) cp "$($DocDir)/**" "$($DocDest)/$($PkgName)/$($DocVersion)$($SASKey)" --recursive=true

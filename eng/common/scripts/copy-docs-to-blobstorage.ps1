@@ -9,7 +9,7 @@ param (
   $ExitOnError=1,
   $UploadLatest=1,
   $PublicArtifactLocation = "",
-  $RepoReplaceRegex = "(https://github.com/.*/(?:blob|tree)/)master(/.*)"
+  $RepoReplaceRegex = "(https://github.com/.*/(?:blob|tree)/)master"
 )
 
 . (Join-Path $PSScriptRoot artifact-metadata-parsing.ps1)
@@ -208,13 +208,9 @@ function Upload-Blobs
         foreach ($htmlFile in (Get-ChildItem $DocDir -include *.html -r)) 
         {
             $fileContent = Get-Content -Path $htmlFile
-            $checkPattern = $false
-            while ($fileContent -match $RepoReplaceRegex) {
-                $fileContent = $fileContent -replace $RepoReplaceRegex, "`${1}$ReleaseTag`$2"
-                $checkPattern = $true
-            }
-            if ($checkPattern) {
-                Set-Content -Path $htmlFile -Value $fileContent
+            $updatedFileContent = $fileContent -replace $RepoReplaceRegex, "`${1}$ReleaseTag"
+            if ($updatedFileContent -ne $fileContent) {
+                Set-Content -Path $htmlFile -Value $updatedFileContent
             }
         }
     } 

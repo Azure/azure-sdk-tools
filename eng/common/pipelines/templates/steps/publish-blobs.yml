@@ -24,7 +24,7 @@ steps:
       -Language "${{ parameters.TargetLanguage }}"
       -BlobName "${{ parameters.BlobName }}"
       -PublicArtifactLocation  "${{ parameters.ArtifactLocation}}""
-      -RepoReplaceRegex "(https://github.com/${{ parameters.RepoId }}/(?:blob|tree)/)master(/.*)"
+      -RepoReplaceRegex "(https://github.com/${{ parameters.RepoId }}/(?:blob|tree)/)master"
     pwsh: true
     workingDirectory: $(Pipeline.Workspace)
   displayName: Copy Docs to Blob

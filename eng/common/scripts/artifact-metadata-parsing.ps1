@@ -387,12 +387,27 @@ function GetExistingTags($apiUrl) {
   }
 }
 
-# Walk across all build artifacts, check them against the appropriate repository, return a list of tags/releases
-function VerifyPackages($pkgRepository, $artifactLocation, $workingDirectory, $apiUrl, $releaseSha,  $continueOnError = $false) {
-  $pkgList = [array]@()
+# Retrieve release tag for artiface package. If multiple packages, then output the first one.
+function RetrieveReleaseTag($pkgRepository, $artifactLocation, $continueOnError = $true) {
+  try {
+    $pkgs, $ParsePkgInfoFn = RetrivePackages -pkgRepository $pkgRepository -artifactLocation $artifactLocation
+    if (!$pkgs -or !$pkgs[0]) {
+      return ""
+    }
+    $parsedPackage = &$ParsePkgInfoFn -pkg $pkgs[0]
+    return GenerateReleaseTag $parsedPackage.packageId $parsedPackage.PackageVersion
+  }
+  catch {
+    if ($continueOnError) {
+      return ""
+    }
+    Write-Error "No release tag retrieved from $artifactLocation"
+  }
+}
+function RetrivePackages($pkgRepository, $artifactLocation) {
   $ParsePkgInfoFn = ""
   $packagePattern = ""
-
+  $pkgRepository = $pkgRepository.Trim()
   switch ($pkgRepository) {
     "Maven" {
       $ParsePkgInfoFn = "ParseMavenPackage"
@@ -427,8 +442,14 @@ function VerifyPackages($pkgRepository, $artifactLocation, $workingDirectory, $a
       exit(1)
     }
   }
+  $pkgs = Get-ChildItem -Path $artifactLocation -Include $packagePattern -Recurse -File
+  return $pkgs, $ParsePkgInfoFn
+}
 
-  $pkgs = (Get-ChildItem -Path $artifactLocation -Include $packagePattern -Recurse -File)
+# Walk across all build artifacts, check them against the appropriate repository, return a list of tags/releases
+function VerifyPackages($pkgRepository, $artifactLocation, $workingDirectory, $apiUrl, $releaseSha,  $continueOnError = $false) {
+  $pkgList = [array]@()
+  $pkgs, $ParsePkgInfoFn = RetrivePackages -pkgRepository $pkgRepository -artifactLocation $artifactLocation
 
   foreach ($pkg in $pkgs) {
     try {
@@ -444,11 +465,7 @@ function VerifyPackages($pkgRepository, $artifactLocation, $workingDirectory, $a
         exit(1)
       }
 
-      $tag = if ($parsedPackage.packageId) {
-        "$($parsedPackage.packageId)_$($parsedPackage.PackageVersion)"
-      } else {
-        $parsedPackage.PackageVersion
-      }
+      $tag = GenerateReleaseTag $parsedPackage.packageId $parsedPackage.PackageVersion
 
       $pkgList += New-Object PSObject -Property @{
         PackageId      = $parsedPackage.PackageId
@@ -510,5 +527,13 @@ function CheckArtifactShaAgainstTagsList($priorExistingTagList, $releaseSha, $ap
   if ($unmatchedTags.Length -gt 0 -and !$continueOnError) {
     Write-Host "Tags already existing with different SHA versions. Exiting."
     exit(1)
+  }
+}
+
+function GenerateReleaseTag($packageId, $packageVersion) {
+  return if ($packageId) {
+    "$packageId_$packageVersion"
+  } else {
+    $packageVersion
   }
 }

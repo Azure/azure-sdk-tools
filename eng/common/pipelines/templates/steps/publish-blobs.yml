@@ -4,6 +4,7 @@ parameters:
   TargetLanguage: ''
   BlobName: ''
   ScriptPath: ''
+  ArtifactLocation: ''
   RepoId: $(Build.Repository.Name)
 
 steps:
@@ -22,6 +23,7 @@ steps:
       -SASKey "${{ parameters.BlobSASKey }}"
       -Language "${{ parameters.TargetLanguage }}"
       -BlobName "${{ parameters.BlobName }}"
+      -PublicArtifactLocation  "${{ parameters.ArtifactLocation}}""
       -RepoReplaceRegex "(https://github.com/${{ parameters.RepoId }}/(?:blob|tree)/)master(/.*)"
     pwsh: true
     workingDirectory: $(Pipeline.Workspace)

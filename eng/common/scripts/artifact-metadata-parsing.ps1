@@ -396,7 +396,6 @@ function GetExistingTags($apiUrl) {
 # Retrieve release tag for artiface package. If multiple packages, then output the first one.
 function RetrieveReleaseTag($pkgRepository, $artifactLocation, $continueOnError = $true) {
   if (!$artifactLocation) {
-    Write-Warning "Please provide the artifact location which to retrieve the releaes tag."
     return ""
   }
   try {

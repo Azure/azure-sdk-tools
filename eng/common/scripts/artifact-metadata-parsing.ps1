@@ -399,7 +399,7 @@ function RetrieveReleaseTag($pkgRepository, $artifactLocation, $continueOnError 
     return ""
   }
   try {
-    $pkgs, $parsePkgInfoFn = RetrivePackages -pkgRepository $pkgRepository -artifactLocation $artifactLocation
+    $pkgs, $parsePkgInfoFn = RetrievePackages -pkgRepository $pkgRepository -artifactLocation $artifactLocation
     if (!$pkgs -or !$pkgs[0]) {
       return ""
     }
@@ -413,7 +413,7 @@ function RetrieveReleaseTag($pkgRepository, $artifactLocation, $continueOnError 
     Write-Error "No release tag retrieved from $artifactLocation"
   }
 }
-function RetrivePackages($pkgRepository, $artifactLocation) {
+function RetrievePackages($pkgRepository, $artifactLocation) {
   $parsePkgInfoFn = ""
   $packagePattern = ""
   $pkgRepository = $pkgRepository.Trim()
@@ -458,7 +458,7 @@ function RetrivePackages($pkgRepository, $artifactLocation) {
 # Walk across all build artifacts, check them against the appropriate repository, return a list of tags/releases
 function VerifyPackages($pkgRepository, $artifactLocation, $workingDirectory, $apiUrl, $releaseSha,  $continueOnError = $false) {
   $pkgList = [array]@()
-  $pkgs, $parsePkgInfoFn = RetrivePackages -pkgRepository $pkgRepository -artifactLocation $artifactLocation
+  $pkgs, $parsePkgInfoFn = RetrievePackages -pkgRepository $pkgRepository -artifactLocation $artifactLocation
 
   foreach ($pkg in $pkgs) {
     try {

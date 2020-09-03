@@ -1,15 +1,22 @@
 package com.azure.tools.apiview.processor.model;
 
 import com.azure.tools.apiview.processor.analysers.ASTAnalyser;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 
 public class ChildItem implements Comparable<ChildItem> {
     @JsonProperty("ChildItems")
     private Set<ChildItem> childItems;
+
+    @JsonIgnore
+    private Map<String, ChildItem> packageNameToChildMap;
 
     @JsonProperty("NavigationId")
     private String navigationId;
@@ -29,6 +36,7 @@ public class ChildItem implements Comparable<ChildItem> {
         this.navigationId = navigationId;
         this.tags = new Tags(typeKind);
         this.text = text;
+        this.packageNameToChildMap = new HashMap<>();
     }
 
     public Set<ChildItem> getChildItem() {
@@ -37,6 +45,18 @@ public class ChildItem implements Comparable<ChildItem> {
 
     public void addChildItem(ChildItem childItem) {
         this.childItems.add(childItem);
+    }
+
+    public void addChildItem(String packageName, ChildItem childItem) {
+        if (packageNameToChildMap.containsKey(packageName)) {
+            ChildItem parent = packageNameToChildMap.get(packageName);
+            parent.addChildItem(childItem);
+        } else {
+            ChildItem parent = new ChildItem(packageName, packageName, TypeKind.NAMESPACE);
+            parent.addChildItem(childItem);
+            packageNameToChildMap.put(packageName, parent);
+            childItems.add(parent);
+        }
     }
 
     public String getNavigationId() {
@@ -74,5 +94,18 @@ public class ChildItem implements Comparable<ChildItem> {
     @Override
     public String toString() {
         return "ChildItem [childItems = "+childItems+", navigationId = "+navigationId+", text = "+text+", tags = "+tags+"]";
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final ChildItem childItem = (ChildItem) o;
+        return text.equals(childItem.text);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(text);
     }
 }

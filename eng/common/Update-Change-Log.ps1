@@ -47,8 +47,8 @@ function Get-VersionTitle($Version, $Unreleased)
    # Generate version title
    $newVersionTitle = "## $Version $UNRELEASED_TAG"
    if ($Unreleased -eq $False) {
-      $actualReleaseDate = $ReleaseDate ?? (Get-Date -Format "(yyyy-MM-dd)");
-      $newVersionTitle = "## $Version $actualReleaseDate"
+      $actualReleaseDate = $ReleaseDate ?? (Get-Date -Format "yyyy-MM-dd");
+      $newVersionTitle = "## $Version ($actualReleaseDate)"
    }
    return $newVersionTitle
 }

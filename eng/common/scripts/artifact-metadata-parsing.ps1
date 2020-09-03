@@ -101,8 +101,7 @@ function IsMavenPackageVersionPublished($pkgId, $pkgVersion, $groupId) {
 
     Write-Host "VersionCheck to maven for packageId $pkgId failed with statuscode $statusCode"
     Write-Host $statusDescription
-    #exit(1)
-    return
+    exit(1)
   }
 }
 

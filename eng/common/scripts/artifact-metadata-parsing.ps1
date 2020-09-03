@@ -404,7 +404,7 @@ function RetrieveReleaseTag($pkgRepository, $artifactLocation, $continueOnError 
       Write-Host "No packages retrieved from artifact location."
       return ""
     }
-    if ($pkgs.Count > 1) {
+    if ($pkgs.Count -gt 1) {
       Write-Host "There are more than 1 packages retieved from artifact location."
       return ""
     }

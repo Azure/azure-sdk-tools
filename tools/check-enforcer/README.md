@@ -9,7 +9,7 @@ The Azure SDK team maintains reusable libraries that developers use to access Az
 
 Each repository contains a large number of seperate libraries. Even though together these libraries constitute a single SDK, they ship seperately on their own individual cadence as the underlying service evolves. As a result we have seperate build and release pipelines for say the KeyVault and the Event Hubs libraries in each repository.
 
-Whilst Checks in GitHub are awesome, one of the limitations when setting up required checks is that you cannot make them required for just one specific path. We don't want to build all libraries for every checkin (that would take a long time and needlessly block teams if other libraries were having build reliability issues) - so we needed a way to work around it.
+Whilst Checks in GitHub are awesome, one of the limitations when setting up required checks is that you cannot make them required for just one specific path. We don't want to build all libraries for every checkin (that would take a long time and needlessly block teams if other libraries were having build reliability issues) - so we needed a way to work around it.sadasdda
 
 Check Enforcer is our solution. We use the built-in triggering w/ path filter options within Azure Pipelines (Check Enforcer is CI tool agnostic however) to control when a pipeline triggers, and we just use Check Enforcer to block until all triggered pipelines pass successfully. Each of those libraries can be optional - and you just make Check Enforcer the only required check in the repo.
 

@@ -11,7 +11,6 @@ param (
   $PublicArtifactLocation = "",
   $RepoReplaceRegex = "(https://github.com/.*/(?:blob|tree)/)master"
 )
-
 . (Join-Path $PSScriptRoot artifact-metadata-parsing.ps1)
 
 $Language = $Language.ToLower()

@@ -399,11 +399,11 @@ function RetrieveReleaseTag($pkgRepository, $artifactLocation, $continueOnError 
     return ""
   }
   try {
-    $pkgs, $ParsePkgInfoFn = RetrivePackages -pkgRepository $pkgRepository -artifactLocation $artifactLocation
+    $pkgs, $parsePkgInfoFn = RetrivePackages -pkgRepository $pkgRepository -artifactLocation $artifactLocation
     if (!$pkgs -or !$pkgs[0]) {
       return ""
     }
-    $parsedPackage = &$ParsePkgInfoFn -pkg $pkgs[0]
+    $parsedPackage = &$parsePkgInfoFn -pkg $pkgs[0]
     return $parsedPackage.ReleaseTag
   }
   catch {
@@ -414,36 +414,36 @@ function RetrieveReleaseTag($pkgRepository, $artifactLocation, $continueOnError 
   }
 }
 function RetrivePackages($pkgRepository, $artifactLocation) {
-  $ParsePkgInfoFn = ""
+  $parsePkgInfoFn = ""
   $packagePattern = ""
   $pkgRepository = $pkgRepository.Trim()
   switch ($pkgRepository) {
     "Maven" {
-      $ParsePkgInfoFn = "ParseMavenPackage"
+      $parsePkgInfoFn = "ParseMavenPackage"
       $packagePattern = "*.pom"
       break
     }
     "Nuget" {
-      $ParsePkgInfoFn = "ParseNugetPackage"
+      $parsePkgInfoFn = "ParseNugetPackage"
       $packagePattern = "*.nupkg"
       break
     }
     "NPM" {
-      $ParsePkgInfoFn = "ParseNPMPackage"
+      $parsePkgInfoFn = "ParseNPMPackage"
       $packagePattern = "*.tgz"
       break
     }
     "PyPI" {
-      $ParsePkgInfoFn = "ParsePyPIPackage"
+      $parsePkgInfoFn = "ParsePyPIPackage"
       $packagePattern = "*.zip"
       break
     }
     "C" {
-      $ParsePkgInfoFn = "ParseCArtifact"
+      $parsePkgInfoFn = "ParseCArtifact"
       $packagePattern = "*.json"
     }
     "CPP" {
-      $ParsePkgInfoFn = "ParseCppArtifact"
+      $parsePkgInfoFn = "ParseCppArtifact"
       $packagePattern = "*.json"
     }
     default {
@@ -452,17 +452,17 @@ function RetrivePackages($pkgRepository, $artifactLocation) {
     }
   }
   $pkgs = Get-ChildItem -Path $artifactLocation -Include $packagePattern -Recurse -File
-  return $pkgs, $ParsePkgInfoFn
+  return $pkgs, $parsePkgInfoFn
 }
 
 # Walk across all build artifacts, check them against the appropriate repository, return a list of tags/releases
 function VerifyPackages($pkgRepository, $artifactLocation, $workingDirectory, $apiUrl, $releaseSha,  $continueOnError = $false) {
   $pkgList = [array]@()
-  $pkgs, $ParsePkgInfoFn = RetrivePackages -pkgRepository $pkgRepository -artifactLocation $artifactLocation
+  $pkgs, $parsePkgInfoFn = RetrivePackages -pkgRepository $pkgRepository -artifactLocation $artifactLocation
 
   foreach ($pkg in $pkgs) {
     try {
-      $parsedPackage = &$ParsePkgInfoFn -pkg $pkg -workingDirectory $workingDirectory
+      $parsedPackage = &$parsePkgInfoFn -pkg $pkg -workingDirectory $workingDirectory
 
       if ($parsedPackage -eq $null) {
         continue

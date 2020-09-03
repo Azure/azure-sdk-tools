@@ -143,7 +143,7 @@ namespace CreateRuleFabricBot.Rules.IssueRouting
 
             // try to parse it as an Uri
             Uri uri = new Uri(fileOrUri, UriKind.Absolute);
-            if (uri.Scheme.ToLowerInvariant() !=" https")
+            if (uri.Scheme.ToLowerInvariant() != "https")
             {
                 throw new ArgumentException("Cannot download off non-https uris");
             }

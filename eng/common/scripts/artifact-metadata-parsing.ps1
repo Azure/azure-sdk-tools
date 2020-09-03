@@ -406,9 +406,12 @@ function RetrieveReleaseTag($pkgRepository, $artifactLocation, $continueOnError 
     }
     if ($pkgs.Count -gt 1) {
       Write-Host "There are more than 1 packages retieved from artifact location."
+      foreach ($pkg in $pkgs) {
+        Write-Host "The package name is $($pkg.BaseName)"
+      }
       return ""
     }
-    $parsedPackage = &$parsePkgInfoFn -pkg $pkgs[0]
+    $parsedPackage = &$parsePkgInfoFn -pkg $pkgs[0] -workDirectory
     return $parsedPackage.ReleaseTag
   }
   catch {

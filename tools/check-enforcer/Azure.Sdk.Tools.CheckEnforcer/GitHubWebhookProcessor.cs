@@ -45,69 +45,6 @@ namespace Azure.Sdk.Tools.CheckEnforcer
         private SecretClient secretClient;
 
         private const string GitHubEventHeader = "X-GitHub-Event";
-
-        private string gitHubAppWebhookSecret;
-        private object gitHubAppWebhookSecretLock = new object();
-
-        private string GetGitHubAppWebhookSecret()
-        {
-            if (gitHubAppWebhookSecret == null)
-            {
-                lock (gitHubAppWebhookSecretLock)
-                {
-                    if (gitHubAppWebhookSecret == null)
-                    {
-                        var gitHubAppWebhookSecretName = globalConfigurationProvider.GetGitHubAppWebhookSecretName();
-                        KeyVaultSecret secret = secretClient.GetSecret(gitHubAppWebhookSecretName);
-                        gitHubAppWebhookSecret = secret.Value;
-                    }
-                }
-            }
-
-            return gitHubAppWebhookSecret;
-        }
-
-        private SecretClient GetSecretClient()
-        {
-            var keyVaultUri = globalConfigurationProvider.GetKeyVaultUri();
-            var credential = new DefaultAzureCredential();
-
-            if (secretClient == null)
-            {
-                secretClient = new SecretClient(new Uri(keyVaultUri), credential);
-            }
-
-            return secretClient;
-        }
-
-        private async Task<string> ReadAndVerifyBodyAsync(HttpRequest request, CancellationToken cancellationToken)
-        {
-            using (var reader = new StreamReader(request.Body))
-            {
-                var json = await reader.ReadToEndAsync();
-                var jsonBytes = Encoding.UTF8.GetBytes(json);
-
-                if (request.Headers.TryGetValue(GitHubWebhookSignatureValidator.GitHubWebhookSignatureHeader, out StringValues signature))
-                {
-                    var secret = GetGitHubAppWebhookSecret();
-
-                    var isValid = GitHubWebhookSignatureValidator.IsValid(jsonBytes, signature, secret);
-                    if (isValid)
-                    {
-                        return json;
-                    }
-                    else
-                    {
-                        throw new CheckEnforcerSecurityException("Webhook signature validation failed.");
-                    }
-                }
-                else
-                {
-                    throw new CheckEnforcerSecurityException("Webhook missing event signature.");
-                }
-            }
-        }
-
         public async Task ProcessWebhookAsync(string eventName, string json, ILogger logger, CancellationToken cancellationToken)
         {
             await Policy

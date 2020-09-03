@@ -20,16 +20,15 @@ namespace Azure.Sdk.Tools.CheckEnforcer
 {
     public class GitHubClientProvider : IGitHubClientProvider
     {
-        public GitHubClientProvider(IGlobalConfigurationProvider globalConfigurationProvider, IMemoryCache cache, KeyClient keyClient)
+        public GitHubClientProvider(IGlobalConfigurationProvider globalConfigurationProvider, IMemoryCache cache, CryptographyClient cryptographyClient)
         {
             this.globalConfigurationProvider = globalConfigurationProvider;
             this.cache = cache;
-            this.keyClient = keyClient;
+            this.cryptographyClient = cryptographyClient;
         }
 
         private IGlobalConfigurationProvider globalConfigurationProvider;
         private IMemoryCache cache;
-        private KeyClient keyClient;
 
         private async Task<string> GetTokenAsync(CancellationToken cancellationToken)
         {
@@ -54,7 +53,6 @@ namespace Azure.Sdk.Tools.CheckEnforcer
 
         private async Task<string> SignHeaderAndPayloadDigestWithGitHubApplicationKey(byte[] digest, CancellationToken cancellationToken)
         {
-            var cryptographyClient = GetCryptographyClient();
             var signResult = await cryptographyClient.SignAsync(
                 SignatureAlgorithm.RS256,
                 digest,
@@ -93,34 +91,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
             return headerAndPayloadString;
         }
 
-        private object cryptographyClientLock = new object();
         private CryptographyClient cryptographyClient;
-
-        private CryptographyClient GetCryptographyClient()
-        {
-            if (cryptographyClient == null)
-            {
-                lock (cryptographyClientLock)
-                {
-                    if (cryptographyClient == null)
-                    {
-                        var key = GetKey(this.keyClient);
-
-                        var credential = new DefaultAzureCredential();
-                        cryptographyClient = new CryptographyClient(key.Id, credential);
-                    }
-                }
-            }
-
-            return cryptographyClient;
-        }
-
-        private KeyVaultKey GetKey(KeyClient keyClient)
-        {
-            var keyResponse = keyClient.GetKey(globalConfigurationProvider.GetGitHubAppPrivateKeyName());
-            var key = keyResponse.Value;
-            return key;
-        }
 
         public async Task<GitHubClient> GetApplicationClientAsync(CancellationToken cancellationToken)
         {

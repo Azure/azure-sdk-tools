@@ -3,6 +3,8 @@ using Azure.Identity;
 using Azure.Sdk.Tools.CheckEnforcer;
 using Azure.Sdk.Tools.CheckEnforcer.Configuration;
 using Azure.Sdk.Tools.CheckEnforcer.Integrations.GitHub;
+using Azure.Security.KeyVault.Keys;
+using Azure.Security.KeyVault.Keys.Cryptography;
 using Microsoft.Azure.Functions.Extensions.DependencyInjection;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.DependencyInjection;
@@ -33,8 +35,13 @@ namespace Azure.Sdk.Tools.CheckEnforcer
                 builder.UseCredential(credential);
 
                 var keyVaultUri = new Uri($"https://{websiteResourceGroupEnvironmentVariable}.vault.azure.net");
-                builder.AddKeyClient(keyVaultUri);
                 builder.AddSecretClient(keyVaultUri);
+
+                // To inject the cryptography client with the extension helpers
+                // here we need to first find the Key ID.
+                var keyClient = new KeyClient(keyVaultUri, credential);
+                KeyVaultKey key = keyClient.GetKey("github-app-private-key");
+                builder.AddCryptographyClient(key.Id);
             });
 
             builder.Services.AddSingleton((builder) =>

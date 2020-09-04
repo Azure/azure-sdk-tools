@@ -1,0 +1,52 @@
+trigger: none
+pr: none
+
+pool:
+  vmImage: 'ubuntu-18.04'
+
+steps:
+- task: PowerShell@2
+  displayName: 'azure-sdk link check'
+  inputs:
+    pwsh: true
+    filePath: eng/scripts/Verify-Links.ps1
+    arguments: >
+      -urls "https://azure.github.io/azure-sdk/index.html"
+      -devOpsLogging: $true
+
+- task: PowerShell@2
+  displayName: 'java link check'
+  inputs:
+    pwsh: true
+    filePath: eng/scripts/Verify-Links.ps1
+    arguments: >
+      -urls "https://azure.github.io/azure-sdk-for-java/index.html"
+      -devOpsLogging: $true
+
+- task: PowerShell@2
+  displayName: 'js link check'
+  inputs:
+    pwsh: true
+    filePath: eng/scripts/Verify-Links.ps1
+    arguments: >
+      -urls "https://azure.github.io/azure-sdk-for-js/index.html"
+      -devOpsLogging: $true
+
+- task: PowerShell@2
+  displayName: 'net link check'
+  inputs:
+    pwsh: true
+    filePath: eng/scripts/Verify-Links.ps1
+    arguments: >
+      -urls "https://azure.github.io/azure-sdk-for-net/index.html"
+      -devOpsLogging: $true
+
+- task: PowerShell@2
+  displayName: 'python link check'
+  inputs:
+    pwsh: true
+    filePath: eng/scripts/Verify-Links.ps1
+    arguments: >
+      -urls "https://azure.github.io/azure-sdk-for-python/index.html"
+      -devOpsLogging: $true
+

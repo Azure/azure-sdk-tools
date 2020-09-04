@@ -69,6 +69,10 @@ import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.isPrivat
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.isTypeAPublicAPI;
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.makeId;
 import static com.azure.tools.apiview.processor.model.TokenKind.COMMENT;
+import static com.azure.tools.apiview.processor.model.TokenKind.DEPRECATED_RANGE_END;
+import static com.azure.tools.apiview.processor.model.TokenKind.DEPRECATED_RANGE_START;
+import static com.azure.tools.apiview.processor.model.TokenKind.DOCUMENTATION_RANGE_END;
+import static com.azure.tools.apiview.processor.model.TokenKind.DOCUMENTATION_RANGE_START;
 import static com.azure.tools.apiview.processor.model.TokenKind.KEYWORD;
 import static com.azure.tools.apiview.processor.model.TokenKind.MEMBER_NAME;
 import static com.azure.tools.apiview.processor.model.TokenKind.NEW_LINE;
@@ -80,7 +84,7 @@ import static com.azure.tools.apiview.processor.model.TokenKind.WHITESPACE;
 import static com.azure.tools.apiview.processor.analysers.util.TokenModifier.*;
 
 public class ASTAnalyser implements Analyser {
-    private static final boolean SHOW_JAVADOC = false;
+    private static final boolean SHOW_JAVADOC = true;
 
     public static final String MODULE_INFO_KEY = "module-info";
 
@@ -438,7 +442,7 @@ public class ASTAnalyser implements Analyser {
                 } else {
                     addToken(new Token(PUNCTUATION, ";"));
                 }
-                addToken(new Token(NEW_LINE, ""));
+                addNewLine();
             });
 
             unindent();
@@ -485,8 +489,19 @@ public class ASTAnalyser implements Analyser {
                 addToken(new Token(KEYWORD, "@"));
             }
 
+            final boolean isDeprecated = typeDeclaration.isAnnotationPresent("Deprecated");
+
             addToken(new Token(KEYWORD, typeKind.getName()), SPACE);
+
+            if (isDeprecated) {
+                addToken(new Token(DEPRECATED_RANGE_START));
+            }
+
             addToken(new Token(TYPE_NAME, className, classId));
+
+            if (isDeprecated) {
+                addToken(new Token(DEPRECATED_RANGE_END));
+            }
 
             NodeList<ClassOrInterfaceType> implementedTypes = null;
             // Type parameters of class definition
@@ -735,7 +750,7 @@ public class ASTAnalyser implements Analyser {
                             getThrowException(callableDeclaration);
 
                             // close statements
-                            addToken(new Token(NEW_LINE, ""));
+                            addNewLine();
                         });
                     });
 
@@ -840,7 +855,7 @@ public class ASTAnalyser implements Analyser {
                 }
 
                 if (addNewline) {
-                    addToken(new Token(NEW_LINE, ""));
+                    addNewLine();
                 } else {
                     addToken(new Token(WHITESPACE, " "));
                 }
@@ -896,10 +911,21 @@ public class ASTAnalyser implements Analyser {
         }
 
         private void getDeclarationNameAndParameters(CallableDeclaration callableDeclaration, NodeList<Parameter> parameters) {
+            final boolean isDeprecated = callableDeclaration.isAnnotationPresent("Deprecated");
+
             // create an unique definition id
             final String name = callableDeclaration.getNameAsString();
             final String definitionId = makeId(callableDeclaration);
+
+            if (isDeprecated) {
+                addToken(new Token(DEPRECATED_RANGE_START));
+            }
+
             addToken(new Token(MEMBER_NAME, name, definitionId));
+
+            if (isDeprecated) {
+                addToken(new Token(DEPRECATED_RANGE_END));
+            }
 
             addToken(new Token(PUNCTUATION, "("));
 
@@ -1158,11 +1184,14 @@ public class ASTAnalyser implements Analyser {
         if (!SHOW_JAVADOC) {
             return;
         }
+
+        addToken(new Token(DOCUMENTATION_RANGE_START));
         Arrays.stream(jd.toString().split("\n")).forEach(line -> {
             addToken(makeWhitespace());
             addToken(new Token(COMMENT, MiscUtils.escapeHTML(line)));
-            addToken(new Token(NEW_LINE, ""));
+            addNewLine();
         });
+        addToken(new Token(DOCUMENTATION_RANGE_END));
     }
 
     private void indent() {
@@ -1179,6 +1208,10 @@ public class ASTAnalyser implements Analyser {
             sb.append(" ");
         }
         return new Token(WHITESPACE, sb.toString());
+    }
+
+    private void addNewLine() {
+        addToken(new Token(NEW_LINE));
     }
 
     private void addToken(Token token) {
@@ -1199,7 +1232,7 @@ public class ASTAnalyser implements Analyser {
         switch (modifier) {
             case INDENT: addToken(makeWhitespace()); break;
             case SPACE: addToken(new Token(WHITESPACE, " ")); break;
-            case NEWLINE: addToken(new Token(NEW_LINE, "")); break;
+            case NEWLINE: addNewLine(); break;
             case NOTHING: break;
         }
     }

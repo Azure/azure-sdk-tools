@@ -18,7 +18,7 @@ namespace ApiView
         public static CodeFileHtmlRenderer Normal { get; } = new CodeFileHtmlRenderer(false);
         public static CodeFileHtmlRenderer ReadOnly { get; } = new CodeFileHtmlRenderer(true);
 
-        protected override void RenderToken(CodeFileToken token, StringBuilder stringBuilder)
+        protected override void RenderToken(CodeFileToken token, StringBuilder stringBuilder, bool isDeprecatedLine)
         {
             if (token.Value == null)
             {
@@ -45,6 +45,11 @@ namespace ApiView
                 case CodeFileTokenKind.Comment:
                     elementClass = "code-comment";
                     break;
+            }
+
+            if (isDeprecatedLine)
+            {
+                elementClass += " deprecated";
             }
 
             string href = null;

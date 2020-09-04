@@ -35,7 +35,15 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="Client\src\documentation.ts" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\APIView\APIView.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <TypeScriptCompile Include="Client\src\documentation.ts" />
   </ItemGroup>
 
 

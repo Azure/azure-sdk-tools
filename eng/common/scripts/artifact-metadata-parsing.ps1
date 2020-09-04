@@ -411,7 +411,7 @@ function RetrieveReleaseTag($pkgRepository, $artifactLocation, $continueOnError 
       }
       return ""
     }
-    $parsedPackage = &$parsePkgInfoFn -pkg $pkgs[0] -workDirectory $artifactLocation
+    $parsedPackage = &$parsePkgInfoFn -pkg $pkgs[0] -workingDirectory $artifactLocation
     return $parsedPackage.ReleaseTag
   }
   catch {

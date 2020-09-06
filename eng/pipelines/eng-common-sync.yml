@@ -65,7 +65,7 @@ stages:
           inputs:
             artifactName: ${{ parameters.ArtifactName }}
             path: $(Build.ArtifactStagingDirectory)/${{ parameters.PRDataFileName }}
- 
+
   - stage: VerifyAndMerge
     jobs:
       - deployment: VerifyandMergeSyncPrs
@@ -89,9 +89,9 @@ stages:
                   displayName: 'Verify then Merge Pull Requests'
                   inputs:
                     targetType: filePath
-                    filePath: $(Build.SourcesDirectory)/scripts/powershell/Verify-And-Merge-PRs.ps1
+                    filePath: $(Build.SourcesDirectory)/eng/scripts/Verify-And-Merge-PRs.ps1
                     arguments: >
-                      -AuthToken "$(azuresdk-github-pat)"
                       -PRDataArtifactPath "$(Pipeline.Workspace)/${{parameters.ArtifactName}}/${{ parameters.PRDataFileName }}"
+                      -AuthToken "$(azuresdk-github-pat)"
                       -devOpsLogging
                     pwsh: true

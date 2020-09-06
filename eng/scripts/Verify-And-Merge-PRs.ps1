@@ -1,6 +1,6 @@
 param(
-  $AuthToken,
   $PRDataArtifactPath,
+  $AuthToken,
   $ShouldMerge,
   [switch]$devOpsLogging = $false
 )
@@ -46,27 +46,29 @@ foreach ($prDataLine in $PRData)
   $repoOwner, $repoName, $prNumber = $prDataLine.Split(";")
 
   $prApiUrl = "https://api.github.com/repos/${repoOwner}/${repoName}/pulls/${prNumber}"
+  $prUrl = "https://github.com/${repoOwner}/${repoName}/pull/${prNumber}"
+  
   try
   {
     $response = Invoke-RestMethod -Headers $headers $prApiUrl
     if ($response.merged) {
-      Write-Host "${prApiUrl} is merged."
+      Write-Host "${prUrl} is merged."
     }
     elseif ($response.state -eq "closed") {
-      LogWarning "${prApiUrl} is closed. Please investigate why was not merged."
+      LogWarning "${prUrl} is closed. Please investigate why was not merged."
       $ReadyForMerge = $false
     }
     elseif ($response.mergeable -and $response.mergeable_state -eq "clean") {
-      Write-Host "${prApiUrl} is ready to merge."
+      Write-Host "${prUrl} is ready to merge."
 
       $mergablePRs += @{ Url = $prApiUrl; HeadSHA = $response.head.sha }
     }
     elseif ($response.mergeable_state -ne "clean") {
-      LogWarning "${prApiUrl} is blocked ($($response.mergeable_state)). Please ensure all checks are green and reviewers have approved."
+      LogWarning "${prUrl} is blocked ($($response.mergeable_state)). Please ensure all checks are green and reviewers have approved."
       $ReadyForMerge = $false
     }
     else {
-      LogWarning "${prApiUrl} is in an unknown state please contact engineering system team to understand the state."
+      LogWarning "${prUrl} is in an unknown state please contact engineering system team to understand the state."
       LogWarning $response
       $ReadyForMerge = $false
     }

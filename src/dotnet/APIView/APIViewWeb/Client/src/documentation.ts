@@ -5,11 +5,8 @@
   const SEL_CODE_INNER_CLASS = ".code-inner";
   const SEL_CODE_LINE = ".code-line";
 
-  $(document).ready(function () {
-      hideCheckboxIfNoDocs();
-      toggleEmptyLineVisibility(false);
-  });
-
+  hideCheckboxIfNoDocs();
+  toggleEmptyLineVisibility(false);
 
   $(document).on("click", SHOW_DOC_CHECKBOX, e => {
       toggleAllDocumentationVisibility(e.target.checked);
@@ -32,10 +29,8 @@
       });
   }
 
-
   function toggleAllDocumentationVisibility(showDocuments: boolean) {
       $(SEL_DOC_CLASS).toggle(showDocuments);
       toggleEmptyLineVisibility(showDocuments);
   }
-
 });

@@ -1,0 +1,2 @@
+# Ignore link to private repo
+https://github.com/Azure/azure-sdk-pr

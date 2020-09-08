@@ -1,6 +1,8 @@
 package com.azure.tools.apiview.processor.diagnostics;
 
 import com.azure.tools.apiview.processor.diagnostics.rules.BadPrefixesDiagnosticRule;
+import com.azure.tools.apiview.processor.diagnostics.rules.ConsiderFinalClassDiagnosticRule;
+import com.azure.tools.apiview.processor.diagnostics.rules.FluentSetterReturnTypeDiagnosticRule;
 import com.azure.tools.apiview.processor.diagnostics.rules.IllegalPackageAPIExportsDiagnosticRule;
 import com.azure.tools.apiview.processor.diagnostics.rules.ImportsDiagnosticRule;
 import com.azure.tools.apiview.processor.diagnostics.rules.MissingAnnotationsDiagnosticRule;
@@ -17,6 +19,8 @@ import java.util.List;
 import static com.azure.tools.apiview.processor.diagnostics.rules.RequiredBuilderMethodsDiagnosticRule.ExactTypeNameCheckFunction;
 import static com.azure.tools.apiview.processor.diagnostics.rules.RequiredBuilderMethodsDiagnosticRule.DirectSubclassCheckFunction;
 
+import static com.azure.tools.apiview.processor.diagnostics.rules.RequiredBuilderMethodsDiagnosticRule.ParameterAllowedTypes;
+
 public class Diagnostics {
     private static final List<DiagnosticRule> diagnostics = new ArrayList<>();
     static {
@@ -29,15 +33,17 @@ public class Diagnostics {
         diagnostics.add(new RequiredBuilderMethodsDiagnosticRule()
             .add("addPolicy", new ExactTypeNameCheckFunction("HttpPipelinePolicy"))
             .add("configuration", new ExactTypeNameCheckFunction("Configuration"))
-            .add("credential", new ExactTypeNameCheckFunction("TokenCredential"))
+            .add("credential", new ExactTypeNameCheckFunction(new ParameterAllowedTypes("TokenCredential", "AzureKeyCredential")))
             .add("connectionString", new ExactTypeNameCheckFunction("String"))
             .add("endpoint", new ExactTypeNameCheckFunction("String"))
             .add("httpClient", new ExactTypeNameCheckFunction("HttpClient"))
             .add("httpLogOptions", new ExactTypeNameCheckFunction("HttpLogOptions"))
             .add("pipeline", new ExactTypeNameCheckFunction("HttpPipeline"))
-            .add("retryPolicy", new ExactTypeNameCheckFunction("HttpPipelinePolicy"))
+            .add("retryPolicy", new ExactTypeNameCheckFunction("RetryPolicy"))
             .add("serviceVersion", new DirectSubclassCheckFunction("ServiceVersion")));
         diagnostics.add(new MissingAnnotationsDiagnosticRule());
+        diagnostics.add(new FluentSetterReturnTypeDiagnosticRule());
+        diagnostics.add(new ConsiderFinalClassDiagnosticRule());
     }
 
     public static void scan(CompilationUnit cu, APIListing listing) {

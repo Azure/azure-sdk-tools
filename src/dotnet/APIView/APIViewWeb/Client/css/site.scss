@@ -516,3 +516,11 @@ code-inner {
 .code-removed {
     background-color: #ffeef0;
 }
+
+.deprecated {
+    text-decoration: line-through;
+}
+
+.documentation {
+    display: none;
+}

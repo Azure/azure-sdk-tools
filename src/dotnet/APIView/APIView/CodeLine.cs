@@ -6,7 +6,6 @@ namespace ApiView
     {
         public string DisplayString { get; }
         public string ElementId { get; }
-
         public CodeLine(string html, string id)
         {
             this.DisplayString = html;

@@ -12,6 +12,7 @@ steps:
     filePath: eng/common/scripts/Verify-Links.ps1
     arguments: >
       -urls "https://azure.github.io/azure-sdk/index.html"
+      -ignoreLinksFile "./eng/pipelines/githubio-linkcheck-ignore-links.txt"
       -devOpsLogging: $true
 
 - task: PowerShell@2
@@ -21,6 +22,7 @@ steps:
     filePath: eng/common/scripts/Verify-Links.ps1
     arguments: >
       -urls "https://azure.github.io/azure-sdk-for-java/index.html"
+      -ignoreLinksFile "./eng/pipelines/githubio-linkcheck-ignore-links.txt"
       -devOpsLogging: $true
 
 - task: PowerShell@2
@@ -30,6 +32,7 @@ steps:
     filePath: eng/common/scripts/Verify-Links.ps1
     arguments: >
       -urls "https://azure.github.io/azure-sdk-for-js/index.html"
+      -ignoreLinksFile "./eng/pipelines/githubio-linkcheck-ignore-links.txt"
       -devOpsLogging: $true
 
 - task: PowerShell@2
@@ -39,6 +42,7 @@ steps:
     filePath: eng/common/scripts/Verify-Links.ps1
     arguments: >
       -urls "https://azure.github.io/azure-sdk-for-net/index.html"
+      -ignoreLinksFile "./eng/pipelines/githubio-linkcheck-ignore-links.txt"
       -devOpsLogging: $true
 
 - task: PowerShell@2
@@ -48,5 +52,5 @@ steps:
     filePath: eng/common/scripts/Verify-Links.ps1
     arguments: >
       -urls "https://azure.github.io/azure-sdk-for-python/index.html"
+      -ignoreLinksFile "./eng/pipelines/githubio-linkcheck-ignore-links.txt"
       -devOpsLogging: $true
-

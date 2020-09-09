@@ -20,12 +20,43 @@ $EngScriptsLanguageSettings = Join-path $EngScriptsDir "Language-Settings.ps1"
 if (Test-Path $EngScriptsLanguageSettings) {
   . $EngScriptsLanguageSettings
 }
-If ($LanguageShort -eq $null)
+if ($null -eq $LanguageShort)
 {
   $LangaugeShort = $Language
+}
+if ($null -eq $isDevOpsRun)
+{
+  $isDevOpsRun = ($null -ne $env:SYSTEM_TEAMPROJECTID)
 }
 
 # Transformed Functions
 $GetPackageInfoFromRepoFn = "Get-${Language}-PackageInfoFromRepo"
 $GetPackageInfoFromPackageFileFn = "Get-${Language}-PackageInfoFromPackageFile"
 $PublishGithubIODocsFn = "Publish-${Language}-GithubIODocs"
+
+function LogHelper ($logType, $logArgs)
+{
+  if ($isDevOpsRun) 
+  {
+    Write-Host "##vso[task.LogIssue type=$logType;]$logArgs"
+  }
+  else 
+  {
+    Write-Warning "$logArgs"
+  }
+}
+
+function LogWarning
+{
+  LogHelper -logType "warning" -logArgs $args
+}
+
+function LogError
+{
+  LogHelper -logType "error" -logArgs $args
+}
+
+function LogDebug
+{
+  LogHelper -logType "debug" -logArgs $args
+}

@@ -1,0 +1,202 @@
+{
+ "Name": "testinterface",
+ "Tokens": [
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "package",
+   "Kind": 7
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": "testinterface",
+   "NavigateToId": null,
+   "Value": "testinterface",
+   "Kind": 4
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "",
+   "Kind": 1
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "",
+   "Kind": 1
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "type",
+   "Kind": 6
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": "SomeInterface",
+   "NavigateToId": "SomeInterface",
+   "Value": "SomeInterface",
+   "Kind": 4
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "interface",
+   "Kind": 6
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "{",
+   "Kind": 3
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "",
+   "Kind": 1
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "\t",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": "Foo",
+   "NavigateToId": null,
+   "Value": "Foo",
+   "Kind": 4
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "(",
+   "Kind": 3
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "bar",
+   "Kind": 9
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "int64",
+   "Kind": 9
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": ")",
+   "Kind": 3
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "*bool",
+   "Kind": 9
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "",
+   "Kind": 1
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "",
+   "Kind": 1
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "",
+   "Kind": 1
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "}",
+   "Kind": 3
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "",
+   "Kind": 1
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "",
+   "Kind": 1
+  }
+ ],
+ "Navigation": [
+  {
+   "Text": "testinterface",
+   "NavigationId": null,
+   "ChildItems": [
+    {
+     "Text": "SomeInterface",
+     "NavigationId": "SomeInterface",
+     "ChildItems": [],
+     "Tags": {
+      "TypeKind": "interface"
+     }
+    }
+   ],
+   "Tags": null
+  }
+ ]
+}

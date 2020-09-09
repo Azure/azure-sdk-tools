@@ -2,6 +2,7 @@ package com.azure.tools.apiview.processor;
 
 import com.azure.tools.apiview.processor.analysers.Analyser;
 import com.azure.tools.apiview.processor.model.Diagnostic;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.azure.tools.apiview.processor.analysers.ASTAnalyser;
 import com.azure.tools.apiview.processor.model.APIListing;
@@ -160,8 +161,11 @@ public class Main {
         // Write out to the filesystem
         try {
             ObjectMapper objectMapper = new ObjectMapper();
-            objectMapper.disable(AUTO_DETECT_CREATORS, AUTO_DETECT_FIELDS, AUTO_DETECT_GETTERS, AUTO_DETECT_IS_GETTERS);
-            objectMapper.writerWithDefaultPrettyPrinter().writeValue(outputFile, apiListing);
+            objectMapper
+                    .disable(AUTO_DETECT_CREATORS, AUTO_DETECT_FIELDS, AUTO_DETECT_GETTERS, AUTO_DETECT_IS_GETTERS)
+                    .setSerializationInclusion(JsonInclude.Include.NON_NULL)
+                    .writerWithDefaultPrettyPrinter()
+                    .writeValue(outputFile, apiListing);
         } catch (IOException e) {
             e.printStackTrace();
         }

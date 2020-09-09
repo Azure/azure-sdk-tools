@@ -22,27 +22,47 @@ namespace ApiView
         {
             var stringBuilder = new StringBuilder();
             string currentId = null;
+            bool isDocumentation = false;
+            bool isDeprecatedToken = false;
+
             foreach (var token in node)
             {
-                if (token.Kind == CodeFileTokenKind.Newline)
+                switch(token.Kind)
                 {
-                    list.Add(new CodeLine(stringBuilder.ToString(), currentId));
-                    currentId = null;
-                    stringBuilder.Clear();
-                }
-                else
-                {
-                    if (token.DefinitionId != null)
-                    {
-                        currentId = token.DefinitionId;
-                    }
+                    case CodeFileTokenKind.Newline:
+                        list.Add(new CodeLine(stringBuilder.ToString(), currentId));
+                        currentId = null;
+                        stringBuilder.Clear();
+                        break;
 
-                    RenderToken(token, stringBuilder);
-                }
+                    case CodeFileTokenKind.DocumentRangeStart:
+                        isDocumentation = true;
+                        break;
+
+                    case CodeFileTokenKind.DocumentRangeEnd:
+                        isDocumentation = false;
+                        break;
+
+                    case CodeFileTokenKind.DeprecatedRangeStart:
+                        isDeprecatedToken = true;
+                        break;
+
+                    case CodeFileTokenKind.DeprecatedRangeEnd:
+                        isDeprecatedToken = false;
+                        break;
+
+                    default:
+                        if (token.DefinitionId != null)
+                        {
+                            currentId = token.DefinitionId;
+                        }
+                        RenderToken(token, stringBuilder, isDeprecatedToken, isDocumentation);
+                        break;
+                }                
             }
         }
 
-        protected virtual void RenderToken(CodeFileToken token, StringBuilder stringBuilder)
+        protected virtual void RenderToken(CodeFileToken token, StringBuilder stringBuilder, bool isDeprecatedToken, bool isDocumentation)
         {
             if (token.Value != null)
             {

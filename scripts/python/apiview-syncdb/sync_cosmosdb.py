@@ -14,7 +14,7 @@ http_logger.setLevel(logging.WARNING)
 # and identify ID of missing records. Script read record from source and insert into destination DB for all missing records.
 
 
-COSMOS_SELECT_ID_PARTITIONKEY_QUERY = "select c.id, c.{0} as partitionKey from {1} c"
+COSMOS_SELECT_ID_PARTITIONKEY_QUERY = "select c.id, c.{0} as partitionKey, c._ts from {1} c"
 COSMOS_SELECT_WHERE_ID_CLAUSE = "select * from {0} c where c.id='{1}'"
 
 # Create cosmosdb clients
@@ -86,14 +86,16 @@ def sync_database_container(src_db_client, dest_db_client, container_name):
 
     source_records = fetch_records(src_container_client, container_name)
     dest_records = fetch_records(dest_container_client, container_name)
+    # find missing or updated records
+    # updated records has new timestamp value in column(_ts)
     missing_records = dict(
-        [(x, source_records[x]) for x in source_records.keys() if x not in dest_records]
+        [(x, source_records[x][0]) for x in source_records.keys() if x not in dest_records or source_records[x][1] != dest_records[x][1]]
     )
     if missing_records:
         logging.info(
-            "Found {} missing rows in destination DB".format(len(missing_records))
+            "Found {} missing/updated rows in source DB".format(len(missing_records))
         )
-        logging.info("Copying missing records....")
+        logging.info("Copying records....")
         copy_missing_records(
             src_container_client, dest_container_client, missing_records, container_name
         )
@@ -125,7 +127,7 @@ def fetch_records(container_client, container_name):
         for row in container_client.query_items(
             query=query_string, enable_cross_partition_query=True
         ):
-            records[row["id"]] = row["partitionKey"]
+            records[row["id"]] = row["partitionKey"], row["_ts"]
     except:
         logging.error("Failed to query database")
         traceback.print_exc()

@@ -89,8 +89,8 @@ function ResolveUri ([System.Uri]$referralUri, [string]$link)
     return $linkUri
   }
 
-  # For rooted paths resolve from the baseUrl
   if (!$linkUri.IsAbsoluteUri) {
+      # For rooted paths resolve from the baseUrl
     if ($link.StartsWith("/")) {
       Write-Verbose "rooturl = $rootUrl"
       $linkUri = new-object System.Uri([System.Uri]$rootUrl, ".$link");
@@ -141,12 +141,6 @@ function CheckLink ([System.Uri]$linkUri)
       LogWarning "broken link $linkUri"
     }
     return $checkedLinks[$linkUri] 
-  }
-
-  if ($checkLinkGuidance -and !$linkUri.IsAbsoluteUri) {
-    LogWarning "DO NOT use relative link $linkUri. Please use absolute link instead.s"
-    $checkedLinks[$linkUri] = $false
-    return $false
   }
 
   $linkValid = $true
@@ -201,11 +195,19 @@ function CheckLink ([System.Uri]$linkUri)
     }
   }
   
-  # Check if link uri includes locale info.
-  if ($checkLinkGuidance -and ($linkUri -match $locale)) {
-    LogWarning "DO NOT include locale $locale information in links: $linkUri."
-    $linkValid = $false
+  if ($checkLinkGuidance) {
+    # Check if the url is relative links
+    if (!$linkUri.IsAbsoluteUri) {
+      LogWarning "DO NOT use relative link $linkUri. Please use absolute link instead."
+      $linkValid = $false
+    }
+     # Check if link uri includes locale info.
+    if ($linkUri -match $locale) {
+      LogWarning "DO NOT include locale $locale information in links: $linkUri."
+      $linkValid = $false
+    }
   }
+
   $checkedLinks[$linkUri] = $linkValid
   return $linkValid
 }

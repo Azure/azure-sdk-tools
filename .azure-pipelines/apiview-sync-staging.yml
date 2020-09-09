@@ -11,7 +11,7 @@ stages:
     jobs:
       - job: 'BlobCopy'
         pool:
-          vmImage: 'vs2017-win2019'
+          vmImage: 'windows-2019'
 
         steps:
         - pwsh: |
@@ -39,4 +39,3 @@ stages:
             pip install -r requirements.txt
             python ./sync_cosmosdb.py --source_url $(apiview-prod-cosmos-url) --source_key $(apiview-prod-cosmos-key) --dest_url $(apiview-staging-cosmos-url) --dest_key $(apiview-staging-cosmos-key) --db_name $(apiview-cosmosdb-name)
           displayName: Sync CosmosDB
-          

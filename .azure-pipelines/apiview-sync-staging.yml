@@ -37,7 +37,6 @@ stages:
         - script: |
             cd $(Build.SourcesDirectory)/scripts/python/apiview-syncdb/
             pip install -r requirements.txt
-            python ./sync_cosmosdb.py --source_url $(APIVIEW-PROD-COSMOSDB-URL) --source_key $(APIVIEW-PROD-COSMOSDB-KEY) --dest_url $(APIVIEW-STAGING-COSMOSDB-URL) --dest_key $(APIVIEW-STAGING-COSMOSDB-KEY) --db_name $(APIVIEW-COSMOSDB-NAME)
+            python ./sync_cosmosdb.py --source_url $(apiview-prod-cosmos-url) --source_key $(apiview-prod-cosmos-key) --dest_url $(apiview-staging-cosmos-url) --dest_key $(apiview-staging-cosmos-key) --db_name $(apiview-cosmosdb-name)
           displayName: Sync CosmosDB
-
-
+          

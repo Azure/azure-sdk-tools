@@ -5,7 +5,6 @@ import com.azure.tools.apiview.processor.model.APIListing;
 import com.azure.tools.apiview.processor.model.Diagnostic;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.MethodDeclaration;
-import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.type.Type;
 
@@ -14,10 +13,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.*;
+
+import static com.azure.tools.apiview.processor.model.DiagnosticKind.*;
 
 /**
  * Not all builders require all methods, but we should warn regardless so it can be considered.
@@ -85,9 +85,10 @@ public class RequiredBuilderMethodsDiagnosticRule implements DiagnosticRule {
                 if (!expectedType.supports(actualTypeName)) {
                     return Optional.of(
                             new Diagnostic(
-                                    makeId(methodDeclaration),
-                                    "Incorrect type being supplied to this builder method. Expected " + expectedType +
-                                            ", but was " + actualTypeName + "."));
+                                WARNING,
+                                makeId(methodDeclaration),
+                                "Incorrect type being supplied to this builder method. Expected " + expectedType +
+                                        ", but was " + actualTypeName + "."));
                 }
             }
 

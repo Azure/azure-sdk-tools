@@ -17,14 +17,18 @@ public class Diagnostic {
     @JsonProperty("TargetId")
     private String targetId;
 
-    public Diagnostic(String targetId, String text) {
-        this(targetId, text, null);
+    @JsonProperty("Level")
+    private DiagnosticKind level;
+
+    public Diagnostic(DiagnosticKind level, String targetId, String text) {
+        this(level, targetId, text, null);
     }
 
-    public Diagnostic(String targetId, String text, String helpLinkUri) {
+    public Diagnostic(DiagnosticKind level, String targetId, String text, String helpLinkUri) {
         this.diagnosticId = "AZ_JAVA_" + diagnosticIdCounter++;
         this.targetId = targetId;
         this.text = text;
+        this.level = level;
         this.helpLinkUri = helpLinkUri;
     }
 }

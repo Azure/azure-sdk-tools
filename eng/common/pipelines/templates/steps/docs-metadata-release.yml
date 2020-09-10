@@ -10,7 +10,7 @@ parameters:
   TargetDocRepoOwner: ''
   PRBranchName: 'smoke-test-rdme'
   SourceBranchName: 'smoke-test'
-  PRLabels: 'automation'
+  PRLabels: 'auto-merge'
   ArtifactName: ''
   Language: ''
   DocRepoDestinationPath: '' #usually docs-ref-services/

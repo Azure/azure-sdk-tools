@@ -31,91 +31,44 @@ namespace Azure.Sdk.Tools.CheckEnforcer
 {
     public class GitHubWebhookProcessor
     {
-        public GitHubWebhookProcessor(IGlobalConfigurationProvider globalConfigurationProvider, IGitHubClientProvider gitHubClientProvider, IRepositoryConfigurationProvider repositoryConfigurationProvider)
+        public GitHubWebhookProcessor(IGlobalConfigurationProvider globalConfigurationProvider, IGitHubClientProvider gitHubClientProvider, IRepositoryConfigurationProvider repositoryConfigurationProvider, SecretClient secretClient)
         {
             this.globalConfigurationProvider = globalConfigurationProvider;
             this.gitHubClientProvider = gitHubClientProvider;
             this.repositoryConfigurationProvider = repositoryConfigurationProvider;
+            this.secretClient = secretClient;
         }
-        
+
         public IGlobalConfigurationProvider globalConfigurationProvider;
         public IGitHubClientProvider gitHubClientProvider;
         private IRepositoryConfigurationProvider repositoryConfigurationProvider;
-        private const string GitHubEventHeader = "X-GitHub-Event";
-
-        private DateTimeOffset gitHubAppWebhookSecretExpiry = DateTimeOffset.MinValue;
-        private string gitHubAppWebhookSecret;
         private SecretClient secretClient;
 
-        private async Task<string> GetGitHubAppWebhookSecretAsync(CancellationToken cancellationToken)
-        {
-            if (gitHubAppWebhookSecretExpiry < DateTimeOffset.UtcNow)
-            {
-                var gitHubAppWebhookSecretName = globalConfigurationProvider.GetGitHubAppWebhookSecretName();
-
-                var client = GetSecretClient();
-                var response = await client.GetSecretAsync(gitHubAppWebhookSecretName, cancellationToken: cancellationToken);
-                var secret = response.Value;
-
-                gitHubAppWebhookSecretExpiry = DateTimeOffset.UtcNow.AddSeconds(30);
-                gitHubAppWebhookSecret = secret.Value;
-            }
-
-            return gitHubAppWebhookSecret;
-        }
-
-        private SecretClient GetSecretClient()
-        {
-            var keyVaultUri = globalConfigurationProvider.GetKeyVaultUri();
-            var credential = new DefaultAzureCredential();
-
-            if (secretClient == null)
-            {
-                secretClient = new SecretClient(new Uri(keyVaultUri), credential);
-            }
-
-            return secretClient;
-        }
-
-        private async Task<string> ReadAndVerifyBodyAsync(HttpRequest request, CancellationToken cancellationToken)
-        {
-            using (var reader = new StreamReader(request.Body))
-            {
-                var json = await reader.ReadToEndAsync();
-                var jsonBytes = Encoding.UTF8.GetBytes(json);
-
-                if (request.Headers.TryGetValue(GitHubWebhookSignatureValidator.GitHubWebhookSignatureHeader, out StringValues signature))
-                {
-                    var secret = await GetGitHubAppWebhookSecretAsync(cancellationToken);
-
-                    var isValid = GitHubWebhookSignatureValidator.IsValid(jsonBytes, signature, secret);
-                    if (isValid)
-                    {
-                        return json;
-                    }
-                    else
-                    {
-                        throw new CheckEnforcerSecurityException("Webhook signature validation failed.");
-                    }
-                }
-                else
-                {
-                    throw new CheckEnforcerSecurityException("Webhook missing event signature.");
-                }
-            }
-        }
-
+        private const string GitHubEventHeader = "X-GitHub-Event";
         public async Task ProcessWebhookAsync(string eventName, string json, ILogger logger, CancellationToken cancellationToken)
         {
             await Policy
                 .Handle<AbuseException>()
+                .Or<RateLimitExceededException>()
                 .RetryAsync(3, async (ex, retryCount) =>
                 {
-                    logger.LogWarning("Abuse exception detected, attempting retry.");
-                    var abuseEx = (AbuseException)ex;
+                    TimeSpan retryDelay = TimeSpan.FromSeconds(10); // Default.
 
-                    logger.LogInformation("Waiting for {seconds} before retrying.", abuseEx.RetryAfterSeconds);
-                    await Task.Delay(TimeSpan.FromSeconds((double)abuseEx.RetryAfterSeconds));
+                    switch (ex)
+                    {
+                        case AbuseException abuseException:
+                            logger.LogWarning("Abuse exception detected, attempting retry.");
+                            retryDelay = TimeSpan.FromSeconds((double)abuseException.RetryAfterSeconds);
+                            break;
+
+                        case RateLimitExceededException rateLimitExceededException:
+                            logger.LogWarning("Rate limit exception detected, attempting retry.");
+                            retryDelay = rateLimitExceededException.GetRetryAfterTimeSpan();
+                            break;
+                    }
+
+                    logger.LogInformation("Waiting for {seconds} before retrying.", retryDelay.TotalSeconds);
+                    await Task.Delay(retryDelay);
                 })
                 .ExecuteAsync(async () =>
                 {
@@ -135,20 +88,6 @@ namespace Azure.Sdk.Tools.CheckEnforcer
                         await handler.HandleAsync(json, cancellationToken);
                     }
                 });
-        }
-
-        public async Task ProcessWebhookAsync(HttpRequest request, ILogger logger, CancellationToken cancellationToken)
-        {
-
-            if (request.Headers.TryGetValue(GitHubEventHeader, out StringValues eventName))
-            {
-                var json = await ReadAndVerifyBodyAsync(request, cancellationToken);
-                await ProcessWebhookAsync(eventName, json, logger, cancellationToken);
-            }
-            else
-            {
-                throw new CheckEnforcerException($"Could not find header '{GitHubEventHeader}'.");
-            }
         }
     }
 }

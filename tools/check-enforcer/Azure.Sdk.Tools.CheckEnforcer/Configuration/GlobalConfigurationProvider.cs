@@ -1,4 +1,6 @@
-﻿using Azure.Sdk.Tools.CheckEnforcer.Configuration;
+﻿using Azure.Data.AppConfiguration;
+using Azure.Sdk.Tools.CheckEnforcer.Configuration;
+using Microsoft.Extensions.Azure;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -7,46 +9,55 @@ namespace Azure.Sdk.Tools.CheckEnforcer
 {
     public class GlobalConfigurationProvider : IGlobalConfigurationProvider
     {
+        private ConfigurationClient configurationClient;
+
+        public GlobalConfigurationProvider(ConfigurationClient configurationClient)
+        {
+            this.configurationClient = configurationClient;
+        }
+
+        private object applicationIDLock = new object();
+        private string applicationID;
+
         public string GetApplicationID()
         {
-            var id = Environment.GetEnvironmentVariable("GITHUBAPP_ID");
-            return id;
+            if (applicationID == null)
+            {
+                lock(applicationIDLock)
+                {
+                    if (applicationID == null)
+                    {
+                        ConfigurationSetting applicationIDSetting = configurationClient.GetConfigurationSetting(
+                            "checkenforcer/github-app-id"
+                            );
+                        applicationID = applicationIDSetting.Value;
+                    }
+                }
+            }
+
+            return applicationID;
         }
+
+        private object applicationNameLock = new object();
+        private string applicationName;
 
         public string GetApplicationName()
         {
-            var applicationName = Environment.GetEnvironmentVariable("CHECK_NAME");
+            if (applicationName == null)
+            {
+                lock (applicationNameLock)
+                {
+                    if (applicationName == null)
+                    {
+                        ConfigurationSetting applicationNameSetting = configurationClient.GetConfigurationSetting(
+                            "checkenforcer/check-name"
+                            );
+                        applicationName = applicationNameSetting.Value;
+                    }
+                }
+            }
+
             return applicationName;
-        }
-
-        public string GetKeyVaultUri()
-        {
-            var keyVaultUri = Environment.GetEnvironmentVariable("KEYVAULT_URI");
-            return keyVaultUri;
-        }
-
-        public string GetGitHubAppPrivateKeyName()
-        {
-            var gitHubAppPrivateKeyName = Environment.GetEnvironmentVariable("KEYVAULT_GITHUBAPP_KEY_NAME");
-            return gitHubAppPrivateKeyName;
-        }
-
-        public string GetGitHubAppWebhookSecretName()
-        {
-            var gitHubAppWebhookSecretName = Environment.GetEnvironmentVariable("GITHUBAPP_WEBHOOK_SECRET");
-            return gitHubAppWebhookSecretName;
-        }
-
-        public string GetDistributedLockStorageUri()
-        {
-            var distributedLockStorageUri = Environment.GetEnvironmentVariable("DISTRIBUTED_LOCK_STORAGE_URI");
-            return distributedLockStorageUri;
-        }
-
-        public string GetDistributedLockContainerName()
-        {
-            var distributedLockContainerName = Environment.GetEnvironmentVariable("DISTRIBUTED_LOCK_CONTAINER_NAME");
-            return distributedLockContainerName;
         }
     }
 }

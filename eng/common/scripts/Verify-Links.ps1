@@ -203,7 +203,7 @@ function CheckLink ([System.Uri]$linkUri)
     }
      # Check if link uri includes locale info.
     if ($linkUri -match $locale) {
-      LogWarning "DO NOT include locale $locale information in links: $linkUri. Check here for more infomation: https://aka.ms/azsdk/guideline/links"
+      LogWarning "DO NOT include locale $locale information in links: $linkUri. Check here for more information: https://aka.ms/azsdk/guideline/links"
       $linkValid = $false
     }
   }

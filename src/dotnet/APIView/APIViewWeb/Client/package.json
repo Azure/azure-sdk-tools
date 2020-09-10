@@ -26,7 +26,6 @@
     "css-loader": "^3.2.0",
     "eslint": "^5.16.0",
     "eslint-plugin-vue": "^5.0.0",
-    "mark.js": "^8.11.1",
     "mini-css-extract-plugin": "^0.8.0",
     "sass": "^1.19.0",
     "sass-loader": "^8.0.0",

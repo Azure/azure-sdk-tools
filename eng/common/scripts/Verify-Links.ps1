@@ -17,7 +17,7 @@ param (
   [string] $branchReplaceRegex = "^(https://github.com/.*/(?:blob|tree)/)master(/.*)$",
   # the substitute branch name or SHA commit
   [string] $branchReplacementName = "",
-  # flag to allow checking against azure sdk link guidance.
+  # flag to allow checking against azure sdk link guidance. Check link guidance here: https://aka.ms/azsdk/guideline/links
   [bool] $checkLinkGuidance = $false
 )
 
@@ -198,12 +198,12 @@ function CheckLink ([System.Uri]$linkUri)
   if ($checkLinkGuidance) {
     # Check if the url is relative links
     if (!$linkUri.IsAbsoluteUri) {
-      LogWarning "DO NOT use relative link $linkUri. Please use absolute link instead."
+      LogWarning "DO NOT use relative link $linkUri. Please use absolute link instead. Check here for more infomation: https://aka.ms/azsdk/guideline/links"
       $linkValid = $false
     }
      # Check if link uri includes locale info.
     if ($linkUri -match $locale) {
-      LogWarning "DO NOT include locale $locale information in links: $linkUri."
+      LogWarning "DO NOT include locale $locale information in links: $linkUri. Check here for more infomation: https://aka.ms/azsdk/guideline/links"
       $linkValid = $false
     }
   }

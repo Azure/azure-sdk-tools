@@ -198,7 +198,7 @@ function CheckLink ([System.Uri]$linkUri)
   if ($checkLinkGuidance) {
     # Check if the url is relative links
     if (!$linkUri.IsAbsoluteUri) {
-      LogWarning "DO NOT use relative link $linkUri. Please use absolute link instead. Check here for more infomation: https://aka.ms/azsdk/guideline/links"
+      LogWarning "DO NOT use relative link $linkUri. Please use absolute link instead. Check here for more information: https://aka.ms/azsdk/guideline/links"
       $linkValid = $false
     }
      # Check if link uri includes locale info.

@@ -38,7 +38,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
             this.repositoryConfigurationProvider = repositoryConfigurationProvider;
             this.secretClient = secretClient;
         }
-        
+
         public IGlobalConfigurationProvider globalConfigurationProvider;
         public IGitHubClientProvider gitHubClientProvider;
         private IRepositoryConfigurationProvider repositoryConfigurationProvider;
@@ -49,13 +49,26 @@ namespace Azure.Sdk.Tools.CheckEnforcer
         {
             await Policy
                 .Handle<AbuseException>()
+                .Or<RateLimitExceededException>()
                 .RetryAsync(3, async (ex, retryCount) =>
                 {
-                    logger.LogWarning("Abuse exception detected, attempting retry.");
-                    var abuseEx = (AbuseException)ex;
+                    TimeSpan retryDelay = TimeSpan.FromSeconds(10); // Default.
 
-                    logger.LogInformation("Waiting for {seconds} before retrying.", abuseEx.RetryAfterSeconds);
-                    await Task.Delay(TimeSpan.FromSeconds((double)abuseEx.RetryAfterSeconds));
+                    switch (ex)
+                    {
+                        case AbuseException abuseException:
+                            logger.LogWarning("Abuse exception detected, attempting retry.");
+                            retryDelay = TimeSpan.FromSeconds((double)abuseException.RetryAfterSeconds);
+                            break;
+
+                        case RateLimitExceededException rateLimitExceededException:
+                            logger.LogWarning("Rate limit exception detected, attempting retry.");
+                            retryDelay = rateLimitExceededException.GetRetryAfterTimeSpan();
+                            break;
+                    }
+
+                    logger.LogInformation("Waiting for {seconds} before retrying.", retryDelay.TotalSeconds);
+                    await Task.Delay(retryDelay);
                 })
                 .ExecuteAsync(async () =>
                 {

@@ -2,10 +2,6 @@
   const searchBox = $("#searchBox");
   const context = $(".review-name") as any;
 
-  // make the search box the initial focused element so users can just start typing once page loads,
-  // but only on the initial load
-  searchBox.focus();
-
   // if already populated from navigating back, filter again
   if (searchBox.val()) {
     filter();
@@ -27,18 +23,4 @@
       });
     }
   }
-  //$(window).on("beforeunload", e => {
-  //  const searchText = (searchBox.val() as string).toUpperCase();
-  //  if (searchText) {
-  //    const form = <HTMLFormElement><any>$("#filter");
-  //    let serializedForm = form.serializeArray();
-  //    serializedForm.push({ name: "filter", value: searchText });
-  //    $.ajax({
-  //      type: "POST",
-  //      url: form.prop("action"),
-  //      data: $.param(serializedForm)
-  //    });
-  //  }
-  //  //e.preventDefault();
-  //});
 });

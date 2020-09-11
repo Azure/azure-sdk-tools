@@ -2,9 +2,9 @@ param (
   $TargetDirectory, # should be in relative form from root of repo. EG: sdk/servicebus
   $RootDirectory, # ideally $(Build.SourcesDirectory)
   $AuthToken,
-  $OwningUsers = "", # target devops output variable
-  $OwningTeams = "",
-  $OwningLabels = ""
+  $VsoOwningUsers = "", # target devops output variable
+  $VsoOwningTeams = "",
+  $VsoOwningLabels = ""
 )
 $target = $TargetDirectory.ToLower().Trim("/")
 $codeOwnersLocation = Join-Path $RootDirectory -ChildPath ".github/CODEOWNERS"
@@ -16,7 +16,26 @@ if (!(Test-Path $codeOwnersLocation)) {
 }
 
 $codeOwnersContent = Get-Content $codeOwnersLocation
-$previousLine
+
+function VerifyAlias($APIUrl)
+{
+  if ($AuthToken) {
+    $headers = @{
+      Authorization = "bearer $AuthToken"
+    }
+  }
+  try
+  {
+    $response = Invoke-RestMethod -Headers $headers $APIUrl
+  }
+  catch 
+  {
+    Write-Host "Invoke-RestMethod ${APIUrl} failed with exception:`n$_"
+    Write-Host "This might be because a team alias was used for user API request or vice versa."
+    return $false
+  }
+  return $true
+}
 
 foreach ($contentLine in $codeOwnersContent) {
   if (-not $contentLine.StartsWith("#") -and $contentLine){
@@ -28,9 +47,9 @@ foreach ($contentLine in $codeOwnersContent) {
     $aliases = ($splitLine[1..$($splitLine.Length)] | ? { $_.StartsWith("@") } | % { return $_.substring(1) }) -join ","
     $labels = ""
 
-    if ($null -ne $previousLine -and $previousLine.StartsWith("# PRLabel:"))
+    if ($null -ne $previousLine -and $previousLine.Contains("PRLabel:"))
     {
-      $previousLine = $previousLine.Replace("# PRLabel: ","")
+      $previousLine = $previousLine.substring($previousLine.IndexOf(':') + 1)
       $splitPrevLine = $previousLine -split "%" 
       $labels = ($splitPrevLine[1..$($splitPrevLine.Length)] | % { return $_.Trim() }) -join ","
     }
@@ -48,54 +67,51 @@ if ($results) {
   $users
   $teams
 
-  if ($AuthToken) {
-    $headers = @{
-      Authorization = "bearer $AuthToken"
-    }
-  }
-
   foreach ($str in $aliases)
   {
     $usersApiUrl = "https://api.github.com/users/$str"
-    try
+    if (VerifyAlias -APIUrl $usersApiUrl)
     {
-      $response = Invoke-RestMethod -Headers $headers $usersApiUrl
       if ($users) { $users += ("," + $str) } else { $users += $str }
     }
-    catch {
-      if ($_.Exception.Response.StatusCode.Value__ -eq 404) # Consider it a team Alias
+    else {
+      if ($str.IndexOf('/') -ne -1) # Check if it's a team alias e.g. Azure/azure-sdk-eng
       {
-        if ($teams) { $teams += ("," + $str) } else { $teams += $str }
+        $org = $str.substring(0, $str.IndexOf('/'))
+        $team_slug = $str.substring($str.IndexOf('/') + 1)
+        $teamApiUrl =  "https://api.github.com/orgs/$org/teams/$team_slug"
+        if (VerifyAlias -APIUrl $teamApiUrl)
+        {
+          if ($teams) { $teams += ("," + $str) } else { $teams += $str }
+          continue
+        }
       }
-      else{
-        LogError "Invoke-RestMethod ${usersApiUrl} failed with exception:`n$_"
-        exit 1
-      }
+      Write-Host "Alias ${str} is neither a recognized github user nor a team"
     }
   }
 
-  if ($OwningUsers) {
-    $presentOwningUsers = [System.Environment]::GetEnvironmentVariable($OwningUsers)
+  if ($VsoOwningUsers) {
+    $presentOwningUsers = [System.Environment]::GetEnvironmentVariable($VsoOwningUsers)
     if ($presentOwningUsers) { 
       $users += ",$presentOwningUsers"
     }
-    Write-Host "##vso[task.setvariable variable=$OwningUsers;]$users"
+    Write-Host "##vso[task.setvariable variable=$VsoOwningUsers;]$users"
   }
 
-  if ($OwningTeams) {
-    $presentOwningTeams = [System.Environment]::GetEnvironmentVariable($OwningTeams)
+  if ($VsoOwningTeams) {
+    $presentOwningTeams = [System.Environment]::GetEnvironmentVariable($VsoOwningTeams)
     if ($presentOwningTeams) { 
       $teams += ",$presentOwningTeams"
     }
-    Write-Host "##vso[task.setvariable variable=$OwningTeams;]$teams"
+    Write-Host "##vso[task.setvariable variable=$VsoOwningTeams;]$teams"
   }
 
-  if ($OwningLabels) {
-    $presentOwningLabels = [System.Environment]::GetEnvironmentVariable($OwningLabels)
+  if ($VsoOwningLabels) {
+    $presentOwningLabels = [System.Environment]::GetEnvironmentVariable($VsoOwningLabels)
     if ($presentOwningLabels) { 
       $labels += ",$presentOwningLabels"
     }
-    Write-Host "##vso[task.setvariable variable=$OwningLabels;]$($result.Labels)"
+    Write-Host "##vso[task.setvariable variable=$VsoOwningLabels;]$($result.Labels)"
   }
 
   return @{ Users = $users; Teams = $teams; Labels = $results.Labels }

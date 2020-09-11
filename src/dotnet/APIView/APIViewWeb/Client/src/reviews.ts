@@ -1,6 +1,10 @@
 ﻿$(() => {
   const searchBox = $("#searchBox");
 
+  // clear the filter so we don't have to deal with the case of a user navigating backwards and
+  // the reviews not matching. TODO it would be nice to handle this case on the server at some point.
+  searchBox.val("");
+
   // make the search box the initial focused element so users can just start typing once page loads
   searchBox.focus();
 

@@ -11,6 +11,10 @@
             <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#uploadModel">Create review</button>
         </div>
 
+        <div class="float-left pl-2">
+            <input type="text" class="form-control" id="searchBox" placeholder="Filter by review name">
+        </div>
+
         <div class="btn-group float-right">
             <a class="btn btn-secondary" active-if="!@Model.Closed" asp-route-closed="false">Open</a>
             <a class="btn btn-secondary" active-if="@Model.Closed" asp-route-closed="true">Closed</a>
@@ -135,27 +139,27 @@
     <tbody>
         @foreach (var assembly in Model.Assemblies)
         {
-        <tr>
-            <td>
-                <a asp-page="./Review" asp-route-id="@assembly.ReviewId">@assembly.DisplayName</a>
-            </td>
-            <td>
-                <a username="@assembly.Author">@assembly.Author</a>
-            </td>
-            <td>
-                <span date="@assembly.LastUpdated.ToLocalTime()"></span>
-            </td>
-            @if (assembly.Author == User.GetGitHubLogin())
+            <tr>
+                <td>
+                    <a class="review-name" asp-page="./Review" asp-route-id="@assembly.ReviewId">@assembly.DisplayName</a>
+                </td>
+                <td>
+                    <a username="@assembly.Author">@assembly.Author</a>
+                </td>
+                <td>
+                    <span date="@assembly.LastUpdated.ToLocalTime()"></span>
+                </td>
+                @if (assembly.Author == User.GetGitHubLogin())
                 {
-            <td>
-                <a asp-page="./Delete" asp-route-id="@assembly.ReviewId">Delete</a>
-            </td>
+                    <td>
+                        <a asp-page="./Delete" asp-route-id="@assembly.ReviewId">Delete</a>
+                    </td>
                 }
                 else
                 {
-            <td></td>
+                    <td></td>
                 }
-        </tr>
+            </tr>
         }
     </tbody>
 </table>

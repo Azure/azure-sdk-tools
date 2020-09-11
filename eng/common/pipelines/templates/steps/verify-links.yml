@@ -4,10 +4,10 @@ parameters:
   WorkingDirectory: "$(System.DefaultWorkingDirectory)"
   ScriptDirectory: "eng/common/scripts"
   Urls: "$(dir -r -i *.md)"
-  Recursive: $False, 
+  Recursive: $false, 
   Branchreplaceregex: "$(System.PullRequest.SourceRepositoryURI)"
   Branchreplacementname: "$(System.PullRequest.SourceCommitId)"
-  Checklinkguidance: $True
+  Checklinkguidance: $true
 steps:
   - task: PowerShell@2
     displayName: Link verification check

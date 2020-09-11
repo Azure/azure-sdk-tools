@@ -24,15 +24,19 @@ namespace ApiView
             string currentId = null;
             bool isDocumentation = false;
             bool isDeprecatedToken = false;
+            //This will be set to true by default when a new line starts and 
+            // set to false when any non documentation token is found within the line
+            bool isLineAllDocumentation = false;
 
             foreach (var token in node)
             {
                 switch(token.Kind)
                 {
                     case CodeFileTokenKind.Newline:
-                        list.Add(new CodeLine(stringBuilder.ToString(), currentId));
+                        list.Add(new CodeLine(stringBuilder.ToString(), currentId, isLineAllDocumentation));
                         currentId = null;
                         stringBuilder.Clear();
+                        isLineAllDocumentation = true;
                         break;
 
                     case CodeFileTokenKind.DocumentRangeStart:
@@ -57,6 +61,10 @@ namespace ApiView
                             currentId = token.DefinitionId;
                         }
                         RenderToken(token, stringBuilder, isDeprecatedToken, isDocumentation);
+                        if(!isDocumentation)
+                        {
+                            isLineAllDocumentation = false;
+                        }
                         break;
                 }                
             }

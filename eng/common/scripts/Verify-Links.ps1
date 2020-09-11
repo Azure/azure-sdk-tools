@@ -198,6 +198,7 @@ function CheckLink ([System.Uri]$linkUri)
   if ($checkLinkGuidance) {
     if (!$linkUri.ToString()) {
       LogWarning "Here is empty link."
+      $checkedLinks[$linkUri] = $true
       return $true
     }
     # Check if the url is relative links

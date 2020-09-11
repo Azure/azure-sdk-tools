@@ -1,28 +1,44 @@
 ﻿$(() => {
   const searchBox = $("#searchBox");
+  const context = $(".review-name") as any;
 
-  // clear the filter so we don't have to deal with the case of a user navigating backwards and
-  // the reviews not matching. TODO it would be nice to handle this case on the server at some point.
-  searchBox.val("");
-
-  // make the search box the initial focused element so users can just start typing once page loads
+  // make the search box the initial focused element so users can just start typing once page loads,
+  // but only on the initial load
   searchBox.focus();
 
-  const context = $(".review-name") as any;
+  // if already populated from navigating back, filter again
+  if (searchBox.val()) {
+    filter();
+  }
+  
   searchBox.on("input", function () {
-    setTimeout(function () {
-      // highlight matching text using mark.js framework and hide rows that don't match
-      const searchText = (searchBox.val() as string).toUpperCase();
-      context.closest("tr").show().unmark();
-      if (searchText) {
-        context.mark(searchText, {
-          done: function () {
-            context.not(":has(mark)").closest("tr").hide();
-          }
-        });
-      }
-    },
-      // use a timeout to prevent bad perf for holding down backspace or really fast typing
-      200);
+    setTimeout(filter, 300);
   });
+
+  function filter() {
+    // highlight matching text using mark.js framework and hide rows that don't match
+    const searchText = (searchBox.val() as string).toUpperCase();
+    context.closest("tr").show().unmark();
+    if (searchText) {
+      context.mark(searchText, {
+        done: function () {
+          context.not(":has(mark)").closest("tr").hide();
+        }
+      });
+    }
+  }
+  //$(window).on("beforeunload", e => {
+  //  const searchText = (searchBox.val() as string).toUpperCase();
+  //  if (searchText) {
+  //    const form = <HTMLFormElement><any>$("#filter");
+  //    let serializedForm = form.serializeArray();
+  //    serializedForm.push({ name: "filter", value: searchText });
+  //    $.ajax({
+  //      type: "POST",
+  //      url: form.prop("action"),
+  //      data: $.param(serializedForm)
+  //    });
+  //  }
+  //  //e.preventDefault();
+  //});
 });

@@ -35,7 +35,11 @@
                     {
                         @lineDiagnostic.Text
                     }
-                    <a href="@lineDiagnostic.HelpLinkUri">Details</a>
+
+                    @if (!string.IsNullOrEmpty(lineDiagnostic.HelpLinkUri))
+                    {
+                        <a href="@lineDiagnostic.HelpLinkUri">Details</a>
+                    }
                 </p>
             }
         </td>

@@ -196,6 +196,10 @@ function CheckLink ([System.Uri]$linkUri)
   }
   
   if ($checkLinkGuidance) {
+    if (!$linkUri.ToString()) {
+      LogWarning "Here is empty link."
+      return
+    }
     # Check if the url is relative links
     if (!$linkUri.IsAbsoluteUri -and !$linkUri.ToString().StartsWith("#")) {
       LogWarning "DO NOT use relative link $linkUri. Please use absolute link instead. Check here for more infomation: https://aka.ms/azsdk/guideline/links"

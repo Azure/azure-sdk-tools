@@ -1,1 +1,2 @@
 azure-cosmos
+azure-storage-blob

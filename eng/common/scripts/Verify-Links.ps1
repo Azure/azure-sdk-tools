@@ -24,7 +24,7 @@ param (
 $ProgressPreference = "SilentlyContinue"; # Disable invoke-webrequest progress dialog
 # Regex of the locale keywords.
 $locale = "/en-us/"
-
+$emptyLinkMessage = "There is at least one empty link. Please check."
 function NormalizeUrl([string]$url){
   if (Test-Path $url) {
     $url = "file://" + (Resolve-Path $url).ToString();
@@ -136,6 +136,14 @@ function ParseLinks([string]$baseUri, [string]$htmlContent)
 
 function CheckLink ([System.Uri]$linkUri)
 {
+  if(!$linkUri.ToString().Trim()) {
+    LogWarning "Found Empty link. Please use absolute link instead. Check here for more infomation: https://aka.ms/azsdk/guideline/links"
+    if ($checkedLinks.ContainsKey($emptyLinkMessage)) {
+      return $false
+    }
+    $checkedLinks[$emptyLinkMessage] = $false
+    return $false
+  }
   if ($checkedLinks.ContainsKey($linkUri)) { 
     if (!$checkedLinks[$linkUri]) {
       LogWarning "broken link $linkUri"
@@ -196,11 +204,6 @@ function CheckLink ([System.Uri]$linkUri)
   }
   
   if ($checkLinkGuidance) {
-    if (!$linkUri.ToString()) {
-      LogWarning "Here is empty link."
-      $checkedLinks[$linkUri] = $true
-      return $true
-    }
     # Check if the url is relative links
     if (!$linkUri.IsAbsoluteUri -and !$linkUri.ToString().StartsWith("#")) {
       LogWarning "DO NOT use relative link $linkUri. Please use absolute link instead. Check here for more infomation: https://aka.ms/azsdk/guideline/links"

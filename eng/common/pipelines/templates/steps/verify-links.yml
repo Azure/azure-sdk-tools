@@ -5,7 +5,7 @@ parameters:
   ScriptDirectory: "eng/common/scripts"
   Urls: "$(dir -r -i *.md)"
   Recursive: false 
-  Branchreplaceregex: "^($(System.PullRequest.SourceRepositoryURI).*/(?:blob|tree)/)master(/.*)$"
+  Branchreplaceregex: "$(System.PullRequest.SourceRepositoryURI)"
   Branchreplacementname: "$(System.PullRequest.SourceCommitId)"
   Checklinkguidance: true
 steps:
@@ -20,7 +20,7 @@ steps:
         -rootUrl "file://${{ parameters.WorkingDirectory }}/${{ parameters.Directory }}" 
         -recursive: ${{ parameters.Recursive }} 
         -ignoreLinksFile ${{ parameters.IgnoreLinksFile }}
-        -branchReplaceRegex ${{ parameters.Branchreplaceregex }}
+        -branchReplaceRegex "^(${{ parameters.Branchreplaceregex }}.*/(?:blob|tree)/)master(/.*)$"
         -branchReplacementName ${{ parameters.Branchreplacementname }}
         -devOpsLogging: $true
         -checkLinkGuidance: ${{ parameters.Checklinkguidance }}

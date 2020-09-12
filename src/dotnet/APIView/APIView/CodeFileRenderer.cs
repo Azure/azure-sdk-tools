@@ -27,7 +27,7 @@ namespace ApiView
             bool isDeprecatedToken = false;
             //This will be set to true by default when a new line starts and 
             // set to false when any non documentation token is found within the line
-            bool isLineAllDocumentation = false;
+            bool isLineAllDocumentation = true;
 
             foreach (var token in node)
             {

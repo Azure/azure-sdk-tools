@@ -55,7 +55,7 @@ def restore_data_from_backup(connection_string, dest_url, dest_key, db_name):
                 dest_container_client.upsert_item(row)
             logging.info("Records in cosmosdb source container {} is synced successfully to destination container.".format(cosmos_container_name))
         else:
-            logging.info("Destionation DB container is in sync with source cosmosDB")
+            logging.info("Destination DB container is in sync with source cosmosDB")
 
 
 def get_backup_contents(container_client, blob_name):

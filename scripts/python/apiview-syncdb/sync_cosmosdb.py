@@ -1,9 +1,14 @@
 import sys
 import argparse
+import codecs
+from datetime import datetime
+import json
 import os
 import logging
 import traceback
+from ast import literal_eval
 from azure.cosmos import CosmosClient
+from azure.storage.blob import BlobServiceClient
 
 logging.getLogger().setLevel(logging.INFO)
 http_logger = logging.getLogger("azure.core.pipeline.policies.http_logging_policy")
@@ -14,16 +19,56 @@ http_logger.setLevel(logging.WARNING)
 # and identify ID of missing records. Script read record from source and insert into destination DB for all missing records.
 
 
-COSMOS_SELECT_ID_PARTITIONKEY_QUERY = "select c.id, c.{0} as partitionKey from {1} c"
-COSMOS_SELECT_WHERE_ID_CLAUSE = "select * from {0} c where c.id='{1}'"
+COSMOS_SELECT_ID_PARTITIONKEY_QUERY = "select c.id, c.{0} as partitionKey, c._ts from {1} c"
+
+COSMOS_CONTAINERS = ["Reviews", "Comments", ]
+BACKUP_CONTAINER = "backups"
+BLOB_NAME_PATTERN ="cosmos/{0}/{1}"
+
+
+
+def restore_data_from_backup(connection_string, dest_url, dest_key, db_name):    
+
+    dest_db_client = get_db_client(dest_url, dest_key, db_name)
+    
+    blob_service_client = BlobServiceClient.from_connection_string(connection_string)
+    container_client = blob_service_client.get_container_client(BACKUP_CONTAINER)
+    for cosmos_container_name in COSMOS_CONTAINERS:
+        # Load source records from backup file
+        source_contents = get_backup_contents(container_client, "{}.json".format(cosmos_container_name))
+        logging.info("Number of records in {0} backup:{1}".format(cosmos_container_name, len(source_contents)))
+
+        # get records from destination DB
+        dest_container_client = dest_db_client.get_container_client(cosmos_container_name)
+        dest_records = fetch_records(dest_container_client, cosmos_container_name)
+
+        # find missing or updated records
+        # updated records has new timestamp value in column(_ts)
+        missing_records = [
+            x for x in source_contents if x['id'] not in dest_records or x['_ts'] > dest_records[x['id']][1]
+        ]
+        if missing_records:
+            logging.info(
+                "Found {} missing/updated rows in source DB".format(len(missing_records))
+            )
+            for row in missing_records:
+                dest_container_client.upsert_item(row)
+            logging.info("Records in cosmosdb source container {} is synced successfully to destination container.".format(cosmos_container_name))
+        else:
+            logging.info("Destination DB container is in sync with source cosmosDB")
+
+
+def get_backup_contents(container_client, blob_name):
+    backup_date = datetime.now().strftime("%y%m%d")
+    blob_path = BLOB_NAME_PATTERN.format(backup_date, blob_name)
+    contents = codecs.decode(container_client.get_blob_client(blob_path).download_blob().content_as_bytes(), 'utf-8-sig')
+    records = json.loads(contents)
+    return records
+     
+
 
 # Create cosmosdb clients
-def get_db_clients(source_url, dest_url, source_key, dest_key, db_name):
-    # Create cosmosdb client for source db
-    source_cosmos_client = CosmosClient(source_url, credential=source_key)
-    if not source_cosmos_client:
-        logging.error("Failed to create cosmos client for source db")
-        exit(1)
+def get_db_client(dest_url, dest_key, db_name):
 
     # Create cosmosdb client for destination db
     dest_cosmos_client = CosmosClient(dest_url, credential=dest_key)
@@ -31,79 +76,17 @@ def get_db_clients(source_url, dest_url, source_key, dest_key, db_name):
         logging.error("Failed to create cosmos client for destination db")
         exit(1)
 
-    logging.info("Created cosmos client for source and destination cosmosdb")
+    logging.info("Created cosmos client for destination cosmosdb")
     # Create database client object using CosmosClient
-    src_db_client = None
     dest_db_client = None
     try:
-        src_db_client = source_cosmos_client.get_database_client(db_name)
         dest_db_client = dest_cosmos_client.get_database_client(db_name)
         logging.info("Created database clients")
     except:
         logging.error("Failed to create databae client using CosmosClient")
         traceback.print_exc()
         exit(1)
-    return src_db_client, dest_db_client
-
-
-# Copy all records in containers from source cosmosDB to destination DB
-def sync_database(src_db_client, dest_db_client):
-    # Find containers in source cosmosDB
-    container_names = []
-    try:
-        container_names = [c["id"] for c in src_db_client.list_containers()]
-    except:
-        logging.error("Failed to get container list from cosmosDB client")
-        traceback.print_exc()
-
-    if not container_names:
-        logging.error(
-            "Container is not found in source cosmosDB. Please check database name parameter"
-        )
-        exit(1)
-
-    # Sync records for each containers
-    for container in container_names:
-        # Sync records in container
-        logging.info("Syncing records in containers:{}".format(container))
-        sync_database_container(src_db_client, dest_db_client, container)
-
-
-# This function fetches records in both source and destination DB and
-# identifies missing records in destination side
-# One future enhancement is to use point in time reference to fetch only new data
-def sync_database_container(src_db_client, dest_db_client, container_name):
-    # Find records and insert missing records into dest container
-    src_container_client = None
-    dest_container_client = None
-    try:
-        src_container_client = src_db_client.get_container_client(container_name)
-        dest_container_client = dest_db_client.get_container_client(container_name)
-    except:
-        logging.error("Failed to get container client for {}".format(container_name))
-        traceback.print_exc()
-        exit(1)
-
-    source_records = fetch_records(src_container_client, container_name)
-    dest_records = fetch_records(dest_container_client, container_name)
-    missing_records = dict(
-        [(x, source_records[x]) for x in source_records.keys() if x not in dest_records]
-    )
-    if missing_records:
-        logging.info(
-            "Found {} missing rows in destination DB".format(len(missing_records))
-        )
-        logging.info("Copying missing records....")
-        copy_missing_records(
-            src_container_client, dest_container_client, missing_records, container_name
-        )
-        logging.info(
-            "Records in cosmosdb source container {} is synced successfully to destination container.".format(
-                container_name
-            )
-        )
-    else:
-        logging.info("Destionation DB container is in sync with source cosmosDB")
+    return dest_db_client
 
 
 # Fetch records in a database container from given client
@@ -125,56 +108,12 @@ def fetch_records(container_client, container_name):
         for row in container_client.query_items(
             query=query_string, enable_cross_partition_query=True
         ):
-            records[row["id"]] = row["partitionKey"]
+            records[row["id"]] = row["partitionKey"], row["_ts"]
     except:
         logging.error("Failed to query database")
         traceback.print_exc()
         exit(1)
     return records
-
-
-# Method to fetch row for each missing id from source and insert into destination db
-def copy_missing_records(
-    src_container_client, dest_container_client, missing_records, container_name
-):
-
-    for row_id in missing_records:
-        logging.debug("Copying '{0}'".format(row_id))
-        insert_row(
-            dest_container_client,
-            container_name,
-            get_row(
-                src_container_client, container_name, row_id, missing_records[row_id]
-            ),
-        )
-
-
-# Read a row using row ID and partition key
-def get_row(container_client, container_name, row_id, partitionKey):
-    try:
-        return container_client.read_item(row_id, partitionKey)
-    except:
-        logging.error(
-            "Failed to read row with {0} from container {1}".format(
-                row_id, container_name
-            )
-        )
-        traceback.print_exc()
-        exit(1)
-
-
-# Insert row into container
-def insert_row(container_client, container_name, row):
-    try:
-        container_client.upsert_item(row)
-    except:
-        logging.error(
-            "Failed to insert row with {0} to container {1}".format(
-                row["id"], container_name
-            )
-        )
-        traceback.print_exc()
-        exit(1)
 
 
 if __name__ == "__main__":
@@ -183,36 +122,27 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--source_url",
+        "--backup-connection-string",
         required=True,
-        help=("URL to source cosmosdb"),
+        help=("Connection string to backup storage account"),
     )
     parser.add_argument(
-        "--source_key",
-        required=True,
-        help=("Source cosmosdb account key"),
-    )
-    parser.add_argument(
-        "--dest_url",
+        "--dest-url",
         required=True,
         help=("URL to destination cosmosdb"),
     )
     parser.add_argument(
-        "--dest_key",
+        "--dest-key",
         required=True,
         help=("Destination cosmosdb account key"),
     )
     parser.add_argument(
-        "--db_name",
+        "--db-name",
         required=True,
         help=("Database name in cosmosdb"),
     )
 
     args = parser.parse_args()
 
-    logging.info("Creating cosmosDB clients...")
-    src_db_client, dest_db_client = get_db_clients(
-        args.source_url, args.dest_url, args.source_key, args.dest_key, args.db_name
-    )
     logging.info("Syncing database..")
-    sync_database(src_db_client, dest_db_client)
+    restore_data_from_backup(args.backup_connection_string, args.dest_url, args.dest_key, args.db_name)

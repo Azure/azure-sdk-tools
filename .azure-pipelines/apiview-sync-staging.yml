@@ -11,7 +11,7 @@ stages:
     jobs:
       - job: 'BlobCopy'
         pool:
-          vmImage: 'vs2017-win2016'
+          vmImage: 'windows-2019'
 
         steps:
         - pwsh: |
@@ -29,3 +29,13 @@ stages:
             workingDirectory: $(Build.BinariesDirectory)
             displayName: Copy Blobs in ${{c}}
 
+        - task: UsePythonVersion@0
+          displayName: 'Use Python 3.6'
+          inputs:
+            versionSpec: 3.6
+
+        - script: |
+            cd $(Build.SourcesDirectory)/scripts/python/apiview-syncdb/
+            pip install -r requirements.txt
+            python ./sync_cosmosdb.py --dest-url $(apiview-staging-cosmos-url) --dest-key $(apiview-staging-cosmos-key) --db-name $(apiview-cosmosdb-name) --backup-connection-string $(apiview-cosmos-backup-connection)
+          displayName: Sync CosmosDB

@@ -9,6 +9,8 @@ namespace ApiView
 {
     public class CodeFileRenderer
     {
+        private const string DOCUMENTATION_SPAN_START = "<span class=\"documentation\">";
+        private const string DOCUMENTATION_SPAN_END = "</span>";
         public static CodeFileRenderer Instance = new CodeFileRenderer();
 
         public CodeLine[] Render(CodeFile file)
@@ -24,23 +26,39 @@ namespace ApiView
             string currentId = null;
             bool isDocumentation = false;
             bool isDeprecatedToken = false;
+            bool isDocumentationLine = false;
 
             foreach (var token in node)
             {
                 switch(token.Kind)
                 {
                     case CodeFileTokenKind.Newline:
-                        list.Add(new CodeLine(stringBuilder.ToString(), currentId));
+                        //Close documentation span if within doc range
+                        if (isDocumentation)
+                        {
+                            stringBuilder.Append(DOCUMENTATION_SPAN_END);
+                        }
+                        list.Add(new CodeLine(stringBuilder.ToString(), currentId, isDocumentationLine));
                         currentId = null;
                         stringBuilder.Clear();
+                        //Start documentation span if tokens still in documentation range
+                        if (isDocumentation)
+                        {
+                            stringBuilder.Append(DOCUMENTATION_SPAN_START);
+                        }
+                        //Reset flag for line documentation. This will be set to false if atleast one token is not a doc
+                        isDocumentationLine = isDocumentation;
                         break;
 
                     case CodeFileTokenKind.DocumentRangeStart:
                         isDocumentation = true;
+                        isDocumentationLine = (stringBuilder.Length == 0);
+                        stringBuilder.Append(DOCUMENTATION_SPAN_START);
                         break;
 
                     case CodeFileTokenKind.DocumentRangeEnd:
                         isDocumentation = false;
+                        stringBuilder.Append(DOCUMENTATION_SPAN_END);
                         break;
 
                     case CodeFileTokenKind.DeprecatedRangeStart:
@@ -56,13 +74,17 @@ namespace ApiView
                         {
                             currentId = token.DefinitionId;
                         }
-                        RenderToken(token, stringBuilder, isDeprecatedToken, isDocumentation);
+                        RenderToken(token, stringBuilder, isDeprecatedToken);
+                        if (!isDocumentation)
+                        {
+                            isDocumentationLine = false;
+                        }
                         break;
                 }                
             }
         }
 
-        protected virtual void RenderToken(CodeFileToken token, StringBuilder stringBuilder, bool isDeprecatedToken, bool isDocumentation)
+        protected virtual void RenderToken(CodeFileToken token, StringBuilder stringBuilder, bool isDeprecatedToken)
         {
             if (token.Value != null)
             {

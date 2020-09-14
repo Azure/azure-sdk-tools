@@ -9,7 +9,7 @@
         DiffLineKind.Added => "code-added",
         _ => ""
     };
-    string documentationClass = Model.CodeLine.isLineAllDocumentation? "documentation": "";
+    string documentationClass = Model.CodeLine.IsDocumentationLine? "documentation": "";
 }
 
 <tr class="code-line @documentationClass" data-line-id="@(isRemoved ? string.Empty : Model.CodeLine.ElementId)">

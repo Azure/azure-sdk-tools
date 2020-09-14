@@ -9,9 +9,10 @@ namespace ApiView
 {
     public class CodeFileRenderer
     {
+        private const string DOCUMENTATION_SPAN_START = "<span class=\"documentation\">";
+        private const string DOCUMENTATION_SPAN_END = "</span>";
         public static CodeFileRenderer Instance = new CodeFileRenderer();
-        const string DOCUMENTATION_SPAN_START = "<span class=\"documentation\">";
-        const string DOCUMENTATION_SPAN_END = "</span>";
+
         public CodeLine[] Render(CodeFile file)
         {
             var list = new List<CodeLine>();
@@ -25,9 +26,7 @@ namespace ApiView
             string currentId = null;
             bool isDocumentation = false;
             bool isDeprecatedToken = false;
-            //This will be set to true by default when a new line starts and 
-            // set to false when any non documentation token is found within the line
-            bool isLineAllDocumentation = true;
+            bool isDocumentationLine = false;
 
             foreach (var token in node)
             {
@@ -35,24 +34,25 @@ namespace ApiView
                 {
                     case CodeFileTokenKind.Newline:
                         //Close documentation span if within doc range
-                        if(isDocumentation)
+                        if (isDocumentation)
                         {
                             stringBuilder.Append(DOCUMENTATION_SPAN_END);
                         }
-                        list.Add(new CodeLine(stringBuilder.ToString(), currentId, isLineAllDocumentation));
+                        list.Add(new CodeLine(stringBuilder.ToString(), currentId, isDocumentationLine));
                         currentId = null;
                         stringBuilder.Clear();
                         //Start documentation span if tokens still in documentation range
-                        if(isDocumentation)
+                        if (isDocumentation)
                         {
                             stringBuilder.Append(DOCUMENTATION_SPAN_START);
                         }
                         //Reset flag for line documentation. This will be set to false if atleast one token is not a doc
-                        isLineAllDocumentation = true;
+                        isDocumentationLine = isDocumentation;
                         break;
 
                     case CodeFileTokenKind.DocumentRangeStart:
                         isDocumentation = true;
+                        isDocumentationLine = (stringBuilder.Length == 0);
                         stringBuilder.Append(DOCUMENTATION_SPAN_START);
                         break;
 
@@ -75,9 +75,9 @@ namespace ApiView
                             currentId = token.DefinitionId;
                         }
                         RenderToken(token, stringBuilder, isDeprecatedToken);
-                        if(!isDocumentation)
+                        if (!isDocumentation)
                         {
-                            isLineAllDocumentation = false;
+                            isDocumentationLine = false;
                         }
                         break;
                 }                

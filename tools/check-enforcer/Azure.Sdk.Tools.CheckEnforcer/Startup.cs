@@ -36,19 +36,15 @@ namespace Azure.Sdk.Tools.CheckEnforcer
 
                 var keyVaultUri = new Uri($"https://{websiteResourceGroupEnvironmentVariable}.vault.azure.net");
                 builder.AddSecretClient(keyVaultUri);
+                
+                var configurationUri = new Uri($"https://{websiteResourceGroupEnvironmentVariable}.azconfig.io/");
+                builder.AddConfigurationClient(configurationUri);
 
                 // To inject the cryptography client with the extension helpers
                 // here we need to first find the Key ID.
                 var keyClient = new KeyClient(keyVaultUri, credential);
                 KeyVaultKey key = keyClient.GetKey("github-app-private-key");
                 builder.AddCryptographyClient(key.Id);
-            });
-
-            builder.Services.AddSingleton((builder) =>
-            {
-                var configurationUri = new Uri($"https://{websiteResourceGroupEnvironmentVariable}.azconfig.io/");
-                var configurationClient = new ConfigurationClient(configurationUri, credential);
-                return configurationClient;
             });
 
             builder.Services.AddSingleton<IGlobalConfigurationProvider, GlobalConfigurationProvider>();

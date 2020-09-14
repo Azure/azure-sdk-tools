@@ -57,19 +57,20 @@ namespace Azure.Sdk.Tools.CheckEnforcer
                     switch (ex)
                     {
                         case AbuseException abuseException:
+                            retryDelay = TimeSpan.FromSeconds((double)abuseException.RetryAfterSeconds);
                             logger.LogWarning("Abuse exception detected. Retry after seconds is: {retrySeconds}",
                                 abuseException.RetryAfterSeconds
                                 );
-                            retryDelay = TimeSpan.FromSeconds((double)abuseException.RetryAfterSeconds);
                             break;
 
                         case RateLimitExceededException rateLimitExceededException:
-                            logger.LogWarning(
-                                "Rate limit exception detected. Limit is: {limit}, reset is: {reset}",
-                                rateLimitExceededException.Limit,
-                                rateLimitExceededException.Reset
-                                );
                             retryDelay = rateLimitExceededException.GetRetryAfterTimeSpan();
+                            logger.LogWarning(
+                                "Rate limit exception detected. Limit is: {limit}, reset is: {reset}, retry seconds is: {retrySeconds}",
+                                rateLimitExceededException.Limit,
+                                rateLimitExceededException.Reset,
+                                retryDelay.TotalSeconds
+                                );
                             break;
                     }
 

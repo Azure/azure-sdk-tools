@@ -73,7 +73,6 @@ function GetAdjustedReadmeContent($pkgInfo, $lang){
 
     # only replace the version if the formatted header can be found
     $titleRegex = "(\# Azure .+? (?:client|plugin|shared) library for (?:JavaScript|Java|Python|\.NET|C))"
-    $titleRegex = "(\# Azure .+? (?:client|plugin|shared) library for (?:JavaScript|Java|Python|\.NET|C))"
     $fileTitle = ""
     if ($pkgInfo.ReadmeContent -match $titleRegex) {
       $fileContent = $pkgInfo.ReadmeContent -replace $titleRegex, "`${1} - Version $($pkgInfo.PackageVersion) `n"

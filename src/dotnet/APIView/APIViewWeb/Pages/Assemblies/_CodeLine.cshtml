@@ -27,7 +27,13 @@
         <td colspan="2">
             @foreach (var lineDiagnostic in Model.Diagnostics)
             {
-                <p>
+                string diagClass = lineDiagnostic.Level switch
+                {
+                    APIView.CodeDiagnosticLevel.Warning => "code-diagnostics-warn",
+                    APIView.CodeDiagnosticLevel.Info => "code-diagnostics-info",
+                    _ => "code-diagnostics-error"
+                };
+                <p class="@diagClass">
                     @if (lineDiagnostic.Text.StartsWith("DO"))
                     {
                         @:✅ <b>DO</b> @lineDiagnostic.Text.Substring(2)

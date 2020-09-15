@@ -446,13 +446,24 @@ code-inner {
 }
 
 /* DIAGNOSTICS */
-.code-diagnostics td {
-    border: 1px solid red;
-    background-color: lightpink;
+.code-diagnostics-error {
+    background-color: lightcoral;
+}
+
+.code-diagnostics-warn {
+    background-color: #ffe066;
+}
+
+.code-diagnostics-info {
+    background-color: lightskyblue;
 }
 
 .code-diagnostics p {
     margin: 0;
+}
+
+.code-diagnostics a {
+    font-weight: bold;
 }
 
 /* ICONS */

@@ -2,6 +2,7 @@ package com.azure.tools.apiview.processor;
 
 import com.azure.tools.apiview.processor.analysers.Analyser;
 import com.azure.tools.apiview.processor.model.Diagnostic;
+import com.azure.tools.apiview.processor.model.DiagnosticKind;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.azure.tools.apiview.processor.analysers.ASTAnalyser;
@@ -153,7 +154,10 @@ public class Main {
             analyser.analyse(allFiles);
         } else {
             apiListing.getTokens().add(new Token(LINE_ID_MARKER, "Error!", "error"));
-            apiListing.addDiagnostic(new Diagnostic("error", "Uploaded files should end with '-sources.jar', " +
+            apiListing.addDiagnostic(new Diagnostic(
+                    DiagnosticKind.ERROR,
+                    "error",
+                    "Uploaded files should end with '-sources.jar', " +
                     "as the APIView tool only works with source jar files, not compiled jar files. The uploaded file " +
                     "that was submitted to APIView was named " + inputFile.getName()));
         }

@@ -8,6 +8,8 @@ import com.github.javaparser.ast.Modifier;
 
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.makeId;
 
+import static com.azure.tools.apiview.processor.model.DiagnosticKind.*;
+
 public class ConsiderFinalClassDiagnosticRule implements DiagnosticRule {
 
     @Override
@@ -16,8 +18,10 @@ public class ConsiderFinalClassDiagnosticRule implements DiagnosticRule {
             if (type.isEnumDeclaration()) return;
             if (type.hasModifier(Modifier.Keyword.ABSTRACT)) return;
             if (!type.hasModifier(Modifier.Keyword.FINAL)) {
-                listing.addDiagnostic(new Diagnostic(makeId(type),
-                        "Consider making all classes final by default - only make non-final if subclassing is supported."));
+                listing.addDiagnostic(new Diagnostic(
+                    INFO,
+                    makeId(type),
+                    "Consider making all classes final by default - only make non-final if subclassing is supported."));
             }
         });
     }

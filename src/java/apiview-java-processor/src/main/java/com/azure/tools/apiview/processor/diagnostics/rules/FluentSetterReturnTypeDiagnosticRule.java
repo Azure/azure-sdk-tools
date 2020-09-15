@@ -8,6 +8,7 @@ import com.github.javaparser.ast.body.TypeDeclaration;
 
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.getPublicOrProtectedMethods;
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.makeId;
+import static com.azure.tools.apiview.processor.model.DiagnosticKind.*;
 
 public class FluentSetterReturnTypeDiagnosticRule implements DiagnosticRule {
 
@@ -30,8 +31,10 @@ public class FluentSetterReturnTypeDiagnosticRule implements DiagnosticRule {
                 .filter(method -> method.getNameAsString().startsWith("set"))
                 .forEach(method -> {
                     if (!method.getType().toString().equals(typeName)) {
-                        listing.addDiagnostic(new Diagnostic(makeId(method),
-                                "Setter methods in a @Fluent class must return the same type as the fluent type."));
+                        listing.addDiagnostic(new Diagnostic(
+                            ERROR,
+                            makeId(method),
+                            "Setter methods in a @Fluent class must return the same type as the fluent type."));
                     }
                 });
     }

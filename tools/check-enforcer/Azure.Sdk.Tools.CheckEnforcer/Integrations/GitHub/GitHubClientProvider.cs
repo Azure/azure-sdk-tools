@@ -114,6 +114,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
             var cachedInstallationToken = await cache.GetOrCreateAsync<Octokit.AccessToken>(installationTokenCacheKey, async (entry) =>
             {
                 var appClient = await GetApplicationClientAsync(cancellationToken);
+                await GitHubRateLimiter.WaitForGitHubCapacityAsync();
                 var installationToken = await appClient.GitHubApps.CreateInstallationToken(installationId);
                 return installationToken;
             });

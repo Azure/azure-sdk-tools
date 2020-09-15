@@ -76,7 +76,6 @@ function GetAdjustedReadmeContent($pkgInfo, $lang){
     $fileTitle = ""
     if ($pkgInfo.ReadmeContent -match $titleRegex) {
       $fileContent = $fileContent -replace $titleRegex, "`${0} - Version $($pkgInfo.PackageVersion) `n"
-      # The if block gurantee there is at least one match which starts with the format of "# Azure..."
       $fileTitle = $matches["filetitle"]
     }
     # Replace github master link with release tag.

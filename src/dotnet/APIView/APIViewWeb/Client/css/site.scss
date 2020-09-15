@@ -447,17 +447,14 @@ code-inner {
 
 /* DIAGNOSTICS */
 .code-diagnostics-error {
-    border: 1px solid red;
     background-color: lightcoral;
 }
 
 .code-diagnostics-warn {
-    border: 1px solid #ffcc00;
     background-color: #ffe066;
 }
 
 .code-diagnostics-info {
-    border: 1px solid blue;
     background-color: lightskyblue;
 }
 
@@ -468,6 +465,7 @@ code-inner {
 .code-diagnostics a {
     font-weight: bold;
 }
+
 /* ICONS */
 .icon {
     height: 16px;

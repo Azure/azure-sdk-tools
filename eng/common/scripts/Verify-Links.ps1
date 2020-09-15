@@ -1,5 +1,5 @@
 param (
-  # url list to verify links. Can either be a http address or a local file request. Local file paths support md and html files.
+  # url list to verify links. Can either be a http address or a local file request. Local file paths support md and html files.	
   [string[]] $urls,
   # file that contains a set of links to ignore when verifying
   [string] $ignoreLinksFile = "$PSScriptRoot/ignore-links.txt",
@@ -24,7 +24,7 @@ param (
 $ProgressPreference = "SilentlyContinue"; # Disable invoke-webrequest progress dialog
 # Regex of the locale keywords.
 $locale = "/en-us/"
-$emptyLinkMessage = "There is at least one empty link. Please check."
+$emptyLinkMessage = "There is at least one empty link in the page. Please replace with absolute link. Check here for more infomation: https://aka.ms/azsdk/guideline/links"
 function NormalizeUrl([string]$url){
   if (Test-Path $url) {
     $url = "file://" + (Resolve-Path $url).ToString();
@@ -138,10 +138,6 @@ function CheckLink ([System.Uri]$linkUri)
 {
   if(!$linkUri.ToString().Trim()) {
     LogWarning "Found Empty link. Please use absolute link instead. Check here for more infomation: https://aka.ms/azsdk/guideline/links"
-    if ($checkedLinks.ContainsKey($emptyLinkMessage)) {
-      return $false
-    }
-    $checkedLinks[$emptyLinkMessage] = $false
     return $false
   }
   if ($checkedLinks.ContainsKey($linkUri)) { 
@@ -204,7 +200,7 @@ function CheckLink ([System.Uri]$linkUri)
   }
   
   if ($checkLinkGuidance) {
-    # Check if the url is relative links
+    # Check if the url is relative links, suppress the archor link validation.
     if (!$linkUri.IsAbsoluteUri -and !$linkUri.ToString().StartsWith("#")) {
       LogWarning "DO NOT use relative link $linkUri. Please use absolute link instead. Check here for more infomation: https://aka.ms/azsdk/guideline/links"
       $linkValid = $false
@@ -303,9 +299,12 @@ while ($pageUrisToCheck.Count -ne 0)
   Write-Host "Found $($linkUris.Count) links on page $pageUri";
   $badLinksPerPage = @();
   foreach ($linkUri in $linkUris) {
-    $linkUri = ReplaceGithubLink $linkUri
-    $isLinkValid = CheckLink $linkUri
+    $replacedLink = ReplaceGithubLink $linkUri
+    $isLinkValid = CheckLink $replacedLink
     if (!$isLinkValid -and !$badLinksPerPage.Contains($linkUri)) {
+      if (!$linkUri.ToString().Trim()) {
+        $linkUri = $emptyLinkMessage
+      }
       $badLinksPerPage += $linkUri
     }
     if ($recursive -and $isLinkValid) {

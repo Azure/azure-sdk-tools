@@ -70,12 +70,15 @@ function GetAdjustedReadmeContent($pkgInfo, $lang){
     }
 
     $fileContent = $pkgInfo.ReadmeContent
-    $foundTitle = ""
 
     # only replace the version if the formatted header can be found
     $titleRegex = "(\# Azure .+? (?:client|plugin|shared) library for (?:JavaScript|Java|Python|\.NET|C))"
-    $fileContent = $pkgInfo.ReadmeContent -replace $titleRegex, "`${1} - Version $($pkgInfo.PackageVersion) `n"
-    
+    $titleRegex = "(\# Azure .+? (?:client|plugin|shared) library for (?:JavaScript|Java|Python|\.NET|C))"
+    $fileTitle = ""
+    if ($pkgInfo.ReadmeContent -match $titleRegex) {
+      $fileContent = $pkgInfo.ReadmeContent -replace $titleRegex, "`${1} - Version $($pkgInfo.PackageVersion) `n"
+      $fileTitle = $Matches[0].Substring(2)
+    }
     # Replace github master link with release tag.
     $ReplacementPattern = "`${1}$($pkgInfo.Tag)"
     $fileContent = $fileContent -replace $releaseReplaceRegex, $ReplacementPattern

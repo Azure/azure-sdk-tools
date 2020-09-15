@@ -28,7 +28,6 @@
             {
                 string diagClass = lineDiagnostic.Level switch
                 {
-                    APIView.CodeDiagnosticLevel.Error => "code-diagnostics-error",
                     APIView.CodeDiagnosticLevel.Warning => "code-diagnostics-warn",
                     APIView.CodeDiagnosticLevel.Info => "code-diagnostics-info",
                     _ => "code-diagnostics-error"

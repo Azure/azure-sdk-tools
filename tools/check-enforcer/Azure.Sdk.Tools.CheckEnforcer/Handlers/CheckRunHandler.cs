@@ -1,14 +1,18 @@
 ﻿using Azure.Sdk.Tools.CheckEnforcer.Configuration;
 using Azure.Sdk.Tools.CheckEnforcer.Integrations.GitHub;
+using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Logging;
 using Octokit;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using YamlDotNet.Core;
 
 namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
 {
@@ -19,6 +23,40 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
         }
 
         public override string EventName => "check_run";
+
+        protected override IEnumerable<CheckRunEventPayload> FilterPayloads(IEnumerable<CheckRunEventPayload> payloads)
+        {
+            // TODO: This filtering logic needs to be rationalized with the HandleCoreAsync
+            //       method, as it duplicates the filtering we do there.
+
+            // If a user explicitly requests an evaluation via the evaluate button, do it.
+            var requestedActionPayloads = from payload in payloads
+                                          where payload.CheckRun.Name == this.GlobalConfigurationProvider.GetApplicationName()
+                                            && payload.Action == "requested_action"
+                                            && payload.RequestedAction.Identifier == "evaluate"
+                                          select payload;
+
+            // Here we just want to take completed events since nothing else matters, and
+            // only the last one since the evaluation will be the same.
+            var elligiblePayloads = from payload in payloads
+                                    where payload.CheckRun.Name != this.GlobalConfigurationProvider.GetApplicationName()
+                                    where payload.CheckRun.StartedAt < DateTimeOffset.UtcNow.Subtract(TimeSpan.FromDays(1))
+                                    where payload.CheckRun.Status == new StringEnum<CheckStatus>(CheckStatus.Completed)
+                                    select payload;
+
+            var everythingElse = from payload in elligiblePayloads
+                                 group payload by payload.CheckRun.HeadSha into payloadGroup
+                                 select payloadGroup.Last();
+
+            var delta = elligiblePayloads.Count() - everythingElse.Count();
+
+            if (delta > 0)
+            {
+                Debugger.Break();
+            }
+
+            return Enumerable.Concat(requestedActionPayloads, everythingElse);
+        }
 
         protected override async Task HandleCoreAsync(HandlerContext<CheckRunEventPayload> context, CancellationToken cancellationToken)
         {

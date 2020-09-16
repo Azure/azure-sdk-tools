@@ -21,6 +21,11 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
 
         public override string EventName => "issue_comment";
 
+        protected override IEnumerable<IssueCommentPayload> FilterPayloads(IEnumerable<IssueCommentPayload> payloads)
+        {
+            return payloads;
+        }
+
         protected override async Task HandleCoreAsync(HandlerContext<IssueCommentPayload> context, CancellationToken cancellationToken)
         {
             var payload = context.Payload;

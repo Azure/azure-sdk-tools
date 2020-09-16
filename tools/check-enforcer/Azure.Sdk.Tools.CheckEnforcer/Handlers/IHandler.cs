@@ -9,6 +9,6 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
     public interface IHandler
     {
         string EventName { get; }
-        Task HandleAsync(string json, CancellationToken cancellationToken);
+        Task HandleAsync(IEnumerable<string> payloads, CancellationToken cancellationToken);
     }
 }

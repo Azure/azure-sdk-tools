@@ -21,6 +21,11 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
 
         public override string EventName => "pull_request";
 
+        protected override IEnumerable<PullRequestEventPayload> FilterPayloads(IEnumerable<PullRequestEventPayload> payloads)
+        {
+            return payloads;
+        }
+
         protected override async Task HandleCoreAsync(HandlerContext<PullRequestEventPayload> context, CancellationToken cancellationToken)
         {
             var payload = context.Payload;

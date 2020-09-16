@@ -48,18 +48,8 @@ namespace Azure.Sdk.Tools.CheckEnforcer
         private ILogger<GitHubWebhookProcessor> logger;
         private Dictionary<string, IHandler> handlers;
 
-        public async Task ProcessWebhooksAsync(List<GitHubWebhookEvent> events, CancellationToken cancellationToken)
-        {
-            // TODO: This is where we reduce things down.
-
-            foreach (var @event in events)
-            {
-                await ProcessWebhookAsync(@event.EventName, @event.Json, cancellationToken);
-            }
-        }
-
         private const string GitHubEventHeader = "X-GitHub-Event";
-        public async Task ProcessWebhookAsync(string eventName, string json, CancellationToken cancellationToken)
+        public async Task ProcessWebhooksAsync(List<GitHubWebhookEvent> events, CancellationToken cancellationToken)
         {
             await Policy
                 .Handle<AbuseException>()
@@ -93,9 +83,15 @@ namespace Azure.Sdk.Tools.CheckEnforcer
                 })
                 .ExecuteAsync(async () =>
                 {
-                    if (handlers.TryGetValue(eventName, out var handler))
+                    var groupedEvents = events.GroupBy((@event) => @event.EventName);
+
+                    foreach (var eventGroup in groupedEvents)
                     {
-                        await handler.HandleAsync(json, cancellationToken);
+                        if (handlers.TryGetValue(eventGroup.Key, out var handler))
+                        {
+                            var eventGroupPaylods = eventGroup.Select((groupedEvent) => groupedEvent.Json);
+                            await handler.HandleAsync(eventGroupPaylods, cancellationToken);
+                        }
                     }
                 });
         }

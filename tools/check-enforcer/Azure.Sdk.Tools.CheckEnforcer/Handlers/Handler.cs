@@ -162,18 +162,27 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
             return payload;
         }
 
-        public async Task HandleAsync(string json, CancellationToken cancellationToken)
+        public async Task HandleAsync(IEnumerable<string> payloads, CancellationToken cancellationToken)
         {
-            var deserializedPayload = DeserializePayload(json);
-            var installationId = deserializedPayload.Installation.Id;
+            // TODO: Handle exceptions on deserialization (too big, malformed, shouldn't
+            //       cause all messages to die).
+            var deserializedPayloads = payloads.Select((payload) => DeserializePayload(payload));
+            var filteredDeserializedPayloads = FilterPayloads(deserializedPayloads);
 
-            var client = await this.GitHubClientProvider.GetInstallationClientAsync(installationId, cancellationToken);
-            var context = new HandlerContext<T>(deserializedPayload, client);
-
-            await HandleCoreAsync(context, cancellationToken);
+            // TODO: What should we do here about partial failure (e.g. one call gets rate
+            //       limited, do we fail and retry the batch, or try to keep track).
+            foreach (var filteredDeserializedPayload in filteredDeserializedPayloads)
+            {
+                var installationId = filteredDeserializedPayload.Installation.Id;
+                var client = await this.GitHubClientProvider.GetInstallationClientAsync(installationId, cancellationToken);
+                var context = new HandlerContext<T>(filteredDeserializedPayload, client);
+                await HandleCoreAsync(context, cancellationToken);
+            }
         }
 
         protected abstract Task HandleCoreAsync(HandlerContext<T> context, CancellationToken cancellationToken);
+
+        protected abstract IEnumerable<T> FilterPayloads(IEnumerable<T> payloads);
 
         public abstract string EventName { get; }
     }

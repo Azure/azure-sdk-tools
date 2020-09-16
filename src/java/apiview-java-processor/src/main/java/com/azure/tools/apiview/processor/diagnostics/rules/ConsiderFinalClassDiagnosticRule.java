@@ -17,6 +17,7 @@ public class ConsiderFinalClassDiagnosticRule implements DiagnosticRule {
         cu.getTypes().forEach(type -> {
             if (type.isEnumDeclaration()) return;
             if (type.hasModifier(Modifier.Keyword.ABSTRACT)) return;
+            if (type.isClassOrInterfaceDeclaration() && type.asClassOrInterfaceDeclaration().isInterface()) return;
             if (!type.hasModifier(Modifier.Keyword.FINAL)) {
                 listing.addDiagnostic(new Diagnostic(
                     INFO,

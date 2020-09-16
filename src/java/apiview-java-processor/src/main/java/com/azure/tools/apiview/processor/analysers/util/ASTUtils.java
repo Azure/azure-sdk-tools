@@ -41,15 +41,16 @@ public class ASTUtils {
     }
 
     public static Stream<ConstructorDeclaration> getPublicOrProtectedConstructors(CompilationUnit cu) {
-        return cu.getTypes().stream()
-                       .flatMap(typeDeclaration -> typeDeclaration.getConstructors().stream())
+        return cu.getTypes().stream().flatMap(ASTUtils::getPublicOrProtectedConstructors);
+    }
+
+    public static Stream<ConstructorDeclaration> getPublicOrProtectedConstructors(TypeDeclaration<?> typeDeclaration) {
+        return typeDeclaration.getConstructors().stream()
                        .filter(type -> isPublicOrProtected(type.getAccessSpecifier()));
     }
 
     public static Stream<MethodDeclaration> getPublicOrProtectedMethods(CompilationUnit cu) {
-        return cu.getTypes().stream()
-                       .flatMap(typeDeclaration -> typeDeclaration.getMethods().stream())
-                       .filter(type -> isPublicOrProtected(type.getAccessSpecifier()));
+        return cu.getTypes().stream().flatMap(ASTUtils::getPublicOrProtectedMethods);
     }
 
     public static Stream<MethodDeclaration> getPublicOrProtectedMethods(TypeDeclaration<?> typeDeclaration) {
@@ -58,8 +59,11 @@ public class ASTUtils {
     }
 
     public static Stream<FieldDeclaration> getPublicOrProtectedFields(CompilationUnit cu) {
-        return cu.getTypes().stream()
-                       .flatMap(typeDeclaration -> typeDeclaration.getFields().stream())
+        return cu.getTypes().stream().flatMap(ASTUtils::getPublicOrProtectedFields);
+    }
+
+    public static Stream<FieldDeclaration> getPublicOrProtectedFields(TypeDeclaration<?> typeDeclaration) {
+        return typeDeclaration.getFields().stream()
                        .filter(type -> isPublicOrProtected(type.getAccessSpecifier()));
     }
 

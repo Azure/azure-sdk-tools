@@ -20,11 +20,11 @@ namespace ApiView
         {
             using (var stream = File.OpenRead(file))
             {
-                return GetCompilation(stream);
+                return GetCompilation(stream, null);
             }
         }
 
-        public static IAssemblySymbol GetCompilation(Stream stream)
+        public static IAssemblySymbol GetCompilation(Stream stream, Stream documentationStream)
         {
             PortableExecutableReference reference;
 
@@ -32,8 +32,17 @@ namespace ApiView
             {
                 stream.CopyTo(memoryStream);
                 memoryStream.Position = 0;
+
+                DocumentationProvider documentation = null;
+                if (documentationStream != null)
+                {
+                    using var docMemoryStream = new MemoryStream();
+                    documentationStream.CopyTo(docMemoryStream);
+                    docMemoryStream.Position = 0;
+                    documentation = XmlDocumentationProvider.CreateFromBytes(docMemoryStream.ToArray());
+                }
                 // MetadataReference.CreateFromStream closes the stream
-                reference = MetadataReference.CreateFromStream(memoryStream);
+                reference = MetadataReference.CreateFromStream(memoryStream, documentation: documentation);
             }
             var compilation = CSharpCompilation.Create(null).AddReferences(reference);
             var corlibLocation = typeof(object).Assembly.Location;

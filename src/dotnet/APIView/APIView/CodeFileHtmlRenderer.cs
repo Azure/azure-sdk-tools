@@ -3,6 +3,7 @@
 
 using APIView;
 using System.Text;
+using System.Web;
 
 namespace ApiView
 {
@@ -85,7 +86,7 @@ namespace ApiView
                 }
                 stringBuilder.Append(" class=\"").Append(elementClass).Append("\"");
                 stringBuilder.Append(">");
-                stringBuilder.Append(token.Value);
+                stringBuilder.Append(HttpUtility.HtmlEncode(token.Value));
 
                 if (a)
                 {

@@ -73,11 +73,12 @@ namespace APIViewWeb.Pages.Assemblies
                 Review.Revisions.Last();
             PreviousRevisions = Review.Revisions.TakeWhile(r => r != Revision).ToArray();
 
-            CodeFile = await _codeFileRepository.GetCodeFileAsync(Revision);
+            var renderedCodeFile = await _codeFileRepository.GetCodeFileAsync(Revision);
+            CodeFile = renderedCodeFile.CodeFile;
 
             var fileDiagnostics = CodeFile.Diagnostics ?? Array.Empty<CodeDiagnostic>();
 
-            var fileHtmlLines = CodeFileHtmlRenderer.Normal.Render(CodeFile);
+            var fileHtmlLines = renderedCodeFile.Render();
 
             if (DiffRevisionId != null)
             {
@@ -85,8 +86,8 @@ namespace APIViewWeb.Pages.Assemblies
 
                 var previousRevisionFile = await _codeFileRepository.GetCodeFileAsync(DiffRevision);
 
-                var previousHtmlLines = CodeFileHtmlRenderer.ReadOnly.Render(previousRevisionFile);
-                var previousRevisionTextLines = CodeFileRenderer.Instance.Render(previousRevisionFile);
+                var previousHtmlLines = previousRevisionFile.RenderReadOnly();
+                var previousRevisionTextLines = previousRevisionFile.RenderText();
                 var fileTextLines = CodeFileRenderer.Instance.Render(CodeFile);
 
                 var diffLines = InlineDiff.Compute(

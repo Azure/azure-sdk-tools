@@ -36,6 +36,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Configuration
                 try
                 { 
                     var client = await gitHubClientProvider.GetInstallationClientAsync(installationId, cancellationToken);
+                    await GitHubRateLimiter.WaitForGitHubCapacityAsync();
                     var searchResults = await client.Repository.Content.GetAllContents(repositoryId, "eng/CHECKENFORCER");
                     var configurationFile = searchResults.Single();
                     ThrowIfInvalidFormat(configurationFile);

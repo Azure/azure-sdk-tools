@@ -35,6 +35,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
 
         protected async Task SetSuccessAsync(GitHubClient client, long repositoryId, string sha, CancellationToken cancellationToken)
         {
+            await GitHubRateLimiter.WaitForGitHubCapacityAsync();
             var response = await client.Check.Run.GetAllForReference(repositoryId, sha);
             var runs = response.CheckRuns;
             var checkEnforcerRuns = runs.Where(r => r.Name == this.GlobalConfigurationProvider.GetApplicationName());
@@ -49,6 +50,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
             foreach (var checkEnforcerRun in checkEnforcerRuns)
             {
                 Logger.LogInformation("Setting check-run {checkEnforcerRunId} to success.", checkEnforcerRun.Id);
+                await GitHubRateLimiter.WaitForGitHubCapacityAsync();
                 await client.Check.Run.Update(repositoryId, checkEnforcerRun.Id, new CheckRunUpdate()
                 {
                     Conclusion = new StringEnum<CheckConclusion>(CheckConclusion.Success),
@@ -64,6 +66,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
 
             Logger.LogInformation("Checking for existing check-run for: {runIdentifier}", runIdentifier);
 
+            await GitHubRateLimiter.WaitForGitHubCapacityAsync();
             var response = await client.Check.Run.GetAllForReference(repositoryId, headSha);
             var runs = response.CheckRuns;
             var checkRun = runs
@@ -75,6 +78,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
             {
                 Logger.LogInformation("Creating check-run for: {runIdentifier}", runIdentifier);
 
+                await GitHubRateLimiter.WaitForGitHubCapacityAsync();
                 checkRun = await client.Check.Run.Create(
                     repositoryId,
                     new NewCheckRun(this.GlobalConfigurationProvider.GetApplicationName(), headSha)
@@ -101,6 +105,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
 
             Logger.LogInformation("Fetching check-runs for: {runIdentifier} for evaluation.", runIdentifier);
 
+            await GitHubRateLimiter.WaitForGitHubCapacityAsync();
             var runsResponse = await client.Check.Run.GetAllForReference(repositoryId, sha);
             var runs = runsResponse.CheckRuns;
             var checkEnforcerRuns = runs.Where(r => r.Name == this.GlobalConfigurationProvider.GetApplicationName());
@@ -134,6 +139,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
                 foreach (var checkEnforcerRun in checkEnforcerRuns)
                 {
                     Logger.LogInformation("Updating check-run for: {runIdentifier}", runIdentifier);
+                    await GitHubRateLimiter.WaitForGitHubCapacityAsync();
                     await client.Check.Run.Update(repositoryId, checkEnforcerRun.Id, new CheckRunUpdate()
                     {
                         Conclusion = new StringEnum<CheckConclusion>(CheckConclusion.Success),

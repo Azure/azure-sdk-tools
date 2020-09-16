@@ -30,6 +30,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
             // Bail early if we aren't even a check enforcer comment. Reduces exception noise.
             if (!comment.StartsWith("/check-enforcer")) return;
 
+            await GitHubRateLimiter.WaitForGitHubCapacityAsync();
             var pullRequest = await context.Client.PullRequest.Get(repositoryId, issueId);
             var sha = pullRequest.Head.Sha;
 

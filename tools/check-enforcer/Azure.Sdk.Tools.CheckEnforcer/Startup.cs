@@ -2,6 +2,7 @@
 using Azure.Identity;
 using Azure.Sdk.Tools.CheckEnforcer;
 using Azure.Sdk.Tools.CheckEnforcer.Configuration;
+using Azure.Sdk.Tools.CheckEnforcer.Handlers;
 using Azure.Sdk.Tools.CheckEnforcer.Integrations.GitHub;
 using Azure.Security.KeyVault.Keys;
 using Azure.Security.KeyVault.Keys.Cryptography;
@@ -47,11 +48,15 @@ namespace Azure.Sdk.Tools.CheckEnforcer
                 builder.AddCryptographyClient(key.Id);
             });
 
+            builder.Services.AddLogging();
+            builder.Services.AddMemoryCache();
+            builder.Services.AddSingleton<IHandler, CheckRunHandler>();
+            builder.Services.AddSingleton<IHandler, IssueCommentHandler>();
+            builder.Services.AddSingleton<IHandler, PullRequestHandler>();
             builder.Services.AddSingleton<IGlobalConfigurationProvider, GlobalConfigurationProvider>();
             builder.Services.AddSingleton<IGitHubClientProvider, GitHubClientProvider>();
             builder.Services.AddSingleton<IRepositoryConfigurationProvider, RepositoryConfigurationProvider>();
             builder.Services.AddSingleton<GitHubWebhookProcessor>();
-            builder.Services.AddMemoryCache();
         }
     }
 }

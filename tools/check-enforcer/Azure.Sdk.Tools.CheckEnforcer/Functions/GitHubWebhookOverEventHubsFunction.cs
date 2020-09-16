@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -19,27 +20,46 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Functions
 {
     public class GitHubWebhookOverEventHubsFunction
     {
-        public GitHubWebhookOverEventHubsFunction(GitHubWebhookProcessor processor, SecretClient secretClient)
+        public GitHubWebhookOverEventHubsFunction(GitHubWebhookProcessor processor, SecretClient secretClient, ILogger<GitHubWebhookOverEventHubsFunction> logger)
         {
             this.processor = processor;
             this.secretClient = secretClient;
+            this.logger = logger;
         }
 
         private GitHubWebhookProcessor processor;
         private SecretClient secretClient;
+        private ILogger<GitHubWebhookOverEventHubsFunction> logger;
 
         [FunctionName("webhook-eventhubs")]
-        public async Task Run([EventHubTrigger("github-webhooks", Connection = "CheckEnforcerEventHubConnectionString")] EventData eventData, ILogger log, CancellationToken cancellationToken)
+        public async Task Run([EventHubTrigger("github-webhooks", Connection = "CheckEnforcerEventHubConnectionString", ConsumerGroup = "localdebugging")] EventData[] eventData, CancellationToken cancellationToken)
         {
-            var message = GetMessage(eventData);
-            var eventName = GetEventName(message);
-            var eventSignature = GetEventSignature(message);
+            var events = new List<GitHubWebhookEvent>();
 
-            var encodedContent = message.RootElement.GetProperty("content").ToString();
-            var contentBytes = Convert.FromBase64String(encodedContent);
-            var json = ReadAndVerifyContent(contentBytes, eventSignature);
+            foreach (var singleEvent in eventData)
+            {
+                var message = GetMessage(singleEvent);
+                var eventName = GetEventName(message);
+                var eventSignature = GetEventSignature(message);
+                var encodedContent = message.RootElement.GetProperty("content").ToString();
+                var contentBytes = Convert.FromBase64String(encodedContent);
 
-            await processor.ProcessWebhookAsync(eventName, json, log, cancellationToken);
+                try
+                {
+                    var json = ReadAndVerifyContent(contentBytes, eventSignature);
+                    events.Add(new GitHubWebhookEvent(eventName, json));
+                }
+                catch (CheckEnforcerSecurityException ex)
+                {
+                    logger.LogError(
+                        ex,
+                        "Failed to process message in batch due to failed signature. Payload was: {payload}",
+                        encodedContent
+                        );
+                }
+            }
+
+            await processor.ProcessWebhooksAsync(events, cancellationToken);
         }
 
         private static string gitHubAppWebhookSecret;

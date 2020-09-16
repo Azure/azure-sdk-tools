@@ -15,9 +15,11 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
 {
     public class PullRequestHandler : Handler<PullRequestEventPayload>
     {
-        public PullRequestHandler(IGlobalConfigurationProvider globalConfigurationProvider, IGitHubClientProvider gitHubClientProvider, IRepositoryConfigurationProvider repositoryConfigurationProvider, ILogger logger) : base(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, logger)
+        public PullRequestHandler(IGlobalConfigurationProvider globalConfigurationProvider, IGitHubClientProvider gitHubClientProvider, IRepositoryConfigurationProvider repositoryConfigurationProvider, ILogger<PullRequestHandler> logger) : base(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, logger)
         {
         }
+
+        public override string EventName => "pull_request";
 
         protected override async Task HandleCoreAsync(HandlerContext<PullRequestEventPayload> context, CancellationToken cancellationToken)
         {

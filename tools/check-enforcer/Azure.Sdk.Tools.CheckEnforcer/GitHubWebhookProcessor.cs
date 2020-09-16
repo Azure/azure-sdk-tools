@@ -31,21 +31,35 @@ namespace Azure.Sdk.Tools.CheckEnforcer
 {
     public class GitHubWebhookProcessor
     {
-        public GitHubWebhookProcessor(IGlobalConfigurationProvider globalConfigurationProvider, IGitHubClientProvider gitHubClientProvider, IRepositoryConfigurationProvider repositoryConfigurationProvider, SecretClient secretClient)
+        public GitHubWebhookProcessor(IGlobalConfigurationProvider globalConfigurationProvider, IGitHubClientProvider gitHubClientProvider, IRepositoryConfigurationProvider repositoryConfigurationProvider, SecretClient secretClient, ILogger<GitHubWebhookProcessor> logger, IHandler[] handlers)
         {
             this.globalConfigurationProvider = globalConfigurationProvider;
             this.gitHubClientProvider = gitHubClientProvider;
             this.repositoryConfigurationProvider = repositoryConfigurationProvider;
             this.secretClient = secretClient;
+            this.logger = logger;
+            this.handlers = handlers.ToDictionary((entry) => entry.EventName);
         }
 
         public IGlobalConfigurationProvider globalConfigurationProvider;
         public IGitHubClientProvider gitHubClientProvider;
         private IRepositoryConfigurationProvider repositoryConfigurationProvider;
         private SecretClient secretClient;
+        private ILogger<GitHubWebhookProcessor> logger;
+        private Dictionary<string, IHandler> handlers;
+
+        public async Task ProcessWebhooksAsync(List<GitHubWebhookEvent> events, CancellationToken cancellationToken)
+        {
+            // TODO: This is where we reduce things down.
+
+            foreach (var @event in events)
+            {
+                await ProcessWebhookAsync(@event.EventName, @event.Json, cancellationToken);
+            }
+        }
 
         private const string GitHubEventHeader = "X-GitHub-Event";
-        public async Task ProcessWebhookAsync(string eventName, string json, ILogger logger, CancellationToken cancellationToken)
+        public async Task ProcessWebhookAsync(string eventName, string json, CancellationToken cancellationToken)
         {
             await Policy
                 .Handle<AbuseException>()
@@ -79,19 +93,8 @@ namespace Azure.Sdk.Tools.CheckEnforcer
                 })
                 .ExecuteAsync(async () =>
                 {
-                    if (eventName == "check_run")
+                    if (handlers.TryGetValue(eventName, out var handler))
                     {
-                        var handler = new CheckRunHandler(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, logger);
-                        await handler.HandleAsync(json, cancellationToken);
-                    }
-                    else if (eventName == "issue_comment")
-                    {
-                        var handler = new IssueCommentHandler(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, logger);
-                        await handler.HandleAsync(json, cancellationToken);
-                    }
-                    else if (eventName == "pull_request")
-                    {
-                        var handler = new PullRequestHandler(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, logger);
                         await handler.HandleAsync(json, cancellationToken);
                     }
                 });

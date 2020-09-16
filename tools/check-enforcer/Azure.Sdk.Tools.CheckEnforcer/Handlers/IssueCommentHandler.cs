@@ -15,9 +15,11 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
 {
     public class IssueCommentHandler : Handler<IssueCommentPayload>
     {
-        public IssueCommentHandler(IGlobalConfigurationProvider globalConfigurationProvider, IGitHubClientProvider gitHubClientProvider, IRepositoryConfigurationProvider repositoryConfigurationProvider, ILogger logger) : base(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, logger)
+        public IssueCommentHandler(IGlobalConfigurationProvider globalConfigurationProvider, IGitHubClientProvider gitHubClientProvider, IRepositoryConfigurationProvider repositoryConfigurationProvider, ILogger<IssueCommentHandler> logger) : base(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, logger)
         {
         }
+
+        public override string EventName => "issue_comment";
 
         protected override async Task HandleCoreAsync(HandlerContext<IssueCommentPayload> context, CancellationToken cancellationToken)
         {

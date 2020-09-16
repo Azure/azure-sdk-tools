@@ -1,6 +1,7 @@
 ﻿using Azure.Sdk.Tools.CheckEnforcer.Configuration;
 using Azure.Sdk.Tools.CheckEnforcer.Integrations.GitHub;
 using Microsoft.Extensions.Logging;
+using Microsoft.Identity.Client;
 using Octokit;
 using Octokit.Internal;
 using System;
@@ -15,7 +16,7 @@ using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
 {
-    public abstract class Handler<T> where T: ActivityPayload
+    public abstract class Handler<T> : IHandler where T: ActivityPayload
     {
         private const int EventIdBase = 1000;
         private static readonly EventId AcquiringSemaphoreEventId = new EventId(EventIdBase + 0, "Acquring Semaphore");
@@ -173,5 +174,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
         }
 
         protected abstract Task HandleCoreAsync(HandlerContext<T> context, CancellationToken cancellationToken);
+
+        public abstract string EventName { get; }
     }
 }

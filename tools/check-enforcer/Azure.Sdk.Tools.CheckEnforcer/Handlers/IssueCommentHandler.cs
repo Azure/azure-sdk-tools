@@ -15,7 +15,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
 {
     public class IssueCommentHandler : Handler<IssueCommentPayload>
     {
-        public IssueCommentHandler(IGlobalConfigurationProvider globalConfigurationProvider, IGitHubClientProvider gitHubClientProvider, IRepositoryConfigurationProvider repositoryConfigurationProvider, ILogger logger) : base(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, logger)
+        public IssueCommentHandler(IGlobalConfigurationProvider globalConfigurationProvider, IGitHubClientProvider gitHubClientProvider, IRepositoryConfigurationProvider repositoryConfigurationProvider, ILogger logger, GitHubRateLimiter limiter) : base(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, logger, limiter)
         {
         }
 
@@ -30,7 +30,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
             // Bail early if we aren't even a check enforcer comment. Reduces exception noise.
             if (!comment.StartsWith("/check-enforcer")) return;
 
-            await GitHubRateLimiter.WaitForGitHubCapacityAsync();
+            await Limiter.WaitForGitHubCapacityAsync();
             var pullRequest = await context.Client.PullRequest.Get(repositoryId, issueId);
             var sha = pullRequest.Head.Sha;
 

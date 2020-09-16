@@ -47,6 +47,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
                 builder.AddCryptographyClient(key.Id);
             });
 
+            builder.Services.AddSingleton<GitHubRateLimiter>();
             builder.Services.AddSingleton<IGlobalConfigurationProvider, GlobalConfigurationProvider>();
             builder.Services.AddSingleton<IGitHubClientProvider, GitHubClientProvider>();
             builder.Services.AddSingleton<IRepositoryConfigurationProvider, RepositoryConfigurationProvider>();

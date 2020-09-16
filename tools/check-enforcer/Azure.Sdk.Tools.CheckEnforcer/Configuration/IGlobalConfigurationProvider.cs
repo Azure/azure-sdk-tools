@@ -8,5 +8,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Configuration
     {
         string GetApplicationID();
         string GetApplicationName();
+        int GetMaxRequestsPerPeriod();
+        int GetPeriodDurationInSeconds();
     }
 }

@@ -31,18 +31,20 @@ namespace Azure.Sdk.Tools.CheckEnforcer
 {
     public class GitHubWebhookProcessor
     {
-        public GitHubWebhookProcessor(IGlobalConfigurationProvider globalConfigurationProvider, IGitHubClientProvider gitHubClientProvider, IRepositoryConfigurationProvider repositoryConfigurationProvider, SecretClient secretClient)
+        public GitHubWebhookProcessor(IGlobalConfigurationProvider globalConfigurationProvider, IGitHubClientProvider gitHubClientProvider, IRepositoryConfigurationProvider repositoryConfigurationProvider, SecretClient secretClient, GitHubRateLimiter limiter)
         {
             this.globalConfigurationProvider = globalConfigurationProvider;
             this.gitHubClientProvider = gitHubClientProvider;
             this.repositoryConfigurationProvider = repositoryConfigurationProvider;
             this.secretClient = secretClient;
+            this.limiter = limiter;
         }
 
         public IGlobalConfigurationProvider globalConfigurationProvider;
         public IGitHubClientProvider gitHubClientProvider;
         private IRepositoryConfigurationProvider repositoryConfigurationProvider;
         private SecretClient secretClient;
+        private GitHubRateLimiter limiter;
 
         private const string GitHubEventHeader = "X-GitHub-Event";
         public async Task ProcessWebhookAsync(string eventName, string json, ILogger logger, CancellationToken cancellationToken)
@@ -81,17 +83,17 @@ namespace Azure.Sdk.Tools.CheckEnforcer
                 {
                     if (eventName == "check_run")
                     {
-                        var handler = new CheckRunHandler(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, logger);
+                        var handler = new CheckRunHandler(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, logger, limiter);
                         await handler.HandleAsync(json, cancellationToken);
                     }
                     else if (eventName == "issue_comment")
                     {
-                        var handler = new IssueCommentHandler(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, logger);
+                        var handler = new IssueCommentHandler(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, logger, limiter);
                         await handler.HandleAsync(json, cancellationToken);
                     }
                     else if (eventName == "pull_request")
                     {
-                        var handler = new PullRequestHandler(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, logger);
+                        var handler = new PullRequestHandler(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, logger, limiter);
                         await handler.HandleAsync(json, cancellationToken);
                     }
                 });

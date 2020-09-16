@@ -15,7 +15,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
 {
     public class PullRequestHandler : Handler<PullRequestEventPayload>
     {
-        public PullRequestHandler(IGlobalConfigurationProvider globalConfigurationProvider, IGitHubClientProvider gitHubClientProvider, IRepositoryConfigurationProvider repositoryConfigurationProvider, ILogger logger) : base(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, logger)
+        public PullRequestHandler(IGlobalConfigurationProvider globalConfigurationProvider, IGitHubClientProvider gitHubClientProvider, IRepositoryConfigurationProvider repositoryConfigurationProvider, ILogger logger, GitHubRateLimiter limiter) : base(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, logger, limiter)
         {
         }
 

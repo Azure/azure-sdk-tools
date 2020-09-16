@@ -47,7 +47,6 @@ namespace APIViewTest
                             solution = solution.AddMetadataReference(projectId, MetadataReference.CreateFromFile(resolveReferencePath));
                         }
                     }
-
                     _solutionCache.Add(testAssembly, solution);
                 }
             }

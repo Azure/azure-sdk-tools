@@ -72,5 +72,10 @@ namespace ApiView
         {
             Append(text, CodeFileTokenKind.Text);
         }
+
+        public void Comment(string text)
+        {
+            Append(text, CodeFileTokenKind.Comment);
+        }
     }
 }

@@ -6,6 +6,7 @@ using APIView.Analysis;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.SymbolDisplay;
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
@@ -15,6 +16,8 @@ namespace ApiView
 {
     public class CodeFileBuilder
     {
+        private static readonly char[] _newlineChars = new char[] { '\r', '\n' };
+
         SymbolDisplayFormat _defaultDisplayFormat = new SymbolDisplayFormat(
             SymbolDisplayGlobalNamespaceStyle.Omitted,
             delegateStyle: SymbolDisplayDelegateStyle.NameAndSignature,
@@ -75,7 +78,6 @@ namespace ApiView
             {
                 analyzer.VisitAssembly(assemblySymbol);
             }
-
             var builder = new CodeFileTokensBuilder();
             var navigationItems = new List<NavigationItem>();
             foreach (var namespaceSymbol in SymbolOrderProvider.OrderNamespaces(EnumerateNamespaces(assemblySymbol)))
@@ -172,6 +174,7 @@ namespace ApiView
             navigationBuilder.Add(navigationItem);
             navigationItem.Tags.Add("TypeKind", namedType.TypeKind.ToString().ToLowerInvariant());
 
+            BuildDocumentation(builder, namedType);
             BuildAttributes(builder, namedType.GetAttributes());
 
             builder.WriteIndent();
@@ -247,6 +250,23 @@ namespace ApiView
             CloseBrace(builder);
         }
 
+        private void BuildDocumentation(CodeFileTokensBuilder builder, ISymbol symbol)
+        {
+            var lines = symbol.GetDocumentationCommentXml().Trim().Split(_newlineChars);
+            if (lines.All(string.IsNullOrWhiteSpace))
+            {
+                return;
+            }
+            builder.Append(null, CodeFileTokenKind.DocumentRangeStart);
+            foreach (var line in lines)
+            {
+                builder.WriteIndent();
+                builder.Comment("// " + line.Trim());
+                builder.NewLine();
+            }
+            builder.Append(null, CodeFileTokenKind.DocumentRangeEnd);
+        }
+
         private static void BuildClassModifiers(CodeFileTokensBuilder builder, INamedTypeSymbol namedType)
         {
             if (namedType.IsAbstract)
@@ -317,6 +337,7 @@ namespace ApiView
 
         private void BuildMember(CodeFileTokensBuilder builder, ISymbol member)
         {
+            BuildDocumentation(builder, member);
             BuildAttributes(builder, member.GetAttributes());
 
             builder.WriteIndent();
@@ -619,12 +640,6 @@ namespace ApiView
             {
                 AddNonNullConstantValue(type, typedConstantValue);
             }
-        }
-
-        public static CodeFile Build(Stream stream, bool runAnalysis)
-        {
-            var assemblySymbol = CompilationFactory.GetCompilation(stream);
-            return new CodeFileBuilder().Build(assemblySymbol, runAnalysis);
         }
     }
 }

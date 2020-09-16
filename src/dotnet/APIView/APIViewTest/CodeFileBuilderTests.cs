@@ -60,7 +60,7 @@ namespace APIViewTest
             compilation.Emit(memoryStream);
             memoryStream.Position = 0;
 
-            var compilationFromDll = CompilationFactory.GetCompilation(memoryStream);
+            var compilationFromDll = CompilationFactory.GetCompilation(memoryStream, null);
             var codeModel = new CodeFileBuilder()
             {
                 SymbolOrderProvider = new NameSymbolOrderProvider()

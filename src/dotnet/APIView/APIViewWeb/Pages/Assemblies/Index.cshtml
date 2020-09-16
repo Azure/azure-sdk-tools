@@ -75,7 +75,13 @@
 
                         <!-- Tab panes -->
                         <div class="tab-content mb-4">
-                            <div class="tab-pane active" id="csharp-help">Upload the .dll file for your assembly.</div>
+                            <div class="tab-pane active" id="csharp-help">
+                                <li>
+                                    Run
+                                    <code>dotnet pack</code>
+                                </li>
+                                Upload the resulting .nupkg file.
+                            </div>
                             <div class="tab-pane" id="java-help">Run a <code>mvn package</code> build on your project, which will generate a number of build artifacts in the <code>/target</code> directory. In there, find the file ending <code>sources.jar</code>, and select it.</div>
                             <div class="tab-pane" id="c-help">
                                 <ol>

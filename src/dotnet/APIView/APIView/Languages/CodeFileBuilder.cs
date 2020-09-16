@@ -253,7 +253,7 @@ namespace ApiView
         private void BuildDocumentation(CodeFileTokensBuilder builder, ISymbol symbol)
         {
             var lines = symbol.GetDocumentationCommentXml().Trim().Split(_newlineChars);
-            if (!lines.Any())
+            if (lines.All(string.IsNullOrWhiteSpace))
             {
                 return;
             }

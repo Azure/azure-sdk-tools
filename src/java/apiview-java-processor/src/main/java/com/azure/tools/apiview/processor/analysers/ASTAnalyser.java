@@ -674,6 +674,11 @@ public class ASTAnalyser implements Analyser {
                         .allMatch(callableDeclaration -> isPrivateOrPackagePrivate(callableDeclaration.getAccessSpecifier()));
 
                 if (isAllPrivateOrPackagePrivate) {
+                    if (typeDeclaration.isEnumDeclaration()) {
+                        unindent();
+                        return;
+                    }
+
                     addToken(INDENT,
                             new Token(COMMENT, "// This class does not have any public constructors, and is not able to be instantiated using 'new'."),
                             NEWLINE);

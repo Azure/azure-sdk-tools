@@ -4,6 +4,7 @@ import com.azure.tools.apiview.processor.diagnostics.DiagnosticRule;
 import com.azure.tools.apiview.processor.model.APIListing;
 import com.azure.tools.apiview.processor.model.Diagnostic;
 import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.expr.MemberValuePair;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
@@ -53,6 +54,8 @@ public class RequiredBuilderMethodsDiagnosticRule implements DiagnosticRule {
             if (typeDeclaration.isAnnotationPresent(BUILDER_ANNOTATION)) {
                 // if it does, we try to read from it the 'protocol' so that we can determine if this
                 // builder is an HTTP or AMQP builder, and then we can apply the appropriate rules.
+                // If the protocol specified in the builder is not present, we will use the previous logic
+                // of this diagnostic rule and just assume we are looking at an http protocol.
                 // This is unless the builderProtocol is null, in which case the set of rules we have
                 // will all be applied.
                 final String protocolName = typeDeclaration.getAnnotationByName(BUILDER_ANNOTATION).get()
@@ -62,9 +65,9 @@ public class RequiredBuilderMethodsDiagnosticRule implements DiagnosticRule {
                       .map(n -> (MemberValuePair) n)
                       .filter(p -> "protocol".equals(p.getNameAsString()))
                       .map(MemberValuePair::getValue)
-                      .map(e -> e.toString())
+                      .map(Node::toString)
                       .findFirst()
-                      .orElse("");
+                      .orElse("http");  // TODO for now we assume that no specified protocol in the builder means we will be http
 
                 if (builderProtocol != null) {
                     if (!builderProtocol.equals(protocolName) || protocolName.isEmpty()) {

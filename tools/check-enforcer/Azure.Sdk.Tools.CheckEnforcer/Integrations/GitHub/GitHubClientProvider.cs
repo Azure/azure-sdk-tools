@@ -20,11 +20,12 @@ namespace Azure.Sdk.Tools.CheckEnforcer
 {
     public class GitHubClientProvider : IGitHubClientProvider
     {
-        public GitHubClientProvider(IGlobalConfigurationProvider globalConfigurationProvider, IMemoryCache cache, CryptographyClient cryptographyClient)
+        public GitHubClientProvider(IGlobalConfigurationProvider globalConfigurationProvider, IMemoryCache cache, CryptographyClient cryptographyClient, GitHubRateLimiter limiter)
         {
             this.globalConfigurationProvider = globalConfigurationProvider;
             this.cache = cache;
             this.cryptographyClient = cryptographyClient;
+            this.limiter = limiter;
         }
 
         private IGlobalConfigurationProvider globalConfigurationProvider;
@@ -92,6 +93,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
         }
 
         private CryptographyClient cryptographyClient;
+        private GitHubRateLimiter limiter;
 
         public async Task<GitHubClient> GetApplicationClientAsync(CancellationToken cancellationToken)
         {
@@ -114,7 +116,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
             var cachedInstallationToken = await cache.GetOrCreateAsync<Octokit.AccessToken>(installationTokenCacheKey, async (entry) =>
             {
                 var appClient = await GetApplicationClientAsync(cancellationToken);
-                await GitHubRateLimiter.WaitForGitHubCapacityAsync();
+                await limiter.WaitForGitHubCapacityAsync();
                 var installationToken = await appClient.GitHubApps.CreateInstallationToken(installationId);
                 return installationToken;
             });

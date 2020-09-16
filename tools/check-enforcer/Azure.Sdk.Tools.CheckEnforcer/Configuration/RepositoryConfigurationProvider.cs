@@ -14,15 +14,16 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Configuration
 {
     public class RepositoryConfigurationProvider : IRepositoryConfigurationProvider
     {
-        public RepositoryConfigurationProvider(IGitHubClientProvider gitHubClientProvider, IMemoryCache cache)
+        public RepositoryConfigurationProvider(IGitHubClientProvider gitHubClientProvider, IMemoryCache cache, GitHubRateLimiter limiter)
         {
             this.gitHubClientProvider = gitHubClientProvider;
             this.cache = cache;
+            this.limiter = limiter;
         }
 
         private IGitHubClientProvider gitHubClientProvider;
         private IMemoryCache cache;
-
+        private GitHubRateLimiter limiter;
         private const int RepositoryConfigurationCacheDurationInSeconds = 60;
 
         public async Task<IRepositoryConfiguration> GetRepositoryConfigurationAsync(long installationId, long repositoryId, string pullRequestSha, CancellationToken cancellationToken)
@@ -36,7 +37,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Configuration
                 try
                 { 
                     var client = await gitHubClientProvider.GetInstallationClientAsync(installationId, cancellationToken);
-                    await GitHubRateLimiter.WaitForGitHubCapacityAsync();
+                    await limiter.WaitForGitHubCapacityAsync();
                     var searchResults = await client.Repository.Content.GetAllContents(repositoryId, "eng/CHECKENFORCER");
                     var configurationFile = searchResults.Single();
                     ThrowIfInvalidFormat(configurationFile);

@@ -14,7 +14,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
 {
     public class CheckRunHandler : Handler<CheckRunEventPayload>
     {
-        public CheckRunHandler(IGlobalConfigurationProvider globalConfigurationProvider, IGitHubClientProvider gitHubCLientProvider, IRepositoryConfigurationProvider repositoryConfigurationProvider, ILogger logger) : base(globalConfigurationProvider, gitHubCLientProvider, repositoryConfigurationProvider, logger)
+        public CheckRunHandler(IGlobalConfigurationProvider globalConfigurationProvider, IGitHubClientProvider gitHubCLientProvider, IRepositoryConfigurationProvider repositoryConfigurationProvider, ILogger logger, GitHubRateLimiter limiter) : base(globalConfigurationProvider, gitHubCLientProvider, repositoryConfigurationProvider, logger, limiter)
         {
         }
 

@@ -1,4 +1,5 @@
-﻿using ComposableAsync;
+﻿using Azure.Sdk.Tools.CheckEnforcer.Configuration;
+using ComposableAsync;
 using RateLimiter;
 using System;
 using System.Collections.Generic;
@@ -7,11 +8,19 @@ using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.CheckEnforcer.Integrations.GitHub
 {
-    public static class GitHubRateLimiter
+    public class GitHubRateLimiter
     {
-        private static TimeLimiter limiter = TimeLimiter.GetFromMaxCountByInterval(1, TimeSpan.FromSeconds(1));
+        public GitHubRateLimiter(IGlobalConfigurationProvider globalConfigurationProvider)
+        {
+            limiter = TimeLimiter.GetFromMaxCountByInterval(
+                globalConfigurationProvider.GetMaxRequestsPerPeriod(),
+                TimeSpan.FromSeconds(globalConfigurationProvider.GetPeriodDurationInSeconds())
+                );
+        }
 
-        public async static Task WaitForGitHubCapacityAsync()
+        private TimeLimiter limiter;
+
+        public async Task WaitForGitHubCapacityAsync()
         {
             await limiter;
         }

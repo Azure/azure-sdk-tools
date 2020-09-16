@@ -59,5 +59,50 @@ namespace Azure.Sdk.Tools.CheckEnforcer
 
             return applicationName;
         }
+
+        private object maxRequestsPerPeriodLock = new object();
+        private int maxRequestsPerPeriod = -1;
+
+        public int GetMaxRequestsPerPeriod()
+        {
+            if (maxRequestsPerPeriod == -1)
+            {
+                lock (maxRequestsPerPeriodLock)
+                {
+                    if (maxRequestsPerPeriod == -1)
+                    {
+                        ConfigurationSetting applicationNameSetting = configurationClient.GetConfigurationSetting(
+                            "checkenforcer/max-requests-per-period"
+                            );
+                        maxRequestsPerPeriod = int.Parse(applicationNameSetting.Value);
+                    }
+                }
+            }
+
+            return maxRequestsPerPeriod;
+        }
+
+        private object periodDurationInSecondsLock = new object();
+        private int periodDurationInSeconds = -1;
+
+        public int GetPeriodDurationInSeconds()
+        {
+            if (periodDurationInSeconds == -1)
+            {
+                lock (periodDurationInSecondsLock)
+                {
+                    if (periodDurationInSeconds == -1)
+                    {
+                        ConfigurationSetting applicationNameSetting = configurationClient.GetConfigurationSetting(
+                            "checkenforcer/period-duration-in-seconds"
+                            );
+                        periodDurationInSeconds = int.Parse(applicationNameSetting.Value);
+                    }
+                }
+            }
+
+            return periodDurationInSeconds;
+        }
+
     }
 }

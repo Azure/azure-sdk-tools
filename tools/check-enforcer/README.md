@@ -13,6 +13,10 @@ Whilst Checks in GitHub are awesome, one of the limitations when setting up requ
 
 Check Enforcer is our solution. We use the built-in triggering w/ path filter options within Azure Pipelines (Check Enforcer is CI tool agnostic however) to control when a pipeline triggers, and we just use Check Enforcer to block until all triggered pipelines pass successfully. Each of those libraries can be optional - and you just make Check Enforcer the only required check in the repo.
 
+
+
+
+
 ## Usage
 
 You can get started with Check Enforcer by first [installing the application](https://github.com/apps/check-enforcer) into your own repository. Once Check Enforcer is installed you need to commit a file named ```CHECKENFORCER``` into the root of the repository. The contents of the file are as follows:

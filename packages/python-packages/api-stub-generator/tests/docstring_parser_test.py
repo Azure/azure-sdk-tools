@@ -98,6 +98,13 @@ docstring_multi_complex_type = """
                 :caption: Detecting language in a batch of documents.
 """
 
+docstring_param_type_private = """
+:param str name: Dummy name param
+:param client: Value type
+:type client: ~azure.search.documents._search_index_document_batching_client_base.SearchIndexDocumentBatchingClientBase
+"""
+
+
 class TestDocStringParser:
 
     def _test_return_type(self, docstring, expected):
@@ -136,6 +143,9 @@ class TestDocStringParser:
 
     def test_param_type(self):
         self._test_variable_type(docstring_param_type, "val", "str")
+
+    def test_param_type_private(self):
+        self._test_variable_type(docstring_param_type_private, "client", "~azure.search.documents._search_index_document_batching_client_base.SearchIndexDocumentBatchingClientBase")
 
     def test_params(self):
         args = [ArgType("name", "str"), ArgType("val", "str")]

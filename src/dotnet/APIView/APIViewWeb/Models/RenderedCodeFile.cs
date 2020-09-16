@@ -9,6 +9,7 @@ namespace APIViewWeb.Models
     public class RenderedCodeFile
     {
         private CodeLine[] _rendered;
+        private CodeLine[] _renderedReadOnly;
         private CodeLine[] _renderedText;
 
         public RenderedCodeFile(CodeFile codeFile)
@@ -17,6 +18,7 @@ namespace APIViewWeb.Models
         }
 
         public CodeFile CodeFile { get; }
+
         public CodeLine[] Render()
         {
             if (_rendered == null)
@@ -25,6 +27,16 @@ namespace APIViewWeb.Models
             }
 
             return _rendered;
+        }
+
+        public CodeLine[] RenderReadOnly()
+        {
+            if (_renderedReadOnly == null)
+            {
+                _renderedReadOnly = CodeFileHtmlRenderer.ReadOnly.Render(CodeFile);
+            }
+
+            return _renderedReadOnly;
         }
 
         internal CodeLine[] RenderText()

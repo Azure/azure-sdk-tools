@@ -86,7 +86,7 @@ namespace APIViewWeb.Pages.Assemblies
 
                 var previousRevisionFile = await _codeFileRepository.GetCodeFileAsync(DiffRevision);
 
-                var previousHtmlLines = previousRevisionFile.Render();
+                var previousHtmlLines = previousRevisionFile.RenderReadOnly();
                 var previousRevisionTextLines = previousRevisionFile.RenderText();
                 var fileTextLines = CodeFileRenderer.Instance.Render(CodeFile);
 

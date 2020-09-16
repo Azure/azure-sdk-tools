@@ -42,8 +42,7 @@ namespace APIViewWeb
             var info = await client.DownloadAsync();
             codeFile = new RenderedCodeFile(await CodeFile.DeserializeAsync(info.Value.Content));
 
-             using var _ = _cache.CreateEntry(key)
-                .SetSize(info.GetRawResponse().Headers.ContentLength ?? 1000)
+            using var _ = _cache.CreateEntry(key)
                 .SetSlidingExpiration(TimeSpan.FromDays(1))
                 .SetValue(codeFile);
 

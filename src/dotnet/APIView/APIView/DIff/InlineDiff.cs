@@ -8,7 +8,7 @@ namespace APIView.DIff
 {
     public class InlineDiff
     {
-        public static InlineDiffLine<TR>[] Compute<T, TR>(T[] before, T[] after, TR[] beforeResults, TR[] afterResults)
+        public static InlineDiffLine<TR>[] Compute<T, TR>(T[] before, T[] after, TR[] beforeResults, TR[] afterResults) where T : IEquatable<T>
         {
             List<InlineDiffLine<TR>> diffs = new List<InlineDiffLine<TR>>();
             int currentLine = 0;

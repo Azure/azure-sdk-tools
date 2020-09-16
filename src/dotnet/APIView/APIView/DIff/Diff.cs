@@ -190,7 +190,7 @@ namespace APIView.DIff
             internal int x, y;
         }
 
-        public static IEnumerable<DiffHunk> GetDiff<T>(T[] baseArray, T[] changedArray)
+        public static IEnumerable<DiffHunk> GetDiff<T>(T[] baseArray, T[] changedArray) where T : IEquatable<T>
         {
             // The A-Version of the data (original data) to be compared.
             var dataA = new DiffData<T>(baseArray);
@@ -263,7 +263,7 @@ namespace APIView.DIff
         /// <param name="downVector">a vector for the (0,0) to (x,y) search. Passed as a parameter for speed reasons.</param>
         /// <param name="upVector">a vector for the (u,v) to (N,M) search. Passed as a parameter for speed reasons.</param>
         /// <returns>a MiddleSnakeData record containing x,y and u,v</returns>
-        static SMSRD SMS<T>(DiffData<T> dataA, int lowerA, int upperA, DiffData<T> dataB, int lowerB, int upperB, int[] downVector, int[] upVector)
+        static SMSRD SMS<T>(DiffData<T> dataA, int lowerA, int upperA, DiffData<T> dataB, int lowerB, int upperB, int[] downVector, int[] upVector) where T: IEquatable<T>
         {
             SMSRD ret;
             int MAX = dataA.Length + dataB.Length + 1;
@@ -400,7 +400,7 @@ namespace APIView.DIff
         /// <param name="upperB">upper bound of the actual range in DataB (exclusive)</param>
         /// <param name="downVector">a vector for the (0,0) to (x,y) search. Passed as a parameter for speed reasons.</param>
         /// <param name="upVector">a vector for the (u,v) to (N,M) search. Passed as a parameter for speed reasons.</param>
-        static void LCS<T>(DiffData<T> dataA, int lowerA, int upperA, DiffData<T> dataB, int lowerB, int upperB, int[] downVector, int[] upVector)
+        static void LCS<T>(DiffData<T> dataA, int lowerA, int upperA, DiffData<T> dataB, int lowerB, int upperB, int[] downVector, int[] upVector) where T : IEquatable<T>
         {
             // Fast walkthrough equal lines at the start
             while (lowerA < upperA && lowerB < upperB && dataA.Data[lowerA].Equals(dataB.Data[lowerB]))

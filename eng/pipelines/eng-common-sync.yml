@@ -36,6 +36,7 @@ stages:
               CommitMessage: "Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools repository for Tools PR $(System.PullRequest.PullRequestNumber)"
               DirectoryToSync: ${{ parameters.DirectoryToSync }}
               PRBranchName: "sync-${{ parameters.DirectoryToSync }}-$(System.PullRequest.SourceBranch)-$(System.PullRequest.PullRequestNumber)"
+              BaseBranchName: $(system.pullRequest.targetBranch) 
               PRTitle: "Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools for PR $(System.PullRequest.PullRequestNumber)"
               PRBody: >
                 Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools for PR https://github.com/Azure/azure-sdk-tools/pull/$(System.PullRequest.PullRequestNumber)<br>

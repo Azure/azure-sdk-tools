@@ -14,32 +14,28 @@ steps:
     displayName: Create PRData Artifact
 
   - ${{ each repo in parameters.Repos }}:
-    - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
-      - pwsh: |
-          git clone --branch ${{ parameters.BaseBranchName }} https://github.com/azure/${{ repo }}
-          $repoPath = "${{ repo }}/${{ parameters.DirectoryToSync }}"
-
+    - pwsh: |
+        git clone --branch ${{ parameters.BaseBranchName }} https://github.com/azure/${{ repo }}
+        $repoPath = "${{ repo }}/${{ parameters.DirectoryToSync }}"
+        if ($PatchFilesLocation)
+        {
+          pushd ${{ repo }}
+          $results = Get-ChildItem $PatchFilesLocation | % { $git am $_.FullName }
+          if ($results.Count -ne (Get-ChildItem $PatchFilesLocation).Count)
+          {
+            Write-Output "Failed to apply patch files"
+            exit 1
+          }
+        }
+        else
+        {
           if (!(Test-Path $repoPath)) { mkdir $repoPath }
           Remove-Item -v -r $repoPath
           Copy-Item -v -r $(Build.SourcesDirectory)/${{ parameters.DirectoryToSync }} $repoPath
           Get-ChildItem -r $repoPath
-        displayName: Copy ${{ parameters.DirectoryToSync }} from azure-sdk-tools to ${{ repo }}
-        workingDirectory: $(System.DefaultWorkingDirectory)
-
-    - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
-      - pwsh: |
-          git clone --branch ${{ parameters.BaseBranchName }} https://github.com/azure/${{ repo }}
-          $repoPath = "${{ repo }}/${{ parameters.DirectoryToSync }}"
-          $patchDir = "${{ repo }}/patchfiles"
-
-          pushd $(Build.SourcesDirectory)
-          git format-patch ${{ parameters.BaseBranchName }}...upstream/master ${{ parameters.DirectoryToSync }} -o $patchDir
-          popd
-          pushd ${{ repo }}
-          Get-ChildItem $patchDir | % { git am $_.FullName }
-          git clean -xfd
-        displayName: Copy ${{ parameters.DirectoryToSync }} from azure-sdk-tools to ${{ repo }}
-        workingDirectory: $(System.DefaultWorkingDirectory)
+        }
+      displayName: Copy ${{ parameters.DirectoryToSync }} from azure-sdk-tools to ${{ repo }}
+      workingDirectory: $(System.DefaultWorkingDirectory)
 
     - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
       parameters:

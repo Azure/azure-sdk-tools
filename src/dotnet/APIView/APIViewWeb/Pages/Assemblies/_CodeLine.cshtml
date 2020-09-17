@@ -23,7 +23,7 @@
 </tr>
 @if (Model.Diagnostics.Any())
 {
-    var errorDiags = Model.Diagnostics.Where(d => d.Level == 0 || d.Level == APIView.CodeDiagnosticLevel.Error);
+    var errorDiags = Model.Diagnostics.Where(d => d.Level == APIView.CodeDiagnosticLevel.Default || d.Level == APIView.CodeDiagnosticLevel.Error);
     var warningDiags = Model.Diagnostics.Where(d => d.Level == APIView.CodeDiagnosticLevel.Warning);
     var infoDiags = Model.Diagnostics.Where(d => d.Level == APIView.CodeDiagnosticLevel.Info);
     <tr class="code-diagnostics" data-line-id="@Model.CodeLine.ElementId">

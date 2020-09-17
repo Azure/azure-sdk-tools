@@ -4,6 +4,7 @@ namespace APIView
 {
     public enum CodeDiagnosticLevel
     {
+        Default = 0,
         Info = 1,
         Warning = 2,
         Error = 3

@@ -31,6 +31,9 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Functions
         [FunctionName("webhook-eventhubs")]
         public async Task Run([EventHubTrigger("github-webhooks", Connection = "CheckEnforcerEventHubConnectionString")] EventData eventData, ILogger log, CancellationToken cancellationToken)
         {
+            var processingDelay = DateTimeOffset.UtcNow - eventData.SystemProperties.EnqueuedTimeUtc;
+            log.LogInformation("Webhook event processing delay is: {seconds} (seconds)", processingDelay.TotalSeconds);
+
             var message = GetMessage(eventData);
             var eventName = GetEventName(message);
             var eventSignature = GetEventSignature(message);

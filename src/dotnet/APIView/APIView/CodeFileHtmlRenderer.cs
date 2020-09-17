@@ -9,6 +9,8 @@ namespace ApiView
 {
     public class CodeFileHtmlRenderer : CodeFileRenderer
     {
+        private const string DOCUMENTATION_SPAN_START = "<span class=\"documentation\">";
+        private const string DOCUMENTATION_SPAN_END = "</span>";
         private readonly bool _readOnly;
 
         protected CodeFileHtmlRenderer(bool readOnly)
@@ -101,6 +103,15 @@ namespace ApiView
             {
                 stringBuilder.Append(EscapeHTML(token.Value));
             }
+        }
+
+        protected override void StartDocumentationRange(StringBuilder stringBuilder)
+        {
+            stringBuilder.Append(DOCUMENTATION_SPAN_START);
+        }
+        protected override void CloseDocumentationRange(StringBuilder stringBuilder) 
+        {
+            stringBuilder.Append(DOCUMENTATION_SPAN_END);
         }
 
         private string EscapeHTML(string word)

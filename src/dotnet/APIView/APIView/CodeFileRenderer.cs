@@ -9,8 +9,6 @@ namespace ApiView
 {
     public class CodeFileRenderer
     {
-        private const string DOCUMENTATION_SPAN_START = "<span class=\"documentation\">";
-        private const string DOCUMENTATION_SPAN_END = "</span>";
         public static CodeFileRenderer Instance = new CodeFileRenderer();
 
         public CodeLine[] Render(CodeFile file)
@@ -36,7 +34,7 @@ namespace ApiView
                         //Close documentation span if within doc range
                         if (isDocumentation)
                         {
-                            stringBuilder.Append(DOCUMENTATION_SPAN_END);
+                            CloseDocumentationRange(stringBuilder);
                         }
                         list.Add(new CodeLine(stringBuilder.ToString(), currentId, isDocumentationLine));
                         currentId = null;
@@ -44,7 +42,7 @@ namespace ApiView
                         //Start documentation span if tokens still in documentation range
                         if (isDocumentation)
                         {
-                            stringBuilder.Append(DOCUMENTATION_SPAN_START);
+                            StartDocumentationRange(stringBuilder);
                         }
                         //Reset flag for line documentation. This will be set to false if atleast one token is not a doc
                         isDocumentationLine = isDocumentation;
@@ -53,12 +51,12 @@ namespace ApiView
                     case CodeFileTokenKind.DocumentRangeStart:
                         isDocumentation = true;
                         isDocumentationLine = (stringBuilder.Length == 0);
-                        stringBuilder.Append(DOCUMENTATION_SPAN_START);
+                        StartDocumentationRange(stringBuilder);
                         break;
 
                     case CodeFileTokenKind.DocumentRangeEnd:
                         isDocumentation = false;
-                        stringBuilder.Append(DOCUMENTATION_SPAN_END);
+                        CloseDocumentationRange(stringBuilder);
                         break;
 
                     case CodeFileTokenKind.DeprecatedRangeStart:
@@ -91,5 +89,10 @@ namespace ApiView
                 stringBuilder.Append(token.Value);
             }
         }
+
+        // Below two methods are HTML renderer specific and implemented in htmlrender class
+        // These methods should not render anything for text renderer so keeping it empty
+        protected virtual void StartDocumentationRange(StringBuilder stringBuilder) { }
+        protected virtual void CloseDocumentationRange(StringBuilder stringBuilder) { }
     }
 }

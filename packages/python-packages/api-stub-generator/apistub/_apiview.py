@@ -13,7 +13,7 @@ from ._diagnostic import Diagnostic
 JSON_FIELDS = ["Name", "Version", "VersionString", "Navigation", "Tokens", "Diagnostics"]
 
 HEADER_TEXT = "# Package is parsed using api-stub-generator(version:{})".format(VERSION)
-TYPE_NAME_REGEX = re.compile("(~?[a-zA-Z\d.]+)")
+TYPE_NAME_REGEX = re.compile("(~?[a-zA-Z\d._]+)")
 TYPE_OR_SEPERATOR = " or "
 
 # Lint warnings

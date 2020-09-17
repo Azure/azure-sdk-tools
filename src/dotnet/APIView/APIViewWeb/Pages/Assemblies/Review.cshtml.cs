@@ -88,7 +88,7 @@ namespace APIViewWeb.Pages.Assemblies
 
                 var previousHtmlLines = previousRevisionFile.RenderReadOnly();
                 var previousRevisionTextLines = previousRevisionFile.RenderText();
-                var fileTextLines = CodeFileRenderer.Instance.Render(CodeFile);
+                var fileTextLines = renderedCodeFile.RenderText();
 
                 var diffLines = InlineDiff.Compute(
                     previousRevisionTextLines,

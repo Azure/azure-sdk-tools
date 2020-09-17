@@ -447,23 +447,22 @@ code-inner {
 
 /* DIAGNOSTICS */
 .code-diagnostics-error {
-    background-color: lightcoral;
+    background-color: lightpink;
+    border: 1px solid red;
 }
 
 .code-diagnostics-warn {
-    background-color: #ffe066;
+    background-color: lightyellow;
+    border: 1px solid #ffe066;
 }
 
 .code-diagnostics-info {
     background-color: lightskyblue;
+    border: 1px solid blue;
 }
 
 .code-diagnostics p {
     margin: 0;
-}
-
-.code-diagnostics a {
-    font-weight: bold;
 }
 
 /* ICONS */

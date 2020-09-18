@@ -34,7 +34,7 @@ steps:
           filePath: $(Build.SourcesDirectory)/eng/common/scripts/get-pr-creator.ps1
           arguments: >
             -PullRequestNumber "$(System.PullRequest.PullRequestNumber)"
-            -VsoPRCreatorVariable "PullRequestCreator"
+            -VsoPRCreatorVariable "System.PullRequest.Creator"
             -AuthToken "$(azuresdk-github-pat)"
           pwsh: true
 
@@ -51,7 +51,8 @@ steps:
         PushArgs: -f
         WorkingDirectory: $(System.DefaultWorkingDirectory)/${{ repo }}
         ScriptDirectory: $(System.DefaultWorkingDirectory)/eng/common/scripts
-        GHReviewersVariable: "PullRequestCreator"
+        GHReviewersVariable: "System.PullRequest.Creator"
+        GHAssignessVariable: "System.PullRequest.Creator"
 
     - pwsh: |
         $PRData = "Azure;${{ repo }};$(Submitted.PullRequest.Number)"

@@ -3,3 +3,13 @@
 ###########
 /eng/       @azure/azure-sdk-eng
 /eng/common/TestResources/  @heaths @danieljurek @weshaggard
+
+###########
+# Eng Sys Services
+###########
+/tools/ @azure/azure-sdk-eng
+/tools/check-enforcer/ @weshaggard @damirault @mitchdenny @JimSuplizio
+/tools/pipeline-witness/ @weshaggard @damirault @mitchdenny @JimSuplizio
+/tools/webhook-router/ @weshaggard @damirault @mitchdenny @JimSuplizio
+/tools/github-issues/ @weshaggard @damirault @mitchdenny @JimSuplizio @AlexGhiondea
+/tools/pipeline-generator/ @weshaggard @mitchdenny @danieljurek

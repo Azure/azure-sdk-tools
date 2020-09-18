@@ -49,39 +49,89 @@ param(
   [string]$PRBody = $PRTitle,
 
   [Parameter(Mandatory = $false)]
-  [string]$PRLabels
+  [string]$PRLabels,
+
+  [Parameter(Mandatory = $false)]
+  [string]$UserReviewers,
+
+  [Parameter(Mandatory = $false)]
+  [string]$TeamReviewers,
+
+  [Parameter(Mandatory = $false)]
+  [string]$Assignees
 )
+
+$baseURI = "https://api.github.com/repos"
+function SplitMembers ($membersString)
+{
+  return @($membersString.Split(",") | % { $_.Trim() } | ? { return $_ })
+}
+
+$userAdditions = SplitMembers -membersString $UserReviewers
+$teamAdditions = SplitMembers -membersString $TeamReviewers
+$labelAdditions = SplitMembers -membersString $PRLabels
+$assigneeAdditions = SplitMembers -membersString $Assignees
 
 $headers = @{
   Authorization = "bearer $AuthToken"
 }
 
-$query = "state=open&head=${PROwner}:${PRBranch}&base=${BaseBranch}"
-
-function AddLabels([int] $prNumber, [string] $prLabelString)
-{
-  # Adding labels to the pr.
-  if (-not $prLabelString) {
-    Write-Verbose "There are no labels added to the PR."
-    return
+function AddMembers($apiURI, $memberName, $additionSet) {
+  $headers = @{
+    Authorization = "bearer $AuthToken"
   }
+  $errorOccurred = $false
 
-  # Parse the labels from string to array
-  $prLabelArray = @($prLabelString.Split(",") | % { $_.Trim() } | ? { return $_ })
-  $prLabelUri = "https://api.github.com/repos/$RepoOwner/$RepoName/issues/$prNumber"
-  $labelRequestData = @{
-    labels = $prLabelArray
-  }
   try {
-    $resp = Invoke-RestMethod -Method PATCH -Headers $headers $prLabelUri -Body ($labelRequestData | ConvertTo-Json)
+    $postResp = @{}
+    $postResp[$memberName] = @($additionSet)
+    $postResp = $postResp | ConvertTo-Json
+
+    Write-Host $postResp
+    $resp = Invoke-RestMethod -Method 'Post' -Headers $headers -Body $postResp -Uri $apiURI -MaximumRetryCount 3
+    $resp | Write-Verbose
   }
   catch {
-    Write-Error "Invoke-RestMethod $prLabelUri failed with exception:`n$_"
+    Write-Error "Invoke-RestMethod $apiURI failed with exception:`n$_"
+    $errorOccurred = $true
   }
 
-  $resp | Write-Verbose
-  Write-Host -f green "Label(s) [$prLabelArray] added to pull request: https://github.com/$RepoOwner/$RepoName/pull/$prNumber"
+  return $errorOccurred
 }
+
+function AddReviewers ($prNumber) {
+  $uri = "$baseURI/$RepoOwner/$RepoName/pulls/$prNumber/requested_reviewers"
+  if ($userAdditions) {
+    $errorsOccurredAddingUsers = AddMembers -apiURI $uri -memberName "reviewers" -additionSet $userAdditions
+    if ($errorsOccurredAddingUsers) { exit 1 }
+    Write-Host -f green "User(s) [$userAdditions] added to: https://github.com/$RepoOwner/$RepoName/issue/$prNumber"
+  }
+  if ($teamAdditions) {
+    $errorsOccurredAddingTeams = AddMembers -apiURI $uri -memberName "team_reviewers" -additionSet $teamAdditions
+    if ($errorsOccurredAddingTeams) { exit 1 }
+    Write-Host -f green "Team(s) [$teamAdditions] added to: https://github.com/$RepoOwner/$RepoName/issue/$prNumber"
+  }
+}
+
+function AddAssignees ($prNumber) {
+  $uri = "$baseURI/$RepoOwner/$RepoName/issues/$prNumber"
+  if ($assigneeAdditions) {
+    $errorsOccurredAddingUsers = AddMembers -apiURI $uri -memberName "assignees" -additionSet $assigneeAdditions
+    if ($errorsOccurredAddingUsers) { exit 1 }
+    Write-Host -f green "Users(s) [$assigneeAdditions] added to: https://github.com/$RepoOwner/$RepoName/issue/$prNumber"
+  }
+}
+
+function AddLabels ($prNumber) {
+  $uri = "$baseURI/$RepoOwner/$RepoName/issues/$prNumber"
+  if ($labelAdditions) {
+    $errorsOccurredAddingUsers = AddMembers -apiURI $uri -memberName "labels" -additionSet $labelAdditions
+    if ($errorsOccurredAddingUsers) { exit 1 }
+    Write-Host -f green "Label(s) [$labelAdditions] added to: https://github.com/$RepoOwner/$RepoName/issue/$prNumber"
+  }
+}
+
+$query = "state=open&head=${PROwner}:${PRBranch}&base=${BaseBranch}"
 
 try {
   $resp = Invoke-RestMethod -Headers $headers "https://api.github.com/repos/$RepoOwner/$RepoName/pulls?$query"
@@ -124,5 +174,7 @@ else {
   # setting variable to reference the pull request by number
   Write-Host "##vso[task.setvariable variable=Submitted.PullRequest.Number]$($resp.number)"
 
-  AddLabels $resp.number $PRLabels
+  AddReviewers -prNumber $resp.number
+  AddLabels -prNumber $resp.number
+  AddAssignees -prNumber $resp.number
 }

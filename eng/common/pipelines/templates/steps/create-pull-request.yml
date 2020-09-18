@@ -17,6 +17,7 @@ parameters:
   GHTeamReviewersVariable: ''
   # Multiple labels seperated by comma, e.g. "bug, APIView"
   PRLabels: ''
+  GHAssignessVariable: ''
 
 steps:
 
@@ -75,37 +76,6 @@ steps:
       -PRTitle "${{ parameters.PRTitle }}"
       -PRBody "${{ coalesce(parameters.PRBody, parameters.CommitMsg, parameters.PRTitle) }}"
       -PRLabels "${{ parameters.PRLabels}}"
-
-- task: PowerShell@2
-  displayName: Tag a Reviewer on PR
-  condition: and(succeeded(), eq(variables['HasChanges'], 'true'))
-  continueOnError: true
-  inputs:
-    pwsh: true
-    workingDirectory: ${{ parameters.WorkingDirectory }}
-    filePath: ${{ parameters.ScriptDirectory }}/add-pullrequest-reviewers.ps1
-    arguments: >
-      -RepoOwner "${{ parameters.RepoOwner }}"
-      -RepoName "$(RepoNameWithoutOwner)"
-      -AuthToken "$(azuresdk-github-pat)"
-      -GitHubUsers "$(${{ parameters.GHReviewersVariable }})"
-      -GitHubTeams "$(${{ parameters.GHTeamReviewersVariable }})"
-      -PRNumber "$(Submitted.PullRequest.Number)"
-
-- task: PowerShell@2
-  displayName: Add Assignee to Pull Request
-  condition: and(succeeded(), eq(variables['HasChanges'], 'true'))
-  continueOnError: true
-  inputs:
-    pwsh: true
-    workingDirectory: ${{ parameters.WorkingDirectory }}
-    filePath: ${{ parameters.ScriptDirectory }}/add-issue-assignees.ps1
-    arguments: >
-      -RepoOwner "${{ parameters.RepoOwner }}"
-      -RepoName "${{ parameters.RepoName }}"
-      -AuthToken "$(azuresdk-github-pat)"
-      -GitHubUsers "$(${{ parameters.GHReviewersVariable }})"
-      -IssueNumber "$(Submitted.PullRequest.Number)"
-
-
-
+      -UserReviewers "$(${{ parameters.GHReviewersVariable }})"
+      -TeamReviewers "$(${{ parameters.GHTeamReviewersVariable }})"
+      -Assignees "$(${{ parameters.GHAssignessVariable }})"

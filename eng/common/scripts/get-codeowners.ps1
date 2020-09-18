@@ -43,36 +43,26 @@ foreach ($contentLine in $codeOwnersContent) {
     
     # CODEOWNERS file can also have labels present after the owner aliases
     # gh aliases start with @ in codeowners. don't pass on to API calls
-
-    $aliases = ($splitLine[1..$($splitLine.Length)] | ? { $_.StartsWith("@") } | % { return $_.substring(1) }) -join ","
-    $labels = ""
-
-    if ($null -ne $previousLine -and $previousLine.Contains("PRLabel:"))
-    {
-      $previousLine = $previousLine.substring($previousLine.IndexOf(':') + 1)
-      $splitPrevLine = $previousLine -split "%" 
-      $labels = ($splitPrevLine[1..$($splitPrevLine.Length)] | % { return $_.Trim() }) -join ","
-    }
-
-    $ownedFolders[$splitLine[0].ToLower().Trim("/")] = @{ Aliases = $aliases; Labels = $labels }
+    $ownedFolders[$splitLine[0].ToLower().Trim("/")] = ($splitLine[1..$($splitLine.Length)] `
+      | ? { $_.StartsWith("@") } `
+      | % { return $_.substring(1) }) -join ","
   }
-  $previousLine = $contentLine
 }
 
 $results = $ownedFolders[$target]
 
 if ($results) {
   Write-Host "Found a folder to match $target"
-  $aliases = $results.Aliases -split ","
-  $users
-  $teams
+  $aliases = $results -split ","
+  $users = [System.Collections.ArrayList]::new()
+  $teams = [System.Collections.ArrayList]::new()
 
   foreach ($str in $aliases)
   {
     $usersApiUrl = "https://api.github.com/users/$str"
     if (VerifyAlias -APIUrl $usersApiUrl)
     {
-      if ($users) { $users += ("," + $str) } else { $users += $str }
+      [void]$users.Add($str)
     }
     else {
       if ($str.IndexOf('/') -ne -1) # Check if it's a team alias e.g. Azure/azure-sdk-eng
@@ -82,7 +72,7 @@ if ($results) {
         $teamApiUrl =  "https://api.github.com/orgs/$org/teams/$team_slug"
         if (VerifyAlias -APIUrl $teamApiUrl)
         {
-          if ($teams) { $teams += ("," + $str) } else { $teams += $str }
+          [void]$teams.Add($team_slug)
           continue
         }
       }
@@ -90,10 +80,16 @@ if ($results) {
     }
   }
 
+  $usersString = $users -join ", "
+  $teamsString = $teams -join ", " 
+
+  Write-Host "User $usersString"
+  Write-Host "Teams $teamsString"
+
   if ($VsoOwningUsers) {
     $presentOwningUsers = [System.Environment]::GetEnvironmentVariable($VsoOwningUsers)
     if ($presentOwningUsers) { 
-      $users += ",$presentOwningUsers"
+      $usersString += ",$presentOwningUsers"
     }
     Write-Host "##vso[task.setvariable variable=$VsoOwningUsers;]$users"
   }
@@ -101,20 +97,12 @@ if ($results) {
   if ($VsoOwningTeams) {
     $presentOwningTeams = [System.Environment]::GetEnvironmentVariable($VsoOwningTeams)
     if ($presentOwningTeams) { 
-      $teams += ",$presentOwningTeams"
+      $teamsString += ",$presentOwningTeams"
     }
     Write-Host "##vso[task.setvariable variable=$VsoOwningTeams;]$teams"
   }
 
-  if ($VsoOwningLabels) {
-    $presentOwningLabels = [System.Environment]::GetEnvironmentVariable($VsoOwningLabels)
-    if ($presentOwningLabels) { 
-      $labels += ",$presentOwningLabels"
-    }
-    Write-Host "##vso[task.setvariable variable=$VsoOwningLabels;]$($result.Labels)"
-  }
-
-  return @{ Users = $users; Teams = $teams; Labels = $results.Labels }
+  return $results
 }
 else {
   Write-Host "Unable to match path $target in CODEOWNERS file located at $codeOwnersLocation."

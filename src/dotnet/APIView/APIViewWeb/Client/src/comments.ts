@@ -90,6 +90,26 @@
         e.preventDefault();
     });
 
+    $(document).on("click", ".js-github", e => {
+        let target = $(e.target);
+        let repo = target.attr("data-repo");
+        let format = target.attr("data-format");
+        let commentElement = getCommentElement(getCommentId(e.target)!);
+        let comment = commentElement.find(".js-comment-raw").html();
+        let elementId = getElementId(commentElement[0]);
+        let codeRow = getCodeRow(elementId!).find(".code-inner").text().trim();
+        let apiViewUrl = window.location.href + "%23" + escape(escape(elementId!));
+
+        // Double escape the element - this is used as the URL back to API View and GitHub will render one layer of the encoding.
+        let issueBody = escape("```" + format + "\n" + codeRow + "\n```\n#\n" + comment + "\n#\n") + "[Created from ApiView comment](" + apiViewUrl + ")";
+
+        window.open(
+            "https://github.com/Azure/" + repo + "/issues/new?" +
+            "&body=" + issueBody,
+            '_blank');
+        e.preventDefault();
+    });
+
     $(document).on("keydown", ".new-thread-comment-text", e => {
         if (e.ctrlKey && (e.keyCode === 10 || e.keyCode === 13)) {
             const form = $(e.target).closest("form");
@@ -101,11 +121,11 @@
     });
 
     addEventListener("hashchange", e => {
-      highlightCurrentRow();
+        highlightCurrentRow();
     });
 
     addEventListener("load", e => {
-      highlightCurrentRow();
+        highlightCurrentRow();
     });
 
     function highlightCurrentRow() {
@@ -113,7 +133,7 @@
         var row = getCodeRow(location.hash.substring(1));
         row.addClass("active");
         row.on("animationend", () => {
-          row.removeClass("active");
+            row.removeClass("active");
         });
     }
 

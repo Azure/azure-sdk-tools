@@ -30,22 +30,28 @@
                                     </button>
                                 </form>
 
-                                @if (comment.Username == User.GetGitHubLogin())
-                                {
-                                    <div class="dropdown show">
-                                        <a class="btn btn-sm" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                            ...
-                                        </a>
+                                <div class="dropdown show">
+                                    <a class="btn btn-sm" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        ...
+                                    </a>
 
-                                        <div class="dropdown-menu">
+                                    <div class="dropdown-menu clickable">
+                                        @if (comment.Username == User.GetGitHubLogin())
+                                        {
                                             <form data-post-update="comments" asp-controller="Comments" asp-action="Delete" method="post" asp-route-reviewId="@Model.ReviewId">
-                                                <input type="hidden" name="commentId" value="@comment.CommentId"/>
+                                                <input type="hidden" name="commentId" value="@comment.CommentId" />
                                                 <button id="@comment.CommentId" type="submit" class="text-danger dropdown-item">Delete</button>
                                             </form>
                                             <a class="dropdown-item js-edit-comment">Edit</a>
-                                        </div>
+                                        }
+                                        <a class="dropdown-item js-github" data-repo="azure-sdk-for-net" data-format="c#">Create issue in .NET repo</a>
+                                        <a class="dropdown-item js-github" data-repo="azure-sdk-for-java" data-format="java">Create issue in Java repo</a>
+                                        <a class="dropdown-item js-github" data-repo="azure-sdk-for-python" data-format="python">Create issue in Python repo</a>
+                                        <a class="dropdown-item js-github" data-repo="azure-sdk-for-js" data-format="javascript">Create issue in JS repo</a>
+                                        <a class="dropdown-item js-github" data-repo="azure-sdk-for-go" data-format="go">Create issue in Go repo</a>
+                                        <a class="dropdown-item js-github" data-repo="azure-sdk-for-c" data-format="c">Create issue in C repo</a>
                                     </div>
-                                }
+                                </div>
                             </div>
                             <div class="media">
                                 <a username="@comment.Username">
@@ -81,7 +87,7 @@
                         }
                         else
                         {
-                            <form data-post-update="comments" method="post" asp-controller="Comments" asp-action="Resolve"  asp-route-reviewId="@Model.ReviewId">
+                            <form data-post-update="comments" method="post" asp-controller="Comments" asp-action="Resolve" asp-route-reviewId="@Model.ReviewId">
                                 <button type="submit" name="submit" value="Submit" class="btn btn-outline-secondary">Resolve</button>
                             </form>
                         }

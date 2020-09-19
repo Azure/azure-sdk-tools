@@ -10,6 +10,8 @@ import java.util.List;
 
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.*;
 
+import static com.azure.tools.apiview.processor.model.DiagnosticKind.*;
+
 public class UpperCaseNamingDiagnosticRule implements DiagnosticRule {
 
     private final List<String> illegalNames;
@@ -33,7 +35,7 @@ public class UpperCaseNamingDiagnosticRule implements DiagnosticRule {
 
     private void check(String name, String id, APIListing listing) {
         if (illegalNames.stream().anyMatch(name::contains)) {
-            listing.addDiagnostic(new Diagnostic(id, "This is named with incorrect casing."));
+            listing.addDiagnostic(new Diagnostic(WARNING, id, "This is named with incorrect casing."));
         }
     }
 }

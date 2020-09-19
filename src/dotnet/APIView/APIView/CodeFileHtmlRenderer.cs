@@ -3,11 +3,14 @@
 
 using APIView;
 using System.Text;
+using System.Web;
 
 namespace ApiView
 {
     public class CodeFileHtmlRenderer : CodeFileRenderer
     {
+        private const string DOCUMENTATION_SPAN_START = "<span class=\"documentation\">";
+        private const string DOCUMENTATION_SPAN_END = "</span>";
         private readonly bool _readOnly;
 
         protected CodeFileHtmlRenderer(bool readOnly)
@@ -18,7 +21,7 @@ namespace ApiView
         public static CodeFileHtmlRenderer Normal { get; } = new CodeFileHtmlRenderer(false);
         public static CodeFileHtmlRenderer ReadOnly { get; } = new CodeFileHtmlRenderer(true);
 
-        protected override void RenderToken(CodeFileToken token, StringBuilder stringBuilder)
+        protected override void RenderToken(CodeFileToken token, StringBuilder stringBuilder, bool isDeprecatedToken)
         {
             if (token.Value == null)
             {
@@ -45,6 +48,11 @@ namespace ApiView
                 case CodeFileTokenKind.Comment:
                     elementClass = "code-comment";
                     break;
+            }
+
+            if (isDeprecatedToken)
+            {
+                elementClass += " deprecated";
             }
 
             string href = null;
@@ -80,7 +88,7 @@ namespace ApiView
                 }
                 stringBuilder.Append(" class=\"").Append(elementClass).Append("\"");
                 stringBuilder.Append(">");
-                stringBuilder.Append(token.Value);
+                stringBuilder.Append(HttpUtility.HtmlEncode(token.Value));
 
                 if (a)
                 {
@@ -95,6 +103,15 @@ namespace ApiView
             {
                 stringBuilder.Append(EscapeHTML(token.Value));
             }
+        }
+
+        protected override void StartDocumentationRange(StringBuilder stringBuilder)
+        {
+            stringBuilder.Append(DOCUMENTATION_SPAN_START);
+        }
+        protected override void CloseDocumentationRange(StringBuilder stringBuilder) 
+        {
+            stringBuilder.Append(DOCUMENTATION_SPAN_END);
         }
 
         private string EscapeHTML(string word)

@@ -9,12 +9,13 @@ namespace APIView
         {
         }
 
-        public CodeDiagnostic(string diagnosticId, string targetId, string text, string helpLinkUri)
+        public CodeDiagnostic(string diagnosticId, string targetId, string text, string helpLinkUri, CodeDiagnosticLevel level = CodeDiagnosticLevel.Error)
         {
             DiagnosticId = diagnosticId;
             Text = text;
             TargetId = targetId;
             HelpLinkUri = helpLinkUri;
+            Level = level;
         }
 
         public string DiagnosticId { get; set; }
@@ -24,5 +25,7 @@ namespace APIView
         public string HelpLinkUri { get; set; }
 
         public string TargetId { get; set; }
+
+        public CodeDiagnosticLevel Level { get; set; }
     }
 }

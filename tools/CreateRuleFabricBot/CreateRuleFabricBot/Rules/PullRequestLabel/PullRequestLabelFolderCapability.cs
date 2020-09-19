@@ -1,9 +1,11 @@
 ﻿using CreateRuleFabricBot.Rules.PullRequestLabel;
 using OutputColorizer;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Text.Encodings.Web;
 
@@ -31,9 +33,10 @@ namespace CreateRuleFabricBot.Rules.IssueRouting
           {
             ""label"": ""###label###"",
             ""pathFilter"": [ ###srcFolders### ],
-            ""exclude"": [ ]
+            ""exclude"": [ """" ]
           }
 ";
+        // Note: By using an empty string in the exclude portion above, the rule we create will allow multiple labels (from different folders) to be applied to the same PR.
 
         private readonly string _repo;
         private readonly string _owner;
@@ -131,11 +134,33 @@ namespace CreateRuleFabricBot.Rules.IssueRouting
             return result;
         }
 
+        private string GetFileContents(string fileOrUri)
+        {
+            if (File.Exists(fileOrUri))
+            {
+                return File.ReadAllText(fileOrUri);
+            }
+
+            // try to parse it as an Uri
+            Uri uri = new Uri(fileOrUri, UriKind.Absolute);
+            if (uri.Scheme.ToLowerInvariant() != "https")
+            {
+                throw new ArgumentException("Cannot download off non-https uris");
+            }
+
+            // try to download it.
+            using (HttpClient client = new HttpClient())
+            {
+                HttpResponseMessage response = client.GetAsync(fileOrUri).ConfigureAwait(false).GetAwaiter().GetResult();
+                return response.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+            }
+        }
+
         private List<CodeOwnerEntry> ReadOwnersFromFile()
         {
             List<CodeOwnerEntry> entries = new List<CodeOwnerEntry>();
             string line;
-            using (StreamReader sr = new StreamReader(_codeownersFile))
+            using (StringReader sr = new StringReader(GetFileContents(_codeownersFile)))
             {
                 while ((line = sr.ReadLine()) != null)
                 {

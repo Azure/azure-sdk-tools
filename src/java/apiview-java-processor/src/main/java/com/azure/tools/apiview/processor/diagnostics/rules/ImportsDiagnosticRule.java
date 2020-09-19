@@ -11,6 +11,8 @@ import java.util.List;
 
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.getClassName;
 
+import static com.azure.tools.apiview.processor.model.DiagnosticKind.*;
+
 public class ImportsDiagnosticRule implements DiagnosticRule {
 
     private final List<String> illegalPackages;
@@ -29,7 +31,10 @@ public class ImportsDiagnosticRule implements DiagnosticRule {
             ASTUtils.getImports(cu).forEach(importStr -> {
                 for (String illegalPackage : illegalPackages) {
                     if (importStr.contains(illegalPackage)) {
-                        listing.addDiagnostic(new Diagnostic(typeId, "Do not add dependencies to classes in the '" + illegalPackage + "' package."));
+                        listing.addDiagnostic(new Diagnostic(
+                            WARNING,
+                            typeId,
+                            "Do not add dependencies to classes in the '" + illegalPackage + "' package."));
                     }
                 }
             });

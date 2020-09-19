@@ -446,9 +446,19 @@ code-inner {
 }
 
 /* DIAGNOSTICS */
-.code-diagnostics td {
-    border: 1px solid red;
+.code-diagnostics-error {
     background-color: lightpink;
+    border: 1px solid red;
+}
+
+.code-diagnostics-warn {
+    background-color: lightyellow;
+    border: 1px solid #ffe066;
+}
+
+.code-diagnostics-info {
+    background-color: lightskyblue;
+    border: 1px solid blue;
 }
 
 .code-diagnostics p {
@@ -515,4 +525,15 @@ code-inner {
 }
 .code-removed {
     background-color: #ffeef0;
+}
+
+.deprecated {
+    text-decoration: line-through;
+}
+
+.documentation {
+    display: none;
+}
+mark {
+    padding: 0;
 }

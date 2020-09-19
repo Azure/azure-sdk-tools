@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.*;
+import static com.azure.tools.apiview.processor.model.DiagnosticKind.*;
 
 /**
  * A diagnostic rule that ensures our public API does not return or accept as a parameter into it something that has a
@@ -80,7 +81,10 @@ public class IllegalPackageAPIExportsDiagnosticRule implements DiagnosticRule {
     private void validatePackageName(String methodId, String packageName, APIListing listing) {
         for (String illegalPackage : illegalPackages) {
             if (packageName.contains(illegalPackage)) {
-                listing.addDiagnostic(new Diagnostic(methodId, "Public API should never expose classes from the " + illegalPackage + " package."));
+                listing.addDiagnostic(new Diagnostic(
+                    ERROR,
+                    methodId,
+                    "Public API should never expose classes from the " + illegalPackage + " package."));
                 continue;
             }
         }

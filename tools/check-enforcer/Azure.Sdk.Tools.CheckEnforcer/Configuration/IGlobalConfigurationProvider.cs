@@ -8,11 +8,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Configuration
     {
         string GetApplicationID();
         string GetApplicationName();
-        string GetGitHubAppPrivateKeyName();
-        string GetGitHubAppWebhookSecretName();
-        string GetKeyVaultUri();
-        string GetDistributedLockStorageUri();
-        string GetDistributedLockContainerName();
-
+        int GetMaxRequestsPerPeriod();
+        int GetPeriodDurationInSeconds();
     }
 }

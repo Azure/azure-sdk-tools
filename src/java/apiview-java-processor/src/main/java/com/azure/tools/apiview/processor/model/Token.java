@@ -15,6 +15,10 @@ public class Token {
     @JsonProperty("Value")
     private String value;
 
+    public Token(final TokenKind kind) {
+        this(kind, null);
+    }
+
     public Token(final TokenKind kind, final String value) {
         this(kind, value, null);
     }

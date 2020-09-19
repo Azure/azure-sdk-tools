@@ -4,6 +4,7 @@ using Azure.Sdk.Tools.CheckEnforcer.Configuration;
 using Azure.Sdk.Tools.CheckEnforcer.Integrations.GitHub;
 using Azure.Security.KeyVault.Keys;
 using Azure.Security.KeyVault.Keys.Cryptography;
+using Azure.Security.KeyVault.Secrets;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.IdentityModel.Tokens;
 using Octokit;
@@ -19,10 +20,12 @@ namespace Azure.Sdk.Tools.CheckEnforcer
 {
     public class GitHubClientProvider : IGitHubClientProvider
     {
-        public GitHubClientProvider(IGlobalConfigurationProvider globalConfigurationProvider, IMemoryCache cache)
+        public GitHubClientProvider(IGlobalConfigurationProvider globalConfigurationProvider, IMemoryCache cache, CryptographyClient cryptographyClient, GitHubRateLimiter limiter)
         {
             this.globalConfigurationProvider = globalConfigurationProvider;
             this.cache = cache;
+            this.cryptographyClient = cryptographyClient;
+            this.limiter = limiter;
         }
 
         private IGlobalConfigurationProvider globalConfigurationProvider;
@@ -51,7 +54,6 @@ namespace Azure.Sdk.Tools.CheckEnforcer
 
         private async Task<string> SignHeaderAndPayloadDigestWithGitHubApplicationKey(byte[] digest, CancellationToken cancellationToken)
         {
-            var cryptographyClient = await GetCryptographyClient(cancellationToken);
             var signResult = await cryptographyClient.SignAsync(
                 SignatureAlgorithm.RS256,
                 digest,
@@ -90,49 +92,8 @@ namespace Azure.Sdk.Tools.CheckEnforcer
             return headerAndPayloadString;
         }
 
-        private async Task<CryptographyClient> GetCryptographyClient(CancellationToken cancellationToken)
-        {
-            // Using DefaultAzureCredential to support local development. If developing
-            // locally you'll need to register an AAD application and set the following
-            // variables:
-            //
-            //      AZURE_TENANT_ID (the ID of the AAD tenant)
-            //      AZURE_CLIENT_ID (the iD of the AAD application you registered)
-            //      AZURE_CLIENT_SECRET (the secret for the AAD application you registered)
-            //
-            // You can get these values when you configure the application. Set them in
-            // the Debug section of the project properties. Once this is done you will need
-            // to create a KeyVault instance and then register a GitHub application and upload
-            // the private key into the vault. The AAD application that you just created needs
-            // to have Get and Sign rights - so set an access policy up which grants the app
-            // those rights.
-            //
-            var credential = new DefaultAzureCredential();
-
-            var keyClient = GetKeyClient(credential);
-            var key = await GetKey(keyClient, cancellationToken);
-
-            var cryptographyClient = new CryptographyClient(key.Id, credential);
-            return cryptographyClient;
-        }
-
-        private async Task<KeyVaultKey> GetKey(KeyClient keyClient, CancellationToken cancellationToken)
-        {
-            var keyResponse = await keyClient.GetKeyAsync(
-                globalConfigurationProvider.GetGitHubAppPrivateKeyName(),
-                cancellationToken: cancellationToken
-                );
-
-            var key = keyResponse.Value;
-            return key;
-        }
-
-        private KeyClient GetKeyClient(TokenCredential credential)
-        {
-            var keyVaultUri = new Uri(globalConfigurationProvider.GetKeyVaultUri());
-            var keyClient = new KeyClient(keyVaultUri, credential);
-            return keyClient;
-        }
+        private CryptographyClient cryptographyClient;
+        private GitHubRateLimiter limiter;
 
         public async Task<GitHubClient> GetApplicationClientAsync(CancellationToken cancellationToken)
         {
@@ -155,6 +116,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
             var cachedInstallationToken = await cache.GetOrCreateAsync<Octokit.AccessToken>(installationTokenCacheKey, async (entry) =>
             {
                 var appClient = await GetApplicationClientAsync(cancellationToken);
+                await limiter.WaitForGitHubCapacityAsync();
                 var installationToken = await appClient.GitHubApps.CreateInstallationToken(installationId);
                 return installationToken;
             });

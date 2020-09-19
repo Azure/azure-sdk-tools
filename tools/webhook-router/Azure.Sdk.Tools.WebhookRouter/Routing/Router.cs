@@ -19,44 +19,18 @@ namespace Azure.Sdk.Tools.WebhookRouter.Routing
 {
     public class Router : IRouter
     {
-        public Router(IMemoryCache cache, ILogger<IRouter> logger)
+        public Router(IMemoryCache cache, ILogger<IRouter> logger, ConfigurationClient configurationClient, SecretClient secretClient)
         {
             this.cache = cache;
             this.logger = logger;
+            this.configurationClient = configurationClient;
+            this.secretClient = secretClient;
         }
 
         private IMemoryCache cache;
         private ILogger logger;
-
-        private string GetWebsiteResourceGroupEnvironmentVariable()
-        {
-            logger.LogInformation("Fetching WEBSITE_RESOURCE_GROUP environment variable.");
-            var websiteResourceGroupEnvironmentVariable = Environment.GetEnvironmentVariable("WEBSITE_RESOURCE_GROUP");
-            logger.LogInformation("WEBSITE_RESOURCE_GROUP environemnt variable was: {websiteResourceGroupEnvironmentVariable}", websiteResourceGroupEnvironmentVariable);
-            return websiteResourceGroupEnvironmentVariable;
-        }
-
-        private Uri GetSecretClientUri()
-        {
-            var websiteResourceGroupEnvironmentVariable = GetWebsiteResourceGroupEnvironmentVariable();
-            var uri = new Uri($"https://{websiteResourceGroupEnvironmentVariable}.vault.azure.net/");
-            return uri;
-        }
-
-        private Uri GetConfigurationUri()
-        {
-            var websiteResourceGroupEnvironmentVariable = GetWebsiteResourceGroupEnvironmentVariable();
-            var uri = new Uri($"https://{websiteResourceGroupEnvironmentVariable}.azconfig.io/");
-            return uri;
-        }
-
-        private SecretClient GetSecretClient()
-        {
-            var uri = GetSecretClientUri();
-            var credential = new DefaultAzureCredential();
-            var client = new SecretClient(uri, credential);
-            return client;
-        }
+        private ConfigurationClient configurationClient;
+        private SecretClient secretClient;
 
         private async Task<string> GetSecretAsync(string secretName)
         {
@@ -70,21 +44,12 @@ namespace Azure.Sdk.Tools.WebhookRouter.Routing
 
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(60);
 
-                var client = GetSecretClient();
-                KeyVaultSecret response = await client.GetSecretAsync(secretName);
+                KeyVaultSecret response = await secretClient.GetSecretAsync(secretName);
                 var secret = response.Value;
                 return secret;
             });
 
             return cachedSecret;
-        }
-
-        private ConfigurationClient GetConfigurationClient()
-        {
-            var uri = GetConfigurationUri();
-            var credential = new DefaultAzureCredential();
-            var client = new ConfigurationClient(uri, credential);
-            return client;
         }
 
         // This key filter template is used to select all the configuration values
@@ -119,8 +84,7 @@ namespace Azure.Sdk.Tools.WebhookRouter.Routing
                 KeyFilter = settingSelectorKeyFilter
             };
 
-            var client = GetConfigurationClient();
-            var settingsPages = client.GetConfigurationSettingsAsync(settingSelector);
+            var settingsPages = configurationClient.GetConfigurationSettingsAsync(settingSelector);
 
             var settings = new Dictionary<string, string>();
             await foreach (var setting in settingsPages)

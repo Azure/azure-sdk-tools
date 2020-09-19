@@ -19,6 +19,7 @@ namespace identity_resolver
         /// <param name="kustoDatabaseVar">Kusto DB environment variable name</param>
         /// <param name="kustoTableVar">Kusto Table environment variable name</param>
         /// <param name="identity">The full name of the employee</param>
+        /// <param name="targetvar">The name of DevOps output variable</param>
         /// <returns></returns>
         public static async Task Main(
             string aadAppIdVar,
@@ -27,7 +28,8 @@ namespace identity_resolver
             string kustoUrlVar,
             string kustoDatabaseVar,
             string kustoTableVar,
-            string identity
+            string identity,
+            string targetvar
             )
         {
 
@@ -35,19 +37,35 @@ namespace identity_resolver
             using (var loggerFactory = new LoggerFactory().AddConsole(includeScopes: true))
 #pragma warning restore CS0618 // Type or member is obsolete
             {
-                var githubNameResolver = new GitHubNameResolver(
-                    Environment.GetEnvironmentVariable(aadAppIdVar),
-                    Environment.GetEnvironmentVariable(aadAppSecretVar),
-                    Environment.GetEnvironmentVariable(aadTenantVar),
-                    Environment.GetEnvironmentVariable(kustoUrlVar),
-                    Environment.GetEnvironmentVariable(kustoDatabaseVar),
-                    Environment.GetEnvironmentVariable(kustoTableVar),
-                    loggerFactory.CreateLogger<GitHubNameResolver>()
-                );
+                try
+                {
+                    var githubNameResolver = new GitHubNameResolver(
+                        Environment.GetEnvironmentVariable(aadAppIdVar),
+                        Environment.GetEnvironmentVariable(aadAppSecretVar),
+                        Environment.GetEnvironmentVariable(aadTenantVar),
+                        Environment.GetEnvironmentVariable(kustoUrlVar),
+                        Environment.GetEnvironmentVariable(kustoDatabaseVar),
+                        Environment.GetEnvironmentVariable(kustoTableVar),
+                        loggerFactory.CreateLogger<GitHubNameResolver>()
+                    );
 
-                var result = await githubNameResolver.GetMappingInformationFromAADName(identity);
+                    var result = await githubNameResolver.GetMappingInformationFromAADName(identity);
 
-                Console.Write(JsonConvert.SerializeObject(result));
+                    if (!String.IsNullOrEmpty(targetvar))
+                    {
+                        Console.WriteLine(String.Format("##vso[task.setvariable variable={0};]{1}", targetvar, result.GithubUserName));
+                    }
+                    Console.WriteLine(JsonConvert.SerializeObject(result));
+                }
+                catch (Exception e)
+                {
+                    if (!String.IsNullOrEmpty(targetvar))
+                    {
+                        Console.WriteLine(String.Format("##vso[task.setvariable variable={0};]{1}", targetvar, ""));
+                    }
+
+                    throw e;
+                }
             }
         }
     }

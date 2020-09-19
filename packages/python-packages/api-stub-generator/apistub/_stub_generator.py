@@ -19,7 +19,6 @@ import pkgutil
 import shutil
 import ast
 import textwrap
-import io
 import re
 import typing
 import tempfile
@@ -30,6 +29,7 @@ import zipfile
 from apistub._apiview import ApiView, APIViewEncoder, Navigation, Kind, NavigationTag
 
 INIT_PY_FILE = "__init__.py"
+TOP_LEVEL_WHEEL_FILE = "top_level.txt"
 
 logging.getLogger().setLevel(logging.ERROR)
 
@@ -98,7 +98,8 @@ class StubGenerator:
         if self.pkg_path.endswith(".whl") or self.pkg_path.endswith(".zip"):
             logging.info("Extracting package to temp path")
             pkg_root_path = self._extract_wheel()
-            pkg_name, version, namespace = self._parse_pkg_name()
+            pkg_name, version = self._parse_pkg_name()
+            namespace = self.get_module_root_name(pkg_root_path)
         else:
             # package root is passed as arg to parse
             pkg_root_path = self.pkg_path
@@ -227,6 +228,21 @@ class StubGenerator:
         logging.debug("Extracted package files into temp path")
         return temp_pkg_dir
 
+
+    def get_module_root_name(self, wheel_extract_path):
+        # APiStubgen finds namespace from setup.py when running against code repo
+        # But we don't have setup.py to parse when wheel is uploaded into APIView tool
+        # Parse top_level.txt file in dist-info to find root module name
+        files = glob.glob(os.path.join(wheel_extract_path, "*", TOP_LEVEL_WHEEL_FILE))
+        if not files:
+            logging.warning("File {0} is not found in {1} to identify root module name. All mdoules in package will be parsed".format(TOP_LEVEL_WHEEL_FILE, wheel_extract_path))
+            return ""
+        with io.open(files[0], "r") as top_lvl_file:
+            root_module_name = top_lvl_file.readline().strip()
+            logging.info("Root module found in {0}: '{1}'".format(TOP_LEVEL_WHEEL_FILE, root_module_name))
+            return root_module_name
+
+
     def _parse_pkg_name(self):
         file_name = os.path.basename(self.pkg_path)
         whl_name, extn = os.path.splitext(file_name)
@@ -238,8 +254,7 @@ class StubGenerator:
         filename_parts = whl_name.split("-")
         pkg_name = filename_parts[0].replace("_", "-")
         version = filename_parts[1]
-        name_space = pkg_name.replace('-', '.')
-        return pkg_name, version, name_space
+        return pkg_name, version
 
     def _install_package(self, pkg_name):
         # Uninstall the package and reinstall it to parse so inspect can get members in package

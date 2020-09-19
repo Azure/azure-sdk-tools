@@ -22,32 +22,77 @@ namespace ApiView
         {
             var stringBuilder = new StringBuilder();
             string currentId = null;
+            bool isDocumentation = false;
+            bool isDeprecatedToken = false;
+            bool isDocumentationLine = false;
+
             foreach (var token in node)
             {
-                if (token.Kind == CodeFileTokenKind.Newline)
+                switch(token.Kind)
                 {
-                    list.Add(new CodeLine(stringBuilder.ToString(), currentId));
-                    currentId = null;
-                    stringBuilder.Clear();
-                }
-                else
-                {
-                    if (token.DefinitionId != null)
-                    {
-                        currentId = token.DefinitionId;
-                    }
+                    case CodeFileTokenKind.Newline:
+                        //Close documentation span if within doc range
+                        if (isDocumentation)
+                        {
+                            CloseDocumentationRange(stringBuilder);
+                        }
+                        list.Add(new CodeLine(stringBuilder.ToString(), currentId, isDocumentationLine));
+                        currentId = null;
+                        stringBuilder.Clear();
+                        //Start documentation span if tokens still in documentation range
+                        if (isDocumentation)
+                        {
+                            StartDocumentationRange(stringBuilder);
+                        }
+                        //Reset flag for line documentation. This will be set to false if atleast one token is not a doc
+                        isDocumentationLine = isDocumentation;
+                        break;
 
-                    RenderToken(token, stringBuilder);
-                }
+                    case CodeFileTokenKind.DocumentRangeStart:
+                        isDocumentation = true;
+                        isDocumentationLine = (stringBuilder.Length == 0);
+                        StartDocumentationRange(stringBuilder);
+                        break;
+
+                    case CodeFileTokenKind.DocumentRangeEnd:
+                        isDocumentation = false;
+                        CloseDocumentationRange(stringBuilder);
+                        break;
+
+                    case CodeFileTokenKind.DeprecatedRangeStart:
+                        isDeprecatedToken = true;
+                        break;
+
+                    case CodeFileTokenKind.DeprecatedRangeEnd:
+                        isDeprecatedToken = false;
+                        break;
+
+                    default:
+                        if (token.DefinitionId != null)
+                        {
+                            currentId = token.DefinitionId;
+                        }
+                        RenderToken(token, stringBuilder, isDeprecatedToken);
+                        if (!isDocumentation)
+                        {
+                            isDocumentationLine = false;
+                        }
+                        break;
+                }                
             }
         }
 
-        protected virtual void RenderToken(CodeFileToken token, StringBuilder stringBuilder)
+        protected virtual void RenderToken(CodeFileToken token, StringBuilder stringBuilder, bool isDeprecatedToken)
         {
             if (token.Value != null)
             {
                 stringBuilder.Append(token.Value);
             }
         }
+
+        // Below two methods are HTML renderer specific and implemented in htmlrender class
+        // These methods should not render anything for text renderer so keeping it empty
+        protected virtual void StartDocumentationRange(StringBuilder stringBuilder) { }
+        protected virtual void CloseDocumentationRange(StringBuilder stringBuilder) { }
     }
 }

@@ -96,12 +96,21 @@
         let format = target.attr("data-format");
         let commentElement = getCommentElement(getCommentId(e.target)!);
         let comment = commentElement.find(".js-comment-raw").html();
-        let elementId = getElementId(commentElement[0]);
-        let codeRow = getCodeRow(elementId!).find(".code-inner").text().trim();
-        let apiViewUrl = window.location.href + "%23" + escape(escape(elementId!));
+        let codeLine = commentElement.closest(".comment-row").prev(".code-line").find(".code");
+        let apiViewUrl = "";
 
-        // Double escape the element - this is used as the URL back to API View and GitHub will render one layer of the encoding.
-        let issueBody = escape("```" + format + "\n" + codeRow + "\n```\n#\n" + comment + "\n#\n") + "[Created from ApiView comment](" + apiViewUrl + ")";
+        if (location.pathname.startsWith("/Assemblies/Conversation")) {
+          // if creating issue from the convos tab, the link to the code element is stored in anchor tag.
+          apiViewUrl = location.protocol + '//' + location.host + escape(codeLine.find("a").attr("href")!);
+        }
+        else {
+          // otherwise we construct the link from the current URL and the element ID
+          // Double escape the element - this is used as the URL back to API View and GitHub will render one layer of the encoding.
+          apiViewUrl = window.location.href.split("#")[0] + "%23" + escape(escape(getElementId(commentElement[0])!));
+        }
+
+        let issueBody = escape("```" + format + "\n" + codeLine.text().trim() + "\n```\n#\n" + comment + "\n#\n") +
+          "[Created from ApiView comment](" + apiViewUrl + ")";
 
         window.open(
             "https://github.com/Azure/" + repo + "/issues/new?" +

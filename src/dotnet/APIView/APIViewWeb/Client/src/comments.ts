@@ -54,6 +54,7 @@
             serializedForm.push({ name: "elementId", value: lineId });
             serializedForm.push({ name: "reviewId", value: getReviewId(e.target) });
             serializedForm.push({ name: "revisionId", value: getRevisionId(e.target) });
+            serializedForm.push({ name: "language", value: getLanguage(e.target) });
 
             $.ajax({
                 type: "POST",
@@ -93,15 +94,22 @@
     $(document).on("click", ".js-github", e => {
         let target = $(e.target);
         let repo = target.attr("data-repo");
-        let format = target.attr("data-format");
+        let language = getLanguage(e.target);
+
+        // Fall back to the repo-language if we don't know the review language,
+        // e.g.Go doesn't specify Language yet.
+        if (!language) {
+          language = target.attr("data-repo-language");
+        }
         let commentElement = getCommentElement(getCommentId(e.target)!);
         let comment = commentElement.find(".js-comment-raw").html();
         let codeLine = commentElement.closest(".comment-row").prev(".code-line").find(".code");
         let apiViewUrl = "";
 
-        if (location.pathname.startsWith("/Assemblies/Conversation")) {
-          // if creating issue from the convos tab, the link to the code element is stored in anchor tag.
-          apiViewUrl = location.protocol + '//' + location.host + escape(codeLine.find("a").attr("href")!);
+        // if creating issue from the convos tab, the link to the code element is in the DOM already.
+        let commentUrlElem = codeLine.find(".comment-url");
+        if (commentUrlElem.length) {
+          apiViewUrl = location.protocol + '//' + location.host + escape(commentUrlElem.attr("href")!);
         }
         else {
           // otherwise we construct the link from the current URL and the element ID
@@ -109,7 +117,7 @@
           apiViewUrl = window.location.href.split("#")[0] + "%23" + escape(escape(getElementId(commentElement[0])!));
         }
 
-        let issueBody = escape("```" + format + "\n" + codeLine.text().trim() + "\n```\n#\n" + comment + "\n#\n") +
+        let issueBody = escape("```" + language + "\n" + codeLine.text().trim() + "\n```\n#\n" + comment + "\n#\n") +
           "[Created from ApiView comment](" + apiViewUrl + ")";
 
         window.open(
@@ -148,6 +156,10 @@
 
     function getReviewId(element: HTMLElement) {
         return getParentData(element, "data-review-id");
+    }
+
+    function getLanguage(element: HTMLElement) {
+      return getParentData(element, "data-language");
     }
 
     function getRevisionId(element: HTMLElement) {

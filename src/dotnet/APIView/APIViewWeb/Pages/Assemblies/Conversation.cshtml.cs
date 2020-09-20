@@ -38,7 +38,7 @@ namespace APIViewWeb.Pages.Assemblies
         {
             TempData["Page"] = "conversation";
             Review = await _reviewManager.GetReviewAsync(User, id);
-            var comments = await _commentsManager.GetReviewCommentsAsync(id);
+            var comments = await _commentsManager.GetReviewCommentsAsync(id, Review.Language);
             Threads = ParseThreads(comments.Threads);
             return Page();
         }

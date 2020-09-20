@@ -25,7 +25,7 @@ namespace APIViewWeb.Pages.Assemblies
         public async Task<IActionResult> OnGetAsync(string id)
         {
             Id = id;
-            Comments = await _commentsManager.GetReviewCommentsAsync(id);
+            Comments = await _commentsManager.GetReviewCommentsAsync(id, null);
             return Page();
         }
     }

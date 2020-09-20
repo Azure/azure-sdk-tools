@@ -44,12 +44,81 @@
                                             </form>
                                             <a class="dropdown-item js-edit-comment">Edit</a>
                                         }
-                                        <a class="dropdown-item js-github" data-repo="azure-sdk-for-net" data-format="c#">Create issue in .NET repo</a>
-                                        <a class="dropdown-item js-github" data-repo="azure-sdk-for-java" data-format="java">Create issue in Java repo</a>
-                                        <a class="dropdown-item js-github" data-repo="azure-sdk-for-python" data-format="python">Create issue in Python repo</a>
-                                        <a class="dropdown-item js-github" data-repo="azure-sdk-for-js" data-format="javascript">Create issue in JS repo</a>
-                                        <a class="dropdown-item js-github" data-repo="azure-sdk-for-go" data-format="go">Create issue in Go repo</a>
-                                        <a class="dropdown-item js-github" data-repo="azure-sdk-for-c" data-format="c">Create issue in C repo</a>
+                                        @switch (Model.Language)
+                                        {
+                                            case "Java":
+                                                <a class="dropdown-item js-github" data-repo="azure-sdk-for-java"
+                                                   data-repo-language="java">Create issue in Java repo</a>
+                                                <a class="dropdown-item js-github" data-repo="azure-sdk-for-net"
+                                                   data-repo-language="c#">Create issue in .NET repo</a>
+                                                <a class="dropdown-item js-github" data-repo="azure-sdk-for-python"
+                                                   data-repo-language="python">Create issue in Python repo</a>
+                                                <a class="dropdown-item js-github" data-repo="azure-sdk-for-js"
+                                                   data-repo-language="javascript">Create issue in JS repo</a>
+                                                <a class="dropdown-item js-github" data-repo="azure-sdk-for-go"
+                                                   data-repo-language="go">Create issue in Go repo</a>
+                                                <a class="dropdown-item js-github" data-repo="azure-sdk-for-c"
+                                                   data-repo-language="c">Create issue in C repo</a>
+                                                break;
+                                            case "Python":
+                                                <a class="dropdown-item js-github" data-repo="azure-sdk-for-python"
+                                                   data-repo-language="python">Create issue in Python repo</a>
+                                                <a class="dropdown-item js-github" data-repo="azure-sdk-for-net"
+                                                   data-repo-language="c#">Create issue in .NET repo</a>
+                                                <a class="dropdown-item js-github" data-repo="azure-sdk-for-java"
+                                                   data-repo-language="java">Create issue in Java repo</a>
+                                                <a class="dropdown-item js-github" data-repo="azure-sdk-for-js"
+                                                   data-repo-language="javascript">Create issue in JS repo</a>
+                                                <a class="dropdown-item js-github" data-repo="azure-sdk-for-go"
+                                                   data-repo-language="go">Create issue in Go repo</a>
+                                                <a class="dropdown-item js-github" data-repo="azure-sdk-for-c"
+                                                   data-repo-language="c">Create issue in C repo</a>
+                                                break;
+                                            case "Javascript":
+                                                <a class="dropdown-item js-github" data-repo="azure-sdk-for-js"
+                                                   data-repo-language="javascript">Create issue in JS repo</a>
+                                                <a class="dropdown-item js-github" data-repo="azure-sdk-for-net"
+                                                   data-repo-language="c#">Create issue in .NET repo</a>
+                                                <a class="dropdown-item js-github" data-repo="azure-sdk-for-java"
+                                                   data-repo-language="java">Create issue in Java repo</a>
+                                                <a class="dropdown-item js-github" data-repo="azure-sdk-for-python"
+                                                   data-repo-language="python">Create issue in Python repo</a>
+                                                <a class="dropdown-item js-github" data-repo="azure-sdk-for-go"
+                                                   data-repo-language="go">Create issue in Go repo</a>
+                                                <a class="dropdown-item js-github" data-repo="azure-sdk-for-c"
+                                                   data-repo-language="c">Create issue in C repo</a>
+                                                break;
+                                            case "C":
+                                                <a class="dropdown-item js-github" data-repo="azure-sdk-for-c"
+                                                   data-repo-language="c">Create issue in C repo</a>
+                                                <a class="dropdown-item js-github" data-repo="azure-sdk-for-net"
+                                                   data-repo-language="c#">Create issue in .NET repo</a>
+                                                <a class="dropdown-item js-github" data-repo="azure-sdk-for-java"
+                                                   data-repo-language="java">Create issue in Java repo</a>
+                                                <a class="dropdown-item js-github" data-repo="azure-sdk-for-python"
+                                                   data-repo-language="python">Create issue in Python repo</a>
+                                                <a class="dropdown-item js-github" data-repo="azure-sdk-for-js"
+                                                   data-repo-language="javascript">Create issue in JS repo</a>
+                                                <a class="dropdown-item js-github" data-repo="azure-sdk-for-go"
+                                                   data-repo-language="go">Create issue in Go repo</a>
+                                                break;
+                                            //TODO: Add Go case when it is supported
+                                            case "C#":
+                                            default:
+                                                <a class="dropdown-item js-github" data-repo="azure-sdk-for-net"
+                                                   data-repo-language="c#">Create issue in .NET repo</a>
+                                                <a class="dropdown-item js-github" data-repo="azure-sdk-for-java"
+                                                   data-repo-language="java">Create issue in Java repo</a>
+                                                <a class="dropdown-item js-github" data-repo="azure-sdk-for-python"
+                                                   data-repo-language="python">Create issue in Python repo</a>
+                                                <a class="dropdown-item js-github" data-repo="azure-sdk-for-js"
+                                                   data-repo-language="javascript">Create issue in JS repo</a>
+                                                <a class="dropdown-item js-github" data-repo="azure-sdk-for-go"
+                                                   data-repo-language="go">Create issue in Go repo</a>
+                                                <a class="dropdown-item js-github" data-repo="azure-sdk-for-c"
+                                                   data-repo-language="c">Create issue in C repo</a>
+                                                break;
+                                        }
                                     </div>
                                 </div>
                             </div>

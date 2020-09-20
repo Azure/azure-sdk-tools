@@ -29,11 +29,11 @@ namespace APIViewWeb
             _notificationManager = notificationManager;
         }
 
-        public async Task<ReviewCommentsModel> GetReviewCommentsAsync(string reviewId)
+        public async Task<ReviewCommentsModel> GetReviewCommentsAsync(string reviewId, string language)
         {
             var comments = await _commentsRepository.GetCommentsAsync(reviewId);
 
-            return new ReviewCommentsModel(reviewId, comments);
+            return new ReviewCommentsModel(reviewId, comments, language);
         }
 
         public async Task AddCommentAsync(ClaimsPrincipal user, CommentModel comment)

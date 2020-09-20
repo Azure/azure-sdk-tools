@@ -67,7 +67,7 @@ namespace APIViewWeb.Pages.Assemblies
                 return RedirectToPage("LegacyReview", new { id = id });
             }
 
-            Comments = await _commentsManager.GetReviewCommentsAsync(id);
+            Comments = await _commentsManager.GetReviewCommentsAsync(id, Review.Language);
             Revision = revisionId != null ?
                 Review.Revisions.Single(r => r.RevisionId == revisionId) :
                 Review.Revisions.Last();

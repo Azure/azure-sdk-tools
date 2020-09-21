@@ -12,11 +12,11 @@ namespace APIViewWeb
     {
         private Dictionary<string, CommentThreadModel> _threads;
 
-        public ReviewCommentsModel(string reviewId, IEnumerable<CommentModel> comments, string language)
+        public ReviewCommentsModel(string reviewId, IEnumerable<CommentModel> comments)
         {
             _threads = comments.OrderBy(c => c.TimeStamp)
                 .GroupBy(c => c.ElementId)
-                .ToDictionary(c => c.Key ?? string.Empty, c => new CommentThreadModel(reviewId, c.Key, c, language));
+                .ToDictionary(c => c.Key ?? string.Empty, c => new CommentThreadModel(reviewId, c.Key, c));
         }
 
         public IEnumerable<CommentThreadModel> Threads => _threads.Values;

@@ -6,7 +6,7 @@ namespace APIViewWeb.Models
 {
     public class CommentThreadModel
     {
-        public CommentThreadModel(string reviewId, string lineId, IEnumerable<CommentModel> comments, string language)
+        public CommentThreadModel(string reviewId, string lineId, IEnumerable<CommentModel> comments)
         {
             ReviewId = reviewId;
             LineId = lineId;
@@ -14,7 +14,6 @@ namespace APIViewWeb.Models
             var resolveComment = comments.FirstOrDefault(c => c.IsResolve);
             IsResolved = resolveComment != null;
             ResolvedBy = resolveComment?.Username;
-            Language = language;
         }
 
         public string ReviewId { get; set; }
@@ -22,8 +21,5 @@ namespace APIViewWeb.Models
         public string LineId { get; set; }
         public bool IsResolved { get; set; }
         public string ResolvedBy { get; set; }
-
-        [JsonIgnore]
-        public string Language { get; set; }
     }
 }

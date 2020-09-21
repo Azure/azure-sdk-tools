@@ -17,7 +17,7 @@ namespace APIViewWeb.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> Add(string reviewId, string revisionId, string elementId, string commentText, string language)
+        public async Task<ActionResult> Add(string reviewId, string revisionId, string elementId, string commentText)
         {
             var comment = new CommentModel();
             comment.TimeStamp = DateTime.UtcNow;
@@ -28,53 +28,53 @@ namespace APIViewWeb.Controllers
 
             await _commentsManager.AddCommentAsync(User, comment);
 
-            return await CommentPartialAsync(reviewId, comment.ElementId, language);
+            return await CommentPartialAsync(reviewId, comment.ElementId);
         }
 
         [HttpPost]
-        public async Task<ActionResult> Update(string reviewId, string commentId, string commentText, string language)
+        public async Task<ActionResult> Update(string reviewId, string commentId, string commentText)
         {
             var comment =  await _commentsManager.UpdateCommentAsync(User, reviewId, commentId, commentText);
 
-            return await CommentPartialAsync(reviewId, comment.ElementId, language);
+            return await CommentPartialAsync(reviewId, comment.ElementId);
         }
 
 
         [HttpPost]
-        public async Task<ActionResult> Resolve(string reviewId, string elementId, string language)
+        public async Task<ActionResult> Resolve(string reviewId, string elementId)
         {
             await _commentsManager.ResolveConversation(User, reviewId, elementId);
 
-            return await CommentPartialAsync(reviewId, elementId, language);
+            return await CommentPartialAsync(reviewId, elementId);
         }
 
         [HttpPost]
-        public async Task<ActionResult> Unresolve(string reviewId, string elementId, string language)
+        public async Task<ActionResult> Unresolve(string reviewId, string elementId)
         {
             await _commentsManager.UnresolveConversation(User, reviewId, elementId);
 
-            return await CommentPartialAsync(reviewId, elementId, language);
+            return await CommentPartialAsync(reviewId, elementId);
         }
 
         [HttpPost]
-        public async Task<ActionResult> Delete(string reviewId, string commentId, string elementId, string language)
+        public async Task<ActionResult> Delete(string reviewId, string commentId, string elementId)
         {
             await _commentsManager.DeleteCommentAsync(User, reviewId, commentId);
 
-            return await CommentPartialAsync(reviewId, elementId, language);
+            return await CommentPartialAsync(reviewId, elementId);
         }
 
         [HttpPost]
-        public async Task<ActionResult> ToggleUpvote(string reviewId, string commentId, string elementId, string language)
+        public async Task<ActionResult> ToggleUpvote(string reviewId, string commentId, string elementId)
         {
             await _commentsManager.ToggleUpvoteAsync(User, reviewId, commentId);
 
-            return await CommentPartialAsync(reviewId, elementId, language);
+            return await CommentPartialAsync(reviewId, elementId);
         }
 
-        private async Task<ActionResult> CommentPartialAsync(string reviewId, string elementId, string language)
+        private async Task<ActionResult> CommentPartialAsync(string reviewId, string elementId)
         {
-            var comments = await _commentsManager.GetReviewCommentsAsync(reviewId, language);
+            var comments = await _commentsManager.GetReviewCommentsAsync(reviewId);
             comments.TryGetThreadForLine(elementId, out var partialModel);
             return PartialView("_CommentThreadPartial", partialModel);
         }

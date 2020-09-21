@@ -54,7 +54,6 @@
             serializedForm.push({ name: "elementId", value: lineId });
             serializedForm.push({ name: "reviewId", value: getReviewId(e.target) });
             serializedForm.push({ name: "revisionId", value: getRevisionId(e.target) });
-            serializedForm.push({ name: "language", value: getLanguage(e.target) });
 
             $.ajax({
                 type: "POST",

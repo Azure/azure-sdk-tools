@@ -11,6 +11,7 @@ namespace APIViewWeb.Models
         private CodeLine[] _rendered;
         private CodeLine[] _renderedReadOnly;
         private CodeLine[] _renderedText;
+        private bool _showDocumentation;
 
         public RenderedCodeFile(CodeFile codeFile)
         {
@@ -19,30 +20,33 @@ namespace APIViewWeb.Models
 
         public CodeFile CodeFile { get; }
 
-        public CodeLine[] Render()
+        public CodeLine[] Render(bool showDocumentation)
         {
-            if (_rendered == null)
+            if (_rendered == null || (_showDocumentation != showDocumentation))
             {
-                _rendered = CodeFileHtmlRenderer.Normal.Render(CodeFile);
+                this._showDocumentation = showDocumentation;
+                _rendered = CodeFileHtmlRenderer.Normal.Render(CodeFile, showDocumentation);
             }
 
             return _rendered;
         }
 
-        public CodeLine[] RenderReadOnly()
+        public CodeLine[] RenderReadOnly(bool showDocumentation)
         {
-            if (_renderedReadOnly == null)
+            if (_renderedReadOnly == null || (_showDocumentation != showDocumentation))
             {
-                _renderedReadOnly = CodeFileHtmlRenderer.ReadOnly.Render(CodeFile);
+                this._showDocumentation = showDocumentation;
+                _renderedReadOnly = CodeFileHtmlRenderer.ReadOnly.Render(CodeFile, showDocumentation);
             }
 
             return _renderedReadOnly;
         }
 
-        internal CodeLine[] RenderText()
+        internal CodeLine[] RenderText(bool showDocumentation)
         {
-            if (_renderedText == null)
+            if (_renderedText == null || (_showDocumentation != showDocumentation))
             {
+                this._showDocumentation = showDocumentation;
                 _renderedText = CodeFileRenderer.Instance.Render(CodeFile);
             }
 

@@ -64,55 +64,55 @@ $results = $ownedFolders[$target]
 if ($results) {
   Write-Host "Found a folder to match $target"
   $aliases = $results.Aliases -split ","
-  $users = [System.Collections.ArrayList]::new()
-  $teams = [System.Collections.ArrayList]::new()
+  $users = @()
+  $teams = @()
 
   foreach ($str in $aliases)
   {
-    $usersApiUrl = "https://api.github.com/users/$str"
-    if (VerifyAlias -APIUrl $usersApiUrl)
+    if ($str.IndexOf('/') -ne -1) # Check if it's a team alias e.g. Azure/azure-sdk-eng
     {
-      [void]$users.Add($str)
-    }
-    else {
-      if ($str.IndexOf('/') -ne -1) # Check if it's a team alias e.g. Azure/azure-sdk-eng
+      $org = $str.substring(0, $str.IndexOf('/'))
+      $team_slug = $str.substring($str.IndexOf('/') + 1)
+      $teamApiUrl =  "https://api.github.com/orgs/$org/teams/$team_slug"
+      if (VerifyAlias -APIUrl $teamApiUrl)
       {
-        $org = $str.substring(0, $str.IndexOf('/'))
-        $team_slug = $str.substring($str.IndexOf('/') + 1)
-        $teamApiUrl =  "https://api.github.com/orgs/$org/teams/$team_slug"
-        if (VerifyAlias -APIUrl $teamApiUrl)
-        {
-          [void]$teams.Add($team_slug)
-          continue
-        }
+        $teams += $team_slug
+        continue
+      }
+    }
+    else
+    {
+      $usersApiUrl = "https://api.github.com/users/$str"
+      if (VerifyAlias -APIUrl $usersApiUrl)
+      {
+        $users += $str
+        continue
       }
       Write-Host "Alias ${str} is neither a recognized github user nor a team"
     }
   }
 
-  $usersString = $users -join ", "
-  $teamsString = $teams -join ", "
   $labelsString = $results.Labels
 
   if ($VsoOwningUsers) {
     $presentOwningUsers = [System.Environment]::GetEnvironmentVariable($VsoOwningUsers)
     if ($presentOwningUsers) { 
-      if ($usersString) { $usersString += ",$presentOwningUsers" } else { $usersString = "$presentOwningUsers" }
+      $user += $presentOwningUsers
     }
-    Write-Host "##vso[task.setvariable variable=$VsoOwningUsers;]$usersString"
+    Write-Host "##vso[task.setvariable variable=$VsoOwningUsers;]($user -join ',')"
   }
 
   if ($VsoOwningTeams) {
     $presentOwningTeams = [System.Environment]::GetEnvironmentVariable($VsoOwningTeams)
     if ($presentOwningTeams) { 
-      if ($teamsString) { $teamsString += ",$presentOwningTeams" } else { $teamsString = "$presentOwningTeams" }
+      $teams += $presentOwningUsers
     }
-    Write-Host "##vso[task.setvariable variable=$VsoOwningTeams;]$teamsString"
+    Write-Host "##vso[task.setvariable variable=$VsoOwningTeams;]($teams -join ',')"
   }
 
   if ($VsoOwningLabels) {
     $presentOwningLabels = [System.Environment]::GetEnvironmentVariable($VsoOwningLabels)
-    if ($presentOwningLabels) { 
+    if ($presentOwningLabels) {
       if ($labelsString) { $labelsString += ",$presentOwningLabels" } else { $teamsString = "$presentOwningLabels" }
     }
     Write-Host "##vso[task.setvariable variable=$VsoOwningLabels;]$labelsString"

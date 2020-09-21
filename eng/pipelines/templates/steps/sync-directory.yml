@@ -25,18 +25,6 @@ steps:
 
       displayName: Copy ${{ parameters.DirectoryToSync }} from azure-sdk-tools to ${{ repo }}
       workingDirectory: $(System.DefaultWorkingDirectory)
-    
-    - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
-      - task: PowerShell@2
-        displayName: 'Get alias of the Tools PR Creator'
-        inputs:
-          targetType: filePath
-          filePath: $(Build.SourcesDirectory)/eng/common/scripts/get-pr-creator.ps1
-          arguments: >
-            -PullRequestNumber "$(System.PullRequest.PullRequestNumber)"
-            -VsoPRCreatorVariable "System.PullRequest.Creator"
-            -AuthToken "$(azuresdk-github-pat)"
-          pwsh: true
 
     - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
       parameters:

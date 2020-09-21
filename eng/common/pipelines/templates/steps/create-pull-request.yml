@@ -15,9 +15,9 @@ parameters:
   ScriptDirectory: eng/common/scripts
   GHReviewersVariable: '' 
   GHTeamReviewersVariable: ''
+  GHAssignessVariable: ''
   # Multiple labels seperated by comma, e.g. "bug, APIView"
   PRLabels: ''
-  GHAssignessVariable: ''
 
 steps:
 

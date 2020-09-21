@@ -1,7 +1,18 @@
 param (
-  $PullRequestNumber,
-  $VsoPRCreatorVariable,
-  $AuthToken
+    [Parameter(Mandatory = $true)]
+    [string]$RepoOwner,
+
+    [Parameter(Mandatory = $true)]
+    [string]$RepoName,
+
+    [Parameter(Mandatory = $true)]
+    $PullRequestNumber,
+
+    [Parameter(Mandatory = $true)]
+    $VsoPRCreatorVariable,
+
+    [Parameter(Mandatory = $false)]
+    $AuthToken
 )
 
 $headers = @{ }
@@ -14,7 +25,7 @@ if ($AuthToken) {
 
 try
 {
-    $prApiUrl = "https://api.github.com/repos/Azure/azure-sdk-tools/pulls/${PullRequestNumber}"
+    $prApiUrl = "https://api.github.com/repos/$RepoOwner/$RepoName/pulls/${PullRequestNumber}"
     $response = Invoke-RestMethod -Headers $headers $prApiUrl
     Write-Host "##vso[task.setvariable variable=$VsoPRCreatorVariable;]$($response.user.login)"
 }

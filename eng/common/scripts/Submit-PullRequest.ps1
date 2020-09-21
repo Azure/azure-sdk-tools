@@ -61,74 +61,48 @@ param(
   [string]$Assignees
 )
 
+$headers = @{
+  Authorization = "bearer $AuthToken"
+}
 $baseURI = "https://api.github.com/repos"
 function SplitMembers ($membersString)
 {
   return @($membersString.Split(",") | % { $_.Trim() } | ? { return $_ })
 }
 
-$userAdditions = SplitMembers -membersString $UserReviewers
-$teamAdditions = SplitMembers -membersString $TeamReviewers
-$labelAdditions = SplitMembers -membersString $PRLabels
-$assigneeAdditions = SplitMembers -membersString $Assignees
-
-$headers = @{
-  Authorization = "bearer $AuthToken"
+function InvokeGitHubAPI($apiURI, $method, $body) {
+  $resp = Invoke-RestMethod -Method $method -Headers $headers -Body ($body | ConvertTo-Json) -Uri $apiURI -MaximumRetryCount 3
+  Write-Host -f green "These members have been added to: https://github.com/$RepoOwner/$RepoName/pull/$prNumber"
+  ($body | Format-List | Write-Output)
+  $resp | Write-Verbose
 }
 
-function AddMembers($apiURI, $memberName, $additionSet) {
-  $headers = @{
-    Authorization = "bearer $AuthToken"
-  }
-  $errorOccurred = $false
-
-  try {
-    $postResp = @{}
-    $postResp[$memberName] = @($additionSet)
-    $postResp = $postResp | ConvertTo-Json
-
-    Write-Host $postResp
-    $resp = Invoke-RestMethod -Method 'Post' -Headers $headers -Body $postResp -Uri $apiURI -MaximumRetryCount 3
-    $resp | Write-Verbose
-  }
-  catch {
-    Write-Error "Invoke-RestMethod $apiURI failed with exception:`n$_"
-    $errorOccurred = $true
-  }
-
-  return $errorOccurred
-}
-
-function AddReviewers ($prNumber) {
+function AddReviewers ($prNumber, $users, $teams) {
   $uri = "$baseURI/$RepoOwner/$RepoName/pulls/$prNumber/requested_reviewers"
+  $userAdditions = SplitMembers -membersString $users
+  $teamAdditions = SplitMembers -membersString $teams
+  $postResp = @{}
   if ($userAdditions) {
-    $errorsOccurredAddingUsers = AddMembers -apiURI $uri -memberName "reviewers" -additionSet $userAdditions
-    if ($errorsOccurredAddingUsers) { exit 1 }
-    Write-Host -f green "User(s) [$userAdditions] added to: https://github.com/$RepoOwner/$RepoName/issue/$prNumber"
+    $postResp["reviewers"] = @($userAdditions)
   }
   if ($teamAdditions) {
-    $errorsOccurredAddingTeams = AddMembers -apiURI $uri -memberName "team_reviewers" -additionSet $teamAdditions
-    if ($errorsOccurredAddingTeams) { exit 1 }
-    Write-Host -f green "Team(s) [$teamAdditions] added to: https://github.com/$RepoOwner/$RepoName/issue/$prNumber"
+    $postResp["team_reviewers"] = @($teamAdditions)
   }
+  return InvokeGitHubAPI -apiURI $uri -method 'Post' -body $postResp
 }
 
-function AddAssignees ($prNumber) {
+function AddLabelsAndOrAssignees ($prNumber, $labels, $assignees) {
   $uri = "$baseURI/$RepoOwner/$RepoName/issues/$prNumber"
+  $labelAdditions = SplitMembers -membersString $labels
+  $assigneeAdditions = SplitMembers -membersString $assignees
+  $postResp = @{}
   if ($assigneeAdditions) {
-    $errorsOccurredAddingUsers = AddMembers -apiURI $uri -memberName "assignees" -additionSet $assigneeAdditions
-    if ($errorsOccurredAddingUsers) { exit 1 }
-    Write-Host -f green "Users(s) [$assigneeAdditions] added to: https://github.com/$RepoOwner/$RepoName/issue/$prNumber"
+    $postResp["assignees"] = @($assigneeAdditions)
   }
-}
-
-function AddLabels ($prNumber) {
-  $uri = "$baseURI/$RepoOwner/$RepoName/issues/$prNumber"
   if ($labelAdditions) {
-    $errorsOccurredAddingUsers = AddMembers -apiURI $uri -memberName "labels" -additionSet $labelAdditions
-    if ($errorsOccurredAddingUsers) { exit 1 }
-    Write-Host -f green "Label(s) [$labelAdditions] added to: https://github.com/$RepoOwner/$RepoName/issue/$prNumber"
+    $postResp["labels"] = @($labelAdditions)
   }
+  return InvokeGitHubAPI -apiURI $uri -method 'Post' -body $postResp
 }
 
 $query = "state=open&head=${PROwner}:${PRBranch}&base=${BaseBranch}"
@@ -143,11 +117,18 @@ catch {
 $resp | Write-Verbose
 
 if ($resp.Count -gt 0) {
+  try {
     Write-Host -f green "Pull request already exists $($resp[0].html_url)"
 
     # setting variable to reference the pull request by number
     Write-Host "##vso[task.setvariable variable=Submitted.PullRequest.Number]$($resp[0].number)"
-    AddLabels $resp[0].number $PRLabels
+    AddReviewers -prNumber $resp[0].number -users $UserReviewers -teams $TeamReviewers
+    AddLabelsAndOrAssignees -prNumber $resp[0].number -labels $PRLabels -assignees $Assignees
+  }
+  catch {
+    Write-Error "Call to GitHub API failed with exception:`n$_"
+    exit 1
+  }
 }
 else {
   $data = @{
@@ -162,19 +143,17 @@ else {
     $resp = Invoke-RestMethod -Method POST -Headers $headers `
                               "https://api.github.com/repos/$RepoOwner/$RepoName/pulls" `
                               -Body ($data | ConvertTo-Json)
+
+    $resp | Write-Verbose
+    Write-Host -f green "Pull request created https://github.com/$RepoOwner/$RepoName/pull/$($resp.number)"
+  
+    # setting variable to reference the pull request by number
+    Write-Host "##vso[task.setvariable variable=Submitted.PullRequest.Number]$($resp.number)"
+    AddReviewers -prNumber $resp.number -users $UserReviewers -teams $TeamReviewers
+    AddLabelsAndOrAssignees -prNumber $resp.number -labels $PRLabels -assignees $Assignees
   }
   catch {
-    Write-Error "Invoke-RestMethod [https://api.github.com/repos/$RepoOwner/$RepoName/pulls] failed with exception:`n$_"
+    Write-Error "Call to GitHub API failed with exception:`n$_"
     exit 1
   }
-
-  $resp | Write-Verbose
-  Write-Host -f green "Pull request created https://github.com/$RepoOwner/$RepoName/pull/$($resp.number)"
-
-  # setting variable to reference the pull request by number
-  Write-Host "##vso[task.setvariable variable=Submitted.PullRequest.Number]$($resp.number)"
-
-  AddReviewers -prNumber $resp.number
-  AddLabels -prNumber $resp.number
-  AddAssignees -prNumber $resp.number
 }

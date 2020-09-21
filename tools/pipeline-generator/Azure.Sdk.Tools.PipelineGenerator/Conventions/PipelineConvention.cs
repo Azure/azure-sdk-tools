@@ -253,7 +253,7 @@ namespace PipelineGenerator.Conventions
         protected const int TotalBuckets = TotalMinutes / BucketSizeInMinutes;
         protected const int BucketsPerHour = 60 / BucketSizeInMinutes;
 
-        protected Schedule CreateScheduleFromDefinition(BuildDefinition definition)
+        protected virtual Schedule CreateScheduleFromDefinition(BuildDefinition definition)
         {
             var bucket = definition.Id % TotalBuckets;
             var startHours = bucket / BucketsPerHour;

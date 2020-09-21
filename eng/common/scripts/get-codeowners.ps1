@@ -43,17 +43,27 @@ foreach ($contentLine in $codeOwnersContent) {
     
     # CODEOWNERS file can also have labels present after the owner aliases
     # gh aliases start with @ in codeowners. don't pass on to API calls
-    $ownedFolders[$splitLine[0].ToLower().Trim("/")] = ($splitLine[1..$($splitLine.Length)] `
-      | ? { $_.StartsWith("@") } `
-      | % { return $_.substring(1) }) -join ","
+
+    $aliases = ($splitLine[1..$($splitLine.Length)] | ? { $_.StartsWith("@") } | % { return $_.substring(1) }) -join ","
+    $labels = ""
+
+    if ($null -ne $previousLine -and $previousLine.Contains("PRLabel:"))
+    {
+      $previousLine = $previousLine.substring($previousLine.IndexOf(':') + 1)
+      $splitPrevLine = $previousLine -split "%" 
+      $labels = ($splitPrevLine[1..$($splitPrevLine.Length)] | % { return $_.Trim() }) -join ","
+    }
+
+    $ownedFolders[$splitLine[0].ToLower().Trim("/")] = @{ Aliases = $aliases; Labels = $labels }
   }
+  $previousLine = $contentLine
 }
 
 $results = $ownedFolders[$target]
 
 if ($results) {
   Write-Host "Found a folder to match $target"
-  $aliases = $results -split ","
+  $aliases = $results.Aliases -split ","
   $users = [System.Collections.ArrayList]::new()
   $teams = [System.Collections.ArrayList]::new()
 
@@ -81,25 +91,31 @@ if ($results) {
   }
 
   $usersString = $users -join ", "
-  $teamsString = $teams -join ", " 
-
-  Write-Host "User $usersString"
-  Write-Host "Teams $teamsString"
+  $teamsString = $teams -join ", "
+  $labelsString = $results.Labels
 
   if ($VsoOwningUsers) {
     $presentOwningUsers = [System.Environment]::GetEnvironmentVariable($VsoOwningUsers)
     if ($presentOwningUsers) { 
-      $usersString += ",$presentOwningUsers"
+      if ($usersString) { $usersString += ",$presentOwningUsers" } else { $usersString = "$presentOwningUsers" }
     }
-    Write-Host "##vso[task.setvariable variable=$VsoOwningUsers;]$users"
+    Write-Host "##vso[task.setvariable variable=$VsoOwningUsers;]$usersString"
   }
 
   if ($VsoOwningTeams) {
     $presentOwningTeams = [System.Environment]::GetEnvironmentVariable($VsoOwningTeams)
     if ($presentOwningTeams) { 
-      $teamsString += ",$presentOwningTeams"
+      if ($teamsString) { $teamsString += ",$presentOwningTeams" } else { $teamsString = "$presentOwningTeams" }
     }
-    Write-Host "##vso[task.setvariable variable=$VsoOwningTeams;]$teams"
+    Write-Host "##vso[task.setvariable variable=$VsoOwningTeams;]$teamsString"
+  }
+
+  if ($VsoOwningLabels) {
+    $presentOwningLabels = [System.Environment]::GetEnvironmentVariable($VsoOwningLabels)
+    if ($presentOwningLabels) { 
+      if ($labelsString) { $labelsString += ",$presentOwningLabels" } else { $teamsString = "$presentOwningLabels" }
+    }
+    Write-Host "##vso[task.setvariable variable=$VsoOwningLabels;]$labelsString"
   }
 
   return $results

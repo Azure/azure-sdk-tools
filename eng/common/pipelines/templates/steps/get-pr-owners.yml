@@ -1,5 +1,6 @@
 parameters: 
-  TargetVariable: ''
+  TargetUserVariable: ''
+  TargetTeamVariable: ''
   ServiceDirectory: ''
 
 steps:
@@ -42,4 +43,5 @@ steps:
       arguments: >
         -TargetDirectory "/sdk/${{ parameters.ServiceDirectory }}/"
         -RootDirectory "$(Build.SourcesDirectory)"
-        -VsoVariable "${{ parameters.TargetVariable }}"
+        -VsoOwningUsers = "${{ parameters.TargetUserVariable }}"
+        -VsoOwningTeams = "${{ parameters.TargetTeamVariable }}"

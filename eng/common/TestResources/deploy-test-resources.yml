@@ -12,15 +12,13 @@ parameters:
 #   "TenantId": "<tenant id>",
 #   "TestApplicationId": "<test app id>",
 #   "TestApplicationSecret": "<test app secret>",
-#   "ProvisionerApplicationId": "<provisioner app id>",
-#   "ProvisionerApplicationSecret": "<provisioner app secret>",
+#   "ProvisionerApplicationId": "<provisoner app id>",
+#   "ProvisoinerApplicationSecret": "<provisoner app secert>",
 #   "Environment": "AzureCloud | AzureGov | AzureChina | <other environment>"
 # }
 
 steps:
-  # New-TestResources command requires Az module
-  - pwsh: Install-Module -Name Az -Scope CurrentUser -AllowClobber -Force -Verbose
-    displayName: Install Azure PowerShell module
+  - template: /eng/common/TestResources/setup-az-modules.yml
 
   - pwsh: |
       $subscriptionConfiguration = @"

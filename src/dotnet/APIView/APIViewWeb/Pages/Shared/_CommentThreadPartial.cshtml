@@ -35,14 +35,14 @@
                                         ...
                                     </a>
 
-                                    <div class="dropdown-menu clickable">
+                                    <div class="dropdown-menu">
                                         @if (comment.Username == User.GetGitHubLogin())
                                         {
                                             <form data-post-update="comments" asp-controller="Comments" asp-action="Delete" method="post" asp-route-reviewId="@Model.ReviewId">
                                                 <input type="hidden" name="commentId" value="@comment.CommentId" />
                                                 <button id="@comment.CommentId" type="submit" class="text-danger dropdown-item">Delete</button>
                                             </form>
-                                            <a class="dropdown-item js-edit-comment">Edit</a>
+                                            <a href="#" class="dropdown-item js-edit-comment">Edit</a>
                                         }
                                         <button type="button" class="btn dropdown-toggle dropdown-item" data-toggle="dropdown" aria-haspopup="true"
                                                 aria-expanded="false">

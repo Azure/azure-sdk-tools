@@ -11,7 +11,6 @@ namespace APIViewWeb.Models
         private CodeLine[] _rendered;
         private CodeLine[] _renderedReadOnly;
         private CodeLine[] _renderedText;
-        private bool _showDocumentation;
 
         public RenderedCodeFile(CodeFile codeFile)
         {
@@ -22,10 +21,15 @@ namespace APIViewWeb.Models
 
         public CodeLine[] Render(bool showDocumentation)
         {
-            if (_rendered == null || (_showDocumentation != showDocumentation))
+            //Always render when documentation is requested to avoid cach thrashing
+            if (showDocumentation)
             {
-                this._showDocumentation = showDocumentation;
-                _rendered = CodeFileHtmlRenderer.Normal.Render(CodeFile, showDocumentation);
+                return CodeFileHtmlRenderer.Normal.Render(CodeFile, true);
+            }
+
+            if (_rendered == null)
+            {
+                _rendered = CodeFileHtmlRenderer.Normal.Render(CodeFile);
             }
 
             return _rendered;
@@ -33,10 +37,14 @@ namespace APIViewWeb.Models
 
         public CodeLine[] RenderReadOnly(bool showDocumentation)
         {
-            if (_renderedReadOnly == null || (_showDocumentation != showDocumentation))
+            if (showDocumentation)
             {
-                this._showDocumentation = showDocumentation;
-                _renderedReadOnly = CodeFileHtmlRenderer.ReadOnly.Render(CodeFile, showDocumentation);
+                return CodeFileHtmlRenderer.ReadOnly.Render(CodeFile, true);
+            }
+
+            if (_renderedReadOnly == null)
+            {
+                _renderedReadOnly = CodeFileHtmlRenderer.ReadOnly.Render(CodeFile);
             }
 
             return _renderedReadOnly;
@@ -44,9 +52,13 @@ namespace APIViewWeb.Models
 
         internal CodeLine[] RenderText(bool showDocumentation)
         {
-            if (_renderedText == null || (_showDocumentation != showDocumentation))
+            if (showDocumentation)
             {
-                this._showDocumentation = showDocumentation;
+                return CodeFileHtmlRenderer.Instance.Render(CodeFile, true);
+            }
+
+            if (_renderedText == null)
+            {
                 _renderedText = CodeFileRenderer.Instance.Render(CodeFile);
             }
 

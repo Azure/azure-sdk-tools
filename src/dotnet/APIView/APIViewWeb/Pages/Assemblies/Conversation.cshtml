@@ -25,7 +25,7 @@
                             @foreach (var thread in revision.Value)
                             {
                                 var elementId = thread.LineId;
-                                <tr class="code-line"><td class="code p-2"><a asp-page="Review"
+                                <tr class="code-line"><td class="code p-2"><a class="comment-url" asp-page="Review"
                                            asp-route-id=@Model.Review.ReviewId
                                            asp-route-revisionId=@revision.Key.RevisionId
                                            asp-fragment=@Uri.EscapeUriString(elementId)>@elementId</a></td></tr>

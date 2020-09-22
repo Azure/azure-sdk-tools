@@ -90,6 +90,44 @@
         e.preventDefault();
     });
 
+    $(document).on("click", ".js-github", e => {
+        let target = $(e.target);
+        let repo = target.attr("data-repo");
+        let language = getLanguage(e.target);
+
+        // Fall back to the repo-language if we don't know the review language,
+        // e.g.Go doesn't specify Language yet.
+        if (!language) {
+          language = target.attr("data-repo-language");
+        }
+        let commentElement = getCommentElement(getCommentId(e.target)!);
+        let comment = commentElement.find(".js-comment-raw").html();
+        let codeLine = commentElement.closest(".comment-row").prev(".code-line").find(".code");
+        let apiViewUrl = "";
+
+        // if creating issue from the convos tab, the link to the code element is in the DOM already.
+        let commentUrlElem = codeLine.find(".comment-url");
+        if (commentUrlElem.length) {
+          apiViewUrl = location.protocol + '//' + location.host + escape(commentUrlElem.attr("href")!);
+        }
+        else {
+          // otherwise we construct the link from the current URL and the element ID
+          // Double escape the element - this is used as the URL back to API View and GitHub will render one layer of the encoding.
+          apiViewUrl = window.location.href.split("#")[0] + "%23" + escape(escape(getElementId(commentElement[0])!));
+        }
+
+        let issueBody = escape("```" + language + "\n" + codeLine.text().trim() + "\n```\n#\n" + comment);
+        // TODO uncomment below once the feature to support public ApiView Reviews is enabled.
+        //+ "\n#\n")
+        //+ "[Created from ApiView comment](" + apiViewUrl + ")";
+
+        window.open(
+            "https://github.com/Azure/" + repo + "/issues/new?" +
+            "&body=" + issueBody,
+            '_blank');
+        e.preventDefault();
+    });
+
     $(document).on("keydown", ".new-thread-comment-text", e => {
         if (e.ctrlKey && (e.keyCode === 10 || e.keyCode === 13)) {
             const form = $(e.target).closest("form");
@@ -101,11 +139,11 @@
     });
 
     addEventListener("hashchange", e => {
-      highlightCurrentRow();
+        highlightCurrentRow();
     });
 
     addEventListener("load", e => {
-      highlightCurrentRow();
+        highlightCurrentRow();
     });
 
     function highlightCurrentRow() {
@@ -113,12 +151,16 @@
         var row = getCodeRow(location.hash.substring(1));
         row.addClass("active");
         row.on("animationend", () => {
-          row.removeClass("active");
+            row.removeClass("active");
         });
     }
 
     function getReviewId(element: HTMLElement) {
         return getParentData(element, "data-review-id");
+    }
+
+    function getLanguage(element: HTMLElement) {
+      return getParentData(element, "data-language");
     }
 
     function getRevisionId(element: HTMLElement) {

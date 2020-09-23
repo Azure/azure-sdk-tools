@@ -56,8 +56,9 @@ namespace APIViewWeb.Pages.Assemblies
         [BindProperty(SupportsGet = true)]
         public string DiffRevisionId { get; set; }
 
+        // Flag to decide whether to  include documentation
         [BindProperty(SupportsGet = true)]
-        public bool ShowDocumentation { get; set; }
+        public bool Doc { get; set; }
 
         public async Task<IActionResult> OnGetAsync(string id, string revisionId = null)
         {
@@ -81,7 +82,7 @@ namespace APIViewWeb.Pages.Assemblies
 
             var fileDiagnostics = CodeFile.Diagnostics ?? Array.Empty<CodeDiagnostic>();
 
-            var fileHtmlLines = renderedCodeFile.Render(ShowDocumentation);
+            var fileHtmlLines = renderedCodeFile.Render(Doc);
 
             if (DiffRevisionId != null)
             {
@@ -89,9 +90,9 @@ namespace APIViewWeb.Pages.Assemblies
 
                 var previousRevisionFile = await _codeFileRepository.GetCodeFileAsync(DiffRevision);
 
-                var previousHtmlLines = previousRevisionFile.RenderReadOnly(ShowDocumentation);
-                var previousRevisionTextLines = previousRevisionFile.RenderText(ShowDocumentation);
-                var fileTextLines = renderedCodeFile.RenderText(ShowDocumentation);
+                var previousHtmlLines = previousRevisionFile.RenderReadOnly(Doc);
+                var previousRevisionTextLines = previousRevisionFile.RenderText(Doc);
+                var fileTextLines = renderedCodeFile.RenderText(Doc);
 
                 var diffLines = InlineDiff.Compute(
                     previousRevisionTextLines,

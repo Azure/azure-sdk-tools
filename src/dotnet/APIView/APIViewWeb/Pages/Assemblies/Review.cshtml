@@ -36,11 +36,11 @@
             <div class="btn-group float-left">
                 @if (Model.DiffRevisionId != null)
                 {
-                    <a class="btn btn-sm btn-outline-secondary active" asp-route-diffRevisionId="">Diff with @Model.DiffRevision?.DisplayName</a>
+                    <a class="btn btn-sm btn-outline-secondary active" asp-route-diffRevisionId="" asp-route-showDocumentation="@Model.ShowDocumentation">Diff with @Model.DiffRevision?.DisplayName</a>
                 }
                 else
                 {
-                    <a class="btn btn-sm btn-outline-secondary" asp-route-diffRevisionId="@Model.PreviousRevisions.Last().RevisionId">Diff</a>
+                    <a class="btn btn-sm btn-outline-secondary" asp-route-diffRevisionId="@Model.PreviousRevisions.Last().RevisionId" asp-route-showDocumentation="@Model.ShowDocumentation">Diff</a>
                 }
                 <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
 
@@ -92,13 +92,11 @@
                         Show comments
                     </label>
                 </span>
-                <span class="dropdown-item checkbox" id="show-documentation-component">
-                    <label>
-                        <a asp-route-diffRevisionId="@Model.DiffRevisionId" asp-route-showDocumentation="@(!Model.ShowDocumentation)">
-                            <input asp-for="@Model.ShowDocumentation">
-                        </a>
-                        Show documentation
-                    </label>
+                <span class="dropdown-item" id="show-documentation-component">
+                    <input asp-for="@Model.ShowDocumentation" class="show-doc-checkbox">
+                    <a class="show-document" asp-route-diffRevisionId="@Model.DiffRevisionId" asp-route-showDocumentation="@(!Model.ShowDocumentation)">
+                        <label>Show documentation</label>
+                    </a>
                 </span>
             </div>
         </div>

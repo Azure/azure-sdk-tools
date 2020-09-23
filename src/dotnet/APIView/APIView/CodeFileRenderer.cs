@@ -11,14 +11,14 @@ namespace ApiView
     {
         public static CodeFileRenderer Instance = new CodeFileRenderer();
 
-        public CodeLine[] Render(CodeFile file, bool ShowDocumentation = false)
+        public CodeLine[] Render(CodeFile file, bool showDocumentation = false)
         {
             var list = new List<CodeLine>();
-            Render(list, file.Tokens, ShowDocumentation);
+            Render(list, file.Tokens, showDocumentation);
             return list.ToArray();
         }
 
-        private void Render(List<CodeLine> list, IEnumerable<CodeFileToken> node, bool ShowDocumentation)
+        private void Render(List<CodeLine> list, IEnumerable<CodeFileToken> node, bool showDocumentation)
         {
             var stringBuilder = new StringBuilder();
             string currentId = null;
@@ -27,7 +27,7 @@ namespace ApiView
 
             foreach (var token in node)
             {
-                if (!ShowDocumentation && isDocumentationRange && token.Kind != CodeFileTokenKind.DocumentRangeEnd)
+                if (!showDocumentation && isDocumentationRange && token.Kind != CodeFileTokenKind.DocumentRangeEnd)
                     continue;
 
                 switch(token.Kind)

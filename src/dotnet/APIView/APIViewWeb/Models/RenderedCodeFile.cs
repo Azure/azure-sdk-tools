@@ -19,8 +19,14 @@ namespace APIViewWeb.Models
 
         public CodeFile CodeFile { get; }
 
-        public CodeLine[] Render()
+        public CodeLine[] Render(bool showDocumentation)
         {
+            //Always render when documentation is requested to avoid cach thrashing
+            if (showDocumentation)
+            {
+                return CodeFileHtmlRenderer.Normal.Render(CodeFile, true);
+            }
+
             if (_rendered == null)
             {
                 _rendered = CodeFileHtmlRenderer.Normal.Render(CodeFile);
@@ -29,8 +35,13 @@ namespace APIViewWeb.Models
             return _rendered;
         }
 
-        public CodeLine[] RenderReadOnly()
+        public CodeLine[] RenderReadOnly(bool showDocumentation)
         {
+            if (showDocumentation)
+            {
+                return CodeFileHtmlRenderer.ReadOnly.Render(CodeFile, true);
+            }
+
             if (_renderedReadOnly == null)
             {
                 _renderedReadOnly = CodeFileHtmlRenderer.ReadOnly.Render(CodeFile);
@@ -39,8 +50,13 @@ namespace APIViewWeb.Models
             return _renderedReadOnly;
         }
 
-        internal CodeLine[] RenderText()
+        internal CodeLine[] RenderText(bool showDocumentation)
         {
+            if (showDocumentation)
+            {
+                return CodeFileHtmlRenderer.Instance.Render(CodeFile, true);
+            }
+
             if (_renderedText == null)
             {
                 _renderedText = CodeFileRenderer.Instance.Render(CodeFile);

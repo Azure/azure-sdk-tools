@@ -1,29 +1,10 @@
 param(
   $PRDataArtifactPath,
   $AuthToken,
-  $ShouldMerge,
-  [switch]$devOpsLogging = $false
+  $ShouldMerge
 )
 
-function LogWarning
-{
-  if ($devOpsLogging) {
-    Write-Host "##vso[task.LogIssue type=warning;]$args"
-  }
-  else {
-    Write-Warning "$args"
-  }
-}
-
-function LogError
-{
-  if ($devOpsLogging) {
-    Write-Host "##vso[task.logissue type=error]$args"
-  }
-  else {
-    Write-Error "$args"
-  }
-}
+. "${PSScriptRoot}..\common\scripts\logging.ps1"
 
 $ReadyForMerge = $true
 $mergablePRs = @()

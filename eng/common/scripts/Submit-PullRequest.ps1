@@ -61,48 +61,63 @@ param(
   [string]$Assignees
 )
 
+. "${PSScriptRoot}\logging.ps1"
+
 $headers = @{
   Authorization = "bearer $AuthToken"
 }
 $baseURI = "https://api.github.com/repos"
 function SplitMembers ($membersString)
 {
+  if (!$membersString) { return $null }
   return @($membersString.Split(",") | % { $_.Trim() } | ? { return $_ })
 }
 
 function InvokeGitHubAPI($apiURI, $method, $body) {
   $resp = Invoke-RestMethod -Method $method -Headers $headers -Body ($body | ConvertTo-Json) -Uri $apiURI -MaximumRetryCount 3
-  Write-Host -f green "These members have been added to: https://github.com/$RepoOwner/$RepoName/pull/$prNumber"
+  LogDebug "These members have been added to: https://github.com/$RepoOwner/$RepoName/pull/$prNumber"
   ($body | Format-List | Write-Output)
   $resp | Write-Verbose
 }
 
 function AddReviewers ($prNumber, $users, $teams) {
-  $uri = "$baseURI/$RepoOwner/$RepoName/pulls/$prNumber/requested_reviewers"
-  $userAdditions = SplitMembers -membersString $users
-  $teamAdditions = SplitMembers -membersString $teams
-  $postResp = @{}
-  if ($userAdditions) {
-    $postResp["reviewers"] = @($userAdditions)
+  if (!$users -and !$teams)
+  {
+    exit 0
   }
-  if ($teamAdditions) {
-    $postResp["team_reviewers"] = @($teamAdditions)
+  else {
+    $uri = "$baseURI/$RepoOwner/$RepoName/pulls/$prNumber/requested_reviewers"
+    $userAdditions = SplitMembers -membersString $users
+    $teamAdditions = SplitMembers -membersString $teams
+    $postResp = @{}
+    if ($userAdditions) {
+      $postResp["reviewers"] = @($userAdditions)
+    }
+    if ($teamAdditions) {
+      $postResp["team_reviewers"] = @($teamAdditions)
+    }
+    return InvokeGitHubAPI -apiURI $uri -method 'Post' -body $postResp
   }
-  return InvokeGitHubAPI -apiURI $uri -method 'Post' -body $postResp
 }
 
 function AddLabelsAndOrAssignees ($prNumber, $labels, $assignees) {
-  $uri = "$baseURI/$RepoOwner/$RepoName/issues/$prNumber"
-  $labelAdditions = SplitMembers -membersString $labels
-  $assigneeAdditions = SplitMembers -membersString $assignees
-  $postResp = @{}
-  if ($assigneeAdditions) {
-    $postResp["assignees"] = @($assigneeAdditions)
+  if (!$labels -and !$assignees)
+  {
+    exit 0
   }
-  if ($labelAdditions) {
-    $postResp["labels"] = @($labelAdditions)
+  else {
+    $uri = "$baseURI/$RepoOwner/$RepoName/issues/$prNumber"
+    $labelAdditions = SplitMembers -membersString $labels
+    $assigneeAdditions = SplitMembers -membersString $assignees
+    $postResp = @{}
+    if ($assigneeAdditions) {
+      $postResp["assignees"] = @($assigneeAdditions)
+    }
+    if ($labelAdditions) {
+      $postResp["labels"] = @($labelAdditions)
+    }
+    return InvokeGitHubAPI -apiURI $uri -method 'Post' -body $postResp
   }
-  return InvokeGitHubAPI -apiURI $uri -method 'Post' -body $postResp
 }
 
 $query = "state=open&head=${PROwner}:${PRBranch}&base=${BaseBranch}"
@@ -118,7 +133,7 @@ $resp | Write-Verbose
 
 if ($resp.Count -gt 0) {
   try {
-    Write-Host -f green "Pull request already exists $($resp[0].html_url)"
+    LogDebug "Pull request already exists $($resp[0].html_url)"
 
     # setting variable to reference the pull request by number
     Write-Host "##vso[task.setvariable variable=Submitted.PullRequest.Number]$($resp[0].number)"
@@ -126,7 +141,7 @@ if ($resp.Count -gt 0) {
     AddLabelsAndOrAssignees -prNumber $resp[0].number -labels $PRLabels -assignees $Assignees
   }
   catch {
-    Write-Error "Call to GitHub API failed with exception:`n$_"
+    LogError "Call to GitHub API failed with exception:`n$_"
     exit 1
   }
 }
@@ -145,7 +160,7 @@ else {
                               -Body ($data | ConvertTo-Json)
 
     $resp | Write-Verbose
-    Write-Host -f green "Pull request created https://github.com/$RepoOwner/$RepoName/pull/$($resp.number)"
+    LogDebug "Pull request created https://github.com/$RepoOwner/$RepoName/pull/$($resp.number)"
   
     # setting variable to reference the pull request by number
     Write-Host "##vso[task.setvariable variable=Submitted.PullRequest.Number]$($resp.number)"
@@ -153,7 +168,7 @@ else {
     AddLabelsAndOrAssignees -prNumber $resp.number -labels $PRLabels -assignees $Assignees
   }
   catch {
-    Write-Error "Call to GitHub API failed with exception:`n$_"
+    LogError "Call to GitHub API failed with exception:`n$_"
     exit 1
   }
 }

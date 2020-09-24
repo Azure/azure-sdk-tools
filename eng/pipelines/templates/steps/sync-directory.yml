@@ -39,8 +39,6 @@ steps:
         PushArgs: -f
         WorkingDirectory: $(System.DefaultWorkingDirectory)/${{ repo }}
         ScriptDirectory: $(System.DefaultWorkingDirectory)/eng/common/scripts
-        GHReviewersVariable: "System.PullRequest.Creator"
-        GHAssignessVariable: "System.PullRequest.Creator"
 
     - pwsh: |
         $PRData = "Azure;${{ repo }};$(Submitted.PullRequest.Number)"

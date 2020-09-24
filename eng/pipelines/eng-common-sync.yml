@@ -30,20 +30,6 @@ stages:
         displayName: Sync ${{ parameters.DirectoryToSync }} Directory
 
         steps:
-        - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
-          - task: PowerShell@2
-            displayName: 'Get alias of the Tools PR Creator'
-            inputs:
-              targetType: filePath
-              filePath: $(Build.SourcesDirectory)/eng/common/scripts/get-pr-creator.ps1
-              arguments: >
-                -RepoOwner "Azure"
-                -RepoName "azure-sdk-tools"
-                -PullRequestNumber "$(System.PullRequest.PullRequestNumber)"
-                -VsoPRCreatorVariable "System.PullRequest.Creator"
-                -AuthToken "$(azuresdk-github-pat)"
-              pwsh: true
-
         - template: ./templates/steps/sync-directory.yml
           parameters:
             ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:

@@ -29,17 +29,13 @@ namespace Azure.Sdk.Tools.GitHubIssues
             builder.Services.AddAzureClients(builder =>
             {
                 builder.UseCredential(credential);
+
                 var keyVaultUri = new Uri($"https://{websiteResourceGroupEnvironmentVariable}.vault.azure.net/");
                 builder.AddSecretClient(keyVaultUri);
-            });
 
-            builder.Services.AddSingleton<ConfigurationClient>((provider) =>
-            {
-                var appConfigurationUri = new Uri($"https://{websiteResourceGroupEnvironmentVariable}.azconfig.io/");
-                var configurationClient = new ConfigurationClient(appConfigurationUri, credential);
-                return configurationClient;
+                var configurationUri = new Uri($"https://{websiteResourceGroupEnvironmentVariable}.azconfig.io/");
+                builder.AddConfigurationClient(configurationUri);
             });
-
 
             builder.Services.AddLogging();
             builder.Services.AddSingleton<IConfigurationService, ConfigurationService>();

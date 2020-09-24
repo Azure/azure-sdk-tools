@@ -12,7 +12,7 @@
       }
   }
 
-  $(document).on("click", SHOW_DOC_CHECKBOX, e => {
+  $(SHOW_DOC_CHECKBOX).on("click", e => {
     $(SHOW_DOC_HREF)[0].click();
   });
 });

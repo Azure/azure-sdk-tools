@@ -6,6 +6,9 @@ param (
   $VsoOwningTeams = "",
   $VsoOwningLabels = ""
 )
+
+. (Join-Path ${PSScriptRoot} logging.ps1)
+
 $target = $TargetDirectory.ToLower().Trim("/")
 $codeOwnersLocation = Join-Path $RootDirectory -ChildPath ".github/CODEOWNERS"
 $ownedFolders = @{}
@@ -45,13 +48,13 @@ foreach ($contentLine in $codeOwnersContent) {
     # gh aliases start with @ in codeowners. don't pass on to API calls
 
     $aliases = ($splitLine[1..$($splitLine.Length)] | ? { $_.StartsWith("@") } | % { return $_.substring(1) }) -join ","
-    $labels = ""
+    $labels = @()
 
     if ($null -ne $previousLine -and $previousLine.Contains("PRLabel:"))
     {
       $previousLine = $previousLine.substring($previousLine.IndexOf(':') + 1)
       $splitPrevLine = $previousLine -split "%" 
-      $labels = ($splitPrevLine[1..$($splitPrevLine.Length)] | % { return $_.Trim() }) -join ","
+      $labels = ($splitPrevLine[1..$($splitPrevLine.Length)] | % { return $_.Trim() })
     }
 
     $ownedFolders[$splitLine[0].ToLower().Trim("/")] = @{ Aliases = $aliases; Labels = $labels }
@@ -88,18 +91,18 @@ if ($results) {
         $users += $str
         continue
       }
-      Write-Host "Alias ${str} is neither a recognized github user nor a team"
+      LogWarning "Alias ${str} is neither a recognized github user nor a team"
     }
   }
 
-  $labelsString = $results.Labels
+  $labels = $results.Labels
 
   if ($VsoOwningUsers) {
     $presentOwningUsers = [System.Environment]::GetEnvironmentVariable($VsoOwningUsers)
     if ($presentOwningUsers) { 
-      $user += $presentOwningUsers
+      $users += $presentOwningUsers
     }
-    Write-Host "##vso[task.setvariable variable=$VsoOwningUsers;]($user -join ',')"
+    Write-Host "##vso[task.setvariable variable=$VsoOwningUsers;]{0}" -F ($users -join ',')
   }
 
   if ($VsoOwningTeams) {
@@ -107,15 +110,15 @@ if ($results) {
     if ($presentOwningTeams) { 
       $teams += $presentOwningUsers
     }
-    Write-Host "##vso[task.setvariable variable=$VsoOwningTeams;]($teams -join ',')"
+    Write-Host "##vso[task.setvariable variable=$VsoOwningTeams;]{0}" -F ($teams -join ',')
   }
 
   if ($VsoOwningLabels) {
     $presentOwningLabels = [System.Environment]::GetEnvironmentVariable($VsoOwningLabels)
     if ($presentOwningLabels) {
-      if ($labelsString) { $labelsString += ",$presentOwningLabels" } else { $teamsString = "$presentOwningLabels" }
+      $labels += $presentOwningLabels
     }
-    Write-Host "##vso[task.setvariable variable=$VsoOwningLabels;]$labelsString"
+    Write-Host "##vso[task.setvariable variable=$VsoOwningLabels;]{0}" -F ($labels -join ',')
   }
 
   return $results

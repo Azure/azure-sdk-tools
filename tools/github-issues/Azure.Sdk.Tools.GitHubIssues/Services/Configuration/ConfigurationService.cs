@@ -63,6 +63,22 @@ namespace Azure.Sdk.Tools.GitHubIssues.Services.Configuration
             return secret.Value;
         }
 
+        public async Task<string> GetApplicationIDAsync()
+        {
+            logger.LogInformation("Reading github-app-id from Azure KeyVault");
+            KeyVaultSecret secret = await secretClient.GetSecretAsync("github-app-id");
+            logger.LogInformation("Read github-app-id from Azure KeyVault");
+            return secret.Value;
+        }
+
+        public async Task<string> GetApplicationNameAsync()
+        {
+            logger.LogInformation("Reading github-app-name from Azure KeyVault");
+            KeyVaultSecret secret = await secretClient.GetSecretAsync("github-app-name");
+            logger.LogInformation("Read github-app-name from Azure KeyVault");
+            return secret.Value;
+        }
+
         public async Task<string> GetGitHubPersonalAccessTokenAsync()
         {
             logger.LogInformation("Reading github-token from Azure KeyVault");
@@ -70,5 +86,24 @@ namespace Azure.Sdk.Tools.GitHubIssues.Services.Configuration
             logger.LogInformation("Read github-token from Azure KeyVault");
             return secret.Value;
         }
+
+        public async Task<int> GetMaxRequestsPerPeriodAsync()
+        {
+            logger.LogInformation("Reading max-requests-per-period from Azure KeyVault");
+            KeyVaultSecret secret = await secretClient.GetSecretAsync("github-token");
+            logger.LogInformation("Read max-requests-per-period from Azure KeyVault");
+            return int.Parse(secret.Value);
+        }
+
+        public async Task<int> GetPeriodDurationInSecondsAsync()
+        {
+            logger.LogInformation("Reading period-duration-in-seconds from Azure KeyVault");
+            KeyVaultSecret secret = await secretClient.GetSecretAsync("period-duration-in-seconds");
+            logger.LogInformation("Read period-duration-in-seconds from Azure KeyVault");
+            return int.Parse(secret.Value);
+        }
+
+
+
     }
 }

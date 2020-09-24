@@ -16,6 +16,9 @@
             public static string ServiceAttention = "Service Attention";
             public static string EngSys = "EngSys";
             public static string MgmtEngSys = "Mgmt-EngSys";
+
         }
+
+        public const int ApplicationTokenLifetimeInMinutes = 10;
     }
 }

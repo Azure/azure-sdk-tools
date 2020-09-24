@@ -12,5 +12,9 @@ namespace Azure.Sdk.Tools.GitHubIssues.Services.Configuration
         Task<string> GetGitHubPersonalAccessTokenAsync();
         Task<string> GetFromAddressAsync();
         Task<string> GetSendGridTokenAsync();
+        Task<string> GetApplicationIDAsync();
+        Task<string> GetApplicationNameAsync();
+        Task<int> GetMaxRequestsPerPeriodAsync();
+        Task<int> GetPeriodDurationInSecondsAsync();
     }
 }

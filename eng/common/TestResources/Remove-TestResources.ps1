@@ -43,6 +43,7 @@ param (
     [string] $ServiceDirectory,
 
     [Parameter()]
+    [ValidateSet('AzureCloud', 'AzureUSGovernment', 'AzureChinaCloud', 'Dogfood')]
     [string] $Environment = 'AzureCloud',
 
     [Parameter()]

@@ -54,6 +54,7 @@ param (
     [Parameter()]
     [string] $Location = '',
 
+    [ValidateSet('AzureCloud', 'AzureUSGovernment', 'AzureChinaCloud', 'Dogfood')]
     [Parameter()]
     [string] $Environment = 'AzureCloud',
 

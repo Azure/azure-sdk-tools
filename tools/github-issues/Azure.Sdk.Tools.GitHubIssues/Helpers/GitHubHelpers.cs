@@ -1,5 +1,8 @@
 ﻿using Azure.Sdk.Tools.GitHubIssues.Services.Configuration;
+using ComposableAsync;
 using Octokit;
+using RateLimiter;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -8,6 +11,13 @@ namespace GitHubIssues.Helpers
 {
     internal static class GitHubHelpers
     {
+        private static TimeLimiter rateLimiter = TimeLimiter.GetFromMaxCountByInterval(1, TimeSpan.FromSeconds(1));
+
+        private static void WaitForGitHubCapacity()
+        {
+            rateLimiter.GetAwaiter().GetResult();
+        }
+
         public static IEnumerable<Issue> SearchForGitHubIssues(this GitHubClient s_gitHub, SearchIssuesRequest issueQuery)
         {
             List<Issue> totalIssues = new List<Issue>();
@@ -20,6 +30,7 @@ namespace GitHubIssues.Helpers
 
                 SearchIssuesResult searchresults = null;
 
+                WaitForGitHubCapacity();
                 searchresults = s_gitHub.Search.SearchIssues(issueQuery).Result;
 
                 foreach (Issue item in searchresults.Items)
@@ -41,6 +52,7 @@ namespace GitHubIssues.Helpers
         {
             MilestonesClient ms = new MilestonesClient(new ApiConnection(s_gitHub.Connection));
 
+            WaitForGitHubCapacity();
             return (await ms.GetAllForRepository(repo.Owner, repo.Name)).ToList();
         }
     }

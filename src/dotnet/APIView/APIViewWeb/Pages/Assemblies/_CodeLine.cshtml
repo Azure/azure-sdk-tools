@@ -9,10 +9,9 @@
         DiffLineKind.Added => "code-added",
         _ => ""
     };
-    string documentationClass = Model.CodeLine.IsDocumentationLine ? "documentation" : "";
 }
 
-<tr class="code-line @documentationClass" data-line-id="@(isRemoved ? string.Empty : Model.CodeLine.ElementId)">
+<tr class="code-line" data-line-id="@(isRemoved ? string.Empty : Model.CodeLine.ElementId)">
     <td class="line-comment-button-cell">
         @if (!isRemoved && Model.CodeLine.ElementId != null)
         {

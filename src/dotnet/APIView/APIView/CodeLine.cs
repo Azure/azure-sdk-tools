@@ -7,13 +7,11 @@ namespace ApiView
     {
         public string DisplayString { get; }
         public string ElementId { get; }
-        public bool IsDocumentationLine { get; }
 
-        public CodeLine(string html, string id, bool isDocumentation)
+        public CodeLine(string html, string id)
         {
             this.DisplayString = html;
             this.ElementId = id;
-            this.IsDocumentationLine = isDocumentation;
         }
 
         public override string ToString()

@@ -31,19 +31,6 @@ stages:
 
         steps:
         - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
-          - task: PowerShell@2
-            displayName: 'Get alias of the Tools PR Creator'
-            inputs:
-              targetType: filePath
-              filePath: $(Build.SourcesDirectory)/eng/common/scripts/get-pr-creator.ps1
-              arguments: >
-                -RepoOwner "Azure"
-                -RepoName "azure-sdk-tools"
-                -PullRequestNumber "$(System.PullRequest.PullRequestNumber)"
-                -VsoPRCreatorVariable "System.PullRequest.Creator"
-                -AuthToken "$(azuresdk-github-pat)"
-              pwsh: true
-
           - pwsh: |
               Set-PsDebug -Trace 1
               $patchDir = "$(Build.ArtifactStagingDirectory)/patchfiles"
@@ -51,6 +38,7 @@ stages:
               if ($patchfiles -and ($LASTEXITCODE -eq 0)) {
                 echo "##vso[task.setvariable variable=PatchFilesLocation]$patchDir"
                 echo "Setting PatchFilesLocation"
+                ls $patchDir
               }
               else {
                 Write-Host "Failed to Create PatchFiles from Pull Request [https://github.com/Azure/azure-sdk-tools/pull/$(System.PullRequest.PullRequestNumber)]"

@@ -8,6 +8,9 @@ parameters:
   PRBody: pr-body-not-set
   PRDataArtifactPath: pr-data-artifact-path-not-set
   SkipCheckingForChanges: false
+  ScriptDirectory: eng/common/scripts
+  PROwner: Azure
+  PushArgs:
 
 steps:
   - pwsh: |
@@ -25,7 +28,6 @@ steps:
           $results = @()
           echo "##vso[task.setvariable variable=HasChanges]$false"
           $shaBeforePatches = git rev-parse --short HEAD
-          Write-Host $shaBeforePatches
           foreach ($file in (Get-ChildItem $(PatchFilesLocation)))
           {
              Write-Host $file.FullName
@@ -37,7 +39,6 @@ steps:
              }
           }
           $shaAfterPatches = git rev-parse --short HEAD
-          Write-Host $shaAfterPatches
           $hasChanges = $shaBeforePatches -ne $shaAfterPatches
           echo "##vso[task.setvariable variable=HasChanges]$hasChanges"
         }
@@ -48,25 +49,22 @@ steps:
           Copy-Item -v -r $(Build.SourcesDirectory)/${{ parameters.DirectoryToSync }} $repoPath
           Get-ChildItem -r $repoPath
         }
-      displayName: Copy ${{ parameters.DirectoryToSync }} from azure-sdk-tools to ${{ repo }}
+      displayName: Copy or Apply Patch for ${{ parameters.DirectoryToSync }} from azure-sdk-tools to ${{ repo }}
       workingDirectory: $(System.DefaultWorkingDirectory)
 
-    - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
-      parameters:
-        RepoName: ${{ repo }}
-        RepoOwner: Azure
-        PRBranchName: ${{ parameters.PRBranchName }}
-        BaseBranchName: ${{ parameters.BaseBranchName }}
-        CommitMsg: ${{ parameters.CommitMessage }}
-        PRTitle: ${{ parameters.PRTitle }}
-        PRBody: ${{ parameters.PRBody }}
-        PRLabels: "EngSys"
-        PushArgs: -f
-        WorkingDirectory: $(System.DefaultWorkingDirectory)/${{ repo }}
-        ScriptDirectory: $(System.DefaultWorkingDirectory)/eng/common/scripts
-        GHReviewersVariable: "System.PullRequest.Creator"
-        GHAssignessVariable: "System.PullRequest.Creator"
-        SkipCheckingForChanges: ${{ parameters.SkipCheckingForChanges }}
+    - task: PowerShell@2
+      displayName: Push changes
+      condition: and(succeeded(), eq(variables['HasChanges'], 'true'))
+      inputs:
+        pwsh: true
+        workingDirectory: ${{ parameters.WorkingDirectory }}
+        filePath: ${{ parameters.ScriptDirectory }}/git-branch-push.ps1
+        arguments: >
+          -PRBranchName "${{ parameters.PRBranchName }}"
+          -CommitMsg "${{ parameters.CommitMessage }}"
+          -GitUrl "https://$(azuresdk-github-pat)@github.com/${{ parameters.PROwner }}/${{ repo }}.git"
+          -PushArgs "${{ parameters.PushArgs }}"
+          -SkipCommit "${{parameters.SkipCheckingForChanges}}"
 
     - pwsh: |
         $PRData = "Azure;${{ repo }};$(Submitted.PullRequest.Number)"

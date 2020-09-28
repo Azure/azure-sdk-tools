@@ -2,6 +2,7 @@
 using Azure.Security.KeyVault.Secrets;
 using GitHubIssues.Helpers;
 using Microsoft.Extensions.Logging;
+using Microsoft.Identity.Client;
 using Octokit;
 using Polly;
 using System;
@@ -15,33 +16,35 @@ namespace Azure.Sdk.Tools.GitHubIssues.Reports
     public abstract class BaseReport
     {
         protected IConfigurationService ConfigurationService { get; private set; }
+        protected ILogger<BaseReport> Logger { get; private set; }
 
-        public BaseReport(IConfigurationService configurationService)
+        public BaseReport(IConfigurationService configurationService, ILogger<BaseReport> logger)
         {
             ConfigurationService = configurationService;
+            Logger = logger;
         }
 
-        public async Task ExecuteAsync(ILogger log)
+        protected async Task ExecuteWithRetryAsync(int retryCount, Func<Task> action)
         {
             await Policy
                 .Handle<AbuseException>()
                 .Or<RateLimitExceededException>()
                 .RetryAsync(3, async (ex, retryCount) =>
                 {
-                TimeSpan retryDelay = TimeSpan.FromSeconds(10); // Default.
+                    TimeSpan retryDelay = TimeSpan.FromSeconds(10); // Default.
 
                     switch (ex)
                     {
                         case AbuseException abuseException:
                             retryDelay = TimeSpan.FromSeconds((double)abuseException.RetryAfterSeconds);
-                            log.LogWarning("Abuse exception detected. Retry after seconds is: {retrySeconds}",
+                            Logger.LogWarning("Abuse exception detected. Retry after seconds is: {retrySeconds}",
                                 abuseException.RetryAfterSeconds
                                 );
                             break;
 
                         case RateLimitExceededException rateLimitExceededException:
                             retryDelay = rateLimitExceededException.GetRetryAfterTimeSpan();
-                            log.LogWarning(
+                            Logger.LogWarning(
                                 "Rate limit exception detected. Limit is: {limit}, reset is: {reset}, retry seconds is: {retrySeconds}",
                                 rateLimitExceededException.Limit,
                                 rateLimitExceededException.Reset,
@@ -50,30 +53,31 @@ namespace Azure.Sdk.Tools.GitHubIssues.Reports
                             break;
                     }
                 })
-                .ExecuteAsync(async () =>
-                {
-                    Task<string> pendingGitHubPersonalAccessToken = ConfigurationService.GetGitHubPersonalAccessTokenAsync();
+                .ExecuteAsync(action);
+        }
 
-                    var gitHubClient = new GitHubClient(new ProductHeaderValue("github-issues"))
-                    {
-                        Credentials = new Credentials(await pendingGitHubPersonalAccessToken)
-                    };
+        public async Task ExecuteAsync(ILogger log)
+        {
+            Task<string> pendingGitHubPersonalAccessToken = ConfigurationService.GetGitHubPersonalAccessTokenAsync();
 
-                    log.LogInformation("Preparing report execution context for: {reportType}", this.GetType());
+            var gitHubClient = new GitHubClient(new ProductHeaderValue("github-issues"))
+            {
+                Credentials = new Credentials(await pendingGitHubPersonalAccessToken)
+            };
 
-                    var context = new ReportExecutionContext(
-                        log,
-                        await ConfigurationService.GetFromAddressAsync(),
-                        await ConfigurationService.GetSendGridTokenAsync(),
-                        await pendingGitHubPersonalAccessToken,
-                        await ConfigurationService.GetRepositoryConfigurationsAsync(),
-                        gitHubClient
-                        );
+            Logger.LogInformation("Preparing report execution context for: {reportType}", this.GetType());
 
-                    log.LogInformation("Executing report: {reportType}", this.GetType());
-                    await ExecuteCoreAsync(context);
-                    log.LogInformation("Executed report: {reportType}", this.GetType());
-                });
+            var context = new ReportExecutionContext(
+                await ConfigurationService.GetFromAddressAsync(),
+                await ConfigurationService.GetSendGridTokenAsync(),
+                await pendingGitHubPersonalAccessToken,
+                await ConfigurationService.GetRepositoryConfigurationsAsync(),
+                gitHubClient
+                );
+
+            Logger.LogInformation("Executing report: {reportType}", this.GetType());
+            await ExecuteCoreAsync(context);
+            Logger.LogInformation("Executed report: {reportType}", this.GetType());
         }
 
         protected abstract Task ExecuteCoreAsync(ReportExecutionContext context);

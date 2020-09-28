@@ -16,7 +16,7 @@ namespace Azure.Sdk.Tools.GitHubIssues.Reports
 {
     public partial class FindCustomerRelatedIssuesInvalidState : BaseReport
     {
-        public FindCustomerRelatedIssuesInvalidState(IConfigurationService configurationService) : base(configurationService)
+        public FindCustomerRelatedIssuesInvalidState(IConfigurationService configurationService, ILogger<FindCustomerRelatedIssuesInvalidState> logger) : base(configurationService, logger)
         {
 
         }
@@ -25,15 +25,18 @@ namespace Azure.Sdk.Tools.GitHubIssues.Reports
         {
             foreach (RepositoryConfiguration repositoryConfiguration in context.RepositoryConfigurations)
             {
-                HtmlPageCreator emailBody = new HtmlPageCreator($"Customer reported issues with invalid state in {repositoryConfiguration.Name}");
-                bool hasFoundIssues = ValidateCustomerReportedIssues(context, repositoryConfiguration, emailBody);
-
-                if (hasFoundIssues)
+                await ExecuteWithRetryAsync(3, async () =>
                 {
-                    // send the email
-                    EmailSender.SendEmail(context.SendGridToken, context.FromAddress, emailBody.GetContent(), repositoryConfiguration.ToEmail, repositoryConfiguration.CcEmail,
-                        $"Customer reported issues in invalid state in repo {repositoryConfiguration.Name}", context.Log);
-                }
+                    HtmlPageCreator emailBody = new HtmlPageCreator($"Customer reported issues with invalid state in {repositoryConfiguration.Name}");
+                    bool hasFoundIssues = ValidateCustomerReportedIssues(context, repositoryConfiguration, emailBody);
+
+                    if (hasFoundIssues)
+                    {
+                        // send the email
+                        EmailSender.SendEmail(context.SendGridToken, context.FromAddress, emailBody.GetContent(), repositoryConfiguration.ToEmail, repositoryConfiguration.CcEmail,
+                            $"Customer reported issues in invalid state in repo {repositoryConfiguration.Name}", Logger);
+                    }
+                });
             }
         }
 
@@ -52,7 +55,7 @@ namespace Azure.Sdk.Tools.GitHubIssues.Reports
                 if (!ValidateIssue(issue, out string issuesFound))
                 {
                     issuesWithNotes.Add(new ReportIssue() { Issue = issue, Note = issuesFound });
-                    context.Log.LogWarning($"{issue.Number}: {issuesFound}");
+                    Logger.LogWarning($"{issue.Number}: {issuesFound}");
                 }
             }
 

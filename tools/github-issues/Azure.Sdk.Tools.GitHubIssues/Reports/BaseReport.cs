@@ -56,7 +56,7 @@ namespace Azure.Sdk.Tools.GitHubIssues.Reports
                 .ExecuteAsync(action);
         }
 
-        public async Task ExecuteAsync(ILogger log)
+        public async Task ExecuteAsync()
         {
             Task<string> pendingGitHubPersonalAccessToken = ConfigurationService.GetGitHubPersonalAccessTokenAsync();
 

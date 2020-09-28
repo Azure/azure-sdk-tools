@@ -29,7 +29,7 @@ namespace Azure.Sdk.Tools.GitHubIssues.Reports
             await Policy
                 .Handle<AbuseException>()
                 .Or<RateLimitExceededException>()
-                .RetryAsync(3, async (ex, retryCount) =>
+                .RetryAsync(10, async (ex, retryCount) =>
                 {
                     TimeSpan retryDelay = TimeSpan.FromSeconds(10); // Default.
 
@@ -52,8 +52,20 @@ namespace Azure.Sdk.Tools.GitHubIssues.Reports
                                 );
                             break;
                     }
+
+                    await Task.Delay(retryDelay);
                 })
-                .ExecuteAsync(action);
+                .ExecuteAsync(async () =>
+                {
+                    try
+                    {
+                        await action();
+                    }
+                    catch (AggregateException ex) when (ex.InnerException! is AbuseException || ex.InnerException! is RateLimitExceededException)
+                    {
+                        throw ex.InnerException;
+                    }
+                });
         }
 
         public async Task ExecuteAsync()

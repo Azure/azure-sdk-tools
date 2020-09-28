@@ -23,40 +23,57 @@ namespace Azure.Sdk.Tools.GitHubIssues.Reports
 
         public async Task ExecuteAsync(ILogger log)
         {
-            try
-            {
-                Task<string> pendingGitHubPersonalAccessToken = ConfigurationService.GetGitHubPersonalAccessTokenAsync();
-
-                var gitHubClient = new GitHubClient(new ProductHeaderValue("github-issues"))
+            await Policy
+                .Handle<AbuseException>()
+                .Or<RateLimitExceededException>()
+                .RetryAsync(3, async (ex, retryCount) =>
                 {
-                    Credentials = new Credentials(await pendingGitHubPersonalAccessToken)
-                };
+                TimeSpan retryDelay = TimeSpan.FromSeconds(10); // Default.
 
-                log.LogInformation("Preparing report execution context for: {reportType}", this.GetType());
+                    switch (ex)
+                    {
+                        case AbuseException abuseException:
+                            retryDelay = TimeSpan.FromSeconds((double)abuseException.RetryAfterSeconds);
+                            log.LogWarning("Abuse exception detected. Retry after seconds is: {retrySeconds}",
+                                abuseException.RetryAfterSeconds
+                                );
+                            break;
 
-                var context = new ReportExecutionContext(
-                    log,
-                    await ConfigurationService.GetFromAddressAsync(),
-                    await ConfigurationService.GetSendGridTokenAsync(),
-                    await pendingGitHubPersonalAccessToken,
-                    await ConfigurationService.GetRepositoryConfigurationsAsync(),
-                    gitHubClient
-                    );
+                        case RateLimitExceededException rateLimitExceededException:
+                            retryDelay = rateLimitExceededException.GetRetryAfterTimeSpan();
+                            log.LogWarning(
+                                "Rate limit exception detected. Limit is: {limit}, reset is: {reset}, retry seconds is: {retrySeconds}",
+                                rateLimitExceededException.Limit,
+                                rateLimitExceededException.Reset,
+                                retryDelay.TotalSeconds
+                                );
+                            break;
+                    }
+                })
+                .ExecuteAsync(async () =>
+                {
+                    Task<string> pendingGitHubPersonalAccessToken = ConfigurationService.GetGitHubPersonalAccessTokenAsync();
 
-                log.LogInformation("Executing report: {reportType}", this.GetType());
-                await ExecuteCoreAsync(context);
-                log.LogInformation("Executed report: {reportType}", this.GetType());
-            }
-            catch (RateLimitExceededException ex)
-            {
-                log.LogError("GitHub rate limit exceeded for report {reportType}. Rate limit is {callsPerHour} calls per Hour. Limit resets at {limitResets}.",
-                    this.GetType(),
-                    ex.Limit,
-                    ex.Reset
-                    );
+                    var gitHubClient = new GitHubClient(new ProductHeaderValue("github-issues"))
+                    {
+                        Credentials = new Credentials(await pendingGitHubPersonalAccessToken)
+                    };
 
-                throw ex;
-            }
+                    log.LogInformation("Preparing report execution context for: {reportType}", this.GetType());
+
+                    var context = new ReportExecutionContext(
+                        log,
+                        await ConfigurationService.GetFromAddressAsync(),
+                        await ConfigurationService.GetSendGridTokenAsync(),
+                        await pendingGitHubPersonalAccessToken,
+                        await ConfigurationService.GetRepositoryConfigurationsAsync(),
+                        gitHubClient
+                        );
+
+                    log.LogInformation("Executing report: {reportType}", this.GetType());
+                    await ExecuteCoreAsync(context);
+                    log.LogInformation("Executed report: {reportType}", this.GetType());
+                });
         }
 
         protected abstract Task ExecuteCoreAsync(ReportExecutionContext context);

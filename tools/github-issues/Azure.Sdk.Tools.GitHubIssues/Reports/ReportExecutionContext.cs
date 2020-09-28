@@ -10,9 +10,8 @@ namespace Azure.Sdk.Tools.GitHubIssues.Reports
 {
     public class ReportExecutionContext
     {
-        public ReportExecutionContext(ILogger log, string fromAddress, string sendGridToken, string gitHubPersonalAccessToken, IEnumerable<RepositoryConfiguration> repositoryConfigurations, GitHubClient gitHubClient)
+        public ReportExecutionContext(string fromAddress, string sendGridToken, string gitHubPersonalAccessToken, IEnumerable<RepositoryConfiguration> repositoryConfigurations, GitHubClient gitHubClient)
         {
-            this.Log = log;
             this.FromAddress = fromAddress;
             this.SendGridToken = sendGridToken;
             this.GitHubPersonalAccessToken = gitHubPersonalAccessToken;
@@ -20,7 +19,6 @@ namespace Azure.Sdk.Tools.GitHubIssues.Reports
             this.GitHubClient = gitHubClient;
         }
 
-        public ILogger Log { get; private set; }
         public string FromAddress { get; private set; }
         public string SendGridToken { get; private set; }
         public string GitHubPersonalAccessToken { get; private set; }

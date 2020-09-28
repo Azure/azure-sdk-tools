@@ -4,19 +4,13 @@ parameters:
   CommitMessage: commit-message-not-set
   PRBranchName: branch-name-not-set
   BaseBranchName: master
-  PRTitle: pr-title-not-set
-  PRBody: pr-body-not-set
-  PRDataArtifactPath: pr-data-artifact-path-not-set
+  Sync: pr-data-artifact-path-not-set
   SkipCheckingForChanges: false
   ScriptDirectory: eng/common/scripts
   PROwner: Azure
-  PushArgs:
+  PushArgs: -f
 
 steps:
-  - pwsh: |
-      New-Item -Path ${{ parameters.PRDataArtifactPath }} -ItemType File
-    displayName: Create PRData Artifact
-
   - ${{ each repo in parameters.Repos }}:
     - pwsh: |
         Set-PsDebug -Trace 1
@@ -57,17 +51,42 @@ steps:
       condition: and(succeeded(), eq(variables['HasChanges'], 'true'))
       inputs:
         pwsh: true
-        workingDirectory: ${{ parameters.WorkingDirectory }}
+        workingDirectory: $(System.DefaultWorkingDirectory)/${{ repo }}
         filePath: ${{ parameters.ScriptDirectory }}/git-branch-push.ps1
         arguments: >
           -PRBranchName "${{ parameters.PRBranchName }}"
           -CommitMsg "${{ parameters.CommitMessage }}"
           -GitUrl "https://$(azuresdk-github-pat)@github.com/${{ parameters.PROwner }}/${{ repo }}.git"
           -PushArgs "${{ parameters.PushArgs }}"
-          -SkipCommit "${{parameters.SkipCheckingForChanges}}"
+          -SkipCommit $${{parameters.SkipCheckingForChanges}}
 
-    - pwsh: |
-        $PRData = "Azure;${{ repo }};$(Submitted.PullRequest.Number)"
-        Add-Content -Path ${{ parameters.PRDataArtifactPath }} -Value $PRData
-      displayName: Write Sync PR Data to Artifact File
-      condition: and(succeeded(), eq(variables['HasChanges'], 'true'))
+    - task: PowerShell@2
+      displayName: Queue test pipeline
+      condition: and(succeeded(), ne(variables['${{repo}}-template-definition-id'], ''))
+      inputs:
+        pwsh: true
+        workingDirectory: ${{ parameters.WorkingDirectory }}
+        filePath: ${{ parameters.ScriptDirectory }}/Queue-Pipeline.ps1
+        arguments: >
+          -Organization "azure-sdk"
+          -Project "internal"
+          -SourceBranch "${{ parameters.PRBranchName }}"
+          -DefinitionId "$(${{repo}}-template-definition-id)"
+          -VsoQueuedPipelines "QueuedPipelines"
+          -AuthToken "$(azuresdk-azure-sdk-devops-build-queuing-pat)"
+
+  - task: PowerShell@2
+    displayName: Write Queued Pipeline Information to Tools PR
+    condition: and(succeeded(), and(ne(variables['QueuedPipelines'], ''), eq(variables['Build.Reason'], 'PullRequest')))
+    inputs:
+      pwsh: true
+      workingDirectory: ${{ parameters.WorkingDirectory }}
+      filePath: ${{ parameters.ScriptDirectory }}/Add-Issue-Comment.ps1
+      arguments: >
+        -RepoOwner "Azure"
+        -RepoName "azure-sdk-tools"
+        -IssueNumber "$(System.PullRequest.PullRequestNumber)"
+        -CommentPrefix "The following pipelines have been queued for testing:<br>"
+        -Comment "QueuedPipelines"
+        -CommentPostFix "<br>Sign off on the approval gate to test the release stage of each pipeline."
+        -AuthToken "$(azuresdk-github-pat)"

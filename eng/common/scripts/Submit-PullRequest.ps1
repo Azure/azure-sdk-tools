@@ -103,7 +103,7 @@ if ($resp.Count -gt 0) {
 
     # setting variable to reference the pull request by number
     Write-Host "##vso[task.setvariable variable=Submitted.PullRequest.Number]$($resp[0].number)"
-    AddLabels $resp[0].number $PRLabels $resp.labels
+    AddLabels $resp[0].number $PRLabels $resp[0].labels
 }
 else {
   $data = @{

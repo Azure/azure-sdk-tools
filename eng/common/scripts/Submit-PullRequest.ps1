@@ -58,7 +58,7 @@ $headers = @{
 
 $query = "state=open&head=${PROwner}:${PRBranch}&base=${BaseBranch}"
 
-function AddLabels([int] $prNumber, [string] $prLabelString)
+function AddLabels([int] $prNumber, [string] $prLabelString, [array]$existingLabels)
 {
   # Adding labels to the pr.
   if (-not $prLabelString) {
@@ -68,6 +68,9 @@ function AddLabels([int] $prNumber, [string] $prLabelString)
 
   # Parse the labels from string to array
   $prLabelArray = @($prLabelString.Split(",") | % { $_.Trim() } | ? { return $_ })
+  foreach ($label in $existingLabels) {
+    $prLabelArray += $label.name
+  }
   $prLabelUri = "https://api.github.com/repos/$RepoOwner/$RepoName/issues/$prNumber"
   $labelRequestData = @{
     labels = $prLabelArray
@@ -97,7 +100,7 @@ if ($resp.Count -gt 0) {
 
     # setting variable to reference the pull request by number
     Write-Host "##vso[task.setvariable variable=Submitted.PullRequest.Number]$($resp[0].number)"
-    AddLabels $resp[0].number $PRLabels
+    AddLabels $resp[0].number $PRLabels $resp.labels
 }
 else {
   $data = @{
@@ -124,5 +127,5 @@ else {
   # setting variable to reference the pull request by number
   Write-Host "##vso[task.setvariable variable=Submitted.PullRequest.Number]$($resp.number)"
 
-  AddLabels $resp.number $PRLabels
+  AddLabels $resp.number $PRLabels $resp.labels
 }

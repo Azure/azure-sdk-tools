@@ -58,7 +58,7 @@ $headers = @{
 
 $query = "state=open&head=${PROwner}:${PRBranch}&base=${BaseBranch}"
 
-function AddLabels([int] $prNumber, [string] $prLabelString, [array]$existingLabels)
+function AddLabels([int] $prNumber, [string] $prLabelString, [array] $existingLabels)
 {
   # Adding labels to the pr.
   if (-not $prLabelString) {

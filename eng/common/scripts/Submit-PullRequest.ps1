@@ -86,6 +86,7 @@ function AddLabels([int] $prNumber, [string] $prLabelString, [array]$existingLab
   Write-Host -f green "Label(s) [$prLabelArray] added to pull request: https://github.com/$RepoOwner/$RepoName/pull/$prNumber"
 }
 
+
 try {
   $resp = Invoke-RestMethod -Headers $headers "https://api.github.com/repos/$RepoOwner/$RepoName/pulls?$query"
 }

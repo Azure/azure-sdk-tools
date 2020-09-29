@@ -71,6 +71,7 @@ function AddLabels([int] $prNumber, [string] $prLabelString, [array]$existingLab
   foreach ($label in $existingLabels) {
     $prLabelArray += $label.name
   }
+  $prLabelArray = $prLabelArray | select -Unique
   $prLabelUri = "https://api.github.com/repos/$RepoOwner/$RepoName/issues/$prNumber"
   $labelRequestData = @{
     labels = $prLabelArray
@@ -85,7 +86,6 @@ function AddLabels([int] $prNumber, [string] $prLabelString, [array]$existingLab
   $resp | Write-Verbose
   Write-Host -f green "Label(s) [$prLabelArray] added to pull request: https://github.com/$RepoOwner/$RepoName/pull/$prNumber"
 }
-
 
 try {
   $resp = Invoke-RestMethod -Headers $headers "https://api.github.com/repos/$RepoOwner/$RepoName/pulls?$query"

@@ -69,9 +69,11 @@ function AddLabels([int] $prNumber, [string] $prLabelString, [array]$existingLab
   # Parse the labels from string to array
   $prLabelArray = @($prLabelString.Split(",") | % { $_.Trim() } | ? { return $_ })
   foreach ($label in $existingLabels) {
+    if ($prLabelArray -contains $label.name) {
+      continue
+    }
     $prLabelArray += $label.name
   }
-  $prLabelArray = $prLabelArray | select -Unique
   $prLabelUri = "https://api.github.com/repos/$RepoOwner/$RepoName/issues/$prNumber"
   $labelRequestData = @{
     labels = $prLabelArray

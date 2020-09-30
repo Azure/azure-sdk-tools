@@ -51,6 +51,12 @@ namespace Azure.Sdk.Tools.GitHubIssues.Reports
                                 retryDelay.TotalSeconds
                                 );
                             break;
+
+                        default:
+                            Logger.LogError(
+                                "Fall through case invoked, this should never happen!"
+                                );
+                            break;
                     }
 
                     await Task.Delay(retryDelay);

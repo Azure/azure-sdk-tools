@@ -19,9 +19,9 @@ namespace Azure.Sdk.Tools.GitHubIssues.Functions
         private FindIssuesInBacklogMilestones report;
 
         [FunctionName("FindIssuesInBacklogMilestonesFunction")]
-        public async Task Run([TimerTrigger("0 30 15 1 * *")]TimerInfo timer, ILogger log, CancellationToken cancellationToken)
+        public async Task Run([TimerTrigger("0 30 15 1 * *")]TimerInfo timer)
         {
-            await report.ExecuteAsync(log);
+            await report.ExecuteAsync();
         }
     }
 }

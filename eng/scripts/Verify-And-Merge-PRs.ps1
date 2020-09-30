@@ -4,7 +4,7 @@ param(
   $ShouldMerge
 )
 
-. "${PSScriptRoot}..\common\scripts\logging.ps1"
+. "${PSScriptRoot}\..\common\scripts\logging.ps1"
 
 $ReadyForMerge = $true
 $mergablePRs = @()

@@ -14,7 +14,7 @@ namespace Azure.Sdk.Tools.GitHubIssues.Reports
 {
     public class FindIssuesInBacklogMilestones : BaseReport
     {
-        public FindIssuesInBacklogMilestones(IConfigurationService configurationService) : base(configurationService)
+        public FindIssuesInBacklogMilestones(IConfigurationService configurationService, ILogger<FindIssuesInBacklogMilestones> logger) : base(configurationService, logger)
         {
         }
 
@@ -22,21 +22,23 @@ namespace Azure.Sdk.Tools.GitHubIssues.Reports
         {
             foreach (RepositoryConfiguration repositoryConfiguration in context.RepositoryConfigurations)
             {
-                HtmlPageCreator emailBody = new HtmlPageCreator($"Issues in expired milestones for {repositoryConfiguration.Name}");
-                bool hasFoundIssues = GetIssuesInBacklogMilestones(context, repositoryConfiguration, emailBody);
+                await ExecuteWithRetryAsync(3, async () => {
+                    HtmlPageCreator emailBody = new HtmlPageCreator($"Issues in expired milestones for {repositoryConfiguration.Name}");
+                    bool hasFoundIssues = GetIssuesInBacklogMilestones(context, repositoryConfiguration, emailBody);
 
-                if (hasFoundIssues)
-                {
-                    // send the email
-                    EmailSender.SendEmail(context.SendGridToken, context.FromAddress, emailBody.GetContent(), repositoryConfiguration.ToEmail, repositoryConfiguration.CcEmail,
-                        $"Issues in old milestone for {repositoryConfiguration.Name}", context.Log);
-                }
+                    if (hasFoundIssues)
+                    {
+                        // send the email
+                        EmailSender.SendEmail(context.SendGridToken, context.FromAddress, emailBody.GetContent(), repositoryConfiguration.ToEmail, repositoryConfiguration.CcEmail,
+                            $"Issues in old milestone for {repositoryConfiguration.Name}", Logger);
+                    }
+                });
             }
         }
 
         private bool GetIssuesInBacklogMilestones(ReportExecutionContext context, RepositoryConfiguration repositoryConfig, HtmlPageCreator emailBody)
         {
-            context.Log.LogInformation($"Retrieving milestone information for repo {repositoryConfig.Name}");
+            Logger.LogInformation($"Retrieving milestone information for repo {repositoryConfig.Name}");
             IEnumerable<Milestone> milestones = context.GitHubClient.ListMilestones(repositoryConfig).GetAwaiter().GetResult();
 
             List<Milestone> backlogMilestones = new List<Milestone>();
@@ -44,7 +46,7 @@ namespace Azure.Sdk.Tools.GitHubIssues.Reports
             {
                 if (item.DueOn == null)
                 {
-                    context.Log.LogWarning($"Milestone {item.Title} has {item.OpenIssues} open issue(s).");
+                    Logger.LogWarning($"Milestone {item.Title} has {item.OpenIssues} open issue(s).");
                     if (item.OpenIssues > 0)
                     {
                         backlogMilestones.Add(item);
@@ -52,11 +54,11 @@ namespace Azure.Sdk.Tools.GitHubIssues.Reports
                 }
             }
 
-            context.Log.LogInformation($"Found {backlogMilestones.Count} past due milestones with active issues");
+            Logger.LogInformation($"Found {backlogMilestones.Count} past due milestones with active issues");
             List<ReportIssue> issuesInBacklogMilestones = new List<ReportIssue>();
             foreach (Milestone item in backlogMilestones)
             {
-                context.Log.LogInformation($"Retrieve issues for milestone {item.Title}");
+                Logger.LogInformation($"Retrieve issues for milestone {item.Title}");
 
                 foreach (Issue issue in context.GitHubClient.SearchForGitHubIssues(CreateQuery(repositoryConfig, item)))
                 {

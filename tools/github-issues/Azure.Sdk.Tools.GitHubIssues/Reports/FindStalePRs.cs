@@ -15,7 +15,7 @@ namespace Azure.Sdk.Tools.GitHubIssues.Reports
 {
     public class FindStalePRs : BaseReport
     {
-        public FindStalePRs(IConfigurationService configurationService) : base(configurationService)
+        public FindStalePRs(IConfigurationService configurationService, ILogger<FindStalePRs> logger) : base(configurationService, logger)
         {
 
         }
@@ -24,15 +24,18 @@ namespace Azure.Sdk.Tools.GitHubIssues.Reports
         {
             foreach (RepositoryConfiguration repositoryConfiguration in context.RepositoryConfigurations)
             {
-                HtmlPageCreator emailBody = new HtmlPageCreator($"Pull Requests older than 3 months in {repositoryConfiguration.Name}");
-                bool hasFoundPRs = FindStalePRsInRepo(context, repositoryConfiguration, emailBody);
-
-                if (hasFoundPRs)
+                await ExecuteWithRetryAsync(3, async () =>
                 {
-                    // send the email
-                    EmailSender.SendEmail(context.SendGridToken, context.FromAddress, emailBody.GetContent(), repositoryConfiguration.ToEmail, repositoryConfiguration.CcEmail,
-                        $"Pull Requests older than 3 months in {repositoryConfiguration.Name}", context.Log);
-                }
+                    HtmlPageCreator emailBody = new HtmlPageCreator($"Pull Requests older than 3 months in {repositoryConfiguration.Name}");
+                    bool hasFoundPRs = FindStalePRsInRepo(context, repositoryConfiguration, emailBody);
+
+                    if (hasFoundPRs)
+                    {
+                        // send the email
+                        EmailSender.SendEmail(context.SendGridToken, context.FromAddress, emailBody.GetContent(), repositoryConfiguration.ToEmail, repositoryConfiguration.CcEmail,
+                            $"Pull Requests older than 3 months in {repositoryConfiguration.Name}", Logger);
+                    }
+                });
             }
         }
 
@@ -44,11 +47,11 @@ namespace Azure.Sdk.Tools.GitHubIssues.Reports
             tc.DefineTableColumn("Author", TableCreator.Templates.Author);
             tc.DefineTableColumn("Assigned", TableCreator.Templates.Assigned);
 
-            context.Log.LogInformation($"Retrieving PR information for repo {repositoryConfig.Name}");
+            Logger.LogInformation($"Retrieving PR information for repo {repositoryConfig.Name}");
             List<ReportIssue> oldPrs = new List<ReportIssue>();
             foreach (Issue issue in context.GitHubClient.SearchForGitHubIssues(CreateQuery(repositoryConfig)))
             {
-                context.Log.LogInformation($"Found stale PR  {issue.Number}");
+                Logger.LogInformation($"Found stale PR  {issue.Number}");
                 oldPrs.Add(new ReportIssue() { Issue = issue, Note = string.Empty, Milestone = null });
             }
 

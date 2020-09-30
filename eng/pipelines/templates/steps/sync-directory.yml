@@ -35,7 +35,7 @@ steps:
         CommitMsg: ${{ parameters.CommitMessage }}
         PRTitle: ${{ parameters.PRTitle }}
         PRBody: ${{ parameters.PRBody }}
-        PRLabels: "EngSys"
+        PRLabels: "Central-EngSys, EngSys"
         PushArgs: -f
         WorkingDirectory: $(System.DefaultWorkingDirectory)/${{ repo }}
         ScriptDirectory: $(System.DefaultWorkingDirectory)/eng/common/scripts

@@ -14,6 +14,7 @@ namespace Azure.ClientSdk.Analyzers
         {
             "Azure.AI",
             "Azure.Analytics",
+            "Azure.Communication",
             "Azure.Data",
             "Azure.DigitalTwins",
             "Azure.Iot",

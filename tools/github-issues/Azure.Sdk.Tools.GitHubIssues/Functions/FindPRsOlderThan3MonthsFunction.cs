@@ -19,9 +19,9 @@ namespace Azure.Sdk.Tools.GitHubIssues.Functions
         private FindStalePRs report;
 
         [FunctionName("FindPRsOlderThan3MonthsFunction")]
-        public async Task Run([TimerTrigger("0 30 15 * * MON")]TimerInfo timer, ILogger log, CancellationToken cancellationToken)
+        public async Task Run([TimerTrigger("0 30 15 * * MON")]TimerInfo timer)
         {
-            await report.ExecuteAsync(log);
+            await report.ExecuteAsync();
         }
     }
 }

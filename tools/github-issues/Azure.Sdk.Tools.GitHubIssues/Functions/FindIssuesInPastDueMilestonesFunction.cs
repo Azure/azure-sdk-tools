@@ -19,9 +19,9 @@ namespace Azure.Sdk.Tools.GitHubIssues.Functions
         private FindIssuesInPastDueMilestones report;
 
         [FunctionName("FindIssuesInPastDueMilestones")]
-        public async Task Run([TimerTrigger("0 0 15 * * WED")]TimerInfo timer, ILogger log, CancellationToken cancellationToken)
+        public async Task Run([TimerTrigger("0 0 15 * * WED")]TimerInfo timer)
         {
-            await report.ExecuteAsync(log);
+            await report.ExecuteAsync();
         }
     }
 }

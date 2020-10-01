@@ -15,7 +15,7 @@ namespace Azure.Sdk.Tools.GitHubIssues.Reports
 {
     public class FindNewGitHubIssuesAndPRs : BaseReport
     {
-        public FindNewGitHubIssuesAndPRs(IConfigurationService configurationService) : base(configurationService)
+        public FindNewGitHubIssuesAndPRs(IConfigurationService configurationService, ILogger<FindNewGitHubIssuesAndPRs> logger) : base(configurationService, logger)
         {
 
         }
@@ -28,7 +28,7 @@ namespace Azure.Sdk.Tools.GitHubIssues.Reports
 
         protected override async Task ExecuteCoreAsync(ReportExecutionContext context)
         {
-            context.Log.LogInformation($"Started function execution: {DateTime.Now}");
+            Logger.LogInformation($"Started function execution: {DateTime.Now}");
 
             var storageConnString = Environment.GetEnvironmentVariable("AzureWebJobsStorage");
             BlobServiceClient bsc = new BlobServiceClient(storageConnString);
@@ -37,52 +37,55 @@ namespace Azure.Sdk.Tools.GitHubIssues.Reports
             // create the container
             bcc.CreateIfNotExists();
 
-            context.Log.LogInformation("Storage account accessed");
+            Logger.LogInformation("Storage account accessed");
 
             DateTime to = DateTime.UtcNow;
             foreach (RepositoryConfiguration repositoryConfiguration in context.RepositoryConfigurations)
             {
-                // retrieve the last accessed time for this repository
-                BlobClient bc = bcc.GetBlobClient($"{repositoryConfiguration.Owner}_{repositoryConfiguration.Name}");
-                DateTime lastDateRun = DateTime.UtcNow.AddDays(-1);
-
-                try
+                await ExecuteWithRetryAsync(3, async () =>
                 {
-                    string content = StreamHelpers.GetContentAsString(bc.Download().Value.Content);
-                    lastDateRun = DateTime.Parse(content);
-                }
-                catch
-                {
-                }
+                    // retrieve the last accessed time for this repository
+                    BlobClient bc = bcc.GetBlobClient($"{repositoryConfiguration.Owner}_{repositoryConfiguration.Name}");
+                    DateTime lastDateRun = DateTime.UtcNow.AddDays(-1);
 
-                context.Log.LogInformation("Last processed date for {0} is {1}", repositoryConfiguration, lastDateRun);
+                    try
+                    {
+                        string content = StreamHelpers.GetContentAsString(bc.Download().Value.Content);
+                        lastDateRun = DateTime.Parse(content);
+                    }
+                    catch
+                    {
+                    }
 
-                string owner = repositoryConfiguration.Owner;
-                string repo = repositoryConfiguration.Name;
+                    Logger.LogInformation("Last processed date for {0} is {1}", repositoryConfiguration, lastDateRun);
 
-                context.Log.LogInformation("Processing repository {0}\\{1}", owner, repo);
+                    string owner = repositoryConfiguration.Owner;
+                    string repo = repositoryConfiguration.Name;
 
-                HtmlPageCreator emailBody = new HtmlPageCreator($"New items in {repo}");
+                    Logger.LogInformation("Processing repository {0}\\{1}", owner, repo);
 
-                // get new issues
-                RetrieveNewItems(context, CreateQueryForNewItems(repositoryConfiguration, IssueIsQualifier.Issue), lastDateRun, emailBody, "New issues");
+                    HtmlPageCreator emailBody = new HtmlPageCreator($"New items in {repo}");
 
-                // get new PRs
-                RetrieveNewItems(context, CreateQueryForNewItems(repositoryConfiguration, IssueIsQualifier.PullRequest), lastDateRun, emailBody, "New PRs");
+                    // get new issues
+                    RetrieveNewItems(context, CreateQueryForNewItems(repositoryConfiguration, IssueIsQualifier.Issue), lastDateRun, emailBody, "New issues");
 
-                // get needs attention issues
-                RetrieveNeedsAttentionIssues(context, repositoryConfiguration, emailBody);
+                    // get new PRs
+                    RetrieveNewItems(context, CreateQueryForNewItems(repositoryConfiguration, IssueIsQualifier.PullRequest), lastDateRun, emailBody, "New PRs");
 
-                emailBody.AddContent($"<p>Last checked range: {lastDateRun} -> {to} </p>");
+                    // get needs attention issues
+                    RetrieveNeedsAttentionIssues(context, repositoryConfiguration, emailBody);
 
-                context.Log.LogInformation("Sending email...");
-                // send the email
-                EmailSender.SendEmail(context.SendGridToken, context.FromAddress, emailBody.GetContent(), repositoryConfiguration.ToEmail, repositoryConfiguration.CcEmail, $"New issues in the {repo} repo as of {to.ToShortDateString()}", context.Log);
+                    emailBody.AddContent($"<p>Last checked range: {lastDateRun} -> {to} </p>");
 
-                context.Log.LogInformation("Email sent...");
+                    Logger.LogInformation("Sending email...");
+                    // send the email
+                    EmailSender.SendEmail(context.SendGridToken, context.FromAddress, emailBody.GetContent(), repositoryConfiguration.ToEmail, repositoryConfiguration.CcEmail, $"New issues in the {repo} repo as of {to.ToShortDateString()}", Logger);
 
-                bc.Upload(StreamHelpers.GetStreamForString(to.ToUniversalTime().ToString()), overwrite: true);
-                context.Log.LogInformation($"Persisted last event time for {repositoryConfiguration.Owner}\\{repositoryConfiguration.Name} as {to}");
+                    Logger.LogInformation("Email sent...");
+
+                    bc.Upload(StreamHelpers.GetStreamForString(to.ToUniversalTime().ToString()), overwrite: true);
+                    Logger.LogInformation($"Persisted last event time for {repositoryConfiguration.Owner}\\{repositoryConfiguration.Name} as {to}");
+                });
             }
         }
 

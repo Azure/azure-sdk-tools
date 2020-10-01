@@ -38,6 +38,18 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
 
                     await EvaluatePullRequestAsync(context.Client, installationId, repositoryId, sha, cancellationToken);
                 }
+                else if (payload.CheckRun.Name.Contains("("))
+                {
+                    // HACK: This change short circuits processing of events that come from jobs rather than runs. We
+                    //       are leveraging the fact that Azure Pipelines jobs have check names with an opening bracket.
+                    //       This is a short term fox to stop the bleeding whilst we figure out a better way to ignore
+                    //       notifications from the job level.
+
+                    Logger.LogInformation(
+                        "Skipping processing event for: {runIdentifier} because based on the name it is a job, not a run.",
+                        runIdentifier
+                        );
+                }
                 else if (payload.CheckRun.Name == this.GlobalConfigurationProvider.GetApplicationName())
                 {
                     Logger.LogInformation(

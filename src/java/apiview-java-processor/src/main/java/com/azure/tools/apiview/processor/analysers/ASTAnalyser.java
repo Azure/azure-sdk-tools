@@ -62,6 +62,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.getPackageName;
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.isInterfaceType;
@@ -313,7 +314,10 @@ public class ASTAnalyser implements Analyser {
             tokeniseConstructorsOrMethods(typeDeclaration, isInterfaceDeclaration, false, typeDeclaration.getMethods());
 
             // get Inner classes
-            tokeniseInnerClasses(typeDeclaration.getMembers());
+            tokeniseInnerClasses(typeDeclaration.getChildNodes()
+                                         .stream()
+                                         .filter(n -> n instanceof TypeDeclaration)
+                                         .map(n -> (TypeDeclaration)n));
 
             // close class
             addToken(makeWhitespace());
@@ -811,14 +815,14 @@ public class ASTAnalyser implements Analyser {
             return methodNameCompare;
         }
 
-        private void tokeniseInnerClasses(NodeList<BodyDeclaration<?>> bodyDeclarations) {
-            for (final BodyDeclaration<?> bodyDeclaration : bodyDeclarations) {
-                if (bodyDeclaration.isEnumDeclaration() || bodyDeclaration.isClassOrInterfaceDeclaration()) {
+        private void tokeniseInnerClasses(Stream<TypeDeclaration<?>> innerTypes) {
+            innerTypes.forEach(innerType -> {
+                if (innerType.isEnumDeclaration() || innerType.isClassOrInterfaceDeclaration()) {
                     indent();
-                    new ClassOrInterfaceVisitor(parentNav).visitClassOrInterfaceOrEnumDeclaration(bodyDeclaration.asTypeDeclaration());
+                    new ClassOrInterfaceVisitor(parentNav).visitClassOrInterfaceOrEnumDeclaration(innerType);
                     unindent();
                 }
-            }
+            });
         }
 
         private void getAnnotations(final NodeWithAnnotations<?> nodeWithAnnotations,

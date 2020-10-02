@@ -1197,7 +1197,7 @@ public class ASTAnalyser implements Analyser {
             Arrays.stream(wrappedString.split(MiscUtils.LINEBREAK)).forEach(line2 -> {
                 addToken(makeWhitespace());
 
-                addToken(new Token(COMMENT, MiscUtils.escapeHTML(line2)));
+                addToken(new Token(COMMENT, line2));
                 addNewLine();
             });
         });

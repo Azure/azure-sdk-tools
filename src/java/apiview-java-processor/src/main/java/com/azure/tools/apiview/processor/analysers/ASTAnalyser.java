@@ -1191,10 +1191,15 @@ public class ASTAnalyser implements Analyser {
         }
 
         addToken(new Token(DOCUMENTATION_RANGE_START));
-        Arrays.stream(jd.toString().split("\n")).forEach(line -> {
-            addToken(makeWhitespace());
-            addToken(new Token(COMMENT, MiscUtils.escapeHTML(line)));
-            addNewLine();
+        Arrays.stream(jd.toString().split(MiscUtils.LINEBREAK)).forEach(line -> {
+            // we want to wrap our javadocs so that they are easier to read, so we wrap at 120 chars
+            final String wrappedString = MiscUtils.wrap(line, 120);
+            Arrays.stream(wrappedString.split(MiscUtils.LINEBREAK)).forEach(line2 -> {
+                addToken(makeWhitespace());
+
+                addToken(new Token(COMMENT, MiscUtils.escapeHTML(line2)));
+                addNewLine();
+            });
         });
         addToken(new Token(DOCUMENTATION_RANGE_END));
     }

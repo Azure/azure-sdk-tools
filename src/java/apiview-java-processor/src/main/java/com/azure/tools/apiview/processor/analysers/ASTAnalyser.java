@@ -317,7 +317,17 @@ public class ASTAnalyser implements Analyser {
             tokeniseInnerClasses(typeDeclaration.getChildNodes()
                                          .stream()
                                          .filter(n -> n instanceof TypeDeclaration)
-                                         .map(n -> (TypeDeclaration)n));
+                                         .map(n -> (TypeDeclaration<?>)n));
+
+            if (isInterfaceDeclaration) {
+                if (typeDeclaration.getMembers().isEmpty()) {
+                    // we have an empty interface declaration, it is probably a marker interface and we will leave a
+                    // comment to that effect
+                    indent();
+                    addComment("// This interface is does not declare any API.");
+                    unindent();
+                }
+            }
 
             // close class
             addToken(makeWhitespace());
@@ -676,9 +686,7 @@ public class ASTAnalyser implements Analyser {
                         return;
                     }
 
-                    addToken(INDENT,
-                            new Token(COMMENT, "// This class does not have any public constructors, and is not able to be instantiated using 'new'."),
-                            NEWLINE);
+                    addComment("// This class does not have any public constructors, and is not able to be instantiated using 'new'.");
                     unindent();
                     return;
                 }
@@ -717,7 +725,7 @@ public class ASTAnalyser implements Analyser {
                         if (showGroupings && !group.isEmpty()) {
                             // we group inside the APIView each of the groups, so that we can visualise their operations
                             // more clearly
-                            addToken(INDENT, new Token(COMMENT, "// " + groupName + ":"), NEWLINE);
+                            addComment("// " + groupName + ":");
                         }
 
                         group.forEach(callableDeclaration -> {
@@ -1215,6 +1223,10 @@ public class ASTAnalyser implements Analyser {
             sb.append(" ");
         }
         return new Token(WHITESPACE, sb.toString());
+    }
+
+    private void addComment(String comment) {
+        addToken(INDENT, new Token(COMMENT, comment), NEWLINE);
     }
 
     private void addNewLine() {

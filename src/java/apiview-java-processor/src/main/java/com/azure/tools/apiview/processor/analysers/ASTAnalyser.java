@@ -250,6 +250,11 @@ public class ASTAnalyser implements Analyser {
         }
 
         private void visitClassOrInterfaceOrEnumDeclaration(TypeDeclaration<?> typeDeclaration) {
+            // Skip if the class is private or package-private, unless it is a nested type defined inside a public interface
+            if (!isTypeAPublicAPI(typeDeclaration)) {
+                return;
+            }
+
             visitJavaDoc(typeDeclaration.getJavadocComment());
 
             // public custom annotation @interface's annotations
@@ -273,12 +278,7 @@ public class ASTAnalyser implements Analyser {
                 }
             }
 
-            // Skip if the class is private or package-private
-            final boolean isPrivate = getTypeDeclaration(typeDeclaration);
-            // Skip rest of code if the class, interface, or enum declaration is private or package private
-            if (isPrivate) {
-                return;
-            }
+            getTypeDeclaration(typeDeclaration);
 
             if (typeDeclaration.isEnumDeclaration()) {
                 getEnumEntries((EnumDeclaration)typeDeclaration);
@@ -448,12 +448,7 @@ public class ASTAnalyser implements Analyser {
             unindent();
         }
 
-        private boolean getTypeDeclaration(TypeDeclaration<?> typeDeclaration) {
-            // Skip if the class is private or package-private, unless it is a nested type defined inside a public interface
-            if (!isTypeAPublicAPI(typeDeclaration)) {
-                return true;
-            }
-
+        private void getTypeDeclaration(TypeDeclaration<?> typeDeclaration) {
             // public class or interface or enum
             getAnnotations(typeDeclaration, true, true);
 
@@ -556,8 +551,6 @@ public class ASTAnalyser implements Analyser {
             }
             // open ClassOrInterfaceDeclaration
             addToken(SPACE, new Token(PUNCTUATION, "{"), NEWLINE);
-
-            return false;
         }
 
         private void tokeniseAnnotationMember(AnnotationDeclaration annotationDeclaration) {

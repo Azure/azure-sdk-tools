@@ -62,6 +62,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.getPackageName;
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.isInterfaceType;
@@ -250,6 +251,11 @@ public class ASTAnalyser implements Analyser {
         }
 
         private void visitClassOrInterfaceOrEnumDeclaration(TypeDeclaration<?> typeDeclaration) {
+            // Skip if the class is private or package-private, unless it is a nested type defined inside a public interface
+            if (!isTypeAPublicAPI(typeDeclaration)) {
+                return;
+            }
+
             visitJavaDoc(typeDeclaration.getJavadocComment());
 
             // public custom annotation @interface's annotations
@@ -273,12 +279,7 @@ public class ASTAnalyser implements Analyser {
                 }
             }
 
-            // Skip if the class is private or package-private
-            final boolean isPrivate = getTypeDeclaration(typeDeclaration);
-            // Skip rest of code if the class, interface, or enum declaration is private or package private
-            if (isPrivate) {
-                return;
-            }
+            getTypeDeclaration(typeDeclaration);
 
             if (typeDeclaration.isEnumDeclaration()) {
                 getEnumEntries((EnumDeclaration)typeDeclaration);
@@ -313,7 +314,20 @@ public class ASTAnalyser implements Analyser {
             tokeniseConstructorsOrMethods(typeDeclaration, isInterfaceDeclaration, false, typeDeclaration.getMethods());
 
             // get Inner classes
-            tokeniseInnerClasses(typeDeclaration.getMembers());
+            tokeniseInnerClasses(typeDeclaration.getChildNodes()
+                                         .stream()
+                                         .filter(n -> n instanceof TypeDeclaration)
+                                         .map(n -> (TypeDeclaration<?>)n));
+
+            if (isInterfaceDeclaration) {
+                if (typeDeclaration.getMembers().isEmpty()) {
+                    // we have an empty interface declaration, it is probably a marker interface and we will leave a
+                    // comment to that effect
+                    indent();
+                    addComment("// This interface is does not declare any API.");
+                    unindent();
+                }
+            }
 
             // close class
             addToken(makeWhitespace());
@@ -448,12 +462,7 @@ public class ASTAnalyser implements Analyser {
             unindent();
         }
 
-        private boolean getTypeDeclaration(TypeDeclaration<?> typeDeclaration) {
-            // Skip if the class is private or package-private, unless it is a nested type defined inside a public interface
-            if (!isTypeAPublicAPI(typeDeclaration)) {
-                return true;
-            }
-
+        private void getTypeDeclaration(TypeDeclaration<?> typeDeclaration) {
             // public class or interface or enum
             getAnnotations(typeDeclaration, true, true);
 
@@ -556,8 +565,6 @@ public class ASTAnalyser implements Analyser {
             }
             // open ClassOrInterfaceDeclaration
             addToken(SPACE, new Token(PUNCTUATION, "{"), NEWLINE);
-
-            return false;
         }
 
         private void tokeniseAnnotationMember(AnnotationDeclaration annotationDeclaration) {
@@ -679,9 +686,7 @@ public class ASTAnalyser implements Analyser {
                         return;
                     }
 
-                    addToken(INDENT,
-                            new Token(COMMENT, "// This class does not have any public constructors, and is not able to be instantiated using 'new'."),
-                            NEWLINE);
+                    addComment("// This class does not have any public constructors, and is not able to be instantiated using 'new'.");
                     unindent();
                     return;
                 }
@@ -720,7 +725,7 @@ public class ASTAnalyser implements Analyser {
                         if (showGroupings && !group.isEmpty()) {
                             // we group inside the APIView each of the groups, so that we can visualise their operations
                             // more clearly
-                            addToken(INDENT, new Token(COMMENT, "// " + groupName + ":"), NEWLINE);
+                            addComment("// " + groupName + ":");
                         }
 
                         group.forEach(callableDeclaration -> {
@@ -818,14 +823,14 @@ public class ASTAnalyser implements Analyser {
             return methodNameCompare;
         }
 
-        private void tokeniseInnerClasses(NodeList<BodyDeclaration<?>> bodyDeclarations) {
-            for (final BodyDeclaration<?> bodyDeclaration : bodyDeclarations) {
-                if (bodyDeclaration.isEnumDeclaration() || bodyDeclaration.isClassOrInterfaceDeclaration()) {
+        private void tokeniseInnerClasses(Stream<TypeDeclaration<?>> innerTypes) {
+            innerTypes.forEach(innerType -> {
+                if (innerType.isEnumDeclaration() || innerType.isClassOrInterfaceDeclaration()) {
                     indent();
-                    new ClassOrInterfaceVisitor(parentNav).visitClassOrInterfaceOrEnumDeclaration(bodyDeclaration.asTypeDeclaration());
+                    new ClassOrInterfaceVisitor(parentNav).visitClassOrInterfaceOrEnumDeclaration(innerType);
                     unindent();
                 }
-            }
+            });
         }
 
         private void getAnnotations(final NodeWithAnnotations<?> nodeWithAnnotations,
@@ -1191,10 +1196,15 @@ public class ASTAnalyser implements Analyser {
         }
 
         addToken(new Token(DOCUMENTATION_RANGE_START));
-        Arrays.stream(jd.toString().split("\n")).forEach(line -> {
-            addToken(makeWhitespace());
-            addToken(new Token(COMMENT, MiscUtils.escapeHTML(line)));
-            addNewLine();
+        Arrays.stream(jd.toString().split(MiscUtils.LINEBREAK)).forEach(line -> {
+            // we want to wrap our javadocs so that they are easier to read, so we wrap at 120 chars
+            final String wrappedString = MiscUtils.wrap(line, 120);
+            Arrays.stream(wrappedString.split(MiscUtils.LINEBREAK)).forEach(line2 -> {
+                addToken(makeWhitespace());
+
+                addToken(new Token(COMMENT, line2));
+                addNewLine();
+            });
         });
         addToken(new Token(DOCUMENTATION_RANGE_END));
     }
@@ -1213,6 +1223,10 @@ public class ASTAnalyser implements Analyser {
             sb.append(" ");
         }
         return new Token(WHITESPACE, sb.toString());
+    }
+
+    private void addComment(String comment) {
+        addToken(INDENT, new Token(COMMENT, comment), NEWLINE);
     }
 
     private void addNewLine() {

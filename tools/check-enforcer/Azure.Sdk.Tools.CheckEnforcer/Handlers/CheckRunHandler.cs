@@ -65,19 +65,26 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
                         (DateTimeOffset.UtcNow - payload.CheckRun.StartedAt).Days
                         );
                 }
+                else if (payload.CheckRun.Conclusion == new StringEnum<CheckConclusion>(CheckConclusion.Neutral))
+                {
+                    Logger.LogInformation("" +
+                        "Skipping processing event for: {runIdentifier} check-run conclusion is neutral.",
+                        runIdentifier
+                        );
+                    return;
+                }
+                else if (payload.CheckRun.Status != new StringEnum<CheckStatus>(CheckStatus.Completed))
+                {
+                    Logger.LogInformation(
+                        "Skipping processing event for: {runIdentifier} check-run status not completed.",
+                        runIdentifier
+                        );
+                    return;
+                }
                 else
                 {
                     try
                     {
-                        if (payload.CheckRun.Status != new StringEnum<CheckStatus>(CheckStatus.Completed))
-                        {
-                            Logger.LogInformation(
-                                "Skipping processing event for: {runIdentifier} check-run status not completed.",
-                                runIdentifier
-                                );
-                            return;
-                        }
-
                         var configuration = await this.RepositoryConfigurationProvider.GetRepositoryConfigurationAsync(installationId, repositoryId, sha, cancellationToken);
                         if (configuration.IsEnabled)
                         {

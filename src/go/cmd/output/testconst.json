@@ -476,14 +476,6 @@
    "NavigationId": null,
    "ChildItems": [
     {
-     "Text": "const",
-     "NavigationId": "const",
-     "ChildItems": [],
-     "Tags": {
-      "TypeKind": "enum"
-     }
-    },
-    {
      "Text": "string",
      "NavigationId": "string",
      "ChildItems": [],
@@ -494,6 +486,14 @@
     {
      "Text": "SomeChoice",
      "NavigationId": "SomeChoice",
+     "ChildItems": [],
+     "Tags": {
+      "TypeKind": "enum"
+     }
+    },
+    {
+     "Text": "const",
+     "NavigationId": "const",
      "ChildItems": [],
      "Tags": {
       "TypeKind": "enum"

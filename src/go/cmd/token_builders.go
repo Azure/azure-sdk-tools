@@ -57,7 +57,7 @@ func makeStructTokens(name *string, anonFields []string, fields map[string]strin
 	makeToken(nil, nil, "", newline, list)
 }
 
-func makeInterfaceTokens(name *string, methods map[string]Func, list *[]Token) {
+func makeInterfaceTokens(name *string, embeddedInterfaces []string, methods map[string]Func, list *[]Token) {
 	n := *name
 	makeToken(nil, nil, "type", keyword, list)
 	makeToken(nil, nil, " ", whitespace, list)
@@ -67,6 +67,13 @@ func makeInterfaceTokens(name *string, methods map[string]Func, list *[]Token) {
 	makeToken(nil, nil, " ", whitespace, list)
 	makeToken(nil, nil, "{", punctuation, list)
 	makeToken(nil, nil, "", newline, list)
+	if embeddedInterfaces != nil {
+		for _, v1 := range embeddedInterfaces {
+			makeToken(nil, nil, "\t", whitespace, list)
+			makeToken(&v1, nil, v1, typeName, list)
+			makeToken(nil, nil, "", newline, list)
+		}
+	}
 	if methods != nil {
 		for k1, v1 := range methods {
 			makeIntFuncTokens(&k1, v1, list)

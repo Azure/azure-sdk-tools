@@ -135,14 +135,7 @@ stages:
                            See [eng/common workflow](https://github.com/Azure/azure-sdk-tools/blob/master/eng/common/README.md#workflow)"
 
                   - pwsh: |
-                      if ("$(System.PullRequest.SourceBranch)" -and "$(System.PullRequest.PullRequestNumber)")
-                      {
-                        $PRData = "Azure;${{ repo }};sync-${{ parameters.DirectoryToSync }}-$(System.PullRequest.SourceBranch)-$(System.PullRequest.PullRequestNumber)"
-                      }
-                      else
-                      {
-                        $PRData = "Azure;${{ repo }};sync-${{ parameters.DirectoryToSync }}"
-                      }
+                      $PRData = "Azure;${{ repo }};$(Submitted.PullRequest.Number)"
                       Add-Content -Path "$(Build.ArtifactStagingDirectory)/${{ parameters.PRDataFileName }}" -Value $PRData
                     displayName: Write Sync PR Data to Artifact File
                     condition: succeeded()
@@ -183,3 +176,17 @@ stages:
                       -AuthToken "$(azuresdk-github-pat)"
                       -devOpsLogging
                     pwsh: true
+
+                - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+                  - ${{ each repo in parameters.Repos }}:
+                    - pwsh: |
+                        git clone https://github.com/azure/${{ repo }} --depth 1
+                        pushd $(System.DefaultWorkingDirectory)/${{ repo }}
+                        git push origin --delete "sync-${{ parameters.DirectoryToSync }}-$(System.PullRequest.SourceBranch)-$(System.PullRequest.PullRequestNumber)"
+                        if ($lastExitCode -ne 0) {
+                          Write-Host "Failed to delete [sync-${{ parameters.DirectoryToSync }}-$(System.PullRequest.SourceBranch)-$(System.PullRequest.PullRequestNumber)] branch in ${{ repo }}"
+                          exit 1
+                        }
+                      displayName: Write Sync PR Data to Artifact File
+                      workingDirectory: $(System.DefaultWorkingDirectory)
+                      condition: succeeded()

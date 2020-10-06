@@ -34,14 +34,16 @@ func makeStructTokens(name *string, anonFields []string, fields map[string]strin
 	makeToken(nil, nil, "{", punctuation, list)
 	if anonFields != nil || fields != nil {
 		for _, v1 := range anonFields {
+			v := v1 + "-" + *name
 			makeToken(nil, nil, "", newline, list)
 			makeToken(nil, nil, "\t", whitespace, list)
-			makeToken(&v1, nil, v1, typeName, list)
+			makeToken(&v, nil, v1, typeName, list)
 		}
 		for k1, v1 := range fields {
+			k := k1 + "-" + *name
 			makeToken(nil, nil, "", newline, list)
 			makeToken(nil, nil, "\t", whitespace, list)
-			makeToken(&k1, nil, k1, typeName, list)
+			makeToken(&k, nil, k1, typeName, list)
 			makeToken(nil, nil, " ", whitespace, list)
 			makeToken(nil, nil, v1, memberName, list)
 		}
@@ -69,7 +71,7 @@ func makeInterfaceTokens(name *string, embeddedInterfaces []string, methods map[
 	makeToken(nil, nil, "", newline, list)
 	if embeddedInterfaces != nil {
 		for _, v1 := range embeddedInterfaces {
-			v := v1 + "-embedded"
+			v := v1 + "-" + n
 			makeToken(nil, nil, "\t", whitespace, list)
 			makeToken(&v, nil, v1, typeName, list)
 			makeToken(nil, nil, "", newline, list)
@@ -156,7 +158,8 @@ func makeMethodTokens(receiverVar, receiver string, isPointer bool, name string,
 	makeToken(nil, nil, receiver, memberName, list)
 	makeToken(nil, nil, ")", punctuation, list)
 	makeToken(nil, nil, " ", whitespace, list)
-	makeToken(&name, nil, name, typeName, list)
+	defID := name + "-" + receiver
+	makeToken(&defID, nil, name, typeName, list)
 	makeToken(nil, nil, "(", punctuation, list)
 	if params != nil {
 		p := *params

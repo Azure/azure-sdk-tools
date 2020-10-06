@@ -41,6 +41,6 @@ jobs:
           -GitHubRepositoryOwner Azure
           -GitHubRepositoryName ${{parameters.Repository}}
           -GitReference ${{parameters.GitReference}}
-          -BranchName "feature/tutorial/${{parameters.BranchName}}"
+          -BranchName "feature/tutorial/${{parameters.Alias}}"
           -GitHubPersonalAccessToken "$(azuresdk-github-pat)"
         pwsh: true

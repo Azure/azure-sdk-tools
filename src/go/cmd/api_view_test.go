@@ -51,7 +51,7 @@ func TestInterface(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(p.Tokens) != 30 {
+	if len(p.Tokens) != 55 {
 		t.Fatal("unexpected token length, signals a change in the output")
 	}
 	if p.Name != "testinterface" {
@@ -59,6 +59,9 @@ func TestInterface(t *testing.T) {
 	}
 	if len(p.Navigation) != 1 {
 		t.Fatal("nagivation slice length should only be one for one package")
+	}
+	if len(p.Navigation[0].ChildItems) != 2 {
+		t.Fatal("unexpected number of child items")
 	}
 }
 

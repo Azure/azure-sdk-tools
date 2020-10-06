@@ -69,8 +69,9 @@ func makeInterfaceTokens(name *string, embeddedInterfaces []string, methods map[
 	makeToken(nil, nil, "", newline, list)
 	if embeddedInterfaces != nil {
 		for _, v1 := range embeddedInterfaces {
+			v := v1 + "-embedded"
 			makeToken(nil, nil, "\t", whitespace, list)
-			makeToken(&v1, nil, v1, typeName, list)
+			makeToken(&v, nil, v1, typeName, list)
 			makeToken(nil, nil, "", newline, list)
 		}
 	}

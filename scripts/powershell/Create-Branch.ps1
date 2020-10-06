@@ -24,7 +24,7 @@ param (
     $GitHubPersonalAccessToken
 )
 
-$ErrorActionPreference = Stop
+$ErrorActionPreference = "Stop"
 
 Write-Host "GitHubRepositoryOwner is: $GitHubRepositoryOwner"
 Write-Host "GitHubRepositoryName is: $GitHubRepositoryName"

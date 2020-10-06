@@ -476,16 +476,16 @@
    "NavigationId": null,
    "ChildItems": [
     {
-     "Text": "string",
-     "NavigationId": "string",
+     "Text": "SomeChoice",
+     "NavigationId": "SomeChoice",
      "ChildItems": [],
      "Tags": {
       "TypeKind": "enum"
      }
     },
     {
-     "Text": "SomeChoice",
-     "NavigationId": "SomeChoice",
+     "Text": "string",
+     "NavigationId": "string",
      "ChildItems": [],
      "Tags": {
       "TypeKind": "enum"

@@ -9,6 +9,18 @@ parameters:
 - name: DirectoryToSync
   type: string
   default: eng/common
+- name: Repos
+  type: object
+  default:
+    - azure-sdk-for-android
+    - azure-sdk-for-c
+    - azure-sdk-for-cpp
+    - azure-sdk-for-go
+    - azure-sdk-for-ios
+    - azure-sdk-for-java
+    - azure-sdk-for-js
+    - azure-sdk-for-net
+    - azure-sdk-for-python
 
 trigger: none
 
@@ -30,16 +42,36 @@ stages:
         displayName: Sync ${{ parameters.DirectoryToSync }} Directory
 
         steps:
+        - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
+          - pwsh: |
+              Set-PsDebug -Trace 1
+              $patchDir = "$(Build.ArtifactStagingDirectory)/patchfiles"
+              $patchfiles = git format-patch --output-directory $patchDir HEAD...origin/$(system.pullRequest.targetBranch) -- "${{ parameters.DirectoryToSync }}"
+              if ($patchfiles -and ($LASTEXITCODE -eq 0)) {
+                echo "##vso[task.setvariable variable=PatchFilesLocation]$patchDir"
+                echo "Setting PatchFilesLocation"
+              }
+              else {
+                Write-Host "Failed to Create PatchFiles from Pull Request [https://github.com/Azure/azure-sdk-tools/pull/$(System.PullRequest.PullRequestNumber)]"
+                exit 1
+              }
+            displayName: Create Patch Files from Changes in PR
+            workingDirectory: $(System.DefaultWorkingDirectory)
+
+          - task: PublishPipelineArtifact@1
+            condition: and(succeeded(), ne(variables['PatchFilesLocation'],''))
+            inputs:
+              artifactName: patchfiles
+              path: "$(PatchFilesLocation)"
+
         - template: ./templates/steps/sync-directory.yml
           parameters:
             ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
               CommitMessage: "Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools repository for Tools PR $(System.PullRequest.PullRequestNumber)"
               DirectoryToSync: ${{ parameters.DirectoryToSync }}
               PRBranchName: "sync-${{ parameters.DirectoryToSync }}-$(System.PullRequest.SourceBranch)-$(System.PullRequest.PullRequestNumber)"
-              PRTitle: "Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools for PR $(System.PullRequest.PullRequestNumber)"
-              PRBody: >
-                Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools for PR https://github.com/Azure/azure-sdk-tools/pull/$(System.PullRequest.PullRequestNumber)<br>
-                See [eng/common workflow](https://github.com/Azure/azure-sdk-tools/blob/master/eng/common/README.md#workflow)
+              BaseBranchName: $(system.pullRequest.targetBranch)
+              SkipCheckingForChanges: true
             ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
               CommitMessage: Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools repository
               DirectoryToSync: ${{ parameters.DirectoryToSync }}
@@ -48,29 +80,78 @@ stages:
               PRBody: >
                 Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools repository.<br>
                 See [eng/common workflow](https://github.com/Azure/azure-sdk-tools/blob/master/eng/common/README.md#workflow)
-            PRDataArtifactPath: $(Build.ArtifactStagingDirectory)/${{ parameters.PRDataFileName }}
-            Repos:
-              - azure-sdk-for-android
-              - azure-sdk-for-c
-              - azure-sdk-for-cpp
-              - azure-sdk-for-go
-              - azure-sdk-for-ios
-              - azure-sdk-for-java
-              - azure-sdk-for-js
-              - azure-sdk-for-net
-              - azure-sdk-for-python
+            Repos: ${{ parameters.Repos }}
 
-        - task: PublishPipelineArtifact@1
-          condition: succeeded()
-          inputs:
-            artifactName: ${{ parameters.ArtifactName }}
-            path: $(Build.ArtifactStagingDirectory)/${{ parameters.PRDataFileName }}
+  - stage: CreateSyncPRs
+    jobs:
+      - deployment: CreateSyncPullRequests
+        displayName: Create Sync Pull Requests
+        environment: githubmerges
+
+        pool:
+          vmImage: windows-2019
+
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+
+                - pwsh: |
+                    New-Item -Path $(Build.ArtifactStagingDirectory)/${{ parameters.PRDataFileName }} -ItemType File
+                  displayName: Create PRData Artifact
+
+                - ${{ each repo in parameters.Repos }}:
+                  - task: PowerShell@2
+                    displayName: Create pull request
+                    condition: succeeded()
+                    inputs:
+                      pwsh: true
+                      workingDirectory: ${{ parameters.WorkingDirectory }}
+                      filePath: $(Build.SourcesDirectory)/eng/common/scripts/Submit-PullRequest.ps1
+                      ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
+                        arguments: >
+                          -RepoOwner "Azure"
+                          -RepoName "${{ repo }}"
+                          -BaseBranch $(system.pullRequest.targetBranch)
+                          -PROwner "Azure"
+                          -PRBranch "sync-${{ parameters.DirectoryToSync }}-$(System.PullRequest.SourceBranch)-$(System.PullRequest.PullRequestNumber)"
+                          -AuthToken "$(azuresdk-github-pat)"
+                          -PRTitle "Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools for PR $(System.PullRequest.PullRequestNumber)"
+                          -PRLabels "Central-EngSys, EngSys"
+                          -PRBody "Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools for PR https://github.com/Azure/azure-sdk-tools/pull/$(System.PullRequest.PullRequestNumber)`
+                           See [eng/common workflow](https://github.com/Azure/azure-sdk-tools/blob/master/eng/common/README.md#workflow)"
+                      ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+                        arguments: >
+                          -RepoOwner "Azure"
+                          -RepoName "${{ repo }}"
+                          -BaseBranch $(system.pullRequest.targetBranch)
+                          -PROwner "Azure"
+                          -PRBranch "sync-${{ parameters.DirectoryToSync }}"
+                          -AuthToken "$(azuresdk-github-pat)"
+                          -PRTitle "Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools for PR $(System.PullRequest.PullRequestNumber)"
+                          -PRLabels "Central-EngSys, EngSys"
+                          -PRBody "Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools for PR https://github.com/Azure/azure-sdk-tools/pull/$(System.PullRequest.PullRequestNumber)`
+                           See [eng/common workflow](https://github.com/Azure/azure-sdk-tools/blob/master/eng/common/README.md#workflow)"
+
+                  - pwsh: |
+                      $PRData = "Azure;${{ repo }};$(Submitted.PullRequest.Number)"
+                      Add-Content -Path "$(Build.ArtifactStagingDirectory)/${{ parameters.PRDataFileName }}" -Value $PRData
+                    displayName: Write Sync PR Data to Artifact File
+                    condition: succeeded()
+                
+                - task: PublishPipelineArtifact@1
+                  condition: succeeded()
+                  displayName: Publish ${{ parameters.PRDataFileName }} 
+                  inputs:
+                    artifactName: ${{ parameters.ArtifactName }}
+                    path: $(Build.ArtifactStagingDirectory)/${{ parameters.PRDataFileName }} 
 
   - stage: VerifyAndMerge
     jobs:
       - deployment: VerifyandMergeSyncPrs
         displayName: Verify and Merge Sync PRs
-        environment: github
+        environment: githubmerges
 
         pool:
           vmImage: windows-2019
@@ -95,3 +176,17 @@ stages:
                       -AuthToken "$(azuresdk-github-pat)"
                       -devOpsLogging
                     pwsh: true
+
+                - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+                  - ${{ each repo in parameters.Repos }}:
+                    - pwsh: |
+                        git clone https://github.com/azure/${{ repo }} --depth 1
+                        pushd $(System.DefaultWorkingDirectory)/${{ repo }}
+                        git push origin --delete "sync-${{ parameters.DirectoryToSync }}-$(System.PullRequest.SourceBranch)-$(System.PullRequest.PullRequestNumber)"
+                        if ($lastExitCode -ne 0) {
+                          Write-Host "Failed to delete [sync-${{ parameters.DirectoryToSync }}-$(System.PullRequest.SourceBranch)-$(System.PullRequest.PullRequestNumber)] branch in ${{ repo }}"
+                          exit 1
+                        }
+                      displayName: Write Sync PR Data to Artifact File
+                      workingDirectory: $(System.DefaultWorkingDirectory)
+                      condition: succeeded()

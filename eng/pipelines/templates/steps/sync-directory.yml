@@ -4,44 +4,89 @@ parameters:
   CommitMessage: commit-message-not-set
   PRBranchName: branch-name-not-set
   BaseBranchName: master
-  PRTitle: pr-title-not-set
-  PRBody: pr-body-not-set
-  PRDataArtifactPath: pr-data-artifact-path-not-set
+  Sync: pr-data-artifact-path-not-set
+  SkipCheckingForChanges: false
+  ScriptDirectory: eng/common/scripts
+  PROwner: Azure
+  PushArgs: -f
 
 steps:
-  - pwsh: |
-      New-Item -Path ${{ parameters.PRDataArtifactPath }} -ItemType File
-    displayName: Create PRData Artifact
-
   - ${{ each repo in parameters.Repos }}:
     - pwsh: |
+        Set-PsDebug -Trace 1
         git clone --branch ${{ parameters.BaseBranchName }} https://github.com/azure/${{ repo }}
         $repoPath = "${{ repo }}/${{ parameters.DirectoryToSync }}"
-
-        if (!(Test-Path $repoPath)) { mkdir $repoPath }
-        Remove-Item -v -r $repoPath
-        Copy-Item -v -r $(Build.SourcesDirectory)/${{ parameters.DirectoryToSync }} $repoPath
-        Get-ChildItem -r $repoPath
-
-      displayName: Copy ${{ parameters.DirectoryToSync }} from azure-sdk-tools to ${{ repo }}
+        if ('$(PatchFilesLocation)')
+        {
+          pushd ${{ repo }}
+          $results = @()
+          echo "##vso[task.setvariable variable=HasChanges]$false"
+          $shaBeforePatches = git rev-parse --short HEAD
+          foreach ($file in (Get-ChildItem $(PatchFilesLocation)))
+          {
+             Write-Host $file.FullName
+             git -c user.name="azure-sdk" -c user.email="azuresdk@microsoft.com" am -3 $file.FullName
+             if ($lastExitCode -ne 0) { 
+               git am --show-current-patch=diff
+               Write-Error "##vso[task.LogIssue type=warning;]Failed to properly apply patch files to [https://github.com/azure/${{ repo }}]"
+               exit 1
+             }
+          }
+          $shaAfterPatches = git rev-parse --short HEAD
+          $hasChanges = $shaBeforePatches -ne $shaAfterPatches
+          echo "##vso[task.setvariable variable=HasChanges]$hasChanges"
+        }
+        else
+        {
+          if (!(Test-Path $repoPath)) { mkdir $repoPath }
+          Remove-Item -v -r $repoPath
+          Copy-Item -v -r $(Build.SourcesDirectory)/${{ parameters.DirectoryToSync }} $repoPath
+          Get-ChildItem -r $repoPath
+        }
+      displayName: Copy or Apply Patch for ${{ parameters.DirectoryToSync }} from azure-sdk-tools to ${{ repo }}
       workingDirectory: $(System.DefaultWorkingDirectory)
 
-    - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
-      parameters:
-        RepoName: ${{ repo }}
-        RepoOwner: Azure
-        PRBranchName: ${{ parameters.PRBranchName }}
-        BaseBranchName: ${{ parameters.BaseBranchName }}
-        CommitMsg: ${{ parameters.CommitMessage }}
-        PRTitle: ${{ parameters.PRTitle }}
-        PRBody: ${{ parameters.PRBody }}
-        PRLabels: "Central-EngSys, EngSys"
-        PushArgs: -f
-        WorkingDirectory: $(System.DefaultWorkingDirectory)/${{ repo }}
-        ScriptDirectory: $(System.DefaultWorkingDirectory)/eng/common/scripts
-
-    - pwsh: |
-        $PRData = "Azure;${{ repo }};$(Submitted.PullRequest.Number)"
-        Add-Content -Path ${{ parameters.PRDataArtifactPath }} -Value $PRData
-      displayName: Write Sync PR Data to Artifact File
+    - task: PowerShell@2
+      displayName: Push changes
       condition: and(succeeded(), eq(variables['HasChanges'], 'true'))
+      inputs:
+        pwsh: true
+        workingDirectory: $(System.DefaultWorkingDirectory)/${{ repo }}
+        filePath: ${{ parameters.ScriptDirectory }}/git-branch-push.ps1
+        arguments: >
+          -PRBranchName "${{ parameters.PRBranchName }}"
+          -CommitMsg "${{ parameters.CommitMessage }}"
+          -GitUrl "https://$(azuresdk-github-pat)@github.com/${{ parameters.PROwner }}/${{ repo }}.git"
+          -PushArgs "${{ parameters.PushArgs }}"
+          -SkipCommit $${{parameters.SkipCheckingForChanges}}
+
+    - task: PowerShell@2
+      displayName: Queue test pipeline
+      condition: and(succeeded(), ne(variables['${{repo}}-template-definition-id'], ''))
+      inputs:
+        pwsh: true
+        workingDirectory: ${{ parameters.WorkingDirectory }}
+        filePath: ${{ parameters.ScriptDirectory }}/Queue-Pipeline.ps1
+        arguments: >
+          -Organization "azure-sdk"
+          -Project "internal"
+          -SourceBranch "${{ parameters.PRBranchName }}"
+          -DefinitionId "$(${{repo}}-template-definition-id)"
+          -VsoQueuedPipelines "QueuedPipelines"
+          -AuthToken "$(azuresdk-azure-sdk-devops-build-queuing-pat)"
+
+  - task: PowerShell@2
+    displayName: Write Queued Pipeline Information to Tools PR
+    condition: and(succeeded(), and(ne(variables['QueuedPipelines'], ''), eq(variables['Build.Reason'], 'PullRequest')))
+    inputs:
+      pwsh: true
+      workingDirectory: ${{ parameters.WorkingDirectory }}
+      filePath: ${{ parameters.ScriptDirectory }}/Add-Issue-Comment.ps1
+      arguments: >
+        -RepoOwner "Azure"
+        -RepoName "azure-sdk-tools"
+        -IssueNumber "$(System.PullRequest.PullRequestNumber)"
+        -CommentPrefix "The following pipelines have been queued for testing:<br>"
+        -Comment "QueuedPipelines"
+        -CommentPostFix "<br>Sign off on the approval gate to test the release stage of each pipeline."
+        -AuthToken "$(azuresdk-github-pat)"

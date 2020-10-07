@@ -26,7 +26,9 @@ steps:
   # this helped resolve the issue. I've adding it as a conditioned step because
   # I'm not confident that this is the solution ... so I'd like to test it on a few
   # pipelines prior to making it the default.
-  
+  # Article: https://techcommunity.microsoft.com/t5/windows-powershell/failed-downloading-az-and-other-modules-for-powershell/m-p/1292985
+
+
   # New-TestResources command requires Az module with TLS 1.2
   - pwsh: |
       [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12

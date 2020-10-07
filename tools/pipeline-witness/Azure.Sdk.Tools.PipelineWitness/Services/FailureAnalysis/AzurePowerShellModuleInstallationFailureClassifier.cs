@@ -17,7 +17,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
                 var failedTasks = from r in context.Timeline.Records
                                   where r.Result == TaskResult.Failed
                                   where r.RecordType == "Task"
-                                  where r.Name == "Install Azure PowerShell module"
+                                  where r.Name.StartsWith("Install Azure PowerShell module")
                                   select r;
 
                 if (failedTasks.Count() > 0)

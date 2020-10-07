@@ -130,7 +130,7 @@ stages:
                           -PRBranch "sync-${{ parameters.DirectoryToSync }}"
                           -AuthToken "$(azuresdk-github-pat)"
                           -PRTitle "Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools for PR $(System.PullRequest.PullRequestNumber)"
-                          -PRLabels "Central-EngSys, EngSys"
+                          -PRLabels "Central-EngSys,EngSys,auto-merge"
                           -PRBody "Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools for PR https://github.com/Azure/azure-sdk-tools/pull/$(System.PullRequest.PullRequestNumber)`
                            See [eng/common workflow](https://github.com/Azure/azure-sdk-tools/blob/master/eng/common/README.md#workflow)"
 

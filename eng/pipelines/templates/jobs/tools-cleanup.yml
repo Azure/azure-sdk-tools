@@ -27,5 +27,6 @@ jobs:
             filePath: $(System.DefaultWorkingDirectory)/eng/common/scripts/Delete-Remote-Branches.ps1
             arguments: >
               -RepoName ${{ repo }}
-              -BranchPrefix "feature"
+              -BranchPrefix "sync-eng/common-"
+              -WorkingDirectory $(System.DefaultWorkingDirectory)
               -AuthToken "$(azuresdk-github-pat)"

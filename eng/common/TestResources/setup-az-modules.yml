@@ -20,10 +20,24 @@ steps:
     displayName: (MacOS) Grant access to ~/.Azure
     condition: contains(variables['OSVmImage'], 'mac')
 
-  # New-TestResources command requires Az module
+  # This alternative invocation is being setup so that PowerShell will use
+  # TLS 1.2 when downloading from the PowerShell Gallery. We are seeing instances
+  # of failed downloads similar to reported in this article and it seemed this
+  # this helped resolve the issue. I've adding it as a conditioned step because
+  # I'm not confident that this is the solution ... so I'd like to test it on a few
+  # pipelines prior to making it the default.
+  
+  # New-TestResources command requires Az module with TLS 1.2
   - pwsh: |
       [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
       Install-Module -Name Az -Scope CurrentUser -AllowClobber -Force -Verbose
+    condition: and(succeeded(), eq(variables.UseTls12, true))
+    displayName: Install Azure PowerShell module (TLS 1.2)
+
+  # New-TestResources command requires Az module with system default TLS version
+  - pwsh: |
+      Install-Module -Name Az -Scope CurrentUser -AllowClobber -Force -Verbose
+    condition: and(succeeded(), ne(variables.UseTls12, true))
     displayName: Install Azure PowerShell module
 
   - task: Powershell@2

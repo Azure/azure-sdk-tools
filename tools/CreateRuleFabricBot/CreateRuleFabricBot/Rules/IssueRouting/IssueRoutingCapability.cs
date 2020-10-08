@@ -58,18 +58,11 @@ namespace CreateRuleFabricBot.Rules.IssueRouting
                 // If we have labels for the specific codeowners entry, add that to the triage list
                 if (entry.ServiceLabels.Any())
                 {
-
-                    // Use 'Service Attention' as well as the service label
-                    List<string> labelsToApply = new List<string>(entry.PRLabels)
-                                                {
-                                                    "Service Attention"
-                                                };
-
                     // Remove the '@' from the owners handle
                     IEnumerable<string> mentionees = entry.Owners.Select(x => x.Replace("@", "").Trim());
 
                     //add the service
-                    AddService(labelsToApply, mentionees);
+                    AddService(entry.ServiceLabels, mentionees);
                 }
             }
 

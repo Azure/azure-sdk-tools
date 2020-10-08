@@ -56,6 +56,12 @@ namespace CreateRuleFabricBot
                         line = NormalizeLine(line);
                     }
 
+                    // Empty line, move on
+                    if (string.IsNullOrEmpty(line))
+                    {
+                        continue;
+                    }
+
                     // If this is not a comment line.
                     if (line.IndexOf('#') == -1)
                     {

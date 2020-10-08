@@ -19,18 +19,6 @@ namespace CreateRuleFabricBot
         internal const string PRLabelMoniker = "PRLabel";
         internal const string ServiceLabelMoniker = "ServiceLabel";
 
-        public CodeOwnerEntry(string entryLine, string PRLabelsLine, string ServiceLabelLine)
-        {
-            PRLabels = new List<string>(ParseLabels(PRLabelsLine, PRLabelMoniker));
-            ServiceLabels = new List<string>(ParseLabels(ServiceLabelLine, ServiceLabelMoniker));
-            ParseOwnersAndPath(entryLine);
-        }
-
-        public CodeOwnerEntry()
-        {
-
-        }
-
         public string PathExpression { get; set; }
 
         public bool ContainsWildcard { get; set; }

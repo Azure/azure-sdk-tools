@@ -1,9 +1,7 @@
-﻿using OutputColorizer;
-using System;
+﻿using CreateRuleFabricBot.Helpers;
+using OutputColorizer;
 using System.Collections.Generic;
 using System.IO;
-using System.Net.Http;
-using System.Text;
 
 namespace CreateRuleFabricBot
 {
@@ -13,7 +11,7 @@ namespace CreateRuleFabricBot
         {
             string content;
             Colorizer.Write("Retrieving file content from [Yellow!{0}]... ", filePathOrUrl);
-            content = GetFileContents(filePathOrUrl);
+            content = FileHelpers.GetFileContents(filePathOrUrl);
             Colorizer.WriteLine("[Green!Done]");
 
             return ParseContent(content);
@@ -82,28 +80,6 @@ namespace CreateRuleFabricBot
         {
             // Remove tabs and trim extra whitespace
             return line.Replace('\t', ' ').Trim();
-        }
-
-        private static string GetFileContents(string fileOrUri)
-        {
-            if (File.Exists(fileOrUri))
-            {
-                return File.ReadAllText(fileOrUri);
-            }
-
-            // try to parse it as an Uri
-            Uri uri = new Uri(fileOrUri, UriKind.Absolute);
-            if (uri.Scheme.ToLowerInvariant() != "https")
-            {
-                throw new ArgumentException("Cannot download off non-https uris");
-            }
-
-            // try to download it.
-            using (HttpClient client = new HttpClient())
-            {
-                HttpResponseMessage response = client.GetAsync(fileOrUri).ConfigureAwait(false).GetAwaiter().GetResult();
-                return response.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
-            }
         }
     }
 }

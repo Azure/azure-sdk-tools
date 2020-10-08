@@ -57,7 +57,8 @@ type Func struct {
 
 // Interface contains the list of methods for an interface.
 type Interface struct {
-	Methods map[string]Func
+	EmbeddedInterfaces []string
+	Methods            map[string]Func
 }
 
 // Struct contains field info about a struct.

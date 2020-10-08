@@ -2,6 +2,7 @@
 using Azure.Security.KeyVault.Secrets;
 using GitHubIssues.Helpers;
 using Microsoft.Extensions.Logging;
+using Microsoft.Identity.Client;
 using Octokit;
 using Polly;
 using System;
@@ -15,48 +16,86 @@ namespace Azure.Sdk.Tools.GitHubIssues.Reports
     public abstract class BaseReport
     {
         protected IConfigurationService ConfigurationService { get; private set; }
+        protected ILogger<BaseReport> Logger { get; private set; }
 
-        public BaseReport(IConfigurationService configurationService)
+        public BaseReport(IConfigurationService configurationService, ILogger<BaseReport> logger)
         {
             ConfigurationService = configurationService;
+            Logger = logger;
         }
 
-        public async Task ExecuteAsync(ILogger log)
+        protected async Task ExecuteWithRetryAsync(int retryCount, Func<Task> action)
         {
-            try
-            {
-                Task<string> pendingGitHubPersonalAccessToken = ConfigurationService.GetGitHubPersonalAccessTokenAsync();
-
-                var gitHubClient = new GitHubClient(new ProductHeaderValue("github-issues"))
+            await Policy
+                .Handle<AbuseException>()
+                .Or<RateLimitExceededException>()
+                .RetryAsync(10, async (ex, retryCount) =>
                 {
-                    Credentials = new Credentials(await pendingGitHubPersonalAccessToken)
-                };
+                    TimeSpan retryDelay = TimeSpan.FromSeconds(10); // Default.
 
-                log.LogInformation("Preparing report execution context for: {reportType}", this.GetType());
+                    switch (ex)
+                    {
+                        case AbuseException abuseException:
+                            retryDelay = TimeSpan.FromSeconds((double)abuseException.RetryAfterSeconds);
+                            Logger.LogWarning("Abuse exception detected. Retry after seconds is: {retrySeconds}",
+                                abuseException.RetryAfterSeconds
+                                );
+                            break;
 
-                var context = new ReportExecutionContext(
-                    log,
-                    await ConfigurationService.GetFromAddressAsync(),
-                    await ConfigurationService.GetSendGridTokenAsync(),
-                    await pendingGitHubPersonalAccessToken,
-                    await ConfigurationService.GetRepositoryConfigurationsAsync(),
-                    gitHubClient
-                    );
+                        case RateLimitExceededException rateLimitExceededException:
+                            retryDelay = rateLimitExceededException.GetRetryAfterTimeSpan();
+                            Logger.LogWarning(
+                                "Rate limit exception detected. Limit is: {limit}, reset is: {reset}, retry seconds is: {retrySeconds}",
+                                rateLimitExceededException.Limit,
+                                rateLimitExceededException.Reset,
+                                retryDelay.TotalSeconds
+                                );
+                            break;
 
-                log.LogInformation("Executing report: {reportType}", this.GetType());
-                await ExecuteCoreAsync(context);
-                log.LogInformation("Executed report: {reportType}", this.GetType());
-            }
-            catch (RateLimitExceededException ex)
+                        default:
+                            Logger.LogError(
+                                "Fall through case invoked, this should never happen!"
+                                );
+                            break;
+                    }
+
+                    await Task.Delay(retryDelay);
+                })
+                .ExecuteAsync(async () =>
+                {
+                    try
+                    {
+                        await action();
+                    }
+                    catch (AggregateException ex) when (ex.InnerException! is AbuseException || ex.InnerException! is RateLimitExceededException)
+                    {
+                        throw ex.InnerException;
+                    }
+                });
+        }
+
+        public async Task ExecuteAsync()
+        {
+            Task<string> pendingGitHubPersonalAccessToken = ConfigurationService.GetGitHubPersonalAccessTokenAsync();
+
+            var gitHubClient = new GitHubClient(new ProductHeaderValue("github-issues"))
             {
-                log.LogError("GitHub rate limit exceeded for report {reportType}. Rate limit is {callsPerHour} calls per Hour. Limit resets at {limitResets}.",
-                    this.GetType(),
-                    ex.Limit,
-                    ex.Reset
-                    );
+                Credentials = new Credentials(await pendingGitHubPersonalAccessToken)
+            };
 
-                throw ex;
-            }
+            Logger.LogInformation("Preparing report execution context for: {reportType}", this.GetType());
+
+            var context = new ReportExecutionContext(
+                await ConfigurationService.GetFromAddressAsync(),
+                await ConfigurationService.GetSendGridTokenAsync(),
+                await pendingGitHubPersonalAccessToken,
+                await ConfigurationService.GetRepositoryConfigurationsAsync(),
+                gitHubClient
+                );
+
+            Logger.LogInformation("Executing report: {reportType}", this.GetType());
+            await ExecuteCoreAsync(context);
+            Logger.LogInformation("Executed report: {reportType}", this.GetType());
         }
 
         protected abstract Task ExecuteCoreAsync(ReportExecutionContext context);

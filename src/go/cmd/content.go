@@ -149,6 +149,9 @@ func (c *content) addInterface(pkg pkg, name string, i *ast.InterfaceType) {
 				n := m.Names[0].Name
 				f := pkg.buildFunc(m.Type.(*ast.FuncType))
 				in.Methods[n] = f
+			} else {
+				n := pkg.getText(m.Type.Pos(), m.Type.End())
+				in.EmbeddedInterfaces = append(in.EmbeddedInterfaces, n)
 			}
 		}
 	}
@@ -158,7 +161,7 @@ func (c *content) addInterface(pkg pkg, name string, i *ast.InterfaceType) {
 // adds the specified struct type to the exports list.
 func (c *content) parseInterface(tokenList *[]Token) {
 	for k, v := range c.Interfaces {
-		makeInterfaceTokens(&k, v.Methods, tokenList)
+		makeInterfaceTokens(&k, v.EmbeddedInterfaces, v.Methods, tokenList)
 	}
 }
 

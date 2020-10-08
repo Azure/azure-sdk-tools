@@ -20,9 +20,9 @@ namespace Azure.Sdk.Tools.GitHubIssues.Functions
         private FindNewGitHubIssuesAndPRs report;
 
         [FunctionName("FindNewGitHubIssuesAndPRs_7am")]
-        public async Task Run([TimerTrigger("0 30 14 * * *")]TimerInfo timer, ILogger log, CancellationToken cancellationToken)
+        public async Task Run([TimerTrigger("0 30 14 * * *")]TimerInfo timer)
         {
-            await report.ExecuteAsync(log);
+            await report.ExecuteAsync();
         }
     }
 }

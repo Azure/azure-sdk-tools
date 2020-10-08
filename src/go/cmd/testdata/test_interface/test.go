@@ -3,7 +3,12 @@
 
 package testinterface
 
+type EmbeddedInt interface {
+	Bar(b string)
+}
+
 type SomeInterface interface {
+	EmbeddedInt
 	Foo(bar int64) *bool
 }
 

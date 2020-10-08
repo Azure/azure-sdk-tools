@@ -121,6 +121,7 @@ form.comment {
     float: right;
     margin-left: 10px;
     margin-right: -5px;
+    max-height: 50px;
 }
 
 .comment-row {
@@ -531,9 +532,6 @@ code-inner {
     text-decoration: line-through;
 }
 
-.documentation {
-    display: none;
-}
 mark {
     padding: 0;
 }

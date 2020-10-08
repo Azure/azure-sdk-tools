@@ -476,8 +476,8 @@
    "NavigationId": null,
    "ChildItems": [
     {
-     "Text": "const",
-     "NavigationId": "const",
+     "Text": "SomeChoice",
+     "NavigationId": "SomeChoice",
      "ChildItems": [],
      "Tags": {
       "TypeKind": "enum"
@@ -492,8 +492,8 @@
      }
     },
     {
-     "Text": "SomeChoice",
-     "NavigationId": "SomeChoice",
+     "Text": "const",
+     "NavigationId": "const",
      "ChildItems": [],
      "Tags": {
       "TypeKind": "enum"

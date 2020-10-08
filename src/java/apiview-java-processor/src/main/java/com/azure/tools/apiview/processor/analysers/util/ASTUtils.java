@@ -104,25 +104,60 @@ public class ASTUtils {
      * public interface.
      */
     public static boolean isTypeAPublicAPI(TypeDeclaration type) {
+        Node parentNode = type.getParentNode().orElse(null);
+        final boolean isTypePrivate = isPrivateOrPackagePrivate(type.getAccessSpecifier());
+
+        // if we have no parent, we just inspect the access modifier on the given type and return appropriately from that.
+        if (parentNode == null) {
+            return !isTypePrivate;
+        }
+
+        // otherwise there are more rules we want to consider...
         final boolean isInterfaceType = isInterfaceType(type);
-        final boolean isNestedType = type.isNestedType();
+//        final boolean isNestedType = type.isNestedType();
 
-        // Skip if the class is private or package-private, unless it is a nested type defined inside a public interface
-        if (isPrivateOrPackagePrivate(type.getAccessSpecifier())) {
-            if (isNestedType && isInterfaceType) {
-                boolean isInPublicParent = type.getParentNode()
-                       .filter(parentNode -> parentNode instanceof ClassOrInterfaceDeclaration)
-                       .map(parentNode -> isPublicOrProtected(((ClassOrInterfaceDeclaration)parentNode).getAccessSpecifier()))
-                       .orElse(false);
+        if (parentNode instanceof ClassOrInterfaceDeclaration) {
+            ClassOrInterfaceDeclaration parentClass = (ClassOrInterfaceDeclaration)parentNode;
+            boolean isInPublicParent = isPublicOrProtected(parentClass.getAccessSpecifier());
+            boolean isParentAnInterface = isInterfaceType(parentClass);
 
-                if (! isInPublicParent) {
-                    return false;
-                }
-            } else {
+            // conditions to consider:
+            // 1) if the parent type is private and not an interface, then it doesn't matter - we are always going to
+            // be private
+            if (!isInPublicParent && !isParentAnInterface) {
                 return false;
             }
+
+            // 2) If the type is an non-public interface, but all parent types are either public or also interfaces,
+            // then this type is public EXCEPT if the root type is a private interface.
+            if (isTypePrivate && isInterfaceType) {
+                // work way up parent chain, checking along the way
+                while (parentClass != null) {
+                    if (isInPublicParent && !isParentAnInterface) {
+                        // we are looking at a public parent *class*. This means we have a private interface in a public
+                        // class, so we know we have non-public API here
+                        return false;
+                    }
+
+                    if (isParentAnInterface || isInPublicParent) {
+                        parentNode = parentClass.getParentNode().orElse(null);
+                        if (parentNode == null || parentNode instanceof CompilationUnit) {
+                            // we have reached the top of the hierarchy, lets now determine if the previous type
+                            // was public - if so we return true
+                            return isInPublicParent;
+                        }
+                        parentClass = (ClassOrInterfaceDeclaration)parentNode;
+                        isInPublicParent = isPublicOrProtected(parentClass.getAccessSpecifier());
+                        isParentAnInterface = parentClass.isInterface();
+                    } else {
+                        return false;
+                    }
+                }
+            }
         }
-        return true;
+
+        // 3) otherwise, we return based on whether the type itself is public or not
+        return !isTypePrivate;
     }
 
     /**

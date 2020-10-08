@@ -17,12 +17,11 @@ namespace Azure.Sdk.Tools.GitHubIssues.Functions
         }
 
         private FindCustomerRelatedIssuesInvalidState report;
-        private ILogger<FindCustomerReportedIssuesInInvalidStateFunction> logger;
 
         [FunctionName("FindCustomerReportedIssuesInInvalidStateFunction")]
-        public async Task Run([TimerTrigger("0 0 16 * * MON")]TimerInfo timer, ILogger log, CancellationToken cancellationToken)
+        public async Task Run([TimerTrigger("0 0 16 * * MON")]TimerInfo timer)
         {
-            await report.ExecuteAsync(log);
+            await report.ExecuteAsync();
         }
     }
 }

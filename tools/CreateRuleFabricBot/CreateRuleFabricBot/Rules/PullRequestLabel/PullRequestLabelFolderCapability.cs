@@ -50,7 +50,7 @@ namespace CreateRuleFabricBot.Rules.PullRequestLabel
 
         public override string GetPayload()
         {
-            List<CodeOwnerEntry> entries = CodeOwners.ReadOwnersFromFile(_codeownersFile);
+            List<CodeOwnerEntry> entries = CodeOwnersFile.ParseFile(_codeownersFile);
 
             StringBuilder configPayload = new StringBuilder();
 

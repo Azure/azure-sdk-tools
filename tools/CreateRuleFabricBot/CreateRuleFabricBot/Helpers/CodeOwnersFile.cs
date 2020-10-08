@@ -7,19 +7,19 @@ using System.Text;
 
 namespace CreateRuleFabricBot
 {
-    public static class CodeOwners
+    public static class CodeOwnersFile
     {
-        public static List<CodeOwnerEntry> ReadOwnersFromFile(string filePathOrUrl)
+        public static List<CodeOwnerEntry> ParseFile(string filePathOrUrl)
         {
             string content;
             Colorizer.Write("Retrieving file content from [Yellow!{0}]... ", filePathOrUrl);
             content = GetFileContents(filePathOrUrl);
             Colorizer.WriteLine("[Green!Done]");
 
-            return ParseOwnersFromContent(content);
+            return ParseContent(content);
         }
 
-        public static List<CodeOwnerEntry> ParseOwnersFromContent(string fileContent)
+        public static List<CodeOwnerEntry> ParseContent(string fileContent)
         {
             Colorizer.Write("Parsing CODEOWNERS table... ");
             List<CodeOwnerEntry> entries = new List<CodeOwnerEntry>();

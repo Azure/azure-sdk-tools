@@ -40,7 +40,7 @@ namespace Tests
             // create the content
             string content = $"{entry.LabelsLine}\r\n{entry.PathAndOwners}";
 
-            CodeOwnerEntry coe = CodeOwners.ParseOwnersFromContent(content).First();
+            CodeOwnerEntry coe = CodeOwnersFile.ParseContent(content).First();
             Assert.AreEqual(entry.ExpectedLabels, coe.PRLabels);
             Assert.AreEqual(entry.ExpectedOwners, coe.Owners);
             Assert.AreEqual(entry.ExpectedPath, coe.PathExpression);
@@ -55,7 +55,7 @@ namespace Tests
             // create the content
             string content = $"{entry.LabelsLine}\r\n{entry.PathAndOwners}";
 
-            CodeOwnerEntry coe = CodeOwners.ParseOwnersFromContent(content).FirstOrDefault();
+            CodeOwnerEntry coe = CodeOwnersFile.ParseContent(content).FirstOrDefault();
 
             Assert.IsNull(coe);
         }
@@ -84,7 +84,7 @@ namespace Tests
 
 ";
 
-            List<CodeOwnerEntry> entries = CodeOwners.ParseOwnersFromContent(content);
+            List<CodeOwnerEntry> entries = CodeOwnersFile.ParseContent(content);
 
             Assert.AreEqual(5, entries.Count);
             Assert.AreEqual("F1", entries[0].PRLabels[0]);

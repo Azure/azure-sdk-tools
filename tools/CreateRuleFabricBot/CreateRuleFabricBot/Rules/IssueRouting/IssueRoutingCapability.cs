@@ -51,7 +51,7 @@ namespace CreateRuleFabricBot.Rules.IssueRouting
 
         public override string GetPayload()
         {
-            List<CodeOwnerEntry> entries = CodeOwners.ReadOwnersFromFile(_codeownersFile);
+            List<CodeOwnerEntry> entries = CodeOwnersFile.ParseFile(_codeownersFile);
 
             foreach (CodeOwnerEntry entry in entries)
             {

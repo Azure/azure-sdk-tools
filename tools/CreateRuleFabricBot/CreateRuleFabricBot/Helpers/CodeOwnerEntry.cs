@@ -29,7 +29,6 @@ namespace CreateRuleFabricBot
 
         public List<string> ServiceLabels { get; set; } = new List<string>();
 
-
         public bool IsValid
         {
             get

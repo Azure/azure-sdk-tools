@@ -1,6 +1,8 @@
+using CreateRuleFabricBot;
 using CreateRuleFabricBot.Rules.PullRequestLabel;
 using CreateRuleFabricBotTests;
 using NUnit.Framework;
+using System.Collections.Generic;
 
 namespace Tests
 {
@@ -35,11 +37,61 @@ namespace Tests
         [Theory]
         public void ValidateOwnersLines(TestAndExpected entry)
         {
-            CodeOwnerEntry coe = new CodeOwnerEntry(entry.PathAndOwners, entry.LabelsLine);
+            CodeOwnerEntry coe = new CodeOwnerEntry(entry.PathAndOwners, entry.LabelsLine, string.Empty);
 
-            Assert.AreEqual(entry.ExpectedLabels, coe.Labels);
+            Assert.AreEqual(entry.ExpectedLabels, coe.PRLabels);
             Assert.AreEqual(entry.ExpectedOwners, coe.Owners);
             Assert.AreEqual(entry.ExpectedPath, coe.PathExpression);
+        }
+
+
+        [Test]
+        public void ValidateCodeOwnersContent()
+        {
+            string content = @"#Comment
+
+
+# ServiceLabel: %F1 %Service Attention
+# PRLabel: %F1
+/folder1/                                @user1
+
+# ServiceLabel: %F2 %Service Attention
+# PRLabel: %F2
+/folder2/                                @user2
+
+# ServiceLabel: %Service Attention %F3
+/folder3/                                   @user3 @user1
+
+# PRLabel: %F4 %Service Attention
+/folder4/                                   @user4
+
+/folder5/                                   @user5
+
+";
+
+            List<CodeOwnerEntry> entries = CodeOwners.ParseOwnersFromContent(content);
+
+            Assert.AreEqual(5, entries.Count);
+            Assert.AreEqual("F1", entries[0].PRLabels[0]);
+            Assert.AreEqual("F1", entries[0].ServiceLabels[0]);
+            Assert.AreEqual("Service Attention", entries[0].ServiceLabels[1]);
+
+            Assert.AreEqual("F2", entries[1].PRLabels[0]);
+            Assert.AreEqual("F2", entries[1].ServiceLabels[0]);
+            Assert.AreEqual("Service Attention", entries[1].ServiceLabels[1]);
+            Assert.AreEqual("/folder2/", entries[1].PathExpression);
+
+            Assert.AreEqual("Service Attention", entries[2].ServiceLabels[0]);
+            Assert.AreEqual(0, entries[2].PRLabels.Count);
+            Assert.AreEqual("F3", entries[2].ServiceLabels[1]);
+
+            Assert.AreEqual("F4", entries[3].PRLabels[0]);
+            Assert.AreEqual(0, entries[3].ServiceLabels.Count);
+            Assert.AreEqual("Service Attention", entries[3].PRLabels[1]);
+
+            Assert.AreEqual(0, entries[4].ServiceLabels.Count);
+            Assert.AreEqual(0, entries[4].PRLabels.Count);
+            Assert.AreEqual("/folder5/", entries[4].PathExpression);
         }
     }
 }

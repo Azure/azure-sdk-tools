@@ -4,17 +4,25 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
 
-namespace CreateRuleFabricBot.Rules.PullRequestLabel
+namespace CreateRuleFabricBot
 {
+    /// <summary>
+    /// The entry for CODEOWNERS has the following structure:
+    /// # PRLabel: %Label
+    /// # ServiceLabel: %Label
+    /// path @owner @owner
+    /// </summary>
     public class CodeOwnerEntry
     {
         const char LabelSeparator = '%';
         const char OwnerSeparator = '@';
-        internal const string LabelMoniker = "PRLabel";
+        internal const string PRLabelMoniker = "PRLabel";
+        internal const string ServiceLabelMoniker = "ServiceLabel";
 
-        public CodeOwnerEntry(string entryLine, string labelsLine)
+        public CodeOwnerEntry(string entryLine, string PRLabelsLine, string ServiceLabelLine)
         {
-            ParseLabels(labelsLine);
+            PRLabels = new List<string>(ParseLabels(PRLabelsLine, PRLabelMoniker));
+            ServiceLabels = new List<string>(ParseLabels(ServiceLabelLine, ServiceLabelMoniker));
             ParseOwnersAndPath(entryLine);
         }
 
@@ -29,7 +37,11 @@ namespace CreateRuleFabricBot.Rules.PullRequestLabel
 
         public List<string> Owners { get; set; } = new List<string>();
 
-        public List<string> Labels { get; set; } = new List<string>();
+        public List<string> PRLabels { get; set; } = new List<string>();
+
+        public List<string> ServiceLabels { get; set; } = new List<string>();
+
+
         public bool IsValid
         {
             get
@@ -45,22 +57,37 @@ namespace CreateRuleFabricBot.Rules.PullRequestLabel
 
         public override string ToString()
         {
-            return $"HasWildcard:{ContainsWildcard} Expression:{PathExpression} Owners:{string.Join(',', Owners)}  Labels:{string.Join(',', Labels)}";
+            return $"HasWildcard:{ContainsWildcard} Expression:{PathExpression} Owners:{string.Join(',', Owners)}  PRLabels:{string.Join(',', PRLabels)}   ServiceLabels:{string.Join(',', ServiceLabels)}";
         }
 
-        public void ParseLabels(string line)
+        public bool ProcessLabelsOnLine(string line)
+        {
+            if (line.IndexOf(PRLabelMoniker, StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                PRLabels.AddRange(ParseLabels(line, PRLabelMoniker));
+                return true;
+            }
+            else if (line.IndexOf(ServiceLabelMoniker, StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                ServiceLabels.AddRange(ParseLabels(line, ServiceLabelMoniker));
+                return true;
+            }
+            return false;
+        }
+
+        private IEnumerable<string> ParseLabels(string line, string moniker)
         {
             // Parse a line that looks like # PRLabel: %Label, %Label
-            if (line.IndexOf(LabelMoniker, StringComparison.OrdinalIgnoreCase) == -1)
+            if (line.IndexOf(moniker, StringComparison.OrdinalIgnoreCase) == -1)
             {
-                return;
+                yield break;
             }
 
             // If we don't have a ':', nothing to do
             int colonPosition = line.IndexOf(':');
             if (colonPosition == -1)
             {
-                return;
+                yield break;
             }
 
             line = line.Substring(colonPosition + 1).Trim();
@@ -68,7 +95,7 @@ namespace CreateRuleFabricBot.Rules.PullRequestLabel
             {
                 if (!string.IsNullOrWhiteSpace(label))
                 {
-                    Labels.Add(label.Trim());
+                    yield return label.Trim();
                 }
             }
         }

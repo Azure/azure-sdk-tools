@@ -29,4 +29,4 @@ jobs:
               -RepoName ${{ repo }}
               -BranchPrefix "sync-eng/common-"
               -WorkingDirectory $(System.DefaultWorkingDirectory)
-              -AuthToken "$(azuresdk-github-pat)"
+              -AuthToken $(azuresdk-github-pat)

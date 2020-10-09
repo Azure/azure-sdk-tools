@@ -47,7 +47,12 @@ namespace CreateRuleFabricBot
                         // If this is not a comment line OR this is a placeholder entry
 
                         entry.ParseOwnersAndPath(line);
-                        entries.Add(entry);
+
+                        // only add it if it is a valid entry
+                        if (entry.IsValid)
+                        {
+                            entries.Add(entry);
+                        }
 
                         // create a new entry.
                         entry = new CodeOwnerEntry();

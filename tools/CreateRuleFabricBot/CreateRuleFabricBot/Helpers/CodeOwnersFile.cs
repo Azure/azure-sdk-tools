@@ -26,8 +26,6 @@ namespace CreateRuleFabricBot
             {
                 while ((line = sr.ReadLine()) != null)
                 {
-                    // Does the line start with '# PRLabel: "label1", "label2"
-
                     // Remove tabs and trim extra whitespace
                     line = NormalizeLine(line);
 
@@ -39,7 +37,7 @@ namespace CreateRuleFabricBot
 
                     CodeOwnerEntry entry = new CodeOwnerEntry();
 
-                    // if we have the moniker in the line, parse the labels
+                    // if we have a comment on the line AND if the line contains special delimiters
                     while (line.StartsWith('#') && entry.ProcessLabelsOnLine(line))
                     {
                         // We need to read the next line as we parsed this line

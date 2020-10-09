@@ -61,7 +61,8 @@ namespace CreateRuleFabricBot
                     }
 
                     // If this is not a comment line.
-                    if (line.IndexOf('#') == -1)
+                    if (line.IndexOf('#') == -1 ||
+                        line.IndexOf(CodeOwnerEntry.MissingFolder, System.StringComparison.OrdinalIgnoreCase) >= 0)
                     {
                         entry.ParseOwnersAndPath(line);
                     }

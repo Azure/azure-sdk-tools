@@ -82,11 +82,18 @@ namespace Tests
 
 /folder5/                                   @user5
 
+# ServiceLabel: %MyService
+#/<NotInRepo>/           @user6
+
+
+# ServiceLabel: %MyService
+# CommentedLine           @user7
 ";
 
             List<CodeOwnerEntry> entries = CodeOwnersFile.ParseContent(content);
+            Assert.AreEqual(6, entries.Count);
 
-            Assert.AreEqual(5, entries.Count);
+
             Assert.AreEqual("F1", entries[0].PRLabels[0]);
             Assert.AreEqual("F1", entries[0].ServiceLabels[0]);
             Assert.AreEqual("Service Attention", entries[0].ServiceLabels[1]);
@@ -107,6 +114,11 @@ namespace Tests
             Assert.AreEqual(0, entries[4].ServiceLabels.Count);
             Assert.AreEqual(0, entries[4].PRLabels.Count);
             Assert.AreEqual("/folder5/", entries[4].PathExpression);
+
+
+            Assert.AreEqual(1, entries[5].ServiceLabels.Count);
+            Assert.AreEqual(0, entries[5].PRLabels.Count);
+            Assert.AreEqual("#/<NotInRepo>/", entries[5].PathExpression);
         }
     }
 }

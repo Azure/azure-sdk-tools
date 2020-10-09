@@ -72,6 +72,13 @@ namespace CreateRuleFabricBot.Rules.PullRequestLabel
                     continue; //TODO: regex expressions are not yet supported
                 }
 
+                if (entries[i].PathExpression.IndexOf(CodeOwnerEntry.MissingFolder, StringComparison.OrdinalIgnoreCase) !=-1)
+                {
+                    Colorizer.WriteLine("[Yellow!Warning]: The path '[Cyan!{0}]' is marked with the non-existing path marker.", entries[i].PathExpression);
+
+                    continue; 
+                }
+
                 // Entries with more than one label are not yet supported.
                 if (entries[i].PRLabels.Count > 1)
                 {

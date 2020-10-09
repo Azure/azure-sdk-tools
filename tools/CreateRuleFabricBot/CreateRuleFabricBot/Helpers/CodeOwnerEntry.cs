@@ -18,6 +18,7 @@ namespace CreateRuleFabricBot
         const char OwnerSeparator = '@';
         internal const string PRLabelMoniker = "PRLabel";
         internal const string ServiceLabelMoniker = "ServiceLabel";
+        internal const string MissingFolder = "#/<NotInRepo>/";
 
         public string PathExpression { get; set; }
 
@@ -89,7 +90,7 @@ namespace CreateRuleFabricBot
 
         public void ParseOwnersAndPath(string line)
         {
-            if (string.IsNullOrEmpty(line) || line.StartsWith('#'))
+            if (string.IsNullOrEmpty(line) || (line.StartsWith('#') && !(line.IndexOf(CodeOwnerEntry.MissingFolder, StringComparison.OrdinalIgnoreCase) >= 0)))
             {
                 return;
             }

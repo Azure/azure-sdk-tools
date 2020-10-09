@@ -88,10 +88,17 @@ namespace Tests
 
 # ServiceLabel: %MyService
 # CommentedLine           @user7
+
+
+/folder6            @user7
+
+
+# ServiceLabel: %MyService
+/folder8           @user6  #This has comment at the end
 ";
 
             List<CodeOwnerEntry> entries = CodeOwnersFile.ParseContent(content);
-            Assert.AreEqual(6, entries.Count);
+            Assert.AreEqual(8, entries.Count);
 
 
             Assert.AreEqual("F1", entries[0].PRLabels[0]);
@@ -115,10 +122,18 @@ namespace Tests
             Assert.AreEqual(0, entries[4].PRLabels.Count);
             Assert.AreEqual("/folder5/", entries[4].PathExpression);
 
-
             Assert.AreEqual(1, entries[5].ServiceLabels.Count);
             Assert.AreEqual(0, entries[5].PRLabels.Count);
             Assert.AreEqual("#/<NotInRepo>/", entries[5].PathExpression);
+
+            Assert.AreEqual(1, entries[6].ServiceLabels.Count);
+            Assert.AreEqual(0, entries[6].PRLabels.Count);
+            Assert.AreEqual("/folder6", entries[6].PathExpression);
+
+            Assert.AreEqual(1, entries[7].ServiceLabels.Count);
+            Assert.AreEqual(0, entries[7].PRLabels.Count);
+            Assert.AreEqual("/folder8", entries[7].PathExpression);
+            Assert.AreEqual("user6", entries[7].Owners[0]);
         }
     }
 }

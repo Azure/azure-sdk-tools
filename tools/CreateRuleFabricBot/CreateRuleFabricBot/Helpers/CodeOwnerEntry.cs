@@ -90,12 +90,22 @@ namespace CreateRuleFabricBot
 
         public void ParseOwnersAndPath(string line)
         {
-            if (string.IsNullOrEmpty(line) || (line.StartsWith('#') && !(line.IndexOf(CodeOwnerEntry.MissingFolder, StringComparison.OrdinalIgnoreCase) >= 0)))
+            if (string.IsNullOrEmpty(line) ||
+               (line.StartsWith('#') && !(line.IndexOf(CodeOwnerEntry.MissingFolder, StringComparison.OrdinalIgnoreCase) >= 0)))
             {
                 return;
             }
 
             line = ParsePath(line);
+
+            //remove any comments from the line, if any.
+            // this is the case when we have something like @user #comment
+            int commentIndex = line.IndexOf("#");
+
+            if (commentIndex >= 0)
+            {
+                line = line.Substring(0, commentIndex).Trim();
+            }
 
             foreach (string author in SplitLine(line, OwnerSeparator).ToList())
             {

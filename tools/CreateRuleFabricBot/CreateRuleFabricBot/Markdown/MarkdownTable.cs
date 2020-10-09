@@ -15,7 +15,7 @@ namespace CreateRuleFabricBot.Markdown
             MarkdownTable mt = new MarkdownTable();
             string line;
 
-            using (StreamReader sr = new StreamReader(FileHelpers.GetFileContents(filePath)))
+            using (StringReader sr = new StringReader(FileHelpers.GetFileContents(filePath)))
             {
                 while ((line = sr.ReadLine()) != null)
                 {

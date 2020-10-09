@@ -176,17 +176,3 @@ stages:
                       -AuthToken "$(azuresdk-github-pat)"
                       -devOpsLogging
                     pwsh: true
-
-                - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
-                  - ${{ each repo in parameters.Repos }}:
-                    - pwsh: |
-                        git clone https://github.com/azure/${{ repo }} --depth 1
-                        pushd $(System.DefaultWorkingDirectory)/${{ repo }}
-                        git push origin --delete "sync-${{ parameters.DirectoryToSync }}-$(System.PullRequest.SourceBranch)-$(System.PullRequest.PullRequestNumber)"
-                        if ($lastExitCode -ne 0) {
-                          Write-Host "Failed to delete [sync-${{ parameters.DirectoryToSync }}-$(System.PullRequest.SourceBranch)-$(System.PullRequest.PullRequestNumber)] branch in ${{ repo }}"
-                          exit 1
-                        }
-                      displayName: Write Sync PR Data to Artifact File
-                      workingDirectory: $(System.DefaultWorkingDirectory)
-                      condition: succeeded()

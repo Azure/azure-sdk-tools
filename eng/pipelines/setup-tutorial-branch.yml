@@ -32,6 +32,8 @@ parameters:
      - refs/heads/feature/tutorial/engsys/complete
      - refs/heads/feature/tutorial/quality/starter
      - refs/heads/feature/tutorial/quality/complete
+     - refs/heads/feature/tutorial/xyz/starter
+     - refs/heads/feature/tutorial/xyz/complete
 
 variables:
   skipComponentGovernanceDetection: true

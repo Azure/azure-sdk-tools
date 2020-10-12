@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CreateRuleFabricBot.Helpers;
+using System;
 using System.Collections.Generic;
 using System.IO;
 
@@ -14,7 +15,7 @@ namespace CreateRuleFabricBot.Markdown
             MarkdownTable mt = new MarkdownTable();
             string line;
 
-            using (StreamReader sr = new StreamReader(filePath))
+            using (StringReader sr = new StringReader(FileHelpers.GetFileContents(filePath)))
             {
                 while ((line = sr.ReadLine()) != null)
                 {

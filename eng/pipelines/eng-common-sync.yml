@@ -11,6 +11,7 @@ parameters:
   default: eng/common
 - name: BaseBranchName
   type: string
+  default: master
 - name: Repos
   type: object
   default:
@@ -147,23 +148,23 @@ stages:
                     path: $(Build.ArtifactStagingDirectory)/${{ parameters.PRDataFileName }} 
 
   - stage: VerifyAndMerge
-      jobs:
-        - deployment: VerifyandMergeSyncPrs
-          displayName: Verify and Merge Sync PRs
-          environment: githubmerges
+    jobs:
+      - deployment: VerifyandMergeSyncPrs
+        displayName: Verify and Merge Sync PRs
+        environment: githubmerges
 
-          pool:
-            vmImage: windows-2019
+        pool:
+          vmImage: windows-2019
 
-          strategy:
-            runOnce:
-              deploy:
-                steps:
-                  - checkout: self
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
 
-                  - download: current
-                    artifact: ${{parameters.ArtifactName}}
-                    displayName: Download ${{ parameters.PRDataFileName }}
+                - download: current
+                  artifact: ${{parameters.ArtifactName}}
+                  displayName: Download ${{ parameters.PRDataFileName }}
 
                 - task: PowerShell@2
                   displayName: 'Verify then Merge Pull Requests'
@@ -172,5 +173,19 @@ stages:
                     filePath: $(Build.SourcesDirectory)/eng/scripts/Verify-And-Merge-PRs.ps1
                     arguments: >
                       -PRDataArtifactPath "$(Pipeline.Workspace)/${{parameters.ArtifactName}}/${{ parameters.PRDataFileName }}"
+                      -AuthToken "$(azuresdk-github-pat)"
+                    pwsh: true
+
+                - task: PowerShell@2
+                  displayName: 'Add Auto merge Label'
+                  condition: succeeded()
+                  inputs:
+                    targetType: filePath
+                    filePath: $(Build.SourcesDirectory)/eng/common/scripts/Add-IssueLabels.ps1
+                    arguments: >
+                      -RepoOwner "Azure"
+                      -RepoName "azure-sdk-tools"
+                      -IssueNumber $(System.PullRequest.PullRequestNumber)
+                      -Labels "auto-merge"
                       -AuthToken "$(azuresdk-github-pat)"
                     pwsh: true

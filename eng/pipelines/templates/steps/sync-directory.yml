@@ -81,10 +81,12 @@ steps:
     inputs:
       pwsh: true
       workingDirectory: ${{ parameters.WorkingDirectory }}
-      filePath: ${{ parameters.ScriptDirectory }}/Add-Issue-Comment.ps1
+      filePath: ${{ parameters.ScriptDirectory }}/Add-IssueComment.ps1
       arguments: >
         -RepoOwner "Azure"
         -RepoName "azure-sdk-tools"
         -IssueNumber "$(System.PullRequest.PullRequestNumber)"
-        -Comment "The following pipelines have been queued for testing:<br>$env:QueuedPipelines<br>Sign off on the approval gate to test the release stage of each pipeline."
+        -Comment "The following pipelines have been queued for testing:<br>$env:QueuedPipelines`
+        <br>You can sign off on the approval gate to test the release stage of each pipeline.`
+        <br>See [eng/common workflow](https://github.com/Azure/azure-sdk-tools/blob/master/eng/common/README.md#workflow)"
         -AuthToken "$(azuresdk-github-pat)"

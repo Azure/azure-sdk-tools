@@ -24,8 +24,8 @@ parameters:
     type: string
     default: refs/heads/feature/tutorial/api-learn/starter
     values:
-     - refs/heads/feature/tutorial/api-learn/starter
-     - refs/heads/feature/tutorial/api-learn/complete
+     - refs/heads/feature/tutorial/api-design/starter
+     - refs/heads/feature/tutorial/api-design/complete
      - refs/heads/feature/tutorial/implementation/starter
      - refs/heads/feature/tutorial/implementation/complete
      - refs/heads/feature/tutorial/engsys/starter

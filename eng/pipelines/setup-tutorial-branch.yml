@@ -22,7 +22,7 @@ parameters:
     type: string
   - name: GitReference
     type: string
-    default: refs/heads/feature/tutorial/api-learn/starter
+    default: refs/heads/feature/tutorial/api-design/starter
     values:
      - refs/heads/feature/tutorial/api-design/starter
      - refs/heads/feature/tutorial/api-design/complete

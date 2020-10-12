@@ -24,7 +24,7 @@ jobs:
           inputs:
             pwsh: true
             workingDirectory: $(System.DefaultWorkingDirectory)
-            filePath: $(System.DefaultWorkingDirectory)/eng/common/scripts/Delete-Remote-Branches.ps1
+            filePath: $(System.DefaultWorkingDirectory)/eng/common/scripts/Delete-RemoteBranches.ps1
             arguments: >
               -RepoName ${{ repo }}
               -BranchPrefix "sync-eng/common-"

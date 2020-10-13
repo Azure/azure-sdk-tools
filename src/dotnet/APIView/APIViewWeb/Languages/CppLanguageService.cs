@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -18,7 +19,13 @@ namespace APIViewWeb
     public class CppLanguageService : LanguageService
     {
         private const string CurrentVersion = "1";
-        private static Regex _typeTokenizer = new Regex("\\w+|[^\\w]+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private const string NamespaceDeclKind = "NamespaceDecl";
+        private const string CxxRecordDeclKind = "CXXRecordDecl";
+        private const string CxxMethodDeclKind = "CXXMethodDecl";
+        private const string RootNamespace = "Azure";
+
+        private static Regex _typeTokenizer = new Regex("[\\w:]+|[^\\w]+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        
         private static HashSet<string> _keywords = new HashSet<string>()
         {
             "auto",
@@ -58,6 +65,7 @@ namespace APIViewWeb
             "typedef",
             "union",
             "unsigned",
+            "uint8_t",
             "virtual",
             "void",
             "volatile",
@@ -74,9 +82,16 @@ namespace APIViewWeb
             "_Thread_local"
         };
 
+        private static HashSet<string> parentTypes = new HashSet<string>()
+        {
+            "private",
+            "protected",
+            "public"
+        };
+
         public override string Name { get; } = "C++";
 
-        public override string Extension { get; } = ".ast";
+        public override string Extension { get; } = ".cppast";
 
         public override bool CanUpdate(string versionString) => versionString != CurrentVersion;
 
@@ -86,10 +101,17 @@ namespace APIViewWeb
             await stream.CopyToAsync(astStream);
             astStream.Position = 0;
 
-
             CodeFileTokensBuilder builder = new CodeFileTokensBuilder();
             List<NavigationItem> navigation = new List<NavigationItem>();
-            BuildNodes(builder, navigation, astStream);
+            List<CodeDiagnostic> diagnostics = new List<CodeDiagnostic>();
+            var archive = new ZipArchive(astStream);
+            var astParser = new CppAstConverter();
+            foreach (var entry in archive.Entries)
+            {
+                var root = new CppAstNode();
+                astParser.ParseToAstTree(entry, root);
+                BuildNodes(builder, navigation, diagnostics, root);
+            }
 
             return new CodeFile()
             {
@@ -98,195 +120,243 @@ namespace APIViewWeb
                 Tokens = builder.Tokens.ToArray(),
                 Navigation = navigation.ToArray(),
                 VersionString = CurrentVersion,
+                Diagnostics = diagnostics.ToArray()
             };
         }
 
-        private static void BuildNodes(CodeFileTokensBuilder builder, List<NavigationItem> navigation, MemoryStream astStream)
+        private static void BuildNodes(CodeFileTokensBuilder builder, List<NavigationItem> navigation, List<CodeDiagnostic> diagnostic, CppAstNode root)
         {
-            Span<byte> ast = astStream.ToArray();
+            //Mapping of each namespace to it's leaf namespace nodes
+            //These leaf nodes are processed to generate and group them together
+            //C++ ast has declarations under same namespace in multiple files so these needs tobe grouped for better presentation
+            var namespaceLeafMap = new Dictionary<string, List<CppAstNode>>();
+            var types = new HashSet<string>();
 
-            while (ast.Length > 2)
+            var namespaceNodes = root.inner.Where(n => n.kind == NamespaceDeclKind && n.name == RootNamespace);
+            foreach (var node in namespaceNodes)
             {
-                Utf8JsonReader reader = new Utf8JsonReader(ast);
+                var namespacebldr = new StringBuilder();
+                var leafNamespaceNode = node;
+                var currentNode = node;
+                //Iterate until leafe namespace node and generate full namespace
+                while (currentNode?.kind == NamespaceDeclKind)
+                {
+                    if (namespacebldr.Length > 0)
+                    {
+                        namespacebldr.Append("::");
+                    }
+                    namespacebldr.Append(currentNode.name);
+                    leafNamespaceNode = currentNode;
+                    currentNode = currentNode.inner?.FirstOrDefault(n => n.kind == NamespaceDeclKind);
+                }
 
-                var astNode = JsonSerializer.Deserialize<CppAstNode>(ref reader);
-                ast = ast.Slice((int)reader.BytesConsumed);
+                var nameSpace = namespacebldr.ToString();
+                if (!namespaceLeafMap.ContainsKey(nameSpace))
+                {
+                    namespaceLeafMap[nameSpace] = new List<CppAstNode>();
+                }
+                namespaceLeafMap[nameSpace].Add(leafNamespaceNode);
+            }
 
-                var queue = new Queue<CppAstNode>(astNode.inner);
-                var types = new HashSet<string>();
+            foreach (var nameSpace in namespaceLeafMap.Keys)
+            {
+                ProcessNamespaceNode(nameSpace);
+                builder.NewLine();
+                builder.NewLine();
+            }
 
-                NavigationItem currentNamespace = null;
+            void ProcessNamespaceNode(string nameSpace)
+            {
+                NavigationItem currentNamespace = new NavigationItem()
+                {
+                    NavigationId = nameSpace,
+                    Text = nameSpace,
+                    Tags = { { "TypeKind", "namespace" } }
+                };
                 List<NavigationItem> currentNamespaceMembers = new List<NavigationItem>();
 
-                while (queue.TryDequeue(out var node))
+                builder.Keyword("namespace");
+                builder.Space();
+                var namespaceTokens = nameSpace.Split("::");
+                foreach (var token in namespaceTokens)
                 {
-                    if (node.isImplicit == true)
-                    {
-                        continue;
-                    }
-
-                    ProcessNode(node);                    
+                    builder.Text(token);
                     builder.Space();
-                    builder.NewLine();
-                }
-
-                if (currentNamespace != null)
-                {
-                    currentNamespace.ChildItems = currentNamespaceMembers.ToArray();
-                    navigation.Add(currentNamespace);
-                }
-
-                void BuildDeclaration(string name, string kind)
-                {
-                    builder.Append(new CodeFileToken()
-                    {
-                        DefinitionId = name,
-                        Kind = CodeFileTokenKind.TypeName,
-                        Value = name,
-                    });
-                    currentNamespaceMembers.Add(new NavigationItem()
-                    {
-                        NavigationId = name,
-                        Text = name,
-                        Tags = { { "TypeKind", kind } }
-                    });
-                }
-
-                void BuildMemberDeclaration(string containerName, string name)
-                {
-                    builder.Append(new CodeFileToken()
-                    {
-                        DefinitionId = containerName + "." + name,
-                        Kind = CodeFileTokenKind.MemberName,
-                        Value = name,
-                    });
-                }
-
-                void ProcessVarDecNode(CppAstNode node)
-                {
-                    var typeBldr = new StringBuilder();
-                    if (node.constexpr == true)
-                    {
-                        typeBldr.Append("constexpr ");
-                    }
-
-                    if (!string.IsNullOrEmpty(node.storageClass))
-                    {
-                        typeBldr.Append("static ");
-                    }
-                    typeBldr.Append(node.type.qualType);
-                    BuildType(builder, typeBldr.ToString(), types);
-                    builder.Space();
-                    BuildDeclaration(node.name, "unknown");
-                    //todo Some var declaration will have rvalue. Process these sepcial types too.
-                    builder.Punctuation(";");
-                    builder.NewLine();
-                }
-
-                void ProcessCXXRecordDecl(CppAstNode node)
-                {
-                    if (node.tagUsed == "struct")
-                        ProcessStructNode(node);
-                    else if (node.tagUsed == "class")
-                        ProcessClassNode(node);
-                }
-
-                void ProcessClassNode(CppAstNode node)
-                {
-                    builder.Keyword("class");
-                    builder.Space();
-                    BuildDeclaration(node.name, "class");
-                    builder.Space();
-                    //Todo handle inheritance here
                     builder.Punctuation("{");
-                    builder.NewLine();
-                    builder.IncrementIndent();
-
-                    if (node.inner != null)
-                    {
-                        foreach (var parameterNode in node.inner)
-                        {
-                            if (parameterNode.kind == "CXXRecordDecl" && parameterNode.name == node.name)
-                                continue;
-
-                            // add public , private or protected access specifier
-                            if (parameterNode.kind == "AccessSpecDecl")
-                            {
-                                builder.DecrementIndent();
-                                builder.Keyword(parameterNode.access);
-                                builder.Punctuation(":");
-                                builder.NewLine();
-                                builder.IncrementIndent();
-                            }
-                            else
-                            {
-                                ProcessNode(parameterNode);
-                            }
-                        }
-                    }                    
-
-                    builder.DecrementIndent();
-                    builder.Punctuation("}");
-                    builder.Punctuation(";");
-                    builder.NewLine();
-                }
-
-                void ProcessStructNode(CppAstNode node)
-                {            
-                    if (node.name == "ListFileSystemsSegmentOptions")
-                    {
-                        builder.NewLine();
-                    }
-                    builder.Keyword("struct");
                     builder.Space();
-                    BuildDeclaration(node.name, "struct");
-                    builder.NewLine();
-                    builder.Punctuation("{");
-                    builder.NewLine();
-                    builder.IncrementIndent();
-                    if (node.inner != null)
+                }
+                builder.NewLine();
+                //Process all nodes in namespace
+                foreach (var leafNamespaceNode in namespaceLeafMap[nameSpace])
+                {
+                    if (leafNamespaceNode.inner != null)
                     {
-                        foreach (var parameterNode in node.inner)
+                        foreach (var member in leafNamespaceNode.inner)
                         {
-                            if (parameterNode.kind == "FieldDecl")
-                            {
-                                builder.WriteIndent();
-                                BuildType(builder, parameterNode.type.qualType, types);
-                                builder.Space();
-                                // todo:Should pass namspace from qualtype
-                                BuildMemberDeclaration("", parameterNode.name);
-                                builder.Punctuation(",");
-                                builder.NewLine();
-                            }
+                            builder.IncrementIndent();
+                            ProcessNode(member, currentNamespaceMembers);
+                            builder.DecrementIndent();
                         }
                     }
-
-                    builder.DecrementIndent();
-                    builder.Punctuation("}");
-                    builder.Punctuation(";");
-                    builder.NewLine();
                 }
 
-                void ProcessEnumNode(CppAstNode node)
+                currentNamespace.ChildItems = currentNamespaceMembers.ToArray();
+                navigation.Add(currentNamespace);
+                builder.NewLine();
+                for (int i = 0; i < namespaceTokens.Length; i++)
+                    builder.Punctuation("}");
+                builder.NewLine();
+            }
+
+            NavigationItem BuildDeclaration(string name, string kind, string parentId = "")
+            {
+                string definitionId = name;
+                if (!string.IsNullOrEmpty(parentId))
                 {
-                    builder.Keyword("enum");
+                    definitionId = parentId + "." + name;
+                }
+
+                builder.Append(new CodeFileToken()
+                {
+                    DefinitionId = definitionId,
+                    Kind = CodeFileTokenKind.TypeName,
+                    Value = name,
+                });
+                types.Add(name);
+                return new NavigationItem()
+                {
+                    NavigationId = definitionId,
+                    Text = name,
+                    Tags = { { "TypeKind", kind } }
+                };
+            }
+
+            void BuildMemberDeclaration(string containerName, string name)
+            {
+                builder.Append(new CodeFileToken()
+                {
+                    DefinitionId = containerName + "." + name,
+                    Kind = CodeFileTokenKind.MemberName,
+                    Value = name,
+                });
+            }
+
+            NavigationItem ProcessClassNode(CppAstNode node, string parentName)
+            {
+                NavigationItem navigationItem = null;
+
+                // Skip empty forward declarations
+                if (node.inner == null)
+                    return navigationItem;
+
+                builder.Keyword(node.tagUsed);
+                builder.Space();
+
+                if (!string.IsNullOrEmpty(node.name))
+                {
+                    navigationItem = BuildDeclaration(node.name, node.tagUsed, parentName);
                     builder.Space();
-                    if (!string.IsNullOrEmpty(node.scopedEnumTag))
+                }
+                
+                var memberNavigations = new List<NavigationItem>();
+                var parents = node.inner?.Where(n => parentTypes.Contains(n.kind));
+                if (parents != null)
+                {                    
+                    bool first = true;
+                    foreach ( var parent in parents)
                     {
-                        builder.Keyword(node.scopedEnumTag);
+                        if (first)
+                        {
+                            builder.Punctuation(":");
+                            builder.Space();
+                            first = false;
+                        }
+                        else
+                        {
+                            builder.Punctuation(",");
+                            builder.Space();
+                        }
+                        builder.Keyword(parent.access);
                         builder.Space();
+                        if (parent.name != null)
+                           BuildType(builder, parent.name, types);
                     }
+                    builder.Space();
+                }
 
-                    if (!string.IsNullOrEmpty(node.name))
+                builder.NewLine();
+                builder.WriteIndent();
+                builder.Punctuation("{");
+                builder.NewLine();
+                //Double intendation for members
+                builder.IncrementIndent();
+                builder.IncrementIndent();
+
+                if (node.inner != null)
+                {
+                    bool isPrivateMember = false;
+                    foreach (var childNode in node.inner)
                     {
-                        BuildDeclaration(node.name, "enum");
+                        if (childNode.kind == CxxRecordDeclKind && childNode.name == node.name)
+                            continue;
+
+                        // add public or protected access specifier
+                        if (childNode.kind == "AccessSpecDecl")
+                        {
+                            //Skip all private members
+                            isPrivateMember = (childNode.access == "private");
+                            if (isPrivateMember)
+                            {
+                                continue;
+                            }
+                            builder.DecrementIndent();
+                            builder.WriteIndent();
+                            builder.Keyword(childNode.access);
+                            builder.Punctuation(":");
+                            builder.IncrementIndent();
+                            builder.NewLine();
+                        }
+                        else if(!isPrivateMember && !parentTypes.Contains(childNode.kind))
+                        {                            
+                            ProcessNode(childNode, memberNavigations, node.name);
+                        }
                     }
-                    builder.NewLine();
+                }
 
-                    builder.Punctuation("{");
-                    builder.NewLine();
-                    builder.IncrementIndent();
+                builder.DecrementIndent();
+                builder.DecrementIndent();
+                builder.WriteIndent();
+                builder.Punctuation("}");
+                builder.Punctuation(";");
+                builder.NewLine();
+                builder.NewLine();
+                  
+                if (navigationItem != null)
+                {
+                    navigationItem.ChildItems = memberNavigations.ToArray();
+                }
 
+                if (node.tagUsed == "class" && node.inner?.Any(n => n.isimplicit == true && n.kind == "CXXConstructorDecl") == true)
+                {
+                    //Add diag for implicit constructor
+                    diagnostic.Add(new CodeDiagnostic("", navigationItem.NavigationId, "Implicit constructor is found. Constructors must be declared explicitly", ""));
+                }
+                return navigationItem;
+            }
+
+            NavigationItem ProcessEnumNode(CppAstNode node)
+            {
+                builder.Keyword("enum");
+                builder.Space();
+                var navigationItem = BuildDeclaration(node.name, "enum");
+                builder.NewLine();
+                builder.WriteIndent();
+                builder.Punctuation("{");
+                builder.NewLine();
+                builder.IncrementIndent();
+
+                if (node.inner != null)
+                {
                     foreach (var parameterNode in node.inner)
                     {
                         if (parameterNode.kind == "EnumConstantDecl")
@@ -306,217 +376,276 @@ namespace APIViewWeb
                             builder.NewLine();
                         }
                     }
-
-                    builder.DecrementIndent();
-                    builder.Punctuation("}");
-                    builder.Punctuation(";");
-                    builder.NewLine();
                 }
 
-                void ProcessFunctionDeclNode(CppAstNode node)
+                builder.DecrementIndent();
+                builder.WriteIndent();
+                builder.Punctuation("};");
+                builder.NewLine();
+                builder.NewLine();
+                return navigationItem;
+            }
+
+            NavigationItem ProcessFunctionDeclNode(CppAstNode node, string parentName)
+            {
+                if (node.isvirtual == true)
                 {
-                    if (node.inline == true)
-                    {
-                        builder.Keyword("inline");
-                    }
-
-                    //Todo : add static for static method
-                    var type = node.type.qualType;
-                    var returnType = type.Split(" ")[0];
-
-                    BuildType(builder, returnType, types);
+                    builder.Keyword("virtual");
                     builder.Space();
-                    BuildDeclaration(node.name, "method");
-                    builder.Punctuation("(");
+                }
+
+                if (node.inline == true)
+                {
+                    builder.Keyword("inline");
+                    builder.Space();
+                }
+
+                if (!string.IsNullOrEmpty(node.storageClass))
+                {
+                    builder.Keyword(node.storageClass);
+                    builder.Space();
+                }
+
+                if (node.type != null)
+                {
+                    BuildType(builder, node.type, types);
+                }
+
+                builder.Space();
+                var navigationItem = BuildDeclaration(node.name, "method", parentName);
+                builder.Punctuation("(");
+                bool first = true;
+                if (node.inner != null)
+                {
+                    bool isMultiLineArgs = node.inner.Count > 1;
                     builder.IncrementIndent();
-
-                    bool first = true;
-                    if (node.inner != null)
+                    foreach (var parameterNode in node.inner)
                     {
-                        foreach (var parameterNode in node.inner)
-                        {
-                            if (parameterNode.kind == "ParmVarDecl")
+                        if (parameterNode.kind == "ParmVarDecl")
+                        {   
+                            if (first)
                             {
-                                if (first)
-                                {
-                                    builder.NewLine();
-                                    first = false;
-                                }
+                                first = false;
+                            }
+                            else
+                            {
+                                builder.Punctuation(",");
+                                builder.Space();
+                            }
 
+                            if (isMultiLineArgs)
+                            {
+                                builder.NewLine();
                                 builder.WriteIndent();
-                                BuildType(builder, parameterNode.type.qualType, types);
+                            }
+                            BuildType(builder, parameterNode.type, types);
+
+                            if (node.isimplicit != true)
+                            {
                                 builder.Space();
                                 builder.Text(parameterNode.name);
-                                builder.Punctuation(",");
-                                builder.NewLine();
-                            }
+                            }                                                     
                         }
                     }
-                    
                     builder.DecrementIndent();
-                    builder.Punctuation(");");
-                    builder.NewLine();
                 }
-
-                void ProcessConstructorDecl(CppAstNode node)
+                
+                builder.Punctuation(")");
+                //Add any postfix keywords if signature has any.
+                // Few expamples are 'const noexcept' 
+                if (!string.IsNullOrEmpty(node.keywords))
                 {
-
-                }
-
-                void ProcessFieldDecl(CppAstNode node)
-                {
-
-                }
-
-                void ProcessNamespaceNoe(CppAstNode node)
-                {
-                    //Generate namespace name
-                    int namespaceDepth = 0;
-                    var namespacebldr = new StringBuilder();
-                    var parentNode = node;
-
-                    //sampe display of namspace text for C++ is
-                    // namespace Azure { namespace Storage { namespace Blobs {
-                    // }}}
-                    while (node?.kind == "NamespaceDecl")
+                    foreach(var key in node.keywords.Split())
                     {
-                        builder.Keyword("namespace");
                         builder.Space();
-                        builder.Text(node.name);
-                        builder.Space();
-                        builder.Punctuation("{");
-                        namespaceDepth++;
-                        builder.Space();
-
-                        if (namespacebldr.Length > 0)
-                        {
-                            namespacebldr.Append("::");
-                        }
-                        namespacebldr.Append(node.name);
-
-                        parentNode = node;
-                        node = node.inner?.FirstOrDefault(n => n.kind == "NamespaceDecl");
-                    }                    
-
-                    var name_space = namespacebldr.ToString();
-                    types.Add(name_space);
-                    currentNamespace = new NavigationItem()
-                    {
-                        NavigationId = name_space,
-                        Text = name_space,
-                        Tags = { { "TypeKind", "namespace" } }
-                    };
-
-                    //Process all nodesin namespace
-                    builder.IncrementIndent();
-                    builder.NewLine();                    
-                    foreach (var inner in parentNode.inner)
-                    {
-                        ProcessNode(inner);
+                        builder.Keyword(key);
                     }
-                    builder.DecrementIndent();
-                    builder.NewLine();
-                    // Mark this namespace as processed by poping last sub namespace
-                    while (namespaceDepth > 0)
-                    {
-                        builder.Punctuation("}");
-                        namespaceDepth--;
-                    }
-                    builder.NewLine();
                 }
 
-                void ProcessTypeAlias(CppAstNode node)
+                // If method is tagged as pure or delete or default then it should be marked as "=<0|default|delete>"
+                if (node.ispure == true)
                 {
-                    builder.Keyword("using");
                     builder.Space();
-                    builder.Text(node.name);
-                    builder.NewLine();
+                    builder.Punctuation("=");
+                    builder.Space();
+                    builder.Text("0");
+                }
+                else if (node.isdefault == true)
+                {
+                    builder.Space();
+                    builder.Punctuation("=");
+                    builder.Space();
+                    builder.Keyword("default");
+                }
+                else if (node.isdelete == true)
+                {
+                    builder.Space();
+                    builder.Punctuation("=");
+                    builder.Space();
+                    builder.Keyword("delete");
                 }
 
-                void ProcessNode(CppAstNode node)
+                builder.Punctuation(";");
+                builder.NewLine();                
+                return navigationItem;
+            }
+
+            NavigationItem ProcessConstrDestrDeclNode(CppAstNode node, string parentName)
+            {
+                NavigationItem navItem = null;
+                if (node.name != null)
                 {
-                    switch (node.kind)
+                    if (node.isimplicit == true)
                     {
-                        case "NamespaceDecl":
-                            {
-                                ProcessNamespaceNoe(node);
-                                break;
-                            }
+                        builder.Keyword("implicit");
+                        builder.Space();
+                    }
+                    navItem = ProcessFunctionDeclNode(node, parentName);
+                }
+                return navItem;
+            }
 
-                        case "CXXRecordDecl":
-                            {
-                                ProcessCXXRecordDecl(node);
-                                break;
-                            }
+            void ProcessTypeAlias(CppAstNode node)
+            {
+                builder.Keyword("using");
+                builder.Space();
+                builder.Text(node.name);
+                builder.Space();
+                builder.Punctuation("=");
+                builder.Space();
+                BuildType(builder, node.type, types);
+                builder.Punctuation(";");
+                builder.NewLine();
+            }
 
-                        case "CXXConstructorDecl":
-                            {
-                                ProcessConstructorDecl(node);
-                                break;
-                            }
+            void ProcessVarDecNode(CppAstNode node, string parentName)
+            {
+                if (node.constexpr == true)
+                {
+                    builder.Keyword("constexpr");
+                    builder.Space();
+                }
+                if (!string.IsNullOrEmpty(node.storageClass))
+                {
+                    builder.Keyword(node.storageClass);
+                    builder.Space();
+                }
 
-                        case "FunctionDecl":
-                        case "CXXMethodDecl":
-                            {
-                                ProcessFunctionDeclNode(node);
-                                break;
-                            }
-                        case "EnumDecl":
-                            {
-                                ProcessEnumNode(node);
-                                break;
-                            }
+                //Remove left most const from type if it is constexpr
+                string type = node.type;
+                if (node.constexpr == true && type.StartsWith("const"))
+                {
+                    var regex = new Regex(Regex.Escape("const"));
+                    type = regex.Replace(type, "", 1).Trim();
+                }
 
-                        case "FieldDecl":
-                            {
-                                ProcessFieldDecl(node);
-                                break;
-                            }
+                BuildType(builder, type, types);
+                builder.Space();
+                BuildMemberDeclaration(parentName, node.name);
+                if (node.inner?.FirstOrDefault() is CppAstNode
+                                exprNode)
+                {
+                    builder.Space();
+                    builder.Punctuation("=");
+                    builder.Space();
+                    BuildExpression(builder, exprNode);
+                }
+                builder.Punctuation(";");
+                builder.NewLine();
+            }
 
-                        case "VarDecl":
-                            {
-                                ProcessVarDecNode(node);
-                                break;
-                            }
-
-                        case "TypeAliasDecl":
-                            {
-                                ProcessTypeAlias(node);
-                                break;
-                            }
-
-                        default:
-                            builder.Text(node.ToString());
+            void ProcessNode(CppAstNode node, List<NavigationItem> navigationItems, string parentName = "")
+            {
+                NavigationItem currentNavItem = null;
+                builder.WriteIndent();
+                switch (node.kind)
+                {
+                    case "CXXRecordDecl":
+                        {
+                            currentNavItem = ProcessClassNode(node, parentName);
+                            builder.NewLine();
                             break;
+                        }
+
+                    case "CXXConstructorDecl":
+                    case "CXXDestructorDecl":
+                        {
+                            currentNavItem = ProcessConstrDestrDeclNode(node, parentName);
+                            break;
+                        }
+
+                    case "FunctionDecl":
+                    case "CXXMethodDecl":
+                        {
+                            currentNavItem = ProcessFunctionDeclNode(node, parentName);
+                            break;
+                        }
+                    case "EnumDecl":
+                        {
+                            currentNavItem = ProcessEnumNode(node);
+                            builder.NewLine();
+                            break;
+                        }
+
+                    case "FieldDecl":
+                    case "VarDecl":
+                        {
+                            ProcessVarDecNode(node, parentName);
+                            break;
+                        }
+
+                    case "TypeAliasDecl":
+                        {
+                            ProcessTypeAlias(node);
+                            break;
+                        }
+
+                    default:
+                        builder.Text(node.ToString());
+                        builder.NewLine();
+                        break;
+                }
+
+                if (currentNavItem != null && navigationItems != null)
+                {
+                    navigationItems.Add(currentNavItem);
+                }
+            }
+
+            void BuildType(CodeFileTokensBuilder builder, string type, HashSet<string> types)
+            {
+                foreach (Match typePartMatch in _typeTokenizer.Matches(type))
+                {
+                    var typePart = typePartMatch.ToString();
+                    if (_keywords.Contains(typePart))
+                    {
+                        builder.Keyword(typePart);
+                    }
+                    else if (typePart.Contains("::"))
+                    {
+                        // Handle type usage before it's defintition
+                        var typeNamespace = typePart.Substring(0, typePart.LastIndexOf("::"));
+                        string typeValue = typePart;
+                        string navigateToId = "";
+                        if (types.Contains(typePart) || namespaceLeafMap.ContainsKey(typeNamespace))
+                        {
+                            typeValue = typePart.Substring(typePart.LastIndexOf("::") + 2);
+                            navigateToId = typePart;
+                        }
+                        builder.Append(new CodeFileToken()
+                        {
+                            Kind = CodeFileTokenKind.TypeName,
+                            NavigateToId = navigateToId,
+                            Value = typeValue
+                        });
+                    }
+                    else
+                    {
+                        builder.Text(typePart);
                     }
                 }
             }
-        }
-
-        private static void BuildType(CodeFileTokensBuilder builder, string type, HashSet<string> types)
-        {
-            foreach (Match typePartMatch in _typeTokenizer.Matches(type))
-            {
-                var typePart = typePartMatch.ToString();
-                if (_keywords.Contains(typePart))
-                {
-                    builder.Keyword(typePart);
-                }
-                else if (types.Contains(typePart))
-                {
-                    builder.Append(new CodeFileToken()
-                    {
-                        Kind = CodeFileTokenKind.TypeName,
-                        NavigateToId = typePart,
-                        Value = typePart
-                    });
-                }
-                else
-                {
-                    builder.Text(typePart);
-                }
-            }
-        }
+        }        
 
         private static void BuildExpression(CodeFileTokensBuilder builder, CppAstNode exprNode)
         {
@@ -540,14 +669,11 @@ namespace APIViewWeb
                 case "IntegerLiteral":
                     builder.Text(exprNode.value);
                     break;
-                case "DeclRefExpr":
-                    builder.Text(exprNode.referencedDecl?.name);
-                    break;
                 case "StringLiteral":
                     builder.Append(exprNode.value, CodeFileTokenKind.StringLiteral);
                     break;
                 case "CXXTemporaryObjectExpr":
-                    var subTypes = exprNode.type.qualType.Split("::");
+                    var subTypes = exprNode.type.Split("::");
                     var shortType = subTypes[subTypes.Length - 1];
                     builder.Text(shortType);
                     builder.Punctuation("(");
@@ -558,62 +684,321 @@ namespace APIViewWeb
                     break;
             }
         }
-        private class CAstNodeType
-        {
-            public string desugaredQualType { get; set; }
-            public string qualType { get; set; }
-        }
-
-        private class CAstNodeRange
-        {
-            public CAstNodeLocation begin { get; set; }
-            public CAstNodeLocation end { get; set; }
-        }
-
-        private class CAstNodeIncludeLocation
-        {
-            public string file { get; set; }
-        }
-
-        private class CAstNodeLocation
-        {
-            public string file { get; set; }
-            public int? offset { get; set; }
-            public int? line { get; set; }
-            public int? col { get; set; }
-            public int? tokLen { get; set; }
-
-            public CAstNodeLocation spellingLoc { get; set; }
-            public CAstNodeLocation expansionLoc { get; set; }
-            public CAstNodeIncludeLocation includedFrom { get; set; }
-        }
 
         private class CppAstNode
         {
             public string id { get; set; }
             public string kind { get; set; }
-            public bool? isImplicit { get; set; }
-            public bool? isReferenced { get; set; }
-            public CAstNodeLocation loc { get; set; }
-            public CAstNodeType type { get; set; }
+            public string type { get; set; }
             public string name { get; set; }
             public string text { get; set; }
             public string value { get; set; }
-            public CppAstNode[] inner { get; set; }
-            public CppAstNode referencedDecl { get; set; }
+            public List<CppAstNode> inner { get; set; }
             public string storageClass { get; set; }
             public bool? constexpr { get; set; }
-            public string mangledName { get; set; }
-            public string init { get; set; }
             public bool? inline { get; set; }
-            public string valueCategory { get; set; }
-            public string castKind { get; set; }
+            public bool? isimplicit {get; set; }
+            public bool? isvirtual { get; set; }
+            public bool? ispure { get; set; }
+            public bool? isdefault { get; set; }
+            public bool? isdelete { get; set; }
             public string tagUsed { get; set; }
-            public string scopedEnumTag { get; set; }
             public string access { get; set; }
+            public string keywords { get; set; }
             public override string ToString()
             {
                 return $"{nameof(kind)}: {kind} {nameof(name)}: {name}";
+            }
+        }
+
+        private class CppAstConverter
+        {
+            private static Regex _declKindParser = new Regex("\\w+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            private static Regex _methodOrParamParser = new Regex("([\\S]+)\\s'([^\\(']*)\\s?\\([^)]*\\)\\s?([^']*)'([\\w\\s]*)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            private static Regex _varOrParamParser = new Regex("([\\S]+)\\s'([^\\(']*)\\s?\\(?[^']*'", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            private static Regex _classNameParser = new Regex("(struct|class|union)\\s?([\\w]*)\\sdefinition", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            private static Regex _fieldDefParser = new Regex("([\\w]+)\\s'([^']+)'", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            private static Regex _accessType = new Regex("private|public|protected", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            private static Regex _stringLiteralParser = new Regex("\"([^\"]+)\"", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            private static Regex _integerLiteralParser = new Regex("'int'\\s([0-9A-Fx]+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            private static Regex _enumDeclParser = new Regex("(class)\\s([\\w]+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            private static Regex _enumConstantDeclParser = new Regex("([\\w]+)+\\s'([\\w:]+)'", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            private static Regex _inheritanceParser = new Regex("(private|public|protected)\\s'([\\w:]+)'", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+            private static HashSet<string> _declarationKinds = new HashSet<string>()
+            {
+                "NamespaceDecl",
+                "VarDecl",
+                "StringLiteral",
+                "IntegerLiteral",
+                "FunctionDecl",
+                "ParmVarDecl",
+                "CXXRecordDecl",
+                "CXXMethodDecl",
+                "FieldDecl",
+                "CXXConstructorDecl",
+                "CXXDestructorDecl",
+                "AccessSpecDecl",
+                "EnumDecl",
+                "EnumConstantDecl",
+                "TypeAliasDecl",
+                "public",
+                "protected",
+                "private"
+            };
+
+            private static HashSet<string> _skipOnlyCurrentNodeKinds = new HashSet<string>()
+            {
+                "ImplicitCastExpr",
+                "TranslationUnitDecl"
+            };
+
+            private static string ParseNodeKind(string line)
+            {
+                var declTypeMatch = _declKindParser.Matches(line).FirstOrDefault();
+                string nodeKind = declTypeMatch != null ? declTypeMatch.ToString() : null;
+                return nodeKind;
+            }
+
+            private static bool ShouldProcessLine(string line, CppAstNode node, CppAstNode lastNode)
+            {
+                node.isimplicit = line.Split().Any(s => s.Equals("implicit"));
+                //Skip Subtree if current node is root namespace and if that's not valid root name('Azure')
+                bool isValidNamespace = true;
+                if (node.kind == NamespaceDeclKind)
+                {
+                    // Check if last name was namespace
+                    // If last node in stack is not namespace node then current namespace node is root node and it has to be valid name
+                    isValidNamespace = lastNode.kind == NamespaceDeclKind || line.Contains(RootNamespace);
+                }
+
+                // Process line if it is within valid namespace and tokenKind is in valid list
+                // Implicit line should be processed only if it is for ConstructorDecl
+                return isValidNamespace && _declarationKinds.Contains(node.kind) && (node.isimplicit == false || node.kind == "CXXConstructorDecl");
+            }
+
+            public void ParseToAstTree(ZipArchiveEntry zipEntry, CppAstNode astRoot)
+            {
+                StreamReader reader = new StreamReader(zipEntry.Open());
+                //Use a stack to track tree level
+                var patternStack = new Stack<string>();
+                var astnodeStack = new Stack<CppAstNode>();
+                astnodeStack.Push(astRoot);
+
+                string line = reader.ReadLine();
+                while (line != null)
+                {
+                    CppAstNode node = new CppAstNode();
+                    node.kind = ParseNodeKind(line);
+                    var prefix = line.Substring(0, line.IndexOf(node.kind));
+                    if (ShouldProcessLine(line, node, astnodeStack.Peek()))
+                    {
+                        ParseLine(line, ref node);
+                        //Prefix string in ast-dump is compared to identify tree depth                    
+                        //If prefix stack is empty or last element is same type as new prefix then node is at same depth
+                        //If new prefix is larger than last element then this new node is sub node
+                        //If new prefix is smaller than last element in stack then this new node is at higher level.(Traverse all the way to find a matching level in stack)
+                        //Stack always keep track of items equivalent to max depth so it will be less items in stack)
+                        if (patternStack.Count > 0)
+                        {
+                            if (patternStack.Peek().Length == prefix.Length)
+                            {
+                                patternStack.Pop();
+                                astnodeStack.Pop();
+                            }
+                            else if (patternStack.Peek().Length > prefix.Length)
+                            {
+                                while (patternStack.Count > 0 && patternStack.Peek().Length >= prefix.Length)
+                                {
+                                    patternStack.Pop();
+                                    astnodeStack.Pop();
+                                }
+                            }
+                        }
+
+                        var parentNode = astnodeStack.Count > 0 ? astnodeStack.Pop() : astRoot;
+                        if (parentNode.inner == null)
+                            parentNode.inner = new List<CppAstNode>();
+
+                        parentNode.inner.Add(node);
+                        patternStack.Push(prefix);
+                        astnodeStack.Push(parentNode);
+                        astnodeStack.Push(node);
+                    }
+                    else if (!_skipOnlyCurrentNodeKinds.Contains(node.kind))
+                    {
+                        //skip anychild nodes of excluded node
+                        line = reader.ReadLine();
+                        while (line != null)
+                        {
+                            var newLinePrefix = line.Substring(0, line.IndexOf(ParseNodeKind(line)));
+                            //Should not skip new line if it is at parent level or sibling
+                            if (newLinePrefix.Length <= prefix.Length)
+                                break;
+                            line = reader.ReadLine();
+                        }
+                        continue;
+                    }
+
+                    line = reader.ReadLine();
+                }
+            }
+
+            private static void ParseLine(string line, ref CppAstNode node)
+            {
+                string[] tokens = line.Split();
+                //Set any common properties
+                node.storageClass = tokens.Any(token => token == "static") ? "static" : "";
+                node.constexpr = tokens.Any(token => token == "constexpr");
+                node.inline = tokens.Any(token => token == "inline");
+                node.isimplicit = tokens.Any(token => token == "implicit");
+
+                switch (node.kind)
+                {
+                    case NamespaceDeclKind:
+                        node.name = tokens.LastOrDefault();
+                        break;
+
+                    case "VarDecl":
+                    case "ParmVarDecl":
+                    case "TypeAliasDecl":
+                        ParseFieldDecl(line, ref node, ref _varOrParamParser);
+                        break;
+
+                    case "CXXMethodDecl":
+                    case "CXXConstructorDecl":
+                    case "CXXDestructorDecl":
+                    case "FunctionDecl":
+                        ParseMethodDecl(line, ref node, ref _methodOrParamParser);
+                        break;
+
+                    case "CXXRecordDecl":
+                        ParseClassDecl(line, ref node);
+                        break;
+
+                    case "FieldDecl":
+                        ParseFieldDecl(line, ref node, ref _fieldDefParser);
+                        break;
+
+                    case "StringLiteral":
+                    case "IntegerLiteral":
+                        ParseLiteralDecl(line, ref node);
+                        break;
+
+                    case "AccessSpecDecl":
+                        ParseAccessType(line, ref node);
+                        break;
+
+                    case "EnumDecl":
+                        ParseEnumDecl(line, ref node);
+                        break;
+
+                    case "EnumConstantDecl":
+                        ParseEnumConstDecl(line, ref node);
+                        break;
+
+                    case "public":
+                    case "protected":
+                    case "private":
+                        //Inheritence declaration has inheritance access level as token kinds
+                        ParseInheritanceDecl(line, node);
+                        break;
+
+                    default:
+                        node.name = "Not implemented";
+                        node.type = "";
+                        break;
+                }
+            }
+
+            private static void ParseFieldDecl(string line, ref CppAstNode node, ref Regex regexPattern)
+            {
+                var match = regexPattern.Match(line);
+                if (match.Success)
+                {
+                    node.name = match.Groups[1].Value;
+                    node.type = match.Groups[2].Value.Trim();
+                }
+            }
+
+            private static void ParseMethodDecl(string line, ref CppAstNode node, ref Regex regexPattern)
+            {
+                var match = regexPattern.Match(line);
+                if (match.Success)
+                {
+                    node.name = match.Groups[1].Value;
+                    node.type = match.Groups[2].Value.Trim();
+                    node.keywords = match.Groups[3].Value;
+                    var qualifiers = match.Groups[4].Value.Split();
+                    node.isvirtual = qualifiers.Any(q => q == "virtual");
+                    node.ispure = qualifiers.Any(q => q == "pure");
+                    node.isdefault = qualifiers.Any(q => q == "default");
+                    node.isdelete = qualifiers.Any(q => q == "delete");
+                }
+            }
+
+            private static void ParseClassDecl(string line, ref CppAstNode node)
+            {
+                var match = _classNameParser.Match(line);
+                if (match.Success)
+                {
+                    node.tagUsed = match.Groups[1].Value;
+                    node.name = match.Groups[2].Value;
+                }
+            }
+
+            private static void ParseInheritanceDecl(string line, CppAstNode node)
+            {
+                var match = _inheritanceParser.Match(line);
+                if (match.Success)
+                {
+                    node.access = match.Groups[1].Value;
+                    node.name = match.Groups[2].Value;
+                }
+            }
+
+            private static void ParseAccessType(string line, ref CppAstNode node)
+            {
+                var match = _accessType.Match(line);
+                if (match.Success)
+                {
+                    node.access = match.Value;
+                }
+            }
+
+            private static void ParseLiteralDecl(string line, ref CppAstNode node)
+            {
+                Regex regex = _stringLiteralParser;
+                if (node.kind == "IntegerLiteral")
+                {
+                    regex = _integerLiteralParser;
+                }
+
+                var match = regex.Match(line);
+                if (match.Success)
+                {
+                    node.value = match.Groups[1].Value; ;
+                }
+            }
+
+
+            private static void ParseEnumDecl(string line, ref CppAstNode node)
+            {
+                var match = _enumDeclParser.Match(line);
+                if (match.Success)
+                {
+                    node.tagUsed = match.Groups[1].Value;
+                    node.name = match.Groups[2].Value;
+                }
+            }
+
+            private static void ParseEnumConstDecl(string line, ref CppAstNode node)
+            {
+                var match = _enumConstantDeclParser.Match(line);
+                if (match.Success)
+                {
+                    node.name = match.Groups[1].Value;
+                }
             }
         }
     }

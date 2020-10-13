@@ -2,7 +2,7 @@ parameters:
   Repos: []
   DirectoryToSync: eng/common
   CommitMessage: commit-message-not-set
-  PRBranchName: branch-name-not-set
+  UpstreamBranchName: branch-name-not-set
   BaseBranchName: master
   Sync: pr-data-artifact-path-not-set
   SkipCheckingForChanges: false
@@ -54,7 +54,7 @@ steps:
         workingDirectory: $(System.DefaultWorkingDirectory)/${{ repo }}
         filePath: ${{ parameters.ScriptDirectory }}/git-branch-push.ps1
         arguments: >
-          -PRBranchName "${{ parameters.PRBranchName }}"
+          -PRBranchName "${{ parameters.UpstreamBranchName }}"
           -CommitMsg "${{ parameters.CommitMessage }}"
           -GitUrl "https://$(azuresdk-github-pat)@github.com/${{ parameters.PROwner }}/${{ repo }}.git"
           -PushArgs "${{ parameters.PushArgs }}"
@@ -70,7 +70,7 @@ steps:
         arguments: >
           -Organization "azure-sdk"
           -Project "internal"
-          -SourceBranch "${{ parameters.PRBranchName }}"
+          -SourceBranch "${{ parameters.UpstreamBranchName }}"
           -DefinitionId "$(${{repo}}-template-definition-id)"
           -VsoQueuedPipelines "QueuedPipelines"
           -AuthToken "$(azuresdk-azure-sdk-devops-build-queuing-pat)"
@@ -81,12 +81,12 @@ steps:
     inputs:
       pwsh: true
       workingDirectory: ${{ parameters.WorkingDirectory }}
-      filePath: ${{ parameters.ScriptDirectory }}/Add-Issue-Comment.ps1
+      filePath: ${{ parameters.ScriptDirectory }}/Add-IssueComment.ps1
       arguments: >
         -RepoOwner "Azure"
         -RepoName "azure-sdk-tools"
         -IssueNumber "$(System.PullRequest.PullRequestNumber)"
-        -CommentPrefix "The following pipelines have been queued for testing:<br>"
-        -Comment "QueuedPipelines"
-        -CommentPostFix "<br>Sign off on the approval gate to test the release stage of each pipeline."
+        -Comment "The following pipelines have been queued for testing:<br>$env:QueuedPipelines`
+        <br>You can sign off on the approval gate to test the release stage of each pipeline.`
+        <br>See [eng/common workflow](https://github.com/Azure/azure-sdk-tools/blob/master/eng/common/README.md#workflow)"
         -AuthToken "$(azuresdk-github-pat)"

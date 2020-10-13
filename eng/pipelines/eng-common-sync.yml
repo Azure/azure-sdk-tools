@@ -9,6 +9,9 @@ parameters:
 - name: DirectoryToSync
   type: string
   default: eng/common
+- name: BaseBranchName
+  type: string
+  default: master
 - name: Repos
   type: object
   default:
@@ -69,17 +72,14 @@ stages:
             ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
               CommitMessage: "Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools repository for Tools PR $(System.PullRequest.PullRequestNumber)"
               DirectoryToSync: ${{ parameters.DirectoryToSync }}
-              PRBranchName: "sync-${{ parameters.DirectoryToSync }}-$(System.PullRequest.SourceBranch)-$(System.PullRequest.PullRequestNumber)"
+              UpstreamBranchName: "sync-${{ parameters.DirectoryToSync }}-$(System.PullRequest.SourceBranch)-$(System.PullRequest.PullRequestNumber)"
               BaseBranchName: $(system.pullRequest.targetBranch)
               SkipCheckingForChanges: true
             ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
               CommitMessage: Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools repository
               DirectoryToSync: ${{ parameters.DirectoryToSync }}
-              PRBranchName: "sync-${{ parameters.DirectoryToSync }}"
-              PRTitle: Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools repository
-              PRBody: >
-                Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools repository.<br>
-                See [eng/common workflow](https://github.com/Azure/azure-sdk-tools/blob/master/eng/common/README.md#workflow)
+              UpstreamBranchName: "sync-${{ parameters.DirectoryToSync }}"
+              BaseBranchName: ${{ coalesce(parameters.BaseBranchName, $(Build.SourceBranchName)) }}
             Repos: ${{ parameters.Repos }}
 
   - stage: CreateSyncPRs
@@ -118,20 +118,20 @@ stages:
                           -PRBranch "sync-${{ parameters.DirectoryToSync }}-$(System.PullRequest.SourceBranch)-$(System.PullRequest.PullRequestNumber)"
                           -AuthToken "$(azuresdk-github-pat)"
                           -PRTitle "Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools for PR $(System.PullRequest.PullRequestNumber)"
-                          -PRLabels "Central-EngSys, EngSys"
+                          -PRLabels "Central-EngSys,EngSys,auto-merge"
                           -PRBody "Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools for PR https://github.com/Azure/azure-sdk-tools/pull/$(System.PullRequest.PullRequestNumber)`
                            See [eng/common workflow](https://github.com/Azure/azure-sdk-tools/blob/master/eng/common/README.md#workflow)"
                       ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
                         arguments: >
                           -RepoOwner "Azure"
                           -RepoName "${{ repo }}"
-                          -BaseBranch $(system.pullRequest.targetBranch)
+                          -BaseBranch ${{ coalesce(parameters.BaseBranchName, $(Build.SourceBranchName)) }}
                           -PROwner "Azure"
                           -PRBranch "sync-${{ parameters.DirectoryToSync }}"
                           -AuthToken "$(azuresdk-github-pat)"
-                          -PRTitle "Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools for PR $(System.PullRequest.PullRequestNumber)"
-                          -PRLabels "Central-EngSys, EngSys"
-                          -PRBody "Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools for PR https://github.com/Azure/azure-sdk-tools/pull/$(System.PullRequest.PullRequestNumber)`
+                          -PRTitle "Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools"
+                          -PRLabels "Central-EngSys,EngSys"
+                          -PRBody "Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools`
                            See [eng/common workflow](https://github.com/Azure/azure-sdk-tools/blob/master/eng/common/README.md#workflow)"
 
                   - pwsh: |
@@ -174,5 +174,18 @@ stages:
                     arguments: >
                       -PRDataArtifactPath "$(Pipeline.Workspace)/${{parameters.ArtifactName}}/${{ parameters.PRDataFileName }}"
                       -AuthToken "$(azuresdk-github-pat)"
-                      -devOpsLogging
+                    pwsh: true
+
+                - task: PowerShell@2
+                  displayName: 'Add Auto merge Label'
+                  condition: succeeded()
+                  inputs:
+                    targetType: filePath
+                    filePath: $(Build.SourcesDirectory)/eng/common/scripts/Add-IssueLabels.ps1
+                    arguments: >
+                      -RepoOwner "Azure"
+                      -RepoName "azure-sdk-tools"
+                      -IssueNumber $(System.PullRequest.PullRequestNumber)
+                      -Labels "auto-merge"
+                      -AuthToken "$(azuresdk-github-pat)"
                     pwsh: true

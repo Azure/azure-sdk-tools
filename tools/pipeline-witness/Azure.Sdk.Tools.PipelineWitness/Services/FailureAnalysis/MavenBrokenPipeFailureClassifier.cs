@@ -38,7 +38,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
                     failedTask.Log.Id
                     );
 
-                if (lines.Any(line => line.Contains("Connection reset")))
+                if (lines.Any(line => line.Contains("Connection reset") || line.Contains("Connection timed out") || line.Contains("504 Gateway Timeout")))
                 {
                     context.AddFailure(failedTask, "Maven Broken Pipe");
                 }

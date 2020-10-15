@@ -3,12 +3,11 @@
 
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Reflection.Metadata.Ecma335;
 using System.Text;
-using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using ApiView;
@@ -22,7 +21,26 @@ namespace APIViewWeb
         private const string NamespaceDeclKind = "NamespaceDecl";
         private const string CxxRecordDeclKind = "CXXRecordDecl";
         private const string CxxMethodDeclKind = "CXXMethodDecl";
+        private const string CxxConstructorDeclKind = "CXXConstructorDecl";
+        private const string CxxDestructorDeclKind = "CXXDestructorDecl";
+        private const string FunctionTemplateDeclKind = "FunctionTemplateDecl";
+        private const string TemplateTypeParmDeclKind = "TemplateTypeParmDecl";
+        private const string AccessSpecDeclKind = "AccessSpecDecl";
+        private const string ParmVarDeclKind = "ParmVarDecl";
+        private const string FunctionDeclKind = "FunctionDecl";
+        private const string EnumConstantDeclKind = "EnumConstantDecl";
+        private const string EnumDeclKind = "EnumDecl";
+        private const string FieldDeclKind = "FieldDecl";
+        private const string VarDeclKind = "VarDecl";
+        private const string TypeAliasDeclKind = "TypeAliasDecl";
+        private const string StringLiteralKind = "StringLiteral";
+        private const string IntegerLiteralKind = "IntegerLiteral";
+        private const string AccessModifierPrivate = "private";
+        private const string AccessModifierProtected = "protected";
+        private const string AccessModifierPublic = "public";
         private const string RootNamespace = "Azure";
+        private const string ImplicitConstrucorHintError = "Implicit constructor is found. Constructors must be explicitly declared.";
+        private const string NonAccessModifierMemberError = "Found field without access modifier. Access modifier must be explicitly declared.";
 
         private static Regex _typeTokenizer = new Regex("[\\w:]+|[^\\w]+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         
@@ -84,9 +102,9 @@ namespace APIViewWeb
 
         private static HashSet<string> parentTypes = new HashSet<string>()
         {
-            "private",
-            "protected",
-            "public"
+            AccessModifierPrivate,
+            AccessModifierProtected,
+            AccessModifierPublic
         };
 
         public override string Name { get; } = "C++";
@@ -263,6 +281,7 @@ namespace APIViewWeb
                 if (parents != null)
                 {                    
                     bool first = true;
+                    //Show inheritance details
                     foreach ( var parent in parents)
                     {
                         if (first)
@@ -288,27 +307,29 @@ namespace APIViewWeb
                 builder.WriteIndent();
                 builder.Punctuation("{");
                 builder.NewLine();
-                //Double intendation for members
+                //Double intendation for members since access modified is not parent for members
                 builder.IncrementIndent();
                 builder.IncrementIndent();
-
+                bool hasFoundDefaultAccessMembers = false;
                 if (node.inner != null)
                 {
                     bool isPrivateMember = false;
+                    string currentAccessModifier = "";
                     foreach (var childNode in node.inner)
                     {
                         if (childNode.kind == CxxRecordDeclKind && childNode.name == node.name)
                             continue;
 
                         // add public or protected access specifier
-                        if (childNode.kind == "AccessSpecDecl")
+                        if (childNode.kind == AccessSpecDeclKind)
                         {
                             //Skip all private members
-                            isPrivateMember = (childNode.access == "private");
+                            isPrivateMember = (childNode.access == AccessModifierPrivate);
                             if (isPrivateMember)
                             {
                                 continue;
                             }
+                            currentAccessModifier = childNode.access;
                             builder.DecrementIndent();
                             builder.WriteIndent();
                             builder.Keyword(childNode.access);
@@ -317,7 +338,11 @@ namespace APIViewWeb
                             builder.NewLine();
                         }
                         else if(!isPrivateMember && !parentTypes.Contains(childNode.kind))
-                        {                            
+                        {
+                            if (string.IsNullOrEmpty(currentAccessModifier) && !hasFoundDefaultAccessMembers)
+                            {
+                                hasFoundDefaultAccessMembers = true;
+                            }
                             ProcessNode(childNode, memberNavigations, node.name);
                         }
                     }
@@ -336,11 +361,19 @@ namespace APIViewWeb
                     navigationItem.ChildItems = memberNavigations.ToArray();
                 }
 
-                if (node.tagUsed == "class" && node.inner?.Any(n => n.isimplicit == true && n.kind == "CXXConstructorDecl") == true)
+                if (node.tagUsed == "class")
                 {
-                    //Add diag for implicit constructor
-                    diagnostic.Add(new CodeDiagnostic("", navigationItem.NavigationId, "Implicit constructor is found. Constructors must be declared explicitly", ""));
+                    if (node.inner?.Any(n => n.isimplicit == true && n.kind == CxxConstructorDeclKind) == true)
+                    {
+                        diagnostic.Add(new CodeDiagnostic("", navigationItem.NavigationId, ImplicitConstrucorHintError, ""));
+                    }
+
+                    if (hasFoundDefaultAccessMembers)
+                    {
+                        diagnostic.Add(new CodeDiagnostic("", navigationItem.NavigationId, NonAccessModifierMemberError, ""));
+                    }
                 }
+                
                 return navigationItem;
             }
 
@@ -359,7 +392,7 @@ namespace APIViewWeb
                 {
                     foreach (var parameterNode in node.inner)
                     {
-                        if (parameterNode.kind == "EnumConstantDecl")
+                        if (parameterNode.kind == EnumConstantDeclKind)
                         {
                             builder.WriteIndent();
                             BuildMemberDeclaration("", parameterNode.name);
@@ -388,6 +421,12 @@ namespace APIViewWeb
 
             NavigationItem ProcessFunctionDeclNode(CppAstNode node, string parentName)
             {
+                if (node.isimplicit == true)
+                {
+                    builder.Keyword("implicit");
+                    builder.Space();
+                }
+
                 if (node.isvirtual == true)
                 {
                     builder.Keyword("virtual");
@@ -409,9 +448,9 @@ namespace APIViewWeb
                 if (node.type != null)
                 {
                     BuildType(builder, node.type, types);
+                    builder.Space();
                 }
-
-                builder.Space();
+                
                 var navigationItem = BuildDeclaration(node.name, "method", parentName);
                 builder.Punctuation("(");
                 bool first = true;
@@ -421,7 +460,7 @@ namespace APIViewWeb
                     builder.IncrementIndent();
                     foreach (var parameterNode in node.inner)
                     {
-                        if (parameterNode.kind == "ParmVarDecl")
+                        if (parameterNode.kind == ParmVarDeclKind)
                         {   
                             if (first)
                             {
@@ -440,7 +479,7 @@ namespace APIViewWeb
                             }
                             BuildType(builder, parameterNode.type, types);
 
-                            if (node.isimplicit != true)
+                            if (!string.IsNullOrEmpty(parameterNode.name))
                             {
                                 builder.Space();
                                 builder.Text(parameterNode.name);
@@ -490,19 +529,35 @@ namespace APIViewWeb
                 return navigationItem;
             }
 
-            NavigationItem ProcessConstrDestrDeclNode(CppAstNode node, string parentName)
+            NavigationItem ProcessTemplateFuncDeclNode(CppAstNode node, string parentName)
             {
-                NavigationItem navItem = null;
-                if (node.name != null)
+                builder.Keyword("template");
+                builder.Space();
+                
+                NavigationItem navigationItem = null;
+                if (node.inner != null)
                 {
-                    if (node.isimplicit == true)
+                    bool first = true;
+                    builder.Punctuation("<");
+                    foreach (var childnode in node.inner.Where(n => n.kind == TemplateTypeParmDeclKind))
                     {
-                        builder.Keyword("implicit");
-                        builder.Space();
+                        if (!first)
+                        {
+                            builder.Punctuation(",");
+                            builder.Space();
+                        }
+                        builder.Text(childnode.name);
                     }
-                    navItem = ProcessFunctionDeclNode(node, parentName);
+                    builder.Punctuation(">");
+
+                    builder.Space();
+                    var methodNode = node.inner.FirstOrDefault(node => node.kind == CxxMethodDeclKind);
+                    if (methodNode != null)
+                    {
+                        navigationItem = ProcessFunctionDeclNode(methodNode, parentName);
+                    }
                 }
-                return navItem;
+                return navigationItem;
             }
 
             void ProcessTypeAlias(CppAstNode node)
@@ -560,46 +615,47 @@ namespace APIViewWeb
                 builder.WriteIndent();
                 switch (node.kind)
                 {
-                    case "CXXRecordDecl":
+                    case CxxRecordDeclKind:
                         {
                             currentNavItem = ProcessClassNode(node, parentName);
                             builder.NewLine();
                             break;
                         }
 
-                    case "CXXConstructorDecl":
-                    case "CXXDestructorDecl":
-                        {
-                            currentNavItem = ProcessConstrDestrDeclNode(node, parentName);
-                            break;
-                        }
-
-                    case "FunctionDecl":
-                    case "CXXMethodDecl":
+                    case CxxConstructorDeclKind:
+                    case CxxDestructorDeclKind:
+                    case FunctionDeclKind:
+                    case CxxMethodDeclKind:
                         {
                             currentNavItem = ProcessFunctionDeclNode(node, parentName);
                             break;
                         }
-                    case "EnumDecl":
+                    case EnumDeclKind:
                         {
                             currentNavItem = ProcessEnumNode(node);
                             builder.NewLine();
                             break;
                         }
 
-                    case "FieldDecl":
-                    case "VarDecl":
+                    case FieldDeclKind:
+                    case VarDeclKind:
                         {
                             ProcessVarDecNode(node, parentName);
                             break;
                         }
 
-                    case "TypeAliasDecl":
+                    case TypeAliasDeclKind:
                         {
                             ProcessTypeAlias(node);
                             break;
                         }
 
+                    case FunctionTemplateDeclKind:
+                        {
+                            currentNavItem = ProcessTemplateFuncDeclNode(node, parentName);
+                            break;
+                        }
+                        
                     default:
                         builder.Text(node.ToString());
                         builder.NewLine();
@@ -672,13 +728,6 @@ namespace APIViewWeb
                 case "StringLiteral":
                     builder.Append(exprNode.value, CodeFileTokenKind.StringLiteral);
                     break;
-                case "CXXTemporaryObjectExpr":
-                    var subTypes = exprNode.type.Split("::");
-                    var shortType = subTypes[subTypes.Length - 1];
-                    builder.Text(shortType);
-                    builder.Punctuation("(");
-                    builder.Punctuation(")");
-                    break;
                 default:
                     builder.Text(exprNode + " " + exprNode.value);
                     break;
@@ -715,7 +764,7 @@ namespace APIViewWeb
         {
             private static Regex _declKindParser = new Regex("\\w+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
             private static Regex _methodOrParamParser = new Regex("([\\S]+)\\s'([^\\(']*)\\s?\\([^)]*\\)\\s?([^']*)'([\\w\\s]*)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-            private static Regex _varOrParamParser = new Regex("([\\S]+)\\s'([^\\(']*)\\s?\\(?[^']*'", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            private static Regex _varOrParamParser = new Regex("([a-zA-Z]*)\\s'([^\\(']*)\\s?\\(?[^']*'", RegexOptions.Compiled | RegexOptions.IgnoreCase);
             private static Regex _classNameParser = new Regex("(struct|class|union)\\s?([\\w]*)\\sdefinition", RegexOptions.Compiled | RegexOptions.IgnoreCase);
             private static Regex _fieldDefParser = new Regex("([\\w]+)\\s'([^']+)'", RegexOptions.Compiled | RegexOptions.IgnoreCase);
             private static Regex _accessType = new Regex("private|public|protected", RegexOptions.Compiled | RegexOptions.IgnoreCase);
@@ -727,24 +776,26 @@ namespace APIViewWeb
 
             private static HashSet<string> _declarationKinds = new HashSet<string>()
             {
-                "NamespaceDecl",
-                "VarDecl",
-                "StringLiteral",
-                "IntegerLiteral",
-                "FunctionDecl",
-                "ParmVarDecl",
-                "CXXRecordDecl",
-                "CXXMethodDecl",
-                "FieldDecl",
-                "CXXConstructorDecl",
-                "CXXDestructorDecl",
-                "AccessSpecDecl",
-                "EnumDecl",
-                "EnumConstantDecl",
-                "TypeAliasDecl",
-                "public",
-                "protected",
-                "private"
+                NamespaceDeclKind,
+                VarDeclKind,
+                StringLiteralKind,
+                IntegerLiteralKind,
+                FunctionDeclKind,
+                ParmVarDeclKind,
+                CxxRecordDeclKind,
+                CxxMethodDeclKind,
+                FieldDeclKind,
+                CxxConstructorDeclKind,
+                CxxDestructorDeclKind,
+                AccessSpecDeclKind,
+                EnumDeclKind,
+                EnumConstantDeclKind,
+                TypeAliasDeclKind,
+                FunctionTemplateDeclKind,
+                TemplateTypeParmDeclKind,
+                AccessModifierPublic,
+                AccessModifierProtected,
+                AccessModifierPrivate
             };
 
             private static HashSet<string> _skipOnlyCurrentNodeKinds = new HashSet<string>()
@@ -774,7 +825,7 @@ namespace APIViewWeb
 
                 // Process line if it is within valid namespace and tokenKind is in valid list
                 // Implicit line should be processed only if it is for ConstructorDecl
-                return isValidNamespace && _declarationKinds.Contains(node.kind) && (node.isimplicit == false || node.kind == "CXXConstructorDecl");
+                return isValidNamespace && _declarationKinds.Contains(node.kind) && (node.isimplicit == false || node.kind == CxxConstructorDeclKind);
             }
 
             public void ParseToAstTree(ZipArchiveEntry zipEntry, CppAstNode astRoot)
@@ -856,50 +907,52 @@ namespace APIViewWeb
                 switch (node.kind)
                 {
                     case NamespaceDeclKind:
+                    case FunctionTemplateDeclKind:
+                    case TemplateTypeParmDeclKind:
                         node.name = tokens.LastOrDefault();
                         break;
 
-                    case "VarDecl":
-                    case "ParmVarDecl":
-                    case "TypeAliasDecl":
+                    case VarDeclKind:
+                    case ParmVarDeclKind:
+                    case TypeAliasDeclKind:
                         ParseFieldDecl(line, ref node, ref _varOrParamParser);
                         break;
 
-                    case "CXXMethodDecl":
-                    case "CXXConstructorDecl":
-                    case "CXXDestructorDecl":
-                    case "FunctionDecl":
+                    case CxxMethodDeclKind:
+                    case CxxConstructorDeclKind:
+                    case CxxDestructorDeclKind:
+                    case FunctionDeclKind:
                         ParseMethodDecl(line, ref node, ref _methodOrParamParser);
                         break;
 
-                    case "CXXRecordDecl":
+                    case CxxRecordDeclKind:
                         ParseClassDecl(line, ref node);
                         break;
 
-                    case "FieldDecl":
+                    case FieldDeclKind:
                         ParseFieldDecl(line, ref node, ref _fieldDefParser);
                         break;
 
-                    case "StringLiteral":
-                    case "IntegerLiteral":
+                    case StringLiteralKind:
+                    case IntegerLiteralKind:
                         ParseLiteralDecl(line, ref node);
                         break;
 
-                    case "AccessSpecDecl":
+                    case AccessSpecDeclKind:
                         ParseAccessType(line, ref node);
                         break;
 
-                    case "EnumDecl":
+                    case EnumDeclKind:
                         ParseEnumDecl(line, ref node);
                         break;
 
-                    case "EnumConstantDecl":
+                    case EnumConstantDeclKind:
                         ParseEnumConstDecl(line, ref node);
                         break;
 
-                    case "public":
-                    case "protected":
-                    case "private":
+                    case AccessModifierPublic:
+                    case AccessModifierProtected:
+                    case AccessModifierPrivate:
                         //Inheritence declaration has inheritance access level as token kinds
                         ParseInheritanceDecl(line, node);
                         break;
@@ -927,7 +980,10 @@ namespace APIViewWeb
                 if (match.Success)
                 {
                     node.name = match.Groups[1].Value;
-                    node.type = match.Groups[2].Value.Trim();
+                    if (node.kind != CxxConstructorDeclKind && node.kind != CxxDestructorDeclKind)
+                    {
+                        node.type = match.Groups[2].Value.Trim();
+                    }
                     node.keywords = match.Groups[3].Value;
                     var qualifiers = match.Groups[4].Value.Split();
                     node.isvirtual = qualifiers.Any(q => q == "virtual");
@@ -969,7 +1025,7 @@ namespace APIViewWeb
             private static void ParseLiteralDecl(string line, ref CppAstNode node)
             {
                 Regex regex = _stringLiteralParser;
-                if (node.kind == "IntegerLiteral")
+                if (node.kind == IntegerLiteralKind)
                 {
                     regex = _integerLiteralParser;
                 }
@@ -980,7 +1036,6 @@ namespace APIViewWeb
                     node.value = match.Groups[1].Value; ;
                 }
             }
-
 
             private static void ParseEnumDecl(string line, ref CppAstNode node)
             {

@@ -27,7 +27,7 @@ steps:
              Write-Host $file.FullName
              git -c user.name="azure-sdk" -c user.email="azuresdk@microsoft.com" am -3 $file.FullName
              if ($lastExitCode -ne 0) { 
-               git am --show-current-patch=diff
+               git -c user.name="azure-sdk" -c user.email="azuresdk@microsoft.com" am --show-current-patch=diff
                Write-Error "##vso[task.LogIssue type=warning;]Failed to properly apply patch files to [https://github.com/azure/${{ repo }}]"
                exit 1
              }

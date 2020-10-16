@@ -101,6 +101,18 @@ stages:
                     New-Item -Path $(Build.ArtifactStagingDirectory)/${{ parameters.PRDataFileName }} -ItemType File
                   displayName: Create PRData Artifact
 
+                - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
+                  - task: PowerShell@2
+                    displayName: 'Get alias of the Tools PR Creator'
+                    inputs:
+                      targetType: filePath
+                      filePath: $(Build.SourcesDirectory)/eng/common/scripts/Get-PullRequestCreator.ps1
+                      arguments: >
+                        -RepoOwner "Azure"
+                        -RepoName "azure-sdk-tools"
+                        -PullRequestNumber "$(System.PullRequest.PullRequestNumber)"
+                      pwsh: true
+
                 - ${{ each repo in parameters.Repos }}:
                   - task: PowerShell@2
                     displayName: Create pull request
@@ -118,8 +130,10 @@ stages:
                           -PRBranch "sync-${{ parameters.DirectoryToSync }}-$(System.PullRequest.SourceBranch)-$(System.PullRequest.PullRequestNumber)"
                           -AuthToken "$(azuresdk-github-pat)"
                           -PRTitle "Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools for PR $(System.PullRequest.PullRequestNumber)"
-                          -PRLabels "Central-EngSys,EngSys,auto-merge"
-                          -PRBody "Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools for PR https://github.com/Azure/azure-sdk-tools/pull/$(System.PullRequest.PullRequestNumber)`
+                          -PRLabels "Central-EngSys,EngSys"
+                          -UserReviewers $(System.PullRequest.Creator)
+                          -Assignees $(System.PullRequest.Creator)
+                          -PRBody "Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools for PR https://github.com/Azure/azure-sdk-tools/pull/$(System.PullRequest.PullRequestNumber) `
                            See [eng/common workflow](https://github.com/Azure/azure-sdk-tools/blob/master/eng/common/README.md#workflow)"
                       ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
                         arguments: >
@@ -131,7 +145,7 @@ stages:
                           -AuthToken "$(azuresdk-github-pat)"
                           -PRTitle "Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools"
                           -PRLabels "Central-EngSys,EngSys"
-                          -PRBody "Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools`
+                          -PRBody "Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools `
                            See [eng/common workflow](https://github.com/Azure/azure-sdk-tools/blob/master/eng/common/README.md#workflow)"
 
                   - pwsh: |

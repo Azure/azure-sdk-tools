@@ -131,10 +131,13 @@
                                     </li>
                                     <li>
                                         Run
-                                        <code>clang++ [input like sdk\storage\azure-storage-files-datalake\inc\azure\storage\files\datalake\datalake.hpp] -Xclang -ast-dump -I .\sdk\core\azure-core\inc -I .\sdk\storage\azure-storage-common\inc -I "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include" -I "C:\Program Files (x86)\Windows Kits\10\Include\10.0.19041.0\ucrt" > az_datalake.ast</code>
+                                        <code>clang++ [input like .\sdk\storage\azure-storage-files-datalake\inc\azure\storage\files\datalake\datalake.hpp] -I .\sdk\storage\azure-storage-files-datalake\inc -I .\sdk\core\azure-core\inc -Xclang  -ast-dump -I .\sdk\storage\azure-storage-common\inc  -I .\sdk\storage\azure-storage-blobs\inc > az_datalake.ast</code>
                                     </li>
                                     <li>
-                                        Archive the file <code>Compress-Archive az_datalake.ast -DestinationPath az_datalake.cppast</code>
+                                        Archive the file <code>Compress-Archive az_datalake.ast -DestinationPath az_datalake.zip</code>
+                                    </li>
+                                    <li>
+                                        Rename the file <code>Rename-Item az_datalake.zip -NewName  az_datalake.cppast</code>
                                     </li>
                                     <li>
                                         Upload the resulting archive.

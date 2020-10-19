@@ -71,6 +71,9 @@
                             <li class="nav-item">
                                 <a class="nav-link" id="profile-tab" data-toggle="tab" href="#js-help">JS/TS</a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="profile-tab" data-toggle="tab" href="#cpp-help">C++</a>
+                            </li>
                         </ul>
 
                         <!-- Tab panes -->
@@ -118,6 +121,26 @@
                                     </li>
                                     <li>
                                         Upload generated api.json file
+                                    </li>
+                                </ol>
+                            </div>
+                            <div class="tab-pane" id="cpp-help">
+                                <ol>
+                                    <li>
+                                        Install clang 10 or later. Your environment may require additional include directories.
+                                    </li>
+                                    <li>
+                                        Run
+                                        <code>clang++ [input like .\sdk\storage\azure-storage-files-datalake\inc\azure\storage\files\datalake\datalake.hpp] -I .\sdk\storage\azure-storage-files-datalake\inc -I .\sdk\core\azure-core\inc -Xclang  -ast-dump -I .\sdk\storage\azure-storage-common\inc  -I .\sdk\storage\azure-storage-blobs\inc > az_datalake.ast</code>
+                                    </li>
+                                    <li>
+                                        Archive the file <code>Compress-Archive az_datalake.ast -DestinationPath az_datalake.zip</code>
+                                    </li>
+                                    <li>
+                                        Rename the file <code>Rename-Item az_datalake.zip -NewName  az_datalake.cppast</code>
+                                    </li>
+                                    <li>
+                                        Upload the resulting archive.
                                     </li>
                                 </ol>
                             </div>

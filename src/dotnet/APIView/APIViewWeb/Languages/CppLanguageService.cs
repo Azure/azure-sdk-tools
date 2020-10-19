@@ -146,7 +146,7 @@ namespace APIViewWeb
         {
             //Mapping of each namespace to it's leaf namespace nodes
             //These leaf nodes are processed to generate and group them together
-            //C++ ast has declarations under same namespace in multiple files so these needs tobe grouped for better presentation
+            //C++ ast has declarations under same namespace in multiple files so these needs to be grouped for better presentation
             var namespaceLeafMap = new Dictionary<string, List<CppAstNode>>();
             var types = new HashSet<string>();
 
@@ -156,7 +156,7 @@ namespace APIViewWeb
                 var namespacebldr = new StringBuilder();
                 var leafNamespaceNode = node;
                 var currentNode = node;
-                //Iterate until leafe namespace node and generate full namespace
+                //Iterate until leaf namespace node and generate full namespace
                 while (currentNode?.kind == NamespaceDeclKind)
                 {
                     if (namespacebldr.Length > 0)
@@ -307,7 +307,7 @@ namespace APIViewWeb
                 builder.WriteIndent();
                 builder.Punctuation("{");
                 builder.NewLine();
-                //Double intendation for members since access modified is not parent for members
+                //Double indentation for members since access modifier is not parent for members
                 builder.IncrementIndent();
                 builder.IncrementIndent();
                 bool hasFoundDefaultAccessMembers = false;
@@ -501,7 +501,7 @@ namespace APIViewWeb
                     }
                 }
 
-                // If method is tagged as pure or delete or default then it should be marked as "=<0|default|delete>"
+                // If method is tagged as pure, delete, or default then it should be marked as "=<0|default|delete>"
                 if (node.ispure == true)
                 {
                     builder.Space();

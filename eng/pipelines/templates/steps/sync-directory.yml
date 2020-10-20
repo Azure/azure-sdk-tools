@@ -16,7 +16,7 @@ steps:
         Set-PsDebug -Trace 1
         git clone --branch ${{ parameters.BaseBranchName }} https://github.com/azure/${{ repo }}
         $repoPath = "${{ repo }}/${{ parameters.DirectoryToSync }}"
-        if ('$(PatchFilesLocation)')
+        if (Test-Path '$(PatchFilesLocation)')
         {
           pushd ${{ repo }}
           $results = @()

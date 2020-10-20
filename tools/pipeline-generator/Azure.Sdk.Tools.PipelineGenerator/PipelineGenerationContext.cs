@@ -36,7 +36,8 @@ namespace PipelineGenerator
             string[] variableGroups,
             string devOpsPath,
             string prefix, 
-            bool whatIf)
+            bool whatIf,
+            bool noSchedule)
         {
             this.organization = organization;
             this.project = project;
@@ -49,11 +50,13 @@ namespace PipelineGenerator
             this.devOpsPath = devOpsPath;
             this.Prefix = prefix;
             this.WhatIf = whatIf;
+            this.NoSchedule = noSchedule;
         }
 
         public string Branch { get; }
         public string Prefix { get; }
         public bool WhatIf { get; }
+        public bool NoSchedule { get; }
         public int[] VariableGroups => this.variableGroups;
         public string DevOpsPath => string.IsNullOrEmpty(this.devOpsPath) ? Prefix : this.devOpsPath;
 

@@ -8,7 +8,7 @@ Param (
     $packageNameReplacement = "",
     $blobPath = "docs" # This is a setting for c. should be empty string for all other repo.
 )
-. (Join-Path $PSScriptRoot ../common/scripts/Package-Properties.ps1)
+. (Join-Path $PSScriptRoot common.ps1)
 
 # A mapping is used to fill in 1. Title of home page, 2. The azure storage link
 $LangMapping = @{

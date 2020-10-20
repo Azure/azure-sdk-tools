@@ -11,7 +11,7 @@ parameters:
   default: eng/common
 - name: BaseBranchName
   type: string
-  default: master
+  default: $(Build.SourceBranchName)
 - name: Repos
   type: object
   default:
@@ -79,7 +79,7 @@ stages:
               CommitMessage: Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools repository
               DirectoryToSync: ${{ parameters.DirectoryToSync }}
               UpstreamBranchName: "sync-${{ parameters.DirectoryToSync }}"
-              BaseBranchName: ${{ coalesce(parameters.BaseBranchName, $(Build.SourceBranchName)) }}
+              BaseBranchName: ${{ parameters.BaseBranchName }}
             Repos: ${{ parameters.Repos }}
 
   - stage: CreateSyncPRs

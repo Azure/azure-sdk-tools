@@ -139,7 +139,7 @@ stages:
                         arguments: >
                           -RepoOwner "Azure"
                           -RepoName "${{ repo }}"
-                          -BaseBranch ${{ coalesce(parameters.BaseBranchName, $(Build.SourceBranchName)) }}
+                          -BaseBranch ${{ parameters.BaseBranchName }}
                           -PROwner "Azure"
                           -PRBranch "sync-${{ parameters.DirectoryToSync }}"
                           -AuthToken "$(azuresdk-github-pat)"

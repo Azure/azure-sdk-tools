@@ -11,7 +11,7 @@ namespace PipelineGenerator.Conventions
     public class IntegrationTestingPipelineConvention : PipelineConvention
     {
         public override string SearchPattern => "tests.yml";
-        public override bool IsScheduled => true;
+        public override bool IsScheduled => !Context.NoSchedule;
         public override bool RemoveCITriggers => true;
 
         public IntegrationTestingPipelineConvention(ILogger logger, PipelineGenerationContext context) : base(logger, context)

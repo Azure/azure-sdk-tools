@@ -11,6 +11,7 @@ parameters:
   PushArgs: -f
 
 steps:
+- ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
   - ${{ each repo in parameters.Repos }}:
     - pwsh: |
         Set-PsDebug -Trace 1
@@ -36,14 +37,7 @@ steps:
           $hasChanges = $shaBeforePatches -ne $shaAfterPatches
           echo "##vso[task.setvariable variable=HasChanges]$hasChanges"
         }
-        else
-        {
-          if (!(Test-Path $repoPath)) { mkdir $repoPath }
-          Remove-Item -v -r $repoPath
-          Copy-Item -v -r $(Build.SourcesDirectory)/${{ parameters.DirectoryToSync }} $repoPath
-          Get-ChildItem -r $repoPath
-        }
-      displayName: Copy or Apply Patch for ${{ parameters.DirectoryToSync }} from azure-sdk-tools to ${{ repo }}
+      displayName: Apply Patch for ${{ parameters.DirectoryToSync }} from azure-sdk-tools to ${{ repo }}
       workingDirectory: $(System.DefaultWorkingDirectory)
 
     - task: PowerShell@2
@@ -90,3 +84,26 @@ steps:
         <br>You can sign off on the approval gate to test the release stage of each pipeline.`
         <br>See [eng/common workflow](https://github.com/Azure/azure-sdk-tools/blob/master/eng/common/README.md#workflow)"
         -AuthToken "$(azuresdk-github-pat)"
+
+- ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+  - ${{ each repo in parameters.Repos }}:
+    - pwsh: |
+        Set-PsDebug -Trace 1
+        git clone --branch ${{ parameters.BaseBranchName }} https://github.com/azure/${{ repo }}
+        $repoPath = "${{ repo }}/${{ parameters.DirectoryToSync }}"
+        if (!(Test-Path $repoPath)) { mkdir $repoPath }
+        Remove-Item -v -r $repoPath
+        Copy-Item -v -r $(Build.SourcesDirectory)/${{ parameters.DirectoryToSync }} $repoPath
+        Get-ChildItem -r $repoPath
+      displayName: Copy ${{ parameters.DirectoryToSync }} from azure-sdk-tools to ${{ repo }}
+      workingDirectory: $(System.DefaultWorkingDirectory)
+
+    - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
+      parameters:
+        RepoName: ${{ repo }}
+        PRBranchName: sync-${{ parameters.DirectoryToSync }}
+        CommitMsg: ${{ parameters.CommitMessage }}
+        PRTitle: ${{ parameters.CommitMessage }}
+        PushArgs: -f
+        WorkingDirectory: $(System.DefaultWorkingDirectory)/${{ repo }}
+        ScriptDirectory: $(System.DefaultWorkingDirectory)/eng/common/scripts

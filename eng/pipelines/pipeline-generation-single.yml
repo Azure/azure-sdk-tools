@@ -23,7 +23,7 @@ jobs:
     vmImage: 'windows-2019'
   steps:
   - checkout: none
-  - template: templates/steps/install-pipeline-generation.yml
+  - template: /eng/common/pipelines/templates/steps/install-pipeline-generation.yml
   - script: |
       git clone --filter=blob:none --branch $(Branch) https://$(azuresdk-github-pat)@github.com/azure/$(RepositoryName) $(Pipeline.Workspace)/$(RepositoryName)
     displayName: 'Clone repository: $(RepositoryName)'

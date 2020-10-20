@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.29215.179
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Sdk.Tools.CheckEnforcer", "Azure.Sdk.Tools.CheckEnforcer\Azure.Sdk.Tools.CheckEnforcer.csproj", "{97850C3F-0A6C-446B-B00B-B1E571426661}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.Sdk.Tools.CheckEnforcer.Tests", "Azure.Sdk.Tools.CheckEnforcer.Tests\Azure.Sdk.Tools.CheckEnforcer.Tests.csproj", "{4C33C118-A3C1-4742-B407-57D032497769}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Sdk.Tools.CheckEnforcer.Tests", "Azure.Sdk.Tools.CheckEnforcer.Tests\Azure.Sdk.Tools.CheckEnforcer.Tests.csproj", "{4C33C118-A3C1-4742-B407-57D032497769}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

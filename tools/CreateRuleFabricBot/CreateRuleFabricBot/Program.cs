@@ -3,6 +3,7 @@ using CreateRuleFabricBot.CommandLine;
 using CreateRuleFabricBot.Markdown;
 using CreateRuleFabricBot.Rules;
 using CreateRuleFabricBot.Rules.IssueRouting;
+using CreateRuleFabricBot.Rules.PullRequestLabel;
 using CreateRuleFabricBot.Service;
 using OutputColorizer;
 using System;

@@ -1,5 +1,4 @@
-﻿using CreateRuleFabricBot.Rules.PullRequestLabel;
-using OutputColorizer;
+﻿using OutputColorizer;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -9,7 +8,7 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Encodings.Web;
 
-namespace CreateRuleFabricBot.Rules.IssueRouting
+namespace CreateRuleFabricBot.Rules.PullRequestLabel
 {
     public class PullRequestLabelFolderCapability : BaseCapability
     {
@@ -51,9 +50,7 @@ namespace CreateRuleFabricBot.Rules.IssueRouting
 
         public override string GetPayload()
         {
-            Colorizer.Write("Parsing CODEOWNERS table... ");
-            List<CodeOwnerEntry> entries = ReadOwnersFromFile();
-            Colorizer.WriteLine("[Green!Done]");
+            List<CodeOwnerEntry> entries = CodeOwnersFile.ParseFile(_codeownersFile);
 
             StringBuilder configPayload = new StringBuilder();
 
@@ -67,24 +64,31 @@ namespace CreateRuleFabricBot.Rules.IssueRouting
                 {
                     // log a warning there
 
-                    if (entries[i].Labels.Any())
+                    if (entries[i].PRLabels.Any())
                     {
-                        Colorizer.WriteLine("[Yellow!Warning]: The path '[Cyan!{0}]' contains a wildcard and a label '[Magenta!{1}]' which is not supported!", entries[i].PathExpression, string.Join(',', entries[i].Labels));
+                        Colorizer.WriteLine("[Yellow!Warning]: The path '[Cyan!{0}]' contains a wildcard and a label '[Magenta!{1}]' which is not supported!", entries[i].PathExpression, string.Join(',', entries[i].PRLabels));
                     }
 
                     continue; //TODO: regex expressions are not yet supported
                 }
 
+                if (entries[i].PathExpression.IndexOf(CodeOwnerEntry.MissingFolder, StringComparison.OrdinalIgnoreCase) !=-1)
+                {
+                    Colorizer.WriteLine("[Yellow!Warning]: The path '[Cyan!{0}]' is marked with the non-existing path marker.", entries[i].PathExpression);
+
+                    continue; 
+                }
+
                 // Entries with more than one label are not yet supported.
-                if (entries[i].Labels.Count > 1)
+                if (entries[i].PRLabels.Count > 1)
                 {
                     Colorizer.WriteLine("[Yellow!Warning]: Multiple labels for the same path '[Cyan!{0}]' are not yet supported", entries[i].PathExpression);
                     continue;
                 }
 
-                if (entries[i].Labels.Count == 0)
+                if (entries[i].PRLabels.Count == 0)
                 {
-                    Colorizer.WriteLine("[Yellow!Warning]: The path '[Cyan!{0}]' does not contain a label.", entries[i].PathExpression, string.Join(',', entries[i].Labels));
+                    Colorizer.WriteLine("[Yellow!Warning]: The path '[Cyan!{0}]' does not contain a label.", entries[i].PathExpression, string.Join(',', entries[i].PRLabels));
                     continue;
                 }
 
@@ -99,7 +103,7 @@ namespace CreateRuleFabricBot.Rules.IssueRouting
                 // get the payload
                 string entryPayload = ToConfigString(entry);
 
-                Colorizer.WriteLine("[Cyan!{0}] => [Magenta!{1}]", entry.PathExpression, entry.Labels.FirstOrDefault());
+                Colorizer.WriteLine("[Cyan!{0}] => [Magenta!{1}]", entry.PathExpression, entry.PRLabels.FirstOrDefault());
 
                 configPayload.Append(ToConfigString(entry));
                 configPayload.Append(',');
@@ -122,7 +126,7 @@ namespace CreateRuleFabricBot.Rules.IssueRouting
         {
             string result = s_configTemplate;
 
-            result = result.Replace("###label###", entry.Labels.First());
+            result = result.Replace("###label###", entry.PRLabels.First());
 
             // at this point we should remove the leading '/' if any
             if (entry.PathExpression.StartsWith("/"))
@@ -132,88 +136,6 @@ namespace CreateRuleFabricBot.Rules.IssueRouting
             result = result.Replace("###srcFolders###", $"\"{entry.PathExpression}\"");
 
             return result;
-        }
-
-        private string GetFileContents(string fileOrUri)
-        {
-            if (File.Exists(fileOrUri))
-            {
-                return File.ReadAllText(fileOrUri);
-            }
-
-            // try to parse it as an Uri
-            Uri uri = new Uri(fileOrUri, UriKind.Absolute);
-            if (uri.Scheme.ToLowerInvariant() != "https")
-            {
-                throw new ArgumentException("Cannot download off non-https uris");
-            }
-
-            // try to download it.
-            using (HttpClient client = new HttpClient())
-            {
-                HttpResponseMessage response = client.GetAsync(fileOrUri).ConfigureAwait(false).GetAwaiter().GetResult();
-                return response.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
-            }
-        }
-
-        private List<CodeOwnerEntry> ReadOwnersFromFile()
-        {
-            List<CodeOwnerEntry> entries = new List<CodeOwnerEntry>();
-            string line;
-            using (StringReader sr = new StringReader(GetFileContents(_codeownersFile)))
-            {
-                while ((line = sr.ReadLine()) != null)
-                {
-                    // Does the line start with '# PRLabel: "label1", "label2"
-
-                    // Remove tabs and trim extra whitespace
-                    line = NormalizeLine(line);
-
-                    // Empty line, move on
-                    if (string.IsNullOrEmpty(line))
-                    {
-                        continue;
-                    }
-
-                    CodeOwnerEntry entry = new CodeOwnerEntry();
-
-                    // if we have the moniker in the line, parse the labels
-                    if (line.StartsWith('#') &&                        
-                        line.IndexOf(CodeOwnerEntry.LabelMoniker, System.StringComparison.OrdinalIgnoreCase) >= 0)
-                    {
-                        entry.ParseLabels(line);
-
-                        // We need to read the next line
-                        line = sr.ReadLine();
-
-                        if (line == null)
-                        {
-                            break;
-                        }
-
-                        // Remove tabs and trim extra whitespace
-                        line = NormalizeLine(line);
-                    }
-
-                    // If this is not a comment line.
-                    if (line.IndexOf('#') == -1)
-                    {
-                        entry.ParseOwnersAndPath(line);
-                    }
-
-                    if (entry.IsValid)
-                    {
-                        entries.Add(entry);
-                    }
-                }
-            }
-            return entries;
-        }
-
-        private static string NormalizeLine(string line)
-        {
-            // Remove tabs and trim extra whitespace
-            return line.Replace('\t', ' ').Trim();
         }
 
         public override string GetTaskId()

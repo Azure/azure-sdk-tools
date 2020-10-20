@@ -4,6 +4,7 @@ using OutputColorizer;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Emit;
 
 namespace CreateRuleFabricBot.Rules.IssueRouting
 {
@@ -27,18 +28,19 @@ namespace CreateRuleFabricBot.Rules.IssueRouting
 
         private readonly string _repo;
         private readonly string _owner;
-        private readonly string _servicesFile;
+        private readonly string _codeownersFile;
 
         private List<TriageConfig> _triageConfig = new List<TriageConfig>();
 
         private int RouteCount { get { return _triageConfig.Count; } }
 
-        public IssueRoutingCapability(string org, string repo, string servicesFile)
+        public IssueRoutingCapability(string org, string repo, string codeownersFile)
         {
             _repo = repo;
             _owner = org;
-            _servicesFile = servicesFile;
+            _codeownersFile = codeownersFile;
         }
+
         private void AddService(IEnumerable<string> labels, IEnumerable<string> mentionees)
         {
             var tc = new TriageConfig();
@@ -49,26 +51,26 @@ namespace CreateRuleFabricBot.Rules.IssueRouting
 
         public override string GetPayload()
         {
-            Colorizer.Write("Parsing service table... ");
-            MarkdownTable table = MarkdownTable.Parse(_servicesFile);
-            Colorizer.WriteLine("[Green!done].");
+            List<CodeOwnerEntry> entries = CodeOwnersFile.ParseFile(_codeownersFile);
 
-            foreach (var row in table.Rows)
+            foreach (CodeOwnerEntry entry in entries)
             {
-                if (!string.IsNullOrEmpty(row[2].Trim()))
+                // If we have labels for the specific codeowners entry, add that to the triage list
+                if (entry.ServiceLabels.Any())
                 {
-                    // the row at position 0 is the label to use on top of 'Service Attention'
-                    string[] labels = new string[] { "Service Attention", row[0] };
-
-                    // The row at position 2 is the set of mentionees to ping on the issue.
-                    IEnumerable<string> mentionees = row[2].Split(',').Select(x => x.Replace("@", "").Trim());
+                    // Remove the '@' from the owners handle
+                    IEnumerable<string> mentionees = entry.Owners.Select(x => x.Replace("@", "").Trim());
 
                     //add the service
-                    AddService(labels, mentionees);
+                    AddService(entry.ServiceLabels, mentionees);
                 }
             }
 
             Colorizer.WriteLine("Found [Yellow!{0}] service routes.", RouteCount);
+            foreach (TriageConfig triage in _triageConfig)
+            {
+                Colorizer.WriteLine("Labels:[Yellow!{0}], Owners:[Yellow!{1}]", string.Join(',', triage.Labels), string.Join(',', triage.Mentionee));
+            }
 
             return s_template
                 .Replace("###repo###", GetTaskId())

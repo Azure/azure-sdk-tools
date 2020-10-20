@@ -14,10 +14,14 @@ public class ConsiderFinalClassDiagnosticRule implements DiagnosticRule {
 
     @Override
     public void scan(final CompilationUnit cu, final APIListing listing) {
+        // TODO we would ideally delay this diagnostic until we have completed analysing, so that we can look up
+        // to see if any other types extend from this particular compilation unit. At present we somewhat embarrasingly
+        // tell people to consider final for types that are extended in the same library.
         cu.getTypes().forEach(type -> {
             if (type.isEnumDeclaration()) return;
             if (type.hasModifier(Modifier.Keyword.ABSTRACT)) return;
             if (type.isClassOrInterfaceDeclaration() && type.asClassOrInterfaceDeclaration().isInterface()) return;
+            if (type.isAnnotationDeclaration()) return;
             if (!type.hasModifier(Modifier.Keyword.FINAL)) {
                 listing.addDiagnostic(new Diagnostic(
                     INFO,

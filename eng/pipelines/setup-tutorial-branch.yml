@@ -1,0 +1,57 @@
+pr: none
+trigger: none
+
+# This pipeline is used to trigger a script which creates a branch in the repository specified
+# by the Repository parameter below. It creates a branch with the name feature/tutorial/<alias>
+# and will be used in training to help training participants get a branch setup to merge their
+# code into to simulate real world CI/CD usage without poluting the master branch.
+# 
+# The Alias parameter forms part of the branch name above, and the GitReference parameter which
+# has a default of refs/heads/feature/tutorial can be overriden if a different base branch is
+# desired (this parameter may be removed in the future once our approach is more settled).
+
+parameters:
+  - name: Repository
+    type: string
+    values:
+      - azure-sdk-for-net
+      - azure-sdk-for-java
+      - azure-sdk-for-python
+      - azure-sdk-for-js
+  - name: Alias
+    type: string
+  - name: GitReference
+    type: string
+    default: refs/heads/feature/tutorial/api-design/starter
+    values:
+     - refs/heads/feature/tutorial/api-design/starter
+     - refs/heads/feature/tutorial/api-design/complete
+     - refs/heads/feature/tutorial/implementation/starter
+     - refs/heads/feature/tutorial/implementation/complete
+     - refs/heads/feature/tutorial/engsys/starter
+     - refs/heads/feature/tutorial/engsys/complete
+     - refs/heads/feature/tutorial/quality/starter
+     - refs/heads/feature/tutorial/quality/complete
+     - refs/heads/feature/tutorial/xyz/starter
+     - refs/heads/feature/tutorial/xyz/complete
+
+variables:
+  skipComponentGovernanceDetection: true
+
+jobs:
+- job: SetupTutorialBranch
+  pool:
+    vmImage: 'ubuntu-latest'
+  steps:
+    - task: PowerShell@2
+      displayName: 'Setup Tutorial Branch'
+      inputs:
+        targetType: filePath
+        filePath: "scripts/powershell/Setup-TutorialBranch.ps1"
+        arguments: >
+          -GitHubRepositoryOwner Azure
+          -GitHubRepositoryName ${{parameters.Repository}}
+          -GitReference ${{parameters.GitReference}}
+          -BranchName "feature/tutorial/${{parameters.Alias}}"
+          -GitHubPersonalAccessToken "$(azuresdk-github-pat)"
+        pwsh: true

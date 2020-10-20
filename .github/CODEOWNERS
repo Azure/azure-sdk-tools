@@ -8,8 +8,8 @@
 # Eng Sys Services
 ###########
 /tools/ @azure/azure-sdk-eng
-/tools/check-enforcer/ @weshaggard @damirault @mitchdenny @JimSuplizio
-/tools/pipeline-witness/ @weshaggard @damirault @mitchdenny @JimSuplizio
-/tools/webhook-router/ @weshaggard @damirault @mitchdenny @JimSuplizio
-/tools/github-issues/ @weshaggard @damirault @mitchdenny @JimSuplizio @AlexGhiondea
+/tools/check-enforcer/ @weshaggard @mitchdenny @JimSuplizio
+/tools/pipeline-witness/ @weshaggard @mitchdenny @JimSuplizio
+/tools/webhook-router/ @weshaggard @mitchdenny @JimSuplizio
+/tools/github-issues/ @weshaggard @mitchdenny @JimSuplizio @AlexGhiondea
 /tools/pipeline-generator/ @weshaggard @mitchdenny @danieljurek

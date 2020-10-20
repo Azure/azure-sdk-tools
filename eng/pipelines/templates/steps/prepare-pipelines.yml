@@ -87,6 +87,7 @@ steps:
         --branch refs/heads/master
         --patvar PATVAR
         --debug
+        --no-schedule
         ${{parameters.CIConventionOptions}}
       env:
         PATVAR: $(azuresdk-azure-sdk-devops-pipeline-generation-pat)
@@ -104,6 +105,7 @@ steps:
         --branch refs/heads/master
         --patvar PATVAR
         --debug
+        --no-schedule
         ${{parameters.UPConventionOptions}}
       env:
         PATVAR: $(azuresdk-azure-sdk-devops-pipeline-generation-pat)
@@ -121,6 +123,7 @@ steps:
         --branch refs/heads/master
         --patvar PATVAR
         --debug
+        --no-schedule
         ${{parameters.TestsConventionOptions}}
       env:
         PATVAR: $(azuresdk-azure-sdk-devops-pipeline-generation-pat)

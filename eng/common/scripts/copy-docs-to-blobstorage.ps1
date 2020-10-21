@@ -185,7 +185,7 @@ function Upload-Blobs
 {
     Param (
         [Parameter(Mandatory=$true)] [String]$DocDir,
-        [Parameter(Mandatory=$true)] [String]$PkgName,
+        [Parameter(Mandatory=$true)] [String[]]$PkgNames,
         [Parameter(Mandatory=$true)] [String]$DocVersion,
         [Parameter(Mandatory=$false)] [String]$ReleaseTag
     )
@@ -193,7 +193,10 @@ function Upload-Blobs
     $DocDest = "$($BlobName)/`$web/$($Language)"
 
     LogDebug "DocDest $($DocDest)"
-    LogDebug "PkgName $($PkgName)"
+    LogDebug "Here lists the packages need to upload: "
+    foreach ($pkgName in $PkgNames) {
+        LogDebug "PkgName $($pkgName)"
+    }
     LogDebug "DocVersion $($DocVersion)"
     LogDebug "DocDir $($DocDir)"
     LogDebug "Final Dest $($DocDest)/$($PkgName)/$($DocVersion)"
@@ -214,8 +217,10 @@ function Upload-Blobs
         LogWarning "Not able to do the master link replacement, since no release tag found for the release. Please manually check."
     } 
    
-    LogDebug "Uploading $($PkgName)/$($DocVersion) to $($DocDest)..."
-    & $($AzCopy) cp "$($DocDir)/**" "$($DocDest)/$($PkgName)/$($DocVersion)$($SASKey)" --recursive=true --cache-control "max-age=300, must-revalidate"
+    foreach ($pkgName in $PkgNames) {
+        LogDebug "Uploading $($PkgName)/$($DocVersion) to $($DocDest)..."
+        & $($AzCopy) cp "$($DocDir)/**" "$($DocDest)/$($PkgName)/$($DocVersion)$($SASKey)" --recursive=true --cache-control "max-age=300, must-revalidate"
+    }
 
     LogDebug "Handling versioning files under $($DocDest)/$($PkgName)/versioning/"
     $versionsObj = (Update-Existing-Versions -PkgName $PkgName -PkgVersion $DocVersion -DocDest $DocDest)

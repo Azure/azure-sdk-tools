@@ -34,6 +34,8 @@ parameters:
      - refs/heads/feature/tutorial/quality/complete
      - refs/heads/feature/tutorial/xyz/starter
      - refs/heads/feature/tutorial/xyz/complete
+     - refs/heads/feature/tutorial/starter
+     - refs/heads/feature/tutorial/complete
 
 variables:
   skipComponentGovernanceDetection: true

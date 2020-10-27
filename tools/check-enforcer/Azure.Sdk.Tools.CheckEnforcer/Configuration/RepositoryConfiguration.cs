@@ -12,6 +12,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Configuration
         {
             MinimumCheckRuns = 1;
             IsEnabled = true;
+            TimeoutInMinutes = 5;
         }
 
         [YamlMember(Alias = "minimumCheckRuns")]
@@ -22,6 +23,9 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Configuration
 
         [YamlMember(Alias = "format")]
         public string Format { get; internal set; }
+
+        [YamlMember(Alias = "timeout")]
+        public uint TimeoutInMinutes { get; internal set; }
 
         public override string ToString()
         {

@@ -10,5 +10,6 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Configuration
         bool IsEnabled { get; }
 
         uint MinimumCheckRuns { get; }
+        uint TimeoutInMinutes { get; }
     }
 }

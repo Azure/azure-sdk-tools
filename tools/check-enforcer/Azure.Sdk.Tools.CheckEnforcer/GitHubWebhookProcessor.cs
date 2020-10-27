@@ -3,6 +3,7 @@ using Azure.Identity;
 using Azure.Sdk.Tools.CheckEnforcer.Configuration;
 using Azure.Sdk.Tools.CheckEnforcer.Handlers;
 using Azure.Sdk.Tools.CheckEnforcer.Integrations.GitHub;
+using Azure.Sdk.Tools.CheckEnforcer.Services.PullRequestTracking;
 using Azure.Security.KeyVault.Keys;
 using Azure.Security.KeyVault.Keys.Cryptography;
 using Azure.Security.KeyVault.Secrets;
@@ -31,13 +32,14 @@ namespace Azure.Sdk.Tools.CheckEnforcer
 {
     public class GitHubWebhookProcessor
     {
-        public GitHubWebhookProcessor(IGlobalConfigurationProvider globalConfigurationProvider, IGitHubClientProvider gitHubClientProvider, IRepositoryConfigurationProvider repositoryConfigurationProvider, SecretClient secretClient, GitHubRateLimiter limiter)
+        public GitHubWebhookProcessor(IGlobalConfigurationProvider globalConfigurationProvider, IGitHubClientProvider gitHubClientProvider, IRepositoryConfigurationProvider repositoryConfigurationProvider, SecretClient secretClient, GitHubRateLimiter limiter, IPullRequestTracker pullRequestTracker)
         {
             this.globalConfigurationProvider = globalConfigurationProvider;
             this.gitHubClientProvider = gitHubClientProvider;
             this.repositoryConfigurationProvider = repositoryConfigurationProvider;
             this.secretClient = secretClient;
             this.limiter = limiter;
+            this.pullRequestTracker = pullRequestTracker;
         }
 
         public IGlobalConfigurationProvider globalConfigurationProvider;
@@ -45,6 +47,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
         private IRepositoryConfigurationProvider repositoryConfigurationProvider;
         private SecretClient secretClient;
         private GitHubRateLimiter limiter;
+        private IPullRequestTracker pullRequestTracker;
 
         private const string GitHubEventHeader = "X-GitHub-Event";
         public async Task ProcessWebhookAsync(string eventName, string json, ILogger logger, CancellationToken cancellationToken)
@@ -93,7 +96,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
                     }
                     else if (eventName == "pull_request")
                     {
-                        var handler = new PullRequestHandler(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, logger, limiter);
+                        var handler = new PullRequestHandler(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, logger, limiter, pullRequestTracker);
                         await handler.HandleAsync(json, cancellationToken);
                     }
                 });

@@ -25,7 +25,7 @@ namespace CreateRuleFabricBot.Service
 
         public void CreateTask(string jsonPayload)
         {
-            string requestUri = $"https://fabric-cp.azurewebsites.net/api/bot/task/{_owner}/{_repo}";
+            string requestUri = $"https://portal.fabricbot.ms/api/bot/task/{_owner}/{_repo}";
             var response = SendRequestAsync(HttpMethod.Post, requestUri, CreateContent(jsonPayload)).GetAwaiter().GetResult();
         }
 

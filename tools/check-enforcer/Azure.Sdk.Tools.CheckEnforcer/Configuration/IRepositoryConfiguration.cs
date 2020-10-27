@@ -8,7 +8,8 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Configuration
     {
         string Format { get; }
         bool IsEnabled { get; }
-
         uint MinimumCheckRuns { get; }
+        uint TimeoutInMinutes { get; }
+        string Message { get; }
     }
 }

@@ -10,14 +10,12 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Configuration
     {
         public RepositoryConfiguration()
         {
+            // These value represent defaults.
             MinimumCheckRuns = 1;
             IsEnabled = true;
             TimeoutInMinutes = 1;
-            Message = @"This repository is protected by Check Enforcer. The _check-enforcer_
-check-run will not pass until there is at least one more check-run successfully passing. Check Enforcer supports
-the following comment commands:
+            Message = @"This repository is protected by Check Enforcer. The _check-enforcer_ check-run will not pass until there is at least one more check-run successfully passing. Check Enforcer supports the following comment commands:
 
-- ```/check-enforcer reset```; resets Check Enforcer to its initial state.
 - ```/check-enforcer evaluate```; tells Check Enforcer to evaluate this pull request.
 - ```/check-enforcer override```; by-pass Check Enforcer (approvals still required).";
         }

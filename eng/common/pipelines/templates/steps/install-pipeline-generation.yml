@@ -2,10 +2,8 @@ parameters:
   ToolPath: $(Pipeline.Workspace)/pipeline-generator
 
 steps:
-  - script: >
-      mkdir $(Pipeline.Workspace)/pipeline-generator
-    displayName: Setup working directory for pipeline generator.
-  - script: >
+  - pwsh: >
+      New-Item -Type Directory -Name ${{parameters.ToolPath}}
       dotnet tool install
       Azure.Sdk.Tools.PipelineGenerator
       --version 1.0.2-dev.20201020.1

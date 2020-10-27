@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -31,7 +32,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Services.PullRequestTracking
 
         public async Task<IEnumerable<PullRequestTrackingTicket>> GetTrackedPullRequestsAsync()
         {
-            return pullRequestTrackingTickets;
+            return pullRequestTrackingTickets.ToImmutableList();
         }
     }
 }

@@ -12,7 +12,14 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Configuration
         {
             MinimumCheckRuns = 1;
             IsEnabled = true;
-            TimeoutInMinutes = 5;
+            TimeoutInMinutes = 1;
+            Message = @"This repository is protected by Check Enforcer. The _check-enforcer_
+check-run will not pass until there is at least one more check-run successfully passing. Check Enforcer supports
+the following comment commands:
+
+- ```/check-enforcer reset```; resets Check Enforcer to its initial state.
+- ```/check-enforcer evaluate```; tells Check Enforcer to evaluate this pull request.
+- ```/check-enforcer override```; by-pass Check Enforcer (approvals still required).";
         }
 
         [YamlMember(Alias = "minimumCheckRuns")]
@@ -26,6 +33,9 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Configuration
 
         [YamlMember(Alias = "timeout")]
         public uint TimeoutInMinutes { get; internal set; }
+
+        [YamlMember(Alias = "message")]
+        public string Message { get; internal set; }
 
         public override string ToString()
         {

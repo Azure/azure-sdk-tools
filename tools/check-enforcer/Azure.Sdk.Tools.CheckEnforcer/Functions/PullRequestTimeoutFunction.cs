@@ -9,6 +9,7 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Extensions.Logging;
 using Octokit;
+using YamlDotNet.Core.Events;
 
 namespace Azure.Sdk.Tools.CheckEnforcer.Functions
 {
@@ -106,18 +107,55 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Functions
                 {
                     await limiter.WaitForGitHubCapacityAsync();
                     var checkRunRepsonse = await gitHubClient.Check.Run.GetAllForReference(pullRequestTrackingTicket.RepositoryId, sha);
-
                     
                     if (checkRunRepsonse.TotalCount > 0 && checkRunRepsonse.CheckRuns.All((checkRun) => checkRun.Name == globalConfigurationProvider.GetApplicationName()))
                     {
                         log.LogInformation(
-                            "Adding timeout comment to pull request {pullRequestNumber} in repository {repositoryId} for installation {installationId} because it has checks.",
+                            "Fetching comments for pull request {pullRequestNumber} in repository {repositoryId} for installation {installationId}.",
                             pullRequestTrackingTicket.PullRequestNumber,
                             pullRequestTrackingTicket.RepositoryId,
                             pullRequestTrackingTicket.InstallationId
                             );
 
-                        // TODO: Add logic to add comment 
+                        await limiter.WaitForGitHubCapacityAsync();
+                        var issueComments = await gitHubClient.Issue.Comment.GetAllForIssue(pullRequestTrackingTicket.RepositoryId, pullRequestTrackingTicket.PullRequestNumber);
+
+                        log.LogInformation(
+                            "Found {commentCount} on pull request {pullRequestNumber} in repository {repositoryId} for installation {installationId}.",
+                            issueComments.Count(),
+                            pullRequestTrackingTicket.PullRequestNumber,
+                            pullRequestTrackingTicket.RepositoryId,
+                            pullRequestTrackingTicket.InstallationId
+                            );
+
+                        if (issueComments.Any((comment) => comment.User.Login.StartsWith("check-enforcer")))
+                        {
+                            log.LogInformation(
+                                "Stopping tracking {pullRequestNumber} in repository {repositoryId} for installation {installationId} because it already has help comment.",
+                                pullRequestTrackingTicket.PullRequestNumber,
+                                pullRequestTrackingTicket.RepositoryId,
+                                pullRequestTrackingTicket.InstallationId
+                                );
+                            await pullRequestTracker.StopTrackingPullRequestAsync(pullRequestTrackingTicket);
+                        }
+                        else
+                        {
+                            log.LogInformation(
+                                "Adding timeout comment to pull request {pullRequestNumber} in repository {repositoryId} for installation {installationId} because it has no check runs.",
+                                pullRequestTrackingTicket.PullRequestNumber,
+                                pullRequestTrackingTicket.RepositoryId,
+                                pullRequestTrackingTicket.InstallationId
+                                );
+
+                            await gitHubClient.Issue.Comment.Create(
+                                pullRequestTrackingTicket.RepositoryId,
+                                pullRequestTrackingTicket.PullRequestNumber,
+                                configuration.Message
+                                );
+
+                            await pullRequestTracker.StopTrackingPullRequestAsync(pullRequestTrackingTicket);
+                        }
+
                     }
                     else
                     {

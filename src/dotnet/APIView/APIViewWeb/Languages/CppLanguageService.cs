@@ -17,7 +17,7 @@ namespace APIViewWeb
 {
     public class CppLanguageService : LanguageService
     {
-        private const string CurrentVersion = "1";
+        private const string CurrentVersion = "2";
         private const string NamespaceDeclKind = "NamespaceDecl";
         private const string CxxRecordDeclKind = "CXXRecordDecl";
         private const string CxxMethodDeclKind = "CXXMethodDecl";

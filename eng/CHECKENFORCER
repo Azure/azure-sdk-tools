@@ -24,27 +24,18 @@ message: >
   try telling _Check Enforcer_ to evaluate your pull request again. You can
   do this by adding a comment to this pull request as follows:
   
-  ```/check-enforcer evaluate```
+  ```
+  /check-enforcer evaluate
+  ```
   
   Typically evaulation only takes a few seconds. If you know that your pull
   request is not covered by a pipeline and this is expected you can override
   Check Enforcer using the following command:
   
-  ```/check-enforcer override```
+  ```
+  /check-enforcer override
+  ```
   
   Note that using the override command triggers alerts so that follow-up
   investigations can occur (PRs still need to be approved as normal).
   
-  # What if I am onboarding a new service?
-  
-  Often, new services do not have validation pipelines associated with them,
-  in order to bootstrap pipelines for a new service, you can issue the following
-  command as a pull request comment:
-  
-  ```/azp run prepare-pipelines```
-  
-  This will run a pipeline that analyzes the source tree and creates the
-  pipelines necessary to build and validate your pull request. Once the pipeline
-  has been created you can trigger the pipeline using the following comment:
-  
-  ```/azp run tools - [toolname]```

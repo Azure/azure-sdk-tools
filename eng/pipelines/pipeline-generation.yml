@@ -51,7 +51,7 @@ jobs:
         PublicOptions: ''
         InternalOptions: '--variablegroup 58 --variablegroup 76 --variablegroup 56'
   steps:
-  - template: /eng/common/pipelines/install-pipeline-generation.yml
+  - template: /eng/common/pipelines/templates/steps/install-pipeline-generation.yml
   - script: |
       git clone https://github.com/azure/$(RepositoryName) $(Pipeline.Workspace)/$(RepositoryName)
       cd $(Pipeline.Workspace)/$(RepositoryName)

@@ -1,5 +1,6 @@
 ﻿using Azure.Sdk.Tools.CheckEnforcer.Configuration;
 using Azure.Sdk.Tools.CheckEnforcer.Integrations.GitHub;
+using Azure.Sdk.Tools.CheckEnforcer.Services.PullRequestTracking;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
 using Microsoft.Identity.Client;
@@ -15,9 +16,12 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
 {
     public class PullRequestHandler : Handler<PullRequestEventPayload>
     {
-        public PullRequestHandler(IGlobalConfigurationProvider globalConfigurationProvider, IGitHubClientProvider gitHubClientProvider, IRepositoryConfigurationProvider repositoryConfigurationProvider, ILogger logger, GitHubRateLimiter limiter) : base(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, logger, limiter)
+        public PullRequestHandler(IGlobalConfigurationProvider globalConfigurationProvider, IGitHubClientProvider gitHubClientProvider, IRepositoryConfigurationProvider repositoryConfigurationProvider, ILogger logger, GitHubRateLimiter limiter, IPullRequestTracker pullRequestTracker) : base(globalConfigurationProvider, gitHubClientProvider, repositoryConfigurationProvider, logger, limiter)
         {
+            this.pullRequestTracker = pullRequestTracker;
         }
+
+        private IPullRequestTracker pullRequestTracker;
 
         protected override async Task HandleCoreAsync(HandlerContext<PullRequestEventPayload> context, CancellationToken cancellationToken)
         {
@@ -42,6 +46,15 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
 
                 if (configuration.IsEnabled)
                 {
+                    var pullRequestTrackingTicket = new PullRequestTrackingTicket()
+                    {
+                        InstallationId = installationId,
+                        RepositoryId = repositoryId,
+                        PullRequestNumber = pullRequestNumber
+                    };
+
+                    await pullRequestTracker.StartTrackingPullRequestAsync(pullRequestTrackingTicket);
+
                     await CreateCheckAsync(context.Client, installationId, repositoryId, sha, false, cancellationToken);
 
                     if (action == "reopened")

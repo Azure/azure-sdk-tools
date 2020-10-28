@@ -1,8 +1,10 @@
 ﻿using Azure.Data.AppConfiguration;
+using Azure.Data.Tables;
 using Azure.Identity;
 using Azure.Sdk.Tools.CheckEnforcer;
 using Azure.Sdk.Tools.CheckEnforcer.Configuration;
 using Azure.Sdk.Tools.CheckEnforcer.Integrations.GitHub;
+using Azure.Sdk.Tools.CheckEnforcer.Services.PullRequestTracking;
 using Azure.Security.KeyVault.Keys;
 using Azure.Security.KeyVault.Keys.Cryptography;
 using Microsoft.Azure.Functions.Extensions.DependencyInjection;
@@ -47,6 +49,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer
                 builder.AddCryptographyClient(key.Id);
             });
 
+            builder.Services.AddSingleton<IPullRequestTracker, PullRequestTracker>();
             builder.Services.AddSingleton<GitHubRateLimiter>();
             builder.Services.AddSingleton<IGlobalConfigurationProvider, GlobalConfigurationProvider>();
             builder.Services.AddSingleton<IGitHubClientProvider, GitHubClientProvider>();

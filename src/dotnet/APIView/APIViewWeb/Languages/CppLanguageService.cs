@@ -17,7 +17,7 @@ namespace APIViewWeb
 {
     public class CppLanguageService : LanguageService
     {
-        private const string CurrentVersion = "1";
+        private const string CurrentVersion = "2";
         private const string NamespaceDeclKind = "NamespaceDecl";
         private const string CxxRecordDeclKind = "CXXRecordDecl";
         private const string CxxMethodDeclKind = "CXXMethodDecl";
@@ -39,6 +39,7 @@ namespace APIViewWeb
         private const string AccessModifierProtected = "protected";
         private const string AccessModifierPublic = "public";
         private const string RootNamespace = "Azure";
+        private const string DetailsNamespacePostfix = "::Details";
         private const string ImplicitConstrucorHintError = "Implicit constructor is found. Constructors must be explicitly declared.";
         private const string NonAccessModifierMemberError = "Found field without access modifier. Access modifier must be explicitly declared.";
 
@@ -169,6 +170,10 @@ namespace APIViewWeb
                 }
 
                 var nameSpace = namespacebldr.ToString();
+                // Skip <partialnamespace>::Details namespace
+                if (nameSpace.EndsWith(DetailsNamespacePostfix))
+                    continue;
+
                 if (!namespaceLeafMap.ContainsKey(nameSpace))
                 {
                     namespaceLeafMap[nameSpace] = new List<CppAstNode>();
@@ -212,7 +217,7 @@ namespace APIViewWeb
                         foreach (var member in leafNamespaceNode.inner)
                         {
                             builder.IncrementIndent();
-                            ProcessNode(member, currentNamespaceMembers);
+                            ProcessNode(member, currentNamespaceMembers, nameSpace);
                             builder.DecrementIndent();
                         }
                     }
@@ -231,7 +236,7 @@ namespace APIViewWeb
                 string definitionId = name;
                 if (!string.IsNullOrEmpty(parentId))
                 {
-                    definitionId = parentId + "." + name;
+                    definitionId = parentId + "::" + name;
                 }
 
                 builder.Append(new CodeFileToken()
@@ -249,14 +254,41 @@ namespace APIViewWeb
                 };
             }
 
-            void BuildMemberDeclaration(string containerName, string name)
+            void BuildMemberDeclaration(string containerName, string name, string id = "")
             {
+                if(string.IsNullOrEmpty(id))
+                {
+                    id = name;
+                }
                 builder.Append(new CodeFileToken()
                 {
-                    DefinitionId = containerName + "." + name,
+                    DefinitionId = containerName + "." + id,
                     Kind = CodeFileTokenKind.MemberName,
                     Value = name,
                 });
+            }
+
+            string GenerateUniqueMethodId(CppAstNode methodNode)
+            {
+                var bldr = new StringBuilder();
+                bldr.Append(methodNode.name);
+
+                if (methodNode.inner != null)
+                {
+                    foreach (var parameterNode in methodNode.inner)
+                    {
+                        if (parameterNode.kind == ParmVarDeclKind)
+                        {
+                            bldr.Append(":");
+                            bldr.Append(parameterNode.type.Replace(" ", "_"));
+                        }
+                    }
+                }
+
+                bldr.Append("::");
+                var type = string.IsNullOrEmpty(methodNode.type) ? "void" : methodNode.type;
+                bldr.Append(type.Replace(" ", "_"));
+                return bldr.ToString();
             }
 
             NavigationItem ProcessClassNode(CppAstNode node, string parentName)
@@ -311,6 +343,8 @@ namespace APIViewWeb
                 builder.IncrementIndent();
                 builder.IncrementIndent();
                 bool hasFoundDefaultAccessMembers = false;
+                var id = parentName + "::" + node.name;
+
                 if (node.inner != null)
                 {
                     bool isPrivateMember = false;
@@ -343,7 +377,7 @@ namespace APIViewWeb
                             {
                                 hasFoundDefaultAccessMembers = true;
                             }
-                            ProcessNode(childNode, memberNavigations, node.name);
+                            ProcessNode(childNode, memberNavigations, id);
                         }
                     }
                 }
@@ -419,7 +453,7 @@ namespace APIViewWeb
                 return navigationItem;
             }
 
-            NavigationItem ProcessFunctionDeclNode(CppAstNode node, string parentName)
+            void ProcessFunctionDeclNode(CppAstNode node, string parentName)
             {
                 if (node.isimplicit == true)
                 {
@@ -451,7 +485,7 @@ namespace APIViewWeb
                     builder.Space();
                 }
                 
-                var navigationItem = BuildDeclaration(node.name, "method", parentName);
+                BuildMemberDeclaration(parentName, node.name, GenerateUniqueMethodId(node));
                 builder.Punctuation("(");
                 bool first = true;
                 if (node.inner != null)
@@ -525,16 +559,14 @@ namespace APIViewWeb
                 }
 
                 builder.Punctuation(";");
-                builder.NewLine();                
-                return navigationItem;
+                builder.NewLine();
             }
 
-            NavigationItem ProcessTemplateFuncDeclNode(CppAstNode node, string parentName)
+            void ProcessTemplateFuncDeclNode(CppAstNode node, string parentName)
             {
                 builder.Keyword("template");
                 builder.Space();
                 
-                NavigationItem navigationItem = null;
                 if (node.inner != null)
                 {
                     bool first = true;
@@ -554,10 +586,9 @@ namespace APIViewWeb
                     var methodNode = node.inner.FirstOrDefault(node => node.kind == CxxMethodDeclKind);
                     if (methodNode != null)
                     {
-                        navigationItem = ProcessFunctionDeclNode(methodNode, parentName);
+                        ProcessFunctionDeclNode(methodNode, parentName);
                     }
                 }
-                return navigationItem;
             }
 
             void ProcessTypeAlias(CppAstNode node)
@@ -609,7 +640,7 @@ namespace APIViewWeb
                 builder.NewLine();
             }
 
-            void ProcessNode(CppAstNode node, List<NavigationItem> navigationItems, string parentName = "")
+            void ProcessNode(CppAstNode node, List<NavigationItem> navigationItems, string parentName)
             {
                 NavigationItem currentNavItem = null;
                 builder.WriteIndent();
@@ -627,7 +658,7 @@ namespace APIViewWeb
                     case FunctionDeclKind:
                     case CxxMethodDeclKind:
                         {
-                            currentNavItem = ProcessFunctionDeclNode(node, parentName);
+                            ProcessFunctionDeclNode(node, parentName);
                             break;
                         }
                     case EnumDeclKind:
@@ -652,7 +683,7 @@ namespace APIViewWeb
 
                     case FunctionTemplateDeclKind:
                         {
-                            currentNavItem = ProcessTemplateFuncDeclNode(node, parentName);
+                            ProcessTemplateFuncDeclNode(node, parentName);
                             break;
                         }
                         

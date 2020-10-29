@@ -184,6 +184,20 @@ stages:
                         -AuthToken "$(azuresdk-github-pat)"
                       pwsh: true
 
+                  - ${{ each repo in parameters.Repos }}:
+                    - task: PowerShell@2
+                      displayName: Clean Up Sync Common Branches
+                      condition: succeeded()
+                      inputs:
+                        pwsh: true
+                        workingDirectory: $(System.DefaultWorkingDirectory)
+                        filePath: $(System.DefaultWorkingDirectory)/eng/common/scripts/Delete-RemoteBranches.ps1
+                        arguments: >
+                          -RepoOwner "Azure"
+                          -RepoName ${{ repo }}
+                          -BranchPrefix "sync-${{ parameters.DirectoryToSync }}-$(System.PullRequest.SourceBranch)-$(System.PullRequest.PullRequestNumber)"
+                          -AuthToken $(azuresdk-github-pat)
+
   - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
     - stage: CreateSync
       jobs:

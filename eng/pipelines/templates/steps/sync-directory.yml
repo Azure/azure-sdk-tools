@@ -41,7 +41,7 @@ steps:
       workingDirectory: $(System.DefaultWorkingDirectory)
 
     - task: PowerShell@2
-      displayName: Push changes
+      displayName: Push changes for creating Sync PRs
       condition: and(succeeded(), eq(variables['HasChanges'], 'true'))
       inputs:
         pwsh: true
@@ -55,6 +55,20 @@ steps:
           -SkipCommit $${{parameters.SkipCheckingForChanges}}
 
     - task: PowerShell@2
+      displayName: Push changes for Queueing Test Pipeline
+      condition: and(succeeded(), ne(variables['${{repo}}-template-definition-id'], ''))
+      inputs:
+        pwsh: true
+        workingDirectory: $(System.DefaultWorkingDirectory)/${{ repo }}
+        filePath: ${{ parameters.ScriptDirectory }}/git-branch-push.ps1
+        arguments: >
+          -PRBranchName "${{ parameters.UpstreamBranchName }}-ForTestPipeline"
+          -CommitMsg "${{ parameters.CommitMessage }}"
+          -GitUrl "https://$(azuresdk-github-pat)@github.com/${{ parameters.PROwner }}/${{ repo }}.git"
+          -PushArgs "${{ parameters.PushArgs }}"
+          -AmendCommit $True
+
+    - task: PowerShell@2
       displayName: Queue test pipeline
       condition: and(succeeded(), ne(variables['${{repo}}-template-definition-id'], ''))
       inputs:
@@ -64,7 +78,7 @@ steps:
         arguments: >
           -Organization "azure-sdk"
           -Project "internal"
-          -SourceBranch "${{ parameters.UpstreamBranchName }}"
+          -SourceBranch "${{ parameters.UpstreamBranchName }}-ForTestPipeline"
           -DefinitionId "$(${{repo}}-template-definition-id)"
           -VsoQueuedPipelines "QueuedPipelines"
           -AuthToken "$(azuresdk-azure-sdk-devops-build-queuing-pat)"

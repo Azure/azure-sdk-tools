@@ -104,6 +104,7 @@ stages:
                         -RepoOwner "Azure"
                         -RepoName "azure-sdk-tools"
                         -PullRequestNumber "$(System.PullRequest.PullRequestNumber)"
+                        -AuthToken "$(azuresdk-github-pat)"
                       pwsh: true
 
                   - ${{ each repo in parameters.Repos }}:

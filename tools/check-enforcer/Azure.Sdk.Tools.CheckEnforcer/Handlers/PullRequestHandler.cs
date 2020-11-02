@@ -46,13 +46,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
 
                 if (configuration.IsEnabled)
                 {
-                    var pullRequestTrackingTicket = new PullRequestTrackingTicket()
-                    {
-                        InstallationId = installationId,
-                        RepositoryId = repositoryId,
-                        PullRequestNumber = pullRequestNumber
-                    };
-
+                    var pullRequestTrackingTicket = new PullRequestTrackingTicket(installationId, repositoryId, pullRequestNumber);
                     await pullRequestTracker.StartTrackingPullRequestAsync(pullRequestTrackingTicket);
 
                     await CreateCheckAsync(context.Client, installationId, repositoryId, sha, false, cancellationToken);

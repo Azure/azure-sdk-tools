@@ -66,11 +66,12 @@ do
       exit 1
     }
   }
-  if ($unMergablePRs.Count -gt 0)
+
+  $RetryCount--
+  if (($unMergablePRs.Count -gt 0) -and ($RetryCount -gt 0) -and $ShouldMerge)
   {
     $PRData = $unMergablePRs
     Start-Sleep -Seconds 30
-    $RetryCount--
     LogDebug "Retrying merging for unmergable Prs"
     $ReadyForMerge = $true
   }

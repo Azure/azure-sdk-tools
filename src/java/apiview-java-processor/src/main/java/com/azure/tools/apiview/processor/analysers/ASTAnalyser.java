@@ -351,13 +351,13 @@ public class ASTAnalyser implements Analyser {
                         addToken(new Token(KEYWORD, "transitive"), SPACE);
                     }
 
-                    addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId(MODULE_INFO_KEY + "-" + d.getNameAsString())));
+                    addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId(MODULE_INFO_KEY + "-requires-" + d.getNameAsString())));
                     addToken(new Token(PUNCTUATION, ";"), NEWLINE);
                 });
 
                 moduleDirective.ifModuleExportsStmt(d -> {
                     addToken(new Token(KEYWORD, "exports"), SPACE);
-                    addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId(MODULE_INFO_KEY + "-" + d.getNameAsString())));
+                    addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId(MODULE_INFO_KEY + "-exports-" + d.getNameAsString())));
 
                     NodeList<Name> names = d.getModuleNames();
 
@@ -379,7 +379,7 @@ public class ASTAnalyser implements Analyser {
 
                 moduleDirective.ifModuleOpensStmt(d -> {
                     addToken(new Token(KEYWORD, "opens"), SPACE);
-                    addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId(MODULE_INFO_KEY + "-" + d.getNameAsString())));
+                    addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId(MODULE_INFO_KEY + "-opens-" + d.getNameAsString())));
 
                     NodeList<Name> names = d.getModuleNames();
                     if (names.size() > 0) {
@@ -400,13 +400,13 @@ public class ASTAnalyser implements Analyser {
 
                 moduleDirective.ifModuleUsesStmt(d -> {
                     addToken(new Token(KEYWORD, "uses"), SPACE);
-                    addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId(MODULE_INFO_KEY + "-" + d.getNameAsString())));
+                    addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId(MODULE_INFO_KEY + "-uses-" + d.getNameAsString())));
                     addToken(new Token(PUNCTUATION, ";"), NEWLINE);
                 });
 
                 moduleDirective.ifModuleProvidesStmt(d -> {
                     addToken(new Token(KEYWORD, "provides"), SPACE);
-                    addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId(MODULE_INFO_KEY + "-" + d.getNameAsString())), SPACE);
+                    addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId(MODULE_INFO_KEY + "-provides-" + d.getNameAsString())), SPACE);
                     addToken(new Token(KEYWORD, "with"), SPACE);
 
                     NodeList<Name> names = d.getWith();

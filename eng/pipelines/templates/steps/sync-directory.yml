@@ -66,6 +66,7 @@ steps:
           -CommitMsg "${{ parameters.CommitMessage }}"
           -GitUrl "https://$(azuresdk-github-pat)@github.com/${{ parameters.PROwner }}/${{ repo }}.git"
           -PushArgs "${{ parameters.PushArgs }}"
+          -AmendCommit $True
 
     - task: PowerShell@2
       displayName: Queue test pipeline

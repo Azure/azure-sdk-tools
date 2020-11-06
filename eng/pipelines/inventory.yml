@@ -1,0 +1,25 @@
+# Inventory PowerShell modules installed
+
+trigger: none
+
+strategy:
+  maxParallel: 3
+  matrix:
+    Linux:
+      OSVmImage: ubuntu-18.04
+    Windows:
+      OSVmImage: windows-2019
+    MacOS:
+      OSVmImage: maxOS-10.15
+
+pool:
+  vmImage: $(OSVmImage)
+
+steps:
+- bash: sudo chown -R runner ~/.Azure
+  displayName: (MacOS) Grant access to ~/.Azure
+  condition: contains(variables['OSVmImage'], 'mac')
+
+- pwsh: |
+    /eng/common/TestResources/Import-AzModules.ps1
+    Get-Module -List

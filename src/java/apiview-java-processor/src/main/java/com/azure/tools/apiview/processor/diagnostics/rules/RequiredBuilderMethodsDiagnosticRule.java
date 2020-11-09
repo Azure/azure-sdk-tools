@@ -48,7 +48,7 @@ public class RequiredBuilderMethodsDiagnosticRule implements DiagnosticRule {
     }
 
     @Override
-    public void scan(final CompilationUnit cu, final APIListing listing) {
+    public void scanIndividual(final CompilationUnit cu, final APIListing listing) {
         // check if the class has the @ServiceClientBuilder annotation, if not, do nothing
         getClasses(cu).forEach(typeDeclaration -> {
             if (typeDeclaration.isAnnotationPresent(BUILDER_ANNOTATION)) {
@@ -87,7 +87,7 @@ public class RequiredBuilderMethodsDiagnosticRule implements DiagnosticRule {
                     listing.addDiagnostic(new Diagnostic(
                             WARNING,
                             makeId(typeDeclaration),
-                            "Not all expected builder methods are present. The following methods were expected but not found: " + missingMethods,
+                            "This builder is missing common APIs. These are not required, but please consider if the following methods should exist: " + missingMethods,
                             "https://azure.github.io/azure-sdk/java_design.html#java-service-client-builder-consistency"));
                 }
             }

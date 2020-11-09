@@ -93,12 +93,15 @@ public class ASTAnalyser implements Analyser {
 
     private final Map<String, JavadocComment> packageNameToPackageInfoJavaDoc;
 
+    private final Diagnostics diagnostic;
+
     private int indent;
 
     public ASTAnalyser(File inputFile, APIListing apiListing) {
         this.apiListing = apiListing;
         this.indent = 0;
         this.packageNameToPackageInfoJavaDoc = new HashMap<>();
+        this.diagnostic = new Diagnostics();
     }
 
     @Override
@@ -120,6 +123,10 @@ public class ASTAnalyser implements Analyser {
                 .map(Optional::get)
                 .collect(Collectors.groupingBy(ScanClass::getPackageName, TreeMap::new, Collectors.toList()))
                 .forEach(this::processPackage);
+
+        // we conclude by doing a final pass over all diagnostics to enable them to do any final analysis based on
+        // the already-executed individual scans
+        diagnostic.scanFinal(apiListing);
     }
 
     // This class represents a class that is going to go through the analysis pipeline, and it collects
@@ -247,7 +254,7 @@ public class ASTAnalyser implements Analyser {
                 visitClassOrInterfaceOrEnumDeclaration(typeDeclaration);
             }
 
-            Diagnostics.scan(compilationUnit, apiListing);
+            diagnostic.scanIndividual(compilationUnit, apiListing);
         }
 
         private void visitClassOrInterfaceOrEnumDeclaration(TypeDeclaration<?> typeDeclaration) {

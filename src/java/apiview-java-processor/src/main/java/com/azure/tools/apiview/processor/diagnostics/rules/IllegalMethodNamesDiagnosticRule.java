@@ -26,7 +26,7 @@ public class IllegalMethodNamesDiagnosticRule implements DiagnosticRule {
     }
 
     @Override
-    public void scan(final CompilationUnit cu, final APIListing listing) {
+    public void scanIndividual(final CompilationUnit cu, final APIListing listing) {
         getClassName(cu).ifPresent(className ->
             getPublicOrProtectedMethods(cu).forEach(method -> {
                 final String methodName = method.getNameAsString();

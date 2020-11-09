@@ -14,7 +14,7 @@ public class PackageNameDiagnosticRule implements DiagnosticRule {
     final static Pattern regex = Pattern.compile("^com.azure(\\.[a-z0-9]+)+$");
 
     @Override
-    public void scan(final CompilationUnit cu, final APIListing listing) {
+    public void scanIndividual(final CompilationUnit cu, final APIListing listing) {
         getPackageName(cu).ifPresent(packageName -> {
             // we need to map the issue to the class id, because package text isn't printed in the APIView output
             getClassName(cu).map(listing.getKnownTypes()::get).ifPresent(typeId -> {

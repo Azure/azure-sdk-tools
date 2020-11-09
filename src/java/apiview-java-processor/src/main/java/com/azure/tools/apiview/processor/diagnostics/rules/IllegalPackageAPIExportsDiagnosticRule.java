@@ -30,7 +30,7 @@ public class IllegalPackageAPIExportsDiagnosticRule implements DiagnosticRule {
     }
 
     @Override
-    public void scan(final CompilationUnit cu, final APIListing listing) {
+    public void scanIndividual(final CompilationUnit cu, final APIListing listing) {
         getPublicOrProtectedConstructors(cu)
                 .forEach(methodDecl -> {
                     final String methodId = makeId(methodDecl);

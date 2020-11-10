@@ -18,7 +18,7 @@ param (
     [Parameter(Mandatory = $true)]
     [ValidatePattern('^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$')]
     [ValidateNotNullOrEmpty()]
-    [string] $ProvisionerApplicationTenantId,
+    [string] $TenantId,
 
     [Parameter(Mandatory = $true)]
     [ValidatePattern('^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$')]
@@ -29,12 +29,15 @@ param (
     $Environment = "AzureCloud",
 
     [Parameter()]
-    [switch] $Force
+    [switch] $Force,
+
+    [Parameter(ValueFromRemainingArguments = $true)]
+    $IgnoreUnusedArguments
 )
 
 Write-Verbose "Logging in"
 az cloud set --name $Environment
-az login --service-principal --username=$ProvisionerApplicationId --password=$ProvisionerApplicationSecret --tenant=$ProvisionerApplicationTenantId
+az login --service-principal --username=$ProvisionerApplicationId --password=$ProvisionerApplicationSecret --tenant=$TenantId
 Write-Verbose "Setting account"
 az account set --subscription=$SubscriptionId
 

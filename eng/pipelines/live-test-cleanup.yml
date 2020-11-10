@@ -13,32 +13,42 @@ stages:
       vmImage: ubuntu-16.04
 
     steps:
-      - pwsh: >
-          ./tools/live-test-cleanup/cleanup.ps1
-          -ProvisionerApplicationId "$(provisioner-aad-id)"
-          -ProvisionerApplicationSecret "$(provisioner-aad-secret)"
-          -ProvisionerApplicationTenantId "$(provisioner-aad-tenant)"
-          -SubscriptionId "$(provisioner-subscription)"
-          -Environment 'AzureCloud'
+      - pwsh: |
+          $subscriptionConfiguration = @'
+            $(sub-config-azure-cloud-test-resources)
+          '@ | ConvertFrom-Json -AsHashtable
+
+          ./tools/live-test-cleanup/cleanup.ps1 `
+          @subscriptionConfiguration `
           -Verbose
         displayName: Clean up subscription resources (AzureCloud)
 
-      - pwsh: >
-          ./tools/live-test-cleanup/cleanup.ps1
-          -ProvisionerApplicationId "$(provisioner-aad-id-gov)"
-          -ProvisionerApplicationSecret "$(provisioner-aad-secret-gov)"
-          -ProvisionerApplicationTenantId "$(provisioner-aad-tenant-gov)"
-          -SubscriptionId "$(provisioner-subscription-gov)"
-          -Environment 'AzureUSGovernment'
+      - pwsh: |
+          $subscriptionConfiguration = @'
+            $(sub-config-azure-cloud-test-resources-preview)
+          '@ | ConvertFrom-Json -AsHashtable
+
+          ./tools/live-test-cleanup/cleanup.ps1 `
+          @subscriptionConfiguration `
+          -Verbose
+        displayName: Clean up subscription resources (AzureCloud-Preview)
+
+      - pwsh: |
+          $subscriptionConfiguration = @'
+            $(sub-config-gov-test-resources)
+          '@ | ConvertFrom-Json -AsHashtable
+
+          ./tools/live-test-cleanup/cleanup.ps1 `
+          @subscriptionConfiguration `
           -Verbose
         displayName: Clean up subscription resources (AzureUSGovernment)
 
-      - pwsh: >
-          ./tools/live-test-cleanup/cleanup.ps1
-          -ProvisionerApplicationId "$(provisioner-aad-id-cn)"
-          -ProvisionerApplicationSecret "$(provisioner-aad-secret-cn)"
-          -ProvisionerApplicationTenantId "$(provisioner-aad-tenant-cn)"
-          -SubscriptionId "$(provisioner-subscription-cn)"
-          -Environment 'AzureChinaCloud'
+      - pwsh: |
+          $subscriptionConfiguration = @'
+            $(sub-config-cn-test-resources)
+          '@ | ConvertFrom-Json -AsHashtable
+
+          ./tools/live-test-cleanup/cleanup.ps1 `
+          @subscriptionConfiguration `
           -Verbose
         displayName: Clean up subscription resources (AzureChinaCloud)

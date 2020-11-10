@@ -15,7 +15,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
                               where r.Result == TaskResult.Failed
                               where r.RecordType == "Task"
                               where r.Task != null
-                              where r.Task.Name == "ESRP Code Signing"
+                              where r.Task.Name == "EsrpCodeSigning"
                               where r.Log != null
                               select r;
 

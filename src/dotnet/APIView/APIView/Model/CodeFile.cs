@@ -34,6 +34,10 @@ namespace ApiView
 
         public string Language { get; set; }
 
+        public string PackageName { get; set; }
+
+        public string PackageVersion { get; set; }
+
         public CodeFileToken[] Tokens { get; set; } = Array.Empty<CodeFileToken>();
 
         public NavigationItem[] Navigation { get; set; }

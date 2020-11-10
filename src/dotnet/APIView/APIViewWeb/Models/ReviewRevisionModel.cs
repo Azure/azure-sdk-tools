@@ -68,5 +68,13 @@ namespace APIViewWeb
         public string Label { get; set; }
 
         public int RevisionNumber => Review.Revisions.IndexOf(this);
+
+        public bool IsApproved { get; set; }
+
+        public string ApprovedBy { get; set; }
+
+        public string ApprovalComments { get; set; }
+
+        public DateTime ApprovedOn { get; set; }
     }
 }

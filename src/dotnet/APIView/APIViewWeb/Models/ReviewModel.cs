@@ -58,7 +58,7 @@ namespace APIViewWeb
 
         public string GetUserEmail(ClaimsPrincipal user) =>
             NotificationManager.GetUserEmail(user);
-
+        
         [JsonIgnore]
         public string DisplayName
         {
@@ -76,5 +76,23 @@ namespace APIViewWeb
 
         [JsonIgnore]
         public string Language => Revisions.FirstOrDefault()?.Files.FirstOrDefault()?.Language;
+
+        [JsonIgnore]
+        public string PackageName => Revisions.LastOrDefault()?.Files.LastOrDefault()?.PackageName;
+
+        [JsonIgnore]
+        public string PackageVersion => Revisions.LastOrDefault()?.Files.LastOrDefault()?.PackageVersion;
+
+        [JsonIgnore]
+        public bool IsApproved => Revisions.LastOrDefault()?.IsApproved ?? false;
+
+        [JsonIgnore]
+        public string ApprovedBy => Revisions.LastOrDefault()?.ApprovedBy;
+
+        [JsonIgnore]
+        public DateTime? ApprovedOn => Revisions.LastOrDefault()?.ApprovedOn;
+
+        [JsonIgnore]
+        public string ApprovalComments => Revisions.LastOrDefault()?.ApprovalComments;
     }
 }

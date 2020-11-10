@@ -26,5 +26,9 @@ namespace APIViewWeb
 
         [Obsolete("Back compat don't use directly")]
         public bool RunAnalysis { get; set; }
+
+        public string PackageName { get; set; }
+
+        public string PackageVersion { get; set; }
     }
 }

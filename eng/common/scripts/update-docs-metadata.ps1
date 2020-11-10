@@ -53,7 +53,7 @@ function GetAdjustedReadmeContent($pkgInfo, $lang){
     $service = ""
 
     # the namespace is not expected to be present for js.
-    $pkgId = $pkgInfo.PackageId.Replace("@azure/", "")
+    $pkgId = $pkgInfo.PackageId.Replace("@azure/", "").Replace("@microsoft/", "")
 
     try {
       $metadata = GetMetaData -lang $lang
@@ -112,7 +112,13 @@ if ($pkgs) {
       $rdSuffix = "-pre"
     }
 
-    $readmeName = "$($packageInfo.PackageId.Replace('azure-','').Replace('Azure.', '').Replace('@azure/', '').ToLower())-readme$rdSuffix.md"
+    $packageId = $packageInfo.PackageId
+    # JS opentelemetry has "azure-" word inside package name and this should not be replaced
+    if ( $packageId.StartsWith("azure-")) 
+    {
+      $packageId = $packageId.Replace("azure-", "")
+    }
+    $readmeName = "$($packageId.Replace('Azure.', '').Replace('@azure/', '').Replace('@microsoft/', '').ToLower())-readme$rdSuffix.md"
     $readmeLocation = Join-Path $DocRepoLocation $DocRepoContentLocation $readmeName
 
     if ($packageInfo.ReadmeContent) {

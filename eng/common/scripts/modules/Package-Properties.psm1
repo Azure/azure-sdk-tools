@@ -107,7 +107,16 @@ function Extract-JsPkgProps ($pkgPath, $serviceName, $pkgName)
     if (Test-Path $projectPath)
     {
         $projectJson = Get-Content $projectPath | ConvertFrom-Json
-        $jsStylePkgName = $pkgName.replace("azure-", "@azure/")
+        $jsStylePkgName = ""
+        if ($pkgName.StartsWith("azure-"))
+        {
+            $jsStylePkgName = $pkgName.replace("azure-", "@azure/")
+        }
+        else if ($pkgName.StartsWith("microsoft-"))
+        {
+            $jsStylePkgName = $pkgName.replace("microsoft-", "@microsoft/")
+        }
+
         if ($projectJson.name -eq "$jsStylePkgName")
         {
             return [PackageProps]::new($projectJson.name, $projectJson.version, $pkgPath, $serviceName)

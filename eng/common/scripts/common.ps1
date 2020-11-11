@@ -17,6 +17,7 @@ $Language = "Unknown"
 $PackageRepository = "Unknown"
 $packagePattern = "Unknown"
 $MetadataUri = "Unknown"
+$SkipChangeLogVerification = @{}
 
 # Import common language settings
 $EngScriptsLanguageSettings = Join-path $EngScriptsDir "Language-Settings.ps1"

@@ -17,7 +17,13 @@ if ($ChangeLogLocation -and $VersionString)
 else
 {
   $PackageProp = Get-PkgProperties -PackageName $PackageName -ServiceDirectory $ServiceDirectory
-  $validChangeLog = Confirm-ChangeLogEntry -ChangeLogLocation $PackageProp.ChangeLogPath -VersionString $PackageProp.Version -ForRelease $ForRelease
+  if ($SkipChangeLogVerification.Contains($PackageProp.Name)) {
+    LogDebug "Skiping ChangeLog verification for [$($PackageProp.Name)] since package name is in skip set."
+    exit 0
+  }
+  else {
+    $validChangeLog = Confirm-ChangeLogEntry -ChangeLogLocation $PackageProp.ChangeLogPath -VersionString $PackageProp.Version -ForRelease $ForRelease
+  }
 }
 
 if (!$validChangeLog)

@@ -81,7 +81,7 @@ function UpdateParamsJsonPython($pkgs, $ciRepo, $locationInDocRepo){
             install_type = "pypi"
             name=$releasingPkg.PackageId
           }
-          excludePath = @("test*","example*","sample*","doc*")
+          exclude_path = @("test*","example*","sample*","doc*")
         }
       $allJson.packages += $newItem
     }

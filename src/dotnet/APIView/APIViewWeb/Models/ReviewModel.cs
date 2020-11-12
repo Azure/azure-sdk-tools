@@ -75,24 +75,9 @@ namespace APIViewWeb
         public DateTime LastUpdated => Revisions.LastOrDefault()?.CreationDate ?? CreationDate;
 
         [JsonIgnore]
-        public string Language => Revisions.FirstOrDefault()?.Files.FirstOrDefault()?.Language;
+        public string Language => Revisions.LastOrDefault()?.Files.LastOrDefault()?.Language;
 
         [JsonIgnore]
         public string PackageName => Revisions.LastOrDefault()?.Files.LastOrDefault()?.PackageName;
-
-        [JsonIgnore]
-        public string PackageVersion => Revisions.LastOrDefault()?.Files.LastOrDefault()?.PackageVersion;
-
-        [JsonIgnore]
-        public bool IsApproved => Revisions.LastOrDefault()?.IsApproved ?? false;
-
-        [JsonIgnore]
-        public string ApprovedBy => Revisions.LastOrDefault()?.ApprovedBy;
-
-        [JsonIgnore]
-        public DateTime? ApprovedOn => Revisions.LastOrDefault()?.ApprovedOn;
-
-        [JsonIgnore]
-        public string ApprovalComments => Revisions.LastOrDefault()?.ApprovalComments;
     }
 }

@@ -110,8 +110,7 @@ namespace ApiView
                 VersionString = CurrentVersion,
                 Navigation = new[] { assemblyNavigationItem },
                 Diagnostics = analyzer.Results.ToArray(),
-                PackageName = assemblySymbol.Name,
-                PackageVersion = $"{assemblySymbol.Identity.Version}"
+                PackageName = assemblySymbol.Name
             };
 
             return node;

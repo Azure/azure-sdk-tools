@@ -19,7 +19,7 @@ namespace APIViewWeb
             _reviewsContainer = client.GetContainer("APIView", "Reviews");
         }
 
-        public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(bool closed)
+        public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(bool closed, string Language)
         {
             var allReviews = new List<ReviewModel>();
             var queryDefinition = new QueryDefinition("SELECT * FROM Reviews r WHERE" +
@@ -33,6 +33,10 @@ namespace APIViewWeb
                 allReviews.AddRange(result.Resource);
             }
 
+            if(!string.IsNullOrEmpty(Language) && Language != "All")
+            {
+                allReviews = allReviews.Where(r => r.Language == Language).ToList();
+            }
             return allReviews.OrderByDescending(r => r.LastUpdated);
         }
 

@@ -28,7 +28,5 @@ namespace APIViewWeb
         public bool RunAnalysis { get; set; }
 
         public string PackageName { get; set; }
-
-        public string PackageVersion { get; set; }
     }
 }

@@ -81,7 +81,8 @@ steps:
           -SourceBranch "${{ parameters.UpstreamBranchName }}-ForTestPipeline"
           -DefinitionId "$(${{repo}}-template-definition-id)"
           -VsoQueuedPipelines "QueuedPipelines"
-          -AuthToken "$(azuresdk-azure-sdk-devops-build-queuing-pat)"
+          -CancelPreviousBuilds $True
+          -Base64EncodedAuthToken "$(azuresdk-azure-sdk-devops-build-queuing-pat)"
 
   - task: PowerShell@2
     displayName: Write Queued Pipeline Information to Tools PR

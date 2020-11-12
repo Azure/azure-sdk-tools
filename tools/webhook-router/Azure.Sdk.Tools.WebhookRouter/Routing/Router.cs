@@ -108,7 +108,7 @@ namespace Azure.Sdk.Tools.WebhookRouter.Routing
 
             var settings = await GetSettingsAsync(route);
 
-            logger.LogInformation("Route {route}     had {dictionaryCount} in settings dictionary.", route, settings.Count);
+            logger.LogInformation("Route {route} had {dictionaryCount} in settings dictionary.", route, settings.Count);
 
             var payloadType = (PayloadType)Enum.Parse(typeof(PayloadType), settings["payload-type"], true);
             var eventHubsNamespace = settings["eventhubs-namespace"];
@@ -154,8 +154,7 @@ namespace Azure.Sdk.Tools.WebhookRouter.Routing
 
             if (!isValid)
             {
-                // TODO: Replace with an exception so we get a 401.
-                throw new Exception("Signature validation failed.");
+                throw new RouterAuthorizationException("Signature validation failed.");
             }
 
             return payloadContent;
@@ -180,8 +179,7 @@ namespace Azure.Sdk.Tools.WebhookRouter.Routing
 
             if (credentialHash != generatedCredentialHash)
             {
-                // TODO: Replace with an exception so we get a 401.
-                throw new Exception("Credential validation failed.");
+                throw new RouterAuthorizationException("Credential validation failed.");
             }
 
             return payloadContent;

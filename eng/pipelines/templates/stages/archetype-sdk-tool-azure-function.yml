@@ -14,6 +14,8 @@ stages:
         pool:
           vmImage: ubuntu-18.04
         steps:
+          - script: |
+              echo $(Build.QueuedById)
           - task: UseDotNet@2
             displayName: Tools
             inputs:

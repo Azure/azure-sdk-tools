@@ -19,12 +19,15 @@ namespace APIViewWeb
             _reviewsContainer = client.GetContainer("APIView", "Reviews");
         }
 
-        public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(bool closed)
+        public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(bool closed, string language)
         {
             var allReviews = new List<ReviewModel>();
             var queryDefinition = new QueryDefinition("SELECT * FROM Reviews r WHERE" +
-                                                      "(IS_DEFINED(r.IsClosed) ? r.IsClosed : false) = @isClosed")
-                .WithParameter("@isClosed", closed);
+                                                      "(IS_DEFINED(r.IsClosed) ? r.IsClosed : false) = @isClosed AND " +
+                                                      "('All' = @language OR EXISTS (SELECT VALUE revision FROM revision in r.Revisions WHERE " +
+                                                                                    "EXISTS (SELECT VALUE files from files in revision.Files WHERE files.Language = @language)))")
+                .WithParameter("@isClosed", closed)
+                .WithParameter("@language", language);
 
             var itemQueryIterator = _reviewsContainer.GetItemQueryIterator<ReviewModel>(queryDefinition);
             while (itemQueryIterator.HasMoreResults)

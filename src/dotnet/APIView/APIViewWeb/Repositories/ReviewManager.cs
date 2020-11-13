@@ -60,9 +60,9 @@ namespace APIViewWeb.Respositories
             return review;
         }
 
-        public Task<IEnumerable<ReviewModel>> GetReviewsAsync(bool closed)
+        public Task<IEnumerable<ReviewModel>> GetReviewsAsync(bool closed, string language)
         {
-            return _reviewsRepository.GetReviewsAsync(closed);
+            return _reviewsRepository.GetReviewsAsync(closed, language);
         }
 
         public async Task DeleteReviewAsync(ClaimsPrincipal user, string id)
@@ -255,6 +255,7 @@ namespace APIViewWeb.Respositories
             file.Language = codeFile.Language;
             file.VersionString = codeFile.VersionString;
             file.Name = codeFile.Name;
+            file.PackageName = codeFile.PackageName;
         }
 
         private LanguageService GetLanguageService(string language)

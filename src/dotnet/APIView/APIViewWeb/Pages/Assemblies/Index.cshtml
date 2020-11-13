@@ -15,9 +15,19 @@
             <input type="text" class="form-control" id="searchBox" placeholder="Filter by review name" autofocus>
         </div>
 
+        <div class="btn-group float-left  pl-5">
+            <a class="btn btn-primary" active-if='@Model.Language != "All"' asp-route-language="All">All</a>
+            <a class="btn btn-primary" active-if='@Model.Language != "C"' asp-route-language="C">C</a>
+            <a class="btn btn-primary" active-if='@Model.Language != "C#"' asp-route-language="C#">C#</a>
+            <a class="btn btn-primary" active-if='@Model.Language != "C++"' asp-route-language="C++">C++</a>
+            <a class="btn btn-primary" active-if='@Model.Language != "Java"' asp-route-language="Java">Java</a>
+            <a class="btn btn-primary" active-if='@Model.Language != "JS/TS"' asp-route-language="JavaScript">JS/TS</a>
+            <a class="btn btn-primary" active-if='@Model.Language != "Python"' asp-route-language="Python">Python</a>
+        </div>
+
         <div class="btn-group float-right">
-            <a class="btn btn-secondary" active-if="!@Model.Closed" asp-route-closed="false">Open</a>
-            <a class="btn btn-secondary" active-if="@Model.Closed" asp-route-closed="true">Closed</a>
+            <a class="btn btn-secondary" active-if="!@Model.Closed" asp-route-closed="false" asp-route-language=@Model.Language>Open</a>
+            <a class="btn btn-secondary" active-if="@Model.Closed" asp-route-closed="true" asp-route-language=@Model.Language>Closed</a>
         </div>
     </div>
 </div>

@@ -75,9 +75,6 @@ namespace APIViewWeb
         public DateTime LastUpdated => Revisions.LastOrDefault()?.CreationDate ?? CreationDate;
 
         [JsonIgnore]
-        public string Language => Revisions.LastOrDefault()?.Files.LastOrDefault()?.Language;
-
-        [JsonIgnore]
-        public string PackageName => Revisions.LastOrDefault()?.Files.LastOrDefault()?.PackageName;
+        public string Language => Revisions.FirstOrDefault()?.Files.FirstOrDefault()?.Language;
     }
 }

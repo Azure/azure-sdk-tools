@@ -58,7 +58,7 @@ namespace APIViewWeb
 
         public string GetUserEmail(ClaimsPrincipal user) =>
             NotificationManager.GetUserEmail(user);
-        
+
         [JsonIgnore]
         public string DisplayName
         {

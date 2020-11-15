@@ -283,5 +283,36 @@ namespace APIViewWeb.Respositories
                 throw new AuthorizationFailedException();
             }
         }
+
+        public async Task ApproveRevisionAsync(ClaimsPrincipal user, string id, string revisionId)
+        {
+            ReviewModel review = await GetReviewAsync(user, id);
+            ReviewRevisionModel revision = review.Revisions.Single(r => r.RevisionId == revisionId);
+            await AssertApprover(user, revision);
+            revision.IsApproved = true;
+            revision.ApprovedBy = user.GetGitHubLogin();
+            await _reviewsRepository.UpsertReviewAsync(review);
+        }
+
+        public async Task RevertApprovalAsync(ClaimsPrincipal user, string id, string revisionId)
+        {
+            ReviewModel review = await GetReviewAsync(user, id);
+            ReviewRevisionModel revision = review.Revisions.Single(r => r.RevisionId == revisionId);
+            await AssertApprover(user, revision);
+            revision.IsApproved = false;
+            revision.ApprovedBy = "";
+            await _reviewsRepository.UpsertReviewAsync(review);
+        }
+        private async Task AssertApprover(ClaimsPrincipal user, ReviewRevisionModel revisionModel)
+        {
+            var result = await _authorizationService.AuthorizeAsync(
+                user,
+                revisionModel,
+                new[] { ApproverRequirement.Instance });
+            if (!result.Succeeded)
+            {
+                throw new AuthorizationFailedException();
+            }
+        }
     }
 }

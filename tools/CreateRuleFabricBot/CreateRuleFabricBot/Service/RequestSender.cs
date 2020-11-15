@@ -31,7 +31,7 @@ namespace CreateRuleFabricBot.Service
 
         public void UpdateTask(string taskId, string jsonPayload)
         {
-            string requestUri = $"https://fabric-cp.azurewebsites.net/api/bot/task/{_owner}/{_repo}/{taskId}";
+            string requestUri = $"https://portal.fabricbot.ms/api/bot/task/{_owner}/{_repo}/{taskId}";
 
             var response = SendRequestAsync(new HttpMethod("PATCH"), requestUri, CreateContent(jsonPayload)).GetAwaiter().GetResult();
         }
@@ -72,7 +72,7 @@ namespace CreateRuleFabricBot.Service
 
         public void DeleteTask(string taskId)
         {
-            string requestUri = $"https://fabric-cp.azurewebsites.net/api/bot/task/{_owner}/{_repo}/{taskId}";
+            string requestUri = $"https://portal.fabricbot.ms/api/bot/task/{_owner}/{_repo}/{taskId}";
 
             var response = SendRequestAsync(HttpMethod.Delete, requestUri).GetAwaiter().GetResult();
             response.EnsureSuccessStatusCode();
@@ -80,7 +80,7 @@ namespace CreateRuleFabricBot.Service
 
         public List<string> GetTaskIds()
         {
-            string requestUri = $"https://fabric-cp.azurewebsites.net/api/bot/getBotConfig?githubKey={_owner}/{_repo}";
+            string requestUri = $"https://portal.fabricbot.ms/api/bot/getBotConfig?githubKey={_owner}/{_repo}";
             List<string> elements = new List<string>();
             var response = SendRequestAsync(HttpMethod.Get, requestUri).GetAwaiter().GetResult();
 
@@ -105,7 +105,7 @@ namespace CreateRuleFabricBot.Service
 
         private async Task<HttpResponseMessage> SendRequestAsync(HttpMethod method, string uri, HttpContent content = null)
         {
-            Cookie authCookie = new Cookie("AppServiceAuthSession", _authHeaderValue, "/", "fabric-cp.azurewebsites.net")
+            Cookie authCookie = new Cookie("AppServiceAuthSession", _authHeaderValue, "/", "portal.fabricbot.ms")
             {
                 HttpOnly = true,
                 Secure = true

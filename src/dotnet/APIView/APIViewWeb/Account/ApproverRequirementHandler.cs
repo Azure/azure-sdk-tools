@@ -10,7 +10,6 @@ namespace APIViewWeb
 {
     public class ApproverRequirementHandler : IAuthorizationHandler
     {
-        //Remove Praveen and Pavel from approver once initial testing is completed on production instance.
         private readonly string[] approvers;
 
         public ApproverRequirementHandler(IConfiguration configuration)

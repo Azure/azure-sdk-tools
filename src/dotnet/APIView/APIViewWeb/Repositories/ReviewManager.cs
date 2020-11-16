@@ -303,6 +303,7 @@ namespace APIViewWeb.Respositories
             revision.ApprovedBy = "";
             await _reviewsRepository.UpsertReviewAsync(review);
         }
+
         private async Task AssertApprover(ClaimsPrincipal user, ReviewRevisionModel revisionModel)
         {
             var result = await _authorizationService.AuthorizeAsync(

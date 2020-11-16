@@ -20,6 +20,7 @@ namespace APIViewWeb
                 approvers = approverConfig.Split(",");
             }
         }
+
         public Task HandleAsync(AuthorizationHandlerContext context)
         {
             foreach (var requirement in context.Requirements)

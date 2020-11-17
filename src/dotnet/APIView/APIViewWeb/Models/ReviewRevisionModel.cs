@@ -69,8 +69,6 @@ namespace APIViewWeb
 
         public int RevisionNumber => Review.Revisions.IndexOf(this);
 
-        public bool IsApproved { get; set; }
-
-        public string ApprovedBy { get; set; }
+        public HashSet<string> Approvers { get; set; } = new HashSet<string>();
     }
 }

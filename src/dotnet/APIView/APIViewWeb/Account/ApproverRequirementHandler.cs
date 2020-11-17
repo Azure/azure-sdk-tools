@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -10,14 +11,17 @@ namespace APIViewWeb
 {
     public class ApproverRequirementHandler : IAuthorizationHandler
     {
-        private readonly string[] approvers;
+        private HashSet<string> approvers = new HashSet<string>();
 
         public ApproverRequirementHandler(IConfiguration configuration)
         {
             var approverConfig = configuration["approvers"];
             if (!string.IsNullOrEmpty(approverConfig))
             {
-                approvers = approverConfig.Split(",");
+                foreach (var id in approverConfig.Split(","))
+                {
+                    approvers.Add(id);
+                }
             }
         }
 

@@ -289,8 +289,7 @@ namespace APIViewWeb.Respositories
             ReviewModel review = await GetReviewAsync(user, id);
             ReviewRevisionModel revision = review.Revisions.Single(r => r.RevisionId == revisionId);
             await AssertApprover(user, revision);
-            revision.IsApproved = true;
-            revision.ApprovedBy = user.GetGitHubLogin();
+            revision.Approvers.Add(user.GetGitHubLogin());
             await _reviewsRepository.UpsertReviewAsync(review);
         }
 
@@ -299,8 +298,7 @@ namespace APIViewWeb.Respositories
             ReviewModel review = await GetReviewAsync(user, id);
             ReviewRevisionModel revision = review.Revisions.Single(r => r.RevisionId == revisionId);
             await AssertApprover(user, revision);
-            revision.IsApproved = false;
-            revision.ApprovedBy = "";
+            revision.Approvers.Remove(user.GetGitHubLogin());
             await _reviewsRepository.UpsertReviewAsync(review);
         }
 

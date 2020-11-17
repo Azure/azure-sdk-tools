@@ -100,7 +100,7 @@
             </div>
         </div>
         <div class="float-right">
-            @if (Model.Revision.IsApproved)
+            @if (Model.Revision.Approvers.Contains(User.GetGitHubLogin()))
             {
                 <form asp-resource="@Model.Review" class="form-inline float-left ml-2" asp-page-handler="RevertApproval" method="post" asp-requirement="@ApproverRequirement.Instance">
                     <input type="hidden" name="revisionId" value="@Model.Revision.RevisionId" />
@@ -117,13 +117,12 @@
         </div>
         <div class="float-right ml-2">
             <label class="approval-label ml-2">Approval Status:</label>
-            @if (Model.Revision.IsApproved)
+            @if (Model.Revision.Approvers.Count > 0)
             {
-                <label class="approval-approved ml-2">Approved</label>
-                <div class="float-left ml-2">
-                    <label class="approval-label">Approved By: </label>
-                    <label class="approval-value">@Model.Revision.ApprovedBy</label>
-                </div>
+                foreach (var approver in Model.Revision.Approvers)
+                {
+                    <label class="approval-value">✔️@approver</label>
+                }
             }
             else
             {

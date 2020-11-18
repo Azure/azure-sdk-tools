@@ -179,5 +179,11 @@ namespace APIViewWeb.Pages.Assemblies
             await _notificationManager.ToggleSubscribedAsync(User, id);
             return RedirectToPage(new { id = id });
         }
+
+        public async Task<IActionResult> OnPostToggleApprovalAsync(string id, string revisionId)
+        {
+            await _manager.ToggleApprovalAsync(User, id, revisionId);
+            return RedirectToPage(new { id = id });
+        }
     }
 }

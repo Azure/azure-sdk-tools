@@ -78,8 +78,7 @@
                 }
             </form>
         </div>
-
-        <div class="dropdown d-inline-block float-right">
+        <div class="dropdown d-inline-block float-right ml-2">
             <a class="btn btn-sm btn-outline-secondary dropdown-toggle" href="#" role="button" data-toggle="dropdown">
                 💬 @Model.ActiveConversations / @Model.TotalActiveConversations
             </a>
@@ -99,6 +98,26 @@
                     </a>
                 </span>
             </div>
+        </div>
+        <div class="float-right">
+            <form asp-resource="@Model.Review" class="form-inline float-left ml-2" asp-page-handler="ToggleApproval" method="post" asp-requirement="@ApproverRequirement.Instance">
+                <input type="hidden" name="revisionId" value="@Model.Revision.RevisionId" />
+                <input type="submit" class="btn btn-sm btn-secondary" value="@(Model.Revision.Approvers.Contains(User.GetGitHubLogin()) ? "Revert Approval" : "Approve")"/>
+            </form>
+        </div>
+        <div class="float-right ml-2">
+            <label>Approval Status:</label>
+            @if (Model.Revision.Approvers.Count > 0)
+            {
+                foreach (var approver in Model.Revision.Approvers)
+                {
+                    <label class="font-weight-bolder text-success">✔️@approver</label>
+                }
+            }
+            else
+            {
+                <label class="font-weight-bolder text-danger">Pending</label>
+            }
         </div>
     </div>
 </div>

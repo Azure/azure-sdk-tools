@@ -68,5 +68,7 @@ namespace APIViewWeb
         public string Label { get; set; }
 
         public int RevisionNumber => Review.Revisions.IndexOf(this);
+
+        public HashSet<string> Approvers { get; set; } = new HashSet<string>();
     }
 }

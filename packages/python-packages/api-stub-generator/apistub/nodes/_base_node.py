@@ -42,7 +42,7 @@ class NodeEntityBase:
             apiview.end_group()
 
 
-def get_qualified_name(obj):
+def get_qualified_name(obj, namespace):
     """Generate and return fully qualified name of object with module name for internal types.
        If module name is not available for the object then it will return name
     :param: obj
@@ -60,7 +60,7 @@ def get_qualified_name(obj):
     module_name = ""
     if hasattr(obj, "__module__"):
         module_name = getattr(obj, "__module__")
-    if module_name and module_name.startswith("azure"):
+    if module_name and module_name.startswith(namespace):
         return "{0}.{1}".format(module_name, name)
 
     return name

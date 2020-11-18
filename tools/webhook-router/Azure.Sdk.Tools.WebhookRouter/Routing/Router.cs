@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.CompilerServices;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -123,9 +124,21 @@ namespace Azure.Sdk.Tools.WebhookRouter.Routing
 
             Rule rule = payloadType switch
             {
-                PayloadType.GitHub => new GitHubRule(route, eventHubsNamespace, eventHubName, settings["github-webhook-secret"]),
-                PayloadType.AzureDevOps => new AzureDevOpsRule(route, eventHubsNamespace, eventHubName),
-                _ => new GenericRule(route, eventHubsNamespace, eventHubName)
+                PayloadType.GitHub => new GitHubRule(
+                    route,
+                    eventHubsNamespace,
+                    eventHubName,
+                    settings["github-webhook-secret"]),
+                PayloadType.AzureDevOps => new AzureDevOpsRule(
+                    route,
+                    eventHubsNamespace,
+                    eventHubName,
+                    settings["azure-devops-webhook-credential-hash"],
+                    settings["azure-devops-webhook-credential-salt"]),
+                _ => new GenericRule(
+                    route,
+                    eventHubsNamespace,
+                    eventHubName)
             };
 
             return rule;
@@ -139,12 +152,36 @@ namespace Azure.Sdk.Tools.WebhookRouter.Routing
             var signature = request.Headers[GitHubWebhookSignatureValidator.GitHubWebhookSignatureHeader];
             bool isValid = GitHubWebhookSignatureValidator.IsValid(payloadContent, signature, secret);
 
+            if (!isValid)
+            {
+                throw new RouterAuthorizationException("Signature validation failed.");
+            }
+
             return payloadContent;
         }
+
+        private SHA256CryptoServiceProvider sha256 = new SHA256CryptoServiceProvider();
 
         private async Task<byte[]> ReadAndValidateContentFromAzureDevOpsAsync(AzureDevOpsRule rule, HttpRequest request)
         {
             var payloadContent = await ReadAndValidateContentFromGenericAsync(rule, request);
+
+            var credentialHash = await GetSecretAsync(rule.CredentialHash);
+            var credentialSalt = await GetSecretAsync(rule.CredentialSalt);
+
+            var authorizationHeader = request.Headers["Authorization"].ToString();
+            var base64EncodedCredentials = authorizationHeader.Replace("Basic ", "");
+
+            var base64EncodedCredentialsWithSalt = $"{base64EncodedCredentials}{credentialSalt}";
+            var base64EncodedCredentialsWithSaltBytes = Encoding.UTF8.GetBytes(base64EncodedCredentialsWithSalt);
+            var generatedCredentialHashBytes = sha256.ComputeHash(base64EncodedCredentialsWithSaltBytes);
+            var generatedCredentialHash = Convert.ToBase64String(generatedCredentialHashBytes);
+
+            if (credentialHash != generatedCredentialHash)
+            {
+                throw new RouterAuthorizationException("Credential validation failed.");
+            }
+
             return payloadContent;
         }
 

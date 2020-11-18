@@ -28,8 +28,16 @@ namespace Azure.Sdk.Tools.WebhookRouter.Functions
             ILogger log,
             Guid route)
         {
-            await router.RouteAsync(route, req);            
-            return new OkResult();
+            try
+            {
+                await router.RouteAsync(route, req);            
+                return new OkResult();
+            }
+            catch (RouterAuthorizationException ex)
+            {
+                log.LogError(ex, "Request did not pass validation.");
+                return new UnauthorizedResult();
+            }
         }
     }
 }

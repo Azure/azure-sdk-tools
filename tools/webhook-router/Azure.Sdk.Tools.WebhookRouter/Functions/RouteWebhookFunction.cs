@@ -35,6 +35,7 @@ namespace Azure.Sdk.Tools.WebhookRouter.Functions
             }
             catch (RouterAuthorizationException ex)
             {
+                log.LogError(ex, "Request did not pass validation.");
                 return new UnauthorizedResult();
             }
         }

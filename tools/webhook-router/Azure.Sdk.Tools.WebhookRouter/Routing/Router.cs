@@ -167,7 +167,7 @@ namespace Azure.Sdk.Tools.WebhookRouter.Routing
             var payloadContent = await ReadAndValidateContentFromGenericAsync(rule, request);
 
             var credentialHash = await GetSecretAsync(rule.CredentialHash);
-            var credentialSalt = await GetSecretAsync(rule.CrdentialSalt);
+            var credentialSalt = await GetSecretAsync(rule.CredentialSalt);
 
             var authorizationHeader = request.Headers["Authorization"].ToString();
             var base64EncodedCredentials = authorizationHeader.Replace("Basic ", "");

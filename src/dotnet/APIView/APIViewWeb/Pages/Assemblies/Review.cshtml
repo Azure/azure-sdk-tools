@@ -100,33 +100,23 @@
             </div>
         </div>
         <div class="float-right">
-            @if (Model.Revision.Approvers.Contains(User.GetGitHubLogin()))
-            {
-                <form asp-resource="@Model.Review" class="form-inline float-left ml-2" asp-page-handler="RevertApproval" method="post" asp-requirement="@ApproverRequirement.Instance">
-                    <input type="hidden" name="revisionId" value="@Model.Revision.RevisionId" />
-                    <input type="submit" class="btn btn-sm btn-secondary" value="Revert Approval" />
-                </form>
-            }
-            else
-            {
-                <form asp-resource="@Model.Review" class="form-inline float-left ml-2" asp-page-handler="Approve" method="post" asp-requirement="@ApproverRequirement.Instance">
-                    <input type="hidden" name="revisionId" value="@Model.Revision.RevisionId" />
-                    <input type="submit" class="btn btn-sm btn-secondary" value="Approve" />
-                </form>
-            }
+            <form asp-resource="@Model.Review" class="form-inline float-left ml-2" asp-page-handler="ToggleApproval" method="post" asp-requirement="@ApproverRequirement.Instance">
+                <input type="hidden" name="revisionId" value="@Model.Revision.RevisionId" />
+                <input type="submit" class="btn btn-sm btn-secondary" value="@(Model.Revision.Approvers.Contains(User.GetGitHubLogin()) ? "Revert Approval" : "Approve")"/>
+            </form>
         </div>
         <div class="float-right ml-2">
-            <label class="approval-label ml-2">Approval Status:</label>
+            <label>Approval Status:</label>
             @if (Model.Revision.Approvers.Count > 0)
             {
                 foreach (var approver in Model.Revision.Approvers)
                 {
-                    <label class="approval-value">✔️@approver</label>
+                    <label class="font-weight-bolder text-success">✔️@approver</label>
                 }
             }
             else
             {
-                <label class="approval-pending ml-2">Pending</label>
+                <label class="font-weight-bolder text-danger">Pending</label>
             }
         </div>
     </div>

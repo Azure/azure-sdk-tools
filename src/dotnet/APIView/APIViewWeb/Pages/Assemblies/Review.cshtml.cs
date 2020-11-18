@@ -180,15 +180,9 @@ namespace APIViewWeb.Pages.Assemblies
             return RedirectToPage(new { id = id });
         }
 
-        public async Task<IActionResult> OnPostApproveAsync(string id, string revisionId)
+        public async Task<IActionResult> OnPostToggleApprovalAsync(string id, string revisionId)
         {
-            await _manager.ApproveRevisionAsync(User, id, revisionId);
-            return RedirectToPage(new { id = id });
-        }
-
-        public async Task<IActionResult> OnPostRevertApprovalAsync(string id, string revisionId)
-        {
-            await _manager.RevertApprovalAsync(User, id, revisionId);
+            await _manager.ToggleApprovalAsync(User, id, revisionId);
             return RedirectToPage(new { id = id });
         }
     }

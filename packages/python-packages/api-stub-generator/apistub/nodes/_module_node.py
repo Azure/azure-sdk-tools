@@ -68,7 +68,7 @@ class ModuleNode(NodeEntityBase):
 
         # Skip any member in module level that is defined in external or built in package
         if hasattr(member_obj, "__module__"):
-            return not getattr(member_obj, "__module__").startswith("azure.")
+            return not getattr(member_obj, "__module__").startswith(self.namespace)
         # Don't skip member if module name is not available. This is just to be on safer side
         return False
 

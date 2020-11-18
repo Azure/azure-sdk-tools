@@ -101,7 +101,7 @@ class ClassNode(NodeEntityBase):
             return False
         if hasattr(func_obj, "__module__"):
             function_module = getattr(func_obj, "__module__")
-            return function_module and function_module.startswith("azure.")
+            return function_module and function_module.startswith(self.namespace)
 
         return False
 

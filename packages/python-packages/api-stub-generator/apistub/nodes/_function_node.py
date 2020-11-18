@@ -113,7 +113,7 @@ class FunctionNode(NodeEntityBase):
         # This is to handle the scenario is keyword arg typehint (py3 style is present in signature itself)
         self.kw_args = []
         for argname in params:
-            arg = ArgType(argname, get_qualified_name(params[argname].annotation), "", self)
+            arg = ArgType(argname, get_qualified_name(params[argname].annotation, self.namespace), "", self)
             # set default value if available
             if params[argname].default != Parameter.empty:
                 arg.default = str(params[argname].default)
@@ -127,7 +127,7 @@ class FunctionNode(NodeEntityBase):
                 self.args.append(arg)
 
         if sig.return_annotation:
-            self.return_type = get_qualified_name(sig.return_annotation)
+            self.return_type = get_qualified_name(sig.return_annotation, self.namespace)
 
         # parse docstring
         self._parse_docstring()

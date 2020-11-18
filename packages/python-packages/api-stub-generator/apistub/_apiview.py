@@ -10,7 +10,7 @@ from ._token_kind import TokenKind
 from ._version import VERSION
 from ._diagnostic import Diagnostic
 
-JSON_FIELDS = ["Name", "Version", "VersionString", "Navigation", "Tokens", "Diagnostics", "PackageName", "PackageVersion"]
+JSON_FIELDS = ["Name", "Version", "VersionString", "Navigation", "Tokens", "Diagnostics", "PackageName"]
 
 HEADER_TEXT = "# Package is parsed using api-stub-generator(version:{})".format(VERSION)
 TYPE_NAME_REGEX = re.compile("(~?[a-zA-Z\d._]+)")
@@ -41,7 +41,6 @@ class ApiView:
         self.namespace = namespace
         self.nodeindex = nodeindex
         self.PackageName = pkg_name
-        self.PackageVersion = pkg_version
         self.add_literal(HEADER_TEXT)
         self.add_new_line(2)
 

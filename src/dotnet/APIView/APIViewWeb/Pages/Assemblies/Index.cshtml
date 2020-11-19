@@ -141,13 +141,13 @@
                                     </li>
                                     <li>
                                         Run
-                                        <code>clang++ [input like .\sdk\storage\azure-storage-files-datalake\inc\azure\storage\files\datalake\datalake.hpp] -I .\sdk\storage\azure-storage-files-datalake\inc -I .\sdk\core\azure-core\inc -Xclang  -ast-dump -I .\sdk\storage\azure-storage-common\inc  -I .\sdk\storage\azure-storage-blobs\inc > az_datalake.ast</code>
+                                        <code>clang++ [input like .\sdk\storage\azure-storage-files-datalake\inc\azure\storage\files\datalake\datalake.hpp] -I .\sdk\storage\azure-storage-files-datalake\inc -I .\sdk\core\azure-core\inc -Xclang  -ast-dump -I .\sdk\storage\azure-storage-common\inc  -I .\sdk\storage\azure-storage-blobs\inc > azure_storage_files_datalake.ast</code>
                                     </li>
                                     <li>
-                                        Archive the file <code>Compress-Archive az_datalake.ast -DestinationPath az_datalake.zip</code>
+                                        Archive the file <code>Compress-Archive azure_storage_files_datalake.ast -DestinationPath azure_storage_files_datalake.zip</code>
                                     </li>
                                     <li>
-                                        Rename the file <code>Rename-Item az_datalake.zip -NewName  az_datalake.cppast</code>
+                                        Rename the file <code>Rename-Item azure_storage_files_datalake.zip -NewName  azure_storage_files_datalake.cppast</code>
                                     </li>
                                     <li>
                                         Upload the resulting archive.

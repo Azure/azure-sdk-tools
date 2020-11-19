@@ -121,7 +121,7 @@ namespace APIViewWeb
             astStream.Position = 0;
 
             //Generate pacakge name from original file name
-            var packageNamespace = originalName.Substring(0,originalName.LastIndexOf(".")).Replace("_", "::");
+            var packageNamespace = originalName.Substring(0,originalName.LastIndexOf(".")).Replace("_", "::").ToLower();
 
             CodeFileTokensBuilder builder = new CodeFileTokensBuilder();
             List<NavigationItem> navigation = new List<NavigationItem>();
@@ -175,7 +175,7 @@ namespace APIViewWeb
 
                 var nameSpace = namespacebldr.ToString();
                 // Skip <partialnamespace>::Details namespace
-                if (nameSpace.EndsWith(DetailsNamespacePostfix) || !nameSpace.StartsWith(packageNamespace))
+                if (nameSpace.EndsWith(DetailsNamespacePostfix) || !nameSpace.ToLower().StartsWith(packageNamespace))
                     continue;
 
                 if (!namespaceLeafMap.ContainsKey(nameSpace))

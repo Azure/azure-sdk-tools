@@ -81,6 +81,8 @@ namespace APIViewWeb
 
             var archive = new ZipArchive(astStream);
 
+            //Generate pacakge name from original file name
+            var packageNamespace = originalName.Substring(0, originalName.LastIndexOf(".")).Replace("_", ".");
 
             CodeFileTokensBuilder builder = new CodeFileTokensBuilder();
             List<NavigationItem> navigation = new List<NavigationItem>();
@@ -99,6 +101,7 @@ namespace APIViewWeb
                 Tokens = builder.Tokens.ToArray(),
                 Navigation = navigation.ToArray(),
                 VersionString = CurrentVersion,
+                PackageName = packageNamespace
             };
         }
 

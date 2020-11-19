@@ -120,6 +120,9 @@ namespace APIViewWeb
             await stream.CopyToAsync(astStream);
             astStream.Position = 0;
 
+            //Generate pacakge name from original file name
+            var packageNamespace = originalName.Substring(0,originalName.LastIndexOf(".")).Replace("_", "::");
+
             CodeFileTokensBuilder builder = new CodeFileTokensBuilder();
             List<NavigationItem> navigation = new List<NavigationItem>();
             List<CodeDiagnostic> diagnostics = new List<CodeDiagnostic>();
@@ -129,13 +132,14 @@ namespace APIViewWeb
             {
                 var root = new CppAstNode();
                 astParser.ParseToAstTree(entry, root);
-                BuildNodes(builder, navigation, diagnostics, root);
+                BuildNodes(builder, navigation, diagnostics, root, packageNamespace);
             }
 
             return new CodeFile()
             {
                 Name = originalName,
                 Language = "C++",
+                PackageName = packageNamespace,
                 Tokens = builder.Tokens.ToArray(),
                 Navigation = navigation.ToArray(),
                 VersionString = CurrentVersion,
@@ -143,7 +147,7 @@ namespace APIViewWeb
             };
         }
 
-        private static void BuildNodes(CodeFileTokensBuilder builder, List<NavigationItem> navigation, List<CodeDiagnostic> diagnostic, CppAstNode root)
+        private static void BuildNodes(CodeFileTokensBuilder builder, List<NavigationItem> navigation, List<CodeDiagnostic> diagnostic, CppAstNode root, string packageNamespace)
         {
             //Mapping of each namespace to it's leaf namespace nodes
             //These leaf nodes are processed to generate and group them together
@@ -171,7 +175,7 @@ namespace APIViewWeb
 
                 var nameSpace = namespacebldr.ToString();
                 // Skip <partialnamespace>::Details namespace
-                if (nameSpace.EndsWith(DetailsNamespacePostfix))
+                if (nameSpace.EndsWith(DetailsNamespacePostfix) || !nameSpace.StartsWith(packageNamespace))
                     continue;
 
                 if (!namespaceLeafMap.ContainsKey(nameSpace))

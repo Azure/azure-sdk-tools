@@ -25,8 +25,9 @@ import static com.azure.tools.apiview.processor.diagnostics.rules.RequiredBuilde
 import static com.azure.tools.apiview.processor.diagnostics.rules.IllegalMethodNamesDiagnosticRule.Rule;
 
 public class Diagnostics {
-    private static final List<DiagnosticRule> diagnostics = new ArrayList<>();
-    static {
+    private final List<DiagnosticRule> diagnostics = new ArrayList<>();
+
+    public Diagnostics() {
         diagnostics.add(new PackageNameDiagnosticRule());
         diagnostics.add(new ImportsDiagnosticRule("com.sun"));
         diagnostics.add(new IllegalPackageAPIExportsDiagnosticRule("implementation", "netty"));
@@ -63,13 +64,21 @@ public class Diagnostics {
             .add("retryPolicy", new ExactTypeNameCheckFunction("RetryPolicy")));
     }
 
-    public static void scan(CompilationUnit cu, APIListing listing) {
+    /**
+     * Runs any diagnostics that can be run against the single compilation unit that has been provided.
+     */
+    public void scanIndividual(CompilationUnit cu, APIListing listing) {
         // We do not scan compilation units that are missing any primary type (i.e. they are completely commented out).
         if (! cu.getPrimaryType().isPresent()) {
             return;
         }
-        for (DiagnosticRule rule : diagnostics) {
-            rule.scan(cu, listing);
-        }
+        diagnostics.forEach(rule -> rule.scanIndividual(cu, listing));
+    }
+
+    /**
+     * Called once to allow for any full analysis to be performed after all individual scans have been completed.
+     */
+    public void scanFinal(APIListing listing) {
+        diagnostics.forEach(rule -> rule.scanFinal(listing));
     }
 }

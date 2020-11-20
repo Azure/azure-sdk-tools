@@ -11,7 +11,7 @@ import static com.azure.tools.apiview.processor.model.DiagnosticKind.*;
 public class NoPublicFieldsDiagnosticRule implements DiagnosticRule {
 
     @Override
-    public void scan(final CompilationUnit cu, final APIListing listing) {
+    public void scanIndividual(final CompilationUnit cu, final APIListing listing) {
         getPublicOrProtectedFields(cu)
                 .filter(fieldDecl -> !fieldDecl.isStatic())
                 .forEach(fieldDecl -> {

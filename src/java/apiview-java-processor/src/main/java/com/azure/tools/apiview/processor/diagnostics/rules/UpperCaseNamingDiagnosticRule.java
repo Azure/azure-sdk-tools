@@ -24,7 +24,7 @@ public class UpperCaseNamingDiagnosticRule implements DiagnosticRule {
     }
 
     @Override
-    public void scan(final CompilationUnit cu, final APIListing listing) {
+    public void scanIndividual(final CompilationUnit cu, final APIListing listing) {
         // check class name
         getClassName(cu).ifPresent(name -> check(name, makeId(cu), listing));
 

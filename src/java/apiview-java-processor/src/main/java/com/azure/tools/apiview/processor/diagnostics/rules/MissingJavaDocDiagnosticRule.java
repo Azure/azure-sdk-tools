@@ -17,7 +17,7 @@ public class MissingJavaDocDiagnosticRule implements DiagnosticRule {
     private static boolean IGNORE_OVERRIDES = true;
 
     @Override
-    public void scan(final CompilationUnit cu, final APIListing listing) {
+    public void scanIndividual(final CompilationUnit cu, final APIListing listing) {
         getClasses(cu).forEach(typeDeclaration -> {
             if (!typeDeclaration.hasJavaDocComment()) {
                 // the type is missing JavaDoc

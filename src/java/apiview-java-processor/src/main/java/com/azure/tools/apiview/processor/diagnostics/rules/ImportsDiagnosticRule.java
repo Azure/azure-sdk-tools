@@ -25,7 +25,7 @@ public class ImportsDiagnosticRule implements DiagnosticRule {
     }
 
     @Override
-    public void scan(final CompilationUnit cu, final APIListing listing) {
+    public void scanIndividual(final CompilationUnit cu, final APIListing listing) {
         // we need to map the issue to the class id, because import text isn't printed in the APIView output
         getClassName(cu).map(listing.getKnownTypes()::get).ifPresent(typeId -> {
             ASTUtils.getImports(cu).forEach(importStr -> {

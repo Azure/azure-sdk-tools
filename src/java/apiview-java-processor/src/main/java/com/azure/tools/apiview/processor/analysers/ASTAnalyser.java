@@ -93,12 +93,15 @@ public class ASTAnalyser implements Analyser {
 
     private final Map<String, JavadocComment> packageNameToPackageInfoJavaDoc;
 
+    private final Diagnostics diagnostic;
+
     private int indent;
 
     public ASTAnalyser(File inputFile, APIListing apiListing) {
         this.apiListing = apiListing;
         this.indent = 0;
         this.packageNameToPackageInfoJavaDoc = new HashMap<>();
+        this.diagnostic = new Diagnostics();
     }
 
     @Override
@@ -120,6 +123,10 @@ public class ASTAnalyser implements Analyser {
                 .map(Optional::get)
                 .collect(Collectors.groupingBy(ScanClass::getPackageName, TreeMap::new, Collectors.toList()))
                 .forEach(this::processPackage);
+
+        // we conclude by doing a final pass over all diagnostics to enable them to do any final analysis based on
+        // the already-executed individual scans
+        diagnostic.scanFinal(apiListing);
     }
 
     // This class represents a class that is going to go through the analysis pipeline, and it collects
@@ -247,7 +254,7 @@ public class ASTAnalyser implements Analyser {
                 visitClassOrInterfaceOrEnumDeclaration(typeDeclaration);
             }
 
-            Diagnostics.scan(compilationUnit, apiListing);
+            diagnostic.scanIndividual(compilationUnit, apiListing);
         }
 
         private void visitClassOrInterfaceOrEnumDeclaration(TypeDeclaration<?> typeDeclaration) {
@@ -351,13 +358,13 @@ public class ASTAnalyser implements Analyser {
                         addToken(new Token(KEYWORD, "transitive"), SPACE);
                     }
 
-                    addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId(MODULE_INFO_KEY + "-" + d.getNameAsString())));
+                    addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId(MODULE_INFO_KEY + "-requires-" + d.getNameAsString())));
                     addToken(new Token(PUNCTUATION, ";"), NEWLINE);
                 });
 
                 moduleDirective.ifModuleExportsStmt(d -> {
                     addToken(new Token(KEYWORD, "exports"), SPACE);
-                    addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId(MODULE_INFO_KEY + "-" + d.getNameAsString())));
+                    addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId(MODULE_INFO_KEY + "-exports-" + d.getNameAsString())));
 
                     NodeList<Name> names = d.getModuleNames();
 
@@ -379,7 +386,7 @@ public class ASTAnalyser implements Analyser {
 
                 moduleDirective.ifModuleOpensStmt(d -> {
                     addToken(new Token(KEYWORD, "opens"), SPACE);
-                    addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId(MODULE_INFO_KEY + "-" + d.getNameAsString())));
+                    addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId(MODULE_INFO_KEY + "-opens-" + d.getNameAsString())));
 
                     NodeList<Name> names = d.getModuleNames();
                     if (names.size() > 0) {
@@ -400,13 +407,13 @@ public class ASTAnalyser implements Analyser {
 
                 moduleDirective.ifModuleUsesStmt(d -> {
                     addToken(new Token(KEYWORD, "uses"), SPACE);
-                    addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId(MODULE_INFO_KEY + "-" + d.getNameAsString())));
+                    addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId(MODULE_INFO_KEY + "-uses-" + d.getNameAsString())));
                     addToken(new Token(PUNCTUATION, ";"), NEWLINE);
                 });
 
                 moduleDirective.ifModuleProvidesStmt(d -> {
                     addToken(new Token(KEYWORD, "provides"), SPACE);
-                    addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId(MODULE_INFO_KEY + "-" + d.getNameAsString())), SPACE);
+                    addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId(MODULE_INFO_KEY + "-provides-" + d.getNameAsString())), SPACE);
                     addToken(new Token(KEYWORD, "with"), SPACE);
 
                     NodeList<Name> names = d.getWith();

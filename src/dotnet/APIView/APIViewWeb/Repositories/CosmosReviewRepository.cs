@@ -19,15 +19,18 @@ namespace APIViewWeb
             _reviewsContainer = client.GetContainer("APIView", "Reviews");
         }
 
-        public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(bool closed, string language)
+        public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(bool closed, string language, string packageName = "", bool locked = false)
         {
             var allReviews = new List<ReviewModel>();
             var queryDefinition = new QueryDefinition("SELECT * FROM Reviews r WHERE" +
                                                       "(IS_DEFINED(r.IsClosed) ? r.IsClosed : false) = @isClosed AND " +
+                                                      "(IS_DEFINED(r.IsLocked) ? r.IsLocked : false) = @isLocked AND " +
                                                       "('All' = @language OR EXISTS (SELECT VALUE revision FROM revision in r.Revisions WHERE " +
-                                                                                    "EXISTS (SELECT VALUE files from files in revision.Files WHERE files.Language = @language)))")
+                                                                                    "EXISTS (SELECT VALUE files from files in revision.Files WHERE files.Language = @language AND (@packageName = '' OR files.PackageName = @packageName))))")
                 .WithParameter("@isClosed", closed)
-                .WithParameter("@language", language);
+                .WithParameter("@language", language)
+                .WithParameter("@isLocked", locked)
+                .WithParameter("@packageName", packageName);
 
             var itemQueryIterator = _reviewsContainer.GetItemQueryIterator<ReviewModel>(queryDefinition);
             while (itemQueryIterator.HasMoreResults)
@@ -52,6 +55,16 @@ namespace APIViewWeb
         public async Task<ReviewModel> GetReviewAsync(string reviewId)
         {
             return await _reviewsContainer.ReadItemAsync<ReviewModel>(reviewId, new PartitionKey(reviewId));
+        }
+
+        public async Task<ReviewModel> GetMasterReviewForPackageAsync(string language, string packageName)
+        {
+            var reviews = await GetReviewsAsync(false, language, packageName, true);
+            if (reviews.Count() > 0)
+            {
+                return await GetReviewAsync(reviews.First().ReviewId);
+            }
+            return null;
         }
     }
 }

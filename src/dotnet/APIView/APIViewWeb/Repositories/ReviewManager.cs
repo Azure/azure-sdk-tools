@@ -8,6 +8,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using ApiView;
+using APIView.DIff;
 using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Authorization;
 
@@ -313,6 +314,92 @@ namespace APIViewWeb.Respositories
             {
                 throw new AuthorizationFailedException();
             }
+        }
+
+        private async Task<ReviewModel> GetMasterReviewAsync(ClaimsPrincipal user, string language, string packageName)
+        {
+            if (user == null)
+            {
+                throw new UnauthorizedAccessException();
+            }
+
+            var review = await _reviewsRepository.GetMasterReviewForPackageAsync(language, packageName);
+            if (review != null)
+            {
+                review.UpdateAvailable = review.Revisions
+                .SelectMany(r => r.Files)
+                .Any(f => f.HasOriginal && GetLanguageService(f.Language).CanUpdate(f.VersionString));
+            }
+
+            return review;
+        }
+
+        public async Task<ReviewModel> CreateMasterReviewAsync(ClaimsPrincipal user, string originalName, string label, Stream fileStream, bool runAnalysis)
+        {
+            var revision = new ReviewRevisionModel();
+
+            //Create code file for uploaded package
+            ReviewCodeFileModel codeFile = await CreateFileAsync(
+                revision.RevisionId,
+                originalName,
+                fileStream,
+                runAnalysis);
+
+            revision.Files.Add(codeFile);
+            revision.Author = user.GetGitHubLogin();
+            revision.Label = label;
+
+            //Get current review for package
+            var review = await GetMasterReviewAsync(user, codeFile.Language, codeFile.PackageName);
+            if (review != null)
+            {
+                // Check if urrent review needs to be updated to rebuild using latest language processor
+                if (review.UpdateAvailable)
+                {
+                    await UpdateReviewAsync(user, review.ReviewId);
+                }
+
+                //Get latest revision of reviw and check diff
+                var lastRevision = review.Revisions.Last();
+                var lastRevisionFile = await _codeFileRepository.GetCodeFileAsync(lastRevision);
+                var lastHtmlLines = lastRevisionFile.RenderReadOnly(false);
+                var lastRevisionTextLines = lastRevisionFile.RenderText(false);
+
+                var renderedCodeFile = await _codeFileRepository.GetCodeFileAsync(revision);
+                var fileTextLines = renderedCodeFile.RenderText(false);
+                var fileHtmlLines = renderedCodeFile.RenderReadOnly(false);
+
+                var diffLines = InlineDiff.Compute(
+                    lastRevisionTextLines,
+                    fileTextLines,
+                    lastHtmlLines,
+                    fileHtmlLines);
+
+                diffLines = diffLines.Where(f => f.Kind == DiffLineKind.Removed || f.Kind == DiffLineKind.Removed).ToArray();
+                if (diffLines.Count() == 0)
+                {
+                    // No change is detected from last revision so no need to update this revision
+                    // Delete newly uploaded files
+                    await _originalsRepository.DeleteOriginalAsync(codeFile.ReviewFileId);
+                    await _codeFileRepository.DeleteCodeFileAsync(revision.RevisionId, codeFile.ReviewFileId);
+                    return review;
+                }
+            }
+            else
+            {
+                review = new ReviewModel
+                {
+                    Author = user.GetGitHubLogin(),
+                    CreationDate = DateTime.UtcNow,
+                    RunAnalysis = runAnalysis,
+                    Name = originalName,
+                    IsLocked = true
+                };
+            }
+
+            review.Revisions.Add(revision);
+            await _reviewsRepository.UpsertReviewAsync(review);
+            return review;
         }
     }
 }

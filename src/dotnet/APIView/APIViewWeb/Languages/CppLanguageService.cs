@@ -17,7 +17,7 @@ namespace APIViewWeb
 {
     public class CppLanguageService : LanguageService
     {
-        private const string CurrentVersion = "2";
+        private const string CurrentVersion = "3";
         private const string NamespaceDeclKind = "NamespaceDecl";
         private const string CxxRecordDeclKind = "CXXRecordDecl";
         private const string CxxMethodDeclKind = "CXXMethodDecl";
@@ -44,6 +44,7 @@ namespace APIViewWeb
         private const string NonAccessModifierMemberError = "Found field without access modifier. Access modifier must be explicitly declared.";
 
         private static Regex _typeTokenizer = new Regex("[\\w:]+|[^\\w]+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static Regex _packageNameParser = new Regex("([A-Za-z_]*)", RegexOptions.Compiled);
         
         private static HashSet<string> _keywords = new HashSet<string>()
         {
@@ -120,6 +121,14 @@ namespace APIViewWeb
             await stream.CopyToAsync(astStream);
             astStream.Position = 0;
 
+            //Generate pacakge name from original file name
+            string packageNamespace = "";
+            var packageNameMatch = _packageNameParser.Match(originalName);
+            if (packageNameMatch.Success)
+            {
+                packageNamespace = packageNameMatch.Groups[1].Value.Replace("_", "::");
+            }
+
             CodeFileTokensBuilder builder = new CodeFileTokensBuilder();
             List<NavigationItem> navigation = new List<NavigationItem>();
             List<CodeDiagnostic> diagnostics = new List<CodeDiagnostic>();
@@ -129,13 +138,14 @@ namespace APIViewWeb
             {
                 var root = new CppAstNode();
                 astParser.ParseToAstTree(entry, root);
-                BuildNodes(builder, navigation, diagnostics, root);
+                BuildNodes(builder, navigation, diagnostics, root, packageNamespace);
             }
 
             return new CodeFile()
             {
                 Name = originalName,
                 Language = "C++",
+                PackageName = packageNamespace,
                 Tokens = builder.Tokens.ToArray(),
                 Navigation = navigation.ToArray(),
                 VersionString = CurrentVersion,
@@ -143,7 +153,7 @@ namespace APIViewWeb
             };
         }
 
-        private static void BuildNodes(CodeFileTokensBuilder builder, List<NavigationItem> navigation, List<CodeDiagnostic> diagnostic, CppAstNode root)
+        private static void BuildNodes(CodeFileTokensBuilder builder, List<NavigationItem> navigation, List<CodeDiagnostic> diagnostic, CppAstNode root, string packageNamespace)
         {
             //Mapping of each namespace to it's leaf namespace nodes
             //These leaf nodes are processed to generate and group them together
@@ -152,6 +162,7 @@ namespace APIViewWeb
             var types = new HashSet<string>();
 
             var namespaceNodes = root.inner.Where(n => n.kind == NamespaceDeclKind && n.name == RootNamespace);
+            bool foundFilterNamespace = false;
             foreach (var node in namespaceNodes)
             {
                 var namespacebldr = new StringBuilder();
@@ -174,6 +185,11 @@ namespace APIViewWeb
                 if (nameSpace.EndsWith(DetailsNamespacePostfix))
                     continue;
 
+                if (!foundFilterNamespace && nameSpace.StartsWith(packageNamespace))
+                {
+                    foundFilterNamespace = true;
+                }
+
                 if (!namespaceLeafMap.ContainsKey(nameSpace))
                 {
                     namespaceLeafMap[nameSpace] = new List<CppAstNode>();
@@ -183,9 +199,14 @@ namespace APIViewWeb
 
             foreach (var nameSpace in namespaceLeafMap.Keys)
             {
-                ProcessNamespaceNode(nameSpace);
-                builder.NewLine();
-                builder.NewLine();
+                // Filter namespace based on file name if any of the namespace matches file name pattern
+                // If no namespace matches file name then allow all namespaces to be part of review to avoid mandating file name convention
+                if (!foundFilterNamespace || nameSpace.StartsWith(packageNamespace))
+                {
+                    ProcessNamespaceNode(nameSpace);
+                    builder.NewLine();
+                    builder.NewLine();
+                }
             }
 
             void ProcessNamespaceNode(string nameSpace)
@@ -1064,7 +1085,7 @@ namespace APIViewWeb
                 var match = regex.Match(line);
                 if (match.Success)
                 {
-                    node.value = match.Groups[1].Value; ;
+                    node.value = match.Groups[1].Value;
                 }
             }
 

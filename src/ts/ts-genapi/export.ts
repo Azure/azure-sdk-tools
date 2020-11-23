@@ -107,7 +107,8 @@ for (const modelPackage of apiModel.packages) {
 var apiViewFile: IApiViewFile = {
     Name: apiModel.packages[0].name,
     Navigation: navigation,
-    Tokens: builder.tokens
+    Tokens: builder.tokens,
+    PackageName: apiModel.packages[0].name
 }
 
 writeFile(process.argv[3], JSON.stringify(apiViewFile), err => {

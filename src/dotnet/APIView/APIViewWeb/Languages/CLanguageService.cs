@@ -16,7 +16,7 @@ namespace APIViewWeb
 {
     public class CLanguageService : LanguageService
     {
-        private const string CurrentVersion = "3";
+        private const string CurrentVersion = "4";
         private static Regex _typeTokenizer = new Regex("\\w+|[^\\w]+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static HashSet<string> _keywords = new HashSet<string>()
         {
@@ -67,6 +67,8 @@ namespace APIViewWeb
             "_Thread_local"
         };
 
+        private static Regex _packageNameParser = new Regex("([A-Za-z_]*)", RegexOptions.Compiled);
+
         public override string Name { get; } = "C";
 
         public override string Extension { get; } = ".zip";
@@ -81,6 +83,13 @@ namespace APIViewWeb
 
             var archive = new ZipArchive(astStream);
 
+            //Generate pacakge name from original file name
+            string packageNamespace = "";
+            var packageNameMatch = _packageNameParser.Match(originalName);
+            if (packageNameMatch.Success)
+            {
+                packageNamespace = packageNameMatch.Groups[1].Value.Replace("_", "::");
+            }
 
             CodeFileTokensBuilder builder = new CodeFileTokensBuilder();
             List<NavigationItem> navigation = new List<NavigationItem>();
@@ -99,6 +108,7 @@ namespace APIViewWeb
                 Tokens = builder.Tokens.ToArray(),
                 Navigation = navigation.ToArray(),
                 VersionString = CurrentVersion,
+                PackageName = packageNamespace
             };
         }
 

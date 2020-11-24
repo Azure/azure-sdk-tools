@@ -49,6 +49,7 @@ namespace APIViewWeb.Pages.Assemblies
                 using (var openReadStream = file.OpenReadStream())
                 {
                     ReviewModel reviewModel = null;
+                    Upload.IsAutomatic = true;
                     if (!Upload.IsAutomatic)
                     {
                         reviewModel = await _manager.CreateReviewAsync(User, file.FileName, Label, openReadStream, Upload.RunAnalysis);

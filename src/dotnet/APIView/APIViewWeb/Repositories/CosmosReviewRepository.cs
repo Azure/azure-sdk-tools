@@ -59,8 +59,8 @@ namespace APIViewWeb
             var queryDefinition = new QueryDefinition("SELECT * FROM Reviews r WHERE " +
                                                       "r.IsClosed = false AND " +
                                                       "r.IsAutomatic = true AND " +
-                                                      "('All' = @language OR EXISTS (SELECT VALUE revision FROM revision in r.Revisions WHERE " +
-                                                                                    "EXISTS (SELECT VALUE files from files in revision.Files WHERE files.Language = @language AND (@packageName = '' OR files.PackageName = @packageName))))")
+                                                      "EXISTS (SELECT VALUE revision FROM revision in r.Revisions WHERE " +
+                                                                                    "EXISTS (SELECT VALUE files from files in revision.Files WHERE files.Language = @language AND files.PackageName = @packageName))")
                 .WithParameter("@language", language)
                 .WithParameter("@packageName", packageName);
 

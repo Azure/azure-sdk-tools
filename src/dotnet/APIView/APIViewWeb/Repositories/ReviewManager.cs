@@ -151,6 +151,7 @@ namespace APIViewWeb.Respositories
             Stream fileStream)
         {
             var review = await GetReviewAsync(user, reviewId);
+            await AssertAutomaticReviewModifier(user, review);
             await AddRevisionAsync(user, review, name, label, fileStream);
         }
 
@@ -340,7 +341,6 @@ namespace APIViewWeb.Respositories
         public async Task<ReviewModel> CreateMasterReviewAsync(ClaimsPrincipal user, string originalName, string label, Stream fileStream, bool runAnalysis)
         {
             var revision = new ReviewRevisionModel();
-
             //Create code file for uploaded package
             ReviewCodeFileModel codeFile = await CreateFileAsync(
                 revision.RevisionId,
@@ -365,10 +365,8 @@ namespace APIViewWeb.Respositories
                 //Get latest revision of review and check diff
                 var lastRevisionFile = await _codeFileRepository.GetCodeFileAsync(review.Revisions.Last());
                 var lastRevisionTextLines = lastRevisionFile.RenderText(false);
-
                 var renderedCodeFile = await _codeFileRepository.GetCodeFileAsync(revision);
                 var fileTextLines = renderedCodeFile.RenderText(false);
-
                 var diffLines = Diff.GetDiff(
                     lastRevisionTextLines,
                     fileTextLines);
@@ -394,9 +392,22 @@ namespace APIViewWeb.Respositories
                 };
             }
 
+            await AssertAutomaticReviewModifier(user, review);
             review.Revisions.Add(revision);
             await _reviewsRepository.UpsertReviewAsync(review);
             return review;
+        }
+
+        private async Task AssertAutomaticReviewModifier(ClaimsPrincipal user, ReviewModel reviewModel)
+        {
+            var result = await _authorizationService.AuthorizeAsync(
+                user,
+                reviewModel,
+                new[] { AutoReviewModifierRequirement.Instance });
+            if (!result.Succeeded)
+            {
+                throw new AuthorizationFailedException();
+            }
         }
     }
 }

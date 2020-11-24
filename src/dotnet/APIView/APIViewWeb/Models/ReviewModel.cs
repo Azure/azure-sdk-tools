@@ -77,7 +77,7 @@ namespace APIViewWeb
         [JsonIgnore]
         public string Language => Revisions.FirstOrDefault()?.Files.FirstOrDefault()?.Language;
 
-        // Master version of review for each package will be locked
-        public bool IsLocked { get; set; }
+        // Master version of review for each package will be auto created
+        public bool IsAutomatic { get; set; }
     }
 }

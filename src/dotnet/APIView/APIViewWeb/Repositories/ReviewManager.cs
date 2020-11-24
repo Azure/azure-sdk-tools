@@ -97,9 +97,7 @@ namespace APIViewWeb.Respositories
             }
 
             var review = await _reviewsRepository.GetReviewAsync(id);
-            review.UpdateAvailable = review.Revisions
-                .SelectMany(r=>r.Files)
-                .Any(f => f.HasOriginal && GetLanguageService(f.Language).CanUpdate(f.VersionString));
+            review.UpdateAvailable = IsUpdateAvailable(review);
 
             // Handle old model
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -316,6 +314,13 @@ namespace APIViewWeb.Respositories
             }
         }
 
+        private bool IsUpdateAvailable(ReviewModel review)
+        {
+            return review.Revisions
+               .SelectMany(r => r.Files)
+               .Any(f => f.HasOriginal && GetLanguageService(f.Language).CanUpdate(f.VersionString));
+        }
+
         private async Task<ReviewModel> GetMasterReviewAsync(ClaimsPrincipal user, string language, string packageName)
         {
             if (user == null)
@@ -326,9 +331,7 @@ namespace APIViewWeb.Respositories
             var review = await _reviewsRepository.GetMasterReviewForPackageAsync(language, packageName);
             if (review != null)
             {
-                review.UpdateAvailable = review.Revisions
-                .SelectMany(r => r.Files)
-                .Any(f => f.HasOriginal && GetLanguageService(f.Language).CanUpdate(f.VersionString));
+                review.UpdateAvailable = IsUpdateAvailable(review);
             }
 
             return review;
@@ -359,24 +362,18 @@ namespace APIViewWeb.Respositories
                     await UpdateReviewAsync(user, review.ReviewId);
                 }
 
-                //Get latest revision of reviw and check diff
-                var lastRevision = review.Revisions.Last();
-                var lastRevisionFile = await _codeFileRepository.GetCodeFileAsync(lastRevision);
-                var lastHtmlLines = lastRevisionFile.RenderReadOnly(false);
+                //Get latest revision of review and check diff
+                var lastRevisionFile = await _codeFileRepository.GetCodeFileAsync(review.Revisions.Last());
                 var lastRevisionTextLines = lastRevisionFile.RenderText(false);
 
                 var renderedCodeFile = await _codeFileRepository.GetCodeFileAsync(revision);
                 var fileTextLines = renderedCodeFile.RenderText(false);
-                var fileHtmlLines = renderedCodeFile.RenderReadOnly(false);
 
-                var diffLines = InlineDiff.Compute(
+                var diffLines = Diff.GetDiff(
                     lastRevisionTextLines,
-                    fileTextLines,
-                    lastHtmlLines,
-                    fileHtmlLines);
+                    fileTextLines);
 
-                diffLines = diffLines.Where(f => f.Kind == DiffLineKind.Removed || f.Kind == DiffLineKind.Removed).ToArray();
-                if (diffLines.Count() == 0)
+                if (!diffLines.Any())
                 {
                     // No change is detected from last revision so no need to update this revision
                     // Delete newly uploaded files
@@ -393,7 +390,7 @@ namespace APIViewWeb.Respositories
                     CreationDate = DateTime.UtcNow,
                     RunAnalysis = runAnalysis,
                     Name = originalName,
-                    IsLocked = true
+                    IsAutomatic = true
                 };
             }
 

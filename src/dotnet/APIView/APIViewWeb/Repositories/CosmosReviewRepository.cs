@@ -19,18 +19,15 @@ namespace APIViewWeb
             _reviewsContainer = client.GetContainer("APIView", "Reviews");
         }
 
-        public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(bool closed, string language, string packageName = "", bool locked = false)
+        public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(bool closed, string language)
         {
             var allReviews = new List<ReviewModel>();
             var queryDefinition = new QueryDefinition("SELECT * FROM Reviews r WHERE" +
                                                       "(IS_DEFINED(r.IsClosed) ? r.IsClosed : false) = @isClosed AND " +
-                                                      "(IS_DEFINED(r.IsLocked) ? r.IsLocked : false) = @isLocked AND " +
                                                       "('All' = @language OR EXISTS (SELECT VALUE revision FROM revision in r.Revisions WHERE " +
-                                                                                    "EXISTS (SELECT VALUE files from files in revision.Files WHERE files.Language = @language AND (@packageName = '' OR files.PackageName = @packageName))))")
+                                                                                    "EXISTS (SELECT VALUE files from files in revision.Files WHERE files.Language = @language)))")
                 .WithParameter("@isClosed", closed)
-                .WithParameter("@language", language)
-                .WithParameter("@isLocked", locked)
-                .WithParameter("@packageName", packageName);
+                .WithParameter("@language", language);
 
             var itemQueryIterator = _reviewsContainer.GetItemQueryIterator<ReviewModel>(queryDefinition);
             while (itemQueryIterator.HasMoreResults)
@@ -59,10 +56,22 @@ namespace APIViewWeb
 
         public async Task<ReviewModel> GetMasterReviewForPackageAsync(string language, string packageName)
         {
-            var reviews = await GetReviewsAsync(false, language, packageName, true);
-            if (reviews.Count() > 0)
+            var queryDefinition = new QueryDefinition("SELECT * FROM Reviews r WHERE " +
+                                                      "r.IsClosed = false AND " +
+                                                      "r.IsAutomatic = true AND " +
+                                                      "('All' = @language OR EXISTS (SELECT VALUE revision FROM revision in r.Revisions WHERE " +
+                                                                                    "EXISTS (SELECT VALUE files from files in revision.Files WHERE files.Language = @language AND (@packageName = '' OR files.PackageName = @packageName))))")
+                .WithParameter("@language", language)
+                .WithParameter("@packageName", packageName);
+
+            var itemQueryIterator = _reviewsContainer.GetItemQueryIterator<ReviewModel>(queryDefinition);
+            if (itemQueryIterator.HasMoreResults)
             {
-                return await GetReviewAsync(reviews.First().ReviewId);
+                var result = await itemQueryIterator.ReadNextAsync();
+                if (result.Resource.Any())
+                {
+                    return result.Resource.First();
+                }
             }
             return null;
         }

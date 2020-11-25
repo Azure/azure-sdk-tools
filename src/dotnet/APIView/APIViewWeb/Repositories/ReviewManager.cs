@@ -9,6 +9,7 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using ApiView;
 using APIView.DIff;
+using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Authorization;
 
@@ -189,30 +190,42 @@ namespace APIViewWeb.Respositories
             Stream fileStream,
             bool runAnalysis)
         {
-            var languageService = _languageServices.Single(s => s.IsSupportedFile(originalName));
+            using var memoryStream = new MemoryStream();
+            var codeFile = await CreateCodeFile(originalName, fileStream, runAnalysis, memoryStream);
+            var reviewCodeFileModel = await CreateReviewCodeFileModel(revisionId, memoryStream, codeFile);
 
+            return reviewCodeFileModel;
+        }
+
+        private async Task<CodeFile> CreateCodeFile(
+            string originalName,
+            Stream fileStream,
+            bool runAnalysis,
+            MemoryStream memoryStream)
+        {
+            var languageService = _languageServices.Single(s => s.IsSupportedFile(originalName));
+            await fileStream.CopyToAsync(memoryStream);
+            memoryStream.Position = 0;
+
+            CodeFile codeFile = await languageService.GetCodeFileAsync(
+                originalName,
+                memoryStream,
+                runAnalysis);
+
+            return codeFile;
+        }
+
+        private async Task<ReviewCodeFileModel> CreateReviewCodeFileModel(string revisionId, MemoryStream memoryStream, CodeFile codeFile)
+        {
             var reviewCodeFileModel = new ReviewCodeFileModel
             {
                 HasOriginal = true,
             };
 
-            using (var memoryStream = new MemoryStream())
-            {
-                await fileStream.CopyToAsync(memoryStream);
-
-                memoryStream.Position = 0;
-
-                CodeFile codeFile = await languageService.GetCodeFileAsync(
-                    originalName,
-                    memoryStream,
-                    runAnalysis);
-
-                InitializeFromCodeFile(reviewCodeFileModel, codeFile);
-
-                memoryStream.Position = 0;
-                await _originalsRepository.UploadOriginalAsync(reviewCodeFileModel.ReviewFileId, memoryStream);
-                await _codeFileRepository.UpsertCodeFileAsync(revisionId, reviewCodeFileModel.ReviewFileId, codeFile);
-            }
+            InitializeFromCodeFile(reviewCodeFileModel, codeFile);
+            memoryStream.Position = 0;
+            await _originalsRepository.UploadOriginalAsync(reviewCodeFileModel.ReviewFileId, memoryStream);
+            await _codeFileRepository.UpsertCodeFileAsync(revisionId, reviewCodeFileModel.ReviewFileId, codeFile);
 
             return reviewCodeFileModel;
         }
@@ -338,20 +351,34 @@ namespace APIViewWeb.Respositories
             return review;
         }
 
+        private async Task<bool> IsReviewDifferent(ReviewModel review, CodeFile newCodeFile)
+        {
+            //This will compare and check if new code file content is same as last revision of given review in parameter
+
+            //Get latest revision of review and check diff
+            var lastRevisionFile = await _codeFileRepository.GetCodeFileAsync(review.Revisions.Last());
+            var lastRevisionTextLines = lastRevisionFile.RenderText(false);
+
+            var renderedCodeFile = new RenderedCodeFile(newCodeFile);
+            var fileTextLines = renderedCodeFile.RenderText(false);
+
+            if (lastRevisionTextLines.Length != fileTextLines.Length)
+                return true;
+
+            for(int i = 0; i <fileTextLines.Length; i++)
+            {
+                if (!lastRevisionTextLines[i].Equals(fileTextLines[i]))
+                    return true;
+            }
+
+            return false;
+        }
+
         public async Task<ReviewModel> CreateMasterReviewAsync(ClaimsPrincipal user, string originalName, string label, Stream fileStream, bool runAnalysis)
         {
-            var revision = new ReviewRevisionModel();
-            //Create code file for uploaded package. This step also uploads original file and created code file into storage repository when uploade binary is read from stream
-            //We need to cleanup these two entries if new revision is not required.
-            ReviewCodeFileModel codeFile = await CreateFileAsync(
-                revision.RevisionId,
-                originalName,
-                fileStream,
-                runAnalysis);
-
-            revision.Files.Add(codeFile);
-            revision.Author = user.GetGitHubLogin();
-            revision.Label = label;
+            //Generate code file from new uploaded package
+            using var memoryStream = new MemoryStream();
+            var codeFile = await CreateCodeFile(originalName, fileStream, runAnalysis, memoryStream);
 
             //Get current master review for package and language
             var review = await GetMasterReviewAsync(user, codeFile.Language, codeFile.PackageName);
@@ -363,21 +390,10 @@ namespace APIViewWeb.Respositories
                     await UpdateReviewAsync(user, review.ReviewId);
                 }
 
-                //Get latest revision of review and check diff
-                var lastRevisionFile = await _codeFileRepository.GetCodeFileAsync(review.Revisions.Last());
-                var lastRevisionTextLines = lastRevisionFile.RenderText(false);
-                var renderedCodeFile = await _codeFileRepository.GetCodeFileAsync(revision);
-                var fileTextLines = renderedCodeFile.RenderText(false);
-                var diffLines = Diff.GetDiff(
-                    lastRevisionTextLines,
-                    fileTextLines);
-
-                if (!diffLines.Any())
+                var isNewRevisionRqrd = await IsReviewDifferent(review, codeFile);
+                if (!isNewRevisionRqrd)
                 {
                     // No change is detected from last revision so no need to update this revision
-                    // Delete newly uploaded files
-                    await _originalsRepository.DeleteOriginalAsync(codeFile.ReviewFileId);
-                    await _codeFileRepository.DeleteCodeFileAsync(revision.RevisionId, codeFile.ReviewFileId);
                     return review;
                 }
             }
@@ -393,9 +409,18 @@ namespace APIViewWeb.Respositories
                     IsAutomatic = true
                 };
             }
+
             // Check if user is authorized to modify automatic review
             await AssertAutomaticReviewModifier(user, review);
+
             // Update or insert review with new revision
+            var revision = new ReviewRevisionModel()
+            {
+                Author = user.GetGitHubLogin(),
+                Label = label
+            };
+            var reviewCodeFileModel = await CreateReviewCodeFileModel(revision.RevisionId, memoryStream, codeFile);
+            revision.Files.Add(reviewCodeFileModel);
             review.Revisions.Add(revision);
             await _reviewsRepository.UpsertReviewAsync(review);
             return review;

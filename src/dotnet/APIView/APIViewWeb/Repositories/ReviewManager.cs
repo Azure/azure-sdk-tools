@@ -341,7 +341,8 @@ namespace APIViewWeb.Respositories
         public async Task<ReviewModel> CreateMasterReviewAsync(ClaimsPrincipal user, string originalName, string label, Stream fileStream, bool runAnalysis)
         {
             var revision = new ReviewRevisionModel();
-            //Create code file for uploaded package
+            //Create code file for uploaded package. This step also uploads original file and created code file into storage repository when uploade binary is read from stream
+            //We need to cleanup these two entries if new revision is not required.
             ReviewCodeFileModel codeFile = await CreateFileAsync(
                 revision.RevisionId,
                 originalName,
@@ -352,11 +353,11 @@ namespace APIViewWeb.Respositories
             revision.Author = user.GetGitHubLogin();
             revision.Label = label;
 
-            //Get current review for package
+            //Get current master review for package and language
             var review = await GetMasterReviewAsync(user, codeFile.Language, codeFile.PackageName);
             if (review != null)
             {
-                // Check if urrent review needs to be updated to rebuild using latest language processor
+                // Check if current review needs to be updated to rebuild using latest language processor
                 if (review.UpdateAvailable)
                 {
                     await UpdateReviewAsync(user, review.ReviewId);
@@ -382,6 +383,7 @@ namespace APIViewWeb.Respositories
             }
             else
             {
+                // Package and language combination doesn't have automatically created review. Create a new review.
                 review = new ReviewModel
                 {
                     Author = user.GetGitHubLogin(),
@@ -391,8 +393,9 @@ namespace APIViewWeb.Respositories
                     IsAutomatic = true
                 };
             }
-
+            // Check if user is authorized to modify automatic review
             await AssertAutomaticReviewModifier(user, review);
+            // Update or insert review with new revision
             review.Revisions.Add(revision);
             await _reviewsRepository.UpsertReviewAsync(review);
             return review;

@@ -8,7 +8,7 @@ namespace APIViewWeb
 {
     public class AutoReviewModifierRequirementHandler : IAuthorizationHandler
     {
-        private static string _auto_review_owner = "azure-sdk";
+        private static string _autoReviewOwner = "azure-sdk";
         public Task HandleAsync(AuthorizationHandlerContext context)
         {
             var loggedInUser = context.User.GetGitHubLogin();
@@ -18,7 +18,7 @@ namespace APIViewWeb
                 {
                     var review = ((ReviewModel)context.Resource);
                     // If review is auto created by bot then ensure logged in user is bot and review owner is bot
-                    if (!review.IsAutomatic || (loggedInUser == _auto_review_owner && review.Author == _auto_review_owner))
+                    if (!review.IsAutomatic || (loggedInUser == _autoReviewOwner && review.Author == _autoReviewOwner))
                     {
                         context.Succeed(requirement);
                     }

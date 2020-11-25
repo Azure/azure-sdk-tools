@@ -177,7 +177,7 @@ class StubGenerator:
         self.module_dict = {}
         nodeindex = NodeIndex()
         # todo (Update the version number correctly)
-        apiview = ApiView(nodeindex, package_name, 0, version, namespace)
+        apiview = ApiView(nodeindex, package_name, version, namespace)
         modules = self._find_modules(pkg_root_path)
         logging.debug("Modules to generate tokens: {}".format(modules))
 

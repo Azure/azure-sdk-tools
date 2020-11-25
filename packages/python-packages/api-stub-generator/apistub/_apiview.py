@@ -10,7 +10,7 @@ from ._token_kind import TokenKind
 from ._version import VERSION
 from ._diagnostic import Diagnostic
 
-JSON_FIELDS = ["Name", "Version", "VersionString", "Navigation", "Tokens", "Diagnostics"]
+JSON_FIELDS = ["Name", "Version", "VersionString", "Navigation", "Tokens", "Diagnostics", "PackageName"]
 
 HEADER_TEXT = "# Package is parsed using api-stub-generator(version:{})".format(VERSION)
 TYPE_NAME_REGEX = re.compile("(~?[a-zA-Z\d._]+)")
@@ -29,17 +29,18 @@ class ApiView:
     :param str: ver_string
     """
 
-    def __init__(self, nodeindex, pkg_name="", pkg_version=0, ver_string="", namespace = ""):
+    def __init__(self, nodeindex, pkg_name="", pkg_version="", namespace = ""):
         self.Name = pkg_name
-        self.Version = pkg_version
-        self.VersionString = ver_string
+        self.Version = 0
+        self.VersionString = ""
         self.Language = "Python"
         self.Tokens = []
         self.Navigation = []
         self.Diagnostics = []
-        self.indent = 0
+        self.indent = 0    
         self.namespace = namespace
         self.nodeindex = nodeindex
+        self.PackageName = pkg_name
         self.add_literal(HEADER_TEXT)
         self.add_new_line(2)
 

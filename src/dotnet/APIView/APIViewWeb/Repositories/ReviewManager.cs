@@ -351,7 +351,7 @@ namespace APIViewWeb.Respositories
             return review;
         }
 
-        private async Task<bool> IsReviewDifferent(ReviewModel review, CodeFile newCodeFile)
+        private async Task<bool> IsReviewSame(ReviewModel review, CodeFile newCodeFile)
         {
             //This will compare and check if new code file content is same as last revision of given review in parameter
 
@@ -362,16 +362,7 @@ namespace APIViewWeb.Respositories
             var renderedCodeFile = new RenderedCodeFile(newCodeFile);
             var fileTextLines = renderedCodeFile.RenderText(false);
 
-            if (lastRevisionTextLines.Length != fileTextLines.Length)
-                return true;
-
-            for(int i = 0; i <fileTextLines.Length; i++)
-            {
-                if (!lastRevisionTextLines[i].Equals(fileTextLines[i]))
-                    return true;
-            }
-
-            return false;
+            return lastRevisionTextLines.SequenceEqual(fileTextLines);
         }
 
         public async Task<ReviewModel> CreateMasterReviewAsync(ClaimsPrincipal user, string originalName, string label, Stream fileStream, bool runAnalysis)
@@ -390,8 +381,8 @@ namespace APIViewWeb.Respositories
                     await UpdateReviewAsync(user, review.ReviewId);
                 }
 
-                var isNewRevisionRqrd = await IsReviewDifferent(review, codeFile);
-                if (!isNewRevisionRqrd)
+                var noDiffFound = await IsReviewSame(review, codeFile);
+                if (noDiffFound)
                 {
                     // No change is detected from last revision so no need to update this revision
                     return review;

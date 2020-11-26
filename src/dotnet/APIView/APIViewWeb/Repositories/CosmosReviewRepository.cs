@@ -53,5 +53,27 @@ namespace APIViewWeb
         {
             return await _reviewsContainer.ReadItemAsync<ReviewModel>(reviewId, new PartitionKey(reviewId));
         }
+
+        public async Task<ReviewModel> GetMasterReviewForPackageAsync(string language, string packageName)
+        {
+            var queryDefinition = new QueryDefinition("SELECT * FROM Reviews r WHERE " +
+                                                      "r.IsClosed = false AND " +
+                                                      "r.IsAutomatic = true AND " +
+                                                      "EXISTS (SELECT VALUE revision FROM revision in r.Revisions WHERE " +
+                                                                                    "EXISTS (SELECT VALUE files from files in revision.Files WHERE files.Language = @language AND files.PackageName = @packageName))")
+                .WithParameter("@language", language)
+                .WithParameter("@packageName", packageName);
+
+            var itemQueryIterator = _reviewsContainer.GetItemQueryIterator<ReviewModel>(queryDefinition);
+            if (itemQueryIterator.HasMoreResults)
+            {
+                var result = await itemQueryIterator.ReadNextAsync();
+                if (result.Resource.Any())
+                {
+                    return result.Resource.First();
+                }
+            }
+            return null;
+        }
     }
 }

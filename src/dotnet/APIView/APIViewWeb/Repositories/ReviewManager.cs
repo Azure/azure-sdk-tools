@@ -8,6 +8,8 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using ApiView;
+using APIView.DIff;
+using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Authorization;
 
@@ -96,9 +98,7 @@ namespace APIViewWeb.Respositories
             }
 
             var review = await _reviewsRepository.GetReviewAsync(id);
-            review.UpdateAvailable = review.Revisions
-                .SelectMany(r=>r.Files)
-                .Any(f => f.HasOriginal && GetLanguageService(f.Language).CanUpdate(f.VersionString));
+            review.UpdateAvailable = IsUpdateAvailable(review);
 
             // Handle old model
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -152,6 +152,7 @@ namespace APIViewWeb.Respositories
             Stream fileStream)
         {
             var review = await GetReviewAsync(user, reviewId);
+            await AssertAutomaticReviewModifier(user, review);
             await AddRevisionAsync(user, review, name, label, fileStream);
         }
 
@@ -189,30 +190,42 @@ namespace APIViewWeb.Respositories
             Stream fileStream,
             bool runAnalysis)
         {
-            var languageService = _languageServices.Single(s => s.IsSupportedFile(originalName));
+            using var memoryStream = new MemoryStream();
+            var codeFile = await CreateCodeFile(originalName, fileStream, runAnalysis, memoryStream);
+            var reviewCodeFileModel = await CreateReviewCodeFileModel(revisionId, memoryStream, codeFile);
 
+            return reviewCodeFileModel;
+        }
+
+        private async Task<CodeFile> CreateCodeFile(
+            string originalName,
+            Stream fileStream,
+            bool runAnalysis,
+            MemoryStream memoryStream)
+        {
+            var languageService = _languageServices.Single(s => s.IsSupportedFile(originalName));
+            await fileStream.CopyToAsync(memoryStream);
+            memoryStream.Position = 0;
+
+            CodeFile codeFile = await languageService.GetCodeFileAsync(
+                originalName,
+                memoryStream,
+                runAnalysis);
+
+            return codeFile;
+        }
+
+        private async Task<ReviewCodeFileModel> CreateReviewCodeFileModel(string revisionId, MemoryStream memoryStream, CodeFile codeFile)
+        {
             var reviewCodeFileModel = new ReviewCodeFileModel
             {
                 HasOriginal = true,
             };
 
-            using (var memoryStream = new MemoryStream())
-            {
-                await fileStream.CopyToAsync(memoryStream);
-
-                memoryStream.Position = 0;
-
-                CodeFile codeFile = await languageService.GetCodeFileAsync(
-                    originalName,
-                    memoryStream,
-                    runAnalysis);
-
-                InitializeFromCodeFile(reviewCodeFileModel, codeFile);
-
-                memoryStream.Position = 0;
-                await _originalsRepository.UploadOriginalAsync(reviewCodeFileModel.ReviewFileId, memoryStream);
-                await _codeFileRepository.UpsertCodeFileAsync(revisionId, reviewCodeFileModel.ReviewFileId, codeFile);
-            }
+            InitializeFromCodeFile(reviewCodeFileModel, codeFile);
+            memoryStream.Position = 0;
+            await _originalsRepository.UploadOriginalAsync(reviewCodeFileModel.ReviewFileId, memoryStream);
+            await _codeFileRepository.UpsertCodeFileAsync(revisionId, reviewCodeFileModel.ReviewFileId, codeFile);
 
             return reviewCodeFileModel;
         }
@@ -309,6 +322,107 @@ namespace APIViewWeb.Respositories
                 user,
                 revisionModel,
                 new[] { ApproverRequirement.Instance });
+            if (!result.Succeeded)
+            {
+                throw new AuthorizationFailedException();
+            }
+        }
+
+        private bool IsUpdateAvailable(ReviewModel review)
+        {
+            return review.Revisions
+               .SelectMany(r => r.Files)
+               .Any(f => f.HasOriginal && GetLanguageService(f.Language).CanUpdate(f.VersionString));
+        }
+
+        private async Task<ReviewModel> GetMasterReviewAsync(ClaimsPrincipal user, string language, string packageName)
+        {
+            if (user == null)
+            {
+                throw new UnauthorizedAccessException();
+            }
+
+            var review = await _reviewsRepository.GetMasterReviewForPackageAsync(language, packageName);
+            if (review != null)
+            {
+                review.UpdateAvailable = IsUpdateAvailable(review);
+            }
+
+            return review;
+        }
+
+        private async Task<bool> IsReviewSame(ReviewModel review, CodeFile newCodeFile)
+        {
+            //This will compare and check if new code file content is same as last revision of given review in parameter
+
+            //Get latest revision of review and check diff
+            var lastRevisionFile = await _codeFileRepository.GetCodeFileAsync(review.Revisions.Last());
+            var lastRevisionTextLines = lastRevisionFile.RenderText(false);
+
+            var renderedCodeFile = new RenderedCodeFile(newCodeFile);
+            var fileTextLines = renderedCodeFile.RenderText(false);
+
+            return lastRevisionTextLines.SequenceEqual(fileTextLines);
+        }
+
+        public async Task<ReviewModel> CreateMasterReviewAsync(ClaimsPrincipal user, string originalName, string label, Stream fileStream, bool runAnalysis)
+        {
+            //Generate code file from new uploaded package
+            using var memoryStream = new MemoryStream();
+            var codeFile = await CreateCodeFile(originalName, fileStream, runAnalysis, memoryStream);
+
+            //Get current master review for package and language
+            var review = await GetMasterReviewAsync(user, codeFile.Language, codeFile.PackageName);
+            if (review != null)
+            {
+                // Check if current review needs to be updated to rebuild using latest language processor
+                if (review.UpdateAvailable)
+                {
+                    await UpdateReviewAsync(user, review.ReviewId);
+                }
+
+                var noDiffFound = await IsReviewSame(review, codeFile);
+                if (noDiffFound)
+                {
+                    // No change is detected from last revision so no need to update this revision
+                    return review;
+                }
+            }
+            else
+            {
+                // Package and language combination doesn't have automatically created review. Create a new review.
+                review = new ReviewModel
+                {
+                    Author = user.GetGitHubLogin(),
+                    CreationDate = DateTime.UtcNow,
+                    RunAnalysis = runAnalysis,
+                    Name = originalName,
+                    IsAutomatic = true
+                };
+            }
+
+            // Check if user is authorized to modify automatic review
+            await AssertAutomaticReviewModifier(user, review);
+
+            // Update or insert review with new revision
+            var revision = new ReviewRevisionModel()
+            {
+                Author = user.GetGitHubLogin(),
+                Label = label
+            };
+            var reviewCodeFileModel = await CreateReviewCodeFileModel(revision.RevisionId, memoryStream, codeFile);
+            revision.Files.Add(reviewCodeFileModel);
+            review.Revisions.Add(revision);
+            await _reviewsRepository.UpsertReviewAsync(review);
+            return review;
+        }
+
+        private async Task AssertAutomaticReviewModifier(ClaimsPrincipal user, ReviewModel reviewModel)
+        {
+            var result = await _authorizationService.AuthorizeAsync(
+                user,
+                reviewModel,
+                new[] { AutoReviewModifierRequirement.Instance });
             if (!result.Succeeded)
             {
                 throw new AuthorizationFailedException();

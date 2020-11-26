@@ -178,6 +178,7 @@ namespace APIViewWeb
             services.AddSingleton<IAuthorizationHandler, ReviewOwnerRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, RevisionOwnerRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, ApproverRequirementHandler>();
+            services.AddSingleton<IAuthorizationHandler, AutoReviewModifierRequirementHandler>();
         }
 
         private static async Task<string> GetMicrosoftEmailAsync(OAuthCreatingTicketContext context)

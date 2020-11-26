@@ -48,7 +48,15 @@ namespace APIViewWeb.Pages.Assemblies
             {
                 using (var openReadStream = file.OpenReadStream())
                 {
-                   var reviewModel = await _manager.CreateReviewAsync(User, file.FileName, Label, openReadStream, Upload.RunAnalysis);
+                    ReviewModel reviewModel = null;
+                    if (!Upload.IsAutomatic)
+                    {
+                        reviewModel = await _manager.CreateReviewAsync(User, file.FileName, Label, openReadStream, Upload.RunAnalysis);
+                    }
+                    else
+                    {
+                        reviewModel = await _manager.CreateMasterReviewAsync(User, file.FileName, Label, openReadStream, Upload.RunAnalysis);
+                    }                    
 
                     return RedirectToPage("Review", new { id = reviewModel.ReviewId });
                 }

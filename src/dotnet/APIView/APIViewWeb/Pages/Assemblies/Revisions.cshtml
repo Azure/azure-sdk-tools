@@ -5,13 +5,14 @@
     ViewData["Title"] = "Revisions";
 }
 
-<div class="row" asp-resource="@Model.Review">
+<div class="row" asp-resource="@Model.Review" asp-requirement="@AutoReviewModifierRequirement.Instance">
     <div class="col">
         <div class="mt-2">
             <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#uploadModel">Add revision</button>
         </div>
     </div>
 </div>
+
 
 <div class="modal fade" id="uploadModel" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">

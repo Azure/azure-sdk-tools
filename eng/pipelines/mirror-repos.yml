@@ -81,6 +81,11 @@ jobs:
               Azure/azure-cli-extensions-pr:
               azure-sdk/azure-cli-extensions:
               azure-sdk/azure-cli-extensions-pr:
+              
+          Azure/azure-libraries-for-java:
+            Branch: master
+            TargetRepos: 
+              Azure/azure-libraries-for-java-pr:
 
     - template: ./templates/steps/sync-repo-branch.yml
       parameters:

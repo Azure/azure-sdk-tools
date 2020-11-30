@@ -86,8 +86,6 @@ jobs:
             Branch: master
             TargetRepos: 
               Azure/azure-libraries-for-java-pr:
-              azure-sdk/azure-libraries-for-java:
-              azure-sdk/azure-libraries-for-java-pr:
 
     - template: ./templates/steps/sync-repo-branch.yml
       parameters:

@@ -16,43 +16,48 @@ import pdb
 # The drop-in replacement oyaml is a handy solution for us.
 import oyaml as yaml
 
+MONIKER_REPLACEMENTS = ['{moniker}','<moniker>']
+
 class PathResolver:
-    def __init__(self, doc_repo_location = None, readme_suffix = "", moniker_folder = "", moniker = ""):
+    def __init__(self, doc_repo_location = None, readme_suffix = "", moniker = ""):
         self.readme_suffix = readme_suffix
         self.excluded_href_paths = []
-        self.moniker_folder = moniker_folder
         self.target_moniker = moniker
 
         self.doc_repo_location = doc_repo_location
 
         if self.doc_repo_location:
-            self.excluded_href_paths = get_non_standard_hrefs(self.doc_repo_location)
+            self.excluded_href_paths = self.get_non_standard_hrefs(self.doc_repo_location)
 
     # the doc builds have the capability to reference readmes from external repos (they resolve during publishing)
     # this means that we can't simply check the href values for existence. If they are an href that STARTS with one of the
     # "dependent repositories" than we should leave them exactly as is.
     # amend_href is the core of the logic for handling referenced files and ensures that we cannot refer to the same readme twice
     # from two different reference ymls
-    def amend_href(toc_dict):
+    def amend_href(self, toc_dict):
         if not self.doc_repo_location:
             return toc_dict
 
-        suffix = "-" + readme_suffix + ".md" if readme_suffix else  ".md"
-        input_string = toc_dict["href"].replace("~/", "")
+        suffix = "-" + self.readme_suffix + ".md" if self.readme_suffix else  ".md"
+        input_string = toc_dict["href"]
 
         # if this is an external readme, we should not attempt to resolve the file to a different one, just return with no changes
         if any([input_string.startswith(href) for href in self.excluded_href_paths]):
             return toc_dict 
 
+        # create a resolvable path to the readme on disk, without any of the docs ms specificity
+        resolvable_path = os.path.normpath(os.path.join(self.doc_repo_location, input_string.replace("~/", "")))
+
         # apply moniker folder adjustments if necessary
         if self.target_moniker is not None:
-            split_path = resolvable_path.split(os.sep).reverse()
+            for replacement in MONIKER_REPLACEMENTS:
+                # input string maintains leading ~/ necessary for docs. update the moniker folder if it exists
+                input_string.replace(replacement, self.target_moniker)
 
-
-        
-        # create a resolvable path to the readme on disk, without any of the docs ms specificity
-        resolvable_path = os.path.normpath(os.path.join(self.doc_repo_location, input_string))
-
+                # the resolvable path is different from the input_string in that it is actually a resolvable path.
+                # update it with the moniker folder so we can test for existence of the file
+                resolvable_path.replace(replacement, self.target_moniker)
+            
         # finally apply suffix
         possible_target_readme = os.path.splitext(resolvable_path)[0] + suffix
 
@@ -67,7 +72,7 @@ class PathResolver:
     # the doc builds have the capability to reference readmes from external repos (they resolve during publishing)
     # this means that we can't simply check the href values for existence. If they are an href that STARTS with one of the
     # "dependent repositories" than we should leave them exactly as is. This function returns the start paths
-    def get_non_standard_hrefs(doc_repo_location):
+    def get_non_standard_hrefs(self, doc_repo_location):
         excluded_href_paths = []
 
         target = os.path.join(doc_repo_location, ".openpublishing.publish.config.json")
@@ -128,8 +133,8 @@ def filter_toc(toc_dict, namespaces, path_resolver):
             return None
 
     # always amend the uid to include the suffix if one is present.
-    if "uid" in toc_dict and readme_suffix:
-        toc_dict["uid"] = toc_dict["uid"] + "." + readme_suffix
+    if "uid" in toc_dict and path_resolver.readme_suffix:
+        toc_dict["uid"] = toc_dict["uid"] + "." + path_resolver.readme_suffix
 
     return toc_dict
 
@@ -174,15 +179,6 @@ if __name__ == "__main__":
     )
     
     parser.add_argument(
-        "-f",
-        "--moniker-folder",
-        dest="moniker_folder",
-        help="Folder at which we begin resolving href documents. Moniker folders assumed to be directly underneath. EG: <repo root>/<moniker_folder>/<moniker>/<document>.md",
-        default="",
-        required=False,
-    )
-    
-    parser.add_argument(
         "-m",
         "--moniker",
         help="Selected moniker. Used when filling in moniker-folder path updates.",
@@ -203,14 +199,6 @@ if __name__ == "__main__":
             "Execution requires that both the known namespaces and reference yml be defined."
         )
 
-    if args.moniker_folder:
-        if not args.moniker:
-            print("If a moniker folder is provided as an argument, a target moniker must also be provided.") 
-
-    if args.moniker:
-        if not args.moniker_folder:
-            print("If a target moniker is provided as an argument, a moniker folder argument must also be provided.") 
-
     present_in_target = grep_children_namespaces(target_autogenerated_toc)
 
     print(
@@ -219,7 +207,7 @@ if __name__ == "__main__":
     for ns in sorted(present_in_target):
         print(" |__ " + ns)
 
-    path_resolver = new PathResolver(doc_repo_location=args.docrepo, readme_suffix=args.suffix, moniker_folder=args.moniker_folder, moniker=args.moniker)
+    path_resolver = PathResolver(doc_repo_location=args.docrepo, readme_suffix=args.suffix, moniker=args.moniker)
 
     base_reference_toc[0] = filter_toc(base_reference_toc[0], present_in_target, path_resolver)
 

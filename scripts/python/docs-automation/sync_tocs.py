@@ -38,7 +38,12 @@ class PathResolver:
         if not self.doc_repo_location:
             return toc_dict
 
-        suffix = "-" + self.readme_suffix + ".md" if self.readme_suffix else  ".md"
+        # We want the readme suffix only if we're dealing with a case that does NOT have a target_moniker
+        # this will maintain backwards compatibility with the first method of invoking this script. We don't
+        # want to entirely remove the "suffix" concept though, as the trailing `.pre` is used to update the uid 
+        # on the preview ToC.ymls.
+        # After a moniker folder is introduced, we NO LONGER want the suffix on the readme to change.
+        suffix = "-" + self.readme_suffix + ".md" if self.readme_suffix and not self.target_moniker else  ".md"
         input_string = toc_dict["href"]
 
         # if this is an external readme, we should not attempt to resolve the file to a different one, just return with no changes

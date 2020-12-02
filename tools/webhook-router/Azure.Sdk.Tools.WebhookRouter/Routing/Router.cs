@@ -96,7 +96,7 @@ namespace Azure.Sdk.Tools.WebhookRouter.Routing
 
             if (!settings.ContainsKey("payload-type") && !settings.ContainsKey("eventhubs-namespace") && !settings.ContainsKey("eventhub-name"))
             {
-                throw new RouterException($"Critical settings for route {route} not present.");
+                throw new RouterConfigurationException($"Critical settings for route {route} not present.");
             }
 
             return settings;
@@ -185,7 +185,7 @@ namespace Azure.Sdk.Tools.WebhookRouter.Routing
             return payloadContent;
         }
 
-        private async Task<byte[]> ReadAndValidateContentFromGenericAsync(Rule rule, HttpRequest request)
+        private async Task<byte[]> ReadContentFromRequest(HttpRequest request)
         {
             using var stream = new MemoryStream();
             await request.Body.CopyToAsync(stream);
@@ -194,6 +194,17 @@ namespace Azure.Sdk.Tools.WebhookRouter.Routing
             logger.LogInformation("Payload length was {length} bytes.", payloadContent.Length);
 
             return payloadContent;
+        }
+
+        private async Task<byte[]> ReadAndValidateContentFromGenericAsync(Rule rule, HttpRequest request)
+        {
+            // At this point generic rules don't do anything
+            // other than read the content from the request
+            // and return it. However, for the sake of clarity
+            // I've broken the logic to do this into a seperate
+            // method so it can be used in a seperate exception
+            // handling scenario when a rule does not exist.
+            return await ReadContentFromRequest(request);
         }
 
         private async Task<Payload> CreateAndValidatePayloadAsync(Rule rule, HttpRequest request)
@@ -230,37 +241,52 @@ namespace Azure.Sdk.Tools.WebhookRouter.Routing
 
         public async Task RouteAsync(Guid route, HttpRequest request)
         {
-            logger.LogInformation("Routing request for route: {route}", route);
+            try
+            {
+                logger.LogInformation("Routing request for route: {route}", route);
 
-            var rule = await GetRuleAsync(route);
-            var payload = await CreateAndValidatePayloadAsync(rule, request);
+                var rule = await GetRuleAsync(route);
+                var payload = await CreateAndValidatePayloadAsync(rule, request);
 
-            var payloadJson = JsonSerializer.Serialize(payload);
+                var payloadJson = JsonSerializer.Serialize(payload);
 
-            logger.LogInformation("Payload Content: {payloadContent}", payload.Content);
+                logger.LogInformation("Payload Content: {payloadContent}", payload.Content);
 
-            var payloadBytes = Encoding.UTF8.GetBytes(payloadJson);
+                var payloadBytes = Encoding.UTF8.GetBytes(payloadJson);
 
-            var @event = new EventData(payloadBytes);
+                var @event = new EventData(payloadBytes);
 
-            logger.LogInformation(
-                "Sending event from route {route} to namespace {namespace} with hub name {hubName}",
-                route,
-                rule.EventHubsNamespace,
-                rule.EventHubName
-                );
+                logger.LogInformation(
+                    "Sending event from route {route} to namespace {namespace} with hub name {hubName}",
+                    route,
+                    rule.EventHubsNamespace,
+                    rule.EventHubName
+                    );
 
-            var producer = GetEventHubProducerClient(rule.EventHubsNamespace, rule.EventHubName);
-            var batch = await producer.CreateBatchAsync();
-            batch.TryAdd(@event);
-            await producer.SendAsync(batch);
+                var producer = GetEventHubProducerClient(rule.EventHubsNamespace, rule.EventHubName);
+                var batch = await producer.CreateBatchAsync();
+                batch.TryAdd(@event);
+                await producer.SendAsync(batch);
 
-            logger.LogInformation(
-                "Sent event from route {route} to namespace {namespace} with hub name {hubName}",
-                route,
-                rule.EventHubsNamespace,
-                rule.EventHubName
-                );
+                logger.LogInformation(
+                    "Sent event from route {route} to namespace {namespace} with hub name {hubName}",
+                    route,
+                    rule.EventHubsNamespace,
+                    rule.EventHubName
+                    );
+            }
+            catch (RouterConfigurationException ex)
+            {
+                var payloadBytes = await ReadContentFromRequest(request);
+                var payload = Encoding.UTF8.GetString(payloadBytes);
+                logger.LogError(
+                    ex,
+                    "Router configuration error, payload was: {payload}",
+                    payload
+                    );
+
+                throw ex;
+            }
         }
     }
 }

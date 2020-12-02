@@ -8,7 +8,6 @@ import os
 import fnmatch
 import re
 import json
-import pdb
 
 # by default, yaml does not maintain insertion order of the dicts
 # given that this is intended to generate TABLE OF CONTENTS values,

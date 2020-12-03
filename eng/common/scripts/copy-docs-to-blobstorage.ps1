@@ -204,7 +204,8 @@ function Upload-Blobs
             $packageList[$folder] = $true
         }
     }
-    foreach ($pkg in $packageList) {
+    foreach ($pkg in $packageList) 
+    {
         LogDebug "DocDest $($DocDest)"
         LogDebug "PkgName $($PkgName)"
         LogDebug "DocVersion $($DocVersion)"
@@ -213,17 +214,20 @@ function Upload-Blobs
         LogDebug "Release Tag $($ReleaseTag)"
     
         # Use the step to replace master link to release tag link 
-        if ($ReleaseTag) {
+        if ($ReleaseTag) 
+        {
             foreach ($htmlFile in (Get-ChildItem $DocDir -include *.html -r)) 
             {
                 $fileContent = Get-Content -Path $htmlFile -Raw
                 $updatedFileContent = $fileContent -replace $RepoReplaceRegex, "`${1}$ReleaseTag"
-                if ($updatedFileContent -ne $fileContent) {
+                if ($updatedFileContent -ne $fileContent) 
+                {
                     Set-Content -Path $htmlFile -Value $updatedFileContent -NoNewLine
                 }
             }
         } 
-        else {
+        else 
+        {
             LogWarning "Not able to do the master link replacement, since no release tag found for the release. Please manually check."
         } 
        

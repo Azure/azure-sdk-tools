@@ -191,42 +191,56 @@ function Upload-Blobs
     )
     #eg : $BlobName = "https://azuresdkdocs.blob.core.windows.net"
     $DocDest = "$($BlobName)/`$web/$($Language)"
-
-    LogDebug "DocDest $($DocDest)"
-    LogDebug "PkgName $($PkgName)"
-    LogDebug "DocVersion $($DocVersion)"
-    LogDebug "DocDir $($DocDir)"
-    LogDebug "Final Dest $($DocDest)/$($PkgName)/$($DocVersion)"
-    LogDebug "Release Tag $($ReleaseTag)"
-
-    # Use the step to replace master link to release tag link 
-    if ($ReleaseTag) {
-        foreach ($htmlFile in (Get-ChildItem $DocDir -include *.html -r)) 
-        {
-            $fileContent = Get-Content -Path $htmlFile -Raw
-            $updatedFileContent = $fileContent -replace $RepoReplaceRegex, "`${1}$ReleaseTag"
-            if ($updatedFileContent -ne $fileContent) {
-                Set-Content -Path $htmlFile -Value $updatedFileContent -NoNewLine
-            }
-        }
-    } 
-    else {
-        LogWarning "Not able to do the master link replacement, since no release tag found for the release. Please manually check."
-    } 
-   
-    LogDebug "Uploading $($PkgName)/$($DocVersion) to $($DocDest)..."
-    & $($AzCopy) cp "$($DocDir)/**" "$($DocDest)/$($PkgName)/$($DocVersion)$($SASKey)" --recursive=true --cache-control "max-age=300, must-revalidate"
-
-    LogDebug "Handling versioning files under $($DocDest)/$($PkgName)/versioning/"
-    $versionsObj = (Update-Existing-Versions -PkgName $PkgName -PkgVersion $DocVersion -DocDest $DocDest)
-
-    # we can safely assume we have AT LEAST one version here. Reason being we just completed Update-Existing-Versions
-    $latestVersion = ($versionsObj.SortedVersionArray | Select-Object -First 1).RawVersion
-
-    if ($UploadLatest -and ($latestVersion -eq $DocVersion))
+    $packageList = @{}
+    if ($PkgName) 
     {
-        LogDebug "Uploading $($PkgName) to latest folder in $($DocDest)..."
-        & $($AzCopy) cp "$($DocDir)/**" "$($DocDest)/$($PkgName)/latest$($SASKey)" --recursive=true --cache-control "max-age=300, must-revalidate"
+        $packageList[$PkgName] = $true
+    }
+    else 
+    {
+        $blobs = & $($AzCopy) list "$($DocDest)$($SASKey)"
+        foreach ($blob in $blobs) {
+            $folder = ($blobs -split "/", 2)[0]
+            $packageList[$folder] = $true
+        }
+    }
+    foreach ($pkg in $packageList) {
+        LogDebug "DocDest $($DocDest)"
+        LogDebug "PkgName $($PkgName)"
+        LogDebug "DocVersion $($DocVersion)"
+        LogDebug "DocDir $($DocDir)"
+        LogDebug "Final Dest $($DocDest)/$($PkgName)/$($DocVersion)"
+        LogDebug "Release Tag $($ReleaseTag)"
+    
+        # Use the step to replace master link to release tag link 
+        if ($ReleaseTag) {
+            foreach ($htmlFile in (Get-ChildItem $DocDir -include *.html -r)) 
+            {
+                $fileContent = Get-Content -Path $htmlFile -Raw
+                $updatedFileContent = $fileContent -replace $RepoReplaceRegex, "`${1}$ReleaseTag"
+                if ($updatedFileContent -ne $fileContent) {
+                    Set-Content -Path $htmlFile -Value $updatedFileContent -NoNewLine
+                }
+            }
+        } 
+        else {
+            LogWarning "Not able to do the master link replacement, since no release tag found for the release. Please manually check."
+        } 
+       
+        LogDebug "Uploading $($PkgName)/$($DocVersion) to $($DocDest)..."
+        & $($AzCopy) cp "$($DocDir)/**" "$($DocDest)/$($PkgName)/$($DocVersion)$($SASKey)" --recursive=true --cache-control "max-age=300, must-revalidate"
+    
+        LogDebug "Handling versioning files under $($DocDest)/$($PkgName)/versioning/"
+        $versionsObj = (Update-Existing-Versions -PkgName $PkgName -PkgVersion $DocVersion -DocDest $DocDest)
+    
+        # we can safely assume we have AT LEAST one version here. Reason being we just completed Update-Existing-Versions
+        $latestVersion = ($versionsObj.SortedVersionArray | Select-Object -First 1).RawVersion
+    
+        if ($UploadLatest -and ($latestVersion -eq $DocVersion))
+        {
+            LogDebug "Uploading $($PkgName) to latest folder in $($DocDest)..."
+            & $($AzCopy) cp "$($DocDir)/**" "$($DocDest)/$($PkgName)/latest$($SASKey)" --recursive=true --cache-control "max-age=300, must-revalidate"
+        }
     }
 }
 

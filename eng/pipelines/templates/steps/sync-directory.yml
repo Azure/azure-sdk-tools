@@ -69,7 +69,7 @@ steps:
           -AmendCommit $True
 
     - task: PowerShell@2
-      displayName: Queue test pipeline
+      displayName: Queue template pipeline
       condition: and(succeeded(), ne(variables['${{repo}}-template-definition-id'], ''))
       inputs:
         pwsh: true
@@ -80,6 +80,22 @@ steps:
           -Project "internal"
           -SourceBranch "${{ parameters.UpstreamBranchName }}-ForTestPipeline"
           -DefinitionId "$(${{repo}}-template-definition-id)"
+          -VsoQueuedPipelines "QueuedPipelines"
+          -CancelPreviousBuilds $True
+          -Base64EncodedAuthToken "$(azuresdk-azure-sdk-devops-build-queuing-pat)"
+
+    - task: PowerShell@2
+      displayName: Queue live-test template pipeline
+      condition: and(succeeded(), ne(variables['${{repo}}-template-tests-definition-id'], ''))
+      inputs:
+        pwsh: true
+        workingDirectory: ${{ parameters.WorkingDirectory }}
+        filePath: ${{ parameters.ScriptDirectory }}/Queue-Pipeline.ps1
+        arguments: >
+          -Organization "azure-sdk"
+          -Project "internal"
+          -SourceBranch "${{ parameters.UpstreamBranchName }}-ForTestPipeline"
+          -DefinitionId "$(${{repo}}-template-tests-definition-id)"
           -VsoQueuedPipelines "QueuedPipelines"
           -CancelPreviousBuilds $True
           -Base64EncodedAuthToken "$(azuresdk-azure-sdk-devops-build-queuing-pat)"

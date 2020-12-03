@@ -73,6 +73,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
             builder.Services.AddMemoryCache();
             builder.Services.AddSingleton<RunProcessor>();
             builder.Services.AddSingleton<IFailureAnalyzer, FailureAnalyzer>();
+            builder.Services.AddSingleton<IFailureClassifier, AzuriteInstallFailureClassifier>();
             builder.Services.AddSingleton<IFailureClassifier, CancelledTaskClassifier>();
             builder.Services.AddSingleton<IFailureClassifier, CosmosDbEmulatorStartFailureClassifier>();
             builder.Services.AddSingleton<IFailureClassifier, AzurePipelinesPoolOutageClassifier>();
@@ -85,7 +86,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
             builder.Services.AddSingleton<IFailureClassifier, JsDevFeedPublishingFailureClassifier>();
             builder.Services.AddSingleton<IFailureClassifier, DownloadSecretsFailureClassifier>();
             builder.Services.AddSingleton<IFailureClassifier, GitCheckoutFailureClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, AzurePowerShellModuleInstallationFailureClassifier>();
+            builder.Services.AddSingleton<IFailureClassifier, AzuriteInstallFailureClassifier>();
             builder.Services.AddSingleton<IFailureClassifier, MavenBrokenPipeFailureClassifier>();
             builder.Services.AddSingleton<IFailureClassifier, CodeSigningFailureClassifier>();
         }

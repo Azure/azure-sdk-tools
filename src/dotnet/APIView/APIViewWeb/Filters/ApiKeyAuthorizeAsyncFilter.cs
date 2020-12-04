@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
@@ -32,10 +34,9 @@ namespace APIViewWeb.Filters
             var hasApiKeyHeader = request.Headers.TryGetValue(_apiKeyHeader, out var apiKeyValue);
             if (hasApiKeyHeader && apiKeyValue == _apiKeyValue)
             {
-                var apiKeyClaim = new Claim("apikey", apiKeyValue);
                 //Adding claim as github login type to keep it uniform across the checks
                 var user = new Claim("urn:github:login", _azure_sdk_bot);
-                var principal = new ClaimsPrincipal(new ClaimsIdentity(new List<Claim> { apiKeyClaim, user }, "ApiKey"));
+                var principal = new ClaimsPrincipal(new ClaimsIdentity(new List<Claim> { user }));
                 context.HttpContext.User = principal;
                 return;
             }

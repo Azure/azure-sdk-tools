@@ -21,13 +21,13 @@ namespace APIViewWeb.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> UploadAutoReview([FromForm] IFormFile file)
+        public async Task<ActionResult> UploadAutoReview([FromForm] IFormFile file, string label)
         {
             if (file != null)
             {
                 using (var openReadStream = file.OpenReadStream())
                 {
-                    var review = await _reviewManager.CreateMasterReviewAsync(User, file.FileName, "Automatic-Review", openReadStream, false);
+                    var review = await _reviewManager.CreateMasterReviewAsync(User, file.FileName, label, openReadStream, false);
                     if(review != null)
                     {
                         //Return 200 OK if last revision is approved and 201 if revision is not yet approved.

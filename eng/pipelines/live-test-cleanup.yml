@@ -52,3 +52,13 @@ stages:
           @subscriptionConfiguration `
           -Verbose
         displayName: Clean up subscription resources (AzureChinaCloud)
+
+      - pwsh: |
+          $subscriptionConfiguration = @'
+            $(acs-subscription-configuration)
+          '@ | ConvertFrom-Json -AsHashtable
+
+          ./tools/live-test-cleanup/cleanup.ps1 `
+          @subscriptionConfiguration `
+          -Verbose
+        displayName: Clean up subscription resources (AzureCloud ACS Subscription)

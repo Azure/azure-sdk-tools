@@ -1,0 +1,24 @@
+pr: none
+trigger: none
+
+stages:
+- stage: Run
+
+  variables:
+  - template: ../pipelines/templates/variables/globals.yml
+
+  jobs:
+  - job: Run
+    pool:
+      vmImage: ubuntu-16.04
+
+    steps:
+      - pwsh: |
+          $subscriptionConfiguration = @'
+            $(acs-subscription-id)
+          '@ | ConvertFrom-Json -AsHashtable
+
+          ./tools/live-test-cleanup/cleanup.ps1 `
+          @subscriptionConfiguration `
+          -Verbose
+        displayName: Clean up subscription resources (AzureCloud-Communication)

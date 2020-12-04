@@ -8,7 +8,6 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using ApiView;
-using APIView.DIff;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Authorization;

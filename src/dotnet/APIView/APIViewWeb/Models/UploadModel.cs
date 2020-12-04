@@ -13,8 +13,5 @@ namespace APIViewWeb.Pages.Assemblies
 
         [BindProperty]
         public IFormFile[] Files { get; set; }
-
-        [BindProperty]
-        public bool IsAutomatic { get; set; }
     }
 }

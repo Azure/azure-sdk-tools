@@ -27,7 +27,7 @@ namespace APIViewWeb.Controllers
             {
                 using (var openReadStream = file.OpenReadStream())
                 {
-                    var review = await _reviewManager.CreateMasterReviewAsync(User, file.FileName, "Auto Review", openReadStream, false);
+                    var review = await _reviewManager.CreateMasterReviewAsync(User, file.FileName, "Automatic-Review", openReadStream, false);
                     if(review != null)
                     {
                         //Return 200 OK if last revision is approved and 201 if revision is not yet approved.

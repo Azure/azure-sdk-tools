@@ -56,11 +56,11 @@ class PathResolver:
         if self.target_moniker is not None:
             for replacement in MONIKER_REPLACEMENTS:
                 # input string maintains leading ~/ necessary for docs. update the moniker folder if it exists
-                input_string.replace(replacement, self.target_moniker)
+                input_string = input_string.replace(replacement, self.target_moniker)
 
                 # the resolvable path is different from the input_string in that it is actually a resolvable path.
                 # update it with the moniker folder so we can test for existence of the file
-                resolvable_path.replace(replacement, self.target_moniker)
+                resolvable_path = resolvable_path.replace(replacement, self.target_moniker)
             
         # finally apply suffix
         possible_target_readme = os.path.splitext(resolvable_path)[0] + suffix

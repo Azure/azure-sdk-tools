@@ -50,7 +50,11 @@ namespace Azure.Sdk.Tools.GitHubIssues.Reports
             tc.DefineTableColumn("Issues Found", i => i.Note);
 
             List<ReportIssue> issuesWithNotes = new List<ReportIssue>();
-            foreach (Issue issue in context.GitHubClient.SearchForGitHubIssues(CreateQuery(repositoryConfig)))
+
+            SearchIssuesRequest searchRequest = CreateQuery(repositoryConfig);
+            searchRequest.Type = IssueTypeQualifier.Issue;
+
+            foreach (Issue issue in context.GitHubClient.SearchForGitHubIssues(searchRequest))
             {
                 if (!ValidateIssue(issue, out string issuesFound))
                 {

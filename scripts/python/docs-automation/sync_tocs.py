@@ -135,6 +135,8 @@ def filter_toc(toc_dict, namespaces, path_resolver):
         # if we filter out all the children, this node should simply cease to exist
         if not filtered_children:
             return None
+    elif "href" not in toc_dict and "items" not in toc_dict:
+        return None
 
     # always amend the uid to include the suffix if one is present.
     if "uid" in toc_dict and path_resolver.readme_suffix:

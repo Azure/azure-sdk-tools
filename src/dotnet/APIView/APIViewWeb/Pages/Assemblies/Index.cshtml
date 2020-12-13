@@ -176,6 +176,7 @@
     <thead>
         <tr>
             <th scope="col">Name</th>
+            <th scope="col">Approval Status</th>
             <th scope="col">Uploader</th>
             <th></th>
             <th></th>
@@ -187,6 +188,25 @@
             <tr>
                 <td>
                     <a class="review-name" asp-page="./Review" asp-route-id="@assembly.ReviewId">@assembly.DisplayName</a>
+                </td>
+                <td>
+                    @if (assembly.Revisions.Count > 0)
+                    {
+                        var lastRevision = assembly.Revisions.Last();
+                        if (lastRevision.Approvers.Count > 0)
+                        {
+                            <span>
+                                @foreach (var approver in lastRevision.Approvers)
+                                {
+                                    <label class="text-success">✔️@approver</label>
+                                }
+                            </span>
+                        }
+                        else
+                        {
+                            <span>Pending</span>
+                        }
+                    }
                 </td>
                 <td>
                     <a username="@assembly.Author">@assembly.Author</a>

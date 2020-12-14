@@ -15,24 +15,32 @@
             <input type="text" class="form-control" id="searchBox" placeholder="Filter by review name" autofocus>
         </div>
 
+        @{
+            var filters = new Dictionary<string, string>
+            {
+                { "language", Model.Language },
+                { "automatic", Model.Automatic? "true" : "false" },
+                { "closed", Model.Closed? "true" : "false"}
+            };
+        }
         <div class="btn-group float-left  pl-5">
-            <a class="btn btn-primary" active-if='@Model.Language != "All"' asp-route-language="All" asp-route-automatic=@Model.Automatic asp-route-closed=@Model.Closed>All</a>
-            <a class="btn btn-primary" active-if='@Model.Language != "C"' asp-route-language="C" asp-route-automatic=@Model.Automatic asp-route-closed=@Model.Closed>C</a>
-            <a class="btn btn-primary" active-if='@Model.Language != "C#"' asp-route-language="C#" asp-route-automatic=@Model.Automatic asp-route-closed=@Model.Closed>C#</a>
-            <a class="btn btn-primary" active-if='@Model.Language != "C++"' asp-route-language="C++" asp-route-automatic=@Model.Automatic asp-route-closed=@Model.Closed>C++</a>
-            <a class="btn btn-primary" active-if='@Model.Language != "Java"' asp-route-language="Java" asp-route-automatic=@Model.Automatic asp-route-closed=@Model.Closed>Java</a>
-            <a class="btn btn-primary" active-if='@Model.Language != "JS/TS"' asp-route-language="JavaScript" asp-route-automatic=@Model.Automatic asp-route-closed=@Model.Closed>JS/TS</a>
-            <a class="btn btn-primary" active-if='@Model.Language != "Python"' asp-route-language="Python" asp-route-automatic=@Model.Automatic asp-route-closed=@Model.Closed>Python</a>
+            <a class="btn btn-primary" active-if='@Model.Language != "All"' asp-all-route-data="filters" asp-route-language="All">All</a>
+            <a class="btn btn-primary" active-if='@Model.Language != "C"' asp-all-route-data="filters" asp-route-language="C">C</a>
+            <a class="btn btn-primary" active-if='@Model.Language != "C#"' asp-all-route-data="filters" asp-route-language="C#" >C#</a>
+            <a class="btn btn-primary" active-if='@Model.Language != "C++"' asp-all-route-data="filters" asp-route-language="C++">C++</a>
+            <a class="btn btn-primary" active-if='@Model.Language != "Java"' asp-all-route-data="filters" asp-route-language="Java">Java</a>
+            <a class="btn btn-primary" active-if='@Model.Language != "JS/TS"' asp-all-route-data="filters" asp-route-language="JavaScript">JS/TS</a>
+            <a class="btn btn-primary" active-if='@Model.Language != "Python"' asp-all-route-data="filters" asp-route-language="Python">Python</a>
         </div>
 
         <div class="btn-group float-right">
-            <a class="btn btn-secondary" active-if="!@Model.Closed" asp-route-closed="false" asp-route-language=@Model.Language asp-route-automatic=@Model.Automatic>Open</a>
-            <a class="btn btn-secondary" active-if="@Model.Closed" asp-route-closed="true" asp-route-language=@Model.Language asp-route-automatic=@Model.Automatic>Closed</a>
+            <a class="btn btn-secondary" active-if="!@Model.Closed" asp-all-route-data="filters" asp-route-closed="false">Open</a>
+            <a class="btn btn-secondary" active-if="@Model.Closed"  asp-all-route-data="filters" asp-route-closed="true">Closed</a>
         </div>
 
         <div class="btn-group float-right pr-5">
-            <a class="btn btn-secondary" active-if="!@Model.Automatic" asp-route-automatic="false" asp-route-language=@Model.Language asp-route-closed=@Model.Closed>Manual</a>
-            <a class="btn btn-secondary" active-if="@Model.Automatic" asp-route-automatic="true" asp-route-language=@Model.Language asp-route-closed=@Model.Closed>Automatic</a>
+            <a class="btn btn-secondary" active-if="!@Model.Automatic" asp-all-route-data="filters" asp-route-automatic="false">Manual</a>
+            <a class="btn btn-secondary" active-if="@Model.Automatic" asp-all-route-data="filters" asp-route-automatic="true">Automatic</a>
         </div>
 
     </div>

@@ -61,9 +61,9 @@ namespace APIViewWeb.Respositories
             return review;
         }
 
-        public Task<IEnumerable<ReviewModel>> GetReviewsAsync(bool closed, string language)
+        public Task<IEnumerable<ReviewModel>> GetReviewsAsync(bool closed, string language, bool automatic)
         {
-            return _reviewsRepository.GetReviewsAsync(closed, language);
+            return _reviewsRepository.GetReviewsAsync(closed, language, automatic);
         }
 
         public async Task DeleteReviewAsync(ClaimsPrincipal user, string id)

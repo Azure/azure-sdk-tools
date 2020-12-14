@@ -28,11 +28,14 @@ namespace APIViewWeb.Pages.Assemblies
         [BindProperty(SupportsGet = true)]
         public string Language { get; set; } = "All";
 
+        [BindProperty(SupportsGet = true)]
+        public bool Automatic { get; set; }
+
         public IEnumerable<ReviewModel> Assemblies { get; set; }
 
         public async Task OnGetAsync()
         {
-            Assemblies = await _manager.GetReviewsAsync(Closed, Language);
+            Assemblies = await _manager.GetReviewsAsync(Closed, Language, Automatic);
         }
 
         public async Task<IActionResult> OnPostUploadAsync()

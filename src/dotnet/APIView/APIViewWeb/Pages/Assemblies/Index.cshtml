@@ -16,19 +16,25 @@
         </div>
 
         <div class="btn-group float-left  pl-5">
-            <a class="btn btn-primary" active-if='@Model.Language != "All"' asp-route-language="All">All</a>
-            <a class="btn btn-primary" active-if='@Model.Language != "C"' asp-route-language="C">C</a>
-            <a class="btn btn-primary" active-if='@Model.Language != "C#"' asp-route-language="C#">C#</a>
-            <a class="btn btn-primary" active-if='@Model.Language != "C++"' asp-route-language="C++">C++</a>
-            <a class="btn btn-primary" active-if='@Model.Language != "Java"' asp-route-language="Java">Java</a>
-            <a class="btn btn-primary" active-if='@Model.Language != "JS/TS"' asp-route-language="JavaScript">JS/TS</a>
-            <a class="btn btn-primary" active-if='@Model.Language != "Python"' asp-route-language="Python">Python</a>
+            <a class="btn btn-primary" active-if='@Model.Language != "All"' asp-all-route-data=@Model.GetRoutingData(language: "All")>All</a>
+            <a class="btn btn-primary" active-if='@Model.Language != "C"' asp-all-route-data=@Model.GetRoutingData(language: "C")>C</a>
+            <a class="btn btn-primary" active-if='@Model.Language != "C#"' asp-all-route-data=@Model.GetRoutingData(language: "C#")>C#</a>
+            <a class="btn btn-primary" active-if='@Model.Language != "C++"' asp-all-route-data=@Model.GetRoutingData(language: "C++")>C++</a>
+            <a class="btn btn-primary" active-if='@Model.Language != "Java"' asp-all-route-data=@Model.GetRoutingData(language: "Java")>Java</a>
+            <a class="btn btn-primary" active-if='@Model.Language != "JS/TS"' asp-all-route-data=@Model.GetRoutingData(language: "JavaScript")>JS/TS</a>
+            <a class="btn btn-primary" active-if='@Model.Language != "Python"' asp-all-route-data=@Model.GetRoutingData(language: "Python")>Python</a>
         </div>
 
         <div class="btn-group float-right">
-            <a class="btn btn-secondary" active-if="!@Model.Closed" asp-route-closed="false" asp-route-language=@Model.Language>Open</a>
-            <a class="btn btn-secondary" active-if="@Model.Closed" asp-route-closed="true" asp-route-language=@Model.Language>Closed</a>
+            <a class="btn btn-secondary" active-if="!@Model.Closed" asp-all-route-data=@Model.GetRoutingData(closed: false)>Open</a>
+            <a class="btn btn-secondary" active-if="@Model.Closed" asp-all-route-data=@Model.GetRoutingData(closed: true)>Closed</a>
         </div>
+
+        <div class="btn-group float-right pr-5">
+            <a class="btn btn-secondary" active-if="!@Model.Automatic" asp-all-route-data=@Model.GetRoutingData(automatic: false)>Manual</a>
+            <a class="btn btn-secondary" active-if="@Model.Automatic" asp-all-route-data=@Model.GetRoutingData(automatic: true)>Automatic</a>
+        </div>
+
     </div>
 </div>
 

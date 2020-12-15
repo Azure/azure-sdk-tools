@@ -28,11 +28,14 @@ namespace APIViewWeb.Pages.Assemblies
         [BindProperty(SupportsGet = true)]
         public string Language { get; set; } = "All";
 
+        [BindProperty(SupportsGet = true)]
+        public bool Automatic { get; set; }
+
         public IEnumerable<ReviewModel> Assemblies { get; set; }
 
         public async Task OnGetAsync()
         {
-            Assemblies = await _manager.GetReviewsAsync(Closed, Language);
+            Assemblies = await _manager.GetReviewsAsync(Closed, Language, Automatic);
         }
 
         public async Task<IActionResult> OnPostUploadAsync()
@@ -54,6 +57,15 @@ namespace APIViewWeb.Pages.Assemblies
             }
 
             return RedirectToPage();
+        }
+
+        public Dictionary<string, string> GetRoutingData(string? language = null, bool? closed = null, bool? automatic = null)
+        {
+            var routingData = new Dictionary<string, string>();
+            routingData["language"] = language ?? Language;
+            routingData["closed"] = (closed ?? Closed) == true ? "true" : "false";
+            routingData["automatic"] = (automatic ?? Automatic) == true ? "true" : "false";
+            return routingData;
         }
     }
 }

@@ -59,7 +59,7 @@ namespace APIViewWeb.Pages.Assemblies
             return RedirectToPage();
         }
 
-        public Dictionary<string, string> GetRoutingData(string? language = null, bool? closed = null, bool? automatic = null)
+        public Dictionary<string, string> GetRoutingData(string language = null, bool? closed = null, bool? automatic = null)
         {
             var routingData = new Dictionary<string, string>();
             routingData["language"] = language ?? Language;

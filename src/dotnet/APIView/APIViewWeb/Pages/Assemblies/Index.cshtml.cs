@@ -33,8 +33,6 @@ namespace APIViewWeb.Pages.Assemblies
 
         public IEnumerable<ReviewModel> Assemblies { get; set; }
 
-        public Dictionary<string, string> RoutingData { get; set; }
-
         public async Task OnGetAsync()
         {
             Assemblies = await _manager.GetReviewsAsync(Closed, Language, Automatic);
@@ -63,16 +61,11 @@ namespace APIViewWeb.Pages.Assemblies
 
         public Dictionary<string, string> GetRoutingData(string? language = null, bool? closed = null, bool? automatic = null)
         {
-            if (RoutingData == null)
-            {
-                RoutingData = new Dictionary<string, string>();
-            }
-
-            RoutingData["language"] = language ?? Language;
-            RoutingData["closed"] = (closed ?? Closed) == true ? "true" : "false";
-            RoutingData["automatic"] = (automatic ?? Automatic) == true ? "true" : "false";
-
-            return RoutingData;
+            var routingData = new Dictionary<string, string>();
+            routingData["language"] = language ?? Language;
+            routingData["closed"] = (closed ?? Closed) == true ? "true" : "false";
+            routingData["automatic"] = (automatic ?? Automatic) == true ? "true" : "false";
+            return routingData;
         }
     }
 }

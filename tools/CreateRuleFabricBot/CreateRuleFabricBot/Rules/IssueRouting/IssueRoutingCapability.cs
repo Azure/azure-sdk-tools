@@ -26,24 +26,18 @@ namespace CreateRuleFabricBot.Rules.IssueRouting
   ""id"": ""###taskId###""
 }";
 
-        private readonly string _repo;
-        private readonly string _owner;
-        private readonly string _codeownersFile;
-
         private List<TriageConfig> _triageConfig = new List<TriageConfig>();
 
         private int RouteCount { get { return _triageConfig.Count; } }
 
-        public IssueRoutingCapability(string org, string repo, string codeownersFile)
+        public IssueRoutingCapability(string org, string repo, string configurationFile)
+            : base(org, repo, configurationFile)
         {
-            _repo = repo;
-            _owner = org;
-            _codeownersFile = codeownersFile;
         }
 
-        private void AddService(IEnumerable<string> labels, IEnumerable<string> mentionees)
+        public void AddRoute(IEnumerable<string> labels, IEnumerable<string> mentionees)
         {
-            var tc = new TriageConfig();
+            TriageConfig tc = new TriageConfig();
             tc.Labels.AddRange(labels);
             tc.Mentionee.AddRange(mentionees);
             _triageConfig.Add(tc);
@@ -51,21 +45,6 @@ namespace CreateRuleFabricBot.Rules.IssueRouting
 
         public override string GetPayload()
         {
-            List<CodeOwnerEntry> entries = CodeOwnersFile.ParseFile(_codeownersFile);
-
-            foreach (CodeOwnerEntry entry in entries)
-            {
-                // If we have labels for the specific codeowners entry, add that to the triage list
-                if (entry.ServiceLabels.Any())
-                {
-                    // Remove the '@' from the owners handle
-                    IEnumerable<string> mentionees = entry.Owners.Select(x => x.Replace("@", "").Trim());
-
-                    //add the service
-                    AddService(entry.ServiceLabels, mentionees);
-                }
-            }
-
             Colorizer.WriteLine("Found [Yellow!{0}] service routes.", RouteCount);
             foreach (TriageConfig triage in _triageConfig)
             {
@@ -80,6 +59,24 @@ namespace CreateRuleFabricBot.Rules.IssueRouting
         public override string GetTaskId()
         {
             return $"AzureSDKTriage_{_owner}_{_repo}";
+        }
+
+        internal override void ReadConfigurationFromFile(string configurationFile)
+        {
+            List<CodeOwnerEntry> entries = CodeOwnersFile.ParseFile(configurationFile);
+
+            foreach (CodeOwnerEntry entry in entries)
+            {
+                // If we have labels for the specific codeowners entry, add that to the triage list
+                if (entry.ServiceLabels.Any())
+                {
+                    // Remove the '@' from the owners handle
+                    IEnumerable<string> mentionees = entry.Owners.Select(x => x.Replace("@", "").Trim());
+
+                    //add the service
+                    AddRoute(entry.ServiceLabels, mentionees);
+                }
+            }
         }
     }
 }

@@ -83,7 +83,7 @@ namespace CreateRuleFabricBot.Service
             string requestUri = $"https://portal.fabricbot.ms/api/bot/getBotConfig?githubKey={_owner}/{_repo}";
             List<string> elements = new List<string>();
             var response = SendRequestAsync(HttpMethod.Get, requestUri).GetAwaiter().GetResult();
-
+            
             // retrieve the information from the response.
             var configJson = JsonDocument.Parse(response.Content.ReadAsByteArrayAsync().GetAwaiter().GetResult());
             // get the config

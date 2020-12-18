@@ -1,4 +1,5 @@
-﻿using OutputColorizer;
+﻿using Newtonsoft.Json.Linq;
+using OutputColorizer;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -12,22 +13,6 @@ namespace CreateRuleFabricBot.Rules.PullRequestLabel
 {
     public class PullRequestLabelFolderCapability : BaseCapability
     {
-        private static readonly string s_template = @"
-{
-      ""taskType"": ""trigger"",
-      ""capabilityId"": ""PrAutoLabel"",
-      ""subCapability"": ""Path"",
-      ""version"": ""1.0"",
-      ""id"": ""###taskId###"",
-      ""config"": {
-        ""configs"": [
-            ###labelConfig###
-        ],
-      ""taskName"" :""Auto PR based on folder paths ""
-      }
-    }
-";
-
         public PullRequestLabelFolderCapability(string org, string name, string configurationFile)
             : base(org, name, configurationFile)
         {
@@ -37,26 +22,27 @@ namespace CreateRuleFabricBot.Rules.PullRequestLabel
 
         public override string GetPayload()
         {
-            StringBuilder configPayload = new StringBuilder();
-            Colorizer.WriteLine("Found the following rules:");
-
-            // Create the payload.
+            // Display the payload on the screen
             foreach (var entry in _entriesToCreate)
             {
-                // get the payload
                 Colorizer.WriteLine("[Cyan!{0}] => [Magenta!{1}]", entry.Path, entry.Label);
-
-                configPayload.Append(entry.ToString());
-                configPayload.Append(',');
             }
 
-            // remove the trailing ','
-            configPayload.Remove(configPayload.Length - 1, 1);
-
             // create the payload from the template
-            return s_template
-                .Replace("###taskId###", GetTaskId())
-                .Replace("###labelConfig###", configPayload.ToString());
+            JObject payload = new JObject(
+                new JProperty("taskType", "trigger"),
+                new JProperty("capabilityId", "PrAutoLabel"),
+                new JProperty("subCapability", "Path"),
+                new JProperty("version", "1.0"),
+                new JProperty("id", new JValue(GetTaskId())),
+                new JProperty("config",
+                    new JObject(
+                        new JProperty("configs",new JArray(_entriesToCreate.Select(tc => tc.GetJsonPayload()))),
+                        new JProperty("taskName", "Auto PR based on folder paths ")
+                    )
+                ));
+
+            return payload.ToString();
         }
 
         /// <summary>

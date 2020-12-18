@@ -1,5 +1,6 @@
 ﻿using CreateRuleFabricBot.CommandLine;
 using CreateRuleFabricBot.Markdown;
+using Newtonsoft.Json.Linq;
 using OutputColorizer;
 using System;
 using System.Collections.Generic;
@@ -10,23 +11,7 @@ namespace CreateRuleFabricBot.Rules.IssueRouting
 {
     public class IssueRoutingCapability : BaseCapability
     {
-        private static readonly string s_template = @"
-{
-  ""taskType"" : ""scheduledAndTrigger"",
-  ""capabilityId"" : ""IssueRouting"",
-  ""version"" : ""1.0"",
-  ""subCapability"": ""@Mention"",
-  ""config"": { 
-    ""labelsAndMentions"": [
-        ###labelsAndMentions###
-    ],
-    ""replyTemplate"": ""Thanks for the feedback! We are routing this to the appropriate team for follow-up. cc ${mentionees}."",
-    ""taskName"" :""Triage issues to the service team""
-  },
-  ""id"": ""###taskId###""
-}";
-
-        private List<TriageConfig> _triageConfig = new List<TriageConfig>();
+        private readonly List<TriageConfig> _triageConfig = new List<TriageConfig>();
 
         private int RouteCount { get { return _triageConfig.Count; } }
 
@@ -51,9 +36,22 @@ namespace CreateRuleFabricBot.Rules.IssueRouting
                 Colorizer.WriteLine("Labels:[Yellow!{0}], Owners:[Yellow!{1}]", string.Join(',', triage.Labels), string.Join(',', triage.Mentionee));
             }
 
-            return s_template
-                .Replace("###repo###", GetTaskId())
-                .Replace("###labelsAndMentions###", string.Join(",", _triageConfig));
+            // create the payload
+            JObject payload = new JObject(
+                new JProperty("taskType", "scheduledAndTrigger"),
+                new JProperty("capabilityId", "IssueRouting"),
+                new JProperty("version", "1.0"),
+                new JProperty("subCapability", "@Mention"),
+                new JProperty("config",
+                    new JObject(
+                        new JProperty("labelsAndMentions", new JArray(_triageConfig.Select(tc => tc.GetJsonPayload()))),
+                        new JProperty("replyTemplate", "Thanks for the feedback! We are routing this to the appropriate team for follow-up. cc ${mentionees}."),
+                        new JProperty("taskName", "Triage issues to the service team")
+                    )
+                ),
+                new JProperty("id", new JValue(GetTaskId())));
+
+            return payload.ToString();
         }
 
         public override string GetTaskId()

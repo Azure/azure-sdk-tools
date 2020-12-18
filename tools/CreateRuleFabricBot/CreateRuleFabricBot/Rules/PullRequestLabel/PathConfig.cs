@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Newtonsoft.Json.Linq;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 
@@ -24,12 +25,15 @@ namespace CreateRuleFabricBot.Rules.PullRequestLabel
         public override string ToString()
         {
             // Note: By using an empty string in the exclude portion above, the rule we create will allow multiple labels (from different folders) to be applied to the same PR.
+            return GetJsonPayload().ToString();
+        }
 
-            return $"{{ " +
-                $"\"labels\": [\"{Label}\"], " +
-                $"\"pathFilter\": [\"{Path}\"], " +
-                "\"exclude\": [ \"\" ] " +
-                $" }}";
+        public JObject GetJsonPayload()
+        {
+            return new JObject(
+                new JProperty("labels", new JArray(new JValue(Label))),
+                new JProperty("pathFilter", new JArray(new JValue(Path))),
+                new JProperty("exclude", new JArray(new JValue(""))));
         }
     }
 }

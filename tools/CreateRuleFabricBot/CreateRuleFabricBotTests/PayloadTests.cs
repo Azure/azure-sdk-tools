@@ -2,11 +2,15 @@ using CreateRuleFabricBot;
 using CreateRuleFabricBot.Rules.IssueRouting;
 using CreateRuleFabricBot.Rules.PullRequestLabel;
 using CreateRuleFabricBot.Service;
+using CreateRuleFabricBotTests;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using NUnit.Framework.Constraints;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 
 namespace Tests
@@ -32,18 +36,18 @@ namespace Tests
     ""replyTemplate"": ""Thanks for the feedback! We are routing this to the appropriate team for follow-up. cc ${mentionees}."",
     ""taskName"" :""Triage issues to the service team""
   },
-  ""id"": ""###taskId###""
+  ""id"": ""AzureSDKTriage_test_repo""
 }";
 
-            Assert.AreEqual(expectedPayload, irc.GetPayload());
+            AreJsonEquivalent(expectedPayload, irc.GetPayload());
         }
 
 
         [Test]
         public void ValidatePullRequestRouting()
         {
-            PullRequestLabelFolderCapability irc = new PullRequestLabelFolderCapability("test", "repo", null);
-            irc.AddEntry("/test", "Label1");
+            PullRequestLabelFolderCapability plfc = new PullRequestLabelFolderCapability("test", "repo", null);
+            plfc.AddEntry("/test", "Label1");
 
             string expectedPayload = @"
 {
@@ -61,7 +65,46 @@ namespace Tests
     }
 ";
 
-            Assert.AreEqual(expectedPayload, irc.GetPayload());
+            AreJsonEquivalent(expectedPayload, plfc.GetPayload());
+        }
+
+        [Test]
+        public void ValidatePathConfigPayload()
+        {
+            PathConfig pc = new PathConfig("folder", "path");
+
+            string expectedPayload = @"{
+  ""labels"": [
+    ""path""
+  ],
+  ""pathFilter"": [ ""folder"" ], ""exclude"": [ """" ]
+}";
+
+            AreJsonEquivalent(expectedPayload, pc.ToString());
+        }
+
+        [Test]
+        public void ValidateTriageConfigPayload()
+        {
+            TriageConfig tc = new TriageConfig();
+            tc.Labels.Add("Label1");
+            tc.Labels.Add("Label2");
+            tc.Mentionee.Add("User1");
+            tc.Mentionee.Add("User2");
+
+            string expectedPayload = @"{
+                ""labels"": [  ""Label1"",""Label2""  ], 
+                ""mentionees"": [ ""User1"",""User2""  ]}";
+
+            AreJsonEquivalent(expectedPayload, tc.ToString());
+        }
+
+        private void AreJsonEquivalent(string expected, string actual)
+        {
+            expected = JObject.Parse(expected).ToString(Formatting.Indented);
+            actual = JObject.Parse(actual).ToString(Formatting.Indented);
+
+            Assert.AreEqual(expected, actual);
         }
     }
 }

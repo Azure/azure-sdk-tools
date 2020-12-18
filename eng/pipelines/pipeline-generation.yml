@@ -109,7 +109,7 @@ jobs:
     env:
       PATVAR: $(azuresdk-azure-sdk-devops-pipeline-generation-pat)
   - script: |
-      $(Pipeline.Workspace)/pipeline-generator/pipeline-generator --organization https://dev.azure.com/azure-sdk --project internal --prefix $(Prefix) --path $(Pipeline.Workspace)/$(RepositoryName)/sdk --endpoint Azure --repository Azure/$(RepositoryName) --convention up --agentpool Hosted --branch refs/heads/$(Branch) --patvar PATVAR --debug $(InternalOptions)
+      $(Pipeline.Workspace)/pipeline-generator/pipeline-generator --organization https://dev.azure.com/azure-sdk --project internal --prefix $(Prefix) --path $(Pipeline.Workspace)/$(RepositoryName)/sdk --endpoint Azure --repository Azure/$(RepositoryName) --convention up --agentpool Hosted --branch refs/heads/$(Branch) --patvar PATVAR --debug $(InternalOptions) $(TestOptions)
     displayName: 'Generate internal pipelines for: $(RepositoryName)'
     env:
       PATVAR: $(azuresdk-azure-sdk-devops-pipeline-generation-pat)

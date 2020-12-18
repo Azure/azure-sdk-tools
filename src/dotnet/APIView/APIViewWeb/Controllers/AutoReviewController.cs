@@ -30,8 +30,9 @@ namespace APIViewWeb.Controllers
                     var review = await _reviewManager.CreateMasterReviewAsync(User, file.FileName, label, openReadStream, false);
                     if(review != null)
                     {
+                        var reviewUrl = $"{this.Request.Scheme}://{this.Request.Host}/Assemblies/Review/{review.ReviewId}";
                         //Return 200 OK if last revision is approved and 201 if revision is not yet approved.
-                        var result = review.Revisions.Last().Approvers.Count > 0 ? Ok() : StatusCode(statusCode: StatusCodes.Status201Created);
+                        var result = review.Revisions.Last().Approvers.Count > 0 ? Ok(reviewUrl) : StatusCode(statusCode: StatusCodes.Status201Created, reviewUrl);
                         return result;
                     }
                 }

@@ -28,15 +28,6 @@ namespace CreateRuleFabricBot.Rules.PullRequestLabel
     }
 ";
 
-        private static readonly string s_configTemplate = @"
-          {
-            ""label"": ""###label###"",
-            ""pathFilter"": [ ###srcFolders### ],
-            ""exclude"": [ """" ]
-          }
-";
-        // Note: By using an empty string in the exclude portion above, the rule we create will allow multiple labels (from different folders) to be applied to the same PR.
-
         public PullRequestLabelFolderCapability(string org, string name, string configurationFile)
             : base(org, name, configurationFile)
         {
@@ -123,22 +114,6 @@ namespace CreateRuleFabricBot.Rules.PullRequestLabel
         public override string GetTaskId()
         {
             return $"AzureSDKPullRequestLabelFolder_{_owner}_{_repo}";
-        }
-
-        private string ToConfigString(CodeOwnerEntry entry)
-        {
-            string result = s_configTemplate;
-
-            result = result.Replace("###label###", entry.PRLabels.First());
-
-            // at this point we should remove the leading '/' if any
-            if (entry.PathExpression.StartsWith("/"))
-            {
-                entry.PathExpression = entry.PathExpression.Substring(1);
-            }
-            result = result.Replace("###srcFolders###", $"\"{entry.PathExpression}\"");
-
-            return result;
         }
     }
 }

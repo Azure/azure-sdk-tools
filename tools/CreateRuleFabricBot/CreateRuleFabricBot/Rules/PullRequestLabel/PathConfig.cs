@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.IO;
+using System.Text.Json;
 
 namespace CreateRuleFabricBot.Rules.PullRequestLabel
 {
@@ -16,12 +18,13 @@ namespace CreateRuleFabricBot.Rules.PullRequestLabel
             Label = label;
         }
 
-
         public string Label { get; set; } = "";
         public string Path { get; set; } = "";
 
         public override string ToString()
         {
+            // Note: By using an empty string in the exclude portion above, the rule we create will allow multiple labels (from different folders) to be applied to the same PR.
+
             return $"{{ " +
                 $"\"labels\": [\"{Label}\"], " +
                 $"\"pathFilter\": [\"{Path}\"], " +

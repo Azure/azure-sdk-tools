@@ -13,12 +13,12 @@ namespace CreateRuleFabricBot.Rules.PullRequestLabel
 {
     public class PullRequestLabelFolderCapability : BaseCapability
     {
+        private List<PathConfig> _entriesToCreate = new List<PathConfig>();
+
         public PullRequestLabelFolderCapability(string org, string name, string configurationFile)
             : base(org, name, configurationFile)
         {
         }
-
-        private List<PathConfig> _entriesToCreate = new List<PathConfig>();
 
         public override string GetPayload()
         {
@@ -93,7 +93,7 @@ namespace CreateRuleFabricBot.Rules.PullRequestLabel
                     continue;
                 }
 
-                _entriesToCreate.Add(new PathConfig(entries[i].PathExpression, entries[i].PRLabels.First()));
+                AddEntry(entries[i].PathExpression, entries[i].PRLabels.First());
             }
         }
 

@@ -1,0 +1,41 @@
+parameters:
+  - name: TaskType
+    displayName: Task Task
+    type: string
+    default: DeleteTag
+    values:
+      - DeleteTag
+
+  - name: Repository
+    displayName: Repository
+    type: string
+    values:
+      - Azure/azure-sdk-for-android
+      - Azure/azure-sdk-for-c
+      - Azure/azure-sdk-for-cpp
+      - Azure/azure-sdk-for-go
+      - Azure/azure-sdk-for-ios
+      - Azure/azure-sdk-for-java
+      - Azure/azure-sdk-for-js
+      - Azure/azure-sdk-for-net
+      - Azure/azure-sdk-for-python
+      - Azure/azure-sdk-tools
+
+  - name: TagName
+    displayName: "Tag Name"
+    type: string
+    default: ''
+
+jobs:
+- ${{if eq(parameters.TaskType, 'DeleteTag')}}:
+  - deployment: DeleteTag
+    displayName: "Delete ${{parameters.TagName}} tag from ${{parameters.Repository}}"
+    environment: git
+    pool:
+      name: azsdk-pool-mms-ubuntu-1804-general
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+            - script: |
+                echo Hello, world!

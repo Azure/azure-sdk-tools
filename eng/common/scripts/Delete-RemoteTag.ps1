@@ -6,4 +6,28 @@ param(
 
 . (Join-Path $PSScriptRoot common.ps1)
 
-Write-Host "Pretending to delete $Tag from $Repository."
+$repositoryParts = $Repository.Split("/")
+
+if (repositoryParts.Length -ne 2)
+{
+    LogError "Repository is not a valid format."
+}
+
+$repositoryOwner = $repositoryParts[0]
+LogDebug "Repository owner is: $repositoryOwner"
+
+$repositoryName = $repositoryParts[1]
+LogDebug "Reposiory name is: $repositoryName"
+
+$ref = "refs/tags/$Tag"
+LogDebug "Calculated ref is: $ref"
+
+try
+{
+    Remove-GitHubSourceReferences -RepoOwner $repositoryOwner -RepoName $repositoryName -Ref $ref -AuthToken $AuthToken
+}
+catch
+{
+  LogError "Remove-GitHubSourceReferences failed with exception:`n$_"
+  exit 1
+}

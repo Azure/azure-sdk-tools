@@ -8,7 +8,7 @@ param(
 
 $repositoryParts = $Repository.Split("/")
 
-if (repositoryParts.Length -ne 2)
+if ($repositoryParts.Length -ne 2)
 {
     LogError "Repository is not a valid format."
 }

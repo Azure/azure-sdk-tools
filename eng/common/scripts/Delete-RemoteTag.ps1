@@ -19,7 +19,7 @@ LogDebug "Repository owner is: $repositoryOwner"
 $repositoryName = $repositoryParts[1]
 LogDebug "Reposiory name is: $repositoryName"
 
-$ref = "ref/tags/$Tag"
+$ref = "tags/$Tag"
 LogDebug "Calculated ref is: $ref"
 
 try

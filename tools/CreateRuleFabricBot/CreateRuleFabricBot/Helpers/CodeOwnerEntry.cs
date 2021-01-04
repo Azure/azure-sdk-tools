@@ -20,9 +20,9 @@ namespace CreateRuleFabricBot
         internal const string ServiceLabelMoniker = "ServiceLabel";
         internal const string MissingFolder = "#/<NotInRepo>/";
 
-        public string PathExpression { get; set; }
+        public string PathExpression { get; set; } = "";
 
-        public bool ContainsWildcard { get; set; }
+        public bool ContainsWildcard => PathExpression.Contains("*");
 
         public List<string> Owners { get; set; } = new List<string>();
 
@@ -128,7 +128,6 @@ namespace CreateRuleFabricBot
             string path = line.Substring(0, ownerStartPosition).Trim();
             // the first entry is the path/regex
             PathExpression = path;
-            ContainsWildcard = path.Contains('*');
 
             // remove the path from the string.
             return line.Substring(ownerStartPosition);

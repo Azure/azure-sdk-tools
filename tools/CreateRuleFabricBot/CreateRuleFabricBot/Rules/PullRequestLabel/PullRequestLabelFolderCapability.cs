@@ -1,4 +1,5 @@
-﻿using OutputColorizer;
+﻿using Newtonsoft.Json.Linq;
+using OutputColorizer;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -12,49 +13,49 @@ namespace CreateRuleFabricBot.Rules.PullRequestLabel
 {
     public class PullRequestLabelFolderCapability : BaseCapability
     {
-        private static readonly string s_template = @"
-{
-      ""taskType"": ""trigger"",
-      ""capabilityId"": ""PrAutoLabel"",
-      ""subCapability"": ""Path"",
-      ""version"": ""1.0"",
-      ""id"": ""###taskId###"",
-      ""config"": {
-        ""configs"": [
-            ###labelConfig###
-        ],
-      ""taskName"" :""Auto PR based on folder paths ""
-      }
-    }
-";
+        private List<PathConfig> _entriesToCreate = new List<PathConfig>();
 
-        private static readonly string s_configTemplate = @"
-          {
-            ""label"": ""###label###"",
-            ""pathFilter"": [ ###srcFolders### ],
-            ""exclude"": [ """" ]
-          }
-";
-        // Note: By using an empty string in the exclude portion above, the rule we create will allow multiple labels (from different folders) to be applied to the same PR.
-
-        private readonly string _repo;
-        private readonly string _owner;
-        private readonly string _codeownersFile;
-
-        public PullRequestLabelFolderCapability(string org, string name, string codeownersFile)
+        public PullRequestLabelFolderCapability(string org, string name, string configurationFile)
+            : base(org, name, configurationFile)
         {
-            _repo = org;
-            _owner = name;
-            _codeownersFile = codeownersFile;
         }
 
         public override string GetPayload()
         {
-            List<CodeOwnerEntry> entries = CodeOwnersFile.ParseFile(_codeownersFile);
+            // Display the payload on the screen
+            foreach (var entry in _entriesToCreate)
+            {
+                Colorizer.WriteLine("[Cyan!{0}] => [Magenta!{1}]", entry.Path, entry.Label);
+            }
 
-            StringBuilder configPayload = new StringBuilder();
+            // create the payload from the template
+            JObject payload = new JObject(
+                new JProperty("taskType", "trigger"),
+                new JProperty("capabilityId", "PrAutoLabel"),
+                new JProperty("subCapability", "Path"),
+                new JProperty("version", "1.0"),
+                new JProperty("id", new JValue(GetTaskId())),
+                new JProperty("config",
+                    new JObject(
+                        new JProperty("configs",new JArray(_entriesToCreate.Select(tc => tc.GetJsonPayload()))),
+                        new JProperty("taskName", "Auto PR based on folder paths ")
+                    )
+                ));
 
-            List<CodeOwnerEntry> entriesToCreate = new List<CodeOwnerEntry>();
+            return payload.ToString();
+        }
+
+        /// <summary>
+        /// Add an entry for a folder with a specified label
+        /// </summary>
+        public void AddEntry(string pathExpression, string label)
+        {
+            _entriesToCreate.Add(new PathConfig(pathExpression, label));
+        }
+
+        internal override void ReadConfigurationFromFile(string configurationFile)
+        {
+            List<CodeOwnerEntry> entries = CodeOwnersFile.ParseFile(configurationFile);
 
             // Filter our the list of entries that we want to create.
             for (int i = 0; i < entries.Count; i++)
@@ -72,11 +73,11 @@ namespace CreateRuleFabricBot.Rules.PullRequestLabel
                     continue; //TODO: regex expressions are not yet supported
                 }
 
-                if (entries[i].PathExpression.IndexOf(CodeOwnerEntry.MissingFolder, StringComparison.OrdinalIgnoreCase) !=-1)
+                if (entries[i].PathExpression.IndexOf(CodeOwnerEntry.MissingFolder, StringComparison.OrdinalIgnoreCase) != -1)
                 {
                     Colorizer.WriteLine("[Yellow!Warning]: The path '[Cyan!{0}]' is marked with the non-existing path marker.", entries[i].PathExpression);
 
-                    continue; 
+                    continue;
                 }
 
                 // Entries with more than one label are not yet supported.
@@ -92,50 +93,8 @@ namespace CreateRuleFabricBot.Rules.PullRequestLabel
                     continue;
                 }
 
-                entriesToCreate.Add(entries[i]);
+                AddEntry(entries[i].PathExpression, entries[i].PRLabels.First());
             }
-
-            Colorizer.WriteLine("Found the following rules:");
-
-            // Create the payload.
-            foreach (var entry in entriesToCreate)
-            {
-                // get the payload
-                string entryPayload = ToConfigString(entry);
-
-                Colorizer.WriteLine("[Cyan!{0}] => [Magenta!{1}]", entry.PathExpression, entry.PRLabels.FirstOrDefault());
-
-                configPayload.Append(ToConfigString(entry));
-                configPayload.Append(',');
-            }
-
-
-            // remove the trailing ','
-            configPayload.Remove(configPayload.Length - 1, 1);
-
-            // Log the set of paths we are creating.
-
-
-            // create the payload from the template
-            return s_template
-                .Replace("###taskId###", GetTaskId())
-                .Replace("###labelConfig###", configPayload.ToString());
-        }
-
-        private string ToConfigString(CodeOwnerEntry entry)
-        {
-            string result = s_configTemplate;
-
-            result = result.Replace("###label###", entry.PRLabels.First());
-
-            // at this point we should remove the leading '/' if any
-            if (entry.PathExpression.StartsWith("/"))
-            {
-                entry.PathExpression = entry.PathExpression.Substring(1);
-            }
-            result = result.Replace("###srcFolders###", $"\"{entry.PathExpression}\"");
-
-            return result;
         }
 
         public override string GetTaskId()

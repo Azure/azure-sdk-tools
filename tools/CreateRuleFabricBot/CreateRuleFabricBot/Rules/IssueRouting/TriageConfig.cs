@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using Newtonsoft.Json.Linq;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace CreateRuleFabricBot.Rules.IssueRouting
 {
@@ -9,13 +11,19 @@ namespace CreateRuleFabricBot.Rules.IssueRouting
 
         public override string ToString()
         {
-            string labels = "\"" + string.Join("\",\"", Labels) + "\"";
-            string mentionee = "\"" + string.Join("\",\"", Mentionee) + "\"";
+            var array = Labels.Select(label => new JValue(label)).ToArray();
+            var arr = new JArray(array);
 
-            return $"{{ " +
-                $"\"labels\": [  {labels}  ], " +
-                $"\"mentionees\": [ {mentionee}  ]" +
-                $" }}";
+            return GetJsonPayload().ToString();
+        }
+
+        public JObject GetJsonPayload()
+        {
+            return new JObject(
+                new JProperty("labels",
+                    new JArray(Labels.Select(label => new JValue(label)).ToArray())),
+                new JProperty("mentionees",
+                    new JArray(Mentionee.Select(ment => new JValue(ment)).ToArray())));
         }
     }
 }

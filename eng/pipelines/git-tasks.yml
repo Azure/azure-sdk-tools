@@ -29,7 +29,7 @@ parameters:
 jobs:
 - ${{if eq(parameters.TaskType, 'DeleteTag')}}:
   - deployment: DeleteTag
-    displayName: "Delete ${{parameters.TagName}} tag from ${{parameters.Repository}}"
+    displayName: "Delete ${{parameters.TagName}} tag from ${{parameters.Repository}} repository"
     environment: git
     pool:
       name: azsdk-pool-mms-ubuntu-1804-general
@@ -37,5 +37,14 @@ jobs:
       runOnce:
         deploy:
           steps:
-            - script: |
-                echo Hello, world!
+            - task: PowerShell@2
+              displayName: Delete remote tag
+              condition: succeeded()
+              inputs:
+                pwsh: true
+                workingDirectory: $(Build.SourcesDirectory)
+                filePath: eng/common/scripts/Delete-RemoteTag.ps1
+                arguments: >
+                  -Repository ${{parameters.Repository}}
+                  -Tag ${{parameters.TagName}}
+                  -AuthToken "$(azuresdk-github-pat)"

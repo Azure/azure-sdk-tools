@@ -37,13 +37,14 @@ jobs:
       runOnce:
         deploy:
           steps:
+            - checkout: self
             - task: PowerShell@2
               displayName: Delete remote tag
               condition: succeeded()
               inputs:
                 pwsh: true
-                workingDirectory: $(Build.SourcesDirectory)
-                filePath: eng/common/scripts/Delete-RemoteTag.ps1
+                workingDirectory: $(Pipeline.Workspace)
+                filePath: $(Build.SourcesDirectory)/eng/common/scripts/Delete-RemoteTag.ps1
                 arguments: >
                   -Repository ${{parameters.Repository}}
                   -Tag ${{parameters.TagName}}

@@ -176,6 +176,7 @@
     <thead>
         <tr>
             <th scope="col">Name</th>
+            <th scope="col">Approval Status</th>
             <th scope="col">Uploader</th>
             <th></th>
             <th></th>
@@ -187,6 +188,19 @@
             <tr>
                 <td>
                     <a class="review-name" asp-page="./Review" asp-route-id="@assembly.ReviewId">@assembly.DisplayName</a>
+                </td>
+                <td>
+                    @if (assembly.Revisions.Count > 0)
+                    {
+                        if (assembly.Revisions.Last().Approvers.Count > 0)
+                        {
+                            <span class="text-success">Approved</span>
+                        }
+                        else
+                        {
+                            <span>Pending</span>
+                        }
+                    }
                 </td>
                 <td>
                     <a username="@assembly.Author">@assembly.Author</a>

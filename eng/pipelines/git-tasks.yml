@@ -1,0 +1,52 @@
+parameters:
+  - name: TaskType
+    displayName: Task Task
+    type: string
+    default: DeleteTag
+    values:
+      - DeleteTag
+
+  - name: Repository
+    displayName: Repository
+    type: string
+    values:
+      - Azure/azure-sdk-for-android
+      - Azure/azure-sdk-for-c
+      - Azure/azure-sdk-for-cpp
+      - Azure/azure-sdk-for-go
+      - Azure/azure-sdk-for-ios
+      - Azure/azure-sdk-for-java
+      - Azure/azure-sdk-for-js
+      - Azure/azure-sdk-for-net
+      - Azure/azure-sdk-for-python
+      - Azure/azure-sdk-tools
+      - Azure/azure-sdk
+
+  - name: TagName
+    displayName: "Tag Name"
+    type: string
+    default: ''
+
+jobs:
+- ${{if eq(parameters.TaskType, 'DeleteTag')}}:
+  - deployment: DeleteTag
+    displayName: "Delete ${{parameters.TagName}} tag from ${{parameters.Repository}} repository"
+    environment: github-operation-approvals
+    pool:
+      name: azsdk-pool-mms-ubuntu-1804-general
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+            - checkout: self
+            - task: PowerShell@2
+              displayName: Delete remote tag
+              condition: succeeded()
+              inputs:
+                pwsh: true
+                workingDirectory: $(Pipeline.Workspace)
+                filePath: $(Build.SourcesDirectory)/eng/common/scripts/Delete-RemoteTag.ps1
+                arguments: >
+                  -Repository ${{parameters.Repository}}
+                  -Tag ${{parameters.TagName}}
+                  -AuthToken "$(azuresdk-github-pat)"

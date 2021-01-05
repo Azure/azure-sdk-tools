@@ -192,15 +192,9 @@
                 <td>
                     @if (assembly.Revisions.Count > 0)
                     {
-                        var lastRevision = assembly.Revisions.Last();
-                        if (lastRevision.Approvers.Count > 0)
+                        if (assembly.Revisions.Last().Approvers.Count > 0)
                         {
-                            <span>
-                                @foreach (var approver in lastRevision.Approvers)
-                                {
-                                    <label class="text-success">✔️@approver</label>
-                                }
-                            </span>
+                            <span class="text-success">Approved</span>
                         }
                         else
                         {

@@ -4,6 +4,7 @@ trigger: none
 
 variables:
   skipComponentGovernanceDetection: true
+  TestOptions: ''
 
 parameters:
   - name: AzureSDK_Maven_Release_Pipeline_Secrets
@@ -52,7 +53,6 @@ jobs:
           --variablegroup ${{ parameters.Release_Secrets_for_GitHubIO_Publishing }}
           --variablegroup ${{ parameters.Secrets_for_DevOps_Notification_Configuration_and_User_Resolution }}
           --variablegroup ${{ parameters.APIReview_AutoCreate_Configurations }}
-        TestOptions: ''
       JavaScript:
         RepositoryName: azure-sdk-for-js
         Branch: master
@@ -98,7 +98,6 @@ jobs:
           --variablegroup ${{ parameters.Release_Secrets_for_GitHubIO_Publishing }}
           --variablegroup ${{ parameters.Secrets_for_DevOps_Notification_Configuration_and_User_Resolution }}
           --variablegroup ${{ parameters.APIReview_AutoCreate_Configurations }}
-        TestOptions: ''
   steps:
   - template: /eng/common/pipelines/templates/steps/install-pipeline-generation.yml
   - script: |

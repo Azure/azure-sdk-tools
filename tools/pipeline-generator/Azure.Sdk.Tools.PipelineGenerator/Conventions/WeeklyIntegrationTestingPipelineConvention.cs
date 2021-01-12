@@ -11,7 +11,7 @@ namespace PipelineGenerator.Conventions
 
         protected override string GetDefinitionName(SdkComponent component)
         {
-            return $"{Context.Prefix} - {component.Name} - tests-weekly";
+            return component.Variant == null ? $"{Context.Prefix} - {component.Name} - tests" : $"{Context.Prefix} - {component.Name} - tests-weekly.{component.Variant}";
         }
 
         protected override Schedule CreateScheduleFromDefinition(BuildDefinition definition)

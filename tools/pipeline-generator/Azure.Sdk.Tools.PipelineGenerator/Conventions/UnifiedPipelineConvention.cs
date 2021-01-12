@@ -19,7 +19,7 @@ namespace PipelineGenerator.Conventions
             return component.Variant == null ? $"{Context.Prefix} - {component.Name}" : $"{Context.Prefix} - {component.Name} - {component.Variant}";
         }
 
-        public override string SearchPattern => "ci*.yml";
+        public override string SearchPattern => "ci.yml";
         public override bool IsScheduled => !Context.NoSchedule;
         public override bool RemoveCITriggers => true;
 

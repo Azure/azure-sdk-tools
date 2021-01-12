@@ -60,6 +60,9 @@ namespace APIViewWeb.Pages.Assemblies
         [BindProperty(Name = "doc", SupportsGet = true)]
         public bool ShowDocumentation { get; set; }
 
+        [BindProperty(Name = "diffOnly", SupportsGet = true)]
+        public bool ShowDiffOnly { get; set; }
+
         public async Task<IActionResult> OnGetAsync(string id, string revisionId = null)
         {
             TempData["Page"] = "api";
@@ -115,6 +118,11 @@ namespace APIViewWeb.Pages.Assemblies
 
         private CodeLineModel[] CreateLines(CodeDiagnostic[] diagnostics, InlineDiffLine<CodeLine>[] lines, ReviewCommentsModel comments)
         {
+            if (ShowDiffOnly)
+            {
+                lines = lines.Where(l => l.Kind != DiffLineKind.Unchanged).ToArray();
+            }
+
             return lines.Select(
                 diffLine => new CodeLineModel(
                     diffLine.Kind,
@@ -184,6 +192,14 @@ namespace APIViewWeb.Pages.Assemblies
         {
             await _manager.ToggleApprovalAsync(User, id, revisionId);
             return RedirectToPage(new { id = id });
+        }
+        public Dictionary<string, string> GetRoutingData(string diffRevisionId = null, bool? showDocumentation = null, bool? showDiffOnly = null)
+        {
+            var routingData = new Dictionary<string, string>();
+            routingData["diffRevisionId"] = diffRevisionId;
+            routingData["doc"] = (showDocumentation ?? showDocumentation) == true ? "true" : "false";
+            routingData["diffOnly"] = (showDiffOnly ?? showDiffOnly) == true ? "true" : "false";
+            return routingData;
         }
     }
 }

@@ -1,6 +1,6 @@
 # http-fault-injector
 
-1. [Install .Net Core](https://dotnet.microsoft.com/download)
+1. [Install .Net 5.0](https://dotnet.microsoft.com/download)
 
 2. Install http-fault-injector
 ```

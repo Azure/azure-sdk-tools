@@ -1,3 +1,3 @@
 variables:
   skipComponentGovernanceDetection: true
-  DotNetCoreVersion: '2.1.503'
+  DotNetCoreVersion: '3.1.405'

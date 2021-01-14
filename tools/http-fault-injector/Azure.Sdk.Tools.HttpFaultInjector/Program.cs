@@ -192,6 +192,7 @@ namespace HttpFaultInjector
                 Log("Sending request to upstream server...");
                 using (var upstreamResponseMessage = await _httpClient.SendAsync(upstreamRequest))
                 {
+                    Console.WriteLine();
                     Log("Upstream Response");
                     var headers = new List<KeyValuePair<string, StringValues>>();
 

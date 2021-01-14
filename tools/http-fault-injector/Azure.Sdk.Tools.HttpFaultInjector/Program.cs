@@ -125,6 +125,8 @@ namespace HttpFaultInjector
                                 Console.WriteLine($"{selectionDescription.Option}: {selectionDescription.Description}");
                             }
 
+                            Console.WriteLine();
+
                             selection = Console.ReadLine();
 
                             if (await TryHandleResponseOption(selection, context, upstreamResponse))
@@ -159,6 +161,7 @@ namespace HttpFaultInjector
 
             var upstreamUri = upstreamUriBuilder.Uri;
 
+            Console.WriteLine();
             Log("Upstream Request");
             Log($"URL: {upstreamUri}");
 
@@ -278,6 +281,8 @@ namespace HttpFaultInjector
 
         private static async Task SendDownstreamResponse(UpstreamResponse upstreamResponse, HttpResponse response, int? contentBytes = null)
         {
+            Console.WriteLine();
+
             Log("Sending downstream response...");
 
             response.StatusCode = upstreamResponse.StatusCode;

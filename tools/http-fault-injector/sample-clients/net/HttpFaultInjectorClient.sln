@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30320.12
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HttpFaultInjectorClient", "HttpFaultInjectorClient.csproj", "{C6B75C5B-AE40-40BD-B8BF-7F7CD5A53B22}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C6B75C5B-AE40-40BD-B8BF-7F7CD5A53B22}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C6B75C5B-AE40-40BD-B8BF-7F7CD5A53B22}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C6B75C5B-AE40-40BD-B8BF-7F7CD5A53B22}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C6B75C5B-AE40-40BD-B8BF-7F7CD5A53B22}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {232A0BD3-B2E9-45A9-BAF3-03BE780F2AE9}
+	EndGlobalSection
+EndGlobal

@@ -21,6 +21,9 @@ pr:
     include:
       - tools/http-fault-injector
 
+variables:
+  DotNetCoreVersion: '3.1.x'
+
 stages:
   - template: ../../eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
     parameters:

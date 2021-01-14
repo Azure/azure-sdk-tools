@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -15,6 +16,9 @@ namespace APIViewWeb.Pages.Assemblies
 {
     public class ReviewPageModel : PageModel
     {
+        private static int REVIEW_DIFF_CONTEXT_SIZE = 3;
+        private const string DIFF_CONTEXT_SEPERATOR = "<br><span>.....</span><br>";
+
         private readonly ReviewManager _manager;
 
         private readonly BlobCodeFileRepository _codeFileRepository;
@@ -116,11 +120,53 @@ namespace APIViewWeb.Pages.Assemblies
             return Page();
         }
 
+        private InlineDiffLine<CodeLine>[] CreateDiffOnlyLines(InlineDiffLine<CodeLine>[] lines)
+        {
+            var unchangedQueue = new Queue<InlineDiffLine<CodeLine>>();
+            var filteredLines = new List<InlineDiffLine<CodeLine>>();
+            for (int i = 0; i < lines.Count(); i++)
+            {
+                if (lines[i].Kind == DiffLineKind.Unchanged)
+                {
+                    // Hold last two unchanged line in queue to create context
+                    unchangedQueue.Enqueue(lines[i]);
+                    if (unchangedQueue.Count > REVIEW_DIFF_CONTEXT_SIZE)
+                    {
+                        unchangedQueue.Dequeue();
+                    }
+                }
+                else
+                {
+                    if (unchangedQueue.Count > 0)
+                    {
+                        // Add sepearator to show skipping lines. for e.g. .....
+                        if (filteredLines.Count > 0)
+                        {
+                            filteredLines.Add(new InlineDiffLine<CodeLine>(new CodeLine(DIFF_CONTEXT_SEPERATOR, null), DiffLineKind.Unchanged));
+                        }
+                        // Copy pre context
+                        filteredLines.AddRange(unchangedQueue);
+                        unchangedQueue.Clear();
+                    }
+                    filteredLines.Add(lines[i]);
+                    // Add post context
+                    int contextIndex = i + 1, contextEnd = i + REVIEW_DIFF_CONTEXT_SIZE;
+                    while (contextIndex <= contextEnd && contextIndex < lines.Count() && lines[contextIndex].Kind == DiffLineKind.Unchanged)
+                    {
+                        filteredLines.Add(lines[contextIndex]);
+                        contextIndex++;
+                    }
+                    unchangedQueue.Clear();
+                }
+            }
+            return filteredLines.ToArray();
+        }
+
         private CodeLineModel[] CreateLines(CodeDiagnostic[] diagnostics, InlineDiffLine<CodeLine>[] lines, ReviewCommentsModel comments)
         {
             if (ShowDiffOnly)
             {
-                lines = lines.Where(l => l.Kind != DiffLineKind.Unchanged).ToArray();
+                lines = CreateDiffOnlyLines(lines);
             }
 
             return lines.Select(

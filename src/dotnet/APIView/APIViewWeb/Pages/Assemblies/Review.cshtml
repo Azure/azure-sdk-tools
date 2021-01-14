@@ -40,14 +40,14 @@
                 }
                 else
                 {
-                    <a class="btn btn-sm btn-outline-secondary" asp-route-diffRevisionId="@Model.PreviousRevisions.Last().RevisionId" asp-route-doc="@Model.ShowDocumentation">Diff</a>
+                    <a class="btn btn-sm btn-outline-secondary" asp-all-route-data=@Model.GetRoutingData(diffRevisionId: Model.PreviousRevisions.Last().RevisionId, showDocumentation: Model.ShowDocumentation, showDiffOnly: Model.ShowDiffOnly)>Diff</a>
                 }
                 <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
 
                 <div class="dropdown-menu">
                     @foreach (var revision in Model.PreviousRevisions.Reverse())
                     {
-                        <a class="dropdown-item" asp-route-diffRevisionId="@revision.RevisionId" active-if="@(Model.DiffRevisionId == revision.RevisionId)" asp-route-doc="@Model.ShowDocumentation">
+                        <a class="dropdown-item" active-if="@(Model.DiffRevisionId == revision.RevisionId)" asp-all-route-data=@Model.GetRoutingData(diffRevisionId: revision.RevisionId, showDocumentation: Model.ShowDocumentation, showDiffOnly: Model.ShowDiffOnly)>
                             @revision.DisplayName
                         </a>
                     }
@@ -93,10 +93,19 @@
                 </span>
                 <span class="dropdown-item" id="show-documentation-component">
                     <input asp-for="@Model.ShowDocumentation" class="show-doc-checkbox">
-                    <a class="text-dark show-document" asp-route-diffRevisionId="@Model.DiffRevisionId" asp-route-doc="@(!Model.ShowDocumentation)">
+                    <a class="text-dark show-document" asp-all-route-data=@Model.GetRoutingData(diffRevisionId: Model.DiffRevisionId, showDocumentation: !Model.ShowDocumentation, showDiffOnly: Model.ShowDiffOnly)>
                         <label>Show documentation</label>
                     </a>
                 </span>
+                @if (!String.IsNullOrEmpty(Model.DiffRevisionId))
+                {
+                    <span class="dropdown-item">
+                        <input asp-for="@Model.ShowDiffOnly" class="show-diffonly-checkbox">
+                        <a class="text-dark show-diffonly" asp-all-route-data=@Model.GetRoutingData(diffRevisionId: Model.DiffRevisionId, showDocumentation: Model.ShowDocumentation, showDiffOnly: !Model.ShowDiffOnly)>
+                            <label>Show only diff</label>
+                        </a>
+                    </span>
+                }
             </div>
         </div>
         <div class="float-right">

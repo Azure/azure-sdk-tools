@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -15,6 +16,9 @@ namespace APIViewWeb.Pages.Assemblies
 {
     public class ReviewPageModel : PageModel
     {
+        private static int REVIEW_DIFF_CONTEXT_SIZE = 3;
+        private const string DIFF_CONTEXT_SEPERATOR = "<br><span>.....</span><br>";
+
         private readonly ReviewManager _manager;
 
         private readonly BlobCodeFileRepository _codeFileRepository;
@@ -59,6 +63,9 @@ namespace APIViewWeb.Pages.Assemblies
         // Flag to decide whether to  include documentation
         [BindProperty(Name = "doc", SupportsGet = true)]
         public bool ShowDocumentation { get; set; }
+
+        [BindProperty(Name = "diffOnly", SupportsGet = true)]
+        public bool ShowDiffOnly { get; set; }
 
         public async Task<IActionResult> OnGetAsync(string id, string revisionId = null)
         {
@@ -113,8 +120,54 @@ namespace APIViewWeb.Pages.Assemblies
             return Page();
         }
 
+        private InlineDiffLine<CodeLine>[] CreateDiffOnlyLines(InlineDiffLine<CodeLine>[] lines)
+        {
+            var filteredLines = new List<InlineDiffLine<CodeLine>>();
+            int lastAddedLine = -1;
+            for (int i = 0; i < lines.Count(); i++)
+            {
+                if (lines[i].Kind != DiffLineKind.Unchanged)
+                {
+                    // Find starting index for pre context
+                    int preContextIndx = Math.Max(lastAddedLine + 1, i - REVIEW_DIFF_CONTEXT_SIZE);
+                    if (preContextIndx < i)
+                    {
+                        // Add sepearator to show skipping lines. for e.g. .....
+                        if (filteredLines.Count > 0)
+                        {
+                            filteredLines.Add(new InlineDiffLine<CodeLine>(new CodeLine(DIFF_CONTEXT_SEPERATOR, null), DiffLineKind.Unchanged));
+                        }
+
+                        while (preContextIndx < i)
+                        {
+                            filteredLines.Add(lines[preContextIndx]);
+                            preContextIndx++;
+                        }
+                    }
+                    //Add changed line
+                    filteredLines.Add(lines[i]);
+                    lastAddedLine = i;
+
+                    // Add post context
+                    int contextStart = i +1, contextEnd = i + REVIEW_DIFF_CONTEXT_SIZE;
+                    while (contextStart <= contextEnd && contextStart < lines.Count() && lines[contextStart].Kind == DiffLineKind.Unchanged)
+                    {
+                        filteredLines.Add(lines[contextStart]);
+                        lastAddedLine = contextStart;
+                        contextStart++;
+                    }
+                }
+            }
+            return filteredLines.ToArray();
+        }
+
         private CodeLineModel[] CreateLines(CodeDiagnostic[] diagnostics, InlineDiffLine<CodeLine>[] lines, ReviewCommentsModel comments)
         {
+            if (ShowDiffOnly)
+            {
+                lines = CreateDiffOnlyLines(lines);
+            }
+
             return lines.Select(
                 diffLine => new CodeLineModel(
                     diffLine.Kind,
@@ -184,6 +237,14 @@ namespace APIViewWeb.Pages.Assemblies
         {
             await _manager.ToggleApprovalAsync(User, id, revisionId);
             return RedirectToPage(new { id = id });
+        }
+        public Dictionary<string, string> GetRoutingData(string diffRevisionId = null, bool? showDocumentation = null, bool? showDiffOnly = null)
+        {
+            var routingData = new Dictionary<string, string>();
+            routingData["diffRevisionId"] = diffRevisionId;
+            routingData["doc"] = (showDocumentation ?? false).ToString();
+            routingData["diffOnly"] = (showDiffOnly ?? false).ToString();
+            return routingData;
         }
     }
 }

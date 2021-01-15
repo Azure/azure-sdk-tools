@@ -1,7 +1,10 @@
 # http-fault-injector
 
 ## Overview
-`http-fault-injector` is an HTTP proxy server for testing HTTP clients during "faults" like "connection closed in middle of body".
+`http-fault-injector` is an HTTP proxy server for testing HTTP clients during "faults" like:
+
+* Partial response (full headers, 50% of body). Then either wait indefinitely, close (TCP FIN), abort (TCP RST), or finish normally.
+* No response. Then either wait indefinitely, close (TCP FIN), or abort (TCP RST).
 
 ## Installation
 1. [Install .Net](https://dotnet.microsoft.com/download)
@@ -14,8 +17,8 @@ You can invoke the tool using the following command: http-fault-injector
 Tool 'azure.sdk.tools.httpfaultinjector' (version '0.1.0') was successfully installed.
 ```
 
-## Usage
-1. Run http-fault-injector
+## Walkthrough
+1. Run `http-fault-injector`
 ```
 > http-fault-injector
 
@@ -35,7 +38,7 @@ Application started. Press Ctrl+C to shut down.
 Sending request...
 ```
 
-3. View request in http-fault-injector
+3. View request in `http-fault-injector`
 ```
 [10:47:20.089] Upstream Request
 [10:47:20.092] URL: https://www.example.org/
@@ -50,6 +53,13 @@ Sending request...
 
 Select a response then press ENTER:
 f: Full response
+p: Partial Response (full headers, 50% of body), then wait indefinitely
+pc: Partial Response (full headers, 50% of body), then close (TCP FIN)
+pa: Partial Response (full headers, 50% of body), then abort (TCP RST)
+pn: Partial Response (full headers, 50% of body), then finish normally
+n: No response, then wait indefinitely
+nc: No response, then close (TCP FIN)
+na: No response, then abort (TCP RST)
 ```
 
 4. Choose response `f`.  Server sends full response, client prints OK.
@@ -73,7 +83,14 @@ OK
 ```
 > Server
 Select a response then press ENTER:
+f: Full response
+p: Partial Response (full headers, 50% of body), then wait indefinitely
 pc: Partial Response (full headers, 50% of body), then close (TCP FIN)
+pa: Partial Response (full headers, 50% of body), then abort (TCP RST)
+pn: Partial Response (full headers, 50% of body), then finish normally
+n: No response, then wait indefinitely
+nc: No response, then close (TCP FIN)
+na: No response, then abort (TCP RST)
 
 pc
 
@@ -89,3 +106,38 @@ Sending request...
 Unhandled exception. System.Net.Http.HttpRequestException: Error while copying content to a stream.
  ---> System.IO.IOException: The response ended prematurely.
 ```
+
+## Request Handling
+When HttpFaultInjector receives a request, it:
+
+1. Prints the request info
+2. Forwards the request to the upstream server
+3. Prints the response info
+4. Prompts you to select a response
+
+The available responses are:
+
+1. Full response.  Should be identical to sending the request directly to the upstream server.
+2. Partial response (full headers, 50% of body).  Then either wait indefinitely, close (TCP FIN), abort (TCP RST), or finish normally.
+3. No response.  Then either wait indefinitely, close (TCP FIN), or abort (TCP RST).
+
+Some client timeouts handle "partial response" and "no response" differently, so it's important to ensure your overall http client stack handles both correctly (and as similar as possible).  For example, if "no response" is automatically retried after some client timeout, then "partial response" should behave the same.
+
+For "close connection" and "abort connection", clients should detect the TCP FIN or RST immediately and either throw an error or retry.
+
+## Client Configuration
+
+### Allow Insecure SSL Certs
+HttpFaultInjector uses a self-signed SSL cert, so when testing HTTPS your http client must be configured to allow untrusted SSL certs.
+
+### Redirection
+When testing an HTTP client, you want to use the same codepath that will be used when talking directly to a server.  For this reason, HttpFaultInjector does not act as a traditional "http proxy" which uses a different codepath in the http client.  Instead, HttpFaultInjector acts like a typical web server, and you need to configure your http client to redirect requests to it.
+
+At the last step in your http client pipeline:
+
+1. Set the `Host` header to the upstream host the proxy should redirect to.  This should be the host from the URI you are requesting.
+2. Change the host and port in the URI to the HttpFaultInjector
+
+## Runnable Sample Clients
+* .NET: https://github.com/Azure/azure-sdk-tools/tree/master/tools/http-fault-injector/sample-clients/net
+* Java: https://github.com/Azure/azure-sdk-tools/tree/master/tools/http-fault-injector/sample-clients/java

@@ -1,16 +1,21 @@
 # http-fault-injector
 
+# Overview
+`http-fault-injector` is an HTTP proxy server which allows you to test HTTP client behavior during "faults" like "connection closed in middle of body".
+
+# Installation
 1. [Install .Net](https://dotnet.microsoft.com/download)
 
 2. Install http-fault-injector
 ```
-> dotnet tool install azure.sdk.tools.httpfaultinjector --global --add-source https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk/nuget/v3/index.json
+dotnet tool install azure.sdk.tools.httpfaultinjector --global --add-source https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk/nuget/v3/index.json
 
 You can invoke the tool using the following command: http-fault-injector
 Tool 'azure.sdk.tools.httpfaultinjector' (version '0.1.0') was successfully installed.
 ```
 
-3. Run http-fault-injector
+## Usage
+1. Run http-fault-injector
 ```
 > http-fault-injector
 
@@ -19,7 +24,7 @@ Now listening on: https://0.0.0.0:7778
 Application started. Press Ctrl+C to shut down.
 ```
 
-4. Clone and run .NET sample client
+2. Clone and run .NET sample client
 ```
 > git clone https://github.com/Azure/azure-sdk-tools
 
@@ -30,7 +35,7 @@ Application started. Press Ctrl+C to shut down.
 Sending request...
 ```
 
-5. View request in http-fault-injector
+3. View request in http-fault-injector
 ```
 [10:47:20.089] Upstream Request
 [10:47:20.092] URL: https://www.example.org/
@@ -47,7 +52,7 @@ Select a response then press ENTER:
 f: Full response
 ```
 
-6. Choose response `f`.  Server sends full response, client prints OK.
+4. Choose response `f`.  Server sends full response, client prints OK.
 ```
 > Server
 f
@@ -63,7 +68,7 @@ f
 OK
 ```
 
-7. Run client again, choose response `pc`.  Server sends partial response then closes, client shows error.
+5. Run client again, choose response `pc`.  Server sends partial response then closes, client shows error.
 
 ```
 > Server

@@ -1,9 +1,9 @@
 # http-fault-injector
 
-# Overview
+## Overview
 `http-fault-injector` is an HTTP proxy server for testing HTTP clients during "faults" like "connection closed in middle of body".
 
-# Installation
+## Installation
 1. [Install .Net](https://dotnet.microsoft.com/download)
 
 2. Install http-fault-injector

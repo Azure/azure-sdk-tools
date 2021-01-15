@@ -5,7 +5,8 @@ stages:
   jobs:
   - job: BuildPackage
     pool:
-      vmImage: ubuntu-16.04
+      name: azsdk-pool-mms-ubuntu-1804-general
+      vmImage: MMSUbuntu18.04
     steps:
       - task: UseDotNet@2
         displayName: 'Use .NET Core sdk $(DotNetCoreVersion)'
@@ -27,9 +28,12 @@ stages:
     dependsOn: Build
     jobs:
     - deployment: PublishPackage
-      environment: azure-sdk
+      environment: tools
       pool:
-        vmImage: ubuntu-16.04
+        name: azsdk-pool-mms-ubuntu-1804-general
+        vmImage: MMSUbuntu18.04
+      variables:
+      - template: ../variables/globals.yml
       strategy:
         runOnce:
           deploy:

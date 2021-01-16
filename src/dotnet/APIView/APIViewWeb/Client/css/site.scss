@@ -274,12 +274,35 @@ form.comment {
     position: relative;
     vertical-align: top;
     width: 100%;
+
+    // Add an invisible left border for code diff navigation focusing (changed
+    // by .code-diff-focused)
+    border: 0px solid #00000000;
+    border-left-width: 5px;
 }
 
 code-inner {
     color: #24292E;
     overflow: visible;
     word-wrap: normal;
+}
+
+// Style for the "..... parent ..... parent ...." enclosing context when using
+// the diff only view
+.code-diff-context {
+    font-style: italic;
+    color: #AAAAAA;
+}
+
+// Style and animation for focusing lines of code using the left border when
+// client side diff navigation mode is enabled
+.code-diff-focused {
+    animation: focusdiff normal 1s ease-in-out;
+}
+@keyframes focusdiff {
+    0% { border-color: #00000000; }
+    25% { border-color: #2AA198; }
+    100% { border-color: #00000000; }
 }
 
 .rounded-1 {

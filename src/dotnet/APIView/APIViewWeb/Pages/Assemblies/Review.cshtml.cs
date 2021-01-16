@@ -1,7 +1,7 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using ApiView;
 using APIView;
@@ -9,6 +9,7 @@ using APIView.DIff;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using APIViewWeb.Respositories;
+using HtmlAgilityPack;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -16,8 +17,11 @@ namespace APIViewWeb.Pages.Assemblies
 {
     public class ReviewPageModel : PageModel
     {
-        private static int REVIEW_DIFF_CONTEXT_SIZE = 3;
-        private const string DIFF_CONTEXT_SEPERATOR = "<br><span>.....</span><br>";
+        private const int REVIEW_DIFF_CONTEXT_SIZE = 3;
+        private const string DIFF_CONTEXT_LINEBREAK = "<br>";
+        private const string DIFF_CONTEXT_SEPERATOR = "<span class='code-diff-context'>.....</span>";
+        private const string DIFF_CONTEXT_ENCLOSING_START = " <span class='code-diff-context'>";
+        private const string DIFF_CONTEXT_ENCLOSING_END = "</span> ";
 
         private readonly ReviewManager _manager;
 
@@ -124,18 +128,72 @@ namespace APIViewWeb.Pages.Assemblies
         {
             var filteredLines = new List<InlineDiffLine<CodeLine>>();
             int lastAddedLine = -1;
+
+            // Keep track of any enclosing context and the level of indent the
+            // deepest corresponds to.  This allows us to include the enclosing
+            // classes, namespaces, etc. when viewing only the diff.  This is
+            // best effort that presumes significant indentation.
+            var enclosingContext = new List<(int, string)>();
+            int enclosingContextIndent = 0;
+            var enclosingMarkup = new StringBuilder(capacity: 256);
+
             for (int i = 0; i < lines.Count(); i++)
             {
+                // Compare the current line's indent to the enclosing context
+                (int indentSize, _) = GetIndentAndCode(lines[i].Line.DisplayString);
+                if (indentSize > enclosingContextIndent && i > 0)
+                {
+                    // If this line is indented further, then the previous line
+                    // should be part of the enclosing context
+                    (_, string code) = GetIndentAndCode(lines[i - 1].Line.DisplayString);
+                    enclosingContext.Add((i - 1, code.Trim()));
+                    enclosingContextIndent = indentSize;
+                }
+                else if (indentSize < enclosingContextIndent)
+                {
+                    // If this line was an outdent, remove the enclosing context
+                    // (but don't assume there was any context in case some
+                    // languages have weird whitespace indentation habits)
+                    if (enclosingContext.Count > 0)
+                    {
+                        enclosingContext.RemoveAt(enclosingContext.Count - 1);
+                        enclosingContextIndent = indentSize;
+                    }
+                    else
+                    {
+                        enclosingContextIndent = 0;
+                    }
+                }
+
                 if (lines[i].Kind != DiffLineKind.Unchanged)
                 {
                     // Find starting index for pre context
                     int preContextIndx = Math.Max(lastAddedLine + 1, i - REVIEW_DIFF_CONTEXT_SIZE);
                     if (preContextIndx < i)
                     {
-                        // Add sepearator to show skipping lines. for e.g. .....
-                        if (filteredLines.Count > 0)
+                        // Don't place any "....." if we're at the very top
+                        if (i > REVIEW_DIFF_CONTEXT_SIZE)
                         {
-                            filteredLines.Add(new InlineDiffLine<CodeLine>(new CodeLine(DIFF_CONTEXT_SEPERATOR, null), DiffLineKind.Unchanged));
+                            // Add a "....." no matter what for diffs that have
+                            // no enclosing context but aren't contiguous
+                            enclosingMarkup.Clear();
+                            enclosingMarkup.Append(DIFF_CONTEXT_LINEBREAK);
+                            enclosingMarkup.Append(DIFF_CONTEXT_SEPERATOR);
+
+                            // Add any enclosing namespaces, classes, etc.
+                            foreach ((int parentLine, string parentCode) in enclosingContext)
+                            {
+                                // Ignore any enclosing scopes included in the
+                                // +/-3 lines of diff context still shown
+                                if (parentLine >= preContextIndx) { continue; }
+
+                                enclosingMarkup.Append(DIFF_CONTEXT_ENCLOSING_START);
+                                enclosingMarkup.Append(parentCode);
+                                enclosingMarkup.Append(DIFF_CONTEXT_ENCLOSING_END);
+                                enclosingMarkup.Append(DIFF_CONTEXT_SEPERATOR);
+                            }
+                            enclosingMarkup.Append(DIFF_CONTEXT_LINEBREAK);
+                            filteredLines.Add(new InlineDiffLine<CodeLine>(new CodeLine(enclosingMarkup.ToString(), null), DiffLineKind.Unchanged));
                         }
 
                         while (preContextIndx < i)
@@ -144,7 +202,8 @@ namespace APIViewWeb.Pages.Assemblies
                             preContextIndx++;
                         }
                     }
-                    //Add changed line
+
+                    // Add changed line
                     filteredLines.Add(lines[i]);
                     lastAddedLine = i;
 
@@ -159,6 +218,29 @@ namespace APIViewWeb.Pages.Assemblies
                 }
             }
             return filteredLines.ToArray();
+
+            // The lines of code are already marked up with HTML which makes
+            // them a little difficult to process.  This strips out all of the
+            // markup and computes the size of the whitespace indent at the
+            // beginning of the line.
+            static (int indentSize, string code) GetIndentAndCode(string line)
+            {
+                if (string.IsNullOrEmpty(line)) { return (0, null); }
+
+                // Parse the line as HTML
+                HtmlDocument html = new HtmlDocument();
+                html.LoadHtml(line);
+
+                // Get the line's code
+                string code = html.DocumentNode.InnerText ?? "";
+
+                // Find the last whitespace character at the start of the line
+                int last = -1;
+                for (; (last + 1) < line.Length && char.IsWhiteSpace(code, last + 1); last++) { }
+
+                // Return the size of the indent and the line of code
+                return (last + 1, code);
+            }
         }
 
         private CodeLineModel[] CreateLines(CodeDiagnostic[] diagnostics, InlineDiffLine<CodeLine>[] lines, ReviewCommentsModel comments)

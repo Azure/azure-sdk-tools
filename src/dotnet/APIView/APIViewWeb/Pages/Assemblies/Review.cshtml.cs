@@ -144,10 +144,17 @@ namespace APIViewWeb.Pages.Assemblies
                 if (indentSize > enclosingContextIndent && i > 0)
                 {
                     // If this line is indented further, then the previous line
-                    // should be part of the enclosing context
+                    // should be part of the enclosing context (unless it was
+                    // an empty line, then we won't add anything and wait for
+                    // the next line with content to use as context at this
+                    // indent level).
                     (_, string code) = GetIndentAndCode(lines[i - 1].Line.DisplayString);
-                    enclosingContext.Add((i - 1, code.Trim()));
-                    enclosingContextIndent = indentSize;
+                    code = code?.Trim();
+                    if (!string.IsNullOrEmpty(code))
+                    {
+                        enclosingContext.Add((i - 1, code));
+                        enclosingContextIndent = indentSize;
+                    }
                 }
                 else if (indentSize < enclosingContextIndent)
                 {
@@ -225,7 +232,7 @@ namespace APIViewWeb.Pages.Assemblies
             // beginning of the line.
             static (int indentSize, string code) GetIndentAndCode(string line)
             {
-                if (string.IsNullOrEmpty(line)) { return (0, null); }
+                if (string.IsNullOrEmpty(line)) { return (0, ""); }
 
                 // Parse the line as HTML
                 HtmlDocument html = new HtmlDocument();

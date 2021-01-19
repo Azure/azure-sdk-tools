@@ -64,7 +64,7 @@ namespace APIViewWeb
         {
             get
             {
-                var label = Revisions.FirstOrDefault()?.Label;
+                var label = Revisions.LastOrDefault()?.Label;
                 return label != null ?
                     $"{Name} - {label}" :
                     Name;
@@ -75,7 +75,7 @@ namespace APIViewWeb
         public DateTime LastUpdated => Revisions.LastOrDefault()?.CreationDate ?? CreationDate;
 
         [JsonIgnore]
-        public string Language => Revisions.FirstOrDefault()?.Files.FirstOrDefault()?.Language;
+        public string Language => Revisions.LastOrDefault()?.Files.LastOrDefault()?.Language;
 
         // Master version of review for each package will be auto created
         public bool IsAutomatic { get; set; }

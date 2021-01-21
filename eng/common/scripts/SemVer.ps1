@@ -132,8 +132,12 @@ class AzureEngSemanticVersion {
 
     if ($this.IsPrerelease)
     {
-      $versionString += $this.PrereleaseLabelSeparator + $this.PrereleaseLabel + `
-                        $this.PrereleaseNumberSeparator + $this.PrereleaseNumber
+      $versionString += $this.PrereleaseLabelSeparator + $this.PrereleaseLabel
+      # Do not add prerelease number if it is 0. Change log for few packages has older prerelease versions without prerelease numbers
+      # for e.g. 10.2.0-preview for js storage-blob package
+      if ($this.PrereleaseNumber) {
+          $versionString += $this.PrereleaseNumberSeparator + $this.PrereleaseNumber
+      }
       if ($this.BuildNumber) {
           $versionString += $this.BuildNumberSeparator + $this.BuildNumber
       }

@@ -1,13 +1,13 @@
 package com.azure.tools.apiview.processor;
 
+import com.azure.tools.apiview.processor.analysers.ASTAnalyser;
 import com.azure.tools.apiview.processor.analysers.Analyser;
+import com.azure.tools.apiview.processor.model.APIListing;
 import com.azure.tools.apiview.processor.model.Diagnostic;
 import com.azure.tools.apiview.processor.model.DiagnosticKind;
+import com.azure.tools.apiview.processor.model.Token;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.azure.tools.apiview.processor.analysers.ASTAnalyser;
-import com.azure.tools.apiview.processor.model.APIListing;
-import com.azure.tools.apiview.processor.model.Token;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
@@ -29,12 +29,16 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Optional;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Stream;
 
-import static com.fasterxml.jackson.databind.MapperFeature.*;
-import static com.azure.tools.apiview.processor.model.TokenKind.*;
+import static com.azure.tools.apiview.processor.model.TokenKind.LINE_ID_MARKER;
+import static com.fasterxml.jackson.databind.MapperFeature.AUTO_DETECT_CREATORS;
+import static com.fasterxml.jackson.databind.MapperFeature.AUTO_DETECT_FIELDS;
+import static com.fasterxml.jackson.databind.MapperFeature.AUTO_DETECT_GETTERS;
+import static com.fasterxml.jackson.databind.MapperFeature.AUTO_DETECT_IS_GETTERS;
 
 public class Main {
 
@@ -51,18 +55,20 @@ public class Main {
 
         final File outputDir = new File(args[1]);
         if (!outputDir.exists()) {
-            outputDir.mkdirs();
+            if (!outputDir.mkdirs()) {
+                System.out.printf("Failed to create output directory %s%n", outputDir);
+            }
         }
 
         System.out.println("Running with following configuration:");
-        System.out.println("  Output directory: '" + outputDir + "'");
+        System.out.printf("  Output directory: '%s'%n", outputDir);
 
         for (final String jarFile : jarFilesArray) {
-            System.out.println("  Processing input .jar file: '" + jarFile + "'");
+            System.out.printf("  Processing input .jar file: '%s'%n", jarFile);
 
             final File file = new File(jarFile);
             if (!file.exists()) {
-                System.out.println("Cannot find file '" + file + "'");
+                System.out.printf("Cannot find file '%s'%n", file);
                 System.exit(-1);
             }
 
@@ -91,16 +97,32 @@ public class Main {
                     final Document xmlDocument = builder.parse(jarIS);
                     final XPath xPath = XPathFactory.newInstance().newXPath();
 
+                    /*
+                     * While it is expected for Azure SDK libraries to contain a groupId in the POM file this is not
+                     * explicitly required by Maven. If the POM has a parent Maven allows the groupId to be omitted as
+                     * it will be inherited from the parent.
+                     */
                     final String groupIdExpression = "/project/groupId";
-                    final Node groupIdNode = (Node) xPath.compile(groupIdExpression).evaluate(xmlDocument, XPathConstants.NODE);
+                    final String parentGroupIdExpression = "/project/parent/groupId";
+                    final Node groupIdNode = Optional
+                        .ofNullable((Node) xPath.evaluate(groupIdExpression, xmlDocument, XPathConstants.NODE))
+                        .orElse((Node) xPath.evaluate(parentGroupIdExpression, xmlDocument, XPathConstants.NODE));
                     reviewProperties.setMavenGroupId(groupIdNode.getTextContent());
 
                     final String artifactIdExpression = "/project/artifactId";
-                    final Node artifactIdNode = (Node) xPath.compile(artifactIdExpression).evaluate(xmlDocument, XPathConstants.NODE);
+                    final Node artifactIdNode = (Node) xPath.evaluate(artifactIdExpression, xmlDocument, XPathConstants.NODE);
                     reviewProperties.setMavenArtifactId(artifactIdNode.getTextContent());
 
+                    /*
+                     * While it is expected for Azure SDK libraries to contain a version in the POM file this is not
+                     * explicitly required by Maven. If the POM has a parent Maven allows the version to be omitted as
+                     * it will be inherited from the parent.
+                     */
                     final String versionExpression = "/project/version";
-                    final Node versionNode = (Node) xPath.compile(versionExpression).evaluate(xmlDocument, XPathConstants.NODE);
+                    final String parentVersionExpression = "/project/parent/version";
+                    final Node versionNode = Optional
+                        .ofNullable((Node) xPath.evaluate(versionExpression, xmlDocument, XPathConstants.NODE))
+                        .orElse((Node) xPath.evaluate(parentVersionExpression, xmlDocument, XPathConstants.NODE));
                     reviewProperties.setPackageVersion(versionNode.getTextContent());
                 }
             }
@@ -167,9 +189,9 @@ public class Main {
         } else {
             apiListing.getTokens().add(new Token(LINE_ID_MARKER, "Error!", "error"));
             apiListing.addDiagnostic(new Diagnostic(
-                    DiagnosticKind.ERROR,
-                    "error",
-                    "Uploaded files should end with '-sources.jar', " +
+                DiagnosticKind.ERROR,
+                "error",
+                "Uploaded files should end with '-sources.jar', " +
                     "as the APIView tool only works with source jar files, not compiled jar files. The uploaded file " +
                     "that was submitted to APIView was named " + inputFile.getName()));
         }

@@ -12,12 +12,11 @@ import (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "apiview",
+	Use:   "apiview <packageDir> <outputDir>",
 	Short: "apiview will generate the JSON token output for APIView",
-	Long: `apiview is a tool that can be used to generate the tokenized 
-		output needed by the APIView tool to show a view of publicly 
-		exposed portions of an API.
-		To generate the output run: apiview <packageDir> <outputDir>`,
+	Long: `The apiview command can be used to generate the tokenized 
+output needed by the APIView tool to show a view of publicly 
+exposed portions of an SDK.`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	Run: func(cmd *cobra.Command, args []string) {

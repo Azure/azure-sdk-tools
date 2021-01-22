@@ -8,7 +8,7 @@
 
 ### Generate the tool
 
-To create the command (this will output an executable), run in the `/go` directory:
+To build the tool, execute the following command from the `./src/go` directory.
 ```
 go build
 ```
@@ -17,7 +17,7 @@ NOTE: To access the command anywhere you can add it to your $PATH variable.
 
 ### Run the tool
 
-Output a JSON file with the tokenized output for the SDK by running:
+Run the following command to generate the file containing the tokenized output for the SDK.
 ```
 ./apiview <path to SDK> <output file location>
 ```

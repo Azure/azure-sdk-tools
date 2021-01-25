@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using common.Helpers;
+using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.TeamFoundation.Core.WebApi;
 using Microsoft.VisualStudio.Services.Notifications.WebApi;
@@ -31,7 +32,7 @@ namespace NotificationConfiguration
             PipelineSelectionStrategy strategy = PipelineSelectionStrategy.Scheduled)
         {
             var pipelines = await GetPipelinesAsync(projectName, projectPath, strategy);
-            var teams = await service.GetTeamsAsync(projectName);
+            var teams = await GetAllTeamsAsync(projectName);
 
             foreach (var pipeline in pipelines)
             {
@@ -83,7 +84,9 @@ namespace NotificationConfiguration
                 var newTeam = new WebApiTeam
                 {
                     Description = YamlHelper.Serialize(teamMetadata),
-                    Name = $"{pipeline.Name} -- {suffix}",
+                    // Ensure team name fits within maximum 64 character limit
+                    // https://docs.microsoft.com/en-us/azure/devops/organizations/settings/naming-restrictions?view=azure-devops#teams
+                    Name = StringHelper.MaxLength($"{pipeline.Name} -- {suffix}", 64),
                 };
 
                 logger.LogInformation("Create Team for Pipeline PipelineId = {0} Purpose = {1}", pipeline.Id, purpose);
@@ -177,6 +180,29 @@ namespace NotificationConfiguration
                     var subscription = await service.CreateSubscriptionAsync(newSubscription);
                 }
             }
+        }
+
+        private async Task<IEnumerable<WebApiTeam>> GetAllTeamsAsync(string projectName)
+        {
+            var accumulator = new List<WebApiTeam>();
+            var skip = 0;
+            IEnumerable<WebApiTeam> teams;
+
+            while (true)
+            {
+                teams = await service.GetTeamsAsync(projectName, skip: skip);
+
+                if (!teams.Any())
+                {
+                    break;
+                }
+
+                accumulator.AddRange(teams);
+                skip += teams.Count();
+            }
+
+            return accumulator;
+
         }
     }
 }

@@ -93,11 +93,13 @@ jobs:
         Branch: master
         Prefix: cpp
         PublicOptions: ''
+        # Resource Provisioner is in InternalOptions and not TestOptions becasue C++ includes live tests in the unified pipelines
         InternalOptions: >-
           --variablegroup ${{ parameters.Release_Secrets_for_GitHub }}
           --variablegroup ${{ parameters.Release_Secrets_for_GitHubIO_Publishing }}
           --variablegroup ${{ parameters.Secrets_for_DevOps_Notification_Configuration_and_User_Resolution }}
           --variablegroup ${{ parameters.APIReview_AutoCreate_Configurations }}
+          --variablegroup ${{ parameters.Secrets_for_Resource_Provisioner }}
   steps:
   - template: /eng/common/pipelines/templates/steps/install-pipeline-generation.yml
   - script: |

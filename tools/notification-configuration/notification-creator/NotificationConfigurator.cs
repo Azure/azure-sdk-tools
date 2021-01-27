@@ -198,7 +198,7 @@ namespace NotificationConfiguration
                 }
 
                 accumulator.AddRange(teams);
-                skip += teams.Count();
+                skip = accumulator.Count;
             }
 
             return accumulator;

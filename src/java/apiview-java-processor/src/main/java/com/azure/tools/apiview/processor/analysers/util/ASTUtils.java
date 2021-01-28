@@ -24,8 +24,8 @@ public class ASTUtils {
 
     public static String getPackageName(TypeDeclaration<?> typeDeclaration) {
         return typeDeclaration.getFullyQualifiedName()
-                       .map(str -> str.substring(0, str.lastIndexOf(".")))
-                       .orElse("");
+            .map(str -> str.substring(0, str.lastIndexOf(".")))
+            .orElse("");
     }
 
     public static Stream<String> getImports(CompilationUnit cu) {
@@ -46,7 +46,7 @@ public class ASTUtils {
 
     public static Stream<ConstructorDeclaration> getPublicOrProtectedConstructors(TypeDeclaration<?> typeDeclaration) {
         return typeDeclaration.getConstructors().stream()
-                       .filter(type -> isPublicOrProtected(type.getAccessSpecifier()));
+            .filter(type -> isPublicOrProtected(type.getAccessSpecifier()));
     }
 
     public static Stream<MethodDeclaration> getPublicOrProtectedMethods(CompilationUnit cu) {
@@ -55,7 +55,7 @@ public class ASTUtils {
 
     public static Stream<MethodDeclaration> getPublicOrProtectedMethods(TypeDeclaration<?> typeDeclaration) {
         return typeDeclaration.getMethods().stream()
-                       .filter(type -> isPublicOrProtected(type.getAccessSpecifier()));
+            .filter(type -> isPublicOrProtected(type.getAccessSpecifier()));
     }
 
     public static Stream<FieldDeclaration> getPublicOrProtectedFields(CompilationUnit cu) {
@@ -64,7 +64,7 @@ public class ASTUtils {
 
     public static Stream<FieldDeclaration> getPublicOrProtectedFields(TypeDeclaration<?> typeDeclaration) {
         return typeDeclaration.getFields().stream()
-                       .filter(type -> isPublicOrProtected(type.getAccessSpecifier()));
+            .filter(type -> isPublicOrProtected(type.getAccessSpecifier()));
     }
 
     public static boolean isPublicOrProtected(AccessSpecifier accessSpecifier) {
@@ -107,7 +107,7 @@ public class ASTUtils {
         Node parentNode = type.getParentNode().orElse(null);
         final boolean isTypePrivate = isPrivateOrPackagePrivate(type.getAccessSpecifier());
 
-        // if we have no parent, we just inspect the access modifier on the given type and return appropriately from that.
+        // When we have no parent use the access modifier on the given type.
         if (parentNode == null) {
             return !isTypePrivate;
         }
@@ -117,18 +117,25 @@ public class ASTUtils {
 //        final boolean isNestedType = type.isNestedType();
 
         if (parentNode instanceof ClassOrInterfaceDeclaration) {
-            ClassOrInterfaceDeclaration parentClass = (ClassOrInterfaceDeclaration)parentNode;
+            ClassOrInterfaceDeclaration parentClass = (ClassOrInterfaceDeclaration) parentNode;
             boolean isInPublicParent = isPublicOrProtected(parentClass.getAccessSpecifier());
             boolean isParentAnInterface = isInterfaceType(parentClass);
 
-            // conditions to consider:
-            // 1) if the parent type is private and not an interface, then it doesn't matter - we are always going to
-            // be private
+            /*
+             * 1) If the parent type is a non-public non-interface type this type is not part of the public API.
+             */
             if (!isInPublicParent && !isParentAnInterface) {
                 return false;
             }
 
-            // 2) If the type is an non-public interface, but all parent types are either public or also interfaces,
+            /*
+             * 2) If the parent type is a public interface then this type is part of the public API.
+             */
+            if (isInPublicParent && isParentAnInterface) {
+                return true;
+            }
+
+            // 3) If the type is an non-public interface, but all parent types are either public or also interfaces,
             // then this type is public EXCEPT if the root type is a private interface.
             if (isTypePrivate && isInterfaceType) {
                 // work way up parent chain, checking along the way
@@ -146,7 +153,7 @@ public class ASTUtils {
                             // was public - if so we return true
                             return isInPublicParent;
                         }
-                        parentClass = (ClassOrInterfaceDeclaration)parentNode;
+                        parentClass = (ClassOrInterfaceDeclaration) parentNode;
                         isInPublicParent = isPublicOrProtected(parentClass.getAccessSpecifier());
                         isParentAnInterface = parentClass.isInterface();
                     } else {
@@ -177,7 +184,7 @@ public class ASTUtils {
 
         Node node = nodeOptional.get();
         if (node instanceof ClassOrInterfaceDeclaration) {
-            ClassOrInterfaceDeclaration type = (ClassOrInterfaceDeclaration)node;
+            ClassOrInterfaceDeclaration type = (ClassOrInterfaceDeclaration) node;
             return type.getFullyQualifiedName().get();
         } else {
             return "";

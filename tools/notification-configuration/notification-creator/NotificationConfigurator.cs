@@ -96,7 +96,7 @@ namespace NotificationConfiguration
                     Description = YamlHelper.Serialize(teamMetadata),
                     // Ensure team name fits within maximum 64 character limit
                     // https://docs.microsoft.com/en-us/azure/devops/organizations/settings/naming-restrictions?view=azure-devops#teams
-                    Name = StringHelper.MaxLength($"{pipeline.Name} -- {suffix}", 64),
+                    Name = StringHelper.MaxLength($"{pipeline.Name} -- {suffix}", MaxTeamNameLength),
                 };
 
                 logger.LogInformation("Create Team for Pipeline PipelineId = {0} Purpose = {1}", pipeline.Id, purpose);

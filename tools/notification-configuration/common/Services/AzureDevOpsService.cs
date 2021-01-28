@@ -13,6 +13,7 @@ using Microsoft.VisualStudio.Services.Common;
 using Microsoft.VisualStudio.Services.Identity.Client;
 using Microsoft.VisualStudio.Services.Identity;
 using System.Threading;
+using System.Linq;
 
 namespace NotificationConfiguration.Services
 {
@@ -116,7 +117,7 @@ namespace NotificationConfiguration.Services
         {
             var client = await GetClientAsync<TeamHttpClient>();
 
-            logger.LogInformation("GetTeamsAsync ProjectName = {0}", projectName);
+            logger.LogInformation("GetTeamsAsync ProjectName = {0}, skip = {1}", projectName, skip);
             var teams = await client.GetTeamsAsync(projectName, skip: skip, top: top);
 
             return teams;
@@ -133,9 +134,10 @@ namespace NotificationConfiguration.Services
             var client = await GetClientAsync<TeamHttpClient>();
 
             logger.LogInformation("CreateTeamForProjectAsync TeamName = {0} ProjectId = {1}", team.Name, projectId);
-            var result = await client.CreateTeamAsync(team, projectId);
 
+            var result = await client.CreateTeamAsync(team, projectId);
             return result;
+
         }
 
         /// <summary>

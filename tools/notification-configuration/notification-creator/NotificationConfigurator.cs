@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using common.Helpers;
+using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.TeamFoundation.Core.WebApi;
 using Microsoft.VisualStudio.Services.Notifications.WebApi;
@@ -6,7 +7,7 @@ using Microsoft.VisualStudio.Services.WebApi;
 using NotificationConfiguration.Enums;
 using NotificationConfiguration.Models;
 using NotificationConfiguration.Services;
-using System.Collections;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -17,6 +18,8 @@ namespace NotificationConfiguration
     {
         private readonly AzureDevOpsService service;
         private readonly ILogger<NotificationConfigurator> logger;
+
+        private const int MaxTeamNameLength = 64;
 
         public NotificationConfigurator(AzureDevOpsService service, ILogger<NotificationConfigurator> logger)
         {
@@ -31,10 +34,18 @@ namespace NotificationConfiguration
             PipelineSelectionStrategy strategy = PipelineSelectionStrategy.Scheduled)
         {
             var pipelines = await GetPipelinesAsync(projectName, projectPath, strategy);
-            var teams = await service.GetTeamsAsync(projectName);
+            var teams = await GetAllTeamsAsync(projectName);
 
             foreach (var pipeline in pipelines)
             {
+                // If the pipeline name length is max or greater there is no
+                // room to add differentiators like "-- Sync Notifications"
+                // and this will result in team name collisions.
+                if (pipeline.Name.Length >= MaxTeamNameLength)
+                {
+                    throw new Exception($"Pipeline Name outside of character limit: Max = {MaxTeamNameLength}, Actual = {pipeline.Name.Length}, Name = {pipeline.Name}");
+                }
+
                 using (logger.BeginScope("Evaluate Pipeline Name = {0}, Path = {1}, Id = {2}", pipeline.Name, pipeline.Path, pipeline.Id))
                 {
                     var parentTeam = await EnsureTeamExists(pipeline, "Notifications", TeamPurpose.ParentNotificationTeam, teams, persistChanges);
@@ -83,7 +94,9 @@ namespace NotificationConfiguration
                 var newTeam = new WebApiTeam
                 {
                     Description = YamlHelper.Serialize(teamMetadata),
-                    Name = $"{pipeline.Name} -- {suffix}",
+                    // Ensure team name fits within maximum 64 character limit
+                    // https://docs.microsoft.com/en-us/azure/devops/organizations/settings/naming-restrictions?view=azure-devops#teams
+                    Name = StringHelper.MaxLength($"{pipeline.Name} -- {suffix}", MaxTeamNameLength),
                 };
 
                 logger.LogInformation("Create Team for Pipeline PipelineId = {0} Purpose = {1}", pipeline.Id, purpose);
@@ -177,6 +190,29 @@ namespace NotificationConfiguration
                     var subscription = await service.CreateSubscriptionAsync(newSubscription);
                 }
             }
+        }
+
+        private async Task<IEnumerable<WebApiTeam>> GetAllTeamsAsync(string projectName)
+        {
+            var accumulator = new List<WebApiTeam>();
+            var skip = 0;
+            IEnumerable<WebApiTeam> teams;
+
+            while (true)
+            {
+                teams = await service.GetTeamsAsync(projectName, skip: skip);
+
+                if (!teams.Any())
+                {
+                    break;
+                }
+
+                accumulator.AddRange(teams);
+                skip = accumulator.Count;
+            }
+
+            return accumulator;
+
         }
     }
 }

@@ -7,7 +7,7 @@ using Microsoft.VisualStudio.Services.WebApi;
 using NotificationConfiguration.Enums;
 using NotificationConfiguration.Models;
 using NotificationConfiguration.Services;
-using System.Collections;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -18,6 +18,8 @@ namespace NotificationConfiguration
     {
         private readonly AzureDevOpsService service;
         private readonly ILogger<NotificationConfigurator> logger;
+
+        private const int MaxTeamNameLength = 64;
 
         public NotificationConfigurator(AzureDevOpsService service, ILogger<NotificationConfigurator> logger)
         {
@@ -36,6 +38,14 @@ namespace NotificationConfiguration
 
             foreach (var pipeline in pipelines)
             {
+                // If the pipeline name length is max or greater there is no
+                // room to add differentiators like "-- Sync Notifications"
+                // and this will result in team name collisions.
+                if (pipeline.Name.Length >= MaxTeamNameLength)
+                {
+                    throw new Exception($"Pipeline Name outside of character limit: Max = {MaxTeamNameLength}, Actual = {pipeline.Name.Length}, Name = {pipeline.Name}");
+                }
+
                 using (logger.BeginScope("Evaluate Pipeline Name = {0}, Path = {1}, Id = {2}", pipeline.Name, pipeline.Path, pipeline.Id))
                 {
                     var parentTeam = await EnsureTeamExists(pipeline, "Notifications", TeamPurpose.ParentNotificationTeam, teams, persistChanges);

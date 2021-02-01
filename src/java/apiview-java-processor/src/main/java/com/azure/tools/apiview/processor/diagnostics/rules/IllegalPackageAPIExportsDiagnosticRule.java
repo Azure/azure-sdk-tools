@@ -4,6 +4,7 @@ import com.azure.tools.apiview.processor.diagnostics.DiagnosticRule;
 import com.azure.tools.apiview.processor.model.APIListing;
 import com.azure.tools.apiview.processor.model.Diagnostic;
 import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.body.CallableDeclaration;
 import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.type.Type;
@@ -32,15 +33,7 @@ public class IllegalPackageAPIExportsDiagnosticRule implements DiagnosticRule {
     @Override
     public void scanIndividual(final CompilationUnit cu, final APIListing listing) {
         getPublicOrProtectedConstructors(cu)
-                .forEach(methodDecl -> {
-                    final String methodId = makeId(methodDecl);
-
-                    methodDecl.getParameters().stream()
-                            .map(Parameter::getType)
-                            .filter(Type::isClassOrInterfaceType)
-                            .map(Type::asClassOrInterfaceType)
-                            .forEach(parameter -> validateType(methodId, parameter, listing));
-                });
+                .forEach(methodDecl -> validateParameters(methodDecl, makeId(methodDecl), listing));
 
         getPublicOrProtectedMethods(cu)
                 .forEach(methodDecl -> {
@@ -51,18 +44,20 @@ public class IllegalPackageAPIExportsDiagnosticRule implements DiagnosticRule {
                         validateType(methodId, returnType, listing);
                     }
 
-                    methodDecl.getParameters().stream()
-                            .map(Parameter::getType)
-                            .filter(Type::isClassOrInterfaceType)
-                            .map(Type::asClassOrInterfaceType)
-                            .forEach(parameter -> validateType(methodId, parameter, listing));
+                    validateParameters(methodDecl, methodId, listing);
                 });
     }
 
     private void validateType(String methodName, ClassOrInterfaceType type, final APIListing listing) {
         String typeAsString = type.getNameAsString();
 
-        if (listing.getTypeToPackageNameMap().containsKey(typeAsString)) {
+        if (typeAsString.contains(".")) {
+            // the type is fully-qualified, e.g. 'com.azure.storage.implementation.models.BlobOptions'.
+            // We therefore strip off the last section (in this case, '.BlobOptions', and pass that in to validate
+            validatePackageName(methodName,
+                typeAsString.substring(0, typeAsString.lastIndexOf(".")),
+                listing);
+        } else if (listing.getTypeToPackageNameMap().containsKey(typeAsString)) {
             // we know the type based on our previous scans
             validatePackageName(methodName, listing.getTypeToPackageNameMap().get(typeAsString), listing);
         } else {
@@ -76,6 +71,15 @@ public class IllegalPackageAPIExportsDiagnosticRule implements DiagnosticRule {
                     .map(Type::asClassOrInterfaceType)
                     .forEach(genericType -> validateType(methodName, genericType, listing));
         });
+    }
+
+    private void validateParameters(CallableDeclaration<?> methodDecl,
+                                    String methodId, APIListing listing) {
+        methodDecl.getParameters().stream()
+            .map(Parameter::getType)
+            .filter(Type::isClassOrInterfaceType)
+            .map(Type::asClassOrInterfaceType)
+            .forEach(parameter -> validateType(methodId, parameter, listing));
     }
 
     private void validatePackageName(String methodId, String packageName, APIListing listing) {

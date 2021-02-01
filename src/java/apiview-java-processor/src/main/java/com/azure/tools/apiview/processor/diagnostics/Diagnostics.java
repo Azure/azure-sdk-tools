@@ -51,7 +51,8 @@ public class Diagnostics {
             .add("configuration", new ExactTypeNameCheckFunction("Configuration"))
             .add("clientOptions", new ExactTypeNameCheckFunction("ClientOptions"))
             .add("connectionString", new ExactTypeNameCheckFunction("String"))
-            .add("credential", new ExactTypeNameCheckFunction(new ParameterAllowedTypes("TokenCredential", "AzureKeyCredential")))
+            .add("credential", new ExactTypeNameCheckFunction(new ParameterAllowedTypes("TokenCredential",
+                    "AzureKeyCredential", "AzureSasCredential")))
             .add("endpoint", new ExactTypeNameCheckFunction("String"))
             .add("serviceVersion", new DirectSubclassCheckFunction("ServiceVersion")));
         diagnostics.add(new RequiredBuilderMethodsDiagnosticRule("amqp")

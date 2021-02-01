@@ -98,7 +98,7 @@ public class RequiredBuilderMethodsDiagnosticRule implements DiagnosticRule {
         private final ParameterAllowedTypes[] expectedTypes;
 
         // For each parameter that we check for, we allow for there to be multiple types allowed for it,
-        // e.g. credential(TokenCredential) or credential(AzureKeyCredential)
+        // e.g. credential(TokenCredential) or credential(AzureKeyCredential) or credential(AzureSasCredential)
         public ExactTypeNameCheckFunction(ParameterAllowedTypes... expectedTypes) {
             this.expectedTypes = expectedTypes;
         }

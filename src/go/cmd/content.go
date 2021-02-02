@@ -11,6 +11,9 @@ import (
 	"strings"
 )
 
+// skip adding the const type in the token list
+const skip = "skip"
+
 // newContent returns an initialized Content object.
 func newContent() content {
 	return content{
@@ -28,8 +31,6 @@ func (c content) isEmpty() bool {
 
 // adds the specified const declaration to the exports list
 func (c *content) addConst(pkg pkg, g *ast.GenDecl) {
-	// skip adding the const type in the token list
-	const skip = "skip"
 	for _, s := range g.Specs {
 		co := Const{}
 		vs := s.(*ast.ValueSpec)

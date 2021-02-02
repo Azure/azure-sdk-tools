@@ -4,19 +4,32 @@ using CommandLine.Text;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
 using YamlDotNet.Serialization;
 
 namespace Azure.Sdk.Tools.PerfAutomation
 {
     public static class Program
     {
-        private class Options
+        private static OptionsDefinition Options { get; set; }
+
+        private class OptionsDefinition
         {
+            [Option('d', "debug")]
+            public bool Debug { get; set; }
+
+            [Option('l', "languages")]
+            public IEnumerable<LanguageName> Languages { get; set; }
+
             [Option('i', "inputFile", Default = "input.yml")]
             public string InputFile { get; set; }
 
             [Option('o', "outputFile", Default = "output.csv")]
             public string OutputFile { get; set; }
+
+            [Option('t', "testFilter", HelpText = "Regex of tests to run")]
+            public string TestFilter { get; set; }
         }
 
         public static void Main(string[] args)
@@ -28,7 +41,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 settings.HelpWriter = null;
             });
 
-            var parserResult = parser.ParseArguments<Options>(args);
+            var parserResult = parser.ParseArguments<OptionsDefinition>(args);
 
             parserResult
                 .WithParsed(options => Run(options))
@@ -46,19 +59,52 @@ namespace Azure.Sdk.Tools.PerfAutomation
             Console.Error.WriteLine(helpText);
         }
 
-        private static void Run(Options options)
+        private static void Run(OptionsDefinition options)
         {
-            Console.WriteLine($"InputFile: {options.InputFile}");
-            Console.WriteLine($"OutputFile: {options.OutputFile}");
+            Options = options;
 
             var input = File.ReadAllText(options.InputFile);
 
             var deserializer = new Deserializer();
             var tests = deserializer.Deserialize<List<Test>>(input);
-            Console.WriteLine(tests);
+
+            var selectedTests = tests.Where(t =>
+                String.IsNullOrEmpty(options.TestFilter) || Regex.IsMatch(t.Name, options.TestFilter, RegexOptions.IgnoreCase));
+            
+            foreach (var test in selectedTests)
+            {
+                var selectedLanguages = test.Languages.Where(l => !options.Languages.Any() || options.Languages.Contains(l.Name));
+
+                foreach (var language in selectedLanguages)
+                {
+                    foreach (var argument in test.Arguments)
+                    {
+                        DebugWriteLine($"Test: {test.Name}, Language: {language.Name}, " +
+                            $"TestName: {language.TestName}, Arguments: {argument}");
+                        foreach (var packageVersions in language.PackageVersions)
+                        {
+                            DebugWriteLine("===");
+                            foreach (var packageVersion in packageVersions)
+                            {
+                                DebugWriteLine($"  Name: {packageVersion.Key}, Version: {packageVersion.Value}");
+
+                                switch (language.Name)
+                                {
+                                    case LanguageName.Net:
+                                        RunNet(test, language);
+                                        break;
+                                    default:
+                                        continue;
+                                }
+                            }
+                        }
+                    }
+
+                }
+            }
         }
 
-        private static void RunNet(Options options)
+        private static void RunNet(Test test, Language language)
         {
             //using var process = new Process();
 
@@ -84,6 +130,14 @@ namespace Azure.Sdk.Tools.PerfAutomation
             //var error = process.StandardError.ReadToEnd();
 
             //Console.WriteLine($"=== Output ===\n{output}\n\n=== Error ===\n{error}");
+        }
+
+        private static void DebugWriteLine(string value)
+        {
+            if (Options.Debug)
+            {
+                Console.WriteLine(value);
+            }
         }
     }
 }

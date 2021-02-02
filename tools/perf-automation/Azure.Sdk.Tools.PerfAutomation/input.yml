@@ -25,3 +25,7 @@
   - -c 5 -p 32
   - -c 500 -p 32
   Languages: *storage-blob-languages
+- Name: storage-blob-uri-builder
+  Arguments:
+  - -p 1
+  Languages: *storage-blob-languages

@@ -58,6 +58,10 @@ func (c *content) addConst(pkg pkg, g *ast.GenDecl) {
 				// const FooConst = "value" + Bar
 				co.Type = "*ast.BinaryExpr"
 				v = pkg.getText(ce.X.Pos(), ce.Y.End())
+			} else if ce, ok := vs.Values[0].(*ast.UnaryExpr); ok {
+				// const FooConst = -1
+				co.Type = "*ast.UnaryExpr"
+				v = pkg.getText(ce.Pos(), ce.End())
 			} else {
 				panic("unhandled case for adding constant")
 			}

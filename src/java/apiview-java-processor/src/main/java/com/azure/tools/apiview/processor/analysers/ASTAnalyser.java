@@ -106,27 +106,35 @@ public class ASTAnalyser implements Analyser {
 
     @Override
     public void analyse(List<Path> allFiles) {
-        // firstly we filter out the files we don't care about
-        allFiles = allFiles.stream()
-                .filter(path -> {
-                    String inputFileName = path.toString();
-                    if (Files.isDirectory(path)) return false;
-                    else if (inputFileName.contains("implementation")) return false;
-                    else return inputFileName.endsWith(".java");
-                }).collect(Collectors.toList());
-
-        // then we do a pass to build a map of all known types and package names, and a map of package names to nav items,
-        // followed by a pass to tokenise each file
+        /*
+         * Begin by filtering out file paths that we don't care about.
+         *
+         * Then build a map of all known types and package names and a map of package names to navigation items.
+         *
+         * Finally tokenize each file.
+         */
         allFiles.stream()
-                .map(this::scanForTypes)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .collect(Collectors.groupingBy(ScanClass::getPackageName, TreeMap::new, Collectors.toList()))
-                .forEach(this::processPackage);
+            .filter(this::filterFilePaths)
+            .map(this::scanForTypes)
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .collect(Collectors.groupingBy(ScanClass::getPackageName, TreeMap::new, Collectors.toList()))
+            .forEach(this::processPackage);
 
         // we conclude by doing a final pass over all diagnostics to enable them to do any final analysis based on
         // the already-executed individual scans
         diagnostic.scanFinal(apiListing);
+    }
+
+    private boolean filterFilePaths(Path filePath) {
+        String fileName = filePath.toString();
+        // Skip paths that are directories or are in implementation.
+        if (Files.isDirectory(filePath) || fileName.contains("implementation")) {
+            return false;
+        } else {
+            // Only include Java files.
+            return fileName.endsWith(".java");
+        }
     }
 
     // This class represents a class that is going to go through the analysis pipeline, and it collects
@@ -172,9 +180,9 @@ public class ASTAnalyser implements Analyser {
 //            combinedTypeSolver.add(new SourceJarTypeSolver(inputFile));
 
             ParserConfiguration parserConfiguration = new ParserConfiguration()
-                    .setStoreTokens(true)
-                    .setSymbolResolver(new JavaSymbolSolver(combinedTypeSolver))
-                    .setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_11);
+                .setStoreTokens(true)
+                .setSymbolResolver(new JavaSymbolSolver(combinedTypeSolver))
+                .setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_11);
 
             // Configure JavaParser to use type resolution
             StaticJavaParser.setConfiguration(parserConfiguration);
@@ -185,10 +193,10 @@ public class ASTAnalyser implements Analyser {
             if (path.endsWith("package-info.java")) {
                 compilationUnit.getPackageDeclaration().ifPresent(pd -> {
                     compilationUnit.getAllComments().stream()
-                            .filter(Comment::isJavadocComment)
-                            .map(Comment::asJavadocComment)
-                            .findFirst()
-                            .ifPresent(comment -> packageNameToPackageInfoJavaDoc.put(pd.getNameAsString(), comment));
+                        .filter(Comment::isJavadocComment)
+                        .map(Comment::asJavadocComment)
+                        .findFirst()
+                        .ifPresent(comment -> packageNameToPackageInfoJavaDoc.put(pd.getNameAsString(), comment));
                 });
 
                 return Optional.empty();
@@ -222,8 +230,8 @@ public class ASTAnalyser implements Analyser {
         indent();
 
         scanClasses.stream()
-                .sorted(Comparator.comparing(s -> s.primaryTypeName))
-                .forEach(this::processSingleFile);
+            .sorted(Comparator.comparing(s -> s.primaryTypeName))
+            .forEach(this::processSingleFile);
 
         unindent();
 
@@ -289,7 +297,7 @@ public class ASTAnalyser implements Analyser {
             getTypeDeclaration(typeDeclaration);
 
             if (typeDeclaration.isEnumDeclaration()) {
-                getEnumEntries((EnumDeclaration)typeDeclaration);
+                getEnumEntries((EnumDeclaration) typeDeclaration);
             }
 
             // Get if the declaration is interface or not
@@ -322,9 +330,9 @@ public class ASTAnalyser implements Analyser {
 
             // get Inner classes
             tokeniseInnerClasses(typeDeclaration.getChildNodes()
-                                         .stream()
-                                         .filter(n -> n instanceof TypeDeclaration)
-                                         .map(n -> (TypeDeclaration<?>)n));
+                .stream()
+                .filter(n -> n instanceof TypeDeclaration)
+                .map(n -> (TypeDeclaration<?>) n));
 
             if (isInterfaceDeclaration) {
                 if (typeDeclaration.getMembers().isEmpty()) {
@@ -480,7 +488,7 @@ public class ASTAnalyser implements Analyser {
             // Get type kind
             TypeKind typeKind;
             if (typeDeclaration.isClassOrInterfaceDeclaration()) {
-                typeKind = ((ClassOrInterfaceDeclaration)typeDeclaration).isInterface() ? TypeKind.INTERFACE : TypeKind.CLASS;
+                typeKind = ((ClassOrInterfaceDeclaration) typeDeclaration).isInterface() ? TypeKind.INTERFACE : TypeKind.CLASS;
             } else if (typeDeclaration.isEnumDeclaration()) {
                 typeKind = TypeKind.ENUM;
             } else if (typeDeclaration.isAnnotationDeclaration()) {
@@ -522,7 +530,7 @@ public class ASTAnalyser implements Analyser {
             NodeList<ClassOrInterfaceType> implementedTypes = null;
             // Type parameters of class definition
             if (typeDeclaration.isClassOrInterfaceDeclaration()) {
-                final ClassOrInterfaceDeclaration classOrInterfaceDeclaration = (ClassOrInterfaceDeclaration)typeDeclaration;
+                final ClassOrInterfaceDeclaration classOrInterfaceDeclaration = (ClassOrInterfaceDeclaration) typeDeclaration;
 
                 // Get type parameters
                 getTypeParameters(classOrInterfaceDeclaration.getTypeParameters());
@@ -534,7 +542,7 @@ public class ASTAnalyser implements Analyser {
 
                     // Java only extends one class if it is class, but can extends multiple interfaces if it is interface itself
                     if (extendedTypes.isNonEmpty()) {
-                        for (int i = 0, max = extendedTypes.size() ; i < max; i++) {
+                        for (int i = 0, max = extendedTypes.size(); i < max; i++) {
                             final ClassOrInterfaceType extendedType = extendedTypes.get(i);
                             getType(extendedType);
 
@@ -547,7 +555,7 @@ public class ASTAnalyser implements Analyser {
                 // Assign implement types
                 implementedTypes = classOrInterfaceDeclaration.getImplementedTypes();
             } else if (typeDeclaration.isEnumDeclaration()) {
-                final EnumDeclaration enumDeclaration = (EnumDeclaration)typeDeclaration;
+                final EnumDeclaration enumDeclaration = (EnumDeclaration) typeDeclaration;
                 // Assign implement types
                 implementedTypes = enumDeclaration.getImplementedTypes();
             } else if (typeDeclaration.isAnnotationDeclaration()) {
@@ -634,7 +642,7 @@ public class ASTAnalyser implements Analyser {
 
                 final NodeList<Modifier> fieldModifiers = fieldDeclaration.getModifiers();
                 // public, protected, static, final
-                for (final Modifier fieldModifier: fieldModifiers) {
+                for (final Modifier fieldModifier : fieldModifiers) {
                     addToken(new Token(KEYWORD, fieldModifier.toString()));
                 }
 
@@ -673,9 +681,9 @@ public class ASTAnalyser implements Analyser {
         }
 
         private void tokeniseConstructorsOrMethods(final TypeDeclaration<?> typeDeclaration,
-                                                   final boolean isInterfaceDeclaration,
-                                                   final boolean isConstructor,
-                                                   final List<? extends CallableDeclaration<?>> callableDeclarations) {
+            final boolean isInterfaceDeclaration,
+            final boolean isConstructor,
+            final List<? extends CallableDeclaration<?>> callableDeclarations) {
             indent();
 
             if (isConstructor) {
@@ -683,9 +691,9 @@ public class ASTAnalyser implements Analyser {
                 // class is unlikely to be instantiable via 'new' calls.
                 // We also must check if there are no constructors, because this indicates that there is the default,
                 // no-args public constructor
-                final boolean isAllPrivateOrPackagePrivate = ! callableDeclarations.isEmpty() && callableDeclarations.stream()
-                        .filter(BodyDeclaration::isConstructorDeclaration)
-                        .allMatch(callableDeclaration -> isPrivateOrPackagePrivate(callableDeclaration.getAccessSpecifier()));
+                final boolean isAllPrivateOrPackagePrivate = !callableDeclarations.isEmpty() && callableDeclarations.stream()
+                    .filter(BodyDeclaration::isConstructorDeclaration)
+                    .allMatch(callableDeclaration -> isPrivateOrPackagePrivate(callableDeclaration.getAccessSpecifier()));
 
                 if (isAllPrivateOrPackagePrivate) {
                     if (typeDeclaration.isEnumDeclaration()) {
@@ -715,61 +723,61 @@ public class ASTAnalyser implements Analyser {
             });
 
             callableDeclarations.stream()
-                    .filter(callableDeclaration -> {
-                        if (isInterfaceDeclaration) {
-                            // By default , interface has public abstract methods if there is no access specifier declared.
-                            // we take all methods in the interface.
-                            return true;
-                        } else if (isPrivateOrPackagePrivate(callableDeclaration.getAccessSpecifier())) {
-                            // Skip if not public API
-                            return false;
-                        }
+                .filter(callableDeclaration -> {
+                    if (isInterfaceDeclaration) {
+                        // By default , interface has public abstract methods if there is no access specifier declared.
+                        // we take all methods in the interface.
                         return true;
-                    })
-                    .sorted(this::sortMethods)
-                    .collect(collector)
-                    .forEach((groupName, group) -> {
-                        if (showGroupings && !group.isEmpty()) {
-                            // we group inside the APIView each of the groups, so that we can visualise their operations
-                            // more clearly
-                            addComment("// " + groupName + ":");
+                    } else if (isPrivateOrPackagePrivate(callableDeclaration.getAccessSpecifier())) {
+                        // Skip if not public API
+                        return false;
+                    }
+                    return true;
+                })
+                .sorted(this::sortMethods)
+                .collect(collector)
+                .forEach((groupName, group) -> {
+                    if (showGroupings && !group.isEmpty()) {
+                        // we group inside the APIView each of the groups, so that we can visualise their operations
+                        // more clearly
+                        addComment("// " + groupName + ":");
+                    }
+
+                    group.forEach(callableDeclaration -> {
+                        // print the JavaDoc above each method / constructor
+                        visitJavaDoc(callableDeclaration.getJavadocComment());
+
+                        addToken(makeWhitespace());
+
+                        // annotations
+                        getAnnotations(callableDeclaration, false, false);
+
+                        // modifiers
+                        getModifiers(callableDeclaration.getModifiers());
+
+                        // type parameters of methods
+                        getTypeParameters(callableDeclaration.getTypeParameters());
+
+                        // if type parameters of method is not empty, we need to add a space before adding type name
+                        if (!callableDeclaration.getTypeParameters().isEmpty()) {
+                            addToken(new Token(WHITESPACE, " "));
                         }
 
-                        group.forEach(callableDeclaration -> {
-                            // print the JavaDoc above each method / constructor
-                            visitJavaDoc(callableDeclaration.getJavadocComment());
+                        // type name
+                        if (callableDeclaration instanceof MethodDeclaration) {
+                            getType(callableDeclaration);
+                        }
 
-                            addToken(makeWhitespace());
+                        // method name and parameters
+                        getDeclarationNameAndParameters(callableDeclaration, callableDeclaration.getParameters());
 
-                            // annotations
-                            getAnnotations(callableDeclaration, false, false);
+                        // throw exceptions
+                        getThrowException(callableDeclaration);
 
-                            // modifiers
-                            getModifiers(callableDeclaration.getModifiers());
-
-                            // type parameters of methods
-                            getTypeParameters(callableDeclaration.getTypeParameters());
-
-                            // if type parameters of method is not empty, we need to add a space before adding type name
-                            if (!callableDeclaration.getTypeParameters().isEmpty()) {
-                                addToken(new Token(WHITESPACE, " "));
-                            }
-
-                            // type name
-                            if (callableDeclaration instanceof MethodDeclaration) {
-                                getType(callableDeclaration);
-                            }
-
-                            // method name and parameters
-                            getDeclarationNameAndParameters(callableDeclaration, callableDeclaration.getParameters());
-
-                            // throw exceptions
-                            getThrowException(callableDeclaration);
-
-                            // close statements
-                            addNewLine();
-                        });
+                        // close statements
+                        addNewLine();
                     });
+                });
 
             unindent();
         }
@@ -798,11 +806,11 @@ public class ASTAnalyser implements Analyser {
 
             final String fullName1 = c1.getNameAsString();
             String s1 = (fullName1.startsWith("set") || fullName1.startsWith("get") ? fullName1.substring(3)
-                    : fullName1.startsWith("is") ? fullName1.substring(2) : fullName1).toLowerCase();
+                : fullName1.startsWith("is") ? fullName1.substring(2) : fullName1).toLowerCase();
 
             final String fullName2 = c2.getNameAsString();
             String s2 = (fullName2.startsWith("set") || fullName2.startsWith("get") ? fullName2.substring(3)
-                    : fullName2.startsWith("is") ? fullName2.substring(2) : fullName2).toLowerCase();
+                : fullName2.startsWith("is") ? fullName2.substring(2) : fullName2).toLowerCase();
 
             if (s1.startsWith("build")) {
                 if (s2.startsWith("build")) {
@@ -841,8 +849,8 @@ public class ASTAnalyser implements Analyser {
         }
 
         private void getAnnotations(final NodeWithAnnotations<?> nodeWithAnnotations,
-                                    final boolean showAnnotationProperties,
-                                    final boolean addNewline) {
+            final boolean showAnnotationProperties,
+            final boolean addNewline) {
             Consumer<AnnotationExpr> consumer = annotation -> {
                 if (addNewline) {
                     addToken(makeWhitespace());
@@ -993,8 +1001,8 @@ public class ASTAnalyser implements Analyser {
             final int size = typeBounds.size();
             if (size != 0) {
                 addToken(SPACE, new Token(KEYWORD, "extends"), SPACE);
-                for (int i = 0; i < size; i++) {
-                    getType(typeBounds.get(i));
+                for (ClassOrInterfaceType typeBound : typeBounds) {
+                    getType(typeBound);
                 }
             }
         }
@@ -1033,13 +1041,13 @@ public class ASTAnalyser implements Analyser {
                     addToken(new Token(PUNCTUATION, "..."));
                 }
             } else if (type instanceof MethodDeclaration) {
-                getClassType(((MethodDeclaration)type).getType());
+                getClassType(((MethodDeclaration) type).getType());
                 addToken(new Token(WHITESPACE, " "));
             } else if (type instanceof FieldDeclaration) {
-                getClassType(((FieldDeclaration)type).getElementType());
+                getClassType(((FieldDeclaration) type).getElementType());
                 addToken(new Token(WHITESPACE, " "));
             } else if (type instanceof ClassOrInterfaceType) {
-                getClassType(((Type)type));
+                getClassType(((Type) type));
             } else {
                 System.err.println("Unknown type " + type + " of type " + type.getClass());
             }
@@ -1055,9 +1063,7 @@ public class ASTAnalyser implements Analyser {
                     addToken(new Token(PUNCTUATION, "[]"));
                 });
                 // Class or Interface type
-                type.ifClassOrInterfaceType(classOrInterfaceType -> {
-                    getTypeDFS(classOrInterfaceType);
-                });
+                type.ifClassOrInterfaceType(this::getTypeDFS);
 
             } else if (type.isWildcardType()) {
                 // TODO: add wild card type implementation, #756
@@ -1122,7 +1128,7 @@ public class ASTAnalyser implements Analyser {
                     continue;
                 } else if (i == childrenSize - 1) {
                     ((ClassOrInterfaceType) node).getTypeArguments().ifPresent(
-                            (NodeList<Type> values) -> addToken(new Token(PUNCTUATION, ">")));
+                        (NodeList<Type> values) -> addToken(new Token(PUNCTUATION, ">")));
                 } else {
                     addToken(new Token(PUNCTUATION, ","), SPACE);
                 }
@@ -1146,9 +1152,8 @@ public class ASTAnalyser implements Analyser {
     private class ScanForClassTypeVisitor extends VoidVisitorAdapter<Map<String, String>> {
         @Override
         public void visit(CompilationUnit compilationUnit, Map<String, String> arg) {
-            compilationUnit.getModule().ifPresent(moduleDeclaration -> {
-                apiListing.addChildItem(new ChildItem(MODULE_INFO_KEY, MODULE_INFO_KEY, TypeKind.CLASS));
-            });
+            compilationUnit.getModule().ifPresent(moduleDeclaration ->
+                apiListing.addChildItem(new ChildItem(MODULE_INFO_KEY, MODULE_INFO_KEY, TypeKind.CLASS)));
 
             for (final TypeDeclaration<?> typeDeclaration : compilationUnit.getTypes()) {
                 buildTypeHierarchyForNavigation(typeDeclaration);
@@ -1156,10 +1161,9 @@ public class ASTAnalyser implements Analyser {
 
             // we build up a map between types and the packages they are in, for use in our diagnostic rules
             compilationUnit.getImports().stream()
-                    .map(ImportDeclaration::getName)
-                    .forEach(name -> name.getQualifier().ifPresent(packageName -> {
-                        apiListing.addPackageTypeMapping(packageName.toString(), name.getIdentifier());
-                    }));
+                .map(ImportDeclaration::getName)
+                .forEach(name -> name.getQualifier().ifPresent(packageName ->
+                    apiListing.addPackageTypeMapping(packageName.toString(), name.getIdentifier())));
         }
     }
 
@@ -1174,7 +1178,7 @@ public class ASTAnalyser implements Analyser {
         }
 
         final boolean isInterfaceType = typeDeclaration.isClassOrInterfaceDeclaration();
-        if (! (isInterfaceType || typeDeclaration.isEnumDeclaration() || typeDeclaration.isAnnotationDeclaration())) {
+        if (!(isInterfaceType || typeDeclaration.isEnumDeclaration() || typeDeclaration.isAnnotationDeclaration())) {
             return;
         }
 
@@ -1189,8 +1193,8 @@ public class ASTAnalyser implements Analyser {
 
         // now do internal types
         typeDeclaration.getMembers().stream()
-                .filter(m -> m.isEnumDeclaration() || m.isClassOrInterfaceDeclaration())
-                .forEach(m -> buildTypeHierarchyForNavigation(m.asTypeDeclaration()));
+            .filter(m -> m.isEnumDeclaration() || m.isClassOrInterfaceDeclaration())
+            .forEach(m -> buildTypeHierarchyForNavigation(m.asTypeDeclaration()));
     }
 
     private void visitJavaDoc(Optional<JavadocComment> javadocComment) {
@@ -1256,10 +1260,17 @@ public class ASTAnalyser implements Analyser {
 
     private void handleTokenModifier(TokenModifier modifier) {
         switch (modifier) {
-            case INDENT: addToken(makeWhitespace()); break;
-            case SPACE: addToken(new Token(WHITESPACE, " ")); break;
-            case NEWLINE: addNewLine(); break;
-            case NOTHING: break;
+            case INDENT:
+                addToken(makeWhitespace());
+                break;
+            case SPACE:
+                addToken(new Token(WHITESPACE, " "));
+                break;
+            case NEWLINE:
+                addNewLine();
+                break;
+            case NOTHING:
+                break;
         }
     }
 }

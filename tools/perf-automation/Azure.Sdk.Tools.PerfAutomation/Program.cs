@@ -36,7 +36,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             [Option('d', "debug")]
             public bool Debug { get; set; }
 
-            [Option("dry-run")]
+            [Option('n', "dry-run")]
             public bool DryRun { get; set; }
 
             [Option('l', "languages")]

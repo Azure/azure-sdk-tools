@@ -178,30 +178,28 @@ namespace APIViewWeb
                     namespacebldr.Append(currentNode.name);
                     leafNamespaceNode = currentNode;
                     currentNode = currentNode.inner?.FirstOrDefault(n => n.kind == NamespaceDeclKind);
-                }
+                    if (leafNamespaceNode.inner?.Any(n => n.kind != NamespaceDeclKind) == true)
+                    {
+                        var nameSpace = namespacebldr.ToString();
+                        if (!foundFilterNamespace && nameSpace.StartsWith(packageNamespace))
+                        {
+                            foundFilterNamespace = true;
+                        }
 
-                var nameSpace = namespacebldr.ToString();
-                // Skip <partialnamespace>::Details namespace
-                if (nameSpace.EndsWith(DetailsNamespacePostfix))
-                    continue;
-
-                if (!foundFilterNamespace && nameSpace.StartsWith(packageNamespace))
-                {
-                    foundFilterNamespace = true;
+                        if (!namespaceLeafMap.ContainsKey(nameSpace))
+                        {
+                            namespaceLeafMap[nameSpace] = new List<CppAstNode>();
+                        }
+                        namespaceLeafMap[nameSpace].Add(leafNamespaceNode);
+                    }
                 }
-
-                if (!namespaceLeafMap.ContainsKey(nameSpace))
-                {
-                    namespaceLeafMap[nameSpace] = new List<CppAstNode>();
-                }
-                namespaceLeafMap[nameSpace].Add(leafNamespaceNode);
             }
 
             foreach (var nameSpace in namespaceLeafMap.Keys)
             {
                 // Filter namespace based on file name if any of the namespace matches file name pattern
                 // If no namespace matches file name then allow all namespaces to be part of review to avoid mandating file name convention
-                if (!foundFilterNamespace || nameSpace.StartsWith(packageNamespace))
+                if ((!foundFilterNamespace || nameSpace.StartsWith(packageNamespace)) && !nameSpace.EndsWith(DetailsNamespacePostfix))
                 {
                     ProcessNamespaceNode(nameSpace);
                     builder.NewLine();
@@ -237,6 +235,11 @@ namespace APIViewWeb
                     {
                         foreach (var member in leafNamespaceNode.inner)
                         {
+                            // Name space has mix of details namespace and classes
+                            // API View should skip those sub details namespaces also
+                            if (member.kind == NamespaceDeclKind)
+                                continue;
+
                             builder.IncrementIndent();
                             ProcessNode(member, currentNamespaceMembers, nameSpace);
                             builder.DecrementIndent();

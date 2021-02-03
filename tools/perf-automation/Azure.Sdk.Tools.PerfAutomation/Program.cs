@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using YamlDotNet.Core;
 using YamlDotNet.Serialization;
 
 namespace Azure.Sdk.Tools.PerfAutomation
@@ -20,7 +21,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             public bool Debug { get; set; }
 
             [Option('l', "languages")]
-            public IEnumerable<LanguageName> Languages { get; set; }
+            public IEnumerable<Language> Languages { get; set; }
 
             [Option('i', "inputFile", Default = "input.yml")]
             public string InputFile { get; set; }
@@ -34,7 +35,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
         public static void Main(string[] args)
         {
-            var parser = new Parser(settings =>
+            var parser = new CommandLine.Parser(settings =>
             {
                 settings.CaseSensitive = false;
                 settings.CaseInsensitiveEnumValues = true;
@@ -63,39 +64,40 @@ namespace Azure.Sdk.Tools.PerfAutomation
         {
             Options = options;
 
-            var input = File.ReadAllText(options.InputFile);
+            var parser = new MergingParser(new YamlDotNet.Core.Parser(File.OpenText(options.InputFile)));
 
             var deserializer = new Deserializer();
-            var tests = deserializer.Deserialize<List<Test>>(input);
+            var tests = deserializer.Deserialize<List<Test>>(parser);
 
             var selectedTests = tests.Where(t =>
                 String.IsNullOrEmpty(options.TestFilter) || Regex.IsMatch(t.Name, options.TestFilter, RegexOptions.IgnoreCase));
             
             foreach (var test in selectedTests)
             {
-                var selectedLanguages = test.Languages.Where(l => !options.Languages.Any() || options.Languages.Contains(l.Name));
+                var selectedLanguages = test.Languages.Where(l => !options.Languages.Any() || options.Languages.Contains(l.Key));
 
                 foreach (var language in selectedLanguages)
                 {
-                    foreach (var argument in test.Arguments)
+                    foreach (var arguments in test.Arguments)
                     {
-                        DebugWriteLine($"Test: {test.Name}, Language: {language.Name}, " +
-                            $"TestName: {language.TestName}, Arguments: {argument}");
-                        foreach (var packageVersions in language.PackageVersions)
+                        DebugWriteLine($"Test: {test.Name}, Language: {language.Key}, " +
+                            $"TestName: {language.Value.TestName}, Arguments: {arguments}");
+                        foreach (var packageVersions in language.Value.PackageVersions)
                         {
                             DebugWriteLine("===");
                             foreach (var packageVersion in packageVersions)
                             {
                                 DebugWriteLine($"  Name: {packageVersion.Key}, Version: {packageVersion.Value}");
+                            }
 
-                                switch (language.Name)
-                                {
-                                    case LanguageName.Net:
-                                        RunNet(test, language);
-                                        break;
-                                    default:
-                                        continue;
-                                }
+
+                            switch (language.Key)
+                            {
+                                case Language.Net:
+                                    RunNet(language.Value, arguments, packageVersions);
+                                    break;
+                                default:
+                                    continue;
                             }
                         }
                     }
@@ -104,8 +106,10 @@ namespace Azure.Sdk.Tools.PerfAutomation
             }
         }
 
-        private static void RunNet(Test test, Language language)
+        private static void RunNet(LanguageSettings languageSettings, string arguments, IDictionary<string, string> packageVersions)
         {
+            DebugWriteLine("RunNet");
+
             //using var process = new Process();
 
             //var arguments = $"run -c release -f netcoreapp2.1 -- {options.Test} -w 0 -d 1 {options.Arguments}";

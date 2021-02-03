@@ -6,6 +6,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Xml;
 
 namespace Azure.Sdk.Tools.PerfAutomation
 {
@@ -13,10 +14,38 @@ namespace Azure.Sdk.Tools.PerfAutomation
     {
         private static void SetPackageVersions(string projectFile, IDictionary<string, string> packageVersions)
         {
+            // Create backup.  Throw if exists, since this shouldn't happen
+            File.Copy(projectFile, projectFile + ".bak", overwrite: false);
+
+            var doc = new XmlDocument() { PreserveWhitespace = true };
+            doc.Load(projectFile);
+
+            var nsmgr = new XmlNamespaceManager(doc.NameTable);
+            nsmgr.AddNamespace("mvn", "http://maven.apache.org/POM/4.0.0");
+
+            foreach (var v in packageVersions)
+            {
+                var packageName = v.Key;
+                var packageVersion = v.Value;
+
+                if (packageVersion == "master")
+                {
+                    continue;
+                }
+                else
+                {
+                    var versionNode = doc.SelectSingleNode($"/mvn:project/mvn:dependencies/mvn:dependency[mvn:artifactId='{packageName}']/mvn:version", nsmgr);
+                    versionNode.InnerText = packageVersion;
+                }
+            }
+
+            doc.Save(projectFile);
         }
 
         private static void UnsetPackageVersions(string projectFile)
         {
+            // Restore backup
+            File.Move(projectFile + ".bak", projectFile, overwrite: true);
         }
 
         public static async Task<Result> RunAsync(

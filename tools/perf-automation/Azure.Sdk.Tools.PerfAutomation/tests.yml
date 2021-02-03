@@ -11,7 +11,7 @@
       - Azure.Storage.Blobs: master
     Java: &storage-blob-java
       Project: sdk/storage/azure-storage-perf/pom.xml
-      TestName: DownloadBlob
+      TestName: downloadblob
       PackageVersions:
       - Azure.Storage.Blobs: 12.10.0
       - Azure.Storage.Blobs: master
@@ -25,7 +25,7 @@
       TestName: UploadBlob
     Java:
       <<: *storage-blob-java
-      TestName: UploadBlob
+      TestName: uploadblob
 - Name: storage-blob-getblobs
   Arguments:
   - -c 5 -p 32
@@ -36,7 +36,7 @@
       TestName: GetBlobs
     Java:
       <<: *storage-blob-java
-      TestName: GetBlobs
+      TestName: getblobs
 - Name: storage-blob-uri-builder
   Arguments:
   - -w 1 -d 1
@@ -50,4 +50,4 @@
   Languages:
     Java:
       <<: *storage-blob-java
-      TestName: BlobServiceClientBuilder
+      TestName: blobserviceclientbuilder

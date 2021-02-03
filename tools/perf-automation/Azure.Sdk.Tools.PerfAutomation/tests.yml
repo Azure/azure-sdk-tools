@@ -11,6 +11,7 @@
       - Azure.Storage.Blobs: master
     Java: &storage-blob-java
       Project: sdk/storage/azure-storage-perf/pom.xml
+      AdditionalArguments: -w 30 -d 30
       TestName: downloadblob
       PackageVersions:
       - azure-storage-blob: 12.10.0
@@ -46,7 +47,7 @@
       TestName: BlobUriBuilderCtor
 - Name: blob-service-client-builder
   Arguments:
-  - -w 1 -d 1
+  - -p 1
   Languages:
     Java:
       <<: *storage-blob-java

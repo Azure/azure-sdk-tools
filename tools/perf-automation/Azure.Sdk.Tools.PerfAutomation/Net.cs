@@ -57,7 +57,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 SetPackageVersions(projectFile, packageVersions);
 
                 var processArguments = $"run -c release -f netcoreapp2.1 -p {languageSettings.Project} -- " +
-                    $"{languageSettings.TestName} {arguments}";
+                    $"{languageSettings.TestName} {arguments} {languageSettings.AdditionalArguments}";
 
                 var result = await ProcessUtil.RunAsync(
                     "dotnet",

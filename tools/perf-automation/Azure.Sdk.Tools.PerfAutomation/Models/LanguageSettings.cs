@@ -6,6 +6,7 @@ namespace Azure.Sdk.Tools.PerfAutomation.Models
     {
         public string Project { get; set; }
         public string TestName { get; set; }
+        public string AdditionalArguments { get; set; }
         public IEnumerable<IDictionary<string, string>> PackageVersions { get; set; }
     }
 }

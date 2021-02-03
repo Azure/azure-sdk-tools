@@ -87,7 +87,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 var buildMatch = Regex.Match(buildResult.StandardOutput, @"Building jar: (.*\.jar)", RegexOptions.IgnoreCase | RegexOptions.RightToLeft);
                 var jar = buildMatch.Groups[1].Value;
 
-                var processArguments = $"-jar {jar} -- {languageSettings.TestName} {arguments}";
+                var processArguments = $"-jar {jar} -- {languageSettings.TestName} {arguments} {languageSettings.AdditionalArguments}";
 
                 var result = await ProcessUtil.RunAsync(
                     "java",

@@ -32,6 +32,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
             [Option('d', "debug")]
             public bool Debug { get; set; }
 
+            [Option("dry-run")]
+            public bool DryRun { get; set; }
+
             [Option('l', "languages")]
             public IEnumerable<Language> Languages { get; set; }
 
@@ -91,22 +94,30 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             foreach (var test in selectedTests)
             {
-                var selectedLanguages = test.Languages.Where(l => !options.Languages.Any() || options.Languages.Contains(l.Key));
+                test.Languages = new Dictionary<Language, LanguageSettings>(test.Languages.Where(l => !options.Languages.Any() || options.Languages.Contains(l.Key)));
+            }
 
-                foreach (var language in selectedLanguages)
+            Console.WriteLine("=== Test Plan ===");
+            var serializer = new Serializer();
+            serializer.Serialize(Console.Out, selectedTests);
+
+            if (options.DryRun)
+            {
+                return;
+            }
+
+            // Create output file early so user sees it immediately
+            using (File.Create(uniqueOutputFile)) { }
+
+            foreach (var test in selectedTests)
+            {
+                foreach (var language in test.Languages)
                 {
                     foreach (var arguments in test.Arguments)
                     {
-                        Util.DebugWriteLine($"Test: {test.Name}, Language: {language.Key}, " +
-                            $"TestName: {language.Value.TestName}, Arguments: {arguments}");
-
                         foreach (var packageVersions in language.Value.PackageVersions)
                         {
-                            Util.DebugWriteLine("===");
-                            foreach (var packageVersion in packageVersions)
-                            {
-                                Util.DebugWriteLine($"  Name: {packageVersion.Key}, Version: {packageVersion.Value}");
-                            }
+                            Console.WriteLine();
 
                             Result result = null;
 
@@ -136,7 +147,6 @@ namespace Azure.Sdk.Tools.PerfAutomation
                             await JsonSerializer.SerializeAsync(stream, results, JsonOptions);
                         }
                     }
-
                 }
             }
         }

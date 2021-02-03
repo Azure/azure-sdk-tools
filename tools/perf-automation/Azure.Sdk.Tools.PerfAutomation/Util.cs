@@ -20,8 +20,6 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 uniquePath = Path.Join(directoryName, $"{fileNameWithoutExtension}.{index}{extension}");
             }
 
-            using var stream = File.Create(uniquePath);
-
             return uniquePath;
         }
 

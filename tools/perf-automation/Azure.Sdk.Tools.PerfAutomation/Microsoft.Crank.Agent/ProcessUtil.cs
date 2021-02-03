@@ -19,12 +19,12 @@ namespace Microsoft.Crank.Agent
         private static extern int sys_kill(int pid, int sig);
 
         public static async Task<ProcessResult> RunAsync(
-            string filename, 
-            string arguments, 
-            TimeSpan? timeout = null, 
+            string filename,
+            string arguments,
+            TimeSpan? timeout = null,
             string workingDirectory = null,
-            bool throwOnError = true, 
-            IDictionary<string, string> environmentVariables = null, 
+            bool throwOnError = true,
+            IDictionary<string, string> environmentVariables = null,
             Action<string> outputDataReceived = null,
             bool log = false,
             Action<int> onStart = null,
@@ -188,7 +188,7 @@ namespace Microsoft.Crank.Agent
 
         public static Task RetryOnExceptionAsync(int retries, Func<Task> operation, CancellationToken cancellationToken = default)
         {
-            return RetryOnExceptionAsync(retries, async () => 
+            return RetryOnExceptionAsync(retries, async () =>
             {
                 await operation();
                 return 0;

@@ -1,11 +1,12 @@
 using Azure.Sdk.Tools.PerfAutomation.Models;
 using CommandLine;
 using CommandLine.Text;
-using Microsoft.Crank.Agent;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using YamlDotNet.Core;
@@ -16,6 +17,15 @@ namespace Azure.Sdk.Tools.PerfAutomation
     public static class Program
     {
         private static OptionsDefinition Options { get; set; }
+
+        private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions
+        {
+            WriteIndented = true,
+            Converters =
+            {
+                new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)
+            }
+        };
 
         private class OptionsDefinition
         {
@@ -28,7 +38,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             [Option('i', "inputFile", Default = "input.yml")]
             public string InputFile { get; set; }
 
-            [Option('o', "outputFile", Default = "output.csv")]
+            [Option('o', "outputFile", Default = "output.json")]
             public string OutputFile { get; set; }
 
             [Option('t', "testFilter", HelpText = "Regex of tests to run")]
@@ -71,13 +81,15 @@ namespace Azure.Sdk.Tools.PerfAutomation
         private static async Task Run(OptionsDefinition options)
         {
             Options = options;
-            
-            outputFile = GetUniqueFile(options.OutputFile);
+
+            var uniqueOutputFile = GetUniquePath(options.OutputFile);
 
             var parser = new MergingParser(new YamlDotNet.Core.Parser(File.OpenText(options.InputFile)));
 
             var deserializer = new Deserializer();
             var tests = deserializer.Deserialize<List<Test>>(parser);
+
+            List<Result> results = new List<Result>();
 
             var selectedTests = tests.Where(t =>
                 String.IsNullOrEmpty(options.TestFilter) || Regex.IsMatch(t.Name, options.TestFilter, RegexOptions.IgnoreCase));
@@ -100,17 +112,32 @@ namespace Azure.Sdk.Tools.PerfAutomation
                                 DebugWriteLine($"  Name: {packageVersion.Key}, Version: {packageVersion.Value}");
                             }
 
-                            double opsPerSecond = -1;
+                            Result result = null;
+
                             switch (language.Key)
                             {
                                 case Language.Net:
-                                    opsPerSecond = await RunNet(language.Value, arguments, packageVersions);
+                                    result = await Net.RunAsync(options.WorkingDirectoryNet, options.Debug, language.Value, arguments, packageVersions);
                                     break;
                                 default:
                                     continue;
                             }
 
+                            if (result != null)
+                            {
+                                result.TestName = test.Name;
 
+                                result.Language = language.Key;
+                                result.Project = language.Value.Project;
+                                result.LanguageTestName = language.Value.TestName;
+                                result.Arguments = arguments;
+                                result.PackageVersions = packageVersions;
+                            }
+
+                            results.Add(result);
+
+                            using var stream = File.OpenWrite(uniqueOutputFile);
+                            await JsonSerializer.SerializeAsync(stream, results, JsonOptions);
                         }
                     }
 
@@ -118,51 +145,24 @@ namespace Azure.Sdk.Tools.PerfAutomation
             }
         }
 
-        private static void GetUniqueOutputFile(string path)
+        private static string GetUniquePath(string path)
         {
-            var outputFile = Options.OutputFile;
+            var directoryName = Path.GetDirectoryName(path);
+            var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(path);
+            var extension = Path.GetExtension(path);
+
+            var uniquePath = Path.Join(directoryName, $"{fileNameWithoutExtension}{extension}");
+
             int index = 0;
-            while (File.Exists(outputFile))
+            while (File.Exists(uniquePath))
             {
                 index++;
-                outputFile = $"{Options.OutputFile}.{index}";
+                uniquePath = Path.Join(directoryName, $"{fileNameWithoutExtension}.{index}{extension}");
             }
-        }
 
-        private static async Task<double> RunNet(LanguageSettings languageSettings, string arguments, IDictionary<string, string> packageVersions)
-        {
-            var processArguments = $"run -c release -f netcoreapp2.1 -p {languageSettings.Project} -- " +
-                $"{languageSettings.TestName} {arguments}";
+            using var stream = File.Create(uniquePath);
 
-            var result = await ProcessUtil.RunAsync(
-                "dotnet",
-                processArguments,
-                workingDirectory: Options.WorkingDirectoryNet,
-                log: Options.Debug,
-                captureOutput: true,
-                captureError: true
-            );
-
-            /*
-            === Warmup ===
-            Current         Total           Average
-            622025          622025          617437.38
-
-            === Results ===
-            Completed 622,025 operations in a weighted-average of 1.01s (617,437.38 ops/s, 0.000 s/op)
-
-            === Test ===
-            Current         Total           Average
-            693696          693696          692328.31
-
-            === Results ===
-            Completed 693,696 operations in a weighted-average of 1.00s (692,328.31 ops/s, 0.000 s/op)
-            */
-
-            var match = Regex.Match(result.StandardOutput, @"\((.*) ops/s", RegexOptions.RightToLeft);
-            var opsPerSecond = double.Parse(match.Groups[1].Value);
-
-            return opsPerSecond;
+            return uniquePath;
         }
 
         private static void DebugWriteLine(string value)

@@ -67,7 +67,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                     captureError: true
                 );
 
-                var match = Regex.Match(result.StandardOutput, @"\((.*) ops/s", RegexOptions.RightToLeft);
+                var match = Regex.Match(result.StandardOutput, @"\((.*) ops/s", RegexOptions.IgnoreCase | RegexOptions.RightToLeft);
                 var opsPerSecond = double.Parse(match.Groups[1].Value);
 
                 return new Result

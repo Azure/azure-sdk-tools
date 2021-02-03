@@ -37,7 +37,7 @@
       TestName: GetBlobs
 - Name: storage-blob-uri-builder
   Arguments:
-  - -p 1 -w 0 -d 1
+  - -w 1 -d 1
   Languages:
     Net:
       <<: *storage-blob-net

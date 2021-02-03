@@ -27,6 +27,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 }
                 else
                 {
+                    // TODO: Use XmlDocument instead of Regex
                     projectContents = Regex.Replace(
                         projectContents,
                         $"<ProjectReference [^>]*{packageName}.csproj[^<]*/>",

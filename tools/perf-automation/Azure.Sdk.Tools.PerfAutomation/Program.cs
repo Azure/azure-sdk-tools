@@ -71,6 +71,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
         private static async Task Run(OptionsDefinition options)
         {
             Options = options;
+            
+            outputFile = GetUniqueFile(options.OutputFile);
 
             var parser = new MergingParser(new YamlDotNet.Core.Parser(File.OpenText(options.InputFile)));
 
@@ -98,15 +100,17 @@ namespace Azure.Sdk.Tools.PerfAutomation
                                 DebugWriteLine($"  Name: {packageVersion.Key}, Version: {packageVersion.Value}");
                             }
 
-
+                            double opsPerSecond = -1;
                             switch (language.Key)
                             {
                                 case Language.Net:
-                                    await RunNet(language.Value, arguments, packageVersions);
+                                    opsPerSecond = await RunNet(language.Value, arguments, packageVersions);
                                     break;
                                 default:
                                     continue;
                             }
+
+
                         }
                     }
 
@@ -114,7 +118,18 @@ namespace Azure.Sdk.Tools.PerfAutomation
             }
         }
 
-        private static async Task RunNet(LanguageSettings languageSettings, string arguments, IDictionary<string, string> packageVersions)
+        private static void GetUniqueOutputFile(string path)
+        {
+            var outputFile = Options.OutputFile;
+            int index = 0;
+            while (File.Exists(outputFile))
+            {
+                index++;
+                outputFile = $"{Options.OutputFile}.{index}";
+            }
+        }
+
+        private static async Task<double> RunNet(LanguageSettings languageSettings, string arguments, IDictionary<string, string> packageVersions)
         {
             var processArguments = $"run -c release -f netcoreapp2.1 -p {languageSettings.Project} -- " +
                 $"{languageSettings.TestName} {arguments}";
@@ -127,6 +142,27 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 captureOutput: true,
                 captureError: true
             );
+
+            /*
+            === Warmup ===
+            Current         Total           Average
+            622025          622025          617437.38
+
+            === Results ===
+            Completed 622,025 operations in a weighted-average of 1.01s (617,437.38 ops/s, 0.000 s/op)
+
+            === Test ===
+            Current         Total           Average
+            693696          693696          692328.31
+
+            === Results ===
+            Completed 693,696 operations in a weighted-average of 1.00s (692,328.31 ops/s, 0.000 s/op)
+            */
+
+            var match = Regex.Match(result.StandardOutput, @"\((.*) ops/s", RegexOptions.RightToLeft);
+            var opsPerSecond = double.Parse(match.Groups[1].Value);
+
+            return opsPerSecond;
         }
 
         private static void DebugWriteLine(string value)

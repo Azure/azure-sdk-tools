@@ -1,11 +1,13 @@
 using Azure.Sdk.Tools.PerfAutomation.Models;
 using CommandLine;
 using CommandLine.Text;
+using Microsoft.Crank.Agent;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using YamlDotNet.Core;
 using YamlDotNet.Serialization;
 
@@ -31,9 +33,12 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             [Option('t', "testFilter", HelpText = "Regex of tests to run")]
             public string TestFilter { get; set; }
+
+            [Option("workingDirectoryNet")]
+            public string WorkingDirectoryNet { get; set; }
         }
 
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var parser = new CommandLine.Parser(settings =>
             {
@@ -44,12 +49,13 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             var parserResult = parser.ParseArguments<OptionsDefinition>(args);
 
-            parserResult
-                .WithParsed(options => Run(options))
-                .WithNotParsed(errors => DisplayHelp(parserResult));
+            await parserResult.MapResult(
+                options => Run(options),
+                errors => DisplayHelp(parserResult)
+            );
         }
 
-        static void DisplayHelp<T>(ParserResult<T> result)
+        static Task DisplayHelp<T>(ParserResult<T> result)
         {
             var helpText = HelpText.AutoBuild(result, settings =>
             {
@@ -58,9 +64,11 @@ namespace Azure.Sdk.Tools.PerfAutomation
             });
 
             Console.Error.WriteLine(helpText);
+
+            return Task.CompletedTask;
         }
 
-        private static void Run(OptionsDefinition options)
+        private static async Task Run(OptionsDefinition options)
         {
             Options = options;
 
@@ -71,7 +79,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             var selectedTests = tests.Where(t =>
                 String.IsNullOrEmpty(options.TestFilter) || Regex.IsMatch(t.Name, options.TestFilter, RegexOptions.IgnoreCase));
-            
+
             foreach (var test in selectedTests)
             {
                 var selectedLanguages = test.Languages.Where(l => !options.Languages.Any() || options.Languages.Contains(l.Key));
@@ -94,7 +102,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                             switch (language.Key)
                             {
                                 case Language.Net:
-                                    RunNet(language.Value, arguments, packageVersions);
+                                    await RunNet(language.Value, arguments, packageVersions);
                                     break;
                                 default:
                                     continue;
@@ -106,34 +114,19 @@ namespace Azure.Sdk.Tools.PerfAutomation
             }
         }
 
-        private static void RunNet(LanguageSettings languageSettings, string arguments, IDictionary<string, string> packageVersions)
+        private static async Task RunNet(LanguageSettings languageSettings, string arguments, IDictionary<string, string> packageVersions)
         {
-            DebugWriteLine("RunNet");
+            var processArguments = $"run -c release -f netcoreapp2.1 -p {languageSettings.Project} -- " +
+                $"{languageSettings.TestName} {arguments}";
 
-            //using var process = new Process();
-
-            //var arguments = $"run -c release -f netcoreapp2.1 -- {options.Test} -w 0 -d 1 {options.Arguments}";
-            //if (options.Parallel.HasValue)
-            //{
-            //    arguments = $"{arguments} -p {options.Parallel}";
-            //}
-
-            //var startInfo = new ProcessStartInfo("dotnet", arguments);
-            //startInfo.UseShellExecute = false;
-            //startInfo.RedirectStandardOutput = true;
-            //startInfo.RedirectStandardError = true;
-
-            //startInfo.WorkingDirectory = options.Directory.FullName;
-
-            //process.StartInfo = startInfo;
-            //process.Start();
-
-            //process.WaitForExit();
-
-            //var output = process.StandardOutput.ReadToEnd();
-            //var error = process.StandardError.ReadToEnd();
-
-            //Console.WriteLine($"=== Output ===\n{output}\n\n=== Error ===\n{error}");
+            var result = await ProcessUtil.RunAsync(
+                "dotnet",
+                processArguments,
+                workingDirectory: Options.WorkingDirectoryNet,
+                log: Options.Debug,
+                captureOutput: true,
+                captureError: true
+            );
         }
 
         private static void DebugWriteLine(string value)

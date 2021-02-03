@@ -4,17 +4,15 @@
   - -s 10485760 -p 32
   Languages:
     Net: &storage-blob-net
-      Project: C:\Git\net-mh\sdk\storage\Azure.Storage.Blobs\perf\Azure.Storage.Blobs.Perf\Azure.Storage.Blobs.Perf.csproj
+      Project: sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Azure.Storage.Blobs.Perf.csproj
       TestName: DownloadBlob
       PackageVersions:
-      # - Azure.Storage.Blobs: 12.0.0
       - Azure.Storage.Blobs: 12.8.0
       - Azure.Storage.Blobs: master
     Java: &storage-blob-java
       Project: com.azure:azure-storage-perf
       TestName: DownloadBlob
       PackageVersions:
-      - Azure.Storage.Blobs: 12.1.0
       - Azure.Storage.Blobs: 12.10.0
       - Azure.Storage.Blobs: master
 - Name: storage-blob-upload
@@ -39,7 +37,7 @@
       TestName: GetBlobs
 - Name: storage-blob-uri-builder
   Arguments:
-  - -p 1
+  - -p 1 -w 0 -d 1
   Languages:
     Net:
       <<: *storage-blob-net

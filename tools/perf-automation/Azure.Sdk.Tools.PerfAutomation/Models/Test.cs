@@ -6,6 +6,6 @@ namespace Azure.Sdk.Tools.PerfAutomation.Models
     {
         public string Name { get; set; }
         public IEnumerable<string> Arguments { get; set; }
-        public IEnumerable<Language> Languages { get; set; }
+        public IDictionary<Language, LanguageSettings> Languages { get; set; }
     }
 }

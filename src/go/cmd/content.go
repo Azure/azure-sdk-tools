@@ -12,7 +12,7 @@ import (
 )
 
 // skip adding the const type in the token list
-const skip = "skip"
+const skip = "Untyped const"
 
 // newContent returns an initialized Content object.
 func newContent() content {

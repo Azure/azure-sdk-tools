@@ -124,7 +124,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                             switch (language.Key)
                             {
                                 case Language.Net:
-                                    result = await Net.RunAsync(options.WorkingDirectoryNet, options.Debug, language.Value, arguments, packageVersions);
+                                    result = await Net.RunAsync(options.WorkingDirectoryNet, language.Value, arguments, packageVersions);
                                     break;
                                 default:
                                     continue;

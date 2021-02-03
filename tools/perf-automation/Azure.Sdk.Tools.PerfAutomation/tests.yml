@@ -1,5 +1,5 @@
 ﻿- Name: storage-blob-download
-  Arguments: &storage-blob-arguments
+  Arguments:
   - -s 10240 -p 32
   - -s 10485760 -p 32
   Languages:
@@ -16,7 +16,9 @@
       - Azure.Storage.Blobs: 12.10.0
       - Azure.Storage.Blobs: master
 - Name: storage-blob-upload
-  Arguments: *storage-blob-arguments
+  Arguments:
+  - -s 10240 -p 32
+  - -s 10485760 -p 32
   Languages:
     Net:
       <<: *storage-blob-net

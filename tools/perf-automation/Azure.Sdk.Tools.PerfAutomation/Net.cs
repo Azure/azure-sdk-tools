@@ -18,7 +18,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 "dotnet",
                 processArguments,
                 workingDirectory: workingDirectory,
-                log: debug,
+                log: true,
                 captureOutput: true,
                 captureError: true
             );

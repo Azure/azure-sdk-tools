@@ -83,14 +83,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
             Options = options;
 
             var uniqueOutputFile = Util.GetUniquePath(options.OutputFile);
+            var results = new List<Result>();
 
-            var parser = new MergingParser(new YamlDotNet.Core.Parser(File.OpenText(options.InputFile)));
-
-            var deserializer = new Deserializer();
-            var tests = deserializer.Deserialize<List<Test>>(parser);
-
-            List<Result> results = new List<Result>();
-
+            var tests = GetTests(options.InputFile);
             var selectedTests = tests.Where(t =>
                 String.IsNullOrEmpty(options.TestFilter) || Regex.IsMatch(t.Name, options.TestFilter, RegexOptions.IgnoreCase));
 
@@ -104,6 +99,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                     {
                         Util.DebugWriteLine($"Test: {test.Name}, Language: {language.Key}, " +
                             $"TestName: {language.Value.TestName}, Arguments: {arguments}");
+
                         foreach (var packageVersions in language.Value.PackageVersions)
                         {
                             Util.DebugWriteLine("===");
@@ -143,6 +139,15 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
                 }
             }
+        }
+
+        private static List<Test> GetTests(string path)
+        {
+            var parser = new MergingParser(new YamlDotNet.Core.Parser(File.OpenText(path)));
+
+            var deserializer = new Deserializer();
+            var tests = deserializer.Deserialize<List<Test>>(parser);
+            return tests;
         }
     }
 }

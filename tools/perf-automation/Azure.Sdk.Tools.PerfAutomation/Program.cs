@@ -17,6 +17,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
     public static class Program
     {
         public static OptionsDefinition Options { get; set; }
+        public static Config Config { get; set; }
 
         private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions
         {
@@ -29,6 +30,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
         public class OptionsDefinition
         {
+            [Option('c', "configFile", Default = "config.yml")]
+            public string ConfigFile { get; set; }
+
             [Option('d', "debug")]
             public bool Debug { get; set; }
 
@@ -38,17 +42,14 @@ namespace Azure.Sdk.Tools.PerfAutomation
             [Option('l', "languages")]
             public IEnumerable<Language> Languages { get; set; }
 
-            [Option('i', "inputFile", Default = "input.yml")]
+            [Option('i', "inputFile", Default = "tests.yml")]
             public string InputFile { get; set; }
 
-            [Option('o', "outputFile", Default = "output.json")]
+            [Option('o', "outputFile", Default = "results.json")]
             public string OutputFile { get; set; }
 
             [Option('t', "testFilter", HelpText = "Regex of tests to run")]
             public string TestFilter { get; set; }
-
-            [Option("workingDirectoryNet")]
-            public string WorkingDirectoryNet { get; set; }
         }
 
         public static async Task Main(string[] args)
@@ -84,11 +85,11 @@ namespace Azure.Sdk.Tools.PerfAutomation
         private static async Task Run(OptionsDefinition options)
         {
             Options = options;
+            
+            Config = DeserializeYaml<Config>(options.ConfigFile);
 
-            var uniqueOutputFile = Util.GetUniquePath(options.OutputFile);
-            var results = new List<Result>();
+            var tests = DeserializeYaml<List<Test>>(options.InputFile);
 
-            var tests = GetTests(options.InputFile);
             var selectedTests = tests.Where(t =>
                 String.IsNullOrEmpty(options.TestFilter) || Regex.IsMatch(t.Name, options.TestFilter, RegexOptions.IgnoreCase));
 
@@ -106,8 +107,11 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 return;
             }
 
+            var uniqueOutputFile = Util.GetUniquePath(options.OutputFile);
             // Create output file early so user sees it immediately
             using (File.Create(uniqueOutputFile)) { }
+            
+            var results = new List<Result>();
 
             foreach (var test in selectedTests)
             {
@@ -124,7 +128,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                             switch (language.Key)
                             {
                                 case Language.Net:
-                                    result = await Net.RunAsync(options.WorkingDirectoryNet, language.Value, arguments, packageVersions);
+                                    result = await Net.RunAsync(language.Value, arguments, packageVersions);
                                     break;
                                 default:
                                     continue;
@@ -151,13 +155,11 @@ namespace Azure.Sdk.Tools.PerfAutomation
             }
         }
 
-        private static List<Test> GetTests(string path)
+        private static T DeserializeYaml<T>(string path)
         {
-            var parser = new MergingParser(new YamlDotNet.Core.Parser(File.OpenText(path)));
-
-            var deserializer = new Deserializer();
-            var tests = deserializer.Deserialize<List<Test>>(parser);
-            return tests;
+            using var fileReader = File.OpenText(path);
+            var parser = new MergingParser(new YamlDotNet.Core.Parser(fileReader));
+            return new Deserializer().Deserialize<T>(parser);
         }
     }
 }

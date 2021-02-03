@@ -13,8 +13,8 @@
       Project: sdk/storage/azure-storage-perf/pom.xml
       TestName: downloadblob
       PackageVersions:
-      - Azure.Storage.Blobs: 12.10.0
-      - Azure.Storage.Blobs: master
+      - azure-storage-blob: 12.10.0
+      - azure-storage-blob: master
 - Name: storage-blob-upload
   Arguments:
   - -s 10240 -p 32

@@ -11,16 +11,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="input.yml" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="input.yml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="CommandLineParser" Version="2.8.0" />
     <PackageReference Include="YamlDotNet" Version="9.1.4" />
   </ItemGroup>

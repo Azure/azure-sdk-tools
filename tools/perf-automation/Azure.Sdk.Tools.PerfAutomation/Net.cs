@@ -46,9 +46,11 @@ namespace Azure.Sdk.Tools.PerfAutomation
             File.Move(projectFile + ".bak", projectFile, overwrite: true);
         }
 
-        public static async Task<Result> RunAsync(string workingDirectory, LanguageSettings languageSettings,
-            string arguments, IDictionary<string, string> packageVersions)
+        public static async Task<Result> RunAsync(
+            LanguageSettings languageSettings, string arguments, IDictionary<string, string> packageVersions)
         {
+            var workingDirectory = Program.Config.WorkingDirectories[Language.Net];
+
             var projectFile = Path.Combine(workingDirectory, languageSettings.Project);
 
             try

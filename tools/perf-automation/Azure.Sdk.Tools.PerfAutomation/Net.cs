@@ -49,7 +49,6 @@ namespace Azure.Sdk.Tools.PerfAutomation
             LanguageSettings languageSettings, string arguments, IDictionary<string, string> packageVersions)
         {
             var workingDirectory = Program.Config.WorkingDirectories[Language.Net];
-
             var projectFile = Path.Combine(workingDirectory, languageSettings.Project);
 
             try

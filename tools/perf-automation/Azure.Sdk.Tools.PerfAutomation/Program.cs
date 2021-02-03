@@ -85,7 +85,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
         private static async Task Run(OptionsDefinition options)
         {
             Options = options;
-            
+
             Config = DeserializeYaml<Config>(options.ConfigFile);
 
             var tests = DeserializeYaml<List<Test>>(options.InputFile);
@@ -110,7 +110,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var uniqueOutputFile = Util.GetUniquePath(options.OutputFile);
             // Create output file early so user sees it immediately
             using (File.Create(uniqueOutputFile)) { }
-            
+
             var results = new List<Result>();
 
             foreach (var test in selectedTests)

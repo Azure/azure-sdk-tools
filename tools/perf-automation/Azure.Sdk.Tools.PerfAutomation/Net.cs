@@ -1,6 +1,5 @@
 ﻿using Azure.Sdk.Tools.PerfAutomation.Models;
 using Microsoft.Crank.Agent;
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
@@ -16,7 +15,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             File.Copy(projectFile, projectFile + ".bak", overwrite: false);
 
             var projectContents = File.ReadAllText(projectFile);
-            
+
             foreach (var v in packageVersions)
             {
                 var packageName = v.Key;

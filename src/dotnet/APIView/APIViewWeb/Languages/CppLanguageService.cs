@@ -188,7 +188,6 @@ namespace APIViewWeb
 
                         if (!namespaceLeafMap.ContainsKey(nameSpace))
                         {
-                        {
                             namespaceLeafMap[nameSpace] = new List<CppAstNode>();
                         }
                         namespaceLeafMap[nameSpace].Add(leafNamespaceNode);

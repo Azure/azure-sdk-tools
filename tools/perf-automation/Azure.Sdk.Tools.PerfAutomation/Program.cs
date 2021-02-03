@@ -130,6 +130,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
                                 case Language.Net:
                                     result = await Net.RunAsync(language.Value, arguments, packageVersions);
                                     break;
+                                case Language.Java:
+                                    result = await Java.RunAsync(language.Value, arguments, packageVersions);
+                                    break;
                                 default:
                                     continue;
                             }

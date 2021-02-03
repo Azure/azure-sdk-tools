@@ -16,7 +16,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
 {
     public static class Program
     {
-        private static OptionsDefinition Options { get; set; }
+        public static OptionsDefinition Options { get; set; }
 
         private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions
         {
@@ -27,7 +27,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             }
         };
 
-        private class OptionsDefinition
+        public class OptionsDefinition
         {
             [Option('d', "debug")]
             public bool Debug { get; set; }
@@ -82,7 +82,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
         {
             Options = options;
 
-            var uniqueOutputFile = GetUniquePath(options.OutputFile);
+            var uniqueOutputFile = Util.GetUniquePath(options.OutputFile);
 
             var parser = new MergingParser(new YamlDotNet.Core.Parser(File.OpenText(options.InputFile)));
 
@@ -102,14 +102,14 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 {
                     foreach (var arguments in test.Arguments)
                     {
-                        DebugWriteLine($"Test: {test.Name}, Language: {language.Key}, " +
+                        Util.DebugWriteLine($"Test: {test.Name}, Language: {language.Key}, " +
                             $"TestName: {language.Value.TestName}, Arguments: {arguments}");
                         foreach (var packageVersions in language.Value.PackageVersions)
                         {
-                            DebugWriteLine("===");
+                            Util.DebugWriteLine("===");
                             foreach (var packageVersion in packageVersions)
                             {
-                                DebugWriteLine($"  Name: {packageVersion.Key}, Version: {packageVersion.Value}");
+                                Util.DebugWriteLine($"  Name: {packageVersion.Key}, Version: {packageVersion.Value}");
                             }
 
                             Result result = null;
@@ -142,34 +142,6 @@ namespace Azure.Sdk.Tools.PerfAutomation
                     }
 
                 }
-            }
-        }
-
-        private static string GetUniquePath(string path)
-        {
-            var directoryName = Path.GetDirectoryName(path);
-            var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(path);
-            var extension = Path.GetExtension(path);
-
-            var uniquePath = Path.Join(directoryName, $"{fileNameWithoutExtension}{extension}");
-
-            int index = 0;
-            while (File.Exists(uniquePath))
-            {
-                index++;
-                uniquePath = Path.Join(directoryName, $"{fileNameWithoutExtension}.{index}{extension}");
-            }
-
-            using var stream = File.Create(uniquePath);
-
-            return uniquePath;
-        }
-
-        private static void DebugWriteLine(string value)
-        {
-            if (Options.Debug)
-            {
-                Console.WriteLine(value);
             }
         }
     }

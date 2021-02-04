@@ -73,10 +73,15 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             var processArguments = $"-jar {context} -- {testName} {arguments}";
 
-            var result = await Util.RunAsync("java", processArguments, workingDirectory);
+            var result = await Util.RunAsync("java", processArguments, workingDirectory, throwOnError: false);
 
             var match = Regex.Match(result.StandardOutput, @"\((.*) ops/s", RegexOptions.IgnoreCase | RegexOptions.RightToLeft);
-            var opsPerSecond = double.Parse(match.Groups[1].Value);
+
+            var opsPerSecond = -1d;
+            if (match.Success)
+            {
+                opsPerSecond = double.Parse(match.Groups[1].Value);
+            }
 
             return new Result
             {

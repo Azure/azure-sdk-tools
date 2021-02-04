@@ -1,5 +1,7 @@
-﻿using System;
+﻿using Microsoft.Crank.Agent;
 using System.IO;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.PerfAutomation
 {
@@ -23,12 +25,21 @@ namespace Azure.Sdk.Tools.PerfAutomation
             return uniquePath;
         }
 
-        public static void DebugWriteLine(string value)
+        public static async Task<ProcessResult> RunAsync(string filename, string arguments, string workingDirectory = null,
+            StringBuilder outputBuilder = null, StringBuilder errorBuilder = null)
         {
-            if (Program.Options.Debug)
-            {
-                Console.WriteLine(value);
-            }
+            var result = await ProcessUtil.RunAsync(
+                filename,
+                arguments,
+                workingDirectory: workingDirectory,
+                log: true,
+                captureOutput: true,
+                captureError: true);
+
+            outputBuilder?.Append(result.StandardOutput);
+            errorBuilder?.Append(result.StandardError);
+
+            return result;
         }
     }
 }

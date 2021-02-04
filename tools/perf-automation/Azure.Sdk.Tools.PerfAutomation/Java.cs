@@ -1,9 +1,8 @@
 ﻿using Azure.Sdk.Tools.PerfAutomation.Models;
-using Microsoft.Crank.Agent;
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml;
@@ -51,6 +50,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
         public static async Task<Result> RunAsync(
             LanguageSettings languageSettings, string arguments, IDictionary<string, string> packageVersions)
         {
+            var outputBuilder = new StringBuilder();
+            var errorBuilder = new StringBuilder();
+
             var workingDirectory = Program.Config.WorkingDirectories[Language.Java];
             var projectFile = Path.Combine(workingDirectory, languageSettings.Project);
 
@@ -60,7 +62,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
                 string buildFilename;
                 var buildArguments = $"package -T1C -am -Dmaven.test.skip=true -Dmaven.javadoc.skip=true --pl {languageSettings.Project}";
-                
+
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
                     buildFilename = "cmd";
@@ -71,14 +73,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                     buildFilename = "mvn";
                 }
 
-                var buildResult = await ProcessUtil.RunAsync(
-                    buildFilename,
-                    buildArguments,
-                    workingDirectory: workingDirectory,
-                    log: true,
-                    captureOutput: true,
-                    captureError: true
-                );
+                var buildResult = await Util.RunAsync(buildFilename, buildArguments, workingDirectory, outputBuilder, errorBuilder);
 
                 /*
                 [11:27:11.796] [INFO] Building jar: C:\Git\java\sdk\storage\azure-storage-perf\target\azure-storage-perf-1.0.0-beta.1-jar-with-dependencies.jar
@@ -89,14 +84,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
                 var processArguments = $"-jar {jar} -- {languageSettings.TestName} {arguments} {languageSettings.AdditionalArguments}";
 
-                var result = await ProcessUtil.RunAsync(
-                    "java",
-                    processArguments,
-                    workingDirectory: workingDirectory,
-                    log: true,
-                    captureOutput: true,
-                    captureError: true
-                );
+                var result = await Util.RunAsync("java", processArguments, workingDirectory, outputBuilder, errorBuilder);
 
                 var match = Regex.Match(result.StandardOutput, @"\((.*) ops/s", RegexOptions.IgnoreCase | RegexOptions.RightToLeft);
                 var opsPerSecond = double.Parse(match.Groups[1].Value);
@@ -104,8 +92,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 return new Result
                 {
                     OperationsPerSecond = opsPerSecond,
-                    StandardError = buildResult.StandardError + Environment.NewLine + result.StandardError,
-                    StandardOutput = buildResult.StandardOutput + Environment.NewLine + result.StandardOutput,
+                    StandardOutput = outputBuilder.ToString(),
+                    StandardError = errorBuilder.ToString()
                 };
             }
             finally

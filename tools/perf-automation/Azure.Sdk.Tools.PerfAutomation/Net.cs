@@ -1,5 +1,4 @@
 ﻿using Azure.Sdk.Tools.PerfAutomation.Models;
-using Microsoft.Crank.Agent;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
@@ -59,14 +58,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 var processArguments = $"run -c release -f netcoreapp2.1 -p {languageSettings.Project} -- " +
                     $"{languageSettings.TestName} {arguments} {languageSettings.AdditionalArguments}";
 
-                var result = await ProcessUtil.RunAsync(
-                    "dotnet",
-                    processArguments,
-                    workingDirectory: workingDirectory,
-                    log: true,
-                    captureOutput: true,
-                    captureError: true
-                );
+                var result = await Util.RunAsync("dotnet", processArguments, workingDirectory: workingDirectory);
 
                 var match = Regex.Match(result.StandardOutput, @"\((.*) ops/s", RegexOptions.IgnoreCase | RegexOptions.RightToLeft);
                 var opsPerSecond = double.Parse(match.Groups[1].Value);

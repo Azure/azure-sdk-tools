@@ -55,10 +55,15 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var processArguments = $"run --no-build -c release -f netcoreapp2.1 -p {project} -- " +
                 $"{testName} {arguments}";
 
-            var result = await Util.RunAsync("dotnet", processArguments, workingDirectory: workingDirectory);
+            var result = await Util.RunAsync("dotnet", processArguments, workingDirectory: workingDirectory, throwOnError: false);
 
             var match = Regex.Match(result.StandardOutput, @"\((.*) ops/s", RegexOptions.IgnoreCase | RegexOptions.RightToLeft);
-            var opsPerSecond = double.Parse(match.Groups[1].Value);
+
+            var opsPerSecond = -1d;
+            if (match.Success)
+            {
+                opsPerSecond = double.Parse(match.Groups[1].Value);
+            }
 
             return new Result
             {

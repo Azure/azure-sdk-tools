@@ -107,7 +107,7 @@ func TestConst(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(p.Tokens) != 78 {
+	if len(p.Tokens) != 76 {
 		t.Fatal("unexpected token length, signals a change in the output")
 	}
 	if p.Name != "testconst" {

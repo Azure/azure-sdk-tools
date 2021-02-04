@@ -11,6 +11,9 @@ import (
 	"strings"
 )
 
+// skip adding the const type in the token list
+const skip = "Untyped const"
+
 // newContent returns an initialized Content object.
 func newContent() content {
 	return content{
@@ -48,7 +51,7 @@ func (c *content) addConst(pkg pkg, g *ast.GenDecl) {
 		} else {
 			// get the type from the token type
 			if bl, ok := vs.Values[0].(*ast.BasicLit); ok {
-				co.Type = strings.ToLower(bl.Kind.String())
+				co.Type = skip
 				v = bl.Value
 			} else if ce, ok := vs.Values[0].(*ast.CallExpr); ok {
 				// const FooConst = FooType("value")
@@ -56,11 +59,11 @@ func (c *content) addConst(pkg pkg, g *ast.GenDecl) {
 				v = pkg.getText(ce.Args[0].Pos(), ce.Args[0].End())
 			} else if ce, ok := vs.Values[0].(*ast.BinaryExpr); ok {
 				// const FooConst = "value" + Bar
-				co.Type = "*ast.BinaryExpr"
+				co.Type = skip
 				v = pkg.getText(ce.X.Pos(), ce.Y.End())
 			} else if ce, ok := vs.Values[0].(*ast.UnaryExpr); ok {
 				// const FooConst = -1
-				co.Type = "*ast.UnaryExpr"
+				co.Type = skip
 				v = pkg.getText(ce.Pos(), ce.End())
 			} else {
 				panic("unhandled case for adding constant")

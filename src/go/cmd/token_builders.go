@@ -258,9 +258,7 @@ func makeConstTokens(name *string, c Const, list *[]Token) {
 	makeToken(nil, nil, "\t", whitespace, list)
 	makeToken(&n, nil, *name, typeName, list)
 	makeToken(nil, nil, " ", whitespace, list)
-	if c.Type == "*ast.BinaryExpr" {
-		makeToken(nil, nil, "", memberName, list)
-	} else {
+	if c.Type != skip {
 		makeToken(nil, nil, c.Type, memberName, list)
 	}
 	makeToken(nil, nil, " ", whitespace, list)

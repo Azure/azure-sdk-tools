@@ -52,7 +52,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             [Option('l', "languages")]
             public IEnumerable<Language> Languages { get; set; }
 
-            [Option('i', "inputFile", Default = "tests.yml")]
+            [Option("inputFile", Default = "tests.yml")]
             public string InputFile { get; set; }
 
             [Option('o', "outputFile", Default = "results.json")]

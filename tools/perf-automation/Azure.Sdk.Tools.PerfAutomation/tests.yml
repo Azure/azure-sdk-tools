@@ -24,7 +24,7 @@
       TestNames:
         Net: DownloadBlob
         Java: downloadblob
-        Python: downloadblob
+        Python: DownloadTest
     - Test: storage-blob-upload
       Arguments:
       - -s 10240 -p 32
@@ -32,4 +32,16 @@
       TestNames:
         Net: UploadBlob
         Java: uploadblob
-        Python: uploadblob
+        Python: UploadTest
+    - Test: no-op-1
+      Arguments:
+      - -w 1 -d 1
+      TestNames:
+        Net: NoOp
+        Python: NoOpTest
+    - Test: no-op-2
+      Arguments:
+      - -w 1 -d 1
+      TestNames:
+        Net: NoOp
+        Python: NoOpTest

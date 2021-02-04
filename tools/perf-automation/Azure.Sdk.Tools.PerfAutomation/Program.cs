@@ -19,6 +19,12 @@ namespace Azure.Sdk.Tools.PerfAutomation
         public static OptionsDefinition Options { get; set; }
         public static Config Config { get; set; }
 
+        private static Dictionary<Language, ILanguage> _languages = new Dictionary<Language, ILanguage>
+        {
+            { Language.Net, new Net() },
+            { Language.Python, new Python() }
+        };
+
         private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions
         {
             WriteIndented = true,
@@ -90,76 +96,87 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             var services = DeserializeYaml<List<ServiceInfo>>(options.InputFile);
 
-
-            //var selectedTests = tests.Where(t =>
-            //    String.IsNullOrEmpty(options.TestFilter) || Regex.IsMatch(t.Name, options.TestFilter, RegexOptions.IgnoreCase));
-
-            //foreach (var test in selectedTests)
-            //{
-            //    test.Languages = new Dictionary<LanguageName, LanguageSettingsOld>(test.Languages.Where(l => !options.Languages.Any() || options.Languages.Contains(l.Key)));
-            //}
+            var selectedServices = services.Select(s => new ServiceInfo
+            {
+                Service = s.Service,
+                Languages = s.Languages.Where(l => !options.Languages.Any() || options.Languages.Contains(l.Key))
+                    .ToDictionary(p => p.Key, p => p.Value),
+                Tests = s.Tests.Where(t =>
+                    String.IsNullOrEmpty(options.TestFilter) || Regex.IsMatch(t.Test, options.TestFilter, RegexOptions.IgnoreCase)).Select(t =>
+                        new TestInfo
+                        {
+                            Test = t.Test,
+                            Arguments = t.Arguments,
+                            TestNames = t.TestNames.Where(n => !options.Languages.Any() || options.Languages.Contains(n.Key))
+                                .ToDictionary(p => p.Key, p => p.Value)
+                        }
+                    )
+            });
 
             Console.WriteLine("=== Test Plan ===");
             var serializer = new Serializer();
-            serializer.Serialize(Console.Out, services);
+            serializer.Serialize(Console.Out, selectedServices);
 
-            //if (options.DryRun)
-            //{
-            //    return;
-            //}
+            if (options.DryRun)
+            {
+                return;
+            }
 
-            //var uniqueOutputFile = Util.GetUniquePath(options.OutputFile);
-            //// Create output file early so user sees it immediately
-            //using (File.Create(uniqueOutputFile)) { }
+            var uniqueOutputFile = Util.GetUniquePath(options.OutputFile);
+            // Create output file early so user sees it immediately
+            using (File.Create(uniqueOutputFile)) { }
 
-            //var results = new List<Result>();
+            var results = new List<Result>();
 
-            //foreach (var test in selectedTests)
-            //{
-            //    foreach (var language in test.Languages)
-            //    {
-            //        foreach (var arguments in test.Arguments)
-            //        {
-            //            foreach (var packageVersions in language.Value.PackageVersions)
-            //            {
-            //                Console.WriteLine();
+            foreach (var service in selectedServices)
+            {
+                foreach (var l in service.Languages)
+                {
+                    var language = l.Key;
+                    var languageInfo = l.Value;
 
-            //                Result result = null;
+                    foreach (var packageVersions in languageInfo.PackageVersions)
+                    {
+                        try
+                        {
+                            var (setupOutput, setupError) = await _languages[language].SetupAsync(languageInfo.Project, packageVersions);
 
-            //                switch (language.Key)
-            //                {
-            //                    case LanguageName.Net:
-            //                        result = await Net.RunAsync(language.Value, arguments, packageVersions);
-            //                        break;
-            //                    case LanguageName.Java:
-            //                        result = await Java.RunAsync(language.Value, arguments, packageVersions);
-            //                        break;
-            //                    case LanguageName.Python:
-            //                        result = await Python.RunAsync(language.Value, arguments, packageVersions);
-            //                        break;
-            //                    default:
-            //                        continue;
-            //                }
+                            foreach (var test in service.Tests)
+                            {
+                                foreach (var arguments in test.Arguments)
+                                {
+                                    var allArguments = $"{arguments} {languageInfo.AdditionalArguments}";
 
-            //                if (result != null)
-            //                {
-            //                    result.TestName = test.Name;
+                                    var result = await _languages[language].RunAsync(
+                                        languageInfo.Project,
+                                        test.TestNames[language],
+                                        allArguments
+                                    );
 
-            //                    result.Language = language.Key;
-            //                    result.Project = language.Value.Project;
-            //                    result.LanguageTestName = language.Value.TestName;
-            //                    result.Arguments = arguments;
-            //                    result.PackageVersions = packageVersions;
-            //                }
+                                    result.TestName = test.Test;
 
-            //                results.Add(result);
+                                    result.Language = language;
+                                    result.Project = languageInfo.Project;
+                                    result.LanguageTestName = test.TestNames[language];
+                                    result.Arguments = allArguments;
+                                    result.PackageVersions = packageVersions;
+                                    result.SetupStandardOutput = setupOutput;
+                                    result.SetupStandardError = setupError;
 
-            //                using var stream = File.OpenWrite(uniqueOutputFile);
-            //                await JsonSerializer.SerializeAsync(stream, results, JsonOptions);
-            //            }
-            //        }
-            //    }
-            //}
+                                    results.Add(result);
+
+                                    using var stream = File.OpenWrite(uniqueOutputFile);
+                                    await JsonSerializer.SerializeAsync(stream, results, JsonOptions);
+                                }
+                            }
+                        }
+                        finally
+                        {
+                            await _languages[language].CleanupAsync(languageInfo.Project);
+                        }
+                    }
+                }
+            }
         }
 
         private static T DeserializeYaml<T>(string path)

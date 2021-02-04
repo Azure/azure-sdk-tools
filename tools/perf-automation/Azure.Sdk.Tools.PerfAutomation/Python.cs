@@ -14,7 +14,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
         private static readonly string _envBin = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "scripts" : "bin";
         private static readonly string _python = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "python" : "python3";
 
-        public async Task<(string output, string error)> SetupAsync(string project, IDictionary<string, string> packageVersions)
+        public async Task<(string output, string error, string context)> SetupAsync(string project, IDictionary<string, string> packageVersions)
         {
             var workingDirectory = Path.Combine(Program.Config.WorkingDirectories[Language.Python], project);
             var env = Path.Combine(workingDirectory, _env);
@@ -55,10 +55,10 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 }
             }
 
-            return (outputBuilder.ToString(), errorBuilder.ToString());
+            return (outputBuilder.ToString(), errorBuilder.ToString(), null);
         }
 
-        public async Task<Result> RunAsync(string project, string testName, string arguments)
+        public async Task<Result> RunAsync(string project, string testName, string arguments, string context)
         {
             var outputBuilder = new StringBuilder();
             var errorBuilder = new StringBuilder();

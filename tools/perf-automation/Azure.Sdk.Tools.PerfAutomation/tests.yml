@@ -33,15 +33,3 @@
         Net: UploadBlob
         Java: uploadblob
         Python: UploadTest
-    - Test: no-op-1
-      Arguments:
-      - -w 1 -d 1
-      TestNames:
-        Net: NoOp
-        Python: NoOpTest
-    - Test: no-op-2
-      Arguments:
-      - -w 1 -d 1
-      TestNames:
-        Net: NoOp
-        Python: NoOpTest

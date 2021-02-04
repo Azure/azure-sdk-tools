@@ -9,7 +9,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
     public class Net : ILanguage
     {
 
-        public async Task<(string output, string error)> SetupAsync(string project, IDictionary<string, string> packageVersions)
+        public async Task<(string output, string error, string context)> SetupAsync(string project, IDictionary<string, string> packageVersions)
         {
             var workingDirectory = Program.Config.WorkingDirectories[Language.Net];
             var projectFile = Path.Combine(workingDirectory, project);
@@ -45,10 +45,10 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             var result = await Util.RunAsync("dotnet", processArguments, workingDirectory: workingDirectory);
 
-            return (result.StandardOutput, result.StandardError);
+            return (result.StandardOutput, result.StandardError, null);
         }
 
-        public async Task<Result> RunAsync(string project, string testName, string arguments)
+        public async Task<Result> RunAsync(string project, string testName, string arguments, string context)
         {
             var workingDirectory = Program.Config.WorkingDirectories[Language.Net];
 

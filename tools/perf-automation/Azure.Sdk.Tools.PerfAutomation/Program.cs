@@ -22,6 +22,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
         private static Dictionary<Language, ILanguage> _languages = new Dictionary<Language, ILanguage>
         {
             { Language.Net, new Net() },
+            { Language.Java, new Java() },
             { Language.Python, new Python() }
         };
 
@@ -139,7 +140,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                     {
                         try
                         {
-                            var (setupOutput, setupError) = await _languages[language].SetupAsync(languageInfo.Project, packageVersions);
+                            var (setupOutput, setupError, context) = await _languages[language].SetupAsync(languageInfo.Project, packageVersions);
 
                             foreach (var test in service.Tests)
                             {
@@ -150,7 +151,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
                                     var result = await _languages[language].RunAsync(
                                         languageInfo.Project,
                                         test.TestNames[language],
-                                        allArguments
+                                        allArguments,
+                                        context
                                     );
 
                                     result.TestName = test.Test;

@@ -7,8 +7,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
 {
     public interface ILanguage
     {
-        Task<(string output, string error)> SetupAsync(string project, IDictionary<string, string> packageVersions);
-        Task<Result> RunAsync(string project, string testName, string arguments);
+        Task<(string output, string error, string context)> SetupAsync(string project, IDictionary<string, string> packageVersions);
+        Task<Result> RunAsync(string project, string testName, string arguments, string context);
         Task CleanupAsync(string project);
     }
 }

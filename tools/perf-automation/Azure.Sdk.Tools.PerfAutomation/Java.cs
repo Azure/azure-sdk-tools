@@ -1,123 +1,118 @@
-﻿//using Azure.Sdk.Tools.PerfAutomation.Models;
-//using System.Collections.Generic;
-//using System.IO;
-//using System.Runtime.InteropServices;
-//using System.Text;
-//using System.Text.RegularExpressions;
-//using System.Threading.Tasks;
-//using System.Xml;
+﻿using Azure.Sdk.Tools.PerfAutomation.Models;
+using System.Collections.Generic;
+using System.IO;
+using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using System.Xml;
 
-//namespace Azure.Sdk.Tools.PerfAutomation
-//{
-//    static class Java
-//    {
-//        private static void SetPackageVersions(string projectFile, IDictionary<string, string> packageVersions)
-//        {
-//            // Create backup.  Throw if exists, since this shouldn't happen
-//            File.Copy(projectFile, projectFile + ".bak", overwrite: false);
+namespace Azure.Sdk.Tools.PerfAutomation
+{
+    public class Java : ILanguage
+    {
+        public async Task<(string output, string error, string context)> SetupAsync(string project, IDictionary<string, string> packageVersions)
+        {
+            var workingDirectory = Program.Config.WorkingDirectories[Language.Java];
+            var projectFile = Path.Combine(workingDirectory, project);
 
-//            var doc = new XmlDocument() { PreserveWhitespace = true };
-//            doc.Load(projectFile);
+            // Create backup.  Throw if exists, since this shouldn't happen
+            File.Copy(projectFile, projectFile + ".bak", overwrite: false);
 
-//            var nsmgr = new XmlNamespaceManager(doc.NameTable);
-//            nsmgr.AddNamespace("mvn", "http://maven.apache.org/POM/4.0.0");
+            var doc = new XmlDocument() { PreserveWhitespace = true };
+            doc.Load(projectFile);
 
-//            foreach (var v in packageVersions)
-//            {
-//                var packageName = v.Key;
-//                var packageVersion = v.Value;
+            var nsmgr = new XmlNamespaceManager(doc.NameTable);
+            nsmgr.AddNamespace("mvn", "http://maven.apache.org/POM/4.0.0");
 
-//                if (packageVersion == "master")
-//                {
-//                    continue;
-//                }
-//                else
-//                {
-//                    var versionNode = doc.SelectSingleNode($"/mvn:project/mvn:dependencies/mvn:dependency[mvn:artifactId='{packageName}']/mvn:version", nsmgr);
-//                    versionNode.InnerText = packageVersion;
-//                }
-//            }
+            foreach (var v in packageVersions)
+            {
+                var packageName = v.Key;
+                var packageVersion = v.Value;
 
-//            doc.Save(projectFile);
-//        }
+                if (packageVersion == "master")
+                {
+                    continue;
+                }
+                else
+                {
+                    var versionNode = doc.SelectSingleNode($"/mvn:project/mvn:dependencies/mvn:dependency[mvn:artifactId='{packageName}']/mvn:version", nsmgr);
+                    versionNode.InnerText = packageVersion;
+                }
+            }
 
-//        private static void UnsetPackageVersions(string projectFile)
-//        {
-//            // Restore backup
-//            File.Move(projectFile + ".bak", projectFile, overwrite: true);
-//        }
+            doc.Save(projectFile);
 
-//        public static async Task<Result> RunAsync(
-//            LanguageSettingsOld languageSettings, string arguments, IDictionary<string, string> packageVersions)
-//        {
-//            var outputBuilder = new StringBuilder();
-//            var errorBuilder = new StringBuilder();
+            string buildFilename;
+            var buildArguments = $"package -T1C -am -Dmaven.test.skip=true -Dmaven.javadoc.skip=true --pl {project}";
 
-//            var workingDirectory = Program.Config.WorkingDirectories[Language.Java];
-//            var projectFile = Path.Combine(workingDirectory, languageSettings.Project);
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                buildFilename = "cmd";
+                buildArguments = $"/c mvn {buildArguments}";
+            }
+            else
+            {
+                buildFilename = "mvn";
+            }
 
-//            try
-//            {
-//                SetPackageVersions(projectFile, packageVersions);
+            var result = await Util.RunAsync(buildFilename, buildArguments, workingDirectory);
 
-//                string buildFilename;
-//                var buildArguments = $"package -T1C -am -Dmaven.test.skip=true -Dmaven.javadoc.skip=true --pl {languageSettings.Project}";
+            /*
+            [11:27:11.796] [INFO] Building jar: C:\Git\java\sdk\storage\azure-storage-perf\target\azure-storage-perf-1.0.0-beta.1-jar-with-dependencies.jar
+            */
 
-//                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-//                {
-//                    buildFilename = "cmd";
-//                    buildArguments = $"/c mvn {buildArguments}";
-//                }
-//                else
-//                {
-//                    buildFilename = "mvn";
-//                }
+            var buildMatch = Regex.Match(result.StandardOutput, @"Building jar: (.*\.jar)", RegexOptions.IgnoreCase | RegexOptions.RightToLeft);
+            var jar = buildMatch.Groups[1].Value;
 
-//                var buildResult = await Util.RunAsync(buildFilename, buildArguments, workingDirectory, outputBuilder, errorBuilder);
+            return (result.StandardOutput, result.StandardError, jar);
+        }
 
-//                /*
-//                [11:27:11.796] [INFO] Building jar: C:\Git\java\sdk\storage\azure-storage-perf\target\azure-storage-perf-1.0.0-beta.1-jar-with-dependencies.jar
-//                */
+        public async Task<Result> RunAsync(string project, string testName, string arguments, string context)
+        {
+            var workingDirectory = Program.Config.WorkingDirectories[Language.Java];
 
-//                var buildMatch = Regex.Match(buildResult.StandardOutput, @"Building jar: (.*\.jar)", RegexOptions.IgnoreCase | RegexOptions.RightToLeft);
-//                var jar = buildMatch.Groups[1].Value;
+            var processArguments = $"-jar {context} -- {testName} {arguments}";
 
-//                var processArguments = $"-jar {jar} -- {languageSettings.TestName} {arguments} {languageSettings.AdditionalArguments}";
+            var result = await Util.RunAsync("java", processArguments, workingDirectory);
 
-//                var result = await Util.RunAsync("java", processArguments, workingDirectory, outputBuilder, errorBuilder);
+            var match = Regex.Match(result.StandardOutput, @"\((.*) ops/s", RegexOptions.IgnoreCase | RegexOptions.RightToLeft);
+            var opsPerSecond = double.Parse(match.Groups[1].Value);
 
-//                var match = Regex.Match(result.StandardOutput, @"\((.*) ops/s", RegexOptions.IgnoreCase | RegexOptions.RightToLeft);
-//                var opsPerSecond = double.Parse(match.Groups[1].Value);
+            return new Result
+            {
+                OperationsPerSecond = opsPerSecond,
+                StandardOutput = result.StandardOutput,
+                StandardError = result.StandardError
+            };
+        }
 
-//                return new Result
-//                {
-//                    OperationsPerSecond = opsPerSecond,
-//                    StandardOutput = outputBuilder.ToString(),
-//                    StandardError = errorBuilder.ToString()
-//                };
-//            }
-//            finally
-//            {
-//                UnsetPackageVersions(projectFile);
-//            }
-//        }
+        public Task CleanupAsync(string project)
+        {
+            var workingDirectory = Program.Config.WorkingDirectories[Language.Java];
+            var projectFile = Path.Combine(workingDirectory, project);
 
-//        /*
-//        === Warmup ===
-//        Current         Total           Average
-//        124293          124293          127608.18
-//        1879            126172          127618.75
+            // Restore backup
+            File.Move(projectFile + ".bak", projectFile, overwrite: true);
 
-//        === Results ===
-//        Completed 126,172 operations in a weighted-average of 0.99s (127,618.75 ops/s, 0.000 s/op)
+            return Task.CompletedTask;
+        }
 
-//        === Test ===
-//        Current         Total           Average
-//        157630          157630          156225.73
-//        0               157630          156225.73
+        /*
+        === Warmup ===
+        Current         Total           Average
+        124293          124293          127608.18
+        1879            126172          127618.75
 
-//        === Results ===
-//        Completed 157,630 operations in a weighted-average of 1.01s (156,225.73 ops/s, 0.000 s/op)
-//        */
-//    }
-//}
+        === Results ===
+        Completed 126,172 operations in a weighted-average of 0.99s (127,618.75 ops/s, 0.000 s/op)
+
+        === Test ===
+        Current         Total           Average
+        157630          157630          156225.73
+        0               157630          156225.73
+
+        === Results ===
+        Completed 157,630 operations in a weighted-average of 1.01s (156,225.73 ops/s, 0.000 s/op)
+        */
+    }
+}

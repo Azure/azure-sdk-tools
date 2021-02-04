@@ -25,7 +25,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             return uniquePath;
         }
 
-        public static async Task<ProcessResult> RunAsync(string filename, string arguments, string workingDirectory = null,
+        public static async Task<ProcessResult> RunAsync(string filename, string arguments, string workingDirectory,
             StringBuilder outputBuilder = null, StringBuilder errorBuilder = null)
         {
             var result = await ProcessUtil.RunAsync(

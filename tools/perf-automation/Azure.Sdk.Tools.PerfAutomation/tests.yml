@@ -16,6 +16,12 @@
       PackageVersions:
       - azure-storage-blob: 12.10.0
       - azure-storage-blob: master
+    Python: &storage-blob-python
+      Project: sdk/storage/azure-storage-blob
+      TestName: downloadblob
+      PackageVersions:
+      - azure-storage-blob: 12.7.1
+      - azure-storage-blob: master
 - Name: storage-blob-upload
   Arguments:
   - -s 10240 -p 32
@@ -52,3 +58,10 @@
     Java:
       <<: *storage-blob-java
       TestName: blobserviceclientbuilder
+- Name: no-op
+  Arguments:
+  - -w 1 -d 1
+  Languages:
+    Python:
+      <<: *storage-blob-python
+      TestName: NoOpTest

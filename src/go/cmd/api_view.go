@@ -10,6 +10,7 @@ import (
 	"go/parser"
 	"go/token"
 	"io/ioutil"
+	"strings"
 )
 
 type TokenType int
@@ -148,6 +149,14 @@ func loadPackage(dir string) (pkg pkg, err error) {
 	if len(packages) < 1 {
 		err = fmt.Errorf("didn't find any packages in '%s'. Length: %d", dir, len(packages))
 		return
+	}
+	// remove test packages
+	if len(packages) == 2 {
+		for i := range packages {
+			if strings.HasSuffix(i, "_test") {
+				delete(packages, i)
+			}
+		}
 	}
 	if len(packages) > 1 {
 		err = fmt.Errorf("found more than one package in '%s'. Length: %d", dir, len(packages))

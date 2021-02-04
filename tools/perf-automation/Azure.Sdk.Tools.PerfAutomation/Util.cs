@@ -26,7 +26,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
         }
 
         public static async Task<ProcessResult> RunAsync(string filename, string arguments, string workingDirectory,
-            bool throwOnError = true, StringBuilder outputBuilder = null, StringBuilder errorBuilder = null)
+            StringBuilder outputBuilder = null, StringBuilder errorBuilder = null, bool throwOnError = true)
         {
             var result = await ProcessUtil.RunAsync(
                 filename,

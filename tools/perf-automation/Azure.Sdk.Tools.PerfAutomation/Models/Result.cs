@@ -11,6 +11,8 @@ namespace Azure.Sdk.Tools.PerfAutomation.Models
         public string LanguageTestName { get; set; }
         public string Arguments { get; set; }
         public IDictionary<string, string> PackageVersions { get; set; }
+        public string SetupStandardOutput { get; set; }
+        public string SetupStandardError { get; set; }
 
         public double OperationsPerSecond { get; set; }
         public string StandardOutput { get; set; }

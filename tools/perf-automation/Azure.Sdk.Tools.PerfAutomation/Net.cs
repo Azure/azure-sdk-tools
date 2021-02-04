@@ -1,95 +1,98 @@
-﻿//using Azure.Sdk.Tools.PerfAutomation.Models;
-//using System.Collections.Generic;
-//using System.IO;
-//using System.Text.RegularExpressions;
-//using System.Threading.Tasks;
+﻿using Azure.Sdk.Tools.PerfAutomation.Models;
+using System.Collections.Generic;
+using System.IO;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
-//namespace Azure.Sdk.Tools.PerfAutomation
-//{
-//    static class Net
-//    {
-//        private static void SetPackageVersions(string projectFile, IDictionary<string, string> packageVersions)
-//        {
-//            // Create backup.  Throw if exists, since this shouldn't happen
-//            File.Copy(projectFile, projectFile + ".bak", overwrite: false);
+namespace Azure.Sdk.Tools.PerfAutomation
+{
+    public class Net : ILanguage
+    {
 
-//            var projectContents = File.ReadAllText(projectFile);
+        public async Task<(string output, string error)> SetupAsync(string project, IDictionary<string, string> packageVersions)
+        {
+            var workingDirectory = Program.Config.WorkingDirectories[Language.Net];
+            var projectFile = Path.Combine(workingDirectory, project);
 
-//            foreach (var v in packageVersions)
-//            {
-//                var packageName = v.Key;
-//                var packageVersion = v.Value;
+            File.Copy(projectFile, projectFile + ".bak", overwrite: true);
 
-//                if (packageVersion == "master")
-//                {
-//                    continue;
-//                }
-//                else
-//                {
-//                    // TODO: Use XmlDocument instead of Regex
-//                    projectContents = Regex.Replace(
-//                        projectContents,
-//                        $"<ProjectReference [^>]*{packageName}.csproj[^<]*/>",
-//                        @$"<PackageReference Include=""{packageName}"" VersionOverride=""{packageVersion}"" />",
-//                        RegexOptions.IgnoreCase | RegexOptions.Singleline
-//                    );
-//                }
-//            }
+            var projectContents = File.ReadAllText(projectFile);
 
-//            File.WriteAllText(projectFile, projectContents);
-//        }
+            foreach (var v in packageVersions)
+            {
+                var packageName = v.Key;
+                var packageVersion = v.Value;
 
-//        private static void UnsetPackageVersions(string projectFile)
-//        {
-//            // Restore backup
-//            File.Move(projectFile + ".bak", projectFile, overwrite: true);
-//        }
+                if (packageVersion == "master")
+                {
+                    continue;
+                }
+                else
+                {
+                    // TODO: Use XmlDocument instead of Regex
+                    projectContents = Regex.Replace(
+                        projectContents,
+                        $"<ProjectReference [^>]*{packageName}.csproj[^<]*/>",
+                        @$"<PackageReference Include=""{packageName}"" VersionOverride=""{packageVersion}"" />",
+                        RegexOptions.IgnoreCase | RegexOptions.Singleline
+                    );
+                }
+            }
 
-//        public static async Task<Result> RunAsync(
-//            LanguageSettingsOld languageSettings, string arguments, IDictionary<string, string> packageVersions)
-//        {
-//            var workingDirectory = Program.Config.WorkingDirectories[LanguageName.Net];
-//            var projectFile = Path.Combine(workingDirectory, languageSettings.Project);
+            File.WriteAllText(projectFile, projectContents);
 
-//            try
-//            {
-//                SetPackageVersions(projectFile, packageVersions);
+            var processArguments = $"build -c release -f netcoreapp2.1 {project}";
 
-//                var processArguments = $"run -c release -f netcoreapp2.1 -p {languageSettings.Project} -- " +
-//                    $"{languageSettings.TestName} {arguments} {languageSettings.AdditionalArguments}";
+            var result = await Util.RunAsync("dotnet", processArguments, workingDirectory: workingDirectory);
 
-//                var result = await Util.RunAsync("dotnet", processArguments, workingDirectory: workingDirectory);
+            return (result.StandardOutput, result.StandardError);
+        }
 
-//                var match = Regex.Match(result.StandardOutput, @"\((.*) ops/s", RegexOptions.IgnoreCase | RegexOptions.RightToLeft);
-//                var opsPerSecond = double.Parse(match.Groups[1].Value);
+        public async Task<Result> RunAsync(string project, string testName, string arguments)
+        {
+            var workingDirectory = Program.Config.WorkingDirectories[Language.Net];
 
-//                return new Result
-//                {
-//                    OperationsPerSecond = opsPerSecond,
-//                    StandardError = result.StandardError,
-//                    StandardOutput = result.StandardOutput,
-//                };
-//            }
-//            finally
-//            {
-//                UnsetPackageVersions(projectFile);
-//            }
-//        }
+            var processArguments = $"run --no-build -c release -f netcoreapp2.1 -p {project} -- " +
+                $"{testName} {arguments}";
 
-//        /*
-//        === Warmup ===
-//        Current         Total           Average
-//        622025          622025          617437.38
+            var result = await Util.RunAsync("dotnet", processArguments, workingDirectory: workingDirectory);
 
-//        === Results ===
-//        Completed 622,025 operations in a weighted-average of 1.01s (617,437.38 ops/s, 0.000 s/op)
+            var match = Regex.Match(result.StandardOutput, @"\((.*) ops/s", RegexOptions.IgnoreCase | RegexOptions.RightToLeft);
+            var opsPerSecond = double.Parse(match.Groups[1].Value);
 
-//        === Test ===
-//        Current         Total           Average
-//        693696          693696          692328.31
+            return new Result
+            {
+                OperationsPerSecond = opsPerSecond,
+                StandardError = result.StandardError,
+                StandardOutput = result.StandardOutput,
+            };
+        }
 
-//        === Results ===
-//        Completed 693,696 operations in a weighted-average of 1.00s (692,328.31 ops/s, 0.000 s/op)
-//        */
-//    }
-//}
+        public Task CleanupAsync(string project)
+        {
+            var workingDirectory = Program.Config.WorkingDirectories[Language.Net];
+            var projectFile = Path.Combine(workingDirectory, project);
+
+            // Restore backup
+            File.Move(projectFile + ".bak", projectFile, overwrite: true);
+
+            return Task.CompletedTask;
+        }
+
+        /*
+        === Warmup ===
+        Current         Total           Average
+        622025          622025          617437.38
+
+        === Results ===
+        Completed 622,025 operations in a weighted-average of 1.01s (617,437.38 ops/s, 0.000 s/op)
+
+        === Test ===
+        Current         Total           Average
+        693696          693696          692328.31
+
+        === Results ===
+        Completed 693,696 operations in a weighted-average of 1.00s (692,328.31 ops/s, 0.000 s/op)
+        */
+    }
+}

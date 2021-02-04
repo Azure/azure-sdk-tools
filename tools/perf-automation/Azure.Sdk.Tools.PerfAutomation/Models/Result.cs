@@ -14,6 +14,8 @@ namespace Azure.Sdk.Tools.PerfAutomation.Models
         public string SetupStandardOutput { get; set; }
         public string SetupStandardError { get; set; }
 
+        public int Iteration { get; set; }
+
         public double OperationsPerSecond { get; set; }
         public string StandardOutput { get; set; }
         public string StandardError { get; set; }

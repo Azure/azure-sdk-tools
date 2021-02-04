@@ -71,7 +71,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
         {
             var workingDirectory = Program.Config.WorkingDirectories[Language.Java];
 
-            var processArguments = $"-jar {context} -- {testName} {arguments}";
+            var processArguments = $"-jar {context} {testName} {arguments}";
 
             var result = await Util.RunAsync("java", processArguments, workingDirectory);
 

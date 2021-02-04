@@ -33,3 +33,18 @@
         Net: UploadBlob
         Java: uploadblob
         Python: UploadTest
+    - Test: storage-blob-getblobs
+      Arguments:
+      - -c 5 -p 32
+      - -c 500 -p 32
+      TestNames:
+        Net: GetBlobs
+        Java: listblobs
+        Python: ListBlobsTest
+    - Test: no-op
+      Arguments:
+      - -w 1 -d 1
+      TestNames:
+        Net: NoOp
+        Java: noop
+        Python: NoOpTest

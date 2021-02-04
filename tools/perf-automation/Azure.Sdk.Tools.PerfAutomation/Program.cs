@@ -144,7 +144,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
                             foreach (var test in service.Tests)
                             {
-                                foreach (var arguments in test.Arguments)
+                                var syncArguments = test.Arguments.SelectMany(a => new string[] { a, a + " --sync" });
+
+                                foreach (var arguments in syncArguments)
                                 {
                                     var allArguments = $"{arguments} {languageInfo.AdditionalArguments}";
 

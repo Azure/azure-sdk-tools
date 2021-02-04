@@ -88,77 +88,78 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             Config = DeserializeYaml<Config>(options.ConfigFile);
 
-            var tests = DeserializeYaml<List<Test>>(options.InputFile);
+            var services = DeserializeYaml<List<ServiceInfo>>(options.InputFile);
 
-            var selectedTests = tests.Where(t =>
-                String.IsNullOrEmpty(options.TestFilter) || Regex.IsMatch(t.Name, options.TestFilter, RegexOptions.IgnoreCase));
 
-            foreach (var test in selectedTests)
-            {
-                test.Languages = new Dictionary<Language, LanguageSettings>(test.Languages.Where(l => !options.Languages.Any() || options.Languages.Contains(l.Key)));
-            }
+            //var selectedTests = tests.Where(t =>
+            //    String.IsNullOrEmpty(options.TestFilter) || Regex.IsMatch(t.Name, options.TestFilter, RegexOptions.IgnoreCase));
+
+            //foreach (var test in selectedTests)
+            //{
+            //    test.Languages = new Dictionary<LanguageName, LanguageSettingsOld>(test.Languages.Where(l => !options.Languages.Any() || options.Languages.Contains(l.Key)));
+            //}
 
             Console.WriteLine("=== Test Plan ===");
             var serializer = new Serializer();
-            serializer.Serialize(Console.Out, selectedTests);
+            serializer.Serialize(Console.Out, services);
 
-            if (options.DryRun)
-            {
-                return;
-            }
+            //if (options.DryRun)
+            //{
+            //    return;
+            //}
 
-            var uniqueOutputFile = Util.GetUniquePath(options.OutputFile);
-            // Create output file early so user sees it immediately
-            using (File.Create(uniqueOutputFile)) { }
+            //var uniqueOutputFile = Util.GetUniquePath(options.OutputFile);
+            //// Create output file early so user sees it immediately
+            //using (File.Create(uniqueOutputFile)) { }
 
-            var results = new List<Result>();
+            //var results = new List<Result>();
 
-            foreach (var test in selectedTests)
-            {
-                foreach (var language in test.Languages)
-                {
-                    foreach (var arguments in test.Arguments)
-                    {
-                        foreach (var packageVersions in language.Value.PackageVersions)
-                        {
-                            Console.WriteLine();
+            //foreach (var test in selectedTests)
+            //{
+            //    foreach (var language in test.Languages)
+            //    {
+            //        foreach (var arguments in test.Arguments)
+            //        {
+            //            foreach (var packageVersions in language.Value.PackageVersions)
+            //            {
+            //                Console.WriteLine();
 
-                            Result result = null;
+            //                Result result = null;
 
-                            switch (language.Key)
-                            {
-                                case Language.Net:
-                                    result = await Net.RunAsync(language.Value, arguments, packageVersions);
-                                    break;
-                                case Language.Java:
-                                    result = await Java.RunAsync(language.Value, arguments, packageVersions);
-                                    break;
-                                case Language.Python:
-                                    result = await Python.RunAsync(language.Value, arguments, packageVersions);
-                                    break;
-                                default:
-                                    continue;
-                            }
+            //                switch (language.Key)
+            //                {
+            //                    case LanguageName.Net:
+            //                        result = await Net.RunAsync(language.Value, arguments, packageVersions);
+            //                        break;
+            //                    case LanguageName.Java:
+            //                        result = await Java.RunAsync(language.Value, arguments, packageVersions);
+            //                        break;
+            //                    case LanguageName.Python:
+            //                        result = await Python.RunAsync(language.Value, arguments, packageVersions);
+            //                        break;
+            //                    default:
+            //                        continue;
+            //                }
 
-                            if (result != null)
-                            {
-                                result.TestName = test.Name;
+            //                if (result != null)
+            //                {
+            //                    result.TestName = test.Name;
 
-                                result.Language = language.Key;
-                                result.Project = language.Value.Project;
-                                result.LanguageTestName = language.Value.TestName;
-                                result.Arguments = arguments;
-                                result.PackageVersions = packageVersions;
-                            }
+            //                    result.Language = language.Key;
+            //                    result.Project = language.Value.Project;
+            //                    result.LanguageTestName = language.Value.TestName;
+            //                    result.Arguments = arguments;
+            //                    result.PackageVersions = packageVersions;
+            //                }
 
-                            results.Add(result);
+            //                results.Add(result);
 
-                            using var stream = File.OpenWrite(uniqueOutputFile);
-                            await JsonSerializer.SerializeAsync(stream, results, JsonOptions);
-                        }
-                    }
-                }
-            }
+            //                using var stream = File.OpenWrite(uniqueOutputFile);
+            //                await JsonSerializer.SerializeAsync(stream, results, JsonOptions);
+            //            }
+            //        }
+            //    }
+            //}
         }
 
         private static T DeserializeYaml<T>(string path)

@@ -1,67 +1,35 @@
-﻿- Name: storage-blob-download
-  Arguments:
-  - -s 10240 -p 32
-  - -s 10485760 -p 32
+﻿- Service: storage-blob
   Languages:
-    Net: &storage-blob-net
+    Net:
       Project: sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Azure.Storage.Blobs.Perf.csproj
-      TestName: DownloadBlob
       PackageVersions:
       - Azure.Storage.Blobs: 12.8.0
       - Azure.Storage.Blobs: master
-    Java: &storage-blob-java
+    Java:
       Project: sdk/storage/azure-storage-perf/pom.xml
       AdditionalArguments: -w 30 -d 30
-      TestName: downloadblob
       PackageVersions:
       - azure-storage-blob: 12.10.0
       - azure-storage-blob: master
-    Python: &storage-blob-python
+    Python:
       Project: sdk/storage/azure-storage-blob
-      TestName: downloadblob
       PackageVersions:
       - azure-storage-blob: 12.7.1
       - azure-storage-blob: master
-- Name: storage-blob-upload
-  Arguments:
-  - -s 10240 -p 32
-  - -s 10485760 -p 32
-  Languages:
-    Net:
-      <<: *storage-blob-net
-      TestName: UploadBlob
-    Java:
-      <<: *storage-blob-java
-      TestName: uploadblob
-- Name: storage-blob-getblobs
-  Arguments:
-  - -c 5 -p 32
-  - -c 500 -p 32
-  Languages:
-    Net:
-      <<: *storage-blob-net
-      TestName: GetBlobs
-    Java:
-      <<: *storage-blob-java
-      TestName: getblobs
-- Name: storage-blob-uri-builder
-  Arguments:
-  - -w 1 -d 1
-  Languages:
-    Net:
-      <<: *storage-blob-net
-      TestName: BlobUriBuilderCtor
-- Name: blob-service-client-builder
-  Arguments:
-  - -p 1
-  Languages:
-    Java:
-      <<: *storage-blob-java
-      TestName: blobserviceclientbuilder
-- Name: no-op
-  Arguments:
-  - -w 1 -d 1
-  Languages:
-    Python:
-      <<: *storage-blob-python
-      TestName: NoOpTest
+  Tests:
+    - Test: storage-blob-download
+      Arguments:
+      - -s 10240 -p 32
+      - -s 10485760 -p 32
+      TestNames:
+        Net: DownloadBlob
+        Java: downloadblob
+        Python: downloadblob
+    - Test: storage-blob-upload
+      Arguments:
+      - -s 10240 -p 32
+      - -s 10485760 -p 32
+      TestNames:
+        Net: UploadBlob
+        Java: uploadblob
+        Python: uploadblob

@@ -1,0 +1,37 @@
+﻿
+
+
+
+
+- Name: storage-blob-getblobs
+  Arguments:
+  - -c 5 -p 32
+  - -c 500 -p 32
+  Languages:
+    Net:
+      <<: *storage-blob-net
+      TestName: GetBlobs
+    Java:
+      <<: *storage-blob-java
+      TestName: getblobs
+- Name: storage-blob-uri-builder
+  Arguments:
+  - -w 1 -d 1
+  Languages:
+    Net:
+      <<: *storage-blob-net
+      TestName: BlobUriBuilderCtor
+- Name: blob-service-client-builder
+  Arguments:
+  - -p 1
+  Languages:
+    Java:
+      <<: *storage-blob-java
+      TestName: blobserviceclientbuilder
+- Name: no-op
+  Arguments:
+  - -w 1 -d 1
+  Languages:
+    Python:
+      <<: *storage-blob-python
+      TestName: NoOpTest

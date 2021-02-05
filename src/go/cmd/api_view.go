@@ -10,6 +10,7 @@ import (
 	"go/parser"
 	"go/token"
 	"io/ioutil"
+	"os"
 	"strings"
 )
 
@@ -141,22 +142,16 @@ func inspectAST(pkg pkg) content {
 func loadPackage(dir string) (pkg pkg, err error) {
 	pkg.files = map[string][]byte{}
 	pkg.f = token.NewFileSet()
-	packages, err := parser.ParseDir(pkg.f, dir, nil, 0)
-	// packages, err := parser.ParseFile(pkg.f, dir, nil, 0)
+	packages, err := parser.ParseDir(pkg.f, dir, func(f os.FileInfo) bool {
+		// exclude test files
+		return !strings.HasSuffix(f.Name(), "_test.go")
+	}, 0)
 	if err != nil {
 		return
 	}
 	if len(packages) < 1 {
 		err = fmt.Errorf("didn't find any packages in '%s'. Length: %d", dir, len(packages))
 		return
-	}
-	// remove test packages
-	if len(packages) == 2 {
-		for i := range packages {
-			if strings.HasSuffix(i, "_test") {
-				delete(packages, i)
-			}
-		}
 	}
 	if len(packages) > 1 {
 		err = fmt.Errorf("found more than one package in '%s'. Length: %d", dir, len(packages))

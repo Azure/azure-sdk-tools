@@ -133,13 +133,13 @@ namespace Azure.Sdk.Tools.PerfAutomation
                     )
             }); ;
 
-            Console.WriteLine("=== Test Plan ===");
-
-            Console.WriteLine($"Iterations: {options.Iterations}");
-            Console.WriteLine($"Async: {!options.NoAsync}");
-            Console.WriteLine($"Sync: {!options.NoSync}");
-
             var serializer = new Serializer();
+            Console.WriteLine("=== Options ===");
+            serializer.Serialize(Console.Out, options);
+
+            Console.WriteLine();
+
+            Console.WriteLine("=== Test Plan ===");
             serializer.Serialize(Console.Out, selectedServices);
 
             if (options.DryRun)

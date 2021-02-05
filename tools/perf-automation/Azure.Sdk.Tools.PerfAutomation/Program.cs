@@ -118,7 +118,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                         Project = p.Value.Project,
                         AdditionalArguments = p.Value.AdditionalArguments,
                         PackageVersions = p.Value.PackageVersions.Where(d => d.Keys.Concat(d.Values).Any(s =>
-                            Regex.IsMatch(s, options.VersionFilter)
+                            String.IsNullOrEmpty(options.VersionFilter) || Regex.IsMatch(s, options.VersionFilter)
                         ))
                     }),
                 Tests = s.Tests.Where(t =>
@@ -134,6 +134,11 @@ namespace Azure.Sdk.Tools.PerfAutomation
             }); ;
 
             Console.WriteLine("=== Test Plan ===");
+
+            Console.WriteLine($"Iterations: {options.Iterations}");
+            Console.WriteLine($"Async: {!options.NoAsync}");
+            Console.WriteLine($"Sync: {!options.NoSync}");
+
             var serializer = new Serializer();
             serializer.Serialize(Console.Out, selectedServices);
 

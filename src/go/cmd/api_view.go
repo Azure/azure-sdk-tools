@@ -10,6 +10,8 @@ import (
 	"go/parser"
 	"go/token"
 	"io/ioutil"
+	"os"
+	"strings"
 )
 
 type TokenType int
@@ -140,8 +142,10 @@ func inspectAST(pkg pkg) content {
 func loadPackage(dir string) (pkg pkg, err error) {
 	pkg.files = map[string][]byte{}
 	pkg.f = token.NewFileSet()
-	packages, err := parser.ParseDir(pkg.f, dir, nil, 0)
-	// packages, err := parser.ParseFile(pkg.f, dir, nil, 0)
+	packages, err := parser.ParseDir(pkg.f, dir, func(f os.FileInfo) bool {
+		// exclude test files
+		return !strings.HasSuffix(f.Name(), "_test.go")
+	}, 0)
 	if err != nil {
 		return
 	}

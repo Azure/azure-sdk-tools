@@ -110,9 +110,6 @@ func (c *content) parseConst(tokenList *[]Token) {
 			// this token parsing is performed so that const declarations of different types are declared
 			// in their own const block to make them easier to click on
 			n := t
-			if n == "*ast.BinaryExpr" {
-				n = "const"
-			}
 			makeToken(nil, nil, "", 1, tokenList)
 			makeToken(nil, nil, " ", whitespace, tokenList)
 			makeToken(nil, nil, "", 1, tokenList)
@@ -167,8 +164,13 @@ func (c *content) addInterface(pkg pkg, name string, i *ast.InterfaceType) {
 
 // adds the specified struct type to the exports list.
 func (c *content) parseInterface(tokenList *[]Token) {
-	for k, v := range c.Interfaces {
-		makeInterfaceTokens(&k, v.EmbeddedInterfaces, v.Methods, tokenList)
+	keys := []string{}
+	for s := range c.Interfaces {
+		keys = append(keys, s)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		makeInterfaceTokens(&k, c.Interfaces[k].EmbeddedInterfaces, c.Interfaces[k].Methods, tokenList)
 	}
 }
 
@@ -316,13 +318,15 @@ func (c *content) parseFunc(tokenList *[]Token) {
 func (c *content) generateNavChildItems() []Navigation {
 	childItems := []Navigation{}
 	types := []string{}
+	keys := []string{}
 	for _, s := range c.Consts {
-		if !includesType(types, s.Type) {
-			types = append(types, s.Type)
-			temp := s.Type
-			if temp == "*ast.BinaryExpr" {
-				temp = "const"
-			}
+		keys = append(keys, s.Type)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		if !includesType(types, k) {
+			types = append(types, k)
+			temp := k
 			childItems = append(childItems, Navigation{
 				Text:         &temp,
 				NavigationId: &temp,
@@ -333,10 +337,11 @@ func (c *content) generateNavChildItems() []Navigation {
 			})
 		}
 	}
-	keys := []string{}
+	keys = []string{}
 	for i := range c.Interfaces {
 		keys = append(keys, i)
 	}
+	sort.Strings(keys)
 	for k := range keys {
 		childItems = append(childItems, Navigation{
 			Text:         &keys[k],
@@ -351,6 +356,7 @@ func (c *content) generateNavChildItems() []Navigation {
 	for i := range c.Structs {
 		keys = append(keys, i)
 	}
+	sort.Strings(keys)
 	for k := range keys {
 		childItems = append(childItems, Navigation{
 			Text:         &keys[k],
@@ -365,6 +371,7 @@ func (c *content) generateNavChildItems() []Navigation {
 	for i := range c.Funcs {
 		keys = append(keys, i)
 	}
+	sort.Strings(keys)
 	for k := range keys {
 		childItems = append(childItems, Navigation{
 			Text:         &keys[k],

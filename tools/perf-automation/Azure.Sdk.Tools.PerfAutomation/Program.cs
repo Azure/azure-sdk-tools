@@ -52,14 +52,23 @@ namespace Azure.Sdk.Tools.PerfAutomation
             [Option('l', "languages")]
             public IEnumerable<Language> Languages { get; set; }
 
-            [Option("inputFile", Default = "tests.yml")]
+            [Option("input-file", Default = "tests.yml")]
             public string InputFile { get; set; }
 
-            [Option('o', "outputFile", Default = "results.json")]
+            [Option("no-async")]
+            public bool NoAsync { get; set; }
+
+            [Option("no-sync")]
+            public bool NoSync { get; set; }
+
+            [Option('o', "output-file", Default = "results.json")]
             public string OutputFile { get; set; }
 
             [Option('t', "testFilter", HelpText = "Regex of tests to run")]
             public string TestFilter { get; set; }
+
+            [Option('v', "versionFilter", HelpText = "Regex of versions to run")]
+            public string VersionFilter { get; set; }
         }
 
         public static async Task Main(string[] args)
@@ -104,7 +113,12 @@ namespace Azure.Sdk.Tools.PerfAutomation
             {
                 Service = s.Service,
                 Languages = s.Languages.Where(l => !options.Languages.Any() || options.Languages.Contains(l.Key))
-                    .ToDictionary(p => p.Key, p => p.Value),
+                    .ToDictionary(p => p.Key, p => new LanguageInfo()
+                    {
+                        Project = p.Value.Project,
+                        AdditionalArguments = p.Value.AdditionalArguments,
+                        PackageVersions = p.Value.PackageVersions.Where()
+                    }),
                 Tests = s.Tests.Where(t =>
                     String.IsNullOrEmpty(options.TestFilter) || Regex.IsMatch(t.Test, options.TestFilter, RegexOptions.IgnoreCase)).Select(t =>
                         new TestInfo
@@ -115,7 +129,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                                 .ToDictionary(p => p.Key, p => p.Value)
                         }
                     )
-            });
+            }); ;
 
             Console.WriteLine("=== Test Plan ===");
             var serializer = new Serializer();
@@ -147,9 +161,25 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
                             foreach (var test in service.Tests)
                             {
-                                var syncArguments = test.Arguments.SelectMany(a => new string[] { a, a + " --sync" });
+                                IEnumerable<string> selectedArguments;
+                                if (!options.NoAsync && !options.NoSync)
+                                {
+                                    selectedArguments = test.Arguments.SelectMany(a => new string[] { a, a + " --sync" });
+                                }
+                                else if (!options.NoSync)
+                                {
+                                    selectedArguments = test.Arguments.Select(a => a + " --sync");
+                                }
+                                else if (!options.NoAsync)
+                                {
+                                    selectedArguments = test.Arguments;
+                                }
+                                else
+                                {
+                                    throw new InvalidOperationException("Cannot set both --no-sync and --no-async");
+                                }
 
-                                foreach (var arguments in syncArguments)
+                                foreach (var arguments in selectedArguments)
                                 {
                                     var allArguments = $"{arguments} {languageInfo.AdditionalArguments}";
 

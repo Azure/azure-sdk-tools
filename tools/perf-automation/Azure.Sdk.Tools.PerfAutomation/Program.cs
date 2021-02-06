@@ -190,31 +190,40 @@ namespace Azure.Sdk.Tools.PerfAutomation
                                 {
                                     var allArguments = $"{arguments} {languageInfo.AdditionalArguments}";
 
+                                    var result = new Result
+                                    {
+                                        TestName = test.Test,
+                                        Language = language,
+                                        Project = languageInfo.Project,
+                                        LanguageTestName = test.TestNames[language],
+                                        Arguments = allArguments,
+                                        PackageVersions = packageVersions,
+                                        SetupStandardOutput = setupOutput,
+                                        SetupStandardError = setupError,
+                                    };
+
+                                    results.Add(result);
+
+                                    using (var stream = File.OpenWrite(uniqueOutputFile))
+                                    {
+                                        await JsonSerializer.SerializeAsync(stream, results, JsonOptions);
+                                    }
+
                                     for (var i = 0; i < options.Iterations; i++)
                                     {
-                                        var result = await _languages[language].RunAsync(
+                                        var iterationResult = await _languages[language].RunAsync(
                                             languageInfo.Project,
                                             test.TestNames[language],
                                             allArguments,
                                             context
                                         );
 
-                                        result.TestName = test.Test;
+                                        result.Iterations.Add(iterationResult);
 
-                                        result.Language = language;
-                                        result.Project = languageInfo.Project;
-                                        result.LanguageTestName = test.TestNames[language];
-                                        result.Arguments = allArguments;
-                                        result.PackageVersions = packageVersions;
-                                        result.SetupStandardOutput = setupOutput;
-                                        result.SetupStandardError = setupError;
-
-                                        result.Iteration = i;
-
-                                        results.Add(result);
-
-                                        using var stream = File.OpenWrite(uniqueOutputFile);
-                                        await JsonSerializer.SerializeAsync(stream, results, JsonOptions);
+                                        using (var stream = File.OpenWrite(uniqueOutputFile))
+                                        {
+                                            await JsonSerializer.SerializeAsync(stream, results, JsonOptions);
+                                        }
                                     }
                                 }
                             }

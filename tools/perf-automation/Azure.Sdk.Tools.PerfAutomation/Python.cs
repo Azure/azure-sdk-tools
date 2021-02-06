@@ -58,7 +58,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             return (outputBuilder.ToString(), errorBuilder.ToString(), null);
         }
 
-        public async Task<Result> RunAsync(string project, string testName, string arguments, string context)
+        public async Task<IterationResult> RunAsync(string project, string testName, string arguments, string context)
         {
             var outputBuilder = new StringBuilder();
             var errorBuilder = new StringBuilder();
@@ -83,7 +83,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var match = Regex.Match(processResult.StandardError, @"\((.*) ops/s", RegexOptions.IgnoreCase | RegexOptions.RightToLeft);
             var opsPerSecond = double.Parse(match.Groups[1].Value);
 
-            return new Result
+            return new IterationResult
             {
                 OperationsPerSecond = opsPerSecond,
                 StandardOutput = outputBuilder.ToString(),

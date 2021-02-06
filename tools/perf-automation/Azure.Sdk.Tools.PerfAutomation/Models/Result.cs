@@ -26,11 +26,11 @@ namespace Azure.Sdk.Tools.PerfAutomation.Models
             var count = values.Count();
             if (count % 2 == 1)
             {
-                return values.Skip((count - 1) / 2).First();
+                return values.OrderBy(d => d).Skip((count - 1) / 2).First();
             }
             else
             {
-                return values.Skip((count / 2) - 1).Take(2).Average();
+                return values.OrderBy(d => d).Skip((count / 2) - 1).Take(2).Average();
             }
         }
     }

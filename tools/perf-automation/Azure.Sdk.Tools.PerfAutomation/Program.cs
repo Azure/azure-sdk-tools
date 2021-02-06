@@ -52,6 +52,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
             [Option('l', "languages")]
             public IEnumerable<Language> Languages { get; set; }
 
+            [Option('v', "languageVersions", HelpText = "Regex of language versions to run")]
+            public string LanguageVersions { get; set; }
+
             [Option("input-file", Default = "tests.yml")]
             public string InputFile { get; set; }
 
@@ -64,11 +67,11 @@ namespace Azure.Sdk.Tools.PerfAutomation
             [Option('o', "output-file", Default = "results.json")]
             public string OutputFile { get; set; }
 
-            [Option('t', "testFilter", HelpText = "Regex of tests to run")]
-            public string TestFilter { get; set; }
+            [Option('p', "packageVersions", HelpText = "Regex of package versions to run")]
+            public string PackageVersions { get; set; }
 
-            [Option('v', "versionFilter", HelpText = "Regex of versions to run")]
-            public string VersionFilter { get; set; }
+            [Option('t', "tests", HelpText = "Regex of tests to run")]
+            public string Tests { get; set; }
         }
 
         public static async Task Main(string[] args)
@@ -116,13 +119,16 @@ namespace Azure.Sdk.Tools.PerfAutomation
                     .ToDictionary(p => p.Key, p => new LanguageInfo()
                     {
                         Project = p.Value.Project,
+                        Versions = p.Value.Versions.Where(v => 
+                            String.IsNullOrEmpty(options.LanguageVersions) || Regex.IsMatch(v, options.LanguageVersions)
+                        ),
                         AdditionalArguments = p.Value.AdditionalArguments,
                         PackageVersions = p.Value.PackageVersions.Where(d => d.Keys.Concat(d.Values).Any(s =>
-                            String.IsNullOrEmpty(options.VersionFilter) || Regex.IsMatch(s, options.VersionFilter)
+                            String.IsNullOrEmpty(options.PackageVersions) || Regex.IsMatch(s, options.PackageVersions)
                         ))
                     }),
                 Tests = s.Tests.Where(t =>
-                    String.IsNullOrEmpty(options.TestFilter) || Regex.IsMatch(t.Test, options.TestFilter, RegexOptions.IgnoreCase)).Select(t =>
+                    String.IsNullOrEmpty(options.Tests) || Regex.IsMatch(t.Test, options.Tests, RegexOptions.IgnoreCase)).Select(t =>
                         new TestInfo
                         {
                             Test = t.Test,
@@ -160,77 +166,84 @@ namespace Azure.Sdk.Tools.PerfAutomation
                     var language = l.Key;
                     var languageInfo = l.Value;
 
-                    foreach (var packageVersions in languageInfo.PackageVersions)
+                    foreach (var languageVersion in languageInfo.Versions)
                     {
-                        try
+
+                        foreach (var packageVersions in languageInfo.PackageVersions)
                         {
-                            var (setupOutput, setupError, context) = await _languages[language].SetupAsync(languageInfo.Project, packageVersions);
-
-                            foreach (var test in service.Tests)
+                            try
                             {
-                                IEnumerable<string> selectedArguments;
-                                if (!options.NoAsync && !options.NoSync)
-                                {
-                                    selectedArguments = test.Arguments.SelectMany(a => new string[] { a, a + " --sync" });
-                                }
-                                else if (!options.NoSync)
-                                {
-                                    selectedArguments = test.Arguments.Select(a => a + " --sync");
-                                }
-                                else if (!options.NoAsync)
-                                {
-                                    selectedArguments = test.Arguments;
-                                }
-                                else
-                                {
-                                    throw new InvalidOperationException("Cannot set both --no-sync and --no-async");
-                                }
+                                var (setupOutput, setupError, context) = await _languages[language].SetupAsync(
+                                    languageInfo.Project, languageVersion, packageVersions);
 
-                                foreach (var arguments in selectedArguments)
+                                foreach (var test in service.Tests)
                                 {
-                                    var allArguments = $"{arguments} {languageInfo.AdditionalArguments}";
-
-                                    var result = new Result
+                                    IEnumerable<string> selectedArguments;
+                                    if (!options.NoAsync && !options.NoSync)
                                     {
-                                        TestName = test.Test,
-                                        Language = language,
-                                        Project = languageInfo.Project,
-                                        LanguageTestName = test.TestNames[language],
-                                        Arguments = allArguments,
-                                        PackageVersions = packageVersions,
-                                        SetupStandardOutput = setupOutput,
-                                        SetupStandardError = setupError,
-                                    };
-
-                                    results.Add(result);
-
-                                    using (var stream = File.OpenWrite(uniqueOutputFile))
+                                        selectedArguments = test.Arguments.SelectMany(a => new string[] { a, a + " --sync" });
+                                    }
+                                    else if (!options.NoSync)
                                     {
-                                        await JsonSerializer.SerializeAsync(stream, results, JsonOptions);
+                                        selectedArguments = test.Arguments.Select(a => a + " --sync");
+                                    }
+                                    else if (!options.NoAsync)
+                                    {
+                                        selectedArguments = test.Arguments;
+                                    }
+                                    else
+                                    {
+                                        throw new InvalidOperationException("Cannot set both --no-sync and --no-async");
                                     }
 
-                                    for (var i = 0; i < options.Iterations; i++)
+                                    foreach (var arguments in selectedArguments)
                                     {
-                                        var iterationResult = await _languages[language].RunAsync(
-                                            languageInfo.Project,
-                                            test.TestNames[language],
-                                            allArguments,
-                                            context
-                                        );
+                                        var allArguments = $"{arguments} {languageInfo.AdditionalArguments}";
 
-                                        result.Iterations.Add(iterationResult);
+                                        var result = new Result
+                                        {
+                                            TestName = test.Test,
+                                            Language = language,
+                                            LanguageVersion = languageVersion,
+                                            Project = languageInfo.Project,
+                                            LanguageTestName = test.TestNames[language],
+                                            Arguments = allArguments,
+                                            PackageVersions = packageVersions,
+                                            SetupStandardOutput = setupOutput,
+                                            SetupStandardError = setupError,
+                                        };
+
+                                        results.Add(result);
 
                                         using (var stream = File.OpenWrite(uniqueOutputFile))
                                         {
                                             await JsonSerializer.SerializeAsync(stream, results, JsonOptions);
                                         }
+
+                                        for (var i = 0; i < options.Iterations; i++)
+                                        {
+                                            var iterationResult = await _languages[language].RunAsync(
+                                                languageInfo.Project,
+                                                languageVersion,
+                                                test.TestNames[language],
+                                                allArguments,
+                                                context
+                                            );
+
+                                            result.Iterations.Add(iterationResult);
+
+                                            using (var stream = File.OpenWrite(uniqueOutputFile))
+                                            {
+                                                await JsonSerializer.SerializeAsync(stream, results, JsonOptions);
+                                            }
+                                        }
                                     }
                                 }
                             }
-                        }
-                        finally
-                        {
-                            await _languages[language].CleanupAsync(languageInfo.Project);
+                            finally
+                            {
+                                await _languages[language].CleanupAsync(languageInfo.Project);
+                            }
                         }
                     }
                 }

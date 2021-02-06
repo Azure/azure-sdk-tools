@@ -9,7 +9,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
     public class Net : ILanguage
     {
 
-        public async Task<(string output, string error, string context)> SetupAsync(string project, IDictionary<string, string> packageVersions)
+        public async Task<(string output, string error, string context)> SetupAsync(
+            string project, string languageVersion, IDictionary<string, string> packageVersions)
         {
             var workingDirectory = Program.Config.WorkingDirectories[Language.Net];
             var projectFile = Path.Combine(workingDirectory, project);
@@ -41,18 +42,18 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             File.WriteAllText(projectFile, projectContents);
 
-            var processArguments = $"build -c release -f netcoreapp2.1 {project}";
+            var processArguments = $"build -c release -f {languageVersion} {project}";
 
             var result = await Util.RunAsync("dotnet", processArguments, workingDirectory: workingDirectory);
 
             return (result.StandardOutput, result.StandardError, null);
         }
 
-        public async Task<IterationResult> RunAsync(string project, string testName, string arguments, string context)
+        public async Task<IterationResult> RunAsync(string project, string languageVersion, string testName, string arguments, string context)
         {
             var workingDirectory = Program.Config.WorkingDirectories[Language.Net];
 
-            var processArguments = $"run --no-build -c release -f netcoreapp2.1 -p {project} -- " +
+            var processArguments = $"run --no-build -c release -f {languageVersion} -p {project} -- " +
                 $"{testName} {arguments}";
 
             var result = await Util.RunAsync("dotnet", processArguments, workingDirectory: workingDirectory, throwOnError: false);

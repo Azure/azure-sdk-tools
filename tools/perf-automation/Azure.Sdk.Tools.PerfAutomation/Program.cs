@@ -222,13 +222,32 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
                                         for (var i = 0; i < options.Iterations; i++)
                                         {
-                                            var iterationResult = await _languages[language].RunAsync(
-                                                languageInfo.Project,
-                                                languageVersion,
-                                                test.TestNames[language],
-                                                allArguments,
-                                                context
-                                            );
+                                            IterationResult iterationResult;
+                                            try
+                                            {
+                                                iterationResult = await _languages[language].RunAsync(
+                                                    languageInfo.Project,
+                                                    languageVersion,
+                                                    test.TestNames[language],
+                                                    allArguments,
+                                                    context
+                                                );
+                                            }
+                                            catch (Exception e)
+                                            {
+                                                iterationResult = new IterationResult
+                                                {
+                                                    OperationsPerSecond = double.MinValue,
+                                                    StandardError = e.ToString()
+                                                };
+                                            }
+
+                                            // Replace non-finite values with minvalue, since non-finite values
+                                            // are not JSON serializable
+                                            if (!double.IsFinite(iterationResult.OperationsPerSecond))
+                                            {
+                                                iterationResult.OperationsPerSecond = double.MinValue;
+                                            }
 
                                             result.Iterations.Add(iterationResult);
 

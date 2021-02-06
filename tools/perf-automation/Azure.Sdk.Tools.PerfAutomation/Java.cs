@@ -10,7 +10,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
 {
     public class Java : ILanguage
     {
-        public async Task<(string output, string error, string context)> SetupAsync(string project, IDictionary<string, string> packageVersions)
+        public async Task<(string output, string error, string context)> SetupAsync(
+            string project, string languageVersion, IDictionary<string, string> packageVersions)
         {
             var workingDirectory = Program.Config.WorkingDirectories[Language.Java];
             var projectFile = Path.Combine(workingDirectory, project);
@@ -67,7 +68,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             return (result.StandardOutput, result.StandardError, jar);
         }
 
-        public async Task<IterationResult> RunAsync(string project, string testName, string arguments, string context)
+        public async Task<IterationResult> RunAsync(string project, string languageVersion, string testName, string arguments, string context)
         {
             var workingDirectory = Program.Config.WorkingDirectories[Language.Java];
 

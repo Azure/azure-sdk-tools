@@ -2,17 +2,25 @@
   Languages:
     Net:
       Project: sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Azure.Storage.Blobs.Perf.csproj
+      Versions:
+      - netcoreapp2.1
+      - netcoreapp3.1
+      - net5.0
       PackageVersions:
       - Azure.Storage.Blobs: 12.8.0
       - Azure.Storage.Blobs: master
     Java:
       Project: sdk/storage/azure-storage-perf/pom.xml
+      Versions:
+      - 11
       AdditionalArguments: -w 15 -d 15
       PackageVersions:
       - azure-storage-blob: 12.10.0
       - azure-storage-blob: master
     Python:
       Project: sdk/storage/azure-storage-blob
+      Versions:
+      - 3.7.9
       PackageVersions:
       - azure-storage-blob: 12.7.1
       - azure-storage-blob: master

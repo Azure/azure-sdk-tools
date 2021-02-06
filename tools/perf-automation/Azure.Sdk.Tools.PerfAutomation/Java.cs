@@ -67,7 +67,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             return (result.StandardOutput, result.StandardError, jar);
         }
 
-        public async Task<Result> RunAsync(string project, string testName, string arguments, string context)
+        public async Task<IterationResult> RunAsync(string project, string testName, string arguments, string context)
         {
             var workingDirectory = Program.Config.WorkingDirectories[Language.Java];
 
@@ -83,7 +83,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 opsPerSecond = double.Parse(match.Groups[1].Value);
             }
 
-            return new Result
+            return new IterationResult
             {
                 OperationsPerSecond = opsPerSecond,
                 StandardOutput = result.StandardOutput,

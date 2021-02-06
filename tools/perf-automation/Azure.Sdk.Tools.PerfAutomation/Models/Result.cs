@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace Azure.Sdk.Tools.PerfAutomation.Models
 {
@@ -14,10 +15,8 @@ namespace Azure.Sdk.Tools.PerfAutomation.Models
         public string SetupStandardOutput { get; set; }
         public string SetupStandardError { get; set; }
 
-        public int Iteration { get; set; }
+        public ICollection<IterationResult> Iterations { get; } = new List<IterationResult>();
 
-        public double OperationsPerSecond { get; set; }
-        public string StandardOutput { get; set; }
-        public string StandardError { get; set; }
+        public double OperationsPerSecondAverage => Iterations.Any() ? Iterations.Average(i => i.OperationsPerSecond) : -1;
     }
 }

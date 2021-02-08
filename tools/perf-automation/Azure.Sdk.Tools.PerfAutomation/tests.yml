@@ -57,3 +57,18 @@
         Net: NoOp
         Java: noop
         Python: NoOpTest
+    - Test: storage-blob-download-sas-http-client
+      Arguments:
+      - -s 10240 -p 256
+      TestNames:
+        Net: DownloadSasUriHttpClient
+    - Test: storage-blob-download-sas-http-pipeline
+      Arguments:
+      - -s 10240 -p 256
+      TestNames:
+        Net: DownloadSasUriHttpPipeline
+    - Test: storage-blob-download-sas-blob-client
+      Arguments:
+      - -s 10240 -p 256
+      TestNames:
+        Net: DownloadSasUriBlobClient

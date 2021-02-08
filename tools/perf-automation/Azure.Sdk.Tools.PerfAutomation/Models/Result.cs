@@ -22,8 +22,10 @@ namespace Azure.Sdk.Tools.PerfAutomation.Models
 
         public ICollection<IterationResult> Iterations { get; } = new List<IterationResult>();
 
+        public double OperationsPerSecondMin => Iterations.Any() ? Iterations.Min(i => i.OperationsPerSecond) : -1;
         public double OperationsPerSecondMean => Iterations.Any() ? Iterations.Average(i => i.OperationsPerSecond) : -1;
         public double OperationsPerSecondMedian => Iterations.Any() ? Median(Iterations.Select(i => i.OperationsPerSecond)) : -1;
+        public double OperationsPerSecondMax => Iterations.Any() ? Iterations.Max(i => i.OperationsPerSecond) : -1;
 
         private double Median(IEnumerable<double> values)
         {

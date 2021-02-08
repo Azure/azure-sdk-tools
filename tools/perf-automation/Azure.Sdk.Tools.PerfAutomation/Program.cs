@@ -203,6 +203,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                                         var result = new Result
                                         {
                                             TestName = test.Test,
+                                            Start = DateTime.Now,
                                             Language = language,
                                             LanguageVersion = languageVersion,
                                             Project = languageInfo.Project,
@@ -256,6 +257,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
                                                 await JsonSerializer.SerializeAsync(stream, results, JsonOptions);
                                             }
                                         }
+
+                                        result.End = DateTime.Now;
                                     }
                                 }
                             }

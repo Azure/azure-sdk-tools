@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Azure.Sdk.Tools.PerfAutomation.Models
@@ -6,6 +7,9 @@ namespace Azure.Sdk.Tools.PerfAutomation.Models
     public class Result
     {
         public string TestName { get; set; }
+
+        public DateTime Start { get; set; }
+        public DateTime End { get; set; }
 
         public Language Language { get; set; }
         public string LanguageVersion { get; set; }

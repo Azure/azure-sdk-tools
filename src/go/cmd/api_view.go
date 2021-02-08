@@ -94,7 +94,10 @@ func CreateAPIView(pkgDir, outputDir string) error {
 	}
 	filename := fmt.Sprintf("%s%s.json", outputDir, pkg.p.Name)
 	file, _ := json.MarshalIndent(review, "", " ")
-	_ = ioutil.WriteFile(filename, file, 0644)
+	err = ioutil.WriteFile(filename, file, 0644)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

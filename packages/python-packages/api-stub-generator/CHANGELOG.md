@@ -1,5 +1,8 @@
 # Release History
 
+## Version 0.2.2 (Unreleased)
+Bug fixes in type hint parser
+
 ## Version 0.2.1 (Unreleased)
 Added package name in review node
 

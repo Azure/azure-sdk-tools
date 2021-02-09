@@ -26,6 +26,10 @@ LINT_EXCLUSION_METHODS = [
     "values",
     "close",    
 ]
+# Find types like ~azure.core.paging.ItemPaged and group returns ItemPaged.
+# Regex is used to find shorten such instances in complex type
+# for e,g, ~azure.core.ItemPaged.ItemPaged[~azure.communication.chat.ChatThreadInfo] to ItemPaged[ChatThreadInfo]
+REGEX_FIND_LONG_TYPE = "((?:~)[\w.]+\.+([\w]+))"
 
 
 def is_kwarg_mandatory(func_name):
@@ -202,6 +206,13 @@ class FunctionNode(NodeEntityBase):
             self.kw_args.extend(parsed_docstring.kw_args)            
 
 
+    def _generate_short_type(self, long_type):
+        short_type = long_type
+        groups = re.findall(REGEX_FIND_LONG_TYPE, short_type)
+        for g in groups:
+            short_type = short_type.replace(g[0], g[1])
+        return short_type
+
     def _parse_typehint(self):
 
         # Skip parsing typehint if typehint is not expected for e.g dunder or async methods
@@ -215,14 +226,15 @@ class FunctionNode(NodeEntityBase):
         type_hint_ret_type = typehint_parser.find_return_type()
         # Type hint must be present for all APIs. Flag it as an error if typehint is missing
         if  not type_hint_ret_type:
-            self.add_error("Typehint is missing for method {}".format(self.name))
+            if (is_typehint_mandatory(self.name)):
+                self.add_error("Typehint is missing for method {}".format(self.name))
             return
 
         if not self.return_type:
             self.return_type = type_hint_ret_type
         else:
             # Verify return type is same in docstring and typehint if typehint is available
-            short_return_type = self.return_type.split(".")[-1]
+            short_return_type = self._generate_short_type(self.return_type)
             long_ret_type = self.return_type
             if long_ret_type != type_hint_ret_type and short_return_type != type_hint_ret_type:
                 error_message = "Return type in type hint is not matching return type in docstring"

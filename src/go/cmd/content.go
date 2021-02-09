@@ -198,7 +198,15 @@ func (c *content) parseStruct(tokenList *[]Token) {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
-	for _, k := range keys {
+	clients := []string{}
+	for i, k := range keys {
+		if strings.HasSuffix(k, "Client") {
+			clients = append(clients, k)
+			keys = append(keys[:i], keys[i+1:]...)
+		}
+	}
+	clients = append(clients, keys...)
+	for _, k := range clients {
 		makeStructTokens(&k, c.Structs[k].AnonymousFields, c.Structs[k].Fields, tokenList)
 		c.searchForCtors(k, tokenList)
 		c.searchForMethods(k, tokenList)
@@ -357,10 +365,18 @@ func (c *content) generateNavChildItems() []Navigation {
 		keys = append(keys, i)
 	}
 	sort.Strings(keys)
-	for k := range keys {
+	clientsFirst := []string{}
+	for i, k := range keys {
+		if strings.HasSuffix(k, "Client") {
+			clientsFirst = append(clientsFirst, k)
+			keys = append(keys[:i], keys[i+1:]...)
+		}
+	}
+	clientsFirst = append(clientsFirst, keys...)
+	for k := range clientsFirst {
 		childItems = append(childItems, Navigation{
-			Text:         &keys[k],
-			NavigationId: &keys[k],
+			Text:         &clientsFirst[k],
+			NavigationId: &clientsFirst[k],
 			ChildItems:   []Navigation{},
 			Tags: &map[string]string{
 				"TypeKind": "struct",

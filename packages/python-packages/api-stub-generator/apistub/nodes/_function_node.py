@@ -29,7 +29,7 @@ LINT_EXCLUSION_METHODS = [
 # Find types like ~azure.core.paging.ItemPaged and group returns ItemPaged.
 # Regex is used to find shorten such instances in complex type
 # for e,g, ~azure.core.ItemPaged.ItemPaged[~azure.communication.chat.ChatThreadInfo] to ItemPaged[ChatThreadInfo]
-REGEX_FIND_LONG_TYPE = "((?:~)[\w.]+\.+([\w]+))"
+REGEX_FIND_LONG_TYPE = "((?:~?)[\w.]+\.+([\w]+))"
 
 
 def is_kwarg_mandatory(func_name):
@@ -237,6 +237,7 @@ class FunctionNode(NodeEntityBase):
             short_return_type = self._generate_short_type(self.return_type)
             long_ret_type = self.return_type
             if long_ret_type != type_hint_ret_type and short_return_type != type_hint_ret_type:
+                logging.info("Long type: {0}, Short type: {1}, Type hint return type: {2}".format(long_ret_type, short_return_type, type_hint_ret_type))
                 error_message = "Return type in type hint is not matching return type in docstring"
                 self.add_error(error_message)
 
@@ -331,7 +332,7 @@ class FunctionNode(NodeEntityBase):
                 if ret_short_type in PAGED_TYPES:
                     logging.debug("list API returns valid paged return type")
                     return
-            error_msg = "list API {0} should return ItemPaged or AsyncItemPaged instead of {1}".format(self.name, self.return_type)
+            error_msg = "list API {0} should return ItemPaged or AsyncItemPaged instead of {1} and page type must be included in docstring rtype".format(self.name, self.return_type)
             logging.error(error_msg)
             self.add_error(error_msg)                
         

@@ -19,8 +19,7 @@ namespace APIViewWeb
 
         public override string GetProcessorArguments(string originalName, string tempDirectory, string jsonFilePath)
         {
-            var targetPath = jsonFilePath.Substring(0, jsonFilePath.LastIndexOf(Path.PathSeparator));
-            return $"\"{originalName}\" \"{targetPath}\"";
+            return $"\"{originalName}\" \"{jsonFilePath}\"";
         }
 
         public override async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis)
@@ -37,11 +36,11 @@ namespace APIViewWeb
             zipStream.Position = 0;
             var archive = new ZipArchive(zipStream);            
             archive.ExtractToDirectory(tempDirectory);
-            var packageTargetDirectory = originalFilePath.Remove(originalFilePath.LastIndexOf("."));
+            var packageRootDirectory = originalFilePath.Replace(Extension, "");
 
             try
             {
-                var arguments = GetProcessorArguments(packageTargetDirectory, tempDirectory, jsonFilePath);
+                var arguments = GetProcessorArguments(packageRootDirectory, tempDirectory, tempDirectory);
                 var processStartInfo = new ProcessStartInfo(ProcessName, arguments);
                 processStartInfo.WorkingDirectory = tempDirectory;
                 processStartInfo.RedirectStandardError = true;

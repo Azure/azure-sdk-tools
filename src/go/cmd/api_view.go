@@ -92,7 +92,7 @@ func CreateAPIView(pkgDir, outputDir string) error {
 	if outputDir == "." {
 		outputDir = ""
 	}
-	filename := fmt.Sprintf("%s%s.json", outputDir, pkg.p.Name)
+	filename := fmt.Sprintf("%s/%s.json", outputDir, pkg.p.Name)
 	file, _ := json.MarshalIndent(review, "", " ")
 	err = ioutil.WriteFile(filename, file, 0644)
 	if err != nil {

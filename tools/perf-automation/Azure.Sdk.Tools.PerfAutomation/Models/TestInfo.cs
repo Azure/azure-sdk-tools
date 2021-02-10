@@ -8,5 +8,4 @@ namespace Azure.Sdk.Tools.PerfAutomation.Models
         public IList<string> Arguments { get; set; }
         public IDictionary<Language, string> TestNames { get; set; }
     }
-
 }

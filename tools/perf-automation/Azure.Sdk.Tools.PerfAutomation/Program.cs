@@ -111,19 +111,25 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             Config = DeserializeYaml<Config>(options.ConfigFile);
 
-            var services = DeserializeYaml<List<ServiceInfo>>(options.InputFile);
+            var input = DeserializeYaml<Input>(options.InputFile);
 
-            var selectedServices = services.Select(s => new ServiceInfo
+            var selectedlanguages = input.Languages
+                .Where(l => !options.Languages.Any() || options.Languages.Contains(l.Key))
+                .ToDictionary(l => l.Key, l => new LanguageInfo()
+                {
+                    Versions = l.Value.Versions.Where(v =>
+                            (String.IsNullOrEmpty(options.LanguageVersions) || Regex.IsMatch(v, options.LanguageVersions)) &&
+                            !(l.Key == Language.Net && v == "net461" && !RuntimeInformation.IsOSPlatform(OSPlatform.Windows)))
+                });
+
+
+            var selectedServices = input.Services.Select(s => new ServiceInfo
             {
                 Service = s.Service,
                 Languages = s.Languages.Where(l => !options.Languages.Any() || options.Languages.Contains(l.Key))
-                    .ToDictionary(p => p.Key, p => new LanguageInfo()
+                    .ToDictionary(p => p.Key, p => new ServiceLanguageInfo()
                     {
                         Project = p.Value.Project,
-                        Versions = p.Value.Versions.Where(v => 
-                            (String.IsNullOrEmpty(options.LanguageVersions) || Regex.IsMatch(v, options.LanguageVersions)) &&
-                            !(p.Key == Language.Net && v == "net461" && !RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                        ),
                         AdditionalArguments = p.Value.AdditionalArguments,
                         PackageVersions = p.Value.PackageVersions.Where(d => d.Keys.Concat(d.Values).Any(s =>
                             String.IsNullOrEmpty(options.PackageVersions) || Regex.IsMatch(s, options.PackageVersions)
@@ -148,7 +154,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             Console.WriteLine();
 
             Console.WriteLine("=== Test Plan ===");
-            serializer.Serialize(Console.Out, selectedServices);
+            serializer.Serialize(Console.Out, new Input() { Languages = selectedlanguages, Services = selectedServices });
 
             if (options.DryRun)
             {
@@ -168,7 +174,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                     var language = l.Key;
                     var languageInfo = l.Value;
 
-                    foreach (var languageVersion in languageInfo.Versions)
+                    foreach (var languageVersion in selectedlanguages[language].Versions)
                     {
 
                         foreach (var packageVersions in languageInfo.PackageVersions)

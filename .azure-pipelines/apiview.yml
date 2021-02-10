@@ -95,7 +95,7 @@ stages:
             displayName: 'Bundle Python API Parser'
 
           - script: |
-              go build
+              go build -o $(Build.ArtifactStagingDirectory)/APIViewWeb
             workingDirectory: $(GoParserPackagePath)
             displayName: "Build go parser"
 

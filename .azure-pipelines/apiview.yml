@@ -59,7 +59,7 @@ stages:
           - task: GoTool@0
             inputs:
               version: '$(GoVersion)'
-            displayName: "Select Go Version"
+            displayName: "Use Go $(GoVersion)"
 
           - script: |
               npm install -g npm@6.14.6
@@ -97,7 +97,7 @@ stages:
           - script: |
               go build -o $(Build.ArtifactStagingDirectory)/APIViewWeb
             workingDirectory: $(GoParserPackagePath)
-            displayName: "Build go parser"
+            displayName: 'Build go parser'
 
           - script: 'dotnet build $(WebProjectPath) -warnaserror'
             displayName: 'Build and Package'

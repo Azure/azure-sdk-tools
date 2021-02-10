@@ -11,6 +11,7 @@
     <JavaScriptProcessor>..\..\..\ts\ts-genapi\</JavaScriptProcessor>
     <TypeScriptToolsVersion>latest</TypeScriptToolsVersion>
     <TypeScriptCompileBlocked>true</TypeScriptCompileBlocked>
+    <GoProcessor>..\..\..\go\apiview.exe</GoProcessor>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -32,6 +33,7 @@
   <ItemGroup>
     <Content Include="$(JavaProcessor)" Condition="Exists($(JavaProcessor))" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="$(JavaScriptProcessor)\**\*" Condition="Exists($(JavaScriptProcessor))" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="$(GoProcessor)" Condition="Exists($(GoProcessor))" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

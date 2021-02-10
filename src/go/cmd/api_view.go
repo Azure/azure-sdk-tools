@@ -91,6 +91,8 @@ func CreateAPIView(pkgDir, outputDir string) error {
 	}
 	if outputDir == "." {
 		outputDir = ""
+	} else if !strings.HasSuffix(outputDir, "/") {
+		outputDir = fmt.Sprintf("%s/", outputDir)
 	}
 	filename := fmt.Sprintf("%s%s.json", outputDir, pkg.p.Name)
 	file, _ := json.MarshalIndent(review, "", " ")

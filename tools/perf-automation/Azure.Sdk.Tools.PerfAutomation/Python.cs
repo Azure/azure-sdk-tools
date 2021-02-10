@@ -46,7 +46,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 var packageName = v.Key;
                 var packageVersion = v.Value;
 
-                if (packageVersion == "master")
+                if (packageVersion == Program.PackageVersionSource)
                 {
                     await Util.RunAsync(pip, "install -e .", workingDirectory, outputBuilder, errorBuilder);
                 }

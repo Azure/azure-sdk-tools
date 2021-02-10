@@ -30,7 +30,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 var packageName = v.Key;
                 var packageVersion = v.Value;
 
-                if (packageVersion == "master")
+                if (packageVersion == Program.PackageVersionSource)
                 {
                     continue;
                 }

@@ -17,6 +17,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
 {
     public static class Program
     {
+        public const string PackageVersionSource = "source";
+
         public static OptionsDefinition Options { get; set; }
         public static Config Config { get; set; }
 

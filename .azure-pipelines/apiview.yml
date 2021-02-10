@@ -35,6 +35,7 @@ variables:
   TypeScriptGeneratorDirectory: 'src/ts/ts-genapi'
   GoParserPackagePath: 'src/go'
   GoVersion: '1.14'
+  NugetSecurityAnalysisWarningLevel: 'none'
 
 stages:
   - stage: 'Main'

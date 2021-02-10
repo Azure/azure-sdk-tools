@@ -125,10 +125,11 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 });
 
 
-            var selectedServices = input.Services.Select(s => new ServiceInfo
-            {
-                Service = s.Service,
-                Languages = s.Languages.Where(l => !options.Languages.Any() || options.Languages.Contains(l.Key))
+            var selectedServices = input.Services
+                .Select(s => new ServiceInfo
+                {
+                    Service = s.Service,
+                    Languages = s.Languages.Where(l => !options.Languages.Any() || options.Languages.Contains(l.Key))
                     .ToDictionary(p => p.Key, p => new ServiceLanguageInfo()
                     {
                         Project = p.Value.Project,
@@ -137,17 +138,18 @@ namespace Azure.Sdk.Tools.PerfAutomation
                             String.IsNullOrEmpty(options.PackageVersions) || Regex.IsMatch(s, options.PackageVersions)
                         ))
                     }),
-                Tests = s.Tests.Where(t =>
-                    String.IsNullOrEmpty(options.Tests) || Regex.IsMatch(t.Test, options.Tests, RegexOptions.IgnoreCase)).Select(t =>
-                        new TestInfo
-                        {
-                            Test = t.Test,
-                            Arguments = t.Arguments,
-                            TestNames = t.TestNames.Where(n => !options.Languages.Any() || options.Languages.Contains(n.Key))
-                                .ToDictionary(p => p.Key, p => p.Value)
-                        }
+                    Tests = s.Tests.Where(t =>
+                        String.IsNullOrEmpty(options.Tests) || Regex.IsMatch(t.Test, options.Tests, RegexOptions.IgnoreCase)).Select(t =>
+                            new TestInfo
+                            {
+                                Test = t.Test,
+                                Arguments = t.Arguments,
+                                TestNames = t.TestNames.Where(n => !options.Languages.Any() || options.Languages.Contains(n.Key))
+                                    .ToDictionary(p => p.Key, p => p.Value)
+                            }
                     )
-            }); ;
+                })
+                .Where(s => s.Tests.Any());
 
             var serializer = new Serializer();
             Console.WriteLine("=== Options ===");

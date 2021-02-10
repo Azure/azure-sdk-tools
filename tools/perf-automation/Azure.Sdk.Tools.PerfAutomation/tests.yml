@@ -89,9 +89,23 @@ Services:
       PackageVersions:
       - azure-storage-file-share: 12.8.0
       - azure-storage-file-share: source
+    Python:
+      Project: sdk/storage/azure-storage-file-share
+      PackageVersions:
+      - azure-storage-file-share: 12.4.1
+      - azure-storage-file-share: source
   Tests:
-  - Test: no-op
+  - Test: storage-file-shares-download
     Arguments:
-    - -w 1 -d 1
+    - -w 1 -d 1 -s 1 -p 2
     TestNames:
-      Net: NoOp
+      Net: DownloadFile
+      Java: downloadfileshare
+      Python: DownloadTest
+  - Test: storage-file-shares-upload
+    Arguments:
+    - -w 1 -d 1 -s 1 -p 2
+    TestNames:
+      Net: UploadFile
+      Java: uploadfileshare
+      Python: UploadTest

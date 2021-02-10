@@ -34,7 +34,7 @@ variables:
   PythonParserPackagePath: 'packages/python-packages/api-stub-generator'
   TypeScriptGeneratorDirectory: 'src/ts/ts-genapi'
   GoParserPackagePath: 'src/go'
-  GoVersion: '1.14'
+  GoVersion: '1.15'
   NugetSecurityAnalysisWarningLevel: 'none'
 
 stages:

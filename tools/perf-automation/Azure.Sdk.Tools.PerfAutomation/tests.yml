@@ -9,12 +9,37 @@
     Versions:
     - 3.7.9
 Services:
+- Service: storage-blob-track1
+  Languages:
+    Net:
+      Project: sdk/storage/Azure.Storage.Blobs/perf/Microsoft.Azure.Storage.Blob.Perf/Microsoft.Azure.Storage.Blob.Perf.csproj
+      PackageVersions:
+      - Microsoft.Azure.Storage.Blob: 11.2.2
+  Tests:
+  - Test: storage-blob-download
+    Arguments:
+    - -s 10240 -p 32
+    - -s 10485760 -p 32
+    TestNames:
+      Net: DownloadBlob
+  - Test: storage-blob-upload
+    Arguments:
+    - -s 10240 -p 32
+    - -s 10485760 -p 32
+    TestNames:
+      Net: UploadBlob
+  - Test: no-op
+    Arguments:
+    - -w 1 -d 1
+    TestNames:
+      Net: NoOp
 - Service: storage-blob
   Languages:
     Net:
       Project: sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Azure.Storage.Blobs.Perf.csproj
       PackageVersions:
       - Azure.Storage.Blobs: 12.8.0
+      - Azure.Storage.Blobs: 12.9.0-beta.1
       - Azure.Storage.Blobs: source
     Java:
       Project: sdk/storage/azure-storage-perf/pom.xml

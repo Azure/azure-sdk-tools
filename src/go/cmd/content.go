@@ -11,6 +11,9 @@ import (
 	"strings"
 )
 
+// skip adding the const type in the token list
+const skip = "Untyped const"
+
 // newContent returns an initialized Content object.
 func newContent() content {
 	return content{
@@ -48,7 +51,7 @@ func (c *content) addConst(pkg pkg, g *ast.GenDecl) {
 		} else {
 			// get the type from the token type
 			if bl, ok := vs.Values[0].(*ast.BasicLit); ok {
-				co.Type = strings.ToLower(bl.Kind.String())
+				co.Type = skip
 				v = bl.Value
 			} else if ce, ok := vs.Values[0].(*ast.CallExpr); ok {
 				// const FooConst = FooType("value")
@@ -56,8 +59,12 @@ func (c *content) addConst(pkg pkg, g *ast.GenDecl) {
 				v = pkg.getText(ce.Args[0].Pos(), ce.Args[0].End())
 			} else if ce, ok := vs.Values[0].(*ast.BinaryExpr); ok {
 				// const FooConst = "value" + Bar
-				co.Type = "*ast.BinaryExpr"
+				co.Type = skip
 				v = pkg.getText(ce.X.Pos(), ce.Y.End())
+			} else if ce, ok := vs.Values[0].(*ast.UnaryExpr); ok {
+				// const FooConst = -1
+				co.Type = skip
+				v = pkg.getText(ce.Pos(), ce.End())
 			} else {
 				panic("unhandled case for adding constant")
 			}
@@ -103,9 +110,6 @@ func (c *content) parseConst(tokenList *[]Token) {
 			// this token parsing is performed so that const declarations of different types are declared
 			// in their own const block to make them easier to click on
 			n := t
-			if n == "*ast.BinaryExpr" {
-				n = "const"
-			}
 			makeToken(nil, nil, "", 1, tokenList)
 			makeToken(nil, nil, " ", whitespace, tokenList)
 			makeToken(nil, nil, "", 1, tokenList)
@@ -160,8 +164,13 @@ func (c *content) addInterface(pkg pkg, name string, i *ast.InterfaceType) {
 
 // adds the specified struct type to the exports list.
 func (c *content) parseInterface(tokenList *[]Token) {
-	for k, v := range c.Interfaces {
-		makeInterfaceTokens(&k, v.EmbeddedInterfaces, v.Methods, tokenList)
+	keys := []string{}
+	for s := range c.Interfaces {
+		keys = append(keys, s)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		makeInterfaceTokens(&k, c.Interfaces[k].EmbeddedInterfaces, c.Interfaces[k].Methods, tokenList)
 	}
 }
 
@@ -189,7 +198,15 @@ func (c *content) parseStruct(tokenList *[]Token) {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
-	for _, k := range keys {
+	clients := []string{}
+	for i, k := range keys {
+		if strings.HasSuffix(k, "Client") {
+			clients = append(clients, k)
+			keys = append(keys[:i], keys[i+1:]...)
+		}
+	}
+	clients = append(clients, keys...)
+	for _, k := range clients {
 		makeStructTokens(&k, c.Structs[k].AnonymousFields, c.Structs[k].Fields, tokenList)
 		c.searchForCtors(k, tokenList)
 		c.searchForMethods(k, tokenList)
@@ -309,13 +326,15 @@ func (c *content) parseFunc(tokenList *[]Token) {
 func (c *content) generateNavChildItems() []Navigation {
 	childItems := []Navigation{}
 	types := []string{}
+	keys := []string{}
 	for _, s := range c.Consts {
-		if !includesType(types, s.Type) {
-			types = append(types, s.Type)
-			temp := s.Type
-			if temp == "*ast.BinaryExpr" {
-				temp = "const"
-			}
+		keys = append(keys, s.Type)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		if !includesType(types, k) {
+			types = append(types, k)
+			temp := k
 			childItems = append(childItems, Navigation{
 				Text:         &temp,
 				NavigationId: &temp,
@@ -326,10 +345,11 @@ func (c *content) generateNavChildItems() []Navigation {
 			})
 		}
 	}
-	keys := []string{}
+	keys = []string{}
 	for i := range c.Interfaces {
 		keys = append(keys, i)
 	}
+	sort.Strings(keys)
 	for k := range keys {
 		childItems = append(childItems, Navigation{
 			Text:         &keys[k],
@@ -344,10 +364,19 @@ func (c *content) generateNavChildItems() []Navigation {
 	for i := range c.Structs {
 		keys = append(keys, i)
 	}
-	for k := range keys {
+	sort.Strings(keys)
+	clientsFirst := []string{}
+	for i, k := range keys {
+		if strings.HasSuffix(k, "Client") {
+			clientsFirst = append(clientsFirst, k)
+			keys = append(keys[:i], keys[i+1:]...)
+		}
+	}
+	clientsFirst = append(clientsFirst, keys...)
+	for k := range clientsFirst {
 		childItems = append(childItems, Navigation{
-			Text:         &keys[k],
-			NavigationId: &keys[k],
+			Text:         &clientsFirst[k],
+			NavigationId: &clientsFirst[k],
 			ChildItems:   []Navigation{},
 			Tags: &map[string]string{
 				"TypeKind": "struct",
@@ -358,6 +387,7 @@ func (c *content) generateNavChildItems() []Navigation {
 	for i := range c.Funcs {
 		keys = append(keys, i)
 	}
+	sort.Strings(keys)
 	for k := range keys {
 		childItems = append(childItems, Navigation{
 			Text:         &keys[k],

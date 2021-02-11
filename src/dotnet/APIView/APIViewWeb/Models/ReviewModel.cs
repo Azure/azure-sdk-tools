@@ -65,7 +65,7 @@ namespace APIViewWeb
             get
             {
                 var label = Revisions.LastOrDefault()?.Label;
-                return label != null ?
+                return label != null && !IsAutomatic ?
                     $"{Name} - {label}" :
                     Name;
             }

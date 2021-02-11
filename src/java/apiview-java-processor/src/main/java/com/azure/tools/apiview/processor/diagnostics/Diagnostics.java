@@ -7,6 +7,7 @@ import com.azure.tools.apiview.processor.diagnostics.rules.IllegalPackageAPIExpo
 import com.azure.tools.apiview.processor.diagnostics.rules.ImportsDiagnosticRule;
 import com.azure.tools.apiview.processor.diagnostics.rules.MissingAnnotationsDiagnosticRule;
 import com.azure.tools.apiview.processor.diagnostics.rules.MissingJavaDocDiagnosticRule;
+import com.azure.tools.apiview.processor.diagnostics.rules.ModuleInfoDiagnosticRule;
 import com.azure.tools.apiview.processor.diagnostics.rules.NoLocalesInJavadocUrlDiagnosticRule;
 import com.azure.tools.apiview.processor.diagnostics.rules.NoPublicFieldsDiagnosticRule;
 import com.azure.tools.apiview.processor.diagnostics.rules.PackageNameDiagnosticRule;
@@ -45,6 +46,7 @@ public class Diagnostics {
         ));
         diagnostics.add(new MissingJavaDocDiagnosticRule());
         diagnostics.add(new NoLocalesInJavadocUrlDiagnosticRule());
+        diagnostics.add(new ModuleInfoDiagnosticRule());
 
         // common APIs for all builders (below we will do rules for http or amqp builders)
         diagnostics.add(new RequiredBuilderMethodsDiagnosticRule(null)

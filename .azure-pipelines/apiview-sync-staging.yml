@@ -5,6 +5,8 @@ parameters:
   - originals
   - codefiles
 
+variables:
+  - template: /eng/pipelines/templates/variables/globals.yml
 
 stages:
   - stage: 'Main'

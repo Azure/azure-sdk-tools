@@ -33,6 +33,9 @@ variables:
   BuildConfiguration: 'Release'
   PythonParserPackagePath: 'packages/python-packages/api-stub-generator'
   TypeScriptGeneratorDirectory: 'src/ts/ts-genapi'
+  GoParserPackagePath: 'src/go'
+  GoVersion: '1.15'
+  NugetSecurityAnalysisWarningLevel: 'none'
 
 stages:
   - stage: 'Main'
@@ -53,6 +56,11 @@ stages:
             inputs:
               versionSpec: '$(NodeVersion)'
             displayName: 'Use NodeJS $(NodeVersion)'
+
+          - task: GoTool@0
+            inputs:
+              version: '$(GoVersion)'
+            displayName: "Use Go $(GoVersion)"
 
           - script: |
               npm install -g npm@6.14.6
@@ -86,6 +94,11 @@ stages:
           - pwsh: |
               copy-item -Path $(PythonParserPackagePath) -Destination $(Build.ArtifactStagingDirectory)/APIViewWeb/api-stub-generator -Recurse -Force
             displayName: 'Bundle Python API Parser'
+
+          - script: |
+              go build -o $(Build.ArtifactStagingDirectory)/APIViewWeb
+            workingDirectory: $(GoParserPackagePath)
+            displayName: 'Build go parser'
 
           - script: 'dotnet build $(WebProjectPath) -warnaserror'
             displayName: 'Build and Package'

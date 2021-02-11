@@ -20,6 +20,7 @@
             <a class="btn btn-primary" active-if='@Model.Language != "C"' asp-all-route-data=@Model.GetRoutingData(language: "C")>C</a>
             <a class="btn btn-primary" active-if='@Model.Language != "C#"' asp-all-route-data=@Model.GetRoutingData(language: "C#")>C#</a>
             <a class="btn btn-primary" active-if='@Model.Language != "C++"' asp-all-route-data=@Model.GetRoutingData(language: "C++")>C++</a>
+            <a class="btn btn-primary" active-if='@Model.Language != "Go"' asp-all-route-data=@Model.GetRoutingData(language: "Go")>Go</a>
             <a class="btn btn-primary" active-if='@Model.Language != "Java"' asp-all-route-data=@Model.GetRoutingData(language: "Java")>Java</a>
             <a class="btn btn-primary" active-if='@Model.Language != "JS/TS"' asp-all-route-data=@Model.GetRoutingData(language: "JavaScript")>JS/TS</a>
             <a class="btn btn-primary" active-if='@Model.Language != "Python"' asp-all-route-data=@Model.GetRoutingData(language: "Python")>Python</a>
@@ -90,6 +91,9 @@
                             <li class="nav-item">
                                 <a class="nav-link" id="profile-tab" data-toggle="tab" href="#cpp-help">C++</a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="profile-tab" data-toggle="tab" href="#go-help">Go</a>
+                            </li>
                         </ul>
 
                         <!-- Tab panes -->
@@ -154,6 +158,19 @@
                                     </li>
                                     <li>
                                         Rename the file <code>Rename-Item Azure_Storage_Files_Datalake.zip -NewName  Azure_Storage_Files_Datalake.cppast</code>
+                                    </li>
+                                    <li>
+                                        Upload the resulting archive.
+                                    </li>
+                                </ol>
+                            </div>
+                            <div class="tab-pane" id="go-help">
+                                <ol>                                    
+                                    <li>
+                                        Archive source module directory <code>Compress-Archive ./sdk/azcore -DestinationPath azcore.zip</code>
+                                    </li>
+                                    <li>
+                                        Rename the file <code>Rename-Item azcore.zip -NewName  azcore.gosource</code>
                                     </li>
                                     <li>
                                         Upload the resulting archive.

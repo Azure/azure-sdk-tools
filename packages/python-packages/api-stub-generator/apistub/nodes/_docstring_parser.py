@@ -17,7 +17,7 @@ find_multi_type_regex = "(?<!:):({0})\s?{1}:([^:]+)(?!:)"
 find_docstring_return_type = "(?<!:):rtype\s?:\s+([^:\n]+)(?!:)"
 
 # Regex to parse type hints
-find_type_hint_ret_type = "(?<!#)#\s+type:[^\n]*->\s+([^\n]*)"
+find_type_hint_ret_type = "(?<!#)\s->\s+([^\n:]*)"
 
 docstring_types = ["param", "type", "paramtype", "keyword", "rtype"]
 

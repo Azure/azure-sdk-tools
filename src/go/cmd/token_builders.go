@@ -4,6 +4,7 @@
 package cmd
 
 import (
+	"sort"
 	"strings"
 )
 
@@ -78,8 +79,13 @@ func makeInterfaceTokens(name *string, embeddedInterfaces []string, methods map[
 		}
 	}
 	if methods != nil {
-		for k1, v1 := range methods {
-			makeIntFuncTokens(&k1, v1, list)
+		keys := []string{}
+		for k1 := range methods {
+			keys = append(keys, k1)
+		}
+		sort.Strings(keys)
+		for _, k1 := range keys {
+			makeIntFuncTokens(&k1, methods[k1], list)
 			makeToken(nil, nil, "", newline, list)
 		}
 	}
@@ -258,9 +264,7 @@ func makeConstTokens(name *string, c Const, list *[]Token) {
 	makeToken(nil, nil, "\t", whitespace, list)
 	makeToken(&n, nil, *name, typeName, list)
 	makeToken(nil, nil, " ", whitespace, list)
-	if c.Type == "*ast.BinaryExpr" {
-		makeToken(nil, nil, "", memberName, list)
-	} else {
+	if c.Type != skip {
 		makeToken(nil, nil, c.Type, memberName, list)
 	}
 	makeToken(nil, nil, " ", whitespace, list)

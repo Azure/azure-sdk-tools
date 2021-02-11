@@ -15,22 +15,15 @@ parameters:
 - name: Repos
   type: object
   default:
-    azure-sdk-for-android:
-    azure-sdk-for-c:
-    azure-sdk-for-cpp:
-    azure-sdk-for-go:
-    azure-sdk-for-ios:
-    azure-sdk-for-java:
-      definition-id: 731
-      tests-definition-id: 2106
-    azure-sdk-for-js:
-      definition-id: 832
-    azure-sdk-for-net:
-      definition-id: 1191
-      tests-definition-id: 1936
-    azure-sdk-for-python:
-      definition-id: 1036
-      tests-definition-id: 2097
+    - azure-sdk-for-android
+    - azure-sdk-for-c
+    - azure-sdk-for-cpp
+    - azure-sdk-for-go
+    - azure-sdk-for-ios
+    - azure-sdk-for-java
+    - azure-sdk-for-js
+    - azure-sdk-for-net
+    - azure-sdk-for-python
 
 trigger: none
 
@@ -124,7 +117,7 @@ stages:
                         filePath: $(Build.SourcesDirectory)/eng/common/scripts/Submit-PullRequest.ps1
                         arguments: >
                           -RepoOwner "Azure"
-                          -RepoName "${{ repo.key }}"
+                          -RepoName "${{ repo }}"
                           -BaseBranch $(system.pullRequest.targetBranch)
                           -PROwner "Azure"
                           -PRBranch "sync-${{ parameters.DirectoryToSync }}-$(System.PullRequest.SourceBranch)-$(System.PullRequest.PullRequestNumber)"
@@ -137,7 +130,7 @@ stages:
                           See [eng/common workflow](https://github.com/Azure/azure-sdk-tools/blob/master/eng/common/README.md#workflow)"
 
                     - pwsh: |
-                        $PRData = "Azure;${{ repo.key }};$(Submitted.PullRequest.Number)"
+                        $PRData = "Azure;${{ repo }};$(Submitted.PullRequest.Number)"
                         Add-Content -Path "$(Build.ArtifactStagingDirectory)/${{ parameters.PRDataFileName }}" -Value $PRData
                       displayName: Write Sync PR Data to Artifact File
                       condition: succeeded()
@@ -202,7 +195,7 @@ stages:
                         filePath: $(System.DefaultWorkingDirectory)/eng/common/scripts/Delete-RemoteBranches.ps1
                         arguments: >
                           -RepoOwner "Azure"
-                          -RepoName ${{ repo.key }}
+                          -RepoName ${{ repo }}
                           -BranchPrefix "sync-${{ parameters.DirectoryToSync }}-$(System.PullRequest.SourceBranch)-$(System.PullRequest.PullRequestNumber)"
                           -AuthToken $(azuresdk-github-pat)
 

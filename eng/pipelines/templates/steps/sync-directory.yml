@@ -15,11 +15,11 @@ steps:
   - ${{ each repo in parameters.Repos }}:
     - pwsh: |
         Set-PsDebug -Trace 1
-        git clone --branch ${{ parameters.BaseBranchName }} https://github.com/azure/${{ repo.key }}
-        $repoPath = "${{ repo.key }}/${{ parameters.DirectoryToSync }}"
+        git clone --branch ${{ parameters.BaseBranchName }} https://github.com/azure/${{ repo }}
+        $repoPath = "${{ repo }}/${{ parameters.DirectoryToSync }}"
         if (Test-Path '$(PatchFilesLocation)')
         {
-          pushd ${{ repo.key }}
+          pushd ${{ repo }}
           $results = @()
           echo "##vso[task.setvariable variable=HasChanges]$false"
           $shaBeforePatches = git rev-parse --short HEAD
@@ -29,7 +29,7 @@ steps:
              git -c user.name="azure-sdk" -c user.email="azuresdk@microsoft.com" am -3 $file.FullName
              if ($lastExitCode -ne 0) { 
                git -c user.name="azure-sdk" -c user.email="azuresdk@microsoft.com" am --show-current-patch=diff
-               Write-Error "##vso[task.LogIssue type=warning;]Failed to properly apply patch files to [https://github.com/azure/${{ repo.key }}]"
+               Write-Error "##vso[task.LogIssue type=warning;]Failed to properly apply patch files to [https://github.com/azure/${{ repo }}]"
                exit 1
              }
           }
@@ -37,7 +37,7 @@ steps:
           $hasChanges = $shaBeforePatches -ne $shaAfterPatches
           echo "##vso[task.setvariable variable=HasChanges]$hasChanges"
         }
-      displayName: Apply Patch for ${{ parameters.DirectoryToSync }} from azure-sdk-tools to ${{ repo.key }}
+      displayName: Apply Patch for ${{ parameters.DirectoryToSync }} from azure-sdk-tools to ${{ repo }}
       workingDirectory: $(System.DefaultWorkingDirectory)
 
     - task: PowerShell@2
@@ -45,12 +45,12 @@ steps:
       condition: and(succeeded(), eq(variables['HasChanges'], 'true'))
       inputs:
         pwsh: true
-        workingDirectory: $(System.DefaultWorkingDirectory)/${{ repo.key }}
+        workingDirectory: $(System.DefaultWorkingDirectory)/${{ repo }}
         filePath: ${{ parameters.ScriptDirectory }}/git-branch-push.ps1
         arguments: >
           -PRBranchName "${{ parameters.UpstreamBranchName }}"
           -CommitMsg "${{ parameters.CommitMessage }}"
-          -GitUrl "https://$(azuresdk-github-pat)@github.com/${{ parameters.PROwner }}/${{ repo.key }}.git"
+          -GitUrl "https://$(azuresdk-github-pat)@github.com/${{ parameters.PROwner }}/${{ repo }}.git"
           -PushArgs "${{ parameters.PushArgs }}"
           -SkipCommit $${{parameters.SkipCheckingForChanges}}
 
@@ -59,18 +59,18 @@ steps:
       condition: and(succeeded(), ne(variables['${{repo}}-template-definition-id'], ''))
       inputs:
         pwsh: true
-        workingDirectory: $(System.DefaultWorkingDirectory)/${{ repo.key }}
+        workingDirectory: $(System.DefaultWorkingDirectory)/${{ repo }}
         filePath: ${{ parameters.ScriptDirectory }}/git-branch-push.ps1
         arguments: >
           -PRBranchName "${{ parameters.UpstreamBranchName }}-ForTestPipeline"
           -CommitMsg "${{ parameters.CommitMessage }}"
-          -GitUrl "https://$(azuresdk-github-pat)@github.com/${{ parameters.PROwner }}/${{ repo.key }}.git"
+          -GitUrl "https://$(azuresdk-github-pat)@github.com/${{ parameters.PROwner }}/${{ repo }}.git"
           -PushArgs "${{ parameters.PushArgs }}"
           -AmendCommit $True
 
     - task: PowerShell@2
       displayName: Queue template pipeline
-      condition: and(succeeded(), ne('${{ repo.value.definition-id }}', ''))
+      condition: and(succeeded(), ne(variables['${{repo}}-template-definition-id'], ''))
       inputs:
         pwsh: true
         workingDirectory: ${{ parameters.WorkingDirectory }}
@@ -79,14 +79,14 @@ steps:
           -Organization "azure-sdk"
           -Project "internal"
           -SourceBranch "${{ parameters.UpstreamBranchName }}-ForTestPipeline"
-          -DefinitionId '${{ repo.value.definition-id }}'
+          -DefinitionId "$(${{repo}}-template-definition-id)"
           -VsoQueuedPipelines "QueuedPipelines"
           -CancelPreviousBuilds $True
           -Base64EncodedAuthToken "$(azuresdk-azure-sdk-devops-build-queuing-pat)"
 
     - task: PowerShell@2
       displayName: Queue live-test template pipeline
-      condition: and(succeeded(), ne('${{ repo.value.tests-definition-id }}', ''))
+      condition: and(succeeded(), ne(variables['${{repo}}-template-tests-definition-id'], ''))
       inputs:
         pwsh: true
         workingDirectory: ${{ parameters.WorkingDirectory }}
@@ -95,7 +95,7 @@ steps:
           -Organization "azure-sdk"
           -Project "internal"
           -SourceBranch "${{ parameters.UpstreamBranchName }}-ForTestPipeline"
-          -DefinitionId '${{ repo.value.tests-definition-id }}'
+          -DefinitionId "$(${{repo}}-template-tests-definition-id)"
           -VsoQueuedPipelines "QueuedPipelines"
           -CancelPreviousBuilds $True
           -Base64EncodedAuthToken "$(azuresdk-azure-sdk-devops-build-queuing-pat)"
@@ -120,21 +120,21 @@ steps:
   - ${{ each repo in parameters.Repos }}:
     - pwsh: |
         Set-PsDebug -Trace 1
-        git clone --branch ${{ parameters.BaseBranchName }} https://github.com/azure/${{ repo.key }}
-        $repoPath = "${{ repo.key }}/${{ parameters.DirectoryToSync }}"
+        git clone --branch ${{ parameters.BaseBranchName }} https://github.com/azure/${{ repo }}
+        $repoPath = "${{ repo }}/${{ parameters.DirectoryToSync }}"
         if (!(Test-Path $repoPath)) { mkdir $repoPath }
         Remove-Item -v -r $repoPath
         Copy-Item -v -r $(Build.SourcesDirectory)/${{ parameters.DirectoryToSync }} $repoPath
         Get-ChildItem -r $repoPath
-      displayName: Copy ${{ parameters.DirectoryToSync }} from azure-sdk-tools to ${{ repo.key }}
+      displayName: Copy ${{ parameters.DirectoryToSync }} from azure-sdk-tools to ${{ repo }}
       workingDirectory: $(System.DefaultWorkingDirectory)
 
     - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
       parameters:
-        RepoName: ${{ repo.key }}
+        RepoName: ${{ repo }}
         PRBranchName: sync-${{ parameters.DirectoryToSync }}
         CommitMsg: ${{ parameters.CommitMessage }}
         PRTitle: ${{ parameters.CommitMessage }}
         PushArgs: -f
-        WorkingDirectory: $(System.DefaultWorkingDirectory)/${{ repo.key }}
+        WorkingDirectory: $(System.DefaultWorkingDirectory)/${{ repo }}
         ScriptDirectory: $(System.DefaultWorkingDirectory)/eng/common/scripts

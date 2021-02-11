@@ -185,6 +185,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                         {
                             try
                             {
+                                // TODO: Handle exception thrown by setup.  Write empty result for all tests.
                                 var (setupOutput, setupError, context) = await _languages[language].SetupAsync(
                                     languageInfo.Project, languageVersion, packageVersions);
 

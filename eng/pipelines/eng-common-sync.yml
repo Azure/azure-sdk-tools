@@ -21,16 +21,16 @@ parameters:
     azure-sdk-for-go:
     azure-sdk-for-ios:
     azure-sdk-for-java:
-      definition-id: 731
-      tests-definition-id: 2106
+      DefinitionId: 731
+      TestsDefinitionId: 2106
     azure-sdk-for-js:
-      definition-id: 832
+      DefinitionId: 832
     azure-sdk-for-net:
-      definition-id: 1191
-      tests-definition-id: 1936
+      DefinitionId: 1191
+      TestsDefinitionId: 1936
     azure-sdk-for-python:
-      definition-id: 1036
-      tests-definition-id: 2097
+      DefinitionId: 1036
+      TestsDefinitionId: 2097
 
 trigger: none
 

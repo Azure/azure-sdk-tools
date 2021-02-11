@@ -1,4 +1,5 @@
 ﻿using Azure.Sdk.Tools.PerfAutomation.Models;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
@@ -31,9 +32,32 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 else
                 {
                     // TODO: Use XmlDocument instead of Regex
+
+                    // Existing reference might be to package or project:
+                    // - <PackageReference Include="Microsoft.Azure.Storage.Blob" />
+                    // - <ProjectReference Include="$(MSBuildThisFileDirectory)..\..\src\Azure.Storage.Blobs.csproj" />
+
+                    string pattern;
+                    var packageReferencePattern = $"<PackageReference [^>]*{packageName}[^<]*/>";
+                    var projectReferencePattern = $"<ProjectReference [^>]*{packageName}.csproj[^<]*/>";
+
+                    if (Regex.IsMatch(projectContents, packageReferencePattern))
+                    {
+                        pattern = packageReferencePattern;
+                    }
+                    else if (Regex.IsMatch(projectContents, projectReferencePattern))
+                    {
+                        pattern = projectReferencePattern;
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException(
+                            $"Project file {projectFile} does not contain existing package or project reference to {packageName}");
+                    }
+
                     projectContents = Regex.Replace(
                         projectContents,
-                        $"<ProjectReference [^>]*{packageName}.csproj[^<]*/>",
+                        pattern,
                         @$"<PackageReference Include=""{packageName}"" VersionOverride=""{packageVersion}"" />",
                         RegexOptions.IgnoreCase | RegexOptions.Singleline
                     );

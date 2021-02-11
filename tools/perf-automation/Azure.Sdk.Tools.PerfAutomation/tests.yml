@@ -2,6 +2,7 @@
   Net:
     Versions:
     - netcoreapp2.1
+    - net5.0
   Java:
     Versions:
     - 11

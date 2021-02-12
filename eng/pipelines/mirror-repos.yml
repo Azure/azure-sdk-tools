@@ -86,6 +86,11 @@ jobs:
             Branch: master
             TargetRepos: 
               Azure/azure-libraries-for-java-pr:
+              
+          Microsoft/vcpkg:
+            Branch: master
+            TargetRepos:
+              azure-sdk/vcpkg:
 
     - template: ./templates/steps/sync-repo-branch.yml
       parameters:

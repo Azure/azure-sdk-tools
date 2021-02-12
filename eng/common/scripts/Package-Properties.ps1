@@ -67,7 +67,7 @@ class PackageProps
     }
 }
 
-# Takes package name and service Name
+# Takes artifact name and service Name
 # Returns important properties of the package as related to the language repo
 # Returns a PS Object with properties @ { pkgName, pkgVersion, pkgDirectoryPath, pkgReadMePath, pkgChangeLogPath }
 # Note: python is required for parsing python package properties.
@@ -75,11 +75,17 @@ function Get-PkgProperties
 {
     Param
     (
-        [Parameter(Mandatory = $true)]
         [string]$PackageName,
+        [string]$ArtifactName,
         [Parameter(Mandatory = $true)]
         [string]$ServiceDirectory
     )
+
+    # This is to help switch PackageName to Artifact name which is more accurate
+    if (!$PackageName)
+    {
+        $PackageName = $ArtifactName
+    }
 
     $pkgDirectoryPath = $null
     $serviceDirectoryPath = Join-Path $RepoRoot "sdk" $ServiceDirectory
@@ -115,11 +121,17 @@ function Get-PkgProperties
     return $null
 }
 
-# Takes ServiceName and Repo Root Directory
 # Returns important properties for each package in the specified service, or entire repo if the serviceName is not specified
 # Returns an Table of service key to array values of PS Object with properties @ { pkgName, pkgVersion, pkgDirectoryPath, pkgReadMePath, pkgChangeLogPath }
-function Get-AllPkgProperties ([string]$ServiceDirectory = $null)
+# Pass the Package Name to filter down to one Package
+function Get-AllPkgProperties
 {
+    Param
+    (
+        [string]$ServiceDirectory = $null,
+        [string]$PackageName
+    )
+
     $pkgPropsResult = @()
 
     if ([string]::IsNullOrEmpty($ServiceDirectory))
@@ -150,6 +162,19 @@ function Get-AllPkgProperties ([string]$ServiceDirectory = $null)
                 $pkgPropsResult = Operate-OnPackages -activePkgList $activePkgList -ServiceDirectory $ServiceDirectory -pkgPropsResult $pkgPropsResult
             }
         }
+    }
+
+    if ($PackageName)
+    {
+        foreach ($pkgProp in $pkgPropsResult) 
+        {
+            if ($pkgProp.Name -eq $PackageName)
+            {
+                return $pkgProp
+            }
+        }
+        LogWarning "Did not find the Package [ $PackageName ] in the repo."
+        return $null
     }
 
     return $pkgPropsResult

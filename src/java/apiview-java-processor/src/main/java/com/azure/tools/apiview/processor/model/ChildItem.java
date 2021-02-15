@@ -85,10 +85,14 @@ public class ChildItem implements Comparable<ChildItem> {
 
     @Override
     public int compareTo(ChildItem o) {
-        // we special case the module-info file so it appears at the top
+        // we special case the maven pom.xml file and the module-info file so it appears at the top
+        if (ASTAnalyser.MAVEN_KEY.equals(text)) return -1;
+        else if (ASTAnalyser.MAVEN_KEY.equals(o.text)) return 1;
+
         if (ASTAnalyser.MODULE_INFO_KEY.equals(text)) return -1;
         else if (ASTAnalyser.MODULE_INFO_KEY.equals(o.text)) return 1;
-        else return text.compareTo(o.text);
+
+        return text.compareTo(o.text);
     }
 
     @Override

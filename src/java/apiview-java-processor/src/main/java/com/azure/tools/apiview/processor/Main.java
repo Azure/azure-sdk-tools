@@ -6,22 +6,12 @@ import com.azure.tools.apiview.processor.model.APIListing;
 import com.azure.tools.apiview.processor.model.Diagnostic;
 import com.azure.tools.apiview.processor.model.DiagnosticKind;
 import com.azure.tools.apiview.processor.model.Token;
+import com.azure.tools.apiview.processor.model.maven.Pom;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.xml.sax.SAXException;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -29,7 +19,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.Optional;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Stream;
@@ -89,49 +78,15 @@ public class Main {
                 final String fullPath = entry.getName();
 
                 if (fullPath.startsWith("META-INF/maven") && fullPath.endsWith("pom.xml")) {
-                    final InputStream jarIS = jarFile.getInputStream(entry);
-
-                    // use xpath to get the artifact ID
-                    final DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
-                    final DocumentBuilder builder = builderFactory.newDocumentBuilder();
-                    final Document xmlDocument = builder.parse(jarIS);
-                    final XPath xPath = XPathFactory.newInstance().newXPath();
-
-                    /*
-                     * While it is expected for Azure SDK libraries to contain a groupId in the POM file this is not
-                     * explicitly required by Maven. If the POM has a parent Maven allows the groupId to be omitted as
-                     * it will be inherited from the parent.
-                     */
-                    final String groupIdExpression = "/project/groupId";
-                    final String parentGroupIdExpression = "/project/parent/groupId";
-                    final Node groupIdNode = Optional
-                        .ofNullable((Node) xPath.evaluate(groupIdExpression, xmlDocument, XPathConstants.NODE))
-                        .orElse((Node) xPath.evaluate(parentGroupIdExpression, xmlDocument, XPathConstants.NODE));
-                    reviewProperties.setMavenGroupId(groupIdNode.getTextContent());
-
-                    final String artifactIdExpression = "/project/artifactId";
-                    final Node artifactIdNode = (Node) xPath.evaluate(artifactIdExpression, xmlDocument, XPathConstants.NODE);
-                    reviewProperties.setMavenArtifactId(artifactIdNode.getTextContent());
-
-                    /*
-                     * While it is expected for Azure SDK libraries to contain a version in the POM file this is not
-                     * explicitly required by Maven. If the POM has a parent Maven allows the version to be omitted as
-                     * it will be inherited from the parent.
-                     */
-                    final String versionExpression = "/project/version";
-                    final String parentVersionExpression = "/project/parent/version";
-                    final Node versionNode = Optional
-                        .ofNullable((Node) xPath.evaluate(versionExpression, xmlDocument, XPathConstants.NODE))
-                        .orElse((Node) xPath.evaluate(parentVersionExpression, xmlDocument, XPathConstants.NODE));
-                    reviewProperties.setPackageVersion(versionNode.getTextContent());
+                    reviewProperties.setMavenPom(new Pom(jarFile.getInputStream(entry)));
                 }
             }
-        } catch (IOException | ParserConfigurationException | SAXException | XPathExpressionException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
         // if we can't get the maven details out of the Jar file, we will just use the filename itself...
-        if (reviewProperties.getMavenArtifactId() == null || reviewProperties.getMavenArtifactId().isEmpty()) {
+        if (reviewProperties.getMavenPom() == null) {
             // we failed to read it from the maven pom file, we will just take the file name without any extension
             final String filename = inputFile.getName();
             int i = 0;
@@ -139,8 +94,9 @@ public class Main {
                 i++;
             }
 
-            reviewProperties.setMavenArtifactId(filename.substring(0, i - 1));
-            reviewProperties.setPackageVersion(filename.substring(i, filename.indexOf("-sources.jar")));
+            String artifactId = filename.substring(0, i - 1);
+            String packageVersion = filename.substring(i, filename.indexOf("-sources.jar"));
+            reviewProperties.setMavenPom(new Pom(null, artifactId, packageVersion));
         }
 
         return reviewProperties;
@@ -149,18 +105,20 @@ public class Main {
     private static void processFile(final File inputFile, final File outputFile) throws IOException {
         final ReviewProperties reviewProperties = getReviewProperties(inputFile);
 
-        final String reviewName = reviewProperties.getMavenArtifactId() + " (version " + reviewProperties.getPackageVersion() + ")";
+        final String reviewName = reviewProperties.getMavenPom().getArtifactId()
+                                  + " (version " + reviewProperties.getMavenPom().getVersion() + ")";
         System.out.println("  Using '" + reviewName + "' for the review name");
 
-        final String packageName = reviewProperties.getMavenGroupId() + ":" + reviewProperties.getMavenArtifactId();
+        final String packageName = reviewProperties.getMavenPom().getGroupId() + ":" + reviewProperties.getMavenPom().getArtifactId();
         System.out.println("  Using '" + packageName + "' for the package name");
 
-        System.out.println("  Using '" + reviewProperties.getPackageVersion() + "' for the package version");
+        System.out.println("  Using '" + reviewProperties.getMavenPom().getVersion() + "' for the package version");
 
         final APIListing apiListing = new APIListing(reviewName);
         apiListing.setPackageName(packageName);
-        apiListing.setPackageVersion(reviewProperties.getPackageVersion());
+        apiListing.setPackageVersion(reviewProperties.getMavenPom().getVersion());
         apiListing.setLanguage("Java");
+        apiListing.setMavenPom(reviewProperties.getMavenPom());
 
         // empty tokens list that we will fill as we process each class file
         final List<Token> tokens = new ArrayList<>();
@@ -205,41 +163,14 @@ public class Main {
     }
 
     private static class ReviewProperties {
-        private String name;
-        private String mavenGroupId;
-        private String mavenArtifactId;
-        private String packageVersion;
+        private Pom mavenPom;
 
-        public String getName() {
-            return name;
+        public void setMavenPom(Pom pom) {
+            this.mavenPom = pom;
         }
 
-        public void setName(final String name) {
-            this.name = name;
-        }
-
-        public String getMavenGroupId() {
-            return mavenGroupId;
-        }
-
-        public void setMavenGroupId(final String mavenGroupId) {
-            this.mavenGroupId = mavenGroupId;
-        }
-
-        public String getMavenArtifactId() {
-            return mavenArtifactId;
-        }
-
-        public void setMavenArtifactId(final String mavenArtifactId) {
-            this.mavenArtifactId = mavenArtifactId;
-        }
-
-        public String getPackageVersion() {
-            return packageVersion;
-        }
-
-        public void setPackageVersion(final String packageVersion) {
-            this.packageVersion = packageVersion;
+        public Pom getMavenPom() {
+            return mavenPom;
         }
     }
 }

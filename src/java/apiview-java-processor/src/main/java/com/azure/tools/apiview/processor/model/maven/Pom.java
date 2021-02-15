@@ -22,12 +22,21 @@ public class Pom implements MavenGAV {
     private Gav parent;
     private List<Dependency> dependencies;
 
+    private Float jacocoMinLineCoverage;
+    private Float jacocoMinBranchCoverage;
+
+    private String checkstyleExcludes;
+
+    // These are the dependencies specifies in the maven-enforcer that are allowed
+    private List<String> allowedDependencies;
+
     public Pom(final String groupId, final String artifactId, final String version) {
         this.gav = new Gav(groupId, artifactId, version);
     }
 
     public Pom(InputStream pomFileStream) throws IOException {
         this.dependencies = new ArrayList<>();
+        this.allowedDependencies = new ArrayList<>();
 
         try {
             // use xpath to get the artifact ID
@@ -39,9 +48,20 @@ public class Pom implements MavenGAV {
             this.gav = createGav(xPath, xmlDocument, "/project");
             this.parent = createGav(xPath, xmlDocument, "/project/parent");
 
+            // jacoco configuration
+            Node n = (Node) xPath.evaluate("/project/properties/jacoco.min.linecoverage", xmlDocument, XPathConstants.NODE);
+            this.jacocoMinLineCoverage = n == null ? null : Float.parseFloat(n.getTextContent());
+
+            n = (Node) xPath.evaluate("/project/properties/jacoco.min.branchcoverage", xmlDocument, XPathConstants.NODE);
+            this.jacocoMinBranchCoverage = n == null ? null : Float.parseFloat(n.getTextContent());
+
+            // checkstyle excludes
+            n = (Node) xPath.evaluate("/project/build/plugins/plugin/artifactId[text()='maven-checkstyle-plugin']/../configuration/excludes", xmlDocument, XPathConstants.NODE);
+            this.checkstyleExcludes = n == null ? null : n.getTextContent();
+
+            // actual dependencies
             final String dependencyExpression = "/project/dependencies/dependency";
             NodeList dependenciesNodeList = (NodeList) xPath.evaluate(dependencyExpression, xmlDocument, XPathConstants.NODESET);
-
             for (int i = 0; i < dependenciesNodeList.getLength(); i++) {
                 Node dep = dependenciesNodeList.item(i);
                 String depGroupId = xPath.evaluate("groupId", dep);
@@ -51,6 +71,12 @@ public class Pom implements MavenGAV {
                 dependencies.add(new Dependency(depGroupId, depArtifactId, depVersion, depScope));
             }
 
+            // allowed dependencies
+            final String allowedDependencies = "/project/build/plugins/plugin/artifactId[text()='maven-enforcer-plugin']/../configuration/rules/bannedDependencies/includes/include";
+            dependenciesNodeList = (NodeList) xPath.evaluate(allowedDependencies, xmlDocument, XPathConstants.NODESET);
+            for (int i = 0; i < dependenciesNodeList.getLength(); i++) {
+                this.allowedDependencies.add(dependenciesNodeList.item(i).getTextContent().trim());
+            }
         } catch (ParserConfigurationException | SAXException | XPathExpressionException e) {
             e.printStackTrace();
         }
@@ -74,6 +100,22 @@ public class Pom implements MavenGAV {
 
     public List<Dependency> getDependencies() {
         return dependencies;
+    }
+
+    public Float getJacocoMinLineCoverage() {
+        return jacocoMinLineCoverage;
+    }
+
+    public Float getJacocoMinBranchCoverage() {
+        return jacocoMinBranchCoverage;
+    }
+
+    public String getCheckstyleExcludes() {
+        return checkstyleExcludes;
+    }
+
+    public List<String> getAllowedDependencies() {
+        return allowedDependencies;
     }
 
     private Gav createGav(final XPath xPath, final Document xmlDocument, final String root) throws XPathExpressionException {

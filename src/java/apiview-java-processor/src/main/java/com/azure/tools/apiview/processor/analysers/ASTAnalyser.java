@@ -287,6 +287,21 @@ public class ASTAnalyser implements Analyser {
         // properties
         gavOutput.accept("properties", mavenPom);
 
+        // configuration
+        addToken(INDENT, new Token(KEYWORD, "configuration"), SPACE);
+        addToken(new Token(PUNCTUATION, "{"), NEWLINE);
+        indent();
+        tokeniseKeyValue("checkstyle-excludes", mavenPom.getCheckstyleExcludes(), "");
+        addToken(INDENT, new Token(KEYWORD, "jacoco"), SPACE);
+        addToken(new Token(PUNCTUATION, "{"), NEWLINE);
+        indent();
+        tokeniseKeyValue("min-line-coverage", mavenPom.getJacocoMinLineCoverage(), "jacoco");
+        tokeniseKeyValue("min-branch-coverage", mavenPom.getJacocoMinBranchCoverage(), "jacoco");
+        unindent();
+        addToken(INDENT, new Token(PUNCTUATION, "}"), NEWLINE);
+        unindent();
+        addToken(INDENT, new Token(PUNCTUATION, "}"), NEWLINE);
+
         // dependencies
         addToken(INDENT, new Token(KEYWORD, "dependencies"), SPACE);
         addToken(new Token(PUNCTUATION, "{"), NEWLINE);
@@ -315,16 +330,26 @@ public class ASTAnalyser implements Analyser {
         unindent();
         addToken(INDENT, new Token(PUNCTUATION, "}"), NEWLINE);
 
+        // allowed dependencies (in maven-enforcer)
+        addToken(INDENT, new Token(KEYWORD, "allowed-dependencies"), SPACE);
+        addToken(new Token(PUNCTUATION, "{"), NEWLINE);
+        indent();
+        mavenPom.getAllowedDependencies().stream().forEach(value -> {
+            addToken(INDENT, new Token(TEXT, value, value), NEWLINE);
+        });
+        unindent();
+        addToken(INDENT, new Token(PUNCTUATION, "}"), NEWLINE);
+
         // close maven
         unindent();
         addToken(INDENT, new Token(PUNCTUATION, "}"), NEWLINE);
     }
 
-    private void tokeniseKeyValue(String key, String value, String linkPrefix) {
+    private void tokeniseKeyValue(String key, Object value, String linkPrefix) {
         addToken(makeWhitespace());
         addToken(new Token(KEYWORD, key));
         addToken(new Token(PUNCTUATION, ":"), SPACE);
-        addToken(new Token(TEXT, value, linkPrefix + "-" + key + "-" + value), NEWLINE);
+        addToken(new Token(TEXT, value == null ? "<default value>" : value.toString(), linkPrefix + "-" + key + "-" + value), NEWLINE);
     }
 
     private class ClassOrInterfaceVisitor extends VoidVisitorAdapter<Void> {

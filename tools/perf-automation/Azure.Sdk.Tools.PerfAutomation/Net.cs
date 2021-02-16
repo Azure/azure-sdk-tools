@@ -19,6 +19,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             File.Copy(projectFile, projectFile + ".bak", overwrite: true);
 
             var projectContents = File.ReadAllText(projectFile);
+            var additionalBuildArguments = String.Empty;
 
             foreach (var v in packageVersions)
             {
@@ -27,7 +28,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
                 if (packageVersion == Program.PackageVersionSource)
                 {
-                    continue;
+                    // Force all transitive dependencies to use project references, to ensure all packages are build from source.
+                    // The default is for transitive dependencies to use package references to the latest published version.
+                    additionalBuildArguments = "-p:UseProjectReferenceToAzureClients=true";
                 }
                 else
                 {
@@ -66,7 +69,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             File.WriteAllText(projectFile, projectContents);
 
-            var processArguments = $"build -c release -f {languageVersion} {project}";
+            var processArguments = $"build -c release -f {languageVersion} {additionalBuildArguments} {project}";
 
             var result = await Util.RunAsync("dotnet", processArguments, workingDirectory: workingDirectory);
 

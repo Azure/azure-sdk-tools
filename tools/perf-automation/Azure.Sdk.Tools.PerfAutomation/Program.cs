@@ -73,6 +73,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
             [Option('p', "packageVersions", HelpText = "Regex of package versions to run")]
             public string PackageVersions { get; set; }
 
+            [Option('s', "services", HelpText = "Regex of services to run")]
+            public string Services { get; set; }
+
             [Option('t', "tests", HelpText = "Regex of tests to run")]
             public string Tests { get; set; }
         }
@@ -126,6 +129,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
 
             var selectedServices = input.Services
+                .Where(s => String.IsNullOrEmpty(options.Services) || Regex.IsMatch(s.Service, options.Services, RegexOptions.IgnoreCase))
                 .Select(s => new ServiceInfo
                 {
                     Service = s.Service,

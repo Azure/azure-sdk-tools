@@ -14,6 +14,13 @@
         </form>
     </div>
 }
+
+@if (Model.Revision.IsOutdated)
+{
+    <div class="alert alert-warning" role="alert" asp-resource="@Model.Review">
+        Your code review is outdated due to changes in another approved review for the same package. Please sync your changes with latest changes in master branch and create a new revision of API review 
+    </div>
+}
 <div class="row">
     <div class="col my-2">
         <div class="dropdown float-left mr-2">
@@ -108,12 +115,15 @@
                 }
             </div>
         </div>
-        <div class="float-right">
-            <form asp-resource="@Model.Review" class="form-inline float-left ml-2" asp-page-handler="ToggleApproval" method="post" asp-requirement="@ApproverRequirement.Instance">
-                <input type="hidden" name="revisionId" value="@Model.Revision.RevisionId" />
-                <input type="submit" class="btn btn-sm btn-secondary" value="@(Model.Revision.Approvers.Contains(User.GetGitHubLogin()) ? "Revert Approval" : "Approve")"/>
-            </form>
-        </div>
+        @if (!Model.Revision.IsOutdated)
+        {
+            <div class="float-right">
+                <form asp-resource="@Model.Review" class="form-inline float-left ml-2" asp-page-handler="ToggleApproval" method="post" asp-requirement="@ApproverRequirement.Instance">
+                    <input type="hidden" name="revisionId" value="@Model.Revision.RevisionId" />
+                    <input type="submit" class="btn btn-sm btn-secondary" value="@(Model.Revision.Approvers.Contains(User.GetGitHubLogin()) ? "Revert Approval" : "Approve")" />
+                </form>
+            </div>
+        }
         <div class="float-right ml-2">
             <label>Approval Status:</label>
             @if (Model.Revision.Approvers.Count > 0)

@@ -58,24 +58,45 @@ namespace APIViewWeb
 
         public async Task<ReviewModel> GetMasterReviewForPackageAsync(string language, string packageName)
         {
-            var queryDefinition = new QueryDefinition("SELECT * FROM Reviews r WHERE " +
+            var reviews = await GetReviewsAsync(language, packageName, true);
+            ReviewModel review = null;
+            if (reviews.Count() > 0)
+            {
+                review = reviews.First();
+            }
+            return review;
+        }
+
+        public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(string language, string packageName, bool? isAutomatic, bool? approvedOrPendingOnly = null)
+        {
+            var queryStringAutomaticFilter = "SELECT * FROM Reviews r WHERE " +
                                                       "r.IsClosed = false AND " +
-                                                      "r.IsAutomatic = true AND " +
+                                                      "(IS_DEFINED(r.IsAutomatic) ? r.IsAutomatic : false) = @isAutomatic AND " +
                                                       "EXISTS (SELECT VALUE revision FROM revision in r.Revisions WHERE " +
-                                                                                    "EXISTS (SELECT VALUE files from files in revision.Files WHERE files.Language = @language AND files.PackageName = @packageName))")
+                                                                                    "EXISTS (SELECT VALUE files from files in revision.Files WHERE files.Language = @language AND files.PackageName = @packageName))";
+            var queryStringAll = "SELECT * FROM Reviews r WHERE " +
+                                                      "r.IsClosed = false AND " +
+                                                      "EXISTS (SELECT VALUE revision FROM revision in r.Revisions WHERE " +
+                                                                                    "EXISTS (SELECT VALUE files from files in revision.Files WHERE files.Language = @language AND files.PackageName = @packageName))";
+
+            var allReviews = new List<ReviewModel>();
+            var queryDefinition = new QueryDefinition(isAutomatic == null? queryStringAll : queryStringAutomaticFilter)
                 .WithParameter("@language", language)
-                .WithParameter("@packageName", packageName);
+                .WithParameter("@packageName", packageName)
+                .WithParameter("@isAutomatic", isAutomatic);
 
             var itemQueryIterator = _reviewsContainer.GetItemQueryIterator<ReviewModel>(queryDefinition);
-            if (itemQueryIterator.HasMoreResults)
+            while (itemQueryIterator.HasMoreResults)
             {
                 var result = await itemQueryIterator.ReadNextAsync();
-                if (result.Resource.Any())
-                {
-                    return result.Resource.First();
-                }
+                allReviews.AddRange(result.Resource);
             }
-            return null;
+
+            if (approvedOrPendingOnly != null)
+            {
+                return allReviews.Where(r => approvedOrPendingOnly == true ? r.Revisions.Last().Approvers.Count() > 0 : r.Revisions.Last().Approvers.Count() == 0);
+            }
+            return allReviews;
         }
     }
 }

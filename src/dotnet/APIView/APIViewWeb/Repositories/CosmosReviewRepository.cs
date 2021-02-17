@@ -59,12 +59,7 @@ namespace APIViewWeb
         public async Task<ReviewModel> GetMasterReviewForPackageAsync(string language, string packageName)
         {
             var reviews = await GetReviewsAsync(language, packageName, true);
-            ReviewModel review = null;
-            if (reviews.Count() > 0)
-            {
-                review = reviews.FirstOrDefault();
-            }
-            return review;
+            return reviews.FirstOrDefault();
         }
 
         public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(string language, string packageName, bool isAutomatic)

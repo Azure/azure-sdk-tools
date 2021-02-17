@@ -62,7 +62,7 @@ namespace APIViewWeb
             ReviewModel review = null;
             if (reviews.Count() > 0)
             {
-                review = reviews.First();
+                review = reviews.FirstOrDefault();
             }
             return review;
         }

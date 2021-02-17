@@ -1,5 +1,7 @@
 package com.azure.tools.apiview.processor.model;
 
+import com.azure.tools.apiview.processor.Main;
+import com.azure.tools.apiview.processor.model.maven.Pom;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -47,6 +49,9 @@ public class APIListing {
 
     @JsonIgnore
     private final Map<String, String> typeToPackageNameMap;
+
+    @JsonIgnore
+    private Pom mavenPom;
 
     public APIListing(String reviewName) {
         this.name = reviewName;
@@ -127,5 +132,13 @@ public class APIListing {
 
     public Map<String, String> getTypeToPackageNameMap() {
         return typeToPackageNameMap;
+    }
+
+    public void setMavenPom(Pom mavenPom) {
+        this.mavenPom = mavenPom;
+    }
+
+    public Pom getMavenPom() {
+        return mavenPom;
     }
 }

@@ -7,6 +7,9 @@ import com.azure.tools.apiview.processor.model.APIListing;
 import com.azure.tools.apiview.processor.model.ChildItem;
 import com.azure.tools.apiview.processor.model.Token;
 import com.azure.tools.apiview.processor.model.TypeKind;
+import com.azure.tools.apiview.processor.model.maven.Dependency;
+import com.azure.tools.apiview.processor.model.maven.MavenGAV;
+import com.azure.tools.apiview.processor.model.maven.Pom;
 import com.github.javaparser.ParserConfiguration;
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.TokenRange;
@@ -59,6 +62,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
@@ -87,6 +91,7 @@ import static com.azure.tools.apiview.processor.analysers.util.TokenModifier.*;
 public class ASTAnalyser implements Analyser {
     private static final boolean SHOW_JAVADOC = true;
 
+    public static final String MAVEN_KEY = "Maven";
     public static final String MODULE_INFO_KEY = "module-info";
 
     private final APIListing apiListing;
@@ -133,7 +138,7 @@ public class ASTAnalyser implements Analyser {
             return false;
         } else {
             // Only include Java files.
-            return fileName.endsWith(".java");
+            return fileName.endsWith(".java") || fileName.endsWith("pom.xml");
         }
     }
 
@@ -148,10 +153,15 @@ public class ASTAnalyser implements Analyser {
         public ScanClass(Path path, CompilationUnit compilationUnit) {
             this.compilationUnit = compilationUnit;
             this.path = path;
-            compilationUnit.getPackageDeclaration().ifPresent(packageDeclaration -> {
-                packageName = packageDeclaration.getNameAsString();
-            });
-            compilationUnit.getPrimaryTypeName().ifPresent(name -> primaryTypeName = name);
+
+            if (compilationUnit != null) {
+                compilationUnit.getPackageDeclaration().ifPresent(packageDeclaration -> {
+                    packageName = packageDeclaration.getNameAsString();
+                });
+                compilationUnit.getPrimaryTypeName().ifPresent(name -> primaryTypeName = name);
+            } else {
+                primaryTypeName = "";
+            }
         }
 
         public CompilationUnit getCompilationUnit() {
@@ -173,6 +183,9 @@ public class ASTAnalyser implements Analyser {
     }
 
     private Optional<ScanClass> scanForTypes(Path path) {
+        if (path.toString().endsWith("pom.xml")) {
+            return Optional.of(new ScanClass(path, null));
+        }
         try {
             // Set up a minimal type solver that only looks at the classes used to run this sample.
             CombinedTypeSolver combinedTypeSolver = new CombinedTypeSolver();
@@ -239,7 +252,104 @@ public class ASTAnalyser implements Analyser {
     }
 
     private void processSingleFile(ScanClass scanClass) {
-        new ClassOrInterfaceVisitor().visit(scanClass.compilationUnit, null);
+        if (scanClass.getPath().toString().endsWith("pom.xml")) {
+            // we want to represent the pom.xml file in short form
+            tokeniseMavenPom(apiListing.getMavenPom());
+        } else {
+            new ClassOrInterfaceVisitor().visit(scanClass.compilationUnit, null);
+        }
+    }
+
+    private void tokeniseMavenPom(Pom mavenPom) {
+        apiListing.addChildItem(new ChildItem(MAVEN_KEY, MAVEN_KEY, TypeKind.ASSEMBLY));
+
+        BiConsumer<String, MavenGAV> gavOutput = (title, gav) -> {
+            addToken(INDENT, new Token(KEYWORD, title), SPACE);
+            addToken(new Token(PUNCTUATION, "{"), NEWLINE);
+
+            indent();
+            tokeniseKeyValue("groupId", gav.getGroupId(), title);
+            tokeniseKeyValue("artifactId", gav.getArtifactId(), title);
+            tokeniseKeyValue("version", gav.getVersion(), title);
+
+            unindent();
+            addToken(INDENT, new Token(PUNCTUATION, "}"), NEWLINE);
+        };
+
+        addToken(makeWhitespace());
+        addToken(new Token(KEYWORD, "maven", MAVEN_KEY), SPACE);
+        addToken(new Token(PUNCTUATION, "{"), NEWLINE);
+        indent();
+
+        // parent
+        gavOutput.accept("parent", mavenPom.getParent());
+
+        // properties
+        gavOutput.accept("properties", mavenPom);
+
+        // configuration
+        addToken(INDENT, new Token(KEYWORD, "configuration"), SPACE);
+        addToken(new Token(PUNCTUATION, "{"), NEWLINE);
+        indent();
+        tokeniseKeyValue("checkstyle-excludes", mavenPom.getCheckstyleExcludes(), "");
+        addToken(INDENT, new Token(KEYWORD, "jacoco"), SPACE);
+        addToken(new Token(PUNCTUATION, "{"), NEWLINE);
+        indent();
+        tokeniseKeyValue("min-line-coverage", mavenPom.getJacocoMinLineCoverage(), "jacoco");
+        tokeniseKeyValue("min-branch-coverage", mavenPom.getJacocoMinBranchCoverage(), "jacoco");
+        unindent();
+        addToken(INDENT, new Token(PUNCTUATION, "}"), NEWLINE);
+        unindent();
+        addToken(INDENT, new Token(PUNCTUATION, "}"), NEWLINE);
+
+        // dependencies
+        addToken(INDENT, new Token(KEYWORD, "dependencies"), SPACE);
+        addToken(new Token(PUNCTUATION, "{"), NEWLINE);
+
+        indent();
+        mavenPom.getDependencies().stream().collect(Collectors.groupingBy(Dependency::getScope)).forEach((k,v) -> {
+            if ("test".equals(k)) {
+                // we don't care to present test scope dependencies
+                return;
+            }
+            String scope = k.equals("") ? "compile" : k;
+
+            addToken(makeWhitespace());
+            addToken(new Token(COMMENT, "// " + scope + " scope"), NEWLINE);
+
+            v.forEach(d -> {
+                addToken(makeWhitespace());
+                String gav = d.getGroupId() + ":" + d.getArtifactId() + ":" + d.getVersion();
+                addToken(new Token(TEXT, gav, gav));
+                addNewLine();
+            });
+
+            addNewLine();
+        });
+
+        unindent();
+        addToken(INDENT, new Token(PUNCTUATION, "}"), NEWLINE);
+
+        // allowed dependencies (in maven-enforcer)
+        addToken(INDENT, new Token(KEYWORD, "allowed-dependencies"), SPACE);
+        addToken(new Token(PUNCTUATION, "{"), NEWLINE);
+        indent();
+        mavenPom.getAllowedDependencies().stream().forEach(value -> {
+            addToken(INDENT, new Token(TEXT, value, value), NEWLINE);
+        });
+        unindent();
+        addToken(INDENT, new Token(PUNCTUATION, "}"), NEWLINE);
+
+        // close maven
+        unindent();
+        addToken(INDENT, new Token(PUNCTUATION, "}"), NEWLINE);
+    }
+
+    private void tokeniseKeyValue(String key, Object value, String linkPrefix) {
+        addToken(makeWhitespace());
+        addToken(new Token(KEYWORD, key));
+        addToken(new Token(PUNCTUATION, ":"), SPACE);
+        addToken(new Token(TEXT, value == null ? "<default value>" : value.toString(), linkPrefix + "-" + key + "-" + value), NEWLINE);
     }
 
     private class ClassOrInterfaceVisitor extends VoidVisitorAdapter<Void> {

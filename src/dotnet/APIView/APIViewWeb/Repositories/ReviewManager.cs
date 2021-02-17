@@ -427,9 +427,16 @@ namespace APIViewWeb.Respositories
                 var matchingApprovedReview = await FindMatchingApprovedReview(review);
                 if (matchingApprovedReview != null)
                 {
-                    review.Revisions.Last().Approvers.Add(user.GetGitHubLogin());
-                    reviewModified = true;
-                }                
+                    var approvers = matchingApprovedReview.Revisions.Last().Approvers;
+                    if (approvers != null && approvers.Count() > 0)
+                    {
+                        foreach (var approver in approvers)
+                        {
+                            review.Revisions.Last().Approvers.Add(approver);
+                        }
+                        reviewModified = true;
+                    }
+                }
             }
 
             if (reviewModified)

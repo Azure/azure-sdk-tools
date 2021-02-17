@@ -418,13 +418,9 @@ namespace APIViewWeb.Respositories
                 var matchingApprovedRevision = await FindMatchingApprovedRevision(review);
                 if (matchingApprovedRevision != null)
                 {
-                    var approvers = matchingApprovedRevision.Approvers;
-                    if (approvers != null && approvers.Count() > 0)
+                    foreach (var approver in matchingApprovedRevision.Approvers)
                     {
-                        foreach (var approver in approvers)
-                        {
-                            review.Revisions.Last().Approvers.Add(approver);
-                        }
+                        review.Revisions.Last().Approvers.Add(approver);
                     }
                 }
             }

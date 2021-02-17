@@ -4,13 +4,13 @@ public class Dependency implements MavenGAV {
     private String groupId;
     private String artifactId;
     private String version;
-    private String scope = "";
+    private String scope; // default scope is compile-time scope
 
     public Dependency(String groupId, String artifactId, String version, String scope) {
         this.groupId = groupId;
         this.artifactId = artifactId;
         this.version = version;
-        this.scope = scope;
+        this.scope = scope == null || scope.isEmpty() ? "compile" : scope;
     }
 
     @Override

@@ -67,20 +67,15 @@ namespace APIViewWeb
             return review;
         }
 
-        public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(string language, string packageName, bool? isAutomatic, bool? approvedOrPendingOnly = null)
+        public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(string language, string packageName, bool isAutomatic)
         {
             var queryStringAutomaticFilter = "SELECT * FROM Reviews r WHERE " +
                                                       "r.IsClosed = false AND " +
                                                       "(IS_DEFINED(r.IsAutomatic) ? r.IsAutomatic : false) = @isAutomatic AND " +
                                                       "EXISTS (SELECT VALUE revision FROM revision in r.Revisions WHERE " +
                                                                                     "EXISTS (SELECT VALUE files from files in revision.Files WHERE files.Language = @language AND files.PackageName = @packageName))";
-            var queryStringAll = "SELECT * FROM Reviews r WHERE " +
-                                                      "r.IsClosed = false AND " +
-                                                      "EXISTS (SELECT VALUE revision FROM revision in r.Revisions WHERE " +
-                                                                                    "EXISTS (SELECT VALUE files from files in revision.Files WHERE files.Language = @language AND files.PackageName = @packageName))";
-
             var allReviews = new List<ReviewModel>();
-            var queryDefinition = new QueryDefinition(isAutomatic == null? queryStringAll : queryStringAutomaticFilter)
+            var queryDefinition = new QueryDefinition(queryStringAutomaticFilter)
                 .WithParameter("@language", language)
                 .WithParameter("@packageName", packageName)
                 .WithParameter("@isAutomatic", isAutomatic);
@@ -91,12 +86,7 @@ namespace APIViewWeb
                 var result = await itemQueryIterator.ReadNextAsync();
                 allReviews.AddRange(result.Resource);
             }
-
-            if (approvedOrPendingOnly != null)
-            {
-                return allReviews.Where(r => approvedOrPendingOnly == true ? r.Revisions.Last().Approvers.Count() > 0 : r.Revisions.Last().Approvers.Count() == 0);
-            }
-            return allReviews;
+            return allReviews.OrderByDescending(r => r.LastUpdated);
         }
     }
 }

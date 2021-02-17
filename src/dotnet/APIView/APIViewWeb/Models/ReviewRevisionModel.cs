@@ -70,7 +70,5 @@ namespace APIViewWeb
         public int RevisionNumber => Review.Revisions.IndexOf(this);
 
         public HashSet<string> Approvers { get; set; } = new HashSet<string>();
-
-        public bool IsOutdated { get; set; }
     }
 }

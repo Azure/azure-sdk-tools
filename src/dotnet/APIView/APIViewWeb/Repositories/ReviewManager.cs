@@ -313,11 +313,6 @@ namespace APIViewWeb.Respositories
                 revision.Approvers.Add(userId);
             }
             await _reviewsRepository.UpsertReviewAsync(review);
-
-            if(revision.Approvers.Count() > 0)
-            {
-                await ApproveOrOutdateReviews(user, review, revisionId);
-            }
         }
 
         private async Task AssertApprover(ClaimsPrincipal user, ReviewRevisionModel revisionModel)
@@ -355,12 +350,21 @@ namespace APIViewWeb.Respositories
             return review;
         }
 
-        private async Task<bool> IsReviewSame(ReviewModel review, RenderedCodeFile renderedCodeFile)
+        private async Task<bool> IsReviewSame(ReviewModel review, RenderedCodeFile renderedCodeFile, string revisionId = "")
         {
             //This will compare and check if new code file content is same as last revision of given review in parameter
+            ReviewRevisionModel revision = null;
+            if (String.IsNullOrEmpty(revisionId))
+            {
+                revision = review.Revisions.Last();
+            }
+            else
+            {
+                revision = review.Revisions.Single(r => r.RevisionId == revisionId);
+            }
 
             //Get latest revision of review and check diff
-            var lastRevisionFile = await _codeFileRepository.GetCodeFileAsync(review.Revisions.Last());
+            var lastRevisionFile = await _codeFileRepository.GetCodeFileAsync(revision);
             var lastRevisionTextLines = lastRevisionFile.RenderText(false);
             var fileTextLines = renderedCodeFile.RenderText(false);
             return lastRevisionTextLines.SequenceEqual(fileTextLines);
@@ -424,10 +428,10 @@ namespace APIViewWeb.Respositories
             // Check if review can be marked as approved if another review with same surface level is in approved status
             if (review.Revisions.Last().Approvers.Count() == 0)
             {
-                var matchingApprovedReview = await FindMatchingApprovedReview(review);
-                if (matchingApprovedReview != null)
+                var matchingApprovedRevision = await FindMatchingApprovedRevision(review);
+                if (matchingApprovedRevision != null)
                 {
-                    var approvers = matchingApprovedReview.Revisions.Last().Approvers;
+                    var approvers = matchingApprovedRevision.Approvers;
                     if (approvers != null && approvers.Count() > 0)
                     {
                         foreach (var approver in approvers)
@@ -458,48 +462,26 @@ namespace APIViewWeb.Respositories
             }
         }
 
-        private async Task ApproveOrOutdateReviews(ClaimsPrincipal user, ReviewModel review, string revisionId)
-        {
-            //This method is called when a review is approved
-            var revisionModel = review.Revisions.Single(r => r.RevisionId == revisionId);
-            var revisionFile = revisionModel.Files.FirstOrDefault();
-            var codeFile = await _codeFileRepository.GetCodeFileAsync(revisionModel);
-
-            // Get reviews and mark them as approved if it matches current one
-            var pendingReviews = await _reviewsRepository.GetReviewsAsync(revisionFile.Language, revisionFile.PackageName, null, false);
-            foreach ( var r in pendingReviews)
-            {
-                // If review matches then mark it as approved
-                bool isReviewSame = await IsReviewSame(r, codeFile);
-                if (isReviewSame)
-                {
-                    var userId = user.GetGitHubLogin();
-                    r.Revisions.Last().Approvers.Add(userId);
-                }
-                else
-                {
-                    r.Revisions.Last().IsOutdated = true;
-                }
-                await _reviewsRepository.UpsertReviewAsync(r);
-            }
-        }
-
-        private async Task<ReviewModel> FindMatchingApprovedReview(ReviewModel review)
+        private async Task<ReviewRevisionModel> FindMatchingApprovedRevision(ReviewModel review)
         {
             var revisionModel = review.Revisions.Last();
             var revisionFile = revisionModel.Files.FirstOrDefault();
             var codeFile = await _codeFileRepository.GetCodeFileAsync(revisionModel);
 
             // Get automatic reviews and mark them as approved if it matches current one
-            var reviews = await _reviewsRepository.GetReviewsAsync(revisionFile.Language, revisionFile.PackageName, false, true);
+            var reviews = await _reviewsRepository.GetReviewsAsync(revisionFile.Language, revisionFile.PackageName, false);
             foreach (var r in reviews)
             {
-                // If review matches then mark it as approved
-                bool isReviewSame = await IsReviewSame(r, codeFile);
-                if (isReviewSame)
+                var approvedRevision = r.Revisions.Where(r => r.Approvers.Count() > 0)?.Last();
+                if (approvedRevision != null)
                 {
-                    return r;
-                }
+                    // If review matches then mark it as approved
+                    bool isReviewSame = await IsReviewSame(r, codeFile, approvedRevision.RevisionId);
+                    if (isReviewSame)
+                    {
+                        return approvedRevision;
+                    }
+                }                
             }
             return null;
         }

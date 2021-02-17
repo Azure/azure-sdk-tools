@@ -96,7 +96,7 @@ public class Main {
 
             String artifactId = filename.substring(0, i - 1);
             String packageVersion = filename.substring(i, filename.indexOf("-sources.jar"));
-            reviewProperties.setMavenPom(new Pom(null, artifactId, packageVersion));
+            reviewProperties.setMavenPom(new Pom("", artifactId, packageVersion));
         }
 
         return reviewProperties;
@@ -105,11 +105,13 @@ public class Main {
     private static void processFile(final File inputFile, final File outputFile) throws IOException {
         final ReviewProperties reviewProperties = getReviewProperties(inputFile);
 
+        final String groupId = reviewProperties.getMavenPom().getGroupId();
+
         final String reviewName = reviewProperties.getMavenPom().getArtifactId()
                                   + " (version " + reviewProperties.getMavenPom().getVersion() + ")";
         System.out.println("  Using '" + reviewName + "' for the review name");
 
-        final String packageName = reviewProperties.getMavenPom().getGroupId() + ":" + reviewProperties.getMavenPom().getArtifactId();
+        final String packageName = (groupId.isEmpty() ? "" : groupId + ":") + reviewProperties.getMavenPom().getArtifactId();
         System.out.println("  Using '" + packageName + "' for the package name");
 
         System.out.println("  Using '" + reviewProperties.getMavenPom().getVersion() + "' for the package version");

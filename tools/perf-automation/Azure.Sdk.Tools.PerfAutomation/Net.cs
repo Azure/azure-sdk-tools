@@ -9,7 +9,6 @@ namespace Azure.Sdk.Tools.PerfAutomation
 {
     public class Net : ILanguage
     {
-
         public async Task<(string output, string error, string context)> SetupAsync(
             string project, string languageVersion, IDictionary<string, string> packageVersions)
         {

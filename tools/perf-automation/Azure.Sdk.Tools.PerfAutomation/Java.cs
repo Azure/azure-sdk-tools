@@ -30,11 +30,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 var packageName = v.Key;
                 var packageVersion = v.Value;
 
-                if (packageVersion == Program.PackageVersionSource)
-                {
-                    continue;
-                }
-                else
+                if (packageVersion != Program.PackageVersionSource)
                 {
                     var versionNode = doc.SelectSingleNode($"/mvn:project/mvn:dependencies/mvn:dependency[mvn:artifactId='{packageName}']/mvn:version", nsmgr);
                     versionNode.InnerText = packageVersion;

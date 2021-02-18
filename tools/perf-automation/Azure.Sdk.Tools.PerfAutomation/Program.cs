@@ -24,8 +24,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
         private static Dictionary<Language, ILanguage> _languages = new Dictionary<Language, ILanguage>
         {
-            { Language.Net, new Net() },
             { Language.Java, new Java() },
+            { Language.JS, new JavaScript() },
+            { Language.Net, new Net() },
             { Language.Python, new Python() }
         };
 

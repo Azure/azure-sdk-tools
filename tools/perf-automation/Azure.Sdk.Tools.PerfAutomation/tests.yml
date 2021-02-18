@@ -22,6 +22,10 @@
 Services:
 - Service: storage-blob-track1
   Languages:
+    JS:
+      Project: sdk/storage/perf-tests/storage-blob-track-1
+      PackageVersions:
+      - "@azure/storage-blob": 10.5.0
     Net:
       Project: sdk/storage/Azure.Storage.Blobs/perf/Microsoft.Azure.Storage.Blob.Perf/Microsoft.Azure.Storage.Blob.Perf.csproj
       PackageVersions:
@@ -43,6 +47,7 @@ Services:
     Arguments:
     - -w 1 -d 1
     TestNames:
+      JS: NoOp
       Net: NoOp
 - Service: storage-blob
   Languages:

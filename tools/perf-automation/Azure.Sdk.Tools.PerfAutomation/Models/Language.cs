@@ -2,9 +2,9 @@
 {
     public enum Language
     {
-        Net,
         Java,
         JS,
+        Net,
         Python
     }
 }

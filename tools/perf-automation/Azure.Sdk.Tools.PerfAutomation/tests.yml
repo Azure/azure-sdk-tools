@@ -1,14 +1,24 @@
 ﻿Languages:
   Net:
-    Versions:
+    DefaultVersions:
     - netcoreapp2.1
+    OptionalVersions:
     - net5.0
   Java:
-    Versions:
-    - 11
+    DefaultVersions:
+    - 8u282-b08
+    OptionalVersions:
+    - 15.0.2+7
+  JS:
+    DefaultVersions:
+    - 14.15.5
+    OptionalVersions:
+    - 15.9.0
   Python:
-    Versions:
+    DefaultVersions:
     - 3.7.9
+    OptionalVersions:
+    - 3.9.1
 Services:
 - Service: storage-blob-track1
   Languages:
@@ -53,6 +63,11 @@ Services:
       PackageVersions:
       - azure-storage-blob: 12.7.1
       - azure-storage-blob: source
+    JS:
+      Project: sdk/storage/perf-tests/storage-blob
+      PackageVersions:
+      - "@azure/storage-blob": 12.4.1
+      - "@azure/storage-blob": source
   Tests:
   - Test: storage-blob-download
     Arguments:
@@ -85,6 +100,7 @@ Services:
       Net: NoOp
       Java: noop
       Python: NoOpTest
+      JS: NoOp
   - Test: storage-blob-download-sas-http-client
     Arguments:
     - -s 10240 -p 256

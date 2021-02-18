@@ -122,8 +122,11 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 .Where(l => !options.Languages.Any() || options.Languages.Contains(l.Key))
                 .ToDictionary(l => l.Key, l => new LanguageInfo()
                 {
-                    Versions = l.Value.Versions.Where(v =>
+                    DefaultVersions = l.Value.DefaultVersions.Where(v =>
                             (String.IsNullOrEmpty(options.LanguageVersions) || Regex.IsMatch(v, options.LanguageVersions)) &&
+                            !(l.Key == Language.Net && v == "net461" && !RuntimeInformation.IsOSPlatform(OSPlatform.Windows))),
+                    OptionalVersions = l.Value.OptionalVersions.Where(v =>
+                            (!String.IsNullOrEmpty(options.LanguageVersions) && Regex.IsMatch(v, options.LanguageVersions)) &&
                             !(l.Key == Language.Net && v == "net461" && !RuntimeInformation.IsOSPlatform(OSPlatform.Windows)))
                 });
 
@@ -180,18 +183,20 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 foreach (var l in service.Languages)
                 {
                     var language = l.Key;
-                    var languageInfo = l.Value;
+                    var serviceLanugageInfo = l.Value;
 
-                    foreach (var languageVersion in selectedlanguages[language].Versions)
+                    var languageInfo = selectedlanguages[language];
+
+                    foreach (var languageVersion in languageInfo.DefaultVersions.Concat(languageInfo.OptionalVersions))
                     {
 
-                        foreach (var packageVersions in languageInfo.PackageVersions)
+                        foreach (var packageVersions in serviceLanugageInfo.PackageVersions)
                         {
                             try
                             {
                                 // TODO: Handle exception thrown by setup.  Write empty result for all tests.
                                 var (setupOutput, setupError, context) = await _languages[language].SetupAsync(
-                                    languageInfo.Project, languageVersion, packageVersions);
+                                    serviceLanugageInfo.Project, languageVersion, packageVersions);
 
                                 foreach (var test in service.Tests)
                                 {
@@ -215,7 +220,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
                                     foreach (var arguments in selectedArguments)
                                     {
-                                        var allArguments = $"{arguments} {languageInfo.AdditionalArguments}";
+                                        var allArguments = $"{arguments} {serviceLanugageInfo.AdditionalArguments}";
 
                                         var result = new Result
                                         {
@@ -223,7 +228,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                                             Start = DateTime.Now,
                                             Language = language,
                                             LanguageVersion = languageVersion,
-                                            Project = languageInfo.Project,
+                                            Project = serviceLanugageInfo.Project,
                                             LanguageTestName = test.TestNames[language],
                                             Arguments = allArguments,
                                             PackageVersions = packageVersions,
@@ -244,7 +249,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                                             try
                                             {
                                                 iterationResult = await _languages[language].RunAsync(
-                                                    languageInfo.Project,
+                                                    serviceLanugageInfo.Project,
                                                     languageVersion,
                                                     test.TestNames[language],
                                                     allArguments,
@@ -281,7 +286,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                             }
                             finally
                             {
-                                await _languages[language].CleanupAsync(languageInfo.Project);
+                                await _languages[language].CleanupAsync(serviceLanugageInfo.Project);
                             }
                         }
                     }

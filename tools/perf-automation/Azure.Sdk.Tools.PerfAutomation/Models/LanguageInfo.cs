@@ -4,6 +4,7 @@ namespace Azure.Sdk.Tools.PerfAutomation.Models
 {
     public class LanguageInfo
     {
-        public IEnumerable<string> Versions { get; set; }
+        public IEnumerable<string> DefaultVersions { get; set; }
+        public IEnumerable<string> OptionalVersions { get; set; }
     }
 }

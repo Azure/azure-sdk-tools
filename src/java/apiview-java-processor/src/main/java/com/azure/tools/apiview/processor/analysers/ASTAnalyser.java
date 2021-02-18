@@ -263,44 +263,44 @@ public class ASTAnalyser implements Analyser {
     private void tokeniseMavenPom(Pom mavenPom) {
         apiListing.addChildItem(new ChildItem(MAVEN_KEY, MAVEN_KEY, TypeKind.ASSEMBLY));
 
-        BiConsumer<String, MavenGAV> gavOutput = (title, gav) -> {
-            addToken(INDENT, new Token(KEYWORD, title), SPACE);
-            addToken(new Token(PUNCTUATION, "{"), NEWLINE);
-
-            indent();
-            tokeniseKeyValue("groupId", gav.getGroupId(), title);
-            tokeniseKeyValue("artifactId", gav.getArtifactId(), title);
-            tokeniseKeyValue("version", gav.getVersion(), title);
-
-            unindent();
-            addToken(INDENT, new Token(PUNCTUATION, "}"), NEWLINE);
-        };
-
         addToken(makeWhitespace());
         addToken(new Token(KEYWORD, "maven", MAVEN_KEY), SPACE);
         addToken(new Token(PUNCTUATION, "{"), NEWLINE);
         indent();
 
         // parent
-        gavOutput.accept("parent", mavenPom.getParent());
+        String gavStr = mavenPom.getParent().getGroupId() + ":" + mavenPom.getParent().getArtifactId() + ":" + mavenPom.getParent().getVersion();
+        tokeniseKeyValue("parent", gavStr, "");
 
         // properties
-        gavOutput.accept("properties", mavenPom);
+        gavStr = mavenPom.getGroupId() + ":" + mavenPom.getArtifactId() + ":" + mavenPom.getVersion();
+        tokeniseKeyValue("properties", gavStr, "");
 
         // configuration
-        addToken(INDENT, new Token(KEYWORD, "configuration"), SPACE);
-        addToken(new Token(PUNCTUATION, "{"), NEWLINE);
-        indent();
-        tokeniseKeyValue("checkstyle-excludes", mavenPom.getCheckstyleExcludes(), "");
-        addToken(INDENT, new Token(KEYWORD, "jacoco"), SPACE);
-        addToken(new Token(PUNCTUATION, "{"), NEWLINE);
-        indent();
-        tokeniseKeyValue("min-line-coverage", mavenPom.getJacocoMinLineCoverage(), "jacoco");
-        tokeniseKeyValue("min-branch-coverage", mavenPom.getJacocoMinBranchCoverage(), "jacoco");
-        unindent();
-        addToken(INDENT, new Token(PUNCTUATION, "}"), NEWLINE);
-        unindent();
-        addToken(INDENT, new Token(PUNCTUATION, "}"), NEWLINE);
+        boolean showJacoco = mavenPom.getJacocoMinLineCoverage() != null &&
+                                 mavenPom.getJacocoMinBranchCoverage() != null;
+        boolean showCheckStyle = mavenPom.getCheckstyleExcludes() != null &&
+                                 !mavenPom.getCheckstyleExcludes().isEmpty();
+
+        if (showJacoco || showCheckStyle) {
+            addToken(INDENT, new Token(KEYWORD, "configuration"), SPACE);
+            addToken(new Token(PUNCTUATION, "{"), NEWLINE);
+            indent();
+            if (showCheckStyle) {
+                tokeniseKeyValue("checkstyle-excludes", mavenPom.getCheckstyleExcludes(), "");
+            }
+            if (showJacoco) {
+                addToken(INDENT, new Token(KEYWORD, "jacoco"), SPACE);
+                addToken(new Token(PUNCTUATION, "{"), NEWLINE);
+                indent();
+                tokeniseKeyValue("min-line-coverage", mavenPom.getJacocoMinLineCoverage(), "jacoco");
+                tokeniseKeyValue("min-branch-coverage", mavenPom.getJacocoMinBranchCoverage(), "jacoco");
+                unindent();
+                addToken(INDENT, new Token(PUNCTUATION, "}"), NEWLINE);
+            }
+            unindent();
+            addToken(INDENT, new Token(PUNCTUATION, "}"), NEWLINE);
+        }
 
         // dependencies
         addToken(INDENT, new Token(KEYWORD, "dependencies"), SPACE);
@@ -331,14 +331,16 @@ public class ASTAnalyser implements Analyser {
         addToken(INDENT, new Token(PUNCTUATION, "}"), NEWLINE);
 
         // allowed dependencies (in maven-enforcer)
-        addToken(INDENT, new Token(KEYWORD, "allowed-dependencies"), SPACE);
-        addToken(new Token(PUNCTUATION, "{"), NEWLINE);
-        indent();
-        mavenPom.getAllowedDependencies().stream().forEach(value -> {
-            addToken(INDENT, new Token(TEXT, value, value), NEWLINE);
-        });
-        unindent();
-        addToken(INDENT, new Token(PUNCTUATION, "}"), NEWLINE);
+//        if (!mavenPom.getAllowedDependencies().isEmpty()) {
+//            addToken(INDENT, new Token(KEYWORD, "allowed-dependencies"), SPACE);
+//            addToken(new Token(PUNCTUATION, "{"), NEWLINE);
+//            indent();
+//            mavenPom.getAllowedDependencies().stream().forEach(value -> {
+//                addToken(INDENT, new Token(TEXT, value, value), NEWLINE);
+//            });
+//            unindent();
+//            addToken(INDENT, new Token(PUNCTUATION, "}"), NEWLINE);
+//        }
 
         // close maven
         unindent();

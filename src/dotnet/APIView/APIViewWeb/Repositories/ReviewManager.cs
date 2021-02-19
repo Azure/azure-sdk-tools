@@ -133,7 +133,7 @@ namespace APIViewWeb.Respositories
                     var fileOriginal = await _originalsRepository.GetOriginalAsync(file.ReviewFileId);
                     var languageService = GetLanguageService(file.Language);
 
-                    // file.Name property has been repurposed to store parse name and version string
+                    // file.Name property has been repurposed to store package name and version string
                     // This is causing issue when updating review using latest parser since it expects Name field as file name
                     // We have added a new property FileName which is only set for new reviews
                     // All older reviews needs to be handled by checking Name field

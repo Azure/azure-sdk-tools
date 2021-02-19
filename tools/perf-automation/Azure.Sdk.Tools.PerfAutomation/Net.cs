@@ -7,13 +7,14 @@ using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.PerfAutomation
 {
-    public class Net : ILanguage
+    public class Net : LanguageBase
     {
-        public async Task<(string output, string error, string context)> SetupAsync(
+        protected override Language Language => Language.Net;
+
+        public override async Task<(string output, string error, string context)> SetupAsync(
             string project, string languageVersion, IDictionary<string, string> packageVersions)
         {
-            var workingDirectory = Program.Config.WorkingDirectories[Language.Net];
-            var projectFile = Path.Combine(workingDirectory, project);
+            var projectFile = Path.Combine(WorkingDirectory, project);
 
             File.Copy(projectFile, projectFile + ".bak", overwrite: true);
 
@@ -70,19 +71,17 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             var processArguments = $"build -c release -f {languageVersion} {additionalBuildArguments} {project}";
 
-            var result = await Util.RunAsync("dotnet", processArguments, workingDirectory: workingDirectory);
+            var result = await Util.RunAsync("dotnet", processArguments, workingDirectory: WorkingDirectory);
 
             return (result.StandardOutput, result.StandardError, null);
         }
 
-        public async Task<IterationResult> RunAsync(string project, string languageVersion, string testName, string arguments, string context)
+        public override async Task<IterationResult> RunAsync(string project, string languageVersion, string testName, string arguments, string context)
         {
-            var workingDirectory = Program.Config.WorkingDirectories[Language.Net];
-
             var processArguments = $"run --no-build -c release -f {languageVersion} -p {project} -- " +
                 $"{testName} {arguments}";
 
-            var result = await Util.RunAsync("dotnet", processArguments, workingDirectory: workingDirectory, throwOnError: false);
+            var result = await Util.RunAsync("dotnet", processArguments, workingDirectory: WorkingDirectory, throwOnError: false);
 
             var match = Regex.Match(result.StandardOutput, @"\((.*) ops/s", RegexOptions.IgnoreCase | RegexOptions.RightToLeft);
 
@@ -100,10 +99,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
             };
         }
 
-        public Task CleanupAsync(string project)
+        public override Task CleanupAsync(string project)
         {
-            var workingDirectory = Program.Config.WorkingDirectories[Language.Net];
-            var projectFile = Path.Combine(workingDirectory, project);
+            var projectFile = Path.Combine(WorkingDirectory, project);
 
             // Restore backup
             File.Move(projectFile + ".bak", projectFile, overwrite: true);

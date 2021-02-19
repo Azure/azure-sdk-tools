@@ -8,17 +8,18 @@ using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.PerfAutomation
 {
-    public class Python : ILanguage
+    public class Python : LanguageBase
     {
         private const string _env = "env-perf";
         private static readonly string _envBin = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "scripts" : "bin";
         private static readonly string _python = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "python" : "python3";
 
-        public async Task<(string output, string error, string context)> SetupAsync(
+        protected override Language Language => Language.Python;
+
+        public override async Task<(string output, string error, string context)> SetupAsync(
             string project, string languageVersion, IDictionary<string, string> packageVersions)
         {
-            var workingDirectory = Path.Combine(Program.Config.WorkingDirectories[Language.Python], project);
-            var env = Path.Combine(workingDirectory, _env);
+            var env = Path.Combine(WorkingDirectory, _env);
 
             if (Directory.Exists(env))
             {
@@ -29,16 +30,16 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var errorBuilder = new StringBuilder();
 
             // Create venv
-            await Util.RunAsync(_python, $"-m venv {_env}", workingDirectory, outputBuilder, errorBuilder);
+            await Util.RunAsync(_python, $"-m venv {_env}", WorkingDirectory, outputBuilder, errorBuilder);
 
             var python = Path.Combine(env, _envBin, "python");
             var pip = Path.Combine(env, _envBin, "pip");
 
             // Upgrade pip
-            await Util.RunAsync(python, "-m pip install --upgrade pip", workingDirectory, outputBuilder, errorBuilder);
+            await Util.RunAsync(python, "-m pip install --upgrade pip", WorkingDirectory, outputBuilder, errorBuilder);
 
             // Install dev reqs
-            await Util.RunAsync(pip, "install -r dev_requirements.txt", workingDirectory, outputBuilder, errorBuilder);
+            await Util.RunAsync(pip, "install -r dev_requirements.txt", WorkingDirectory, outputBuilder, errorBuilder);
 
             // TODO: Support multiple packages if possible.  Maybe by force installing?
             foreach (var v in packageVersions)
@@ -48,34 +49,33 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
                 if (packageVersion == Program.PackageVersionSource)
                 {
-                    await Util.RunAsync(pip, "install -e .", workingDirectory, outputBuilder, errorBuilder);
+                    await Util.RunAsync(pip, "install -e .", WorkingDirectory, outputBuilder, errorBuilder);
                 }
                 else
                 {
-                    await Util.RunAsync(pip, $"install {packageName}=={packageVersion}", workingDirectory, outputBuilder, errorBuilder);
+                    await Util.RunAsync(pip, $"install {packageName}=={packageVersion}", WorkingDirectory, outputBuilder, errorBuilder);
                 }
             }
 
             return (outputBuilder.ToString(), errorBuilder.ToString(), null);
         }
 
-        public async Task<IterationResult> RunAsync(string project, string languageVersion, string testName, string arguments, string context)
+        public override async Task<IterationResult> RunAsync(string project, string languageVersion, string testName, string arguments, string context)
         {
             var outputBuilder = new StringBuilder();
             var errorBuilder = new StringBuilder();
 
-            var workingDirectory = Path.Combine(Program.Config.WorkingDirectories[Language.Python], project);
-            var env = Path.Combine(workingDirectory, _env);
+            var env = Path.Combine(WorkingDirectory, _env);
             var pip = Path.Combine(env, _envBin, "pip");
             var perfstress = Path.Combine(env, _envBin, "perfstress");
 
             // Dump package versions to std output
-            await Util.RunAsync(pip, "freeze", workingDirectory, outputBuilder, errorBuilder);
+            await Util.RunAsync(pip, "freeze", WorkingDirectory, outputBuilder, errorBuilder);
 
             var processResult = await Util.RunAsync(
                 perfstress,
                 $"{testName} {arguments}",
-                Path.Combine(workingDirectory, "tests"),
+                Path.Combine(WorkingDirectory, "tests"),
                 outputBuilder,
                 errorBuilder
             );
@@ -92,10 +92,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
             };
         }
 
-        public Task CleanupAsync(string project)
+        public override Task CleanupAsync(string project)
         {
-            var workingDirectory = Path.Combine(Program.Config.WorkingDirectories[Language.Python], project);
-            Directory.Delete(Path.Combine(workingDirectory, _env), recursive: true);
+            Directory.Delete(Path.Combine(WorkingDirectory, _env), recursive: true);
             return Task.CompletedTask;
         }
 

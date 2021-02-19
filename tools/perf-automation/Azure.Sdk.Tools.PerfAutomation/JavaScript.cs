@@ -5,6 +5,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -103,12 +104,16 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var projectDirectory = Path.Combine(WorkingDirectory, project);
 
             // Dump "npm list 2>nul | findstr @azure" to stdout
-            await Util.RunAsync("npm", "list", projectDirectory, outputBuilder, errorBuilder);
+            // "npm list" fails with exit code 1, but it succeeds enough to print the versions we care about
+            var npmListResult = await Util.RunAsync("npm", "list", projectDirectory, throwOnError: false);
 
+            foreach (var line in npmListResult.StandardOutput.ToLines().Where(l => l.Contains("@azure")))
+            {
+                outputBuilder.AppendLine(line);
+            }
+            
             // 1. cd project
             // 2. npm run perf-test:node -- testName arguments
-
-            await Task.CompletedTask;
 
             return new IterationResult
             {

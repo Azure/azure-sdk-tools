@@ -179,9 +179,7 @@ namespace NotificationConfiguration.Services
         {
             var client = await GetClientAsync<GraphHttpClient>();
 
-            // Do not log PII: "alias@microsoft.com" => "***@microsoft.com"
-            var loggableUserPrincipal = $"***{userPrincipal.Substring(userPrincipal.IndexOf("@"))}";
-            logger.LogInformation("GetDescriptorForAlias UserPrincipal = {0}", loggableUserPrincipal);
+            logger.LogInformation("GetDescriptorForAlias UserPrincipal = {0}", userPrincipal);
             var context = new GraphUserPrincipalNameCreationContext()
             {
                 PrincipalName = userPrincipal,

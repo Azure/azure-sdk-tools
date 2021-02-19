@@ -13,6 +13,7 @@ pr: none
 trigger: none
 
 variables:
+  NugetSecurityAnalysisWarningLevel: none
   skipComponentGovernanceDetection: true
   DevOpsOrg: https://dev.azure.com/azure-sdk
   PathFilter: $(Pipeline.Workspace)/$(RepositoryName)/sdk/$(ServiceDirectory)

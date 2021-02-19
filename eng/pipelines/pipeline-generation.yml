@@ -3,7 +3,7 @@ pr: none
 trigger: none
 
 variables:
-  NugetSecurityAnalysisWarningLevel: warn
+  NugetSecurityAnalysisWarningLevel: none
   skipComponentGovernanceDetection: true
   TestOptions: ''
 

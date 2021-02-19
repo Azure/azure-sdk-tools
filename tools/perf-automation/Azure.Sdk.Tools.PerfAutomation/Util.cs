@@ -1,5 +1,7 @@
 ﻿using Microsoft.Crank.Agent;
 using System.IO;
+using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -25,9 +27,23 @@ namespace Azure.Sdk.Tools.PerfAutomation
             return uniquePath;
         }
 
+        // These commands must be run using "cmd /c" on Windows, since they are shell scripts rather than executables.
+        private static readonly string[] _requiresShellOnWindows = new string[]
+        {
+            "mvn",
+            "npm",
+            "rush"
+        };
+
         public static async Task<ProcessResult> RunAsync(string filename, string arguments, string workingDirectory,
             StringBuilder outputBuilder = null, StringBuilder errorBuilder = null, bool throwOnError = true)
         {
+            if (_requiresShellOnWindows.Contains(filename) && RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                arguments = $"/c {filename} {arguments}";
+                filename = "cmd";
+            }
+
             var result = await ProcessUtil.RunAsync(
                 filename,
                 arguments,

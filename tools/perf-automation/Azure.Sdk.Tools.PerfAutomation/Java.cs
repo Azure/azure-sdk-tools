@@ -40,20 +40,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             doc.Save(projectFile);
 
-            string buildFilename;
-            var buildArguments = $"package -T1C -am -Dmaven.test.skip=true -Dmaven.javadoc.skip=true --pl {project}";
-
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                buildFilename = "cmd";
-                buildArguments = $"/c mvn {buildArguments}";
-            }
-            else
-            {
-                buildFilename = "mvn";
-            }
-
-            var result = await Util.RunAsync(buildFilename, buildArguments, WorkingDirectory);
+            var result = await Util.RunAsync("mvn", $"package -T1C -am -Dmaven.test.skip=true -Dmaven.javadoc.skip=true --pl {project}",
+                WorkingDirectory);
 
             /*
             [11:27:11.796] [INFO] Building jar: C:\Git\java\sdk\storage\azure-storage-perf\target\azure-storage-perf-1.0.0-beta.1-jar-with-dependencies.jar

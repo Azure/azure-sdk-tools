@@ -92,8 +92,10 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             var parserResult = parser.ParseArguments<OptionsDefinition>(args);
 
+            parserResult.WithParsed(options => Options = options);
+
             await parserResult.MapResult(
-                options => Run(options),
+                options => Run(),
                 errors => DisplayHelp(parserResult)
             );
         }
@@ -111,48 +113,46 @@ namespace Azure.Sdk.Tools.PerfAutomation
             return Task.CompletedTask;
         }
 
-        private static async Task Run(OptionsDefinition options)
+        private static async Task Run()
         {
-            Options = options;
+            Config = DeserializeYaml<Config>(Options.ConfigFile);
 
-            Config = DeserializeYaml<Config>(options.ConfigFile);
-
-            var input = DeserializeYaml<Input>(options.InputFile);
+            var input = DeserializeYaml<Input>(Options.InputFile);
 
             var selectedlanguages = input.Languages
-                .Where(l => !options.Languages.Any() || options.Languages.Contains(l.Key))
+                .Where(l => !Options.Languages.Any() || Options.Languages.Contains(l.Key))
                 .ToDictionary(l => l.Key, l => new LanguageInfo()
                 {
                     DefaultVersions = l.Value.DefaultVersions.Where(v =>
-                            (String.IsNullOrEmpty(options.LanguageVersions) || Regex.IsMatch(v, options.LanguageVersions)) &&
+                            (String.IsNullOrEmpty(Options.LanguageVersions) || Regex.IsMatch(v, Options.LanguageVersions)) &&
                             !(l.Key == Language.Net && v == "net461" && !RuntimeInformation.IsOSPlatform(OSPlatform.Windows))),
                     OptionalVersions = l.Value.OptionalVersions.Where(v =>
-                            (!String.IsNullOrEmpty(options.LanguageVersions) && Regex.IsMatch(v, options.LanguageVersions)) &&
+                            (!String.IsNullOrEmpty(Options.LanguageVersions) && Regex.IsMatch(v, Options.LanguageVersions)) &&
                             !(l.Key == Language.Net && v == "net461" && !RuntimeInformation.IsOSPlatform(OSPlatform.Windows)))
                 });
 
 
             var selectedServices = input.Services
-                .Where(s => String.IsNullOrEmpty(options.Services) || Regex.IsMatch(s.Service, options.Services, RegexOptions.IgnoreCase))
+                .Where(s => String.IsNullOrEmpty(Options.Services) || Regex.IsMatch(s.Service, Options.Services, RegexOptions.IgnoreCase))
                 .Select(s => new ServiceInfo
                 {
                     Service = s.Service,
-                    Languages = s.Languages.Where(l => !options.Languages.Any() || options.Languages.Contains(l.Key))
+                    Languages = s.Languages.Where(l => !Options.Languages.Any() || Options.Languages.Contains(l.Key))
                     .ToDictionary(p => p.Key, p => new ServiceLanguageInfo()
                     {
                         Project = p.Value.Project,
                         AdditionalArguments = p.Value.AdditionalArguments,
                         PackageVersions = p.Value.PackageVersions.Where(d => d.Keys.Concat(d.Values).Any(s =>
-                            String.IsNullOrEmpty(options.PackageVersions) || Regex.IsMatch(s, options.PackageVersions)
+                            String.IsNullOrEmpty(Options.PackageVersions) || Regex.IsMatch(s, Options.PackageVersions)
                         ))
                     }),
                     Tests = s.Tests.Where(t =>
-                        String.IsNullOrEmpty(options.Tests) || Regex.IsMatch(t.Test, options.Tests, RegexOptions.IgnoreCase)).Select(t =>
+                        String.IsNullOrEmpty(Options.Tests) || Regex.IsMatch(t.Test, Options.Tests, RegexOptions.IgnoreCase)).Select(t =>
                             new TestInfo
                             {
                                 Test = t.Test,
                                 Arguments = t.Arguments,
-                                TestNames = t.TestNames.Where(n => !options.Languages.Any() || options.Languages.Contains(n.Key))
+                                TestNames = t.TestNames.Where(n => !Options.Languages.Any() || Options.Languages.Contains(n.Key))
                                     .ToDictionary(p => p.Key, p => p.Value)
                             }
                     )
@@ -161,21 +161,21 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             var serializer = new Serializer();
             Console.WriteLine("=== Options ===");
-            serializer.Serialize(Console.Out, options);
+            serializer.Serialize(Console.Out, Options);
 
             Console.WriteLine();
 
             Console.WriteLine("=== Test Plan ===");
             serializer.Serialize(Console.Out, new Input() { Languages = selectedlanguages, Services = selectedServices });
 
-            if (options.DryRun)
+            if (Options.DryRun)
             {
                 return;
             }
 
-            var uniqueOutputFile = Util.GetUniquePath(options.OutputFile);
+            var outputFile = Util.GetUniquePath(Options.OutputFile);
             // Create output file early so user sees it immediately
-            using (File.Create(uniqueOutputFile)) { }
+            using (File.Create(outputFile)) { }
 
             var results = new List<Result>();
 
@@ -193,105 +193,119 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
                         foreach (var packageVersions in serviceLanugageInfo.PackageVersions)
                         {
-                            try
-                            {
-                                // TODO: Handle exception thrown by setup.  Write empty result for all tests.
-                                var (setupOutput, setupError, context) = await _languages[language].SetupAsync(
-                                    serviceLanugageInfo.Project, languageVersion, packageVersions);
-
-                                foreach (var test in service.Tests)
-                                {
-                                    IEnumerable<string> selectedArguments;
-                                    if (!options.NoAsync && !options.NoSync)
-                                    {
-                                        selectedArguments = test.Arguments.SelectMany(a => new string[] { a, a + " --sync" });
-                                    }
-                                    else if (!options.NoSync)
-                                    {
-                                        selectedArguments = test.Arguments.Select(a => a + " --sync");
-                                    }
-                                    else if (!options.NoAsync)
-                                    {
-                                        selectedArguments = test.Arguments;
-                                    }
-                                    else
-                                    {
-                                        throw new InvalidOperationException("Cannot set both --no-sync and --no-async");
-                                    }
-
-                                    foreach (var arguments in selectedArguments)
-                                    {
-                                        var allArguments = $"{arguments} {serviceLanugageInfo.AdditionalArguments}";
-
-                                        var result = new Result
-                                        {
-                                            TestName = test.Test,
-                                            Start = DateTime.Now,
-                                            Language = language,
-                                            LanguageVersion = languageVersion,
-                                            Project = serviceLanugageInfo.Project,
-                                            LanguageTestName = test.TestNames[language],
-                                            Arguments = allArguments,
-                                            PackageVersions = packageVersions,
-                                            SetupStandardOutput = setupOutput,
-                                            SetupStandardError = setupError,
-                                        };
-
-                                        results.Add(result);
-
-                                        using (var stream = File.OpenWrite(uniqueOutputFile))
-                                        {
-                                            await JsonSerializer.SerializeAsync(stream, results, JsonOptions);
-                                        }
-
-                                        for (var i = 0; i < options.Iterations; i++)
-                                        {
-                                            IterationResult iterationResult;
-                                            try
-                                            {
-                                                iterationResult = await _languages[language].RunAsync(
-                                                    serviceLanugageInfo.Project,
-                                                    languageVersion,
-                                                    test.TestNames[language],
-                                                    allArguments,
-                                                    context
-                                                );
-                                            }
-                                            catch (Exception e)
-                                            {
-                                                iterationResult = new IterationResult
-                                                {
-                                                    OperationsPerSecond = double.MinValue,
-                                                    StandardError = e.ToString()
-                                                };
-                                            }
-
-                                            // Replace non-finite values with minvalue, since non-finite values
-                                            // are not JSON serializable
-                                            if (!double.IsFinite(iterationResult.OperationsPerSecond))
-                                            {
-                                                iterationResult.OperationsPerSecond = double.MinValue;
-                                            }
-
-                                            result.Iterations.Add(iterationResult);
-
-                                            using (var stream = File.OpenWrite(uniqueOutputFile))
-                                            {
-                                                await JsonSerializer.SerializeAsync(stream, results, JsonOptions);
-                                            }
-                                        }
-
-                                        result.End = DateTime.Now;
-                                    }
-                                }
-                            }
-                            finally
-                            {
-                                await _languages[language].CleanupAsync(serviceLanugageInfo.Project);
-                            }
+                            await RunPackageVersion(outputFile, results, service.Tests, 
+                                language, serviceLanugageInfo, languageVersion, packageVersions);
                         }
                     }
                 }
+            }
+        }
+
+        private static async Task RunPackageVersion(string outputFile, List<Result> results, IEnumerable<TestInfo> tests,
+            Language language, ServiceLanguageInfo serviceLanguageInfo, string languageVersion, IDictionary<string, string> packageVersions)
+        {
+            try
+            {
+                Console.WriteLine($"SetupAsync({serviceLanguageInfo.Project}, {languageVersion}, " +
+                    $"{JsonSerializer.Serialize(packageVersions)})");
+
+                // TODO: Handle exception thrown by setup.  Write empty result for all tests.
+                var (setupOutput, setupError, context) = await _languages[language].SetupAsync(
+                    serviceLanguageInfo.Project, languageVersion, packageVersions);
+
+                foreach (var test in tests)
+                {
+                    IEnumerable<string> selectedArguments;
+                    if (!Options.NoAsync && !Options.NoSync)
+                    {
+                        selectedArguments = test.Arguments.SelectMany(a => new string[] { a, a + " --sync" });
+                    }
+                    else if (!Options.NoSync)
+                    {
+                        selectedArguments = test.Arguments.Select(a => a + " --sync");
+                    }
+                    else if (!Options.NoAsync)
+                    {
+                        selectedArguments = test.Arguments;
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException("Cannot set both --no-sync and --no-async");
+                    }
+
+                    foreach (var arguments in selectedArguments)
+                    {
+                        var allArguments = $"{arguments} {serviceLanguageInfo.AdditionalArguments}";
+
+                        var result = new Result
+                        {
+                            TestName = test.Test,
+                            Start = DateTime.Now,
+                            Language = language,
+                            LanguageVersion = languageVersion,
+                            Project = serviceLanguageInfo.Project,
+                            LanguageTestName = test.TestNames[language],
+                            Arguments = allArguments,
+                            PackageVersions = packageVersions,
+                            SetupStandardOutput = setupOutput,
+                            SetupStandardError = setupError,
+                        };
+
+                        results.Add(result);
+
+                        using (var stream = File.OpenWrite(outputFile))
+                        {
+                            await JsonSerializer.SerializeAsync(stream, results, JsonOptions);
+                        }
+
+                        for (var i = 0; i < Options.Iterations; i++)
+                        {
+                            IterationResult iterationResult;
+                            try
+                            {
+                                Console.WriteLine($"RunAsync({serviceLanguageInfo.Project}, {languageVersion}, " +
+                                    $"{test.TestNames[language]}, {allArguments}, {context})");
+
+                                iterationResult = await _languages[language].RunAsync(
+                                    serviceLanguageInfo.Project,
+                                    languageVersion,
+                                    test.TestNames[language],
+                                    allArguments,
+                                    context
+                                );
+                            }
+                            catch (Exception e)
+                            {
+                                iterationResult = new IterationResult
+                                {
+                                    OperationsPerSecond = double.MinValue,
+                                    StandardError = e.ToString()
+                                };
+                            }
+
+                            // Replace non-finite values with minvalue, since non-finite values
+                            // are not JSON serializable
+                            if (!double.IsFinite(iterationResult.OperationsPerSecond))
+                            {
+                                iterationResult.OperationsPerSecond = double.MinValue;
+                            }
+
+                            result.Iterations.Add(iterationResult);
+
+                            using (var stream = File.OpenWrite(outputFile))
+                            {
+                                await JsonSerializer.SerializeAsync(stream, results, JsonOptions);
+                            }
+                        }
+
+                        result.End = DateTime.Now;
+                    }
+                }
+            }
+            finally
+            {
+                Console.WriteLine($"CleanupAsync({serviceLanguageInfo.Project})");
+                await _languages[language].CleanupAsync(serviceLanguageInfo.Project);
             }
         }
 

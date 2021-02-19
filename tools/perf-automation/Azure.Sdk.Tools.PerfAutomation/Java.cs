@@ -8,13 +8,14 @@ using System.Xml;
 
 namespace Azure.Sdk.Tools.PerfAutomation
 {
-    public class Java : ILanguage
+    public class Java : LanguageBase
     {
-        public async Task<(string output, string error, string context)> SetupAsync(
+        protected override Language Language => Language.Java;
+
+        public override async Task<(string output, string error, string context)> SetupAsync(
             string project, string languageVersion, IDictionary<string, string> packageVersions)
         {
-            var workingDirectory = Program.Config.WorkingDirectories[Language.Java];
-            var projectFile = Path.Combine(workingDirectory, project);
+            var projectFile = Path.Combine(WorkingDirectory, project);
 
             // Create backup.  Throw if exists, since this shouldn't happen
             File.Copy(projectFile, projectFile + ".bak", overwrite: false);
@@ -52,7 +53,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 buildFilename = "mvn";
             }
 
-            var result = await Util.RunAsync(buildFilename, buildArguments, workingDirectory);
+            var result = await Util.RunAsync(buildFilename, buildArguments, WorkingDirectory);
 
             /*
             [11:27:11.796] [INFO] Building jar: C:\Git\java\sdk\storage\azure-storage-perf\target\azure-storage-perf-1.0.0-beta.1-jar-with-dependencies.jar
@@ -64,13 +65,11 @@ namespace Azure.Sdk.Tools.PerfAutomation
             return (result.StandardOutput, result.StandardError, jar);
         }
 
-        public async Task<IterationResult> RunAsync(string project, string languageVersion, string testName, string arguments, string context)
+        public override async Task<IterationResult> RunAsync(string project, string languageVersion, string testName, string arguments, string context)
         {
-            var workingDirectory = Program.Config.WorkingDirectories[Language.Java];
-
             var processArguments = $"-jar {context} -- {testName} {arguments}";
 
-            var result = await Util.RunAsync("java", processArguments, workingDirectory, throwOnError: false);
+            var result = await Util.RunAsync("java", processArguments, WorkingDirectory, throwOnError: false);
 
             var match = Regex.Match(result.StandardOutput, @"\((.*) ops/s", RegexOptions.IgnoreCase | RegexOptions.RightToLeft);
 
@@ -88,10 +87,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
             };
         }
 
-        public Task CleanupAsync(string project)
+        public override Task CleanupAsync(string project)
         {
-            var workingDirectory = Program.Config.WorkingDirectories[Language.Java];
-            var projectFile = Path.Combine(workingDirectory, project);
+            var projectFile = Path.Combine(WorkingDirectory, project);
 
             // Restore backup
             File.Move(projectFile + ".bak", projectFile, overwrite: true);

@@ -141,8 +141,8 @@ namespace APIViewWeb.Respositories
                     var fileName = file.FileName ?? (Path.HasExtension(file.Name)? file.Name : review.Name);
                     var codeFile = await languageService.GetCodeFileAsync(fileName, fileOriginal, review.RunAnalysis);
                     await _codeFileRepository.UpsertCodeFileAsync(revision.RevisionId, file.ReviewFileId, codeFile);
-                    file.FileName = fileName;
                     InitializeFromCodeFile(file, codeFile);
+                    file.FileName = fileName;
                 }
             }
 

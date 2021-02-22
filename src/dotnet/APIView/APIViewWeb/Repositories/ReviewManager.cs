@@ -133,10 +133,16 @@ namespace APIViewWeb.Respositories
                     var fileOriginal = await _originalsRepository.GetOriginalAsync(file.ReviewFileId);
                     var languageService = GetLanguageService(file.Language);
 
-                    var codeFile = await languageService.GetCodeFileAsync(file.Name, fileOriginal, review.RunAnalysis);
+                    // file.Name property has been repurposed to store package name and version string
+                    // This is causing issue when updating review using latest parser since it expects Name field as file name
+                    // We have added a new property FileName which is only set for new reviews
+                    // All older reviews needs to be handled by checking Name field
+                    // If name field has no extension and File Name is Emtpy then use review.Name
+                    var fileName = file.FileName ?? (Path.HasExtension(file.Name)? file.Name : review.Name);
+                    var codeFile = await languageService.GetCodeFileAsync(fileName, fileOriginal, review.RunAnalysis);
                     await _codeFileRepository.UpsertCodeFileAsync(revision.RevisionId, file.ReviewFileId, codeFile);
-
                     InitializeFromCodeFile(file, codeFile);
+                    file.FileName = fileName;
                 }
             }
 
@@ -192,7 +198,7 @@ namespace APIViewWeb.Respositories
             using var memoryStream = new MemoryStream();
             var codeFile = await CreateCodeFile(originalName, fileStream, runAnalysis, memoryStream);
             var reviewCodeFileModel = await CreateReviewCodeFileModel(revisionId, memoryStream, codeFile);
-
+            reviewCodeFileModel.FileName = originalName;
             return reviewCodeFileModel;
         }
 
@@ -408,6 +414,7 @@ namespace APIViewWeb.Respositories
                     Label = label
                 };
                 var reviewCodeFileModel = await CreateReviewCodeFileModel(revision.RevisionId, memoryStream, codeFile);
+                reviewCodeFileModel.FileName = originalName;
                 revision.Files.Add(reviewCodeFileModel);
                 review.Revisions.Add(revision);
             }

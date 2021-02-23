@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Claims;
+using System.Threading;
 using System.Threading.Tasks;
 using ApiView;
 using APIViewWeb.Models;
@@ -485,7 +486,8 @@ namespace APIViewWeb.Respositories
             {
                 try
                 {
-                   await UpdateReviewAsync(review);
+                    await UpdateReviewAsync(review);
+                    Thread.Sleep(5000);
                 }
                 catch (Exception)
                 {

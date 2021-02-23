@@ -118,9 +118,8 @@ namespace APIViewWeb.Respositories
             return review;
         }
 
-        internal async Task UpdateReviewAsync(ClaimsPrincipal user, string id)
+        private async Task UpdateReviewAsync(ReviewModel review)
         {
-            var review = await GetReviewAsync(user, id);
             foreach (var revision in review.Revisions)
             {
                 foreach (var file in revision.Files)
@@ -147,6 +146,12 @@ namespace APIViewWeb.Respositories
             }
 
             await _reviewsRepository.UpsertReviewAsync(review);
+        }
+
+        internal async Task UpdateReviewAsync(ClaimsPrincipal user, string id)
+        {
+            var review = await GetReviewAsync(user, id);
+            await UpdateReviewAsync(review);
         }
 
         public async Task AddRevisionAsync(
@@ -468,6 +473,18 @@ namespace APIViewWeb.Respositories
                 }
             }
             return null;
+        }
+
+        public async void UpdateReviewBackground()
+        {
+            // Enabling this only for manual reviews in the beginning to check impact on system performance
+            // We will enable it for all reviews based on the perf details
+            // Automatic reviews are already updated as part of scheduled upload daily
+            var reviews = await _reviewsRepository.GetReviewsAsync(false, "All", false);
+            foreach(var review in reviews.Where(r => IsUpdateAvailable(r)))
+            {
+                await UpdateReviewAsync(review);
+            }
         }
     }
 }

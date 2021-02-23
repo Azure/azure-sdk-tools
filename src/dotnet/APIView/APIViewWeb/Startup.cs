@@ -21,6 +21,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using APIViewWeb.Repositories;
 using System.Threading.Tasks;
+using APIViewWeb.HostedServices;
 
 namespace APIViewWeb
 {
@@ -180,6 +181,7 @@ namespace APIViewWeb
             services.AddSingleton<IAuthorizationHandler, RevisionOwnerRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, ApproverRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, AutoReviewModifierRequirementHandler>();
+            services.AddHostedService<ReviewBackgroundHostedService>();
         }
 
         private static async Task<string> GetMicrosoftEmailAsync(OAuthCreatingTicketContext context)

@@ -483,7 +483,15 @@ namespace APIViewWeb.Respositories
             var reviews = await _reviewsRepository.GetReviewsAsync(false, "All", false);
             foreach(var review in reviews.Where(r => IsUpdateAvailable(r)))
             {
-                await UpdateReviewAsync(review);
+                try
+                {
+                   await UpdateReviewAsync(review);
+                }
+                catch (Exception)
+                {
+                    // Skip for now. Need to come up with better logging strategy to resolve these errors
+                    // Or add warning message about failed auto udpate for these reviews.
+                }
             }
         }
     }

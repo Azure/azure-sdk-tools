@@ -3,13 +3,18 @@
 
 using System;
 using System.Collections.Generic;
+using System.Data.Odbc;
 using System.IO;
 using System.Linq;
 using System.Security.Claims;
+using System.Threading;
 using System.Threading.Tasks;
 using ApiView;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.DataContracts;
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Authorization;
 
 namespace APIViewWeb.Respositories
@@ -118,9 +123,8 @@ namespace APIViewWeb.Respositories
             return review;
         }
 
-        internal async Task UpdateReviewAsync(ClaimsPrincipal user, string id)
+        private async Task UpdateReviewAsync(ReviewModel review)
         {
-            var review = await GetReviewAsync(user, id);
             foreach (var revision in review.Revisions)
             {
                 foreach (var file in revision.Files)
@@ -147,6 +151,12 @@ namespace APIViewWeb.Respositories
             }
 
             await _reviewsRepository.UpsertReviewAsync(review);
+        }
+
+        internal async Task UpdateReviewAsync(ClaimsPrincipal user, string id)
+        {
+            var review = await GetReviewAsync(user, id);
+            await UpdateReviewAsync(review);
         }
 
         public async Task AddRevisionAsync(
@@ -468,6 +478,34 @@ namespace APIViewWeb.Respositories
                 }
             }
             return null;
+        }
+
+        public async void UpdateReviewBackground()
+        {
+            TelemetryClient telemetryClient = new TelemetryClient(TelemetryConfiguration.CreateDefault());
+
+            // Enabling this only for manual reviews in the beginning to check impact on system performance
+            // We will enable it for all reviews based on the perf details
+            // Automatic reviews are already updated as part of scheduled upload daily
+            var reviews = await _reviewsRepository.GetReviewsAsync(false, "All", false);
+            foreach(var review in reviews.Where(r => IsUpdateAvailable(r)))
+            {
+                var requestTelemetry = new RequestTelemetry { Name = "Updating Review " + review.ReviewId };
+                var operation = telemetryClient.StartOperation(requestTelemetry);
+                try
+                {
+                    await Task.Delay(5000);
+                    await UpdateReviewAsync(review);
+                }
+                catch (Exception e)
+                {
+                    telemetryClient.TrackException(e);
+                }
+                finally
+                {
+                    telemetryClient.StopOperation(operation);
+                }
+            }
         }
     }
 }

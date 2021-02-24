@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Data.Odbc;
 using System.IO;
 using System.Linq;
 using System.Security.Claims;
@@ -11,6 +12,9 @@ using System.Threading.Tasks;
 using ApiView;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.DataContracts;
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Authorization;
 
 namespace APIViewWeb.Respositories
@@ -478,21 +482,28 @@ namespace APIViewWeb.Respositories
 
         public async void UpdateReviewBackground()
         {
+            TelemetryClient telemetryClient = new TelemetryClient(TelemetryConfiguration.CreateDefault());
+
             // Enabling this only for manual reviews in the beginning to check impact on system performance
             // We will enable it for all reviews based on the perf details
             // Automatic reviews are already updated as part of scheduled upload daily
             var reviews = await _reviewsRepository.GetReviewsAsync(false, "All", false);
             foreach(var review in reviews.Where(r => IsUpdateAvailable(r)))
             {
+                var requestTelemetry = new RequestTelemetry { Name = "Updating Review " + review.ReviewId };
+                var operation = telemetryClient.StartOperation(requestTelemetry);
                 try
                 {
+                    await Task.Delay(5000);
                     await UpdateReviewAsync(review);
-                    Thread.Sleep(5000);
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
-                    // Skip for now. Need to come up with better logging strategy to resolve these errors
-                    // Or add warning message about failed auto udpate for these reviews.
+                    telemetryClient.TrackException(e);
+                }
+                finally
+                {
+                    telemetryClient.StopOperation(operation);
                 }
             }
         }

@@ -103,6 +103,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             var projectDirectory = Path.Combine(WorkingDirectory, project);
 
+            // TODO: Investigate why "npm list" is not printing all output
+
             // Dump "npm list 2>nul | findstr @azure" to stdout
             // "npm list" fails with exit code 1, but it succeeds enough to print the versions we care about
             var npmListResult = await Util.RunAsync("npm", "list", projectDirectory, throwOnError: false);

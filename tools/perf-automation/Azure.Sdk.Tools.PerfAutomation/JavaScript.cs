@@ -1,14 +1,10 @@
 ﻿using Azure.Sdk.Tools.PerfAutomation.Models;
-using Microsoft.Crank.Agent;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.PerfAutomation
@@ -113,7 +109,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             {
                 outputBuilder.AppendLine(line);
             }
-            
+
             // 1. cd project
             // 2. npm run perf-test:node -- testName arguments
 

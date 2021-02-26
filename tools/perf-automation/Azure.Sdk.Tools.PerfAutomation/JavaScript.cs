@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.PerfAutomation
@@ -99,10 +100,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             var projectDirectory = Path.Combine(WorkingDirectory, project);
 
-            // TODO: Investigate why "npm list" is not printing all output
-
             // Dump "npm list 2>nul | findstr @azure" to stdout
-            // "npm list" fails with exit code 1, but it succeeds enough to print the versions we care about
+            // "npm list" may fail with exit code 1, but it succeeds enough to print the versions we care about
             var npmListResult = await Util.RunAsync("npm", "list", projectDirectory, throwOnError: false);
 
             foreach (var line in npmListResult.StandardOutput.ToLines().Where(l => l.Contains("@azure")))
@@ -113,8 +112,20 @@ namespace Azure.Sdk.Tools.PerfAutomation
             // 1. cd project
             // 2. npm run perf-test:node -- testName arguments
 
+            var testResult = await Util.RunAsync("npm", $"run perf-test:node -- {testName} {arguments}",
+                projectDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder, throwOnError: false);
+
+            var match = Regex.Match(testResult.StandardOutput, @"\((.*) ops/s", RegexOptions.IgnoreCase | RegexOptions.RightToLeft);
+
+            var opsPerSecond = -1d;
+            if (match.Success)
+            {
+                opsPerSecond = double.Parse(match.Groups[1].Value);
+            }
+
             return new IterationResult
             {
+                OperationsPerSecond = opsPerSecond,
                 StandardOutput = outputBuilder.ToString(),
                 StandardError = errorBuilder.ToString(),
             };

@@ -81,7 +81,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var processArguments = $"run --no-build -c release -f {languageVersion} -p {project} -- " +
                 $"{testName} {arguments}";
 
-            var result = await Util.RunAsync("dotnet", processArguments, workingDirectory: WorkingDirectory, throwOnError: false);
+            var result = await Util.RunAsync("dotnet", processArguments, WorkingDirectory, throwOnError: false);
 
             var match = Regex.Match(result.StandardOutput, @"\((.*) ops/s", RegexOptions.IgnoreCase | RegexOptions.RightToLeft);
 

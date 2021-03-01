@@ -62,15 +62,21 @@ namespace APIViewWeb
             return reviews.FirstOrDefault();
         }
 
-        public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(string language, string packageName, bool isAutomatic)
+        public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(string language, string packageName = "", bool? isAutomatic = null)
         {
             var queryStringAutomaticFilter = "SELECT * FROM Reviews r WHERE " +
                                                       "r.IsClosed = false AND " +
                                                       "(IS_DEFINED(r.IsAutomatic) ? r.IsAutomatic : false) = @isAutomatic AND " +
+                                                      "('All' = @language OR EXISTS (SELECT VALUE revision FROM revision in r.Revisions WHERE " +
+                                                                                    "EXISTS (SELECT VALUE files from files in revision.Files WHERE files.Language = @language AND files.PackageName = @packageName)))";
+            var queryStringLanguagePackageFilter = "SELECT * FROM Reviews r WHERE " +
+                                                      "r.IsClosed = false AND " +
                                                       "EXISTS (SELECT VALUE revision FROM revision in r.Revisions WHERE " +
-                                                                                    "EXISTS (SELECT VALUE files from files in revision.Files WHERE files.Language = @language AND files.PackageName = @packageName))";
+                                                                                    "EXISTS (SELECT VALUE files from files in revision.Files " +
+                                                                                    "WHERE ('All' = @language OR files.Language = @language) AND (@packageName = '' OR files.PackageName = @packageName)))";
+
             var allReviews = new List<ReviewModel>();
-            var queryDefinition = new QueryDefinition(queryStringAutomaticFilter)
+            var queryDefinition = new QueryDefinition(isAutomatic != null? queryStringAutomaticFilter : queryStringLanguagePackageFilter)
                 .WithParameter("@language", language)
                 .WithParameter("@packageName", packageName)
                 .WithParameter("@isAutomatic", isAutomatic);

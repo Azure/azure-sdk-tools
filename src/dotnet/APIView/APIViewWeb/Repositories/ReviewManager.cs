@@ -68,7 +68,7 @@ namespace APIViewWeb.Respositories
 
         public Task<IEnumerable<ReviewModel>> GetReviewsAsync(bool closed, string language, bool automatic)
         {
-            return _reviewsRepository.GetReviewsAsync(closed, language, automatic);
+            return _reviewsRepository.GetReviewsAsync(closed, language, isAutomatic: automatic);
         }
 
         public async Task DeleteReviewAsync(ClaimsPrincipal user, string id)
@@ -350,22 +350,6 @@ namespace APIViewWeb.Respositories
                .Any(f => f.HasOriginal && GetLanguageService(f.Language).CanUpdate(f.VersionString));
         }
 
-        private async Task<ReviewModel> GetMasterReviewAsync(ClaimsPrincipal user, string language, string packageName)
-        {
-            if (user == null)
-            {
-                throw new UnauthorizedAccessException();
-            }
-
-            var review = await _reviewsRepository.GetMasterReviewForPackageAsync(language, packageName);
-            if (review != null)
-            {
-                review.UpdateAvailable = IsUpdateAvailable(review);
-            }
-
-            return review;
-        }
-
         private async Task<bool> IsReviewSame(ReviewRevisionModel revision, RenderedCodeFile renderedCodeFile)
         {
             //This will compare and check if new code file content is same as revision in parameter
@@ -382,16 +366,10 @@ namespace APIViewWeb.Respositories
             var codeFile = await CreateCodeFile(originalName, fileStream, runAnalysis, memoryStream);
 
             //Get current master review for package and language
-            var review = await GetMasterReviewAsync(user, codeFile.Language, codeFile.PackageName);
+            var review = await _reviewsRepository.GetMasterReviewForPackageAsync(codeFile.Language, codeFile.PackageName);
             bool createNewRevision = true;
             if (review != null)
             {
-                // Check if current review needs to be updated to rebuild using latest language processor
-                if (review.UpdateAvailable)
-                {
-                    await UpdateReviewAsync(user, review.ReviewId);
-                }
-
                 var renderedCodeFile = new RenderedCodeFile(codeFile);
                 var noDiffFound = await IsReviewSame(review.Revisions.LastOrDefault(), renderedCodeFile);
                 if (noDiffFound)
@@ -464,7 +442,7 @@ namespace APIViewWeb.Respositories
             var codeFile = await _codeFileRepository.GetCodeFileAsync(revisionModel);
 
             // Get manual reviews to check if a matching review is in approved state
-            var reviews = await _reviewsRepository.GetReviewsAsync(revisionFile.Language, revisionFile.PackageName, false);
+            var reviews = await _reviewsRepository.GetReviewsAsync(false, revisionFile.Language, revisionFile.PackageName, false);
             foreach (var r in reviews)
             {
                 var approvedRevision = r.Revisions.Where(r => r.Approvers.Count() > 0).LastOrDefault();
@@ -487,7 +465,7 @@ namespace APIViewWeb.Respositories
             // Enabling this only for manual reviews in the beginning to check impact on system performance
             // We will enable it for all reviews based on the perf details
             // Automatic reviews are already updated as part of scheduled upload daily
-            var reviews = await _reviewsRepository.GetReviewsAsync(false, "All", false);
+            var reviews = await _reviewsRepository.GetReviewsAsync(false, "All");
             foreach(var review in reviews.Where(r => IsUpdateAvailable(r)))
             {
                 var requestTelemetry = new RequestTelemetry { Name = "Updating Review " + review.ReviewId };

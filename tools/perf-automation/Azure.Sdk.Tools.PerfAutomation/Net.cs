@@ -11,7 +11,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
     {
         protected override Language Language => Language.Net;
 
-        private string PublishDirectory => Path.Join(WorkingDirectory, "perf-publish");
+        // Azure.Core.TestFramework.TestEnvironment requires publishing under the "artifacts" folder to find the repository root.
+        private string PublishDirectory => Path.Join(WorkingDirectory, "artifacts", "perf");
 
         public override async Task<(string output, string error, string context)> SetupAsync(
             string project, string languageVersion, IDictionary<string, string> packageVersions)

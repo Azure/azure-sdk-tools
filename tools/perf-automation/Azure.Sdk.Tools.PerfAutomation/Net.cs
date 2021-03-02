@@ -11,6 +11,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
     {
         protected override Language Language => Language.Net;
 
+        private string PublishDirectory => Path.Join(WorkingDirectory, "perf-publish");
+
         public override async Task<(string output, string error, string context)> SetupAsync(
             string project, string languageVersion, IDictionary<string, string> packageVersions)
         {
@@ -69,7 +71,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             File.WriteAllText(projectFile, projectContents);
 
-            var processArguments = $"build -c release -f {languageVersion} {additionalBuildArguments} {project}";
+            Util.DeleteIfExists(PublishDirectory);
+
+            var processArguments = $"publish -c release -f {languageVersion} -o {PublishDirectory} {additionalBuildArguments} {project}";
 
             var result = await Util.RunAsync("dotnet", processArguments, workingDirectory: WorkingDirectory);
 
@@ -78,8 +82,10 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
         public override async Task<IterationResult> RunAsync(string project, string languageVersion, string testName, string arguments, string context)
         {
-            var processArguments = $"run --no-build -c release -f {languageVersion} -p {project} -- " +
-                $"{testName} {arguments}";
+            var dllName = Path.GetFileNameWithoutExtension(project) + ".dll";
+            var dllPath = Path.Combine(PublishDirectory, dllName);
+
+            var processArguments = $"{dllPath} {testName} {arguments}";
 
             var result = await Util.RunAsync("dotnet", processArguments, WorkingDirectory, throwOnError: false);
 
@@ -101,6 +107,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
         public override Task CleanupAsync(string project)
         {
+            Util.DeleteIfExists(PublishDirectory);
+
             var projectFile = Path.Combine(WorkingDirectory, project);
 
             // Restore backup

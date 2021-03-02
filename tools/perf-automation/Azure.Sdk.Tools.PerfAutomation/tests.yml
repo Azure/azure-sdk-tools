@@ -66,7 +66,6 @@ Services:
       Project: sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Azure.Storage.Blobs.Perf.csproj
       PackageVersions:
       - Azure.Storage.Blobs: 12.8.0
-      - Azure.Storage.Blobs: 12.9.0-beta.1
       - Azure.Storage.Blobs: source
     Python:
       Project: sdk/storage/azure-storage-blob

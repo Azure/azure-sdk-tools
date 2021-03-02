@@ -58,5 +58,13 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             return result;
         }
+
+        public static void DeleteIfExists(string path)
+        {
+            if (Directory.Exists(path))
+            {
+                Directory.Delete(path, recursive: true);
+            }
+        }
     }
 }

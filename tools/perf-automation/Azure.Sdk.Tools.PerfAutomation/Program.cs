@@ -160,7 +160,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
                             TestNames = t.TestNames.Where(n => !Options.Languages.Any() || Options.Languages.Contains(n.Key))
                                         .ToDictionary(p => p.Key, p => p.Value)
                         })
-                        .Where(t => t.TestNames.Any()),
+                        .Where(t => t.TestNames.Any())
+                        .Where(t => t.Arguments.Any()),
                 })
                 .Where(s => s.Tests.Any());
 

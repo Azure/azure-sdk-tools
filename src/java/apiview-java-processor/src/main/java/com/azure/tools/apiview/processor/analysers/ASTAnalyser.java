@@ -268,13 +268,13 @@ public class ASTAnalyser implements Analyser {
         addToken(new Token(PUNCTUATION, "{"), NEWLINE);
         indent();
 
-        // parent
-        String gavStr = mavenPom.getParent().getGroupId() + ":" + mavenPom.getParent().getArtifactId() + ":" + mavenPom.getParent().getVersion();
-        tokeniseKeyValue("parent", gavStr, "");
-
-        // properties
-        gavStr = mavenPom.getGroupId() + ":" + mavenPom.getArtifactId() + ":" + mavenPom.getVersion();
-        tokeniseKeyValue("properties", gavStr, "");
+//        // parent
+//        String gavStr = mavenPom.getParent().getGroupId() + ":" + mavenPom.getParent().getArtifactId() + ":" + mavenPom.getParent().getVersion();
+//        tokeniseKeyValue("parent", gavStr, "");
+//
+//        // properties
+//        gavStr = mavenPom.getGroupId() + ":" + mavenPom.getArtifactId() + ":" + mavenPom.getVersion();
+//        tokeniseKeyValue("properties", gavStr, "");
 
         // configuration
         boolean showJacoco = mavenPom.getJacocoMinLineCoverage() != null &&

@@ -19,7 +19,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
         public override async Task<(string output, string error, string context)> SetupAsync(
             string project, string languageVersion, IDictionary<string, string> packageVersions)
         {
-            var env = Path.Combine(WorkingDirectory, _env);
+            var projectDirectory = Path.Combine(WorkingDirectory, project);
+            var env = Path.Combine(projectDirectory, _env);
 
             if (Directory.Exists(env))
             {
@@ -30,16 +31,16 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var errorBuilder = new StringBuilder();
 
             // Create venv
-            await Util.RunAsync(_python, $"-m venv {_env}", WorkingDirectory, outputBuilder, errorBuilder);
+            await Util.RunAsync(_python, $"-m venv {_env}", projectDirectory, outputBuilder, errorBuilder);
 
             var python = Path.Combine(env, _envBin, "python");
             var pip = Path.Combine(env, _envBin, "pip");
 
             // Upgrade pip
-            await Util.RunAsync(python, "-m pip install --upgrade pip", WorkingDirectory, outputBuilder, errorBuilder);
+            await Util.RunAsync(python, "-m pip install --upgrade pip", projectDirectory, outputBuilder, errorBuilder);
 
             // Install dev reqs
-            await Util.RunAsync(pip, "install -r dev_requirements.txt", WorkingDirectory, outputBuilder, errorBuilder);
+            await Util.RunAsync(pip, "install -r dev_requirements.txt", projectDirectory, outputBuilder, errorBuilder);
 
             // TODO: Support multiple packages if possible.  Maybe by force installing?
             foreach (var v in packageVersions)
@@ -49,11 +50,11 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
                 if (packageVersion == Program.PackageVersionSource)
                 {
-                    await Util.RunAsync(pip, "install -e .", WorkingDirectory, outputBuilder, errorBuilder);
+                    await Util.RunAsync(pip, "install -e .", projectDirectory, outputBuilder, errorBuilder);
                 }
                 else
                 {
-                    await Util.RunAsync(pip, $"install {packageName}=={packageVersion}", WorkingDirectory, outputBuilder, errorBuilder);
+                    await Util.RunAsync(pip, $"install {packageName}=={packageVersion}", projectDirectory, outputBuilder, errorBuilder);
                 }
             }
 
@@ -62,20 +63,22 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
         public override async Task<IterationResult> RunAsync(string project, string languageVersion, string testName, string arguments, string context)
         {
+            var projectDirectory = Path.Combine(WorkingDirectory, project);
+
             var outputBuilder = new StringBuilder();
             var errorBuilder = new StringBuilder();
 
-            var env = Path.Combine(WorkingDirectory, _env);
+            var env = Path.Combine(projectDirectory, _env);
             var pip = Path.Combine(env, _envBin, "pip");
             var perfstress = Path.Combine(env, _envBin, "perfstress");
 
             // Dump package versions to std output
-            await Util.RunAsync(pip, "freeze", WorkingDirectory, outputBuilder, errorBuilder);
+            await Util.RunAsync(pip, "freeze", projectDirectory, outputBuilder, errorBuilder);
 
             var processResult = await Util.RunAsync(
                 perfstress,
                 $"{testName} {arguments}",
-                Path.Combine(WorkingDirectory, "tests"),
+                Path.Combine(projectDirectory, "tests"),
                 outputBuilder,
                 errorBuilder
             );
@@ -94,7 +97,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
         public override Task CleanupAsync(string project)
         {
-            Directory.Delete(Path.Combine(WorkingDirectory, _env), recursive: true);
+            var projectDirectory = Path.Combine(WorkingDirectory, project);
+            Directory.Delete(Path.Combine(projectDirectory, _env), recursive: true);
             return Task.CompletedTask;
         }
 

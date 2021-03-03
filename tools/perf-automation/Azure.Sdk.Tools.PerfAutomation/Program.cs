@@ -137,25 +137,26 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 .Select(s => new ServiceInfo
                 {
                     Service = s.Service,
-                    Languages = s.Languages.Where(l => !Options.Languages.Any() || Options.Languages.Contains(l.Key))
-                    .ToDictionary(p => p.Key, p => new ServiceLanguageInfo()
-                    {
-                        Project = p.Value.Project,
-                        AdditionalArguments = p.Value.AdditionalArguments,
-                        PackageVersions = p.Value.PackageVersions.Where(d => d.Keys.Concat(d.Values).Any(s =>
-                            String.IsNullOrEmpty(Options.PackageVersions) || Regex.IsMatch(s, Options.PackageVersions)
-                        ))
-                    }),
-                    Tests = s.Tests.Where(t =>
-                        String.IsNullOrEmpty(Options.Tests) || Regex.IsMatch(t.Test, Options.Tests, RegexOptions.IgnoreCase)).Select(t =>
-                            new TestInfo
-                            {
-                                Test = t.Test,
-                                Arguments = t.Arguments,
-                                TestNames = t.TestNames.Where(n => !Options.Languages.Any() || Options.Languages.Contains(n.Key))
-                                    .ToDictionary(p => p.Key, p => p.Value)
-                            }
-                    )
+                    Languages = s.Languages
+                        .Where(l => !Options.Languages.Any() || Options.Languages.Contains(l.Key))
+                        .ToDictionary(p => p.Key, p => new ServiceLanguageInfo()
+                        {
+                            Project = p.Value.Project,
+                            AdditionalArguments = p.Value.AdditionalArguments,
+                            PackageVersions = p.Value.PackageVersions.Where(d => d.Keys.Concat(d.Values).Any(s =>
+                                String.IsNullOrEmpty(Options.PackageVersions) || Regex.IsMatch(s, Options.PackageVersions)
+                            ))
+                        }),
+                    Tests = s.Tests
+                        .Where(t => String.IsNullOrEmpty(Options.Tests) || Regex.IsMatch(t.Test, Options.Tests, RegexOptions.IgnoreCase))
+                        .Select(t => new TestInfo
+                        {
+                            Test = t.Test,
+                            Arguments = t.Arguments,
+                            TestNames = t.TestNames.Where(n => !Options.Languages.Any() || Options.Languages.Contains(n.Key))
+                                        .ToDictionary(p => p.Key, p => p.Value)
+                        })
+                        .Where(t => t.TestNames.Any()),
                 })
                 .Where(s => s.Tests.Any());
 

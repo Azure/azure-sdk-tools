@@ -1,4 +1,9 @@
 ﻿Languages:
+  Net:
+    DefaultVersions:
+    - netcoreapp2.1
+    OptionalVersions:
+    - net5.0
   Java:
     DefaultVersions:
     - 8u282-b08
@@ -9,48 +14,32 @@
     - 14.15.5
     OptionalVersions:
     - 15.9.0
-  Net:
-    DefaultVersions:
-    - netcoreapp2.1
-    OptionalVersions:
-    - net5.0
   Python:
     DefaultVersions:
     - 3.7.9
     OptionalVersions:
     - 3.9.1
 Services:
-- Service: storage-blob-track1
+- Service: sample
   Languages:
-    JS:
-      Project: sdk/storage/perf-tests/storage-blob-track-1
-      PackageVersions:
-      - "@azure/storage-blob": 10.5.0
     Net:
-      Project: sdk/storage/Azure.Storage.Blobs/perf/Microsoft.Azure.Storage.Blob.Perf/Microsoft.Azure.Storage.Blob.Perf.csproj
+      Project: common/Perf/Azure.Sample.Perf/Azure.Sample.Perf.csproj
       PackageVersions:
-      - Microsoft.Azure.Storage.Blob: 11.2.2
+      - Azure.Test.Perf: source
+    # Java:
   Tests:
-  - Test: storage-blob-download
-    Arguments:
-    - -s 10240 -p 32
-    - -s 10485760 -p 32
-    TestNames:
-      Net: DownloadBlob
-  - Test: storage-blob-upload
-    Arguments:
-    - -s 10240 -p 32
-    - -s 10485760 -p 32
-    TestNames:
-      Net: UploadBlob
   - Test: no-op
     Arguments:
     - -w 1 -d 1
     TestNames:
-      JS: NoOp
       Net: NoOp
 - Service: storage-blob
   Languages:
+    Net:
+      Project: sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Azure.Storage.Blobs.Perf.csproj
+      PackageVersions:
+      - Azure.Storage.Blobs: 12.8.0
+      - Azure.Storage.Blobs: source
     Java:
       Project: sdk/storage/azure-storage-perf/pom.xml
       AdditionalArguments: -w 15 -d 15
@@ -62,11 +51,6 @@ Services:
       PackageVersions:
       - "@azure/storage-blob": 12.4.1
       - "@azure/storage-blob": source
-    Net:
-      Project: sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Azure.Storage.Blobs.Perf.csproj
-      PackageVersions:
-      - Azure.Storage.Blobs: 12.8.0
-      - Azure.Storage.Blobs: source
     Python:
       Project: sdk/storage/azure-storage-blob
       PackageVersions:
@@ -78,32 +62,32 @@ Services:
     - -s 10240 -p 32
     - -s 10485760 -p 32
     TestNames:
-      Java: downloadblob
       Net: DownloadBlob
+      Java: downloadblob
       Python: DownloadTest
   - Test: storage-blob-upload
     Arguments:
     - -s 10240 -p 32
     - -s 10485760 -p 32
     TestNames:
-      Java: uploadblob
       Net: UploadBlob
+      Java: uploadblob
       Python: UploadTest
   - Test: storage-blob-getblobs
     Arguments:
     - -c 5 -p 32
     - -c 500 -p 32
     TestNames:
-      Java: listblobs
       Net: GetBlobs
+      Java: listblobs
       Python: ListBlobsTest
   - Test: no-op
     Arguments:
     - -w 1 -d 1
     TestNames:
+      Net: NoOp
       Java: noop
       JS: NoOp
-      Net: NoOp
       Python: NoOpTest
   - Test: storage-blob-download-sas-http-client
     Arguments:
@@ -120,18 +104,47 @@ Services:
     - -s 10240 -p 256
     TestNames:
       Net: DownloadSasUriBlobClient
+- Service: storage-blob-track1
+  Languages:
+    Net:
+      Project: sdk/storage/Azure.Storage.Blobs/perf/Microsoft.Azure.Storage.Blob.Perf/Microsoft.Azure.Storage.Blob.Perf.csproj
+      PackageVersions:
+      - Microsoft.Azure.Storage.Blob: 11.2.2
+    JS:
+      Project: sdk/storage/perf-tests/storage-blob-track-1
+      PackageVersions:
+      - "@azure/storage-blob": 10.5.0
+  Tests:
+  - Test: storage-blob-download
+    Arguments:
+    - -s 10240 -p 32
+    - -s 10485760 -p 32
+    TestNames:
+      Net: DownloadBlob
+  - Test: storage-blob-upload
+    Arguments:
+    - -s 10240 -p 32
+    - -s 10485760 -p 32
+    TestNames:
+      Net: UploadBlob
+  - Test: no-op
+    Arguments:
+    - -w 1 -d 1
+    TestNames:
+      Net: NoOp
+      JS: NoOp
 - Service: storage-files-shares
   Languages:
-    Java:
-      Project: sdk/storage/azure-storage-perf/pom.xm
-      PackageVersions:
-      - azure-storage-file-share: 12.8.0
-      - azure-storage-file-share: source
     Net:
       Project: sdk/storage/Azure.Storage.Files.Shares/perf/Azure.Storage.Files.Shares.Perf/Azure.Storage.Files.Shares.Perf.csproj
       PackageVersions:
       - Azure.Storage.Files.Shares: 12.6.0
       - Azure.Storage.Files.Shares: source
+    Java:
+      Project: sdk/storage/azure-storage-perf/pom.xm
+      PackageVersions:
+      - azure-storage-file-share: 12.8.0
+      - azure-storage-file-share: source
     Python:
       Project: sdk/storage/azure-storage-file-share
       PackageVersions:
@@ -142,13 +155,13 @@ Services:
     Arguments:
     - -w 1 -d 1 -s 1 -p 2
     TestNames:
-      Java: downloadfileshare
       Net: DownloadFile
+      Java: downloadfileshare
       Python: DownloadTest
   - Test: storage-file-shares-upload
     Arguments:
     - -w 1 -d 1 -s 1 -p 2
     TestNames:
-      Java: uploadfileshare
       Net: UploadFile
+      Java: uploadfileshare
       Python: UploadTest

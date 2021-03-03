@@ -306,8 +306,11 @@ namespace Azure.Sdk.Tools.PerfAutomation
                                     iterationResult = new IterationResult
                                     {
                                         OperationsPerSecond = double.MinValue,
-                                        StandardError = e.ToString()
+                                        Exception = e.ToString(),
                                     };
+
+                                    Console.WriteLine(e);
+                                    Console.WriteLine();
                                 }
 
                                 // Replace non-finite values with minvalue, since non-finite values

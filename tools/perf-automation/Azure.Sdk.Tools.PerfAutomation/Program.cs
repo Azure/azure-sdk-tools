@@ -41,6 +41,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
         public class OptionsDefinition
         {
+            [Option('a', "arguments", HelpText = "Regex of arguments to run")]
+            public string Arguments { get; set; }
+
             [Option('c', "configFile", Default = "config.yml")]
             public string ConfigFile { get; set; }
 
@@ -152,7 +155,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
                         .Select(t => new TestInfo
                         {
                             Test = t.Test,
-                            Arguments = t.Arguments,
+                            Arguments = t.Arguments.Where(a =>
+                                String.IsNullOrEmpty(Options.Arguments) || Regex.IsMatch(a, Options.Arguments, RegexOptions.IgnoreCase)),
                             TestNames = t.TestNames.Where(n => !Options.Languages.Any() || Options.Languages.Contains(n.Key))
                                         .ToDictionary(p => p.Key, p => p.Value)
                         })

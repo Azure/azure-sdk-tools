@@ -26,13 +26,17 @@ Services:
       Project: common/Perf/Azure.Sample.Perf/Azure.Sample.Perf.csproj
       PackageVersions:
       - Azure.Test.Perf: source
-    # Java:
+    Java:
+      Project: sdk/template/azure-template-perf
+      PackageVersions:
+      - perf-test-core: source
   Tests:
   - Test: no-op
     Arguments:
     - -w 1 -d 1
     TestNames:
       Net: NoOp
+      Java: noop
 - Service: storage-blob
   Languages:
     Net:
@@ -41,7 +45,7 @@ Services:
       - Azure.Storage.Blobs: 12.8.0
       - Azure.Storage.Blobs: source
     Java:
-      Project: sdk/storage/azure-storage-perf/pom.xml
+      Project: sdk/storage/azure-storage-perf
       AdditionalArguments: -w 15 -d 15
       PackageVersions:
       - azure-storage-blob: 12.10.0
@@ -141,7 +145,7 @@ Services:
       - Azure.Storage.Files.Shares: 12.6.0
       - Azure.Storage.Files.Shares: source
     Java:
-      Project: sdk/storage/azure-storage-perf/pom.xm
+      Project: sdk/storage/azure-storage-perf
       PackageVersions:
       - azure-storage-file-share: 12.8.0
       - azure-storage-file-share: source

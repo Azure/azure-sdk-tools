@@ -170,7 +170,15 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             if (Options.DryRun)
             {
-                return;
+                Console.WriteLine();
+                Console.Write("Press 'y' to continue, or any other key to exit: ");
+                var key = Console.ReadKey();
+                Console.WriteLine();
+                Console.WriteLine();
+                if (char.ToLowerInvariant(key.KeyChar) != 'y')
+                {
+                    return;
+                }
             }
 
             var outputFile = Util.GetUniquePath(Options.OutputFile);
@@ -208,6 +216,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             {
                 Console.WriteLine($"SetupAsync({serviceLanguageInfo.Project}, {languageVersion}, " +
                     $"{JsonSerializer.Serialize(packageVersions)})");
+                Console.WriteLine();
 
                 string setupOutput = null;
                 string setupError = null;
@@ -221,8 +230,10 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(e);
                     setupException = e.ToString();
+
+                    Console.WriteLine(e);
+                    Console.WriteLine();
                 }
 
                 foreach (var test in tests)
@@ -279,6 +290,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                                 {
                                     Console.WriteLine($"RunAsync({serviceLanguageInfo.Project}, {languageVersion}, " +
                                         $"{test.TestNames[language]}, {allArguments}, {context})");
+                                    Console.WriteLine();
 
                                     iterationResult = await _languages[language].RunAsync(
                                         serviceLanguageInfo.Project,
@@ -320,6 +332,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
             finally
             {
                 Console.WriteLine($"CleanupAsync({serviceLanguageInfo.Project})");
+                Console.WriteLine();
+
                 try
                 {
                     await _languages[language].CleanupAsync(serviceLanguageInfo.Project);
@@ -327,6 +341,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 catch (Exception e)
                 {
                     Console.WriteLine(e);
+                    Console.WriteLine();
                 }
             }
         }

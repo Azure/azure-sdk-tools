@@ -14,7 +14,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
         public override async Task<(string output, string error, string context)> SetupAsync(
             string project, string languageVersion, IDictionary<string, string> packageVersions)
         {
-            var projectFile = Path.Combine(WorkingDirectory, project);
+            var projectFile = Path.Combine(WorkingDirectory, project, "pom.xml");
 
             // Create backup.  Throw if exists, since this shouldn't happen
             File.Copy(projectFile, projectFile + ".bak", overwrite: false);
@@ -76,7 +76,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
         public override Task CleanupAsync(string project)
         {
-            var projectFile = Path.Combine(WorkingDirectory, project);
+            var projectFile = Path.Combine(WorkingDirectory, project, "pom.xml");
 
             // Restore backup
             File.Move(projectFile + ".bak", projectFile, overwrite: true);

@@ -209,9 +209,21 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 Console.WriteLine($"SetupAsync({serviceLanguageInfo.Project}, {languageVersion}, " +
                     $"{JsonSerializer.Serialize(packageVersions)})");
 
-                // TODO: Handle exception thrown by setup.  Write empty result for all tests.
-                var (setupOutput, setupError, context) = await _languages[language].SetupAsync(
-                    serviceLanguageInfo.Project, languageVersion, packageVersions);
+                string setupOutput = null;
+                string setupError = null;
+                string context = null;
+                string setupException = null;
+
+                try
+                {
+                    (setupOutput, setupError, context) = await _languages[language].SetupAsync(
+                        serviceLanguageInfo.Project, languageVersion, packageVersions);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    setupException = e.ToString();
+                }
 
                 foreach (var test in tests)
                 {
@@ -249,6 +261,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                             PackageVersions = packageVersions,
                             SetupStandardOutput = setupOutput,
                             SetupStandardError = setupError,
+                            SetupException = setupException,
                         };
 
                         results.Add(result);
@@ -257,44 +270,46 @@ namespace Azure.Sdk.Tools.PerfAutomation
                         {
                             await JsonSerializer.SerializeAsync(stream, results, JsonOptions);
                         }
-
-                        for (var i = 0; i < Options.Iterations; i++)
+                        if (setupException == null)
                         {
-                            IterationResult iterationResult;
-                            try
+                            for (var i = 0; i < Options.Iterations; i++)
                             {
-                                Console.WriteLine($"RunAsync({serviceLanguageInfo.Project}, {languageVersion}, " +
-                                    $"{test.TestNames[language]}, {allArguments}, {context})");
-
-                                iterationResult = await _languages[language].RunAsync(
-                                    serviceLanguageInfo.Project,
-                                    languageVersion,
-                                    test.TestNames[language],
-                                    allArguments,
-                                    context
-                                );
-                            }
-                            catch (Exception e)
-                            {
-                                iterationResult = new IterationResult
+                                IterationResult iterationResult;
+                                try
                                 {
-                                    OperationsPerSecond = double.MinValue,
-                                    StandardError = e.ToString()
-                                };
-                            }
+                                    Console.WriteLine($"RunAsync({serviceLanguageInfo.Project}, {languageVersion}, " +
+                                        $"{test.TestNames[language]}, {allArguments}, {context})");
 
-                            // Replace non-finite values with minvalue, since non-finite values
-                            // are not JSON serializable
-                            if (!double.IsFinite(iterationResult.OperationsPerSecond))
-                            {
-                                iterationResult.OperationsPerSecond = double.MinValue;
-                            }
+                                    iterationResult = await _languages[language].RunAsync(
+                                        serviceLanguageInfo.Project,
+                                        languageVersion,
+                                        test.TestNames[language],
+                                        allArguments,
+                                        context
+                                    );
+                                }
+                                catch (Exception e)
+                                {
+                                    iterationResult = new IterationResult
+                                    {
+                                        OperationsPerSecond = double.MinValue,
+                                        StandardError = e.ToString()
+                                    };
+                                }
 
-                            result.Iterations.Add(iterationResult);
+                                // Replace non-finite values with minvalue, since non-finite values
+                                // are not JSON serializable
+                                if (!double.IsFinite(iterationResult.OperationsPerSecond))
+                                {
+                                    iterationResult.OperationsPerSecond = double.MinValue;
+                                }
 
-                            using (var stream = File.OpenWrite(outputFile))
-                            {
-                                await JsonSerializer.SerializeAsync(stream, results, JsonOptions);
+                                result.Iterations.Add(iterationResult);
+
+                                using (var stream = File.OpenWrite(outputFile))
+                                {
+                                    await JsonSerializer.SerializeAsync(stream, results, JsonOptions);
+                                }
                             }
                         }
 
@@ -305,7 +320,14 @@ namespace Azure.Sdk.Tools.PerfAutomation
             finally
             {
                 Console.WriteLine($"CleanupAsync({serviceLanguageInfo.Project})");
-                await _languages[language].CleanupAsync(serviceLanguageInfo.Project);
+                try
+                {
+                    await _languages[language].CleanupAsync(serviceLanguageInfo.Project);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                }
             }
         }
 

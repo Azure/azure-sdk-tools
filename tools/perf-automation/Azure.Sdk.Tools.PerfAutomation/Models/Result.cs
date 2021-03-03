@@ -19,6 +19,7 @@ namespace Azure.Sdk.Tools.PerfAutomation.Models
         public IDictionary<string, string> PackageVersions { get; set; }
         public string SetupStandardOutput { get; set; }
         public string SetupStandardError { get; set; }
+        public string SetupException { get; set; }
 
         public ICollection<IterationResult> Iterations { get; } = new List<IterationResult>();
 

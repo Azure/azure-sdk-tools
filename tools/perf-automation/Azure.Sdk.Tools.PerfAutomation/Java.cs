@@ -39,7 +39,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             doc.Save(projectFile);
 
-            var result = await Util.RunAsync("mvn", $"package -T1C -am -Dmaven.test.skip=true -Dmaven.javadoc.skip=true --pl {project}",
+            var result = await Util.RunAsync("mvn", $"clean package -T1C -am -Dmaven.test.skip=true -Dmaven.javadoc.skip=true --pl {project}",
                 WorkingDirectory);
 
             /*

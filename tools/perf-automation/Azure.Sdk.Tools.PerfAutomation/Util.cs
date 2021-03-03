@@ -35,6 +35,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             "rush"
         };
 
+        // TODO: We should usually not throw on error, since it prevents extracting StandardOutput and StandardError
         public static async Task<ProcessResult> RunAsync(string filename, string arguments, string workingDirectory,
             StringBuilder outputBuilder = null, StringBuilder errorBuilder = null, bool throwOnError = true)
         {

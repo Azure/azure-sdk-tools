@@ -1,8 +1,10 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
@@ -17,28 +19,6 @@ namespace APIViewWeb
         {
             var client = new CosmosClient(configuration["Cosmos:ConnectionString"]);
             _reviewsContainer = client.GetContainer("APIView", "Reviews");
-        }
-
-        public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(bool closed, string language, bool automatic)
-        {
-            var allReviews = new List<ReviewModel>();
-            var queryDefinition = new QueryDefinition("SELECT * FROM Reviews r WHERE" +
-                                                      "(IS_DEFINED(r.IsClosed) ? r.IsClosed : false) = @isClosed AND " +
-                                                      "(IS_DEFINED(r.IsAutomatic) ? r.IsAutomatic : false) = @isAutomatic AND " +
-                                                      "('All' = @language OR EXISTS (SELECT VALUE revision FROM revision in r.Revisions WHERE " +
-                                                                                    "EXISTS (SELECT VALUE files from files in revision.Files WHERE files.Language = @language)))")
-                .WithParameter("@isClosed", closed)
-                .WithParameter("@language", language)
-                .WithParameter("@isAutomatic", automatic);
-
-            var itemQueryIterator = _reviewsContainer.GetItemQueryIterator<ReviewModel>(queryDefinition);
-            while (itemQueryIterator.HasMoreResults)
-            {
-                var result = await itemQueryIterator.ReadNextAsync();
-                allReviews.AddRange(result.Resource);
-            }
-
-            return allReviews.OrderByDescending(r => r.LastUpdated);
         }
 
         public async Task UpsertReviewAsync(ReviewModel reviewModel)
@@ -58,22 +38,38 @@ namespace APIViewWeb
 
         public async Task<ReviewModel> GetMasterReviewForPackageAsync(string language, string packageName)
         {
-            var reviews = await GetReviewsAsync(language, packageName, true);
+            var reviews = await GetReviewsAsync(false, language, packageName, true);
             return reviews.FirstOrDefault();
         }
 
-        public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(string language, string packageName, bool isAutomatic)
+        public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(bool isClosed, string language, string packageName = "", bool? isAutomatic = null)
         {
-            var queryStringAutomaticFilter = "SELECT * FROM Reviews r WHERE " +
-                                                      "r.IsClosed = false AND " +
-                                                      "(IS_DEFINED(r.IsAutomatic) ? r.IsAutomatic : false) = @isAutomatic AND " +
-                                                      "EXISTS (SELECT VALUE revision FROM revision in r.Revisions WHERE " +
-                                                                                    "EXISTS (SELECT VALUE files from files in revision.Files WHERE files.Language = @language AND files.PackageName = @packageName))";
+            var queryStringBuilder = new StringBuilder("SELECT * FROM Reviews r WHERE (IS_DEFINED(r.IsClosed) ? r.IsClosed : false) = @isClosed ");
+
+            //Add filter if looking for automatic or manual reviews only
+            if (isAutomatic != null)
+            {
+                queryStringBuilder.Append("AND (IS_DEFINED(r.IsAutomatic) ? r.IsAutomatic : false) = @isAutomatic ");
+            }
+
+            // Add language and package name clause
+            // Currently we don't have any use case of searching for a package name across languages
+            if (language != "All")
+            {
+                queryStringBuilder.Append("AND EXISTS (SELECT VALUE revision FROM revision in r.Revisions WHERE EXISTS (SELECT VALUE files from files in revision.Files WHERE files.Language = @language");
+                if (!String.IsNullOrEmpty(packageName))
+                {
+                    queryStringBuilder.Append(" AND files.PackageName = @packageName");
+                }
+                queryStringBuilder.Append("))");
+            }
+
             var allReviews = new List<ReviewModel>();
-            var queryDefinition = new QueryDefinition(queryStringAutomaticFilter)
+            var queryDefinition = new QueryDefinition(queryStringBuilder.ToString())
                 .WithParameter("@language", language)
                 .WithParameter("@packageName", packageName)
-                .WithParameter("@isAutomatic", isAutomatic);
+                .WithParameter("@isAutomatic", isAutomatic)
+                .WithParameter("@isClosed", isClosed);
 
             var itemQueryIterator = _reviewsContainer.GetItemQueryIterator<ReviewModel>(queryDefinition);
             while (itemQueryIterator.HasMoreResults)

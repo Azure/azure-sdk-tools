@@ -55,7 +55,9 @@ public class ModuleInfoDiagnosticRule implements DiagnosticRule {
 
         moduleName = moduleInfoToken.get().getValue();
         if (moduleName != null) {
-            if (!moduleName.equals(basePackageName)) {
+            // special casing azure-core as the base package doesn't have any classes and hence not included in the
+            // list of packages
+            if (!moduleName.equals(basePackageName) && !moduleName.equals("com.azure.core")) {
                 // add warning message if the module name does not match the base package name
                 listing.addDiagnostic(new Diagnostic(DiagnosticKind.WARNING,
                         makeId(ASTAnalyser.MODULE_INFO_KEY), "Module name should be the same as base package " +

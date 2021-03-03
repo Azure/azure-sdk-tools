@@ -3,13 +3,18 @@
 
 using System;
 using System.Collections.Generic;
+using System.Data.Odbc;
 using System.IO;
 using System.Linq;
 using System.Security.Claims;
+using System.Threading;
 using System.Threading.Tasks;
 using ApiView;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.DataContracts;
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Authorization;
 
 namespace APIViewWeb.Respositories
@@ -63,7 +68,7 @@ namespace APIViewWeb.Respositories
 
         public Task<IEnumerable<ReviewModel>> GetReviewsAsync(bool closed, string language, bool automatic)
         {
-            return _reviewsRepository.GetReviewsAsync(closed, language, automatic);
+            return _reviewsRepository.GetReviewsAsync(closed, language, isAutomatic: automatic);
         }
 
         public async Task DeleteReviewAsync(ClaimsPrincipal user, string id)
@@ -118,9 +123,8 @@ namespace APIViewWeb.Respositories
             return review;
         }
 
-        internal async Task UpdateReviewAsync(ClaimsPrincipal user, string id)
+        private async Task UpdateReviewAsync(ReviewModel review)
         {
-            var review = await GetReviewAsync(user, id);
             foreach (var revision in review.Revisions)
             {
                 foreach (var file in revision.Files)
@@ -133,14 +137,26 @@ namespace APIViewWeb.Respositories
                     var fileOriginal = await _originalsRepository.GetOriginalAsync(file.ReviewFileId);
                     var languageService = GetLanguageService(file.Language);
 
-                    var codeFile = await languageService.GetCodeFileAsync(file.Name, fileOriginal, review.RunAnalysis);
+                    // file.Name property has been repurposed to store package name and version string
+                    // This is causing issue when updating review using latest parser since it expects Name field as file name
+                    // We have added a new property FileName which is only set for new reviews
+                    // All older reviews needs to be handled by checking Name field
+                    // If name field has no extension and File Name is Emtpy then use review.Name
+                    var fileName = file.FileName ?? (Path.HasExtension(file.Name)? file.Name : review.Name);
+                    var codeFile = await languageService.GetCodeFileAsync(fileName, fileOriginal, review.RunAnalysis);
                     await _codeFileRepository.UpsertCodeFileAsync(revision.RevisionId, file.ReviewFileId, codeFile);
-
                     InitializeFromCodeFile(file, codeFile);
+                    file.FileName = fileName;
                 }
             }
 
             await _reviewsRepository.UpsertReviewAsync(review);
+        }
+
+        internal async Task UpdateReviewAsync(ClaimsPrincipal user, string id)
+        {
+            var review = await GetReviewAsync(user, id);
+            await UpdateReviewAsync(review);
         }
 
         public async Task AddRevisionAsync(
@@ -192,7 +208,7 @@ namespace APIViewWeb.Respositories
             using var memoryStream = new MemoryStream();
             var codeFile = await CreateCodeFile(originalName, fileStream, runAnalysis, memoryStream);
             var reviewCodeFileModel = await CreateReviewCodeFileModel(revisionId, memoryStream, codeFile);
-
+            reviewCodeFileModel.FileName = originalName;
             return reviewCodeFileModel;
         }
 
@@ -334,22 +350,6 @@ namespace APIViewWeb.Respositories
                .Any(f => f.HasOriginal && GetLanguageService(f.Language).CanUpdate(f.VersionString));
         }
 
-        private async Task<ReviewModel> GetMasterReviewAsync(ClaimsPrincipal user, string language, string packageName)
-        {
-            if (user == null)
-            {
-                throw new UnauthorizedAccessException();
-            }
-
-            var review = await _reviewsRepository.GetMasterReviewForPackageAsync(language, packageName);
-            if (review != null)
-            {
-                review.UpdateAvailable = IsUpdateAvailable(review);
-            }
-
-            return review;
-        }
-
         private async Task<bool> IsReviewSame(ReviewRevisionModel revision, RenderedCodeFile renderedCodeFile)
         {
             //This will compare and check if new code file content is same as revision in parameter
@@ -366,16 +366,10 @@ namespace APIViewWeb.Respositories
             var codeFile = await CreateCodeFile(originalName, fileStream, runAnalysis, memoryStream);
 
             //Get current master review for package and language
-            var review = await GetMasterReviewAsync(user, codeFile.Language, codeFile.PackageName);
+            var review = await _reviewsRepository.GetMasterReviewForPackageAsync(codeFile.Language, codeFile.PackageName);
             bool createNewRevision = true;
             if (review != null)
             {
-                // Check if current review needs to be updated to rebuild using latest language processor
-                if (review.UpdateAvailable)
-                {
-                    await UpdateReviewAsync(user, review.ReviewId);
-                }
-
                 var renderedCodeFile = new RenderedCodeFile(codeFile);
                 var noDiffFound = await IsReviewSame(review.Revisions.LastOrDefault(), renderedCodeFile);
                 if (noDiffFound)
@@ -408,6 +402,7 @@ namespace APIViewWeb.Respositories
                     Label = label
                 };
                 var reviewCodeFileModel = await CreateReviewCodeFileModel(revision.RevisionId, memoryStream, codeFile);
+                reviewCodeFileModel.FileName = originalName;
                 revision.Files.Add(reviewCodeFileModel);
                 review.Revisions.Add(revision);
             }
@@ -447,7 +442,7 @@ namespace APIViewWeb.Respositories
             var codeFile = await _codeFileRepository.GetCodeFileAsync(revisionModel);
 
             // Get manual reviews to check if a matching review is in approved state
-            var reviews = await _reviewsRepository.GetReviewsAsync(revisionFile.Language, revisionFile.PackageName, false);
+            var reviews = await _reviewsRepository.GetReviewsAsync(false, revisionFile.Language, revisionFile.PackageName, false);
             foreach (var r in reviews)
             {
                 var approvedRevision = r.Revisions.Where(r => r.Approvers.Count() > 0).LastOrDefault();
@@ -461,6 +456,34 @@ namespace APIViewWeb.Respositories
                 }
             }
             return null;
+        }
+
+        public async void UpdateReviewBackground()
+        {
+            TelemetryClient telemetryClient = new TelemetryClient(TelemetryConfiguration.CreateDefault());
+
+            // Enabling this only for manual reviews in the beginning to check impact on system performance
+            // We will enable it for all reviews based on the perf details
+            // Automatic reviews are already updated as part of scheduled upload daily
+            var reviews = await _reviewsRepository.GetReviewsAsync(false, "All");
+            foreach(var review in reviews.Where(r => IsUpdateAvailable(r)))
+            {
+                var requestTelemetry = new RequestTelemetry { Name = "Updating Review " + review.ReviewId };
+                var operation = telemetryClient.StartOperation(requestTelemetry);
+                try
+                {
+                    await Task.Delay(5000);
+                    await UpdateReviewAsync(review);
+                }
+                catch (Exception e)
+                {
+                    telemetryClient.TrackException(e);
+                }
+                finally
+                {
+                    telemetryClient.StopOperation(operation);
+                }
+            }
         }
     }
 }

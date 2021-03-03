@@ -30,6 +30,10 @@ Services:
       Project: sdk/template/azure-template-perf
       PackageVersions:
       - perf-test-core: source
+    JS:
+      Project: sdk/test-utils/perfstress
+      PackageVersions:
+      - "@azure/test-utils-perfstress": source
   Tests:
   - Test: no-op
     Arguments:
@@ -37,6 +41,7 @@ Services:
     TestNames:
       Net: NoOp
       Java: noop
+      JS: NoOp
 - Service: storage-blob
   Languages:
     Net:

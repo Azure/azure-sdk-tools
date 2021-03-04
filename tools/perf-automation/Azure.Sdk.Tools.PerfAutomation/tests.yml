@@ -177,6 +177,7 @@ Services:
   - Test: download
     Arguments:
     - -w 1 -d 1 -s 1 -p 1
+    - -s 10240 -p 32
     TestNames:
       Net: DownloadFile
       Java: downloadfileshare
@@ -222,6 +223,7 @@ Services:
   - Test: read
     Arguments:
     - -w 1 -d 1 -s 1 -p 1
+    - -s 10240 -p 32
     TestNames:
       Net: Read
       Java: readfiledatalake

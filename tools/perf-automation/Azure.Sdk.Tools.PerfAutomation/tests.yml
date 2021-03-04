@@ -7,21 +7,21 @@
 
   Java:
     DefaultVersions:
-    - 8u282-b08
+    - 1.8.0_282
     OptionalVersions:
     - 15.0.2+7
 
   JS:
     DefaultVersions:
-    - 14.15.5
+    - 14.16.0
     OptionalVersions:
-    - 15.9.0
+    - 15.11.0
   
   Python:
     DefaultVersions:
-    - 3.7.9
+    - 3.7.10
     OptionalVersions:
-    - 3.9.1
+    - 3.9.2
 
 Services:
 - Service: sample

@@ -101,7 +101,7 @@ Services:
     - -c 1 -w 0 -d 1
     - -c 5 -p 32
     - -c 500 -p 32
-    - -c 50000 -p 8
+    - -c 50000 -p 8 -w 60 -d 60
     TestNames:
       Net: GetBlobs
       Java: listblobs

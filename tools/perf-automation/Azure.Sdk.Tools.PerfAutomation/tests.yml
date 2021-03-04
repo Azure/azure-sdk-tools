@@ -98,9 +98,10 @@ Services:
 
   - Test: list-blobs
     Arguments:
-    - -c 5 -w 0 -d 1
+    - -c 1 -w 0 -d 1
     - -c 5 -p 32
     - -c 500 -p 32
+    - -c 50000 -p 8
     TestNames:
       Net: GetBlobs
       Java: listblobs
@@ -191,6 +192,7 @@ Services:
   - Test: upload
     Arguments:
     - -s 1 -w 0 -d 1
+    - -s 10240 -p 32
     TestNames:
       Net: UploadFile
       Java: uploadfileshare

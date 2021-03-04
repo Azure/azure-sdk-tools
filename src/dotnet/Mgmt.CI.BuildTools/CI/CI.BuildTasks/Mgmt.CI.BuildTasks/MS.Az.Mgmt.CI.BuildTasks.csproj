@@ -4,7 +4,7 @@
     <AssemblyName>MS.Az.Mgmt.NetSdk.BuildTasks</AssemblyName>
     <RuntimeIdentifier>win10-x64</RuntimeIdentifier>
     <IncludeBuildOutput>false</IncludeBuildOutput>
-    <NoWarn>$(NoWarn);NU5100;NU5110;NU5111</NoWarn>
+    <NoWarn>$(NoWarn);NU5100;NU5110;NU5111;NU5128</NoWarn>
 
     <PackageId>Microsoft.Internal.NetSdkBuild.Mgmt.Tools</PackageId>
     <Description>Build tools for building Azure SDK for NET repository</Description>

@@ -10,9 +10,11 @@ resources:
       name: internal/azure-sdk-build-tools
 
 variables:
-  DotNetCoreVersion: '2.1.503'
-  ProjectFile: mgmtci.proj
-  BlobFeedUrl: https://azuresdkartifacts.blob.core.windows.net/azure-sdk-tools/index.json
+  - template: /eng/pipelines/templates/variables/globals.yml
+  - name: ProjectFile
+    value: mgmtci.proj
+  - name: BlobFeedUrl
+    value: https://azuresdkartifacts.blob.core.windows.net/azure-sdk-tools/index.json
 
 stages:
   - stage: Build
@@ -23,10 +25,11 @@ stages:
           vmImage: 'vs2017-win2016'
 
         steps:
-          - task: DotNetCoreInstaller@0
+          - task: UseDotNet@2
             displayName: 'Use .NET Core sdk $(DotNetCoreVersion)'
             inputs:
-              version: '$(DotNetCoreVersion)'
+              packageType: sdk
+              version: $(DotNetCoreVersion)
 
           - script: 'dotnet pack $(ProjectFile) -o $(Build.ArtifactStagingDirectory) -warnaserror $(VersioningProps)'
             displayName: 'Build and Package'

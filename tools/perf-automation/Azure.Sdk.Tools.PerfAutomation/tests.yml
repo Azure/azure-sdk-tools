@@ -4,21 +4,25 @@
     - netcoreapp2.1
     OptionalVersions:
     - net5.0
+
   Java:
     DefaultVersions:
     - 8u282-b08
     OptionalVersions:
     - 15.0.2+7
+
   JS:
     DefaultVersions:
     - 14.15.5
     OptionalVersions:
     - 15.9.0
+  
   Python:
     DefaultVersions:
     - 3.7.9
     OptionalVersions:
     - 3.9.1
+
 Services:
 - Service: sample
   Languages:
@@ -42,6 +46,7 @@ Services:
       Net: NoOp
       Java: noop
       JS: NoOp
+
 - Service: storage-blob
   Languages:
     Net:
@@ -51,7 +56,6 @@ Services:
       - Azure.Storage.Blobs: source
     Java:
       Project: sdk/storage/azure-storage-perf
-      # AdditionalArguments: -w 15 -d 15
       PackageVersions:
       - azure-storage-blob: 12.10.0
       - azure-storage-blob: source
@@ -65,8 +69,9 @@ Services:
       PackageVersions:
       - azure-storage-blob: 12.7.1
       - azure-storage-blob: source
+
   Tests:
-  - Test: storage-blob-download
+  - Test: download
     Arguments:
     - -s 1 -p 1 -w 1 -d 1
     - -s 10240 -p 32
@@ -76,7 +81,8 @@ Services:
       Java: downloadblob
       JS: StorageBlobDownloadTest
       Python: DownloadTest
-  - Test: storage-blob-upload
+
+  - Test: upload
     Arguments:
     - -s 10240 -p 32
     - -s 10485760 -p 32
@@ -84,7 +90,8 @@ Services:
       Net: UploadBlob
       Java: uploadblob
       Python: UploadTest
-  - Test: storage-blob-getblobs
+
+  - Test: list-blobs
     Arguments:
     - -c 5 -p 32
     - -c 500 -p 32
@@ -92,29 +99,25 @@ Services:
       Net: GetBlobs
       Java: listblobs
       Python: ListBlobsTest
-  - Test: no-op
-    Arguments:
-    - -w 1 -d 1
-    TestNames:
-      Net: NoOp
-      Java: noop
-      JS: NoOp
-      Python: NoOpTest
-  - Test: storage-blob-download-sas-http-client
+
+  - Test: download-sas-http-client
     Arguments:
     - -s 10240 -p 256
     TestNames:
       Net: DownloadSasUriHttpClient
-  - Test: storage-blob-download-sas-http-pipeline
+
+  - Test: download-sas-http-pipeline
     Arguments:
     - -s 10240 -p 256
     TestNames:
       Net: DownloadSasUriHttpPipeline
-  - Test: storage-blob-download-sas-blob-client
+
+  - Test: download-sas-blob-client
     Arguments:
     - -s 10240 -p 256
     TestNames:
       Net: DownloadSasUriBlobClient
+
 - Service: storage-blob-track1
   Languages:
     Net:
@@ -125,26 +128,23 @@ Services:
       Project: sdk/storage/perf-tests/storage-blob-track-1
       PackageVersions:
       - "@azure/storage-blob": 10.5.0
+
   Tests:
-  - Test: storage-blob-download
+  - Test: download
     Arguments:
     - -s 10240 -p 32
     - -s 10485760 -p 32
     TestNames:
       Net: DownloadBlob
-  - Test: storage-blob-upload
+
+  - Test: upload
     Arguments:
     - -s 10240 -p 32
     - -s 10485760 -p 32
     TestNames:
       Net: UploadBlob
-  - Test: no-op
-    Arguments:
-    - -w 1 -d 1
-    TestNames:
-      Net: NoOp
-      JS: NoOp
-- Service: storage-files-shares
+
+- Service: storage-file-share
   Languages:
     Net:
       Project: sdk/storage/Azure.Storage.Files.Shares/perf/Azure.Storage.Files.Shares.Perf/Azure.Storage.Files.Shares.Perf.csproj
@@ -156,22 +156,29 @@ Services:
       PackageVersions:
       - azure-storage-file-share: 12.8.0
       - azure-storage-file-share: source
+    JS:
+      Project: sdk/storage/perf-tests/storage-file-share
+      PackageVersions:
+      - "@azure/storage-file-share": 12.4.1
+      - "@azure/storage-file-share": source      
     Python:
       Project: sdk/storage/azure-storage-file-share
       PackageVersions:
       - azure-storage-file-share: 12.4.1
       - azure-storage-file-share: source
+
   Tests:
-  - Test: storage-file-shares-download
+  - Test: download
     Arguments:
-    - -w 1 -d 1 -s 1 -p 2
+    - -w 1 -d 1 -s 1 -p 1
     TestNames:
       Net: DownloadFile
       Java: downloadfileshare
+      JS: StorageFileShareDownloadTest
       Python: DownloadTest
   - Test: storage-file-shares-upload
     Arguments:
-    - -w 1 -d 1 -s 1 -p 2
+    - -w 1 -d 1 -s 1 -p 1
     TestNames:
       Net: UploadFile
       Java: uploadfileshare

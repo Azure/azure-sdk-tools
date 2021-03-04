@@ -93,7 +93,11 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             // TODO: Why does Python perf framework write to StdErr instead of StdOut?
             var match = Regex.Match(processResult.StandardError, @"\((.*) ops/s", RegexOptions.IgnoreCase | RegexOptions.RightToLeft);
-            var opsPerSecond = double.Parse(match.Groups[1].Value);
+            double opsPerSecond = -1;
+            if (match.Success)
+            {
+                opsPerSecond = double.Parse(match.Groups[1].Value);
+            }
 
             return new IterationResult
             {

@@ -49,7 +49,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 filename,
                 arguments,
                 workingDirectory: workingDirectory,
-                throwOnError: throwOnError,
+                throwOnError: false,
                 log: true,
                 captureOutput: true,
                 captureError: true);
@@ -57,7 +57,14 @@ namespace Azure.Sdk.Tools.PerfAutomation
             outputBuilder?.Append(result.StandardOutput);
             errorBuilder?.Append(result.StandardError);
 
-            return result;
+            if (throwOnError)
+            {
+                throw new ProcessResultException(command: $"{filename} {arguments}", result: result);
+            }
+            else
+            {
+                return result;
+            }
         }
 
         public static void DeleteIfExists(string path)

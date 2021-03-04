@@ -10,7 +10,7 @@ resources:
       name: internal/azure-sdk-build-tools
 
 variables:
-  - template: templates/variables/globals.yml
+  - template: /eng/pipelines/templates/variables/globals.yml
   - name: ProjectFile
     value: mgmtci.proj
   - name: BlobFeedUrl

@@ -57,7 +57,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             outputBuilder?.Append(result.StandardOutput);
             errorBuilder?.Append(result.StandardError);
 
-            if (throwOnError)
+            if (throwOnError && result.ExitCode != 0)
             {
                 throw new ProcessResultException(command: $"{filename} {arguments}", result: result);
             }

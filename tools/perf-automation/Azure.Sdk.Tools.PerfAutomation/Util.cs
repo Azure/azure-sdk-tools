@@ -32,7 +32,6 @@ namespace Azure.Sdk.Tools.PerfAutomation
         {
             "mvn",
             "npm",
-            "rush"
         };
 
         // TODO: We should usually not throw on error, since it prevents extracting StandardOutput and StandardError

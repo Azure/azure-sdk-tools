@@ -12,6 +12,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
 {
     public class JavaScript : LanguageBase
     {
+        private const string _rush = "common/scripts/install-run-rush.js";
+
         protected override Language Language => Language.JS;
 
         public override async Task<(string output, string error, string context)> SetupAsync(
@@ -76,7 +78,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             File.Copy(projectFile, projectFile + ".bak", overwrite: true);
             File.WriteAllText(projectFile, projectJson.ToString() + Environment.NewLine);
 
-            await Util.RunAsync("rush", "update", WorkingDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
+            await Util.RunAsync("node", $"{_rush} update", WorkingDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
 
             if (track1)
             {
@@ -86,7 +88,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             else
             {
                 var projectName = projectJson["name"];
-                await Util.RunAsync("rush", $"build --to {projectName}", WorkingDirectory,
+                await Util.RunAsync("node", $"{_rush} build --to {projectName}", WorkingDirectory,
                     outputBuilder: outputBuilder, errorBuilder: errorBuilder);
             }
 

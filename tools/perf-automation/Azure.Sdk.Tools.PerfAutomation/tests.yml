@@ -59,6 +59,9 @@ Services:
       PackageVersions:
       - azure-storage-blob: 12.10.0
       - azure-storage-blob: source
+      AdditionalArguments:
+        w: 15
+        d: 15
     JS:
       Project: sdk/storage/perf-tests/storage-blob
       PackageVersions:
@@ -156,6 +159,9 @@ Services:
       PackageVersions:
       - azure-storage-file-share: 12.8.0
       - azure-storage-file-share: source
+      AdditionalArguments:
+        w: 15
+        d: 15
     JS:
       Project: sdk/storage/perf-tests/storage-file-share
       PackageVersions:
@@ -176,10 +182,12 @@ Services:
       Java: downloadfileshare
       JS: StorageFileShareDownloadTest
       Python: DownloadTest
-  - Test: storage-file-shares-upload
+
+  - Test: upload
     Arguments:
     - -w 1 -d 1 -s 1 -p 1
     TestNames:
       Net: UploadFile
       Java: uploadfileshare
+      JS: StorageFileShareUploadTest
       Python: UploadTest

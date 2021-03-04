@@ -51,7 +51,7 @@ Services:
       - Azure.Storage.Blobs: source
     Java:
       Project: sdk/storage/azure-storage-perf
-      AdditionalArguments: -w 15 -d 15
+      # AdditionalArguments: -w 15 -d 15
       PackageVersions:
       - azure-storage-blob: 12.10.0
       - azure-storage-blob: source
@@ -68,11 +68,13 @@ Services:
   Tests:
   - Test: storage-blob-download
     Arguments:
+    - -s 1 -p 1 -w 1 -d 1
     - -s 10240 -p 32
     - -s 10485760 -p 32
     TestNames:
       Net: DownloadBlob
       Java: downloadblob
+      JS: StorageBlobDownloadTest
       Python: DownloadTest
   - Test: storage-blob-upload
     Arguments:

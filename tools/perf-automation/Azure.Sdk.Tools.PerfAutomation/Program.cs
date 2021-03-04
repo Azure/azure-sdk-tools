@@ -6,6 +6,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
@@ -32,11 +34,12 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
         private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions
         {
-            WriteIndented = true,
             Converters =
             {
                 new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)
-            }
+            },
+            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+            WriteIndented = true,
         };
 
         public class OptionsDefinition
@@ -301,6 +304,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                                     iterationResult = await _languages[language].RunAsync(
                                         serviceLanguageInfo.Project,
                                         languageVersion,
+                                        packageVersions,
                                         test.TestNames[language],
                                         allArguments,
                                         context

@@ -61,7 +61,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
             return (outputBuilder.ToString(), errorBuilder.ToString(), null);
         }
 
-        public override async Task<IterationResult> RunAsync(string project, string languageVersion, string testName, string arguments, string context)
+        public override async Task<IterationResult> RunAsync(string project, string languageVersion,
+            IDictionary<string, string> packageVersions, string testName, string arguments, string context)
         {
             var projectDirectory = Path.Combine(WorkingDirectory, project);
 
@@ -72,8 +73,15 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var pip = Path.Combine(env, _envBin, "pip");
             var perfstress = Path.Combine(env, _envBin, "perfstress");
 
-            // Dump package versions to std output
-            await Util.RunAsync(pip, "freeze", projectDirectory, outputBuilder, errorBuilder);
+            var runtimePackageVersions = new Dictionary<string, string>(packageVersions.Count);
+            var freezeResult = await Util.RunAsync(pip, "freeze", projectDirectory, outputBuilder, errorBuilder);
+            foreach (var package in packageVersions.Keys)
+            {
+                // Package: azure-core==1.12.0
+                // Source: -e git+https://github.com/Azure/azure-sdk-for-python@895ce54e1ad45ae15a0cd0cff89a29026a8a5cd2#egg=azure_storage_blob&subdirectory=sdk\storage\azure-storage-blob
+                var versionMatch = Regex.Match(freezeResult.StandardOutput, @$"^.*{package}.*$", RegexOptions.Multiline);
+                runtimePackageVersions[package] = versionMatch.Value.Trim();
+            }
 
             var processResult = await Util.RunAsync(
                 perfstress,
@@ -89,6 +97,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             return new IterationResult
             {
+                PackageVersions = runtimePackageVersions,
                 OperationsPerSecond = opsPerSecond,
                 StandardOutput = outputBuilder.ToString(),
                 StandardError = errorBuilder.ToString()

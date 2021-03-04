@@ -98,7 +98,7 @@ Services:
 
   - Test: list-blobs
     Arguments:
-    - -c 1 -w 0 -d 1
+    - -c 5 -w 0 -d 1
     - -c 5 -p 32
     - -c 500 -p 32
     TestNames:

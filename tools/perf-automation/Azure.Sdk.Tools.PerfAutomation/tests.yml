@@ -191,3 +191,39 @@ Services:
       Java: uploadfileshare
       JS: StorageFileShareUploadTest
       Python: UploadTest
+
+- Service: storage-file-datalake
+  Languages:
+    Net:
+      Project: sdk/storage/Azure.Storage.Files.DataLake/perf/Azure.Storage.Files.DataLake.Perf/Azure.Storage.Files.DataLake.Perf.csproj
+      PackageVersions:
+      - Azure.Storage.Files.DataLake: 12.6.0
+      - Azure.Storage.Files.DataLake: source
+    Java:
+      Project: sdk/storage/azure-storage-perf
+      PackageVersions:
+      - azure-storage-file-datalake: 12.4.0
+      - azure-storage-file-datalake: source
+      AdditionalArguments:
+        w: 15
+        d: 15
+    JS:
+      Project: sdk/storage/perf-tests/storage-file-datalake
+      PackageVersions:
+      - "@azure/storage-file-datalake": 12.3.1
+      - "@azure/storage-file-datalake": source
+    Python:
+      Project: sdk/storage/azure-storage-file-datalake
+      PackageVersions:
+      - azure-storage-file-datalake: 12.2.3
+      - azure-storage-file-datalake: source
+
+  Tests:
+  - Test: read
+    Arguments:
+    - -w 1 -d 1 -s 1 -p 1
+    TestNames:
+      Net: Read
+      Java: readfiledatalake
+      JS: StorageDFSReadTest
+      Python: DownloadTest

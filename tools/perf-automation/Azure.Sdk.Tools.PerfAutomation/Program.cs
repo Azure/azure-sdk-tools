@@ -267,7 +267,16 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
                     foreach (var arguments in selectedArguments)
                     {
-                        var allArguments = $"{arguments} {serviceLanguageInfo.AdditionalArguments}";
+                        var allArguments = arguments;
+                        foreach (var kvp in serviceLanguageInfo.AdditionalArguments)
+                        {
+                            var (name, value) = (kvp.Key, kvp.Value);
+
+                            if (!arguments.Contains($"-{name} "))
+                            {
+                                allArguments += $" -{name} {value}";
+                            }
+                        }
 
                         var result = new Result
                         {

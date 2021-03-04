@@ -25,10 +25,11 @@ stages:
           vmImage: 'vs2017-win2016'
 
         steps:
-          - task: DotNetCoreInstaller@0
+          - task: UseDotNet@2
             displayName: 'Use .NET Core sdk $(DotNetCoreVersion)'
             inputs:
-              version: '$(DotNetCoreVersion)'
+              packageType: sdk
+              version: $(DotNetCoreVersion)
 
           - script: 'dotnet pack $(ProjectFile) -o $(Build.ArtifactStagingDirectory) -warnaserror $(VersioningProps)'
             displayName: 'Build and Package'

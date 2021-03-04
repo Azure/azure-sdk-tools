@@ -110,6 +110,15 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 outputBuilder.AppendLine(line);
             }
 
+            var runtimePackageVersions = new Dictionary<string, string>(packageVersions.Count);
+            foreach (var package in packageVersions.Keys)
+            {
+                // Package: +-- @azure/storage-blob@12.4.1 -> js\common\temp\node_modules\.pnpm\@azure\storage-blob@12.4.1\node_modules\@azure\storage-blob
+                // Source:  +-- @azure/storage-blob@12.5.0-beta.2 -> \js\sdk\storage\storage-blob
+                var versionMatch = Regex.Match(npmListResult.StandardOutput, @$"{package}@(.*)$", RegexOptions.Multiline);
+                runtimePackageVersions[package] = versionMatch.Groups[1].Value.Trim();
+            }
+
             // 1. cd project
             // 2. npm run perf-test:node -- testName arguments
 
@@ -126,6 +135,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             return new IterationResult
             {
+                PackageVersions = runtimePackageVersions,
                 OperationsPerSecond = opsPerSecond,
                 StandardOutput = outputBuilder.ToString(),
                 StandardError = errorBuilder.ToString(),

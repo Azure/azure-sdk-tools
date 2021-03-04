@@ -81,7 +81,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
             return (result.StandardOutput, result.StandardError, null);
         }
 
-        public override async Task<IterationResult> RunAsync(string project, string languageVersion, string testName, string arguments, string context)
+        public override async Task<IterationResult> RunAsync(string project, string languageVersion,
+            IDictionary<string, string> packageVersions, string testName, string arguments, string context)
         {
             var dllName = Path.GetFileNameWithoutExtension(project) + ".dll";
             var dllPath = Path.Combine(PublishDirectory, dllName);
@@ -98,8 +99,20 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 opsPerSecond = double.Parse(match.Groups[1].Value);
             }
 
+            var runtimePackageVersions = new Dictionary<string, string>(packageVersions.Count);
+            foreach (var package in packageVersions.Keys)
+            {
+                // Azure.Storage.Blobs:
+                //   Referenced: 12.8.0.0
+                //   Loaded: 12.8.0.0
+                //   Informational: 12.8.0+430f2eba747d6de99a43f4f8bd63cd28e673f979
+                var versionMatch = Regex.Match(result.StandardOutput, @$"{package}:.*?Informational: (\S*)", RegexOptions.Singleline);
+                runtimePackageVersions[package] = versionMatch.Groups[1].Value;
+            }
+
             return new IterationResult
             {
+                PackageVersions = runtimePackageVersions,
                 OperationsPerSecond = opsPerSecond,
                 StandardError = result.StandardError,
                 StandardOutput = result.StandardOutput,

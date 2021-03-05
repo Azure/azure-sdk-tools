@@ -6,7 +6,7 @@
     <AssemblyName>APIViewWeb</AssemblyName>
     <UserSecretsId>79cceff6-d533-4370-a0ee-f3321a343907</UserSecretsId>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
-    <JavaProcessor>..\..\..\java\apiview-java-processor\target\apiview-java-processor-1.20.0.jar</JavaProcessor>
+    <JavaProcessor>..\..\..\java\apiview-java-processor\target\apiview-java-processor-1.21.0.jar</JavaProcessor>
     <PythonProcessor>..\..\..\..\packages\python-packages\api-stub-generator\dist\api_stub_generator-0.1.0-py3-none-any.whl</PythonProcessor>
     <JavaScriptProcessor>..\..\..\ts\ts-genapi\</JavaScriptProcessor>
     <TypeScriptToolsVersion>latest</TypeScriptToolsVersion>

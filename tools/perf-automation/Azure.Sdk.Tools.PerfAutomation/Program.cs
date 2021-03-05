@@ -74,7 +74,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             [Option("no-sync")]
             public bool NoSync { get; set; }
 
-            [Option('o', "output-file", Default = "results.json")]
+            [Option('o', "output-file", Default = "results/results.json")]
             public string OutputFile { get; set; }
 
             [Option('p', "packageVersions", HelpText = "Regex of package versions to run")]
@@ -192,6 +192,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             var outputFile = Util.GetUniquePath(Options.OutputFile);
             // Create output file early so user sees it immediately
+            Directory.CreateDirectory(Path.GetDirectoryName(outputFile));
             using (File.Create(outputFile)) { }
 
             var results = new List<Result>();

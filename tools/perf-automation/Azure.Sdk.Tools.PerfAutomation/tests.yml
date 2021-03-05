@@ -60,8 +60,8 @@ Services:
       - azure-storage-blob: 12.10.0
       - azure-storage-blob: source
       AdditionalArguments:
-        w: 15
-        d: 15
+        warmup: 15
+        duration: 15
     JS:
       Project: sdk/storage/perf-tests/storage-blob
       PackageVersions:
@@ -165,8 +165,8 @@ Services:
       - azure-storage-file-share: 12.8.0
       - azure-storage-file-share: source
       AdditionalArguments:
-        w: 15
-        d: 15
+        warmup: 15
+        duration: 15
     JS:
       Project: sdk/storage/perf-tests/storage-file-share
       PackageVersions:
@@ -212,8 +212,8 @@ Services:
       - azure-storage-file-datalake: 12.4.0
       - azure-storage-file-datalake: source
       AdditionalArguments:
-        w: 15
-        d: 15
+        warmup: 15
+        duration: 15
     JS:
       Project: sdk/storage/perf-tests/storage-file-datalake
       PackageVersions:

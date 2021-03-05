@@ -303,6 +303,9 @@ public class ASTAnalyser implements Analyser {
         }
 
         // dependencies
+        // Disabling dependencies until we have a solution to avoid showing daily alpha version as dependency
+        // Alpha daily version number make each revision different and this leads to mismatch with approved review revision
+        /*
         addToken(INDENT, new Token(KEYWORD, "dependencies"), SPACE);
         addToken(new Token(PUNCTUATION, "{"), NEWLINE);
 
@@ -329,6 +332,7 @@ public class ASTAnalyser implements Analyser {
 
         unindent();
         addToken(INDENT, new Token(PUNCTUATION, "}"), NEWLINE);
+        */
 
         // allowed dependencies (in maven-enforcer)
 //        if (!mavenPom.getAllowedDependencies().isEmpty()) {

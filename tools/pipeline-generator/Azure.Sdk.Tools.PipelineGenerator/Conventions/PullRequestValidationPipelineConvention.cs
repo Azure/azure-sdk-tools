@@ -58,6 +58,25 @@ namespace PipelineGenerator.Conventions
                 }
             }
 
+            var ciTrigger = definition.Triggers.OfType<ContinuousIntegrationTrigger>().SingleOrDefault();
+
+            if (ciTrigger == null)
+            {
+                definition.Triggers.Add(new ContinuousIntegrationTrigger()
+                {
+                    SettingsSourceType = 2
+                });
+                hasChanges = true;
+            }
+            else
+            {
+                if (ciTrigger.SettingsSourceType != 2)
+                {
+                    ciTrigger.SettingsSourceType = 2;
+                    hasChanges = true;
+                }
+            }
+
             return hasChanges;
         }
     }

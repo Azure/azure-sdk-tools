@@ -276,9 +276,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
                             {
                                 var (name, value) = (kvp.Key, kvp.Value);
 
-                                if (!arguments.Contains($"-{name} "))
+                                if (!arguments.Contains($"--{name} "))
                                 {
-                                    allArguments += $" -{name} {value}";
+                                    allArguments += $" --{name} {value}";
                                 }
                             }
                         }

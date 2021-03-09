@@ -242,3 +242,4 @@ Services:
     - --size 10240 --parallel 32
     TestNames:
       Net: Upload
+      Java: uploadfiledatalake

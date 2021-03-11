@@ -12,6 +12,7 @@ namespace A {
     public class ArrayAttribute : Attribute {
         public ArrayAttribute(int[] arr)/*-*/{/*-*/;/*-*/}/*-*/
     }
+    [DebuggerTypeProxy(typeof(PrivateAttribute))]
     public class Class {
         public Class()/*-*/{/*-*/;/*-*/}/*-*/
         [Conditional("string")]

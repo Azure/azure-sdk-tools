@@ -3,11 +3,8 @@ parameters:
   Artifacts: []
   ConfigFileDir: $(Build.ArtifactStagingDirectory)/PackageInfo
 
-variables:
-  BaseReleaseBranch: 'master'
-
 steps:
-  - ${{ if eq(variables['Build.SourceBranch'], variables['BaseReleaseBranch']) }}:
+  - ${{ if eq(variables['Build.SourceBranch'], 'master') }}:
     - ${{ each artifact in parameters.Artifacts }}:
       - task: Powershell@2
         inputs:

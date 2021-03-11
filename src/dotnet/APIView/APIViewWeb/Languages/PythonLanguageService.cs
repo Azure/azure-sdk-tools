@@ -11,7 +11,7 @@ namespace APIViewWeb
     {
         public override string Name { get; } = "Python";
         public override string Extension { get; } = ".whl";
-        public override string VersionString { get; } = "0.2.2";
+        public override string VersionString { get; } = "0.2.3";
 
         private readonly string _apiViewPythonProcessor;
         public override string ProcessName => _apiViewPythonProcessor;

@@ -21,10 +21,11 @@ class ModuleNode(NodeEntityBase):
     :param dict: nodeindex
     """
 
-    def __init__(self, namespace, module, nodeindex):
+    def __init__(self, namespace, module, nodeindex, pkg_root_namespace):
         super().__init__(namespace, None, module)
         self.namespace_id = self.generate_id()
         self.nodeindex = nodeindex
+        self.pkg_root_namespace = pkg_root_namespace
         self._inspect()
 
     def _inspect(self):
@@ -68,7 +69,7 @@ class ModuleNode(NodeEntityBase):
 
         # Skip any member in module level that is defined in external or built in package
         if hasattr(member_obj, "__module__"):
-            return not getattr(member_obj, "__module__").startswith(self.namespace)
+            return not getattr(member_obj, "__module__").startswith(self.pkg_root_namespace)
         # Don't skip member if module name is not available. This is just to be on safer side
         return False
 

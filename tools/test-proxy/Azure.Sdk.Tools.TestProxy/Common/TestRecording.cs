@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using Azure.Core.Pipeline;
 using System;
 using System.IO;
 using System.Linq;
@@ -8,8 +9,6 @@ using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text.Json;
 using System.Threading;
-using System.Threading.Tasks;
-using Azure.Core.Pipeline;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
 {

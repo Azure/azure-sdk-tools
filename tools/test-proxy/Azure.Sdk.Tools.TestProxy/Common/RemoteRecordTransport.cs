@@ -1,11 +1,10 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using System;
-using System.IO;
-using System.Threading.Tasks;
 using Azure.Core;
 using Azure.Core.Pipeline;
+using System;
+using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
 {

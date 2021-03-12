@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Azure.Core.Pipeline;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
 {

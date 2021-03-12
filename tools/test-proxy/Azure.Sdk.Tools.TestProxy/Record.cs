@@ -1,18 +1,18 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using Azure.Sdk.Tools.TestProxy.Common;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Primitives;
 using System;
 using System.Collections.Concurrent;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Http;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
-using System.Collections.Generic;
-using Microsoft.Extensions.Primitives;
 using System.Text.Json;
-using Azure.Sdk.Tools.TestProxy.Common;
-using System.IO;
+using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.TestProxy
 {
@@ -22,7 +22,7 @@ namespace Azure.Sdk.Tools.TestProxy
     [Route("[controller]/[action]")]
     public sealed class Record : ControllerBase
     {
-        private static readonly ConcurrentDictionary<string, (string File, RecordSession Session)> s_sessions 
+        private static readonly ConcurrentDictionary<string, (string File, RecordSession Session)> s_sessions
             = new ConcurrentDictionary<string, (string, RecordSession)>();
 
         private static readonly RecordedTestSanitizer s_sanitizer = new RecordedTestSanitizer();
@@ -46,7 +46,7 @@ namespace Azure.Sdk.Tools.TestProxy
             string file = GetHeader(Request, "x-recording-file");
             var id = Guid.NewGuid().ToString();
             var session = (file, new RecordSession());
-            
+
             if (!s_sessions.TryAdd(id, session))
             {
                 // This should not happen as the key is a new GUID.
@@ -99,12 +99,12 @@ namespace Azure.Sdk.Tools.TestProxy
             var entry = await Playback.CreateEntryAsync(Request).ConfigureAwait(false);
             var upstreamRequest = CreateUpstreamRequest(Request, entry.Request.Body);
             var upstreamResponse = await s_client.SendAsync(upstreamRequest).ConfigureAwait(false);
-            
+
             var body = await upstreamResponse.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
             entry.Response.Body = body.Length == 0 ? null : body;
             entry.StatusCode = (int)upstreamResponse.StatusCode;
             session.Session.Entries.Add(entry);
-            
+
             Response.StatusCode = (int)upstreamResponse.StatusCode;
             foreach (var header in upstreamResponse.Headers)
             {

@@ -1,16 +1,16 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using Azure.Core;
+using Azure.Sdk.Tools.TestProxy.Common;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Concurrent;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using System.Text.Json;
 using System.IO;
-using Microsoft.AspNetCore.Http;
 using System.Linq;
-using Azure.Sdk.Tools.TestProxy.Common;
-using Azure.Core;
+using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.TestProxy
 {
@@ -20,7 +20,7 @@ namespace Azure.Sdk.Tools.TestProxy
     [Route("[controller]/[action]")]
     public sealed class Playback : ControllerBase
     {
-        private static readonly ConcurrentDictionary<string, RecordSession> s_sessions 
+        private static readonly ConcurrentDictionary<string, RecordSession> s_sessions
             = new ConcurrentDictionary<string, RecordSession>();
         // !! Neither matching nor sanitization can be customized yet.
         private static readonly RecordMatcher s_matcher = new RecordMatcher();
@@ -101,7 +101,7 @@ namespace Azure.Sdk.Tools.TestProxy
             entry.Request.Body = await ReadAllBytes(request.Body).ConfigureAwait(false);
             return entry;
         }
-  
+
         private static bool IncludeHeader(string header)
         {
             return !header.Equals("Host", StringComparison.OrdinalIgnoreCase)

@@ -1,13 +1,13 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using System;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System;
 
 namespace Azure.Sdk.Tools.TestProxy
 {
@@ -21,7 +21,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             host.ConfigureWebHostDefaults(
                 builder => builder.UseStartup<Startup>());
-            
+
             host.Build().Run();
         }
 
@@ -52,7 +52,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 app.MapWhen(
                     context =>
                         controller.Equals(
-                            GetRecordingMode(context), 
+                            GetRecordingMode(context),
                             StringComparison.OrdinalIgnoreCase),
                     app =>
                     {

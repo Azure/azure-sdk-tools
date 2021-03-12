@@ -25,8 +25,8 @@ pr:
       - packages/python-packages/api-stub-generator
 
 variables:
-  DotNetCoreVersion: '5.0.200'
-  DotNetRuntimeVersion: '3.1'
+  DotNetCoreVersion: '5.x'
+  DotNetRuntimeVersion: '3.1.x'
   WebClientProjectDirectory: 'src/dotnet/APIView/APIViewWeb/Client'
   WebProjectPath: 'src/dotnet/APIView/APIViewWeb/APIViewWeb.csproj'
   TestProjectPath: 'src/dotnet/APIView/APIViewTest/APIViewTest.csproj'

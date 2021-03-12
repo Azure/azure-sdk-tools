@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using Microsoft.Extensions.Primitives;
 using System.Text.Json;
 using Azure.Sdk.Tools.TestProxy.Common;
+using System.IO;
 
 namespace Azure.Sdk.Tools.TestProxy
 {
@@ -70,6 +71,13 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 var (file, session) = fileAndSession;
                 session.Sanitize(s_sanitizer);
+
+                // Create directories above file if they don't already exist
+                var directory = Path.GetDirectoryName(file);
+                if (!String.IsNullOrEmpty(directory))
+                {
+                    Directory.CreateDirectory(directory);
+                }
 
                 using var stream = System.IO.File.Create(file);
                 var options = new JsonWriterOptions { Indented = true };

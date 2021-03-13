@@ -55,9 +55,11 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -90,11 +92,12 @@ public class ASTAnalyser implements Analyser {
     public static final String MODULE_INFO_KEY = "module-info";
 
     private static final boolean SHOW_JAVADOC = true;
-    private static final List<String> BLOCKED_ANNOTATIONS = Arrays.asList(
-            "ServiceMethod",
-            "JsonCreator",
-            "JsonValue",
-            "SuppressWarnings");
+    private static final Set<String> BLOCKED_ANNOTATIONS = new HashSet<String>() {{
+        add("ServiceMethod");
+        add("JsonCreator");
+        add("JsonValue");
+        add("SuppressWarnings");
+    }};
 
     private final APIListing apiListing;
 

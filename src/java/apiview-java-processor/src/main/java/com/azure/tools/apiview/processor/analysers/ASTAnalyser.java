@@ -1004,7 +1004,6 @@ public class ASTAnalyser implements Analyser {
                 }
             };
 
-            // for now we will only include the annotations we care about
             nodeWithAnnotations.getAnnotations()
                     .stream()
                     .filter(annotationExpr -> !BLOCKED_ANNOTATIONS.contains(annotationExpr.getName().getIdentifier()))

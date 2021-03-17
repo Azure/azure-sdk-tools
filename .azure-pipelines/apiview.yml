@@ -25,7 +25,8 @@ pr:
       - packages/python-packages/api-stub-generator
 
 variables:
-  DotNetCoreVersion: '3.0.100'
+  DotNetCoreVersion: '5.x'
+  DotNetRuntimeVersion: '3.1.x'
   WebClientProjectDirectory: 'src/dotnet/APIView/APIViewWeb/Client'
   WebProjectPath: 'src/dotnet/APIView/APIViewWeb/APIViewWeb.csproj'
   TestProjectPath: 'src/dotnet/APIView/APIViewTest/APIViewTest.csproj'
@@ -51,6 +52,12 @@ stages:
             displayName: 'Use .NET Core sdk $(DotNetCoreVersion)'
             inputs:
               version: '$(DotNetCoreVersion)'
+
+          - task: DotNetCoreInstaller@2
+            displayName: 'Use .NET Core $(DotNetRuntimeVersion)'
+            inputs:
+              packageType: runtime
+              version: '$(DotNetRuntimeVersion)'
 
           - task: NodeTool@0
             inputs:
@@ -145,6 +152,12 @@ stages:
             displayName: 'Use .NET Core sdk $(DotNetCoreVersion)'
             inputs:
               version: '$(DotNetCoreVersion)'
+
+          - task: DotNetCoreInstaller@2
+            displayName: 'Use .NET Core $(DotNetRuntimeVersion)'
+            inputs:
+              packageType: runtime
+              version: '$(DotNetRuntimeVersion)'
 
           - task: DotNetCoreCLI@2
             displayName: 'Build & Test'

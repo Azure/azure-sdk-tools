@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using Azure.Sdk.Tools.TestProxy.Common;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -29,6 +30,7 @@ namespace Azure.Sdk.Tools.TestProxy
         {
             services.AddHttpClient();
             services.AddControllers();
+            services.AddSingleton<InMemorySessionManager>();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

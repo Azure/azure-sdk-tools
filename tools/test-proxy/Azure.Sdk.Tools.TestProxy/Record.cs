@@ -27,6 +27,8 @@ namespace Azure.Sdk.Tools.TestProxy
 
         private static readonly RecordedTestSanitizer s_sanitizer = new RecordedTestSanitizer();
 
+        private readonly InMemorySessionManager _sessionManager;
+
         private static readonly string[] s_excludedRequestHeaders = new string[] {
             // Only applies to request between client and proxy
             "Proxy-Connection",
@@ -40,6 +42,8 @@ namespace Azure.Sdk.Tools.TestProxy
 
         private static readonly HttpClient s_client = new HttpClient();
 
+        public Record(InMemorySessionManager sessionManager) => _sessionManager = sessionManager;
+
         [HttpPost]
         public void Start()
         {
@@ -47,10 +51,16 @@ namespace Azure.Sdk.Tools.TestProxy
             var id = Guid.NewGuid().ToString();
             var session = (file, new RecordSession());
 
+
             if (!s_sessions.TryAdd(id, session))
             {
                 // This should not happen as the key is a new GUID.
                 throw new InvalidOperationException("Failed to add new session.");
+            }
+
+            if (this._sessionManager.sessions.TryAdd(id, new RecordSession()))
+            {
+                
             }
 
             Response.Headers.Add("x-recording-id", id);

@@ -22,11 +22,6 @@ namespace Azure.Sdk.Tools.TestProxy
     [Route("[controller]/[action]")]
     public sealed class Record : ControllerBase
     {
-        private static readonly ConcurrentDictionary<string, (string File, RecordSession Session)> s_sessions
-            = new ConcurrentDictionary<string, (string, RecordSession)>();
-
-        private static readonly RecordedTestSanitizer s_sanitizer = new RecordedTestSanitizer();
-
         private readonly InMemorySessionManager _sessionManager;
 
         private static readonly string[] s_excludedRequestHeaders = new string[] {
@@ -47,21 +42,8 @@ namespace Azure.Sdk.Tools.TestProxy
         [HttpPost]
         public void Start()
         {
-            string file = GetHeader(Request, "x-recording-file");
-            var id = Guid.NewGuid().ToString();
-            var session = (file, new RecordSession());
+            var id = this._sessionManager.StartRecording();
 
-
-            if (!s_sessions.TryAdd(id, session))
-            {
-                // This should not happen as the key is a new GUID.
-                throw new InvalidOperationException("Failed to add new session.");
-            }
-
-            if (this._sessionManager.sessions.TryAdd(id, new RecordSession()))
-            {
-                
-            }
 
             Response.Headers.Add("x-recording-id", id);
         }
@@ -71,40 +53,18 @@ namespace Azure.Sdk.Tools.TestProxy
         {
             string id = GetHeader(Request, "x-recording-id");
 
-            if (!s_sessions.TryRemove(id, out var fileAndSession))
-            {
-                return;
-            }
+            this._sessionManager.StopRecording(id);
 
             bool save = bool.Parse(GetHeader(Request, "x-recording-save"));
             if (save)
             {
-                var (file, session) = fileAndSession;
-                session.Sanitize(s_sanitizer);
-
-                // Create directories above file if they don't already exist
-                var directory = Path.GetDirectoryName(file);
-                if (!String.IsNullOrEmpty(directory))
-                {
-                    Directory.CreateDirectory(directory);
-                }
-
-                using var stream = System.IO.File.Create(file);
-                var options = new JsonWriterOptions { Indented = true };
-                var writer = new Utf8JsonWriter(stream, options);
-                session.Serialize(writer);
-                writer.Flush();
+                this._sessionManager.SaveSessions();
             }
         }
 
         public async Task HandleRequest()
         {
             string id = GetHeader(Request, "x-recording-id");
-
-            if (!s_sessions.TryGetValue(id, out var session))
-            {
-                throw new InvalidOperationException("No recording loaded with that ID.");
-            }
 
             var entry = await Playback.CreateEntryAsync(Request).ConfigureAwait(false);
             var upstreamRequest = CreateUpstreamRequest(Request, entry.Request.Body);
@@ -113,8 +73,9 @@ namespace Azure.Sdk.Tools.TestProxy
             var body = await upstreamResponse.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
             entry.Response.Body = body.Length == 0 ? null : body;
             entry.StatusCode = (int)upstreamResponse.StatusCode;
-            session.Session.Entries.Add(entry);
 
+            this._sessionManager.UpdateRecording(id, entry);
+            
             Response.StatusCode = (int)upstreamResponse.StatusCode;
             foreach (var header in upstreamResponse.Headers)
             {

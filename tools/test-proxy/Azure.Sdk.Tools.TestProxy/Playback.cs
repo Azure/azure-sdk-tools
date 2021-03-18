@@ -20,8 +20,10 @@ namespace Azure.Sdk.Tools.TestProxy
     [Route("[controller]/[action]")]
     public sealed class Playback : ControllerBase
     {
-        private static readonly ConcurrentDictionary<string, RecordSession> s_sessions
-            = new ConcurrentDictionary<string, RecordSession>();
+        private readonly InMemorySessionManager _sessionManager;
+        public Playback(InMemorySessionManager sessionManager) => _sessionManager = sessionManager;
+      
+
         // !! Neither matching nor sanitization can be customized yet.
         private static readonly RecordMatcher s_matcher = new RecordMatcher();
         private static readonly RecordedTestSanitizer s_sanitizer = new RecordedTestSanitizer();
@@ -29,37 +31,19 @@ namespace Azure.Sdk.Tools.TestProxy
         [HttpPost]
         public async Task Start()
         {
-            string file = GetHeader(Request, "x-recording-file");
-            var id = Guid.NewGuid().ToString();
-            using var stream = System.IO.File.OpenRead(file);
-            using var doc = await JsonDocument.ParseAsync(stream).ConfigureAwait(false);
-            var session = RecordSession.Deserialize(doc.RootElement);
-
-            if (!s_sessions.TryAdd(id, session))
-            {
-                // This should not happen as the key is a new GUID.
-                throw new InvalidOperationException("Failed to add new session.");
-            }
-
-            Response.Headers.Add("x-recording-id", id);
         }
 
         [HttpPost]
         public void Stop()
         {
-            string id = GetHeader(Request, "x-recording-id");
-            s_sessions.TryRemove(id, out _);
         }
 
         public async Task HandleRequest()
         {
             string id = GetHeader(Request, "x-recording-id");
 
-            if (!s_sessions.TryGetValue(id, out var session))
-            {
-                throw new InvalidOperationException("No recording loaded with that ID.");
-            }
 
+            var session = _sessionManager.GetRecording(id);
             var entry = await CreateEntryAsync(Request).ConfigureAwait(false);
             var match = session.Lookup(entry, s_matcher, s_sanitizer);
 

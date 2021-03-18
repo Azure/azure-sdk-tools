@@ -62,7 +62,7 @@ def RecordedByProxy(func):
                 headers={"x-recording-file": test_id, "x-recording-id": recording_id},
                 verify=False,
             )
-            recording_id = result.headers["x-recording-id"]
+            recording_id = get_recording_id(test_id)
 
         def transform_args(*args, **kwargs):
             copied_positional_args = list(args)

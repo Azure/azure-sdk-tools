@@ -75,6 +75,12 @@ namespace Azure.Sdk.Tools.TestProxy
                 Response.Headers.Add("x-ms-client-id", clientId);
             }
 
+            // Storage Blobs requires "x-ms-client-request-id" header in request and response to match
+            if (Request.Headers.TryGetValue("x-ms-client-request-id", out var clientRequestId))
+            {
+                Response.Headers["x-ms-client-request-id"] = clientRequestId;
+            }
+
             Response.Headers.Remove("Transfer-Encoding");
 
             if (match.Response.Body?.Length > 0)

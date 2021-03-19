@@ -10,7 +10,7 @@ namespace Azure.ClientSdk.Analyzers.Tests
     public class AZC0016Tests
     {
         [Fact]
-        public async Task AZC0005ProducedForOperationTypesWithoutProtectedCtor()
+        public async Task AZC0016ProducedForOperationTypesWithoutProtectedCtor()
         {
             const string code = @"
 namespace RandomNamespace
@@ -26,7 +26,7 @@ namespace RandomNamespace
         }
 
         [Fact]
-        public async Task AZC0005ProducedForOperationTypesWithoutProtectedCtorGenericBaseType()
+        public async Task AZC0016ProducedForOperationTypesWithoutProtectedCtorGenericBaseType()
         {
             const string code = @"
 namespace RandomNamespace
@@ -42,7 +42,7 @@ namespace RandomNamespace
         }
 
         [Fact]
-        public async Task AZC0005NotProducedForOperationTypesWithProtectedCtor()
+        public async Task AZC0016NotProducedForOperationTypesWithProtectedCtor()
         {
             const string code = @"
 namespace RandomNamespace

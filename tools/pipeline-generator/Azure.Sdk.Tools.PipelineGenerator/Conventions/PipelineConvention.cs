@@ -267,7 +267,7 @@ namespace PipelineGenerator.Conventions
                 StartMinutes = startMinutes * BucketSizeInMinutes,
                 TimeZoneId = "Pacific Standard Time",
             };
-            schedule.BranchFilters.Add("+master");
+            schedule.BranchFilters.Add($"+{Context.Branch}");
 
             return schedule;
         }

@@ -40,5 +40,22 @@ namespace RandomNamespace
 }";
             await Verifier.VerifyAnalyzerAsync(code, "AZC0016");
         }
+
+        [Fact]
+        public async Task AZC0005NotProducedForOperationTypesWithProtectedCtor()
+        {
+            const string code = @"
+namespace RandomNamespace
+{
+    public class Operation<T> { }
+
+    public class CertificateOperation: Operation<int>
+    {
+        internal CertificateOperation(string s) {}
+        protected CertificateOperation() {}
+    }
+}";
+            await Verifier.VerifyAnalyzerAsync(code);
+        }
     }
 }

@@ -13,7 +13,6 @@ namespace Azure.Sdk.Tools.TestProxy.HttpPipelineSample
     {
         private static readonly Uri _url = new Uri("https://www.example.org");
         private static readonly Uri _proxy = new Uri("https://localhost:5001");
-        private static readonly string _recordingFile = Path.Combine(Path.GetTempPath(), "test-proxy", "net-http-pipeline-sample.json");
 
         private static readonly HttpClient _httpClient = new HttpClient(new HttpClientHandler()
         {
@@ -22,17 +21,14 @@ namespace Azure.Sdk.Tools.TestProxy.HttpPipelineSample
 
         static async Task Main(string[] args)
         {
-            Console.WriteLine($"Recording File: {_recordingFile}");
-            Console.WriteLine();
-
             var defaultPipeline = HttpPipelineBuilder.Build(new TestClientOptions());
             await SendRequest(defaultPipeline);
 
-            await Record();
-            await Playback();
+            var recordingId = await Record();
+            await Playback(recordingId);
         }
 
-        private static async Task Record()
+        private static async Task<string> Record()
         {
             var recordingId = await StartRecording();
 
@@ -46,12 +42,11 @@ namespace Azure.Sdk.Tools.TestProxy.HttpPipelineSample
             await SendRequest(pipeline);
             
             await StopRecording(recordingId);
+            return recordingId;
         }
 
-        private static async Task Playback()
+        private static async Task Playback(string recordingId)
         {
-            var recordingId = await StartPlayback();
-
             var pipeline = HttpPipelineBuilder.Build(new TestClientOptions()
             {
                 Transport = new TestProxyTransport(new HttpClientTransport(_httpClient), _proxy.Host, _proxy.Port, recordingId, "playback"),
@@ -59,34 +54,6 @@ namespace Azure.Sdk.Tools.TestProxy.HttpPipelineSample
 
             await SendRequest(pipeline);
             await SendRequest(pipeline);
-            
-            await StopPlayback(recordingId);
-        }
-
-        private static async Task<string> StartPlayback()
-        {
-            Console.WriteLine("StartPlayback");
-
-            var message = new HttpRequestMessage(HttpMethod.Post, _proxy + "playback/start");
-            message.Headers.Add("x-recording-file", _recordingFile);
-
-            var response = await _httpClient.SendAsync(message);
-            var recordingId = response.Headers.GetValues("x-recording-id").Single();
-            Console.WriteLine($"  x-recording-id: {recordingId}");
-            Console.WriteLine();
-
-            return recordingId;
-        }
-
-        private static async Task StopPlayback(string recordingId)
-        {
-            Console.WriteLine("StopPlayback");
-            Console.WriteLine();
-
-            var message = new HttpRequestMessage(HttpMethod.Post, _proxy + "playback/stop");
-            message.Headers.Add("x-recording-id", recordingId);
-
-            await _httpClient.SendAsync(message);
         }
 
         private static async Task<string> StartRecording()
@@ -94,7 +61,6 @@ namespace Azure.Sdk.Tools.TestProxy.HttpPipelineSample
             Console.WriteLine("StartRecording");
 
             var message = new HttpRequestMessage(HttpMethod.Post, _proxy + "record/start");
-            message.Headers.Add("x-recording-file", _recordingFile);
 
             var response = await _httpClient.SendAsync(message);
             var recordingId = response.Headers.GetValues("x-recording-id").Single();

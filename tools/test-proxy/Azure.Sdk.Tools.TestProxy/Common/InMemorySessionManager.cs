@@ -45,7 +45,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 throw new InvalidOperationException($"Failed to complete session {id}");
             }
 
-            if (c_sessions.TryAdd(id, completedSession))
+            if (!c_sessions.TryAdd(id, completedSession))
             {
                 // This should not happen as the key is a new GUID.
                 throw new InvalidOperationException("Failed to add new session.");

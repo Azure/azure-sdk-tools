@@ -111,10 +111,9 @@ namespace Azure.Sdk.Tools.TestProxy
         public static Uri GetRequestUri(HttpRequest request)
         {
             var uri = new RequestUriBuilder();
-            uri.Reset(new Uri(GetHeader(request, "x-recording-upstream-base-uri")));
-            uri.Path = request.Path;
-            uri.Query = request.QueryString.ToUriComponent();
-            return uri.ToUri();
+
+            var target_uri = GetHeader(request, "x-recording-upstream-base-uri");
+            return new Uri(target_uri);
         }
 
         private static string GetHeader(HttpRequest request, string name)

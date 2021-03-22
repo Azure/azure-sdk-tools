@@ -32,6 +32,7 @@ resources:
 
 variables:
   DotNetCoreVersion: '3.0.100'
+  NugetSecurityAnalysisWarningLevel: 'none'
 
 stages:
   - stage: 'Build_and_Test'

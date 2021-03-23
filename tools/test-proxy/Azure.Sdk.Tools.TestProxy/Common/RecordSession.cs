@@ -91,6 +91,17 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             }
         }
 
+        public RecordEntry NoneDestructiveLookup(RecordEntry requestEntry, RecordMatcher matcher, RecordedTestSanitizer sanitizer)
+        {
+            sanitizer.Sanitize(requestEntry);
+
+            lock (Entries)
+            {
+                RecordEntry entry = matcher.FindMatch(requestEntry, Entries);
+                return entry;
+            }
+        }
+
         public void Sanitize(RecordedTestSanitizer sanitizer)
         {
             lock (Entries)

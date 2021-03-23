@@ -45,32 +45,43 @@ namespace Azure.Sdk.Tools.TestProxy
 
             var session = _sessionManager.GetRecording(id);
             var entry = await CreateEntryAsync(Request).ConfigureAwait(false);
-            var match = session.Lookup(entry, s_matcher, s_sanitizer);
-
-            Response.StatusCode = match.StatusCode;
-
-            foreach (var header in match.Response.Headers)
+            try
             {
-                Response.Headers.Add(header.Key, header.Value.ToArray());
+                var match = session.NoneDestructiveLookup(entry, s_matcher, s_sanitizer);
+
+
+                Response.StatusCode = match.StatusCode;
+
+                foreach (var header in match.Response.Headers)
+                {
+                    Response.Headers.Add(header.Key, header.Value.ToArray());
+                }
+
+                if (Request.Headers.TryGetValue("x-ms-client-id", out var clientId))
+                {
+                    Response.Headers.Add("x-ms-client-id", clientId);
+                }
+
+                // Storage Blobs requires "x-ms-client-request-id" header in request and response to match
+                if (Request.Headers.TryGetValue("x-ms-client-request-id", out var clientRequestId))
+                {
+                    Response.Headers["x-ms-client-request-id"] = clientRequestId;
+                }
+
+                Response.Headers.Remove("Transfer-Encoding");
+
+                if (match.Response.Body?.Length > 0)
+                {
+
+                    Console.WriteLine($"Playing back a request for {entry.RequestUri}");
+
+                    Response.ContentLength = match.Response.Body.Length;
+                    await Response.Body.WriteAsync(match.Response.Body).ConfigureAwait(false);
+                }
             }
-
-            if (Request.Headers.TryGetValue("x-ms-client-id", out var clientId))
+            catch(Exception e)
             {
-                Response.Headers.Add("x-ms-client-id", clientId);
-            }
-
-            // Storage Blobs requires "x-ms-client-request-id" header in request and response to match
-            if (Request.Headers.TryGetValue("x-ms-client-request-id", out var clientRequestId))
-            {
-                Response.Headers["x-ms-client-request-id"] = clientRequestId;
-            }
-
-            Response.Headers.Remove("Transfer-Encoding");
-
-            if (match.Response.Body?.Length > 0)
-            {
-                Response.ContentLength = match.Response.Body.Length;
-                await Response.Body.WriteAsync(match.Response.Body).ConfigureAwait(false);
+                // nothing
             }
         }
 

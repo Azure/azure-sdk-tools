@@ -74,8 +74,15 @@ namespace Azure.Sdk.Tools.TestProxy
             entry.Response.Body = body.Length == 0 ? null : body;
             entry.StatusCode = (int)upstreamResponse.StatusCode;
 
-            this._sessionManager.UpdateRecording(id, entry);
-            
+            if (!upstreamRequest.RequestUri.ToString().Contains("login.microsoft")) {
+                Console.WriteLine($"Recorded a request to {upstreamRequest.RequestUri}");
+                this._sessionManager.UpdateRecording(id, entry);
+            }
+            else
+            {
+                Console.WriteLine($"Passthrough request {upstreamRequest.RequestUri}");
+            }
+
             Response.StatusCode = (int)upstreamResponse.StatusCode;
             foreach (var header in upstreamResponse.Headers)
             {
@@ -83,6 +90,8 @@ namespace Azure.Sdk.Tools.TestProxy
                 Response.Headers.Add(header.Key, values);
                 entry.Response.Headers.Add(header.Key, values);
             }
+
+            
 
             Response.Headers.Remove("Transfer-Encoding");
 

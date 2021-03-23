@@ -10,12 +10,16 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 {
     public class InMemorySessionManager
     {
-        // in progress
+        // in recording progress
         public readonly ConcurrentDictionary<string, RecordSession> i_sessions
             = new ConcurrentDictionary<string, RecordSession>();
 
         // completed
         public readonly ConcurrentDictionary<string, RecordSession> c_sessions
+            = new ConcurrentDictionary<string, RecordSession>();
+
+        // in playback progress
+        public readonly ConcurrentDictionary<string, RecordSession> p_sessions
             = new ConcurrentDictionary<string, RecordSession>();
 
         private static readonly RecordedTestSanitizer s_sanitizer = new RecordedTestSanitizer();

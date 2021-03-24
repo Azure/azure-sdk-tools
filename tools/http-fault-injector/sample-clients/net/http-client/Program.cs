@@ -3,13 +3,13 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace HttpFaultInjectorClient
+namespace Azure.Sdk.Tools.HttpFaultInjector.HttpClientSample
 {
     class Program
     {
         static async Task Main(string[] args)
         {
-            var httpClient = new HttpClient(new FaultInjectionClientHandler("localhost", 7778));
+            var httpClient = new HttpClient(new FaultInjectionClientHandler(new Uri("https://localhost:7778")));
 
             Console.WriteLine("Sending request...");
             var response = await httpClient.GetAsync("https://www.example.org");
@@ -18,13 +18,11 @@ namespace HttpFaultInjectorClient
 
         class FaultInjectionClientHandler : HttpClientHandler
         {
-            private readonly string _host;
-            private readonly int _port;
+            private readonly Uri _uri;
 
-            public FaultInjectionClientHandler(string host, int port)
+            public FaultInjectionClientHandler(Uri uri)
             {
-                _host = host;
-                _port = port;
+                _uri = uri;
 
                 // Allow insecure SSL certs
                 ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true;
@@ -38,8 +36,9 @@ namespace HttpFaultInjectorClient
                 // Set URI to fault injector
                 var builder = new UriBuilder(request.RequestUri)
                 {
-                    Host = _host,
-                    Port = _port
+                    Scheme = _uri.Scheme,
+                    Host = _uri.Host,
+                    Port = _uri.Port,
                 };
                 request.RequestUri = builder.Uri;
 

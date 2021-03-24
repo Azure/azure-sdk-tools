@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Sdk.Tools.HttpFaultIn
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Sdk.Tools.HttpFaultInjector.HttpClientSample", "sample-clients\net\http-client\Azure.Sdk.Tools.HttpFaultInjector.HttpClientSample.csproj", "{43B895B8-6EF0-42CE-BBBE-4E3352FBB250}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Sdk.Tools.HttpFaultInjector.StorageBlobSample", "sample-clients\net\storage-blob\Azure.Sdk.Tools.HttpFaultInjector.StorageBlobSample.csproj", "{B30425E7-16A6-4DC8-9B25-5787218EAB8E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Sdk.Tools.HttpFaultInjector.StorageBlobsSample", "sample-clients\net\storage-blobs\Azure.Sdk.Tools.HttpFaultInjector.StorageBlobsSample.csproj", "{B30425E7-16A6-4DC8-9B25-5787218EAB8E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

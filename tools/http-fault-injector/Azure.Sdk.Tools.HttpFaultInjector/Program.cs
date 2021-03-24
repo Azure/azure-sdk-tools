@@ -7,7 +7,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Primitives;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -16,7 +15,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace HttpFaultInjector
+namespace Azure.Sdk.Tools.HttpFaultInjector
 {
     public static class Program
     {

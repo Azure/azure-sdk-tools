@@ -59,7 +59,7 @@ namespace Azure.Sdk.Tools.TestProxy
                         app.UseRouting();
                         app.UseEndpoints(
                             endpoints => endpoints.MapFallbackToController(
-                                "HandleRequest", controller));
+                                "{*path}", "HandleRequest", controller));
                     });
             }
         }

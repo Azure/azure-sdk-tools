@@ -61,7 +61,16 @@ namespace Azure.Sdk.Tools.TestProxy
             }
 
             var entry = await CreateEntryAsync(Request).ConfigureAwait(false);
-            var match = session.Lookup(entry, s_matcher, s_sanitizer);
+
+            // If request contains "x-recording-remove: false", then request is not removed from session after playback.
+            // Used by perf tests to play back the same request multiple times.
+            var remove = true;
+            if (Request.Headers.TryGetValue("x-recording-remove", out var removeHeader))
+            {
+                remove = bool.Parse(removeHeader);
+            }
+
+            var match = session.Lookup(entry, s_matcher, s_sanitizer, remove);
 
             Response.StatusCode = match.StatusCode;
 

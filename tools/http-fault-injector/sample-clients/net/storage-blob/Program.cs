@@ -29,7 +29,7 @@ namespace Azure.Sdk.Tools.HttpFaultInjector.StorageBlobSample
             Console.WriteLine("Sending request...");
             var response = await blobClient.DownloadAsync();
             var content = (new StreamReader(response.Value.Content)).ReadToEnd();
-            Console.WriteLine(content);
+            Console.WriteLine($"Content: {content}");
         }
 
         class FaultInjectionTransport : HttpPipelineTransport

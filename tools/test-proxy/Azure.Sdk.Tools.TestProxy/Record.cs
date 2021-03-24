@@ -75,12 +75,12 @@ namespace Azure.Sdk.Tools.TestProxy
             entry.StatusCode = (int)upstreamResponse.StatusCode;
 
             if (!upstreamRequest.RequestUri.ToString().Contains("login.microsoft")) {
-                Console.WriteLine($"Recorded a request to {upstreamRequest.RequestUri}");
+                Console.WriteLine($"Recorded a request to \u001b[32m{upstreamRequest.RequestUri}\u001b[0m");
                 this._sessionManager.UpdateRecording(id, entry);
             }
             else
             {
-                Console.WriteLine($"Passthrough request {upstreamRequest.RequestUri}");
+                Console.WriteLine($"\u001b[33mPassthrough request {upstreamRequest.RequestUri}\u001b[0m");
             }
 
             Response.StatusCode = (int)upstreamResponse.StatusCode;

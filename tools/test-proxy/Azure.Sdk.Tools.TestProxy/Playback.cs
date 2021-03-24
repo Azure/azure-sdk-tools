@@ -73,7 +73,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 if (match.Response.Body?.Length > 0)
                 {
 
-                    Console.WriteLine($"Playing back a request for {entry.RequestUri}");
+                    Console.WriteLine($"Playing back a request for \u001b[35m{entry.RequestUri}\u001b[0m");
 
                     Response.ContentLength = match.Response.Body.Length;
                     await Response.Body.WriteAsync(match.Response.Body).ConfigureAwait(false);

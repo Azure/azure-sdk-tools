@@ -12,6 +12,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.TestProxy
@@ -104,6 +105,8 @@ namespace Azure.Sdk.Tools.TestProxy
             entry.Response.Body = body.Length == 0 ? null : body;
             entry.StatusCode = (int)upstreamResponse.StatusCode;
             session.Session.Entries.Add(entry);
+
+            Interlocked.Increment(ref Startup.RequestsRecorded);
 
             Response.StatusCode = (int)upstreamResponse.StatusCode;
             foreach (var header in upstreamResponse.Headers)

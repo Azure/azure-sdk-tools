@@ -10,6 +10,7 @@ using System.Collections.Concurrent;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.TestProxy
@@ -71,6 +72,8 @@ namespace Azure.Sdk.Tools.TestProxy
             }
 
             var match = session.Lookup(entry, s_matcher, s_sanitizer, remove);
+
+            Interlocked.Increment(ref Startup.RequestsPlayedBack);
 
             Response.StatusCode = match.StatusCode;
 

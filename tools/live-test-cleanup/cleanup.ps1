@@ -44,22 +44,25 @@ az account set --subscription=$SubscriptionId
 Write-Verbose "Fetching groups"
 $allGroups = az group list | ConvertFrom-Json
 
-Write-Verbose "Total Resource Groups: $($allGroups.Length)"
+Write-Host "Total Resource Groups: $($allGroups.Count)"
 
 $now = [DateTime]::UtcNow
 
-$toDelete = $allGroups |
-    where {
-        $parsedTime = [DateTime]::MaxValue
-        $canParse = [DateTime]::TryParse($_.tags.DeleteAfter, [ref]$parsedTime)
-        $canParse -and ($now -gt $parsedTime)
-    }
+$noDeleteAfter = $allGroups.Where({ !($_.tags -and $_.tags.PSObject.Members.name -contains "DeleteAfter") })
+Write-Host "Subscription contains $($noDeleteAfter.Count) resource groups with no DeleteAfter tags"
+$noDeleteAfter | ForEach-Object { Write-Verbose $_.name }
 
-Write-Verbose "Groups to delete: $($toDelete.Length)"
+$hasDeleteAfter = $allGroups.Where({ $_.tags -and $_.tags.PSObject.Members.name -contains "DeleteAfter" })
 
-$toDelete | foreach {
-    if ($Force -or $PSCmdlet.ShouldProcess("$($_.Name) (UTC: $($_.tags.DeleteAfter))", "Delete Group")) {
-        Write-Verbose "Deleting group: $($_.Name)"
-        az group delete --name $_.Name --yes --no-wait
-    }
+$toDelete = $hasDeleteAfter.Where({ $now -gt [DateTime]$_.tags.DeleteAfter })
+
+Write-Host "Groups to delete: $($toDelete.Count)"
+
+foreach ($rg in $toDelete)
+{
+  if ($Force -or $PSCmdlet.ShouldProcess("$($rg.Name) (UTC: $($rg.tags.DeleteAfter))", "Delete Group")) {
+    Write-Verbose "Deleting group: $($rg.Name)"
+    Write-Verbose "  tags $($rg.tags)"
+    az group delete --name $rg.Name --yes --no-wait
+  }
 }

@@ -1,4 +1,4 @@
-# Mirror the master branch for each repo folder to all subscribed langauge repos.
+# Mirror the default branch for each repo folder to all subscribed langauge repos.
 
 trigger: none
 pr: none
@@ -18,54 +18,46 @@ jobs:
         Repos:
 
           Azure/azure-rest-api-specs:
-            Branch: master
             TargetRepos: 
               Azure/azure-rest-api-specs-pr:
               azure-sdk/azure-rest-api-specs:
 
           Azure/azure-sdk-for-go:
-            Branch: master
             TargetRepos: 
               Azure/azure-sdk-for-go-pr:
               azure-sdk/azure-sdk-for-go:
               azure-sdk/azure-sdk-for-go-pr:
 
           Azure/azure-sdk-for-java:
-            Branch: master
             TargetRepos: 
               Azure/azure-sdk-for-java-pr:
               azure-sdk/azure-sdk-for-java:
               azure-sdk/azure-sdk-for-java-pr:
 
           Azure/azure-sdk-for-js:
-            Branch: master
             TargetRepos:
               Azure/azure-sdk-for-js-pr:
               azure-sdk/azure-sdk-for-js:
               azure-sdk/azure-sdk-for-js-pr:
 
           Azure/azure-sdk-for-net:
-            Branch: master
             TargetRepos: 
               Azure/azure-sdk-for-net-pr:
               azure-sdk/azure-sdk-for-net:
               azure-sdk/azure-sdk-for-net-pr:
 
           Azure/azure-sdk-for-python:
-            Branch: master
             TargetRepos: 
               Azure/azure-sdk-for-python-pr:
               azure-sdk/azure-sdk-for-python:
               azure-sdk/azure-sdk-for-python-pr:
 
           Azure/azure-sdk-for-ios:
-            Branch: master
             TargetRepos: 
               Azure/azure-sdk-for-ios-pr:
               azure-sdk/azure-sdk-for-ios:
 
           Azure/azure-sdk-for-android:
-            Branch: master
             TargetRepos: 
               Azure/azure-sdk-for-android-pr:
               azure-sdk/azure-sdk-for-android:
@@ -76,19 +68,16 @@ jobs:
               Azure/azure-cli-pr:
 
           Azure/azure-cli-extensions:
-            Branch: master
             TargetRepos: 
               Azure/azure-cli-extensions-pr:
               azure-sdk/azure-cli-extensions:
               azure-sdk/azure-cli-extensions-pr:
               
           Azure/azure-libraries-for-java:
-            Branch: master
             TargetRepos: 
               Azure/azure-libraries-for-java-pr:
               
           Microsoft/vcpkg:
-            Branch: master
             TargetRepos:
               azure-sdk/vcpkg:
 

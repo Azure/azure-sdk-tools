@@ -2,6 +2,7 @@
 
 trigger:
   - master
+  - main
 
 resources:
   repositories:

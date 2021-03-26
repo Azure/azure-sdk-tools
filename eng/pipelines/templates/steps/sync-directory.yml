@@ -3,7 +3,7 @@ parameters:
   DirectoryToSync: eng/common
   CommitMessage: commit-message-not-set
   UpstreamBranchName: branch-name-not-set
-  BaseBranchName: master
+  BaseBranchName: $(DefaultBranch)
   Sync: pr-data-artifact-path-not-set
   SkipCheckingForChanges: false
   ScriptDirectory: eng/common/scripts
@@ -16,6 +16,10 @@ steps:
     - pwsh: |
         Set-PsDebug -Trace 1
         git clone --branch ${{ parameters.BaseBranchName }} https://github.com/azure/${{ repo }}
+      displayName: Clone ${{ repo }}
+      workingDirectory: $(System.DefaultWorkingDirectory)
+    - template: /eng/common/pipelines/templates/steps/set-default-branch.yml
+    - pwsh: |
         $repoPath = "${{ repo }}/${{ parameters.DirectoryToSync }}"
         if (Test-Path '$(PatchFilesLocation)')
         {

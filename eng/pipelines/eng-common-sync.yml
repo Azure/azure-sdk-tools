@@ -31,6 +31,7 @@ pr:
   branches:
     include:
       - master
+      - main
   paths:
     include:
       - eng/common

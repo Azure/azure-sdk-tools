@@ -75,10 +75,11 @@ Services:
 
   Tests:
   - Test: download
-    Arguments:
+    Arguments: &storage-blob-sizes
     - --size 1 --warmup 0 --duration 1
     - --size 10240 --parallel 32
     - --size 10485760 --parallel 32
+    - --size 1073741824 --parallel 32 --warmup 60 --duration 60
     TestNames:
       Net: DownloadBlob
       Java: downloadblob
@@ -86,10 +87,7 @@ Services:
       Python: DownloadTest
 
   - Test: upload
-    Arguments:
-    - --size 1 --warmup 0 --duration 1
-    - --size 10240 --parallel 32
-    - --size 10485760 --parallel 32
+    Arguments: *storage-blob-sizes
     TestNames:
       Net: UploadBlob
       Java: uploadblob
@@ -97,11 +95,11 @@ Services:
       Python: UploadTest
 
   - Test: list-blobs
-    Arguments:
+    Arguments: &storage-blob-counts
     - --count 1 --warmup 0 --duration 1
     - --count 5 --parallel 32
     - --count 500 --parallel 32
-    - --count 50000 --parallel 8 --warmup 60 --duration 60
+    - --count 50000 --parallel 32 --warmup 60 --duration 60
     TestNames:
       Net: GetBlobs
       Java: listblobs
@@ -139,18 +137,19 @@ Services:
 
   Tests:
   - Test: download
-    Arguments:
-    - --size 10240 --parallel 32
-    - --size 10485760 --parallel 32
+    Arguments: *storage-blob-sizes
     TestNames:
       Net: DownloadBlob
 
   - Test: upload
-    Arguments:
-    - --size 10240 --parallel 32
-    - --size 10485760 --parallel 32
+    Arguments: *storage-blob-sizes
     TestNames:
       Net: UploadBlob
+
+  - Test: list-blobs
+    Arguments: *storage-blob-counts
+    TestNames:
+      Net: GetBlobs
 
 - Service: storage-file-share
   Languages:

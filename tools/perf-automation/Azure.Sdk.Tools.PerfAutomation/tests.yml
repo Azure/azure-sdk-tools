@@ -77,7 +77,7 @@ Services:
   - Test: download
     Arguments: &storage-blob-sizes
     - --size 1 --warmup 0 --duration 1
-    - --size 10240 --parallel 32
+    - --size 10240 --parallel 64
     - --size 10485760 --parallel 32
     - --size 1073741824 --parallel 32 --warmup 60 --duration 60
     TestNames:
@@ -97,7 +97,7 @@ Services:
   - Test: list-blobs
     Arguments: &storage-blob-counts
     - --count 1 --warmup 0 --duration 1
-    - --count 5 --parallel 32
+    - --count 5 --parallel 64
     - --count 500 --parallel 32
     - --count 50000 --parallel 32 --warmup 60 --duration 60
     TestNames:
@@ -130,6 +130,8 @@ Services:
       Project: sdk/storage/Azure.Storage.Blobs/perf/Microsoft.Azure.Storage.Blob.Perf/Microsoft.Azure.Storage.Blob.Perf.csproj
       PackageVersions:
       - Microsoft.Azure.Storage.Blob: 11.2.2
+    Java:
+      Project: 
     JS:
       Project: sdk/storage/perf-tests/storage-blob-track-1
       PackageVersions:

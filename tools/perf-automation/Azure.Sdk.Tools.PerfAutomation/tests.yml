@@ -139,6 +139,10 @@ Services:
       Project: sdk/storage/perf-tests/storage-blob-track-1
       PackageVersions:
       - "@azure/storage-blob": 10.5.0
+    Python:
+      Project: sdk/storage/azure-storage-blob
+      PackageVersions:
+      - azure-storage-blob: 2.1.0
 
   Tests:
   - Test: download
@@ -146,18 +150,24 @@ Services:
     TestNames:
       Net: DownloadBlob
       Java: downloadblob
+      JS: StorageBlobDownloadTest
+      Python: LegacyDownloadTest
 
   - Test: upload
     Arguments: *storage-blob-sizes
     TestNames:
       Net: UploadBlob
       Java: uploadblob
+      JS: StorageBlobUploadTest
+      Python: LegacyUploadTest
 
   - Test: list-blobs
     Arguments: *storage-blob-counts
     TestNames:
       Net: GetBlobs
       Java: listblobs
+      JS: StorageBlobListTest
+      Python: LegacyListBlobsTest
 
 - Service: storage-file-share
   Languages:

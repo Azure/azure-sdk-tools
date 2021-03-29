@@ -59,7 +59,7 @@ Services:
       PackageVersions:
       - azure-storage-blob: 12.10.0
       - azure-storage-blob: source
-      AdditionalArguments:
+      AdditionalArguments: &java-additional-arguments
         warmup: 15
         duration: 15
     JS:
@@ -131,7 +131,10 @@ Services:
       PackageVersions:
       - Microsoft.Azure.Storage.Blob: 11.2.2
     Java:
-      Project: 
+      Project: sdk/storage/microsoft-azure-storage-perf
+      PackageVersions:
+      - azure-storage: 8.6.5
+      AdditionalArguments: *java-additional-arguments
     JS:
       Project: sdk/storage/perf-tests/storage-blob-track-1
       PackageVersions:
@@ -142,16 +145,19 @@ Services:
     Arguments: *storage-blob-sizes
     TestNames:
       Net: DownloadBlob
+      Java: downloadblob
 
   - Test: upload
     Arguments: *storage-blob-sizes
     TestNames:
       Net: UploadBlob
+      Java: uploadblob
 
   - Test: list-blobs
     Arguments: *storage-blob-counts
     TestNames:
       Net: GetBlobs
+      Java: listblobs
 
 - Service: storage-file-share
   Languages:

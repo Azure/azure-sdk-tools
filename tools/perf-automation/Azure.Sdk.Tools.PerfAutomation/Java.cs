@@ -46,7 +46,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             [11:27:11.796] [INFO] Building jar: C:\Git\java\sdk\storage\azure-storage-perf\target\azure-storage-perf-1.0.0-beta.1-jar-with-dependencies.jar
             */
 
-            var buildMatch = Regex.Match(result.StandardOutput, @"Building jar: (.*\.jar)", RegexOptions.IgnoreCase | RegexOptions.RightToLeft);
+            var buildMatch = Regex.Match(result.StandardOutput, @"Building jar: (.*with-dependencies\.jar)", RegexOptions.IgnoreCase | RegexOptions.RightToLeft);
             var jar = buildMatch.Groups[1].Value;
 
             return (result.StandardOutput, result.StandardError, jar);

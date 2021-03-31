@@ -415,7 +415,7 @@ try {
                 if ($CI) {
                     $DebugPreference = "Continue"
                 }
-                New-AzResourceGroupDeployment -Name $BaseName -ResourceGroupName $resourceGroup.ResourceGroupName -TemplateFile $templateFile -TemplateParameterObject $templateFileParameters
+                New-AzResourceGroupDeployment -Name $BaseName -ResourceGroupName $resourceGroup.ResourceGroupName -TemplateFile $templateFile -TemplateParameterObject $templateFileParameters -Mode Complete
             } catch {
                 Write-Output @"
 #####################################################

@@ -395,6 +395,14 @@ namespace APIViewWeb.Respositories
             await AssertAutomaticReviewModifier(user, review);
             if (createNewRevision)
             {
+                // Delete last revision if it is not in approved state before adding new revision
+                // This is to keep only one pending revision since last approval or from initial review revision
+                var lastRevision = review.Revisions.LastOrDefault();
+                if (lastRevision != null && lastRevision.Approvers.Count == 0 && review.Revisions.Count > 1)
+                {
+                    review.Revisions.Remove(lastRevision);
+                }
+
                 // Update or insert review with new revision
                 var revision = new ReviewRevisionModel()
                 {

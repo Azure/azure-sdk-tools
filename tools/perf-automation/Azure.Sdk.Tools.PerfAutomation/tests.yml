@@ -52,12 +52,12 @@ Services:
     Net:
       Project: sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Azure.Storage.Blobs.Perf.csproj
       PackageVersions:
-      - Azure.Storage.Blobs: 12.8.0
+      - Azure.Storage.Blobs: 12.8.1
       - Azure.Storage.Blobs: source
     Java:
       Project: sdk/storage/azure-storage-perf
       PackageVersions:
-      - azure-storage-blob: 12.10.0
+      - azure-storage-blob: 12.10.2
       - azure-storage-blob: source
       AdditionalArguments: &java-additional-arguments
         warmup: 15
@@ -65,12 +65,12 @@ Services:
     JS:
       Project: sdk/storage/perf-tests/storage-blob
       PackageVersions:
-      - "@azure/storage-blob": 12.4.1
+      - "@azure/storage-blob": 12.5.0
       - "@azure/storage-blob": source
     Python:
       Project: sdk/storage/azure-storage-blob
       PackageVersions:
-      - azure-storage-blob: 12.7.1
+      - azure-storage-blob: 12.8.0
       - azure-storage-blob: source
 
   Tests:

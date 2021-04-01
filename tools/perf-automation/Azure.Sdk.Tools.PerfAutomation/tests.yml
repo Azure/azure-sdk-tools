@@ -217,12 +217,12 @@ Services:
     Net:
       Project: sdk/storage/Azure.Storage.Files.DataLake/perf/Azure.Storage.Files.DataLake.Perf/Azure.Storage.Files.DataLake.Perf.csproj
       PackageVersions:
-      - Azure.Storage.Files.DataLake: 12.6.0
+      - Azure.Storage.Files.DataLake: 12.6.1
       - Azure.Storage.Files.DataLake: source
     Java:
       Project: sdk/storage/azure-storage-perf
       PackageVersions:
-      - azure-storage-file-datalake: 12.4.0
+      - azure-storage-file-datalake: 12.4.1
       - azure-storage-file-datalake: source
       AdditionalArguments:
         warmup: 15
@@ -230,19 +230,17 @@ Services:
     JS:
       Project: sdk/storage/perf-tests/storage-file-datalake
       PackageVersions:
-      - "@azure/storage-file-datalake": 12.3.1
+      - "@azure/storage-file-datalake": 12.4.0
       - "@azure/storage-file-datalake": source
     Python:
       Project: sdk/storage/azure-storage-file-datalake
       PackageVersions:
-      - azure-storage-file-datalake: 12.2.3
+      - azure-storage-file-datalake: 12.3.0
       - azure-storage-file-datalake: source
 
   Tests:
   - Test: download
-    Arguments:
-    - --size 1 --warmup 0 --duration 1
-    - --size 10240 --parallel 32
+    Arguments: *storage-sizes
     TestNames:
       Net: Read
       Java: readfiledatalake
@@ -250,9 +248,9 @@ Services:
       Python: DownloadTest
 
   - Test: upload
-    Arguments:
-    - --size 1 --warmup 0 --duration 1
-    - --size 10240 --parallel 32
+    Arguments: *storage-sizes
     TestNames:
       Net: Upload
       Java: uploadfiledatalake
+      JS: StorageDFSUploadTest
+      Python: UploadTest

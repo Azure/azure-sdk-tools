@@ -75,7 +75,7 @@ Services:
 
   Tests:
   - Test: download
-    Arguments: &storage-blob-sizes
+    Arguments: &storage-sizes
     - --size 1 --warmup 0 --duration 1
     - --size 10240 --parallel 64
     - --size 10485760 --parallel 32
@@ -87,7 +87,7 @@ Services:
       Python: DownloadTest
 
   - Test: upload
-    Arguments: *storage-blob-sizes
+    Arguments: *storage-sizes
     TestNames:
       Net: UploadBlob
       Java: uploadblob
@@ -146,7 +146,7 @@ Services:
 
   Tests:
   - Test: download
-    Arguments: *storage-blob-sizes
+    Arguments: *storage-sizes
     TestNames:
       Net: DownloadBlob
       Java: downloadblob
@@ -154,7 +154,7 @@ Services:
       Python: LegacyDownloadTest
 
   - Test: upload
-    Arguments: *storage-blob-sizes
+    Arguments: *storage-sizes
     TestNames:
       Net: UploadBlob
       Java: uploadblob
@@ -174,7 +174,7 @@ Services:
     Net:
       Project: sdk/storage/Azure.Storage.Files.Shares/perf/Azure.Storage.Files.Shares.Perf/Azure.Storage.Files.Shares.Perf.csproj
       PackageVersions:
-      - Azure.Storage.Files.Shares: 12.6.0
+      - Azure.Storage.Files.Shares: 12.6.1
       - Azure.Storage.Files.Shares: source
     Java:
       Project: sdk/storage/azure-storage-perf
@@ -187,7 +187,7 @@ Services:
     JS:
       Project: sdk/storage/perf-tests/storage-file-share
       PackageVersions:
-      - "@azure/storage-file-share": 12.4.1
+      - "@azure/storage-file-share": 12.5.0
       - "@azure/storage-file-share": source      
     Python:
       Project: sdk/storage/azure-storage-file-share
@@ -197,9 +197,7 @@ Services:
 
   Tests:
   - Test: download
-    Arguments:
-    - --size 1 --warmup 0 --duration 1
-    - --size 10240 --parallel 32
+    Arguments: *storage-sizes
     TestNames:
       Net: DownloadFile
       Java: downloadfileshare
@@ -207,9 +205,7 @@ Services:
       Python: DownloadTest
 
   - Test: upload
-    Arguments:
-    - --size 1 --warmup 0 --duration 1
-    - --size 10240 --parallel 32
+    Arguments: *storage-sizes
     TestNames:
       Net: UploadFile
       Java: uploadfileshare

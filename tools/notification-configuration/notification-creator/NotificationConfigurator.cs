@@ -34,7 +34,7 @@ namespace NotificationConfiguration
             PipelineSelectionStrategy strategy = PipelineSelectionStrategy.Scheduled)
         {
             var pipelines = await GetPipelinesAsync(projectName, projectPath, strategy);
-            var teams = await GetAllTeamsAsync(projectName);
+            var teams = await service.GetAllTeamsAsync(projectName);
 
             foreach (var pipeline in pipelines)
             {
@@ -190,29 +190,6 @@ namespace NotificationConfiguration
                     var subscription = await service.CreateSubscriptionAsync(newSubscription);
                 }
             }
-        }
-
-        private async Task<IEnumerable<WebApiTeam>> GetAllTeamsAsync(string projectName)
-        {
-            var accumulator = new List<WebApiTeam>();
-            var skip = 0;
-            IEnumerable<WebApiTeam> teams;
-
-            while (true)
-            {
-                teams = await service.GetTeamsAsync(projectName, skip: skip);
-
-                if (!teams.Any())
-                {
-                    break;
-                }
-
-                accumulator.AddRange(teams);
-                skip = accumulator.Count;
-            }
-
-            return accumulator;
-
         }
     }
 }

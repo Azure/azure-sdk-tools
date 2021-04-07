@@ -72,7 +72,7 @@ namespace GitHubCodeownerSubscriber
 
                 var logger = loggerFactory.CreateLogger<Program>();
 
-                var pipelineGroupTasks = (await devOpsService.GetTeamsAsync(project))
+                var pipelineGroupTasks = (await devOpsService.GetAllTeamsAsync(project))
                     .Where(team =>
                         YamlHelper.Deserialize<TeamMetadata>(team.Description, swallowExceptions: true)?.Purpose == TeamPurpose.SynchronizedNotificationTeam
                     ).Select(async team =>

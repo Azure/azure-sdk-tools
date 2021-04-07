@@ -122,7 +122,35 @@ namespace NotificationConfiguration.Services
 
             return teams;
         }
-        
+
+        /// <summary>
+        /// Returns all teams in the given project
+        /// </summary>
+        /// <param name="projectName">Name of the project</param>
+        /// <returns>All teams which satisfy the given criteria</returns>
+        public async Task<IEnumerable<WebApiTeam>> GetAllTeamsAsync(string projectName)
+        {
+            var accumulator = new List<WebApiTeam>();
+            var skip = 0;
+            IEnumerable<WebApiTeam> teams;
+
+            while (true)
+            {
+                teams = await GetTeamsAsync(projectName, skip: skip);
+
+                if (!teams.Any())
+                {
+                    break;
+                }
+
+                accumulator.AddRange(teams);
+                skip = accumulator.Count;
+            }
+
+            return accumulator;
+
+        }
+
         /// <summary>
         /// Creates a team in the given project
         /// </summary>

@@ -95,6 +95,7 @@ namespace NotificationConfiguration.Services
             BuildDefinition result;
             try
             {
+                logger.LogInformation("GetPipelineAsync ProjectName = {0} PipelineId = {1}", projectName, pipelineId);
                 result = await client.GetDefinitionAsync(projectName, pipelineId);
             }
             catch (DefinitionNotFoundException)

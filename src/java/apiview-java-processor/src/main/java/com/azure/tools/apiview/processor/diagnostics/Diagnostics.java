@@ -7,6 +7,7 @@ import com.azure.tools.apiview.processor.diagnostics.rules.IllegalPackageAPIExpo
 import com.azure.tools.apiview.processor.diagnostics.rules.ImportsDiagnosticRule;
 import com.azure.tools.apiview.processor.diagnostics.rules.MissingAnnotationsDiagnosticRule;
 import com.azure.tools.apiview.processor.diagnostics.rules.MissingJavaDocDiagnosticRule;
+import com.azure.tools.apiview.processor.diagnostics.rules.MissingJavadocCodeSnippetsRule;
 import com.azure.tools.apiview.processor.diagnostics.rules.ModuleInfoDiagnosticRule;
 import com.azure.tools.apiview.processor.diagnostics.rules.NoLocalesInJavadocUrlDiagnosticRule;
 import com.azure.tools.apiview.processor.diagnostics.rules.NoPublicFieldsDiagnosticRule;
@@ -45,6 +46,7 @@ public class Diagnostics {
             new Rule("^setHas")
         ));
         diagnostics.add(new MissingJavaDocDiagnosticRule());
+        diagnostics.add(new MissingJavadocCodeSnippetsRule());
         diagnostics.add(new NoLocalesInJavadocUrlDiagnosticRule());
         diagnostics.add(new ModuleInfoDiagnosticRule());
 

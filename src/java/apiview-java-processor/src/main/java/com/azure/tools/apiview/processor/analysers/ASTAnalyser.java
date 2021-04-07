@@ -1009,7 +1009,8 @@ public class ASTAnalyser implements Analyser {
 
             nodeWithAnnotations.getAnnotations()
                     .stream()
-                    .filter(annotationExpr -> !BLOCKED_ANNOTATIONS.contains(annotationExpr.getName().getIdentifier()))
+                    .filter(annotationExpr -> !BLOCKED_ANNOTATIONS.contains(annotationExpr.getName().getIdentifier())
+                            || !annotationExpr.getName().getIdentifier().startsWith("Json"))
                     .forEach(consumer);
         }
 

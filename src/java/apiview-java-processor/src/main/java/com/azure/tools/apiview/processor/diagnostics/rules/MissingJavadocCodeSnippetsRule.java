@@ -17,7 +17,6 @@ import static com.azure.tools.apiview.processor.model.DiagnosticKind.INFO;
  */
 public class MissingJavadocCodeSnippetsRule implements DiagnosticRule {
     public static final String CODE_SNIPPET_TAG = "{@codesnippet";
-    private static boolean IGNORE_OVERRIDES = true;
 
     @Override
     public void scanIndividual(final CompilationUnit cu, final APIListing listing) {

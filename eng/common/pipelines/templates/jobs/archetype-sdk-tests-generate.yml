@@ -35,7 +35,8 @@ parameters:
 jobs:
 - job: generate_matrix
   variables:
-    displayNameFilter: $[ coalesce(variables.jobMatrixFilter, '.*') ]
+    # Temporarily exclude macOS tests by default because of ongoing pool issues
+    displayNameFilter: $[ coalesce(variables.jobMatrixFilter, '^(?!.*macOS.*)') ]
   pool:
     name: ${{ parameters.Pool }}
     vmImage: ${{ parameters.OsVmImage }}

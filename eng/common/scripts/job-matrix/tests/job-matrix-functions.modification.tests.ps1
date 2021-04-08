@@ -404,7 +404,7 @@ Describe "Platform Matrix Replace" -Tag "replace" {
         { $parsed = ParseReplacement $query } | Should -Throw
     }
     
-    It "Should replace values in a matrix" {
+    It "Should replace values in a matrix and respect query ordering" {
         $matrixJson = @'
 {
     "matrix": {
@@ -483,7 +483,7 @@ Describe "Platform Matrix Replace" -Tag "replace" {
 }
 '@
         $importConfig = GetMatrixConfigFromJson $matrixJson
-        $matrix = GenerateMatrix $importConfig "all" -replace @("JavaTestVersion=1.8/2.0", "Pool=.*ubuntu.*/custom-ubuntu-pool")
+        $matrix = GenerateMatrix $importConfig "all" -replace @("JavaTestVersion=1.8/2.0", "Pool=.*mms-ubuntu.*/custom-ubuntu-pool")
 
         $matrix.Length | Should -Be 2
         # Replacements of inner values will preserve the grouping name
@@ -493,7 +493,7 @@ Describe "Platform Matrix Replace" -Tag "replace" {
         $matrix[0].parameters.OSVmImage | Should -Be "MMSUbuntu18.04"
 
         # Make sure non-literal keys still replace under the hood
-        $matrix = GenerateMatrix $importConfig "all" -replace ".*=.*ubuntu.*/custom-ubuntu-pool"
+        $matrix = GenerateMatrix $importConfig "all" -replace ".*=.*mms-ubuntu.*/custom-ubuntu-pool"
 
         $matrix.Length | Should -Be 2
         $matrix[0].name | Should -Be "ubuntu1804_18"
@@ -542,4 +542,26 @@ Describe "Platform Matrix Replace" -Tag "replace" {
         $matrix[1].parameters.Foo | Should -Be "foo2"
         $matrix[1].parameters.Bar | Should -Be "bar1"
     }
+
+    It "Should replace values and update job display names for groupings" {
+        $matrixJson = @'
+{
+  "matrix": {
+    "Agent": {
+      "ubuntu-1804": { "OSVmImage": "MMSUbuntu18.04", "Pool": "azsdk-pool-mms-ubuntu-1804-general" }
+    },
+    "JavaTestVersion": [ "1.8", "1.11" ]
+  }
+}
+'@
+        $importConfig = GetMatrixConfigFromJson $matrixJson
+        $matrix = GenerateMatrix $importConfig "all" -replace "Agent=ubuntu-1804/replacedGroupName", "OSVmImage=.*ubuntu.*/replacedImage"
+
+        $matrix.Length | Should -Be 2
+        $matrix[0].name | Should -Be "replacedGroupName_18"
+        $matrix[0].parameters.JavaTestVersion | Should -Be "1.8"
+        $matrix[0].parameters.Pool | Should -Be "azsdk-pool-mms-ubuntu-1804-general"
+        $matrix[0].parameters.OSVmImage | Should -Be "replacedImage"
+    }
+
 }

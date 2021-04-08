@@ -15,8 +15,15 @@ class MatrixParameter {
         $this.Name = $name
     }
 
+    MatrixParameter([String]$name, [System.Object]$value, [String]$groupLabel) {
+        $this.Value = $value
+        $this.Name = $name
+        $this.GroupLabel = $groupLabel
+    }
+
+    [String]$Name
     [System.Object]$Value
-    [System.Object]$Name
+    [String]$GroupLabel
 
     Set($value, [String]$keyRegex = '')
     {
@@ -37,11 +44,17 @@ class MatrixParameter {
         }
     }
 
+    [Boolean]IsGrouped()
+    {
+        return $this.Value -is [PSCustomObject]
+    }
+
     [System.Object]Flatten()
     {
         if ($this.Value -is [PSCustomObject]) {
             return $this.Value.PSObject.Properties | ForEach-Object {
-                [MatrixParameter]::new($_.Name, $_.Value)
+                # Pass in $this.Name as $groupLabel to support replace against parameter group display names
+                [MatrixParameter]::new($_.Name, $_.Value, $this.Name)
             }
         } elseif ($this.Value -is [Array]) {
             return $this.Value | ForEach-Object {
@@ -317,7 +330,17 @@ function ProcessReplace
         foreach ($perm in $element._permutation) {
             $replace = $perm
 
+            foreach ($query in $replacements) {
+                $parsed = ParseReplacement $query
+
+                if ($perm.IsGrouped() -and $perm.GroupLabel -match $parsed.key -and $perm.Name -match $parsed.value) {
+                    $perm.Name = $perm.Name -replace $parsed.value, $parsed.replace
+                }
+            }
+
             # Iterate nested permutations or run once for singular values (int, string, bool)
+            # NOTE: do not be tempted to combine this for loop with the one above. The flattened parameters
+            # must be iterated over as the outer loop to preserve matching and ordering precedence.
             foreach ($flattened in $perm.Flatten()) {
                 foreach ($query in $replacements) {
                     $parsed = ParseReplacement $query

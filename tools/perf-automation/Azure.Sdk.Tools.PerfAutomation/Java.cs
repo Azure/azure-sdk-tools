@@ -11,11 +11,31 @@ namespace Azure.Sdk.Tools.PerfAutomation
     {
         protected override Language Language => Language.Java;
 
+        private string perfCoreProjectFile => Path.Combine(WorkingDirectory, "common", "perf-test-core", "pom.xml");
+
         public override async Task<(string output, string error, string context)> SetupAsync(
             string project, string languageVersion, IDictionary<string, string> packageVersions)
         {
             var projectFile = Path.Combine(WorkingDirectory, project, "pom.xml");
 
+            UpdatePackageVersions(perfCoreProjectFile, packageVersions);
+            UpdatePackageVersions(projectFile, packageVersions);
+
+            var result = await Util.RunAsync("mvn", $"clean package -T1C -am -Denforcer.skip=true -Dmaven.test.skip=true -Dmaven.javadoc.skip=true --pl {project}",
+                WorkingDirectory);
+
+            /*
+            [11:27:11.796] [INFO] Building jar: C:\Git\java\sdk\storage\azure-storage-perf\target\azure-storage-perf-1.0.0-beta.1-jar-with-dependencies.jar
+            */
+
+            var buildMatch = Regex.Match(result.StandardOutput, @"Building jar: (.*with-dependencies\.jar)", RegexOptions.IgnoreCase | RegexOptions.RightToLeft);
+            var jar = buildMatch.Groups[1].Value;
+
+            return (result.StandardOutput, result.StandardError, jar);
+        }
+
+        private static void UpdatePackageVersions(string projectFile, IDictionary<string, string> packageVersions)
+        {
             // Create backup.  Throw if exists, since this shouldn't happen
             File.Copy(projectFile, projectFile + ".bak", overwrite: false);
 
@@ -33,23 +53,16 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 if (packageVersion != Program.PackageVersionSource)
                 {
                     var versionNode = doc.SelectSingleNode($"/mvn:project/mvn:dependencies/mvn:dependency[mvn:artifactId='{packageName}']/mvn:version", nsmgr);
-                    versionNode.InnerText = packageVersion;
+                    
+                    // Skip missing dependencies
+                    if (versionNode != null)
+                    {
+                        versionNode.InnerText = packageVersion;
+                    }
                 }
             }
 
             doc.Save(projectFile);
-
-            var result = await Util.RunAsync("mvn", $"clean package -T1C -am -Denforcer.skip=true -Dmaven.test.skip=true -Dmaven.javadoc.skip=true --pl {project}",
-                WorkingDirectory);
-
-            /*
-            [11:27:11.796] [INFO] Building jar: C:\Git\java\sdk\storage\azure-storage-perf\target\azure-storage-perf-1.0.0-beta.1-jar-with-dependencies.jar
-            */
-
-            var buildMatch = Regex.Match(result.StandardOutput, @"Building jar: (.*with-dependencies\.jar)", RegexOptions.IgnoreCase | RegexOptions.RightToLeft);
-            var jar = buildMatch.Groups[1].Value;
-
-            return (result.StandardOutput, result.StandardError, jar);
         }
 
         public override async Task<IterationResult> RunAsync(string project, string languageVersion,
@@ -79,7 +92,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
         {
             var projectFile = Path.Combine(WorkingDirectory, project, "pom.xml");
 
-            // Restore backup
+            // Restore backups
+            File.Move(perfCoreProjectFile + ".bak", perfCoreProjectFile, overwrite: true);
             File.Move(projectFile + ".bak", projectFile, overwrite: true);
 
             return Task.CompletedTask;

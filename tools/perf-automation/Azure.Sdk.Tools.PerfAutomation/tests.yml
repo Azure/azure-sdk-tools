@@ -56,9 +56,15 @@ Services:
       - Azure.Storage.Blobs: source
     Java:
       Project: sdk/storage/azure-storage-perf
-      PackageVersions:
-      - azure-storage-blob: 12.10.2
+      PackageVersions: &java-storage-package-versions
+      - azure-storage-blob: 12.10.0
+        azure-storage-file-share: 12.8.0
+        azure-storage-file-datalake: 12.4.0
+        reactor-core: 3.3.12.RELEASE
       - azure-storage-blob: source
+        azure-storage-file-share: source
+        azure-storage-file-datalake: source
+        reactor-core: source
       AdditionalArguments: &java-additional-arguments
         warmup: 15
         duration: 15
@@ -179,9 +185,7 @@ Services:
       - Azure.Storage.Files.Shares: source
     Java:
       Project: sdk/storage/azure-storage-perf
-      PackageVersions:
-      - azure-storage-file-share: 12.8.0
-      - azure-storage-file-share: source
+      PackageVersions: *java-storage-package-versions
       AdditionalArguments:
         warmup: 15
         duration: 15
@@ -222,9 +226,7 @@ Services:
       - Azure.Storage.Files.DataLake: source
     Java:
       Project: sdk/storage/azure-storage-perf
-      PackageVersions:
-      - azure-storage-file-datalake: 12.4.1
-      - azure-storage-file-datalake: source
+      PackageVersions: *java-storage-package-versions
       AdditionalArguments:
         warmup: 15
         duration: 15

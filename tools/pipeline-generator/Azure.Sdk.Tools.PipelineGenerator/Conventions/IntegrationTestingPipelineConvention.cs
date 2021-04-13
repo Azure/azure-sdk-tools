@@ -57,7 +57,7 @@ namespace PipelineGenerator.Conventions
                 RequireCommentsForNonTeamMembersOnly = false,
                 IsCommentRequiredForPullRequest = true,
             };
-            newTrigger.BranchFilters.Add("+master");
+            newTrigger.BranchFilters.Add($"+{Context.Branch}");
 
             return newTrigger;
         }
@@ -87,6 +87,12 @@ namespace PipelineGenerator.Conventions
             if (!target.IsCommentRequiredForPullRequest)
             {
                 target.IsCommentRequiredForPullRequest = true;
+                hasChanges = true;
+            }
+
+            if (!target.BranchFilters.Contains($"+{Context.Branch}"))
+            {
+                target.BranchFilters.Add($"+{Context.Branch}");
                 hasChanges = true;
             }
 

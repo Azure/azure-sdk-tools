@@ -11,6 +11,9 @@ parameters:
   - name: SkipDefaultCheckout
     type: boolean
     default: false
+  - name: SkipEngCheckout
+    type: boolean
+    default: false
 
 steps:
   - ${{ if not(parameters.SkipDefaultCheckout) }}:
@@ -26,6 +29,12 @@ steps:
         git sparse-checkout init
         git sparse-checkout set eng
       displayName: Init sparse checkout ${{ repo.Name }}
+      workingDirectory: ${{ coalesce(repo.WorkingDirectory, format('{0}/{1}', '$(System.DefaultWorkingDirectory)', repo.Name)) }}
+
+    - pwsh: |
+        git sparse-checkout set eng
+      displayName: Add eng folder to sparse-checkout set
+      condition: and(succeededOrFailed(), not(SkipEngCheckout))
       workingDirectory: ${{ coalesce(repo.WorkingDirectory, format('{0}/{1}', '$(System.DefaultWorkingDirectory)', repo.Name)) }}
 
     - ${{ each path in parameters.Paths }}:

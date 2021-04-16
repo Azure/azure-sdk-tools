@@ -233,18 +233,13 @@ Potentially, the roadmap could be ordered like this:
 The idea with the prototype was to take our existing in-proc technology for C#
 and host it as test server in the way described above.
 
-It is just a minimal proof of concept and still quite far from something
-that can be used for real testing. Some next steps that come to mind:
+So far, we have confirmed that this performs well under the pressure of local performance testing. Moving foward, the following
+(in no particular order)
 
-* Finding a permanent home for the server code. It is currently an extra
-  project in the C# SDK repo, which made it easy to reuse the code but
-  maybe it belongs elsewhere.
+* Figuring out packaging/distribution of server. As discussed above, Docker is an option,
+  but a simple `dotnet run`-able command is also an ideal experience.
 
-* Figuring out packaging/distribution of server. As discussed above, we are
-  leaning towards Docker, but another idea would be to make it a standalone
-  .NET executable.
-
-* Making client tests automatically start and stop the server. For the prototype,
+* Making client tests automatically start and stop the server. Currently,
   you have to manually start the server then run the tests.
 
 * Work out how to save and playback environment variables. There was an issue
@@ -252,86 +247,20 @@ that can be used for real testing. Some next steps that come to mind:
   at startup and synchronously.
 
 * Figure out how to handle https. It works with the dev certificate right now
-  for C#. For JS, I couldn't manage to get it to accept that without the big
-  hammer of disabling verification altogether.
+  for C#. For JS, Python and Java, disabling verification is necessary before the tests will connect properly.
 
-The code for the server can be found here:
-https://github.com/nguerrera/azure-sdk-for-net/tree/oop-experiment
+* Store files in a structured fashion. The current plan here is to have the test-proxy write to a github repo.
 
-That branch also has Schema Registry tests wired to use the out-of-proc server
-for playback and recording with some hacking around setting environment
-variables.
+* Finish a full integration with the storage livetests. These are by far our most extensive test suites across 
+  our existing languages. The footprint should be large enough to discover blocking issues.
 
-There is also an experiement to wire the Schema Registry client tests for
-JavaScript to the server. That can be found here:
-https://github.com/nguerrera/azure-sdk-for-js/tree/oop-experiment. 
+* Publish nuget package to core feed, for easy access via `nuget install` and `dotnet run`
 
-The JS part is especially hacked up purely to get a proof of concept. The
-redirection to the test server is done in the Schema Registry tests themselves
-rather than integrated into the JS test framework. Recordings are also hard-coded
-to store in c:\temp\recording\*.json instead of their usual location in the JS
-repo in a different format.
-
-To play with the prototype:
+To play with the server:
 
 1. Start the server:
+   1. Open the solution present in "tools/test-proxy/Azure.Sdk.Tools.TestProxy/"
+   2. F5
 
-* Checkout the C# SDK branch above
-* Open "sdk\core\Azure.Core.TestFramework\Azure.Core.TestFramework.sln"
-* F5
+2. Try a sample. There are multiple sample clients present in the `sample-clients` folder.
 
-
-2. Run the C# Schema Registry tests against it:
-
-* Open "sdk\schemaregistry\Azure.Data.SchemaRegistry\Azure.Data.SchemaRegistry.sln" 
-* Create c:\temp\schema-env\.env with the following:
-```
-SCHEMAREGISTRY_ENDPOINT=nicholgsrplayground.servicebus.windows.net
-SCHEMAREGISTRY_GROUP=nicholg01
-AZURE_TEST_MODE=RemoteRecord
-#AZURE_TEST_MODE=RemotePlayback
-TENANT_ID=X
-CLIENT_ID=Y
-CLIENT_SECRET=Z
-```
-* Run tests using test explorer
-
-Change AZURE_TEST_MODE between RemoteRecord and RemotePlayback to switch between
-recording and playback. The path to the .env is hard-coded and using .env at all
-was hacked in for immediate experimentation. See GetMode() in
-SchemaRegistryClientLiveTest.cs, which is where the hack is implemented. The
-path can be changed there or any other approach can be made to get these
-environment variables set. Reach out to me (nicholg) to get credentials or help
-setting up your own live Schema Registry instance. See also point above about
-handling variables as part of the recording, which is not implemented yet.
-
-
-3. Run the JavaScript tests
-
-* Checkout the JS SDK branch above
-* rush update
-* rush build
-* cd sdk\schemaregistry\schema-registry
-* Create .env with the following:
-
-```
-TEST_MODE=record
-#TEST_MODE=playback
-SCHEMA_REGISTRY_ENDPOINT=https://nicholgsrplayground.servicebus.windows.net
-SCHEMAREGISTRY_GROUP=nicholg01
-NODE_TLS_REJECT_UNAUTHORIZED=0
-AZURE_TENANT_ID=X
-AZURE_CLIENT_ID=Y
-AZURE_CLIENT_SECRET=Z
-```
-
-Change TEST_MODE between record and playback to switch between recording and playback.
-The use of .env in JavaScript is built-in and idiomatic and not just a prototype hack 
-like C#. However, there is still a problem with variables in JavaScript. The opportunistic
-way the test server communication is wired into the schema registry tests (as mentioned above)
-fails to mock the authentication, and so the variables above are needed during playback and
-record while they should only be need for record in a real solution. But NODE_TLS_REJECT_UNAUTHORIZED=0
-is a hack to get JavaScript to connect to the test server without trying to validate the
-ASP.NET dev certificate.
-
-* npm run test

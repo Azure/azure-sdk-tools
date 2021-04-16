@@ -48,12 +48,13 @@ java -jar wiremock-standalone-2.27.2.jar --https-port 5001 --verbose
 
 By providing the https port, WireMock will default to using a dev certificate.
 
-Set AZURE_RECORD_MODE to `record`.
+Set environment variable AZURE_RECORD_MODE to `record`.
 
 ```python
 pytest test.py
 ```
 
+To run in playback, set environment variable AZURE_RECORD_MODE to `playback`.
 
 ## Discovered missing features
 

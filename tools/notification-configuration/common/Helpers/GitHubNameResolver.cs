@@ -6,7 +6,7 @@ using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using System;
 using System.Threading.Tasks;
 using NotificationConfiguration.Models;
-using Microsoft.Extensions.Caching.Memory;
+using System.Collections.Concurrent;
 
 namespace NotificationConfiguration.Helpers
 {
@@ -18,7 +18,7 @@ namespace NotificationConfiguration.Helpers
         private readonly ICslQueryProvider client;
         private readonly string kustoTable;
         private readonly ILogger<GitHubNameResolver> logger;
-        private static MemoryCache memoryCache = new MemoryCache(new MemoryCacheOptions());
+        private static ConcurrentDictionary<string, string> githubUserNameCache = new ConcurrentDictionary<string, string>();
 
         private static ICslQueryProvider GetKustoClient(
             string aadAppId,
@@ -72,13 +72,13 @@ namespace NotificationConfiguration.Helpers
         public async Task<string> GetInternalUserPrincipal(string githubUserName)
         {
             string result;
-            if (memoryCache.TryGetValue(githubUserName, out result))
+            if (githubUserNameCache.TryGetValue(githubUserName, out result))
             {
                 return result;
             }
 
             result = await GetInternalUserPrincipalImpl(githubUserName);
-            memoryCache.Set(githubUserName, result);
+            githubUserNameCache.TryAdd(githubUserName, result);
             return result;
         }
 

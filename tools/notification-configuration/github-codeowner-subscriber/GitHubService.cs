@@ -1,6 +1,6 @@
-﻿using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -13,7 +13,7 @@ namespace GitHubCodeownerSubscriber
     public class GitHubService
     {
         private static HttpClient httpClient = new HttpClient();
-        private static MemoryCache memoryCache = new MemoryCache(new MemoryCacheOptions());
+        private static ConcurrentDictionary<string, string> codeownersFileCache = new ConcurrentDictionary<string, string>();
 
         private readonly ILogger<GitHubService> logger;
 
@@ -34,13 +34,13 @@ namespace GitHubCodeownerSubscriber
         public async Task<string> GetCodeownersFile(Uri repoUrl)
         {
             string result;
-            if (memoryCache.TryGetValue(repoUrl.ToString(), out result))
+            if (codeownersFileCache.TryGetValue(repoUrl.ToString(), out result))
             {
                 return result; 
             }
 
             result = await GetCodeownersFileImpl(repoUrl);
-            memoryCache.Set(repoUrl.ToString(), result);
+            codeownersFileCache.TryAdd(repoUrl.ToString(), result);
             return result;
         }
 

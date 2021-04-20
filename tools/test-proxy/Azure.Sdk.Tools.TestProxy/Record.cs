@@ -17,12 +17,14 @@ using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.TestProxy
 {
-    // !! TODO: Lots of Record/Playback duplication
-    // !! TODO: Replace statics with dependency injection, expiration policy of some kind
     [ApiController]
     [Route("[controller]/[action]")]
     public sealed class Record : ControllerBase
     {
+        private readonly RecordingHandler _recordingHandler;
+        public Record(RecordingHandler recordingHandler) => _recordingHandler = recordingHandler;
+
+
         private static readonly ConcurrentDictionary<string, (string File, RecordSession Session)> s_sessions
             = new ConcurrentDictionary<string, (string, RecordSession)>();
 
@@ -30,6 +32,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
         private static readonly string[] s_excludedRequestHeaders = new string[] {
             // Only applies to request between client and proxy
+            // TODO, we need to handle this properly, there are tests that actually test proxy functionality.
             "Proxy-Connection",
         };
 
@@ -45,6 +48,7 @@ namespace Azure.Sdk.Tools.TestProxy
         public void Start()
         {
             string file = GetHeader(Request, "x-recording-file");
+
             var id = Guid.NewGuid().ToString();
             var session = (file, new RecordSession());
 
@@ -73,14 +77,16 @@ namespace Azure.Sdk.Tools.TestProxy
                 var (file, session) = fileAndSession;
                 session.Sanitize(s_sanitizer);
 
+                var targetPath = Path.Join(_recordingHandler.RepoPath, "recordings", file);
+
                 // Create directories above file if they don't already exist
-                var directory = Path.GetDirectoryName(file);
+                var directory = Path.GetDirectoryName(targetPath);
                 if (!String.IsNullOrEmpty(directory))
                 {
                     Directory.CreateDirectory(directory);
                 }
 
-                using var stream = System.IO.File.Create(file);
+                using var stream = System.IO.File.Create(targetPath);
                 var options = new JsonWriterOptions { Indented = true };
                 var writer = new Utf8JsonWriter(stream, options);
                 session.Serialize(writer);

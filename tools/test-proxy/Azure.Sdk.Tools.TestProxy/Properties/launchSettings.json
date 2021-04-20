@@ -17,6 +17,7 @@
     },
     "Azure.Sdk.Tools.TestProxy": {
       "commandName": "Project",
+      "commandLineArgs": "--storage-location \"C:/repo/scraps/test-proxy/repo\"",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"

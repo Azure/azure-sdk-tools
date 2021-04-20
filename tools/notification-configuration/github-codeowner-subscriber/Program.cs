@@ -46,9 +46,10 @@ namespace GitHubCodeownerSubscriber
             bool dryRun = false
             )
         {
-
 #pragma warning disable CS0618 // Type or member is obsolete
-            using (var loggerFactory = new LoggerFactory().AddConsole(includeScopes: true))
+            using (var loggerFactory = LoggerFactory.Create(builder => {
+                builder.AddConsole(config => { config.IncludeScopes = true; }); 
+            }))
 #pragma warning restore CS0618 // Type or member is obsolete
             {
                 var devOpsService = AzureDevOpsService.CreateAzureDevOpsService(
@@ -72,7 +73,7 @@ namespace GitHubCodeownerSubscriber
 
                 var logger = loggerFactory.CreateLogger<Program>();
 
-                var pipelineGroupTasks = (await devOpsService.GetTeamsAsync(project))
+                var pipelineGroupTasks = (await devOpsService.GetAllTeamsAsync(project))
                     .Where(team =>
                         YamlHelper.Deserialize<TeamMetadata>(team.Description, swallowExceptions: true)?.Purpose == TeamPurpose.SynchronizedNotificationTeam
                     ).Select(async team =>

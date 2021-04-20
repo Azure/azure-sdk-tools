@@ -6,6 +6,7 @@ using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using System;
 using System.Threading.Tasks;
 using NotificationConfiguration.Models;
+using System.Collections.Concurrent;
 
 namespace NotificationConfiguration.Helpers
 {
@@ -17,6 +18,7 @@ namespace NotificationConfiguration.Helpers
         private readonly ICslQueryProvider client;
         private readonly string kustoTable;
         private readonly ILogger<GitHubNameResolver> logger;
+        private static ConcurrentDictionary<string, string> githubUserNameCache = new ConcurrentDictionary<string, string>();
 
         private static ICslQueryProvider GetKustoClient(
             string aadAppId,
@@ -68,6 +70,19 @@ namespace NotificationConfiguration.Helpers
         /// <param name="githubUserName">GitHub alias</param>
         /// <returns>Internal alias or null if no internal user found</returns>
         public async Task<string> GetInternalUserPrincipal(string githubUserName)
+        {
+            string result;
+            if (githubUserNameCache.TryGetValue(githubUserName, out result))
+            {
+                return result;
+            }
+
+            result = await GetInternalUserPrincipalImpl(githubUserName);
+            githubUserNameCache.TryAdd(githubUserName, result);
+            return result;
+        }
+
+        public async Task<string> GetInternalUserPrincipalImpl(string githubUserName)
         {
             var query = $"{kustoTable} | where githubUserName == '{githubUserName}' | project aadUpn | limit 1;";
 

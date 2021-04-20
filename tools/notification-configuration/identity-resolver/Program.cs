@@ -34,7 +34,9 @@ namespace identity_resolver
         {
 
 #pragma warning disable CS0618 // Type or member is obsolete
-            using (var loggerFactory = new LoggerFactory().AddConsole(includeScopes: true))
+            using (var loggerFactory = LoggerFactory.Create(builder => {
+                builder.AddConsole(config => { config.IncludeScopes = true; });
+            }))
 #pragma warning restore CS0618 // Type or member is obsolete
             {
                 try

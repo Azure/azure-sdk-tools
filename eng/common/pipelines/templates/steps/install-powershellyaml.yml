@@ -1,0 +1,7 @@
+steps:
+  - task: NuGetToolInstaller@1
+    displayName: 'Use NuGet '
+
+  - powershell: |
+      nuget install powershell-yaml -Version 0.4.2 -OutputDirectory $(Build.ArtifactStagingDirectory)
+      Import-Module (Join-Path -Path $(Build.ArtifactStagingDirectory) powershell-yaml.0.4.2 powershell-yaml.psm1)

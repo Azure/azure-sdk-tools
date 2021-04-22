@@ -33,7 +33,7 @@ jobs:
     matrix:
       Java:
         RepositoryName: azure-sdk-for-java
-        Branch: master
+        Branch: main
         Prefix: java
         PublicOptions: ''
         InternalOptions: >-
@@ -45,7 +45,7 @@ jobs:
         TestOptions: '--variablegroup ${{ parameters.Secrets_for_Resource_Provisioner }}'
       Android:
         RepositoryName: azure-sdk-for-android
-        Branch: master
+        Branch: main
         Prefix: android
         PublicOptions: ''
         InternalOptions: >-
@@ -56,7 +56,7 @@ jobs:
           --variablegroup ${{ parameters.APIReview_AutoCreate_Configurations }}
       JavaScript:
         RepositoryName: azure-sdk-for-js
-        Branch: master
+        Branch: main
         Prefix: js
         PublicOptions: ''
         InternalOptions: >-
@@ -68,7 +68,7 @@ jobs:
         TestOptions: '--variablegroup ${{ parameters.Secrets_for_Resource_Provisioner }}'
       Python:
         RepositoryName: azure-sdk-for-python
-        Branch: master
+        Branch: main
         Prefix: python
         PublicOptions: ''
         InternalOptions: >-
@@ -79,7 +79,7 @@ jobs:
         TestOptions: '--variablegroup ${{ parameters.Secrets_for_Resource_Provisioner }}'
       Net:
         RepositoryName: azure-sdk-for-net
-        Branch: master
+        Branch: main
         Prefix: net
         PublicOptions: ''
         InternalOptions: >-
@@ -91,7 +91,7 @@ jobs:
         TestOptions: '--variablegroup ${{ parameters.Secrets_for_Resource_Provisioner }}'
       Cpp:
         RepositoryName: azure-sdk-for-cpp
-        Branch: master
+        Branch: main
         Prefix: cpp
         PublicOptions: ''
         # Resource Provisioner is in InternalOptions and not TestOptions becasue C++ includes live tests in the unified pipelines

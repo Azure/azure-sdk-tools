@@ -23,41 +23,48 @@ jobs:
               azure-sdk/azure-rest-api-specs:
 
           Azure/azure-sdk-for-go:
+            Branch: main
             TargetRepos: 
               Azure/azure-sdk-for-go-pr:
               azure-sdk/azure-sdk-for-go:
               azure-sdk/azure-sdk-for-go-pr:
 
           Azure/azure-sdk-for-java:
+            Branch: main
             TargetRepos: 
               Azure/azure-sdk-for-java-pr:
               azure-sdk/azure-sdk-for-java:
               azure-sdk/azure-sdk-for-java-pr:
 
           Azure/azure-sdk-for-js:
+            Branch: main
             TargetRepos:
               Azure/azure-sdk-for-js-pr:
               azure-sdk/azure-sdk-for-js:
               azure-sdk/azure-sdk-for-js-pr:
 
           Azure/azure-sdk-for-net:
+            Branch: main
             TargetRepos: 
               Azure/azure-sdk-for-net-pr:
               azure-sdk/azure-sdk-for-net:
               azure-sdk/azure-sdk-for-net-pr:
 
           Azure/azure-sdk-for-python:
+            Branch: main
             TargetRepos: 
               Azure/azure-sdk-for-python-pr:
               azure-sdk/azure-sdk-for-python:
               azure-sdk/azure-sdk-for-python-pr:
 
           Azure/azure-sdk-for-ios:
+            Branch: main
             TargetRepos: 
               Azure/azure-sdk-for-ios-pr:
               azure-sdk/azure-sdk-for-ios:
 
           Azure/azure-sdk-for-android:
+            Branch: main
             TargetRepos: 
               Azure/azure-sdk-for-android-pr:
               azure-sdk/azure-sdk-for-android:

@@ -1,6 +1,22 @@
 # Azure SDK Tools Test Proxy
 
-This project is intended for use in conjunction with a github repo.
+For a detailed explanation, check the README.md one level up from this one. This project is intended to act as an out-of-proc record/playback server and is intended to be **non-language-specific**.
+
+## Installation
+1. [Install .Net Core 3.1](https://dotnet.microsoft.com/download)
+
+2. Install test-proxy
+```
+> dotnet tool install azure.sdk.tools.testproxy --global --add-source https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk/nuget/v3/index.json
+```
+
+## Before Invoking
+
+Install a developer HTTPS Cert. If you installed .NET in the previous step, invoke this command.
+
+```
+dotnet dev-certs https --trust
+```
 
 ## Command line arguments
 
@@ -14,6 +30,10 @@ It uses:
 
 * the pre-release package [`System.CommandLine.DragonFruit`](https://github.com/dotnet/command-line-api) to parse arguments.
 * the package [`libgit2sharp`](https://github.com/libgit2/libgit2sharp/) to handle git integration.
+
+## Install Dev Certificate
+
+
 
 ## How do I use the test-proxy to get a recording?
 
@@ -34,10 +54,10 @@ You will receive a test-id in the reponse, look for header `x-recording-id`.
 
 1. Prevent outgoing request from hitting original URL
 2. Make the following changes to the outgoing request
-    a. Place original Request URL in header "x-recording-upstream-base-uri"
-    b. Replace Request URL with Proxy Server URL. (currently https://localhost:5001. This will change as SSL updates happen)
-    c. Add header "x-recording-id": <x-recording-id> from startup step
-    d. Add header "x-recording-mode": "record"
+    1. Place original Request URL in header "x-recording-upstream-base-uri"
+    2. Replace Request URL with Proxy Server URL. (currently https://localhost:5001. This will change as SSL updates happen)
+    3. Add header "x-recording-id": <x-recording-id> from startup step
+    4. Add header "x-recording-mode": "record"
 
 ### When finished running test
 
@@ -76,10 +96,10 @@ Check response header `x-recording-id` to get the recording-id.
 
 1. Prevent outgoing request from hitting original URL
 2. Make the following changes to the outgoing request
-    a. Place original Request URL in header "x-recording-upstream-base-uri"
-    b. Replace Request URL with Proxy Server URL. (currently https://localhost:5001. This will change as SSL updates happen)
-    c. Add header "x-recording-id": <x-recording-id> from startup step
-    d. Add header "x-recording-mode": "playback"
+    1. Place original Request URL in header "x-recording-upstream-base-uri"
+    2. Replace Request URL with Proxy Server URL. (currently https://localhost:5001. This will change as SSL updates happen)
+    3. Add header "x-recording-id": <x-recording-id> from startup step
+    4. Add header "x-recording-mode": "playback"
 
 ### Stop playback
 

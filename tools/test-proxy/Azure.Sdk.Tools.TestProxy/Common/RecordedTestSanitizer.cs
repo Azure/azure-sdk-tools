@@ -16,11 +16,9 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         public const string SanitizeValue = "Sanitized";
         public List<string> JsonPathSanitizers { get; } = new List<string>();
 
-        /// <summary>
         /// This is just a temporary workaround to avoid breaking tests that need to be re-recorded
         //  when updating the JsonPathSanitizer logic to avoid changing date formats when deserializing requests.
         //  this property will be removed in the future.
-        /// </summary>
         public bool LegacyConvertJsonDateTokens { get; set; }
 
         private static readonly string[] s_sanitizeValueArray = { SanitizeValue };

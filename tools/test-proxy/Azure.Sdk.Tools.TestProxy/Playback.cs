@@ -23,14 +23,19 @@ namespace Azure.Sdk.Tools.TestProxy
     {
         private static readonly ConcurrentDictionary<string, RecordSession> s_sessions
             = new ConcurrentDictionary<string, RecordSession>();
+
         // !! Neither matching nor sanitization can be customized yet.
         private static readonly RecordMatcher s_matcher = new RecordMatcher();
         private static readonly RecordedTestSanitizer s_sanitizer = new RecordedTestSanitizer();
+
+        private readonly RecordingHandler _recordingHandler;
+        public Playback(RecordingHandler recordingHandler) => _recordingHandler = recordingHandler;
 
         [HttpPost]
         public async Task Start()
         {
             string file = GetHeader(Request, "x-recording-file");
+
             var id = Guid.NewGuid().ToString();
             using var stream = System.IO.File.OpenRead(file);
             using var doc = await JsonDocument.ParseAsync(stream).ConfigureAwait(false);
@@ -138,11 +143,8 @@ namespace Azure.Sdk.Tools.TestProxy
 
         public static Uri GetRequestUri(HttpRequest request)
         {
-            var uri = new RequestUriBuilder();
-            uri.Reset(new Uri(GetHeader(request, "x-recording-upstream-base-uri")));
-            uri.Path = request.Path;
-            uri.Query = request.QueryString.ToUriComponent();
-            return uri.ToUri();
+            var target_uri = GetHeader(request, "x-recording-upstream-base-uri");
+            return new Uri(target_uri);
         }
 
         private static string GetHeader(HttpRequest request, string name)

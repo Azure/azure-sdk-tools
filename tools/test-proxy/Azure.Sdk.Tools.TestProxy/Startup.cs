@@ -10,6 +10,10 @@ using Microsoft.Extensions.Hosting;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.CommandLine;
+using System.CommandLine.Invocation;
+using System.IO;
+using Newtonsoft.Json;
 
 namespace Azure.Sdk.Tools.TestProxy
 {
@@ -20,14 +24,29 @@ namespace Azure.Sdk.Tools.TestProxy
 
         public Startup(IConfiguration configuration) { }
 
-        public static void Main(string[] args)
+        public static string TargetLocation;
+
+        private static string resolveRepoLocation(string storageLocation = null)
+        {
+            var envValue = Environment.GetEnvironmentVariable("TEST_PROXY_FOLDER");
+
+            // TODO: absolute the paths first two paths if relative
+            return storageLocation ?? envValue ?? Directory.GetCurrentDirectory();
+        }
+
+        /// <param name="storageLocation">The path to the target local git repo. If not provided as an argument, Environment variable TEST_PROXY_FOLDER will be consumed. 
+        /// Lacking both, the current working directory will be utilized.</param>
+        public static void Main(string storageLocation = null)
         {
             var statusThreadCts = new CancellationTokenSource();
+
+            TargetLocation = resolveRepoLocation(storageLocation);
+
             var statusThread = PrintStatus(
                 () => $"Recorded: {RequestsRecorded}\tPlayed Back: {RequestsPlayedBack}",
                 newLine: true, statusThreadCts.Token);
 
-            var host = Host.CreateDefaultBuilder(args);
+            var host = Host.CreateDefaultBuilder();
 
             host.ConfigureWebHostDefaults(
                 builder => builder.UseStartup<Startup>());
@@ -42,6 +61,7 @@ namespace Azure.Sdk.Tools.TestProxy
         {
             services.AddHttpClient();
             services.AddControllers();
+            services.AddSingleton<RecordingHandler>(new RecordingHandler(TargetLocation));
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

@@ -58,15 +58,5 @@ namespace Azure.Sdk.Tools.TestProxy
         {
             throw new NotImplementedException();
         }
-
-        private static string GetHeader(HttpRequest request, string name)
-        {
-            if (!request.Headers.TryGetValue(name, out var value))
-            {
-                return null;
-            }
-
-            return value;
-        }
     }
 }

@@ -10,7 +10,7 @@ namespace Azure.Sdk.Tools.TestProxy.HttpClientSample
     {
         private const string _url = "https://www.example.org";
         private const string _proxy = "https://localhost:5001";
-        private static readonly string _recordingFile = Path.Combine("http-client-sample", "net-http-client-sample.json");
+        private static readonly string _recordingFile = Path.Combine("test-proxy", "net-http-client-sample.json");
 
         private static readonly HttpClient _httpClient = new HttpClient(new HttpClientHandler()
         {

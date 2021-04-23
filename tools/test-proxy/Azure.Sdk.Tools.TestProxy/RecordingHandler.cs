@@ -19,7 +19,7 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 Repository = new Repository(targetDirectory);
             }
-            catch(Exception e)
+            catch(Exception)
             {
                 Console.WriteLine("The configured storage directory is not a git repository. Git functionality will be unavailable.");
             }

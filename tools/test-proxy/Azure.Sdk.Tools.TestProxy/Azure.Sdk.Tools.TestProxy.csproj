@@ -3,6 +3,10 @@
     <TargetFrameworks>netcoreapp3.1</TargetFrameworks>
     <RequiredTargetFrameworks>$(TargetFrameworks)</RequiredTargetFrameworks>
     <NoWarn>$(NoWarn);1591;AZC0001;AZC0012;CA1724;CA1801;CA1812;CA1822;SA1028</NoWarn>
+
+    <IsPackable>true</IsPackable>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>test-proxy</ToolCommandName>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Azure.Core" Version="1.10.0" />

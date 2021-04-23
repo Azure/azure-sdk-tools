@@ -10,12 +10,16 @@ For a detailed explanation, check the README.md one level up from this one. This
 > dotnet tool install azure.sdk.tools.testproxy --global --add-source https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk/nuget/v3/index.json
 ```
 
-## Before Invoking
+Note that given there are only dev versions available, please add `--version <selectedVersion>`.
+
+Otherwise, nuget will kick back with a "these are the versions available". Please choose the latest one.
+
+### Before Invoking, install a dev certificate
 
 Install a developer HTTPS Cert. If you installed .NET in the previous step, invoke this command.
 
 ```
-dotnet dev-certs https --trust
+> dotnet dev-certs https --trust
 ```
 
 ## Command line arguments
@@ -31,13 +35,13 @@ It uses:
 * the pre-release package [`System.CommandLine.DragonFruit`](https://github.com/dotnet/command-line-api) to parse arguments.
 * the package [`libgit2sharp`](https://github.com/libgit2/libgit2sharp/) to handle git integration.
 
-## Install Dev Certificate
-
-
-
 ## How do I use the test-proxy to get a recording?
 
 Run the test-proxy locally. Leverage the command line arguments above to set the working directory.
+
+```
+> test-proxy --storage-location <your target folder>
+```
 
 ### Start the test run
 
@@ -55,7 +59,7 @@ You will receive a test-id in the reponse, look for header `x-recording-id`.
 1. Prevent outgoing request from hitting original URL
 2. Make the following changes to the outgoing request
     1. Place original Request URL in header "x-recording-upstream-base-uri"
-    2. Replace Request URL with Proxy Server URL. (currently https://localhost:5001. This will change as SSL updates happen)
+    2. Replace Request URL with Proxy Server URL. (currently https://localhost:5001. This will probably change as SSL updates happen)
     3. Add header "x-recording-id": <x-recording-id> from startup step
     4. Add header "x-recording-mode": "record"
 
@@ -69,8 +73,7 @@ POST to the proxy server:
 URL: https://localhost:5001/record/stop
 headers {
     "x-recording-id": <x-recording-id>,
-    "x-recording-save": true,
-    "x-recording-mode": "record"
+    "x-recording-save": true
 }
 
 ```

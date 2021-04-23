@@ -15,8 +15,21 @@ namespace Azure.Sdk.Tools.TestProxy
 
         public RecordingHandler(string targetDirectory)
         {
-            Repository = new Repository(targetDirectory);
+            try
+            {
+                Repository = new Repository(targetDirectory);
+            }
+            catch(Exception e)
+            {
+                Console.WriteLine("The configured storage directory is not a git repository. Git functionality will be unavailable.");
+            }
+
             RepoPath = targetDirectory;
+        }
+
+        public string GetRecordingPath(string file)
+        {
+            return Path.Join(RepoPath, "recordings", file);
         }
 
         public void Commit()

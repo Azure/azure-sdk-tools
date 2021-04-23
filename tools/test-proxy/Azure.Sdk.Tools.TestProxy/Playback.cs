@@ -37,7 +37,7 @@ namespace Azure.Sdk.Tools.TestProxy
             string file = GetHeader(Request, "x-recording-file");
 
             var id = Guid.NewGuid().ToString();
-            using var stream = System.IO.File.OpenRead(file);
+            using var stream = System.IO.File.OpenRead(_recordingHandler.GetRecordingPath(file));
             using var doc = await JsonDocument.ParseAsync(stream).ConfigureAwait(false);
             var session = RecordSession.Deserialize(doc.RootElement);
 

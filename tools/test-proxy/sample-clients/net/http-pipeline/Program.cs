@@ -13,7 +13,7 @@ namespace Azure.Sdk.Tools.TestProxy.HttpPipelineSample
     {
         private static readonly Uri _url = new Uri("https://www.example.org");
         private static readonly Uri _proxy = new Uri("https://localhost:5001");
-        private static readonly string _recordingFile = Path.Combine(Path.GetTempPath(), "test-proxy", "net-http-pipeline-sample.json");
+        private static readonly string _recordingFile = Path.Combine("test-proxy", "net-http-pipeline-sample.json");
 
         private static readonly HttpClient _httpClient = new HttpClient(new HttpClientHandler()
         {

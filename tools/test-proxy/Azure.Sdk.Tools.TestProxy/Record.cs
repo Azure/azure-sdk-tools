@@ -77,7 +77,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 var (file, session) = fileAndSession;
                 session.Sanitize(s_sanitizer);
 
-                var targetPath = Path.Join(_recordingHandler.RepoPath, "recordings", file);
+                var targetPath = _recordingHandler.GetRecordingPath(file);
 
                 // Create directories above file if they don't already exist
                 var directory = Path.GetDirectoryName(targetPath);

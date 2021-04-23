@@ -10,9 +10,9 @@ As with all python development, it is recommended that you create a virtual envi
 
 0. Run the test proxy client from VS2019. (.NET Core 5)
 1. `cd` to this directory
-2. `pip install requirements.txt`
+2. `pip install -r requirements.txt`
 3. Set the environment variable `AZURE_RECORD_MODE` to `Record` or `Playback` (capitalization does not matter)
-4. Run `pytest`
+4. Run `pytest test.py`
     a. Note that invoking in `Playback` mode prior to invoking in `Record` mode will result in an error. You won't have the recordings locally saved!
 
 ## Suggestions for your implementation

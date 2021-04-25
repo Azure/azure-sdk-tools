@@ -87,15 +87,9 @@ namespace Azure.Sdk.Tools.TestProxy
                 Response.Headers.Add(header.Key, header.Value.ToArray());
             }
 
-            if (Request.Headers.TryGetValue("x-ms-client-id", out var clientId))
-            {
-                Response.Headers.Add("x-ms-client-id", clientId);
-            }
-
-            // Storage Blobs requires "x-ms-client-request-id" header in request and response to match
-            if (Request.Headers.TryGetValue("x-ms-client-request-id", out var clientRequestId))
-            {
-                Response.Headers["x-ms-client-request-id"] = clientRequestId;
+            // TODO, allow per-test extension of the manipulations, to do this we need 
+            foreach (ResponseTransform transform in SessionConfiguration.Transforms){
+                transform.ApplyTransform(Request, Response);
             }
 
             Response.Headers.Remove("Transfer-Encoding");

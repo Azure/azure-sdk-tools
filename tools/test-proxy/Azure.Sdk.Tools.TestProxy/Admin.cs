@@ -41,20 +41,17 @@ namespace Azure.Sdk.Tools.TestProxy
             // so far, nothing necessary here
         }
 
+
         [HttpPost]
-        public void AddHeaderTransform()
+        public void AddTransform(string recordingId)
         {
+            // with recordingId passed, the transform will be associated with a specific testId
+            
             throw new NotImplementedException();
         }
 
         [HttpPost]
-        public void AddHeaderSanitizer()
-        {
-            throw new NotImplementedException();
-        }
-
-        [HttpPost]
-        public void AddPassthrough()
+        public void AddSanitizer()
         {
             throw new NotImplementedException();
         }

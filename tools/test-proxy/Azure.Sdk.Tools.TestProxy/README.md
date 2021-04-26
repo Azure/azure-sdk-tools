@@ -117,11 +117,38 @@ headers {
 }
 ```
 
-## See example implementations
+### See example implementations
 
 Of course, feel free to check any of the [examples](https://github.com/Azure/azure-sdk-tools/tree/feature/http-recording-server/tools/test-proxy/sample-clients) to see actual test code and invocations.
 
 Additionally, Nick Guerrera [Prototyped a JS example](https://github.com/nguerrera/azure-sdk-for-js/tree/oop-hack) as well.
+
+
+## Session and Test Level Transforms, Sanitiziers, and Matchers
+
+A `sanitizer` is used to remove sensitive information prior to storage. When a request comes in during `playback` mode, the same set of `sanitizers` are applied prior to matching with the recordings.
+
+`Matchers` are used to retrieve a `RecordEntry` from a `RecordSession`. As of now, only a single matcher can be used when retrieving an entry during playback.
+
+Default sets of `matcher`, `transforms`, and `sanitizers` are applied during recording and playback. These default settings are all set at the `session` level. Customization is allowed for these default sets by accessing the `Admin` controller.
+
+<example1 of sanitizer>
+
+<example2 of transform update>
+
+<example of matcher update>
+
+When invoked as basic requests to the `Admin` controller, these settings will be applied to **all** further requests and responses. Both `Playback` and `Recording`.
+
+However, it is also possible to set these at the individual recording level, prior to sending any requests. To do this, invoke the same controllers with a header that states the individual recordingId.
+
+<example of matcher update at testid level> 
+
+<example of transform update at testid level>
+
+<example of sanitizer update at testid level>
+
+Currently, these settings are NOT propogated onto disk. That may change in the near future.
 
 ## Testing
 

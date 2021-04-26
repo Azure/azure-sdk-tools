@@ -7,14 +7,13 @@ using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.TestProxy.Transforms
 {
-    public class StorageRequestIdTransform : ResponseTransform
+    public class CopyApiVersion : ResponseTransform
     {
         public override void ApplyTransform(HttpRequest request, HttpResponse response)
         {
-            // Storage Blobs requires "x-ms-client-request-id" header in request and response to match
-            if (request.Headers.TryGetValue("x-ms-client-request-id", out var clientRequestId))
+            if (request.Headers.TryGetValue("api-version", out var clientId))
             {
-                response.Headers["x-ms-client-request-id"] = clientRequestId;
+                response.Headers.Add("api-version", clientId);
             }
         }
     }

@@ -58,7 +58,8 @@ namespace Azure.Sdk.Tools.TestProxy
 
         public List<ResponseTransform> Transforms = new List<ResponseTransform>
         {
-            new StorageRequestIdTransform()
+            new StorageRequestIdTransform(),
+            new ClientIdTransform()
         };
 
         public readonly ConcurrentDictionary<string, (string File, RecordSession Session)> recording_sessions
@@ -280,10 +281,14 @@ namespace Azure.Sdk.Tools.TestProxy
             return Path.Join(RepoPath, "recordings", file);
         }
 
-        public static string GetHeader(HttpRequest request, string name)
+        public static string GetHeader(HttpRequest request, string name, bool allowNulls = false)
         {
             if (!request.Headers.TryGetValue(name, out var value))
             {
+                if (allowNulls)
+                {
+                    return null;
+                }
                 throw new InvalidOperationException("Missing header: " + name);
             }
 

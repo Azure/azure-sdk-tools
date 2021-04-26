@@ -43,17 +43,51 @@ namespace Azure.Sdk.Tools.TestProxy
 
 
         [HttpPost]
-        public void AddTransform(string recordingId)
+        public void AddTransform(string recordingId = null)
         {
-            // with recordingId passed, the transform will be associated with a specific testId
-            
-            throw new NotImplementedException();
+            RecordingHandler.GetHeader(Request, "x-abstraction-identifier");
+
+            var session = RecordingHandler.GetHeader(Request, "x-recording-id", true);
+            if (session != null)
+            {
+                // add to individual recording
+            }
+            else
+            {
+                // add to session
+            }
         }
 
         [HttpPost]
-        public void AddSanitizer()
+        public void AddSanitizer(string recordingId = null)
         {
-            throw new NotImplementedException();
+            RecordingHandler.GetHeader(Request, "x-abstraction-identifier");
+
+            var session = RecordingHandler.GetHeader(Request, "x-recording-id", true);
+            if (session != null)
+            {
+                // add to individual recording
+            }
+            else
+            {
+                // add to session
+            }
+        }
+
+        [HttpPost]
+        public void SetMatcher(string recordingId = null)
+        {
+            RecordingHandler.GetHeader(Request, "x-abstraction-identifier");
+
+            var session = RecordingHandler.GetHeader(Request, "x-recording-id", true);
+            if (session != null)
+            {
+                // add to individual recording
+            }
+            else
+            {
+                // add to session
+            }
         }
     }
 }

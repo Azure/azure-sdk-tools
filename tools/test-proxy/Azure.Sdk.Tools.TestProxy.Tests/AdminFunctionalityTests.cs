@@ -15,24 +15,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [Fact]
         public void TestSetMatcher()
         {
-            // arrange
-            var httpContext = new DefaultHttpContext();
-            httpContext.Request.Headers["x-"] = "";
-
-            var controller = new Admin(testRecordingHandler)
-            {
-                ControllerContext = new ControllerContext()
-                {
-                    HttpContext = httpContext
-                }
-            };
-
-            // act
-            controller.AddTransform();
-
-
-            // assert
-            
 
         }
 
@@ -57,7 +39,25 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [Fact]
         public void TestAddTransform()
         {
+            // arrange
+            var httpContext = new DefaultHttpContext();
+            var apiVersion = "2016-03-21";
+            httpContext.Request.Headers["x-api-version"] = apiVersion;
+            httpContext.Request.Headers["x-abstraction-identifier"] = "ApiVersionTransform";
 
+            var controller = new Admin(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+
+            // act
+            controller.AddTransform();
+
+            // assert
+            Assert.Equal(httpContext.Response.Headers["x-api-version"], apiVersion);
         }
 
         [Fact]

@@ -62,13 +62,13 @@ namespace Azure.Sdk.Tools.TestProxy
             new ClientIdTransform()
         };
 
-        public readonly ConcurrentDictionary<string, (string File, RecordSession Session)> recording_sessions
-            = new ConcurrentDictionary<string, (string, RecordSession)>();
+        public readonly ConcurrentDictionary<string, (string File, ModifiableRecordSession ModifiableSession)> recording_sessions
+            = new ConcurrentDictionary<string, (string, ModifiableRecordSession)>();
 
-        private readonly ConcurrentDictionary<string, RecordSession> playback_sessions 
-            = new ConcurrentDictionary<string, RecordSession>();
+        private readonly ConcurrentDictionary<string, ModifiableRecordSession> playback_sessions 
+            = new ConcurrentDictionary<string, ModifiableRecordSession>();
 
-        private readonly RecordMatcher defaultMatcher = new RecordMatcher();
+        public RecordMatcher Matcher = new RecordMatcher();
         #endregion
 
         #region recording functionality
@@ -82,7 +82,11 @@ namespace Azure.Sdk.Tools.TestProxy
             if (saveToDisk)
             {
                 var (file, session) = fileAndSession;
-                session.Sanitize(defaultSanitizer);
+
+                foreach (RecordedTestSanitizer sanitizer in Sanitizers.Concat(session.AdditionalSanitizers))
+                {
+                    session.Session.Sanitize(sanitizer);
+                }
 
                 var targetPath = GetRecordingPath(file);
 
@@ -96,7 +100,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 using var stream = System.IO.File.Create(targetPath);
                 var options = new JsonWriterOptions { Indented = true };
                 var writer = new Utf8JsonWriter(stream, options);
-                session.Serialize(writer);
+                session.Session.Serialize(writer);
                 writer.Flush();
             }
         }
@@ -104,7 +108,7 @@ namespace Azure.Sdk.Tools.TestProxy
         public void StartRecording(string fileId, HttpResponse outgoingResponse)
         {
             var id = Guid.NewGuid().ToString();
-            var session = (fileId, new RecordSession());
+            var session = (fileId, new ModifiableRecordSession(new RecordSession()));
 
             if (!recording_sessions.TryAdd(id, session))
             {
@@ -130,7 +134,7 @@ namespace Azure.Sdk.Tools.TestProxy
             var body = await upstreamResponse.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
             entry.Response.Body = body.Length == 0 ? null : body;
             entry.StatusCode = (int)upstreamResponse.StatusCode;
-            session.Session.Entries.Add(entry);
+            session.ModifiableSession.Session.Entries.Add(entry);
 
             Interlocked.Increment(ref Startup.RequestsRecorded);
 
@@ -187,6 +191,17 @@ namespace Azure.Sdk.Tools.TestProxy
             upstreamRequest.Headers.Host = upstreamRequest.RequestUri.Host;
             return upstreamRequest;
         }
+
+        public void AddRecordSanitizer(string recordingId, RecordedTestSanitizer sanitizer)
+        {
+            if (!recording_sessions.TryGetValue(recordingId, out var session))
+            {
+                throw new InvalidOperationException("No recording loaded with that ID.");
+            }
+
+            session.ModifiableSession.AdditionalSanitizers.Add(sanitizer);
+        }
+
         #endregion
 
         #region playback functionality
@@ -195,7 +210,7 @@ namespace Azure.Sdk.Tools.TestProxy
             var id = Guid.NewGuid().ToString();
             using var stream = System.IO.File.OpenRead(GetRecordingPath(fileId));
             using var doc = await JsonDocument.ParseAsync(stream).ConfigureAwait(false);
-            var session = RecordSession.Deserialize(doc.RootElement);
+            var session = new ModifiableRecordSession(RecordSession.Deserialize(doc.RootElement));
 
             if (!playback_sessions.TryAdd(id, session))
             {
@@ -228,7 +243,8 @@ namespace Azure.Sdk.Tools.TestProxy
                 remove = bool.Parse(removeHeader);
             }
 
-            var match = session.Lookup(entry, defaultMatcher, defaultSanitizer, remove);
+            
+            var match = session.Session.Lookup(entry, session.CustomMatcher??Matcher, Sanitizers.Concat(session.AdditionalSanitizers), remove);
 
             Interlocked.Increment(ref Startup.RequestsPlayedBack);
 
@@ -239,7 +255,6 @@ namespace Azure.Sdk.Tools.TestProxy
                 outgoingResponse.Headers.Add(header.Key, header.Value.ToArray());
             }
 
-            // TODO, allow per-test extension of the manipulations, to do this we need 
             foreach (ResponseTransform transform in Transforms)
             {
                 transform.ApplyTransform(incomingRequest, outgoingResponse);
@@ -272,6 +287,35 @@ namespace Azure.Sdk.Tools.TestProxy
             return entry;
         }
 
+        public void AddPlaybackSanitizer(string recordingId, RecordedTestSanitizer sanitizer)
+        {
+            if (!playback_sessions.TryGetValue(recordingId, out var session))
+            {
+                throw new InvalidOperationException("No recording loaded with that ID.");
+            }
+
+            session.AdditionalSanitizers.Add(sanitizer);
+        }
+
+        public void SetPlaybackMatcher(string recordingId, RecordMatcher matcher)
+        {
+            if (!playback_sessions.TryGetValue(recordingId, out var session))
+            {
+                throw new InvalidOperationException("No recording loaded with that ID.");
+            }
+
+            session.CustomMatcher = matcher;
+        }
+
+        public void AddPlaybackTransform(string recordingId, ResponseTransform transform)
+        {
+            if (!playback_sessions.TryGetValue(recordingId, out var session))
+            {
+                throw new InvalidOperationException("No recording loaded with that ID.");
+            }
+
+            session.AdditionalTransforms.Add(transform);
+        }
 
         #endregion
 

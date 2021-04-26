@@ -43,50 +43,92 @@ namespace Azure.Sdk.Tools.TestProxy
 
 
         [HttpPost]
-        public void AddTransform(string recordingId = null)
+        public void AddTransform()
         {
-            RecordingHandler.GetHeader(Request, "x-abstraction-identifier");
+            var tName = RecordingHandler.GetHeader(Request, "x-abstraction-identifier");
+            var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", true);
+            ResponseTransform t = (ResponseTransform)GetTransform(tName);
 
-            var session = RecordingHandler.GetHeader(Request, "x-recording-id", true);
-            if (session != null)
+            if (recordingId != null)
             {
-                // add to individual recording
+                _recordingHandler.AddPlaybackTransform(recordingId, t);
             }
             else
             {
-                // add to session
+                _recordingHandler.Transforms.Add(t);
             }
         }
 
         [HttpPost]
-        public void AddSanitizer(string recordingId = null)
+        public void AddSanitizer()
         {
-            RecordingHandler.GetHeader(Request, "x-abstraction-identifier");
+            var sName = RecordingHandler.GetHeader(Request, "x-abstraction-identifier");
+            var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", true);
+            RecordedTestSanitizer s = (RecordedTestSanitizer)GetSanitizer(sName);
 
-            var session = RecordingHandler.GetHeader(Request, "x-recording-id", true);
-            if (session != null)
+            if (recordingId != null)
             {
-                // add to individual recording
+                _recordingHandler.AddRecordSanitizer(recordingId, s);
             }
             else
             {
-                // add to session
+                _recordingHandler.Sanitizers.Add(s);
             }
         }
 
         [HttpPost]
-        public void SetMatcher(string recordingId = null)
+        public void SetMatcher()
         {
-            RecordingHandler.GetHeader(Request, "x-abstraction-identifier");
+            var mName = RecordingHandler.GetHeader(Request, "x-abstraction-identifier");
+            var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", true);
+            RecordMatcher m = (RecordMatcher)GetMatcher(mName);
 
-            var session = RecordingHandler.GetHeader(Request, "x-recording-id", true);
-            if (session != null)
+            if (recordingId != null)
             {
-                // add to individual recording
+                _recordingHandler.SetPlaybackMatcher(recordingId, m);
             }
             else
             {
-                // add to session
+                _recordingHandler.Matcher = m; 
+            }
+        }
+
+        public object GetSanitizer(string name)
+        {
+            try
+            {
+                Type t = Type.GetType(name);
+                return Activator.CreateInstance(t);
+            }
+            catch
+            {
+                throw new Exception(String.Format("Sanitizer named {0} is not recognized", name));
+            }
+        }
+
+        public object GetTransform(string name)
+        {
+            try
+            {
+                Type t = Type.GetType(name);
+                return Activator.CreateInstance(t);
+            }
+            catch
+            {
+                throw new Exception(String.Format("Transform named {0} is not recognized", name));
+            }
+        }
+
+        public object GetMatcher(string name)
+        {
+            try
+            {
+                Type t = Type.GetType(name);
+                return Activator.CreateInstance(t);
+            }
+            catch
+            {
+                throw new Exception(String.Format("Matcher named {0} is not recognized", name));
             }
         }
     }

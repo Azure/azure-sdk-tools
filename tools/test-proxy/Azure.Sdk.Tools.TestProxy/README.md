@@ -148,6 +148,11 @@ However, it is also possible to set these at the individual recording level, pri
 
 <example of sanitizer update at testid level>
 
+
+* `sanitizers` can be set at an individual level during both a `record` and `playback` session.
+* `matchers` can be set at for a `playback` session. 
+* `transforms` can be set for a `playback` session.
+
 Currently, these settings are NOT propogated onto disk. That may change in the near future.
 
 ## Testing

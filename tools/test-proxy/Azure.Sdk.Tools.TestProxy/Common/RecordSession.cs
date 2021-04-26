@@ -94,6 +94,24 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             }
         }
 
+        public RecordEntry Lookup(RecordEntry requestEntry, RecordMatcher matcher, IEnumerable<RecordedTestSanitizer> sanitizers, bool remove = true)
+        {
+            foreach(RecordedTestSanitizer sanitizer in sanitizers)
+            {
+                sanitizer.Sanitize(requestEntry);
+            }
+
+            lock (Entries)
+            {
+                RecordEntry entry = matcher.FindMatch(requestEntry, Entries);
+                if (remove)
+                {
+                    Entries.Remove(entry);
+                }
+                return entry;
+            }
+        }
+
         public void Sanitize(RecordedTestSanitizer sanitizer)
         {
             lock (Entries)

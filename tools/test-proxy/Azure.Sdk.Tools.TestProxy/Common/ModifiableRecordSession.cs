@@ -7,14 +7,13 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 {
     public class ModifiableRecordSession
     {
-        public RecordMatcher DefaultMatcher;
+        public RecordMatcher CustomMatcher = null;
 
         public RecordSession Session;
 
-        public ModifiableRecordSession(RecordSession session, RecordMatcher matcher)
+        public ModifiableRecordSession(RecordSession session)
         {
             Session = session;
-            DefaultMatcher = matcher;
         }
 
         public List<ResponseTransform> AdditionalTransforms = new List<ResponseTransform>();

@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace Azure.Sdk.Tools.TestProxy.Matchers
+namespace Azure.Sdk.Tools.TestProxy.Sanitizers
 {
     public class StripRequestUri : RecordedTestSanitizer
     {

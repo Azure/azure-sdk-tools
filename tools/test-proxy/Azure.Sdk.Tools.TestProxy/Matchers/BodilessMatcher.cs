@@ -4,10 +4,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Azure.Sdk.Tools.TestProxy.Transforms
+namespace Azure.Sdk.Tools.TestProxy.Matchers
 {
     public class BodilessMatcher : RecordMatcher
     {
-        public BodilessMatcher() : base(true) { }
+        public BodilessMatcher() : base(false) { }
     }
 }

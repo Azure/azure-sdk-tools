@@ -1,14 +1,24 @@
-﻿using LibGit2Sharp;
+﻿using Azure.Core;
+using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Transforms;
+using LibGit2Sharp;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Primitives;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
+using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.TestProxy
 {
     public class RecordingHandler
     {
+        #region constructor and common variables
         public string CurrentBranch = "master";
         public IRepository Repository;
         public string RepoPath;
@@ -27,11 +37,283 @@ namespace Azure.Sdk.Tools.TestProxy
             RepoPath = targetDirectory;
         }
 
+        private static readonly RecordedTestSanitizer defaultSanitizer = new RecordedTestSanitizer();
+
+        private static readonly string[] s_excludedRequestHeaders = new string[] {
+            // Only applies to request between client and proxy
+            // TODO, we need to handle this properly, there are tests that actually test proxy functionality.
+            "Proxy-Connection",
+        };
+
+        // Headers which must be set on HttpContent instead of HttpRequestMessage
+        private static readonly string[] s_contentRequestHeaders = new string[] {
+            "Content-Length",
+            "Content-Type",
+        };
+
+        public List<RecordedTestSanitizer> Sanitizers = new List<RecordedTestSanitizer>
+        {
+            new RecordedTestSanitizer()
+        };
+
+        public List<ResponseTransform> Transforms = new List<ResponseTransform>
+        {
+            new StorageRequestIdTransform()
+        };
+
+        public readonly ConcurrentDictionary<string, (string File, RecordSession Session)> recording_sessions
+            = new ConcurrentDictionary<string, (string, RecordSession)>();
+
+        private readonly ConcurrentDictionary<string, RecordSession> playback_sessions 
+            = new ConcurrentDictionary<string, RecordSession>();
+
+        private readonly RecordMatcher defaultMatcher = new RecordMatcher();
+        #endregion
+
+        #region recording functionality
+        public void StopRecording(string id, bool saveToDisk)
+        {
+            if (!recording_sessions.TryRemove(id, out var fileAndSession))
+            {
+                return;
+            }
+
+            if (saveToDisk)
+            {
+                var (file, session) = fileAndSession;
+                session.Sanitize(defaultSanitizer);
+
+                var targetPath = GetRecordingPath(file);
+
+                // Create directories above file if they don't already exist
+                var directory = Path.GetDirectoryName(targetPath);
+                if (!String.IsNullOrEmpty(directory))
+                {
+                    Directory.CreateDirectory(directory);
+                }
+
+                using var stream = System.IO.File.Create(targetPath);
+                var options = new JsonWriterOptions { Indented = true };
+                var writer = new Utf8JsonWriter(stream, options);
+                session.Serialize(writer);
+                writer.Flush();
+            }
+        }
+
+        public void StartRecording(string fileId, HttpResponse outgoingResponse)
+        {
+            var id = Guid.NewGuid().ToString();
+            var session = (fileId, new RecordSession());
+
+            if (!recording_sessions.TryAdd(id, session))
+            {
+                // This should not happen as the key is a new GUID.
+                throw new InvalidOperationException("Failed to add new session.");
+            }
+
+
+            outgoingResponse.Headers.Add("x-recording-id", id);
+        }
+
+        public async Task HandleRecordRequest(string recordingId, HttpRequest incomingRequest, HttpResponse outgoingResponse, HttpClient client)
+        {
+            if (!recording_sessions.TryGetValue(recordingId, out var session))
+            {
+                throw new InvalidOperationException("No recording loaded with that ID.");
+            }
+
+            var entry = await CreateEntryAsync(incomingRequest).ConfigureAwait(false);
+            var upstreamRequest = CreateUpstreamRequest(incomingRequest, entry.Request.Body);
+            var upstreamResponse = await client.SendAsync(upstreamRequest).ConfigureAwait(false);
+
+            var body = await upstreamResponse.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
+            entry.Response.Body = body.Length == 0 ? null : body;
+            entry.StatusCode = (int)upstreamResponse.StatusCode;
+            session.Session.Entries.Add(entry);
+
+            Interlocked.Increment(ref Startup.RequestsRecorded);
+
+            outgoingResponse.StatusCode = (int)upstreamResponse.StatusCode;
+            foreach (var header in upstreamResponse.Headers)
+            {
+                var values = new StringValues(header.Value.ToArray());
+                outgoingResponse.Headers.Add(header.Key, values);
+                entry.Response.Headers.Add(header.Key, values);
+            }
+
+            outgoingResponse.Headers.Remove("Transfer-Encoding");
+
+            if (entry.Response.Body?.Length > 0)
+            {
+                outgoingResponse.ContentLength = entry.Response.Body.Length;
+                await outgoingResponse.Body.WriteAsync(entry.Response.Body).ConfigureAwait(false);
+            }
+        }
+
+        private HttpRequestMessage CreateUpstreamRequest(HttpRequest incomingRequest, byte[] incomingBody)
+        {
+            var upstreamRequest = new HttpRequestMessage();
+            upstreamRequest.RequestUri = GetRequestUri(incomingRequest);
+            upstreamRequest.Method = new HttpMethod(incomingRequest.Method);
+            upstreamRequest.Content = new ReadOnlyMemoryContent(incomingBody);
+
+            foreach (var header in incomingRequest.Headers)
+            {
+                IEnumerable<string> values = header.Value;
+
+                if (s_excludedRequestHeaders.Contains(header.Key, StringComparer.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                try
+                {
+                    if (s_contentRequestHeaders.Contains(header.Key, StringComparer.OrdinalIgnoreCase))
+                    {
+                        upstreamRequest.Content.Headers.Add(header.Key, values);
+                    }
+                    else
+                    {
+                        upstreamRequest.Headers.Add(header.Key, values);
+                    }
+                }
+                catch (FormatException)
+                {
+                    // ignore
+                }
+            }
+
+            upstreamRequest.Headers.Host = upstreamRequest.RequestUri.Host;
+            return upstreamRequest;
+        }
+        #endregion
+
+        #region playback functionality
+        public async Task StartPlayback(string fileId, HttpResponse outgoingResponse)
+        {
+            var id = Guid.NewGuid().ToString();
+            using var stream = System.IO.File.OpenRead(GetRecordingPath(fileId));
+            using var doc = await JsonDocument.ParseAsync(stream).ConfigureAwait(false);
+            var session = RecordSession.Deserialize(doc.RootElement);
+
+            if (!playback_sessions.TryAdd(id, session))
+            {
+                // This should not happen as the key is a new GUID.
+                throw new InvalidOperationException("Failed to add new session.");
+            }
+
+            outgoingResponse.Headers.Add("x-recording-id", id);
+        }
+
+        public void StopPlayback(string recordingId)
+        {
+            playback_sessions.TryRemove(recordingId, out _);
+        }
+
+        public async Task Playback(string recordingId, HttpRequest incomingRequest, HttpResponse outgoingResponse)
+        {
+            if (!playback_sessions.TryGetValue(recordingId, out var session))
+            {
+                throw new InvalidOperationException("No recording loaded with that ID.");
+            }
+
+            var entry = await CreateEntryAsync(incomingRequest).ConfigureAwait(false);
+
+            // If request contains "x-recording-remove: false", then request is not removed from session after playback.
+            // Used by perf tests to play back the same request multiple times.
+            var remove = true;
+            if (incomingRequest.Headers.TryGetValue("x-recording-remove", out var removeHeader))
+            {
+                remove = bool.Parse(removeHeader);
+            }
+
+            var match = session.Lookup(entry, defaultMatcher, defaultSanitizer, remove);
+
+            Interlocked.Increment(ref Startup.RequestsPlayedBack);
+
+            outgoingResponse.StatusCode = match.StatusCode;
+
+            foreach (var header in match.Response.Headers)
+            {
+                outgoingResponse.Headers.Add(header.Key, header.Value.ToArray());
+            }
+
+            // TODO, allow per-test extension of the manipulations, to do this we need 
+            foreach (ResponseTransform transform in Transforms)
+            {
+                transform.ApplyTransform(incomingRequest, outgoingResponse);
+            }
+
+            outgoingResponse.Headers.Remove("Transfer-Encoding");
+
+            if (match.Response.Body?.Length > 0)
+            {
+                outgoingResponse.ContentLength = match.Response.Body.Length;
+                await outgoingResponse.Body.WriteAsync(match.Response.Body).ConfigureAwait(false);
+            }
+        }
+
+        public static async Task<RecordEntry> CreateEntryAsync(HttpRequest request)
+        {
+            var entry = new RecordEntry();
+            entry.RequestUri = GetRequestUri(request).ToString();
+            entry.RequestMethod = new RequestMethod(request.Method);
+
+            foreach (var header in request.Headers)
+            {
+                if (IncludeHeader(header.Key))
+                {
+                    entry.Request.Headers.Add(header.Key, header.Value.ToArray());
+                }
+            }
+
+            entry.Request.Body = await ReadAllBytes(request.Body).ConfigureAwait(false);
+            return entry;
+        }
+
+
+        #endregion
+
+        #region common functions
         public string GetRecordingPath(string file)
         {
             return Path.Join(RepoPath, "recordings", file);
         }
 
+        public static string GetHeader(HttpRequest request, string name)
+        {
+            if (!request.Headers.TryGetValue(name, out var value))
+            {
+                throw new InvalidOperationException("Missing header: " + name);
+            }
+
+            return value;
+        }
+
+        public static Uri GetRequestUri(HttpRequest request)
+        {
+            var target_uri = GetHeader(request, "x-recording-upstream-base-uri");
+            return new Uri(target_uri);
+        }
+
+        private static bool IncludeHeader(string header)
+        {
+            return !header.Equals("Host", StringComparison.OrdinalIgnoreCase)
+                && !header.StartsWith("x-recording-", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static async Task<byte[]> ReadAllBytes(Stream stream)
+        {
+            using var memory = new MemoryStream();
+            using (stream)
+            {
+                await stream.CopyToAsync(memory).ConfigureAwait(false);
+            }
+            return memory.Length == 0 ? null : memory.ToArray();
+        }
+        #endregion
+
+        #region git functionality
         public void Commit()
         {
             foreach (var item in Repository.RetrieveStatus())
@@ -69,5 +351,6 @@ namespace Azure.Sdk.Tools.TestProxy
             // Clean the working directory.
             Repository.RemoveUntrackedFiles();
         }
+        #endregion
     }
 }

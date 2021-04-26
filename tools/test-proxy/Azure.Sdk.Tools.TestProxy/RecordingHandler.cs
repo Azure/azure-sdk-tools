@@ -83,7 +83,7 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 var (file, session) = fileAndSession;
 
-                foreach (RecordedTestSanitizer sanitizer in Sanitizers.Concat(session.AdditionalSanitizers))
+                foreach (RecordedTestSanitizer sanitizer in session.AdditionalSanitizers.Count > 0 ? Sanitizers.Concat(session.AdditionalSanitizers) : Sanitizers)
                 {
                     session.Session.Sanitize(sanitizer);
                 }
@@ -244,7 +244,7 @@ namespace Azure.Sdk.Tools.TestProxy
             }
 
             
-            var match = session.Session.Lookup(entry, session.CustomMatcher??Matcher, Sanitizers.Concat(session.AdditionalSanitizers), remove);
+            var match = session.Session.Lookup(entry, session.CustomMatcher??Matcher, session.AdditionalSanitizers.Count > 0 ? Sanitizers.Concat(session.AdditionalSanitizers) : Sanitizers, remove);
 
             Interlocked.Increment(ref Startup.RequestsPlayedBack);
 
@@ -255,7 +255,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 outgoingResponse.Headers.Add(header.Key, header.Value.ToArray());
             }
 
-            foreach (ResponseTransform transform in Transforms)
+            foreach (ResponseTransform transform in session.AdditionalTransforms.Count > 0 ? Transforms.Concat(session.AdditionalTransforms) : Transforms)
             {
                 transform.ApplyTransform(incomingRequest, outgoingResponse);
             }

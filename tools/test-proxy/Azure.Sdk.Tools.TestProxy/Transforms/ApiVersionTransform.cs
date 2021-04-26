@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.TestProxy.Transforms
 {
-    public class CopyApiVersion : ResponseTransform
+    public class ApiVersionTransform : ResponseTransform
     {
         public override void ApplyTransform(HttpRequest request, HttpResponse response)
         {

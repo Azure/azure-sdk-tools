@@ -97,7 +97,8 @@ namespace Azure.Sdk.Tools.TestProxy
         {
             try
             {
-                Type t = Type.GetType(name);
+                // TODO: why doesn't this retrieve without the fully qualified name?
+                Type t = Type.GetType("Azure.Sdk.Tools.TestProxy.Sanitizers." + name);
                 return Activator.CreateInstance(t);
             }
             catch
@@ -110,7 +111,8 @@ namespace Azure.Sdk.Tools.TestProxy
         {
             try
             {
-                Type t = Type.GetType(name);
+                // TODO: why doesn't this retrieve without the fully qualified name?
+                Type t = Type.GetType("Azure.Sdk.Tools.TestProxy.Transforms." + name);
                 return Activator.CreateInstance(t);
             }
             catch
@@ -123,7 +125,8 @@ namespace Azure.Sdk.Tools.TestProxy
         {
             try
             {
-                Type t = Type.GetType(name);
+                // TODO: why doesn't this retrieve without the fully qualified name?
+                Type t = Type.GetType("Azure.Sdk.Tools.TestProxy.Matchers." + name);
                 return Activator.CreateInstance(t);
             }
             catch

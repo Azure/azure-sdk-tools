@@ -5,13 +5,13 @@ using System;
 using System.IO;
 using Xunit;
 using Azure.Sdk.Tools.TestProxy;
+using System.Linq;
+using Azure.Sdk.Tools.TestProxy.Transforms;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
 {
     public class AdminFunctionalityTests
     {
-        private RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
-
         [Fact]
         public void TestSetMatcher()
         {
@@ -40,6 +40,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         public void TestAddTransform()
         {
             // arrange
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
             var apiVersion = "2016-03-21";
             httpContext.Request.Headers["x-api-version"] = apiVersion;
@@ -53,11 +54,15 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 }
             };
 
+            testRecordingHandler.Transforms.Clear();
+
             // act
             controller.AddTransform();
 
+            var result = testRecordingHandler.Transforms.First();
+
             // assert
-            Assert.Equal(httpContext.Response.Headers["x-api-version"], apiVersion);
+            Assert.True(result is ApiVersionTransform);
         }
 
         [Fact]

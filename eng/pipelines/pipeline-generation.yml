@@ -100,7 +100,6 @@ jobs:
   - script: |
       git clone https://github.com/azure/$(RepositoryName) $(Pipeline.Workspace)/$(RepositoryName)
       cd $(Pipeline.Workspace)/$(RepositoryName)
-      git checkout -
     displayName: 'Clone repository: $(RepositoryName)'
   - template: /eng/common/pipelines/templates/steps/set-default-branch.yml
     parameters:

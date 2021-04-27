@@ -99,7 +99,6 @@ jobs:
   - template: /eng/common/pipelines/templates/steps/install-pipeline-generation.yml
   - script: |
       git clone https://github.com/azure/$(RepositoryName) $(Pipeline.Workspace)/$(RepositoryName)
-      cd $(Pipeline.Workspace)/$(RepositoryName)
     displayName: 'Clone repository: $(RepositoryName)'
   - template: /eng/common/pipelines/templates/steps/set-default-branch.yml
     parameters:

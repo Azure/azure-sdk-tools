@@ -97,12 +97,14 @@ jobs:
           --variablegroup ${{ parameters.Secrets_for_Resource_Provisioner }}
   steps:
   - template: /eng/common/pipelines/templates/steps/install-pipeline-generation.yml
-  - template: /eng/common/pipelines/templates/steps/set-default-branch.yml
   - script: |
       git clone https://github.com/azure/$(RepositoryName) $(Pipeline.Workspace)/$(RepositoryName)
       cd $(Pipeline.Workspace)/$(RepositoryName)
-      git checkout $(DefaultBranch)
+      git checkout -
     displayName: 'Clone repository: $(RepositoryName)'
+  - template: /eng/common/pipelines/templates/steps/set-default-branch.yml
+    parameters:
+      WorkingDirectory: $(Pipeline.Workspace)/$(RepositoryName)
   - script: |
       $(Pipeline.Workspace)/pipeline-generator/pipeline-generator --organization https://dev.azure.com/azure-sdk --project public --prefix $(Prefix) --path $(Pipeline.Workspace)/$(RepositoryName)/sdk --endpoint Azure --repository Azure/$(RepositoryName) --convention ci --agentpool Hosted --branch refs/heads/$(DefaultBranch) --patvar PATVAR --debug $(PublicOptions)
     displayName: 'Generate public pipelines for: $(RepositoryName)'

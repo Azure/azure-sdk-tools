@@ -1,112 +1,114 @@
 trigger: none
 pr: none
 
-timeoutInMinutes: 120
-
 pool:
   vmImage: 'ubuntu-18.04'
 
 variables:
   cachefile: verify-links-cache.txt
 
-steps:
-- task: PowerShell@2
-  displayName: 'azure-sdk link check'
-  condition: succeededOrFailed()
-  inputs:
-    pwsh: true
-    filePath: eng/common/scripts/Verify-Links.ps1
-    arguments: >
-      -urls "https://azure.github.io/azure-sdk/index.html"
-      -ignoreLinksFile "./eng/pipelines/githubio-linkcheck-ignore-links.txt"
-      -inputCacheFile "$(cachefile)"
-      -outputCacheFile "$(cachefile)"
-      -devOpsLogging: $true
+jobs:
+- job: CheckLinks
+  displayName: Check and Cache Links
+  timeoutInMinutes: 120
+  steps:
+  - task: PowerShell@2
+    displayName: 'azure-sdk link check'
+    condition: succeededOrFailed()
+    inputs:
+      pwsh: true
+      filePath: eng/common/scripts/Verify-Links.ps1
+      arguments: >
+        -urls "https://azure.github.io/azure-sdk/index.html"
+        -ignoreLinksFile "./eng/pipelines/githubio-linkcheck-ignore-links.txt"
+        -inputCacheFile "$(cachefile)"
+        -outputCacheFile "$(cachefile)"
+        -devOpsLogging: $true
 
-- task: PowerShell@2
-  displayName: 'azure-sdk link check with caching'
-  condition: succeededOrFailed()
-  inputs:
-    pwsh: true
-    filePath: eng/common/scripts/Verify-Links.ps1
-    arguments: >
-      -urls "https://azure.github.io/azure-sdk/index.html"
-      -ignoreLinksFile "./eng/pipelines/githubio-linkcheck-ignore-links.txt"
-      -inputCacheFile "$(cachefile)"
-      -outputCacheFile "$(cachefile)"
-      -devOpsLogging: $true
+  - task: PowerShell@2
+    displayName: 'azure-sdk link check with caching'
+    condition: succeededOrFailed()
+    inputs:
+      pwsh: true
+      filePath: eng/common/scripts/Verify-Links.ps1
+      arguments: >
+        -urls "https://azure.github.io/azure-sdk/index.html"
+        -ignoreLinksFile "./eng/pipelines/githubio-linkcheck-ignore-links.txt"
+        -inputCacheFile "$(cachefile)"
+        -outputCacheFile "$(cachefile)"
+        -devOpsLogging: $true
 
-- task: PowerShell@2
-  displayName: 'java link check'
-  condition: succeededOrFailed()
-  inputs:
-    pwsh: true
-    filePath: eng/common/scripts/Verify-Links.ps1
-    arguments: >
-      -urls "https://azure.github.io/azure-sdk-for-java/index.html"
-      -ignoreLinksFile "./eng/pipelines/githubio-linkcheck-ignore-links.txt"
-      -inputCacheFile "$(cachefile)"
-      -outputCacheFile "$(cachefile)"
-      -devOpsLogging: $true
+  - task: PowerShell@2
+    displayName: 'java link check'
+    condition: succeededOrFailed()
+    inputs:
+      pwsh: true
+      filePath: eng/common/scripts/Verify-Links.ps1
+      arguments: >
+        -urls "https://azure.github.io/azure-sdk-for-java/index.html"
+        -ignoreLinksFile "./eng/pipelines/githubio-linkcheck-ignore-links.txt"
+        -inputCacheFile "$(cachefile)"
+        -outputCacheFile "$(cachefile)"
+        -devOpsLogging: $true
 
-- task: PowerShell@2
-  displayName: 'js link check'
-  condition: succeededOrFailed()
-  inputs:
-    pwsh: true
-    filePath: eng/common/scripts/Verify-Links.ps1
-    arguments: >
-      -urls "https://azure.github.io/azure-sdk-for-js/index.html"
-      -ignoreLinksFile "./eng/pipelines/githubio-linkcheck-ignore-links.txt"
-      -inputCacheFile "$(cachefile)"
-      -outputCacheFile "$(cachefile)"
-      -devOpsLogging: $true
+  - task: PowerShell@2
+    displayName: 'js link check'
+    condition: succeededOrFailed()
+    inputs:
+      pwsh: true
+      filePath: eng/common/scripts/Verify-Links.ps1
+      arguments: >
+        -urls "https://azure.github.io/azure-sdk-for-js/index.html"
+        -ignoreLinksFile "./eng/pipelines/githubio-linkcheck-ignore-links.txt"
+        -inputCacheFile "$(cachefile)"
+        -outputCacheFile "$(cachefile)"
+        -devOpsLogging: $true
 
-- task: PowerShell@2
-  displayName: 'net link check'
-  condition: succeededOrFailed()
-  inputs:
-    pwsh: true
-    filePath: eng/common/scripts/Verify-Links.ps1
-    arguments: >
-      -urls "https://azure.github.io/azure-sdk-for-net/index.html"
-      -ignoreLinksFile "./eng/pipelines/githubio-linkcheck-ignore-links.txt"
-      -inputCacheFile "$(cachefile)"
-      -outputCacheFile "$(cachefile)"
-      -devOpsLogging: $true
+  - task: PowerShell@2
+    displayName: 'net link check'
+    condition: succeededOrFailed()
+    inputs:
+      pwsh: true
+      filePath: eng/common/scripts/Verify-Links.ps1
+      arguments: >
+        -urls "https://azure.github.io/azure-sdk-for-net/index.html"
+        -ignoreLinksFile "./eng/pipelines/githubio-linkcheck-ignore-links.txt"
+        -inputCacheFile "$(cachefile)"
+        -outputCacheFile "$(cachefile)"
+        -devOpsLogging: $true
 
-- task: PowerShell@2
-  displayName: 'python link check'
-  condition: succeededOrFailed()
-  inputs:
-    pwsh: true
-    filePath: eng/common/scripts/Verify-Links.ps1
-    arguments: >
-      -urls "https://azure.github.io/azure-sdk-for-python/index.html"
-      -ignoreLinksFile "./eng/pipelines/githubio-linkcheck-ignore-links.txt"
-      -inputCacheFile "$(cachefile)"
-      -outputCacheFile "$(cachefile)"
-      -devOpsLogging: $true
+  - task: PowerShell@2
+    displayName: 'python link check'
+    condition: succeededOrFailed()
+    inputs:
+      pwsh: true
+      filePath: eng/common/scripts/Verify-Links.ps1
+      arguments: >
+        -urls "https://azure.github.io/azure-sdk-for-python/index.html"
+        -ignoreLinksFile "./eng/pipelines/githubio-linkcheck-ignore-links.txt"
+        -inputCacheFile "$(cachefile)"
+        -outputCacheFile "$(cachefile)"
+        -devOpsLogging: $true
 
-- task: PowerShell@2
-  displayName: 'go link check'
-  condition: succeededOrFailed()
-  inputs:
-    pwsh: true
-    filePath: eng/common/scripts/Verify-Links.ps1
-    arguments: >
-      -urls "https://raw.githubusercontent.com/Azure/azure-sdk-for-go/master/CHANGELOG.md"
-      -ignoreLinksFile "./eng/pipelines/githubio-linkcheck-ignore-links.txt"
-      -inputCacheFile "$(cachefile)"
-      -outputCacheFile "$(cachefile)"
-      -devOpsLogging: $true
+  - task: PowerShell@2
+    displayName: 'go link check'
+    condition: succeededOrFailed()
+    inputs:
+      pwsh: true
+      filePath: eng/common/scripts/Verify-Links.ps1
+      arguments: >
+        -urls "https://raw.githubusercontent.com/Azure/azure-sdk-for-go/master/CHANGELOG.md"
+        -ignoreLinksFile "./eng/pipelines/githubio-linkcheck-ignore-links.txt"
+        -inputCacheFile "$(cachefile)"
+        -outputCacheFile "$(cachefile)"
+        -devOpsLogging: $true
 
-- publish: $(cachefile)
-  artifact: verify-links-cache.txt
-  condition: succeededOrFailed()
-  displayName: Upload verified links
+  - publish: $(cachefile)
+    artifact: verify-links-cache.txt
+    condition: succeededOrFailed()
+    displayName: Upload verified links
 
-- pwsh: |
-    azcopy copy '$(cachefile)' 'https://azuresdkartifacts.blob.core.windows.net/verify-links-cache$(azuresdkartifacts-verify-links-cache-sas)'
-  condition: succeededOrFailed()
-  displayName: Upload cache file to blob container
+  - pwsh: |
+      azcopy copy '$(cachefile)' 'https://azuresdkartifacts.blob.core.windows.net/verify-links-cache$(azuresdkartifacts-verify-links-cache-sas)'
+    condition: succeededOrFailed()
+    displayName: Upload cache file to blob container

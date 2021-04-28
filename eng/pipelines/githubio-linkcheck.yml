@@ -24,6 +24,7 @@ jobs:
         -inputCacheFile "$(cachefile)"
         -outputCacheFile "$(cachefile)"
         -devOpsLogging: $true
+        -checkLinkGuidance: $true
 
   - task: PowerShell@2
     displayName: 'azure-sdk link check with caching'
@@ -37,6 +38,7 @@ jobs:
         -inputCacheFile "$(cachefile)"
         -outputCacheFile "$(cachefile)"
         -devOpsLogging: $true
+        -checkLinkGuidance: $true
 
   - task: PowerShell@2
     displayName: 'java link check'
@@ -50,6 +52,7 @@ jobs:
         -inputCacheFile "$(cachefile)"
         -outputCacheFile "$(cachefile)"
         -devOpsLogging: $true
+        -checkLinkGuidance: $true
 
   - task: PowerShell@2
     displayName: 'js link check'
@@ -63,6 +66,7 @@ jobs:
         -inputCacheFile "$(cachefile)"
         -outputCacheFile "$(cachefile)"
         -devOpsLogging: $true
+        -checkLinkGuidance: $true
 
   - task: PowerShell@2
     displayName: 'net link check'
@@ -76,6 +80,7 @@ jobs:
         -inputCacheFile "$(cachefile)"
         -outputCacheFile "$(cachefile)"
         -devOpsLogging: $true
+        -checkLinkGuidance: $true
 
   - task: PowerShell@2
     displayName: 'python link check'
@@ -89,6 +94,7 @@ jobs:
         -inputCacheFile "$(cachefile)"
         -outputCacheFile "$(cachefile)"
         -devOpsLogging: $true
+        -checkLinkGuidance: $true
 
   - task: PowerShell@2
     displayName: 'go link check'
@@ -102,6 +108,7 @@ jobs:
         -inputCacheFile "$(cachefile)"
         -outputCacheFile "$(cachefile)"
         -devOpsLogging: $true
+        -checkLinkGuidance: $true
 
   - publish: $(cachefile)
     artifact: verify-links-cache.txt

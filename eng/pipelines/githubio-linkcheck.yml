@@ -1,6 +1,8 @@
 trigger: none
 pr: none
 
+timeoutInMinutes: 120
+
 pool:
   vmImage: 'ubuntu-18.04'
 
@@ -75,6 +77,18 @@ steps:
     filePath: eng/common/scripts/Verify-Links.ps1
     arguments: >
       -urls "https://azure.github.io/azure-sdk-for-python/index.html"
+      -ignoreLinksFile "./eng/pipelines/githubio-linkcheck-ignore-links.txt"
+      -inputCacheFile "$(cachefile)"
+      -outputCacheFile "$(cachefile)"
+      -devOpsLogging: $true
+
+- task: PowerShell@2
+  displayName: 'go link check'
+  inputs:
+    pwsh: true
+    filePath: eng/common/scripts/Verify-Links.ps1
+    arguments: >
+      -urls "https://raw.githubusercontent.com/Azure/azure-sdk-for-go/master/CHANGELOG.md"
       -ignoreLinksFile "./eng/pipelines/githubio-linkcheck-ignore-links.txt"
       -inputCacheFile "$(cachefile)"
       -outputCacheFile "$(cachefile)"

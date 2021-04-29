@@ -117,8 +117,44 @@ headers {
 }
 ```
 
-## See example implementations
+### See example implementations
 
 Of course, feel free to check any of the [examples](https://github.com/Azure/azure-sdk-tools/tree/feature/http-recording-server/tools/test-proxy/sample-clients) to see actual test code and invocations.
 
 Additionally, Nick Guerrera [Prototyped a JS example](https://github.com/nguerrera/azure-sdk-for-js/tree/oop-hack) as well.
+
+
+## Session and Test Level Transforms, Sanitiziers, and Matchers
+
+A `sanitizer` is used to remove sensitive information prior to storage. When a request comes in during `playback` mode, the same set of `sanitizers` are applied prior to matching with the recordings.
+
+`Matchers` are used to retrieve a `RecordEntry` from a `RecordSession`. As of now, only a single matcher can be used when retrieving an entry during playback.
+
+Default sets of `matcher`, `transforms`, and `sanitizers` are applied during recording and playback. These default settings are all set at the `session` level. Customization is allowed for these default sets by accessing the `Admin` controller.
+
+<example1 of sanitizer>
+
+<example2 of transform update>
+
+<example of matcher update>
+
+When invoked as basic requests to the `Admin` controller, these settings will be applied to **all** further requests and responses. Both `Playback` and `Recording`.
+
+However, it is also possible to set these at the individual recording level, prior to sending any requests. To do this, invoke the same controllers with a header that states the individual recordingId.
+
+<example of matcher update at testid level> 
+
+<example of transform update at testid level>
+
+<example of sanitizer update at testid level>
+
+
+* `sanitizers` can be set at an individual level during both a `record` and `playback` session.
+* `matchers` can be set at for a `playback` session. 
+* `transforms` can be set for a `playback` session.
+
+Currently, these settings are NOT propogated onto disk. That may change in the near future.
+
+## Testing
+
+This project uses `xunit` as the test framework. This is the most popular .NET test solution [according to this twitter poll](https://twitter.com/shahedC/status/1131337874903896065?ref_src=twsrc%5Etfw%7Ctwcamp%5Etweetembed%7Ctwterm%5E1131337874903896065%7Ctwgr%5E%7Ctwcon%5Es1_c10&ref_url=https%3A%2F%2Fwakeupandcode.com%2Funit-testing-in-asp-net-core%2F) and it's also what the majority of the test projects in the `Azure/azure-sdk-tools` repo utilize as well.

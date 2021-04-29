@@ -41,22 +41,98 @@ namespace Azure.Sdk.Tools.TestProxy
             // so far, nothing necessary here
         }
 
+
         [HttpPost]
-        public void AddHeaderTransform()
+        public void AddTransform()
         {
-            throw new NotImplementedException();
+            var tName = RecordingHandler.GetHeader(Request, "x-abstraction-identifier");
+            var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", true);
+            ResponseTransform t = (ResponseTransform)GetTransform(tName);
+
+            if (recordingId != null)
+            {
+                _recordingHandler.AddPlaybackTransform(recordingId, t);
+            }
+            else
+            {
+                _recordingHandler.Transforms.Add(t);
+            }
         }
 
         [HttpPost]
-        public void AddHeaderSanitizer()
+        public void AddSanitizer()
         {
-            throw new NotImplementedException();
+            var sName = RecordingHandler.GetHeader(Request, "x-abstraction-identifier");
+            var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
+            RecordedTestSanitizer s = (RecordedTestSanitizer)GetSanitizer(sName);
+
+            if (recordingId != null)
+            {
+                _recordingHandler.AddRecordSanitizer(recordingId, s);
+            }
+            else
+            {
+                _recordingHandler.Sanitizers.Add(s);
+            }
         }
 
         [HttpPost]
-        public void AddPassthrough()
+        public void SetMatcher()
         {
-            throw new NotImplementedException();
+            var mName = RecordingHandler.GetHeader(Request, "x-abstraction-identifier");
+            var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", true);
+            RecordMatcher m = (RecordMatcher)GetMatcher(mName);
+
+            if (recordingId != null)
+            {
+                _recordingHandler.SetPlaybackMatcher(recordingId, m);
+            }
+            else
+            {
+                _recordingHandler.Matcher = m; 
+            }
+        }
+
+        public object GetSanitizer(string name)
+        {
+            try
+            {
+                // TODO: why doesn't this retrieve without the fully qualified name?
+                Type t = Type.GetType("Azure.Sdk.Tools.TestProxy.Sanitizers." + name);
+                return Activator.CreateInstance(t);
+            }
+            catch
+            {
+                throw new Exception(String.Format("Sanitizer named {0} is not recognized", name));
+            }
+        }
+
+        public object GetTransform(string name)
+        {
+            try
+            {
+                // TODO: why doesn't this retrieve without the fully qualified name?
+                Type t = Type.GetType("Azure.Sdk.Tools.TestProxy.Transforms." + name);
+                return Activator.CreateInstance(t);
+            }
+            catch
+            {
+                throw new Exception(String.Format("Transform named {0} is not recognized", name));
+            }
+        }
+
+        public object GetMatcher(string name)
+        {
+            try
+            {
+                // TODO: why doesn't this retrieve without the fully qualified name?
+                Type t = Type.GetType("Azure.Sdk.Tools.TestProxy.Matchers." + name);
+                return Activator.CreateInstance(t);
+            }
+            catch
+            {
+                throw new Exception(String.Format("Matcher named {0} is not recognized", name));
+            }
         }
     }
 }

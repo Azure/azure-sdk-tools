@@ -83,7 +83,7 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 var (file, session) = fileAndSession;
 
-                foreach (RecordedTestSanitizer sanitizer in session.AdditionalSanitizers.Count > 0 ? Sanitizers.Concat(session.AdditionalSanitizers) : Sanitizers)
+                foreach (RecordedTestSanitizer sanitizer in Sanitizers.Concat(session.AdditionalSanitizers))
                 {
                     session.Session.Sanitize(sanitizer);
                 }

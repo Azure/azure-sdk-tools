@@ -25,7 +25,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
             return line.Contains("EAI_AGAIN", StringComparison.OrdinalIgnoreCase)
                 || line.Contains("getaddrinfo", StringComparison.OrdinalIgnoreCase)
                 || line.Contains("Temporary failure in name resolution", StringComparison.OrdinalIgnoreCase)
-                || line.Contains("No such host is known", StringComparison.OrdinalIgnoreCase)
+                || line.Contains("No such host is known", StringComparison.OrdinalIgnoreCase);
         }
 
         public async Task ClassifyAsync(FailureAnalyzerContext context)

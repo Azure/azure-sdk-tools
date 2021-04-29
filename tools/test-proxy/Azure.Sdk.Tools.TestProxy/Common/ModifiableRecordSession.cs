@@ -16,9 +16,9 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             Session = session;
         }
 
-        public List<ResponseTransform> AdditionalTransforms = new List<ResponseTransform>();
+        public List<ResponseTransform> AdditionalTransforms { get; } = new List<ResponseTransform>();
 
-        public List<RecordedTestSanitizer> AdditionalSanitizers = new List<RecordedTestSanitizer>();
+        public List<RecordedTestSanitizer> AdditionalSanitizers { get; }= new List<RecordedTestSanitizer>();
 
     }
 }

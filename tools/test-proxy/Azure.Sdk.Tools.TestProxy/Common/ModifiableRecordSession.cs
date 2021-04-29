@@ -7,9 +7,9 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 {
     public class ModifiableRecordSession
     {
-        public RecordMatcher CustomMatcher = null;
+        public RecordMatcher CustomMatcher { get; set;}
 
-        public RecordSession Session;
+        public RecordSession Session { get; }
 
         public ModifiableRecordSession(RecordSession session)
         {

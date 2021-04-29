@@ -63,7 +63,7 @@ namespace Azure.Sdk.Tools.TestProxy
         public void AddSanitizer()
         {
             var sName = RecordingHandler.GetHeader(Request, "x-abstraction-identifier");
-            var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", true);
+            var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
             RecordedTestSanitizer s = (RecordedTestSanitizer)GetSanitizer(sName);
 
             if (recordingId != null)

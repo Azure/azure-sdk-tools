@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
 {
-    public class ResponseTransform
+    public abstract class ResponseTransform
     {
         
         /// <summary>
@@ -15,9 +15,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// </summary>
         /// <param name="request"></param>
         /// <param name="response"></param>
-        public virtual void ApplyTransform(HttpRequest request, HttpResponse response)
-        {
-            // empty by default
-        }
+        public abstract void ApplyTransform(HttpRequest request, HttpResponse response);
     }
 }

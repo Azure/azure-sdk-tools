@@ -15,11 +15,6 @@ namespace Azure.Sdk.Tools.TestProxy.Transforms
             {
                 response.Headers.Add("x-ms-client-id", clientId);
             }
-
-            if (request.Headers.TryGetValue("x-ms-client-request-id", out var clientRId))
-            {
-                response.Headers.Add("x-ms-client-request-id", clientRId);
-            }
         }
     }
 }

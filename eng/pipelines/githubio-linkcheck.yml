@@ -50,7 +50,6 @@ jobs:
         -inputCacheFile "$(cachefile)"
         -outputCacheFile "$(cachefile)"
         -devOpsLogging: $true
-        -checkLinkGuidance: $true
 
   - task: PowerShell@2
     displayName: 'js link check'

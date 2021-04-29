@@ -22,10 +22,10 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
 
         private bool IsDnsResolutionFailure(string line)
         {
-            return (line.Contains("EAI_AGAIN") && line.Contains("getaddrinfo"))
-                || line.Contains("getaddrinfo EAI_AGAIN")
-                || line.Contains("Temporary failure in name resolution")
-                || line.Contains("No such host is known.");
+            return line.Contains("EAI_AGAIN", StringComparison.OrdinalIgnoreCase)
+                || line.Contains("getaddrinfo", StringComparison.OrdinalIgnoreCase)
+                || line.Contains("Temporary failure in name resolution", StringComparison.OrdinalIgnoreCase)
+                || line.Contains("No such host is known", StringComparison.OrdinalIgnoreCase)
         }
 
         public async Task ClassifyAsync(FailureAnalyzerContext context)

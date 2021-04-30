@@ -33,7 +33,6 @@ jobs:
     matrix:
       Java:
         RepositoryName: azure-sdk-for-java
-        Branch: master
         Prefix: java
         PublicOptions: ''
         InternalOptions: >-
@@ -45,7 +44,6 @@ jobs:
         TestOptions: '--variablegroup ${{ parameters.Secrets_for_Resource_Provisioner }}'
       Android:
         RepositoryName: azure-sdk-for-android
-        Branch: master
         Prefix: android
         PublicOptions: ''
         InternalOptions: >-
@@ -56,7 +54,6 @@ jobs:
           --variablegroup ${{ parameters.APIReview_AutoCreate_Configurations }}
       JavaScript:
         RepositoryName: azure-sdk-for-js
-        Branch: master
         Prefix: js
         PublicOptions: ''
         InternalOptions: >-
@@ -68,7 +65,6 @@ jobs:
         TestOptions: '--variablegroup ${{ parameters.Secrets_for_Resource_Provisioner }}'
       Python:
         RepositoryName: azure-sdk-for-python
-        Branch: master
         Prefix: python
         PublicOptions: ''
         InternalOptions: >-
@@ -79,7 +75,6 @@ jobs:
         TestOptions: '--variablegroup ${{ parameters.Secrets_for_Resource_Provisioner }}'
       Net:
         RepositoryName: azure-sdk-for-net
-        Branch: master
         Prefix: net
         PublicOptions: ''
         InternalOptions: >-
@@ -91,7 +86,6 @@ jobs:
         TestOptions: '--variablegroup ${{ parameters.Secrets_for_Resource_Provisioner }}'
       Cpp:
         RepositoryName: azure-sdk-for-cpp
-        Branch: master
         Prefix: cpp
         PublicOptions: ''
         # Resource Provisioner is in InternalOptions and not TestOptions becasue C++ includes live tests in the unified pipelines
@@ -105,28 +99,29 @@ jobs:
   - template: /eng/common/pipelines/templates/steps/install-pipeline-generation.yml
   - script: |
       git clone https://github.com/azure/$(RepositoryName) $(Pipeline.Workspace)/$(RepositoryName)
-      cd $(Pipeline.Workspace)/$(RepositoryName)
-      git checkout $(Branch)
     displayName: 'Clone repository: $(RepositoryName)'
+  - template: /eng/common/pipelines/templates/steps/set-default-branch.yml
+    parameters:
+      WorkingDirectory: $(Pipeline.Workspace)/$(RepositoryName)
   - script: |
-      $(Pipeline.Workspace)/pipeline-generator/pipeline-generator --organization https://dev.azure.com/azure-sdk --project public --prefix $(Prefix) --path $(Pipeline.Workspace)/$(RepositoryName)/sdk --endpoint Azure --repository Azure/$(RepositoryName) --convention ci --agentpool Hosted --branch refs/heads/$(Branch) --patvar PATVAR --debug $(PublicOptions)
+      $(Pipeline.Workspace)/pipeline-generator/pipeline-generator --organization https://dev.azure.com/azure-sdk --project public --prefix $(Prefix) --path $(Pipeline.Workspace)/$(RepositoryName)/sdk --endpoint Azure --repository Azure/$(RepositoryName) --convention ci --agentpool Hosted --branch refs/heads/$(DefaultBranch) --patvar PATVAR --debug $(PublicOptions)
     displayName: 'Generate public pipelines for: $(RepositoryName)'
     env:
       PATVAR: $(azuresdk-azure-sdk-devops-pipeline-generation-pat)
   - script: |
-      $(Pipeline.Workspace)/pipeline-generator/pipeline-generator --organization https://dev.azure.com/azure-sdk --project internal --prefix $(Prefix) --path $(Pipeline.Workspace)/$(RepositoryName)/sdk --endpoint Azure --repository Azure/$(RepositoryName) --convention up --agentpool Hosted --branch refs/heads/$(Branch) --patvar PATVAR --debug $(InternalOptions) $(TestOptions)
+      $(Pipeline.Workspace)/pipeline-generator/pipeline-generator --organization https://dev.azure.com/azure-sdk --project internal --prefix $(Prefix) --path $(Pipeline.Workspace)/$(RepositoryName)/sdk --endpoint Azure --repository Azure/$(RepositoryName) --convention up --agentpool Hosted --branch refs/heads/$(DefaultBranch) --patvar PATVAR --debug $(InternalOptions) $(TestOptions)
     displayName: 'Generate internal pipelines for: $(RepositoryName)'
     env:
       PATVAR: $(azuresdk-azure-sdk-devops-pipeline-generation-pat)
   - script: |
-      $(Pipeline.Workspace)/pipeline-generator/pipeline-generator --organization https://dev.azure.com/azure-sdk --project internal --prefix $(Prefix) --path $(Pipeline.Workspace)/$(RepositoryName)/sdk --endpoint Azure --repository Azure/$(RepositoryName) --convention tests --agentpool Hosted --branch refs/heads/$(Branch) --patvar PATVAR --debug $(TestOptions)
+      $(Pipeline.Workspace)/pipeline-generator/pipeline-generator --organization https://dev.azure.com/azure-sdk --project internal --prefix $(Prefix) --path $(Pipeline.Workspace)/$(RepositoryName)/sdk --endpoint Azure --repository Azure/$(RepositoryName) --convention tests --agentpool Hosted --branch refs/heads/$(DefaultBranch) --patvar PATVAR --debug $(TestOptions)
     displayName: 'Generate test pipelines for: $(RepositoryName)'
     condition: ne(variables['TestOptions'],'')
     env:
       PATVAR: $(azuresdk-azure-sdk-devops-pipeline-generation-pat)
 
   # - script: |
-  #     pipeline-generator --organization https://dev.azure.com/azure-sdk --project internal --prefix $(Prefix)-pr --devopspath "\$(Prefix)\pr" --path $(Pipeline.Workspace)/$(RepositoryName)/sdk --endpoint Azure --repository Azure/$(RepositoryName)-pr --convention ci --agentpool Hosted --branch refs/heads/ $(Branch) --patvar PATVAR --debug
+  #     pipeline-generator --organization https://dev.azure.com/azure-sdk --project internal --prefix $(Prefix)-pr --devopspath "\$(Prefix)\pr" --path $(Pipeline.Workspace)/$(RepositoryName)/sdk --endpoint Azure --repository Azure/$(RepositoryName)-pr --convention ci --agentpool Hosted --branch refs/heads/ $(DefaultBranch) --patvar PATVAR --debug
   #   displayName: 'Generate internal pipelines for: $(RepositoryName)-pr'
   #   env:
   #     PATVAR: $(azuresdk-azure-sdk-devops-pipeline-generation-pat)

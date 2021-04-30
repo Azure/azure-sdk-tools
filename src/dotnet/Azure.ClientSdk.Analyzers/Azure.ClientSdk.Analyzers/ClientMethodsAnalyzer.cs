@@ -116,7 +116,7 @@ namespace Azure.ClientSdk.Analyzers
             INamedTypeSymbol type = (INamedTypeSymbol)context.Symbol;
             foreach (var member in type.GetMembers())
             {
-                if (member is IMethodSymbol methodSymbol && methodSymbol.Name.EndsWith(AsyncSuffix) && member.DeclaredAccessibility == Accessibility.Public)
+                if (member is IMethodSymbol methodSymbol && IsMethod(methodSymbol) && methodSymbol.Name.EndsWith(AsyncSuffix) && member.DeclaredAccessibility == Accessibility.Public)
                 {
                     CheckClientMethod(context, methodSymbol);
 
@@ -134,6 +134,14 @@ namespace Azure.ClientSdk.Analyzers
                     }
                 }
             }
+
+            static bool IsMethod(IMethodSymbol methodSymbol) =>
+                methodSymbol.MethodKind switch
+                {
+                    MethodKind.Ordinary => true,
+                    MethodKind.ExplicitInterfaceImplementation => true,
+                    _ => false
+                };
         }
     }
 }

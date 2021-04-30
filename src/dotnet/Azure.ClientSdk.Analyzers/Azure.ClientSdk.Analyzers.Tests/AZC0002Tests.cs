@@ -182,5 +182,22 @@ namespace RandomNamespace
                 .WithDisabledDiagnostics("AZC0015")
                 .RunAsync();
         }
+
+        [Fact]
+        public async Task AZC0002NotProducedForEvents()
+        {
+            const string code = @"
+using System;
+using System.Threading.Tasks;
+
+namespace RandomNamespace
+{
+    public class SomeClient
+    {
+        public event Func<EventArgs, Task> EventAsync;
+    }
+}";
+            await Verifier.VerifyAnalyzerAsync(code);
+        }
     }
 }

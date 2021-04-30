@@ -23,6 +23,19 @@ namespace RandomNamespace
         }
 
         [Fact]
+        public async Task AZC0008NotProducedForAbstractClientOptionsWithoutServiceVersionEnum()
+        {
+            const string code = @"
+namespace RandomNamespace
+{
+    public abstract class SomeClientOptions { 
+
+    }
+}";
+            await Verifier.VerifyAnalyzerAsync(code);
+        }
+
+        [Fact]
         public async Task AZC0008NotProducedForClientOptionsWithServiceVersionEnum()
         {
             const string code = @"

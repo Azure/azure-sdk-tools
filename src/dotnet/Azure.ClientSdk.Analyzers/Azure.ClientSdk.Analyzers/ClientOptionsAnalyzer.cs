@@ -25,7 +25,7 @@ namespace Azure.ClientSdk.Analyzers
         public override void Analyze(ISymbolAnalysisContext symbolAnalysisContext)
         {
             var typeSymbol = (INamedTypeSymbol)symbolAnalysisContext.Symbol;
-            if (typeSymbol.TypeKind != TypeKind.Class || !typeSymbol.Name.EndsWith(ClientOptionsSuffix) || typeSymbol.DeclaredAccessibility != Accessibility.Public)
+            if (typeSymbol.TypeKind != TypeKind.Class || !typeSymbol.Name.EndsWith(ClientOptionsSuffix) || typeSymbol.DeclaredAccessibility != Accessibility.Public || typeSymbol.IsAbstract)
             {
                 return;
             }

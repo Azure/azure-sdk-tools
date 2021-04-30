@@ -89,6 +89,8 @@ namespace Azure.Sdk.Tools.PipelineWitness
             builder.Services.AddSingleton<IFailureClassifier, AzuriteInstallFailureClassifier>();
             builder.Services.AddSingleton<IFailureClassifier, MavenBrokenPipeFailureClassifier>();
             builder.Services.AddSingleton<IFailureClassifier, CodeSigningFailureClassifier>();
+            builder.Services.AddSingleton<IFailureClassifier, AzureArtifactsServiceUnavailableClassifier>();
+            builder.Services.AddSingleton<IFailureClassifier, DnsResolutionFailureClassifier>();
         }
     }
 }

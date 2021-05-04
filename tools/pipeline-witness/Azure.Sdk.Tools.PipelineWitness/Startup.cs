@@ -91,6 +91,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
             builder.Services.AddSingleton<IFailureClassifier, CodeSigningFailureClassifier>();
             builder.Services.AddSingleton<IFailureClassifier, AzureArtifactsServiceUnavailableClassifier>();
             builder.Services.AddSingleton<IFailureClassifier, DnsResolutionFailureClassifier>();
+            builder.Services.AddSingleton<IFailureClassifier, CacheChunkOrderingFailureClassifier>();
         }
     }
 }

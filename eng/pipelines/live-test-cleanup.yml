@@ -55,10 +55,40 @@ stages:
 
       - pwsh: |
           $subscriptionConfiguration = @'
-            $(acs-subscription-configuration)
+            $(sub-config-communication-int-test-resources)
+          '@ | ConvertFrom-Json -AsHashtable
+
+          ./tools/live-test-cleanup/cleanup.ps1 `
+          @subscriptionConfiguration `
+          -Verbose
+        displayName: Clean up subscription resources (PreProduction ACS Subscription)
+
+      - template: /eng/common/TestResources/build-test-resource-config.yml
+        parameters:
+          SubscriptionConfigurations:
+            - $(sub-config-azure-cloud-test-resources)
+            - $(sub-config-communication-services-cloud-test-resources)
+      - pwsh: |
+          $subscriptionConfiguration = @'
+            $(SubscriptionConfiguration)
           '@ | ConvertFrom-Json -AsHashtable
 
           ./tools/live-test-cleanup/cleanup.ps1 `
           @subscriptionConfiguration `
           -Verbose
         displayName: Clean up subscription resources (AzureCloud ACS Subscription)
+
+      - template: /eng/common/TestResources/build-test-resource-config.yml
+        parameters:
+          SubscriptionConfigurations:
+            - $(sub-config-azure-cloud-test-resources)
+            - $(sub-config-cosmos-azure-cloud-test-resources)
+      - pwsh: |
+          $subscriptionConfiguration = @'
+            $(SubscriptionConfiguration)
+          '@ | ConvertFrom-Json -AsHashtable
+
+          ./tools/live-test-cleanup/cleanup.ps1 `
+          @subscriptionConfiguration `
+          -Verbose
+        displayName: Clean up subscription resources (AzureCloud Cosmos Subscription)

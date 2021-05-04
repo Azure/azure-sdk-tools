@@ -8,8 +8,8 @@ param (
 
 . (Join-Path $PSScriptRoot common.ps1)
 
-LogDebug "$$RepoOwner was: $RepoOwner"
-LogDebug "$$RepoName was: $RepoName"
+LogDebug "`$RepoOwner was: $RepoOwner"
+LogDebug "`$RepoName was: $RepoName"
 
 try
 {

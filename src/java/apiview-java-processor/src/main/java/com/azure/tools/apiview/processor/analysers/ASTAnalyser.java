@@ -10,6 +10,7 @@ import com.azure.tools.apiview.processor.model.TypeKind;
 import com.azure.tools.apiview.processor.model.maven.Dependency;
 import com.azure.tools.apiview.processor.model.maven.MavenGAV;
 import com.azure.tools.apiview.processor.model.maven.Pom;
+import com.github.javaparser.ParseProblemException;
 import com.github.javaparser.ParserConfiguration;
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.TokenRange;
@@ -200,21 +201,27 @@ public class ASTAnalyser implements Analyser {
             // Configure JavaParser to use type resolution
             StaticJavaParser.setConfiguration(parserConfiguration);
 
-            CompilationUnit compilationUnit = StaticJavaParser.parse(path);
-            new ScanForClassTypeVisitor().visit(compilationUnit, null);
+            try {
+                CompilationUnit compilationUnit = StaticJavaParser.parse(path);
+                new ScanForClassTypeVisitor().visit(compilationUnit, null);
 
-            if (path.endsWith("package-info.java")) {
-                compilationUnit.getPackageDeclaration().ifPresent(pd -> {
-                    compilationUnit.getAllComments().stream()
-                        .filter(Comment::isJavadocComment)
-                        .map(Comment::asJavadocComment)
-                        .findFirst()
-                        .ifPresent(comment -> packageNameToPackageInfoJavaDoc.put(pd.getNameAsString(), comment));
-                });
+                if (path.endsWith("package-info.java")) {
+                    compilationUnit.getPackageDeclaration().ifPresent(pd -> {
+                        compilationUnit.getAllComments().stream()
+                            .filter(Comment::isJavadocComment)
+                            .map(Comment::asJavadocComment)
+                            .findFirst()
+                            .ifPresent(comment -> packageNameToPackageInfoJavaDoc.put(pd.getNameAsString(), comment));
+                    });
 
+                    return Optional.empty();
+                } else {
+                    return Optional.of(new ScanClass(path, compilationUnit));
+                }
+            } catch (ParseProblemException e) {
+                System.out.println("Failed to parse file " + path + ":");
+                e.getProblems().forEach(problem -> System.out.println("  " + problem.getVerboseMessage()));
                 return Optional.empty();
-            } else {
-                return Optional.of(new ScanClass(path, compilationUnit));
             }
         } catch (IOException e) {
             e.printStackTrace();

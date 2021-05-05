@@ -1,0 +1,39 @@
+pr: none
+
+trigger:
+  branches:
+    include:
+    - master
+    - main
+  paths:
+    include:
+    - eng/containers/
+    - eng/tools/test-proxy/dockerfile
+
+pool:
+  vmImage: 'ubuntu-18.04'
+
+variables:
+  containerRegistry: 'azsdkengsys'
+  imageTag: $(build.buildid)
+  DockerDeployments:
+  - name: test-proxy
+    dockerRepo: engsys/ubuntu_testproxy_server
+    dockerFile: ../../tools/test-proxy/dockerfile
+
+steps:
+- ${{ each config in variables.DockerDeployments }}:
+  - task: Docker@2
+    displayName: Build ${{ config.name }} Docker Image
+    inputs:
+      command: build
+      Dockerfile: ${{ config.dockerFile }}
+      tags: $(imageTag)
+      arguments: '-t $(containerRegistry).azurecr.io/${{ config.dockerRepo }}:$(imageTag)'
+  - task: Docker@2
+    displayName: Push ${{ config.name }} Docker Image
+    inputs:
+      containerRegistry: $(containerRegistry)
+      repository: ${{ config.dockerRepo }}
+      command: push
+      tags: $(imageTag)

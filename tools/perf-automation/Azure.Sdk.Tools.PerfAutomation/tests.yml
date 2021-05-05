@@ -7,7 +7,7 @@
 
   Java:
     DefaultVersions:
-    - 1.8.0_282
+    - 1.8.0_292
     OptionalVersions:
     - 15.0.2+7
 
@@ -52,15 +52,15 @@ Services:
     Net:
       Project: sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Azure.Storage.Blobs.Perf.csproj
       PackageVersions:
-      - Azure.Storage.Blobs: 12.8.1
+      - Azure.Storage.Blobs: 12.8.3
       - Azure.Storage.Blobs: source
     Java:
       Project: sdk/storage/azure-storage-perf
       PackageVersions: &java-storage-package-versions
-      - azure-storage-blob: 12.10.0
-        azure-storage-file-share: 12.8.0
-        azure-storage-file-datalake: 12.4.0
-        reactor-core: 3.3.12.RELEASE
+      - azure-storage-blob: 12.11.0
+        azure-storage-file-share: 12.9.0
+        azure-storage-file-datalake: 12.5.0
+        reactor-core: 3.4.3
       - azure-storage-blob: source
         azure-storage-file-share: source
         azure-storage-file-datalake: source
@@ -76,7 +76,7 @@ Services:
     Python:
       Project: sdk/storage/azure-storage-blob
       PackageVersions:
-      - azure-storage-blob: 12.8.0
+      - azure-storage-blob: 12.8.1
       - azure-storage-blob: source
 
   Tests:
@@ -85,8 +85,7 @@ Services:
     - --size 1 --warmup 0 --duration 1
     - --size 10240 --parallel 64
     - --size 10485760 --parallel 32
-    - --size 134217728 --parallel 32 --warmup 60 --duration 60
-    - --size 1073741824 --parallel 32 --warmup 60 --duration 60
+    - --size 1073741824 --parallel 8 --warmup 60 --duration 60
     TestNames:
       Net: DownloadBlob
       Java: downloadblob
@@ -197,7 +196,7 @@ Services:
     Python:
       Project: sdk/storage/azure-storage-file-share
       PackageVersions:
-      - azure-storage-file-share: 12.4.1
+      - azure-storage-file-share: 12.4.2
       - azure-storage-file-share: source
 
   Tests:
@@ -238,7 +237,7 @@ Services:
     Python:
       Project: sdk/storage/azure-storage-file-datalake
       PackageVersions:
-      - azure-storage-file-datalake: 12.3.0
+      - azure-storage-file-datalake: 12.3.1
       - azure-storage-file-datalake: source
 
   Tests:

@@ -171,5 +171,5 @@ First, get the docker image:
 Note that you will need to provide a port mapping to `5001` from your local, as well as a `volume` for recording propogation.
 
 ```
-docker run test-proxy -v <your-volume-name>:/etc/testproxy -p 5001:5001
+docker run -v <your-volume-name-or-location>:/etc/testproxy -p 5001:5001 test-proxy
 ```

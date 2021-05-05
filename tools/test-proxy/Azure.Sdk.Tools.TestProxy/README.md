@@ -158,3 +158,18 @@ Currently, these settings are NOT propogated onto disk. That may change in the n
 ## Testing
 
 This project uses `xunit` as the test framework. This is the most popular .NET test solution [according to this twitter poll](https://twitter.com/shahedC/status/1131337874903896065?ref_src=twsrc%5Etfw%7Ctwcamp%5Etweetembed%7Ctwterm%5E1131337874903896065%7Ctwgr%5E%7Ctwcon%5Es1_c10&ref_url=https%3A%2F%2Fwakeupandcode.com%2Funit-testing-in-asp-net-core%2F) and it's also what the majority of the test projects in the `Azure/azure-sdk-tools` repo utilize as well.
+
+## Container Images
+
+For users that don't want to mess about installing dotnet, there is a docker container available.
+
+First, get the docker image:
+```
+<docker run example>
+```
+
+Note that you will need to provide a port mapping to `5001` from your local, as well as a `volume` for recording propogation.
+
+```
+docker run test-proxy -v <your-volume-name>:/etc/testproxy -p 5001:5001
+```

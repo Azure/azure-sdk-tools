@@ -11,7 +11,7 @@ parameters:
   default: eng/common
 - name: BaseBranchName
   type: string
-  default: $(Build.SourceBranchName)
+  default: $(Build.SourceBranch)
 - name: Repos
   type: object
   default:

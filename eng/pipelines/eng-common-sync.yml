@@ -47,6 +47,11 @@ stages:
           displayName: Sync ${{ parameters.DirectoryToSync }} Directory
 
           steps:
+            - template: /eng/common/pipelines/steps/sparse-checkout.yml
+              parameters:
+                Paths:
+                  - ${{ parameters.DirectoryToSync }}
+
             - pwsh: |
                 Set-PsDebug -Trace 1
                 $patchDir = "$(Build.ArtifactStagingDirectory)/patchfiles"

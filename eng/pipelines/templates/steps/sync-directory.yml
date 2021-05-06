@@ -130,6 +130,9 @@ steps:
       Paths:
         - ${{ parameters.DirectoryToSync }}
       Repositories:
+        - Name: $(Build.Repository.Name)
+          Commitish: $(Build.SourceVersion)
+          WorkingDirectory: $(System.DefaultWorkingDirectory)/$(Build.Repository.Name)
         - ${{ each repo in parameters.Repos }}:
           - Name: Azure/${{ repo }}
             Commitish: ${{ parameters.BaseBranchName }}
@@ -139,9 +142,10 @@ steps:
     - pwsh: |
         Set-PsDebug -Trace 1
         $repoPath = "${{ repo }}/${{ parameters.DirectoryToSync }}"
-        if (!(Test-Path $repoPath)) { mkdir $repoPath }
-        Remove-Item -v -r $repoPath
-        Copy-Item -v -r $(Build.SourcesDirectory)/${{ parameters.DirectoryToSync }} $repoPath
+        Remove-Item -v -r -ErrorAction Ignore $repoPath
+        Copy-Item -v -r `
+          $(System.DefaultWorkingDirectory)/$(Build.Repository.Name)/${{ parameters.DirectoryToSync }} `
+          $repoPath
         Get-ChildItem -r $repoPath
       displayName: Copy ${{ parameters.DirectoryToSync }} from azure-sdk-tools to ${{ repo }}
       workingDirectory: $(System.DefaultWorkingDirectory)
@@ -154,4 +158,4 @@ steps:
         PRTitle: ${{ parameters.CommitMessage }}
         PushArgs: -f
         WorkingDirectory: $(System.DefaultWorkingDirectory)/${{ repo }}
-        ScriptDirectory: $(System.DefaultWorkingDirectory)/eng/common/scripts
+        ScriptDirectory: $(System.DefaultWorkingDirectory)/$(Build.Repository.Name)/eng/common/scripts

@@ -360,3 +360,51 @@ function Remove-GitHubSourceReferences  {
           -Headers (Get-GitHubApiHeaders -token $AuthToken) `
           -MaximumRetryCount 3
 }
+
+function Get-GitHubAuthorizationHeaderFromRepository {
+  param(
+    [Parameter(Mandatory = $true)]
+    $RepoPath
+  )
+
+  try {
+    Push-Location -Path $RepoPath
+
+    $configuration = $(git config --list --local)
+    $entries = $configuration | ConvertFrom-StringData
+    $entry = $entries.Values | Where-Object -FilterScript { $_ -like "AUTHORIZATION: *" }
+
+    if ($entry) {
+      $header = $entry.Replace("AUTHORIZATION: ", "")
+      return $header
+    }
+
+    Pop-Location
+  }
+  catch {
+    Write-Error "Error in Get-GitHubAccessTokenFromRepository:`n$_"
+    Pop-Location
+  }
+}
+
+function Get-GitHubDefaultBranch {
+  param (
+    [Parameter(Mandatory = $true)]
+    $RepoOwner,
+    [Parameter(Mandatory = $true)]
+    $RepoName,
+    [Parameter(Mandatory = $true)]
+    $AuthToken
+  )
+
+  $uri = "$GithubAPIBaseURI/$RepoOwner/$RepoName"
+
+  $response = Invoke-RestMethod `
+                -Method GET `
+                -Uri $uri `
+                -Headers (Get-GitHubApiHeaders -token $AuthToken) `
+                -MaximumRetryCount 3
+
+  return $response.default_branch
+
+}

@@ -16,6 +16,7 @@ steps:
 - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
   - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
     parameters:
+      SkipDefaultCheckout: true
       Paths:
         - ${{ parameters.DirectoryToSync }}
       Repositories:
@@ -129,6 +130,7 @@ steps:
 - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
   - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
     parameters:
+      SkipDefaultCheckout: true
       Paths:
         - ${{ parameters.DirectoryToSync }}
       Repositories:

@@ -153,6 +153,7 @@ steps:
     - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
       parameters:
         RepoName: ${{ repo }}
+        BaseBranchName: ${{ parameters.BaseBranchName }}
         PRBranchName: sync-${{ parameters.DirectoryToSync }}
         CommitMsg: ${{ parameters.CommitMessage }}
         PRTitle: ${{ parameters.CommitMessage }}

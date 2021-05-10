@@ -11,6 +11,8 @@ parameters:
   PushArgs: -f
 
 steps:
+- template: /eng/common/pipelines/templates/steps/set-default-branch.yml
+
 - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
   - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
     parameters:
@@ -18,11 +20,11 @@ steps:
         - ${{ parameters.DirectoryToSync }}
       Repositories:
         - ${{ each repo in parameters.Repos }}:
-          - Name: Azure/${{ repo }}
+          - Name: ${{ parameters.PROwner }}/${{ repo }}
+            Commitish: ${{ parameters.BaseBranchName }}
             WorkingDirectory: $(System.DefaultWorkingDirectory)/${{ repo }}
 
   - ${{ each repo in parameters.Repos }}:
-    - template: /eng/common/pipelines/templates/steps/set-default-branch.yml
     - pwsh: |
         $repoPath = "${{ repo }}/${{ parameters.DirectoryToSync }}"
         if (Test-Path '$(PatchFilesLocation)')
@@ -134,7 +136,7 @@ steps:
           Commitish: $(Build.SourceVersion)
           WorkingDirectory: $(System.DefaultWorkingDirectory)/$(Build.Repository.Name)
         - ${{ each repo in parameters.Repos }}:
-          - Name: Azure/${{ repo }}
+          - Name: ${{ parameters.PROwner }}/${{ repo }}
             Commitish: ${{ parameters.BaseBranchName }}
             WorkingDirectory: $(System.DefaultWorkingDirectory)/${{ repo }}
 
@@ -159,4 +161,4 @@ steps:
         PRTitle: ${{ parameters.CommitMessage }}
         PushArgs: -f
         WorkingDirectory: $(System.DefaultWorkingDirectory)/${{ repo }}
-        ScriptDirectory: $(System.DefaultWorkingDirectory)/$(Build.Repository.Name)/eng/common/scripts
+        ScriptDirectory: $(System.DefaultWorkingDirectory)/$(Build.Repository.Name)/${{ parameters.ScriptDirectory }}

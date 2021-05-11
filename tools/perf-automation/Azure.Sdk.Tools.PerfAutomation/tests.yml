@@ -100,6 +100,13 @@ Services:
       JS: StorageBlobUploadTest
       Python: UploadTest
 
+  - Test: upload-file
+    Arguments:
+    - --size 268435456 --parallel 1 --warmup 30 --duration 30
+    - --size 268435456 --parallel 1 --warmup 30 --duration 30 --max-concurrency 8
+    TestNames:
+      Python: UploadFromFileTest
+
   - Test: list-blobs
     Arguments: &storage-blob-counts
     - --count 1 --warmup 0 --duration 1

@@ -14,59 +14,54 @@ stages:
 
     steps:
       # Register the dogfood environment to clean up ACS custom subscription
-      - template: /eng/common/TestResources/setup-az-modules.yml
+      - template: /eng/common/TestResources/setup-environments.yml
 
       - pwsh: |
-          eng/common/TestResources/Import-AzModules.ps1
           $subscriptionConfiguration = @'
             $(sub-config-azure-cloud-test-resources)
           '@ | ConvertFrom-Json -AsHashtable
 
-          ./tools/live-test-cleanup/cleanup.ps1 `
+          ./eng/scripts/live-test-resource-cleanup.ps1 `
           @subscriptionConfiguration `
           -Verbose
         displayName: Clean up subscription resources (AzureCloud)
 
       - pwsh: |
-          eng/common/TestResources/Import-AzModules.ps1
           $subscriptionConfiguration = @'
             $(sub-config-azure-cloud-test-resources-preview)
           '@ | ConvertFrom-Json -AsHashtable
 
-          ./tools/live-test-cleanup/cleanup.ps1 `
+          ./eng/scripts/live-test-resource-cleanup.ps1 `
           @subscriptionConfiguration `
           -Verbose
         displayName: Clean up subscription resources (AzureCloud-Preview)
 
       - pwsh: |
-          eng/common/TestResources/Import-AzModules.ps1
           $subscriptionConfiguration = @'
             $(sub-config-gov-test-resources)
           '@ | ConvertFrom-Json -AsHashtable
 
-          ./tools/live-test-cleanup/cleanup.ps1 `
+          ./eng/scripts/live-test-resource-cleanup.ps1 `
           @subscriptionConfiguration `
           -Verbose
         displayName: Clean up subscription resources (AzureUSGovernment)
 
       - pwsh: |
-          eng/common/TestResources/Import-AzModules.ps1
           $subscriptionConfiguration = @'
             $(sub-config-cn-test-resources)
           '@ | ConvertFrom-Json -AsHashtable
 
-          ./tools/live-test-cleanup/cleanup.ps1 `
+          ./eng/scripts/live-test-resource-cleanup.ps1 `
           @subscriptionConfiguration `
           -Verbose
         displayName: Clean up subscription resources (AzureChinaCloud)
 
       - pwsh: |
-          eng/common/TestResources/Import-AzModules.ps1
           $subscriptionConfiguration = @'
             $(sub-config-communication-int-test-resources)
           '@ | ConvertFrom-Json -AsHashtable
 
-          ./tools/live-test-cleanup/cleanup.ps1 `
+          ./eng/scripts/live-test-resource-cleanup.ps1 `
           @subscriptionConfiguration `
           -Verbose
         displayName: Clean up subscription resources (Dogfood ACS)
@@ -77,12 +72,11 @@ stages:
             - $(sub-config-azure-cloud-test-resources)
             - $(sub-config-communication-services-cloud-test-resources-common)
       - pwsh: |
-          eng/common/TestResources/Import-AzModules.ps1
           $subscriptionConfiguration = @'
             $(SubscriptionConfiguration)
           '@ | ConvertFrom-Json -AsHashtable
 
-          ./tools/live-test-cleanup/cleanup.ps1 `
+          ./eng/scripts/live-test-resource-cleanup.ps1 `
           @subscriptionConfiguration `
           -Verbose
         displayName: Clean up subscription resources (AzureCloud ACS)
@@ -93,12 +87,11 @@ stages:
             - $(sub-config-azure-cloud-test-resources)
             - $(sub-config-cosmos-azure-cloud-test-resources)
       - pwsh: |
-          eng/common/TestResources/Import-AzModules.ps1
           $subscriptionConfiguration = @'
             $(SubscriptionConfiguration)
           '@ | ConvertFrom-Json -AsHashtable
 
-          ./tools/live-test-cleanup/cleanup.ps1 `
+          ./eng/scripts/live-test-resource-cleanup.ps1 `
           @subscriptionConfiguration `
           -Verbose
         displayName: Clean up subscription resources (AzureCloud Cosmos)

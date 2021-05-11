@@ -25,3 +25,4 @@ stages:
   - template: ../../eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
     parameters:
       ToolDirectory: test-proxy
+      DotNetCoreVersion: "5.0.100"

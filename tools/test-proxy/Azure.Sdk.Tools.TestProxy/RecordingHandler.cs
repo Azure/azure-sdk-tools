@@ -116,7 +116,6 @@ namespace Azure.Sdk.Tools.TestProxy
                 throw new InvalidOperationException("Failed to add new session.");
             }
 
-
             outgoingResponse.Headers.Add("x-recording-id", id);
         }
 
@@ -175,20 +174,24 @@ namespace Azure.Sdk.Tools.TestProxy
                 {
                     if (s_contentRequestHeaders.Contains(header.Key, StringComparer.OrdinalIgnoreCase))
                     {
-                        upstreamRequest.Content.Headers.Add(header.Key, values);
+                        upstreamRequest.Content.Headers.TryAddWithoutValidation(header.Key, values);
                     }
                     else
                     {
-                        upstreamRequest.Headers.Add(header.Key, values);
+                        if (!header.Key.StartsWith("x-recording"))
+                        {
+                            upstreamRequest.Headers.TryAddWithoutValidation(header.Key, values);
+                        }
                     }
                 }
-                catch (FormatException)
+                catch (Exception)
                 {
                     // ignore
                 }
             }
 
             upstreamRequest.Headers.Host = upstreamRequest.RequestUri.Host;
+
             return upstreamRequest;
         }
 

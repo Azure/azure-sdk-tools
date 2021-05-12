@@ -1,3 +1,8 @@
+parameters:
+  DotNetCoreVersion: ''
+
+
+
 stages:
 - stage: Build
   variables:
@@ -9,9 +14,9 @@ stages:
       vmImage: MMSUbuntu18.04
     steps:
       - task: UseDotNet@2
-        displayName: 'Use .NET Core sdk $(DotNetCoreVersion)'
+        displayName: 'Use .NET Core sdk ${{ coalesce( parameters.DotNetCoreVersion, variables.DotNetCoreVersion) }}'
         inputs:
-          version: '$(DotNetCoreVersion)'
+          version: '${{ coalesce( parameters.DotNetCoreVersion, variables.DotNetCoreVersion) }}'
       - script: 'dotnet pack -o $(Build.ArtifactStagingDirectory) -warnaserror'
         displayName: 'Build and Package'
         workingDirectory: $(Build.SourcesDirectory)/tools/${{parameters.ToolDirectory}}

@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:3.1-focal AS build
+FROM mcr.microsoft.com/dotnet/sdk:5.0-focal AS build
 
 ENV \
     NO_AT_BRIDGE=1 \
@@ -7,7 +7,7 @@ ENV \
     POWERSHELL_DISTRIBUTION_CHANNEL=PSDocker-DotnetCoreSDK-Ubuntu-20.04 \
     CERT_INSTALLER="https://raw.githubusercontent.com/BorisWilhelms/create-dotnet-devcert/f3b5da6f9107834eb31ea5ba7c0583e14cda6b31/create-dotnet-devcert.sh" \
     CERT_INSTALLER_FILE="create-dotnet-devcert.sh"
-
+    
 # Install GNOME keyring
 RUN apt-get update \
     && apt-get install -y \
@@ -36,7 +36,12 @@ RUN wget -q $CERT_INSTALLER \
 RUN dotnet tool install azure.sdk.tools.testproxy \
     --global \
     --add-source https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk/nuget/v3/index.json \
-    --version 1.0.0-dev.20210506.1 \
+    --version 1.0.0-dev.20210512.1 \
     && mkdir /etc/testproxy
+
+EXPOSE 5001
+EXPOSE 5000
+
+ENV DOTNET_URLS="http://0.0.0.0:5000;https://0.0.0.0:5001"
 
 ENTRYPOINT ["/root/.dotnet/tools/test-proxy", "--storage-location", "/etc/testproxy"]

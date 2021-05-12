@@ -1,0 +1,47 @@
+FROM mcr.microsoft.com/dotnet/sdk:5.0-focal AS build
+
+ENV \
+    NO_AT_BRIDGE=1 \
+    DOCKER_CONTAINER_NAME="ubuntu_testproxy_server" \
+    PSModuleAnalysisCachePath=/var/cache/microsoft/powershell/PSModuleAnalysisCache/ModuleAnalysisCache \
+    POWERSHELL_DISTRIBUTION_CHANNEL=PSDocker-DotnetCoreSDK-Ubuntu-20.04 \
+    CERT_INSTALLER="https://raw.githubusercontent.com/BorisWilhelms/create-dotnet-devcert/f3b5da6f9107834eb31ea5ba7c0583e14cda6b31/create-dotnet-devcert.sh" \
+    CERT_INSTALLER_FILE="create-dotnet-devcert.sh"
+    
+# Install GNOME keyring
+RUN apt-get update \
+    && apt-get install -y \
+        libsecret-1-dev \
+        dbus-x11 \
+        gnome-keyring \
+        libssl-dev \
+        python
+
+# Install PowerShell && .net core runtime 3.1
+RUN wget -q https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb \
+    && dpkg -i packages-microsoft-prod.deb \
+    && apt-get update \
+    && apt-get install -y powershell \
+    && pwsh --version \
+    && apt-get install -y dotnet-runtime-3.1 \
+    && dotnet --list-runtimes
+
+# prep the machine dev certificate
+RUN wget -q $CERT_INSTALLER \
+    && chmod +x $CERT_INSTALLER_FILE \
+    && ./$CERT_INSTALLER_FILE \
+    && rm ./$CERT_INSTALLER_FILE
+
+# install the package
+RUN dotnet tool install azure.sdk.tools.testproxy \
+    --global \
+    --add-source https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk/nuget/v3/index.json \
+    --version 1.0.0-dev.20210512.1 \
+    && mkdir /etc/testproxy
+
+EXPOSE 5001
+EXPOSE 5000
+
+ENV DOTNET_URLS="http://0.0.0.0:5000;https://0.0.0.0:5001"
+
+ENTRYPOINT ["/root/.dotnet/tools/test-proxy", "--storage-location", "/etc/testproxy"]

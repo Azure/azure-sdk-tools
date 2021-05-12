@@ -42,6 +42,12 @@ namespace Azure.Sdk.Tools.TestProxy
         }
 
 
+        [HttpGet]
+        public void IsAlive(){
+            Response.StatusCode = 200;
+        }
+
+
         [HttpPost]
         public void AddTransform()
         {

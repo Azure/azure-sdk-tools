@@ -11,7 +11,7 @@ parameters:
   default: eng/common
 - name: BaseBranchName
   type: string
-  default: $(Build.SourceBranchName)
+  default: $(Build.SourceBranch)
 - name: Repos
   type: object
   default:
@@ -47,6 +47,11 @@ stages:
           displayName: Sync ${{ parameters.DirectoryToSync }} Directory
 
           steps:
+            - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
+              parameters:
+                Paths:
+                  - ${{ parameters.DirectoryToSync }}
+
             - pwsh: |
                 Set-PsDebug -Trace 1
                 $patchDir = "$(Build.ArtifactStagingDirectory)/patchfiles"
@@ -135,13 +140,13 @@ stages:
                         Add-Content -Path "$(Build.ArtifactStagingDirectory)/${{ parameters.PRDataFileName }}" -Value $PRData
                       displayName: Write Sync PR Data to Artifact File
                       condition: succeeded()
-                  
+
                   - task: PublishPipelineArtifact@1
                     condition: succeeded()
-                    displayName: Publish ${{ parameters.PRDataFileName }} 
+                    displayName: Publish ${{ parameters.PRDataFileName }}
                     inputs:
                       artifactName: ${{ parameters.ArtifactName }}
-                      path: $(Build.ArtifactStagingDirectory)/${{ parameters.PRDataFileName }} 
+                      path: $(Build.ArtifactStagingDirectory)/${{ parameters.PRDataFileName }}
 
     - stage: VerifyAndMerge
       jobs:

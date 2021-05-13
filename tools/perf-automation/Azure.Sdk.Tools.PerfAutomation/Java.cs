@@ -53,7 +53,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 if (packageVersion != Program.PackageVersionSource)
                 {
                     var versionNode = doc.SelectSingleNode($"/mvn:project/mvn:dependencies/mvn:dependency[mvn:artifactId='{packageName}']/mvn:version", nsmgr);
-                    
+
                     // Skip missing dependencies
                     if (versionNode != null)
                     {

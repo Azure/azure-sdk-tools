@@ -78,7 +78,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 catch (UnauthorizedAccessException)
                 {
                     // Allow deleting read-only files
-                    foreach (var file in Directory.GetFiles(path, "*", SearchOption.AllDirectories)) {
+                    foreach (var file in Directory.GetFiles(path, "*", SearchOption.AllDirectories))
+                    {
                         File.SetAttributes(file, FileAttributes.Normal);
                     }
 

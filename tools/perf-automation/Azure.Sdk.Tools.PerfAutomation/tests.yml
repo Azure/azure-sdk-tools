@@ -23,6 +23,12 @@
     OptionalVersions:
     - 3.9.2
 
+  Cpp:
+    DefaultVersions:
+    - default
+    OptionalVersions:
+    - optional
+
 Services:
 - Service: sample
   Languages:
@@ -78,6 +84,10 @@ Services:
       PackageVersions:
       - azure-storage-blob: 12.8.1
       - azure-storage-blob: source
+    Cpp:
+      Project: azure-storage-blobs-perf
+      PackageVersions:
+      - azure-storage-blobs: source
 
   Tests:
   - Test: download
@@ -91,6 +101,7 @@ Services:
       Java: downloadblob
       JS: StorageBlobDownloadTest
       Python: DownloadTest
+      Cpp: DownloadBlob
 
   - Test: upload
     Arguments: *storage-sizes

@@ -1,4 +1,5 @@
 ﻿using Microsoft.Crank.Agent;
+using System;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -70,7 +71,19 @@ namespace Azure.Sdk.Tools.PerfAutomation
         {
             if (Directory.Exists(path))
             {
-                Directory.Delete(path, recursive: true);
+                try
+                {
+                    Directory.Delete(path, recursive: true);
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    // Allow deleting read-only files
+                    foreach (var file in Directory.GetFiles(path, "*", SearchOption.AllDirectories)) {
+                        File.SetAttributes(file, FileAttributes.Normal);
+                    }
+
+                    Directory.Delete(path, recursive: true);
+                }
             }
         }
     }

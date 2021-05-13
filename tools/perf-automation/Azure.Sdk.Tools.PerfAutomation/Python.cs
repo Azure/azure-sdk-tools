@@ -22,10 +22,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var projectDirectory = Path.Combine(WorkingDirectory, project);
             var env = Path.Combine(projectDirectory, _env);
 
-            if (Directory.Exists(env))
-            {
-                Directory.Delete(env, recursive: true);
-            }
+            Util.DeleteIfExists(env);
 
             var outputBuilder = new StringBuilder();
             var errorBuilder = new StringBuilder();
@@ -111,7 +108,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
         public override Task CleanupAsync(string project)
         {
             var projectDirectory = Path.Combine(WorkingDirectory, project);
-            Directory.Delete(Path.Combine(projectDirectory, _env), recursive: true);
+            var env = Path.Combine(projectDirectory, _env);
+            Util.DeleteIfExists(env);
             return Task.CompletedTask;
         }
 

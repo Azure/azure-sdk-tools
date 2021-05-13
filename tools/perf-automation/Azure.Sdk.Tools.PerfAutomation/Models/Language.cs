@@ -5,6 +5,7 @@
         Java,
         JS,
         Net,
-        Python
+        Python,
+        Cpp
     }
 }

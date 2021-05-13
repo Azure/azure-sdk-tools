@@ -29,7 +29,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
             { Language.Java, new Java() },
             { Language.JS, new JavaScript() },
             { Language.Net, new Net() },
-            { Language.Python, new Python() }
+            { Language.Python, new Python() },
+            { Language.Cpp, new Cpp() }
         };
 
         private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions
@@ -56,7 +57,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             [Option('n', "dry-run")]
             public bool DryRun { get; set; }
 
-            [Option('i', "iterations", Default = 3)]
+            [Option('i', "iterations", Default = 1)]
             public int Iterations { get; set; }
 
             [Option('l', "languages")]
@@ -70,6 +71,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             [Option("no-async")]
             public bool NoAsync { get; set; }
+
+            [Option("no-cleanup", HelpText = "Disables test cleanup")]
+            public bool NoCleanup { get; set; }
 
             [Option("no-sync")]
             public bool NoSync { get; set; }
@@ -358,17 +362,20 @@ namespace Azure.Sdk.Tools.PerfAutomation
             }
             finally
             {
-                Console.WriteLine($"CleanupAsync({serviceLanguageInfo.Project})");
-                Console.WriteLine();
-
-                try
+                if (!Options.NoCleanup)
                 {
-                    await _languages[language].CleanupAsync(serviceLanguageInfo.Project);
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e);
+                    Console.WriteLine($"CleanupAsync({serviceLanguageInfo.Project})");
                     Console.WriteLine();
+
+                    try
+                    {
+                        await _languages[language].CleanupAsync(serviceLanguageInfo.Project);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e);
+                        Console.WriteLine();
+                    }
                 }
             }
         }

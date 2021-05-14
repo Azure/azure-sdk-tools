@@ -1,4 +1,10 @@
-pr: none
+parameters:
+- name: DockerDeployments
+  type: object
+  default:
+  - name: test-proxy
+    dockerRepo: 'engsys/ubuntu_testproxy_server'
+    dockerFile: 'tools/test-proxy/docker/dockerfile'
 
 trigger:
   branches:
@@ -8,21 +14,22 @@ trigger:
   paths:
     include:
     - eng/containers/
-    - eng/tools/test-proxy/dockerfile
+    - tools/test-proxy/dockerfile
+
+pr: none
 
 pool:
   vmImage: 'ubuntu-18.04'
 
 variables:
-  containerRegistry: 'azsdkengsys'
-  imageTag: $(build.buildid)
-  DockerDeployments:
-  - name: test-proxy
-    dockerRepo: engsys/ubuntu_testproxy_server
-    dockerFile: ../../tools/test-proxy/dockerfile
-
+  - name: containerRegistry
+    value: 'azsdkengsys'
+  - name: imageTag
+    value: $(build.buildid)
+  - template: ../pipelines/templates/variables/globals.yml
+  
 steps:
-- ${{ each config in variables.DockerDeployments }}:
+- ${{ each config in parameters.DockerDeployments }}:
   - task: Docker@2
     displayName: Build ${{ config.name }} Docker Image
     inputs:

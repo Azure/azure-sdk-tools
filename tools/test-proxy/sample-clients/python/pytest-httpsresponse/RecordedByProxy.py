@@ -4,7 +4,7 @@ import os
 from contextlib import contextmanager
 import pdb
 
-PROXY_URL = "https://localhost:5001"
+PROXY_URL = "http://localhost:5000"
 RECORDING_START_URL = "{}/record/start".format(PROXY_URL)
 RECORDING_STOP_URL = "{}/record/stop".format(PROXY_URL)
 PLAYBACK_START_URL = "{}/playback/start".format(PROXY_URL)

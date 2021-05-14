@@ -138,7 +138,7 @@ POST to the proxy server:
 ```json
 URL: https://localhost:5001/record/stop
 headers {
-    "x-recording-id": <x-recording-id>,
+    "x-recording-id": "<x-recording-id>",
     "x-recording-save": true
 }
 

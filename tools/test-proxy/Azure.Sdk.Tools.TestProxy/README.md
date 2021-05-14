@@ -2,13 +2,13 @@
 
 For a detailed explanation, check the README.md one level up from this one. This project is intended to act as an out-of-proc record/playback server and is intended to be **non-language-specific**.
 
-## Installation
+## Installation...
 ### ...Via Local Compile or .NET
 
 1. [Install .Net 5.0](https://dotnet.microsoft.com/download)
 2. Install test-proxy
 
-```
+```powershell
 > dotnet tool install azure.sdk.tools.testproxy --global --add-source https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk/nuget/v3/index.json
 ```
 
@@ -16,7 +16,7 @@ Note that given there are only dev versions available, please add `--version <se
 
 After successful installation, run the tool:
 
-```
+```powershell
 > test-proxy --storage-location <location>
 ```
 
@@ -31,7 +31,7 @@ Feel free to build the docker file locally within working directory `/tools/test
 
 Or, leverage the azure sdk eng sys container registry.
 
-```
+```powershell
 > az login
 > az acr login --name azuresdkengsys
 > docker run azsdkengsys.azurecr.io/engsys/ubuntu_testproxy_server:896685 -v <your-volume-name-or-location>:/etc/testproxy -p 5001:5001 -p 5000:5000
@@ -59,7 +59,7 @@ There are two options here, generate your own SSL Cert, or import an existing on
 
 Invoke the command:
 
-```
+```powershell
 > dotnet dev-certs https --trust
 ```
 
@@ -106,13 +106,16 @@ Use either local or docker image to start the tool. Reference the [Installation]
 ### Start the test run
 
 POST to the Proxy Server. Pass in your "test-id". This should be the path to your testfile + test name.
-```
+
+```json
 URL: https://localhost:5001/record/start
 headers {
     "x-recording-file": "<path-to-test>.<testname>"
 }
 ```
+
 You will receive a test-id in the reponse, look for header `x-recording-id`. The header `x-recording-id` should be provided in all further requests.
+
 ### Run your tests
 
 The implicit assumption about this proxy is that you as a dev have _some way_ to reroute your existing requests (with some header additions) to the test-proxy.
@@ -121,10 +124,10 @@ The implementation is language specific, but what you want to do is:
 
 1. Prevent outgoing request from hitting original URL
 2. Make the following changes to the outgoing request
-    1. Place original Request URL in header "x-recording-upstream-base-uri"
+    1. Place original Request URL in header `x-recording-upstream-base-uri`
     2. Replace Request URL with Proxy Server URL. (currently https://localhost:5001 or http://localhost:5000)
-    3. Add header "x-recording-id": <x-recording-id> from startup step
-    4. Add header "x-recording-mode": "record"
+    3. Add header `"x-recording-id": <x-recording-id>` from startup step
+    4. Add header `"x-recording-mode": "record"`
 
 ### When finished running test
 
@@ -132,7 +135,7 @@ After your test has finished and there are no additional requests to be recorded
 
 POST to the proxy server:
 
-```
+```json
 URL: https://localhost:5001/record/stop
 headers {
     "x-recording-id": <x-recording-id>,
@@ -143,13 +146,13 @@ headers {
 
 ## How do I use the test-proxy to play a recording back?
 
-### Start playback 
+### Start playback
 
 Extremely similar to recording start.
 
 POST to the proxy server:
 
-```
+```json
 URL: https://localhost:5001/playback/start
 headers {
     "x-recording-file": "<path-to-test>.<testname>"
@@ -164,10 +167,10 @@ Very much like record, except now `x-recording-mode` header should be set to `pl
 
 1. Prevent outgoing request from hitting original URL
 2. Make the following changes to the outgoing request
-    1. Place original Request URL in header "x-recording-upstream-base-uri"
+    1. Place original Request URL in header `x-recording-upstream-base-uri`
     2. Replace Request URL with Proxy Server URL. (currently https://localhost:5001 or http://localhost:5000)
-    3. Add header "x-recording-id": <x-recording-id> from startup step
-    4. Add header "x-recording-mode": "playback"
+    3. Add header `"x-recording-id": <x-recording-id>` from startup step
+    4. Add header `"x-recording-mode": "playback"`
 
 ### Stop playback
 
@@ -175,7 +178,7 @@ This really only allows the server to free up a few bits, but:
 
 POST to the proxy server:
 
-```
+```json
 URL: https://localhost:5001/playback/stop
 headers {
     "x-recording-id": "<x-recording-id>"
@@ -187,7 +190,6 @@ headers {
 Of course, feel free to check any of the [examples](https://github.com/Azure/azure-sdk-tools/tree/feature/http-recording-server/tools/test-proxy/sample-clients) to see actual test code and invocations.
 
 Additionally, Nick Guerrera [Prototyped a JS example](https://github.com/nguerrera/azure-sdk-for-js/tree/oop-hack) as well.
-
 
 ## Session and Test Level Transforms, Sanitiziers, and Matchers
 
@@ -215,7 +217,7 @@ However, it is also possible to set these at the individual recording level, pri
 
 
 * `sanitizers` can be set at an individual level during both a `record` and `playback` session.
-* `matchers` can be set at for a `playback` session. 
+* `matchers` can be set at for a `playback` session.
 * `transforms` can be set for a `playback` session.
 
 Currently, these settings are NOT propogated onto disk. That may change in the near future.

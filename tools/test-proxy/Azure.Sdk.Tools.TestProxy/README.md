@@ -39,7 +39,7 @@ Or, leverage the azure sdk eng sys container registry.
 
 Note in both cases you will need to provide the port and volume mapping as arguments.
 
-Within the container, recording outputs are written within the directory `/etc/testproxy`. It is a non-destructive initialize.Any files that exist in this volume locally will only be appended to/updated in place.
+Within the container, recording outputs are written within the directory `/etc/testproxy`. It is a non-destructive initialize. Any files that exist in this volume locally will only be appended to/updated in place.
 
 ## SSL Support
 
@@ -90,7 +90,7 @@ It uses:
 * the pre-release package [`System.CommandLine.DragonFruit`](https://github.com/dotnet/command-line-api) to parse arguments.
 * the package [`libgit2sharp`](https://github.com/libgit2/libgit2sharp/) to handle git integration.
 
-By default, the server will listen on. These mappings also hold true for the docker image.
+By default, the server will listen on the following port mappings:
 
 | protocol | port |
 |-|-|

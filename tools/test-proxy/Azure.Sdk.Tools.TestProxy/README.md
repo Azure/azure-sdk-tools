@@ -34,7 +34,7 @@ Or, leverage the azure sdk eng sys container registry.
 ```powershell
 > az login
 > az acr login --name azuresdkengsys
-> docker run azsdkengsys.azurecr.io/engsys/ubuntu_testproxy_server:896685 -v <your-volume-name-or-location>:/etc/testproxy -p 5001:5001 -p 5000:5000
+> docker run azsdkengsys.azurecr.io/engsys/ubuntu_testproxy_server:897574 -v <your-volume-name-or-location>:/etc/testproxy -p 5001:5001 -p 5000:5000
 ```
 
 Note in both cases you will need to provide the port and volume mapping as arguments.

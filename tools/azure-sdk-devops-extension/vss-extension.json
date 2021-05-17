@@ -1,0 +1,39 @@
+{
+    "manifestVersion": 1,
+    "id": "azure-sdk-devops-extension",
+    "publisher": "azure-sdk",
+    "version": "1.0.0",
+    "name": "Azure SDK DevOps Extension",
+    "description": "Azure DevOps extension by the Azure SDK team to enhance the engineering system.",
+    "public": false,
+    "categories": ["Azure Pipelines"],
+    "targets": [
+        {
+            "id": "Microsoft.VisualStudio.Services"
+        }
+    ],
+    "contributions": [
+        {
+            "id": "my-hub",
+            "type": "ms.vss-web.hub",
+            "targets": [
+                "ms.vss-code-web.code-hub-group"
+            ],
+            "properties": {
+                "name": "Azure SDK",
+                "uri": "my-hub.html"
+            }
+        }
+    ],
+    "files": [
+        {
+            "path": "my-hub.html",
+            "addressable": true
+        },
+        {
+            "path": "node_modules/vss-web-extension-sdk/lib",
+            "addressable": true,
+            "packagePath": "lib"
+        }
+    ]
+}

@@ -2,12 +2,10 @@ FROM mcr.microsoft.com/dotnet/sdk:5.0-focal AS build
 
 ENV \
     NO_AT_BRIDGE=1 \
-    DOCKER_CONTAINER_NAME="ubuntu_testproxy_server" \
-    PSModuleAnalysisCachePath=/var/cache/microsoft/powershell/PSModuleAnalysisCache/ModuleAnalysisCache \
-    POWERSHELL_DISTRIBUTION_CHANNEL=PSDocker-DotnetCoreSDK-Ubuntu-20.04 \
-    CERT_INSTALLER="https://raw.githubusercontent.com/BorisWilhelms/create-dotnet-devcert/f3b5da6f9107834eb31ea5ba7c0583e14cda6b31/create-dotnet-devcert.sh" \
-    CERT_INSTALLER_FILE="create-dotnet-devcert.sh"
-    
+    CERT_FOLDER=/var/certwork \
+    CERT_IMPORT_SH=apply-dev-cert.sh \
+    ASPNETCORE_ENVIRONMENT=Development
+
 # Install GNOME keyring
 RUN apt-get update \
     && apt-get install -y \
@@ -17,20 +15,16 @@ RUN apt-get update \
         libssl-dev \
         python
 
-# Install PowerShell && .net core runtime 3.1
-RUN wget -q https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb \
-    && dpkg -i packages-microsoft-prod.deb \
-    && apt-get update \
-    && apt-get install -y powershell \
-    && pwsh --version \
-    && apt-get install -y dotnet-runtime-3.1 \
-    && dotnet --list-runtimes
-
 # prep the machine dev certificate
-RUN wget -q $CERT_INSTALLER \
-    && chmod +x $CERT_INSTALLER_FILE \
-    && ./$CERT_INSTALLER_FILE \
-    && rm ./$CERT_INSTALLER_FILE
+RUN mkdir $CERT_FOLDER
+
+ADD dev_certificate/$CERT_IMPORT_SH $CERT_FOLDER
+ADD dev_certificate/dotnet-devcert.pfx $CERT_FOLDER
+ADD dev_certificate/dotnet-devcert.crt $CERT_FOLDER
+
+RUN chmod +x $CERT_FOLDER/$CERT_IMPORT_SH \
+    && $CERT_FOLDER/$CERT_IMPORT_SH \
+    && rm $CERT_FOLDER/$CERT_IMPORT_SH
 
 # install the package
 RUN dotnet tool install azure.sdk.tools.testproxy \
@@ -42,6 +36,8 @@ RUN dotnet tool install azure.sdk.tools.testproxy \
 EXPOSE 5001
 EXPOSE 5000
 
+# this override allows the tool server to listen to traffic over the docker bridge.
+# default URL of localhost:5000 or localhost:50001 are not usable from outside the container
 ENV DOTNET_URLS="http://0.0.0.0:5000;https://0.0.0.0:5001"
 
 ENTRYPOINT ["/root/.dotnet/tools/test-proxy", "--storage-location", "/etc/testproxy"]

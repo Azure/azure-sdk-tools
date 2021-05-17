@@ -4,17 +4,23 @@
 
 Invoke to generate a container (with optional tag):
 
-```
+```docker
 docker build . -t test-proxy
 ```
 
 Start locally using:
 
-```
-docker run -t test-proxy -p 5000:5000 -p 5001:5001
+```docker
+docker run -p 5000:5000 -p 5001:5001 -v <yourvolume>:/etc/proxy -t test-proxy 
 ```
 
-Generated files will be within `/etc/proxy/` inside the docker image. Provide a volume as necessary if you that.
+Generated files will be within `/etc/proxy/` inside the docker image. Providing a volume as shown above is necessary if you want to propogate these recordings onto your local file system.
+
+If you _don't_ provide a volume bound to `/etc/proxy`, it's not actually the end of the world. Use `docker cp` to grab those files into your host system.
+
+```docker
+docker cp <containerid>:/etc/proxy/ <target local path local path>
+```
 
 ## Certificates
 
@@ -37,7 +43,7 @@ dotnet dev-certs https --clean --import ./dotnet-devcert.pfx --password=""
 
 Or add and trust with the toolchain of your choice.
 
-On a ubuntu-flavored distro of linux, feel free to re-use the import mechanism in the local file `import-dev-cert.sh`. Prior to using locally, ensure $CERT_FOLDER environment variable is set to the directory `dev_certificate` to access necessary files!
+On a ubuntu-flavored distro of linux, feel free to re-use the import mechanism in the local file `import-dev-cert.sh`. Prior to using locally, ensure $CERT_FOLDER environment variable is set to the local directory `dev_certificate` to access necessary files!
 
 ## Confirm Success
 

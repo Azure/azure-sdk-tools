@@ -3,14 +3,14 @@ parameters:
   # Example:
   #   Azure/azure-rest-api-specs:
   #     Branch: master
-  #     TargetRepos: 
+  #     TargetRepos:
   #       Azure/azure-rest-api-specs-pr:
   #       azure-sdk/azure-rest-api-specs:
   #         Branch: dev
   #         Rebase: true
   #   Azure/azure-sdk-for-go:
   #     Branch: master
-  #     TargetRepos: 
+  #     TargetRepos:
   #       Azure/azure-sdk-for-go-pr:
   - name: Repos
     type: object
@@ -40,7 +40,7 @@ steps:
         Write-Host "No source branch. Fetch default branch $defaultBranch."
         $SourceBranch = $defaultBranch
       }
-      
+
       git fetch --no-tags Source $SourceBranch
       if ($LASTEXITCODE -ne 0) {
         Write-Host "#`#vso[task.logissue type=error]Failed to fetch ${SourceRepo}:${SourceBranch}"

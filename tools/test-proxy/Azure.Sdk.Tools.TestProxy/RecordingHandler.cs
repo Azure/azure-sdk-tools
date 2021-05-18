@@ -138,7 +138,7 @@ namespace Azure.Sdk.Tools.TestProxy
             Interlocked.Increment(ref Startup.RequestsRecorded);
 
             outgoingResponse.StatusCode = (int)upstreamResponse.StatusCode;
-            foreach (var header in upstreamResponse.Headers)
+            foreach (var header in upstreamResponse.Headers.Concat(upstreamResponse.Content.Headers))
             {
                 var values = new StringValues(header.Value.ToArray());
                 outgoingResponse.Headers.Add(header.Key, values);

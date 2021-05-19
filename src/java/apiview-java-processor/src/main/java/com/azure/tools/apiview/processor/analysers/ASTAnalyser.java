@@ -273,13 +273,14 @@ public class ASTAnalyser implements Analyser {
         addToken(new Token(PUNCTUATION, "{"), NEWLINE);
         indent();
 
-//        // parent
-//        String gavStr = mavenPom.getParent().getGroupId() + ":" + mavenPom.getParent().getArtifactId() + ":" + mavenPom.getParent().getVersion();
-//        tokeniseKeyValue("parent", gavStr, "");
-//
-//        // properties
-//        gavStr = mavenPom.getGroupId() + ":" + mavenPom.getArtifactId() + ":" + mavenPom.getVersion();
-//        tokeniseKeyValue("properties", gavStr, "");
+       addToken(new Token(SKIP_DIFF_START));
+       // parent
+       String gavStr = mavenPom.getParent().getGroupId() + ":" + mavenPom.getParent().getArtifactId() + ":" + mavenPom.getParent().getVersion();
+       tokeniseKeyValue("parent", gavStr, "");
+
+       // properties
+       gavStr = mavenPom.getGroupId() + ":" + mavenPom.getArtifactId() + ":" + mavenPom.getVersion();
+       tokeniseKeyValue("properties", gavStr, "");
 
         // configuration
         boolean showJacoco = mavenPom.getJacocoMinLineCoverage() != null &&
@@ -308,9 +309,6 @@ public class ASTAnalyser implements Analyser {
         }
 
         // dependencies
-        // Disabling dependencies until we have a solution to avoid showing daily alpha version as dependency
-        // Alpha daily version number make each revision different and this leads to mismatch with approved review revision
-        /*
         addToken(INDENT, new Token(KEYWORD, "dependencies"), SPACE);
         addToken(new Token(PUNCTUATION, "{"), NEWLINE);
 
@@ -337,7 +335,7 @@ public class ASTAnalyser implements Analyser {
 
         unindent();
         addToken(INDENT, new Token(PUNCTUATION, "}"), NEWLINE);
-        */
+        addToken(new Token(SKIP_DIFF_END));
 
         // allowed dependencies (in maven-enforcer)
 //        if (!mavenPom.getAllowedDependencies().isEmpty()) {

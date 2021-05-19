@@ -24,9 +24,14 @@ namespace ApiView
             string currentId = null;
             bool isDocumentationRange = false;
             bool isDeprecatedToken = false;
+            bool isSkipDiffRange = false;
 
             foreach (var token in node)
             {
+                // Skip all tokens till range end
+                if (isSkipDiffRange && token.Kind != CodeFileTokenKind.SkipDiffRangeEnd)
+                    continue;
+
                 if (!showDocumentation && isDocumentationRange && token.Kind != CodeFileTokenKind.DocumentRangeEnd)
                     continue;
 
@@ -54,6 +59,19 @@ namespace ApiView
 
                     case CodeFileTokenKind.DeprecatedRangeEnd:
                         isDeprecatedToken = false;
+                        break;
+
+                    case CodeFileTokenKind.SkipDiffRangeStart:
+                        // Skip only when creating diff text
+                        // Tokens should not be skipped from html renderring
+                        if (GetType() == typeof(CodeFileRenderer))
+                        {
+                            isSkipDiffRange = true;
+                        }
+                        break;
+
+                    case CodeFileTokenKind.SkipDiffRangeEnd:
+                        isSkipDiffRange = false;
                         break;
 
                     default:

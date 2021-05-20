@@ -84,6 +84,8 @@ import static com.azure.tools.apiview.processor.model.TokenKind.PUNCTUATION;
 import static com.azure.tools.apiview.processor.model.TokenKind.TEXT;
 import static com.azure.tools.apiview.processor.model.TokenKind.TYPE_NAME;
 import static com.azure.tools.apiview.processor.model.TokenKind.WHITESPACE;
+import static com.azure.tools.apiview.processor.model.TokenKind.SKIP_DIFF_START;
+import static com.azure.tools.apiview.processor.model.TokenKind.SKIP_DIFF_END;
 
 import static com.azure.tools.apiview.processor.analysers.util.TokenModifier.*;
 

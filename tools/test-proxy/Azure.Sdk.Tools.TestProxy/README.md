@@ -200,28 +200,56 @@ A `sanitizer` is used to remove sensitive information prior to storage. When a r
 
 Default sets of `matcher`, `transforms`, and `sanitizers` are applied during recording and playback. These default settings are all set at the `session` level. Customization is allowed for these default sets by accessing the `Admin` controller.
 
-<example1 of sanitizer>
+**When creating a custom sanitizer/matcher/transform, a single constructor must be provided.**
 
-<example2 of transform update>
+This is due to the fact that if there are **arguments** to the constructor, the body attributes will be mapped **by name.**
 
-<example of matcher update>
+### Apply Matcher
 
-When invoked as basic requests to the `Admin` controller, these settings will be applied to **all** further requests and responses. Both `Playback` and `Recording`.
+```json
+POST
+url: https://localhost:5001/Admin/SetMatcher
+headers: {
+    
+}
+bodyBODY: {
 
-However, it is also possible to set these at the individual recording level, prior to sending any requests. To do this, invoke the same controllers with a header that states the individual recordingId.
+}
+```
 
-<example of matcher update at testid level> 
+### Add more than default transforms
 
-<example of transform update at testid level>
+```json
+POST
+url: https://localhost:5001/Admin/SetMatcher
+headers: {
+    
+}
+bodyBODY: {
 
-<example of sanitizer update at testid level>
+}
+```
 
+### Add non-default sanitizer
 
-* `sanitizers` can be set at an individual level during both a `record` and `playback` session.
-* `matchers` can be set at for a `playback` session.
-* `transforms` can be set for a `playback` session.
+```json
+POST
+url: https://localhost:5001/Admin/SetMatcher
+headers: {
+    
+}
+bodyBODY: {
 
-Currently, these settings are NOT propogated onto disk. That may change in the near future.
+}
+```
+
+When invoked as basic requests to the `Admin` controller, these settings will be applied to **all** further requests and responses. Both `Playback` and `Recording`. Where applicable.
+
+* `sanitizers` are applied before the recording is saved to disk AND when an incoming request is matched.
+* A custom `matcher` can be set for a session or individual recording and is applied when retrieving an entry from a loaded recording.
+* `transforms` are applied when returning a request during playback.
+
+Currently, the configured set of transforms/playback/sanitizers are NOT propogated onto disk alongside the recording.
 
 ## Testing
 

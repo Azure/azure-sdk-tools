@@ -17,4 +17,16 @@
     <ProjectReference Include="..\Azure.Sdk.Tools.TestProxy\Azure.Sdk.Tools.TestProxy.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="Test.RecordEntries\oauth_request.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Test.RecordEntries\post_delete_get_content.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Test.RecordEntries\response_with_xml_body.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

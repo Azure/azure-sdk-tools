@@ -23,9 +23,9 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
         };
 
-        public RecordEntryMessage Request { get; } = new RecordEntryMessage();
+        public RecordEntryMessage Request { get; set;  } = new RecordEntryMessage();
 
-        public RecordEntryMessage Response { get; } = new RecordEntryMessage();
+        public RecordEntryMessage Response { get; set; } = new RecordEntryMessage();
 
         public string RequestUri { get; set; }
 

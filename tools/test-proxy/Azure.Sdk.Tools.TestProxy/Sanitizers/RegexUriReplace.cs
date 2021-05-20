@@ -7,12 +7,12 @@ using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.TestProxy.Sanitizers
 {
-    public class StripRequestUri : RecordedTestSanitizer
+    public class RegexUriReplace : RecordedTestSanitizer
     {
         private Regex _regex;
         private string _newValue;
         
-        public StripRequestUri(string regex, string value = "Sanitized")
+        public RegexUriReplace(string regex, string value = "Sanitized")
         {
             _regex = new Regex(regex, RegexOptions.Compiled);
             _newValue = value;

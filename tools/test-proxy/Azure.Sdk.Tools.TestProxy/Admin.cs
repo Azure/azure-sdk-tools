@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -52,8 +53,9 @@ namespace Azure.Sdk.Tools.TestProxy
         public void AddTransform()
         {
             var tName = RecordingHandler.GetHeader(Request, "x-abstraction-identifier");
-            var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", true);
-            ResponseTransform t = (ResponseTransform)GetTransform(tName);
+            var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
+
+            ResponseTransform t = (ResponseTransform)GetTransform(tName, GetBody(Request));
 
             if (recordingId != null)
             {
@@ -70,7 +72,8 @@ namespace Azure.Sdk.Tools.TestProxy
         {
             var sName = RecordingHandler.GetHeader(Request, "x-abstraction-identifier");
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
-            RecordedTestSanitizer s = (RecordedTestSanitizer)GetSanitizer(sName);
+
+            RecordedTestSanitizer s = (RecordedTestSanitizer)GetSanitizer(sName, GetBody(Request));
 
             if (recordingId != null)
             {
@@ -86,8 +89,9 @@ namespace Azure.Sdk.Tools.TestProxy
         public void SetMatcher()
         {
             var mName = RecordingHandler.GetHeader(Request, "x-abstraction-identifier");
-            var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", true);
-            RecordMatcher m = (RecordMatcher)GetMatcher(mName);
+            var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
+            
+            RecordMatcher m = (RecordMatcher)GetMatcher(mName, GetBody(Request));
 
             if (recordingId != null)
             {
@@ -99,46 +103,72 @@ namespace Azure.Sdk.Tools.TestProxy
             }
         }
 
-        public object GetSanitizer(string name)
+        public object GetSanitizer(string name, JsonDocument body)
+        {
+            return GenerateInstance("Azure.Sdk.Tools.TestProxy.Sanitizers.", name, body);
+        }
+
+        public object GetTransform(string name, JsonDocument body)
+        {
+            return GenerateInstance("Azure.Sdk.Tools.TestProxy.Transforms.", name, body);
+        }
+
+        public object GetMatcher(string name, JsonDocument body)
+        {
+            return GenerateInstance("Azure.Sdk.Tools.TestProxy.Matchers.", name, body);
+        }
+
+        public object GenerateInstance(string typePrefix, string name, JsonDocument body = null)
         {
             try
             {
-                // TODO: why doesn't this retrieve without the fully qualified name?
-                Type t = Type.GetType("Azure.Sdk.Tools.TestProxy.Sanitizers." + name);
-                return Activator.CreateInstance(t);
+                Type t = Type.GetType(typePrefix + name);
+
+                if (body != null)
+                {
+                    var arg_list = new List<Object> { };
+
+                    // we are deliberately assuming here that there will only be a single constructor
+                    var ctor = t.GetConstructors()[0];
+                    var paramsSet = ctor.GetParameters().Select(x => x.Name);
+
+                    // walk across our constructor params. check inside the body for a resulting value for each of them
+                    foreach (var param in paramsSet)
+                    {
+                        if (body.RootElement.TryGetProperty(param, out var jsonElement)){
+
+                            var valueResult = jsonElement.GetString();
+                            arg_list.Add((object)valueResult);
+                        }
+                        else
+                        {
+                            // TODO: make this a specific type of exception
+                            throw new Exception(String.Format("Required parameter key {0} was not found in the request body.", param));
+                        }
+                    }
+
+                    return Activator.CreateInstance(t, arg_list.ToArray());
+                }
+                else
+                {
+                    return Activator.CreateInstance(t);
+                }
             }
             catch
             {
-                throw new Exception(String.Format("Sanitizer named {0} is not recognized", name));
+                throw new Exception(String.Format("Requested type {0} is not not recognized.", typePrefix + name));
             }
         }
 
-        public object GetTransform(string name)
-        {
-            try
-            {
-                // TODO: why doesn't this retrieve without the fully qualified name?
-                Type t = Type.GetType("Azure.Sdk.Tools.TestProxy.Transforms." + name);
-                return Activator.CreateInstance(t);
-            }
-            catch
-            {
-                throw new Exception(String.Format("Transform named {0} is not recognized", name));
-            }
-        }
 
-        public object GetMatcher(string name)
+        private static JsonDocument GetBody(HttpRequest req)
         {
-            try
+            if (req.Body.Length > 0)
             {
-                // TODO: why doesn't this retrieve without the fully qualified name?
-                Type t = Type.GetType("Azure.Sdk.Tools.TestProxy.Matchers." + name);
-                return Activator.CreateInstance(t);
+                return JsonDocument.Parse(req.Body, options: new JsonDocumentOptions() { AllowTrailingCommas = true });
             }
-            catch
-            {
-                throw new Exception(String.Format("Matcher named {0} is not recognized", name));
-            }
+
+            return null;
         }
     }
 }

@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -30,19 +31,21 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var outputBuilder = new StringBuilder();
             var errorBuilder = new StringBuilder();
 
+            // Windows and Linux require different arguments to build Release config
+            var additionalGenerateArguments = Util.IsWindows ? String.Empty : "-DCMAKE_BUILD_TYPE=Release";
+            var additionalBuildArguments = Util.IsWindows ? "--config Release" : String.Empty;
+
             await Util.RunAsync(
-                "cmake", "-DBUILD_TESTING=ON -DBUILD_PERFORMANCE_TESTS=ON ..",
+                "cmake", $"-DBUILD_TESTING=ON -DBUILD_PERFORMANCE_TESTS=ON {additionalGenerateArguments} ..",
                 buildDirectory, outputBuilder, errorBuilder);
 
             var result = await Util.RunAsync(
-                "cmake", $"--build . --config Release --parallel {Environment.ProcessorCount} --target {project}",
+                "cmake", $"--build . --parallel {Environment.ProcessorCount} {additionalBuildArguments} --target {project}",
                 buildDirectory, outputBuilder, errorBuilder);
 
-            /*
-            azure-storage-blobs-perf.vcxproj -> C:\Git\cpp\build-perf\sdk\storage\azure-storage-blobs\test\perf\Release\azure-storage-blobs-perf.exe
-            */
-            var buildMatch = Regex.Match(result.StandardOutput, $@"-> (.*{project}\.exe)", RegexOptions.IgnoreCase | RegexOptions.RightToLeft);
-            var exe = buildMatch.Groups[1].Value;
+            // Find path to perf test executable
+            var exeFileName = Util.IsWindows ? $"{project}.exe" : project;
+            var exe = Directory.GetFiles(buildDirectory, exeFileName, SearchOption.AllDirectories).Single();
 
             return (result.StandardOutput, result.StandardError, exe);
         }

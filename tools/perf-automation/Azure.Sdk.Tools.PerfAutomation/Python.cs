@@ -1,7 +1,6 @@
 ﻿using Azure.Sdk.Tools.PerfAutomation.Models;
 using System.Collections.Generic;
 using System.IO;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -11,8 +10,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
     public class Python : LanguageBase
     {
         private const string _env = "env-perf";
-        private static readonly string _envBin = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "scripts" : "bin";
-        private static readonly string _python = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "python" : "python3";
+        private static readonly string _envBin = Util.IsWindows ? "scripts" : "bin";
+        private static readonly string _python = Util.IsWindows ? "python" : "python3";
 
         protected override Language Language => Language.Python;
 

@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import os, re
 
-PACKAGE_NAME = "llc-api-gen"
+PACKAGE_NAME = "low-level-client-api-gen"
 
 DESCRIPTION = (
     "A llc stub generator for published APIs, variables and properties in a package"

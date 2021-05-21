@@ -6,9 +6,9 @@ from typing import Any, Dict
 
 import yaml
 
-from .token import Token
-from .token_kind import TokenKind
-from .diagnostic import Diagnostic
+from ._token import Token
+from ._token_kind import TokenKind
+from ._diagnostic import Diagnostic
 
 JSON_FIELDS = ["Name", "Version", "VersionString", "Navigation", "Tokens", "Diagnostics", "PackageName"]
 PARAM_FIELDS = ["name", "type", "default", "optional", "indent"]

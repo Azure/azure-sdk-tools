@@ -30,7 +30,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             // Windows and Linux require different arguments to build Release config
             var additionalGenerateArguments = Util.IsWindows ? String.Empty : "-DCMAKE_BUILD_TYPE=Release";
-            var additionalBuildArguments = Util.IsWindows ? "--config Release" : String.Empty;
+            var additionalBuildArguments = Util.IsWindows ? "--config MinSizeRel" : String.Empty;
 
             await Util.RunAsync(
                 "cmake", $"-DBUILD_TESTING=ON -DBUILD_PERFORMANCE_TESTS=ON {additionalGenerateArguments} ..",

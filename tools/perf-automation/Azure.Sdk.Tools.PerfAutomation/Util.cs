@@ -10,6 +10,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
 {
     static class Util
     {
+        public static bool IsWindows { get; } = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+
         public static string GetUniquePath(string path)
         {
             var directoryName = Path.GetDirectoryName(path);
@@ -39,7 +41,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
         public static async Task<ProcessResult> RunAsync(string filename, string arguments, string workingDirectory,
             StringBuilder outputBuilder = null, StringBuilder errorBuilder = null, bool throwOnError = true)
         {
-            if (_requiresShellOnWindows.Contains(filename) && RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            if (IsWindows && _requiresShellOnWindows.Contains(filename))
             {
                 arguments = $"/c {filename} {arguments}";
                 filename = "cmd";

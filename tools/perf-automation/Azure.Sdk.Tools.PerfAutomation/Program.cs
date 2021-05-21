@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -134,10 +133,10 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 {
                     DefaultVersions = l.Value.DefaultVersions.Where(v =>
                             (String.IsNullOrEmpty(Options.LanguageVersions) || Regex.IsMatch(v, Options.LanguageVersions)) &&
-                            !(l.Key == Language.Net && v == "net461" && !RuntimeInformation.IsOSPlatform(OSPlatform.Windows))),
+                            !(l.Key == Language.Net && v == "net461" && !Util.IsWindows)),
                     OptionalVersions = l.Value.OptionalVersions.Where(v =>
                             (!String.IsNullOrEmpty(Options.LanguageVersions) && Regex.IsMatch(v, Options.LanguageVersions)) &&
-                            !(l.Key == Language.Net && v == "net461" && !RuntimeInformation.IsOSPlatform(OSPlatform.Windows)))
+                            !(l.Key == Language.Net && v == "net461" && !Util.IsWindows))
                 });
 
 

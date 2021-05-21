@@ -20,9 +20,6 @@ namespace Azure.Sdk.Tools.PerfAutomation
         public override async Task<(string output, string error, string context)> SetupAsync(
             string project, string languageVersion, IDictionary<string, string> packageVersions)
         {
-            //cmake --build . --config Release -j <num-cores>
-            //sdk\storage\azure-storage-blobs\test\perf\Release\azure-storage-blobs-perf DownloadBlob
-
             var buildDirectory = Path.Combine(WorkingDirectory, _buildDirectory);
 
             Util.DeleteIfExists(buildDirectory);

@@ -12,7 +12,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
     // set VCPKG_ROOT=C:\Git\vcpkg& set VCPKG_DEFAULT_TRIPLET=x64-windows
     public class Cpp : LanguageBase
     {
-        private const string _buildDirectory = "build-perf";
+        private const string _buildDirectory = "build";
 
         protected override Language Language => Language.Cpp;
 

@@ -53,7 +53,6 @@ class FormattingClass:
         token.set_definition_id(text)
         self.add_token(token)
 
-
     def add_text(self, id, text):
         token = Token(text, TokenKind.Text)
         token.DefinitionId = id
@@ -155,22 +154,22 @@ class LLCClientView(FormattingClass):
         self.add_punctuation("}")
 
         #Create heiarchy map for view, linkage stuff
-        # self.module_dict = {}
+        self.module_dict = {}
        
-        # navigation = Navigation(self.Name, None)
-        # navigation.set_tag(NavigationTag(Kind.type_package))
-        # self.add_navigation(navigation)
+        navigation = Navigation(self.Name, None)
+        navigation.set_tag(NavigationTag(Kind.type_package))
+        self.add_navigation(navigation)
 
-        # # Generate tokens
-        # modules = self.module_dict.keys()
-        # for m in modules:
-        #     # Generate and add token to APIView
-        #     logging.debug("Generating tokens for module {}".format(m))
-        #     self.module_dict[m].to_json()
-        #     # Add navigation info for this modules. navigation info is used to build tree panel in API tool
-        #     module_nav = self.module_dict[m].get_navigation()
-        #     if module_nav:
-        #         navigation.add_child(module_nav)
+        # Generate tokens
+        modules = self.module_dict.keys()
+        for m in modules:
+            # Generate and add token to APIView
+            logging.debug("Generating tokens for module {}".format(m))
+            self.module_dict[m].to_json()
+            # Add navigation info for this modules. navigation info is used to build tree panel in API tool
+            module_nav = self.module_dict[m].get_navigation()
+            if module_nav:
+                navigation.add_child(module_nav)
             #Link things to each other
         return self.Tokens  
 
@@ -181,8 +180,12 @@ class LLCClientView(FormattingClass):
             if key in self.__dict__:
                 obj_dict[key] = self.__dict__[key]
         for i in range(0,len(obj_dict["Tokens"])):
-            obj_dict["Tokens"][i] = {"Kind": obj_dict["Tokens"][i].Kind.value, "Value" : obj_dict["Tokens"][i].Value}
+            #Break down token objects into dictionary
+            obj_dict["Tokens"][i] = {"Kind": obj_dict["Tokens"][i].Kind.value, "Value" : obj_dict["Tokens"][i].Value, 
+                "NavigateToId": obj_dict["Tokens"][i].NavigateToId, "DefinitionId": obj_dict["Tokens"][i].DefinitionId}
 
+            #Remove Null Values from Tokens
+            obj_dict["Tokens"][i] = {key:value for key,value in obj_dict["Tokens"][i].items() if value is not None}
         return obj_dict
 
 

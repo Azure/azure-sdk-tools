@@ -2,7 +2,7 @@
 # Licensed under the MIT License.
 
 import os
-from .llc_view_models import LLCClientView, LLCOperationView, ParameterView
+from .llc_view_models import LLCClientView, LLCOperationView, LLCParameterView
 
 from .version import VERSION
 from .parse_yml import parse_yaml, out_path
@@ -10,7 +10,7 @@ from .parse_yml import parse_yaml, out_path
 __all__ = [
         'LLCClientView',
         'LLCOperationView',
-        'ParameterView',
+        'LLCParameterView',
         "Navigation",
         "NavigationTag",
         "Kind",

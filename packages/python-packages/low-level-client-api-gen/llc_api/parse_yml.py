@@ -1,6 +1,6 @@
 import yaml
 import json
-from .llc_view_models import ParameterView, LLCOperationView, LLCClientView 
+from .llc_view_models import LLCParameterView, LLCOperationView, LLCClientView 
 
 #Allow for user to input file names
 YAML_FILE = input("Enter YAML file path: ")

@@ -189,6 +189,15 @@ class LLCClientView(FormattingClass):
         return obj_dict
 
 
+class LLCOperationGroupView(FormattingClass):
+  def __init__(self, operation_name, parameters):
+        self.operation=operation_name;
+        self.parameters=parameters; #parameterview list
+        self.Tokens =[]
+        self.indent = 0 
+
+
+
 class LLCOperationView(FormattingClass):
     def __init__(self, operation_name, parameters):
         self.operation=operation_name;
@@ -200,7 +209,7 @@ class LLCOperationView(FormattingClass):
     def from_yaml(cls,yaml_data: Dict[str,Any],num): 
             p = []
             for i in range(0,len(yaml_data["operationGroups"][0]["operations"][num]["signatureParameters"])):
-                p.append(ParameterView.from_yaml(yaml_data["operationGroups"][0]["operations"][num],i))
+                p.append(LLCParameterView.from_yaml(yaml_data["operationGroups"][0]["operations"][num],i))
             return cls(
                 operation_name = yaml_data["operationGroups"][0]["operations"][num]["language"]["default"]["name"],
                 parameters = p,
@@ -259,9 +268,8 @@ class LLCOperationView(FormattingClass):
             obj_dict[key] = self.__dict__[key]
         return obj_dict
         
-    
 
-class ParameterView(FormattingClass):
+class LLCParameterView(FormattingClass):
     def __init__(self, param_name, param_type, default=None, required = False):
         self.name = param_name;
         self.type = param_type;

@@ -5,74 +5,30 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-import glob
-import sys
-import os
-import argparse
-
-import inspect
-import io
-import importlib
-import json
-import logging
-import pkgutil
-import shutil
 import ast
+import glob
+import importlib
+import io
+import logging
+import os
+import shutil
+import sys
 import textwrap
-import re
-import typing
-import tempfile
-from subprocess import check_call
+import subprocess
 import zipfile
 
+from ._apiview import ApiView, APIViewEncoder, Navigation, Kind, NavigationTag
+from ._constants import INIT_PY_FILE, TOP_LEVEL_WHEEL_FILE
+from ._helpers import parse_args
 
-from apistub._apiview import ApiView, APIViewEncoder, Navigation, Kind, NavigationTag
-
-INIT_PY_FILE = "__init__.py"
-TOP_LEVEL_WHEEL_FILE = "top_level.txt"
 
 logging.getLogger().setLevel(logging.ERROR)
 
 
 class StubGenerator:
     def __init__(self):
-        parser = argparse.ArgumentParser(
-            description="Parse a python package and generate json token file to be supplied to API review tool"
-        )
-        parser.add_argument(
-            "--pkg-path", required=True, help=("Package root path"),
-        )
-        parser.add_argument(
-            "--temp-path", 
-            help=("Temp path to extract package"),
-            default=tempfile.gettempdir(),
-        )
-        parser.add_argument(
-            "--out-path",
-            default=os.getcwd(),
-            help=("Path to generate json file with parsed tokens"),
-        )
-        parser.add_argument(
-            "--verbose",
-            help=("Enable verbose logging"),
-            default=False,
-            action="store_true",
-        )
+        args = parse_args()
 
-        parser.add_argument(
-            "--hide-report",
-            help=("Hide diagnostic report"),
-            default=False,
-            action="store_true",
-        )
-
-        parser.add_argument(
-            "--filter-namespace",
-            help=("Generate Api view only for a specific namespace"),
-        )
-        
-
-        args = parser.parse_args()
         if not os.path.exists(args.pkg_path):
             logging.error("Package path [{}] is invalid".format(args.pkg_path))
             exit(1)
@@ -91,7 +47,7 @@ class StubGenerator:
         self.filter_namespace = ''
         if args.filter_namespace:
             self.filter_namespace = args.filter_namespace
-            
+
 
     def generate_tokens(self):
         # Extract package to temp directory if it is wheel or sdist
@@ -109,7 +65,7 @@ class StubGenerator:
 
         logging.debug("Installing package from {}".format(self.pkg_path))
         self._install_package(pkg_name)
-        
+
         if self.filter_namespace:
             logging.info("Namespace filter is passed. Filtering modules within namespace :{}".format(self.filter_namespace))
             namespace = self.filter_namespace
@@ -260,9 +216,9 @@ class StubGenerator:
         # Uninstall the package and reinstall it to parse so inspect can get members in package
         # We don't want to force reinstall to avoid reinstalling other dependent packages
         commands = [sys.executable, "-m", "pip", "uninstall", pkg_name, "--yes", "-q"]
-        check_call(commands)
+        subprocess.check_call(commands)
         commands = [sys.executable, "-m", "pip", "install", self.pkg_path , "-q"]
-        check_call(commands)
+        subprocess.check_call(commands)
 
 
 class NodeIndex:

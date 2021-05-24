@@ -1,5 +1,3 @@
-import logging
-
 # Special default values that should not be treated as string literal
 SPECIAL_DEFAULT_VALUES = ["None", "..."]
 
@@ -31,7 +29,7 @@ class ArgType:
     def generate_tokens(self, apiview, function_id, add_line_marker):
         """Generates token for the node and it's children recursively and add it to apiview
         :param ~ApiVersion apiview: The ApiView
-        :param str function_id: Module level Unique ID created for function 
+        :param str function_id: Module level Unique ID created for function
         :param bool include_default: Optional flag to indicate to include/exclude default value in tokens
         """
         # Add arg name

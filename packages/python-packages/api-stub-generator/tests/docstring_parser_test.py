@@ -129,7 +129,6 @@ docstring_async_paging = """
 
 
 class TestDocStringParser:
-
     def _test_return_type(self, docstring, expected):
         docstring_parser = DocstringParser(docstring)
         assert expected == docstring_parser.find_return_type()
@@ -141,7 +140,7 @@ class TestDocStringParser:
     def _test_find_args(self, docstring, expected_args, is_keyword=False):
         parser = DocstringParser(docstring)
         expected = {arg.argname: arg for arg in expected_args}
-        for arg in parser.find_args('keyword' if is_keyword else 'param'):
+        for arg in parser.find_args("keyword" if is_keyword else "param"):
             assert arg.argname in expected and arg.argtype == expected[arg.argname].argtype
 
     def _test_keyword_type(self, docstring, varname, expected):
@@ -174,7 +173,11 @@ class TestDocStringParser:
         self._test_variable_type(docstring_param_type, "val", "str")
 
     def test_param_type_private(self):
-        self._test_variable_type(docstring_param_type_private, "client", "~azure.search.documents._search_index_document_batching_client_base.SearchIndexDocumentBatchingClientBase")
+        self._test_variable_type(
+            docstring_param_type_private,
+            "client",
+            "~azure.search.documents._search_index_document_batching_client_base.SearchIndexDocumentBatchingClientBase",
+        )
 
     def test_params(self):
         args = [ArgType("name", "str"), ArgType("val", "str")]
@@ -191,15 +194,27 @@ class TestDocStringParser:
         self._test_variable_type(docstring_param_typing_optional, "group", "typing.Optional[str]")
 
     def test_nested_union_type(self):
-        self._test_variable_type(docstring_param_nested_union, "dummyarg", "typing.Union[~azure.eventhub.EventDataBatch, List[~azure.eventhub.EventData]]")
+        self._test_variable_type(
+            docstring_param_nested_union,
+            "dummyarg",
+            "typing.Union[~azure.eventhub.EventDataBatch, List[~azure.eventhub.EventData]]",
+        )
 
     def test_multi_text_analytics_type(self):
-        self._test_variable_type(docstring_multi_complex_type, "documents", "list[str] or list[~azure.ai.textanalytics.DetectLanguageInput] or list[dict[str, str]]")
+        self._test_variable_type(
+            docstring_multi_complex_type,
+            "documents",
+            "list[str] or list[~azure.ai.textanalytics.DetectLanguageInput] or list[dict[str, str]]",
+        )
         self._test_keyword_type(docstring_multi_complex_type, "model_version", "str")
 
     def test_multi_attestation_type(self):
-        self._test_keyword_type(docstring_multi_complex_type2, "options", "azure.security.attestation.TokenValidationOptions")
-        self._test_keyword_type(docstring_multi_complex_type2, "signers", "list[azure.security.attestation.AttestationSigner]")
+        self._test_keyword_type(
+            docstring_multi_complex_type2, "options", "azure.security.attestation.TokenValidationOptions"
+        )
+        self._test_keyword_type(
+            docstring_multi_complex_type2, "signers", "list[azure.security.attestation.AttestationSigner]"
+        )
 
     def test_paging_type(self):
         docstring_parser = DocstringParser(docstring_sync_paging)

@@ -3,14 +3,10 @@ import os, re
 
 PACKAGE_NAME = "test-module"
 
-DESCRIPTION = (
-    "A fake module for testing api-stub-gen"
-)
+DESCRIPTION = "A fake module for testing api-stub-gen"
 
 with open(os.path.join("src", "_version.py"), "r") as fd:
-    version = re.search(
-        r'^VERSION\s*=\s*[\'"]([^\'"]*)[\'"]', fd.read(), re.MULTILINE
-    ).group(1)
+    version = re.search(r'^VERSION\s*=\s*[\'"]([^\'"]*)[\'"]', fd.read(), re.MULTILINE).group(1)
 
 if not version:
     raise RuntimeError("Cannot find version information")

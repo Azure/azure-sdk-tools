@@ -1,4 +1,4 @@
-from .token_kind import TokenKind
+from ._token_kind import TokenKind
 
 
 class Token:

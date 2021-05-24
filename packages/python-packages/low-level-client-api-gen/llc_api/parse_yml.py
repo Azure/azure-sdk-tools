@@ -3,12 +3,12 @@ import json
 from .llc_view_models import ParameterView, LLCOperationView, LLCClientView 
 
 #Allow for user to input file names
-# YAML_FILE = input("Enter YAML file name: ") + ".yaml"
+YAML_FILE = input("Enter YAML file path: ")
 # OUTPUT_FILE = input("Enter OUTPUT file name: ") + ".json"
-YAML_FILE = "code-model-v4-no-tags.yaml"
+#YAML_FILE = "code-model-v4-no-tags.yaml"
 OUTPUT_FILE = "llc_api_view.json"
 
-def parse_yaml(self):
+def parse_yaml():
     # open the yaml file and load data
     with open(YAML_FILE) as f:
         data = yaml.safe_load(f)

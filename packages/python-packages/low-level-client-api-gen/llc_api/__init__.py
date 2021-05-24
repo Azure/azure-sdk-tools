@@ -15,7 +15,8 @@ __all__ = [
         "NavigationTag",
         "Kind",
         "Diagnostic",
-        "parse_yaml"
+        "parse_yaml",
+        "out_path"
 ]
 
 

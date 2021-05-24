@@ -1,6 +1,7 @@
 import re
 import inspect
 import logging
+from typing import Optional
 from ._argtype import ArgType
 
 
@@ -96,6 +97,7 @@ class DocstringParser:
         return params
 
     def parse(self):
+        # type: () -> None
         """Returns a parsed docstring object
         """
         if not self.docstring:
@@ -108,7 +110,8 @@ class DocstringParser:
 
 
 class TypeHintParser:
-    """TypeHintParser helps to find return type from type hint is type hint is available
+    """TypeHintParser helps to find return type from type hint if type hint is available
+
     :param object: obj
     """
 
@@ -121,7 +124,8 @@ class TypeHintParser:
             logging.error("Failed to get source of object {}".format(obj))
 
     def find_return_type(self):
-        """Returns return type is type hint is available
+        # type: () -> Optional[str]
+        """Returns return type if type hint is available
         """
         if not self.code:
             return None
@@ -131,5 +135,4 @@ class TypeHintParser:
         # Don't return None as string literal
         if ret_type and ret_type != "None":
             return ret_type.groups()[-1]
-        else:
-            return None
+        return None

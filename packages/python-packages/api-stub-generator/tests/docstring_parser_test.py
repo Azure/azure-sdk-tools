@@ -52,7 +52,7 @@ docstring_param_type1 = """
 :param pipe_id: pipeline id
 :type pipe_id: Union[str, int]
 :param data: Dummy data
-:type data: str or 
+:type data: str or
 ~azure.dummy.datastream
 """
 
@@ -98,10 +98,33 @@ docstring_multi_complex_type = """
                 :caption: Detecting language in a batch of documents.
 """
 
+docstring_multi_complex_type2 = """ Validate the attestation token based on the options specified in the
+         :class:`TokenValidationOptions`.
+
+        :param azure.security.attestation.TokenValidationOptions options: Options to be used when validating
+            the token.
+        :keyword list[azure.security.attestation.AttestationSigner] signers: Potential signers for the token.
+            If the signers parameter is specified, validate_token will only
+            consider the signers as potential signatories for the token, otherwise
+            it will consider attributes in the header of the token.
+        :return bool: Returns True if the token successfully validated, False
+            otherwise.
+
+        :raises: azure.security.attestation.AttestationTokenValidationException
+        """
+
 docstring_param_type_private = """
 :param str name: Dummy name param
 :param client: Value type
 :type client: ~azure.search.documents._search_index_document_batching_client_base.SearchIndexDocumentBatchingClientBase
+"""
+
+docstring_sync_paging = """
+:rtype: ~azure.core.paging.ItemPaged[~azure.containerregistry.ArtifactTagProperties]
+"""
+
+docstring_async_paging = """
+:rtype: ~azure.core.async_paging.AsyncItemPaged[~azure.containerregistry.ArtifactManifestProperties]
 """
 
 
@@ -115,20 +138,26 @@ class TestDocStringParser:
         docstring_parser = DocstringParser(docstring)
         assert expected == docstring_parser.find_type("(type|keywordtype|paramtype|vartype)", varname)
 
-    def _test_find_args(self, docstring, expected_args, is_keyword = False):
+    def _test_find_args(self, docstring, expected_args, is_keyword=False):
         parser = DocstringParser(docstring)
-        expected = {}
-        for arg in expected_args:
-            expected[arg.argname] = arg
+        expected = {arg.argname: arg for arg in expected_args}
         for arg in parser.find_args('keyword' if is_keyword else 'param'):
             assert arg.argname in expected and arg.argtype == expected[arg.argname].argtype
-            
+
+    def _test_keyword_type(self, docstring, varname, expected):
+        parser = DocstringParser(docstring)
+        args = parser.find_args(arg_type="keyword")
+        assert args is not None
+        for arg in args:
+            if arg.argname == varname:
+                assert arg.argtype == expected
+
     def test_return_builtin_return_type(self):
         self._test_return_type(docstring_standard_return_type, "str")
 
     def test_return_union_return_type(self):
         self._test_return_type(docstring_Union_return_type1, "Union[str, int]")
-    
+
     def test_return_union_return_type1(self):
         self._test_return_type(docstring_Union_return_type2, "Union(str, int)")
 
@@ -150,7 +179,7 @@ class TestDocStringParser:
     def test_params(self):
         args = [ArgType("name", "str"), ArgType("val", "str")]
         self._test_find_args(docstring_param_type, args)
-    
+
     def test_param_optional_type(self):
         self._test_variable_type(docstring_param_type1, "pipe_id", "Union[str, int]")
 
@@ -166,3 +195,18 @@ class TestDocStringParser:
 
     def test_multi_text_analytics_type(self):
         self._test_variable_type(docstring_multi_complex_type, "documents", "list[str] or list[~azure.ai.textanalytics.DetectLanguageInput] or list[dict[str, str]]")
+        self._test_keyword_type(docstring_multi_complex_type, "model_version", "str")
+
+    def test_multi_attestation_type(self):
+        self._test_keyword_type(docstring_multi_complex_type2, "options", "azure.security.attestation.TokenValidationOptions")
+        self._test_keyword_type(docstring_multi_complex_type2, "signers", "list[azure.security.attestation.AttestationSigner]")
+
+    def test_paging_type(self):
+        docstring_parser = DocstringParser(docstring_sync_paging)
+        expected = "ItemPaged[ArtifactManifestProperties]"
+        assert expected == docstring_parser.find_return_type()
+
+    def test_async_paging_type(self):
+        docstring_parser = DocstringParser(docstring_async_paging)
+        expected = "AsyncItemPaged[ArtifactManifestProperties]"
+        assert expected == docstring_parser.find_return_type()

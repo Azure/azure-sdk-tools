@@ -47,7 +47,7 @@ Services:
   Tests:
   - Test: no-op
     Arguments:
-    - --warmup 0 --duration 1 --foo
+    - --warmup 0 --duration 1
     TestNames:
       Net: NoOp
       Java: noop

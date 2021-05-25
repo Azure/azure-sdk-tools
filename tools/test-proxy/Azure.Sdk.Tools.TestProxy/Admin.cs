@@ -49,6 +49,17 @@ namespace Azure.Sdk.Tools.TestProxy
         }
 
 
+        [HttpGet]
+        public ContentResult Actions()
+        {
+            return new ContentResult
+            {
+                ContentType = "text/html",
+                Content = "<div>Hello World</div>"
+            };
+        }
+
+
         [HttpPost]
         public void AddTransform()
         {
@@ -136,7 +147,6 @@ namespace Azure.Sdk.Tools.TestProxy
                     foreach (var param in paramsSet)
                     {
                         if (body.RootElement.TryGetProperty(param, out var jsonElement)){
-
                             var valueResult = jsonElement.GetString();
                             arg_list.Add((object)valueResult);
                         }

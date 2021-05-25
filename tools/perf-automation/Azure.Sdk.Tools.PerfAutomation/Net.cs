@@ -91,6 +91,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             var result = await Util.RunAsync("dotnet", processArguments, WorkingDirectory, throwOnError: false);
 
+            // Completed 693,696 operations in a weighted-average of 1.00s (692,328.31 ops/s, 0.000 s/op)
             var match = Regex.Match(result.StandardOutput, @"\((.*) ops/s", RegexOptions.IgnoreCase | RegexOptions.RightToLeft);
 
             var opsPerSecond = -1d;
@@ -130,21 +131,5 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             return Task.CompletedTask;
         }
-
-        /*
-        === Warmup ===
-        Current         Total           Average
-        622025          622025          617437.38
-
-        === Results ===
-        Completed 622,025 operations in a weighted-average of 1.01s (617,437.38 ops/s, 0.000 s/op)
-
-        === Test ===
-        Current         Total           Average
-        693696          693696          692328.31
-
-        === Results ===
-        Completed 693,696 operations in a weighted-average of 1.00s (692,328.31 ops/s, 0.000 s/op)
-        */
     }
 }

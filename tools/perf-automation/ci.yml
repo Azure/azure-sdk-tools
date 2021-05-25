@@ -1,0 +1,29 @@
+# NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
+trigger:
+  branches:
+    include:
+      - master
+      - main
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - tools/perf-automation
+
+pr:
+  branches:
+    include:
+      - master
+      - main
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - tools/perf-automation
+
+stages:
+  - template: ../../eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
+    parameters:
+      ToolDirectory: perf-automation

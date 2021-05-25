@@ -36,33 +36,32 @@ param (
 )
 
 Write-Verbose "Logging in"
-az cloud set --name $Environment
-az login --service-principal --username=$ProvisionerApplicationId --password=$ProvisionerApplicationSecret --tenant=$TenantId
-Write-Verbose "Setting account"
-az account set --subscription=$SubscriptionId
+$provisionerSecret = ConvertTo-SecureString -String $ProvisionerApplicationSecret -AsPlainText -Force
+$provisionerCredential = [System.Management.Automation.PSCredential]::new($ProvisionerApplicationId, $provisionerSecret)
+Connect-AzAccount -Force -Tenant $TenantId -Credential $provisionerCredential -ServicePrincipal -Environment $Environment
+Select-AzSubscription -Subscription $SubscriptionId
 
 Write-Verbose "Fetching groups"
-$allGroups = az group list | ConvertFrom-Json
+$allGroups = Get-AzResourceGroup
 
 Write-Host "Total Resource Groups: $($allGroups.Count)"
 
 $now = [DateTime]::UtcNow
 
-$noDeleteAfter = $allGroups.Where({ !($_.tags -and $_.tags.PSObject.Members.name -contains "DeleteAfter") })
+$noDeleteAfter = $allGroups.Where({ $_.Tags.Keys -notcontains "DeleteAfter" })
 Write-Host "Subscription contains $($noDeleteAfter.Count) resource groups with no DeleteAfter tags"
-$noDeleteAfter | ForEach-Object { Write-Verbose $_.name }
+$noDeleteAfter | ForEach-Object { Write-Verbose $_.ResourceGroupName }
 
-$hasDeleteAfter = $allGroups.Where({ $_.tags -and $_.tags.PSObject.Members.name -contains "DeleteAfter" })
-
-$toDelete = $hasDeleteAfter.Where({ $now -gt [DateTime]$_.tags.DeleteAfter })
-
+$hasDeleteAfter = $allGroups.Where({ $_.Tags.Keys -contains "DeleteAfter" })
+Write-Host "Count $($hasDeleteAfter.Count)"
+$toDelete = $hasDeleteAfter.Where({ $now -gt [DateTime]$_.Tags.DeleteAfter })
 Write-Host "Groups to delete: $($toDelete.Count)"
 
 foreach ($rg in $toDelete)
 {
-  if ($Force -or $PSCmdlet.ShouldProcess("$($rg.Name) (UTC: $($rg.tags.DeleteAfter))", "Delete Group")) {
+  if ($Force -or $PSCmdlet.ShouldProcess("$($rg.ResourceGroupName) (UTC: $($rg.Tags.DeleteAfter))", "Delete Group")) {
     Write-Verbose "Deleting group: $($rg.Name)"
-    Write-Verbose "  tags $($rg.tags)"
-    az group delete --name $rg.Name --yes --no-wait
+    Write-Verbose "  tags $($rg.Tags | ConvertTo-Json -Compress)"
+    Write-Host ($rg | Remove-AzResourceGroup -Force -AsJob).Name
   }
 }

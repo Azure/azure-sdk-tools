@@ -88,6 +88,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             );
 
             // TODO: Why does Python perf framework write to StdErr instead of StdOut?
+            // Completed 5,718,534 operations in a weighted-average of 2.00s (2,858,373.57 ops/s, 0.000 s/op)
             var match = Regex.Match(processResult.StandardError, @"\((.*) ops/s", RegexOptions.IgnoreCase | RegexOptions.RightToLeft);
             double opsPerSecond = -1;
             if (match.Success)
@@ -111,21 +112,5 @@ namespace Azure.Sdk.Tools.PerfAutomation
             Util.DeleteIfExists(env);
             return Task.CompletedTask;
         }
-
-        /*
-        === Warmup ===
-        Current         Total           Average
-        3103684         3103684         2879624.40
-
-        === Results ===
-        Completed 5,735,961 operations in a weighted-average of 2.00s (2,867,847.51 ops/s, 0.000 s/op)
-
-        === Test ===
-        Current         Total           Average
-        3116721         3116721         2854769.61
-
-        === Results ===
-        Completed 5,718,534 operations in a weighted-average of 2.00s (2,858,373.57 ops/s, 0.000 s/op)
-        */
     }
 }

@@ -18,6 +18,7 @@ namespace Azure.Sdk.Tools.HttpFaultInjector.StorageBlobsSample
                 Transport = new FaultInjectionTransport(HttpClientTransport.Shared, new Uri("https://localhost:7778"))
             };
             
+            // Use a single fast retry instead of the default settings
             blobClientOptions.Retry.Mode = RetryMode.Fixed;
             blobClientOptions.Retry.Delay = TimeSpan.Zero;
             blobClientOptions.Retry.MaxRetries = 1;

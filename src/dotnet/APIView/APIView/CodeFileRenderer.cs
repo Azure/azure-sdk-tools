@@ -29,7 +29,7 @@ namespace ApiView
             foreach (var token in node)
             {
                 // Skip all tokens till range end
-                if (isSkipDiffRange && token.Kind != CodeFileTokenKind.SkipDiffRangeEnd)
+                if (enableSkipDiff && isSkipDiffRange && token.Kind != CodeFileTokenKind.SkipDiffRangeEnd)
                     continue;
 
                 if (!showDocumentation && isDocumentationRange && token.Kind != CodeFileTokenKind.DocumentRangeEnd)
@@ -62,12 +62,7 @@ namespace ApiView
                         break;
 
                     case CodeFileTokenKind.SkipDiffRangeStart:
-                        // Skip only when creating diff text
-                        // Tokens should not be skipped from html renderring
-                        if (enableSkipDiff)
-                        {
-                            isSkipDiffRange = true;
-                        }
+                        isSkipDiffRange = true;
                         break;
 
                     case CodeFileTokenKind.SkipDiffRangeEnd:

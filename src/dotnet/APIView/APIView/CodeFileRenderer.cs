@@ -7,9 +7,16 @@ using System.Text;
 
 namespace ApiView
 {
+    public enum RendererType
+    {
+        Text,
+        Html
+    }
+
     public class CodeFileRenderer
     {
         public static CodeFileRenderer Instance = new CodeFileRenderer();
+        public virtual RendererType RenderringType => RendererType.Text;
 
         public CodeLine[] Render(CodeFile file, bool showDocumentation = false)
         {
@@ -64,7 +71,7 @@ namespace ApiView
                     case CodeFileTokenKind.SkipDiffRangeStart:
                         // Skip only when creating diff text
                         // Tokens should not be skipped from html renderring
-                        if (GetType() == typeof(CodeFileRenderer))
+                        if (RenderringType == RendererType.Text)
                         {
                             isSkipDiffRange = true;
                         }

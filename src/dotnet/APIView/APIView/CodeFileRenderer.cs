@@ -7,25 +7,18 @@ using System.Text;
 
 namespace ApiView
 {
-    public enum RendererType
-    {
-        Text,
-        Html
-    }
-
     public class CodeFileRenderer
     {
         public static CodeFileRenderer Instance = new CodeFileRenderer();
-        public virtual RendererType RenderringType => RendererType.Text;
 
-        public CodeLine[] Render(CodeFile file, bool showDocumentation = false)
+        public CodeLine[] Render(CodeFile file, bool showDocumentation = false, bool enableSkipDiff = false)
         {
             var list = new List<CodeLine>();
-            Render(list, file.Tokens, showDocumentation);
+            Render(list, file.Tokens, showDocumentation, enableSkipDiff);
             return list.ToArray();
         }
 
-        private void Render(List<CodeLine> list, IEnumerable<CodeFileToken> node, bool showDocumentation)
+        private void Render(List<CodeLine> list, IEnumerable<CodeFileToken> node, bool showDocumentation, bool enableSkipDiff)
         {
             var stringBuilder = new StringBuilder();
             string currentId = null;
@@ -71,7 +64,7 @@ namespace ApiView
                     case CodeFileTokenKind.SkipDiffRangeStart:
                         // Skip only when creating diff text
                         // Tokens should not be skipped from html renderring
-                        if (RenderringType == RendererType.Text)
+                        if (enableSkipDiff)
                         {
                             isSkipDiffRange = true;
                         }

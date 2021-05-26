@@ -13,8 +13,6 @@ namespace ApiView
         private const string DOCUMENTATION_SPAN_END = "</span>";
         private readonly bool _readOnly;
 
-        public override RendererType RenderringType => RendererType.Html;
-
         protected CodeFileHtmlRenderer(bool readOnly)
         {
             _readOnly = readOnly;

@@ -3,12 +3,18 @@ import logging
 import importlib
 import inspect
 from typing import Any, Dict
+import os
+import textwrap
+import ast
+import io
 
-import yaml
 
 from ._token import Token
 from ._token_kind import TokenKind
 from ._diagnostic import Diagnostic
+
+filter_function = lambda x: isinstance(x, FunctionNode)
+filter_class = lambda x: isinstance(x, ClassNode)
 
 JSON_FIELDS = ["Name", "Version", "VersionString", "Navigation", "Tokens", "Diagnostics", "PackageName"]
 PARAM_FIELDS = ["name", "type", "default", "optional", "indent"]
@@ -23,14 +29,18 @@ TYPE_OR_SEPERATOR = " or "
 SOURCE_LINK_NOT_AVAILABLE = "Source definition link is not available for [{0}]. Please check and ensure type is fully qualified name in docstring"
 RETURN_TYPE_MISMATCH = "Return type in type hint is not matching return type in docstring"
 
+TOP_LEVEL_WHEEL_FILE = "top_level.txt"
+INIT_PY_FILE = "__init__.py"
+
+logging.getLogger().setLevel(logging.ERROR)
+
 class FormattingClass:
     def __init__(self):
         pass
  
-    def add_whitespace(self):
-        self.indent=1
-        if self.indent:
-            self.add_token(Token(" " * (self.indent * 4)))
+    def add_whitespace(self,indent):
+        if indent:
+            self.add_token(Token(" " * (indent * 4)))
 
     def add_space(self):
         self.add_token(Token(" ", TokenKind.Whitespace))
@@ -58,43 +68,55 @@ class FormattingClass:
         token.DefinitionId = id
         self.add_token(token)
     
-    def add_typename(self, id, text):
+    def add_typename(self, id, text, nav):
         token = Token(text, TokenKind.TypeName)
+        token.DefinitionId = id
+        token.NavigateToId = nav
+        self.add_token(token)
+    
+    def add_stringliteral(self, id, text):
+        token = Token(text, TokenKind.StringLiteral)
         token.DefinitionId = id
         self.add_token(token)
 
-    def add_keyword(self, keyword, prefix_space=False, postfix_space=False):
-        if prefix_space:
-            self.add_space()
-        self.add_token(Token(keyword, TokenKind.Keyword))
-        if postfix_space:
-            self.add_space()
+    def add_literal(self, id, text):
+        token = Token(text, TokenKind.Literal)
+        token.DefinitionId = id
+        self.add_token(token)
+
+    def add_keyword(self, id, keyword):
+        token = Token(keyword, TokenKind.Keyword)
+        token.DefinitionId = id
+        self.add_token(token)
+     
 
     def add_navigation(self, navigation):
         self.Navigation.append(navigation)
 
 class LLCClientView(FormattingClass):
     """Entity class that holds LLC view for all namespaces within a package"""
-    def __init__(self, name="",endpoint="endpoint",endpoint_type="string",credential="credential",credential_type="Azure Credential"):
-        self.Name = name
+    def __init__(self, pkg_name="",endpoint="endpoint",endpoint_type="string",credential="credential",credential_type="Azure Credential"):
+        self.Name = pkg_name
+        self.module_dict = {}
         self.Language = "LLC"
         self.Tokens = []
         self.Operations = []
+        self.Operation_Group=[]
         self.Navigation = []
-        self.Diagnostic = []
-        self.PackageName = name
+        self.Diagnostics = []
+        self.PackageName = pkg_name
         self.indent = 0 
         self.endpoint_type = endpoint_type;
         self.endpoint = endpoint;
         self.credential = credential;  
         self.credential_type = credential_type;  
         self.add_new_line(2)
-        self.Client_Name = name
+        self.namespace = "Azure."+pkg_name
 
     @classmethod
     def from_yaml(cls,yaml_data: Dict[str,Any]):
         return cls(
-            name = yaml_data["info"]["title"],
+            pkg_name = yaml_data["info"]["title"],
             endpoint = yaml_data["globalParameters"][0]["language"]["default"]["name"],
             endpoint_type = yaml_data["globalParameters"][0]["schema"]["type"] ,
         )
@@ -116,61 +138,67 @@ class LLCClientView(FormattingClass):
 
     def add_operation(self,operation):
         self.Operations.append(operation)
+
+    def add_operation_group(self,operation_group):
+        self.Operation_Group.append(operation_group)
     
     def to_token(self): 
     #Create view 
-
         #Overall Name
-        self.add_keyword(self.Name)
+        self.add_keyword(None,self.namespace)
         self.add_space()
         self.add_punctuation("{")
         self.add_new_line(1)
         # self.add_new_line(1)
 
         #Name of client
-        self.add_whitespace()
-        self.add_typename(None,self.Name)
+        self.add_whitespace(1)
+        self.add_typename(None,self.Name,self.namespace)
         self.add_punctuation("(")
-        self.add_text(None,self.endpoint_type)
+        self.add_stringliteral(None,self.endpoint_type)
         self.add_space()
         self.add_text(None,self.endpoint)
 
         self.add_punctuation(",")
         self.add_space()
-        self.add_text(None,self.credential_type)
+        self.add_stringliteral(None,self.credential_type)
         self.add_space()
         self.add_text(None,self.credential)
  
         self.add_punctuation(")")
         self.add_new_line(1)
 
-        #Set up operations and add to token
-        for operation in self.Operations:
+        #Set Navigation
+        navigation = Navigation(self.namespace, None)
+        navigation.set_tag(NavigationTag(Kind.type_package))
+
+        for operation in self.Operation_Group:
+            #Add children
+            child_nav = Navigation(operation.operation_group, None)
+            child_nav.set_tag(NavigationTag(Kind.type_class))
+            navigation.add_child(child_nav)
+            navigation1 = Navigation(operation, self.namespace+operation.operation_group)
+            navigation1.set_tag(NavigationTag(Kind.type_class))
+
             operation.to_token()
             my_ops = operation.get_tokens()
             for o in my_ops:
                 self.add_token(o)
-
+      
+        #Set up operations and add to token
+            for op in operation.operations:
+                child_nav1 = Navigation(op.operation, self.namespace+op.operation)
+                child_nav1.set_tag(NavigationTag(Kind.type_method))
+                child_nav.add_child(child_nav1)
+            # operation.to_token()
+            # my_ops = operation.get_tokens()
+            # for o in my_ops:
+            #     self.add_token(o)
+        self.add_new_line()
         self.add_punctuation("}")
 
-        #Create heiarchy map for view, linkage stuff
-        self.module_dict = {}
-       
-        navigation = Navigation(self.Name, None)
-        navigation.set_tag(NavigationTag(Kind.type_package))
         self.add_navigation(navigation)
 
-        # Generate tokens
-        modules = self.module_dict.keys()
-        for m in modules:
-            # Generate and add token to APIView
-            logging.debug("Generating tokens for module {}".format(m))
-            self.module_dict[m].to_json()
-            # Add navigation info for this modules. navigation info is used to build tree panel in API tool
-            module_nav = self.module_dict[m].get_navigation()
-            if module_nav:
-                navigation.add_child(module_nav)
-            #Link things to each other
         return self.Tokens  
 
     def to_json(self):
@@ -185,34 +213,97 @@ class LLCClientView(FormattingClass):
                 "NavigateToId": obj_dict["Tokens"][i].NavigateToId, "DefinitionId": obj_dict["Tokens"][i].DefinitionId}
 
             #Remove Null Values from Tokens
-            obj_dict["Tokens"][i] = {key:value for key,value in obj_dict["Tokens"][i].items() if value is not None}
+            # obj_dict["Tokens"][i] = {key:value for key,value in obj_dict["Tokens"][i].items() if value is not None}
+        
+        return obj_dict
+    
+    
+class LLCOperationGroupView(FormattingClass):
+    def __init__(self, operation_group_name, operations, namespace):
+        self.operation_group=operation_group_name;
+        self.operations=operations; #parameterview list
+        self.Tokens =[]
+        self.indent = 0 
+        self.namespace = namespace
+    
+    @classmethod
+    def from_yaml(cls,yaml_data: Dict[str,Any],op_group,name): 
+            o = []
+            for i in range(0,len(yaml_data["operationGroups"][op_group]["operations"])):
+                o.append(LLCOperationView.from_yaml(yaml_data,op_group,i,name))
+            return cls(
+                operation_group_name = yaml_data["operationGroups"][op_group]["language"]["default"]["name"],
+                operations = o,
+                namespace=name,
+            )
+
+    def get_tokens(self):
+            return self.Tokens
+
+    def add_token(self, token):
+        self.Tokens.append(token)
+
+    #have a to_token to create the line for parameters
+    def to_token(self):
+
+        #Each operation will indent itself by 4
+        self.add_new_line()
+        
+
+        if self.operation_group:
+            self.add_whitespace(1)
+            #Operation Name token
+            self.add_typename(self.namespace+self.operation_group,self.operation_group,self.namespace+self.operation_group)
+
+            self.add_new_line()
+    
+
+            for operation in range(0,len(self.operations)):
+                if self.operations[operation]:
+                    self.operations[operation].to_token()
+                    if operation==0:
+                        self.add_whitespace(2)
+                        self.add_punctuation("{")
+                    self.add_new_line()
+                    self.add_whitespace(2)
+                    for t in self.operations[operation].get_tokens():
+                        self.add_token(t)
+            self.add_whitespace(2)
+            self.add_punctuation("}")
+        else:
+            for operation in range(0,len(self.operations)):
+                if self.operations[operation]:
+                    self.operations[operation].to_token()
+                    for t in self.operations[operation].get_tokens():
+                        self.add_token(t)
+
+       
+
+    def to_json(self):
+        obj_dict={}
+        self.to_token()
+        for key in OP_FIELDS:
+            obj_dict[key] = self.__dict__[key]
         return obj_dict
 
 
-class LLCOperationGroupView(FormattingClass):
-  def __init__(self, operation_name, parameters):
-        self.operation=operation_name;
-        self.parameters=parameters; #parameterview list
-        self.Tokens =[]
-        self.indent = 0 
-
-
-
 class LLCOperationView(FormattingClass):
-    def __init__(self, operation_name, parameters):
+    def __init__(self, operation_name, parameters,namespace):
         self.operation=operation_name;
         self.parameters=parameters; #parameterview list
         self.Tokens =[]
         self.indent = 0 
+        self.namespace = namespace
 
     @classmethod
-    def from_yaml(cls,yaml_data: Dict[str,Any],num): 
+    def from_yaml(cls,yaml_data: Dict[str,Any],op_group,num,name): 
             p = []
-            for i in range(0,len(yaml_data["operationGroups"][0]["operations"][num]["signatureParameters"])):
-                p.append(LLCParameterView.from_yaml(yaml_data["operationGroups"][0]["operations"][num],i))
+            for i in range(0,len(yaml_data["operationGroups"][op_group]["operations"][num]["signatureParameters"])):
+                p.append(LLCParameterView.from_yaml(yaml_data["operationGroups"][op_group]["operations"][num],i))
             return cls(
-                operation_name = yaml_data["operationGroups"][0]["operations"][num]["language"]["default"]["name"],
+                operation_name = yaml_data["operationGroups"][op_group]["operations"][num]["language"]["default"]["name"],
                 parameters = p,
+                namespace = name
             )
 
     def get_tokens(self):
@@ -225,10 +316,10 @@ class LLCOperationView(FormattingClass):
     def to_token(self):
 
         #Each operation will indent itself by 4
-        self.add_whitespace()
+        self.add_whitespace(1)
 
         #Operation Name token
-        self.add_typename(None,self.operation)
+        self.add_typename(self.namespace+self.operation,self.operation, self.namespace+self.operation)
 
         #Set up operation parameters
         if len(self.parameters)==0:
@@ -239,13 +330,14 @@ class LLCOperationView(FormattingClass):
             if self.parameters[param_num]:
                 self.parameters[param_num].to_token()
             if param_num==0:
+                self.add_new_line()
+                self.add_whitespace(3)
                 self.add_punctuation("(")
             
-            #If not the first, put a space after the comma
-            if param_num!=0: self.add_space()
-
+            self.add_new_line()
             #Add in parameter tokens
             if self.parameters[param_num]:
+                self.add_whitespace(4)
                 for t in self.parameters[param_num].get_tokens():
                     self.add_token(t)
 
@@ -254,9 +346,12 @@ class LLCOperationView(FormattingClass):
             try:
                 self.parameters[param_num+1]
                 self.add_punctuation(",")
+                
             
             #Create a new line for the next operation
             except: 
+                self.add_new_line()
+                self.add_whitespace(3)
                 self.add_punctuation(")")
                 self.add_new_line()
         #Need to consider operation groups next
@@ -301,11 +396,11 @@ class LLCParameterView(FormattingClass):
     def to_token(self):
 
         #Create parameter type token
-        self.add_text(None,self.type)
+        self.add_stringliteral(None,self.type)
 
         #If parameter is optional, token for ? created
         if not self.required:
-            self.add_text(None,"?")
+            self.add_stringliteral(None,"?")
 
         self.add_space()
 
@@ -355,17 +450,4 @@ class Navigation:
 
     def add_child(self, child):
         self.ChildItems.append(child)
-
-def is_valid_type_name(type_name):
-    try:
-        module_end_index = type_name.rfind(".")
-        if module_end_index > 0:
-            module_name = type_name[:module_end_index]
-            class_name = type_name[module_end_index+1:]
-            mod = importlib.import_module(module_name)
-            return class_name in [x[0] for x in inspect.getmembers(mod)]
-    except:
-        logging.error("Failed to import {}".format(type_name))    
-    return False
-    
 

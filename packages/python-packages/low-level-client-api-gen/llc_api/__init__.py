@@ -2,15 +2,17 @@
 # Licensed under the MIT License.
 
 import os
-from .llc_view_models import LLCClientView, LLCOperationView, LLCParameterView
+import json
+from .llc_view_models import LLCClientView, LLCOperationView, LLCParameterView,LLCOperationGroupView
 
 from .version import VERSION
-from .parse_yml import parse_yaml, out_path
+from .parse_yml import llc_generator
 
 __all__ = [
         'LLCClientView',
         'LLCOperationView',
         'LLCParameterView',
+        "LLCOperationGroupView",
         "Navigation",
         "NavigationTag",
         "Kind",
@@ -21,6 +23,6 @@ __all__ = [
 
 
 def console_entry_point():
-    main_view = parse_yaml()
-    # Write to JSON file
-    out_path(main_view)
+        llc_gen = llc_generator()
+        llc_gen.parse_yaml()
+    

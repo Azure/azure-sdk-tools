@@ -41,8 +41,8 @@ public class App {
             upstream.getFragment());
 
         return httpClient
-            // Set "Host" header to upstream host
-            .headers(headers -> headers.add("Host", upstream.getHost()))
+            // Set "X-Upstream-Host" header to upstream host
+            .headers(headers -> headers.add("X-Upstream-Host", upstream.getHost()))
             .get()
             // Set URI to fault injector
             .uri(faultInjector.toString())

@@ -17,6 +17,28 @@ You can invoke the tool using the following command: http-fault-injector
 Tool 'azure.sdk.tools.httpfaultinjector' (version '0.1.0') was successfully installed.
 ```
 
+## .NET Core Developer Certificate
+`http-fault-injector` uses the [.NET development certificate](https://www.hanselman.com/blog/developing-locally-with-aspnet-core-under-https-ssl-and-selfsigned-certs).  You must either configure your machine and/or client language to trust this certificate, or disable SSL validation in your client app.
+
+### Windows/Mac
+1. `dotnet dev-certs https --trust`
+2. Accept the popup to trust the cert.
+
+### Ubuntu
+Note: These instructions are documented to work, but they were not working for my Ubuntu 18.04 machine.
+
+1. `sudo dotnet dev-certs https -ep /usr/local/share/ca-certificates/aspnet/https.crt --format PEM`
+2. `sudo update-ca-certificates`
+
+https://docs.microsoft.com/en-us/aspnet/core/security/enforcing-ssl?view=aspnetcore-5.0&tabs=visual-studio#ubuntu-trust-the-certificate-for-service-to-service-communication
+
+After these steps, .NET clients should automatically trust the certificate.  Other client languages may need additional steps.
+
+### Java Windows
+1. Run `dotnet dev-certs https --export-path dotnet-dev-cert.pfx` to export the cert to a file
+2. Run `keytool -importcert -cacerts -file dotnet-dev-cert.pfx` to import the cert to the Java default cacerts keystore
+   1. Requires admin command prompt.
+
 ## Walkthrough
 1. Run `http-fault-injector`
 ```
@@ -127,15 +149,12 @@ For "close connection" and "abort connection", clients should detect the TCP FIN
 
 ## Client Configuration
 
-### Allow Insecure SSL Certs
-HttpFaultInjector uses a self-signed SSL cert, so when testing HTTPS your http client must be configured to allow untrusted SSL certs.
-
 ### Redirection
 When testing an HTTP client, you want to use the same codepath that will be used when talking directly to a server.  For this reason, HttpFaultInjector does not act as a traditional "http proxy" which uses a different codepath in the http client.  Instead, HttpFaultInjector acts like a typical web server, and you need to configure your http client to redirect requests to it.
 
 At the last step in your http client pipeline:
 
-1. Set the `Host` header to the upstream host the proxy should redirect to.  This should be the host from the URI you are requesting.
+1. Set the `X-Upstream-Host` header to the upstream host the proxy should redirect to.  This should be the host from the URI you are requesting.
 2. Change the host and port in the URI to the HttpFaultInjector
 
 ## Runnable Sample Clients

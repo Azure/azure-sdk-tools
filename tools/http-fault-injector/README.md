@@ -17,6 +17,13 @@ You can invoke the tool using the following command: http-fault-injector
 Tool 'azure.sdk.tools.httpfaultinjector' (version '0.1.0') was successfully installed.
 ```
 
+## Updating
+```
+> dotnet tool update azure.sdk.tools.httpfaultinjector --global --add-source https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk/nuget/v3/index.json
+
+Tool 'azure.sdk.tools.httpfaultinjector' was successfully updated from version '0.1.0' to version '0.1.1'.
+```
+
 ## .NET Core Developer Certificate
 `http-fault-injector` uses the [.NET development certificate](https://www.hanselman.com/blog/developing-locally-with-aspnet-core-under-https-ssl-and-selfsigned-certs).  You must either configure your machine and/or client language to trust this certificate, or disable SSL validation in your client app.
 

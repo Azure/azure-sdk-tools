@@ -1,0 +1,16 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ping-example
+  namespace: <YOUR NAME>
+spec:
+  template:
+    spec:
+      containers:
+      - name: ping-example
+        image: azuresdkdev.azurecr.io/<YOUR NAME>/pingexample:v1
+        command: ["bash"]
+        args: ["-c", "while true; do echo running; ping 8.8.8.8 -c 1; sleep 5;done"]
+      restartPolicy: Never
+  backoffLimit: 0
+

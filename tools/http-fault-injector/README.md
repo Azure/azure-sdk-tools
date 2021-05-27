@@ -32,12 +32,12 @@ Tool 'azure.sdk.tools.httpfaultinjector' was successfully updated from version '
 2. Accept the popup to trust the cert.
 
 ### Ubuntu
-Note: These instructions are documented to work, but they were not working for my Ubuntu 18.04 machine.
-
-1. `sudo dotnet dev-certs https -ep /usr/local/share/ca-certificates/aspnet/https.crt --format PEM`
-2. `sudo update-ca-certificates`
-
-https://docs.microsoft.com/en-us/aspnet/core/security/enforcing-ssl?view=aspnetcore-5.0&tabs=visual-studio#ubuntu-trust-the-certificate-for-service-to-service-communication
+1. Ensure you are using openssl 1.1.1h or later.  If the latest package for your distro is older, you may need to build and install openssl yourself.
+2. `sudo dotnet dev-certs https -ep /usr/local/share/ca-certificates/aspnet/https.crt --format PEM`
+3. `sudo update-ca-certificates`
+4. Docs:
+   1. https://docs.microsoft.com/en-us/aspnet/core/security/enforcing-ssl?view=aspnetcore-5.0&tabs=visual-studio#ubuntu-trust-the-certificate-for-service-to-service-communication
+   2. https://github.com/dotnet/aspnetcore/issues/27344#issuecomment-815139224
 
 After these steps, .NET clients should automatically trust the certificate.  Other client languages may need additional steps.
 

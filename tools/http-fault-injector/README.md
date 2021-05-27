@@ -18,7 +18,7 @@ Tool 'azure.sdk.tools.httpfaultinjector' (version '0.1.0') was successfully inst
 ```
 
 ## .NET Core Developer Certificate
-`http-fault-injector` uses the [.NET development certificate](https://www.hanselman.com/blog/developing-locally-with-aspnet-core-under-https-ssl-and-selfsigned-certs).  You must either disable SSL validation in your client app, or configure your machine and/or client language to trust this certificate.
+`http-fault-injector` uses the [.NET development certificate](https://www.hanselman.com/blog/developing-locally-with-aspnet-core-under-https-ssl-and-selfsigned-certs).  You must either configure your machine and/or client language to trust this certificate, or disable SSL validation in your client app.
 
 ### Windows/Mac
 1. `dotnet dev-certs https --trust`

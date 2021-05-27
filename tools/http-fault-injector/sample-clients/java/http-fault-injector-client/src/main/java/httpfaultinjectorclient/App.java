@@ -2,9 +2,6 @@ package httpfaultinjectorclient;
 
 import java.net.URI;
 
-import io.netty.handler.ssl.SslContext;
-import io.netty.handler.ssl.SslContextBuilder;
-import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 import reactor.netty.http.client.HttpClientResponse;
@@ -14,12 +11,7 @@ public class App {
     private static int _port = 7778;
 
     public static void main(String[] args) throws Exception {
-        // Allow insecure SSL certs
-        SslContext sslContext = SslContextBuilder.forClient().trustManager(InsecureTrustManagerFactory.INSTANCE)
-                .build();
-
-        HttpClient httpClient = HttpClient.create()
-                .secure(sslContextBuilder -> sslContextBuilder.sslContext(sslContext));
+        HttpClient httpClient = HttpClient.create();
 
         System.out.println("Sending request...");
 

@@ -13,9 +13,17 @@ namespace Azure.Sdk.Tools.HttpFaultInjector.StorageBlobsSample
         {
             var connectionString = Environment.GetEnvironmentVariable("STORAGE_CONNECTION_STRING");
 
+            var httpClientTransport = HttpClientTransport.Shared;
+
+            // You must either trust the .NET developer certificate, or uncomment the following lines to disable SSL validation.
+            // httpClientTransport = new HttpClientTransport(new System.Net.Http.HttpClient(new System.Net.Http.HttpClientHandler()
+            // {
+            //     ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
+            // }));
+
             var blobClientOptions = new BlobClientOptions
             {
-                Transport = new FaultInjectionTransport(HttpClientTransport.Shared, new Uri("https://localhost:7778"))
+                Transport = new FaultInjectionTransport(httpClientTransport, new Uri("https://localhost:7778"))
             };
             
             // Use a single fast retry instead of the default settings

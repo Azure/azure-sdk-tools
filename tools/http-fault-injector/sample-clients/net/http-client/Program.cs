@@ -23,6 +23,9 @@ namespace Azure.Sdk.Tools.HttpFaultInjector.HttpClientSample
             public FaultInjectionClientHandler(Uri uri)
             {
                 _uri = uri;
+
+                // You must either trust the .NET developer certificate, or uncomment the following line to disable SSL validation.
+                // ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true;
             }
 
             protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)

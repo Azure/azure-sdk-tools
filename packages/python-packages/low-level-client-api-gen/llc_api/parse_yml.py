@@ -4,11 +4,8 @@ import argparse
 import logging
 import os
 import tempfile
-from .llc_view_models import LLCOperationGroupView, LLCParameterView, LLCOperationView, LLCClientView 
+from .llc_view_models import LLCOperationGroupView, LLCClientView 
 
-#Allow for user to input file names
-# OUTPUT_FILE = input("Enter OUTPUT file name: ") + ".json"
-#YAML_FILE = "code-model-v4-no-tags.yaml"
 OUTPUT_FILE = "llc_api_view.json"
 
 class llc_generator:

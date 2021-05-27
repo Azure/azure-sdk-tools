@@ -13,9 +13,6 @@ from ._token import Token
 from ._token_kind import TokenKind
 from ._diagnostic import Diagnostic
 
-filter_function = lambda x: isinstance(x, FunctionNode)
-filter_class = lambda x: isinstance(x, ClassNode)
-
 JSON_FIELDS = ["Name", "Version", "VersionString", "Navigation", "Tokens", "Diagnostics", "PackageName"]
 PARAM_FIELDS = ["name", "type", "default", "optional", "indent"]
 OP_FIELDS = ["operation", "parameters", "indent"]
@@ -63,9 +60,10 @@ class FormattingClass:
         token.set_definition_id(text)
         self.add_token(token)
 
-    def add_text(self, id, text):
+    def add_text(self, id, text, nav):
         token = Token(text, TokenKind.Text)
         token.DefinitionId = id
+        token.NavigateToId = nav
         self.add_token(token)
     
     def add_typename(self, id, text, nav):
@@ -84,9 +82,10 @@ class FormattingClass:
         token.DefinitionId = id
         self.add_token(token)
 
-    def add_keyword(self, id, keyword):
+    def add_keyword(self, id, keyword, nav):
         token = Token(keyword, TokenKind.Keyword)
         token.DefinitionId = id
+        token.NavigateToId = nav
         self.add_token(token)
      
 
@@ -145,7 +144,7 @@ class LLCClientView(FormattingClass):
     def to_token(self): 
     #Create view 
         #Overall Name
-        self.add_keyword(None,self.namespace)
+        self.add_keyword(None,self.namespace,None)
         self.add_space()
         self.add_punctuation("{")
         self.add_new_line(1)
@@ -157,13 +156,13 @@ class LLCClientView(FormattingClass):
         self.add_punctuation("(")
         self.add_stringliteral(None,self.endpoint_type)
         self.add_space()
-        self.add_text(None,self.endpoint)
+        self.add_text(None,self.endpoint, None)
 
         self.add_punctuation(",")
         self.add_space()
         self.add_stringliteral(None,self.credential_type)
         self.add_space()
-        self.add_text(None,self.credential)
+        self.add_text(None,self.credential,None)
  
         self.add_punctuation(")")
         self.add_new_line(1)
@@ -180,16 +179,19 @@ class LLCClientView(FormattingClass):
             navigation1 = Navigation(operation, self.namespace+operation.operation_group)
             navigation1.set_tag(NavigationTag(Kind.type_class))
 
+               #Set up operations and add to token
+            for op in operation.operations:
+                #Add operation comments
+                child_nav1 = Navigation(op.operation, self.namespace+op.operation)
+                child_nav1.set_tag(NavigationTag(Kind.type_method))
+                child_nav.add_child(child_nav1)
+
             operation.to_token()
             my_ops = operation.get_tokens()
             for o in my_ops:
                 self.add_token(o)
       
-        #Set up operations and add to token
-            for op in operation.operations:
-                child_nav1 = Navigation(op.operation, self.namespace+op.operation)
-                child_nav1.set_tag(NavigationTag(Kind.type_method))
-                child_nav.add_child(child_nav1)
+     
             # operation.to_token()
             # my_ops = operation.get_tokens()
             # for o in my_ops:
@@ -209,11 +211,12 @@ class LLCClientView(FormattingClass):
                 obj_dict[key] = self.__dict__[key]
         for i in range(0,len(obj_dict["Tokens"])):
             #Break down token objects into dictionary
-            obj_dict["Tokens"][i] = {"Kind": obj_dict["Tokens"][i].Kind.value, "Value" : obj_dict["Tokens"][i].Value, 
-                "NavigateToId": obj_dict["Tokens"][i].NavigateToId, "DefinitionId": obj_dict["Tokens"][i].DefinitionId}
+            if obj_dict["Tokens"][i]:
+                obj_dict["Tokens"][i] = {"Kind": obj_dict["Tokens"][i].Kind.value, "Value" : obj_dict["Tokens"][i].Value, 
+                    "NavigateToId": obj_dict["Tokens"][i].NavigateToId, "DefinitionId": obj_dict["Tokens"][i].DefinitionId}
 
             #Remove Null Values from Tokens
-            # obj_dict["Tokens"][i] = {key:value for key,value in obj_dict["Tokens"][i].items() if value is not None}
+            obj_dict["Tokens"][i] = {key:value for key,value in obj_dict["Tokens"][i].items() if value is not None}
         
         return obj_dict
     
@@ -288,22 +291,26 @@ class LLCOperationGroupView(FormattingClass):
 
 
 class LLCOperationView(FormattingClass):
-    def __init__(self, operation_name, parameters,namespace):
+    def __init__(self, operation_name, parameters,namespace, description =""):
         self.operation=operation_name;
         self.parameters=parameters; #parameterview list
         self.Tokens =[]
         self.indent = 0 
         self.namespace = namespace
+        self.description = description
 
     @classmethod
     def from_yaml(cls,yaml_data: Dict[str,Any],op_group,num,name): 
-            p = []
+            param = []
+            if len(yaml_data["operationGroups"][op_group]["operations"][num]["signatureParameters"])==0:
+                param.append(LLCParameterView.from_yaml(yaml_data["operationGroups"][op_group]["operations"][num],0))
             for i in range(0,len(yaml_data["operationGroups"][op_group]["operations"][num]["signatureParameters"])):
-                p.append(LLCParameterView.from_yaml(yaml_data["operationGroups"][op_group]["operations"][num],i))
+                param.append(LLCParameterView.from_yaml(yaml_data["operationGroups"][op_group]["operations"][num],i))
             return cls(
                 operation_name = yaml_data["operationGroups"][op_group]["operations"][num]["language"]["default"]["name"],
-                parameters = p,
-                namespace = name
+                parameters = param,
+                namespace = name,
+                description = yaml_data["operationGroups"][op_group]["operations"][num]["language"]["default"]["summary"]
             )
 
     def get_tokens(self):
@@ -321,18 +328,29 @@ class LLCOperationView(FormattingClass):
         #Operation Name token
         self.add_typename(self.namespace+self.operation,self.operation, self.namespace+self.operation)
 
+        self.parameters = [key for key in self.parameters if key.type is not None]
         #Set up operation parameters
         if len(self.parameters)==0:
             self.add_punctuation("(")
             self.add_punctuation(")")
             self.add_new_line()
+            self.add_whitespace(3)
+            self.add_token(Token(kind=TokenKind.StartDocGroup))
+            self.add_keyword(None,self.description,None)
+            self.add_token(Token(kind=TokenKind.EndDocGroup))
+            self.add_new_line()
         for param_num in range(0,len(self.parameters)):
             if self.parameters[param_num]:
                 self.parameters[param_num].to_token()
             if param_num==0:
+                # self.add_new_line()
+                # self.add_whitespace(3)
+                self.add_punctuation("(")
                 self.add_new_line()
                 self.add_whitespace(3)
-                self.add_punctuation("(")
+                self.add_token(Token(kind=TokenKind.StartDocGroup))
+                self.add_keyword(None,self.description,None)
+                self.add_token(Token(kind=TokenKind.EndDocGroup))
             
             self.add_new_line()
             #Add in parameter tokens
@@ -351,9 +369,9 @@ class LLCOperationView(FormattingClass):
             #Create a new line for the next operation
             except: 
                 self.add_new_line()
-                self.add_whitespace(3)
+                self.add_whitespace(1)
                 self.add_punctuation(")")
-                self.add_new_line()
+                self.add_new_line(2)
         #Need to consider operation groups next
     
     def to_json(self):
@@ -375,15 +393,34 @@ class LLCParameterView(FormattingClass):
     
     @classmethod
     def from_yaml(cls,yaml_data: Dict[str,Any],i):
-            if yaml_data["signatureParameters"][i].get("required"):
-                    re=(yaml_data["signatureParameters"][i]['required'])
+            req=True
+            if len(yaml_data["signatureParameters"])!=0:
+                p_type = yaml_data["signatureParameters"][i]["schema"]['type']
+                p_name = yaml_data["signatureParameters"][i]['language']['default']['name']
+                if yaml_data["signatureParameters"][i].get("required"):
+                    req=(yaml_data["signatureParameters"][i]['required'])
+                else:
+                    req = False
             else:
-                re = False
+                p_type = None
+                p_name = None
+            
+            if p_type is None:
+                try:
+                   my_name = yaml_data['requests'][0]['signatureParameters'][0]['originalParameter']['schema']['properties'][0]['schema']['elementType']['language']['default']['name']
+                   my_type = yaml_data['requests'][0]['signatureParameters'][0]['originalParameter']['schema']['properties'][0]['serializedName']
+                except:
+                    my_type = None
+                    my_name = None
+            else:
+                my_name = p_name
+                my_type = p_type
+
             return cls(
-                param_type=yaml_data["signatureParameters"][i]["schema"]['type'],
-                param_name=yaml_data["signatureParameters"][i]['language']['default']['name'],
-                required=re,
-                #default=yaml_data["globalParameters"][0]["language"]["default"]["name"]
+                param_type=my_name,
+                param_name=my_type,
+                required=req,
+                # default=yaml_data["globalParameters"][0]["language"]["default"]["name"]
             )
     
     def add_token(self, token):
@@ -395,25 +432,26 @@ class LLCParameterView(FormattingClass):
     #have a to_token to create the line for parameters
     def to_token(self):
 
-        #Create parameter type token
-        self.add_stringliteral(None,self.type)
+        if self.type is not None:
+            #Create parameter type token
+            self.add_stringliteral(None,self.type)
 
-        #If parameter is optional, token for ? created
-        if not self.required:
-            self.add_stringliteral(None,"?")
+            #If parameter is optional, token for ? created
+            if not self.required:
+                self.add_stringliteral(None,"?")
 
-        self.add_space()
-
-        #Create parameter name token
-        self.add_text(None,self.name)
-   
-
-        #Check if parameter has a default value or not
-        if self.default is not None:
             self.add_space()
-            self.add_text(None,"=")
-            self.add_space()
-            self.add_text(None,self.default)
+
+            #Create parameter name token
+            self.add_text(None,self.name,None)
+    
+
+            #Check if parameter has a default value or not
+            if self.default is not None:
+                self.add_space()
+                self.add_text(None,"=",None)
+                self.add_space()
+                self.add_text(None,self.default,None)
         
             
     def to_json(self):

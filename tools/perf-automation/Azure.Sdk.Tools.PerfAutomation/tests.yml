@@ -58,7 +58,7 @@ Services:
     Net:
       Project: sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Azure.Storage.Blobs.Perf.csproj
       PackageVersions:
-      - Azure.Storage.Blobs: 12.8.3
+      - Azure.Storage.Blobs: 12.8.4
       - Azure.Storage.Blobs: source
     Java:
       Project: sdk/storage/azure-storage-perf

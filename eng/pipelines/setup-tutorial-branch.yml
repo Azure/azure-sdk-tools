@@ -39,7 +39,8 @@ parameters:
 
 variables:
   skipComponentGovernanceDetection: true
-
+  NugetSecurityAnalysisWarningLevel: none
+  
 jobs:
 - job: SetupTutorialBranch
   pool:

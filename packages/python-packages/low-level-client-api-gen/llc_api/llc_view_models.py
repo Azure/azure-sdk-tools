@@ -273,6 +273,7 @@ class LLCOperationGroupView(FormattingClass):
                         self.add_token(t)
             self.add_whitespace(2)
             self.add_punctuation("}")
+            self.add_new_line(1)
         else:
             for operation in range(0,len(self.operations)):
                 if self.operations[operation]:
@@ -313,13 +314,13 @@ class LLCOperationView(FormattingClass):
             if des is None:
                 des = yaml_data["operationGroups"][op_group]["operations"][num]["language"]["default"]["description"]
 
-            pageable = yaml_data["operationGroups"][op_group]["operations"][num]["language"]["default"].get("paging")
+            pageable = yaml_data["operationGroups"][op_group]["operations"][num]["extensions"].get("x-ms-pageable")
             if pageable:
                 paging_op = "True"
             else:
                 paging_op = "False"
             
-            lro = yaml_data["operationGroups"][op_group]["operations"][num]["language"]["default"].get("lro")
+            lro = yaml_data["operationGroups"][op_group]["operations"][num]["extensions"].get("x-ms-long-running-operation")
             if lro:
                 lro_op = "True"
             else:
@@ -419,9 +420,9 @@ class LLCOperationView(FormattingClass):
             #Create a new line for the next operation
             else: 
                 self.add_new_line()
-                self.add_whitespace(1)
+                self.add_whitespace(3)
                 self.add_punctuation(")")
-                self.add_new_line(2)
+                self.add_new_line(1)
         #Need to consider operation groups next
     
     def to_json(self):
@@ -456,9 +457,13 @@ class LLCParameterView(FormattingClass):
                 p_name = None
             
             if p_type is None:
-                    if yaml_data['requests'][0]['signatureParameters']:
-                        p_type = yaml_data['requests'][0]['signatureParameters'][0]['originalParameter']['schema']['properties'][0]['schema']['elementType']['language']['default']['name']
-                        p_name = yaml_data['requests'][0]['signatureParameters'][0]['originalParameter']['schema']['properties'][0]['serializedName']
+                    if yaml_data['requests'][0].get('signatureParameters'):
+                        if yaml_data['requests'][0]['signatureParameters'][0].get('originalParameter'):
+                        # p_type = yaml_data['requests'][0]['signatureParameters'][0]['schema']['elementType']['properties'][0]['schema']['type']
+                        # p_name = yaml_data['requests'][0]['signatureParameters'][0]['schema']['language']['default']['name']
+                        # req = "True" if yaml_data['requests'][0]['signatureParameters'][0]['schema']['language']['default'].get('required') else "False"
+                            p_type = yaml_data['requests'][0]['signatureParameters'][0]['originalParameter']['schema']['properties'][0]['schema']['elementType']['language']['default']['name']
+                            p_name = yaml_data['requests'][0]['signatureParameters'][0]['originalParameter']['schema']['properties'][0]['serializedName']
 
             my_name = p_name
             my_type = p_type

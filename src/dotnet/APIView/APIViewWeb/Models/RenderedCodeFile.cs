@@ -24,7 +24,7 @@ namespace APIViewWeb.Models
             //Always render when documentation is requested to avoid cach thrashing
             if (showDocumentation)
             {
-                return CodeFileHtmlRenderer.Normal.Render(CodeFile, true);
+                return CodeFileHtmlRenderer.Normal.Render(CodeFile, showDocumentation: true);
             }
 
             if (_rendered == null)
@@ -39,7 +39,7 @@ namespace APIViewWeb.Models
         {
             if (showDocumentation)
             {
-                return CodeFileHtmlRenderer.ReadOnly.Render(CodeFile, true);
+                return CodeFileHtmlRenderer.ReadOnly.Render(CodeFile, showDocumentation: true);
             }
 
             if (_renderedReadOnly == null)
@@ -54,12 +54,12 @@ namespace APIViewWeb.Models
         {
             if (showDocumentation)
             {
-                return CodeFileHtmlRenderer.Instance.Render(CodeFile, true);
+                return CodeFileRenderer.Instance.Render(CodeFile, showDocumentation: true, enableSkipDiff: true);
             }
 
             if (_renderedText == null)
             {
-                _renderedText = CodeFileRenderer.Instance.Render(CodeFile);
+                _renderedText = CodeFileRenderer.Instance.Render(CodeFile, enableSkipDiff: true);
             }
 
             return _renderedText;

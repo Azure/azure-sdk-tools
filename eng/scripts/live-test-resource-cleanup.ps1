@@ -34,6 +34,7 @@ param (
     [Parameter(ValueFromRemainingArguments = $true)]
     $IgnoreUnusedArguments
 )
+eng/common/scripts/Import-AzModules.ps1
 
 Write-Verbose "Logging in"
 $provisionerSecret = ConvertTo-SecureString -String $ProvisionerApplicationSecret -AsPlainText -Force

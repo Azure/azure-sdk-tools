@@ -2,9 +2,6 @@ package httpfaultinjectorclient;
 
 import java.net.URI;
 
-import io.netty.handler.ssl.SslContext;
-import io.netty.handler.ssl.SslContextBuilder;
-import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 import reactor.netty.http.client.HttpClientResponse;
@@ -14,13 +11,15 @@ public class App {
     private static int _port = 7778;
 
     public static void main(String[] args) throws Exception {
-        // Allow insecure SSL certs
-        SslContext sslContext = SslContextBuilder.forClient().trustManager(InsecureTrustManagerFactory.INSTANCE)
-                .build();
+        HttpClient httpClient = HttpClient.create();
 
-        HttpClient httpClient = HttpClient.create()
-                .secure(sslContextBuilder -> sslContextBuilder.sslContext(sslContext));
-
+        // You must either add the .NET developer certiifcate to the Java cacerts keystore, or uncomment the following
+        // lines to disable SSL validation.
+        //
+        // io.netty.handler.ssl.SslContext sslContext = io.netty.handler.ssl.SslContextBuilder
+        //     .forClient().trustManager(io.netty.handler.ssl.util.InsecureTrustManagerFactory.INSTANCE).build();
+        // httpClient = httpClient.secure(sslContextBuilder -> sslContextBuilder.sslContext(sslContext));
+        
         System.out.println("Sending request...");
 
         HttpClientResponse response = get(httpClient, "https://www.example.org").block();
@@ -41,8 +40,8 @@ public class App {
             upstream.getFragment());
 
         return httpClient
-            // Set "Host" header to upstream host
-            .headers(headers -> headers.add("Host", upstream.getHost()))
+            // Set "X-Upstream-Host" header to upstream host
+            .headers(headers -> headers.add("X-Upstream-Host", upstream.getHost()))
             .get()
             // Set URI to fault injector
             .uri(faultInjector.toString())

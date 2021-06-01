@@ -7,6 +7,7 @@ import com.azure.tools.apiview.processor.model.APIListing;
 import com.azure.tools.apiview.processor.model.ChildItem;
 import com.azure.tools.apiview.processor.model.Token;
 import com.azure.tools.apiview.processor.model.TypeKind;
+import com.azure.tools.apiview.processor.model.maven.Dependency;
 import com.azure.tools.apiview.processor.model.maven.Pom;
 import com.github.javaparser.ParserConfiguration;
 import com.github.javaparser.StaticJavaParser;
@@ -84,6 +85,8 @@ import static com.azure.tools.apiview.processor.model.TokenKind.PUNCTUATION;
 import static com.azure.tools.apiview.processor.model.TokenKind.TEXT;
 import static com.azure.tools.apiview.processor.model.TokenKind.TYPE_NAME;
 import static com.azure.tools.apiview.processor.model.TokenKind.WHITESPACE;
+import static com.azure.tools.apiview.processor.model.TokenKind.SKIP_DIFF_START;
+import static com.azure.tools.apiview.processor.model.TokenKind.SKIP_DIFF_END;
 
 import static com.azure.tools.apiview.processor.analysers.util.TokenModifier.*;
 
@@ -273,13 +276,14 @@ public class ASTAnalyser implements Analyser {
         addToken(new Token(PUNCTUATION, "{"), NEWLINE);
         indent();
 
-//        // parent
-//        String gavStr = mavenPom.getParent().getGroupId() + ":" + mavenPom.getParent().getArtifactId() + ":" + mavenPom.getParent().getVersion();
-//        tokeniseKeyValue("parent", gavStr, "");
-//
-//        // properties
-//        gavStr = mavenPom.getGroupId() + ":" + mavenPom.getArtifactId() + ":" + mavenPom.getVersion();
-//        tokeniseKeyValue("properties", gavStr, "");
+       addToken(new Token(SKIP_DIFF_START));
+       // parent
+       String gavStr = mavenPom.getParent().getGroupId() + ":" + mavenPom.getParent().getArtifactId() + ":" + mavenPom.getParent().getVersion();
+       tokeniseKeyValue("parent", gavStr, "");
+
+       // properties
+       gavStr = mavenPom.getGroupId() + ":" + mavenPom.getArtifactId() + ":" + mavenPom.getVersion();
+       tokeniseKeyValue("properties", gavStr, "");
 
         // configuration
         boolean showJacoco = mavenPom.getJacocoMinLineCoverage() != null &&
@@ -308,9 +312,6 @@ public class ASTAnalyser implements Analyser {
         }
 
         // dependencies
-        // Disabling dependencies until we have a solution to avoid showing daily alpha version as dependency
-        // Alpha daily version number make each revision different and this leads to mismatch with approved review revision
-        /*
         addToken(INDENT, new Token(KEYWORD, "dependencies"), SPACE);
         addToken(new Token(PUNCTUATION, "{"), NEWLINE);
 
@@ -337,7 +338,7 @@ public class ASTAnalyser implements Analyser {
 
         unindent();
         addToken(INDENT, new Token(PUNCTUATION, "}"), NEWLINE);
-        */
+        addToken(new Token(SKIP_DIFF_END));
 
         // allowed dependencies (in maven-enforcer)
 //        if (!mavenPom.getAllowedDependencies().isEmpty()) {

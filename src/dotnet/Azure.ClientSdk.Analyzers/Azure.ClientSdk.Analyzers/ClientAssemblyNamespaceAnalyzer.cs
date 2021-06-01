@@ -28,7 +28,7 @@ namespace Azure.ClientSdk.Analyzers
             "Azure.Storage",
             "Azure.Template",
             "Azure.Identity",
-            "Microsoft.Extensions.Azure",
+            "Microsoft.Extensions.Azure"
         };
 
         public ClientAssemblyNamespaceAnalyzer()

@@ -457,15 +457,15 @@ class LLCParameterView(FormattingClass):
             
             if p_type is None:
                     if yaml_data['requests'][0]['signatureParameters']:
-                        p_name = yaml_data['requests'][0]['signatureParameters'][0]['originalParameter']['schema']['properties'][0]['schema']['elementType']['language']['default']['name']
-                        p_type = yaml_data['requests'][0]['signatureParameters'][0]['originalParameter']['schema']['properties'][0]['serializedName']
+                        p_type = yaml_data['requests'][0]['signatureParameters'][0]['originalParameter']['schema']['properties'][0]['schema']['elementType']['language']['default']['name']
+                        p_name = yaml_data['requests'][0]['signatureParameters'][0]['originalParameter']['schema']['properties'][0]['serializedName']
 
             my_name = p_name
             my_type = p_type
 
             return cls(
-                param_type=my_name,
-                param_name=my_type,
+                param_type=my_type,
+                param_name=my_name,
                 required=req,
                 # default=yaml_data["globalParameters"][0]["language"]["default"]["name"]
             )

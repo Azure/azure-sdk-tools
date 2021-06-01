@@ -173,11 +173,11 @@ class LLCClientView(FormattingClass):
 
         for operation in self.Operation_Group:
             #Add children
-            child_nav = Navigation(operation.operation_group, None)
+            child_nav = Navigation(operation.operation_group, self.namespace+operation.operation_group)
             child_nav.set_tag(NavigationTag(Kind.type_class))
             navigation.add_child(child_nav)
-            navigation1 = Navigation(operation, self.namespace+operation.operation_group)
-            navigation1.set_tag(NavigationTag(Kind.type_class))
+            # navigation1 = Navigation(operation, self.namespace+operation.operation_group)
+            # navigation1.set_tag(NavigationTag(Kind.type_class))
 
                #Set up operations and add to token
             for op in operation.operations:
@@ -306,9 +306,9 @@ class LLCOperationView(FormattingClass):
     def from_yaml(cls,yaml_data: Dict[str,Any],op_group,num,name): 
             param = []
             if len(yaml_data["operationGroups"][op_group]["operations"][num]["signatureParameters"])==0:
-                param.append(LLCParameterView.from_yaml(yaml_data["operationGroups"][op_group]["operations"][num],0))
+                param.append(LLCParameterView.from_yaml(yaml_data["operationGroups"][op_group]["operations"][num],0,name))
             for i in range(0,len(yaml_data["operationGroups"][op_group]["operations"][num]["signatureParameters"])):
-                param.append(LLCParameterView.from_yaml(yaml_data["operationGroups"][op_group]["operations"][num],i))
+                param.append(LLCParameterView.from_yaml(yaml_data["operationGroups"][op_group]["operations"][num],i,name))
 
             des = yaml_data["operationGroups"][op_group]["operations"][num]["language"]["default"].get("summary")
             if des is None:
@@ -371,7 +371,7 @@ class LLCOperationView(FormattingClass):
             self.add_punctuation("(")
             self.add_punctuation(")")
     
-            self.add_new_line()
+            self.add_new_line(1)
             self.add_whitespace(3)
             self.add_token(Token(kind=TokenKind.StartDocGroup))
             self.add_typename(None,self.description,None)
@@ -434,16 +434,17 @@ class LLCOperationView(FormattingClass):
         
 
 class LLCParameterView(FormattingClass):
-    def __init__(self, param_name, param_type, default=None, required = False):
+    def __init__(self, param_name, param_type, namespace, default=None, required = False):
         self.name = param_name;
         self.type = param_type;
         self.default = default;
         self.required = required
         self.Tokens = []
         self.indent = 0 
+        self.namespace = namespace
     
     @classmethod
-    def from_yaml(cls,yaml_data: Dict[str,Any],i):
+    def from_yaml(cls,yaml_data: Dict[str,Any],i,name):
             req=True
             if len(yaml_data["signatureParameters"])!=0:
                 p_type = yaml_data["signatureParameters"][i]["schema"]['type']
@@ -472,6 +473,7 @@ class LLCParameterView(FormattingClass):
                 param_type=my_type,
                 param_name=my_name,
                 required=req,
+                namespace = name
                 # default=yaml_data["globalParameters"][0]["language"]["default"]["name"]
             )
     
@@ -495,7 +497,7 @@ class LLCParameterView(FormattingClass):
             self.add_space()
 
             #Create parameter name token
-            self.add_text(None,self.name,None)
+            self.add_text(self.namespace+self.name,self.name,None)
     
 
             #Check if parameter has a default value or not

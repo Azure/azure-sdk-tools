@@ -152,7 +152,7 @@ class LLCClientView(FormattingClass):
 
         #Name of client
         self.add_whitespace(1)
-        self.add_typename(None,self.Name,self.namespace)
+        self.add_keyword(None,self.Name,self.namespace)
         self.add_punctuation("(")
         self.add_stringliteral(None,self.endpoint_type)
         self.add_space()
@@ -256,7 +256,7 @@ class LLCOperationGroupView(FormattingClass):
         if self.operation_group:
             self.add_whitespace(1)
             #Operation Name token
-            self.add_typename(self.namespace+self.operation_group,self.operation_group,self.namespace+self.operation_group)
+            self.add_keyword(self.namespace+self.operation_group,self.operation_group,self.namespace+self.operation_group)
 
             self.add_new_line()
     
@@ -291,13 +291,15 @@ class LLCOperationGroupView(FormattingClass):
 
 
 class LLCOperationView(FormattingClass):
-    def __init__(self, operation_name, parameters,namespace, description =""):
+    def __init__(self, operation_name, parameters,namespace, description ="", paging = "",lro=""):
         self.operation=operation_name;
         self.parameters=parameters; #parameterview list
         self.Tokens =[]
         self.indent = 0 
         self.namespace = namespace
         self.description = description
+        self.paging = paging
+        self.lro = lro
 
     @classmethod
     def from_yaml(cls,yaml_data: Dict[str,Any],op_group,num,name): 
@@ -306,11 +308,30 @@ class LLCOperationView(FormattingClass):
                 param.append(LLCParameterView.from_yaml(yaml_data["operationGroups"][op_group]["operations"][num],0))
             for i in range(0,len(yaml_data["operationGroups"][op_group]["operations"][num]["signatureParameters"])):
                 param.append(LLCParameterView.from_yaml(yaml_data["operationGroups"][op_group]["operations"][num],i))
+
+            des = yaml_data["operationGroups"][op_group]["operations"][num]["language"]["default"].get("summary")
+            if des is None:
+                des = yaml_data["operationGroups"][op_group]["operations"][num]["language"]["default"]["description"]
+
+            pageable = yaml_data["operationGroups"][op_group]["operations"][num]["language"]["default"].get("paging")
+            if pageable:
+                paging_op = "True"
+            else:
+                paging_op = "False"
+            
+            lro = yaml_data["operationGroups"][op_group]["operations"][num]["language"]["default"].get("lro")
+            if lro:
+                lro_op = "True"
+            else:
+                lro_op = "False"
+            
             return cls(
                 operation_name = yaml_data["operationGroups"][op_group]["operations"][num]["language"]["default"]["name"],
                 parameters = param,
                 namespace = name,
-                description = yaml_data["operationGroups"][op_group]["operations"][num]["language"]["default"]["summary"]
+                description = des,
+                paging = paging_op,
+                lro = lro_op
             )
 
     def get_tokens(self):
@@ -326,17 +347,33 @@ class LLCOperationView(FormattingClass):
         self.add_whitespace(1)
 
         #Operation Name token
-        self.add_typename(self.namespace+self.operation,self.operation, self.namespace+self.operation)
+        self.add_keyword(self.namespace+self.operation,self.operation, self.namespace+self.operation)
+        self.add_space
 
         self.parameters = [key for key in self.parameters if key.type is not None]
         #Set up operation parameters
         if len(self.parameters)==0:
+            self.add_space()
+            self.add_text(None,"[",None)
+            self.add_text(None,"paging",None)
+            self.add_punctuation("=")
+            self.add_space()
+            self.add_text(None,self.paging,None)
+            self.add_space()
+            self.add_text(None,"lro",None)
+            self.add_punctuation("=")
+            self.add_space()
+            self.add_text(None,self.lro,None)
+            self.add_space()
+            self.add_text(None,"]",None)
+            self.add_space()
             self.add_punctuation("(")
             self.add_punctuation(")")
+    
             self.add_new_line()
             self.add_whitespace(3)
             self.add_token(Token(kind=TokenKind.StartDocGroup))
-            self.add_keyword(None,self.description,None)
+            self.add_typename(None,self.description,None)
             self.add_token(Token(kind=TokenKind.EndDocGroup))
             self.add_new_line()
         for param_num in range(0,len(self.parameters)):
@@ -345,11 +382,25 @@ class LLCOperationView(FormattingClass):
             if param_num==0:
                 # self.add_new_line()
                 # self.add_whitespace(3)
+                self.add_space()
+                self.add_text(None,"[",None)
+                self.add_text(None,"paging",None)
+                self.add_punctuation("=")
+                self.add_space()
+                self.add_text(None,self.paging,None)
+                self.add_space()
+                self.add_text(None,"lro",None)
+                self.add_punctuation("=")
+                self.add_space()
+                self.add_text(None,self.lro,None)
+                self.add_space()
+                self.add_text(None,"]",None)
+                self.add_space()
                 self.add_punctuation("(")
                 self.add_new_line()
                 self.add_whitespace(3)
                 self.add_token(Token(kind=TokenKind.StartDocGroup))
-                self.add_keyword(None,self.description,None)
+                self.add_typename(None,self.description,None)
                 self.add_token(Token(kind=TokenKind.EndDocGroup))
             
             self.add_new_line()
@@ -361,13 +412,12 @@ class LLCOperationView(FormattingClass):
 
 
             #Add in comma before the next parameter
-            try:
+            if param_num+1 in range(0,len(self.parameters)):
                 self.parameters[param_num+1]
                 self.add_punctuation(",")
-                
-            
+                 
             #Create a new line for the next operation
-            except: 
+            else: 
                 self.add_new_line()
                 self.add_whitespace(1)
                 self.add_punctuation(")")
@@ -406,15 +456,12 @@ class LLCParameterView(FormattingClass):
                 p_name = None
             
             if p_type is None:
-                try:
-                   my_name = yaml_data['requests'][0]['signatureParameters'][0]['originalParameter']['schema']['properties'][0]['schema']['elementType']['language']['default']['name']
-                   my_type = yaml_data['requests'][0]['signatureParameters'][0]['originalParameter']['schema']['properties'][0]['serializedName']
-                except:
-                    my_type = None
-                    my_name = None
-            else:
-                my_name = p_name
-                my_type = p_type
+                    if yaml_data['requests'][0]['signatureParameters']:
+                        p_name = yaml_data['requests'][0]['signatureParameters'][0]['originalParameter']['schema']['properties'][0]['schema']['elementType']['language']['default']['name']
+                        p_type = yaml_data['requests'][0]['signatureParameters'][0]['originalParameter']['schema']['properties'][0]['serializedName']
+
+            my_name = p_name
+            my_type = p_type
 
             return cls(
                 param_type=my_name,

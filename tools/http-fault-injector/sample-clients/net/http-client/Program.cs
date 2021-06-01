@@ -24,14 +24,14 @@ namespace Azure.Sdk.Tools.HttpFaultInjector.HttpClientSample
             {
                 _uri = uri;
 
-                // Allow insecure SSL certs
-                ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true;
+                // You must either trust the .NET developer certificate, or uncomment the following line to disable SSL validation.
+                // ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true;
             }
 
             protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
             {
-                // Set "Host" header to upstream host:port
-                request.Headers.Add("Host", $"{request.RequestUri.Host}:{request.RequestUri.Port}");
+                // Set "X-Upstream-Host" header to upstream host:port
+                request.Headers.Add("X-Upstream-Host", $"{request.RequestUri.Host}:{request.RequestUri.Port}");
 
                 // Set URI to fault injector
                 var builder = new UriBuilder(request.RequestUri)

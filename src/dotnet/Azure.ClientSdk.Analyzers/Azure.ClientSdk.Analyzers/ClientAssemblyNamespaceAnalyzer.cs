@@ -22,12 +22,13 @@ namespace Azure.ClientSdk.Analyzers
             "Azure.Media",
             "Azure.Management",
             "Azure.Messaging",
+            "Azure.ResourceManager",   
             "Azure.Search",
             "Azure.Security",
             "Azure.Storage",
             "Azure.Template",
             "Azure.Identity",
-            "Microsoft.Extensions.Azure"
+            "Microsoft.Extensions.Azure",
         };
 
         public ClientAssemblyNamespaceAnalyzer()

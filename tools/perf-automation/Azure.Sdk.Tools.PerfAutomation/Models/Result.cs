@@ -6,7 +6,8 @@ namespace Azure.Sdk.Tools.PerfAutomation.Models
 {
     public class Result
     {
-        public string TestName { get; set; }
+        public string Service { get; set; }
+        public string Test { get; set; }
 
         public DateTime Start { get; set; }
         public DateTime End { get; set; }

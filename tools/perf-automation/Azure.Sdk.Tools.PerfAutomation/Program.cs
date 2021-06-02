@@ -219,7 +219,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
                         foreach (var packageVersions in serviceLanugageInfo.PackageVersions)
                         {
-                            await RunPackageVersion(options, outputFile, results, service.Tests,
+                            await RunPackageVersion(options, outputFile, results, service,
                                 language, serviceLanugageInfo, languageVersion, packageVersions);
                         }
                     }
@@ -227,7 +227,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             }
         }
 
-        private static async Task RunPackageVersion(RunOptions options, string outputFile, List<Result> results, IEnumerable<TestInfo> tests,
+        private static async Task RunPackageVersion(RunOptions options, string outputFile, List<Result> results, ServiceInfo service,
             Language language, ServiceLanguageInfo serviceLanguageInfo, string languageVersion, IDictionary<string, string> packageVersions)
         {
             try
@@ -254,7 +254,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                     Console.WriteLine();
                 }
 
-                foreach (var test in tests)
+                foreach (var test in service.Tests)
                 {
                     IEnumerable<string> selectedArguments;
                     if (!options.NoAsync && !options.NoSync)
@@ -293,7 +293,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
                         var result = new Result
                         {
-                            TestName = test.Test,
+                            Service = service.Service,
+                            Test = test.Test,
                             Start = DateTime.Now,
                             Language = language,
                             LanguageVersion = languageVersion,

@@ -19,7 +19,6 @@ namespace Azure.Sdk.Tools.PerfAutomation
     {
         public const string PackageVersionSource = "source";
 
-        public static OptionsDefinition Options { get; set; }
         public static Config Config { get; set; }
 
         private static Dictionary<Language, ILanguage> _languages = new Dictionary<Language, ILanguage>
@@ -41,7 +40,13 @@ namespace Azure.Sdk.Tools.PerfAutomation
             WriteIndented = true,
         };
 
-        public class OptionsDefinition
+        public class CommonOptions {
+            [Option("input-file", Default = "tests.yml")]
+            public string InputFile { get; set; }
+        }
+
+        [Verb("run", HelpText = "Run perf tests and collect results")]
+        public class RunOptions : CommonOptions
         {
             [Option('a', "arguments", HelpText = "Regex of arguments to run")]
             public string Arguments { get; set; }
@@ -63,9 +68,6 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             [Option('v', "languageVersions", HelpText = "Regex of language versions to run")]
             public string LanguageVersions { get; set; }
-
-            [Option("input-file", Default = "tests.yml")]
-            public string InputFile { get; set; }
 
             [Option("no-async")]
             public bool NoAsync { get; set; }
@@ -89,6 +91,11 @@ namespace Azure.Sdk.Tools.PerfAutomation
             public string Tests { get; set; }
         }
 
+        [Verb("update", HelpText = "Update language and package versions")]
+        public class UpdateOptions : CommonOptions
+        {
+        }
+
         public static async Task Main(string[] args)
         {
             var parser = new CommandLine.Parser(settings =>
@@ -98,12 +105,11 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 settings.HelpWriter = null;
             });
 
-            var parserResult = parser.ParseArguments<OptionsDefinition>(args);
-
-            parserResult.WithParsed(options => Options = options);
+            var parserResult = parser.ParseArguments<RunOptions, UpdateOptions>(args);
 
             await parserResult.MapResult(
-                options => Run(),
+                (RunOptions options) => Run(options),
+                (UpdateOptions options) => Update(options),
                 errors => DisplayHelp(parserResult)
             );
         }
@@ -121,48 +127,48 @@ namespace Azure.Sdk.Tools.PerfAutomation
             return Task.CompletedTask;
         }
 
-        private static async Task Run()
+        private static async Task Run(RunOptions options)
         {
-            Config = DeserializeYaml<Config>(Options.ConfigFile);
+            Config = DeserializeYaml<Config>(options.ConfigFile);
 
-            var input = DeserializeYaml<Input>(Options.InputFile);
+            var input = DeserializeYaml<Input>(options.InputFile);
 
             var selectedlanguages = input.Languages
-                .Where(l => !Options.Languages.Any() || Options.Languages.Contains(l.Key))
+                .Where(l => !options.Languages.Any() || options.Languages.Contains(l.Key))
                 .ToDictionary(l => l.Key, l => new LanguageInfo()
                 {
                     DefaultVersions = l.Value.DefaultVersions.Where(v =>
-                            (String.IsNullOrEmpty(Options.LanguageVersions) || Regex.IsMatch(v, Options.LanguageVersions)) &&
+                            (String.IsNullOrEmpty(options.LanguageVersions) || Regex.IsMatch(v, options.LanguageVersions)) &&
                             !(l.Key == Language.Net && v == "net461" && !Util.IsWindows)),
                     OptionalVersions = l.Value.OptionalVersions.Where(v =>
-                            (!String.IsNullOrEmpty(Options.LanguageVersions) && Regex.IsMatch(v, Options.LanguageVersions)) &&
+                            (!String.IsNullOrEmpty(options.LanguageVersions) && Regex.IsMatch(v, options.LanguageVersions)) &&
                             !(l.Key == Language.Net && v == "net461" && !Util.IsWindows))
                 });
 
 
             var selectedServices = input.Services
-                .Where(s => String.IsNullOrEmpty(Options.Services) || Regex.IsMatch(s.Service, Options.Services, RegexOptions.IgnoreCase))
+                .Where(s => String.IsNullOrEmpty(options.Services) || Regex.IsMatch(s.Service, options.Services, RegexOptions.IgnoreCase))
                 .Select(s => new ServiceInfo
                 {
                     Service = s.Service,
                     Languages = s.Languages
-                        .Where(l => !Options.Languages.Any() || Options.Languages.Contains(l.Key))
+                        .Where(l => !options.Languages.Any() || options.Languages.Contains(l.Key))
                         .ToDictionary(p => p.Key, p => new ServiceLanguageInfo()
                         {
                             Project = p.Value.Project,
                             AdditionalArguments = p.Value.AdditionalArguments,
                             PackageVersions = p.Value.PackageVersions.Where(d => d.Keys.Concat(d.Values).Any(s =>
-                                String.IsNullOrEmpty(Options.PackageVersions) || Regex.IsMatch(s, Options.PackageVersions)
+                                String.IsNullOrEmpty(options.PackageVersions) || Regex.IsMatch(s, options.PackageVersions)
                             ))
                         }),
                     Tests = s.Tests
-                        .Where(t => String.IsNullOrEmpty(Options.Tests) || Regex.IsMatch(t.Test, Options.Tests, RegexOptions.IgnoreCase))
+                        .Where(t => String.IsNullOrEmpty(options.Tests) || Regex.IsMatch(t.Test, options.Tests, RegexOptions.IgnoreCase))
                         .Select(t => new TestInfo
                         {
                             Test = t.Test,
                             Arguments = t.Arguments.Where(a =>
-                                String.IsNullOrEmpty(Options.Arguments) || Regex.IsMatch(a, Options.Arguments, RegexOptions.IgnoreCase)),
-                            TestNames = t.TestNames.Where(n => !Options.Languages.Any() || Options.Languages.Contains(n.Key))
+                                String.IsNullOrEmpty(options.Arguments) || Regex.IsMatch(a, options.Arguments, RegexOptions.IgnoreCase)),
+                            TestNames = t.TestNames.Where(n => !options.Languages.Any() || options.Languages.Contains(n.Key))
                                         .ToDictionary(p => p.Key, p => p.Value)
                         })
                         .Where(t => t.TestNames.Any())
@@ -172,14 +178,14 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             var serializer = new Serializer();
             Console.WriteLine("=== Options ===");
-            serializer.Serialize(Console.Out, Options);
+            serializer.Serialize(Console.Out, options);
 
             Console.WriteLine();
 
             Console.WriteLine("=== Test Plan ===");
             serializer.Serialize(Console.Out, new Input() { Languages = selectedlanguages, Services = selectedServices });
 
-            if (Options.DryRun)
+            if (options.DryRun)
             {
                 Console.WriteLine();
                 Console.Write("Press 'y' to continue, or any other key to exit: ");
@@ -192,7 +198,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 }
             }
 
-            var outputFile = Util.GetUniquePath(Options.OutputFile);
+            var outputFile = Util.GetUniquePath(options.OutputFile);
             // Create output file early so user sees it immediately
             Directory.CreateDirectory(Path.GetDirectoryName(outputFile));
             using (File.Create(outputFile)) { }
@@ -213,7 +219,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
                         foreach (var packageVersions in serviceLanugageInfo.PackageVersions)
                         {
-                            await RunPackageVersion(outputFile, results, service.Tests,
+                            await RunPackageVersion(options, outputFile, results, service.Tests,
                                 language, serviceLanugageInfo, languageVersion, packageVersions);
                         }
                     }
@@ -221,7 +227,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             }
         }
 
-        private static async Task RunPackageVersion(string outputFile, List<Result> results, IEnumerable<TestInfo> tests,
+        private static async Task RunPackageVersion(RunOptions options, string outputFile, List<Result> results, IEnumerable<TestInfo> tests,
             Language language, ServiceLanguageInfo serviceLanguageInfo, string languageVersion, IDictionary<string, string> packageVersions)
         {
             try
@@ -251,15 +257,15 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 foreach (var test in tests)
                 {
                     IEnumerable<string> selectedArguments;
-                    if (!Options.NoAsync && !Options.NoSync)
+                    if (!options.NoAsync && !options.NoSync)
                     {
                         selectedArguments = test.Arguments.SelectMany(a => new string[] { a, a + " --sync" });
                     }
-                    else if (!Options.NoSync)
+                    else if (!options.NoSync)
                     {
                         selectedArguments = test.Arguments.Select(a => a + " --sync");
                     }
-                    else if (!Options.NoAsync)
+                    else if (!options.NoAsync)
                     {
                         selectedArguments = test.Arguments;
                     }
@@ -308,7 +314,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                         }
                         if (setupException == null)
                         {
-                            for (var i = 0; i < Options.Iterations; i++)
+                            for (var i = 0; i < options.Iterations; i++)
                             {
                                 IterationResult iterationResult;
                                 try
@@ -360,7 +366,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             }
             finally
             {
-                if (!Options.NoCleanup)
+                if (!options.NoCleanup)
                 {
                     Console.WriteLine($"CleanupAsync({serviceLanguageInfo.Project})");
                     Console.WriteLine();
@@ -376,6 +382,11 @@ namespace Azure.Sdk.Tools.PerfAutomation
                     }
                 }
             }
+        }
+
+        private static async Task Update(UpdateOptions options)
+        {
+            await Task.CompletedTask;
         }
 
         private static T DeserializeYaml<T>(string path)

@@ -13,7 +13,7 @@
 
   JS:
     DefaultVersions:
-    - 14.16.0
+    - 14.17.0
     OptionalVersions:
     - 15.12.0
   
@@ -63,10 +63,10 @@ Services:
     Java:
       Project: sdk/storage/azure-storage-perf
       PackageVersions: &java-storage-package-versions
-      - azure-storage-blob: 12.11.0
-        azure-storage-file-share: 12.9.0
-        azure-storage-file-datalake: 12.5.0
-        reactor-core: 3.4.3
+      - azure-storage-blob: 12.11.1
+        azure-storage-file-share: 12.9.1
+        azure-storage-file-datalake: 12.5.1
+        reactor-core: 3.4.5
       - azure-storage-blob: source
         azure-storage-file-share: source
         azure-storage-file-datalake: source
@@ -198,7 +198,7 @@ Services:
     Net:
       Project: sdk/storage/Azure.Storage.Files.Shares/perf/Azure.Storage.Files.Shares.Perf/Azure.Storage.Files.Shares.Perf.csproj
       PackageVersions:
-      - Azure.Storage.Files.Shares: 12.6.1
+      - Azure.Storage.Files.Shares: 12.6.2
       - Azure.Storage.Files.Shares: source
     Java:
       Project: sdk/storage/azure-storage-perf

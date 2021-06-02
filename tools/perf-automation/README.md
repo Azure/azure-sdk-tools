@@ -14,6 +14,6 @@
 
 5. Run `dotnet run -- --help` to view available command-line arguments
 
-6. Example: `dotnet run -- --languages net java --services sample --dry-run`
+6. Example: `dotnet run -- run --languages net java --services sample --dry-run`
 
 7. View results in file `results/results.json`

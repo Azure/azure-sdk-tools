@@ -357,11 +357,13 @@ class LLCOperationView(FormattingClass):
             self.add_space()
             self.add_text(None,"[",None)
             self.add_text(None,"paging",None)
+            self.add_space()
             self.add_punctuation("=")
             self.add_space()
             self.add_text(None,self.paging,None)
             self.add_space()
             self.add_text(None,"lro",None)
+            self.add_space()
             self.add_punctuation("=")
             self.add_space()
             self.add_text(None,self.lro,None)
@@ -386,11 +388,13 @@ class LLCOperationView(FormattingClass):
                 self.add_space()
                 self.add_text(None,"[",None)
                 self.add_text(None,"paging",None)
+                self.add_space()
                 self.add_punctuation("=")
                 self.add_space()
                 self.add_text(None,self.paging,None)
                 self.add_space()
                 self.add_text(None,"lro",None)
+                self.add_space()
                 self.add_punctuation("=")
                 self.add_space()
                 self.add_text(None,self.lro,None)
@@ -446,7 +450,9 @@ class LLCParameterView(FormattingClass):
     @classmethod
     def from_yaml(cls,yaml_data: Dict[str,Any],i,name):
             req=True
+            default = None
             if len(yaml_data["signatureParameters"])!=0:
+                default = yaml_data["signatureParameters"][i]["schema"].get('defaultValue')
                 p_type = yaml_data["signatureParameters"][i]["schema"]['type']
                 p_name = yaml_data["signatureParameters"][i]['language']['default']['name']
                 if yaml_data["signatureParameters"][i].get("required"):
@@ -459,22 +465,24 @@ class LLCParameterView(FormattingClass):
             
             if p_type is None:
                     if yaml_data['requests'][0].get('signatureParameters'):
-                        if yaml_data['requests'][0]['signatureParameters'][0].get('originalParameter'):
-                        # p_type = yaml_data['requests'][0]['signatureParameters'][0]['schema']['elementType']['properties'][0]['schema']['type']
-                        # p_name = yaml_data['requests'][0]['signatureParameters'][0]['schema']['language']['default']['name']
+                        if yaml_data['requests'][0]['signatureParameters'][0].get('language'):
+                            p_type = yaml_data['requests'][0]['signatureParameters'][0]['protocol']['http']['in']
+                            p_name = yaml_data['requests'][0]['signatureParameters'][0]['protocol']['http']['style']
                         # req = "True" if yaml_data['requests'][0]['signatureParameters'][0]['schema']['language']['default'].get('required') else "False"
-                            p_type = yaml_data['requests'][0]['signatureParameters'][0]['originalParameter']['schema']['properties'][0]['schema']['elementType']['language']['default']['name']
-                            p_name = yaml_data['requests'][0]['signatureParameters'][0]['originalParameter']['schema']['properties'][0]['serializedName']
+                            # p_type = yaml_data['requests'][0]['signatureParameters'][0]['originalParameter']['schema']['properties'][0]['schema']['elementType']['language']['default']['name']
+                            # p_name = yaml_data['requests'][0]['signatureParameters'][0]['originalParameter']['schema']['properties'][0]['serializedName']
 
             my_name = p_name
             my_type = p_type
+
+            
 
             return cls(
                 param_type=my_type,
                 param_name=my_name,
                 required=req,
-                namespace = name
-                # default=yaml_data["globalParameters"][0]["language"]["default"]["name"]
+                namespace = name,
+                default=default
             )
     
     def add_token(self, token):
@@ -505,7 +513,7 @@ class LLCParameterView(FormattingClass):
                 self.add_space()
                 self.add_text(None,"=",None)
                 self.add_space()
-                self.add_text(None,self.default,None)
+                self.add_text(None,str(self.default),None)
         
             
     def to_json(self):

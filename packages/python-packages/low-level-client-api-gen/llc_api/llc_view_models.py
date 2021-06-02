@@ -315,15 +315,15 @@ class LLCOperationView(FormattingClass):
 
             pageable = yaml_data["operationGroups"][op_group]["operations"][num]["extensions"].get("x-ms-pageable")
             if pageable:
-                paging_op = "True"
+                paging_op = True
             else:
-                paging_op = "False"
+                paging_op = False
             
             lro = yaml_data["operationGroups"][op_group]["operations"][num]["extensions"].get("x-ms-long-running-operation")
             if lro:
-                lro_op = "True"
+                lro_op = True
             else:
-                lro_op = "False"
+                lro_op = False
             
             return cls(
                 operation_name = yaml_data["operationGroups"][op_group]["operations"][num]["language"]["default"]["name"],
@@ -343,18 +343,20 @@ class LLCOperationView(FormattingClass):
     def add_first_line(self):
         self.add_space()
         self.add_text(None,"[",None)
-        self.add_text(None,"paging",None)
-        self.add_space()
-        self.add_punctuation("=")
-        self.add_space()
-        self.add_text(None,self.paging,None)
-        self.add_space()
-        self.add_text(None,"lro",None)
-        self.add_space()
-        self.add_punctuation("=")
-        self.add_space()
-        self.add_text(None,self.lro,None)
-        self.add_space()
+        if self.paging:
+            self.add_text(None,"paging",None)
+            self.add_space()
+            self.add_punctuation("=")
+            self.add_space()
+            self.add_text(None,str(self.paging),None)
+            self.add_space()
+        if self.lro:
+            self.add_text(None,"lro",None)
+            self.add_space()
+            self.add_punctuation("=")
+            self.add_space()
+            self.add_text(None,str(self.lro),None)
+            self.add_space()
         self.add_text(None,"]",None)
         self.add_space()
         self.add_punctuation("(")

@@ -29,6 +29,7 @@ resources:
     - repository: azure-sdk-build-tools
       type: git
       name: internal/azure-sdk-build-tools
+      ref: refs/tags/azure-sdk-build-tools_20210602.1
 
 variables:
   DotNetCoreVersion: '3.0.100'

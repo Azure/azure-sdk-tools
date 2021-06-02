@@ -148,7 +148,6 @@ class LLCClientView(FormattingClass):
         self.add_space()
         self.add_punctuation("{")
         self.add_new_line(1)
-        # self.add_new_line(1)
 
         #Name of client
         self.add_whitespace(1)
@@ -341,6 +340,32 @@ class LLCOperationView(FormattingClass):
     def add_token(self, token):
         self.Tokens.append(token)
     
+    def add_first_line(self):
+        self.add_space()
+        self.add_text(None,"[",None)
+        self.add_text(None,"paging",None)
+        self.add_space()
+        self.add_punctuation("=")
+        self.add_space()
+        self.add_text(None,self.paging,None)
+        self.add_space()
+        self.add_text(None,"lro",None)
+        self.add_space()
+        self.add_punctuation("=")
+        self.add_space()
+        self.add_text(None,self.lro,None)
+        self.add_space()
+        self.add_text(None,"]",None)
+        self.add_space()
+        self.add_punctuation("(")
+    
+    def add_description(self):
+        self.add_new_line()
+        self.add_whitespace(3)
+        self.add_token(Token(kind=TokenKind.StartDocGroup))
+        self.add_typename(None,self.description,None)
+        self.add_token(Token(kind=TokenKind.EndDocGroup))
+
     #have a to_token to create the line for parameters
     def to_token(self):
 
@@ -354,60 +379,16 @@ class LLCOperationView(FormattingClass):
         self.parameters = [key for key in self.parameters if key.type is not None]
         #Set up operation parameters
         if len(self.parameters)==0:
-            self.add_space()
-            self.add_text(None,"[",None)
-            self.add_text(None,"paging",None)
-            self.add_space()
-            self.add_punctuation("=")
-            self.add_space()
-            self.add_text(None,self.paging,None)
-            self.add_space()
-            self.add_text(None,"lro",None)
-            self.add_space()
-            self.add_punctuation("=")
-            self.add_space()
-            self.add_text(None,self.lro,None)
-            self.add_space()
-            self.add_text(None,"]",None)
-            self.add_space()
-            self.add_punctuation("(")
+            self.add_first_line()
             self.add_punctuation(")")
-    
-            self.add_new_line(1)
-            self.add_whitespace(3)
-            self.add_token(Token(kind=TokenKind.StartDocGroup))
-            self.add_typename(None,self.description,None)
-            self.add_token(Token(kind=TokenKind.EndDocGroup))
-            self.add_new_line()
+            self.add_description()
+
         for param_num in range(0,len(self.parameters)):
             if self.parameters[param_num]:
                 self.parameters[param_num].to_token()
             if param_num==0:
-                # self.add_new_line()
-                # self.add_whitespace(3)
-                self.add_space()
-                self.add_text(None,"[",None)
-                self.add_text(None,"paging",None)
-                self.add_space()
-                self.add_punctuation("=")
-                self.add_space()
-                self.add_text(None,self.paging,None)
-                self.add_space()
-                self.add_text(None,"lro",None)
-                self.add_space()
-                self.add_punctuation("=")
-                self.add_space()
-                self.add_text(None,self.lro,None)
-                self.add_space()
-                self.add_text(None,"]",None)
-                self.add_space()
-                self.add_punctuation("(")
-                self.add_new_line()
-                self.add_whitespace(3)
-                self.add_token(Token(kind=TokenKind.StartDocGroup))
-                self.add_typename(None,self.description,None)
-                self.add_token(Token(kind=TokenKind.EndDocGroup))
-            
+                self.add_first_line()
+                self.add_description()
             self.add_new_line()
             #Add in parameter tokens
             if self.parameters[param_num]:
@@ -449,6 +430,8 @@ class LLCParameterView(FormattingClass):
     
     @classmethod
     def from_yaml(cls,yaml_data: Dict[str,Any],i,name):
+
+
             req=True
             default = None
             if len(yaml_data["signatureParameters"])!=0:
@@ -456,19 +439,23 @@ class LLCParameterView(FormattingClass):
                 p_type = yaml_data["signatureParameters"][i]["schema"]['type']
                 p_name = yaml_data["signatureParameters"][i]['language']['default']['name']
                 if yaml_data["signatureParameters"][i].get("required"):
-                    req=(yaml_data["signatureParameters"][i]['required'])
+                    req=yaml_data["signatureParameters"][i]['required']
                 else:
                     req = False
             else:
                 p_type = None
                 p_name = None
             
-            if p_type is None:
-                    if yaml_data['requests'][0].get('signatureParameters'):
-                        if yaml_data['requests'][0]['signatureParameters'][0].get('language'):
-                            p_type = yaml_data['requests'][0]['signatureParameters'][0]['protocol']['http']['in']
-                            p_name = yaml_data['requests'][0]['signatureParameters'][0]['protocol']['http']['style']
-                        # req = "True" if yaml_data['requests'][0]['signatureParameters'][0]['schema']['language']['default'].get('required') else "False"
+            # if p_type is None:
+            if yaml_data['requests'][0].get('signatureParameters'):
+                if yaml_data['requests'][0]['signatureParameters'][i]:
+                    p_type = yaml_data['requests'][0]['signatureParameters'][i]['protocol']['http']['in']
+                    p_name = yaml_data['requests'][0]['signatureParameters'][i]['protocol']['http']['style']
+                    if yaml_data['requests'][0]['signatureParameters'][i].get("required"):
+                        req=yaml_data['requests'][0]['signatureParameters'][i]['required']
+                    else:
+                        req = False
+                #   req = "True" if yaml_data['requests'][0]['signatureParameters'][0]['schema']['language']['default'].get('required') else "False"
                             # p_type = yaml_data['requests'][0]['signatureParameters'][0]['originalParameter']['schema']['properties'][0]['schema']['elementType']['language']['default']['name']
                             # p_name = yaml_data['requests'][0]['signatureParameters'][0]['originalParameter']['schema']['properties'][0]['serializedName']
 

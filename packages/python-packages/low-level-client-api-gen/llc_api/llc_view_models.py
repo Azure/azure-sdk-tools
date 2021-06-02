@@ -72,9 +72,10 @@ class FormattingClass:
         token.NavigateToId = nav
         self.add_token(token)
     
-    def add_stringliteral(self, id, text):
+    def add_stringliteral(self, id, text,nav):
         token = Token(text, TokenKind.StringLiteral)
         token.DefinitionId = id
+        token.NavigateToId = nav
         self.add_token(token)
 
     def add_literal(self, id, text):
@@ -153,13 +154,13 @@ class LLCClientView(FormattingClass):
         self.add_whitespace(1)
         self.add_keyword(None,self.Name,self.namespace)
         self.add_punctuation("(")
-        self.add_stringliteral(None,self.endpoint_type)
+        self.add_stringliteral(None,self.endpoint_type,None)
         self.add_space()
         self.add_text(None,self.endpoint, None)
 
         self.add_punctuation(",")
         self.add_space()
-        self.add_stringliteral(None,self.credential_type)
+        self.add_stringliteral(None,self.credential_type,None)
         self.add_space()
         self.add_text(None,self.credential,None)
  
@@ -384,6 +385,7 @@ class LLCOperationView(FormattingClass):
             self.add_first_line()
             self.add_punctuation(")")
             self.add_description()
+            self.add_new_line()
 
         for param_num in range(0,len(self.parameters)):
             if self.parameters[param_num]:
@@ -448,15 +450,18 @@ class LLCParameterView(FormattingClass):
                 p_type = None
                 p_name = None
             
-            # if p_type is None:
-            if yaml_data['requests'][0].get('signatureParameters'):
-                if yaml_data['requests'][0]['signatureParameters'][i]:
-                    p_type = yaml_data['requests'][0]['signatureParameters'][i]['protocol']['http']['in']
-                    p_name = yaml_data['requests'][0]['signatureParameters'][i]['protocol']['http']['style']
-                    if yaml_data['requests'][0]['signatureParameters'][i].get("required"):
-                        req=yaml_data['requests'][0]['signatureParameters'][i]['required']
-                    else:
-                        req = False
+    #This depends on the number of request bodies in an operation/ Can iterate through all of them
+            if p_type is None:
+                if yaml_data['requests'][0].get('signatureParameters'):
+                    if yaml_data['requests'][0]['signatureParameters'][0]:
+                        p_type = yaml_data['requests'][0]['signatureParameters'][0]['protocol']['http'].get('in')
+                        p_name = yaml_data['requests'][0]['signatureParameters'][0]['protocol']['http'].get('style')
+                        if p_name is None:
+                            p_name = yaml_data['requests'][0]['signatureParameters'][0]["language"]['default']['name']
+                        if yaml_data['requests'][0]['signatureParameters'][0].get("required"):
+                            req=yaml_data['requests'][0]['signatureParameters'][0]['required']
+                        else:
+                            req = False
                 #   req = "True" if yaml_data['requests'][0]['signatureParameters'][0]['schema']['language']['default'].get('required') else "False"
                             # p_type = yaml_data['requests'][0]['signatureParameters'][0]['originalParameter']['schema']['properties'][0]['schema']['elementType']['language']['default']['name']
                             # p_name = yaml_data['requests'][0]['signatureParameters'][0]['originalParameter']['schema']['properties'][0]['serializedName']
@@ -485,16 +490,16 @@ class LLCParameterView(FormattingClass):
 
         if self.type is not None:
             #Create parameter type token
-            self.add_stringliteral(None,self.type)
+            self.add_stringliteral(self.namespace+self.type,self.type,None)
 
             #If parameter is optional, token for ? created
             if not self.required:
-                self.add_stringliteral(None,"?")
+                self.add_stringliteral(None,"?",None)
 
             self.add_space()
 
             #Create parameter name token
-            self.add_text(self.namespace+self.name,self.name,None)
+            self.add_text(None,self.name,None)
     
 
             #Check if parameter has a default value or not

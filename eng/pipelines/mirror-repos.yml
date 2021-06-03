@@ -81,8 +81,8 @@ jobs:
           #   TargetRepos:
           #     azure-sdk/vcpkg:
           Azure/azure-sdk-for-c:
-              TargetRepos:
-                Azure/azure-sdk-for-c-pr:
+            TargetRepos:
+              Azure/azure-sdk-for-c-pr:
 
     # - template: ./templates/steps/sync-repo-branch.yml
     #   parameters:

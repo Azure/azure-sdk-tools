@@ -217,7 +217,7 @@ class LLCClientView(FormattingClass):
 
             #Remove Null Values from Tokens
             obj_dict["Tokens"][i] = {key:value for key,value in obj_dict["Tokens"][i].items() if value is not None}
-        
+        obj_dict['Language'] = self.Language
         return obj_dict
     
     

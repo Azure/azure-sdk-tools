@@ -86,6 +86,7 @@ class llc_generator:
 
         # Write output to .json
         j = open (OUTPUT_FILE, "w")
-        j.write(json.dumps(main_view.to_json(), default= lambda o : o.__dict__))
+        parsed_json = json.dumps(main_view.to_json(), default= lambda o : o.__dict__)
+        j.write(parsed_json)
 
         j.close()

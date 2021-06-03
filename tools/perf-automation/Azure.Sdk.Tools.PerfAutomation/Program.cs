@@ -1,8 +1,10 @@
 using Azure.Sdk.Tools.PerfAutomation.Models;
 using CommandLine;
 using CommandLine.Text;
+using CsvHelper;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text.Encodings.Web;
@@ -40,7 +42,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
             WriteIndented = true,
         };
 
-        public class CommonOptions {
+        public class CommonOptions
+        {
             [Option("input-file", Default = "tests.yml")]
             public string InputFile { get; set; }
         }
@@ -96,6 +99,16 @@ namespace Azure.Sdk.Tools.PerfAutomation
         {
         }
 
+        [Verb("csv", HelpText = "Generate CSV from results.json files")]
+        public class CsvOptions
+        {
+            [Option('i', "input-folder", Default = "results")]
+            public string InputFolder { get; set; }
+
+            [Option('o', "output-file", Default = "results/results.csv")]
+            public string OutputFile { get; set; }
+        }
+
         public static async Task Main(string[] args)
         {
             var parser = new CommandLine.Parser(settings =>
@@ -105,11 +118,12 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 settings.HelpWriter = null;
             });
 
-            var parserResult = parser.ParseArguments<RunOptions, UpdateOptions>(args);
+            var parserResult = parser.ParseArguments<RunOptions, UpdateOptions, CsvOptions>(args);
 
             await parserResult.MapResult(
                 (RunOptions options) => Run(options),
                 (UpdateOptions options) => Update(options),
+                (CsvOptions options) => Csv(options),
                 errors => DisplayHelp(parserResult)
             );
         }
@@ -388,6 +402,73 @@ namespace Azure.Sdk.Tools.PerfAutomation
         private static async Task Update(UpdateOptions options)
         {
             await Task.CompletedTask;
+        }
+
+        private static async Task Csv(CsvOptions options)
+        {
+            var serializer = new Serializer();
+            Console.WriteLine("=== Options ===");
+            serializer.Serialize(Console.Out, options);
+            Console.WriteLine();
+
+            var csvResults = new List<CsvResult>();
+
+            foreach (var inputFile in Directory.EnumerateFiles(options.InputFolder, "*.json", SearchOption.AllDirectories))
+            {
+                Console.WriteLine(inputFile);
+
+                List<Result> results;
+                using (var stream = File.OpenRead(inputFile))
+                {
+                    results = await JsonSerializer.DeserializeAsync<List<Result>>(stream, JsonOptions);
+                }
+
+                foreach (var result in results)
+                {
+                    var csvResult = new CsvResult
+                    {
+                        Service = result.Service,
+                        Test = result.Test,
+                        Language = result.Language,
+                        OperationsPerSecondMax = result.OperationsPerSecondMax
+                    };
+
+                    csvResult.PackageVersions =
+                        String.Join(",", result.PackageVersions.Select(kvp => String.Join(":", kvp.Key, kvp.Value)));
+
+                    var sizeMatch = Regex.Match(result.Arguments, @"--size\s+(\d+)");
+                    if (sizeMatch.Success)
+                    {
+                        csvResult.Size = long.Parse(sizeMatch.Groups[1].Value);
+                    }
+
+                    var countMatch = Regex.Match(result.Arguments, @"--count\s+(\d+)");
+                    if (countMatch.Success)
+                    {
+                        csvResult.Count = int.Parse(countMatch.Groups[1].Value);
+                    }
+
+                    var parallelMatch = Regex.Match(result.Arguments, @"--parallel\s+(\d+)");
+                    if (parallelMatch.Success)
+                    {
+                        csvResult.Parallel = int.Parse(parallelMatch.Groups[1].Value);
+                    }
+
+                    csvResults.Add(csvResult);
+                }
+            }
+
+            var outputFile = Util.GetUniquePath(options.OutputFile);
+
+            using (var consoleWriter = new CsvWriter(Console.Out, CultureInfo.InvariantCulture))
+            {
+                await consoleWriter.WriteRecordsAsync(csvResults);
+            }
+
+            using (var outputFileWriter = new CsvWriter(new StreamWriter(outputFile), CultureInfo.InvariantCulture))
+            {
+                await outputFileWriter.WriteRecordsAsync(csvResults);
+            }
         }
 
         private static T DeserializeYaml<T>(string path)

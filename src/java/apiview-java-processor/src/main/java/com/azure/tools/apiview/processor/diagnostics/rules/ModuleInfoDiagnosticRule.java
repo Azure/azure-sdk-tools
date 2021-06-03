@@ -11,8 +11,11 @@ import com.github.javaparser.ast.CompilationUnit;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.makeId;
 
@@ -22,7 +25,7 @@ import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.makeId;
  */
 public class ModuleInfoDiagnosticRule implements DiagnosticRule {
     private String moduleName;
-    private List<String> packages = new ArrayList<>();
+    private Set<String> packages = new HashSet<>();
 
     @Override
     public void scanIndividual(CompilationUnit cu, APIListing listing) {
@@ -47,6 +50,14 @@ public class ModuleInfoDiagnosticRule implements DiagnosticRule {
                 .filter(token -> token.getDefinitionId() != null && token.getDefinitionId().equals(ASTAnalyser.MODULE_INFO_KEY))
                 .findFirst();
 
+        // Collect all packages that are exported
+        Set<String> exportsPackages = listing.getTokens().stream()
+                .filter(token -> token.getKind().equals(TokenKind.TYPE_NAME))
+                .filter(token -> token.getDefinitionId() != null && token.getDefinitionId().startsWith("module-info" +
+                        "-exports"))
+                .map(token -> token.getValue())
+                .collect(Collectors.toSet());
+
         if (!moduleInfoToken.isPresent()) {
             listing.addDiagnostic(new Diagnostic(DiagnosticKind.WARNING, makeId(basePackageName),
                     "This module is missing module-info.java"));
@@ -63,6 +74,14 @@ public class ModuleInfoDiagnosticRule implements DiagnosticRule {
                         makeId(ASTAnalyser.MODULE_INFO_KEY), "Module name should be the same as base package " +
                         "name: " + basePackageName));
             }
+
+            // Validate that all public packages are exported in module-info
+            packages.stream()
+                    .filter(publicPackage -> !exportsPackages.contains(publicPackage))
+                    .forEach(missingExport -> {
+                        listing.addDiagnostic(new Diagnostic(DiagnosticKind.ERROR,
+                                makeId(ASTAnalyser.MODULE_INFO_KEY), "Public package not exported: " + missingExport));
+                    });
         }
     }
 }

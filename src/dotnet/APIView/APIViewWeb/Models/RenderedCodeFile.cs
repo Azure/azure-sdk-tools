@@ -52,14 +52,14 @@ namespace APIViewWeb.Models
 
         internal CodeLine[] RenderText(bool showDocumentation, bool skipDiff = false)
         {
-            if (showDocumentation)
+            if (showDocumentation || skipDiff)
             {
                 return CodeFileRenderer.Instance.Render(CodeFile, showDocumentation: showDocumentation, enableSkipDiff: skipDiff);
             }
 
             if (_renderedText == null)
             {
-                _renderedText = CodeFileRenderer.Instance.Render(CodeFile, enableSkipDiff: skipDiff);
+                _renderedText = CodeFileRenderer.Instance.Render(CodeFile);
             }
 
             return _renderedText;

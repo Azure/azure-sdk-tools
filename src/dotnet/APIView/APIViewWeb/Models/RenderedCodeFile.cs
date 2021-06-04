@@ -19,47 +19,47 @@ namespace APIViewWeb.Models
 
         public CodeFile CodeFile { get; }
 
-        public CodeLine[] Render(bool showDocumentation)
+        public CodeLine[] Render(bool showDocumentation, bool skipDiff = false)
         {
             //Always render when documentation is requested to avoid cach thrashing
             if (showDocumentation)
             {
-                return CodeFileHtmlRenderer.Normal.Render(CodeFile, showDocumentation: true);
+                return CodeFileHtmlRenderer.Normal.Render(CodeFile, showDocumentation: showDocumentation, enableSkipDiff: skipDiff);
             }
 
             if (_rendered == null)
             {
-                _rendered = CodeFileHtmlRenderer.Normal.Render(CodeFile);
+                _rendered = CodeFileHtmlRenderer.Normal.Render(CodeFile, enableSkipDiff: skipDiff);
             }
 
             return _rendered;
         }
 
-        public CodeLine[] RenderReadOnly(bool showDocumentation)
+        public CodeLine[] RenderReadOnly(bool showDocumentation, bool skipDiff = false)
         {
             if (showDocumentation)
             {
-                return CodeFileHtmlRenderer.ReadOnly.Render(CodeFile, showDocumentation: true);
+                return CodeFileHtmlRenderer.ReadOnly.Render(CodeFile, showDocumentation: showDocumentation, enableSkipDiff: skipDiff);
             }
 
             if (_renderedReadOnly == null)
             {
-                _renderedReadOnly = CodeFileHtmlRenderer.ReadOnly.Render(CodeFile);
+                _renderedReadOnly = CodeFileHtmlRenderer.ReadOnly.Render(CodeFile, skipDiff);
             }
 
             return _renderedReadOnly;
         }
 
-        internal CodeLine[] RenderText(bool showDocumentation)
+        internal CodeLine[] RenderText(bool showDocumentation, bool skipDiff = false)
         {
             if (showDocumentation)
             {
-                return CodeFileRenderer.Instance.Render(CodeFile, showDocumentation: true, enableSkipDiff: true);
+                return CodeFileRenderer.Instance.Render(CodeFile, showDocumentation: showDocumentation, enableSkipDiff: skipDiff);
             }
 
             if (_renderedText == null)
             {
-                _renderedText = CodeFileRenderer.Instance.Render(CodeFile, enableSkipDiff: true);
+                _renderedText = CodeFileRenderer.Instance.Render(CodeFile, enableSkipDiff: skipDiff);
             }
 
             return _renderedText;

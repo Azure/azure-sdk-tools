@@ -426,25 +426,25 @@ class LLCOperationView(FormattingClass):
                         self.add_token(Token(kind=TokenKind.StartDocGroup))
                         for key in self.json_request.keys():
                             
-                            self.add_whitespace(3)
-                            self.add_text(None,key,None)
+                            self.add_whitespace(4)
+                            self.add_keyword(None,key,None)
                             self.add_space()
                             self.add_punctuation("[")
                             self.add_new_line()
                             if key =='name':
-                                self.add_whitespace(3)
-                                self.add_typename(None, self.json_request[key],None)
+                                self.add_whitespace(5)
+                                self.add_text(None, self.json_request[key],None)
                                 self.add_new_line()
                             if key !='name':
                                 for num in range(0,len(self.json_request[key])):
                                     self.json_request[key][num].to_token()
-                                    self.add_whitespace(4)
+                                    self.add_whitespace(5)
                                     for t in self.json_request[key][num].get_tokens():
                                         self.add_token(t)
                                     self.add_new_line()
-                            self.add_whitespace(3)
+                            self.add_whitespace(4)
                             self.add_punctuation("]")
-                            self.add_new_line(2)
+                            self.add_new_line(1)
                         self.add_token(Token(kind=TokenKind.EndDocGroup))
     
     def to_json(self):
@@ -605,13 +605,13 @@ class SchemaRequest():
                                     current_type = element['schema']['properties'][source_num]["schema"]['type']
                                     if current_type =='choice':
                                         current_type = element['schema']['properties'][source_num]["schema"]['choiceType']['type']
-                                    json_format['source'].append(LLCParameterView(element['schema']['properties'][source_num]['language']['default']['name'],current_type,self.namespace))
+                                    json_format['source'].append(LLCParameterView(element['schema']['properties'][source_num]['language']['default']['name'],current_type,self.namespace,required=element.get('required')))
                             if element['serializedName'] == 'targets':
                                 for target_num in range(0,len(element['schema']['elementType']['properties'])):
                                     tcurrent_type = element['schema']['elementType']['properties'][target_num]["schema"]['type']
                                     if tcurrent_type =='choice':
                                         tcurrent_type = element['schema']['elementType']['properties'][target_num]["schema"]['choiceType']['type']
-                                    json_format['targets'].append(LLCParameterView(element['schema']['elementType']['properties'][target_num]['language']['default']['name'],tcurrent_type,self.namespace))
+                                    json_format['targets'].append(LLCParameterView(element['schema']['elementType']['properties'][target_num]['language']['default']['name'],tcurrent_type,self.namespace,required=element.get('required')))
                                 break
                                 
         return json_format

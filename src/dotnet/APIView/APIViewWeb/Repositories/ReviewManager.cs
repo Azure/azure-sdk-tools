@@ -354,8 +354,8 @@ namespace APIViewWeb.Respositories
         {
             //This will compare and check if new code file content is same as revision in parameter
             var lastRevisionFile = await _codeFileRepository.GetCodeFileAsync(revision);
-            var lastRevisionTextLines = lastRevisionFile.RenderText(false);
-            var fileTextLines = renderedCodeFile.RenderText(false);
+            var lastRevisionTextLines = lastRevisionFile.RenderText(showDocumentation: false, skipDiff: true);
+            var fileTextLines = renderedCodeFile.RenderText(showDocumentation: false, skipDiff: true);
             return lastRevisionTextLines.SequenceEqual(fileTextLines);
         }
 

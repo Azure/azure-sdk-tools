@@ -88,7 +88,6 @@ namespace APIViewWeb.Pages.Assemblies
             CodeFile = renderedCodeFile.CodeFile;
 
             var fileDiagnostics = CodeFile.Diagnostics ?? Array.Empty<CodeDiagnostic>();
-
             var fileHtmlLines = renderedCodeFile.Render(ShowDocumentation);
 
             if (DiffRevisionId != null)

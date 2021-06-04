@@ -1,3 +1,4 @@
+import json
 import re
 import logging
 import importlib
@@ -292,7 +293,7 @@ class LLCOperationGroupView(FormattingClass):
 
 
 class LLCOperationView(FormattingClass):
-    def __init__(self, operation_name, parameters,namespace, description ="", paging = "",lro=""):
+    def __init__(self, operation_name, parameters,namespace, json_request=None, description ="", paging = "",lro=""):
         self.operation=operation_name;
         self.parameters=parameters; #parameterview list
         self.Tokens =[]
@@ -301,6 +302,7 @@ class LLCOperationView(FormattingClass):
         self.description = description
         self.paging = paging
         self.lro = lro
+        self.json_request = json_request
 
     @classmethod
     def from_yaml(cls,yaml_data: Dict[str,Any],op_group,num,name): 
@@ -326,13 +328,18 @@ class LLCOperationView(FormattingClass):
             else:
                 lro_op = False
             
+            request_docstring = SchemaRequest.from_yaml(yaml_data["operationGroups"][op_group]["operations"][num]['requests'][0],name)
+            json_request = request_docstring.to_json_formatting()
+            print(json_request)
+            
             return cls(
                 operation_name = yaml_data["operationGroups"][op_group]["operations"][num]["language"]["default"]["name"],
                 parameters = param,
                 namespace = name,
                 description = des,
                 paging = paging_op,
-                lro = lro_op
+                lro = lro_op,
+                json_request = json_request
             )
 
     def get_tokens(self):
@@ -351,6 +358,7 @@ class LLCOperationView(FormattingClass):
             self.add_space()
             self.add_text(None,str(self.paging),None)
             self.add_space()
+        #make smaller classes
         if self.lro:
             self.add_text(None,"lro",None)
             self.add_space()
@@ -412,7 +420,32 @@ class LLCOperationView(FormattingClass):
                 self.add_whitespace(3)
                 self.add_punctuation(")")
                 self.add_new_line(1)
-        #Need to consider operation groups next
+
+                if self.json_request:
+                    if self.json_request.get('name'):
+                        self.add_token(Token(kind=TokenKind.StartDocGroup))
+                        for key in self.json_request.keys():
+                            
+                            self.add_whitespace(3)
+                            self.add_text(None,key,None)
+                            self.add_space()
+                            self.add_punctuation("[")
+                            self.add_new_line()
+                            if key =='name':
+                                self.add_whitespace(3)
+                                self.add_typename(None, self.json_request[key],None)
+                                self.add_new_line()
+                            if key !='name':
+                                for num in range(0,len(self.json_request[key])):
+                                    self.json_request[key][num].to_token()
+                                    self.add_whitespace(4)
+                                    for t in self.json_request[key][num].get_tokens():
+                                        self.add_token(t)
+                                    self.add_new_line()
+                            self.add_whitespace(3)
+                            self.add_punctuation("]")
+                            self.add_new_line(2)
+                        self.add_token(Token(kind=TokenKind.EndDocGroup))
     
     def to_json(self):
         obj_dict={}
@@ -423,22 +456,22 @@ class LLCOperationView(FormattingClass):
         
 
 class LLCParameterView(FormattingClass):
-    def __init__(self, param_name, param_type, namespace, default=None, required = False):
+    def __init__(self, param_name, param_type, namespace, json_request = None, default=None, required = False):
         self.name = param_name;
         self.type = param_type;
         self.default = default;
         self.required = required
         self.Tokens = []
         self.indent = 0 
+        self.json_request = json_request
         self.namespace = namespace
     
     @classmethod
     def from_yaml(cls,yaml_data: Dict[str,Any],i,name):
-
-
             req=True
             default = None
-            if len(yaml_data["signatureParameters"])!=0:
+            json_request ={}
+            if len(yaml_data.get("signatureParameters"))!=0:
                 default = yaml_data["signatureParameters"][i]["schema"].get('defaultValue')
                 p_type = yaml_data["signatureParameters"][i]["schema"]['type']
                 p_name = yaml_data["signatureParameters"][i]['language']['default']['name']
@@ -449,8 +482,11 @@ class LLCParameterView(FormattingClass):
             else:
                 p_type = None
                 p_name = None
+  
             
     #This depends on the number of request bodies in an operation/ Can iterate through all of them
+    # Make request dictionary here 
+           
             if p_type is None:
                 if yaml_data['requests'][0].get('signatureParameters'):
                     if yaml_data['requests'][0]['signatureParameters'][0]:
@@ -462,6 +498,9 @@ class LLCParameterView(FormattingClass):
                             req=yaml_data['requests'][0]['signatureParameters'][0]['required']
                         else:
                             req = False
+
+
+
                 #   req = "True" if yaml_data['requests'][0]['signatureParameters'][0]['schema']['language']['default'].get('required') else "False"
                             # p_type = yaml_data['requests'][0]['signatureParameters'][0]['originalParameter']['schema']['properties'][0]['schema']['elementType']['language']['default']['name']
                             # p_name = yaml_data['requests'][0]['signatureParameters'][0]['originalParameter']['schema']['properties'][0]['serializedName']
@@ -476,7 +515,8 @@ class LLCParameterView(FormattingClass):
                 param_name=my_name,
                 required=req,
                 namespace = name,
-                default=default
+                default=default,
+                json_request = json_request
             )
     
     def add_token(self, token):
@@ -508,8 +548,8 @@ class LLCParameterView(FormattingClass):
                 self.add_text(None,"=",None)
                 self.add_space()
                 self.add_text(None,str(self.default),None)
-        
-            
+
+
     def to_json(self):
         obj_dict={}
         self.to_token()
@@ -544,4 +584,47 @@ class Navigation:
 
     def add_child(self, child):
         self.ChildItems.append(child)
+
+class SchemaRequest():
+    def __init__(self,media_types,parameters,namespace):
+        self.parameters = parameters
+        self.media_types = media_types
+        self.namespace = namespace
+
+    def to_json_formatting(self):
+        json_format ={'name':None,'source':[],'targets':[]}
+        for param in self.parameters:
+            # this goes through the parameters
+            if param.get('schema'):
+                for prop in param['schema'].get('properties'):
+                    json_format['name'] = prop['serializedName']
+                    if prop['schema'].get('elementType'):
+                        for element in prop['schema']['elementType'].get('properties'):
+                            if element['serializedName'] == 'source':
+                                for source_num in range(0,len(element['schema']['properties'])):
+                                    current_type = element['schema']['properties'][source_num]["schema"]['type']
+                                    if current_type =='choice':
+                                        current_type = element['schema']['properties'][source_num]["schema"]['choiceType']['type']
+                                    json_format['source'].append(LLCParameterView(element['schema']['properties'][source_num]['language']['default']['name'],current_type,self.namespace))
+                            if element['serializedName'] == 'targets':
+                                for target_num in range(0,len(element['schema']['elementType']['properties'])):
+                                    tcurrent_type = element['schema']['elementType']['properties'][target_num]["schema"]['type']
+                                    if tcurrent_type =='choice':
+                                        tcurrent_type = element['schema']['elementType']['properties'][target_num]["schema"]['choiceType']['type']
+                                    json_format['targets'].append(LLCParameterView(element['schema']['elementType']['properties'][target_num]['language']['default']['name'],tcurrent_type,self.namespace))
+                                break
+                                
+        return json_format
+
+    
+    @classmethod
+    def from_yaml(cls,yaml_data: Dict[str,Any],name):
+        parameters = []
+        parameters = yaml_data.get("signatureParameters", [])
+        
+        return cls(
+            media_types = None,
+            parameters = parameters,
+            namespace =name
+        )
 

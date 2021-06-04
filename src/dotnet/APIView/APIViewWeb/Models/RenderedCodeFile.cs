@@ -19,32 +19,32 @@ namespace APIViewWeb.Models
 
         public CodeFile CodeFile { get; }
 
-        public CodeLine[] Render(bool showDocumentation, bool skipDiff = false)
+        public CodeLine[] Render(bool showDocumentation)
         {
             //Always render when documentation is requested to avoid cach thrashing
             if (showDocumentation)
             {
-                return CodeFileHtmlRenderer.Normal.Render(CodeFile, showDocumentation: showDocumentation, enableSkipDiff: skipDiff);
+                return CodeFileHtmlRenderer.Normal.Render(CodeFile, showDocumentation: true);
             }
 
             if (_rendered == null)
             {
-                _rendered = CodeFileHtmlRenderer.Normal.Render(CodeFile, enableSkipDiff: skipDiff);
+                _rendered = CodeFileHtmlRenderer.Normal.Render(CodeFile);
             }
 
             return _rendered;
         }
 
-        public CodeLine[] RenderReadOnly(bool showDocumentation, bool skipDiff = false)
+        public CodeLine[] RenderReadOnly(bool showDocumentation)
         {
             if (showDocumentation)
             {
-                return CodeFileHtmlRenderer.ReadOnly.Render(CodeFile, showDocumentation: showDocumentation, enableSkipDiff: skipDiff);
+                return CodeFileHtmlRenderer.ReadOnly.Render(CodeFile, showDocumentation: true);
             }
 
             if (_renderedReadOnly == null)
             {
-                _renderedReadOnly = CodeFileHtmlRenderer.ReadOnly.Render(CodeFile, skipDiff);
+                _renderedReadOnly = CodeFileHtmlRenderer.ReadOnly.Render(CodeFile);
             }
 
             return _renderedReadOnly;

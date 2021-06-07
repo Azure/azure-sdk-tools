@@ -75,7 +75,7 @@
     <Message Text="Target ==> CleaningNugetPackages Initiated....." Importance="Low" />
     <ItemGroup>
       <_SDKPackageFilesToDelete Include="$(PackageOutputPath)\*.nupkg"/>
-      <_SDKPackageFilesToDelete Include="$(PackageOutputPath)\*.snupkg"/>
+      <_SDKPackageFilesToDelete Include="$(PackageOutputPath)\*.$(SymbolPackageFormat)"/>
       <_SDKPackageFilesToDelete Include="$(BaseIntermediateOutputPath)\*.nuspec"/>
     </ItemGroup>
     <Message Text="Cleaning Packages..... @(_SDKPackageFilesToDelete)" Condition=" '@(_SDKPackageFilesToDelete)' != '' " />
@@ -160,7 +160,7 @@
         PackageOutputPath=$(NugPkgOutPutDirPath); 
         NoPackageAnalysis=true; 
         IncludeSymbols=true;
-        SymbolPackageFormat=snupkg;
+        SymbolPackageFormat=$(SymbolPackageFormat);
         IsPackable=true;
         NoBuild=true;" Condition=" ('@(ProjectsToPackage)' != '') OR ('$(WhatIf)' != 'true') ">
       <Output TaskParameter="TargetOutputs" ItemName="SdkNuGetPackages" />

@@ -329,8 +329,8 @@ class LLCOperationView(FormattingClass):
                 lro_op = False
             
             request_docstring = SchemaRequest.from_yaml(yaml_data["operationGroups"][op_group]["operations"][num]['requests'][0],name)
-            json_request = request_docstring.to_json_formatting()
-            print(json_request)
+            json_request = request_docstring.to_json_formatting(request_docstring.parameters)
+            # print(json_request)
             
             return cls(
                 operation_name = yaml_data["operationGroups"][op_group]["operations"][num]["language"]["default"]["name"],
@@ -422,30 +422,39 @@ class LLCOperationView(FormattingClass):
                 self.add_new_line(1)
 
                 if self.json_request:
-                    if self.json_request.get('name'):
-                        self.add_token(Token(kind=TokenKind.StartDocGroup))
-                        for key in self.json_request.keys():
-                            
-                            self.add_whitespace(4)
-                            self.add_keyword(None,key,None)
-                            self.add_space()
-                            self.add_punctuation("[")
-                            self.add_new_line()
-                            if key =='name':
-                                self.add_whitespace(5)
-                                self.add_text(None, self.json_request[key],None)
+                    self.add_token(Token(kind=TokenKind.StartDocGroup))
+                    for key in self.json_request.keys():
+                        
+                        self.add_whitespace(4)
+                        self.add_keyword(None,key,None)
+                        self.add_space()
+                        self.add_punctuation("{")
+                        self.add_new_line()
+                        for num in range(0,len(self.json_request[key])):
+                            if isinstance(self.json_request[key][num],list):
+                                self.add_whitespace(6)
+                                self.add_punctuation("{")
                                 self.add_new_line()
-                            if key !='name':
-                                for num in range(0,len(self.json_request[key])):
-                                    self.json_request[key][num].to_token()
-                                    self.add_whitespace(5)
-                                    for t in self.json_request[key][num].get_tokens():
+                                
+                                for p_list in self.json_request[key][num]:
+                                    for p in p_list: 
+                                        p.to_token()
+                                    self.add_whitespace(6)
+                                    for t in p.get_tokens():  
                                         self.add_token(t)
                                     self.add_new_line()
-                            self.add_whitespace(4)
-                            self.add_punctuation("]")
-                            self.add_new_line(1)
-                        self.add_token(Token(kind=TokenKind.EndDocGroup))
+                                self.add_whitespace(6)
+                                self.add_punctuation("}")
+                            else: 
+                                self.json_request[key][num].to_token()
+                                self.add_whitespace(5)
+                                for t in self.json_request[key][num].get_tokens():
+                                    self.add_token(t)
+                            self.add_new_line()
+                    self.add_whitespace(4)
+                    self.add_punctuation("}")
+                    self.add_new_line(1)
+                    self.add_token(Token(kind=TokenKind.EndDocGroup))
     
     def to_json(self):
         obj_dict={}
@@ -490,8 +499,11 @@ class LLCParameterView(FormattingClass):
             if p_type is None:
                 if yaml_data['requests'][0].get('signatureParameters'):
                     if yaml_data['requests'][0]['signatureParameters'][0]:
-                        p_type = yaml_data['requests'][0]['signatureParameters'][0]['protocol']['http'].get('in')
-                        p_name = yaml_data['requests'][0]['signatureParameters'][0]['protocol']['http'].get('style')
+                        p_type = yaml_data['requests'][0]['signatureParameters'][0]['schema']['properties'][0]['schema']['elementType']['language']['default']['name']
+                        p_name = yaml_data['requests'][0]['signatureParameters'][0]['schema']['properties'][0]['serializedName']
+
+                        # p_type = yaml_data['requests'][0]['signatureParameters'][0]['protocol']['http'].get('in')
+                        # p_name = yaml_data['requests'][0]['signatureParameters'][0]['protocol']['http'].get('style')
                         if p_name is None:
                             p_name = yaml_data['requests'][0]['signatureParameters'][0]["language"]['default']['name']
                         if yaml_data['requests'][0]['signatureParameters'][0].get("required"):
@@ -591,28 +603,38 @@ class SchemaRequest():
         self.media_types = media_types
         self.namespace = namespace
 
-    def to_json_formatting(self):
-        json_format ={'name':None,'source':[],'targets':[]}
-        for param in self.parameters:
+    def to_json_formatting(self, parameters):
+        json_format ={}
+        for param in parameters:
             # this goes through the parameters
             if param.get('schema'):
-                for prop in param['schema'].get('properties'):
-                    json_format['name'] = prop['serializedName']
-                    if prop['schema'].get('elementType'):
-                        for element in prop['schema']['elementType'].get('properties'):
-                            if element['serializedName'] == 'source':
-                                for source_num in range(0,len(element['schema']['properties'])):
-                                    current_type = element['schema']['properties'][source_num]["schema"]['type']
-                                    if current_type =='choice':
-                                        current_type = element['schema']['properties'][source_num]["schema"]['choiceType']['type']
-                                    json_format['source'].append(LLCParameterView(element['schema']['properties'][source_num]['language']['default']['name'],current_type,self.namespace,required=element.get('required')))
-                            if element['serializedName'] == 'targets':
-                                for target_num in range(0,len(element['schema']['elementType']['properties'])):
-                                    tcurrent_type = element['schema']['elementType']['properties'][target_num]["schema"]['type']
-                                    if tcurrent_type =='choice':
-                                        tcurrent_type = element['schema']['elementType']['properties'][target_num]["schema"]['choiceType']['type']
-                                    json_format['targets'].append(LLCParameterView(element['schema']['elementType']['properties'][target_num]['language']['default']['name'],tcurrent_type,self.namespace,required=element.get('required')))
-                                break
+                for r_property in param['schema'].get('properties'):
+                    json_format[r_property['serializedName']] = [LLCParameterView(r_property['serializedName'], r_property['schema']['type'],self.namespace,required = r_property.get('required'))]
+                    if r_property['schema'].get('elementType'):
+                        if r_property['schema']['elementType'].get('properties'):
+                            for element in r_property['schema']['elementType'].get('properties'):
+                                 if element['schema'].get('properties'):
+                                    elements = []
+                                    for source_num in range(0,len(element['schema']['properties'])):
+                                        current_type = element['schema']['properties'][source_num]["schema"]['type']
+                                        if current_type =='choice':
+                                            current_type = element['schema']['properties'][source_num]["schema"]['choiceType']['type']
+                                        elements.append(LLCParameterView(element['schema']['properties'][source_num]['language']['default']['name'],current_type,self.namespace,required=element.get('required')))
+                                    json_format[element['serializedName']] = elements
+                    elif r_property['schema'].get('properties'):
+                        imbedded_prop = []
+                        for obj_property in r_property['schema']['properties']:
+                            imbedded_prop.append([LLCParameterView(obj_property['serializedName'], obj_property['schema']['type'],self.namespace,required = obj_property.get('required'))])
+                        json_format[r_property['serializedName']].append(imbedded_prop)
+                        #you know it will have children 
+                      
+                                # if element['serializedName'] == 'targets':
+                                #     for target_num in range(0,len(element['schema']['elementType']['properties'])):
+                                #         tcurrent_type = element['schema']['elementType']['properties'][target_num]["schema"]['type']
+                                #         if tcurrent_type =='choice':
+                                #             tcurrent_type = element['schema']['elementType']['properties'][target_num]["schema"]['choiceType']['type']
+                                #         json_format['targets'].append(LLCParameterView(element['schema']['elementType']['properties'][target_num]['language']['default']['name'],tcurrent_type,self.namespace,required=element.get('required')))
+                                #     break
                                 
         return json_format
 

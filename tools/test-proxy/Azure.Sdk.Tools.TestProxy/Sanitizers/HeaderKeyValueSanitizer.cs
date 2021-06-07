@@ -25,8 +25,6 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
                 headers[_targetKey] = _newValue;
             }
         }
-
-        // TODO: explore the body and do a key/value replace if necessary there as well
     }
 
 }

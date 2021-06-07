@@ -281,6 +281,7 @@ class LLCOperationGroupView(FormattingClass):
                     self.operations[operation].to_token()
                     for t in self.operations[operation].get_tokens():
                         self.add_token(t)
+                
 
        
 
@@ -307,30 +308,38 @@ class LLCOperationView(FormattingClass):
     @classmethod
     def from_yaml(cls,yaml_data: Dict[str,Any],op_group,num,name): 
             param = []
+            pageable =None
+            lro=None
             if len(yaml_data["operationGroups"][op_group]["operations"][num]["signatureParameters"])==0:
                 param.append(LLCParameterView.from_yaml(yaml_data["operationGroups"][op_group]["operations"][num],0,name))
             for i in range(0,len(yaml_data["operationGroups"][op_group]["operations"][num]["signatureParameters"])):
                 param.append(LLCParameterView.from_yaml(yaml_data["operationGroups"][op_group]["operations"][num],i,name))
+            for j in range(0, len(yaml_data['operationGroups'][op_group]['operations'][num]['requests'])):
+                for i in range(0,len(yaml_data['operationGroups'][op_group]['operations'][num]['requests'][j].get('signatureParameters',[]))):
+                    param.append(LLCParameterView.from_yaml(yaml_data["operationGroups"][op_group]["operations"][num]['requests'][j],i,name))
 
             des = yaml_data["operationGroups"][op_group]["operations"][num]["language"]["default"].get("summary")
             if des is None:
                 des = yaml_data["operationGroups"][op_group]["operations"][num]["language"]["default"]["description"]
 
-            pageable = yaml_data["operationGroups"][op_group]["operations"][num]["extensions"].get("x-ms-pageable")
+            if yaml_data["operationGroups"][op_group]["operations"][num].get("extensions"):
+                pageable = yaml_data["operationGroups"][op_group]["operations"][num]["extensions"].get("x-ms-pageable")
+                lro = yaml_data["operationGroups"][op_group]["operations"][num]["extensions"].get("x-ms-long-running-operation")
             if pageable:
                 paging_op = True
             else:
                 paging_op = False
             
-            lro = yaml_data["operationGroups"][op_group]["operations"][num]["extensions"].get("x-ms-long-running-operation")
+            
             if lro:
                 lro_op = True
             else:
                 lro_op = False
-            
-            request_docstring = SchemaRequest.from_yaml(yaml_data["operationGroups"][op_group]["operations"][num]['requests'][0],name)
-            json_request = request_docstring.to_json_formatting(request_docstring.parameters)
-            # print(json_request)
+
+            json_request=None
+            # request_docstring = SchemaRequest.from_yaml(yaml_data["operationGroups"][op_group]["operations"][num]['requests'][0],name)
+            # json_request = request_docstring.to_json_formatting(request_docstring.parameters)
+            # # print(json_request)
             
             return cls(
                 operation_name = yaml_data["operationGroups"][op_group]["operations"][num]["language"]["default"]["name"],
@@ -495,21 +504,23 @@ class LLCParameterView(FormattingClass):
             
     #This depends on the number of request bodies in an operation/ Can iterate through all of them
     # Make request dictionary here 
-           
-            if p_type is None:
-                if yaml_data['requests'][0].get('signatureParameters'):
-                    if yaml_data['requests'][0]['signatureParameters'][0]:
-                        p_type = yaml_data['requests'][0]['signatureParameters'][0]['schema']['properties'][0]['schema']['elementType']['language']['default']['name']
-                        p_name = yaml_data['requests'][0]['signatureParameters'][0]['schema']['properties'][0]['serializedName']
 
-                        # p_type = yaml_data['requests'][0]['signatureParameters'][0]['protocol']['http'].get('in')
-                        # p_name = yaml_data['requests'][0]['signatureParameters'][0]['protocol']['http'].get('style')
-                        if p_name is None:
-                            p_name = yaml_data['requests'][0]['signatureParameters'][0]["language"]['default']['name']
-                        if yaml_data['requests'][0]['signatureParameters'][0].get("required"):
-                            req=yaml_data['requests'][0]['signatureParameters'][0]['required']
-                        else:
-                            req = False
+    #check if looking at a request if sig param is zero
+           
+            # if p_type is None:
+            #     if yaml_data['requests'][0].get('signatureParameters'):
+            #         if yaml_data['requests'][0]['signatureParameters'][0]:
+            #             # p_type = yaml_data['requests'][0]['signatureParameters'][0]['schema']['properties'][0]['schema']['elementType']['language']['default']['name']
+            #             p_name = yaml_data['requests'][0]['signatureParameters'][0]['schema']['properties'][0]['serializedName']
+
+            #             p_type = yaml_data['requests'][0]['signatureParameters'][0]['protocol']['http'].get('in')
+            #             # p_name = yaml_data['requests'][0]['signatureParameters'][0]['protocol']['http'].get('style')
+            #             if p_name is None:
+            #                 p_name = yaml_data['requests'][0]['signatureParameters'][0]["language"]['default']['name']
+            #             if yaml_data['requests'][0]['signatureParameters'][0].get("required"):
+            #                 req=yaml_data['requests'][0]['signatureParameters'][0]['required']
+            #             else:
+            #                 req = False
 
 
 
@@ -608,19 +619,18 @@ class SchemaRequest():
         for param in parameters:
             # this goes through the parameters
             if param.get('schema'):
-                for r_property in param['schema'].get('properties'):
+                for r_property in param['schema'].get('properties',[]):
                     json_format[r_property['serializedName']] = [LLCParameterView(r_property['serializedName'], r_property['schema']['type'],self.namespace,required = r_property.get('required'))]
                     if r_property['schema'].get('elementType'):
                         if r_property['schema']['elementType'].get('properties'):
-                            for element in r_property['schema']['elementType'].get('properties'):
-                                 if element['schema'].get('properties'):
-                                    elements = []
-                                    for source_num in range(0,len(element['schema']['properties'])):
-                                        current_type = element['schema']['properties'][source_num]["schema"]['type']
-                                        if current_type =='choice':
-                                            current_type = element['schema']['properties'][source_num]["schema"]['choiceType']['type']
-                                        elements.append(LLCParameterView(element['schema']['properties'][source_num]['language']['default']['name'],current_type,self.namespace,required=element.get('required')))
-                                    json_format[element['serializedName']] = elements
+                            for element in r_property['schema']['elementType'].get('properties',[]):
+                                elements = []
+                                for source_num in range(0,len(element['schema'].get('properties',[]))):
+                                    current_type = element['schema']['properties'][source_num]["schema"]['type']
+                                    if current_type =='choice':
+                                        current_type = element['schema']['properties'][source_num]["schema"]['choiceType']['type']
+                                    elements.append(LLCParameterView(element['schema']['properties'][source_num]['language']['default']['name'],current_type,self.namespace,required=element.get('required')))
+                                json_format[element['serializedName']] = elements
                     elif r_property['schema'].get('properties'):
                         imbedded_prop = []
                         for obj_property in r_property['schema']['properties']:

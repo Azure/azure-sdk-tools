@@ -22,6 +22,7 @@ namespace Azure.Sdk.Tools.TestProxy
         public string CurrentBranch = "master";
         public IRepository Repository;
         public string RepoPath;
+        public bool SaveByInput = false;
 
         public RecordingHandler(string targetDirectory)
         {
@@ -178,10 +179,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     }
                     else
                     {
-                        if (!header.Key.StartsWith("x-recording"))
-                        {
-                            upstreamRequest.Headers.TryAddWithoutValidation(header.Key, values);
-                        }
+                        upstreamRequest.Headers.TryAddWithoutValidation(header.Key, values);
                     }
                 }
                 catch (Exception)
@@ -325,7 +323,10 @@ namespace Azure.Sdk.Tools.TestProxy
         #region common functions
         public string GetRecordingPath(string file)
         {
-            return Path.Join(RepoPath, "recordings", file);
+            if (SaveByInput)
+                return file;
+            else 
+                return Path.Join(RepoPath, "recordings", file);
         }
 
         public static string GetHeader(HttpRequest request, string name, bool allowNulls = false)
@@ -344,8 +345,13 @@ namespace Azure.Sdk.Tools.TestProxy
 
         public static Uri GetRequestUri(HttpRequest request)
         {
-            var target_uri = GetHeader(request, "x-recording-upstream-base-uri");
-            return new Uri(target_uri);
+            var uri = new RequestUriBuilder();
+            uri.Reset(new Uri(GetHeader(request, "x-recording-upstream-base-uri")));
+            uri.Path = request.Path;
+            uri.Query = request.QueryString.ToUriComponent();
+            var result = uri.ToUri();
+
+            return result;
         }
 
         private static bool IncludeHeader(string header)

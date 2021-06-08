@@ -48,6 +48,15 @@ namespace Azure.Sdk.Tools.TestProxy
             Response.StatusCode = 200;
         }
 
+        public void SaveAuto()
+        {
+            _recordingHandler.SaveByInput = false;
+        }
+
+        public void SaveManual()
+        {
+            _recordingHandler.SaveByInput = true;
+        }
 
         [HttpPost]
         public void AddTransform()

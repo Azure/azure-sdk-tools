@@ -28,7 +28,7 @@ namespace Azure.Sdk.Tools.TestProxy
             string file = RecordingHandler.GetHeader(Request, "x-recording-file", true);
             string recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", true);
 
-            if (String.IsNullOrWhiteSpace(file) && !String.IsNullOrWhiteSpace(recordingId))
+            if (String.IsNullOrEmpty(file) && !String.IsNullOrEmpty(recordingId))
             {
                 await _recordingHandler.StartPlayback(recordingId, Response, RecordingType.IN_MEMORY);
             }

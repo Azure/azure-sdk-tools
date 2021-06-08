@@ -89,7 +89,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 session.Session.Sanitize(sanitizer);
             }
 
-            if (String.IsNullOrWhiteSpace(file))
+            if (String.IsNullOrEmpty(file))
             {
                 if (!in_memory_sessions.TryAdd(sessionId, session))
                 {
@@ -119,7 +119,7 @@ namespace Azure.Sdk.Tools.TestProxy
         public void StartRecording(string sessionId, HttpResponse outgoingResponse)
         {
             var id = Guid.NewGuid().ToString();
-            var session = (sessionId??"", new ModifiableRecordSession(new RecordSession()));
+            var session = (sessionId ?? String.Empty, new ModifiableRecordSession(new RecordSession()));
 
             if (!recording_sessions.TryAdd(id, session))
             {
@@ -129,7 +129,6 @@ namespace Azure.Sdk.Tools.TestProxy
 
             outgoingResponse.Headers.Add("x-recording-id", id);
         }
-
 
         public async Task HandleRecordRequest(string recordingId, HttpRequest incomingRequest, HttpResponse outgoingResponse, HttpClient client)
         {

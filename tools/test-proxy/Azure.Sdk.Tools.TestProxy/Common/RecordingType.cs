@@ -7,7 +7,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 {
     public enum RecordingType
     {
-        IN_MEMORY,
-        FILE_PERSISTED
+        InMemory,
+        FilePersisted
     }
 }

@@ -220,12 +220,12 @@ namespace Azure.Sdk.Tools.TestProxy
         #endregion
 
         #region playback functionality
-        public async Task StartPlayback(string sessionId, HttpResponse outgoingResponse, RecordingType mode = RecordingType.FILE_PERSISTED)
+        public async Task StartPlayback(string sessionId, HttpResponse outgoingResponse, RecordingType mode = RecordingType.FilePersisted)
         {
             var id = Guid.NewGuid().ToString();
             ModifiableRecordSession session;
 
-            if(mode == RecordingType.IN_MEMORY)
+            if(mode == RecordingType.InMemory)
             {
                 if(!in_memory_sessions.TryGetValue(sessionId, out session))
                 {

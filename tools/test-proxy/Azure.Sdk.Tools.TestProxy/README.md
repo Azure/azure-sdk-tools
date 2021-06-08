@@ -189,12 +189,13 @@ headers {
 
 If a user does **not** provide a `fileId` via header `x-recording-file`, the recording will be saved **in-memory only**. If a recording is saved into memory, the only way to retrieve it is to access the playback by passing along the original recordingId that you **recorded it with**.
 
-**Record Start**
+Start the recording **without a `x-recording-file` header**.
+
 ```json
 URL: https://localhost:5001/record/start
 ```
 
-Results in recordingId `X`.
+The POST will return recordingId `X`.
 
 To load this recording for playback...
 

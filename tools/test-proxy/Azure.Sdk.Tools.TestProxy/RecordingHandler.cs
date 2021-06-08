@@ -89,7 +89,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 session.Session.Sanitize(sanitizer);
             }
 
-            if (String.IsNullOrWhiteSpace(file))
+            if (String.IsNullOrEmpty(file))
             {
                 if (!in_memory_sessions.TryAdd(sessionId, session))
                 {

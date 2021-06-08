@@ -4,17 +4,10 @@
 using Azure.Sdk.Tools.TestProxy.Common;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Primitives;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Net.Http;
-using System.Text;
 using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.TestProxy
 {
@@ -44,7 +37,8 @@ namespace Azure.Sdk.Tools.TestProxy
 
 
         [HttpGet]
-        public void IsAlive(){
+        public void IsAlive()
+        {
             Response.StatusCode = 200;
         }
 
@@ -89,7 +83,7 @@ namespace Azure.Sdk.Tools.TestProxy
         {
             var mName = RecordingHandler.GetHeader(Request, "x-abstraction-identifier");
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
-            
+
             RecordMatcher m = (RecordMatcher)GetMatcher(mName, GetBody(Request));
 
             if (recordingId != null)
@@ -98,7 +92,7 @@ namespace Azure.Sdk.Tools.TestProxy
             }
             else
             {
-                _recordingHandler.Matcher = m; 
+                _recordingHandler.Matcher = m;
             }
         }
 
@@ -134,7 +128,8 @@ namespace Azure.Sdk.Tools.TestProxy
                     // walk across our constructor params. check inside the body for a resulting value for each of them
                     foreach (var param in paramsSet)
                     {
-                        if (body.RootElement.TryGetProperty(param, out var jsonElement)){
+                        if (body.RootElement.TryGetProperty(param, out var jsonElement))
+                        {
 
                             var valueResult = jsonElement.GetString();
                             arg_list.Add((object)valueResult);

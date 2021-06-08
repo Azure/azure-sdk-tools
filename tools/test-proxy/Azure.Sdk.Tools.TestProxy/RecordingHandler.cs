@@ -29,7 +29,7 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 Repository = new Repository(targetDirectory);
             }
-            catch(Exception)
+            catch (Exception)
             {
                 Console.WriteLine("The configured storage directory is not a git repository. Git functionality will be unavailable.");
             }
@@ -68,7 +68,7 @@ namespace Azure.Sdk.Tools.TestProxy
         private readonly ConcurrentDictionary<string, ModifiableRecordSession> in_memory_sessions
             = new ConcurrentDictionary<string, ModifiableRecordSession>();
 
-        private readonly ConcurrentDictionary<string, ModifiableRecordSession> playback_sessions 
+        private readonly ConcurrentDictionary<string, ModifiableRecordSession> playback_sessions
             = new ConcurrentDictionary<string, ModifiableRecordSession>();
 
         public RecordMatcher Matcher = new RecordMatcher();
@@ -224,9 +224,9 @@ namespace Azure.Sdk.Tools.TestProxy
             var id = Guid.NewGuid().ToString();
             ModifiableRecordSession session;
 
-            if(mode == RecordingType.InMemory)
+            if (mode == RecordingType.InMemory)
             {
-                if(!in_memory_sessions.TryGetValue(sessionId, out session))
+                if (!in_memory_sessions.TryGetValue(sessionId, out session))
                 {
                     throw new InvalidOperationException("Failed to retrieve in-memory session.");
                 }
@@ -269,8 +269,8 @@ namespace Azure.Sdk.Tools.TestProxy
                 remove = bool.Parse(removeHeader);
             }
 
-            
-            var match = session.Session.Lookup(entry, session.CustomMatcher??Matcher, session.AdditionalSanitizers.Count > 0 ? Sanitizers.Concat(session.AdditionalSanitizers) : Sanitizers, remove);
+
+            var match = session.Session.Lookup(entry, session.CustomMatcher ?? Matcher, session.AdditionalSanitizers.Count > 0 ? Sanitizers.Concat(session.AdditionalSanitizers) : Sanitizers, remove);
 
             Interlocked.Increment(ref Startup.RequestsPlayedBack);
 

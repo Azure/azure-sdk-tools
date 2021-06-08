@@ -1,16 +1,9 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using Azure.Core;
 using Azure.Sdk.Tools.TestProxy.Common;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
-using System.Collections.Concurrent;
-using System.IO;
-using System.Linq;
-using System.Text.Json;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.TestProxy
@@ -30,11 +23,11 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (String.IsNullOrEmpty(file) && !String.IsNullOrEmpty(recordingId))
             {
-                await _recordingHandler.StartPlayback(recordingId, Response, RecordingType.IN_MEMORY);
+                await _recordingHandler.StartPlayback(recordingId, Response, RecordingType.InMemory);
             }
             else
             {
-                await _recordingHandler.StartPlayback(file, Response, RecordingType.FILE_PERSISTED);
+                await _recordingHandler.StartPlayback(file, Response, RecordingType.FilePersisted);
             }
         }
 

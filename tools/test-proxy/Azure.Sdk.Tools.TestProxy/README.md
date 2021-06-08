@@ -140,7 +140,6 @@ POST to the proxy server:
 URL: https://localhost:5001/record/stop
 headers {
     "x-recording-id": "<x-recording-id>",
-    "x-recording-save": true
 }
 
 ```
@@ -183,6 +182,26 @@ POST to the proxy server:
 URL: https://localhost:5001/playback/stop
 headers {
     "x-recording-id": "<x-recording-id>"
+}
+```
+
+### An important note about perf testing
+
+If a user does **not** provide a `fileId` via header `x-recording-file`, the recording will be saved **in-memory only**. If a recording is saved into memory, the only way to retrieve it is to access the playback by passing along the original recordingId that you **recorded it with**.
+
+**Record Start**
+```json
+URL: https://localhost:5001/record/start
+```
+
+Results in recordingId `X`.
+
+To load this recording for playback...
+
+```json
+URL: https://localhost:5001/playback/start
+headers {
+    "x-recording-id": "X"
 }
 ```
 

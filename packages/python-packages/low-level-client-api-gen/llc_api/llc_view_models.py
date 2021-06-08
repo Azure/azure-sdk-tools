@@ -325,7 +325,12 @@ class LLCOperationView(FormattingClass):
             try:
                 return_type = yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['properties'][0]['schema']['type']
                 if return_type =='array':
-                    return_type += "["+  yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['properties'][0]['schema']['elementType']['type']+"]"
+                    if yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['properties'][0]['schema']['elementType']['type'] != 'object' and yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['properties'][0]['schema']['elementType']['type'] != 'choice':
+                        return_type += "["+  yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['properties'][0]['schema']['elementType']['type']+"]"
+                    else:
+                        return_type+= "["+  yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['properties'][0]['schema']['elementType']['language']['default']['name']+"]"
+                if return_type == 'dictionary':
+                    return_type += "[string, "+ yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['properties'][0]['schema']['elementType']['type']+"]"  #['language']['default']['name']+"]"    #
             except:
                 return_type=None
 
@@ -418,7 +423,10 @@ class LLCOperationView(FormattingClass):
         #Set up operation parameters
         if len(self.parameters)==0:
             self.add_first_line()
+            self.add_new_line()
+            self.add_whitespace(3)
             self.add_punctuation(")")
+            self.add_new_line(1)
             
             # self.add_new_line()
 
@@ -525,7 +533,14 @@ class LLCParameterView(FormattingClass):
                 default = yaml_data["signatureParameters"][i]["schema"].get('defaultValue')
                 p_type = yaml_data["signatureParameters"][i]["schema"]['type']
                 if p_type =='array':
-                    p_type += "["+yaml_data["signatureParameters"][i]["schema"]['elementType']['type']+"]"
+                   
+                    if yaml_data["signatureParameters"][i]["schema"]['elementType']['type'] != 'object' and yaml_data["signatureParameters"][i]["schema"]['elementType']['type'] != 'choice':
+                            p_type += "["+yaml_data["signatureParameters"][i]["schema"]['elementType']['type']+"]"
+                    else:
+                        p_type+= "["+yaml_data["signatureParameters"][i]["schema"]['elementType']['language']['default']['name']+"]"
+                if p_type == 'dictionary':
+                    p_type += "[string, "+ yaml_data["signatureParameters"][i]["schema"]['elementType']['type']+"]"
+
                 p_name = yaml_data["signatureParameters"][i]['language']['default']['name']
                 if yaml_data["signatureParameters"][i].get("required"):
                     req=yaml_data["signatureParameters"][i]['required']

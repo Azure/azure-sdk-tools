@@ -119,7 +119,7 @@ namespace Azure.Sdk.Tools.TestProxy
         public void StartRecording(string sessionId, HttpResponse outgoingResponse)
         {
             var id = Guid.NewGuid().ToString();
-            var session = (sessionId??"", new ModifiableRecordSession(new RecordSession()));
+            var session = (sessionId ?? String.Empty, new ModifiableRecordSession(new RecordSession()));
 
             if (!recording_sessions.TryAdd(id, session))
             {

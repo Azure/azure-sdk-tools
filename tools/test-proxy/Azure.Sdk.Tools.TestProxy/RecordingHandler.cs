@@ -179,7 +179,10 @@ namespace Azure.Sdk.Tools.TestProxy
                     }
                     else
                     {
-                        upstreamRequest.Headers.TryAddWithoutValidation(header.Key, values);
+                        if (!header.Key.StartsWith("x-recording"))
+                        {
+                            upstreamRequest.Headers.TryAddWithoutValidation(header.Key, values);
+                        }
                     }
                 }
                 catch (Exception)

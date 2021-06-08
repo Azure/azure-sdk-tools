@@ -22,7 +22,6 @@ namespace Azure.Sdk.Tools.TestProxy
         public string CurrentBranch = "master";
         public IRepository Repository;
         public string RepoPath;
-        public bool SaveByInput = false;
 
         public RecordingHandler(string targetDirectory)
         {
@@ -66,6 +65,9 @@ namespace Azure.Sdk.Tools.TestProxy
         public readonly ConcurrentDictionary<string, (string File, ModifiableRecordSession ModifiableSession)> recording_sessions
             = new ConcurrentDictionary<string, (string, ModifiableRecordSession)>();
 
+        private readonly ConcurrentDictionary<string, ModifiableRecordSession> in_memory_sessions
+            = new ConcurrentDictionary<string, ModifiableRecordSession>();
+
         private readonly ConcurrentDictionary<string, ModifiableRecordSession> playback_sessions 
             = new ConcurrentDictionary<string, ModifiableRecordSession>();
 
@@ -73,22 +75,30 @@ namespace Azure.Sdk.Tools.TestProxy
         #endregion
 
         #region recording functionality
-        public void StopRecording(string id, bool saveToDisk)
+        public void StopRecording(string sessionId)
         {
-            if (!recording_sessions.TryRemove(id, out var fileAndSession))
+            if (!recording_sessions.TryRemove(sessionId, out var fileAndSession))
             {
                 return;
             }
 
-            if (saveToDisk)
+            var (file, session) = fileAndSession;
+
+            foreach (RecordedTestSanitizer sanitizer in Sanitizers.Concat(session.AdditionalSanitizers))
             {
-                var (file, session) = fileAndSession;
+                session.Session.Sanitize(sanitizer);
+            }
 
-                foreach (RecordedTestSanitizer sanitizer in Sanitizers.Concat(session.AdditionalSanitizers))
+            if (String.IsNullOrWhiteSpace(file))
+            {
+                if (!in_memory_sessions.TryAdd(sessionId, session))
                 {
-                    session.Session.Sanitize(sanitizer);
+                    // This should not happen as the key is a new GUID.
+                    throw new InvalidOperationException("Failed to save in-memory session.");
                 }
-
+            }
+            else
+            {
                 var targetPath = GetRecordingPath(file);
 
                 // Create directories above file if they don't already exist
@@ -106,10 +116,10 @@ namespace Azure.Sdk.Tools.TestProxy
             }
         }
 
-        public void StartRecording(string fileId, HttpResponse outgoingResponse)
+        public void StartRecording(string sessionId, HttpResponse outgoingResponse)
         {
             var id = Guid.NewGuid().ToString();
-            var session = (fileId, new ModifiableRecordSession(new RecordSession()));
+            var session = (sessionId??"", new ModifiableRecordSession(new RecordSession()));
 
             if (!recording_sessions.TryAdd(id, session))
             {
@@ -119,6 +129,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             outgoingResponse.Headers.Add("x-recording-id", id);
         }
+
 
         public async Task HandleRecordRequest(string recordingId, HttpRequest incomingRequest, HttpResponse outgoingResponse, HttpClient client)
         {
@@ -209,12 +220,24 @@ namespace Azure.Sdk.Tools.TestProxy
         #endregion
 
         #region playback functionality
-        public async Task StartPlayback(string fileId, HttpResponse outgoingResponse)
+        public async Task StartPlayback(string sessionId, HttpResponse outgoingResponse, RecordingType mode = RecordingType.FILE_PERSISTED)
         {
             var id = Guid.NewGuid().ToString();
-            using var stream = System.IO.File.OpenRead(GetRecordingPath(fileId));
-            using var doc = await JsonDocument.ParseAsync(stream).ConfigureAwait(false);
-            var session = new ModifiableRecordSession(RecordSession.Deserialize(doc.RootElement));
+            ModifiableRecordSession session;
+
+            if(mode == RecordingType.IN_MEMORY)
+            {
+                if(!in_memory_sessions.TryGetValue(sessionId, out session))
+                {
+                    throw new InvalidOperationException("Failed to retrieve in-memory session.");
+                }
+            }
+            else
+            {
+                using var stream = System.IO.File.OpenRead(GetRecordingPath(sessionId));
+                using var doc = await JsonDocument.ParseAsync(stream).ConfigureAwait(false);
+                session = new ModifiableRecordSession(RecordSession.Deserialize(doc.RootElement));
+            }
 
             if (!playback_sessions.TryAdd(id, session))
             {
@@ -326,10 +349,7 @@ namespace Azure.Sdk.Tools.TestProxy
         #region common functions
         public string GetRecordingPath(string file)
         {
-            if (SaveByInput)
-                return file;
-            else 
-                return Path.Join(RepoPath, "recordings", file);
+            return Path.Join(RepoPath, "recordings", file);
         }
 
         public static string GetHeader(HttpRequest request, string name, bool allowNulls = false)

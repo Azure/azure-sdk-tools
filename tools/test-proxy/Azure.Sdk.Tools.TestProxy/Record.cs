@@ -39,9 +39,8 @@ namespace Azure.Sdk.Tools.TestProxy
         public void Stop()
         {
             string id = RecordingHandler.GetHeader(Request, "x-recording-id");
-            bool save = bool.Parse(RecordingHandler.GetHeader(Request, "x-recording-save"));
 
-            _recordingHandler.StopRecording(id, save);
+            _recordingHandler.StopRecording(id);
 
         }
 

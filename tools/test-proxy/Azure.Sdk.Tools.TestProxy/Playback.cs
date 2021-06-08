@@ -25,9 +25,16 @@ namespace Azure.Sdk.Tools.TestProxy
         [HttpPost]
         public async Task Start()
         {
-            string file = RecordingHandler.GetHeader(Request, "x-recording-file");
+            string file = RecordingHandler.GetHeader(Request, "x-recording-file", true);
 
-            await _recordingHandler.StartPlayback(file, Response);
+            if (String.IsNullOrWhiteSpace(file))
+            {
+                await _recordingHandler.StartPlayback(file, Response, RecordingType.IN_MEMORY);
+            }
+            else
+            {
+                await _recordingHandler.StartPlayback(file, Response, RecordingType.FILE_PERSISTED);
+            }
         }
 
         [HttpPost]

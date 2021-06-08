@@ -257,6 +257,8 @@ class LLCOperationGroupView(FormattingClass):
         if self.operation_group:
             self.add_whitespace(1)
             #Operation Name token
+            self.add_text(None,"opgrp",None)
+            self.add_space()
             self.add_keyword(self.namespace+self.operation_group,self.operation_group,self.namespace+self.operation_group)
 
             self.add_new_line()
@@ -294,9 +296,10 @@ class LLCOperationGroupView(FormattingClass):
 
 
 class LLCOperationView(FormattingClass):
-    def __init__(self, operation_name, parameters,namespace, json_request=None, description ="", paging = "",lro=""):
-        self.operation=operation_name;
-        self.parameters=parameters; #parameterview list
+    def __init__(self, operation_name, return_type, parameters,namespace, json_request=None, description ="", paging = "",lro=""):
+        self.operation=operation_name
+        self.return_type = return_type
+        self.parameters=parameters #parameterview list
         self.Tokens =[]
         self.indent = 0 
         self.namespace = namespace
@@ -318,6 +321,14 @@ class LLCOperationView(FormattingClass):
                 for i in range(0,len(yaml_data['operationGroups'][op_group]['operations'][num]['requests'][j].get('signatureParameters',[]))):
                     param.append(LLCParameterView.from_yaml(yaml_data["operationGroups"][op_group]["operations"][num]['requests'][j],i,name))
 
+            #Get return type
+            try:
+                return_type = yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['properties'][0]['schema']['type']
+                if return_type =='array':
+                    return_type += "["+  yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['properties'][0]['schema']['elementType']['type']+"]"
+            except:
+                return_type=None
+
             des = yaml_data["operationGroups"][op_group]["operations"][num]["language"]["default"].get("summary")
             if des is None:
                 des = yaml_data["operationGroups"][op_group]["operations"][num]["language"]["default"]["description"]
@@ -328,9 +339,7 @@ class LLCOperationView(FormattingClass):
             if pageable:
                 paging_op = True
             else:
-                paging_op = False
-            
-            
+                paging_op = False  
             if lro:
                 lro_op = True
             else:
@@ -344,6 +353,7 @@ class LLCOperationView(FormattingClass):
             return cls(
                 operation_name = yaml_data["operationGroups"][op_group]["operations"][num]["language"]["default"]["name"],
                 parameters = param,
+                return_type = return_type,
                 namespace = name,
                 description = des,
                 paging = paging_op,
@@ -358,15 +368,16 @@ class LLCOperationView(FormattingClass):
         self.Tokens.append(token)
     
     def add_first_line(self):
-        self.add_space()
-        self.add_text(None,"[",None)
+        if self.paging or self.lro: 
+            self.add_space()
+            self.add_text(None,"[",None)
         if self.paging:
             self.add_text(None,"paging",None)
             self.add_space()
             self.add_punctuation("=")
             self.add_space()
             self.add_text(None,str(self.paging),None)
-            self.add_space()
+            if self.lro: self.add_space()
         #make smaller classes
         if self.lro:
             self.add_text(None,"lro",None)
@@ -374,16 +385,19 @@ class LLCOperationView(FormattingClass):
             self.add_punctuation("=")
             self.add_space()
             self.add_text(None,str(self.lro),None)
-            self.add_space()
-        self.add_text(None,"]",None)
-        self.add_space()
+        if self.paging or self.lro: 
+            self.add_text(None,"]",None)
+        self.add_new_line()
+        self.add_description()
+        self.add_whitespace(3)
         self.add_punctuation("(")
     
     def add_description(self):
-        self.add_new_line()
-        self.add_whitespace(3)
+        # self.add_new_line()
         self.add_token(Token(kind=TokenKind.StartDocGroup))
+        self.add_whitespace(3)
         self.add_typename(None,self.description,None)
+        self.add_new_line()
         self.add_token(Token(kind=TokenKind.EndDocGroup))
 
     #have a to_token to create the line for parameters
@@ -393,23 +407,27 @@ class LLCOperationView(FormattingClass):
         self.add_whitespace(1)
 
         #Operation Name token
+        if self.return_type is None: self.add_stringliteral(None, "void", None)
+        self.add_stringliteral(None,self.return_type,None)
+        self.add_space()
         self.add_keyword(self.namespace+self.operation,self.operation, self.namespace+self.operation)
         self.add_space
 
         self.parameters = [key for key in self.parameters if key.type is not None]
+        # self.add_new_line()
         #Set up operation parameters
         if len(self.parameters)==0:
             self.add_first_line()
             self.add_punctuation(")")
-            self.add_description()
-            self.add_new_line()
+            
+            # self.add_new_line()
 
         for param_num in range(0,len(self.parameters)):
             if self.parameters[param_num]:
                 self.parameters[param_num].to_token()
             if param_num==0:
                 self.add_first_line()
-                self.add_description()
+                # self.add_description()
             self.add_new_line()
             #Add in parameter tokens
             if self.parameters[param_num]:
@@ -433,33 +451,47 @@ class LLCOperationView(FormattingClass):
                 if self.json_request:
                     self.add_token(Token(kind=TokenKind.StartDocGroup))
                     for key in self.json_request.keys():
-                        
+                        self.add_new_line(1)
                         self.add_whitespace(4)
                         self.add_keyword(None,key,None)
                         self.add_space()
-                        self.add_punctuation("{")
-                        self.add_new_line()
+                        if len(self.json_request[key])==0: 
+                            self.add_punctuation("{")
+                            self.add_punctuation("}")
+                            # self.add_new_line()
                         for num in range(0,len(self.json_request[key])):
                             if isinstance(self.json_request[key][num],list):
-                                self.add_whitespace(6)
+                                self.add_whitespace(4)
                                 self.add_punctuation("{")
                                 self.add_new_line()
-                                
                                 for p_list in self.json_request[key][num]:
                                     for p in p_list: 
                                         p.to_token()
                                     self.add_whitespace(6)
+
                                     for t in p.get_tokens():  
                                         self.add_token(t)
                                     self.add_new_line()
-                                self.add_whitespace(6)
+                                self.add_whitespace(4)
                                 self.add_punctuation("}")
+                                # self.add_whitespace(6)
+                                
                             else: 
                                 self.json_request[key][num].to_token()
+                                self.add_new_line()
+                                self.add_whitespace(4)
+                                self.add_punctuation("{")
+                                self.add_new_line()
                                 self.add_whitespace(5)
                                 for t in self.json_request[key][num].get_tokens():
                                     self.add_token(t)
-                            self.add_new_line()
+                                self.add_new_line()
+                                if num<len(self.json_request[key])-1 and (type(self.json_request[key][num+1]) is not list):
+                                    self.add_whitespace(4)
+                                    self.add_punctuation("}")
+                               
+                   
+                    self.add_new_line()
                     self.add_whitespace(4)
                     self.add_punctuation("}")
                     self.add_new_line(1)
@@ -492,6 +524,8 @@ class LLCParameterView(FormattingClass):
             if len(yaml_data.get("signatureParameters"))!=0:
                 default = yaml_data["signatureParameters"][i]["schema"].get('defaultValue')
                 p_type = yaml_data["signatureParameters"][i]["schema"]['type']
+                if p_type =='array':
+                    p_type += "["+yaml_data["signatureParameters"][i]["schema"]['elementType']['type']+"]"
                 p_name = yaml_data["signatureParameters"][i]['language']['default']['name']
                 if yaml_data["signatureParameters"][i].get("required"):
                     req=yaml_data["signatureParameters"][i]['required']
@@ -619,6 +653,16 @@ class SchemaRequest():
         for param in parameters:
             # this goes through the parameters
             if param.get('schema'):
+                if param['schema'].get('elementType',[]):
+                    for element in param['schema']['elementType'].get('properties',[]):
+                        elements = []
+                        for source_num in range(0,len(element['schema'].get('properties',[]))):
+                            current_type = element['schema']['properties'][source_num]["schema"]['type']
+                            
+                            if current_type =='choice':
+                                current_type = element['schema']['properties'][source_num]["schema"]['choiceType']['type']
+                            elements.append(LLCParameterView(element['schema']['properties'][source_num]['language']['default']['name'],current_type,self.namespace,required=element.get('required')))
+                            json_format[element['serializedName']] = elements
                 for r_property in param['schema'].get('properties',[]):
                     json_format[r_property['serializedName']] = [LLCParameterView(r_property['serializedName'], r_property['schema']['type'],self.namespace,required = r_property.get('required'))]
                     if r_property['schema'].get('elementType'):
@@ -627,9 +671,11 @@ class SchemaRequest():
                                 elements = []
                                 for source_num in range(0,len(element['schema'].get('properties',[]))):
                                     current_type = element['schema']['properties'][source_num]["schema"]['type']
+                                    
                                     if current_type =='choice':
                                         current_type = element['schema']['properties'][source_num]["schema"]['choiceType']['type']
                                     elements.append(LLCParameterView(element['schema']['properties'][source_num]['language']['default']['name'],current_type,self.namespace,required=element.get('required')))
+                                # elements.append((self.to_json_formatting([element])))
                                 json_format[element['serializedName']] = elements
                     elif r_property['schema'].get('properties'):
                         imbedded_prop = []

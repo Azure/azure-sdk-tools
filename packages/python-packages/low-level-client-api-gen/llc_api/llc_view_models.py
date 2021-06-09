@@ -535,6 +535,8 @@ class LLCParameterView(FormattingClass):
                     if p_type == 'dictionary':
                         p_type += "[string, "+ yaml_data["signatureParameters"][i]["schema"]['elementType']['type']+"]"
                 p_name = yaml_data["signatureParameters"][i]['language']['default']['name']
+                if p_type == 'dictionary':
+                    p_type = GetType.get_type(cls, yaml_data["signatureParameters"][i]["schema"])
                 if p_type == 'object':
                     p_type = GetType.get_type(cls, yaml_data["signatureParameters"][i]["schema"]['properties'][0]['schema'])
                 if p_name == 'body':

@@ -161,8 +161,8 @@ Initialize your resources:
 cd ./examples
 
 kubectl create namespace <YOUR NAME>
-docker build . -t azuresdkdev.azurecr.io/<YOUR NAME>/pingexample:v1
-docker push azuresdkdev.azurecr.io/<YOUR NAME>/pingexample:v1
+docker build . -t azuresdkdev.azurecr.io/<YOUR NAME>/networkexample:v1
+docker push azuresdkdev.azurecr.io/<YOUR NAME>/networkexample:v1
 ```
 
 Edit the `examples/testjob.yaml` file, changing the `metadata.namespace` and `spec.template.spec.containers[0].image` fields to match against the resources you created above.
@@ -177,8 +177,8 @@ Verify the pods in the job have booted and are running ok:
 
 ```
 ⇉ ⇉ ⇉ kubectl get pod -n <YOUR NAMESPACE>
-NAME                 READY   STATUS    RESTARTS   AGE
-ping-example-6vlkm   1/1     Running   0          5s
+NAME                    READY   STATUS    RESTARTS   AGE
+network-example-6vlkm   1/1     Running   0          5s
 ```
 
 ### Faults via Config
@@ -201,7 +201,7 @@ NOTE: The chaos mesh dashbaord is just a helper for generating manifest under th
 1. Select `Network Attack` and then select `LOSS`
 1. In the `Loss` textbox, enter `100`
 1. Scroll down to `Scope`. Enter your namespace in the `Namespace Selectors` field, and enter `job-name: ping-example` under `Label Selectors`.
-1. Enter a name for experiment like `<YOUR NAME>-ping-example`.
+1. Enter a name for experiment like `<YOUR NAME>-network-example`.
 1. Enable `Run Continuously`
 1. Click through the multiple `Submit` buttons.
 

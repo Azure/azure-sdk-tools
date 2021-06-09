@@ -96,7 +96,7 @@ class FormattingClass:
 
 class LLCClientView(FormattingClass):
     """Entity class that holds LLC view for all namespaces within a package"""
-    def __init__(self, pkg_name="",endpoint="endpoint",endpoint_type="string",credential="credential",credential_type="Azure Credential"):
+    def __init__(self, pkg_name="",endpoint="endpoint",endpoint_type="string",credential="credential",credential_type="AzureCredential"):
         self.Name = pkg_name
         self.module_dict = {}
         self.Language = "LLC"
@@ -321,18 +321,9 @@ class LLCOperationView(FormattingClass):
                 for i in range(0,len(yaml_data['operationGroups'][op_group]['operations'][num]['requests'][j].get('signatureParameters',[]))):
                     param.append(LLCParameterView.from_yaml(yaml_data["operationGroups"][op_group]["operations"][num]['requests'][j],i,name))
 
-            #Get return type
-            try:
-                return_type = yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['properties'][0]['schema']['type']
-                if return_type =='array':
-                    if yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['properties'][0]['schema']['elementType']['type'] != 'object' and yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['properties'][0]['schema']['elementType']['type'] != 'choice':
-                        return_type += "["+  yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['properties'][0]['schema']['elementType']['type']+"]"
-                    else:
-                        return_type+= "["+  yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['properties'][0]['schema']['elementType']['language']['default']['name']+"]"
-                if return_type == 'dictionary':
-                    return_type += "[string, "+ yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['properties'][0]['schema']['elementType']['type']+"]"  #['language']['default']['name']+"]"    #
-            except:
-                return_type=None
+            out = GetType.from_yaml(yaml_data,op_group,num)
+            return_type = out.get_type(out.yaml_data)
+            print(return_type)
 
             des = yaml_data["operationGroups"][op_group]["operations"][num]["language"]["default"].get("summary")
             if des is None:
@@ -366,6 +357,7 @@ class LLCOperationView(FormattingClass):
                 json_request = json_request
             )
 
+    
     def get_tokens(self):
         return self.Tokens
 
@@ -538,8 +530,8 @@ class LLCParameterView(FormattingClass):
                             p_type += "["+yaml_data["signatureParameters"][i]["schema"]['elementType']['type']+"]"
                     else:
                         p_type+= "["+yaml_data["signatureParameters"][i]["schema"]['elementType']['language']['default']['name']+"]"
-                if p_type == 'dictionary':
-                    p_type += "[string, "+ yaml_data["signatureParameters"][i]["schema"]['elementType']['type']+"]"
+                    if p_type == 'dictionary':
+                        p_type += "[string, "+ yaml_data["signatureParameters"][i]["schema"]['elementType']['type']+"]"
 
                 p_name = yaml_data["signatureParameters"][i]['language']['default']['name']
                 if yaml_data["signatureParameters"][i].get("required"):
@@ -721,3 +713,69 @@ class SchemaRequest():
             namespace =name
         )
 
+class GetType():
+        def __init__(self,yaml_data,op_group,num):
+            self.yaml_data = yaml_data
+            self.op_group = op_group
+            self.num = num
+        
+        def get_type(self,data):
+                 #Get return type
+            try:
+                # if len(yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['properties'])==1:
+                # return_type = yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['properties'][0]['schema']['type']
+                # else:
+                return_type = data['type']
+                
+                if return_type == "dictionary":
+                    value = data['elementType']['type']
+                    if value =='object'or value =='array' or value =='dictionary': value = self.get_type(data['elementType'])
+                    return_type += "[string, "+ value +"]"    
+                elif return_type == "object":
+                    return_type = data['language']['default']['name']
+                if return_type =='array':
+                    if data['elementType']['type'] != 'object' and data['elementType']['type'] != 'choice':
+                        return_type += "["+ data['elementType']['type']+"]"
+                    else:
+                        return_type+= "["+  data['elementType']['language']['default']['name']+"]"
+            except:
+                return_type=None
+            return return_type
+
+        @classmethod
+        def from_yaml(cls,yaml_data: Dict[str,Any],op_group,num): 
+            yaml_data = yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0].get('schema',[])
+            return cls(
+                yaml_data=yaml_data,
+                op_group=op_group,
+                num=num
+            )
+
+            #       #Get return type
+            # try:
+            #     # if len(yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['properties'])==1:
+            #     # return_type = yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['properties'][0]['schema']['type']
+            #     # else:
+            #     return_type = yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['type']
+            #     if return_type == "dictionary":
+            #         value = self.get_type(yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['elementType']['type'])
+            #                        #['type']+"]" ['language']['default']['name']
+            #         # if value == "object":
+            #         #     value = yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['language']['default']['name']
+            #         # if value =='array':
+            #         #     if yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['elementType']['type'] != 'object' and yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['elementType']['type'] != 'choice':
+            #         #         value += "["+  yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['elementType']['elementType']['type']+"]"
+            #         #     else:
+            #         #         value+= "["+  yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['elementType']['language']['default']['name']+"]"
+            #         return_type += "[string, "+ value +"]"    
+            #     elif return_type == "object":
+            #         return_type = yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['language']['default']['name']
+            #     if return_type =='array':
+            #         if yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['elementType']['type'] != 'object' and yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['elementType']['type'] != 'choice':
+            #             return_type += "["+  yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['elementType']['type']+"]"
+            #         else:
+            #             return_type+= "["+  yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['elementType']['language']['default']['name']+"]"
+            # #     if return_type == 'dictionary':
+            # #         return_type += "[string, "+ yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['properties'][0]['schema']['language']['default']['name']+"]"    #['elementType']['type']+"]"  #
+            # except:
+            #     return_type=None

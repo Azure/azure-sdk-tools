@@ -1,4 +1,5 @@
 ﻿@using Azure.Sdk.Tools.TestProxy.Models; 
+@model CommonMetadataModel
 
 @{
     Layout = null;
@@ -10,7 +11,9 @@
 <head>
     <meta name="viewport" content="width=device-width" />
     <title>Metadata</title>
+
 </head>
 <body>
+    We have @Model.Length
 </body>
 </html>

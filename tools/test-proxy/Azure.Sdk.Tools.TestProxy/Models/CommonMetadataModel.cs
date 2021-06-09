@@ -1,15 +1,17 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Mvc.RazorPages;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.TestProxy.Models
 {
-    public class CommonMetadata
+    public class CommonMetadataModel : PageModel
     {
         IEnumerable<ActionDescription> Descriptions;
 
-        public CommonMetadata()
+        public int Length { get { return Descriptions.Count(); } }
+
+        public CommonMetadataModel()
         {
             Descriptions = _populateFromMetadata();
         }
@@ -31,9 +33,13 @@ namespace Azure.Sdk.Tools.TestProxy.Models
 
         private List<ActionDescription> _populateFromMetadata()
         {
-
-
-            return new List<ActionDescription>();
+            return new List<ActionDescription>() { new ActionDescription(){
+                ActionType = MetaDataType.Matcher,
+                Arguments = null,
+                Description = "This is a test!",
+                StringDescription = "this is so a test!",
+                Name = "TestMatcher!"
+            }};
         }
     }
 }

@@ -321,9 +321,9 @@ class LLCOperationView(FormattingClass):
                 for i in range(0,len(yaml_data['operationGroups'][op_group]['operations'][num]['requests'][j].get('signatureParameters',[]))):
                     param.append(LLCParameterView.from_yaml(yaml_data["operationGroups"][op_group]["operations"][num]['requests'][j],i,name))
 
-            out = GetType.from_yaml(yaml_data,op_group,num)
-            return_type = out.get_type(out.yaml_data)
-            print(return_type)
+            # out = GetType.from_yaml(yaml_data,op_group,num)
+            return_type = get_type(yaml_data["operationGroups"][op_group]["operations"][num])
+            # print(return_type)
 
             des = yaml_data["operationGroups"][op_group]["operations"][num]["language"]["default"].get("summary")
             if des is None:
@@ -524,16 +524,24 @@ class LLCParameterView(FormattingClass):
             if len(yaml_data.get("signatureParameters"))!=0:
                 default = yaml_data["signatureParameters"][i]["schema"].get('defaultValue')
                 p_type = yaml_data["signatureParameters"][i]["schema"]['type']
+                # p_type = GetType.get_type(cls, yaml_data["signatureParameters"][i]["schema"]) #['properties'][0]['schema']
+                if p_type =='choice':
+                    p_type = yaml_data["signatureParameters"][i]["schema"]['choiceType']['type']
                 if p_type =='array':
-                   
                     if yaml_data["signatureParameters"][i]["schema"]['elementType']['type'] != 'object' and yaml_data["signatureParameters"][i]["schema"]['elementType']['type'] != 'choice':
                             p_type += "["+yaml_data["signatureParameters"][i]["schema"]['elementType']['type']+"]"
                     else:
                         p_type+= "["+yaml_data["signatureParameters"][i]["schema"]['elementType']['language']['default']['name']+"]"
                     if p_type == 'dictionary':
                         p_type += "[string, "+ yaml_data["signatureParameters"][i]["schema"]['elementType']['type']+"]"
-
                 p_name = yaml_data["signatureParameters"][i]['language']['default']['name']
+                if p_type == 'object':
+                    p_type = GetType.get_type(cls, yaml_data["signatureParameters"][i]["schema"]['properties'][0]['schema'])
+                if p_name == 'body':
+                    try:
+                        p_name = yaml_data["signatureParameters"][i]["schema"]['properties'][0]['serializedName']   
+                    except:
+                        p_name =p_name
                 if yaml_data["signatureParameters"][i].get("required"):
                     req=yaml_data["signatureParameters"][i]['required']
                 else:
@@ -542,6 +550,7 @@ class LLCParameterView(FormattingClass):
                 p_type = None
                 p_name = None
   
+            print(p_type, " + ", p_name)
             
     #This depends on the number of request bodies in an operation/ Can iterate through all of them
     # Make request dictionary here 
@@ -713,6 +722,7 @@ class SchemaRequest():
             namespace =name
         )
 
+
 class GetType():
         def __init__(self,yaml_data,op_group,num):
             self.yaml_data = yaml_data
@@ -726,7 +736,6 @@ class GetType():
                 # return_type = yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['properties'][0]['schema']['type']
                 # else:
                 return_type = data['type']
-                
                 if return_type == "dictionary":
                     value = data['elementType']['type']
                     if value =='object'or value =='array' or value =='dictionary': value = self.get_type(data['elementType'])
@@ -779,3 +788,27 @@ class GetType():
             # #         return_type += "[string, "+ yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['properties'][0]['schema']['language']['default']['name']+"]"    #['elementType']['type']+"]"  #
             # except:
             #     return_type=None
+
+def get_type(data):
+            #Get return type
+    try:
+        # if len(yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['properties'])==1:
+        # return_type = yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['properties'][0]['schema']['type']
+        # else:
+        return_type = data['type']
+        if return_type =='choice':
+                return_type = data['choiceType']['type']
+        if return_type == "dictionary":
+            value = data['elementType']['type']
+            if value =='object'or value =='array' or value =='dictionary': value = get_type(data['elementType'])
+            return_type += "[string, "+ value +"]"    
+        elif return_type == "object":
+            return_type = data['language']['default']['name']
+        if return_type =='array':
+            if data['elementType']['type'] != 'object' and data['elementType']['type'] != 'choice':
+                return_type += "["+ data['elementType']['type']+"]"
+            else:
+                return_type+= "["+  data['elementType']['language']['default']['name']+"]"
+    except:
+        return_type=None
+    return return_type

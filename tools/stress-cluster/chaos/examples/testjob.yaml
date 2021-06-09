@@ -1,16 +1,20 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: ping-example
-  namespace: <YOUR NAME>
+  name: network-example
+  namespace: <your namespace>
 spec:
   template:
+    metadata:
+      labels:
+        test: network-example
     spec:
       containers:
-      - name: ping-example
-        image: azuresdkdev.azurecr.io/<YOUR NAME>/pingexample:v1
+      - name: network-example
+        image: azuresdkdev.azurecr.io/<your name>/networkexample:v1
         command: ["bash"]
-        args: ["-c", "while true; do echo running; ping 8.8.8.8 -c 1; sleep 5;done"]
+        # Azure AKS default outbound rules do not allow ICMP, so use wget in place of ping for deployment simplicity
+        args: ["-c", "while true; do wget -T1 -t1 --spider http://www.bing.com; sleep 5;done"]
       restartPolicy: Never
   backoffLimit: 0
 

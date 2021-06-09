@@ -1,0 +1,19 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: NetworkChaos
+metadata:
+  name: network-loss-example
+  namespace: <your namespace>
+spec:
+  action: loss
+  direction: to
+  externalTargets:
+    - bing.com
+  mode: one
+  selector:
+    labelSelectors:
+      "test": "network-example"
+    namespaces:
+      - <your name>
+  loss:
+    loss: "100"
+    correlation: "0"

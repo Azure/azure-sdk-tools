@@ -62,6 +62,11 @@ jobs:
               Azure/azure-sdk-for-android-pr:
               azure-sdk/azure-sdk-for-android:
 
+          Azure/azure-sdk-for-c:
+            TargetRepos:
+              Azure/azure-sdk-for-c-pr:
+              azure-sdk/azure-sdk-for-c:
+
           Azure/azure-cli:
             Branch: dev
             TargetRepos: 

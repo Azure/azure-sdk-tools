@@ -1,16 +1,9 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using Azure.Core;
 using Azure.Sdk.Tools.TestProxy.Common;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
-using System.Collections.Concurrent;
-using System.IO;
-using System.Linq;
-using System.Text.Json;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.TestProxy
@@ -25,9 +18,21 @@ namespace Azure.Sdk.Tools.TestProxy
         [HttpPost]
         public async Task Start()
         {
-            string file = RecordingHandler.GetHeader(Request, "x-recording-file");
+            string file = RecordingHandler.GetHeader(Request, "x-recording-file", true);
+            string recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", true);
 
-            await _recordingHandler.StartPlayback(file, Response);
+            if (String.IsNullOrEmpty(file) && !String.IsNullOrEmpty(recordingId))
+            {
+                await _recordingHandler.StartPlayback(recordingId, Response, RecordingType.InMemory);
+            }
+            else if(!String.IsNullOrEmpty(file))
+            {
+                await _recordingHandler.StartPlayback(file, Response, RecordingType.FilePersisted);
+            }
+            else
+            {
+                throw new InvalidOperationException("Either header 'x-recording-file' or 'x-recording-id' must be set when starting playback.");
+            }
         }
 
         [HttpPost]

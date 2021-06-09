@@ -25,9 +25,13 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 await _recordingHandler.StartPlayback(recordingId, Response, RecordingType.InMemory);
             }
-            else
+            else if(!String.IsNullOrEmpty(file))
             {
                 await _recordingHandler.StartPlayback(file, Response, RecordingType.FilePersisted);
+            }
+            else
+            {
+                throw new InvalidOperationException("Either header 'x-recording-file' or 'x-recording-id' must be set when starting playback.");
             }
         }
 

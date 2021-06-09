@@ -235,7 +235,7 @@ Services:
       JS: StorageFileShareUploadTest
       Python: UploadTest
 
-- Service: storage-file-datalake
+- Service: storage-file-data-lake
   Languages:
     Net:
       Project: sdk/storage/Azure.Storage.Files.DataLake/perf/Azure.Storage.Files.DataLake.Perf/Azure.Storage.Files.DataLake.Perf.csproj
@@ -275,3 +275,27 @@ Services:
       Java: uploadfiledatalake
       JS: StorageDFSUploadTest
       Python: UploadTest
+
+- Service: key-vault-secrets
+  Languages:
+    Net:
+      Project: sdk/keyvault/Azure.Security.KeyVault.Secrets/perf/Azure.Security.KeyVault.Secrets.Perf.csproj
+      PackageVersions:
+      - Azure.Security.KeyVault.Secrets: 4.1.0
+      - Azure.Security.KeyVault.Secrets: source
+
+  Tests:
+  - Test: get-secret
+    Arguments:
+    - --warmup 0 --duration 1
+    - --parallel 64
+    TestNames:
+      Net: GetSecret
+
+  - Test: list-secrets
+    Arguments: &key-vault-counts
+    - --count 1 --warmup 0 --duration 1
+    - --count 5 --parallel 64
+    - --count 500 --parallel 32
+    TestNames:
+      Net: ListSecrets

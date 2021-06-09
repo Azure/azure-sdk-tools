@@ -29,7 +29,7 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 Repository = new Repository(targetDirectory);
             }
-            catch(Exception)
+            catch (Exception)
             {
                 Console.WriteLine("The configured storage directory is not a git repository. Git functionality will be unavailable.");
             }
@@ -65,29 +65,40 @@ namespace Azure.Sdk.Tools.TestProxy
         public readonly ConcurrentDictionary<string, (string File, ModifiableRecordSession ModifiableSession)> recording_sessions
             = new ConcurrentDictionary<string, (string, ModifiableRecordSession)>();
 
-        private readonly ConcurrentDictionary<string, ModifiableRecordSession> playback_sessions 
+        private readonly ConcurrentDictionary<string, ModifiableRecordSession> in_memory_sessions
+            = new ConcurrentDictionary<string, ModifiableRecordSession>();
+
+        private readonly ConcurrentDictionary<string, ModifiableRecordSession> playback_sessions
             = new ConcurrentDictionary<string, ModifiableRecordSession>();
 
         public RecordMatcher Matcher = new RecordMatcher();
         #endregion
 
         #region recording functionality
-        public void StopRecording(string id, bool saveToDisk)
+        public void StopRecording(string sessionId)
         {
-            if (!recording_sessions.TryRemove(id, out var fileAndSession))
+            if (!recording_sessions.TryRemove(sessionId, out var fileAndSession))
             {
                 return;
             }
 
-            if (saveToDisk)
+            var (file, session) = fileAndSession;
+
+            foreach (RecordedTestSanitizer sanitizer in Sanitizers.Concat(session.AdditionalSanitizers))
             {
-                var (file, session) = fileAndSession;
+                session.Session.Sanitize(sanitizer);
+            }
 
-                foreach (RecordedTestSanitizer sanitizer in Sanitizers.Concat(session.AdditionalSanitizers))
+            if (String.IsNullOrEmpty(file))
+            {
+                if (!in_memory_sessions.TryAdd(sessionId, session))
                 {
-                    session.Session.Sanitize(sanitizer);
+                    // This should not happen as the key is a new GUID.
+                    throw new InvalidOperationException("Failed to save in-memory session.");
                 }
-
+            }
+            else
+            {
                 var targetPath = GetRecordingPath(file);
 
                 // Create directories above file if they don't already exist
@@ -105,10 +116,10 @@ namespace Azure.Sdk.Tools.TestProxy
             }
         }
 
-        public void StartRecording(string fileId, HttpResponse outgoingResponse)
+        public void StartRecording(string sessionId, HttpResponse outgoingResponse)
         {
             var id = Guid.NewGuid().ToString();
-            var session = (fileId, new ModifiableRecordSession(new RecordSession()));
+            var session = (sessionId ?? String.Empty, new ModifiableRecordSession(new RecordSession()));
 
             if (!recording_sessions.TryAdd(id, session))
             {
@@ -208,12 +219,24 @@ namespace Azure.Sdk.Tools.TestProxy
         #endregion
 
         #region playback functionality
-        public async Task StartPlayback(string fileId, HttpResponse outgoingResponse)
+        public async Task StartPlayback(string sessionId, HttpResponse outgoingResponse, RecordingType mode = RecordingType.FilePersisted)
         {
             var id = Guid.NewGuid().ToString();
-            using var stream = System.IO.File.OpenRead(GetRecordingPath(fileId));
-            using var doc = await JsonDocument.ParseAsync(stream).ConfigureAwait(false);
-            var session = new ModifiableRecordSession(RecordSession.Deserialize(doc.RootElement));
+            ModifiableRecordSession session;
+
+            if (mode == RecordingType.InMemory)
+            {
+                if (!in_memory_sessions.TryGetValue(sessionId, out session))
+                {
+                    throw new InvalidOperationException("Failed to retrieve in-memory session.");
+                }
+            }
+            else
+            {
+                using var stream = System.IO.File.OpenRead(GetRecordingPath(sessionId));
+                using var doc = await JsonDocument.ParseAsync(stream).ConfigureAwait(false);
+                session = new ModifiableRecordSession(RecordSession.Deserialize(doc.RootElement));
+            }
 
             if (!playback_sessions.TryAdd(id, session))
             {
@@ -246,8 +269,8 @@ namespace Azure.Sdk.Tools.TestProxy
                 remove = bool.Parse(removeHeader);
             }
 
-            
-            var match = session.Session.Lookup(entry, session.CustomMatcher??Matcher, session.AdditionalSanitizers.Count > 0 ? Sanitizers.Concat(session.AdditionalSanitizers) : Sanitizers, remove);
+
+            var match = session.Session.Lookup(entry, session.CustomMatcher ?? Matcher, session.AdditionalSanitizers.Count > 0 ? Sanitizers.Concat(session.AdditionalSanitizers) : Sanitizers, remove);
 
             Interlocked.Increment(ref Startup.RequestsPlayedBack);
 
@@ -344,8 +367,13 @@ namespace Azure.Sdk.Tools.TestProxy
 
         public static Uri GetRequestUri(HttpRequest request)
         {
-            var target_uri = GetHeader(request, "x-recording-upstream-base-uri");
-            return new Uri(target_uri);
+            var uri = new RequestUriBuilder();
+            uri.Reset(new Uri(GetHeader(request, "x-recording-upstream-base-uri")));
+            uri.Path = request.Path;
+            uri.Query = request.QueryString.ToUriComponent();
+            var result = uri.ToUri();
+
+            return result;
         }
 
         private static bool IncludeHeader(string header)

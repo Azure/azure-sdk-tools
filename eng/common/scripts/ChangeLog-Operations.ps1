@@ -41,6 +41,7 @@ function Get-ChangeLogEntriesFromContent {
   try {
     # walk the document, finding where the version specifiers are and creating lists
     foreach ($line in $changeLogContent) {
+      $line = $line.Trim()
       if ($line -match $RELEASE_TITLE_REGEX) {
         $changeLogEntry = [pscustomobject]@{ 
           ReleaseVersion = $matches["version"]
@@ -53,7 +54,7 @@ function Get-ChangeLogEntriesFromContent {
       }
       else {
         if ($changeLogEntry) {
-          if ($line.Trim() -match "^###\s(?<sectionName>.*)")
+          if ($line -match "^###\s(?<sectionName>.*)")
           {
             $sectionName = $matches["sectionName"].Trim()
             $changeLogEntry.Sections[$sectionName] = @()

@@ -125,6 +125,8 @@ kubectl delete -f testjob.yaml
 
 Faults can be configured via kubernetes manifests or via the UI (which is a helper for building the manifests under the hood). For docs on the manifest schema, see [here](https://chaos-mesh.org/docs/user_guides/run_chaos_experiment).
 
+### Faults via Dashboard
+
 To configure faults via the UI, make sure you can access the chaos dashboard by running the below command, and navigating to `localhost:2333` in your browser.
 
 ```
@@ -137,6 +139,9 @@ When defining tests, a target must be supplied, which tells the chaos service wh
 Under the `Scope` fields, for `Namespace Selectors` you should select the namespace your job lives in. Under `Label Selectors` you should be able to find
 a label like `job-name: <your job name>` in the drop down.
 
+### Faults via Config
+
+Faults can be configured via Kubernetes manifests. To see numerous examples of fault configs, head to the [Chaos Experiments docs](https://chaos-mesh.org/docs/chaos_experiments/podchaos_experiment).
 
 ## Running the example test with a network fault
 
@@ -176,6 +181,18 @@ NAME                 READY   STATUS    RESTARTS   AGE
 ping-example-6vlkm   1/1     Running   0          5s
 ```
 
+### Faults via Config
+
+Edit the `examples/network_loss.yaml` file, changing the `metadata.namespace` and `spec.selector.namespaces` fields to contain your namespace.
+
+Then apply the chaos experiment:
+
+```
+kubectl apply -f ./examples/network_loss.yaml
+```
+
+### Faults via Dashboard
+
 Navigate to the chaos dashboard at `localhost:2333`
 
 NOTE: The chaos mesh dashbaord is just a helper for generating manifest under the hood. You can create and submit these directly as well. See the [docs](https://chaos-mesh.org/docs/chaos_experiments/networkchaos_experiment).
@@ -191,11 +208,13 @@ NOTE: The chaos mesh dashbaord is just a helper for generating manifest under th
 You should now be able to see packet loss in the test:
 
 ```
-⇉ ⇉ ⇉ kubectl logs -n <YOUR NAMESPACE> -l job-name=ping-example -f
-running
-PING 8.8.8.8 (8.8.8.8) 56(84) bytes of data.
-From 10.244.0.67 icmp_seq=1 Destination Host Unreachable
-
---- 8.8.8.8 ping statistics ---
-1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms
+⇉ ⇉ ⇉ kubectl logs -n <YOUR NAMESPACE> -l test=network-example -f
+...
+Spider mode enabled. Check if remote file exists.
+--2021-06-09 00:51:52--  http://www.bing.com/
+Resolving www.bing.com (www.bing.com)... 204.79.197.200, 13.107.21.200, 2620:1ec:c11::200
+Connecting to www.bing.com (www.bing.com)|204.79.197.200|:80... failed: Connection timed out.
+Connecting to www.bing.com (www.bing.com)|13.107.21.200|:80... failed: Connection timed out.
+Connecting to www.bing.com (www.bing.com)|2620:1ec:c11::200|:80... failed: Cannot assign requested address.
+Giving up.
 ```

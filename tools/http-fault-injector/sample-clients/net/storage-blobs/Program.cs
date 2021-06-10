@@ -26,7 +26,7 @@ namespace Azure.Sdk.Tools.HttpFaultInjector.StorageBlobsSample
                 Transport = httpClientTransport
             };
 
-            // FaultInjectionPolicy should be per-retry to run as late as possible in the pipeline.  Specifically, some
+            // FaultInjectionPolicy should be per-retry to run as late as possible in the pipeline.  For example, some
             // clients compute a request signature as a per-retry policy, and FaultInjectionPolicy should run after the
             // signature is computed to avoid altering the signature.
             blobClientOptions.AddPolicy(new FaultInjectionPolicy(new Uri("https://localhost:7778")), HttpPipelinePosition.PerRetry);

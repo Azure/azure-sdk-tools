@@ -23,9 +23,14 @@ namespace Azure.Sdk.Tools.HttpFaultInjector.StorageBlobsSample
 
             var blobClientOptions = new BlobClientOptions
             {
-                Transport = new FaultInjectionTransport(httpClientTransport, new Uri("https://localhost:7778"))
+                Transport = httpClientTransport                
             };
-            
+
+            // FaultInjectionPolicy should be per-retry to run as late as possible in the pipeline.  Specifically, some
+            // clients compute a request signature as a per-retry policy, and FaultInjectionPolicy should run after the
+            // signature is computed to avoid altering the signature.
+            blobClientOptions.AddPolicy(new FaultInjectionPolicy(new Uri("https://localhost:7778")), HttpPipelinePosition.PerRetry);
+
             // Use a single fast retry instead of the default settings
             blobClientOptions.Retry.Mode = RetryMode.Fixed;
             blobClientOptions.Retry.Delay = TimeSpan.Zero;
@@ -39,32 +44,25 @@ namespace Azure.Sdk.Tools.HttpFaultInjector.StorageBlobsSample
             Console.WriteLine($"Content: {content}");
         }
 
-        class FaultInjectionTransport : HttpPipelineTransport
+        class FaultInjectionPolicy : HttpPipelinePolicy
         {
-            private readonly HttpPipelineTransport _transport;
             private readonly Uri _uri;
 
-            public FaultInjectionTransport(HttpPipelineTransport transport, Uri uri)
+            public FaultInjectionPolicy(Uri uri)
             {
-                _transport = transport;
                 _uri = uri;
             }
 
-            public override Request CreateRequest()
-            {
-                return _transport.CreateRequest();
-            }
-
-            public override void Process(HttpMessage message)
+            public override void Process(HttpMessage message, ReadOnlyMemory<HttpPipelinePolicy> pipeline)
             {
                 RedirectToFaultInjector(message);
-                _transport.Process(message);
+                ProcessNext(message, pipeline);
             }
 
-            public override ValueTask ProcessAsync(HttpMessage message)
+            public override ValueTask ProcessAsync(HttpMessage message, ReadOnlyMemory<HttpPipelinePolicy> pipeline)
             {
                 RedirectToFaultInjector(message);
-                return _transport.ProcessAsync(message);
+                return ProcessNextAsync(message, pipeline);
             }
 
             protected void RedirectToFaultInjector(HttpMessage message)
@@ -72,7 +70,7 @@ namespace Azure.Sdk.Tools.HttpFaultInjector.StorageBlobsSample
                 // Ensure X-Upstream-Host header is only set once, since the same HttpMessage will be reused on retries
                 if (!message.Request.Headers.Contains("X-Upstream-Host"))
                 {
-                    message.Request.Headers.SetValue("X-Upstream-Host", $"{message.Request.Uri.Host}:{message.Request.Uri.Port}");
+                    message.Request.Headers.SetValue("X-Upstream-Host", $"{message.Request.Uri.Host}:{message.Request.Uri.Port}");                   
                 }
 
                 message.Request.Uri.Host = _uri.Host;

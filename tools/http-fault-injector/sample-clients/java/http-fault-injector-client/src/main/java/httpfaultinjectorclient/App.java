@@ -13,13 +13,13 @@ public class App {
     public static void main(String[] args) throws Exception {
         HttpClient httpClient = HttpClient.create();
 
-        // You must either add the .NET developer certiifcate to the Java cacerts keystore, or uncomment the following
+        // You must either add the .NET developer certificate to the Java cacerts keystore, or uncomment the following
         // lines to disable SSL validation.
         //
         // io.netty.handler.ssl.SslContext sslContext = io.netty.handler.ssl.SslContextBuilder
         //     .forClient().trustManager(io.netty.handler.ssl.util.InsecureTrustManagerFactory.INSTANCE).build();
         // httpClient = httpClient.secure(sslContextBuilder -> sslContextBuilder.sslContext(sslContext));
-        
+
         System.out.println("Sending request...");
 
         HttpClientResponse response = get(httpClient, "https://www.example.org").block();

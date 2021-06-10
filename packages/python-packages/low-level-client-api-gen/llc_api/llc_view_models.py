@@ -96,7 +96,7 @@ class FormattingClass:
 
 class LLCClientView(FormattingClass):
     """Entity class that holds LLC view for all namespaces within a package"""
-    def __init__(self, pkg_name="",endpoint="endpoint",endpoint_type="string",credential="credential",credential_type="AzureCredential"):
+    def __init__(self, pkg_name="",endpoint="endpoint",endpoint_type="string",credential="Credential",credential_type="AzureCredential"):
         self.Name = pkg_name
         self.module_dict = {}
         self.Language = "LLC"
@@ -146,14 +146,14 @@ class LLCClientView(FormattingClass):
     def to_token(self): 
     #Create view 
         #Overall Name
-        self.add_keyword(None,self.namespace,None)
+        self.add_keyword(self.namespace,self.namespace,self.namespace)
         self.add_space()
         self.add_punctuation("{")
         self.add_new_line(1)
 
         #Name of client
         self.add_whitespace(1)
-        self.add_keyword(None,self.Name,self.namespace)
+        self.add_keyword(self.namespace+self.Name,self.Name,self.namespace+self.Name)
         self.add_punctuation("(")
         self.add_stringliteral(None,self.endpoint_type,None)
         self.add_space()
@@ -192,7 +192,6 @@ class LLCClientView(FormattingClass):
             for o in my_ops:
                 self.add_token(o)
       
-     
             # operation.to_token()
             # my_ops = operation.get_tokens()
             # for o in my_ops:
@@ -285,8 +284,6 @@ class LLCOperationGroupView(FormattingClass):
                         self.add_token(t)
                 
 
-       
-
     def to_json(self):
         obj_dict={}
         self.to_token()
@@ -322,7 +319,7 @@ class LLCOperationView(FormattingClass):
                     param.append(LLCParameterView.from_yaml(yaml_data["operationGroups"][op_group]["operations"][num]['requests'][j],i,name))
 
             # out = GetType.from_yaml(yaml_data,op_group,num)
-            return_type = get_type(yaml_data["operationGroups"][op_group]["operations"][num])
+            return_type = get_type(yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0].get('schema',[]))
             # print(return_type)
 
             des = yaml_data["operationGroups"][op_group]["operations"][num]["language"]["default"].get("summary")
@@ -365,25 +362,38 @@ class LLCOperationView(FormattingClass):
         self.Tokens.append(token)
     
     def add_first_line(self):
-        if self.paging or self.lro: 
-            self.add_space()
+        if self.paging and self.lro: 
+            self.add_text(None,"PagingLRO",None)
             self.add_text(None,"[",None)
+            # self.add_space()
+ 
         if self.paging:
-            self.add_text(None,"paging",None)
-            self.add_space()
-            self.add_punctuation("=")
-            self.add_space()
-            self.add_text(None,str(self.paging),None)
-            if self.lro: self.add_space()
+            self.add_text(None,"Paging",None)
+            self.add_text(None,"[",None)
+            # self.add_space()
+            # self.add_punctuation("=")
+            # self.add_space()
+            # self.add_text(None,str(self.paging),None)
         #make smaller classes
         if self.lro:
-            self.add_text(None,"lro",None)
-            self.add_space()
-            self.add_punctuation("=")
-            self.add_space()
-            self.add_text(None,str(self.lro),None)
+            self.add_text(None,"LRO",None)
+            self.add_text(None,"[",None)
+            # self.add_space()
+            # self.add_punctuation("=")
+            # self.add_space()
+            # self.add_text(None,str(self.lro),None)
+        
+        if self.return_type is None: self.add_stringliteral(None, "void", None)
+        self.add_stringliteral(None,self.return_type,None)
+        
         if self.paging or self.lro: 
             self.add_text(None,"]",None)
+         #Operation Name token
+        
+        self.add_space()
+        self.add_keyword(self.namespace+self.operation,self.operation, self.namespace+self.operation)
+        self.add_space
+        
         self.add_new_line()
         self.add_description()
         self.add_whitespace(3)
@@ -402,13 +412,6 @@ class LLCOperationView(FormattingClass):
 
         #Each operation will indent itself by 4
         self.add_whitespace(1)
-
-        #Operation Name token
-        if self.return_type is None: self.add_stringliteral(None, "void", None)
-        self.add_stringliteral(None,self.return_type,None)
-        self.add_space()
-        self.add_keyword(self.namespace+self.operation,self.operation, self.namespace+self.operation)
-        self.add_space
 
         self.parameters = [key for key in self.parameters if key.type is not None]
         # self.add_new_line()
@@ -528,17 +531,18 @@ class LLCParameterView(FormattingClass):
                 if p_type =='choice':
                     p_type = yaml_data["signatureParameters"][i]["schema"]['choiceType']['type']
                 if p_type =='array':
-                    if yaml_data["signatureParameters"][i]["schema"]['elementType']['type'] != 'object' and yaml_data["signatureParameters"][i]["schema"]['elementType']['type'] != 'choice':
-                            p_type += "["+yaml_data["signatureParameters"][i]["schema"]['elementType']['type']+"]"
-                    else:
-                        p_type+= "["+yaml_data["signatureParameters"][i]["schema"]['elementType']['language']['default']['name']+"]"
-                    if p_type == 'dictionary':
-                        p_type += "[string, "+ yaml_data["signatureParameters"][i]["schema"]['elementType']['type']+"]"
+                    p_type = get_type(yaml_data["signatureParameters"][i]["schema"])
+                    # if yaml_data["signatureParameters"][i]["schema"]['elementType']['type'] != 'object' and yaml_data["signatureParameters"][i]["schema"]['elementType']['type'] != 'choice':
+                    #         p_type += "["+yaml_data["signatureParameters"][i]["schema"]['elementType']['type']+"]"
+                    # else:
+                    #     p_type+= "["+yaml_data["signatureParameters"][i]["schema"]['elementType']['language']['default']['name']+"]"
+                    # if p_type == 'dictionary':
+                    #     p_type += "[string, "+ yaml_data["signatureParameters"][i]["schema"]['elementType']['type']+"]"
                 p_name = yaml_data["signatureParameters"][i]['language']['default']['name']
                 if p_type == 'dictionary':
-                    p_type = GetType.get_type(cls, yaml_data["signatureParameters"][i]["schema"])
+                    p_type = get_type(yaml_data["signatureParameters"][i]["schema"])
                 if p_type == 'object':
-                    p_type = GetType.get_type(cls, yaml_data["signatureParameters"][i]["schema"]['properties'][0]['schema'])
+                    p_type = get_type(yaml_data["signatureParameters"][i]["schema"]['properties'][0]['schema'])
                 if p_name == 'body':
                     try:
                         p_name = yaml_data["signatureParameters"][i]["schema"]['properties'][0]['serializedName']   
@@ -808,9 +812,9 @@ def get_type(data):
             return_type = data['language']['default']['name']
         if return_type =='array':
             if data['elementType']['type'] != 'object' and data['elementType']['type'] != 'choice':
-                return_type += "["+ data['elementType']['type']+"]"
+                return_type = data['elementType']['type']+ "[]"
             else:
-                return_type+= "["+  data['elementType']['language']['default']['name']+"]"
+                return_type=  data['elementType']['language']['default']['name']+"[]]"
     except:
         return_type=None
     return return_type

@@ -23,7 +23,7 @@ namespace Azure.Sdk.Tools.HttpFaultInjector.StorageBlobsSample
 
             var blobClientOptions = new BlobClientOptions
             {
-                Transport = httpClientTransport                
+                Transport = httpClientTransport
             };
 
             // FaultInjectionPolicy should be per-retry to run as late as possible in the pipeline.  Specifically, some
@@ -70,7 +70,7 @@ namespace Azure.Sdk.Tools.HttpFaultInjector.StorageBlobsSample
                 // Ensure X-Upstream-Host header is only set once, since the same HttpMessage will be reused on retries
                 if (!message.Request.Headers.Contains("X-Upstream-Host"))
                 {
-                    message.Request.Headers.SetValue("X-Upstream-Host", $"{message.Request.Uri.Host}:{message.Request.Uri.Port}");                   
+                    message.Request.Headers.SetValue("X-Upstream-Host", $"{message.Request.Uri.Host}:{message.Request.Uri.Port}");
                 }
 
                 message.Request.Uri.Host = _uri.Host;

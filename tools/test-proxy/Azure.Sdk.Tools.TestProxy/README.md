@@ -271,6 +271,13 @@ When invoked as basic requests to the `Admin` controller, these settings will be
 
 Currently, the configured set of transforms/playback/sanitizers are NOT propogated onto disk alongside the recording.
 
+### Viewing Available/Active Sanitizers, Matchers, and Transforms
+
+Launch the test-proxy through your chosen method, then visit 
+
+- `<proxyUrl>/Info/Available` to see all available
+- `<proxyUrl>/Info/Active` to see all currently active, along with their settings.
+
 ## Testing
 
 This project uses `xunit` as the test framework. This is the most popular .NET test solution [according to this twitter poll](https://twitter.com/shahedC/status/1131337874903896065?ref_src=twsrc%5Etfw%7Ctwcamp%5Etweetembed%7Ctwterm%5E1131337874903896065%7Ctwgr%5E%7Ctwcon%5Es1_c10&ref_url=https%3A%2F%2Fwakeupandcode.com%2Funit-testing-in-asp-net-core%2F) and it's also what the majority of the test projects in the `Azure/azure-sdk-tools` repo utilize as well.

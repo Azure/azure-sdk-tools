@@ -6,14 +6,148 @@
 }
 
 <!DOCTYPE html>
-
 <html>
 <head>
     <meta name="viewport" content="width=device-width" />
     <title>Metadata</title>
+    <style type="text/css">
+        body {
+            margin: 40px auto;
+            max-width: 800px;
+            line-height: 1.6;
+            font-size: 18px;
+            color: #444;
+            padding: 0 10px;
+            font-family: Calibri;
+        }
 
+        h1, h2, h3 {
+            line-height: 1.2;
+            width: 100%;
+        }
+    </style>
 </head>
 <body>
-    We have @Model.Length
+    <h1>
+        Test-Proxy Service Available Extensions
+    </h1>
+    <p>
+        There is an example POST to the Admin controller alongside each of these documented below, but in general, your header will contain
+    </p>
+    <pre>
+        POST: <proxyurl>/
+    </pre>
+    <p>
+        To observe which transforms are currently active on your session, visit <b>/Info/WhatIsActive</b>
+    </p>
+    <h1>Available Sanitizers</h1>
+    <p>
+        A <b>sanitizer</b> is applied to recordings in two locations
+        <ul>
+            <li>
+                Before they are saved. (Affects the session as a whole as well as individual entries)
+            </li>
+            <li>
+                During playback, when a request comes in from a client. This means that only individual entry sanitizers apply in this case.
+            </li>
+        </ul>
+
+        This is due to the fact that during playback, there is no session context. The test-proxy can only operate against the request that just came in.
+    </p>
+    @foreach (var extension in Model.Sanitizers)
+    {
+        <table style="width:100%">
+            <tr>
+                <td>
+                    <h2>@extension.Name</h2>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <h3>Description</h3>
+                    <p>
+                        @extension.Description
+                    </p>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <h3>Arguments</h3>
+                    <ul>
+                        @foreach (var arg in extension.Arguments)
+                        {
+                            <li>@arg.Item1: @arg.Item2</li>
+                        }
+                    </ul>
+                </td>
+            </tr>
+        </table>
+    }
+
+    <h1>Available Matchers</h1>
+    @foreach (var extension in Model.Matchers)
+    {
+        <table style="width:100%">
+            <tr>
+                <td>
+                    <h2>@extension.Name</h2>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <h3>Description</h3>
+                    <p>
+                        @extension.Description
+                    </p>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <h3>Arguments</h3>
+                    <ul>
+                        @foreach (var arg in extension.Arguments)
+                        {
+                            <li>@arg.Item1: @arg.Item2</li>
+                        }
+                    </ul>
+                </td>
+            </tr>
+        </table>
+    }
+
+
+    <h1>Available Transforms</h1>
+    <p>A <b>transform</b> extends functionality of the test-proxy by applying to responses just before they are returned during <b>playback</b> mode.</p>
+    @foreach (var extension in Model.Transforms)
+    {
+        <table style="width:100%">
+            <tr>
+                <td>
+                    <h2>@extension.Name</h2>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <h3>Description</h3>
+                    <p>
+                        @extension.Description
+                    </p>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <h3>Arguments</h3>
+                    <ul>
+                        @foreach (var arg in extension.Arguments)
+                        {
+                            <li>@arg.Item1: @arg.Item2</li>
+                        }
+                    </ul>
+                </td>
+            </tr>
+        </table>
+    }
+
+
 </body>
 </html>

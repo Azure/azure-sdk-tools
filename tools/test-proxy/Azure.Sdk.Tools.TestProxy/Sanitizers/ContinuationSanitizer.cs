@@ -38,9 +38,9 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
         /// Supports "all further requests get this key" as well as "single response/request pair". Defaults to maintaining same key 
         /// for rest of recording.
         /// </summary>
-        /// <param name="key"></param>
-        /// <param name="method"></param>
-        /// <param name="resetAfterFirst"></param>
+        /// <param name="key">The name of the header whos value will be replaced from response -> next request.</param>
+        /// <param name="method">The method by which the value of the targeted key will be replaced. Defaults to guid replacement.</param>
+        /// <param name="resetAfterFirst">Do we need multiple pairs replaced? Or do we want to replace each value with the same value.</param>
         public ContinuationSanitizer(string key, string method, string resetAfterFirst = "false")
         {
             _targetKey = key;

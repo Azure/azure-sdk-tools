@@ -16,8 +16,8 @@ namespace Azure.Sdk.Tools.TestProxy.Models
     {
         public MetaDataType ActionType;
         public string Name;
-        public string StringDescription;
         public string Description;
-        public List<string> Arguments;
+        public string ConstructorDescription;
+        public List<Tuple<string, string>> Arguments;
     }
 }

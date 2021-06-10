@@ -114,6 +114,7 @@ namespace Azure.Sdk.Tools.HttpFaultInjector.StorageBlobsSample
                 {
                     message.Request.Headers.SetValue("X-Upstream-Host", $"{message.Request.Uri.Host}:{message.Request.Uri.Port}");
                 }
+
                 message.Request.Uri.Host = _uri.Host;
                 message.Request.Uri.Port = _uri.Port;
             }

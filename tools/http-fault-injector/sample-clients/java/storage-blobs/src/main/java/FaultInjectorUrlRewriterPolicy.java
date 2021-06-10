@@ -41,10 +41,9 @@ public final class FaultInjectorUrlRewriterPolicy implements HttpPipelinePolicy 
 
     @Override
     public Mono<HttpResponse> process(HttpPipelineCallContext context, HttpPipelineNextPolicy next) {
-        return Mono.defer(() ->
-            Mono.fromCallable(() -> Utils.rewriteUrlToUseFaultInjector(context.getHttpRequest(), host, port)))
-            .map(context::setHttpRequest)
-            .then(next.process());
+        context.setHttpRequest(Utils.rewriteUrlToUseFaultInjector(context.getHttpRequest(), host, port));
+
+        return next.process();
     }
 
     @Override

@@ -32,8 +32,8 @@ public class App {
             .blobName("sample.txt")
             .retryOptions(new RequestRetryOptions(RetryPolicyType.FIXED, 3, Duration.ofMinutes(1),
                 Duration.ofSeconds(1), Duration.ofSeconds(1), null))
-            .httpClient(new FaultInjectorHttpClient(httpClient))
-            // .addPolicy(new FaultInjectorUrlRewriterPolicy()) // Using an HttpPipelinePolicy is also a valid option.
+            // .httpClient(new FaultInjectorHttpClient(httpClient)) // Using an HttpClient is also a valid option.
+            .addPolicy(new FaultInjectorUrlRewriterPolicy())
             .buildClient();
 
         System.out.println("Sending request...");

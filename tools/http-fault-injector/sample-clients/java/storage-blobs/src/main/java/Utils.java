@@ -54,8 +54,11 @@ public final class Utils {
             URI faultInjectorUri = new URI(requestUri.getScheme(), requestUri.getUserInfo(), host,
                 port, requestUri.getPath(), requestUri.getQuery(), requestUri.getFragment());
 
-            return request
-                .setHeader(HTTP_FAULT_INJECTOR_UPSTREAM_HOST_HEADER, requestUri.getHost() + ":" + requestUri.getPort())
+            String xUpstreamHost = (requestUri.getPort() < 0)
+                ? requestUri.getHost()
+                : requestUri.getHost() + ":" + requestUri.getPort();
+
+            return request.setHeader(HTTP_FAULT_INJECTOR_UPSTREAM_HOST_HEADER, xUpstreamHost)
                 .setUrl(faultInjectorUri.toURL());
         } catch (Exception exception) {
             throw new IllegalStateException(exception);

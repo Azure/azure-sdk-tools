@@ -31,7 +31,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             using var stream = System.IO.File.OpenRead(path);
             using var doc = JsonDocument.Parse(stream);
             var guid = Guid.NewGuid().ToString();
-
             var session = new ModifiableRecordSession(RecordSession.Deserialize(doc.RootElement));
 
             RecordingHandler handler = new RecordingHandler(Directory.GetCurrentDirectory());

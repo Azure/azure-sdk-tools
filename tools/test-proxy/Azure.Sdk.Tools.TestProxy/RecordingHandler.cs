@@ -257,7 +257,17 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (!String.IsNullOrEmpty(session.SourceRecordingId) && purgeMemoryStore)
             {
-                InMemorySessions.TryRemove(session.SourceRecordingId, out _);
+                if (!InMemorySessions.TryGetValue(session.SourceRecordingId, out var inMemorySession))
+                {
+                    throw new InvalidOperationException("Unexpected failure to retrieve in-memory session.");
+                }
+
+                Interlocked.Add(ref Startup.RequestsRecorded, -1 * inMemorySession.Session.Entries.Count);                
+
+                if (!InMemorySessions.TryRemove(session.SourceRecordingId, out _))
+                {
+                    throw new InvalidOperationException("Unexpected failure to remove in-memory session.");
+                }
             }
         }
 

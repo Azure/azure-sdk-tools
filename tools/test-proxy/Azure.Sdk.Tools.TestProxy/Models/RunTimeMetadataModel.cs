@@ -8,20 +8,15 @@ using System.IO;
 
 namespace Azure.Sdk.Tools.TestProxy.Models
 {
-    public class CommonMetadataModel : PageModel
+    public class RunTimeMetaDataModel : PageModel
     {
-        private Assembly _assembly = Assembly.GetExecutingAssembly();
+        public Assembly Assembly = Assembly.GetExecutingAssembly();
         const string CTOR_FORMAT_STRING = "M:{0}.#ctor";
         const string CLASS_FORMAT_STRING = "T:{0}";
 
         public IEnumerable<ActionDescription> Descriptions;
 
         public int Length { get { return Descriptions.Count(); } }
-
-        public CommonMetadataModel()
-        {
-            Descriptions = _populateFromMetadata();
-        }
 
         public IEnumerable<ActionDescription> Transforms
         {
@@ -38,23 +33,7 @@ namespace Azure.Sdk.Tools.TestProxy.Models
             get { return Descriptions.Where(x => x.ActionType == MetaDataType.Sanitizer); }
         }
 
-        private List<ActionDescription> _populateFromMetadata()
-        {
-            XmlDocument docCommentXml = _getDocCommentXML();
-
-            var namespaces = new string[] { "Azure.Sdk.Tools.TestProxy.Sanitizers", "Azure.Sdk.Tools.TestProxy.Matchers", "Azure.Sdk.Tools.TestProxy.Transforms" };
-            var extensions = _assembly.GetTypes().Where(t => namespaces.Contains(t.Namespace));
-
-            var result = extensions.Select(x => new ActionDescription(x.Namespace) {
-                Name = x.Name,
-                ConstructorDetails = _getCtorDescription(x, docCommentXml),
-                Description = _getClassDocComment(x, docCommentXml)
-            }).ToList();
-
-            return result;
-        }
-
-        private CtorDescription _getCtorDescription(Type type, XmlDocument docCommentXml)
+        public CtorDescription GetCtorDescription(Type type, XmlDocument docCommentXml)
         {
             var memberSearchString = String.Format(CTOR_FORMAT_STRING, type.FullName);
             var description = String.Empty;
@@ -85,7 +64,7 @@ namespace Azure.Sdk.Tools.TestProxy.Models
             };
         }
 
-        private string _getClassDocComment(Type type, XmlDocument docCommentXml)
+        public string GetClassDocComment(Type type, XmlDocument docCommentXml)
         {
             var memberSearchString = String.Format(CLASS_FORMAT_STRING, type.FullName);
 
@@ -101,9 +80,9 @@ namespace Azure.Sdk.Tools.TestProxy.Models
         }
 
         // for this to work you need to have generatexmldoc activated and the generated comment xml MUST be alongside the assembly
-        private XmlDocument _getDocCommentXML()
+        public XmlDocument GetDocCommentXML()
         {
-            var location = _assembly.Location;
+            var location = Assembly.Location;
             using (var xmlReader = new StreamReader(Path.ChangeExtension(location, ".xml")))
             {
                 XmlDocument result = new XmlDocument();

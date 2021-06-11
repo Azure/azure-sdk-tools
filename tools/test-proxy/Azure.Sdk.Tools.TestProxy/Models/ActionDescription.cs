@@ -25,6 +25,8 @@ namespace Azure.Sdk.Tools.TestProxy.Models
         public string Description;
         public CtorDescription ConstructorDetails;
 
+        public ActionDescription() { }
+
         public ActionDescription(string nameSpace)
         {
             var nsValue = nameSpace.Split(".").Last();

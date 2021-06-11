@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
@@ -13,7 +14,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [Fact]
         public void TestReflectionModelBuild()
         {
-            var testModel = new CommonMetadataModel();
+            var testModel = new AvailableMetadataModel();
 
             // in general, check that these are populating correctly
             Assert.True(testModel.Sanitizers.Count() > 0);

@@ -11,6 +11,11 @@ using System.Web;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
 {
+    /// <summary>
+    /// The default matcher. Matches a request against the set of recorded requests during playback by comparing RequestUri, Headers, and Body.
+    ///
+    /// Excludes the following headers while comparing: Date, x-ms-date, x-ms-client-request-id, User-Agent, Request-Id, and traceparent.
+    /// </summary>
     public class RecordMatcher
     {
         // Headers that are normalized by HttpClient

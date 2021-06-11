@@ -10,19 +10,19 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
     public class HeaderKeyValueSanitizer : RecordedTestSanitizer
     {
         private string _targetKey;
-        private string[] _newValue;
+        private string _newValue;
 
         public HeaderKeyValueSanitizer(string key, string value)
         {
             _targetKey = key;
-            _newValue = new string[] { value };
+            _newValue = value;
         }
 
         public override void SanitizeHeaders(IDictionary<string, string[]> headers)
         {
             if (headers.ContainsKey(_targetKey))
             {
-                headers[_targetKey] = _newValue;
+                headers[_targetKey] = new string[] { _newValue };
             }
         }
     }

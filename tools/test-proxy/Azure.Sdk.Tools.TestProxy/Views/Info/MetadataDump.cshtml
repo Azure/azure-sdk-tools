@@ -1,5 +1,5 @@
 ﻿@using Azure.Sdk.Tools.TestProxy.Models; 
-@model CommonMetadataModel
+@model AvailableMetadataModel
 
 @{
     Layout = null;
@@ -58,7 +58,7 @@
         To leverage any of the below extensions, your local test framework should POST to the <code>Admin</code> controller. Below is an example.
     </p>
     <pre>
-        Method: POST
+        METHOD: POST
         URL: PROXYURL/Admin/AddSanitizer
         HEADERS: {
             "x-abstraction-identifier": "ContinuationSanitizer"
@@ -70,7 +70,7 @@
         }
     </pre>
     <p>
-        To observe which transforms are currently active on your session, visit <b>/Info/Available</b>
+        To observe which transforms are currently active on your session, visit <b>/Info/Active</b>
     </p>
     <h1>Available Sanitizers</h1>
     <p>
@@ -104,16 +104,26 @@
             </tr>
             <tr>
                 <td>
+
                     <h3>Constructor</h3>
-                    <p>
-                        @extension.ConstructorDetails.Description
-                    </p>
-                    <ul>
-                        @foreach (var arg in extension.ConstructorDetails.Arguments)
-                        {
-                            <li><span><code>@arg.Item1</code></span>: @arg.Item2</li>
-                        }
-                    </ul>
+                    @if (!String.IsNullOrEmpty(extension.ConstructorDetails.Description) || extension.ConstructorDetails.Arguments.Count() > 0)
+                    {
+                        <p>
+                            @extension.ConstructorDetails.Description
+                        </p>
+                        <ul>
+                            @foreach (var arg in extension.ConstructorDetails.Arguments)
+                            {
+                                <li><span><code>@arg.Item1</code></span>: @arg.Item2</li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <p class="unused">
+                            This sanitizer either does have a constructor description or does not offer customization beyond applying it to your session.
+                        </p>
+                    }
                 </td>
             </tr>
         </table>
@@ -139,15 +149,24 @@
             <tr>
                 <td>
                     <h3>Constructor</h3>
-                    <p>
-                        @extension.ConstructorDetails.Description
-                    </p>
-                    <ul>
-                        @foreach (var arg in extension.ConstructorDetails.Arguments)
-                        {
-                            <li><span><code>@arg.Item1</code></span>: @arg.Item2</li>
-                        }
-                    </ul>
+                    @if (!String.IsNullOrEmpty(extension.ConstructorDetails.Description) || extension.ConstructorDetails.Arguments.Count() > 0)
+                    {
+                        <p>
+                            @extension.ConstructorDetails.Description
+                        </p>
+                        <ul>
+                            @foreach (var arg in extension.ConstructorDetails.Arguments)
+                            {
+                                <li><span><code>@arg.Item1</code></span>: @arg.Item2</li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <p class="unused">
+                            This matcher either does have a constructor description or does not offer customization beyond applying it to your session.
+                        </p>
+                    }
                 </td>
             </tr>
         </table>
@@ -175,15 +194,24 @@
             <tr>
                 <td>
                     <h3>Constructor</h3>
-                    <p>
-                        @extension.ConstructorDetails.Description
-                    </p>
-                    <ul>
-                        @foreach (var arg in extension.ConstructorDetails.Arguments)
-                        {
-                            <li><span><code>@arg.Item1</code></span>: @arg.Item2</li>
-                        }
-                    </ul>
+                    @if (!String.IsNullOrEmpty(extension.ConstructorDetails.Description) || extension.ConstructorDetails.Arguments.Count() > 0)
+                    {
+                        <p>
+                            @extension.ConstructorDetails.Description
+                        </p>
+                        <ul>
+                            @foreach (var arg in extension.ConstructorDetails.Arguments)
+                            {
+                                <li><span><code>@arg.Item1</code></span>: @arg.Item2</li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <p class="unused">
+                            This transform either does have a constructor description or does not offer customization beyond applying it to your session.
+                        </p>
+                    }
                 </td>
             </tr>
         </table>

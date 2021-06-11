@@ -28,8 +28,22 @@ namespace Azure.Sdk.Tools.TestProxy
         [HttpGet]
         public async Task<ContentResult> Available()
         {
-            var dataModel = new CommonMetadataModel();
+            var dataModel = new AvailableMetadataModel();
             var viewHtml = await RenderViewAsync(this, "MetadataDump", dataModel);
+
+            return new ContentResult
+            {
+                ContentType = "text/html",
+                Content = viewHtml
+            };
+        }
+
+
+        [HttpGet]
+        public async Task<ContentResult> Active()
+        {
+            var dataModel = new ActiveMetadataModel(_recordingHandler);
+            var viewHtml = await RenderViewAsync(this, "ActiveExtensions", dataModel);
 
             return new ContentResult
             {

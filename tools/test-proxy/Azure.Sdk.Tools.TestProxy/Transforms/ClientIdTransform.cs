@@ -7,6 +7,10 @@ using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.TestProxy.Transforms
 {
+    /// <summary>
+    /// This transform applies during playback mode. It copies the header "x-ms-client-id" of the request
+    /// onto the response before returning to the client.
+    /// </summary>
     public class ClientIdTransform : ResponseTransform
     {
         public override void ApplyTransform(HttpRequest request, HttpResponse response)

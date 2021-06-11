@@ -3,6 +3,7 @@ using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Transforms;
 using LibGit2Sharp;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Primitives;
 using System;
 using System.Collections.Concurrent;
@@ -62,13 +63,13 @@ namespace Azure.Sdk.Tools.TestProxy
             new ClientIdTransform()
         };
 
-        public readonly ConcurrentDictionary<string, (string File, ModifiableRecordSession ModifiableSession)> recording_sessions
+        public readonly ConcurrentDictionary<string, (string File, ModifiableRecordSession ModifiableSession)> RecordingSessions
             = new ConcurrentDictionary<string, (string, ModifiableRecordSession)>();
 
-        private readonly ConcurrentDictionary<string, ModifiableRecordSession> in_memory_sessions
+        public readonly ConcurrentDictionary<string, ModifiableRecordSession> InMemorySessions
             = new ConcurrentDictionary<string, ModifiableRecordSession>();
 
-        private readonly ConcurrentDictionary<string, ModifiableRecordSession> playback_sessions
+        public readonly ConcurrentDictionary<string, ModifiableRecordSession> PlaybackSessions
             = new ConcurrentDictionary<string, ModifiableRecordSession>();
 
         public RecordMatcher Matcher = new RecordMatcher();
@@ -77,7 +78,7 @@ namespace Azure.Sdk.Tools.TestProxy
         #region recording functionality
         public void StopRecording(string sessionId)
         {
-            if (!recording_sessions.TryRemove(sessionId, out var fileAndSession))
+            if (!RecordingSessions.TryRemove(sessionId, out var fileAndSession))
             {
                 return;
             }
@@ -91,7 +92,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (String.IsNullOrEmpty(file))
             {
-                if (!in_memory_sessions.TryAdd(sessionId, session))
+                if (!InMemorySessions.TryAdd(sessionId, session))
                 {
                     // This should not happen as the key is a new GUID.
                     throw new InvalidOperationException("Failed to save in-memory session.");
@@ -121,7 +122,7 @@ namespace Azure.Sdk.Tools.TestProxy
             var id = Guid.NewGuid().ToString();
             var session = (sessionId ?? String.Empty, new ModifiableRecordSession(new RecordSession()));
 
-            if (!recording_sessions.TryAdd(id, session))
+            if (!RecordingSessions.TryAdd(id, session))
             {
                 // This should not happen as the key is a new GUID.
                 throw new InvalidOperationException("Failed to add new session.");
@@ -132,7 +133,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
         public async Task HandleRecordRequest(string recordingId, HttpRequest incomingRequest, HttpResponse outgoingResponse, HttpClient client)
         {
-            if (!recording_sessions.TryGetValue(recordingId, out var session))
+            if (!RecordingSessions.TryGetValue(recordingId, out var session))
             {
                 throw new InvalidOperationException("No recording loaded with that ID.");
             }
@@ -208,7 +209,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
         public void AddRecordSanitizer(string recordingId, RecordedTestSanitizer sanitizer)
         {
-            if (!recording_sessions.TryGetValue(recordingId, out var session))
+            if (!RecordingSessions.TryGetValue(recordingId, out var session))
             {
                 throw new InvalidOperationException("No recording loaded with that ID.");
             }
@@ -226,10 +227,11 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (mode == RecordingType.InMemory)
             {
-                if (!in_memory_sessions.TryGetValue(sessionId, out session))
+                if (!InMemorySessions.TryGetValue(sessionId, out session))
                 {
                     throw new InvalidOperationException("Failed to retrieve in-memory session.");
                 }
+                session.SourceRecordingId = sessionId;
             }
             else
             {
@@ -238,7 +240,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 session = new ModifiableRecordSession(RecordSession.Deserialize(doc.RootElement));
             }
 
-            if (!playback_sessions.TryAdd(id, session))
+            if (!PlaybackSessions.TryAdd(id, session))
             {
                 // This should not happen as the key is a new GUID.
                 throw new InvalidOperationException("Failed to add new session.");
@@ -247,14 +249,22 @@ namespace Azure.Sdk.Tools.TestProxy
             outgoingResponse.Headers.Add("x-recording-id", id);
         }
 
-        public void StopPlayback(string recordingId)
+        public void StopPlayback(string recordingId, bool purgeMemoryStore = false)
         {
-            playback_sessions.TryRemove(recordingId, out _);
+            if (!PlaybackSessions.TryRemove(recordingId, out var session))
+            {
+                throw new InvalidOperationException("Unexpected failure to retrieve playback session.");
+            }
+
+            if (!String.IsNullOrEmpty(session.SourceRecordingId) && purgeMemoryStore)
+            {
+                InMemorySessions.TryRemove(session.SourceRecordingId, out _);
+            }
         }
 
         public async Task Playback(string recordingId, HttpRequest incomingRequest, HttpResponse outgoingResponse)
         {
-            if (!playback_sessions.TryGetValue(recordingId, out var session))
+            if (!PlaybackSessions.TryGetValue(recordingId, out var session))
             {
                 throw new InvalidOperationException("No recording loaded with that ID.");
             }
@@ -315,7 +325,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
         public void AddPlaybackSanitizer(string recordingId, RecordedTestSanitizer sanitizer)
         {
-            if (!playback_sessions.TryGetValue(recordingId, out var session))
+            if (!PlaybackSessions.TryGetValue(recordingId, out var session))
             {
                 throw new InvalidOperationException("No recording loaded with that ID.");
             }
@@ -325,7 +335,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
         public void SetPlaybackMatcher(string recordingId, RecordMatcher matcher)
         {
-            if (!playback_sessions.TryGetValue(recordingId, out var session))
+            if (!PlaybackSessions.TryGetValue(recordingId, out var session))
             {
                 throw new InvalidOperationException("No recording loaded with that ID.");
             }
@@ -335,7 +345,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
         public void AddPlaybackTransform(string recordingId, ResponseTransform transform)
         {
-            if (!playback_sessions.TryGetValue(recordingId, out var session))
+            if (!PlaybackSessions.TryGetValue(recordingId, out var session))
             {
                 throw new InvalidOperationException("No recording loaded with that ID.");
             }

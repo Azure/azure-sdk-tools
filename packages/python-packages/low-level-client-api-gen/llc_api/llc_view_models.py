@@ -659,14 +659,14 @@ class SchemaRequest():
                                     
                                     # if current_type =='choice':
                                     #     current_type = element['schema']['properties'][source_num]["schema"]['choiceType']['type']
-                                    elements.append(LLCParameterView(element['schema']['properties'][source_num]['language']['default']['name'],get_type(element['schema']),self.namespace,required=element.get('required')))
+                                    elements.append(LLCParameterView(element['schema']['properties'][source_num]['language']['default']['name'],get_type(element['schema']['properties'][source_num]["schema"]),self.namespace,required=element.get('required')))
                                 if (element['schema'].get('elementType',[])):
                                     for source_num in range(0,len(element['schema']['elementType'].get('properties',[]))):
                                         # current_type = element['schema']['elementType']['properties'][source_num]["schema"]['type']
                                     
                                         # if current_type =='choice':
                                         #     current_type = element['schema']['elementType']['properties'][source_num]["schema"]['choiceType']['type']
-                                        elements.append(LLCParameterView( element['schema']['elementType']['properties'][source_num]['language']['default']['name'],get_type(element['schema']),self.namespace,required=element.get('required')))
+                                        elements.append(LLCParameterView( element['schema']['elementType']['properties'][source_num]['language']['default']['name'],get_type(element['schema']['elementType']['properties'][source_num]["schema"]),self.namespace,required=element.get('required')))
                                         # my_dict.update((self.to_json_formatting([element])))
                                         # elements.append(list(my_dict))
                                 json_format[element['serializedName']] = elements

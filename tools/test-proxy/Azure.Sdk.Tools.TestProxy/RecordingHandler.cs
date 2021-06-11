@@ -3,7 +3,6 @@ using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Transforms;
 using LibGit2Sharp;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Primitives;
 using System;
 using System.Collections.Concurrent;

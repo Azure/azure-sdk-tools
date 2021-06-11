@@ -1,13 +1,10 @@
+using Azure.Sdk.Tools.TestProxy.Sanitizers;
+using Azure.Sdk.Tools.TestProxy.Transforms;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Razor.TagHelpers;
-using System;
 using System.IO;
-using Xunit;
-using Azure.Sdk.Tools.TestProxy;
 using System.Linq;
-using Azure.Sdk.Tools.TestProxy.Transforms;
-using Azure.Sdk.Tools.TestProxy.Sanitizers;
+using Xunit;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
 {

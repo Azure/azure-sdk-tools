@@ -456,6 +456,7 @@ class LLCOperationView(FormattingClass):
                             self.add_punctuation("{")
                             self.add_punctuation("}")
                             # self.add_new_line()
+                        
                         for num in range(0,len(self.json_request[key])):
                             if isinstance(self.json_request[key][num],list):
                                 self.add_whitespace(4)
@@ -634,39 +635,48 @@ class SchemaRequest():
                 if param['schema'].get('elementType',[]):
                     for element in param['schema']['elementType'].get('properties',[]):
                         elements1 = []
-                        el ={}
+                        my_dict ={}
                         for source_num in range(0,len(element['schema'].get('properties',[]))):
-                            current_type = element['schema']['properties'][source_num]["schema"]['type']
+                            # current_type = element['schema']['properties'][source_num]["schema"]['type']
                             
-                            if current_type =='choice':
-                                current_type = element['schema']['properties'][source_num]["schema"]['choiceType']['type']
-                            elements1.append(LLCParameterView(element['schema']['properties'][source_num]['language']['default']['name'],current_type,self.namespace,required=element.get('required')))
-                            el.update(self.to_json_formatting([element]))
-                            json_format.update(el)
+                            # if current_type =='choice':
+                            #     current_type = element['schema']['properties'][source_num]["schema"]['choiceType']['type']
+                            elements1.append(LLCParameterView(element['schema']['properties'][source_num]['language']['default']['name'],get_type(element['schema']['properties'][source_num]["schema"]),self.namespace,required=element.get('required')))
+                            # my_dict.update((self.to_json_formatting([element])))
+                            # elements1.append(list(my_dict))
+                   
                             json_format[element['serializedName']] = elements1
                 for r_property in param['schema'].get('properties',[]):
-                    json_format[r_property['serializedName']] = [LLCParameterView(r_property['serializedName'], r_property['schema']['type'],self.namespace,required = r_property.get('required'))]
+                    json_format[r_property['serializedName']] = [LLCParameterView(r_property['serializedName'], get_type(r_property['schema']),self.namespace,required = r_property.get('required'))]
                     if r_property['schema'].get('elementType'):
                         if r_property['schema']['elementType'].get('properties'):
                             for element in r_property['schema']['elementType'].get('properties',[]):
-                                elements = {}
+                                elements = []
                                 my_dict = {}
+                                # json_format[element['serializedName']] = list(self.to_json_formatting([element]))
                                 for source_num in range(0,len(element['schema'].get('properties',[]))):
-                                    current_type = element['schema']['properties'][source_num]["schema"]['type']
+                                    # current_type = element['schema']['properties'][source_num]["schema"]['type']
                                     
-                                    if current_type =='choice':
-                                        current_type = element['schema']['properties'][source_num]["schema"]['choiceType']['type']
-                                    elements.append(LLCParameterView(element['schema']['properties'][source_num]['language']['default']['name'],current_type,self.namespace,required=element.get('required')))
-                                    my_dict.update((self.to_json_formatting([element])))
+                                    # if current_type =='choice':
+                                    #     current_type = element['schema']['properties'][source_num]["schema"]['choiceType']['type']
+                                    elements.append(LLCParameterView(element['schema']['properties'][source_num]['language']['default']['name'],get_type(element['schema']),self.namespace,required=element.get('required')))
+                                if (element['schema'].get('elementType',[])):
+                                    for source_num in range(0,len(element['schema']['elementType'].get('properties',[]))):
+                                        # current_type = element['schema']['elementType']['properties'][source_num]["schema"]['type']
+                                    
+                                        # if current_type =='choice':
+                                        #     current_type = element['schema']['elementType']['properties'][source_num]["schema"]['choiceType']['type']
+                                        elements.append(LLCParameterView( element['schema']['elementType']['properties'][source_num]['language']['default']['name'],get_type(element['schema']),self.namespace,required=element.get('required')))
+                                        # my_dict.update((self.to_json_formatting([element])))
+                                        # elements.append(list(my_dict))
                                 json_format[element['serializedName']] = elements
-                                json_format.update(my_dict)
                     elif r_property['schema'].get('properties'):
                         imbedded_prop = []
-                        el = {}
+                        my_dict = {}
                         for obj_property in r_property['schema']['properties']:
-                            imbedded_prop.append([LLCParameterView(obj_property['serializedName'], obj_property['schema']['type'],self.namespace,required = obj_property.get('required'))])
-                            el.update(self.to_json_formatting([obj_property]))
-                        json_format.update(el)
+                            imbedded_prop.append([LLCParameterView(obj_property['serializedName'], get_type(obj_property['schema']),self.namespace,required = obj_property.get('required'))])
+                            # my_dict.update((self.to_json_formatting([obj_property])))
+                            # imbedded_prop.append(list(my_dict))
                         json_format[r_property['serializedName']].append(imbedded_prop)
         return json_format
 
@@ -696,7 +706,7 @@ def get_type(data):
             value = data['elementType']['type']
             if value =='object'or value =='array' or value =='dictionary': value = get_type(data['elementType'])
             return_type += "[string, "+ value +"]"    
-        elif return_type == "object":
+        if return_type == "object":
             return_type = data['language']['default']['name']
             value = data['properties'][0]['schema']['type']
             if value =='object'or value =='array' or value =='dictionary': return_type = get_type(data['properties'][0]['schema'])
@@ -705,6 +715,7 @@ def get_type(data):
                 return_type = data['elementType']['type']+ "[]"
             else:
                 return_type=  data['elementType']['language']['default']['name']+"[]"
+        else: return_type = return_type
     except:
         return_type=None
     return return_type

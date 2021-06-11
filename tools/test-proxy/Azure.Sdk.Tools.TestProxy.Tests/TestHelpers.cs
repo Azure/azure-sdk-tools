@@ -1,11 +1,8 @@
 ﻿using Azure.Sdk.Tools.TestProxy.Common;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
 {
@@ -27,6 +24,19 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             using var doc = JsonDocument.Parse(stream);
 
             return new ModifiableRecordSession(RecordSession.Deserialize(doc.RootElement));
+        }
+
+        public static RecordingHandler LoadRecordSessionIntoInMemoryStore(string path)
+        {
+            using var stream = System.IO.File.OpenRead(path);
+            using var doc = JsonDocument.Parse(stream);
+            var guid = Guid.NewGuid().ToString();
+            var session = new ModifiableRecordSession(RecordSession.Deserialize(doc.RootElement));
+
+            RecordingHandler handler = new RecordingHandler(Directory.GetCurrentDirectory());
+            handler.InMemorySessions.TryAdd(guid, session);
+
+            return handler;
         }
 
         public static byte[] GenerateByteRequestBody(string s)

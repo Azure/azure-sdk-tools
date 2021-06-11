@@ -177,10 +177,8 @@ class LLCClientView(FormattingClass):
             child_nav = Navigation(operation.operation_group, self.namespace+operation.operation_group)
             child_nav.set_tag(NavigationTag(Kind.type_class))
             navigation.add_child(child_nav)
-            # navigation1 = Navigation(operation, self.namespace+operation.operation_group)
-            # navigation1.set_tag(NavigationTag(Kind.type_class))
 
-               #Set up operations and add to token
+            #Set up operations and add to token
             for op in operation.operations:
                 #Add operation comments
                 child_nav1 = Navigation(op.operation, self.namespace+op.operation)
@@ -191,11 +189,7 @@ class LLCClientView(FormattingClass):
             my_ops = operation.get_tokens()
             for o in my_ops:
                 self.add_token(o)
-      
-            # operation.to_token()
-            # my_ops = operation.get_tokens()
-            # for o in my_ops:
-            #     self.add_token(o)
+
         self.add_new_line()
         self.add_punctuation("}")
 
@@ -310,6 +304,7 @@ class LLCOperationView(FormattingClass):
             param = []
             pageable =None
             lro=None
+            json_request={}
             if len(yaml_data["operationGroups"][op_group]["operations"][num]["signatureParameters"])==0:
                 param.append(LLCParameterView.from_yaml(yaml_data["operationGroups"][op_group]["operations"][num],0,name))
             for i in range(0,len(yaml_data["operationGroups"][op_group]["operations"][num]["signatureParameters"])):
@@ -317,7 +312,9 @@ class LLCOperationView(FormattingClass):
             for j in range(0, len(yaml_data['operationGroups'][op_group]['operations'][num]['requests'])):
                 for i in range(0,len(yaml_data['operationGroups'][op_group]['operations'][num]['requests'][j].get('signatureParameters',[]))):
                     param.append(LLCParameterView.from_yaml(yaml_data["operationGroups"][op_group]["operations"][num]['requests'][j],i,name))
-
+                    request_docstring = SchemaRequest.from_yaml(yaml_data["operationGroups"][op_group]["operations"][num]['requests'][j],name)
+                    json_request.update(request_docstring.to_json_formatting(request_docstring.parameters))
+            print(json_request)
             # out = GetType.from_yaml(yaml_data,op_group,num)
             return_type = get_type(yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0].get('schema',[]))
             # print(return_type)
@@ -338,10 +335,7 @@ class LLCOperationView(FormattingClass):
             else:
                 lro_op = False
 
-            json_request=None
-            # request_docstring = SchemaRequest.from_yaml(yaml_data["operationGroups"][op_group]["operations"][num]['requests'][0],name)
-            # json_request = request_docstring.to_json_formatting(request_docstring.parameters)
-            # # print(json_request)
+            
             
             return cls(
                 operation_name = yaml_data["operationGroups"][op_group]["operations"][num]["language"]["default"]["name"],
@@ -456,7 +450,7 @@ class LLCOperationView(FormattingClass):
                     for key in self.json_request.keys():
                         self.add_new_line(1)
                         self.add_whitespace(4)
-                        self.add_keyword(None,key,None)
+                        self.add_typename(None,key,None)
                         self.add_space()
                         if len(self.json_request[key])==0: 
                             self.add_punctuation("{")
@@ -468,6 +462,7 @@ class LLCOperationView(FormattingClass):
                                 self.add_punctuation("{")
                                 self.add_new_line()
                                 for p_list in self.json_request[key][num]:
+                                    # self.add_whitespace(4)
                                     for p in p_list: 
                                         p.to_token()
                                     self.add_whitespace(6)
@@ -480,23 +475,23 @@ class LLCOperationView(FormattingClass):
                                 # self.add_whitespace(6)
                                 
                             else: 
-                                self.json_request[key][num].to_token()
                                 self.add_new_line()
                                 self.add_whitespace(4)
                                 self.add_punctuation("{")
+                                self.json_request[key][num].to_token()
                                 self.add_new_line()
                                 self.add_whitespace(5)
                                 for t in self.json_request[key][num].get_tokens():
                                     self.add_token(t)
                                 self.add_new_line()
-                                if num<len(self.json_request[key])-1 and (type(self.json_request[key][num+1]) is not list):
-                                    self.add_whitespace(4)
-                                    self.add_punctuation("}")
+                                # if num<len(self.json_request[key])-1:    # and (type(self.json_request[key][num+1]) is not list):
+                                self.add_whitespace(4)
+                                self.add_punctuation("}")
                                
                    
-                    self.add_new_line()
-                    self.add_whitespace(4)
-                    self.add_punctuation("}")
+                    # self.add_new_line()
+                    # self.add_whitespace(4)
+                    # self.add_punctuation("}")
                     self.add_new_line(1)
                     self.add_token(Token(kind=TokenKind.EndDocGroup))
     
@@ -526,23 +521,10 @@ class LLCParameterView(FormattingClass):
             json_request ={}
             if len(yaml_data.get("signatureParameters"))!=0:
                 default = yaml_data["signatureParameters"][i]["schema"].get('defaultValue')
-                p_type = yaml_data["signatureParameters"][i]["schema"]['type']
-                # p_type = GetType.get_type(cls, yaml_data["signatureParameters"][i]["schema"]) #['properties'][0]['schema']
-                if p_type =='choice':
-                    p_type = yaml_data["signatureParameters"][i]["schema"]['choiceType']['type']
-                if p_type =='array':
-                    p_type = get_type(yaml_data["signatureParameters"][i]["schema"])
-                    # if yaml_data["signatureParameters"][i]["schema"]['elementType']['type'] != 'object' and yaml_data["signatureParameters"][i]["schema"]['elementType']['type'] != 'choice':
-                    #         p_type += "["+yaml_data["signatureParameters"][i]["schema"]['elementType']['type']+"]"
-                    # else:
-                    #     p_type+= "["+yaml_data["signatureParameters"][i]["schema"]['elementType']['language']['default']['name']+"]"
-                    # if p_type == 'dictionary':
-                    #     p_type += "[string, "+ yaml_data["signatureParameters"][i]["schema"]['elementType']['type']+"]"
+                p_type = get_type(yaml_data["signatureParameters"][i]["schema"])
                 p_name = yaml_data["signatureParameters"][i]['language']['default']['name']
-                if p_type == 'dictionary':
-                    p_type = get_type(yaml_data["signatureParameters"][i]["schema"])
-                if p_type == 'object':
-                    p_type = get_type(yaml_data["signatureParameters"][i]["schema"]['properties'][0]['schema'])
+                # if yaml_data["signatureParameters"][i]["schema"]['type'] == 'object':
+                #     p_type = get_type(yaml_data["signatureParameters"][i]["schema"]['properties'][0]['schema'])
                 if p_name == 'body':
                     try:
                         p_name = yaml_data["signatureParameters"][i]["schema"]['properties'][0]['serializedName']   
@@ -556,33 +538,7 @@ class LLCParameterView(FormattingClass):
                 p_type = None
                 p_name = None
   
-            print(p_type, " + ", p_name)
-            
-    #This depends on the number of request bodies in an operation/ Can iterate through all of them
-    # Make request dictionary here 
-
-    #check if looking at a request if sig param is zero
-           
-            # if p_type is None:
-            #     if yaml_data['requests'][0].get('signatureParameters'):
-            #         if yaml_data['requests'][0]['signatureParameters'][0]:
-            #             # p_type = yaml_data['requests'][0]['signatureParameters'][0]['schema']['properties'][0]['schema']['elementType']['language']['default']['name']
-            #             p_name = yaml_data['requests'][0]['signatureParameters'][0]['schema']['properties'][0]['serializedName']
-
-            #             p_type = yaml_data['requests'][0]['signatureParameters'][0]['protocol']['http'].get('in')
-            #             # p_name = yaml_data['requests'][0]['signatureParameters'][0]['protocol']['http'].get('style')
-            #             if p_name is None:
-            #                 p_name = yaml_data['requests'][0]['signatureParameters'][0]["language"]['default']['name']
-            #             if yaml_data['requests'][0]['signatureParameters'][0].get("required"):
-            #                 req=yaml_data['requests'][0]['signatureParameters'][0]['required']
-            #             else:
-            #                 req = False
-
-
-
-                #   req = "True" if yaml_data['requests'][0]['signatureParameters'][0]['schema']['language']['default'].get('required') else "False"
-                            # p_type = yaml_data['requests'][0]['signatureParameters'][0]['originalParameter']['schema']['properties'][0]['schema']['elementType']['language']['default']['name']
-                            # p_name = yaml_data['requests'][0]['signatureParameters'][0]['originalParameter']['schema']['properties'][0]['serializedName']
+            # print(p_type, " + ", p_name)
 
             my_name = p_name
             my_type = p_type
@@ -677,43 +633,41 @@ class SchemaRequest():
             if param.get('schema'):
                 if param['schema'].get('elementType',[]):
                     for element in param['schema']['elementType'].get('properties',[]):
-                        elements = []
+                        elements1 = []
+                        el ={}
                         for source_num in range(0,len(element['schema'].get('properties',[]))):
                             current_type = element['schema']['properties'][source_num]["schema"]['type']
                             
                             if current_type =='choice':
                                 current_type = element['schema']['properties'][source_num]["schema"]['choiceType']['type']
-                            elements.append(LLCParameterView(element['schema']['properties'][source_num]['language']['default']['name'],current_type,self.namespace,required=element.get('required')))
-                            json_format[element['serializedName']] = elements
+                            elements1.append(LLCParameterView(element['schema']['properties'][source_num]['language']['default']['name'],current_type,self.namespace,required=element.get('required')))
+                            el.update(self.to_json_formatting([element]))
+                            json_format.update(el)
+                            json_format[element['serializedName']] = elements1
                 for r_property in param['schema'].get('properties',[]):
                     json_format[r_property['serializedName']] = [LLCParameterView(r_property['serializedName'], r_property['schema']['type'],self.namespace,required = r_property.get('required'))]
                     if r_property['schema'].get('elementType'):
                         if r_property['schema']['elementType'].get('properties'):
                             for element in r_property['schema']['elementType'].get('properties',[]):
-                                elements = []
+                                elements = {}
+                                my_dict = {}
                                 for source_num in range(0,len(element['schema'].get('properties',[]))):
                                     current_type = element['schema']['properties'][source_num]["schema"]['type']
                                     
                                     if current_type =='choice':
                                         current_type = element['schema']['properties'][source_num]["schema"]['choiceType']['type']
                                     elements.append(LLCParameterView(element['schema']['properties'][source_num]['language']['default']['name'],current_type,self.namespace,required=element.get('required')))
-                                # elements.append((self.to_json_formatting([element])))
+                                    my_dict.update((self.to_json_formatting([element])))
                                 json_format[element['serializedName']] = elements
+                                json_format.update(my_dict)
                     elif r_property['schema'].get('properties'):
                         imbedded_prop = []
+                        el = {}
                         for obj_property in r_property['schema']['properties']:
                             imbedded_prop.append([LLCParameterView(obj_property['serializedName'], obj_property['schema']['type'],self.namespace,required = obj_property.get('required'))])
+                            el.update(self.to_json_formatting([obj_property]))
+                        json_format.update(el)
                         json_format[r_property['serializedName']].append(imbedded_prop)
-                        #you know it will have children 
-                      
-                                # if element['serializedName'] == 'targets':
-                                #     for target_num in range(0,len(element['schema']['elementType']['properties'])):
-                                #         tcurrent_type = element['schema']['elementType']['properties'][target_num]["schema"]['type']
-                                #         if tcurrent_type =='choice':
-                                #             tcurrent_type = element['schema']['elementType']['properties'][target_num]["schema"]['choiceType']['type']
-                                #         json_format['targets'].append(LLCParameterView(element['schema']['elementType']['properties'][target_num]['language']['default']['name'],tcurrent_type,self.namespace,required=element.get('required')))
-                                #     break
-                                
         return json_format
 
     
@@ -728,72 +682,6 @@ class SchemaRequest():
             namespace =name
         )
 
-
-class GetType():
-        def __init__(self,yaml_data,op_group,num):
-            self.yaml_data = yaml_data
-            self.op_group = op_group
-            self.num = num
-        
-        def get_type(self,data):
-                 #Get return type
-            try:
-                # if len(yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['properties'])==1:
-                # return_type = yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['properties'][0]['schema']['type']
-                # else:
-                return_type = data['type']
-                if return_type == "dictionary":
-                    value = data['elementType']['type']
-                    if value =='object'or value =='array' or value =='dictionary': value = self.get_type(data['elementType'])
-                    return_type += "[string, "+ value +"]"    
-                elif return_type == "object":
-                    return_type = data['language']['default']['name']
-                if return_type =='array':
-                    if data['elementType']['type'] != 'object' and data['elementType']['type'] != 'choice':
-                        return_type += "["+ data['elementType']['type']+"]"
-                    else:
-                        return_type+= "["+  data['elementType']['language']['default']['name']+"]"
-            except:
-                return_type=None
-            return return_type
-
-        @classmethod
-        def from_yaml(cls,yaml_data: Dict[str,Any],op_group,num): 
-            yaml_data = yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0].get('schema',[])
-            return cls(
-                yaml_data=yaml_data,
-                op_group=op_group,
-                num=num
-            )
-
-            #       #Get return type
-            # try:
-            #     # if len(yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['properties'])==1:
-            #     # return_type = yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['properties'][0]['schema']['type']
-            #     # else:
-            #     return_type = yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['type']
-            #     if return_type == "dictionary":
-            #         value = self.get_type(yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['elementType']['type'])
-            #                        #['type']+"]" ['language']['default']['name']
-            #         # if value == "object":
-            #         #     value = yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['language']['default']['name']
-            #         # if value =='array':
-            #         #     if yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['elementType']['type'] != 'object' and yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['elementType']['type'] != 'choice':
-            #         #         value += "["+  yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['elementType']['elementType']['type']+"]"
-            #         #     else:
-            #         #         value+= "["+  yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['elementType']['language']['default']['name']+"]"
-            #         return_type += "[string, "+ value +"]"    
-            #     elif return_type == "object":
-            #         return_type = yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['language']['default']['name']
-            #     if return_type =='array':
-            #         if yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['elementType']['type'] != 'object' and yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['elementType']['type'] != 'choice':
-            #             return_type += "["+  yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['elementType']['type']+"]"
-            #         else:
-            #             return_type+= "["+  yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['elementType']['language']['default']['name']+"]"
-            # #     if return_type == 'dictionary':
-            # #         return_type += "[string, "+ yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['properties'][0]['schema']['language']['default']['name']+"]"    #['elementType']['type']+"]"  #
-            # except:
-            #     return_type=None
 
 def get_type(data):
             #Get return type
@@ -810,11 +698,13 @@ def get_type(data):
             return_type += "[string, "+ value +"]"    
         elif return_type == "object":
             return_type = data['language']['default']['name']
+            value = data['properties'][0]['schema']['type']
+            if value =='object'or value =='array' or value =='dictionary': return_type = get_type(data['properties'][0]['schema'])
         if return_type =='array':
             if data['elementType']['type'] != 'object' and data['elementType']['type'] != 'choice':
                 return_type = data['elementType']['type']+ "[]"
             else:
-                return_type=  data['elementType']['language']['default']['name']+"[]]"
+                return_type=  data['elementType']['language']['default']['name']+"[]"
     except:
         return_type=None
     return return_type

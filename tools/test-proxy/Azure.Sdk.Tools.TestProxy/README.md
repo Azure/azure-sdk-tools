@@ -276,7 +276,7 @@ Currently, the configured set of transforms/playback/sanitizers are NOT propogat
 Launch the test-proxy through your chosen method, then visit 
 
 - `<proxyUrl>/Info/Available` to see all available
-- `<proxyUrl>/Info/Active` to see all currently active, along with their settings.
+- `<proxyUrl>/Info/Active` to see all currently active.
 
 ## Testing
 

@@ -26,7 +26,7 @@ namespace Azure.Sdk.Tools.TestProxy
         public Info(RecordingHandler recordingHandler) => _recordingHandler = recordingHandler;
 
         [HttpGet]
-        public async Task<ContentResult> WhatIsAvailable()
+        public async Task<ContentResult> Available()
         {
             var dataModel = new CommonMetadataModel();
             var viewHtml = await RenderViewAsync(this, "MetadataDump", dataModel);

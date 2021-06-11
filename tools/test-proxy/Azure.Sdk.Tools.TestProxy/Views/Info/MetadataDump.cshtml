@@ -9,7 +9,7 @@
 <html>
 <head>
     <meta name="viewport" content="width=device-width" />
-    <title>Metadata</title>
+    <title>Test-Proxy - Available Extensions</title>
     <style type="text/css">
         body {
             margin: 40px auto;
@@ -23,7 +23,30 @@
 
         h1, h2, h3 {
             line-height: 1.2;
+        }
+
+        h1 {
+            border-bottom: 1px solid grey;
             width: 100%;
+        }
+
+        h2 {
+            border-bottom: 1px solid #43425A;
+        }
+
+        h3 {
+            color: #707070;
+        }
+
+        table {
+            margin-bottom: 2em;
+            background-color: aliceblue;
+            border: 1px solid lightgrey;
+            padding: 10px;
+        }
+
+        span {
+            background-color: #E1EAE8;
         }
     </style>
 </head>
@@ -32,13 +55,22 @@
         Test-Proxy Service Available Extensions
     </h1>
     <p>
-        There is an example POST to the Admin controller alongside each of these documented below, but in general, your header will contain
+        To leverage any of the below extensions, your local test framework should POST to the <code>Admin</code> controller. Below is an example.
     </p>
     <pre>
-        POST: <proxyurl>/
+        Method: POST
+        URL: PROXYURL/Admin/AddSanitizer
+        HEADERS: {
+            "x-abstraction-identifier": "ContinuationSanitizer"
+        }
+        BODY: {
+            "key": "RequestId",
+            "method": "guid",
+            "resetAfterFirst": "false"
+        }
     </pre>
     <p>
-        To observe which transforms are currently active on your session, visit <b>/Info/WhatIsActive</b>
+        To observe which transforms are currently active on your session, visit <b>/Info/Available</b>
     </p>
     <h1>Available Sanitizers</h1>
     <p>
@@ -72,11 +104,14 @@
             </tr>
             <tr>
                 <td>
-                    <h3>Arguments</h3>
+                    <h3>Constructor</h3>
+                    <p>
+                        @extension.ConstructorDetails.Description
+                    </p>
                     <ul>
-                        @foreach (var arg in extension.Arguments)
+                        @foreach (var arg in extension.ConstructorDetails.Arguments)
                         {
-                            <li>@arg.Item1: @arg.Item2</li>
+                            <li><span><code>@arg.Item1</code></span>: @arg.Item2</li>
                         }
                     </ul>
                 </td>
@@ -103,11 +138,14 @@
             </tr>
             <tr>
                 <td>
-                    <h3>Arguments</h3>
+                    <h3>Constructor</h3>
+                    <p>
+                        @extension.ConstructorDetails.Description
+                    </p>
                     <ul>
-                        @foreach (var arg in extension.Arguments)
+                        @foreach (var arg in extension.ConstructorDetails.Arguments)
                         {
-                            <li>@arg.Item1: @arg.Item2</li>
+                            <li><span><code>@arg.Item1</code></span>: @arg.Item2</li>
                         }
                     </ul>
                 </td>
@@ -136,18 +174,20 @@
             </tr>
             <tr>
                 <td>
-                    <h3>Arguments</h3>
+                    <h3>Constructor</h3>
+                    <p>
+                        @extension.ConstructorDetails.Description
+                    </p>
                     <ul>
-                        @foreach (var arg in extension.Arguments)
+                        @foreach (var arg in extension.ConstructorDetails.Arguments)
                         {
-                            <li>@arg.Item1: @arg.Item2</li>
+                            <li><span><code>@arg.Item1</code></span>: @arg.Item2</li>
                         }
                     </ul>
                 </td>
             </tr>
         </table>
     }
-
 
 </body>
 </html>

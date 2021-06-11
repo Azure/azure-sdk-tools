@@ -12,12 +12,27 @@ namespace Azure.Sdk.Tools.TestProxy.Models
         Matcher
     }
 
+    public class CtorDescription
+    {
+        public string Description;
+        public List<Tuple<string, string>> Arguments;
+    }
+
     public class ActionDescription
     {
         public MetaDataType ActionType;
         public string Name;
         public string Description;
-        public string ConstructorDescription;
-        public List<Tuple<string, string>> Arguments;
+        public CtorDescription ConstructorDetails;
+
+        public ActionDescription(string nameSpace)
+        {
+            var nsValue = nameSpace.Split(".").Last();
+
+            if (Enum.TryParse(nsValue.Substring(0, nsValue.Length - 1), out MetaDataType actionType))
+            {
+                ActionType = actionType;
+            };
+        }
     }
 }

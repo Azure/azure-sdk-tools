@@ -20,6 +20,9 @@ pr:
     include:
       - eng/packages/python-packages/doc-warden
 
+variables:
+- template: /eng/pipelines/templates/variables/globals.yml
+
 jobs:
 - job: 'Build'
 

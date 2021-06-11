@@ -20,5 +20,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public List<RecordedTestSanitizer> AdditionalSanitizers { get; }= new List<RecordedTestSanitizer>();
 
+        public string SourceRecordingId { get; set; }
     }
 }

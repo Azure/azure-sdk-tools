@@ -39,8 +39,9 @@ namespace Azure.Sdk.Tools.TestProxy
         public void Stop()
         {
             string id = RecordingHandler.GetHeader(Request, "x-recording-id");
+            bool.TryParse(RecordingHandler.GetHeader(Request, "x-purge-inmemory-recording", true), out var shouldPurgeRecording);
 
-            _recordingHandler.StopPlayback(id);
+            _recordingHandler.StopPlayback(id, purgeMemoryStore: shouldPurgeRecording);
         }
 
         public async Task HandleRequest()

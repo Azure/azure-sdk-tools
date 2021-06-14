@@ -26,6 +26,8 @@ parameters:
     default: 76
   - name: APIReview_AutoCreate_Configurations
     default: 93
+  - name: Release_Secrets_for_docsms
+    default: 99
 
 jobs:
 - job: GeneratePipelines
@@ -64,6 +66,7 @@ jobs:
           --variablegroup ${{ parameters.Release_Secrets_for_GitHubIO_Publishing }}
           --variablegroup ${{ parameters.Secrets_for_DevOps_Notification_Configuration_and_User_Resolution }}
           --variablegroup ${{ parameters.APIReview_AutoCreate_Configurations }}
+          --variablegroup ${{ parameters.Release_Secrets_for_docsms }}
         TestOptions: '--variablegroup ${{ parameters.Secrets_for_Resource_Provisioner }}'
       Python:
         RepositoryName: azure-sdk-for-python
@@ -74,6 +77,7 @@ jobs:
           --variablegroup ${{ parameters.Release_Secrets_for_GitHubIO_Publishing }}
           --variablegroup ${{ parameters.Secrets_for_DevOps_Notification_Configuration_and_User_Resolution }}
           --variablegroup ${{ parameters.APIReview_AutoCreate_Configurations }}
+          --variablegroup ${{ parameters.Release_Secrets_for_docsms }}
         TestOptions: '--variablegroup ${{ parameters.Secrets_for_Resource_Provisioner }}'
       Net:
         RepositoryName: azure-sdk-for-net
@@ -85,6 +89,7 @@ jobs:
           --variablegroup ${{ parameters.Release_Secrets_for_GitHubIO_Publishing }}
           --variablegroup ${{ parameters.Secrets_for_DevOps_Notification_Configuration_and_User_Resolution }}
           --variablegroup ${{ parameters.APIReview_AutoCreate_Configurations }}
+          --variablegroup ${{ parameters.Release_Secrets_for_docsms }}
         TestOptions: '--variablegroup ${{ parameters.Secrets_for_Resource_Provisioner }}'
       Cpp:
         RepositoryName: azure-sdk-for-cpp

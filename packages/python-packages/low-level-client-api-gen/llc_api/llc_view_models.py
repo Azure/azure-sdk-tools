@@ -9,8 +9,6 @@ JSON_FIELDS = ["Name", "Version", "VersionString", "Navigation", "Tokens", "Diag
 PARAM_FIELDS = ["name", "type", "default", "optional", "indent"]
 OP_FIELDS = ["operation", "parameters", "indent"]
 
-logging.getLogger().setLevel(logging.ERROR)
-
 class FormattingClass:
     def add_whitespace(self,indent):
         if indent:

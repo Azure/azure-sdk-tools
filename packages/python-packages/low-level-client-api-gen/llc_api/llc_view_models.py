@@ -338,9 +338,7 @@ class LLCOperationView(FormattingClass):
                     (request_docstring.to_json_formatting(request_docstring.parameters))
                     json_request.update(request_docstring.json_format)
           
-            # out = GetType.from_yaml(yaml_data,op_group,num)
             return_type = get_type(yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0].get('schema',[]))
-            # print(return_type)
 
             des = yaml_data["operationGroups"][op_group]["operations"][num]["language"]["default"].get("summary")
             if des is None:
@@ -750,7 +748,7 @@ def get_type(data):
             return_type += "[string, "+ value +"]"    
         if return_type == "object":
             return_type = data['language']['default']['name']
-            value = data['properties'][0]['schema']['type']
+            # value = data['properties'][0]['schema']['type']
             # if value =='object': return_type = get_type(data['properties'][0]['schema']) #or value =='array' or value =='dictionary'
         if return_type =='array':
             if data['elementType']['type'] != 'object' and data['elementType']['type'] != 'choice':

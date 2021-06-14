@@ -573,8 +573,8 @@ class LLCParameterView(FormattingClass):
                 default = yaml_data["signatureParameters"][i]["schema"].get('defaultValue')
                 p_type = get_type(yaml_data["signatureParameters"][i]["schema"])
                 p_name = yaml_data["signatureParameters"][i]['language']['default']['name']
-                # if yaml_data["signatureParameters"][i]["schema"]['type'] == 'object':
-                #     p_type = get_type(yaml_data["signatureParameters"][i]["schema"]['properties'][0]['schema'])
+                if yaml_data["signatureParameters"][i]["schema"]['type'] == 'object':
+                    p_type = get_type(yaml_data["signatureParameters"][i]["schema"]['properties'][0]['schema'])
                 if p_name == 'body':
                     try:
                         p_name = yaml_data["signatureParameters"][i]["schema"]['properties'][0]['serializedName']   
@@ -741,9 +741,6 @@ class SchemaRequest():
 def get_type(data):
             #Get return type
     try:
-        # if len(yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['properties'])==1:
-        # return_type = yaml_data["operationGroups"][op_group]["operations"][num]['responses'][0]['schema']['properties'][0]['schema']['type']
-        # else:
         return_type = data['type']
         if return_type =='choice':
                 return_type = data['choiceType']['type']
@@ -754,7 +751,7 @@ def get_type(data):
         if return_type == "object":
             return_type = data['language']['default']['name']
             value = data['properties'][0]['schema']['type']
-            if value =='object'or value =='array' or value =='dictionary': return_type = get_type(data['properties'][0]['schema'])
+            # if value =='object': return_type = get_type(data['properties'][0]['schema']) #or value =='array' or value =='dictionary'
         if return_type =='array':
             if data['elementType']['type'] != 'object' and data['elementType']['type'] != 'choice':
                 return_type = data['elementType']['type']+ "[]"

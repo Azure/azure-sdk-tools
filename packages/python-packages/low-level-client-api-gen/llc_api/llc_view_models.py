@@ -168,6 +168,15 @@ class LLCClientView(FormattingClass):
         self.add_punctuation(")")
         self.add_new_line(1)
 
+        #Create Overview
+     
+        for operation in self.Operation_Group:
+            operation.to_token()
+            my_ops = operation.overview_tokens
+            for o in my_ops:
+                    if o:
+                        self.add_token(o)
+        
         #Set Navigation
         navigation = Navigation(self.namespace, None)
         navigation.set_tag(NavigationTag(Kind.type_package))
@@ -184,13 +193,13 @@ class LLCClientView(FormattingClass):
                 child_nav1 = Navigation(op.operation, self.namespace+op.operation)
                 child_nav1.set_tag(NavigationTag(Kind.type_method))
                 child_nav.add_child(child_nav1)
-
-            operation.to_token()
-            my_ops = operation.get_tokens()
-            for o in my_ops:
+                
+            ops = operation.get_tokens()
+            for o in ops:
                 self.add_token(o)
 
         self.add_new_line()
+
         self.add_punctuation("}")
 
         self.add_navigation(navigation)
@@ -220,6 +229,7 @@ class LLCOperationGroupView(FormattingClass):
         self.operation_group=operation_group_name;
         self.operations=operations; #parameterview list
         self.Tokens =[]
+        self.overview_tokens =[]
         self.indent = 0 
         self.namespace = namespace
     
@@ -245,35 +255,45 @@ class LLCOperationGroupView(FormattingClass):
 
         #Each operation will indent itself by 4
         self.add_new_line()
-        
 
         if self.operation_group:
             self.add_whitespace(1)
             #Operation Name token
-            self.add_text(None,"opgrp",None)
+            self.add_text(None,"OperationGroup",None)
+            self.overview_tokens.append(Token("OperationGroup",TokenKind.Text))
             self.add_space()
+            self.overview_tokens.append(Token(" ",TokenKind.Text))
             self.add_keyword(self.namespace+self.operation_group,self.operation_group,self.namespace+self.operation_group)
+            self.overview_tokens.append(Token(self.operation_group,TokenKind.Keyword))
 
             self.add_new_line()
+            self.overview_tokens.append(Token("",TokenKind.Newline))
     
-
             for operation in range(0,len(self.operations)):
                 if self.operations[operation]:
                     self.operations[operation].to_token()
                     if operation==0:
                         self.add_whitespace(2)
+                        self.overview_tokens.append(Token("  " * (4),TokenKind.Text))
                         self.add_punctuation("{")
                     self.add_new_line()
+                    self.overview_tokens.append(Token("",TokenKind.Newline))
                     self.add_whitespace(2)
+                    for i in self.operations[operation].overview_tokens:
+                        self.overview_tokens.append(i)
                     for t in self.operations[operation].get_tokens():
                         self.add_token(t)
             self.add_whitespace(2)
             self.add_punctuation("}")
             self.add_new_line(1)
+            self.overview_tokens.append(Token("",TokenKind.Newline))
+            
         else:
             for operation in range(0,len(self.operations)):
                 if self.operations[operation]:
                     self.operations[operation].to_token()
+                    for i in self.operations[operation].overview_tokens:
+                        self.overview_tokens.append(i)
                     for t in self.operations[operation].get_tokens():
                         self.add_token(t)
                 
@@ -292,6 +312,7 @@ class LLCOperationView(FormattingClass):
         self.return_type = return_type
         self.parameters=parameters #parameterview list
         self.Tokens =[]
+        self.overview_tokens =[]
         self.indent = 0 
         self.namespace = namespace
         self.description = description
@@ -358,11 +379,15 @@ class LLCOperationView(FormattingClass):
     
     def add_first_line(self):
         if self.paging and self.lro: 
+            self.overview_tokens.append(Token("PagingLRO",TokenKind.Text))
+            self.overview_tokens.append(Token("[",TokenKind.Text))
             self.add_text(None,"PagingLRO",None)
             self.add_text(None,"[",None)
             # self.add_space()
  
         if self.paging:
+            self.overview_tokens.append(Token("Paging",TokenKind.Text))
+            self.overview_tokens.append(Token("[",TokenKind.Text))
             self.add_text(None,"Paging",None)
             self.add_text(None,"[",None)
             # self.add_space()
@@ -371,6 +396,8 @@ class LLCOperationView(FormattingClass):
             # self.add_text(None,str(self.paging),None)
         #make smaller classes
         if self.lro:
+            self.overview_tokens.append(Token("LRO",TokenKind.Text))
+            self.overview_tokens.append(Token("[",TokenKind.Text))
             self.add_text(None,"LRO",None)
             self.add_text(None,"[",None)
             # self.add_space()
@@ -378,20 +405,28 @@ class LLCOperationView(FormattingClass):
             # self.add_space()
             # self.add_text(None,str(self.lro),None)
         
-        if self.return_type is None: self.add_stringliteral(None, "void", None)
+        if self.return_type is None: 
+            self.overview_tokens.append(Token("void",TokenKind.StringLiteral))
+            self.add_stringliteral(None, "void", None)
         self.add_stringliteral(None,self.return_type,None)
-        
+        self.overview_tokens.append(Token(self.return_type,TokenKind.StringLiteral))
         if self.paging or self.lro: 
             self.add_text(None,"]",None)
+            self.overview_tokens.append(Token("]",TokenKind.Text))
          #Operation Name token
         
         self.add_space()
+        self.overview_tokens.append(Token(" ",TokenKind.Text))
+        token = Token(self.operation,TokenKind.Keyword)
+        token.set_definition_id(self.namespace+self.operation)
+        self.overview_tokens.append(token)
         self.add_keyword(self.namespace+self.operation,self.operation, self.namespace+self.operation)
         self.add_space
         
         self.add_new_line()
         self.add_description()
         self.add_whitespace(3)
+        self.overview_tokens.append(Token("(",TokenKind.Text))
         self.add_punctuation("(")
     
     def add_description(self):
@@ -405,16 +440,24 @@ class LLCOperationView(FormattingClass):
     #have a to_token to create the line for parameters
     def to_token(self):
 
+        #Remove None Param
+        self.parameters = [key for key in self.parameters if key.type is not None]
+
+        #Create Overview:
+        self.overview_tokens.append(Token(" " * (4),TokenKind.Text))
+
+
         #Each operation will indent itself by 4
         self.add_whitespace(1)
 
-        self.parameters = [key for key in self.parameters if key.type is not None]
+        
         # self.add_new_line()
         #Set up operation parameters
         if len(self.parameters)==0:
             self.add_first_line()
             self.add_new_line()
             self.add_whitespace(3)
+            self.overview_tokens.append(Token(")",TokenKind.Text))
             self.add_punctuation(")")
             self.add_new_line(1)
             
@@ -432,17 +475,20 @@ class LLCOperationView(FormattingClass):
                 self.add_whitespace(4)
                 for t in self.parameters[param_num].get_tokens():
                     self.add_token(t)
+                    self.overview_tokens.append(t)
 
 
             #Add in comma before the next parameter
             if param_num+1 in range(0,len(self.parameters)):
                 self.parameters[param_num+1]
                 self.add_punctuation(",")
+                self.overview_tokens.append(Token(", ",TokenKind.Text))
                  
             #Create a new line for the next operation
             else: 
                 self.add_new_line()
                 self.add_whitespace(3)
+                self.overview_tokens.append(Token(")",TokenKind.Text))
                 self.add_punctuation(")")
                 self.add_new_line(1)
 
@@ -512,6 +558,7 @@ class LLCParameterView(FormattingClass):
         self.default = default;
         self.required = required
         self.Tokens = []
+        self.overview_tokens = []
         self.indent = 0 
         self.json_request = json_request
         self.namespace = namespace
@@ -568,23 +615,29 @@ class LLCParameterView(FormattingClass):
         if self.type is not None:
             #Create parameter type token
             self.add_stringliteral(self.namespace+self.type,self.type,None)
+            self.overview_tokens.append(Token(self.type,TokenKind.StringLiteral))
 
             #If parameter is optional, token for ? created
             if not self.required:
                 self.add_stringliteral(None,"?",None)
-
+                self.overview_tokens.append(Token("?",TokenKind.StringLiteral))
             self.add_space()
-
+            self.overview_tokens.append(Token(" ",TokenKind.Text))
             #Create parameter name token
             self.add_text(None,self.name,None)
+            self.overview_tokens.append(Token(self.name,TokenKind.Text))
     
 
             #Check if parameter has a default value or not
             if self.default is not None:
                 self.add_space()
+                self.overview_tokens.append(Token(" ",TokenKind.Text))
                 self.add_text(None,"=",None)
+                self.overview_tokens.append(Token("=",TokenKind.Text))
                 self.add_space()
+                self.overview_tokens.append(Token(" ",TokenKind.Text))
                 self.add_text(None,str(self.default),None)
+                self.overview_tokens.append(Token(str(self.default),TokenKind.Text))
 
 
     def to_json(self):

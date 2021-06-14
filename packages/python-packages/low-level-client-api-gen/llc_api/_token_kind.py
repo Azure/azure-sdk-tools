@@ -12,5 +12,6 @@ class TokenKind(Enum):
     MemberName = 7
     StringLiteral = 8
     Literal = 9
+    Comment = 10
     StartDocGroup = 11
     EndDocGroup = 12

@@ -8,7 +8,7 @@ from .llc_view_models import LLCOperationGroupView, LLCClientView
 
 OUTPUT_FILE = "llc_api_view.json"
 
-class llc_generator:
+class LLCGenerator:
     def __init__(self):
         parser = argparse.ArgumentParser(
             description="Parse a python package and generate json token file to be supplied to API review tool"
@@ -73,16 +73,6 @@ class llc_generator:
 
         #Create main_view for LLC API View
         main_view = LLCClientView.from_yaml(data)
-
-
-        #Iterate through Operations in OperationGroups
-        for k in range(0,len(data["operationGroups"])):
-            operation_groups = LLCOperationGroupView.from_yaml(data,k,main_view.namespace)
-            # for i in range(0,len(data["operationGroups"][k]["operations"])):
-            #     op = LLCOperationView.from_yaml(data,k,i)
-            #     main_view.add_operation(LLCOperationView(op.operation,op.parameters))
-                #Add each operation to the main_view
-            main_view.add_operation_group(LLCOperationGroupView(operation_groups.operation_group,operation_groups.operations,main_view.namespace))
 
         # Write output to .json
         j = open (OUTPUT_FILE, "w")

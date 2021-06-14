@@ -231,6 +231,7 @@ class LLCOperationGroupView(FormattingClass):
 
         if self.operation_group:
             self.add_whitespace(1)
+            self.overview_tokens.append(Token(" "*4,TokenKind.Whitespace))
             #Operation Name token
             self.add_text(None,"OperationGroup",None)
             self.overview_tokens.append(Token("OperationGroup",TokenKind.Text))
@@ -400,11 +401,10 @@ class LLCOperationView(FormattingClass):
         self.parameters = [key for key in self.parameters if key.type is not None]
 
         #Create Overview:
-        self.overview_tokens.append(Token(" " * (4),TokenKind.Text))
 
         #Each operation will indent itself by 4
         self.add_whitespace(1)
-        self.overview_tokens.append(Token(" "*4,TokenKind.Whitespace))
+        self.overview_tokens.append(Token("  "*4,TokenKind.Whitespace))
 
         #Set up operation parameters
         if len(self.parameters)==0:

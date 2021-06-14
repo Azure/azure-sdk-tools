@@ -296,8 +296,6 @@ class LLCOperationView(FormattingClass):
         pageable =None
         lro=None
         json_request={}
-        if yaml_data["operationGroups"][op_group_num]["operations"][op_num]["signatureParameters"]:
-            param.append(LLCParameterView.from_yaml(yaml_data["operationGroups"][op_group_num]["operations"][op_num],0,namespace))
         for i in range(0,len(yaml_data["operationGroups"][op_group_num]["operations"][op_num]["signatureParameters"])):
             param.append(LLCParameterView.from_yaml(yaml_data["operationGroups"][op_group_num]["operations"][op_num],i,namespace))
         for j in range(0, len(yaml_data['operationGroups'][op_group_num]['operations'][op_num]['requests'])):
@@ -396,7 +394,7 @@ class LLCOperationView(FormattingClass):
 
     def to_token(self):
         #Remove None Param
-        self.parameters = [key for key in self.parameters if key.type is not None]
+        self.parameters = [key for key in self.parameters if key.type]
 
         #Create Overview:
 
@@ -513,10 +511,11 @@ class LLCParameterView(FormattingClass):
             json_request ={}
             if yaml_data.get("signatureParameters"):
                 default = yaml_data["signatureParameters"][i]["schema"].get('defaultValue')
-                param_type = get_type(yaml_data["signatureParameters"][i]["schema"])
                 param_name = yaml_data["signatureParameters"][i]['language']['default']['name']
                 if yaml_data["signatureParameters"][i]["schema"]['type'] == 'object':
                     param_type = get_type(yaml_data["signatureParameters"][i]["schema"]['properties'][0]['schema'])
+                else:
+                    param_type = get_type(yaml_data["signatureParameters"][i]["schema"])
                 if param_name == 'body':
                     try:
                         param_name = yaml_data["signatureParameters"][i]["schema"]['properties'][0]['serializedName']   
@@ -682,6 +681,16 @@ def get_type(data):
                 return_type = data['elementType']['type']+ "[]"
             else:
                 return_type=  data['elementType']['language']['default']['name']+"[]"
+        if return_type == 'number':
+            if data['precision'] == 32:
+                    return_type = "float32"
+            if data['precision'] == 64:
+                return_type = "float64"
+        if return_type == 'integer':
+            if data['precision'] == 32:
+                return_type = "int32"
+            if data['precision'] == 64:
+                return_type = "int64"
         else: return_type = return_type
     except:
         return_type=None

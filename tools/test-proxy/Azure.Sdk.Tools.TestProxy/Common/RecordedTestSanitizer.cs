@@ -11,6 +11,9 @@ using System.Text;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
 {
+    /// <summary>
+    /// The default sanitizer that is always applied. Removes the header "Authorization" and replaces it with the value "Sanitized".
+    /// </summary>
     public class RecordedTestSanitizer
     {
         public const string SanitizeValue = "Sanitized";

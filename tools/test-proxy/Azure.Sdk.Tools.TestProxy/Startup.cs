@@ -61,6 +61,8 @@ namespace Azure.Sdk.Tools.TestProxy
         {
             services.AddHttpClient();
             services.AddControllers();
+            services.AddControllersWithViews();
+            services.AddRazorPages();
             services.AddSingleton<RecordingHandler>(new RecordingHandler(TargetLocation));
         }
 

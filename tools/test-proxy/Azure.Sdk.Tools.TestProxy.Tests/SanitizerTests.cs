@@ -42,5 +42,48 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             Assert.Equal(expectedCount, session.Session.Entries.Count);
         }
+
+
+        [Fact]
+        public void ReplaceRequestSubscriptionId()
+        {
+
+        }
+
+        [Fact]
+        public void ReplaceRequestSubscriptionIdNoAction()
+        {
+
+        }
+
+        [Fact]
+        public void HeaderRegexSanitizerSimpleReplace()
+        {
+
+        }
+
+        [Fact]
+        public void HeaderRegexSanitizerGroupedRegexReplace()
+        {
+
+        }
+
+        [Fact]
+        public void ContinuationSanitizerMultipleStepsNoKey()
+        {
+
+        }
+
+        [Fact]
+        public void ContinuationSanitizerSimpleRequestResponse()
+        {
+
+        }
+
+        [Fact]
+        public void ContinuationSanitizerMultipleSteps()
+        {
+
+        }
     }
 }

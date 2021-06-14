@@ -4,7 +4,7 @@ import argparse
 import logging
 import os
 import tempfile
-from .llc_view_models import LLCOperationGroupView, LLCClientView 
+from .llc_view_models import LLCClientView 
 
 OUTPUT_FILE = "llc_api_view.json"
 

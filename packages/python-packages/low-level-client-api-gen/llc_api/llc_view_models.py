@@ -12,18 +12,6 @@ from ._diagnostic import Diagnostic
 JSON_FIELDS = ["Name", "Version", "VersionString", "Navigation", "Tokens", "Diagnostics", "PackageName"]
 PARAM_FIELDS = ["name", "type", "default", "optional", "indent"]
 OP_FIELDS = ["operation", "parameters", "indent"]
-TOKEN_FIELDS = ["Kind","DefinitionId","NavigateToId","Value"]
-
-
-TYPE_NAME_REGEX = re.compile("(~?[a-zA-Z\d._]+)")
-TYPE_OR_SEPERATOR = " or "
-
-# Lint warnings
-SOURCE_LINK_NOT_AVAILABLE = "Source definition link is not available for [{0}]. Please check and ensure type is fully qualified name in docstring"
-RETURN_TYPE_MISMATCH = "Return type in type hint is not matching return type in docstring"
-
-TOP_LEVEL_WHEEL_FILE = "top_level.txt"
-INIT_PY_FILE = "__init__.py"
 
 logging.getLogger().setLevel(logging.ERROR)
 
@@ -90,14 +78,12 @@ class LLCClientView(FormattingClass):
     """Entity class that holds LLC view for all namespaces within a package"""
     def __init__(self, operation_groups, pkg_name="", endpoint="endpoint",endpoint_type="string",credential="Credential",credential_type="AzureCredential"):
         self.Name = pkg_name
-        self.module_dict = {}
         self.Language = "LLC"
         self.Tokens = []
         self.Operations = []
         self.Operation_Groups= operation_groups
         self.Navigation = []
         self.Diagnostics = []
-        self.PackageName = pkg_name
         self.endpoint_type = endpoint_type
         self.endpoint = endpoint
         self.credential = credential 
@@ -229,10 +215,9 @@ class LLCClientView(FormattingClass):
 class LLCOperationGroupView(FormattingClass):
     def __init__(self, operation_group_name, operations, namespace):
         self.operation_group=operation_group_name
-        self.operations=operations #parameterview list
+        self.operations=operations 
         self.Tokens =[]
         self.overview_tokens =[]
-        self.indent = 0 
         self.namespace = namespace
     
     @classmethod
@@ -315,7 +300,6 @@ class LLCOperationView(FormattingClass):
         self.parameters=parameters #parameterview list
         self.Tokens =[]
         self.overview_tokens =[]
-        self.indent = 0 
         self.namespace = namespace
         self.description = description
         self.paging = paging
@@ -559,7 +543,6 @@ class LLCParameterView(FormattingClass):
         self.required = required
         self.Tokens = []
         self.overview_tokens = []
-        self.indent = 0 
         self.json_request = json_request
         self.namespace = namespace
     

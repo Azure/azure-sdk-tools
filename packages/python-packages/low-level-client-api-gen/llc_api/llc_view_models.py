@@ -180,7 +180,7 @@ class LLCClientView(FormattingClass):
         #Set Navigation
         navigation = Navigation(self.namespace, None)
         navigation.set_tag(NavigationTag(Kind.type_package))
-
+        self.add_new_line(1)
         for operation in self.Operation_Group:
             #Add children
             child_nav = Navigation(operation.operation_group, self.namespace+operation.operation_group)
@@ -188,12 +188,13 @@ class LLCClientView(FormattingClass):
             navigation.add_child(child_nav)
 
             #Set up operations and add to token
+            
             for op in operation.operations:
                 #Add operation comments
                 child_nav1 = Navigation(op.operation, self.namespace+op.operation)
                 child_nav1.set_tag(NavigationTag(Kind.type_method))
                 child_nav.add_child(child_nav1)
-                
+
             ops = operation.get_tokens()
             for o in ops:
                 self.add_token(o)

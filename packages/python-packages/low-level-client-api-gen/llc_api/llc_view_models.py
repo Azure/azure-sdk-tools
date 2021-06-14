@@ -175,9 +175,9 @@ class LLCClientView(FormattingClass):
                 child_nav1.set_tag(NavigationTag(Kind.type_method))
                 child_nav.add_child(child_nav1)
 
-            operations = operation_view.get_tokens()
-            for token in operations:
-                self.add_token(token)
+                operations = operation_view.get_tokens()
+                for token in operations:
+                    self.add_token(token)
         return navigation 
 
     def to_json(self):

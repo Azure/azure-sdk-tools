@@ -47,25 +47,31 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [Fact]
         public void ReplaceRequestSubscriptionId()
         {
-
+            // tests successfully replacement
         }
 
         [Fact]
         public void ReplaceRequestSubscriptionIdNoAction()
         {
-
+            // successful sanitize, no action necessary
         }
 
         [Fact]
         public void HeaderRegexSanitizerSimpleReplace()
         {
-
+            // where we have a key, a regex, and no groupname.
         }
 
         [Fact]
         public void HeaderRegexSanitizerGroupedRegexReplace()
         {
+            // where we have a key, a regex, and a groupname to replace with value Y
+        }
 
+        [Fact]
+        public void HeaderRegexSanitizerReplacesNothingProperly()
+        {
+            // where we find a key, but there is nothing to be done by the sanitizer
         }
 
         [Fact]

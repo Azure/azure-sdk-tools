@@ -141,6 +141,9 @@ namespace Azure.Sdk.Tools.TestProxy
             var upstreamRequest = CreateUpstreamRequest(incomingRequest, entry.Request.Body);
             var upstreamResponse = await client.SendAsync(upstreamRequest).ConfigureAwait(false);
 
+            var headerListOrig = incomingRequest.Headers.Select(x => String.Format("{0}: {1}", x.Key, x.Value.First())).ToList();
+            var headerList = upstreamRequest.Headers.Select(x => String.Format("{0}: {1}", x.Key, x.Value.First())).ToList();
+
             var body = await upstreamResponse.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
             entry.Response.Body = body.Length == 0 ? null : body;
             entry.StatusCode = (int)upstreamResponse.StatusCode;
@@ -391,6 +394,9 @@ namespace Azure.Sdk.Tools.TestProxy
             uri.Path = request.Path;
             uri.Query = request.QueryString.ToUriComponent();
             var result = uri.ToUri();
+
+            var target_uri = GetHeader(request, "x-recording-upstream-base-uri");
+            var additional_result = new Uri(target_uri);
 
             return result;
         }

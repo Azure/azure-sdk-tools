@@ -10,7 +10,7 @@ stages:
   jobs:
   - job: Run
     pool:
-      vmImage: ubuntu-16.04
+      vmImage: ubuntu-20.04
 
     steps:
       # Register the dogfood environment to clean up ACS custom subscription

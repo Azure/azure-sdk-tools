@@ -1,7 +1,9 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
+from abc import ABC, abstractmethod
+from enum import Enum
 import logging
-from typing import Any, Dict
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from ._token import Token
 from ._token_kind import TokenKind
 
@@ -306,9 +308,10 @@ class LLCOperationView(FormattingClass):
         for j in range(0, len(yaml_data['operationGroups'][op_group_num]['operations'][op_num]['requests'])):
             for i in range(0,len(yaml_data['operationGroups'][op_group_num]['operations'][op_num]['requests'][j].get('signatureParameters',[]))):
                 param.append(LLCParameterView.from_yaml(yaml_data["operationGroups"][op_group_num]["operations"][op_num]['requests'][j],i,namespace))
-                request_docstring = SchemaRequest.from_yaml(yaml_data["operationGroups"][op_group_num]["operations"][op_num]['requests'][j],namespace)
+                request_docstring = SchemaRequest1.from_yaml(yaml_data["operationGroups"][op_group_num]["operations"][op_num]['requests'][j],namespace) #
                 request_docstring.to_json_formatting(request_docstring.parameters)
                 json_request.update(request_docstring.json_format)
+                # json_request = request_docstring.json_format
         
         return_type = get_type(yaml_data["operationGroups"][op_group_num]["operations"][op_num]['responses'][0].get('schema',[]))
 
@@ -455,39 +458,42 @@ class LLCOperationView(FormattingClass):
                 self.add_whitespace(4)
                 self.add_typename(None,key,None)
                 self.add_space()
-                if len(self.json_request[key])==0: 
-                    self.add_punctuation("{")
-                    self.add_punctuation("}")
-                            # self.add_new_line()
+                if isinstance(self.json_request[key],LLCParameterView):
+                    self.json_request[key].to_token()
+                    for t in self.json_request[key].get_tokens():
+                        self.add_token(t)
+                    # self.add_punctuation("{")
+                    # self.add_punctuation("}")
+                else:
+                    for num in range(0,len(self.json_request[key])):
                         
-                for num in range(0,len(self.json_request[key])):
-                    if isinstance(self.json_request[key][num],list):
-                        self.add_whitespace(4)
-                        self.add_punctuation("{")
-                        self.add_new_line()
-                        for p_list in self.json_request[key][num]:
-                            for p in p_list: 
-                                p.to_token()
-                            self.add_whitespace(6)
+                        if isinstance(self.json_request[key][num],list):
+                            self.add_whitespace(4)
+                            self.add_punctuation("{")
+                            self.add_new_line()
+                            for p_list in self.json_request[key][num]:
+                                for p in p_list: 
+                                    p.to_token()
+                                # self.add_whitespace(6)
 
-                            for t in p.get_tokens():  
+                                    for t in p.get_tokens():  
+                                        self.add_token(t)
+                                self.add_new_line()
+                            self.add_whitespace(4)
+                            self.add_punctuation("}")              
+                        else: 
+                            self.add_new_line()
+                            self.add_whitespace(4)
+                            self.add_punctuation("{")
+                            self.json_request[key][num].to_token()
+                            self.add_new_line()
+                            self.add_whitespace(5)
+                            for t in self.json_request[key][num].get_tokens():
                                 self.add_token(t)
                             self.add_new_line()
-                        self.add_whitespace(4)
-                        self.add_punctuation("}")              
-                    else: 
-                        self.add_new_line()
-                        self.add_whitespace(4)
-                        self.add_punctuation("{")
-                        self.json_request[key][num].to_token()
-                        self.add_new_line()
-                        self.add_whitespace(5)
-                        for t in self.json_request[key][num].get_tokens():
-                            self.add_token(t)
-                        self.add_new_line()
-                        self.add_whitespace(4)
-                        self.add_punctuation("}")
-                               
+                            self.add_whitespace(4)
+                            self.add_punctuation("}")
+                                
             self.add_new_line(1)
             self.add_token(Token(kind=TokenKind.EndDocGroup))
     
@@ -613,64 +619,80 @@ class Navigation:
     def add_child(self, child):
         self.ChildItems.append(child)
 
-class SchemaRequest():
+class SchemaRequest1():
     def __init__(self,media_types,parameters,namespace):
         self.parameters = parameters
         self.media_types = media_types
         self.namespace = namespace
         self.json_format = {}
+        self.elements = []
 
     def to_json_formatting(self, parameters):
-        elements=[]
-        self.json_format ={}
         for param in parameters:
-            # this goes through the parameters
-            if param.get('schema'):
-                if param['schema'].get('elementType',[]):
-                    for element in param['schema']['elementType'].get('properties',[]):
-                        elements1 =[]
-                        for source_num in range(0,len(element['schema'].get('properties',[]))):
-                            elements1.append(LLCParameterView(element['schema']['properties'][source_num]['language']['default']['name'],get_type(element['schema']['properties'][source_num]["schema"]),self.namespace,required=element.get('required')))
-                            # elements1.append((self.to_json_formatting([element])))
-                            self.json_format[element['serializedName']] = elements1
-                            elements.append(elements1)
-                for r_property in param['schema'].get('properties',[]):
-                    self.json_format[r_property['serializedName']] = [LLCParameterView(r_property['serializedName'], get_type(r_property['schema']),self.namespace,required = r_property.get('required'))]
-                    if r_property['schema'].get('elementType'):
-                        elements2 = []
-                        if r_property['schema']['elementType'].get('properties'):
-                            for element in r_property['schema']['elementType'].get('properties',[]):
-                                elements2 = []
-                                for source_num in range(0,len(element['schema'].get('properties',[]))):
-                                    elements2.append(LLCParameterView(element['schema']['properties'][source_num]['language']['default']['name'],get_type(element['schema']['properties'][source_num]["schema"]),self.namespace,required=element.get('required')))
-                                if (element['schema'].get('elementType',[])):
-                                    for source_num in range(0,len(element['schema']['elementType'].get('properties',[]))):
-                                        elements2.append(LLCParameterView( element['schema']['elementType']['properties'][source_num]['language']['default']['name'],get_type(element['schema']['elementType']['properties'][source_num]["schema"]),self.namespace,required=element.get('required')))
-                                        elements.append(elements2)
-                                self.json_format[element['serializedName']] = elements2
+            for index in param.get('schema'):
+                if index=='properties':
+                    for properties in param['schema']['properties']:
+                        self.elements = LLCParameterView(properties['serializedName'],get_type(properties['schema']),
+                        self.namespace,required = properties.get('required'))
+                        self.json_format[properties['serializedName']] = self.elements
+                        if properties['schema'].get('elementType'):
+                            for properties in properties['schema']['elementType'].get('properties'):
+                                self.elements = self.to_json_formatting([properties])
+                                self.json_format[properties['serializedName']] = self.elements
+                if index=='elementType':
+                    for properties in param['schema']['elementType'].get('properties'):
+                        self.elements = LLCParameterView( properties['language']['default']['name'],get_type(properties["schema"]),
+                        self.namespace,required=properties.get('required'))
+                        self.json_format[properties['serializedName']] = self.elements
+                        self.elements = self.to_json_formatting([properties])
+        return self.elements
+        #     # this goes through the parameters
+        #     if param.get('schema'):
+        #         if param['schema'].get('elementType',[]):
+        #             for element in param['schema']['elementType'].get('properties',[]):
+        #                 elements1 =[]
+        #                 for source_num in range(0,len(element['schema'].get('properties',[]))):
+        #                     elements1.append(LLCParameterView(element['schema']['properties'][source_num]['language']['default']['name'],get_type(element['schema']['properties'][source_num]["schema"]),self.namespace,required=element.get('required')))
+        #                     self.json_format[element['serializedName']] = elements1
+        #                     elements.append(elements1)
+        #         for r_property in param['schema'].get('properties',[]):
+        #             self.json_format[r_property['serializedName']] = [LLCParameterView(r_property['serializedName'], get_type(r_property['schema']),self.namespace,required = r_property.get('required'))]
+        #             if r_property['schema'].get('elementType'):
+        #                 elements2 = []
+        #                 if r_property['schema']['elementType'].get('properties'):
+        #                     for element in r_property['schema']['elementType'].get('properties',[]):
+        #                         elements2 = []
+        #                         for source_num in range(0,len(element['schema'].get('properties',[]))):
+        #                             elements2.append(LLCParameterView(element['schema']['properties'][source_num]['language']['default']['name'],get_type(element['schema']['properties'][source_num]["schema"]),self.namespace,required=element.get('required')))
+        #                         if (element['schema'].get('elementType',[])):
+        #                             for source_num in range(0,len(element['schema']['elementType'].get('properties',[]))):
+        #                                 elements2.append(LLCParameterView( element['schema']['elementType']['properties'][source_num]['language']['default']['name'],get_type(element['schema']['elementType']['properties'][source_num]["schema"]),self.namespace,required=element.get('required')))
+        #                                 elements.append(elements2)
+        #                         self.json_format[element['serializedName']] = elements2
                                 
-                    elif r_property['schema'].get('properties'):
-                        elements3 = []
-                        for obj_property in r_property['schema']['properties']:
-                            elements3.append([LLCParameterView(obj_property['serializedName'], get_type(obj_property['schema']),self.namespace,required = obj_property.get('required'))])
-                            # elements.append(self.to_json_formatting([obj_property]))
-                            elements.append(elements3)
-                        self.json_format[r_property['serializedName']].append(elements3)
-        return elements
+        #             elif r_property['schema'].get('properties'):
+        #                 elements3 = []
+        #                 for obj_property in r_property['schema']['properties']:
+        #                     elements3.append([LLCParameterView(obj_property['serializedName'], get_type(obj_property['schema']),self.namespace,required = obj_property.get('required'))])
+        #                     elements.append(elements3)
+        #                 self.json_format[r_property['serializedName']].append(elements3)
+        # return elements
     
     @classmethod
     def from_yaml(cls,yaml_data: Dict[str,Any],name):
         parameters = []
         parameters = yaml_data.get("signatureParameters", [])
-        
+        # json_request={SchemaRequest.from_yaml(yaml) for yaml in yaml_data["requests"]}
         return cls(
             media_types = None,
             parameters = parameters,
-            namespace =name
+            namespace =name,
+            # json_format = json_request
         )
 
 
 def get_type(data):
+
     #Get type
     try:
         return_type = data['type']
@@ -701,3 +723,718 @@ def get_type(data):
     except:
         return_type=None
     return return_type
+
+# class ImportType(str, Enum):
+#     STDLIB = "stdlib"
+#     THIRDPARTY = "thirdparty"
+#     AZURECORE = "azurecore"
+#     LOCAL = "local"
+
+# class TypingSection(str, Enum):
+#     REGULAR = "regular"  # this import is always a typing import
+#     CONDITIONAL = "conditional"  # is a typing import when we're dealing with files that py2 will use, else regular
+#     TYPING = "typing"  # never a typing import
+
+# class FileImport:
+#     def __init__(
+#         self,
+#         imports: Dict[
+#             TypingSection,
+#             Dict[ImportType, Dict[str, Set[Optional[Union[str, Tuple[str, str]]]]]]
+#         ] = None
+#     ) -> None:
+#         # Basic implementation
+#         # First level dict: TypingSection
+#         # Second level dict: ImportType
+#         # Third level dict: the package name.
+#         # Fourth level set: None if this import is a "import", the name to import if it's a "from"
+#         self._imports: Dict[
+#             TypingSection,
+#             Dict[ImportType, Dict[str, Set[Optional[Union[str, Tuple[str, str]]]]]]
+#         ] = imports or dict()
+
+#     def _add_import(
+#         self,
+#         from_section: str,
+#         import_type: ImportType,
+#         name_import: Optional[Union[str, Tuple[str, str]]] = None,
+#         typing_section: TypingSection = TypingSection.REGULAR
+#     ) -> None:
+#         self._imports.setdefault(
+#                 typing_section, dict()
+#             ).setdefault(
+#                 import_type, dict()
+#             ).setdefault(
+#                 from_section, set()
+#             ).add(name_import)
+
+#     def add_from_import(
+#         self,
+#         from_section: str,
+#         name_import: str,
+#         import_type: ImportType,
+#         typing_section: TypingSection = TypingSection.REGULAR,
+#         alias: Optional[str] = None,
+#     ) -> None:
+#         """Add an import to this import block.
+#         """
+#         self._add_import(
+#             from_section, import_type, (name_import, alias) if alias else name_import, typing_section
+#         )
+
+#     def add_import(
+#         self,
+#         name_import: str,
+#         import_type: ImportType,
+#         typing_section: TypingSection = TypingSection.REGULAR
+#     ) -> None:
+#         # Implementation detail: a regular import is just a "from" with no from
+#         self._add_import(name_import, import_type, None, typing_section)
+
+#     @property
+#     def imports(self) -> Dict[
+#             TypingSection,
+#             Dict[ImportType, Dict[str, Set[Optional[Union[str, Tuple[str, str]]]]]]
+#         ]:
+#         return self._imports
+
+#     def merge(self, file_import: "FileImport") -> None:
+#         """Merge the given file import format."""
+#         for typing_section, import_type_dict in file_import.imports.items():
+#             for import_type, package_list in import_type_dict.items():
+#                 for package_name, module_list in package_list.items():
+#                     for module_name in module_list:
+#                         self._add_import(package_name, import_type, module_name, typing_extensions)
+
+
+
+# class BaseModel:
+#     """This is the base class for model that are based on some YAML data.
+#     :param yaml_data: the yaml data for this schema
+#     :type yaml_data: dict[str, Any]
+#     """
+
+#     def __init__(
+#         self, yaml_data: Dict[str, Any],
+#     ) -> None:
+#         self.yaml_data = yaml_data
+
+#     @property
+#     def id(self) -> int:
+#         return id(self.yaml_data)
+
+#     def __repr__(self):
+#         return f"<{self.__class__.__name__}>"
+# class SchemaRequest(BaseModel):
+#     def __init__(self,yaml_data: Dict[str, Any],parameters: LLCParameterView,) -> None:
+#         super().__init__(yaml_data)
+#         self.parameters = parameters
+
+
+#     @property
+#     def body_parameter_has_schema(self) -> bool:
+#         """Tell if that request has a parameter that defines a body.
+#         """
+#         return any([p for p in self.parameters if hasattr(p, 'schema') and p.schema])
+
+#     @property
+#     def is_stream_request(self) -> bool:
+#         """Is the request expected to be streamable, like a download."""
+#         if self.yaml_data['protocol']['http'].get('knownMediaType'):
+#             return self.yaml_data['protocol']['http']['knownMediaType'] == 'binary' # FIXME: this might be an m4 issue
+#         return self.yaml_data["protocol"]["http"].get("binary", False)
+
+#     @classmethod
+#     def from_yaml(cls, yaml_data: Dict[str, Any]) -> "SchemaRequest":
+
+#         parameters: Optional[List[LLCParameterView]] = [
+#             LLCParameterView.from_yaml(yaml,0,"")
+#             for yaml in yaml_data.get("parameters", [])
+#         ]
+
+#         return cls(
+#             yaml_data=yaml_data,
+           
+#             parameters=parameters
+#         )
+
+#     def __repr__(self) -> str:
+#         return f"<{self.__class__.__name__} {self.media_types}>"
+# class RawString(object):
+#     def __init__(self, string: str) -> None:
+#         self.string = string
+
+#     def __repr__(self) -> str:
+#         return "r'{}'".format(self.string.replace('\'', '\\\''))
+# class BaseSchema(BaseModel, ABC):
+#     """This is the base class for all schema models.
+#     :param yaml_data: the yaml data for this schema
+#     :type yaml_data: dict[str, Any]
+#     """
+
+#     def __init__(self, namespace: str, yaml_data: Dict[str, Any]) -> None:
+#         super().__init__(yaml_data)
+#         self.namespace = namespace
+#         self.default_value = yaml_data.get("defaultValue", None)
+#         self.xml_metadata = yaml_data.get("serialization", {}).get("xml", {})
+#         self.api_versions = set(value_dict["version"] for value_dict in yaml_data.get("apiVersions", []))
+
+#     @classmethod
+#     def from_yaml(
+#         cls, namespace: str, yaml_data: Dict[str, Any], **kwargs  # pylint: disable=unused-argument
+#     ) -> "BaseSchema":
+#         return cls(namespace=namespace, yaml_data=yaml_data)
+
+#     @property
+#     def has_xml_serialization_ctxt(self) -> bool:
+#         return bool(self.xml_metadata)
+
+#     def xml_serialization_ctxt(self) -> Optional[str]:
+#         """Return the serialization context in case this schema is used in an operation.
+#         """
+#         attrs_list = []
+#         if self.xml_metadata.get("name"):
+#             attrs_list.append(f"'name': '{self.xml_metadata['name']}'")
+#         if self.xml_metadata.get("attribute", False):
+#             attrs_list.append("'attr': True")
+#         if self.xml_metadata.get("prefix", False):
+#             attrs_list.append(f"'prefix': '{self.xml_metadata['prefix']}'")
+#         if self.xml_metadata.get("namespace", False):
+#             attrs_list.append(f"'ns': '{self.xml_metadata['namespace']}'")
+#         if self.xml_metadata.get("text"):
+#             attrs_list.append(f"'text': True")
+#         return ", ".join(attrs_list)
+
+#     def imports(self) -> FileImport:  # pylint: disable=no-self-use
+#         return FileImport()
+
+#     def model_file_imports(self) -> FileImport:
+#         return self.imports()
+
+#     @property
+#     @abstractmethod
+#     def serialization_type(self) -> str:
+#         """The tag recognized by 'msrest' as a serialization/deserialization.
+#         'str', 'int', 'float', 'bool' or
+#         https://github.com/Azure/msrest-for-python/blob/b505e3627b547bd8fdc38327e86c70bdb16df061/msrest/serialization.py#L407-L416
+#         or the object schema name (e.g. DotSalmon).
+#         If list: '[str]'
+#         If dict: '{str}'
+#         """
+#         ...
+
+#     @property
+#     @abstractmethod
+#     def docstring_text(self) -> str:
+#         """The names used in rtype documentation
+#         """
+#         ...
+
+#     @property
+#     @abstractmethod
+#     def docstring_type(self) -> str:
+#         """The python type used for RST syntax input.
+#         Special case for enum, for instance: 'str or ~namespace.EnumName'
+#         """
+#         ...
+
+#     @property
+#     def type_annotation(self) -> str:
+#         """The python type used for type annotation
+#         Special case for enum, for instance: Union[str, "EnumName"]
+#         """
+#         ...
+
+#     @property
+#     def operation_type_annotation(self) -> str:
+#         return self.type_annotation
+
+#     def get_declaration(self, value: Any) -> str:  # pylint: disable=no-self-use
+#         """Return the current value from YAML as a Python string that represents the constant.
+#         Example, if schema is "bytearray" and value is "foo",
+#         should return bytearray("foo", encoding="utf-8")
+#         as a string.
+#         This is important for constant serialization.
+#         By default, return value, since it works sometimes (integer)
+#         """
+#         return str(value)
+
+#     @property
+#     def default_value_declaration(self) -> str:
+#         """Return the default value as string using get_declaration.
+#         """
+#         if self.default_value is None:
+#             return "None"
+#         return self.get_declaration(self.default_value)
+
+#     @property
+#     def validation_map(self) -> Optional[Dict[str, Union[bool, int, str]]]:  # pylint: disable=no-self-use
+#         return None
+
+#     @property
+#     def serialization_constraints(self) -> Optional[List[str]]:  # pylint: disable=no-self-use
+#         return None
+
+#     @abstractmethod
+#     def get_json_template_representation(self, **kwargs: Any) -> Any:
+#         """Template of what this schema would look like as JSON input
+#         """
+#         ...
+
+#     @abstractmethod
+#     def get_files_template_representation(self, **kwargs: Any) -> Any:
+#         """Template of what this schema would look like as files input
+#         """
+#         ...
+# def _add_optional_and_default_value_template_representation(
+#     representation: str,
+#     *,
+#     optional: bool = True,
+#     default_value_declaration: Optional[str] = None,
+#     description: Optional[str] = None,
+#     **kwargs: Any
+# ):
+#     if optional:
+#         representation += " (optional)"
+#     if default_value_declaration and default_value_declaration != "None":  # not doing None bc that's assumed
+#         representation += f". Default value is {default_value_declaration}"
+#     if description:
+#         representation += f". {description}"
+#     return representation
+# class PrimitiveSchema(BaseSchema):
+#     _TYPE_MAPPINGS = {
+#         "boolean": "bool",
+#     }
+
+#     def _to_python_type(self) -> str:
+#         return self._TYPE_MAPPINGS.get(self.yaml_data["type"], "str")
+
+#     @property
+#     def serialization_type(self) -> str:
+#         return self._to_python_type()
+
+#     @property
+#     def docstring_type(self) -> str:
+#         return self._to_python_type()
+
+#     @property
+#     def type_annotation(self) -> str:
+#         return self.docstring_type
+
+#     @property
+#     def docstring_text(self) -> str:
+#         return self.docstring_type
+
+#     def get_json_template_representation(self, **kwargs: Any) -> Any:
+#         return _add_optional_and_default_value_template_representation(
+#             representation=self.docstring_text,
+#             **kwargs
+#         )
+
+#     def get_files_template_representation(self, **kwargs: Any) -> Any:
+#         """Template of what the files input should look like
+#         """
+#         return _add_optional_and_default_value_template_representation(
+#             representation=self.docstring_text,
+#             **kwargs
+#         )
+
+# class ListSchema(BaseSchema):
+#     def __init__(
+#         self,
+#         namespace: str,
+#         yaml_data: Dict[str, Any],
+#         element_type: BaseSchema,
+#         *,
+#         max_items: Optional[int] = None,
+#         min_items: Optional[int] = None,
+#         unique_items: Optional[int] = None,
+#     ) -> None:
+#         super(ListSchema, self).__init__(namespace=namespace, yaml_data=yaml_data)
+#         self.element_type = element_type
+#         self.max_items = max_items
+#         self.min_items = min_items
+#         self.unique_items = unique_items
+
+#     @property
+#     def serialization_type(self) -> str:
+#         return f"[{self.element_type.serialization_type}]"
+
+#     @property
+#     def type_annotation(self) -> str:
+#         return f"List[{self.element_type.type_annotation}]"
+
+#     @property
+#     def operation_type_annotation(self) -> str:
+#         return f"List[{self.element_type.operation_type_annotation}]"
+
+#     @property
+#     def docstring_type(self) -> str:
+#         return f"list[{self.element_type.docstring_type}]"
+
+#     @property
+#     def docstring_text(self) -> str:
+#         return f"list of {self.element_type.docstring_text}"
+
+#     @property
+#     def validation_map(self) -> Optional[Dict[str, Union[bool, int, str]]]:
+#         validation_map: Dict[str, Union[bool, int, str]] = {}
+#         if self.max_items:
+#             validation_map["max_items"] = self.max_items
+#             validation_map["min_items"] = self.min_items or 0
+#         if self.min_items:
+#             validation_map["min_items"] = self.min_items
+#         if self.unique_items:
+#             validation_map["unique"] = True
+#         return validation_map or None
+
+#     @property
+#     def has_xml_serialization_ctxt(self) -> bool:
+#         return super().has_xml_serialization_ctxt or self.element_type.has_xml_serialization_ctxt
+
+#     def _get_template_representation(
+#         self,
+#         callable: Callable,
+#         **kwargs: Any
+#     ) -> Any:
+#         try:
+#             if self.element_type.name == kwargs.pop("object_schema_name", ""):
+#                 return ["..."]
+#         except AttributeError:
+#             pass
+#         return [callable(**kwargs)]
+
+#     def get_json_template_representation(self, **kwargs: Any) -> Any:
+#         return self._get_template_representation(
+#             callable=self.element_type.get_json_template_representation,
+#             **kwargs
+#         )
+
+#     def get_files_template_representation(self, **kwargs: Any) -> Any:
+#         return self._get_template_representation(
+#             callable=self.element_type.get_files_template_representation,
+#             **kwargs
+#         )
+
+#     def xml_serialization_ctxt(self) -> Optional[str]:
+#         attrs_list = []
+#         base_xml_map = super().xml_serialization_ctxt()
+#         if base_xml_map:
+#             attrs_list.append(base_xml_map)
+
+#         # Attribute at the list level
+#         if self.xml_metadata.get("wrapped", False):
+#             attrs_list.append("'wrapped': True")
+
+#         # Attributes of the items
+#         item_xml_metadata = self.element_type.xml_metadata
+#         if item_xml_metadata.get("name"):
+#             attrs_list.append(f"'itemsName': '{item_xml_metadata['name']}'")
+#         if item_xml_metadata.get("prefix", False):
+#             attrs_list.append(f"'itemsPrefix': '{item_xml_metadata['prefix']}'")
+#         if item_xml_metadata.get("namespace", False):
+#             attrs_list.append(f"'itemsNs': '{item_xml_metadata['namespace']}'")
+
+#         return ", ".join(attrs_list)
+
+#     @classmethod
+#     def from_yaml(cls, namespace: str, yaml_data: Dict[str, Any], **kwargs) -> "ListSchema":
+#         # TODO: for items, if the type is a primitive is it listed in type instead of $ref?
+#         element_schema = yaml_data["elementType"]
+
+#         from . import build_schema  # pylint: disable=import-outside-toplevel
+
+#         element_type = build_schema(yaml_data=element_schema, **kwargs)
+
+#         return cls(
+#             namespace=namespace,
+#             yaml_data=yaml_data,
+#             element_type=element_type,
+#             max_items=yaml_data.get("maxItems"),
+#             min_items=yaml_data.get("minItems"),
+#             unique_items=yaml_data.get("uniqueItems"),
+#         )
+
+#     def imports(self) -> FileImport:
+#         file_import = FileImport()
+#         file_import.add_from_import("typing", "List", ImportType.STDLIB, TypingSection.CONDITIONAL)
+#         file_import.merge(self.element_type.imports())
+#         return file_import
+
+# class ConstantSchema(BaseSchema):
+#     """Schema for constants that will be serialized.
+#     :param yaml_data: the yaml data for this schema
+#     :type yaml_data: dict[str, Any]
+#     :param str value: The actual value of this constant.
+#     :param schema: The schema for the value of this constant.
+#     :type schema: ~autorest.models.PrimitiveSchema
+#     """
+
+#     def __init__(
+#         self, namespace: str, yaml_data: Dict[str, Any], schema: PrimitiveSchema, value: Optional[str],
+#     ) -> None:
+#         super(ConstantSchema, self).__init__(namespace=namespace, yaml_data=yaml_data)
+#         self.value = value
+#         self.schema = schema
+
+#     def get_declaration(self, value: Any):
+#         if value != self.value:
+#             _LOGGER.warning(
+#                 "Passed in value of %s differs from constant value of %s. Choosing constant value",
+#                 str(value), str(self.value)
+#             )
+#         if self.value is None:
+#             return "None"
+#         return self.schema.get_declaration(self.value)
+
+#     @property
+#     def serialization_type(self) -> str:
+#         """Returns the serialization value for msrest.
+#         :return: The serialization value for msrest
+#         :rtype: str
+#         """
+#         return self.schema.serialization_type
+
+#     @property
+#     def docstring_text(self) -> str:
+#         return "constant"
+
+#     @property
+#     def docstring_type(self) -> str:
+#         """The python type used for RST syntax input and type annotation.
+#         :param str namespace: Optional. The namespace for the models.
+#         """
+#         return self.schema.docstring_type
+
+#     @property
+#     def type_annotation(self) -> str:
+#         return self.schema.type_annotation
+
+#     @classmethod
+#     def from_yaml(cls, namespace: str, yaml_data: Dict[str, Any], **kwargs) -> "ConstantSchema":
+#         """Constructs a ConstantSchema from yaml data.
+#         :param yaml_data: the yaml data from which we will construct this schema
+#         :type yaml_data: dict[str, Any]
+#         :return: A created ConstantSchema
+#         :rtype: ~autorest.models.ConstantSchema
+#         """
+#         name = yaml_data["language"]["python"]["name"] if yaml_data["language"]["python"].get("name") else ""
+#         logging.Logger.debug("Parsing %s constant", name)
+#         return cls(
+#             namespace=namespace,
+#             yaml_data=yaml_data,
+#             schema=get_primitive_schema(namespace=namespace, yaml_data=yaml_data["valueType"]),
+#             value=yaml_data.get("value", {}).get("value", None),
+#         )
+
+#     def get_json_template_representation(self, **kwargs: Any) -> Any:
+#         return self.schema.get_json_template_representation(**kwargs)
+
+#     def get_files_template_representation(self, **kwargs: Any) -> Any:
+#         return self.schema.get_files_template_representation(**kwargs)
+
+#     def imports(self) -> FileImport:
+#         file_import = FileImport()
+#         file_import.merge(self.schema.imports())
+#         return file_import
+        
+# class ParameterLocation(Enum):
+#     Path = "path"
+#     Body = "body"
+#     Query = "query"
+#     Header = "header"
+#     Uri = "uri"
+#     Other = "other"
+
+# class ParameterStyle(Enum):
+#     simple = "simple"
+#     label = "label"
+#     matrix = "matrix"
+#     form = "form"
+#     spaceDelimited = "spaceDelimited"
+#     pipeDelimited = "pipeDelimited"
+#     deepObject = "deepObject"
+#     tabDelimited = "tabDelimited"
+#     json = "json"
+#     binary = "binary"
+#     xml = "xml"
+#     multipart = "multipart"
+# class Parameter(BaseModel):  # pylint: disable=too-many-instance-attributes
+#     def __init__(
+#         self,
+#         yaml_data: Dict[str, Any],
+#         schema: BaseSchema,
+#         rest_api_name: str,
+#         serialized_name: str,
+#         description: str,
+#         implementation: str,
+#         required: bool,
+#         location: ParameterLocation,
+#         skip_url_encoding: bool,
+#         constraints: List[Any],
+#         target_property_name: Optional[Union[int, str]] = None,  # first uses id as placeholder
+#         style: Optional[ParameterStyle] = None,
+#         explode: Optional[bool] = False,
+#         *,
+#         flattened: bool = False,
+#         grouped_by: Optional["Parameter"] = None,
+#         original_parameter: Optional["Parameter"] = None,
+#         client_default_value: Optional[Any] = None,
+#     ) -> None:
+#         super().__init__(yaml_data)
+#         self.schema = schema
+#         self.rest_api_name = rest_api_name
+#         self.serialized_name = serialized_name
+#         self.description = description
+#         self._implementation = implementation
+#         self.required = required
+#         self.location = location
+#         self.skip_url_encoding = skip_url_encoding
+#         self.constraints = constraints
+#         self.target_property_name = target_property_name
+#         self.style = style
+#         self.explode = explode
+#         self.flattened = flattened
+#         self.grouped_by = grouped_by
+#         self.original_parameter = original_parameter
+#         self._client_default_value = client_default_value
+#         self.is_hidden_kwarg: bool = False
+#         self.has_multiple_media_types: bool = False
+#         self.multiple_media_types_type_annot: Optional[str] = None
+#         self.multiple_media_types_docstring_type: Optional[str] = None
+#         self.is_partial_body = yaml_data.get("isPartialBody", False)
+
+#     def __eq__(self, o: "Parameter") -> bool:
+#         try:
+#             return self.serialized_name == o.serialized_name
+#         except AttributeError:
+#             return False
+
+#     def __hash__(self) -> int:
+#         return hash(self.serialized_name)
+
+#     @staticmethod
+#     def serialize_line(function_name: str, parameters_line: str):
+#         return f'self._serialize.{function_name}({parameters_line})'
+
+#     def build_serialize_data_call(self, function_name: str) -> str:
+
+#         optional_parameters = []
+
+#         if self.skip_url_encoding:
+#             optional_parameters.append("skip_quote=True")
+
+#         if self.style and not self.explode:
+#             if self.style in [ParameterStyle.simple, ParameterStyle.form]:
+#                 div_char = ","
+#             elif self.style in [ParameterStyle.spaceDelimited]:
+#                 div_char = " "
+#             elif self.style in [ParameterStyle.pipeDelimited]:
+#                 div_char = "|"
+#             elif self.style in [ParameterStyle.tabDelimited]:
+#                 div_char = "\t"
+#             else:
+#                 raise ValueError(f"Do not support {self.style} yet")
+#             optional_parameters.append(f"div='{div_char}'")
+
+#         if self.explode:
+#             if not isinstance(self.schema, ListSchema):
+#                 raise ValueError("Got a explode boolean on a non-array schema")
+#             serialization_schema = self.schema.element_type
+#         else:
+#             serialization_schema = self.schema
+
+#         serialization_constraints = serialization_schema.serialization_constraints
+#         if serialization_constraints:
+#             optional_parameters += serialization_constraints
+
+#         origin_name = self.full_serialized_name
+
+#         parameters = [
+#             f'"{origin_name.lstrip("_")}"',
+#             "q" if self.explode else origin_name,
+#             f"'{serialization_schema.serialization_type}'",
+#             *optional_parameters
+#         ]
+#         parameters_line = ', '.join(parameters)
+
+#         serialize_line = self.serialize_line(function_name, parameters_line)
+
+#         if self.explode:
+#             return f"[{serialize_line} if q is not None else '' for q in {origin_name}]"
+#         return serialize_line
+
+#     @property
+#     def constant(self) -> bool:
+#         """Returns whether a parameter is a constant or not.
+#         Checking to see if it's required, because if not, we don't consider it
+#         a constant because it can have a value of None.
+#         """
+#         if not isinstance(self.schema, ConstantSchema):
+#             return False
+#         return self.required
+
+#     @property
+#     def is_multipart(self) -> bool:
+#         return self.yaml_data["language"]["python"].get("multipart", False)
+
+#     @property
+#     def constant_declaration(self) -> str:
+#         if self.schema:
+#             if isinstance(self.schema, ConstantSchema):
+#                 return self.schema.get_declaration(self.schema.value)
+#             raise ValueError(
+#                 "Trying to get constant declaration for a schema that is not ConstantSchema"
+#                 )
+#         raise ValueError("Trying to get a declaration for a schema that doesn't exist")
+
+#     @property
+#     def xml_serialization_ctxt(self) -> str:
+#         return self.schema.xml_serialization_ctxt() or ""
+
+#     @property
+#     def is_body(self) -> bool:
+#         return self.location == ParameterLocation.Body
+
+#     @property
+#     def in_method_signature(self) -> bool:
+#         return not(
+#             # If I only have one value, I can't be set, so no point being in signature
+#             self.constant
+#             # If i'm not in the method code, no point in being in signature
+#             or not self.in_method_code
+#             # If I'm grouped, my grouper will be on signature, not me
+#             or self.grouped_by
+#             # If I'm body and it's flattened, I'm not either
+#             or (self.is_body and self.flattened)
+#             # If I'm a kwarg, don't include in the signature
+#             or self.is_hidden_kwarg
+#         )
+
+
+#     @classmethod
+#     def from_yaml(cls, yaml_data: Dict[str, Any]) -> "Parameter":
+#         http_protocol = yaml_data["protocol"].get("http", {"in": ParameterLocation.Other})
+#         return cls(
+#             yaml_data=yaml_data,
+#             schema=yaml_data.get("schema", None),  # FIXME replace by operation model
+#             # See also https://github.com/Azure/autorest.modelerfour/issues/80
+#             rest_api_name=yaml_data["language"]["default"].get(
+#                 "serializedName", yaml_data["language"]["default"]["name"]
+#             ),
+#             serialized_name=yaml_data["language"]["python"]["name"],
+#             description=yaml_data["language"]["python"]["description"],
+#             implementation=yaml_data["implementation"],
+#             required=yaml_data.get("required", False),
+#             location=ParameterLocation(http_protocol["in"]),
+#             skip_url_encoding=yaml_data.get("extensions", {}).get("x-ms-skip-url-encoding", False),
+#             constraints=[],  # FIXME constraints
+#             target_property_name=id(yaml_data["targetProperty"]) if yaml_data.get("targetProperty") else None,
+#             style=ParameterStyle(http_protocol["style"]) if "style" in http_protocol else None,
+#             explode=http_protocol.get("explode", False),
+#             grouped_by=yaml_data.get("groupedBy", None),
+#             original_parameter=yaml_data.get("originalParameter", None),
+#             flattened=yaml_data.get("flattened", False),
+#             client_default_value=yaml_data.get("clientDefaultValue"),
+#         )
+

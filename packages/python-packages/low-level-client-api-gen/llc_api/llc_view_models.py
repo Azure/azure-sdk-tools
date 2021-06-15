@@ -636,15 +636,17 @@ class SchemaRequest1():
                         self.namespace,required = properties.get('required'))
                         self.json_format[properties['serializedName']] = self.elements
                         if properties['schema'].get('elementType'):
-                            for properties in properties['schema']['elementType'].get('properties'):
-                                self.elements = self.to_json_formatting([properties])
-                                self.json_format[properties['serializedName']] = self.elements
+                            for prop in properties['schema']['elementType'].get('properties'):
+                                self.elements = LLCParameterView( prop['language']['default']['name'],get_type(prop["schema"]),
+                                self.namespace,required=prop.get('required'))
+                                # self.elements = self.to_json_formatting([prop])
+                                self.json_format[prop['serializedName']] = self.elements
                 if index=='elementType':
                     for properties in param['schema']['elementType'].get('properties'):
                         self.elements = LLCParameterView( properties['language']['default']['name'],get_type(properties["schema"]),
                         self.namespace,required=properties.get('required'))
-                        self.json_format[properties['serializedName']] = self.elements
-                        self.elements = self.to_json_formatting([properties])
+                        # self.json_format[properties['serializedName']] = self.elements
+                        self.to_json_formatting([properties])
         return self.elements
         #     # this goes through the parameters
         #     if param.get('schema'):

@@ -143,7 +143,8 @@ class LLCClientView(FormattingClass):
             for token in operation_tokens:
                     if token:
                         self.add_token(token)
-        
+            self.add_new_line(1)
+
         navigation = self.to_child_tokens()
 
         self.add_new_line()
@@ -226,7 +227,7 @@ class LLCOperationGroupView(FormattingClass):
 
         #Each operation will indent itself by 4
         self.add_new_line()
-
+      
         if self.operation_group:
             self.add_whitespace(1)
             self.overview_tokens.append(Token(" "*4,TokenKind.Whitespace))
@@ -258,7 +259,10 @@ class LLCOperationGroupView(FormattingClass):
             self.add_whitespace(2)
             self.add_punctuation("}")
             self.add_new_line(1)
+            self.overview_tokens.append(Token(" ",TokenKind.Whitespace))
             self.overview_tokens.append(Token("",TokenKind.Newline))
+
+                
             
         else:
             for operation in range(0,len(self.operations)):
@@ -268,7 +272,8 @@ class LLCOperationGroupView(FormattingClass):
                         self.overview_tokens.append(i)
                     for t in self.operations[operation].get_tokens():
                         self.add_token(t)
-                
+            self.overview_tokens.append(Token(" ",TokenKind.Newline))
+        
     def to_json(self):
         obj_dict={}
         self.to_token()
@@ -438,6 +443,7 @@ class LLCOperationView(FormattingClass):
                 self.overview_tokens.append(Token(")",TokenKind.Text))
                 self.add_punctuation(")")
                 self.add_new_line(1)
+
 
                 self.request_builder()
 

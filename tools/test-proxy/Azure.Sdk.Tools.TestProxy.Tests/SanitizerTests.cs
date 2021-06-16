@@ -97,7 +97,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var originalHeaderValue = targetEntry.Response.Headers[targetKey].First();
 
             // where we have a key, a regex, and no groupname.
-            var headerRegexSanitizer = new HeaderRegexSanitizer(targetKey, "fakeaccount", regex: lookaheadReplaceRegex);
+            var headerRegexSanitizer = new HeaderRegexSanitizer(targetKey, value: "fakeaccount", regex: lookaheadReplaceRegex);
             session.Session.Sanitize(headerRegexSanitizer);
 
             var testValue = targetEntry.Response.Headers[targetKey].First();
@@ -115,7 +115,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var originalHeaderValue = targetEntry.Response.Headers[targetKey].First();
 
             // where we have a key, a regex, and a groupname to replace with value Y
-            var headerRegexSanitizer = new HeaderRegexSanitizer(targetKey, "fakeaccount", regex: capturingGroupReplaceRegex, groupForReplace: "account");
+            var headerRegexSanitizer = new HeaderRegexSanitizer(targetKey, value: "fakeaccount", regex: capturingGroupReplaceRegex, groupForReplace: "account");
             session.Session.Sanitize(headerRegexSanitizer);
 
             var testValue = targetEntry.Response.Headers[targetKey].First();
@@ -133,7 +133,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var originalHeaderValue = targetEntry.Response.Headers[targetKey].First();
 
             // where we find a key, but there is nothing to be done by the sanitizer
-            var headerRegexSanitizer = new HeaderRegexSanitizer(targetKey, "fakeaccount", regex: capturingGroupReplaceRegex, groupForReplace: "account");
+            var headerRegexSanitizer = new HeaderRegexSanitizer(targetKey, value: "fakeaccount", regex: capturingGroupReplaceRegex, groupForReplace: "account");
             session.Session.Sanitize(headerRegexSanitizer);
 
             var newResult = targetEntry.Response.Headers[targetKey].First();

@@ -44,7 +44,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                         var currentCaptureEnd = capture.Index + capture.Length - m.Index;
                         var currentCaptureLength = capture.Index - m.Index - previousCaptureEnd;
 
-                        // append everything up to our current capture
+                        // append everything up to our current capture. (also if we're between multiple captures in a single match string)
                         sb.Append(m.Value.Substring(previousCaptureEnd, currentCaptureLength));
 
                         // add the replacement value
@@ -56,7 +56,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                         previousCaptureEnd = currentCaptureEnd;
                     }
 
-                    // one final append if necessary
+                    // one final append to pick up the remainder of the string after the capture
                     sb.Append(m.Value.Substring(previousCaptureEnd));
 
                     return sb.ToString();

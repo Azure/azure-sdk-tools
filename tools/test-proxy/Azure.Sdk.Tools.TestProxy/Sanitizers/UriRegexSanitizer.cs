@@ -12,7 +12,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
     /// </summary>
     public class UriRegexSanitizer : RecordedTestSanitizer
     {
-        private Regex _regex;
+        private string _regexValue;
         private string _newValue;
         
         /// <summary>
@@ -22,13 +22,13 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
         /// <param name="value">The substituted value.</param>
         public UriRegexSanitizer(string regex, string value = "Sanitized")
         {
-            _regex = new Regex(regex, RegexOptions.Compiled);
+            _regexValue = regex;
             _newValue = value;
         }
 
         public override string SanitizeUri(string uri)
         {
-            return _regex.Replace(uri, _newValue);
+            return StringSanitizer.SanitizeValue(uri, _newValue, _regexValue);
         }
     }
 }

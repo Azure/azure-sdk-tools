@@ -395,9 +395,6 @@ namespace Azure.Sdk.Tools.TestProxy
             uri.Query = request.QueryString.ToUriComponent();
             var result = uri.ToUri();
 
-            var target_uri = GetHeader(request, "x-recording-upstream-base-uri");
-            var additional_result = new Uri(target_uri);
-
             return result;
         }
 

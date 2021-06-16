@@ -167,7 +167,9 @@ class LLCClientView(FormattingClass):
             child_nav = Navigation(operation_group_view.operation_group, self.namespace + operation_group_view.operation_group)
             child_nav.set_tag(NavigationTag(Kind.type_class))
             navigation.add_child(child_nav)
-
+            op_group = operation_group_view.get_tokens()
+            for token in op_group:
+                self.add_token(token)
             #Set up operations and add to token
             
             for operation_view in operation_group_view.operations:
@@ -176,9 +178,6 @@ class LLCClientView(FormattingClass):
                 child_nav1.set_tag(NavigationTag(Kind.type_method))
                 child_nav.add_child(child_nav1)
 
-                operations = operation_view.get_tokens()
-                for token in operations:
-                    self.add_token(token)
         return navigation 
 
     def to_json(self):
@@ -274,7 +273,7 @@ class LLCOperationGroupView(FormattingClass):
                         self.overview_tokens.append(i)
                     for t in self.operations[operation].get_tokens():
                         self.add_token(t)
-            self.overview_tokens.append(Token(" ",TokenKind.Newline))
+            
         
     def to_json(self):
         obj_dict={}
@@ -308,9 +307,9 @@ class LLCOperationView(FormattingClass):
         for j in range(0, len(yaml_data['operationGroups'][op_group_num]['operations'][op_num]['requests'])):
             for i in range(0,len(yaml_data['operationGroups'][op_group_num]['operations'][op_num]['requests'][j].get('signatureParameters',[]))):
                 param.append(LLCParameterView.from_yaml(yaml_data["operationGroups"][op_group_num]["operations"][op_num]['requests'][j],i,namespace))
-                request_docstring = SchemaRequest1.from_yaml(yaml_data["operationGroups"][op_group_num]["operations"][op_num]['requests'][j],namespace) #
-                request_docstring.to_json_formatting(request_docstring.parameters)
-                json_request.update(request_docstring.json_format)
+                # request_docstring = SchemaRequest1.from_yaml(yaml_data["operationGroups"][op_group_num]["operations"][op_num]['requests'][j],namespace) #
+                # request_docstring.to_json_formatting(request_docstring.parameters)
+                # json_request.update(request_docstring.json_format)
                 # json_request = request_docstring.json_format
         
         return_type = get_type(yaml_data["operationGroups"][op_group_num]["operations"][op_num]['responses'][0].get('schema',[]))
@@ -628,25 +627,26 @@ class SchemaRequest1():
         self.elements = []
 
     def to_json_formatting(self, parameters):
+        elements1 = []
         for param in parameters:
             for index in param.get('schema'):
                 if index=='properties':
                     for properties in param['schema']['properties']:
-                        self.elements = LLCParameterView(properties['serializedName'],get_type(properties['schema']),
-                        self.namespace,required = properties.get('required'))
+                        self.elements = (LLCParameterView(properties['serializedName'],get_type(properties['schema']),
+                        self.namespace,required = properties.get('required')))
                         self.json_format[properties['serializedName']] = self.elements
                         if properties['schema'].get('elementType'):
                             for prop in properties['schema']['elementType'].get('properties'):
                                 self.elements = LLCParameterView( prop['language']['default']['name'],get_type(prop["schema"]),
                                 self.namespace,required=prop.get('required'))
-                                # self.elements = self.to_json_formatting([prop])
                                 self.json_format[prop['serializedName']] = self.elements
+                                self.elements = self.to_json_formatting([prop])
                 if index=='elementType':
                     for properties in param['schema']['elementType'].get('properties'):
                         self.elements = LLCParameterView( properties['language']['default']['name'],get_type(properties["schema"]),
                         self.namespace,required=properties.get('required'))
-                        # self.json_format[properties['serializedName']] = self.elements
-                        self.to_json_formatting([properties])
+                        self.json_format[properties['serializedName']] = self.elements
+                        self.elements = self.to_json_formatting([properties])
         return self.elements
         #     # this goes through the parameters
         #     if param.get('schema'):

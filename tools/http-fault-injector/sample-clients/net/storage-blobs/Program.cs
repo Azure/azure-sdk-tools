@@ -9,7 +9,7 @@ namespace Azure.Sdk.Tools.HttpFaultInjector.StorageBlobsSample
 {
     class Program
     {
-        private static readonly Uri _faultInjectorUri = new Uri("https://localhost:7778");
+        private static readonly Uri _faultInjectorUri = new Uri("http://localhost:7777");
 
         static async Task Main(string[] args)
         {
@@ -17,7 +17,8 @@ namespace Azure.Sdk.Tools.HttpFaultInjector.StorageBlobsSample
 
             var blobClientOptions = new BlobClientOptions();
 
-            // You must either trust the .NET developer certificate, or uncomment the following lines to disable SSL validation.
+            // When using an HTTPS _faultInjectorUri, you must either trust the .NET developer certificate,
+            // or uncomment the following line to disable SSL validation.
             // blobClientOptions.Transport = new HttpClientTransport(new System.Net.Http.HttpClient(new System.Net.Http.HttpClientHandler()
             // {
             //     ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
@@ -68,12 +69,20 @@ namespace Azure.Sdk.Tools.HttpFaultInjector.StorageBlobsSample
 
             protected void RedirectToFaultInjector(HttpMessage message)
             {
-                // Ensure X-Upstream-Host header is only set once, since the same HttpMessage will be reused on retries
-                if (!message.Request.Headers.Contains("X-Upstream-Host"))
+                // Ensure X-Upstream-Base-Uri header is only set once, since the same HttpMessage will be reused on retries
+                if (!message.Request.Headers.Contains("X-Upstream-Base-Uri"))
                 {
-                    message.Request.Headers.SetValue("X-Upstream-Host", $"{message.Request.Uri.Host}:{message.Request.Uri.Port}");
+                    var upstreamBaseUriBuilder = new UriBuilder()
+                    {
+                        Scheme = message.Request.Uri.Scheme,
+                        Host = message.Request.Uri.Host,
+                        Port = message.Request.Uri.Port,
+                    };
+
+                    message.Request.Headers.SetValue("X-Upstream-Base-Uri", upstreamBaseUriBuilder.ToString());
                 }
 
+                message.Request.Uri.Scheme = _uri.Scheme;
                 message.Request.Uri.Host = _uri.Host;
                 message.Request.Uri.Port = _uri.Port;
             }
@@ -109,12 +118,20 @@ namespace Azure.Sdk.Tools.HttpFaultInjector.StorageBlobsSample
 
             protected void RedirectToFaultInjector(HttpMessage message)
             {
-                // Ensure X-Upstream-Host header is only set once, since the same HttpMessage will be reused on retries
-                if (!message.Request.Headers.Contains("X-Upstream-Host"))
+                // Ensure X-Upstream-Base-Uri header is only set once, since the same HttpMessage will be reused on retries
+                if (!message.Request.Headers.Contains("X-Upstream-Base-Uri"))
                 {
-                    message.Request.Headers.SetValue("X-Upstream-Host", $"{message.Request.Uri.Host}:{message.Request.Uri.Port}");
+                    var upstreamBaseUriBuilder = new UriBuilder()
+                    {
+                        Scheme = message.Request.Uri.Scheme,
+                        Host = message.Request.Uri.Host,
+                        Port = message.Request.Uri.Port,
+                    };
+
+                    message.Request.Headers.SetValue("X-Upstream-Base-Uri", upstreamBaseUriBuilder.ToString());
                 }
 
+                message.Request.Uri.Scheme = _uri.Scheme;
                 message.Request.Uri.Host = _uri.Host;
                 message.Request.Uri.Port = _uri.Port;
             }

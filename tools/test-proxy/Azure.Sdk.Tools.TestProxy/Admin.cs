@@ -129,20 +129,27 @@ namespace Azure.Sdk.Tools.TestProxy
 
                     // we are deliberately assuming here that there will only be a single constructor
                     var ctor = t.GetConstructors()[0];
-                    var paramsSet = ctor.GetParameters().Select(x => x.Name);
+                    var paramsSet = ctor.GetParameters();
 
                     // walk across our constructor params. check inside the body for a resulting value for each of them
                     foreach (var param in paramsSet)
                     {
-                        if (body.RootElement.TryGetProperty(param, out var jsonElement))
+                        if (body.RootElement.TryGetProperty(param.Name, out var jsonElement))
                         {
                             var valueResult = jsonElement.GetString();
                             arg_list.Add((object)valueResult);
                         }
                         else
                         {
-                            // TODO: make this a specific type of exception
-                            throw new Exception(String.Format("Required parameter key {0} was not found in the request body.", param));
+                            if (param.IsOptional)
+                            {
+                                arg_list.Add(null);
+                            }
+                            else
+                            {
+                                // TODO: make this a specific argument not found exception
+                                throw new Exception(String.Format("Required parameter key {0} was not found in the request body.", param));
+                            }
                         }
                     }
 

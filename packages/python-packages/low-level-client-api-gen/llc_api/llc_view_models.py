@@ -306,19 +306,14 @@ class LLCOperationView(FormattingClass):
         json_request={}
         code = CodeModel(rest_layer=True,no_models=True,no_operations=True,only_path_params_positional=True,options={})
         request_builder = RequestBuilder.from_yaml(yaml_data["operationGroups"][op_group_num]["operations"][op_num],code_model=code)
-        w =build_schema(yaml_data = request_builder.parameters.json_body,code_model=code).get_json_template_representation()
-        
-        # print(r.parameters.get_json_template_representation)
-        # o = ObjectSchema.from_yaml(yaml_data=yaml_data["operationGroups"][op_group_num]["operations"][op_num],namespace=namespace)
-        # o.get_json_template_representation()
-        # for i in r.schema_requests:
-        #     print(i)
-        
+      
         for i in range(0,len(yaml_data["operationGroups"][op_group_num]["operations"][op_num]["signatureParameters"])):
             param.append(LLCParameterView.from_yaml(yaml_data["operationGroups"][op_group_num]["operations"][op_num],i,namespace))
         for j in range(0, len(yaml_data['operationGroups'][op_group_num]['operations'][op_num]['requests'])):
             for i in range(0,len(yaml_data['operationGroups'][op_group_num]['operations'][op_num]['requests'][j].get('signatureParameters',[]))):
                 param.append(LLCParameterView.from_yaml(yaml_data["operationGroups"][op_group_num]["operations"][op_num]['requests'][j],i,namespace))
+                json_request =build_schema(yaml_data = request_builder.parameters.json_body,code_model=code).get_json_template_representation()
+
                 # request_docstring = SchemaRequest1.from_yaml(yaml_data["operationGroups"][op_group_num]["operations"][op_num]['requests'][j],namespace) #
                 # request_docstring.to_json_formatting(request_docstring.parameters)
                 # json_request.update(request_docstring.json_format)
@@ -464,6 +459,39 @@ class LLCOperationView(FormattingClass):
     def request_builder(self):
         if self.json_request:
             self.add_token(Token(kind=TokenKind.StartDocGroup))
+            for i in self.json_request:
+                self.add_whitespace(4)
+                self.add_comment(None,i,None)
+                self.add_new_line()
+                for j in self.json_request[i][0]:
+                    self.add_whitespace(5)
+                    self.add_comment(None,j,None)
+                    self.add_new_line()
+                    if isinstance(self.json_request[i][0][j],str):
+                            self.add_whitespace(6)
+                            self.add_comment(None,self.json_request[i][0][j],None)
+                            self.add_space()
+                            if isinstance(self.json_request[i][0].get(j),str):
+                                self.add_comment(None,self.json_request[i][0].get(j),None)
+                    else:
+                        for x in self.json_request[i][0][j]:
+                            if isinstance(x,dict):
+                                for w in x:
+                                    self.add_whitespace(6)
+                                    self.add_comment(None,w,None)
+                                    self.add_space()
+                                    if isinstance(x.get(w),str):
+                                        self.add_comment(None,x.get(w),None)
+                                    self.add_new_line()
+                            else:    
+                                self.add_whitespace(6)
+                                self.add_comment(None,x,None)
+                                self.add_space()
+                                if isinstance(self.json_request[i][0][j].get(x),str):
+                                    self.add_comment(None,self.json_request[i][0][j].get(x),None)
+                                self.add_new_line()
+            self.add_new_line(1)
+            self.add_token(Token(kind=TokenKind.EndDocGroup))
             # for key in self.json_request:
             #     self.add_typename(None,key['full_serialized_name'],None)
             #     self.add_new_line(1)
@@ -509,7 +537,7 @@ class LLCOperationView(FormattingClass):
             #                 self.add_punctuation("}")
                                 
             # self.add_new_line(1)
-            self.add_token(Token(kind=TokenKind.EndDocGroup))
+            
     
     def to_json(self):
         obj_dict={}

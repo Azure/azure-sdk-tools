@@ -3,9 +3,11 @@
 from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+
+from autorest.codegen.models.schema_request import SchemaRequest
 from ._token import Token
 from ._token_kind import TokenKind
-from autorest.codegen.models import RequestBuilder, CodeModel, ObjectSchema
+from autorest.codegen.models import RequestBuilder, CodeModel, ObjectSchema, request_builder,build_schema
 
 JSON_FIELDS = ["Name", "Version", "VersionString", "Navigation", "Tokens", "Diagnostics", "PackageName"]
 PARAM_FIELDS = ["name", "type", "default", "optional", "indent"]
@@ -303,7 +305,9 @@ class LLCOperationView(FormattingClass):
         lro=None
         json_request={}
         code = CodeModel(rest_layer=True,no_models=True,no_operations=True,only_path_params_positional=True,options={})
-        r = RequestBuilder.from_yaml(yaml_data["operationGroups"][op_group_num]["operations"][op_num],code_model=code)
+        request_builder = RequestBuilder.from_yaml(yaml_data["operationGroups"][op_group_num]["operations"][op_num],code_model=code)
+        w =build_schema(yaml_data = request_builder.parameters.json_body,code_model=code).get_json_template_representation()
+        
         # print(r.parameters.get_json_template_representation)
         # o = ObjectSchema.from_yaml(yaml_data=yaml_data["operationGroups"][op_group_num]["operations"][op_num],namespace=namespace)
         # o.get_json_template_representation()
@@ -315,10 +319,10 @@ class LLCOperationView(FormattingClass):
         for j in range(0, len(yaml_data['operationGroups'][op_group_num]['operations'][op_num]['requests'])):
             for i in range(0,len(yaml_data['operationGroups'][op_group_num]['operations'][op_num]['requests'][j].get('signatureParameters',[]))):
                 param.append(LLCParameterView.from_yaml(yaml_data["operationGroups"][op_group_num]["operations"][op_num]['requests'][j],i,namespace))
-                request_docstring = SchemaRequest1.from_yaml(yaml_data["operationGroups"][op_group_num]["operations"][op_num]['requests'][j],namespace) #
-                request_docstring.to_json_formatting(request_docstring.parameters)
-                json_request.update(request_docstring.json_format)
-                json_request = request_docstring.json_format
+                # request_docstring = SchemaRequest1.from_yaml(yaml_data["operationGroups"][op_group_num]["operations"][op_num]['requests'][j],namespace) #
+                # request_docstring.to_json_formatting(request_docstring.parameters)
+                # json_request.update(request_docstring.json_format)
+                # json_request = request_docstring.json_format
         
         return_type = get_type(yaml_data["operationGroups"][op_group_num]["operations"][op_num]['responses'][0].get('schema',[]))
 
@@ -460,48 +464,51 @@ class LLCOperationView(FormattingClass):
     def request_builder(self):
         if self.json_request:
             self.add_token(Token(kind=TokenKind.StartDocGroup))
-            for key in self.json_request.keys():
-                self.add_new_line(1)
-                self.add_whitespace(4)
-                self.add_typename(None,key,None)
-                self.add_space()
-                if isinstance(self.json_request[key],LLCParameterView):
-                    self.json_request[key].to_token()
-                    for t in self.json_request[key].get_tokens():
-                        self.add_token(t)
-                    # self.add_punctuation("{")
-                    # self.add_punctuation("}")
-                else:
-                    for num in range(0,len(self.json_request[key])):
+            # for key in self.json_request:
+            #     self.add_typename(None,key['full_serialized_name'],None)
+            #     self.add_new_line(1)
+            # for key in self.json_request.keys():
+            #     self.add_new_line(1)
+            #     self.add_whitespace(4)
+            #     self.add_typename(None,key,None)
+            #     self.add_space()
+            #     if isinstance(self.json_request[key],LLCParameterView):
+            #         self.json_request[key].to_token()
+            #         for t in self.json_request[key].get_tokens():
+            #             self.add_token(t)
+            #         # self.add_punctuation("{")
+            #         # self.add_punctuation("}")
+            #     else:
+            #         for num in range(0,len(self.json_request[key])):
                         
-                        if isinstance(self.json_request[key][num],list):
-                            self.add_whitespace(4)
-                            self.add_punctuation("{")
-                            self.add_new_line()
-                            for p_list in self.json_request[key][num]:
-                                for p in p_list: 
-                                    p.to_token()
-                                # self.add_whitespace(6)
+            #             if isinstance(self.json_request[key][num],list):
+            #                 self.add_whitespace(4)
+            #                 self.add_punctuation("{")
+            #                 self.add_new_line()
+            #                 for p_list in self.json_request[key][num]:
+            #                     for p in p_list: 
+            #                         p.to_token()
+            #                     # self.add_whitespace(6)
 
-                                    for t in p.get_tokens():  
-                                        self.add_token(t)
-                                self.add_new_line()
-                            self.add_whitespace(4)
-                            self.add_punctuation("}")              
-                        else: 
-                            self.add_new_line()
-                            self.add_whitespace(4)
-                            self.add_punctuation("{")
-                            self.json_request[key][num].to_token()
-                            self.add_new_line()
-                            self.add_whitespace(5)
-                            for t in self.json_request[key][num].get_tokens():
-                                self.add_token(t)
-                            self.add_new_line()
-                            self.add_whitespace(4)
-                            self.add_punctuation("}")
+            #                         for t in p.get_tokens():  
+            #                             self.add_token(t)
+            #                     self.add_new_line()
+            #                 self.add_whitespace(4)
+            #                 self.add_punctuation("}")              
+            #             else: 
+            #                 self.add_new_line()
+            #                 self.add_whitespace(4)
+            #                 self.add_punctuation("{")
+            #                 self.json_request[key][num].to_token()
+            #                 self.add_new_line()
+            #                 self.add_whitespace(5)
+            #                 for t in self.json_request[key][num].get_tokens():
+            #                     self.add_token(t)
+            #                 self.add_new_line()
+            #                 self.add_whitespace(4)
+            #                 self.add_punctuation("}")
                                 
-            self.add_new_line(1)
+            # self.add_new_line(1)
             self.add_token(Token(kind=TokenKind.EndDocGroup))
     
     def to_json(self):

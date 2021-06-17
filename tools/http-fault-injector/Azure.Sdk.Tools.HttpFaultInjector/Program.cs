@@ -37,8 +37,8 @@ namespace Azure.Sdk.Tools.HttpFaultInjector
             // Only applies to request between client and proxy
             "Proxy-Connection",
 
-            // "X-Upstream-Host" in original request is mapped to "Host" in upstream request
-            "X-Upstream-Host",
+            // "X-Upstream-Base-Uri" in original request is used as the Base URI in the upstream request
+            "X-Upstream-Base-Uri",
             "Host",
 
             _responseSelectionHeader
@@ -173,20 +173,11 @@ namespace Azure.Sdk.Tools.HttpFaultInjector
                 Log($"  {header.Key}:{header.Value}");
             }
 
-            var upstreamHost = new HostString(request.Headers["X-Upstream-Host"]);
-
-            var upstreamUriBuilder = new UriBuilder()
+            var upstreamUriBuilder = new UriBuilder(request.Headers["X-Upstream-Base-Uri"])
             {
-                Scheme = request.Scheme,
-                Host = upstreamHost.Host,
                 Path = request.Path.Value,
                 Query = request.QueryString.Value,
             };
-
-            if (upstreamHost.Port.HasValue)
-            {
-                upstreamUriBuilder.Port = upstreamHost.Port.Value;
-            }
 
             var upstreamUri = upstreamUriBuilder.Uri;
 
@@ -208,10 +199,6 @@ namespace Azure.Sdk.Tools.HttpFaultInjector
                         upstreamRequest.Content.Headers.Add(header.Key, values: header.Value);
                     }
                 }
-
-                // Map X-Upstream-Host in original request to Host in upstream request
-                Log($"  Host:{upstreamHost}");
-                upstreamRequest.Headers.TryAddWithoutValidation("Host", upstreamHost.ToString());
 
                 foreach (var header in request.Headers.Where(h => !_excludedRequestHeaders.Contains(h.Key) && !_contentRequestHeaders.Contains(h.Key)))
                 {

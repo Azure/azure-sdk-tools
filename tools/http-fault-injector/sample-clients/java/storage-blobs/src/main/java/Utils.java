@@ -12,6 +12,11 @@ import java.util.Objects;
  */
 public final class Utils {
     /**
+     * The default scheme used by HTTP fault injector.
+     */
+    public static final String DEFAULT_HTTP_FAULT_INJECTOR_SCHEME = "http";
+
+    /**
      * The default host used by HTTP fault injector.
      */
     public static final String DEFAULT_HTTP_FAULT_INJECTOR_HOST = "localhost";
@@ -29,7 +34,7 @@ public final class Utils {
     /**
      * The HTTP header used by HTTP fault injector to determine where it needs to forward a request.
      */
-    public static final String HTTP_FAULT_INJECTOR_UPSTREAM_HOST_HEADER =  "X-Upstream-Host";
+    public static final String HTTP_FAULT_INJECTOR_UPSTREAM_BASE_URI_HEADER =  "X-Upstream-Base-Uri";
 
     /**
      * Utility method which re-writes the {@link HttpRequest HttpRequest's} URL to use the HTTP fault injector.
@@ -46,19 +51,19 @@ public final class Utils {
      * an invalid port.
      * @throws IllegalStateException If the request URL isn't valid or the HTTP fault injector URL isn't valid.
      */
-    public static HttpRequest rewriteUrlToUseFaultInjector(HttpRequest request, String host, int port) {
-        validateHostAndPort(host, port);
+    public static HttpRequest rewriteUrlToUseFaultInjector(HttpRequest request, String scheme, String host, int port) {
+        validateSchemeHostAndPort(scheme, host, port);
 
         try {
             URI requestUri = request.getUrl().toURI();
-            URI faultInjectorUri = new URI(requestUri.getScheme(), requestUri.getUserInfo(), host,
+            URI faultInjectorUri = new URI(scheme, requestUri.getUserInfo(), host,
                 port, requestUri.getPath(), requestUri.getQuery(), requestUri.getFragment());
 
-            String xUpstreamHost = (requestUri.getPort() < 0)
-                ? requestUri.getHost()
-                : requestUri.getHost() + ":" + requestUri.getPort();
+            String xUpstreamBaseUri = (requestUri.getPort() < 0)
+                ? requestUri.getScheme() + "://" + requestUri.getHost()
+                : requestUri.getScheme() + "://" + requestUri.getHost() + ":" + requestUri.getPort();
 
-            return request.setHeader(HTTP_FAULT_INJECTOR_UPSTREAM_HOST_HEADER, xUpstreamHost)
+            return request.setHeader(HTTP_FAULT_INJECTOR_UPSTREAM_BASE_URI_HEADER, xUpstreamBaseUri)
                 .setUrl(faultInjectorUri.toURL());
         } catch (Exception exception) {
             throw new IllegalStateException(exception);
@@ -68,8 +73,14 @@ public final class Utils {
     /*
      * Helper method for validating the HTTP fault injector host and port.
      */
-    static void validateHostAndPort(String host, int port) {
+    static void validateSchemeHostAndPort(String scheme, String host, int port) {
+        Objects.requireNonNull(scheme, "'scheme' cannot be null.");
+
         Objects.requireNonNull(host, "'host' cannot be null.");
+
+        if (scheme.isEmpty()) {
+            throw new IllegalArgumentException("'scheme' must be a non-empty string.");
+        }
 
         if (host.isEmpty()) {
             throw new IllegalArgumentException("'host' must be a non-empty string.");

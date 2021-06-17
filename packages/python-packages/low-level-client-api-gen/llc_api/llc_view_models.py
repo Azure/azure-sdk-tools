@@ -275,6 +275,7 @@ class LLCOperationGroupView(FormattingClass):
                         self.overview_tokens.append(i)
                     for t in self.operations[operation].get_tokens():
                         self.add_token(t)
+                self.overview_tokens.append(Token("",TokenKind.Newline))
             
         
     def to_json(self):
@@ -312,7 +313,8 @@ class LLCOperationView(FormattingClass):
         for j in range(0, len(yaml_data['operationGroups'][op_group_num]['operations'][op_num]['requests'])):
             for i in range(0,len(yaml_data['operationGroups'][op_group_num]['operations'][op_num]['requests'][j].get('signatureParameters',[]))):
                 param.append(LLCParameterView.from_yaml(yaml_data["operationGroups"][op_group_num]["operations"][op_num]['requests'][j],i,namespace))
-                json_request =build_schema(yaml_data = request_builder.parameters.json_body,code_model=code).get_json_template_representation()
+                if build_schema(yaml_data = request_builder.parameters.json_body,code_model=code).serialization_type != "IO":
+                    json_request =build_schema(yaml_data = request_builder.parameters.json_body,code_model=code).get_json_template_representation()
 
                 # request_docstring = SchemaRequest1.from_yaml(yaml_data["operationGroups"][op_group_num]["operations"][op_num]['requests'][j],namespace) #
                 # request_docstring.to_json_formatting(request_docstring.parameters)
@@ -457,39 +459,41 @@ class LLCOperationView(FormattingClass):
                 self.request_builder()
 
     def request_builder(self):
+        #Need towork on this to make it work for everything
         if self.json_request:
             self.add_token(Token(kind=TokenKind.StartDocGroup))
             for i in self.json_request:
                 self.add_whitespace(4)
-                self.add_comment(None,i,None)
+                if isinstance(i,str):
+                    self.add_comment(None,i,None)
                 self.add_new_line()
-                for j in self.json_request[i][0]:
-                    self.add_whitespace(5)
-                    self.add_comment(None,j,None)
-                    self.add_new_line()
-                    if isinstance(self.json_request[i][0][j],str):
-                            self.add_whitespace(6)
-                            self.add_comment(None,self.json_request[i][0][j],None)
-                            self.add_space()
-                            if isinstance(self.json_request[i][0].get(j),str):
-                                self.add_comment(None,self.json_request[i][0].get(j),None)
-                    else:
-                        for x in self.json_request[i][0][j]:
-                            if isinstance(x,dict):
-                                for w in x:
-                                    self.add_whitespace(6)
-                                    self.add_comment(None,w,None)
-                                    self.add_space()
-                                    if isinstance(x.get(w),str):
-                                        self.add_comment(None,x.get(w),None)
-                                    self.add_new_line()
-                            else:    
-                                self.add_whitespace(6)
-                                self.add_comment(None,x,None)
-                                self.add_space()
-                                if isinstance(self.json_request[i][0][j].get(x),str):
-                                    self.add_comment(None,self.json_request[i][0][j].get(x),None)
-                                self.add_new_line()
+                # for j in self.json_request[i][0]:
+                #     self.add_whitespace(5)
+                #     self.add_comment(None,j,None)
+                #     self.add_new_line()
+                #     if isinstance(self.json_request[i][0][j],str):
+                #             self.add_whitespace(6)
+                #             self.add_comment(None,self.json_request[i][0][j],None)
+                #             self.add_space()
+                #             if isinstance(self.json_request[i][0].get(j),str):
+                #                 self.add_comment(None,self.json_request[i][0].get(j),None)
+                #     else:
+                #         for x in self.json_request[i][0][j]:
+                #             if isinstance(x,dict):
+                #                 for w in x:
+                #                     self.add_whitespace(6)
+                #                     self.add_comment(None,w,None)
+                #                     self.add_space()
+                #                     if isinstance(x.get(w),str):
+                #                         self.add_comment(None,x.get(w),None)
+                #                     self.add_new_line()
+                #             else:    
+                #                 self.add_whitespace(6)
+                #                 self.add_comment(None,x,None)
+                #                 self.add_space()
+                #                 if isinstance(self.json_request[i][0][j].get(x),str):
+                #                     self.add_comment(None,self.json_request[i][0][j].get(x),None)
+                #                 self.add_new_line()
             self.add_new_line(1)
             self.add_token(Token(kind=TokenKind.EndDocGroup))
             # for key in self.json_request:

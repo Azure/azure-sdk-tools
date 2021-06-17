@@ -47,7 +47,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                         // append everything up to our current capture. (also if we're between multiple captures in a single match string)
                         sb.Append(m.Value.Substring(previousCaptureEnd, currentCaptureLength));
 
-                        // add the replacement value
+                        // add the replacement value where the original resided
                         sb.Append(replacementValue);
 
                         // updating the end will both inform the next capture group AS WELL AS

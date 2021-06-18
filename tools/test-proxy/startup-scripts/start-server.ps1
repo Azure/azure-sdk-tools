@@ -14,15 +14,19 @@ try {
 catch {
     Write-Host $_
     Write-Error "A invocation of docker info failed. This indicates that docker is not properly installed or running."
-    Write-Error "Please check your docker invocation and try again"
+    Write-Error "Please check your docker invocation and try running the script again."
 }
 
 # need relative path to repo root. as we need to mount it
-$repoRoot = "<TODO>"
+$repoRoot = "C:/repo/sdk-for-python"
 
-$DOCKER_RUN = "run -v $repoRoot:/etc/testproxy -p 5001:5001 -p 5000:5000 azsdkengsys.azurecr.io/engsys/ubuntu_testproxy_server:90164"
-$DOCKER_CONTAINER_QUERY = "container ls -a --format -filter `"{{ json . }}`" `"label=blah`" -filter `"name=blah`""
-$DOCKER_CONTAINER_CREATE = ""
+$TAG_ID = "952205"
+$CONTAINER_NAME = "ambitious_azsdk_test_proxy"
+
+# $DOCKER_RUN = "run -v $repoRoot:/etc/testproxy -p 5001:5001 -p 5000:5000 azsdkengsys.azurecr.io/engsys/ubuntu_testproxy_server:$TAG_ID"
+
+$DOCKER_CONTAINER_QUERY = "container ls -a --format -filter `"{{ json . }}`" -filter `"name=blah`" azsdkengsys.azurecr.io/engsys/ubuntu_testproxy_server:$TAG_ID"
+$DOCKER_CONTAINER_CREATE = "container create -v $($repoRoot):/etc/testproxy  -p 5001:5001 -p 5000:5000 --name ambitious_azsdk_test_proxy azsdkengsys.azurecr.io/engsys/ubuntu_testproxy_server:$($TAG_ID)"
 $DOCKER_CONTAINER_RUN = ""
 $DOCKER_CONTAINER_STOP = ""
 
@@ -37,7 +41,9 @@ if ($mode -eq "start"){
 
 if ($mode -eq "stop"){
     $proxyContainers = docker $DOCKER_CONTAINER_QUERY | ConvertFrom-Json
-    # if there is no container, we're done
+    
+
+
     # if there is a container, and it's stopped, we are done
     # if it's running. stop it.
 

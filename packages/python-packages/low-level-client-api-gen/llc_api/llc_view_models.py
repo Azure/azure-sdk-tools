@@ -7,7 +7,7 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from autorest.codegen.models.schema_request import SchemaRequest
 from ._token import Token
 from ._token_kind import TokenKind
-from autorest.codegen.models import RequestBuilder, CodeModel, ObjectSchema, request_builder,build_schema
+from autorest.codegen.models import RequestBuilder, CodeModel, code_model, request_builder,build_schema, Operation
 
 JSON_FIELDS = ["Name", "Version", "VersionString", "Navigation", "Tokens", "Diagnostics", "PackageName"]
 PARAM_FIELDS = ["name", "type", "default", "optional", "indent"]
@@ -287,7 +287,7 @@ class LLCOperationGroupView(FormattingClass):
 
 
 class LLCOperationView(FormattingClass):
-    def __init__(self, operation_name, return_type, parameters,namespace, json_request=None, description ="", paging = "",lro=""):
+    def __init__(self, operation_name, return_type, parameters,namespace, json_request=None,json_response=None, description ="", paging = "",lro=""):
         self.operation=operation_name
         self.return_type = return_type
         self.parameters=parameters #parameterview list
@@ -298,6 +298,7 @@ class LLCOperationView(FormattingClass):
         self.paging = paging
         self.lro = lro
         self.json_request = json_request
+        self.json_response = json_response
 
     @classmethod
     def from_yaml(cls,yaml_data: Dict[str,Any],op_group_num,op_num,namespace): 
@@ -305,9 +306,12 @@ class LLCOperationView(FormattingClass):
         pageable =None
         lro=None
         json_request={}
+        json_response={}
+        response_builder = {}
         code = CodeModel(rest_layer=True,no_models=True,no_operations=True,only_path_params_positional=True,options={})
         request_builder = RequestBuilder.from_yaml(yaml_data["operationGroups"][op_group_num]["operations"][op_num],code_model=code)
-      
+        response_builder = Operation.from_yaml(yaml_data["operationGroups"][op_group_num]["operations"][op_num])
+        
         if yaml_data["operationGroups"][op_group_num]["operations"][op_num].get("extensions"):
             pageable = yaml_data["operationGroups"][op_group_num]["operations"][op_num]["extensions"].get("x-ms-pageable")
             lro = yaml_data["operationGroups"][op_group_num]["operations"][op_num]["extensions"].get("x-ms-long-running-operation")
@@ -320,29 +324,27 @@ class LLCOperationView(FormattingClass):
         else:
             lro_op = False
 
+        return_type = get_type(yaml_data["operationGroups"][op_group_num]["operations"][op_num]['responses'][0].get('schema',[]),paging_op)
 
         for i in range(0,len(yaml_data["operationGroups"][op_group_num]["operations"][op_num]["signatureParameters"])):
             param.append(LLCParameterView.from_yaml(yaml_data["operationGroups"][op_group_num]["operations"][op_num],i,namespace))
         for j in range(0, len(yaml_data['operationGroups'][op_group_num]['operations'][op_num]['requests'])):
             for i in range(0,len(yaml_data['operationGroups'][op_group_num]['operations'][op_num]['requests'][j].get('signatureParameters',[]))):
                 param.append(LLCParameterView.from_yaml(yaml_data["operationGroups"][op_group_num]["operations"][op_num]['requests'][j],i,namespace))
-                if build_schema(yaml_data = request_builder.parameters.json_body,code_model=code).serialization_type != "IO":
-                    json_request =build_schema(yaml_data = request_builder.parameters.json_body,code_model=code).get_json_template_representation()
-
-                # request_docstring = SchemaRequest1.from_yaml(yaml_data["operationGroups"][op_group_num]["operations"][op_num]['requests'][j],namespace) #
-                # request_docstring.to_json_formatting(request_docstring.parameters)
-                # json_request.update(request_docstring.json_format)
-                # json_request = request_docstring.json_format
+                if build_schema(yaml_data = request_builder.parameters.json_body,code_model=code).serialization_type != "IO": 
+                        json_request =build_schema(yaml_data = request_builder.parameters.json_body,code_model=code).get_json_template_representation()
+                for i in response_builder.responses:
+                    if i.schema:
+                        if isinstance(i.schema,dict):
+                            if build_schema(yaml_data = i.schema,code_model=code).serialization_type != "IO": 
+                                json_response = build_schema(yaml_data = i.schema,code_model=code).get_json_template_representation()
+                        else: json_response = i.schema.get_json_template_representation(code_model=code)
         
-        return_type = get_type(yaml_data["operationGroups"][op_group_num]["operations"][op_num]['responses'][0].get('schema',[]),paging_op)
-
+       
         description = yaml_data["operationGroups"][op_group_num]["operations"][op_num]["language"]["default"].get("summary")
         if description is None:
             description = yaml_data["operationGroups"][op_group_num]["operations"][op_num]["language"]["default"]["description"]
 
-       
-
-        
         
         return cls(
             operation_name = yaml_data["operationGroups"][op_group_num]["operations"][op_num]["language"]["default"]["name"],
@@ -352,7 +354,8 @@ class LLCOperationView(FormattingClass):
             description = description,
             paging = paging_op,
             lro = lro_op,
-            json_request = json_request
+            json_request = json_request,
+            json_response = json_response
         )
 
     def get_tokens(self):
@@ -459,10 +462,24 @@ class LLCOperationView(FormattingClass):
                 self.add_new_line(1)
 
                 self.add_token(Token(kind=TokenKind.StartDocGroup))
-                request_builder(self,self.json_request)
-                self.add_new_line(1)
+
+                if self.json_request:
+                    self.add_whitespace(4)
+                    self.add_typename(None,"Request",None)
+                    self.add_new_line(1)
+                    request_builder(self,self.json_request)
+                    self.add_new_line(1)
+                # self.add_token(Token(kind=TokenKind.EndDocGroup))
+
+                if self.json_response:
+                # self.add_token(Token(kind=TokenKind.StartDocGroup))
+                    self.add_whitespace(4)
+                    self.add_typename(None,"Response",None)
+                    self.add_new_line(1)
+                    request_builder(self,self.json_response)
+                    self.add_new_line(1)
                 self.add_token(Token(kind=TokenKind.EndDocGroup))
-   
+    
     
     def to_json(self):
         obj_dict={}

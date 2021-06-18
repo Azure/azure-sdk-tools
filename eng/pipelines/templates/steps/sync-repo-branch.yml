@@ -2,14 +2,14 @@ parameters:
   # Provde a list of repos
   # Example:
   #   Azure/azure-rest-api-specs:
-  #     Branch: master
+  #     Branch: main
   #     TargetRepos:
   #       Azure/azure-rest-api-specs-pr:
   #       azure-sdk/azure-rest-api-specs:
   #         Branch: dev
   #         Rebase: true
   #   Azure/azure-sdk-for-go:
-  #     Branch: master
+  #     Branch: main
   #     TargetRepos:
   #       Azure/azure-sdk-for-go-pr:
   - name: Repos

@@ -1,7 +1,6 @@
 trigger:
   branches:
     include:
-      - master
       - feature/*
       - release/*
       - hotfix/*
@@ -12,7 +11,6 @@ trigger:
 pr:
   branches:
     include:
-      - master
       - feature/*
       - release/*
       - hotfix/*

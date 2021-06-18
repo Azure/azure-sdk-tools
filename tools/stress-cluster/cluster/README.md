@@ -16,10 +16,10 @@ Azure Bicep comes pre-installed with the Azure CLI, and is a DSL for generating 
 
 ## Deploying a Personal Dev Cluster
 
-First, update the `parameters.dev.json` with the values marked `// add me`, then:
+First, update the `./parameters/dev.json` parameters file with the values marked `// add me`, then:
 
 ```
-az deployment sub create -o json -n <your name> -l westus -f ./main.bicep --parameters ./parameters.dev.json
+az deployment sub create -o json -n <your name> -l westus -f ./main.bicep --parameters ./parameters/dev.json
 
 # wait until resource group and AKS cluster are deployed
 az aks get-credentials stress-azuresdk -g rg-stress-test-cluster-<group suffix parameter>
@@ -60,9 +60,9 @@ az bicep build -f ./main.bicep
 To deploy and access resources:
 
 ```
-# Edit parameters.dev.json, replacing // add me values
+# Edit ./parameters/dev.json, replacing // add me values
 # Add -c to dry run changes with a chance to confirm
-az deployment sub create -o json -n <your name> -l westus -f ./main.bicep --parameters ./parameters.dev.json
+az deployment sub create -o json -n <your name> -l westus -f ./main.bicep --parameters ./parameters/dev.json
 
 az aks list -g rg-stress-test-cluster-<group suffix parameter>
 az aks get-credentials stress-azuresdk -g rg-stress-test-cluster-<group suffix parameter>
@@ -99,7 +99,7 @@ az group delete <resource group name>
 TODO: Additional steps for initializing resources and secrets for Application Insights.
 
 ```
-az deployment sub create -o json -n stress-test-prod -l westus -f ./main.bicep --parameters ./parameters.prod.json
+az deployment sub create -o json -n stress-test-prod -l westus -f ./main.bicep --parameters ./parameters/prod.json
 # wait until resource group and AKS cluster are deployed
 az aks get-credentials stress-azuresdk -g rg-stress-test-cluster-prod
 helm repo add chaos-mesh https://charts.chaos-mesh.org

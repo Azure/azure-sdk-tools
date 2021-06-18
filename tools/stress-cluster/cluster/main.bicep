@@ -3,6 +3,7 @@ targetScope = 'subscription'
 param groupSuffix string
 param location string
 param tags object
+param enableMonitoring bool = false
 
 resource clusterGroup 'Microsoft.Resources/resourceGroups@2020-10-01' = {
     name: 'rg-stress-test-cluster-${groupSuffix}'
@@ -16,5 +17,6 @@ module clusterMod 'cluster/cluster.bicep' = {
     params: {
         tags: tags
         groupSuffix: groupSuffix
+        enableMonitoring: enableMonitoring
     }
 }

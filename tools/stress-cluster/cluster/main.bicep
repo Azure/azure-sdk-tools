@@ -55,6 +55,7 @@ module keyvault 'cluster/keyvault.bicep' = if (enableMonitoring) {
         keyVaultName: 'stress-kv-${resourceSuffix}'  // 24 character max length
         location: clusterLocation
         tags: tags
+        objectId: cluster.outputs.secretProviderObjectId
         secretsObject: {
             secrets: [
                 {

@@ -102,3 +102,5 @@ resource metricsPublisher 'Microsoft.Authorization/roleAssignments@2020-04-01-pr
     principalId: cluster.properties.addonProfiles.omsagent.identity.objectId
   }
 }
+
+output secretProviderClientId string = cluster.properties.addonProfiles.azureKeyvaultSecretsProvider.identity.objectId

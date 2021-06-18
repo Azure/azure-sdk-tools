@@ -10,7 +10,7 @@ resource clusterGroup 'Microsoft.Resources/resourceGroups@2020-10-01' = {
     tags: tags
 }
 
-module clusterMod './cluster.bicep' = {
+module clusterMod 'cluster/cluster.bicep' = {
     name: 'clusterMod'
     scope: clusterGroup
     params: {

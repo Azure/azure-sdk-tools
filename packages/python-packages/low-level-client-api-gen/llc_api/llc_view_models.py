@@ -455,18 +455,50 @@ class LLCOperationView(FormattingClass):
                 self.add_punctuation(")")
                 self.add_new_line(1)
 
+                self.add_token(Token(kind=TokenKind.StartDocGroup))
+                request_builder(self,self.json_request)
+                self.add_new_line(1)
+                self.add_token(Token(kind=TokenKind.EndDocGroup))
+   
+    
+    def to_json(self):
+        obj_dict={}
+        self.to_token()
+        for key in OP_FIELDS:
+            obj_dict[key] = self.__dict__[key]
+        return obj_dict
 
-                self.request_builder()
-
-    def request_builder(self):
+def request_builder(self,json_request,indent=4):
         #Need towork on this to make it work for everything
-        if self.json_request:
-            self.add_token(Token(kind=TokenKind.StartDocGroup))
-            for i in self.json_request:
-                self.add_whitespace(4)
-                if isinstance(i,str):
-                    self.add_comment(None,i,None)
+        if json_request:
+            if not isinstance(json_request,str):
+                for i in json_request:
+                    if isinstance(i,str):
+                        self.add_whitespace(indent)
+                        self.add_comment(None,i,None)
+                        self.add_space()
+                        if isinstance(json_request,list):
+                            self.add_whitespace(5)
+                            for j in range(0,len(json_request)):
+                                request_builder(self,json_request[j],True)
+                        if isinstance(json_request[i],list):
+                            self.add_new_line()
+                            for j in range(0,len(json_request[i])):
+                                request_builder(self,json_request[i][j],indent+1)
+                        elif isinstance(json_request[i],str):
+                            self.add_comment(None,json_request[i],None)
+                            self.add_new_line()
+                        elif isinstance(json_request[i],dict):
+                            self.add_new_line()
+                            #everytime this is called it needs to indent by one more, but bc it is recursive it doesn't
+                            request_builder(self,json_request[i],indent+1)
+                        
+            else:
                 self.add_new_line()
+                self.add_whitespace(5)
+                self.add_comment(None,json_request,None)
+                self.add_new_line()
+
                 # for j in self.json_request[i][0]:
                 #     self.add_whitespace(5)
                 #     self.add_comment(None,j,None)
@@ -494,8 +526,7 @@ class LLCOperationView(FormattingClass):
                 #                 if isinstance(self.json_request[i][0][j].get(x),str):
                 #                     self.add_comment(None,self.json_request[i][0][j].get(x),None)
                 #                 self.add_new_line()
-            self.add_new_line(1)
-            self.add_token(Token(kind=TokenKind.EndDocGroup))
+            
             # for key in self.json_request:
             #     self.add_typename(None,key['full_serialized_name'],None)
             #     self.add_new_line(1)
@@ -541,15 +572,7 @@ class LLCOperationView(FormattingClass):
             #                 self.add_punctuation("}")
                                 
             # self.add_new_line(1)
-            
-    
-    def to_json(self):
-        obj_dict={}
-        self.to_token()
-        for key in OP_FIELDS:
-            obj_dict[key] = self.__dict__[key]
-        return obj_dict
-        
+                    
 
 class LLCParameterView(FormattingClass):
     def __init__(self, param_name, param_type, namespace, json_request = None, default=None, required = False):

@@ -37,6 +37,25 @@ param(
   [boolean]$Audit=$true
 )
 
+function IsValidAlias
+{
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Alias
+    )
+
+    $domains = @("microsoft.com", "ntdev.microsoft.com")
+
+    foreach ($domain in $domains)
+    {
+        if (Get-AzAdUser -UserPrincipalName "$($Matches.2)@$($domain)")
+        {
+            return $true;
+        }
+    }
+    return $false;
+}
+
 # Check if we're in audit mode (no actual deletions)
 if ($Audit)
 {
@@ -67,7 +86,7 @@ foreach ($resourceGroup in Get-AzResourceGroup | Sort ResourceGroupName)
     }
 
     # check compliance (formatting first, then validate alias) and skip if compliant
-    if ($resourceGroup.ResourceGroupName -match "^(rg-)?((t-|a-|v-)?[a-z,A-Z]{3,15})([-_]{1}.*)?$" -and (Get-AzAdUser -UserPrincipalName "$($Matches.2)@microsoft.com"))
+    if ($resourceGroup.ResourceGroupName -match "^(rg-)?((t-|a-|v-)?[a-z,A-Z]{3,15})([-_]{1}.*)?$" -and IsValidAlias -Alias $Matches.2)
     {
         Write-Host " Skipping compliant resource group: $($resourceGroup.ResourceGroupName)"
         $skipped += $($resourceGroup.ResourceGroupName)

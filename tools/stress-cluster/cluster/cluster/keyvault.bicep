@@ -32,15 +32,15 @@ resource vault 'Microsoft.KeyVault/vaults@2019-09-01' = {
   tags: tags
   properties: {
     tenantId: tenantId
-    // accessPolicies: [
-    //   {
-    //     objectId: objectId
-    //     tenantId: tenantId
-    //     permissions: {
-    //       secrets: secretsPermissions
-    //     }
-    //   }
-    // ]
+    accessPolicies: [
+    //  {
+    //    objectId: objectId
+    //    tenantId: tenantId
+    //    permissions: {
+    //      secrets: secretsPermissions
+    //    }
+    //  }
+    ]
     sku: {
       name: skuName
       family: 'A'

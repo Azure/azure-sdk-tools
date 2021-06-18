@@ -52,7 +52,7 @@ module keyvault 'cluster/keyvault.bicep' = if (enableMonitoring) {
     name: 'keyvault'
     scope: group
     params: {
-        keyVaultName: '${clusterName}-kv-${resourceSuffix}'
+        keyVaultName: 'stress-kv-${resourceSuffix}'  // 24 character max length
         location: clusterLocation
         tags: tags
         secretsObject: {

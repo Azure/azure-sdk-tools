@@ -71,6 +71,75 @@ class LLCGenerator:
         with open(self.pkg_path) as f:
             data = yaml.safe_load(f)
 
+        ##Iterate through all data duplicate all language_default_name to lanuage_python_name for ops and params so you have both
+        s = data['language']
+        p = {'python':s['default']}
+        s.update(p)
+        data['language'] = s
+        for op_group in data['schemas']:
+            for op in range(0,len(data['schemas'][op_group])):
+                s = data['schemas'][op_group][op]['language']
+                p = {'python':s['default']}
+                s.update(p)
+                data['schemas'][op_group][op]['language'] = s
+                if op_group =="objects":
+                    for o in range(0,len(data['schemas'][op_group][op].get('properties',[]))):
+                        l = data['schemas'][op_group][op]['properties'][o]['language']
+                        pa = {'python':l['default']}
+                        l.update(pa)
+                        data['schemas'][op_group][op]['properties'][o]['language'] = l
+                if op_group =="arrays":
+                    l = data['schemas'][op_group][op]['elementType']['language']
+                    pa = {'python':l['default']}
+                    l.update(pa)
+                    data['schemas'][op_group][op]['elementType']['language'] = l
+                    for p in range(0,len(data['schemas'][op_group][op]['elementType'].get('properties',[]))):
+                        x= data['schemas'][op_group][op]['elementType']['properties'][p]['language']
+                        w =  {'python':x['default']}
+                        x.update(w)
+                        data['schemas'][op_group][op]['elementType']['properties'][p]['language'] = x
+                if op_group =="choices":
+                        for o in range(0,len(data['schemas'][op_group][op].get('choices'))):
+                            l = data['schemas'][op_group][op]['choices'][o]['language']
+                            pa = {'python':l['default']}
+                            l.update(pa)
+                            data['schemas'][op_group][op]['choices'][o]['language'] = l
+        for op_group in range(0,len(data['operationGroups'])):
+            sa = data['operationGroups'][op_group]['language']
+            ps = {'python':sa['default']}
+            sa.update(ps)
+            data['operationGroups'][op_group]['language'] = sa
+            for op in range(0,len(data['operationGroups'][op_group]['operations'])):
+                s = data['operationGroups'][op_group]['operations'][op]['language']
+                p = {'python':s['default']}
+                s.update(p)
+                data['operationGroups'][op_group]['operations'][op]['language'] = s
+                for p in range(0,len(data['operationGroups'][op_group]['operations'][op].get('signatureParameters'))):
+                    l = data['operationGroups'][op_group]['operations'][op]['signatureParameters'][p]['language']
+                    pa = {'python':l['default']}
+                    l.update(pa)
+                    data['operationGroups'][op_group]['operations'][op]['signatureParameters'][p]['language'] = l
+                for p in range(0,len(data['operationGroups'][op_group]['operations'][op].get('parameters'))):
+                    l = data['operationGroups'][op_group]['operations'][op]['parameters'][p]['language']
+                    pa = {'python':l['default']}
+                    l.update(pa)
+                    data['operationGroups'][op_group]['operations'][op]['parameters'][p]['language'] = l
+                for p in range(0,len(data['operationGroups'][op_group]['operations'][op].get('requests'))):
+                    l = data['operationGroups'][op_group]['operations'][op]['requests'][p]['language']
+                    pa = {'python':l['default']}
+                    l.update(pa)
+                    data['operationGroups'][op_group]['operations'][op]['requests'][p]['language'] = l
+                    for r in range(0,len(data['operationGroups'][op_group]['operations'][op]['requests'][p].get('parameters',[]))):
+                        q = data['operationGroups'][op_group]['operations'][op]['requests'][p]['parameters'][r]['language']
+                        f = {'python':q['default']}
+                        q.update(f)
+                        data['operationGroups'][op_group]['operations'][op]['requests'][p]['parameters'][r]['language'] = q
+                for p in range(0,len(data['operationGroups'][op_group]['operations'][op].get('responses'))):
+                    l = data['operationGroups'][op_group]['operations'][op]['responses'][p]['language']
+                    pa = {'python':l['default']}
+                    l.update(pa)
+                    data['operationGroups'][op_group]['operations'][op]['responses'][p]['language'] = l
+
         #Create main_view for LLC API View
         main_view = LLCClientView.from_yaml(data)
 

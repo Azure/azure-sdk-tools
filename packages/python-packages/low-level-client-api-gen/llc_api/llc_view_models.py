@@ -308,6 +308,19 @@ class LLCOperationView(FormattingClass):
         code = CodeModel(rest_layer=True,no_models=True,no_operations=True,only_path_params_positional=True,options={})
         request_builder = RequestBuilder.from_yaml(yaml_data["operationGroups"][op_group_num]["operations"][op_num],code_model=code)
       
+        if yaml_data["operationGroups"][op_group_num]["operations"][op_num].get("extensions"):
+            pageable = yaml_data["operationGroups"][op_group_num]["operations"][op_num]["extensions"].get("x-ms-pageable")
+            lro = yaml_data["operationGroups"][op_group_num]["operations"][op_num]["extensions"].get("x-ms-long-running-operation")
+        if pageable:
+            paging_op = True
+        else:
+            paging_op = False  
+        if lro:
+            lro_op = True
+        else:
+            lro_op = False
+
+
         for i in range(0,len(yaml_data["operationGroups"][op_group_num]["operations"][op_num]["signatureParameters"])):
             param.append(LLCParameterView.from_yaml(yaml_data["operationGroups"][op_group_num]["operations"][op_num],i,namespace))
         for j in range(0, len(yaml_data['operationGroups'][op_group_num]['operations'][op_num]['requests'])):
@@ -321,23 +334,13 @@ class LLCOperationView(FormattingClass):
                 # json_request.update(request_docstring.json_format)
                 # json_request = request_docstring.json_format
         
-        return_type = get_type(yaml_data["operationGroups"][op_group_num]["operations"][op_num]['responses'][0].get('schema',[]))
+        return_type = get_type(yaml_data["operationGroups"][op_group_num]["operations"][op_num]['responses'][0].get('schema',[]),paging_op)
 
         description = yaml_data["operationGroups"][op_group_num]["operations"][op_num]["language"]["default"].get("summary")
         if description is None:
             description = yaml_data["operationGroups"][op_group_num]["operations"][op_num]["language"]["default"]["description"]
 
-        if yaml_data["operationGroups"][op_group_num]["operations"][op_num].get("extensions"):
-            pageable = yaml_data["operationGroups"][op_group_num]["operations"][op_num]["extensions"].get("x-ms-pageable")
-            lro = yaml_data["operationGroups"][op_group_num]["operations"][op_num]["extensions"].get("x-ms-long-running-operation")
-        if pageable:
-            paging_op = True
-        else:
-            paging_op = False  
-        if lro:
-            lro_op = True
-        else:
-            lro_op = False
+       
 
         
         
@@ -481,7 +484,7 @@ def request_builder(self,json_request,indent=4):
                             self.add_whitespace(5)
                             for j in range(0,len(json_request)):
                                 request_builder(self,json_request[j],True)
-                        if isinstance(json_request[i],list):
+                        elif isinstance(json_request[i],list):
                             self.add_new_line()
                             for j in range(0,len(json_request[i])):
                                 request_builder(self,json_request[i][j],indent+1)
@@ -689,7 +692,7 @@ class SchemaRequest1():
         )
 
 
-def get_type(data,obj=False):
+def get_type(data,page=False):
     #Get type
     try:
         return_type = data['type']
@@ -701,11 +704,11 @@ def get_type(data,obj=False):
             return_type += "[string, "+ value +"]"    
         if return_type == "object":
             return_type = data['language']['default']['name']
-            return_type = get_type(data['properties'][0]['schema'],True)
+            if page: return_type = get_type(data['properties'][0]['schema'],True)
         if return_type =='array':
             if data['elementType']['type'] != 'object' and data['elementType']['type'] != 'choice':
                 return_type = data['elementType']['type']+ "[]"
-            elif not obj:
+            elif not page:
                 return_type=  data['elementType']['language']['default']['name']+"[]"
             else:
                 return_type=  data['elementType']['language']['default']['name']

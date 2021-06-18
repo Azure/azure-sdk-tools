@@ -47,3 +47,21 @@ module cluster 'cluster/cluster.bicep' = {
         workspaceId: enableMonitoring ? logWorkspace.outputs.id : ''
     }
 }
+
+module keyvault 'cluster/keyvault.bicep' = if (enableMonitoring) {
+    name: 'keyvault'
+    scope: group
+    params: {
+        keyVaultName: '${clusterName}-kv-${resourceSuffix}'
+        location: clusterLocation
+        tags: tags
+        secretsObject: {
+            secrets: [
+                {
+                    secretName: 'appInsightsInstrumentationKey-${resourceSuffix}'
+                    secretValue: appInsights.outputs.instrumentationKey
+                }
+            ]
+        }
+    }
+}

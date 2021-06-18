@@ -54,6 +54,12 @@ resource cluster 'Microsoft.ContainerService/managedClusters@2020-09-01' = {
   }
   properties: {
     addonProfiles: (enableMonitoring ? {
+      azureKeyvaultSecretsProvider: {
+        enabled: true
+        config: {
+          enableSecretRotation: false
+        }
+      }
       omsagent: {
         enabled: true
         config: {

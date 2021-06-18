@@ -99,6 +99,9 @@ az group delete <resource group name>
 
 TODO: Additional steps for initializing resources and secrets for Application Insights.
 
+If not already done, enable the relevant preview features in the subscription and CLI:
+- [AKS-AzureKeyVaultSecretsProvider](https://docs.microsoft.com/en-us/azure/aks/csi-secrets-store-driver#register-the-aks-azurekeyvaultsecretsprovider-preview-feature)
+
 ```
 az deployment sub create -o json -n stress-test-prod -l westus -f ./main.bicep --parameters ./parameters/prod.json
 # wait until resource group and AKS cluster are deployed

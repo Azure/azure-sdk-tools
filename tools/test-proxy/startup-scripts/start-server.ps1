@@ -1,50 +1,58 @@
-# Currently assumes that:
-#   az login
-#   az acr login --name azsdkengsys
-# has been executed. a public container registry will resolve this going forward.
 param(
     [ValidateSet("start", "stop")]    
     [String]
-    $mode
+    $mode,
+    [String]
+    $startPath = "."
 )
 
 try {
-    docker info
+    docker --version | Out-Null
 }
 catch {
-    Write-Host $_
-    Write-Error "A invocation of docker info failed. This indicates that docker is not properly installed or running."
+    Write-Error "A invocation of docker --version failed. This indicates that docker is not properly installed or running."
     Write-Error "Please check your docker invocation and try running the script again."
 }
 
-# need relative path to repo root. as we need to mount it
-$repoRoot = "C:/repo/sdk-for-python"
-
-$TAG_ID = "952205"
 $CONTAINER_NAME = "ambitious_azsdk_test_proxy"
+$IMAGE_SOURCE = "azsdkengsys.azurecr.io/engsys/ubuntu_testproxy_server:952205"
 
-# $DOCKER_RUN = "run -v $repoRoot:/etc/testproxy -p 5001:5001 -p 5000:5000 azsdkengsys.azurecr.io/engsys/ubuntu_testproxy_server:$TAG_ID"
+function Get-Proxy-Container(){
+    return (docker container ls -a --format "{{ json . }}" --filter "name=$CONTAINER_NAME" `
+                | ConvertFrom-Json `
+                | Select-Object -First 1)
+}
 
-$DOCKER_CONTAINER_QUERY = "container ls -a --format -filter `"{{ json . }}`" -filter `"name=blah`" azsdkengsys.azurecr.io/engsys/ubuntu_testproxy_server:$TAG_ID"
-$DOCKER_CONTAINER_CREATE = "container create -v $($repoRoot):/etc/testproxy  -p 5001:5001 -p 5000:5000 --name ambitious_azsdk_test_proxy azsdkengsys.azurecr.io/engsys/ubuntu_testproxy_server:$($TAG_ID)"
-$DOCKER_CONTAINER_RUN = ""
-$DOCKER_CONTAINER_STOP = ""
+$repoRoot = Resolve-Path $startPath
 
 if ($mode -eq "start"){
-    # check set of visible containers filtered by the expression
-    $proxyContainers = docker $DOCKER_CONTAINER_QUERY | ConvertFrom-Json
+    $proxyContainer = Get-Proxy-Container
 
-    # if there is no container, create it
-    # check status of container. if it's running, we are done
-    # if it's not running, start it.
+    # if we already have one, we just need to check the state
+    if($proxyContainer){
+        if ($proxyContainer.State -eq "running")
+        {
+            Write-Host "Discovered an already running instance of the test-proxy!. Exiting"
+            exit(0)
+        }
+    }
+    # else we need to create it
+    else {
+        Write-Host "Attempting creation of Docker host $CONTAINER_NAME"
+        docker container create -v ${repoRoot}:/etc/testproxy -p 5001:5001 -p 5000:5000 --name $CONTAINER_NAME $IMAGE_SOURCE
+    }
+
+    Write-Host "Attempting start of Docker host $CONTAINER_NAME"
+    docker container start $CONTAINER_NAME
 }
 
 if ($mode -eq "stop"){
-    $proxyContainers = docker $DOCKER_CONTAINER_QUERY | ConvertFrom-Json
-    
+    $proxyContainer = Get-Proxy-Container
 
-
-    # if there is a container, and it's stopped, we are done
-    # if it's running. stop it.
-
+    if($proxyContainer){
+        if($proxyContainer.State -eq "running"){
+            Write-Host "Found a running instance of $CONTAINER_NAME, shutting it down."
+            docker container stop $CONTAINER_NAME
+        }
+    }
 }

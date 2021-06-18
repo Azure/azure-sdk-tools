@@ -7,6 +7,7 @@ Azure Bicep comes pre-installed with the Azure CLI, and is a DSL for generating 
 # Dependencies
 
 - [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
+    - If using app insights, install the az extension: `az extension add --name application-insights`
 - [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) (if accessing clusters)
 - [kind](https://github.com/kubernetes-sigs/kind/releases) (if deploying/testing locally)
 - [Docker](https://docs.docker.com/get-docker/) (if deploying/testing locally)

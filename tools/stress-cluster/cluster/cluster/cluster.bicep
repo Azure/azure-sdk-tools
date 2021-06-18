@@ -91,9 +91,11 @@ resource cluster 'Microsoft.ContainerService/managedClusters@2020-09-01' = {
 // cluster resource container insights.
 // https://docs.microsoft.com/en-us/azure/azure-monitor/containers/container-insights-update-metrics
 resource metricsPublisher 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = if (enableMonitoring) {
-  name: '${clusterName}/Microsoft.Authorization/${guid('monitoringMetricsPublisher', resourceGroup().id)}'
+  name: '${guid('monitoringMetricsPublisherRole', resourceGroup().id)}'
+  scope: cluster
   properties: {
     roleDefinitionId: '${subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '3913510d-42f4-4e42-8a64-420c390055eb')}'
-    principalId: cluster.properties.addonProfiles.omsagent.identity.clientId
+    // NOTE: using objectId over clientId seems to handle cross-region propagation delays better for newly created identities
+    principalId: cluster.properties.addonProfiles.omsagent.identity.objectId
   }
 }

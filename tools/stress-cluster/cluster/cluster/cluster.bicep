@@ -103,4 +103,4 @@ resource metricsPublisher 'Microsoft.Authorization/roleAssignments@2020-04-01-pr
   }
 }
 
-output secretProviderClientId string = cluster.properties.addonProfiles.azureKeyvaultSecretsProvider.identity.objectId
+output secretProviderObjectId string = cluster.properties.addonProfiles.azureKeyvaultSecretsProvider.identity.objectId

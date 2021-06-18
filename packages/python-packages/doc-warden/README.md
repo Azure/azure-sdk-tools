@@ -1,4 +1,4 @@
-# Doc Warden [![Build Status](https://dev.azure.com/azure-sdk/public/_apis/build/status/108?branchName=master)](https://dev.azure.com/azure-sdk/public/_build/latest?definitionId=108&branchName=master)
+# Doc Warden [![Build Status](https://dev.azure.com/azure-sdk/public/_apis/build/status/108?branchName=main)](https://dev.azure.com/azure-sdk/public/_build/latest?definitionId=108&branchName=main)
 
 Every CI build owned by the Azure-SDK team also needs to verify that the documentation within the target repo meets a set of standards. `Doc-warden` is intended to ease the _implementation_ of these checks in CI builds.
 
@@ -228,7 +228,7 @@ For .net, `warden` will traverse **up** one directory at a time, looking for the
 
 Note that `warden` will not even execute an index against a .NET repo _unless the traversal stops are set_. 
 
-[SDK for net .docsettings](https://github.com/Azure/azure-sdk-for-net/blob/master/eng/.docsettings.yml) is a great example for both the exclusion list as well as the traversal stops.
+[SDK for net .docsettings](https://github.com/Azure/azure-sdk-for-net/blob/main/eng/.docsettings.yml) is a great example for both the exclusion list as well as the traversal stops.
 
 ## Provide Feedback
 

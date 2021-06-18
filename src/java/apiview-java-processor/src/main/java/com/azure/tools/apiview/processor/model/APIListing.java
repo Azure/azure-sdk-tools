@@ -30,7 +30,7 @@ public class APIListing {
     private String packageVersion;
 
     // This string is taken from here:
-    // https://github.com/Azure/azure-sdk-tools/blob/master/src/dotnet/APIView/APIView/Languages/CodeFileBuilder.cs#L50
+    // https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIView/Languages/CodeFileBuilder.cs#L50
     @JsonProperty("VersionString")
     private final String versionString = "19";
 

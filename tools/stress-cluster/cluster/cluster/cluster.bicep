@@ -1,15 +1,19 @@
+// cluster parameters
 param tags object
 param groupSuffix string
 param dnsPrefix string = 's1'
-param clusterName string = 'stress-azuresdk'
+param clusterName string
 param location string = resourceGroup().location
 param agentVMSize string = 'Standard_D2_v3'
-param enableMonitoring bool = false
 
 @minValue(1)
 @maxValue(50)
 @description('The number of nodes for the cluster.')
 param agentCount int = 3
+
+// monitoring parameters
+param enableMonitoring bool = false
+param workspaceId string
 
 var kubernetesVersion = '1.20.7'
 var subnetRef = '${vn.id}/subnets/${subnetName}'
@@ -41,15 +45,7 @@ resource vn 'Microsoft.Network/virtualNetworks@2020-06-01' = {
   }
 }
 
-module logWorkspace '../monitoring/log-analytics-workspace.bicep' = if (enableMonitoring) {
-    name: 'logsMod'
-    params: {
-        workspaceName: '${clusterName}-logs'
-        location: location
-    }
-}
-
-resource stress_cluster 'Microsoft.ContainerService/managedClusters@2020-09-01' = {
+resource cluster 'Microsoft.ContainerService/managedClusters@2020-09-01' = {
   name: clusterName
   location: location
   tags: tags
@@ -61,7 +57,7 @@ resource stress_cluster 'Microsoft.ContainerService/managedClusters@2020-09-01' 
       omsagent: {
         enabled: true
         config: {
-          logAnalyticsWorkspaceResourceID: logWorkspace.outputs.id
+          logAnalyticsWorkspaceResourceID: workspaceId
         }
       }
     } : null)
@@ -91,5 +87,13 @@ resource stress_cluster 'Microsoft.ContainerService/managedClusters@2020-09-01' 
   }
 }
 
-output id string = stress_cluster.id
-output apiServerAddress string = stress_cluster.properties.fqdn
+// Add Monitoring Metrics Publisher role to omsagent identity. Required to publish metrics data to
+// cluster resource container insights.
+// https://docs.microsoft.com/en-us/azure/azure-monitor/containers/container-insights-update-metrics
+resource metricsPublisher 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = if (enableMonitoring) {
+  name: '${clusterName}/Microsoft.Authorization/${guid('monitoringMetricsPublisher', resourceGroup().id)}'
+  properties: {
+    roleDefinitionId: '${subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '3913510d-42f4-4e42-8a64-420c390055eb')}'
+    principalId: cluster.properties.addonProfiles.omsagent.identity.clientId
+  }
+}

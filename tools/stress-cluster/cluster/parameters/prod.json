@@ -5,8 +5,14 @@
     "groupSuffix": {
       "value": "prod"
     },
-    "location": {
-      "value": "westus"
+    "clusterName": {
+      "value": "stress-prod"
+    },
+    "clusterLocation": {
+      "value": "westus2"
+    },
+    "monitoringLocation": {
+      "value": "centralus"
     },
     "enableMonitoring": {
         "value": true

@@ -5,8 +5,11 @@
     "groupName": {
       "value": // add me
     },
-    "location": {
-      "value": "westus"
+    "clusterName": {
+      "value": "stress-dev"
+    },
+    "clusterLocation": {
+      "value": "westus2"
     },
     "tags": {
       "value": {

@@ -283,7 +283,11 @@ Services:
       PackageVersions:
       - Azure.Security.KeyVault.Secrets: 4.1.0
       - Azure.Security.KeyVault.Secrets: source
-
+    Python:
+      Project: sdk/keyvault/azure-keyvault-secrets
+      PackageVersions:
+      - azure-keyvault-secrets: 12.3.1
+      - azure-keyvault-secrets: source
   Tests:
   - Test: get-secret
     Arguments:
@@ -291,6 +295,7 @@ Services:
     - --parallel 64
     TestNames:
       Net: GetSecret
+      Python: GetSecretTest
 
   - Test: list-secrets
     Arguments: &key-vault-counts

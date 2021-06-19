@@ -157,13 +157,11 @@ namespace NotificationConfiguration
             {
                 case PipelineSelectionStrategy.All:
                     return definitions;
-                    break;
                 case PipelineSelectionStrategy.Scheduled:
                 default:
                     return definitions.Where(
                         def => def.Triggers.Any(
                             trigger => trigger.TriggerType == DefinitionTriggerType.Schedule));
-                    break;
             }
         }
 

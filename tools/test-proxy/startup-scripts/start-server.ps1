@@ -3,7 +3,7 @@ param(
     [String]
     $mode,
     [String]
-    $startPath = "."
+    $targetFolder = "."
 )
 
 try {
@@ -23,7 +23,7 @@ function Get-Proxy-Container(){
                 | Select-Object -First 1)
 }
 
-$repoRoot = Resolve-Path $startPath
+$repoRoot = Resolve-Path $targetFolder
 
 if ($mode -eq "start"){
     $proxyContainer = Get-Proxy-Container

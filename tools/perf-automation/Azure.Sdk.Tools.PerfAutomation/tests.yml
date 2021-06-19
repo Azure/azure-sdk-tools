@@ -286,7 +286,7 @@ Services:
     Python:
       Project: sdk/keyvault/azure-keyvault-secrets
       PackageVersions:
-      - azure-keyvault-secrets: 12.3.1
+      - azure-keyvault-secrets: 4.2.0
       - azure-keyvault-secrets: source
   Tests:
   - Test: get-secret

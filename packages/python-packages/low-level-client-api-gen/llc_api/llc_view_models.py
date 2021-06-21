@@ -1,13 +1,10 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
-from abc import ABC, abstractmethod
-from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 
-from autorest.codegen.models.schema_request import SchemaRequest
+from typing import Any, Dict
 from ._token import Token
 from ._token_kind import TokenKind
-from autorest.codegen.models import RequestBuilder, CodeModel, code_model, request_builder,build_schema, Operation
+from autorest.codegen.models import RequestBuilder, CodeModel, request_builder,build_schema, Operation
 
 JSON_FIELDS = ["Name", "Version", "VersionString", "Navigation", "Tokens", "Diagnostics", "PackageName"]
 PARAM_FIELDS = ["name", "type", "default", "optional", "indent"]

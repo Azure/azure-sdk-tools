@@ -25,7 +25,7 @@ namespace PipelineGenerator.Conventions
         {
             var hasChanges = await base.ApplyConventionAsync(definition, component);
 
-            if (EnsureDefautPullRequestTrigger(definition, overrideYaml: true))
+            if (EnsureDefautPullRequestTrigger(definition, overrideYaml: true, securePipeline: true))
             {
                 hasChanges = true;
             }

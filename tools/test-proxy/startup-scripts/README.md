@@ -19,6 +19,6 @@ Example invocations as-is:
 - JS
   - `node ./start-server.js start "C:/repo/sdk-for-js"`
 - Python
-  - `python ./start-server.py --mode="start" --target_path="C:/repo/sdk-for-python"`
+  - `python ./start-server.py --mode="start" --target_folder="C:/repo/sdk-for-python"`
 - Powershell
   - `./start-server.ps1 -mode start -targetFolder "C:/repo/sdk-for-net"`

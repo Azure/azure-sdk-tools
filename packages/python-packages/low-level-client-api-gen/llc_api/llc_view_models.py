@@ -464,16 +464,14 @@ class LLCOperationView(FormattingClass):
                 self.add_token(Token(kind=TokenKind.StartDocGroup))
 
                 if self.json_request:
-                    self.add_whitespace(4)
+                    self.add_whitespace(3)
                     self.add_typename(None,"Request",None)
                     self.add_new_line(1)
                     request_builder(self,self.json_request)
                     self.add_new_line(1)
-                # self.add_token(Token(kind=TokenKind.EndDocGroup))
 
                 if self.json_response:
-                # self.add_token(Token(kind=TokenKind.StartDocGroup))
-                    self.add_whitespace(4)
+                    self.add_whitespace(3)
                     self.add_typename(None,"Response",None)
                     self.add_new_line(1)
                     request_builder(self,self.json_response)

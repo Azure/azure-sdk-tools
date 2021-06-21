@@ -125,9 +125,22 @@ func (c *content) parseConst(tokenList *[]Token) {
 			}
 			makeToken(nil, nil, ")", punctuation, tokenList)
 			makeToken(nil, nil, "", 1, tokenList)
+
+			c.searchForPossibleValuesMethod(t, tokenList)
+			c.searchForMethods(t, tokenList)
 		}
 	}
 
+}
+
+func (c *content) searchForPossibleValuesMethod(t string, tokenList *[]Token) {
+	for i, f := range c.Funcs {
+		if i == fmt.Sprintf("Possible%sValues", t) {
+			makeFuncTokens(&i, f.Params, f.Returns, f.ReturnsNum, tokenList)
+			delete(c.Funcs, i)
+			return
+		}
+	}
 }
 
 // adds the specified function declaration to the exports list

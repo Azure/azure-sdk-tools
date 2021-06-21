@@ -169,7 +169,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
         private async static Task<JsonDocument> GetBody(HttpRequest req)
         {
-            if (req.Body.Length > 0)
+            if (req.ContentLength > 0)
             {
                 var result = await JsonDocument.ParseAsync(req.Body, options: new JsonDocumentOptions() { AllowTrailingCommas = true });
 

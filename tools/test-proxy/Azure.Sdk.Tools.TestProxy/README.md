@@ -224,11 +224,43 @@ Default sets of `matcher`, `transforms`, and `sanitizers` are applied during rec
 
 This is due to the fact that if there are **arguments** to the constructor, the body attributes will be mapped **by name.**
 
+### Add Sanitizer
+
+Add a simple Uri Sanitizer that leverages lookahead to ensure it's not overly aggressive:
+
+```json
+POST
+url: <proxyURL>/Admin/AddSanitizer
+headers: {
+    "x-abstraction-identifier": "UriRegexSanitizer"
+}
+body: {
+    "value": "fakeaccount",
+    "regex": "[a-z]+(?=\\.(?:table|blob|queue)\\.core\\.windows\\.net)"
+}
+```
+
+Add a more expansive Header sanitizer that uses a target group instead of filtering by lookahead:
+
+```json
+POST
+url: <proxyURL>/Admin/AddSanitizer
+headers: {
+    "x-abstraction-identifier": "HeaderRegexSanitizer"
+}
+body: {
+    "key": "Location",
+    "value": "fakeaccount",
+    "regex": "https\\:\\/\\/(?<account>[a-z]+)\\.(?:table|blob|queue)\\.core\\.windows\\.net",
+    "groupForReplace": "account"
+}
+```
+
 ### Apply Matcher
 
 ```json
 POST
-url: https://localhost:5001/Admin/SetMatcher
+url: <proxyURL>/Admin/SetMatcher
 headers: {
     
 }
@@ -241,27 +273,14 @@ bodyBODY: {
 
 ```json
 POST
-url: https://localhost:5001/Admin/SetMatcher
+url: <proxyURL>/Admin/SetMatcher
 headers: {
-    
 }
 bodyBODY: {
-
+    ""
 }
 ```
 
-### Add non-default sanitizer
-
-```json
-POST
-url: https://localhost:5001/Admin/SetMatcher
-headers: {
-    
-}
-bodyBODY: {
-
-}
-```
 
 When invoked as basic requests to the `Admin` controller, these settings will be applied to **all** further requests and responses. Both `Playback` and `Recording`. Where applicable.
 
@@ -277,6 +296,8 @@ Launch the test-proxy through your chosen method, then visit
 
 - `<proxyUrl>/Info/Available` to see all available
 - `<proxyUrl>/Info/Active` to see all currently active.
+
+Note that the `constructor arguments` that are documented must be present (where documented as such) in the body of the POST sent to the Admin Interface. 
 
 ## Testing
 

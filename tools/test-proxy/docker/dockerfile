@@ -6,14 +6,11 @@ ENV \
     CERT_IMPORT_SH=apply-dev-cert.sh \
     ASPNETCORE_ENVIRONMENT=Development
 
-# Install GNOME keyring
+# Install openssl
 RUN apt-get update \
     && apt-get install -y \
         libsecret-1-dev \
-        dbus-x11 \
-        gnome-keyring \
-        libssl-dev \
-        python
+        libssl-dev
 
 # prep the machine dev certificate
 RUN mkdir $CERT_FOLDER
@@ -21,6 +18,8 @@ RUN mkdir $CERT_FOLDER
 ADD dev_certificate/$CERT_IMPORT_SH $CERT_FOLDER
 ADD dev_certificate/dotnet-devcert.pfx $CERT_FOLDER
 ADD dev_certificate/dotnet-devcert.crt $CERT_FOLDER
+
+RUN sed -i -e 's/\r$//' $CERT_FOLDER/$CERT_IMPORT_SH
 
 RUN chmod +x $CERT_FOLDER/$CERT_IMPORT_SH \
     && $CERT_FOLDER/$CERT_IMPORT_SH \

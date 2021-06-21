@@ -31,6 +31,7 @@ jobs:
 - job: GeneratePipelines
   pool:
     vmImage: 'windows-2019'
+  timeoutInMinutes: 120
   strategy:
     matrix:
       Java:

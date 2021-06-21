@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"unicode"
 )
 
 // skip adding the const type in the token list
@@ -135,8 +136,13 @@ func (c *content) addFunc(pkg pkg, f *ast.FuncDecl) {
 	// with the function name e.g. "FooReceiver.Method", else just the function name.
 	sig := ""
 	if f.Recv != nil {
+		receiver := pkg.getText(f.Recv.List[0].Type.Pos(), f.Recv.List[0].Type.End())
+		if unicode.IsLower(rune(receiver[0])) || (string(receiver[0]) == "*" && unicode.IsLower(rune(receiver[1]))) {
+			// skip adding methods on unexported receivers
+			return
+		}
 		sig = "(" + f.Recv.List[0].Names[0].Name + " "
-		sig += pkg.getText(f.Recv.List[0].Type.Pos(), f.Recv.List[0].Type.End())
+		sig += receiver
 		// CP: changed to space, was a period before
 		sig += ") "
 	}

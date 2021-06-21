@@ -49,12 +49,12 @@ namespace Azure.Sdk.Tools.TestProxy
         }
 
         [HttpPost]
-        public void AddTransform()
+        public async void AddTransform()
         {
             var tName = RecordingHandler.GetHeader(Request, "x-abstraction-identifier");
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
 
-            ResponseTransform t = (ResponseTransform)GetTransform(tName, GetBody(Request));
+            ResponseTransform t = (ResponseTransform)GetTransform(tName, await GetBody(Request));
 
             if (recordingId != null)
             {
@@ -67,12 +67,12 @@ namespace Azure.Sdk.Tools.TestProxy
         }
 
         [HttpPost]
-        public void AddSanitizer()
+        public async void AddSanitizer()
         {
             var sName = RecordingHandler.GetHeader(Request, "x-abstraction-identifier");
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
 
-            RecordedTestSanitizer s = (RecordedTestSanitizer)GetSanitizer(sName, GetBody(Request));
+            RecordedTestSanitizer s = (RecordedTestSanitizer)GetSanitizer(sName, await GetBody(Request));
 
             if (recordingId != null)
             {
@@ -85,12 +85,12 @@ namespace Azure.Sdk.Tools.TestProxy
         }
 
         [HttpPost]
-        public void SetMatcher()
+        public async void SetMatcher()
         {
             var mName = RecordingHandler.GetHeader(Request, "x-abstraction-identifier");
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
 
-            RecordMatcher m = (RecordMatcher)GetMatcher(mName, GetBody(Request));
+            RecordMatcher m = (RecordMatcher)GetMatcher(mName, await GetBody(Request));
 
             if (recordingId != null)
             {
@@ -167,11 +167,13 @@ namespace Azure.Sdk.Tools.TestProxy
         }
 
 
-        private static JsonDocument GetBody(HttpRequest req)
+        private async static Task<JsonDocument> GetBody(HttpRequest req)
         {
             if (req.Body.Length > 0)
             {
-                return JsonDocument.Parse(req.Body, options: new JsonDocumentOptions() { AllowTrailingCommas = true });
+                var result = await JsonDocument.ParseAsync(req.Body, options: new JsonDocumentOptions() { AllowTrailingCommas = true });
+
+                return result;
             }
 
             return null;

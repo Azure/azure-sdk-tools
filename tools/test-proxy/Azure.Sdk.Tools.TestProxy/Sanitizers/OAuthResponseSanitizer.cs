@@ -17,6 +17,9 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
     {
         public static Regex rx = new Regex("/oauth2(?:/v2.0)?/token");
 
+        /// <summary>
+        /// There are no customizations available for this sanitizer.
+        /// </summary>
         public OAuthResponseSanitizer() { }
 
         public override void Sanitize(RecordSession session)

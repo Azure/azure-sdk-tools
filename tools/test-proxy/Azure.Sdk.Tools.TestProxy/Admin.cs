@@ -49,12 +49,12 @@ namespace Azure.Sdk.Tools.TestProxy
         }
 
         [HttpPost]
-        public void AddTransform()
+        public async void AddTransform()
         {
             var tName = RecordingHandler.GetHeader(Request, "x-abstraction-identifier");
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
 
-            ResponseTransform t = (ResponseTransform)GetTransform(tName, GetBody(Request));
+            ResponseTransform t = (ResponseTransform)GetTransform(tName, await GetBody(Request));
 
             if (recordingId != null)
             {
@@ -67,12 +67,12 @@ namespace Azure.Sdk.Tools.TestProxy
         }
 
         [HttpPost]
-        public void AddSanitizer()
+        public async void AddSanitizer()
         {
             var sName = RecordingHandler.GetHeader(Request, "x-abstraction-identifier");
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
 
-            RecordedTestSanitizer s = (RecordedTestSanitizer)GetSanitizer(sName, GetBody(Request));
+            RecordedTestSanitizer s = (RecordedTestSanitizer)GetSanitizer(sName, await GetBody(Request));
 
             if (recordingId != null)
             {
@@ -85,12 +85,12 @@ namespace Azure.Sdk.Tools.TestProxy
         }
 
         [HttpPost]
-        public void SetMatcher()
+        public async void SetMatcher()
         {
             var mName = RecordingHandler.GetHeader(Request, "x-abstraction-identifier");
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
 
-            RecordMatcher m = (RecordMatcher)GetMatcher(mName, GetBody(Request));
+            RecordMatcher m = (RecordMatcher)GetMatcher(mName, await GetBody(Request));
 
             if (recordingId != null)
             {
@@ -129,20 +129,27 @@ namespace Azure.Sdk.Tools.TestProxy
 
                     // we are deliberately assuming here that there will only be a single constructor
                     var ctor = t.GetConstructors()[0];
-                    var paramsSet = ctor.GetParameters().Select(x => x.Name);
+                    var paramsSet = ctor.GetParameters();
 
                     // walk across our constructor params. check inside the body for a resulting value for each of them
                     foreach (var param in paramsSet)
                     {
-                        if (body.RootElement.TryGetProperty(param, out var jsonElement))
+                        if (body.RootElement.TryGetProperty(param.Name, out var jsonElement))
                         {
                             var valueResult = jsonElement.GetString();
                             arg_list.Add((object)valueResult);
                         }
                         else
                         {
-                            // TODO: make this a specific type of exception
-                            throw new Exception(String.Format("Required parameter key {0} was not found in the request body.", param));
+                            if (param.IsOptional)
+                            {
+                                arg_list.Add(null);
+                            }
+                            else
+                            {
+                                // TODO: make this a specific argument not found exception
+                                throw new Exception(String.Format("Required parameter key {0} was not found in the request body.", param));
+                            }
                         }
                     }
 
@@ -160,11 +167,13 @@ namespace Azure.Sdk.Tools.TestProxy
         }
 
 
-        private static JsonDocument GetBody(HttpRequest req)
+        private async static Task<JsonDocument> GetBody(HttpRequest req)
         {
             if (req.Body.Length > 0)
             {
-                return JsonDocument.Parse(req.Body, options: new JsonDocumentOptions() { AllowTrailingCommas = true });
+                var result = await JsonDocument.ParseAsync(req.Body, options: new JsonDocumentOptions() { AllowTrailingCommas = true });
+
+                return result;
             }
 
             return null;

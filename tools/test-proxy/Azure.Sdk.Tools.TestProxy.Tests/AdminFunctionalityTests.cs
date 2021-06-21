@@ -36,7 +36,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var httpContext = new DefaultHttpContext();
             var apiVersion = "2016-03-21";
             httpContext.Request.Headers["x-api-version"] = apiVersion;
-            httpContext.Request.Headers["x-abstraction-identifier"] = "HeaderKeyValueSanitizer";
+            httpContext.Request.Headers["x-abstraction-identifier"] = "HeaderRegexSanitizer";
             httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{ \"key\": \"Location\", \"value\": \"https://fakeazsdktestaccount.table.core.windows.net/Tables\" }");
 
             var controller = new Admin(testRecordingHandler)
@@ -52,7 +52,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             controller.AddSanitizer();
 
             var result = testRecordingHandler.Sanitizers.First();
-            Assert.True(result is HeaderKeyValueSanitizer);
+            Assert.True(result is HeaderRegexSanitizer);
         }
 
 

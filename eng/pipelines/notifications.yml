@@ -37,7 +37,7 @@ stages:
 
     steps:
 
-      - task: DotNetCoreInstaller@0
+      - task: UseDotNet@2
         displayName: 'Use .NET Core sdk $(DotNetCoreVersion)'
         inputs:
           version: '$(DotNetCoreVersion)'

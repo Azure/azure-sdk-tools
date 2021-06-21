@@ -313,7 +313,7 @@ namespace PipelineGenerator.Conventions
             return Task.FromResult(hasChanges);
         }
 
-        protected bool EnsureDefautPullRequestTrigger(BuildDefinition definition, bool overrideYaml = true)
+        protected bool EnsureDefautPullRequestTrigger(BuildDefinition definition, bool overrideYaml = true, bool securePipeline = true)
         {
             bool hasChanges = false;
             var prTriggers = definition.Triggers.OfType<PullRequestTrigger>();
@@ -333,11 +333,12 @@ namespace PipelineGenerator.Conventions
 
                 newTrigger.Forks = new Forks
                 {
-                    AllowSecrets = true,
+                    AllowSecrets = securePipeline,
                     Enabled = true
                 };
+
                 newTrigger.RequireCommentsForNonTeamMembersOnly = false;
-                newTrigger.IsCommentRequiredForPullRequest = true;
+                newTrigger.IsCommentRequiredForPullRequest = securePipeline;
 
                 definition.Triggers.Add(newTrigger);
                 hasChanges = true;
@@ -366,16 +367,16 @@ namespace PipelineGenerator.Conventions
                         }
 
                     }
-                    if (trigger.RequireCommentsForNonTeamMembersOnly ||
-                       !trigger.Forks.AllowSecrets ||
-                       !trigger.Forks.Enabled ||
-                       !trigger.IsCommentRequiredForPullRequest
+                    if (trigger.RequireCommentsForNonTeamMembersOnly != false ||
+                       trigger.Forks.AllowSecrets != securePipeline ||
+                       trigger.Forks.Enabled != true ||
+                       trigger.IsCommentRequiredForPullRequest != securePipeline
                        )
                     {
-                        trigger.Forks.AllowSecrets = true;
+                        trigger.Forks.AllowSecrets = securePipeline;
                         trigger.Forks.Enabled = true;
                         trigger.RequireCommentsForNonTeamMembersOnly = false;
-                        trigger.IsCommentRequiredForPullRequest = true;
+                        trigger.IsCommentRequiredForPullRequest = securePipeline;
    
                         hasChanges = true;
                     }

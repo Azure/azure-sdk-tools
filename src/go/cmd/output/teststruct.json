@@ -110,36 +110,6 @@
    "Kind": 2
   },
   {
-   "DefinitionId": "Resp-SomeStruct",
-   "NavigateToId": null,
-   "Value": "Resp",
-   "Kind": 4
-  },
-  {
-   "DefinitionId": null,
-   "NavigateToId": null,
-   "Value": " ",
-   "Kind": 2
-  },
-  {
-   "DefinitionId": null,
-   "NavigateToId": null,
-   "Value": "*http.Response",
-   "Kind": 7
-  },
-  {
-   "DefinitionId": null,
-   "NavigateToId": null,
-   "Value": "",
-   "Kind": 1
-  },
-  {
-   "DefinitionId": null,
-   "NavigateToId": null,
-   "Value": "\t",
-   "Kind": 2
-  },
-  {
    "DefinitionId": "Foo-SomeStruct",
    "NavigateToId": null,
    "Value": "Foo",
@@ -155,6 +125,36 @@
    "DefinitionId": null,
    "NavigateToId": null,
    "Value": "*bool",
+   "Kind": 7
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "",
+   "Kind": 1
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "\t",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": "Resp-SomeStruct",
+   "NavigateToId": null,
+   "Value": "Resp",
+   "Kind": 4
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "*http.Response",
    "Kind": 7
   },
   {
@@ -250,7 +250,7 @@
   {
    "DefinitionId": null,
    "NavigateToId": null,
-   "Value": "c",
+   "Value": "s",
    "Kind": 7
   },
   {

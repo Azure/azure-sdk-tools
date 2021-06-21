@@ -135,7 +135,7 @@ func (c *content) addFunc(pkg pkg, f *ast.FuncDecl) {
 	// with the function name e.g. "FooReceiver.Method", else just the function name.
 	sig := ""
 	if f.Recv != nil {
-		sig = "(c "
+		sig = "(" + f.Recv.List[0].Names[0].Name + " "
 		sig += pkg.getText(f.Recv.List[0].Type.Pos(), f.Recv.List[0].Type.End())
 		// CP: changed to space, was a period before
 		sig += ") "

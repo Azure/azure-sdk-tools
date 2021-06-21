@@ -2,7 +2,6 @@ import subprocess
 import argparse
 import json
 import sys
-import pdb
 import os
 
 CONTAINER_NAME = "ambitious_azsdk_test_proxy"
@@ -23,7 +22,7 @@ def docker_interact(mode, root):
     try:
         subprocess.check_output(["docker", "--version"])
     except:
-        print("A invocation of docker --version failed. This indicates that docker is not properly installed or running.")
+        print("An invocation of docker --version failed. This indicates that docker is not properly installed or running.")
         print("Please check your docker invocation and try running the script again.")
         sys.exit(1)
 

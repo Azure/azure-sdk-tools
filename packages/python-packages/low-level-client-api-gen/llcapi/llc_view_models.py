@@ -407,7 +407,7 @@ class LLCOperationView(FormattingClass):
     def add_description(self):
         self.add_token(Token(kind=TokenKind.StartDocGroup))
         self.add_whitespace(3)
-        self.add_comment(None,self.description,None)
+        self.add_typename(None,self.description,None)
         self.add_new_line()
         self.add_token(Token(kind=TokenKind.EndDocGroup))
 
@@ -659,37 +659,7 @@ class SchemaRequest1():
                         self.json_format[properties['serializedName']] = self.elements
                         self.elements = self.to_json_formatting([properties])
         return self.elements
-        #     # this goes through the parameters
-        #     if param.get('schema'):
-        #         if param['schema'].get('elementType',[]):
-        #             for element in param['schema']['elementType'].get('properties',[]):
-        #                 elements1 =[]
-        #                 for source_num in range(0,len(element['schema'].get('properties',[]))):
-        #                     elements1.append(LLCParameterView(element['schema']['properties'][source_num]['language']['default']['name'],get_type(element['schema']['properties'][source_num]["schema"]),self.namespace,required=element.get('required')))
-        #                     self.json_format[element['serializedName']] = elements1
-        #                     elements.append(elements1)
-        #         for r_property in param['schema'].get('properties',[]):
-        #             self.json_format[r_property['serializedName']] = [LLCParameterView(r_property['serializedName'], get_type(r_property['schema']),self.namespace,required = r_property.get('required'))]
-        #             if r_property['schema'].get('elementType'):
-        #                 elements2 = []
-        #                 if r_property['schema']['elementType'].get('properties'):
-        #                     for element in r_property['schema']['elementType'].get('properties',[]):
-        #                         elements2 = []
-        #                         for source_num in range(0,len(element['schema'].get('properties',[]))):
-        #                             elements2.append(LLCParameterView(element['schema']['properties'][source_num]['language']['default']['name'],get_type(element['schema']['properties'][source_num]["schema"]),self.namespace,required=element.get('required')))
-        #                         if (element['schema'].get('elementType',[])):
-        #                             for source_num in range(0,len(element['schema']['elementType'].get('properties',[]))):
-        #                                 elements2.append(LLCParameterView( element['schema']['elementType']['properties'][source_num]['language']['default']['name'],get_type(element['schema']['elementType']['properties'][source_num]["schema"]),self.namespace,required=element.get('required')))
-        #                                 elements.append(elements2)
-        #                         self.json_format[element['serializedName']] = elements2
-                                
-        #             elif r_property['schema'].get('properties'):
-        #                 elements3 = []
-        #                 for obj_property in r_property['schema']['properties']:
-        #                     elements3.append([LLCParameterView(obj_property['serializedName'], get_type(obj_property['schema']),self.namespace,required = obj_property.get('required'))])
-        #                     elements.append(elements3)
-        #                 self.json_format[r_property['serializedName']].append(elements3)
-        # return elements
+       
     
     @classmethod
     def from_yaml(cls,yaml_data: Dict[str,Any],name):

@@ -7,7 +7,7 @@ DESCRIPTION = (
     "A llc stub generator for published APIs, variables and properties in a package"
 )
 
-with open(os.path.join("parse_yml", "_version.py"), "r") as fd:
+with open(os.path.join("llc_api", "_version.py"), "r") as fd:
     version = re.search(
         r'^VERSION\s*=\s*[\'"]([^\'"]*)[\'"]', fd.read(), re.MULTILINE
     ).group(1)
@@ -31,7 +31,7 @@ setup(
     packages=find_packages(),
     install_requires=["astroid"],
     python_requires=">=3.4.0",
-    entry_points={"console_scripts": ["apistubgen=apistub:console_entry_point",]},
+    entry_points={"console_scripts": ["low_level_client_api=llc_api:console_entry_point",]},
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Programming Language :: Python",

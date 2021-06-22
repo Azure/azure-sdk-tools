@@ -59,4 +59,20 @@ class TestParser:
         operation1 = LLCOperationView.from_yaml(data,0,1," ")
         assert operation1.json_request == {}
 
+    def _test_parameter_response(self):
+        path = "C:\\Users\\t-llawrence\\Desktop\\yaml\\translator_test.yaml"
+        with open(path) as f:
+            data = yaml.safe_load(f)
+        create_python_name(data)   
+        for i in range(0,8):
+            operation = LLCOperationView.from_yaml(data,0,i," ")
+            assert operation.json_response =={}
     
+    def _test_parameter_empty(self):
+        path = "C:\\Users\\t-llawrence\\Desktop\\yaml\\translator_test.yaml"
+        with open(path) as f:
+            data = yaml.safe_load(f)
+        create_python_name(data)   
+        
+        operation = LLCOperationView.from_yaml(data,0,8," ")
+        assert operation.parameters == []

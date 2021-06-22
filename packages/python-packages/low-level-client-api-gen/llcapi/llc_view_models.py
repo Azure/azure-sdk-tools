@@ -514,24 +514,28 @@ def request_builder(self, json_request, indent=4):
         if not isinstance(json_request, str):
             for i in json_request:
                 if isinstance(i, str):
-                    self.add_whitespace(indent)
-                    self.add_comment(None, i, None)
-                    self.add_space()
+                    if len(i)>0:
+                        self.add_whitespace(indent)
+                        self.add_comment(None, i, None)
+                        self.add_space()
                     if isinstance(json_request, list):
                         self.add_whitespace(5)
                         for j in range(0, len(json_request)):
-                            request_builder(self, json_request[j], True)
+                            request_builder(self, json_request[j], indent)
                     elif isinstance(json_request[i], list):
-                        self.add_new_line()
-                        for j in range(0, len(json_request[i])):
-                            request_builder(self, json_request[i][j], indent+1)
+                        if len(i)>0:
+                            self.add_new_line()
+                            for j in range(0, len(json_request[i])):
+                                request_builder(self, json_request[i][j], indent+1)
                     elif isinstance(json_request[i], str):
                         self.add_comment(None, json_request[i], None)
                         self.add_new_line()
                     elif isinstance(json_request[i], dict):
-                        self.add_new_line()
-                        # everytime this is called it needs to indent by one more, but bc it is recursive it doesn't
-                        request_builder(self, json_request[i], indent+1)
+                        if len(i)>0:
+                            self.add_new_line()
+                            request_builder(self, json_request[i], indent+1)
+                        else:
+                            request_builder(self, json_request[i], indent)
 
         else:
             self.add_new_line()

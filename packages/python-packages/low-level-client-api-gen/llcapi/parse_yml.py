@@ -111,7 +111,7 @@ def create_python_name(data):
                     w =  {'python':x['default']}
                     x.update(w)
                     data['schemas'][op_group][op]['elementType']['properties'][p]['language'] = x
-            if op_group =="choices":
+            if op_group =="choices" or op_group=="sealedChoices":
                     for o in range(0,len(data['schemas'][op_group][op].get('choices'))):
                         l = data['schemas'][op_group][op]['choices'][o]['language']
                         pa = {'python':l['default']}

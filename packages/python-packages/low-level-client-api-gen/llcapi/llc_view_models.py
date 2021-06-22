@@ -629,51 +629,6 @@ class Navigation:
     def add_child(self, child):
         self.ChildItems.append(child)
 
-class SchemaRequest1():
-    def __init__(self,media_types,parameters,namespace):
-        self.parameters = parameters
-        self.media_types = media_types
-        self.namespace = namespace
-        self.json_format = {}
-        self.elements = []
-
-    def to_json_formatting(self, parameters):
-        elements1 = []
-        for param in parameters:
-            for index in param.get('schema'):
-                if index=='properties':
-                    for properties in param['schema']['properties']:
-                        self.elements = (LLCParameterView(properties['serializedName'],get_type(properties['schema']),
-                        self.namespace,required = properties.get('required')))
-                        self.json_format[properties['serializedName']] = self.elements
-                        if properties['schema'].get('elementType'):
-                            for prop in properties['schema']['elementType'].get('properties'):
-                                self.elements = LLCParameterView( prop['language']['default']['name'],get_type(prop["schema"]),
-                                self.namespace,required=prop.get('required'))
-                                self.json_format[prop['serializedName']] = self.elements
-                                self.elements = self.to_json_formatting([prop])
-                if index=='elementType':
-                    for properties in param['schema']['elementType'].get('properties'):
-                        self.elements = LLCParameterView( properties['language']['default']['name'],get_type(properties["schema"]),
-                        self.namespace,required=properties.get('required'))
-                        self.json_format[properties['serializedName']] = self.elements
-                        self.elements = self.to_json_formatting([properties])
-        return self.elements
-       
-    
-    @classmethod
-    def from_yaml(cls,yaml_data: Dict[str,Any],name):
-        parameters = []
-        parameters = yaml_data.get("signatureParameters", [])
-        # json_request={SchemaRequest.from_yaml(yaml) for yaml in yaml_data["requests"]}
-        return cls(
-            media_types = None,
-            parameters = parameters,
-            namespace =name,
-            # json_format = json_request
-        )
-
-
 def get_type(data,page=False):
     #Get type
     try:

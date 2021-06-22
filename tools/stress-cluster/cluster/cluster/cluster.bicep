@@ -23,6 +23,7 @@ var subnetPrefix = '20.0.0.0/24'
 var virtualNetworkName = 'vnet-${dnsPrefix}-${clusterName}'
 var nodeResourceGroup = 'rg-nodes-${dnsPrefix}-${clusterName}-${groupSuffix}'
 var agentPoolName = 'agentpool01'
+var registryName = '${replace(clusterName, '-', '')}registry'
 
 resource vn 'Microsoft.Network/virtualNetworks@2020-06-01' = {
   name: virtualNetworkName
@@ -101,6 +102,15 @@ resource metricsPublisher 'Microsoft.Authorization/roleAssignments@2020-04-01-pr
     // NOTE: using objectId over clientId seems to handle cross-region propagation delays better for newly created identities
     principalId: cluster.properties.addonProfiles.omsagent.identity.objectId
   }
+}
+
+module containerRegistry 'acr.bicep' = {
+    name: 'containerRegistry'
+    params: {
+        registryName: registryName
+        location: location
+        objectId: cluster.properties.identityProfile.kubeletidentity.objectId
+    }
 }
 
 output secretProviderObjectId string = cluster.properties.addonProfiles.azureKeyvaultSecretsProvider.identity.objectId

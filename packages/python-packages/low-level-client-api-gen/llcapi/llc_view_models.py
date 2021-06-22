@@ -196,7 +196,6 @@ class LLCClientView(FormattingClass):
         obj_dict['Language'] = self.Language
         return obj_dict
     
-    
 class LLCOperationGroupView(FormattingClass):
     def __init__(self, operation_group_name, operations, namespace):
         self.operation_group=operation_group_name

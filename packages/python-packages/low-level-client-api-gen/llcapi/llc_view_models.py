@@ -103,7 +103,10 @@ class LLCClientView(FormattingClass):
                 yaml_data, op_groups, "Azure."+yaml_data["info"]["title"])
             operation_group = LLCOperationGroupView(
                 operation_group_view.operation_group, operation_group_view.operations, "Azure."+yaml_data["info"]["title"])
-            operation_groups.append(operation_group)
+            if operation_group.operation_group == "":
+                operation_group.operation_group = "<default>"
+                operation_groups.insert(0,operation_group)
+            else: operation_groups.append(operation_group)
 
         return cls(
             operation_groups=operation_groups,
@@ -650,9 +653,14 @@ class LLCParameterView(FormattingClass):
                 self.overview_tokens.append(Token("=", TokenKind.Text))
                 self.add_space()
                 self.overview_tokens.append(Token(" ", TokenKind.Text))
-                self.add_text(None, str(self.default), None)
-                self.overview_tokens.append(
-                    Token(str(self.default), TokenKind.Text))
+                if self.type == "string":
+                    self.add_text(None, "'"+str(self.default)+"'", None)
+                    self.overview_tokens.append(
+                        Token("'"+str(self.default)+"'", TokenKind.Text))
+                else:
+                    self.add_text(None, str(self.default), None)
+                    self.overview_tokens.append(
+                        Token(str(self.default), TokenKind.Text))
 
     def to_json(self):
         obj_dict = {}
@@ -723,6 +731,8 @@ def get_type(data, page=False):
                 return_type = "int32"
             if data['precision'] == 64:
                 return_type = "int64"
+        if return_type == 'boolean':
+            return_type = "bool"
         else:
             return_type = return_type
     except:

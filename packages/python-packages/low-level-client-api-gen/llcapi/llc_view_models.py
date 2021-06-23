@@ -10,7 +10,7 @@ JSON_FIELDS = ["Name", "Version", "VersionString",
                "Navigation", "Tokens", "Diagnostics", "PackageName"]
 PARAM_FIELDS = ["name", "type", "default", "optional", "indent"]
 OP_FIELDS = ["operation", "parameters", "indent"]
-
+R_TYPE = ['dictionary','string','bool','int32','int64','float32','float64']
 
 class FormattingClass:
     def add_whitespace(self, indent):
@@ -411,33 +411,38 @@ class LLCOperationView(FormattingClass):
 
     def add_first_line(self):
         if self.paging and self.lro:
-            self.overview_tokens.append(Token("PagingLRO", TokenKind.Text))
-            self.overview_tokens.append(Token("[", TokenKind.Text))
-            self.add_text(None, "PagingLRO", None)
-            self.add_text(None, "[", None)
+            self.overview_tokens.append(Token("PagingLro", TokenKind.TypeName))
+            self.overview_tokens.append(Token("[", TokenKind.StringLiteral))
+            self.add_typename(None, "PagingLro", None)
+            self.add_stringliteral(None, "[", None)
 
         if self.paging:
-            self.overview_tokens.append(Token("Paging", TokenKind.Text))
-            self.overview_tokens.append(Token("[", TokenKind.Text))
-            self.add_text(None, "Paging", None)
-            self.add_text(None, "[", None)
+            self.overview_tokens.append(Token("Paging", TokenKind.TypeName))
+            self.overview_tokens.append(Token("[", TokenKind.StringLiteral))
+            self.add_typename(None, "Paging", None)
+            self.add_stringliteral(None, "[", None)
 
         if self.lro:
-            self.overview_tokens.append(Token("LRO", TokenKind.Text))
-            self.overview_tokens.append(Token("[", TokenKind.Text))
-            self.add_text(None, "LRO", None)
-            self.add_text(None, "[", None)
+            self.overview_tokens.append(Token("lro", TokenKind.TypeName))
+            self.overview_tokens.append(Token("[", TokenKind.StringLiteral))
+            self.add_typename(None, "lro", None)
+            self.add_stringliteral(None, "[", None)
 
         if self.return_type is None:
-            self.overview_tokens.append(Token("void", TokenKind.StringLiteral))
-            self.add_stringliteral(None, "void", None)
+            self.overview_tokens.append(Token("void", TokenKind.TypeName))
+            self.add_typename(None, "void", None)
 
-        self.add_stringliteral(None, self.return_type, None)
-        self.overview_tokens.append(
-            Token(self.return_type, TokenKind.StringLiteral))
+        elif any(i in self.return_type for i in R_TYPE):
+            self.add_typename(None, self.return_type, None)
+            self.overview_tokens.append(
+                Token(self.return_type, TokenKind.TypeName))
+        else:
+            self.add_stringliteral(None, self.return_type, None)
+            self.overview_tokens.append(
+                Token(self.return_type, TokenKind.StringLiteral))
         if self.paging or self.lro:
-            self.add_text(None, "]", None)
-            self.overview_tokens.append(Token("]", TokenKind.Text))
+            self.add_stringliteral(None, "]", None)
+            self.overview_tokens.append(Token("]", TokenKind.StringLiteral))
 
         self.add_space()
         self.overview_tokens.append(Token(" ", TokenKind.Text))

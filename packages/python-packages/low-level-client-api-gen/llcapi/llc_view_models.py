@@ -154,7 +154,7 @@ class LLCClientView(FormattingClass):
         self.add_new_line()
         for operation_group in self.Operation_Groups:
             child_nav3 = Navigation(operation_group.operation_group,
-                            self.namespace + operation_group.operation_group+ "overview")
+                            self.namespace + operation_group.operation_group+"overview")
             child_nav3.set_tag(NavigationTag(Kind.type_class))
             overview.add_child(child_nav3)
             operation_group.to_token()
@@ -162,11 +162,16 @@ class LLCClientView(FormattingClass):
             for token in operation_tokens:
                 if token:
                     self.add_token(token)
+            for operation_view in operation_group.operations:
+                child_nav2 = Navigation(
+                operation_view.operation, self.namespace + operation_view.operation+"overview")
+                child_nav2.set_tag(NavigationTag(Kind.type_method))
+                child_nav3.add_child(child_nav2)
             self.add_new_line(1)
 
         self.add_typename("details","Details ######################################################################","details")
         self.add_new_line()
-        details = self.to_child_tokens(child_nav3)
+        details = self.to_child_tokens()
         
         self.add_new_line()
 
@@ -178,7 +183,7 @@ class LLCClientView(FormattingClass):
 
         return self.Tokens
 
-    def to_child_tokens(self,child_nav3):
+    def to_child_tokens(self):
         # Set Navigation
         details = Navigation("Details", "details")
         details.set_tag(NavigationTag(Kind.type_package))
@@ -201,10 +206,6 @@ class LLCClientView(FormattingClass):
                 child_nav.set_tag(NavigationTag(Kind.type_method))
                 child_nav1.add_child(child_nav)
 
-                child_nav2 = Navigation(
-                    operation_view.operation, self.namespace + operation_view.operation+"overview")
-                child_nav2.set_tag(NavigationTag(Kind.type_method))
-                child_nav3.add_child(child_nav2)
         return details
 
     def to_json(self):
@@ -438,7 +439,7 @@ class LLCOperationView(FormattingClass):
         self.add_space()
         self.overview_tokens.append(Token(" ", TokenKind.Text))
         token = Token(self.operation, TokenKind.Keyword)
-        token.set_definition_id(self.namespace+self.operation+"overview")
+        token.set_definition_id(self.namespace+self.operation)
         token.set_navigation_id(self.namespace+self.operation+"overview")
         self.overview_tokens.append(token)
         self.add_keyword(self.namespace+self.operation,

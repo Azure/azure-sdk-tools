@@ -429,13 +429,13 @@ class LLCOperationView(FormattingClass):
             self.add_stringliteral(None, "[", None)
 
         if self.return_type is None:
-            self.overview_tokens.append(Token("void", TokenKind.TypeName))
-            self.add_typename(None, "void", None)
+            self.overview_tokens.append(Token("void", TokenKind.Text))
+            self.add_text(None, "void", None)
 
         elif any(i in self.return_type for i in R_TYPE):
-            self.add_typename(None, self.return_type, None)
+            self.add_text(None, self.return_type, None)
             self.overview_tokens.append(
-                Token(self.return_type, TokenKind.TypeName))
+                Token(self.return_type, TokenKind.Text))
         else:
             self.add_stringliteral(None, self.return_type, None)
             self.overview_tokens.append(

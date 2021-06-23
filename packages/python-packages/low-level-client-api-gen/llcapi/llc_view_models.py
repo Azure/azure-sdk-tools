@@ -150,11 +150,11 @@ class LLCClientView(FormattingClass):
         overview = Navigation("Overview","overview")
         overview.set_tag(NavigationTag(Kind.type_package))
     
-        self.add_typename(None,"Overview ######################################################################",None)
+        self.add_typename("overview","Overview ######################################################################","overview")
         self.add_new_line()
         for operation_group in self.Operation_Groups:
             child_nav3 = Navigation(operation_group.operation_group,
-                            self.namespace + operation_group.operation_group+"overview")
+                            self.namespace + operation_group.operation_group+ "overview")
             child_nav3.set_tag(NavigationTag(Kind.type_class))
             overview.add_child(child_nav3)
             operation_group.to_token()
@@ -164,7 +164,7 @@ class LLCClientView(FormattingClass):
                     self.add_token(token)
             self.add_new_line(1)
 
-        self.add_typename(None,"Details ######################################################################",None)
+        self.add_typename("details","Details ######################################################################","details")
         self.add_new_line()
         details = self.to_child_tokens(child_nav3)
         
@@ -180,7 +180,7 @@ class LLCClientView(FormattingClass):
 
     def to_child_tokens(self,child_nav3):
         # Set Navigation
-        details = Navigation("Details", None)
+        details = Navigation("Details", "details")
         details.set_tag(NavigationTag(Kind.type_package))
         self.add_new_line()
         for operation_group_view in self.Operation_Groups:
@@ -197,7 +197,7 @@ class LLCClientView(FormattingClass):
             for operation_view in operation_group_view.operations:
                  # Add operation comments
                 child_nav = Navigation(
-                    operation_view.operation, self.namespace + operation_view.operation+"overview")
+                    operation_view.operation, self.namespace + operation_view.operation)
                 child_nav.set_tag(NavigationTag(Kind.type_method))
                 child_nav1.add_child(child_nav)
 
@@ -269,8 +269,10 @@ class LLCOperationGroupView(FormattingClass):
             self.overview_tokens.append(Token(" ", TokenKind.Text))
             self.add_keyword(self.namespace+self.operation_group,
                              self.operation_group, self.namespace+self.operation_group)
-            self.overview_tokens.append(
-                Token(self.operation_group, TokenKind.Keyword))
+            token = Token(self.operation_group, TokenKind.Keyword)
+            token.set_navigation_id(self.namespace+self.operation_group+"overview")
+            token.set_definition_id(self.namespace+self.operation_group+"overview")
+            self.overview_tokens.append(token)
 
             self.add_new_line()
             self.overview_tokens.append(Token("", TokenKind.Newline))
@@ -436,7 +438,8 @@ class LLCOperationView(FormattingClass):
         self.add_space()
         self.overview_tokens.append(Token(" ", TokenKind.Text))
         token = Token(self.operation, TokenKind.Keyword)
-        token.set_definition_id(self.namespace+self.operation)
+        token.set_definition_id(self.namespace+self.operation+"overview")
+        token.set_navigation_id(self.namespace+self.operation+"overview")
         self.overview_tokens.append(token)
         self.add_keyword(self.namespace+self.operation,
                          self.operation, self.namespace+self.operation)

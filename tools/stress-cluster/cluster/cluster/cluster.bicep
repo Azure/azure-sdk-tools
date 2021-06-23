@@ -5,6 +5,7 @@ param dnsPrefix string = 's1'
 param clusterName string
 param location string = resourceGroup().location
 param agentVMSize string = 'Standard_D2_v3'
+param accessGroups array
 
 @minValue(1)
 @maxValue(50)
@@ -109,7 +110,7 @@ module containerRegistry 'acr.bicep' = {
     params: {
         registryName: registryName
         location: location
-        objectId: cluster.properties.identityProfile.kubeletidentity.objectId
+        objectIds: concat(accessGroups, array(cluster.properties.identityProfile.kubeletidentity.objectId))
     }
 }
 

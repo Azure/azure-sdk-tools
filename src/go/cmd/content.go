@@ -10,6 +10,7 @@ import (
 	"sort"
 	"strings"
 	"unicode"
+	"unicode/utf8"
 )
 
 // skip adding the const type in the token list
@@ -150,7 +151,7 @@ func (c *content) addFunc(pkg pkg, f *ast.FuncDecl) {
 	sig := ""
 	if f.Recv != nil {
 		receiver := pkg.getText(f.Recv.List[0].Type.Pos(), f.Recv.List[0].Type.End())
-		if unicode.IsLower(rune(receiver[0])) || (string(receiver[0]) == "*" && unicode.IsLower(rune(receiver[1]))) {
+		if !isExported(receiver) {
 			// skip adding methods on unexported receivers
 			return
 		}
@@ -418,4 +419,12 @@ func (c *content) generateNavChildItems() []Navigation {
 		})
 	}
 	return childItems
+}
+
+func isExported(name string) bool {
+	if string(name[0]) == "*" {
+		name = name[1:]
+	}
+	ch, _ := utf8.DecodeRuneInString(name)
+	return unicode.IsUpper(ch)
 }

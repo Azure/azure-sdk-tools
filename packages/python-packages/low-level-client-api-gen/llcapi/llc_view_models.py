@@ -439,7 +439,7 @@ class LLCOperationView(FormattingClass):
         self.add_space()
         self.overview_tokens.append(Token(" ", TokenKind.Text))
         token = Token(self.operation, TokenKind.Keyword)
-        token.set_definition_id(self.namespace+self.operation)
+        token.set_definition_id(self.namespace+self.operation+"overview")
         token.set_navigation_id(self.namespace+self.operation+"overview")
         self.overview_tokens.append(token)
         self.add_keyword(self.namespace+self.operation,
@@ -625,7 +625,7 @@ class LLCParameterView(FormattingClass):
 
         if self.type is not None:
             # Create parameter type token
-            self.add_stringliteral(self.namespace+self.type, self.type, None)
+            self.add_stringliteral(None, self.type, None)
             self.overview_tokens.append(
                 Token(self.type, TokenKind.StringLiteral))
 
@@ -637,8 +637,10 @@ class LLCParameterView(FormattingClass):
             self.add_space()
             self.overview_tokens.append(Token(" ", TokenKind.Text))
             # Create parameter name token
-            self.add_text(None, self.name, None)
-            self.overview_tokens.append(Token(self.name, TokenKind.Text))
+            self.add_text(self.namespace+self.type, self.name, None)
+            token = Token(self.name, TokenKind.Text)
+            token.set_navigation_id(self.name+"overview")
+            self.overview_tokens.append(token)
 
             # Check if parameter has a default value or not
             if self.default is not None:

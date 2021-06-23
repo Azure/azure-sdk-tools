@@ -115,3 +115,4 @@ module containerRegistry 'acr.bicep' = {
 }
 
 output secretProviderObjectId string = cluster.properties.addonProfiles.azureKeyvaultSecretsProvider.identity.objectId
+output secretProviderClientId string = cluster.properties.addonProfiles.azureKeyvaultSecretsProvider.identity.clientId

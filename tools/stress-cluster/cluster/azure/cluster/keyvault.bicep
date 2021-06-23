@@ -1,6 +1,6 @@
 param tags object = {}
 param location string = resourceGroup().location
-param keyVaultName string
+param keyvaultName string
 param tenantId string = subscription().tenantId
 param objectIds array
 
@@ -20,7 +20,7 @@ param secretsPermissions array = [
 param skuName string = 'standard'
 
 resource vault 'Microsoft.KeyVault/vaults@2019-09-01' = {
-    name: keyVaultName
+    name: keyvaultName
     location: location
     tags: tags
     properties: {
@@ -49,3 +49,5 @@ resource secrets 'Microsoft.KeyVault/vaults/secrets@2018-02-14' = [for secret in
         value: secret.secretValue
     }
 }]
+
+output keyvaultName string = keyvaultName

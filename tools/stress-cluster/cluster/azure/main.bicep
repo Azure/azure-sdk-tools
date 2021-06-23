@@ -55,21 +55,28 @@ module cluster 'cluster/cluster.bicep' = {
     }
 }
 
+var appInsightsInstrumentationKeyName = 'appInsightsInstrumentationKey-${resourceSuffix}'
+
 module keyvault 'cluster/keyvault.bicep' = if (enableMonitoring) {
     name: 'keyvault'
     scope: group
     params: {
-        keyVaultName: 'stress-kv-${resourceSuffix}'  // 24 character max length
+        keyvaultName: 'stress-kv-${resourceSuffix}'  // 24 character max length
         location: clusterLocation
         tags: tags
         objectIds: concat(accessGroups, array(cluster.outputs.secretProviderObjectId))
         secretsObject: {
             secrets: [
                 {
-                    secretName: 'appInsightsInstrumentationKey-${resourceSuffix}'
+                    secretName: appInsightsInstrumentationKeyName
                     secretValue: appInsights.outputs.instrumentationKey
                 }
             ]
         }
     }
 }
+
+output TENANT_ID string = subscription().tenantId
+output SECRET_PROVIDER_CLIENT_ID string = cluster.outputs.secretProviderClientId
+output KEYVAULT_NAME string = keyvault.outputs.keyvaultName
+output APPINSIGHTS_KEY_NAME string = appInsightsInstrumentationKeyName

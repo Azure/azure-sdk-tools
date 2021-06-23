@@ -8,8 +8,8 @@ Azure Bicep comes pre-installed with the Azure CLI, and is a DSL for generating 
 
 - [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
     - If using app insights, install the az extension: `az extension add --name application-insights`
-- [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) (if accessing clusters)
-- [kind](https://github.com/kubernetes-sigs/kind/releases) (if deploying/testing locally)
+- [kubectl version](https://kubernetes.io/docs/tasks/tools/#kubectl) (if accessing clusters)
+- [kind](https://github.com/kubernetes-sigs/kind/releases) (if testing locally)
 - [Docker](https://docs.docker.com/get-docker/) (if deploying/testing locally)
     - If using Windows Subsystem for Linux (WSL), prefer [Docker Desktop](https://docs.docker.com/docker-for-windows/wsl/)
 
@@ -17,10 +17,10 @@ Azure Bicep comes pre-installed with the Azure CLI, and is a DSL for generating 
 
 ## Deploying a Personal Dev Cluster
 
-First, update the `./parameters/dev.json` parameters file with the values marked `// add me`, then:
+First, update the `./azure/parameters/dev.json` parameters file with the values marked `// add me`, then:
 
 ```
-az deployment sub create -o json -n <your name> -l westus -f ./main.bicep --parameters ./parameters/dev.json
+az deployment sub create -o json -n <your name> -l westus -f ./azure/main.bicep --parameters ./azure/parameters/dev.json
 
 # wait until resource group and AKS cluster are deployed
 az aks get-credentials stress-azuresdk -g rg-stress-test-cluster-<group suffix parameter>
@@ -55,15 +55,15 @@ Bicep also has a [VSCode extension](https://marketplace.visualstudio.com/items?i
 To validate file changes/compilation:
 
 ```
-az bicep build -f ./main.bicep
+az bicep build -f ./azure/main.bicep
 ```
 
 To deploy and access resources:
 
 ```
-# Edit ./parameters/dev.json, replacing // add me values
+# Edit ./azure/parameters/dev.json, replacing // add me values
 # Add -c to dry run changes with a chance to confirm
-az deployment sub create -o json -n <your name> -l westus -f ./main.bicep --parameters ./parameters/dev.json
+az deployment sub create -o json -n <your name> -l westus -f ./azure/main.bicep --parameters ./azure/parameters/dev.json
 
 az aks list -g rg-stress-test-cluster-<group suffix parameter>
 az aks get-credentials stress-azuresdk -g rg-stress-test-cluster-<group suffix parameter>
@@ -103,7 +103,7 @@ If not already done, enable the relevant preview features in the subscription an
 - [AKS-AzureKeyVaultSecretsProvider](https://docs.microsoft.com/en-us/azure/aks/csi-secrets-store-driver#register-the-aks-azurekeyvaultsecretsprovider-preview-feature)
 
 ```
-az deployment sub create -o json -n stress-test-prod -l westus -f ./main.bicep --parameters ./parameters/prod.json
+az deployment sub create -o json -n stress-test-prod -l westus -f ./azure/main.bicep --parameters ./azure/parameters/prod.json
 # wait until resource group and AKS cluster are deployed
 az aks get-credentials stress-azuresdk -g rg-stress-test-cluster-prod
 helm repo add chaos-mesh https://charts.chaos-mesh.org

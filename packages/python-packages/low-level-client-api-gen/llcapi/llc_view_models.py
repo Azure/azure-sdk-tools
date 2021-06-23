@@ -145,7 +145,18 @@ class LLCClientView(FormattingClass):
         self.add_new_line(1)
 
         # Create Overview
+        navigation = Navigation(None, None)
+        navigation.set_tag(NavigationTag(Kind.type_package))
+        overview = Navigation("Overview","overview")
+        overview.set_tag(NavigationTag(Kind.type_package))
+    
+        self.add_typename(None,"Overview ######################################################################",None)
+        self.add_new_line()
         for operation_group in self.Operation_Groups:
+            child_nav3 = Navigation(operation_group.operation_group,
+                            self.namespace + operation_group.operation_group+"overview")
+            child_nav3.set_tag(NavigationTag(Kind.type_class))
+            overview.add_child(child_nav3)
             operation_group.to_token()
             operation_tokens = operation_group.overview_tokens
             for token in operation_tokens:
@@ -153,40 +164,48 @@ class LLCClientView(FormattingClass):
                     self.add_token(token)
             self.add_new_line(1)
 
-        navigation = self.to_child_tokens()
-
+        self.add_typename(None,"Details ######################################################################",None)
+        self.add_new_line()
+        details = self.to_child_tokens(child_nav3)
+        
         self.add_new_line()
 
         self.add_punctuation("}")
 
+        navigation.add_child(overview)
+        navigation.add_child(details)
         self.add_navigation(navigation)
 
         return self.Tokens
 
-    def to_child_tokens(self):
+    def to_child_tokens(self,child_nav3):
         # Set Navigation
-        navigation = Navigation(self.namespace, None)
-        navigation.set_tag(NavigationTag(Kind.type_package))
-        self.add_new_line(1)
+        details = Navigation("Details", None)
+        details.set_tag(NavigationTag(Kind.type_package))
+        self.add_new_line()
         for operation_group_view in self.Operation_Groups:
             # Add children
-            child_nav = Navigation(operation_group_view.operation_group,
+            child_nav1 = Navigation(operation_group_view.operation_group,
                                    self.namespace + operation_group_view.operation_group)
-            child_nav.set_tag(NavigationTag(Kind.type_class))
-            navigation.add_child(child_nav)
+            child_nav1.set_tag(NavigationTag(Kind.type_class))
+            details.add_child(child_nav1)
             op_group = operation_group_view.get_tokens()
             for token in op_group:
                 self.add_token(token)
             # Set up operations and add to token
 
             for operation_view in operation_group_view.operations:
-                # Add operation comments
-                child_nav1 = Navigation(
-                    operation_view.operation, self.namespace + operation_view.operation)
-                child_nav1.set_tag(NavigationTag(Kind.type_method))
-                child_nav.add_child(child_nav1)
+                 # Add operation comments
+                child_nav = Navigation(
+                    operation_view.operation, self.namespace + operation_view.operation+"overview")
+                child_nav.set_tag(NavigationTag(Kind.type_method))
+                child_nav1.add_child(child_nav)
 
-        return navigation
+                child_nav2 = Navigation(
+                    operation_view.operation, self.namespace + operation_view.operation+"overview")
+                child_nav2.set_tag(NavigationTag(Kind.type_method))
+                child_nav3.add_child(child_nav2)
+        return details
 
     def to_json(self):
         obj_dict = {}

@@ -15,35 +15,9 @@ param agentCount int = 3
 param enableMonitoring bool = false
 param workspaceId string
 
-var kubernetesVersion = '1.18.19'
-var subnetRef = '${vn.id}/subnets/${subnetName}'
-var addressPrefix = '20.0.0.0/16'
-var subnetName = 'Subnet01'
-var subnetPrefix = '20.0.0.0/24'
-var virtualNetworkName = 'vnet-${dnsPrefix}-${clusterName}'
+var kubernetesVersion = '1.20.5'
 var nodeResourceGroup = 'rg-nodes-${dnsPrefix}-${clusterName}-${groupSuffix}'
 var agentPoolName = 'agentpool01'
-
-resource vn 'Microsoft.Network/virtualNetworks@2020-06-01' = {
-  name: virtualNetworkName
-  location: location
-  tags: tags
-  properties: {
-    addressSpace: {
-      addressPrefixes: [
-        addressPrefix
-      ]
-    }
-    subnets: [
-      {
-        name: subnetName
-        properties: {
-          addressPrefix: subnetPrefix
-        }
-      }
-    ]
-  }
-}
 
 resource cluster 'Microsoft.ContainerService/managedClusters@2020-09-01' = {
   name: clusterName
@@ -76,17 +50,12 @@ resource cluster 'Microsoft.ContainerService/managedClusters@2020-09-01' = {
         type: 'VirtualMachineScaleSets'
         osType: 'Linux'
         enableAutoScaling: false
-        vnetSubnetID: subnetRef
       }
     ]
     servicePrincipalProfile: {
       clientId: 'msi'
     }
     nodeResourceGroup: nodeResourceGroup
-    networkProfile: {
-      networkPlugin: 'azure'
-      loadBalancerSku: 'standard'
-    }
   }
 }
 

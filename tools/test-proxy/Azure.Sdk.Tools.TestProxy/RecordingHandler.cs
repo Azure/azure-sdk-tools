@@ -8,8 +8,10 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -138,13 +140,15 @@ namespace Azure.Sdk.Tools.TestProxy
             }
 
             var entry = await CreateEntryAsync(incomingRequest).ConfigureAwait(false);
+
             var upstreamRequest = CreateUpstreamRequest(incomingRequest, entry.Request.Body);
             var upstreamResponse = await client.SendAsync(upstreamRequest).ConfigureAwait(false);
 
             var headerListOrig = incomingRequest.Headers.Select(x => String.Format("{0}: {1}", x.Key, x.Value.First())).ToList();
             var headerList = upstreamRequest.Headers.Select(x => String.Format("{0}: {1}", x.Key, x.Value.First())).ToList();
 
-            var body = await upstreamResponse.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
+            var body = DecompressBody(await upstreamResponse.Content.ReadAsByteArrayAsync().ConfigureAwait(false), upstreamResponse.Content.Headers);
+
             entry.Response.Body = body.Length == 0 ? null : body;
             entry.StatusCode = (int)upstreamResponse.StatusCode;
             session.ModifiableSession.Session.Entries.Add(entry);
@@ -163,9 +167,49 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (entry.Response.Body?.Length > 0)
             {
-                outgoingResponse.ContentLength = entry.Response.Body.Length;
-                await outgoingResponse.Body.WriteAsync(entry.Response.Body).ConfigureAwait(false);
+                var bodyData = CompressBody(entry.Response.Body, entry.Response.Headers);
+
+                outgoingResponse.ContentLength = bodyData.Length;
+                await outgoingResponse.Body.WriteAsync(bodyData).ConfigureAwait(false);
             }
+        }
+
+        private byte[] CompressBody(byte[] incomingBody, SortedDictionary<string, string[]> headers)
+        {
+            if (headers.TryGetValue("Content-Encoding", out var values))
+            {
+                if (values.Contains("gzip"))
+                {
+                    using (var compressedStream = new MemoryStream(incomingBody))
+                    using (var zipStream = new GZipStream(compressedStream, CompressionMode.Compress))
+                    using (var resultStream = new MemoryStream())
+                    {
+                        resultStream.CopyTo(zipStream);
+                        return resultStream.ToArray();
+                    }
+                }
+            }
+
+            return incomingBody;
+        }
+
+        private byte[] DecompressBody(byte[] incomingBody, HttpContentHeaders headers)
+        {
+            if (headers.TryGetValues("Content-Encoding", out var values))
+            {
+                if (values.Contains("gzip"))
+                {
+                    using (var compressedStream = new MemoryStream(incomingBody))
+                    using (var zipStream = new GZipStream(compressedStream, CompressionMode.Decompress))
+                    using (var resultStream = new MemoryStream())
+                    {
+                        zipStream.CopyTo(resultStream);
+                        return resultStream.ToArray();
+                    }
+                }
+            }
+
+            return incomingBody;
         }
 
         private HttpRequestMessage CreateUpstreamRequest(HttpRequest incomingRequest, byte[] incomingBody)
@@ -274,7 +318,7 @@ namespace Azure.Sdk.Tools.TestProxy
             }
         }
 
-        public async Task Playback(string recordingId, HttpRequest incomingRequest, HttpResponse outgoingResponse)
+        public async Task HandlePlaybackRequest(string recordingId, HttpRequest incomingRequest, HttpResponse outgoingResponse)
         {
             if (!PlaybackSessions.TryGetValue(recordingId, out var session))
             {
@@ -312,8 +356,10 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (match.Response.Body?.Length > 0)
             {
-                outgoingResponse.ContentLength = match.Response.Body.Length;
-                await outgoingResponse.Body.WriteAsync(match.Response.Body).ConfigureAwait(false);
+                var bodyData = CompressBody(match.Response.Body, match.Response.Headers);
+
+                outgoingResponse.ContentLength = bodyData.Length;
+                await outgoingResponse.Body.WriteAsync(bodyData).ConfigureAwait(false);
             }
         }
 

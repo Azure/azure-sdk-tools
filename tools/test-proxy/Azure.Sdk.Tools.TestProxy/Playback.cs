@@ -48,7 +48,7 @@ namespace Azure.Sdk.Tools.TestProxy
         {
             string id = RecordingHandler.GetHeader(Request, "x-recording-id");
 
-            await _recordingHandler.Playback(id, Request, Response);
+            await _recordingHandler.HandlePlaybackRequest(id, Request, Response);
         }
 
     }

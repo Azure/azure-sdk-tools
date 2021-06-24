@@ -51,11 +51,20 @@ module cluster 'cluster/cluster.bicep' = {
         groupSuffix: groupSuffix
         enableMonitoring: enableMonitoring
         workspaceId: enableMonitoring ? logWorkspace.outputs.id : ''
-        accessGroups: accessGroups
     }
 }
 
 var appInsightsInstrumentationKeyName = 'appInsightsInstrumentationKey-${resourceSuffix}'
+
+module containerRegistry 'cluster/acr.bicep' = {
+    name: 'containerRegistry'
+    scope: group
+    params: {
+        registryName: '${replace(clusterName, '-', '')}registry'
+        location: clusterLocation
+        objectIds: concat(accessGroups, array(cluster.outputs.kubeletIdentityObjectId))
+    }
+}
 
 module keyvault 'cluster/keyvault.bicep' = if (enableMonitoring) {
     name: 'keyvault'
@@ -76,7 +85,10 @@ module keyvault 'cluster/keyvault.bicep' = if (enableMonitoring) {
     }
 }
 
-output TENANT_ID string = subscription().tenantId
 output SECRET_PROVIDER_CLIENT_ID string = cluster.outputs.secretProviderClientId
-output KEYVAULT_NAME string = keyvault.outputs.keyvaultName
 output APPINSIGHTS_KEY_NAME string = appInsightsInstrumentationKeyName
+output KEYVAULT_NAME string = keyvault.outputs.keyvaultName
+output CLUSTER_NAME string = cluster.outputs.clusterName
+output CONTAINER_REGISTRY_NAME string = containerRegistry.outputs.containerRegistryName
+output RESOURCE_GROUP string = group.name
+output TENANT_ID string = subscription().tenantId

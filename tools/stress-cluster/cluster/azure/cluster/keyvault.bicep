@@ -19,7 +19,7 @@ param secretsPermissions array = [
 ])
 param skuName string = 'standard'
 
-resource vault 'Microsoft.KeyVault/vaults@2019-09-01' = {
+resource keyvault 'Microsoft.KeyVault/vaults@2019-09-01' = {
     name: keyvaultName
     location: location
     tags: tags
@@ -44,10 +44,10 @@ resource vault 'Microsoft.KeyVault/vaults@2019-09-01' = {
 }
 
 resource secrets 'Microsoft.KeyVault/vaults/secrets@2018-02-14' = [for secret in secretsObject.secrets: {
-    name: '${vault.name}/${secret.secretName}'
+    name: '${keyvault.name}/${secret.secretName}'
     properties: {
         value: secret.secretValue
     }
 }]
 
-output keyvaultName string = keyvaultName
+output keyvaultName string = keyvault.name

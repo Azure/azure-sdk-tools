@@ -5,7 +5,6 @@ param dnsPrefix string = 's1'
 param clusterName string
 param location string = resourceGroup().location
 param agentVMSize string = 'Standard_D2_v3'
-param accessGroups array
 
 @minValue(1)
 @maxValue(50)
@@ -16,7 +15,7 @@ param agentCount int = 3
 param enableMonitoring bool = false
 param workspaceId string
 
-var kubernetesVersion = '1.20.7'
+var kubernetesVersion = '1.18.19'
 var subnetRef = '${vn.id}/subnets/${subnetName}'
 var addressPrefix = '20.0.0.0/16'
 var subnetName = 'Subnet01'
@@ -24,7 +23,6 @@ var subnetPrefix = '20.0.0.0/24'
 var virtualNetworkName = 'vnet-${dnsPrefix}-${clusterName}'
 var nodeResourceGroup = 'rg-nodes-${dnsPrefix}-${clusterName}-${groupSuffix}'
 var agentPoolName = 'agentpool01'
-var registryName = '${replace(clusterName, '-', '')}registry'
 
 resource vn 'Microsoft.Network/virtualNetworks@2020-06-01' = {
   name: virtualNetworkName
@@ -105,14 +103,7 @@ resource metricsPublisher 'Microsoft.Authorization/roleAssignments@2020-04-01-pr
   }
 }
 
-module containerRegistry 'acr.bicep' = {
-    name: 'containerRegistry'
-    params: {
-        registryName: registryName
-        location: location
-        objectIds: concat(accessGroups, array(cluster.properties.identityProfile.kubeletidentity.objectId))
-    }
-}
-
 output secretProviderObjectId string = cluster.properties.addonProfiles.azureKeyvaultSecretsProvider.identity.objectId
 output secretProviderClientId string = cluster.properties.addonProfiles.azureKeyvaultSecretsProvider.identity.clientId
+output kubeletIdentityObjectId string = cluster.properties.identityProfile.kubeletidentity.objectId
+output clusterName string = cluster.name

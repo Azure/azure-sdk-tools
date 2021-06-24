@@ -3,10 +3,10 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "groupSuffix": {
-      "value": "test"
+      "value": "test8"
     },
     "clusterName": {
-      "value": "stress-test"
+      "value": "stress8"
     },
     "clusterLocation": {
       "value": "westus2"

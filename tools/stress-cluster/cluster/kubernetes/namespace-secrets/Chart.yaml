@@ -1,0 +1,6 @@
+apiVersion: v2
+name: namespace-secrets
+description: Baseline secrets for stress testing clusters
+
+version: 0.1.0
+appVersion: v0.1

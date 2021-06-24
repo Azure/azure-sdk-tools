@@ -25,7 +25,7 @@
             <div class="dropdown-menu">
                 @foreach (var revision in Model.Review.Revisions.Reverse())
                 {
-                    var colorCss =  revision.Approvers.Count() > 0 ? "text-success" : "";
+                    var colorCss =  revision.IsApproved ? "text-success" : "";
                     <a class="dropdown-item @colorCss" asp-route-id="@Model.Review.ReviewId" asp-route-revisionId="@revision.RevisionId" asp-route-doc="@Model.ShowDocumentation">
                         @revision.DisplayName
                     </a>
@@ -49,7 +49,7 @@
                 <div class="dropdown-menu">
                     @foreach (var revision in Model.PreviousRevisions.Reverse())
                     {
-                        var colorCss = revision.Approvers.Count() > 0 ? "text-success" : "";
+                        var colorCss = revision.IsApproved ? "text-success" : "";
                         <a class="dropdown-item @colorCss" active-if="@(Model.DiffRevisionId == revision.RevisionId)" asp-all-route-data=@Model.GetRoutingData(diffRevisionId: revision.RevisionId, showDocumentation: Model.ShowDocumentation, showDiffOnly: Model.ShowDiffOnly)>
                             @revision.DisplayName
                         </a>

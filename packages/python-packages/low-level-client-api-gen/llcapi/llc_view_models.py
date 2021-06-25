@@ -225,7 +225,7 @@ class LLCClientView(FormattingClass):
             # Remove Null Values from Tokens
             obj_dict["Tokens"][i] = {
                 key: value for key, value in obj_dict["Tokens"][i].items() if value is not None}
-        obj_dict['Language'] = self.Language
+        # obj_dict['Language'] = self.Language
         return obj_dict
 
 
@@ -342,6 +342,7 @@ class LLCOperationView(FormattingClass):
         json_request = {}
         json_response = {}
         response_builder = {}
+        response_num = []
         code = CodeModel(rest_layer=True, no_models=True, no_operations=True,
                          only_path_params_positional=True, options={})
         request_builder = RequestBuilder.from_yaml(
@@ -350,7 +351,7 @@ class LLCOperationView(FormattingClass):
             yaml_data["operationGroups"][op_group_num]["operations"][op_num])
         
         for i in range(0,len(yaml_data["operationGroups"][op_group_num]["operations"][op_num].get('responses'))):
-            response_num = yaml_data["operationGroups"][op_group_num]["operations"][op_num]['responses'][i]['protocol']['http']['statusCodes']
+            response_num.append(yaml_data["operationGroups"][op_group_num]["operations"][op_num]['responses'][i]['protocol']['http']['statusCodes'])
 
         if yaml_data["operationGroups"][op_group_num]["operations"][op_num].get("extensions"):
             pageable = yaml_data["operationGroups"][op_group_num]["operations"][op_num]["extensions"].get(
@@ -523,9 +524,14 @@ class LLCOperationView(FormattingClass):
                 if self.response_num:
                     self.add_whitespace(3)
                     self.add_typename(None, "Status Codes", None)
-                    self.add_new_line(1)
+                    # self.add_new_line(1)
+                    self.add_space()
                     for i in self.response_num:
-                        self.add_text(None,i,None)
+                        if isinstance(i,list):
+                            for j in i:
+                                self.add_text(None,j,None)
+                        else:
+                            self.add_text(None,i,None)
                     self.add_new_line(1)
 
                 if self.json_request:
@@ -559,7 +565,12 @@ def request_builder(self, json_request, indent=4):
                 if isinstance(i, str):
                     if len(i)>0:
                         self.add_whitespace(indent)
-                        self.add_comment(None, i, None)
+                        if indent==4:
+                            self.add_comment(None, "model", None)
+                            self.add_space()
+                            self.add_comment(None, i, None)
+                        else:
+                            self.add_comment(None, i+" :", None)
                         self.add_space()
                     if isinstance(json_request, list):
                         self.add_whitespace(5)
@@ -571,6 +582,13 @@ def request_builder(self, json_request, indent=4):
                             for j in range(0, len(json_request[i])):
                                 request_builder(self, json_request[i][j], indent+1)
                     elif isinstance(json_request[i], str):
+                        index = json_request[i].find("(optional)")
+                        param = json_request[i].split()
+                        if len(param)>=2:
+                            if index!=-1:
+                                json_request[i] = param[0]+"?"
+                            else:
+                                json_request[i] = param[0]
                         self.add_comment(None, json_request[i], None)
                         self.add_new_line()
                     elif isinstance(json_request[i], dict):

@@ -1,6 +1,5 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
-
 from typing import Any, Dict
 from ._token import Token
 from ._token_kind import TokenKind
@@ -82,7 +81,7 @@ class LLCClientView(FormattingClass):
 
     def __init__(self, operation_groups, pkg_name="", endpoint="endpoint", endpoint_type="string", credential="Credential", credential_type="AzureCredential"):
         self.Name = pkg_name
-        self.Language = "LLC"
+        self.Language = "Protocol"
         self.Tokens = []
         self.Operations = []
         self.Operation_Groups = operation_groups
@@ -321,7 +320,7 @@ class LLCOperationGroupView(FormattingClass):
 
 
 class LLCOperationView(FormattingClass):
-    def __init__(self, operation_name, return_type, parameters, namespace, json_request=None, json_response=None, description="", paging="", lro=""):
+    def __init__(self, operation_name, return_type, parameters, namespace, json_request=None, json_response=None, response_num=None, description="", paging="", lro=""):
         self.operation = operation_name
         self.return_type = return_type
         self.parameters = parameters  # parameterview list
@@ -333,6 +332,7 @@ class LLCOperationView(FormattingClass):
         self.lro = lro
         self.json_request = json_request
         self.json_response = json_response
+        self.response_num = response_num
 
     @classmethod
     def from_yaml(cls, yaml_data: Dict[str, Any], op_group_num, op_num, namespace):
@@ -348,6 +348,9 @@ class LLCOperationView(FormattingClass):
             yaml_data["operationGroups"][op_group_num]["operations"][op_num], code_model=code)
         response_builder = Operation.from_yaml(
             yaml_data["operationGroups"][op_group_num]["operations"][op_num])
+        
+        for i in range(0,len(yaml_data["operationGroups"][op_group_num]["operations"][op_num].get('responses'))):
+            response_num = yaml_data["operationGroups"][op_group_num]["operations"][op_num]['responses'][i]['protocol']['http']['statusCodes']
 
         if yaml_data["operationGroups"][op_group_num]["operations"][op_num].get("extensions"):
             pageable = yaml_data["operationGroups"][op_group_num]["operations"][op_num]["extensions"].get(
@@ -400,7 +403,8 @@ class LLCOperationView(FormattingClass):
             paging=paging_op,
             lro=lro_op,
             json_request=json_request,
-            json_response=json_response
+            json_response=json_response,
+            response_num = response_num
         )
 
     def get_tokens(self):
@@ -515,6 +519,14 @@ class LLCOperationView(FormattingClass):
                 self.add_new_line(1)
 
                 self.add_token(Token(kind=TokenKind.StartDocGroup))
+                
+                if self.response_num:
+                    self.add_whitespace(3)
+                    self.add_typename(None, "Status Codes", None)
+                    self.add_new_line(1)
+                    for i in self.response_num:
+                        self.add_text(None,i,None)
+                    self.add_new_line(1)
 
                 if self.json_request:
                     self.add_whitespace(3)

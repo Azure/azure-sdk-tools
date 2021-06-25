@@ -1,2 +1,2 @@
 testName: network-example
-image: stress4registry.azurecr.io/benbp/networkexample:v1
+registry: stress10nocniregistry

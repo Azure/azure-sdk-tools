@@ -7,4 +7,4 @@ appVersion: v0.1
 dependencies:
 - name: namespace-secrets
   version: 0.1.0
-  repository: file://../../../cluster/kubernetes/namespace-secrets
+  repository: file://../../../../cluster/kubernetes/namespace-secrets

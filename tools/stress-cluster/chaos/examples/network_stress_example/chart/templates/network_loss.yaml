@@ -17,4 +17,4 @@ spec:
       - {{ .Release.Namespace }}
   loss:
     loss: "100"
-    correlation: "0"
+    correlation: "100"

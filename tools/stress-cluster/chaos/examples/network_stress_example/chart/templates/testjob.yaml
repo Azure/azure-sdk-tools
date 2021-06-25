@@ -12,10 +12,16 @@ spec:
     spec:
       containers:
       - name: network-example
-        image: {{ .Values.image }}
+        image: "{{ .Values.registry }}.azurecr.io/benbp/networkexample:v1"
         command: ["bash"]
         # Azure AKS default outbound rules do not allow ICMP, so use wget in place of ping for deployment simplicity
-        args: ["-c", "while true; do wget -T1 -t1 --spider http://www.duckduckgo.com; sleep 5;done"]
+        args: ["-c", "while true; do wget -Tl -t1 --spider http://www.bing.com; sleep 3;done"]
+        env:
+          - name: APPINSIGHTS_INSTRUMENTATIONKEY
+            valueFrom:
+              secretKeyRef:
+                name: appinsightsinstrumentationkey
+                key: value
       restartPolicy: Never
   backoffLimit: 0
 

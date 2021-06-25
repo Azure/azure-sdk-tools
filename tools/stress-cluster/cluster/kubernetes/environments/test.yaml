@@ -1,5 +1,5 @@
 namespace-secrets:
-  appInsightsKeySecretName: appInsightsInstrumentationKey-zvhntkhp2msxm
-  keyvaultName: stress-kv-zvhntkhp2msxm
-  secretProviderIdentity: 0eebb1bf-7d00-4b82-abbd-dc8ee567744e
+  appInsightsKeySecretName: appInsightsInstrumentationKey-3hmrduyobflts
+  keyvaultName: stress-kv-3hmrduyobflts
+  secretProviderIdentity: b0e18a00-d99a-4a05-a9a9-da859ca41b85
   tenantId: 72f988bf-86f1-41af-91ab-2d7cd011db47

@@ -1,0 +1,36 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: deploy-example-{{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        stressTest: "true"
+        chaos: "true"
+        owners: "benbp"
+    spec:
+      restartPolicy: Never
+      volumes:
+        {{- include "azure-deployer.deploy-volumes" . | nindent 8}}
+      initContainers:
+        {{- include "azure-deployer.deploy-init" . | nindent 8}}
+      containers:
+        - name: deployment-example
+          image: mcr.microsoft.com/azure-cli
+          command: ['bash', '-c']
+          args:
+            - |
+                source /outputs/.env &&
+                az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID &&
+                az account set -s "{{ .Values.subscription }}" &&
+                az group show -g $RESOURCE_GROUP -o json
+          volumeMounts:
+            - name: test-resources-outputs
+              mountPath: /outputs
+          env:
+            {{- include "azure-deployer.azure-env" . | nindent 12 }}
+---
+{{ include "azure-deployer.deploy-configmap" . }}

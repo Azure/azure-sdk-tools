@@ -1,0 +1,6 @@
+apiVersion: v2
+name: azure-deployer
+description: Resources for deploying azure resources
+version: 0.1.0
+appVersion: v0.1
+type: library

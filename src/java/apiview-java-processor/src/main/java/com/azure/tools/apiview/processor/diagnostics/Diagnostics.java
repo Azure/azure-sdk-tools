@@ -18,6 +18,7 @@ import com.azure.tools.apiview.processor.diagnostics.rules.UpperCaseNamingDiagno
 import com.azure.tools.apiview.processor.model.APIListing;
 import com.azure.tools.apiview.processor.model.Diagnostic;
 import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.type.Type;
 
@@ -47,10 +48,10 @@ public class Diagnostics {
         diagnostics.add(new FluentSetterReturnTypeDiagnosticRule());
         diagnostics.add(new ConsiderFinalClassDiagnosticRule());
         diagnostics.add(new IllegalMethodNamesDiagnosticRule(
-                new Rule("Builder$", "tokenCredential"), // it should just be 'credential'
-                new Rule("Builder$", "^set"),            // we shouldn't have setters in the builder
-                new Rule("^isHas"),
-                new Rule("^setHas")
+            new Rule("Builder$", "tokenCredential"), // it should just be 'credential'
+            new Rule("Builder$", "^set"),            // we shouldn't have setters in the builder
+            new Rule("^isHas"),
+            new Rule("^setHas")
         ));
         diagnostics.add(new MissingJavaDocDiagnosticRule());
         diagnostics.add(new MissingJavadocCodeSnippetsRule());
@@ -66,17 +67,7 @@ public class Diagnostics {
             .add("credential", new ExactTypeNameCheckFunction(new ParameterAllowedTypes("TokenCredential",
                     "AzureKeyCredential", "AzureSasCredential", "AzureNamedKeyCredential")))
             .add("endpoint", new ExactTypeNameCheckFunction("String"))
-            .add("serviceVersion", methodDeclaration -> {
-                Type parameterType = methodDeclaration.getParameter(0).getType();
-                ClassOrInterfaceType classOrInterfaceType = parameterType.asClassOrInterfaceType();
-                if (!classOrInterfaceType.getNameAsString().endsWith("ServiceVersion")) {
-                    return Optional.of(
-                            new Diagnostic(WARNING, makeId(methodDeclaration),
-                                    "Incorrect type being supplied to this builder method. Expected an enum "
-                                    + "implementing ServiceVersion but was " + classOrInterfaceType.getNameAsString() + "."));
-                }
-                return Optional.empty();
-            }));
+            .add("serviceVersion", this::checkServiceVersionType));
         diagnostics.add(new RequiredBuilderMethodsDiagnosticRule("amqp")
             .add("proxyOptions", new ExactTypeNameCheckFunction("ProxyOptions"))
             .add("retry", new ExactTypeNameCheckFunction("AmqpRetryOptions"))
@@ -87,6 +78,18 @@ public class Diagnostics {
             .add("httpLogOptions", new ExactTypeNameCheckFunction("HttpLogOptions"))
             .add("pipeline", new ExactTypeNameCheckFunction("HttpPipeline"))
             .add("retryPolicy", new ExactTypeNameCheckFunction("RetryPolicy")));
+    }
+
+    private Optional<Diagnostic> checkServiceVersionType(MethodDeclaration methodDeclaration) {
+        Type parameterType = methodDeclaration.getParameter(0).getType();
+        ClassOrInterfaceType classOrInterfaceType = parameterType.asClassOrInterfaceType();
+        if (!classOrInterfaceType.getNameAsString().endsWith("ServiceVersion")) {
+            return Optional.of(
+                    new Diagnostic(WARNING, makeId(methodDeclaration),
+                            "Incorrect type being supplied to this builder method. Expected an enum "
+                            + "implementing ServiceVersion but was " + classOrInterfaceType.getNameAsString() + "."));
+        }
+        return Optional.empty();
     }
 
     /**

@@ -225,7 +225,7 @@ class LLCClientView(FormattingClass):
             # Remove Null Values from Tokens
             obj_dict["Tokens"][i] = {
                 key: value for key, value in obj_dict["Tokens"][i].items() if value is not None}
-        # obj_dict['Language'] = self.Language
+        obj_dict['Language'] = self.Language
         return obj_dict
 
 
@@ -352,6 +352,8 @@ class LLCOperationView(FormattingClass):
         
         for i in range(0,len(yaml_data["operationGroups"][op_group_num]["operations"][op_num].get('responses'))):
             response_num.append(yaml_data["operationGroups"][op_group_num]["operations"][op_num]['responses'][i]['protocol']['http']['statusCodes'])
+        for i in range(0,len(yaml_data["operationGroups"][op_group_num]["operations"][op_num].get('exceptions'))):
+            response_num.append(yaml_data["operationGroups"][op_group_num]["operations"][op_num]['exceptions'][i]['protocol']['http']['statusCodes'])
 
         if yaml_data["operationGroups"][op_group_num]["operations"][op_num].get("extensions"):
             pageable = yaml_data["operationGroups"][op_group_num]["operations"][op_num]["extensions"].get(
@@ -530,8 +532,10 @@ class LLCOperationView(FormattingClass):
                         if isinstance(i,list):
                             for j in i:
                                 self.add_text(None,j,None)
+                                self.add_text(None," ",None)
                         else:
                             self.add_text(None,i,None)
+                            self.add_text(None," ",None)
                     self.add_new_line(1)
 
                 if self.json_request:
@@ -574,12 +578,10 @@ def request_builder(self, json_request, indent=4):
                         else:
                             self.add_comment(None, i, None)
                     if isinstance(json_request, list):
-                        # self.add_comment(None, " []", None)
                         self.add_whitespace(5)
                         for j in range(0, len(json_request)):
                             request_builder(self, json_request[j], indent)
                     elif isinstance(json_request[i], list):
-                        # self.add_comment(None, " []", None)
                         if len(i)>0:
                             self.add_new_line()
                             for j in range(0, len(json_request[i])):
@@ -595,9 +597,7 @@ def request_builder(self, json_request, indent=4):
                         self.add_comment(None, json_request[i], None)
                         self.add_new_line()
                     elif isinstance(json_request[i], dict):
-                       
-                        #I think a dictionary just means it is a string of information
-                        # self.add_comment(None, " {}", None)
+          
                         if len(i)>0:
                             self.add_new_line()
                             request_builder(self, json_request[i], indent+1)

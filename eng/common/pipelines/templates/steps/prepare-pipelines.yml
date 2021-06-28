@@ -13,6 +13,9 @@ parameters:
   - name: TestsConventionOptions
     type: string
     default: ''
+  - name: Timeout
+    type: int
+    default: 60
 
 steps:
   - template: install-pipeline-generation.yml
@@ -35,6 +38,7 @@ steps:
         --debug
         ${{parameters.CIConventionOptions}}
       displayName: Create CI pipelines for public repository
+      timeoutInMinutes: ${{ parameters.Timeout }}
       env:
         PATVAR: $(azuresdk-azure-sdk-devops-pipeline-generation-pat)
     - script: >
@@ -53,6 +57,7 @@ steps:
         --debug
         ${{parameters.UPConventionOptions}}
       displayName: Create UP pipelines for public repository
+      timeoutInMinutes: ${{ parameters.Timeout }}
       env:
         PATVAR: $(azuresdk-azure-sdk-devops-pipeline-generation-pat)
     - script: >
@@ -71,6 +76,7 @@ steps:
         --debug
         ${{parameters.TestsConventionOptions}}
       displayName: Create Live Test pipelines for public repository
+      timeoutInMinutes: ${{ parameters.Timeout }}
       condition: ne('${{parameters.TestsConventionOptions}}','')
       env:
         PATVAR: $(azuresdk-azure-sdk-devops-pipeline-generation-pat)
@@ -94,6 +100,7 @@ steps:
         --no-schedule
         ${{parameters.CIConventionOptions}}
       displayName: Create CI pipelines for private repository
+      timeoutInMinutes: ${{ parameters.Timeout }}
       env:
         PATVAR: $(azuresdk-azure-sdk-devops-pipeline-generation-pat)
     - script: >
@@ -113,6 +120,7 @@ steps:
         --no-schedule
         ${{parameters.UPConventionOptions}}
       displayName: Create UP pipelines for private repository
+      timeoutInMinutes: ${{ parameters.Timeout }}
       env:
         PATVAR: $(azuresdk-azure-sdk-devops-pipeline-generation-pat)
     - script: >
@@ -132,6 +140,7 @@ steps:
         --no-schedule
         ${{parameters.TestsConventionOptions}}
       displayName: Create Live Test pipelines for private repository
+      timeoutInMinutes: ${{ parameters.Timeout }}
       condition: ne('${{parameters.TestsConventionOptions}}','')
       env:
         PATVAR: $(azuresdk-azure-sdk-devops-pipeline-generation-pat)

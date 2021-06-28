@@ -9,7 +9,7 @@ JSON_FIELDS = ["Name", "Version", "VersionString",
                "Navigation", "Tokens", "Diagnostics", "PackageName"]
 PARAM_FIELDS = ["name", "type", "default", "optional", "indent"]
 OP_FIELDS = ["operation", "parameters", "indent"]
-R_TYPE = ['dictionary','string','bool','int32','int64','float32','float64']
+R_TYPE = ['dictionary','string','bool','int32','int64','float32','float64','binary']
 
 class FormattingClass:
     def add_whitespace(self, indent):
@@ -416,22 +416,22 @@ class LLCOperationView(FormattingClass):
 
     def add_first_line(self):
         if self.paging and self.lro:
-            self.overview_tokens.append(Token("PagingLro", TokenKind.TypeName))
-            self.overview_tokens.append(Token("[", TokenKind.StringLiteral))
-            self.add_typename(None, "PagingLro", None)
-            self.add_stringliteral(None, "[", None)
+            self.overview_tokens.append(Token("PagingLro", TokenKind.Text))
+            self.overview_tokens.append(Token("[", TokenKind.Text))
+            self.add_text(None, "PagingLro", None)
+            self.add_text(None, "[", None)
 
         if self.paging:
-            self.overview_tokens.append(Token("Paging", TokenKind.TypeName))
-            self.overview_tokens.append(Token("[", TokenKind.StringLiteral))
-            self.add_typename(None, "Paging", None)
-            self.add_stringliteral(None, "[", None)
+            self.overview_tokens.append(Token("Paging", TokenKind.Text))
+            self.overview_tokens.append(Token("[", TokenKind.Text))
+            self.add_text(None, "Paging", None)
+            self.add_text(None, "[", None)
 
         if self.lro:
-            self.overview_tokens.append(Token("lro", TokenKind.TypeName))
-            self.overview_tokens.append(Token("[", TokenKind.StringLiteral))
-            self.add_typename(None, "lro", None)
-            self.add_stringliteral(None, "[", None)
+            self.overview_tokens.append(Token("lro", TokenKind.Text))
+            self.overview_tokens.append(Token("[", TokenKind.Text))
+            self.add_text(None, "lro", None)
+            self.add_text(None, "[", None)
 
         if self.return_type is None:
             self.overview_tokens.append(Token("void", TokenKind.Text))
@@ -446,8 +446,8 @@ class LLCOperationView(FormattingClass):
             self.overview_tokens.append(
                 Token(self.return_type, TokenKind.StringLiteral))
         if self.paging or self.lro:
-            self.add_stringliteral(None, "]", None)
-            self.overview_tokens.append(Token("]", TokenKind.StringLiteral))
+            self.add_text(None, "]", None)
+            self.overview_tokens.append(Token("]", TokenKind.Text))
 
         self.add_space()
         self.overview_tokens.append(Token(" ", TokenKind.Text))
@@ -569,14 +569,17 @@ def request_builder(self, json_request, indent=4):
                             self.add_comment(None, "model", None)
                             self.add_space()
                             self.add_comment(None, i, None)
+                        elif not isinstance(json_request[i],str):
+                            self.add_comment(None, "model "+i,None)
                         else:
-                            self.add_comment(None, i+" :", None)
-                        self.add_space()
+                            self.add_comment(None, i, None)
                     if isinstance(json_request, list):
+                        # self.add_comment(None, " []", None)
                         self.add_whitespace(5)
                         for j in range(0, len(json_request)):
                             request_builder(self, json_request[j], indent)
                     elif isinstance(json_request[i], list):
+                        # self.add_comment(None, " []", None)
                         if len(i)>0:
                             self.add_new_line()
                             for j in range(0, len(json_request[i])):
@@ -586,12 +589,15 @@ def request_builder(self, json_request, indent=4):
                         param = json_request[i].split()
                         if len(param)>=2:
                             if index!=-1:
-                                json_request[i] = param[0]+"?"
+                                json_request[i] ="? :"+ param[0]
                             else:
-                                json_request[i] = param[0]
+                                json_request[i] = ": "+ param[0]
                         self.add_comment(None, json_request[i], None)
                         self.add_new_line()
                     elif isinstance(json_request[i], dict):
+                       
+                        #I think a dictionary just means it is a string of information
+                        # self.add_comment(None, " {}", None)
                         if len(i)>0:
                             self.add_new_line()
                             request_builder(self, json_request[i], indent+1)
@@ -599,8 +605,14 @@ def request_builder(self, json_request, indent=4):
                             request_builder(self, json_request[i], indent)
 
         else:
-            self.add_new_line()
             self.add_whitespace(5)
+            index = json_request.find("(optional)")
+            param = json_request.split()
+            if len(param)>=2:
+                if index!=-1:
+                    json_request ="? :"+ param[0]
+                else:
+                    json_request = ": "+ param[0]
             self.add_comment(None, json_request, None)
             self.add_new_line()
 

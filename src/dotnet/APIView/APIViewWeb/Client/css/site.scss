@@ -26,6 +26,10 @@ a.navbar-brand
     word-break: break-all;
 }
 
+tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
 /* Sticky footer styles
 -------------------------------------------------- */
 html {

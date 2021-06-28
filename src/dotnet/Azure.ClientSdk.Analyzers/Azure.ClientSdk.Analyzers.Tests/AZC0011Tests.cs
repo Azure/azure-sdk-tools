@@ -34,6 +34,7 @@ namespace Azure.ClientSdk.Analyzers.Tests
             const string code = @"
 [assembly:System.Runtime.CompilerServices.InternalsVisibleTo(""Product.Benchmarks, PublicKey=..."")]
 [assembly:System.Runtime.CompilerServices.InternalsVisibleTo(""Product.Performance, PublicKey=..."")]
+[assembly:System.Runtime.CompilerServices.InternalsVisibleTo(""Product.Perf, PublicKey=..."")]
 ";
             await Verifier.VerifyAnalyzerAsync(code);
         }

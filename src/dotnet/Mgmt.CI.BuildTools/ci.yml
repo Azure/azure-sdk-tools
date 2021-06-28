@@ -1,18 +1,21 @@
 # NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
 
 trigger:
-  - master
+  - main
 
 resources:
   repositories:
     - repository: azure-sdk-build-tools
       type: git
       name: internal/azure-sdk-build-tools
+      ref: refs/tags/azure-sdk-build-tools_20210603.1
 
 variables:
-  DotNetCoreVersion: '2.1.503'
-  ProjectFile: mgmtci.proj
-  BlobFeedUrl: https://azuresdkartifacts.blob.core.windows.net/azure-sdk-tools/index.json
+  - template: /eng/pipelines/templates/variables/globals.yml
+  - name: ProjectFile
+    value: mgmtci.proj
+  - name: BlobFeedUrl
+    value: https://azuresdkartifacts.blob.core.windows.net/azure-sdk-tools/index.json
 
 stages:
   - stage: Build
@@ -23,10 +26,11 @@ stages:
           vmImage: 'vs2017-win2016'
 
         steps:
-          - task: DotNetCoreInstaller@0
+          - task: UseDotNet@2
             displayName: 'Use .NET Core sdk $(DotNetCoreVersion)'
             inputs:
-              version: '$(DotNetCoreVersion)'
+              packageType: sdk
+              version: $(DotNetCoreVersion)
 
           - script: 'dotnet pack $(ProjectFile) -o $(Build.ArtifactStagingDirectory) -warnaserror $(VersioningProps)'
             displayName: 'Build and Package'
@@ -41,7 +45,7 @@ stages:
             inputs:
               ArtifactName: packages
   - ${{ if ne(variables['System.TeamProject'], 'Public') }}:
-    - template: pipelines/stages/net-release-blobfeed.yml@azure-sdk-build-tools
+    - template: pipelines/stages/net-release-to-feed.yml@azure-sdk-build-tools
       parameters:
         ShouldTag: false  # Disable tagging for now as github is rate limiting us
         ShouldSign: false # Disable signing for now because the tools package contains a number files we cannot correctly sign

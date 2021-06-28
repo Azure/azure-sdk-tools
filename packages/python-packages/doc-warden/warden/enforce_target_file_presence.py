@@ -44,7 +44,7 @@ def find_missing_target_files(configuration):
 
     return missing_target_file_paths, ignored_missing_target_file_paths
 
-# check the root of the target_directory for a master README 
+# check the root of the target_directory for a default README 
 def check_repo_root(configuration):
     if configuration.root_check_enabled:
         # check root for readme.md

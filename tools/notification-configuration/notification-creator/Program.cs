@@ -32,7 +32,10 @@ namespace NotificationConfiguration
             var devOpsConnection = new VssConnection(new Uri($"https://dev.azure.com/{organization}/"), devOpsCreds);
 
 #pragma warning disable CS0618 // Type or member is obsolete
-            var loggerFactory = new LoggerFactory().AddConsole(includeScopes: true);
+            var loggerFactory = LoggerFactory.Create(builder =>
+            {
+                builder.AddConsole(config => { config.IncludeScopes = true; });
+            });
 #pragma warning restore CS0618 // Type or member is obsolete
             var devOpsServiceLogger = loggerFactory.CreateLogger<AzureDevOpsService>();
             var notificationConfiguratorLogger = loggerFactory.CreateLogger<NotificationConfigurator>();

@@ -6,13 +6,12 @@ parameters:
   Repos: []
 
 steps:
-
 - ${{ each repo in parameters.Repos }}:
   - pwsh: |
-      git clone --branch master https://github.com/azure/${{ repo }}
+      git clone https://github.com/azure/${{ repo }}
     displayName: Clone ${{ repo }}
     workingDirectory: $(System.DefaultWorkingDirectory)
-
+  - template: /eng/common/pipelines/templates/steps/set-default-branch.yml
   - task: Powershell@2
     inputs:
       targetType: 'filePath'
@@ -33,4 +32,4 @@ steps:
       PushArgs: -f
       WorkingDirectory: $(System.DefaultWorkingDirectory)/${{ repo }}
       ScriptDirectory: ${{ parameters.ToolsRepoPath }}/eng/common/scripts
-      BaseBranchName: refs/heads/master
+      BaseBranchName: "$(DefaultBranch)"

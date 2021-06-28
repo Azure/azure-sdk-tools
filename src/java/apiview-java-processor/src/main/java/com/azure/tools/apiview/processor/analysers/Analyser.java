@@ -1,6 +1,5 @@
 package com.azure.tools.apiview.processor.analysers;
 
-import com.azure.tools.apiview.processor.model.APIListing;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -9,7 +8,6 @@ import java.util.List;
  * We support multiple analysers, to serve different purposes.
  *
  * @see ASTAnalyser
- * @see ReflectiveAnalyser
  */
 @FunctionalInterface
 public interface Analyser {

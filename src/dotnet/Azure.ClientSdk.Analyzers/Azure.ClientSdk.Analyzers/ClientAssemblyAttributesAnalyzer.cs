@@ -14,7 +14,8 @@ namespace Azure.ClientSdk.Analyzers
             "Tests",
             "DynamicProxyGenAssembly2",
             "Benchmarks",
-            "Performance"
+            "Performance",
+            "Perf"
         };
 
         public override void Initialize(AnalysisContext context)

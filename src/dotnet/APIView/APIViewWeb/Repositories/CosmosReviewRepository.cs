@@ -42,7 +42,7 @@ namespace APIViewWeb
             return reviews.FirstOrDefault();
         }
 
-        public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(bool isClosed, string language, string packageName = "", bool? isAutomatic = null)
+        public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(bool isClosed, string language, string packageName = null, bool? isAutomatic = null)
         {
             var queryStringBuilder = new StringBuilder("SELECT * FROM Reviews r WHERE (IS_DEFINED(r.IsClosed) ? r.IsClosed : false) = @isClosed ");
 

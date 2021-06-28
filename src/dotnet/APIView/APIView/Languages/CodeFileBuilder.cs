@@ -39,7 +39,6 @@ namespace ApiView
                              SymbolDisplayGenericsOptions.IncludeTypeParameters |
                              SymbolDisplayGenericsOptions.IncludeVariance,
             memberOptions: SymbolDisplayMemberOptions.IncludeExplicitInterface |
-                           SymbolDisplayMemberOptions.IncludeAccessibility |
                            SymbolDisplayMemberOptions.IncludeConstantValue |
                            SymbolDisplayMemberOptions.IncludeModifiers |
                            SymbolDisplayMemberOptions.IncludeParameters |
@@ -50,7 +49,7 @@ namespace ApiView
 
         public ICodeFileBuilderSymbolOrderProvider SymbolOrderProvider { get; set; } = new CodeFileBuilderSymbolOrderProvider();
 
-        public const string CurrentVersion = "19";
+        public const string CurrentVersion = "20";
 
         private IEnumerable<INamespaceSymbol> EnumerateNamespaces(IAssemblySymbol assemblySymbol)
         {
@@ -441,6 +440,13 @@ namespace ApiView
             {
                 new CodeFileBuilderEnumFormatter(builder).Format(typedConstant.Type, typedConstant.Value);
             }
+            else if (typedConstant.Kind == TypedConstantKind.Type)
+            {
+                builder.Keyword(SyntaxKind.TypeOfKeyword);
+                builder.Punctuation("(");
+                DisplayName(builder, (ITypeSymbol)typedConstant.Value);
+                builder.Punctuation(")");
+            }
             else if (typedConstant.Kind == TypedConstantKind.Array)
             {
                 builder.Keyword(SyntaxKind.NewKeyword);
@@ -498,10 +504,30 @@ namespace ApiView
 
         private void DisplayName(CodeFileTokensBuilder builder, ISymbol symbol, ISymbol definedSymbol = null)
         {
+            if (NeedsAccessibility(symbol))
+            {
+                builder.Keyword(SyntaxFacts.GetText(symbol.DeclaredAccessibility));
+                builder.Space();
+            }
             foreach (var symbolDisplayPart in symbol.ToDisplayParts(_defaultDisplayFormat))
             {
                 builder.Append(MapToken(definedSymbol, symbolDisplayPart));
             }
+        }
+
+        private bool NeedsAccessibility(ISymbol symbol)
+        {
+            return symbol switch
+            {
+                INamespaceSymbol => false,
+                INamedTypeSymbol => false,
+                IFieldSymbol fieldSymbol => fieldSymbol.ContainingType.TypeKind != TypeKind.Enum,
+                IMethodSymbol methodSymbol => !methodSymbol.ExplicitInterfaceImplementations.Any() &&
+                                              methodSymbol.ContainingType.TypeKind != TypeKind.Interface,
+                IPropertySymbol propertySymbol => !propertySymbol.ExplicitInterfaceImplementations.Any() &&
+                                                  propertySymbol.ContainingType.TypeKind != TypeKind.Interface,
+                _ => true
+            };
         }
 
         private CodeFileToken MapToken(ISymbol definedSymbol, SymbolDisplayPart symbolDisplayPart)
@@ -592,8 +618,18 @@ namespace ApiView
                 case Accessibility.Public:
                     return true;
                 default:
-                    return false;
+                    return IsAccessibleExplicitInterfaceImplementation(s);
             }
+        }
+
+        private bool IsAccessibleExplicitInterfaceImplementation(ISymbol s)
+        {
+            return s switch
+            {
+                IMethodSymbol methodSymbol => methodSymbol.ExplicitInterfaceImplementations.Any(i => IsAccessible(i.ContainingType)),
+                IPropertySymbol propertySymbol => propertySymbol.ExplicitInterfaceImplementations.Any(i => IsAccessible(i.ContainingType)),
+                _ => false
+            };
         }
 
         internal class CodeFileBuilderEnumFormatter : AbstractSymbolDisplayVisitor

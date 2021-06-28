@@ -11,7 +11,7 @@ parameters:
   default: eng/common
 - name: BaseBranchName
   type: string
-  default: $(Build.SourceBranchName)
+  default: $(Build.SourceBranch)
 - name: Repos
   type: object
   default:
@@ -30,7 +30,7 @@ trigger: none
 pr:
   branches:
     include:
-      - master
+      - main
   paths:
     include:
       - eng/common
@@ -46,6 +46,11 @@ stages:
           displayName: Sync ${{ parameters.DirectoryToSync }} Directory
 
           steps:
+            - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
+              parameters:
+                Paths:
+                  - ${{ parameters.DirectoryToSync }}
+
             - pwsh: |
                 Set-PsDebug -Trace 1
                 $patchDir = "$(Build.ArtifactStagingDirectory)/patchfiles"
@@ -127,20 +132,20 @@ stages:
                           -UserReviewers $(System.PullRequest.Creator)
                           -Assignees $(System.PullRequest.Creator)
                           -PRBody "Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools for PR https://github.com/Azure/azure-sdk-tools/pull/$(System.PullRequest.PullRequestNumber) `
-                          See [eng/common workflow](https://github.com/Azure/azure-sdk-tools/blob/master/eng/common/README.md#workflow)"
+                          See [eng/common workflow](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/README.md#workflow)"
 
                     - pwsh: |
                         $PRData = "Azure;${{ repo }};$(Submitted.PullRequest.Number)"
                         Add-Content -Path "$(Build.ArtifactStagingDirectory)/${{ parameters.PRDataFileName }}" -Value $PRData
                       displayName: Write Sync PR Data to Artifact File
                       condition: succeeded()
-                  
+
                   - task: PublishPipelineArtifact@1
                     condition: succeeded()
-                    displayName: Publish ${{ parameters.PRDataFileName }} 
+                    displayName: Publish ${{ parameters.PRDataFileName }}
                     inputs:
                       artifactName: ${{ parameters.ArtifactName }}
-                      path: $(Build.ArtifactStagingDirectory)/${{ parameters.PRDataFileName }} 
+                      path: $(Build.ArtifactStagingDirectory)/${{ parameters.PRDataFileName }}
 
     - stage: VerifyAndMerge
       jobs:

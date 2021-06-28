@@ -189,7 +189,7 @@ class StubGenerator:
 
             logging.debug("Importing module {}".format(m))
             module_obj = importlib.import_module(m)
-            self.module_dict[m] = ModuleNode(m, module_obj, nodeindex)
+            self.module_dict[m] = ModuleNode(m, module_obj, nodeindex, namespace)
 
         # Create navigation info to navigate within APIreview tool
         navigation = Navigation(package_name, None)

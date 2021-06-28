@@ -1,6 +1,11 @@
 ﻿/*-*/using System;
 using System.Threading.Tasks;
 
+internal interface IInternal
+{
+    void M();
+    void N();
+}
 /*-*/namespace A {
     public interface I1 {
     }
@@ -16,11 +21,17 @@ using System.Threading.Tasks;
         public abstract ValueTask DisposeAsync();
     }
     public abstract class M : IDisposable {
-        protected M()/*-*/{/*-*/;/*-*/}
-        void IDisposable.Dispose() { }/*-*/
+        protected M()/*-*/{/*-*/;/*-*/}/*-*/
+        void IDisposable.Dispose()/*-*/{/*-*/;/*-*/}/*-*/
     }
     public class NClass : K, I1, I2<K> {
         public NClass()/*-*/{/*-*/;/*-*/}/*-*/
         public override sealed void M()/*-*/{/*-*/;/*-*/}/*-*/
+    }
+    public class OClass/*-*/ : IInternal/*-*/ {
+        public OClass()/*-*/{/*-*/;/*-*/}/*-*/
+        public void M()/*-*/{/*-*/;/*-*/}/*-*//*-*/
+        void IInternal.N(){}
+        /*-*/
     }
 }

@@ -26,7 +26,11 @@ public enum TokenKind {
 
     // for types and members that are marked as deprecated
     DEPRECATED_RANGE_START(13),
-    DEPRECATED_RANGE_END(14);
+    DEPRECATED_RANGE_END(14),
+
+    // for any metadata that should not be compared when checking diff
+    SKIP_DIFF_START(15),
+    SKIP_DIFF_END(16);
 
     private final int id;
 

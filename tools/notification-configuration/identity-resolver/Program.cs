@@ -10,7 +10,7 @@ namespace identity_resolver
     {
 
         /// <summary>
-        /// Retrieves github<->ms mapping information given the full name of an employee.
+        /// Retrieves github-to-ms mapping information given the full name of an employee.
         /// </summary>
         /// <param name="aadAppIdVar">AAD App ID environment variable name (Kusto access)</param>
         /// <param name="aadAppSecretVar">AAD App Secret environment variable name (Kusto access)</param>
@@ -34,7 +34,9 @@ namespace identity_resolver
         {
 
 #pragma warning disable CS0618 // Type or member is obsolete
-            using (var loggerFactory = new LoggerFactory().AddConsole(includeScopes: true))
+            using (var loggerFactory = LoggerFactory.Create(builder => {
+                builder.AddConsole(config => { config.IncludeScopes = true; });
+            }))
 #pragma warning restore CS0618 // Type or member is obsolete
             {
                 try

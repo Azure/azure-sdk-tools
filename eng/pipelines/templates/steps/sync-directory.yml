@@ -3,7 +3,7 @@ parameters:
   DirectoryToSync: eng/common
   CommitMessage: commit-message-not-set
   UpstreamBranchName: branch-name-not-set
-  BaseBranchName: master
+  BaseBranchName: $(DefaultBranch)
   Sync: pr-data-artifact-path-not-set
   SkipCheckingForChanges: false
   ScriptDirectory: eng/common/scripts
@@ -11,11 +11,22 @@ parameters:
   PushArgs: -f
 
 steps:
+- template: /eng/common/pipelines/templates/steps/set-default-branch.yml
+
 - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
+  - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
+    parameters:
+      SkipDefaultCheckout: true
+      Paths:
+        - ${{ parameters.DirectoryToSync }}
+      Repositories:
+        - ${{ each repo in parameters.Repos }}:
+          - Name: ${{ parameters.PROwner }}/${{ repo }}
+            Commitish: ${{ parameters.BaseBranchName }}
+            WorkingDirectory: $(System.DefaultWorkingDirectory)/${{ repo }}
+
   - ${{ each repo in parameters.Repos }}:
     - pwsh: |
-        Set-PsDebug -Trace 1
-        git clone --branch ${{ parameters.BaseBranchName }} https://github.com/azure/${{ repo }}
         $repoPath = "${{ repo }}/${{ parameters.DirectoryToSync }}"
         if (Test-Path '$(PatchFilesLocation)')
         {
@@ -27,7 +38,7 @@ steps:
           {
              Write-Host $file.FullName
              git -c user.name="azure-sdk" -c user.email="azuresdk@microsoft.com" am -3 $file.FullName
-             if ($lastExitCode -ne 0) { 
+             if ($lastExitCode -ne 0) {
                git -c user.name="azure-sdk" -c user.email="azuresdk@microsoft.com" am --show-current-patch=diff
                Write-Error "##vso[task.LogIssue type=warning;]Failed to properly apply patch files to [https://github.com/azure/${{ repo }}]"
                exit 1
@@ -113,18 +124,32 @@ steps:
         -IssueNumber "$(System.PullRequest.PullRequestNumber)"
         -Comment "The following pipelines have been queued for testing:<br>$env:QueuedPipelines`
         <br>You can sign off on the approval gate to test the release stage of each pipeline.`
-        <br>See [eng/common workflow](https://github.com/Azure/azure-sdk-tools/blob/master/eng/common/README.md#workflow)"
+        <br>See [eng/common workflow](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/README.md#workflow)"
         -AuthToken "$(azuresdk-github-pat)"
 
 - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+  - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
+    parameters:
+      SkipDefaultCheckout: true
+      Paths:
+        - ${{ parameters.DirectoryToSync }}
+      Repositories:
+        - Name: $(Build.Repository.Name)
+          Commitish: $(Build.SourceVersion)
+          WorkingDirectory: $(System.DefaultWorkingDirectory)/$(Build.Repository.Name)
+        - ${{ each repo in parameters.Repos }}:
+          - Name: ${{ parameters.PROwner }}/${{ repo }}
+            Commitish: ${{ parameters.BaseBranchName }}
+            WorkingDirectory: $(System.DefaultWorkingDirectory)/${{ repo }}
+
   - ${{ each repo in parameters.Repos }}:
     - pwsh: |
         Set-PsDebug -Trace 1
-        git clone --branch ${{ parameters.BaseBranchName }} https://github.com/azure/${{ repo }}
         $repoPath = "${{ repo }}/${{ parameters.DirectoryToSync }}"
-        if (!(Test-Path $repoPath)) { mkdir $repoPath }
-        Remove-Item -v -r $repoPath
-        Copy-Item -v -r $(Build.SourcesDirectory)/${{ parameters.DirectoryToSync }} $repoPath
+        Remove-Item -v -r -ErrorAction Ignore $repoPath
+        Copy-Item -v -r `
+          $(System.DefaultWorkingDirectory)/$(Build.Repository.Name)/${{ parameters.DirectoryToSync }} `
+          $repoPath
         Get-ChildItem -r $repoPath
       displayName: Copy ${{ parameters.DirectoryToSync }} from azure-sdk-tools to ${{ repo }}
       workingDirectory: $(System.DefaultWorkingDirectory)
@@ -132,9 +157,10 @@ steps:
     - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
       parameters:
         RepoName: ${{ repo }}
+        BaseBranchName: ${{ parameters.BaseBranchName }}
         PRBranchName: sync-${{ parameters.DirectoryToSync }}
         CommitMsg: ${{ parameters.CommitMessage }}
         PRTitle: ${{ parameters.CommitMessage }}
         PushArgs: -f
         WorkingDirectory: $(System.DefaultWorkingDirectory)/${{ repo }}
-        ScriptDirectory: $(System.DefaultWorkingDirectory)/eng/common/scripts
+        ScriptDirectory: $(System.DefaultWorkingDirectory)/$(Build.Repository.Name)/${{ parameters.ScriptDirectory }}

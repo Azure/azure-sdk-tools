@@ -95,6 +95,7 @@ namespace NotificationConfiguration.Services
             BuildDefinition result;
             try
             {
+                logger.LogInformation("GetPipelineAsync ProjectName = {0} PipelineId = {1}", projectName, pipelineId);
                 result = await client.GetDefinitionAsync(projectName, pipelineId);
             }
             catch (DefinitionNotFoundException)
@@ -113,7 +114,7 @@ namespace NotificationConfiguration.Services
         /// <param name="skip">Number of entries to skip</param>
         /// <param name="top">Maximum number of entries to return</param>
         /// <returns>Teams that satisfy given criteria</returns>
-        public async Task<IEnumerable<WebApiTeam>> GetTeamsAsync(string projectName, int skip = 0, int top = int.MaxValue)
+        internal async Task<IEnumerable<WebApiTeam>> GetTeamsAsync(string projectName, int skip = 0, int top = int.MaxValue)
         {
             var client = await GetClientAsync<TeamHttpClient>();
 
@@ -122,7 +123,35 @@ namespace NotificationConfiguration.Services
 
             return teams;
         }
-        
+
+        /// <summary>
+        /// Returns all teams in the given project
+        /// </summary>
+        /// <param name="projectName">Name of the project</param>
+        /// <returns>All teams which satisfy the given criteria</returns>
+        public async Task<IEnumerable<WebApiTeam>> GetAllTeamsAsync(string projectName)
+        {
+            var accumulator = new List<WebApiTeam>();
+            var skip = 0;
+            IEnumerable<WebApiTeam> teams;
+
+            while (true)
+            {
+                teams = await GetTeamsAsync(projectName, skip: skip);
+
+                if (!teams.Any())
+                {
+                    break;
+                }
+
+                accumulator.AddRange(teams);
+                skip = accumulator.Count;
+            }
+
+            return accumulator;
+
+        }
+
         /// <summary>
         /// Creates a team in the given project
         /// </summary>
@@ -137,7 +166,22 @@ namespace NotificationConfiguration.Services
 
             var result = await client.CreateTeamAsync(team, projectId);
             return result;
+        }
 
+        /// <summary>
+        /// Updates a team in the given project
+        /// </summary>
+        /// <param name="projectId">ID of project to associate with team</param>
+        /// <param name="team">Team to create</param>
+        /// <returns>Team with properties updated</returns>
+        public async Task<WebApiTeam> UpdateTeamForProjectAsync(string projectId, WebApiTeam team)
+        {
+            var client = await GetClientAsync<TeamHttpClient>();
+
+            logger.LogInformation("UpdateTeamForProjectAsync TeamName = {0} ProjectId = {1}", team.Name, projectId);
+
+            var result = await client.UpdateTeamAsync(team, projectId, team.Id.ToString());
+            return result;
         }
 
         /// <summary>
@@ -224,7 +268,7 @@ namespace NotificationConfiguration.Services
         {
             var client = await GetClientAsync<GraphHttpClient>();
 
-            logger.LogInformation("RemoveMember GroupDescriptor = {0}, MemberDescriptor = {1}");
+            logger.LogInformation("RemoveMember GroupDescriptor = {0}, MemberDescriptor = {1}", groupDescriptor, memberDescriptor);
             await client.RemoveMembershipAsync(memberDescriptor, groupDescriptor);
         }
 
@@ -246,11 +290,6 @@ namespace NotificationConfiguration.Services
         /// <summary>
         /// Gets subscriptions for a given target GUID
         /// </summary>
-        /// <remarks>
-        /// Some properties of the NotificationSubscription (like "Filter") are
-        /// not resolved in this API call. Expansion with a followup call may
-        /// be required
-        /// </remarks>
         /// <param name="targetId">GUID of the subscription target</param>
         /// <returns>Complete subscription objects</returns>
         public async Task<IEnumerable<NotificationSubscription>> GetSubscriptionsAsync(Guid targetId)
@@ -258,7 +297,7 @@ namespace NotificationConfiguration.Services
             var client = await GetClientAsync<NotificationHttpClient>();
 
             logger.LogInformation("GetSubscriptionsAsync TargetId = {0}", targetId);
-            var result = await client.ListSubscriptionsAsync(targetId);
+            var result = await client.ListSubscriptionsAsync(targetId, queryFlags: SubscriptionQueryFlags.IncludeFilterDetails);
 
             return result;
         }
@@ -274,6 +313,20 @@ namespace NotificationConfiguration.Services
 
             logger.LogInformation("CreateSubscriptionAsync Description = {0}", newSubscription.Description);
             var result = await client.CreateSubscriptionAsync(newSubscription);
+            return result;
+        }
+
+        /// <summary>
+        /// Updates a subscription
+        /// </summary>
+        /// <param name="newSubscription">Subscription to update</param>
+        /// <returns>The updated subscription</returns>
+        public async Task<NotificationSubscription> UpdatedSubscriptionAsync(NotificationSubscriptionUpdateParameters updateParameters, string subscriptionId)
+        {
+            var client = await GetClientAsync<NotificationHttpClient>();
+
+            logger.LogInformation("UpdateSubscriptionAsync Id = {0}", subscriptionId);
+            var result = await client.UpdateSubscriptionAsync(updateParameters, subscriptionId);
             return result;
         }
     }

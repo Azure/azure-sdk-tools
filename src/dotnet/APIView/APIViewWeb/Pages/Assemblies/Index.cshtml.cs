@@ -35,7 +35,7 @@ namespace APIViewWeb.Pages.Assemblies
 
         public async Task OnGetAsync()
         {
-            Assemblies = await _manager.GetReviewsAsync(Closed, Language, Automatic);
+            Assemblies = await _manager.GetReviewsAsync(Closed, Language, automatic: Automatic);
         }
 
         public async Task<IActionResult> OnPostUploadAsync()

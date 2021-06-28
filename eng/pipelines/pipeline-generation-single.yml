@@ -1,6 +1,6 @@
 # Variables defined in pipeline definition
 # DevOpsProject - public, internal
-# Branch - master
+# Branch - main
 # Prefix - net, python, js, java, <lang>-pr
 # RepositoryName - azure-sdk-for-<lang>
 # DevOpsPath - $(Prefix)\pr

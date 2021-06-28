@@ -446,6 +446,21 @@ code-inner {
     cursor: pointer;
 }
 
+.btn-group {
+    .btn.active {
+        border-radius: .25rem !important;
+    }
+
+    .btn:not(.active) {
+        transform: scaleY(0.9);
+    }
+
+    .btn:hover {
+        border-radius: .25rem !important;
+        transform: scaleY(1);
+    }
+}
+
 /* DIAGNOSTICS */
 .code-diagnostics-error {
     background-color: lightpink;

@@ -8,7 +8,6 @@ import com.azure.tools.apiview.processor.model.ChildItem;
 import com.azure.tools.apiview.processor.model.Token;
 import com.azure.tools.apiview.processor.model.TypeKind;
 import com.azure.tools.apiview.processor.model.maven.Dependency;
-import com.azure.tools.apiview.processor.model.maven.MavenGAV;
 import com.azure.tools.apiview.processor.model.maven.Pom;
 import com.github.javaparser.ParserConfiguration;
 import com.github.javaparser.StaticJavaParser;
@@ -48,6 +47,7 @@ import com.github.javaparser.ast.type.TypeParameter;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
+import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 
 import java.io.File;
@@ -57,12 +57,13 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
@@ -85,14 +86,20 @@ import static com.azure.tools.apiview.processor.model.TokenKind.PUNCTUATION;
 import static com.azure.tools.apiview.processor.model.TokenKind.TEXT;
 import static com.azure.tools.apiview.processor.model.TokenKind.TYPE_NAME;
 import static com.azure.tools.apiview.processor.model.TokenKind.WHITESPACE;
+import static com.azure.tools.apiview.processor.model.TokenKind.SKIP_DIFF_START;
+import static com.azure.tools.apiview.processor.model.TokenKind.SKIP_DIFF_END;
 
 import static com.azure.tools.apiview.processor.analysers.util.TokenModifier.*;
 
 public class ASTAnalyser implements Analyser {
-    private static final boolean SHOW_JAVADOC = true;
-
     public static final String MAVEN_KEY = "Maven";
     public static final String MODULE_INFO_KEY = "module-info";
+
+    private static final boolean SHOW_JAVADOC = true;
+    private static final Set<String> BLOCKED_ANNOTATIONS = new HashSet<String>() {{
+        add("ServiceMethod");
+        add("SuppressWarnings");
+    }};
 
     private final APIListing apiListing;
 
@@ -268,13 +275,14 @@ public class ASTAnalyser implements Analyser {
         addToken(new Token(PUNCTUATION, "{"), NEWLINE);
         indent();
 
-        // parent
-        String gavStr = mavenPom.getParent().getGroupId() + ":" + mavenPom.getParent().getArtifactId() + ":" + mavenPom.getParent().getVersion();
-        tokeniseKeyValue("parent", gavStr, "");
+       addToken(new Token(SKIP_DIFF_START));
+       // parent
+       String gavStr = mavenPom.getParent().getGroupId() + ":" + mavenPom.getParent().getArtifactId() + ":" + mavenPom.getParent().getVersion();
+       tokeniseKeyValue("parent", gavStr, "");
 
-        // properties
-        gavStr = mavenPom.getGroupId() + ":" + mavenPom.getArtifactId() + ":" + mavenPom.getVersion();
-        tokeniseKeyValue("properties", gavStr, "");
+       // properties
+       gavStr = mavenPom.getGroupId() + ":" + mavenPom.getArtifactId() + ":" + mavenPom.getVersion();
+       tokeniseKeyValue("properties", gavStr, "");
 
         // configuration
         boolean showJacoco = mavenPom.getJacocoMinLineCoverage() != null &&
@@ -329,6 +337,7 @@ public class ASTAnalyser implements Analyser {
 
         unindent();
         addToken(INDENT, new Token(PUNCTUATION, "}"), NEWLINE);
+        addToken(new Token(SKIP_DIFF_END));
 
         // allowed dependencies (in maven-enforcer)
 //        if (!mavenPom.getAllowedDependencies().isEmpty()) {
@@ -998,14 +1007,11 @@ public class ASTAnalyser implements Analyser {
                 }
             };
 
-            // for now we will only include the annotations we care about
-            nodeWithAnnotations.getAnnotationByName("Deprecated").ifPresent(consumer);
-            nodeWithAnnotations.getAnnotationByName("Override").ifPresent(consumer);
-            nodeWithAnnotations.getAnnotationByName("ServiceClient").ifPresent(consumer);
-            nodeWithAnnotations.getAnnotationByName("ServiceClientBuilder").ifPresent(consumer);
-            // nodeWithAnnotations.getAnnotationByName("ServiceMethod").ifPresent(consumer);
-            nodeWithAnnotations.getAnnotationByName("Fluent").ifPresent(consumer);
-            nodeWithAnnotations.getAnnotationByName("Immutable").ifPresent(consumer);
+            nodeWithAnnotations.getAnnotations()
+                    .stream()
+                    .filter(annotationExpr -> !BLOCKED_ANNOTATIONS.contains(annotationExpr.getName().getIdentifier())
+                            && !annotationExpr.getName().getIdentifier().startsWith("Json"))
+                    .forEach(consumer);
         }
 
         private void processAnnotationValueExpression(Expression valueExpr) {

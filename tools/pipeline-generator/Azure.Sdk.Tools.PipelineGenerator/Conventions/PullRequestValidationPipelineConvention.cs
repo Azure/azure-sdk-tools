@@ -20,42 +20,19 @@ namespace PipelineGenerator.Conventions
         }
 
         public override string SearchPattern => "ci.yml";
-        public override bool IsScheduled => false;
-        public override bool RemoveCITriggers => true;
 
         protected override async Task<bool> ApplyConventionAsync(BuildDefinition definition, SdkComponent component)
         {
-            // NOTE: Not happy with this code at all, I'm going to look for a reasonable
-            // API that can do equality comparisons (without having to do all the checks myself).
-
             var hasChanges = await base.ApplyConventionAsync(definition, component);
 
-            var prTrigger = definition.Triggers.OfType<PullRequestTrigger>().SingleOrDefault();
-
-            if (prTrigger == null)
+            if (EnsureDefautPullRequestTrigger(definition, overrideYaml: false, securePipeline: false))
             {
-                // TODO: We should probably be more complete here.
-                definition.Triggers.Add(new PullRequestTrigger()
-                {
-                    SettingsSourceType = 2, // HACK: See above.
-                    Forks = new Forks()
-                    {
-                        AllowSecrets = false,
-                        Enabled = true
-                    }
-                });
                 hasChanges = true;
             }
-            else
+
+            if (EnsureDefaultCITrigger(definition))
             {
-                // TODO: We should probably be more complete here.
-                if (prTrigger.SettingsSourceType != 2 || prTrigger.Forks.AllowSecrets != false || prTrigger.Forks.Enabled != true)
-                {
-                    prTrigger.SettingsSourceType = 2;
-                    prTrigger.Forks.AllowSecrets = false;
-                    prTrigger.Forks.Enabled = true;
-                    hasChanges = true;
-                }
+                hasChanges = true;
             }
 
             return hasChanges;

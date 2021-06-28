@@ -69,6 +69,14 @@ public class Main {
 
     private static ReviewProperties getReviewProperties(File inputFile) {
         final ReviewProperties reviewProperties = new ReviewProperties();
+        final String filename = inputFile.getName();
+        int i = 0;
+        while (i < filename.length() && !Character.isDigit(filename.charAt(i))) {
+            i++;
+        }
+
+        String artifactId = filename.substring(0, i - 1);
+        String packageVersion = filename.substring(i, filename.indexOf("-sources.jar"));
 
         // we will firstly try to get the artifact ID from the maven file inside the jar file...if it exists
         try (final JarFile jarFile = new JarFile(inputFile)) {
@@ -77,7 +85,9 @@ public class Main {
                 final JarEntry entry = enumOfJar.nextElement();
                 final String fullPath = entry.getName();
 
-                if (fullPath.startsWith("META-INF/maven") && fullPath.endsWith("pom.xml")) {
+                // use the pom.xml of this artifact only
+                // shaded jars can contain a pom.xml file each for every shaded dependencies
+                if (fullPath.startsWith("META-INF/maven") && fullPath.endsWith(artifactId + "/pom.xml")) {
                     reviewProperties.setMavenPom(new Pom(jarFile.getInputStream(entry)));
                 }
             }
@@ -88,14 +98,6 @@ public class Main {
         // if we can't get the maven details out of the Jar file, we will just use the filename itself...
         if (reviewProperties.getMavenPom() == null) {
             // we failed to read it from the maven pom file, we will just take the file name without any extension
-            final String filename = inputFile.getName();
-            int i = 0;
-            while (i < filename.length() && !Character.isDigit(filename.charAt(i))) {
-                i++;
-            }
-
-            String artifactId = filename.substring(0, i - 1);
-            String packageVersion = filename.substring(i, filename.indexOf("-sources.jar"));
             reviewProperties.setMavenPom(new Pom("", artifactId, packageVersion));
         }
 

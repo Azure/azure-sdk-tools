@@ -147,9 +147,7 @@ namespace Azure.Sdk.Tools.TestProxy
             var headerListOrig = incomingRequest.Headers.Select(x => String.Format("{0}: {1}", x.Key, x.Value.First())).ToList();
             var headerList = upstreamRequest.Headers.Select(x => String.Format("{0}: {1}", x.Key, x.Value.First())).ToList();
 
-
-            var originalBody = await upstreamResponse.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
-            var body = DecompressBody(originalBody, upstreamResponse.Content.Headers);
+            var body = DecompressBody(await upstreamResponse.Content.ReadAsByteArrayAsync().ConfigureAwait(false), upstreamResponse.Content.Headers);
 
             entry.Response.Body = body.Length == 0 ? null : body;
             entry.StatusCode = (int)upstreamResponse.StatusCode;
@@ -170,7 +168,6 @@ namespace Azure.Sdk.Tools.TestProxy
             if (entry.Response.Body?.Length > 0)
             {
                 var bodyData = CompressBody(entry.Response.Body, entry.Response.Headers);
-
                 outgoingResponse.ContentLength = bodyData.Length;
                 await outgoingResponse.Body.WriteAsync(bodyData).ConfigureAwait(false);
             }
@@ -184,9 +181,11 @@ namespace Azure.Sdk.Tools.TestProxy
                 {
                     using (var uncompressedStream = new MemoryStream(incomingBody))
                     using (var resultStream = new MemoryStream())
-                    using (var compressedStream = new GZipStream(resultStream, CompressionMode.Compress))
                     {
-                        uncompressedStream.CopyTo(compressedStream);
+                        using (var compressedStream = new GZipStream(resultStream, CompressionMode.Compress))
+                        {
+                            uncompressedStream.CopyTo(compressedStream);
+                        }
                         return resultStream.ToArray();
                     }
                 }

@@ -352,7 +352,7 @@ class LLCOperationView(FormattingClass):
         
         for i in range(0,len(yaml_data["operationGroups"][op_group_num]["operations"][op_num].get('responses'))):
             response_num.append(yaml_data["operationGroups"][op_group_num]["operations"][op_num]['responses'][i]['protocol']['http']['statusCodes'])
-        for i in range(0,len(yaml_data["operationGroups"][op_group_num]["operations"][op_num].get('exceptions'))):
+        for i in range(0,len(yaml_data["operationGroups"][op_group_num]["operations"][op_num].get('exceptions',[]))):
             response_num.append(yaml_data["operationGroups"][op_group_num]["operations"][op_num]['exceptions'][i]['protocol']['http']['statusCodes'])
 
         if yaml_data["operationGroups"][op_group_num]["operations"][op_num].get("extensions"):
@@ -573,16 +573,17 @@ def request_builder(self, json_request, indent=4):
                             self.add_comment(None, "model", None)
                             self.add_space()
                             self.add_comment(None, i, None)
-                        elif not isinstance(json_request[i],str):
-                            self.add_comment(None, "model "+i,None)
+                        # elif not isinstance(json_request[i],str):
+                        #     self.add_comment(None, "model "+i,None)
                         else:
                             self.add_comment(None, i, None)
+                            self.add_space()
                     if isinstance(json_request, list):
                         self.add_whitespace(5)
                         for j in range(0, len(json_request)):
                             request_builder(self, json_request[j], indent)
                     elif isinstance(json_request[i], list):
-                        if len(i)>0:
+                        if len(json_request[i])>0:
                             self.add_new_line()
                             for j in range(0, len(json_request[i])):
                                 request_builder(self, json_request[i][j], indent+1)
@@ -597,7 +598,15 @@ def request_builder(self, json_request, indent=4):
                         self.add_comment(None, json_request[i], None)
                         self.add_new_line()
                     elif isinstance(json_request[i], dict):
-          
+                        if len(json_request[i])==1:
+                            if not isinstance(json_request[i].get('str'),str):
+                                self.add_new_line()
+                                self.add_whitespace(indent+1)
+                                self.add_comment(None,"Map<",None)
+                                if isinstance(json_request[i]['str'],list): m_type = "list[]"
+                                if isinstance(json_request[i]['str'],dict): m_type = "dict[]"
+                                self.add_comment(None,"string,"+m_type+">",None)
+                                indent+=1
                         if len(i)>0:
                             self.add_new_line()
                             request_builder(self, json_request[i], indent+1)

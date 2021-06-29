@@ -147,7 +147,9 @@ namespace Azure.Sdk.Tools.TestProxy
             var headerListOrig = incomingRequest.Headers.Select(x => String.Format("{0}: {1}", x.Key, x.Value.First())).ToList();
             var headerList = upstreamRequest.Headers.Select(x => String.Format("{0}: {1}", x.Key, x.Value.First())).ToList();
 
-            var body = DecompressBody(await upstreamResponse.Content.ReadAsByteArrayAsync().ConfigureAwait(false), upstreamResponse.Content.Headers);
+
+            var originalBody = await upstreamResponse.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
+            var body = DecompressBody(originalBody, upstreamResponse.Content.Headers);
 
             entry.Response.Body = body.Length == 0 ? null : body;
             entry.StatusCode = (int)upstreamResponse.StatusCode;
@@ -180,11 +182,11 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 if (values.Contains("gzip"))
                 {
-                    using (var compressedStream = new MemoryStream(incomingBody))
-                    using (var zipStream = new GZipStream(compressedStream, CompressionMode.Compress))
+                    using (var uncompressedStream = new MemoryStream(incomingBody))
                     using (var resultStream = new MemoryStream())
+                    using (var compressedStream = new GZipStream(resultStream, CompressionMode.Compress))
                     {
-                        resultStream.CopyTo(zipStream);
+                        uncompressedStream.CopyTo(compressedStream);
                         return resultStream.ToArray();
                     }
                 }
@@ -200,10 +202,10 @@ namespace Azure.Sdk.Tools.TestProxy
                 if (values.Contains("gzip"))
                 {
                     using (var compressedStream = new MemoryStream(incomingBody))
-                    using (var zipStream = new GZipStream(compressedStream, CompressionMode.Decompress))
+                    using (var unzippedStream = new GZipStream(compressedStream, CompressionMode.Decompress))
                     using (var resultStream = new MemoryStream())
                     {
-                        zipStream.CopyTo(resultStream);
+                        unzippedStream.CopyTo(resultStream);
                         return resultStream.ToArray();
                     }
                 }

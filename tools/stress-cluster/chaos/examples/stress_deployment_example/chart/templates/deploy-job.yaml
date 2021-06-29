@@ -3,21 +3,23 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: deploy-example-{{ .Release.Name }}
+  name: {{ .Values.testName }}
   namespace: {{ .Release.Namespace }}
 spec:
   backoffLimit: 0
   template:
     metadata:
       labels:
-        stressTest: "true"
+        testName: "{{ .Values.testName }}"
         chaos: "true"
-        owners: "benbp"
+        owners: "{{ .Values.owners }}"
     spec:
       restartPolicy: Never
       volumes:
+        {{- include "stress-test-addons.env-volumes" . | nindent 8 }}
         {{- include "stress-test-addons.deploy-volumes" . | nindent 8 }}
       initContainers:
+        {{- include "stress-test-addons.init-cluster-secrets" . | nindent 8 }}
         {{- include "stress-test-addons.init-deploy" . | nindent 8 }}
       containers:
         - name: deployment-example
@@ -25,11 +27,13 @@ spec:
           command: ['bash', '-c']
           args:
             - |
-                source /mnt/outputs/.env &&
+                source $ENV_FILE &&
                 az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID &&
                 az account set -s $AZURE_SUBSCRIPTION_ID &&
                 az group show -g $RESOURCE_GROUP -o json &&
-                echo $APPINSIGHTS_INSTRUMENTATIONKEY
+          env:
+            - name: ENV_FILE
+              value: /mnt/outputs/.env
           volumeMounts:
-            - name: test-resources-outputs-{{ .Release.Name }}
+            - name: test-env-{{ .Release.Name }}
               mountPath: /mnt/outputs

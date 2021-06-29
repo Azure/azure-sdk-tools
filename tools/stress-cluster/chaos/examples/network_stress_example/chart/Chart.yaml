@@ -1,10 +1,10 @@
 apiVersion: v2
 name: network_example
-description: An example stress test chart
+description: An example stress test chart with network chaos
 version: 0.1.0
 appVersion: v0.1
 
 dependencies:
-- name: namespace-secrets
+- name: stress-test-addons
   version: 0.1.0
-  repository: file://../../../../cluster/kubernetes/namespace-secrets
+  repository: file://../../../../cluster/kubernetes/stress-test-addons

@@ -1,8 +1,10 @@
 apiVersion: chaos-mesh.org/v1alpha1
 kind: NetworkChaos
 metadata:
-  name: network-loss-example
+  name: {{ .Release.name }}
   namespace: {{ .Release.Namespace }}
+  labels:
+    owners: "{{ .Values.owners }}"
 spec:
   action: loss
   direction: to

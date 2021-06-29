@@ -4,24 +4,20 @@ metadata:
   name: {{ .Values.testName }}
   namespace: {{ .Release.Namespace }}
 spec:
+  backoffLimit: 0
   template:
     metadata:
       labels:
         testName: "{{ .Values.testName }}"
         chaos: "true"
+        owners: "{{ .Values.owners }}"
     spec:
+      restartPolicy: Never
+      volumes:
+        {{- include "stress-test-addons.env-volumes" . | nindent 8 }}
+      initContainers:
+        {{- include "stress-test-addons.init-cluster-secrets" . | nindent 8 }}
       containers:
       - name: network-example
-        image: "{{ .Values.registry }}.azurecr.io/benbp/networkexample:v1"
-        command: ["bash"]
-        # Azure AKS default outbound rules do not allow ICMP, so use wget in place of ping for deployment simplicity
-        args: ["-c", "while true; do wget -Tl -t1 --spider http://www.bing.com; sleep 3;done"]
-        env:
-          - name: APPINSIGHTS_INSTRUMENTATIONKEY
-            valueFrom:
-              secretKeyRef:
-                name: appinsightsinstrumentationkey
-                key: value
-      restartPolicy: Never
-  backoffLimit: 0
-
+        image: "{{ .Values.image }}"
+        command: ["bash", "poll.sh"]

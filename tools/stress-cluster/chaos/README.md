@@ -156,6 +156,16 @@ The basic layout for a stress test is the following (see `examples/stress_deploy
                           # Most commonly this will contain a Kubernetes Job manifest and a chaos mesh manifest.
 ```
 
+#### Stress Test Secrets
+
+For ease of implementation regarding merging secrets from various Keyvault sources, secret values injected into the stress
+test container can be found in a file at path `$ENV_FILE`. This file follows the "dotenv" file syntax (i.e. lines of <key>=<value>), and
+can be [loaded](https://www.npmjs.com/package/dotenv) [via](https://pypi.org/project/python-dotenv/)
+[various](https://mvnrepository.com/artifact/io.github.cdimascio/dotenv-java) [packages](https://www.nuget.org/packages/dotenv.net/).
+
+Stress tests should publish telemetry and logs to Application Insights via the $APPINSIGHTS_INSTRUMENTATIONKEY environment variable
+injected into the container.
+
 #### Helm Chart Dependencies
 
 The <chart root>/chart/Chart.yaml file should look something like below. It must include the `stress-test-addons` dependency:
@@ -201,18 +211,26 @@ spec:
       restartPolicy: Never
       volumes:
         # Volume template for mounting secrets
+        {{- include "stress-test-addons.env-volumes" . | nindent 8 }}
+        # Volume template for mounting ARM templates
         {{- include "stress-test-addons.deploy-volumes" . | nindent 8 }}
       initContainers:
-        # Init container template for deploying azure resources on startup
+        # Init container template for injecting secrets
+        # (e.g. app insights instrumentation key, azure client credentials)
+        {{- include "stress-test-addons.init-env" . | nindent 8 }}
+        # Init container template for deploying azure resources on startup and adding deployment outputs to the env
         {{- include "stress-test-addons.init-deploy" . | nindent 8 }}
       containers:
         - name: <stress test name>
           image: <stress test container image>
           command: <startup command array>
           args: <startup args array>
+          env:
+            - name: ENV_FILE
+              value: /mnt/outputs/.env
           volumeMounts:
-            # These hardcoded names/paths must be preserved
-            - name: test-resources-outputs-{{ .Release.Name }}
+            # These hardcoded names/paths must be preserved to mount the environment file
+            - name: test-env-{{ .Release.Name }}
               mountPath: /mnt/outputs
 ```
 

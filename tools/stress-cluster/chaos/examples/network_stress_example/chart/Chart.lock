@@ -1,6 +1,0 @@
-dependencies:
-- name: namespace-secrets
-  repository: file://../../../../cluster/kubernetes/namespace-secrets
-  version: 0.1.0
-digest: sha256:be2cc8850850ca82cb92d71a7018ece083783a99f2e637da033636ff093b45bf
-generated: "2021-06-23T02:20:52.9474495-04:00"

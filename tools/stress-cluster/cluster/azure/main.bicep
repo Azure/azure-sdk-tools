@@ -54,7 +54,8 @@ module cluster 'cluster/cluster.bicep' = {
     }
 }
 
-var appInsightsInstrumentationKeyName = 'appInsightsInstrumentationKey-${resourceSuffix}'
+var appInsightsInstrumentationKeySecretName = 'appInsightsInstrumentationKey-${resourceSuffix}'
+var appInsightsInstrumentationKeySecretValue = 'APPINSIGHTS_INSTRUMENTATIONKEY=${appInsights.outputs.instrumentationKey}\n'
 
 module containerRegistry 'cluster/acr.bicep' = {
     name: 'containerRegistry'
@@ -77,16 +78,29 @@ module keyvault 'cluster/keyvault.bicep' = if (enableMonitoring) {
         secretsObject: {
             secrets: [
                 {
-                    secretName: appInsightsInstrumentationKeyName
-                    secretValue: appInsights.outputs.instrumentationKey
+                    secretName: appInsightsInstrumentationKeySecretName
+                    secretValue: appInsightsInstrumentationKeySecretValue
                 }
             ]
         }
     }
 }
 
+var staticTestSecretsVault = 'StressTestSecrets-test'
+
+module accessPolicy 'cluster/static-vault-access-policy.bicep' = {
+    name: 'accessPolicy'
+    scope: resourceGroup('rg-StressTestSecrets-test')
+    params: {
+        vaultName: staticTestSecretsVault
+        tenantId: subscription().tenantId
+        objectId: cluster.outputs.secretProviderObjectId
+    }
+}
+
+output STATIC_TEST_SECRETS_VAULT string = staticTestSecretsVault
 output SECRET_PROVIDER_CLIENT_ID string = cluster.outputs.secretProviderClientId
-output APPINSIGHTS_KEY_NAME string = appInsightsInstrumentationKeyName
+output APPINSIGHTS_KEY_SECRET_NAME string = appInsightsInstrumentationKeySecretName
 output KEYVAULT_NAME string = keyvault.outputs.keyvaultName
 output CLUSTER_NAME string = cluster.outputs.clusterName
 output CONTAINER_REGISTRY_NAME string = containerRegistry.outputs.containerRegistryName

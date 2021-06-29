@@ -1,13 +1,10 @@
 apiVersion: v2
-name: network_example
-description: An example stress test chart
+name: deployment_example
+description: An example stress test chart for performing azure resource deployments
 version: 0.1.0
 appVersion: v0.1
 
 dependencies:
-- name: namespace-secrets
+- name: stress-test-addons
   version: 0.1.0
-  repository: file://../../../../cluster/kubernetes/namespace-secrets
-- name: azure-deployer
-  version: 0.1.0
-  repository: file://../../../../cluster/kubernetes/azure-deployer
+  repository: file://../../../../cluster/kubernetes/stress-test-addons

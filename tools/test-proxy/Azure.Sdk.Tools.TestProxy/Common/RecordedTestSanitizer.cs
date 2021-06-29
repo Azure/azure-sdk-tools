@@ -26,7 +26,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         private static readonly string[] s_sanitizeValueArray = { SanitizeValue };
 
-        private static readonly JsonSerializerSettings SerializerSettings = new JsonSerializerSettings
+        public static readonly JsonSerializerSettings SerializerSettings = new JsonSerializerSettings
         {
             DateParseHandling = DateParseHandling.None
         };

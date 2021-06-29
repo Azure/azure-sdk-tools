@@ -142,6 +142,34 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
+        public void BodyRegexSanitizerCleansJSON()
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/post_delete_get_content.json");
+            var targetEntry = session.Session.Entries[0];
+            var targetKey = "Location";
+            
+        
+        
+        }
+
+        [Fact]
+        public void BodyRegexSanitizerCleansText()
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/oauth_request.json");
+            var targetEntry = session.Session.Entries[0];
+            var targetKey = "Location";
+            
+        }
+
+        [Fact]
+        public void BodyRegexSanitizerQuietlyExits()
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/oauth_request.json");
+            var targetEntry = session.Session.Entries[0];
+            var targetKey = "Location";
+        }
+
+        [Fact]
         public void ContinuationSanitizerMultipleStepsNoKey()
         {
 

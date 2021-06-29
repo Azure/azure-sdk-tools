@@ -22,7 +22,8 @@ You will need the following tools to create and run tests:
 
 1. [Docker](https://docs.docker.com/get-docker/)
 1. [Kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl)
-1. Azure CLI
+1. [Helm](https://helm.sh/)
+1. [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
 
 ## Access
 
@@ -30,9 +31,9 @@ To access the cluster, run the following:
 
 ```
 az login
-az account set --subscription 'Azure SDK Developer Playground'
+az account set --subscription 'Azure SDK Test Resources'
 # Download the kubeconfig for the cluster
-az aks get-credentials -g bebroder-aks-sdk-dev -n aks-sdk-dev
+az aks get-credentials -g rg-stress-test-cluster- -n stress-test
 ```
 
 You should now be able to access the cluster. To verify, you should see a list of namespaces when running the command:
@@ -51,6 +52,10 @@ Then navigate to `localhost:2333` in your browser. You will need to keep the abo
 
 ## Getting Started
 
+### Quick Testing with no Dependencies
+
+This section details how to deploy a simple job, without any dependencies on the cluster (e.g. azure credentials, app insights keys).
+
 To get started, you will need to create a container image containing your long-running test, and a manifest to execute that image as a [kubernetes job](https://kubernetes.io/docs/concepts/workloads/controllers/job/).
 
 The Dockerfile for your image should contain your test code/artifacts. See [docs on how to create a Dockerfile](https://docs.docker.com/develop/develop-images/dockerfile_best-practices/)
@@ -65,7 +70,7 @@ You will then need to build and push your container image to a registry the clus
 
 ```
 az acr login -n azuresdkdev
-docker build . -t azuresdkdev.azurecr.io/<<your name>/test job image name>:<version>
+docker build . -t azuresdkdev.azurecr.io/<your name>/<test job image name>:<version>
 docker push azuresdkdev.azurecr.io/<your name>/<test job image name>:<version>
 ```
 
@@ -121,6 +126,165 @@ To delete your test:
 kubectl delete -f testjob.yaml
 ```
 
+### Creating a Stress Test
+
+This section details how to create a formal stress test which creates azure resource deployments and publishes telemetry.
+
+Stress tests are packaged as [helm charts](https://helm.sh/docs/topics/charts/) using helm, which is a "package manager" for Kubernetes manifests.
+The usage of helm charts allows for two primary scenarios:
+
+- Stress tests can easily take dependencies on core configuration and templates required to interact with the cluster
+- Stress tests can easily be deployed and removed via the `helm` command line tool.
+
+#### Layout
+
+The basic layout for a stress test is the following (see `examples/stress_deployment_example` for an example):
+
+```
+<chart root directory>
+  Dockerfile              # A Dockerfile for building the stress test image
+  <misc scripts/configs>  # Any language specific files for building/running/deploying the test
+  <source directories>    # Directory/directories containing code for stress tests
+  <test-resources.bicep>  # An Azure Bicep template for deploying stress test azure resources.
+
+  chart/                  # Directory containing the helm chart for deploying into the stress test cluster
+    Chart.yaml            # A YAML file containing information about the chart
+    values.yaml           # Any default configuration values for this chart
+    charts/               # A directory containing any charts upon which this chart depends.
+    templates/            # A directory of templates that, when combined with values,
+                          # will generate valid Kubernetes manifest files.
+                          # Most commonly this will contain a Kubernetes Job manifest and a chaos mesh manifest.
+```
+
+#### Helm Chart Dependencies
+
+The <chart root>/chart/Chart.yaml file should look something like below. It must include the `stress-test-addons` dependency:
+
+```
+apiVersion: v2
+name: <stress test name>
+description: <description>
+version: 0.1.0
+appVersion: v0.1
+
+dependencies:
+- name: stress-test-addons
+  version: 0.1.0
+  repository: file://../../../../cluster/kubernetes/stress-test-addons
+```
+
+#### Job Manifest
+
+The [Job](https://kubernetes.io/docs/concepts/workloads/controllers/job/) manifest should be a simple config 
+that runs your stress test container with a startup command. There are a few [helm template include](https://helm.sh/docs/howto/charts_tips_and_tricks/)
+functions that pull in config boilerplate from the `stress-test-addons` dependency in order to deploy
+azure resources on startup and inject environment secrets.
+
+```
+# Configmap template that adds the stress test ARM template
+{{ include "stress-test-addons.deploy-configmap" . }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: <stress test name>-{{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        testName: <stress test name>
+        owners: <owner aliases>
+        chaos: "true"
+    spec:
+      restartPolicy: Never
+      volumes:
+        # Volume template for mounting secrets
+        {{- include "stress-test-addons.deploy-volumes" . | nindent 8 }}
+      initContainers:
+        # Init container template for deploying azure resources on startup
+        {{- include "stress-test-addons.init-deploy" . | nindent 8 }}
+      containers:
+        - name: <stress test name>
+          image: <stress test container image>
+          command: <startup command array>
+          args: <startup args array>
+          volumeMounts:
+            # These hardcoded names/paths must be preserved
+            - name: test-resources-outputs-{{ .Release.Name }}
+              mountPath: /mnt/outputs
+```
+
+#### Chaos Manifest
+
+Any [chaos experiment](https://chaos-mesh.org/docs/chaos_experiments/networkchaos_experiment) manifests
+can be placed in `<stress test directory>/chart/templates/`. See Faults via Dashboard and Faults via Config below.
+
+### Deploying a Stress Test
+
+To build and deploy the stress test, first log in to access the cluster resources if not already set up:
+
+```
+az login
+az account set --subscription 'Azure SDK Test Resources'
+# Log in to the container registry for Docker access
+az acr login -n stresstestregistry
+# Download the kubeconfig for the cluster
+az aks get-credentials -g rg-stress-test-cluster- -n stress-test
+```
+
+Then build/publish images and build ARM templates. Make sure the docker image matches what's referenced in the helm templates.
+
+```
+# Build and publish image
+docker build . -t stresstestregistry.azurecr.io/<your name>/<test job image name>:<version>
+docker push stresstestregistry.azurecr.io/<your name>/<test job image name>:<version>
+
+# Compile ARM template (if using Bicep files)
+az bicep build -f ./test-resources.bicep --outfile ./chart/test-resources.json
+
+# Install helm dependencies
+helm dependency update ./chart
+```
+
+Then install the stress test into the cluster:
+
+```
+kubectl create namespace <your stress test namespace>
+helm install <stress test name> ./chart -f ../../../cluster/kubernetes/environments/test.yaml
+```
+
+You can check the progress/status of your installation via:
+
+```
+helm list -n <stress test namespace>
+```
+
+To stop and remove the test:
+
+```
+helm uninstall <stress test name> -n <stress test namespace>
+```
+
+To check the status of the stress test job resources:
+
+```
+# List stress test pods
+kubectl get pods -n <stress test namespace>
+# Get logs from azure-deployer init container
+kubectl logs -n <stress test namespace> <stress test pod name> -c azure-deployer
+# If empty, there may have been startup failures
+kubectl describe pod -n <stress test namespace> <stress test pod name>
+```
+
+Once the `azure-deployer` init container is completed and the stress test pod is in a `Running` state,
+you can quick check the local logs:
+
+```
+kubectl logs -n <stress test namespace> <stress test pod name>
+```
+
 ## Configuring faults
 
 Faults can be configured via kubernetes manifests or via the UI (which is a helper for building the manifests under the hood). For docs on the manifest schema, see [here](https://chaos-mesh.org/docs/user_guides/run_chaos_experiment).
@@ -152,7 +316,7 @@ Log in to the cluster:
 ```
 az login
 az acr login -n azuresdkdev
-az aks get-credentials -g bebroder-aks-sdk-dev -n aks-sdk-dev
+az aks get-credentials -g rg-stress-test-cluster- -n stress-test
 ```
 
 Initialize your resources:

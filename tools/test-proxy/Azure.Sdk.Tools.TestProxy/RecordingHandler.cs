@@ -168,7 +168,6 @@ namespace Azure.Sdk.Tools.TestProxy
             if (entry.Response.Body?.Length > 0)
             {
                 var bodyData = CompressBody(entry.Response.Body, entry.Response.Headers);
-
                 outgoingResponse.ContentLength = bodyData.Length;
                 await outgoingResponse.Body.WriteAsync(bodyData).ConfigureAwait(false);
             }
@@ -180,11 +179,13 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 if (values.Contains("gzip"))
                 {
-                    using (var compressedStream = new MemoryStream(incomingBody))
-                    using (var zipStream = new GZipStream(compressedStream, CompressionMode.Compress))
+                    using (var uncompressedStream = new MemoryStream(incomingBody))
                     using (var resultStream = new MemoryStream())
                     {
-                        resultStream.CopyTo(zipStream);
+                        using (var compressedStream = new GZipStream(resultStream, CompressionMode.Compress))
+                        {
+                            uncompressedStream.CopyTo(compressedStream);
+                        }
                         return resultStream.ToArray();
                     }
                 }
@@ -200,10 +201,10 @@ namespace Azure.Sdk.Tools.TestProxy
                 if (values.Contains("gzip"))
                 {
                     using (var compressedStream = new MemoryStream(incomingBody))
-                    using (var zipStream = new GZipStream(compressedStream, CompressionMode.Decompress))
+                    using (var uncompressedStream = new GZipStream(compressedStream, CompressionMode.Decompress))
                     using (var resultStream = new MemoryStream())
                     {
-                        zipStream.CopyTo(resultStream);
+                        uncompressedStream.CopyTo(resultStream);
                         return resultStream.ToArray();
                     }
                 }

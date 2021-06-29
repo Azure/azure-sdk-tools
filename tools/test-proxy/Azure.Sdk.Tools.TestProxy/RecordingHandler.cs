@@ -201,10 +201,10 @@ namespace Azure.Sdk.Tools.TestProxy
                 if (values.Contains("gzip"))
                 {
                     using (var compressedStream = new MemoryStream(incomingBody))
-                    using (var unzippedStream = new GZipStream(compressedStream, CompressionMode.Decompress))
+                    using (var uncompressedStream = new GZipStream(compressedStream, CompressionMode.Decompress))
                     using (var resultStream = new MemoryStream())
                     {
-                        unzippedStream.CopyTo(resultStream);
+                        uncompressedStream.CopyTo(resultStream);
                         return resultStream.ToArray();
                     }
                 }

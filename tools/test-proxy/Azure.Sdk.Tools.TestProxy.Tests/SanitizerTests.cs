@@ -2,6 +2,7 @@
 using Azure.Sdk.Tools.TestProxy.Sanitizers;
 using System;
 using System.Linq;
+using System.Text;
 using System.Text.Json;
 using Xunit;
 
@@ -13,6 +14,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
         public string lookaheadReplaceRegex = @"[a-z]+(?=\.(?:table|blob|queue)\.core\.windows\.net)";
         public string capturingGroupReplaceRegex = @"https\:\/\/(?<account>[a-z]+)\.(?:table|blob|queue)\.core\.windows\.net";
+        public string scopeClean = @"scope\=(?<scope>[^&]*)";
 
         [Fact]
         public void OauthResponseSanitizerCleansV2AuthRequest()
@@ -146,10 +148,13 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         {
             var session = TestHelpers.LoadRecordSession("Test.RecordEntries/post_delete_get_content.json");
             var targetEntry = session.Session.Entries[0];
-            var targetKey = "Location";
-            
-        
-        
+
+            var replaceTableNameRegex = "TableName\"\\s*:\\s*\"(?<tablename>[a-z0-9]+)\"";
+
+            var bodyRegexSanitizer = new BodyRegexSanitizer(value: "afaketable", regex: replaceTableNameRegex, groupForReplace: "tablename");
+            session.Session.Sanitize(bodyRegexSanitizer);
+
+            Assert.Contains("\"TableName\":\"afaketable\"", Encoding.UTF8.GetString(targetEntry.Response.Body));
         }
 
         [Fact]
@@ -157,17 +162,53 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         {
             var session = TestHelpers.LoadRecordSession("Test.RecordEntries/oauth_request.json");
             var targetEntry = session.Session.Entries[0];
-            var targetKey = "Location";
-            
+
+            var bodyRegexSanitizer = new BodyRegexSanitizer(value: "sanitized.scope", regex: scopeClean, groupForReplace: "scope");
+            session.Session.Sanitize(bodyRegexSanitizer);
+
+            var expectedBodyStartsWith = "scope=sanitized.scope&client_id";
+
+            Assert.StartsWith(expectedBodyStartsWith, Encoding.UTF8.GetString(targetEntry.Request.Body));
         }
 
         [Fact]
         public void BodyRegexSanitizerQuietlyExits()
         {
-            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/oauth_request.json");
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/post_delete_get_content.json");
             var targetEntry = session.Session.Entries[0];
-            var targetKey = "Location";
+
+            var beforeUpdate = targetEntry.Request.Body;
+            var bodyRegexSanitizer = new BodyRegexSanitizer(value: "fakeaccount", regex: capturingGroupReplaceRegex, groupForReplace: "account");
+            session.Session.Sanitize(bodyRegexSanitizer);
+
+            Assert.Equal(beforeUpdate, targetEntry.Request.Body);
         }
+
+        [Fact]
+        public void RemoveHeaderSanitizerQuietlyExits()
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/post_delete_get_content.json");
+            var targetEntry = session.Session.Entries[0];
+
+        }
+
+        [Fact]
+        public void RemoveHeaderSanitizerRemovesSingleHeader()
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/post_delete_get_content.json");
+            var targetEntry = session.Session.Entries[0];
+
+        }
+
+        [Fact]
+        public void RemoveHeaderSanitizerRemovesMultipleHeaders()
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/post_delete_get_content.json");
+            var targetEntry = session.Session.Entries[0];
+
+
+        }
+
 
         [Fact]
         public void ContinuationSanitizerMultipleStepsNoKey()

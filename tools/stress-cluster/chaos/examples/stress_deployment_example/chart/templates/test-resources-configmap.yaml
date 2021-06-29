@@ -1,1 +1,0 @@
-{{ include "stress-test-addons.deploy-configmap" . }}

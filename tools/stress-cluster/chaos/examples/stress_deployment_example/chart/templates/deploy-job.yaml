@@ -1,3 +1,5 @@
+{{ include "stress-test-addons.deploy-configmap" . }}
+---
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -14,9 +16,9 @@ spec:
     spec:
       restartPolicy: Never
       volumes:
-        {{- include "stress-test-addons.deploy-volumes" . | nindent 8}}
+        {{- include "stress-test-addons.deploy-volumes" . | nindent 8 }}
       initContainers:
-        {{- include "stress-test-addons.init-deploy" . | nindent 8}}
+        {{- include "stress-test-addons.init-deploy" . | nindent 8 }}
       containers:
         - name: deployment-example
           image: mcr.microsoft.com/azure-cli
@@ -25,7 +27,7 @@ spec:
             - |
                 source /mnt/outputs/.env &&
                 az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID &&
-                az account set -s "{{ .Values.subscription }}" &&
+                az account set -s $AZURE_SUBSCRIPTION_ID &&
                 az group show -g $RESOURCE_GROUP -o json &&
                 echo $APPINSIGHTS_INSTRUMENTATIONKEY
           volumeMounts:

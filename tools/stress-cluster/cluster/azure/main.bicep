@@ -3,6 +3,8 @@ targetScope = 'subscription'
 param groupSuffix string
 param clusterName string
 param clusterLocation string = 'westus2'
+param staticTestSecretsKeyvaultName string
+param staticTestSecretsKeyvaultGroup string
 param monitoringLocation string = 'centralus'
 param tags object
 param enableMonitoring bool = false
@@ -54,9 +56,6 @@ module cluster 'cluster/cluster.bicep' = {
     }
 }
 
-var appInsightsInstrumentationKeySecretName = 'appInsightsInstrumentationKey-${resourceSuffix}'
-var appInsightsInstrumentationKeySecretValue = 'APPINSIGHTS_INSTRUMENTATIONKEY=${appInsights.outputs.instrumentationKey}\n'
-
 module containerRegistry 'cluster/acr.bicep' = {
     name: 'containerRegistry'
     scope: group
@@ -66,6 +65,9 @@ module containerRegistry 'cluster/acr.bicep' = {
         objectIds: concat(accessGroups, array(cluster.outputs.kubeletIdentityObjectId))
     }
 }
+
+var appInsightsInstrumentationKeySecretName = 'appInsightsInstrumentationKey-${resourceSuffix}'
+var appInsightsInstrumentationKeySecretValue = 'APPINSIGHTS_INSTRUMENTATIONKEY=${appInsights.outputs.instrumentationKey}\n'
 
 module keyvault 'cluster/keyvault.bicep' = if (enableMonitoring) {
     name: 'keyvault'
@@ -86,23 +88,21 @@ module keyvault 'cluster/keyvault.bicep' = if (enableMonitoring) {
     }
 }
 
-var staticTestSecretsVault = 'StressTestSecrets-test'
-
 module accessPolicy 'cluster/static-vault-access-policy.bicep' = {
     name: 'accessPolicy'
-    scope: resourceGroup('rg-StressTestSecrets-test')
+    scope: resourceGroup(staticTestSecretsKeyvaultGroup)
     params: {
-        vaultName: staticTestSecretsVault
+        vaultName: staticTestSecretsKeyvaultName
         tenantId: subscription().tenantId
         objectId: cluster.outputs.secretProviderObjectId
     }
 }
 
-output STATIC_TEST_SECRETS_VAULT string = staticTestSecretsVault
+output STATIC_TEST_SECRETS_KEYVAULT string = staticTestSecretsKeyvaultName
+output CLUSTER_KEYVAULT string = keyvault.outputs.keyvaultName
 output SECRET_PROVIDER_CLIENT_ID string = cluster.outputs.secretProviderClientId
-output APPINSIGHTS_KEY_SECRET_NAME string = appInsightsInstrumentationKeySecretName
-output KEYVAULT_NAME string = keyvault.outputs.keyvaultName
 output CLUSTER_NAME string = cluster.outputs.clusterName
 output CONTAINER_REGISTRY_NAME string = containerRegistry.outputs.containerRegistryName
+output APPINSIGHTS_KEY_SECRET_NAME string = appInsightsInstrumentationKeySecretName
 output RESOURCE_GROUP string = group.name
 output TENANT_ID string = subscription().tenantId

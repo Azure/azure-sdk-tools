@@ -617,6 +617,8 @@ def request_builder(self, json_request, notfirst, indent=4):
                         json_request[i] =i+"? :"+ param[0]
                     else:
                         json_request[i] =i+ ": "+ param[0]
+                else:
+                    self.add_comment(None,i+": ",None)        
                 self.add_comment(None, json_request[i], None)
                 self.add_new_line()
             else:

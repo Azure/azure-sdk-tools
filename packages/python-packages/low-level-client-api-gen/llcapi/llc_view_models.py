@@ -569,7 +569,8 @@ class LLCOperationView(FormattingClass):
         return obj_dict
 
 
-def request_builder(self, json_request, yaml, notfirst, indent=4, name=''):
+def request_builder(self, json_request, yaml, notfirst, indent=4, name='',inner_model = []):
+    inner_model = inner_model
     if isinstance(json_request,str):
         self.add_whitespace(indent)
         self.add_comment(None,json_request,None)
@@ -578,14 +579,13 @@ def request_builder(self, json_request, yaml, notfirst, indent=4, name=''):
     if isinstance(json_request,list):
         for i in range(0,len(json_request)):
             if isinstance(json_request[i],str):     
-                # self.add_whitespace(indent)
                 index = json_request[i].find("(optional)")
                 param = json_request[i].split()
                 if len(param)>=2:
                     if index!=-1:
-                        json_request[i] ="[] ? :"+ param[0]
+                        json_request[i] ="? :"+ param[0]+"[] "
                     else:
-                        json_request[i] ="[] : "+ param[0]
+                        json_request[i] =" : "+ param[0]+"[]"
                 self.add_comment(None, json_request[i], None)
                 self.add_new_line()
             else:
@@ -617,11 +617,11 @@ def request_builder(self, json_request, yaml, notfirst, indent=4, name=''):
                         
                         m_type = get_map_type(yaml,name)
                         
-                        self.add_comment(None,"Map<str, "+ m_type +">",None)
+                        self.add_comment(None,"Map<str, "+ m_type +">;",None)
                         self.add_new_line()
                         self.add_whitespace(indent)
-                        self.add_comment(None,"model "+m_type,None)
-                        # self.add_new_line()
+                        inner_model.append("model "+m_type[:len(m_type)-2])
+                        self.add_comment(None,"model "+m_type[:len(m_type)-2],None)
                 else:
                     self.add_whitespace(indent)
                     self.add_comment(None,i,None)
@@ -633,9 +633,9 @@ def request_builder(self, json_request, yaml, notfirst, indent=4, name=''):
                 param = json_request[i].split()
                 if i == 'str':
                     if index!=-1:
-                            self.add_comment(None,"Map<str, "+ param[0] +">?",None)
+                            self.add_comment(None,"Map<str, "+ param[0] +">;",None)
                     else:
-                        self.add_comment(None,"Map<str, "+ param[0] +">",None)
+                        self.add_comment(None,"Map<str, "+ param[0] +">;",None)
                 else:
                     if len(param)>=2:
                         if index!=-1:

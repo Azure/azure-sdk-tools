@@ -617,9 +617,7 @@ def request_builder(self, json_request, yaml, notfirst, indent=4, name=''):
                         
                         m_type = get_map_type(yaml,name)
                         
-                        # if isinstance(json_request[i],list): m_type = "list"
-                        # if isinstance(json_request[i],dict): m_type = "dict"
-                        self.add_comment(None,"Map<string, "+ m_type +">",None)
+                        self.add_comment(None,"Map<str, "+ m_type +">",None)
                         self.add_new_line()
                         self.add_whitespace(indent)
                         self.add_comment(None,"model "+m_type,None)
@@ -633,14 +631,20 @@ def request_builder(self, json_request, yaml, notfirst, indent=4, name=''):
                 self.add_whitespace(indent)
                 index = json_request[i].find("(optional)")
                 param = json_request[i].split()
-                if len(param)>=2:
+                if i == 'str':
                     if index!=-1:
-                        json_request[i] =i+"? :"+ param[0]
+                            self.add_comment(None,"Map<str, "+ param[0] +">?",None)
                     else:
-                        json_request[i] =i+ ": "+ param[0]
+                        self.add_comment(None,"Map<str, "+ param[0] +">",None)
                 else:
-                    self.add_comment(None,i+": ",None)        
-                self.add_comment(None, json_request[i], None)
+                    if len(param)>=2:
+                        if index!=-1:
+                            json_request[i] =i+"? :"+ param[0]
+                        else:
+                            json_request[i] =i+ ": "+ param[0]
+                    else:
+                        self.add_comment(None,i+": ",None)        
+                    self.add_comment(None, json_request[i], None)
                 # self.add_new_line()
             else:
                 # if "model" not in self.Tokens[len(self.Tokens)-2].Value:

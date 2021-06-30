@@ -608,6 +608,7 @@ def request_builder(self, json_request, yaml, notfirst, indent=4, name=''):
                 self.add_comment(None,"model "+i,None)
                 self.add_comment(None," {",None)
                 notfirst=True
+                name = i
             if indent>4 and not isinstance(json_request[i],str):
                 self.add_new_line()
                 if i == 'str':
@@ -645,19 +646,24 @@ def request_builder(self, json_request, yaml, notfirst, indent=4, name=''):
                 # if "model" not in self.Tokens[len(self.Tokens)-2].Value:
                 #     self.add_comment(None,":",None)
                 # self.add_new_line()
+                # if isinstance(json_request[i],dict):
+                    
                 request_builder(self,json_request[i],yaml,indent=indent+1,notfirst=True,name=name) 
 
 def get_map_type(yaml,name=''):
     #Find yaml type
     m_type = ''
-    for i in yaml['requests'][0]['parameters']:
-        if i['schema'].get('properties',[]):
-            for j in i['schema']['properties'][0]['schema'].get('properties',[]):
-                if j['serializedName'] == name:
-                    m_type = get_type(j['schema']['elementType'])
-            
-    for i in yaml.get('responses'):
-        pass
+    if yaml['requests'][0]['parameters']:
+        for i in yaml['requests'][0]['parameters']:
+            if i['schema'].get('properties',[]):
+                for j in i['schema']['properties'][0]['schema'].get('properties',[]):
+                    if j['serializedName'] == name:
+                        m_type = get_type(j['schema']['elementType'])
+    if yaml['responses'][0].get('schema'):
+        for i in yaml['responses'][0]['schema'].get('properties',[]):
+                # for j in i['schema']['properties'][0]['schema'].get('properties',[]):
+                    if i['serializedName'] == name:
+                        m_type = get_type(i['schema']['elementType'])
     return m_type  
         
     

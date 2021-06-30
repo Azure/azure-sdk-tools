@@ -189,7 +189,12 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         {
             var session = TestHelpers.LoadRecordSession("Test.RecordEntries/post_delete_get_content.json");
             var targetEntry = session.Session.Entries[0];
+            var requestHeaderCountBefore = targetEntry.Request.Headers.Count;
 
+            var removeHeaderSanitizer = new RemoveHeaderSanitizer(headersForRemoval: "fakeaccount");
+            session.Session.Sanitize(removeHeaderSanitizer);
+
+            Assert.Equal(requestHeaderCountBefore, targetEntry.Request.Headers.Count);
         }
 
         [Fact]
@@ -197,7 +202,12 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         {
             var session = TestHelpers.LoadRecordSession("Test.RecordEntries/post_delete_get_content.json");
             var targetEntry = session.Session.Entries[0];
+            var headerForRemoval = "DataServiceVersion";
 
+            var removeHeaderSanitizer = new RemoveHeaderSanitizer(headersForRemoval: headerForRemoval);
+            session.Session.Sanitize(removeHeaderSanitizer);
+
+            Assert.False(targetEntry.Request.Headers.ContainsKey(headerForRemoval));
         }
 
         [Fact]
@@ -205,8 +215,53 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         {
             var session = TestHelpers.LoadRecordSession("Test.RecordEntries/post_delete_get_content.json");
             var targetEntry = session.Session.Entries[0];
+            var headerForRemoval = "DataServiceVersion, Date,User-Agent"; // please note the wonky spacing is intentional
 
+            var removeHeaderSanitizer = new RemoveHeaderSanitizer(headersForRemoval: headerForRemoval);
+            session.Session.Sanitize(removeHeaderSanitizer);
 
+            foreach(var header in headerForRemoval.Split().Select(x => x.Trim()))
+            {
+                Assert.False(targetEntry.Request.Headers.ContainsKey(header));
+            }
+        }
+
+        [Fact]
+        public void BodyKeySanitizerKeyReplace()
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/post_delete_get_content.json");
+            var targetEntry = session.Session.Entries[0];
+            var replacementValue = "sanitized.tablename";
+
+            var bodyKeySanitizer = new BodyKeySanitizer(jsonPath: "$.TableName", value: replacementValue);
+            session.Session.Sanitize(bodyKeySanitizer);
+
+            Assert.Contains(replacementValue, Encoding.UTF8.GetString(targetEntry.Request.Body));
+        }
+
+        [Fact]
+        public void BodyKeySanitizerRegexReplace()
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/post_delete_get_content.json");
+            var targetEntry = session.Session.Entries[0];
+
+            var bodyKeySanitizer = new BodyKeySanitizer(jsonPath: "$.TableName", value: "TABLE_ID_IS_SANITIZED", regex: @"(?<=listtable)(?<tableid>[a-z0-9]+)", groupForReplace: "tableid");
+            session.Session.Sanitize(bodyKeySanitizer);
+
+            Assert.Contains("listtableTABLE_ID_IS_SANITIZED", Encoding.UTF8.GetString(targetEntry.Response.Body));
+        }
+
+        [Fact]
+        public void BodyKeySanitizerQuietlyExits()
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/post_delete_get_content.json");
+            var targetEntry = session.Session.Entries[0];
+            var replacementValue = "BodyIsSanitized";
+
+            var bodyKeySanitizer = new BodyKeySanitizer(jsonPath: "$.Location", value: replacementValue);
+            session.Session.Sanitize(bodyKeySanitizer);
+
+            Assert.DoesNotContain(replacementValue, Encoding.UTF8.GetString(targetEntry.Request.Body));
         }
 
 

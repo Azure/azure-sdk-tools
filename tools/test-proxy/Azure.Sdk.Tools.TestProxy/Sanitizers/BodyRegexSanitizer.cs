@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 namespace Azure.Sdk.Tools.TestProxy.Sanitizers
 {
     /// <summary>
-    /// This sanitizer operates on a RecordSession entry and applies itself to the bodies contained therein.
+    /// This sanitizer operates on a RecordSession entry and applies itself to the Request and Response bodies contained therein.
     /// </summary>
     public class BodyRegexSanitizer : RecordedTestSanitizer
     {
@@ -20,7 +20,9 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
         private string _groupForReplace = null;
 
         /// <summary>
-        /// 
+        /// This sanitizer offers regex replace within a returned body. Specifically, this means regex applying to the raw JSON. If you are attempting to simply 
+        /// replace a specific key, the BodyKeySanitizer is probably the way to go. Regardless, there are examples present in SanitizerTests.cs.
+        /// to 
         /// </summary>
         /// <param name="value">The substitution value.</param>
         /// <param name="regex">A regex. Can be defined as a simple regex replace OR if groupForReplace is set, a subsitution operation.</param>

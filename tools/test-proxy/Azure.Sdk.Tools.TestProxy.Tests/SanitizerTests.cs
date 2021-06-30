@@ -2,6 +2,7 @@
 using Azure.Sdk.Tools.TestProxy.Sanitizers;
 using System;
 using System.Linq;
+using System.Text;
 using System.Text.Json;
 using Xunit;
 
@@ -13,6 +14,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
         public string lookaheadReplaceRegex = @"[a-z]+(?=\.(?:table|blob|queue)\.core\.windows\.net)";
         public string capturingGroupReplaceRegex = @"https\:\/\/(?<account>[a-z]+)\.(?:table|blob|queue)\.core\.windows\.net";
+        public string scopeClean = @"scope\=(?<scope>[^&]*)";
 
         [Fact]
         public void OauthResponseSanitizerCleansV2AuthRequest()
@@ -140,6 +142,128 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             Assert.Equal(originalHeaderValue, newResult);
         }
+
+        [Fact]
+        public void BodyRegexSanitizerCleansJSON()
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/post_delete_get_content.json");
+            var targetEntry = session.Session.Entries[0];
+
+            var replaceTableNameRegex = "TableName\"\\s*:\\s*\"(?<tablename>[a-z0-9]+)\"";
+
+            var bodyRegexSanitizer = new BodyRegexSanitizer(value: "afaketable", regex: replaceTableNameRegex, groupForReplace: "tablename");
+            session.Session.Sanitize(bodyRegexSanitizer);
+
+            Assert.Contains("\"TableName\":\"afaketable\"", Encoding.UTF8.GetString(targetEntry.Response.Body));
+        }
+
+        [Fact]
+        public void BodyRegexSanitizerCleansText()
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/oauth_request.json");
+            var targetEntry = session.Session.Entries[0];
+
+            var bodyRegexSanitizer = new BodyRegexSanitizer(value: "sanitized.scope", regex: scopeClean, groupForReplace: "scope");
+            session.Session.Sanitize(bodyRegexSanitizer);
+
+            var expectedBodyStartsWith = "scope=sanitized.scope&client_id";
+
+            Assert.StartsWith(expectedBodyStartsWith, Encoding.UTF8.GetString(targetEntry.Request.Body));
+        }
+
+        [Fact]
+        public void BodyRegexSanitizerQuietlyExits()
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/post_delete_get_content.json");
+            var targetEntry = session.Session.Entries[0];
+
+            var beforeUpdate = targetEntry.Request.Body;
+            var bodyRegexSanitizer = new BodyRegexSanitizer(value: "fakeaccount", regex: capturingGroupReplaceRegex, groupForReplace: "account");
+            session.Session.Sanitize(bodyRegexSanitizer);
+
+            Assert.Equal(beforeUpdate, targetEntry.Request.Body);
+        }
+
+        [Fact]
+        public void RemoveHeaderSanitizerQuietlyExits()
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/post_delete_get_content.json");
+            var targetEntry = session.Session.Entries[0];
+            var requestHeaderCountBefore = targetEntry.Request.Headers.Count;
+
+            var removeHeaderSanitizer = new RemoveHeaderSanitizer(headersForRemoval: "fakeaccount");
+            session.Session.Sanitize(removeHeaderSanitizer);
+
+            Assert.Equal(requestHeaderCountBefore, targetEntry.Request.Headers.Count);
+        }
+
+        [Fact]
+        public void RemoveHeaderSanitizerRemovesSingleHeader()
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/post_delete_get_content.json");
+            var targetEntry = session.Session.Entries[0];
+            var headerForRemoval = "DataServiceVersion";
+
+            var removeHeaderSanitizer = new RemoveHeaderSanitizer(headersForRemoval: headerForRemoval);
+            session.Session.Sanitize(removeHeaderSanitizer);
+
+            Assert.False(targetEntry.Request.Headers.ContainsKey(headerForRemoval));
+        }
+
+        [Fact]
+        public void RemoveHeaderSanitizerRemovesMultipleHeaders()
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/post_delete_get_content.json");
+            var targetEntry = session.Session.Entries[0];
+            var headerForRemoval = "DataServiceVersion, Date,User-Agent"; // please note the wonky spacing is intentional
+
+            var removeHeaderSanitizer = new RemoveHeaderSanitizer(headersForRemoval: headerForRemoval);
+            session.Session.Sanitize(removeHeaderSanitizer);
+
+            foreach(var header in headerForRemoval.Split().Select(x => x.Trim()))
+            {
+                Assert.False(targetEntry.Request.Headers.ContainsKey(header));
+            }
+        }
+
+        [Fact]
+        public void BodyKeySanitizerKeyReplace()
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/post_delete_get_content.json");
+            var targetEntry = session.Session.Entries[0];
+            var replacementValue = "sanitized.tablename";
+
+            var bodyKeySanitizer = new BodyKeySanitizer(jsonPath: "$.TableName", value: replacementValue);
+            session.Session.Sanitize(bodyKeySanitizer);
+
+            Assert.Contains(replacementValue, Encoding.UTF8.GetString(targetEntry.Request.Body));
+        }
+
+        [Fact]
+        public void BodyKeySanitizerRegexReplace()
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/post_delete_get_content.json");
+            var targetEntry = session.Session.Entries[0];
+
+            var bodyKeySanitizer = new BodyKeySanitizer(jsonPath: "$.TableName", value: "TABLE_ID_IS_SANITIZED", regex: @"(?<=listtable)(?<tableid>[a-z0-9]+)", groupForReplace: "tableid");
+            session.Session.Sanitize(bodyKeySanitizer);
+
+            Assert.Contains("listtableTABLE_ID_IS_SANITIZED", Encoding.UTF8.GetString(targetEntry.Response.Body));
+        }
+
+        [Fact]
+        public void BodyKeySanitizerQuietlyExits()
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/post_delete_get_content.json");
+            var targetEntry = session.Session.Entries[0];
+            var replacementValue = "BodyIsSanitized";
+
+            var bodyKeySanitizer = new BodyKeySanitizer(jsonPath: "$.Location", value: replacementValue);
+            session.Session.Sanitize(bodyKeySanitizer);
+
+            Assert.DoesNotContain(replacementValue, Encoding.UTF8.GetString(targetEntry.Request.Body));
+        }
+
 
         [Fact]
         public void ContinuationSanitizerMultipleStepsNoKey()

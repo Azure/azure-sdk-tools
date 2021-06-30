@@ -38,6 +38,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             httpContext.Request.Headers["x-api-version"] = apiVersion;
             httpContext.Request.Headers["x-abstraction-identifier"] = "HeaderRegexSanitizer";
             httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{ \"key\": \"Location\", \"value\": \"https://fakeazsdktestaccount.table.core.windows.net/Tables\" }");
+            httpContext.Request.ContentLength = 92;
 
             var controller = new Admin(testRecordingHandler)
             {

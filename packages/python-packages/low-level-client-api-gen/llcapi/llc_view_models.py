@@ -320,7 +320,7 @@ class LLCOperationGroupView(FormattingClass):
 
 
 class LLCOperationView(FormattingClass):
-    def __init__(self, operation_name, return_type, parameters, namespace, json_request=None, json_response=None, response_num=None, description="", paging="", lro=""):
+    def __init__(self, operation_name, return_type, parameters, namespace, json_request=None, json_response=None, response_num=None, description="", paging="", lro="",yaml=None):
         self.operation = operation_name
         self.return_type = return_type
         self.parameters = parameters  # parameterview list
@@ -333,6 +333,7 @@ class LLCOperationView(FormattingClass):
         self.json_request = json_request
         self.json_response = json_response
         self.response_num = response_num
+        self.yaml = yaml
 
     @classmethod
     def from_yaml(cls, yaml_data: Dict[str, Any], op_group_num, op_num, namespace):
@@ -407,7 +408,8 @@ class LLCOperationView(FormattingClass):
             lro=lro_op,
             json_request=json_request,
             json_response=json_response,
-            response_num = response_num
+            response_num = response_num,
+            yaml = yaml_data["operationGroups"][op_group_num]["operations"][op_num]
         )
 
     def get_tokens(self):
@@ -542,7 +544,7 @@ class LLCOperationView(FormattingClass):
                     self.add_whitespace(3)
                     self.add_typename(None, "Request", None)
                     self.add_new_line(1)
-                    request_builder(self, self.json_request,notfirst=False)
+                    request_builder(self, self.json_request,self.yaml, notfirst=False)
                     self.add_new_line()
                     self.add_whitespace(4)
                     self.add_comment(None," }",None)
@@ -552,7 +554,7 @@ class LLCOperationView(FormattingClass):
                     self.add_whitespace(3)
                     self.add_typename(None, "Response", None)
                     self.add_new_line(1)
-                    request_builder(self, self.json_response,notfirst=False)
+                    request_builder(self, self.json_response,self.yaml, notfirst=False)
                     self.add_new_line()
                     self.add_whitespace(4)
                     self.add_comment(None," }",None)
@@ -567,7 +569,7 @@ class LLCOperationView(FormattingClass):
         return obj_dict
 
 
-def request_builder(self, json_request, notfirst, indent=4):
+def request_builder(self, json_request, yaml, notfirst, indent=4, name=''):
     if isinstance(json_request,str):
         self.add_whitespace(indent)
         self.add_comment(None,json_request,None)
@@ -588,9 +590,10 @@ def request_builder(self, json_request, notfirst, indent=4):
                 self.add_new_line()
             else:
                 # It is a list of whatever is in here:
-                self.add_comment(None,":",None)
+                if "{" not in self.Tokens[len(self.Tokens)-1].Value:
+                    self.add_comment(None,":",None)
                 self.add_new_line()
-                request_builder(self,json_request[i],indent=indent+1,notfirst=True)  
+                request_builder(self,json_request[i],yaml, indent=indent+1,notfirst=True)  
         
     if isinstance(json_request,dict):
         for i in json_request:
@@ -610,8 +613,11 @@ def request_builder(self, json_request, notfirst, indent=4):
                 if i == 'str':
                     if not isinstance(json_request[i],str):
                         self.add_whitespace(indent)
-                        if isinstance(json_request[i],list): m_type = "list"
-                        if isinstance(json_request[i],dict): m_type = "dict"
+                        
+                        m_type = get_map_type(yaml,name)
+                        
+                        # if isinstance(json_request[i],list): m_type = "list"
+                        # if isinstance(json_request[i],dict): m_type = "dict"
                         self.add_comment(None,"Map<string, "+ m_type +">",None)
                         self.add_new_line()
                         self.add_whitespace(indent)
@@ -619,7 +625,8 @@ def request_builder(self, json_request, notfirst, indent=4):
                         # self.add_new_line()
                 else:
                     self.add_whitespace(indent)
-                    self.add_comment(None,i,None)      
+                    self.add_comment(None,i,None)
+                    name = i      
             if isinstance(json_request[i],str):
                 self.add_new_line()
                 self.add_whitespace(indent)
@@ -638,7 +645,20 @@ def request_builder(self, json_request, notfirst, indent=4):
                 # if "model" not in self.Tokens[len(self.Tokens)-2].Value:
                 #     self.add_comment(None,":",None)
                 # self.add_new_line()
-                request_builder(self,json_request[i],indent=indent+1,notfirst=True)   
+                request_builder(self,json_request[i],yaml,indent=indent+1,notfirst=True,name=name) 
+
+def get_map_type(yaml,name=''):
+    #Find yaml type
+    m_type = ''
+    for i in yaml['requests'][0]['parameters']:
+        if i['schema'].get('properties',[]):
+            for j in i['schema']['properties'][0]['schema'].get('properties',[]):
+                if j['serializedName'] == name:
+                    m_type = get_type(j['schema']['elementType'])
+            
+    for i in yaml.get('responses'):
+        pass
+    return m_type  
         
     
         

@@ -543,6 +543,7 @@ class LLCOperationView(FormattingClass):
                     self.add_typename(None, "Request", None)
                     self.add_new_line(1)
                     request_builder(self, self.json_request,notfirst=False)
+                    self.add_new_line()
                     self.add_whitespace(4)
                     self.add_comment(None," }",None)
                     self.add_new_line(1)
@@ -552,6 +553,7 @@ class LLCOperationView(FormattingClass):
                     self.add_typename(None, "Response", None)
                     self.add_new_line(1)
                     request_builder(self, self.json_response,notfirst=False)
+                    self.add_new_line()
                     self.add_whitespace(4)
                     self.add_comment(None," }",None)
                     self.add_new_line(1)
@@ -574,10 +576,19 @@ def request_builder(self, json_request, notfirst, indent=4):
     if isinstance(json_request,list):
         for i in range(0,len(json_request)):
             if isinstance(json_request[i],str):     
-                self.add_whitespace(indent)
+                # self.add_whitespace(indent)
+                index = json_request[i].find("(optional)")
+                param = json_request[i].split()
+                if len(param)>=2:
+                    if index!=-1:
+                        json_request[i] ="[] ? :"+ param[0]
+                    else:
+                        json_request[i] ="[] : "+ param[0]
                 self.add_comment(None, json_request[i], None)
                 self.add_new_line()
             else:
+                # It is a list of whatever is in here:
+                self.add_comment(None,":",None)
                 self.add_new_line()
                 request_builder(self,json_request[i],indent=indent+1,notfirst=True)  
         
@@ -586,6 +597,8 @@ def request_builder(self, json_request, notfirst, indent=4):
             if indent==4:
                 self.add_whitespace(indent)
                 if(notfirst):
+                    self.add_new_line()
+                    self.add_whitespace(indent)
                     self.add_comment(None," }",None)
                     self.add_new_line()
                     self.add_whitespace(indent)
@@ -602,8 +615,8 @@ def request_builder(self, json_request, notfirst, indent=4):
                         self.add_comment(None,"Map<string, "+ m_type +">",None)
                         self.add_new_line()
                         self.add_whitespace(indent)
-                        self.add_comment(None,"model "+m_type+" :",None)
-                        self.add_new_line()
+                        self.add_comment(None,"model "+m_type,None)
+                        # self.add_new_line()
                 else:
                     self.add_whitespace(indent)
                     self.add_comment(None,i,None)      
@@ -620,11 +633,11 @@ def request_builder(self, json_request, notfirst, indent=4):
                 else:
                     self.add_comment(None,i+": ",None)        
                 self.add_comment(None, json_request[i], None)
-                self.add_new_line()
+                # self.add_new_line()
             else:
                 # if "model" not in self.Tokens[len(self.Tokens)-2].Value:
                 #     self.add_comment(None,":",None)
-                self.add_new_line()
+                # self.add_new_line()
                 request_builder(self,json_request[i],indent=indent+1,notfirst=True)   
         
     

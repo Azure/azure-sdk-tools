@@ -1,13 +1,14 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ .Values.testName }}
+  name: "{{ .Values.testName }}-{{ .Release.Name }}"
   namespace: {{ .Release.Namespace }}
 spec:
   backoffLimit: 0
   template:
     metadata:
       labels:
+        testInstance: "{{ .Values.testName }}-{{ .Release.Name }}"
         testName: "{{ .Values.testName }}"
         chaos: "true"
         owners: "{{ .Values.owners }}"
@@ -16,8 +17,14 @@ spec:
       volumes:
         {{- include "stress-test-addons.env-volumes" . | nindent 8 }}
       initContainers:
-        {{- include "stress-test-addons.init-cluster-secrets" . | nindent 8 }}
+        {{- include "stress-test-addons.init-env" . | nindent 8 }}
       containers:
       - name: network-example
         image: "{{ .Values.image }}"
         command: ["bash", "poll.sh"]
+        env:
+          - name: ENV_FILE
+            value: /mnt/outputs/.env
+        volumeMounts:
+          - name: test-env-{{ .Release.Name }}
+            mountPath: /mnt/outputs

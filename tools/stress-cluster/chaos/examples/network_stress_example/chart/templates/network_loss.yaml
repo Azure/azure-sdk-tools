@@ -1,7 +1,7 @@
 apiVersion: chaos-mesh.org/v1alpha1
 kind: NetworkChaos
 metadata:
-  name: {{ .Release.name }}
+  name: "{{ .Values.testName }}-{{ .Release.Name }}"
   namespace: {{ .Release.Namespace }}
   labels:
     owners: "{{ .Values.owners }}"
@@ -13,7 +13,7 @@ spec:
   mode: one
   selector:
     labelSelectors:
-      testName: {{ .Values.testName }}
+      testInstance: "{{ .Values.testName }}-{{ .Release.Name }}"
       chaos: "true"
     namespaces:
       - {{ .Release.Namespace }}

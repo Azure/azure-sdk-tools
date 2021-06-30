@@ -359,11 +359,11 @@ namespace APIViewWeb.Respositories
             return lastRevisionTextLines.SequenceEqual(fileTextLines);
         }
 
-        public async Task<ReviewModel> CreateMasterReviewAsync(ClaimsPrincipal user, string originalName, string label, Stream fileStream, bool runAnalysis)
+        public async Task<ReviewModel> CreateMasterReviewAsync(ClaimsPrincipal user, string originalName, string label, Stream fileStream, bool checkAllRevisions)
         {
             //Generate code file from new uploaded package
             using var memoryStream = new MemoryStream();
-            var codeFile = await CreateCodeFile(originalName, fileStream, runAnalysis, memoryStream);
+            var codeFile = await CreateCodeFile(originalName, fileStream, false, memoryStream);
 
             //Get current master review for package and language
             var review = await _reviewsRepository.GetMasterReviewForPackageAsync(codeFile.Language, codeFile.PackageName);
@@ -380,8 +380,26 @@ namespace APIViewWeb.Respositories
                 }
 
                 var renderedCodeFile = new RenderedCodeFile(codeFile);
-                var noDiffFound = await IsReviewSame(review.Revisions.LastOrDefault(), renderedCodeFile);
-                if (noDiffFound)
+                var reviewMatches = false;
+                // API surface level may or may not match with latest revision when releasing a hotfix from a feature branch
+                // We need to compare this against all approved revision in such cases
+                // We don't want to do this every nightly run due to perf issue for every create review request
+                // Alternate option is to compare against package version unfortunately not all language review currently has actual package versions at processing time.
+                if (!checkAllRevisions)
+                {
+                    reviewMatches = await IsReviewSame(review.Revisions.LastOrDefault(), renderedCodeFile);
+                }
+                else
+                {
+                    foreach(var rev in review.Revisions.Where(r => r.IsApproved))
+                    {
+                        reviewMatches = await IsReviewSame(rev, renderedCodeFile);
+                        if (reviewMatches)
+                            break;
+                    }
+                }
+                
+                if (reviewMatches)
                 {
                     // No change is detected from last revision so no need to update this revision
                     createNewRevision = false;
@@ -394,7 +412,7 @@ namespace APIViewWeb.Respositories
                 {
                     Author = user.GetGitHubLogin(),
                     CreationDate = DateTime.UtcNow,
-                    RunAnalysis = runAnalysis,
+                    RunAnalysis = false,
                     Name = originalName,
                     IsAutomatic = true
                 };

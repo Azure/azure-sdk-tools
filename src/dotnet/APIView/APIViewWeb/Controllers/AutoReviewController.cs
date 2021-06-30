@@ -28,13 +28,13 @@ namespace APIViewWeb.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> UploadAutoReview([FromForm] IFormFile file, string label)
+        public async Task<ActionResult> UploadAutoReview([FromForm] IFormFile file, string label, bool checkAllRevisions = false)
         {
             if (file != null)
             {
                 using (var openReadStream = file.OpenReadStream())
                 {
-                    var review = await _reviewManager.CreateMasterReviewAsync(User, file.FileName, label, openReadStream, false);
+                    var review = await _reviewManager.CreateMasterReviewAsync(User, file.FileName, label, openReadStream, checkAllRevisions);
                     if(review != null)
                     {
                         var reviewUrl = $"{this.Request.Scheme}://{this.Request.Host}/Assemblies/Review/{review.ReviewId}";

@@ -593,7 +593,9 @@ def request_builder(self, json_request, yaml, notfirst, indent=4, name='',inner_
                 if "{" not in self.Tokens[len(self.Tokens)-1].Value:
                     self.add_comment(None,":",None)
                 self.add_new_line()
+                # self.add_comment(None,"{",None)
                 request_builder(self,json_request[i],yaml, indent=indent+1,notfirst=True)  
+                # self.add_comment(None,"}",None) 
         
     if isinstance(json_request,dict):
         for i in json_request:
@@ -651,8 +653,9 @@ def request_builder(self, json_request, yaml, notfirst, indent=4, name='',inner_
                 #     self.add_comment(None,":",None)
                 # self.add_new_line()
                 # if isinstance(json_request[i],dict):
-                    
+                # self.add_comment(None,"{",None)    
                 request_builder(self,json_request[i],yaml,indent=indent+1,notfirst=True,name=name) 
+                # self.add_comment(None,"}",None) 
 
 def get_map_type(yaml,name=''):
     #Find yaml type
@@ -665,7 +668,6 @@ def get_map_type(yaml,name=''):
                         m_type = get_type(j['schema']['elementType'])
     if yaml['responses'][0].get('schema'):
         for i in yaml['responses'][0]['schema'].get('properties',[]):
-                # for j in i['schema']['properties'][0]['schema'].get('properties',[]):
                     if i['serializedName'] == name:
                         m_type = get_type(i['schema']['elementType'])
     return m_type  

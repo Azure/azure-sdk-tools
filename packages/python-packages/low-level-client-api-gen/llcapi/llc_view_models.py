@@ -3,13 +3,36 @@
 from typing import Any, Dict
 from ._token import Token
 from ._token_kind import TokenKind
-from autorest.codegen.models import RequestBuilder, CodeModel, request_builder, build_schema, Operation
+from autorest.codegen.models import (
+    RequestBuilder,
+    CodeModel,
+    request_builder,
+    build_schema,
+    Operation,
+)
 
-JSON_FIELDS = ["Name", "Version", "VersionString",
-               "Navigation", "Tokens", "Diagnostics", "PackageName"]
+JSON_FIELDS = [
+    "Name",
+    "Version",
+    "VersionString",
+    "Navigation",
+    "Tokens",
+    "Diagnostics",
+    "PackageName",
+]
 PARAM_FIELDS = ["name", "type", "default", "optional", "indent"]
 OP_FIELDS = ["operation", "parameters", "indent"]
-R_TYPE = ['dictionary','string','bool','int32','int64','float32','float64','binary']
+R_TYPE = [
+    "dictionary",
+    "string",
+    "bool",
+    "int32",
+    "int64",
+    "float32",
+    "float64",
+    "binary",
+]
+
 
 class FormattingClass:
     def add_whitespace(self, indent):
@@ -79,7 +102,15 @@ class FormattingClass:
 class LLCClientView(FormattingClass):
     """Entity class that holds LLC view for all namespaces within a package"""
 
-    def __init__(self, operation_groups, pkg_name="", endpoint="endpoint", endpoint_type="string", credential="Credential", credential_type="AzureCredential"):
+    def __init__(
+        self,
+        operation_groups,
+        pkg_name="",
+        endpoint="endpoint",
+        endpoint_type="string",
+        credential="Credential",
+        credential_type="AzureCredential",
+    ):
         self.Name = pkg_name
         self.Language = "Protocol"
         self.Tokens = []
@@ -91,7 +122,7 @@ class LLCClientView(FormattingClass):
         self.endpoint = endpoint
         self.credential = credential
         self.credential_type = credential_type
-        self.namespace = "Azure."+pkg_name
+        self.namespace = "Azure." + pkg_name
 
     @classmethod
     def from_yaml(cls, yaml_data: Dict[str, Any]):
@@ -99,13 +130,18 @@ class LLCClientView(FormattingClass):
         # Iterate through Operations in OperationGroups
         for op_groups in range(0, len(yaml_data["operationGroups"])):
             operation_group_view = LLCOperationGroupView.from_yaml(
-                yaml_data, op_groups, "Azure."+yaml_data["info"]["title"])
+                yaml_data, op_groups, "Azure." + yaml_data["info"]["title"]
+            )
             operation_group = LLCOperationGroupView(
-                operation_group_view.operation_group, operation_group_view.operations, "Azure."+yaml_data["info"]["title"])
+                operation_group_view.operation_group,
+                operation_group_view.operations,
+                "Azure." + yaml_data["info"]["title"],
+            )
             if operation_group.operation_group == "":
                 operation_group.operation_group = "<default>"
-                operation_groups.insert(0,operation_group)
-            else: operation_groups.append(operation_group)
+                operation_groups.insert(0, operation_group)
+            else:
+                operation_groups.append(operation_group)
 
         return cls(
             operation_groups=operation_groups,
@@ -130,8 +166,9 @@ class LLCClientView(FormattingClass):
 
         # Name of client
         self.add_whitespace(1)
-        self.add_keyword(self.namespace+self.Name,
-                         self.Name, self.namespace+self.Name)
+        self.add_keyword(
+            self.namespace + self.Name, self.Name, self.namespace + self.Name
+        )
         self.add_punctuation("(")
         self.add_stringliteral(None, self.endpoint_type, None)
         self.add_space()
@@ -149,14 +186,20 @@ class LLCClientView(FormattingClass):
         # Create Overview
         navigation = Navigation(None, None)
         navigation.set_tag(NavigationTag(Kind.type_package))
-        overview = Navigation("Overview","overview")
+        overview = Navigation("Overview", "overview")
         overview.set_tag(NavigationTag(Kind.type_package))
-    
-        self.add_typename("overview","Overview ######################################################################","overview")
+
+        self.add_typename(
+            "overview",
+            "Overview ######################################################################",
+            "overview",
+        )
         self.add_new_line()
         for operation_group in self.Operation_Groups:
-            child_nav3 = Navigation(operation_group.operation_group,
-                            self.namespace + operation_group.operation_group+"overview")
+            child_nav3 = Navigation(
+                operation_group.operation_group,
+                self.namespace + operation_group.operation_group + "overview",
+            )
             child_nav3.set_tag(NavigationTag(Kind.type_class))
             overview.add_child(child_nav3)
             operation_group.to_token()
@@ -166,15 +209,21 @@ class LLCClientView(FormattingClass):
                     self.add_token(token)
             for operation_view in operation_group.operations:
                 child_nav2 = Navigation(
-                operation_view.operation, self.namespace + operation_view.operation+"overview")
+                    operation_view.operation,
+                    self.namespace + operation_view.operation + "overview",
+                )
                 child_nav2.set_tag(NavigationTag(Kind.type_method))
                 child_nav3.add_child(child_nav2)
             self.add_new_line(1)
 
-        self.add_typename("details","Details ######################################################################","details")
+        self.add_typename(
+            "details",
+            "Details ######################################################################",
+            "details",
+        )
         self.add_new_line()
         details = self.to_child_tokens()
-        
+
         self.add_new_line()
 
         self.add_punctuation("}")
@@ -192,8 +241,10 @@ class LLCClientView(FormattingClass):
         self.add_new_line()
         for operation_group_view in self.Operation_Groups:
             # Add children
-            child_nav1 = Navigation(operation_group_view.operation_group,
-                                   self.namespace + operation_group_view.operation_group)
+            child_nav1 = Navigation(
+                operation_group_view.operation_group,
+                self.namespace + operation_group_view.operation_group,
+            )
             child_nav1.set_tag(NavigationTag(Kind.type_class))
             details.add_child(child_nav1)
             op_group = operation_group_view.get_tokens()
@@ -202,9 +253,10 @@ class LLCClientView(FormattingClass):
             # Set up operations and add to token
 
             for operation_view in operation_group_view.operations:
-                 # Add operation comments
+                # Add operation comments
                 child_nav = Navigation(
-                    operation_view.operation, self.namespace + operation_view.operation)
+                    operation_view.operation, self.namespace + operation_view.operation
+                )
                 child_nav.set_tag(NavigationTag(Kind.type_method))
                 child_nav1.add_child(child_nav)
 
@@ -219,13 +271,20 @@ class LLCClientView(FormattingClass):
         for i in range(0, len(obj_dict["Tokens"])):
             # Break down token objects into dictionary
             if obj_dict["Tokens"][i]:
-                obj_dict["Tokens"][i] = {"Kind": obj_dict["Tokens"][i].Kind.value, "Value": obj_dict["Tokens"][i].Value,
-                                         "NavigateToId": obj_dict["Tokens"][i].NavigateToId, "DefinitionId": obj_dict["Tokens"][i].DefinitionId}
+                obj_dict["Tokens"][i] = {
+                    "Kind": obj_dict["Tokens"][i].Kind.value,
+                    "Value": obj_dict["Tokens"][i].Value,
+                    "NavigateToId": obj_dict["Tokens"][i].NavigateToId,
+                    "DefinitionId": obj_dict["Tokens"][i].DefinitionId,
+                }
 
             # Remove Null Values from Tokens
             obj_dict["Tokens"][i] = {
-                key: value for key, value in obj_dict["Tokens"][i].items() if value is not None}
-        obj_dict['Language'] = self.Language
+                key: value
+                for key, value in obj_dict["Tokens"][i].items()
+                if value is not None
+            }
+        obj_dict["Language"] = self.Language
         return obj_dict
 
 
@@ -241,10 +300,11 @@ class LLCOperationGroupView(FormattingClass):
     def from_yaml(cls, yaml_data: Dict[str, Any], op_group, name):
         operations = []
         for i in range(0, len(yaml_data["operationGroups"][op_group]["operations"])):
-            operations.append(LLCOperationView.from_yaml(
-                yaml_data, op_group, i, name))
+            operations.append(LLCOperationView.from_yaml(yaml_data, op_group, i, name))
         return cls(
-            operation_group_name=yaml_data["operationGroups"][op_group]["language"]["default"]["name"],
+            operation_group_name=yaml_data["operationGroups"][op_group]["language"][
+                "default"
+            ]["name"],
             operations=operations,
             namespace=name,
         )
@@ -263,18 +323,20 @@ class LLCOperationGroupView(FormattingClass):
 
         if self.operation_group:
             self.add_whitespace(1)
-            self.overview_tokens.append(Token(" "*4, TokenKind.Whitespace))
+            self.overview_tokens.append(Token(" " * 4, TokenKind.Whitespace))
             # Operation Name token
             self.add_text(None, "OperationGroup", None)
-            self.overview_tokens.append(
-                Token("OperationGroup", TokenKind.Text))
+            self.overview_tokens.append(Token("OperationGroup", TokenKind.Text))
             self.add_space()
             self.overview_tokens.append(Token(" ", TokenKind.Text))
-            self.add_keyword(self.namespace+self.operation_group,
-                             self.operation_group, self.namespace+self.operation_group)
+            self.add_keyword(
+                self.namespace + self.operation_group,
+                self.operation_group,
+                self.namespace + self.operation_group,
+            )
             token = Token(self.operation_group, TokenKind.Keyword)
-            token.set_navigation_id(self.namespace+self.operation_group+"overview")
-            token.set_definition_id(self.namespace+self.operation_group+"overview")
+            token.set_navigation_id(self.namespace + self.operation_group + "overview")
+            token.set_definition_id(self.namespace + self.operation_group + "overview")
             self.overview_tokens.append(token)
 
             self.add_new_line()
@@ -285,8 +347,7 @@ class LLCOperationGroupView(FormattingClass):
                     self.operations[operation].to_token()
                     if operation == 0:
                         self.add_whitespace(2)
-                        self.overview_tokens.append(
-                            Token("  " * (4), TokenKind.Text))
+                        self.overview_tokens.append(Token("  " * (4), TokenKind.Text))
                         self.add_punctuation("{")
                     self.add_new_line()
                     self.overview_tokens.append(Token("", TokenKind.Newline))
@@ -320,7 +381,20 @@ class LLCOperationGroupView(FormattingClass):
 
 
 class LLCOperationView(FormattingClass):
-    def __init__(self, operation_name, return_type, parameters, namespace, json_request=None, json_response=None, response_num=None, description="", paging="", lro="",yaml=None):
+    def __init__(
+        self,
+        operation_name,
+        return_type,
+        parameters,
+        namespace,
+        json_request=None,
+        json_response=None,
+        response_num=None,
+        description="",
+        paging="",
+        lro="",
+        yaml=None,
+    ):
         self.operation = operation_name
         self.return_type = return_type
         self.parameters = parameters  # parameterview list
@@ -344,23 +418,57 @@ class LLCOperationView(FormattingClass):
         json_response = {}
         response_builder = {}
         response_num = []
-        code = CodeModel(rest_layer=True, no_models=True, no_operations=True,
-                         only_path_params_positional=True, options={})
+        code = CodeModel(
+            rest_layer=True,
+            no_models=True,
+            no_operations=True,
+            only_path_params_positional=True,
+            options={},
+        )
         request_builder = RequestBuilder.from_yaml(
-            yaml_data["operationGroups"][op_group_num]["operations"][op_num], code_model=code)
+            yaml_data["operationGroups"][op_group_num]["operations"][op_num],
+            code_model=code,
+        )
         response_builder = Operation.from_yaml(
-            yaml_data["operationGroups"][op_group_num]["operations"][op_num])
-        
-        for i in range(0,len(yaml_data["operationGroups"][op_group_num]["operations"][op_num].get('responses'))):
-            response_num.append(yaml_data["operationGroups"][op_group_num]["operations"][op_num]['responses'][i]['protocol']['http']['statusCodes'])
-        for i in range(0,len(yaml_data["operationGroups"][op_group_num]["operations"][op_num].get('exceptions',[]))):
-            response_num.append(yaml_data["operationGroups"][op_group_num]["operations"][op_num]['exceptions'][i]['protocol']['http']['statusCodes'])
+            yaml_data["operationGroups"][op_group_num]["operations"][op_num]
+        )
 
-        if yaml_data["operationGroups"][op_group_num]["operations"][op_num].get("extensions"):
-            pageable = yaml_data["operationGroups"][op_group_num]["operations"][op_num]["extensions"].get(
-                "x-ms-pageable")
-            lro = yaml_data["operationGroups"][op_group_num]["operations"][op_num]["extensions"].get(
-                "x-ms-long-running-operation")
+        for i in range(
+            0,
+            len(
+                yaml_data["operationGroups"][op_group_num]["operations"][op_num].get(
+                    "responses"
+                )
+            ),
+        ):
+            response_num.append(
+                yaml_data["operationGroups"][op_group_num]["operations"][op_num][
+                    "responses"
+                ][i]["protocol"]["http"]["statusCodes"]
+            )
+        for i in range(
+            0,
+            len(
+                yaml_data["operationGroups"][op_group_num]["operations"][op_num].get(
+                    "exceptions", []
+                )
+            ),
+        ):
+            response_num.append(
+                yaml_data["operationGroups"][op_group_num]["operations"][op_num][
+                    "exceptions"
+                ][i]["protocol"]["http"]["statusCodes"]
+            )
+
+        if yaml_data["operationGroups"][op_group_num]["operations"][op_num].get(
+            "extensions"
+        ):
+            pageable = yaml_data["operationGroups"][op_group_num]["operations"][op_num][
+                "extensions"
+            ].get("x-ms-pageable")
+            lro = yaml_data["operationGroups"][op_group_num]["operations"][op_num][
+                "extensions"
+            ].get("x-ms-long-running-operation")
         if pageable:
             paging_op = True
         else:
@@ -370,36 +478,91 @@ class LLCOperationView(FormattingClass):
         else:
             lro_op = False
 
-        return_type = get_type(yaml_data["operationGroups"][op_group_num]
-                               ["operations"][op_num]['responses'][0].get('schema', []), paging_op)
+        return_type = get_type(
+            yaml_data["operationGroups"][op_group_num]["operations"][op_num][
+                "responses"
+            ][0].get("schema", []),
+            paging_op,
+        )
 
-        for i in range(0, len(yaml_data["operationGroups"][op_group_num]["operations"][op_num]["signatureParameters"])):
-            param.append(LLCParameterView.from_yaml(
-                yaml_data["operationGroups"][op_group_num]["operations"][op_num], i, namespace))
-        for j in range(0, len(yaml_data['operationGroups'][op_group_num]['operations'][op_num]['requests'])):
-            for i in range(0, len(yaml_data['operationGroups'][op_group_num]['operations'][op_num]['requests'][j].get('signatureParameters', []))):
-                param.append(LLCParameterView.from_yaml(
-                    yaml_data["operationGroups"][op_group_num]["operations"][op_num]['requests'][j], i, namespace))
-                if build_schema(yaml_data=request_builder.parameters.json_body, code_model=code).serialization_type != "IO":
+        for i in range(
+            0,
+            len(
+                yaml_data["operationGroups"][op_group_num]["operations"][op_num][
+                    "signatureParameters"
+                ]
+            ),
+        ):
+            param.append(
+                LLCParameterView.from_yaml(
+                    yaml_data["operationGroups"][op_group_num]["operations"][op_num],
+                    i,
+                    namespace,
+                )
+            )
+        for j in range(
+            0,
+            len(
+                yaml_data["operationGroups"][op_group_num]["operations"][op_num][
+                    "requests"
+                ]
+            ),
+        ):
+            for i in range(
+                0,
+                len(
+                    yaml_data["operationGroups"][op_group_num]["operations"][op_num][
+                        "requests"
+                    ][j].get("signatureParameters", [])
+                ),
+            ):
+                param.append(
+                    LLCParameterView.from_yaml(
+                        yaml_data["operationGroups"][op_group_num]["operations"][
+                            op_num
+                        ]["requests"][j],
+                        i,
+                        namespace,
+                    )
+                )
+                if (
+                    build_schema(
+                        yaml_data=request_builder.parameters.json_body, code_model=code
+                    ).serialization_type
+                    != "IO"
+                ):
                     json_request = build_schema(
-                        yaml_data=request_builder.parameters.json_body, code_model=code).get_json_template_representation()
+                        yaml_data=request_builder.parameters.json_body, code_model=code
+                    ).get_json_template_representation()
                 for i in response_builder.responses:
                     if i.schema:
                         if isinstance(i.schema, dict):
-                            if build_schema(yaml_data=i.schema, code_model=code).serialization_type != "IO":
+                            if (
+                                build_schema(
+                                    yaml_data=i.schema, code_model=code
+                                ).serialization_type
+                                != "IO"
+                            ):
                                 json_response = build_schema(
-                                    yaml_data=i.schema, code_model=code).get_json_template_representation()
+                                    yaml_data=i.schema, code_model=code
+                                ).get_json_template_representation()
                         else:
                             json_response = i.schema.get_json_template_representation(
-                                code_model=code)
+                                code_model=code
+                            )
 
-        description = yaml_data["operationGroups"][op_group_num]["operations"][op_num]["language"]["default"].get(
-            "summary")
+        description = yaml_data["operationGroups"][op_group_num]["operations"][op_num][
+            "language"
+        ]["default"].get("summary")
         if description is None:
-            description = yaml_data["operationGroups"][op_group_num]["operations"][op_num]["language"]["default"]["description"]
+            description = yaml_data["operationGroups"][op_group_num]["operations"][
+                op_num
+            ]["language"]["default"]["description"]
 
         return cls(
-            operation_name=yaml_data["operationGroups"][op_group_num]["operations"][op_num]["language"]["default"]["name"],
+            operation_name=yaml_data["operationGroups"][op_group_num]["operations"][
+                op_num
+            ]["language"]["default"]["name"],
             parameters=param,
             return_type=return_type,
             namespace=namespace,
@@ -408,8 +571,8 @@ class LLCOperationView(FormattingClass):
             lro=lro_op,
             json_request=json_request,
             json_response=json_response,
-            response_num = response_num,
-            yaml = yaml_data["operationGroups"][op_group_num]["operations"][op_num]
+            response_num=response_num,
+            yaml=yaml_data["operationGroups"][op_group_num]["operations"][op_num],
         )
 
     def get_tokens(self):
@@ -443,12 +606,12 @@ class LLCOperationView(FormattingClass):
 
         elif any(i in self.return_type for i in R_TYPE):
             self.add_text(None, self.return_type, None)
-            self.overview_tokens.append(
-                Token(self.return_type, TokenKind.Text))
+            self.overview_tokens.append(Token(self.return_type, TokenKind.Text))
         else:
             self.add_stringliteral(None, self.return_type, None)
             self.overview_tokens.append(
-                Token(self.return_type, TokenKind.StringLiteral))
+                Token(self.return_type, TokenKind.StringLiteral)
+            )
         if self.paging or self.lro:
             self.add_text(None, "]", None)
             self.overview_tokens.append(Token("]", TokenKind.Text))
@@ -456,11 +619,14 @@ class LLCOperationView(FormattingClass):
         self.add_space()
         self.overview_tokens.append(Token(" ", TokenKind.Text))
         token = Token(self.operation, TokenKind.Keyword)
-        token.set_definition_id(self.namespace+self.operation+"overview")
-        token.set_navigation_id(self.namespace+self.operation+"overview")
+        token.set_definition_id(self.namespace + self.operation + "overview")
+        token.set_navigation_id(self.namespace + self.operation + "overview")
         self.overview_tokens.append(token)
-        self.add_keyword(self.namespace+self.operation,
-                         self.operation, self.namespace+self.operation)
+        self.add_keyword(
+            self.namespace + self.operation,
+            self.operation,
+            self.namespace + self.operation,
+        )
         self.add_space
 
         self.add_new_line()
@@ -484,7 +650,7 @@ class LLCOperationView(FormattingClass):
 
         # Each operation will indent itself by 4
         self.add_whitespace(1)
-        self.overview_tokens.append(Token("  "*4, TokenKind.Whitespace))
+        self.overview_tokens.append(Token("  " * 4, TokenKind.Whitespace))
 
         # Set up operation parameters
         if len(self.parameters) == 0:
@@ -510,8 +676,8 @@ class LLCOperationView(FormattingClass):
                     self.overview_tokens.append(t)
 
             # Add in comma before the next parameter
-            if param_num+1 in range(0, len(self.parameters)):
-                self.parameters[param_num+1]
+            if param_num + 1 in range(0, len(self.parameters)):
+                self.parameters[param_num + 1]
                 self.add_punctuation(",")
                 self.overview_tokens.append(Token(", ", TokenKind.Text))
 
@@ -524,46 +690,50 @@ class LLCOperationView(FormattingClass):
                 self.add_new_line(1)
 
                 self.add_token(Token(kind=TokenKind.StartDocGroup))
-                
+
                 if self.response_num:
                     self.add_whitespace(3)
                     self.add_typename(None, "Status Codes", None)
                     # self.add_new_line(1)
                     self.add_space()
                     for i in self.response_num:
-                        if isinstance(i,list):
+                        if isinstance(i, list):
                             for j in i:
-                                self.add_text(None,j,None)
-                                self.add_text(None," ",None)
+                                self.add_text(None, j, None)
+                                self.add_text(None, " ", None)
                         else:
-                            self.add_text(None,i,None)
-                            self.add_text(None," ",None)
+                            self.add_text(None, i, None)
+                            self.add_text(None, " ", None)
                     self.add_new_line(1)
 
                 if self.json_request:
                     self.add_whitespace(3)
                     self.add_typename(None, "Request", None)
                     self.add_new_line(1)
-                    inn = request_builder(self, self.json_request,self.yaml, notfirst=False)
+                    inn = request_builder(
+                        self, self.json_request, self.yaml, notfirst=False
+                    )
                     for m in inn:
                         if m:
                             self.Tokens.append(m)
                     self.add_new_line()
                     self.add_whitespace(4)
-                    self.add_comment(None," };",None)
+                    self.add_comment(None, " };", None)
                     self.add_new_line(1)
 
                 if self.json_response:
                     self.add_whitespace(3)
                     self.add_typename(None, "Response", None)
                     self.add_new_line(1)
-                    inp = request_builder(self, self.json_response,self.yaml, notfirst=False)
+                    inp = request_builder(
+                        self, self.json_response, self.yaml, notfirst=False
+                    )
                     for i in inp:
                         if i:
                             self.Tokens.append(i)
                     self.add_new_line()
                     self.add_whitespace(4)
-                    self.add_comment(None," };",None)
+                    self.add_comment(None, " };", None)
                     self.add_new_line(1)
                 self.add_token(Token(kind=TokenKind.EndDocGroup))
 
@@ -575,143 +745,209 @@ class LLCOperationView(FormattingClass):
         return obj_dict
 
 
-def request_builder(self, json_request, yaml, notfirst, indent=4, name='',inner_model=[],pre_indent=4):
+def request_builder(
+    self, json_request, yaml, notfirst, indent=4, name="", inner_model=[], pre_indent=4
+):
     inner_model = inner_model
     # if pre_indent<indent:
     #     self.add_comment(None,"};",None)
     # pre_indent = indent
-    if isinstance(json_request,str):
+    if isinstance(json_request, str):
         self.add_whitespace(indent)
-        self.add_comment(None,json_request,None)
+        self.add_comment(None, json_request, None)
         self.add_new_line()
-        
-    if isinstance(json_request,list):
-        for i in range(0,len(json_request)):
-            if isinstance(json_request[i],str):     
+
+    if isinstance(json_request, list):
+        for i in range(0, len(json_request)):
+            if isinstance(json_request[i], str):
                 index = json_request[i].find("(optional)")
                 param = json_request[i].split()
-                if len(param)>=2:
-                    if index!=-1:
-                        json_request[i] ="? :"+ param[0]+"[];"
+                if len(param) >= 2:
+                    if index != -1:
+                        json_request[i] = "? :" + param[0] + "[];"
                     else:
-                        json_request[i] =" : "+ param[0]+"[];"
+                        json_request[i] = " : " + param[0] + "[];"
                 if inner_model:
-                    inner_model.append(Token(json_request[i],TokenKind.Comment))
-                    inner_model.append(Token(" ",TokenKind.Newline))
+                    inner_model.append(Token(json_request[i], TokenKind.Comment))
+                    inner_model.append(Token(" ", TokenKind.Newline))
                 else:
                     self.add_comment(None, json_request[i], None)
                     self.add_new_line()
             else:
                 # It is a list of whatever is in here:
-                if "{" not in self.Tokens[len(self.Tokens)-1].Value: 
+                if "{" not in self.Tokens[len(self.Tokens) - 1].Value:
                     if inner_model:
-                        inner_model.append(Token(":{",TokenKind.Comment))
-                        inner_model.append(Token(" ",TokenKind.Newline))
+                        inner_model.append(Token(":{", TokenKind.Comment))
+                        inner_model.append(Token(" ", TokenKind.Newline))
                     else:
-                        self.add_comment(None,": {",None)
+                        self.add_comment(None, ": {", None)
                         self.add_new_line()
-                request_builder(self,json_request[i],yaml, indent=indent+1,notfirst=True)  
-        
-    if isinstance(json_request,dict):
+                if inner_model:
+                    inner_model = request_builder(
+                        self,
+                        json_request[i],
+                        yaml,
+                        indent=indent + 1,
+                        notfirst=True,
+                        inner_model=inner_model,
+                    )
+                else:
+                    request_builder(
+                        self, json_request[i], yaml, indent=indent + 1, notfirst=True
+                    )
+
+    if isinstance(json_request, dict):
         for i in json_request:
-            if indent==4:
+            if indent == 4:
                 self.add_whitespace(indent)
-                if(notfirst):
+                if notfirst:
                     if inner_model:
-                        inner_model.append(Token(" ",TokenKind.Newline))
-                        inner_model.append(Token(" " * (indent * 4),TokenKind.Whitespace))
-                        inner_model.append(Token("};",TokenKind.Comment))
+                        inner_model.append(Token(" ", TokenKind.Newline))
+                        inner_model.append(
+                            Token(" " * (indent * 4), TokenKind.Whitespace)
+                        )
+                        inner_model.append(Token("};", TokenKind.Comment))
+                        inner_model = []
                     else:
                         self.add_new_line()
                         self.add_whitespace(indent)
-                        self.add_comment(None," };",None)
+                        self.add_comment(None, " };", None)
                         self.add_new_line()
                         self.add_whitespace(indent)
-                self.add_comment(None,"model "+i,None)
-                self.add_comment(None,": {",None)
-                notfirst=True
+                self.add_comment(None, "model " + i, None)
+                self.add_comment(None, ": {", None)
+                notfirst = True
                 name = i
-            if indent>4 and not isinstance(json_request[i],str):
+            if indent > 4 and not isinstance(json_request[i], str):
                 self.add_new_line()
-                if i == 'str':
-                    if not isinstance(json_request[i],str):
+                if i == "str":
+                    if not isinstance(json_request[i], str):
                         self.add_whitespace(indent)
-                        
-                        m_type,key = get_map_type(yaml,name)
-                        
-                        self.add_comment(None,key+": Map<str, "+ m_type +">;",None)
-                        self.add_new_line()
-                        #START COLLECTING INNER MODEL DATA
-                        inner_model.append(Token(" ",TokenKind.Newline))
-                        inner_model.append(Token(" " * (indent * 4),TokenKind.Whitespace))
-                        inner_model.append(Token("model "+m_type[:len(m_type)-2],TokenKind.Comment))
+
+                        m_type, key = get_map_type(yaml, name)
+                        if inner_model:
+                            inner_model.append(
+                                Token(
+                                    key + ": Map<str, " + m_type + ">;",
+                                    TokenKind.Comment,
+                                )
+                            )
+                        else:
+                            self.add_comment(
+                                None, key + ": Map<str, " + m_type + ">;", None
+                            )
+                            self.add_new_line()
+                            # START COLLECTING INNER MODEL DATA
+                            inner_model.append(Token(" ", TokenKind.Newline))
+                            inner_model.append(
+                                Token(" " * (indent * 4), TokenKind.Whitespace)
+                            )
+                            inner_model.append(
+                                Token(
+                                    "model " + m_type[: len(m_type) - 2],
+                                    TokenKind.Comment,
+                                )
+                            )
 
                         # self.add_whitespace(indent)
                         # self.add_comment(None,"model "+m_type[:len(m_type)-2],None)
                 else:
-                    
+
                     if inner_model:
-                        inner_model.append(Token(" " * (indent * 4),TokenKind.Whitespace))
-                        inner_model.append(Token(i+ ": {",TokenKind.Comment))
+                        inner_model.append(
+                            Token(" " * (indent * 4), TokenKind.Whitespace)
+                        )
+                        inner_model.append(Token(i + ": {", TokenKind.Comment))
                     else:
                         self.add_whitespace(indent)
-                        self.add_comment(None,i +": {",None)
-                    name = i      
-            if isinstance(json_request[i],str):
+                        self.add_comment(None, i + ": {", None)
+                    name = i
+            if isinstance(json_request[i], str):
                 self.add_new_line()
                 self.add_whitespace(indent)
                 index = json_request[i].find("(optional)")
                 param = json_request[i].split()
-                if i == 'str':
-                    if index!=-1:
-                            self.add_comment(None,i+"? : Map<str, "+ param[0] +">;",None)
+                if i == "str":
+                    if index != -1:
+                        self.add_comment(
+                            None, i + "? : Map<str, " + param[0] + ">;", None
+                        )
                     else:
-                        self.add_comment(None,i+": Map<str, "+ param[0] +">;",None)
+                        self.add_comment(
+                            None, i + ": Map<str, " + param[0] + ">;", None
+                        )
                 else:
-                    if len(param)>=2:
-                        if index!=-1:
-                            json_request[i] =i+"? :"+ param[0] +";"
+                    if len(param) >= 2:
+                        if index != -1:
+                            json_request[i] = i + "? :" + param[0] + ";"
                         else:
-                            json_request[i] =i+ ": "+ param[0]+";"
-                    else:
-                        
+                            json_request[i] = i + ": " + param[0] + ";"
                         if inner_model:
-                            inner_model.append(Token(i+ ":",TokenKind.Comment))       
+                            inner_model.append(
+                                Token(json_request[i], TokenKind.Comment)
+                            )
                         else:
-                            self.add_comment(None,i+": ",None) 
-                    
-                    if inner_model:
-                        inner_model.append(Token(json_request[i],TokenKind.Comment))   
+                            self.add_comment(None, json_request[i], None)
+                            # self.add_new_line()
                     else:
-                        self.add_comment(None, json_request[i], None)
-                        # self.add_new_line()
+
+                        if inner_model:
+                            inner_model.append(Token(i + ":", TokenKind.Comment))
+                        else:
+                            self.add_comment(None, i + ": ", None)
+
             else:
                 if inner_model:
-                    inner_model= request_builder(self,json_request[i],yaml,indent=indent+1,notfirst=True,inner_model = inner_model, name=name)
+                    inner_model = request_builder(
+                        self,
+                        json_request[i],
+                        yaml,
+                        indent=indent + 1,
+                        notfirst=True,
+                        inner_model=inner_model,
+                        name=name,
+                    )
                 else:
-                    request_builder(self,json_request[i],yaml,indent=indent+1,notfirst=True,name=name) 
+                    request_builder(
+                        self,
+                        json_request[i],
+                        yaml,
+                        indent=indent + 1,
+                        notfirst=True,
+                        name=name,
+                    )
     return inner_model
 
-def get_map_type(yaml,name=''):
-    #Find yaml type
-    key = ''
-    m_type = ''
-    if yaml['requests'][0]['parameters']:
-        for i in yaml['requests'][0]['parameters']:
-            if i['schema'].get('properties',[]):
-                for j in i['schema']['properties'][0]['schema'].get('properties',[]):
-                    if j['serializedName'] == name:
-                        m_type = get_type(j['schema']['elementType'])
-                        key = j['schema']['language']['default']['name']
-    if yaml['responses'][0].get('schema'):
-        for i in yaml['responses'][0]['schema'].get('properties',[]):
-                    if i['serializedName'] == name:
-                        m_type = get_type(i['schema']['elementType'])
-                        key = i['schema']['language']['default']['name']
-    return m_type,key
-        
+
+def get_map_type(yaml, name=""):
+    # Find yaml type
+    key = ""
+    m_type = ""
+    if yaml["requests"][0]["parameters"]:
+        for i in yaml["requests"][0]["parameters"]:
+            if i["schema"].get("properties", []):
+                for j in i["schema"]["properties"][0]["schema"].get("properties", []):
+                    if j["serializedName"] == name:
+                        m_type = get_type(j["schema"]["elementType"])
+                        key = j["schema"]["language"]["default"]["name"]
+    if yaml["responses"][0].get("schema"):
+        for i in yaml["responses"][0]["schema"].get("properties", []):
+            if i["serializedName"] == name:
+                m_type = get_type(i["schema"]["elementType"])
+                key = i["schema"]["language"]["default"]["name"]
+    return m_type, key
+
+
 class LLCParameterView(FormattingClass):
-    def __init__(self, param_name, param_type, namespace, json_request=None, default=None, required=False):
+    def __init__(
+        self,
+        param_name,
+        param_type,
+        namespace,
+        json_request=None,
+        default=None,
+        required=False,
+    ):
         self.name = param_name
         self.type = param_type
         self.default = default
@@ -727,22 +963,27 @@ class LLCParameterView(FormattingClass):
         default = None
         json_request = {}
         if yaml_data.get("signatureParameters"):
-            default = yaml_data["signatureParameters"][i]["schema"].get(
-                'defaultValue')
-            param_name = yaml_data["signatureParameters"][i]['language']['default']['name']
-            if yaml_data["signatureParameters"][i]["schema"]['type'] == 'object':
+            default = yaml_data["signatureParameters"][i]["schema"].get("defaultValue")
+            param_name = yaml_data["signatureParameters"][i]["language"]["default"][
+                "name"
+            ]
+            if yaml_data["signatureParameters"][i]["schema"]["type"] == "object":
                 param_type = get_type(
-                    yaml_data["signatureParameters"][i]["schema"]['properties'][0]['schema'])
+                    yaml_data["signatureParameters"][i]["schema"]["properties"][0][
+                        "schema"
+                    ]
+                )
             else:
-                param_type = get_type(
-                    yaml_data["signatureParameters"][i]["schema"])
-            if param_name == 'body':
+                param_type = get_type(yaml_data["signatureParameters"][i]["schema"])
+            if param_name == "body":
                 try:
-                    param_name = yaml_data["signatureParameters"][i]["schema"]['properties'][0]['serializedName']
+                    param_name = yaml_data["signatureParameters"][i]["schema"][
+                        "properties"
+                    ][0]["serializedName"]
                 except:
                     param_name = param_name
             if yaml_data["signatureParameters"][i].get("required"):
-                required = yaml_data["signatureParameters"][i]['required']
+                required = yaml_data["signatureParameters"][i]["required"]
             else:
                 required = False
         else:
@@ -755,7 +996,7 @@ class LLCParameterView(FormattingClass):
             required=required,
             namespace=name,
             default=default,
-            json_request=json_request
+            json_request=json_request,
         )
 
     def add_token(self, token):
@@ -769,20 +1010,18 @@ class LLCParameterView(FormattingClass):
         if self.type is not None:
             # Create parameter type token
             self.add_stringliteral(None, self.type, None)
-            self.overview_tokens.append(
-                Token(self.type, TokenKind.StringLiteral))
+            self.overview_tokens.append(Token(self.type, TokenKind.StringLiteral))
 
             # If parameter is optional, token for ? created
             if not self.required:
                 self.add_stringliteral(None, "?", None)
-                self.overview_tokens.append(
-                    Token("?", TokenKind.StringLiteral))
+                self.overview_tokens.append(Token("?", TokenKind.StringLiteral))
             self.add_space()
             self.overview_tokens.append(Token(" ", TokenKind.Text))
             # Create parameter name token
-            self.add_text(self.namespace+self.type, self.name, None)
+            self.add_text(self.namespace + self.type, self.name, None)
             token = Token(self.name, TokenKind.Text)
-            token.set_navigation_id(self.name+"overview")
+            token.set_navigation_id(self.name + "overview")
             self.overview_tokens.append(token)
 
             # Check if parameter has a default value or not
@@ -794,13 +1033,15 @@ class LLCParameterView(FormattingClass):
                 self.add_space()
                 self.overview_tokens.append(Token(" ", TokenKind.Text))
                 if self.type == "string":
-                    self.add_text(None, "'"+str(self.default)+"'", None)
+                    self.add_text(None, "'" + str(self.default) + "'", None)
                     self.overview_tokens.append(
-                        Token("'"+str(self.default)+"'", TokenKind.Text))
+                        Token("'" + str(self.default) + "'", TokenKind.Text)
+                    )
                 else:
                     self.add_text(None, str(self.default), None)
                     self.overview_tokens.append(
-                        Token(str(self.default), TokenKind.Text))
+                        Token(str(self.default), TokenKind.Text)
+                    )
 
     def to_json(self):
         obj_dict = {}
@@ -842,36 +1083,39 @@ class Navigation:
 def get_type(data, page=False):
     # Get type
     try:
-        return_type = data['type']
-        if return_type == 'choice':
-            return_type = data['choiceType']['type']
+        return_type = data["type"]
+        if return_type == "choice":
+            return_type = data["choiceType"]["type"]
         if return_type == "dictionary":
-            value = data['elementType']['type']
-            if value == 'object' or value == 'array' or value == 'dictionary':
-                value = get_type(data['elementType'])
+            value = data["elementType"]["type"]
+            if value == "object" or value == "array" or value == "dictionary":
+                value = get_type(data["elementType"])
             return_type += "[string, " + value + "]"
         if return_type == "object":
-            return_type = data['language']['default']['name']
+            return_type = data["language"]["default"]["name"]
             if page:
-                return_type = get_type(data['properties'][0]['schema'], True)
-        if return_type == 'array':
-            if data['elementType']['type'] != 'object' and data['elementType']['type'] != 'choice':
-                return_type = data['elementType']['type'] + "[]"
+                return_type = get_type(data["properties"][0]["schema"], True)
+        if return_type == "array":
+            if (
+                data["elementType"]["type"] != "object"
+                and data["elementType"]["type"] != "choice"
+            ):
+                return_type = data["elementType"]["type"] + "[]"
             elif not page:
-                return_type = data['elementType']['language']['default']['name']+"[]"
+                return_type = data["elementType"]["language"]["default"]["name"] + "[]"
             else:
-                return_type = data['elementType']['language']['default']['name']
-        if return_type == 'number':
-            if data['precision'] == 32:
+                return_type = data["elementType"]["language"]["default"]["name"]
+        if return_type == "number":
+            if data["precision"] == 32:
                 return_type = "float32"
-            if data['precision'] == 64:
+            if data["precision"] == 64:
                 return_type = "float64"
-        if return_type == 'integer':
-            if data['precision'] == 32:
+        if return_type == "integer":
+            if data["precision"] == 32:
                 return_type = "int32"
-            if data['precision'] == 64:
+            if data["precision"] == 64:
                 return_type = "int64"
-        if return_type == 'boolean':
+        if return_type == "boolean":
             return_type = "bool"
         else:
             return_type = return_type

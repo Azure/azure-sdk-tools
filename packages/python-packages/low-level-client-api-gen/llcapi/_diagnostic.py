@@ -3,7 +3,7 @@ class Diagnostic:
 
     def __init__(self, target_id, message):
         self.DiagnosticId = "AZ_PY_{}".format(Diagnostic.id_counter)
-        Diagnostic.id_counter+=1
+        Diagnostic.id_counter += 1
         self.Text = message
         self.HelpLinkUri = ""
         self.TargetId = target_id

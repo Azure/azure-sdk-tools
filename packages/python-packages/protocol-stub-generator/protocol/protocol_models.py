@@ -360,7 +360,6 @@ class ProtocolOperationGroupView(FormattingClass):
                         self.overview_tokens.append(i)
                     for t in self.operations[operation].get_tokens():
                         self.add_token(t)
-                self.overview_tokens.append(Token("", TokenKind.Newline))
 
     def to_json(self):
         obj_dict = {}
@@ -378,8 +377,8 @@ class ProtocolOperationView(FormattingClass):
         parameters,
         namespace,
         description="",
-        paging="",
-        lro="",
+        paging=False,
+        lro=False,
     ):
         self.operation = operation_name
         self.return_type = return_type
@@ -406,6 +405,7 @@ class ProtocolOperationView(FormattingClass):
             lro = yaml_data["operationGroups"][op_group_num]["operations"][op_num][
                 "extensions"
             ].get("x-ms-long-running-operation")
+        
         paging_op = True if pageable else False
         lro_op = True if lro else False
       
@@ -590,8 +590,6 @@ class ProtocolOperationView(FormattingClass):
                 self.overview_tokens.append(Token(")", TokenKind.Text))
                 self.add_punctuation(")")
                 self.add_new_line(1)
-
-                self.add_token(Token(kind=TokenKind.StartDocGroup))
 
     def to_json(self):
         obj_dict = {}

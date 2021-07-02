@@ -231,7 +231,7 @@ appVersion: v0.1
 dependencies:
 - name: stress-test-addons
   version: 0.1.0
-  repository: file://../../../../cluster/kubernetes/stress-test-addons
+  repository: https://stresstestcharts.blob.core.windows.net/helm/
 ```
 
 ### Values file
@@ -323,6 +323,13 @@ az login
 az acr login -n stresstestregistry
 # Download the kubeconfig for the cluster
 az aks get-credentials -g rg-stress-test-cluster- -n stress-test --subscription 'Azure SDK Test Resources'
+```
+
+Then register the helm repository (this only needs to be done once):
+
+```
+helm repo add stress-test-charts https://stresstestcharts.blob.core.windows.net/helm/
+helm repo update
 ```
 
 Then build/publish images and build ARM templates. Make sure the docker image matches what's referenced in the helm templates.

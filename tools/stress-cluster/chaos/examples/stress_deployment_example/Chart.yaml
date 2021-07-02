@@ -7,4 +7,4 @@ appVersion: v0.1
 dependencies:
 - name: stress-test-addons
   version: 0.1.0
-  repository: file://../../../cluster/kubernetes/stress-test-addons
+  repository: https://stresstestcharts.blob.core.windows.net/helm/

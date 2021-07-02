@@ -89,10 +89,7 @@ class LLCGenerator:
 
 def create_python_name(data):
     ##Iterate through all data duplicate all language_default_name to lanuage_python_name for ops and params so you have both
-    s = data["language"]
-    p = {"python": s["default"]}
-    s.update(p)
-    data["language"] = s
+    data["language"]["python"] = data["language"].get("default")
     for op_group in data["schemas"]:
         for op in range(0, len(data["schemas"][op_group])):
             data["schemas"][op_group][op]["language"]["python"] = data["schemas"][

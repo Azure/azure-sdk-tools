@@ -44,9 +44,8 @@ To access the cluster, run the following:
 
 ```
 az login
-az account set --subscription 'Azure SDK Test Resources'
 # Download the kubeconfig for the cluster
-az aks get-credentials -g rg-stress-test-cluster- -n stress-test
+az aks get-credentials --subscription 'Azure SDK Test Resources' -g rg-stress-test-cluster- -n stress-test
 ```
 
 You should now be able to access the cluster. To verify, you should see a list of namespaces when running the command:
@@ -54,14 +53,6 @@ You should now be able to access the cluster. To verify, you should see a list o
 ```
 kubectl get namespaces
 ```
-
-To access the chaos dashboard, run this command:
-
-```
-kubectl port-forward -n chaos-testing svc/chaos-dashboard 2333:2333
-```
-
-Then navigate to `localhost:2333` in your browser. You will need to keep the above command running in order to maintain dashboard access.
 
 ## Quick Testing with no Dependencies
 
@@ -261,49 +252,30 @@ that runs your stress test container with a startup command. There are a few [he
 functions that pull in config boilerplate from the `stress-test-addons` dependency in order to deploy
 azure resources on startup and inject environment secrets.
 
+Some required Job manifest fields like `Kind`, `metadata`, etc. are omitted for simplicity as they get added
+in by the `stress-test-addons.job-template` include.  These can be overridden in the top level file if needed.
+
 ```
-# Configmap template that adds the stress test ARM template
-{{ include "stress-test-addons.deploy-configmap" . }}
----
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: <stress test name>-{{ .Release.Name }}
-  namespace: {{ .Release.Namespace }}
+{{- include "stress-test-addons.job-template" (list . "stress.deploy-example") -}}
+{{- define "stress.deploy-example" -}}
 spec:
-  backoffLimit: 0
   template:
     metadata:
       labels:
-        testInstance: "{{ .Values.testName }}-{{ .Release.Name }}"
-        testName: {{ .Values.testName }}
-        owners: "{{ .Values.owners }}"
-        chaos: "true"
+        testName: "deploy-example"
     spec:
-      restartPolicy: Never
-      volumes:
-        # Volume template for mounting secrets
-        {{- include "stress-test-addons.env-volumes" . | nindent 8 }}
-        # Volume template for mounting ARM templates
-        {{- include "stress-test-addons.deploy-volumes" . | nindent 8 }}
-      initContainers:
-        # Init container template for injecting secrets
-        # (e.g. app insights instrumentation key, azure client credentials)
-        {{- include "stress-test-addons.init-env" . | nindent 8 }}
-        # Init container template for deploying azure resources on startup and adding deployment outputs to the env
-        {{- include "stress-test-addons.init-deploy" . | nindent 8 }}
       containers:
-        - name: <stress test name>
-          image: <stress test container image>
-          command: <startup command array>
-          args: <startup args array>
-          env:
-            - name: ENV_FILE
-              value: /mnt/outputs/.env
-          volumeMounts:
-            # These hardcoded names/paths must be preserved to mount the environment file
-            - name: test-env-{{ .Release.Name }}
-              mountPath: /mnt/outputs
+        - name: deployment-example
+          image: mcr.microsoft.com/azure-cli
+          {{- include "stress-test-addons.container-env" . | nindent 10 }}
+          command: ['bash', '-c']
+          args:
+            - |
+                source $ENV_FILE &&
+                az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID &&
+                az account set -s $AZURE_SUBSCRIPTION_ID &&
+                az group show -g $RESOURCE_GROUP -o json
+{{- end -}}
 ```
 
 ### Chaos Manifest
@@ -319,8 +291,8 @@ Given a pod metadata like:
 ```
 metadata:
   labels:
-    testInstance: "{{ .Values.testName }}-{{ .Release.Name }}"
-    testName: "{{ .Values.testName }}"
+    testInstance: "mytestname-{{ .Release.Name }}-{{ .Release.Revision }}"
+    testName: mytestname
     chaos: "true"
 ```
 
@@ -329,7 +301,7 @@ The chaos experiment can be configured to target that pod and its parent namespa
 ```
 selector:
   labelSelectors:
-    testInstance: "{{ .Values.testName }}-{{ .Release.Name }}"
+    testInstance: "mytestname-{{ .Release.Name }}-{{ .Release.Revision }}"
     chaos: "true"
   namespaces:
     - {{ .Release.Namespace }}
@@ -380,6 +352,18 @@ You can check the progress/status of your installation via:
 
 ```
 helm list -n <stress test namespace>
+```
+
+To update/re-deploy the test with changes:
+
+```
+helm upgrade <stress test name> ./chart -f ../../../cluster/kubernetes/environments/test.yaml
+```
+
+To debug the yaml built by `helm install`, run:
+
+```
+helm template <stress test name> ./chart -f ../../../cluster/kubernetes/environments/test.yaml
 ```
 
 To stop and remove the test:

@@ -1,29 +1,15 @@
-{{ include "stress-test-addons.deploy-configmap" . }}
----
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: "{{ .Values.testName }}-{{ .Release.Name }}"
-  namespace: {{ .Release.Namespace }}
+{{- include "stress-test-addons.job-template" (list . "stress.deploy-example") -}}
+{{- define "stress.deploy-example" -}}
 spec:
-  backoffLimit: 0
   template:
     metadata:
       labels:
-        testName: "{{ .Values.testName }}-{{ .Release.Name }}"
-        chaos: "true"
-        owners: "{{ .Values.owners }}"
+        testName: "deploy-example"
     spec:
-      restartPolicy: Never
-      volumes:
-        {{- include "stress-test-addons.env-volumes" . | nindent 8 }}
-        {{- include "stress-test-addons.deploy-volumes" . | nindent 8 }}
-      initContainers:
-        {{- include "stress-test-addons.init-env" . | nindent 8 }}
-        {{- include "stress-test-addons.init-deploy" . | nindent 8 }}
       containers:
         - name: deployment-example
           image: mcr.microsoft.com/azure-cli
+          {{- include "stress-test-addons.container-env" . | nindent 10 }}
           command: ['bash', '-c']
           args:
             - |
@@ -31,9 +17,4 @@ spec:
                 az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID &&
                 az account set -s $AZURE_SUBSCRIPTION_ID &&
                 az group show -g $RESOURCE_GROUP -o json
-          env:
-            - name: ENV_FILE
-              value: /mnt/outputs/.env
-          volumeMounts:
-            - name: test-env-{{ .Release.Name }}
-              mountPath: /mnt/outputs
+{{- end -}}

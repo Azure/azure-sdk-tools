@@ -1,17 +1,16 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: "{{ .Values.testName }}-{{ .Release.Name }}"
+  name: "{{ .Release.Name }}-{{ .Release.Revision }}"
   namespace: {{ .Release.Namespace }}
 spec:
   backoffLimit: 0
   template:
     metadata:
       labels:
-        testInstance: "{{ .Values.testName }}-{{ .Release.Name }}"
-        testName: "{{ .Values.testName }}"
+        testInstance: "packet-loss-{{ .Release.Name }}-{{ .Release.Revision }}"
+        testName: packet-loss
         chaos: "true"
-        owners: "{{ .Values.owners }}"
     spec:
       restartPolicy: Never
       volumes:

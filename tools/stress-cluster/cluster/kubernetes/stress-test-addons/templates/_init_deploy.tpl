@@ -21,11 +21,11 @@
     - name: ENV_FILE
       value: /mnt/outputs/.env
   volumeMounts:
-    - name: test-resources-{{ .Release.Name }}
+    - name: "{{ .Release.Name }}-test-resources"
       mountPath: /mnt/testresources
-    - name: test-env-{{ .Release.Name }}
+    - name: "test-env-{{ .Release.Name }}"
       mountPath: /mnt/outputs
-    - name: static-secrets-{{ .Release.Name }}
+    - name: "static-secrets-{{ .Release.Name }}"
       mountPath: "/mnt/secrets/static"
       readOnly: true
 {{ end }}

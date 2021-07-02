@@ -1,10 +1,8 @@
 apiVersion: chaos-mesh.org/v1alpha1
 kind: NetworkChaos
 metadata:
-  name: "{{ .Values.testName }}-{{ .Release.Name }}"
+  name: "{{ .Release.Name }}-{{ .Release.Revision }}"
   namespace: {{ .Release.Namespace }}
-  labels:
-    owners: "{{ .Values.owners }}"
 spec:
   action: loss
   direction: to
@@ -13,7 +11,7 @@ spec:
   mode: one
   selector:
     labelSelectors:
-      testInstance: "{{ .Values.testName }}-{{ .Release.Name }}"
+      testInstance: "packet-loss-{{ .Release.Name }}-{{ .Release.Revision }}"
       chaos: "true"
     namespaces:
       - {{ .Release.Namespace }}

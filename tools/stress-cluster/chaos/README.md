@@ -230,7 +230,7 @@ appVersion: v0.1
 
 dependencies:
 - name: stress-test-addons
-  version: 0.1.0
+  version: 0.1.1
   repository: https://stresstestcharts.blob.core.windows.net/helm/
 ```
 
@@ -351,7 +351,14 @@ Then install the stress test into the cluster:
 ```
 kubectl create namespace <your stress test namespace> 
 kubectl label namespace <namespace> owners=<owner alias>
-helm install <stress test name> . -f ../../../cluster/kubernetes/environments/test.yaml
+helm install <stress test name> .
+```
+
+To install into a different cluster (test, prod, or dev):
+
+```
+az aks get-credentials --subscription '<cluster subscription>' -g rg-stress-test-cluster-<cluster suffix> -n stress-test
+helm install <stress test name> . --set stress-test-addons.env=<cluster suffix>
 ```
 
 You can check the progress/status of your installation via:
@@ -363,13 +370,13 @@ helm list -n <stress test namespace>
 To update/re-deploy the test with changes:
 
 ```
-helm upgrade <stress test name> . -f ../../../cluster/kubernetes/environments/test.yaml
+helm upgrade <stress test name> .
 ```
 
 To debug the yaml built by `helm install`, run:
 
 ```
-helm template <stress test name> . -f ../../../cluster/kubernetes/environments/test.yaml
+helm template <stress test name> .
 ```
 
 To stop and remove the test:

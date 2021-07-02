@@ -1,9 +1,0 @@
-stress-test-addons:
-  appInsightsKeySecretName: appInsightsInstrumentationKey-uj7jqs4ukw2gi
-  staticTestSecretsKeyvaultName: StressTestSecrets
-  clusterTestSecretsKeyvaultName: stress-kv-uj7jqs4ukw2gi
-  secretProviderIdentity: bc7712b9-1622-4b7f-9943-604c73cda131
-  subscription: public
-  tenantId: 72f988bf-86f1-41af-91ab-2d7cd011db47
-
-subscription: public

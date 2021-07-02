@@ -2,6 +2,7 @@
 # Licensed under the MIT License.
 from enum import Enum
 
+
 class TokenKind(Enum):
     Text = 0
     Newline = 1

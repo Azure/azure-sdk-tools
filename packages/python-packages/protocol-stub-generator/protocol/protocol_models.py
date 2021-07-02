@@ -293,7 +293,9 @@ class ProtocolOperationGroupView(FormattingClass):
     def from_yaml(cls, yaml_data: Dict[str, Any], op_group, name):
         operations = []
         for i in range(0, len(yaml_data["operationGroups"][op_group]["operations"])):
-            operations.append(ProtocolOperationView.from_yaml(yaml_data, op_group, i, name))
+            operations.append(
+                ProtocolOperationView.from_yaml(yaml_data, op_group, i, name)
+            )
         return cls(
             operation_group_name=yaml_data["operationGroups"][op_group]["language"][
                 "default"

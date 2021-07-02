@@ -95,14 +95,24 @@ def create_python_name(data):
     data["language"] = s
     for op_group in data["schemas"]:
         for op in range(0, len(data["schemas"][op_group])):
-            data["schemas"][op_group][op]["language"]["python"] = data["schemas"][op_group][op]["language"].get("default")
+            data["schemas"][op_group][op]["language"]["python"] = data["schemas"][
+                op_group
+            ][op]["language"].get("default")
             if op_group == "objects":
                 for o in range(
                     0, len(data["schemas"][op_group][op].get("properties", []))
                 ):
-                    data["schemas"][op_group][op]["properties"][o]["language"]["python"] = data["schemas"][op_group][op]["properties"][o]["language"].get("default")
+                    data["schemas"][op_group][op]["properties"][o]["language"][
+                        "python"
+                    ] = data["schemas"][op_group][op]["properties"][o]["language"].get(
+                        "default"
+                    )
             if op_group == "arrays":
-                data["schemas"][op_group][op]["elementType"]["language"]['python'] = data["schemas"][op_group][op]["elementType"]["language"].get('default')
+                data["schemas"][op_group][op]["elementType"]["language"][
+                    "python"
+                ] = data["schemas"][op_group][op]["elementType"]["language"].get(
+                    "default"
+                )
                 for p in range(
                     0,
                     len(
@@ -111,14 +121,34 @@ def create_python_name(data):
                         )
                     ),
                 ):
-                    data["schemas"][op_group][op]["elementType"]["properties"][p]["language"]["python"] = data["schemas"][op_group][op]["elementType"]["properties"][p]["language"].get("default")
+                    data["schemas"][op_group][op]["elementType"]["properties"][p][
+                        "language"
+                    ]["python"] = data["schemas"][op_group][op]["elementType"][
+                        "properties"
+                    ][
+                        p
+                    ][
+                        "language"
+                    ].get(
+                        "default"
+                    )
             if op_group == "choices" or op_group == "sealedChoices":
                 for o in range(0, len(data["schemas"][op_group][op].get("choices"))):
-                    data["schemas"][op_group][op]["choices"][o]["language"]["python"] = data["schemas"][op_group][op]["choices"][o]["language"].get("default")
+                    data["schemas"][op_group][op]["choices"][o]["language"][
+                        "python"
+                    ] = data["schemas"][op_group][op]["choices"][o]["language"].get(
+                        "default"
+                    )
     for op_group in range(0, len(data["operationGroups"])):
-        data["operationGroups"][op_group]["language"]['python'] = data["operationGroups"][op_group]["language"].get('default')
+        data["operationGroups"][op_group]["language"]["python"] = data[
+            "operationGroups"
+        ][op_group]["language"].get("default")
         for op in range(0, len(data["operationGroups"][op_group]["operations"])):
-            data["operationGroups"][op_group]["operations"][op]["language"]['python'] = data["operationGroups"][op_group]["operations"][op]["language"].get('default')
+            data["operationGroups"][op_group]["operations"][op]["language"][
+                "python"
+            ] = data["operationGroups"][op_group]["operations"][op]["language"].get(
+                "default"
+            )
             for p in range(
                 0,
                 len(
@@ -127,7 +157,21 @@ def create_python_name(data):
                     )
                 ),
             ):
-                data["operationGroups"][op_group]["operations"][op]["signatureParameters"][p]["language"]['python'] =  data["operationGroups"][op_group]["operations"][op]["signatureParameters"][p]["language"].get('default')
+                data["operationGroups"][op_group]["operations"][op][
+                    "signatureParameters"
+                ][p]["language"]["python"] = data["operationGroups"][op_group][
+                    "operations"
+                ][
+                    op
+                ][
+                    "signatureParameters"
+                ][
+                    p
+                ][
+                    "language"
+                ].get(
+                    "default"
+                )
             for p in range(
                 0,
                 len(
@@ -136,14 +180,34 @@ def create_python_name(data):
                     )
                 ),
             ):
-                data["operationGroups"][op_group]["operations"][op]["parameters"][p]["language"]['python']=data["operationGroups"][op_group]["operations"][op]["parameters"][p]["language"].get('default')
+                data["operationGroups"][op_group]["operations"][op]["parameters"][p][
+                    "language"
+                ]["python"] = data["operationGroups"][op_group]["operations"][op][
+                    "parameters"
+                ][
+                    p
+                ][
+                    "language"
+                ].get(
+                    "default"
+                )
             for p in range(
                 0,
                 len(
                     data["operationGroups"][op_group]["operations"][op].get("requests")
                 ),
             ):
-                data["operationGroups"][op_group]["operations"][op]["requests"][p]["language"]['python'] = data["operationGroups"][op_group]["operations"][op]["requests"][p]["language"].get('default')
+                data["operationGroups"][op_group]["operations"][op]["requests"][p][
+                    "language"
+                ]["python"] = data["operationGroups"][op_group]["operations"][op][
+                    "requests"
+                ][
+                    p
+                ][
+                    "language"
+                ].get(
+                    "default"
+                )
                 for r in range(
                     0,
                     len(
@@ -152,11 +216,39 @@ def create_python_name(data):
                         ].get("parameters", [])
                     ),
                 ):
-                    data["operationGroups"][op_group]["operations"][op]["requests"][p]["parameters"][r]["language"]['python']= data["operationGroups"][op_group]["operations"][op]["requests"][p]["parameters"][r]["language"].get('default')
+                    data["operationGroups"][op_group]["operations"][op]["requests"][p][
+                        "parameters"
+                    ][r]["language"]["python"] = data["operationGroups"][op_group][
+                        "operations"
+                    ][
+                        op
+                    ][
+                        "requests"
+                    ][
+                        p
+                    ][
+                        "parameters"
+                    ][
+                        r
+                    ][
+                        "language"
+                    ].get(
+                        "default"
+                    )
             for p in range(
                 0,
                 len(
                     data["operationGroups"][op_group]["operations"][op].get("responses")
                 ),
             ):
-                data["operationGroups"][op_group]["operations"][op]["responses"][p]["language"]['python'] = data["operationGroups"][op_group]["operations"][op]["responses"][p]["language"].get('default')
+                data["operationGroups"][op_group]["operations"][op]["responses"][p][
+                    "language"
+                ]["python"] = data["operationGroups"][op_group]["operations"][op][
+                    "responses"
+                ][
+                    p
+                ][
+                    "language"
+                ].get(
+                    "default"
+                )

@@ -122,13 +122,8 @@ class ProtocolClientView(FormattingClass):
         operation_groups = []
         # Iterate through Operations in OperationGroups
         for op_groups in range(0, len(yaml_data["operationGroups"])):
-            operation_group_view = ProtocolOperationGroupView.from_yaml(
+            operation_group = ProtocolOperationGroupView.from_yaml(
                 yaml_data, op_groups, "Azure." + yaml_data["info"]["title"]
-            )
-            operation_group = ProtocolOperationGroupView(
-                operation_group_view.operation_group,
-                operation_group_view.operations,
-                "Azure." + yaml_data["info"]["title"],
             )
             if operation_group.operation_group == "":
                 operation_group.operation_group = "<default>"

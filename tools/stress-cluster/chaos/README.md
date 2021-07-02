@@ -12,7 +12,6 @@ The chaos environment is an AKS cluster (Azure Kubernetes Service) with several 
      * [Stress Test Secrets](#stress-test-secrets)
      * [Stress Test Azure Resources](#stress-test-azure-resources)
      * [Helm Chart Dependencies](#helm-chart-dependencies)
-     * [Values file](#values-file)
      * [Job Manifest](#job-manifest)
      * [Chaos Manifest](#chaos-manifest)
   * [Deploying a Stress Test](#deploying-a-stress-test)
@@ -144,26 +143,27 @@ The usage of helm charts allows for two primary scenarios:
 The basic layout for a stress test is the following (see `examples/stress_deployment_example` for an example):
 
 ```
-<chart root directory>
-  Dockerfile              # A Dockerfile for building the stress test image
-  <misc scripts/configs>  # Any language specific files for building/running/deploying the test
-  <source directories>    # Directory/directories containing code for stress tests
-  <test-resources.bicep>  # An Azure Bicep template for deploying stress test azure resources.
+<stress test root directory>
+    Dockerfile                   # A Dockerfile for building the stress test image
+    test-resources.[bicep|json]  # An Azure Bicep or ARM template for deploying stress test azure resources.
+    parameters.json              # An ARM template parameters file that will be used at runtime along with the ARM template
 
-  chart/                  # Directory containing the helm chart for deploying into the stress test cluster
-    Chart.yaml            # A YAML file containing information about the chart
-    values.yaml           # Any default configuration values for this chart
-    parameters.json       # An ARM template parameters file that will be used at runtime along with the ARM template
-    charts/               # A directory containing any charts upon which this chart depends.
-    templates/            # A directory of templates that, when combined with values,
-                          # will generate valid Kubernetes manifest files.
-                          # Most commonly this will contain a Kubernetes Job manifest and a chaos mesh manifest.
+    Chart.yaml                   # A YAML file containing information about the helm chart and its dependencies
+    templates/                   # A directory of helm templates that will generate Kubernetes manifest files.
+                                 # Most commonly this will contain a Job/Pod spec snippet and a chaos mesh manifest.
+
+    # Optional files/directories
+
+    values.yaml                  # Any default helm template values for this chart
+    <misc scripts/configs>       # Any language specific files for building/running/deploying the test
+    <source directories>         # Directories containing code for stress tests
+    <bicep modules>              # Any additional bicep module files/directories referenced by test-resources.bicep
 ```
 
 ### Stress Test Secrets
 
 For ease of implementation regarding merging secrets from various Keyvault sources, secret values injected into the stress
-test container can be found in a file at path `$ENV_FILE`. This file follows the "dotenv" file syntax (i.e. lines of <key>=<value>), and
+test container can be found in a file at path `$ENV_FILE` (usually `/mnt/outputs/.env`). This file follows the "dotenv" file syntax (i.e. lines of <key>=<value>), and
 can be [loaded](https://www.npmjs.com/package/dotenv) [via](https://pypi.org/project/python-dotenv/)
 [various](https://mvnrepository.com/artifact/io.github.cdimascio/dotenv-java) [packages](https://www.nuget.org/packages/dotenv.net/).
 
@@ -232,17 +232,6 @@ dependencies:
 - name: stress-test-addons
   version: 0.1.1
   repository: https://stresstestcharts.blob.core.windows.net/helm/
-```
-
-### Values file
-
-The `<chart root>/chart/values.yaml` should contain a few default values:
-
-```
-testName: <test name>
-owners: <csv string of owner aliases>
-# If the test is publishing its own images
-image: <cluster container registry>.azurecr.io/<test parent, e.g. js>/<test image name>:<version>
 ```
 
 ### Job Manifest

@@ -256,7 +256,7 @@ Some required Job manifest fields like `Kind`, `metadata`, etc. are omitted for 
 in by the `stress-test-addons.job-template` include.  These can be overridden in the top level file if needed.
 
 ```
-{{- include "stress-test-addons.job-template" (list . "stress.deploy-example") -}}
+{{- include "stress-test-addons.deploy-job-template" (list . "stress.deploy-example") -}}
 {{- define "stress.deploy-example" -}}
 spec:
   template:
@@ -319,11 +319,10 @@ To build and deploy the stress test, first log in to access the cluster resource
 
 ```
 az login
-az account set --subscription 'Azure SDK Test Resources'
 # Log in to the container registry for Docker access
 az acr login -n stresstestregistry
 # Download the kubeconfig for the cluster
-az aks get-credentials -g rg-stress-test-cluster- -n stress-test
+az aks get-credentials -g rg-stress-test-cluster- -n stress-test --subscription 'Azure SDK Test Resources'
 ```
 
 Then build/publish images and build ARM templates. Make sure the docker image matches what's referenced in the helm templates.
@@ -334,10 +333,10 @@ docker build . -t stresstestregistry.azurecr.io/<your name>/<test job image name
 docker push stresstestregistry.azurecr.io/<your name>/<test job image name>:<version>
 
 # Compile ARM template (if using Bicep files)
-az bicep build -f ./test-resources.bicep --outfile ./chart/test-resources.json
+az bicep build -f ./test-resources.bicep
 
 # Install helm dependencies
-helm dependency update ./chart
+helm dependency update
 ```
 
 Then install the stress test into the cluster:
@@ -345,7 +344,7 @@ Then install the stress test into the cluster:
 ```
 kubectl create namespace <your stress test namespace> 
 kubectl label namespace <namespace> owners=<owner alias>
-helm install <stress test name> ./chart -f ../../../cluster/kubernetes/environments/test.yaml
+helm install <stress test name> . -f ../../../cluster/kubernetes/environments/test.yaml
 ```
 
 You can check the progress/status of your installation via:
@@ -357,13 +356,13 @@ helm list -n <stress test namespace>
 To update/re-deploy the test with changes:
 
 ```
-helm upgrade <stress test name> ./chart -f ../../../cluster/kubernetes/environments/test.yaml
+helm upgrade <stress test name> . -f ../../../cluster/kubernetes/environments/test.yaml
 ```
 
 To debug the yaml built by `helm install`, run:
 
 ```
-helm template <stress test name> ./chart -f ../../../cluster/kubernetes/environments/test.yaml
+helm template <stress test name> . -f ../../../cluster/kubernetes/environments/test.yaml
 ```
 
 To stop and remove the test:

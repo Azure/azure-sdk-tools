@@ -1,3 +1,0 @@
-testName: network-example
-image: stresstestregistry.azurecr.io/example/networkexample:v1
-owners: "example"

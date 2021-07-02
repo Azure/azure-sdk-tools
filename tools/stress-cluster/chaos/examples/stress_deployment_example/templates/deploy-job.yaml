@@ -1,4 +1,4 @@
-{{- include "stress-test-addons.job-template" (list . "stress.deploy-example") -}}
+{{- include "stress-test-addons.deploy-job-template" (list . "stress.deploy-example") -}}
 {{- define "stress.deploy-example" -}}
 spec:
   template:

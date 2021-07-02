@@ -5,7 +5,7 @@ param location string
 param now string = utcNow('u')
 
 resource group 'Microsoft.Resources/resourceGroups@2020-10-01' = {
-    name: 'rg-stress-${groupName}-${uniqueString(now)}'
+    name: 'rg-${groupName}-${uniqueString(now)}'
     location: location
     tags: {
         DeleteAfter: dateTimeAdd(now, 'PT8H')

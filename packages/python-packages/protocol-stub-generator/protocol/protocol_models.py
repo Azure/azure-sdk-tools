@@ -579,7 +579,6 @@ class ProtocolOperationView(FormattingClass):
 
             # Add in comma before the next parameter
             if param_num + 1 in range(0, len(self.parameters)):
-                self.parameters[param_num + 1]
                 self.add_punctuation(",")
                 self.overview_tokens.append(Token(", ", TokenKind.Text))
 

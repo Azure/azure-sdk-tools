@@ -6,7 +6,7 @@ import argparse
 import logging
 import os
 import tempfile
-from .protocol_models import LLCClientView
+from .protocol_models import ProtocolClientView
 
 OUTPUT_FILE = "protocol_view.json"
 
@@ -77,7 +77,7 @@ class LLCGenerator:
         create_python_name(data)
 
         # Create main_view for LLC API View
-        main_view = LLCClientView.from_yaml(data)
+        main_view = ProtocolClientView.from_yaml(data)
 
         # Write output to .json
         j = open(OUTPUT_FILE, "w")

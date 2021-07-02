@@ -92,7 +92,7 @@ class FormattingClass:
         self.Navigation.append(navigation)
 
 
-class LLCClientView(FormattingClass):
+class ProtocolClientView(FormattingClass):
     """Entity class that holds LLC view for all namespaces within a package"""
 
     def __init__(
@@ -122,10 +122,10 @@ class LLCClientView(FormattingClass):
         operation_groups = []
         # Iterate through Operations in OperationGroups
         for op_groups in range(0, len(yaml_data["operationGroups"])):
-            operation_group_view = LLCOperationGroupView.from_yaml(
+            operation_group_view = ProtocolOperationGroupView.from_yaml(
                 yaml_data, op_groups, "Azure." + yaml_data["info"]["title"]
             )
-            operation_group = LLCOperationGroupView(
+            operation_group = ProtocolOperationGroupView(
                 operation_group_view.operation_group,
                 operation_group_view.operations,
                 "Azure." + yaml_data["info"]["title"],
@@ -281,7 +281,7 @@ class LLCClientView(FormattingClass):
         return obj_dict
 
 
-class LLCOperationGroupView(FormattingClass):
+class ProtocolOperationGroupView(FormattingClass):
     def __init__(self, operation_group_name, operations, namespace):
         self.operation_group = operation_group_name
         self.operations = operations
@@ -293,7 +293,7 @@ class LLCOperationGroupView(FormattingClass):
     def from_yaml(cls, yaml_data: Dict[str, Any], op_group, name):
         operations = []
         for i in range(0, len(yaml_data["operationGroups"][op_group]["operations"])):
-            operations.append(LLCOperationView.from_yaml(yaml_data, op_group, i, name))
+            operations.append(ProtocolOperationView.from_yaml(yaml_data, op_group, i, name))
         return cls(
             operation_group_name=yaml_data["operationGroups"][op_group]["language"][
                 "default"
@@ -373,7 +373,7 @@ class LLCOperationGroupView(FormattingClass):
         return obj_dict
 
 
-class LLCOperationView(FormattingClass):
+class ProtocolOperationView(FormattingClass):
     def __init__(
         self,
         operation_name,
@@ -434,7 +434,7 @@ class LLCOperationView(FormattingClass):
             ),
         ):
             param.append(
-                LLCParameterView.from_yaml(
+                ProtocolParameterView.from_yaml(
                     yaml_data["operationGroups"][op_group_num]["operations"][op_num],
                     i,
                     namespace,
@@ -457,7 +457,7 @@ class LLCOperationView(FormattingClass):
                 ),
             ):
                 param.append(
-                    LLCParameterView.from_yaml(
+                    ProtocolParameterView.from_yaml(
                         yaml_data["operationGroups"][op_group_num]["operations"][
                             op_num
                         ]["requests"][j],
@@ -610,7 +610,7 @@ class LLCOperationView(FormattingClass):
         return obj_dict
 
 
-class LLCParameterView(FormattingClass):
+class ProtocolParameterView(FormattingClass):
     def __init__(
         self,
         param_name,

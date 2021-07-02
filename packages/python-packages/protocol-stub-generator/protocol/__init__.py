@@ -2,18 +2,18 @@
 # Licensed under the MIT License.
 
 from .protocol_models import (
-    LLCClientView,
-    LLCOperationView,
-    LLCParameterView,
-    LLCOperationGroupView,
+    ProtocolClientView,
+    ProtocolOperationView,
+    ProtocolParameterView,
+    ProtocolOperationGroupView,
 )
 from .parse_yml import LLCGenerator
 
 __all__ = [
-    "LLCClientView",
-    "LLCOperationView",
-    "LLCParameterView",
-    "LLCOperationGroupView",
+    "ProtocolClientView",
+    "ProtocolOperationView",
+    "ProtocolParameterView",
+    "ProtocolOperationGroupView",
     "LLCGenerator",
 ]
 

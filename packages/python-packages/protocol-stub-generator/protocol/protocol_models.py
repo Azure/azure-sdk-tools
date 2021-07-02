@@ -529,7 +529,7 @@ class ProtocolOperationView(FormattingClass):
             self.operation,
             self.namespace + self.operation,
         )
-        self.add_space
+        self.add_space()
 
         self.add_new_line()
         self.add_description()

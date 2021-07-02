@@ -33,7 +33,7 @@ setup(
     python_requires=">=3.4.0",
     entry_points={
         "console_scripts": [
-            "protocol_api=protocol:console_entry_point",
+            "protocolGen=protocol:console_entry_point",
         ]
     },
     classifiers=[

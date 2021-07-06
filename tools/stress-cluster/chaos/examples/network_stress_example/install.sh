@@ -10,8 +10,4 @@ docker build . -t stresstestregistry.azurecr.io/example/networkexample:v1
 docker push stresstestregistry.azurecr.io/example/networkexample:v1
 
 kubectl create namespace examples || true
-
-helm install \
-    network-example \
-    -n examples \
-     -f ../../../cluster/kubernetes/environments/test.yaml
+helm install stress-network-example -n examples . --set stress-test-addons.env=test

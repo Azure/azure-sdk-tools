@@ -4,6 +4,7 @@ metadata:
   labels:
     testInstance: "packet-loss-{{ .Release.Name }}-{{ .Release.Revision }}"
     testName: packet-loss
+    chaos: "true"
 spec:
   containers:
     - name: network-example

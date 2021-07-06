@@ -378,7 +378,7 @@ To check the status of the stress test job resources:
 
 ```
 # List stress test pods
-kubectl get pods -n <stress test namespace>
+kubectl get pods -n <stress test namespace> -l release=<stress test name>
 # Get logs from azure-deployer init container
 kubectl logs -n <stress test namespace> <stress test pod name> -c azure-deployer
 # If empty, there may have been startup failures

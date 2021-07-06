@@ -10,12 +10,14 @@ kind: Job
 metadata:
   name: "{{ .Release.Name }}-{{ .Release.Revision }}"
   namespace: {{ .Release.Namespace }}
+  labels:
+    release: {{ .Release.Name }}
 spec:
   backoffLimit: 0
   template:
     metadata:
       labels:
-        chaos: "true"
+        release: {{ .Release.Name }}
     spec:
       restartPolicy: Never
       volumes:
@@ -53,12 +55,14 @@ kind: Job
 metadata:
   name: "{{ .Release.Name }}-{{ .Release.Revision }}"
   namespace: {{ .Release.Namespace }}
+  labels:
+    release: {{ .Release.Name }}
 spec:
   backoffLimit: 0
   template:
     metadata:
       labels:
-        chaos: "true"
+        release: {{ .Release.Name }}
     spec:
       restartPolicy: Never
       volumes:

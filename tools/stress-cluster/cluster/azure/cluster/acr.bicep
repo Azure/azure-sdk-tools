@@ -35,3 +35,5 @@ resource acrPullRole 'Microsoft.Authorization/roleAssignments@2020-04-01-preview
     principalId: objectId
   }
 }]
+
+output containerRegistryName string = registry.name

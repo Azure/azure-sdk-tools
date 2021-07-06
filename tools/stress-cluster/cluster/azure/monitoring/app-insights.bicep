@@ -13,3 +13,4 @@ resource applicationInsights 'Microsoft.Insights/components@2020-02-02-preview' 
 }
 
 output instrumentationKey string = applicationInsights.properties.InstrumentationKey
+output appInsightsName string = name

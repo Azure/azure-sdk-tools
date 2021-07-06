@@ -3,6 +3,8 @@ targetScope = 'subscription'
 param groupSuffix string
 param clusterName string
 param clusterLocation string = 'westus2'
+param staticTestSecretsKeyvaultName string
+param staticTestSecretsKeyvaultGroup string
 param monitoringLocation string = 'centralus'
 param tags object
 param enableMonitoring bool = false
@@ -51,25 +53,56 @@ module cluster 'cluster/cluster.bicep' = {
         groupSuffix: groupSuffix
         enableMonitoring: enableMonitoring
         workspaceId: enableMonitoring ? logWorkspace.outputs.id : ''
-        accessGroups: accessGroups
     }
 }
+
+module containerRegistry 'cluster/acr.bicep' = {
+    name: 'containerRegistry'
+    scope: group
+    params: {
+        registryName: '${replace(clusterName, '-', '')}registry'
+        location: clusterLocation
+        objectIds: concat(accessGroups, array(cluster.outputs.kubeletIdentityObjectId))
+    }
+}
+
+var appInsightsInstrumentationKeySecretName = 'appInsightsInstrumentationKey-${resourceSuffix}'
+var appInsightsInstrumentationKeySecretValue = 'APPINSIGHTS_INSTRUMENTATIONKEY=${appInsights.outputs.instrumentationKey}\n'
 
 module keyvault 'cluster/keyvault.bicep' = if (enableMonitoring) {
     name: 'keyvault'
     scope: group
     params: {
-        keyVaultName: 'stress-kv-${resourceSuffix}'  // 24 character max length
+        keyvaultName: 'stress-kv-${resourceSuffix}'  // 24 character max length
         location: clusterLocation
         tags: tags
         objectIds: concat(accessGroups, array(cluster.outputs.secretProviderObjectId))
         secretsObject: {
             secrets: [
                 {
-                    secretName: 'appInsightsInstrumentationKey-${resourceSuffix}'
-                    secretValue: appInsights.outputs.instrumentationKey
+                    secretName: appInsightsInstrumentationKeySecretName
+                    secretValue: appInsightsInstrumentationKeySecretValue
                 }
             ]
         }
     }
 }
+
+module accessPolicy 'cluster/static-vault-access-policy.bicep' = {
+    name: 'accessPolicy'
+    scope: resourceGroup(staticTestSecretsKeyvaultGroup)
+    params: {
+        vaultName: staticTestSecretsKeyvaultName
+        tenantId: subscription().tenantId
+        objectId: cluster.outputs.secretProviderObjectId
+    }
+}
+
+output STATIC_TEST_SECRETS_KEYVAULT string = staticTestSecretsKeyvaultName
+output CLUSTER_KEYVAULT string = keyvault.outputs.keyvaultName
+output SECRET_PROVIDER_CLIENT_ID string = cluster.outputs.secretProviderClientId
+output CLUSTER_NAME string = cluster.outputs.clusterName
+output CONTAINER_REGISTRY_NAME string = containerRegistry.outputs.containerRegistryName
+output APPINSIGHTS_KEY_SECRET_NAME string = appInsightsInstrumentationKeySecretName
+output RESOURCE_GROUP string = group.name
+output TENANT_ID string = subscription().tenantId

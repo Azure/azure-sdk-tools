@@ -25,6 +25,9 @@
 // --------------------------------------------------------------------------
 
 import Foundation
+import AST
+import Parser
+import Source
 
 /// Handles the generation of APIView JSON files.
 class APIViewManager {
@@ -47,7 +50,7 @@ class APIViewManager {
 
         try buildTokenFile(from: sourceUrl)
 
-        let destPath = args.dest ?? "SOME DEFAULT HERE"
+        let destPath = args.dest ?? "~/Desktop"
         guard let destUrl = URL(string: destPath) else {
             SharedLogger.fail("usage error: `--dest PATH` was invalid.")
         }
@@ -56,5 +59,97 @@ class APIViewManager {
 
     func buildTokenFile(from sourceUrl: URL) throws {
         // TODO: Build AST. Traverse and populate token file.
+        SharedLogger.debug("URL: \(sourceUrl.absoluteString)")
+        let sourceFile = try SourceReader.read(at: sourceUrl.absoluteString)
+        let parser = Parser(source: sourceFile)
+        let topLevelDecl = try parser.parse()
+        let visitor = TokenVisitor()
+        print(try visitor.traverse(topLevelDecl))
+        
+        
     }
 }
+
+struct TokenNode {
+    var node : ASTNode
+    var tokens : [TokenItem]
+    var depth : Int
+    
+    init(node: ASTNode, tokens: [TokenItem], depth: Int) {
+        self.node = node
+        self.tokens = tokens
+        self.depth = depth
+    }
+}
+
+class TokenVisitor : ASTVisitor {
+    func visit(_ decl: ClassDeclaration) throws -> Bool {
+        switch decl.accessLevelModifier {
+        case .open, .openSet, .public, .publicSet:
+            return true
+        default:
+            return true
+        }
+      return true
+    }
+
+    func visit(_ decl: ConstantDeclaration) throws -> Bool {
+        SharedLogger.debug("Constant Declaration")
+        SharedLogger.debug(decl.modifiers.textDescription)
+      return true
+    }
+
+    func visit(_ decl: DeinitializerDeclaration) throws -> Bool {
+      return true
+    }
+
+    func visit(_ decl: EnumDeclaration) throws -> Bool {
+      return true
+    }
+
+    func visit(_ decl: ExtensionDeclaration) throws -> Bool {
+      return true
+    }
+
+    func visit(_ decl: FunctionDeclaration) throws -> Bool {
+      return true
+    }
+
+    func visit(_ decl: ImportDeclaration) throws -> Bool {
+      return true
+    }
+
+    func visit(_ decl: InitializerDeclaration) throws -> Bool {
+      return true
+    }
+
+    func visit(_ decl: OperatorDeclaration) throws -> Bool {
+      return true
+    }
+
+    func visit(_ decl: PrecedenceGroupDeclaration) throws -> Bool {
+      return true
+    }
+
+    func visit(_ decl: ProtocolDeclaration) throws -> Bool {
+      return true
+    }
+
+    func visit(_ decl: StructDeclaration) throws -> Bool {
+      return true
+    }
+
+    func visit(_ decl: SubscriptDeclaration) throws -> Bool {
+      return true
+    }
+
+    func visit(_ decl: TypealiasDeclaration) throws -> Bool {
+      return true
+    }
+
+    func visit(_ decl: VariableDeclaration) throws -> Bool {
+      return true
+    }
+}
+
+

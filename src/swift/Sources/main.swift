@@ -27,11 +27,19 @@
 import Foundation
 
 // Should be set to `.warning` normally
-let logLevel = LogLevel.warning
-SharedLogger.set(logger: StdoutLogger(), withLevel: logLevel)
-
+let logLevel = LogLevel.debug
+SharedLogger.set(logger: StdoutLogger(), withLevel: logLevel);
 do {
     try APIViewManager.shared.run()
 } catch {
     SharedLogger.error("\(error)")
+}
+SharedLogger.debug("Got to the end of main. Exiting")
+
+//remove when done
+exit()
+
+func exit() {
+    print("Press Enter to terminate...")
+    readLine()
 }

@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 50;
+	objectVersion = 52;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -16,6 +16,7 @@
 		0A6A544C268B8F67001006AF /* TokenItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A6A544B268B8F67001006AF /* TokenItem.swift */; };
 		0A6A544E268B8F75001006AF /* NavigationItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A6A544D268B8F75001006AF /* NavigationItem.swift */; };
 		0A6A5450268B91FC001006AF /* NavigationTags.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A6A544F268B91FC001006AF /* NavigationTags.swift */; };
+		31FB4C92268E0FF1006FB1E6 /* SwiftAST in Frameworks */ = {isa = PBXBuildFile; productRef = 31FB4C91268E0FF1006FB1E6 /* SwiftAST */; };
 		88980DB8A3E0F9DD51B2742D /* libPods-SwiftAPIView.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BADCA632B6A0CC35560C52EA /* libPods-SwiftAPIView.a */; };
 /* End PBXBuildFile section */
 
@@ -35,7 +36,7 @@
 		0A6A5430268B82D0001006AF /* SwiftAPIView */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = SwiftAPIView; sourceTree = BUILT_PRODUCTS_DIR; };
 		0A6A5433268B82D0001006AF /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		0A6A543B268B845A001006AF /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		0A6A543C268B8496001006AF /* Podfile */ = {isa = PBXFileReference; lastKnownFileType = text; path = Podfile; sourceTree = "<group>"; };
+		0A6A543C268B8496001006AF /* Podfile */ = {isa = PBXFileReference; lastKnownFileType = text; path = Podfile; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.ruby; };
 		0A6A5440268B886D001006AF /* Logger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logger.swift; sourceTree = "<group>"; };
 		0A6A5442268B88AE001006AF /* URL+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "URL+Extensions.swift"; sourceTree = "<group>"; };
 		0A6A5444268B89DE001006AF /* APIViewManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIViewManager.swift; sourceTree = "<group>"; };
@@ -55,6 +56,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				88980DB8A3E0F9DD51B2742D /* libPods-SwiftAPIView.a in Frameworks */,
+				31FB4C92268E0FF1006FB1E6 /* SwiftAST in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -147,6 +149,9 @@
 			dependencies = (
 			);
 			name = SwiftAPIView;
+			packageProductDependencies = (
+				31FB4C91268E0FF1006FB1E6 /* SwiftAST */,
+			);
 			productName = SwiftAPIView;
 			productReference = 0A6A5430268B82D0001006AF /* SwiftAPIView */;
 			productType = "com.apple.product-type.tool";
@@ -174,6 +179,9 @@
 				Base,
 			);
 			mainGroup = 0A6A5427268B82D0001006AF;
+			packageReferences = (
+				31FB4C90268E0FF1006FB1E6 /* XCRemoteSwiftPackageReference "swift-ast" */,
+			);
 			productRefGroup = 0A6A5431268B82D0001006AF /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -347,8 +355,9 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 4E3E05ED8E994336207F2F12 /* Pods-SwiftAPIView.debug.xcconfig */;
 			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = UBF8T346G9;
+				DEVELOPMENT_TEAM = ZQB5E94758;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = "$(SRCROOT)/Info.plist";
 				PRODUCT_BUNDLE_IDENTIFIER = "";
@@ -361,12 +370,14 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 66F268376BF20DBACB7B67A1 /* Pods-SwiftAPIView.release.xcconfig */;
 			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = UBF8T346G9;
+				DEVELOPMENT_TEAM = ZQB5E94758;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = "$(SRCROOT)/Info.plist";
 				PRODUCT_BUNDLE_IDENTIFIER = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_VERSION = 5.0;
 			};
 			name = Release;
@@ -393,6 +404,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		31FB4C90268E0FF1006FB1E6 /* XCRemoteSwiftPackageReference "swift-ast" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/yanagiba/swift-ast";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.19.9;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		31FB4C91268E0FF1006FB1E6 /* SwiftAST */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 31FB4C90268E0FF1006FB1E6 /* XCRemoteSwiftPackageReference "swift-ast" */;
+			productName = SwiftAST;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 0A6A5428268B82D0001006AF /* Project object */;
 }

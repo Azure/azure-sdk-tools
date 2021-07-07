@@ -23,7 +23,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Set contents of status markdown file
-    with open(args.status_markdown_file, "w") as status_markdown_file:
+    status_markdown_file_path = os.path.join(args.repo_root, args.status_markdown_file)
+    with open(status_markdown_file_path, "w") as status_markdown_file:
         status_markdown_content = f"""\
 # Docs Generation Status
 
@@ -32,7 +33,8 @@ if __name__ == "__main__":
         status_markdown_file.write(status_markdown_content)
 
     # Add to ToC
-    with open(args.table_of_contents, "r") as toc:
+    toc_file_path = os.path.join(args.repo_root, args.table_of_contents)
+    with open(toc_file_path, "r") as toc:
         toc = yaml.safe_load(toc)
 
     # Normalize the path to match the rest of the ToC
@@ -44,5 +46,5 @@ if __name__ == "__main__":
     }
     toc[0]['items'] = [new_entry] + toc[0]['items']
 
-    with open(args.table_of_contents, "w") as toc_out:
+    with open(toc_file_path, "w") as toc_out:
         toc_out.write(yaml.dump(toc))

@@ -35,12 +35,14 @@ class TokenFile: Codable {
     /// List of APIView navigation items which display in the sidebar
     var navigation: [NavigationItem]
 
+    var indentLevel: Int
     // MARK: Initializers
 
     init(name: String) {
         self.name = name
         self.tokens = []
         self.navigation = []
+        self.indentLevel = 0
     }
 
     // MARK: Codable
@@ -49,6 +51,7 @@ class TokenFile: Codable {
         case name = "Name"
         case tokens = "Tokens"
         case navigation = "Navigation"
+        case indentLevel = "indentLevel"
     }
 
     func encode(to encoder: Encoder) throws {
@@ -56,6 +59,7 @@ class TokenFile: Codable {
         try container.encode(name, forKey: .name)
         try container.encode(tokens, forKey: .tokens)
         try container.encode(navigation, forKey: .navigation)
+        try container.encode(0, forKey: .indentLevel)
     }
 
     // MARK: Methods
@@ -68,6 +72,9 @@ class TokenFile: Codable {
     func addNewline() {
         let item = TokenItem(definitionId: nil, navigateToId: nil, value: nil, kind: .newline)
         tokens.append(item)
+        if indentLevel > 0 {
+            addWhitespace(spaces: indentLevel)
+        }
     }
 
     func addWhitespace(spaces: Int = 1) {

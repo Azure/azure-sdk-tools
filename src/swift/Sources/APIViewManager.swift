@@ -48,7 +48,7 @@ class APIViewManager {
 //            SharedLogger.fail("usage error: SwiftAPIView --source PATH")
 //        }
         let sourcePath = "/Users/travisprescott/repos/azure-sdk-for-ios/sdk/communication/AzureCommunicationChat/Source/ChatClient.swift"
-        guard let sourceUrl = URL(string: sourcePath) else {
+        guard let sourceUrl = URL(string: args.source ?? sourcePath) else {
             SharedLogger.fail("usage error: `--source PATH` was invalid.")
         }
 
@@ -89,11 +89,35 @@ class APIViewManager {
         for statement in decl.statements {
             switch statement {
             case let decl as ClassDeclaration:
-                process(decl)
-            case let decl as StructDeclaration:
-                process(decl)
+              process(decl)
+            case let decl as ConstantDeclaration:
+              process(decl)
+            case let decl as DeinitializerDeclaration:
+              process(decl)
             case let decl as EnumDeclaration:
-                process(decl)
+              process(decl)
+            case let decl as ExtensionDeclaration:
+              process(decl)
+            case let decl as FunctionDeclaration:
+              process(decl)
+            case let decl as ImportDeclaration:
+              process(decl)
+            case let decl as InitializerDeclaration:
+              process(decl)
+            case let decl as OperatorDeclaration:
+              continue // process(decl)
+            case let decl as PrecedenceGroupDeclaration:
+              continue // process(decl)
+            case let decl as ProtocolDeclaration:
+              process(decl)
+            case let decl as StructDeclaration:
+              process(decl)
+            case let decl as SubscriptDeclaration:
+              continue // process(decl)
+            case let decl as TypealiasDeclaration:
+              process(decl)
+            case let decl as VariableDeclaration:
+              process(decl)
             default:
                 continue
             }
@@ -116,11 +140,21 @@ class APIViewManager {
             process(inheritance)
         }
         tokenFile.addPunctuation("{")
+        tokenFile.indentLevel += 2
+        tokenFile.addNewline()
         for member in decl.members {
             // TODO: Add members
-            let test = "best"
+            switch member {
+            case .declaration(let decl):
+                process(decl)
+            default:
+                continue
+            }
         }
+        tokenFile.indentLevel -= 2
+        tokenFile.addNewline()
         tokenFile.addPunctuation("}")
+        tokenFile.addNewline()
     }
 
     func process(_ decl: StructDeclaration) {
@@ -135,12 +169,87 @@ class APIViewManager {
         }
     }
 
+    func process(_ decl: ProtocolDeclaration) {
+        
+    }
+    
+    func process(_ decl: TypealiasDeclaration) {
+        
+    }
+    
+    func process(_ decl: VariableDeclaration) {
+        
+    }
+    
+    func process(_ decl: ExtensionDeclaration) {
+        
+    }
+    
+    func process(_ decl: ConstantDeclaration) {
+        
+    }
+    
+    func process(_ decl: InitializerDeclaration) {
+        
+    }
+    
+    func process(_ decl: DeinitializerDeclaration) {
+        
+    }
+    
+    func process(_ decl: FunctionDeclaration) {
+        
+    }
+    
+    func process(_ decl: ImportDeclaration) {
+        
+    }
+    
+
+    
     func process(_ clause: TypeInheritanceClause) {
         tokenFile.addPunctuation(":")
         tokenFile.addWhitespace()
         for item in clause.typeInheritanceList {
             // TODO: Add type inheritance
             let test = "best"
+        }
+    }
+    
+    func process(_ decl: Declaration) {
+        switch decl {
+        case let decl as ClassDeclaration:
+          return process(decl)
+        case let decl as ConstantDeclaration:
+          return process(decl)
+        case let decl as DeinitializerDeclaration:
+          return process(decl)
+        case let decl as EnumDeclaration:
+          return process(decl)
+        case let decl as ExtensionDeclaration:
+          return process(decl)
+        case let decl as FunctionDeclaration:
+          return process(decl)
+        case let decl as ImportDeclaration:
+          return process(decl)
+        case let decl as InitializerDeclaration:
+          return process(decl)
+        case let decl as OperatorDeclaration:
+          return // process(decl)
+        case let decl as PrecedenceGroupDeclaration:
+          return // process(decl)
+        case let decl as ProtocolDeclaration:
+          return process(decl)
+        case let decl as StructDeclaration:
+          return process(decl)
+        case let decl as SubscriptDeclaration:
+          return // process(decl)
+        case let decl as TypealiasDeclaration:
+          return process(decl)
+        case let decl as VariableDeclaration:
+          return process(decl)
+        default:
+          return // no implementation for this declaration, just continue
         }
     }
 }

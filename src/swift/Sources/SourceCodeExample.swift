@@ -23,8 +23,16 @@
 // IN THE SOFTWARE.
 //
 // --------------------------------------------------------------------------
-
 import Foundation
+
+public class SwiftClass {
+    let text = "Yea boi"
+}
+
+public class ThirdClass : SwiftClass {
+    let newtext = "yessur"
+}
+
 
 struct SwiftAPIViewResources : Codable {
     static var text = "Hello, World!"
@@ -32,13 +40,10 @@ struct SwiftAPIViewResources : Codable {
     
 }
 
-class SwiftClass {
-    let text = "Yea boi"
+protocol testProtocol : Codable {
+    
 }
 
-class ThirdClass : SwiftClass {
-    let newtext = "yessur"
-}
 
 extension SwiftAPIViewResources {
     func transition() throws {

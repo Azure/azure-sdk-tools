@@ -18,7 +18,6 @@
 		0A6A5450268B91FC001006AF /* NavigationTags.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A6A544F268B91FC001006AF /* NavigationTags.swift */; };
 		31A6751B2697437400F92505 /* SourceCodeExample.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31A6751A2697437400F92505 /* SourceCodeExample.swift */; };
 		31FB4C92268E0FF1006FB1E6 /* SwiftAST in Frameworks */ = {isa = PBXBuildFile; productRef = 31FB4C91268E0FF1006FB1E6 /* SwiftAST */; };
-		88980DB8A3E0F9DD51B2742D /* libPods-SwiftAPIView.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BADCA632B6A0CC35560C52EA /* libPods-SwiftAPIView.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -57,7 +56,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				88980DB8A3E0F9DD51B2742D /* libPods-SwiftAPIView.a in Frameworks */,
 				31FB4C92268E0FF1006FB1E6 /* SwiftAST in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

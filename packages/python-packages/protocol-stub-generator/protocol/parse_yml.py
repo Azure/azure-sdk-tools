@@ -81,8 +81,12 @@ class LLCGenerator:
         parsed_json = json.dumps(main_view.to_json(), default=lambda o: o.__dict__)
 
         # Write output to .json
-        file_name, _ = os.path.splitext(self.pkg_path)
-        out_file_path = os.path.join(self.out_path, os.path.basename(file_name) + ".json")
+        # APIView provides full path with json file name.
+        # if given path doesn't have json file name then append file name
+        out_file_path = self.out_path
+        if not out_file_path.endswith(".json"):
+            file_name, _ = os.path.splitext(self.pkg_path)
+            out_file_path = os.path.join(self.out_path, os.path.basename(file_name) + ".json")
         logging.info ("Generating out file: [{0}]".format(out_file_path))
         with open(out_file_path, "w") as j:
             j.write(parsed_json)

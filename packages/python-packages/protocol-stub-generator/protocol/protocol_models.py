@@ -3,6 +3,7 @@
 from typing import Any, Dict
 from ._token import Token
 from ._token_kind import TokenKind
+import re
 
 JSON_FIELDS = [
     "Name",
@@ -772,16 +773,16 @@ def get_type(data, page=False):
                 return_type = data["elementType"]["language"]["default"]["name"] + "[]"
             else:
                 return_type = data["elementType"]["language"]["default"]["name"]
-        if return_type == "number":
+        if "number" in return_type:
             if data["precision"] == 32:
-                return_type = "float32"
+               return_type = re.sub("number", "float32",return_type)
             if data["precision"] == 64:
-                return_type = "float64"
-        if return_type == "integer":
+                return_type= re.sub("number", "float64",return_type)
+        if "integer" in return_type:
             if data["precision"] == 32:
-                return_type = "int32"
+                return_type = re.sub("integer", "int32",return_type)
             if data["precision"] == 64:
-                return_type = "int64"
+                return_type = re.sub("integer", "int64",return_type)
         if return_type == "boolean":
             return_type = "bool"
         else:

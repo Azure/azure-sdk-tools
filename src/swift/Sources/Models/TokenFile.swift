@@ -23,33 +23,34 @@
 // IN THE SOFTWARE.
 //
 // --------------------------------------------------------------------------
+
 import AST
 import Foundation
 
 /// The token file that is readable by APIView
 class TokenFile: Codable {
+
     /// The name to be used in the APIView review list
     var name: String
+
     /// List of APIVIew tokens to render
     var tokens: [TokenItem]
+
     /// List of APIView navigation items which display in the sidebar
     var navigation: [NavigationItem]
-    
-    var language : String
-    
-    var packageName : String
-    
+
     /// Indentation level
-    private var indentLevel: Int = 0
-    
-    /// Indent Spaces
+    private var indentLevel = 0
+
+    /// True immediately after a newline
+    private var needsIndent = false
+
+    /// Number of spaces per indentation level
     private let indentSpaces = 4
-    
-    /// Access modifiers to expose to APIView
+
+    /// Access modifier to expose via APIView
     private let publicModifiers: [AccessLevelModifier] = [.public, .open]
-   
-    private var needsNewLine = false
-    
+
     // MARK: Initializers
     
     init(name: String) {
@@ -80,9 +81,118 @@ class TokenFile: Codable {
         try container.encode(navigation, forKey: .navigation)
     }
 
-    // MARK: Methods
+    // MARK: Processing Methods
+
+    func process(_ decl: TopLevelDeclaration) {
+
+        let packageName = self.name
+
+        let rootItem = NavigationItem(text: packageName, navigationId: nil, typeKind: .assembly)
+        navigation(add: rootItem)
+
+        // package is a Swift concept but not a keyword
+        text("package")
+        whitespace()
+        text(packageName)
+        whitespace()
+        punctuation("{")
+        newline()
+
+        for statement in decl.statements {
+            switch statement {
+            case let decl as ClassDeclaration:
+                process(decl)
+            case let decl as StructDeclaration:
+                process(decl)
+            case let decl as EnumDeclaration:
+                process(decl)
+            default:
+                continue
+            }
+        }
+        punctuation("}")
+        newline()
+    }
+
+    private func process(_ decl: ClassDeclaration) {
+        guard publicModifiers.contains(decl.accessLevelModifier ?? .internal) else {
+            return
+        }
+        let value = (decl.accessLevelModifier ?? .internal).textDescription
+        let defId = decl.name.textDescription
+
+        indent()
+        defer { deindent() }
+
+        lineIdMarker(definitionId: defId)
+        keyword(value: value)
+        whitespace()
+        if decl.isFinal {
+            keyword(value: "final")
+            whitespace()
+        }
+        keyword(value: "class")
+        whitespace()
+        type(name: decl.name.textDescription, definitionId: defId)
+        if let inheritance = decl.typeInheritanceClause {
+            process(inheritance)
+        }
+        whitespace()
+        punctuation("{")
+        newline()
+        for member in decl.members {
+            // TODO: Add members
+            let test = "best"
+        }
+        punctuation("}")
+        newline()
+    
+        navigation(add: NavigationItem(text: defId, navigationId: defId, typeKind: .class))
+    }
+
+    private func process(_ decl: StructDeclaration) {
+        guard publicModifiers.contains(decl.accessLevelModifier ?? .internal) else {
+            return
+        }
+    }
+
+    private func process(_ decl: EnumDeclaration) {
+        guard publicModifiers.contains(decl.accessLevelModifier ?? .internal) else {
+            return
+        }
+    }
+
+    private func process(_ clause: TypeInheritanceClause) {
+        punctuation(":")
+        whitespace()
+        for item in clause.typeInheritanceList {
+            // TODO: Add type inheritance
+            let test = "best"
+        }
+    }
+
+    // MARK: Navigation Emitter Methods
+
+    func navigation(add item: NavigationItem) {
+        if let topItem = navigation.last {
+            topItem.childItems.append(item)
+        } else {
+            navigation.append(item)
+        }
+    }
+
+    // MARK: Token Emitter Methods
+
+    func indent() {
+        indentLevel += 1
+    }
+
+    func deindent() {
+        indentLevel -= 1
+    }
 
     func text(_ text: String) {
+        indentIfNeeded()
         let item = TokenItem(definitionId: nil, navigateToId: nil, value: text, kind: .text)
         tokens.append(item)
         needsNewLine = true
@@ -104,35 +214,41 @@ class TokenFile: Codable {
     }
 
     func punctuation(_ value: String) {
+        indentIfNeeded()
         let item = TokenItem(definitionId: nil, navigateToId: nil, value: value, kind: .punctuation)
         tokens.append(item)
         needsNewLine = true
     }
 
     func keyword(value: String) {
+        indentIfNeeded()
         let item = TokenItem(definitionId: nil, navigateToId: nil, value: value, kind: .keyword)
         tokens.append(item)
         needsNewLine = true
     }
 
     func lineIdMarker(definitionId: String? = nil) {
+        indentIfNeeded()
         let item = TokenItem(definitionId: definitionId, navigateToId: nil, value: nil, kind: .lineIdMarker)
         tokens.append(item)
     }
 
     func type(name: String, definitionId: String? = nil) {
+        indentIfNeeded()
         let item = TokenItem(definitionId: definitionId, navigateToId: nil, value: name, kind: .typeName)
         tokens.append(item)
         needsNewLine = true
     }
 
     func member(name: String) {
+        indentIfNeeded()
         let item = TokenItem(definitionId: nil, navigateToId: nil, value: name, kind: .memberName)
         tokens.append(item)
         needsNewLine = true
     }
 
     func stringLiteral(_ text: String) {
+        indentIfNeeded()
         let item = TokenItem(definitionId: nil, navigateToId: nil, value: text, kind: .stringLiteral)
         tokens.append(item)
         needsNewLine = true
@@ -434,5 +550,13 @@ class TokenFile: Codable {
         default:
           return nil
         }
+    }
+
+    // MARK: Private Utility Methods
+
+    private func indentIfNeeded() {
+        guard needsIndent, indentLevel > 0 else { return }
+        self.whitespace(spaces: indentSpaces * indentLevel)
+        needsIndent = false
     }
 }

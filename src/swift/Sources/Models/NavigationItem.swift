@@ -27,15 +27,21 @@
 import Foundation
 
 /// APIView navigation item for the left-hand navigation sidebar
-struct NavigationItem: Codable {
+class NavigationItem: Codable {
     /// Text to display in the navigation sidebar
     var text: String
     /// Unique indentifier describing the navigation path
     var navigationId: String?
     /// Child navigation items
-    var childItems: [NavigationItem]
+    var childItems = [NavigationItem]()
     /// Tags which determine the type of icon displayed in the navigation pane of APIView
     var tags: NavigationTags
+
+    init(text: String, navigationId: String?, typeKind: NavigationTypeKind) {
+        self.text = text
+        self.navigationId = navigationId
+        tags = NavigationTags(typeKind: typeKind)
+    }
 
     // MARK: Codable
 

@@ -88,7 +88,7 @@ class TokenFile: Codable {
         needsNewLine = true
     }
 
-    func newLine() {
+    func newline() {
         let item = TokenItem(definitionId: nil, navigateToId: nil, value: nil, kind: .newline)
         tokens.append(item)
         if indentLevel > 0 {
@@ -115,13 +115,13 @@ class TokenFile: Codable {
         needsNewLine = true
     }
 
-    func lineIdMarker() {
-        let item = TokenItem(definitionId: nil, navigateToId: nil, value: nil, kind: .lineIdMarker)
+    func lineIdMarker(definitionId: String? = nil) {
+        let item = TokenItem(definitionId: definitionId, navigateToId: nil, value: nil, kind: .lineIdMarker)
         tokens.append(item)
     }
 
-    func type(name: String) {
-        let item = TokenItem(definitionId: nil, navigateToId: nil, value: name, kind: .typeName)
+    func type(name: String, definitionId: String? = nil) {
+        let item = TokenItem(definitionId: definitionId, navigateToId: nil, value: name, kind: .typeName)
         tokens.append(item)
         needsNewLine = true
     }

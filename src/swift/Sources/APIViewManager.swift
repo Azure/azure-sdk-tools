@@ -69,6 +69,7 @@ class APIViewManager {
         }
         do {
             let encoder = JSONEncoder()
+            encoder.outputFormatting = .prettyPrinted
             let tokenData = try encoder.encode(tokenFile)
             try tokenData.write(to: destUrl)
         } catch {
@@ -84,6 +85,4 @@ class APIViewManager {
         let topLevelDecl = try parser.parse()
         tokenFile.generateTokenFile([topLevelDecl])
     }
-
-    
 }

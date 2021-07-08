@@ -58,4 +58,21 @@ struct TokenItem: Codable {
     var value: String?
     // Token kind
     var kind: TokenKind
+
+    // MARK: Codable
+
+    enum CodingKeys: String, CodingKey {
+        case definitionId = "DefinitionId"
+        case navigateToId = "NavigateToId"
+        case value = "Value"
+        case kind = "Kind"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(definitionId, forKey: .definitionId)
+        try container.encode(navigateToId, forKey: .navigateToId)
+        try container.encode(value, forKey: .value)
+        try container.encode(kind, forKey: .kind)
+    }
 }

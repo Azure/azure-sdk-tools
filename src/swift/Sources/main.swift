@@ -41,5 +41,5 @@ SharedLogger.debug("Got to the end of main. Exiting")
 
 func exit() {
     print("Press Enter to terminate...")
-    readLine()
+    _ = readLine()
 }

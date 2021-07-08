@@ -36,203 +36,111 @@ class APIViewManager {
 
     static var shared = APIViewManager()
     let args = CommandLineArguments()
-    let tokenFile = TokenFile(name: "", tokens: [], navigation: [])
+    var tokenFile = TokenFile(name: "TestFile")
+
+    let publicModifiers: [AccessLevelModifier] = [.public, .open]
 
     // MARK: Methods
 
     func run() throws {
-        guard let sourcePath = args.source else {
-            SharedLogger.fail("usage error: SwiftAPIView --source PATH")
-        }
+        // TODO: Re-enable after testing
+//        guard let sourcePath = args.source else {
+//            SharedLogger.fail("usage error: SwiftAPIView --source PATH")
+//        }
+        let sourcePath = "/Users/travisprescott/repos/azure-sdk-for-ios/sdk/communication/AzureCommunicationChat/Source/ChatClient.swift"
         guard let sourceUrl = URL(string: sourcePath) else {
             SharedLogger.fail("usage error: `--source PATH` was invalid.")
         }
 
         try buildTokenFile(from: sourceUrl)
 
-        let destPath = args.dest ?? "~/Desktop"
-        guard let destUrl = URL(string: destPath) else {
-            SharedLogger.fail("usage error: `--dest PATH` was invalid.")
+        let destUrl: URL
+        if let destPath = args.dest {
+            guard let dest = URL(string: destPath) else {
+                SharedLogger.fail("usage error: `--dest PATH` was invalid.")
+            }
+            destUrl = dest
+        } else {
+            let destPath = "SwiftAPIView.json"
+            guard let dest = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent(destPath) else {
+                SharedLogger.fail("Could not access file system.")
+            }
+            destUrl = dest
         }
-        // TODO: Output the token file
+        do {
+            let encoder = JSONEncoder()
+            let tokenData = try encoder.encode(tokenFile)
+            try tokenData.write(to: destUrl)
+        } catch {
+            SharedLogger.fail(error.localizedDescription)
+        }
     }
 
     func buildTokenFile(from sourceUrl: URL) throws {
-        // TODO: Build AST. Traverse and populate token file.
         SharedLogger.debug("URL: \(sourceUrl.absoluteString)")
+        // TODO: This should loop through all source files instead of targeting one
         let sourceFile = try SourceReader.read(at: sourceUrl.absoluteString)
         let parser = Parser(source: sourceFile)
         let topLevelDecl = try parser.parse()
-        let visitor = TokenVisitor()
-        print(try visitor.traverse(topLevelDecl))
-        
-        
+        process(topLevelDecl)
     }
-}
 
-struct TokenNode {
-    var node : ASTNode
-    var tokens : [TokenItem]
-    var depth : Int
-    
-    init(node: ASTNode, tokens: [TokenItem], depth: Int) {
-        self.node = node
-        self.tokens = tokens
-        self.depth = depth
-    }
-}
-
-class TokenVisitor : ASTVisitor {
-    
-    var visited : [ASTNode] = []
-    
-    func registerVisit(to visitingNode : ASTNode) -> Bool {
-        for node in visited {
-            if node.sourceLocation == visitingNode.sourceLocation {
-                return false
+    func process(_ decl: TopLevelDeclaration) {
+        for statement in decl.statements {
+            switch statement {
+            case let decl as ClassDeclaration:
+                process(decl)
+            case let decl as StructDeclaration:
+                process(decl)
+            case let decl as EnumDeclaration:
+                process(decl)
+            default:
+                continue
             }
         }
-        visited.append(visitingNode)
-        return true
-    }
-    
-    func visit(_ decl : TopLevelDeclaration) throws -> Bool {
-        SharedLogger.debug("Top Level Declaration")
-        let newVisit = registerVisit(to: decl)
-        SharedLogger.debug("\(decl.lexicalParent == nil)")
-        SharedLogger.debug("Node already registered: \(!newVisit)")
-        return true
-    }
-    
-    func visit(_ decl: ClassDeclaration) throws -> Bool {
-        SharedLogger.debug("Class Declaration")
-        let newVisit = registerVisit(to: decl)
-        SharedLogger.debug(decl.accessLevelModifier?.textDescription ?? "Internal")
-        SharedLogger.debug("Node already registered: \(!newVisit)")
-      return true
     }
 
-    func visit(_ decl: ConstantDeclaration) throws -> Bool {
-        SharedLogger.debug("Constant Declaration")
-        let newVisit = registerVisit(to: decl)
-        SharedLogger.debug("Modifiers: " + decl.modifiers.textDescription)
-        SharedLogger.debug("Node already registered: \(!newVisit)")
-      return true
-    }
-    
-    // come back to this
-    func visit(_ decl: DeinitializerDeclaration) throws -> Bool {
-        SharedLogger.debug("Deinitialzer Declaration")
-        let newVisit = registerVisit(to: decl)
-        SharedLogger.debug("Node already registered: \(!newVisit)")
-      return true
-    }
-
-    func visit(_ decl: EnumDeclaration) throws -> Bool {
-        SharedLogger.debug("Enum Declaration")
-        let newVisit = registerVisit(to: decl)
-        SharedLogger.debug(decl.accessLevelModifier?.textDescription ?? "Internal")
-        SharedLogger.debug("Node already registered: \(!newVisit)")
-      return true
-    }
-
-    func visit(_ decl: ExtensionDeclaration) throws -> Bool {
-        SharedLogger.debug("Extension Declaration")
-        let newVisit = registerVisit(to: decl)
-        SharedLogger.debug(decl.accessLevelModifier?.textDescription ?? "Internal")
-        SharedLogger.debug("Node already registered: \(!newVisit)")
-      return true
+    func process(_ decl: ClassDeclaration) {
+        guard publicModifiers.contains(decl.accessLevelModifier ?? .internal) else {
+            return
+        }
+        let value = (decl.accessLevelModifier ?? .internal).textDescription
+        tokenFile.addKeyword(value: value)
+        tokenFile.addWhitespace()
+        if decl.isFinal {
+            tokenFile.addKeyword(value: "final")
+            tokenFile.addWhitespace()
+        }
+        tokenFile.addType(name: decl.name.textDescription)
+        if let inheritance = decl.typeInheritanceClause {
+            process(inheritance)
+        }
+        tokenFile.addPunctuation("{")
+        for member in decl.members {
+            // TODO: Add members
+            let test = "best"
+        }
+        tokenFile.addPunctuation("}")
     }
 
-    func visit(_ decl: FunctionDeclaration) throws -> Bool {
-        SharedLogger.debug("Function Declaration")
-        let newVisit = registerVisit(to: decl)
-        SharedLogger.debug("Name: " + decl.name.textDescription)
-        SharedLogger.debug("GeneticParameter: " + (decl.genericParameterClause?.textDescription ?? ""))
-        SharedLogger.debug("GeneticParameter: " + (decl.genericWhereClause?.textDescription ?? ""))
-        SharedLogger.debug("Signature: " + decl.signature.textDescription)
-        SharedLogger.debug("Modifiers: " + decl.modifiers.textDescription)
-        SharedLogger.debug("Attributes: " + decl.attributes.textDescription)
-        SharedLogger.debug("Source Location: \(decl.sourceLocation.description)" )
-        SharedLogger.debug("Node already registered: \(!newVisit)")
-      return true
+    func process(_ decl: StructDeclaration) {
+        guard publicModifiers.contains(decl.accessLevelModifier ?? .internal) else {
+            return
+        }
     }
 
-    // include all
-    func visit(_ decl: ImportDeclaration) throws -> Bool {
-        SharedLogger.debug("Import Declaration")
-        let newVisit = registerVisit(to: decl)
-        SharedLogger.debug("Node already registered: \(!newVisit)")
-        
-      return true
-    }
-    
-    // include all (for public and open)
-    func visit(_ decl: InitializerDeclaration) throws -> Bool {
-        SharedLogger.debug("Initializer Declaration")
-        let newVisit = registerVisit(to: decl)
-        SharedLogger.debug("Node already registered: \(!newVisit)")
-      return true
+    func process(_ decl: EnumDeclaration) {
+        guard publicModifiers.contains(decl.accessLevelModifier ?? .internal) else {
+            return
+        }
     }
 
-    // dont include for now
-    func visit(_ decl: OperatorDeclaration) throws -> Bool {
-        SharedLogger.debug("Operator Declaration")
-        let newVisit = registerVisit(to: decl)
-        SharedLogger.debug("Node already registered: \(!newVisit)")
-      return true
-    }
-
-    // dont include for now
-    func visit(_ decl: PrecedenceGroupDeclaration) throws -> Bool {
-        SharedLogger.debug("PrecedenceGroup Declaration")
-        let newVisit = registerVisit(to: decl)
-        SharedLogger.debug("Node already registered: \(!newVisit)")
-      return true
-    }
-
-    
-    func visit(_ decl: ProtocolDeclaration) throws -> Bool {
-        SharedLogger.debug("Protocol Declaration")
-        let newVisit = registerVisit(to: decl)
-        SharedLogger.debug(decl.accessLevelModifier?.textDescription ?? "Internal")
-        SharedLogger.debug("Node already registered: \(!newVisit)")
-      return true
-    }
-
-    func visit(_ decl: StructDeclaration) throws -> Bool {
-        SharedLogger.debug("Struct Declaration")
-        let newVisit = registerVisit(to: decl)
-        SharedLogger.debug(decl.accessLevelModifier?.rawValue ?? "Internal")
-        SharedLogger.debug("Source Location: \(decl.sourceLocation.description)")
-        SharedLogger.debug("Node already registered: \(!newVisit)")
-      return true
-    }
-
-    func visit(_ decl: SubscriptDeclaration) throws -> Bool {
-        SharedLogger.debug("Subscript Declaration")
-        let newVisit = registerVisit(to: decl)
-        SharedLogger.debug("Modifiers: " + decl.modifiers.textDescription)
-        SharedLogger.debug("Node already registered: \(!newVisit)")
-      return true
-    }
-
-    func visit(_ decl: TypealiasDeclaration) throws -> Bool {
-        SharedLogger.debug("Typealias Declaration")
-        let newVisit = registerVisit(to: decl)
-        SharedLogger.debug(decl.accessLevelModifier?.textDescription ?? "Internal")
-        SharedLogger.debug("Node already registered: \(!newVisit)")
-      return true
-    }
-
-    func visit(_ decl: VariableDeclaration) throws -> Bool {
-        SharedLogger.debug("Variable Declaration")
-        let newVisit = registerVisit(to: decl)
-        SharedLogger.debug(decl.attributes.textDescription)
-        SharedLogger.debug("Modifiers: " + decl.modifiers.textDescription)
-        SharedLogger.debug("Node already registered: \(!newVisit)")
-      return true
+    func process(_ clause: TypeInheritanceClause) {
+        tokenFile.addPunctuation(":")
+        tokenFile.addWhitespace()
+        for item in clause.typeInheritanceList {
+            // TODO: Add type inheritance
+            let test = "best"
+        }
     }
 }
-
-

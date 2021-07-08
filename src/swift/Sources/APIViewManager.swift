@@ -36,7 +36,7 @@ class APIViewManager {
 
     static var shared = APIViewManager()
     let args = CommandLineArguments()
-    var tokenFile = TokenFile(name: "TestFile")
+    var tokenFile = TokenFile(name: "TestFile", packageName: "TestFile", versionString: "abc")
 
     
 

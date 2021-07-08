@@ -33,6 +33,16 @@ class TokenFile: Codable {
     /// The name to be used in the APIView review list
     var name: String
 
+    /// Package name for the review
+    var packageName: String
+
+    /// The version string
+    var versionString: String
+
+    // TODO: Should be switched to Swift once APIView supports
+    /// Language string.
+    let language = "Json"
+
     /// List of APIVIew tokens to render
     var tokens: [TokenItem]
 
@@ -52,14 +62,13 @@ class TokenFile: Codable {
     private let publicModifiers: [AccessLevelModifier] = [.public, .open]
 
     // MARK: Initializers
-    
-    init(name: String) {
+
+    init(name: String, packageName: String, versionString: String) {
         self.name = name
         self.tokens = []
         self.navigation = []
-        self.indentLevel = 0
-        self.language = "Json"
-        self.packageName = name
+        self.packageName = packageName
+        self.versionString = versionString
     }
 
     // MARK: Codable
@@ -70,6 +79,9 @@ class TokenFile: Codable {
         case language = "Language"
         case packageName = "PackageName"
         case navigation = "Navigation"
+        case language = "Language"
+        case packageName = "PackageName"
+        case versionString = "VersionString"
     }
 
     func encode(to encoder: Encoder) throws {
@@ -79,6 +91,9 @@ class TokenFile: Codable {
         try container.encode(language, forKey: .language)
         try container.encode(tokens, forKey: .tokens)
         try container.encode(navigation, forKey: .navigation)
+        try container.encode(language, forKey: .language)
+        try container.encode(packageName, forKey: .packageName)
+        try container.encode(versionString, forKey: .versionString)
     }
 
     // MARK: Processing Methods

@@ -130,6 +130,13 @@ class TokenFile: Codable {
     }
     
     func process(_ decl: TopLevelDeclaration) {
+        text("package")
+        whitespace()
+        text(packageName)
+        whitespace()
+        punctuation("{")
+        indentLevel += indentSpaces
+        newline()
         for statement in decl.statements {
             switch statement {
             case let decl as ClassDeclaration:
@@ -166,6 +173,9 @@ class TokenFile: Codable {
                 continue
             }
         }
+        indentLevel -= indentSpaces
+        newline()
+        punctuation("}")
     }
 
     func process(_ decl: ClassDeclaration) {

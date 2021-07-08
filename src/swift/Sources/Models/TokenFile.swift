@@ -35,6 +35,10 @@ class TokenFile: Codable {
     /// List of APIView navigation items which display in the sidebar
     var navigation: [NavigationItem]
     
+    var language : String
+    
+    var packageName : String
+    
     /// Indentation level
     private var indentLevel: Int = 0
     
@@ -51,6 +55,8 @@ class TokenFile: Codable {
         self.tokens = []
         self.navigation = []
         self.indentLevel = 0
+        self.language = "Json"
+        self.packageName = name
     }
 
     // MARK: Codable
@@ -58,12 +64,16 @@ class TokenFile: Codable {
     enum CodingKeys: String, CodingKey {
         case name = "Name"
         case tokens = "Tokens"
+        case language = "Language"
+        case packageName = "PackageName"
         case navigation = "Navigation"
     }
 
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(name, forKey: .name)
+        try container.encode(packageName, forKey: .packageName)
+        try container.encode(language, forKey: .language)
         try container.encode(tokens, forKey: .tokens)
         try container.encode(navigation, forKey: .navigation)
     }

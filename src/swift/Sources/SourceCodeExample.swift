@@ -26,20 +26,22 @@
 
 import Foundation
 
-// Should be set to `.warning` normally
-let logLevel = LogLevel.debug
-SharedLogger.set(logger: StdoutLogger(), withLevel: logLevel);
-do {
-    try APIViewManager.shared.run()
-} catch {
-    SharedLogger.error("\(error)")
+struct SwiftAPIViewResources : Codable {
+    static var text = "Hello, World!"
+    public let a = "yessir"
+    
 }
-SharedLogger.debug("Got to the end of main. Exiting")
 
-//remove when done
+class SwiftClass {
+    let text = "Yea boi"
+}
 
+class ThirdClass : SwiftClass {
+    let newtext = "yessur"
+}
 
-func exit() {
-    print("Press Enter to terminate...")
-    readLine()
+extension SwiftAPIViewResources {
+    func transition() throws {
+        print("I've transitioned")
+    }
 }

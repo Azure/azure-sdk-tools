@@ -16,6 +16,7 @@
 		0A6A544C268B8F67001006AF /* TokenItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A6A544B268B8F67001006AF /* TokenItem.swift */; };
 		0A6A544E268B8F75001006AF /* NavigationItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A6A544D268B8F75001006AF /* NavigationItem.swift */; };
 		0A6A5450268B91FC001006AF /* NavigationTags.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A6A544F268B91FC001006AF /* NavigationTags.swift */; };
+		31A6751B2697437400F92505 /* SourceCodeExample.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31A6751A2697437400F92505 /* SourceCodeExample.swift */; };
 		31FB4C92268E0FF1006FB1E6 /* SwiftAST in Frameworks */ = {isa = PBXBuildFile; productRef = 31FB4C91268E0FF1006FB1E6 /* SwiftAST */; };
 		88980DB8A3E0F9DD51B2742D /* libPods-SwiftAPIView.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BADCA632B6A0CC35560C52EA /* libPods-SwiftAPIView.a */; };
 /* End PBXBuildFile section */
@@ -45,6 +46,7 @@
 		0A6A544B268B8F67001006AF /* TokenItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenItem.swift; sourceTree = "<group>"; };
 		0A6A544D268B8F75001006AF /* NavigationItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationItem.swift; sourceTree = "<group>"; };
 		0A6A544F268B91FC001006AF /* NavigationTags.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationTags.swift; sourceTree = "<group>"; };
+		31A6751A2697437400F92505 /* SourceCodeExample.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceCodeExample.swift; sourceTree = "<group>"; };
 		4E3E05ED8E994336207F2F12 /* Pods-SwiftAPIView.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SwiftAPIView.debug.xcconfig"; path = "Target Support Files/Pods-SwiftAPIView/Pods-SwiftAPIView.debug.xcconfig"; sourceTree = "<group>"; };
 		66F268376BF20DBACB7B67A1 /* Pods-SwiftAPIView.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SwiftAPIView.release.xcconfig"; path = "Target Support Files/Pods-SwiftAPIView/Pods-SwiftAPIView.release.xcconfig"; sourceTree = "<group>"; };
 		BADCA632B6A0CC35560C52EA /* libPods-SwiftAPIView.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-SwiftAPIView.a"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -91,6 +93,7 @@
 				0A6A5433268B82D0001006AF /* main.swift */,
 				0A6A5444268B89DE001006AF /* APIViewManager.swift */,
 				0A6A5446268B8B4E001006AF /* CommandLineArguments.swift */,
+				31A6751A2697437400F92505 /* SourceCodeExample.swift */,
 			);
 			path = Sources;
 			sourceTree = "<group>";
@@ -225,6 +228,7 @@
 				0A6A5447268B8B4F001006AF /* CommandLineArguments.swift in Sources */,
 				0A6A544A268B8EF9001006AF /* TokenFile.swift in Sources */,
 				0A6A544C268B8F67001006AF /* TokenItem.swift in Sources */,
+				31A6751B2697437400F92505 /* SourceCodeExample.swift in Sources */,
 				0A6A5434268B82D0001006AF /* main.swift in Sources */,
 				0A6A5443268B88AE001006AF /* URL+Extensions.swift in Sources */,
 				0A6A5445268B89DE001006AF /* APIViewManager.swift in Sources */,

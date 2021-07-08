@@ -52,7 +52,7 @@
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
-            argument = "--source=/Users/jairmyree/Projects/SwiftAPIViewResources/Sources/SwiftAPIViewResources/SwiftAPIViewResources.swift"
+            argument = "--source=/Users/jairmyree/Desktop/azure-sdk-tools/src/swift/Sources/SourceCodeExample.swift"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>

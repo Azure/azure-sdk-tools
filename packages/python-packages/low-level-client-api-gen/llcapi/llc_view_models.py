@@ -717,6 +717,7 @@ class LLCOperationView(FormattingClass):
                     # self.add_comment(None, " };", None)
                     for m in self.inner_model:
                         if m:
+                            if m.Value == 'str': m.Value == 'string'
                             self.Tokens.append(m)
                             # self.add_new_line()
 
@@ -739,6 +740,7 @@ class LLCOperationView(FormattingClass):
                     # self.add_comment(None, " };", None)
                     for i in self.inner_model:
                         if i:
+                            if i.Value == 'str': i.Value == 'string'
                             self.Tokens.append(i)
                             # self.add_new_line()
 
@@ -766,6 +768,7 @@ def request_builder(
                 index = json_request[i].find("(optional)")
                 param = json_request[i].split()
                 if len(param) >= 2:
+                    if param[0] == 'str': param[0]='string'
                     if index != -1:
                         json_request[i] = "? :" + param[0] + "[];"
                     else:
@@ -774,6 +777,7 @@ def request_builder(
                     inner_model.append(Token(json_request[i], TokenKind.Comment))
                     inner_model.append(Token(" ", TokenKind.Newline))
                 else:
+                    if json_request[i] == 'str': json_request[i]='string'
                     self.add_comment(None, json_request[i], None)
                     self.add_new_line()
             else:
@@ -830,7 +834,7 @@ def request_builder(
                         m_type, key = get_map_type(yaml, name)
                         inner_model.append(
                             Token(
-                                key + ": Map<str, " + m_type + ">;", TokenKind.Comment
+                                key + ": Map<string, " + m_type + ">;", TokenKind.Comment
                             )
                         )
                     else:
@@ -838,7 +842,7 @@ def request_builder(
                         self.add_whitespace(indent)
                         m_type, key = get_map_type(yaml, name)
                         self.add_comment(
-                            None, key + ": Map<str, " + m_type + ">;", None
+                            None, key + ": Map<string, " + m_type + ">;", None
                         )
 
                         # START COLLECTING INNER MODEL DATA
@@ -881,11 +885,12 @@ def request_builder(
                 param = json_request[i].split()
                 if i == "str":
                     m_type, key = get_map_type(yaml, name)
+                    if param[0] == 'str': param[0]='string'
                     if inner_model:
                         if index != -1:
                             inner_model.append(
                                 Token(
-                                    i + "? : Map<str, " + param[0] + ">;",
+                                    i + "? : Map<string, " + param[0] + ">;",
                                     TokenKind.Comment,
                                 )
                             )
@@ -907,6 +912,7 @@ def request_builder(
                             )
                 else:
                     if len(param) >= 2:
+                        if param[0] == 'str': param[0]='string'
                         if index != -1:
                             json_request[i] = i + "? :" + param[0] + ";"
                         else:
@@ -918,7 +924,7 @@ def request_builder(
                         else:
                             self.add_comment(None, json_request[i], None)
                     else:
-
+                        if json_request[i] == 'str': json_request[i]='string'
                         if inner_model:
                             inner_model.append(
                                 Token(

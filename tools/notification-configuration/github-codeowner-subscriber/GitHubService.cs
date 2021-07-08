@@ -27,7 +27,7 @@ namespace GitHubCodeownerSubscriber
         }
 
         /// <summary>
-        /// Looks for CODEOWNERS in the master branch of the given repo URL using cache
+        /// Looks for CODEOWNERS in the main branch of the given repo URL using cache
         /// </summary>
         /// <param name="repoUrl">GitHub repository URL</param>
         /// <returns>Contents fo the located CODEOWNERS file</returns>
@@ -36,7 +36,7 @@ namespace GitHubCodeownerSubscriber
             string result;
             if (codeownersFileCache.TryGetValue(repoUrl.ToString(), out result))
             {
-                return result; 
+                return result;
             }
 
             result = await GetCodeownersFileImpl(repoUrl);
@@ -45,7 +45,7 @@ namespace GitHubCodeownerSubscriber
         }
 
         /// <summary>
-        /// Looks for CODEOWNERS in the master branch of the given repo URL
+        /// Looks for CODEOWNERS in the main branch of the given repo URL
         /// </summary>
         /// <param name="repoUrl"></param>
         /// <returns></returns>
@@ -55,7 +55,7 @@ namespace GitHubCodeownerSubscriber
             var relevantPathParts = repoUrl.Segments.Skip(1).Take(2);
             var repoPath = string.Join("", relevantPathParts);
 
-            var codeOwnersUrl = $"https://raw.githubusercontent.com/{repoPath}/master/.github/CODEOWNERS";
+            var codeOwnersUrl = $"https://raw.githubusercontent.com/{repoPath}/main/.github/CODEOWNERS";
             var result = await httpClient.GetAsync(codeOwnersUrl);
             if (result.IsSuccessStatusCode)
             {

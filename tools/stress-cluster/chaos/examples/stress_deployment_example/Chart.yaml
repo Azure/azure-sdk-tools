@@ -1,0 +1,10 @@
+apiVersion: v2
+name: deployment_example
+description: An example stress test chart for performing azure resource deployments
+version: 0.1.0
+appVersion: v0.1
+
+dependencies:
+- name: stress-test-addons
+  version: 0.1.2
+  repository: https://stresstestcharts.blob.core.windows.net/helm/

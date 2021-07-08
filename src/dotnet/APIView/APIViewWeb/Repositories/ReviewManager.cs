@@ -454,7 +454,7 @@ namespace APIViewWeb.Respositories
             var reviews = await _reviewsRepository.GetReviewsAsync(false, revisionFile.Language, revisionFile.PackageName, false);
             foreach (var r in reviews)
             {
-                var approvedRevision = r.Revisions.Where(r => r.Approvers.Count() > 0).LastOrDefault();
+                var approvedRevision = r.Revisions.Where(r => r.IsApproved).LastOrDefault();
                 if (approvedRevision != null)
                 {
                     bool isReviewSame = await IsReviewSame(approvedRevision, codeFile);

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "groupName": {
+      "value": // add me
+    },
+    "clusterName": {
+      "value": "stress-dev"
+    },
+    "clusterLocation": {
+      "value": "westus2"
+    },
+    "staticTestSecretsKeyvaultName": {
+      "value": "StressTestSecrets"
+    },
+    "staticTestSecretsKeyvaultGroup": {
+      "value": "rg-StressTestSecrets"
+    },
+    "tags": {
+      "value": {
+        "environment": "Dev",
+        "owners": // add me
+      }
+    }
+  }
+}

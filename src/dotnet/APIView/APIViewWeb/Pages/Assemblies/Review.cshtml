@@ -25,7 +25,8 @@
             <div class="dropdown-menu">
                 @foreach (var revision in Model.Review.Revisions.Reverse())
                 {
-                    <a class="dropdown-item" asp-route-id="@Model.Review.ReviewId" asp-route-revisionId="@revision.RevisionId" asp-route-doc="@Model.ShowDocumentation">
+                    var colorCss =  revision.IsApproved ? "text-success" : "";
+                    <a class="dropdown-item @colorCss" asp-route-id="@Model.Review.ReviewId" asp-route-revisionId="@revision.RevisionId" asp-route-doc="@Model.ShowDocumentation">
                         @revision.DisplayName
                     </a>
                 }
@@ -48,7 +49,8 @@
                 <div class="dropdown-menu">
                     @foreach (var revision in Model.PreviousRevisions.Reverse())
                     {
-                        <a class="dropdown-item" active-if="@(Model.DiffRevisionId == revision.RevisionId)" asp-all-route-data=@Model.GetRoutingData(diffRevisionId: revision.RevisionId, showDocumentation: Model.ShowDocumentation, showDiffOnly: Model.ShowDiffOnly)>
+                        var colorCss = revision.IsApproved ? "text-success" : "";
+                        <a class="dropdown-item @colorCss" active-if="@(Model.DiffRevisionId == revision.RevisionId)" asp-all-route-data=@Model.GetRoutingData(diffRevisionId: revision.RevisionId, showDocumentation: Model.ShowDocumentation, showDiffOnly: Model.ShowDiffOnly)>
                             @revision.DisplayName
                         </a>
                     }
@@ -112,9 +114,18 @@
         <div class="float-right">
             <form asp-resource="@Model.Review" class="form-inline float-left ml-2" asp-page-handler="ToggleApproval" method="post" asp-requirement="@ApproverRequirement.Instance">
                 <input type="hidden" name="revisionId" value="@Model.Revision.RevisionId" />
-                <input type="submit" class="btn btn-sm btn-secondary" value="@(Model.Revision.Approvers.Contains(User.GetGitHubLogin()) ? "Revert Approval" : "Approve")" />
+                @if (Model.DiffRevision == null || Model.DiffRevision.Approvers.Count > 0)
+                {
+                    <input type="submit" class="btn btn-sm btn-secondary" value="@(Model.Revision.Approvers.Contains(User.GetGitHubLogin()) ? "Revert Approval" : "Approve")" />
+                }
+                else
+                {
+
+                    <input type="submit" class="btn btn-sm btn-secondary" disabled title="API review cannot be approved when comparing against unapproved revision." value="@(Model.Revision.Approvers.Contains(User.GetGitHubLogin()) ? "Revert Approval" : "Approve")" />
+                }
             </form>
         </div>
+
         <div class="float-right ml-2">
             <label>Approval Status:</label>
             @if (Model.Revision.Approvers.Count > 0)

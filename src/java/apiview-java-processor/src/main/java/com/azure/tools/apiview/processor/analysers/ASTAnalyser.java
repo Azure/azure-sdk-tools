@@ -47,6 +47,7 @@ import com.github.javaparser.ast.type.TypeParameter;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
+import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 
 import java.io.File;
@@ -97,8 +98,6 @@ public class ASTAnalyser implements Analyser {
     private static final boolean SHOW_JAVADOC = true;
     private static final Set<String> BLOCKED_ANNOTATIONS = new HashSet<String>() {{
         add("ServiceMethod");
-        add("JsonCreator");
-        add("JsonValue");
         add("SuppressWarnings");
     }};
 
@@ -1011,7 +1010,7 @@ public class ASTAnalyser implements Analyser {
             nodeWithAnnotations.getAnnotations()
                     .stream()
                     .filter(annotationExpr -> !BLOCKED_ANNOTATIONS.contains(annotationExpr.getName().getIdentifier())
-                            || !annotationExpr.getName().getIdentifier().startsWith("Json"))
+                            && !annotationExpr.getName().getIdentifier().startsWith("Json"))
                     .forEach(consumer);
         }
 

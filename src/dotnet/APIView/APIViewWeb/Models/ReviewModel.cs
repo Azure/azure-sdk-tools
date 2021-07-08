@@ -64,10 +64,12 @@ namespace APIViewWeb
         {
             get
             {
-                var label = Revisions.LastOrDefault()?.Label;
+                var revision = Revisions.LastOrDefault();
+                var label = revision?.Label;
+                var name = revision?.Name ?? Name;
                 return label != null && !IsAutomatic ?
-                    $"{Name} - {label}" :
-                    Name;
+                    $"{name} - {label}" :
+                    name;
             }
         }
 

@@ -383,6 +383,7 @@ class LLCOperationGroupView(FormattingClass):
 class LLCOperationView(FormattingClass):
     def __init__(
         self,
+        operation_group,
         operation_name,
         return_type,
         parameters,
@@ -395,6 +396,7 @@ class LLCOperationView(FormattingClass):
         lro="",
         yaml=None,
     ):
+        self.operation_group = operation_group
         self.operation = operation_name
         self.return_type = return_type
         self.parameters = parameters  # parameterview list
@@ -561,6 +563,7 @@ class LLCOperationView(FormattingClass):
             ]["language"]["default"]["description"]
 
         return cls(
+            operation_group = yaml_data["operationGroups"][op_group_num]["language"]["default"]["name"],
             operation_name=yaml_data["operationGroups"][op_group_num]["operations"][
                 op_num
             ]["language"]["default"]["name"],
@@ -620,15 +623,15 @@ class LLCOperationView(FormattingClass):
         self.add_space()
         self.overview_tokens.append(Token(" ", TokenKind.Text))
         token = Token(self.operation, TokenKind.Keyword)
-        token.set_definition_id(self.namespace + self.operation + "overview")
-        token.set_navigation_id(self.namespace + self.operation + "overview")
+        token.set_definition_id(self.namespace + self.operation_group + self.operation + "overview")
+        token.set_navigation_id(self.namespace + self.operation_group + self.operation + "overview")
         self.overview_tokens.append(token)
         self.add_keyword(
-            self.namespace + self.operation,
+            self.namespace + self.operation_group + self.operation,
             self.operation,
-            self.namespace + self.operation,
+            self.namespace + self.operation_group + self.operation,
         )
-        self.add_space
+        self.add_space()
 
         self.add_new_line()
         self.add_description()
@@ -672,9 +675,10 @@ class LLCOperationView(FormattingClass):
             # Add in parameter tokens
             if self.parameters[param_num]:
                 self.add_whitespace(4)
-                for t in self.parameters[param_num].get_tokens():
-                    self.add_token(t)
-                    self.overview_tokens.append(t)
+                for p in self.parameters[param_num].get_tokens():
+                    self.add_token(p)
+                for o in self.parameters[param_num].overview_tokens:
+                    self.overview_tokens.append(o)
 
             # Add in comma before the next parameter
             if param_num + 1 in range(0, len(self.parameters)):
@@ -988,6 +992,7 @@ def get_map_type(yaml, name=""):
 class LLCParameterView(FormattingClass):
     def __init__(
         self,
+        operation,
         param_name,
         param_type,
         namespace,
@@ -995,6 +1000,7 @@ class LLCParameterView(FormattingClass):
         default=None,
         required=False,
     ):
+        self.operation = operation
         self.name = param_name
         self.type = param_type
         self.default = default
@@ -1038,6 +1044,7 @@ class LLCParameterView(FormattingClass):
             param_name = None
 
         return cls(
+            operation = yaml_data['language']['default']['name'],
             param_type=param_type,
             param_name=param_name,
             required=required,
@@ -1066,9 +1073,9 @@ class LLCParameterView(FormattingClass):
             self.add_space()
             self.overview_tokens.append(Token(" ", TokenKind.Text))
             # Create parameter name token
-            self.add_text(self.namespace + self.type, self.name, None)
+            self.add_text(self.namespace + self.operation + self.type+ self.name + "details", self.name, None)
             token = Token(self.name, TokenKind.Text)
-            token.set_navigation_id(self.name + "overview")
+            token.set_definition_id(self.namespace + self.operation + self.type+ self.name + "overview")
             self.overview_tokens.append(token)
 
             # Check if parameter has a default value or not

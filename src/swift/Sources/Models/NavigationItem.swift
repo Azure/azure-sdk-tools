@@ -36,4 +36,21 @@ struct NavigationItem: Codable {
     var childItems: [NavigationItem]
     /// Tags which determine the type of icon displayed in the navigation pane of APIView
     var tags: NavigationTags
+
+    // MARK: Codable
+
+    enum CodingKeys: String, CodingKey {
+        case text = "Text"
+        case navigationId = "NavigationId"
+        case childItems = "ChildItems"
+        case tags = "Tags"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(text, forKey: .text)
+        try container.encode(navigationId, forKey: .navigationId)
+        try container.encode(childItems, forKey: .childItems)
+        try container.encode(tags, forKey: .tags)
+    }
 }

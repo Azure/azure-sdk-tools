@@ -27,11 +27,83 @@
 import Foundation
 
 /// The token file that is readable by APIView
-struct TokenFile: Codable {
+class TokenFile: Codable {
     /// The name to be used in the APIView review list
     var name: String
     /// List of APIVIew tokens to render
     var tokens: [TokenItem]
     /// List of APIView navigation items which display in the sidebar
     var navigation: [NavigationItem]
+
+    // MARK: Initializers
+
+    init(name: String) {
+        self.name = name
+        self.tokens = []
+        self.navigation = []
+    }
+
+    // MARK: Codable
+
+    enum CodingKeys: String, CodingKey {
+        case name = "Name"
+        case tokens = "Tokens"
+        case navigation = "Navigation"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(name, forKey: .name)
+        try container.encode(tokens, forKey: .tokens)
+        try container.encode(navigation, forKey: .navigation)
+    }
+
+    // MARK: Methods
+
+    func addText(_ text: String) {
+        let item = TokenItem(definitionId: nil, navigateToId: nil, value: text, kind: .text)
+        tokens.append(item)
+    }
+
+    func addNewline() {
+        let item = TokenItem(definitionId: nil, navigateToId: nil, value: nil, kind: .newline)
+        tokens.append(item)
+    }
+
+    func addWhitespace(spaces: Int = 1) {
+        let value = String(repeating: " ", count: spaces)
+        let item = TokenItem(definitionId: nil, navigateToId: nil, value: value, kind: .whitespace)
+        tokens.append(item)
+    }
+
+    func addPunctuation(_ value: String) {
+        let item = TokenItem(definitionId: nil, navigateToId: nil, value: value, kind: .punctuation)
+        tokens.append(item)
+    }
+
+    func addKeyword(value: String) {
+        let item = TokenItem(definitionId: nil, navigateToId: nil, value: value, kind: .keyword)
+        tokens.append(item)
+    }
+
+    func addLineIdMarker() {
+        let item = TokenItem(definitionId: nil, navigateToId: nil, value: nil, kind: .lineIdMarker)
+        tokens.append(item)
+    }
+
+    func addType(name: String) {
+        let item = TokenItem(definitionId: nil, navigateToId: nil, value: name, kind: .typeName)
+        tokens.append(item)
+    }
+
+    func addMember(name: String) {
+        let item = TokenItem(definitionId: nil, navigateToId: nil, value: name, kind: .memberName)
+        tokens.append(item)
+    }
+
+    func addStringLiteral(_ text: String) {
+        let item = TokenItem(definitionId: nil, navigateToId: nil, value: text, kind: .stringLiteral)
+        tokens.append(item)
+    }
 }
+

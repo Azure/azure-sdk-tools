@@ -1,7 +1,6 @@
 # NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
 
 trigger:
-  - master
   - main
 
 resources:
@@ -9,6 +8,7 @@ resources:
     - repository: azure-sdk-build-tools
       type: git
       name: internal/azure-sdk-build-tools
+      ref: refs/tags/azure-sdk-build-tools_20210603.1
 
 variables:
   - template: /eng/pipelines/templates/variables/globals.yml
@@ -45,7 +45,7 @@ stages:
             inputs:
               ArtifactName: packages
   - ${{ if ne(variables['System.TeamProject'], 'Public') }}:
-    - template: pipelines/stages/net-release-blobfeed.yml@azure-sdk-build-tools
+    - template: pipelines/stages/net-release-to-feed.yml@azure-sdk-build-tools
       parameters:
         ShouldTag: false  # Disable tagging for now as github is rate limiting us
         ShouldSign: false # Disable signing for now because the tools package contains a number files we cannot correctly sign

@@ -4,7 +4,7 @@ trigger: none
 # This pipeline is used to trigger a script which creates a branch in the repository specified
 # by the Repository parameter below. It creates a branch with the name feature/tutorial/<alias>
 # and will be used in training to help training participants get a branch setup to merge their
-# code into to simulate real world CI/CD usage without poluting the master branch.
+# code into to simulate real world CI/CD usage without poluting the main branch.
 # 
 # The Alias parameter forms part of the branch name above, and the GitReference parameter which
 # has a default of refs/heads/feature/tutorial can be overriden if a different base branch is

@@ -16,14 +16,15 @@
         </div>
 
         <div class="btn-group float-left  pl-5">
-            <a class="btn btn-primary" active-if='@Model.Language == "All"' asp-all-route-data=@Model.GetRoutingData(language: "All")>All</a>
-            <a class="btn btn-primary" active-if='@Model.Language == "C"' asp-all-route-data=@Model.GetRoutingData(language: "C")>C</a>
-            <a class="btn btn-primary" active-if='@Model.Language == "C#"' asp-all-route-data=@Model.GetRoutingData(language: "C#")>C#</a>
-            <a class="btn btn-primary" active-if='@Model.Language == "C++"' asp-all-route-data=@Model.GetRoutingData(language: "C++")>C++</a>
-            <a class="btn btn-primary" active-if='@Model.Language == "Go"' asp-all-route-data=@Model.GetRoutingData(language: "Go")>Go</a>
-            <a class="btn btn-primary" active-if='@Model.Language == "Java"' asp-all-route-data=@Model.GetRoutingData(language: "Java")>Java</a>
-            <a class="btn btn-primary" active-if='@Model.Language == "JavaScript"' asp-all-route-data=@Model.GetRoutingData(language: "JavaScript")>JS/TS</a>
-            <a class="btn btn-primary" active-if='@Model.Language == "Python"' asp-all-route-data=@Model.GetRoutingData(language: "Python")>Python</a>
+            <a class="btn btn-secondary" active-if='@Model.Language == "All"' asp-all-route-data=@Model.GetRoutingData(language: "All")>All</a>
+            <a class="btn btn-secondary" active-if='@Model.Language == "C"' asp-all-route-data=@Model.GetRoutingData(language: "C")>C</a>
+            <a class="btn btn-secondary" active-if='@Model.Language == "C#"' asp-all-route-data=@Model.GetRoutingData(language: "C#")>C#</a>
+            <a class="btn btn-secondary" active-if='@Model.Language == "C++"' asp-all-route-data=@Model.GetRoutingData(language: "C++")>C++</a>
+            <a class="btn btn-secondary" active-if='@Model.Language == "Go"' asp-all-route-data=@Model.GetRoutingData(language: "Go")>Go</a>
+            <a class="btn btn-secondary" active-if='@Model.Language == "Java"' asp-all-route-data=@Model.GetRoutingData(language: "Java")>Java</a>
+            <a class="btn btn-secondary" active-if='@Model.Language == "JavaScript"' asp-all-route-data=@Model.GetRoutingData(language: "JavaScript")>JS/TS</a>
+            <a class="btn btn-secondary" active-if='@Model.Language == "Python"' asp-all-route-data=@Model.GetRoutingData(language: "Python")>Python</a>
+            <a class="btn btn-secondary" active-if='@Model.Language == "Protocol"' asp-all-route-data=@Model.GetRoutingData(language: "Protocol")>Protocol</a>
         </div>
 
         <div class="btn-group float-right">
@@ -93,6 +94,9 @@
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" id="profile-tab" data-toggle="tab" href="#go-help">Go</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="profile-tab" data-toggle="tab" href="#protocol-help">Protocol</a>
                             </li>
                         </ul>
 
@@ -165,7 +169,7 @@
                                 </ol>
                             </div>
                             <div class="tab-pane" id="go-help">
-                                <ol>                                    
+                                <ol>
                                     <li>
                                         Archive source module directory <code>Compress-Archive ./sdk/azcore -DestinationPath azcore.zip</code>
                                     </li>
@@ -174,6 +178,16 @@
                                     </li>
                                     <li>
                                         Upload the resulting archive.
+                                    </li>
+                                </ol>
+                            </div>
+                            <div class="tab-pane" id="protocol-help">
+                                <ol>
+                                    <li>
+                                        Generate json file using Protocol parser
+                                    </li>
+                                    <li>
+                                        Upload the resulting json file.
                                     </li>
                                 </ol>
                             </div>
@@ -189,11 +203,10 @@
     </div>
 </div>
 
-<table class="table table-hover">
-    <thead>
+<table class="table table-hover table-striped">
+    <thead class="thead-light">
         <tr>
             <th scope="col">Name</th>
-            <th scope="col">Approval Status</th>
             <th scope="col">Uploader</th>
             <th></th>
             <th></th>
@@ -205,18 +218,9 @@
             <tr>
                 <td>
                     <a class="review-name" asp-page="./Review" asp-route-id="@assembly.ReviewId">@assembly.DisplayName</a>
-                </td>
-                <td>
-                    @if (assembly.Revisions.Count > 0)
+                    @if (assembly.Revisions.LastOrDefault()?.IsApproved == true)
                     {
-                        if (assembly.Revisions.Last().Approvers.Count > 0)
-                        {
-                            <span class="text-success">Approved</span>
-                        }
-                        else
-                        {
-                            <span>Pending</span>
-                        }
+                        <label class="text-success">✔️</label>
                     }
                 </td>
                 <td>

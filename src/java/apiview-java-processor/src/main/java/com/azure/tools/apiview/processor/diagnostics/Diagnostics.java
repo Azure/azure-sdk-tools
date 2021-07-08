@@ -13,19 +13,27 @@ import com.azure.tools.apiview.processor.diagnostics.rules.NoLocalesInJavadocUrl
 import com.azure.tools.apiview.processor.diagnostics.rules.NoPublicFieldsDiagnosticRule;
 import com.azure.tools.apiview.processor.diagnostics.rules.PackageNameDiagnosticRule;
 import com.azure.tools.apiview.processor.diagnostics.rules.RequiredBuilderMethodsDiagnosticRule;
+import com.azure.tools.apiview.processor.diagnostics.rules.ServiceVersionDiagnosticRule;
 import com.azure.tools.apiview.processor.diagnostics.rules.UpperCaseNamingDiagnosticRule;
 import com.azure.tools.apiview.processor.model.APIListing;
+import com.azure.tools.apiview.processor.model.Diagnostic;
 import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.body.MethodDeclaration;
+import com.github.javaparser.ast.type.ClassOrInterfaceType;
+import com.github.javaparser.ast.type.Type;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
+import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.makeId;
 import static com.azure.tools.apiview.processor.diagnostics.rules.RequiredBuilderMethodsDiagnosticRule.ExactTypeNameCheckFunction;
 import static com.azure.tools.apiview.processor.diagnostics.rules.RequiredBuilderMethodsDiagnosticRule.DirectSubclassCheckFunction;
 
 import static com.azure.tools.apiview.processor.diagnostics.rules.RequiredBuilderMethodsDiagnosticRule.ParameterAllowedTypes;
 
 import static com.azure.tools.apiview.processor.diagnostics.rules.IllegalMethodNamesDiagnosticRule.Rule;
+import static com.azure.tools.apiview.processor.model.DiagnosticKind.WARNING;
 
 public class Diagnostics {
     private final List<DiagnosticRule> diagnostics = new ArrayList<>();
@@ -49,6 +57,7 @@ public class Diagnostics {
         diagnostics.add(new MissingJavadocCodeSnippetsRule());
         diagnostics.add(new NoLocalesInJavadocUrlDiagnosticRule());
         diagnostics.add(new ModuleInfoDiagnosticRule());
+        diagnostics.add(new ServiceVersionDiagnosticRule());
 
         // common APIs for all builders (below we will do rules for http or amqp builders)
         diagnostics.add(new RequiredBuilderMethodsDiagnosticRule(null)
@@ -56,9 +65,9 @@ public class Diagnostics {
             .add("clientOptions", new ExactTypeNameCheckFunction("ClientOptions"))
             .add("connectionString", new ExactTypeNameCheckFunction("String"))
             .add("credential", new ExactTypeNameCheckFunction(new ParameterAllowedTypes("TokenCredential",
-                    "AzureKeyCredential", "AzureSasCredential")))
+                    "AzureKeyCredential", "AzureSasCredential", "AzureNamedKeyCredential")))
             .add("endpoint", new ExactTypeNameCheckFunction("String"))
-            .add("serviceVersion", new DirectSubclassCheckFunction("ServiceVersion")));
+            .add("serviceVersion", this::checkServiceVersionType));
         diagnostics.add(new RequiredBuilderMethodsDiagnosticRule("amqp")
             .add("proxyOptions", new ExactTypeNameCheckFunction("ProxyOptions"))
             .add("retry", new ExactTypeNameCheckFunction("AmqpRetryOptions"))
@@ -69,6 +78,18 @@ public class Diagnostics {
             .add("httpLogOptions", new ExactTypeNameCheckFunction("HttpLogOptions"))
             .add("pipeline", new ExactTypeNameCheckFunction("HttpPipeline"))
             .add("retryPolicy", new ExactTypeNameCheckFunction("RetryPolicy")));
+    }
+
+    private Optional<Diagnostic> checkServiceVersionType(MethodDeclaration methodDeclaration) {
+        Type parameterType = methodDeclaration.getParameter(0).getType();
+        ClassOrInterfaceType classOrInterfaceType = parameterType.asClassOrInterfaceType();
+        if (!classOrInterfaceType.getNameAsString().endsWith("ServiceVersion")) {
+            return Optional.of(
+                    new Diagnostic(WARNING, makeId(methodDeclaration),
+                            "Incorrect type being supplied to this builder method. Expected an enum "
+                            + "implementing ServiceVersion but was " + classOrInterfaceType.getNameAsString() + "."));
+        }
+        return Optional.empty();
     }
 
     /**

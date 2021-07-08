@@ -22,6 +22,7 @@ namespace Azure.ClientSdk.Analyzers
             "Azure.Media",
             "Azure.Management",
             "Azure.Messaging",
+            "Azure.ResourceManager",   
             "Azure.Search",
             "Azure.Security",
             "Azure.Storage",

@@ -354,8 +354,8 @@ namespace APIViewWeb.Respositories
         {
             //This will compare and check if new code file content is same as revision in parameter
             var lastRevisionFile = await _codeFileRepository.GetCodeFileAsync(revision);
-            var lastRevisionTextLines = lastRevisionFile.RenderText(false);
-            var fileTextLines = renderedCodeFile.RenderText(false);
+            var lastRevisionTextLines = lastRevisionFile.RenderText(showDocumentation: false, skipDiff: true);
+            var fileTextLines = renderedCodeFile.RenderText(showDocumentation: false, skipDiff: true);
             return lastRevisionTextLines.SequenceEqual(fileTextLines);
         }
 
@@ -370,6 +370,15 @@ namespace APIViewWeb.Respositories
             bool createNewRevision = true;
             if (review != null)
             {
+                // Delete pending revisions if it is not in approved state before adding new revision
+                // This is to keep only one pending revision since last approval or from initial review revision
+                var lastRevision = review.Revisions.LastOrDefault();
+                while (lastRevision.Approvers.Count == 0 && review.Revisions.Count > 1)
+                {
+                    review.Revisions.Remove(lastRevision);
+                    lastRevision = review.Revisions.LastOrDefault();
+                }
+
                 var renderedCodeFile = new RenderedCodeFile(codeFile);
                 var noDiffFound = await IsReviewSame(review.Revisions.LastOrDefault(), renderedCodeFile);
                 if (noDiffFound)
@@ -395,14 +404,6 @@ namespace APIViewWeb.Respositories
             await AssertAutomaticReviewModifier(user, review);
             if (createNewRevision)
             {
-                // Delete last revision if it is not in approved state before adding new revision
-                // This is to keep only one pending revision since last approval or from initial review revision
-                var lastRevision = review.Revisions.LastOrDefault();
-                if (lastRevision != null && lastRevision.Approvers.Count == 0 && review.Revisions.Count > 1)
-                {
-                    review.Revisions.Remove(lastRevision);
-                }
-
                 // Update or insert review with new revision
                 var revision = new ReviewRevisionModel()
                 {
@@ -453,7 +454,7 @@ namespace APIViewWeb.Respositories
             var reviews = await _reviewsRepository.GetReviewsAsync(false, revisionFile.Language, revisionFile.PackageName, false);
             foreach (var r in reviews)
             {
-                var approvedRevision = r.Revisions.Where(r => r.Approvers.Count() > 0).LastOrDefault();
+                var approvedRevision = r.Revisions.Where(r => r.IsApproved).LastOrDefault();
                 if (approvedRevision != null)
                 {
                     bool isReviewSame = await IsReviewSame(approvedRevision, codeFile);

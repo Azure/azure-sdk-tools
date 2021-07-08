@@ -97,7 +97,7 @@ jobs:
       pwsh: true
       filePath: eng/common/scripts/Verify-Links.ps1
       arguments: >
-        -urls "https://raw.githubusercontent.com/Azure/azure-sdk-for-go/master/CHANGELOG.md"
+        -urls "https://raw.githubusercontent.com/Azure/azure-sdk-for-go/main/CHANGELOG.md"
         -ignoreLinksFile "./eng/pipelines/githubio-linkcheck-ignore-links.txt"
         -inputCacheFile "$(cachefile)"
         -outputCacheFile "$(cachefile)"

@@ -73,6 +73,10 @@ namespace NotificationConfiguration
             IEnumerable<WebApiTeam> teams, 
             bool persistChanges)
         {
+            // Ensure team name fits within maximum 64 character limit
+            // https://docs.microsoft.com/en-us/azure/devops/organizations/settings/naming-restrictions?view=azure-devops#teams
+            string teamName = StringHelper.MaxLength($"{pipeline.Name} -- {suffix}", MaxTeamNameLength);
+            bool updateMetadataAndName = false;
             var result = teams.FirstOrDefault(
                 team =>
                 {
@@ -80,7 +84,29 @@ namespace NotificationConfiguration
                     // free form text fields which might be non-yaml text
                     // are not exceptional
                     var metadata = YamlHelper.Deserialize<TeamMetadata>(team.Description, swallowExceptions: true);
-                    return metadata?.PipelineId == pipeline.Id && metadata?.Purpose == purpose;
+                    bool metadataMatches = (metadata?.PipelineId == pipeline.Id && metadata?.Purpose == purpose);
+                    bool nameMatches = (team.Name == teamName);
+
+                    if (metadataMatches && nameMatches)
+                    {
+                        return true;
+                    }
+
+                    if (metadataMatches)
+                    {
+                        logger.LogInformation("Found team with matching pipeline id {0} but different name '{1}', expected '{2}'. Purpose = '{3}'", metadata?.PipelineId, team.Name, teamName, metadata?.Purpose);
+                        updateMetadataAndName = true;
+                        return true;
+                    }
+
+                    if (nameMatches)
+                    {
+                        logger.LogInformation("Found team with matching name {0} but different pipeline id {1}, expected {2}. Purpose = '{3}'", team.Name, metadata?.PipelineId, pipeline.Id, metadata?.Purpose);
+                        updateMetadataAndName = true;
+                        return true;
+                    }
+
+                    return false;
                 });
 
             if (result == default)
@@ -94,15 +120,29 @@ namespace NotificationConfiguration
                 var newTeam = new WebApiTeam
                 {
                     Description = YamlHelper.Serialize(teamMetadata),
-                    // Ensure team name fits within maximum 64 character limit
-                    // https://docs.microsoft.com/en-us/azure/devops/organizations/settings/naming-restrictions?view=azure-devops#teams
-                    Name = StringHelper.MaxLength($"{pipeline.Name} -- {suffix}", MaxTeamNameLength),
+                    Name = teamName
                 };
 
-                logger.LogInformation("Create Team for Pipeline PipelineId = {0} Purpose = {1}", pipeline.Id, purpose);
+                logger.LogInformation("Create Team for Pipeline PipelineId = {0} Purpose = {1} Name = '{2}'", pipeline.Id, purpose, teamName);
                 if (persistChanges)
                 {
                     result = await service.CreateTeamForProjectAsync(pipeline.Project.Id.ToString(), newTeam);
+                }
+            }
+            else if (updateMetadataAndName)
+            {
+                var teamMetadata = new TeamMetadata
+                {
+                    PipelineId = pipeline.Id,
+                    Purpose = purpose,
+                };
+                result.Description = YamlHelper.Serialize(teamMetadata);
+                result.Name = teamName;
+
+                logger.LogInformation("Update Team for Pipeline PipelineId = {0} Purpose = {1} Name = '{2}'", pipeline.Id, purpose, teamName);
+                if (persistChanges)
+                {
+                    result = await service.UpdateTeamForProjectAsync(pipeline.Project.Id.ToString(), result);
                 }
             }
 
@@ -117,13 +157,11 @@ namespace NotificationConfiguration
             {
                 case PipelineSelectionStrategy.All:
                     return definitions;
-                    break;
                 case PipelineSelectionStrategy.Scheduled:
                 default:
                     return definitions.Where(
                         def => def.Triggers.Any(
                             trigger => trigger.TriggerType == DefinitionTriggerType.Schedule));
-                    break;
             }
         }
 
@@ -152,18 +190,19 @@ namespace NotificationConfiguration
             const string BuildFailureNotificationTag = "#AutomaticBuildFailureNotification";
             var subscriptions = await service.GetSubscriptionsAsync(team.Id);
 
-            var hasSubscription = subscriptions.Any(sub => sub.Description.Contains(BuildFailureNotificationTag));
+            var subscription = subscriptions.FirstOrDefault(sub => sub.Description.Contains(BuildFailureNotificationTag));
 
-            logger.LogInformation("Team Is Subscribed TeamId = {0} PipelineId = {1} HasSubscription = {2}", team.Id, pipeline.Id, hasSubscription);
+            logger.LogInformation("Team Is Subscribed TeamName = {0} PipelineId = {1}", team.Name, pipeline.Id);
 
-            if (!hasSubscription)
+            string definitionName = $"\\{pipeline.Project.Name}\\{pipeline.Name}";
+            if (subscription == default)
             {
                 var filterModel = new ExpressionFilterModel
                 {
                     Clauses = new ExpressionFilterClause[]
                     {
                         new ExpressionFilterClause { Index = 1, LogicalOperator = "", FieldName = "Status", Operator = "=", Value = "Failed" },
-                        new ExpressionFilterClause { Index = 2, LogicalOperator = "And", FieldName = "Definition name", Operator = "=", Value = $"\\{pipeline.Project.Name}\\{pipeline.Name}" },
+                        new ExpressionFilterClause { Index = 2, LogicalOperator = "And", FieldName = "Definition name", Operator = "=", Value = definitionName },
                         new ExpressionFilterClause { Index = 3, LogicalOperator = "And", FieldName = "Build reason", Operator = "=", Value = "Scheduled" }
                     }
                 };
@@ -187,7 +226,42 @@ namespace NotificationConfiguration
                 logger.LogInformation("Creating Subscription PipelineId = {0}, TeamId = {1}", pipeline.Id, team.Id);
                 if (persistChanges)
                 {
-                    var subscription = await service.CreateSubscriptionAsync(newSubscription);
+                    subscription = await service.CreateSubscriptionAsync(newSubscription);
+                }
+            }
+            else
+            {
+                var filter = subscription.Filter as ExpressionFilter;
+                if (filter == null)
+                {
+                    logger.LogWarning("Subscription expression is not correct for of team {0}", team.Name);
+                    return;
+                }
+
+                var definitionClause = filter.FilterModel.Clauses.FirstOrDefault(c => c.FieldName == "Definition name");
+
+                if (definitionClause == null)
+                {
+                    logger.LogWarning("Subscription doesn't have correct expression filters for of team {0}", team.Name);
+                    return;
+                }
+
+                if (definitionClause.Value != definitionName)
+                {
+                    definitionClause.Value = definitionName;
+
+                    if (persistChanges)
+                    {
+                        var updateParameters = new NotificationSubscriptionUpdateParameters()
+                        {
+                            Channel = subscription.Channel,
+                            Description = subscription.Description,
+                            Filter = subscription.Filter,
+                            Scope = subscription.Scope,
+                        };
+                        logger.LogInformation("Updating Subscription expression for team {0} with correct definition name {1}", team.Name, definitionName);
+                        subscription = await service.UpdatedSubscriptionAsync(updateParameters, subscription.Id.ToString());
+                    }
                 }
             }
         }

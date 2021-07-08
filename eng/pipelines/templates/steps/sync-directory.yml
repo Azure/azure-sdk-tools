@@ -124,7 +124,7 @@ steps:
         -IssueNumber "$(System.PullRequest.PullRequestNumber)"
         -Comment "The following pipelines have been queued for testing:<br>$env:QueuedPipelines`
         <br>You can sign off on the approval gate to test the release stage of each pipeline.`
-        <br>See [eng/common workflow](https://github.com/Azure/azure-sdk-tools/blob/master/eng/common/README.md#workflow)"
+        <br>See [eng/common workflow](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/README.md#workflow)"
         -AuthToken "$(azuresdk-github-pat)"
 
 - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:

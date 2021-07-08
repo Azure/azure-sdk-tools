@@ -8,7 +8,7 @@ namespace NotificationConfiguration
     /// Performs rudimentary parsing of a CODEOWNERS file for synchornizing into 
     /// </summary>
     /// <remarks>
-    /// See: https://github.com/Azure/azure-sdk/blob/master/docs/engineering-system/codeowners.md
+    /// See: https://github.com/Azure/azure-sdk/blob/main/docs/engineering-system/codeowners.md
     /// </remarks>
     public class CodeOwnersParser
     {

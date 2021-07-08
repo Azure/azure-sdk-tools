@@ -28,11 +28,7 @@ namespace Azure.Sdk.Tools.TestProxy
         [HttpPost]
         public void StartSession()
         {
-            // to begin with, recordings should still be located in their home repository
-            if (Request.Headers.TryGetValue("x-recording-sha", out var sha))
-            {
-                _recordingHandler.Checkout(sha);
-            }
+            // so far, nothing necessary here
         }
 
         [HttpPost]

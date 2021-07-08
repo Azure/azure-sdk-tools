@@ -8,9 +8,6 @@ import os
 import tempfile
 from .protocol_models import ProtocolClientView
 
-OUTPUT_FILE = "protocol_view.json"
-
-
 class LLCGenerator:
     def __init__(self):
         parser = argparse.ArgumentParser(
@@ -80,7 +77,9 @@ class LLCGenerator:
         main_view = ProtocolClientView.from_yaml(data)
 
         # Write output to .json
-        j = open(OUTPUT_FILE, "w")
+        out_file = self.pkg_path.split("\\")
+        file_name = out_file[len(out_file)-1]
+        j = open(self.out_path + "\\"+ file_name.split(".")[0]+".json", "w")
         parsed_json = json.dumps(main_view.to_json(), default=lambda o: o.__dict__)
         j.write(parsed_json)
 

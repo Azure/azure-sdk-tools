@@ -62,9 +62,6 @@ class LLCGenerator:
         if args.verbose:
             logging.getLogger().setLevel(logging.DEBUG)
 
-        self.filter_namespace = ""
-        if args.filter_namespace:
-            self.filter_namespace = args.filter_namespace
 
     def parse_yaml(self):
         # open the yaml file and load data

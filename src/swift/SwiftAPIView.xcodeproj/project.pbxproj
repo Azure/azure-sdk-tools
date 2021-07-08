@@ -36,7 +36,6 @@
 		0A6A5430268B82D0001006AF /* SwiftAPIView */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = SwiftAPIView; sourceTree = BUILT_PRODUCTS_DIR; };
 		0A6A5433268B82D0001006AF /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		0A6A543B268B845A001006AF /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		0A6A543C268B8496001006AF /* Podfile */ = {isa = PBXFileReference; lastKnownFileType = text; path = Podfile; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.ruby; };
 		0A6A5440268B886D001006AF /* Logger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logger.swift; sourceTree = "<group>"; };
 		0A6A5442268B88AE001006AF /* URL+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "URL+Extensions.swift"; sourceTree = "<group>"; };
 		0A6A5444268B89DE001006AF /* APIViewManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIViewManager.swift; sourceTree = "<group>"; };
@@ -46,9 +45,6 @@
 		0A6A544D268B8F75001006AF /* NavigationItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationItem.swift; sourceTree = "<group>"; };
 		0A6A544F268B91FC001006AF /* NavigationTags.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationTags.swift; sourceTree = "<group>"; };
 		31A6751A2697437400F92505 /* SourceCodeExample.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceCodeExample.swift; sourceTree = "<group>"; };
-		4E3E05ED8E994336207F2F12 /* Pods-SwiftAPIView.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SwiftAPIView.debug.xcconfig"; path = "Target Support Files/Pods-SwiftAPIView/Pods-SwiftAPIView.debug.xcconfig"; sourceTree = "<group>"; };
-		66F268376BF20DBACB7B67A1 /* Pods-SwiftAPIView.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SwiftAPIView.release.xcconfig"; path = "Target Support Files/Pods-SwiftAPIView/Pods-SwiftAPIView.release.xcconfig"; sourceTree = "<group>"; };
-		BADCA632B6A0CC35560C52EA /* libPods-SwiftAPIView.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-SwiftAPIView.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -66,11 +62,9 @@
 		0A6A5427268B82D0001006AF = {
 			isa = PBXGroup;
 			children = (
-				0A6A543C268B8496001006AF /* Podfile */,
 				0A6A543B268B845A001006AF /* Info.plist */,
 				0A6A5432268B82D0001006AF /* Sources */,
 				0A6A5431268B82D0001006AF /* Products */,
-				1BDF513CF784F00F2CE1E028 /* Pods */,
 				6F4C0E2E04E03C6B3145C4A1 /* Frameworks */,
 			);
 			sourceTree = "<group>";
@@ -116,19 +110,9 @@
 			path = Models;
 			sourceTree = "<group>";
 		};
-		1BDF513CF784F00F2CE1E028 /* Pods */ = {
-			isa = PBXGroup;
-			children = (
-				4E3E05ED8E994336207F2F12 /* Pods-SwiftAPIView.debug.xcconfig */,
-				66F268376BF20DBACB7B67A1 /* Pods-SwiftAPIView.release.xcconfig */,
-			);
-			path = Pods;
-			sourceTree = "<group>";
-		};
 		6F4C0E2E04E03C6B3145C4A1 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				BADCA632B6A0CC35560C52EA /* libPods-SwiftAPIView.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -355,7 +339,6 @@
 		};
 		0A6A5438268B82D0001006AF /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 4E3E05ED8E994336207F2F12 /* Pods-SwiftAPIView.debug.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
@@ -370,7 +353,6 @@
 		};
 		0A6A5439268B82D0001006AF /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 66F268376BF20DBACB7B67A1 /* Pods-SwiftAPIView.release.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;

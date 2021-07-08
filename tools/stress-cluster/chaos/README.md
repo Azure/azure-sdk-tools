@@ -244,26 +244,27 @@ azure resources on startup and inject environment secrets.
 Some required Job manifest fields like `Kind`, `metadata`, etc. are omitted for simplicity as they get added
 in by the `stress-test-addons.job-template` include.  These can be overridden in the top level file if needed.
 
+In the example below, the "deploy-job-template.from-pod" template is used, which will inject field values for a
+[pod spec](https://kubernetes.io/docs/concepts/workloads/pods/#pod-templates) into a job manifest.
+
 ```
-{{- include "stress-test-addons.deploy-job-template" (list . "stress.deploy-example") -}}
+{{- include "stress-test-addons.deploy-job-template.from-pod" (list . "stress.deploy-example") -}}
 {{- define "stress.deploy-example" -}}
+metadata:
+  labels:
+    testName: "deploy-example"
 spec:
-  template:
-    metadata:
-      labels:
-        testName: "deploy-example"
-    spec:
-      containers:
-        - name: deployment-example
-          image: mcr.microsoft.com/azure-cli
-          {{- include "stress-test-addons.container-env" . | nindent 10 }}
-          command: ['bash', '-c']
-          args:
-            - |
-                source $ENV_FILE &&
-                az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID &&
-                az account set -s $AZURE_SUBSCRIPTION_ID &&
-                az group show -g $RESOURCE_GROUP -o json
+  containers:
+    - name: deployment-example
+      image: mcr.microsoft.com/azure-cli
+      {{- include "stress-test-addons.container-env" . | nindent 10 }}
+      command: ['bash', '-c']
+      args:
+        - |
+            source $ENV_FILE &&
+            az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID &&
+            az account set -s $AZURE_SUBSCRIPTION_ID &&
+            az group show -g $RESOURCE_GROUP -o json
 {{- end -}}
 ```
 

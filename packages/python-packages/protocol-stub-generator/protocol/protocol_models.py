@@ -198,7 +198,7 @@ class ProtocolClientView(FormattingClass):
             for operation_view in operation_group.operations:
                 child_nav2 = Navigation(
                     operation_view.operation,
-                    self.namespace + operation_view.operation + "overview",
+                    self.namespace + operation_group.operation_group + operation_view.operation + "overview",
                 )
                 child_nav2.set_tag(NavigationTag(Kind.type_method))
                 child_nav3.add_child(child_nav2)
@@ -243,7 +243,7 @@ class ProtocolClientView(FormattingClass):
             for operation_view in operation_group_view.operations:
                 # Add operation comments
                 child_nav = Navigation(
-                    operation_view.operation, self.namespace + operation_view.operation
+                    operation_view.operation, self.namespace + operation_group_view.operation_group + operation_view.operation
                 )
                 child_nav.set_tag(NavigationTag(Kind.type_method))
                 child_nav1.add_child(child_nav)
@@ -372,6 +372,7 @@ class ProtocolOperationGroupView(FormattingClass):
 class ProtocolOperationView(FormattingClass):
     def __init__(
         self,
+        operation_group,
         operation_name,
         return_type,
         parameters,
@@ -380,6 +381,7 @@ class ProtocolOperationView(FormattingClass):
         paging=False,
         lro=False,
     ):
+        self.operation_group = operation_group
         self.operation = operation_name
         self.return_type = return_type
         self.parameters = parameters  # parameterview list
@@ -395,7 +397,7 @@ class ProtocolOperationView(FormattingClass):
         param = []
         pageable = None
         lro = None
-
+        
         if yaml_data["operationGroups"][op_group_num]["operations"][op_num].get(
             "extensions"
         ):
@@ -466,6 +468,7 @@ class ProtocolOperationView(FormattingClass):
             ]["language"]["default"]["description"]
 
         return cls(
+            operation_group = yaml_data["operationGroups"][op_group_num]["language"]["default"]["name"],
             operation_name=yaml_data["operationGroups"][op_group_num]["operations"][
                 op_num
             ]["language"]["default"]["name"],
@@ -521,13 +524,13 @@ class ProtocolOperationView(FormattingClass):
         self.add_space()
         self.overview_tokens.append(Token(" ", TokenKind.Text))
         token = Token(self.operation, TokenKind.Keyword)
-        token.set_definition_id(self.namespace + self.operation + "overview")
-        token.set_navigation_id(self.namespace + self.operation + "overview")
+        token.set_definition_id(self.namespace + self.operation_group + self.operation + "overview")
+        token.set_navigation_id(self.namespace + self.operation_group + self.operation + "overview")
         self.overview_tokens.append(token)
         self.add_keyword(
-            self.namespace + self.operation,
+            self.namespace + self.operation_group + self.operation,
             self.operation,
-            self.namespace + self.operation,
+            self.namespace + self.operation_group + self.operation,
         )
         self.add_space()
 
@@ -573,9 +576,10 @@ class ProtocolOperationView(FormattingClass):
             # Add in parameter tokens
             if self.parameters[param_num]:
                 self.add_whitespace(4)
-                for t in self.parameters[param_num].get_tokens():
-                    self.add_token(t)
-                    self.overview_tokens.append(t)
+                for p in self.parameters[param_num].get_tokens():
+                    self.add_token(p)
+                for o in self.parameters[param_num].overview_tokens:
+                    self.overview_tokens.append(o)
 
             # Add in comma before the next parameter
             if param_num + 1 in range(0, len(self.parameters)):
@@ -601,6 +605,7 @@ class ProtocolOperationView(FormattingClass):
 class ProtocolParameterView(FormattingClass):
     def __init__(
         self,
+        operation,
         param_name,
         param_type,
         namespace,
@@ -608,6 +613,7 @@ class ProtocolParameterView(FormattingClass):
         default=None,
         required=False,
     ):
+        self.operation = operation
         self.name = param_name
         self.type = param_type
         self.default = default
@@ -651,6 +657,7 @@ class ProtocolParameterView(FormattingClass):
             param_name = None
 
         return cls(
+            operation = yaml_data['language']['default']['name'],
             param_type=param_type,
             param_name=param_name,
             required=required,
@@ -679,9 +686,9 @@ class ProtocolParameterView(FormattingClass):
             self.add_space()
             self.overview_tokens.append(Token(" ", TokenKind.Text))
             # Create parameter name token
-            self.add_text(self.namespace + self.type, self.name, None)
+            self.add_text(self.namespace + self.operation + self.type+ self.name + "details", self.name, None)
             token = Token(self.name, TokenKind.Text)
-            token.set_navigation_id(self.name + "overview")
+            token.set_definition_id(self.namespace + self.operation + self.type+ self.name + "overview")
             self.overview_tokens.append(token)
 
             # Check if parameter has a default value or not

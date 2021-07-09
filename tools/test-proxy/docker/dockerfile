@@ -1,0 +1,42 @@
+FROM mcr.microsoft.com/dotnet/sdk:5.0.301 AS build
+
+ENV \
+    NO_AT_BRIDGE=1 \
+    CERT_FOLDER=/var/certwork \
+    CERT_IMPORT_SH=apply-dev-cert.sh \
+    ASPNETCORE_ENVIRONMENT=Development
+
+# Install openssl
+RUN apt-get update \
+    && apt-get install -y \
+        libsecret-1-dev \
+        libssl-dev
+
+# prep the machine dev certificate
+RUN mkdir $CERT_FOLDER
+
+ADD dev_certificate/$CERT_IMPORT_SH $CERT_FOLDER
+ADD dev_certificate/dotnet-devcert.pfx $CERT_FOLDER
+ADD dev_certificate/dotnet-devcert.crt $CERT_FOLDER
+
+RUN sed -i -e 's/\r$//' $CERT_FOLDER/$CERT_IMPORT_SH
+
+RUN chmod +x $CERT_FOLDER/$CERT_IMPORT_SH \
+    && $CERT_FOLDER/$CERT_IMPORT_SH \
+    && rm $CERT_FOLDER/$CERT_IMPORT_SH
+
+# install the package
+RUN dotnet tool install azure.sdk.tools.testproxy \
+    --global \
+    --add-source https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk/nuget/v3/index.json \
+    --version 1.0.0-dev.20210630.1 \
+    && mkdir /etc/testproxy
+
+EXPOSE 5001
+EXPOSE 5000
+
+# this override allows the tool server to listen to traffic over the docker bridge.
+# default URL of localhost:5000 or localhost:50001 are not usable from outside the container
+ENV DOTNET_URLS="http://0.0.0.0:5000;https://0.0.0.0:5001"
+
+ENTRYPOINT ["/root/.dotnet/tools/test-proxy", "--storage-location", "/etc/testproxy"]

@@ -23,42 +23,52 @@
 // IN THE SOFTWARE.
 //
 // --------------------------------------------------------------------------
+
 import AST
 import Foundation
 
 /// The token file that is readable by APIView
 class TokenFile: Codable {
+
     /// The name to be used in the APIView review list
     var name: String
+
+    /// Package name for the review
+    var packageName: String
+
+    /// The version string
+    var versionString: String
+
+    // TODO: Should be switched to Swift once APIView supports
+    /// Language string.
+    let language = "Json"
+
     /// List of APIVIew tokens to render
     var tokens: [TokenItem]
+
     /// List of APIView navigation items which display in the sidebar
     var navigation: [NavigationItem]
-    
-    var language : String
-    
-    var packageName : String
-    
+
     /// Indentation level
-    private var indentLevel: Int = 0
-    
-    /// Indent Spaces
+    private var indentLevel = 0
+
+    /// Number of spaces per indentation level
     private let indentSpaces = 4
-    
-    /// Access modifiers to expose to APIView
+
+    /// Access modifier to expose via APIView
     private let publicModifiers: [AccessLevelModifier] = [.public, .open]
-   
+
+    /// Controls whether a newline is needed
     private var needsNewLine = false
-    
+
     // MARK: Initializers
-    
-    init(name: String) {
+
+    init(name: String, packageName: String, versionString: String) {
         self.name = name
         self.tokens = []
         self.navigation = []
-        self.indentLevel = 0
-        self.language = "Json"
-        self.packageName = name
+        self.packageName = packageName
+        self.versionString = versionString
     }
 
     // MARK: Codable
@@ -69,6 +79,7 @@ class TokenFile: Codable {
         case language = "Language"
         case packageName = "PackageName"
         case navigation = "Navigation"
+        case versionString = "VersionString"
     }
 
     func encode(to encoder: Encoder) throws {
@@ -78,9 +89,10 @@ class TokenFile: Codable {
         try container.encode(language, forKey: .language)
         try container.encode(tokens, forKey: .tokens)
         try container.encode(navigation, forKey: .navigation)
+        try container.encode(versionString, forKey: .versionString)
     }
 
-    // MARK: Methods
+    // MARK: Token Emitter Methods
 
     func text(_ text: String) {
         let item = TokenItem(definitionId: nil, navigateToId: nil, value: text, kind: .text)
@@ -115,13 +127,13 @@ class TokenFile: Codable {
         needsNewLine = true
     }
 
-    func lineIdMarker() {
-        let item = TokenItem(definitionId: nil, navigateToId: nil, value: nil, kind: .lineIdMarker)
+    func lineIdMarker(definitionId: String? = nil) {
+        let item = TokenItem(definitionId: definitionId, navigateToId: nil, value: nil, kind: .lineIdMarker)
         tokens.append(item)
     }
 
-    func type(name: String) {
-        let item = TokenItem(definitionId: nil, navigateToId: nil, value: name, kind: .typeName)
+    func type(name: String, definitionId: String? = nil) {
+        let item = TokenItem(definitionId: definitionId, navigateToId: nil, value: name, kind: .typeName)
         tokens.append(item)
         needsNewLine = true
     }
@@ -163,7 +175,9 @@ class TokenFile: Codable {
         
         navigation(from: declarations)
     }
-    
+
+    // MARK: Processing Methods
+
     func process(_ decl: TopLevelDeclaration) {
         if needsNewLine  {
             newLine()
@@ -206,24 +220,26 @@ class TokenFile: Codable {
         }
     }
 
-    func process(_ decl: ClassDeclaration)  {
+    private func process(_ decl: ClassDeclaration) {
         // Gather Information
         SharedLogger.debug(decl.textDescription)
         SharedLogger.debug(decl.attributes.textDescription)
         SharedLogger.debug(decl.genericWhereClause?.textDescription ?? "")
-        
-        
+
         guard publicModifiers.contains(decl.accessLevelModifier ?? .internal) else {
             return
         }
         let value = (decl.accessLevelModifier ?? .internal).textDescription
+        let defId = decl.name.textDescription
+
         if needsNewLine {
             newLine()
         }
         if !decl.attributes.isEmpty {
             handle(attributes: decl.attributes)
         }
-        
+
+        lineIdMarker(definitionId: defId)
         keyword(value: value)
         whitespace()
         if decl.isFinal {
@@ -232,7 +248,7 @@ class TokenFile: Codable {
         }
         keyword(value: "class")
         whitespace()
-        type(name: decl.name.textDescription)
+        type(name: decl.name.textDescription, definitionId: defId)
         if let genericParam = decl.genericParameterClause {
             handle(clause: genericParam)
         }
@@ -258,56 +274,59 @@ class TokenFile: Codable {
             newLine()
         }
         punctuation("}")
+
+        navigation(add: NavigationItem(text: defId, navigationId: defId, typeKind: .class))
     }
 
-    func process(_ decl: StructDeclaration) {
+    private func process(_ decl: StructDeclaration) {
+        guard publicModifiers.contains(decl.accessLevelModifier ?? .internal) else {
+            return
+        }
+    }
+
+    private func process(_ decl: EnumDeclaration) {
+        guard publicModifiers.contains(decl.accessLevelModifier ?? .internal) else {
+            return
+        }
+    }
+
+    private func process(_ decl: ProtocolDeclaration) {
+        
+    }
+    
+    private func process(_ decl: TypealiasDeclaration) {
+        
+    }
+    
+    private func process(_ decl: VariableDeclaration) {
+        
+    }
+    
+    private func process(_ decl: ExtensionDeclaration) {
+        
+    }
+    
+    private func process(_ decl: ConstantDeclaration) {
+        
+    }
+    
+    private func process(_ decl: InitializerDeclaration) {
+        
+    }
+    
+    private func process(_ decl: DeinitializerDeclaration) {
+        
+    }
+    
+    private func process(_ decl: FunctionDeclaration) {
+        
+    }
+    
+    private func process(_ decl: ImportDeclaration) {
         
     }
 
-    func process(_ decl: EnumDeclaration) {
-    
-    }
-
-    func process(_ decl: ProtocolDeclaration) {
-        
-    }
-    
-    func process(_ decl: TypealiasDeclaration) {
-        
-    }
-    
-    func process(_ decl: VariableDeclaration) {
-        
-    }
-    
-    func process(_ decl: ExtensionDeclaration) {
-        
-    }
-    
-    func process(_ decl: ConstantDeclaration) {
-        
-    }
-    
-    func process(_ decl: InitializerDeclaration) {
-        
-    }
-    
-    func process(_ decl: DeinitializerDeclaration) {
-        
-    }
-    
-    func process(_ decl: FunctionDeclaration) {
-        
-    }
-    
-    func process(_ decl: ImportDeclaration) {
-        
-    }
-    
-
-    
-    
-    func process(_ decl: Declaration) {
+    private func process(_ decl: Declaration) {
         switch decl {
         case let decl as ClassDeclaration:
           return process(decl)
@@ -344,7 +363,7 @@ class TokenFile: Codable {
         }
     }
     
-    func handle(clause typeInheritance: TypeInheritanceClause) {
+    private func handle(clause typeInheritance: TypeInheritanceClause) {
         var inherits = typeInheritance.textDescription
         inherits.removeFirst()
         text(":")
@@ -352,24 +371,33 @@ class TokenFile: Codable {
         whitespace()
     }
     
-    func handle(clause genericParam: GenericParameterClause) {
+    private func handle(clause genericParam: GenericParameterClause) {
         text(genericParam.textDescription)
         whitespace()
     }
     
-    func handle(clause genericWhere: GenericWhereClause) {
+    private func handle(clause genericWhere: GenericWhereClause) {
         text(genericWhere.textDescription)
         whitespace()
     }
     
-    func handle(attributes : Attributes) {
+    private func handle(attributes : Attributes) {
         keyword(value: attributes.textDescription)
         newLine()
     }
-    
-    func navigation(from declarations: [TopLevelDeclaration]) {
-        let tags = NavigationTags(typeKind: .assembly)
-        var packageNavItem = NavigationItem(text: packageName, navigationId: nil, childItems: [], tags: tags)
+
+    // MARK: Navigation Emitter Methods
+
+    private func navigation(add item: NavigationItem) {
+        if let topItem = navigation.last {
+            topItem.childItems.append(item)
+        } else {
+            navigation.append(item)
+        }
+    }
+
+    private func navigation(from declarations: [TopLevelDeclaration]) {
+        let packageNavItem = NavigationItem(text: packageName, navigationId: nil, typeKind: .assembly)
         declarations.forEach { decl in
             let item = navigation(from: decl)
             packageNavItem.childItems += item
@@ -377,7 +405,7 @@ class TokenFile: Codable {
         self.navigation = [packageNavItem]
     }
     
-    func navigation(from decl: TopLevelDeclaration) -> [NavigationItem] {
+    private func navigation(from decl: TopLevelDeclaration) -> [NavigationItem] {
         var navItems : [NavigationItem] = []
         decl.statements.forEach { stmt in
             if let item = navigation(from: stmt) {
@@ -387,9 +415,8 @@ class TokenFile: Codable {
         return navItems
     }
     
-    func navigation(from decl: ClassDeclaration) -> NavigationItem? {
-        let tags = NavigationTags(typeKind: .class)
-        var navItem = NavigationItem(text: decl.name.textDescription, navigationId: nil, childItems: [], tags: tags)
+    private func navigation(from decl: ClassDeclaration) -> NavigationItem? {
+        let navItem = NavigationItem(text: decl.name.textDescription, navigationId: nil, typeKind: .class)
         decl.members.forEach { member in
             switch member {
             case .declaration(var decl):
@@ -403,23 +430,23 @@ class TokenFile: Codable {
         return navItem
     }
     
-    func navigation(from decl: StructDeclaration) -> NavigationItem? {
+    private func navigation(from decl: StructDeclaration) -> NavigationItem? {
         return nil
     }
     
-    func navigation(from decl: EnumDeclaration) -> NavigationItem? {
+    private func navigation(from decl: EnumDeclaration) -> NavigationItem? {
         return nil
     }
 
-    func navigation(from decl: ProtocolDeclaration) -> NavigationItem? {
+    private func navigation(from decl: ProtocolDeclaration) -> NavigationItem? {
         return nil
     }
     
-    func navigation(from decl: ExtensionDeclaration) -> NavigationItem? {
+    private func navigation(from decl: ExtensionDeclaration) -> NavigationItem? {
         return nil
     }
     
-    func navigation(from decl: Statement) -> NavigationItem? {
+    private func navigation(from decl: Statement) -> NavigationItem? {
         switch decl {
         case let decl as ClassDeclaration:
             return navigation(from: decl)

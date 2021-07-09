@@ -8,9 +8,6 @@ import os
 import tempfile
 from .protocol_models import ProtocolClientView
 
-OUTPUT_FILE = "protocol_view.json"
-
-
 class LLCGenerator:
     def __init__(self):
         parser = argparse.ArgumentParser(
@@ -65,9 +62,6 @@ class LLCGenerator:
         if args.verbose:
             logging.getLogger().setLevel(logging.DEBUG)
 
-        self.filter_namespace = ""
-        if args.filter_namespace:
-            self.filter_namespace = args.filter_namespace
 
     def parse_yaml(self):
         # open the yaml file and load data
@@ -78,6 +72,7 @@ class LLCGenerator:
 
         # Create main_view for LLC API View
         main_view = ProtocolClientView.from_yaml(data)
+
         parsed_json = json.dumps(main_view.to_json(), default=lambda o: o.__dict__)
 
         # Write output to .json

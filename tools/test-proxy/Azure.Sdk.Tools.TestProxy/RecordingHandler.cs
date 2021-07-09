@@ -136,7 +136,7 @@ namespace Azure.Sdk.Tools.TestProxy
             var headerListOrig = incomingRequest.Headers.Select(x => String.Format("{0}: {1}", x.Key, x.Value.First())).ToList();
             var headerList = upstreamRequest.Headers.Select(x => String.Format("{0}: {1}", x.Key, x.Value.First())).ToList();
 
-            var body = DecompressBody(await upstreamResponse.Content.ReadAsStreamAsync().ConfigureAwait(false), upstreamResponse.Content.Headers);
+            var body = DecompressBody((MemoryStream) await upstreamResponse.Content.ReadAsStreamAsync().ConfigureAwait(false), upstreamResponse.Content.Headers);
 
             entry.Response.Body = body.Length == 0 ? null : body;
             entry.StatusCode = (int)upstreamResponse.StatusCode;
@@ -183,7 +183,7 @@ namespace Azure.Sdk.Tools.TestProxy
             return incomingBody;
         }
 
-        private byte[] DecompressBody(Stream incomingBody, HttpContentHeaders headers)
+        private byte[] DecompressBody(MemoryStream incomingBody, HttpContentHeaders headers)
         {
             if (headers.TryGetValues("Content-Encoding", out var values))
             {
@@ -198,11 +198,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 }
             }
 
-            using (MemoryStream ms = new MemoryStream())
-            {
-                incomingBody.CopyTo(ms);
-                return ms.ToArray();
-            }
+            return incomingBody.ToArray();
         }
 
         private HttpRequestMessage CreateUpstreamRequest(HttpRequest incomingRequest, byte[] incomingBody)

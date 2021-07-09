@@ -34,12 +34,3 @@ do {
 } catch {
     SharedLogger.error("\(error)")
 }
-SharedLogger.debug("Got to the end of main. Exiting")
-
-//remove when done
-
-
-func exit() {
-    print("Press Enter to terminate...")
-    _ = readLine()
-}

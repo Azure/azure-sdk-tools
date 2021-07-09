@@ -394,24 +394,14 @@ class TokenFile: Codable {
     private func process(_: TypealiasDeclaration) {}
 
     private func process(_ decl: VariableDeclaration) {
-        var accessLevel: AccessLevelModifier? = nil
+        let accessLevel = decl.modifiers.accessLevel
         var name = "NAME"
         var typeName = "TYPE"
         var isOptional = false
         var isArray = false
-        var isStatic = false
+        let isStatic = decl.modifiers.isStatic
 
-        // search for relevant modifiers
-        for modifier in decl.modifiers {
-            switch modifier {
-            case let .accessLevel(value):
-                accessLevel = value
-            case .static:
-                isStatic = true
-            default:
-                SharedLogger.fail("Unsupported modfier: \(modifier)")
-            }
-        }
+        decl.modifiers.verifySupported()
 
         switch decl.body {
         case let .initializerList(initializerList):
@@ -476,24 +466,14 @@ class TokenFile: Codable {
     private func process(_: ExtensionDeclaration) {}
 
     private func process(_ decl: ConstantDeclaration) {
-        var accessLevel: AccessLevelModifier? = nil
+        let accessLevel = decl.modifiers.accessLevel
         var name = "NAME"
         var typeName = "TYPE"
         var isOptional = false
         var isArray = false
-        var isStatic = false
+        let isStatic = decl.modifiers.isStatic
 
-        // search for relevant modifiers
-        for modifier in decl.modifiers {
-            switch modifier {
-            case let .accessLevel(value):
-                accessLevel = value
-            case .static:
-                isStatic = true
-            default:
-                SharedLogger.fail("Unsupported modfier: \(modifier)")
-            }
-        }
+        decl.modifiers.verifySupported()
 
         for item in decl.initializerList {
             if case let identPattern as IdentifierPattern = item.pattern {
@@ -553,8 +533,70 @@ class TokenFile: Codable {
 
     private func process(_: DeinitializerDeclaration) {}
 
-    private func process(_: FunctionDeclaration) {
-        // TODO: Prioritize
+    private func process(_ decl: FunctionDeclaration) {
+        let accessLevel = decl.modifiers.accessLevel
+        let name = decl.name.textDescription
+        let isStatic = decl.modifiers.isStatic
+        let throwsKind = decl.signature.throwsKind.textDescription
+        var returnType: String? = nil
+
+        decl.modifiers.verifySupported()
+
+        if let result = decl.signature.result {
+            // TODO: Return type should not include optionality, but this is quick and easy for now
+            returnType = result.type.textDescription
+        }
+
+        guard publicModifiers.contains(accessLevel ?? .internal) else { return }
+        newLine()
+        keyword(value: accessLevel!.textDescription)
+        whitespace()
+        if isStatic {
+            keyword(value: "static")
+            whitespace()
+        }
+        keyword(value: "func")
+        whitespace()
+        lineIdMarker(definitionId: name)
+        member(name: name)
+        punctuation("(")
+        for (idx, param) in decl.signature.parameterList.enumerated() {
+            if let externalName = param.externalName?.textDescription {
+                text(externalName)
+                whitespace()
+            }
+            text(param.localName.textDescription)
+            punctuation(":")
+            whitespace()
+            // TODO: More granularity here to extract the full type
+            let paramType = String(param.typeAnnotation.textDescription.dropFirst(2))
+            type(name: paramType)
+            if let defaultClause = param.defaultArgumentClause {
+                whitespace()
+                punctuation("=")
+                // TODO: Need to improve the granularity here
+                text(defaultClause.textDescription)
+            }
+            if param.isVarargs {
+                SharedLogger.fail("Varargs parameter not currently supported.")
+            }
+            if idx != decl.signature.parameterList.count - 1 {
+                punctuation(",")
+                whitespace()
+            }
+        }
+        punctuation(")")
+        whitespace()
+        if throwsKind != ThrowsKind.nothrowing.textDescription {
+            keyword(value: throwsKind)
+            whitespace()
+        }
+        if let rtype = returnType {
+            text("->")
+            whitespace()
+            // TODO: Link with definition ID
+            type(name: rtype)
+        }
     }
 
     private func process(_: ImportDeclaration) {}
@@ -705,5 +747,43 @@ class TokenFile: Codable {
         default:
             return nil
         }
+    }
+}
+
+extension DeclarationModifiers {
+
+    func verifySupported() {
+        for modifier in self {
+            switch modifier {
+            case .accessLevel, .static:
+                continue
+            default:
+                SharedLogger.fail("Unsupported modifier: \(modifier)")
+            }
+        }
+    }
+
+    var accessLevel: AccessLevelModifier? {
+        for modifier in self {
+            switch modifier {
+            case let .accessLevel(value):
+                return value
+            default:
+                continue
+            }
+        }
+        return nil
+    }
+
+    var isStatic: Bool {
+        for modifier in self {
+            switch modifier {
+            case let .static:
+                return true
+            default:
+                continue
+            }
+        }
+        return false
     }
 }

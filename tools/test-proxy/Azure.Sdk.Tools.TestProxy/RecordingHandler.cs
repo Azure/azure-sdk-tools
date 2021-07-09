@@ -136,7 +136,7 @@ namespace Azure.Sdk.Tools.TestProxy
             var headerListOrig = incomingRequest.Headers.Select(x => String.Format("{0}: {1}", x.Key, x.Value.First())).ToList();
             var headerList = upstreamRequest.Headers.Select(x => String.Format("{0}: {1}", x.Key, x.Value.First())).ToList();
 
-            var body = DecompressBody(await upstreamResponse.Content.ReadAsByteArrayAsync().ConfigureAwait(false), upstreamResponse.Content.Headers);
+            var body = DecompressBody(await upstreamResponse.Content.ReadAsStreamAsync().ConfigureAwait(false), upstreamResponse.Content.Headers);
 
             entry.Response.Body = body.Length == 0 ? null : body;
             entry.StatusCode = (int)upstreamResponse.StatusCode;
@@ -183,14 +183,13 @@ namespace Azure.Sdk.Tools.TestProxy
             return incomingBody;
         }
 
-        private byte[] DecompressBody(byte[] incomingBody, HttpContentHeaders headers)
+        private byte[] DecompressBody(Stream incomingBody, HttpContentHeaders headers)
         {
             if (headers.TryGetValues("Content-Encoding", out var values))
             {
                 if (values.Contains("gzip"))
                 {
-                    using (var compressedStream = new MemoryStream(incomingBody))
-                    using (var uncompressedStream = new GZipStream(compressedStream, CompressionMode.Decompress))
+                    using (var uncompressedStream = new GZipStream(incomingBody, CompressionMode.Decompress))
                     using (var resultStream = new MemoryStream())
                     {
                         uncompressedStream.CopyTo(resultStream);
@@ -199,7 +198,11 @@ namespace Azure.Sdk.Tools.TestProxy
                 }
             }
 
-            return incomingBody;
+            using (MemoryStream ms = new MemoryStream())
+            {
+                incomingBody.CopyTo(ms);
+                return ms.ToArray();
+            }
         }
 
         private HttpRequestMessage CreateUpstreamRequest(HttpRequest incomingRequest, byte[] incomingBody)

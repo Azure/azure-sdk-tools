@@ -40,20 +40,26 @@ public final class ThirdClass : TestProtocol {
     let newtext = "yessur"
 }
 
-
-struct SwiftAPIViewResources : Codable {
+@available(macOS 10.12, *)
+public struct SwiftAPIViewResources : Codable {
     static var text = "Hello, World!"
     public let a = "yessir"
     
 }
 
+@available(macOS 10.12, *)
 public class TestGeneric<T> {
-    
+   
+}
+
+@available(macOS 10.12, *)
+public indirect enum VariableNode<T> {
+    case endpoint(value: T)
+    case node(value: T, next: VariableNode)
 }
 
 
-
-extension SwiftAPIViewResources {
+public extension SwiftAPIViewResources {
     func transition() throws {
         print("I've transitioned")
     }

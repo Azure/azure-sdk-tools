@@ -261,15 +261,142 @@ class TokenFile: Codable {
     }
 
     func process(_ decl: StructDeclaration) {
+        SharedLogger.debug("Struct Declaration")
+        SharedLogger.debug(decl.textDescription)
+        guard publicModifiers.contains(decl.accessLevelModifier ?? .internal) else {
+            return
+        }
+        let value = (decl.accessLevelModifier ?? .internal).textDescription
+        if needsNewLine {
+            newLine()
+        }
+        if !decl.attributes.isEmpty {
+            handle(attributes: decl.attributes)
+        }
         
+        keyword(value: value)
+        whitespace()
+        keyword(value: "struct")
+        whitespace()
+        type(name: decl.name.textDescription)
+        if let genericParam = decl.genericParameterClause {
+            handle(clause: genericParam)
+        }
+        if let inheritance = decl.typeInheritanceClause {
+            handle(clause: inheritance)
+        }
+        if let genericWhere = decl.genericWhereClause {
+            handle(clause: genericWhere)
+        }
+        punctuation("{")
+        indent {
+            for member in decl.members {
+                // TODO: Add members
+                switch member {
+                case .declaration(let decl):
+                    process(decl)
+                default:
+                    continue
+                }
+            }
+        }
+        if needsNewLine {
+            newLine()
+        }
+        punctuation("}")
     }
 
     func process(_ decl: EnumDeclaration) {
-    
+        SharedLogger.debug("Enum Declaration")
+        SharedLogger.debug(decl.textDescription)
+        guard publicModifiers.contains(decl.accessLevelModifier ?? .internal) else {
+            return
+        }
+        let value = (decl.accessLevelModifier ?? .internal).textDescription
+        if needsNewLine {
+            newLine()
+        }
+        if !decl.attributes.isEmpty {
+            handle(attributes: decl.attributes)
+        }
+        if decl.isIndirect {
+            keyword(value: "indirect")
+            whitespace()
+        }
+        keyword(value: value)
+        whitespace()
+        keyword(value: "enum")
+        whitespace()
+        type(name: decl.name.textDescription)
+        if let genericParam = decl.genericParameterClause {
+            handle(clause: genericParam)
+        }
+        if let inheritance = decl.typeInheritanceClause {
+            handle(clause: inheritance)
+        }
+        if let genericWhere = decl.genericWhereClause {
+            handle(clause: genericWhere)
+        }
+        punctuation("{")
+        indent {
+            for member in decl.members {
+                // TODO: Add members
+                switch member {
+                case .declaration(let decl):
+                    process(decl)
+                default:
+                    continue
+                }
+            }
+        }
+        if needsNewLine {
+            newLine()
+        }
+        punctuation("}")
     }
 
     func process(_ decl: ProtocolDeclaration) {
+        SharedLogger.debug("Protocol Declaration")
+        SharedLogger.debug(decl.textDescription)
+        guard publicModifiers.contains(decl.accessLevelModifier ?? .internal) else {
+            return
+        }
+        let value = (decl.accessLevelModifier ?? .internal).textDescription
+        if needsNewLine {
+            newLine()
+        }
+        if !decl.attributes.isEmpty {
+            handle(attributes: decl.attributes)
+        }
         
+        keyword(value: value)
+        whitespace()
+        keyword(value: "protocol")
+        whitespace()
+        type(name: decl.name.textDescription)
+        if let inheritance = decl.typeInheritanceClause {
+            handle(clause: inheritance)
+        }
+        punctuation("{")
+        indent {
+            for member in decl.members {
+                // TODO: Add members
+                switch member {
+                case .property(let decl):
+                    process(decl)
+                case .method(let decl):
+                    process(decl)
+                case .property(let decl):
+                    process(decl)
+                default:
+                    continue
+                }
+            }
+        }
+        if needsNewLine {
+            newLine()
+        }
+        punctuation("}")
     }
     
     func process(_ decl: TypealiasDeclaration) {
@@ -303,8 +430,6 @@ class TokenFile: Codable {
     func process(_ decl: ImportDeclaration) {
         
     }
-    
-
     
     
     func process(_ decl: Declaration) {
@@ -344,6 +469,20 @@ class TokenFile: Codable {
         }
     }
     
+    enum Members {
+        case protocolDeclaration(members: [ProtocolDeclaration.Member])
+        case structDeclaration(members: [StructDeclaration.Member])
+        case classDeclaration(members: [ClassDeclaration.Member])
+        case enumDeclaration(members: [EnumDeclaration.Member])
+        
+        
+    }
+    
+    func process(members: Members) {
+        return
+    }
+    
+    
     func handle(clause typeInheritance: TypeInheritanceClause) {
         var inherits = typeInheritance.textDescription
         inherits.removeFirst()
@@ -366,6 +505,9 @@ class TokenFile: Codable {
         keyword(value: attributes.textDescription)
         newLine()
     }
+    
+    
+    //MARK: Navigation
     
     func navigation(from declarations: [TopLevelDeclaration]) {
         let tags = NavigationTags(typeKind: .assembly)
@@ -435,4 +577,5 @@ class TokenFile: Codable {
           return nil
         }
     }
+    
 }

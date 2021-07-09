@@ -47,7 +47,8 @@ class APIViewManager {
 //        guard let sourcePath = args.source else {
 //            SharedLogger.fail("usage error: SwiftAPIView --source PATH")
 //        }
-        let sourcePath = "/Users/travisprescott/repos/azure-sdk-for-ios/sdk/communication/AzureCommunicationChat/Source/ChatClient.swift"
+        let sourcePath = "/Users/travisprescott/repos/azure-sdk-for-ios/sdk/communication/AzureCommunicationChat/Source"
+        // let sourcePath = "/Users/travisprescott/repos/azure-sdk-tools/src/swift/Sources/SourceCodeExample.swift"
         guard let sourceUrl = URL(string: args.source ?? sourcePath) else {
             SharedLogger.fail("usage error: `--source PATH` was invalid.")
         }
@@ -79,10 +80,31 @@ class APIViewManager {
 
     func buildTokenFile(from sourceUrl: URL) throws {
         SharedLogger.debug("URL: \(sourceUrl.absoluteString)")
-        // TODO: This should loop through all source files instead of targeting one
-        let sourceFile = try SourceReader.read(at: sourceUrl.absoluteString)
-        let parser = Parser(source: sourceFile)
-        let topLevelDecl = try parser.parse()
-        tokenFile.generateTokenFile([topLevelDecl])
+        var declarations = [TopLevelDeclaration]()
+
+        var isDir: ObjCBool = false
+
+
+        guard FileManager.default.fileExists(atPath: sourceUrl.path, isDirectory: &isDir) else {
+            SharedLogger.fail("\(sourceUrl.path) does not exist.")
+        }
+
+        // collect all swift files in a directory (and subdirectories)
+        if isDir.boolValue {
+            let fileEnumerator = FileManager.default.enumerator(atPath: sourceUrl.path)
+            while let itemPath = fileEnumerator?.nextObject() as? String {
+                guard itemPath.hasSuffix(".swift") else { continue }
+                let itemUrl = sourceUrl.appendingPathComponent(itemPath)
+                let sourceFile = try SourceReader.read(at: itemUrl.absoluteString)
+                let topLevelDecl = try Parser(source: sourceFile).parse()
+                declarations.append(topLevelDecl)
+            }
+        } else {
+            // otherwise load a single file
+            let sourceFile = try SourceReader.read(at: sourceUrl.absoluteString)
+            let topLevelDecl = try Parser(source: sourceFile).parse()
+            declarations.append(topLevelDecl)
+        }
+        tokenFile.process(declarations)
     }
 }

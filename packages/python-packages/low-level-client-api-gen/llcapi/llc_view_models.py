@@ -449,6 +449,7 @@ class LLCOperationView(FormattingClass):
                     "responses"
                 ][i]["protocol"]["http"]["statusCodes"]
             )
+            response_num.append("/")
         for i in range(
             0,
             len(
@@ -457,6 +458,7 @@ class LLCOperationView(FormattingClass):
                 )
             ),
         ):
+           
             response_num.append(
                 yaml_data["operationGroups"][op_group_num]["operations"][op_num][
                     "exceptions"

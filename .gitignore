@@ -467,8 +467,6 @@ tools/test-proxy/**/recordings/
 # npm pack artifacts
 *.tgz
 
-
-
 # Visual Studio launch settings (frequently user-specific)
 launchSettings.json
 

@@ -469,7 +469,7 @@ class ProtocolOperationView(FormattingClass):
             ]["language"]["default"]["description"]
 
         return cls(
-            operation_group = yaml_data["operationGroups"][op_group_num]["language"]["default"]["name"],
+            operation_group=yaml_data["operationGroups"][op_group_num]["language"]["default"]["name"],
             operation_name=yaml_data["operationGroups"][op_group_num]["operations"][
                 op_num
             ]["language"]["default"]["name"],

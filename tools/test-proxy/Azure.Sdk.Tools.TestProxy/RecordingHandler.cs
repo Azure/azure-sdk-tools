@@ -152,8 +152,11 @@ namespace Azure.Sdk.Tools.TestProxy
                 entry.Response.Headers.Add(header.Key, values);
             }
 
-            outgoingResponse.Headers.Remove("Transfer-Encoding");
+            if (outgoingResponse.Headers.ContainsKey("Transfer-Encoding"))
+            {
 
+            }
+            
             if (entry.Response.Body?.Length > 0)
             {
                 var bodyData = CompressBody(entry.Response.Body, entry.Response.Headers);

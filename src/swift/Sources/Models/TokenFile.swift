@@ -155,8 +155,11 @@ class TokenFile: Codable {
         indentedCode()
         indentLevel -= indentSpaces
     }
-    
-    func generateTokenFile(_ declarations: [TopLevelDeclaration]) {
+
+    // MARK: Processing Methods
+
+    /// This should be the only process method that APIViewManager should be able to call
+    internal func process(_ declarations: [TopLevelDeclaration]) {
         text("package")
         whitespace()
         text(packageName)
@@ -176,9 +179,7 @@ class TokenFile: Codable {
         navigation(from: declarations)
     }
 
-    // MARK: Processing Methods
-
-    func process(_ decl: TopLevelDeclaration) {
+    private func process(_ decl: TopLevelDeclaration) {
         if needsNewLine  {
             newLine()
         }

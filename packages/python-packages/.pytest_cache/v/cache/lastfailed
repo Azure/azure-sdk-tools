@@ -1,0 +1,9 @@
+{
+  "llc-api-generator/LLC/View/_LLCview.py": true,
+  "llc-api-generator/LLC/_llc_view_models.py": true,
+  "llc-api-generator/LLC/_token.py": true,
+  "llc-api-generator/LLC/parse_yml.py": true,
+  "llc-api-generator/psuedo_start_code.py": true,
+  "parse_yml.py": true,
+  "psuedo_start_code.py": true
+}

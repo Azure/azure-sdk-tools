@@ -1,0 +1,4 @@
+{
+  "setup.py": true,
+  "tox_monorepo/monorepo.py": true
+}

@@ -1,0 +1,6 @@
+chaos-mesh:
+  dashboard:
+    securityMode: false
+  chaosDaemon:
+    runtime: containerd
+    socketPath: /run/containerd/containerd.sock

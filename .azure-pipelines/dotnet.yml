@@ -5,7 +5,7 @@
 trigger:
   branches:
     include:
-      - master
+      - main
       - feature/*
       - release/*
       - hotfix/*
@@ -16,7 +16,7 @@ trigger:
 pr:
   branches:
     include:
-      - master
+      - main
       - feature/*
       - release/*
       - hotfix/*
@@ -29,6 +29,7 @@ resources:
     - repository: azure-sdk-build-tools
       type: git
       name: internal/azure-sdk-build-tools
+      ref: refs/tags/azure-sdk-build-tools_20210603.1
 
 variables:
   DotNetCoreVersion: '3.0.100'
@@ -93,4 +94,4 @@ stages:
               mergeTestResults: true
 
   - ${{ if ne(variables['System.TeamProject'], 'Public') }}:
-    - template: pipelines/stages/net-release-blobfeed.yml@azure-sdk-build-tools
+    - template: pipelines/stages/net-release-to-feed.yml@azure-sdk-build-tools

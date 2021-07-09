@@ -20,73 +20,24 @@ namespace PipelineGenerator.Conventions
         }
 
         public override string SearchPattern => "ci.yml";
-        public override bool IsScheduled => !Context.NoSchedule;
-        public override bool RemoveCITriggers => true;
 
         protected override async Task<bool> ApplyConventionAsync(BuildDefinition definition, SdkComponent component)
         {
-            // NOTE: Not happy with this code at all, I'm going to look for a reasonable
-            // API that can do equality comparisons (without having to do all the checks myself).
-
             var hasChanges = await base.ApplyConventionAsync(definition, component);
 
-            var prTrigger = definition.Triggers.OfType<PullRequestTrigger>().SingleOrDefault();
-
-            if (prTrigger == null)
+            if (EnsureDefautPullRequestTrigger(definition, overrideYaml: true, securePipeline: true))
             {
-                definition.Triggers.Add(new PullRequestTrigger()
-                {
-                    SettingsSourceType = 1,
-                    IsCommentRequiredForPullRequest = true,
-                    BranchFilters = new List<string>()
-                    {
-                        $"+{Context.Branch}"
-                    },
-                    Forks = new Forks()
-                    {
-                        AllowSecrets = true,
-                        Enabled = true
-                    }
-                });
                 hasChanges = true;
             }
-            else
-            {
-                if (prTrigger.SettingsSourceType != 1 ||
-                    prTrigger.IsCommentRequiredForPullRequest != true ||
-                    !prTrigger.BranchFilters.All(bf => bf == $"+{Context.Branch}") ||
-                    prTrigger.Forks.AllowSecrets != true ||
-                    prTrigger.Forks.Enabled != true)
-                {
-                    prTrigger.SettingsSourceType = 1;
-                    prTrigger.IsCommentRequiredForPullRequest = true;
-                    prTrigger.BranchFilters = new List<string>()
-                    {
-                        $"+{Context.Branch}"
-                    };
-                    prTrigger.Forks.AllowSecrets = true;
-                    prTrigger.Forks.Enabled = true;
-                    hasChanges = true;
-                }
-            }
 
-            var ciTrigger = definition.Triggers.OfType<ContinuousIntegrationTrigger>().SingleOrDefault();
-
-            if (ciTrigger == null)
+            if (EnsureDefaultCITrigger(definition))
             {
-                definition.Triggers.Add(new ContinuousIntegrationTrigger()
-                {
-                    SettingsSourceType = 2
-                });
                 hasChanges = true;
             }
-            else
+
+            if (!Context.NoSchedule && EnsureDefaultScheduledTrigger(definition))
             {
-                if (ciTrigger.SettingsSourceType != 2)
-                {
-                    ciTrigger.SettingsSourceType = 2;
-                    hasChanges = true;
-                }
+                hasChanges = true;
             }
 
             return hasChanges;

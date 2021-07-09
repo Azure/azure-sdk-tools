@@ -165,5 +165,5 @@ At the last step in your http client pipeline:
 2. Change the host and port in the URI to the HttpFaultInjector
 
 ## Runnable Sample Clients
-* .NET: https://github.com/Azure/azure-sdk-tools/tree/master/tools/http-fault-injector/sample-clients/net
-* Java: https://github.com/Azure/azure-sdk-tools/tree/master/tools/http-fault-injector/sample-clients/java
+* .NET: https://github.com/Azure/azure-sdk-tools/tree/main/tools/http-fault-injector/sample-clients/net
+* Java: https://github.com/Azure/azure-sdk-tools/tree/main/tools/http-fault-injector/sample-clients/java

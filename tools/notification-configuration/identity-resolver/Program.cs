@@ -10,7 +10,7 @@ namespace identity_resolver
     {
 
         /// <summary>
-        /// Retrieves github<->ms mapping information given the full name of an employee.
+        /// Retrieves github-to-ms mapping information given the full name of an employee.
         /// </summary>
         /// <param name="aadAppIdVar">AAD App ID environment variable name (Kusto access)</param>
         /// <param name="aadAppSecretVar">AAD App Secret environment variable name (Kusto access)</param>

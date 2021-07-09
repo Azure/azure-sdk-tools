@@ -30,7 +30,6 @@ trigger: none
 pr:
   branches:
     include:
-      - master
       - main
   paths:
     include:
@@ -133,7 +132,7 @@ stages:
                           -UserReviewers $(System.PullRequest.Creator)
                           -Assignees $(System.PullRequest.Creator)
                           -PRBody "Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools for PR https://github.com/Azure/azure-sdk-tools/pull/$(System.PullRequest.PullRequestNumber) `
-                          See [eng/common workflow](https://github.com/Azure/azure-sdk-tools/blob/master/eng/common/README.md#workflow)"
+                          See [eng/common workflow](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/README.md#workflow)"
 
                     - pwsh: |
                         $PRData = "Azure;${{ repo }};$(Submitted.PullRequest.Number)"

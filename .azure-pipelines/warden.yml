@@ -1,7 +1,7 @@
 trigger:
   branches:
     include:
-      - master
+      - main
       - feature/*
       - release/*
       - hotfix/*
@@ -12,7 +12,7 @@ trigger:
 pr:
   branches:
     include:
-      - master
+      - main
       - feature/*
       - release/*
       - hotfix/*
@@ -20,11 +20,14 @@ pr:
     include:
       - eng/packages/python-packages/doc-warden
 
+variables:
+- template: /eng/pipelines/templates/variables/globals.yml
+
 jobs:
 - job: 'Build'
 
   pool:
-    vmImage: 'ubuntu-16.04'  
+    vmImage: 'ubuntu-20.04'
 
   steps:
   - task: UsePythonVersion@0
@@ -72,7 +75,7 @@ jobs:
   dependsOn: 'Build'
 
   pool:
-    vmImage: 'ubuntu-16.04'  
+    vmImage: 'ubuntu-20.04'
 
   steps:
 

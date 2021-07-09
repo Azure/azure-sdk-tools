@@ -26,38 +26,30 @@
 import Foundation
 
 @available(macOS 10.12, *)
-public class SwiftClass<T> where T : Codable {
+public class SwiftClass<T> where T: Codable {
     let text = "Yea boi"
 }
 
+public protocol TestProtocol {}
 
-
-public protocol TestProtocol {
-    
-}
-
-public final class ThirdClass : TestProtocol {
+public final class ThirdClass: TestProtocol {
     let newtext = "yessur"
 }
 
 @available(macOS 10.12, *)
-public struct SwiftAPIViewResources : Codable {
+public struct SwiftAPIViewResources: Codable {
     static var text = "Hello, World!"
     public let a = "yessir"
-    
 }
 
 @available(macOS 10.12, *)
-public class TestGeneric<T> {
-   
-}
+public class TestGeneric<T> {}
 
 @available(macOS 10.12, *)
 public indirect enum VariableNode<T> {
     case endpoint(value: T)
     case node(value: T, next: VariableNode)
 }
-
 
 public extension SwiftAPIViewResources {
     func transition() throws {

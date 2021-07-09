@@ -29,7 +29,6 @@ import Foundation
 
 /// The token file that is readable by APIView
 class TokenFile: Codable {
-
     /// The name to be used in the APIView review list
     var name: String
 
@@ -65,8 +64,8 @@ class TokenFile: Codable {
 
     init(name: String, packageName: String, versionString: String) {
         self.name = name
-        self.tokens = []
-        self.navigation = []
+        tokens = []
+        navigation = []
         self.packageName = packageName
         self.versionString = versionString
     }
@@ -149,7 +148,7 @@ class TokenFile: Codable {
         tokens.append(item)
         needsNewLine = true
     }
-    
+
     func indent(_ indentedCode: () -> Void) {
         indentLevel += indentSpaces
         indentedCode()
@@ -170,51 +169,51 @@ class TokenFile: Codable {
                 process(topLevelDecl)
             }
         }
-        if needsNewLine  {
+        if needsNewLine {
             newLine()
         }
         punctuation("}")
         newLine()
-        
+
         navigation(from: declarations)
     }
 
     private func process(_ decl: TopLevelDeclaration) {
-        if needsNewLine  {
+        if needsNewLine {
             newLine()
         }
         for statement in decl.statements {
             switch statement {
             case let decl as ClassDeclaration:
-              process(decl)
+                process(decl)
             case let decl as ConstantDeclaration:
-              process(decl)
+                process(decl)
             case let decl as DeinitializerDeclaration:
-              process(decl)
+                process(decl)
             case let decl as EnumDeclaration:
-              process(decl)
+                process(decl)
             case let decl as ExtensionDeclaration:
-              process(decl)
+                process(decl)
             case let decl as FunctionDeclaration:
-              process(decl)
+                process(decl)
             case let decl as ImportDeclaration:
-              process(decl)
+                process(decl)
             case let decl as InitializerDeclaration:
-              process(decl)
+                process(decl)
             case let decl as OperatorDeclaration:
-              continue // process(decl)
+                continue // process(decl)
             case let decl as PrecedenceGroupDeclaration:
-              continue // process(decl)
+                continue // process(decl)
             case let decl as ProtocolDeclaration:
-              process(decl)
+                process(decl)
             case let decl as StructDeclaration:
-              process(decl)
+                process(decl)
             case let decl as SubscriptDeclaration:
-              continue // process(decl)
+                continue // process(decl)
             case let decl as TypealiasDeclaration:
-              process(decl)
+                process(decl)
             case let decl as VariableDeclaration:
-              process(decl)
+                process(decl)
             default:
                 continue
             }
@@ -262,9 +261,8 @@ class TokenFile: Codable {
         punctuation("{")
         indent {
             for member in decl.members {
-                // TODO: Add members
                 switch member {
-                case .declaration(let decl):
+                case let .declaration(decl):
                     process(decl)
                 default:
                     continue
@@ -313,9 +311,8 @@ class TokenFile: Codable {
         punctuation("{")
         indent {
             for member in decl.members {
-                // TODO: Add members
                 switch member {
-                case .declaration(let decl):
+                case let .declaration(decl):
                     process(decl)
                 default:
                     continue
@@ -365,9 +362,8 @@ class TokenFile: Codable {
         punctuation("{")
         indent {
             for member in decl.members {
-                // TODO: Add members
                 switch member {
-                case .declaration(let decl):
+                case let .declaration(decl):
                     process(decl)
                 default:
                     continue
@@ -395,83 +391,219 @@ class TokenFile: Codable {
         }
     }
 
-    private func process(_ decl: TypealiasDeclaration) {
-        
-    }
-    
+    private func process(_: TypealiasDeclaration) {}
+
     private func process(_ decl: VariableDeclaration) {
-        
+        var accessLevel: AccessLevelModifier? = nil
+        var name = "NAME"
+        var typeName = "TYPE"
+        var isOptional = false
+        var isArray = false
+        var isStatic = false
+
+        // search for relevant modifiers
+        for modifier in decl.modifiers {
+            switch modifier {
+            case let .accessLevel(value):
+                accessLevel = value
+            case .static:
+                isStatic = true
+            default:
+                SharedLogger.fail("Unsupported modfier: \(modifier)")
+            }
+        }
+
+        switch decl.body {
+        case let .initializerList(initializerList):
+            for item in initializerList {
+                if case let identPattern as IdentifierPattern = item.pattern {
+
+                    name = identPattern.identifier.textDescription
+
+                    if let typeAnnotation = identPattern.typeAnnotation?.type {
+                        if case let typeAnno as OptionalType = typeAnnotation {
+                            isOptional = true
+                            if case let identifier as TypeIdentifier = typeAnno.wrappedType {
+                                typeName = identifier.names.first!.name.textDescription
+                            } else if case let identifier as ArrayType = typeAnno.wrappedType {
+                                isArray = true
+                                typeName = identifier.elementType.textDescription
+                            } else {
+                                SharedLogger.fail("Unsupported identifier: \(typeAnno.wrappedType)")
+                            }
+                        } else {
+                            if case let identifier as TypeIdentifier = typeAnnotation {
+                                typeName = identifier.names.first!.name.textDescription
+                            } else if case let identifier as ArrayType = typeAnnotation {
+                                isArray = true
+                                typeName = identifier.elementType.textDescription
+                            } else {
+                                SharedLogger.fail("Unsupported identifier: \(typeAnnotation)")
+                            }
+                        }
+                    }
+                }
+            }
+        case let .codeBlock(ident, typeAnno, _):
+            typeName = typeAnno.textDescription
+            name = ident.textDescription
+        default:
+            SharedLogger.fail("Unsupported variable body type: \(decl.body)")
+        }
+
+        guard publicModifiers.contains(accessLevel ?? .internal) else { return }
+        newLine()
+        keyword(value: accessLevel!.textDescription)
+        whitespace()
+        if isStatic {
+            keyword(value: "static")
+            whitespace()
+        }
+        keyword(value: "var")
+        whitespace()
+        lineIdMarker(definitionId: name)
+        member(name: name)
+        punctuation(":")
+        whitespace()
+        if isArray { punctuation("[") }
+        type(name: typeName)
+        if isArray { punctuation("]") }
+        if isOptional {
+            punctuation("?")
+        }
     }
-    
-    private func process(_ decl: ExtensionDeclaration) {
-        
-    }
-    
+
+    private func process(_: ExtensionDeclaration) {}
+
     private func process(_ decl: ConstantDeclaration) {
-        
+        var accessLevel: AccessLevelModifier? = nil
+        var name = "NAME"
+        var typeName = "TYPE"
+        var isOptional = false
+        var isArray = false
+        var isStatic = false
+
+        // search for relevant modifiers
+        for modifier in decl.modifiers {
+            switch modifier {
+            case let .accessLevel(value):
+                accessLevel = value
+            case .static:
+                isStatic = true
+            default:
+                SharedLogger.fail("Unsupported modfier: \(modifier)")
+            }
+        }
+
+        for item in decl.initializerList {
+            if case let identPattern as IdentifierPattern = item.pattern {
+
+                name = identPattern.identifier.textDescription
+
+                if let typeAnnotation = identPattern.typeAnnotation?.type {
+                    if case let typeAnno as OptionalType = typeAnnotation {
+                        isOptional = true
+                        if case let identifier as TypeIdentifier = typeAnno.wrappedType {
+                            typeName = identifier.names.first!.name.textDescription
+                        } else if case let identifier as ArrayType = typeAnno.wrappedType {
+                            isArray = true
+                            typeName = identifier.elementType.textDescription
+                        } else {
+                            SharedLogger.fail("Unsupported identifier: \(typeAnno.wrappedType)")
+                        }
+                    } else {
+                        if case let identifier as TypeIdentifier = typeAnnotation {
+                            typeName = identifier.names.first!.name.textDescription
+                        } else if case let identifier as ArrayType = typeAnnotation {
+                            isArray = true
+                            typeName = identifier.elementType.textDescription
+                        } else {
+                            SharedLogger.fail("Unsupported identifier: \(typeAnnotation)")
+                        }
+                    }
+                }
+            }
+        }
+
+        guard publicModifiers.contains(accessLevel ?? .internal) else { return }
+        newLine()
+        keyword(value: accessLevel!.textDescription)
+        whitespace()
+        if isStatic {
+            keyword(value: "static")
+            whitespace()
+        }
+        keyword(value: "let")
+        whitespace()
+        lineIdMarker(definitionId: name)
+        member(name: name)
+        punctuation(":")
+        whitespace()
+        if isArray { punctuation("[") }
+        type(name: typeName)
+        if isArray { punctuation("]") }
+        if isOptional {
+            punctuation("?")
+        }
     }
-    
-    private func process(_ decl: InitializerDeclaration) {
-        
+
+    private func process(_: InitializerDeclaration) {
+        // TODO: Prioritize
     }
-    
-    private func process(_ decl: DeinitializerDeclaration) {
-        
+
+    private func process(_: DeinitializerDeclaration) {}
+
+    private func process(_: FunctionDeclaration) {
+        // TODO: Prioritize
     }
-    
-    private func process(_ decl: FunctionDeclaration) {
-        
-    }
-    
-    private func process(_ decl: ImportDeclaration) {
-        
-    }
+
+    private func process(_: ImportDeclaration) {}
 
     private func process(_ decl: Declaration) {
         switch decl {
         case let decl as ClassDeclaration:
-          return process(decl)
+            return process(decl)
         case let decl as ConstantDeclaration:
-          return process(decl)
+            return process(decl)
         case let decl as DeinitializerDeclaration:
-          return process(decl)
+            return process(decl)
         case let decl as EnumDeclaration:
-          return process(decl)
+            return process(decl)
         case let decl as ExtensionDeclaration:
-          return process(decl)
+            return process(decl)
         case let decl as FunctionDeclaration:
-          return process(decl)
+            return process(decl)
         case let decl as ImportDeclaration:
-          return process(decl)
+            return process(decl)
         case let decl as InitializerDeclaration:
-          return process(decl)
+            return process(decl)
         case let decl as OperatorDeclaration:
-          return // process(decl)
+            return // process(decl)
         case let decl as PrecedenceGroupDeclaration:
-          return // process(decl)
+            return // process(decl)
         case let decl as ProtocolDeclaration:
-          return process(decl)
+            return process(decl)
         case let decl as StructDeclaration:
-          return process(decl)
+            return process(decl)
         case let decl as SubscriptDeclaration:
-          return // process(decl)
+            return // process(decl)
         case let decl as TypealiasDeclaration:
-          return process(decl)
+            return process(decl)
         case let decl as VariableDeclaration:
-          return process(decl)
+            return process(decl)
         default:
-          return // no implementation for this declaration, just continue
+            return // no implementation for this declaration, just continue
         }
     }
-    
+
     private enum Members {
         case protocolDeclaration(members: [ProtocolDeclaration.Member])
         case structDeclaration(members: [StructDeclaration.Member])
         case classDeclaration(members: [ClassDeclaration.Member])
         case enumDeclaration(members: [EnumDeclaration.Member])
     }
-    
-    private func process(members: Members) {
+
+    private func process(members _: Members) {
         return
     }
 
@@ -482,18 +614,18 @@ class TokenFile: Codable {
         type(name: inherits)
         whitespace()
     }
-    
+
     private func handle(clause genericParam: GenericParameterClause) {
         text(genericParam.textDescription)
         whitespace()
     }
-    
+
     private func handle(clause genericWhere: GenericWhereClause) {
         text(genericWhere.textDescription)
         whitespace()
     }
-    
-    private func handle(attributes : Attributes) {
+
+    private func handle(attributes: Attributes) {
         keyword(value: attributes.textDescription)
         newLine()
     }
@@ -514,11 +646,11 @@ class TokenFile: Codable {
             let item = navigation(from: decl)
             packageNavItem.childItems += item
         }
-        self.navigation = [packageNavItem]
+        navigation = [packageNavItem]
     }
-    
+
     private func navigation(from decl: TopLevelDeclaration) -> [NavigationItem] {
-        var navItems : [NavigationItem] = []
+        var navItems: [NavigationItem] = []
         decl.statements.forEach { stmt in
             if let item = navigation(from: stmt) {
                 navItems.append(item)
@@ -526,38 +658,38 @@ class TokenFile: Codable {
         }
         return navItems
     }
-    
+
     private func navigation(from decl: ClassDeclaration) -> NavigationItem? {
         let navItem = NavigationItem(text: decl.name.textDescription, navigationId: nil, typeKind: .class)
         decl.members.forEach { member in
             switch member {
-            case .declaration(var decl):
+            case var .declaration(decl):
                 if let item = navigation(from: decl) {
                     navItem.childItems.append(item)
                 }
-            case .compilerControl(_):
+            case .compilerControl:
                 return
             }
         }
         return navItem
     }
-    
-    private func navigation(from decl: StructDeclaration) -> NavigationItem? {
-        return nil
-    }
-    
-    private func navigation(from decl: EnumDeclaration) -> NavigationItem? {
+
+    private func navigation(from _: StructDeclaration) -> NavigationItem? {
         return nil
     }
 
-    private func navigation(from decl: ProtocolDeclaration) -> NavigationItem? {
+    private func navigation(from _: EnumDeclaration) -> NavigationItem? {
         return nil
     }
-    
-    private func navigation(from decl: ExtensionDeclaration) -> NavigationItem? {
+
+    private func navigation(from _: ProtocolDeclaration) -> NavigationItem? {
         return nil
     }
-    
+
+    private func navigation(from _: ExtensionDeclaration) -> NavigationItem? {
+        return nil
+    }
+
     private func navigation(from decl: Statement) -> NavigationItem? {
         switch decl {
         case let decl as ClassDeclaration:
@@ -571,7 +703,7 @@ class TokenFile: Codable {
         case let decl as StructDeclaration:
             return navigation(from: decl)
         default:
-          return nil
+            return nil
         }
     }
 }

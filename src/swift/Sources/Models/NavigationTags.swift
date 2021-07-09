@@ -42,7 +42,7 @@ struct NavigationTags: Codable {
     var typeKind: NavigationTypeKind?
 
     // MARK: Codable
-    
+
     enum CodingKeys: String, CodingKey {
         case typeKind = "TypeKind"
     }

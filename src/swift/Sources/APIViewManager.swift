@@ -38,8 +38,6 @@ class APIViewManager {
     let args = CommandLineArguments()
     var tokenFile = TokenFile(name: "TestFile", packageName: "TestFile", versionString: "abc")
 
-    
-
     // MARK: Methods
 
     func run() throws {

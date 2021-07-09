@@ -16,6 +16,8 @@ jobs:
   - job: CleanUp
     pool:
       vmImage: windows-2019
+    variables:
+      - template: ./templates/variables/globals.yml
     steps:
       - ${{ each repo in parameters.Repos }}:
         - task: PowerShell@2

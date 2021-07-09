@@ -10,6 +10,7 @@ trigger:
       - src/dotnet/APIView
       - src/java/apiview-java-processor
       - packages/python-packages/api-stub-generator
+      - packages/python-packages/protocol-stub-generator
 
 pr:
   branches:
@@ -23,6 +24,7 @@ pr:
       - src/dotnet/APIView
       - src/java/apiview-java-processor
       - packages/python-packages/api-stub-generator
+      - packages/python-packages/protocol-stub-generator
 
 variables:
   DotNetCoreVersion: '5.x'
@@ -33,6 +35,7 @@ variables:
   NodeVersion: '12.x'
   BuildConfiguration: 'Release'
   PythonParserPackagePath: 'packages/python-packages/api-stub-generator'
+  ProtocolParserPackagePath: 'packages/python-packages/protocol-stub-generator'
   TypeScriptGeneratorDirectory: 'src/ts/ts-genapi'
   GoParserPackagePath: 'src/go'
   GoVersion: '1.15'
@@ -100,7 +103,8 @@ stages:
 
           - pwsh: |
               copy-item -Path $(PythonParserPackagePath) -Destination $(Build.ArtifactStagingDirectory)/APIViewWeb/api-stub-generator -Recurse -Force
-            displayName: 'Bundle Python API Parser'
+              copy-item -Path $(ProtocolParserPackagePath) -Destination $(Build.ArtifactStagingDirectory)/APIViewWeb/protocol-stub-generator -Recurse -Force
+            displayName: 'Bundle API Parsers'
 
           - script: |
               go build -o $(Build.ArtifactStagingDirectory)/APIViewWeb

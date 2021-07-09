@@ -82,7 +82,7 @@ class APIViewManager {
         let sourceFile = try SourceReader.read(at: sourceUrl.absoluteString)
         let parser = Parser(source: sourceFile)
         let topLevelDecl = try parser.parse()
-        tokenFile.process(topLevelDecl)
+        tokenFile.generateTokenFile([topLevelDecl])
     }
 
     

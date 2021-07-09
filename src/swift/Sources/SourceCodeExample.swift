@@ -25,11 +25,18 @@
 // --------------------------------------------------------------------------
 import Foundation
 
-public class SwiftClass {
+@available(macOS 10.12, *)
+public class SwiftClass<T> where T : Codable {
     let text = "Yea boi"
 }
 
-public class ThirdClass : SwiftClass {
+
+
+public protocol TestProtocol {
+    
+}
+
+public final class ThirdClass : TestProtocol {
     let newtext = "yessur"
 }
 
@@ -40,9 +47,10 @@ struct SwiftAPIViewResources : Codable {
     
 }
 
-protocol testProtocol : Codable {
+public class TestGeneric<T> {
     
 }
+
 
 
 extension SwiftAPIViewResources {

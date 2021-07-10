@@ -275,8 +275,6 @@ class TokenFile: Codable {
             newLine()
         }
         punctuation("}")
-
-        navigation(add: NavigationItem(text: defId, navigationId: defId, typeKind: .class))
     }
 
     private func process(_ decl: StructDeclaration) {
@@ -324,7 +322,7 @@ class TokenFile: Codable {
         }
         punctuation("}")
     }
-
+    
     private func process(_ decl: EnumDeclaration) {
         SharedLogger.debug("Enum Declaration")
         SharedLogger.debug(decl.textDescription)
@@ -347,6 +345,7 @@ class TokenFile: Codable {
         keyword(value: "enum")
         whitespace()
         type(name: decl.name.textDescription)
+        whitespace()
         if let genericParam = decl.genericParameterClause {
             handle(clause: genericParam)
         }
@@ -358,14 +357,8 @@ class TokenFile: Codable {
         }
         punctuation("{")
         indent {
-            for member in decl.members {
-                // TODO: Add members
-                switch member {
-                case .declaration(let decl):
-                    process(decl)
-                default:
-                    continue
-                }
+            decl.members.forEach { member in
+                // TODO: Need to complete this
             }
         }
         if needsNewLine {
@@ -387,6 +380,26 @@ class TokenFile: Codable {
         if !decl.attributes.isEmpty {
             handle(attributes: decl.attributes)
         }
+        keyword(value: value)
+        whitespace()
+        keyword(value: "protocol")
+        whitespace()
+        type(name: decl.name.textDescription)
+        whitespace()
+        if let inheritance = decl.typeInheritanceClause {
+            handle(clause: inheritance)
+        }
+        punctuation("{")
+        indent {
+            decl.members.forEach { member in
+                // TODO: Need to complete this
+            }
+        }
+        if needsNewLine {
+            newLine()
+        }
+        punctuation("}")
+        
     }
 
     private func process(_ decl: TypealiasDeclaration) {
@@ -398,7 +411,41 @@ class TokenFile: Codable {
     }
     
     private func process(_ decl: ExtensionDeclaration) {
-        
+        SharedLogger.debug("Extension Declaration")
+        SharedLogger.debug(decl.type.textDescription)
+        guard publicModifiers.contains(decl.accessLevelModifier ?? .internal) else {
+            return
+        }
+        let value = (decl.accessLevelModifier ?? .internal).textDescription
+        if needsNewLine {
+            newLine()
+        }
+        if !decl.attributes.isEmpty {
+            handle(attributes: decl.attributes)
+        }
+        keyword(value: value)
+        whitespace()
+        keyword(value: "extension")
+        whitespace()
+        type(name: decl.type.textDescription)
+        whitespace()
+        if let inheritance = decl.typeInheritanceClause {
+            handle(clause: inheritance)
+        }
+        if let genericWhere = decl.genericWhereClause {
+            handle(clause: genericWhere)
+        }
+        punctuation("{")
+        indent {
+            decl.members.forEach { member in
+                // TODO: Need to complete this
+                
+            }
+        }
+        if needsNewLine {
+            newLine()
+        }
+        punctuation("}")
     }
     
     private func process(_ decl: ConstantDeclaration) {
@@ -418,7 +465,9 @@ class TokenFile: Codable {
     }
     
     private func process(_ decl: ImportDeclaration) {
-        
+        if !decl.attributes.isEmpty {
+            handle(attributes: decl.attributes)
+        }
     }
 
     private func process(_ decl: Declaration) {

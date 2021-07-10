@@ -284,13 +284,16 @@ class TokenFile: Codable {
             return
         }
         let value = (decl.accessLevelModifier ?? .internal).textDescription
+        let defId = decl.name.textDescription
+
         if needsNewLine {
             newLine()
         }
         if !decl.attributes.isEmpty {
             handle(attributes: decl.attributes)
         }
-        
+
+        lineIdMarker(definitionId: defId)
         keyword(value: value)
         whitespace()
         keyword(value: "struct")
@@ -330,6 +333,8 @@ class TokenFile: Codable {
             return
         }
         let value = (decl.accessLevelModifier ?? .internal).textDescription
+        let defId = decl.name.textDescription
+
         if needsNewLine {
             newLine()
         }
@@ -340,6 +345,7 @@ class TokenFile: Codable {
             keyword(value: "indirect")
             whitespace()
         }
+        lineIdMarker(definitionId: defId)
         keyword(value: value)
         whitespace()
         keyword(value: "enum")

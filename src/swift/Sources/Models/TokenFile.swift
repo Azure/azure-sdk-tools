@@ -218,6 +218,7 @@ class TokenFile: Codable {
             default:
                 continue
             }
+            
         }
     }
 
@@ -265,6 +266,7 @@ class TokenFile: Codable {
                 // TODO: Add members
                 switch member {
                 case .declaration(let decl):
+                    newLine()
                     process(decl)
                 default:
                     continue
@@ -467,13 +469,45 @@ class TokenFile: Codable {
     }
     
     private func process(_ decl: FunctionDeclaration) {
+        SharedLogger.debug("Function Declaration")
+        SharedLogger.debug(decl.sourceLocation.description)
+        SharedLogger.debug(decl.genericParameterClause?.textDescription  ?? "")
+        SharedLogger.debug(decl.signature.result?.textDescription)
+        SharedLogger.debug(decl.signature.parameterList[0].textDescription)
+        SharedLogger.debug(decl.signature.parameterList[0].localName.textDescription)
+        SharedLogger.debug(decl.signature.parameterList[0].typeAnnotation.textDescription)
         
-    }
-    
-    private func process(_ decl: ImportDeclaration) {
+        guard hasPublic(modifiers: decl.modifiers) == true else {
+            return
+        }
         if !decl.attributes.isEmpty {
             handle(attributes: decl.attributes)
         }
+        handle(modifiers: decl.modifiers)
+        keyword(value: "func")
+        whitespace()
+        type(name: decl.name.textDescription, definitionId: decl.sourceLocation.description)
+        whitespace()
+        if let genericParam = decl.genericParameterClause {
+            handle(clause: genericParam)
+        }
+        handle(signature: decl.signature)
+    }
+    
+    private func process(_ decl: ImportDeclaration) {
+        SharedLogger.debug("Import Declaration")
+        if !decl.attributes.isEmpty {
+            handle(attributes: decl.attributes)
+        }
+        keyword(value: "import")
+        whitespace()
+        if let kind = decl.kind {
+            keyword(value: kind.rawValue)
+            whitespace()
+        }
+        let pathText = decl.path.map({ $0.textDescription }).joined(separator: ".")
+        SharedLogger.debug(pathText)
+        type(name: pathText)
     }
 
     private func process(_ decl: Declaration) {
@@ -524,6 +558,82 @@ class TokenFile: Codable {
         return
     }
 
+    private func hasPublic(modifiers: DeclarationModifiers) -> Bool {
+        for modifier in modifiers {
+            switch modifier {
+            case .accessLevel(let modifier):
+                switch modifier {
+                case .public, .publicSet:
+                    return true
+                default:
+                    continue
+                }
+            default:
+                continue
+            }
+        }
+        return false
+    }
+    
+    private func handle(modifiers: DeclarationModifiers) {
+        keyword(value: modifiers.textDescription)
+        whitespace()
+    }
+    
+    private func handle(signature: FunctionSignature) {
+        func handle(parameter: FunctionSignature.Parameter) {
+            let externalNameText = parameter.externalName.map({ [$0.textDescription] }) ?? []
+            let localNameText = parameter.localName.textDescription.isEmpty ? [] : [parameter.localName.textDescription]
+            let nameText = (externalNameText + localNameText).joined(separator: " ")
+            var typeAnnoText = parameter.typeAnnotation.textDescription
+            typeAnnoText.removeFirst()
+            let defaultText =
+                parameter.defaultArgumentClause.map({ " = \($0.textDescription)" }) ?? ""
+            let varargsText = parameter.isVarargs ? "..." : ""
+            member(name: nameText)
+            text(":")
+            type(name: typeAnnoText)
+            stringLiteral(defaultText)
+            text(varargsText)
+        }
+        
+        func handle(throws: ThrowsKind) {
+            switch `throws` {
+            case .throwing, .rethrowing:
+                keyword(value: `throws`.textDescription)
+                whitespace()
+            default:
+                return
+            }
+        }
+        
+        func handle(result: FunctionResult?) {
+            guard let result = result else {
+                return
+            }
+            var resultText = result.textDescription
+            resultText.removeFirst(); resultText.removeFirst()
+            text("->")
+            whitespace()
+            type(name: resultText)
+        }
+        text("(")
+        var count = signature.parameterList.count - 1
+        signature.parameterList.forEach { parameter in
+            handle(parameter: parameter)
+            if count > 0 {
+                text(",")
+                whitespace()
+                count -= 1
+            }
+        }
+        text(")")
+        whitespace()
+        handle(throws: signature.throwsKind)
+        handle(result: signature.result)
+        
+    }
+    
     private func handle(clause typeInheritance: TypeInheritanceClause) {
         var inherits = typeInheritance.textDescription
         inherits.removeFirst()
@@ -541,6 +651,8 @@ class TokenFile: Codable {
         text(genericWhere.textDescription)
         whitespace()
     }
+    
+    
     
     private func handle(attributes : Attributes) {
         keyword(value: attributes.textDescription)

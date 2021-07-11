@@ -26,14 +26,23 @@
 import Foundation
 
 @available(macOS 10.12, *)
-public class SwiftClass<T> where T: Codable {
-    let text = "Yea boi"
+public class SwiftClass<T> where T : Codable {
+    let text : String = "Yea boi"
+    public func test(name: String) throws -> Bool {
+        return true
+    }
 }
 
 public protocol TestProtocol {}
 
-public final class ThirdClass: TestProtocol {
-    let newtext = "yessur"
+
+
+public protocol TestProtocol {
+    
+}
+
+public final class ThirdClass : TestProtocol {
+
 }
 
 @available(macOS 10.12, *)

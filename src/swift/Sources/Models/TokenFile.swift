@@ -217,6 +217,7 @@ class TokenFile: Codable {
             default:
                 continue
             }
+            
         }
     }
 
@@ -262,7 +263,8 @@ class TokenFile: Codable {
         indent {
             for member in decl.members {
                 switch member {
-                case let .declaration(decl):
+                case .declaration(let decl):
+                    newLine()
                     process(decl)
                 default:
                     continue
@@ -273,8 +275,6 @@ class TokenFile: Codable {
             newLine()
         }
         punctuation("}")
-
-        navigation(add: NavigationItem(text: defId, navigationId: defId, typeKind: .class))
     }
 
     private func process(_ decl: StructDeclaration) {
@@ -324,7 +324,7 @@ class TokenFile: Codable {
         }
         punctuation("}")
     }
-
+    
     private func process(_ decl: EnumDeclaration) {
         SharedLogger.debug("Enum Declaration")
         SharedLogger.debug(decl.textDescription)
@@ -350,6 +350,7 @@ class TokenFile: Codable {
         keyword(value: "enum")
         whitespace()
         type(name: decl.name.textDescription)
+        whitespace()
         if let genericParam = decl.genericParameterClause {
             handle(clause: genericParam)
         }
@@ -389,6 +390,26 @@ class TokenFile: Codable {
         if !decl.attributes.isEmpty {
             handle(attributes: decl.attributes)
         }
+        keyword(value: value)
+        whitespace()
+        keyword(value: "protocol")
+        whitespace()
+        type(name: decl.name.textDescription)
+        whitespace()
+        if let inheritance = decl.typeInheritanceClause {
+            handle(clause: inheritance)
+        }
+        punctuation("{")
+        indent {
+            decl.members.forEach { member in
+                // TODO: Need to complete this
+            }
+        }
+        if needsNewLine {
+            newLine()
+        }
+        punctuation("}")
+        
     }
 
     private func process(_: TypealiasDeclaration) {}
@@ -462,8 +483,44 @@ class TokenFile: Codable {
             punctuation("?")
         }
     }
-
-    private func process(_: ExtensionDeclaration) {}
+    
+    private func process(_ decl: ExtensionDeclaration) {
+        SharedLogger.debug("Extension Declaration")
+        SharedLogger.debug(decl.type.textDescription)
+        guard publicModifiers.contains(decl.accessLevelModifier ?? .internal) else {
+            return
+        }
+        let value = (decl.accessLevelModifier ?? .internal).textDescription
+        if needsNewLine {
+            newLine()
+        }
+        if !decl.attributes.isEmpty {
+            handle(attributes: decl.attributes)
+        }
+        keyword(value: value)
+        whitespace()
+        keyword(value: "extension")
+        whitespace()
+        type(name: decl.type.textDescription)
+        whitespace()
+        if let inheritance = decl.typeInheritanceClause {
+            handle(clause: inheritance)
+        }
+        if let genericWhere = decl.genericWhereClause {
+            handle(clause: genericWhere)
+        }
+        punctuation("{")
+        indent {
+            decl.members.forEach { member in
+                // TODO: Need to complete this
+                
+            }
+        }
+        if needsNewLine {
+            newLine()
+        }
+        punctuation("}")
+    }
 
     private func process(_ decl: ConstantDeclaration) {
         let accessLevel = decl.modifiers.accessLevel
@@ -534,69 +591,46 @@ class TokenFile: Codable {
     private func process(_: DeinitializerDeclaration) {}
 
     private func process(_ decl: FunctionDeclaration) {
-        let accessLevel = decl.modifiers.accessLevel
-        let name = decl.name.textDescription
-        let isStatic = decl.modifiers.isStatic
-        let throwsKind = decl.signature.throwsKind.textDescription
-        var returnType: String? = nil
-
-        decl.modifiers.verifySupported()
-
-        if let result = decl.signature.result {
-            // TODO: Return type should not include optionality, but this is quick and easy for now
-            returnType = result.type.textDescription
+        SharedLogger.debug("Function Declaration")
+        SharedLogger.debug(decl.sourceLocation.description)
+        SharedLogger.debug(decl.genericParameterClause?.textDescription  ?? "")
+        SharedLogger.debug(decl.signature.result?.textDescription)
+        SharedLogger.debug(decl.signature.parameterList[0].textDescription)
+        SharedLogger.debug(decl.signature.parameterList[0].localName.textDescription)
+        SharedLogger.debug(decl.signature.parameterList[0].typeAnnotation.textDescription)
+        
+        guard hasPublic(modifiers: decl.modifiers) == true else {
+            return
         }
-
-        guard publicModifiers.contains(accessLevel ?? .internal) else { return }
-        newLine()
-        keyword(value: accessLevel!.textDescription)
-        whitespace()
-        if isStatic {
-            keyword(value: "static")
-            whitespace()
+        if !decl.attributes.isEmpty {
+            handle(attributes: decl.attributes)
         }
+        handle(modifiers: decl.modifiers)
         keyword(value: "func")
-        whitespace()
         lineIdMarker(definitionId: name)
-        member(name: name)
-        punctuation("(")
-        for (idx, param) in decl.signature.parameterList.enumerated() {
-            if let externalName = param.externalName?.textDescription {
-                text(externalName)
-                whitespace()
-            }
-            text(param.localName.textDescription)
-            punctuation(":")
-            whitespace()
-            // TODO: More granularity here to extract the full type
-            let paramType = String(param.typeAnnotation.textDescription.dropFirst(2))
-            type(name: paramType)
-            if let defaultClause = param.defaultArgumentClause {
-                whitespace()
-                punctuation("=")
-                // TODO: Need to improve the granularity here
-                text(defaultClause.textDescription)
-            }
-            if param.isVarargs {
-                SharedLogger.fail("Varargs parameter not currently supported.")
-            }
-            if idx != decl.signature.parameterList.count - 1 {
-                punctuation(",")
-                whitespace()
-            }
-        }
-        punctuation(")")
         whitespace()
-        if throwsKind != ThrowsKind.nothrowing.textDescription {
-            keyword(value: throwsKind)
+        type(name: decl.name.textDescription, definitionId: decl.sourceLocation.description)
+        whitespace()
+        if let genericParam = decl.genericParameterClause {
+            handle(clause: genericParam)
+        }
+        handle(signature: decl.signature)
+    }
+    
+    private func process(_ decl: ImportDeclaration) {
+        SharedLogger.debug("Import Declaration")
+        if !decl.attributes.isEmpty {
+            handle(attributes: decl.attributes)
+        }
+        keyword(value: "import")
+        whitespace()
+        if let kind = decl.kind {
+            keyword(value: kind.rawValue)
             whitespace()
         }
-        if let rtype = returnType {
-            text("->")
-            whitespace()
-            // TODO: Link with definition ID
-            type(name: rtype)
-        }
+        let pathText = decl.path.map({ $0.textDescription }).joined(separator: ".")
+        SharedLogger.debug(pathText)
+        type(name: pathText)
     }
 
     private func process(_: ImportDeclaration) {}
@@ -649,6 +683,82 @@ class TokenFile: Codable {
         return
     }
 
+    private func hasPublic(modifiers: DeclarationModifiers) -> Bool {
+        for modifier in modifiers {
+            switch modifier {
+            case .accessLevel(let modifier):
+                switch modifier {
+                case .public, .publicSet:
+                    return true
+                default:
+                    continue
+                }
+            default:
+                continue
+            }
+        }
+        return false
+    }
+    
+    private func handle(modifiers: DeclarationModifiers) {
+        keyword(value: modifiers.textDescription)
+        whitespace()
+    }
+    
+    private func handle(signature: FunctionSignature) {
+        func handle(parameter: FunctionSignature.Parameter) {
+            let externalNameText = parameter.externalName.map({ [$0.textDescription] }) ?? []
+            let localNameText = parameter.localName.textDescription.isEmpty ? [] : [parameter.localName.textDescription]
+            let nameText = (externalNameText + localNameText).joined(separator: " ")
+            var typeAnnoText = parameter.typeAnnotation.textDescription
+            typeAnnoText.removeFirst()
+            let defaultText =
+                parameter.defaultArgumentClause.map({ " = \($0.textDescription)" }) ?? ""
+            let varargsText = parameter.isVarargs ? "..." : ""
+            member(name: nameText)
+            text(":")
+            type(name: typeAnnoText)
+            stringLiteral(defaultText)
+            text(varargsText)
+        }
+        
+        func handle(throws: ThrowsKind) {
+            switch `throws` {
+            case .throwing, .rethrowing:
+                keyword(value: `throws`.textDescription)
+                whitespace()
+            default:
+                return
+            }
+        }
+        
+        func handle(result: FunctionResult?) {
+            guard let result = result else {
+                return
+            }
+            var resultText = result.textDescription
+            resultText.removeFirst(); resultText.removeFirst()
+            text("->")
+            whitespace()
+            type(name: resultText)
+        }
+        text("(")
+        var count = signature.parameterList.count - 1
+        signature.parameterList.forEach { parameter in
+            handle(parameter: parameter)
+            if count > 0 {
+                text(",")
+                whitespace()
+                count -= 1
+            }
+        }
+        text(")")
+        whitespace()
+        handle(throws: signature.throwsKind)
+        handle(result: signature.result)
+        
+    }
+    
     private func handle(clause typeInheritance: TypeInheritanceClause) {
         var inherits = typeInheritance.textDescription
         inherits.removeFirst()

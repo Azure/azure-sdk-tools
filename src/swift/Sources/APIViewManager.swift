@@ -24,14 +24,13 @@
 //
 // --------------------------------------------------------------------------
 
-import Foundation
 import AST
+import Foundation
 import Parser
 import Source
 
 /// Handles the generation of APIView JSON files.
 class APIViewManager {
-
     // MARK: Properties
 
     static var shared = APIViewManager()
@@ -81,7 +80,6 @@ class APIViewManager {
         var declarations = [TopLevelDeclaration]()
 
         var isDir: ObjCBool = false
-
 
         guard FileManager.default.fileExists(atPath: sourceUrl.path, isDirectory: &isDir) else {
             SharedLogger.fail("\(sourceUrl.path) does not exist.")

@@ -197,7 +197,7 @@ class FileLogger: Logger {
         guard let documentsUrl = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
             fatalError("Unable to locate Documents directory.")
         }
-        self.url = documentsUrl.appendingPathComponent(name)
+        url = documentsUrl.appendingPathComponent(name)
         if deleteIfExists {
             try? FileManager.default.removeItem(atPath: url.path)
         }

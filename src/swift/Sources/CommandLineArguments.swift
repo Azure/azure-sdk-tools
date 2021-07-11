@@ -32,7 +32,7 @@ class CommandLineArguments: Encodable {
     /// Keys which are supported by Autorest.Swift
     private let supportedKeys: [String] = [
         "source",
-        "dest"
+        "dest",
     ]
 
     // MARK: Computed properties
@@ -50,7 +50,7 @@ class CommandLineArguments: Encodable {
     // MARK: Initializers
 
     init() {
-        self.rawArgs = [String: String]()
+        rawArgs = [String: String]()
 
         // Load arguments from direct command line (run standalone)
         for item in CommandLine.arguments.dropFirst() {

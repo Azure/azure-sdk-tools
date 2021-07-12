@@ -193,41 +193,11 @@ class TokenFile: Codable {
         }
         for statement in decl.statements {
             switch statement {
-            case let decl as ClassDeclaration:
-                process(decl)
-            case let decl as ConstantDeclaration:
-                process(decl)
-            case let decl as DeinitializerDeclaration:
-                process(decl)
-            case let decl as EnumDeclaration:
-                newLine()
-                process(decl)
-            case let decl as ExtensionDeclaration:
-                process(decl)
-            case let decl as FunctionDeclaration:
-                process(decl)
-            case let decl as ImportDeclaration:
-                process(decl)
-            case let decl as InitializerDeclaration:
-                process(decl)
-            case let decl as OperatorDeclaration:
-                continue // process(decl)
-            case let decl as PrecedenceGroupDeclaration:
-                continue // process(decl)
-            case let decl as ProtocolDeclaration:
-                process(decl)
-            case let decl as StructDeclaration:
-                process(decl)
-            case let decl as SubscriptDeclaration:
-                continue // process(decl)
-            case let decl as TypealiasDeclaration:
-                process(decl)
-            case let decl as VariableDeclaration:
+            case let decl as Declaration:
                 process(decl)
             default:
                 continue
             }
-            
         }
     }
 
@@ -458,7 +428,7 @@ class TokenFile: Codable {
             handle(clause: genericParam)
         }
         whitespace()
-        text("=")
+        punctuation("=")
         whitespace()
         text(decl.assignment.textDescription)
     }
@@ -694,7 +664,7 @@ class TokenFile: Codable {
                 parameter.defaultArgumentClause.map({ " = \($0.textDescription)" }) ?? ""
             let varargsText = parameter.isVarargs ? "..." : ""
             member(name: nameText)
-            text(":")
+            punctuation(":")
             type(name: typeAnnoText)
             stringLiteral(defaultText)
             text(varargsText)
@@ -716,21 +686,21 @@ class TokenFile: Codable {
             }
             var resultText = result.textDescription
             resultText.removeFirst(); resultText.removeFirst()
-            text("->")
+            punctuation("->")
             whitespace()
             type(name: resultText)
         }
-        text("(")
+        punctuation("(")
         var count = signature.parameterList.count - 1
         signature.parameterList.forEach { parameter in
             handle(parameter: parameter)
             if count > 0 {
-                text(",")
+                punctuation(",")
                 whitespace()
                 count -= 1
             }
         }
-        text(")")
+        punctuation(")")
         whitespace()
         handle(throws: signature.throwsKind)
         handle(result: signature.result)
@@ -738,24 +708,28 @@ class TokenFile: Codable {
     }
     
     private func handle(clause typeInheritance: TypeInheritanceClause) {
+        // TODO: Remove reliance on textDescription
         var inherits = typeInheritance.textDescription
         inherits.removeFirst()
-        text(":")
+        punctuation(":")
         type(name: inherits)
         whitespace()
     }
 
     private func handle(clause genericParam: GenericParameterClause) {
+        // TODO: Remove reliance on textDescription
         text(genericParam.textDescription)
         whitespace()
     }
 
     private func handle(clause genericWhere: GenericWhereClause) {
+        // TODO: Remove reliance on textDescription
         text(genericWhere.textDescription)
         whitespace()
     }
 
     private func handle(attributes: Attributes) {
+        // TODO: Remove reliance on textDescription
         keyword(value: attributes.textDescription)
         newLine()
     }
@@ -763,7 +737,7 @@ class TokenFile: Codable {
     private func handle(typeModel: TypeModel?) {
         guard let source = typeModel else { return }
         if source.isArray { punctuation("[") }
-        type(name: name)
+        type(name: source.name)
         if source.isArray { punctuation("]") }
         if source.isOptional {
             punctuation("?")

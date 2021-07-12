@@ -664,6 +664,7 @@ class ProtocolOperationView(FormattingClass):
             self.add_whitespace(3)
             self.overview_tokens.append(Token(")", TokenKind.Text))
             self.add_punctuation(")")
+            self.format_status_code()
             self.add_new_line(1)
 
         for param_num in range(0, len(self.parameters)):
@@ -696,20 +697,7 @@ class ProtocolOperationView(FormattingClass):
 
                 self.add_token(Token(kind=TokenKind.StartDocGroup))
 
-                if self.status_codes:
-                    self.add_whitespace(3)
-                    self.add_typename(None, "Status Codes", None)
-                    # self.add_new_line(1)
-                    self.add_space()
-                    for i in self.status_codes:
-                        if isinstance(i, list):
-                            for j in i:
-                                self.add_text(None, j, None)
-                                self.add_text(None, " ", None)
-                        else:
-                            self.add_text(None, i, None)
-                            self.add_text(None, " ", None)
-                    self.add_new_line(1)
+                self.format_status_code()
 
                 if self.json_request:
                     self.add_whitespace(3)
@@ -750,6 +738,22 @@ class ProtocolOperationView(FormattingClass):
 
                     self.add_new_line(1)
                 self.add_token(Token(kind=TokenKind.EndDocGroup))
+
+    def format_status_code(self):
+        if self.status_codes:
+            self.add_whitespace(3)
+            self.add_typename(None, "Status Codes", None)
+                    # self.add_new_line(1)
+            self.add_space()
+            for i in self.status_codes:
+                if isinstance(i, list):
+                    for j in i:
+                        self.add_text(None, j, None)
+                        self.add_text(None, " ", None)
+                else:
+                    self.add_text(None, i, None)
+                    self.add_text(None, " ", None)
+            self.add_new_line(1)
 
     def to_json(self):
         obj_dict = {}

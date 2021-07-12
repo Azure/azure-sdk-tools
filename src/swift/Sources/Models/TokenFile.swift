@@ -178,6 +178,11 @@ class TokenFile: Codable {
         newLine()
 
         navigation(from: declarations)
+        // ensure items appear in sorted order
+        navigation.sort(by: {$0.text < $1.text })
+        for item in navigation {
+            item.childItems.sort(by: { $0.text < $1.text })
+        }
     }
 
     private func process(_ decl: TopLevelDeclaration) {

@@ -684,12 +684,12 @@ class TokenFile: Codable {
             guard let result = result else {
                 return
             }
-            var resultText = result.textDescription
-            resultText.removeFirst(); resultText.removeFirst()
+            let typeModel = TypeModel(from: result.type)
             punctuation("->")
             whitespace()
-            type(name: resultText)
+            self.handle(typeModel: typeModel)
         }
+
         punctuation("(")
         var count = signature.parameterList.count - 1
         signature.parameterList.forEach { parameter in
@@ -704,7 +704,6 @@ class TokenFile: Codable {
         whitespace()
         handle(throws: signature.throwsKind)
         handle(result: signature.result)
-        
     }
     
     private func handle(clause typeInheritance: TypeInheritanceClause) {

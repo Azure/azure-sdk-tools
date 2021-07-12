@@ -4,6 +4,14 @@ from typing import Any, Dict
 from ._token import Token
 from ._token_kind import TokenKind
 import re
+from autorest.codegen.models import (
+    RequestBuilder,
+    CodeModel,
+    request_builder,
+    build_schema,
+    Operation,
+)
+
 
 JSON_FIELDS = [
     "Name",
@@ -378,9 +386,13 @@ class ProtocolOperationView(FormattingClass):
         return_type,
         parameters,
         namespace,
+       json_request=None,
+        json_response=None,
+        response_num=None,
         description="",
-        paging=False,
-        lro=False,
+        paging="",
+        lro="",
+        yaml=None,
     ):
         self.operation_group = operation_group
         self.operation = operation_name
@@ -392,13 +404,65 @@ class ProtocolOperationView(FormattingClass):
         self.description = description
         self.paging = paging
         self.lro = lro
+        self.json_request = json_request
+        self.json_response = json_response
+        self.response_num = response_num
+        self.yaml = yaml
+        self.inner_model = []
 
     @classmethod
     def from_yaml(cls, yaml_data: Dict[str, Any], op_group_num, op_num, namespace):
         param = []
         pageable = None
         lro = None
-        
+        json_request = {}
+        json_response = {}
+        response_builder = {}
+        response_num = []
+        code = CodeModel(
+            rest_layer=True,
+            no_models=True,
+            no_operations=True,
+            only_path_params_positional=True,
+            options={},
+        )
+        request_builder = RequestBuilder.from_yaml(
+            yaml_data["operationGroups"][op_group_num]["operations"][op_num],
+            code_model=code,
+        )
+        response_builder = Operation.from_yaml(
+            yaml_data["operationGroups"][op_group_num]["operations"][op_num]
+        )
+
+        for i in range(
+            0,
+            len(
+                yaml_data["operationGroups"][op_group_num]["operations"][op_num].get(
+                    "responses"
+                )
+            ),
+        ):
+            response_num.append(
+                yaml_data["operationGroups"][op_group_num]["operations"][op_num][
+                    "responses"
+                ][i]["protocol"]["http"]["statusCodes"]
+            )
+            response_num.append("/")
+        for i in range(
+            0,
+            len(
+                yaml_data["operationGroups"][op_group_num]["operations"][op_num].get(
+                    "exceptions", []
+                )
+            ),
+        ):
+           
+            response_num.append(
+                yaml_data["operationGroups"][op_group_num]["operations"][op_num][
+                    "exceptions"
+                ][i]["protocol"]["http"]["statusCodes"]
+            )
+
         if yaml_data["operationGroups"][op_group_num]["operations"][op_num].get(
             "extensions"
         ):
@@ -408,10 +472,15 @@ class ProtocolOperationView(FormattingClass):
             lro = yaml_data["operationGroups"][op_group_num]["operations"][op_num][
                 "extensions"
             ].get("x-ms-long-running-operation")
-        
-        paging_op = True if pageable else False
-        lro_op = True if lro else False
-      
+        if pageable:
+            paging_op = True
+        else:
+            paging_op = False
+        if lro:
+            lro_op = True
+        else:
+            lro_op = False
+
         return_type = get_type(
             yaml_data["operationGroups"][op_group_num]["operations"][op_num][
                 "responses"
@@ -459,6 +528,31 @@ class ProtocolOperationView(FormattingClass):
                         namespace,
                     )
                 )
+                if (
+                    build_schema(
+                        yaml_data=request_builder.parameters.json_body, code_model=code
+                    ).serialization_type
+                    != "IO"
+                ):
+                    json_request = build_schema(
+                        yaml_data=request_builder.parameters.json_body, code_model=code
+                    ).get_json_template_representation()
+                for i in response_builder.responses:
+                    if i.schema:
+                        if isinstance(i.schema, dict):
+                            if (
+                                build_schema(
+                                    yaml_data=i.schema, code_model=code
+                                ).serialization_type
+                                != "IO"
+                            ):
+                                json_response = build_schema(
+                                    yaml_data=i.schema, code_model=code
+                                ).get_json_template_representation()
+                        else:
+                            json_response = i.schema.get_json_template_representation(
+                                code_model=code
+                            )
 
         description = yaml_data["operationGroups"][op_group_num]["operations"][op_num][
             "language"
@@ -469,7 +563,7 @@ class ProtocolOperationView(FormattingClass):
             ]["language"]["default"]["description"]
 
         return cls(
-            operation_group=yaml_data["operationGroups"][op_group_num]["language"]["default"]["name"],
+            operation_group = yaml_data["operationGroups"][op_group_num]["language"]["default"]["name"],
             operation_name=yaml_data["operationGroups"][op_group_num]["operations"][
                 op_num
             ]["language"]["default"]["name"],
@@ -479,7 +573,12 @@ class ProtocolOperationView(FormattingClass):
             description=description,
             paging=paging_op,
             lro=lro_op,
+            json_request=json_request,
+            json_response=json_response,
+            response_num=response_num,
+            yaml=yaml_data["operationGroups"][op_group_num]["operations"][op_num],
         )
+
 
     def get_tokens(self):
         return self.Tokens

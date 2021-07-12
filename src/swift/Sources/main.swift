@@ -27,7 +27,7 @@
 import Foundation
 
 // Should be set to `.warning` normally
-let logLevel = LogLevel.debug
+let logLevel = LogLevel.warning
 SharedLogger.set(logger: StdoutLogger(), withLevel: logLevel)
 do {
     try APIViewManager.shared.run()

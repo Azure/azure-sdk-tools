@@ -296,7 +296,7 @@ class TokenFile: Codable {
         whitespace()
         keyword(value: "struct")
         whitespace()
-        type(name: decl.name.textDescription)
+        type(name: decl.name.textDescription, definitionId: defId)
         if let genericParam = decl.genericParameterClause {
             handle(clause: genericParam)
         }
@@ -345,7 +345,7 @@ class TokenFile: Codable {
         whitespace()
         keyword(value: "enum")
         whitespace()
-        type(name: decl.name.textDescription)
+        type(name: decl.name.textDescription, definitionId: defId)
         whitespace()
         if let genericParam = decl.genericParameterClause {
             handle(clause: genericParam)
@@ -398,11 +398,12 @@ class TokenFile: Codable {
         if !decl.attributes.isEmpty {
             handle(attributes: decl.attributes)
         }
+        let defId = decl.name.textDescription
         keyword(value: value)
         whitespace()
         keyword(value: "protocol")
         whitespace()
-        type(name: decl.name.textDescription)
+        type(name: decl.name.textDescription, definitionId: defId)
         whitespace()
         if let inheritance = decl.typeInheritanceClause {
             handle(clause: inheritance)
@@ -433,7 +434,8 @@ class TokenFile: Codable {
         whitespace()
         keyword(value: "typealias")
         whitespace()
-        type(name: decl.name.textDescription)
+        let defId = decl.name.textDescription
+        type(name: decl.name.textDescription, definitionId: defId)
         if let genericParam = decl.generic {
             handle(clause: genericParam)
         }
@@ -516,7 +518,7 @@ class TokenFile: Codable {
     
     private func process(_ decl: ExtensionDeclaration) {
         SharedLogger.debug("Extension Declaration")
-        SharedLogger.debug(decl.type.textDescription)
+        SharedLogger.debug(decl.textDescription)
         guard publicModifiers.contains(decl.accessLevelModifier ?? .internal) else {
             return
         }
@@ -529,9 +531,9 @@ class TokenFile: Codable {
         whitespace()
         keyword(value: "extension")
         whitespace()
-        let defId = decl.sourceLocation.description
+        let defId = decl.type.textDescription
         lineIdMarker(definitionId: defId)
-        type(name: decl.type.textDescription)
+        type(name: decl.type.textDescription, definitionId: defId)
         whitespace()
         if let inheritance = decl.typeInheritanceClause {
             handle(clause: inheritance)
@@ -622,7 +624,7 @@ class TokenFile: Codable {
     private func process(_ decl : InitializerDeclaration) {
         // TODO: Prioritize
         SharedLogger.debug("Initializer Declaration")
-        guard hasPublic(modifiers: decl.modifiers) == true else {
+        guard isRevealed(modifiers: decl.modifiers) == true else {
             return
         }
         newLine()
@@ -632,7 +634,7 @@ class TokenFile: Codable {
         if !decl.modifiers.isEmpty {
             handle(modifiers: decl.modifiers)
         }
-        let defId = decl.sourceLocation.description
+        let defId = decl.textDescription
         keyword(value: "init")
         lineIdMarker(definitionId: defId)
         whitespace()
@@ -652,7 +654,7 @@ class TokenFile: Codable {
         SharedLogger.debug("Function Declaration")
         SharedLogger.debug(decl.signature.textDescription)
         
-        guard hasPublic(modifiers: decl.modifiers) == true else {
+        guard isRevealed(modifiers: decl.modifiers) == true else {
             return
         }
         newLine()
@@ -663,7 +665,7 @@ class TokenFile: Codable {
         keyword(value: "func")
         lineIdMarker(definitionId: name)
         whitespace()
-        type(name: decl.name.textDescription, definitionId: decl.sourceLocation.description)
+        type(name: decl.name.textDescription, definitionId: decl.textDescription)
         whitespace()
         if let genericParam = decl.genericParameterClause {
             handle(clause: genericParam)
@@ -683,7 +685,7 @@ class TokenFile: Codable {
             handle(attributes: decl.attributes)
         }
         keyword(value: "import")
-        let defId = decl.sourceLocation.description
+        let defId = decl.textDescription
         lineIdMarker(definitionId: defId)
         whitespace()
         if let kind = decl.kind {
@@ -745,12 +747,12 @@ class TokenFile: Codable {
         return
     }
 
-    private func hasPublic(modifiers: DeclarationModifiers) -> Bool {
+    private func isRevealed(modifiers: DeclarationModifiers) -> Bool {
         for modifier in modifiers {
             switch modifier {
             case .accessLevel(let modifier):
                 switch modifier {
-                case .public, .publicSet:
+                case .public, .publicSet, .open, .openSet:
                     return true
                 default:
                     continue
@@ -874,10 +876,13 @@ class TokenFile: Codable {
     }
 
     private func navigation(from decl: ClassDeclaration) -> NavigationItem? {
-        let navItem = NavigationItem(text: decl.name.textDescription, navigationId: nil, typeKind: .class)
+        guard publicModifiers.contains(decl.accessLevelModifier ?? .internal) else {
+            return nil
+        }
+        let navItem = NavigationItem(text: decl.name.textDescription, navigationId: decl.name.textDescription, typeKind: .class)
         decl.members.forEach { member in
             switch member {
-            case var .declaration(decl):
+            case let .declaration(decl):
                 if let item = navigation(from: decl) {
                     navItem.childItems.append(item)
                 }
@@ -888,20 +893,66 @@ class TokenFile: Codable {
         return navItem
     }
 
-    private func navigation(from _: StructDeclaration) -> NavigationItem? {
-        return nil
+    private func navigation(from decl: StructDeclaration) -> NavigationItem? {
+        guard publicModifiers.contains(decl.accessLevelModifier ?? .internal) else {
+            return nil
+        }
+        let navItem = NavigationItem(text: decl.name.textDescription, navigationId: decl.name.textDescription, typeKind: .class)
+        decl.members.forEach { member in
+            switch member {
+            case let .declaration(decl):
+                if let item = navigation(from: decl) {
+                    navItem.childItems.append(item)
+                }
+            case .compilerControl:
+                return
+            }
+        }
+        return navItem
     }
 
-    private func navigation(from _: EnumDeclaration) -> NavigationItem? {
-        return nil
+    private func navigation(from decl: EnumDeclaration) -> NavigationItem? {
+        guard publicModifiers.contains(decl.accessLevelModifier ?? .internal) else {
+            return nil
+        }
+        let navItem = NavigationItem(text: decl.name.textDescription, navigationId: decl.name.textDescription, typeKind: .class)
+        decl.members.forEach { member in
+            switch member {
+            case let .declaration(decl):
+                if let item = navigation(from: decl) {
+                    navItem.childItems.append(item)
+                }
+            default:
+                return
+            }
+        }
+        return navItem
     }
 
-    private func navigation(from _: ProtocolDeclaration) -> NavigationItem? {
-        return nil
+    private func navigation(from decl: ProtocolDeclaration) -> NavigationItem? {
+        guard publicModifiers.contains(decl.accessLevelModifier ?? .internal) else {
+            return nil
+        }
+        let navItem = NavigationItem(text: decl.name.textDescription, navigationId: decl.name.textDescription, typeKind: .class)
+        return navItem
     }
 
-    private func navigation(from _: ExtensionDeclaration) -> NavigationItem? {
-        return nil
+    private func navigation(from decl: ExtensionDeclaration) -> NavigationItem? {
+        guard publicModifiers.contains(decl.accessLevelModifier ?? .internal) else {
+            return nil
+        }
+        let navItem = NavigationItem(text: decl.type.textDescription, navigationId: decl.type.textDescription, typeKind: .class)
+        decl.members.forEach { member in
+            switch member {
+            case let .declaration(decl):
+                if let item = navigation(from: decl) {
+                    navItem.childItems.append(item)
+                }
+            default:
+                return
+            }
+        }
+        return navItem
     }
 
     private func navigation(from decl: Statement) -> NavigationItem? {

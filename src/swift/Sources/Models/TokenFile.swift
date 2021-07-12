@@ -658,14 +658,14 @@ class TokenFile: Codable {
             let externalNameText = parameter.externalName.map({ [$0.textDescription] }) ?? []
             let localNameText = parameter.localName.textDescription.isEmpty ? [] : [parameter.localName.textDescription]
             let nameText = (externalNameText + localNameText).joined(separator: " ")
-            var typeAnnoText = parameter.typeAnnotation.textDescription
-            typeAnnoText.removeFirst()
+            let typeModel = TypeModel(from: parameter.typeAnnotation)
             let defaultText =
                 parameter.defaultArgumentClause.map({ " = \($0.textDescription)" }) ?? ""
             let varargsText = parameter.isVarargs ? "..." : ""
             member(name: nameText)
             punctuation(":")
-            type(name: typeAnnoText)
+            whitespace()
+            self.handle(typeModel: typeModel)
             stringLiteral(defaultText)
             text(varargsText)
         }
@@ -733,7 +733,7 @@ class TokenFile: Codable {
     }
 
     private func handle(attributes: Attributes) {
-        // TODO: Remove reliance on textDescription
+        // TODO: remove reliance on textDescription
         keyword(value: attributes.textDescription)
         newLine()
     }
@@ -872,43 +872,5 @@ class TokenFile: Codable {
         default:
             return nil
         }
-    }
-}
-
-extension DeclarationModifiers {
-
-    func verifySupported() {
-        for modifier in self {
-            switch modifier {
-            case .accessLevel, .static:
-                continue
-            default:
-                SharedLogger.fail("Unsupported modifier: \(modifier)")
-            }
-        }
-    }
-
-    var accessLevel: AccessLevelModifier? {
-        for modifier in self {
-            switch modifier {
-            case let .accessLevel(value):
-                return value
-            default:
-                continue
-            }
-        }
-        return nil
-    }
-
-    var isStatic: Bool {
-        for modifier in self {
-            switch modifier {
-            case .static:
-                return true
-            default:
-                continue
-            }
-        }
-        return false
     }
 }

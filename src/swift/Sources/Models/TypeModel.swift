@@ -31,7 +31,7 @@ struct TypeModel {
     var name: String
     var isOptional = false
     var isArray = false
-    
+
     init(from source: IdentifierPattern) {
         guard let typeAnnotation = source.typeAnnotation?.type else {
             SharedLogger.fail("Missing type annotation.")
@@ -43,26 +43,46 @@ struct TypeModel {
         self.init(from: source.type)
     }
 
-    init(from source: Type) {
-        if case let optional as OptionalType = source {
-            isOptional = true
-            if case let identifier as TypeIdentifier = optional.wrappedType {
-                name = identifier.names.map { $0.name.textDescription }.joined(separator: ".")
-            } else if case let identifier as ArrayType = optional.wrappedType {
-                isArray = true
-                name = identifier.elementType.textDescription
-            } else {
-                SharedLogger.fail("Unsupported identifier: \(optional.wrappedType)")
-            }
+    init(from source: OptionalType) {
+        self.init(from: source.wrappedType)
+        isOptional = true
+    }
+
+    init(from source: ArrayType) {
+        self.init(from: source.elementType)
+        isArray = true
+    }
+
+    init(from source: TypeIdentifier) {
+        let genericArgumentClauses = source.names.compactMap { $0.genericArgumentClause }
+        guard genericArgumentClauses.count < 2 else {
+            SharedLogger.fail("Unexpectedly found multiple generic argument clauses.")
+        }
+        if genericArgumentClauses.count == 1 {
+            // TODO: remove reliance on textDescription
+            name = source.textDescription
         } else {
-            if case let identifier as TypeIdentifier = source {
-                name = identifier.names.map { $0.name.textDescription }.joined(separator: ".")
-            } else if case let identifier as ArrayType = source {
-                isArray = true
-                name = identifier.elementType.textDescription
-            } else {
-                SharedLogger.fail("Unsupported identifier: \(source)")
-            }
+            name = source.names.map { $0.name.textDescription }.joined(separator: ".")
+        }
+    }
+
+    init(from source: FunctionType) {
+        // TODO: remove reliance on textDescription
+        name = source.textDescription
+    }
+
+    init(from source: Type) {
+        switch source {
+        case let src as OptionalType:
+            self.init(from: src)
+        case let src as TypeIdentifier:
+            self.init(from: src)
+        case let src as ArrayType:
+            self.init(from: src)
+        case let src as FunctionType:
+            self.init(from: src)
+        default:
+            SharedLogger.fail("Unsupported identifier: \(source)")
         }
     }
 }

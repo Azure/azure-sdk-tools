@@ -52,7 +52,7 @@
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
-            argument = "--source=/Users/jairmyree/Desktop/azure-sdk-tools/src/swift/Sources/SourceCodeExample.swift"
+            argument = "--source=/Users/jairmyree/Desktop/azure-sdk-for-ios/sdk/communication/AzureCommunicationChat/Source"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>

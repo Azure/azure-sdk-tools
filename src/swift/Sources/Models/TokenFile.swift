@@ -59,7 +59,9 @@ class TokenFile: Codable {
 
     /// Controls whether a newline is needed
     private var needsNewLine = false
-
+    
+    /// Watches import statements so that they aren't repeated in the APIView
+    private var imports = [String:Bool]()
     // MARK: Initializers
 
     init(name: String, packageName: String, versionString: String) {
@@ -191,6 +193,7 @@ class TokenFile: Codable {
             case let decl as DeinitializerDeclaration:
                 process(decl)
             case let decl as EnumDeclaration:
+                newLine()
                 process(decl)
             case let decl as ExtensionDeclaration:
                 process(decl)
@@ -233,9 +236,7 @@ class TokenFile: Codable {
         let value = (decl.accessLevelModifier ?? .internal).textDescription
         let defId = decl.name.textDescription
 
-        if needsNewLine {
-            newLine()
-        }
+        newLine()
         if !decl.attributes.isEmpty {
             handle(attributes: decl.attributes)
         }
@@ -264,7 +265,6 @@ class TokenFile: Codable {
             for member in decl.members {
                 switch member {
                 case .declaration(let decl):
-                    newLine()
                     process(decl)
                 default:
                     continue
@@ -286,9 +286,7 @@ class TokenFile: Codable {
         let value = (decl.accessLevelModifier ?? .internal).textDescription
         let defId = decl.name.textDescription
 
-        if needsNewLine {
-            newLine()
-        }
+        newLine()
         if !decl.attributes.isEmpty {
             handle(attributes: decl.attributes)
         }
@@ -333,10 +331,8 @@ class TokenFile: Codable {
         }
         let value = (decl.accessLevelModifier ?? .internal).textDescription
         let defId = decl.name.textDescription
-
-        if needsNewLine {
-            newLine()
-        }
+        
+        newLine()
         if !decl.attributes.isEmpty {
             handle(attributes: decl.attributes)
         }
@@ -364,8 +360,22 @@ class TokenFile: Codable {
         indent {
             for member in decl.members {
                 switch member {
-                case let .declaration(decl):
+                case .declaration(let decl):
                     process(decl)
+                case .union(let enumCase):
+                    enumCase.cases.forEach { enumCaseValue in
+                        newLine()
+                        keyword(value: "case")
+                        whitespace()
+                        self.member(name: enumCaseValue.name.textDescription)
+                    }
+                case .rawValue(let enumCase):
+                    enumCase.cases.forEach { enumCaseValue in
+                        keyword(value: "case")
+                        whitespace()
+                        newLine()
+                        self.member(name: enumCaseValue.name.textDescription)
+                    }
                 default:
                     continue
                 }
@@ -384,9 +394,7 @@ class TokenFile: Codable {
             return
         }
         let value = (decl.accessLevelModifier ?? .internal).textDescription
-        if needsNewLine {
-            newLine()
-        }
+        newLine()
         if !decl.attributes.isEmpty {
             handle(attributes: decl.attributes)
         }
@@ -412,7 +420,28 @@ class TokenFile: Codable {
         
     }
 
-    private func process(_: TypealiasDeclaration) {}
+    private func process(_ decl : TypealiasDeclaration) {
+        guard publicModifiers.contains(decl.accessLevelModifier ?? .internal) else {
+            return
+        }
+        let value = (decl.accessLevelModifier ?? .internal).textDescription
+        newLine()
+        if !decl.attributes.isEmpty {
+            handle(attributes: decl.attributes)
+        }
+        keyword(value: value)
+        whitespace()
+        keyword(value: "typealias")
+        whitespace()
+        type(name: decl.name.textDescription)
+        if let genericParam = decl.generic {
+            handle(clause: genericParam)
+        }
+        whitespace()
+        text("=")
+        whitespace()
+        text(decl.assignment.textDescription)
+    }
 
     private func process(_ decl: VariableDeclaration) {
         let accessLevel = decl.modifiers.accessLevel
@@ -482,6 +511,7 @@ class TokenFile: Codable {
         if isOptional {
             punctuation("?")
         }
+        
     }
     
     private func process(_ decl: ExtensionDeclaration) {
@@ -491,9 +521,7 @@ class TokenFile: Codable {
             return
         }
         let value = (decl.accessLevelModifier ?? .internal).textDescription
-        if needsNewLine {
-            newLine()
-        }
+        newLine()
         if !decl.attributes.isEmpty {
             handle(attributes: decl.attributes)
         }
@@ -501,6 +529,8 @@ class TokenFile: Codable {
         whitespace()
         keyword(value: "extension")
         whitespace()
+        let defId = decl.sourceLocation.description
+        lineIdMarker(definitionId: defId)
         type(name: decl.type.textDescription)
         whitespace()
         if let inheritance = decl.typeInheritanceClause {
@@ -512,7 +542,12 @@ class TokenFile: Codable {
         punctuation("{")
         indent {
             decl.members.forEach { member in
-                // TODO: Need to complete this
+                switch member {
+                case .declaration(let decl):
+                    process(decl)
+                default:
+                    return
+                }
                 
             }
         }
@@ -584,24 +619,43 @@ class TokenFile: Codable {
         }
     }
 
-    private func process(_: InitializerDeclaration) {
+    private func process(_ decl : InitializerDeclaration) {
         // TODO: Prioritize
+        SharedLogger.debug("Initializer Declaration")
+        guard hasPublic(modifiers: decl.modifiers) == true else {
+            return
+        }
+        newLine()
+        if !decl.attributes.isEmpty {
+            handle(attributes: decl.attributes)
+        }
+        if !decl.modifiers.isEmpty {
+            handle(modifiers: decl.modifiers)
+        }
+        let defId = decl.sourceLocation.description
+        keyword(value: "init")
+        lineIdMarker(definitionId: defId)
+        whitespace()
+        if let genericParam = decl.genericParameterClause {
+            handle(clause: genericParam)
+        }
+        let initSignature = FunctionSignature(parameterList: decl.parameterList, throwsKind: decl.throwsKind, result: nil)
+        handle(signature: initSignature)
+        if let genericWhere = decl.genericWhereClause {
+            handle(clause: genericWhere)
+        }
     }
 
     private func process(_: DeinitializerDeclaration) {}
 
     private func process(_ decl: FunctionDeclaration) {
         SharedLogger.debug("Function Declaration")
-        SharedLogger.debug(decl.sourceLocation.description)
-        SharedLogger.debug(decl.genericParameterClause?.textDescription  ?? "")
-        SharedLogger.debug(decl.signature.result?.textDescription)
-        SharedLogger.debug(decl.signature.parameterList[0].textDescription)
-        SharedLogger.debug(decl.signature.parameterList[0].localName.textDescription)
-        SharedLogger.debug(decl.signature.parameterList[0].typeAnnotation.textDescription)
+        SharedLogger.debug(decl.signature.textDescription)
         
         guard hasPublic(modifiers: decl.modifiers) == true else {
             return
         }
+        newLine()
         if !decl.attributes.isEmpty {
             handle(attributes: decl.attributes)
         }
@@ -619,10 +673,18 @@ class TokenFile: Codable {
     
     private func process(_ decl: ImportDeclaration) {
         SharedLogger.debug("Import Declaration")
+        
+        guard imports[decl.textDescription] == nil else {
+            return
+        }
+        newLine()
+        imports[decl.textDescription] = true
         if !decl.attributes.isEmpty {
             handle(attributes: decl.attributes)
         }
         keyword(value: "import")
+        let defId = decl.sourceLocation.description
+        lineIdMarker(definitionId: defId)
         whitespace()
         if let kind = decl.kind {
             keyword(value: kind.rawValue)
@@ -631,9 +693,9 @@ class TokenFile: Codable {
         let pathText = decl.path.map({ $0.textDescription }).joined(separator: ".")
         SharedLogger.debug(pathText)
         type(name: pathText)
+        newLine()
     }
 
-    private func process(_: ImportDeclaration) {}
 
     private func process(_ decl: Declaration) {
         switch decl {

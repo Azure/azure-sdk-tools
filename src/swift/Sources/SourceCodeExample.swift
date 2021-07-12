@@ -33,8 +33,6 @@ public class SwiftClass<T> where T : Codable {
     }
 }
 
-public protocol TestProtocol {}
-
 
 
 public protocol TestProtocol {

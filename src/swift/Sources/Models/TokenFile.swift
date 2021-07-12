@@ -491,7 +491,8 @@ class TokenFile: Codable {
                 }
             }
         case let .codeBlock(ident, typeAnno, _):
-            typeName = typeAnno.textDescription
+            // strips the leading : from the type annotation text description
+            typeName = String(typeAnno.textDescription.dropFirst(2))
             name = ident.textDescription
         default:
             SharedLogger.fail("Unsupported variable body type: \(decl.body)")

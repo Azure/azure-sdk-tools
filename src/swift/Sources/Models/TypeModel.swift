@@ -47,7 +47,7 @@ struct TypeModel {
         if case let optional as OptionalType = source {
             isOptional = true
             if case let identifier as TypeIdentifier = optional.wrappedType {
-                name = identifier.names.first!.name.textDescription
+                name = identifier.names.map { $0.name.textDescription }.joined(separator: ".")
             } else if case let identifier as ArrayType = optional.wrappedType {
                 isArray = true
                 name = identifier.elementType.textDescription
@@ -56,7 +56,7 @@ struct TypeModel {
             }
         } else {
             if case let identifier as TypeIdentifier = source {
-                name = identifier.names.first!.name.textDescription
+                name = identifier.names.map { $0.name.textDescription }.joined(separator: ".")
             } else if case let identifier as ArrayType = source {
                 isArray = true
                 name = identifier.elementType.textDescription

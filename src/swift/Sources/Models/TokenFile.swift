@@ -708,11 +708,16 @@ class TokenFile: Codable {
     }
     
     private func handle(clause typeInheritance: TypeInheritanceClause) {
-        // TODO: Remove reliance on textDescription
-        var inherits = typeInheritance.textDescription
-        inherits.removeFirst()
         punctuation(":")
-        type(name: inherits)
+        whitespace()
+        for (idx, item) in typeInheritance.typeInheritanceList.enumerated() {
+            let typeModel = TypeModel(from: item)
+            handle(typeModel: typeModel)
+            if idx != typeInheritance.typeInheritanceList.count - 1 {
+                punctuation(",")
+                whitespace()
+            }
+        }
         whitespace()
     }
 

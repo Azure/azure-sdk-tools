@@ -40,12 +40,9 @@ class APIViewManager {
     // MARK: Methods
 
     func run() throws {
-        // TODO: Re-enable after testing
-//        guard let sourcePath = args.source else {
-//            SharedLogger.fail("usage error: SwiftAPIView --source PATH")
-//        }
-        let sourcePath = "/Users/travisprescott/repos/azure-sdk-for-ios/sdk/communication/AzureCommunicationChat/Source"
-        // let sourcePath = "/Users/travisprescott/repos/azure-sdk-tools/src/swift/Sources/SourceCodeExample.swift"
+        guard let sourcePath = args.source else {
+            SharedLogger.fail("usage error: SwiftAPIView --source PATH")
+        }
         guard let sourceUrl = URL(string: args.source ?? sourcePath) else {
             SharedLogger.fail("usage error: `--source PATH` was invalid.")
         }

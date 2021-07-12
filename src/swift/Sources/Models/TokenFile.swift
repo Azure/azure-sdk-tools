@@ -139,8 +139,8 @@ class TokenFile: Codable {
         needsNewLine = true
     }
 
-    func member(name: String) {
-        let item = TokenItem(definitionId: nil, navigateToId: nil, value: name, kind: .memberName)
+    func member(name: String, definitionId: String? = nil) {
+        let item = TokenItem(definitionId: definitionId, navigateToId: nil, value: name, kind: .memberName)
         tokens.append(item)
         needsNewLine = true
     }
@@ -346,8 +346,8 @@ class TokenFile: Codable {
         keyword(value: "enum")
         whitespace()
         type(name: decl.name.textDescription, definitionId: defId)
-        whitespace()
         if let genericParam = decl.genericParameterClause {
+            whitespace()
             handle(clause: genericParam)
         }
         if let inheritance = decl.typeInheritanceClause {
@@ -365,16 +365,20 @@ class TokenFile: Codable {
                 case .union(let enumCase):
                     enumCase.cases.forEach { enumCaseValue in
                         newLine()
+                        let enumDefId = "\(decl.name.textDescription).\(enumCaseValue.name.textDescription)"
+                        lineIdMarker(definitionId: enumDefId)
                         keyword(value: "case")
                         whitespace()
-                        self.member(name: enumCaseValue.name.textDescription)
+                        self.member(name: enumCaseValue.name.textDescription, definitionId: enumDefId)
                     }
                 case .rawValue(let enumCase):
                     enumCase.cases.forEach { enumCaseValue in
+                        let enumDefId = "\(decl.name.textDescription).\(enumCaseValue.name.textDescription)"
+                        lineIdMarker(definitionId: enumDefId)
                         keyword(value: "case")
                         whitespace()
                         newLine()
-                        self.member(name: enumCaseValue.name.textDescription)
+                        self.member(name: enumCaseValue.name.textDescription, definitionId: enumDefId)
                     }
                 default:
                     continue
@@ -487,7 +491,8 @@ class TokenFile: Codable {
                 }
             }
         case let .codeBlock(ident, typeAnno, _):
-            typeName = typeAnno.textDescription
+            // strips the leading : from the type annotation text description
+            typeName = String(typeAnno.textDescription.dropFirst(2))
             name = ident.textDescription
         default:
             SharedLogger.fail("Unsupported variable body type: \(decl.body)")
@@ -550,7 +555,6 @@ class TokenFile: Codable {
                 default:
                     return
                 }
-                
             }
         }
         if needsNewLine {
@@ -622,7 +626,6 @@ class TokenFile: Codable {
     }
 
     private func process(_ decl : InitializerDeclaration) {
-        // TODO: Prioritize
         SharedLogger.debug("Initializer Declaration")
         guard isRevealed(modifiers: decl.modifiers) == true else {
             return
@@ -637,7 +640,6 @@ class TokenFile: Codable {
         let defId = decl.textDescription
         keyword(value: "init")
         lineIdMarker(definitionId: defId)
-        whitespace()
         if let genericParam = decl.genericParameterClause {
             handle(clause: genericParam)
         }
@@ -647,8 +649,6 @@ class TokenFile: Codable {
             handle(clause: genericWhere)
         }
     }
-
-    private func process(_: DeinitializerDeclaration) {}
 
     private func process(_ decl: FunctionDeclaration) {
         SharedLogger.debug("Function Declaration")
@@ -666,38 +666,12 @@ class TokenFile: Codable {
         lineIdMarker(definitionId: name)
         whitespace()
         type(name: decl.name.textDescription, definitionId: decl.textDescription)
-        whitespace()
         if let genericParam = decl.genericParameterClause {
+            whitespace()
             handle(clause: genericParam)
         }
         handle(signature: decl.signature)
     }
-    
-    private func process(_ decl: ImportDeclaration) {
-        SharedLogger.debug("Import Declaration")
-        
-        guard imports[decl.textDescription] == nil else {
-            return
-        }
-        newLine()
-        imports[decl.textDescription] = true
-        if !decl.attributes.isEmpty {
-            handle(attributes: decl.attributes)
-        }
-        keyword(value: "import")
-        let defId = decl.textDescription
-        lineIdMarker(definitionId: defId)
-        whitespace()
-        if let kind = decl.kind {
-            keyword(value: kind.rawValue)
-            whitespace()
-        }
-        let pathText = decl.path.map({ $0.textDescription }).joined(separator: ".")
-        SharedLogger.debug(pathText)
-        type(name: pathText)
-        newLine()
-    }
-
 
     private func process(_ decl: Declaration) {
         switch decl {
@@ -706,14 +680,12 @@ class TokenFile: Codable {
         case let decl as ConstantDeclaration:
             return process(decl)
         case let decl as DeinitializerDeclaration:
-            return process(decl)
+            return // process(decl)
         case let decl as EnumDeclaration:
             return process(decl)
         case let decl as ExtensionDeclaration:
             return process(decl)
         case let decl as FunctionDeclaration:
-            return process(decl)
-        case let decl as ImportDeclaration:
             return process(decl)
         case let decl as InitializerDeclaration:
             return process(decl)
@@ -734,17 +706,6 @@ class TokenFile: Codable {
         default:
             return // no implementation for this declaration, just continue
         }
-    }
-
-    private enum Members {
-        case protocolDeclaration(members: [ProtocolDeclaration.Member])
-        case structDeclaration(members: [StructDeclaration.Member])
-        case classDeclaration(members: [ClassDeclaration.Member])
-        case enumDeclaration(members: [EnumDeclaration.Member])
-    }
-
-    private func process(members _: Members) {
-        return
     }
 
     private func isRevealed(modifiers: DeclarationModifiers) -> Bool {
@@ -1001,7 +962,7 @@ extension DeclarationModifiers {
     var isStatic: Bool {
         for modifier in self {
             switch modifier {
-            case let .static:
+            case .static:
                 return true
             default:
                 continue

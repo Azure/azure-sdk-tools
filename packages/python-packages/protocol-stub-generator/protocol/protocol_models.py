@@ -388,7 +388,7 @@ class ProtocolOperationView(FormattingClass):
         namespace,
        json_request=None,
         json_response=None,
-        response_num=None,
+        status_codes=None,
         description="",
         paging="",
         lro="",
@@ -406,7 +406,7 @@ class ProtocolOperationView(FormattingClass):
         self.lro = lro
         self.json_request = json_request
         self.json_response = json_response
-        self.response_num = response_num
+        self.status_codes = status_codes
         self.yaml = yaml
         self.inner_model = []
 
@@ -418,7 +418,7 @@ class ProtocolOperationView(FormattingClass):
         json_request = {}
         json_response = {}
         response_builder = {}
-        response_num = []
+        status_codes = []
         code = CodeModel(
             rest_layer=True,
             no_models=True,
@@ -442,12 +442,12 @@ class ProtocolOperationView(FormattingClass):
                 )
             ),
         ):
-            response_num.append(
+            status_codes.append(
                 yaml_data["operationGroups"][op_group_num]["operations"][op_num][
                     "responses"
                 ][i]["protocol"]["http"]["statusCodes"]
             )
-            response_num.append("/")
+            status_codes.append("/")
         for i in range(
             0,
             len(
@@ -457,7 +457,7 @@ class ProtocolOperationView(FormattingClass):
             ),
         ):
            
-            response_num.append(
+            status_codes.append(
                 yaml_data["operationGroups"][op_group_num]["operations"][op_num][
                     "exceptions"
                 ][i]["protocol"]["http"]["statusCodes"]
@@ -575,7 +575,7 @@ class ProtocolOperationView(FormattingClass):
             lro=lro_op,
             json_request=json_request,
             json_response=json_response,
-            response_num=response_num,
+            status_codes=status_codes,
             yaml=yaml_data["operationGroups"][op_group_num]["operations"][op_num],
         )
 
@@ -696,12 +696,12 @@ class ProtocolOperationView(FormattingClass):
 
                 self.add_token(Token(kind=TokenKind.StartDocGroup))
 
-                if self.response_num:
+                if self.status_codes:
                     self.add_whitespace(3)
                     self.add_typename(None, "Status Codes", None)
                     # self.add_new_line(1)
                     self.add_space()
-                    for i in self.response_num:
+                    for i in self.status_codes:
                         if isinstance(i, list):
                             for j in i:
                                 self.add_text(None, j, None)

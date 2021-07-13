@@ -702,14 +702,14 @@ class ProtocolParameterView(FormattingClass):
             param_name = yaml_data["signatureParameters"][i]["language"]["default"][
                 "name"
             ]
-            if yaml_data["signatureParameters"][i]["schema"]["type"] == "object":
-                param_type = get_type(
-                    yaml_data["signatureParameters"][i]["schema"]["properties"][0][
-                        "schema"
-                    ]
-                )
-            else:
-                param_type = get_type(yaml_data["signatureParameters"][i]["schema"])
+            # if yaml_data["signatureParameters"][i]["schema"]["type"] == "object":
+            #     param_type = get_type(
+            #         yaml_data["signatureParameters"][i]["schema"]["properties"][0][
+            #             "schema"
+            #         ]
+            #     )
+            # else:
+            param_type = get_type(yaml_data["signatureParameters"][i]["schema"])
             if param_name == "body":
                 try:
                     param_name = yaml_data["signatureParameters"][i]["schema"][

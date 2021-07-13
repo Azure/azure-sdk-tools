@@ -420,7 +420,7 @@ class ProtocolOperationView(FormattingClass):
                     "responses"
                 ][i]["protocol"]["http"]["statusCodes"]
             )
-        status_codes.append("/")
+        if yaml_data["operationGroups"][op_group_num]["operations"][op_num].get("exceptions", []): status_codes.append("/")
         for i in range(
             0,
             len(

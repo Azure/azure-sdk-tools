@@ -573,6 +573,8 @@ class ProtocolOperationView(FormattingClass):
             description=description,
             paging=paging_op,
             lro=lro_op,
+            json_request=json_request,
+            json_response=json_response,
             status_codes=status_codes,
             yaml=yaml_data["operationGroups"][op_group_num]["operations"][op_num],
         )

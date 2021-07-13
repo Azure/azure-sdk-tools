@@ -3,6 +3,7 @@
 
 using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Models;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -26,12 +27,14 @@ namespace Azure.Sdk.Tools.TestProxy
         public Admin(RecordingHandler recordingHandler) => _recordingHandler = recordingHandler;
 
         [HttpPost]
+        [EnableCors]
         public void StartSession()
         {
             // so far, nothing necessary here
         }
 
         [HttpPost]
+        [EnableCors]
         public void StopSession()
         {
             // so far, nothing necessary here
@@ -39,12 +42,14 @@ namespace Azure.Sdk.Tools.TestProxy
 
 
         [HttpGet]
+        [EnableCors]
         public void IsAlive()
         {
             Response.StatusCode = 200;
         }
 
         [HttpPost]
+        [EnableCors]
         public async void AddTransform()
         {
             var tName = RecordingHandler.GetHeader(Request, "x-abstraction-identifier");
@@ -63,6 +68,7 @@ namespace Azure.Sdk.Tools.TestProxy
         }
 
         [HttpPost]
+        [EnableCors]
         public async void AddSanitizer()
         {
             var sName = RecordingHandler.GetHeader(Request, "x-abstraction-identifier");
@@ -81,6 +87,7 @@ namespace Azure.Sdk.Tools.TestProxy
         }
 
         [HttpPost]
+        [EnableCors]
         public async void SetMatcher()
         {
             var mName = RecordingHandler.GetHeader(Request, "x-abstraction-identifier");

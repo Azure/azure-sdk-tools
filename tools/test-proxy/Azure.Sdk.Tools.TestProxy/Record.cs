@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Net.Http;
@@ -19,6 +20,7 @@ namespace Azure.Sdk.Tools.TestProxy
         private static readonly HttpClient s_client = new HttpClient() { Timeout = TimeSpan.FromSeconds(600) };
 
         [HttpPost]
+        [EnableCors]
         public void Start()
         {
             string file = RecordingHandler.GetHeader(Request, "x-recording-file", allowNulls: true);
@@ -27,6 +29,7 @@ namespace Azure.Sdk.Tools.TestProxy
         }
 
         [HttpPost]
+        [EnableCors]
         public void Stop()
         {
             string id = RecordingHandler.GetHeader(Request, "x-recording-id");
@@ -35,6 +38,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
         }
 
+        [EnableCors]
         public async Task HandleRequest()
         {
             string id = RecordingHandler.GetHeader(Request, "x-recording-id");

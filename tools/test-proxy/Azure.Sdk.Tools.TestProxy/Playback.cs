@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using Azure.Sdk.Tools.TestProxy.Common;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
@@ -16,6 +17,7 @@ namespace Azure.Sdk.Tools.TestProxy
         public Playback(RecordingHandler recordingHandler) => _recordingHandler = recordingHandler;
 
         [HttpPost]
+        [EnableCors]
         public async Task Start()
         {
             string file = RecordingHandler.GetHeader(Request, "x-recording-file", true);
@@ -36,6 +38,7 @@ namespace Azure.Sdk.Tools.TestProxy
         }
 
         [HttpPost]
+        [EnableCors]
         public void Stop()
         {
             string id = RecordingHandler.GetHeader(Request, "x-recording-id");
@@ -44,6 +47,7 @@ namespace Azure.Sdk.Tools.TestProxy
             _recordingHandler.StopPlayback(id, purgeMemoryStore: shouldPurgeRecording);
         }
 
+        [EnableCors]
         public async Task HandleRequest()
         {
             string id = RecordingHandler.GetHeader(Request, "x-recording-id");

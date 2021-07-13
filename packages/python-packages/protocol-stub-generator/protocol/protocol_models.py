@@ -13,6 +13,8 @@ from autorest.codegen.models import (
 )
 
 
+
+
 JSON_FIELDS = [
     "Name",
     "Version",
@@ -447,7 +449,7 @@ class ProtocolOperationView(FormattingClass):
                     "responses"
                 ][i]["protocol"]["http"]["statusCodes"]
             )
-        status_codes.append("/")
+        if yaml_data["operationGroups"][op_group_num]["operations"][op_num].get("exceptions", []): status_codes.append("/")
         for i in range(
             0,
             len(
@@ -472,38 +474,17 @@ class ProtocolOperationView(FormattingClass):
             lro = yaml_data["operationGroups"][op_group_num]["operations"][op_num][
                 "extensions"
             ].get("x-ms-long-running-operation")
-        if pageable:
-            paging_op = True
-        else:
-            paging_op = False
-        if lro:
-            lro_op = True
-        else:
-            lro_op = False
-
+            
+        paging_op = True if pageable else False
+        lro_op = True if lro else False
+        
         return_type = get_type(
             yaml_data["operationGroups"][op_group_num]["operations"][op_num][
                 "responses"
             ][0].get("schema", []),
             paging_op,
         )
-
-        for i in range(
-            0,
-            len(
-                yaml_data["operationGroups"][op_group_num]["operations"][op_num][
-                    "signatureParameters"
-                ]
-            ),
-        ):
-            param.append(
-                ProtocolParameterView.from_yaml(
-                    yaml_data["operationGroups"][op_group_num]["operations"][op_num],
-                    i,
-                    namespace,
-                )
-            )
-           
+        
         for j in range(
             0,
             len(
@@ -554,6 +535,24 @@ class ProtocolOperationView(FormattingClass):
                             json_response = i.schema.get_json_template_representation(
                                 code_model=code
                             )
+
+        for i in range(
+            0,
+            len(
+                yaml_data["operationGroups"][op_group_num]["operations"][op_num][
+                    "signatureParameters"
+                ]
+            ),
+        ):
+            param.append(
+                ProtocolParameterView.from_yaml(
+                    yaml_data["operationGroups"][op_group_num]["operations"][op_num],
+                    i,
+                    namespace,
+                )
+            )
+           
+
         description = yaml_data["operationGroups"][op_group_num]["operations"][op_num][
             "language"
         ]["default"].get("summary")
@@ -747,7 +746,6 @@ class ProtocolOperationView(FormattingClass):
         if self.status_codes:
             self.add_whitespace(3)
             self.add_typename(None, "Status Codes", None)
-                    # self.add_new_line(1)
             self.add_space()
             for i in self.status_codes:
                 if isinstance(i, list):

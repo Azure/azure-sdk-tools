@@ -51,10 +51,7 @@ class APIViewManager {
 
         let destUrl: URL
         if let destPath = args.dest {
-            guard let dest = URL(string: destPath) else {
-                SharedLogger.fail("usage error: `--dest PATH` was invalid.")
-            }
-            destUrl = dest
+            destUrl = URL(fileURLWithPath: destPath)
         } else {
             let destPath = "SwiftAPIView.json"
             guard let dest = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent(destPath) else {

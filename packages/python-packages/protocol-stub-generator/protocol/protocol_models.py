@@ -382,8 +382,8 @@ class ProtocolOperationView(FormattingClass):
         namespace,
         status_codes=None,
         description="",
-        paging="",
-        lro="",
+        paging=False,
+        lro=False,
         yaml=None,
     ):
         self.operation_group = operation_group
@@ -445,15 +445,9 @@ class ProtocolOperationView(FormattingClass):
             lro = yaml_data["operationGroups"][op_group_num]["operations"][op_num][
                 "extensions"
             ].get("x-ms-long-running-operation")
-        if pageable:
-            paging_op = True
-        else:
-            paging_op = False
-        if lro:
-            lro_op = True
-        else:
-            lro_op = False
-
+            
+        paging_op = True if pageable else False
+        lro_op = True if lro else False
         return_type = get_type(
             yaml_data["operationGroups"][op_group_num]["operations"][op_num][
                 "responses"

@@ -4,8 +4,11 @@ from typing import Any, Dict
 from ._token import Token
 from ._token_kind import TokenKind
 import re
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> 2eab8bf932d72b2b3e241b24cddfd375154ac443
 
 JSON_FIELDS = [
     "Name",
@@ -489,7 +492,7 @@ class ProtocolOperationView(FormattingClass):
             ]["language"]["default"]["description"]
 
         return cls(
-            operation_group = yaml_data["operationGroups"][op_group_num]["language"]["default"]["name"],
+            operation_group=yaml_data["operationGroups"][op_group_num]["language"]["default"]["name"],
             operation_name=yaml_data["operationGroups"][op_group_num]["operations"][
                 op_num
             ]["language"]["default"]["name"],

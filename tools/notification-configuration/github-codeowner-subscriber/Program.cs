@@ -72,16 +72,33 @@ namespace GitHubCodeownerSubscriber
                 );
 
                 var logger = loggerFactory.CreateLogger<Program>();
+                var pipelines = (await devOpsService.GetPipelinesAsync(project)).ToDictionary(p => p.Id);
 
                 var pipelineGroupTasks = (await devOpsService.GetAllTeamsAsync(project))
                     .Where(team =>
                         YamlHelper.Deserialize<TeamMetadata>(team.Description, swallowExceptions: true)?.Purpose == TeamPurpose.SynchronizedNotificationTeam
                     ).Select(async team =>
                     {
+                        BuildDefinition pipeline;
                         var pipelineId = YamlHelper.Deserialize<TeamMetadata>(team.Description).PipelineId;
+
+                        if (!pipelines.ContainsKey(pipelineId))
+                        {
+                            pipeline = await devOpsService.GetPipelineAsync(project, pipelineId);
+                        }
+                        else
+                        {
+                            pipeline = pipelines[pipelineId];
+                        }
+
+                        if (pipeline == default)
+                        {
+                            logger.LogWarning($"Could not find pipeline with id {pipelineId} referenced by team {team.Name}.");
+                        }
+
                         return new
                         {
-                            Pipeline = await devOpsService.GetPipelineAsync(project, pipelineId),
+                            Pipeline = pipeline,
                             Team = team
                         };
                     });
@@ -114,12 +131,10 @@ namespace GitHubCodeownerSubscriber
 
                         // Find matching contacts for the YAML file's path
                         var parser = new CodeOwnersParser(codeownersContent);
-                        var matchPath = PathWithoutFilename(process.YamlFilename);
-                        var searchPath = $"/{matchPath}/";
-                        logger.LogInformation("Searching CODEOWNERS for matching path Path = {0}", searchPath);
-                        var contacts = parser.GetContactsForPath(searchPath);
+                        logger.LogInformation("Searching CODEOWNERS for matching path for {0}", process.YamlFilename);
+                        var contacts = parser.GetContactsForPath(process.YamlFilename);
 
-                        logger.LogInformation("Matching Contacts Path = {0}, NumContacts = {1}", searchPath, contacts.Count);
+                        logger.LogInformation("Matching Contacts Path = {0}, NumContacts = {1}", process.YamlFilename, contacts.Count);
 
                         // Get set of team members in the CODEOWNERS file
                         var contactResolutionTasks = contacts
@@ -167,20 +182,6 @@ namespace GitHubCodeownerSubscriber
                     }
                 }
             }
-        }
-
-        /// <summary>
-        /// Returns a path that excludes the file name
-        /// </summary>
-        /// <param name="path">Path, must have forward slash separators ("/")</param>
-        /// <returns></returns>
-        private static string PathWithoutFilename(string path)
-        {
-            var splitPath = path
-                .Split("/", options: StringSplitOptions.RemoveEmptyEntries)
-                .ToList();
-
-            return string.Join("/", splitPath.Take(splitPath.Count - 1));
         }
     }
 }

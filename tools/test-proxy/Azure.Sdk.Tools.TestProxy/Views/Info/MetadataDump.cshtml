@@ -1,0 +1,184 @@
+﻿@using Azure.Sdk.Tools.TestProxy.Models; 
+@model AvailableMetadataModel
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Test-Proxy - Available Extensions</title>
+
+    @await Html.PartialAsync("css.cshtml")
+</head>
+<body>
+    <h1>
+        Test-Proxy Service Available Extensions
+    </h1>
+    <p>
+        To leverage any of the below extensions, your local test framework should POST to the <code>Admin</code> controller. Below is an example.
+    </p>
+    <pre>
+        METHOD: POST
+        URL: PROXYURL/Admin/AddSanitizer
+        HEADERS: {
+            "x-abstraction-identifier": "ContinuationSanitizer"
+        }
+        BODY: {
+            "key": "RequestId",
+            "method": "guid",
+            "resetAfterFirst": "false"
+        }
+    </pre>
+    <p>
+        To observe which transforms are currently active on your session, visit <b>/Info/Active</b>
+    </p>
+    <h1>Available Sanitizers</h1>
+    <p>
+        A <b>sanitizer</b> is applied to recordings in two locations
+        <ul>
+            <li>
+                Before they are saved. (Affects the session as a whole as well as individual entries)
+            </li>
+            <li>
+                During playback, when a request comes in from a client. This means that only individual entry sanitizers apply in this case.
+            </li>
+        </ul>
+
+        This is due to the fact that during playback, there is no session context. The test-proxy can only operate against the request that just came in.
+    </p>
+    @foreach (var extension in Model.Sanitizers)
+    {
+        <table style="width:100%">
+            <tr>
+                <td>
+                    <h2>@extension.Name</h2>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <h3>Description</h3>
+                    <p>
+                        @extension.Description
+                    </p>
+                </td>
+            </tr>
+            <tr>
+                <td>
+
+                    <h3>Constructor</h3>
+                    @if (!String.IsNullOrEmpty(extension.ConstructorDetails.Description) || extension.ConstructorDetails.Arguments.Count() > 0)
+                    {
+                        <p>
+                            @extension.ConstructorDetails.Description
+                        </p>
+                        <ul>
+                            @foreach (var arg in extension.ConstructorDetails.Arguments)
+                            {
+                                <li><span><code>@arg.Item1</code></span>: @arg.Item2</li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <p class="unused">
+                            This sanitizer either does have a constructor description or does not offer customization beyond applying it to your session.
+                        </p>
+                    }
+                </td>
+            </tr>
+        </table>
+    }
+
+    <h1>Available Matchers</h1>
+    @foreach (var extension in Model.Matchers)
+    {
+        <table style="width:100%">
+            <tr>
+                <td>
+                    <h2>@extension.Name</h2>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <h3>Description</h3>
+                    <p>
+                        @extension.Description
+                    </p>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <h3>Constructor</h3>
+                    @if (!String.IsNullOrEmpty(extension.ConstructorDetails.Description) || extension.ConstructorDetails.Arguments.Count() > 0)
+                    {
+                        <p>
+                            @extension.ConstructorDetails.Description
+                        </p>
+                        <ul>
+                            @foreach (var arg in extension.ConstructorDetails.Arguments)
+                            {
+                                <li><span><code>@arg.Item1</code></span>: @arg.Item2</li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <p class="unused">
+                            This matcher either does have a constructor description or does not offer customization beyond applying it to your session.
+                        </p>
+                    }
+                </td>
+            </tr>
+        </table>
+    }
+
+
+    <h1>Available Transforms</h1>
+    <p>A <b>transform</b> extends functionality of the test-proxy by applying to responses just before they are returned during <b>playback</b> mode.</p>
+    @foreach (var extension in Model.Transforms)
+    {
+        <table style="width:100%">
+            <tr>
+                <td>
+                    <h2>@extension.Name</h2>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <h3>Description</h3>
+                    <p>
+                        @extension.Description
+                    </p>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <h3>Constructor</h3>
+                    @if (!String.IsNullOrEmpty(extension.ConstructorDetails.Description) || extension.ConstructorDetails.Arguments.Count() > 0)
+                    {
+                        <p>
+                            @extension.ConstructorDetails.Description
+                        </p>
+                        <ul>
+                            @foreach (var arg in extension.ConstructorDetails.Arguments)
+                            {
+                                <li><span><code>@arg.Item1</code></span>: @arg.Item2</li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <p class="unused">
+                            This transform either does have a constructor description or does not offer customization beyond applying it to your session.
+                        </p>
+                    }
+                </td>
+            </tr>
+        </table>
+    }
+
+</body>
+</html>

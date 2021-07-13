@@ -854,6 +854,9 @@ def request_builder(
                         self.add_comment(
                             None, key + ": Map<string, " + m_type + ">;", None
                         )
+                        self.add_new_line()
+                        self.add_whitespace(4)
+                        self.add_comment(None,"};",None)
 
                         # START COLLECTING INNER MODEL DATA
                         indent = 4
@@ -877,7 +880,9 @@ def request_builder(
                         inner_model.append(
                             Token(" " * (indent * 4), TokenKind.Whitespace)
                         )
-                        inner_model.append(Token(i + ": {", TokenKind.Comment))  # + ": {"
+                        if isinstance(json_request[i], list) and len(json_request[i])==1: 
+                            inner_model.append(Token(i + ":", TokenKind.Comment))
+                        else: inner_model.append(Token(i + ": {", TokenKind.Comment))  # + ": {"
                         name = i
                     else:
                         self.add_new_line()
@@ -958,21 +963,31 @@ def request_builder(
                     inner_model=inner_model,
                     pre_indent=indent,
                 )
-                if inner_model and indent == 4:
-                    inner_model.append(Token(" ", TokenKind.Newline))
-                    inner_model.append(Token(" " * (indent * 4), TokenKind.Whitespace))
-                    inner_model.append(Token("};",TokenKind.Comment))
+                # if indent == 4 and inner_model:
+                #     inner_model.append(Token(" ", TokenKind.Newline))
+                #     inner_model.append(Token(" " * (indent * 4), TokenKind.Whitespace))
+                #     inner_model.append(Token("};",TokenKind.Comment))
+                if inner_model and indent>4:
+                    if isinstance(json_request[i],list):
+                        if len(json_request[i])==1: pass
+                        else:
+                            inner_model.append(Token(" ", TokenKind.Newline))
+                            inner_model.append(Token(" " * (indent * 4), TokenKind.Whitespace))
+                            inner_model.append(Token("}[];",TokenKind.Comment))
+                    else:
+                        inner_model.append(Token(" ", TokenKind.Newline))
+                        inner_model.append(Token(" " * (indent * 4), TokenKind.Whitespace))
+                        inner_model.append(Token("};",TokenKind.Comment))
                 elif isinstance(json_request[i],list) and indent>4: 
+                    self.add_new_line()
+                    self.add_whitespace(indent)
+                    self.add_comment(None,"}[];",None)
+                else:
                     if inner_model: pass
                     else:
                         self.add_new_line()
                         self.add_whitespace(indent)
-                        self.add_comment(None,"}[];",None)
-                else:
-                 
-                    self.add_new_line()
-                    self.add_whitespace(indent)
-                    self.add_comment(None,"};",None)
+                        self.add_comment(None,"};",None)
                         
 
 

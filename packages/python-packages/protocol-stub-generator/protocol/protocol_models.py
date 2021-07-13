@@ -869,8 +869,8 @@ def request_builder(
                         inner_model.append(
                             Token(" " * (indent * 4), TokenKind.Whitespace)
                         )
-                        if isinstance(json_request[i], list) and len(json_request[i])==1: 
-                            inner_model.append(Token(i + ":", TokenKind.Comment))
+                        if isinstance(json_request[i], list) and not isinstance(json_request[i][0],dict): 
+                            inner_model.append(Token(i, TokenKind.Comment))
                         else: inner_model.append(Token(i + ": {", TokenKind.Comment))  # + ": {"
                         name = i
                     else:

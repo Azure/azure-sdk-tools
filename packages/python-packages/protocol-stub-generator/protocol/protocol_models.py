@@ -769,8 +769,7 @@ class ProtocolOperationView(FormattingClass):
 def request_builder(
     self, json_request, yaml, notfirst, indent=4, name="", inner_model=[], pre_indent=4
 ):
-    # if pre_indent<indent:
-    #     self.add_comment(None,"};",None)
+
     self.inner_model = inner_model
 
     if isinstance(json_request, list):
@@ -901,25 +900,25 @@ def request_builder(
                         if index != -1:
                             inner_model.append(
                                 Token(
-                                    i + "? : Map<string, " + param[0] + ">;",
+                                    key + "? : Map<string, " + param[0] + ">;",
                                     TokenKind.Comment,
                                 )
                             )
                         else:
                             inner_model.append(
                                 Token(
-                                    i + ": Map<str, " + param[0] + ">;",
+                                    key + ": Map<string, " + param[0] + ">;",
                                     TokenKind.Comment,
                                 )
                             )
                     else:
                         if index != -1:
                             self.add_comment(
-                                None, key + "? : Map<str, " + param[0] + ">;", None
+                                None, key + "? : Map<string, " + param[0] + ">;", None
                             )
                         else:
                             self.add_comment(
-                                None, key + ": Map<str, " + param[0] + ">;", None
+                                None, key + ": Map<string, " + param[0] + ">;", None
                             )
                 else:
                     if len(param) >= 2:
@@ -988,6 +987,11 @@ def get_map_type(yaml, name=""):
                         if j["serializedName"] == name:
                             m_type = get_type(j["schema"]["elementType"])
                             key = j["schema"]["language"]["default"]["name"]
+                    for j in i["schema"]["properties"][0]["schema"].get("elementType", []):
+                        for k in i["schema"]["properties"][0]["schema"]["elementType"].get("properties",[]):
+                            if k['serializedName'] == name:
+                                m_type = get_type(k["schema"]["elementType"])
+                                key = k["schema"]["language"]["default"]["name"]
         if yaml["responses"][0].get("schema"):
             for i in yaml["responses"][0]["schema"].get("properties", []):
                 if i["serializedName"] == name:

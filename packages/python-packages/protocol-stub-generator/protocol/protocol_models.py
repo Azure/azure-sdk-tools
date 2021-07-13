@@ -699,21 +699,6 @@ class ProtocolOperationView(FormattingClass):
                 self.add_token(Token(kind=TokenKind.StartDocGroup))
 
                 self.format_status_code()
-                
-                if self.response_num:
-                    self.add_whitespace(3)
-                    self.add_typename(None, "Status Codes", None)
-                    # self.add_new_line(1)
-                    self.add_space()
-                    for i in self.response_num:
-                        if isinstance(i, list):
-                            for j in i:
-                                self.add_text(None, j, None)
-                                self.add_text(None, " ", None)
-                        else:
-                            self.add_text(None, i, None)
-                            self.add_text(None, " ", None)
-                    self.add_new_line(1)
 
                 if self.json_request:
                     self.add_whitespace(3)

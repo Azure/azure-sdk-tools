@@ -5,6 +5,8 @@ from ._token import Token
 from ._token_kind import TokenKind
 import re
 
+
+
 JSON_FIELDS = [
     "Name",
     "Version",
@@ -378,9 +380,11 @@ class ProtocolOperationView(FormattingClass):
         return_type,
         parameters,
         namespace,
+        status_codes=None,
         description="",
         paging=False,
         lro=False,
+        yaml=None,
     ):
         self.operation_group = operation_group
         self.operation = operation_name
@@ -392,13 +396,47 @@ class ProtocolOperationView(FormattingClass):
         self.description = description
         self.paging = paging
         self.lro = lro
+        self.status_codes = status_codes
+        self.yaml = yaml
+        self.inner_model = []
 
     @classmethod
     def from_yaml(cls, yaml_data: Dict[str, Any], op_group_num, op_num, namespace):
         param = []
         pageable = None
         lro = None
-        
+        status_codes = []
+     
+        for i in range(
+            0,
+            len(
+                yaml_data["operationGroups"][op_group_num]["operations"][op_num].get(
+                    "responses"
+                )
+            ),
+        ):
+            status_codes.append(
+                yaml_data["operationGroups"][op_group_num]["operations"][op_num][
+                    "responses"
+                ][i]["protocol"]["http"]["statusCodes"]
+            )
+        if yaml_data["operationGroups"][op_group_num]["operations"][op_num].get("exceptions", []): status_codes.append("/")
+        for i in range(
+            0,
+            len(
+                yaml_data["operationGroups"][op_group_num]["operations"][op_num].get(
+                    "exceptions", []
+                )
+            ),
+        ):
+           
+            status_codes.append(
+                yaml_data["operationGroups"][op_group_num]["operations"][op_num][
+                    "exceptions"
+                ][i]["protocol"]["http"]["statusCodes"]
+            )
+
+
         if yaml_data["operationGroups"][op_group_num]["operations"][op_num].get(
             "extensions"
         ):
@@ -408,32 +446,17 @@ class ProtocolOperationView(FormattingClass):
             lro = yaml_data["operationGroups"][op_group_num]["operations"][op_num][
                 "extensions"
             ].get("x-ms-long-running-operation")
-        
+            
         paging_op = True if pageable else False
         lro_op = True if lro else False
-      
+        
         return_type = get_type(
             yaml_data["operationGroups"][op_group_num]["operations"][op_num][
                 "responses"
             ][0].get("schema", []),
             paging_op,
         )
-
-        for i in range(
-            0,
-            len(
-                yaml_data["operationGroups"][op_group_num]["operations"][op_num][
-                    "signatureParameters"
-                ]
-            ),
-        ):
-            param.append(
-                ProtocolParameterView.from_yaml(
-                    yaml_data["operationGroups"][op_group_num]["operations"][op_num],
-                    i,
-                    namespace,
-                )
-            )
+        
         for j in range(
             0,
             len(
@@ -460,6 +483,23 @@ class ProtocolOperationView(FormattingClass):
                     )
                 )
 
+        for i in range(
+            0,
+            len(
+                yaml_data["operationGroups"][op_group_num]["operations"][op_num][
+                    "signatureParameters"
+                ]
+            ),
+        ):
+            param.append(
+                ProtocolParameterView.from_yaml(
+                    yaml_data["operationGroups"][op_group_num]["operations"][op_num],
+                    i,
+                    namespace,
+                )
+            )
+           
+
         description = yaml_data["operationGroups"][op_group_num]["operations"][op_num][
             "language"
         ]["default"].get("summary")
@@ -479,7 +519,10 @@ class ProtocolOperationView(FormattingClass):
             description=description,
             paging=paging_op,
             lro=lro_op,
+            status_codes=status_codes,
+            yaml=yaml_data["operationGroups"][op_group_num]["operations"][op_num],
         )
+
 
     def get_tokens(self):
         return self.Tokens
@@ -565,6 +608,10 @@ class ProtocolOperationView(FormattingClass):
             self.add_whitespace(3)
             self.overview_tokens.append(Token(")", TokenKind.Text))
             self.add_punctuation(")")
+            self.add_new_line()
+            self.add_token(Token(kind=TokenKind.StartDocGroup))
+            self.format_status_code()
+            self.add_token(Token(kind=TokenKind.EndDocGroup))
             self.add_new_line(1)
 
         for param_num in range(0, len(self.parameters)):
@@ -587,13 +634,34 @@ class ProtocolOperationView(FormattingClass):
                 self.add_punctuation(",")
                 self.overview_tokens.append(Token(", ", TokenKind.Text))
 
-            # Create a new line for the next operation
+           # Create a new line for the next operation
             else:
                 self.add_new_line()
                 self.add_whitespace(3)
                 self.overview_tokens.append(Token(")", TokenKind.Text))
                 self.add_punctuation(")")
                 self.add_new_line(1)
+
+                self.add_token(Token(kind=TokenKind.StartDocGroup))
+
+                self.format_status_code()
+
+                self.add_token(Token(kind=TokenKind.EndDocGroup))
+
+    def format_status_code(self):
+        if self.status_codes:
+            self.add_whitespace(3)
+            self.add_typename(None, "Status Codes", None)
+            self.add_space()
+            for i in self.status_codes:
+                if isinstance(i, list):
+                    for j in i:
+                        self.add_text(None, j, None)
+                        self.add_text(None, " ", None)
+                else:
+                    self.add_text(None, i, None)
+                    self.add_text(None, " ", None)
+            self.add_new_line(1)
 
     def to_json(self):
         obj_dict = {}

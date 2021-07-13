@@ -880,6 +880,10 @@ def request_builder(
                         name = i
                         inner_model = []
             if isinstance(json_request[i], str):
+                in_model = False
+                if indent == 4: 
+                    in_model = True
+                    indent=indent+1;
                 if inner_model:
                     inner_model.append(Token(" ", TokenKind.Newline))
                     inner_model.append(Token(" " * (indent * 4), TokenKind.Whitespace))
@@ -915,6 +919,13 @@ def request_builder(
                             self.add_comment(
                                 None, key + ": Map<string, " + param[0] + ">;", None
                             )
+                        
+                        if in_model: 
+                            self.add_new_line()
+                            self.add_whitespace(4)
+                            self.add_comment(None, "};", None)
+                            in_model =False
+                            indent =4 
                 else:
                     if len(param) >= 2:
                         if param[0] == 'str': param[0]='string'
@@ -928,6 +939,12 @@ def request_builder(
                             )
                         else:
                             self.add_comment(None, json_request[i], None)
+                            if in_model: 
+                                self.add_new_line()
+                                self.add_whitespace(4)
+                                self.add_comment(None, "};", None)
+                                in_model =False
+                                indent =4 
                     else:
                         if json_request[i] == 'str': json_request[i]='string'
                         if inner_model:
@@ -940,6 +957,12 @@ def request_builder(
                             self.add_comment(
                                 None, i + ": " + json_request[i] + ";", None
                             )
+                            if in_model: 
+                                self.add_new_line()
+                                self.add_whitespace(4)
+                                self.add_comment(None, "};", None)
+                                in_model =False
+                                indent =4 
 
             else:
                 request_builder(

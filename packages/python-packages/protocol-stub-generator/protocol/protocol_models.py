@@ -878,6 +878,7 @@ def request_builder(
                             Token(" " * (indent * 4), TokenKind.Whitespace)
                         )
                         inner_model.append(Token(i + ": {", TokenKind.Comment))  # + ": {"
+                        name = i
                     else:
                         self.add_new_line()
                         self.add_whitespace(indent)

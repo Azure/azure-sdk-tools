@@ -59,9 +59,10 @@ class TokenFile: Codable {
 
     /// Controls whether a newline is needed
     private var needsNewLine = false
-    
-    /// Watches import statements so that they aren't repeated in the APIView
-    private var imports = [String:Bool]()
+
+    /// Tracks assigned definition IDs so they can be linked where key is the name and value is the definition ID (which could be different)
+    private var definitionIds = [String: String]()
+
     // MARK: Initializers
 
     init(name: String, packageName: String, versionString: String) {
@@ -134,7 +135,8 @@ class TokenFile: Codable {
     }
 
     func type(name: String, definitionId: String? = nil) {
-        let item = TokenItem(definitionId: definitionId, navigateToId: nil, value: name, kind: .typeName)
+        let linkId = definitionIds[name]
+        let item = TokenItem(definitionId: definitionId, navigateToId: linkId, value: name, kind: .typeName)
         tokens.append(item)
         needsNewLine = true
     }
@@ -191,41 +193,11 @@ class TokenFile: Codable {
         }
         for statement in decl.statements {
             switch statement {
-            case let decl as ClassDeclaration:
-                process(decl)
-            case let decl as ConstantDeclaration:
-                process(decl)
-            case let decl as DeinitializerDeclaration:
-                process(decl)
-            case let decl as EnumDeclaration:
-                newLine()
-                process(decl)
-            case let decl as ExtensionDeclaration:
-                process(decl)
-            case let decl as FunctionDeclaration:
-                process(decl)
-            case let decl as ImportDeclaration:
-                process(decl)
-            case let decl as InitializerDeclaration:
-                process(decl)
-            case let decl as OperatorDeclaration:
-                continue // process(decl)
-            case let decl as PrecedenceGroupDeclaration:
-                continue // process(decl)
-            case let decl as ProtocolDeclaration:
-                process(decl)
-            case let decl as StructDeclaration:
-                process(decl)
-            case let decl as SubscriptDeclaration:
-                continue // process(decl)
-            case let decl as TypealiasDeclaration:
-                process(decl)
-            case let decl as VariableDeclaration:
+            case let decl as Declaration:
                 process(decl)
             default:
                 continue
             }
-            
         }
     }
 
@@ -240,6 +212,7 @@ class TokenFile: Codable {
         }
         let value = (decl.accessLevelModifier ?? .internal).textDescription
         let defId = decl.name.textDescription
+        definitionIds[defId] = defId
 
         newLine()
         if !decl.attributes.isEmpty {
@@ -290,6 +263,7 @@ class TokenFile: Codable {
         }
         let value = (decl.accessLevelModifier ?? .internal).textDescription
         let defId = decl.name.textDescription
+        definitionIds[defId] = defId
 
         newLine()
         if !decl.attributes.isEmpty {
@@ -336,6 +310,7 @@ class TokenFile: Codable {
         }
         let value = (decl.accessLevelModifier ?? .internal).textDescription
         let defId = decl.name.textDescription
+        definitionIds[defId] = defId
         
         newLine()
         if !decl.attributes.isEmpty {
@@ -408,6 +383,8 @@ class TokenFile: Codable {
             handle(attributes: decl.attributes)
         }
         let defId = decl.name.textDescription
+        definitionIds[defId] = defId
+
         keyword(value: value)
         whitespace()
         keyword(value: "protocol")
@@ -435,6 +412,9 @@ class TokenFile: Codable {
             return
         }
         let value = (decl.accessLevelModifier ?? .internal).textDescription
+        let defId = decl.name.textDescription
+        definitionIds[defId] = defId
+
         newLine()
         if !decl.attributes.isEmpty {
             handle(attributes: decl.attributes)
@@ -443,13 +423,12 @@ class TokenFile: Codable {
         whitespace()
         keyword(value: "typealias")
         whitespace()
-        let defId = decl.name.textDescription
         type(name: decl.name.textDescription, definitionId: defId)
         if let genericParam = decl.generic {
             handle(clause: genericParam)
         }
         whitespace()
-        text("=")
+        punctuation("=")
         whitespace()
         text(decl.assignment.textDescription)
     }
@@ -457,10 +436,8 @@ class TokenFile: Codable {
     private func process(_ decl: VariableDeclaration) {
         let accessLevel = decl.modifiers.accessLevel
         var name = "NAME"
-        var typeName = "TYPE"
-        var isOptional = false
-        var isArray = false
         let isStatic = decl.modifiers.isStatic
+        var typeModel: TypeModel? = nil
 
         decl.modifiers.verifySupported()
 
@@ -468,36 +445,13 @@ class TokenFile: Codable {
         case let .initializerList(initializerList):
             for item in initializerList {
                 if case let identPattern as IdentifierPattern = item.pattern {
-
                     name = identPattern.identifier.textDescription
-
-                    if let typeAnnotation = identPattern.typeAnnotation?.type {
-                        if case let typeAnno as OptionalType = typeAnnotation {
-                            isOptional = true
-                            if case let identifier as TypeIdentifier = typeAnno.wrappedType {
-                                typeName = identifier.names.first!.name.textDescription
-                            } else if case let identifier as ArrayType = typeAnno.wrappedType {
-                                isArray = true
-                                typeName = identifier.elementType.textDescription
-                            } else {
-                                SharedLogger.fail("Unsupported identifier: \(typeAnno.wrappedType)")
-                            }
-                        } else {
-                            if case let identifier as TypeIdentifier = typeAnnotation {
-                                typeName = identifier.names.first!.name.textDescription
-                            } else if case let identifier as ArrayType = typeAnnotation {
-                                isArray = true
-                                typeName = identifier.elementType.textDescription
-                            } else {
-                                SharedLogger.fail("Unsupported identifier: \(typeAnnotation)")
-                            }
-                        }
-                    }
+                    typeModel = TypeModel(from: identPattern)
+                    break
                 }
             }
         case let .codeBlock(ident, typeAnno, _):
-            // strips the leading : from the type annotation text description
-            typeName = String(typeAnno.textDescription.dropFirst(2))
+            typeModel = TypeModel(from: typeAnno)
             name = ident.textDescription
         default:
             SharedLogger.fail("Unsupported variable body type: \(decl.body)")
@@ -517,13 +471,7 @@ class TokenFile: Codable {
         member(name: name)
         punctuation(":")
         whitespace()
-        if isArray { punctuation("[") }
-        type(name: typeName)
-        if isArray { punctuation("]") }
-        if isOptional {
-            punctuation("?")
-        }
-        
+        handle(typeModel: typeModel)
     }
     
     private func process(_ decl: ExtensionDeclaration) {
@@ -571,40 +519,15 @@ class TokenFile: Codable {
     private func process(_ decl: ConstantDeclaration) {
         let accessLevel = decl.modifiers.accessLevel
         var name = "NAME"
-        var typeName = "TYPE"
-        var isOptional = false
-        var isArray = false
         let isStatic = decl.modifiers.isStatic
+        var typeModel: TypeModel? = nil
 
         decl.modifiers.verifySupported()
 
         for item in decl.initializerList {
             if case let identPattern as IdentifierPattern = item.pattern {
-
                 name = identPattern.identifier.textDescription
-
-                if let typeAnnotation = identPattern.typeAnnotation?.type {
-                    if case let typeAnno as OptionalType = typeAnnotation {
-                        isOptional = true
-                        if case let identifier as TypeIdentifier = typeAnno.wrappedType {
-                            typeName = identifier.names.first!.name.textDescription
-                        } else if case let identifier as ArrayType = typeAnno.wrappedType {
-                            isArray = true
-                            typeName = identifier.elementType.textDescription
-                        } else {
-                            SharedLogger.fail("Unsupported identifier: \(typeAnno.wrappedType)")
-                        }
-                    } else {
-                        if case let identifier as TypeIdentifier = typeAnnotation {
-                            typeName = identifier.names.first!.name.textDescription
-                        } else if case let identifier as ArrayType = typeAnnotation {
-                            isArray = true
-                            typeName = identifier.elementType.textDescription
-                        } else {
-                            SharedLogger.fail("Unsupported identifier: \(typeAnnotation)")
-                        }
-                    }
-                }
+                typeModel = TypeModel(from: identPattern)
             }
         }
 
@@ -622,12 +545,7 @@ class TokenFile: Codable {
         member(name: name)
         punctuation(":")
         whitespace()
-        if isArray { punctuation("[") }
-        type(name: typeName)
-        if isArray { punctuation("]") }
-        if isOptional {
-            punctuation("?")
-        }
+        handle(typeModel: typeModel)
     }
 
     private func process(_ decl : InitializerDeclaration) {
@@ -740,14 +658,14 @@ class TokenFile: Codable {
             let externalNameText = parameter.externalName.map({ [$0.textDescription] }) ?? []
             let localNameText = parameter.localName.textDescription.isEmpty ? [] : [parameter.localName.textDescription]
             let nameText = (externalNameText + localNameText).joined(separator: " ")
-            var typeAnnoText = parameter.typeAnnotation.textDescription
-            typeAnnoText.removeFirst()
+            let typeModel = TypeModel(from: parameter.typeAnnotation)
             let defaultText =
                 parameter.defaultArgumentClause.map({ " = \($0.textDescription)" }) ?? ""
             let varargsText = parameter.isVarargs ? "..." : ""
             member(name: nameText)
-            text(":")
-            type(name: typeAnnoText)
+            punctuation(":")
+            whitespace()
+            self.handle(typeModel: typeModel)
             stringLiteral(defaultText)
             text(varargsText)
         }
@@ -766,50 +684,68 @@ class TokenFile: Codable {
             guard let result = result else {
                 return
             }
-            var resultText = result.textDescription
-            resultText.removeFirst(); resultText.removeFirst()
-            text("->")
+            let typeModel = TypeModel(from: result.type)
+            punctuation("->")
             whitespace()
-            type(name: resultText)
+            self.handle(typeModel: typeModel)
         }
-        text("(")
+
+        punctuation("(")
         var count = signature.parameterList.count - 1
         signature.parameterList.forEach { parameter in
             handle(parameter: parameter)
             if count > 0 {
-                text(",")
+                punctuation(",")
                 whitespace()
                 count -= 1
             }
         }
-        text(")")
+        punctuation(")")
         whitespace()
         handle(throws: signature.throwsKind)
         handle(result: signature.result)
-        
     }
     
     private func handle(clause typeInheritance: TypeInheritanceClause) {
-        var inherits = typeInheritance.textDescription
-        inherits.removeFirst()
-        text(":")
-        type(name: inherits)
+        punctuation(":")
+        whitespace()
+        for (idx, item) in typeInheritance.typeInheritanceList.enumerated() {
+            let typeModel = TypeModel(from: item)
+            handle(typeModel: typeModel)
+            if idx != typeInheritance.typeInheritanceList.count - 1 {
+                punctuation(",")
+                whitespace()
+            }
+        }
         whitespace()
     }
 
     private func handle(clause genericParam: GenericParameterClause) {
+        // TODO: Remove reliance on textDescription
         text(genericParam.textDescription)
         whitespace()
     }
 
     private func handle(clause genericWhere: GenericWhereClause) {
+        // TODO: Remove reliance on textDescription
         text(genericWhere.textDescription)
         whitespace()
     }
 
     private func handle(attributes: Attributes) {
+        // TODO: remove reliance on textDescription
         keyword(value: attributes.textDescription)
         newLine()
+    }
+
+    private func handle(typeModel: TypeModel?) {
+        guard let source = typeModel else { return }
+        if source.isArray { punctuation("[") }
+        type(name: source.name)
+        if source.isArray { punctuation("]") }
+        if source.isOptional {
+            punctuation("?")
+        }
     }
 
     // MARK: Navigation Emitter Methods
@@ -936,43 +872,5 @@ class TokenFile: Codable {
         default:
             return nil
         }
-    }
-}
-
-extension DeclarationModifiers {
-
-    func verifySupported() {
-        for modifier in self {
-            switch modifier {
-            case .accessLevel, .static:
-                continue
-            default:
-                SharedLogger.fail("Unsupported modifier: \(modifier)")
-            }
-        }
-    }
-
-    var accessLevel: AccessLevelModifier? {
-        for modifier in self {
-            switch modifier {
-            case let .accessLevel(value):
-                return value
-            default:
-                continue
-            }
-        }
-        return nil
-    }
-
-    var isStatic: Bool {
-        for modifier in self {
-            switch modifier {
-            case .static:
-                return true
-            default:
-                continue
-            }
-        }
-        return false
     }
 }

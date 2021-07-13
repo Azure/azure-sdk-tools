@@ -4,11 +4,8 @@ from typing import Any, Dict
 from ._token import Token
 from ._token_kind import TokenKind
 import re
-<<<<<<< HEAD
 
 
-=======
->>>>>>> 2eab8bf932d72b2b3e241b24cddfd375154ac443
 
 JSON_FIELDS = [
     "Name",
@@ -383,8 +380,6 @@ class ProtocolOperationView(FormattingClass):
         return_type,
         parameters,
         namespace,
-       json_request=None,
-        json_response=None,
         status_codes=None,
         description="",
         paging="",

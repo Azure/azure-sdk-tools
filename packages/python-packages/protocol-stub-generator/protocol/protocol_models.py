@@ -789,15 +789,6 @@ def request_builder(
                     self.add_comment(None, json_request[i], None)
                     self.add_new_line()
             else:
-                # # It is a list of whatever is in here:
-                # if "{" not in self.Tokens[len(self.Tokens) - 1].Value:
-                #     if inner_model:
-                #         # inner_model.append(Token(":{", TokenKind.Comment))
-                #         inner_model.append(Token(" ", TokenKind.Newline))
-                #     # else:
-                #     #     self.add_comment(None, ": {", None)
-                #     #     self.add_new_line()
-
                 request_builder(
                     self,
                     json_request[i],
@@ -961,13 +952,14 @@ def request_builder(
                     inner_model=inner_model,
                     pre_indent=indent,
                 )
-                # if indent == 4 and inner_model:
-                #     inner_model.append(Token(" ", TokenKind.Newline))
-                #     inner_model.append(Token(" " * (indent * 4), TokenKind.Whitespace))
-                #     inner_model.append(Token("};",TokenKind.Comment))
-                if inner_model and indent>4:
+                if i == 'str': pass
+                elif inner_model and indent>4:
                     if isinstance(json_request[i],list):
-                        if len(json_request[i])==1: pass
+                        if isinstance(json_request[i][0],dict):
+                            inner_model.append(Token(" ", TokenKind.Newline))
+                            inner_model.append(Token(" " * (indent * 4), TokenKind.Whitespace))
+                            inner_model.append(Token("}[];",TokenKind.Comment))
+                        elif len(json_request[i])==1: pass
                         else:
                             inner_model.append(Token(" ", TokenKind.Newline))
                             inner_model.append(Token(" " * (indent * 4), TokenKind.Whitespace))
@@ -981,7 +973,10 @@ def request_builder(
                     self.add_whitespace(indent)
                     self.add_comment(None,"}[];",None)
                 else:
-                    if inner_model: pass
+                    if indent == 4 and inner_model:
+                        inner_model.append(Token(" ", TokenKind.Newline))
+                        inner_model.append(Token(" " * (indent * 4), TokenKind.Whitespace))
+                        inner_model.append(Token("};",TokenKind.Comment))
                     else:
                         self.add_new_line()
                         self.add_whitespace(indent)

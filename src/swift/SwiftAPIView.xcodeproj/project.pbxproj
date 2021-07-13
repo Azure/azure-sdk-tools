@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 52;
+	objectVersion = 50;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -19,7 +19,6 @@
 		0A6A545B269CAD5A001006AF /* TypeModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A6A545A269CAD59001006AF /* TypeModel.swift */; };
 		0A6A545E269CE223001006AF /* DeclarationModifier+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A6A545D269CE223001006AF /* DeclarationModifier+Extensions.swift */; };
 		31A6751B2697437400F92505 /* SourceCodeExample.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31A6751A2697437400F92505 /* SourceCodeExample.swift */; };
-		31FB4C92268E0FF1006FB1E6 /* SwiftAST in Frameworks */ = {isa = PBXBuildFile; productRef = 31FB4C91268E0FF1006FB1E6 /* SwiftAST */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -48,6 +47,9 @@
 		0A6A544F268B91FC001006AF /* NavigationTags.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationTags.swift; sourceTree = "<group>"; };
 		0A6A545A269CAD59001006AF /* TypeModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TypeModel.swift; sourceTree = "<group>"; };
 		0A6A545D269CE223001006AF /* DeclarationModifier+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DeclarationModifier+Extensions.swift"; sourceTree = "<group>"; };
+		0A6A545F269E2589001006AF /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		0A6A5460269E2589001006AF /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
+		0A6A5463269E25BF001006AF /* SwiftAPIViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftAPIViewTests.swift; sourceTree = "<group>"; };
 		31A6751A2697437400F92505 /* SourceCodeExample.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceCodeExample.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -56,7 +58,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				31FB4C92268E0FF1006FB1E6 /* SwiftAST in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -66,8 +67,11 @@
 		0A6A5427268B82D0001006AF = {
 			isa = PBXGroup;
 			children = (
+				0A6A5460269E2589001006AF /* Package.swift */,
+				0A6A545F269E2589001006AF /* README.md */,
 				0A6A543B268B845A001006AF /* Info.plist */,
 				0A6A5432268B82D0001006AF /* Sources */,
+				0A6A5461269E25BF001006AF /* Tests */,
 				0A6A5431268B82D0001006AF /* Products */,
 				6F4C0E2E04E03C6B3145C4A1 /* Frameworks */,
 			);
@@ -124,6 +128,14 @@
 			path = Extensions;
 			sourceTree = "<group>";
 		};
+		0A6A5461269E25BF001006AF /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				0A6A5463269E25BF001006AF /* SwiftAPIViewTests.swift */,
+			);
+			path = Tests;
+			sourceTree = "<group>";
+		};
 		6F4C0E2E04E03C6B3145C4A1 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
@@ -148,7 +160,6 @@
 			);
 			name = SwiftAPIView;
 			packageProductDependencies = (
-				31FB4C91268E0FF1006FB1E6 /* SwiftAST */,
 			);
 			productName = SwiftAPIView;
 			productReference = 0A6A5430268B82D0001006AF /* SwiftAPIView */;
@@ -178,7 +189,6 @@
 			);
 			mainGroup = 0A6A5427268B82D0001006AF;
 			packageReferences = (
-				31FB4C90268E0FF1006FB1E6 /* XCRemoteSwiftPackageReference "swift-ast" */,
 			);
 			productRefGroup = 0A6A5431268B82D0001006AF /* Products */;
 			projectDirPath = "";
@@ -378,25 +388,6 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
-
-/* Begin XCRemoteSwiftPackageReference section */
-		31FB4C90268E0FF1006FB1E6 /* XCRemoteSwiftPackageReference "swift-ast" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/yanagiba/swift-ast";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 0.19.9;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-		31FB4C91268E0FF1006FB1E6 /* SwiftAST */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 31FB4C90268E0FF1006FB1E6 /* XCRemoteSwiftPackageReference "swift-ast" */;
-			productName = SwiftAST;
-		};
-/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 0A6A5428268B82D0001006AF /* Project object */;
 }

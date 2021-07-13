@@ -422,7 +422,7 @@ class ProtocolOperationView(FormattingClass):
                     "responses"
                 ][i]["protocol"]["http"]["statusCodes"]
             )
-            status_codes.append("/")
+        status_codes.append("/")
         for i in range(
             0,
             len(

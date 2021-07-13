@@ -456,6 +456,32 @@ class ProtocolOperationView(FormattingClass):
             ][0].get("schema", []),
             paging_op,
         )
+        
+        for j in range(
+            0,
+            len(
+                yaml_data["operationGroups"][op_group_num]["operations"][op_num][
+                    "requests"
+                ]
+            ),
+        ):
+            for i in range(
+                0,
+                len(
+                    yaml_data["operationGroups"][op_group_num]["operations"][op_num][
+                        "requests"
+                    ][j].get("signatureParameters", [])
+                ),
+            ):
+                param.append(
+                    ProtocolParameterView.from_yaml(
+                        yaml_data["operationGroups"][op_group_num]["operations"][
+                            op_num
+                        ]["requests"][j],
+                        i,
+                        namespace,
+                    )
+                )
 
         for i in range(
             0,

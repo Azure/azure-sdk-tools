@@ -436,6 +436,7 @@ class ProtocolOperationView(FormattingClass):
                 ][i]["protocol"]["http"]["statusCodes"]
             )
 
+
         if yaml_data["operationGroups"][op_group_num]["operations"][op_num].get(
             "extensions"
         ):
@@ -448,6 +449,7 @@ class ProtocolOperationView(FormattingClass):
             
         paging_op = True if pageable else False
         lro_op = True if lro else False
+        
         return_type = get_type(
             yaml_data["operationGroups"][op_group_num]["operations"][op_num][
                 "responses"
@@ -624,7 +626,6 @@ class ProtocolOperationView(FormattingClass):
         if self.status_codes:
             self.add_whitespace(3)
             self.add_typename(None, "Status Codes", None)
-                    # self.add_new_line(1)
             self.add_space()
             for i in self.status_codes:
                 if isinstance(i, list):

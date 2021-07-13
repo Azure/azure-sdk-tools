@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 50;
+	objectVersion = 52;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -18,6 +18,9 @@
 		0A6A5450268B91FC001006AF /* NavigationTags.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A6A544F268B91FC001006AF /* NavigationTags.swift */; };
 		0A6A545B269CAD5A001006AF /* TypeModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A6A545A269CAD59001006AF /* TypeModel.swift */; };
 		0A6A545E269CE223001006AF /* DeclarationModifier+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A6A545D269CE223001006AF /* DeclarationModifier+Extensions.swift */; };
+		0A6A546C269E2AE8001006AF /* SwiftAPIViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A6A546B269E2AE8001006AF /* SwiftAPIViewTests.swift */; };
+		0A6A5474269E2B83001006AF /* SwiftAST in Frameworks */ = {isa = PBXBuildFile; productRef = 0A6A5473269E2B83001006AF /* SwiftAST */; };
+		0A6A5476269E2B83001006AF /* SwiftAST+Tooling in Frameworks */ = {isa = PBXBuildFile; productRef = 0A6A5475269E2B83001006AF /* SwiftAST+Tooling */; };
 		31A6751B2697437400F92505 /* SourceCodeExample.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31A6751A2697437400F92505 /* SourceCodeExample.swift */; };
 /* End PBXBuildFile section */
 
@@ -48,13 +51,23 @@
 		0A6A545A269CAD59001006AF /* TypeModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TypeModel.swift; sourceTree = "<group>"; };
 		0A6A545D269CE223001006AF /* DeclarationModifier+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DeclarationModifier+Extensions.swift"; sourceTree = "<group>"; };
 		0A6A545F269E2589001006AF /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
-		0A6A5460269E2589001006AF /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
-		0A6A5463269E25BF001006AF /* SwiftAPIViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftAPIViewTests.swift; sourceTree = "<group>"; };
+		0A6A5469269E2AE8001006AF /* SwiftAPIViewTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SwiftAPIViewTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		0A6A546B269E2AE8001006AF /* SwiftAPIViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftAPIViewTests.swift; sourceTree = "<group>"; };
+		0A6A546D269E2AE8001006AF /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		31A6751A2697437400F92505 /* SourceCodeExample.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceCodeExample.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		0A6A542D268B82D0001006AF /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0A6A5476269E2B83001006AF /* SwiftAST+Tooling in Frameworks */,
+				0A6A5474269E2B83001006AF /* SwiftAST in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0A6A5466269E2AE8001006AF /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -67,11 +80,10 @@
 		0A6A5427268B82D0001006AF = {
 			isa = PBXGroup;
 			children = (
-				0A6A5460269E2589001006AF /* Package.swift */,
 				0A6A545F269E2589001006AF /* README.md */,
 				0A6A543B268B845A001006AF /* Info.plist */,
 				0A6A5432268B82D0001006AF /* Sources */,
-				0A6A5461269E25BF001006AF /* Tests */,
+				0A6A546A269E2AE8001006AF /* Tests */,
 				0A6A5431268B82D0001006AF /* Products */,
 				6F4C0E2E04E03C6B3145C4A1 /* Frameworks */,
 			);
@@ -81,6 +93,7 @@
 			isa = PBXGroup;
 			children = (
 				0A6A5430268B82D0001006AF /* SwiftAPIView */,
+				0A6A5469269E2AE8001006AF /* SwiftAPIViewTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -128,10 +141,11 @@
 			path = Extensions;
 			sourceTree = "<group>";
 		};
-		0A6A5461269E25BF001006AF /* Tests */ = {
+		0A6A546A269E2AE8001006AF /* Tests */ = {
 			isa = PBXGroup;
 			children = (
-				0A6A5463269E25BF001006AF /* SwiftAPIViewTests.swift */,
+				0A6A546B269E2AE8001006AF /* SwiftAPIViewTests.swift */,
+				0A6A546D269E2AE8001006AF /* Info.plist */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -160,10 +174,29 @@
 			);
 			name = SwiftAPIView;
 			packageProductDependencies = (
+				0A6A5473269E2B83001006AF /* SwiftAST */,
+				0A6A5475269E2B83001006AF /* SwiftAST+Tooling */,
 			);
 			productName = SwiftAPIView;
 			productReference = 0A6A5430268B82D0001006AF /* SwiftAPIView */;
 			productType = "com.apple.product-type.tool";
+		};
+		0A6A5468269E2AE8001006AF /* SwiftAPIViewTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0A6A546E269E2AE8001006AF /* Build configuration list for PBXNativeTarget "SwiftAPIViewTests" */;
+			buildPhases = (
+				0A6A5465269E2AE8001006AF /* Sources */,
+				0A6A5466269E2AE8001006AF /* Frameworks */,
+				0A6A5467269E2AE8001006AF /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = SwiftAPIViewTests;
+			productName = SwiftAPIViewTests;
+			productReference = 0A6A5469269E2AE8001006AF /* SwiftAPIViewTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
 
@@ -175,6 +208,9 @@
 				LastUpgradeCheck = 1250;
 				TargetAttributes = {
 					0A6A542F268B82D0001006AF = {
+						CreatedOnToolsVersion = 12.5.1;
+					};
+					0A6A5468269E2AE8001006AF = {
 						CreatedOnToolsVersion = 12.5.1;
 					};
 				};
@@ -189,15 +225,27 @@
 			);
 			mainGroup = 0A6A5427268B82D0001006AF;
 			packageReferences = (
+				0A6A5472269E2B83001006AF /* XCRemoteSwiftPackageReference "swift-ast" */,
 			);
 			productRefGroup = 0A6A5431268B82D0001006AF /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
 				0A6A542F268B82D0001006AF /* SwiftAPIView */,
+				0A6A5468269E2AE8001006AF /* SwiftAPIViewTests */,
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		0A6A5467269E2AE8001006AF /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		0A6A542C268B82D0001006AF /* Sources */ = {
@@ -216,6 +264,14 @@
 				0A6A5445268B89DE001006AF /* APIViewManager.swift in Sources */,
 				0A6A544E268B8F75001006AF /* NavigationItem.swift in Sources */,
 				0A6A5441268B886D001006AF /* Logger.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0A6A5465269E2AE8001006AF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0A6A546C269E2AE8001006AF /* SwiftAPIViewTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -345,7 +401,7 @@
 				DEVELOPMENT_TEAM = ZQB5E94758;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = "$(SRCROOT)/Info.plist";
-				PRODUCT_BUNDLE_IDENTIFIER = "";
+				PRODUCT_BUNDLE_IDENTIFIER = com.microsoft.SwiftAPIView;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
 			};
@@ -359,9 +415,45 @@
 				DEVELOPMENT_TEAM = ZQB5E94758;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = "$(SRCROOT)/Info.plist";
-				PRODUCT_BUNDLE_IDENTIFIER = "";
+				PRODUCT_BUNDLE_IDENTIFIER = com.microsoft.SwiftAPIView;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		0A6A546F269E2AE8001006AF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = UBF8T346G9;
+				INFOPLIST_FILE = SwiftAPIViewTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.microsoft.azure.SwiftAPIViewTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		0A6A5470269E2AE8001006AF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = UBF8T346G9;
+				INFOPLIST_FILE = SwiftAPIViewTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.microsoft.azure.SwiftAPIViewTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
 			};
 			name = Release;
@@ -387,7 +479,40 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		0A6A546E269E2AE8001006AF /* Build configuration list for PBXNativeTarget "SwiftAPIViewTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0A6A546F269E2AE8001006AF /* Debug */,
+				0A6A5470269E2AE8001006AF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		0A6A5472269E2B83001006AF /* XCRemoteSwiftPackageReference "swift-ast" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/yanagiba/swift-ast";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.19.9;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		0A6A5473269E2B83001006AF /* SwiftAST */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0A6A5472269E2B83001006AF /* XCRemoteSwiftPackageReference "swift-ast" */;
+			productName = SwiftAST;
+		};
+		0A6A5475269E2B83001006AF /* SwiftAST+Tooling */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0A6A5472269E2B83001006AF /* XCRemoteSwiftPackageReference "swift-ast" */;
+			productName = "SwiftAST+Tooling";
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 0A6A5428268B82D0001006AF /* Project object */;
 }

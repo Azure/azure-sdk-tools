@@ -786,7 +786,10 @@ def request_builder(
                     inner_model.append(Token(" ", TokenKind.Newline))
                 else:
                     if json_request[i] == 'str': json_request[i]='string'
-                    self.add_comment(None, json_request[i], None)
+                    if name:
+                        self.add_whitespace(indent)
+                        self.add_comment(None, name+ json_request[i], None)
+                    else: self.add_comment(None, json_request[i], None)
                     self.add_new_line()
             else:
                 request_builder(

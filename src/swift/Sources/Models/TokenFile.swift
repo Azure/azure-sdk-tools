@@ -553,7 +553,7 @@ class TokenFile: Codable {
 
     private func process(_ decl : InitializerDeclaration) {
         SharedLogger.debug("Initializer Declaration")
-        guard isRevealed(modifiers: decl.modifiers) == true else {
+        guard publicModifiers.contains(decl.modifiers.accessLevel ?? .internal) else {
             return
         }
         newLine()
@@ -579,8 +579,8 @@ class TokenFile: Codable {
     private func process(_ decl: FunctionDeclaration) {
         SharedLogger.debug("Function Declaration")
         SharedLogger.debug(decl.signature.textDescription)
-        
-        guard isRevealed(modifiers: decl.modifiers) == true else {
+
+        guard publicModifiers.contains(decl.modifiers.accessLevel ?? .internal) else {
             return
         }
         newLine()
@@ -634,23 +634,6 @@ class TokenFile: Codable {
         }
     }
 
-    private func isRevealed(modifiers: DeclarationModifiers) -> Bool {
-        for modifier in modifiers {
-            switch modifier {
-            case .accessLevel(let modifier):
-                switch modifier {
-                case .public, .publicSet, .open, .openSet:
-                    return true
-                default:
-                    continue
-                }
-            default:
-                continue
-            }
-        }
-        return false
-    }
-    
     private func handle(modifiers: DeclarationModifiers) {
         keyword(value: modifiers.textDescription)
         whitespace()

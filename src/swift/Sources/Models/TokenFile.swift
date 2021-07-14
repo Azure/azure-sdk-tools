@@ -433,50 +433,6 @@ class TokenFile: Codable {
         text(decl.assignment.textDescription)
     }
 
-    private func process(_ decl: VariableDeclaration) {
-        let accessLevel = decl.modifiers.accessLevel
-        var name = "NAME"
-        let isStatic = decl.modifiers.isStatic
-        var typeModel: TypeModel? = nil
-
-        decl.modifiers.verifySupported()
-
-        switch decl.body {
-        case let .initializerList(initializerList):
-            for item in initializerList {
-                if case let identPattern as IdentifierPattern = item.pattern {
-                    name = identPattern.identifier.textDescription
-                    typeModel = TypeModel(from: identPattern)
-                    break
-                }
-            }
-        case let .codeBlock(ident, typeAnno, _):
-            typeModel = TypeModel(from: typeAnno)
-            name = ident.textDescription
-        case let .getterSetterKeywordBlock(ident, typeAnno, _):
-            typeModel = TypeModel(from: typeAnno)
-            name = ident.textDescription
-        default:
-            SharedLogger.fail("Unsupported variable body type: \(decl.body)")
-        }
-
-        guard publicModifiers.contains(accessLevel ?? .internal) else { return }
-        newLine()
-        keyword(value: accessLevel!.textDescription)
-        whitespace()
-        if isStatic {
-            keyword(value: "static")
-            whitespace()
-        }
-        keyword(value: "var")
-        whitespace()
-        lineIdMarker(definitionId: name)
-        member(name: name)
-        punctuation(":")
-        whitespace()
-        handle(typeModel: typeModel)
-    }
-    
     private func process(_ decl: ExtensionDeclaration) {
         SharedLogger.debug("Extension Declaration")
         SharedLogger.debug(decl.textDescription)
@@ -519,36 +475,56 @@ class TokenFile: Codable {
         punctuation("}")
     }
 
-    private func process(_ decl: ConstantDeclaration) {
-        let accessLevel = decl.modifiers.accessLevel
-        var name = "NAME"
-        let isStatic = decl.modifiers.isStatic
-        var typeModel: TypeModel? = nil
-
-        decl.modifiers.verifySupported()
-
-        for item in decl.initializerList {
-            if case let identPattern as IdentifierPattern = item.pattern {
-                name = identPattern.identifier.textDescription
-                typeModel = TypeModel(from: identPattern)
-            }
-        }
-
+    private func processMember(name: String, typeModel: TypeModel, isConst: Bool, accessLevel: AccessLevelModifier, isStatic: Bool) {
         guard publicModifiers.contains(accessLevel ?? .internal) else { return }
         newLine()
-        keyword(value: accessLevel!.textDescription)
+        keyword(value: accessLevel.textDescription)
         whitespace()
         if isStatic {
             keyword(value: "static")
             whitespace()
         }
-        keyword(value: "let")
+        keyword(value: isConst ? "let" : "var")
         whitespace()
         lineIdMarker(definitionId: name)
         member(name: name)
         punctuation(":")
         whitespace()
         handle(typeModel: typeModel)
+    }
+
+    private func process(_ decl: ConstantDeclaration) {
+        decl.modifiers.verifySupported()
+        guard let ident = decl.initializerList.compactMap({ $0.pattern as? IdentifierPattern }).first else {
+            SharedLogger.fail("Unable to extract IdentifierPattern.")
+        }
+        let name = ident.identifier.textDescription
+        let typeModel = TypeModel(from: ident)
+        processMember(name: name, typeModel: typeModel, isConst: true, accessLevel: decl.modifiers.accessLevel!, isStatic: decl.modifiers.isStatic)
+    }
+
+    private func process(_ decl: VariableDeclaration) {
+        decl.modifiers.verifySupported()
+        var name: String
+        var typeModel: TypeModel
+
+        switch decl.body {
+        case let .initializerList(initializerList):
+            guard let ident = initializerList.compactMap({ $0.pattern as? IdentifierPattern }).first else {
+                SharedLogger.fail("Unable to extract IdentifierPattern.")
+            }
+            name = ident.identifier.textDescription
+            typeModel = TypeModel(from: ident)
+        case let .codeBlock(ident, typeAnno, _):
+            typeModel = TypeModel(from: typeAnno)
+            name = ident.textDescription
+        case let .getterSetterKeywordBlock(ident, typeAnno, _):
+            typeModel = TypeModel(from: typeAnno)
+            name = ident.textDescription
+        default:
+            SharedLogger.fail("Unsupported variable body type: \(decl.body)")
+        }
+        processMember(name: name, typeModel: typeModel, isConst: false, accessLevel: decl.modifiers.accessLevel!, isStatic: decl.modifiers.isStatic)
     }
 
     private func process(_ decl : InitializerDeclaration) {
@@ -623,6 +599,9 @@ class TokenFile: Codable {
             return process(decl)
         case _ as ImportDeclaration:
             // Imports are no-op
+            return
+        case _ as DeinitializerDeclaration:
+            // Deinitializers are never public
             return
         default:
             SharedLogger.fail("Unsupported declaration: \(decl)")

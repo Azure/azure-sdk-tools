@@ -53,6 +53,10 @@ struct TypeModel {
         isArray = true
     }
 
+    init(from source: String) {
+        name = source
+    }
+
     init(from source: TypeIdentifier) {
         let genericArgumentClauses = source.names.compactMap { $0.genericArgumentClause }
         guard genericArgumentClauses.count < 2 else {
@@ -63,6 +67,17 @@ struct TypeModel {
             name = source.textDescription
         } else {
             name = source.names.map { $0.name.textDescription }.joined(separator: ".")
+        }
+    }
+
+    init(from source: PatternInitializer) {
+        if case let identPattern as IdentifierPattern = source.pattern,
+           let typeAnnotation = identPattern.typeAnnotation {
+            self.init(from: typeAnnotation)
+        } else if let expression = source.initializerExpression as? LiteralExpression {
+            self.init(from: expression.kind.textDescription)
+        } else {
+            SharedLogger.fail("Unable to extract type information.")
         }
     }
 

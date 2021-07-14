@@ -1,3 +1,4 @@
+import Foundation
 // --------------------------------------------------------------------------
 //
 // Copyright (c) Microsoft Corporation. All rights reserved.
@@ -23,43 +24,89 @@
 // IN THE SOFTWARE.
 //
 // --------------------------------------------------------------------------
+
 import Foundation
 
+// MARK: Test Class
+
 @available(macOS 10.12, *)
-public class SwiftClass<T> where T : Codable {
-    let text : String = "Yea boi"
+public class SomeClass<GenericType> where GenericType : Codable {
+
+    public let const: String = "value"
+    public var value: String {
+        didSet {
+            numberOfEdits += 1
+        }
+    }
+    public private(set) var numberOfEdits = 0
+
+    let internalConst: String = "value"
+    var internalValue: String
+
+    public init(value: String) {
+        self.value = value
+        self.internalValue = value
+    }
+
+    public convenience init?() {
+        self.init(value: "value")
+    }
+
     public func test(name: String) throws -> Bool {
         return true
     }
+
+    deinit {
+    }
 }
 
+// MARK: Test Protocol
 
+public protocol SomeProtocol: AnyObject {
+    associatedtype SomeProtocolType
 
-public protocol TestProtocol {
-    
+    var value: String { get }
 }
 
-public final class ThirdClass : TestProtocol {
+public final class ThirdClass: SomeProtocol {
+    public typealias SomeProtocolType = String
 
+    public var value: String {
+        return "value"
+    }
 }
+
+// MARK: Test Struct
 
 @available(macOS 10.12, *)
-public struct SwiftAPIViewResources: Codable {
+public struct SomeStruct: Codable, Equatable {
     static var text = "Hello, World!"
-    public let a = "yessir"
+    public let const = "value"
 }
 
-@available(macOS 10.12, *)
-public class TestGeneric<T> {}
+// MARK: Test Generic Class
 
 @available(macOS 10.12, *)
-public indirect enum VariableNode<T> {
-    case endpoint(value: T)
-    case node(value: T, next: VariableNode)
+public class SomeGeneric<GenericType> {}
+
+// MARK: Test Enum
+
+@available(macOS 10.12, *)
+public indirect enum VariableNode<GenericType> {
+    case endpoint(value: GenericType)
+    case node(value: GenericType, next: VariableNode)
 }
 
-public extension SwiftAPIViewResources {
-    func transition() throws {
-        print("I've transitioned")
+// MARK: Test Extension
+
+public extension SomeStruct {
+    func someMethod() throws {
+        print("Doing stuff")
+    }
+}
+
+public class SomeSubscriptable {
+    public subscript(index: String) -> String {
+        return "Value"
     }
 }

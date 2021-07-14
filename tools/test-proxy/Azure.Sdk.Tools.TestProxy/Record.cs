@@ -20,12 +20,22 @@ namespace Azure.Sdk.Tools.TestProxy
         private static readonly HttpClient s_client = new HttpClient() { Timeout = TimeSpan.FromSeconds(600) };
 
         [HttpPost]
+        [HttpOptions]
         [EnableCors]
         public void Start()
         {
-            string file = RecordingHandler.GetHeader(Request, "x-recording-file", allowNulls: true);
+            if(String.Equals(Request.Method, "options", StringComparison.OrdinalIgnoreCase)){
+                Response.Headers.Add("Allow", "POST");
+                Response.Headers.Add("Access-Control-Allow-Origin", "*");
+                Response.Headers.Add("Access-Control-Allow-Methods", "POST,OPTIONS");
+                Response.Headers.Add("Access-Control-Allow-Headers", "*");
+            }
+            else
+            {
+                string file = RecordingHandler.GetHeader(Request, "x-recording-file", allowNulls: true);
 
-            _recordingHandler.StartRecording(file, Response);
+                _recordingHandler.StartRecording(file, Response);
+            }
         }
 
         [HttpPost]

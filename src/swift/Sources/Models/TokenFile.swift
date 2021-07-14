@@ -605,8 +605,6 @@ class TokenFile: Codable {
             return process(decl)
         case let decl as ConstantDeclaration:
             return process(decl)
-        case let decl as DeinitializerDeclaration:
-            return // process(decl)
         case let decl as EnumDeclaration:
             return process(decl)
         case let decl as ExtensionDeclaration:
@@ -615,22 +613,19 @@ class TokenFile: Codable {
             return process(decl)
         case let decl as InitializerDeclaration:
             return process(decl)
-        case let decl as OperatorDeclaration:
-            return // process(decl)
-        case let decl as PrecedenceGroupDeclaration:
-            return // process(decl)
         case let decl as ProtocolDeclaration:
             return process(decl)
         case let decl as StructDeclaration:
             return process(decl)
-        case let decl as SubscriptDeclaration:
-            return // process(decl)
         case let decl as TypealiasDeclaration:
             return process(decl)
         case let decl as VariableDeclaration:
             return process(decl)
+        case _ as ImportDeclaration:
+            // Imports are no-op
+            return
         default:
-            return // no implementation for this declaration, just continue
+            SharedLogger.fail("Unsupported declaration: \(decl)")
         }
     }
 

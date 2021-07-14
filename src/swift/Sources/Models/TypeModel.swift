@@ -71,6 +71,11 @@ struct TypeModel {
         name = source.textDescription
     }
 
+    init(from source: DictionaryType) {
+        // TODO: remove reliance on textDescription
+        name = source.textDescription
+    }
+
     init(from source: Type) {
         switch source {
         case let src as OptionalType:
@@ -80,6 +85,8 @@ struct TypeModel {
         case let src as ArrayType:
             self.init(from: src)
         case let src as FunctionType:
+            self.init(from: src)
+        case let src as DictionaryType:
             self.init(from: src)
         default:
             SharedLogger.fail("Unsupported identifier: \(source)")

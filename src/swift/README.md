@@ -3,8 +3,8 @@
 SwiftAPIView is a plugin that converts `.swift` source code to an APIView-compatible token file.
 
 Executable Instructions:
-./SwiftAPIView --source=`path to source` --dest=`path to destination`
+`./SwiftAPIView --source=<PATH_TO_SOURCE> --dest=<PATH_TO_DESTINATION_FILE>`
   
-  `path to source`: Either be a file or a folder
+  `--source`: May target a folder or a single file.
   
-  `path to destination` (Optional): A json file. If not provided it will output to "SwiftAPIView.json" inside your documents directory 
+  `--dest`:  (Optional) The path and desired JSON filename. If not provided, it will output as `SwiftAPIView.json` inside your documents directory. 

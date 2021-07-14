@@ -453,6 +453,9 @@ class TokenFile: Codable {
         case let .codeBlock(ident, typeAnno, _):
             typeModel = TypeModel(from: typeAnno)
             name = ident.textDescription
+        case let .getterSetterKeywordBlock(ident, typeAnno, _):
+            typeModel = TypeModel(from: typeAnno)
+            name = ident.textDescription
         default:
             SharedLogger.fail("Unsupported variable body type: \(decl.body)")
         }

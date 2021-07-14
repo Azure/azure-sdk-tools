@@ -32,7 +32,7 @@ extension DeclarationModifiers {
     func verifySupported() {
         for modifier in self {
             switch modifier {
-            case .accessLevel, .static:
+            case .accessLevel, .static, .final:
                 continue
             default:
                 SharedLogger.fail("Unsupported modifier: \(modifier)")

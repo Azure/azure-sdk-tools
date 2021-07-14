@@ -96,7 +96,7 @@ class APIViewManager {
         let tempFilename = "\(UUID().uuidString)_\(filename)"
         let tempUrl = sourceDir.appendingPathComponent(tempFilename)
         try newLines.joined(separator: "\n").write(toFile: tempUrl.absoluteString, atomically: true, encoding: .utf8)
-        defer { try? FileManager.default.removeItem(at: tempUrl) }
+        defer { try! FileManager.default.removeItem(atPath: tempUrl.absoluteString) }
         return try SourceReader.read(at: tempUrl.absoluteString)
     }
 

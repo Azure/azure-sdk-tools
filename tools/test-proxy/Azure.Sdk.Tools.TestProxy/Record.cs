@@ -1,7 +1,6 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Net.Http;
@@ -20,19 +19,8 @@ namespace Azure.Sdk.Tools.TestProxy
         private static readonly HttpClient s_client = new HttpClient() { Timeout = TimeSpan.FromSeconds(600) };
 
         [HttpPost]
-        [HttpOptions]
-        [EnableCors]
         public void Start()
         {
-            if(Request.Headers.TryGetValue("Sec-Fetch-Mode", out var value))
-            {
-                if(String.Equals("cors", value, StringComparison.OrdinalIgnoreCase))
-                {
-                    Response.Headers.Add("Access-Control-Allow-Origin", "*");
-                    Response.Headers.Add("Access-Control-Allow-Methods", "POST,OPTIONS");
-                    Response.Headers.Add("Access-Control-Allow-Headers", "*");
-                }
-            }
 
             string file = RecordingHandler.GetHeader(Request, "x-recording-file", allowNulls: true);
 
@@ -40,26 +28,14 @@ namespace Azure.Sdk.Tools.TestProxy
         }
 
         [HttpPost]
-        [EnableCors]
         public void Stop()
         {
-            if (Request.Headers.TryGetValue("Sec-Fetch-Mode", out var value))
-            {
-                if (String.Equals("cors", value, StringComparison.OrdinalIgnoreCase))
-                {
-                    Response.Headers.Add("Access-Control-Allow-Origin", "*");
-                    Response.Headers.Add("Access-Control-Allow-Methods", "POST,OPTIONS");
-                    Response.Headers.Add("Access-Control-Allow-Headers", "*");
-                }
-            }
-
             string id = RecordingHandler.GetHeader(Request, "x-recording-id");
 
             _recordingHandler.StopRecording(id);
 
         }
 
-        [EnableCors]
         public async Task HandleRequest()
         {
             string id = RecordingHandler.GetHeader(Request, "x-recording-id");

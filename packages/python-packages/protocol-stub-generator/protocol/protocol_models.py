@@ -747,6 +747,10 @@ class ProtocolOperationView(FormattingClass):
                     self.add_whitespace(3)
                     self.add_typename(None, "Response", None)
                     self.add_new_line(1)
+                    new_req ={}
+                    if len(self.json_response)>1 and not any(j in self.return_type for j in R_TYPE):
+                        new_req[self.return_type] = self.json_response
+                        self.json_response= new_req
                     request_builder(
                         self,
                         self.json_response,
@@ -816,7 +820,7 @@ def request_builder(
                     if json_request[i] == "str":
                         json_request[i] = "string"
                     if name:
-                        self.add_whitespace(indent)
+                        self.add_whitespace(indent-1)
                         self.add_comment(None, name + json_request[i], None)
                     else:
                         self.add_comment(None, json_request[i], None)
@@ -912,10 +916,15 @@ def request_builder(
                                 Token(i + ": {", TokenKind.Comment)
                             )  # + ": {"
                         name = i
-                    else:
-                        self.add_new_line()
-                        self.add_whitespace(indent)
-                        self.add_comment(None, i + ": {", None)  # + ": {"
+                    else: 
+                        self.add_new_line() 
+                        if isinstance(json_request[i], list) and not isinstance(
+                            json_request[i][0], dict
+                        ):
+                            pass
+                        else: 
+                            self.add_whitespace(indent)
+                            self.add_comment(None, i + ": {", None)  # + ": {"
                         name = i
                         inner_model = []
             if isinstance(json_request[i], str):
@@ -1042,9 +1051,16 @@ def request_builder(
                         )
                         inner_model.append(Token("};", TokenKind.Comment))
                 elif isinstance(json_request[i], list) and indent > 4:
-                    self.add_new_line()
-                    self.add_whitespace(indent)
-                    self.add_comment(None, "}[];", None)
+                    if isinstance(json_request[i][0], dict):
+                        self.add_new_line()
+                        self.add_whitespace(indent)
+                        self.add_comment(None, "}[];", None)
+                    elif len(json_request[i]) == 1:
+                            pass
+                    else:
+                        self.add_new_line()
+                        self.add_whitespace(indent)
+                        self.add_comment(None, "}[];", None)
                 else:
                     if indent == 4 and inner_model:
                         inner_model.append(Token(" ", TokenKind.Newline))
@@ -1083,9 +1099,29 @@ def get_map_type(yaml, name=""):
                                 key = k["schema"]["language"]["default"]["name"]
         if yaml["responses"][0].get("schema"):
             for i in yaml["responses"][0]["schema"].get("properties", []):
-                if i["serializedName"] == name:
-                    m_type = get_type(i["schema"]["elementType"])
-                    key = i["schema"]["language"]["default"]["name"]
+                if i["schema"].get("properties", []):
+                    for j in i["schema"]["properties"][0]["schema"].get(
+                        "properties", []
+                    ):
+                        if j["serializedName"] == name:
+                            m_type = get_type(j["schema"]["elementType"])
+                            key = j["schema"]["language"]["default"]["name"]
+                    for j in i["schema"]["properties"][0]["schema"].get(
+                        "elementType", []
+                    ):
+                        for k in i["schema"]["properties"][0]["schema"][
+                            "elementType"
+                        ].get("properties", []):
+                            if k["serializedName"] == name:
+                                m_type = get_type(k["schema"]["elementType"])
+                                key = k["schema"]["language"]["default"]["name"]
+                if i["schema"].get("elementType", []):
+                    for j in i["schema"]["elementType"].get(
+                        "properties", []
+                    ):
+                        if j["serializedName"] == name:
+                            m_type = get_type(j["schema"]["elementType"])
+                            key = j["schema"]["language"]["default"]["name"]
     return m_type, key
 
 
@@ -1120,14 +1156,14 @@ class ProtocolParameterView(FormattingClass):
             param_name = yaml_data["signatureParameters"][i]["language"]["default"][
                 "name"
             ]
-            if yaml_data["signatureParameters"][i]["schema"]["type"] == "object":
-                param_type = get_type(
-                    yaml_data["signatureParameters"][i]["schema"]["properties"][0][
-                        "schema"
-                    ]
-                )
-            else:
-                param_type = get_type(yaml_data["signatureParameters"][i]["schema"])
+            # if yaml_data["signatureParameters"][i]["schema"]["type"] == "object":
+            #     param_type = get_type(
+            #         yaml_data["signatureParameters"][i]["schema"]["properties"][0][
+            #             "schema"
+            #         ]
+            #     )
+            # else:
+            param_type = get_type(yaml_data["signatureParameters"][i]["schema"])
             if param_name == "body":
                 try:
                     param_name = yaml_data["signatureParameters"][i]["schema"][
@@ -1255,6 +1291,8 @@ def get_type(data, page=False):
             return_type = data["language"]["default"]["name"]
             if page:
                 return_type = get_type(data["properties"][0]["schema"], True)
+            if len(data["properties"])==1: 
+                return_type = get_type(data["properties"][0]["schema"])
         if return_type == "array":
             if (
                 data["elementType"]["type"] != "object"

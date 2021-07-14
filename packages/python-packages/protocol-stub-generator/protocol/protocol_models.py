@@ -712,10 +712,23 @@ class ProtocolOperationView(FormattingClass):
 
                 self.format_status_code()
 
+                #If the request or response contain more than one entry, check the parameters of the operation and see if one of them is an object, if it is, that is your overall model request name , then refactor the request to be a dictionary of that type
+                #if type is not a normal type .. aka an object name ^
+
                 if self.json_request:
                     self.add_whitespace(3)
                     self.add_typename(None, "Request", None)
                     self.add_new_line(1)
+                    object_name = None
+                    new_req ={}
+                    for i in self.parameters:
+                        if any(j in i.type for j in R_TYPE):
+                            pass
+                        else:
+                            object_name = i.type
+                    if len(self.json_request)>1 and object_name:
+                        new_req[object_name] = self.json_request
+                        self.json_request= new_req
                     request_builder(self, self.json_request, self.yaml, notfirst=False)
                     self.add_new_line()
                     self.add_whitespace(4)
@@ -781,7 +794,7 @@ class ProtocolOperationView(FormattingClass):
 def request_builder(
     self, json_request, yaml, notfirst, indent=4, name="", inner_model=[], pre_indent=4
 ):
-
+    
     self.inner_model = inner_model
 
     if isinstance(json_request, list):

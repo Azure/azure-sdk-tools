@@ -495,12 +495,15 @@ class TokenFile: Codable {
 
     private func process(_ decl: ConstantDeclaration) {
         decl.modifiers.verifySupported()
-        guard let ident = decl.initializerList.compactMap({ $0.pattern as? IdentifierPattern }).first else {
-            SharedLogger.fail("Unable to extract IdentifierPattern.")
+        for item in decl.initializerList {
+            if let typeModelVal = item.typeModel {
+                let name = item.name
+                let typeModel = typeModelVal
+                processMember(name: name, typeModel: typeModel, isConst: true, accessLevel: decl.modifiers.accessLevel ?? .internal, isStatic: decl.modifiers.isStatic)
+                return
+            }
         }
-        let name = ident.identifier.textDescription
-        let typeModel = TypeModel(from: ident)
-        processMember(name: name, typeModel: typeModel, isConst: true, accessLevel: decl.modifiers.accessLevel!, isStatic: decl.modifiers.isStatic)
+        SharedLogger.fail("Type information not found.")
     }
 
     private func process(_ decl: VariableDeclaration) {
@@ -510,16 +513,23 @@ class TokenFile: Codable {
 
         switch decl.body {
         case let .initializerList(initializerList):
-            guard let ident = initializerList.compactMap({ $0.pattern as? IdentifierPattern }).first else {
-                SharedLogger.fail("Unable to extract IdentifierPattern.")
+            for item in initializerList {
+                if let typeModelVal = item.typeModel {
+                    name = item.name
+                    typeModel = typeModelVal
+                    processMember(name: name, typeModel: typeModel, isConst: false, accessLevel: decl.modifiers.accessLevel ?? .internal, isStatic: decl.modifiers.isStatic)
+                    return
+                }
             }
-            name = ident.identifier.textDescription
-            typeModel = TypeModel(from: ident)
+            SharedLogger.fail("Type information not found.")
         case let .codeBlock(ident, typeAnno, _):
             typeModel = TypeModel(from: typeAnno)
             name = ident.textDescription
         case let .getterSetterKeywordBlock(ident, typeAnno, _):
             typeModel = TypeModel(from: typeAnno)
+            name = ident.textDescription
+        case let .willSetDidSetBlock(ident, typeAnno, expression, _):
+            typeModel = TypeModel(from: typeAnno!)
             name = ident.textDescription
         default:
             SharedLogger.fail("Unsupported variable body type: \(decl.body)")
@@ -575,6 +585,24 @@ class TokenFile: Codable {
         handle(signature: decl.signature)
     }
 
+    private func process(_ decl: SubscriptDeclaration) {
+        guard publicModifiers.contains(decl.modifiers.accessLevel ?? .internal) else {
+            return
+        }
+        newLine()
+        if !decl.attributes.isEmpty {
+            handle(attributes: decl.attributes)
+        }
+        handle(modifiers: decl.modifiers)
+        keyword(value: "subscript")
+        lineIdMarker(definitionId: name)
+        punctuation("(")
+        // TODO: Handle parameters
+        punctuation(")")
+        whitespace()
+        handle(result: decl.resultType)
+    }
+
     private func process(_ decl: Declaration) {
         switch decl {
         case let decl as ClassDeclaration:
@@ -603,53 +631,55 @@ class TokenFile: Codable {
         case _ as DeinitializerDeclaration:
             // Deinitializers are never public
             return
+        case let decl as SubscriptDeclaration:
+            return process(decl)
         default:
             SharedLogger.fail("Unsupported declaration: \(decl)")
         }
+    }
+
+    private func handle(throws: ThrowsKind) {
+        switch `throws` {
+        case .throwing, .rethrowing:
+            keyword(value: `throws`.textDescription)
+            whitespace()
+        default:
+            return
+        }
+    }
+
+    private func handle(result: Type?) {
+        guard let result = result else {
+            return
+        }
+        let typeModel = TypeModel(from: result)
+        punctuation("->")
+        whitespace()
+        self.handle(typeModel: typeModel)
+    }
+
+    private func handle(parameter: FunctionSignature.Parameter) {
+        let externalNameText = parameter.externalName.map({ [$0.textDescription] }) ?? []
+        let localNameText = parameter.localName.textDescription.isEmpty ? [] : [parameter.localName.textDescription]
+        let nameText = (externalNameText + localNameText).joined(separator: " ")
+        let typeModel = TypeModel(from: parameter.typeAnnotation)
+        let defaultText =
+            parameter.defaultArgumentClause.map({ " = \($0.textDescription)" }) ?? ""
+        let varargsText = parameter.isVarargs ? "..." : ""
+        member(name: nameText)
+        punctuation(":")
+        whitespace()
+        self.handle(typeModel: typeModel)
+        stringLiteral(defaultText)
+        text(varargsText)
     }
 
     private func handle(modifiers: DeclarationModifiers) {
         keyword(value: modifiers.textDescription)
         whitespace()
     }
-    
-    private func handle(signature: FunctionSignature) {
-        func handle(parameter: FunctionSignature.Parameter) {
-            let externalNameText = parameter.externalName.map({ [$0.textDescription] }) ?? []
-            let localNameText = parameter.localName.textDescription.isEmpty ? [] : [parameter.localName.textDescription]
-            let nameText = (externalNameText + localNameText).joined(separator: " ")
-            let typeModel = TypeModel(from: parameter.typeAnnotation)
-            let defaultText =
-                parameter.defaultArgumentClause.map({ " = \($0.textDescription)" }) ?? ""
-            let varargsText = parameter.isVarargs ? "..." : ""
-            member(name: nameText)
-            punctuation(":")
-            whitespace()
-            self.handle(typeModel: typeModel)
-            stringLiteral(defaultText)
-            text(varargsText)
-        }
-        
-        func handle(throws: ThrowsKind) {
-            switch `throws` {
-            case .throwing, .rethrowing:
-                keyword(value: `throws`.textDescription)
-                whitespace()
-            default:
-                return
-            }
-        }
-        
-        func handle(result: FunctionResult?) {
-            guard let result = result else {
-                return
-            }
-            let typeModel = TypeModel(from: result.type)
-            punctuation("->")
-            whitespace()
-            self.handle(typeModel: typeModel)
-        }
 
+    private func handle(signature: FunctionSignature) {
         punctuation("(")
         var count = signature.parameterList.count - 1
         signature.parameterList.forEach { parameter in
@@ -663,7 +693,7 @@ class TokenFile: Codable {
         punctuation(")")
         whitespace()
         handle(throws: signature.throwsKind)
-        handle(result: signature.result)
+        handle(result: signature.result?.type)
     }
     
     private func handle(clause typeInheritance: TypeInheritanceClause) {

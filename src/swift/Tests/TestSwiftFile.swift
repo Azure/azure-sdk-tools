@@ -30,7 +30,7 @@ import Foundation
 // MARK: Test Class
 
 @available(macOS 10.12, *)
-public class SomeClass<GenericType> where GenericType : Codable {
+public class SomeClass<GenericType> where GenericType: Codable {
 
     public let const: String = "value"
     public var value: String {

@@ -32,13 +32,6 @@ struct TypeModel {
     var isOptional = false
     var isArray = false
 
-    init(from source: IdentifierPattern) {
-        guard let typeAnnotation = source.typeAnnotation?.type else {
-            SharedLogger.fail("Missing type annotation.")
-        }
-        self.init(from: typeAnnotation)
-    }
-
     init(from source: TypeAnnotation) {
         self.init(from: source.type)
     }

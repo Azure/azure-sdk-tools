@@ -831,6 +831,8 @@ def get_type(data, page=False):
             return_type = data["language"]["default"]["name"]
             if page:
                 return_type = get_type(data["properties"][0]["schema"], True)
+            if len(data["properties"])==1: 
+                return_type = get_type(data["properties"][0]["schema"])
         if return_type == "array":
             if (
                 data["elementType"]["type"] != "object"

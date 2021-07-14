@@ -24,24 +24,35 @@ namespace Azure.Sdk.Tools.TestProxy
         [EnableCors]
         public void Start()
         {
-            if(String.Equals(Request.Method, "options", StringComparison.OrdinalIgnoreCase)){
-                Response.Headers.Add("Allow", "POST");
-                Response.Headers.Add("Access-Control-Allow-Origin", "*");
-                Response.Headers.Add("Access-Control-Allow-Methods", "POST,OPTIONS");
-                Response.Headers.Add("Access-Control-Allow-Headers", "*");
-            }
-            else
+            if(Request.Headers.TryGetValue("Sec-Fetch-Mode", out var value))
             {
-                string file = RecordingHandler.GetHeader(Request, "x-recording-file", allowNulls: true);
-
-                _recordingHandler.StartRecording(file, Response);
+                if(String.Equals("cors", value, StringComparison.OrdinalIgnoreCase))
+                {
+                    Response.Headers.Add("Access-Control-Allow-Origin", "*");
+                    Response.Headers.Add("Access-Control-Allow-Methods", "POST,OPTIONS");
+                    Response.Headers.Add("Access-Control-Allow-Headers", "*");
+                }
             }
+
+            string file = RecordingHandler.GetHeader(Request, "x-recording-file", allowNulls: true);
+
+            _recordingHandler.StartRecording(file, Response);
         }
 
         [HttpPost]
         [EnableCors]
         public void Stop()
         {
+            if (Request.Headers.TryGetValue("Sec-Fetch-Mode", out var value))
+            {
+                if (String.Equals("cors", value, StringComparison.OrdinalIgnoreCase))
+                {
+                    Response.Headers.Add("Access-Control-Allow-Origin", "*");
+                    Response.Headers.Add("Access-Control-Allow-Methods", "POST,OPTIONS");
+                    Response.Headers.Add("Access-Control-Allow-Headers", "*");
+                }
+            }
+
             string id = RecordingHandler.GetHeader(Request, "x-recording-id");
 
             _recordingHandler.StopRecording(id);

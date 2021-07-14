@@ -59,6 +59,18 @@ namespace Azure.Sdk.Tools.TestProxy
 
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddCors(options =>
+            {
+                options.AddPolicy(name: "DefaultPolicy",
+                    builder =>
+                    {
+                        builder.AllowAnyHeader()
+                               .AllowAnyMethod()
+                               .AllowAnyOrigin();
+                    });
+            });
+
+
             services.AddHttpClient();
             services.AddControllers();
             services.AddControllersWithViews();
@@ -72,6 +84,7 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 app.UseDeveloperExceptionPage();
             }
+            app.UseCors("DefaultPolicy");
 
             MapRecording(app);
             app.UseRouting();

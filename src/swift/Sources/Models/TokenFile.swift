@@ -553,7 +553,7 @@ class TokenFile: Codable {
 
     private func process(_ decl : InitializerDeclaration) {
         SharedLogger.debug("Initializer Declaration")
-        guard isRevealed(modifiers: decl.modifiers) == true else {
+        guard publicModifiers.contains(decl.modifiers.accessLevel ?? .internal) else {
             return
         }
         newLine()
@@ -579,8 +579,8 @@ class TokenFile: Codable {
     private func process(_ decl: FunctionDeclaration) {
         SharedLogger.debug("Function Declaration")
         SharedLogger.debug(decl.signature.textDescription)
-        
-        guard isRevealed(modifiers: decl.modifiers) == true else {
+
+        guard publicModifiers.contains(decl.modifiers.accessLevel ?? .internal) else {
             return
         }
         newLine()
@@ -605,8 +605,6 @@ class TokenFile: Codable {
             return process(decl)
         case let decl as ConstantDeclaration:
             return process(decl)
-        case let decl as DeinitializerDeclaration:
-            return // process(decl)
         case let decl as EnumDeclaration:
             return process(decl)
         case let decl as ExtensionDeclaration:
@@ -615,42 +613,22 @@ class TokenFile: Codable {
             return process(decl)
         case let decl as InitializerDeclaration:
             return process(decl)
-        case let decl as OperatorDeclaration:
-            return // process(decl)
-        case let decl as PrecedenceGroupDeclaration:
-            return // process(decl)
         case let decl as ProtocolDeclaration:
             return process(decl)
         case let decl as StructDeclaration:
             return process(decl)
-        case let decl as SubscriptDeclaration:
-            return // process(decl)
         case let decl as TypealiasDeclaration:
             return process(decl)
         case let decl as VariableDeclaration:
             return process(decl)
+        case _ as ImportDeclaration:
+            // Imports are no-op
+            return
         default:
-            return // no implementation for this declaration, just continue
+            SharedLogger.fail("Unsupported declaration: \(decl)")
         }
     }
 
-    private func isRevealed(modifiers: DeclarationModifiers) -> Bool {
-        for modifier in modifiers {
-            switch modifier {
-            case .accessLevel(let modifier):
-                switch modifier {
-                case .public, .publicSet, .open, .openSet:
-                    return true
-                default:
-                    continue
-                }
-            default:
-                continue
-            }
-        }
-        return false
-    }
-    
     private func handle(modifiers: DeclarationModifiers) {
         keyword(value: modifiers.textDescription)
         whitespace()

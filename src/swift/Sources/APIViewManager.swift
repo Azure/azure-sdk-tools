@@ -35,7 +35,7 @@ class APIViewManager {
 
     static var shared = APIViewManager()
     let args = CommandLineArguments()
-    var tokenFile = TokenFile(name: "TestFile", packageName: "TestFile", versionString: "abc")
+    var tokenFile: TokenFile!
 
     // MARK: Methods
 
@@ -96,14 +96,23 @@ class APIViewManager {
         let tempFilename = "\(UUID().uuidString)_\(filename)"
         let tempUrl = sourceDir.appendingPathComponent(tempFilename)
         try newLines.joined(separator: "\n").write(toFile: tempUrl.absoluteString, atomically: true, encoding: .utf8)
-        defer { try? FileManager.default.removeItem(at: tempUrl) }
+        defer { try! FileManager.default.removeItem(atPath: tempUrl.absoluteString) }
         return try SourceReader.read(at: tempUrl.absoluteString)
+    }
+
+    func extractPackageName(from sourceUrl: URL) -> String {
+        let sourcePath = sourceUrl.path
+        let pattern = #"sdk\/[^\/]*\/([^\/]*)"#
+        let regex = try! NSRegularExpression(pattern: pattern, options: [])
+        let result = regex.matches(in: sourcePath, range: NSMakeRange(0, sourcePath.utf16.count))
+        let matchRange = Range(result[0].range(at: 1), in: sourcePath)!
+        return String(sourcePath[matchRange])
     }
 
     func buildTokenFile(from sourceUrl: URL) throws {
         SharedLogger.debug("URL: \(sourceUrl.absoluteString)")
         var declarations = [TopLevelDeclaration]()
-
+        var packageName: String
         var isDir: ObjCBool = false
 
         guard FileManager.default.fileExists(atPath: sourceUrl.path, isDirectory: &isDir) else {
@@ -112,6 +121,7 @@ class APIViewManager {
 
         // collect all swift files in a directory (and subdirectories)
         if isDir.boolValue {
+            packageName = extractPackageName(from: sourceUrl)
             let fileEnumerator = FileManager.default.enumerator(atPath: sourceUrl.path)
             while let itemPath = fileEnumerator?.nextObject() as? String {
                 guard itemPath.hasSuffix(".swift") else { continue }
@@ -122,10 +132,12 @@ class APIViewManager {
             }
         } else {
             // otherwise load a single file
+            packageName = sourceUrl.lastPathComponent
             let sourceFile = try process(url: sourceUrl)
             let topLevelDecl = try Parser(source: sourceFile).parse()
             declarations.append(topLevelDecl)
         }
+        tokenFile = TokenFile(name: packageName, packageName: packageName, versionString: version)
         tokenFile.process(declarations)
     }
 }

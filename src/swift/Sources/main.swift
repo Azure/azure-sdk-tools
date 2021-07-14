@@ -26,6 +26,8 @@
 
 import Foundation
 
+let version = "1.0.0"
+
 // Should be set to `.warning` normally
 let logLevel = LogLevel.warning
 SharedLogger.set(logger: StdoutLogger(), withLevel: logLevel)

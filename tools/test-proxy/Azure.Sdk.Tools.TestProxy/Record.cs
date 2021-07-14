@@ -21,7 +21,6 @@ namespace Azure.Sdk.Tools.TestProxy
         [HttpPost]
         public void Start()
         {
-
             string file = RecordingHandler.GetHeader(Request, "x-recording-file", allowNulls: true);
 
             _recordingHandler.StartRecording(file, Response);

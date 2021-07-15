@@ -728,7 +728,7 @@ class ProtocolOperationView(FormattingClass):
                             pass
                         else:
                             object_name = i.type
-                    if object_name : #and ((isinstance(self.json_request,dict) or isinstance(self.json_request,list)) and len(self.json_request)>1):
+                    if object_name: #and ((isinstance(self.json_request,dict) or isinstance(self.json_request,list)) and len(self.json_request)>1):
                         object_name = object_name.replace("[]","")
                         new_req[object_name] = self.json_request
                         self.json_request= new_req
@@ -795,8 +795,7 @@ class ProtocolOperationView(FormattingClass):
 def request_builder(
     self, json_request, yaml, notfirst, indent=4, name="", inner_model=[], pre_indent=4
 ):
-    if inner_model and not self.inner_model: self.inner_model = inner_model
-    
+    if inner_model: self.inner_model = inner_model
     if isinstance(json_request, list):
         for i in range(0, len(json_request)):
             if isinstance(json_request[i], str):
@@ -1047,16 +1046,16 @@ def request_builder(
                         )
                         inner_model.append(Token("};", TokenKind.Comment))
                 elif isinstance(json_request[i], list) and indent > 4:
-                    if not isinstance(json_request[i][0], str):
-                        self.add_new_line()
-                        self.add_whitespace(indent)
-                        self.add_comment(None, "}[];", None)
+                    # if isinstance(json_request[i][0], dict):
+                    #     self.add_new_line()
+                    #     self.add_whitespace(indent)
+                    #     self.add_comment(None, "}[];", None)
                     if len(json_request[i]) == 1:
                             pass
-                    else:
-                        self.add_new_line()
-                        self.add_whitespace(indent)
-                        self.add_comment(None, "}[];", None)
+                    # else:
+                    #     self.add_new_line()
+                    #     self.add_whitespace(indent)
+                    #     self.add_comment(None, "}[];", None)
                 else:
                     if indent == 5 and inner_model:
                         inner_model.append(Token(" ", TokenKind.Newline))
@@ -1064,7 +1063,9 @@ def request_builder(
                             Token(" " * (indent * 4), TokenKind.Whitespace)
                         )
                         inner_model.append(Token("};", TokenKind.Comment))
-                        self.inner_model += inner_model
+                        if inner_model!=self.inner_model:
+                            self.inner_model += inner_model
+                        else: self.inner_model = inner_model
                         inner_model = []
                     else:
                         self.add_new_line()

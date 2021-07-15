@@ -742,7 +742,7 @@ class ProtocolOperationView(FormattingClass):
                             self.Tokens.append(m)
                     self.add_new_line(1)
 
-                if isinstance(self.json_response,list) and isinstance(self.json_response[0],str): self.json_response = None
+                if isinstance(self.json_response,str) or (isinstance(self.json_response,list) and isinstance(self.json_response[0],str)): self.json_response = None
                 if self.json_response:
                     self.inner_model = []
                     self.add_whitespace(3)
@@ -1064,7 +1064,7 @@ def request_builder(
                             Token(" " * (indent * 4), TokenKind.Whitespace)
                         )
                         inner_model.append(Token("};", TokenKind.Comment))
-                        self.inner_model = inner_model
+                        self.inner_model += inner_model
                         inner_model = []
                     else:
                         self.add_new_line()

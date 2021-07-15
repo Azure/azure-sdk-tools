@@ -1110,6 +1110,9 @@ def get_map_type(yaml, name=""):
                             if k["serializedName"] == name:
                                 m_type = get_type(k["schema"]["elementType"])
                                 key = k["schema"]["language"]["default"]["name"]
+                if i["serializedName"] == name:
+                        m_type = get_type(i["schema"]["elementType"])
+                        key = i["schema"]["language"]["default"]["name"]
                 if i["schema"].get("elementType", []):
                     for j in i["schema"]["elementType"].get(
                         "properties", []

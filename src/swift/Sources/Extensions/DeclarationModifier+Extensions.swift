@@ -28,7 +28,6 @@ import AST
 import Foundation
 
 extension DeclarationModifiers {
-
     func verifySupported() {
         for modifier in self {
             switch modifier {

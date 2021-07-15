@@ -181,33 +181,28 @@ class TokenFile: Codable {
 
         navigation(from: declarations)
         // ensure items appear in sorted order
-        navigation.sort(by: {$0.text < $1.text })
-        for item in navigation {
+        navigation.sort(by: { $0.text < $1.text })
+        navigation.forEach { item in
             item.childItems.sort(by: { $0.text < $1.text })
         }
     }
 
-    private func process(_ decl: TopLevelDeclaration) {
+    private func process(_ decl: TopLevelDeclaration, overridingAccess: AccessLevelModifier? = nil) {
         if needsNewLine {
             newLine()
         }
-        for statement in decl.statements {
+        decl.statements.forEach { statement in
             switch statement {
             case let decl as Declaration:
                 process(decl)
             default:
-                continue
+                SharedLogger.fail("Unsupported statement type: \(statement)")
             }
         }
     }
 
-    private func process(_ decl: ClassDeclaration) {
-        // Gather Information
-        SharedLogger.debug(decl.textDescription)
-        SharedLogger.debug(decl.attributes.textDescription)
-        SharedLogger.debug(decl.genericWhereClause?.textDescription ?? "")
-
-        guard publicModifiers.contains(decl.accessLevelModifier ?? .internal) else {
+    private func process(_ decl: ClassDeclaration, overridingAccess: AccessLevelModifier? = nil) {
+        guard publicModifiers.contains(decl.accessLevelModifier ?? overridingAccess ?? .internal) else {
             return
         }
         let value = (decl.accessLevelModifier ?? .internal).textDescription
@@ -240,13 +235,8 @@ class TokenFile: Codable {
         }
         punctuation("{")
         indent {
-            for member in decl.members {
-                switch member {
-                case .declaration(let decl):
-                    process(decl)
-                default:
-                    continue
-                }
+            decl.members.forEach { member in
+                handle(member: member)
             }
         }
         if needsNewLine {
@@ -255,10 +245,8 @@ class TokenFile: Codable {
         punctuation("}")
     }
 
-    private func process(_ decl: StructDeclaration) {
-        SharedLogger.debug("Struct Declaration")
-        SharedLogger.debug(decl.textDescription)
-        guard publicModifiers.contains(decl.accessLevelModifier ?? .internal) else {
+    private func process(_ decl: StructDeclaration, overridingAccess: AccessLevelModifier? = nil) {
+        guard publicModifiers.contains(decl.accessLevelModifier ?? overridingAccess ?? .internal) else {
             return
         }
         let value = (decl.accessLevelModifier ?? .internal).textDescription
@@ -287,13 +275,8 @@ class TokenFile: Codable {
         }
         punctuation("{")
         indent {
-            for member in decl.members {
-                switch member {
-                case let .declaration(decl):
-                    process(decl)
-                default:
-                    continue
-                }
+            decl.members.forEach { member in
+                handle(member: member)
             }
         }
         if needsNewLine {
@@ -301,17 +284,15 @@ class TokenFile: Codable {
         }
         punctuation("}")
     }
-    
-    private func process(_ decl: EnumDeclaration) {
-        SharedLogger.debug("Enum Declaration")
-        SharedLogger.debug(decl.textDescription)
-        guard publicModifiers.contains(decl.accessLevelModifier ?? .internal) else {
+
+    private func process(_ decl: EnumDeclaration, overridingAccess: AccessLevelModifier? = nil) {
+        guard publicModifiers.contains(decl.accessLevelModifier ?? overridingAccess ?? .internal) else {
             return
         }
         let value = (decl.accessLevelModifier ?? .internal).textDescription
         let defId = decl.name.textDescription
         definitionIds[defId] = defId
-        
+
         newLine()
         if !decl.attributes.isEmpty {
             handle(attributes: decl.attributes)
@@ -338,31 +319,8 @@ class TokenFile: Codable {
         }
         punctuation("{")
         indent {
-            for member in decl.members {
-                switch member {
-                case .declaration(let decl):
-                    process(decl)
-                case .union(let enumCase):
-                    enumCase.cases.forEach { enumCaseValue in
-                        newLine()
-                        let enumDefId = "\(decl.name.textDescription).\(enumCaseValue.name.textDescription)"
-                        lineIdMarker(definitionId: enumDefId)
-                        keyword(value: "case")
-                        whitespace()
-                        self.member(name: enumCaseValue.name.textDescription, definitionId: enumDefId)
-                    }
-                case .rawValue(let enumCase):
-                    enumCase.cases.forEach { enumCaseValue in
-                        let enumDefId = "\(decl.name.textDescription).\(enumCaseValue.name.textDescription)"
-                        lineIdMarker(definitionId: enumDefId)
-                        keyword(value: "case")
-                        whitespace()
-                        newLine()
-                        self.member(name: enumCaseValue.name.textDescription, definitionId: enumDefId)
-                    }
-                default:
-                    continue
-                }
+            decl.members.forEach { member in
+                handle(member: member, withParentId: defId)
             }
         }
         if needsNewLine {
@@ -371,10 +329,8 @@ class TokenFile: Codable {
         punctuation("}")
     }
 
-    private func process(_ decl: ProtocolDeclaration) {
-        SharedLogger.debug("Protocol Declaration")
-        SharedLogger.debug(decl.textDescription)
-        guard publicModifiers.contains(decl.accessLevelModifier ?? .internal) else {
+    private func process(_ decl: ProtocolDeclaration, overridingAccess: AccessLevelModifier? = nil) {
+        guard publicModifiers.contains(decl.accessLevelModifier ?? overridingAccess ?? .internal) else {
             return
         }
         let value = (decl.accessLevelModifier ?? .internal).textDescription
@@ -397,18 +353,17 @@ class TokenFile: Codable {
         punctuation("{")
         indent {
             decl.members.forEach { member in
-                // TODO: Need to complete this
+                handle(member: member)
             }
         }
         if needsNewLine {
             newLine()
         }
         punctuation("}")
-        
     }
 
-    private func process(_ decl : TypealiasDeclaration) {
-        guard publicModifiers.contains(decl.accessLevelModifier ?? .internal) else {
+    private func process(_ decl: TypealiasDeclaration, overridingAccess: AccessLevelModifier? = nil) {
+        guard publicModifiers.contains(decl.accessLevelModifier ?? overridingAccess ?? .internal) else {
             return
         }
         let value = (decl.accessLevelModifier ?? .internal).textDescription
@@ -433,18 +388,24 @@ class TokenFile: Codable {
         text(decl.assignment.textDescription)
     }
 
-    private func process(_ decl: ExtensionDeclaration) {
-        SharedLogger.debug("Extension Declaration")
-        SharedLogger.debug(decl.textDescription)
-        guard publicModifiers.contains(decl.accessLevelModifier ?? .internal) else {
-            return
+    private func process(_ decl: ExtensionDeclaration, overridingAccess: AccessLevelModifier? = nil) {
+        let accessModifier = decl.accessLevelModifier
+
+        // a missing access modifier for extensions does *not* automatically
+        // imply internal access
+        if let access = accessModifier ?? overridingAccess {
+            guard publicModifiers.contains(access) else {
+                return
+            }
         }
-        let value = (decl.accessLevelModifier ?? .internal).textDescription
         newLine()
         if !decl.attributes.isEmpty {
             handle(attributes: decl.attributes)
         }
-        keyword(value: value)
+        if let access = accessModifier {
+            let value = access.textDescription
+            keyword(value: value)
+        }
         whitespace()
         keyword(value: "extension")
         whitespace()
@@ -461,12 +422,7 @@ class TokenFile: Codable {
         punctuation("{")
         indent {
             decl.members.forEach { member in
-                switch member {
-                case .declaration(let decl):
-                    process(decl)
-                default:
-                    return
-                }
+                handle(member: member, overridingAccess: accessModifier)
             }
         }
         if needsNewLine {
@@ -476,7 +432,7 @@ class TokenFile: Codable {
     }
 
     private func processMember(name: String, typeModel: TypeModel, isConst: Bool, accessLevel: AccessLevelModifier, isStatic: Bool) {
-        guard publicModifiers.contains(accessLevel ?? .internal) else { return }
+        guard publicModifiers.contains(accessLevel) else { return }
         newLine()
         keyword(value: accessLevel.textDescription)
         whitespace()
@@ -493,20 +449,21 @@ class TokenFile: Codable {
         handle(typeModel: typeModel)
     }
 
-    private func process(_ decl: ConstantDeclaration) {
+    private func process(_ decl: ConstantDeclaration, overridingAccess: AccessLevelModifier? = nil) {
         decl.modifiers.verifySupported()
         for item in decl.initializerList {
             if let typeModelVal = item.typeModel {
                 let name = item.name
                 let typeModel = typeModelVal
-                processMember(name: name, typeModel: typeModel, isConst: true, accessLevel: decl.modifiers.accessLevel ?? .internal, isStatic: decl.modifiers.isStatic)
+                let accessLevel = decl.modifiers.accessLevel ?? overridingAccess ?? .internal
+                processMember(name: name, typeModel: typeModel, isConst: true, accessLevel: accessLevel, isStatic: decl.modifiers.isStatic)
                 return
             }
         }
         SharedLogger.fail("Type information not found.")
     }
 
-    private func process(_ decl: VariableDeclaration) {
+    private func process(_ decl: VariableDeclaration, overridingAccess: AccessLevelModifier? = nil) {
         decl.modifiers.verifySupported()
         var name: String
         var typeModel: TypeModel
@@ -534,12 +491,12 @@ class TokenFile: Codable {
         default:
             SharedLogger.fail("Unsupported variable body type: \(decl.body)")
         }
-        processMember(name: name, typeModel: typeModel, isConst: false, accessLevel: decl.modifiers.accessLevel!, isStatic: decl.modifiers.isStatic)
+        let accessLevel = decl.modifiers.accessLevel ?? overridingAccess ?? .internal
+        processMember(name: name, typeModel: typeModel, isConst: false, accessLevel: accessLevel, isStatic: decl.modifiers.isStatic)
     }
 
-    private func process(_ decl : InitializerDeclaration) {
-        SharedLogger.debug("Initializer Declaration")
-        guard publicModifiers.contains(decl.modifiers.accessLevel ?? .internal) else {
+    private func process(_ decl: InitializerDeclaration, overridingAccess: AccessLevelModifier? = nil) {
+        guard publicModifiers.contains(decl.modifiers.accessLevel ?? overridingAccess ?? .internal) else {
             return
         }
         newLine()
@@ -562,11 +519,8 @@ class TokenFile: Codable {
         }
     }
 
-    private func process(_ decl: FunctionDeclaration) {
-        SharedLogger.debug("Function Declaration")
-        SharedLogger.debug(decl.signature.textDescription)
-
-        guard publicModifiers.contains(decl.modifiers.accessLevel ?? .internal) else {
+    private func process(_ decl: FunctionDeclaration, overridingAccess: AccessLevelModifier? = nil) {
+        guard publicModifiers.contains(decl.modifiers.accessLevel ?? overridingAccess ?? .internal) else {
             return
         }
         newLine()
@@ -585,8 +539,8 @@ class TokenFile: Codable {
         handle(signature: decl.signature)
     }
 
-    private func process(_ decl: SubscriptDeclaration) {
-        guard publicModifiers.contains(decl.modifiers.accessLevel ?? .internal) else {
+    private func process(_ decl: SubscriptDeclaration, overridingAccess: AccessLevelModifier? = nil) {
+        guard publicModifiers.contains(decl.modifiers.accessLevel ?? overridingAccess ?? .internal) else {
             return
         }
         newLine()
@@ -597,34 +551,36 @@ class TokenFile: Codable {
         keyword(value: "subscript")
         lineIdMarker(definitionId: name)
         punctuation("(")
-        // TODO: Handle parameters
+        decl.parameterList.forEach { param in
+            handle(parameter: param)
+        }
         punctuation(")")
         whitespace()
         handle(result: decl.resultType)
     }
 
-    private func process(_ decl: Declaration) {
+    private func process(_ decl: Declaration, overridingAccess: AccessLevelModifier? = nil) {
         switch decl {
         case let decl as ClassDeclaration:
-            return process(decl)
+            return process(decl, overridingAccess: overridingAccess)
         case let decl as ConstantDeclaration:
-            return process(decl)
+            return process(decl, overridingAccess: overridingAccess)
         case let decl as EnumDeclaration:
-            return process(decl)
+            return process(decl, overridingAccess: overridingAccess)
         case let decl as ExtensionDeclaration:
-            return process(decl)
+            return process(decl, overridingAccess: overridingAccess)
         case let decl as FunctionDeclaration:
-            return process(decl)
+            return process(decl, overridingAccess: overridingAccess)
         case let decl as InitializerDeclaration:
-            return process(decl)
+            return process(decl, overridingAccess: overridingAccess)
         case let decl as ProtocolDeclaration:
-            return process(decl)
+            return process(decl, overridingAccess: overridingAccess)
         case let decl as StructDeclaration:
-            return process(decl)
+            return process(decl, overridingAccess: overridingAccess)
         case let decl as TypealiasDeclaration:
-            return process(decl)
+            return process(decl, overridingAccess: overridingAccess)
         case let decl as VariableDeclaration:
-            return process(decl)
+            return process(decl, overridingAccess: overridingAccess)
         case _ as ImportDeclaration:
             // Imports are no-op
             return
@@ -632,7 +588,7 @@ class TokenFile: Codable {
             // Deinitializers are never public
             return
         case let decl as SubscriptDeclaration:
-            return process(decl)
+            return process(decl, overridingAccess: overridingAccess)
         default:
             SharedLogger.fail("Unsupported declaration: \(decl)")
         }
@@ -655,21 +611,21 @@ class TokenFile: Codable {
         let typeModel = TypeModel(from: result)
         punctuation("->")
         whitespace()
-        self.handle(typeModel: typeModel)
+        handle(typeModel: typeModel)
     }
 
     private func handle(parameter: FunctionSignature.Parameter) {
-        let externalNameText = parameter.externalName.map({ [$0.textDescription] }) ?? []
+        let externalNameText = parameter.externalName.map { [$0.textDescription] } ?? []
         let localNameText = parameter.localName.textDescription.isEmpty ? [] : [parameter.localName.textDescription]
         let nameText = (externalNameText + localNameText).joined(separator: " ")
         let typeModel = TypeModel(from: parameter.typeAnnotation)
         let defaultText =
-            parameter.defaultArgumentClause.map({ " = \($0.textDescription)" }) ?? ""
+            parameter.defaultArgumentClause.map { " = \($0.textDescription)" } ?? ""
         let varargsText = parameter.isVarargs ? "..." : ""
         member(name: nameText)
         punctuation(":")
         whitespace()
-        self.handle(typeModel: typeModel)
+        handle(typeModel: typeModel)
         stringLiteral(defaultText)
         text(varargsText)
     }
@@ -695,7 +651,7 @@ class TokenFile: Codable {
         handle(throws: signature.throwsKind)
         handle(result: signature.result?.type)
     }
-    
+
     private func handle(clause typeInheritance: TypeInheritanceClause) {
         punctuation(":")
         whitespace()
@@ -735,6 +691,63 @@ class TokenFile: Codable {
         if source.isArray { punctuation("]") }
         if source.isOptional {
             punctuation("?")
+        }
+    }
+
+    private func handle(member: ClassDeclaration.Member) {
+        switch member {
+        case let .declaration(decl):
+            process(decl)
+        default:
+            SharedLogger.fail("Unsupported member: \(member)")
+        }
+    }
+
+    private func handle(member: StructDeclaration.Member) {
+        switch member {
+        case let .declaration(decl):
+            process(decl)
+        default:
+            SharedLogger.fail("Unsupported member: \(member)")
+        }
+    }
+
+    private func handle(member: EnumDeclaration.Member, withParentId parentId: String) {
+        switch member {
+        case let .declaration(decl):
+            process(decl)
+        case let .union(enumCase):
+            enumCase.cases.forEach { enumCaseValue in
+                newLine()
+                let enumDefId = "\(parentId).\(enumCaseValue.name.textDescription)"
+                lineIdMarker(definitionId: enumDefId)
+                keyword(value: "case")
+                whitespace()
+                self.member(name: enumCaseValue.name.textDescription, definitionId: enumDefId)
+            }
+        case let .rawValue(enumCase):
+            enumCase.cases.forEach { enumCaseValue in
+                let enumDefId = "\(parentId).\(enumCaseValue.name.textDescription)"
+                lineIdMarker(definitionId: enumDefId)
+                keyword(value: "case")
+                whitespace()
+                newLine()
+                self.member(name: enumCaseValue.name.textDescription, definitionId: enumDefId)
+            }
+        default:
+            SharedLogger.fail("Unsupported member: \(member)")
+        }
+    }
+
+    private func handle(member: ProtocolDeclaration.Member) {
+    }
+
+    private func handle(member: ExtensionDeclaration.Member, overridingAccess: AccessLevelModifier?) {
+        switch member {
+        case let .declaration(decl):
+            process(decl)
+        case let .compilerControl(statement):
+            SharedLogger.fail("Unsupported statement: \(statement)")
         }
     }
 

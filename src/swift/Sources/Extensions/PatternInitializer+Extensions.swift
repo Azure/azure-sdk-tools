@@ -29,18 +29,18 @@ import Foundation
 
 extension PatternInitializer {
     var name: String {
-        return self.textDescription
+        return textDescription
     }
 
     var typeModel: TypeModel? {
-        if case let typeAnno as IdentifierPattern = self.pattern,
-           let typeInfo = typeAnno.typeAnnotation?.type {
+        if case let typeAnno as IdentifierPattern = pattern,
+            let typeInfo = typeAnno.typeAnnotation?.type {
             return TypeModel(from: typeInfo)
         }
-        if case let literalExpression as LiteralExpression = self.initializerExpression {
+        if case let literalExpression as LiteralExpression = initializerExpression {
             return TypeModel(from: literalExpression.kind.textDescription)
         }
-        SharedLogger.warn("Unsupported pattern: \(self)")
+        SharedLogger.fail("Unsupported pattern: \(self)")
         return nil
     }
 }

@@ -65,7 +65,7 @@ struct TypeModel {
 
     init(from source: PatternInitializer) {
         if case let identPattern as IdentifierPattern = source.pattern,
-           let typeAnnotation = identPattern.typeAnnotation {
+            let typeAnnotation = identPattern.typeAnnotation {
             self.init(from: typeAnnotation)
         } else if let expression = source.initializerExpression as? LiteralExpression {
             self.init(from: expression.kind.textDescription)

@@ -100,8 +100,18 @@ public indirect enum VariableNode<GenericType> {
 // MARK: Test Extension
 
 public extension SomeStruct {
-    func someMethod() throws {
+    internal func someInternalMethod() throws {
         print("Doing stuff")
+    }
+
+    func somePublicMethod() throws -> String {
+        return "value"
+    }
+}
+
+extension SomeStruct {
+    public func specialPublicMethod() {
+        return
     }
 }
 

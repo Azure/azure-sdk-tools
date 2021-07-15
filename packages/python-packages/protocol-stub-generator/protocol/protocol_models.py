@@ -726,20 +726,18 @@ class ProtocolOperationView(FormattingClass):
                             pass
                         else:
                             object_name = i.type
-                    if len(self.json_request)>1 and object_name:
+                    if object_name:
+                        object_name = object_name.replace("[]","")
                         new_req[object_name] = self.json_request
                         self.json_request= new_req
                     request_builder(self, self.json_request, self.yaml, notfirst=False)
                     self.add_new_line()
                     self.add_whitespace(4)
-                    # self.add_comment(None, " };", None)
                     for m in self.inner_model:
                         if m:
                             if m.Value == "str":
                                 m.Value == "string"
                             self.Tokens.append(m)
-                            # self.add_new_line()
-
                     self.add_new_line(1)
 
                 if self.json_response:
@@ -748,7 +746,7 @@ class ProtocolOperationView(FormattingClass):
                     self.add_typename(None, "Response", None)
                     self.add_new_line(1)
                     new_req ={}
-                    if len(self.json_response)>1 and not any(j in self.return_type for j in R_TYPE):
+                    if not any(j in self.return_type for j in R_TYPE):
                         new_req[self.return_type] = self.json_response
                         self.json_response= new_req
                     request_builder(
@@ -760,14 +758,11 @@ class ProtocolOperationView(FormattingClass):
                     )
                     self.add_new_line()
                     self.add_whitespace(4)
-                    # self.add_comment(None, " };", None)
                     for i in self.inner_model:
                         if i:
                             if i.Value == "str":
                                 i.Value == "string"
                             self.Tokens.append(i)
-                            # self.add_new_line()
-
                     self.add_new_line(1)
 
                 self.add_token(Token(kind=TokenKind.EndDocGroup))
@@ -1164,13 +1159,13 @@ class ProtocolParameterView(FormattingClass):
             #     )
             # else:
             param_type = get_type(yaml_data["signatureParameters"][i]["schema"])
-            if param_name == "body":
-                try:
-                    param_name = yaml_data["signatureParameters"][i]["schema"][
-                        "properties"
-                    ][0]["serializedName"]
-                except:
-                    param_name = param_name
+            # if param_name == "body":
+            #     try:
+            #         param_name = yaml_data["signatureParameters"][i]["schema"][
+            #             "properties"
+            #         ][0]["serializedName"]
+            #     except:
+            #         param_name = param_name
             if yaml_data["signatureParameters"][i].get("required"):
                 required = yaml_data["signatureParameters"][i]["required"]
             else:
@@ -1291,8 +1286,8 @@ def get_type(data, page=False):
             return_type = data["language"]["default"]["name"]
             if page:
                 return_type = get_type(data["properties"][0]["schema"], True)
-            if len(data["properties"])==1: 
-                return_type = get_type(data["properties"][0]["schema"])
+            # if len(data["properties"])==1: 
+            #     return_type = get_type(data["properties"][0]["schema"])
         if return_type == "array":
             if (
                 data["elementType"]["type"] != "object"

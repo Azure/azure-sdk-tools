@@ -628,11 +628,13 @@ class ProtocolOperationView(FormattingClass):
             self.overview_tokens.append(Token("]", TokenKind.Text))
 
         self.add_space()
+        if not self.operation_group: self.operation_group = "<default>"
         self.overview_tokens.append(Token(" ", TokenKind.Text))
         token = Token(self.operation, TokenKind.Keyword)
         token.set_definition_id(
             self.namespace + self.operation_group + self.operation + "overview"
         )
+       
         token.set_navigation_id(
             self.namespace + self.operation_group + self.operation + "overview"
         )

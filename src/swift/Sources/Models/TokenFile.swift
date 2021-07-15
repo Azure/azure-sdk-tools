@@ -55,7 +55,7 @@ class TokenFile: Codable {
     private let indentSpaces = 4
 
     /// Access modifier to expose via APIView
-    private let publicModifiers: [AccessLevelModifier] = [.public, .open]
+    let publicModifiers: [AccessLevelModifier] = [.public, .open]
 
     /// Controls whether a newline is needed
     private var needsNewLine = false
@@ -179,7 +179,7 @@ class TokenFile: Codable {
         punctuation("}")
         newLine()
 
-        navigation(from: declarations)
+        navigationTokens(from: declarations)
         // ensure items appear in sorted order
         navigation.sort(by: { $0.text < $1.text })
         navigation.forEach { item in
@@ -202,20 +202,18 @@ class TokenFile: Codable {
     }
 
     private func process(_ decl: ClassDeclaration, overridingAccess: AccessLevelModifier? = nil) {
-        guard publicModifiers.contains(decl.accessLevelModifier ?? overridingAccess ?? .internal) else {
+        let accessLevel = decl.accessLevelModifier ?? overridingAccess ?? .internal
+        guard publicModifiers.contains(accessLevel) else {
             return
         }
-        let value = (decl.accessLevelModifier ?? .internal).textDescription
+
         let defId = decl.name.textDescription
         definitionIds[defId] = defId
 
         newLine()
-        if !decl.attributes.isEmpty {
-            handle(attributes: decl.attributes)
-        }
-
+        handle(attributes: decl.attributes)
         lineIdMarker(definitionId: defId)
-        keyword(value: value)
+        keyword(value: accessLevel.textDescription)
         whitespace()
         if decl.isFinal {
             keyword(value: "final")
@@ -246,20 +244,17 @@ class TokenFile: Codable {
     }
 
     private func process(_ decl: StructDeclaration, overridingAccess: AccessLevelModifier? = nil) {
-        guard publicModifiers.contains(decl.accessLevelModifier ?? overridingAccess ?? .internal) else {
+        let accessLevel = decl.accessLevelModifier ?? overridingAccess ?? .internal
+        guard publicModifiers.contains(accessLevel) else {
             return
         }
-        let value = (decl.accessLevelModifier ?? .internal).textDescription
         let defId = decl.name.textDescription
         definitionIds[defId] = defId
 
         newLine()
-        if !decl.attributes.isEmpty {
-            handle(attributes: decl.attributes)
-        }
-
+        handle(attributes: decl.attributes)
         lineIdMarker(definitionId: defId)
-        keyword(value: value)
+        keyword(value: accessLevel.textDescription)
         whitespace()
         keyword(value: "struct")
         whitespace()
@@ -286,23 +281,21 @@ class TokenFile: Codable {
     }
 
     private func process(_ decl: EnumDeclaration, overridingAccess: AccessLevelModifier? = nil) {
-        guard publicModifiers.contains(decl.accessLevelModifier ?? overridingAccess ?? .internal) else {
+        let accessLevel = decl.accessLevelModifier ?? overridingAccess ?? .internal
+        guard publicModifiers.contains(accessLevel) else {
             return
         }
-        let value = (decl.accessLevelModifier ?? .internal).textDescription
         let defId = decl.name.textDescription
         definitionIds[defId] = defId
 
         newLine()
-        if !decl.attributes.isEmpty {
-            handle(attributes: decl.attributes)
-        }
+        handle(attributes: decl.attributes)
         if decl.isIndirect {
             keyword(value: "indirect")
             whitespace()
         }
         lineIdMarker(definitionId: defId)
-        keyword(value: value)
+        keyword(value: accessLevel.textDescription)
         whitespace()
         keyword(value: "enum")
         whitespace()
@@ -330,18 +323,15 @@ class TokenFile: Codable {
     }
 
     private func process(_ decl: ProtocolDeclaration, overridingAccess: AccessLevelModifier? = nil) {
-        guard publicModifiers.contains(decl.accessLevelModifier ?? overridingAccess ?? .internal) else {
+        let accessLevel = decl.accessLevelModifier ?? overridingAccess ?? .internal
+        guard publicModifiers.contains(accessLevel) else {
             return
         }
-        let value = (decl.accessLevelModifier ?? .internal).textDescription
         newLine()
-        if !decl.attributes.isEmpty {
-            handle(attributes: decl.attributes)
-        }
+        handle(attributes: decl.attributes)
         let defId = decl.name.textDescription
         definitionIds[defId] = defId
-
-        keyword(value: value)
+        keyword(value: accessLevel.textDescription)
         whitespace()
         keyword(value: "protocol")
         whitespace()
@@ -353,7 +343,7 @@ class TokenFile: Codable {
         punctuation("{")
         indent {
             decl.members.forEach { member in
-                handle(member: member, withParentId: defId)
+                handle(member: member, withParentId: defId, overridingAccess: accessLevel)
             }
         }
         if needsNewLine {
@@ -363,18 +353,16 @@ class TokenFile: Codable {
     }
 
     private func process(_ decl: TypealiasDeclaration, overridingAccess: AccessLevelModifier? = nil) {
-        guard publicModifiers.contains(decl.accessLevelModifier ?? overridingAccess ?? .internal) else {
+        let accessLevel = decl.accessLevelModifier ?? overridingAccess ?? .internal
+        guard publicModifiers.contains(accessLevel) else {
             return
         }
-        let value = (decl.accessLevelModifier ?? .internal).textDescription
         let defId = decl.name.textDescription
         definitionIds[defId] = defId
 
         newLine()
-        if !decl.attributes.isEmpty {
-            handle(attributes: decl.attributes)
-        }
-        keyword(value: value)
+        handle(attributes: decl.attributes)
+        keyword(value: accessLevel.textDescription)
         whitespace()
         keyword(value: "typealias")
         whitespace()
@@ -389,20 +377,18 @@ class TokenFile: Codable {
     }
 
     private func process(_ decl: ExtensionDeclaration, overridingAccess: AccessLevelModifier? = nil) {
-        let accessModifier = decl.accessLevelModifier
+        let accessLevel = decl.accessLevelModifier ?? overridingAccess
 
         // a missing access modifier for extensions does *not* automatically
         // imply internal access
-        if let access = accessModifier ?? overridingAccess {
+        if let access = accessLevel {
             guard publicModifiers.contains(access) else {
                 return
             }
         }
         newLine()
-        if !decl.attributes.isEmpty {
-            handle(attributes: decl.attributes)
-        }
-        if let access = accessModifier {
+        handle(attributes: decl.attributes)
+        if let access = accessLevel {
             let value = access.textDescription
             keyword(value: value)
             whitespace()
@@ -422,7 +408,7 @@ class TokenFile: Codable {
         punctuation("{")
         indent {
             decl.members.forEach { member in
-                handle(member: member, overridingAccess: accessModifier)
+                handle(member: member, overridingAccess: accessLevel)
             }
         }
         if needsNewLine {
@@ -431,32 +417,13 @@ class TokenFile: Codable {
         punctuation("}")
     }
 
-    private func processMember(name: String, typeModel: TypeModel, isConst: Bool, accessLevel: AccessLevelModifier, isStatic: Bool) {
-        guard publicModifiers.contains(accessLevel) else { return }
-        newLine()
-        keyword(value: accessLevel.textDescription)
-        whitespace()
-        if isStatic {
-            keyword(value: "static")
-            whitespace()
-        }
-        keyword(value: isConst ? "let" : "var")
-        whitespace()
-        lineIdMarker(definitionId: name)
-        member(name: name)
-        punctuation(":")
-        whitespace()
-        handle(typeModel: typeModel)
-    }
-
     private func process(_ decl: ConstantDeclaration, overridingAccess: AccessLevelModifier? = nil) {
-        decl.modifiers.verifySupported()
         for item in decl.initializerList {
             if let typeModelVal = item.typeModel {
                 let name = item.name
                 let typeModel = typeModelVal
                 let accessLevel = decl.modifiers.accessLevel ?? overridingAccess ?? .internal
-                processMember(name: name, typeModel: typeModel, isConst: true, accessLevel: accessLevel, isStatic: decl.modifiers.isStatic)
+                processMember(name: name, attributes: decl.attributes, modifiers: decl.modifiers, typeModel: typeModel, isConst: true, accessLevel: accessLevel)
                 return
             }
         }
@@ -464,17 +431,17 @@ class TokenFile: Codable {
     }
 
     private func process(_ decl: VariableDeclaration, overridingAccess: AccessLevelModifier? = nil) {
-        decl.modifiers.verifySupported()
         var name: String
         var typeModel: TypeModel
 
         switch decl.body {
         case let .initializerList(initializerList):
             for item in initializerList {
+                let accessLevel = decl.modifiers.accessLevel ?? overridingAccess ?? .internal
                 if let typeModelVal = item.typeModel {
                     name = item.name
                     typeModel = typeModelVal
-                    processMember(name: name, typeModel: typeModel, isConst: false, accessLevel: decl.modifiers.accessLevel ?? .internal, isStatic: decl.modifiers.isStatic)
+                    processMember(name: name, attributes: decl.attributes, modifiers: decl.modifiers, typeModel: typeModel, isConst: false, accessLevel: accessLevel)
                     return
                 }
             }
@@ -486,77 +453,33 @@ class TokenFile: Codable {
             typeModel = TypeModel(from: typeAnno)
             name = ident.textDescription
         case let .willSetDidSetBlock(ident, typeAnno, expression, _):
+            // TODO: complete implementation
             typeModel = TypeModel(from: typeAnno!)
             name = ident.textDescription
         default:
             SharedLogger.fail("Unsupported variable body type: \(decl.body)")
         }
         let accessLevel = decl.modifiers.accessLevel ?? overridingAccess ?? .internal
-        processMember(name: name, typeModel: typeModel, isConst: false, accessLevel: accessLevel, isStatic: decl.modifiers.isStatic)
+        processMember(name: name, attributes: decl.attributes, modifiers: decl.modifiers, typeModel: typeModel, isConst: false, accessLevel: accessLevel)
     }
 
     private func process(_ decl: InitializerDeclaration, overridingAccess: AccessLevelModifier? = nil) {
-        guard publicModifiers.contains(decl.modifiers.accessLevel ?? overridingAccess ?? .internal) else {
-            return
-        }
-        newLine()
-        if !decl.attributes.isEmpty {
-            handle(attributes: decl.attributes)
-        }
-        if !decl.modifiers.isEmpty {
-            handle(modifiers: decl.modifiers)
-        }
+        let accessLevel = decl.modifiers.accessLevel ?? overridingAccess ?? .internal
         let defId = decl.textDescription
-        keyword(value: "init")
-        lineIdMarker(definitionId: defId)
-        if let genericParam = decl.genericParameterClause {
-            handle(clause: genericParam)
-        }
-        let initSignature = FunctionSignature(parameterList: decl.parameterList, throwsKind: decl.throwsKind, result: nil)
-        handle(signature: initSignature)
-        if let genericWhere = decl.genericWhereClause {
-            handle(clause: genericWhere)
-        }
+        processInitializer(defId: defId, attributes: decl.attributes, modifiers: decl.modifiers, kind: decl.kind.textDescription, accessLevel: accessLevel,  genericParam: decl.genericParameterClause, throwsKind: decl.throwsKind, parameterList: decl.parameterList, genericWhere: decl.genericWhereClause)
     }
 
     private func process(_ decl: FunctionDeclaration, overridingAccess: AccessLevelModifier? = nil) {
-        guard publicModifiers.contains(decl.modifiers.accessLevel ?? overridingAccess ?? .internal) else {
-            return
-        }
-        newLine()
-        if !decl.attributes.isEmpty {
-            handle(attributes: decl.attributes)
-        }
-        handle(modifiers: decl.modifiers)
-        keyword(value: "func")
-        lineIdMarker(definitionId: name)
-        whitespace()
-        type(name: decl.name.textDescription, definitionId: decl.textDescription)
-        if let genericParam = decl.genericParameterClause {
-            whitespace()
-            handle(clause: genericParam)
-        }
-        handle(signature: decl.signature)
+        let accessLevel = decl.modifiers.accessLevel ?? overridingAccess ?? .internal
+        let defId = decl.textDescription
+        let name = decl.name.textDescription
+        processFunction(name: name, defId: defId, attributes: decl.attributes, modifiers: decl.modifiers, accessLevel: accessLevel, signature: decl.signature, genericParam: decl.genericParameterClause, genericWhere: decl.genericWhereClause)
     }
 
     private func process(_ decl: SubscriptDeclaration, overridingAccess: AccessLevelModifier? = nil) {
-        guard publicModifiers.contains(decl.modifiers.accessLevel ?? overridingAccess ?? .internal) else {
-            return
-        }
-        newLine()
-        if !decl.attributes.isEmpty {
-            handle(attributes: decl.attributes)
-        }
-        handle(modifiers: decl.modifiers)
-        keyword(value: "subscript")
-        lineIdMarker(definitionId: name)
-        punctuation("(")
-        decl.parameterList.forEach { param in
-            handle(parameter: param)
-        }
-        punctuation(")")
-        whitespace()
-        handle(result: decl.resultType)
+        let accessLevel = decl.modifiers.accessLevel ?? overridingAccess ?? .internal
+        let defId = decl.textDescription
+        processSubscript(defId: defId, attributes: decl.attributes, modifiers: decl.modifiers, accessLevel: accessLevel, genericParam: decl.genericParameterClause, parameterList: decl.parameterList, resultType: decl.resultType, genericWhere: decl.genericWhereClause)
     }
 
     private func process(_ decl: Declaration, overridingAccess: AccessLevelModifier? = nil) {
@@ -605,9 +528,7 @@ class TokenFile: Codable {
     }
 
     private func handle(result: Type?) {
-        guard let result = result else {
-            return
-        }
+        guard let result = result else { return }
         let typeModel = TypeModel(from: result)
         punctuation("->")
         whitespace()
@@ -615,6 +536,7 @@ class TokenFile: Codable {
     }
 
     private func handle(parameter: FunctionSignature.Parameter) {
+        // TODO: eliminate reliance on textDescription
         let externalNameText = parameter.externalName.map { [$0.textDescription] } ?? []
         let localNameText = parameter.localName.textDescription.isEmpty ? [] : [parameter.localName.textDescription]
         let nameText = (externalNameText + localNameText).joined(separator: " ")
@@ -631,8 +553,11 @@ class TokenFile: Codable {
     }
 
     private func handle(modifiers: DeclarationModifiers) {
-        keyword(value: modifiers.textDescription)
-        whitespace()
+        guard !modifiers.isEmpty else { return }
+        modifiers.forEach { modifier in
+            keyword(value: modifier.textDescription)
+            whitespace()
+        }
     }
 
     private func handle(signature: FunctionSignature) {
@@ -666,22 +591,78 @@ class TokenFile: Codable {
         whitespace()
     }
 
-    private func handle(clause genericParam: GenericParameterClause) {
-        // TODO: Remove reliance on textDescription
-        text(genericParam.textDescription)
+    private func handle(clause genericParam: GenericParameterClause?) {
+        guard let genericParam = genericParam else { return }
+        // TODO: make dotted names linkable
+        punctuation("<")
+        let stopIdx = genericParam.parameterList.count - 1
+        for (idx, param) in genericParam.parameterList.enumerated() {
+            switch param {
+            case let .identifier(type1):
+                type(name: type1.textDescription)
+            case let .protocolConformance(type1, protocol2):
+                type(name: type1.textDescription)
+                punctuation(":")
+                whitespace()
+                type(name: protocol2.textDescription)
+            case let .typeConformance(type1, type2):
+                type(name: type1.textDescription)
+                punctuation(":")
+                whitespace()
+                type(name: type2.textDescription)
+            }
+            if idx != stopIdx {
+                punctuation(",")
+                whitespace()
+            }
+        }
+        punctuation(">")
         whitespace()
     }
 
-    private func handle(clause genericWhere: GenericWhereClause) {
-        // TODO: Remove reliance on textDescription
-        text(genericWhere.textDescription)
+    private func handle(clause genericWhere: GenericWhereClause?) {
+        guard let genericWhere = genericWhere else { return }
+        whitespace()
+        keyword(value: "where")
+        whitespace()
+        let stopIdx = genericWhere.requirementList.count - 1
+        for (idx, requirement) in genericWhere.requirementList.enumerated() {
+            // TODO: make dotted names linkable
+            switch requirement {
+            case let .protocolConformance(type1, protocol2):
+                type(name: type1.textDescription)
+                punctuation(":")
+                whitespace()
+                type(name: protocol2.textDescription)
+            case let .sameType(type1, type2):
+                type(name: type1.textDescription)
+                whitespace()
+                punctuation("==")
+                whitespace()
+                type(name: type2.textDescription)
+            case let .typeConformance(type1, type2):
+                type(name: type1.textDescription)
+                punctuation(":")
+                whitespace()
+                type(name: type2.textDescription)
+            }
+            if idx != stopIdx {
+                punctuation(",")
+                whitespace()
+            }
+        }
         whitespace()
     }
 
     private func handle(attributes: Attributes) {
-        // TODO: remove reliance on textDescription
-        keyword(value: attributes.textDescription)
-        newLine()
+        guard !attributes.isEmpty else { return }
+        attributes.forEach { attribute in
+            keyword(value: "@\(attribute.name.textDescription)")
+            if let argument = attribute.argumentClause {
+                text(argument.textDescription)
+            }
+            newLine()
+        }
     }
 
     private func handle(typeModel: TypeModel?) {
@@ -740,7 +721,6 @@ class TokenFile: Codable {
     }
 
     private func handle(member: ProtocolDeclaration.Member, withParentId parentId: String, overridingAccess: AccessLevelModifier? = nil) {
-        // TODO: Handle protocols
         switch member {
         case let .associatedType(data):
             let name = data.name.textDescription
@@ -753,16 +733,15 @@ class TokenFile: Codable {
                 handle(clause: inheritance)
             }
         case let .method(data):
-            newLine()
-            // TODO: remove reliance on textDescription
-            text(data.textDescription)
+            let accessLevel = data.modifiers.accessLevel ?? overridingAccess ?? .internal
+            let defId = "\(parentId).\(data.textDescription)"
+            let name = data.name.textDescription
+            processFunction(name: name, defId: defId, attributes: data.attributes, modifiers: data.modifiers, accessLevel: accessLevel, signature: data.signature, genericParam: data.genericParameter, genericWhere: data.genericWhere)
         case let .property(data):
             let name = data.name.textDescription
             newLine()
-            if let access = data.modifiers.accessLevel {
-                keyword(value: access.textDescription)
-                whitespace()
-            }
+            handle(attributes: data.attributes)
+            handle(modifiers: data.modifiers)
             keyword(value: "var")
             whitespace()
             lineIdMarker(definitionId: "\(parentId).\(name)")
@@ -771,16 +750,31 @@ class TokenFile: Codable {
             whitespace()
             handle(typeModel: TypeModel(from: data.typeAnnotation))
             whitespace()
-            let getter = data.getterSetterKeywordBlock.getter
-            let setter = data.getterSetterKeywordBlock.setter
+            punctuation("{")
+            whitespace()
+            if data.getterSetterKeywordBlock.getter.mutationModifier != nil {
+                keyword(value: "mutating")
+                whitespace()
+            }
+            keyword(value: "get" )
+            whitespace()
+            if let setter = data.getterSetterKeywordBlock.setter {
+                if setter.mutationModifier != nil {
+                    keyword(value: "mutating")
+                    whitespace()
+                }
+                keyword(value: "set")
+                whitespace()
+            }
+            punctuation("}")
         case let .initializer(data):
-            newLine()
-            // TODO: remove reliance on textDescription
-            text(data.textDescription)
+            let accessLevel = data.modifiers.accessLevel ?? overridingAccess ?? .internal
+            let defId = "\(parentId).\(data.textDescription)"
+            processInitializer(defId: defId, attributes: data.attributes, modifiers: data.modifiers, kind: data.kind.textDescription, accessLevel: accessLevel,  genericParam: data.genericParameter, throwsKind: data.throwsKind, parameterList: data.parameterList, genericWhere: data.genericWhere)
         case let .subscript(data):
-            newLine()
-            // TODO: remove reliance on textDescription
-            text(data.textDescription)
+            let accessLevel = data.modifiers.accessLevel ?? overridingAccess ?? .internal
+            let defId = "\(parentId).\(data.textDescription)"
+            processSubscript(defId: defId, attributes: data.attributes, modifiers: data.modifiers, accessLevel: accessLevel, genericParam: data.genericParameter, parameterList: data.parameterList, resultType: data.resultType, genericWhere: data.genericWhere)
         default:
             SharedLogger.fail("Unsupported protocol member: \(member)")
         }
@@ -795,129 +789,65 @@ class TokenFile: Codable {
         }
     }
 
-    // MARK: Navigation Emitter Methods
+    // MARK: Common Processors
 
-    private func navigation(add item: NavigationItem) {
-        if let topItem = navigation.last {
-            topItem.childItems.append(item)
-        } else {
-            navigation.append(item)
-        }
+    private func processMember(name: String, attributes: Attributes, modifiers: DeclarationModifiers, typeModel: TypeModel, isConst: Bool, accessLevel: AccessLevelModifier) {
+        guard publicModifiers.contains(accessLevel) else { return }
+        newLine()
+        handle(attributes: attributes)
+        handle(modifiers: modifiers)
+        keyword(value: isConst ? "let" : "var")
+        whitespace()
+        lineIdMarker(definitionId: name)
+        member(name: name)
+        punctuation(":")
+        whitespace()
+        handle(typeModel: typeModel)
     }
 
-    private func navigation(from declarations: [TopLevelDeclaration]) {
-        let packageNavItem = NavigationItem(text: packageName, navigationId: nil, typeKind: .assembly)
-        declarations.forEach { decl in
-            let item = navigation(from: decl)
-            packageNavItem.childItems += item
-        }
-        navigation = [packageNavItem]
+    private func processInitializer(defId: String, attributes: Attributes, modifiers: DeclarationModifiers, kind: String, accessLevel: AccessLevelModifier, genericParam: GenericParameterClause?, throwsKind: ThrowsKind, parameterList: [FunctionSignature.Parameter], genericWhere: GenericWhereClause?) {
+        guard publicModifiers.contains(accessLevel) else { return }
+        newLine()
+        handle(attributes: attributes)
+        handle(modifiers: modifiers)
+        keyword(value: "init")
+        punctuation(kind)
+        lineIdMarker(definitionId: defId)
+        handle(clause: genericParam)
+        let initSignature = FunctionSignature(parameterList: parameterList, throwsKind: throwsKind, result: nil)
+        handle(signature: initSignature)
+        handle(clause: genericWhere)
     }
 
-    private func navigation(from decl: TopLevelDeclaration) -> [NavigationItem] {
-        var navItems: [NavigationItem] = []
-        decl.statements.forEach { stmt in
-            if let item = navigation(from: stmt) {
-                navItems.append(item)
-            }
+    private func processSubscript(defId: String, attributes: Attributes, modifiers: DeclarationModifiers, accessLevel: AccessLevelModifier, genericParam: GenericParameterClause?, parameterList: [FunctionSignature.Parameter], resultType: Type, genericWhere: GenericWhereClause?) {
+        guard publicModifiers.contains(accessLevel) else { return }
+        newLine()
+        handle(attributes: attributes)
+        handle(modifiers: modifiers)
+        keyword(value: "subscript")
+        lineIdMarker(definitionId: defId)
+        handle(clause: genericParam)
+        punctuation("(")
+        parameterList.forEach { param in
+            handle(parameter: param)
         }
-        return navItems
+        punctuation(")")
+        whitespace()
+        handle(result: resultType)
+        handle(clause: genericWhere)
     }
 
-    private func navigation(from decl: ClassDeclaration) -> NavigationItem? {
-        guard publicModifiers.contains(decl.accessLevelModifier ?? .internal) else {
-            return nil
-        }
-        let navItem = NavigationItem(text: decl.name.textDescription, navigationId: decl.name.textDescription, typeKind: .class)
-        decl.members.forEach { member in
-            switch member {
-            case let .declaration(decl):
-                if let item = navigation(from: decl) {
-                    navItem.childItems.append(item)
-                }
-            case .compilerControl:
-                return
-            }
-        }
-        return navItem
-    }
-
-    private func navigation(from decl: StructDeclaration) -> NavigationItem? {
-        guard publicModifiers.contains(decl.accessLevelModifier ?? .internal) else {
-            return nil
-        }
-        let navItem = NavigationItem(text: decl.name.textDescription, navigationId: decl.name.textDescription, typeKind: .class)
-        decl.members.forEach { member in
-            switch member {
-            case let .declaration(decl):
-                if let item = navigation(from: decl) {
-                    navItem.childItems.append(item)
-                }
-            case .compilerControl:
-                return
-            }
-        }
-        return navItem
-    }
-
-    private func navigation(from decl: EnumDeclaration) -> NavigationItem? {
-        guard publicModifiers.contains(decl.accessLevelModifier ?? .internal) else {
-            return nil
-        }
-        let navItem = NavigationItem(text: decl.name.textDescription, navigationId: decl.name.textDescription, typeKind: .class)
-        decl.members.forEach { member in
-            switch member {
-            case let .declaration(decl):
-                if let item = navigation(from: decl) {
-                    navItem.childItems.append(item)
-                }
-            default:
-                return
-            }
-        }
-        return navItem
-    }
-
-    private func navigation(from decl: ProtocolDeclaration) -> NavigationItem? {
-        guard publicModifiers.contains(decl.accessLevelModifier ?? .internal) else {
-            return nil
-        }
-        let navItem = NavigationItem(text: decl.name.textDescription, navigationId: decl.name.textDescription, typeKind: .class)
-        return navItem
-    }
-
-    private func navigation(from decl: ExtensionDeclaration) -> NavigationItem? {
-        guard publicModifiers.contains(decl.accessLevelModifier ?? .internal) else {
-            return nil
-        }
-        let navItem = NavigationItem(text: decl.type.textDescription, navigationId: decl.type.textDescription, typeKind: .class)
-        decl.members.forEach { member in
-            switch member {
-            case let .declaration(decl):
-                if let item = navigation(from: decl) {
-                    navItem.childItems.append(item)
-                }
-            default:
-                return
-            }
-        }
-        return navItem
-    }
-
-    private func navigation(from decl: Statement) -> NavigationItem? {
-        switch decl {
-        case let decl as ClassDeclaration:
-            return navigation(from: decl)
-        case let decl as EnumDeclaration:
-            return navigation(from: decl)
-        case let decl as ExtensionDeclaration:
-            return navigation(from: decl)
-        case let decl as ProtocolDeclaration:
-            return navigation(from: decl)
-        case let decl as StructDeclaration:
-            return navigation(from: decl)
-        default:
-            return nil
-        }
+    private func processFunction(name: String, defId: String, attributes: Attributes, modifiers: DeclarationModifiers, accessLevel: AccessLevelModifier, signature: FunctionSignature, genericParam: GenericParameterClause?, genericWhere: GenericWhereClause?) {
+        guard publicModifiers.contains(accessLevel) else { return }
+        newLine()
+        handle(attributes: attributes)
+        handle(modifiers: modifiers)
+        keyword(value: "func")
+        lineIdMarker(definitionId: defId)
+        whitespace()
+        type(name: name, definitionId: defId)
+        handle(clause: genericParam)
+        handle(signature: signature)
+        handle(clause: genericWhere)
     }
 }

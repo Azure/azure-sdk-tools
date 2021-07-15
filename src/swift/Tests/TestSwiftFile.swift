@@ -56,23 +56,68 @@ public class SomeClass<GenericType> where GenericType: Codable {
         return true
     }
 
+    static public func ==(lhs: SomeClass<GenericType>, rhs: SomeClass<GenericType>) -> Bool {
+        return false
+    }
+
     deinit {
     }
 }
 
 // MARK: Test Protocol
 
-public protocol SomeProtocol: AnyObject {
-    associatedtype SomeProtocolType: Codable
-
-    var value: String { get }
+public protocol Container {
+    associatedtype Item
+    mutating func append(_ item: Item)
+    var count: Int { get }
+    subscript(i: Int) -> Item { get }
 }
 
-public final class ThirdClass: SomeProtocol {
+public protocol SomeOtherProtocol {
+    var mutatableValue: String { mutating get mutating set }
+
+    func doSomething(param1: Int, _ param2: String...) throws -> String
+
+    subscript(index: Int) -> String { get }
+
+    init?(withName name: String) throws
+
+    init!(withRisk risk: String)
+
+    init(withRegular reg: String)
+}
+
+public final class ThirdClass: SomeOtherProtocol {
+    public var mutatableValue: String
+
+    public func doSomething(param1: Int, _ param2: String...) throws -> String {
+        return ""
+    }
+
+    public subscript(index: Int) -> String {
+        return ""
+    }
+
+    public init?(withName name: String) throws {
+        return nil
+    }
+
+    public init!(withRisk risk: String) {
+        return nil
+    }
+
+    public init(withRegular reg: String) {
+        mutatableValue = reg
+    }
+
     public typealias SomeProtocolType = String
 
     public var value: String {
         return "value"
+    }
+
+    public func allItemsMatch<C1: Container, C2: Container>(_ someContainer: C1, _ anotherContainer: C2) -> Bool where C1.Item == C2.Item, C1.Item: Equatable {
+        return false
     }
 }
 

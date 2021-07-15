@@ -28,16 +28,6 @@ import AST
 import Foundation
 
 extension DeclarationModifiers {
-    func verifySupported() {
-        for modifier in self {
-            switch modifier {
-            case .accessLevel, .static, .final:
-                continue
-            default:
-                SharedLogger.fail("Unsupported modifier: \(modifier)")
-            }
-        }
-    }
 
     var accessLevel: AccessLevelModifier? {
         for modifier in self {
@@ -49,17 +39,5 @@ extension DeclarationModifiers {
             }
         }
         return nil
-    }
-
-    var isStatic: Bool {
-        for modifier in self {
-            switch modifier {
-            case .static:
-                return true
-            default:
-                continue
-            }
-        }
-        return false
     }
 }

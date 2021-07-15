@@ -194,7 +194,7 @@ class TokenFile: Codable {
         decl.statements.forEach { statement in
             switch statement {
             case let decl as Declaration:
-                process(decl)
+                process(decl, overridingAccess: overridingAccess)
             default:
                 SharedLogger.fail("Unsupported statement type: \(statement)")
             }
@@ -353,7 +353,7 @@ class TokenFile: Codable {
         punctuation("{")
         indent {
             decl.members.forEach { member in
-                handle(member: member)
+                handle(member: member, withParentId: defId)
             }
         }
         if needsNewLine {
@@ -405,8 +405,8 @@ class TokenFile: Codable {
         if let access = accessModifier {
             let value = access.textDescription
             keyword(value: value)
+            whitespace()
         }
-        whitespace()
         keyword(value: "extension")
         whitespace()
         let defId = decl.type.textDescription
@@ -694,28 +694,28 @@ class TokenFile: Codable {
         }
     }
 
-    private func handle(member: ClassDeclaration.Member) {
+    private func handle(member: ClassDeclaration.Member, overridingAccess: AccessLevelModifier? = nil) {
         switch member {
         case let .declaration(decl):
-            process(decl)
+            process(decl, overridingAccess: overridingAccess)
         default:
             SharedLogger.fail("Unsupported member: \(member)")
         }
     }
 
-    private func handle(member: StructDeclaration.Member) {
+    private func handle(member: StructDeclaration.Member, overridingAccess: AccessLevelModifier? = nil) {
         switch member {
         case let .declaration(decl):
-            process(decl)
+            process(decl, overridingAccess: overridingAccess)
         default:
             SharedLogger.fail("Unsupported member: \(member)")
         }
     }
 
-    private func handle(member: EnumDeclaration.Member, withParentId parentId: String) {
+    private func handle(member: EnumDeclaration.Member, withParentId parentId: String, overridingAccess: AccessLevelModifier? = nil) {
         switch member {
         case let .declaration(decl):
-            process(decl)
+            process(decl, overridingAccess: overridingAccess)
         case let .union(enumCase):
             enumCase.cases.forEach { enumCaseValue in
                 newLine()
@@ -739,13 +739,57 @@ class TokenFile: Codable {
         }
     }
 
-    private func handle(member: ProtocolDeclaration.Member) {
+    private func handle(member: ProtocolDeclaration.Member, withParentId parentId: String, overridingAccess: AccessLevelModifier? = nil) {
+        // TODO: Handle protocols
+        switch member {
+        case let .associatedType(data):
+            let name = data.name.textDescription
+            newLine()
+            keyword(value: "associatedtype")
+            whitespace()
+            lineIdMarker(definitionId: "\(parentId).\(name)")
+            self.member(name: name)
+            if let inheritance = data.typeInheritance {
+                handle(clause: inheritance)
+            }
+        case let .method(data):
+            newLine()
+            // TODO: remove reliance on textDescription
+            text(data.textDescription)
+        case let .property(data):
+            let name = data.name.textDescription
+            newLine()
+            if let access = data.modifiers.accessLevel {
+                keyword(value: access.textDescription)
+                whitespace()
+            }
+            keyword(value: "var")
+            whitespace()
+            lineIdMarker(definitionId: "\(parentId).\(name)")
+            self.member(name: name)
+            punctuation(":")
+            whitespace()
+            handle(typeModel: TypeModel(from: data.typeAnnotation))
+            whitespace()
+            let getter = data.getterSetterKeywordBlock.getter
+            let setter = data.getterSetterKeywordBlock.setter
+        case let .initializer(data):
+            newLine()
+            // TODO: remove reliance on textDescription
+            text(data.textDescription)
+        case let .subscript(data):
+            newLine()
+            // TODO: remove reliance on textDescription
+            text(data.textDescription)
+        default:
+            SharedLogger.fail("Unsupported protocol member: \(member)")
+        }
     }
 
     private func handle(member: ExtensionDeclaration.Member, overridingAccess: AccessLevelModifier?) {
         switch member {
         case let .declaration(decl):
-            process(decl)
+            process(decl, overridingAccess: overridingAccess)
         case let .compilerControl(statement):
             SharedLogger.fail("Unsupported statement: \(statement)")
         }

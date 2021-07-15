@@ -63,7 +63,7 @@ public class SomeClass<GenericType> where GenericType: Codable {
 // MARK: Test Protocol
 
 public protocol SomeProtocol: AnyObject {
-    associatedtype SomeProtocolType
+    associatedtype SomeProtocolType: Codable
 
     var value: String { get }
 }

@@ -283,6 +283,17 @@ Services:
       PackageVersions:
       - Azure.Security.KeyVault.Secrets: 4.1.0
       - Azure.Security.KeyVault.Secrets: source
+    Java:
+      Project: sdk/keyvault/azure-security-keyvault-perf
+      PackageVersions:
+      - azure-security-keyvault-certificates: 4.2.0
+        azure-security-keyvault-keys: 4.3.0
+        azure-security-keyvault-secrets: 4.3.0
+        reactor-core: 3.4.6
+      - azure-security-keyvault-certificates: source
+        azure-security-keyvault-keys: source
+        azure-security-keyvault-secrets: source
+        reactor-core: source
     Python:
       Project: sdk/keyvault/azure-keyvault-secrets
       PackageVersions:
@@ -295,6 +306,7 @@ Services:
     - --parallel 64
     TestNames:
       Net: GetSecret
+      Java: GetSecret
       Python: GetSecretTest
 
   - Test: list-secrets
@@ -304,3 +316,4 @@ Services:
     - --count 500 --parallel 32
     TestNames:
       Net: ListSecrets
+      Java: ListSecrets

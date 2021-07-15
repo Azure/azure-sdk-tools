@@ -728,7 +728,7 @@ class ProtocolOperationView(FormattingClass):
                             pass
                         else:
                             object_name = i.type
-                    if object_name:
+                    if object_name : #and ((isinstance(self.json_request,dict) or isinstance(self.json_request,list)) and len(self.json_request)>1):
                         object_name = object_name.replace("[]","")
                         new_req[object_name] = self.json_request
                         self.json_request= new_req
@@ -742,6 +742,7 @@ class ProtocolOperationView(FormattingClass):
                             self.Tokens.append(m)
                     self.add_new_line(1)
 
+                if isinstance(self.json_response,list) and isinstance(self.json_response[0],str): self.json_response = None
                 if self.json_response:
                     self.inner_model = []
                     self.add_whitespace(3)
@@ -749,7 +750,7 @@ class ProtocolOperationView(FormattingClass):
                     self.add_new_line(1)
                     new_req ={}
                     if not any(j in self.return_type for j in R_TYPE):
-                        new_req[self.return_type] = self.json_response
+                        new_req[self.return_type.replace("[]","")] = self.json_response
                         self.json_response= new_req
                     request_builder(
                         self,
@@ -794,7 +795,7 @@ class ProtocolOperationView(FormattingClass):
 def request_builder(
     self, json_request, yaml, notfirst, indent=4, name="", inner_model=[], pre_indent=4
 ):
-    if inner_model: self.inner_model = inner_model
+    if inner_model: self.inner_model += inner_model
     if isinstance(json_request, list):
         for i in range(0, len(json_request)):
             if isinstance(json_request[i], str):
@@ -1062,7 +1063,7 @@ def request_builder(
                             Token(" " * (indent * 4), TokenKind.Whitespace)
                         )
                         inner_model.append(Token("};", TokenKind.Comment))
-                        self.inner_model =inner_model
+                        self.inner_model += inner_model
                         inner_model = []
                     else:
                         self.add_new_line()
@@ -1093,6 +1094,24 @@ def get_map_type(yaml, name=""):
                             if k["serializedName"] == name:
                                 m_type = get_type(k["schema"]["elementType"])
                                 key = k["schema"]["language"]["default"]["name"]
+                    if i["schema"]["properties"][0].get('serializedName') == name:
+                        m_type = get_type(i["schema"]["properties"][0]["schema"]['elementType'])
+                        key = i["schema"]["properties"][0]["schema"]["language"]["default"]["name"]
+                if i["schema"].get("elementType", []):
+                    if i['schema']['elementType'].get("properties",[]):
+                        for j in i['schema']['elementType'].get("properties",[]):
+                            if j["serializedName"] == name:
+                                m_type = get_type(j["schema"]["elementType"])
+                                key = j["schema"]["language"]["default"]["name"]
+                        for j in i["schema"]['elementType']["properties"][0]["schema"].get(
+                            "elementType", []
+                        ):
+                            for k in i["schema"]['elementType']["properties"][0]["schema"][
+                                "elementType"
+                            ].get("properties", []):
+                                if k["serializedName"] == name:
+                                    m_type = get_type(k["schema"]["elementType"])
+                                    key = k["schema"]["language"]["default"]["name"]
         if yaml["responses"][0].get("schema"):
             for i in yaml["responses"][0]["schema"].get("properties", []):
                 if i["schema"].get("properties", []):

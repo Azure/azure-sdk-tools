@@ -753,8 +753,7 @@ class ProtocolOperationView(FormattingClass):
                         self,
                         self.json_response,
                         self.yaml,
-                        notfirst=False,
-                        inner_model=[],
+                        notfirst=False
                     )
                     self.add_new_line()
                     self.add_whitespace(4)
@@ -793,9 +792,7 @@ class ProtocolOperationView(FormattingClass):
 def request_builder(
     self, json_request, yaml, notfirst, indent=4, name="", inner_model=[], pre_indent=4
 ):
-    
-    self.inner_model = inner_model
-
+    if inner_model: self.inner_model = inner_model
     if isinstance(json_request, list):
         for i in range(0, len(json_request)):
             if isinstance(json_request[i], str):
@@ -1023,7 +1020,7 @@ def request_builder(
                 )
                 if i == "str":
                     pass
-                elif inner_model and indent > 4:
+                elif inner_model and indent > 5:
                     if isinstance(json_request[i], list):
                         if isinstance(json_request[i][0], dict):
                             inner_model.append(Token(" ", TokenKind.Newline))
@@ -1057,12 +1054,14 @@ def request_builder(
                         self.add_whitespace(indent)
                         self.add_comment(None, "}[];", None)
                 else:
-                    if indent == 4 and inner_model:
+                    if indent == 5 and inner_model:
                         inner_model.append(Token(" ", TokenKind.Newline))
                         inner_model.append(
                             Token(" " * (indent * 4), TokenKind.Whitespace)
                         )
                         inner_model.append(Token("};", TokenKind.Comment))
+                        self.inner_model =inner_model
+                        inner_model = []
                     else:
                         self.add_new_line()
                         self.add_whitespace(indent)

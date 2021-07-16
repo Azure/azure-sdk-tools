@@ -804,6 +804,8 @@ def request_builder(
                 if len(param) >= 2:
                     if param[0] == "str":
                         param[0] = "string"
+                    if param[0] == "any-object":
+                        param[0] = "{"+"}"
                     if index != -1:
                         json_request[i] = "? :" + param[0] + "[];"
                     else:
@@ -814,6 +816,8 @@ def request_builder(
                 else:
                     if json_request[i] == "str":
                         json_request[i] = "string"
+                    if json_request[i] == "any-object":
+                        json_request[i] = "{"+"}"
                     if name:
                         self.add_whitespace(indent-1)
                         self.add_comment(None, name + json_request[i], None)
@@ -863,6 +867,7 @@ def request_builder(
                             Token(" " * (indent * 4), TokenKind.Whitespace)
                         )
                         m_type, key = get_map_type(yaml, name)
+                        m_type = format_type(m_type)
                         inner_model.append(
                             Token(
                                 key + ": Map<string, " + m_type + ">;",
@@ -873,6 +878,7 @@ def request_builder(
                         self.add_new_line()
                         self.add_whitespace(indent)
                         m_type, key = get_map_type(yaml, name)
+                        m_type = format_type(m_type)
                         self.add_comment(
                             None, key + ": Map<string, " + m_type + ">;", None
                         )
@@ -909,7 +915,7 @@ def request_builder(
                         else:
                             inner_model.append(
                                 Token(i + ": {", TokenKind.Comment)
-                            )  # + ": {"
+                            ) 
                         name = i
                     else: 
                         self.add_new_line() 
@@ -939,7 +945,10 @@ def request_builder(
                 if i == "str":
                     if param[0] == "str":
                         param[0] = "string"
+                    if param[0] == "any-object":
+                            param[0] = "{"+ "}"
                     m_type, key = get_map_type(yaml, name)
+                    m_type = format_type(m_type)
                     if not key: key = self.parameters[0].name
                     if inner_model:
                         if index != -1:
@@ -976,6 +985,8 @@ def request_builder(
                     if len(param) >= 2:
                         if param[0] == "str":
                             param[0] = "string"
+                        if param[0] == "any-object":
+                            param[0] = "{"+ "}"
                         if index != -1:
                             json_request[i] = i + "? :" + param[0] + ";"
                         else:
@@ -995,6 +1006,8 @@ def request_builder(
                     else:
                         if json_request[i] == "str":
                             json_request[i] = "string"
+                        if json_request[i] == "any-object":
+                            json_request[i] = "{"+ "}"
                         if inner_model:
                             inner_model.append(
                                 Token(
@@ -1065,6 +1078,14 @@ def request_builder(
                         self.add_whitespace(indent)
                         self.add_comment(None, "};", None)
 
+def format_type(m_type):
+    if "dictionary" in m_type:
+        m_type = m_type.split()
+        m_type = m_type[1][:len(m_type[1])-1]
+    if m_type == 'any-object':
+        m_type = "{"+"}"
+    return m_type
+
 
 def get_map_type(yaml, name=""):
     # Find yaml type
@@ -1074,6 +1095,10 @@ def get_map_type(yaml, name=""):
         if yaml["requests"][0]["parameters"]:
             for i in yaml["requests"][0]["parameters"]:
                 if i["schema"].get("properties", []):
+                    for j in i["schema"]["properties"]:
+                        if j["serializedName"] == name:
+                            m_type = get_type(j["schema"]["elementType"])
+                            key = j["schema"]["language"]["default"]["name"]
                     for j in i["schema"]["properties"][0]["schema"].get(
                         "properties", []
                     ):

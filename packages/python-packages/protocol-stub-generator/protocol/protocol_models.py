@@ -1040,6 +1040,8 @@ def request_builder(
                 if i == "str":
                     pass
                 elif inner_model and indent > 5:
+                    if len(json_request[i])==1:
+                        pass
                     if isinstance(json_request[i], list):
                             inner_model.append(Token(" ", TokenKind.Newline))
                             inner_model.append(

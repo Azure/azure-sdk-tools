@@ -173,3 +173,18 @@ public class SomeSubscriptable {
         return "Value"
     }
 }
+
+// MARK: Test Precedence Group
+
+precedencegroup SquareSumOperatorPrecedence {
+    lowerThan: MultiplicationPrecedence
+    higherThan: AdditionPrecedence
+    associativity: left
+    assignment: false
+}
+
+// MARK: Test Operators
+
+infix operator +-: SquareSumOperatorPrecedence
+prefix operator +++
+postfix operator ---

@@ -467,6 +467,91 @@ class TokenFile: Codable {
         return processSubscript(defId: defId, attributes: decl.attributes, modifiers: decl.modifiers, accessLevel: accessLevel, genericParam: decl.genericParameterClause, parameterList: decl.parameterList, resultType: decl.resultType, genericWhere: decl.genericWhereClause)
     }
 
+    private func process(_ decl: OperatorDeclaration) -> Bool {
+        var kword: String
+        var name: String? = nil
+        var opName: String
+        switch decl.kind {
+        case let .infix(op, ident):
+            kword = "infix"
+            opName = op
+            name = ident?.textDescription
+        case let .prefix(op):
+            kword = "prefix"
+            opName = op
+        case let .postfix(op):
+            kword = "postfix"
+            opName = op
+        }
+        keyword(value: kword)
+        whitespace()
+        keyword(value: "operator")
+        whitespace()
+        text(opName)
+        if let name = name {
+            punctuation(":")
+            whitespace()
+
+            // register type name to make linkable
+            let defId = "operator.\(name)"
+            definitionIds[defId] = defId
+
+            type(name: name, definitionId: defId)
+        }
+        newLine()
+        return true
+    }
+
+    private func process(_ decl: PrecedenceGroupDeclaration) -> Bool {
+        let name = decl.name.textDescription
+        keyword(value: "precedencegroup")
+        whitespace()
+        type(name: name)
+        whitespace()
+        punctuation("{")
+        newLine()
+        indent {
+            decl.attributes.forEach { attr in
+                switch attr {
+                case let .assignment(val):
+                    keyword(value: "assignment")
+                    punctuation(":")
+                    whitespace()
+                    keyword(value: String(val))
+                case .associativityLeft:
+                    keyword(value: "associativity")
+                    punctuation(":")
+                    whitespace()
+                    keyword(value: "left")
+                case .associativityNone:
+                    keyword(value: "associativity")
+                    punctuation(":")
+                    whitespace()
+                    keyword(value: "none")
+                case .associativityRight:
+                    keyword(value: "associativity")
+                    punctuation(":")
+                    whitespace()
+                    keyword(value: "right")
+                case let .higherThan(val):
+                    keyword(value: "higherThan")
+                    punctuation(":")
+                    whitespace()
+                    type(name: val.map { $0.textDescription }.joined(separator: "."))
+                case  let .lowerThan(val):
+                    keyword(value: "lowerThan")
+                    punctuation(":")
+                    whitespace()
+                    type(name: val.map { $0.textDescription }.joined(separator: "."))
+                }
+                newLine()
+            }
+        }
+        punctuation("}")
+        newLine()
+        return true
+    }
+
     /// Returns false if declaration is skipped. True if it is processed.
     private func process(_ decl: Declaration, overridingAccess: AccessLevelModifier? = nil) -> Bool {
         switch decl {
@@ -498,6 +583,12 @@ class TokenFile: Codable {
             return false
         case let decl as SubscriptDeclaration:
             return process(decl, overridingAccess: overridingAccess)
+        case let decl as PrecedenceGroupDeclaration:
+            // precedence groups are always public
+            return process(decl)
+        case let decl as OperatorDeclaration:
+            // operators are always public
+            return process(decl)
         default:
             SharedLogger.fail("Unsupported declaration: \(decl)")
         }

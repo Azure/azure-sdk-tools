@@ -927,6 +927,7 @@ def request_builder(
                 if indent == 4:
                     in_model = True
                     indent = indent + 1
+                    name = i
                 if inner_model:
                     inner_model.append(Token(" ", TokenKind.Newline))
                     inner_model.append(Token(" " * (indent * 4), TokenKind.Whitespace))
@@ -936,9 +937,10 @@ def request_builder(
                 index = json_request[i].find("(optional)")
                 param = json_request[i].split()
                 if i == "str":
-                    m_type, key = get_map_type(yaml, name)
                     if param[0] == "str":
                         param[0] = "string"
+                    m_type, key = get_map_type(yaml, name)
+                    if not key: key = self.parameters[0].name
                     if inner_model:
                         if index != -1:
                             inner_model.append(

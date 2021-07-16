@@ -29,7 +29,10 @@ import Foundation
 
 extension PatternInitializer {
     var name: String {
-        return textDescription
+        if let ident = self.pattern as? IdentifierPattern {
+            return ident.identifier.textDescription
+        }
+        SharedLogger.fail("Unable to extract name from \(self)")
     }
 
     var typeModel: TypeModel? {
@@ -41,6 +44,9 @@ extension PatternInitializer {
             return TypeModel(from: literalExpression.kind.textDescription)
         }
         SharedLogger.fail("Unsupported pattern: \(self)")
-        return nil
+    }
+
+    var defaultValue: String? {
+        return initializerExpression?.textDescription
     }
 }

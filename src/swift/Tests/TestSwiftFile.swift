@@ -126,6 +126,7 @@ public final class ThirdClass: SomeOtherProtocol {
 @available(macOS 10.12, *)
 public struct SomeStruct: Codable, Equatable {
     static var text = "Hello, World!"
+    public static var staticVar = "initial value"
     public let const = "value"
 }
 
@@ -140,6 +141,12 @@ public class SomeGeneric<GenericType> {}
 public indirect enum VariableNode<GenericType> {
     case endpoint(value: GenericType)
     case node(value: GenericType, next: VariableNode)
+    case vague(GenericType)
+}
+
+public enum RawValue: String {
+    case first = "First"
+    case second
 }
 
 // MARK: Test Extension
@@ -149,6 +156,7 @@ public extension SomeStruct {
         print("Doing stuff")
     }
 
+    @discardableResult
     func somePublicMethod() throws -> String {
         return "value"
     }

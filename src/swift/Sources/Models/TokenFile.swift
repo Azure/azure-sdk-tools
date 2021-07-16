@@ -734,21 +734,24 @@ class TokenFile: Codable {
         whitespace()
     }
 
-    private func handle(attributes: Attributes) {
+    private func handle(attributes: Attributes, inline: Bool = false) {
         guard !attributes.isEmpty else { return }
         // extra newline for readability
-        newLine()
+        inline ? whitespace() : newLine()
         attributes.forEach { attribute in
             keyword(value: "@\(attribute.name.textDescription)")
             if let argument = attribute.argumentClause {
                 text(argument.textDescription)
             }
-            newLine()
+            inline ? whitespace() : newLine()
         }
     }
 
     private func handle(typeModel: TypeModel?) {
         guard let source = typeModel else { return }
+        if let attributes = typeModel?.attributes {
+            handle(attributes: attributes, inline: true)
+        }
         if source.isArray { punctuation("[") }
         type(name: source.name)
         if source.isArray { punctuation("]") }
@@ -971,7 +974,7 @@ class TokenFile: Codable {
         keyword(value: "func")
         lineIdMarker(definitionId: defId)
         whitespace()
-        type(name: name, definitionId: defId)
+        member(name: name, definitionId: defId)
         handle(clause: genericParam)
         handle(signature: signature)
         handle(clause: genericWhere)

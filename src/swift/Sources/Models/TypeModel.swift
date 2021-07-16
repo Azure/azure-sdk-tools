@@ -31,9 +31,11 @@ struct TypeModel {
     var name: String
     var isOptional = false
     var isArray = false
+    var attributes: Attributes? = nil
 
     init(from source: TypeAnnotation) {
         self.init(from: source.type)
+        attributes = source.attributes
     }
 
     init(from source: OptionalType) {
@@ -77,6 +79,7 @@ struct TypeModel {
     init(from source: FunctionType) {
         // TODO: remove reliance on textDescription
         name = source.textDescription
+        attributes = source.attributes
     }
 
     init(from source: DictionaryType) {

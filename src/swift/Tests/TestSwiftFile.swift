@@ -121,6 +121,14 @@ public final class ThirdClass: SomeOtherProtocol {
     }
 }
 
+// MARK: Typealias
+
+public typealias SomeClosure = (Result<String, Error>) -> Void
+
+public func invoke(withClosure closure: @escaping SomeClosure) {
+    closure(.success("succeeded"))
+}
+
 // MARK: Test Struct
 
 @available(macOS 10.12, *)
@@ -188,3 +196,17 @@ precedencegroup SquareSumOperatorPrecedence {
 infix operator +-: SquareSumOperatorPrecedence
 prefix operator +++
 postfix operator ---
+
+// MARK: ObjC Class
+
+@objcMembers
+open class SomeObjCClass: NSObject {
+
+    open func myFunc() -> String {
+        return "mine"
+    }
+
+    public func doubleInPlace(number: inout Int) {
+        number *= 2
+    }
+}

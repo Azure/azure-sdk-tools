@@ -1023,17 +1023,15 @@ def request_builder(
                 )
                 if i == "str":
                     pass
-                elif inner_model and indent > 5:
+                elif inner_model and indent > 4:
                     if isinstance(json_request[i], list):
-                        if isinstance(json_request[i][0], dict):
-                            inner_model.append(Token(" ", TokenKind.Newline))
-                            inner_model.append(
-                                Token(" " * (indent * 4), TokenKind.Whitespace)
-                            )
-                            inner_model.append(Token("}[];", TokenKind.Comment))
-                        elif len(json_request[i]) == 1:
-                            pass
-                        else:
+                        # if isinstance(json_request[i][0], dict) :
+                        #     inner_model.append(Token(" ", TokenKind.Newline))
+                        #     inner_model.append(
+                        #         Token(" " * (indent * 4), TokenKind.Whitespace)
+                        #     )
+                        #     inner_model.append(Token("}[];", TokenKind.Comment))
+                        # else:
                             inner_model.append(Token(" ", TokenKind.Newline))
                             inner_model.append(
                                 Token(" " * (indent * 4), TokenKind.Whitespace)
@@ -1046,16 +1044,16 @@ def request_builder(
                         )
                         inner_model.append(Token("};", TokenKind.Comment))
                 elif isinstance(json_request[i], list) and indent > 4:
-                    # if isinstance(json_request[i][0], dict):
-                    #     self.add_new_line()
-                    #     self.add_whitespace(indent)
-                    #     self.add_comment(None, "}[];", None)
-                    if len(json_request[i]) == 1:
-                            pass
-                    # else:
-                    #     self.add_new_line()
-                    #     self.add_whitespace(indent)
-                    #     self.add_comment(None, "}[];", None)
+                    if isinstance(json_request[i][0], dict) :
+                        self.add_new_line()
+                        self.add_whitespace(indent)
+                        self.add_comment(None, "}[];", None)
+                    if len(json_request[i])==1:
+                        pass
+                    else:
+                        self.add_new_line()
+                        self.add_whitespace(indent)
+                        self.add_comment(None, "}[];", None)
                 else:
                     if indent == 5 and inner_model:
                         inner_model.append(Token(" ", TokenKind.Newline))

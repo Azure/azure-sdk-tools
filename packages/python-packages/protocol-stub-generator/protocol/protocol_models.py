@@ -887,20 +887,21 @@ def request_builder(
                         self.add_comment(None, "};", None)
 
                         # START COLLECTING INNER MODEL DATA
-                        indent = 4
-                        if "[]" in m_type:
-                            m_type = m_type[0 : len(m_type) - 2]
-                        inner_model.append(Token(" ", TokenKind.Newline))
-                        inner_model.append(
-                            Token(" " * (indent * 4), TokenKind.Whitespace)
-                        )
-
-                        inner_model.append(
-                            Token(
-                                "model " + m_type + " {",
-                                TokenKind.Comment,
+                        if not m_type == "{"+"}":
+                            indent = 4
+                            if "[]" in m_type:
+                                m_type = m_type[0 : len(m_type) - 2]
+                            inner_model.append(Token(" ", TokenKind.Newline))
+                            inner_model.append(
+                                Token(" " * (indent * 4), TokenKind.Whitespace)
                             )
-                        )
+
+                            inner_model.append(
+                                Token(
+                                    "model " + m_type + " {",
+                                    TokenKind.Comment,
+                                )
+                            )
 
                 else:
                     if inner_model:

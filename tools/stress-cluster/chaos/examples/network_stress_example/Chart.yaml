@@ -1,0 +1,10 @@
+apiVersion: v2
+name: network_example
+description: An example stress test chart with network chaos
+version: 0.1.0
+appVersion: v0.1
+
+dependencies:
+- name: stress-test-addons
+  version: 0.1.2
+  repository: https://stresstestcharts.blob.core.windows.net/helm/

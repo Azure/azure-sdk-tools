@@ -1,0 +1,95 @@
+﻿@using Azure.Sdk.Tools.TestProxy.Models; 
+@model ActiveMetadataModel
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Test-Proxy - Active Extensions</title>
+
+    @await Html.PartialAsync("css.cshtml")
+</head>
+<body>
+    <h1>
+        Test-Proxy Service <b>Active</b> Extensions
+    </h1>
+    <p>
+        The below extensions are currently configured.
+    </p>
+    <p>
+        To observe other extensions are can be added to your session, visit <b>/Info/Available</b>
+    </p>
+    @if (Model.Sanitizers.Count() >= 0)
+    {
+        <h1>Active Sanitizers</h1>
+    }
+    @foreach (var extension in Model.Sanitizers)
+    {
+        <table style="width:100%">
+            <tr>
+                <td>
+                    <h2>@extension.Name</h2>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <h3>Description</h3>
+                    <p>
+                        @extension.Description
+                    </p>
+                </td>
+            </tr>
+        </table>
+    }
+
+    @if (Model.Matchers.Count() >= 0)
+    {
+        <h1>Active Matchers</h1>
+    }
+    @foreach (var extension in Model.Matchers)
+    {
+        <table style="width:100%">
+            <tr>
+                <td>
+                    <h2>@extension.Name</h2>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <h3>Description</h3>
+                    <p>
+                        @extension.Description
+                    </p>
+                </td>
+            </tr>
+        </table>
+    }
+
+    @if (Model.Transforms.Count() >= 0)
+    {
+        <h1>Active Transforms</h1>
+    }
+    @foreach (var extension in Model.Transforms)
+    {
+        <table style="width:100%">
+            <tr>
+                <td>
+                    <h2>@extension.Name</h2>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <h3>Description</h3>
+                    <p>
+                        @extension.Description
+                    </p>
+                </td>
+            </tr>
+        </table>
+    }
+</body>
+</html>

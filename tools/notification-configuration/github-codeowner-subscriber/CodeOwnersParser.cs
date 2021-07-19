@@ -32,19 +32,27 @@ namespace NotificationConfiguration
         /// <summary>
         /// Returns GitHub contacts for a given file path
         /// </summary>
-        /// <param name="path">Path to search in CODEOWNERS</param>
+        /// <param name="filePath">Path to search in CODEOWNERS</param>
         /// <returns>A list of contacts at the associated path or an empty list if no contacts are found</returns>
-        public List<string> GetContactsForPath(string path)
+        public List<string> GetContactsForPath(string filePath)
         {
-            var result = expressionContacts
-                .Where(expr => path.StartsWith(expr.GlobExpression))
-                .SelectMany(item => item.Contacts)
-                .ToHashSet()
-                .ToList();
+            // Normalize the start and end of the paths by trimming slash
+            filePath = filePath.Trim('/');
 
-            return result == default
-                ? new List<string>()
-                : result;
+            // We want to find the match closest to the bottom of the codeowners file
+            for (int i = expressionContacts.Count - 1; i >= 0; i--)
+            {
+                string pathExpression = expressionContacts[i].GlobExpression.Trim('/');
+
+                // Note that this only matches on paths without glob patterns which is good enough
+                // for our current scenarios but in the future might need to support globs
+                if (filePath.StartsWith(pathExpression, StringComparison.OrdinalIgnoreCase))
+                {
+                    return expressionContacts[i].Contacts;
+                }
+            }
+
+            return new List<string>();
         }
 
         /// <summary>

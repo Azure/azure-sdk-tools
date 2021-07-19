@@ -1,0 +1,62 @@
+parameters:
+- name: DockerDeployments
+  type: object
+  default:
+  - name: test-proxy
+    dockerRepo: 'engsys/ubuntu_testproxy_server'
+    dockerFile: 'tools/test-proxy/docker/dockerfile'
+    stableTags:
+    - 'latest'
+
+trigger:
+  branches:
+    include:
+    - main
+  paths:
+    include:
+    - eng/containers/
+    - tools/test-proxy/dockerfile
+
+pr: none
+
+pool:
+  vmImage: 'ubuntu-20.04'
+
+variables:
+  - name: containerRegistry
+    value: 'azsdkengsys'
+  - name: imageTag
+    value: $(build.buildid)
+  - template: ../pipelines/templates/variables/globals.yml
+  
+steps:
+- ${{ each config in parameters.DockerDeployments }}:
+  - task: Docker@2
+    displayName: Build ${{ config.name }}:$(imageTag)
+    inputs:
+      command: build
+      Dockerfile: ${{ config.dockerFile }}
+      tags: $(imageTag)
+      arguments: '-t $(containerRegistry).azurecr.io/${{ config.dockerRepo }}:$(imageTag)'
+  - task: Docker@2
+    displayName: Push ${{ config.name }}:$(imageTag)
+    inputs:
+      containerRegistry: $(containerRegistry)
+      repository: ${{ config.dockerRepo }}
+      command: push
+      tags: $(imageTag)
+  - ${{ each stableTag in config.stableTags }}:
+    - task: Docker@2
+      displayName: Build ${{ config.name }}:${{ stableTag }}
+      inputs:
+        command: build
+        Dockerfile: ${{ config.dockerFile }}
+        tags: ${{ stableTag }}
+        arguments: '-t $(containerRegistry).azurecr.io/${{ config.dockerRepo }}:${{ stableTag }}'
+    - task: Docker@2
+      displayName: Push ${{ config.name }}:${{ stableTag }}
+      inputs:
+        containerRegistry: $(containerRegistry)
+        repository: ${{ config.dockerRepo }}
+        command: push
+        tags: ${{ stableTag }}

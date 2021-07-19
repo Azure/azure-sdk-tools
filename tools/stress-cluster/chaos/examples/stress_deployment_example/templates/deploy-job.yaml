@@ -1,0 +1,18 @@
+{{- include "stress-test-addons.deploy-job-template.from-pod" (list . "stress.deploy-example") -}}
+{{- define "stress.deploy-example" -}}
+metadata:
+  labels:
+    testName: "deploy-example"
+spec:
+  containers:
+    - name: deployment-example
+      image: mcr.microsoft.com/azure-cli
+      command: ['bash', '-c']
+      args:
+        - |
+            source $ENV_FILE &&
+            az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID &&
+            az account set -s $AZURE_SUBSCRIPTION_ID &&
+            az group show -g $RESOURCE_GROUP -o json
+      {{- include "stress-test-addons.container-env" . | nindent 6 }}
+{{- end -}}

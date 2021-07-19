@@ -457,6 +457,9 @@ restoredPackages/
 src/dotnet/Mgmt.CI.BuildTools/NugetToolsPackage/CI.Tools.Package/build/tasks/net461/
 src/dotnet/Mgmt.CI.BuildTools/NugetToolsPackage/CI.Tools.Package/build/tasks/netstandard2.0
 
+# ensure local debugging of the test-proxy will not end up committed
+tools/test-proxy/**/recordings/
+
 # local settings
 .DS_Store
 .vscode
@@ -466,6 +469,7 @@ src/dotnet/Mgmt.CI.BuildTools/NugetToolsPackage/CI.Tools.Package/build/tasks/net
 
 # Visual Studio launch settings (frequently user-specific)
 launchSettings.json
+
 
 # Azure Functions
 local.settings.json

@@ -1,0 +1,14 @@
+{{- include "stress-test-addons.env-job-template.from-pod" (list . "stress.network-example") -}}
+{{- define "stress.network-example" -}}
+metadata:
+  labels:
+    testInstance: "packet-loss-{{ .Release.Name }}-{{ .Release.Revision }}"
+    testName: packet-loss
+    chaos: "true"
+spec:
+  containers:
+    - name: network-example
+      image: stresstestregistry.azurecr.io/example/networkexample:v1
+      command: ["bash", "poll.sh"]
+      {{- include "stress-test-addons.container-env" . | nindent 6 }}
+{{- end -}}

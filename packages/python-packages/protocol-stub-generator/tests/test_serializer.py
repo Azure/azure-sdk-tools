@@ -1,34 +1,15 @@
 import os, sys
-import argparse
 import unittest
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 
-from protocol.parse_yml import LLCGenerator
 from protocol.protocol_models import ProtocolClientView, ProtocolOperationView
 from protocol.parse_yml import create_python_name
 import yaml
 
-parser = argparse.ArgumentParser(
-            description="" )
-parser.add_argument(
-            "--pkg-path",
-            required=True,
-            help=("Package root path"),
-        )
-parser.add_argument(
-            "--out-path",
-            default=os.getcwd(),
-            help=("Path to generate json file with parsed tokens"),
-        )
-args = parser.parse_args()
-PATH = args.pkg_path
+PATH = "c:\\Users\\t-llawrence\\Desktop\\yaml\\translator_test.yaml"
 
 
 class TestCases(unittest.TestCase):
-
-    def test_get_json(self): 
-        print("hi")
-        # assert(True)
 
     def test_client_name(self):
         with open(PATH) as f:

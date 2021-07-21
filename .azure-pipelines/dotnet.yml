@@ -34,6 +34,8 @@ resources:
 variables:
   DotNetCoreVersion: '3.0.100'
   NugetSecurityAnalysisWarningLevel: 'none'
+  ProjectFile: 'dotnet.proj'
+  VersioningProps: '/p:OfficialBuildId=$(Build.BuildNumber)'
 
 stages:
   - stage: 'Build_and_Test'
@@ -95,3 +97,6 @@ stages:
 
   - ${{ if ne(variables['System.TeamProject'], 'Public') }}:
     - template: pipelines/stages/net-release-to-feed.yml@azure-sdk-build-tools
+      parameters:
+        # azure-sdk-tools feed at https://dev.azure.com/azure-sdk/public/_packaging?_a=feed&feed=azure-sdk-tools
+        DevOpsFeedId: 29ec6040-b234-4e31-b139-33dc4287b756/5a74d21c-c79b-44a9-afb3-39fed340c1f3

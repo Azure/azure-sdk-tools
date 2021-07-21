@@ -23,43 +23,23 @@
 // IN THE SOFTWARE.
 //
 // --------------------------------------------------------------------------
+
+import AST
 import Foundation
 
-@available(macOS 10.12, *)
-public class SwiftClass<T> where T : Codable {
-    let text : String = "Yea boi"
-    public func test(name: String) throws -> Bool {
-        return true
-    }
-}
-
-
-
-public protocol TestProtocol {
-    
-}
-
-public final class ThirdClass : TestProtocol {
-
-}
-
-@available(macOS 10.12, *)
-public struct SwiftAPIViewResources: Codable {
-    static var text = "Hello, World!"
-    public let a = "yessir"
-}
-
-@available(macOS 10.12, *)
-public class TestGeneric<T> {}
-
-@available(macOS 10.12, *)
-public indirect enum VariableNode<T> {
-    case endpoint(value: T)
-    case node(value: T, next: VariableNode)
-}
-
-public extension SwiftAPIViewResources {
-    func transition() throws {
-        print("I've transitioned")
+extension LiteralExpression.Kind: ASTTextRepresentable {
+    public var textDescription: String {
+        switch self {
+        case .boolean:
+            return "Bool"
+        case .floatingPoint:
+            return "Float"
+        case .integer:
+            return "Int"
+        case .staticString, .interpolatedString:
+            return "String"
+        default:
+            SharedLogger.fail("Unsupported literal kind: \(self)")
+        }
     }
 }

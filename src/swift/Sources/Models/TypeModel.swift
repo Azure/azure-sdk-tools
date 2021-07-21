@@ -31,16 +31,11 @@ struct TypeModel {
     var name: String
     var isOptional = false
     var isArray = false
-
-    init(from source: IdentifierPattern) {
-        guard let typeAnnotation = source.typeAnnotation?.type else {
-            SharedLogger.fail("Missing type annotation.")
-        }
-        self.init(from: typeAnnotation)
-    }
+    var attributes: Attributes? = nil
 
     init(from source: TypeAnnotation) {
         self.init(from: source.type)
+        attributes = source.attributes
     }
 
     init(from source: OptionalType) {
@@ -51,6 +46,10 @@ struct TypeModel {
     init(from source: ArrayType) {
         self.init(from: source.elementType)
         isArray = true
+    }
+
+    init(from source: String) {
+        name = source
     }
 
     init(from source: TypeIdentifier) {
@@ -66,9 +65,21 @@ struct TypeModel {
         }
     }
 
+    init(from source: PatternInitializer) {
+        if case let identPattern as IdentifierPattern = source.pattern,
+            let typeAnnotation = identPattern.typeAnnotation {
+            self.init(from: typeAnnotation)
+        } else if let expression = source.initializerExpression as? LiteralExpression {
+            self.init(from: expression.kind.textDescription)
+        } else {
+            SharedLogger.fail("Unable to extract type information.")
+        }
+    }
+
     init(from source: FunctionType) {
         // TODO: remove reliance on textDescription
         name = source.textDescription
+        attributes = source.attributes
     }
 
     init(from source: DictionaryType) {
@@ -88,6 +99,8 @@ struct TypeModel {
             self.init(from: src)
         case let src as DictionaryType:
             self.init(from: src)
+        case let src as MetatypeType:
+            self.init(from: src.referenceType)
         default:
             SharedLogger.fail("Unsupported identifier: \(source)")
         }

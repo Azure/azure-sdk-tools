@@ -59,6 +59,10 @@
             argument = "--source=/Users/travisprescott/repos/azure-sdk-for-ios/sdk/communication/AzureCommunicationChat/Source"
             isEnabled = "YES">
          </CommandLineArgument>
+         <CommandLineArgument
+            argument = "--source=/Users/travisprescott/repos/azure-sdk-tools/src/swift/Tests/TestSwiftFile.swift"
+            isEnabled = "YES">
+         </CommandLineArgument>
       </CommandLineArguments>
       <LocationScenarioReference
          identifier = "com.apple.dt.IDEFoundation.CurrentLocationScenarioIdentifier"

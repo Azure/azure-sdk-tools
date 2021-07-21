@@ -27,17 +27,26 @@
 import AST
 import Foundation
 
-extension DeclarationModifiers {
-
-    var accessLevel: AccessLevelModifier? {
-        for modifier in self {
-            switch modifier {
-            case let .accessLevel(value):
-                return value
-            default:
-                continue
-            }
+extension PatternInitializer {
+    var name: String {
+        if let ident = self.pattern as? IdentifierPattern {
+            return ident.identifier.textDescription
         }
-        return nil
+        SharedLogger.fail("Unable to extract name from \(self)")
+    }
+
+    var typeModel: TypeModel? {
+        if case let typeAnno as IdentifierPattern = pattern,
+            let typeInfo = typeAnno.typeAnnotation?.type {
+            return TypeModel(from: typeInfo)
+        }
+        if case let literalExpression as LiteralExpression = initializerExpression {
+            return TypeModel(from: literalExpression.kind.textDescription)
+        }
+        SharedLogger.fail("Unsupported pattern: \(self)")
+    }
+
+    var defaultValue: String? {
+        return initializerExpression?.textDescription
     }
 }

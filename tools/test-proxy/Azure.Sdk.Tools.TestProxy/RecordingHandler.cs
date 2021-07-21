@@ -405,7 +405,7 @@ namespace Azure.Sdk.Tools.TestProxy
         #region common functions
         public string GetRecordingPath(string file)
         {
-            return Path.Join(RepoPath, "recordings", file);
+            return Path.Join(RepoPath, file);
         }
 
         public static string GetHeader(HttpRequest request, string name, bool allowNulls = false)

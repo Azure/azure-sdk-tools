@@ -728,7 +728,7 @@ class ProtocolOperationView(FormattingClass):
                             pass
                         else:
                             object_name = i.type
-                    if object_name:
+                    if object_name: 
                         object_name = object_name.replace("[]","")
                         new_req[object_name] = self.json_request
                         self.json_request= new_req
@@ -800,15 +800,13 @@ def request_builder(
         no_list = True
         for i in range(0, len(json_request)):
             if isinstance(json_request[i], str):
-                
                 index = json_request[i].find("(optional)")
                 param = json_request[i].split()
                 if len(param) >= 2:
                     param[0] = format_param_type(param[0])
                     if index != -1:
-                        json_request[i] = "? :" + param[0] + "[];"
-                    else:
-                        json_request[i] = " : " + param[0] + "[];"
+                        optional = "?"
+                    json_request[i] = optional + " : " + param[0] + "[];"
                 if inner_model:
                     inner_model.append(Token(json_request[i], TokenKind.Comment))
                     inner_model.append(Token(" ", TokenKind.Newline))
@@ -946,28 +944,19 @@ def request_builder(
                     if not key: key = self.parameters[0].name
                     if inner_model:
                         if index != -1:
-                            inner_model.append(
-                                Token(
-                                    key + "? : Map<string, " + param[0] + ">;",
-                                    TokenKind.Comment,
-                                )
+                            optional = "?"
+                        inner_model.append(
+                            Token(
+                                key + optional + " : Map<string, " + param[0] + ">;",
+                                TokenKind.Comment,
                             )
-                        else:
-                            inner_model.append(
-                                Token(
-                                    key + ": Map<string, " + param[0] + ">;",
-                                    TokenKind.Comment,
-                                )
-                            )
+                        )
                     else:
                         if index != -1:
-                            self.add_comment(
-                                None, key + "? : Map<string, " + param[0] + ">;", None
-                            )
-                        else:
-                            self.add_comment(
-                                None, key + ": Map<string, " + param[0] + ">;", None
-                            )
+                            optional = "?"
+                        self.add_comment(
+                            None, key + optional + " : Map<string, " + param[0] + ">;", None
+                        )
 
                         if in_model:
                             self.add_new_line()
@@ -979,9 +968,8 @@ def request_builder(
                     if len(param) >= 2:
                         param[0] = format_param_type(param[0])
                         if index != -1:
-                            json_request[i] = i + "? :" + param[0] + ";"
-                        else:
-                            json_request[i] = i + ": " + param[0] + ";"
+                            optional = "?"
+                        json_request[i] = i + optional + " : " + param[0] + ";"
                         if inner_model:
                             inner_model.append(
                                 Token(json_request[i], TokenKind.Comment)

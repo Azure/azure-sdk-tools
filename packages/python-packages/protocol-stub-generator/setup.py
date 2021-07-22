@@ -29,7 +29,7 @@ setup(
     author_email="azuresdkengsysadmins@microsoft.com",
     license="MIT License",
     packages=find_packages(),
-    install_requires=["astroid","pyyaml", "autorest.codegen.models"],
+    install_requires=["astroid","pyyaml", "autorest.codegen.models @ git+ssh://git@github.com/autorestv3/iscai_msft@v3.0#egg=autorestv3'"],
     python_requires=">=3.4.0",
     entry_points={
         "console_scripts": [

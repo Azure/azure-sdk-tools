@@ -1,0 +1,32 @@
+# coding=utf-8
+{{ code_model.options['license_header'] }}
+
+{% if schemas %}
+try:
+    {% for schema in schemas %}
+    from ._models_py3 import {{ schema }}
+    {% endfor %}
+except (SyntaxError, ImportError):
+    {% for schema in schemas %}
+    from ._models import {{ schema }}  # type: ignore
+    {% endfor %}
+{% endif %}
+{% if enums %}
+
+from ._{{ code_model.module_name }}_enums import (
+    {% for enum in enums %}
+    {{ enum }},
+    {% endfor %}
+)
+{% endif %}
+
+__all__ = [
+    {% for schema in schemas %}
+    '{{ schema }}',
+    {% endfor %}
+    {% if enums %}
+    {% for enum in enums %}
+    '{{ enum }}',
+    {% endfor %}
+{% endif %}
+]

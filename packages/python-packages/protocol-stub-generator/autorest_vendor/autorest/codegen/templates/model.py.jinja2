@@ -1,0 +1,78 @@
+{% set basename = model.base_models | join(', ', attribute='name') if model.base_models else "" %}
+{# actual template starts here #}
+
+
+{% if basename %}
+class {{ model.name }}({{ basename }}):
+{% else %}
+class {{ model.name }}(msrest.serialization.Model):
+{% endif %}
+    """{{ model.description }}
+    {% if model.discriminator_name %}
+
+    You probably want to use the sub-classes and not this class directly. Known
+    sub-classes are: {{ model.subtype_map.values()|join(', ') }}.
+    {% endif %}
+    {% if model.has_readonly_or_constant_property %}
+
+    Variables are only populated by the server, and will be ignored when sending a request.
+    {% endif %}
+    {% if (model.properties | selectattr('required') | first) is defined %}
+
+    All required parameters must be populated in order to send to Azure.
+    {% endif %}
+
+    {% if model.properties != None %}
+        {% for p in model.properties %}
+            {% for doc_string in prop_documentation_string(p).replace('\n', '\n ').split('\n') %}
+    {{ doc_string | wordwrap(width=95, break_long_words=False, break_on_hyphens=False, wrapstring='\n     ') }}
+            {% endfor %}
+    {{ prop_type_documentation_string(p) | wordwrap(width=95, break_long_words=False, break_on_hyphens=False, wrapstring='\n     ') }}
+        {% endfor %}
+    {% endif %}
+    """
+    {% if (model.properties | selectattr('validation_map') ) | first %}
+
+    _validation = {
+        {% for p in model.properties | selectattr('validation_map')%}
+        '{{ p.name }}': {{ str(p.validation_map) }},
+        {% endfor %}
+    }
+    {% endif %}
+
+    _attribute_map = {
+        {% if model.properties != None %}
+            {% for p in model.properties %}
+        '{{ p.name }}': {'key': '{{ p.escaped_swagger_name }}', 'type': '{{ p.serialization_type}}'{{ p.xml_metadata }}},
+            {% endfor %}
+        {% else%}
+        {% endif %}
+    }
+    {% if model.discriminator_name %}
+
+    _subtype_map = {
+        '{{ model.discriminator_name }}': {{ str(model.subtype_map) }}
+    }
+    {% endif %}
+    {% if model.xml_metadata %}
+    _xml_map = {
+        {{ model.xml_map_content() }}
+    }
+    {% endif %}
+    {% if (model.properties | selectattr('constant') | first) is defined %}
+
+        {% for p in model.properties | selectattr('constant')%}
+    {{ p.name }} = {{ p.constant_declaration }}
+        {% endfor %}
+    {% endif %}
+
+    def __init__(
+        self,
+        {% for param_signature in init_line(model) %}
+        {{ param_signature }},
+        {% endfor %}
+        **kwargs
+    ):
+    {% for arg in init_args(model) %}
+        {{ arg }}
+    {% endfor %}

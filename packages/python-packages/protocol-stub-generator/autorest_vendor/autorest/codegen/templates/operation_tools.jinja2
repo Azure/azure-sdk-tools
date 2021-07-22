@@ -1,0 +1,250 @@
+{% macro wrap_string(string, wrapstring) %}{{ string | wordwrap(width=95, break_long_words=False, break_on_hyphens=False, wrapstring=wrapstring)}}{% endmacro %}
+
+{% macro description(builder, serializer) %}
+    {% for description in serializer.description_and_summary(builder) %}
+        {% if description %}
+{% set description = wrap_string(description, wrapstring='\n') %}
+{{ '"""' + description if loop.first else description }}
+        {% else %}
+
+        {% endif %}
+    {% endfor %}
+    {% for description in serializer.param_description_and_response_docstring(builder) %}
+        {% if description %}
+{{ wrap_string(description, wrapstring='\n ') }}
+        {% else %}
+
+        {% endif %}
+{% endfor %}
+{% if serializer.want_example_template(builder) %}
+
+Example:
+    .. code-block:: python
+    {% for template_line in serializer.get_example_template(builder) %}
+        {% if template_line %}
+        {{ template_line }}
+        {% else %}
+
+        {% endif %}
+    {% endfor %}
+{% endif %}
+"""
+{% endmacro %}
+
+{# error map handling #}
+{% macro error_map(operation, code_model) %}
+{%if operation.status_code_exceptions %}
+error_map = {
+    {% if not 401 in operation.status_code_exceptions_status_codes %}
+    401: ClientAuthenticationError,
+    {% endif %}
+    {% if not 404 in operation.status_code_exceptions_status_codes %}
+    404: ResourceNotFoundError,
+    {% endif %}
+    {% if not 409 in operation.status_code_exceptions_status_codes %}
+    409: ResourceExistsError,
+    {% endif %}
+{% for excep in operation.status_code_exceptions %}
+    {% for status_code in excep.status_codes %}
+    {% set error_model = ", model=self._deserialize(_models." + excep.serialization_type + ", response)" if excep.is_exception else "" %}
+    {% set error_format = ", error_format=ARMErrorFormat" if code_model.options['azure_arm'] else "" %}
+    {% if status_code == 401 %}
+    401: lambda response: ClientAuthenticationError(response=response{{ error_model }}{{ error_format }}),
+    {% elif status_code == 404 %}
+    404: lambda response: ResourceNotFoundError(response=response{{ error_model }}{{ error_format }}),
+    {% elif status_code == 409 %}
+    409: lambda response: ResourceExistsError(response=response{{ error_model }}{{ error_format }}),
+    {% else %}
+    {% if not error_model and not error_format %}
+    {{ status_code }}: HttpResponseError,
+    {% else %}
+    {{ status_code }}: lambda response: HttpResponseError(response=response{{ error_model }}{{ error_format }}),
+    {% endif %}
+    {% endif %}
+    {% endfor %}
+{% endfor %}
+}
+{% else %}
+error_map = {
+    401: ClientAuthenticationError, 404: ResourceNotFoundError, 409: ResourceExistsError
+}
+{% endif %}
+error_map.update(kwargs.pop('error_map', {})){%- endmacro -%}
+
+{% macro response_headers(response) %}
+{% for response_header in response.headers %}
+response_headers['{{ response_header.name }}']=self._deserialize('{{ response_header.serialization_type }}', response.headers.get('{{ response_header.name }}'))
+{% endfor %}{% endmacro %}
+
+{% macro response_headers_and_deserialization(response, code_model) %}
+{% if response.headers %}
+{{ response_headers(response) }}
+    {% endif %}
+    {% if response.is_stream_response %}
+deserialized = response.stream_download(self._client._pipeline)
+    {% elif response.has_body %}
+deserialized = self._deserialize('{{ response.serialization_type }}', pipeline_response)
+    {% endif %}
+{% endmacro %}
+
+{# write queryparameters #}
+{% macro query_parameters(request_builder, async_mode) %}
+# Construct parameters
+query_parameters = kwargs.pop("params", {})  # type: Dict[str, Any]
+{% for query_parameter in request_builder.parameters.query %}
+    {%if query_parameter.required %}
+query_parameters['{{ query_parameter.rest_api_name }}'] = {{ query_parameter.build_serialize_data_call("query") }}
+    {% else %}
+if {{ query_parameter.full_serialized_name }} is not None:
+    query_parameters['{{ query_parameter.rest_api_name }}'] = {{ query_parameter.build_serialize_data_call("query") }}
+    {% endif %}
+{% endfor %}{% endmacro %}
+
+{# write request_builder headers #}
+{% macro header_parameters(code_model, request_builder, async_mode) %}
+# Construct headers
+header_parameters = kwargs.pop("headers", {})  # type: Dict[str, Any]
+{% for header_parameter in request_builder.parameters.headers %}
+    {%if header_parameter.required %}
+header_parameters['{{ header_parameter.rest_api_name }}'] = {{ header_parameter.build_serialize_data_call("header") }}
+    {% else %}
+if {{ header_parameter.full_serialized_name }} is not None:
+    header_parameters['{{ header_parameter.rest_api_name }}'] = {{ header_parameter.build_serialize_data_call("header") }}
+    {% endif %}
+{% endfor %}{% endmacro %}
+
+{# path format arguments #}
+{% macro path_format_arguments(path_parameters) %}
+path_format_arguments = {
+{% for path_parameter in path_parameters %}
+    '{{ path_parameter.rest_api_name }}': {{ path_parameter.build_serialize_data_call("url") }},
+{% endfor %}
+}{% endmacro %}
+
+{% macro format_path_format_arguments(url_name="url") %}
+{{ url_name }} = self._client.format_url({{ url_name }}, **path_format_arguments){% endmacro %}
+
+{# helper for non-stream body params with schema #}
+{% macro serialize_body(operation) %}
+{% set send_xml = "xml" if operation.parameters.has_body and "xml" in operation.parameters.content_types %}
+{% set ser_ctxt = operation.parameters.body[0].xml_serialization_ctxt if send_xml else None %}
+{% set body_is_xml = ", is_xml=True" if send_xml else "" %}
+{% if ser_ctxt %}
+serialization_ctxt = {'xml': {{ "{" }}{{ ser_ctxt }}{{ "}}" }}
+{% endif %}
+{% if operation.parameters.body[0].required %}
+{{ operation_serializer.body_serialization_str }}
+{% else %}
+if {{ operation.parameters.body[0].serialized_name }} is not None:
+    {{ operation_serializer.body_serialization_str }}
+else:
+    json = None
+{% endif %}{% endmacro %}
+
+{% macro set_body_content_kwarg(operation, schema_request) %}
+{% if schema_request.is_stream_request %}
+content = {{ operation.parameters.body[0].serialized_name }}
+{% elif schema_request.body_parameter_has_schema and not operation.request_builder.multipart %}
+{{ serialize_body(operation) }}{% endif %}{% endmacro %}
+
+{# write body parameters #}
+{% macro body_parameters(operation) %}
+{% if operation.parameters.has_body %}
+    {% if (operation.request_builder.schema_requests | length) == 1 %}
+{{ set_body_content_kwarg(operation, operation.request_builder.schema_requests[0]) }}
+    {% else %}
+content = input
+        {% for schema_request in operation.request_builder.schema_requests | rejectattr("is_stream_request")%}
+{{ "el" if not loop.first }}if content_type.split(";")[0] in {{ schema_request.pre_semicolon_media_types }}:
+    {{ set_body_content_kwarg(operation, schema_request)|indent }}
+        {% endfor %}
+{% endif %}{% endif %}{% endmacro %}
+
+{# create HTTPRequest #}
+{% macro create_http_request(request_builder, is_python_3_file) %}
+return HttpRequest(
+    method="{{ request_builder.method }}",
+    url=url,
+    {% if request_builder.parameters.query %}
+    params=query_parameters,
+    {% endif %}
+    {% if request_builder.parameters.headers %}
+    headers=header_parameters,
+    {% endif %}
+    {% if request_builder.parameters.has_body %}
+        {% if is_python_3_file %}
+            {% for body_kwarg in request_builder.parameters.body_kwarg_names.keys() | list %}
+    {{ body_kwarg }}={{ body_kwarg }},
+            {% endfor %}
+        {% endif %}
+    {% endif %}
+    **kwargs
+)
+{% endmacro %}
+
+
+{% macro handle_error_response(code_model, operation) %}
+if response.status_code not in {{ operation.success_status_code|string() }}:
+    map_error(status_code=response.status_code, response=response, error_map=error_map)
+    {% set error_model = "" %}
+	{% if operation.default_exception %}
+    error = self._deserialize.failsafe_deserialize({{ operation.default_exception }}, response)
+    {% set error_model = ", model=error" %}
+	{% endif %}
+    raise HttpResponseError(response=response{{ error_model }}{{ ", error_format=ARMErrorFormat" if code_model.options['azure_arm'] else "" }}){% endmacro %}
+
+{# deal with response #}
+{% macro handle_response(code_model, operation) %}
+response = pipeline_response.http_response
+
+{{ handle_error_response(code_model, operation) }}
+
+{# now we only initialize deserialized to None if we know there is both > 1 response with body and > 1 response of None #}
+{# otherwise, we know that deserialized will be set to a value then returned #}
+{% if operation.has_optional_return_type %}
+deserialized = None
+{% endif %}
+{% if operation.any_response_has_headers %}
+response_headers = {}
+{% endif %}
+{% if operation.has_response_body or operation.any_response_has_headers %}
+  {% if operation.responses|count > 1 %}
+    {% for status_code in operation.success_status_code %}
+      {% set response =  operation.get_response_from_status(status_code) %}
+      {% if response.headers or response.has_body %}
+if response.status_code == {{ status_code }}:
+    {{ response_headers_and_deserialization(response, code_model)|indent }}
+      {% endif %}
+    {% endfor %}
+  {% else %}
+    {% set response = operation.responses[0] %}
+{{ response_headers_and_deserialization(response, code_model) }}
+  {% endif %}
+{% endif %}
+if cls:
+    return cls(pipeline_response, {{ 'deserialized' if operation.has_response_body else 'None'}}, {{ 'response_headers' if operation.any_response_has_headers else '{}' }})
+{% if operation.has_response_body %}
+
+return deserialized
+{% endif %}
+{% if operation.request_builder.method == 'HEAD' and code_model.options['head_as_boolean'] %}
+return 200 <= response.status_code <= 299
+{% endif %}{% endmacro %}
+
+{% macro serialize(lines) %}
+{% for line in lines %}
+    {% if line %}
+{{ line }}
+    {% else %}
+
+    {% endif %}
+{% endfor %}{% endmacro %}
+
+{% macro serialize_with_wrap(lines, wrapstring) %}
+{% for line in lines %}
+    {% if line %}
+{{ wrap_string(line, wrapstring=wrapstring) }}
+    {% else %}
+
+    {% endif %}
+{% endfor %}{% endmacro %}

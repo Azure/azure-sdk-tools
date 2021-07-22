@@ -1,0 +1,13 @@
+
+class {{ enum.name }}(with_metaclass(_CaseInsensitiveEnumMeta, {{ enum.enum_type.type_annotation }}, Enum)):
+    {% if enum.description %}
+    """{{ enum.description | wordwrap(width=95, break_long_words=False, break_on_hyphens=False, wrapstring='\n    ') }}
+    """
+    {% endif %}
+
+    {% for value in enum.values %}
+    {% if value.description %}
+    #: {{ value.description | wordwrap(width=95, break_long_words=False, break_on_hyphens=False, wrapstring='\n    #: ') }}
+    {% endif %}
+    {{ value.name }} = {{ enum.enum_type.get_declaration(value.value) }}
+    {% endfor %}

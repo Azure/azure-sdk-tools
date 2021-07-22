@@ -1,0 +1,26 @@
+{% import 'keywords.jinja2' as keywords with context %}
+{% import 'operation_tools.jinja2' as op_tools with context %}
+{{ request_builder_serializer.method_signature_and_response_type_annotation(request_builder) }}
+    {{ op_tools.description(request_builder, request_builder_serializer) | indent }}
+{% if request_builder.parameters.kwargs_to_pop(is_python_3_file) %}
+    {{ op_tools.serialize(request_builder_serializer.pop_kwargs_from_signature(request_builder)) | indent }}
+{% endif %}
+{% if request_builder.parameters.constant|selectattr("implementation", "equalto", "Method")|selectattr("original_parameter", "equalto", None)|selectattr("in_method_code") %}
+    {% for constant_parameter in request_builder.parameters.constant|selectattr("implementation", "equalto", "Method")|selectattr("original_parameter", "equalto", None)|selectattr("in_method_code") %}
+    {{ constant_parameter.serialized_name }} = {{ constant_parameter.constant_declaration }}
+    {% endfor %}
+{% endif %}
+    # Construct URL
+    url = kwargs.pop("template_url", {{ keywords.escape_str(request_builder.url) }})
+{% if request_builder.parameters.path %}
+    {{ op_tools.path_format_arguments(request_builder.parameters.path)|indent }}
+    url = _format_url_section(url, **path_format_arguments)
+{% endif %}
+
+{% if request_builder.parameters.query %}
+    {{ op_tools.query_parameters(request_builder, is_python_3_file)|indent }}
+{% endif %}
+{% if request_builder.parameters.headers %}
+    {{ op_tools.header_parameters(code_model, request_builder, is_python_3_file)|indent }}
+{% endif %}
+    {{ op_tools.create_http_request(request_builder, is_python_3_file)|indent }}

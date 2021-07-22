@@ -1,0 +1,17 @@
+# coding=utf-8
+{{ code_model.options['license_header'] }}
+
+try:
+    {% for request_builder in request_builders %}
+    from ._request_builders_py3 import {{ request_builder.name }}
+    {% endfor %}
+except (SyntaxError, ImportError):
+    {% for request_builder in request_builders %}
+    from ._request_builders import {{ request_builder.name }}  # type: ignore
+    {% endfor %}
+
+__all__ = [
+    {% for request_builder in request_builders %}
+    '{{ request_builder.name }}',
+    {% endfor %}
+]

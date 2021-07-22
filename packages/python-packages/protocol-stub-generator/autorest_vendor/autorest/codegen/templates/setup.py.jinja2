@@ -1,0 +1,34 @@
+{% set name = code_model.options["package_name"] or code_model.class_name %}
+{% set azure_mgmt_core_import = ', "azure-mgmt-core<2.0.0,>=1.2.1"' if code_model.options["azure_arm"] else "" %}
+# coding=utf-8
+{{ code_model.options['license_header'] }}
+# coding: utf-8
+
+from setuptools import setup, find_packages
+
+NAME = "{{ name|lower }}"
+VERSION = "{{ code_model.options.get('package_version', '0.0.0') }}"
+
+# To install the library, run the following
+#
+# python setup.py install
+#
+# prerequisite: setuptools
+# http://pypi.python.org/pypi/setuptools
+
+REQUIRES = ["msrest>=0.6.21", "azure-core<2.0.0,>=1.16.0"{{ azure_mgmt_core_import }}]
+
+setup(
+    name=NAME,
+    version=VERSION,
+    description="{{ name }}",
+    author_email="",
+    url="",
+    keywords=["Swagger", "{{ code_model.class_name }}"],
+    install_requires=REQUIRES,
+    packages=find_packages(),
+    include_package_data=True,
+    long_description="""\
+    {{ code_model.description }}
+    """
+)

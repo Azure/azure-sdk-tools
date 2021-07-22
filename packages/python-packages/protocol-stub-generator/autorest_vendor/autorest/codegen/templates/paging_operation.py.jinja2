@@ -1,0 +1,24 @@
+{% import 'operation_tools.jinja2' as op_tools with context %}
+{% import 'paging_operation_helper.jinja2' as helper with context %}
+{% set send_xml = "xml" if operation.parameters.has_body and "xml" in operation.request_content_type  %}
+{% set request_as_xml = ", is_xml=True" if send_xml else "" %}
+{% macro param_documentation_string(parameter) %}:param {{ parameter.serialized_name }}: {{ parameter.description }}{% endmacro %}
+{# actual template starts here #}
+{% if code_model.options['tracing'] and operation.want_tracing %}
+@distributed_trace
+{% endif %}
+{{ operation_serializer.method_signature_and_response_type_annotation(operation) }}
+{% if operation.want_description_docstring %}
+    {{ op_tools.description(operation, operation_serializer) | indent }}{% endif %}
+{% if operation.deprecated %}
+    warnings.warn('Method {{operation.name}} is deprecated', DeprecationWarning)
+{% endif %}
+    {% if operation.parameters.kwargs_to_pop(async_mode) %}
+    {{ op_tools.serialize(operation_serializer.pop_kwargs_from_signature(operation)) | indent }}
+    {% endif %}
+    {{ helper.paging_operation() | indent }}
+
+    return {{ operation.get_pager(async_mode) }}(
+        get_next, extract_data
+    )
+{{ operation.python_name }}.metadata = {'url': '{{ request_builder.url|replace("'", "\\'") }}'}  # type: ignore

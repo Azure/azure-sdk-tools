@@ -1,0 +1,7 @@
+# coding=utf-8
+{{ code_model.options['license_header'] }}
+
+{{ imports }}
+{% for model in code_model.sorted_schemas %}
+{% include "model.py.jinja2" %}
+{% endfor %}

@@ -1,0 +1,36 @@
+{% import 'operation_tools.jinja2' as op_tools with context %}
+{% import 'lro_operation_helper.jinja2' as helper with context %}
+{% set trace_decorator = "@distributed_trace_async" if async_mode else "@distributed_trace" %}
+{% macro return_docstring(async_mode) %}
+:return: An instance of {{ operation.get_poller(async_mode) }} that returns either {{ operation.responses[0].docstring_text }} or the result of cls(response)
+:rtype: ~{{ operation.get_poller_path(async_mode)}}[{{ operation.responses[0].docstring_type }}]{% endmacro %}
+{% macro operation_docstring(async_mode) %}
+{{ helper.operation_docstring_helper(code_model, operation, async_mode) }}
+{{ return_docstring(async_mode) }}
+:raises ~azure.core.exceptions.HttpResponseError:
+"""{% endmacro %}
+{# actual template starts here #}
+{% if code_model.options['tracing'] %}
+{{ trace_decorator }}
+{% endif %}
+{{ operation_serializer.method_signature_and_response_type_annotation(operation) }}
+    {{ op_tools.description(operation, operation_serializer) | indent -}}
+    {% if operation.parameters.kwargs_to_pop(async_mode) %}
+    {{ op_tools.serialize(operation_serializer.pop_kwargs_from_signature(operation)) | indent }}
+    {%- endif %}
+    {{ helper.lro_operation() | indent }}
+    def get_long_running_output(pipeline_response):
+        {% if operation.lro_response.has_headers %}
+        response_headers = {}
+        {% endif %}
+        {% if operation.lro_response %}
+        response = pipeline_response.http_response
+        {{ op_tools.response_headers_and_deserialization(operation.lro_response, code_model)|indent(8) }}
+        {% endif %}
+        if cls:
+            return cls(pipeline_response, {{ 'deserialized' if operation.lro_response.has_body else 'None'}}, {{ 'response_headers' if operation.lro_response.has_headers else '{}' }})
+        {% if operation.lro_response.has_body %}
+        return deserialized
+        {% endif %}
+
+{{ helper.lro_operation_return() }}

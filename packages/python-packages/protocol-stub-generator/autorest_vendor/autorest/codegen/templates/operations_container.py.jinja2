@@ -1,0 +1,50 @@
+{% set object_base_class = "" if async_mode else "(object)" %}
+{% set operations_description = "async operations" if async_mode else "operations" %}
+{% set return_none_type_annotation = " -> None" if async_mode else "" %}
+# coding=utf-8
+{{ code_model.options['license_header'] }}
+{{ imports }}
+
+{{ "    " if not async_mode }}T = TypeVar('T')
+{{ "    " if not async_mode }}ClsType = Optional[Callable[[PipelineResponse[HttpRequest, {{ "Async" if async_mode else "" }}HttpResponse], T, Dict[str, Any]], Any]]
+
+class {{ operation_group.class_name }}{{ object_base_class }}:
+    """{{ operation_group.class_name }} {{ operations_description }}.
+
+    You should not instantiate this class directly. Instead, you should create a Client instance that
+    instantiates it for you and attaches it as an attribute.
+
+{% if code_model.schemas %}
+    :ivar models: Alias to model classes used in this operation group.
+    :type models: ~{{ code_model.namespace }}.models
+{% endif %}
+    :param client: Client for service requests.
+    :param config: Configuration of service client.
+    :param serializer: An object model serializer.
+    :param deserializer: An object model deserializer.
+    """
+
+{% if code_model.schemas %}
+    models = _models
+
+{% endif %}
+    def __init__(self, client, config, serializer, deserializer){{ return_none_type_annotation }}:
+        self._client = client
+        self._serialize = serializer
+        self._deserialize = deserializer
+        self._config = config
+{% for operation in operation_group.operations %}
+
+{% set request_builder = operation.request_builder %}
+{% set operation_serializer = get_operation_serializer(operation) %}
+    {% if is_lro(operation) and is_paging(operation) %}
+    {%- macro someop() %}{% include "lro_paging_operation.py.jinja2" %}{% endmacro %}
+    {% elif is_lro(operation) %}
+    {%- macro someop() %}{% include "lro_operation.py.jinja2" %}{% endmacro %}
+    {% elif is_paging(operation) %}
+    {% macro someop() %}{% include "paging_operation.py.jinja2" %}{% endmacro %}
+    {% else %}
+    {% macro someop() %}{% include "operation.py.jinja2" %}{% endmacro %}
+    {% endif %}
+    {{ someop()|indent }}
+{% endfor %}

@@ -66,7 +66,8 @@ namespace Azure.Sdk.Tools.TestProxy
                     {
                         builder.AllowAnyHeader()
                                .AllowAnyMethod()
-                               .AllowAnyOrigin();
+                               .AllowAnyOrigin()
+                               .WithExposedHeaders("*");
                     });
             });
 

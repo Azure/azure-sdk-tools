@@ -728,7 +728,7 @@ class ProtocolOperationView(FormattingClass):
                             pass
                         else:
                             object_name = i.type
-                    if object_name: #and ((isinstance(self.json_request,dict) or isinstance(self.json_request,list)) and len(self.json_request)>1):
+                    if object_name:
                         object_name = object_name.replace("[]","")
                         new_req[object_name] = self.json_request
                         self.json_request= new_req
@@ -922,7 +922,7 @@ def request_builder(
                             pass
                         else: 
                             self.add_whitespace(indent)
-                            self.add_comment(None, i + ": {", None)  # + ": {"
+                            self.add_comment(None, i + ": {", None)  
                         name = i
                         inner_model = []
             if isinstance(json_request[i], str):
@@ -1201,21 +1201,7 @@ class ProtocolParameterView(FormattingClass):
             param_name = yaml_data["signatureParameters"][i]["language"]["default"][
                 "name"
             ]
-            # if yaml_data["signatureParameters"][i]["schema"]["type"] == "object":
-            #     param_type = get_type(
-            #         yaml_data["signatureParameters"][i]["schema"]["properties"][0][
-            #             "schema"
-            #         ]
-            #     )
-            # else:
             param_type = get_type(yaml_data["signatureParameters"][i]["schema"])
-            # if param_name == "body":
-            #     try:
-            #         param_name = yaml_data["signatureParameters"][i]["schema"][
-            #             "properties"
-            #         ][0]["serializedName"]
-            #     except:
-            #         param_name = param_name
             if yaml_data["signatureParameters"][i].get("required"):
                 required = yaml_data["signatureParameters"][i]["required"]
             else:
@@ -1336,8 +1322,6 @@ def get_type(data, page=False):
             return_type = data["language"]["default"]["name"]
             if page:
                 return_type = get_type(data["properties"][0]["schema"], True)
-            # if len(data["properties"])==1: 
-            #     return_type = get_type(data["properties"][0]["schema"])
         if return_type == "array":
             if (
                 data["elementType"]["type"] != "object"

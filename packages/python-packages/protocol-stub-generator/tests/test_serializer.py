@@ -6,7 +6,7 @@ from protocol.protocol_models import ProtocolClientView, ProtocolOperationView
 from protocol.parse_yml import create_python_name
 import yaml
 
-PATH = "c:\\Users\\t-llawrence\\Desktop\\yaml\\translator_test.yaml"
+PATH = os.getenv("TESTJSONPATH")
 
 
 class TestCases(unittest.TestCase):

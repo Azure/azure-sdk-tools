@@ -460,7 +460,16 @@ class ProtocolOperationView(FormattingClass):
             paging_op,
         )
 
-        json_request, json_response = cls.get_models(yaml_data, op_group_num, op_num, namespace, param, code, request_builder, response_builder)
+        json_request, json_response = cls.get_models(
+            yaml_data,
+            op_group_num,
+            op_num,
+            namespace,
+            param,
+            code,
+            request_builder,
+            response_builder,
+        )
 
         description = cls.get_description(yaml_data, op_group_num, op_num)
 
@@ -492,14 +501,24 @@ class ProtocolOperationView(FormattingClass):
             description = yaml_data["operationGroups"][op_group_num]["operations"][
                 op_num
             ]["language"]["default"]["description"]
-            
+
         return description
 
     @classmethod
-    def get_models(cls, yaml_data, op_group_num, op_num, namespace, param, code, request_builder, response_builder):
+    def get_models(
+        cls,
+        yaml_data,
+        op_group_num,
+        op_num,
+        namespace,
+        param,
+        code,
+        request_builder,
+        response_builder,
+    ):
         json_request = {}
         json_response = {}
-        
+
         for j in range(
             0,
             len(
@@ -566,8 +585,8 @@ class ProtocolOperationView(FormattingClass):
                     namespace,
                 )
             )
-            
-        return json_request,json_response
+
+        return json_request, json_response
 
     @classmethod
     def get_status_codes(cls, yaml_data, op_group_num, op_num, status_codes):
@@ -644,13 +663,14 @@ class ProtocolOperationView(FormattingClass):
             self.overview_tokens.append(Token("]", TokenKind.Text))
 
         self.add_space()
-        if not self.operation_group: self.operation_group = "<default>"
+        if not self.operation_group:
+            self.operation_group = "<default>"
         self.overview_tokens.append(Token(" ", TokenKind.Text))
         token = Token(self.operation, TokenKind.Keyword)
         token.set_definition_id(
             self.namespace + self.operation_group + self.operation + "overview"
         )
-       
+
         token.set_navigation_id(
             self.namespace + self.operation_group + self.operation + "overview"
         )
@@ -730,24 +750,24 @@ class ProtocolOperationView(FormattingClass):
 
                 self.format_status_code()
 
-                #If the request or response contain more than one entry, check the parameters of the operation and see if one of them is an object, if it is, that is your overall model request name , then refactor the request to be a dictionary of that type
-                #if type is not a normal type .. aka an object name ^
+                # If the request or response contain more than one entry, check the parameters of the operation and see if one of them is an object, if it is, that is your overall model request name , then refactor the request to be a dictionary of that type
+                # if type is not a normal type .. aka an object name ^
 
                 if self.json_request:
                     self.add_whitespace(3)
                     self.add_typename(None, "Request", None)
                     self.add_new_line(1)
                     object_name = None
-                    new_req ={}
+                    new_req = {}
                     for i in self.parameters:
                         if any(j in i.type for j in R_TYPE):
                             pass
                         else:
                             object_name = i.type
-                    if object_name: 
-                        object_name = object_name.replace("[]","")
+                    if object_name:
+                        object_name = object_name.replace("[]", "")
                         new_req[object_name] = self.json_request
-                        self.json_request= new_req
+                        self.json_request = new_req
                     request_builder(self, self.json_request, self.yaml, not_first=False)
                     self.add_new_line()
                     self.add_whitespace(4)
@@ -758,22 +778,23 @@ class ProtocolOperationView(FormattingClass):
                             self.Tokens.append(m)
                     self.add_new_line(1)
 
-                #If the response is just a string or simple list, ignore writing the response
-                if isinstance(self.json_response,str) or (isinstance(self.json_response,list) and isinstance(self.json_response[0],str)): self.json_response = None
+                # If the response is just a string or simple list, ignore writing the response
+                if isinstance(self.json_response, str) or (
+                    isinstance(self.json_response, list)
+                    and isinstance(self.json_response[0], str)
+                ):
+                    self.json_response = None
                 if self.json_response:
                     self.inner_model = []
                     self.add_whitespace(3)
                     self.add_typename(None, "Response", None)
                     self.add_new_line(1)
-                    new_req ={}
+                    new_req = {}
                     if not any(j in self.return_type for j in R_TYPE):
-                        new_req[self.return_type.replace("[]","")] = self.json_response
-                        self.json_response= new_req
+                        new_req[self.return_type.replace("[]", "")] = self.json_response
+                        self.json_response = new_req
                     request_builder(
-                        self,
-                        self.json_response,
-                        self.yaml,
-                        not_first=False
+                        self, self.json_response, self.yaml, not_first=False
                     )
                     self.add_new_line()
                     self.add_whitespace(4)
@@ -812,251 +833,17 @@ class ProtocolOperationView(FormattingClass):
 def request_builder(
     self, json_request, yaml, not_first, indent=4, name="", inner_model=[], no_list=True
 ):
-    if inner_model and not self.inner_model: self.inner_model = inner_model
-    no_list = list_format(self, json_request, yaml, not_first, indent, name, inner_model)
+    if inner_model and not self.inner_model:
+        self.inner_model = inner_model
+    no_list = list_format(
+        self, json_request, yaml, not_first, indent, name, inner_model
+    )
+    not_first, indent, inner_model = dict_format(
+        self, json_request, yaml, not_first, indent, inner_model, no_list, name
+    )
 
-    not_first, indent, inner_model = dict_format(self, json_request, yaml, not_first, indent, inner_model, no_list,name)
 
-def dict_format(self, json_request, yaml, not_first, indent, inner_model, no_list,name):
-    if isinstance(json_request, dict):
-        for i in json_request:
-            if indent == 4:
-                self.add_whitespace(indent)
-                if not_first:
-                    self.add_new_line()
-                    self.add_whitespace(indent)
-                    self.add_new_line()
-                    self.add_whitespace(indent)
-                if not inner_model:
-                    self.add_comment(None, "model " + i + " {", None)
-                    self.add_new_line()
-                    not_first = True
-                    name = i
-                    inner_model.clear()
-                else:
-                    inner_model.append(Token(" ", TokenKind.Newline))
-                    inner_model.append(Token(" " * (indent * 4), TokenKind.Whitespace))
-                    inner_model.append(Token("model " + i + " {", TokenKind.Comment))
-                    inner_model.append(Token(" ", TokenKind.Newline))
-            if indent > 4 and (
-                isinstance(json_request[i], list) or isinstance(json_request[i], dict)
-            ):
-                if i == "str":
-                    if inner_model:
-                        inner_model.append(Token(" ", TokenKind.Newline))
-                        inner_model.append(
-                            Token(" " * (indent * 4), TokenKind.Whitespace)
-                        )
-                        m_type, key = get_map_type(yaml, name)
-                        m_type = format_map_type(m_type)
-                        inner_model.append(
-                            Token(
-                                key + ": Map<string, " + m_type + ">;",
-                                TokenKind.Comment,
-                            )
-                        )
-                    else:
-                        self.add_new_line()
-                        self.add_whitespace(indent)
-                        m_type, key = get_map_type(yaml, name)
-                        m_type = format_map_type(m_type)
-                        self.add_comment(
-                            None, key + ": Map<string, " + m_type + ">;", None
-                        )
-                        self.add_new_line()
-                        self.add_whitespace(4)
-                        self.add_comment(None, "};", None)
-
-                        # START COLLECTING INNER MODEL DATA
-                        if not m_type == "{"+"}":
-                            indent = 4
-                            if "[]" in m_type:
-                                m_type = m_type[0 : len(m_type) - 2]
-                            inner_model.append(Token(" ", TokenKind.Newline))
-                            inner_model.append(
-                                Token(" " * (indent * 4), TokenKind.Whitespace)
-                            )
-
-                            inner_model.append(
-                                Token(
-                                    "model " + m_type + " {",
-                                    TokenKind.Comment,
-                                )
-                            )
-
-                else:
-                    if inner_model:
-                        inner_model.append(Token(" ", TokenKind.Newline))
-                        inner_model.append(
-                            Token(" " * (indent * 4), TokenKind.Whitespace)
-                        )
-                        if isinstance(json_request[i], list) and not isinstance(
-                            json_request[i][0], dict
-                        ):
-                            inner_model.append(Token(i, TokenKind.Comment))
-                        else:
-                            inner_model.append(
-                                Token(i + ": {", TokenKind.Comment)
-                            ) 
-                        name = i
-                    else: 
-                        self.add_new_line() 
-                        if not (isinstance(json_request[i], list) and not isinstance(
-                            json_request[i][0], dict)
-                        ):
-                            self.add_whitespace(indent)
-                            self.add_comment(None, i + ": {", None)  
-                        name = i
-                        inner_model = []
-            if isinstance(json_request[i], str):
-                in_model = False
-                if indent == 4:
-                    in_model = True
-                    indent = indent + 1
-                    name = i
-                if inner_model:
-                    inner_model.append(Token(" ", TokenKind.Newline))
-                    inner_model.append(Token(" " * (indent * 4), TokenKind.Whitespace))
-                else:
-                    self.add_new_line()
-                    self.add_whitespace(indent)
-                index = json_request[i].find("(optional)")
-                param = json_request[i].split()
-                if i == "str":
-                    param[0] = format_param_type(param[0])
-                    m_type, key = get_map_type(yaml, name)
-                    m_type = format_map_type(m_type)
-                    if not key: key = self.parameters[0].name
-                    if inner_model:
-                        if index != -1:
-                            optional = "?"
-                        inner_model.append(
-                            Token(
-                                key + optional + " : Map<string, " + param[0] + ">;",
-                                TokenKind.Comment,
-                            )
-                        )
-                    else:
-                        if index != -1:
-                            optional = "?"
-                        self.add_comment(
-                            None, key + optional + " : Map<string, " + param[0] + ">;", None
-                        )
-
-                        if in_model:
-                            self.add_new_line()
-                            self.add_whitespace(4)
-                            self.add_comment(None, "};", None)
-                            in_model = False
-                            indent = 4
-                else:
-                    if len(param) >= 2:
-                        param[0] = format_param_type(param[0])
-                        if index != -1:
-                            optional = "?"
-                        json_request[i] = i + optional + " : " + param[0] + ";"
-                        if inner_model:
-                            inner_model.append(
-                                Token(json_request[i], TokenKind.Comment)
-                            )
-                        else:
-                            self.add_comment(None, json_request[i], None)
-                            if in_model:
-                                self.add_new_line()
-                                self.add_whitespace(4)
-                                self.add_comment(None, "};", None)
-                                in_model = False
-                                indent = 4
-                    else:
-                        json_request[i] = format_param_type(json_request[i])
-                        if inner_model:
-                            inner_model.append(
-                                Token(
-                                    i + ":" + json_request[i] + ";", TokenKind.Comment
-                                )
-                            )
-                        else:
-                            self.add_comment(
-                                None, i + ": " + json_request[i] + ";", None
-                            )
-                            if in_model:
-                                self.add_new_line()
-                                self.add_whitespace(4)
-                                self.add_comment(None, "};", None)
-                                in_model = False
-                                indent = 4
-
-            else:
-                request_builder(
-                    self,
-                    json_request[i],
-                    yaml,
-                    indent=indent + 1,
-                    not_first=True,
-                    name=name,
-                    inner_model=inner_model,
-                    no_list=no_list,
-                )
-                inner_model = format_punctuation(self, json_request, indent, inner_model, i)
-    return not_first,indent,inner_model
-
-def format_punctuation(self, json_request, indent, inner_model, i):
-    if i == "str":
-        pass
-    elif inner_model and isinstance(json_request[i], list):
-        if isinstance(json_request[i], list) and len(json_request[i])>1:
-                inner_model.append(Token(" ", TokenKind.Newline))
-                inner_model.append(
-                                Token(" " * (indent * 4), TokenKind.Whitespace)
-                            )
-                inner_model.append(Token("}[];", TokenKind.Comment))
-        elif isinstance(json_request[i],list) and isinstance(json_request[i][0],dict):
-            inner_model.append(Token(" ", TokenKind.Newline))
-            inner_model.append(
-                            Token(" " * (indent * 4), TokenKind.Whitespace)
-                        )
-            inner_model.append(Token("}[];", TokenKind.Comment))
-        elif len(json_request[i])>1:
-            inner_model.append(Token(" ", TokenKind.Newline))
-            inner_model.append(
-                            Token(" " * (indent * 4), TokenKind.Whitespace)
-                        )
-            inner_model.append(Token("};", TokenKind.Comment))
-    elif isinstance(json_request[i], list) and indent > 4:
-        if isinstance(json_request[i][0], dict) :
-            self.add_new_line()
-            self.add_whitespace(indent)
-            self.add_comment(None, "}[];", None)
-        if len(json_request[i])==1:
-            pass
-        else:
-            self.add_new_line()
-            self.add_whitespace(indent)
-            self.add_comment(None, "}[];", None)
-    else:
-        if indent == 5 and inner_model:
-            inner_model.append(Token(" ", TokenKind.Newline))
-            inner_model.append(
-                            Token(" " * (indent * 4), TokenKind.Whitespace)
-                        )
-            inner_model.append(Token("};", TokenKind.Comment))
-            if self.inner_model != inner_model:
-                self.inner_model +=inner_model
-            else: self.inner_model = inner_model
-            inner_model = []
-        elif inner_model:
-            inner_model.append(Token(" ", TokenKind.Newline))
-            inner_model.append(
-                            Token(" " * (indent * 4), TokenKind.Whitespace)
-                        )
-            inner_model.append(Token("};", TokenKind.Comment))
-        else:
-            self.add_new_line()
-            self.add_whitespace(indent)
-            self.add_comment(None, "};", None)
-    return inner_model
-
-def list_format(self, json_request, yaml, not_first, indent, name, inner_model):
+def list_format(self, json_request, yaml, indent, name, inner_model):
     no_list = True
     if isinstance(json_request, list):
         for i in range(0, len(json_request)):
@@ -1074,7 +861,7 @@ def list_format(self, json_request, yaml, not_first, indent, name, inner_model):
                 else:
                     json_request[i] = format_param_type(json_request[i])
                     if name:
-                        self.add_whitespace(indent-1)
+                        self.add_whitespace(indent - 1)
                         self.add_comment(None, name + json_request[i], None)
                     else:
                         self.add_comment(None, json_request[i], None)
@@ -1090,22 +877,265 @@ def list_format(self, json_request, yaml, not_first, indent, name, inner_model):
                     inner_model=inner_model,
                     no_list=no_list,
                 )
-                
+
     return no_list
+
+
+def dict_format(
+    self, json_request, yaml, not_first, indent, inner_model, no_list, name
+):
+    if isinstance(json_request, dict):
+        for i in json_request:
+            not_first, name = create_model(self, not_first, indent, inner_model, i)
+            if indent > 4 and (
+                isinstance(json_request[i], list) or isinstance(json_request[i], dict)
+            ):
+                indent = format_model_dict_info(
+                    self, json_request, yaml, indent, inner_model, name, i
+                )
+            if isinstance(json_request[i], str):
+                indent, name = format_dict_str_info(
+                    self, json_request, yaml, indent, inner_model, i
+                )
+
+            else:
+                request_builder(
+                    self,
+                    json_request[i],
+                    yaml,
+                    indent=indent + 1,
+                    not_first=True,
+                    name=name,
+                    inner_model=inner_model,
+                    no_list=no_list,
+                )
+                inner_model = format_punctuation(
+                    self, json_request, indent, inner_model, i
+                )
+    return not_first, indent, inner_model
+
+
+def format_dict_str_info(self, json_request, yaml, indent, inner_model, i):
+    in_model = False
+    if indent == 4:
+        in_model = True
+        indent = indent + 1
+        name = i
+    if inner_model:
+        inner_model.append(Token(" ", TokenKind.Newline))
+        inner_model.append(Token(" " * (indent * 4), TokenKind.Whitespace))
+    else:
+        self.add_new_line()
+        self.add_whitespace(indent)
+    index = json_request[i].find("(optional)")
+    param = json_request[i].split()
+    if i == "str":
+        param[0] = format_param_type(param[0])
+        m_type, key = get_map_type(yaml, name)
+        m_type = format_map_type(m_type)
+        if not key:
+            key = self.parameters[0].name
+        if inner_model:
+            if index != -1:
+                optional = "?"
+            inner_model.append(
+                Token(
+                    key + optional + " : Map<string, " + param[0] + ">;",
+                    TokenKind.Comment,
+                )
+            )
+        else:
+            if index != -1:
+                optional = "?"
+            self.add_comment(
+                None, key + optional + " : Map<string, " + param[0] + ">;", None
+            )
+
+            if in_model:
+                self.add_new_line()
+                self.add_whitespace(4)
+                self.add_comment(None, "};", None)
+                in_model = False
+                indent = 4
+    else:
+        if len(param) >= 2:
+            param[0] = format_param_type(param[0])
+            if index != -1:
+                optional = "?"
+            json_request[i] = i + optional + " : " + param[0] + ";"
+            if inner_model:
+                inner_model.append(Token(json_request[i], TokenKind.Comment))
+            else:
+                self.add_comment(None, json_request[i], None)
+                if in_model:
+                    self.add_new_line()
+                    self.add_whitespace(4)
+                    self.add_comment(None, "};", None)
+                    in_model = False
+                    indent = 4
+        else:
+            json_request[i] = format_param_type(json_request[i])
+            if inner_model:
+                inner_model.append(
+                    Token(i + ":" + json_request[i] + ";", TokenKind.Comment)
+                )
+            else:
+                self.add_comment(None, i + ": " + json_request[i] + ";", None)
+                if in_model:
+                    self.add_new_line()
+                    self.add_whitespace(4)
+                    self.add_comment(None, "};", None)
+                    in_model = False
+                    indent = 4
+    return indent, name
+
+
+def format_model_dict_info(self, json_request, yaml, indent, inner_model, name, i):
+    if i == "str":
+        if inner_model:
+            inner_model.append(Token(" ", TokenKind.Newline))
+            inner_model.append(Token(" " * (indent * 4), TokenKind.Whitespace))
+            m_type, key = get_map_type(yaml, name)
+            m_type = format_map_type(m_type)
+            inner_model.append(
+                Token(
+                    key + ": Map<string, " + m_type + ">;",
+                    TokenKind.Comment,
+                )
+            )
+        else:
+            self.add_new_line()
+            self.add_whitespace(indent)
+            m_type, key = get_map_type(yaml, name)
+            m_type = format_map_type(m_type)
+            self.add_comment(None, key + ": Map<string, " + m_type + ">;", None)
+            self.add_new_line()
+            self.add_whitespace(4)
+            self.add_comment(None, "};", None)
+
+            # START COLLECTING INNER MODEL DATA
+            if not m_type == "{" + "}":
+                indent = 4
+                if "[]" in m_type:
+                    m_type = m_type[0 : len(m_type) - 2]
+                inner_model.append(Token(" ", TokenKind.Newline))
+                inner_model.append(Token(" " * (indent * 4), TokenKind.Whitespace))
+
+                inner_model.append(
+                    Token(
+                        "model " + m_type + " {",
+                        TokenKind.Comment,
+                    )
+                )
+
+    else:
+        if inner_model:
+            inner_model.append(Token(" ", TokenKind.Newline))
+            inner_model.append(Token(" " * (indent * 4), TokenKind.Whitespace))
+            if isinstance(json_request[i], list) and not isinstance(
+                json_request[i][0], dict
+            ):
+                inner_model.append(Token(i, TokenKind.Comment))
+            else:
+                inner_model.append(Token(i + ": {", TokenKind.Comment))
+            name = i
+        else:
+            self.add_new_line()
+            if not (
+                isinstance(json_request[i], list)
+                and not isinstance(json_request[i][0], dict)
+            ):
+                self.add_whitespace(indent)
+                self.add_comment(None, i + ": {", None)
+            name = i
+            inner_model.clear()
+    return indent
+
+
+def create_model(self, not_first, indent, inner_model, i):
+    if indent == 4:
+        self.add_whitespace(indent)
+        if not_first:
+            self.add_new_line()
+            self.add_whitespace(indent)
+            self.add_new_line()
+            self.add_whitespace(indent)
+        if not inner_model:
+            self.add_comment(None, "model " + i + " {", None)
+            self.add_new_line()
+            not_first = True
+            name = i
+            inner_model.clear()
+        else:
+            inner_model.append(Token(" ", TokenKind.Newline))
+            inner_model.append(Token(" " * (indent * 4), TokenKind.Whitespace))
+            inner_model.append(Token("model " + i + " {", TokenKind.Comment))
+            inner_model.append(Token(" ", TokenKind.Newline))
+    return not_first, name
+
+
+def format_punctuation(self, json_request, indent, inner_model, i):
+    if i == "str":
+        pass
+    elif inner_model and isinstance(json_request[i], list):
+        if isinstance(json_request[i], list) and len(json_request[i]) > 1:
+            inner_model.append(Token(" ", TokenKind.Newline))
+            inner_model.append(Token(" " * (indent * 4), TokenKind.Whitespace))
+            inner_model.append(Token("}[];", TokenKind.Comment))
+        elif isinstance(json_request[i], list) and isinstance(json_request[i][0], dict):
+            inner_model.append(Token(" ", TokenKind.Newline))
+            inner_model.append(Token(" " * (indent * 4), TokenKind.Whitespace))
+            inner_model.append(Token("}[];", TokenKind.Comment))
+        elif len(json_request[i]) > 1:
+            inner_model.append(Token(" ", TokenKind.Newline))
+            inner_model.append(Token(" " * (indent * 4), TokenKind.Whitespace))
+            inner_model.append(Token("};", TokenKind.Comment))
+    elif isinstance(json_request[i], list) and indent > 4:
+        if isinstance(json_request[i][0], dict):
+            self.add_new_line()
+            self.add_whitespace(indent)
+            self.add_comment(None, "}[];", None)
+        if len(json_request[i]) == 1:
+            pass
+        else:
+            self.add_new_line()
+            self.add_whitespace(indent)
+            self.add_comment(None, "}[];", None)
+    else:
+        if indent == 5 and inner_model:
+            inner_model.append(Token(" ", TokenKind.Newline))
+            inner_model.append(Token(" " * (indent * 4), TokenKind.Whitespace))
+            inner_model.append(Token("};", TokenKind.Comment))
+            if self.inner_model != inner_model:
+                self.inner_model += inner_model
+            else:
+                self.inner_model = inner_model
+            inner_model = []
+        elif inner_model:
+            inner_model.append(Token(" ", TokenKind.Newline))
+            inner_model.append(Token(" " * (indent * 4), TokenKind.Whitespace))
+            inner_model.append(Token("};", TokenKind.Comment))
+        else:
+            self.add_new_line()
+            self.add_whitespace(indent)
+            self.add_comment(None, "};", None)
+    return inner_model
+
 
 def format_param_type(p_type):
     if p_type == "str":
         p_type = "string"
     if p_type == "any-object":
-        p_type = "{"+"}"
+        p_type = "{" + "}"
     return p_type
+
 
 def format_map_type(m_type):
     if "dictionary" in m_type:
         m_type = m_type.split()
-        m_type = m_type[1][:len(m_type[1])-1]
-    if m_type == 'any-object':
-        m_type = "{"+"}"
+        m_type = m_type[1][: len(m_type[1]) - 1]
+    if m_type == "any-object":
+        m_type = "{" + "}"
     return m_type
 
 
@@ -1136,21 +1166,25 @@ def get_map_type(yaml, name=""):
                             if k["serializedName"] == name:
                                 m_type = get_type(k["schema"]["elementType"])
                                 key = k["schema"]["language"]["default"]["name"]
-                    if i["schema"]["properties"][0].get('serializedName') == name:
-                        m_type = get_type(i["schema"]["properties"][0]["schema"]['elementType'])
-                        key = i["schema"]["properties"][0]["schema"]["language"]["default"]["name"]
+                    if i["schema"]["properties"][0].get("serializedName") == name:
+                        m_type = get_type(
+                            i["schema"]["properties"][0]["schema"]["elementType"]
+                        )
+                        key = i["schema"]["properties"][0]["schema"]["language"][
+                            "default"
+                        ]["name"]
                 if i["schema"].get("elementType", []):
-                    if i['schema']['elementType'].get("properties",[]):
-                        for j in i['schema']['elementType'].get("properties",[]):
+                    if i["schema"]["elementType"].get("properties", []):
+                        for j in i["schema"]["elementType"].get("properties", []):
                             if j["serializedName"] == name:
                                 m_type = get_type(j["schema"]["elementType"])
                                 key = j["schema"]["language"]["default"]["name"]
-                        for j in i["schema"]['elementType']["properties"][0]["schema"].get(
-                            "elementType", []
-                        ):
-                            for k in i["schema"]['elementType']["properties"][0]["schema"][
-                                "elementType"
-                            ].get("properties", []):
+                        for j in i["schema"]["elementType"]["properties"][0][
+                            "schema"
+                        ].get("elementType", []):
+                            for k in i["schema"]["elementType"]["properties"][0][
+                                "schema"
+                            ]["elementType"].get("properties", []):
                                 if k["serializedName"] == name:
                                     m_type = get_type(k["schema"]["elementType"])
                                     key = k["schema"]["language"]["default"]["name"]
@@ -1173,12 +1207,10 @@ def get_map_type(yaml, name=""):
                                 m_type = get_type(k["schema"]["elementType"])
                                 key = k["schema"]["language"]["default"]["name"]
                 if i["serializedName"] == name:
-                        m_type = get_type(i["schema"]["elementType"])
-                        key = i["schema"]["language"]["default"]["name"]
+                    m_type = get_type(i["schema"]["elementType"])
+                    key = i["schema"]["language"]["default"]["name"]
                 if i["schema"].get("elementType", []):
-                    for j in i["schema"]["elementType"].get(
-                        "properties", []
-                    ):
+                    for j in i["schema"]["elementType"].get("properties", []):
                         if j["serializedName"] == name:
                             m_type = get_type(j["schema"]["elementType"])
                             key = j["schema"]["language"]["default"]["name"]

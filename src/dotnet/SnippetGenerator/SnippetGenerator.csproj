@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
+    <Description>Generates code snippets for readmes in the azure-sdk-for-net repo.</Description>
     <TargetFramework>net5.0</TargetFramework>
   </PropertyGroup>
 

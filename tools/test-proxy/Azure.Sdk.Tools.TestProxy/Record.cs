@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Net.Http.Headers;
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -22,6 +23,8 @@ namespace Azure.Sdk.Tools.TestProxy
         public void Start()
         {
             string file = RecordingHandler.GetHeader(Request, "x-recording-file", allowNulls: true);
+
+            Response.Headers.Add("Access-Control-Allow-Headers", "*");
 
             _recordingHandler.StartRecording(file, Response);
         }

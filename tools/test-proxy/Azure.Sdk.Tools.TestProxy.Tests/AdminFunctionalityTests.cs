@@ -56,6 +56,23 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.True(result is HeaderRegexSanitizer);
         }
 
+        [Fact]
+        public void TestResetAfterAddition()
+        {
+            // arrange
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+
+
+
+        }
+
+        [Fact]
+        public void TestResetAfterRemoval()
+        {
+            // arrange
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+
+        }
 
         [Fact]
         public void TestAddTransform()

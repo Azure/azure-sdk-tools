@@ -422,8 +422,6 @@ class ProtocolOperationView(FormattingClass):
         pageable = None
         lro = None
         status_codes = []
-        json_request = {}
-        json_response = {}
 
         code = CodeModel(
             rest_layer=True,
@@ -440,37 +438,7 @@ class ProtocolOperationView(FormattingClass):
             yaml_data["operationGroups"][op_group_num]["operations"][op_num]
         )
 
-        for i in range(
-            0,
-            len(
-                yaml_data["operationGroups"][op_group_num]["operations"][op_num].get(
-                    "responses"
-                )
-            ),
-        ):
-            status_codes.append(
-                yaml_data["operationGroups"][op_group_num]["operations"][op_num][
-                    "responses"
-                ][i]["protocol"]["http"]["statusCodes"]
-            )
-        if yaml_data["operationGroups"][op_group_num]["operations"][op_num].get(
-            "exceptions", []
-        ):
-            status_codes.append("/")
-        for i in range(
-            0,
-            len(
-                yaml_data["operationGroups"][op_group_num]["operations"][op_num].get(
-                    "exceptions", []
-                )
-            ),
-        ):
-
-            status_codes.append(
-                yaml_data["operationGroups"][op_group_num]["operations"][op_num][
-                    "exceptions"
-                ][i]["protocol"]["http"]["statusCodes"]
-            )
+        cls.get_status_codes(yaml_data, op_group_num, op_num, status_codes)
 
         if yaml_data["operationGroups"][op_group_num]["operations"][op_num].get(
             "extensions"
@@ -492,6 +460,46 @@ class ProtocolOperationView(FormattingClass):
             paging_op,
         )
 
+        json_request, json_response = cls.get_models(yaml_data, op_group_num, op_num, namespace, param, code, request_builder, response_builder)
+
+        description = cls.get_description(yaml_data, op_group_num, op_num)
+
+        return cls(
+            operation_group=yaml_data["operationGroups"][op_group_num]["language"][
+                "default"
+            ]["name"],
+            operation_name=yaml_data["operationGroups"][op_group_num]["operations"][
+                op_num
+            ]["language"]["default"]["name"],
+            parameters=param,
+            return_type=return_type,
+            namespace=namespace,
+            description=description,
+            paging=paging_op,
+            lro=lro_op,
+            json_request=json_request,
+            json_response=json_response,
+            status_codes=status_codes,
+            yaml=yaml_data["operationGroups"][op_group_num]["operations"][op_num],
+        )
+
+    @classmethod
+    def get_description(cls, yaml_data, op_group_num, op_num):
+        description = yaml_data["operationGroups"][op_group_num]["operations"][op_num][
+            "language"
+        ]["default"].get("summary")
+        if description is None:
+            description = yaml_data["operationGroups"][op_group_num]["operations"][
+                op_num
+            ]["language"]["default"]["description"]
+            
+        return description
+
+    @classmethod
+    def get_models(cls, yaml_data, op_group_num, op_num, namespace, param, code, request_builder, response_builder):
+        json_request = {}
+        json_response = {}
+        
         for j in range(
             0,
             len(
@@ -558,33 +566,41 @@ class ProtocolOperationView(FormattingClass):
                     namespace,
                 )
             )
+            
+        return json_request,json_response
 
-        description = yaml_data["operationGroups"][op_group_num]["operations"][op_num][
-            "language"
-        ]["default"].get("summary")
-        if description is None:
-            description = yaml_data["operationGroups"][op_group_num]["operations"][
-                op_num
-            ]["language"]["default"]["description"]
-
-        return cls(
-            operation_group=yaml_data["operationGroups"][op_group_num]["language"][
-                "default"
-            ]["name"],
-            operation_name=yaml_data["operationGroups"][op_group_num]["operations"][
-                op_num
-            ]["language"]["default"]["name"],
-            parameters=param,
-            return_type=return_type,
-            namespace=namespace,
-            description=description,
-            paging=paging_op,
-            lro=lro_op,
-            json_request=json_request,
-            json_response=json_response,
-            status_codes=status_codes,
-            yaml=yaml_data["operationGroups"][op_group_num]["operations"][op_num],
-        )
+    @classmethod
+    def get_status_codes(cls, yaml_data, op_group_num, op_num, status_codes):
+        for i in range(
+            0,
+            len(
+                yaml_data["operationGroups"][op_group_num]["operations"][op_num].get(
+                    "responses"
+                )
+            ),
+        ):
+            status_codes.append(
+                yaml_data["operationGroups"][op_group_num]["operations"][op_num][
+                    "responses"
+                ][i]["protocol"]["http"]["statusCodes"]
+            )
+        if yaml_data["operationGroups"][op_group_num]["operations"][op_num].get(
+            "exceptions", []
+        ):
+            status_codes.append("/")
+        for i in range(
+            0,
+            len(
+                yaml_data["operationGroups"][op_group_num]["operations"][op_num].get(
+                    "exceptions", []
+                )
+            ),
+        ):
+            status_codes.append(
+                yaml_data["operationGroups"][op_group_num]["operations"][op_num][
+                    "exceptions"
+                ][i]["protocol"]["http"]["statusCodes"]
+            )
 
     def get_tokens(self):
         return self.Tokens

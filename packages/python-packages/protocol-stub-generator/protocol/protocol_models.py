@@ -900,11 +900,9 @@ def dict_format(self, json_request, yaml, not_first, indent, inner_model, no_lis
                         name = i
                     else: 
                         self.add_new_line() 
-                        if isinstance(json_request[i], list) and not isinstance(
-                            json_request[i][0], dict
+                        if not (isinstance(json_request[i], list) and not isinstance(
+                            json_request[i][0], dict)
                         ):
-                            pass
-                        else: 
                             self.add_whitespace(indent)
                             self.add_comment(None, i + ": {", None)  
                         name = i

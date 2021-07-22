@@ -14,6 +14,18 @@ trigger:
       - dotnet.proj
       - src/dotnet/*
 
+pr:
+  branches:
+    include:
+      - main
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - dotnet.proj
+      - src/dotnet/*
+
 resources:
   repositories:
     - repository: azure-sdk-build-tools

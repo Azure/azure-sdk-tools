@@ -748,7 +748,7 @@ class ProtocolOperationView(FormattingClass):
                         object_name = object_name.replace("[]","")
                         new_req[object_name] = self.json_request
                         self.json_request= new_req
-                    request_builder(self, self.json_request, self.yaml, notfirst=False)
+                    request_builder(self, self.json_request, self.yaml, not_first=False)
                     self.add_new_line()
                     self.add_whitespace(4)
                     for m in self.inner_model:
@@ -772,7 +772,7 @@ class ProtocolOperationView(FormattingClass):
                         self,
                         self.json_response,
                         self.yaml,
-                        notfirst=False
+                        not_first=False
                     )
                     self.add_new_line()
                     self.add_whitespace(4)
@@ -809,19 +809,19 @@ class ProtocolOperationView(FormattingClass):
 
 
 def request_builder(
-    self, json_request, yaml, notfirst, indent=4, name="", inner_model=[], no_list=True
+    self, json_request, yaml, not_first, indent=4, name="", inner_model=[], no_list=True
 ):
     if inner_model and not self.inner_model: self.inner_model = inner_model
-    no_list = list_format(self, json_request, yaml, notfirst, indent, name, inner_model)
+    no_list = list_format(self, json_request, yaml, not_first, indent, name, inner_model)
 
-    notfirst, indent, inner_model = dict_format(self, json_request, yaml, notfirst, indent, inner_model, no_list,name)
+    not_first, indent, inner_model = dict_format(self, json_request, yaml, not_first, indent, inner_model, no_list,name)
 
-def dict_format(self, json_request, yaml, notfirst, indent, inner_model, no_list,name):
+def dict_format(self, json_request, yaml, not_first, indent, inner_model, no_list,name):
     if isinstance(json_request, dict):
         for i in json_request:
             if indent == 4:
                 self.add_whitespace(indent)
-                if notfirst:
+                if not_first:
                     self.add_new_line()
                     self.add_whitespace(indent)
                     self.add_new_line()
@@ -829,7 +829,7 @@ def dict_format(self, json_request, yaml, notfirst, indent, inner_model, no_list
                 if not inner_model:
                     self.add_comment(None, "model " + i + " {", None)
                     self.add_new_line()
-                    notfirst = True
+                    not_first = True
                     name = i
                     inner_model.clear()
                 else:
@@ -993,13 +993,13 @@ def dict_format(self, json_request, yaml, notfirst, indent, inner_model, no_list
                     json_request[i],
                     yaml,
                     indent=indent + 1,
-                    notfirst=True,
+                    not_first=True,
                     name=name,
                     inner_model=inner_model,
                     no_list=no_list,
                 )
                 inner_model = format_punctuation(self, json_request, indent, inner_model, i)
-    return notfirst,indent,inner_model
+    return not_first,indent,inner_model
 
 def format_punctuation(self, json_request, indent, inner_model, i):
     if i == "str":
@@ -1057,7 +1057,7 @@ def format_punctuation(self, json_request, indent, inner_model, i):
             self.add_comment(None, "};", None)
     return inner_model
 
-def list_format(self, json_request, yaml, notfirst, indent, name, inner_model):
+def list_format(self, json_request, yaml, not_first, indent, name, inner_model):
     no_list = True
     if isinstance(json_request, list):
         for i in range(0, len(json_request)):
@@ -1087,7 +1087,7 @@ def list_format(self, json_request, yaml, notfirst, indent, name, inner_model):
                     json_request[i],
                     yaml,
                     indent=indent + 1,
-                    notfirst=True,
+                    not_first=True,
                     inner_model=inner_model,
                     no_list=no_list,
                 )

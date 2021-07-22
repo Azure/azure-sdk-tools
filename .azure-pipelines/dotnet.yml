@@ -14,18 +14,6 @@ trigger:
       - dotnet.proj
       - src/dotnet/*
 
-pr:
-  branches:
-    include:
-      - main
-      - feature/*
-      - release/*
-      - hotfix/*
-  paths:
-    include:
-      - dotnet.proj
-      - src/dotnet/*
-
 resources:
   repositories:
     - repository: azure-sdk-build-tools
@@ -34,7 +22,6 @@ resources:
       ref: refs/tags/azure-sdk-build-tools_20210603.1
 
 variables:
-  DotNetCoreVersion: '3.0.100'
   NugetSecurityAnalysisWarningLevel: 'none'
   ProjectFile: 'dotnet.proj'
   VersioningProps: '/p:OfficialBuildId=$(Build.BuildNumber)'
@@ -48,11 +35,6 @@ stages:
           vmImage: 'vs2017-win2016'
 
         steps:
-          - task: DotNetCoreInstaller@0
-            displayName: 'Use .NET Core sdk $(DotNetCoreVersion)'
-            inputs:
-              version: '$(DotNetCoreVersion)'
-
           - script: 'dotnet pack $(ProjectFile) -o $(Build.ArtifactStagingDirectory) -warnaserror $(VersioningProps)'
             displayName: 'Build and Package'
             env:
@@ -72,11 +54,6 @@ stages:
           vmImage: 'vs2017-win2016'
 
         steps:
-          - task: DotNetCoreInstaller@0
-            displayName: 'Use .NET Core sdk $(DotNetCoreVersion)'
-            inputs:
-              version: '$(DotNetCoreVersion)'
-
           - task: DotNetCoreCLI@2
             displayName: 'Build & Test'
             env:
@@ -97,7 +74,7 @@ stages:
               testResultsFormat: 'VSTest'
               mergeTestResults: true
 
-  - ${{ if ne(variables['System.TeamProject'], 'Public') }}:
+  - ${{ if and(ne(variables['System.TeamProject'], 'Public'),  }}:
     - template: pipelines/stages/net-release-to-feed.yml@azure-sdk-build-tools
       parameters:
         # azure-sdk-tools feed at https://dev.azure.com/azure-sdk/public/_packaging?_a=feed&feed=azure-sdk-tools

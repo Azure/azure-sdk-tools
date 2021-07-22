@@ -804,10 +804,7 @@ def request_builder(
                 index = json_request[i].find("(optional)")
                 param = json_request[i].split()
                 if len(param) >= 2:
-                    if param[0] == "str":
-                        param[0] = "string"
-                    if param[0] == "any-object":
-                        param[0] = "{"+"}"
+                    param[0] = format_param_type(param[0])
                     if index != -1:
                         json_request[i] = "? :" + param[0] + "[];"
                     else:
@@ -816,10 +813,7 @@ def request_builder(
                     inner_model.append(Token(json_request[i], TokenKind.Comment))
                     inner_model.append(Token(" ", TokenKind.Newline))
                 else:
-                    if json_request[i] == "str":
-                        json_request[i] = "string"
-                    if json_request[i] == "any-object":
-                        json_request[i] = "{"+"}"
+                    json_request[i] = format_param_type(json_request[i])
                     if name:
                         self.add_whitespace(indent-1)
                         self.add_comment(None, name + json_request[i], None)
@@ -852,7 +846,7 @@ def request_builder(
                     self.add_new_line()
                     notfirst = True
                     name = i
-                    inner_model = []
+                    inner_model.clear()
                 else:
                     inner_model.append(Token(" ", TokenKind.Newline))
                     inner_model.append(Token(" " * (indent * 4), TokenKind.Whitespace))
@@ -869,7 +863,7 @@ def request_builder(
                             Token(" " * (indent * 4), TokenKind.Whitespace)
                         )
                         m_type, key = get_map_type(yaml, name)
-                        m_type = format_type(m_type)
+                        m_type = format_map_type(m_type)
                         inner_model.append(
                             Token(
                                 key + ": Map<string, " + m_type + ">;",
@@ -880,7 +874,7 @@ def request_builder(
                         self.add_new_line()
                         self.add_whitespace(indent)
                         m_type, key = get_map_type(yaml, name)
-                        m_type = format_type(m_type)
+                        m_type = format_map_type(m_type)
                         self.add_comment(
                             None, key + ": Map<string, " + m_type + ">;", None
                         )
@@ -946,12 +940,9 @@ def request_builder(
                 index = json_request[i].find("(optional)")
                 param = json_request[i].split()
                 if i == "str":
-                    if param[0] == "str":
-                        param[0] = "string"
-                    if param[0] == "any-object":
-                            param[0] = "{"+ "}"
+                    param[0] = format_param_type(param[0])
                     m_type, key = get_map_type(yaml, name)
-                    m_type = format_type(m_type)
+                    m_type = format_map_type(m_type)
                     if not key: key = self.parameters[0].name
                     if inner_model:
                         if index != -1:
@@ -986,10 +977,7 @@ def request_builder(
                             indent = 4
                 else:
                     if len(param) >= 2:
-                        if param[0] == "str":
-                            param[0] = "string"
-                        if param[0] == "any-object":
-                            param[0] = "{"+ "}"
+                        param[0] = format_param_type(param[0])
                         if index != -1:
                             json_request[i] = i + "? :" + param[0] + ";"
                         else:
@@ -1007,10 +995,7 @@ def request_builder(
                                 in_model = False
                                 indent = 4
                     else:
-                        if json_request[i] == "str":
-                            json_request[i] = "string"
-                        if json_request[i] == "any-object":
-                            json_request[i] = "{"+ "}"
+                        json_request[i] = format_param_type(json_request[i])
                         if inner_model:
                             inner_model.append(
                                 Token(
@@ -1093,7 +1078,14 @@ def request_builder(
                         self.add_whitespace(indent)
                         self.add_comment(None, "};", None)
 
-def format_type(m_type):
+def format_param_type(p_type):
+    if p_type == "str":
+        p_type = "string"
+    if p_type == "any-object":
+        p_type = "{"+"}"
+    return p_type
+
+def format_map_type(m_type):
     if "dictionary" in m_type:
         m_type = m_type.split()
         m_type = m_type[1][:len(m_type[1])-1]

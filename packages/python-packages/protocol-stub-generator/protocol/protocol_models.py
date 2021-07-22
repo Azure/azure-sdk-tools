@@ -758,6 +758,7 @@ class ProtocolOperationView(FormattingClass):
                             self.Tokens.append(m)
                     self.add_new_line(1)
 
+                #If the response is just a string or simple list, ignore writing the response
                 if isinstance(self.json_response,str) or (isinstance(self.json_response,list) and isinstance(self.json_response[0],str)): self.json_response = None
                 if self.json_response:
                     self.inner_model = []

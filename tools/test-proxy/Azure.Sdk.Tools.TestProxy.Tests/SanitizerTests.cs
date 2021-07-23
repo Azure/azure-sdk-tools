@@ -55,7 +55,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var session = TestHelpers.LoadRecordSession("Test.RecordEntries/post_delete_get_content.json");
             var originalValue = session.Session.Entries[0].RequestUri;
 
-            var uriSanitizer = new UriRegexSanitizer("fakeaccount", lookaheadReplaceRegex);
+            var uriSanitizer = new UriRegexSanitizer(value: "fakeaccount", regex: lookaheadReplaceRegex);
             session.Session.Sanitize(uriSanitizer);
 
             var testValue = session.Session.Entries[0].RequestUri;
@@ -70,7 +70,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var session = TestHelpers.LoadRecordSession("Test.RecordEntries/oauth_request.json");
             var originalValue = session.Session.Entries[0].RequestUri;
 
-            var uriSanitizer = new UriRegexSanitizer("fakeaccount", lookaheadReplaceRegex);
+            var uriSanitizer = new UriRegexSanitizer(value: "fakeaccount", regex: lookaheadReplaceRegex);
             session.Session.Sanitize(uriSanitizer);
 
             var testValue = session.Session.Entries[0].RequestUri;
@@ -78,16 +78,29 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Equal(originalValue, testValue);
         }
 
+
+        [Fact]
+        public void GeneralRegexSanitizerAppliesToAllSets()
+        {
+
+        }
+
+        [Fact]
+        public void GeneralRegexSanitizerAggressivenessCheck()
+        {
+
+        }
+
         [Fact]
         public void ReplaceRequestSubscriptionId()
         {
-            // tests successfully replacement
+            // TODO: tests successfully replacement
         }
 
         [Fact]
         public void ReplaceRequestSubscriptionIdNoAction()
         {
-            // successful sanitize, no action necessary
+            // TODO: successful sanitize, no action necessary
         }
 
         [Fact]

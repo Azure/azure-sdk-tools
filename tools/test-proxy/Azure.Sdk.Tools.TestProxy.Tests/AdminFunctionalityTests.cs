@@ -29,7 +29,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
         }
 
-
         [Fact]
         public void TestAddSanitizer()
         {

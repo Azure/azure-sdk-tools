@@ -1,7 +1,7 @@
 
 # Protocol API View
 
-## Class Descriptions
+## Main Class Descriptions
 * ProtocolMainView
     * Formats the whole view
     * Creates the Navigation Panel on the side
@@ -16,7 +16,13 @@
 * ProtocolParameterView
     * Gets the parameters for each operation from the yaml
     * Calls get_type() to obtain their types 
-    
+
+## Request and Response Class
+
+* Request and Response Class
+    * request_builder: 
+        * Format models of requests and responses using the Autorestv3 CodeGen models for RequestBuilder and Operation Responses.
+
 ## Autorest Dependency 
 * Requests and Response Models Depend on Autorestv3: [Autorest.python](https://github.com/Azure/autorest.python/tree/prepare_request)
 

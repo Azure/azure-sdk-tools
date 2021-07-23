@@ -55,7 +55,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var session = TestHelpers.LoadRecordSession("Test.RecordEntries/post_delete_get_content.json");
             var originalValue = session.Session.Entries[0].RequestUri;
 
-            var uriSanitizer = new UriRegexSanitizer(lookaheadReplaceRegex, "fakeaccount");
+            var uriSanitizer = new UriRegexSanitizer("fakeaccount", lookaheadReplaceRegex);
             session.Session.Sanitize(uriSanitizer);
 
             var testValue = session.Session.Entries[0].RequestUri;
@@ -70,7 +70,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var session = TestHelpers.LoadRecordSession("Test.RecordEntries/oauth_request.json");
             var originalValue = session.Session.Entries[0].RequestUri;
 
-            var uriSanitizer = new UriRegexSanitizer(lookaheadReplaceRegex, "fakeaccount");
+            var uriSanitizer = new UriRegexSanitizer("fakeaccount", lookaheadReplaceRegex);
             session.Session.Sanitize(uriSanitizer);
 
             var testValue = session.Session.Entries[0].RequestUri;

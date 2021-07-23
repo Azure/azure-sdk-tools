@@ -1,3 +1,5 @@
+using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Matchers;
 using Azure.Sdk.Tools.TestProxy.Sanitizers;
 using Azure.Sdk.Tools.TestProxy.Transforms;
 using Microsoft.AspNetCore.Http;
@@ -54,24 +56,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             var result = testRecordingHandler.Sanitizers.First();
             Assert.True(result is HeaderRegexSanitizer);
-        }
-
-        [Fact]
-        public void TestResetAfterAddition()
-        {
-            // arrange
-            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
-
-
-
-        }
-
-        [Fact]
-        public void TestResetAfterRemoval()
-        {
-            // arrange
-            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
-
         }
 
         [Fact]

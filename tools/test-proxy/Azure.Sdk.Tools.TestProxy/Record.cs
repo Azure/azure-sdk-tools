@@ -23,9 +23,6 @@ namespace Azure.Sdk.Tools.TestProxy
         {
             string file = RecordingHandler.GetHeader(Request, "x-recording-file", allowNulls: true);
 
-            Response.Headers.Add("Access-Control-Allow-Headers", "*");
-            Response.Headers.Add("Access-Control-Expose-Headers", "*");
-
             _recordingHandler.StartRecording(file, Response);
         }
 

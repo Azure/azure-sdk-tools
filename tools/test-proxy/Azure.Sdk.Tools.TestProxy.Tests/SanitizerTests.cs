@@ -82,13 +82,47 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [Fact]
         public void GeneralRegexSanitizerAppliesToAllSets()
         {
+            // arrange
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/post_delete_get_content.json");
+            var targetEntry = session.Session.Entries.First();
 
-        }
+            var originalUri = targetEntry.RequestUri.ToString();
+            var originalBody = targetEntry.Response.Body.Clone();
+            var originalLocationHeader = targetEntry.Response.Headers["Location"].First().ToString();
+            var genericTValue = "generic_table_name";
+            var genericAValue = "generic_account_name";
+            var realTValue = "listtable09bf2a3d";
+            var realAValue = "fakeazsdktestaccount";
 
-        [Fact]
-        public void GeneralRegexSanitizerAggressivenessCheck()
-        {
+            // shows up in requestBody, responseBody, responseHeader Location
+            var tableNameSanitizer = new GeneralRegexSanitizer(value: genericTValue, regex: realTValue);
+            // shows up in requestUri, responseHeader Location
+            var accountNameSanitizer = new GeneralRegexSanitizer(value: genericAValue, regex: realAValue);
 
+            // act
+            session.Session.Sanitize(tableNameSanitizer);
+            session.Session.Sanitize(accountNameSanitizer);
+            var locationHeaderValue = targetEntry.Response.Headers["Location"].First();
+
+            // assert that we successfully changed a header, the body, and the uri
+            Assert.NotEqual(originalUri, targetEntry.RequestUri);
+            Assert.NotEqual(originalBody, targetEntry.Response.Body);
+            Assert.NotEqual(originalLocationHeader, locationHeaderValue);
+
+            var requestBody = Encoding.UTF8.GetString(targetEntry.Request.Body);
+            var responseBody = Encoding.UTF8.GetString(targetEntry.Response.Body);
+
+            // assert that body doesn't contain anything we don't expect it to
+            Assert.DoesNotContain(realTValue, responseBody);
+            Assert.DoesNotContain(realAValue, responseBody);
+            Assert.DoesNotContain(realTValue, requestBody);
+            Assert.DoesNotContain(realTValue, requestBody);
+
+            // assert that the new value has been dropped in where we expect it
+            Assert.Contains(genericAValue, targetEntry.RequestUri);
+            Assert.Contains(genericTValue, responseBody);
+            Assert.Contains(genericAValue, locationHeaderValue);
+            Assert.Contains(genericTValue, locationHeaderValue);
         }
 
         [Fact]

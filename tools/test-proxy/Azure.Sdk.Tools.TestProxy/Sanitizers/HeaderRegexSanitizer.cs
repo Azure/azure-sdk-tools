@@ -40,6 +40,10 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
         {
             if (headers.ContainsKey(_targetKey))
             {
+                // Accessing 0th key safe due to the fact that we force header values in without splitting them on ;. 
+                // We do this because letting .NET split and then reassemble header values introduces a space into the header itself
+                // Ex: "application/json;odata=minimalmetadata" with .NET default header parsing becomes "application/json; odata=minimalmetadata"
+                // Given this breaks signature verification, we have to avoid it.
                 var originalValue = headers[_targetKey][0];
 
                 var replacement = StringSanitizer.SanitizeValue(originalValue, _newValue, _regexValue, _groupForReplace);

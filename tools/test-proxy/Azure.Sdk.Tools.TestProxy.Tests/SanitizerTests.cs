@@ -1,9 +1,6 @@
-﻿using Azure.Sdk.Tools.TestProxy.Common;
-using Azure.Sdk.Tools.TestProxy.Sanitizers;
-using System;
+﻿using Azure.Sdk.Tools.TestProxy.Sanitizers;
 using System.Linq;
 using System.Text;
-using System.Text.Json;
 using Xunit;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests

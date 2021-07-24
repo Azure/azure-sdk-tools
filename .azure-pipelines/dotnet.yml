@@ -11,7 +11,8 @@ trigger:
       - hotfix/*
   paths:
     include:
-      - src/dotnet/Azure.ClientSdk.Analyzers
+      - dotnet.proj
+      - src/dotnet/*
 
 pr:
   branches:
@@ -22,7 +23,8 @@ pr:
       - hotfix/*
   paths:
     include:
-      - src/dotnet/Azure.ClientSdk.Analyzers
+      - dotnet.proj
+      - src/dotnet/*
 
 resources:
   repositories:
@@ -32,8 +34,9 @@ resources:
       ref: refs/tags/azure-sdk-build-tools_20210603.1
 
 variables:
-  DotNetCoreVersion: '3.0.100'
   NugetSecurityAnalysisWarningLevel: 'none'
+  ProjectFile: 'dotnet.proj'
+  VersioningProps: '/p:OfficialBuildId=$(Build.BuildNumber)'
 
 stages:
   - stage: 'Build_and_Test'
@@ -44,11 +47,6 @@ stages:
           vmImage: 'vs2017-win2016'
 
         steps:
-          - task: DotNetCoreInstaller@0
-            displayName: 'Use .NET Core sdk $(DotNetCoreVersion)'
-            inputs:
-              version: '$(DotNetCoreVersion)'
-
           - script: 'dotnet pack $(ProjectFile) -o $(Build.ArtifactStagingDirectory) -warnaserror $(VersioningProps)'
             displayName: 'Build and Package'
             env:
@@ -68,11 +66,6 @@ stages:
           vmImage: 'vs2017-win2016'
 
         steps:
-          - task: DotNetCoreInstaller@0
-            displayName: 'Use .NET Core sdk $(DotNetCoreVersion)'
-            inputs:
-              version: '$(DotNetCoreVersion)'
-
           - task: DotNetCoreCLI@2
             displayName: 'Build & Test'
             env:
@@ -93,5 +86,8 @@ stages:
               testResultsFormat: 'VSTest'
               mergeTestResults: true
 
-  - ${{ if ne(variables['System.TeamProject'], 'Public') }}:
+  - ${{ if and(ne(variables['System.TeamProject'], 'Public'), ne(variables['Build.Reason'], 'PullRequest'))}}:
     - template: pipelines/stages/net-release-to-feed.yml@azure-sdk-build-tools
+      parameters:
+        # azure-sdk-tools feed at https://dev.azure.com/azure-sdk/public/_packaging?_a=feed&feed=azure-sdk-tools
+        DevOpsFeedId: 29ec6040-b234-4e31-b139-33dc4287b756/5a74d21c-c79b-44a9-afb3-39fed340c1f3

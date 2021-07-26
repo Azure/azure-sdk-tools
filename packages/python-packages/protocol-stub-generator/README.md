@@ -23,6 +23,13 @@
     * request_builder: 
         * Format models of requests and responses using the Autorestv3 CodeGen models for RequestBuilder and Operation Responses.
 
+## How to Run Locally
+
+* Running the package:
+    * Navigate to protocol-stub-generator level
+    * `pip install -e . `
+    * `protocolGen --pkg-path MY_YAML_ABSOLUTE_PATH`
+
 ## Autorest Dependency 
 * Requests and Response Models Depend on Autorestv3: [Autorest.python](https://github.com/Azure/autorest.python/tree/prepare_request)
 

@@ -5,6 +5,12 @@
     <TargetFramework>net5.0</TargetFramework>
   </PropertyGroup>
 
+  <Target Name="CopyBuildOutputIntoPackage" AfterTargets="Build" BeforeTargets="Pack" >
+    <ItemGroup>
+      <None Include="$(OutputPath)\**\*" PackagePath="tools\$(TargetFramework)" Pack="true" />
+    </ItemGroup>
+  </Target>
+
   <ItemGroup>
     <Compile Remove="SnippetGenerator.Tests\**" />
     <EmbeddedResource Remove="SnippetGenerator.Tests\**" />
@@ -18,6 +24,6 @@
     <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="3.2.1" />
     <PackageReference Include="Microsoft.Build" Version="16.0.461" />
     <PackageReference Include="Microsoft.Build.Tasks.Core" Version="16.0.461" />
+    <PackageReference Update="@(PackageReference)" PrivateAssets="All" />
   </ItemGroup>
-
 </Project>

@@ -752,7 +752,7 @@ class ProtocolOperationView(FormattingClass):
 
                 self.format_status_code()
 
-                # If the request or response contain more than one entry, check the parameters of the operation and see if one of them is an object, if it is, that is your overall model request name , then refactor the request to be a dictionary of that type
+                # If the request or response contain more than one entry, check the parameters of the operation and see if one of them is an object, if it is, that is your overall model request name
                 # if type is not a normal type .. aka an object name ^
 
                 if self.json_request:

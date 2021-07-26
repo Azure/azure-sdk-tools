@@ -1,9 +1,6 @@
-﻿using Azure.Sdk.Tools.TestProxy.Common;
-using Azure.Sdk.Tools.TestProxy.Sanitizers;
-using System;
+﻿using Azure.Sdk.Tools.TestProxy.Sanitizers;
 using System.Linq;
 using System.Text;
-using System.Text.Json;
 using Xunit;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
@@ -55,7 +52,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var session = TestHelpers.LoadRecordSession("Test.RecordEntries/post_delete_get_content.json");
             var originalValue = session.Session.Entries[0].RequestUri;
 
-            var uriSanitizer = new UriRegexSanitizer(lookaheadReplaceRegex, "fakeaccount");
+            var uriSanitizer = new UriRegexSanitizer(value: "fakeaccount", regex: lookaheadReplaceRegex);
             session.Session.Sanitize(uriSanitizer);
 
             var testValue = session.Session.Entries[0].RequestUri;
@@ -70,7 +67,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var session = TestHelpers.LoadRecordSession("Test.RecordEntries/oauth_request.json");
             var originalValue = session.Session.Entries[0].RequestUri;
 
-            var uriSanitizer = new UriRegexSanitizer(lookaheadReplaceRegex, "fakeaccount");
+            var uriSanitizer = new UriRegexSanitizer(value: "fakeaccount", regex: lookaheadReplaceRegex);
             session.Session.Sanitize(uriSanitizer);
 
             var testValue = session.Session.Entries[0].RequestUri;
@@ -78,16 +75,63 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Equal(originalValue, testValue);
         }
 
+
+        [Fact]
+        public void GeneralRegexSanitizerAppliesToAllSets()
+        {
+            // arrange
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/post_delete_get_content.json");
+            var targetEntry = session.Session.Entries.First();
+
+            var originalUri = targetEntry.RequestUri.ToString();
+            var originalBody = targetEntry.Response.Body.Clone();
+            var originalLocationHeader = targetEntry.Response.Headers["Location"].First().ToString();
+            var genericTValue = "generic_table_name";
+            var genericAValue = "generic_account_name";
+            var realTValue = "listtable09bf2a3d";
+            var realAValue = "fakeazsdktestaccount";
+
+            // shows up in requestBody, responseBody, responseHeader Location
+            var tableNameSanitizer = new GeneralRegexSanitizer(value: genericTValue, regex: realTValue);
+            // shows up in requestUri, responseHeader Location
+            var accountNameSanitizer = new GeneralRegexSanitizer(value: genericAValue, regex: realAValue);
+
+            // act
+            session.Session.Sanitize(tableNameSanitizer);
+            session.Session.Sanitize(accountNameSanitizer);
+            var locationHeaderValue = targetEntry.Response.Headers["Location"].First();
+
+            // assert that we successfully changed a header, the body, and the uri
+            Assert.NotEqual(originalUri, targetEntry.RequestUri);
+            Assert.NotEqual(originalBody, targetEntry.Response.Body);
+            Assert.NotEqual(originalLocationHeader, locationHeaderValue);
+
+            var requestBody = Encoding.UTF8.GetString(targetEntry.Request.Body);
+            var responseBody = Encoding.UTF8.GetString(targetEntry.Response.Body);
+
+            // assert that body doesn't contain anything we don't expect it to
+            Assert.DoesNotContain(realTValue, responseBody);
+            Assert.DoesNotContain(realAValue, responseBody);
+            Assert.DoesNotContain(realTValue, requestBody);
+            Assert.DoesNotContain(realTValue, requestBody);
+
+            // assert that the new value has been dropped in where we expect it
+            Assert.Contains(genericAValue, targetEntry.RequestUri);
+            Assert.Contains(genericTValue, responseBody);
+            Assert.Contains(genericAValue, locationHeaderValue);
+            Assert.Contains(genericTValue, locationHeaderValue);
+        }
+
         [Fact]
         public void ReplaceRequestSubscriptionId()
         {
-            // tests successfully replacement
+            // TODO: tests successfully replacement
         }
 
         [Fact]
         public void ReplaceRequestSubscriptionIdNoAction()
         {
-            // successful sanitize, no action necessary
+            // TODO: successful sanitize, no action necessary
         }
 
         [Fact]

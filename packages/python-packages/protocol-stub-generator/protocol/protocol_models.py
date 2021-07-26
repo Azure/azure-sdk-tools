@@ -761,11 +761,8 @@ class ProtocolOperationView(FormattingClass):
                     self.add_new_line(1)
                     object_name = None
                     new_req = {}
-                    for i in self.parameters:
-                        if any(j in i.type for j in R_TYPE):
-                            pass
-                        else:
-                            object_name = i.type
+                    if not any(j in self.parameters[0].type for j in R_TYPE):
+                        object_name = self.parameters[0].type
                     if object_name:
                         object_name = object_name.replace("[]", "")
                         new_req[object_name] = self.json_request

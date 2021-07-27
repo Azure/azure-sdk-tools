@@ -1,8 +1,12 @@
 apiVersion: v2
-name: network_example
+name: network-example
 description: An example stress test chart with network chaos
-version: 0.1.0
+version: 0.1.1
 appVersion: v0.1
+annotations:
+  stressTest: 'true'
+  namespace: 'examples'
+  example: 'true'
 
 dependencies:
 - name: stress-test-addons

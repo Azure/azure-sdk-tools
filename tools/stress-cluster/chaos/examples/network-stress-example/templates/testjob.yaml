@@ -8,7 +8,7 @@ metadata:
 spec:
   containers:
     - name: network-example
-      image: stresstestregistry.azurecr.io/example/networkexample:v1
+      image: stresstestregistry.azurecr.io/examples/network-stress-example:v1
       command: ["bash", "poll.sh"]
       {{- include "stress-test-addons.container-env" . | nindent 6 }}
 {{- end -}}

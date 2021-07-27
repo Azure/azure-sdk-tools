@@ -1,0 +1,72 @@
+pr: none
+
+trigger: none
+
+parameters:
+  - name: Subscription
+    type: string
+    default: 2cd617ea-1866-46b1-90e3-fffb087ebf9b
+  - name: Environment
+    type: string
+    default: prod
+  - name: ClusterName
+    type: string
+    default: stress-prod
+  - name: ClusterGroup
+    type: string
+    default: rg-stress-test-cluster-prod
+  - name: RegistryName
+    type: string
+    default: stressprodregistry
+
+jobs:
+- job: ReleaseStressTests
+  strategy:
+    matrix:
+      examples:
+        Repository: Azure/azure-sdk-tools
+        Filters: '@{ "example" = "true" }'
+      javascript:
+        Repository: Azure/azure-sdk-for-js
+        Filters: '@{}'
+      java:
+        Repository: Azure/azure-sdk-for-java
+        Filters: '@{}'
+      net:
+        Repository: Azure/azure-sdk-for-net
+        Filters: '@{}'
+      python:
+        Repository: Azure/azure-sdk-for-python
+        Filters: '@{}'
+  pool:
+    name: 'azsdk-pool-mms-ubuntu-2004-general'
+    vmImage: 'MMSUbuntu20.04'
+  steps:
+    - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
+      parameters:
+        Repositories:
+          - Name: Azure/azure-sdk-tools
+            WorkingDirectory: $(System.DefaultWorkingDirectory)/Azure/azure-sdk-tools
+          - Name: $(Repository)
+            WorkingDirectory: $(System.DefaultWorkingDirectory)/$(Repository)
+        Paths:
+          - '!sdk/**/test-recordings'
+          - '!sdk/**/session-records'
+          - '!sdk/**/SessionRecords'
+
+    - task: AzureCLI@2
+      displayName: Azure CLI
+      inputs:
+        azureSubscription: ${{ parameters.Subscription }}
+        scriptType: pscore
+        scriptLocation: $(System.DefaultWorkingDirectory)/Azure/azure-sdk-tools/tools/stress-cluster/scripts/deploy_stress_tests.ps1
+        arguments:
+          -searchDirectory $(System.DefaultWorkingDirectory)/$(Repository) `
+          -filters $(Filters) `
+          -environment ${{ parameters.Environment }} `
+          -uploadToRegistry ${{ parameters.RegistryName }} `
+          -repository $(Agent.JobName) `
+          -deployId $(Build.BuildNumber) `
+          -subscription ${{ parameters.Subscription }} `
+          -clusterName ${{ parameters.ClusterName }} `
+          -clusterGroup ${{ parameters.ClusterGroup }}

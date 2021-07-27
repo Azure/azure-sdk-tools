@@ -1073,7 +1073,7 @@ def format_punctuation(self, json_request, indent, inner_model, i):
             self.add_comment(None, "};", None)
     return inner_model
 
-def list_format(self, json_request, yaml, not_first, indent, name, inner_model):
+def list_format(self, json_request, yaml, indent, name, inner_model):
     no_list = True
     if isinstance(json_request, list):
         for i in range(0, len(json_request)):

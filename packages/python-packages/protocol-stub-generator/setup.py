@@ -15,7 +15,7 @@ with open(os.path.join("protocol", "_version.py"), "r") as fd:
 if not version:
     raise RuntimeError("Cannot find version information")
 
-with open("README.md", encoding="utf-8") as f:
+with open("README.md") as f:
     long_description = f.read()
 
 setup(
@@ -29,7 +29,7 @@ setup(
     author_email="azuresdkengsysadmins@microsoft.com",
     license="MIT License",
     packages=find_packages(),
-    install_requires=["astroid","pyyaml"],
+    install_requires=["astroid","pyyaml","jinja2"],
     python_requires=">=3.4.0",
     entry_points={
         "console_scripts": [

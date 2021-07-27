@@ -955,6 +955,7 @@ def dict_format(self, json_request, yaml, not_first, indent, inner_model, no_lis
                             )
                         )
                     else:
+                        optional = ""
                         if index != -1:
                             optional = "?"
                         self.add_comment(
@@ -970,6 +971,7 @@ def dict_format(self, json_request, yaml, not_first, indent, inner_model, no_lis
                 else:
                     if len(param) >= 2:
                         param[0] = format_param_type(param[0])
+                        optional = ""
                         if index != -1:
                             optional = "?"
                         json_request[i] = i + optional + " : " + param[0] + ";"
@@ -1083,6 +1085,7 @@ def list_format(self, json_request, yaml, indent, name, inner_model):
                 param = json_request[i].split()
                 if len(param) >= 2:
                     param[0] = format_param_type(param[0])
+                    optional = ""
                     if index != -1:
                         optional = "?"
                     json_request[i] = optional + " : " + param[0] + "[];"

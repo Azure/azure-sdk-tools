@@ -9,7 +9,6 @@ sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 from autorest_vendor.autorest.codegen.models import (
     RequestBuilder,
     CodeModel,
-    request_builder,
     build_schema,
     Operation,
 )

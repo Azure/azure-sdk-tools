@@ -6,7 +6,7 @@
 from typing import Any, Dict, List
 from .base_model import BaseModel
 from .request_builder import RequestBuilder
-from .imports import FileImport, ImportType
+from .imports import FileImport
 
 class Rest(BaseModel):
     """Everything that goes into the request_builders
@@ -23,7 +23,6 @@ class Rest(BaseModel):
         file_import = FileImport()
         for request_builder in self.request_builders:
             file_import.merge(request_builder.imports())
-        file_import.add_from_import("msrest", "Serializer", ImportType.AZURECORE)
         return file_import
 
     @classmethod

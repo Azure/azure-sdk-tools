@@ -58,18 +58,9 @@ class CodeModel:  # pylint: disable=too-many-instance-attributes
     def __init__(
         self,
         options: Dict[str, Any],
-        *,
-        show_builders: Optional[bool] = False,
-        show_models: Optional[bool] = True,
-        show_operations: Optional[bool] = True,
-        show_send_request: Optional[bool] = False,
-        only_path_and_body_params_positional: Optional[bool] = False,
     ) -> None:
-        self.rest_layer_name = "rest" if show_builders else "_rest"
-        self.send_request_name = "send_request" if show_send_request else "_send_request"
-        self.show_models = show_models
-        self.show_operations = show_operations
-        self.only_path_and_body_params_positional = only_path_and_body_params_positional
+        self.send_request_name = "send_request" if options['show_send_request'] else "_send_request"
+        self.rest_layer_name = "rest" if options["builders_visibility"] == "public" else "_rest"
         self.options = options
         self.module_name: str = ""
         self.class_name: str = ""

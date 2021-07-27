@@ -157,7 +157,7 @@ class Operation(BaseBuilder):  # pylint: disable=too-many-public-methods, too-ma
             excp.status_codes for excp in self.status_code_exceptions
         ]))
 
-    def _imports_shared(self) -> FileImport:
+    def _imports_shared(self, async_mode: bool) -> FileImport: # pylint: disable=unused-argument
         file_import = FileImport()
         file_import.add_from_import("typing", "Any", ImportType.STDLIB, TypingSection.CONDITIONAL)
         for param in self.parameters.method:
@@ -178,10 +178,10 @@ class Operation(BaseBuilder):  # pylint: disable=too-many-public-methods, too-ma
 
 
     def imports_for_multiapi(self, code_model, async_mode: bool) -> FileImport:  # pylint: disable=unused-argument
-        return self._imports_shared()
+        return self._imports_shared(async_mode)
 
     def imports(self, code_model, async_mode: bool) -> FileImport:
-        file_import = self._imports_shared()
+        file_import = self._imports_shared(async_mode)
 
         # Exceptions
         file_import.add_from_import("azure.core.exceptions", "map_error", ImportType.AZURECORE)
@@ -208,22 +208,25 @@ class Operation(BaseBuilder):  # pylint: disable=too-many-public-methods, too-ma
         if True:  # pylint: disable=using-constant-test
             file_import.add_import("warnings", ImportType.STDLIB)
 
-        operation_group_name = self.request_builder.operation_group_name
-        rest_import_path = "..." if async_mode else ".."
-        if operation_group_name:
-            file_import.add_from_import(
-                f"{rest_import_path}{code_model.rest_layer_name}",
-                name_import=operation_group_name,
-                import_type=ImportType.LOCAL,
-                alias=f"rest_{operation_group_name}"
-            )
-        else:
-            file_import.add_from_import(
-                rest_import_path,
-                code_model.rest_layer_name,
-                import_type=ImportType.LOCAL,
-                alias="rest"
-            )
+        if code_model.options["builders_visibility"] != "embedded":
+            operation_group_name = self.request_builder.operation_group_name
+            rest_import_path = "..." if async_mode else ".."
+            if operation_group_name:
+                file_import.add_from_import(
+                    f"{rest_import_path}{code_model.rest_layer_name}",
+                    name_import=operation_group_name,
+                    import_type=ImportType.LOCAL,
+                    alias=f"rest_{operation_group_name}"
+                )
+            else:
+                file_import.add_from_import(
+                    rest_import_path,
+                    code_model.rest_layer_name,
+                    import_type=ImportType.LOCAL,
+                    alias="rest"
+                )
+        if code_model.options["builders_visibility"] == "embedded" and not async_mode:
+            file_import.merge(self.request_builder.imports())
         return file_import
 
     def convert_multiple_media_type_parameters(self) -> None:

@@ -93,8 +93,7 @@ class Parameter(BaseModel):  # pylint: disable=too-many-instance-attributes, too
     def __hash__(self) -> int:
         return hash(self.serialized_name)
 
-    @staticmethod
-    def serialize_line(function_name: str, parameters_line: str):
+    def serialize_line(self, function_name: str, parameters_line: str):  # pylint: disable=no-self-use
         return f'self._serialize.{function_name}({parameters_line})'
 
     def build_serialize_data_call(self, function_name: str) -> str:

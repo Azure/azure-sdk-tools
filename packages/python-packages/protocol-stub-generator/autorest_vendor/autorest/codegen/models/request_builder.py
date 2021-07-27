@@ -69,6 +69,7 @@ class RequestBuilder(BaseBuilder):
         file_import.add_from_import(
             "typing", "Any", ImportType.STDLIB, typing_section=TypingSection.CONDITIONAL
         )
+        file_import.add_from_import("msrest", "Serializer", ImportType.AZURECORE)
         return file_import
 
     @staticmethod

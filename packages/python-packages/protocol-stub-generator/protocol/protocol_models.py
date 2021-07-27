@@ -832,7 +832,7 @@ def request_builder(
     if inner_model and not self.inner_model: self.inner_model = inner_model
     no_list = list_format(self, json_request, yaml, indent, name, inner_model)
 
-    not_first, indent, inner_model = dict_format(self, json_request, yaml, not_first, indent, inner_model, no_list,name)
+    dict_format(self, json_request, yaml, not_first, indent, inner_model, no_list,name)
 
 def dict_format(self, json_request, yaml, not_first, indent, inner_model, no_list,name):
     if isinstance(json_request, dict):
@@ -1018,7 +1018,6 @@ def dict_format(self, json_request, yaml, not_first, indent, inner_model, no_lis
                     no_list=no_list,
                 )
                 inner_model = format_punctuation(self, json_request, indent, inner_model, i)
-    return not_first,indent,inner_model
 
 def format_punctuation(self, json_request, indent, inner_model, i):
     if i == "str":

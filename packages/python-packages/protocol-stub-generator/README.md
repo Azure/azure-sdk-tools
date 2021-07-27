@@ -32,5 +32,5 @@
 
 ## Autorest Dependency 
 * Requests and Response Models Depend on Autorestv3: [Autorest.python](https://github.com/Azure/autorest.python/tree/prepare_request)
-* Commit: 51f578c
+* Commit: 3ca50e506c0f75f0f751aff39c69be7513c986e2
 

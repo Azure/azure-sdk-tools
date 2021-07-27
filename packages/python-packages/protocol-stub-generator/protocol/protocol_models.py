@@ -552,11 +552,7 @@ class ProtocolOperationView(FormattingClass):
         status_codes = []
 
         code = CodeModel(
-            show_builders=True,
-            show_models=True,
-            show_operations=True,
-            only_path_and_body_params_positional=True,
-            options={},
+            options={"show_models":True,"show_send_request":True,"builders_visibility":True},
         )
         request_builder = RequestBuilder.from_yaml(
             yaml_data["operationGroups"][op_group_num]["operations"][op_num],

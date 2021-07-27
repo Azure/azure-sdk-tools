@@ -770,7 +770,7 @@ class ProtocolOperationView(FormattingClass):
                     for m in self.inner_model:
                         if m:
                             if m.Value == "str":
-                                m.Value == "string"
+                                m.Value = "string"
                             self.Tokens.append(m)
                     self.add_new_line(1)
 

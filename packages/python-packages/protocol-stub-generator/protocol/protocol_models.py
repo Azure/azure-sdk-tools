@@ -945,6 +945,7 @@ def dict_format(self, json_request, yaml, not_first, indent, inner_model, no_lis
                     m_type = format_map_type(m_type)
                     if not key: key = self.parameters[0].name
                     if inner_model:
+                        optional = ""
                         if index != -1:
                             optional = "?"
                         inner_model.append(

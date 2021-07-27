@@ -1,18 +1,20 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
-from typing import Any, Dict
-from ._token import Token
-from ._token_kind import TokenKind
+import os
 import re
-import os, sys
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
+import sys
+
 from autorest_vendor.autorest.codegen.models import (
     RequestBuilder,
     CodeModel,
     build_schema,
     Operation,
 )
+from ._token import Token
+from ._token_kind import TokenKind
+from typing import Any, Dict
 
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 
 JSON_FIELDS = [
     "Name",
@@ -384,6 +386,131 @@ class ProtocolOperationGroupView(FormattingClass):
             obj_dict[key] = self.__dict__[key]
         return obj_dict
 
+def get_description(yaml_data, op_group_num, op_num):
+    description = yaml_data["operationGroups"][op_group_num]["operations"][op_num][
+        "language"
+    ]["default"].get("summary")
+    if description is None:
+        description = yaml_data["operationGroups"][op_group_num]["operations"][
+            op_num
+        ]["language"]["default"]["description"]
+
+    return description
+
+def get_models(
+    yaml_data,
+    op_group_num,
+    op_num,
+    namespace,
+    param,
+    code,
+    request_builder,
+    response_builder,
+):
+    json_request = {}
+    json_response = {}
+
+    for j in range(
+        0,
+        len(
+            yaml_data["operationGroups"][op_group_num]["operations"][op_num][
+                "requests"
+            ]
+        ),
+    ):
+        for i in range(
+            0,
+            len(
+                yaml_data["operationGroups"][op_group_num]["operations"][op_num][
+                    "requests"
+                ][j].get("signatureParameters", [])
+            ),
+        ):
+            param.append(
+                ProtocolParameterView.from_yaml(
+                    yaml_data["operationGroups"][op_group_num]["operations"][
+                        op_num
+                    ]["requests"][j],
+                    i,
+                    namespace,
+                )
+            )
+            if (
+                build_schema(
+                    yaml_data=request_builder.parameters.json_body, code_model=code
+                ).serialization_type
+                != "IO"
+            ):
+                json_request = build_schema(
+                    yaml_data=request_builder.parameters.json_body, code_model=code
+                ).get_json_template_representation()
+            for i in response_builder.responses:
+                if i.schema:
+                    if isinstance(i.schema, dict):
+                        if (
+                            build_schema(
+                                yaml_data=i.schema, code_model=code
+                            ).serialization_type
+                            != "IO"
+                        ):
+                            json_response = build_schema(
+                                yaml_data=i.schema, code_model=code
+                            ).get_json_template_representation()
+                    else:
+                        json_response = i.schema.get_json_template_representation(
+                            code_model=code
+                        )
+
+    for i in range(
+        0,
+        len(
+            yaml_data["operationGroups"][op_group_num]["operations"][op_num][
+                "signatureParameters"
+            ]
+        ),
+    ):
+        param.append(
+            ProtocolParameterView.from_yaml(
+                yaml_data["operationGroups"][op_group_num]["operations"][op_num],
+                i,
+                namespace,
+            )
+        )
+
+    return json_request, json_response
+
+
+def get_status_codes(yaml_data, op_group_num, op_num, status_codes):
+    for i in range(
+        0,
+        len(
+            yaml_data["operationGroups"][op_group_num]["operations"][op_num].get(
+                "responses"
+            )
+        ),
+    ):
+        status_codes.append(
+            yaml_data["operationGroups"][op_group_num]["operations"][op_num][
+                "responses"
+            ][i]["protocol"]["http"]["statusCodes"]
+        )
+    if yaml_data["operationGroups"][op_group_num]["operations"][op_num].get(
+        "exceptions", []
+    ):
+        status_codes.append("/")
+    for i in range(
+        0,
+        len(
+            yaml_data["operationGroups"][op_group_num]["operations"][op_num].get(
+                "exceptions", []
+            )
+        ),
+    ):
+        status_codes.append(
+            yaml_data["operationGroups"][op_group_num]["operations"][op_num][
+                "exceptions"
+            ][i]["protocol"]["http"]["statusCodes"]
+        )
 
 class ProtocolOperationView(FormattingClass):
     def __init__(
@@ -439,7 +566,7 @@ class ProtocolOperationView(FormattingClass):
             yaml_data["operationGroups"][op_group_num]["operations"][op_num]
         )
 
-        cls.get_status_codes(yaml_data, op_group_num, op_num, status_codes)
+        get_status_codes(yaml_data, op_group_num, op_num, status_codes)
 
         if yaml_data["operationGroups"][op_group_num]["operations"][op_num].get(
             "extensions"
@@ -461,7 +588,7 @@ class ProtocolOperationView(FormattingClass):
             paging_op,
         )
 
-        json_request, json_response = cls.get_models(
+        json_request, json_response = get_models(
             yaml_data,
             op_group_num,
             op_num,
@@ -472,7 +599,7 @@ class ProtocolOperationView(FormattingClass):
             response_builder,
         )
 
-        description = cls.get_description(yaml_data, op_group_num, op_num)
+        description = get_description(yaml_data, op_group_num, op_num)
 
         return cls(
             operation_group=yaml_data["operationGroups"][op_group_num]["language"][
@@ -492,135 +619,6 @@ class ProtocolOperationView(FormattingClass):
             status_codes=status_codes,
             yaml=yaml_data["operationGroups"][op_group_num]["operations"][op_num],
         )
-
-    @classmethod
-    def get_description(cls, yaml_data, op_group_num, op_num):
-        description = yaml_data["operationGroups"][op_group_num]["operations"][op_num][
-            "language"
-        ]["default"].get("summary")
-        if description is None:
-            description = yaml_data["operationGroups"][op_group_num]["operations"][
-                op_num
-            ]["language"]["default"]["description"]
-
-        return description
-
-    @classmethod
-    def get_models(
-        cls,
-        yaml_data,
-        op_group_num,
-        op_num,
-        namespace,
-        param,
-        code,
-        request_builder,
-        response_builder,
-    ):
-        json_request = {}
-        json_response = {}
-
-        for j in range(
-            0,
-            len(
-                yaml_data["operationGroups"][op_group_num]["operations"][op_num][
-                    "requests"
-                ]
-            ),
-        ):
-            for i in range(
-                0,
-                len(
-                    yaml_data["operationGroups"][op_group_num]["operations"][op_num][
-                        "requests"
-                    ][j].get("signatureParameters", [])
-                ),
-            ):
-                param.append(
-                    ProtocolParameterView.from_yaml(
-                        yaml_data["operationGroups"][op_group_num]["operations"][
-                            op_num
-                        ]["requests"][j],
-                        i,
-                        namespace,
-                    )
-                )
-                if (
-                    build_schema(
-                        yaml_data=request_builder.parameters.json_body, code_model=code
-                    ).serialization_type
-                    != "IO"
-                ):
-                    json_request = build_schema(
-                        yaml_data=request_builder.parameters.json_body, code_model=code
-                    ).get_json_template_representation()
-                for i in response_builder.responses:
-                    if i.schema:
-                        if isinstance(i.schema, dict):
-                            if (
-                                build_schema(
-                                    yaml_data=i.schema, code_model=code
-                                ).serialization_type
-                                != "IO"
-                            ):
-                                json_response = build_schema(
-                                    yaml_data=i.schema, code_model=code
-                                ).get_json_template_representation()
-                        else:
-                            json_response = i.schema.get_json_template_representation(
-                                code_model=code
-                            )
-
-        for i in range(
-            0,
-            len(
-                yaml_data["operationGroups"][op_group_num]["operations"][op_num][
-                    "signatureParameters"
-                ]
-            ),
-        ):
-            param.append(
-                ProtocolParameterView.from_yaml(
-                    yaml_data["operationGroups"][op_group_num]["operations"][op_num],
-                    i,
-                    namespace,
-                )
-            )
-
-        return json_request, json_response
-
-    @classmethod
-    def get_status_codes(cls, yaml_data, op_group_num, op_num, status_codes):
-        for i in range(
-            0,
-            len(
-                yaml_data["operationGroups"][op_group_num]["operations"][op_num].get(
-                    "responses"
-                )
-            ),
-        ):
-            status_codes.append(
-                yaml_data["operationGroups"][op_group_num]["operations"][op_num][
-                    "responses"
-                ][i]["protocol"]["http"]["statusCodes"]
-            )
-        if yaml_data["operationGroups"][op_group_num]["operations"][op_num].get(
-            "exceptions", []
-        ):
-            status_codes.append("/")
-        for i in range(
-            0,
-            len(
-                yaml_data["operationGroups"][op_group_num]["operations"][op_num].get(
-                    "exceptions", []
-                )
-            ),
-        ):
-            status_codes.append(
-                yaml_data["operationGroups"][op_group_num]["operations"][op_num][
-                    "exceptions"
-                ][i]["protocol"]["http"]["statusCodes"]
-            )
 
     def get_tokens(self):
         return self.Tokens

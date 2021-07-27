@@ -830,7 +830,7 @@ def request_builder(
     self, json_request, yaml, not_first, indent=4, name="", inner_model=[], no_list=True
 ):
     if inner_model and not self.inner_model: self.inner_model = inner_model
-    no_list = list_format(self, json_request, yaml, not_first, indent, name, inner_model)
+    no_list = list_format(self, json_request, yaml, indent, name, inner_model)
 
     not_first, indent, inner_model = dict_format(self, json_request, yaml, not_first, indent, inner_model, no_list,name)
 

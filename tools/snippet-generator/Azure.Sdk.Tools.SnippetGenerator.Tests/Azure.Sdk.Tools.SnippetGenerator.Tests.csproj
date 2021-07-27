@@ -11,7 +11,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\SnippetGenerator.csproj" />
+      <ProjectReference Include="..\Azure.Sdk.Tools.SnippetGenerator\Azure.Sdk.Tools.SnippetGenerator.csproj" />
     </ItemGroup>
 
 </Project>

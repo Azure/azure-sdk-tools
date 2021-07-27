@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using NUnit.Framework;
 
-namespace SnippetGenerator.Tests
+namespace Azure.Sdk.Tools.SnippetGenerator.Tests
 {
     public class Tests
     {

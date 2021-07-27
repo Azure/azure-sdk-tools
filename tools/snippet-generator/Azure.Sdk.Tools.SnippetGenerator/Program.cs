@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 using McMaster.Extensions.CommandLineUtils;
 using Microsoft.CodeAnalysis.Options;
 
-namespace SnippetGenerator
+namespace Azure.Sdk.Tools.SnippetGenerator
 {
     public class Program
     {

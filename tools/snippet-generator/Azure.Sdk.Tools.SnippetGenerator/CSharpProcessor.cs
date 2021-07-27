@@ -7,7 +7,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace SnippetGenerator
+namespace Azure.Sdk.Tools.SnippetGenerator
 {
     public class CSharpProcessor
     {

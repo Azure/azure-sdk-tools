@@ -14,7 +14,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 
-namespace SnippetGenerator
+namespace Azure.Sdk.Tools.SnippetGenerator
 {
     public class DirectoryProcessor
     {

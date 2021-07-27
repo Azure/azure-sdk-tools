@@ -25,7 +25,7 @@ After successful installation, run the tool:
 
 ### Via Docker Image
 
-Feel free to build the docker file locally within working directory `/tools/test-proxy/docker/`. All required resources are located within.
+Feel free to build the docker file locally within working directory `/tools/test-proxy/docker/`. All required resources are located within. There are additional helpful tips regarding the docker build and install in the [docker readme](../docker/README)
 
 ```powershell
 > docker build . -t test-proxy
@@ -35,8 +35,6 @@ Feel free to build the docker file locally within working directory `/tools/test
 Or, leverage the azure sdk eng sys container registry.
 
 ```powershell
-> az login
-> az acr login --name azsdkengsys
 > docker run -v <your-volume-name-or-location>:/etc/testproxy -p 5001:5001 -p 5000:5000 azsdkengsys.azurecr.io/engsys/ubuntu_testproxy_server:latest
 ```
 

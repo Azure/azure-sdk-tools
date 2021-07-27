@@ -28,18 +28,18 @@ namespace APIViewWeb.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> UploadAutoReview([FromForm] IFormFile file, string label)
+        public async Task<ActionResult> UploadAutoReview([FromForm] IFormFile file, string label, bool compareAllRevisions = false)
         {
             if (file != null)
             {
                 using (var openReadStream = file.OpenReadStream())
                 {
-                    var review = await _reviewManager.CreateMasterReviewAsync(User, file.FileName, label, openReadStream, false);
-                    if(review != null)
+                    var reviewRevision = await _reviewManager.CreateMasterReviewAsync(User, file.FileName, label, openReadStream, compareAllRevisions);
+                    if(reviewRevision != null)
                     {
-                        var reviewUrl = $"{this.Request.Scheme}://{this.Request.Host}/Assemblies/Review/{review.ReviewId}";
+                        var reviewUrl = $"{this.Request.Scheme}://{this.Request.Host}/Assemblies/Review/{reviewRevision.Review.ReviewId}";
                         //Return 200 OK if last revision is approved and 201 if revision is not yet approved.
-                        var result = review.Revisions.Last().Approvers.Count > 0 ? Ok(reviewUrl) : StatusCode(statusCode: StatusCodes.Status201Created, reviewUrl);
+                        var result = reviewRevision.IsApproved ? Ok(reviewUrl) : StatusCode(statusCode: StatusCodes.Status201Created, reviewUrl);
                         return result;
                     }
                 }
@@ -62,7 +62,7 @@ namespace APIViewWeb.Controllers
             {
                 _logger.LogInformation("Found review ID " + review.ReviewId + " for package " + packageName);
                 // Return 200 OK for approved review and 201 for review in pending status
-                return review.Revisions.LastOrDefault().Approvers.Count > 0 ? Ok() : StatusCode(statusCode: StatusCodes.Status201Created);
+                return review.Revisions.LastOrDefault().IsApproved ? Ok() : StatusCode(statusCode: StatusCodes.Status201Created);
             }
 
             throw new Exception("Automatic review is not found for package " + packageName);

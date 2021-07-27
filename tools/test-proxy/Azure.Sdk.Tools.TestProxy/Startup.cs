@@ -10,10 +10,7 @@ using Microsoft.Extensions.Hosting;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using System.CommandLine;
-using System.CommandLine.Invocation;
 using System.IO;
-using Newtonsoft.Json;
 
 namespace Azure.Sdk.Tools.TestProxy
 {
@@ -66,7 +63,8 @@ namespace Azure.Sdk.Tools.TestProxy
                     {
                         builder.AllowAnyHeader()
                                .AllowAnyMethod()
-                               .AllowAnyOrigin();
+                               .AllowAnyOrigin()
+                               .WithExposedHeaders("*");
                     });
             });
 

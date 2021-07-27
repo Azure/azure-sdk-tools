@@ -31,6 +31,11 @@ namespace Azure.Sdk.Tools.TestProxy
             // so far, nothing necessary here
         }
 
+        [HttpGet]
+        public void Reset()
+        {
+            _recordingHandler.SetDefaultExtensions();
+        }
 
         [HttpGet]
         public void IsAlive()

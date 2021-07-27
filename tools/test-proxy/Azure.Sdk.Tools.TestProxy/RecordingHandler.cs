@@ -26,6 +26,8 @@ namespace Azure.Sdk.Tools.TestProxy
         public RecordingHandler(string targetDirectory)
         {
             RepoPath = targetDirectory;
+
+            SetDefaultExtensions();
         }
 
         private static readonly RecordedTestSanitizer defaultSanitizer = new RecordedTestSanitizer();
@@ -42,16 +44,11 @@ namespace Azure.Sdk.Tools.TestProxy
             "Content-Type",
         };
 
-        public List<RecordedTestSanitizer> Sanitizers = new List<RecordedTestSanitizer>
-        {
-            new RecordedTestSanitizer()
-        };
+        public List<RecordedTestSanitizer> Sanitizers { get; set; }
 
-        public List<ResponseTransform> Transforms = new List<ResponseTransform>
-        {
-            new StorageRequestIdTransform(),
-            new ClientIdTransform()
-        };
+        public List<ResponseTransform> Transforms { get; set; }
+
+        public RecordMatcher Matcher { get; set; }
 
         public readonly ConcurrentDictionary<string, (string File, ModifiableRecordSession ModifiableSession)> RecordingSessions
             = new ConcurrentDictionary<string, (string, ModifiableRecordSession)>();
@@ -61,8 +58,6 @@ namespace Azure.Sdk.Tools.TestProxy
 
         public readonly ConcurrentDictionary<string, ModifiableRecordSession> PlaybackSessions
             = new ConcurrentDictionary<string, ModifiableRecordSession>();
-
-        public RecordMatcher Matcher = new RecordMatcher();
         #endregion
 
         #region recording functionality
@@ -403,6 +398,23 @@ namespace Azure.Sdk.Tools.TestProxy
         #endregion
 
         #region common functions
+
+        public void SetDefaultExtensions()
+        {
+            Sanitizers = new List<RecordedTestSanitizer>
+            {
+                new RecordedTestSanitizer()
+            };
+
+            Transforms = new List<ResponseTransform>
+            {
+                new StorageRequestIdTransform(),
+                new ClientIdTransform()
+            };
+
+            Matcher = new RecordMatcher();
+        }
+
         public string GetRecordingPath(string file)
         {
             return Path.Join(RepoPath, file);

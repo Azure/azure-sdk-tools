@@ -50,18 +50,6 @@ stages:
           vmImage: 'vs2017-win2016'
 
         steps:
-
-          - task: DotNetCoreInstaller@2
-            displayName: 'Use .NET Core sdk $(DotNetCoreVersion)'
-            inputs:
-              version: '$(DotNetCoreVersion)'
-
-          - task: DotNetCoreInstaller@2
-            displayName: 'Use .NET Core $(DotNetRuntimeVersion)'
-            inputs:
-              packageType: runtime
-              version: '$(DotNetRuntimeVersion)'
-
           - task: NodeTool@0
             inputs:
               versionSpec: '$(NodeVersion)'

@@ -1019,7 +1019,7 @@ def dict_format(self, json_request, yaml, not_first, indent, inner_model, no_lis
 
 def format_punctuation(self, json_request, indent, inner_model, i):
     if i == "str":
-        pass
+        return inner_model
     elif inner_model and isinstance(json_request[i], list):
         if isinstance(json_request[i], list) and len(json_request[i])>1:
                 inner_model.append(Token(" ", TokenKind.Newline))

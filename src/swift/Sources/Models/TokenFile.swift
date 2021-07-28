@@ -456,7 +456,7 @@ class TokenFile: Codable {
 
     private func process(_ decl: FunctionDeclaration, overridingAccess: AccessLevelModifier? = nil) -> Bool {
         let accessLevel = decl.modifiers.accessLevel ?? overridingAccess ?? .internal
-        let defId = decl.textDescription
+        let defId = decl.name.textDescription
         let name = decl.name.textDescription
         return processFunction(name: name, defId: defId, attributes: decl.attributes, modifiers: decl.modifiers, accessLevel: accessLevel, signature: decl.signature, genericParam: decl.genericParameterClause, genericWhere: decl.genericWhereClause)
     }

@@ -98,7 +98,7 @@ public final class ThirdClass: SomeOtherProtocol {
         return ""
     }
 
-    public init?(withName name: String) throws {
+    public init?(withName name: String = "Great Name!") throws {
         return nil
     }
 

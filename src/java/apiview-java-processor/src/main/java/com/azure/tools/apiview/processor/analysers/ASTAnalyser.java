@@ -259,9 +259,14 @@ public class ASTAnalyser implements Analyser {
     }
 
     private void processSingleFile(ScanClass scanClass) {
-        if (scanClass.getPath().toString().endsWith("pom.xml")) {
-            // we want to represent the pom.xml file in short form
-            tokeniseMavenPom(apiListing.getMavenPom());
+        final String path = scanClass.getPath().toString();
+        final String artifactId = apiListing.getMavenPom().getArtifactId();
+        if (path.endsWith("/pom.xml")) {
+            // We only tokenise the maven pom related to the library, and not any other shaded maven poms
+            if (path.endsWith(artifactId + "/pom.xml")) {
+                // we want to represent the pom.xml file in short form
+                tokeniseMavenPom(apiListing.getMavenPom());
+            }
         } else {
             new ClassOrInterfaceVisitor().visit(scanClass.compilationUnit, null);
         }
@@ -1172,8 +1177,10 @@ public class ASTAnalyser implements Analyser {
         }
 
         private void getClassType(Type type) {
-            if (type.isPrimitiveType() || type.isVoidType()) {
-                addToken(new Token(TYPE_NAME, type.toString()));
+            if (type.isPrimitiveType()) {
+                addToken(new Token(TYPE_NAME, type.asPrimitiveType().toString()));
+            } else if (type.isVoidType()) {
+                addToken(new Token(TYPE_NAME, "void"));
             } else if (type.isReferenceType()) {
                 // Array Type
                 type.ifArrayType(arrayType -> {

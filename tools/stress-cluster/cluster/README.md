@@ -153,7 +153,7 @@ helm dependency update ./kubernetes/stress-infrastructure
 helm install stress-infra -n stress-infra --create-namespace ./kubernetes/stress-infrastructure
 ```
 
-Copy the deployment outputs to `./kubernetes/environments/<environment yaml file>` and check in the changes.
+Update the values in `./kubernetes/stress-test-addons/values.yaml` to match the deployment outputs and check in the changes.
 
 ```
 az deployment sub show -o json -n <your name> --query properties.outputs

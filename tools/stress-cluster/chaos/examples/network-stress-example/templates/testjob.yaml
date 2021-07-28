@@ -9,6 +9,6 @@ spec:
   containers:
     - name: network-example
       command: ["bash", "poll.sh"]
-      image: {{ default "stresstestregistry" .Values.registry }}.azurecr.io/{{ default "images" .Values.repository }}/network-stress-example:v1
+      image: {{ default "" .Values.repository }}/network-stress-example:{{ default "v1" .Values.tag }}
       {{- include "stress-test-addons.container-env" . | nindent 6 }}
 {{- end -}}

@@ -12,55 +12,80 @@ parameters:
   - name: ClusterGroup
     type: string
     default: rg-stress-test-cluster-prod
+  - name: TestRepository
+    displayName: Stress Test Repository
+    type: string
+    default: all
+    values:
+    - all
+    - examples
+    - javascript
+    - java
+    - net
+    - python
+    - go
 
 jobs:
-- job: ReleaseStressTests
+- job:
   strategy:
     matrix:
-      examples:
-        Repository: Azure/azure-sdk-tools
-        Filters: '@{ "example" = "true" }'
-      javascript:
-        Repository: Azure/azure-sdk-for-js
-        Filters: '@{}'
-      java:
-        Repository: Azure/azure-sdk-for-java
-        Filters: '@{}'
-      net:
-        Repository: Azure/azure-sdk-for-net
-        Filters: '@{}'
-      python:
-        Repository: Azure/azure-sdk-for-python
-        Filters: '@{}'
+      ${{ if or(eq(parameters.TestRepository, 'examples'), eq(parameters.TestRepository, 'all')) }}:
+        examples:
+          Repository: Azure/azure-sdk-tools
+          Filters: '@{ "example" = "true" }'
+      ${{ if or(eq(parameters.TestRepository, 'javascript'), eq(parameters.TestRepository, 'all')) }}:
+        javascript:
+          Repository: Azure/azure-sdk-for-js
+          Filters: '@{}'
+      ${{ if or(eq(parameters.TestRepository, 'java'), eq(parameters.TestRepository, 'all')) }}:
+        java:
+          Repository: Azure/azure-sdk-for-java
+          Filters: '@{}'
+      ${{ if or(eq(parameters.TestRepository, 'net'), eq(parameters.TestRepository, 'all')) }}:
+        net:
+          Repository: Azure/azure-sdk-for-net
+          Filters: '@{}'
+      ${{ if or(eq(parameters.TestRepository, 'python'), eq(parameters.TestRepository, 'all')) }}:
+        python:
+          Repository: Azure/azure-sdk-for-python
+          Filters: '@{}'
+      ${{ if or(eq(parameters.TestRepository, 'go'), eq(parameters.TestRepository, 'all')) }}:
+        go:
+          Repository: Azure/azure-sdk-for-go
+          Filters: '@{}'
   pool:
-    name: 'azsdk-pool-mms-ubuntu-2004-general'
-    vmImage: 'MMSUbuntu20.04'
+    vmImage: 'ubuntu-20.04'
+    #name: 'azsdk-pool-mms-ubuntu-2004-general'
+    #vmImage: 'MMSUbuntu20.04'
   steps:
     - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
       parameters:
         Repositories:
           - Name: Azure/azure-sdk-tools
+            Commitish: $(Build.SourceVersion)
             WorkingDirectory: $(System.DefaultWorkingDirectory)/Azure/azure-sdk-tools
           - Name: $(Repository)
+            Commitish: $(Build.SourceVersion)
             WorkingDirectory: $(System.DefaultWorkingDirectory)/$(Repository)
         Paths:
+          - '/tools'
           - '!sdk/**/test-recordings'
           - '!sdk/**/session-records'
           - '!sdk/**/SessionRecords'
 
     - task: AzureCLI@2
-      displayName: Azure CLI
+      displayName: Build and Deploy Stress Tests
       inputs:
         azureSubscription: ${{ parameters.Subscription }}
         scriptType: pscore
         scriptPath: $(System.DefaultWorkingDirectory)/Azure/azure-sdk-tools/tools/stress-cluster/scripts/deploy_stress_tests.ps1
         arguments:
-          -SearchDirectory $(System.DefaultWorkingDirectory)/$(Repository) `
-          -Filters $(Filters) `
-          -Environment ${{ parameters.Environment }} `
-          -Repository $(Agent.JobName) `
-          -PushImages `
-          -ClusterGroup ${{ parameters.ClusterGroup }} `
-          -Login `
-          -Subscription ${{ parameters.Subscription }} `
-          -DeployId $(Build.BuildNumber) `
+          -SearchDirectory '$(System.DefaultWorkingDirectory)/$(Repository)'
+          -Filters $(Filters)
+          -Environment '${{ parameters.Environment }}'
+          -Repository '$(Agent.JobName)'
+          -PushImages
+          -ClusterGroup '${{ parameters.ClusterGroup }}'
+          -Login
+          -Subscription '${{ parameters.Subscription }}'
+          -DeployId '$(Build.BuildNumber)'

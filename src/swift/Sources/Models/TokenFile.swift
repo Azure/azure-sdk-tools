@@ -613,20 +613,21 @@ class TokenFile: Codable {
     }
 
     private func handle(parameter: FunctionSignature.Parameter) {
-        // TODO: eliminate reliance on textDescription
-        let externalNameText = parameter.externalName.map { [$0.textDescription] } ?? []
-        let localNameText = parameter.localName.textDescription.isEmpty ? [] : [parameter.localName.textDescription]
-        let nameText = (externalNameText + localNameText).joined(separator: " ")
+        let name = parameter.externalName?.textDescription ?? parameter.localName.textDescription
         let typeModel = TypeModel(from: parameter.typeAnnotation)
-        let defaultText =
-            parameter.defaultArgumentClause.map { " = \($0.textDescription)" } ?? ""
-        let varargsText = parameter.isVarargs ? "..." : ""
-        member(name: nameText)
+        member(name: name)
         punctuation(":")
         whitespace()
         handle(typeModel: typeModel)
-        stringLiteral(defaultText)
-        text(varargsText)
+        if let defaultArgument = parameter.defaultArgumentClause {
+            whitespace()
+            punctuation("=")
+            whitespace()
+            stringLiteral(defaultArgument.textDescription)
+        }
+        if parameter.isVarargs {
+            text("...")
+        }
     }
 
     private func handle(modifiers: DeclarationModifiers) {

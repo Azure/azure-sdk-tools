@@ -8,7 +8,7 @@ trigger:
       - hotfix/*
   paths:
     include:
-      - tools/http-fault-injector
+      - tools/dotnet/Azure.ClientSdk.Analyzers
 
 pr:
   branches:
@@ -19,9 +19,9 @@ pr:
       - hotfix/*
   paths:
     include:
-      - tools/http-fault-injector
+      - src/dotnet/Azure.ClientSdk.Analyzers
 
 stages:
   - template: ../../eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
     parameters:
-      ToolDirectory: tools/http-fault-injector
+      ToolDirectory: src/dotnet/Azure.ClientSdk.Analyzers

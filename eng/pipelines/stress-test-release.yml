@@ -5,19 +5,13 @@ trigger: none
 parameters:
   - name: Subscription
     type: string
-    default: 2cd617ea-1866-46b1-90e3-fffb087ebf9b
+    default: 'Azure SDK Test Resources'
   - name: Environment
     type: string
     default: prod
-  - name: ClusterName
-    type: string
-    default: stress-prod
   - name: ClusterGroup
     type: string
     default: rg-stress-test-cluster-prod
-  - name: RegistryName
-    type: string
-    default: stressprodregistry
 
 jobs:
 - job: ReleaseStressTests
@@ -59,14 +53,14 @@ jobs:
       inputs:
         azureSubscription: ${{ parameters.Subscription }}
         scriptType: pscore
-        scriptLocation: $(System.DefaultWorkingDirectory)/Azure/azure-sdk-tools/tools/stress-cluster/scripts/deploy_stress_tests.ps1
+        scriptPath: $(System.DefaultWorkingDirectory)/Azure/azure-sdk-tools/tools/stress-cluster/scripts/deploy_stress_tests.ps1
         arguments:
-          -searchDirectory $(System.DefaultWorkingDirectory)/$(Repository) `
-          -filters $(Filters) `
-          -environment ${{ parameters.Environment }} `
-          -uploadToRegistry ${{ parameters.RegistryName }} `
-          -repository $(Agent.JobName) `
-          -deployId $(Build.BuildNumber) `
-          -subscription ${{ parameters.Subscription }} `
-          -clusterName ${{ parameters.ClusterName }} `
-          -clusterGroup ${{ parameters.ClusterGroup }}
+          -SearchDirectory $(System.DefaultWorkingDirectory)/$(Repository) `
+          -Filters $(Filters) `
+          -Environment ${{ parameters.Environment }} `
+          -Repository $(Agent.JobName) `
+          -PushImages `
+          -ClusterGroup ${{ parameters.ClusterGroup }} `
+          -Login `
+          -Subscription ${{ parameters.Subscription }} `
+          -DeployId $(Build.BuildNumber) `

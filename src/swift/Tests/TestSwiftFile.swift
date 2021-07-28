@@ -136,6 +136,10 @@ public struct SomeStruct: Codable, Equatable {
     static var text = "Hello, World!"
     public static var staticVar = "initial value"
     public let const = "value"
+
+    public func myMethod(takes type: Any) -> Any {
+        return "" as Any
+    }
 }
 
 // MARK: Test Generic Class

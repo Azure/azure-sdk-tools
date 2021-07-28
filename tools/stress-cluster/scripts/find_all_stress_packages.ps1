@@ -9,21 +9,27 @@ class StressTestPackageInfo {
     [string]$ReleaseName
 }
 
-function findStressPackages([string]$directory, [hashtable]$filters = @{}) {
+function FindStressPackages([string]$directory, [hashtable]$filters = @{}) {
     # Bare minimum filter for stress tests
     $filters['stressTest'] = 'true'
 
-    Get-ChildItem -Recurse -Filter 'Chart.yaml' -PipelineVariable chartFile $directory 
-      | % { parseChart $chartFile }
-      | ? { matchesAnnotations $_ $filters }
-      | % { NewStressTestPackageInfo $_ $chartFile }
+    $packages = @()
+    $chartFiles = Get-ChildItem -Recurse -Filter 'Chart.yaml' $directory 
+    foreach ($chartFile in $chartFiles) {
+        $chart = ParseChart $chartFile
+        if (matchesAnnotations $chart $filters) {
+            $packages += NewStressTestPackageInfo $chart $chartFile
+        }
+    }
+
+    return $packages
 }
 
-function parseChart([string]$chartFile) {
-    ConvertFrom-Yaml (Get-Content -Raw $chartFile)
+function ParseChart([string]$chartFile) {
+    return ConvertFrom-Yaml (Get-Content -Raw $chartFile)
 }
 
-function matchesAnnotations([hashtable]$chart, [hashtable]$filters) {
+function MatchesAnnotations([hashtable]$chart, [hashtable]$filters) {
     foreach ($filter in $filters.GetEnumerator()) {
         if (!$chart.annotations -or $chart.annotations[$filter.Key] -ne $filter.Value) {
             return $false
@@ -34,7 +40,7 @@ function matchesAnnotations([hashtable]$chart, [hashtable]$filters) {
 }
 
 function NewStressTestPackageInfo([hashtable]$chart, [System.IO.FileInfo]$chartFile) {
-    [StressTestPackageInfo]@{
+    return [StressTestPackageInfo]@{
         Namespace = $chart.annotations.namespace
         Directory = $chartFile.DirectoryName
         ReleaseName = $chart.name
@@ -43,5 +49,5 @@ function NewStressTestPackageInfo([hashtable]$chart, [System.IO.FileInfo]$chartF
 
 # Don't call functions when the script is being dot sourced
 if ($MyInvocation.InvocationName -ne ".") {
-    findStressPackages $searchDirectory $filters
+    FindStressPackages $searchDirectory $filters
 }

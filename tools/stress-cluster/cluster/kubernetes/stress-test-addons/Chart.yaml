@@ -2,5 +2,5 @@ apiVersion: v2
 name: stress-test-addons
 description: Baseline resources and templates for stress testing clusters
 
-version: 0.1.2
+version: 0.2.0
 appVersion: v0.1

@@ -98,6 +98,7 @@ To remove Azure resources:
 
 ```
 az group delete <resource group name>
+az keyvault purge -n <keyvault name>
 ```
 
 # Building out the Main/Prod Testing Cluster

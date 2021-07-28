@@ -1,113 +1,136 @@
 [CmdletBinding(DefaultParameterSetName = 'Default')]
 param(
-    [string]$searchDirectory,
-    [hashtable]$filters,
-    [string]$environment,
-    [string]$uploadToRegistry,
-    [string]$repository,
-
-    [Parameter(Mandatory=$true)]
-    [string]$deployId,
-
-    [Parameter(ParameterSetName = 'DoLogin', Mandatory = $true)]
-    [string]$subscription,
+    [string]$SearchDirectory,
+    [hashtable]$Filters,
+    [string]$Environment,
+    [string]$Repository,
+    [switch]$PushImages,
+    [string]$ClusterGroup,
+    [string]$DeployId,
 
     [Parameter(ParameterSetName = 'DoLogin', Mandatory = $true)]
-    [string]$clusterName,
+    [switch]$Login,
 
-    [Parameter(ParameterSetName = 'DoLogin', Mandatory = $true)]
-    [string]$clusterGroup
+    [Parameter(ParameterSetName = 'DoLogin')]
+    [string]$Subscription
 )
+
+$ErrorActionPreference = 'Stop'
+
+$FailedCommands = New-Object Collections.Generic.List[hashtable]
 
 . $PSScriptRoot/find_all_stress_packages.ps1
 
 # Powershell does not (at time of writing) treat exit codes from external binaries
 # as cause for stopping execution, so do this via a wrapper function.
 # See https://github.com/PowerShell/PowerShell-RFC/pull/277
-function run() {
+function Run() {
     Write-Output "" "==> $args" ""
     $command, $arguments = $args
     & $command $arguments
-    if (!$?) {
-        $code = $LASTEXITCODE
-        Write-Output "Command '$args' failed with code: $code"
-        exit $code
+    if ($LASTEXITCODE) {
+        Write-Error "Command '$args' failed with code: $LASTEXITCODE" -ErrorAction 'Continue'
+        $FailedCommands.Add(@{ command = "$args"; code = $LASTEXITCODE })
     }
 }
 
-$runFunctionInit=[scriptblock]::create(@"
-function run() {
-    $function:run
+function RunOrExit() {
+    run @args
+    if ($LASTEXITCODE) {
+        exit $LASTEXITCODE
+    }
 }
-"@)
 
-function login([string]$subscription, [string]$clusterName, [string]$clusterGroup, [string]$uploadToRegistry) {
+function Login([string]$subscription, [string]$clusterGroup, [boolean]$pushImages) {
     Write-Output "Logging in to subscription, cluster and container registry"
     az account show
-    if (!$?) {
-        run az login --allow-no-subscriptions
+    if ($LASTEXITCODE) {
+        RunOrExit az login --allow-no-subscriptions
     }
 
-    run az aks get-credentials `
+    $clusterName = (az aks list -g $clusterGroup -o json| ConvertFrom-Json).name
+
+    RunOrExit az aks get-credentials `
         -n "$clusterName" `
         -g "$clusterGroup" `
         --subscription "$subscription" `
         --overwrite-existing
 
-    if ($uploadToRegistry) {
-        run az acr login -n $uploadToRegistry
+    if ($pushImages) {
+        $registry = (az acr list -g $clusterGroup -o json | ConvertFrom-Json).name
+        RunOrExit az acr login -n $registry
     }
 }
 
-function deployStressTests(
+function DeployStressTests(
     [string]$searchDirectory = '.',
     [hashtable]$filters = @{},
     [string]$environment = 'test',
-    [string]$uploadToRegistry,
     [string]$repository = 'images',
-    [string]$deployId,
-    [string]$subscription,
-    [string]$clusterName,
-    [string]$clusterGroup
+    [boolean]$pushImages = $false,
+    [string]$clusterGroup = 'rg-stress-test-cluster-',
+    [string]$deployId = 'local',
+    [string]$subscription = 'Azure SDK Test Resources'
 ) {
     if ($PSCmdlet.ParameterSetName -eq 'DoLogin') {
-        login $subscription $clusterName $clusterGroup $uploadToRegistry
+        Login $subscription $clusterGroup $pushImages
     }
 
-    run helm repo add stress-test-charts https://stresstestcharts.blob.core.windows.net/helm/
-    run helm repo update
+    RunOrExit helm repo add stress-test-charts https://stresstestcharts.blob.core.windows.net/helm/
+    Run helm repo update
+    if ($LASTEXITCODE) { return $LASTEXITCODE }
 
-    findStressPackages $searchDirectory $filters | % {
-        $args = $_, $deployId, $environment, $uploadToRegistry, $repository
-        Write-Output "Deploying stress test at '$($_.Directory)'"
-        deployStressPackage @args
+    $pkgs = FindStressPackages $searchDirectory $filters
+    Write-Output "" "Found $($pkgs.Length) stress test packages:"
+    Write-Output $pkgs.Directory ""
+    foreach ($pkg in $pkgs) {
+        Write-Output "Deploying stress test at '$($pkg.Directory)'"
+        DeployStressPackage $pkg $deployId $environment $repository $pushImages
     }
 
     Write-Output "Releases deployed by $deployId"
-    run helm list --all-namespaces -l deployId=$deployId
+    Run helm list --all-namespaces -l deployId=$deployId
+
+    if ($FailedCommands) {
+        Write-Warning "" "The following commands failed:" ""
+        foreach ($cmd in $FailedCommands) {
+            Write-Error "'$($cmd.command)' failed with code $($cmd.code)" -ErrorAction 'Continue'
+        }
+        exit 1
+    }
 }
 
-function deployStressPackage(
+function DeployStressPackage(
     [object]$pkg,
     [string]$deployId,
     [string]$environment,
-    [string]$uploadToRegistry,
-    [string]$repository
+    [string]$repository,
+    [boolean]$pushImages
 ) {
-    if ($uploadToRegistry) {
-        run helm dependency update $pkg.Directory
+    $registry = (az acr list -g $clusterGroup -o json | ConvertFrom-Json).name
+    if (!$registry) {
+        Write-Output "Could not find container registry in resource group $clusterGroup"
+        exit 1
+    }
 
-        Get-ChildItem "$($pkg.Directory)/Dockerfile*" | % {
+    if ($pushImages) {
+        Run helm dependency update $pkg.Directory
+        if ($LASTEXITCODE) { return $LASTEXITCODE }
+
+        $dockerFiles = Get-ChildItem "$($pkg.Directory)/Dockerfile*"
+        foreach ($dockerFile in $dockerFiles) {
             # Infer docker image name from parent directory name, if file is named `Dockerfile`
             # or from suffix, is file is named like `Dockerfile.myimage` (for multiple dockerfiles).
-            $prefix, $imageName = $_.Name.Split(".")
+            $prefix, $imageName = $dockerFile.Name.Split(".")
             if (!$imageName) {
-                $imageName = $_.Directory.Name
+                $imageName = $dockerFile.Directory.Name
             }
-            $imageTag = "$uploadToRegistry.azurecr.io/$($repository.ToLower())/$($imageName):$deployId"
+            $imageTag = "$registry.azurecr.io/$($repository.ToLower())/$($imageName):$deployId"
             Write-Output "Building and pushing stress test docker image '$imageTag'"
-            run docker build -t $imageTag -f $_.FullName $_.DirectoryName
-            run docker push $imageTag
+            Run docker build -t $imageTag -f $dockerFile.FullName $dockerFile.DirectoryName
+            if ($LASTEXITCODE) { return $LASTEXITCODE }
+            Run docker push $imageTag
+            if ($LASTEXITCODE) { return $LASTEXITCODE }
         }
     }
 
@@ -115,10 +138,13 @@ function deployStressPackage(
     kubectl create namespace $pkg.Namespace --dry-run=client -o yaml | kubectl apply -f -
 
     Write-Output "Installing or upgrading stress test $($pkg.ReleaseName) from $($pkg.Directory)"
-    run helm upgrade $pkg.ReleaseName $pkg.Directory `
+    Run helm upgrade $pkg.ReleaseName $pkg.Directory `
         -n $pkg.Namespace `
         --install `
+        --set registry=$registry `
+        --set repository=$repository `
         --set stress-test-addons.env=$environment
+    if ($LASTEXITCODE) { return $LASTEXITCODE }
     
     # Helm 3 stores release information in kubernetes secrets. The only way to add extra labels around
     # specific releases (thereby enabling filtering on `helm list`) is to label the underlying secret resources.
@@ -128,7 +154,7 @@ function deployStressPackage(
         -l status!=superseded,name=$($pkg.ReleaseName) `
         -o jsonpath='{.items[0].metadata.name}'
 
-    run kubectl label secret -n $pkg.Namespace --overwrite $helmReleaseConfig deployId=$deployId
+    Run kubectl label secret -n $pkg.Namespace --overwrite $helmReleaseConfig deployId=$deployId
 }
 
 deployStressTests @PSBoundParameters

@@ -1,0 +1,41 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.63.48766",
+      "templateHash": "658186316551815960"
+    }
+  },
+  "parameters": {
+    "groupName": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    },
+    "now": {
+      "type": "string",
+      "defaultValue": "[utcNow('u')]"
+    }
+  },
+  "functions": [],
+  "resources": [
+    {
+      "type": "Microsoft.Resources/resourceGroups",
+      "apiVersion": "2020-10-01",
+      "name": "[format('rg-{0}-{1}', parameters('groupName'), uniqueString(parameters('now')))]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "DeleteAfter": "[dateTimeAdd(parameters('now'), 'PT8H')]"
+      }
+    }
+  ],
+  "outputs": {
+    "RESOURCE_GROUP": {
+      "type": "string",
+      "value": "[format('rg-{0}-{1}', parameters('groupName'), uniqueString(parameters('now')))]"
+    }
+  }
+}

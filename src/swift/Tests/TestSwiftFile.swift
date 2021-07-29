@@ -98,7 +98,7 @@ public final class ThirdClass: SomeOtherProtocol {
         return ""
     }
 
-    public init?(withName name: String) throws {
+    public init?(withName name: String = "Great Name!") throws {
         return nil
     }
 
@@ -136,6 +136,10 @@ public struct SomeStruct: Codable, Equatable {
     static var text = "Hello, World!"
     public static var staticVar = "initial value"
     public let const = "value"
+
+    public func myMethod(takes type: Any) -> Any {
+        return "" as Any
+    }
 }
 
 // MARK: Test Generic Class

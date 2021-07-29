@@ -8,7 +8,7 @@ trigger:
       - hotfix/*
   paths:
     include:
-      - tools/dotnet/Azure.ClientSdk.Analyzers
+      - src/dotnet/Azure.ClientSdk.Analyzers
 
 pr:
   branches:
@@ -21,7 +21,7 @@ pr:
     include:
       - src/dotnet/Azure.ClientSdk.Analyzers
 
-stages:
-  - template: ../../eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
-    parameters:
-      ToolDirectory: src/dotnet/Azure.ClientSdk.Analyzers
+extends:
+  template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
+  parameters:
+    ToolDirectory: src/dotnet/Azure.ClientSdk.Analyzers

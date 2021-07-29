@@ -24,4 +24,4 @@ pr:
 stages:
   - template: ../../eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
     parameters:
-      ToolDirectory: tools/pipeline-generator
+      ToolDirectory: pipeline-generator

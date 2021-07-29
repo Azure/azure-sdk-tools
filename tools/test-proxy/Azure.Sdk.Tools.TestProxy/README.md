@@ -113,7 +113,7 @@ The implementation is language specific, but what you want to do is:
 1. Prevent each request originating from the test test from hitting their original endpoint.
 2. Make the following changes to every outgoing request
     1. Place original request scheme + hostname in header `x-recording-upstream-base-uri`
-       - `x-recording-upstream-base-uri: "https://fakeazsdktestaccount.table.core.windows.net"`
+       - Example header setting: `x-recording-upstream-base-uri: "https://fakeazsdktestaccount.table.core.windows.net"`
     2. Replace request <scheme:hostname> with Proxy Server <scheme:hostname>. (currently https://localhost:5001 or http://localhost:5000)
        - Example transformation: `https://fakeazsdktestaccount.table.core.windows.net/Tables` -> `http://localhost:5001/Tables`.
     3. Add header `"x-recording-id": <x-recording-id>` from startup step

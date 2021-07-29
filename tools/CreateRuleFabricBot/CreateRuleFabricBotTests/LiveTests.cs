@@ -14,6 +14,7 @@ namespace Tests
         private FabricBotClient _requestSender;
 
         [OneTimeSetUp]
+        [Ignore("Can't run test without officebot_token")]
         public void OneTimeSetup()
         {
             string token = Environment.GetEnvironmentVariable("officebot_token");
@@ -25,6 +26,7 @@ namespace Tests
         }
 
         [Test]
+        [Ignore("Can't run test without officebot_token")]
         public void CreateUpdateDeleteRule()
         {
             IssueRoutingCapability irc = new IssueRoutingCapability(_org, _repo, "");

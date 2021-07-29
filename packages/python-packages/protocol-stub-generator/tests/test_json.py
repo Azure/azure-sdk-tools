@@ -6,7 +6,6 @@ JSON_PATH = os.getenv("TESTJSONPATH")
 
 
 class TestJsonFormat:
-    @pytest.mark.skip()
     def test_print_out(self):
         with open(JSON_PATH) as f:
             data = json.load(f)

@@ -1,3 +1,5 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
 import json
 import os
 import pytest
@@ -23,13 +25,10 @@ class TestJsonFormat:
                 d.append(" ")
             if token["Kind"] == 1:
                 d.append("\n")
-            else:
-                pass
         return d
     def test_print_out(self):
         with open(JSON_PATH) as f:
             data = json.load(f)
-        d = []
         d = self.format_tokens(data["Tokens"])
         print(*d)
 
@@ -45,7 +44,6 @@ class TestJsonFormat:
 
     def test_request_format(self):
         r = []
-        d = []
         start = False
         with open(JSON_PATH) as f:
             data = json.load(f)

@@ -1,3 +1,5 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
 import os
 import sys
 import unittest
@@ -14,6 +16,7 @@ PATH = os.getenv("TESTJSONPATH")
 
 class TestCases(unittest.TestCase):
     def test_client_name(self):
+        # Use Document Translation YAML
         with open(PATH) as f:
             data = yaml.safe_load(f)
         create_python_name(data)
@@ -21,6 +24,7 @@ class TestCases(unittest.TestCase):
         assert client.Name == "Batch Document Translation Client"
 
     def test_client_operationGroups(self):
+        # Use Document Translation YAML
         with open(PATH) as f:
             data = yaml.safe_load(f)
         create_python_name(data)
@@ -30,6 +34,7 @@ class TestCases(unittest.TestCase):
             assert g.operation_group == "DocumentTranslation"
 
     def test_client_operation(self):
+        # Use Document Translation YAML
         with open(PATH) as f:
             data = yaml.safe_load(f)
         create_python_name(data)
@@ -46,10 +51,10 @@ class TestCases(unittest.TestCase):
         groups = client.Operation_Groups
         for g in groups:
             for o in g.operations:
-                if o.return_type == "void":
-                    assert True
+                assert o.return_type == "void"
 
     def test_parameter_request(self):
+        # Use Document Translation YAML
         with open(PATH) as f:
             data = yaml.safe_load(f)
         create_python_name(data)

@@ -219,7 +219,7 @@ See the [Job Manifest section](#job-manifest) for an example spec containing con
 
 ### Helm Chart Dependencies
 
-The `<chart root>/chart/Chart.yaml` file should look something like below. It must include the `stress-test-addons` dependency:
+The `<chart root>/chart/Chart.yaml` file should look something like below. It must include the `stress-test-addons` dependency and the included annotations:
 
 ```
 apiVersion: v2
@@ -227,6 +227,9 @@ name: <stress test name>
 description: <description>
 version: 0.1.0
 appVersion: v0.1
+annotations:
+  stressTest: 'true'
+  namespace: <your stress test namespace>
 
 dependencies:
 - name: stress-test-addons
@@ -341,14 +344,16 @@ Then install the stress test into the cluster:
 ```
 kubectl create namespace <your stress test namespace> 
 kubectl label namespace <namespace> owners=<owner alias>
-helm install <stress test name> .
+helm install -n <your stress test namespace> <stress test name> .
 ```
 
 To install into a different cluster (test, prod, or dev):
 
 ```
 az aks get-credentials --subscription '<cluster subscription>' -g rg-stress-test-cluster-<cluster suffix> -n stress-test
-helm install <stress test name> . --set stress-test-addons.env=<cluster suffix>
+kubectl create namespace <your stress test namespace> 
+kubectl label namespace <namespace> owners=<owner alias>
+helm install -n <your stress test namespace> <stress test name> . --set stress-test-addons.env=<cluster suffix>
 ```
 
 You can check the progress/status of your installation via:

@@ -37,7 +37,7 @@ function Run() {
     }
 }
 
-function RunOrExit() {
+function RunOrExitOnFailure() {
     run @args
     if ($LASTEXITCODE) {
         exit $LASTEXITCODE
@@ -46,14 +46,14 @@ function RunOrExit() {
 
 function Login([string]$subscription, [string]$clusterGroup, [boolean]$pushImages) {
     Write-Host "Logging in to subscription, cluster and container registry"
-    az account show
+    az account show *> $null
     if ($LASTEXITCODE) {
-        RunOrExit az login --allow-no-subscriptions
+        RunOrExitOnFailure az login --allow-no-subscriptions
     }
 
     $clusterName = (az aks list -g $clusterGroup -o json| ConvertFrom-Json).name
 
-    RunOrExit az aks get-credentials `
+    RunOrExitOnFailure az aks get-credentials `
         -n "$clusterName" `
         -g "$clusterGroup" `
         --subscription "$subscription" `
@@ -61,7 +61,7 @@ function Login([string]$subscription, [string]$clusterGroup, [boolean]$pushImage
 
     if ($pushImages) {
         $registry = (az acr list -g $clusterGroup -o json | ConvertFrom-Json).name
-        RunOrExit az acr login -n $registry
+        RunOrExitOnFailure az acr login -n $registry
     }
 }
 
@@ -79,7 +79,7 @@ function DeployStressTests(
         Login $subscription $clusterGroup $pushImages
     }
 
-    RunOrExit helm repo add stress-test-charts https://stresstestcharts.blob.core.windows.net/helm/
+    RunOrExitOnFailure helm repo add stress-test-charts https://stresstestcharts.blob.core.windows.net/helm/
     Run helm repo update
     if ($LASTEXITCODE) { return $LASTEXITCODE }
 

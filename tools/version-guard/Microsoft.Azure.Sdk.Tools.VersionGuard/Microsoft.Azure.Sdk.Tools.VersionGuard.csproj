@@ -3,7 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp2.1</TargetFramework>
-    <Version>0.1.0</Version>
+    <VersionPrefix>0.1.0</VersionPrefix>
 
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>version-guard</ToolCommandName>

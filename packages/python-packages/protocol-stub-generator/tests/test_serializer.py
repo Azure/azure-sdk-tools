@@ -40,8 +40,7 @@ class TestCases(unittest.TestCase):
         create_python_name(data)
         client = ProtocolClientView.from_yaml(data)
         groups = client.Operation_Groups
-        for g in groups:
-            assert len(g.operations) == 9
+        assert len(groups[0].operations) == 9
 
     def test_client_parameter_return_type(self):
         with open(PATH) as f:

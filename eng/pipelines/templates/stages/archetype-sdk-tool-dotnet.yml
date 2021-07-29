@@ -6,18 +6,25 @@ resources:
       ref: refs/tags/azure-sdk-build-tools_20210603.1
 
 parameters:
-  DotNetCoreVersion: ''
-  SkipDotNetInstall: false
-
-pool:
-  name: azsdk-pool-mms-ubuntu-2004-general
-  vmImage: MMSUbuntu20.04
+  - name: ToolDirectory
+    type: string
+    default: ''
+  - name: DotNetCoreVersion
+    type: string
+    default: ''
+  - name: SkipDotNetInstall
+    type: boolean
+    default: false
 
 variables:
   - template: ../variables/globals.yml
 
 stages:
   - stage: BuildTestAndPackage
+
+    pool:
+      name: azsdk-pool-mms-ubuntu-2004-general
+      vmImage: MMSUbuntu20.04
 
     jobs:
       - job: BuildAndPackage
@@ -67,8 +74,8 @@ stages:
               testResultsFormat: 'VSTest'
               mergeTestResults: true
 
-- ${{if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
-  - template: pipelines/stages/net-release-to-feed.yml@azure-sdk-build-tools
-        parameters:
+  - ${{if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
+    - template: pipelines/stages/net-release-to-feed.yml@azure-sdk-build-tools
+      parameters:
         # Publish to https://dev.azure.com/azure-sdk/public/_packaging?_a=feed&feed=azure-sdk-for-net
         DevOpsFeedId: '29ec6040-b234-4e31-b139-33dc4287b756/fa8c16a3-dbe0-4de2-a297-03065ec1ba3f'

@@ -1353,7 +1353,9 @@ def get_type(data, page=False):
         if return_type == "object":
             return_type = data["language"]["default"]["name"]
             if page:
-                return_type = get_type(data["properties"][0]["schema"], True)
+                for i in data['properties']:
+                    if i.get('serializedName') == 'value':
+                        return_type = get_type(i["schema"], True)
         if return_type == "array":
             if (
                 data["elementType"]["type"] != "object"

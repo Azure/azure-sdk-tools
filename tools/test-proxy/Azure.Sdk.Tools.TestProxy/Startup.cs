@@ -10,10 +10,7 @@ using Microsoft.Extensions.Hosting;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using System.CommandLine;
-using System.CommandLine.Invocation;
 using System.IO;
-using Newtonsoft.Json;
 
 namespace Azure.Sdk.Tools.TestProxy
 {
@@ -59,6 +56,19 @@ namespace Azure.Sdk.Tools.TestProxy
 
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddCors(options =>
+            {
+                options.AddPolicy(name: "DefaultPolicy",
+                    builder =>
+                    {
+                        builder.AllowAnyHeader()
+                               .AllowAnyMethod()
+                               .AllowAnyOrigin()
+                               .WithExposedHeaders("*");
+                    });
+            });
+
+
             services.AddHttpClient();
             services.AddControllers();
             services.AddControllersWithViews();
@@ -72,6 +82,7 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 app.UseDeveloperExceptionPage();
             }
+            app.UseCors("DefaultPolicy");
 
             MapRecording(app);
             app.UseRouting();

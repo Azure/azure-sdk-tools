@@ -10,8 +10,8 @@ stages:
   jobs:
   - job: BuildPackage
     pool:
-      name: azsdk-pool-mms-ubuntu-1804-general
-      vmImage: MMSUbuntu18.04
+      name: azsdk-pool-mms-ubuntu-2004-general
+      vmImage: MMSUbuntu20.04
     steps:
       - task: UseDotNet@2
         displayName: 'Use .NET Core sdk ${{ coalesce( parameters.DotNetCoreVersion, variables.DotNetCoreVersion) }}'
@@ -35,8 +35,8 @@ stages:
     - deployment: PublishPackage
       environment: tools
       pool:
-        name: azsdk-pool-mms-ubuntu-1804-general
-        vmImage: MMSUbuntu18.04
+        name: azsdk-pool-mms-ubuntu-2004-general
+        vmImage: MMSUbuntu20.04
       variables:
       - template: ../variables/globals.yml
       strategy:

@@ -1,9 +1,4 @@
 ﻿using Azure.Sdk.Tools.TestProxy.Common;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.TestProxy.Sanitizers
 {
@@ -12,23 +7,27 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
     /// </summary>
     public class UriRegexSanitizer : RecordedTestSanitizer
     {
-        private string _regexValue;
         private string _newValue;
-        
+        private string _regexValue = null;
+        private string _groupForReplace = null;
+
+
         /// <summary>
         /// Runs a regex replace on the member of your choice.
         /// </summary>
-        /// <param name="regex">The regex used to replace.</param>
-        /// <param name="value">The substituted value.</param>
-        public UriRegexSanitizer(string regex, string value = "Sanitized")
+        /// <param name="value">The substitution value.</param>
+        /// <param name="regex">A regex. Can be defined as a simple regex replace OR if groupForReplace is set, a subsitution operation.</param>
+        /// <param name="groupForReplace">The capture group that needs to be operated upon. Do not set if you're invoking a simple replacement operation.</param>
+        public UriRegexSanitizer(string value = "Sanitized", string regex = ".*", string groupForReplace = null)
         {
             _regexValue = regex;
             _newValue = value;
+            _groupForReplace = groupForReplace;
         }
 
         public override string SanitizeUri(string uri)
         {
-            return StringSanitizer.SanitizeValue(uri, _newValue, _regexValue);
+            return StringSanitizer.SanitizeValue(uri, _newValue, _regexValue, _groupForReplace);
         }
     }
 }

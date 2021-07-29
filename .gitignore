@@ -482,3 +482,4 @@ src/dotnet/APIView/APIViewWeb/wwwroot/js/*.js*
 
 # npm
 *-lock.json
+src/swift/SwiftAPIView.xcworkspace/xcuserdata

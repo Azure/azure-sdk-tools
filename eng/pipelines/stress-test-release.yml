@@ -24,6 +24,9 @@ parameters:
     - net
     - python
     - go
+  - name: DeployFromBranchOrCommit
+    type: string
+    default: main
 
 jobs:
 - job:
@@ -62,10 +65,10 @@ jobs:
       parameters:
         Repositories:
           - Name: Azure/azure-sdk-tools
-            Commitish: $(Build.SourceVersion)
+            Commitish: ${{ parameters.DeployFromBranchOrCommit }}
             WorkingDirectory: $(System.DefaultWorkingDirectory)/Azure/azure-sdk-tools
           - Name: $(Repository)
-            Commitish: $(Build.SourceVersion)
+            Commitish: ${{ parameters.DeployFromBranchOrCommit }}
             WorkingDirectory: $(System.DefaultWorkingDirectory)/$(Repository)
         Paths:
           - '/tools'

@@ -6,13 +6,6 @@ JSON_PATH = os.getenv("TESTJSONPATH")
 
 
 class TestJsonFormat:
-    def test_print_out(self):
-        with open(JSON_PATH) as f:
-            data = json.load(f)
-        d = []
-        d = self.format_tokens(data["Tokens"])
-        print(*d)
-
     def format_tokens(self, data):
         d = []
         for token in data:
@@ -33,6 +26,14 @@ class TestJsonFormat:
             else:
                 pass
         return d
+    def test_print_out(self):
+        with open(JSON_PATH) as f:
+            data = json.load(f)
+        d = []
+        d = self.format_tokens(data["Tokens"])
+        print(*d)
+
+
 
     def test_operation_format(self):
         with open(JSON_PATH) as f:

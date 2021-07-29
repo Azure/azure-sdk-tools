@@ -78,7 +78,7 @@ jobs:
       inputs:
         azureSubscription: ${{ parameters.Subscription }}
         scriptType: pscore
-        scriptPath: $(System.DefaultWorkingDirectory)/Azure/azure-sdk-tools/tools/stress-cluster/scripts/deploy_stress_tests.ps1
+        scriptPath: $(System.DefaultWorkingDirectory)/Azure/azure-sdk-tools/tools/stress-cluster/scripts/deploy-stress-tests.ps1
         arguments:
           -SearchDirectory '$(System.DefaultWorkingDirectory)/$(Repository)'
           -Filters $(Filters)

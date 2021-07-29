@@ -17,7 +17,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-. $PSScriptRoot/find_all_stress_packages.ps1
+. $PSScriptRoot/find-all-stress-packages.ps1
 $FailedCommands = New-Object Collections.Generic.List[hashtable]
 
 if (!(Get-Module powershell-yaml)) {

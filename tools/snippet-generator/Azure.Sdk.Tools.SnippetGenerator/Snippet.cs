@@ -3,7 +3,7 @@
 
 using Microsoft.CodeAnalysis.Text;
 
-namespace SnippetGenerator
+namespace Azure.Sdk.Tools.SnippetGenerator
 {
     public class Snippet
     {

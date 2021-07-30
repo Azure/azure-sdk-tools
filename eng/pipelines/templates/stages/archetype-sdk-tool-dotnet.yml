@@ -36,7 +36,7 @@ stages:
             inputs:
               version: '${{ coalesce( parameters.DotNetCoreVersion, variables.DotNetCoreVersion) }}'
 
-          - script: 'dotnet pack -o $(Build.ArtifactStagingDirectory) -warnaserror'
+          - script: 'dotnet pack -o $(Build.ArtifactStagingDirectory) -warnaserror -c Release'
             displayName: 'Build and Package'
             workingDirectory: $(Build.SourcesDirectory)/${{parameters.ToolDirectory}}
             env:

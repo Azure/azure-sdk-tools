@@ -1,5 +1,4 @@
-{{- $ctx := merge . (dict "Scenario" "bbp" ) -}}
-{{- include "stress-test-addons.env-job-template.from-pod" (list $ctx "stress.network-example") -}}
+{{- include "stress-test-addons.env-job-template.from-pod" (list . "stress.network-example") -}}
 {{- define "stress.network-example" -}}
 metadata:
   labels:

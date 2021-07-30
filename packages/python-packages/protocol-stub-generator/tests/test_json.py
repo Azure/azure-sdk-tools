@@ -44,6 +44,7 @@ class TestJsonFormat:
 
     def test_request_format(self):
         r = []
+        d = []
         start = False
         with open(JSON_PATH) as f:
             data = json.load(f)

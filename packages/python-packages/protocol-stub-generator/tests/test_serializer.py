@@ -11,7 +11,7 @@ from protocol.parse_yml import create_python_name
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
 
-PATH = os.getenv("TESTJSONPATH")
+PATH = os.getenv("TESTPATH")
 
 
 class TestCases(unittest.TestCase):
@@ -49,8 +49,7 @@ class TestCases(unittest.TestCase):
         client = ProtocolClientView.from_yaml(data)
         groups = client.Operation_Groups
         for g in groups:
-            for o in g.operations:
-                assert o.return_type == "void"
+            assert g.operations[0].return_type == None
 
     def test_parameter_request(self):
         # Use Document Translation YAML

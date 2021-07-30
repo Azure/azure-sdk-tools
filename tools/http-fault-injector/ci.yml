@@ -21,7 +21,7 @@ pr:
     include:
       - tools/http-fault-injector
 
-stages:
-  - template: ../../eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
-    parameters:
-      ToolDirectory: http-fault-injector
+extends:
+  template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
+  parameters:
+    ToolDirectory: tools/http-fault-injector

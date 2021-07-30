@@ -8,7 +8,7 @@ trigger:
       - hotfix/*
   paths:
     include:
-      - tools/test-proxy
+      - src/dotnet/Azure.ClientSdk.Analyzers
 
 pr:
   branches:
@@ -19,10 +19,10 @@ pr:
       - hotfix/*
   paths:
     include:
-      - tools/test-proxy
+      - src/dotnet/Azure.ClientSdk.Analyzers
 
 extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
   parameters:
-    ToolDirectory: tools/test-proxy
-    DotNetCoreVersion: "5.0.100"
+    ToolDirectory: src/dotnet/Azure.ClientSdk.Analyzers
+    SkipDotNetInstall: true

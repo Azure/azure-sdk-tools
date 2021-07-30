@@ -1,51 +1,81 @@
+resources:
+  repositories:
+    - repository: azure-sdk-build-tools
+      type: git
+      name: internal/azure-sdk-build-tools
+      ref: refs/tags/azure-sdk-build-tools_20210603.1
+
 parameters:
-  DotNetCoreVersion: ''
+  - name: ToolDirectory
+    type: string
+    default: ''
+  - name: DotNetCoreVersion
+    type: string
+    default: ''
+  - name: SkipDotNetInstall
+    type: boolean
+    default: false
 
-
+variables:
+  - template: ../variables/globals.yml
 
 stages:
-- stage: Build
-  variables:
-  - template: ../variables/globals.yml
-  jobs:
-  - job: BuildPackage
+  - stage: BuildTestAndPackage
+
     pool:
       name: azsdk-pool-mms-ubuntu-2004-general
       vmImage: MMSUbuntu20.04
-    steps:
-      - task: UseDotNet@2
-        displayName: 'Use .NET Core sdk ${{ coalesce( parameters.DotNetCoreVersion, variables.DotNetCoreVersion) }}'
-        inputs:
-          version: '${{ coalesce( parameters.DotNetCoreVersion, variables.DotNetCoreVersion) }}'
-      - script: 'dotnet pack -o $(Build.ArtifactStagingDirectory) -warnaserror'
-        displayName: 'Build and Package'
-        workingDirectory: $(Build.SourcesDirectory)/tools/${{parameters.ToolDirectory}}
-        env:
-          DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
-          DOTNET_CLI_TELEMETRY_OPTOUT: 1
-          DOTNET_MULTILEVEL_LOOKUP: 0
-      - publish: $(Build.ArtifactStagingDirectory)
-        displayName: Publish package to run artifacts
-        artifact: packages
-        condition: succeededOrFailed()
-- ${{if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
-  - stage: Release
-    dependsOn: Build
+
     jobs:
-    - deployment: PublishPackage
-      environment: tools
-      pool:
-        name: azsdk-pool-mms-ubuntu-2004-general
-        vmImage: MMSUbuntu20.04
-      variables:
-      - template: ../variables/globals.yml
-      strategy:
-        runOnce:
-          deploy:
-            steps:
-            - task: NuGetCommand@2
-              inputs:
-                command: 'push'
-                packagesToPush: '$(Pipeline.Workspace)/packages/**/*.nupkg'
-                nuGetFeedType: 'internal'
-                publishVstsFeed: '29ec6040-b234-4e31-b139-33dc4287b756/12354d14-c9a7-4f21-97dc-d3b97f89d71d'
+      - job: BuildAndPackage
+
+        steps:
+          - task: UseDotNet@2 
+            condition: eq(${{ parameters.SkipDotNetInstall }}, false)
+            displayName: 'Use .NET Core sdk ${{ coalesce( parameters.DotNetCoreVersion, variables.DotNetCoreVersion) }}'
+            inputs:
+              version: '${{ coalesce( parameters.DotNetCoreVersion, variables.DotNetCoreVersion) }}'
+
+          - script: 'dotnet pack -o $(Build.ArtifactStagingDirectory) -warnaserror'
+            displayName: 'Build and Package'
+            workingDirectory: $(Build.SourcesDirectory)/${{parameters.ToolDirectory}}
+            env:
+              DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+              DOTNET_CLI_TELEMETRY_OPTOUT: 1
+              DOTNET_MULTILEVEL_LOOKUP: 0
+
+          - publish: $(Build.ArtifactStagingDirectory)
+            displayName: Publish package to run artifacts
+            artifact: packages
+            condition: succeededOrFailed()
+
+      - job: Test
+
+        steps:
+          - task: UseDotNet@2 
+            condition: eq(${{ parameters.SkipDotNetInstall }}, false)
+            displayName: 'Use .NET Core sdk ${{ coalesce( parameters.DotNetCoreVersion, variables.DotNetCoreVersion) }}'
+            inputs:
+              version: '${{ coalesce( parameters.DotNetCoreVersion, variables.DotNetCoreVersion) }}'
+
+          - script: 'dotnet test -o $(Build.ArtifactStagingDirectory) -warnaserror --logger trx'
+            displayName: 'Test'
+            workingDirectory: $(Build.SourcesDirectory)/${{parameters.ToolDirectory}}
+            env:
+              DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+              DOTNET_CLI_TELEMETRY_OPTOUT: 1
+              DOTNET_MULTILEVEL_LOOKUP: 0
+
+          - task: PublishTestResults@2
+            condition: succeededOrFailed()
+            inputs:
+              testResultsFiles: '**/*.trx'
+              testRunTitle: 'Windows DotNet $(DotNetCoreVersion)'
+              testResultsFormat: 'VSTest'
+              mergeTestResults: true
+
+  - ${{if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
+    - template: pipelines/stages/net-release-to-feed.yml@azure-sdk-build-tools
+      parameters:
+        # Publish to https://dev.azure.com/azure-sdk/public/_packaging?_a=feed&feed=azure-sdk-for-net
+        DevOpsFeedId: '29ec6040-b234-4e31-b139-33dc4287b756/fa8c16a3-dbe0-4de2-a297-03065ec1ba3f'

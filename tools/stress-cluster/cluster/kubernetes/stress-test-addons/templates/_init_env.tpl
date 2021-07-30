@@ -9,7 +9,7 @@
     - name: ENV_FILE
       value: /mnt/outputs/.env
   volumeMounts:
-    - name: test-env-{{ .Release.Name }}
+    - name: test-env-{{ default "" (printf "%s-" .Scenario) }}{{ .Release.Name }}-{{ .Release.Revision }}
       mountPath: /mnt/outputs
     - name: static-secrets-{{ .Release.Name }}
       mountPath: "/mnt/secrets/static"

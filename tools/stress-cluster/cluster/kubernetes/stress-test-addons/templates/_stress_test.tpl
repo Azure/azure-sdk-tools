@@ -8,16 +8,18 @@ spec:
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: "{{ default "" .Scenario }}{{ .Release.Name }}-{{ .Release.Revision }}"
+  name: "{{ default "" (printf "%s-" (lower .Scenario)) }}{{ .Release.Name }}-{{ .Release.Revision }}"
   namespace: {{ .Release.Namespace }}
   labels:
     release: {{ .Release.Name }}
+    scenario: {{ default "" .Scenario }}
 spec:
   backoffLimit: 0
   template:
     metadata:
       labels:
         release: {{ .Release.Name }}
+        scenario: {{ default "" .Scenario }}
     spec:
       restartPolicy: Never
       volumes:
@@ -53,7 +55,7 @@ spec:
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: "{{ default "" (printf "%s-" .Scenario) }}{{ .Release.Name }}-{{ .Release.Revision }}"
+  name: "{{ default "" (printf "%s-" (lower .Scenario)) }}{{ .Release.Name }}-{{ .Release.Revision }}"
   namespace: {{ .Release.Namespace }}
   labels:
     release: {{ .Release.Name }}

@@ -21,8 +21,8 @@ pr:
     include:
       - tools/snippet-generator
 
-stages:
-  - template: ../../eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
-    parameters:
-      ToolDirectory: tools/snippet-generator
-      SkipDotNetInstall: true
+extends:
+  template: ../../eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
+  parameters:
+    ToolDirectory: tools/snippet-generator
+    SkipDotNetInstall: true

@@ -13,8 +13,7 @@ namespace Tests
         private string _repo = "<PleaseSpecify>";
         private FabricBotClient _requestSender;
 
-        [OneTimeSetUp]
-        [Ignore("Can't run test without officebot_token")]
+        //[OneTimeSetUp]
         public void OneTimeSetup()
         {
             string token = Environment.GetEnvironmentVariable("officebot_token");

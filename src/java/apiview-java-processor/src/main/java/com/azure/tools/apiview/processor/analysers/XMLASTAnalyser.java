@@ -11,6 +11,7 @@ import javax.xml.stream.XMLStreamReader;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.azure.tools.apiview.processor.model.TokenKind.COMMENT;
@@ -46,8 +47,9 @@ public class XMLASTAnalyser implements Analyser {
         apiListing.addChildItem(new ChildItem(filename, filename, TypeKind.ASSEMBLY));
 
         final XMLInputFactory factory = XMLInputFactory.newInstance();
+        XMLStreamReader reader = null;
         try {
-            final XMLStreamReader reader = factory.createXMLStreamReader(new FileInputStream(file.toFile()));
+            reader = factory.createXMLStreamReader(new FileInputStream(file.toFile()));
 
             while (reader.hasNext()) {
                 final int eventType = reader.next();
@@ -122,10 +124,16 @@ public class XMLASTAnalyser implements Analyser {
                     }
                 }
             }
-
-            reader.close();
         } catch (XMLStreamException | FileNotFoundException e) {
             e.printStackTrace();
+        } finally {
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (XMLStreamException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
@@ -207,7 +215,7 @@ public class XMLASTAnalyser implements Analyser {
         int head = 0;
         int tail = 0;
         for (int i = 0; i < characters.length(); i++) {
-            char ch = characters.charAt(i);
+            final char ch = characters.charAt(i);
             if (ch == '\n') {
                 if (tail > head) {
                     final String substring = characters.substring(head, tail);
@@ -217,6 +225,10 @@ public class XMLASTAnalyser implements Analyser {
                         addToken(new Token(TEXT, substring));
                     }
                 }
+
+                // fixing issue in APIView where you can't have consecutive newlines.
+                addToken(new Token(WHITESPACE, " "));
+
                 addNewLine();
                 head = i + 1;
                 tail = i + 1;

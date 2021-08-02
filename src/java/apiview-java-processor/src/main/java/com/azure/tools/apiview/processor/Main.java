@@ -13,7 +13,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -124,7 +123,7 @@ public class Main {
             apiListing.addDiagnostic(new Diagnostic(
                 DiagnosticKind.ERROR,
                 "error",
-                "Uploaded files should end with '-sources.jar', " +
+                "Uploaded files should end with '-sources.jar' or '.xml', " +
                     "as the APIView tool only works with source jar files, not compiled jar files. The uploaded file " +
                     "that was submitted to APIView was named " + inputFile.getName()));
         }
@@ -183,6 +182,7 @@ public class Main {
             String reviewName;
             String packageName;
             String packageVersion;
+            String reviewLanguage;
 
             try {
                 reviewProperties.setMavenPom(new Pom(fis));
@@ -190,8 +190,8 @@ public class Main {
                 final String groupId = reviewProperties.getMavenPom().getGroupId();
                 packageName = (groupId.isEmpty() ? "" : groupId + ":") + reviewProperties.getMavenPom().getArtifactId();
                 packageVersion = reviewProperties.getMavenPom().getVersion();
-
                 reviewName = reviewProperties.getMavenPom().getArtifactId() + " (version " + packageVersion + ")";
+                reviewLanguage = "Java";
 
                 apiListing.setMavenPom(reviewProperties.getMavenPom());
             } catch (IOException e) {
@@ -199,6 +199,7 @@ public class Main {
                 reviewName = inputFile.getName();
                 packageName = reviewName;
                 packageVersion = "1.0.0";
+                reviewLanguage = "Xml";
             }
 
             System.out.println("  Using '" + reviewName + "' for the review name");
@@ -208,7 +209,7 @@ public class Main {
             apiListing.setReviewName(reviewName);
             apiListing.setPackageName(packageName);
             apiListing.setPackageVersion(packageVersion);
-            apiListing.setLanguage("Xml");
+            apiListing.setLanguage(reviewLanguage);
 
             final Analyser analyser = new XMLASTAnalyser(apiListing);
             analyser.analyse(inputFile.toPath());

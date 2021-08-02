@@ -25,6 +25,7 @@
             <a class="btn btn-secondary" active-if='@Model.Language == "JavaScript"' asp-all-route-data=@Model.GetRoutingData(language: "JavaScript")>JS/TS</a>
             <a class="btn btn-secondary" active-if='@Model.Language == "Python"' asp-all-route-data=@Model.GetRoutingData(language: "Python")>Python</a>
             <a class="btn btn-secondary" active-if='@Model.Language == "Protocol"' asp-all-route-data=@Model.GetRoutingData(language: "Protocol")>Protocol</a>
+            <a class="btn btn-secondary" active-if='@Model.Language == "Swift"' asp-all-route-data=@Model.GetRoutingData(language: "Swift")>Swift</a>
         </div>
 
         <div class="btn-group float-right">
@@ -97,6 +98,9 @@
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" id="profile-tab" data-toggle="tab" href="#protocol-help">Protocol</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="profile-tab" data-toggle="tab" href="#swift-help">Swift</a>
                             </li>
                         </ul>
 
@@ -185,6 +189,17 @@
                                 <ol>
                                     <li>
                                         Upload generated yml file from autorest 
+                                    </li>
+                                </ol>
+                            </div>
+                            <div class="tab-pane" id="swift-help">
+                                <ol>
+                                    <li>
+                                        Generate JSON file for the source by running Swift APIView parser in XCode.
+                                        More information is available here on <a href="https://github.com/Azure/azure-sdk-tools/blob/main/src/swift/README.md">Swift API parser</a> 
+                                    </li>
+                                    <li>
+                                        Upload generated JSON
                                     </li>
                                 </ol>
                             </div>

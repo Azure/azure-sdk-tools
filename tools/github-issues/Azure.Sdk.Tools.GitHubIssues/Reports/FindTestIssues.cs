@@ -16,7 +16,6 @@ namespace Azure.Sdk.Tools.GitHubIssues.Reports
     {
         public FindTestIssues(IConfigurationService configurationService, ILogger<FindIssuesInPastDueMilestones> logger) : base(configurationService, logger)
         {
-
         }
 
         private string[] _labels = new string[] { "test-reliability", "test-manual-pass", "test-sovereign-cloud" };

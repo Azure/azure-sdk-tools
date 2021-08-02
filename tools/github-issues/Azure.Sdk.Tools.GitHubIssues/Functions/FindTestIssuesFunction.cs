@@ -11,7 +11,6 @@ namespace Azure.Sdk.Tools.GitHubIssues.Functions
 {
     public class FindTestIssuesFunction
     {
-
         public FindTestIssuesFunction(FindTestIssues report)
         {
             this.report = report;

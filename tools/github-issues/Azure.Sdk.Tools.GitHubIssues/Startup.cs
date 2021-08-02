@@ -48,6 +48,7 @@ namespace Azure.Sdk.Tools.GitHubIssues
             builder.Services.AddSingleton<FindIssuesInPastDueMilestones>();
             builder.Services.AddSingleton<FindNewGitHubIssuesAndPRs>();
             builder.Services.AddSingleton<FindStalePRs>();
+            builder.Services.AddSingleton<FindTestIssues>();
         }
     }
 }

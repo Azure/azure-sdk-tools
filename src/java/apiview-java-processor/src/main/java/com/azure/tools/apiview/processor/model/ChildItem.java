@@ -1,11 +1,10 @@
 package com.azure.tools.apiview.processor.model;
 
-import com.azure.tools.apiview.processor.analysers.ASTAnalyser;
+import com.azure.tools.apiview.processor.analysers.JavaASTAnalyser;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -86,11 +85,11 @@ public class ChildItem implements Comparable<ChildItem> {
     @Override
     public int compareTo(ChildItem o) {
         // we special case the maven pom.xml file and the module-info file so it appears at the top
-        if (ASTAnalyser.MAVEN_KEY.equals(text)) return -1;
-        else if (ASTAnalyser.MAVEN_KEY.equals(o.text)) return 1;
+        if (JavaASTAnalyser.MAVEN_KEY.equals(text)) return -1;
+        else if (JavaASTAnalyser.MAVEN_KEY.equals(o.text)) return 1;
 
-        if (ASTAnalyser.MODULE_INFO_KEY.equals(text)) return -1;
-        else if (ASTAnalyser.MODULE_INFO_KEY.equals(o.text)) return 1;
+        if (JavaASTAnalyser.MODULE_INFO_KEY.equals(text)) return -1;
+        else if (JavaASTAnalyser.MODULE_INFO_KEY.equals(o.text)) return 1;
 
         return text.compareTo(o.text);
     }

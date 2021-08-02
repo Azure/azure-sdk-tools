@@ -1,4 +1,20 @@
 Processing Azure\azure-sdk-for-java-pr repo.
+Label,P0,,e10c02
+Label,P1,,d7e102
+Label,P2,,02d7e1
+Label,In Progress,,02e10c
+Label,Ready for test,,02e10c
+Label,Infrastructure,,DDDDDD
+Label,In Test,,02e10c
+Label,Blocked,,e10c02
+Label,Pending,,02e10c
+Label,Live Streaming,,5319e7
+Label,EngSys,This issue is impacting the engineering system.,e99695
+Label,Epic,,3E4B9E
+Label,Client,This issue points to a problem in the data-plane of the library.,ffeb77
+Label,App Configuration,Azure.ApplicationModel.Configuration,e99695
+Label,Mgmt,This issue is related to a management-plane library.,ffeb77
+Label,Cognitive - Metrics Advisor,,e99695
 Label,AAD,,e99695
 Label,ACS,,e99695
 Label,AKS,,e99695
@@ -17,7 +33,6 @@ Label,Advisor,,e99695
 Label,AgriFood,,e99695
 Label,Alerts Management,,e99695
 Label,Analysis Services,,e99695
-Label,App Configuration,Azure.ApplicationModel.Configuration,e99695
 Label,App Services,,e99695
 Label,Attestation,,e99695
 Label,Authentication,,e99695
@@ -30,11 +45,9 @@ Label,Azure.Identity,,e99695
 Label,Batch,,e99695
 Label,BatchAI,,e99695
 Label,Billing,,e99695
-Label,Blocked,,e10c02
 Label,Blueprint,,e99695
 Label,Bot Service,,e99695
 Label,Central-EngSys,This issue is owned by the Engineering System team.,ffeb77
-Label,Client,This issue points to a problem in the data-plane of the library.,ffeb77
 Label,Cloud Shell,,e99695
 Label,CodeGen,Issues that relate to code generation,e99695
 Label,Cognitive - Anomaly Detector,,e99695
@@ -48,7 +61,6 @@ Label,Cognitive - Immersive Reader,,e99695
 Label,Cognitive - Ink Recognizer,,e99695
 Label,Cognitive - LUIS,,e99695
 Label,Cognitive - Language,,e99695
-Label,Cognitive - Metrics Advisor,,e99695
 Label,Cognitive - Mgmt,,e99695
 Label,Cognitive - Personalizer,,e99695
 Label,Cognitive - QnA Maker,,e99695
@@ -96,8 +108,6 @@ Label,Devtestlab,,e99695
 Label,Digital Twins,,e99695
 Label,Do Not Merge,,b60205
 Label,Docs,,e99695
-Label,EngSys,This issue is impacting the engineering system.,e99695
-Label,Epic,,3E4B9E
 Label,Event Grid,,e99695
 Label,Event Hubs,,e99695
 Label,Functions,,e99695
@@ -108,9 +118,6 @@ Label,Guest Configuration,,e99695
 Label,HDInsight,,e99695
 Label,HPC Cache,,e99695
 Label,Import Export,,e99695
-Label,In Progress,,02e10c
-Label,In Test,,02e10c
-Label,Infrastructure,,DDDDDD
 Label,Insights,,e99695
 Label,Intune,,e99695
 Label,IoT,,e99695
@@ -120,7 +127,6 @@ Label,Kubernetes Configuration,,e99695
 Label,Kusto,,e99695
 Label,LOUIS,,e99695
 Label,Lab Services,,e99695
-Label,Live Streaming,,5319e7
 Label,Logic App,,e99695
 Label,MQ,"This issue is part of a ""milestone of quality"" initiative.",7365c9
 Label,Machine Learning,,e99695
@@ -131,7 +137,6 @@ Label,ManagedServices,,e99695
 Label,MariaDB,,e99695
 Label,Marketplace Ordering,,e99695
 Label,Media Services,,e99695
-Label,Mgmt,This issue is related to a management-plane library.,ffeb77
 Label,Mgmt-EngSys,Engineering System (Management Plane Specific),ffeb77
 Label,Migrate,,e99695
 Label,Mixed Reality,,e99695
@@ -170,11 +175,7 @@ Label,Network - Virtual Network NAT,,e99695
 Label,Network - Virtual WAN,,e99695
 Label,Notification Hub,,e99695
 Label,Operations Management,,e99695
-Label,P0,,e10c02
-Label,P1,,d7e102
-Label,P2,,02d7e1
 Label,Peering,,e99695
-Label,Pending,,02e10c
 Label,Policy,,e99695
 Label,Policy Insights,,e99695
 Label,PostgreSQL,,e99695
@@ -182,7 +183,6 @@ Label,PowerBI,,e99695
 Label,Purview,,e99695
 Label,Quantum,,e99695
 Label,Quota,Quota Service,e99695
-Label,Ready for test,,02e10c
 Label,Recovery Services Backup,,e99695
 Label,Recovery Services Site-Recovery,,e99695
 Label,Redis Cache,,e99695

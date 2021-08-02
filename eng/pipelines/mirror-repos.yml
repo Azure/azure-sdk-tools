@@ -20,7 +20,7 @@ jobs:
           Azure/azure-rest-api-specs:
             TargetRepos: 
               Azure/azure-rest-api-specs:
-                Branch: main
+                Branch: master
               Azure/azure-rest-api-specs-pr:
               azure-sdk/azure-rest-api-specs:
 

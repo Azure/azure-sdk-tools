@@ -85,7 +85,7 @@ public class XMLASTAnalyser implements Analyser {
                     }
 
                     case XMLStreamReader.END_DOCUMENT: {
-                        System.out.println("IGNORING END_DOCUMENT ");
+                        addNewLine();
                         break;
                     }
 

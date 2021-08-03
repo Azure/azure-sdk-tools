@@ -58,7 +58,7 @@
             </div>
         }
 
-        <form asp-resource="@Model.Review" asp-requirement="@ReviewOwnerRequirement.Instance" class="form-inline float-right ml-2" method="post" asp-page-handler="ToggleClosed">
+        <form asp-resource="@Model.Review" class="form-inline float-right ml-2" method="post" asp-page-handler="ToggleClosed">
             <input type="submit" class="btn btn-sm btn-secondary" value="@(Model.Review.IsClosed ? "Reopen": "Close")" />
         </form>
 

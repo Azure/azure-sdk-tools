@@ -101,6 +101,8 @@ struct TypeModel {
             self.init(from: src)
         case let src as MetatypeType:
             self.init(from: src.referenceType)
+        case let src as AnyType:
+            self.init(from: src.textDescription)
         default:
             SharedLogger.fail("Unsupported identifier: \(source)")
         }

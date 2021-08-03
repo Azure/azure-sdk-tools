@@ -27,7 +27,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
         }
 
-
         [Fact]
         public void TestAddSanitizer()
         {
@@ -55,7 +54,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var result = testRecordingHandler.Sanitizers.First();
             Assert.True(result is HeaderRegexSanitizer);
         }
-
 
         [Fact]
         public void TestAddTransform()

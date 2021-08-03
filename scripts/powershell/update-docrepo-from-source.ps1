@@ -67,7 +67,7 @@ foreach($service in $selectedServices){
 
     $fileMatch = (Select-String -InputObject $fileContent -Pattern 'Azure .+? (client|plugin|shared) library for (JavaScript|Java|Python|\.NET)').Matches[0]
 
-    $header = "---`r`ntitle: $fileMatch`r`nkeywords: Azure, $lang, SDK, API, $service, $package`r`nauthor: maggiepint`r`nms.author: magpint`r`nms.date: $date`r`nms.topic: article`r`nms.prod: azure`r`nms.technology: azure`r`nms.devlang: $lang`r`nms.service: $service`r`n---`r`n"
+    $header = "---`r`ntitle: $fileMatch`r`nkeywords: Azure, $lang, SDK, API, $service, $package`r`nauthor: maggiepint`r`nms.author: magpint`r`nms.date: $date`r`nms.topic: reference`r`nms.prod: azure`r`nms.technology: azure`r`nms.devlang: $lang`r`nms.service: $service`r`n---`r`n"
 
     $fileContent = $fileContent -replace $fileMatch, "$fileMatch - Version $version `r`n"
 

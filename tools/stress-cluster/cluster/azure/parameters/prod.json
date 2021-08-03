@@ -14,6 +14,12 @@
     "monitoringLocation": {
       "value": "centralus"
     },
+    "staticTestSecretsKeyvaultName": {
+      "value": "StressTestSecrets"
+    },
+    "staticTestSecretsKeyvaultGroup": {
+      "value": "rg-StressTestSecrets"
+    },
     "enableMonitoring": {
         "value": true
     },

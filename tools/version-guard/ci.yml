@@ -21,7 +21,8 @@ pr:
     include:
       - tools/version-guard
 
-stages:
-  - template: ../../eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
-    parameters:
-      ToolDirectory: version-guard
+extends:
+  template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
+  parameters:
+    ToolDirectory: tools/version-guard
+    SkipDotNetInstall: true

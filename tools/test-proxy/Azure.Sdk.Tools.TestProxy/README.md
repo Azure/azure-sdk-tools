@@ -25,7 +25,7 @@ After successful installation, run the tool:
 
 ### Via Docker Image
 
-Feel free to build the docker file locally within working directory `/tools/test-proxy/docker/`. All required resources are located within.
+Feel free to build the docker file locally within working directory `/tools/test-proxy/docker/`. All required resources are located within. There are additional helpful tips regarding the docker build and install in the [docker readme](../docker/README)
 
 ```powershell
 > docker build . -t test-proxy
@@ -35,8 +35,6 @@ Feel free to build the docker file locally within working directory `/tools/test
 Or, leverage the azure sdk eng sys container registry.
 
 ```powershell
-> az login
-> az acr login --name azsdkengsys
 > docker run -v <your-volume-name-or-location>:/etc/testproxy -p 5001:5001 -p 5000:5000 azsdkengsys.azurecr.io/engsys/ubuntu_testproxy_server:latest
 ```
 
@@ -114,9 +112,10 @@ The implementation is language specific, but what you want to do is:
 
 1. Prevent each request originating from the test test from hitting their original endpoint.
 2. Make the following changes to every outgoing request
-    1. Place original request HOSTNAME in header `x-recording-upstream-base-uri`
-    2. Replace request HOSTNAME with Proxy Server HOSTNAME. (currently https://localhost:5001 or http://localhost:5000)
-       - Example transformation: `https://fakeazsdktestaccount.table.core.windows.net/Tables` -> `https://localhost:5001/Tables`.
+    1. Place original request scheme + hostname in header `x-recording-upstream-base-uri`
+       - Example header setting: `x-recording-upstream-base-uri: "https://fakeazsdktestaccount.table.core.windows.net"`
+    2. Replace request <scheme:hostname> with Proxy Server <scheme:hostname>. (currently https://localhost:5001 or http://localhost:5000)
+       - Example transformation: `https://fakeazsdktestaccount.table.core.windows.net/Tables` -> `http://localhost:5001/Tables`.
     3. Add header `"x-recording-id": <x-recording-id>` from startup step
     4. Add header `"x-recording-mode": "record"`
 3. As each request hits the test proxy (due to the fact the target hostname has been updated), the test-proxy will invoke the requests and store their results prior to returning to the test code.

@@ -21,7 +21,8 @@ pr:
     include:
       - tools/CreateRuleFabricBot
 
-stages:
-  - template: ../../eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
-    parameters:
-      ToolDirectory: CreateRuleFabricBot
+extends:
+  template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
+  parameters:
+    ToolDirectory: tools/CreateRuleFabricBot
+    SkipDotNetInstall: true

@@ -2,7 +2,7 @@ env: test
 
 appInsightsKeySecretName:
   test: appInsightsInstrumentationKey-uj7jqs4ukw2gi
-  prod: 'not-specified'
+  prod: appInsightsInstrumentationKey-dqojlttkovp2c
   dev: 'not-specified'
 staticTestSecretsKeyvaultName:
   test: StressTestSecrets
@@ -10,11 +10,11 @@ staticTestSecretsKeyvaultName:
   dev: 'not-specified'
 clusterTestSecretsKeyvaultName:
   test: stress-kv-uj7jqs4ukw2gi
-  prod: 'not-specified'
+  prod: stress-kv-dqojlttkovp2c
   dev: 'not-specified'
 secretProviderIdentity:
   test: bc7712b9-1622-4b7f-9943-604c73cda131
-  prod: 'not-specified'
+  prod: ea706f92-1d9a-4611-9cde-8305aa3d9e98
   dev: 'not-specified'
 subscription:
   test: public

@@ -270,11 +270,6 @@ namespace APIViewWeb.Respositories
 
         public async Task ToggleIsClosedAsync(ClaimsPrincipal user, string id)
         {
-            if (user == null)
-            {
-                throw new UnauthorizedAccessException();
-            }
-
             var review = await GetReviewAsync(user, id);
             review.IsClosed = !review.IsClosed;
             await _reviewsRepository.UpsertReviewAsync(review);

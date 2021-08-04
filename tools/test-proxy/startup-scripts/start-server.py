@@ -5,7 +5,7 @@ import sys
 import os
 
 CONTAINER_NAME = "ambitious_azsdk_test_proxy"
-IMAGE_SOURCE = "azsdkengsys.azurecr.io/engsys/ubuntu_testproxy_server:952205"
+IMAGE_SOURCE = "azsdkengsys.azurecr.io/engsys/testproxy:952205"
 
 def get_proxy_container():
     unparsed_result = subprocess.check_output(["docker", "container", "ls", "-a", "--format", "\"{{ json . }}\"", "--filter", "name={}".format(CONTAINER_NAME)])

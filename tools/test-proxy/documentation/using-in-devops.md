@@ -25,7 +25,7 @@ There are a couple options here. Discussed above are `start-up scripts` that can
       -v $(Build.SourcesDirectory):/etc/testproxy `
       -p 5001:5001 `
       -p 5000:5000 `
-      azsdkengsys.azurecr.io/engsys/ubuntu_testproxy_server:latest
+      azsdkengsys.azurecr.io/engsys/testproxy:latest
     displayName: 'Run the docker container'
 ```
 

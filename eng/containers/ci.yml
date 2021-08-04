@@ -3,7 +3,7 @@ parameters:
   type: object
   default:
   - name: test-proxy
-    dockerRepo: 'engsys/ubuntu_testproxy_server'
+    dockerRepo: 'engsys/testproxy'
     dockerFile: 'tools/test-proxy/docker/dockerfile'
     stableTags:
     - 'latest'

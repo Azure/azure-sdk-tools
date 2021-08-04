@@ -35,7 +35,7 @@ Feel free to build the docker file locally within working directory `/tools/test
 Or, leverage the azure sdk eng sys container registry.
 
 ```powershell
-> docker run -v <your-volume-name-or-location>:/etc/testproxy -p 5001:5001 -p 5000:5000 azsdkengsys.azurecr.io/engsys/ubuntu_testproxy_server:latest
+> docker run -v <your-volume-name-or-location>:/etc/testproxy -p 5001:5001 -p 5000:5000 azsdkengsys.azurecr.io/engsys/testproxy:latest
 ```
 
 Note in both cases you will need to provide the port and volume mapping as arguments.

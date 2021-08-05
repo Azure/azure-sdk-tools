@@ -39,32 +39,15 @@ docker build . -f dockerfile-win -t test-proxy
 
 ### Certificates
 
-All necessary components for dev-certificate usage are present within the `dev_certificate` directory.
+All necessary components for dev-certificate usage are present within the `dev_certificate` directory. Reference [trusting-cert-per-language.md](../documentation/trusting-cert-per-language.md) to learn how to add and trust with the toolchain of your choice.
 
-**Note that this certificate was generated with no password.**
-
-Within are components of a **dev certificate** that has no usage outside of keeping your local usage of SSL happy. When running the container, you will need to trust this certificate if you want to connect to `https://localhost:5001` without cert validation failures. These certificates have no usage outside of your local box.
-
-```powershell
-# ensure root access
-> $rootCert = $(Import-PfxCertificate -FilePath ./dev_certificate/dotnet-devcert.pfx -CertStoreLocation 'Cert:\LocalMachine\Root')
-```
-
-or via `dotnet`
-
-```powershell
-dotnet dev-certs https --clean --import ./dotnet-devcert.pfx --password="password"
-```
-
-Or add and trust with the toolchain of your choice.
-
-On a ubuntu-flavored distro of linux, feel free to re-use the import mechanism in the local file `import-dev-cert.sh`. Prior to using locally, ensure $CERT_FOLDER environment variable is set to the local directory `dev_certificate` to access necessary files!
+Please note that each language + its SSL stack will provide different mechanisms for validating SSL certificates. Again, reference [trusting-cert-per-language.md](../documentation/trusting-cert-per-language.md) to understand the process beyond the most general case.
 
 ### Confirm Success
 
 Run the container and attempt a `curl https://localhost:5001/Admin/IsAlive`.
 
-Do you see activity in docker logs + a successfully 200 response?
+Do you see activity in docker logs + a 200 response?
 
 ### Acknowledgement
 

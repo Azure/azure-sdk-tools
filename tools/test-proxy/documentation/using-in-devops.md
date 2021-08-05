@@ -29,12 +29,6 @@ There are a couple options here. Discussed above are `start-up scripts` that can
     displayName: 'Run the docker container'
 ```
 
-**Important Note** about running docker in your build. Remember that by default, on Windows machines, the container will be running in `windows` mode, which will PREVENT THE INSTALL of the test-proxy (a linux container) image. At this time, Azure DevOps does not support swapping mode at runtime.
-
-To account for this, one must install the `Docker Desktop` for access to `dockercli.exe`. This will allow the usage of `dockercli.exe -SwitchLinuxEngine` to swap the docker daemon's selected mode.
-
-** this is an ongoing issue **
-
 ### Without Docker
 
 If `docker` is not an option for your unit tests, there will need to be a manual installation and invocation of the test-proxy. It should be noted, that the below, while working on Linux and Windows, can be extremely finicky. Use with caution.
@@ -43,7 +37,11 @@ Something along the lines of...
 
 ```yml
   - pwsh: |
-      dotnet tool install azure.sdk.tools.testproxy --tool-path $(Build.BinariesDirectory)/test-proxy --add-source https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk/nuget/v3/index.json --version <version>
+      dotnet tool install `
+        azure.sdk.tools.testproxy `
+        --tool-path $(Build.BinariesDirectory)/test-proxy `
+        --add-source https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk/nuget/v3/index.json `
+        --version <version>
     displayName: "Install TestProxy"
 
   - pwsh: |

@@ -3,6 +3,7 @@ const { exit } = require('process');
 const path = require('path');
 
 var CONTAINER_NAME = "ambitious_azsdk_test_proxy"
+// this image should be pinned when merged to main in your repo.
 var IMAGE_SOURCE = "azsdkengsys.azurecr.io/engsys/testproxy:952205"
 
 function getProxyContainer(){

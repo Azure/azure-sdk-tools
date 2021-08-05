@@ -7,6 +7,11 @@ parameters:
     dockerFile: 'tools/test-proxy/docker/dockerfile'
     stableTags:
     - 'latest'
+  - name: test-proxy
+    dockerRepo: 'engsys/testproxy'
+    dockerFile: 'tools/test-proxy/docker/dockerfile-win'
+    stableTags:
+    - 'latest'
 
 trigger:
   branches:
@@ -15,7 +20,7 @@ trigger:
   paths:
     include:
     - eng/containers/
-    - tools/test-proxy/dockerfile
+    - tools/test-proxy/docker/
 
 pr: none
 

@@ -67,6 +67,6 @@ jobs:
             inputs:
               containerRegistry: $(containerRegistry)
               repository: ${{ config.dockerRepo }}
-            command: push
-            tags: ${{ stableTag }}
-    
+              command: push
+              tags: ${{ stableTag }}
+      

@@ -22,7 +22,7 @@ RUN Write-host "Verifying valid Version..."; \
     Invoke-WebRequest -Uri $url -outfile /installer/powershell.zip -verbose; \
     Expand-Archive /installer/powershell.zip -DestinationPath \PowerShell
 
-FROM mcr.microsoft.com/dotnet/sdk:5.0.302-nanoserver-20H2 AS build
+FROM mcr.microsoft.com/dotnet/sdk:5.0.302-nanoserver-1809 AS build
 
 # Copy PowerShell Core from the installer container
 ENV ProgramFiles="C:\Program Files" \
@@ -60,7 +60,6 @@ RUN mkdir testproxy
 
 ADD dev_certificate/dotnet-devcert.pfx certwork
 ADD dev_certificate/dotnet-devcert.crt certwork
-ADD dev_certificate/trust-dev-cert.ps1 certwork
 
 USER ContainerAdministrator
 RUN dotnet dev-certs https --clean --import /certwork/dotnet-devcert.pfx -p "password"

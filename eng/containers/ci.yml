@@ -1,5 +1,5 @@
 parameters:
-- name: LinuxDockerDeployments
+- name: DockerDeployments
   type: object
   default:
   - name: test-proxy-linux

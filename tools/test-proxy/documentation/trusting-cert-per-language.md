@@ -22,6 +22,8 @@ dotnet dev-certs https --trust
 
 On a ubuntu-flavored distro of linux, feel free to re-use the import mechanism in the local file `tools/test-proxy/docker/dev_certificate/import-dev-cert.sh`. Prior to using locally, ensure $CERT_FOLDER environment variable is set to the local directory `dev_certificate` to access necessary files!
 
+Also note that taken to trust this cert will _also apply to installing the dotnet tool directly_. The test-proxy tool will consume the certificate just the same as the docker container does.
+
 ## Go
 
 [Reference This Document](https://forfuncsake.github.io/post/2017/08/trust-extra-ca-cert-in-go-app/) for a walkthrough on how to add the certificate to the `trusted pool`.

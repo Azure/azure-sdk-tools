@@ -66,6 +66,16 @@ USER ContainerAdministrator
 RUN dotnet dev-certs https --clean --import /certwork/dotnet-devcert.pfx -p "password"
 USER ContainerUser
 
+# this is the workaround for the inability to "trust" a certificate due to permissions issues on the windows platform
+# we would obviously prefer to use...
+# RUN dotnet dev-certs https --trust
+# ...to trust the cert we imported above. However, due to the fact that a UI is REQUIRED to assent to this specific tool, 
+# it won't work on docker. ADDITIONALLY, we can't use the methodology of using powershell to insert into the LocalMachine/Root
+# as even if we surround it in a USER ContainerAdministrator to elevate our access, we STILL hit weird permission denied errors 
+# and he ASP.NET startup still can't load it as a dev certificate. 
+ENV ASPNETCORE_Kestrel__Certificates__Default__Path="/certwork/dotnet-devcert.pfx" \
+    ASPNETCORE_Kestrel__Certificates__Default__Password="password"  
+
 SHELL ["pwsh", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
 
 # install the package
@@ -76,9 +86,6 @@ RUN dotnet tool install azure.sdk.tools.testproxy \
 
 EXPOSE 5001
 EXPOSE 5000
-
-ENV ASPNETCORE_Kestrel__Certificates__Default__Path="/certwork/dotnet-devcert.pfx" \
-    ASPNETCORE_Kestrel__Certificates__Default__Password="password"  
 
 # this override allows the tool server to listen to traffic over the docker bridge.
 # default URL of localhost:5000 or localhost:50001 are not usable from outside the container

@@ -2,13 +2,13 @@ parameters:
 - name: DockerDeployments
   type: object
   default:
-  - name: test-proxy-linux
+  - name: test_proxy_linux
     pool: 'ubuntu-20.04'
     dockerRepo: 'engsys/testproxy'
     dockerFile: 'tools/test-proxy/docker/dockerfile'
     stableTags:
     - 'latest'
-  - name: test-proxy-windows
+  - name: test_proxy_windows
     pool: 'windows-2019'
     dockerRepo: 'engsys/testproxy'
     dockerFile: 'tools/test-proxy/docker/dockerfile-win'

@@ -1,7 +1,8 @@
 package com.azure.tools.apiview.processor;
 
-import com.azure.tools.apiview.processor.analysers.ASTAnalyser;
+import com.azure.tools.apiview.processor.analysers.JavaASTAnalyser;
 import com.azure.tools.apiview.processor.analysers.Analyser;
+import com.azure.tools.apiview.processor.analysers.XMLASTAnalyser;
 import com.azure.tools.apiview.processor.model.APIListing;
 import com.azure.tools.apiview.processor.model.Diagnostic;
 import com.azure.tools.apiview.processor.model.DiagnosticKind;
@@ -11,6 +12,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -105,55 +107,23 @@ public class Main {
     }
 
     private static void processFile(final File inputFile, final File outputFile) throws IOException {
-        final ReviewProperties reviewProperties = getReviewProperties(inputFile);
-
-        final String groupId = reviewProperties.getMavenPom().getGroupId();
-
-        final String reviewName = reviewProperties.getMavenPom().getArtifactId()
-                                  + " (version " + reviewProperties.getMavenPom().getVersion() + ")";
-        System.out.println("  Using '" + reviewName + "' for the review name");
-
-        final String packageName = (groupId.isEmpty() ? "" : groupId + ":") + reviewProperties.getMavenPom().getArtifactId();
-        System.out.println("  Using '" + packageName + "' for the package name");
-
-        System.out.println("  Using '" + reviewProperties.getMavenPom().getVersion() + "' for the package version");
-
-        final APIListing apiListing = new APIListing(reviewName);
-        apiListing.setPackageName(packageName);
-        apiListing.setPackageVersion(reviewProperties.getMavenPom().getVersion());
-        apiListing.setLanguage("Java");
-        apiListing.setMavenPom(reviewProperties.getMavenPom());
+        final APIListing apiListing = new APIListing();
 
         // empty tokens list that we will fill as we process each class file
         final List<Token> tokens = new ArrayList<>();
         apiListing.setTokens(tokens);
 
         if (inputFile.getName().endsWith("-sources.jar")) {
-            final Analyser analyser = new ASTAnalyser(inputFile, apiListing);
-
-            // Read all files within the jar file so that we can create a list of files to analyse
-            final List<Path> allFiles = new ArrayList<>();
-            try (FileSystem fs = FileSystems.newFileSystem(inputFile.toPath(), Main.class.getClassLoader())) {
-                fs.getRootDirectories().forEach(root -> {
-                    try (Stream<Path> paths = Files.walk(root)) {
-                        paths.forEach(allFiles::add);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        System.exit(-1);
-                    }
-                });
-
-                // Do the analysis while the filesystem is still represented in memory
-                analyser.analyse(allFiles);
-            }
-
-
+            processJavaSourcesJar(inputFile, apiListing);
+        } else if (inputFile.getName().endsWith(".xml")) {
+            // We are *probably* looking at a Maven BOM / POM file, let's analyse it!
+            processXmlFile(inputFile, apiListing);
         } else {
             apiListing.getTokens().add(new Token(LINE_ID_MARKER, "Error!", "error"));
             apiListing.addDiagnostic(new Diagnostic(
                 DiagnosticKind.ERROR,
                 "error",
-                "Uploaded files should end with '-sources.jar', " +
+                "Uploaded files should end with '-sources.jar' or '.xml', " +
                     "as the APIView tool only works with source jar files, not compiled jar files. The uploaded file " +
                     "that was submitted to APIView was named " + inputFile.getName()));
         }
@@ -164,6 +134,90 @@ public class Main {
             .setSerializationInclusion(JsonInclude.Include.NON_NULL)
             .writerWithDefaultPrettyPrinter()
             .writeValue(outputFile, apiListing);
+    }
+
+    private static void processJavaSourcesJar(File inputFile, APIListing apiListing) throws IOException {
+        final ReviewProperties reviewProperties = getReviewProperties(inputFile);
+
+        final String groupId = reviewProperties.getMavenPom().getGroupId();
+
+        final String reviewName = reviewProperties.getMavenPom().getArtifactId()
+                                      + " (version " + reviewProperties.getMavenPom().getVersion() + ")";
+        System.out.println("  Using '" + reviewName + "' for the review name");
+
+        final String packageName = (groupId.isEmpty() ? "" : groupId + ":") + reviewProperties.getMavenPom().getArtifactId();
+        System.out.println("  Using '" + packageName + "' for the package name");
+
+        System.out.println("  Using '" + reviewProperties.getMavenPom().getVersion() + "' for the package version");
+
+        apiListing.setReviewName(reviewName);
+        apiListing.setPackageName(packageName);
+        apiListing.setPackageVersion(reviewProperties.getMavenPom().getVersion());
+        apiListing.setLanguage("Java");
+        apiListing.setMavenPom(reviewProperties.getMavenPom());
+
+        final Analyser analyser = new JavaASTAnalyser(inputFile, apiListing);
+
+        // Read all files within the jar file so that we can create a list of files to analyse
+        final List<Path> allFiles = new ArrayList<>();
+        try (FileSystem fs = FileSystems.newFileSystem(inputFile.toPath(), Main.class.getClassLoader())) {
+            fs.getRootDirectories().forEach(root -> {
+                try (Stream<Path> paths = Files.walk(root)) {
+                    paths.forEach(allFiles::add);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    System.exit(-1);
+                }
+            });
+
+            // Do the analysis while the filesystem is still represented in memory
+            analyser.analyse(allFiles);
+        }
+    }
+
+    private static void processXmlFile(File inputFile, APIListing apiListing) {
+        final ReviewProperties reviewProperties = new ReviewProperties();
+
+        try (FileInputStream fis = new FileInputStream(inputFile)) {
+            String reviewName;
+            String packageName;
+            String packageVersion;
+            String reviewLanguage;
+
+            try {
+                reviewProperties.setMavenPom(new Pom(fis));
+
+                final String groupId = reviewProperties.getMavenPom().getGroupId();
+                packageName = (groupId.isEmpty() ? "" : groupId + ":") + reviewProperties.getMavenPom().getArtifactId();
+                packageVersion = reviewProperties.getMavenPom().getVersion();
+                reviewName = reviewProperties.getMavenPom().getArtifactId() + " (version " + packageVersion + ")";
+                reviewLanguage = "Java";
+
+                apiListing.setMavenPom(reviewProperties.getMavenPom());
+            } catch (IOException e) {
+                // this is likely to not be a maven pom file
+                reviewName = inputFile.getName();
+                packageName = reviewName;
+                packageVersion = "1.0.0";
+                reviewLanguage = "Xml";
+            }
+
+            System.out.println("  Using '" + reviewName + "' for the review name");
+            System.out.println("  Using '" + packageName + "' for the package name");
+            System.out.println("  Using '" + packageVersion + "' for the package version");
+
+            apiListing.setReviewName(reviewName);
+            apiListing.setPackageName(packageName);
+            apiListing.setPackageVersion(packageVersion);
+            apiListing.setLanguage(reviewLanguage);
+
+            final Analyser analyser = new XMLASTAnalyser(apiListing);
+            analyser.analyse(inputFile.toPath());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
     }
 
     private static class ReviewProperties {

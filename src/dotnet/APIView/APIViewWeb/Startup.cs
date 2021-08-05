@@ -90,6 +90,7 @@ namespace APIViewWeb
             services.AddSingleton<LanguageService, GoLanguageService>();
             services.AddSingleton<LanguageService, ProtocolLanguageService>();
             services.AddSingleton<LanguageService, SwiftLanguageService>();
+            services.AddSingleton<LanguageService, XmlLanguageService>();
 
             services.AddAuthentication(options =>
                 {

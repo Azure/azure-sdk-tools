@@ -53,14 +53,16 @@ public class APIListing {
     @JsonIgnore
     private Pom mavenPom;
 
-    public APIListing(String reviewName) {
-        this.name = reviewName;
+    public APIListing() {
         this.diagnostics = new ArrayList<>();
         this.knownTypes = new HashMap<>();
         this.packageNamesToTypesMap = new HashMap<>();
         this.typeToPackageNameMap = new HashMap<>();
-
         this.navigation = new ArrayList<>();
+    }
+
+    public void setReviewName(final String name) {
+        this.name = name;
         this.rootNav = new ChildItem(name, TypeKind.ASSEMBLY);
         this.navigation.add(rootNav);
     }

@@ -2,12 +2,13 @@ package com.azure.tools.apiview.processor.analysers;
 
 
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
 
 /**
  * We support multiple analysers, to serve different purposes.
  *
- * @see ASTAnalyser
+ * @see JavaASTAnalyser
  */
 @FunctionalInterface
 public interface Analyser {
@@ -22,4 +23,8 @@ public interface Analyser {
      *      ignored as necessary.
      */
     void analyse(List<Path> allFiles);
+
+    default void analyse(Path file) {
+        analyse(Arrays.asList(file));
+    }
 }

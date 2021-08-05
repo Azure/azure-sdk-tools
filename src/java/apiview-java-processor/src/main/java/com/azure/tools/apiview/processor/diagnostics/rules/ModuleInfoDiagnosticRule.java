@@ -1,6 +1,6 @@
 package com.azure.tools.apiview.processor.diagnostics.rules;
 
-import com.azure.tools.apiview.processor.analysers.ASTAnalyser;
+import com.azure.tools.apiview.processor.analysers.JavaASTAnalyser;
 import com.azure.tools.apiview.processor.diagnostics.DiagnosticRule;
 import com.azure.tools.apiview.processor.model.APIListing;
 import com.azure.tools.apiview.processor.model.Diagnostic;
@@ -45,7 +45,7 @@ public class ModuleInfoDiagnosticRule implements DiagnosticRule {
         // Check for the presence of module-info
         Optional<Token> moduleInfoToken = listing.getTokens().stream()
                 .filter(token -> token.getKind().equals(TokenKind.TYPE_NAME))
-                .filter(token -> token.getDefinitionId() != null && token.getDefinitionId().equals(ASTAnalyser.MODULE_INFO_KEY))
+                .filter(token -> token.getDefinitionId() != null && token.getDefinitionId().equals(JavaASTAnalyser.MODULE_INFO_KEY))
                 .findFirst();
 
         // Collect all packages that are exported
@@ -69,7 +69,7 @@ public class ModuleInfoDiagnosticRule implements DiagnosticRule {
             if (!moduleName.equals(basePackageName) && !moduleName.equals("com.azure.core")) {
                 // add warning message if the module name does not match the base package name
                 listing.addDiagnostic(new Diagnostic(DiagnosticKind.WARNING,
-                        makeId(ASTAnalyser.MODULE_INFO_KEY), "Module name should be the same as base package " +
+                        makeId(JavaASTAnalyser.MODULE_INFO_KEY), "Module name should be the same as base package " +
                         "name: " + basePackageName));
             }
 
@@ -78,7 +78,7 @@ public class ModuleInfoDiagnosticRule implements DiagnosticRule {
                     .filter(publicPackage -> !exportsPackages.contains(publicPackage))
                     .forEach(missingExport -> {
                         listing.addDiagnostic(new Diagnostic(DiagnosticKind.ERROR,
-                                makeId(ASTAnalyser.MODULE_INFO_KEY), "Public package not exported: " + missingExport));
+                                makeId(JavaASTAnalyser.MODULE_INFO_KEY), "Public package not exported: " + missingExport));
                     });
         }
     }

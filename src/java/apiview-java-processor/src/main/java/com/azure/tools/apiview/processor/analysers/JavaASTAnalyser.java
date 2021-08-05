@@ -91,7 +91,7 @@ import static com.azure.tools.apiview.processor.model.TokenKind.SKIP_DIFF_END;
 
 import static com.azure.tools.apiview.processor.analysers.util.TokenModifier.*;
 
-public class ASTAnalyser implements Analyser {
+public class JavaASTAnalyser implements Analyser {
     public static final String MAVEN_KEY = "Maven";
     public static final String MODULE_INFO_KEY = "module-info";
 
@@ -109,7 +109,7 @@ public class ASTAnalyser implements Analyser {
 
     private int indent;
 
-    public ASTAnalyser(File inputFile, APIListing apiListing) {
+    public JavaASTAnalyser(File inputFile, APIListing apiListing) {
         this.apiListing = apiListing;
         this.indent = 0;
         this.packageNameToPackageInfoJavaDoc = new HashMap<>();

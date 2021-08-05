@@ -2,12 +2,12 @@ parameters:
 - name: DockerDeployments
   type: object
   default:
-  - name: test-proxy
+  - name: test-proxy-linux
     dockerRepo: 'engsys/testproxy'
     dockerFile: 'tools/test-proxy/docker/dockerfile'
     stableTags:
     - 'latest'
-  - name: test-proxy
+  - name: test-proxy-windows
     dockerRepo: 'engsys/testproxy'
     dockerFile: 'tools/test-proxy/docker/dockerfile-win'
     stableTags:

@@ -1,10 +1,8 @@
 FROM mcr.microsoft.com/powershell:nanoserver  AS installer-env
 
-# Arguments for installing PowerShell, must be defined in the container they are used
 ARG PS_VERSION=7.1.0
 ARG PS_PACKAGE_URL=https://github.com/PowerShell/PowerShell/releases/download/v$PS_VERSION/PowerShell-$PS_VERSION-win-x64.zip
 
-# disable telemetry
 ENV POWERSHELL_TELEMETRY_OPTOUT="1"
 
 SHELL ["pwsh", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
@@ -18,12 +16,11 @@ RUN Write-host "Verifying valid Version..."; \
     $ProgressPreference = 'SilentlyContinue'; \
     Write-host "using url: $env:PS_PACKAGE_URL" ;\
     $url = $env:PS_PACKAGE_URL ; \
-    Write-host "downloading: $url"; \
+    Write-host "downloading: $url" ; \
     [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12; \
     New-Item -ItemType Directory /installer > $null ; \
     Invoke-WebRequest -Uri $url -outfile /installer/powershell.zip -verbose; \
     Expand-Archive /installer/powershell.zip -DestinationPath \PowerShell
-
 
 FROM mcr.microsoft.com/dotnet/sdk:5.0.302-nanoserver-20H2 AS build
 
@@ -39,10 +36,8 @@ ENV ProgramFiles="C:\Program Files" \
     ASPNETCORE_ENVIRONMENT=Development
 
 USER ContainerAdministrator
-# This is basically the correct code except for the /M
 RUN setx PATH "%PATH%;%ProgramFiles%\PowerShell;" /M
 USER ContainerUser
-### End workaround ###
 
 COPY --from=installer-env ["\\PowerShell\\", "$ProgramFiles\\PowerShell"]
 
@@ -60,8 +55,16 @@ RUN pwsh \
             Start-Sleep -Seconds 6 ; \
           }"
 
-# # prep the machine dev certificate
+RUN mkdir certwork
+RUN mkdir testproxy
+
 ADD dev_certificate/dotnet-devcert.pfx certwork
+ADD dev_certificate/dotnet-devcert.crt certwork
+ADD dev_certificate/trust-dev-cert.ps1 certwork
+
+USER ContainerAdministrator
+RUN dotnet dev-certs https --clean --import /certwork/dotnet-devcert.pfx -p "password"
+USER ContainerUser
 
 SHELL ["pwsh", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
 
@@ -71,10 +74,11 @@ RUN dotnet tool install azure.sdk.tools.testproxy \
     --add-source https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk/nuget/v3/index.json \
     --version 1.0.0-dev.20210729.1 
 
-RUN mkdir testproxy
-
 EXPOSE 5001
 EXPOSE 5000
+
+ENV ASPNETCORE_Kestrel__Certificates__Default__Path="/certwork/dotnet-devcert.pfx" \
+    ASPNETCORE_Kestrel__Certificates__Default__Password="password"  
 
 # this override allows the tool server to listen to traffic over the docker bridge.
 # default URL of localhost:5000 or localhost:50001 are not usable from outside the container

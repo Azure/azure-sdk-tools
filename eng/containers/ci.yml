@@ -4,13 +4,13 @@ parameters:
   default:
   - name: test_proxy_linux
     pool: 'ubuntu-20.04'
-    dockerRepo: 'engsys/testproxy'
+    dockerRepo: 'engsys/testproxy-lin'
     dockerFile: 'tools/test-proxy/docker/dockerfile'
     stableTags:
     - 'latest'
   - name: test_proxy_windows
     pool: 'windows-2019'
-    dockerRepo: 'engsys/testproxy'
+    dockerRepo: 'engsys/testproxy-win'
     dockerFile: 'tools/test-proxy/docker/dockerfile-win'
     stableTags:
     - 'latest'

@@ -4,7 +4,7 @@
 
 All necessary components for dev-certificate usage are present within the `dev_certificate` directory.
 
-**Note that this certificate was generated password "password"**
+**Note that this certificate was generated with password "password"**
 
 Within are components of a **dev certificate** that has no usage outside of keeping your local usage of SSL happy. When running the container, you will need to trust this certificate (`dotnet-devcert.pfx`) if you want to connect to `https://localhost:5001` without cert validation failures. This certificate has no usage outside of your local box and is strictly associated with `CN=localhost`.
 

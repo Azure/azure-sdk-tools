@@ -76,6 +76,8 @@ ENV ASPNETCORE_Kestrel__Certificates__Default__Path="/certwork/dotnet-devcert.pf
 
 SHELL ["pwsh", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
 
+# while it may seem a bit strange to use "etc" on a windows container. We are mirroring
+# the methodology from the primary container, which is linux.
 RUN mkdir -p etc/testproxy
 
 # install the package

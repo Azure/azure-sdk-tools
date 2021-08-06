@@ -3,9 +3,11 @@ const bodyParser = require("body-parser");
 const jwt = require("jsonwebtoken");
 const jose = require("node-jose");
 const crypto = require("crypto");
+const url = require("url");
 
 const PORT = process.env.PORT || 5000;
-const HOST = process.env.HOST || "0.0.0.0";
+
+const fullUrl = (req) => `https://${req.get("host")}`;
 
 async function initKeys() {
   const { publicKey, privateKey } = crypto.generateKeyPairSync("rsa", {
@@ -28,9 +30,9 @@ function initApp({ keyStore, privateKey, signingKeyId }) {
   const app = express();
   app.use(bodyParser.json());
 
-  app.get("/.well-known/openid-configuration", (_req, res) => {
+  app.get("/.well-known/openid-configuration", (req, res) => {
     res.json({
-      jwks_uri: `${HOST}/keys`
+      jwks_uri: `${fullUrl(req)}/keys`
     });
   });
 
@@ -44,11 +46,10 @@ function initApp({ keyStore, privateKey, signingKeyId }) {
       use: "enc",
       kid: "fake-release-key"
     });
-    releaseKey.toJSON(false);
 
     // sdk-test will be the claim used for tests.
     const tokenData = {
-      iss: `${HOST}/`,
+      iss: `${fullUrl(req)}/`,
       "sdk-test": true,
       "x-ms-inittime": {},
       "x-ms-runtime": {
@@ -61,12 +62,12 @@ function initApp({ keyStore, privateKey, signingKeyId }) {
       algorithm: "RS256",
       expiresIn: "7 days",
       header: {
-        jku: `${HOST}/keys`,
+        jku: `${fullUrl(req)}/keys`,
         kid: signingKeyId
       }
     });
 
-    res.json({ token });
+    res.json({ token, attestationToken: token });
   });
 
   return app;
@@ -81,7 +82,6 @@ async function main() {
         reject(err);
       }
 
-      console.log("Host is:", HOST);
       console.log(`Server listening on port ${PORT}`);
 
       resolve();

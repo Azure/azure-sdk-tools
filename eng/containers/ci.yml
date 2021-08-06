@@ -8,6 +8,12 @@ parameters:
     dockerFile: 'tools/test-proxy/docker/dockerfile'
     stableTags:
     - 'latest'
+  - name: mock_attestation
+    pool: 'ubuntu-20.04'
+    dockerRepo: 'keyvault-mock-attestation'
+    dockerFile: 'tools/keyvault-mock-attestation/Dockerfile'
+    stableTags:
+    - 'latest'
   - name: test_proxy_windows
     pool: 'windows-2019'
     dockerRepo: 'engsys/testproxy-win'
@@ -23,6 +29,7 @@ trigger:
     include:
     - eng/containers/
     - tools/test-proxy/docker/
+    - tools/keyvault-mock-attestation/Dockerfile
 
 pr: none
 

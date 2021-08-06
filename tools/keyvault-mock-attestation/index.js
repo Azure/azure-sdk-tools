@@ -67,6 +67,9 @@ function initApp({ keyStore, privateKey, signingKeyId }) {
       }
     });
 
+    // TODO: some tests are still referencing `token` which is too generic.
+    // Let's move to attestationToken which is easier to understand and replace in a recorder.
+    // We can delete `token` once languages have moved over.
     res.json({ token, attestationToken: token });
   });
 

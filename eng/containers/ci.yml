@@ -69,4 +69,3 @@ jobs:
               repository: ${{ config.dockerRepo }}
               command: push
               tags: ${{ stableTag }}
-      

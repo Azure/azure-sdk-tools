@@ -29,7 +29,7 @@ RUN chmod +x $CERT_FOLDER/$CERT_IMPORT_SH \
 RUN dotnet tool install azure.sdk.tools.testproxy \
     --global \
     --add-source https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk/nuget/v3/index.json \
-    --version 1.0.0-dev.20210722.1 \
+    --version 1.0.0-dev.20210729.1 \
     && mkdir /etc/testproxy
 
 EXPOSE 5001

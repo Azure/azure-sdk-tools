@@ -13,3 +13,4 @@
 /tools/webhook-router/ @weshaggard @praveenkuttappan
 /tools/github-issues/ @weshaggard @praveenkuttappan @AlexGhiondea
 /tools/pipeline-generator/ @weshaggard @benbp
+/tools/test-proxy/ @scbedd @mikeharder

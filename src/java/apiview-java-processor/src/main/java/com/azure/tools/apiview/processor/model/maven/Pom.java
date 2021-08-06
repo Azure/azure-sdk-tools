@@ -48,6 +48,10 @@ public class Pom implements MavenGAV {
             this.gav = createGav(xPath, xmlDocument, "/project");
             this.parent = createGav(xPath, xmlDocument, "/project/parent");
 
+            if (!gav.isValid()) {
+                throw new IOException("Cannot parse given file as a Maven POM");
+            }
+
             // jacoco configuration
             Node n = (Node) xPath.evaluate("/project/properties/jacoco.min.linecoverage", xmlDocument, XPathConstants.NODE);
             this.jacocoMinLineCoverage = n == null ? null : Float.parseFloat(n.getTextContent());
@@ -78,7 +82,7 @@ public class Pom implements MavenGAV {
                 this.allowedDependencies.add(dependenciesNodeList.item(i).getTextContent().trim());
             }
         } catch (ParserConfigurationException | SAXException | XPathExpressionException e) {
-            e.printStackTrace();
+            throw new IOException("Cannot parse given file as a Maven POM");
         }
     }
 
@@ -121,15 +125,15 @@ public class Pom implements MavenGAV {
     private Gav createGav(final XPath xPath, final Document xmlDocument, final String root) throws XPathExpressionException {
         final String groupIdExpression = root + "/groupId";
         final Node groupIdNode = (Node) xPath.evaluate(groupIdExpression, xmlDocument, XPathConstants.NODE);
-        final String groupId = groupIdNode.getTextContent();
+        final String groupId = groupIdNode == null ? "" : groupIdNode.getTextContent();
 
         final String artifactIdExpression = root + "/artifactId";
         final Node artifactIdNode = (Node) xPath.evaluate(artifactIdExpression, xmlDocument, XPathConstants.NODE);
-        final String artifactId = artifactIdNode.getTextContent();
+        final String artifactId = artifactIdNode == null ? "" : artifactIdNode.getTextContent();
 
         final String versionExpression = root + "/version";
         final Node versionNode = (Node) xPath.evaluate(versionExpression, xmlDocument, XPathConstants.NODE);
-        final String version = versionNode.getTextContent();
+        final String version = versionNode == null ? "" : versionNode.getTextContent();
 
         return new Gav(groupId, artifactId, version);
     }

@@ -15,7 +15,8 @@ catch {
 }
 
 $CONTAINER_NAME = "ambitious_azsdk_test_proxy"
-$IMAGE_SOURCE = "azsdkengsys.azurecr.io/engsys/ubuntu_testproxy_server:952205"
+# this image should be pinned when merged to main in your repo.
+$IMAGE_SOURCE = "azsdkengsys.azurecr.io/engsys/testproxy-lin:1035186"
 
 function Get-Proxy-Container(){
     return (docker container ls -a --format "{{ json . }}" --filter "name=$CONTAINER_NAME" `

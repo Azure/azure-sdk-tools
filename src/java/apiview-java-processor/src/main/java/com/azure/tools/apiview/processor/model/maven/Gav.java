@@ -22,4 +22,9 @@ public class Gav implements MavenGAV {
     public String getVersion() {
         return version;
     }
+
+    public boolean isValid() {
+        return groupId != null && artifactId != null && version != null
+                   && !groupId.isEmpty() && !artifactId.isEmpty() && !version.isEmpty();
+    }
 }

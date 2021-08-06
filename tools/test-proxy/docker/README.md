@@ -1,8 +1,11 @@
 # Common Docker Questions
 
+
 ## Local Generation of the test-proxy image
 
 ### Build and Run
+
+First, navigate to the folder containing the test-proxy dockerfile: `tools/test-proxy/docker`.
 
 Invoke to generate a container (with optional tag):
 
@@ -24,34 +27,27 @@ If you _don't_ provide a volume bound to `/etc/testproxy`, it's not actually the
 docker cp <containerid>:/etc/testproxy/ <target local path local path>
 ```
 
+### Windows Container
+
+Actions images do not support swapping between `Linux` and `Windows` containers. This lack of support means that the azure-sdk engsys must also provide a test-proxy container for windows containers.
+
+To build _that_, use the following command.
+
+```docker
+docker build . -f dockerfile-win -t test-proxy
+```
+
 ### Certificates
 
-All necessary components for dev-certificate usage are present within the `dev_certificate` directory.
+All necessary components for dev-certificate usage are present within the `dev_certificate` directory. Reference [trusting-cert-per-language.md](../documentation/trusting-cert-per-language.md) to learn how to add and trust with the toolchain of your choice.
 
-**Note that this certificate was generated with no password.**
-
-Within are components of a **dev certificate** that has no usage outside of keeping your local usage of SSL happy. When running the container, you will need to trust this certificate if you want to connect to `https://localhost:5001` without cert validation failures. These certificates have no usage outside of your local box.
-
-```powershell
-# ensure root access
-> $rootCert = $(Import-PfxCertificate -FilePath ./dev_certificate/dotnet-devcert.pfx -CertStoreLocation 'Cert:\LocalMachine\Root')
-```
-
-or via `dotnet`
-
-```powershell
-dotnet dev-certs https --clean --import ./dotnet-devcert.pfx --password=""
-```
-
-Or add and trust with the toolchain of your choice.
-
-On a ubuntu-flavored distro of linux, feel free to re-use the import mechanism in the local file `import-dev-cert.sh`. Prior to using locally, ensure $CERT_FOLDER environment variable is set to the local directory `dev_certificate` to access necessary files!
+Please note that each language + its SSL stack will provide different mechanisms for validating SSL certificates. Again, reference [trusting-cert-per-language.md](../documentation/trusting-cert-per-language.md) to understand the process beyond the most general case.
 
 ### Confirm Success
 
 Run the container and attempt a `curl https://localhost:5001/Admin/IsAlive`.
 
-Do you see activity in docker logs + a successfully 200 response?
+Do you see activity in docker logs + a 200 response?
 
 ### Acknowledgement
 
@@ -64,8 +60,8 @@ Most issues we've seen are related to having a prior `az acr login` or the like.
 If your error looks something like this:
 
 ```
-> docker pull azsdkengsys.azurecr.io/engsys/ubuntu_testproxy_server:latest
-Error response from daemon: Head https://azsdkengsys.azurecr.io/v2/engsys/ubuntu_testproxy_server/manifests/latest: unauthorized: authentication required
+> docker pull azsdkengsys.azurecr.io/engsys/testproxy:latest
+Error response from daemon: Head https://azsdkengsys.azurecr.io/v2/engsys/testproxy/manifests/latest: unauthorized: authentication required
 ```
 
 Need to clear multiple sets of credentials.
@@ -79,7 +75,7 @@ This occurs when a user has a **prior login** to `azsdkengsys.azurecr.io`. `az a
 For errors that look like:
 
 ```
-> docker pull azsdkengsys.azurecr.io/engsys/ubuntu_testproxy_server:latest
+> docker pull azsdkengsys.azurecr.io/engsys/testproxy:latest
 Error response from daemon: Get https://azsdkengsys.azurecr.io/v2/: x509: certificate has expired or is not yet valid
 ```
 
@@ -88,3 +84,4 @@ Open up docker desktop and click the bug.
 ![image](https://user-images.githubusercontent.com/45376673/126579279-5048132c-39c0-4b40-a3b2-6da03553097b.png)
 
 Then click `Restart`. Reference [this stack overflow](https://stackoverflow.com/questions/35289802/docker-pull-error-x509-certificate-has-expired-or-is-not-yet-valid) post. The docker daemon clock doesn't stay synced with windows, which causes these certificate failures.
+

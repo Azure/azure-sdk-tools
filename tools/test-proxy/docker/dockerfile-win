@@ -1,0 +1,93 @@
+FROM mcr.microsoft.com/powershell:nanoserver  AS installer-env
+
+ARG PS_VERSION=7.1.0
+ARG PS_PACKAGE_URL=https://github.com/PowerShell/PowerShell/releases/download/v$PS_VERSION/PowerShell-$PS_VERSION-win-x64.zip
+
+ENV POWERSHELL_TELEMETRY_OPTOUT="1"
+
+SHELL ["pwsh", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
+
+ARG PS_PACKAGE_URL_BASE64
+
+RUN Write-host "Verifying valid Version..."; \
+    if (!($env:PS_VERSION -match '^\d+\.\d+\.\d+(-\w+(\.\d+)?)?$' )) { \
+        throw ('PS_Version ({0}) must match the regex "^\d+\.\d+\.\d+(-\w+(\.\d+)?)?$"' -f $env:PS_VERSION) \
+    } \
+    $ProgressPreference = 'SilentlyContinue'; \
+    Write-host "using url: $env:PS_PACKAGE_URL" ;\
+    $url = $env:PS_PACKAGE_URL ; \
+    Write-host "downloading: $url" ; \
+    [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12; \
+    New-Item -ItemType Directory /installer > $null ; \
+    Invoke-WebRequest -Uri $url -outfile /installer/powershell.zip -verbose; \
+    Expand-Archive /installer/powershell.zip -DestinationPath \PowerShell
+
+FROM mcr.microsoft.com/dotnet/sdk:5.0.302-nanoserver-1809 AS build
+
+# Copy PowerShell Core from the installer container
+ENV ProgramFiles="C:\Program Files" \
+    # set a fixed location for the Module analysis cache
+    PSModuleAnalysisCachePath="C:\Users\Public\AppData\Local\Microsoft\Windows\PowerShell\docker\ModuleAnalysisCache" \
+    # Persist %PSCORE% ENV variable for user convenience
+    PSCORE="$ProgramFiles\PowerShell\pwsh.exe" \
+    # Set the default windows path so we can use it
+    WindowsPATH="C:\Windows\system32;C:\Windows" \
+    NO_AT_BRIDGE=1 \
+    ASPNETCORE_ENVIRONMENT=Development
+
+USER ContainerAdministrator
+RUN setx PATH "%PATH%;%ProgramFiles%\PowerShell;" /M
+USER ContainerUser
+
+COPY --from=installer-env ["\\PowerShell\\", "$ProgramFiles\\PowerShell"]
+
+# intialize powershell module cache
+RUN pwsh \
+        -NoLogo \
+        -NoProfile \
+        -Command " \
+          $stopTime = (get-date).AddMinutes(15); \
+          $ErrorActionPreference = 'Stop' ; \
+          $ProgressPreference = 'SilentlyContinue' ; \
+          while(!(Test-Path -Path $env:PSModuleAnalysisCachePath)) {  \
+            Write-Host "'Waiting for $env:PSModuleAnalysisCachePath'" ; \
+            if((get-date) -gt $stopTime) { throw 'timout expired'} \
+            Start-Sleep -Seconds 6 ; \
+          }"
+
+RUN mkdir certwork
+RUN mkdir testproxy
+
+ADD dev_certificate/dotnet-devcert.pfx certwork
+ADD dev_certificate/dotnet-devcert.crt certwork
+
+USER ContainerAdministrator
+RUN dotnet dev-certs https --clean --import /certwork/dotnet-devcert.pfx -p "password"
+USER ContainerUser
+
+# this is the workaround for the inability to "trust" a certificate due to permissions issues on the windows platform
+# we would obviously prefer to use...
+# RUN dotnet dev-certs https --trust
+# ...to trust the cert we imported above. However, due to the fact that a UI is REQUIRED to assent to this specific tool, 
+# it won't work on docker. ADDITIONALLY, we can't use the methodology of using powershell to insert into the LocalMachine/Root
+# as even if we surround it in a USER ContainerAdministrator to elevate our access, we STILL hit weird permission denied errors 
+# and he ASP.NET startup still can't load it as a dev certificate. 
+ENV ASPNETCORE_Kestrel__Certificates__Default__Path="/certwork/dotnet-devcert.pfx" \
+    ASPNETCORE_Kestrel__Certificates__Default__Password="password"  
+
+SHELL ["pwsh", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
+
+# install the package
+RUN dotnet tool install azure.sdk.tools.testproxy \
+    --tool-path /proxyserver \
+    --add-source https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk/nuget/v3/index.json \
+    --version 1.0.0-dev.20210729.1 
+
+EXPOSE 5001
+EXPOSE 5000
+
+# this override allows the tool server to listen to traffic over the docker bridge.
+# default URL of localhost:5000 or localhost:50001 are not usable from outside the container
+ENV DOTNET_URLS="http://0.0.0.0:5000;https://0.0.0.0:5001"
+
+ENTRYPOINT ["/proxyserver/test-proxy.exe", "--storage-location", "/testproxy"]

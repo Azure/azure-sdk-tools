@@ -7,7 +7,7 @@ const url = require("url");
 
 const PORT = process.env.PORT || 5000;
 
-const fullUrl = (req) => `https://${req.get("host")}`;
+const baseUrl = (req) => `https://${req.get("host")}`;
 
 async function initKeys() {
   const { publicKey, privateKey } = crypto.generateKeyPairSync("rsa", {
@@ -32,7 +32,7 @@ function initApp({ keyStore, privateKey, signingKeyId }) {
 
   app.get("/.well-known/openid-configuration", (req, res) => {
     res.json({
-      jwks_uri: `${fullUrl(req)}/keys`
+      jwks_uri: `${baseUrl(req)}/keys`
     });
   });
 
@@ -49,7 +49,7 @@ function initApp({ keyStore, privateKey, signingKeyId }) {
 
     // sdk-test will be the claim used for tests.
     const tokenData = {
-      iss: `${fullUrl(req)}/`,
+      iss: `${baseUrl(req)}/`,
       "sdk-test": true,
       "x-ms-inittime": {},
       "x-ms-runtime": {
@@ -62,7 +62,7 @@ function initApp({ keyStore, privateKey, signingKeyId }) {
       algorithm: "RS256",
       expiresIn: "7 days",
       header: {
-        jku: `${fullUrl(req)}/keys`,
+        jku: `${baseUrl(req)}/keys`,
         kid: signingKeyId
       }
     });

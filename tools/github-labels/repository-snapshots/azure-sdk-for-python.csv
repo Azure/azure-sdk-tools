@@ -1,28 +1,4 @@
 Processing Azure\azure-sdk-for-python repo.
-Label,P0,,e10c02
-Label,P1,,d7e102
-Label,P2,,02d7e1
-Label,P3,,e102d8
-Label,bug,This issue requires a change to an existing behavior in the product in order to be resolved.,eaa875
-Label,feature-request,This issue requires a new behavior in the product in order be resolved.,eaa875
-Label,Service Bus,,e99695
-Label,Storage,"Storage Service (Queues, Blobs, Files)",e99695
-Label,ASM,,5319e7
-Label,Docs,,e99695
-Label,question,The issue doesn't require a change to the product in order to be resolved. Most issues start as that,eaa875
-Label,breaking-change,,d73a49
-Label,RestAPI,,006b75
-Label,ARM,,e99695
-Label,Packaging,,bfdadc
-Label,Swagger,,fbca04
-Label,Autorest Issue,,fef2c0
-Label,KeyVault,,e99695
-Label,Preview,,5776bf
-Label,Azure Stack,,e99695
-Label,RestPRInProgress,,fbca04
-Label,RestPRRefused,,b60205
-Label,RestPRMerged,,0e8a16
-Label,ServicePR,,1d76db
 Label,AAD,,e99695
 Label,ACS,,e99695
 Label,AKS,,e99695
@@ -310,3 +286,27 @@ Label,pillar-acquisition,"This issue is related to the ability to acquire new cu
 Label,pillar-compatibility,"This issue is related to compatibility between versions, one of our core engineering pillars.",65a5c9
 Label,pillar-reliability,"The issue is related to reliability, one of our core engineering pillars. (includes stress testing)",65a5c9
 Label,test-enhancement,,7365c9
+Label,ARM,,e99695
+Label,ASM,,5319e7
+Label,Autorest Issue,,fef2c0
+Label,Azure Stack,,e99695
+Label,breaking-change,,d73a49
+Label,bug,This issue requires a change to an existing behavior in the product in order to be resolved.,eaa875
+Label,Docs,,e99695
+Label,feature-request,This issue requires a new behavior in the product in order be resolved.,eaa875
+Label,KeyVault,,e99695
+Label,P0,,e10c02
+Label,P1,,d7e102
+Label,P2,,02d7e1
+Label,P3,,e102d8
+Label,Packaging,,bfdadc
+Label,Preview,,5776bf
+Label,question,The issue doesn't require a change to the product in order to be resolved. Most issues start as that,eaa875
+Label,RestAPI,,006b75
+Label,RestPRInProgress,,fbca04
+Label,RestPRMerged,,0e8a16
+Label,RestPRRefused,,b60205
+Label,Service Bus,,e99695
+Label,ServicePR,,1d76db
+Label,Storage,"Storage Service (Queues, Blobs, Files)",e99695
+Label,Swagger,,fbca04

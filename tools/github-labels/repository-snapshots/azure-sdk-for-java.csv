@@ -1,11 +1,4 @@
 Processing Azure\azure-sdk-for-java repo.
-Label,compat breaks,,d93f0b
-Label,in progress,,efcfaa
-Label,ported,,bfd4f2
-Label,EntitySearch,,e99695
-Label,FaceAPI,,e99695
-Label,question,The issue doesn't require a change to the product in order to be resolved. Most issues start as that,eaa875
-Label,Do Not Merge,,b60205
 Label,RestPRInProgress,,fbca04
 Label,RestPRMerged,,0e8a16
 Label,ServicePR,,1d76db
@@ -315,4 +308,12 @@ Label,MQ,"This issue is part of a ""milestone of quality"" initiative.",7365c9
 Label,Mixed Reality,,e99695
 Label,Monitor - Log Analytics,,e99695
 Label,Monitor - Query,,e99695
+Label,dependency-issue-jackson,Issue caused by dependency version mismatch with one of the Jackson libraries,0366d6
+Label,compat breaks,,d93f0b
+Label,Do Not Merge,,b60205
+Label,EntitySearch,,e99695
+Label,FaceAPI,,e99695
+Label,in progress,,efcfaa
+Label,ported,,bfd4f2
+Label,question,The issue doesn't require a change to the product in order to be resolved. Most issues start as that,eaa875
 Label,test-sovereign-cloud,,AA6C89

@@ -1,7 +1,4 @@
 Processing Azure\azure-sdk-for-go-pr repo.
-Label,bug,This issue requires a change to an existing behavior in the product in order to be resolved.,eaa875
-Label,duplicate,This issue is the duplicate of another issue,e4c288
-Label,question,The issue doesn't require a change to the product in order to be resolved. Most issues start as that,eaa875
 Label,AAD,,e99695
 Label,ACS,,e99695
 Label,AKS,,e99695
@@ -237,3 +234,6 @@ Label,pillar-reliability,"The issue is related to reliability, one of our core e
 Label,test-enhancement,,7365c9
 Label,test-manual-pass,,c0eaf9
 Label,test-reliability,Issue that causes tests to be unreliable,e04545
+Label,bug,This issue requires a change to an existing behavior in the product in order to be resolved.,eaa875
+Label,duplicate,This issue is the duplicate of another issue,e4c288
+Label,question,The issue doesn't require a change to the product in order to be resolved. Most issues start as that,eaa875

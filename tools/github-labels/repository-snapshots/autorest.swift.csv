@@ -1,7 +1,4 @@
 Processing Azure\autorest.swift repo.
-Label,bug,This issue requires a change to an existing behavior in the product in order to be resolved.,eaa875
-Label,duplicate,This issue is the duplicate of another issue,e4c288
-Label,question,The issue doesn't require a change to the product in order to be resolved. Most issues start as that,eaa875
 Label,Track 1,Legacy issue with old C#-based generator.,d93f0b
 Label,Epic,,3E4B9E
 Label,blocked,Blocked by another issue or pull request.,dddddd
@@ -244,3 +241,6 @@ Label,pillar-reliability,"The issue is related to reliability, one of our core e
 Label,test-enhancement,,7365c9
 Label,test-manual-pass,,c0eaf9
 Label,test-reliability,Issue that causes tests to be unreliable,e04545
+Label,bug,This issue requires a change to an existing behavior in the product in order to be resolved.,eaa875
+Label,duplicate,This issue is the duplicate of another issue,e4c288
+Label,question,The issue doesn't require a change to the product in order to be resolved. Most issues start as that,eaa875

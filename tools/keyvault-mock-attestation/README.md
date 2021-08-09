@@ -10,14 +10,19 @@ when verifying the attestation token.
 
 ## Endpoints
 
-- `GET /generate-test-token`: called by the test itself, it returns a signed token that can be passed to the Managed HSM when releasing the key.
-- `GET /.well-known/openid-configuration`: the OIDC discovery document containing the `jwks_uri` as described in the [OIDC spec](https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata). The service uses `/keys` as the `jwks_uri`.
-- `GET /keys`: The `jwks_uri` points to this endpoint, and is used to get the public key of the attestation service in order to verify the attestation token.
+- `GET /generate-test-token`: called by the test itself, it returns a signed token that
+  can be passed to the Managed HSM when releasing the key.
+- `GET /.well-known/openid-configuration`: the OIDC discovery document containing the
+  `jwks_uri` as described in the [OIDC spec](https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata).
+  The service uses `/keys` as the `jwks_uri`.
+- `GET /keys`: The `jwks_uri` points to this endpoint, and is used to get the public key of
+  the attestation service in order to verify the attestation token.
 
 ## How to use the service
 
-This service is published as a Docker container to the Azure SDK Tools Docker container registry and the image can be used to deploy the service to an Azure
-App Service or Azure Container Instance as needed.
+This service is published as a Docker container to the Azure SDK Tools Docker container
+registry and the image can be used to deploy the service to an Azure App Service or Azure
+Container Instance as needed.
 
 > Note: The service is not intended to be used in production, it is only used for testing.
 

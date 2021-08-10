@@ -1,0 +1,78 @@
+parameters:
+- name: DockerDeployments
+  type: object
+  default:
+  - name: test_proxy_linux
+    pool: 'ubuntu-20.04'
+    dockerRepo: 'engsys/testproxy-lin'
+    dockerFile: 'tools/test-proxy/docker/dockerfile'
+    stableTags:
+    - 'latest'
+  - name: mock_attestation
+    pool: 'ubuntu-20.04'
+    dockerRepo: 'keyvault-mock-attestation'
+    dockerFile: 'tools/keyvault-mock-attestation/Dockerfile'
+    stableTags:
+    - 'latest'
+  - name: test_proxy_windows
+    pool: 'windows-2019'
+    dockerRepo: 'engsys/testproxy-win'
+    dockerFile: 'tools/test-proxy/docker/dockerfile-win'
+    stableTags:
+    - 'latest'
+
+trigger:
+  branches:
+    include:
+    - main
+  paths:
+    include:
+    - eng/containers/
+    - tools/test-proxy/docker/
+    - tools/keyvault-mock-attestation/Dockerfile
+
+pr: none
+
+variables:
+  - name: containerRegistry
+    value: 'azsdkengsys'
+  - name: imageTag
+    value: $(build.buildid)
+  - template: ../pipelines/templates/variables/globals.yml
+
+jobs:
+  - ${{ each config in parameters.DockerDeployments }}:
+    - job: container_build_${{ config.name }}
+      displayName: Deploy ${{ config.name }} Image
+      pool:
+        vmImage: ${{ config.pool }}
+      steps:
+        - task: Docker@2
+          displayName: Build ${{ config.name }}:$(imageTag)
+          inputs:
+            command: build
+            Dockerfile: ${{ config.dockerFile }}
+            tags: $(imageTag)
+            arguments: '-t $(containerRegistry).azurecr.io/${{ config.dockerRepo }}:$(imageTag)'
+        - task: Docker@2
+          displayName: Push ${{ config.name }}:$(imageTag)
+          inputs:
+            containerRegistry: $(containerRegistry)
+            repository: ${{ config.dockerRepo }}
+            command: push
+            tags: $(imageTag)
+        - ${{ each stableTag in config.stableTags }}:
+          - task: Docker@2
+            displayName: Build ${{ config.name }}:${{ stableTag }}
+            inputs:
+              command: build
+              Dockerfile: ${{ config.dockerFile }}
+              tags: ${{ stableTag }}
+              arguments: '-t $(containerRegistry).azurecr.io/${{ config.dockerRepo }}:${{ stableTag }}'
+          - task: Docker@2
+            displayName: Push ${{ config.name }}:${{ stableTag }}
+            inputs:
+              containerRegistry: $(containerRegistry)
+              repository: ${{ config.dockerRepo }}
+              command: push
+              tags: ${{ stableTag }}

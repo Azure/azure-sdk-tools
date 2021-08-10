@@ -9,6 +9,8 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 )
 
 // skip adding the const type in the token list
@@ -124,9 +126,22 @@ func (c *content) parseConst(tokenList *[]Token) {
 			}
 			makeToken(nil, nil, ")", punctuation, tokenList)
 			makeToken(nil, nil, "", 1, tokenList)
+
+			c.searchForPossibleValuesMethod(t, tokenList)
+			c.searchForMethods(t, tokenList)
 		}
 	}
 
+}
+
+func (c *content) searchForPossibleValuesMethod(t string, tokenList *[]Token) {
+	for i, f := range c.Funcs {
+		if i == fmt.Sprintf("Possible%sValues", t) {
+			makeFuncTokens(&i, f.Params, f.Returns, f.ReturnsNum, tokenList)
+			delete(c.Funcs, i)
+			return
+		}
+	}
 }
 
 // adds the specified function declaration to the exports list
@@ -135,8 +150,13 @@ func (c *content) addFunc(pkg pkg, f *ast.FuncDecl) {
 	// with the function name e.g. "FooReceiver.Method", else just the function name.
 	sig := ""
 	if f.Recv != nil {
-		sig = "(c "
-		sig += pkg.getText(f.Recv.List[0].Type.Pos(), f.Recv.List[0].Type.End())
+		receiver := pkg.getText(f.Recv.List[0].Type.Pos(), f.Recv.List[0].Type.End())
+		if !isExported(receiver) {
+			// skip adding methods on unexported receivers
+			return
+		}
+		sig = "(" + f.Recv.List[0].Names[0].Name + " "
+		sig += receiver
 		// CP: changed to space, was a period before
 		sig += ") "
 	}
@@ -399,4 +419,12 @@ func (c *content) generateNavChildItems() []Navigation {
 		})
 	}
 	return childItems
+}
+
+func isExported(name string) bool {
+	if string(name[0]) == "*" {
+		name = name[1:]
+	}
+	ch, _ := utf8.DecodeRuneInString(name)
+	return unicode.IsUpper(ch)
 }

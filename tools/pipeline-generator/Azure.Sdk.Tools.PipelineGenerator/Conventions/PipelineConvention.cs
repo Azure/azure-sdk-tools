@@ -19,14 +19,12 @@ namespace PipelineGenerator.Conventions
         }
 
         private const string ReportBuildStatusKey = "reportBuildStatus";
+        private Dictionary<string, BuildDefinitionReference> pipelineReferences;
 
         protected ILogger Logger { get; }
         protected PipelineGenerationContext Context { get; }
 
         public abstract string SearchPattern { get; }
-        public abstract bool IsScheduled { get; }
-
-        public abstract bool RemoveCITriggers { get; }
 
         protected abstract string GetDefinitionName(SdkComponent component);
 
@@ -113,25 +111,31 @@ namespace PipelineGenerator.Conventions
             var projectReference = await Context.GetProjectReferenceAsync(cancellationToken);
             var sourceRepository = await Context.GetSourceRepositoryAsync(cancellationToken);
             var buildClient = await Context.GetBuildHttpClientAsync(cancellationToken);
-            var definitionReferences = await buildClient.GetDefinitionsAsync(
-                project: projectReference.Id,
-                name: definitionName,
-                path: Context.DevOpsPath,
-                repositoryId: sourceRepository.Id,
-                repositoryType: "github"
-                );
 
-            if (definitionReferences.Count() > 1)
+            if (pipelineReferences == default)
             {
-                Logger.LogError("More than one definition with name '{0}' found - this is an error!", definitionName);
+                var definitionReferences = await buildClient.GetDefinitionsAsync(
+                    project: projectReference.Id,
+                    path: Context.DevOpsPath
+                    );
 
-                foreach (var duplicationDefinitionReference in definitionReferences)
+                pipelineReferences = new Dictionary<string, BuildDefinitionReference>();
+                foreach (var definition in definitionReferences)
                 {
-                    Logger.LogDebug("Definition '{0}' at: {1}", definitionName, duplicationDefinitionReference.GetWebUrl());
+                    if (pipelineReferences.ContainsKey(definition.Name))
+                    {
+                        Logger.LogDebug($"Found more then one definition with name {definition.Name}, picking the first one {pipelineReferences[definition.Name].Id} and not {definition.Id}");
+                    }
+                    else
+                    {
+                        pipelineReferences.Add(definition.Name, definition);
+                    }
                 }
+                Logger.LogDebug($"Cached {definitionReferences.Count} pipelines.");
             }
 
-            var definitionReference = definitionReferences.SingleOrDefault();
+            BuildDefinitionReference definitionReference = null;
+            pipelineReferences.TryGetValue(definitionName, out definitionReference);
 
             if (definitionReference != null)
             {
@@ -286,37 +290,6 @@ namespace PipelineGenerator.Conventions
                 hasChanges = true;
             }
 
-
-            if (IsScheduled)
-            {
-                var scheduleTriggers = definition.Triggers.OfType<ScheduleTrigger>();
-
-                // Only add the schedule trigger if one doesn't exist. 
-                if (scheduleTriggers == default || !scheduleTriggers.Any())
-                {
-                    var computedSchedule = CreateScheduleFromDefinition(definition);
-
-                    definition.Triggers.Add(new ScheduleTrigger
-                    {
-                        Schedules = new List<Schedule> { computedSchedule }
-                    });
-
-                    hasChanges = true;
-                }
-            }
-
-            if (RemoveCITriggers)
-            {
-                for (int i = definition.Triggers.Count - 1; i >= 0; i--)
-                {
-                    if (definition.Triggers[i] is ContinuousIntegrationTrigger)
-                    {
-                        definition.Triggers.RemoveAt(i);
-                        hasChanges = true;
-                    }
-                }
-            }
-
             if (definition.Path != this.Context.DevOpsPath)
             {
                 definition.Path = this.Context.DevOpsPath;
@@ -338,6 +311,121 @@ namespace PipelineGenerator.Conventions
             }
 
             return Task.FromResult(hasChanges);
+        }
+
+        protected bool EnsureDefautPullRequestTrigger(BuildDefinition definition, bool overrideYaml = true, bool securePipeline = true)
+        {
+            bool hasChanges = false;
+            var prTriggers = definition.Triggers.OfType<PullRequestTrigger>();
+            if (prTriggers == default || !prTriggers.Any())
+            {
+                var newTrigger = new PullRequestTrigger();
+
+                if (overrideYaml)
+                {
+                    newTrigger.SettingsSourceType = 1; // Override what is in the yaml file and use what is in the pipeline definition
+                    newTrigger.BranchFilters.Add("+*");
+                }
+                else
+                {
+                    newTrigger.SettingsSourceType = 2; // Pull settings from yaml
+                }
+
+                newTrigger.Forks = new Forks
+                {
+                    AllowSecrets = securePipeline,
+                    Enabled = true
+                };
+
+                newTrigger.RequireCommentsForNonTeamMembersOnly = false;
+                newTrigger.IsCommentRequiredForPullRequest = securePipeline;
+
+                definition.Triggers.Add(newTrigger);
+                hasChanges = true;
+            }
+            else
+            {
+                foreach (var trigger in prTriggers)
+                {
+                    if (overrideYaml)
+                    {
+                        if (trigger.SettingsSourceType != 1 ||
+                            trigger.BranchFilters.Contains("+*"))
+                        {
+                            // Override what is in the yaml file and use what is in the pipeline definition
+                            trigger.SettingsSourceType = 1;
+                            trigger.BranchFilters.Add("+*");
+                        }
+                    }
+                    else
+                    {
+                        if (trigger.SettingsSourceType != 2)
+                        {
+                            // Pull settings from yaml
+                            trigger.SettingsSourceType = 2;
+                            hasChanges = true;
+                        }
+
+                    }
+                    if (trigger.RequireCommentsForNonTeamMembersOnly != false ||
+                       trigger.Forks.AllowSecrets != securePipeline ||
+                       trigger.Forks.Enabled != true ||
+                       trigger.IsCommentRequiredForPullRequest != securePipeline
+                       )
+                    {
+                        trigger.Forks.AllowSecrets = securePipeline;
+                        trigger.Forks.Enabled = true;
+                        trigger.RequireCommentsForNonTeamMembersOnly = false;
+                        trigger.IsCommentRequiredForPullRequest = securePipeline;
+   
+                        hasChanges = true;
+                    }
+                }
+            }
+            return hasChanges;
+        }
+
+        protected bool EnsureDefaultScheduledTrigger(BuildDefinition definition)
+        {
+            bool hasChanges = false;
+            var scheduleTriggers = definition.Triggers.OfType<ScheduleTrigger>();
+
+            // Only add the schedule trigger if one doesn't exist. 
+            if (scheduleTriggers == default || !scheduleTriggers.Any())
+            {
+                var computedSchedule = CreateScheduleFromDefinition(definition);
+
+                definition.Triggers.Add(new ScheduleTrigger
+                {
+                    Schedules = new List<Schedule> { computedSchedule }
+                });
+
+                hasChanges = true;
+            }
+            return hasChanges;
+        }
+
+        protected bool EnsureDefaultCITrigger(BuildDefinition definition)
+        {
+            bool hasChanges = false;
+            var ciTrigger = definition.Triggers.OfType<ContinuousIntegrationTrigger>().SingleOrDefault();
+            if (ciTrigger == null)
+            {
+                definition.Triggers.Add(new ContinuousIntegrationTrigger()
+                {
+                    SettingsSourceType = 2 // Get CI trigger data from yaml file
+                });
+                hasChanges = true;
+            }
+            else
+            {
+                if (ciTrigger.SettingsSourceType != 2)
+                {
+                    ciTrigger.SettingsSourceType = 2;
+                    hasChanges = true;
+                }
+            }
+            return hasChanges;
         }
     }
 }

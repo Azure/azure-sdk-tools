@@ -11,8 +11,6 @@ namespace PipelineGenerator.Conventions
     public class IntegrationTestingPipelineConvention : PipelineConvention
     {
         public override string SearchPattern => "tests.yml";
-        public override bool IsScheduled => !Context.NoSchedule;
-        public override bool RemoveCITriggers => true;
 
         public IntegrationTestingPipelineConvention(ILogger logger, PipelineGenerationContext context) : base(logger, context)
         {
@@ -27,72 +25,13 @@ namespace PipelineGenerator.Conventions
         {
             var hasChanges = await base.ApplyConventionAsync(definition, component);
 
-            // Ensure PR trigger
-            var prTriggers = definition.Triggers.OfType<PullRequestTrigger>();
-            if (prTriggers == default || !prTriggers.Any())
+            if (EnsureDefautPullRequestTrigger(definition, overrideYaml: true, securePipeline: true))
             {
-                var newTrigger = GetDefaultPrTrigger();
-                definition.Triggers.Add(newTrigger);
-                hasChanges = true;
-            }
-            else
-            {
-                foreach (var trigger in prTriggers)
-                {
-                    if (EnsurePrTriggerDefaults(trigger))
-                    {
-                        hasChanges = true;
-                    }
-                }
-            }
-
-            return hasChanges;
-        }
-
-        private PullRequestTrigger GetDefaultPrTrigger()
-        {
-            var newTrigger = new PullRequestTrigger
-            {
-                Forks = new Forks { AllowSecrets = true, Enabled = true },
-                RequireCommentsForNonTeamMembersOnly = false,
-                IsCommentRequiredForPullRequest = true,
-            };
-            newTrigger.BranchFilters.Add($"+{Context.Branch}");
-
-            return newTrigger;
-        }
-
-        private bool EnsurePrTriggerDefaults(PullRequestTrigger target)
-        {
-            var hasChanges = false;
-
-            if (!target.Forks.AllowSecrets)
-            {
-                target.Forks.AllowSecrets = true;
                 hasChanges = true;
             }
 
-            if (!target.Forks.Enabled)
+            if (!Context.NoSchedule && EnsureDefaultScheduledTrigger(definition))
             {
-                target.Forks.Enabled = true;
-                hasChanges = true;
-            }
-
-            if (target.RequireCommentsForNonTeamMembersOnly)
-            {
-                target.RequireCommentsForNonTeamMembersOnly = false;
-                hasChanges = true;
-            }
-
-            if (!target.IsCommentRequiredForPullRequest)
-            {
-                target.IsCommentRequiredForPullRequest = true;
-                hasChanges = true;
-            }
-
-            if (!target.BranchFilters.Contains($"+{Context.Branch}"))
-            {
-                target.BranchFilters.Add($"+{Context.Branch}");
                 hasChanges = true;
             }
 

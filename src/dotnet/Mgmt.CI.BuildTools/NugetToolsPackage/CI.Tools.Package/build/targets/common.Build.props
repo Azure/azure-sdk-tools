@@ -2,6 +2,7 @@
 	<PropertyGroup>
 		<Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
 		<NoWarn>1591;1701;1573;CS1591;MSB3245;3245</NoWarn>
+		<SymbolPackageFormat Condition=" '$(SymbolPackageFormat)' == ''">snupkg</SymbolPackageFormat>
 	</PropertyGroup>
 	
 	<PropertyGroup Condition=" '$(TargetFramework)'=='net452' ">

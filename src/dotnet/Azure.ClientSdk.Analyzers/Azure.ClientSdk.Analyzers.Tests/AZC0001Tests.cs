@@ -20,7 +20,7 @@ namespace RandomNamespace
 
             var diagnostic = Verifier.Diagnostic("AZC0001")
                 .WithMessage("Namespace 'RandomNamespace' shouldn't contain public types. Use one of the following pre-approved namespace groups (https://azure.github.io/azure-sdk/registered_namespaces.html):" +
-                             " Azure.AI, Azure.Analytics, Azure.Communication, Azure.Data, Azure.DigitalTwins, Azure.IoT, Azure.Learn, Azure.Media, Azure.Management, Azure.Messaging, Azure.Search, Azure.Security, Azure.Storage, Azure.Template, Azure.Identity, Microsoft.Extensions.Azure")
+                             " Azure.AI, Azure.Analytics, Azure.Communication, Azure.Data, Azure.DigitalTwins, Azure.IoT, Azure.Learn, Azure.Media, Azure.Management, Azure.Messaging, Azure.ResourceManager, Azure.Search, Azure.Security, Azure.Storage, Azure.Template, Azure.Identity, Microsoft.Extensions.Azure")
                 .WithSpan(2, 11, 2, 26);
 
             await Verifier.VerifyAnalyzerAsync(code, diagnostic);

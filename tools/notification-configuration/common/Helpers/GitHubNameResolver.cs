@@ -82,6 +82,7 @@ namespace NotificationConfiguration.Helpers
             return result;
         }
 
+#pragma warning disable 1998
         public async Task<string> GetInternalUserPrincipalImpl(string githubUserName)
         {
             var query = $"{kustoTable} | where githubUserName == '{githubUserName}' | project aadUpn | limit 1;";
@@ -126,6 +127,7 @@ namespace NotificationConfiguration.Helpers
                 return default;
             }
         }
+#pragma warning restore 1998
 
         /// <summary>
         /// Disposes the GitHubNameResolver

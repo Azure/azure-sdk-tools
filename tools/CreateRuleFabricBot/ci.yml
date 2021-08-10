@@ -2,7 +2,6 @@
 trigger:
   branches:
     include:
-      - master
       - main
       - feature/*
       - release/*
@@ -14,7 +13,6 @@ trigger:
 pr:
   branches:
     include:
-      - master
       - main
       - feature/*
       - release/*
@@ -23,7 +21,8 @@ pr:
     include:
       - tools/CreateRuleFabricBot
 
-stages:
-  - template: ../../eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
-    parameters:
-      ToolDirectory: CreateRuleFabricBot
+extends:
+  template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
+  parameters:
+    ToolDirectory: tools/CreateRuleFabricBot
+    SkipDotNetInstall: true

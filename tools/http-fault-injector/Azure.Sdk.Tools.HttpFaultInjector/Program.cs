@@ -36,6 +36,11 @@ namespace Azure.Sdk.Tools.HttpFaultInjector
         private static readonly string[] _excludedRequestHeaders = new string[] {
             // Only applies to request between client and proxy
             "Proxy-Connection",
+
+            // "X-Upstream-Base-Uri" in original request is used as the Base URI in the upstream request
+            "X-Upstream-Base-Uri",
+            "Host",
+
             _responseSelectionHeader
         };
 
@@ -88,7 +93,7 @@ namespace Azure.Sdk.Tools.HttpFaultInjector
                     kestrelOptions.Listen(IPAddress.Any, 7777);
                     kestrelOptions.Listen(IPAddress.Any, 7778, listenOptions =>
                     {
-                        listenOptions.UseHttps("testCert.pfx", "testPassword");
+                        listenOptions.UseHttps();
                     });
                     kestrelOptions.Limits.KeepAliveTimeout = TimeSpan.FromSeconds(options.KeepAliveTimeout);
                 })
@@ -145,18 +150,34 @@ namespace Azure.Sdk.Tools.HttpFaultInjector
 
         private static async Task<UpstreamResponse> SendUpstreamRequest(HttpRequest request)
         {
-            var upstreamUriBuilder = new UriBuilder()
-            {
+            Console.WriteLine();
+            Log("Incoming Request");
+
+            var incomingUriBuilder = new UriBuilder() {
                 Scheme = request.Scheme,
                 Host = request.Host.Host,
                 Path = request.Path.Value,
                 Query = request.QueryString.Value,
             };
-
             if (request.Host.Port.HasValue)
             {
-                upstreamUriBuilder.Port = request.Host.Port.Value;
+                incomingUriBuilder.Port = request.Host.Port.Value;
             }
+            var incomingUri = incomingUriBuilder.Uri;
+
+            Log($"URL: {incomingUri}");
+
+            Log("Headers:");
+            foreach (var header in request.Headers)
+            {
+                Log($"  {header.Key}:{header.Value}");
+            }
+
+            var upstreamUriBuilder = new UriBuilder(request.Headers["X-Upstream-Base-Uri"])
+            {
+                Path = request.Path.Value,
+                Query = request.QueryString.Value,
+            };
 
             var upstreamUri = upstreamUriBuilder.Uri;
 

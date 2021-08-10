@@ -19,22 +19,22 @@ if ($CodeRepo -Match "net")
 {
   $lang = ".NET"
   $TARGET_FOLDER = Join-Path -Path $DocRepo  -ChildPath "api/overview/azure"
-  $metadataUri = "https://raw.githubusercontent.com/Azure/azure-sdk/master/_data/releases/latest/dotnet-packages.csv"
+  $metadataUri = "https://raw.githubusercontent.com/Azure/azure-sdk/main/_data/releases/latest/dotnet-packages.csv"
 }
 if ($CodeRepo -Match "python"){
   $lang = "Python"
   $TARGET_FOLDER = Join-Path -Path $DocRepo  -ChildPath "docs-ref-services"
-  $metadataUri = "https://raw.githubusercontent.com/Azure/azure-sdk/master/_data/releases/latest/python-packages.csv"
+  $metadataUri = "https://raw.githubusercontent.com/Azure/azure-sdk/main/_data/releases/latest/python-packages.csv"
 }
 if ($CodeRepo -Match "java"){
   $lang = "Java"
   $TARGET_FOLDER = Join-Path -Path $DocRepo  -ChildPath "docs-ref-services"
-  $metadataUri = "https://raw.githubusercontent.com/Azure/azure-sdk/master/_data/releases/latest/java-packages.csv"
+  $metadataUri = "https://raw.githubusercontent.com/Azure/azure-sdk/main/_data/releases/latest/java-packages.csv"
 }
 if ($CodeRepo -Match "js"){
   $lang = "JavaScript"
   $TARGET_FOLDER = Join-Path -Path $DocRepo  -ChildPath "docs-ref-services"
-  $metadataUri = "https://raw.githubusercontent.com/Azure/azure-sdk/master/_data/releases/latest/js-packages.csv"
+  $metadataUri = "https://raw.githubusercontent.com/Azure/azure-sdk/main/_data/releases/latest/js-packages.csv"
 }
 
 $metadataResponse = Invoke-WebRequest -Uri $metadataUri | ConvertFrom-Csv
@@ -67,7 +67,7 @@ foreach($service in $selectedServices){
 
     $fileMatch = (Select-String -InputObject $fileContent -Pattern 'Azure .+? (client|plugin|shared) library for (JavaScript|Java|Python|\.NET)').Matches[0]
 
-    $header = "---`r`ntitle: $fileMatch`r`nkeywords: Azure, $lang, SDK, API, $service, $package`r`nauthor: maggiepint`r`nms.author: magpint`r`nms.date: $date`r`nms.topic: article`r`nms.prod: azure`r`nms.technology: azure`r`nms.devlang: $lang`r`nms.service: $service`r`n---`r`n"
+    $header = "---`r`ntitle: $fileMatch`r`nkeywords: Azure, $lang, SDK, API, $service, $package`r`nauthor: maggiepint`r`nms.author: magpint`r`nms.date: $date`r`nms.topic: reference`r`nms.prod: azure`r`nms.technology: azure`r`nms.devlang: $lang`r`nms.service: $service`r`n---`r`n"
 
     $fileContent = $fileContent -replace $fileMatch, "$fileMatch - Version $version `r`n"
 

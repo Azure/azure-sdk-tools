@@ -1,6 +1,6 @@
 package com.azure.tools.apiview.processor.diagnostics.rules;
 
-import com.azure.tools.apiview.processor.analysers.ASTAnalyser;
+import com.azure.tools.apiview.processor.analysers.JavaASTAnalyser;
 import com.azure.tools.apiview.processor.diagnostics.DiagnosticRule;
 import com.azure.tools.apiview.processor.model.APIListing;
 import com.azure.tools.apiview.processor.model.Diagnostic;
@@ -9,10 +9,11 @@ import com.azure.tools.apiview.processor.model.Token;
 import com.azure.tools.apiview.processor.model.TokenKind;
 import com.github.javaparser.ast.CompilationUnit;
 
-import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.makeId;
 
@@ -22,7 +23,7 @@ import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.makeId;
  */
 public class ModuleInfoDiagnosticRule implements DiagnosticRule {
     private String moduleName;
-    private List<String> packages = new ArrayList<>();
+    private Set<String> packages = new HashSet<>();
 
     @Override
     public void scanIndividual(CompilationUnit cu, APIListing listing) {
@@ -44,8 +45,16 @@ public class ModuleInfoDiagnosticRule implements DiagnosticRule {
         // Check for the presence of module-info
         Optional<Token> moduleInfoToken = listing.getTokens().stream()
                 .filter(token -> token.getKind().equals(TokenKind.TYPE_NAME))
-                .filter(token -> token.getDefinitionId() != null && token.getDefinitionId().equals(ASTAnalyser.MODULE_INFO_KEY))
+                .filter(token -> token.getDefinitionId() != null && token.getDefinitionId().equals(JavaASTAnalyser.MODULE_INFO_KEY))
                 .findFirst();
+
+        // Collect all packages that are exported
+        Set<String> exportsPackages = listing.getTokens().stream()
+                .filter(token -> token.getKind().equals(TokenKind.TYPE_NAME))
+                .filter(token -> token.getDefinitionId() != null && token.getDefinitionId().startsWith("module-info" +
+                        "-exports"))
+                .map(token -> token.getValue())
+                .collect(Collectors.toSet());
 
         if (!moduleInfoToken.isPresent()) {
             listing.addDiagnostic(new Diagnostic(DiagnosticKind.WARNING, makeId(basePackageName),
@@ -60,9 +69,17 @@ public class ModuleInfoDiagnosticRule implements DiagnosticRule {
             if (!moduleName.equals(basePackageName) && !moduleName.equals("com.azure.core")) {
                 // add warning message if the module name does not match the base package name
                 listing.addDiagnostic(new Diagnostic(DiagnosticKind.WARNING,
-                        makeId(ASTAnalyser.MODULE_INFO_KEY), "Module name should be the same as base package " +
+                        makeId(JavaASTAnalyser.MODULE_INFO_KEY), "Module name should be the same as base package " +
                         "name: " + basePackageName));
             }
+
+            // Validate that all public packages are exported in module-info
+            packages.stream()
+                    .filter(publicPackage -> !exportsPackages.contains(publicPackage))
+                    .forEach(missingExport -> {
+                        listing.addDiagnostic(new Diagnostic(DiagnosticKind.ERROR,
+                                makeId(JavaASTAnalyser.MODULE_INFO_KEY), "Public package not exported: " + missingExport));
+                    });
         }
     }
 }

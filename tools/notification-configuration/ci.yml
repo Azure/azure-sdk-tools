@@ -2,7 +2,6 @@
 trigger:
   branches:
     include:
-      - master
       - main
       - feature/*
       - release/*
@@ -14,7 +13,6 @@ trigger:
 pr:
   branches:
     include:
-      - master
       - main
       - feature/*
       - release/*
@@ -23,7 +21,7 @@ pr:
     include:
       - tools/notification-configuration
 
-stages:
-  - template: ../../eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
-    parameters:
-      ToolDirectory: notification-configuration
+extends:
+  template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
+  parameters:
+    ToolDirectory: tools/notification-configuration

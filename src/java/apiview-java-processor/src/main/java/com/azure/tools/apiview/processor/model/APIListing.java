@@ -30,7 +30,7 @@ public class APIListing {
     private String packageVersion;
 
     // This string is taken from here:
-    // https://github.com/Azure/azure-sdk-tools/blob/master/src/dotnet/APIView/APIView/Languages/CodeFileBuilder.cs#L50
+    // https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIView/Languages/CodeFileBuilder.cs#L50
     @JsonProperty("VersionString")
     private final String versionString = "19";
 
@@ -53,14 +53,16 @@ public class APIListing {
     @JsonIgnore
     private Pom mavenPom;
 
-    public APIListing(String reviewName) {
-        this.name = reviewName;
+    public APIListing() {
         this.diagnostics = new ArrayList<>();
         this.knownTypes = new HashMap<>();
         this.packageNamesToTypesMap = new HashMap<>();
         this.typeToPackageNameMap = new HashMap<>();
-
         this.navigation = new ArrayList<>();
+    }
+
+    public void setReviewName(final String name) {
+        this.name = name;
         this.rootNav = new ChildItem(name, TypeKind.ASSEMBLY);
         this.navigation.add(rootNav);
     }

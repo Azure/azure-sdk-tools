@@ -18,6 +18,8 @@ namespace APIView
         DocumentRangeStart = 11,
         DocumentRangeEnd = 12,
         DeprecatedRangeStart = 13,
-        DeprecatedRangeEnd = 14
+        DeprecatedRangeEnd = 14,
+        SkipDiffRangeStart = 15,
+        SkipDiffRangeEnd = 16
     }
 }

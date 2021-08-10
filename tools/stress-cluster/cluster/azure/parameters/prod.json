@@ -1,0 +1,33 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "groupSuffix": {
+      "value": "prod"
+    },
+    "clusterName": {
+      "value": "stress-prod"
+    },
+    "clusterLocation": {
+      "value": "westus2"
+    },
+    "monitoringLocation": {
+      "value": "centralus"
+    },
+    "staticTestSecretsKeyvaultName": {
+      "value": "StressTestSecrets"
+    },
+    "staticTestSecretsKeyvaultGroup": {
+      "value": "rg-StressTestSecrets"
+    },
+    "enableMonitoring": {
+        "value": true
+    },
+    "tags": {
+      "value": {
+        "environment": "Prod",
+        "owners": "bebroder"
+      }
+    }
+  }
+}

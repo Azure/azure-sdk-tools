@@ -19,7 +19,7 @@
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-light border-bottom mb-3">
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark bg-dark border-bottom mb-3">
             <div class="container-fluid">
                 <a href="/" class="navbar-brand"><img class="apiview-logo" src="~/icons/apiview.png" />apiview.dev</a>
                 <button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".navbar-collapse" aria-controls="navbarSupportedContent"
@@ -30,10 +30,10 @@
                     <ul class="navbar-nav flex-grow-1">
                         @if (User.Identity.IsAuthenticated) {
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Assemblies/Index">Reviews</a>
+                            <a class="nav-link" asp-area="" asp-page="/Assemblies/Index">Reviews</a>
                         </li>
                         <li class="nav-item">
-                            <a asp-action="Logout" asp-controller="Account" class="nav-link text-dark">Log Out</a>
+                            <a asp-action="Logout" asp-controller="Account" class="nav-link">Log Out</a>
                         </li>
                         }
                     </ul>

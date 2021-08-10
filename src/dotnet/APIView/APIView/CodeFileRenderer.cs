@@ -11,22 +11,27 @@ namespace ApiView
     {
         public static CodeFileRenderer Instance = new CodeFileRenderer();
 
-        public CodeLine[] Render(CodeFile file, bool showDocumentation = false)
+        public CodeLine[] Render(CodeFile file, bool showDocumentation = false, bool enableSkipDiff = false)
         {
             var list = new List<CodeLine>();
-            Render(list, file.Tokens, showDocumentation);
+            Render(list, file.Tokens, showDocumentation, enableSkipDiff);
             return list.ToArray();
         }
 
-        private void Render(List<CodeLine> list, IEnumerable<CodeFileToken> node, bool showDocumentation)
+        private void Render(List<CodeLine> list, IEnumerable<CodeFileToken> node, bool showDocumentation, bool enableSkipDiff)
         {
             var stringBuilder = new StringBuilder();
             string currentId = null;
             bool isDocumentationRange = false;
             bool isDeprecatedToken = false;
+            bool isSkipDiffRange = false;
 
             foreach (var token in node)
             {
+                // Skip all tokens till range end
+                if (enableSkipDiff && isSkipDiffRange && token.Kind != CodeFileTokenKind.SkipDiffRangeEnd)
+                    continue;
+
                 if (!showDocumentation && isDocumentationRange && token.Kind != CodeFileTokenKind.DocumentRangeEnd)
                     continue;
 
@@ -54,6 +59,14 @@ namespace ApiView
 
                     case CodeFileTokenKind.DeprecatedRangeEnd:
                         isDeprecatedToken = false;
+                        break;
+
+                    case CodeFileTokenKind.SkipDiffRangeStart:
+                        isSkipDiffRange = true;
+                        break;
+
+                    case CodeFileTokenKind.SkipDiffRangeEnd:
+                        isSkipDiffRange = false;
                         break;
 
                     default:

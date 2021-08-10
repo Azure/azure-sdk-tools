@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30907.101
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Sdk.Tools.TestProxy", "Azure.Sdk.Tools.TestProxy\Azure.Sdk.Tools.TestProxy.csproj", "{9E3819C4-4760-45C0-B7F3-2EF890EEE1FD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.Sdk.Tools.TestProxy.Tests", "Azure.Sdk.Tools.TestProxy.Tests\Azure.Sdk.Tools.TestProxy.Tests.csproj", "{CE39ECF2-480A-4659-96FC-9C4617C08666}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9E3819C4-4760-45C0-B7F3-2EF890EEE1FD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9E3819C4-4760-45C0-B7F3-2EF890EEE1FD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9E3819C4-4760-45C0-B7F3-2EF890EEE1FD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9E3819C4-4760-45C0-B7F3-2EF890EEE1FD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CE39ECF2-480A-4659-96FC-9C4617C08666}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CE39ECF2-480A-4659-96FC-9C4617C08666}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CE39ECF2-480A-4659-96FC-9C4617C08666}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CE39ECF2-480A-4659-96FC-9C4617C08666}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {694A60A6-EAB6-4F49-BD1A-EC215F83A8BE}
+	EndGlobalSection
+EndGlobal

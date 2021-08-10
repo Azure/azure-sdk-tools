@@ -354,27 +354,50 @@ namespace APIViewWeb.Respositories
         {
             //This will compare and check if new code file content is same as revision in parameter
             var lastRevisionFile = await _codeFileRepository.GetCodeFileAsync(revision);
-            var lastRevisionTextLines = lastRevisionFile.RenderText(false);
-            var fileTextLines = renderedCodeFile.RenderText(false);
+            var lastRevisionTextLines = lastRevisionFile.RenderText(showDocumentation: false, skipDiff: true);
+            var fileTextLines = renderedCodeFile.RenderText(showDocumentation: false, skipDiff: true);
             return lastRevisionTextLines.SequenceEqual(fileTextLines);
         }
 
-        public async Task<ReviewModel> CreateMasterReviewAsync(ClaimsPrincipal user, string originalName, string label, Stream fileStream, bool runAnalysis)
+        public async Task<ReviewRevisionModel> CreateMasterReviewAsync(ClaimsPrincipal user, string originalName, string label, Stream fileStream, bool compareAllRevisions)
         {
             //Generate code file from new uploaded package
             using var memoryStream = new MemoryStream();
-            var codeFile = await CreateCodeFile(originalName, fileStream, runAnalysis, memoryStream);
+            var codeFile = await CreateCodeFile(originalName, fileStream, false, memoryStream);
 
             //Get current master review for package and language
             var review = await _reviewsRepository.GetMasterReviewForPackageAsync(codeFile.Language, codeFile.PackageName);
             bool createNewRevision = true;
+            ReviewRevisionModel reviewRevision = null;
             if (review != null)
             {
-                var renderedCodeFile = new RenderedCodeFile(codeFile);
-                var noDiffFound = await IsReviewSame(review.Revisions.LastOrDefault(), renderedCodeFile);
-                if (noDiffFound)
+                // Delete pending revisions if it is not in approved state before adding new revision
+                // This is to keep only one pending revision since last approval or from initial review revision
+                var lastRevision = review.Revisions.LastOrDefault();
+                while (lastRevision.Approvers.Count == 0 && review.Revisions.Count > 1)
                 {
-                    // No change is detected from last revision so no need to update this revision
+                    review.Revisions.Remove(lastRevision);
+                    lastRevision = review.Revisions.LastOrDefault();
+                }
+
+                var renderedCodeFile = new RenderedCodeFile(codeFile);
+                // We should compare against only latest revision when calling this API from scheduled CI runs
+                // But any manual pipeline run at release time should compare against all approved revisions to ensure hotfix release doesn't have API change
+                // If review surface doesn't match with any approved revisions then we will create new revision if it doesn't match pending latest revision
+                if (compareAllRevisions)
+                {
+                    foreach (var approvedRevision in review.Revisions.Where(r => r.IsApproved).Reverse())
+                    {
+                        if (await IsReviewSame(approvedRevision, renderedCodeFile))
+                        {
+                            return approvedRevision;
+                        }
+                    }
+                }
+
+                if (await IsReviewSame(lastRevision, renderedCodeFile))
+                {
+                    reviewRevision = lastRevision;
                     createNewRevision = false;
                 }
             }
@@ -385,7 +408,7 @@ namespace APIViewWeb.Respositories
                 {
                     Author = user.GetGitHubLogin(),
                     CreationDate = DateTime.UtcNow,
-                    RunAnalysis = runAnalysis,
+                    RunAnalysis = false,
                     Name = originalName,
                     IsAutomatic = true
                 };
@@ -395,24 +418,16 @@ namespace APIViewWeb.Respositories
             await AssertAutomaticReviewModifier(user, review);
             if (createNewRevision)
             {
-                // Delete last revision if it is not in approved state before adding new revision
-                // This is to keep only one pending revision since last approval or from initial review revision
-                var lastRevision = review.Revisions.LastOrDefault();
-                if (lastRevision != null && lastRevision.Approvers.Count == 0 && review.Revisions.Count > 1)
-                {
-                    review.Revisions.Remove(lastRevision);
-                }
-
                 // Update or insert review with new revision
-                var revision = new ReviewRevisionModel()
+                reviewRevision = new ReviewRevisionModel()
                 {
                     Author = user.GetGitHubLogin(),
                     Label = label
                 };
-                var reviewCodeFileModel = await CreateReviewCodeFileModel(revision.RevisionId, memoryStream, codeFile);
+                var reviewCodeFileModel = await CreateReviewCodeFileModel(reviewRevision.RevisionId, memoryStream, codeFile);
                 reviewCodeFileModel.FileName = originalName;
-                revision.Files.Add(reviewCodeFileModel);
-                review.Revisions.Add(revision);
+                reviewRevision.Files.Add(reviewCodeFileModel);
+                review.Revisions.Add(reviewRevision);
             }
             
             // Check if review can be marked as approved if another review with same surface level is in approved status
@@ -428,7 +443,7 @@ namespace APIViewWeb.Respositories
                 }
             }
             await _reviewsRepository.UpsertReviewAsync(review);
-            return review;
+            return reviewRevision;
         }
 
         private async Task AssertAutomaticReviewModifier(ClaimsPrincipal user, ReviewModel reviewModel)
@@ -453,7 +468,7 @@ namespace APIViewWeb.Respositories
             var reviews = await _reviewsRepository.GetReviewsAsync(false, revisionFile.Language, revisionFile.PackageName, false);
             foreach (var r in reviews)
             {
-                var approvedRevision = r.Revisions.Where(r => r.Approvers.Count() > 0).LastOrDefault();
+                var approvedRevision = r.Revisions.Where(r => r.IsApproved).LastOrDefault();
                 if (approvedRevision != null)
                 {
                     bool isReviewSame = await IsReviewSame(approvedRevision, codeFile);

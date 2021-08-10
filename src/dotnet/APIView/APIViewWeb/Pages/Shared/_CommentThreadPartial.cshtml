@@ -27,10 +27,7 @@
                                             {
                                                 @comment.Upvotes.Count
                                             }
-                                            var upvoteclass = comment.Upvotes.Contains(User.GetGitHubLogin()) ? "active" : "";
-                                            //Direct use of active-if is throwing null pointer exception when clicking the button
-                                            //Reason: this span has no predefined class so it doesn't find class resource to add active dynamically
-                                            <span class="@upvoteclass">👍</span>
+                                            <span active-if="@comment.Upvotes.Contains(User.GetGitHubLogin())">👍</span>
                                         }
                                     </button>
                                 </form>

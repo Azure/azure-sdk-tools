@@ -40,7 +40,7 @@ spec:
 {{- $podDefinition := index . 1 -}}
 # Configmap template that adds the stress test ARM template for mounting
 {{- include "stress-test-addons.deploy-configmap" $global }}
-{{- range (default (list "default") $global.Values.scenarios) }}
+{{- range (default (list "stress") $global.Values.scenarios) }}
 ---
 {{- /* Copy scenario name into top level key of global context */}}
 {{ $instance := deepCopy $global | merge (dict "Scenario" . ) -}}
@@ -81,7 +81,7 @@ spec:
 {{- define "stress-test-addons.env-job-template.from-pod" -}}
 {{- $global := index . 0 -}}
 {{- $podDefinition := index . 1 -}}
-{{- range (default (list "default") $global.Values.scenarios) }}
+{{- range (default (list "stress") $global.Values.scenarios) }}
 ---
 {{- /* Copy scenario name into top level key of global context */}}
 {{ $instance := deepCopy $global | merge (dict "Scenario" . ) -}}

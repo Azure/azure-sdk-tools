@@ -1,15 +1,13 @@
-targetScope = 'subscription'
+// Dummy parameter to handle defaults the script passes in
+param testApplicationOid string = ''
 
-param groupName string
-param location string
-param now string = utcNow('u')
-
-resource group 'Microsoft.Resources/resourceGroups@2020-10-01' = {
-    name: 'rg-${groupName}-${uniqueString(now)}'
-    location: location
-    tags: {
-        DeleteAfter: dateTimeAdd(now, 'PT8H')
-    }
+resource config 'Microsoft.AppConfiguration/configurationStores@2020-07-01-preview' = {
+  name: 'config-${resourceGroup().name}'
+  location: resourceGroup().location
+  sku: {
+    name: 'Standard'
+  }
 }
 
-output RESOURCE_GROUP string = group.name
+output RESOURCE_GROUP string = resourceGroup().name
+output AZURE_CLIENT_OID string = testApplicationOid

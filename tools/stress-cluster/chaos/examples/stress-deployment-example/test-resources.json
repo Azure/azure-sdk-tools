@@ -1,41 +1,39 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "metadata": {
     "_generator": {
       "name": "bicep",
       "version": "0.4.63.48766",
-      "templateHash": "658186316551815960"
+      "templateHash": "13987799099034517242"
     }
   },
   "parameters": {
-    "groupName": {
-      "type": "string"
-    },
-    "location": {
-      "type": "string"
-    },
-    "now": {
+    "testApplicationOid": {
       "type": "string",
-      "defaultValue": "[utcNow('u')]"
+      "defaultValue": ""
     }
   },
   "functions": [],
   "resources": [
     {
-      "type": "Microsoft.Resources/resourceGroups",
-      "apiVersion": "2020-10-01",
-      "name": "[format('rg-{0}-{1}', parameters('groupName'), uniqueString(parameters('now')))]",
-      "location": "[parameters('location')]",
-      "tags": {
-        "DeleteAfter": "[dateTimeAdd(parameters('now'), 'PT8H')]"
+      "type": "Microsoft.AppConfiguration/configurationStores",
+      "apiVersion": "2020-07-01-preview",
+      "name": "[format('config-{0}', resourceGroup().name)]",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "Standard"
       }
     }
   ],
   "outputs": {
     "RESOURCE_GROUP": {
       "type": "string",
-      "value": "[format('rg-{0}-{1}', parameters('groupName'), uniqueString(parameters('now')))]"
+      "value": "[resourceGroup().name]"
+    },
+    "AZURE_CLIENT_OID": {
+      "type": "string",
+      "value": "[parameters('testApplicationOid')]"
     }
   }
 }

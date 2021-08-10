@@ -7,7 +7,7 @@
       source /mnt/secrets/static/* &&
       az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID &&
       az account set -s $AZURE_SUBSCRIPTION_ID &&
-      groupName='{{ default "" (printf "%s-" .Scenario) }}{{ .Release.Name }}-{{ .Release.Revision }}'
+      groupName='{{ lower .Scenario }}-{{ .Release.Name }}-{{ .Release.Revision }}'
       az group create -l westus2 -g $groupName &&
       group=$(az group show -g $groupName -o tsv --query "id") &&
       az tag create --resource-id $group --tags DeleteAfter="$(date -d '+192:00:00' -Iseconds -u)" &&
@@ -29,7 +29,7 @@
   volumeMounts:
     - name: "{{ .Release.Name }}-test-resources"
       mountPath: /mnt/testresources
-    - name: test-env-{{ default "" (printf "%s-" (lower .Scenario)) }}{{ .Release.Name }}-{{ .Release.Revision }}
+    - name: test-env-{{ lower .Scenario }}-{{ .Release.Name }}-{{ .Release.Revision }}
       mountPath: /mnt/outputs
     - name: "static-secrets-{{ .Release.Name }}"
       mountPath: "/mnt/secrets/static"

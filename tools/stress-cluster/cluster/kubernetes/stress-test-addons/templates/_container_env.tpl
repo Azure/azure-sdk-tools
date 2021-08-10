@@ -3,6 +3,6 @@ env:
   - name: ENV_FILE
     value: /mnt/outputs/.env
 volumeMounts:
-  - name: test-env-{{ default "" (printf "%s-" (lower .Scenario)) }}{{ .Release.Name }}-{{ .Release.Revision }}
+  - name: test-env-{{ lower .Scenario }}-{{ .Release.Name }}-{{ .Release.Revision }}
     mountPath: /mnt/outputs
 {{- end -}}

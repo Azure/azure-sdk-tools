@@ -11,6 +11,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using System.IO;
+using System.Text.RegularExpressions;
 
 namespace Azure.Sdk.Tools.TestProxy
 {
@@ -35,6 +36,8 @@ namespace Azure.Sdk.Tools.TestProxy
         /// Lacking both, the current working directory will be utilized.</param>
         public static void Main(string storageLocation = null)
         {
+            Regex.CacheSize = 0;
+
             var statusThreadCts = new CancellationTokenSource();
 
             TargetLocation = resolveRepoLocation(storageLocation);

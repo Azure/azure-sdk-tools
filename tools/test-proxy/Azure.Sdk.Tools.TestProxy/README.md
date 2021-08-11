@@ -10,7 +10,7 @@ For a detailed explanation, check the README.md one level up from this one. This
 2. Install test-proxy
 
 ```powershell
-> dotnet tool install azure.sdk.tools.testproxy --global --add-source https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk/nuget/v3/index.json
+> dotnet tool install azure.sdk.tools.testproxy --global --add-source https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json
 ```
 
 This feed is available in [the public azure-sdk project.](https://dev.azure.com/azure-sdk/public/_packaging?_a=feed&feed=azure-sdk)

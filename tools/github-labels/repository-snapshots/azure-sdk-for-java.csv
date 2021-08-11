@@ -1,97 +1,4 @@
 Processing Azure\azure-sdk-for-java repo.
-Label,RestPRInProgress,,fbca04
-Label,RestPRMerged,,0e8a16
-Label,ServicePR,,1d76db
-Label,RestPRRefused,,b60205
-Label,bug,This issue requires a change to an existing behavior in the product in order to be resolved.,eaa875
-Label,AAD,,e99695
-Label,ACS,,e99695
-Label,AKS,,e99695
-Label,ARM,,e99695
-Label,Advisor,,e99695
-Label,Analysis Services,,e99695
-Label,API Management,,e99695
-Label,App Services,,e99695
-Label,Authorization,,e99695
-Label,Automation,,e99695
-Label,Azure Stack,,e99695
-Label,Batch,,e99695
-Label,BatchAI,,e99695
-Label,Billing,,e99695
-Label,Network - CDN,,e99695
-Label,Cognitive Services,,e99695
-Label,Commerce,,e99695
-Label,Compute,,e99695
-Label,Compute - Extensions,,e99695
-Label,Compute - Images,,e99695
-Label,Compute - Managed Disks,,e99695
-Label,Compute - VM,,e99695
-Label,Compute - VMSS,,e99695
-Label,Consumption,,e99695
-Label,Container Instances,,e99695
-Label,Container Registry,,e99695
-Label,Cosmos,,e99695
-Label,Customer Insights,,e99695
-Label,Data Catalog,,e99695
-Label,Data Factory,,e99695
-Label,Data Lake,,e99695
-Label,Data Lake Analytics,,e99695
-Label,Data Lake Store,,e99695
-Label,Data Migration,,e99695
-Label,Devtestlab,,e99695
-Label,Event Grid,,e99695
-Label,Event Hubs,,e99695
-Label,Graph,,e99695
-Label,HDInsight,,e99695
-Label,Import Export,,e99695
-Label,Intune,,e99695
-Label,Insights,,e99695
-Label,IoT,,e99695
-Label,KeyVault,,e99695
-Label,Logic App,,e99695
-Label,Machine Learning,,e99695
-Label,Machine Learning Compute,,e99695
-Label,Machine Learning Experimentation,,e99695
-Label,Marketplace Ordering,,e99695
-Label,Media Services,,e99695
-Label,Migrate,,e99695
-Label,Mobile Engagement,,e99695
-Label,Monitor,"Monitor, Operational Insights",e99695
-Label,MySQL,,e99695
-Label,Network,,e99695
-Label,Network - Application Gateway,,e99695
-Label,Network - ExpressRoute,,e99695
-Label,Network - Load Balancer,,e99695
-Label,Network - Network Watcher,,e99695
-Label,Network - DNS,,e99695
-Label,Network - Traffic Manager,,e99695
-Label,Notification Hub,,e99695
-Label,Monitor - Operational Insights,,e99695
-Label,Operations Management,,e99695
-Label,Policy Insights,,e99695
-Label,PostgreSQL,,e99695
-Label,PowerBI,,e99695
-Label,Recovery Services Backup,,e99695
-Label,Recovery Services Site-Recovery,,e99695
-Label,Redis Cache,,e99695
-Label,Relay,,e99695
-Label,Reservations,,e99695
-Label,Resource Authorization,,e99695
-Label,Resource Health,,e99695
-Label,Search,,e99695
-Label,Security,,e99695
-Label,Scheduler,,e99695
-Label,Server Management,,e99695
-Label,Service Bus,,e99695
-Label,Service Fabric,,e99695
-Label,Service Map,,e99695
-Label,SQL,,e99695
-Label,Storage,"Storage Service (Queues, Blobs, Files)",e99695
-Label,Storsimple,,e99695
-Label,Stream Analytics,,e99695
-Label,TimeseriesInsights,,e99695
-Label,Visual Studio,,e99695
-Label,Service Attention,This issue is responsible by Azure service team.,10066b
 Label,Mgmt,This issue is related to a management-plane library.,ffeb77
 Label,Investigate,The issue needs investigation to get to the root cause,dafc2f
 Label,EngSys,This issue is impacting the engineering system.,e99695
@@ -309,11 +216,104 @@ Label,Mixed Reality,,e99695
 Label,Monitor - Log Analytics,,e99695
 Label,Monitor - Query,,e99695
 Label,dependency-issue-jackson,Issue caused by dependency version mismatch with one of the Jackson libraries,0366d6
+Label,AAD,,e99695
+Label,ACS,,e99695
+Label,Advisor,,e99695
+Label,AKS,,e99695
+Label,Analysis Services,,e99695
+Label,API Management,,e99695
+Label,App Services,,e99695
+Label,ARM,,e99695
+Label,Authorization,,e99695
+Label,Automation,,e99695
+Label,Azure Stack,,e99695
+Label,Batch,,e99695
+Label,BatchAI,,e99695
+Label,Billing,,e99695
+Label,bug,This issue requires a change to an existing behavior in the product in order to be resolved.,eaa875
+Label,Cognitive Services,,e99695
+Label,Commerce,,e99695
 Label,compat breaks,,d93f0b
+Label,Compute,,e99695
+Label,Compute - Extensions,,e99695
+Label,Compute - Images,,e99695
+Label,Compute - Managed Disks,,e99695
+Label,Compute - VM,,e99695
+Label,Compute - VMSS,,e99695
+Label,Consumption,,e99695
+Label,Container Instances,,e99695
+Label,Container Registry,,e99695
+Label,Cosmos,,e99695
+Label,Customer Insights,,e99695
+Label,Data Catalog,,e99695
+Label,Data Factory,,e99695
+Label,Data Lake,,e99695
+Label,Data Lake Analytics,,e99695
+Label,Data Lake Store,,e99695
+Label,Data Migration,,e99695
+Label,Devtestlab,,e99695
 Label,Do Not Merge,,b60205
 Label,EntitySearch,,e99695
+Label,Event Grid,,e99695
+Label,Event Hubs,,e99695
 Label,FaceAPI,,e99695
+Label,Graph,,e99695
+Label,HDInsight,,e99695
+Label,Import Export,,e99695
 Label,in progress,,efcfaa
+Label,Insights,,e99695
+Label,Intune,,e99695
+Label,IoT,,e99695
+Label,KeyVault,,e99695
+Label,Logic App,,e99695
+Label,Machine Learning,,e99695
+Label,Machine Learning Compute,,e99695
+Label,Machine Learning Experimentation,,e99695
+Label,Marketplace Ordering,,e99695
+Label,Media Services,,e99695
+Label,Migrate,,e99695
+Label,Mobile Engagement,,e99695
+Label,Monitor,"Monitor, Operational Insights",e99695
+Label,Monitor - Operational Insights,,e99695
+Label,MySQL,,e99695
+Label,Network,,e99695
+Label,Network - Application Gateway,,e99695
+Label,Network - CDN,,e99695
+Label,Network - DNS,,e99695
+Label,Network - ExpressRoute,,e99695
+Label,Network - Load Balancer,,e99695
+Label,Network - Network Watcher,,e99695
+Label,Network - Traffic Manager,,e99695
+Label,Notification Hub,,e99695
+Label,Operations Management,,e99695
+Label,Policy Insights,,e99695
 Label,ported,,bfd4f2
+Label,PostgreSQL,,e99695
+Label,PowerBI,,e99695
 Label,question,The issue doesn't require a change to the product in order to be resolved. Most issues start as that,eaa875
+Label,Recovery Services Backup,,e99695
+Label,Recovery Services Site-Recovery,,e99695
+Label,Redis Cache,,e99695
+Label,Relay,,e99695
+Label,Reservations,,e99695
+Label,Resource Authorization,,e99695
+Label,Resource Health,,e99695
+Label,RestPRInProgress,,fbca04
+Label,RestPRMerged,,0e8a16
+Label,RestPRRefused,,b60205
+Label,Scheduler,,e99695
+Label,Search,,e99695
+Label,Security,,e99695
+Label,Server Management,,e99695
+Label,Service Attention,This issue is responsible by Azure service team.,10066b
+Label,Service Bus,,e99695
+Label,Service Fabric,,e99695
+Label,Service Map,,e99695
+Label,ServicePR,,1d76db
+Label,SQL,,e99695
+Label,Storage,"Storage Service (Queues, Blobs, Files)",e99695
+Label,Storsimple,,e99695
+Label,Stream Analytics,,e99695
 Label,test-sovereign-cloud,,AA6C89
+Label,TimeseriesInsights,,e99695
+Label,Visual Studio,,e99695

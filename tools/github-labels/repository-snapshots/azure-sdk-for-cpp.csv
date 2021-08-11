@@ -20,7 +20,6 @@ Label,Storage,"Storage Service (Queues, Blobs, Files)",e99695
 Label,Mgmt,This issue is related to a management-plane library.,ffeb77
 Label,Service,This issue points to a problem in the service.,ffeb77
 Label,Service Attention,This issue is responsible by Azure service team.,10066b
-Label,test bug,This issue requires a change to an existing behavior in the tests to be resolved.,216ba8
 Label,blocking-release,Blocks release,d73a49
 Label,Azure.Identity,,e99695
 Label,KeyVault,,e99695
@@ -232,7 +231,7 @@ Label,Synapse,,e99695
 Label,Tables,,e99695
 Label,test-enhancement,,7365c9
 Label,test-manual-pass,,c0eaf9
-Label,test-reliability,Issue that causes tests to be unreliable,e04545
+Label,test-reliability,Issue that causes tests to be unreliable,7365c9
 Label,TimeseriesInsights,,e99695
 Label,Training,Work items that track the work to build training materials for building Client libraries,e99695
 Label,Visual Studio,,e99695

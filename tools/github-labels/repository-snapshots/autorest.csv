@@ -1,5 +1,4 @@
 Processing Azure\autorest repo.
-Label,PowerShell,PowerShell Generator Incubator,c4cbfc
 Label,AutoRest v3,Related to AutoRest v3 Core,7ae80d
 Label,Invalid Specification,Caused by invalid OpenAPI or Swagger specification,c12028
 Label,AutoRest v2,Related to AutoRest v2 Core,7ae80d
@@ -115,6 +114,7 @@ Label,P0 - Critical,Critical Issue - blocking,d83c59
 Label,P1 - Required,Required functionality - not blocking,e8db7d
 Label,P2 - Requested,Feature Request,5635a8
 Label,PHP,,c4cbfc
+Label,PowerShell,PowerShell Generator Incubator,c4cbfc
 Label,Python,,c4cbfc
 Label,question,The issue doesn't require a change to the product in order to be resolved. Most issues start as that,eaa875
 Label,Ruby,,c4cbfc

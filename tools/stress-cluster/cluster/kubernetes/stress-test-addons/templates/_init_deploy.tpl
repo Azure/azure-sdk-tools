@@ -10,7 +10,7 @@
       groupName='{{ lower .Scenario }}-{{ .Release.Name }}-{{ .Release.Revision }}'
       az group create -l westus2 -g $groupName &&
       group=$(az group show -g $groupName -o tsv --query "id") &&
-      az tag create --resource-id $group --tags DeleteAfter="$(date -d '+192:00:00' -Iseconds -u)" &&
+      az tag create --resource-id $group --tags DeleteAfter="$(date -d '+192:00:00' -Iseconds -u | sed 's/UTC/Z/')" &&
       az deployment group create \
           -g $groupName \
           -n $groupName \

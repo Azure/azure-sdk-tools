@@ -1,11 +1,13 @@
 export AZURE_STORAGE_ACCOUNT=stresstestcharts
-# AZURE_STORAGE_KEY must be exported too, run the below command to get the key:
-# az storage account keys list --account-name stresstestcharts -o json --query '[0].value'
+export AZURE_STORAGE_KEY=$(az storage account keys list --account-name $AZURE_STORAGE_ACCOUNT -o tsv --query '[0].value')
 
 rm *.tgz
 
 helm package  .
-helm repo index --url https://stresstestcharts.blob.core.windows.net/helm/ .
+helm repo index --url https://stresstestcharts.blob.core.windows.net/helm/ --merge index.yaml .
+
+# The index.yaml in git should be synced with the index.yaml already in blob storage
+# az storage blob download -c helm -n index.yaml -f index.yaml
 
 az storage blob upload --container-name helm --file index.yaml --name index.yaml
 az storage blob upload --container-name helm --file *.tgz --name *.tgz

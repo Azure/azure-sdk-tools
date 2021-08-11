@@ -7,9 +7,9 @@ annotations:
   stressTest: 'true'
   namespace: 'examples'
   example: 'true'
-  test: 'true'
+  hasChaos: 'true'
 
 dependencies:
 - name: stress-test-addons
-  version: 0.1.2
+  version: 0.1.4
   repository: https://stresstestcharts.blob.core.windows.net/helm/

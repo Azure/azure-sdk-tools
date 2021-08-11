@@ -14,22 +14,23 @@
     the set of repositories to update labels for, with each repository appearing on a new line.
 
   .PARAMETER DelayMinutes
-    [optional] The number of minutes to delay between updating labels for each individual repository; 
+    [optional] The number of minutes to delay between updating labels for each individual repository;
     intended to help guard against throttling.
 #>
 
 [CmdletBinding()]
 param
-( 
+(
   [Parameter(Mandatory=$true, HelpMessage="Please provide your GitHub access token.", Position=0)]
-  [string] $GitHubAccessToken,
+  [ValidateNotNullOrEmpty()]
+  [string]$GitHubAccessToken,
 
   [Parameter(Mandatory=$false, HelpMessage="Please provide the path to the set of common labels.")]
-  [ValidateScript({Test-Path $_ -PathType 'Leaf'})] 
+  [ValidateScript({Test-Path $_ -PathType 'Leaf'})]
   [string]$LabelFilePath = "./common-labels.csv",
 
   [Parameter(Mandatory=$false, HelpMessage="Please provide the path to the set of repositories.")]
-  [ValidateScript({Test-Path $_ -PathType 'Leaf'})] 
+  [ValidateScript({Test-Path $_ -PathType 'Leaf'})]
   [string]$RepositoryFilePath = "./repositories.txt",
 
   [Parameter(Mandatory=$false, HelpMessage="Please provide the time to delay between repositories (in minutes), between 0 and 100.")]

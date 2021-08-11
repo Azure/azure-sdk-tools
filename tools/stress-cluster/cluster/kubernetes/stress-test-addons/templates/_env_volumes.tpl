@@ -1,5 +1,5 @@
 {{ define "stress-test-addons.env-volumes" }}
-- name: test-env-{{ .Release.Name }}
+- name: test-env-{{ lower .Scenario }}-{{ .Release.Name }}-{{ .Release.Revision }}
   emptyDir: {}
 - name: cluster-secrets-{{ .Release.Name }}
   csi:

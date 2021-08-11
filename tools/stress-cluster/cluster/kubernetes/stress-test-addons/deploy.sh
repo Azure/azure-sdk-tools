@@ -1,3 +1,5 @@
+set -ex
+
 export AZURE_STORAGE_ACCOUNT=stresstestcharts
 export AZURE_STORAGE_KEY=$(az storage account keys list --account-name $AZURE_STORAGE_ACCOUNT -o tsv --query '[0].value')
 
@@ -15,4 +17,4 @@ az storage blob upload --container-name helm --file *.tgz --name *.tgz
 # index.yaml must be kept up to date, otherwise when helm generates the file, it will not
 # merge it with previous entries, and those packages will become inaccessible as they are no
 # longer index.
-echo "COMMIT CHANGES MADE TO `index.yaml`"
+echo "COMMIT CHANGES MADE TO 'index.yaml'"

@@ -24,7 +24,7 @@ stages:
           ./eng/scripts/live-test-resource-cleanup.ps1 `
           @subscriptionConfiguration `
           -Verbose
-        displayName: Clean up subscription resources (AzureCloud)
+        displayName: AzureCloud - Resource Cleanup
 
       - pwsh: |
           $subscriptionConfiguration = @'
@@ -34,7 +34,7 @@ stages:
           ./eng/scripts/live-test-resource-cleanup.ps1 `
           @subscriptionConfiguration `
           -Verbose
-        displayName: Clean up subscription resources (AzureCloud-Preview)
+        displayName: AzureCloud-Preview - Resource Cleanup
 
       - pwsh: |
           $subscriptionConfiguration = @'
@@ -44,7 +44,7 @@ stages:
           ./eng/scripts/live-test-resource-cleanup.ps1 `
           @subscriptionConfiguration `
           -Verbose
-        displayName: Clean up subscription resources (AzureUSGovernment)
+        displayName: AzureUSGovernment - Resource Cleanup
 
       - pwsh: |
           $subscriptionConfiguration = @'
@@ -54,7 +54,7 @@ stages:
           ./eng/scripts/live-test-resource-cleanup.ps1 `
           @subscriptionConfiguration `
           -Verbose
-        displayName: Clean up subscription resources (AzureChinaCloud)
+        displayName: AzureChinaCloud - Resource Cleanup
 
       - pwsh: |
           $subscriptionConfiguration = @'
@@ -64,7 +64,7 @@ stages:
           ./eng/scripts/live-test-resource-cleanup.ps1 `
           @subscriptionConfiguration `
           -Verbose
-        displayName: Clean up subscription resources (Dogfood ACS)
+        displayName: Dogfood ACS - Resource Cleanup
 
       - template: /eng/common/TestResources/build-test-resource-config.yml
         parameters:
@@ -79,7 +79,7 @@ stages:
           ./eng/scripts/live-test-resource-cleanup.ps1 `
           @subscriptionConfiguration `
           -Verbose
-        displayName: Clean up subscription resources (AzureCloud ACS)
+        displayName: AzureCloud ACS - Resource Cleanup
 
       - template: /eng/common/TestResources/build-test-resource-config.yml
         parameters:
@@ -94,4 +94,14 @@ stages:
           ./eng/scripts/live-test-resource-cleanup.ps1 `
           @subscriptionConfiguration `
           -Verbose
-        displayName: Clean up subscription resources (AzureCloud Cosmos)
+        displayName: AzureCloud Cosmos - Resource Cleanup
+
+      - pwsh: |
+          $subscriptionConfiguration = @'
+            $(sub-config-azure-cloud-playground)
+          '@ | ConvertFrom-Json -AsHashtable
+
+          ./eng/scripts/live-test-resource-cleanup.ps1 `
+          @subscriptionConfiguration `
+          -Verbose
+        displayName: AzureCloud Playground - Resource Cleanup

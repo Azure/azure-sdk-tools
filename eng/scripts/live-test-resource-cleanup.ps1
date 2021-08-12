@@ -36,6 +36,14 @@ param (
 )
 eng/common/scripts/Import-AzModules.ps1
 
+# Import resource management helpers and override its Log function.
+. "$PSScriptRoot\..\common\scripts\Helpers\Resource-Helpers.ps1"
+
+function Log($Message) {
+  Write-Host $Message
+}
+
+
 Write-Verbose "Logging in"
 $provisionerSecret = ConvertTo-SecureString -String $ProvisionerApplicationSecret -AsPlainText -Force
 $provisionerCredential = [System.Management.Automation.PSCredential]::new($ProvisionerApplicationId, $provisionerSecret)
@@ -60,10 +68,13 @@ Write-Host "Groups to delete: $($toDelete.Count)"
 
 foreach ($rg in $toDelete)
 {
-  if ($Force -or $PSCmdlet.ShouldProcess("$($rg.ResourceGroupName) (UTC: $($rg.Tags.DeleteAfter))", "Delete Group"))
-  {
+  if ($Force -or $PSCmdlet.ShouldProcess("$($rg.ResourceGroupName) (UTC: $($rg.Tags.DeleteAfter))", "Delete Group")) {
+    $purgeableResources = Get-PurgeableResources $rg.Name
+
     Write-Verbose "Deleting group: $($rg.Name)"
     Write-Verbose "  tags $($rg.Tags | ConvertTo-Json -Compress)"
     Write-Host ($rg | Remove-AzResourceGroup -Force -AsJob).Name
+
+    Remove-PurgeableResources $purgeableResources 
   }
 }

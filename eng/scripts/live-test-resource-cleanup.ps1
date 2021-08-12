@@ -66,15 +66,21 @@ Write-Host "Count $($hasDeleteAfter.Count)"
 $toDelete = $hasDeleteAfter.Where({ $deleteDate = ($_.Tags.DeleteAfter -as [DateTime]); (!$deleteDate -or $now -gt $deleteDate) })
 Write-Host "Groups to delete: $($toDelete.Count)"
 
+# Get purgeable resources already in a deleted state coerced into a collection even if empty.
+$purgeableResources = @(Get-PurgeableResources)
+
 foreach ($rg in $toDelete)
 {
   if ($Force -or $PSCmdlet.ShouldProcess("$($rg.ResourceGroupName) (UTC: $($rg.Tags.DeleteAfter))", "Delete Group")) {
-    $purgeableResources = Get-PurgeableResources $rg.Name
+    # Add purgeable resources that will be deleted with the resource group to the collection.
+    $purgeableResources += Get-PurgeableGroupResources $rg.Name
 
     Write-Verbose "Deleting group: $($rg.Name)"
     Write-Verbose "  tags $($rg.Tags | ConvertTo-Json -Compress)"
     Write-Host ($rg | Remove-AzResourceGroup -Force -AsJob).Name
-
-    Remove-PurgeableResources $purgeableResources 
   }
 }
+
+# Purge all the purgeable resources.
+Write-Host "Deleting $($purgeableResources.Count) purgeable resources"
+Remove-PurgeableResources $purgeableResources

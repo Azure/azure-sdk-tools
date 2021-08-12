@@ -40,7 +40,7 @@ Something along the lines of...
       dotnet tool install `
         azure.sdk.tools.testproxy `
         --tool-path $(Build.BinariesDirectory)/test-proxy `
-        --add-source https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk/nuget/v3/index.json `
+        --add-source https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json `
         --version <version>
     displayName: "Install TestProxy"
 

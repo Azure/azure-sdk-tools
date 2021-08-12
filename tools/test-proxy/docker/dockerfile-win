@@ -83,8 +83,8 @@ RUN mkdir -p etc/testproxy
 # install the package
 RUN dotnet tool install azure.sdk.tools.testproxy \
     --tool-path /proxyserver \
-    --add-source https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk/nuget/v3/index.json \
-    --version 1.0.0-dev.20210729.1 
+    --add-source https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json \
+    --version 1.0.0-dev.20210811.2 
 
 EXPOSE 5001
 EXPOSE 5000

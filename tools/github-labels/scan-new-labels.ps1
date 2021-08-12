@@ -15,22 +15,23 @@
     the set of repositories to query, with each repository appearing on a new line.
 
   .PARAMETER DelayMinutes
-    [optional] The number of minutes to delay between querying each individual repository; 
+    [optional] The number of minutes to delay between querying each individual repository;
     intended to help guard against throttling.
 #>
 
 [CmdletBinding()]
 param
-( 
+(
   [Parameter(Mandatory=$true, HelpMessage="Please provide your GitHub access token.", Position=0)]
-  [string] $GitHubAccessToken,
+  [ValidateNotNullOrEmpty()]
+  [string]$GitHubAccessToken,
 
   [Parameter(Mandatory=$false, HelpMessage="Please provide the directory read snapshots from.")]
-  [ValidateScript({Test-Path $_ -PathType 'Container'})] 
+  [ValidateScript({Test-Path $_ -PathType 'Container'})]
   [string]$SnapshotDirectory = "./repository-snapshots",
 
   [Parameter(Mandatory=$false, HelpMessage="Please provide the path to the set of repositories.")]
-  [ValidateScript({Test-Path $_ -PathType 'Leaf'})] 
+  [ValidateScript({Test-Path $_ -PathType 'Leaf'})]
   [string]$RepositoryFilePath = "./repositories.txt",
 
   [Parameter(Mandatory=$false, HelpMessage="Please provide the time to delay between repositories (in minutes), between 0 and 100.")]
@@ -63,9 +64,9 @@ $repositories = Get-Content $RepositoryFilePath
 foreach ($currentRepository in $repositories)
 {
     $name = $currentRepository.Replace("Azure\", "")
-    
+
     Write-Host " ==================================================== " -ForegroundColor Green
-    Write-Host " $($currentRepository)"                                 -ForegroundColor Green    
+    Write-Host " $($currentRepository)"                                 -ForegroundColor Green
     Write-Host " ==================================================== " -ForegroundColor Green
 
     $snapshotLabels = BuildSnapshotHash (Join-Path $SnapshotDirectory "$($name).csv")
@@ -77,7 +78,7 @@ foreach ($currentRepository in $repositories)
         if (-not [String]::IsNullOrEmpty($line))
         {
             [string]$label = (($line -split ",")[1])
-            
+
             if (-not $snapshotLabels.Contains($label))
             {
                 Write-Host "`t$($label)"
@@ -90,7 +91,7 @@ foreach ($currentRepository in $repositories)
     {
         Write-Host "`tNo new labels found"
     }
-    
+
     Write-Host ""
     Write-Host ""
 

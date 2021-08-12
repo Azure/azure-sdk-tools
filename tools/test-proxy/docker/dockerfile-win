@@ -56,7 +56,6 @@ RUN pwsh \
           }"
 
 RUN mkdir certwork
-RUN mkdir testproxy
 
 ADD dev_certificate/dotnet-devcert.pfx certwork
 ADD dev_certificate/dotnet-devcert.crt certwork
@@ -77,6 +76,10 @@ ENV ASPNETCORE_Kestrel__Certificates__Default__Path="/certwork/dotnet-devcert.pf
 
 SHELL ["pwsh", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
 
+# while it may seem a bit strange to use "etc" on a windows container. We are mirroring
+# the methodology from the primary container, which is linux.
+RUN mkdir -p etc/testproxy
+
 # install the package
 RUN dotnet tool install azure.sdk.tools.testproxy \
     --tool-path /proxyserver \
@@ -90,4 +93,4 @@ EXPOSE 5000
 # default URL of localhost:5000 or localhost:50001 are not usable from outside the container
 ENV DOTNET_URLS="http://0.0.0.0:5000;https://0.0.0.0:5001"
 
-ENTRYPOINT ["/proxyserver/test-proxy.exe", "--storage-location", "/testproxy"]
+ENTRYPOINT ["/proxyserver/test-proxy.exe", "--storage-location", "/etc/testproxy"]

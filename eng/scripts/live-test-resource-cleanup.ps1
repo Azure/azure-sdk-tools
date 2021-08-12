@@ -55,12 +55,13 @@ $noDeleteAfter | ForEach-Object { Write-Verbose $_.ResourceGroupName }
 
 $hasDeleteAfter = $allGroups.Where({ $_.Tags.Keys -contains "DeleteAfter" })
 Write-Host "Count $($hasDeleteAfter.Count)"
-$toDelete = $hasDeleteAfter.Where({ $now -gt [DateTime]$_.Tags.DeleteAfter })
+$toDelete = $hasDeleteAfter.Where({ $deleteDate = ($_.Tags.DeleteAfter -as [DateTime]); (!$deleteDate -or $now -gt $deleteDate) })
 Write-Host "Groups to delete: $($toDelete.Count)"
 
 foreach ($rg in $toDelete)
 {
-  if ($Force -or $PSCmdlet.ShouldProcess("$($rg.ResourceGroupName) (UTC: $($rg.Tags.DeleteAfter))", "Delete Group")) {
+  if ($Force -or $PSCmdlet.ShouldProcess("$($rg.ResourceGroupName) (UTC: $($rg.Tags.DeleteAfter))", "Delete Group"))
+  {
     Write-Verbose "Deleting group: $($rg.Name)"
     Write-Verbose "  tags $($rg.Tags | ConvertTo-Json -Compress)"
     Write-Host ($rg | Remove-AzResourceGroup -Force -AsJob).Name

@@ -1,7 +1,4 @@
 Processing Azure\azure-sdk-for-net-pr repo.
-Label,Do Not Merge,,b60205
-Label,ADFV2,,e99695
-Label,needs-revision,,faaa04
 Label,EngSys,This issue is impacting the engineering system.,e99695
 Label,Mgmt,This issue is related to a management-plane library.,ffeb77
 Label,Cognitive - Metrics Advisor,,e99695
@@ -240,3 +237,6 @@ Label,question,The issue doesn't require a change to the product in order to be 
 Label,test-enhancement,,7365c9
 Label,test-manual-pass,,c0eaf9
 Label,test-reliability,Issue that causes tests to be unreliable,e04545
+Label,ADFV2,,e99695
+Label,Do Not Merge,,b60205
+Label,needs-revision,,faaa04

@@ -34,6 +34,17 @@ This area is focused on the management of GitHub labels for the various Azure SD
    pwsh -Command "get-help ./deploy-labels.ps1 -full"
    ```
    
+  ### `diff-repo-labels.ps1`
+   _With the default parameter set, this script will query set of labels for the requested repository and compare them against the set of common labels from the `common-labels.csv` file.  Any labels found in the repository that are not    part of the common set will be written as output._
+   
+   ```bash
+   # Execute for the .NET SDK repository using the default set of common label data.
+   pwsh ./diff-repo-labels.ps1 << TOKEN >> "Azure\azure-sdk-for-net"
+   
+   # View the help for the full set of parameters.
+   pwsh -Command "get-help ./diff-repo-labels.ps1 -full"
+   ```
+   
   ### `refresh-shapshots.ps1`
    _With the default parameter set, this script will query set of labels for each of the repositories identified by the `repositories.txt` file and save them as individual files in the `repository-shapshots` directory._
    

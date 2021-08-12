@@ -14,6 +14,7 @@ The chaos environment is an AKS cluster (Azure Kubernetes Service) with several 
      * [Helm Chart Dependencies](#helm-chart-dependencies)
      * [Job Manifest](#job-manifest)
      * [Chaos Manifest](#chaos-manifest)
+     * [Scenarios and values.yaml](#scenarios-and-valuesyaml)
   * [Deploying a Stress Test](#deploying-a-stress-test)
   * [Configuring faults](#configuring-faults)
      * [Faults via Dashboard](#faults-via-dashboard)
@@ -154,7 +155,7 @@ The basic layout for a stress test is the following (see `examples/stress_deploy
 
     # Optional files/directories
 
-    values.yaml                  # Any default helm template values for this chart
+    values.yaml                  # Any default helm template values for this chart, e.g. a `scenarios` list
     <misc scripts/configs>       # Any language specific files for building/running/deploying the test
     <source directories>         # Directories containing code for stress tests
     <bicep modules>              # Any additional bicep module files/directories referenced by test-resources.bicep
@@ -305,6 +306,39 @@ For more detailed examples, see:
 - [Chaos Experiments](https://chaos-mesh.org/docs/chaos_experiments/networkchaos_experiment) docs for all possible types
 - `./examples/network_stress_example/chart/templates/network_loss.yaml` for an example network loss manifest within a helm chart
 - The [Faults via Dashboard section](#faults-via-dashboard) for generating the configs from the UI
+
+### Scenarios and values.yaml
+
+For cases where the same job config must be run for multiple instances, a `scenarios` list can be specified in a file called `values.yaml`.
+
+For example, given a stress test package with multiple tests represented as separate files:
+
+```
+values.yaml
+templates/
+app/
+  scenarioLongRunning.js
+  scenarioPeekMessages.js
+  scenarioBatchReceive.js
+...
+```
+
+The pod command in the job manifest could be configured to run a variable file name:
+
+```
+command: ["node", "app/{{ .Scenario }}.js"]
+```
+
+In order to accomplish this, add the scenarios list to `values.yaml`
+
+```
+scenarios:
+  - scenarioLongRunning
+  - scenarioPeekMessages
+  - scenarioBatchReceive
+```
+
+The underlying `stress-test-addons` helm library will handle a scenarios list automatically, and deploy multiple instances of the stress test job, one for each scenario.
 
 ## Deploying a Stress Test
 

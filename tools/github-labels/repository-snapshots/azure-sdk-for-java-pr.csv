@@ -1,14 +1,4 @@
 Processing Azure\azure-sdk-for-java-pr repo.
-Label,P0,,e10c02
-Label,P1,,d7e102
-Label,P2,,02d7e1
-Label,In Progress,,02e10c
-Label,Ready for test,,02e10c
-Label,Infrastructure,,DDDDDD
-Label,In Test,,02e10c
-Label,Blocked,,e10c02
-Label,Pending,,02e10c
-Label,Live Streaming,,5319e7
 Label,EngSys,This issue is impacting the engineering system.,e99695
 Label,Epic,,3E4B9E
 Label,Client,This issue points to a problem in the data-plane of the library.,ffeb77
@@ -247,3 +237,13 @@ Label,question,The issue doesn't require a change to the product in order to be 
 Label,test-enhancement,,7365c9
 Label,test-manual-pass,,c0eaf9
 Label,test-reliability,Issue that causes tests to be unreliable,e04545
+Label,Blocked,,e10c02
+Label,In Progress,,02e10c
+Label,In Test,,02e10c
+Label,Infrastructure,,DDDDDD
+Label,Live Streaming,,5319e7
+Label,P0,,e10c02
+Label,P1,,d7e102
+Label,P2,,02d7e1
+Label,Pending,,02e10c
+Label,Ready for test,,02e10c

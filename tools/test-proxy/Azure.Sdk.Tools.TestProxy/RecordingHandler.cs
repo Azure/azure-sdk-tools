@@ -299,6 +299,8 @@ namespace Azure.Sdk.Tools.TestProxy
                 {
                     throw new InvalidOperationException("Unexpected failure to remove in-memory session.");
                 }
+
+                GC.Collect();
             }
         }
 

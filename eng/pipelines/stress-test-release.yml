@@ -68,8 +68,7 @@ jobs:
             Commitish: ${{ parameters.DeployFromBranchOrCommit }}
             WorkingDirectory: $(System.DefaultWorkingDirectory)/$(Repository)
         Paths:
-          - '/tools'
-          - '/sdk'
+          - '/*'
           - '!sdk/**/test-recordings'
           - '!sdk/**/session-records'
           - '!sdk/**/SessionRecords'

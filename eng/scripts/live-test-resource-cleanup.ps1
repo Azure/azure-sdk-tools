@@ -34,7 +34,8 @@ param (
     [Parameter(ValueFromRemainingArguments = $true)]
     $IgnoreUnusedArguments
 )
-eng/common/scripts/Import-AzModules.ps1
+
+&"$PSScriptRoot/../common/scripts/Import-AzModules.ps1"
 
 # Import resource management helpers and override its Log function.
 . "$PSScriptRoot\..\common\scripts\Helpers\Resource-Helpers.ps1"
@@ -67,15 +68,19 @@ $toDelete = $hasDeleteAfter.Where({ $deleteDate = ($_.Tags.DeleteAfter -as [Date
 Write-Host "Groups to delete: $($toDelete.Count)"
 
 # Get purgeable resources already in a deleted state coerced into a collection even if empty.
-$purgeableResources = @(Get-PurgeableResources)
+$purgeableResources = Get-PurgeableResources
 
 foreach ($rg in $toDelete)
 {
   if ($Force -or $PSCmdlet.ShouldProcess("$($rg.ResourceGroupName) (UTC: $($rg.Tags.DeleteAfter))", "Delete Group")) {
     # Add purgeable resources that will be deleted with the resource group to the collection.
-    $purgeableResources += Get-PurgeableGroupResources $rg.Name
+    $purgeableResourcesFromRG = Get-PurgeableGroupResources $rg.ResourceGroupName
 
-    Write-Verbose "Deleting group: $($rg.Name)"
+    if ($purgeableResourcesFromRG) {
+      $purgeableResources += $purgeableResourcesFromRG
+      Write-Verbose "Found $($purgeableResourcesFromRG.Count) potentially purgeable resources in resource group $($rg.ResourceGroupName)"
+    }
+    Write-Verbose "Deleting group: $($rg.ResourceGroupName)"
     Write-Verbose "  tags $($rg.Tags | ConvertTo-Json -Compress)"
     Write-Host ($rg | Remove-AzResourceGroup -Force -AsJob).Name
   }

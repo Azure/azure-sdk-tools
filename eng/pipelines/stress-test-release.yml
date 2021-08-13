@@ -64,9 +64,6 @@ jobs:
     - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
       parameters:
         Repositories:
-          - Name: Azure/azure-sdk-tools
-            Commitish: ${{ parameters.DeployFromBranchOrCommit }}
-            WorkingDirectory: $(System.DefaultWorkingDirectory)/Azure/azure-sdk-tools
           - Name: $(Repository)
             Commitish: ${{ parameters.DeployFromBranchOrCommit }}
             WorkingDirectory: $(System.DefaultWorkingDirectory)/$(Repository)
@@ -82,7 +79,7 @@ jobs:
       inputs:
         azureSubscription: ${{ parameters.Subscription }}
         scriptType: pscore
-        scriptPath: $(System.DefaultWorkingDirectory)/Azure/azure-sdk-tools/eng/common/scripts/stress-testing/deploy-stress-tests.ps1
+        scriptPath: $(System.DefaultWorkingDirectory)/$(Repository)/eng/common/scripts/stress-testing/deploy-stress-tests.ps1
         arguments:
           -SearchDirectory '$(System.DefaultWorkingDirectory)/$(Repository)'
           -Filters $(Filters)

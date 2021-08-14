@@ -67,8 +67,7 @@ Write-Host "Count $($hasDeleteAfter.Count)"
 $toDelete = $hasDeleteAfter.Where({ $deleteDate = ($_.Tags.DeleteAfter -as [DateTime]); (!$deleteDate -or $now -gt $deleteDate) })
 Write-Host "Groups to delete: $($toDelete.Count)"
 
-# Get purgeable resources already in a deleted state coerced into a collection even if empty.
-$purgeableResources = Get-PurgeableResources
+$purgeableResources = @()
 
 foreach ($rg in $toDelete)
 {
@@ -86,6 +85,16 @@ foreach ($rg in $toDelete)
   }
 }
 
+# Get purgeable resources already in a deleted state coerced into a collection even if empty.
+$purgeableResources = Get-PurgeableResources
+$allPurgeCount = $purgeableResources.Count
+
+# Filter down to the ones that we can actually perge.
+$purgeableResources = $purgeableResources.Where({ $purgeDate = $_.ScheduledPurgeDate -as [DateTime]; (!$purgeDate -or $now -gt $purgeDate) })
+
 # Purge all the purgeable resources.
-Write-Host "Deleting $($purgeableResources.Count) purgeable resources"
+Write-Host "Attempting to purge $($purgeableResources.Count) resources."
+if ($allPurgeCount -gt $purgeableResources.Count) {
+  Write-Host "Skipping $($allPurgeCount - $purgeableResources.Count) as their purge date is still in the future."
+}
 Remove-PurgeableResources $purgeableResources

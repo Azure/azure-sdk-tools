@@ -9,6 +9,7 @@ stages:
 
   jobs:
   - job: Run
+    timeoutInMinutes: 0
     pool:
       vmImage: ubuntu-20.04
 

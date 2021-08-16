@@ -5,14 +5,20 @@
 
 ### Build and Run
 
-**Be aware that this dockerfile must from the root directory of the sdk-tools repository.**
+**Be aware there is a pre-step to prepare the working directory before building the dockerfile.**
 
 This is necessary to access supporting certificate files located in eng/common. There is intent to adjust this build upon a `test-assets image` that will allow us to relocate build context to this local folder, but that is as yet incomplete.
 
-Invoke to generate a container (with optional tag):
+Prior to any other steps, invoke:
+
+```pwsh
+./prepare.ps1
+```
+
+Then, invoke to generate a container (with optional tag):
 
 ```docker
-docker build . -t test-proxy -f tools/test-proxy/docker/dockerfile
+docker build . -t test-proxy
 ```
 
 Start locally using:
@@ -36,7 +42,7 @@ Actions images do not support swapping between `Linux` and `Windows` containers.
 To build _that_, use the following command.
 
 ```docker
-docker build . -f tools/test-proxy/docker/dockerfile-win -t test-proxy
+docker build . -f dockerfile-win -t test-proxy
 ```
 
 ### Certificates

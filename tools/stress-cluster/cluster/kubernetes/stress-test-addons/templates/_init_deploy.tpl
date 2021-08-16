@@ -16,7 +16,7 @@
           -n $groupName \
           -f /mnt/testresources/test-resources.json \
           --parameters /mnt/testresources/parameters.json \
-          --parameters testApplicationOid=$AZURE_CLIENT_OID &&
+          --parameters testApplicationOid=$AZURE_CLIENT_OID > /dev/null &&
       az deployment group show \
           -g $groupName \
           -n $groupName \

@@ -27,7 +27,7 @@
                                             {
                                                 @comment.Upvotes.Count
                                             }
-                                            <span active-if="@comment.Upvotes.Contains(User.GetGitHubLogin())">👍</span>
+                                            <span active-if="@comment.Upvotes.Any()">👍</span>
                                         }
                                     </button>
                                 </form>

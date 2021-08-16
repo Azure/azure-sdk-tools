@@ -6,5 +6,5 @@ if (-not (Test-Path $PsScriptRoot/dev_certificate/))
 }
 
 # copy all files other than .yml from eng/common/scripts/testproxy into local directory dev_certificate
-Get-ChildItem $targetDirectory -Exclude "*.yml" | % { Copy-Item -Path $_ -Destination "$PsScriptRoot/dev_certificate${$_.Name}" }
+Get-ChildItem $targetDirectory -Exclude "*.yml" | % { Copy-Item -Path $_ -Destination "$PsScriptRoot/dev_certificate/${$_.Name}" }
 

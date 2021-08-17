@@ -5,6 +5,7 @@ parameters:
   - name: test_proxy_linux
     pool: 'ubuntu-20.04'
     dockerRepo: 'engsys/testproxy-lin'
+    prepareScript: tools/test-proxy/docker/prepare.ps1
     dockerFile: 'tools/test-proxy/docker/dockerfile'
     stableTags:
     - 'latest'
@@ -17,6 +18,7 @@ parameters:
   - name: test_proxy_windows
     pool: 'windows-2019'
     dockerRepo: 'engsys/testproxy-win'
+    prepareScript: tools/test-proxy/docker/prepare.ps1
     dockerFile: 'tools/test-proxy/docker/dockerfile-win'
     stableTags:
     - 'latest'
@@ -47,6 +49,11 @@ jobs:
       pool:
         vmImage: ${{ config.pool }}
       steps:
+        - ${{ if config.prepareScript }}:
+          - pwsh: |
+              ./${{ config.prepareScript }}
+            displayName: "Run prep script"
+
         - task: Docker@2
           displayName: Build ${{ config.name }}:$(imageTag)
           inputs:
@@ -54,6 +61,7 @@ jobs:
             Dockerfile: ${{ config.dockerFile }}
             tags: $(imageTag)
             arguments: '-t $(containerRegistry).azurecr.io/${{ config.dockerRepo }}:$(imageTag)'
+
         - task: Docker@2
           displayName: Push ${{ config.name }}:$(imageTag)
           inputs:
@@ -61,6 +69,7 @@ jobs:
             repository: ${{ config.dockerRepo }}
             command: push
             tags: $(imageTag)
+
         - ${{ each stableTag in config.stableTags }}:
           - task: Docker@2
             displayName: Build ${{ config.name }}:${{ stableTag }}
@@ -69,6 +78,7 @@ jobs:
               Dockerfile: ${{ config.dockerFile }}
               tags: ${{ stableTag }}
               arguments: '-t $(containerRegistry).azurecr.io/${{ config.dockerRepo }}:${{ stableTag }}'
+
           - task: Docker@2
             displayName: Push ${{ config.name }}:${{ stableTag }}
             inputs:

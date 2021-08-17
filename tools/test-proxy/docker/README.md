@@ -5,9 +5,17 @@
 
 ### Build and Run
 
-First, navigate to the folder containing the test-proxy dockerfile: `tools/test-proxy/docker`.
+**Be aware there is a pre-step to prepare the working directory before building the dockerfile.**
 
-Invoke to generate a container (with optional tag):
+This is necessary to access supporting certificate files located in eng/common. There is intent to adjust this build upon a `test-assets image` that will allow us to relocate build context to this local folder, but that is as yet incomplete.
+
+Prior to any other steps, invoke:
+
+```pwsh
+./prepare.ps1
+```
+
+Then, invoke to generate a container (with optional tag):
 
 ```docker
 docker build . -t test-proxy

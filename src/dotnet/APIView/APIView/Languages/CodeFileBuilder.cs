@@ -424,6 +424,7 @@ namespace ApiView
                 case "AsyncStateMachineAttribute":
                 case "IteratorStateMachineAttribute":
                 case "DefaultMemberAttribute":
+                case "AsyncIteratorStateMachineAttribute":
                     return true;
                 default:
                     return false;

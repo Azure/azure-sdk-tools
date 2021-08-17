@@ -237,3 +237,4 @@ Label,pillar-reliability,"The issue is related to reliability, one of our core e
 Label,test-enhancement,,7365c9
 Label,test-manual-pass,,c0eaf9
 Label,test-reliability,Issue that causes tests to be unreliable,e04545
+Label,Stress,"This issue is related to stress testing, part of our reliability pillar.",65a5c9

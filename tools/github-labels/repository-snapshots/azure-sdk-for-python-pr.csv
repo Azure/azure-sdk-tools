@@ -1,7 +1,4 @@
 Processing Azure\azure-sdk-for-python-pr repo.
-Label,EngSys,This issue is impacting the engineering system.,e99695
-Label,Mgmt,This issue is related to a management-plane library.,ffeb77
-Label,Service Bus,,e99695
 Label,Cognitive - Metrics Advisor,,e99695
 Label,Epic,,3E4B9E
 Label,Do Not Merge,,b60205
@@ -239,9 +236,13 @@ Label,test-manual-pass,,c0eaf9
 Label,test-reliability,Issue that causes tests to be unreliable,e04545
 Label,bug,This issue requires a change to an existing behavior in the product in order to be resolved.,eaa875
 Label,duplicate,This issue is the duplicate of another issue,e4c288
+Label,EngSys,This issue is impacting the engineering system.,e99695
+Label,Mgmt,This issue is related to a management-plane library.,ffeb77
 Label,question,The issue doesn't require a change to the product in order to be resolved. Most issues start as that,eaa875
 Label,RestPRInProgress,,fbca04
 Label,RestPRMerged,,0e8a16
 Label,RestPRRefused,,b60205
+Label,Service Bus,,e99695
 Label,ServicePR,,1d76db
+Label,Stress,"This issue is related to stress testing, part of our reliability pillar.",65a5c9
 Label,wontfix,,ffffff

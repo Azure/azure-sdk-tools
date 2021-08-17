@@ -1,5 +1,4 @@
 Processing Azure\autorest.go repo.
-Label,Track2,,ed7f44
 Label,needs-team-attention,This issue needs attention from Azure service team or SDK team,3BA0F8
 Label,no-recent-activity,There has been no recent activity on this issue.,bbbbbb
 Label,customer-reported,Issues that are reported by GitHub users external to the Azure organization.,3800e0
@@ -243,4 +242,6 @@ Label,invalid,,e6e6e6
 Label,planned,,e6e6e6
 Label,question,The issue doesn't require a change to the product in order to be resolved. Most issues start as that,eaa875
 Label,review,,ededed
+Label,Stress,"This issue is related to stress testing, part of our reliability pillar.",65a5c9
+Label,Track2,,ed7f44
 Label,wontfix,,ffffff

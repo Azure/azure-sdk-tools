@@ -11,8 +11,13 @@ Azure\azure-sdk-for-c-pr
 Azure\azure-sdk-for-cpp
 Azure\azure-sdk-for-go
 Azure\azure-sdk-for-go-pr
-Azure\azure-sdk-tools
+Azure\azure-sdk-for-ios
+Azure\azure-sdk-for-ios-pr
+Azure\azure-sdk-for-android
+Azure\azure-sdk-for-android-pr
 Azure\azure-sdk
+Azure\azure-sdk-pr
+Azure\azure-sdk-tools
 Azure\autorest
 Azure\autorest.csharp
 Azure\autorest.java

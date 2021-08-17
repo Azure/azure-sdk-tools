@@ -1,6 +1,4 @@
 Processing Azure\azure-sdk-for-net-pr repo.
-Label,EngSys,This issue is impacting the engineering system.,e99695
-Label,Mgmt,This issue is related to a management-plane library.,ffeb77
 Label,Cognitive - Metrics Advisor,,e99695
 Label,Epic,,3E4B9E
 Label,Client,This issue points to a problem in the data-plane of the library.,ffeb77
@@ -239,4 +237,7 @@ Label,test-manual-pass,,c0eaf9
 Label,test-reliability,Issue that causes tests to be unreliable,e04545
 Label,ADFV2,,e99695
 Label,Do Not Merge,,b60205
+Label,EngSys,This issue is impacting the engineering system.,e99695
+Label,Mgmt,This issue is related to a management-plane library.,ffeb77
 Label,needs-revision,,faaa04
+Label,Stress,"This issue is related to stress testing, part of our reliability pillar.",65a5c9

@@ -1,16 +1,4 @@
 Processing Azure\autorest.csharp repo.
-Label,v2,Version 2 of AutoRest C# generator.,213f7f
-Label,v3,Version 3 of AutoRest C# generator.,e993ff
-Label,test-server,AutoRest test server related issue.,f7ae9e
-Label,EngSys,This issue is impacting the engineering system.,e99695
-Label,customization,AutoRest C# language generator customization option.,91fc74
-Label,workaround-easy,Working around the problem is easy.,1d76db
-Label,workaround-medium,Working around the problem is somewhat difficult.,1d76db
-Label,workaround-hard,Working around the problem is difficult.,1d76db
-Label,instances<5,Less than 5 instances that need a workaround.,a04060
-Label,instances5-50,Between 5 and 50 instances that need a workaround.,a04060
-Label,instances>50,More than 50 instances that need a workaround.,a04060
-Label,backlog,Planned future work.,c5def5
 Label,Mgmt,This issue is related to a management-plane library.,ffeb77
 Label,💥 API Impact,Changes that would result in API changes in default cases (customization excluded),c64539
 Label,Epic,,3E4B9E
@@ -255,3 +243,16 @@ Label,pillar-reliability,"The issue is related to reliability, one of our core e
 Label,test-enhancement,,7365c9
 Label,test-manual-pass,,c0eaf9
 Label,test-reliability,Issue that causes tests to be unreliable,e04545
+Label,backlog,Planned future work.,c5def5
+Label,customization,AutoRest C# language generator customization option.,91fc74
+Label,EngSys,This issue is impacting the engineering system.,e99695
+Label,instances<5,Less than 5 instances that need a workaround.,a04060
+Label,instances>50,More than 50 instances that need a workaround.,a04060
+Label,instances5-50,Between 5 and 50 instances that need a workaround.,a04060
+Label,Stress,"This issue is related to stress testing, part of our reliability pillar.",65a5c9
+Label,test-server,AutoRest test server related issue.,f7ae9e
+Label,v2,Version 2 of AutoRest C# generator.,213f7f
+Label,v3,Version 3 of AutoRest C# generator.,e993ff
+Label,workaround-easy,Working around the problem is easy.,1d76db
+Label,workaround-hard,Working around the problem is difficult.,1d76db
+Label,workaround-medium,Working around the problem is somewhat difficult.,1d76db

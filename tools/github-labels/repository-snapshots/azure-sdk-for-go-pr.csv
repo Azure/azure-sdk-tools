@@ -237,3 +237,4 @@ Label,test-reliability,Issue that causes tests to be unreliable,e04545
 Label,bug,This issue requires a change to an existing behavior in the product in order to be resolved.,eaa875
 Label,duplicate,This issue is the duplicate of another issue,e4c288
 Label,question,The issue doesn't require a change to the product in order to be resolved. Most issues start as that,eaa875
+Label,Stress,"This issue is related to stress testing, part of our reliability pillar.",65a5c9

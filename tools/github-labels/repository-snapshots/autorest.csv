@@ -1,6 +1,4 @@
 Processing Azure\autorest repo.
-Label,AutoRest v3,Related to AutoRest v3 Core,7ae80d
-Label,Invalid Specification,Caused by invalid OpenAPI or Swagger specification,c12028
 Label,AutoRest v2,Related to AutoRest v2 Core,7ae80d
 Label,Generator v2,Using an AutoRest v2 generator,0a607f
 Label,Rust,,8ef29f
@@ -100,12 +98,14 @@ Label,pillar-performance,"The issue is related to performance, one of our core e
 Label,pillar-reliability,"The issue is related to reliability, one of our core engineering pillars. (includes stress testing)",65a5c9
 Label,test-enhancement,,7365c9
 Label,test-manual-pass,,c0eaf9
+Label,AutoRest v3,Related to AutoRest v3 Core,7ae80d
 Label,C#,,c4cbfc
 Label,DataPlane Feature,,5319e7
 Label,design-discussion,An area of design currently under discussion and open to team and community feedback.,0BABDF
 Label,documentation,,c5def5
 Label,Go,,c4cbfc
 Label,help wanted,This issue is tracking work for which community contributions would be welcomed and appreciated,64c170
+Label,Invalid Specification,Caused by invalid OpenAPI or Swagger specification,c12028
 Label,Modeler,,90f4cc
 Label,needs-author-feedback,More information is needed from author to address the issue.,f72598
 Label,OpenAPI 2,OpenAPI 2 (Swagger),fbca04
@@ -118,4 +118,5 @@ Label,PowerShell,PowerShell Generator Incubator,c4cbfc
 Label,Python,,c4cbfc
 Label,question,The issue doesn't require a change to the product in order to be resolved. Most issues start as that,eaa875
 Label,Ruby,,c4cbfc
+Label,Stress,"This issue is related to stress testing, part of our reliability pillar.",65a5c9
 Label,TypeScript,,c4cbfc

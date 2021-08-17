@@ -67,7 +67,7 @@ Write-Host "Count $($hasDeleteAfter.Count)"
 $toDelete = $hasDeleteAfter.Where({ $deleteDate = ($_.Tags.DeleteAfter -as [DateTime]); (!$deleteDate -or $now -gt $deleteDate) })
 Write-Host "Groups to delete: $($toDelete.Count)"
 
-# Get purgeable resources arleady in a deleted state.
+# Get purgeable resources already in a deleted state.
 $purgeableResources = Get-PurgeableResources
 
 foreach ($rg in $toDelete)

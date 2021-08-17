@@ -86,6 +86,10 @@ foreach ($rg in $toDelete)
   }
 }
 
-# Purge all the purgeable resources.
+# Purge all the purgeable resources and get a list of resources (as a collection) we need to follow-up on.
 Write-Host "Attempting to purge $($purgeableResources.Count) resources."
-Remove-PurgeableResources $purgeableResources
+$failedResources = @(Remove-PurgeableResources $purgeableResources -PassThru)
+if ($failedResources) {
+  Write-Host "Failed to delete the following $($failedResources.Count) resources:"
+  $failedResources | Sort-Object AzsdkResourceType, AzsdkName | Format-Table -Property @{l='Type'; e={$_.AzsdkResourceType}}, @{l='Name'; e={$_.AzsdkName}}
+}

@@ -90,6 +90,6 @@ foreach ($rg in $toDelete)
 Write-Host "Attempting to purge $($purgeableResources.Count) resources."
 $failedResources = @(Remove-PurgeableResources $purgeableResources -PassThru)
 if ($failedResources) {
-  Write-Warning "Failed to delete the following $($failedResources.Count) resources:"
+  Write-Warning "Timed out deleting the following $($failedResources.Count) resources. Please file an IcM ticket per resource type."
   $failedResources | Sort-Object AzsdkResourceType, AzsdkName | Format-Table -Property @{l='Type'; e={$_.AzsdkResourceType}}, @{l='Name'; e={$_.AzsdkName}}
 }

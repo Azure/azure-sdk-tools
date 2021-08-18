@@ -67,7 +67,8 @@ Write-Host "Count $($hasDeleteAfter.Count)"
 $toDelete = $hasDeleteAfter.Where({ $deleteDate = ($_.Tags.DeleteAfter -as [DateTime]); (!$deleteDate -or $now -gt $deleteDate) })
 Write-Host "Groups to delete: $($toDelete.Count)"
 
-$purgeableResources = @()
+# Get purgeable resources already in a deleted state.
+$purgeableResources = Get-PurgeableResources
 
 foreach ($rg in $toDelete)
 {
@@ -85,16 +86,10 @@ foreach ($rg in $toDelete)
   }
 }
 
-# Get purgeable resources already in a deleted state coerced into a collection even if empty.
-$purgeableResources = Get-PurgeableResources
-$allPurgeCount = $purgeableResources.Count
-
-# Filter down to the ones that we can actually perge.
-$purgeableResources = $purgeableResources.Where({ $purgeDate = $_.ScheduledPurgeDate -as [DateTime]; (!$purgeDate -or $now -gt $purgeDate) })
-
-# Purge all the purgeable resources.
+# Purge all the purgeable resources and get a list of resources (as a collection) we need to follow-up on.
 Write-Host "Attempting to purge $($purgeableResources.Count) resources."
-if ($allPurgeCount -gt $purgeableResources.Count) {
-  Write-Host "Skipping $($allPurgeCount - $purgeableResources.Count) as their purge date is still in the future."
+$failedResources = @(Remove-PurgeableResources $purgeableResources -PassThru)
+if ($failedResources) {
+  Write-Warning "Timed out deleting the following $($failedResources.Count) resources. Please file an IcM ticket per resource type."
+  $failedResources | Sort-Object AzsdkResourceType, AzsdkName | Format-Table -Property @{l='Type'; e={$_.AzsdkResourceType}}, @{l='Name'; e={$_.AzsdkName}}
 }
-Remove-PurgeableResources $purgeableResources

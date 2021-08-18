@@ -43,6 +43,21 @@ To trust this certificate...
    3. Set `REQUESTS_CA_BUNDLE` to the location of the newly combined pemfile.
 3. Ensure SSL verification is enabled still, notice that your requests to the test proxy still succeed!
 
+## Java
+
+A given certificate must be added to the `Java Certificate Store`.
+
+1. Grab the `dotnet-devcert.crt` from the `eng/common/testproxy` directory of any azure-sdk language repo. Keep its location handy.
+2. Find the Java install that you will be using to run your tests. EG: `C:\Program Files\Java\jre1.8.0_301`.
+   1. Within your Java install folder, ensure that `lib/security/cacerts` exists.
+3. Open your preferred shell in `admin` mode.
+4. Run `keytool.exe -import -file <path-to-dotnet-devcert.crt> -keystore <location of ca-certs file> -alias DotNetDevCert
+   1. `keytool.exe` is part of the the `bin` folder within your Java install.
+5. When prompted, the default password to the `Java Certificate Store` is `changeit`.
+
+[Private OneNote for Reference](https://microsoft.sharepoint.com/teams/AzureDeveloperExperience/_layouts/OneNote.aspx?id=%2Fteams%2FAzureDeveloperExperience%2FShared%20Documents%2FLanguage%20-%20Java%2FAzure%20SDK%20-%20Language%20-%20Java&wd=target%28Engineering%20System.one%7C2E590CA4-A12F-4AF0-9AC0-42AF66D54510%2FUsing%20Fiddler%20as%20a%20Proxy%7C2060B735-F0F0-4059-BD5F-711031550B46%2F%29
+onenote:https://microsoft.sharepoint.com/teams/AzureDeveloperExperience/Shared%20Documents/Language%20-%20Java/Azure%20SDK%20-%20Language%20-%20Java/Engineering%20System.one#Using%20Fiddler%20as%20a%20Proxy&section-id={2E590CA4-A12F-4AF0-9AC0-42AF66D54510}&page-id={2060B735-F0F0-4059-BD5F-711031550B46}&end)
+
 ## .NET
 
 Use the `dotnet dev-certs` approach as recommended in [general section](#generally).

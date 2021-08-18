@@ -47,7 +47,7 @@ docker build . -f dockerfile-win -t test-proxy
 
 ### Certificates
 
-All necessary components for dev-certificate usage are present within the `dev_certificate` directory. Reference [trusting-cert-per-language.md](../documentation/trusting-cert-per-language.md) to learn how to add and trust with the toolchain of your choice.
+All necessary components for dev-certificate usage are present within the `eng/common/testproxy` directory. Reference [trusting-cert-per-language.md](../documentation/trusting-cert-per-language.md) to learn how to add and trust with the toolchain of your choice.
 
 Please note that each language + its SSL stack will provide different mechanisms for validating SSL certificates. Again, reference [trusting-cert-per-language.md](../documentation/trusting-cert-per-language.md) to understand the process beyond the most general case.
 
@@ -68,8 +68,8 @@ Most issues we've seen are related to having a prior `az acr login` or the like.
 If your error looks something like this:
 
 ```
-> docker pull azsdkengsys.azurecr.io/engsys/testproxy:latest
-Error response from daemon: Head https://azsdkengsys.azurecr.io/v2/engsys/testproxy/manifests/latest: unauthorized: authentication required
+> docker pull azsdkengsys.azurecr.io/engsys/testproxy-lin:latest
+Error response from daemon: Head https://azsdkengsys.azurecr.io/v2/engsys/testproxy-lin/manifests/latest: unauthorized: authentication required
 ```
 
 Need to clear multiple sets of credentials.
@@ -83,7 +83,7 @@ This occurs when a user has a **prior login** to `azsdkengsys.azurecr.io`. `az a
 For errors that look like:
 
 ```
-> docker pull azsdkengsys.azurecr.io/engsys/testproxy:latest
+> docker pull azsdkengsys.azurecr.io/engsys/testproxy-lin:latest
 Error response from daemon: Get https://azsdkengsys.azurecr.io/v2/: x509: certificate has expired or is not yet valid
 ```
 

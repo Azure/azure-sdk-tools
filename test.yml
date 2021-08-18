@@ -1,0 +1,17 @@
+strategy:
+  matrix:
+    Linux:
+      Pool: "azsdk-pool-mms-ubuntu-2004-general"
+      OSVmImage: "MMSUbuntu20.04"
+
+variables:
+  NugetSecurityAnalysisWarningLevel: 'none'
+  skipComponentGovernanceDetection: 'true'
+  system.debug: 'true'
+
+pool:
+  name: $(Pool)
+  vmImage: $(OSVmImage)
+
+steps:
+  - script: echo 'hello'

@@ -23,6 +23,12 @@ After successful installation, run the tool:
 > test-proxy --storage-location <location>
 ```
 
+If you've already installed the tool, you can always check the installed version by invoking:
+
+```powershell
+> test-proxy --version
+```
+
 ### Via Docker Image
 
 Feel free to build the docker file locally within working directory `/tools/test-proxy/docker/`. All required resources are located within. There are additional helpful tips regarding the docker build and install in the [docker readme](../docker/README)

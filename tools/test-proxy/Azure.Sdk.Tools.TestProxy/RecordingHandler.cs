@@ -419,7 +419,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
         public string GetRecordingPath(string file)
         {
-            return Path.Join(RepoPath, file);
+            return Path.Join(RepoPath, file + (!file.EndsWith(".json") ? ".json" : String.Empty));
         }
 
         public static string GetHeader(HttpRequest request, string name, bool allowNulls = false)

@@ -14,7 +14,7 @@ namespace APIViewWeb.TagHelpers
         {
             if (ActiveIf)
             {
-                output.Attributes.SetAttribute("class", output.Attributes["class"].Value + " active");
+                output.Attributes.SetAttribute("class", output.Attributes["class"]?.Value + " active");
             }
         }
     }

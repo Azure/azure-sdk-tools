@@ -202,6 +202,7 @@ Label,SignalR,,e99695
 Label,Storage,"Storage Service (Queues, Blobs, Files)",e99695
 Label,Storsimple,,e99695
 Label,Stream Analytics,,e99695
+Label,Stress,"This issue is related to stress testing, part of our reliability pillar.",65a5c9
 Label,Subscription,,e99695
 Label,Support,,e99695
 Label,Synapse,,e99695

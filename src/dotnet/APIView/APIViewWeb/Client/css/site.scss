@@ -330,8 +330,9 @@ code-inner {
     margin: -8px -16px;
 }
 
-.btn-upvote {
+.btn-upvote span {
     filter: grayscale(100%) opacity(30%);
+
     &.active {
         filter: unset;
     }

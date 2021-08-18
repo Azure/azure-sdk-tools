@@ -460,6 +460,9 @@ src/dotnet/Mgmt.CI.BuildTools/NugetToolsPackage/CI.Tools.Package/build/tasks/net
 # ensure local debugging of the test-proxy will not end up committed
 tools/test-proxy/**/recordings/
 
+# ensure local build directory for test-proxy dockerfiles remains ignored
+tools/test-proxy/docker/dev_certificate
+
 # local settings
 .DS_Store
 .vscode

@@ -34,7 +34,16 @@ param (
     [Parameter(ValueFromRemainingArguments = $true)]
     $IgnoreUnusedArguments
 )
-eng/common/scripts/Import-AzModules.ps1
+
+&"$PSScriptRoot/../common/scripts/Import-AzModules.ps1"
+
+# Import resource management helpers and override its Log function.
+. "$PSScriptRoot\..\common\scripts\Helpers\Resource-Helpers.ps1"
+
+function Log($Message) {
+  Write-Host $Message
+}
+
 
 Write-Verbose "Logging in"
 $provisionerSecret = ConvertTo-SecureString -String $ProvisionerApplicationSecret -AsPlainText -Force
@@ -55,14 +64,37 @@ $noDeleteAfter | ForEach-Object { Write-Verbose $_.ResourceGroupName }
 
 $hasDeleteAfter = $allGroups.Where({ $_.Tags.Keys -contains "DeleteAfter" })
 Write-Host "Count $($hasDeleteAfter.Count)"
-$toDelete = $hasDeleteAfter.Where({ $now -gt [DateTime]$_.Tags.DeleteAfter })
+$toDelete = $hasDeleteAfter.Where({ $deleteDate = ($_.Tags.DeleteAfter -as [DateTime]); (!$deleteDate -or $now -gt $deleteDate) })
 Write-Host "Groups to delete: $($toDelete.Count)"
+
+$purgeableResources = @()
 
 foreach ($rg in $toDelete)
 {
   if ($Force -or $PSCmdlet.ShouldProcess("$($rg.ResourceGroupName) (UTC: $($rg.Tags.DeleteAfter))", "Delete Group")) {
-    Write-Verbose "Deleting group: $($rg.Name)"
+    # Add purgeable resources that will be deleted with the resource group to the collection.
+    $purgeableResourcesFromRG = Get-PurgeableGroupResources $rg.ResourceGroupName
+
+    if ($purgeableResourcesFromRG) {
+      $purgeableResources += $purgeableResourcesFromRG
+      Write-Verbose "Found $($purgeableResourcesFromRG.Count) potentially purgeable resources in resource group $($rg.ResourceGroupName)"
+    }
+    Write-Verbose "Deleting group: $($rg.ResourceGroupName)"
     Write-Verbose "  tags $($rg.Tags | ConvertTo-Json -Compress)"
     Write-Host ($rg | Remove-AzResourceGroup -Force -AsJob).Name
   }
 }
+
+# Get purgeable resources already in a deleted state coerced into a collection even if empty.
+$purgeableResources = Get-PurgeableResources
+$allPurgeCount = $purgeableResources.Count
+
+# Filter down to the ones that we can actually perge.
+$purgeableResources = $purgeableResources.Where({ $purgeDate = $_.ScheduledPurgeDate -as [DateTime]; (!$purgeDate -or $now -gt $purgeDate) })
+
+# Purge all the purgeable resources.
+Write-Host "Attempting to purge $($purgeableResources.Count) resources."
+if ($allPurgeCount -gt $purgeableResources.Count) {
+  Write-Host "Skipping $($allPurgeCount - $purgeableResources.Count) as their purge date is still in the future."
+}
+Remove-PurgeableResources $purgeableResources

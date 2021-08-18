@@ -55,9 +55,6 @@ A given certificate must be added to the `Java Certificate Store`.
 5. When prompted, the default password to the `Java Certificate Store` is `changeit`.
 6. To clean up, run `keytool.exe -cacerts -delete -alias DotNetDevCert`.
 
-[Private OneNote for Reference](https://microsoft.sharepoint.com/teams/AzureDeveloperExperience/_layouts/OneNote.aspx?id=%2Fteams%2FAzureDeveloperExperience%2FShared%20Documents%2FLanguage%20-%20Java%2FAzure%20SDK%20-%20Language%20-%20Java&wd=target%28Engineering%20System.one%7C2E590CA4-A12F-4AF0-9AC0-42AF66D54510%2FUsing%20Fiddler%20as%20a%20Proxy%7C2060B735-F0F0-4059-BD5F-711031550B46%2F%29
-onenote:https://microsoft.sharepoint.com/teams/AzureDeveloperExperience/Shared%20Documents/Language%20-%20Java/Azure%20SDK%20-%20Language%20-%20Java/Engineering%20System.one#Using%20Fiddler%20as%20a%20Proxy&section-id={2E590CA4-A12F-4AF0-9AC0-42AF66D54510}&page-id={2060B735-F0F0-4059-BD5F-711031550B46}&end)
-
 ## .NET
 
 Use the `dotnet dev-certs` approach as recommended in [general section](#generally).

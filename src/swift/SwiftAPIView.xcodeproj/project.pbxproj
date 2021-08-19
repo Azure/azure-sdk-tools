@@ -19,12 +19,13 @@
 		0A6A545B269CAD5A001006AF /* TypeModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A6A545A269CAD59001006AF /* TypeModel.swift */; };
 		0A6A545E269CE223001006AF /* DeclarationModifier+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A6A545D269CE223001006AF /* DeclarationModifier+Extensions.swift */; };
 		0A6A546C269E2AE8001006AF /* SwiftAPIViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A6A546B269E2AE8001006AF /* SwiftAPIViewTests.swift */; };
-		0A6A5474269E2B83001006AF /* SwiftAST in Frameworks */ = {isa = PBXBuildFile; productRef = 0A6A5473269E2B83001006AF /* SwiftAST */; };
-		0A6A5476269E2B83001006AF /* SwiftAST+Tooling in Frameworks */ = {isa = PBXBuildFile; productRef = 0A6A5475269E2B83001006AF /* SwiftAST+Tooling */; };
 		0A6A5478269F775B001006AF /* TestSwiftFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A6A5477269F775B001006AF /* TestSwiftFile.swift */; };
 		0A6A547A269F8DA3001006AF /* Kind+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A6A5479269F8DA3001006AF /* Kind+Extensions.swift */; };
 		0A6A547C269F9A41001006AF /* PatternInitializer+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A6A547B269F9A41001006AF /* PatternInitializer+Extensions.swift */; };
 		0A6A547F26A0D296001006AF /* NavigationTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A6A547E26A0D296001006AF /* NavigationTokens.swift */; };
+		0AA97B4026CECCAD0040A744 /* SwiftSemantics in Frameworks */ = {isa = PBXBuildFile; productRef = 0AA97B3F26CECCAD0040A744 /* SwiftSemantics */; settings = {ATTRIBUTES = (Required, ); }; };
+		0AA97B4326CECD1B0040A744 /* SwiftAST in Frameworks */ = {isa = PBXBuildFile; productRef = 0AA97B4226CECD1B0040A744 /* SwiftAST */; };
+		0AA97B4826CED01D0040A744 /* SwiftSyntax in Frameworks */ = {isa = PBXBuildFile; productRef = 0AA97B4726CED01D0040A744 /* SwiftSyntax */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -61,6 +62,7 @@
 		0A6A5479269F8DA3001006AF /* Kind+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Kind+Extensions.swift"; sourceTree = "<group>"; };
 		0A6A547B269F9A41001006AF /* PatternInitializer+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PatternInitializer+Extensions.swift"; sourceTree = "<group>"; };
 		0A6A547E26A0D296001006AF /* NavigationTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationTokens.swift; sourceTree = "<group>"; };
+		0AA97B4526CECFD00040A744 /* swift-syntax */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "swift-syntax"; path = "/Users/travisprescott/Library/Developer/Xcode/DerivedData/SwiftAPIView-bimyfzoutgsebyanxqovckhujwsb/SourcePackages/checkouts/swift-syntax"; sourceTree = "<absolute>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -68,8 +70,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0A6A5476269E2B83001006AF /* SwiftAST+Tooling in Frameworks */,
-				0A6A5474269E2B83001006AF /* SwiftAST in Frameworks */,
+				0AA97B4026CECCAD0040A744 /* SwiftSemantics in Frameworks */,
+				0AA97B4826CED01D0040A744 /* SwiftSyntax in Frameworks */,
+				0AA97B4326CECD1B0040A744 /* SwiftAST in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -91,7 +94,7 @@
 				0A6A5432268B82D0001006AF /* Sources */,
 				0A6A546A269E2AE8001006AF /* Tests */,
 				0A6A5431268B82D0001006AF /* Products */,
-				6F4C0E2E04E03C6B3145C4A1 /* Frameworks */,
+				0AA97B4426CECFD00040A744 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -167,9 +170,10 @@
 			path = TokenGeneration;
 			sourceTree = "<group>";
 		};
-		6F4C0E2E04E03C6B3145C4A1 /* Frameworks */ = {
+		0AA97B4426CECFD00040A744 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				0AA97B4526CECFD00040A744 /* swift-syntax */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -191,8 +195,9 @@
 			);
 			name = SwiftAPIView;
 			packageProductDependencies = (
-				0A6A5473269E2B83001006AF /* SwiftAST */,
-				0A6A5475269E2B83001006AF /* SwiftAST+Tooling */,
+				0AA97B3F26CECCAD0040A744 /* SwiftSemantics */,
+				0AA97B4226CECD1B0040A744 /* SwiftAST */,
+				0AA97B4726CED01D0040A744 /* SwiftSyntax */,
 			);
 			productName = SwiftAPIView;
 			productReference = 0A6A5430268B82D0001006AF /* SwiftAPIView */;
@@ -242,7 +247,9 @@
 			);
 			mainGroup = 0A6A5427268B82D0001006AF;
 			packageReferences = (
-				0A6A5472269E2B83001006AF /* XCRemoteSwiftPackageReference "swift-ast" */,
+				0AA97B3E26CECCAD0040A744 /* XCRemoteSwiftPackageReference "SwiftSemantics" */,
+				0AA97B4126CECD1B0040A744 /* XCRemoteSwiftPackageReference "swift-ast" */,
+				0AA97B4626CED01D0040A744 /* XCRemoteSwiftPackageReference "swift-syntax" */,
 			);
 			productRefGroup = 0A6A5431268B82D0001006AF /* Products */;
 			projectDirPath = "";
@@ -349,6 +356,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -404,6 +412,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -418,7 +427,7 @@
 			buildSettings = {
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = ZQB5E94758;
+				DEVELOPMENT_TEAM = UBF8T346G9;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = "$(SRCROOT)/Info.plist";
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
@@ -433,7 +442,7 @@
 			buildSettings = {
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = ZQB5E94758;
+				DEVELOPMENT_TEAM = UBF8T346G9;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = "$(SRCROOT)/Info.plist";
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
@@ -513,7 +522,15 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		0A6A5472269E2B83001006AF /* XCRemoteSwiftPackageReference "swift-ast" */ = {
+		0AA97B3E26CECCAD0040A744 /* XCRemoteSwiftPackageReference "SwiftSemantics" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/SwiftDocOrg/SwiftSemantics";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+		0AA97B4126CECD1B0040A744 /* XCRemoteSwiftPackageReference "swift-ast" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/yanagiba/swift-ast";
 			requirement = {
@@ -521,18 +538,31 @@
 				minimumVersion = 0.19.9;
 			};
 		};
+		0AA97B4626CED01D0040A744 /* XCRemoteSwiftPackageReference "swift-syntax" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-syntax";
+			requirement = {
+				branch = release/5.4;
+				kind = branch;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		0A6A5473269E2B83001006AF /* SwiftAST */ = {
+		0AA97B3F26CECCAD0040A744 /* SwiftSemantics */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 0A6A5472269E2B83001006AF /* XCRemoteSwiftPackageReference "swift-ast" */;
+			package = 0AA97B3E26CECCAD0040A744 /* XCRemoteSwiftPackageReference "SwiftSemantics" */;
+			productName = SwiftSemantics;
+		};
+		0AA97B4226CECD1B0040A744 /* SwiftAST */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0AA97B4126CECD1B0040A744 /* XCRemoteSwiftPackageReference "swift-ast" */;
 			productName = SwiftAST;
 		};
-		0A6A5475269E2B83001006AF /* SwiftAST+Tooling */ = {
+		0AA97B4726CED01D0040A744 /* SwiftSyntax */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 0A6A5472269E2B83001006AF /* XCRemoteSwiftPackageReference "swift-ast" */;
-			productName = "SwiftAST+Tooling";
+			package = 0AA97B4626CED01D0040A744 /* XCRemoteSwiftPackageReference "swift-syntax" */;
+			productName = SwiftSyntax;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

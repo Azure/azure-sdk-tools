@@ -25,6 +25,8 @@
 // --------------------------------------------------------------------------
 
 import AST
+import SwiftSemantics
+import SwiftSyntax
 import Foundation
 import Parser
 import Source
@@ -71,33 +73,42 @@ class APIViewManager {
 
     /// Handles automatic processing of swiftinterface file, if supplied
     func process(url sourceUrl: URL) throws -> SourceFile {
-        guard sourceUrl.absoluteString.hasSuffix("swiftinterface") else {
-            return try SourceReader.read(at: sourceUrl.absoluteString)
-        }
+//        guard sourceUrl.absoluteString.hasSuffix("swiftinterface") else {
+        return try SourceReader.read(at: sourceUrl.absoluteString)
+//        }
 
-        func check(line: String) -> String {
-            let needsBodyPatterns = [" init(", " init?(", " func ", " deinit"]
-            for pattern in needsBodyPatterns {
-                if line.contains(pattern) {
-                    return "\(line) {}"
-                }
-            }
-            return line
-        }
-
-        var newLines = [String]()
-        let interfaceContents = try String(contentsOfFile: sourceUrl.absoluteString, encoding: .utf8)
-        for line in interfaceContents.components(separatedBy: .newlines) {
-            newLines.append(check(line: line))
-        }
-        // write modified swiftinterface file to temp location
-        let sourceDir = sourceUrl.deletingLastPathComponent()
-        let filename = sourceUrl.lastPathComponent
-        let tempFilename = "\(UUID().uuidString)_\(filename)"
-        let tempUrl = sourceDir.appendingPathComponent(tempFilename)
-        try newLines.joined(separator: "\n").write(toFile: tempUrl.absoluteString, atomically: true, encoding: .utf8)
-        defer { try! FileManager.default.removeItem(atPath: tempUrl.absoluteString) }
-        return try SourceReader.read(at: tempUrl.absoluteString)
+//        func check(line: String) -> String {
+//            var newLine = line
+//            let needsBodyPatterns = [" init(", " init?(", " func ", " deinit"] //"\tget", " get", " set", " set("]
+//            for pattern in needsBodyPatterns {
+//                if newLine.contains(pattern) && !newLine.contains("{}") {
+//                    newLine = "\(newLine) {}"
+//                }
+//            }
+//
+//            let duplicatePatterns = ["@discardableResult"]
+//            for pattern in duplicatePatterns {
+//                let dupePattern = "\(pattern) \(pattern)"
+//                if newLine.contains(dupePattern) {
+//                    newLine = newLine.replacingOccurrences(of: dupePattern, with: pattern)
+//                }
+//            }
+//            return newLine
+//        }
+//
+//        var newLines = [String]()
+//        let interfaceContents = try String(contentsOfFile: sourceUrl.absoluteString, encoding: .utf8)
+//        for line in interfaceContents.components(separatedBy: .newlines) {
+//            newLines.append(check(line: line))
+//        }
+//        // write modified swiftinterface file to temp location
+//        let sourceDir = sourceUrl.deletingLastPathComponent()
+//        let filename = sourceUrl.lastPathComponent
+//        let tempFilename = "\(UUID().uuidString)_\(filename)"
+//        let tempUrl = sourceDir.appendingPathComponent(tempFilename)
+//        try newLines.joined(separator: "\n").write(toFile: tempUrl.absoluteString, atomically: true, encoding: .utf8)
+//        defer { try! FileManager.default.removeItem(atPath: tempUrl.absoluteString) }
+//        return try SourceReader.read(at: tempUrl.absoluteString)
     }
 
     func extractPackageName(from sourceUrl: URL) -> String {
@@ -134,8 +145,14 @@ class APIViewManager {
             // otherwise load a single file
             packageName = sourceUrl.lastPathComponent
             let sourceFile = try process(url: sourceUrl)
-            let topLevelDecl = try Parser(source: sourceFile).parse()
-            declarations.append(topLevelDecl)
+            if sourceUrl.absoluteString.hasSuffix("swift") {
+                let topLevelDecl = try Parser(source: sourceFile).parse()
+                declarations.append(topLevelDecl)
+            } else if sourceUrl.absoluteString.hasSuffix("swiftinterface") {
+                var collector = DeclarationCollector()
+                let tree = try SyntaxParser.parse(source: sourceUrl.absoluteString)
+                let test = "best"
+            }
         }
         tokenFile = TokenFile(name: packageName, packageName: packageName, versionString: version)
         tokenFile.process(declarations)

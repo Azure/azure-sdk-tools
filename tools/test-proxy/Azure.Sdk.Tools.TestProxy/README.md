@@ -31,22 +31,15 @@ If you've already installed the tool, you can always check the installed version
 
 ### Via Docker Image
 
-Feel free to build the docker file locally within working directory `/tools/test-proxy/docker/`. All required resources are located within. There are additional helpful tips regarding the docker build and install in the [docker readme](../docker/README)
+The Azure SDK Team maintains a public Azure Container Registry.
 
 ```powershell
-> docker build . -t test-proxy
-> docker run -v <your-volume-name-or-location>:/etc/testproxy -p 5001:5001 -p 5000:5000 -t test-proxy
+> docker run -v <your-volume-name-or-location>:/etc/testproxy -p 5001:5001 -p 5000:5000 azsdkengsys.azurecr.io/engsys/testproxy-lin:latest
 ```
 
-Or, leverage the azure sdk eng sys container registry.
+Note the **port and volume mapping** as arguments! Any files that exist in this volume locally will only be appended to/updated in place. It is a non-destructive initialize.
 
-```powershell
-> docker run -v <your-volume-name-or-location>:/etc/testproxy -p 5001:5001 -p 5000:5000 azsdkengsys.azurecr.io/engsys/testproxy:latest
-```
-
-Note in both cases you will need to provide the port and volume mapping as arguments.
-
-Within the container, recording outputs are written within the directory `/etc/testproxy`. It is a non-destructive initialize. Any files that exist in this volume locally will only be appended to/updated in place.
+Within the container, recording outputs are written within the directory `/etc/testproxy`.
 
 ## Command line arguments
 

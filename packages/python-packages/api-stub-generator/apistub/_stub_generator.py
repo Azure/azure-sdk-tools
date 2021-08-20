@@ -261,7 +261,7 @@ class StubGenerator:
         # We don't want to force reinstall to avoid reinstalling other dependent packages
         commands = [sys.executable, "-m", "pip", "uninstall", pkg_name, "--yes", "-q"]
         check_call(commands)
-        commands = [sys.executable, "-m", "pip", "install", self.pkg_path , "-q", "--user"]
+        commands = [sys.executable, "-m", "pip", "install", self.pkg_path , "-q"]
         check_call(commands)
 
 

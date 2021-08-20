@@ -422,7 +422,7 @@ function Start-AutoRestCodeGeneration {
         [string] $SpecsRepoName = "azure-rest-api-specs",
 
         [Parameter(Mandatory = $false)]
-        [string] $SpecsRepoBranch = "master",
+        [string] $SpecsRepoBranch = "main",
 
         [Parameter(Mandatory = $false)]
         [string] $AutoRestVersion = "latest",
@@ -566,7 +566,7 @@ function Start-CodeGeneration {
         [string] $ResourceProvider,
         [string] $SpecsRepoFork = "Azure",
         [string] $SpecsRepoName = "azure-rest-api-specs",
-        [string] $SpecsRepoBranch = "master",
+        [string] $SpecsRepoBranch = "main",
         [string] $AutoRestVersion = "latest",
         [string] $SdkRootDirectory,
         [string] $SdkDirectory,

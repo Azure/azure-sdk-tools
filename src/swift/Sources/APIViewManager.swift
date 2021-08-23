@@ -112,12 +112,11 @@ class APIViewManager {
         throw ToolError.client("Unsupported file type: \(sourceUrl.absoluteString)")
     }
 
-    func extractPackageName(from sourceUrl: URL) -> String? {
+    func extractPackageName(from sourceUrl: URL) -> String {
         let sourcePath = sourceUrl.path
         let pattern = #"sdk\/[^\/]*\/([^\/]*)"#
         let regex = try! NSRegularExpression(pattern: pattern, options: [])
         let result = regex.matches(in: sourcePath, range: NSMakeRange(0, sourcePath.utf16.count))
-        guard result.count > 0 else { return nil }
         let matchRange = Range(result[0].range(at: 1), in: sourcePath)!
         return String(sourcePath[matchRange])
     }
@@ -134,7 +133,7 @@ class APIViewManager {
 
         // collect all swift files in a directory (and subdirectories)
         if isDir.boolValue {
-            packageName = extractPackageName(from: sourceUrl) ?? "TestItem"
+            packageName = args.packageName ?? extractPackageName(from: sourceUrl)
             let fileEnumerator = FileManager.default.enumerator(atPath: sourceUrl.path)
             while let itemPath = fileEnumerator?.nextObject() as? String {
                 let itemUrl = sourceUrl.appendingPathComponent(itemPath)
@@ -142,7 +141,7 @@ class APIViewManager {
                     let sourceFile = try process(url: itemUrl)
                     let topLevelDecl = try Parser(source: sourceFile).parse()
                     declarations.append(topLevelDecl)
-                } catch let err {
+                } catch {
                     continue
                 }
             }

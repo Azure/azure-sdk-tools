@@ -103,6 +103,10 @@ struct TypeModel {
             self.init(from: src.referenceType)
         case let src as AnyType:
             self.init(from: src.textDescription)
+        case let src as TupleType:
+            self.init(from: src.textDescription)
+        case let src as ImplicitlyUnwrappedOptionalType:
+            self.init(from: src.textDescription)
         default:
             SharedLogger.fail("Unsupported identifier: \(source)")
         }

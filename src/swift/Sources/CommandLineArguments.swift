@@ -47,6 +47,10 @@ class CommandLineArguments: Encodable {
         return rawArgs["dest"]
     }
 
+    var packageName: String? {
+        return rawArgs["package-name"]
+    }
+
     // MARK: Initializers
 
     init() {

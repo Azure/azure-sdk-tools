@@ -56,7 +56,11 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "--source=/Users/travisprescott/Documents/generated-interface.swiftinterface"
+            argument = "--source=/Users/travisprescott/repos/MixedCodeDemo/Sources"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "--source=/Users/travisprescott/repos/SpeechSDK/source/bindings/objective-c/public"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument

@@ -33,6 +33,7 @@ class CommandLineArguments: Encodable {
     private let supportedKeys: [String] = [
         "source",
         "dest",
+        "package-name",
     ]
 
     // MARK: Computed properties
@@ -45,6 +46,10 @@ class CommandLineArguments: Encodable {
     /// The desired output path for JSON file
     var dest: String? {
         return rawArgs["dest"]
+    }
+
+    var packageName: String? {
+        return rawArgs["package-name"]
     }
 
     // MARK: Initializers

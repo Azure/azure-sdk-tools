@@ -52,16 +52,20 @@
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
-            argument = "--source=/Users/jairmyree/Desktop/azure-sdk-for-ios/sdk/communication/AzureCommunicationChat/Source"
-            isEnabled = "NO">
-         </CommandLineArgument>
-         <CommandLineArgument
             argument = "--source=/Users/travisprescott/repos/azure-sdk-for-ios/sdk/communication/AzureCommunicationChat/Source"
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "--source=/Users/travisprescott/repos/azure-sdk-tools/src/swift/Tests/TestSwiftFile.swift"
+            argument = "--source=/Users/travisprescott/repos/MixedCodeDemo/Sources"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "--source=/Users/travisprescott/repos/SpeechSDK/source/bindings/objective-c/public"
             isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "--source=/Users/travisprescott/repos/azure-sdk-tools/src/swift/Tests/TestSwiftFile.swift"
+            isEnabled = "NO">
          </CommandLineArgument>
       </CommandLineArguments>
       <LocationScenarioReference

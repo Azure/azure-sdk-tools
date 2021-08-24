@@ -38,9 +38,8 @@ class TokenFile: Codable {
     /// The version string
     var versionString: String
 
-    // TODO: Should be switched to Swift once APIView supports
     /// Language string.
-    let language = "Json"
+    let language = "Swift"
 
     /// List of APIVIew tokens to render
     var tokens: [TokenItem]

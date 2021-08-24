@@ -33,6 +33,7 @@ class CommandLineArguments: Encodable {
     private let supportedKeys: [String] = [
         "source",
         "dest",
+        "package-name",
     ]
 
     // MARK: Computed properties

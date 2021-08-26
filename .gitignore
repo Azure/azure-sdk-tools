@@ -461,7 +461,7 @@ src/dotnet/Mgmt.CI.BuildTools/NugetToolsPackage/CI.Tools.Package/build/tasks/net
 tools/test-proxy/**/recordings/
 
 # ensure local build directory for test-proxy dockerfiles remains ignored
-tools/test-proxy/docker/dev_certificate
+tools/test-proxy/docker/docker_build
 
 # local settings
 .DS_Store

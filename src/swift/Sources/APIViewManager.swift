@@ -26,6 +26,7 @@
 
 import AST
 import Foundation
+import OrderedCollections
 import Parser
 import Source
 import SourceKittenFramework
@@ -37,6 +38,7 @@ class APIViewManager {
     static var shared = APIViewManager()
     let args = CommandLineArguments()
     var tokenFile: TokenFile!
+    var statements = OrderedDictionary<Int, Statement>()
 
     // MARK: Methods
 
@@ -91,7 +93,7 @@ class APIViewManager {
                 let tempUrl = sourceDir.appendingPathComponent(tempFilename)
                 try sourceCode.write(to: tempUrl, atomically: true, encoding: .utf8)
                 defer { try! FileManager.default.removeItem(at: tempUrl) }
-                return try SourceReader.read(at: tempUrl.absoluteString)
+                return try SourceReader.read(at: tempUrl.path)
             }
         }
         throw ToolError.client("Unsupported file type: \(filePath)")
@@ -107,9 +109,25 @@ class APIViewManager {
         return String(sourcePath[matchRange])
     }
 
+    func collectFilePaths(at url: URL) -> [String] {
+        var filePaths = [String]()
+        let fileEnumerator = FileManager.default.enumerator(atPath: url.path)
+        while let item = fileEnumerator?.nextObject() as? String {
+            guard item.hasSuffix("swift") || item.hasSuffix("h") || item.hasSuffix("swiftinterface") else { continue }
+            filePaths.append(url.appendingPathComponent(item).absoluteString)
+        }
+        return filePaths
+    }
+
+    /// Hashes top-level statement text to eliminate duplicates.
+    func merge(statements: [Statement]) {
+        statements.forEach { statement in
+            self.statements[statement.description.hash] = statement
+        }
+    }
+
     func buildTokenFile(from sourceUrl: URL) throws {
         SharedLogger.debug("URL: \(sourceUrl.absoluteString)")
-        var declarations = [TopLevelDeclaration]()
         var packageName: String
         var isDir: ObjCBool = false
 
@@ -120,11 +138,7 @@ class APIViewManager {
         var filePaths = [String]()
         if isDir.boolValue {
             packageName = args.packageName ?? extractPackageName(from: sourceUrl) ?? "Default"
-            let fileEnumerator = FileManager.default.enumerator(atPath: sourceUrl.path)
-            while let item = fileEnumerator?.nextObject() as? String {
-                guard item.hasSuffix("swift") || item.hasSuffix("h") || item.hasSuffix("swiftinterface") else { continue }
-                filePaths.append(sourceUrl.appendingPathComponent(item).absoluteString)
-            }
+            filePaths = collectFilePaths(at: sourceUrl)
         } else {
             packageName = args.packageName ?? sourceUrl.lastPathComponent
             filePaths.append(sourceUrl.absoluteString)
@@ -133,12 +147,12 @@ class APIViewManager {
             do {
                 let sourceFile = try process(filePath: filePath)
                 let topLevelDecl = try Parser(source: sourceFile).parse()
-                declarations.append(topLevelDecl)
+                merge(statements: topLevelDecl.statements)
             } catch let error {
                 SharedLogger.warn(error.localizedDescription)
             }
         }
         tokenFile = TokenFile(name: packageName, packageName: packageName, versionString: version)
-        tokenFile.process(declarations)
+        tokenFile.process(statements: Array(statements.values))
     }
 }

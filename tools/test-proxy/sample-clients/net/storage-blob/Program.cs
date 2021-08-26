@@ -17,7 +17,7 @@ namespace Azure.Sdk.Tools.TestProxy.StorageBlobSample
         private const string _blobName = "sample";
 
         private static readonly Uri _proxy = new Uri("https://localhost:5001");
-        private static readonly string _recordingFile = Path.Combine("test-proxy", "net-storage-blob-sample.json");
+        private static readonly string _recordingFile = Path.Combine("recordings", "test-proxy", "net-storage-blob-sample.json");
 
         private static readonly HttpClient _httpClient = new HttpClient(new HttpClientHandler()
         {

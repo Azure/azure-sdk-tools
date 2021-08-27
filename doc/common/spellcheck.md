@@ -15,6 +15,12 @@ We use [`cspell`](https://github.com/streetsidesoftware/cspell) in the CI enviro
 
 CI checks only files which are changed. If some files are excluded in the `cspell.json` config those files will not be scanned even if they are changed. All spelling errors in a changed file will be reported, not just portions of the file that were changed for a particular PR.
 
+This behavior can be replicated locally by running from the root of the repo:
+
+```pwsh
+./eng/common/scripts/check-spelling-in-changed-files.ps1
+```
+
 ## Fixing spelling errors
 
 ### Requirements

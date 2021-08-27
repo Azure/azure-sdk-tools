@@ -19,9 +19,9 @@ SwiftAPIView is a plugin that converts `.swift` source code and `.h` Objective-C
 You may run the tool directly in Xcode or from the command line.
 
 Parameters:
-  `--source`: May target a folder, which will collect all `*.swift` files, or a single `*.swift` or `*.swiftinterface` file.
-  `--dest`:  (Optional) The path and desired JSON filename. If not provided, it will output as `SwiftAPIView.json` inside your documents directory.
-  `--package-name`: (Optional) The top-level package name to use. If not provided, Swift APIView will attempt to determine the package name. If unsuccessful, supply the value.
+  `--source`: May target a folder, which will collect and process all `*.swift`, `*.h` and `*.swiftinterace` files in the folder and its subfolders. Can also target a single file.
+  `--dest`:  (Optional) The path and desired JSON filename. If not provided, it will output as `SwiftAPIView.json` inside your Documents directory.
+  `--package-name`: (Optional) The top-level package name to use. If not provided, Swift APIView will attempt to determine the package name. If unsuccessful, supply the value or it will use "Default".
 
 #### Xcode
 

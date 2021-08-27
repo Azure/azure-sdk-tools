@@ -176,7 +176,7 @@ class TokenFile: Codable {
     // MARK: Processing Methods
 
     /// This should be the only process method that APIViewManager should be able to call
-    internal func process(_ declarations: [TopLevelDeclaration]) {
+    internal func process(statements: [Statement]) {
         text("package")
         whitespace()
         text(packageName)
@@ -184,33 +184,27 @@ class TokenFile: Codable {
         punctuation("{")
         newLine()
         indent {
-            declarations.forEach { topLevelDecl in
-                process(topLevelDecl)
+            let stopIdx = statements.count - 1
+            for (idx, statement) in statements.enumerated() {
+                switch statement {
+                case let decl as Declaration:
+                    if process(decl), idx != stopIdx {
+                        // add an blank line for each declaration that is actually rendered
+                        newLine()
+                    }
+                default:
+                    SharedLogger.fail("Unsupported statement type: \(statement)")
+                }
             }
         }
         punctuation("}")
         newLine()
 
-        navigationTokens(from: declarations)
+        navigation = navigationTokens(from: statements)
         // ensure items appear in sorted order
         navigation.sort(by: { $0.text < $1.text })
         navigation.forEach { item in
             item.childItems.sort(by: { $0.text < $1.text })
-        }
-    }
-
-    private func process(_ decl: TopLevelDeclaration, overridingAccess: AccessLevelModifier? = nil) {
-        let stopIdx = decl.statements.count - 1
-        for (idx, statement) in decl.statements.enumerated() {
-            switch statement {
-            case let decl as Declaration:
-                if process(decl, overridingAccess: overridingAccess), idx != stopIdx {
-                    // add an blank line for each declaration that is actually rendered
-                    newLine()
-                }
-            default:
-                SharedLogger.fail("Unsupported statement type: \(statement)")
-            }
         }
     }
 

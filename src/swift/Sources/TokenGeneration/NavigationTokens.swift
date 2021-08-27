@@ -31,18 +31,9 @@ extension TokenFile {
 
     // MARK: Navigation Emitter Methods
 
-    func navigationTokens(from declarations: [TopLevelDeclaration]) {
-        let packageNavItem = NavigationItem(text: packageName, navigationId: nil, typeKind: .assembly)
-        declarations.forEach { decl in
-            let item = navigationTokens(from: decl)
-            packageNavItem.childItems += item
-        }
-        navigation = [packageNavItem]
-    }
-
-    private func navigationTokens(from decl: TopLevelDeclaration) -> [NavigationItem] {
+    func navigationTokens(from statements: [Statement]) -> [NavigationItem] {
         var navItems: [NavigationItem] = []
-        decl.statements.forEach { stmt in
+        statements.forEach { stmt in
             if let item = navigationTokens(from: stmt) {
                 navItems.append(item)
             }

@@ -56,11 +56,19 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
+            argument = "--package-name=TestPackage"
+            isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
             argument = "--source=/Users/travisprescott/repos/MixedCodeDemo/Sources"
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "--source=/Users/travisprescott/repos/SpeechSDK/source/bindings/objective-c/public"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "--source=/Users/travisprescott/Documents/AzureCommunicationCalling.framework"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument

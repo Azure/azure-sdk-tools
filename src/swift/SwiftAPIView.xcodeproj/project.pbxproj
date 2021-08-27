@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0A2D45F226D6DCD600EEA234 /* SwiftAST in Frameworks */ = {isa = PBXBuildFile; productRef = 0A2D45F126D6DCD600EEA234 /* SwiftAST */; };
+		0A2D45F526D8355800EEA234 /* OrderedCollections in Frameworks */ = {isa = PBXBuildFile; productRef = 0A2D45F426D8355800EEA234 /* OrderedCollections */; };
 		0A6A5434268B82D0001006AF /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A6A5433268B82D0001006AF /* main.swift */; };
 		0A6A5441268B886D001006AF /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A6A5440268B886D001006AF /* Logger.swift */; };
 		0A6A5443268B88AE001006AF /* URL+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A6A5442268B88AE001006AF /* URL+Extensions.swift */; };
@@ -24,7 +26,6 @@
 		0A6A547C269F9A41001006AF /* PatternInitializer+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A6A547B269F9A41001006AF /* PatternInitializer+Extensions.swift */; };
 		0A6A547F26A0D296001006AF /* NavigationTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A6A547E26A0D296001006AF /* NavigationTokens.swift */; };
 		0AD8C85C26D42F1F00491D59 /* SourceKittenFramework in Frameworks */ = {isa = PBXBuildFile; productRef = 0AD8C85B26D42F1F00491D59 /* SourceKittenFramework */; };
-		0AD8C85F26D430C400491D59 /* SwiftAST in Frameworks */ = {isa = PBXBuildFile; productRef = 0AD8C85E26D430C400491D59 /* SwiftAST */; };
 		0AD8C86126D4314800491D59 /* Errors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AD8C86026D4314800491D59 /* Errors.swift */; };
 /* End PBXBuildFile section */
 
@@ -74,7 +75,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				0AD8C85C26D42F1F00491D59 /* SourceKittenFramework in Frameworks */,
-				0AD8C85F26D430C400491D59 /* SwiftAST in Frameworks */,
+				0A2D45F226D6DCD600EEA234 /* SwiftAST in Frameworks */,
+				0A2D45F526D8355800EEA234 /* OrderedCollections in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -202,7 +204,8 @@
 			name = SwiftAPIView;
 			packageProductDependencies = (
 				0AD8C85B26D42F1F00491D59 /* SourceKittenFramework */,
-				0AD8C85E26D430C400491D59 /* SwiftAST */,
+				0A2D45F126D6DCD600EEA234 /* SwiftAST */,
+				0A2D45F426D8355800EEA234 /* OrderedCollections */,
 			);
 			productName = SwiftAPIView;
 			productReference = 0A6A5430268B82D0001006AF /* SwiftAPIView */;
@@ -253,7 +256,8 @@
 			mainGroup = 0A6A5427268B82D0001006AF;
 			packageReferences = (
 				0AD8C85A26D42F1F00491D59 /* XCRemoteSwiftPackageReference "SourceKitten" */,
-				0AD8C85D26D430C400491D59 /* XCRemoteSwiftPackageReference "swift-ast" */,
+				0A2D45F026D6DCD600EEA234 /* XCRemoteSwiftPackageReference "swift-ast" */,
+				0A2D45F326D8355800EEA234 /* XCRemoteSwiftPackageReference "swift-collections" */,
 			);
 			productRefGroup = 0A6A5431268B82D0001006AF /* Products */;
 			projectDirPath = "";
@@ -548,6 +552,22 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		0A2D45F026D6DCD600EEA234 /* XCRemoteSwiftPackageReference "swift-ast" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/tjprescott/swift-ast.git";
+			requirement = {
+				branch = SwiftInterface;
+				kind = branch;
+			};
+		};
+		0A2D45F326D8355800EEA234 /* XCRemoteSwiftPackageReference "swift-collections" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-collections.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.0.7;
+			};
+		};
 		0AD8C85A26D42F1F00491D59 /* XCRemoteSwiftPackageReference "SourceKitten" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/jpsim/SourceKitten";
@@ -556,26 +576,23 @@
 				minimumVersion = 0.31.0;
 			};
 		};
-		0AD8C85D26D430C400491D59 /* XCRemoteSwiftPackageReference "swift-ast" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/yanagiba/swift-ast.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 0.19.9;
-			};
-		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		0A2D45F126D6DCD600EEA234 /* SwiftAST */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0A2D45F026D6DCD600EEA234 /* XCRemoteSwiftPackageReference "swift-ast" */;
+			productName = SwiftAST;
+		};
+		0A2D45F426D8355800EEA234 /* OrderedCollections */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0A2D45F326D8355800EEA234 /* XCRemoteSwiftPackageReference "swift-collections" */;
+			productName = OrderedCollections;
+		};
 		0AD8C85B26D42F1F00491D59 /* SourceKittenFramework */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 0AD8C85A26D42F1F00491D59 /* XCRemoteSwiftPackageReference "SourceKitten" */;
 			productName = SourceKittenFramework;
-		};
-		0AD8C85E26D430C400491D59 /* SwiftAST */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 0AD8C85D26D430C400491D59 /* XCRemoteSwiftPackageReference "swift-ast" */;
-			productName = SwiftAST;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

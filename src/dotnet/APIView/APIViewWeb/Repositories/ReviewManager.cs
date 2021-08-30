@@ -290,15 +290,18 @@ namespace APIViewWeb.Respositories
 
         private async Task AssertReviewOwnerAsync(ClaimsPrincipal user, ReviewModel reviewModel)
         {
+#if !LOCAL_DEV_SKIP_AUTH
             var result = await _authorizationService.AuthorizeAsync(user, reviewModel, new[] { ReviewOwnerRequirement.Instance });
             if (!result.Succeeded)
             {
                 throw new AuthorizationFailedException();
             }
+#endif
         }
 
         private async Task AssertRevisionOwner(ClaimsPrincipal user, ReviewRevisionModel revisionModel)
         {
+#if !LOCAL_DEV_SKIP_AUTH
             var result = await _authorizationService.AuthorizeAsync(
                 user,
                 revisionModel,
@@ -307,6 +310,7 @@ namespace APIViewWeb.Respositories
             {
                 throw new AuthorizationFailedException();
             }
+#endif
         }
 
         public async Task ToggleApprovalAsync(ClaimsPrincipal user, string id, string revisionId)
@@ -330,6 +334,7 @@ namespace APIViewWeb.Respositories
 
         private async Task AssertApprover(ClaimsPrincipal user, ReviewRevisionModel revisionModel)
         {
+#if !LOCAL_DEV_SKIP_AUTH
             var result = await _authorizationService.AuthorizeAsync(
                 user,
                 revisionModel,
@@ -338,6 +343,7 @@ namespace APIViewWeb.Respositories
             {
                 throw new AuthorizationFailedException();
             }
+#endif
         }
 
         private bool IsUpdateAvailable(ReviewModel review)

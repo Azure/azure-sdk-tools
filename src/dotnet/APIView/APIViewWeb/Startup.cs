@@ -67,7 +67,9 @@ namespace APIViewWeb
 
             services.AddRazorPages(options =>
             {
+#if !LOCAL_DEV_SKIP_AUTH
                 options.Conventions.AuthorizeFolder("/Assemblies", RequireOrganizationPolicy);
+#endif
                 options.Conventions.AddPageRoute("/Assemblies/Index", "");
             });
 
@@ -89,9 +91,11 @@ namespace APIViewWeb
             services.AddSingleton<LanguageService, CppLanguageService>();
             services.AddSingleton<LanguageService, GoLanguageService>();
             services.AddSingleton<LanguageService, ProtocolLanguageService>();
+            services.AddSingleton<LanguageService, SwaggerLanguageService>();
             services.AddSingleton<LanguageService, SwiftLanguageService>();
             services.AddSingleton<LanguageService, XmlLanguageService>();
 
+#if !LOCAL_DEV_SKIP_AUTH
             services.AddAuthentication(options =>
                 {
                     options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
@@ -185,6 +189,7 @@ namespace APIViewWeb
             services.AddSingleton<IAuthorizationHandler, ApproverRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, AutoReviewModifierRequirementHandler>();
             services.AddHostedService<ReviewBackgroundHostedService>();
+#endif
         }
 
         private static async Task<string> GetMicrosoftEmailAsync(OAuthCreatingTicketContext context)

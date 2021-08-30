@@ -1,7 +1,7 @@
 ﻿@model IEnumerable<APIView.NavigationItem>
 
 <ul class="nav-list-children">
-        @foreach (var item in Model)
+        @foreach (var item in Model ?? Enumerable.Empty<APIView.NavigationItem>())
         {
             <li class="nav-list-group">
                 <span class="nav-list-toggle @(item.ChildItems.Any() ? "":"invisible")"></span>

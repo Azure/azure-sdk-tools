@@ -11,9 +11,9 @@ namespace chaos_watcher
         {
             var config = KubernetesClientConfiguration.BuildConfigFromConfigFile();
             var client = new Kubernetes(config);
-            var generic = new GenericClient(config, "chaos-mesh.org", "v1alpha", "NetworkChaos");
+            var chaosClient = new GenericChaosClient(config);
 
-            var podEventHandler = new PodEventHandler(client, generic);
+            var podEventHandler = new PodEventHandler(client, chaosClient);
             using Watcher<V1Pod> watcher = podEventHandler.Watch();
 
             var ctrlc = new ManualResetEventSlim(false);

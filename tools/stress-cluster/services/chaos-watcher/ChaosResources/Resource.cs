@@ -15,7 +15,7 @@ namespace chaos_watcher
                 labels += kvp.Key + " : " + kvp.Value + ", ";
             }
             labels = labels.TrimEnd(',', ' ');
-            return $"{Metadata.Name} Labels: {{ {labels} }}, Spec: {{ {Spec.Selector} }}";
+            return $"{Metadata.Name} Status: { CStatus.Experiment.phase }, Labels: {{ {labels} }}, Spec: {{ {Spec.Selector} }}";
         }
     }
 

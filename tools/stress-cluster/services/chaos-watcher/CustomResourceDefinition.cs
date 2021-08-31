@@ -29,7 +29,7 @@ namespace chaos_watcher
         [JsonProperty(PropertyName = "spec")]
         public TSpec Spec { get; set; }
 
-        [JsonProperty(PropertyName = "CStatus")]
+        [JsonProperty(PropertyName = "status")]
         public TStatus CStatus { get; set; }
     }
 

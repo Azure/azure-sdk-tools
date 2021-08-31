@@ -1,29 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:5.0.301 AS build
-
-ENV \
-    NO_AT_BRIDGE=1 \
-    CERT_FOLDER=/var/certwork \
-    CERT_IMPORT_SH=apply-dev-cert.sh \
-    ASPNETCORE_ENVIRONMENT=Development
-
-# Install openssl
-RUN apt-get update \
-    && apt-get install -y \
-        libsecret-1-dev \
-        libssl-dev
-
-# prep the machine dev certificate
-RUN mkdir $CERT_FOLDER
-
-ADD docker_build/$CERT_IMPORT_SH $CERT_FOLDER
-ADD docker_build/dotnet-devcert.pfx $CERT_FOLDER
-ADD docker_build/dotnet-devcert.crt $CERT_FOLDER
-
-RUN sed -i -e 's/\r$//' $CERT_FOLDER/$CERT_IMPORT_SH
-
-RUN chmod +x $CERT_FOLDER/$CERT_IMPORT_SH \
-    && $CERT_FOLDER/$CERT_IMPORT_SH \
-    && rm $CERT_FOLDER/$CERT_IMPORT_SH
+FROM mcr.microsoft.com/dotnet/sdk:5.0.400-alpine3.13 AS build
 
 # copy the code
 COPY docker_build/Azure.Sdk.Tools.TestProxy/ /proxyservercode
@@ -31,11 +6,38 @@ COPY docker_build/Azure.Sdk.Tools.TestProxy/ /proxyservercode
 # publish the package
 RUN cd /proxyservercode && dotnet publish -c Release -o /proxyserver -f net5.0
 
-EXPOSE 5001
-EXPOSE 5000
 
-# this override allows the tool server to listen to traffic over the docker bridge.
-# default URL of localhost:5000 or localhost:50001 are not usable from outside the container
-ENV DOTNET_URLS="http://0.0.0.0:5000;https://0.0.0.0:5001"
+FROM mcr.microsoft.com/dotnet/aspnet:5.0.9-alpine3.13
 
-ENTRYPOINT ["/proxyserver/Azure.Sdk.Tools.TestProxy", "--storage-location", "/etc/testproxy"]
+ENV \
+    NO_AT_BRIDGE=1 \
+    CERT_FOLDER=/var/certwork \
+    CERT_IMPORT_SH=apply-dev-cert.sh \
+    ASPNETCORE_ENVIRONMENT=Development \
+    # this override allows the tool server to listen to traffic over the docker bridge.
+    # default URL of localhost:5000 or localhost:50001 are not usable from outside the container
+    ASPNETCORE_URLS="http://0.0.0.0:5000;https://0.0.0.0:5001"
+
+COPY --from=build /proxyserver /proxyserver
+
+# dotnet-dev-certs tool is not included in aspnet image, so manually copy from sdk image
+COPY --from=build /usr/share/dotnet/sdk/5.0.400/DotnetTools/dotnet-dev-certs/5.0.9-servicing.21365.3/tools/net5.0/any/ /dotnet-dev-certs
+
+# prep the machine dev certificate
+COPY docker_build/$CERT_IMPORT_SH docker_build/dotnet-devcert.pfx docker_build/dotnet-devcert.crt $CERT_FOLDER/
+
+RUN \
+    # Install bash and certutil
+    apk add --no-cache bash nss-tools \
+    # Fix line endings
+    && sed -i -e 's/\r$//' $CERT_FOLDER/$CERT_IMPORT_SH \
+    # Use copied dotnet-dev-certs tool
+    && sed -i -e 's|dotnet dev-certs|dotnet /dotnet-dev-certs/dotnet-dev-certs.dll|' $CERT_FOLDER/$CERT_IMPORT_SH \
+    # Run script to import certificate
+    && chmod +x $CERT_FOLDER/$CERT_IMPORT_SH \
+    && $CERT_FOLDER/$CERT_IMPORT_SH \
+    && rm $CERT_FOLDER/$CERT_IMPORT_SH
+
+EXPOSE 5000 5001
+
+ENTRYPOINT ["dotnet", "/proxyserver/Azure.Sdk.Tools.TestProxy.dll", "--storage-location", "/etc/testproxy"]

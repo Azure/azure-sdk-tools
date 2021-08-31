@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using k8s.Models;
 using k8s;
 
-namespace chaos_watcher
+namespace Stress.Watcher
 {
     public class PodEventHandler
     {
@@ -83,14 +83,12 @@ namespace chaos_watcher
             var chaos = await ChaosClient.ListNamespacedAsync(pod.Namespace());
             var tasks = chaos.Items
                         .Where(cr => ShouldStartChaos(cr, pod))
-                        .Select(cr => {
-                            return Task.Run(async () =>
-                            {
-                                await Client.PatchNamespacedCustomObjectWithHttpMessagesAsync(
-                                        PodChaosResumePatchBody, ChaosClient.Group, ChaosClient.Version,
-                                        pod.Namespace(), cr.Kind.ToLower(), cr.Metadata.Name);
-                                Log($"Started {cr.Kind} {cr.Metadata.Name} for pod {pod.Namespace()}/{pod.Name()}");
-                            });
+                        .Select(async cr => {
+                            await Client.PatchNamespacedCustomObjectWithHttpMessagesAsync(
+                                    PodChaosResumePatchBody, ChaosClient.Group, ChaosClient.Version,
+                                    pod.Namespace(), cr.Kind.ToLower(), cr.Metadata.Name);
+
+                            Log($"Started {cr.Kind} {cr.Metadata.Name} for pod {pod.Namespace()}/{pod.Name()}");
                         });
 
             await Task.WhenAll(tasks);

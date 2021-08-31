@@ -3,7 +3,7 @@ using Newtonsoft.Json;
 using k8s;
 using k8s.Models;
 
-namespace chaos_watcher
+namespace Stress.Watcher
 {
     public class CustomResourceDefinition
     {

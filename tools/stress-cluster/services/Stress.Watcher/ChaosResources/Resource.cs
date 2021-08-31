@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Newtonsoft.Json;
 using k8s.Models;
 
-namespace chaos_watcher
+namespace Stress.Watcher
 {
     public class GenericChaosResource : CustomResource<ChaosResourceSpec, ChaosResourceStatus>
     {

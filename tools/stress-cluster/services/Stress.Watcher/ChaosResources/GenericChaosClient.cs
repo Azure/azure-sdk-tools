@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using k8s;
 
-namespace chaos_watcher
+namespace Stress.Watcher
 {
     public class GenericChaosClient
     {
@@ -35,11 +35,7 @@ namespace chaos_watcher
 
         public async Task<CustomResourceList<GenericChaosResource>> ListNamespacedAsync(string ns)
         {
-            var tasks = Clients.Select(cl => 
-            {
-                return Task.Run(async() => await cl.ListNamespacedAsync<CustomResourceList<GenericChaosResource>>(ns));
-            });
-
+            var tasks = Clients.Select(async cl => await cl.ListNamespacedAsync<CustomResourceList<GenericChaosResource>>(ns));
             await Task.WhenAll(tasks);
 
             var results = new CustomResourceList<GenericChaosResource>();

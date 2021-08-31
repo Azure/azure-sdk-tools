@@ -3,7 +3,7 @@ using System.Threading;
 using k8s;
 using k8s.Models;
 
-namespace chaos_watcher
+namespace Stress.Watcher
 {
     class ChaosWatcher
     {

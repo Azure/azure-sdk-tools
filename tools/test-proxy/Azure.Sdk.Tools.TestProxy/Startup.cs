@@ -13,6 +13,8 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Reflection;
+using Microsoft.Extensions.Logging;
+using Microsoft.VisualStudio.Web.CodeGeneration.Design;
 
 namespace Azure.Sdk.Tools.TestProxy
 {
@@ -54,16 +56,26 @@ namespace Azure.Sdk.Tools.TestProxy
 
             TargetLocation = resolveRepoLocation(storageLocation);
 
-            var statusThread = PrintStatus(
-                () => $"[{DateTime.Now.ToString("HH:mm:ss")}] Recorded: {RequestsRecorded}\tPlayed Back: {RequestsPlayedBack}",
-                newLine: true, statusThreadCts.Token);
-
             var host = Host.CreateDefaultBuilder();
+
+            host.ConfigureLogging(logging =>
+            {
+                logging.AddConsole();
+            });
 
             host.ConfigureWebHostDefaults(
                 builder => builder.UseStartup<Startup>());
 
-            host.Build().Run();
+            var builtHost = host.Build();
+
+            var logger = builtHost.Services.GetRequiredService<ILogger<Program>>();
+
+            var statusThread = PrintStatus(
+                logger,
+                () => $"[{DateTime.Now.ToString("HH:mm:ss")}] Recorded: {RequestsRecorded}\tPlayed Back: {RequestsPlayedBack}",
+                statusThreadCts.Token);
+
+            builtHost.Run();
 
             statusThreadCts.Cancel();
             statusThread.Join();
@@ -137,12 +149,10 @@ namespace Azure.Sdk.Tools.TestProxy
 
         // Run in dedicated thread instead of using async/await in ThreadPool, to ensure this thread has priority
         // and never fails to run to due ThreadPool starvation.
-        private static Thread PrintStatus(Func<object> status, bool newLine, CancellationToken token, int intervalSeconds = 1)
+        private static Thread PrintStatus(ILogger logger, Func<object> status, CancellationToken token, int intervalSeconds = 1)
         {
             var thread = new Thread(() =>
             {
-                bool needsExtraNewline = false;
-
                 while (!token.IsCancellationRequested)
                 {
                     try
@@ -155,23 +165,8 @@ namespace Azure.Sdk.Tools.TestProxy
 
                     var obj = status();
 
-                    if (newLine)
-                    {
-                        Console.WriteLine(obj);
-                    }
-                    else
-                    {
-                        Console.Write(obj);
-                        needsExtraNewline = true;
-                    }
+                    logger.LogInformation((string)obj);
                 }
-
-                if (needsExtraNewline)
-                {
-                    Console.WriteLine();
-                }
-
-                Console.WriteLine();
             });
 
             thread.Start();

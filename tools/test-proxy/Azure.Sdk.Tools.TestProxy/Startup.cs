@@ -21,6 +21,9 @@ namespace Azure.Sdk.Tools.TestProxy
         internal static int RequestsRecorded;
         internal static int RequestsPlayedBack;
 
+        private static bool _insecure;
+        internal static bool Insecure => _insecure;
+
         public Startup(IConfiguration configuration) { }
 
         public static string TargetLocation;
@@ -33,10 +36,13 @@ namespace Azure.Sdk.Tools.TestProxy
             return storageLocation ?? envValue ?? Directory.GetCurrentDirectory();
         }
 
-        /// <param name="storageLocation">The path to the target local git repo. If not provided as an argument, Environment variable TEST_PROXY_FOLDER will be consumed. 
-        /// Lacking both, the current working directory will be utilized.</param>
+        /// <summary>
+        /// test-proxy
+        /// </summary>
+        /// <param name="insecure">Allow untrusted SSL certs from upstream server</param>
+        /// <param name="storageLocation">The path to the target local git repo. If not provided as an argument, Environment variable TEST_PROXY_FOLDER will be consumed. Lacking both, the current working directory will be utilized.</param>
         /// <param name="version">Flag. Invoke to get the version of the tool.</param>
-        public static void Main(string storageLocation = null, bool version = false)
+        public static void Main(bool insecure = false, string storageLocation = null, bool version = false)
         {
             if (version)
             {
@@ -47,6 +53,8 @@ namespace Azure.Sdk.Tools.TestProxy
 
                 Environment.Exit(0);
             }
+
+            _insecure = insecure;
 
             Regex.CacheSize = 0;
 
@@ -84,7 +92,6 @@ namespace Azure.Sdk.Tools.TestProxy
             });
 
 
-            services.AddHttpClient();
             services.AddControllers();
             services.AddControllersWithViews();
             services.AddRazorPages();

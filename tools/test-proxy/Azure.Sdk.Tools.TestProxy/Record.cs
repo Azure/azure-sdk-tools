@@ -16,7 +16,14 @@ namespace Azure.Sdk.Tools.TestProxy
         public Record(RecordingHandler recordingHandler) => _recordingHandler = recordingHandler;
 
 
-        private static readonly HttpClient s_client = new HttpClient() { Timeout = TimeSpan.FromSeconds(600) };
+        private static readonly HttpClient s_client = Startup.Insecure ?
+            new HttpClient(new HttpClientHandler() {  ServerCertificateCustomValidationCallback = (_, _, _, _) => true })
+            {
+                Timeout = TimeSpan.FromSeconds(600)
+            } :
+            new HttpClient() {
+                Timeout = TimeSpan.FromSeconds(600)
+            };
 
         [HttpPost]
         public void Start()

@@ -12,7 +12,7 @@ Modified to be recordable by the test proxy, it should look like this:
 
 ![request_changes_after](https://user-images.githubusercontent.com/45376673/131716970-dee28516-cb45-4589-abce-6d2aa6bec93d.png)
 
-There is a walkthrough through the process below in the [recording walkthrough below.](#how-do-i-use-the-test-proxy-to-get-a-recording)
+There is a walkthrough through the process below in the [how do I use the test proxy to get a recording.](#how-do-i-use-the-test-proxy-to-get-a-recording)
 
 ## Installation
 

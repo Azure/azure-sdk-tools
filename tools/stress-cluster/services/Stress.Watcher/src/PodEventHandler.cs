@@ -32,8 +32,6 @@ namespace Stress.Watcher
         private Kubernetes Client;
         private GenericChaosClient ChaosClient;
 
-        private string testInstanceLabelKey = "testInstance";
-
         public PodEventHandler(Kubernetes client, GenericChaosClient chaosClient)
         {
             Client = client;
@@ -50,12 +48,12 @@ namespace Stress.Watcher
               .Watch<V1Pod, V1PodList>(HandlePodEvent);
         }
 
-        private void Log(string msg)
+        public void Log(string msg)
         {
             Console.WriteLine(msg);
         }
 
-        private void HandlePodEvent(WatchEventType type, V1Pod pod)
+        public void HandlePodEvent(WatchEventType type, V1Pod pod)
         {
             ResumeChaos(type, pod).ContinueWith(t =>
             {
@@ -67,7 +65,7 @@ namespace Stress.Watcher
             });
         }
 
-        private async Task ResumeChaos(WatchEventType type, V1Pod pod)
+        public async Task ResumeChaos(WatchEventType type, V1Pod pod)
         {
             if (!ShouldStartPodChaos(type, pod))
             {
@@ -80,12 +78,13 @@ namespace Stress.Watcher
             Log($"Annotated pod chaos started for {pod.NamespacedName()};");
         }
 
-        private async Task StartChaosResources(V1Pod pod)
+        public async Task StartChaosResources(V1Pod pod)
         {
             var chaos = await ChaosClient.ListNamespacedAsync(pod.Namespace());
             var tasks = chaos.Items
                         .Where(cr => ShouldStartChaos(cr, pod))
-                        .Select(async cr => {
+                        .Select(async cr =>
+                        {
                             await Client.PatchNamespacedCustomObjectWithHttpMessagesAsync(
                                     PodChaosResumePatchBody, ChaosClient.Group, ChaosClient.Version,
                                     pod.Namespace(), cr.Kind.ToLower(), cr.Metadata.Name);
@@ -96,24 +95,17 @@ namespace Stress.Watcher
             await Task.WhenAll(tasks);
         }
 
-        private bool ShouldStartChaos(GenericChaosResource chaos, V1Pod pod)
+        public bool ShouldStartChaos(GenericChaosResource chaos, V1Pod pod)
         {
-            if (chaos.Spec.Selector.LabelSelectors.TestInstance != pod.Labels()[testInstanceLabelKey])
+            if (chaos.Spec.Selector.LabelSelectors.TestInstance != pod.TestInstance())
             {
                 return false;
             }
 
-            var paused = "";
-            chaos.Metadata.Annotations.TryGetValue("experiment.chaos-mesh.org/pause", out paused);
-            if (paused != "true")
-            {
-                return false;
-            }
-
-            return true;
+            return chaos.IsPaused();
         }
 
-        private bool ShouldStartPodChaos(WatchEventType type, V1Pod pod)
+        public bool ShouldStartPodChaos(WatchEventType type, V1Pod pod)
         {
             if ((type != WatchEventType.Added && type != WatchEventType.Modified) ||
                 pod.Status.Phase != "Running")
@@ -126,16 +118,13 @@ namespace Stress.Watcher
                 return false;
             }
 
-            if (!pod.Labels().ContainsKey(testInstanceLabelKey))
+            if (String.IsNullOrEmpty(pod.TestInstance()))
             {
-                Log($"Pod {pod.NamespacedName()} has chaos label but no {testInstanceLabelKey} label.");
+                Log($"Pod {pod.NamespacedName()} has chaos label but missing or empty {GenericChaosResource.TestInstanceLabelKey} label.");
                 return false;
             }
 
-            var started = "";
-            if (pod.Metadata.Annotations != null &&
-                pod.Metadata.Annotations.TryGetValue("stress/chaos.started", out started) &&
-                started == "true")
+            if (pod.HasChaosStarted())
             {
                 Log($"Pod {pod.NamespacedName()} chaos has started.");
                 return false;

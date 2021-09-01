@@ -7,6 +7,17 @@ namespace Stress.Watcher
 {
     public class GenericChaosResource : CustomResource<ChaosResourceSpec, ChaosResourceStatus>
     {
+        public static string PauseAnnotationKey = "experiment.chaos-mesh.org/pause";
+
+        public static string TestInstanceLabelKey = "testInstance";
+
+        public bool IsPaused()
+        {
+            var paused = "";
+            Metadata.Annotations?.TryGetValue(GenericChaosResource.PauseAnnotationKey, out paused);
+            return paused == "true";
+        }
+
         public override string ToString()
         {
             var labels = "";
@@ -30,7 +41,8 @@ namespace Stress.Watcher
         public ChaosLabelSelectors LabelSelectors { get; set; }
         public List<string> Namespaces { get; set; }
 
-        public override string ToString() {
+        public override string ToString()
+        {
             return $"Namespaces: {String.Join(',', Namespaces)}, {LabelSelectors}";
         }
     }
@@ -39,7 +51,8 @@ namespace Stress.Watcher
     {
         public string TestInstance { get; set; }
 
-        public override string ToString() {
+        public override string ToString()
+        {
             return $"TestInstance: {TestInstance}";
         }
     }

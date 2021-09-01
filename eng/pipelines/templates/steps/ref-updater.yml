@@ -8,11 +8,16 @@ parameters:
 steps:
 - ${{ each repo in parameters.Repos }}:
   - pwsh: |
-      git clone https://github.com/azure/${{ repo.key }}
-      if ("${{ repo.value.branch }}")
+      if (!(Test-Path ${{ repo.key }}))
       {
-        Write-Host "git checkout -b ${{ repo.value.branch }} origin/${{ repo.value.branch }}"
-        git checkout -b ${{ repo.value.branch }} origin/${{ repo.value.branch }}
+        git clone https://github.com/azure/${{ repo.key }}
+        if ("${{ repo.value.branch }}")
+        { 
+          Push-Location ${{ repo.key }}
+          Write-Host "git checkout ${{ repo.value.branch }}"
+          git checkout ${{ repo.value.branch }}
+          Pop-Location
+        }
       }
     displayName: Clone ${{ repo.key }}
     workingDirectory: $(System.DefaultWorkingDirectory)

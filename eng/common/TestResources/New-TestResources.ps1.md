@@ -16,9 +16,9 @@ Deploys live test resources defined for a service directory to Azure.
 ```
 New-TestResources.ps1 [-BaseName <String>] [-ResourceGroupName <String>] [-ServiceDirectory] <String>
  [-TestApplicationId <String>] [-TestApplicationSecret <String>] [-TestApplicationOid <String>]
- [-SubscriptionId <String>] [-DeleteAfterHours <Int32>] [-Location <String>] [-Environment <String>]
- [-ArmTemplateParameters <Hashtable>] [-AdditionalParameters <Hashtable>] [-EnvironmentVariables <Hashtable>]
- [-CI] [-Force] [-OutFile] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-SubscriptionId <String>] [-DeleteAfterHours <Int32>] [-DoNotApplyDeleteAfterTag] [-Location <String>]
+ [-Environment <String>] [-ArmTemplateParameters <Hashtable>] [-AdditionalParameters <Hashtable>]
+ [-EnvironmentVariables <Hashtable>] [-CI] [-Force] [-OutFile] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ### Provisioner
@@ -26,30 +26,31 @@ New-TestResources.ps1 [-BaseName <String>] [-ResourceGroupName <String>] [-Servi
 New-TestResources.ps1 [-BaseName <String>] [-ResourceGroupName <String>] [-ServiceDirectory] <String>
  [-TestApplicationId <String>] [-TestApplicationSecret <String>] [-TestApplicationOid <String>]
  -TenantId <String> [-SubscriptionId <String>] -ProvisionerApplicationId <String>
- -ProvisionerApplicationSecret <String> [-DeleteAfterHours <Int32>] [-Location <String>]
- [-Environment <String>] [-ArmTemplateParameters <Hashtable>] [-AdditionalParameters <Hashtable>]
- [-EnvironmentVariables <Hashtable>] [-CI] [-Force] [-OutFile] [-WhatIf] [-Confirm] [<CommonParameters>]
+ -ProvisionerApplicationSecret <String> [-DeleteAfterHours <Int32>] [-DoNotApplyDeleteAfterTag]
+ [-Location <String>] [-Environment <String>] [-ArmTemplateParameters <Hashtable>]
+ [-AdditionalParameters <Hashtable>] [-EnvironmentVariables <Hashtable>] [-CI] [-Force] [-OutFile] [-WhatIf]
+ [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-Deploys live test resouces specified in test-resources.json files to a resource
-group.
+Deploys live test resouces specified in test-resources.json or test-resources.bicep
+files to a new resource group.
 
 This script searches the directory specified in $ServiceDirectory recursively
-for files named test-resources.json.
-All found test-resources.json files will be
-deployed to the test resource group.
+for files named test-resources.json or test-resources.bicep.
+All found test-resources.json
+and test-resources.bicep files will be deployed to the test resource group.
 
-If no test-resources.json files are located the script exits without making
-changes to the Azure environment.
+If no test-resources.json or test-resources.bicep files are located the script
+exits without making changes to the Azure environment.
 
-A service principal must first be created before this script is run and passed
-to $TestApplicationId and $TestApplicationSecret.
-Test resources will grant this
-service principal access.
+A service principal may optionally be passed to $TestApplicationId and $TestApplicationSecret.
+Test resources will grant this service principal access to the created resources.
+If no service principal is specified, a new one will be created and assigned  the
+'Owner' role for the subscription.
 
-This script uses credentials already specified in Connect-AzAccount or those
-specified in $ProvisionerApplicationId and $ProvisionerApplicationSecret.
+This script runs in the context of credentials already specified in Connect-AzAccount
+or those specified in $ProvisionerApplicationId and $ProvisionerApplicationSecret.
 
 ## EXAMPLES
 
@@ -76,6 +77,7 @@ New-TestResources.ps1 `
     -TestApplicationId '$(TestAppId)' `
     -TestApplicationSecret '$(TestAppSecret)' `
     -DeleteAfterHours 24 `
+    -DoNotApplyDeleteAfterTag `
     -CI `
     -Force `
     -Verbose
@@ -111,7 +113,10 @@ Accept wildcard characters: False
 
 ### -ResourceGroupName
 Set this value to deploy directly to a Resource Group that has already been
-created.
+created or to create a new resource group with this name.
+
+If not specified, the $BaseName will be used to generate name for the resource
+group that will be created.
 
 ```yaml
 Type: String
@@ -127,8 +132,10 @@ Accept wildcard characters: False
 
 ### -ServiceDirectory
 A directory under 'sdk' in the repository root - optionally with subdirectories
-specified - in which to discover ARM templates named 'test-resources.json'.
-This can also be an absolute path or specify parent directories.
+specified - in which to discover ARM templates named 'test-resources.json' and
+Bicep templates named 'test-resources.bicep'. 
+This can also be an absolute path
+or specify parent directories.
 
 ```yaml
 Type: String
@@ -143,9 +150,12 @@ Accept wildcard characters: False
 ```
 
 ### -TestApplicationId
-The AAD Application ID to authenticate the test runner against deployed
-resources.
+Optional Azure Active Directory Application ID to authenticate the test runner
+against deployed resources.
 Passed to the ARM template as 'testApplicationId'.
+
+If not specified, a new AAD Application will be created and granted the
+'Owner' role for the subscription.
 
 This application is used by the test runner to execute tests against the
 live test resources.
@@ -312,6 +322,27 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -DoNotApplyDeleteAfterTag
+Indicates that the 'DeleteAfter' tag should not be applied to the created
+resource group. 
+This allows for configuring local testing to use a persistent
+set of resoruces rather than having them potentially disappear if not manually
+extended.
+
+If this flag is set, then $DeleteAfterHours be ignored.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Location
 Optional location where resources should be created.
 If left empty, the default
@@ -428,10 +459,17 @@ Accept wildcard characters: False
 ```
 
 ### -OutFile
-Save test environment settings into a test-resources.json.env file next to test-resources.json.
-File is protected via DPAPI.
-Supported only on windows.
-The environment file would be scoped to the current repository directory.
+Save test environment settings into a .env file next to test resources template.
+The contents of the file are protected via the .NET Data Protection API (DPAPI).
+This is supported only on Windows. 
+The environment file is scoped to the current
+service directory.
+
+The environment file will be named for the test resources template that it was
+generated for. 
+For ARM templates, it will be test-resources.json.env.
+For
+Bicep templates, test-resources.bicep.env.
 
 ```yaml
 Type: SwitchParameter
@@ -477,7 +515,7 @@ Accept wildcard characters: False
 ```
 
 ### CommonParameters
-This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 

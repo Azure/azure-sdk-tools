@@ -36,7 +36,7 @@ param (
     [ValidateNotNullOrEmpty()]
     [string] $TenantId,
 
-    # Azure SDK Developer Playground subscription
+    # Azure SDK Developer Playground subscription is assumed if not set
     [Parameter()]
     [ValidatePattern('^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$')]
     [string] $SubscriptionId,
@@ -51,6 +51,9 @@ param (
     [Parameter()]
     [ValidateRange(1, [int]::MaxValue)]
     [int] $DeleteAfterHours = 120,
+
+    [Parameter()]
+    [switch] $DoNotApplyDeleteAfterTag,
 
     [Parameter()]
     [string] $Location = '',
@@ -379,10 +382,13 @@ try {
         ServiceDirectory = $ServiceDirectory
     }
 
-    # Tag the resource group to be deleted after a certain number of hours.
-    Write-Warning "Any clean-up scripts running against subscription '$SubscriptionId' may delete resource group '$ResourceGroupName' after $DeleteAfterHours hours."
-    $deleteAfter = [DateTime]::UtcNow.AddHours($DeleteAfterHours).ToString('o')
-    $tags['DeleteAfter'] = $deleteAfter
+    # Unless the flag is set, tag the resource group to be deleted after a certain number of hours.
+
+    if (-not $DoNotApplyDeleteAfterTag) {
+        Write-Warning "Any clean-up scripts running against subscription '$SubscriptionId' may delete resource group '$ResourceGroupName' after $DeleteAfterHours hours."
+        $deleteAfter = [DateTime]::UtcNow.AddHours($DeleteAfterHours).ToString('o')
+        $tags['DeleteAfter'] = $deleteAfter
+    }
 
     if ($CI) {
         # Add tags for the current CI job.
@@ -484,7 +490,7 @@ try {
             "Deployment template $($templateFile.jsonFilePath) to resource group $($resourceGroup.ResourceGroupName)"
         }
         Log $msg
-        
+
         $deployment = Retry {
             $lastDebugPreference = $DebugPreference
             try {
@@ -609,22 +615,23 @@ if ($CI) {
 Deploys live test resources defined for a service directory to Azure.
 
 .DESCRIPTION
-Deploys live test resouces specified in test-resources.json files to a resource
-group.
+Deploys live test resouces specified in test-resources.json or test-resources.bicep
+files to a new resource group.
 
 This script searches the directory specified in $ServiceDirectory recursively
-for files named test-resources.json. All found test-resources.json files will be
-deployed to the test resource group.
+for files named test-resources.json or test-resources.bicep. All found test-resources.json
+and test-resources.bicep files will be deployed to the test resource group.
 
-If no test-resources.json files are located the script exits without making
-changes to the Azure environment.
+If no test-resources.json or test-resources.bicep files are located the script
+exits without making changes to the Azure environment.
 
-A service principal must first be created before this script is run and passed
-to $TestApplicationId and $TestApplicationSecret. Test resources will grant this
-service principal access.
+A service principal may optionally be passed to $TestApplicationId and $TestApplicationSecret.
+Test resources will grant this service principal access to the created resources.
+If no service principal is specified, a new one will be created and assigned  the
+'Owner' role for the subscription.
 
-This script uses credentials already specified in Connect-AzAccount or those
-specified in $ProvisionerApplicationId and $ProvisionerApplicationSecret.
+This script runs in the context of credentials already specified in Connect-AzAccount
+or those specified in $ProvisionerApplicationId and $ProvisionerApplicationSecret.
 
 .PARAMETER BaseName
 A name to use in the resource group and passed to the ARM template as 'baseName'.
@@ -636,16 +643,23 @@ by New-TestResources.ps1 if $CI is specified.
 
 .PARAMETER ResourceGroupName
 Set this value to deploy directly to a Resource Group that has already been
-created.
+created or to create a new resource group with this name.
+
+If not specified, the $BaseName will be used to generate name for the resource
+group that will be created.
 
 .PARAMETER ServiceDirectory
 A directory under 'sdk' in the repository root - optionally with subdirectories
-specified - in which to discover ARM templates named 'test-resources.json'.
-This can also be an absolute path or specify parent directories.
+specified - in which to discover ARM templates named 'test-resources.json' and
+Bicep templates named 'test-resources.bicep'.  This can also be an absolute path
+or specify parent directories.
 
 .PARAMETER TestApplicationId
-The AAD Application ID to authenticate the test runner against deployed
-resources. Passed to the ARM template as 'testApplicationId'.
+Optional Azure Active Directory Application ID to authenticate the test runner
+against deployed resources. Passed to the ARM template as 'testApplicationId'.
+
+If not specified, a new AAD Application will be created and granted the
+'Owner' role for the subscription.
 
 This application is used by the test runner to execute tests against the
 live test resources.
@@ -708,6 +722,14 @@ timestamp is less than the current time.
 
 This is used for CI automation.
 
+.PARAMETER DoNotApplyDeleteAfterTag
+Indicates that the 'DeleteAfter' tag should not be applied to the created
+resource group.  This allows for configuring local testing to use a persistent
+set of resoruces rather than having them potentially disappear if not manually
+extended.
+
+If this flag is set, then $DeleteAfterHours be ignored.
+
 .PARAMETER Location
 Optional location where resources should be created. If left empty, the default
 is based on the cloud to which the template is being deployed:
@@ -738,8 +760,14 @@ Deployment (CI/CD) build (only Azure Pipelines is currently supported).
 Force creation of resources instead of being prompted.
 
 .PARAMETER OutFile
-Save test environment settings into a test-resources.json.env file next to test-resources.json. File is protected via DPAPI. Supported only on windows.
-The environment file would be scoped to the current repository directory.
+Save test environment settings into a .env file next to test resources template.
+The contents of the file are protected via the .NET Data Protection API (DPAPI).
+This is supported only on Windows.  The environment file is scoped to the current
+service directory.
+
+The environment file will be named for the test resources template that it was
+generated for.  For ARM templates, it will be test-resources.json.env. For
+Bicep templates, test-resources.bicep.env.
 
 .EXAMPLE
 Connect-AzAccount -Subscription 'REPLACE_WITH_SUBSCRIPTION_ID'
@@ -761,6 +789,7 @@ New-TestResources.ps1 `
     -TestApplicationId '$(TestAppId)' `
     -TestApplicationSecret '$(TestAppSecret)' `
     -DeleteAfterHours 24 `
+    -DoNotApplyDeleteAfterTag `
     -CI `
     -Force `
     -Verbose

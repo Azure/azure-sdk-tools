@@ -6,9 +6,11 @@ This test proxy is intended to provide out-of-process record/playback capabiliti
 
 All that is required to start recording is to make minor updates to the requests made within a given test. A standard request looks something like this:
 
+![request_changes](https://user-images.githubusercontent.com/45376673/131716856-5a89eba5-bdb8-45a4-9195-164de01aa35a.png)
+
 Modified to be recordable by the test proxy, it should look like this:
 
-
+![request_changes_after](https://user-images.githubusercontent.com/45376673/131716970-dee28516-cb45-4589-abce-6d2aa6bec93d.png)
 
 There is a walkthrough through the process below in the [recording walkthrough below.](#how-do-i-use-the-test-proxy-to-get-a-recording)
 

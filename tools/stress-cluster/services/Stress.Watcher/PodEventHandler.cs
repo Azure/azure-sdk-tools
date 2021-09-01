@@ -1,8 +1,8 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using k8s.Models;
 using k8s;
+using k8s.Models;
 
 namespace Stress.Watcher
 {
@@ -31,6 +31,8 @@ namespace Stress.Watcher
 
         private Kubernetes Client;
         private GenericChaosClient ChaosClient;
+
+        private string testInstanceLabelKey = "testInstance";
 
         public PodEventHandler(Kubernetes client, GenericChaosClient chaosClient)
         {
@@ -73,9 +75,9 @@ namespace Stress.Watcher
             }
 
             await StartChaosResources(pod);
-            Log($"Started chaos resources for pod {pod.Namespace()}/{pod.Name()};");
+            Log($"Started chaos resources for pod {pod.NamespacedName()};");
             await Client.PatchNamespacedPodAsync(PodChaosHandledPatchBody, pod.Name(), pod.Namespace());
-            Log($"Annotated pod chaos started for {pod.Namespace()}/{pod.Name()};");
+            Log($"Annotated pod chaos started for {pod.NamespacedName()};");
         }
 
         private async Task StartChaosResources(V1Pod pod)
@@ -88,7 +90,7 @@ namespace Stress.Watcher
                                     PodChaosResumePatchBody, ChaosClient.Group, ChaosClient.Version,
                                     pod.Namespace(), cr.Kind.ToLower(), cr.Metadata.Name);
 
-                            Log($"Started {cr.Kind} {cr.Metadata.Name} for pod {pod.Namespace()}/{pod.Name()}");
+                            Log($"Started {cr.Kind} {cr.Metadata.Name} for pod {pod.NamespacedName()}");
                         });
 
             await Task.WhenAll(tasks);
@@ -96,7 +98,7 @@ namespace Stress.Watcher
 
         private bool ShouldStartChaos(GenericChaosResource chaos, V1Pod pod)
         {
-            if (chaos.Spec.Selector.LabelSelectors.TestInstance != pod.Labels()["testInstance"])
+            if (chaos.Spec.Selector.LabelSelectors.TestInstance != pod.Labels()[testInstanceLabelKey])
             {
                 return false;
             }
@@ -124,9 +126,9 @@ namespace Stress.Watcher
                 return false;
             }
 
-            if (!pod.Labels().ContainsKey("testInstance"))
+            if (!pod.Labels().ContainsKey(testInstanceLabelKey))
             {
-                Log($"Pod {pod.Namespace()}/{pod.Name()} has chaos label but no test-instance label.");
+                Log($"Pod {pod.NamespacedName()} has chaos label but no {testInstanceLabelKey} label.");
                 return false;
             }
 
@@ -135,7 +137,7 @@ namespace Stress.Watcher
                 pod.Metadata.Annotations.TryGetValue("stress/chaos.started", out started) &&
                 started == "true")
             {
-                Log($"Pod {pod.Namespace()}/{pod.Name()} chaos has started.");
+                Log($"Pod {pod.NamespacedName()} chaos has started.");
                 return false;
             }
 

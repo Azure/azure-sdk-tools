@@ -1,6 +1,16 @@
 # Azure SDK Tools Test Proxy
 
-For a detailed explanation, check the README.md one level up from this one. This project is intended to act as an out-of-proc record/playback server and is intended to be **non-language-specific**.
+For a detailed explanation and more-or-less spec, check the [README.md](../README.md) one level up from this one.
+
+This test proxy is intended to provide out-of-process record/playback capabilities compatible with any language. It offers session and recording level customization during both `record` and `playback` of a test.
+
+All that is required to start recording is to make minor updates to the requests made within a given test. A standard request looks something like this:
+
+Modified to be recordable by the test proxy, it should look like this:
+
+
+
+There is a walkthrough through the process below in the [recording walkthrough below.](#how-do-i-use-the-test-proxy-to-get-a-recording)
 
 ## Installation
 
@@ -201,9 +211,7 @@ headers {
 
 Of course, feel free to check any of the [examples](https://github.com/Azure/azure-sdk-tools/tree/feature/http-recording-server/tools/test-proxy/sample-clients) to see actual test code and invocations.
 
-Additionally, Nick Guerrera [Prototyped a JS example](https://github.com/nguerrera/azure-sdk-for-js/tree/oop-hack) as well.
-
-## Session and Test Level Transforms, Sanitiziers, and Matchers
+## Session and Test Level Transforms, Sanitizers, and Matchers
 
 A `sanitizer` is used to remove sensitive information prior to storage. When a request comes in during `playback` mode, the same set of `sanitizers` are applied prior to matching with the recordings.
 
@@ -244,19 +252,6 @@ body: {
     "value": "fakeaccount",
     "regex": "https\\:\\/\\/(?<account>[a-z]+)\\.(?:table|blob|queue)\\.core\\.windows\\.net",
     "groupForReplace": "account"
-}
-```
-
-### Apply Matcher
-
-```json
-POST
-url: <proxyURL>/Admin/SetMatcher
-headers: {
-    
-}
-bodyBODY: {
-
 }
 ```
 

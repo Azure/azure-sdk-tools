@@ -227,40 +227,11 @@ Potentially, the roadmap could be ordered like this:
 3. Recording/playback migration for existing languages
 4. Sharing tech with customers
 
+# Implementation
 
-# Prototype
+The prototype that used to be here is now obsolete. The original prototype was used as the base of the tool available under `eng/tools/test-proxy/Azure.Sdk.Tools.TestProxy/`. It is documented [here](Azure.Sdk.Tools.TestProxy/README.md). Try it out!
 
-The idea with the prototype was to take our existing in-proc technology for C#
-and host it as test server in the way described above.
+If you're still curious, the original prototypes are located in Nick Guerrera's forks of azure-sdk-for-js and net.
 
-So far, we have confirmed that this performs well under the pressure of local performance testing. Moving foward, the following
-(in no particular order)
-
-* Figuring out packaging/distribution of server. As discussed above, Docker is an option,
-  but a simple `dotnet run`-able command is also an ideal experience.
-
-* Making client tests automatically start and stop the server. Currently,
-  you have to manually start the server then run the tests.
-
-* Work out how to save and playback environment variables. There was an issue
-  with the timing here as tests currently need these environment variables
-  at startup and synchronously.
-
-* Figure out how to handle https. It works with the dev certificate right now
-  for C#. For JS, Python and Java, disabling verification is necessary before the tests will connect properly.
-
-* Store files in a structured fashion. The current plan here is to have the test-proxy write to a github repo.
-
-* Finish a full integration with the storage livetests. These are by far our most extensive test suites across 
-  our existing languages. The footprint should be large enough to discover blocking issues.
-
-* Publish nuget package to core feed, for easy access via `nuget install` and `dotnet run`
-
-To play with the server:
-
-1. Start the server:
-   1. Open the solution present in "tools/test-proxy/Azure.Sdk.Tools.TestProxy/"
-   2. F5
-
-2. Try a sample. There are multiple sample clients present in the `sample-clients` folder.
-
+- [nguerrera/azure-sdk-for-js](https://github.com/nguerrera/azure-sdk-for-js/tree/oop-hack)
+- [nguerrera/azure-sdk-for-net](https://github.com/nguerrera/azure-sdk-for-net/tree/oop-hack)

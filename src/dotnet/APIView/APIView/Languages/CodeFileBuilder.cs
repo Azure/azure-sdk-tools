@@ -49,7 +49,7 @@ namespace ApiView
 
         public ICodeFileBuilderSymbolOrderProvider SymbolOrderProvider { get; set; } = new CodeFileBuilderSymbolOrderProvider();
 
-        public const string CurrentVersion = "20";
+        public const string CurrentVersion = "21";
 
         private IEnumerable<INamespaceSymbol> EnumerateNamespaces(IAssemblySymbol assemblySymbol)
         {
@@ -424,6 +424,7 @@ namespace ApiView
                 case "AsyncStateMachineAttribute":
                 case "IteratorStateMachineAttribute":
                 case "DefaultMemberAttribute":
+                case "AsyncIteratorStateMachineAttribute":
                     return true;
                 default:
                     return false;

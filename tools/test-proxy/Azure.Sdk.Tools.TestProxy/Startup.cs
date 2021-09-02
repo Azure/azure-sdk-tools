@@ -12,6 +12,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.IO;
 using System.Text.RegularExpressions;
+using System.Reflection;
 
 namespace Azure.Sdk.Tools.TestProxy
 {
@@ -19,6 +20,9 @@ namespace Azure.Sdk.Tools.TestProxy
     {
         internal static int RequestsRecorded;
         internal static int RequestsPlayedBack;
+
+        private static bool _insecure;
+        internal static bool Insecure => _insecure;
 
         public Startup(IConfiguration configuration) { }
 
@@ -32,10 +36,26 @@ namespace Azure.Sdk.Tools.TestProxy
             return storageLocation ?? envValue ?? Directory.GetCurrentDirectory();
         }
 
-        /// <param name="storageLocation">The path to the target local git repo. If not provided as an argument, Environment variable TEST_PROXY_FOLDER will be consumed. 
-        /// Lacking both, the current working directory will be utilized.</param>
-        public static void Main(string storageLocation = null)
+        /// <summary>
+        /// test-proxy
+        /// </summary>
+        /// <param name="insecure">Allow untrusted SSL certs from upstream server</param>
+        /// <param name="storageLocation">The path to the target local git repo. If not provided as an argument, Environment variable TEST_PROXY_FOLDER will be consumed. Lacking both, the current working directory will be utilized.</param>
+        /// <param name="version">Flag. Invoke to get the version of the tool.</param>
+        public static void Main(bool insecure = false, string storageLocation = null, bool version = false)
         {
+            if (version)
+            {
+                var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+                var nameVersion = assembly.GetName().Version;
+
+                Console.WriteLine(nameVersion);
+
+                Environment.Exit(0);
+            }
+
+            _insecure = insecure;
+
             Regex.CacheSize = 0;
 
             var statusThreadCts = new CancellationTokenSource();
@@ -72,7 +92,6 @@ namespace Azure.Sdk.Tools.TestProxy
             });
 
 
-            services.AddHttpClient();
             services.AddControllers();
             services.AddControllersWithViews();
             services.AddRazorPages();

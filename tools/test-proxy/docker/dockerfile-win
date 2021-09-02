@@ -57,8 +57,8 @@ RUN pwsh \
 
 RUN mkdir certwork
 
-ADD dev_certificate/dotnet-devcert.pfx certwork
-ADD dev_certificate/dotnet-devcert.crt certwork
+ADD docker_build/dotnet-devcert.pfx certwork
+ADD docker_build/dotnet-devcert.crt certwork
 
 USER ContainerAdministrator
 RUN dotnet dev-certs https --clean --import /certwork/dotnet-devcert.pfx -p "password"
@@ -80,11 +80,11 @@ SHELL ["pwsh", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference
 # the methodology from the primary container, which is linux.
 RUN mkdir -p etc/testproxy
 
-# install the package
-RUN dotnet tool install azure.sdk.tools.testproxy \
-    --tool-path /proxyserver \
-    --add-source https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json \
-    --version 1.0.0-dev.20210811.2 
+# copy the code
+COPY docker_build/Azure.Sdk.Tools.TestProxy/ /proxyservercode
+
+# publish the package
+RUN cd /proxyservercode && dotnet publish -c Release -o /proxyserver -f net5.0
 
 EXPOSE 5001
 EXPOSE 5000
@@ -93,4 +93,4 @@ EXPOSE 5000
 # default URL of localhost:5000 or localhost:50001 are not usable from outside the container
 ENV DOTNET_URLS="http://0.0.0.0:5000;https://0.0.0.0:5001"
 
-ENTRYPOINT ["/proxyserver/test-proxy.exe", "--storage-location", "/etc/testproxy"]
+ENTRYPOINT ["/proxyserver/Azure.Sdk.Tools.TestProxy.exe", "--storage-location", "/etc/testproxy"]

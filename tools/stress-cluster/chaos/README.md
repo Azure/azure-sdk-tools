@@ -35,8 +35,9 @@ You will need the following tools to create and run tests:
 
 1. [Docker](https://docs.docker.com/get-docker/)
 1. [Kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl)
-1. [Helm](https://helm.sh/)
+1. [Helm](https://helm.sh/docs/intro/install/)
 1. [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
+1. [Powershell Core](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell-core-on-linux?view=powershell-7.1#ubuntu-2004) (if using Linux)
 
 ## Access
 
@@ -56,7 +57,7 @@ kubectl get namespaces
 
 ## Quick Testing with no Dependencies
 
-This section details how to deploy a simple job, without any dependencies on the cluster (e.g. azure credentials, app insights keys).
+This section details how to deploy a simple job, without any dependencies on the cluster (e.g. azure credentials, app insights keys) or stress test scripts. It is used to illustrate how kubernetes and the tools work only. Stress test development should be done using the [deploy script](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/scripts/stress-testing/deploy-stress-tests.ps1).
 
 To get started, you will need to create a container image containing your long-running test, and a manifest to execute that image as a [kubernetes job](https://kubernetes.io/docs/concepts/workloads/controllers/job/).
 
@@ -161,6 +162,18 @@ The basic layout for a stress test is the following (see `examples/stress_deploy
     <bicep modules>              # Any additional bicep module files/directories referenced by test-resources.bicep
 ```
 
+### Stress Test Metadata
+
+A stress test package should follow a few conventions that are used by the automation to auto-discover behavior.
+
+Fields in `Chart.yaml`
+1. The `name` field will get used as the helm release name. To deploy instances of the same stress test release in parallel, update this field.
+1. The `annotations.stressTest` field must be set to true for the script to discover the test.
+1. The `annotations.namespace` field must be set, and governs which kubernetes namespace the stress test package will be
+   installed into as a helm release.
+1. Extra fields in `annotations` can be set arbitrarily, and used via the `-Filters` argument to the [stress test deploy
+   script](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/scripts/stress-testing/deploy-stress-tests.ps1).
+
 ### Stress Test Secrets
 
 For ease of implementation regarding merging secrets from various Keyvault sources, secret values injected into the stress
@@ -192,31 +205,33 @@ a `chart/test-resources.json` file in place before running `helm install`.
 The stress test cluster and config boilerplate will handle running ARM deployments in an init container before
 stress test container startup.
 
-If using Azure Bicep files, they should be declared at the subscription `targetScope`, as opposed to the default
-resource group scope. Additionally, they should create a resource group for the test, along with tags marking deletion
-for the group after the intended duration of the stress test.
-
 The bicep file should output at least the resource group name, which will be injected into the stress test env file.
 
 ```
-targetScope = 'subscription'
+// Dummy parameter to handle defaults the script passes in
+param testApplicationOid string = ''
 
-param groupName string
-param location string
-param now string = utcNow('u')
-
-resource group 'Microsoft.Resources/resourceGroups@2020-10-01' = {
-    name: 'rg-stress-${groupName}-${uniqueString(now)}'
-    location: location
-    tags: {
-        DeleteAfter: dateTimeAdd(now, 'PT8H')
-    }
+resource config 'Microsoft.AppConfiguration/configurationStores@2020-07-01-preview' = {
+  name: 'config-${resourceGroup().name}'
+  location: resourceGroup().location
+  sku: {
+    name: 'Standard'
+  }
 }
 
-output RESOURCE_GROUP string = group.name
+output RESOURCE_GROUP string = resourceGroup().name
+output AZURE_CLIENT_OID string = testApplicationOid
 ```
 
-See the [Job Manifest section](#job-manifest) for an example spec containing config template includes for resource auto-deployment.
+A stress test package must include a `parameters.json` file as well, which can either be empty or contain parameters:
+
+```
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": { }
+}
+```
 
 ### Helm Chart Dependencies
 
@@ -261,7 +276,6 @@ spec:
   containers:
     - name: deployment-example
       image: mcr.microsoft.com/azure-cli
-      {{- include "stress-test-addons.container-env" . | nindent 10 }}
       command: ['bash', '-c']
       args:
         - |
@@ -269,6 +283,7 @@ spec:
             az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID &&
             az account set -s $AZURE_SUBSCRIPTION_ID &&
             az group show -g $RESOURCE_GROUP -o json
+      {{- include "stress-test-addons.container-env" . | nindent 6 }}
 {{- end -}}
 ```
 
@@ -342,52 +357,32 @@ The underlying `stress-test-addons` helm library will handle a scenarios list au
 
 ## Deploying a Stress Test
 
-To build and deploy the stress test, first log in to access the cluster resources if not already set up:
+The stress test deployment is best run via the [stress test deploy
+script](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/scripts/stress-testing/deploy-stress-tests.ps1).
+This script handles: cluster and container registry access, building the stress test helm package, installing helm
+package dependencies, and building and pushing docker images. The script must be run via powershell or powershell core.
+
+If using bash or another linux terminal, a [powershell core](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell-core-on-linux?view=powershell-7.1#ubuntu-2004) shell can be invoked via `pwsh`.
+
+The first invocation of the script must be run with the `-Login` flag to set up cluster and container registry access.
 
 ```
-az login
-# Log in to the container registry for Docker access
-az acr login -n stresstestregistry
-# Download the kubeconfig for the cluster
-az aks get-credentials -g rg-stress-test-cluster- -n stress-test --subscription 'Azure SDK Test Resources'
+cd <stress test search directory>
+
+<repo root>/eng/common/scripts/stress-testing/deploy-stress-tests.ps1 `
+    -Login `
+    -PushImages `
+    -Repository <your name> `
+    -DeployId <tag for scoping>
 ```
 
-Then register the helm repository (this only needs to be done once):
+To re-deploy more quickly, the script can be run without `-Login` and/or without `-PushImages` (if no code changes were
+made).
 
 ```
-helm repo add stress-test-charts https://stresstestcharts.blob.core.windows.net/helm/
-helm repo update
-```
-
-Then build/publish images and build ARM templates. Make sure the docker image matches what's referenced in the helm templates.
-
-```
-# Build and publish image
-docker build . -t stresstestregistry.azurecr.io/<your name>/<test job image name>:<version>
-docker push stresstestregistry.azurecr.io/<your name>/<test job image name>:<version>
-
-# Compile ARM template (if using Bicep files)
-az bicep build -f ./test-resources.bicep
-
-# Install helm dependencies
-helm dependency update
-```
-
-Then install the stress test into the cluster:
-
-```
-kubectl create namespace <your stress test namespace> 
-kubectl label namespace <namespace> owners=<owner alias>
-helm install -n <your stress test namespace> <stress test name> .
-```
-
-To install into a different cluster (test, prod, or dev):
-
-```
-az aks get-credentials --subscription '<cluster subscription>' -g rg-stress-test-cluster-<cluster suffix> -n stress-test
-kubectl create namespace <your stress test namespace> 
-kubectl label namespace <namespace> owners=<owner alias>
-helm install -n <your stress test namespace> <stress test name> . --set stress-test-addons.env=<cluster suffix>
+<repo root>/eng/common/scripts/stress-testing/deploy-stress-tests.ps1 `
+    -Repository <your name> `
+    -DeployId <tag for scoping>
 ```
 
 You can check the progress/status of your installation via:
@@ -396,13 +391,7 @@ You can check the progress/status of your installation via:
 helm list -n <stress test namespace>
 ```
 
-To update/re-deploy the test with changes:
-
-```
-helm upgrade <stress test name> .
-```
-
-To debug the yaml built by `helm install`, run:
+To debug the kubernetes manifests installed by the stress test, run the following from the stress test directory:
 
 ```
 helm template <stress test name> .
@@ -419,13 +408,16 @@ To check the status of the stress test job resources:
 ```
 # List stress test pods
 kubectl get pods -n <stress test namespace> -l release=<stress test name>
-# Get logs from azure-deployer init container
+
+# Get logs from azure-deployer init container, if deploying resources. Omit `-c azure-deployer` to get main container
+logs.
 kubectl logs -n <stress test namespace> <stress test pod name> -c azure-deployer
+
 # If empty, there may have been startup failures
 kubectl describe pod -n <stress test namespace> <stress test pod name>
 ```
 
-Once the `azure-deployer` init container is completed and the stress test pod is in a `Running` state,
+If deploying resources, once the `azure-deployer` init container is completed and the stress test pod is in a `Running` state,
 you can quick check the local logs:
 
 ```

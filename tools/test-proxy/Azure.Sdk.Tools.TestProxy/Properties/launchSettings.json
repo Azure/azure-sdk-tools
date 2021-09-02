@@ -12,6 +12,7 @@
       "commandName": "Project",
       "launchBrowser": false,
       "environmentVariables": {
+        "Logging__LogLevel__Microsoft": "Information",
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
       "applicationUrl": "https://localhost:5001;http://localhost:5000"

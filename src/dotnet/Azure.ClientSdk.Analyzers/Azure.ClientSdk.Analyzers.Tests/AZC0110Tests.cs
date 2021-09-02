@@ -21,12 +21,12 @@ namespace RandomNamespace
     {
         private static async Task FooAsync(bool async)
         {
-            await [|Task.Delay(0)|].ConfigureAwait(false);
+            await {|AZC0110:Task.Delay(0)|}.ConfigureAwait(false);
         }
     }
 }";
 
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0110");
+            await Verifier.VerifyAnalyzerAsync(code);
         }
 
         [Fact]
@@ -42,12 +42,12 @@ namespace RandomNamespace
         private static async Task FooAsync(bool async)
         {
             var task = Task.Delay(0);
-            await [|task|].ConfigureAwait(false);
+            await {|AZC0110:task|}.ConfigureAwait(false);
         }
     }
 }";
 
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0110");
+            await Verifier.VerifyAnalyzerAsync(code);
         }
 
         [Fact]
@@ -63,7 +63,7 @@ namespace RandomNamespace
         private static async Task FooAsync(bool async)
         {
             var b = false;
-            await [|FooImplAsync(b)|].ConfigureAwait(false);
+            await {|AZC0110:FooImplAsync(b)|}.ConfigureAwait(false);
         }
 
         private static async Task FooImplAsync(bool async) 
@@ -73,7 +73,7 @@ namespace RandomNamespace
     }
 }";
 
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0110");
+            await Verifier.VerifyAnalyzerAsync(code);
         }
 
         [Fact]
@@ -88,7 +88,7 @@ namespace RandomNamespace
     {
         private static async Task FooAsync(bool async)
         {
-            await [|FooImplAsync(B())|].ConfigureAwait(false);
+            await {|AZC0110:FooImplAsync(B())|}.ConfigureAwait(false);
         }
 
         private static bool B() => false;
@@ -100,7 +100,7 @@ namespace RandomNamespace
     }
 }";
 
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0110");
+            await Verifier.VerifyAnalyzerAsync(code);
         }
 
         [Fact]
@@ -116,14 +116,14 @@ namespace RandomNamespace
     {
         private static async Task FooAsync(bool async)
         {
-            await ([|async ? FooImplAsync(true) : FooImplAsync(false)|]).ConfigureAwait(false);
+            await ({|AZC0110:async ? FooImplAsync(true) : FooImplAsync(false)|}).ConfigureAwait(false);
         }
 
         private static async Task<int> FooImplAsync(bool async)
             => async ? await Task.FromResult(42).ConfigureAwait(false) : 42;
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0110");
+            await Verifier.VerifyAnalyzerAsync(code);
         }
     
         [Fact]

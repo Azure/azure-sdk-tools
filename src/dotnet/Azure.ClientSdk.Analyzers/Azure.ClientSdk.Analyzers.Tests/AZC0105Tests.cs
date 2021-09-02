@@ -18,12 +18,12 @@ namespace RandomNamespace
     using System.Threading.Tasks;
     public class MyClass
     {
-        public static async Task<int> FooAsync([|bool async|], CancellationToken ct)
+        public static async Task<int> FooAsync({|AZC0105:bool async|}, CancellationToken ct)
             => async ? await Task.FromResult(42).ConfigureAwait(false) : 42;
     }
 }";
 
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0105");
+            await Verifier.VerifyAnalyzerAsync(code);
         }
 
         [Fact]
@@ -36,11 +36,11 @@ namespace RandomNamespace
     using System.Threading.Tasks;
     public class MyClass
     {
-        public static void Foo([|bool async|], CancellationToken ct) { }
+        public static void Foo({|AZC0105:bool async|}, CancellationToken ct) { }
     }
 }";
 
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0105");
+            await Verifier.VerifyAnalyzerAsync(code);
         }
 
         [Fact]

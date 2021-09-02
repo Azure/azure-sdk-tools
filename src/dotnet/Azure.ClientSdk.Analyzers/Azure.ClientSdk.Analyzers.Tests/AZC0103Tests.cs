@@ -37,7 +37,7 @@ namespace RandomNamespace
         public async Task Foo()
         {
             await Task.Yield();
-            FooImplAsync(true).[|EnsureCompleted()|];
+            FooImplAsync(true).{|AZC0103:EnsureCompleted()|};
         }
 
         private static async Task<int> FooImplAsync(bool async, CancellationToken ct = default(CancellationToken))
@@ -45,7 +45,7 @@ namespace RandomNamespace
     }
 }";
             
-            await Verifier.CreateAnalyzer(code, "AZC0103")
+            await Verifier.CreateAnalyzer(code)
                 .WithSources(AzureCorePipelineTaskExtensions)
                 .RunAsync();
         }
@@ -67,7 +67,7 @@ namespace RandomNamespace
             Func<Task> f = async () => 
             {
                 await Task.Yield();
-                FooImplAsync(true).[|EnsureCompleted()|];
+                FooImplAsync(true).{|AZC0103:EnsureCompleted()|};
             };
         }
 
@@ -76,7 +76,7 @@ namespace RandomNamespace
     }
 }";
             
-            await Verifier.CreateAnalyzer(code, "AZC0103")
+            await Verifier.CreateAnalyzer(code)
                 .WithSources(AzureCorePipelineTaskExtensions)
                 .RunAsync();
         }
@@ -96,7 +96,7 @@ namespace RandomNamespace
         private Func<Task> _f = async () => 
         {
             await Task.Yield();
-            FooImplAsync(true).[|EnsureCompleted()|];
+            FooImplAsync(true).{|AZC0103:EnsureCompleted()|};
         };
 
         private static async Task<int> FooImplAsync(bool async, CancellationToken ct = default(CancellationToken))
@@ -104,7 +104,7 @@ namespace RandomNamespace
     }
 }";
             
-            await Verifier.CreateAnalyzer(code, "AZC0103")
+            await Verifier.CreateAnalyzer(code)
                 .WithSources(AzureCorePipelineTaskExtensions)
                 .RunAsync();
         }
@@ -123,7 +123,7 @@ namespace RandomNamespace
         public async Task Foo()
         {
             await Task.Yield();
-            FooImplAsync(true).[|GetAwaiter().GetResult()|];
+            FooImplAsync(true).{|AZC0103:GetAwaiter().GetResult()|};
         }
 
         private static async Task<int> FooImplAsync(bool async, CancellationToken ct = default(CancellationToken))
@@ -131,7 +131,7 @@ namespace RandomNamespace
     }
 }";
             
-            await Verifier.CreateAnalyzer(code, "AZC0103")
+            await Verifier.CreateAnalyzer(code)
                 .WithSources(AzureCorePipelineTaskExtensions)
                 .RunAsync();
         }

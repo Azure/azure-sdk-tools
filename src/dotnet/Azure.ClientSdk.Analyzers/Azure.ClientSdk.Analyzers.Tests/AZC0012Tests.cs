@@ -15,7 +15,7 @@ namespace Azure.ClientSdk.Analyzers.Tests
             const string code = @"
 namespace Azure.Data
 {
-    public class [|Program|] { }
+    public class {|AZC0012:Program|} { }
 }";
 
             await Verifier.VerifyAnalyzerAsync(code);
@@ -27,7 +27,7 @@ namespace Azure.Data
             const string code = @"
 namespace Azure.Data
 {
-    public interface [|IProgram|] { }
+    public interface {|AZC0012:IProgram|} { }
 }";
 
             await Verifier.VerifyAnalyzerAsync(code);

@@ -14,7 +14,7 @@ namespace Azure.ClientSdk.Analyzers.Tests
             const string code = @"
 namespace RandomNamespace
 {
-    public class [|SomeClientOptions|] {
+    public class {|AZC0009:SomeClientOptions|} {
 
         public enum ServiceVersion
         {
@@ -22,7 +22,7 @@ namespace RandomNamespace
         }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0009");
+            await Verifier.VerifyAnalyzerAsync(code);
         }
 
         [Fact]
@@ -38,12 +38,12 @@ namespace RandomNamespace
             V2018_11_09 = 0
         }
 
-        public [|SomeClientOptions|]()
+        public {|AZC0009:SomeClientOptions|}()
         {
         }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0009");
+            await Verifier.VerifyAnalyzerAsync(code);
         }
 
         [Fact]
@@ -59,12 +59,12 @@ namespace RandomNamespace
             V2018_11_09 = 0
         }
 
-        public SomeClientOptions(string [|anOption|], ServiceVersion version = ServiceVersion.V2018_11_09)
+        public SomeClientOptions(string {|AZC0009:anOption|}, ServiceVersion version = ServiceVersion.V2018_11_09)
         {
         }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0009");
+            await Verifier.VerifyAnalyzerAsync(code);
         }
 
         [Fact]

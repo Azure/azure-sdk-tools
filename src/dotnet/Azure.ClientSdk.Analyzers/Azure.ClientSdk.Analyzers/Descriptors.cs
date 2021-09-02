@@ -104,13 +104,6 @@ namespace Azure.ClientSdk.Analyzers
             "Usage",
             DiagnosticSeverity.Warning, true);
 
-        public static DiagnosticDescriptor AZC0016 = new DiagnosticDescriptor(
-            nameof(AZC0016),
-            "DO provide protected parameterless constructor for mocking operations.",
-            "DO provide protected parameterless constructor for mocking operations.",
-            "Usage", DiagnosticSeverity.Warning, isEnabledByDefault: true, description: null
-        );
-
         public static DiagnosticDescriptor AZC0100 = new DiagnosticDescriptor(
             nameof(AZC0100),
             "ConfigureAwait(false) must be used.",

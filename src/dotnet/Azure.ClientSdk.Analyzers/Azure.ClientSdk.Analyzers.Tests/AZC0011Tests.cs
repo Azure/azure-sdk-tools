@@ -12,9 +12,9 @@ namespace Azure.ClientSdk.Analyzers.Tests
         public async Task AZC0011ProducedForNonTestIVTs()
         {
             const string code = @"
-[assembly:[|System.Runtime.CompilerServices.InternalsVisibleTo(""Product, PublicKey=..."")|]]
+[assembly:{|AZC0011:System.Runtime.CompilerServices.InternalsVisibleTo(""Product, PublicKey=..."")|}]
 ";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0011");
+            await Verifier.VerifyAnalyzerAsync(code);
         }
 
         [Fact]

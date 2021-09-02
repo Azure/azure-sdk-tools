@@ -20,10 +20,10 @@ namespace RandomNamespace
     public class SomeClient
     {
         protected SomeClient() {}
-        public [|SomeClient|](SomeClientOptions options) {}
+        public {|AZC0006:SomeClient|}(SomeClientOptions options) {}
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0006");
+            await Verifier.VerifyAnalyzerAsync(code);
         }
 
         [Fact]
@@ -37,10 +37,10 @@ namespace RandomNamespace
     public class SomeClient
     {
         protected SomeClient() {}
-        public [|SomeClient|](string connectionString, SomeClientOptions options) {}
+        public {|AZC0006:SomeClient|}(string connectionString, SomeClientOptions options) {}
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0006");
+            await Verifier.VerifyAnalyzerAsync(code);
         }
 
         [Fact]

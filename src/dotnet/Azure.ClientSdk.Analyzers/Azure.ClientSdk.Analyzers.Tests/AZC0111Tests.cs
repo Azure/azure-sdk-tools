@@ -37,12 +37,12 @@ namespace RandomNamespace
     {
         private static async Task FooAsync(bool async)
         {
-            [|Task.Delay(0)|].EnsureCompleted();
+            {|AZC0111:Task.Delay(0)|}.EnsureCompleted();
         }
     }
 }";
 
-            await Verifier.CreateAnalyzer(code, "AZC0111")
+            await Verifier.CreateAnalyzer(code)
                 .WithSources(AzureCorePipelineTaskExtensions)
                 .RunAsync();
         }
@@ -62,12 +62,12 @@ namespace RandomNamespace
         private static async Task FooAsync(bool async)
         {
             var task = Task.Delay(0);
-            [|task|].EnsureCompleted();
+            {|AZC0111:task|}.EnsureCompleted();
         }
     }
 }";
 
-            await Verifier.CreateAnalyzer(code, "AZC0111")
+            await Verifier.CreateAnalyzer(code)
                 .WithSources(AzureCorePipelineTaskExtensions)
                 .RunAsync();
         }
@@ -88,7 +88,7 @@ namespace RandomNamespace
     {
         private static async Task FooAsync(bool async)
         {
-            [|FooImplAsync(async)|].EnsureCompleted();
+            {|AZC0111:FooImplAsync(async)|}.EnsureCompleted();
         }
 
         private static async Task FooImplAsync(bool async) 
@@ -98,7 +98,7 @@ namespace RandomNamespace
     }
 }";
             
-            await Verifier.CreateAnalyzer(code, "AZC0111")
+            await Verifier.CreateAnalyzer(code)
                 .WithSources(AzureCorePipelineTaskExtensions)
                 .RunAsync();
         }

@@ -24,11 +24,11 @@ namespace RandomNamespace
         public static void Foo()
         {
             Task<int> task = Task.Run(() => 10);
-            task.[|GetAwaiter().GetResult()|];
+            task.{|AZC0102:GetAwaiter().GetResult()|};
         }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0102", languageVersion);
+            await Verifier.VerifyAnalyzerAsync(code, languageVersion);
         }
 
         [Theory]
@@ -44,11 +44,11 @@ namespace RandomNamespace
     {
         public static void Foo()
         {
-            new ValueTask().[|GetAwaiter().GetResult()|];
+            new ValueTask().{|AZC0102:GetAwaiter().GetResult()|};
         }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0102", languageVersion);
+            await Verifier.VerifyAnalyzerAsync(code, languageVersion);
         }
 
         [Fact]
@@ -65,7 +65,7 @@ namespace RandomNamespace
     {
         public static void Foo()
         {
-            new CustomAwaitable().[|GetAwaiter().GetResult()|];
+            new CustomAwaitable().{|AZC0102:GetAwaiter().GetResult()|};
         }
     }
 
@@ -82,7 +82,7 @@ namespace RandomNamespace
         public void UnsafeOnCompleted(Action continuation) {}
     }  
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0102");
+            await Verifier.VerifyAnalyzerAsync(code);
         }
 
         [Fact]
@@ -99,7 +99,7 @@ namespace RandomNamespace
     {
         public static void Foo()
         {
-            new TestStruct().[|GetAwaiter().GetResult()|];
+            new TestStruct().{|AZC0102:GetAwaiter().GetResult()|};
         }
     }
 
@@ -110,7 +110,7 @@ namespace RandomNamespace
         public static TaskAwaiter GetAwaiter(this TestStruct s) => default;
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0102");
+            await Verifier.VerifyAnalyzerAsync(code);
         }
 
         [Fact]

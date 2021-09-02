@@ -15,11 +15,11 @@ namespace Azure.ClientSdk.Analyzers.Tests
             const string code = @"
 namespace RandomNamespace
 {
-    public class [|SomeClientOptions|] { 
+    public class {|AZC0008:SomeClientOptions|} { 
 
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0008");
+            await Verifier.VerifyAnalyzerAsync(code);
         }
 
         [Fact]

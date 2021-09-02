@@ -20,17 +20,17 @@ namespace RandomNamespace
 {
     public class SomeClient
     {
-        public Task [|GetAsync|](CancellationToken cancellationToken = default)
+        public Task {|AZC0003:GetAsync|](CancellationToken cancellationToken = default)
         {
             return null;
         }
 
-        public void [|Get|](CancellationToken cancellationToken = default)
+        public void {|AZC0003:Get|](CancellationToken cancellationToken = default)
         {
         }
     }
 }";
-            await Verifier.CreateAnalyzer(code, "AZC0003")
+            await Verifier.CreateAnalyzer(code)
                 .WithDisabledDiagnostics("AZC0015")
                 .RunAsync();
         }
@@ -56,7 +56,7 @@ namespace RandomNamespace
         }
     }
 }";
-            await Verifier.CreateAnalyzer(code, "AZC0003")
+            await Verifier.CreateAnalyzer(code)
                 .WithDisabledDiagnostics("AZC0015")
                 .RunAsync();
         }

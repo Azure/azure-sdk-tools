@@ -36,7 +36,7 @@ namespace RandomNamespace
     {
         public static void Foo()
         {
-            [|FooImplAsync()|].EnsureCompleted();
+            {|AZC0106:FooImplAsync()|}.EnsureCompleted();
         }
 
         private static async Task<int> FooImplAsync(CancellationToken ct = default(CancellationToken)) 
@@ -47,7 +47,7 @@ namespace RandomNamespace
     }
 }";
             
-            await Verifier.CreateAnalyzer(code, "AZC0106")
+            await Verifier.CreateAnalyzer(code)
                 .WithSources(AzureCorePipelineTaskExtensions)
                 .RunAsync();
         }
@@ -66,7 +66,7 @@ namespace RandomNamespace
     {
         public async Task Foo()
         {
-            Func<int, int> a = i => [|FooImplAsync()|].EnsureCompleted();
+            Func<int, int> a = i => {|AZC0106:FooImplAsync()|}.EnsureCompleted();
             await Task.Yield();
         }
 
@@ -78,7 +78,7 @@ namespace RandomNamespace
     }
 }";
             
-            await Verifier.CreateAnalyzer(code, "AZC0106")
+            await Verifier.CreateAnalyzer(code)
                 .WithSources(AzureCorePipelineTaskExtensions)
                 .RunAsync();
         }
@@ -99,7 +99,7 @@ namespace RandomNamespace
         {
             Action a = delegate
             {
-                [|FooImplAsync()|].EnsureCompleted();
+                {|AZC0106:FooImplAsync()|}.EnsureCompleted();
             };
             await Task.Yield();
         }
@@ -112,7 +112,7 @@ namespace RandomNamespace
     }
 }";
             
-            await Verifier.CreateAnalyzer(code, "AZC0106")
+            await Verifier.CreateAnalyzer(code)
                 .WithSources(AzureCorePipelineTaskExtensions)
                 .RunAsync();
         }
@@ -135,7 +135,7 @@ namespace RandomNamespace
 
             void FooImpl()
             {
-                [|FooImplAsync()|].EnsureCompleted();
+                {|AZC0106:FooImplAsync()|}.EnsureCompleted();
             }
         }
 
@@ -147,7 +147,7 @@ namespace RandomNamespace
     }
 }";
             
-            await Verifier.CreateAnalyzer(code, "AZC0106")
+            await Verifier.CreateAnalyzer(code)
                 .WithSources(AzureCorePipelineTaskExtensions)
                 .RunAsync();
         }

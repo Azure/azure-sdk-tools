@@ -30,16 +30,16 @@ namespace RandomNamespace
         public async Task AZC0001ProducedOneErrorPerNamespaceDefinition()
         {
             const string code = @"
-namespace [|RandomNamespace|]
+namespace {|AZC0001:RandomNamespace|}
 {
     public class Program { }
 }
 
-namespace [|RandomNamespace|]
+namespace {|AZC0001:RandomNamespace|}
 {
     public class Program2 { }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0001");
+            await Verifier.VerifyAnalyzerAsync(code);
         }
 
         [Fact]

@@ -12,10 +12,11 @@ namespace Azure.Sdk.Tools.PerfAutomation
     // Prerequisites
     // 1. Set VCPKG env vars
     //    Windows: set VCPKG_ROOT=C:\Git\vcpkg & set VCPKG_DEFAULT_TRIPLET=x64-windows-static
-    //    Linux: export VCPKG_ROOT=/home/user/vcpkg && set VCPKG_DEFAULT_TRIPLET=x64-linux
+    //    Linux: export VCPKG_ROOT=/home/user/vcpkg && export VCPKG_DEFAULT_TRIPLET=x64-linux
     // 2. git clone https://github.com/microsoft/vcpkg
-    // 3. bootstrap-vcpkg
-    // 4. vcpkg install curl LibXml2
+    // 3. cd vcpkg
+    // 4. ./bootstrap-vcpkg
+    // 5. vcpkg install curl LibXml2
     public class Cpp : LanguageBase
     {
         private const string _buildDirectory = "build";

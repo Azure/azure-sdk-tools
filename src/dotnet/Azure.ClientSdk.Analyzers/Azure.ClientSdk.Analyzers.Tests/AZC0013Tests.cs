@@ -18,7 +18,7 @@ namespace RandomNamespace
 
     internal class RandomClass
     {
-        private TaskCompletionSource<string> _tcs = [|new TaskCompletionSource<string>()|};
+        private TaskCompletionSource<string> _tcs = {|AZC0013:new TaskCompletionSource<string>()|};
     }
 }
 ";

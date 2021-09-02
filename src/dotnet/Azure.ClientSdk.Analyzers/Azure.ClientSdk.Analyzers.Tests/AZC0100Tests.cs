@@ -575,12 +575,9 @@ namespace RandomNamespace
         public static async Task M24() { await using(var a = ){} }
     }
 }";
-            await new AzureAnalyzerTest<AsyncAnalyzer>
-            {
-                CompilerDiagnostics = CompilerDiagnostics.None,
-                TestCode = code,
-                TestBehaviors = TestBehaviors.SkipGeneratedCodeCheck
-            }.RunAsync();
+            var analyzerTest = Verifier.CreateAnalyzer(code);
+            analyzerTest.CompilerDiagnostics = CompilerDiagnostics.None;
+            await analyzerTest.RunAsync();
         }
     }
 }

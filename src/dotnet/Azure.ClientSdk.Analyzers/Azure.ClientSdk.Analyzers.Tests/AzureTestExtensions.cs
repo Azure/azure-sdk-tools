@@ -2,13 +2,15 @@
 // Licensed under the MIT License.
 
 using Microsoft.CodeAnalysis.CodeRefactorings;
+using Microsoft.CodeAnalysis.CSharp.Testing;
 using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis.Testing.Verifiers;
 
 namespace Azure.ClientSdk.Analyzers.Tests
 {
     public static class AzureTestExtensions
     {
-        public static AzureAnalyzerTest<TAnalyzer> WithSources<TAnalyzer>(this AzureAnalyzerTest<TAnalyzer> test, params string[] sources)
+        public static CSharpAnalyzerTest<TAnalyzer, XUnitVerifier> WithSources<TAnalyzer>(this CSharpAnalyzerTest<TAnalyzer, XUnitVerifier> test, params string[] sources)
             where TAnalyzer : DiagnosticAnalyzer, new()
         {
             foreach (var source in sources)
@@ -18,14 +20,14 @@ namespace Azure.ClientSdk.Analyzers.Tests
             return test;
         }
 
-        public static AzureAnalyzerTest<TAnalyzer> WithDisabledDiagnostics<TAnalyzer>(this AzureAnalyzerTest<TAnalyzer> test, params string[] diagnostics)
+        public static CSharpAnalyzerTest<TAnalyzer, XUnitVerifier> WithDisabledDiagnostics<TAnalyzer>(this CSharpAnalyzerTest<TAnalyzer, XUnitVerifier> test, params string[] diagnostics)
             where TAnalyzer : DiagnosticAnalyzer, new()
         {
             test.DisabledDiagnostics.AddRange(diagnostics);
             return test;
         }
 
-        public static AzureRefactoringTest<TRefactoring> WithSources<TRefactoring>(this AzureRefactoringTest<TRefactoring> test, params string[] sources)
+        public static CSharpCodeRefactoringTest<TRefactoring, XUnitVerifier> WithSources<TRefactoring>(this CSharpCodeRefactoringTest<TRefactoring, XUnitVerifier> test, params string[] sources)
             where TRefactoring : CodeRefactoringProvider, new()
         {
             foreach (var source in sources)

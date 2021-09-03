@@ -41,13 +41,13 @@ namespace RandomNamespace
 
         private static async Task<int> FooImplAsync(bool async, CancellationToken ct = default(CancellationToken)) 
         {
-            [|async = false|];
+            {|AZC0109:async = false|};
             return async ? await Task.FromResult(42).ConfigureAwait(false) : 42;
         }
     }
 }";
             
-            await Verifier.CreateAnalyzer(code, "AZC0109")
+            await Verifier.CreateAnalyzer(code)
                 .WithSources(AzureCorePipelineTaskExtensions)
                 .RunAsync();
         }
@@ -70,7 +70,7 @@ namespace RandomNamespace
 
         private static async Task<int> FooImplAsync(bool async, CancellationToken ct = default(CancellationToken)) 
         {
-            var x [|= async|];
+            var x {|AZC0109:= async|};
             if (x)
             {
                 return async ? await Task.FromResult(42).ConfigureAwait(false) : 42;
@@ -81,7 +81,7 @@ namespace RandomNamespace
     }
 }";
             
-            await Verifier.CreateAnalyzer(code, "AZC0109")
+            await Verifier.CreateAnalyzer(code)
                 .WithSources(AzureCorePipelineTaskExtensions)
                 .RunAsync();
         }
@@ -105,7 +105,7 @@ namespace RandomNamespace
         private static async Task<int> FooImplAsync(bool async, CancellationToken ct = default(CancellationToken)) 
         {
             var x = false;
-            if ([|async && x|])
+            if ({|AZC0109:async && x|})
             {
                 return async ? await Task.FromResult(42).ConfigureAwait(false) : 42;
             }
@@ -114,7 +114,7 @@ namespace RandomNamespace
     }
 }";
             
-            await Verifier.CreateAnalyzer(code, "AZC0109")
+            await Verifier.CreateAnalyzer(code)
                 .WithSources(AzureCorePipelineTaskExtensions)
                 .RunAsync();
         }

@@ -10,13 +10,13 @@ namespace Azure.ClientSdk.Analyzers.Tests
     public class AZC0015Tests
     {
         [Theory]
-        [InlineData("public Task<AsyncPageable<int>> [|ClientMethodAsync|]() { return default; }")]
-        [InlineData("public Task<Pageable<int>> [|ClientMethodAsync|]() { return default; }")]
-        [InlineData("public int [|ClientMethodAsync|]() { return default; }")]
-        [InlineData("public int[] [|ClientMethodAsync|]() { return default; }")]
-        [InlineData("public Task<int[]> [|ClientMethodAsync|]() { return default; }")]
-        [InlineData("public ValueTask<Response<int>> [|ClientMethodAsync|]() { return default; }")]
-        [InlineData("public string [|ClientMethodAsync|]() { return default; }")]
+        [InlineData("public Task<AsyncPageable<int>> {|AZC0015:ClientMethodAsync|}() { return default; }")]
+        [InlineData("public Task<Pageable<int>> {|AZC0015:ClientMethodAsync|}() { return default; }")]
+        [InlineData("public int {|AZC0015:ClientMethodAsync|}() { return default; }")]
+        [InlineData("public int[] {|AZC0015:ClientMethodAsync|}() { return default; }")]
+        [InlineData("public Task<int[]> {|AZC0015:ClientMethodAsync|}() { return default; }")]
+        [InlineData("public ValueTask<Response<int>> {|AZC0015:ClientMethodAsync|}() { return default; }")]
+        [InlineData("public string {|AZC0015:ClientMethodAsync|}() { return default; }")]
         public async Task AZC0015ProducedForInvalidClientMethodReturnTypes(string usage)
         {
             string code = $@"
@@ -31,7 +31,7 @@ namespace RandomNamespace
         {usage}       
     }}
 }}";
-            await Verifier.CreateAnalyzer(code, "AZC0015")
+            await Verifier.CreateAnalyzer(code)
                 .WithDisabledDiagnostics("AZC0002", "AZC0003", "AZC0004")
                 .RunAsync();
         }
@@ -60,7 +60,7 @@ namespace RandomNamespace
         {usage}       
     }}
 }}";
-            await Verifier.CreateAnalyzer(code, "AZC0015")
+            await Verifier.CreateAnalyzer(code)
                 .WithDisabledDiagnostics("AZC0002", "AZC0003", "AZC0004")
                 .RunAsync();
         }

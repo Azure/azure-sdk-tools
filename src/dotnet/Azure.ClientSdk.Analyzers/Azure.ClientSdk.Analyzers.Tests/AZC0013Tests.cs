@@ -18,11 +18,11 @@ namespace RandomNamespace
 
     internal class RandomClass
     {
-        private TaskCompletionSource<string> _tcs = [|new TaskCompletionSource<string>()|];
+        private TaskCompletionSource<string> _tcs = {|AZC0013:new TaskCompletionSource<string>()|};
     }
 }
 ";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0013");
+            await Verifier.VerifyAnalyzerAsync(code);
         }
         
         [Fact]
@@ -35,11 +35,11 @@ namespace RandomNamespace
 
     internal class RandomClass
     {
-        private TaskCompletionSource<string> _tcs = new TaskCompletionSource<string>([|new object()|]);
+        private TaskCompletionSource<string> _tcs = new TaskCompletionSource<string>({|AZC0013:new object()|});
     }
 }
 ";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0013");
+            await Verifier.VerifyAnalyzerAsync(code);
         }
         
         [Fact]
@@ -52,11 +52,11 @@ namespace RandomNamespace
 
     internal class RandomClass
     {
-        private TaskCompletionSource<string> _tcs = new TaskCompletionSource<string>(new object(), [|TaskCreationOptions.LongRunning | TaskCreationOptions.PreferFairness|]);
+        private TaskCompletionSource<string> _tcs = new TaskCompletionSource<string>(new object(), {|AZC0013:TaskCreationOptions.LongRunning | TaskCreationOptions.PreferFairness|});
     }
 }
 ";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0013");
+            await Verifier.VerifyAnalyzerAsync(code);
         }
         
         [Fact]
@@ -70,11 +70,11 @@ namespace RandomNamespace
     internal class RandomClass
     {
         private static TaskCreationOptions _option = TaskCreationOptions.RunContinuationsAsynchronously;
-        private TaskCompletionSource<string> _tcs = new TaskCompletionSource<string>([|TaskCreationOptions.LongRunning | _option | TaskCreationOptions.PreferFairness|]);
+        private TaskCompletionSource<string> _tcs = new TaskCompletionSource<string>({|AZC0013:TaskCreationOptions.LongRunning | _option | TaskCreationOptions.PreferFairness|});
     }
 }
 ";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0013");
+            await Verifier.VerifyAnalyzerAsync(code);
         }
         
         [Fact]

@@ -10,14 +10,14 @@ namespace Azure.ClientSdk.Analyzers.Tests
     public class AZC0014Tests
     {
         [Theory]
-        [InlineData("public class [|Class|]: System.IProgress<JsonElement> { public void Report (JsonElement [|value|]) {} }")]
-        [InlineData("public void Report(JsonElement [|value|]) {}")]
-        [InlineData("public JsonElement [|Report|]() { return default; }")]
-        [InlineData("public IEnumerable<JsonElement> [|Report|]() { return default; }")]
-        [InlineData("public JsonElement [|Report|] { get; }")]
-        [InlineData("public JsonElement [|Report|];")]
-        [InlineData("public event EventHandler<JToken> [|Report|];")]
-        [InlineData("protected JToken [|Report|];")]
+        [InlineData("public class {|AZC0014:Class|}: System.IProgress<JsonElement> { public void Report (JsonElement {|AZC0014:value|}) {} }")]
+        [InlineData("public void Report(JsonElement {|AZC0014:value|}) {}")]
+        [InlineData("public JsonElement {|AZC0014:Report|}() { return default; }")]
+        [InlineData("public IEnumerable<JsonElement> {|AZC0014:Report|}() { return default; }")]
+        [InlineData("public JsonElement {|AZC0014:Report|} { get; }")]
+        [InlineData("public JsonElement {|AZC0014:Report|};")]
+        [InlineData("public event EventHandler<JToken> {|AZC0014:Report|};")]
+        [InlineData("protected JToken {|AZC0014:Report|};")]
         public async Task AZC0014ProducedForJsonTypeUsageInPublicApi(string usage)
         {
             string code = $@"
@@ -34,7 +34,7 @@ namespace RandomNamespace
         {usage}       
     }}
 }}";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0014");
+            await Verifier.VerifyAnalyzerAsync(code);
         }
 
 

@@ -23,11 +23,11 @@ namespace RandomNamespace
     {
         public static async System.Threading.Tasks.Task Foo()
         {
-            [|await System.Threading.Tasks.Task.Run(() => {})|];
+            {|AZC0100:await System.Threading.Tasks.Task.Run(() => {})|];
         }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0100", languageVersion);
+            await Verifier.VerifyAnalyzerAsync(code, languageVersion);
         }
 
         [Theory]
@@ -42,11 +42,11 @@ namespace RandomNamespace
     {
         public static async System.Threading.Tasks.Task Foo()
         {
-            var i = [|await System.Threading.Tasks.Task.Run(() => 42)|];
+            var i = {|AZC0100:await System.Threading.Tasks.Task.Run(() => 42)|};
         }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0100", languageVersion);
+            await Verifier.VerifyAnalyzerAsync(code, languageVersion);
         }
 
         [Theory]
@@ -63,7 +63,7 @@ namespace RandomNamespace
 
         public static async System.Threading.Tasks.ValueTask Foo()
         {
-            [|await RunAsync()|];
+            {|AZC0100:await RunAsync()|};
         }
 
         private static async System.Threading.Tasks.ValueTask RunAsync()
@@ -72,7 +72,7 @@ namespace RandomNamespace
         }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0100", languageVersion);
+            await Verifier.VerifyAnalyzerAsync(code, languageVersion);
         }
 
         [Theory]
@@ -87,7 +87,7 @@ namespace RandomNamespace
     {
         public static async System.Threading.Tasks.ValueTask Foo()
         {
-            var i = [|await GetValueAsync()|];
+            var i = {|AZC0100:await GetValueAsync()|};
         }
 
         private static async System.Threading.Tasks.ValueTask<int> GetValueAsync()
@@ -96,7 +96,7 @@ namespace RandomNamespace
         }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0100", languageVersion);
+            await Verifier.VerifyAnalyzerAsync(code, languageVersion);
         }
 
         [Fact]
@@ -126,11 +126,11 @@ namespace RandomNamespace
     {
         public static async System.Threading.Tasks.Task Foo()
         {
-            [|await System.Threading.Tasks.Task.Delay(42)|];
+            {|AZC0100:await System.Threading.Tasks.Task.Delay(42)|};
         }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0100");
+            await Verifier.VerifyAnalyzerAsync(code);
         }
 
         [Fact]
@@ -183,11 +183,11 @@ namespace RandomNamespace
         public static async System.Threading.Tasks.Task Foo()
         {
             var task = System.Threading.Tasks.Task.Run(() => {});
-            [|await task|];
+            {|AZC0100:await task|};
         }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0100");
+            await Verifier.VerifyAnalyzerAsync(code);
         }
 
         [Fact]
@@ -204,13 +204,13 @@ namespace RandomNamespace
     {
         public static async Task Foo()
         {
-            await foreach (var x in [|GetValuesAsync()|]) { }
+            await foreach (var x in {|AZC0100:GetValuesAsync()|}) { }
         }
 
         private static async IAsyncEnumerable<int> GetValuesAsync() { yield break; }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0100");
+            await Verifier.VerifyAnalyzerAsync(code);
         }
 
         [Fact]
@@ -274,13 +274,13 @@ namespace RandomNamespace
         public static async Task Foo()
         {
             var enumerable = GetValuesAsync();
-            await foreach (var x in [|enumerable|]) { }
+            await foreach (var x in {|AZC0100:enumerable|}) { }
         }
 
         private static async IAsyncEnumerable<int> GetValuesAsync() { yield break; }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0100");
+            await Verifier.VerifyAnalyzerAsync(code);
         }
 
         [Fact]
@@ -298,7 +298,7 @@ namespace RandomNamespace
         public static async Task Foo()
         {
             foreach (var y in new List<string>()) { }
-            await foreach (var x in [|new AsyncEnumerable()|]) { }
+            await foreach (var x in {|AZC0100:new AsyncEnumerable()|}) { }
         }
 
         private class AsyncEnumerable : IAsyncEnumerable<int> 
@@ -307,7 +307,7 @@ namespace RandomNamespace
         }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0100");
+            await Verifier.VerifyAnalyzerAsync(code);
         }
 
         [Fact]
@@ -324,7 +324,7 @@ namespace RandomNamespace
         public static async Task Foo()
         {
             var ad = new AsyncDisposable();
-            await using([|ad|]) { }
+            await using({|AZC0100:ad|}) { }
         }
     
         private class AsyncDisposable : IAsyncDisposable
@@ -333,7 +333,7 @@ namespace RandomNamespace
         }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0100");
+            await Verifier.VerifyAnalyzerAsync(code);
         }
 
         [Fact]
@@ -349,7 +349,7 @@ namespace RandomNamespace
     {
         public static async Task Foo()
         {
-            await using([|new AsyncDisposable()|]) { }
+            await using({|AZC0100:new AsyncDisposable()|}) { }
         }
     
         private class AsyncDisposable : IAsyncDisposable
@@ -358,7 +358,7 @@ namespace RandomNamespace
         }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0100");
+            await Verifier.VerifyAnalyzerAsync(code);
         }
 
         [Fact]
@@ -374,8 +374,8 @@ namespace RandomNamespace
     {
         public static async Task Foo()
         {
-            await using IAsyncDisposable x = [|CreateAsyncDisposable()|],
-                                         y = [|new AsyncDisposable()|];
+            await using IAsyncDisposable x = {|AZC0100:CreateAsyncDisposable()|},
+                                         y = {|AZC0100:new AsyncDisposable()|};
         }
 
         private static IAsyncDisposable CreateAsyncDisposable() => new AsyncDisposable();
@@ -386,7 +386,7 @@ namespace RandomNamespace
         }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0100");
+            await Verifier.VerifyAnalyzerAsync(code);
         }
 
         [Fact]
@@ -403,7 +403,7 @@ namespace RandomNamespace
         public static async Task Foo()
         {
             var ad = new AsyncDisposable();
-            await using var _ = [|ad|];
+            await using var _ = {|AZC0100:ad|};
         }
     
         private class AsyncDisposable : IAsyncDisposable
@@ -412,7 +412,7 @@ namespace RandomNamespace
         }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0100");
+            await Verifier.VerifyAnalyzerAsync(code);
         }
 
         [Fact]
@@ -575,12 +575,9 @@ namespace RandomNamespace
         public static async Task M24() { await using(var a = ){} }
     }
 }";
-            await new AzureAnalyzerTest<AsyncAnalyzer>
-            {
-                CompilerDiagnostics = CompilerDiagnostics.None,
-                TestCode = code,
-                TestBehaviors = TestBehaviors.SkipGeneratedCodeCheck
-            }.RunAsync();
+            var analyzerTest = Verifier.CreateAnalyzer(code);
+            analyzerTest.CompilerDiagnostics = CompilerDiagnostics.None;
+            await analyzerTest.RunAsync();
         }
     }
 }

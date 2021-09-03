@@ -36,12 +36,12 @@ namespace RandomNamespace
     {
         private static void Foo()
         {
-            Task.[|Delay(0)|].EnsureCompleted();
+            Task.{|AZC0107:Delay(0)|}.EnsureCompleted();
         }
     }
 }";
             
-            await Verifier.CreateAnalyzer(code, "AZC0107")
+            await Verifier.CreateAnalyzer(code)
                 .WithSources(AzureCorePipelineTaskExtensions)
                 .RunAsync();
         }
@@ -65,12 +65,12 @@ namespace RandomNamespace
             }
             else 
             {
-                Task.[|Delay(0)|].EnsureCompleted();
+                Task.{|AZC0107:Delay(0)|}.EnsureCompleted();
             }
         }
     }
 }";
-            await Verifier.CreateAnalyzer(code, "AZC0107")
+            await Verifier.CreateAnalyzer(code)
                 .WithSources(AzureCorePipelineTaskExtensions)
                 .RunAsync();
         }

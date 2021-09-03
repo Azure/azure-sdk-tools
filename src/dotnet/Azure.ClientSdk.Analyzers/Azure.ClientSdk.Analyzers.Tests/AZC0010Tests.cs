@@ -21,12 +21,12 @@ namespace RandomNamespace
             V2018_11_09 = 0
         }
 
-        public SomeClientOptions(ServiceVersion [|version|])
+        public SomeClientOptions(ServiceVersion {|AZC0010:version|})
         {
         }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0010");
+            await Verifier.VerifyAnalyzerAsync(code);
         }
 
         [Fact]
@@ -43,12 +43,12 @@ namespace RandomNamespace
             V2019_03_20 = 1
         }
 
-        public SomeClientOptions(ServiceVersion [|version|] = ServiceVersion.V2018_11_09)
+        public SomeClientOptions(ServiceVersion {|AZC0010:version|} = ServiceVersion.V2018_11_09)
         {
         }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0010");
+            await Verifier.VerifyAnalyzerAsync(code);
         }
 
         [Fact]
@@ -65,12 +65,12 @@ namespace RandomNamespace
             V2019_03_20
         }
 
-        public SomeClientOptions(ServiceVersion [|version|] = ServiceVersion.V2018_11_09)
+        public SomeClientOptions(ServiceVersion {|AZC0010:version|} = ServiceVersion.V2018_11_09)
         {
         }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0010");
+            await Verifier.VerifyAnalyzerAsync(code);
         }
 
         [Fact]

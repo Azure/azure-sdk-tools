@@ -36,7 +36,7 @@ namespace RandomNamespace
     {
         public static async Task FooAsync()
         {
-            await FooImplAsync([|false|]).ConfigureAwait(false);
+            await FooImplAsync({|AZC0108:false|}).ConfigureAwait(false);
         }
 
         private static async Task<int> FooImplAsync(bool async, CancellationToken ct = default(CancellationToken))
@@ -44,7 +44,7 @@ namespace RandomNamespace
     }
 }";
 
-            await Verifier.CreateAnalyzer(code, "AZC0108")
+            await Verifier.CreateAnalyzer(code)
                 .WithSources(AzureCorePipelineTaskExtensions)
                 .RunAsync();
         }
@@ -64,7 +64,7 @@ namespace RandomNamespace
         {
             if (async)
             {
-                await FooImplAsync([|false|]).ConfigureAwait(false);
+                await FooImplAsync({|AZC0108:false|}).ConfigureAwait(false);
             }
         }
 
@@ -73,7 +73,7 @@ namespace RandomNamespace
     }
 }";
 
-            await Verifier.CreateAnalyzer(code, "AZC0108")
+            await Verifier.CreateAnalyzer(code)
                 .WithSources(AzureCorePipelineTaskExtensions)
                 .RunAsync();
         }
@@ -93,7 +93,7 @@ namespace RandomNamespace
         private static void Foo(bool async)
         {
             Func<Task<int>> fooAsync = async () 
-                => async ? await FooImplAsync([|false|]).ConfigureAwait(false) : 42;
+                => async ? await FooImplAsync({|AZC0108:false|}).ConfigureAwait(false) : 42;
         }
 
         private static async Task<int> FooImplAsync(bool async, CancellationToken ct = default(CancellationToken))
@@ -101,7 +101,7 @@ namespace RandomNamespace
     }
 }";
 
-            await Verifier.CreateAnalyzer(code, "AZC0108")
+            await Verifier.CreateAnalyzer(code)
                 .WithSources(AzureCorePipelineTaskExtensions)
                 .RunAsync();
         }
@@ -121,7 +121,7 @@ namespace RandomNamespace
         {
             if (async)
             {
-                var task = FooImplAsync([|false|]);
+                var task = FooImplAsync({|AZC0108:false|});
                 await task.ConfigureAwait(false);
             }
         }
@@ -131,7 +131,7 @@ namespace RandomNamespace
     }
 }";
             
-            await Verifier.CreateAnalyzer(code, "AZC0108")
+            await Verifier.CreateAnalyzer(code)
                 .WithSources(AzureCorePipelineTaskExtensions)
                 .RunAsync();
         }
@@ -151,7 +151,7 @@ namespace RandomNamespace
         {
             if (async)
             {
-                await FooImplAsync([|false|]).Unwrap().ConfigureAwait(false);
+                await FooImplAsync({|AZC0108:false|}).Unwrap().ConfigureAwait(false);
             }
         }
         
@@ -160,7 +160,7 @@ namespace RandomNamespace
     }
 }";
 
-            await Verifier.CreateAnalyzer(code, "AZC0108")
+            await Verifier.CreateAnalyzer(code)
                 .WithSources(AzureCorePipelineTaskExtensions)
                 .RunAsync();
         }
@@ -177,7 +177,7 @@ namespace RandomNamespace
     {
         public static void Foo()
         {
-            FooImplAsync([|true|]).EnsureCompleted();
+            FooImplAsync({|AZC0108:true|}).EnsureCompleted();
         }
 
         private static async Task<int> FooImplAsync(bool async, CancellationToken ct = default(CancellationToken))
@@ -185,7 +185,7 @@ namespace RandomNamespace
     }
 }";
 
-            await Verifier.CreateAnalyzer(code, "AZC0108")
+            await Verifier.CreateAnalyzer(code)
                 .WithSources(AzureCorePipelineTaskExtensions)
                 .RunAsync();
         }
@@ -202,14 +202,14 @@ namespace RandomNamespace
 
     public class MyClass
     {
-        public static int Foo { get { return FooImplAsync([|true|]).EnsureCompleted(); } }
+        public static int Foo { get { return FooImplAsync({|AZC0108:true|}).EnsureCompleted(); } }
 
         private static async Task<int> FooImplAsync(bool async, CancellationToken ct = default(CancellationToken))
             => async ? await Task.FromResult(42).ConfigureAwait(false) : 42;
     }
 }";
 
-            await Verifier.CreateAnalyzer(code, "AZC0108")
+            await Verifier.CreateAnalyzer(code)
                 .WithSources(AzureCorePipelineTaskExtensions)
                 .RunAsync();
         }
@@ -226,14 +226,14 @@ namespace RandomNamespace
 
     public class MyClass
     {
-        public static int Foo => FooImplAsync([|true|]).EnsureCompleted();
+        public static int Foo => FooImplAsync({|AZC0108:true|}).EnsureCompleted();
 
         private static async Task<int> FooImplAsync(bool async, CancellationToken ct = default(CancellationToken))
             => async ? await Task.FromResult(42).ConfigureAwait(false) : 42;
     }
 }";
 
-            await Verifier.CreateAnalyzer(code, "AZC0108")
+            await Verifier.CreateAnalyzer(code)
                 .WithSources(AzureCorePipelineTaskExtensions)
                 .RunAsync();
         }
@@ -254,7 +254,7 @@ namespace RandomNamespace
         {
             if (!async)
             {
-                FooImplAsync([|true|]).EnsureCompleted();
+                FooImplAsync({|AZC0108:true|}).EnsureCompleted();
             }
             else 
             {
@@ -267,7 +267,7 @@ namespace RandomNamespace
     }
 }";
 
-            await Verifier.CreateAnalyzer(code, "AZC0108")
+            await Verifier.CreateAnalyzer(code)
                 .WithSources(AzureCorePipelineTaskExtensions)
                 .RunAsync();
         }
@@ -288,7 +288,7 @@ namespace RandomNamespace
         private static async Task FooAsync(bool async)
         {
             Func<Task<int>> fooAsync = async () 
-                => async ? await FooImplAsync(true).ConfigureAwait(false) : FooImplAsync([|true|]).EnsureCompleted();
+                => async ? await FooImplAsync(true).ConfigureAwait(false) : FooImplAsync({|AZC0108:true|}).EnsureCompleted();
         }
 
         private static async Task<int> FooImplAsync(bool async, CancellationToken ct = default(CancellationToken))
@@ -296,7 +296,7 @@ namespace RandomNamespace
     }
 }";
 
-            await Verifier.CreateAnalyzer(code, "AZC0108")
+            await Verifier.CreateAnalyzer(code)
                 .WithSources(AzureCorePipelineTaskExtensions)
                 .RunAsync();
         }
@@ -314,7 +314,7 @@ namespace RandomNamespace
     {
         private static void Foo()
         {
-            FooImplAsync([|true|]).Unwrap().EnsureCompleted();
+            FooImplAsync({|AZC0108:true|}).Unwrap().EnsureCompleted();
         }
         
         private static Task<Task<int>> FooImplAsync(bool async, CancellationToken ct = default(CancellationToken))
@@ -322,7 +322,7 @@ namespace RandomNamespace
     }
 }";
 
-            await Verifier.CreateAnalyzer(code, "AZC0108")
+            await Verifier.CreateAnalyzer(code)
                 .WithSources(AzureCorePipelineTaskExtensions)
                 .RunAsync();
         }

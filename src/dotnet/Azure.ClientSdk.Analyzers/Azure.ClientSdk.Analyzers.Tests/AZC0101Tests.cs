@@ -19,11 +19,11 @@ namespace RandomNamespace
     {
         public static async System.Threading.Tasks.Task Foo()
         {
-            await System.Threading.Tasks.Task.Run(() => {}).[|ConfigureAwait(true)|];
+            await System.Threading.Tasks.Task.Run(() => {}).{|AZC0101:ConfigureAwait(true)|};
         }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0101");
+            await Verifier.VerifyAnalyzerAsync(code);
         }
 
         [Fact]
@@ -40,13 +40,13 @@ namespace RandomNamespace
     {
         public static async Task Foo()
         {
-            await foreach (var x in GetValuesAsync().[|ConfigureAwait(true)|]) { }
+            await foreach (var x in GetValuesAsync().{|AZC0101:ConfigureAwait(true)|}) { }
         }
 
         private static async IAsyncEnumerable<int> GetValuesAsync() { yield break; }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0101");
+            await Verifier.VerifyAnalyzerAsync(code);
         }
 
         [Fact]
@@ -63,7 +63,7 @@ namespace RandomNamespace
         public static async Task Foo()
         {
             var ad = new AsyncDisposable();
-            await using(ad.[|ConfigureAwait(true)|]) { }
+            await using(ad.{|AZC0101:ConfigureAwait(true)|}) { }
         }
     
         private class AsyncDisposable : IAsyncDisposable
@@ -72,7 +72,7 @@ namespace RandomNamespace
         }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0101");
+            await Verifier.VerifyAnalyzerAsync(code);
         }
 
         [Fact]
@@ -89,7 +89,7 @@ namespace RandomNamespace
         public static async Task Foo()
         {
             var ad = new AsyncDisposable();
-            await using var x = ad.[|ConfigureAwait(true)|];
+            await using var x = ad.{|AZC0101:ConfigureAwait(true)|};
         }
     
         private class AsyncDisposable : IAsyncDisposable
@@ -98,7 +98,7 @@ namespace RandomNamespace
         }
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0101");
+            await Verifier.VerifyAnalyzerAsync(code);
         }
 
         [Fact]

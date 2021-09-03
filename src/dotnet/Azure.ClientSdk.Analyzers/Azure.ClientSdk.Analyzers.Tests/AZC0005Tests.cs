@@ -17,13 +17,13 @@ namespace RandomNamespace
 {
     public class SomeClientOptions { }
 
-    public class [|SomeClient|]
+    public class {|AZC0005:SomeClient|}
     {
         public SomeClient(string connectionString) {}
         public SomeClient(string connectionString, SomeClientOptions options) {}
     }
 }";
-            await Verifier.VerifyAnalyzerAsync(code, "AZC0005");
+            await Verifier.VerifyAnalyzerAsync(code);
         }
     }
 }

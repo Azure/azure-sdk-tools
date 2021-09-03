@@ -33,12 +33,5 @@ namespace Azure.ClientSdk.Analyzers.Tests
 
             ReferenceAssemblies = DefaultReferenceAssemblies;
         }
-
-        public string DescriptorName { get; set; }
-
-        protected override DiagnosticDescriptor GetDefaultDiagnostic(DiagnosticAnalyzer[] analyzers)
-            => string.IsNullOrWhiteSpace(DescriptorName)
-                ? base.GetDefaultDiagnostic(analyzers)
-                : analyzers.SelectMany(a => a.SupportedDiagnostics).FirstOrDefault(d => d.Id == DescriptorName) ?? base.GetDefaultDiagnostic(analyzers);
     }
 }

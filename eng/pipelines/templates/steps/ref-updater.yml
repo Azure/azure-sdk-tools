@@ -8,8 +8,18 @@ parameters:
 steps:
 - ${{ each repo in parameters.Repos }}:
   - pwsh: |
-      git clone https://github.com/azure/${{ repo }}
-    displayName: Clone ${{ repo }}
+      if (!(Test-Path ${{ repo.key }}))
+      {
+        git clone https://github.com/azure/${{ repo.key }}
+        if ("${{ repo.value.branch }}")
+        { 
+          Push-Location ${{ repo.key }}
+          Write-Host "git checkout ${{ repo.value.branch }}"
+          git checkout ${{ repo.value.branch }}
+          Pop-Location
+        }
+      }
+    displayName: Clone ${{ repo.key }}
     workingDirectory: $(System.DefaultWorkingDirectory)
   - template: /eng/common/pipelines/templates/steps/set-default-branch.yml
   - task: Powershell@2
@@ -17,7 +27,7 @@ steps:
       targetType: 'filePath'
       filePath: ${{ parameters.ToolsRepoPath }}/scripts/powershell/ref-updater.ps1
       arguments: >
-        -RepoRoot $(System.DefaultWorkingDirectory)/${{ repo }}
+        -RepoRoot $(System.DefaultWorkingDirectory)/${{ repo.key }}
         -Tag ${{ parameters.Tag }}
         -ToolRepo ${{ parameters.ToolRepo }}
       pwsh: true
@@ -25,11 +35,14 @@ steps:
 
   - template: ../../../common/pipelines/templates/steps/create-pull-request.yml
     parameters:
-      RepoName: ${{ repo }}
+      RepoName: ${{ repo.key }}
       PRBranchName: UpdateRepositoryRefsFor${{ parameters.ToolRepo }}
       CommitMsg: Update ${{ parameters.ToolRepo }} Repository Resource Refs in Yaml files
       PRTitle: Update ${{ parameters.ToolRepo }} Repository Resource Refs in Yaml files
       PushArgs: -f
-      WorkingDirectory: $(System.DefaultWorkingDirectory)/${{ repo }}
+      WorkingDirectory: $(System.DefaultWorkingDirectory)/${{ repo.key }}
       ScriptDirectory: ${{ parameters.ToolsRepoPath }}/eng/common/scripts
-      BaseBranchName: "$(DefaultBranch)"
+      ${{ if ne(repo.value.branch, '') }}:
+        BaseBranchName: ${{ repo.value.branch }}
+      ${{ if eq(repo.value.branch, '') }}:
+        BaseBranchName: $(DefaultBranch)

@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
+using System;
 using System.Collections.Immutable;
 using System.Linq;
 
@@ -17,7 +18,8 @@ namespace Azure.ClientSdk.Analyzers
         {
             Descriptors.AZC0008,
             Descriptors.AZC0009,
-            Descriptors.AZC0010
+            Descriptors.AZC0010,
+            Descriptors.AZC0016,
         });
 
         public override SymbolKind[] SymbolKinds => new[] { SymbolKind.NamedType };
@@ -43,6 +45,18 @@ namespace Azure.ClientSdk.Analyzers
             {
                 context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0008, typeSymbol.Locations.First()), typeSymbol);
                 return;
+            }
+
+            foreach (var serviceVersionMember in serviceVersionEnum.GetMembers().Where(member => member.Kind == SymbolKind.Field))
+            {
+                var parts = serviceVersionMember.Name.Split('_');
+                foreach (var part in parts)
+                {
+                    if (part.Length == 0 || !(char.IsDigit(part[0]) || char.IsUpper(part[0])))
+                    {
+                        context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0016, serviceVersionMember.Locations.First()), serviceVersionMember);
+                    }
+                }
             }
 
             foreach (var constructor in typeSymbol.Constructors)

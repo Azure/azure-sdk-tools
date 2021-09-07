@@ -16,15 +16,15 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
         private string _groupForReplace = null;
 
         /// <summary>
-        /// This sanitizer offers regex update of a specific JTokenPath. EG: "TableName" within a json response body having it's value replaced by
+        /// This sanitizer offers regex update of a specific JTokenPath. EG: "TableName" within a json response body having its value replaced by
         /// whatever substitution is offered. This simply means that if you are attempting to replace a specific key wholesale, this sanitizer will be 
         /// simpler than configuring a BodyRegexSanitizer that has to match against the full "KeyName": "Value" that is part of the json structure. Further reading is available
-        /// <a href="https://www.newtonsoft.com/json/help/html/SelectToken.htm#SelectTokenJSONPath">here.</a>
+        /// <a href="https://www.newtonsoft.com/json/help/html/SelectToken.htm#SelectTokenJSONPath">here.</a> If the body is NOT a JSON object, this sanitizer will NOT be applied.
         /// </summary>
         /// <param name="jsonPath">The SelectToken path (which could possibly match multiple entries) that will be used to select JTokens for value replacement.</param>
         /// <param name="value">The substitution value.</param>
         /// <param name="regex">A regex. Can be defined as a simple regex replace OR if groupForReplace is set, a subsitution operation. Defaults to replacing the entire string.</param>
-        /// <param name="groupForReplace">The capture group that needs to be operated upon. Do not set if you're invoking a simple replacement operation.</param>
+        /// <param name="groupForReplace">The regex capture group that needs to be operated upon. Do not set if you're invoking a simple replacement operation.</param>
         public BodyKeySanitizer(string jsonPath, string value = "Sanitized", string regex = ".*", string groupForReplace = null)
         {
             _jsonPath = jsonPath;
@@ -67,7 +67,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
 
         public override byte[] SanitizeBody(string contentType, byte[] body)
         {
-            throw new NotImplementedException("Current concept of sanitization doesn't apply to non-text payloads. If you are encountering this, contact scbedd with the example so as to improve the system.");
+            return body;
         }
     }
 }

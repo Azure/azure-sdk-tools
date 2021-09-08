@@ -41,10 +41,10 @@ namespace Azure.Sdk.Tools.SnippetGenerator
                 unUsedSnippets = (await new DirectoryProcessor(BasePath).ProcessAsync()).ToList();
             }
             Console.WriteLine();
-            string message = $"Not all snippets were used.\n{string.Join(Environment.NewLine, unUsedSnippets)}";
-            unUsedSnippets.Sort();
             if (unUsedSnippets.Any())
             {
+                string message = $"Not all snippets were used.\n{string.Join(Environment.NewLine, unUsedSnippets)}";
+                unUsedSnippets.Sort();
                 if (StrictMode)
                 {
                     throw new InvalidOperationException(message);

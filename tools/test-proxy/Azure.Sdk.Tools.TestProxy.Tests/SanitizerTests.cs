@@ -264,7 +264,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var removeHeaderSanitizer = new RemoveHeaderSanitizer(headersForRemoval: headerForRemoval);
             session.Session.Sanitize(removeHeaderSanitizer);
 
-            foreach(var header in headerForRemoval.Split().Select(x => x.Trim()))
+            foreach(var header in headerForRemoval.Split(",").Select(x => x.Trim()))
             {
                 Assert.False(targetEntry.Request.Headers.ContainsKey(header));
             }

@@ -18,7 +18,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
         /// between the commas separating each key. They will be ignored.</param>
         public RemoveHeaderSanitizer(string headersForRemoval)
         {
-            _keysForRemoval = headersForRemoval.Split().Select(x => x.Trim()).ToArray();
+            _keysForRemoval = headersForRemoval.Split(",").Select(x => x.Trim()).ToArray();
         }
 
         public override void SanitizeHeaders(IDictionary<string, string[]> headers)

@@ -3,13 +3,13 @@
 
 using System;
 using System.Collections.Generic;
-using System.Data.Odbc;
 using System.IO;
 using System.Linq;
 using System.Security.Claims;
-using System.Threading;
+using System.Text;
 using System.Threading.Tasks;
 using ApiView;
+using APIView.DIff;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.ApplicationInsights;
@@ -21,6 +21,7 @@ namespace APIViewWeb.Respositories
 {
     public class ReviewManager
     {
+
         private readonly IAuthorizationService _authorizationService;
 
         private readonly CosmosReviewRepository _reviewsRepository;
@@ -212,7 +213,7 @@ namespace APIViewWeb.Respositories
             return reviewCodeFileModel;
         }
 
-        private async Task<CodeFile> CreateCodeFile(
+        public async Task<CodeFile> CreateCodeFile(
             string originalName,
             Stream fileStream,
             bool runAnalysis,
@@ -504,6 +505,59 @@ namespace APIViewWeb.Respositories
                     telemetryClient.StopOperation(operation);
                 }
             }
+        }
+
+        public async Task<string> GetApiDiffFromAutomaticReview(CodeFile codeFile)
+        {
+            // Get automatically generated master review for package
+            var review = await _reviewsRepository.GetMasterReviewForPackageAsync(codeFile.Language, codeFile.PackageName);
+            if (review == null)
+            {
+                return "";
+            }
+
+            // Check if API surface level matches with any revisions
+            var renderedCodeFile = new RenderedCodeFile(codeFile);
+            foreach (var approvedRevision in review.Revisions.Reverse())
+            {
+                if (await IsReviewSame(approvedRevision, renderedCodeFile))
+                {
+                    return "";
+                }
+            }
+            // If review doesn't match with any revisions then generate formatted diff against last revision of automatic review
+            return await GetFormattedDiff(renderedCodeFile, review.Revisions.Last());
+        }
+
+
+        // Find formatted text diff only against last revision
+        private async Task<string> GetFormattedDiff(RenderedCodeFile renderedCodeFile, ReviewRevisionModel lastRevision)
+        {
+            RenderedCodeFile autoReview = await _codeFileRepository.GetCodeFileAsync(lastRevision);
+            var autoReviewTextFile = autoReview.RenderText(showDocumentation: false, skipDiff: true);
+            var prCodeTextFile = renderedCodeFile.RenderText(showDocumentation: false, skipDiff: true);
+            var diffLines = InlineDiff.Compute(autoReviewTextFile, prCodeTextFile, autoReviewTextFile, prCodeTextFile);
+            if (diffLines == null || diffLines.Length == 0)
+            {
+                return "";
+            }
+
+            var stringBuilder = new StringBuilder();
+            stringBuilder.Append("```").Append(Environment.NewLine);
+            foreach( var line in diffLines)
+            {
+                if ( line.Kind == DiffLineKind.Added)
+                {
+                    stringBuilder.Append("+ ").Append(line.Line.DisplayString).Append(Environment.NewLine);
+                }
+                else if(line.Kind == DiffLineKind.Removed)
+                {
+                    stringBuilder.Append("- ").Append(line.Line.DisplayString).Append(Environment.NewLine);
+                }
+                //No need to include unchanged lines for now. We will enhance this in next revision to include context.
+            }
+            stringBuilder.Append("```");
+            return stringBuilder.ToString();
         }
     }
 }

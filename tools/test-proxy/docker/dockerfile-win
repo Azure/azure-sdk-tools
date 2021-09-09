@@ -1,28 +1,12 @@
-FROM mcr.microsoft.com/powershell:nanoserver  AS installer-env
+FROM mcr.microsoft.com/dotnet/sdk:5.0.303-nanoserver-1809 AS build_env
 
-ARG PS_VERSION=7.1.0
-ARG PS_PACKAGE_URL=https://github.com/PowerShell/PowerShell/releases/download/v$PS_VERSION/PowerShell-$PS_VERSION-win-x64.zip
+# copy the code
+COPY docker_build/Azure.Sdk.Tools.TestProxy/ /proxyservercode
 
-ENV POWERSHELL_TELEMETRY_OPTOUT="1"
+# publish the package
+RUN cd /proxyservercode && dotnet publish -c Release -o /proxyserver -f net5.0
 
-SHELL ["pwsh", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
-
-ARG PS_PACKAGE_URL_BASE64
-
-RUN Write-host "Verifying valid Version..."; \
-    if (!($env:PS_VERSION -match '^\d+\.\d+\.\d+(-\w+(\.\d+)?)?$' )) { \
-        throw ('PS_Version ({0}) must match the regex "^\d+\.\d+\.\d+(-\w+(\.\d+)?)?$"' -f $env:PS_VERSION) \
-    } \
-    $ProgressPreference = 'SilentlyContinue'; \
-    Write-host "using url: $env:PS_PACKAGE_URL" ;\
-    $url = $env:PS_PACKAGE_URL ; \
-    Write-host "downloading: $url" ; \
-    [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12; \
-    New-Item -ItemType Directory /installer > $null ; \
-    Invoke-WebRequest -Uri $url -outfile /installer/powershell.zip -verbose; \
-    Expand-Archive /installer/powershell.zip -DestinationPath \PowerShell
-
-FROM mcr.microsoft.com/dotnet/sdk:5.0.302-nanoserver-1809 AS build
+FROM mcr.microsoft.com/dotnet/aspnet:5.0.3-nanoserver-1809 AS build
 
 # Copy PowerShell Core from the installer container
 ENV ProgramFiles="C:\Program Files" \
@@ -33,64 +17,30 @@ ENV ProgramFiles="C:\Program Files" \
     # Set the default windows path so we can use it
     WindowsPATH="C:\Windows\system32;C:\Windows" \
     NO_AT_BRIDGE=1 \
-    ASPNETCORE_ENVIRONMENT=Development
-
-USER ContainerAdministrator
-RUN setx PATH "%PATH%;%ProgramFiles%\PowerShell;" /M
-USER ContainerUser
-
-COPY --from=installer-env ["\\PowerShell\\", "$ProgramFiles\\PowerShell"]
-
-# intialize powershell module cache
-RUN pwsh \
-        -NoLogo \
-        -NoProfile \
-        -Command " \
-          $stopTime = (get-date).AddMinutes(15); \
-          $ErrorActionPreference = 'Stop' ; \
-          $ProgressPreference = 'SilentlyContinue' ; \
-          while(!(Test-Path -Path $env:PSModuleAnalysisCachePath)) {  \
-            Write-Host "'Waiting for $env:PSModuleAnalysisCachePath'" ; \
-            if((get-date) -gt $stopTime) { throw 'timout expired'} \
-            Start-Sleep -Seconds 6 ; \
-          }"
-
-RUN mkdir certwork
-
-ADD docker_build/dotnet-devcert.pfx certwork
-ADD docker_build/dotnet-devcert.crt certwork
-
-USER ContainerAdministrator
-RUN dotnet dev-certs https --clean --import /certwork/dotnet-devcert.pfx -p "password"
-USER ContainerUser
-
-# this is the workaround for the inability to "trust" a certificate due to permissions issues on the windows platform
-# we would obviously prefer to use...
-# RUN dotnet dev-certs https --trust
-# ...to trust the cert we imported above. However, due to the fact that a UI is REQUIRED to assent to this specific tool, 
-# it won't work on docker. ADDITIONALLY, we can't use the methodology of using powershell to insert into the LocalMachine/Root
-# as even if we surround it in a USER ContainerAdministrator to elevate our access, we STILL hit weird permission denied errors 
-# and he ASP.NET startup still can't load it as a dev certificate. 
-ENV ASPNETCORE_Kestrel__Certificates__Default__Path="/certwork/dotnet-devcert.pfx" \
-    ASPNETCORE_Kestrel__Certificates__Default__Password="password"  
-
-SHELL ["pwsh", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
-
+    ASPNETCORE_ENVIRONMENT=Development \
+    # these environment variables are workarounds for the inability to "trust" a certificate due to permissions issues on the windows platform
+    # we would obviously prefer to use...
+    # RUN dotnet dev-certs https --trust
+    # ...to trust the cert we imported above. However, due to the fact that a UI is REQUIRED to assent to this specific tool, 
+    # it won't work on docker. ADDITIONALLY, we can't use the methodology of using powershell to insert into the LocalMachine/Root
+    # as even if we surround it in a USER ContainerAdministrator to elevate our access, we STILL hit weird permission denied errors 
+    # and he ASP.NET startup still can't load it as a dev certificate. 
+    ASPNETCORE_Kestrel__Certificates__Default__Path="/certwork/dotnet-devcert.pfx" \
+    ASPNETCORE_Kestrel__Certificates__Default__Password="password"  \
+    # this override allows the tool server to listen to traffic over the docker bridge.
+    # default URL of localhost:5000 or localhost:50001 are not usable from outside the container
+    ASPNETCORE_URLS="http://0.0.0.0:5000;https://0.0.0.0:5001"
+    
 # while it may seem a bit strange to use "etc" on a windows container. We are mirroring
 # the methodology from the primary container, which is linux.
-RUN mkdir -p etc/testproxy
+RUN mkdir certwork & mkdir etc & cd etc & mkdir testproxy
+ADD docker_build/dotnet-devcert.pfx certwork
 
-# copy the code
-COPY docker_build/Azure.Sdk.Tools.TestProxy/ /proxyservercode
+WORKDIR /proxyserver
 
-# publish the package
-RUN cd /proxyservercode && dotnet publish -c Release -o /proxyserver -f net5.0
+COPY --from=build_env /proxyserver .
 
 EXPOSE 5001
 EXPOSE 5000
 
-# this override allows the tool server to listen to traffic over the docker bridge.
-# default URL of localhost:5000 or localhost:50001 are not usable from outside the container
-ENV DOTNET_URLS="http://0.0.0.0:5000;https://0.0.0.0:5001"
-
-ENTRYPOINT ["/proxyserver/Azure.Sdk.Tools.TestProxy.exe", "--storage-location", "/etc/testproxy"]
+ENTRYPOINT ["dotnet", "Azure.Sdk.Tools.TestProxy.dll", "--storage-location", "/etc/testproxy"]

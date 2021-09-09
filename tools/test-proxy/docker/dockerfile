@@ -18,8 +18,6 @@ ENV \
     # default URL of localhost:5000 or localhost:50001 are not usable from outside the container
     ASPNETCORE_URLS="http://0.0.0.0:5000;https://0.0.0.0:5001"
 
-COPY --from=build /proxyserver /proxyserver
-
 # dotnet-dev-certs tool is not included in aspnet image, so manually copy from sdk image
 COPY --from=build /usr/share/dotnet/sdk/5.0.400/DotnetTools/dotnet-dev-certs/5.0.9-servicing.21365.3/tools/net5.0/any/ /dotnet-dev-certs
 
@@ -40,4 +38,8 @@ RUN \
 
 EXPOSE 5000 5001
 
-ENTRYPOINT ["dotnet", "/proxyserver/Azure.Sdk.Tools.TestProxy.dll", "--storage-location", "/etc/testproxy"]
+WORKDIR /proxyserver
+
+COPY --from=build /proxyserver .
+
+ENTRYPOINT ["dotnet", "Azure.Sdk.Tools.TestProxy.dll", "--storage-location", "/etc/testproxy"]

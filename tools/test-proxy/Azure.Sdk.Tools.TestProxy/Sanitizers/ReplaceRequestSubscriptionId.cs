@@ -6,7 +6,8 @@
     public class ReplaceRequestSubscriptionId : UriRegexSanitizer
     {
 
-        public static string _regex = @"/(subscriptions)/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
+        public static string _regex = @"/subscriptions/(?<subid>[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})";
+        public static string _groupForReplace = "subid";
         private string _value;
 
         /// <summary>
@@ -14,7 +15,7 @@
         /// that it is replaced WITH however. The default replacement value is "00000000-0000-0000-0000-000000000000".
         /// </summary>
         /// <param name="value">The fake subscriptionId that will be placed where the real one is in the real request.</param>
-        public ReplaceRequestSubscriptionId(string value = "00000000-0000-0000-0000-000000000000"): base(_regex, value)
+        public ReplaceRequestSubscriptionId(string value = "00000000-0000-0000-0000-000000000000"): base(value: value, regex: _regex, groupForReplace: _groupForReplace)
         {
             _value = value;
         }

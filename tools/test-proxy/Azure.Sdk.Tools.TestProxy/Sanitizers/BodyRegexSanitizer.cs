@@ -35,7 +35,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
 
         public override byte[] SanitizeBody(string contentType, byte[] body)
         {
-            throw new NotImplementedException("Current concept of sanitization doesn't apply to non-text payloads. If you are encountering this, contact scbedd with the example so as to improve the system.");
+            return body;
         }
     }
 }

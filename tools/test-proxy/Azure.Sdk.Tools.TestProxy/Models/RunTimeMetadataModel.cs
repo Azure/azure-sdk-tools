@@ -72,14 +72,14 @@ namespace Azure.Sdk.Tools.TestProxy.Models
         public CtorDescription GetInstanceDetails(object target)
         {
             Type tType = target.GetType();
-            IList<PropertyInfo> props = new List<PropertyInfo>(tType.GetProperties());
+            IList<FieldInfo> fields = new List<FieldInfo>(tType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance));
             var arguments = new List<Tuple<string, string>>();
 
-            foreach (PropertyInfo prop in props.Where(x => x.PropertyType.IsValueType == true))
+            foreach (FieldInfo field in fields.Where(x => x.FieldType.Name == "String"))
             {
-                string propValue = prop.GetValue(target, null).ToString();
+                string propValue = field.GetValue(target).ToString();
 
-                arguments.Add(new Tuple<string, string>(prop.Name, propValue));
+                arguments.Add(new Tuple<string, string>(field.Name, propValue));
             }
 
             return new CtorDescription()

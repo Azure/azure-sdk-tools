@@ -125,13 +125,33 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [Fact]
         public void ReplaceRequestSubscriptionId()
         {
-            // TODO: tests successfully replacement
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/request_with_subscriptionid.json");
+            var targetEntry = session.Session.Entries.First();
+            var originalUri = targetEntry.RequestUri.ToString();
+            var subscriptionIdReplaceSanitizer = new UriSubscriptionIdSanitizer();
+
+            session.Session.Sanitize(subscriptionIdReplaceSanitizer);
+            var sanitizedUri = targetEntry.RequestUri;
+
+            Assert.NotEqual(originalUri, sanitizedUri);
+            Assert.StartsWith("/subscriptions/00000000-0000-0000-0000-000000000000/", sanitizedUri.Replace("https://management.azure.com", ""));
+            Assert.DoesNotContain("12345678-1234-1234-5678-123456789010", sanitizedUri);
+            Assert.Equal(originalUri.Length, sanitizedUri.Length);
         }
 
         [Fact]
         public void ReplaceRequestSubscriptionIdNoAction()
         {
-            // TODO: successful sanitize, no action necessary
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/oauth_request.json");
+            var targetEntry = session.Session.Entries.First();
+            var originalUri = targetEntry.RequestUri.ToString();
+            var subscriptionIdReplaceSanitizer = new UriSubscriptionIdSanitizer();
+
+            session.Session.Sanitize(subscriptionIdReplaceSanitizer);
+            var sanitizedUri = targetEntry.RequestUri;
+
+            // no action should have taken place here.
+            Assert.Equal(originalUri, sanitizedUri);
         }
 
         [Fact]

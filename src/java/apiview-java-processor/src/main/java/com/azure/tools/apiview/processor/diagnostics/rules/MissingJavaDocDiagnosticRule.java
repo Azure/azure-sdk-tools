@@ -14,7 +14,7 @@ import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.makeId;
 import static com.azure.tools.apiview.processor.model.DiagnosticKind.WARNING;
 
 public class MissingJavaDocDiagnosticRule implements DiagnosticRule {
-    private static boolean IGNORE_OVERRIDES = true;
+    private static final boolean IGNORE_OVERRIDES = true;
 
     @Override
     public void scanIndividual(final CompilationUnit cu, final APIListing listing) {
@@ -39,7 +39,7 @@ public class MissingJavaDocDiagnosticRule implements DiagnosticRule {
         });
     }
 
-    private void checkJavaDoc(NodeWithJavadoc n, String id, APIListing listing) {
+    private void checkJavaDoc(NodeWithJavadoc<?> n, String id, APIListing listing) {
         if (!n.hasJavaDocComment()) {
             listing.addDiagnostic(new Diagnostic(WARNING, id, "This API is missing JavaDoc."));
         }

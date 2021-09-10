@@ -1,10 +1,12 @@
 package com.azure.tools.apiview.processor.analysers.util;
 
+import com.github.javaparser.Range;
 import com.github.javaparser.ast.AccessSpecifier;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.ImportDeclaration;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.PackageDeclaration;
+import com.github.javaparser.ast.body.BodyDeclaration;
 import com.github.javaparser.ast.body.CallableDeclaration;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.ConstructorDeclaration;
@@ -12,7 +14,11 @@ import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.TypeDeclaration;
 import com.github.javaparser.ast.body.VariableDeclarator;
+import com.github.javaparser.ast.comments.Comment;
+import com.github.javaparser.ast.comments.JavadocComment;
+import com.github.javaparser.ast.nodeTypes.NodeWithJavadoc;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -189,5 +195,54 @@ public class ASTUtils {
         } else {
             return "";
         }
+    }
+
+    public static Optional<JavadocComment> attemptToFindJavadocComment(BodyDeclaration<?> bodyDeclaration) {
+        // It is possible to have a situation where a Javadoc exists but is in a detached from the declaration body.
+        //
+        // This occurs in a situation such as the following:
+        //
+        // <javadoc>
+        // // Comment between Javadoc and body declaration
+        // <body declaration>
+        //
+        // Unfortunately, this will be flagged in ApiView as missing a Javadoc. So, now, traverse the comments of the
+        // body declaration until they terminate, then find the orphaned (if there is any) Javadoc which precedes it in
+        // the code file. This is only attempted if bodyDeclaration doesn't have a Javadoc.
+        if (!(bodyDeclaration instanceof NodeWithJavadoc<?>)) {
+            return Optional.empty();
+        }
+
+        NodeWithJavadoc<?> nodeWithJavadoc = (NodeWithJavadoc<?>) bodyDeclaration;
+
+        // BodyDeclaration has a Javadoc.
+        if (nodeWithJavadoc.getJavadocComment().isPresent()) {
+            return nodeWithJavadoc.getJavadocComment();
+        }
+
+        // Get the orphaned comments.
+        List<Comment> orphanedComments = bodyDeclaration.getParentNode().get().getOrphanComments();
+
+        // Traverse up the comments between the Javadoc and the body declaration.
+        Optional<Comment> commentTraversalNode = bodyDeclaration.getComment();
+        Comment comment = null;
+        while (commentTraversalNode.isPresent()) {
+            comment = commentTraversalNode.get();
+            commentTraversalNode = comment.getComment();
+        }
+
+        if (comment == null) {
+            return Optional.empty();
+        }
+
+        // Check if there are any orphaned Javadoc comments before the additional code comments.
+        Range expectedJavadocRangeOverlap = comment.getRange().get()
+            .withBeginLine(comment.getRange().get().begin.line - 1);
+
+        return orphanedComments.stream()
+            .filter(c -> c.getRange().get().overlapsWith(expectedJavadocRangeOverlap))
+            .filter(c -> c instanceof JavadocComment)
+            .map(c -> (JavadocComment) c)
+            .findFirst();
     }
 }

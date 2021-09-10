@@ -10,7 +10,6 @@ import com.azure.tools.apiview.processor.model.TypeKind;
 import com.azure.tools.apiview.processor.model.maven.Dependency;
 import com.azure.tools.apiview.processor.model.maven.Pom;
 import com.github.javaparser.ParserConfiguration;
-import com.github.javaparser.Range;
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.TokenRange;
 import com.github.javaparser.ast.CompilationUnit;
@@ -69,6 +68,7 @@ import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.attemptToFindJavadocComment;
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.getPackageName;
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.isInterfaceType;
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.isPrivateOrPackagePrivate;
@@ -397,7 +397,7 @@ public class JavaASTAnalyser implements Analyser {
                 return;
             }
 
-            visitJavaDoc(typeDeclaration.getJavadocComment(), typeDeclaration);
+            visitJavaDoc(typeDeclaration);
 
             // public custom annotation @interface's annotations
             if (typeDeclaration.isAnnotationDeclaration() && !isPrivateOrPackagePrivate(typeDeclaration.getAccessSpecifier())) {
@@ -577,7 +577,7 @@ public class JavaASTAnalyser implements Analyser {
             AtomicInteger counter = new AtomicInteger();
 
             enumConstantDeclarations.forEach(enumConstantDeclaration -> {
-                visitJavaDoc(enumConstantDeclaration.getJavadocComment(), enumConstantDeclaration);
+                visitJavaDoc(enumConstantDeclaration);
 
                 addToken(makeWhitespace());
 
@@ -759,7 +759,7 @@ public class JavaASTAnalyser implements Analyser {
                     continue;
                 }
 
-                visitJavaDoc(fieldDeclaration.getJavadocComment(), fieldDeclaration);
+                visitJavaDoc(fieldDeclaration);
 
                 addToken(makeWhitespace());
 
@@ -871,7 +871,7 @@ public class JavaASTAnalyser implements Analyser {
 
                     group.forEach(callableDeclaration -> {
                         // print the JavaDoc above each method / constructor
-                        visitJavaDoc(callableDeclaration.getJavadocComment(), callableDeclaration);
+                        visitJavaDoc(callableDeclaration);
 
                         addToken(makeWhitespace());
 
@@ -1250,7 +1250,9 @@ public class JavaASTAnalyser implements Analyser {
                 getTypeDFS(childNode);
 
                 // Closing punctuation character
-                if (i == childrenSize - 1) {
+                if (i == 0) {
+                    continue;
+                } else if (i == childrenSize - 1) {
                     ((ClassOrInterfaceType) node).getTypeArguments().ifPresent(
                         (NodeList<Type> values) -> addToken(new Token(PUNCTUATION, ">")));
                 } else {
@@ -1321,49 +1323,8 @@ public class JavaASTAnalyser implements Analyser {
             .forEach(m -> buildTypeHierarchyForNavigation(m.asTypeDeclaration()));
     }
 
-    private void visitJavaDoc(Optional<JavadocComment> javadocComment, BodyDeclaration<?> bodyDeclaration) {
-        // It is possible to have a situation where a Javadoc exists but is in a detached from the declaration body.
-        //
-        // This occurs in a situation such as the following:
-        //
-        // <javadoc>
-        // // Comment between Javadoc and body declaration
-        // <body declaration>
-        //
-        // Unfortunately, this will be flagged in ApiView as missing a Javadoc. So, now, traverse the comments of the
-        // body declaration until they terminate, then find the orphaned (if there is any) Javadoc which precedes it in
-        // the code file. This is only attempted if bodyDeclaration doesn't have a Javadoc.
-        if (javadocComment.isPresent()) {
-            visitJavaDoc(javadocComment.get());
-            return;
-        }
-
-        // Get the orphaned comments.
-        List<Comment> orphanedComments = bodyDeclaration.getParentNode().get().getOrphanComments();
-
-        // Traverse up the comments between the Javadoc and the body declaration.
-        Optional<Comment> commentTraversalNode = bodyDeclaration.getComment();
-        Comment comment = null;
-        while (commentTraversalNode.isPresent()) {
-            comment = commentTraversalNode.get();
-            commentTraversalNode = comment.getComment();
-        }
-
-        if (comment == null) {
-            return;
-        }
-
-        // Check if there are any orphaned Javadoc comments before the additional code comments.
-        Range expectedJavadocRangeOverlap = comment.getRange().get()
-            .withBeginLine(comment.getRange().get().begin.line - 1);
-        Optional<JavadocComment> potentialJavadoc = orphanedComments.stream()
-            .filter(c -> c.getRange().get().overlapsWith(expectedJavadocRangeOverlap))
-            .filter(c -> c instanceof JavadocComment)
-            .map(c -> (JavadocComment) c)
-            .findFirst();
-
-        // Check if a detached Javadoc is found and if so visit it.
-        potentialJavadoc.ifPresent(this::visitJavaDoc);
+    private void visitJavaDoc(BodyDeclaration<?> bodyDeclaration) {
+        attemptToFindJavadocComment(bodyDeclaration).ifPresent(this::visitJavaDoc);
     }
 
     private void visitJavaDoc(JavadocComment jd) {

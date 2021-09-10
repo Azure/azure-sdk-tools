@@ -118,46 +118,42 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 Type t = Type.GetType(typePrefix + name);
 
-                if (body != null)
+
+                var arg_list = new List<Object> { };
+
+                // we are deliberately assuming here that there will only be a single constructor
+                var ctor = t.GetConstructors()[0];
+                var paramsSet = ctor.GetParameters();
+
+                // walk across our constructor params. check inside the body for a resulting value for each of them
+                foreach (var param in paramsSet)
                 {
-                    var arg_list = new List<Object> { };
-
-                    // we are deliberately assuming here that there will only be a single constructor
-                    var ctor = t.GetConstructors()[0];
-                    var paramsSet = ctor.GetParameters();
-
-                    // walk across our constructor params. check inside the body for a resulting value for each of them
-                    foreach (var param in paramsSet)
+                    if (body != null && body.RootElement.TryGetProperty(param.Name, out var jsonElement))
                     {
-                        if (body.RootElement.TryGetProperty(param.Name, out var jsonElement))
+                        var valueResult = jsonElement.GetString();
+                        arg_list.Add((object)valueResult);
+                    }
+                    else
+                    {
+                        if (param.IsOptional)
                         {
-                            var valueResult = jsonElement.GetString();
-                            arg_list.Add((object)valueResult);
+                            arg_list.Add(null);
                         }
                         else
                         {
-                            if (param.IsOptional)
-                            {
-                                arg_list.Add(null);
-                            }
-                            else
-                            {
-                                // TODO: make this a specific argument not found exception
-                                throw new Exception(String.Format("Required parameter key {0} was not found in the request body.", param));
-                            }
+                            // TODO: make this a specific argument not found exception
+                            throw new Exception(String.Format("Required parameter key {0} was not found in the request body.", param));
                         }
                     }
+                }
 
-                    return Activator.CreateInstance(t, arg_list.ToArray());
-                }
-                else
-                {
-                    return Activator.CreateInstance(t);
-                }
+                return Activator.CreateInstance(t, arg_list.ToArray());
             }
-            catch
+            catch(Exception e)
             {
-                throw new Exception(String.Format("Requested type {0} is not not recognized.", typePrefix + name));
+                e.Data.Add("Attempted Type", String.Format("Requested type {0} is not not recognized.", typePrefix + name));
+
+                throw;
             }
         }
 

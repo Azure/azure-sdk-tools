@@ -27,12 +27,10 @@ import java.util.List;
 import java.util.Optional;
 
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.makeId;
-import static com.azure.tools.apiview.processor.diagnostics.rules.RequiredBuilderMethodsDiagnosticRule.ExactTypeNameCheckFunction;
-import static com.azure.tools.apiview.processor.diagnostics.rules.RequiredBuilderMethodsDiagnosticRule.DirectSubclassCheckFunction;
-
-import static com.azure.tools.apiview.processor.diagnostics.rules.RequiredBuilderMethodsDiagnosticRule.ParameterAllowedTypes;
-
 import static com.azure.tools.apiview.processor.diagnostics.rules.IllegalMethodNamesDiagnosticRule.Rule;
+import static com.azure.tools.apiview.processor.diagnostics.rules.RequiredBuilderMethodsDiagnosticRule.DirectSubclassCheckFunction;
+import static com.azure.tools.apiview.processor.diagnostics.rules.RequiredBuilderMethodsDiagnosticRule.ExactTypeNameCheckFunction;
+import static com.azure.tools.apiview.processor.diagnostics.rules.RequiredBuilderMethodsDiagnosticRule.ParameterAllowedTypes;
 import static com.azure.tools.apiview.processor.model.DiagnosticKind.WARNING;
 
 public class Diagnostics {
@@ -65,7 +63,7 @@ public class Diagnostics {
             .add("clientOptions", new ExactTypeNameCheckFunction("ClientOptions"))
             .add("connectionString", new ExactTypeNameCheckFunction("String"))
             .add("credential", new ExactTypeNameCheckFunction(new ParameterAllowedTypes("TokenCredential",
-                    "AzureKeyCredential", "AzureSasCredential", "AzureNamedKeyCredential")))
+                "AzureKeyCredential", "AzureSasCredential", "AzureNamedKeyCredential")))
             .add("endpoint", new ExactTypeNameCheckFunction("String"))
             .add("serviceVersion", this::checkServiceVersionType));
         diagnostics.add(new RequiredBuilderMethodsDiagnosticRule("amqp")
@@ -85,9 +83,9 @@ public class Diagnostics {
         ClassOrInterfaceType classOrInterfaceType = parameterType.asClassOrInterfaceType();
         if (!classOrInterfaceType.getNameAsString().endsWith("ServiceVersion")) {
             return Optional.of(
-                    new Diagnostic(WARNING, makeId(methodDeclaration),
-                            "Incorrect type being supplied to this builder method. Expected an enum "
-                            + "implementing ServiceVersion but was " + classOrInterfaceType.getNameAsString() + "."));
+                new Diagnostic(WARNING, makeId(methodDeclaration),
+                    "Incorrect type being supplied to this builder method. Expected an enum "
+                        + "implementing ServiceVersion but was " + classOrInterfaceType.getNameAsString() + "."));
         }
         return Optional.empty();
     }
@@ -97,7 +95,7 @@ public class Diagnostics {
      */
     public void scanIndividual(CompilationUnit cu, APIListing listing) {
         // We do not scan compilation units that are missing any primary type (i.e. they are completely commented out).
-        if (! cu.getPrimaryType().isPresent()) {
+        if (!cu.getPrimaryType().isPresent()) {
             return;
         }
         diagnostics.forEach(rule -> rule.scanIndividual(cu, listing));

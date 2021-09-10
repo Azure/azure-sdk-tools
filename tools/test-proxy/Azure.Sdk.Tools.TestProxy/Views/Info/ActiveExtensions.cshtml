@@ -15,13 +15,13 @@
 </head>
 <body>
     <h1>
-        Test-Proxy Service <b>Active</b> Extensions
+        Test-Proxy - Active Extensions
     </h1>
     <p>
         The below extensions are currently configured.
     </p>
     <p>
-        To observe other extensions are can be added to your session, visit <b>/Info/Available</b>
+        To observe other extensions are can be added to your session, visit <a href="/Info/Available">/Info/Available</a>.
     </p>
     @if (Model.Sanitizers.Count() >= 0)
     {
@@ -41,6 +41,29 @@
                     <p>
                         @extension.Description
                     </p>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <h3>Instance Details</h3>
+                    @if (!String.IsNullOrEmpty(extension.ConstructorDetails.Description) || extension.ConstructorDetails.Arguments.Count() > 0)
+                    {
+                        <p>
+                            This sanitizer was created with the following settings:
+                        </p>
+                        <ul>
+                            @foreach (var arg in extension.ConstructorDetails.Arguments)
+                            {
+                                <li><span><code>@arg.Item1</code></span>: @arg.Item2</li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <p class="unused">
+                            This sanitizer does not have any customizable settings.
+                        </p>
+                    }
                 </td>
             </tr>
         </table>
@@ -66,6 +89,29 @@
                     </p>
                 </td>
             </tr>
+            <tr>
+                <td>
+                    <h3>Instance Details</h3>
+                    @if (!String.IsNullOrEmpty(extension.ConstructorDetails.Description) || extension.ConstructorDetails.Arguments.Count() > 0)
+                    {
+                        <p>
+                            This matcher was created with the following settings:
+                        </p>
+                        <ul>
+                            @foreach (var arg in extension.ConstructorDetails.Arguments)
+                            {
+                                <li><span><code>@arg.Item1</code></span>: @arg.Item2</li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <p class="unused">
+                            This matcher does not have any customizable settings.
+                        </p>
+                    }
+                </td>
+            </tr>
         </table>
     }
 
@@ -87,6 +133,29 @@
                     <p>
                         @extension.Description
                     </p>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <h3>Instance Details</h3>
+                    @if (!String.IsNullOrEmpty(extension.ConstructorDetails.Description) || extension.ConstructorDetails.Arguments.Count() > 0)
+                    {
+                        <p>
+                            This transform was created with the following settings:
+                        </p>
+                        <ul>
+                            @foreach (var arg in extension.ConstructorDetails.Arguments)
+                            {
+                                <li><span><code>@arg.Item1</code></span>: @arg.Item2</li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <p class="unused">
+                            This transform does not have any customizable settings.
+                        </p>
+                    }
                 </td>
             </tr>
         </table>

@@ -15,25 +15,43 @@
 </head>
 <body>
     <h1>
-        Test-Proxy Service Available Extensions
+        Test-Proxy - Available Extensions
     </h1>
+    <p>
+        The test-proxy supports "extensions" or "customizations" to the recording experience. What this really means is that non-default <code>sanitization</code>, <code>matching</code>, and response <code>transformation</code> are all possible.
+    </p>
+    <p>
+        This page serves as an index of all these available customizations. They range from generalized regex find/replace to on-the-fly updating of a played back response with updated <code>Date</code> and <code>request-id</code> headers.
+    </p>
     <p>
         To leverage any of the below extensions, your local test framework should POST to the <code>Admin</code> controller. Below is an example.
     </p>
     <pre>
-        METHOD: POST
-        URL: PROXYURL/Admin/AddSanitizer
-        HEADERS: {
-            "x-abstraction-identifier": "ContinuationSanitizer"
-        }
-        BODY: {
-            "key": "RequestId",
-            "method": "guid",
-            "resetAfterFirst": "false"
-        }
+METHOD: POST
+URL: PROXYURL/Admin/AddSanitizer
+HEADERS: {
+    "x-abstraction-identifier": "GeneralRegexSanitizer"
+}
+BODY: {
+    "value": "fakeaccount",
+    "regex": "https\:\/\/(?&lt;account&gt;[a-z]+)\.(?:table|blob|queue)\.core\.windows\.net",
+    "groupForReplace": "account"
+}
     </pre>
     <p>
-        To observe which transforms are currently active on your session, visit <b>/Info/Active</b>
+        You should provide a single header value. One that identifies the the <b>exact</b> name of an existing session customization. The key/value pairs visible in the body correspond
+        to mandatory arguments defined by each customization. These are higlighted in the information available below!
+    </p>
+    <p>
+        Also note that the above example is adding a <code>sanitizer</code>, which is one of three session customizations offered by this test proxy.
+        <ul>
+            <li>/Admin/AddSanitizer</li>
+            <li>/Admin/AddTransform</li>
+            <li>/Admin/SetMatcher</li>
+        </ul>
+    </p>
+    <p>
+        To observe which customizations are currently active on your session, visit <a href="/Info/Active">/Info/Active/</a>.
     </p>
     <h1>Available Sanitizers</h1>
     <p>
@@ -93,6 +111,13 @@
     }
 
     <h1>Available Matchers</h1>
+    <p>
+        A <b>matcher</b> is applied during a playback session. The default matcher matches a request on <b>headers</b>, <b>URI</b>, and <b>the body.</b>
+    </p>
+    <p>
+        This is the least used customization as most adjustments to matching really come down to sanitizing properly before storing the recording. Further, when using this
+        customization, it is recommended that one passes the <code>x-recording-id</code> header so that the adjusting matching only occurs for a specific recording during playback.
+    </p>
     @foreach (var extension in Model.Matchers)
     {
         <table style="width:100%">

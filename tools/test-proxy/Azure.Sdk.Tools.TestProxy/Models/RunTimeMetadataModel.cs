@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Xml;
 using System.IO;
+using Azure.Sdk.Tools.TestProxy.Common;
 
 namespace Azure.Sdk.Tools.TestProxy.Models
 {
@@ -33,6 +34,7 @@ namespace Azure.Sdk.Tools.TestProxy.Models
             get { return Descriptions.Where(x => x.ActionType == MetaDataType.Sanitizer); }
         }
 
+        // generates a constructor description for a given type based off comment xml
         public CtorDescription GetCtorDescription(Type type, XmlDocument docCommentXml)
         {
             var memberSearchString = String.Format(CTOR_FORMAT_STRING, type.FullName);
@@ -60,6 +62,29 @@ namespace Azure.Sdk.Tools.TestProxy.Models
             return new CtorDescription()
             {
                 Description = description,
+                Arguments = arguments
+            };
+        }
+
+
+        // takes a already instantiated sanitizer, matcher, or transform and returns the instance details as a ctor description
+        // does not use the commentxml
+        public CtorDescription GetInstanceDetails(object target)
+        {
+            Type tType = target.GetType();
+            IList<FieldInfo> fields = new List<FieldInfo>(tType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance));
+            var arguments = new List<Tuple<string, string>>();
+
+            foreach (FieldInfo field in fields.Where(x => x.FieldType.Name == "String"))
+            {
+                string propValue = field.GetValue(target).ToString();
+
+                arguments.Add(new Tuple<string, string>(field.Name, propValue));
+            }
+
+            return new CtorDescription()
+            {
+                Description = String.Empty,
                 Arguments = arguments
             };
         }

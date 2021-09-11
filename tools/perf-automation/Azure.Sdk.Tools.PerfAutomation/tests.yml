@@ -281,6 +281,7 @@ Services:
     Net:
       Project: sdk/keyvault/Azure.Security.KeyVault.Secrets/perf/Azure.Security.KeyVault.Secrets.Perf.csproj
       PackageVersions:
+      - Azure.Security.KeyVault.Secrets: 4.0.0
       - Azure.Security.KeyVault.Secrets: 4.2.0
       - Azure.Security.KeyVault.Secrets: source
     Java:
@@ -294,6 +295,11 @@ Services:
         azure-security-keyvault-keys: source
         azure-security-keyvault-secrets: source
         reactor-core: source
+    JS:
+      Project: sdk/keyvault/perf-tests/keyvault-secrets
+      PackageVersions:
+      - "@azure/storage-file-datalake": 12.5.0
+      - "@azure/storage-file-datalake": source
     Python:
       Project: sdk/keyvault/azure-keyvault-secrets
       PackageVersions:

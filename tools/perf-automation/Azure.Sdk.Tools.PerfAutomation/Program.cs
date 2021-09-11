@@ -63,6 +63,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
             [Option('n', "dry-run")]
             public bool DryRun { get; set; }
 
+            [Option("insecure", HelpText = "Allow untrusted SSL certs")]
+            public bool Insecure { get; set; }
+
             [Option('i', "iterations", Default = 1)]
             public int Iterations { get; set; }
 
@@ -89,6 +92,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             [Option('s', "services", HelpText = "Regex of services to run")]
             public string Services { get; set; }
+
+            [Option('x', "test-proxy", HelpText = "URI of TestProxy Server")]
+            public Uri TestProxy { get; set; }
 
             [Option('t', "tests", HelpText = "Regex of tests to run")]
             public string Tests { get; set; }
@@ -303,6 +309,16 @@ namespace Azure.Sdk.Tools.PerfAutomation
                                     allArguments += $" --{name} {value}";
                                 }
                             }
+                        }
+
+                        if (options.Insecure)
+                        {
+                            allArguments += " --insecure";
+                        }
+
+                        if (options.TestProxy != null)
+                        {
+                            allArguments += $" --test-proxy {options.TestProxy}";
                         }
 
                         var result = new Result

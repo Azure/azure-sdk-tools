@@ -276,7 +276,7 @@ Services:
       JS: StorageDFSUploadTest
       Python: UploadTest
 
-- Service: key-vault-secrets
+- Service: keyvault-secrets
   Languages:
     Net:
       Project: sdk/keyvault/Azure.Security.KeyVault.Secrets/perf/Azure.Security.KeyVault.Secrets.Perf.csproj
@@ -316,7 +316,7 @@ Services:
       Python: GetSecretTest
 
   - Test: list-secrets
-    Arguments: &key-vault-counts
+    Arguments: &keyvault-counts
     - --count 1 --warmup 0 --duration 1
     - --count 5 --parallel 64
     - --count 500 --parallel 32

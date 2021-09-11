@@ -94,6 +94,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             public string Services { get; set; }
 
             [Option('x', "test-proxy", HelpText = "URI of TestProxy Server")]
+            [YamlMember(typeof(string))]
             public Uri TestProxy { get; set; }
 
             [Option('t', "tests", HelpText = "Regex of tests to run")]

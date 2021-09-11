@@ -324,7 +324,7 @@ Services:
       Net: ListSecrets
       Java: ListSecrets
 
-- Service: event-hubs
+- Service: eventhubs
   Languages:
     Net:
       Project: sdk/eventhub/Azure.Messaging.EventHubs/perf

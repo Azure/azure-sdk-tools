@@ -543,6 +543,7 @@ namespace APIViewWeb.Respositories
             }
 
             var stringBuilder = new StringBuilder();
+            stringBuilder.Append("Following API change(s) have been detected in this PR by APIView system.").Append(Environment.NewLine);
             stringBuilder.Append("```").Append(Environment.NewLine);
             foreach( var line in diffLines)
             {

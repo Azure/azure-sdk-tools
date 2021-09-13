@@ -51,19 +51,20 @@ namespace APIViewWeb.Repositories
             var operation = telemetryClient.StartOperation(requestTelemetry);
             try
             {
-                if (await IsShaAlreadyProcessed(language, prNumber, commitSha))
+                if (await IsShaAlreadyProcessed(language, prNumber, commitSha, filePath))
                 {
                     return;
                 }
 
-                var pullRequestModel = await _pullRequestsRepository.GetPullRequestAsync(prNumber, language);
+                var pullRequestModel = await _pullRequestsRepository.GetPullRequestAsync(prNumber, language, filePath);
                 if (pullRequestModel == null)
                 {
                     pullRequestModel = new PullRequestModel()
                     {
                         Language = language,
                         CommitSha = commitSha,
-                        PullRequestNumber = prNumber
+                        PullRequestNumber = prNumber,
+                        FilePath = filePath
                     };
                 }
                 else
@@ -102,9 +103,9 @@ namespace APIViewWeb.Repositories
         }
 
         // Make sure we are not processing same commit by repeated run of build pipeline
-        private async Task<bool> IsShaAlreadyProcessed(string language, int prNumber, string commitSha)
+        private async Task<bool> IsShaAlreadyProcessed(string language, int prNumber, string commitSha, string filePath)
         {
-            var pullRequestModel = await _pullRequestsRepository.GetPullRequestAsync(prNumber, language, commitSha);
+            var pullRequestModel = await _pullRequestsRepository.GetPullRequestAsync(prNumber, language, commitSha, filePath);
             return pullRequestModel != null;
         }
 

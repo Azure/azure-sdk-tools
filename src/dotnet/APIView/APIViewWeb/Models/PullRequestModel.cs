@@ -11,5 +11,7 @@ namespace APIViewWeb.Models
         public int PullRequestNumber { get; set; }
         public string CommitSha { get; set; }
         public string Language { get; set; }
+        public string FilePath { get; set; }
+        public bool IsOpen { get; set; } = true;
     }
 }

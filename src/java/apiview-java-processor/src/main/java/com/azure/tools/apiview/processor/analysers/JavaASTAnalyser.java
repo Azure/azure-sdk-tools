@@ -47,7 +47,6 @@ import com.github.javaparser.ast.type.TypeParameter;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
-import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 
 import java.io.File;
@@ -69,11 +68,16 @@ import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.attemptToFindJavadocComment;
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.getPackageName;
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.isInterfaceType;
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.isPrivateOrPackagePrivate;
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.isTypeAPublicAPI;
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.makeId;
+import static com.azure.tools.apiview.processor.analysers.util.TokenModifier.INDENT;
+import static com.azure.tools.apiview.processor.analysers.util.TokenModifier.NEWLINE;
+import static com.azure.tools.apiview.processor.analysers.util.TokenModifier.NOTHING;
+import static com.azure.tools.apiview.processor.analysers.util.TokenModifier.SPACE;
 import static com.azure.tools.apiview.processor.model.TokenKind.COMMENT;
 import static com.azure.tools.apiview.processor.model.TokenKind.DEPRECATED_RANGE_END;
 import static com.azure.tools.apiview.processor.model.TokenKind.DEPRECATED_RANGE_START;
@@ -83,23 +87,19 @@ import static com.azure.tools.apiview.processor.model.TokenKind.KEYWORD;
 import static com.azure.tools.apiview.processor.model.TokenKind.MEMBER_NAME;
 import static com.azure.tools.apiview.processor.model.TokenKind.NEW_LINE;
 import static com.azure.tools.apiview.processor.model.TokenKind.PUNCTUATION;
+import static com.azure.tools.apiview.processor.model.TokenKind.SKIP_DIFF_END;
+import static com.azure.tools.apiview.processor.model.TokenKind.SKIP_DIFF_START;
 import static com.azure.tools.apiview.processor.model.TokenKind.TEXT;
 import static com.azure.tools.apiview.processor.model.TokenKind.TYPE_NAME;
 import static com.azure.tools.apiview.processor.model.TokenKind.WHITESPACE;
-import static com.azure.tools.apiview.processor.model.TokenKind.SKIP_DIFF_START;
-import static com.azure.tools.apiview.processor.model.TokenKind.SKIP_DIFF_END;
-
-import static com.azure.tools.apiview.processor.analysers.util.TokenModifier.*;
 
 public class JavaASTAnalyser implements Analyser {
     public static final String MAVEN_KEY = "Maven";
     public static final String MODULE_INFO_KEY = "module-info";
 
     private static final boolean SHOW_JAVADOC = true;
-    private static final Set<String> BLOCKED_ANNOTATIONS = new HashSet<String>() {{
-        add("ServiceMethod");
-        add("SuppressWarnings");
-    }};
+    private static final Set<String> BLOCKED_ANNOTATIONS =
+        new HashSet<>(Arrays.asList("ServiceMethod", "SuppressWarnings"));
 
     private final APIListing apiListing;
 
@@ -123,7 +123,7 @@ public class JavaASTAnalyser implements Analyser {
          *
          * Then build a map of all known types and package names and a map of package names to navigation items.
          *
-         * Finally tokenize each file.
+         * Finally, tokenize each file.
          */
         allFiles.stream()
             .filter(this::filterFilePaths)
@@ -280,20 +280,20 @@ public class JavaASTAnalyser implements Analyser {
         addToken(new Token(PUNCTUATION, "{"), NEWLINE);
         indent();
 
-       addToken(new Token(SKIP_DIFF_START));
-       // parent
-       String gavStr = mavenPom.getParent().getGroupId() + ":" + mavenPom.getParent().getArtifactId() + ":" + mavenPom.getParent().getVersion();
-       tokeniseKeyValue("parent", gavStr, "");
+        addToken(new Token(SKIP_DIFF_START));
+        // parent
+        String gavStr = mavenPom.getParent().getGroupId() + ":" + mavenPom.getParent().getArtifactId() + ":" + mavenPom.getParent().getVersion();
+        tokeniseKeyValue("parent", gavStr, "");
 
-       // properties
-       gavStr = mavenPom.getGroupId() + ":" + mavenPom.getArtifactId() + ":" + mavenPom.getVersion();
-       tokeniseKeyValue("properties", gavStr, "");
+        // properties
+        gavStr = mavenPom.getGroupId() + ":" + mavenPom.getArtifactId() + ":" + mavenPom.getVersion();
+        tokeniseKeyValue("properties", gavStr, "");
 
         // configuration
         boolean showJacoco = mavenPom.getJacocoMinLineCoverage() != null &&
-                                 mavenPom.getJacocoMinBranchCoverage() != null;
+            mavenPom.getJacocoMinBranchCoverage() != null;
         boolean showCheckStyle = mavenPom.getCheckstyleExcludes() != null &&
-                                 !mavenPom.getCheckstyleExcludes().isEmpty();
+            !mavenPom.getCheckstyleExcludes().isEmpty();
 
         if (showJacoco || showCheckStyle) {
             addToken(INDENT, new Token(KEYWORD, "configuration"), SPACE);
@@ -320,7 +320,7 @@ public class JavaASTAnalyser implements Analyser {
         addToken(new Token(PUNCTUATION, "{"), NEWLINE);
 
         indent();
-        mavenPom.getDependencies().stream().collect(Collectors.groupingBy(Dependency::getScope)).forEach((k,v) -> {
+        mavenPom.getDependencies().stream().collect(Collectors.groupingBy(Dependency::getScope)).forEach((k, v) -> {
             if ("test".equals(k)) {
                 // we don't care to present test scope dependencies
                 return;
@@ -397,7 +397,7 @@ public class JavaASTAnalyser implements Analyser {
                 return;
             }
 
-            visitJavaDoc(typeDeclaration.getJavadocComment());
+            visitJavaDoc(typeDeclaration);
 
             // public custom annotation @interface's annotations
             if (typeDeclaration.isAnnotationDeclaration() && !isPrivateOrPackagePrivate(typeDeclaration.getAccessSpecifier())) {
@@ -577,7 +577,7 @@ public class JavaASTAnalyser implements Analyser {
             AtomicInteger counter = new AtomicInteger();
 
             enumConstantDeclarations.forEach(enumConstantDeclaration -> {
-                visitJavaDoc(enumConstantDeclaration.getJavadocComment());
+                visitJavaDoc(enumConstantDeclaration);
 
                 addToken(makeWhitespace());
 
@@ -759,7 +759,7 @@ public class JavaASTAnalyser implements Analyser {
                     continue;
                 }
 
-                visitJavaDoc(fieldDeclaration.getJavadocComment());
+                visitJavaDoc(fieldDeclaration);
 
                 addToken(makeWhitespace());
 
@@ -871,7 +871,7 @@ public class JavaASTAnalyser implements Analyser {
 
                     group.forEach(callableDeclaration -> {
                         // print the JavaDoc above each method / constructor
-                        visitJavaDoc(callableDeclaration.getJavadocComment());
+                        visitJavaDoc(callableDeclaration);
 
                         addToken(makeWhitespace());
 
@@ -1013,10 +1013,10 @@ public class JavaASTAnalyser implements Analyser {
             };
 
             nodeWithAnnotations.getAnnotations()
-                    .stream()
-                    .filter(annotationExpr -> !BLOCKED_ANNOTATIONS.contains(annotationExpr.getName().getIdentifier())
-                            && !annotationExpr.getName().getIdentifier().startsWith("Json"))
-                    .forEach(consumer);
+                .stream()
+                .filter(annotationExpr -> !BLOCKED_ANNOTATIONS.contains(annotationExpr.getName().getIdentifier())
+                    && !annotationExpr.getName().getIdentifier().startsWith("Json"))
+                .forEach(consumer);
         }
 
         private void processAnnotationValueExpression(Expression valueExpr) {
@@ -1058,7 +1058,8 @@ public class JavaASTAnalyser implements Analyser {
             }
         }
 
-        private void getDeclarationNameAndParameters(CallableDeclaration callableDeclaration, NodeList<Parameter> parameters) {
+        private void getDeclarationNameAndParameters(CallableDeclaration<?> callableDeclaration,
+            NodeList<Parameter> parameters) {
             final boolean isDeprecated = callableDeclaration.isAnnotationPresent("Deprecated");
 
             // create an unique definition id
@@ -1130,7 +1131,7 @@ public class JavaASTAnalyser implements Analyser {
             }
         }
 
-        private void getThrowException(CallableDeclaration callableDeclaration) {
+        private void getThrowException(CallableDeclaration<?> callableDeclaration) {
             final NodeList<ReferenceType> thrownExceptions = callableDeclaration.getThrownExceptions();
             if (thrownExceptions.size() == 0) {
                 return;
@@ -1226,7 +1227,7 @@ public class JavaASTAnalyser implements Analyser {
              *
              * E.x., "com.azure.example.TypeA", it has two node,
              * node one = "com.azure.example", node two = "TypeA"
-             * Further more, node one has two children: "com.azure" and "example".
+             * Furthermore, node one has two children: "com.azure" and "example".
              */
             for (int i = 0; i < childrenSize; i++) {
                 final Node childNode = nodes.get(i);
@@ -1322,8 +1323,8 @@ public class JavaASTAnalyser implements Analyser {
             .forEach(m -> buildTypeHierarchyForNavigation(m.asTypeDeclaration()));
     }
 
-    private void visitJavaDoc(Optional<JavadocComment> javadocComment) {
-        javadocComment.ifPresent(this::visitJavaDoc);
+    private void visitJavaDoc(BodyDeclaration<?> bodyDeclaration) {
+        attemptToFindJavadocComment(bodyDeclaration).ifPresent(this::visitJavaDoc);
     }
 
     private void visitJavaDoc(JavadocComment jd) {

@@ -1,10 +1,12 @@
 package com.azure.tools.apiview.processor.analysers.util;
 
+import com.github.javaparser.Range;
 import com.github.javaparser.ast.AccessSpecifier;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.ImportDeclaration;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.PackageDeclaration;
+import com.github.javaparser.ast.body.BodyDeclaration;
 import com.github.javaparser.ast.body.CallableDeclaration;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.ConstructorDeclaration;
@@ -12,7 +14,11 @@ import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.TypeDeclaration;
 import com.github.javaparser.ast.body.VariableDeclarator;
+import com.github.javaparser.ast.comments.Comment;
+import com.github.javaparser.ast.comments.JavadocComment;
+import com.github.javaparser.ast.nodeTypes.NodeWithJavadoc;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -189,5 +195,60 @@ public class ASTUtils {
         } else {
             return "";
         }
+    }
+
+    /**
+     * Attempts to retrieve the {@link JavadocComment} for a given {@link BodyDeclaration}.
+     * <p>
+     * If the {@link BodyDeclaration} is an instance of {@link NodeWithJavadoc}, it will be checked for having an
+     * existing {@link NodeWithJavadoc#getJavadocComment()}.
+     * <p>
+     * If the {@link BodyDeclaration} isn't an instance of {@link NodeWithJavadoc} or doesn't have an existing {@link
+     * JavadocComment} the {@link BodyDeclaration} will be inspected for having a "detached Javadoc". Detached Javadoc
+     * comments can occur when there is comment lines between the Javadoc and the body. This is resolved by walking up
+     * the comments (reading earlier line numbers) until the previous line is no longer a comment line. Then the
+     * orphaned Javadoc comments for the file are checked for containing the current line number, if so that Javadoc
+     * comment is used as the Javadoc comment for the body declaration.
+     *
+     * @param bodyDeclaration The {@link BodyDeclaration} whose Javadoc comment is being found.
+     * @return An {@link Optional} either containing the Javadoc comment for the body declaration or {@link
+     * Optional#empty()}.
+     */
+    public static Optional<JavadocComment> attemptToFindJavadocComment(BodyDeclaration<?> bodyDeclaration) {
+        if (!(bodyDeclaration instanceof NodeWithJavadoc<?>)) {
+            return Optional.empty();
+        }
+
+        NodeWithJavadoc<?> nodeWithJavadoc = (NodeWithJavadoc<?>) bodyDeclaration;
+
+        // BodyDeclaration has a Javadoc.
+        if (nodeWithJavadoc.getJavadocComment().isPresent()) {
+            return nodeWithJavadoc.getJavadocComment();
+        }
+
+        // Get the orphaned comments.
+        List<Comment> orphanedComments = bodyDeclaration.getParentNode().get().getOrphanComments();
+
+        // Traverse up the comments between the Javadoc and the body declaration.
+        Optional<Comment> commentTraversalNode = bodyDeclaration.getComment();
+        Comment comment = null;
+        while (commentTraversalNode.isPresent()) {
+            comment = commentTraversalNode.get();
+            commentTraversalNode = comment.getComment();
+        }
+
+        if (comment == null) {
+            return Optional.empty();
+        }
+
+        // Check if there are any orphaned Javadoc comments before the additional code comments.
+        Range expectedJavadocRangeOverlap = comment.getRange().get()
+            .withBeginLine(comment.getRange().get().begin.line - 1);
+
+        return orphanedComments.stream()
+            .filter(c -> c.getRange().get().overlapsWith(expectedJavadocRangeOverlap))
+            .filter(c -> c instanceof JavadocComment)
+            .map(c -> (JavadocComment) c)
+            .findFirst();
     }
 }

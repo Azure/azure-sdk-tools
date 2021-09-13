@@ -1,6 +1,6 @@
 ﻿using k8s.Models;
 
-namespace k8s
+namespace Stress.Watcher.Extensions
 {
     public static class Extensions
     {

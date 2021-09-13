@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Xunit;
 using FluentAssertions;
-using Stress.Watcher;
+using Stress.Watcher.Extensions;
 using k8s;
 using k8s.Models;
 

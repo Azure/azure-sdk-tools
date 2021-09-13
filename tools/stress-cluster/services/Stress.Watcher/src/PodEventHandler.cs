@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Stress.Watcher.Extensions;
 using k8s;
 using k8s.Models;
 

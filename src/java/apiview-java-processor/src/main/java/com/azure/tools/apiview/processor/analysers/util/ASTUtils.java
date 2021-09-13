@@ -197,18 +197,24 @@ public class ASTUtils {
         }
     }
 
+    /**
+     * Attempts to retrieve the {@link JavadocComment} for a given {@link BodyDeclaration}.
+     * <p>
+     * If the {@link BodyDeclaration} is an instance of {@link NodeWithJavadoc}, it will be checked for having an
+     * existing {@link NodeWithJavadoc#getJavadocComment()}.
+     * <p>
+     * If the {@link BodyDeclaration} isn't an instance of {@link NodeWithJavadoc} or doesn't have an existing {@link
+     * JavadocComment} the {@link BodyDeclaration} will be inspected for having a "detached Javadoc". Detached Javadoc
+     * comments can occur when there is comment lines between the Javadoc and the body. This is resolved by walking up
+     * the comments (reading earlier line numbers) until the previous line is no longer a comment line. Then the
+     * orphaned Javadoc comments for the file are checked for containing the current line number, if so that Javadoc
+     * comment is used as the Javadoc comment for the body declaration.
+     *
+     * @param bodyDeclaration The {@link BodyDeclaration} whose Javadoc comment is being found.
+     * @return An {@link Optional} either containing the Javadoc comment for the body declaration or {@link
+     * Optional#empty()}.
+     */
     public static Optional<JavadocComment> attemptToFindJavadocComment(BodyDeclaration<?> bodyDeclaration) {
-        // It is possible to have a situation where a Javadoc exists but is in a detached from the declaration body.
-        //
-        // This occurs in a situation such as the following:
-        //
-        // <javadoc>
-        // // Comment between Javadoc and body declaration
-        // <body declaration>
-        //
-        // Unfortunately, this will be flagged in ApiView as missing a Javadoc. So, now, traverse the comments of the
-        // body declaration until they terminate, then find the orphaned (if there is any) Javadoc which precedes it in
-        // the code file. This is only attempted if bodyDeclaration doesn't have a Javadoc.
         if (!(bodyDeclaration instanceof NodeWithJavadoc<?>)) {
             return Optional.empty();
         }

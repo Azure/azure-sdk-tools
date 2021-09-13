@@ -10,7 +10,7 @@ variables:
 jobs:
 - job: CheckLinks
   displayName: Check and Cache Links
-  timeoutInMinutes: 120
+  timeoutInMinutes: 0
   steps:
   - task: PowerShell@2
     displayName: 'azure-sdk link check'

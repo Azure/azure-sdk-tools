@@ -98,6 +98,10 @@ namespace Azure.Sdk.Tools.PerfAutomation
             [YamlMember(typeof(string))]
             public IEnumerable<Uri> TestProxies { get; set; }
 
+            [Option("test-proxy", HelpText = "URI of TestProxy Server")]
+            [YamlMember(typeof(string))]
+            public Uri TestProxy { get; set; }
+
             [Option('t', "tests", HelpText = "Regex of tests to run")]
             public string Tests { get; set; }
         }
@@ -321,6 +325,11 @@ namespace Azure.Sdk.Tools.PerfAutomation
                         if (options.TestProxies != null && options.TestProxies.Any())
                         {
                             allArguments += $" --test-proxies {String.Join(';', options.TestProxies)}";
+                        }
+
+                        if (options.TestProxy != null)
+                        {
+                            allArguments += $" --test-proxy {options.TestProxy}";
                         }
 
                         var result = new Result

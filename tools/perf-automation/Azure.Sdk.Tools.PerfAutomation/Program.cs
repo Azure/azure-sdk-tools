@@ -93,9 +93,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
             [Option('s', "services", HelpText = "Regex of services to run")]
             public string Services { get; set; }
 
-            [Option('x', "test-proxy", HelpText = "URI of TestProxy Server")]
+            [Option('x', "test-proxies", Separator = ';', HelpText = "URIs of TestProxy Servers")]
             [YamlMember(typeof(string))]
-            public Uri TestProxy { get; set; }
+            public IEnumerable<Uri> TestProxies { get; set; }
 
             [Option('t', "tests", HelpText = "Regex of tests to run")]
             public string Tests { get; set; }
@@ -317,9 +317,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
                             allArguments += " --insecure";
                         }
 
-                        if (options.TestProxy != null)
+                        if (options.TestProxies != null && options.TestProxies.Any())
                         {
-                            allArguments += $" --test-proxy {options.TestProxy}";
+                            allArguments += $" --test-proxies {String.Join(';', options.TestProxies)}";
                         }
 
                         var result = new Result

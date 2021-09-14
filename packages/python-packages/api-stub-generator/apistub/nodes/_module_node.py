@@ -42,7 +42,7 @@ class ModuleNode(NodeEntityBase):
                 continue
 
             if inspect.isclass(member_obj):
-                class_node = ClassNode(self.namespace, self, member_obj)
+                class_node = ClassNode(self.namespace, self, member_obj, self.pkg_root_namespace)
                 key = "{0}.{1}".format(self.namespace, class_node.name)
                 self.nodeindex.add(key, class_node)
                 self.child_nodes.append(class_node)

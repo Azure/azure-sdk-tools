@@ -31,7 +31,7 @@ namespace Azure.Sdk.Tools.TestProxy
             // so far, nothing necessary here
         }
 
-        [HttpGet]
+        [HttpPost]
         public void Reset()
         {
             _recordingHandler.SetDefaultExtensions();

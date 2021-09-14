@@ -77,7 +77,8 @@ namespace Azure.Sdk.Tools.TestProxy.Models
 
             foreach (FieldInfo field in fields.Where(x => x.FieldType.Name == "String"))
             {
-                string propValue = field.GetValue(target).ToString();
+                var prop = field.GetValue(target);
+                string propValue = prop == null ? "This argument is unset or null." : "\"" + prop.ToString() + "\"";
 
                 arguments.Add(new Tuple<string, string>(field.Name, propValue));
             }

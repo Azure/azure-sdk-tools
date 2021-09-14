@@ -11,6 +11,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -99,6 +100,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 var writer = new Utf8JsonWriter(stream, options);
                 session.Session.Serialize(writer);
                 writer.Flush();
+                stream.Write(Encoding.UTF8.GetBytes(Environment.NewLine));
             }
         }
 

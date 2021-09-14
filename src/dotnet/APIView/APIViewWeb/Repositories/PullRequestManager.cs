@@ -21,8 +21,9 @@ namespace APIViewWeb.Repositories
 {
     public class PullRequestManager
     {        
-        static readonly GitHubClient githubClient = new(new Octokit.ProductHeaderValue("apiview"));
-        
+        static readonly GitHubClient _githubClient = new GitHubClient(new Octokit.ProductHeaderValue("apiview"));
+        readonly TelemetryClient _telemetryClient = new TelemetryClient(TelemetryConfiguration.CreateDefault());
+
         private readonly ReviewManager _reviewManager;
         private readonly CosmosPullRequestsRepository _pullRequestsRepository;
         private readonly IConfiguration _configuration;
@@ -45,15 +46,14 @@ namespace APIViewWeb.Repositories
             _reviewsRepository = reviewsRepository;
             _codeFileRepository = codeFileRepository;
             _devopsArtifactRepository = devopsArtifactRepository;
-            githubClient.Credentials = new Credentials(_configuration["github-access-token"]);
+            _githubClient.Credentials = new Credentials(_configuration["github-access-token"]);
         }
 
         // API change detection for PR will pull artifact from devops artifact
         public async Task DetectApiChanges(string buildId, string artifactName, string filePath, int prNumber, string commitSha, string repoName)
         {
-            TelemetryClient telemetryClient = new(TelemetryConfiguration.CreateDefault());
             var requestTelemetry = new RequestTelemetry { Name = "Detecting API changes for PR: " + prNumber };
-            var operation = telemetryClient.StartOperation(requestTelemetry);
+            var operation = _telemetryClient.StartOperation(requestTelemetry);
             try
             {
                 var pullRequestModel = await _pullRequestsRepository.GetPullRequestAsync(prNumber, repoName, filePath);
@@ -86,22 +86,22 @@ namespace APIViewWeb.Repositories
                     {
                         var repoOwner = _configuration["default-source-repo-owner"];
                         //Consider adding option to override owner when required
-                        await githubClient.Issue.Comment.Create(repoOwner, repoName, prNumber, apiDiff);
+                        await _githubClient.Issue.Comment.Create(repoOwner, repoName, prNumber, apiDiff);
                     }
                     await _pullRequestsRepository.UpsertPullRequestAsync(pullRequestModel);
                 }
                 else
                 {
-                    telemetryClient.TrackTrace("Failed to download artifact. Please recheck build id and artifact path values in API change detection request.");
+                    _telemetryClient.TrackTrace("Failed to download artifact. Please recheck build id and artifact path values in API change detection request.");
                 }                
             }
             catch (Exception ex)
             {
-                telemetryClient.TrackException(ex);
+                _telemetryClient.TrackException(ex);
             }
             finally
             {
-                telemetryClient.StopOperation(operation);
+                _telemetryClient.StopOperation(operation);
             }
         }
 

@@ -11,7 +11,7 @@ namespace APIViewWeb.Repositories
 {
     public class DevopsArtifactRepository
     {
-        static readonly HttpClient devopsClient = new();
+        static readonly HttpClient _devopsClient = new();
         private readonly IConfiguration _configuration;
 
         public DevopsArtifactRepository(IConfiguration configuration)
@@ -25,7 +25,7 @@ namespace APIViewWeb.Repositories
             if (!string.IsNullOrEmpty(downloadUrl))
             {
                 downloadUrl = downloadUrl.Split("?")[0] + "?format=file&subPath=" + filePath;
-                var downloadResp = await devopsClient.GetAsync(downloadUrl);
+                var downloadResp = await _devopsClient.GetAsync(downloadUrl);
                 downloadResp.EnsureSuccessStatusCode();
                 return await downloadResp.Content.ReadAsStreamAsync();
             }
@@ -35,7 +35,7 @@ namespace APIViewWeb.Repositories
         private async Task<string> GetDownloadArtifactUrl(string repoName, string buildId, string artifactName)
         {
             var artifactGetReq = GetArtifactRestAPIForRepo(repoName).Replace("{buildId}", buildId).Replace("{artifactName}", artifactName);
-            var response = await devopsClient.GetAsync(artifactGetReq);
+            var response = await _devopsClient.GetAsync(artifactGetReq);
             response.EnsureSuccessStatusCode();
             var buildResource = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
             if (buildResource == null)
@@ -47,12 +47,12 @@ namespace APIViewWeb.Repositories
 
         private string GetArtifactRestAPIForRepo(string repoName)
         {
-            var downloadARtifactRestApi = _configuration["download-artifact-rest-api-for-" + repoName];
-            if (downloadARtifactRestApi == null)
+            var downloadArtifactRestApi = _configuration["download-artifact-rest-api-for-" + repoName];
+            if (downloadArtifactRestApi == null)
             {
-                downloadARtifactRestApi = _configuration["download-artifact-rest-api"];
+                downloadArtifactRestApi = _configuration["download-artifact-rest-api"];
             }
-            return downloadARtifactRestApi;
+            return downloadArtifactRestApi;
         }
     }
 }

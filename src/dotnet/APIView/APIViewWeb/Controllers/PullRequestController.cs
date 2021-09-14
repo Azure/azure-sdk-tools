@@ -29,16 +29,8 @@ namespace APIViewWeb.Controllers
             string commitSha,
             string repoName)
         {
-            try
-            {
-                await _pullRequestManager.DetectApiChanges(buildId, artifactName, filePath, pullRequestNumber, commitSha, repoName);
-                return Ok();
-            }
-            catch
-            {
-                // Return internal server error for any unknown error
-                return StatusCode(statusCode: StatusCodes.Status500InternalServerError);
-            }           
+            await _pullRequestManager.DetectApiChanges(buildId, artifactName, filePath, pullRequestNumber, commitSha, repoName);
+            return Ok();
         }
 
         

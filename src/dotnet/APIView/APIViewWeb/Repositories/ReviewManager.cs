@@ -21,7 +21,6 @@ namespace APIViewWeb.Respositories
 {
     public class ReviewManager
     {
-
         private readonly IAuthorizationService _authorizationService;
 
         private readonly CosmosReviewRepository _reviewsRepository;

@@ -93,6 +93,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             [Option('s', "services", HelpText = "Regex of services to run")]
             public string Services { get; set; }
 
+            // TODO: Configure YAML serialization to print URI values
             [Option('x', "test-proxies", Separator = ';', HelpText = "URIs of TestProxy Servers")]
             [YamlMember(typeof(string))]
             public IEnumerable<Uri> TestProxies { get; set; }

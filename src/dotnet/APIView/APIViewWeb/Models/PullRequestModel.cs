@@ -9,8 +9,8 @@ namespace APIViewWeb.Models
         [JsonProperty("id")]
         public string PullRequestId { get; set; } = IdHelper.GenerateId();
         public int PullRequestNumber { get; set; }
-        public string CommitSha { get; set; }
-        public string Language { get; set; }
+        public List<string> Commits { get; set; } = new List<string>();
+        public string RepoName { get; set; }
         public string FilePath { get; set; }
         public bool IsOpen { get; set; } = true;
     }

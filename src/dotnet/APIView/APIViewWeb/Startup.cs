@@ -76,6 +76,7 @@ namespace APIViewWeb
             services.AddSingleton<CosmosReviewRepository>();
             services.AddSingleton<CosmosCommentsRepository>();
             services.AddSingleton<CosmosPullRequestsRepository>();
+            services.AddSingleton<DevopsArtifactRepository>();
 
             services.AddSingleton<ReviewManager>();
             services.AddSingleton<CommentsManager>();

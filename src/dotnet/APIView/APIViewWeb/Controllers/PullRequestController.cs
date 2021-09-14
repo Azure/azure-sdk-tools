@@ -27,11 +27,11 @@ namespace APIViewWeb.Controllers
             string filePath, 
             int pullRequestNumber, 
             string commitSha,
-            string language)
+            string repoName)
         {
             try
             {
-                await _pullRequestManager.DetectApiChanges(buildId, artifactName, filePath, pullRequestNumber, commitSha, language);
+                await _pullRequestManager.DetectApiChanges(buildId, artifactName, filePath, pullRequestNumber, commitSha, repoName);
                 return Ok();
             }
             catch

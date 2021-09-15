@@ -84,9 +84,8 @@ namespace APIViewWeb.Repositories
                     var apiDiff = await GetApiDiffFromAutomaticReview(codeFile);
                     if (apiDiff != "")
                     {
-                        var repoOwner = _configuration["default-source-repo-owner"];
-                        //Consider adding option to override owner when required
-                        await _githubClient.Issue.Comment.Create(repoOwner, repoName, prNumber, apiDiff);
+                        var repoInfo = repoName.Split("/");
+                        await _githubClient.Issue.Comment.Create(repoInfo[0], repoInfo[1], prNumber, apiDiff);
                     }
                     await _pullRequestsRepository.UpsertPullRequestAsync(pullRequestModel);
                 }

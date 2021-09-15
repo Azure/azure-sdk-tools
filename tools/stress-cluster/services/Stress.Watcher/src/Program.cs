@@ -25,7 +25,18 @@ namespace Stress.Watcher
 
         static void Main(Options options)
         {
-            var config = KubernetesClientConfiguration.BuildConfigFromConfigFile();
+            KubernetesClientConfiguration config;
+
+            try
+            {
+                config = KubernetesClientConfiguration.BuildConfigFromConfigFile();
+            }
+            catch (Exception)
+            {
+                Console.WriteLine("Failure loading kubeconfig, falling back to in cluster config.");
+                config = KubernetesClientConfiguration.InClusterConfig();
+            }
+
             var client = new Kubernetes(config);
             var chaosClient = new GenericChaosClient(config);
 

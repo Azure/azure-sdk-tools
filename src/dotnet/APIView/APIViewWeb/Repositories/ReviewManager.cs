@@ -3,13 +3,13 @@
 
 using System;
 using System.Collections.Generic;
-using System.Data.Odbc;
 using System.IO;
 using System.Linq;
 using System.Security.Claims;
-using System.Threading;
+using System.Text;
 using System.Threading.Tasks;
 using ApiView;
+using APIView.DIff;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.ApplicationInsights;
@@ -212,7 +212,7 @@ namespace APIViewWeb.Respositories
             return reviewCodeFileModel;
         }
 
-        private async Task<CodeFile> CreateCodeFile(
+        public async Task<CodeFile> CreateCodeFile(
             string originalName,
             Stream fileStream,
             bool runAnalysis,
@@ -347,7 +347,7 @@ namespace APIViewWeb.Respositories
                .Any(f => f.HasOriginal && GetLanguageService(f.Language).CanUpdate(f.VersionString));
         }
 
-        private async Task<bool> IsReviewSame(ReviewRevisionModel revision, RenderedCodeFile renderedCodeFile)
+        public async Task<bool> IsReviewSame(ReviewRevisionModel revision, RenderedCodeFile renderedCodeFile)
         {
             //This will compare and check if new code file content is same as revision in parameter
             var lastRevisionFile = await _codeFileRepository.GetCodeFileAsync(revision);

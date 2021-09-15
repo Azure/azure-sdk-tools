@@ -138,7 +138,14 @@ namespace Stress.Watcher
                 return false;
             }
 
-            if (!pod.Metadata.Labels.ContainsKey("chaos") || pod.Metadata.Labels["chaos"] != "true")
+            var autoStart = "";
+            pod.Metadata.Annotations?.TryGetValue("stress/chaos.autoStart", out autoStart);
+            if (autoStart == "false")
+            {
+                return false;
+            }
+
+            if (!pod.Metadata.Labels.TryGetValue("chaos", out var chaos) || chaos != "true")
             {
                 return false;
             }
@@ -149,7 +156,9 @@ namespace Stress.Watcher
                 return false;
             }
 
-            if (pod.HasChaosStarted())
+            var started = "";
+            pod.Metadata.Annotations?.TryGetValue("stress/chaos.started", out started);
+            if (started == "true")
             {
                 Log($"Pod {pod.NamespacedName()} chaos has started.");
                 return false;

@@ -12,12 +12,5 @@ namespace Stress.Watcher.Extensions
             pod.Metadata.Labels.TryGetValue("testInstance", out instance);
             return instance;
         }
-
-        public static bool HasChaosStarted(this V1Pod pod)
-        {
-            var started = "";
-            pod.Metadata.Annotations?.TryGetValue("stress/chaos.started", out started);
-            return started == "true";
-        }
     }
 }

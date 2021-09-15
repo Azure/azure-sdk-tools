@@ -1,10 +1,12 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Stress.Watcher.Extensions;
 using k8s;
 using k8s.Models;
+using Serilog;
+using Serilog.Context;
+using Serilog.Sinks.SystemConsole.Themes;
 
 namespace Stress.Watcher
 {
@@ -34,6 +36,8 @@ namespace Stress.Watcher
         private Kubernetes Client;
         private GenericChaosClient ChaosClient;
 
+        private Serilog.Core.Logger Logger;
+
         public string Namespace;
 
         public PodEventHandler(
@@ -46,6 +50,15 @@ namespace Stress.Watcher
             ChaosClient = chaosClient;
             Namespace = watchNamespace;
 
+            Logger = new LoggerConfiguration()
+                .MinimumLevel.Information()
+                .Enrich
+                .FromLogContext()
+                .WriteTo.Console(
+                    outputTemplate: "[{Timestamp:hh:mm:ss} {Level:u3}] {Message,-30:lj} {Properties:j}{NewLine}{Exception}",
+                    theme: AnsiConsoleTheme.Code
+                )
+                .CreateLogger();
 
             PodChaosHandledPatchBody = new V1Patch(PodChaosHandledPatch, V1Patch.PatchType.MergePatch);
             PodChaosResumePatchBody = new V1Patch(PodChaosResumePatch, V1Patch.PatchType.MergePatch);
@@ -58,44 +71,44 @@ namespace Stress.Watcher
               .Watch<V1Pod, V1PodList>(HandlePodEvent, HandleOnError, HandleOnClose);
         }
 
-        public void Log(string msg)
-        {
-            Console.WriteLine(msg);
-        }
-
         public void HandleOnError(Exception ex)
         {
-            Log($"Exception: {ex.Message}");
+            Logger.Error(ex, "Handling error event for pod watch stream.");
         }
 
         public void HandleOnClose()
         {
-            Log("Closed");
+            Logger.Warning("Pod watch has closed.");
         }
 
         public void HandlePodEvent(WatchEventType type, V1Pod pod)
         {
-            ResumeChaos(type, pod).ContinueWith(t =>
+            using (LogContext.PushProperty("namespace", pod.Namespace()))
+            using (LogContext.PushProperty("pod", pod.Name()))
             {
-                if (t.Exception != null)
+                ResumeChaos(type, pod).ContinueWith(t =>
                 {
-                    // TODO: handle watch event re-queue on failure
-                    Log(t.Exception.ToString());
-                }
-            });
+                    if (t.Exception != null)
+                    {
+                        // TODO: handle watch event re-queue on failure
+                        Logger.Error(t.Exception, "Error handling pod event.");
+                    }
+                });
+            }
         }
 
         public async Task ResumeChaos(WatchEventType type, V1Pod pod)
         {
             if (!ShouldStartPodChaos(type, pod))
             {
+                Logger.Debug("Skipping pod.");
                 return;
             }
 
             await StartChaosResources(pod);
-            Log($"Started chaos resources for pod {pod.NamespacedName()};");
+            Logger.Information($"Started chaos resources for pod");
             await Client.PatchNamespacedPodAsync(PodChaosHandledPatchBody, pod.Name(), pod.Namespace());
-            Log($"Annotated pod chaos started for {pod.NamespacedName()};");
+            Logger.Information($"Annotated pod chaos started");
         }
 
         public async Task StartChaosResources(V1Pod pod)
@@ -109,7 +122,10 @@ namespace Stress.Watcher
                                     PodChaosResumePatchBody, ChaosClient.Group, ChaosClient.Version,
                                     pod.Namespace(), cr.Kind.ToLower(), cr.Metadata.Name);
 
-                            Log($"Started {cr.Kind} {cr.Metadata.Name} for pod {pod.NamespacedName()}");
+                            using (LogContext.PushProperty("chaosResource", $"{cr.Kind}/{cr.Metadata.Name}"))
+                            {
+                                Logger.Information($"Started chaos for pod.");
+                            }
                         });
 
             await Task.WhenAll(tasks);
@@ -152,7 +168,7 @@ namespace Stress.Watcher
 
             if (String.IsNullOrEmpty(pod.TestInstance()))
             {
-                Log($"Pod {pod.NamespacedName()} has chaos label but missing or empty {GenericChaosResource.TestInstanceLabelKey} label.");
+                Logger.Information($"Pod has 'chaos' label but missing or empty {GenericChaosResource.TestInstanceLabelKey} label.");
                 return false;
             }
 
@@ -160,7 +176,7 @@ namespace Stress.Watcher
             pod.Metadata.Annotations?.TryGetValue("stress/chaos.started", out started);
             if (started == "true")
             {
-                Log($"Pod {pod.NamespacedName()} chaos has started.");
+                Logger.Information($"Pod is in chaos.started state.");
                 return false;
             }
 

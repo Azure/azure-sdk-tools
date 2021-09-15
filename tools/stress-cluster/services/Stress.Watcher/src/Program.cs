@@ -19,21 +19,22 @@ namespace Stress.Watcher
             Parser.Default.ParseArguments<Options>(args)
                 .WithParsed<Options>(o =>
                 {
-                    Main(o);
+                    Program(o);
                 });
         }
 
-        static void Main(Options options)
+        static void Program(Options options)
         {
             KubernetesClientConfiguration config;
 
+            // Try to load kubeconfig file, if running locally,
+            // otherwise try in cluster config (running in k8s container)
             try
             {
                 config = KubernetesClientConfiguration.BuildConfigFromConfigFile();
             }
             catch (Exception)
             {
-                Console.WriteLine("Failure loading kubeconfig, falling back to in cluster config.");
                 config = KubernetesClientConfiguration.InClusterConfig();
             }
 

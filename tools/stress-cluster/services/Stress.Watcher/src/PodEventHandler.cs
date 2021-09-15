@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Stress.Watcher.Extensions;
@@ -33,10 +34,18 @@ namespace Stress.Watcher
         private Kubernetes Client;
         private GenericChaosClient ChaosClient;
 
-        public PodEventHandler(Kubernetes client, GenericChaosClient chaosClient)
+        public string Namespace;
+
+        public PodEventHandler(
+            Kubernetes client,
+            GenericChaosClient chaosClient,
+            string watchNamespace = ""
+        )
         {
             Client = client;
             ChaosClient = chaosClient;
+            Namespace = watchNamespace;
+
 
             PodChaosHandledPatchBody = new V1Patch(PodChaosHandledPatch, V1Patch.PatchType.MergePatch);
             PodChaosResumePatchBody = new V1Patch(PodChaosResumePatch, V1Patch.PatchType.MergePatch);
@@ -46,12 +55,22 @@ namespace Stress.Watcher
         {
             return Client
               .ListPodForAllNamespacesWithHttpMessagesAsync(watch: true)
-              .Watch<V1Pod, V1PodList>(HandlePodEvent);
+              .Watch<V1Pod, V1PodList>(HandlePodEvent, HandleOnError, HandleOnClose);
         }
 
         public void Log(string msg)
         {
             Console.WriteLine(msg);
+        }
+
+        public void HandleOnError(Exception ex)
+        {
+            Log($"Exception: {ex.Message}");
+        }
+
+        public void HandleOnClose()
+        {
+            Log("Closed");
         }
 
         public void HandlePodEvent(WatchEventType type, V1Pod pod)
@@ -98,7 +117,7 @@ namespace Stress.Watcher
 
         public bool ShouldStartChaos(GenericChaosResource chaos, V1Pod pod)
         {
-            if (chaos.Spec.Selector.LabelSelectors.TestInstance != pod.TestInstance())
+            if (chaos.Spec.Selector.LabelSelectors?.TestInstance != pod.TestInstance())
             {
                 return false;
             }
@@ -108,6 +127,11 @@ namespace Stress.Watcher
 
         public bool ShouldStartPodChaos(WatchEventType type, V1Pod pod)
         {
+            if (!string.IsNullOrEmpty(Namespace) && Namespace != pod.Namespace())
+            {
+                return false;
+            }
+
             if ((type != WatchEventType.Added && type != WatchEventType.Modified) ||
                 pod.Status.Phase != "Running")
             {

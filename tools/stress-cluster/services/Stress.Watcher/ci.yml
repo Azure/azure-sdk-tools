@@ -26,3 +26,4 @@ extends:
   parameters:
     ToolDirectory: tools/stress-cluster/services/Stress.Watcher
     DotNetCoreVersion: "5.0.100"
+    NoWarn: true

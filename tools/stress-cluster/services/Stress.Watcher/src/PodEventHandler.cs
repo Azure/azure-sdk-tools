@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Stress.Watcher.Extensions;
 using k8s;
@@ -64,21 +65,53 @@ namespace Stress.Watcher
             PodChaosResumePatchBody = new V1Patch(PodChaosResumePatch, V1Patch.PatchType.MergePatch);
         }
 
-        public Watcher<V1Pod> Watch()
+        public async Task Watch(CancellationToken cancellationToken)
         {
-            return Client
-              .ListPodForAllNamespacesWithHttpMessagesAsync(watch: true)
-              .Watch<V1Pod, V1PodList>(HandlePodEvent, HandleOnError, HandleOnClose);
-        }
-
-        public void HandleOnError(Exception ex)
-        {
-            Logger.Error(ex, "Handling error event for pod watch stream.");
-        }
-
-        public void HandleOnClose()
-        {
-            Logger.Warning("Pod watch has closed.");
+            string resourceVersion = null;
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                try
+                {
+                    var listTask = Client.ListPodForAllNamespacesWithHttpMessagesAsync(
+                        allowWatchBookmarks: true,
+                        watch: true,
+                        resourceVersion: resourceVersion,
+                        cancellationToken: cancellationToken
+                    );
+                    var tcs = new TaskCompletionSource();
+                    using var watcher = listTask.Watch<V1Pod, V1PodList>(
+                        (type, pod) => {
+                            resourceVersion = pod.ResourceVersion();
+                            HandlePodEvent(type, pod);
+                        },
+                        (err) =>
+                        {
+                            Logger.Error(err, "Handling error event for pod watch stream.");
+                            if (err is KubernetesException kubernetesError)
+                            {
+                                // Handle "too old resource version"
+                                if (string.Equals(kubernetesError.Status.Reason, "Expired", StringComparison.Ordinal))
+                                {
+                                    resourceVersion = null;
+                                }
+                            }
+                            tcs.TrySetException(err);
+                            throw err;
+                        },
+                        () => {
+                            Logger.Warning("Pod watch has closed.");
+                            tcs.TrySetResult();
+                        }
+                    );
+                    using var registration = cancellationToken.Register(watcher.Dispose);
+                    await tcs.Task;
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "Error with pod watch stream.");
+                    await Task.Delay(1000, cancellationToken);
+                }
+            }
         }
 
         public void HandlePodEvent(WatchEventType type, V1Pod pod)

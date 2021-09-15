@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading;
+using System.Threading.Tasks;
 using k8s;
 using k8s.Models;
 using CommandLine;
@@ -14,16 +15,16 @@ namespace Stress.Watcher
             public string Namespace { get; set; }
         }
 
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
-            Parser.Default.ParseArguments<Options>(args)
-                .WithParsed<Options>(o =>
+            await Parser.Default.ParseArguments<Options>(args)
+                .WithParsedAsync<Options>(async o =>
                 {
-                    Program(o);
+                    await Program(o);
                 });
         }
 
-        static void Program(Options options)
+        static async Task Program(Options options)
         {
             KubernetesClientConfiguration config;
 
@@ -42,11 +43,9 @@ namespace Stress.Watcher
             var chaosClient = new GenericChaosClient(config);
 
             var podEventHandler = new PodEventHandler(client, chaosClient, options.Namespace);
-            using Watcher<V1Pod> watcher = podEventHandler.Watch();
-
-            var ctrlc = new ManualResetEventSlim(false);
-            Console.CancelKeyPress += (sender, eventArgs) => ctrlc.Set();
-            ctrlc.Wait();
+            
+            var cts = new CancellationTokenSource();
+            await podEventHandler.Watch(cts.Token);
         }
     }
 }

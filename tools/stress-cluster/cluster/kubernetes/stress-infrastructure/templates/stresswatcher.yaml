@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stress-watcher
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: stress-watcher
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: stress-watcher
+  template:
+    metadata:
+      namespace: {{ .Release.Namespace }}
+      labels:
+        app: stress-watcher
+    spec:
+      containers:
+      - name: stresswatcher
+        image: stress{{ .Values.repository }}registry.azurecr.io/services/stresswatcher:{{ .Values.tag }}
+        command: ["dotnet", "Stress.Watcher.dll"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: stress-writer
+rules:
+- apiGroups:
+  - '*'
+  resources:
+  - '*'
+  verbs:
+  - get
+  - list
+  - watch
+  - update
+  - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: stress-watcher-cluster-role-binding
+subjects:
+- namespace: {{ .Release.Namespace }}
+  kind: ServiceAccount
+  name: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: stress-writer

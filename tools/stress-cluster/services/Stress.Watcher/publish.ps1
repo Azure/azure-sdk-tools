@@ -10,5 +10,5 @@ docker tag stresswatcher stressprodregistry.azurecr.io/services/stresswatcher:$T
 az acr login -n stresstestregistry
 docker push stresstestregistry.azurecr.io/services/stresswatcher:$Tag
 
-#az acr login -n stressprodregistry
-#docker push stressprodregistry.azurecr.io/services/stresswatcher:$Tag
+az acr login -n stressprodregistry
+docker push stressprodregistry.azurecr.io/services/stresswatcher:$Tag

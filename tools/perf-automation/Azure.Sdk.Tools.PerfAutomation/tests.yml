@@ -287,6 +287,10 @@ Services:
     Java:
       Project: sdk/keyvault/azure-security-keyvault-perf
       PackageVersions:
+      - azure-security-keyvault-certificates: 4.0.0
+        azure-security-keyvault-keys: 4.0.0
+        azure-security-keyvault-secrets: 4.0.0
+        reactor-core: 3.3.0.RELEASE
       - azure-security-keyvault-certificates: 4.2.2
         azure-security-keyvault-keys: 4.3.2
         azure-security-keyvault-secrets: 4.3.2

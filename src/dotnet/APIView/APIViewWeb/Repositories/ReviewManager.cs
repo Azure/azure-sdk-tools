@@ -361,6 +361,7 @@ namespace APIViewWeb.Respositories
             //Generate code file from new uploaded package
             using var memoryStream = new MemoryStream();
             var codeFile = await CreateCodeFile(originalName, fileStream, false, memoryStream);
+            var renderedCodeFile = new RenderedCodeFile(codeFile);
 
             //Get current master review for package and language
             var review = await _reviewsRepository.GetMasterReviewForPackageAsync(codeFile.Language, codeFile.PackageName);
@@ -371,13 +372,11 @@ namespace APIViewWeb.Respositories
                 // Delete pending revisions if it is not in approved state before adding new revision
                 // This is to keep only one pending revision since last approval or from initial review revision
                 var lastRevision = review.Revisions.LastOrDefault();
-                while (lastRevision.Approvers.Count == 0 && review.Revisions.Count > 1)
+                while (lastRevision.Approvers.Count == 0 && review.Revisions.Count > 1 && !await IsReviewSame(lastRevision, renderedCodeFile))
                 {
                     review.Revisions.Remove(lastRevision);
                     lastRevision = review.Revisions.LastOrDefault();
                 }
-
-                var renderedCodeFile = new RenderedCodeFile(codeFile);
                 // We should compare against only latest revision when calling this API from scheduled CI runs
                 // But any manual pipeline run at release time should compare against all approved revisions to ensure hotfix release doesn't have API change
                 // If review surface doesn't match with any approved revisions then we will create new revision if it doesn't match pending latest revision

@@ -316,7 +316,7 @@ Services:
     - --parallel 64
     TestNames:
       Net: GetSecret
-      Java: GetSecret
+      Java: getsecret
       Python: GetSecretTest
 
   - Test: list-secrets
@@ -326,7 +326,7 @@ Services:
     - --count 500 --parallel 32
     TestNames:
       Net: ListSecrets
-      Java: ListSecrets
+      Java: listsecrets
 
 - Service: eventhubs
   Languages:

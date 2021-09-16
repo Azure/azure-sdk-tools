@@ -15,9 +15,17 @@ parameters:
   - name: SkipDotNetInstall
     type: boolean
     default: false
+  - name: NoWarn
+    type: boolean
+    default: false
 
 variables:
   - template: ../variables/globals.yml
+  - name: Warn
+    ${{ if parameters.NoWarn }}:
+      value: ''
+    ${{ if not(parameters.NoWarn) }}:
+      value: -warnaserror
 
 stages:
   - stage: BuildTestAndPackage
@@ -30,13 +38,13 @@ stages:
       - job: BuildAndPackage
 
         steps:
-          - task: UseDotNet@2 
+          - task: UseDotNet@2
             condition: eq(${{ parameters.SkipDotNetInstall }}, false)
             displayName: 'Use .NET Core sdk ${{ coalesce( parameters.DotNetCoreVersion, variables.DotNetCoreVersion) }}'
             inputs:
               version: '${{ coalesce( parameters.DotNetCoreVersion, variables.DotNetCoreVersion) }}'
 
-          - script: 'dotnet pack -o $(Build.ArtifactStagingDirectory) -warnaserror -c Release'
+          - script: 'dotnet pack -o $(Build.ArtifactStagingDirectory) $(Warn) -c Release'
             displayName: 'Build and Package'
             workingDirectory: $(Build.SourcesDirectory)/${{parameters.ToolDirectory}}
             env:
@@ -52,7 +60,7 @@ stages:
       - job: Test
 
         steps:
-          - task: UseDotNet@2 
+          - task: UseDotNet@2
             condition: eq(${{ parameters.SkipDotNetInstall }}, false)
             displayName: 'Use .NET Core sdk ${{ coalesce( parameters.DotNetCoreVersion, variables.DotNetCoreVersion) }}'
             inputs:

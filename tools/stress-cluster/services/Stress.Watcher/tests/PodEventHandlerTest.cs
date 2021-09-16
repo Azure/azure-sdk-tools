@@ -94,6 +94,10 @@ namespace Stress.Watcher.Tests
             pod.Metadata.Annotations["stress/chaos.started"] = "true";
             handler.ShouldStartPodChaos(WatchEventType.Modified, pod).Should().BeFalse();
 
+            pod.Metadata.Annotations.Remove("stress/chaos.started");
+            pod.Metadata.Annotations["stress/chaos.autoStart"] = "false";
+            handler.ShouldStartPodChaos(WatchEventType.Modified, pod).Should().BeFalse();
+
             pod = CreatePod("testns", "");
             handler.ShouldStartPodChaos(WatchEventType.Modified, pod).Should().BeFalse();
 

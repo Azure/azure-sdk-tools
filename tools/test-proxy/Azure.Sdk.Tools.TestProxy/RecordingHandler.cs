@@ -2,6 +2,7 @@
 using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Transforms;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Primitives;
 using System;
 using System.Collections.Concurrent;
@@ -442,7 +443,8 @@ namespace Azure.Sdk.Tools.TestProxy
         {
             var uri = new RequestUriBuilder();
             uri.Reset(new Uri(GetHeader(request, "x-recording-upstream-base-uri")));
-            uri.Path = request.Path;
+            uri.Path = request.HttpContext.Features.Get<IHttpRequestFeature>().RawTarget;
+            
             uri.Query = request.QueryString.ToUriComponent();
             var result = uri.ToUri();
 

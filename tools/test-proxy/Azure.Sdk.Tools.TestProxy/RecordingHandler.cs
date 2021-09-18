@@ -2,6 +2,7 @@
 using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Transforms;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Primitives;
 using System;
 using System.Collections.Concurrent;
@@ -440,13 +441,14 @@ namespace Azure.Sdk.Tools.TestProxy
 
         public static Uri GetRequestUri(HttpRequest request)
         {
-            var uri = new RequestUriBuilder();
-            uri.Reset(new Uri(GetHeader(request, "x-recording-upstream-base-uri")));
-            uri.Path = request.Path;
-            uri.Query = request.QueryString.ToUriComponent();
-            var result = uri.ToUri();
-
-            return result;
+            // Instead of obtaining the Path of the request from request.Path, we use this
+            // more complicated method obtaining the raw string from the httpcontext. Unfortunately,
+            // The native request functions implicitly decode the Path value. EG: "aa%27bb" is decoded into 'aa'bb'.
+            // Using the RawTarget PREVENTS this automatic decode. We still lean on the URI constructors
+            // to give us some amount of safety, but note that we explicitly disable escaping in that combination.
+            var rawTarget = request.HttpContext.Features.Get<IHttpRequestFeature>().RawTarget;
+            var host = new Uri(GetHeader(request, "x-recording-upstream-base-uri"));
+            return new Uri(host, rawTarget);
         }
 
         private static bool IncludeHeader(string header)

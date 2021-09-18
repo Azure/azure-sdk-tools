@@ -441,13 +441,9 @@ namespace Azure.Sdk.Tools.TestProxy
 
         public static Uri GetRequestUri(HttpRequest request)
         {
-            var uri = new RequestUriBuilder();
-            uri.Reset(new Uri(GetHeader(request, "x-recording-upstream-base-uri")));
-            uri.Path = request.HttpContext.Features.Get<IHttpRequestFeature>().RawTarget;
-            uri.Query = request.QueryString.ToUriComponent();
-            var result = uri.ToUri();
-
-            return result;
+            var rawTarget = request.HttpContext.Features.Get<IHttpRequestFeature>().RawTarget;
+            var host = new Uri(GetHeader(request, "x-recording-upstream-base-uri"));
+            return new Uri(host, rawTarget, dontEscape: true);
         }
 
         private static bool IncludeHeader(string header)

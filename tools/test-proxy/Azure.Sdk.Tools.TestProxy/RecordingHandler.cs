@@ -448,7 +448,7 @@ namespace Azure.Sdk.Tools.TestProxy
             // to give us some amount of safety, but note that we explicitly disable escaping in that combination.
             var rawTarget = request.HttpContext.Features.Get<IHttpRequestFeature>().RawTarget;
             var host = new Uri(GetHeader(request, "x-recording-upstream-base-uri"));
-            return new Uri(host, rawTarget, dontEscape: true);
+            return new Uri(host, rawTarget);
         }
 
         private static bool IncludeHeader(string header)

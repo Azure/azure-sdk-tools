@@ -441,6 +441,11 @@ namespace Azure.Sdk.Tools.TestProxy
 
         public static Uri GetRequestUri(HttpRequest request)
         {
+            // Instead of obtaining the Path of the request from request.Path, we use this
+            // more complicated method obtaining the raw string from the httpcontext. Unfortunately,
+            // The native request functions implicitly decode the Path value. EG: "aa%27bb" is decoded into 'aa'bb'.
+            // Using the RawTarget PREVENTS this automatic decode. We still lean on the URI constructors
+            // to give us some amount of safety, but note that we explicitly disable escaping in that combination.
             var rawTarget = request.HttpContext.Features.Get<IHttpRequestFeature>().RawTarget;
             var host = new Uri(GetHeader(request, "x-recording-upstream-base-uri"));
             return new Uri(host, rawTarget, dontEscape: true);

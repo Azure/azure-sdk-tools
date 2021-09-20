@@ -30,6 +30,19 @@ namespace APIViewWeb
             await _pullRequestsContainer.UpsertItemAsync(pullRequestModel, new PartitionKey(pullRequestModel.PullRequestNumber));
         }
 
+        public async Task<IEnumerable<PullRequestModel>> GetPullRequestsAsync(bool isOpen)
+        {
+            var pullRequests = new List<PullRequestModel>();
+            var queryDefinition = new QueryDefinition("SELECT * FROM PullRequests c WHERE c.IsOpen = @isOpen").WithParameter("@isClosed", isOpen);
+            var itemQueryIterator = _pullRequestsContainer.GetItemQueryIterator<PullRequestModel>(queryDefinition);
+            while (itemQueryIterator.HasMoreResults)
+            {
+                var result = await itemQueryIterator.ReadNextAsync();
+                pullRequests.AddRange(result.Resource);
+            }
+            return pullRequests;
+        }
+
         private async Task<PullRequestModel> GetPullRequestFromQueryAsync(string query)
         {
             var itemQueryIterator = _pullRequestsContainer.GetItemQueryIterator<PullRequestModel>(query);

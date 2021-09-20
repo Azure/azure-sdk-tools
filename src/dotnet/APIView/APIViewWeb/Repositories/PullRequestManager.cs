@@ -144,7 +144,7 @@ namespace APIViewWeb.Repositories
             };
 
             var stringBuilder = new StringBuilder();
-            var diffUrl = REVIEW_DIFF_URL.Replace("{ReviewId}",review.ReviewId).Replace("{NewRevision}", newRevision.RevisionId);
+            var diffUrl = REVIEW_DIFF_URL.Replace("{ReviewId}",review.ReviewId).Replace("{NewRevision}", review.Revisions.Last().RevisionId);
             stringBuilder.Append($"API changes have been detected in this PR. You can review API changes [here]({diffUrl})").Append(Environment.NewLine);
             // If review doesn't match with any revisions then generate formatted diff against last revision of automatic review
             await GetFormattedDiff(renderedCodeFile, review.Revisions.Last(), stringBuilder);
@@ -284,10 +284,11 @@ namespace APIViewWeb.Repositories
 
         private async Task AssertPullRequestCreatorPermission(PullRequestModel prModel)
         {
-            var org = await _githubClient.Organization.GetAllForUser(prModel.Author);
+            var orgs = await _githubClient.Organization.GetAllForUser(prModel.Author);
+            var orgNames = orgs.Select(o => o.Login);
             var result = await _authorizationService.AuthorizeAsync(
                 null,
-                org,
+                orgNames,
                 new[] { PullRequestPermissionRequirement.Instance });
             if (!result.Succeeded)
             {

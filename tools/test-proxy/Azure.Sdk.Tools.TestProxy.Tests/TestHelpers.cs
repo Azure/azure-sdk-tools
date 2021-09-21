@@ -39,6 +39,24 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             return handler;
         }
 
+        public static void LoadRecordSessionIntoHandler(string path, string guid, RecordingHandler existingHandler)
+        {
+            using var stream = System.IO.File.OpenRead(path);
+            using var doc = JsonDocument.Parse(stream);
+            var session = new ModifiableRecordSession(RecordSession.Deserialize(doc.RootElement));
+
+            existingHandler.RecordingSessions.TryAdd(guid, (path, session));
+        }
+
+        public static void LoadPlaybackSessionIntoHandler(string path, string guid, RecordingHandler existingHandler)
+        {
+            using var stream = System.IO.File.OpenRead(path);
+            using var doc = JsonDocument.Parse(stream);
+            var session = new ModifiableRecordSession(RecordSession.Deserialize(doc.RootElement));
+
+            existingHandler.PlaybackSessions.TryAdd(guid, session);
+        }
+
         public static byte[] GenerateByteRequestBody(string s)
         {
             return Encoding.UTF8.GetBytes(s);

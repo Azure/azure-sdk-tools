@@ -55,7 +55,7 @@ namespace APIViewWeb.Repositories
             _authorizationService = authorizationService;
             _githubClient.Credentials = new Credentials(_configuration["github-access-token"]);
 
-            var pullRequestReviewCloseAfter = _configuration["pull-request-review-close-after-days"] ?? "7";
+            var pullRequestReviewCloseAfter = _configuration["pull-request-review-close-after-days"] ?? "30";
             _pullRequestCleanupDays = int.Parse(pullRequestReviewCloseAfter);
         }
 

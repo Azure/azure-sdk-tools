@@ -302,8 +302,9 @@ Services:
     JS:
       Project: sdk/keyvault/perf-tests/keyvault-secrets
       PackageVersions:
-      - "@azure/storage-file-datalake": 12.5.0
-      - "@azure/storage-file-datalake": source
+      - "@azure/keyvault-secrets": 4.0.0
+      - "@azure/keyvault-secrets": 4.3.0
+      - "@azure/keyvault-secrets": source
     Python:
       Project: sdk/keyvault/azure-keyvault-secrets
       PackageVersions:
@@ -317,6 +318,7 @@ Services:
     TestNames:
       Net: GetSecret
       Java: getsecret
+      JS: GetSecretTest
       Python: GetSecretTest
 
   - Test: list-secrets
@@ -327,6 +329,7 @@ Services:
     TestNames:
       Net: ListSecrets
       Java: listsecrets
+      JS: ListSecretsTest
 
 - Service: eventhubs
   Languages:

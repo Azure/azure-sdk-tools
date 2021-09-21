@@ -46,13 +46,9 @@ namespace APIViewWeb.HostedServices
 
         private async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            //stoppingToken.Register(() =>
-            //        _logger.LogDebug($" GracePeriod background task is stopping."));
-
             do
             {
                 await _pullRequestManager.CleanupPullRequestData();
-
                 await Task.Delay(6 * 60 * 60000, stoppingToken); //6 hours delay
             }
             while (!stoppingToken.IsCancellationRequested);

@@ -66,10 +66,10 @@ namespace APIViewWeb.Repositories
             var operation = _telemetryClient.StartOperation(requestTelemetry);
             try
             {
+                string[] repoInfo = repoName.Split("/");
                 var pullRequestModel = await _pullRequestsRepository.GetPullRequestAsync(prNumber, repoName, filePath);
                 if (pullRequestModel == null)
                 {
-                    var repoInfo = repoName.Split("/");
                     var issue = await _githubClient.Issue.Get(repoInfo[0], repoInfo[1], prNumber);
                     pullRequestModel = new PullRequestModel()
                     {
@@ -99,7 +99,6 @@ namespace APIViewWeb.Repositories
                     var apiDiff = await GetApiDiffFromAutomaticReview(codeFile, prNumber, fileName, memoryStream, pullRequestModel);
                     if (apiDiff != "")
                     {
-                        var repoInfo = repoName.Split("/");
                         await _githubClient.Issue.Comment.Create(repoInfo[0], repoInfo[1], prNumber, apiDiff);
                     }                    
                 }
@@ -258,7 +257,7 @@ namespace APIViewWeb.Repositories
         {
             var repoInfo = prModel.RepoName.Split("/");
             var issue = await _githubClient.Issue.Get(repoInfo[0], repoInfo[1], prModel.PullRequestNumber);
-            // Close review created for pull request if pull request was closed more than 7 days ago
+            // Close review created for pull request if pull request was closed more than _pullRequestCleanupDays days ago
             if (issue.ClosedAt != null)
             {
                 return issue.ClosedAt?.AddDays(_pullRequestCleanupDays) < DateTimeOffset.Now;

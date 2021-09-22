@@ -1,4 +1,6 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
@@ -13,5 +15,7 @@ namespace APIViewWeb.Models
         public string RepoName { get; set; }
         public string FilePath { get; set; }
         public bool IsOpen { get; set; } = true;
+        public string ReviewId { get; set; }
+        public string Author { get; set; }
     }
 }

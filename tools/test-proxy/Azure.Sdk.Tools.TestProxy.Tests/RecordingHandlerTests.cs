@@ -3,6 +3,7 @@ using Azure.Sdk.Tools.TestProxy.Matchers;
 using Azure.Sdk.Tools.TestProxy.Sanitizers;
 using Azure.Sdk.Tools.TestProxy.Transforms;
 using Microsoft.AspNetCore.Http;
+using System;
 using System.IO;
 using System.Linq;
 using Xunit;
@@ -82,6 +83,116 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             recordingHandler.StopPlayback(playbackSession, false);
 
             Assert.True(1 == recordingHandler.InMemorySessions.Count);
+        }
+
+        [Fact]
+        public async void TestLoadOfAbsoluteRecording()
+        {
+            var tmpPath = Path.GetTempPath();
+            var currentPath = Directory.GetCurrentDirectory();
+            var httpContext = new DefaultHttpContext();
+            var pathToRecording = Path.Combine(currentPath, "Test.RecordEntries/oauth_request.json");
+
+            var recordingHandler = new RecordingHandler(tmpPath);
+
+            await recordingHandler.StartPlayback(pathToRecording, httpContext.Response);
+
+            var playbackSession = recordingHandler.PlaybackSessions.First();
+            var entry = playbackSession.Value.Session.Entries.First();
+
+            Assert.Equal("https://login.microsoftonline.com/12345678-1234-1234-1234-123456789012/oauth2/v2.0/token", entry.RequestUri);
+        }
+
+        [Fact]
+        public async void TestLoadOfRelativeRecording()
+        {
+            var currentPath = Directory.GetCurrentDirectory();
+            var httpContext = new DefaultHttpContext();
+            var pathToRecording = "Test.RecordEntries/oauth_request.json";
+            var recordingHandler = new RecordingHandler(currentPath);
+
+            await recordingHandler.StartPlayback(pathToRecording, httpContext.Response);
+
+            var playbackSession = recordingHandler.PlaybackSessions.First();
+            var entry = playbackSession.Value.Session.Entries.First();
+
+            Assert.Equal("https://login.microsoftonline.com/12345678-1234-1234-1234-123456789012/oauth2/v2.0/token", entry.RequestUri);
+        }
+
+        [Fact]
+        public void TestWriteAbsoluteRecording()
+        {
+            var tmpPath = Path.GetTempPath();
+            var currentPath = Directory.GetCurrentDirectory();
+            var httpContext = new DefaultHttpContext();
+            var pathToRecording = Path.Combine(currentPath, "recordings/oauth_request_new.json");
+            var recordingHandler = new RecordingHandler(tmpPath);
+
+            recordingHandler.StartRecording(pathToRecording, httpContext.Response);
+            var sessionId = httpContext.Response.Headers["x-recording-id"].ToString();
+            recordingHandler.StopRecording(sessionId);
+
+            try
+            {
+                Assert.True(File.Exists(pathToRecording));
+            }
+            finally
+            {
+                File.Delete(pathToRecording);
+            }
+        }
+
+        [Fact]
+        public void TestWriteRelativeRecording()
+        {
+            var currentPath = Directory.GetCurrentDirectory();
+            var httpContext = new DefaultHttpContext();
+            var pathToRecording = "recordings/oauth_request_new";
+            var recordingHandler = new RecordingHandler(currentPath);
+            var fullPathToRecording = Path.Combine(currentPath, pathToRecording) + ".json";
+
+            recordingHandler.StartRecording(pathToRecording, httpContext.Response);
+            var sessionId = httpContext.Response.Headers["x-recording-id"].ToString();
+            recordingHandler.StopRecording(sessionId);
+
+
+            try
+            {
+                Assert.True(File.Exists(fullPathToRecording));
+            }
+            finally
+            {
+                File.Delete(fullPathToRecording);
+            }
+        }
+
+        [Fact]
+        public async void TestLoadNonexistentAbsoluteRecording()
+        {
+            var tmpPath = Path.GetTempPath();
+            var currentPath = Directory.GetCurrentDirectory();
+            var httpContext = new DefaultHttpContext();
+            var pathToRecording = Path.Combine(currentPath, "Test.RecordEntries/oauth_request_wrong.json");
+
+            var recordingHandler = new RecordingHandler(tmpPath);
+
+            await Assert.ThrowsAsync<FileNotFoundException>(
+               async () => await recordingHandler.StartPlayback(pathToRecording, httpContext.Response)
+            );
+        }
+
+        [Fact]
+        public async void TestLoadNonexistentRelativeRecording()
+        {
+            var currentPath = Directory.GetCurrentDirectory();
+            var httpContext = new DefaultHttpContext();
+            var pathToRecording = "Test.RecordEntries/oauth_request_wrong.json";
+
+            var recordingHandler = new RecordingHandler(currentPath);
+
+            await Assert.ThrowsAsync<FileNotFoundException>(
+               async () => await recordingHandler.StartPlayback(pathToRecording, httpContext.Response)
+            );
         }
     }
 }

@@ -244,12 +244,13 @@ description: <description>
 version: 0.1.0
 appVersion: v0.1
 annotations:
-  stressTest: 'true'
+  stressTest: 'true'  # enable auto-discovery of this test via `find-all-stress-packages.ps1`
   namespace: <your stress test namespace>
+  <optional key/value annotations for filtering>
 
 dependencies:
 - name: stress-test-addons
-  version: 0.1.1
+  version: 0.1.6
   repository: https://stresstestcharts.blob.core.windows.net/helm/
 ```
 

@@ -120,7 +120,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
-        public async void TestWriteAbsoluteRecording()
+        public void TestWriteAbsoluteRecording()
         {
             var tmpPath = Path.GetTempPath();
             var currentPath = Directory.GetCurrentDirectory();
@@ -143,13 +143,13 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
-        public async void TestWriteRelativeRecording()
+        public void TestWriteRelativeRecording()
         {
             var currentPath = Directory.GetCurrentDirectory();
             var httpContext = new DefaultHttpContext();
-            var pathToRecording = "recordings/oauth_request_new.json";
+            var pathToRecording = "recordings/oauth_request_new";
             var recordingHandler = new RecordingHandler(currentPath);
-            var fullPathToRecording = Path.Combine(currentPath, pathToRecording);
+            var fullPathToRecording = Path.Combine(currentPath, pathToRecording) + ".json";
 
             recordingHandler.StartRecording(pathToRecording, httpContext.Response);
             var sessionId = httpContext.Response.Headers["x-recording-id"].ToString();

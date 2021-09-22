@@ -420,16 +420,17 @@ namespace Azure.Sdk.Tools.TestProxy
             Matcher = new RecordMatcher();
         }
 
+
         public string GetRecordingPath(string file)
         {
-            if (Path.IsPathFullyQualified(file))
+            var path = file;
+
+            if (!Path.IsPathFullyQualified(file))
             {
-                return file + (!file.EndsWith(".json") ? ".json" : String.Empty).Replace("\\", "/");
+                path = Path.Join(RepoPath, file);
             }
-            else
-            {
-                return Path.Join(RepoPath, file + (!file.EndsWith(".json") ? ".json" : String.Empty)).Replace("\\", "/");
-            }
+
+            return (path + (!path.EndsWith(".json") ? ".json" : String.Empty)).Replace("\\", "/");
         }
 
         public static string GetHeader(HttpRequest request, string name, bool allowNulls = false)

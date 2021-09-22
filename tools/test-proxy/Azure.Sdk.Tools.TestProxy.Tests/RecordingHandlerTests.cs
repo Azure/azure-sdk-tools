@@ -173,10 +173,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var currentPath = Directory.GetCurrentDirectory();
             var httpContext = new DefaultHttpContext();
             var pathToRecording = Path.Combine(currentPath, "Test.RecordEntries/oauth_request_wrong.json");
-            //  we intentionally change the context to somewhere that we can't see the recordings from a relative path
+
             var recordingHandler = new RecordingHandler(tmpPath);
 
-            // given the changed storage context, can we load an absolute recording?
             await Assert.ThrowsAsync<FileNotFoundException>(
                async () => await recordingHandler.StartPlayback(pathToRecording, httpContext.Response)
             );
@@ -188,10 +187,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var currentPath = Directory.GetCurrentDirectory();
             var httpContext = new DefaultHttpContext();
             var pathToRecording = "Test.RecordEntries/oauth_request_wrong.json";
-            //  we intentionally change the context to somewhere that we can't see the recordings from a relative path
+
             var recordingHandler = new RecordingHandler(currentPath);
 
-            // given the changed storage context, can we load an absolute recording?
             await Assert.ThrowsAsync<FileNotFoundException>(
                async () => await recordingHandler.StartPlayback(pathToRecording, httpContext.Response)
             );

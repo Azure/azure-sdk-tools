@@ -90,64 +90,111 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         {
             var tmpPath = Path.GetTempPath();
             var currentPath = Directory.GetCurrentDirectory();
+            var httpContext = new DefaultHttpContext();
             var pathToRecording = Path.Combine(currentPath, "Test.RecordEntries/oauth_request.json");
-            //  we intentionally change the context to somewhere that we can't see the recordings
+
             var recordingHandler = new RecordingHandler(tmpPath);
-            var guid = Guid.NewGuid().ToString();
 
-            // given the changed storage context, can we load an absolute recording?
-            TestHelpers.LoadPlaybackSessionIntoHandler(pathToRecording, guid, recordingHandler);
+            await recordingHandler.StartPlayback(pathToRecording, httpContext.Response);
 
-            // ensure that the first item in the session
-            var entry = recordingHandler.PlaybackSessions[guid].Session.Entries.First();
+            var playbackSession = recordingHandler.PlaybackSessions.First();
+            var entry = playbackSession.Value.Session.Entries.First();
 
-            // if we loaded the entry appropriately, we should have the stuff we xpect
             Assert.Equal("https://login.microsoftonline.com/12345678-1234-1234-1234-123456789012/oauth2/v2.0/token", entry.RequestUri);
         }
 
         [Fact]
         public async void TestLoadOfRelativeRecording()
         {
-            var tmpPath = Path.GetTempPath();
             var currentPath = Directory.GetCurrentDirectory();
-            var pathToRecording = Path.Combine(currentPath, "Test.RecordEntries/oauth_request.json");
-            //  we intentionally change the context to somewhere that we can't see the recordings
-            var recordingHandler = new RecordingHandler(tmpPath);
-            var guid = Guid.NewGuid().ToString();
+            var httpContext = new DefaultHttpContext();
+            var pathToRecording = "Test.RecordEntries/oauth_request.json";
+            var recordingHandler = new RecordingHandler(currentPath);
 
-            // given the changed storage context, can we load an absolute recording?
-            TestHelpers.LoadPlaybackSessionIntoHandler(pathToRecording, guid, recordingHandler);
+            await recordingHandler.StartPlayback(pathToRecording, httpContext.Response);
 
-            // ensure that the first item in the session
-            var entry = recordingHandler.PlaybackSessions[guid].Session.Entries.First();
+            var playbackSession = recordingHandler.PlaybackSessions.First();
+            var entry = playbackSession.Value.Session.Entries.First();
 
-            // if we loaded the entry appropriately, we should have the stuff we xpect
             Assert.Equal("https://login.microsoftonline.com/12345678-1234-1234-1234-123456789012/oauth2/v2.0/token", entry.RequestUri);
-
         }
 
         [Fact]
         public async void TestWriteAbsoluteRecording()
         {
-            // can we write an absolute recording with storage context?
+            var tmpPath = Path.GetTempPath();
+            var currentPath = Directory.GetCurrentDirectory();
+            var httpContext = new DefaultHttpContext();
+            var pathToRecording = Path.Combine(currentPath, "recordings/oauth_request_new.json");
+            var recordingHandler = new RecordingHandler(tmpPath);
+
+            recordingHandler.StartRecording(pathToRecording, httpContext.Response);
+            var sessionId = httpContext.Response.Headers["x-recording-id"].ToString();
+            recordingHandler.StopRecording(sessionId);
+
+            try
+            {
+                Assert.True(File.Exists(pathToRecording));
+            }
+            finally
+            {
+                File.Delete(pathToRecording);
+            }
         }
 
         [Fact]
         public async void TestWriteRelativeRecording()
         {
-            // can we write a relative recording with storage context?
+            var currentPath = Directory.GetCurrentDirectory();
+            var httpContext = new DefaultHttpContext();
+            var pathToRecording = "recordings/oauth_request_new.json";
+            var recordingHandler = new RecordingHandler(currentPath);
+            var fullPathToRecording = Path.Combine(currentPath, pathToRecording);
+
+            recordingHandler.StartRecording(pathToRecording, httpContext.Response);
+            var sessionId = httpContext.Response.Headers["x-recording-id"].ToString();
+            recordingHandler.StopRecording(sessionId);
+
+
+            try
+            {
+                Assert.True(File.Exists(fullPathToRecording));
+            }
+            finally
+            {
+                File.Delete(fullPathToRecording);
+            }
         }
 
         [Fact]
         public async void TestLoadNonexistentAbsoluteRecording()
         {
-            // loading something that doesn't exist breaks
+            var tmpPath = Path.GetTempPath();
+            var currentPath = Directory.GetCurrentDirectory();
+            var httpContext = new DefaultHttpContext();
+            var pathToRecording = Path.Combine(currentPath, "Test.RecordEntries/oauth_request_wrong.json");
+            //  we intentionally change the context to somewhere that we can't see the recordings from a relative path
+            var recordingHandler = new RecordingHandler(tmpPath);
+
+            // given the changed storage context, can we load an absolute recording?
+            await Assert.ThrowsAsync<FileNotFoundException>(
+               async () => await recordingHandler.StartPlayback(pathToRecording, httpContext.Response)
+            );
         }
 
         [Fact]
         public async void TestLoadNonexistentRelativeRecording()
         {
-            // loading something that doesn't exist breaks
+            var currentPath = Directory.GetCurrentDirectory();
+            var httpContext = new DefaultHttpContext();
+            var pathToRecording = "Test.RecordEntries/oauth_request_wrong.json";
+            //  we intentionally change the context to somewhere that we can't see the recordings from a relative path
+            var recordingHandler = new RecordingHandler(currentPath);
+
+            // given the changed storage context, can we load an absolute recording?
+            await Assert.ThrowsAsync<FileNotFoundException>(
+               async () => await recordingHandler.StartPlayback(pathToRecording, httpContext.Response)
+            );
         }
     }
 }

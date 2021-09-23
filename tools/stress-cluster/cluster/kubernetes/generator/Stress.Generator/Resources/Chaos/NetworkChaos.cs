@@ -33,7 +33,7 @@ namespace Stress.Generator
         [ResourceProperty("External Targets, e.g. servicebus.windows.net")]
         public string ExternalTargets;
 
-        public NetworkChaos(string templatePath) : base(templatePath)
+        public NetworkChaos() : base()
         {
             
         }

@@ -10,7 +10,7 @@ namespace Stress.Generator
         [ResourceProperty("Container command. If using multiple scenarios, use a template like `node dist/{{ .Scenario }}.js`")]
         public string Command;
 
-        public Job(string templatePath) : base(templatePath)
+        public Job() : base()
         {
             
         }

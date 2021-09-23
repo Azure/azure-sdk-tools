@@ -11,9 +11,8 @@ namespace Stress.Generator
         public string Template;
         public bool IsLoaded = false;
         
-        public Resource(string templatePath)
+        public Resource()
         {
-            TemplatePath = templatePath;
         }
         
         private void CheckLoaded()

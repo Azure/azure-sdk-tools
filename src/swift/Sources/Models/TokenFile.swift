@@ -313,6 +313,10 @@ class TokenFile: Codable {
         let accessLevel = decl.accessLevelModifier ?? overridingAccess ?? .internal
         guard publicModifiers.contains(accessLevel) else { return false }
 
+        if (decl.members.count <= 1) {
+            return false
+        }
+
         // register type as linkable
         let defId = decl.name.textDescription
         definitionIds[defId] = defId
@@ -373,6 +377,10 @@ class TokenFile: Codable {
             }
         }
 
+        if (decl.members.count <= 1) {
+            return false
+        }
+
         handle(attributes: decl.attributes)
         if let access = accessLevel {
             let value = access.textDescription
@@ -428,6 +436,9 @@ class TokenFile: Codable {
             typeModel = TypeModel(from: typeAnno)
             name = ident.textDescription
         case let .getterSetterKeywordBlock(ident, typeAnno, _):
+            typeModel = TypeModel(from: typeAnno)
+            name = ident.textDescription
+        case let .getterSetterBlock(ident, typeAnno, _):
             typeModel = TypeModel(from: typeAnno)
             name = ident.textDescription
         case let .willSetDidSetBlock(ident, typeAnno, expression, _):

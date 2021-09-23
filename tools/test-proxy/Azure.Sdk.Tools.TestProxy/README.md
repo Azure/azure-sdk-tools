@@ -22,12 +22,10 @@ There is a walkthrough through the process below in the [how do I use the test p
 2. Install test-proxy
 
 ```powershell
-> dotnet tool install azure.sdk.tools.testproxy --global --add-source https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json
+> dotnet tool install azure.sdk.tools.testproxy --global --prerelease --add-source https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json
 ```
 
 This feed is available in [the public azure-sdk project.](https://dev.azure.com/azure-sdk/public/_packaging?_a=feed&feed=azure-sdk)
-
-Note that given there are only dev versions available, please add `--version <selectedVersion>`. You will see a failure that **gives you the latest version of the package** if you do not provide this additional argument.
 
 After successful installation, run the tool:
 

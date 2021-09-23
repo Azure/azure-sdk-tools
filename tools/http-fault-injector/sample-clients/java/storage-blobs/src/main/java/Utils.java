@@ -74,7 +74,6 @@ public final class Utils {
         }
     }
 
-
     /*
      * Helper method for validating the HTTP fault injector host and port.
      */

@@ -3,11 +3,11 @@ using System.Collections.Generic;
 
 namespace Stress.Generator
 {
-    public class generator
+    public class Generator
     {
         public IPrompter Prompter;
 
-        public void Generate(IPrompter prompter = null)
+        public Generator(IPrompter prompter = null)
         {
             Prompter = prompter ?? new Prompter();
         }
@@ -28,7 +28,7 @@ namespace Stress.Generator
                     values.Add(Prompt<T>());
                 }
                 Console.WriteLine("Enter another value (y/n)?");
-                another = Console.ReadLine();
+                another = Prompter.Prompt();
             }
             return values;
         }
@@ -37,16 +37,16 @@ namespace Stress.Generator
         {
             var retryMessage = $"Invalid value, expected {typeof(T)}";
             Console.WriteLine(promptMessage);
-            var value = Console.ReadLine(); 
+            var value = Prompter.Prompt();
 
             if (typeof(T) == typeof(string))
             {
                 return (T)(object)value;
             }
 
-            if (typeof(T) == typeof(float))
+            if (typeof(T) == typeof(double))
             {
-                if (!float.TryParse(value, out float parsed))
+                if (!double.TryParse(value, out double parsed))
                 {
                     return Prompt<T>(retryMessage);
                 }

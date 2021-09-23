@@ -313,10 +313,6 @@ class TokenFile: Codable {
         let accessLevel = decl.accessLevelModifier ?? overridingAccess ?? .internal
         guard publicModifiers.contains(accessLevel) else { return false }
 
-        if (decl.members.count <= 1) {
-            return false
-        }
-
         // register type as linkable
         let defId = decl.name.textDescription
         definitionIds[defId] = defId

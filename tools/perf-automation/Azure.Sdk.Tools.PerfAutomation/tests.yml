@@ -281,16 +281,11 @@ Services:
     Net:
       Project: sdk/keyvault/Azure.Security.KeyVault.Secrets/perf/Azure.Security.KeyVault.Secrets.Perf.csproj
       PackageVersions:
-      - Azure.Security.KeyVault.Secrets: 4.0.0
       - Azure.Security.KeyVault.Secrets: 4.2.0
       - Azure.Security.KeyVault.Secrets: source
     Java:
       Project: sdk/keyvault/azure-security-keyvault-perf
       PackageVersions:
-      - azure-security-keyvault-certificates: 4.0.0
-        azure-security-keyvault-keys: 4.0.0
-        azure-security-keyvault-secrets: 4.0.0
-        reactor-core: 3.3.0.RELEASE
       - azure-security-keyvault-certificates: 4.2.2
         azure-security-keyvault-keys: 4.3.2
         azure-security-keyvault-secrets: 4.3.2
@@ -302,7 +297,6 @@ Services:
     JS:
       Project: sdk/keyvault/perf-tests/keyvault-secrets
       PackageVersions:
-      - "@azure/keyvault-secrets": 4.0.0
       - "@azure/keyvault-secrets": 4.3.0
       - "@azure/keyvault-secrets": source
     Python:
@@ -330,6 +324,7 @@ Services:
       Net: ListSecrets
       Java: listsecrets
       JS: ListSecretsTest
+      Python: ListSecretsTest
 
 - Service: eventhubs
   Languages:

@@ -3,7 +3,7 @@ set -ex
 export AZURE_STORAGE_ACCOUNT=stresstestcharts
 export AZURE_STORAGE_KEY=$(az storage account keys list --account-name $AZURE_STORAGE_ACCOUNT -o tsv --query '[0].value')
 
-rm *.tgz
+rm -f ./*.tgz
 
 helm package  .
 helm repo index --url https://stresstestcharts.blob.core.windows.net/helm/ --merge index.yaml .

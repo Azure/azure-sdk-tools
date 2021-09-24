@@ -15,7 +15,7 @@ namespace APIViewWeb.Controllers
         private readonly PullRequestManager _pullRequestManager;
         private readonly ILogger _logger;
 
-        string[] VALID_EXTENSIONS = new string[] { ".whl", ".api.json", ".nuget", "-sources.jar" };
+        string[] VALID_EXTENSIONS = new string[] { ".whl", ".api.json", ".nupkg", "-sources.jar" };
 
         public PullRequestController(PullRequestManager pullRequestManager, ILogger<AutoReviewController> logger)
         {

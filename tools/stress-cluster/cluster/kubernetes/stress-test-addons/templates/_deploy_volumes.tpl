@@ -4,7 +4,7 @@
     name: "{{ .Release.Name }}-test-resources"
     items:
       - key: template
-        path: test-resources.json
+        path: stress-test-resources.json
       - key: parameters
         path: parameters.json
 {{ end }}

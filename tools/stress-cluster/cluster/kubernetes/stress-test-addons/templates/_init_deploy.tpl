@@ -14,7 +14,7 @@
       az deployment group create \
           -g $groupName \
           -n $groupName \
-          -f /mnt/testresources/test-resources.json \
+          -f /mnt/testresources/stress-test-resources.json \
           --parameters /mnt/testresources/parameters.json \
           --parameters testApplicationOid=$AZURE_CLIENT_OID > /dev/null &&
       az deployment group show \

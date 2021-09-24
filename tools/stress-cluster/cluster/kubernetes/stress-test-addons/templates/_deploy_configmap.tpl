@@ -6,7 +6,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
 data:
   template: |
-    {{- .Files.Get "test-resources.json" | nindent 4 }}
+    {{- .Files.Get "stress-test-resources.json" | nindent 4 }}
   parameters: |
     {{- .Files.Get "parameters.json" | nindent 4 }}
 {{ end }}

@@ -146,20 +146,20 @@ The basic layout for a stress test is the following (see `examples/stress_deploy
 
 ```
 <stress test root directory>
-    Dockerfile                   # A Dockerfile for building the stress test image
-    test-resources.[bicep|json]  # An Azure Bicep or ARM template for deploying stress test azure resources.
-    parameters.json              # An ARM template parameters file that will be used at runtime along with the ARM template
+    Dockerfile                          # A Dockerfile for building the stress test image
+    stress-test-resources.[bicep|json]  # An Azure Bicep or ARM template for deploying stress test azure resources.
+    parameters.json                     # An ARM template parameters file that will be used at runtime along with the ARM template
 
-    Chart.yaml                   # A YAML file containing information about the helm chart and its dependencies
-    templates/                   # A directory of helm templates that will generate Kubernetes manifest files.
-                                 # Most commonly this will contain a Job/Pod spec snippet and a chaos mesh manifest.
+    Chart.yaml                          # A YAML file containing information about the helm chart and its dependencies
+    templates/                          # A directory of helm templates that will generate Kubernetes manifest files.
+                                        # Most commonly this will contain a Job/Pod spec snippet and a chaos mesh manifest.
 
     # Optional files/directories
 
     values.yaml                  # Any default helm template values for this chart, e.g. a `scenarios` list
     <misc scripts/configs>       # Any language specific files for building/running/deploying the test
     <source directories>         # Directories containing code for stress tests
-    <bicep modules>              # Any additional bicep module files/directories referenced by test-resources.bicep
+    <bicep modules>              # Any additional bicep module files/directories referenced by stress-test-resources.bicep
 ```
 
 ### Stress Test Metadata
@@ -201,7 +201,7 @@ RESOURCE_GROUP=<value>
 ### Stress Test Azure Resources
 
 Stress test resources can either be defined as azure bicep files, or an ARM template directly, provided there is
-a `chart/test-resources.json` file in place before running `helm install`.
+a `chart/stress-test-resources.json` file in place before running `helm install`.
 The stress test cluster and config boilerplate will handle running ARM deployments in an init container before
 stress test container startup.
 

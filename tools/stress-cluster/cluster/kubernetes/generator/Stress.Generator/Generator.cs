@@ -27,23 +27,7 @@ namespace Stress.Generator
         public List<Resource> GenerateResources()
         {
             var resources = new List<Resource>();
-
-            var another = "y";
-            while (true)
-            {
-                if (another == "n")
-                {
-                    break;
-                }
-                else if (another == "y")
-                {
-                    resources.Add(GenerateResource());
-                }
-
-                Console.Write("Enter another resource? (y/n): ");
-                another = Prompter.Prompt();
-            }
-
+            PromptMultiple(() => resources.Add(GenerateResource()), "Enter another resource?");
             return resources;
         }
 
@@ -100,7 +84,7 @@ namespace Stress.Generator
             }
             else if (property.PropertyType == typeof(List<string>))
             {
-                resource.SetProperty(property, PromptList<string>($"Enter first value for {property.Name} list: "));
+                resource.SetProperty(property, PromptList<string>($"Enter item for list {property.Name}: "));
             }
             else
             {
@@ -111,21 +95,7 @@ namespace Stress.Generator
         public List<T> PromptList<T>(string promptMessage = "Enter Value:")
         {
             var values = new List<T>();
-            values.Add(Prompt<T>());
-            var another = "";
-            while (true)
-            {
-                if (another == "n")
-                {
-                    break;
-                }
-                if (another == "y")
-                {
-                    values.Add(Prompt<T>());
-                }
-                Console.Write("Enter another value? (y/n): ");
-                another = Prompter.Prompt();
-            }
+            PromptMultiple(() => values.Add(Prompt<T>(promptMessage)), "Enter another value?");
             return values;
         }
 
@@ -159,6 +129,25 @@ namespace Stress.Generator
             }
 
             throw new Exception($"Unsupported value {typeof(T)}");
+        }
+
+        public void PromptMultiple(Action promptAction, string message)
+        {
+            var another = "y";
+            while (true)
+            {
+                if (another == "n")
+                {
+                    break;
+                }
+                else if (another == "y")
+                {
+                    promptAction();
+                }
+
+                Console.Write(message + " (y/n): ");
+                another = Prompter.Prompt();
+            }
         }
     }
 

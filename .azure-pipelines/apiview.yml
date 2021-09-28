@@ -9,6 +9,7 @@ trigger:
     include:
       - src/dotnet/APIView
       - src/java/apiview-java-processor
+      - src/ts/ts-genapi
       - packages/python-packages/api-stub-generator
       - packages/python-packages/protocol-stub-generator
 
@@ -23,6 +24,7 @@ pr:
     include:
       - src/dotnet/APIView
       - src/java/apiview-java-processor
+      - src/ts/ts-genapi
       - packages/python-packages/api-stub-generator
       - packages/python-packages/protocol-stub-generator
 

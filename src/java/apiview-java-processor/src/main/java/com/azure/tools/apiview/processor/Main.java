@@ -10,6 +10,7 @@ import com.azure.tools.apiview.processor.model.Token;
 import com.azure.tools.apiview.processor.model.maven.Pom;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -32,6 +33,10 @@ import static com.fasterxml.jackson.databind.MapperFeature.AUTO_DETECT_GETTERS;
 import static com.fasterxml.jackson.databind.MapperFeature.AUTO_DETECT_IS_GETTERS;
 
 public class Main {
+    private static final ObjectWriter WRITER = new ObjectMapper()
+        .disable(AUTO_DETECT_CREATORS, AUTO_DETECT_FIELDS, AUTO_DETECT_GETTERS, AUTO_DETECT_IS_GETTERS)
+        .setSerializationInclusion(JsonInclude.Include.NON_NULL)
+        .writerWithDefaultPrettyPrinter();
 
     // expected argument order:
     // [inputFiles] <outputDirectory>
@@ -129,11 +134,7 @@ public class Main {
         }
 
         // Write out to the filesystem
-        new ObjectMapper()
-            .disable(AUTO_DETECT_CREATORS, AUTO_DETECT_FIELDS, AUTO_DETECT_GETTERS, AUTO_DETECT_IS_GETTERS)
-            .setSerializationInclusion(JsonInclude.Include.NON_NULL)
-            .writerWithDefaultPrettyPrinter()
-            .writeValue(outputFile, apiListing);
+        WRITER.writeValue(outputFile, apiListing);
     }
 
     private static void processJavaSourcesJar(File inputFile, APIListing apiListing) throws IOException {

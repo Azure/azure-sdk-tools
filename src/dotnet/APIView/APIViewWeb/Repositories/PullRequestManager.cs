@@ -60,14 +60,14 @@ namespace APIViewWeb.Repositories
         }
 
         // API change detection for PR will pull artifact from devops artifact
-        public async Task DetectApiChanges(string buildId, string artifactName, string filePath, int prNumber, string commitSha, string repoName)
+        public async Task DetectApiChanges(string buildId, string artifactName, string filePath, int prNumber, string commitSha, string repoName, string packageName)
         {
             var requestTelemetry = new RequestTelemetry { Name = "Detecting API changes for PR: " + prNumber };
             var operation = _telemetryClient.StartOperation(requestTelemetry);
             try
             {
                 string[] repoInfo = repoName.Split("/");
-                var pullRequestModel = await _pullRequestsRepository.GetPullRequestAsync(prNumber, repoName, filePath);
+                var pullRequestModel = await _pullRequestsRepository.GetPullRequestAsync(prNumber, repoName, packageName);
                 if (pullRequestModel == null)
                 {
                     var issue = await _githubClient.Issue.Get(repoInfo[0], repoInfo[1], prNumber);
@@ -76,7 +76,8 @@ namespace APIViewWeb.Repositories
                         RepoName = repoName,
                         PullRequestNumber = prNumber,
                         FilePath = filePath,
-                        Author = issue.User.Login
+                        Author = issue.User.Login,
+                        PackageName = packageName
                     };
                 }
                 else

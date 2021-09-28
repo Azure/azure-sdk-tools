@@ -19,9 +19,9 @@ namespace APIViewWeb
             _pullRequestsContainer = client.GetContainer("APIView", "PullRequests");
         }
 
-        public async Task<PullRequestModel> GetPullRequestAsync(int pullRequestNumber, string repoName, string filePath)
+        public async Task<PullRequestModel> GetPullRequestAsync(int pullRequestNumber, string repoName, string packageName)
         {
-            var query = $"SELECT * FROM PullRequests c WHERE c.PullRequestNumber = {pullRequestNumber} and c.RepoName = '{repoName}' and c.FilePath = '{filePath}'";
+            var query = $"SELECT * FROM PullRequests c WHERE c.PullRequestNumber = {pullRequestNumber} and c.RepoName = '{repoName}' and c.PackageName = '{packageName}'";
             return await GetPullRequestFromQueryAsync(query);
         }
 

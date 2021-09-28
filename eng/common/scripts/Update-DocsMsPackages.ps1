@@ -128,7 +128,7 @@ if ($UpdateDocsMsPackagesFn -and (Test-Path "Function:$UpdateDocsMsPackagesFn"))
 
   try {
     $docsMetadata = GetDocsMetadata
-    &$UpdateDocsMsPackagesFn -DocsRepoLocation $DocRepoLocation -DocsMetadata $docsMetadata
+    &$UpdateDocsMsPackagesFn -DocsRepoLocation $DocRepoLocation -DocsMetadata $docsMetadata -DevVersionUpdate $PackageSourceOverride
   } catch { 
     LogError "Exception while updating docs.ms packages"
     LogError $_ 

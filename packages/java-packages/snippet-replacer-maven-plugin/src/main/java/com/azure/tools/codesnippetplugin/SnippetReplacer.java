@@ -19,6 +19,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -41,11 +42,14 @@ final class SnippetReplacer {
     static final String DEFAULT_CODESNIPPET_GLOB = "**/src/samples/java/**/*.java";
     static final String DEFAULT_SOURCE_GLOB = "**/*.java";
 
-    private static final HashMap<String, String> REPLACEMENT_SET = new HashMap<String, String>() {{
+    // Ordering matters. If the ampersand (&) isn't done first it will double encode ampersands used in other
+    // replacements.
+    private static final Map<String, String> REPLACEMENT_SET = new LinkedHashMap<String, String>() {{
+        put("&", "&amp;");
         put("\"", "&quot;");
         put(">", "&gt;");
         put("<", "&lt;");
-        put("@", "{@literal @}");
+        put("@", "&#64;");
         put("{", "&#123;");
         put("}", "&#125;");
         put("(", "&#40;");
@@ -95,7 +99,8 @@ final class SnippetReplacer {
             }
 
             // Get the files that match the sources glob and are contained in the sources root directory.
-            sourceFiles = globFiles(sourcesRootDirectory, FileSystems.getDefault().getPathMatcher(sourcesGlob));
+            sourceFiles = globFiles(sourcesRootDirectory, FileSystems.getDefault()
+                .getPathMatcher("glob:" + sourcesGlob));
         }
 
         List<VerifyResult> snippetsNeedingUpdate = new ArrayList<>();
@@ -107,7 +112,8 @@ final class SnippetReplacer {
         // walk across all the java files, run UpdateSrcSnippets
         if (includeSources) {
             for (Path sourcePath : sourceFiles) {
-                SnippetOperationResult<List<VerifyResult>> sourcesResult = verifySrcSnippets(sourcePath, foundSnippets);
+                SnippetOperationResult<List<VerifyResult>> sourcesResult = verifySnippets(sourcePath,
+                    SNIPPET_SRC_CALL_BEGIN, SNIPPET_SRC_CALL_END, foundSnippets, "<pre>", "</pre>", 1, "* ", false);
                 snippetsNeedingUpdate.addAll(sourcesResult.result);
                 badSnippetCalls.addAll(sourcesResult.errorList);
             }
@@ -116,7 +122,8 @@ final class SnippetReplacer {
         // now find folderToVerify/README.md
         // run Update ReadmeSnippets on that
         if (includeReadme) {
-            SnippetOperationResult<List<VerifyResult>> readmeResult = verifyReadmeSnippets(readmePath, foundSnippets);
+            SnippetOperationResult<List<VerifyResult>> readmeResult = verifySnippets(readmePath,
+                SNIPPET_README_CALL_BEGIN, SNIPPET_README_CALL_END, foundSnippets, "", "", 0, "", true);
             snippetsNeedingUpdate.addAll(readmeResult.result);
             badSnippetCalls.addAll(readmeResult.errorList);
         }
@@ -195,13 +202,14 @@ final class SnippetReplacer {
             }
 
             // Get the files that match the sources glob and are contained in the sources root directory.
-            sourceFiles = globFiles(sourcesRootDirectory, FileSystems.getDefault().getPathMatcher(sourcesGlob));
+            sourceFiles = globFiles(sourcesRootDirectory, FileSystems.getDefault()
+                .getPathMatcher("glob:" + sourcesGlob));
         }
-
-        List<VerifyResult> badSnippetCalls = new ArrayList<>();
 
         // scan the sample files for all the snippet files
         Map<String, List<String>> foundSnippets = getAllSnippets(codesnippetFiles);
+
+        List<VerifyResult> badSnippetCalls = new ArrayList<>();
 
         // walk across all the java files, run UpdateSrcSnippets
         if (includeSources) {
@@ -226,18 +234,10 @@ final class SnippetReplacer {
         }
     }
 
-    static List<VerifyResult> updateReadmeCodesnippets(Path file, Map<String, List<String>> snippetMap) throws IOException {
-        List<String> lines = Files.readAllLines(file, StandardCharsets.UTF_8);
-        SnippetOperationResult<StringBuilder> opResult = updateSnippets(file,
-            lines,
-            SNIPPET_README_CALL_BEGIN,
-            SNIPPET_README_CALL_END,
-            snippetMap,
-            "",
-            "",
-            0,
-            "",
-            true);
+    static List<VerifyResult> updateReadmeCodesnippets(Path file, Map<String, List<String>> snippetMap)
+        throws IOException {
+        SnippetOperationResult<StringBuilder> opResult = updateSnippets(file, SNIPPET_README_CALL_BEGIN,
+            SNIPPET_README_CALL_END, snippetMap, "", "", 0, "", true);
 
         if (opResult.result != null) {
             try (BufferedWriter writer = Files.newBufferedWriter(file, StandardCharsets.UTF_8)) {
@@ -250,17 +250,8 @@ final class SnippetReplacer {
 
     static List<VerifyResult> updateSourceCodeSnippets(Path file, Map<String, List<String>> snippetMap)
         throws IOException {
-        List<String> lines = Files.readAllLines(file, StandardCharsets.UTF_8);
-        SnippetOperationResult<StringBuilder> opResult = updateSnippets(file,
-            lines,
-            SNIPPET_SRC_CALL_BEGIN,
-            SNIPPET_SRC_CALL_END,
-            snippetMap,
-            "<pre>",
-            "</pre>",
-            1,
-            "* ",
-            false);
+        SnippetOperationResult<StringBuilder> opResult = updateSnippets(file, SNIPPET_SRC_CALL_BEGIN,
+            SNIPPET_SRC_CALL_END, snippetMap, "<pre>", "</pre>", 1, "* ", false);
 
         if (opResult.result != null) {
             try (BufferedWriter writer = Files.newBufferedWriter(file, StandardCharsets.UTF_8)) {
@@ -271,9 +262,10 @@ final class SnippetReplacer {
         return opResult.errorList;
     }
 
-    static SnippetOperationResult<StringBuilder> updateSnippets(Path file, List<String> lines, Pattern beginRegex,
-        Pattern endRegex, Map<String, List<String>> snippetMap, String preFence, String postFence, int prefixGroupNum,
-        String additionalLinePrefix, boolean disableEscape) {
+    static SnippetOperationResult<StringBuilder> updateSnippets(Path file, Pattern beginRegex, Pattern endRegex,
+        Map<String, List<String>> snippetMap, String preFence, String postFence, int prefixGroupNum,
+        String additionalLinePrefix, boolean disableEscape) throws IOException {
+        List<String> lines = Files.readAllLines(file, StandardCharsets.UTF_8);
 
         List<VerifyResult> badSnippetCalls = new ArrayList<>();
         StringBuilder modifiedLines = new StringBuilder();
@@ -329,40 +321,23 @@ final class SnippetReplacer {
                     needsAmend = true;
                     inSnippet = false;
                 }
-            } else {
-                if (inSnippet) {
-                    // do nothing. we'll write everything at the end,
-                    // we'd do a comparison here if we were verifying
-                } else {
-                    modifiedLines.append(line).append(lineSep);
-                }
+            } else if (!inSnippet) {
+                // Only modify the lines if not in the codesnippet.
+                modifiedLines.append(line).append(lineSep);
             }
         }
 
         if (needsAmend) {
             return new SnippetOperationResult<>(modifiedLines, badSnippetCalls);
         } else {
-            return null;
+            return new SnippetOperationResult<>(null, badSnippetCalls);
         }
     }
 
-    static SnippetOperationResult<List<VerifyResult>> verifyReadmeSnippets(Path file,
-        Map<String, List<String>> snippetMap) throws IOException {
+    static SnippetOperationResult<List<VerifyResult>> verifySnippets(Path file, Pattern beginRegex, Pattern endRegex,
+        Map<String, List<String>> snippetMap, String preFence, String postFence, int prefixGroupNum,
+        String additionalLinePrefix, boolean disableEscape) throws IOException {
         List<String> lines = Files.readAllLines(file, StandardCharsets.UTF_8);
-        return verifySnippets(file, lines, SNIPPET_README_CALL_BEGIN, SNIPPET_README_CALL_END, snippetMap, "", "", 0,
-            "", true);
-    }
-
-    static SnippetOperationResult<List<VerifyResult>> verifySrcSnippets(Path file,
-        Map<String, List<String>> snippetMap) throws IOException {
-        List<String> lines = Files.readAllLines(file, StandardCharsets.UTF_8);
-        return verifySnippets(file, lines, SNIPPET_SRC_CALL_BEGIN, SNIPPET_SRC_CALL_END, snippetMap, "<pre>", "</pre>",
-            1, "* ", false);
-    }
-
-    static SnippetOperationResult<List<VerifyResult>> verifySnippets(Path file, List<String> lines, Pattern beginRegex,
-        Pattern endRegex, Map<String, List<String>> snippetMap, String preFence, String postFence, int prefixGroupNum,
-        String additionalLinePrefix, boolean disableEscape) {
 
         boolean inSnippet = false;
         String lineSep = System.lineSeparator();
@@ -470,7 +445,6 @@ final class SnippetReplacer {
                 }
             }
         }
-        ;
 
         if (detectedIssues.size() > 0) {
             throw new MojoExecutionException("Duplicate Snippet Definitions Detected. " + System.lineSeparator() +
@@ -484,7 +458,11 @@ final class SnippetReplacer {
         StringBuilder results = new StringBuilder();
 
         for (VerifyResult result : errors) {
-            results.append(String.format("Duplicate snippetId %s detected in %s.", result.snippetWithIssues, result.readmeLocation))
+            results.append("Duplicate snippetId ")
+                .append(result.snippetWithIssues)
+                .append(" detected in ")
+                .append(result.readmeLocation)
+                .append(".")
                 .append(System.lineSeparator());
         }
 
@@ -518,16 +496,6 @@ final class SnippetReplacer {
         }
 
         return modifiedStrings;
-    }
-
-    static int getEndIndex(List<String> lines, int startIndex) {
-        for (int i = startIndex; i < lines.size(); i++) {
-            Matcher end = SNIPPET_SRC_CALL_END.matcher(lines.get(i));
-            if (end.matches())
-                return i;
-        }
-
-        return -1;
     }
 
     static String prefixFunction(Matcher match, int groupNum, String additionalPrefix) {

@@ -53,15 +53,14 @@ public class SnippetReplacerTests {
         Path snippetSourceFile = getPathToResource("basic_src_snippet_parse.txt");
         Path codeForReplacement = getPathToResource("basic_src_snippet_insertion_before.txt");
         Path expectedOutCome = getPathToResource("basic_src_snippet_insertion_after.txt");
-        List<String> testLines = Files.readAllLines(codeForReplacement, StandardCharsets.UTF_8);
         byte[] rawBytes = Files.readAllBytes(expectedOutCome);
         String expectedString = new String(rawBytes, StandardCharsets.UTF_8);
 
         Map<String, List<String>> foundSnippets = SnippetReplacer.getAllSnippets(
             new ArrayList<>(Collections.singletonList(snippetSourceFile.toAbsolutePath())));
-        SnippetOperationResult<StringBuilder> opResult = SnippetReplacer.updateSnippets(codeForReplacement, testLines,
-            SnippetReplacer.SNIPPET_SRC_CALL_BEGIN, SnippetReplacer.SNIPPET_SRC_CALL_END, foundSnippets,
-            "<pre>", "</pre>", 1, "* ", false);
+        SnippetOperationResult<StringBuilder> opResult = SnippetReplacer.updateSnippets(codeForReplacement,
+            SnippetReplacer.SNIPPET_SRC_CALL_BEGIN, SnippetReplacer.SNIPPET_SRC_CALL_END, foundSnippets, "<pre>",
+            "</pre>", 1, "* ", false);
 
         assertNotNull(opResult);
         assertNotNull(opResult.result);
@@ -77,15 +76,14 @@ public class SnippetReplacerTests {
         Path snippetSourceFile = getPathToResource("basic_src_snippet_parse.txt");
         Path codeForReplacement = getPathToResource("basic_readme_insertion_before.txt");
         Path expectedOutCome = getPathToResource("basic_readme_insertion_after.txt");
-        List<String> testLines = Files.readAllLines(codeForReplacement, StandardCharsets.UTF_8);
         byte[] rawBytes = Files.readAllBytes(expectedOutCome);
         String expectedString = new String(rawBytes, StandardCharsets.UTF_8);
 
         Map<String, List<String>> foundSnippets = SnippetReplacer.getAllSnippets(
             new ArrayList<>(Collections.singletonList(snippetSourceFile.toAbsolutePath())));
-        SnippetOperationResult<StringBuilder> opResult = SnippetReplacer.updateSnippets(codeForReplacement, testLines,
-            SnippetReplacer.SNIPPET_README_CALL_BEGIN, SnippetReplacer.SNIPPET_README_CALL_END, foundSnippets,
-            "", "", 0, "", true);
+        SnippetOperationResult<StringBuilder> opResult = SnippetReplacer.updateSnippets(codeForReplacement,
+            SnippetReplacer.SNIPPET_README_CALL_BEGIN, SnippetReplacer.SNIPPET_README_CALL_END, foundSnippets, "", "",
+            0, "", true);
 
         assertNotNull(opResult);
         assertNotNull(opResult.result);
@@ -96,11 +94,10 @@ public class SnippetReplacerTests {
     public void testReadmeVerification() throws Exception {
         Path snippetSourceFile = getPathToResource("basic_src_snippet_parse.txt");
         Path verification = getPathToResource("readme_insertion_verification_failure.txt");
-        List<String> testLines = Files.readAllLines(verification, StandardCharsets.UTF_8);
 
         Map<String, List<String>> foundSnippets = SnippetReplacer.getAllSnippets(
             new ArrayList<>(Collections.singletonList(snippetSourceFile.toAbsolutePath())));
-        SnippetOperationResult<List<VerifyResult>> opResult = SnippetReplacer.verifySnippets(verification, testLines,
+        SnippetOperationResult<List<VerifyResult>> opResult = SnippetReplacer.verifySnippets(verification,
             SnippetReplacer.SNIPPET_README_CALL_BEGIN, SnippetReplacer.SNIPPET_README_CALL_END, foundSnippets,
             "", "", 0, "", true);
 
@@ -113,11 +110,10 @@ public class SnippetReplacerTests {
     public void testSrcVerification() throws Exception {
         Path snippetSourceFile = getPathToResource("basic_src_snippet_parse.txt");
         Path verification = getPathToResource("src_insertion_verification_failure.txt");
-        List<String> testLines = Files.readAllLines(verification, StandardCharsets.UTF_8);
 
         Map<String, List<String>> foundSnippets = SnippetReplacer.getAllSnippets(
             new ArrayList<>(Collections.singletonList(snippetSourceFile.toAbsolutePath())));
-        SnippetOperationResult<List<VerifyResult>> opResult = SnippetReplacer.verifySnippets(verification, testLines,
+        SnippetOperationResult<List<VerifyResult>> opResult = SnippetReplacer.verifySnippets(verification,
             SnippetReplacer.SNIPPET_SRC_CALL_BEGIN, SnippetReplacer.SNIPPET_SRC_CALL_END, foundSnippets,
             "<pre>", "</pre>", 1, "* ", false);
 
@@ -170,11 +166,10 @@ public class SnippetReplacerTests {
         HashMap<String, List<String>> emptyMap = new HashMap<>();
 
         Path codeForReplacement = getPathToResource("basic_src_snippet_insertion_before.txt");
-        List<String> testLines = Files.readAllLines(codeForReplacement, StandardCharsets.UTF_8);
 
-        SnippetOperationResult<StringBuilder> opResult = SnippetReplacer.updateSnippets(codeForReplacement, testLines,
-            SnippetReplacer.SNIPPET_SRC_CALL_BEGIN, SnippetReplacer.SNIPPET_SRC_CALL_END, emptyMap, "<pre>",
-            "</pre>", 1, "* ", false);
+        SnippetOperationResult<StringBuilder> opResult = SnippetReplacer.updateSnippets(codeForReplacement,
+            SnippetReplacer.SNIPPET_SRC_CALL_BEGIN, SnippetReplacer.SNIPPET_SRC_CALL_END, emptyMap, "<pre>", "</pre>",
+            1, "* ", false);
 
         assertNotNull(opResult);
         assertEquals(3, opResult.errorList.size());

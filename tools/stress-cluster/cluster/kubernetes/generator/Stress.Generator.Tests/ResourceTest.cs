@@ -13,14 +13,14 @@ namespace Stress.Generator.Tests
         {
             var template =
 @"name: (( Name ))
-image: (( Image ))
-command: (( Command ))";
+command: (( Command ))
+chaos: (( ChaosEnabled ))";
 
-            var job = new Job{
+            var job = new JobWithoutAzureResourceDeployment{
                 Name = "TestJob",
-                Image = "TestImage",
+                ChaosEnabled = true,
+                Template = template
             };
-            job.Template = template.Split('\n').ToList();
 
             Action act = () => job.Render();
             act.Should().Throw<Exception>();
@@ -29,9 +29,9 @@ command: (( Command ))";
             job.Render();
             var lines = job.Rendered.ToList();
             lines.Count().Should().Be(3);
-            lines[0].Should().Be("name: \"TestJob\"");
-            lines[1].Should().Be("image: \"TestImage\"");
-            lines[2].Should().Be("command: [\"sleep\",\"infinity\"]");
+            lines[0].Should().Be("name: TestJob");
+            lines[1].Should().Be("command: [\"sleep\",\"infinity\"]");
+            lines[2].Should().Be("chaos: true");
         }
     }
 }

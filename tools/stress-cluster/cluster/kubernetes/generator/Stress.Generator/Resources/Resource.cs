@@ -8,15 +8,28 @@ using System.IO;
 
 namespace Stress.Generator
 {
-    public abstract class Resource
+    public interface IResource
     {
-        public List<string> Template;
+        string Template { get; set; }
+        string Help { get; set; }
+
+        IEnumerable<ResourcePropertyInfo> OptionalProperties();
+        IEnumerable<ResourcePropertyInfo> Properties();
+        void Render();
+        void SetProperty(PropertyInfo prop, object value);
+        void Write(string outputPath);
+        void Write();
+    }
+
+    public abstract class Resource : IResource
+    {
         public List<string> Rendered;
         public bool IsRendered = false;
+        public abstract string Template { get; set; }
+        public abstract string Help { get; set; }
 
-        public Resource(params string[] templates)
+        public Resource()
         {
-            Template = string.Join('\n', templates).Split('\n').ToList();
             Rendered = new List<string>();
         }
 
@@ -24,7 +37,8 @@ namespace Stress.Generator
         {
             return this.GetType().GetProperties()
                    .Where(p => p.GetCustomAttribute(typeof(ResourceProperty)) != null)
-                   .Select(p => {
+                   .Select(p =>
+                   {
                        var rp = p.GetCustomAttribute(typeof(ResourceProperty)) as ResourceProperty;
                        return new ResourcePropertyInfo(p, rp);
                    });
@@ -34,7 +48,8 @@ namespace Stress.Generator
         {
             return this.GetType().GetProperties()
                    .Where(p => p.GetCustomAttribute(typeof(OptionalResourceProperty)) != null)
-                   .Select(p => {
+                   .Select(p =>
+                   {
                        var rp = p.GetCustomAttribute(typeof(OptionalResourceProperty)) as OptionalResourceProperty;
                        return new ResourcePropertyInfo(p, rp);
                    });
@@ -54,10 +69,11 @@ namespace Stress.Generator
             var expr = new Regex(@"\(\(\s*(\w*)\s*\)\)");
             var hasError = false;
             var _rendered = new List<string>();
+            var _template = Template.Split('\n');
 
-            for (var lineNumber = 0; lineNumber < Template.Count(); lineNumber++)
+            for (var lineNumber = 0; lineNumber < _template.Count(); lineNumber++)
             {
-                var line = Template[lineNumber];
+                var line = _template[lineNumber];
                 var match = expr.Match(line);
                 if (!match.Success)
                 {
@@ -68,8 +84,8 @@ namespace Stress.Generator
                 var val = this.GetType().GetProperty(prop)?.GetValue(this);
                 if (val == null)
                 {
-                    Console.WriteLine($"Missing property {prop} on line {lineNumber}");
-                    Console.WriteLine($">>> line");
+                    Console.WriteLine($"Error rendering template for {this.GetType().Name}: Missing property {prop} on line {lineNumber}");
+                    Console.WriteLine($">>> {line}");
                     hasError = true;
                     _rendered.Add(line);
                     continue;
@@ -95,6 +111,9 @@ namespace Stress.Generator
             File.WriteAllLines(outputPath, Rendered);
         }
 
-        public abstract void Write();
+        public virtual void Write()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

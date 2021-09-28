@@ -8,7 +8,7 @@ namespace Stress.Generator.Tests
     public class TestPrompter : IPrompter
     {
         public Queue<string> PromptValues;
-        
+
         public TestPrompter()
         {
             PromptValues = new Queue<string>();
@@ -62,7 +62,7 @@ namespace Stress.Generator.Tests
         {
             var prompter = new TestPrompter();
             var generator = new Generator(prompter);
-            
+
             prompter.SetResponse("stringvalue");
             generator.Prompt<string>().Should().Be("stringvalue");
 
@@ -76,8 +76,8 @@ namespace Stress.Generator.Tests
             prompter.SetResponse("false");
             generator.Prompt<bool>().Should().Be(false);
 
-            prompter.SetResponse(new List<string>{"itemvalue1", "itemvalue2", "itemvalue3"});
-            List<string> list = generator.PromptList<string>();
+            prompter.SetResponse("itemvalue1 itemvalue2 itemvalue3");
+            List<string> list = generator.PromptList();
             list.Count.Should().Be(3);
             list[0].Should().Be("itemvalue1");
             list[1].Should().Be("itemvalue2");
@@ -91,25 +91,25 @@ namespace Stress.Generator.Tests
             var generator = new Generator(prompter);
 
             // Test resource name selection
-            prompter.AddResponse("Job");
+            prompter.AddResponse("JobWithoutAzureResourceDeployment");
             prompter.AddResponse("TestJobName");
-            prompter.AddResponse("TestJobImage");
-            prompter.AddResponse(new List<string>{"binary", "-flag", "flagValue"});
+            prompter.AddResponse("bash -c sleep 3600");
+            prompter.AddResponse("true");
 
-            Job resource = (Job)generator.GenerateResource();
+            var resource = (JobWithoutAzureResourceDeployment)generator.GenerateResource();
             resource.Name.Should().Be("TestJobName");
-            resource.Command.Should().Equal(new List<string>{"binary", "-flag", "flagValue"});
+            resource.Command.Should().Equal(new List<string>{"bash", "-c", "sleep", "3600"});
 
             // Test resource index selector
             prompter.SetResponse("0");
             prompter.AddResponse("TestJobName");
-            prompter.AddResponse("TestJobImage");
-            prompter.AddResponse(new List<string>{"binary"});
+            prompter.AddResponse("binary");
+            prompter.AddResponse("true");
 
-            resource = (Job)generator.GenerateResource();
+            resource = (JobWithoutAzureResourceDeployment)generator.GenerateResource();
             resource.Name.Should().Be("TestJobName");
-            resource.Image.Should().Be("TestJobImage");
             resource.Command.Should().Equal(new List<string>{"binary"});
+            resource.ChaosEnabled.Should().Be(true);
         }
 
         [Fact]
@@ -124,7 +124,7 @@ namespace Stress.Generator.Tests
             prompter.AddResponse("n");
 
             NetworkChaos resource = (NetworkChaos)generator.GenerateResource();
-            resource.ExternalTargets.Should().Be("bing.com");
+            resource.ExternalTargets.Should().Equal(new List<string>{"bing.com"});
             resource.Action.Should().Be("loss");
         }
 
@@ -134,10 +134,10 @@ namespace Stress.Generator.Tests
             var prompter = new TestPrompter();
             var generator = new Generator(prompter);
 
-            prompter.AddResponse("Job");
+            prompter.AddResponse("JobWithoutAzureResourceDeployment");
             prompter.AddResponse("TestJobName");
-            prompter.AddResponse("TestJobImage");
-            prompter.AddResponse(new List<string>{"binary", "-flag", "flagValue"});
+            prompter.AddResponse("bash -c sleep 3600");
+            prompter.AddResponse("true");
             prompter.AddResponse("y");
             prompter.AddResponse("NetworkChaos");
             prompter.AddResponse("TestNetChaos");
@@ -147,12 +147,12 @@ namespace Stress.Generator.Tests
             prompter.AddResponse("n");
 
             var resources = generator.GenerateResources();
-            var job = (Job)resources[0];
+            var job = (JobWithoutAzureResourceDeployment)resources[0];
             job.Name.Should().Be("TestJobName");
-            job.Image.Should().Be("TestJobImage");
-            job.Command.Should().Equal(new List<string>{"binary", "-flag", "flagValue"});
+            job.Command.Should().Equal(new List<string>{"bash", "-c", "sleep", "3600"});
+            job.ChaosEnabled.Should().Be(true);
             var chaos = (NetworkChaos)resources[1];
-            chaos.ExternalTargets.Should().Be("bing.com");
+            chaos.ExternalTargets.Should().Equal(new List<string>{"bing.com"});
             chaos.Action.Should().Be("loss");
         }
     }

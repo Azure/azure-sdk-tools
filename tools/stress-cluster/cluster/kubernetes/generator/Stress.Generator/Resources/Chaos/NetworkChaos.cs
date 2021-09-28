@@ -6,7 +6,7 @@ namespace Stress.Generator
 {
     public class NetworkChaos : Resource
     {
-        public const string NetworkChaosTemplate = @"
+        public override string Template { get; set; } = @"
 apiVersion: chaos-mesh.org/v1alpha1
 kind: NetworkChaos
 metadata:
@@ -28,6 +28,8 @@ spec:
     loss: '100'
     correlation: '100'
 ";
+
+        public override string Help { get; set; } = "Configuration for network chaos. See https://chaos-mesh.org/docs/simulate-network-chaos-on-kubernetes/";
 
         [ResourceProperty("Network Chaos Name")]
         public string Name { get; set; }

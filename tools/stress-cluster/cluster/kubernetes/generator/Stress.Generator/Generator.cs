@@ -8,26 +8,38 @@ namespace Stress.Generator
     {
         public IPrompter Prompter;
 
-        public static List<Type> ResourceTypes = new List<Type>{ typeof(Job), typeof(AzureDeploymentJob), typeof(NetworkChaos) };
+        public static List<IResource> ResourceTypes = new List<IResource>{
+            new JobWithoutAzureResourceDeployment(),
+            new JobWithAzureResourceDeployment(),
+            new NetworkChaos(),
+        };
 
         public Generator(IPrompter prompter = null)
         {
             Prompter = prompter ?? new Prompter();
         }
 
-        public List<Resource> GenerateResources()
+        public List<IResource> GenerateResources()
         {
-            var resources = new List<Resource>();
+            var resources = new List<IResource>();
             PromptMultiple(() => resources.Add(GenerateResource()), "Enter another resource?");
             return resources;
         }
 
-        public Resource GenerateResource()
+        private List<string> PadStrings(IEnumerable<string> left)
         {
-            var resourceTypeNames = ResourceTypes.Select(t => t.Name).ToList();
-            var selection = PromptMultipleChoice(resourceTypeNames, "Which resource would you like to generate? Available resources are:");
-            var resourceType = ResourceTypes.Where(t => t.Name == selection);
-            var resource = (Resource)Activator.CreateInstance(resourceType.First());
+            var leftSize = left.OrderBy(s => s.Length).Last().Length;
+            return left.Select(s => s + new string(' ', leftSize - s.Length)).ToList();
+        }
+
+        public IResource GenerateResource()
+        {
+            var resourceTypeNames = ResourceTypes.Select(t => t.GetType().Name);
+            var resourceTypeHelp = ResourceTypes.Select(t => t.Help).ToList();
+            var padded = PadStrings(resourceTypeNames);
+            var selection = PromptMultipleChoice(padded, resourceTypeHelp, "Which resource would you like to generate? Available resources are:");
+            var resourceType = ResourceTypes.Where(t => t.GetType().Name == selection);
+            var resource = (IResource)Activator.CreateInstance(resourceType.First().GetType());
 
             foreach (var prop in resource.Properties())
             {
@@ -43,7 +55,7 @@ namespace Stress.Generator
             return resource;
         }
 
-        public void PromptSetOptionalProperty(Resource resource, ResourcePropertyInfo prop)
+        public void PromptSetOptionalProperty(IResource resource, ResourcePropertyInfo prop)
         {
             var set = "";
             while (set != "y" && set != "n")
@@ -56,7 +68,7 @@ namespace Stress.Generator
             }
         }
 
-        public void PromptSetProperty(Resource resource, ResourcePropertyInfo prop)
+        public void PromptSetProperty(IResource resource, ResourcePropertyInfo prop)
         {
             Console.WriteLine($"--> {prop.Info.Name} ({prop.Property.Help})");
 
@@ -74,7 +86,7 @@ namespace Stress.Generator
             }
             else if (prop.Info.PropertyType == typeof(List<string>))
             {
-                resource.SetProperty(prop.Info, PromptList<string>($"(list item string): "));
+                resource.SetProperty(prop.Info, PromptList($"(list item string): "));
             }
             else
             {
@@ -82,21 +94,25 @@ namespace Stress.Generator
             }
         }
 
-        public string PromptMultipleChoice(List<string> options, string promptMessage)
+        public string PromptMultipleChoice(List<string> options, List<string> help, string promptMessage)
         {
+            if (options.Count != help.Count)
+            {
+                throw new Exception("Expected multiple choice options to be the same length as options help.");
+            }
             var selected = "";
             while (string.IsNullOrEmpty(selected))
             {
                 Console.WriteLine(promptMessage);
                 for (int i = 0; i < options.Count; i++)
                 {
-                    Console.WriteLine($"    ({i}) {options[i]}");
+                    Console.WriteLine($"    ({i}) {options[i]} - {help[i]}");
                 }
 
                 var optionSelection = Prompt<string>();
                 if (uint.TryParse(optionSelection, out var idx) && idx < options.Count)
                 {
-                    optionSelection = ResourceTypes[(int)idx].Name;
+                    optionSelection = ResourceTypes[(int)idx].GetType().Name;
                 }
                 selected = options.Find(o => o == optionSelection);
             }
@@ -104,11 +120,9 @@ namespace Stress.Generator
             return selected;
         }
 
-        public List<T> PromptList<T>(string promptMessage = "(list item value):")
+        public List<string> PromptList(string promptMessage = "(list item value):")
         {
-            var values = new List<T>();
-            PromptMultiple(() => values.Add(Prompt<T>(promptMessage)), "Enter another value?");
-            return values;
+            return Prompt<string>("(space separated list): ").Split(' ').ToList();
         }
 
         public T Prompt<T>(string promptMessage = "(value): ")

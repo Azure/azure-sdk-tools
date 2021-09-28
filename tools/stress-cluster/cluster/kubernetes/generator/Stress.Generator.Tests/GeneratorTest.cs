@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using Xunit;
 using FluentAssertions;
-using Stress.Generator;
 
 namespace Stress.Generator.Tests
 {
@@ -10,9 +9,19 @@ namespace Stress.Generator.Tests
     {
         public Queue<string> PromptValues;
         
-        public void SetList(List<string> promptValues)
+        public TestPrompter()
         {
             PromptValues = new Queue<string>();
+        }
+
+        public void SetResponse(List<string> promptValues)
+        {
+            PromptValues = new Queue<string>();
+            AddResponse(promptValues);
+        }
+
+        public void AddResponse(List<string> promptValues)
+        {
             for (var i = 0; i < promptValues.Count; i++)
             {
                 PromptValues.Enqueue(promptValues[i]);
@@ -27,45 +36,92 @@ namespace Stress.Generator.Tests
             }
         }
 
-        public void SetString(string promptValue)
+        public void SetResponse(string promptValue)
         {
             PromptValues = new Queue<string>();
+            AddResponse(promptValue);
+        }
+
+        public void AddResponse(string promptValue)
+        {
             PromptValues.Enqueue(promptValue);
         }
 
         public string Prompt()
         {
-            return PromptValues.Dequeue();
+            var response = PromptValues.Dequeue();
+            Console.WriteLine($"{response} <-- test prompter");
+            return response;
         }
     }
 
     public class GeneratorTests
     {
         [Fact]
-        public void PromptString()
+        public void TestPrompt()
         {
             var prompter = new TestPrompter();
             var generator = new Generator(prompter);
             
-            prompter.SetString("stringvalue");
+            prompter.SetResponse("stringvalue");
             generator.Prompt<string>().Should().Be("stringvalue");
 
-            prompter.SetString("1.5");
+            prompter.SetResponse("1.5");
             generator.Prompt<double>().Should().Be(1.5);
-            prompter.SetString("1");
+            prompter.SetResponse("1");
             generator.Prompt<double>().Should().Be(1);
 
-            prompter.SetString("true");
+            prompter.SetResponse("true");
             generator.Prompt<bool>().Should().Be(true);
-            prompter.SetString("false");
+            prompter.SetResponse("false");
             generator.Prompt<bool>().Should().Be(false);
 
-            prompter.SetList(new List<string>{"itemvalue1", "itemvalue2", "itemvalue3"});
+            prompter.SetResponse(new List<string>{"itemvalue1", "itemvalue2", "itemvalue3"});
             List<string> list = generator.PromptList<string>();
             list.Count.Should().Be(3);
             list[0].Should().Be("itemvalue1");
             list[1].Should().Be("itemvalue2");
             list[2].Should().Be("itemvalue3");
+        }
+
+        [Fact]
+        public void TestGenerateResource()
+        {
+            var prompter = new TestPrompter();
+            var generator = new Generator(prompter);
+
+            prompter.AddResponse("Job");
+            prompter.AddResponse("TestJobName");
+            prompter.AddResponse(new List<string>{"binary", "-flag", "flagValue"});
+
+            Job resource = (Job)generator.GenerateResource();
+            resource.Name.Should().Be("TestJobName");
+            resource.Command.Should().Equal(new List<string>{"binary", "-flag", "flagValue"});
+        }
+
+        [Fact]
+        public void TestGenerateResources()
+        {
+            var prompter = new TestPrompter();
+            var generator = new Generator(prompter);
+
+            prompter.AddResponse("Job");
+            prompter.AddResponse("TestJobName");
+            prompter.AddResponse(new List<string>{"binary", "-flag", "flagValue"});
+            prompter.AddResponse("y");
+            prompter.AddResponse("NetworkChaos");
+            prompter.AddResponse("bing.com");
+            prompter.AddResponse("y");
+            prompter.AddResponse("loss");
+            prompter.AddResponse("n");
+
+            var resources = generator.GenerateResources();
+            var job = (Job)resources[0];
+            job.Name.Should().Be("TestJobName");
+            job.Command.Should().Equal(new List<string>{"binary", "-flag", "flagValue"});
+            var chaos = (NetworkChaos)resources[1];
+            chaos.ExternalTargets.Should().Be("bing.com");
+            chaos.Action.Should().Be("loss");
         }
     }
 }

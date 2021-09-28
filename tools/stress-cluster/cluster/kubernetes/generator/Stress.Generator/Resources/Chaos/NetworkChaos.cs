@@ -28,10 +28,10 @@ namespace Stress.Generator
     public class NetworkChaos : Resource
     {
         [OptionalResourceProperty("Action: loss, delay, netem, duplicate, corrupt, partition, bandwidth", "loss")]
-        public string Action;
+        public string Action { get; set; }
 
         [ResourceProperty("External Targets, e.g. servicebus.windows.net")]
-        public string ExternalTargets;
+        public string ExternalTargets { get; set; }
 
         public NetworkChaos() : base()
         {

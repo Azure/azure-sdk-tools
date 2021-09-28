@@ -1,18 +1,18 @@
 using System;
+using System.Collections.Generic;
 
 namespace Stress.Generator
 {
     public class Job : Resource
     {
         [ResourceProperty("Test name")]
-        public string Name;
+        public string Name { get; set; }
 
         [ResourceProperty("Container command. If using multiple scenarios, use a template like `node dist/{{ .Scenario }}.js`")]
-        public string Command;
+        public List<string> Command { get; set; }
 
         public Job() : base()
         {
-            
         }
     }
 }

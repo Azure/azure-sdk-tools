@@ -34,14 +34,26 @@ namespace Stress.Generator
 
         public Resource GenerateResource()
         {
-            var typeStrings = string.Join(", ", ResourceTypes.Select(t => t.Name));
+            var resourceOptions = new List<string>();
+            for (int i = 0; i < ResourceTypes.Count; i++)
+            {
+                resourceOptions.Add($"    ({i}) {ResourceTypes[i].Name}");
+            }
 
             IEnumerable<Type> resourceType = new List<Type>();
             while (resourceType.Count() == 0)
             {
                 Console.WriteLine("Which resource would you like to generate?");
-                Console.WriteLine($"Available types are: {typeStrings}");
+                Console.WriteLine($"Available resources are:");
+                foreach(var msg in resourceOptions)
+                {
+                    Console.WriteLine(msg);
+                }
                 var resourceTypeName = Prompt<string>();
+                if (uint.TryParse(resourceTypeName, out var idx) && idx < ResourceTypes.Count)
+                {
+                    resourceTypeName = ResourceTypes[(int)idx].Name;
+                }
                 resourceType = ResourceTypes.Where(t => t.Name == resourceTypeName);
             }
 

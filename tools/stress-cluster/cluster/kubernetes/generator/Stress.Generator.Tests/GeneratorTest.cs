@@ -90,6 +90,7 @@ namespace Stress.Generator.Tests
             var prompter = new TestPrompter();
             var generator = new Generator(prompter);
 
+            // Test resource name selection
             prompter.AddResponse("Job");
             prompter.AddResponse("TestJobName");
             prompter.AddResponse(new List<string>{"binary", "-flag", "flagValue"});
@@ -97,6 +98,15 @@ namespace Stress.Generator.Tests
             Job resource = (Job)generator.GenerateResource();
             resource.Name.Should().Be("TestJobName");
             resource.Command.Should().Equal(new List<string>{"binary", "-flag", "flagValue"});
+
+            // Test resource index selector
+            prompter.SetResponse("0");
+            prompter.AddResponse("TestJobName");
+            prompter.AddResponse(new List<string>{"binary"});
+
+            resource = (Job)generator.GenerateResource();
+            resource.Name.Should().Be("TestJobName");
+            resource.Command.Should().Equal(new List<string>{"binary"});
         }
 
         [Fact]

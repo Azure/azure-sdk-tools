@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 
 namespace Stress.Generator
 {
@@ -16,14 +15,6 @@ namespace Stress.Generator
             Prompter = prompter ?? new Prompter();
         }
 
-        public static void Main()
-        {
-            var generator = new Generator();
-            var resources = generator.GenerateResources();
-
-            Console.WriteLine("Done");
-        }
-
         public List<Resource> GenerateResources()
         {
             var resources = new List<Resource>();
@@ -31,75 +22,58 @@ namespace Stress.Generator
             return resources;
         }
 
-
         public Resource GenerateResource()
         {
-            var resourceOptions = new List<string>();
-            for (int i = 0; i < ResourceTypes.Count; i++)
-            {
-                resourceOptions.Add($"    ({i}) {ResourceTypes[i].Name}");
-            }
-
-            IEnumerable<Type> resourceType = new List<Type>();
-            while (resourceType.Count() == 0)
-            {
-                Console.WriteLine("Which resource would you like to generate?");
-                Console.WriteLine($"Available resources are:");
-                foreach(var msg in resourceOptions)
-                {
-                    Console.WriteLine(msg);
-                }
-                var resourceTypeName = Prompt<string>();
-                if (uint.TryParse(resourceTypeName, out var idx) && idx < ResourceTypes.Count)
-                {
-                    resourceTypeName = ResourceTypes[(int)idx].Name;
-                }
-                resourceType = ResourceTypes.Where(t => t.Name == resourceTypeName);
-            }
-
+            var resourceTypeNames = ResourceTypes.Select(t => t.Name).ToList();
+            var selection = PromptEnum(resourceTypeNames, "Which resource would you like to generate? Available resources are:");
+            var resourceType = ResourceTypes.Where(t => t.Name == selection);
             var resource = (Resource)Activator.CreateInstance(resourceType.First());
 
             foreach (var prop in resource.Properties())
             {
-                PromptSetProperty(resource, prop.Prop, prop.Help);
+                PromptSetProperty(resource, prop);
             }
 
             foreach (var prop in resource.OptionalProperties())
             {
-                Console.WriteLine($"=== [{prop.Prop.Name}] {prop.Help} ===");
-                var set = "";
-                while (set != "y" && set != "n")
-                {
-                    set = Prompt<string>($"Set a value for optional property {prop.Prop.Name}? (y/n): ");
-                }
-                if (set == "y")
-                {
-                    PromptSetProperty(resource, prop.Prop, prop.Help);
-                }
+                PromptSetOptionalProperty(resource, prop);
             }
 
             return resource;
         }
 
-        public void PromptSetProperty(Resource resource, PropertyInfo property, string propertyHelp)
+        public void PromptSetOptionalProperty(Resource resource, ResourcePropertyInfo prop)
         {
-            Console.WriteLine($"=== [{property.Name}] {propertyHelp} ===");
+            var set = "";
+            while (set != "y" && set != "n")
+            {
+                set = Prompt<string>($"Set a value for optional property {prop.Info.Name}? (y/n): ");
+            }
+            if (set == "y")
+            {
+                PromptSetProperty(resource, prop);
+            }
+        }
 
-            if (property.PropertyType == typeof(string))
+        public void PromptSetProperty(Resource resource, ResourcePropertyInfo prop)
+        {
+            Console.WriteLine($"--> {prop.Info.Name} ({prop.Property.Help})");
+
+            if (prop.Info.PropertyType == typeof(string))
             {
-                resource.SetProperty(property, Prompt<string>($"Enter value: "));
+                resource.SetProperty(prop.Info, Prompt<string>($"(string): "));
             }
-            else if (property.PropertyType == typeof(double))
+            else if (prop.Info.PropertyType == typeof(double))
             {
-                resource.SetProperty(property, Prompt<double>($"Enter number value: "));
+                resource.SetProperty(prop.Info, Prompt<double>($"(number): "));
             }
-            else if (property.PropertyType == typeof(bool))
+            else if (prop.Info.PropertyType == typeof(bool))
             {
-                resource.SetProperty(property, Prompt<bool>($"Enter true or false: "));
+                resource.SetProperty(prop.Info, Prompt<bool>($"(true/false): "));
             }
-            else if (property.PropertyType == typeof(List<string>))
+            else if (prop.Info.PropertyType == typeof(List<string>))
             {
-                resource.SetProperty(property, PromptList<string>($"Enter item for list: "));
+                resource.SetProperty(prop.Info, PromptList<string>($"(list item string): "));
             }
             else
             {
@@ -107,14 +81,36 @@ namespace Stress.Generator
             }
         }
 
-        public List<T> PromptList<T>(string promptMessage = "Enter Value:")
+        public string PromptEnum(List<string> options, string promptMessage)
+        {
+            var selected = "";
+            while (string.IsNullOrEmpty(selected))
+            {
+                Console.WriteLine(promptMessage);
+                for (int i = 0; i < options.Count; i++)
+                {
+                    Console.WriteLine($"    ({i}) {options[i]}");
+                }
+
+                var optionSelection = Prompt<string>();
+                if (uint.TryParse(optionSelection, out var idx) && idx < options.Count)
+                {
+                    optionSelection = ResourceTypes[(int)idx].Name;
+                }
+                selected = options.Find(o => o == optionSelection);
+            }
+
+            return selected;
+        }
+
+        public List<T> PromptList<T>(string promptMessage = "(list item value):")
         {
             var values = new List<T>();
             PromptMultiple(() => values.Add(Prompt<T>(promptMessage)), "Enter another value?");
             return values;
         }
 
-        public T Prompt<T>(string promptMessage = "Enter Value: ")
+        public T Prompt<T>(string promptMessage = "(value): ")
         {
             var retryMessage = $"Invalid value, expected {typeof(T)}";
             Console.Write(promptMessage);
@@ -164,18 +160,5 @@ namespace Stress.Generator
                 another = Prompter.Prompt();
             }
         }
-    }
-
-    public class Prompter : IPrompter
-    {
-        public string Prompt()
-        {
-            return Console.ReadLine();
-        }
-    }
-
-    public interface IPrompter
-    {
-        public string Prompt();
     }
 }

@@ -5,33 +5,38 @@ namespace Stress.Generator
 {
     public class ResourcePropertyInfo
     {
-        public PropertyInfo Prop;
-        public string Help;
+        public PropertyInfo Info;
+        public IResourceProperty Property;
 
-        public ResourcePropertyInfo(PropertyInfo prop, string help)
+        public ResourcePropertyInfo(PropertyInfo info, IResourceProperty property)
         {
-            Prop = prop;
-            Help = help;
+            Info = info;
+            Property = property;
         }
     }
 
-    public class ResourceProperty : Attribute
+    public interface IResourceProperty
+    {
+        public string Help { get; set; }
+    }
+
+    public abstract class BaseResourceProperty : Attribute, IResourceProperty
     {
         public string Help { get; set; }
 
-        public ResourceProperty(string help)
+        public BaseResourceProperty(string help)
         {
             this.Help = help;
         }
     }
 
-    public class OptionalResourceProperty : Attribute
+    public class ResourceProperty : BaseResourceProperty
     {
-        public string Help { get; set; }
+        public ResourceProperty(string help) : base(help) {}
+    }
 
-        public OptionalResourceProperty(string help)
-        {
-            this.Help = help;
-        }
+    public class OptionalResourceProperty : BaseResourceProperty
+    {
+        public OptionalResourceProperty(string help) : base(help) {}
     }
 }

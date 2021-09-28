@@ -99,7 +99,7 @@ namespace CreateRuleFabricBot.Rules.PullRequestLabel
 
         public override string GetTaskId()
         {
-            return $"AzureSDKPullRequestLabelFolder_{_owner}_{_repo}";
+            return $"AzureSDKPullRequestLabelFolder_{_repo}_{_owner}";
         }
     }
 }

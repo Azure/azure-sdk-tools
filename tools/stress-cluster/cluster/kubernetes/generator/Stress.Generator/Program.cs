@@ -9,7 +9,10 @@ namespace Stress.Generator
             var generator = new Generator();
             var resources = generator.GenerateResources();
 
-            Console.WriteLine("Done");
+            foreach (var resource in resources)
+            {
+                resource.Write();
+            }
         }
     }
 }

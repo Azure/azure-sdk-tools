@@ -8,7 +8,7 @@ namespace Stress.Generator
     {
         public IPrompter Prompter;
 
-        public static List<Type> ResourceTypes = new List<Type>{ typeof(Job), typeof(NetworkChaos) };
+        public static List<Type> ResourceTypes = new List<Type>{ typeof(Job), typeof(AzureDeploymentJob), typeof(NetworkChaos) };
 
         public Generator(IPrompter prompter = null)
         {
@@ -25,7 +25,7 @@ namespace Stress.Generator
         public Resource GenerateResource()
         {
             var resourceTypeNames = ResourceTypes.Select(t => t.Name).ToList();
-            var selection = PromptEnum(resourceTypeNames, "Which resource would you like to generate? Available resources are:");
+            var selection = PromptMultipleChoice(resourceTypeNames, "Which resource would you like to generate? Available resources are:");
             var resourceType = ResourceTypes.Where(t => t.Name == selection);
             var resource = (Resource)Activator.CreateInstance(resourceType.First());
 
@@ -39,6 +39,7 @@ namespace Stress.Generator
                 PromptSetOptionalProperty(resource, prop);
             }
 
+            resource.Render();
             return resource;
         }
 
@@ -81,7 +82,7 @@ namespace Stress.Generator
             }
         }
 
-        public string PromptEnum(List<string> options, string promptMessage)
+        public string PromptMultipleChoice(List<string> options, string promptMessage)
         {
             var selected = "";
             while (string.IsNullOrEmpty(selected))
@@ -112,7 +113,7 @@ namespace Stress.Generator
 
         public T Prompt<T>(string promptMessage = "(value): ")
         {
-            var retryMessage = $"Invalid value, expected {typeof(T)}";
+            var retryMessage = $"Invalid value, expected {typeof(T)}: ";
             Console.Write(promptMessage);
             var value = Prompter.Prompt();
 

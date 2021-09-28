@@ -119,6 +119,7 @@ namespace Stress.Generator.Tests
             var generator = new Generator(prompter);
 
             prompter.AddResponse("NetworkChaos");
+            prompter.AddResponse("TestNetChaos");
             prompter.AddResponse("bing.com");
             prompter.AddResponse("n");
 
@@ -139,6 +140,7 @@ namespace Stress.Generator.Tests
             prompter.AddResponse(new List<string>{"binary", "-flag", "flagValue"});
             prompter.AddResponse("y");
             prompter.AddResponse("NetworkChaos");
+            prompter.AddResponse("TestNetChaos");
             prompter.AddResponse("bing.com");
             prompter.AddResponse("y");
             prompter.AddResponse("loss");

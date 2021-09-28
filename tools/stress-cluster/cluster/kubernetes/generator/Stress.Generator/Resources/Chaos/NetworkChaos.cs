@@ -1,14 +1,47 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
 
 namespace Stress.Generator
 {
     public class NetworkChaos : Resource
     {
+        public const string NetworkChaosTemplate = @"
+apiVersion: chaos-mesh.org/v1alpha1
+kind: NetworkChaos
+metadata:
+  name: '{{ .Release.Name }}-{{ .Release.Revision }}'
+  namespace: {{ .Release.Namespace }}
+spec:
+  action: loss
+  direction: to
+  externalTargets:
+    - bing.com
+  mode: one
+  selector:
+    labelSelectors:
+      testInstance: 'packet-loss-{{ .Release.Name }}-{{ .Release.Revision }}'
+      chaos: 'true'
+    namespaces:
+      - {{ .Release.Namespace }}
+  loss:
+    loss: '100'
+    correlation: '100'
+";
+
+        [ResourceProperty("Network Chaos Name")]
+        public string Name { get; set; }
+
         [OptionalResourceProperty("loss, delay, netem, duplicate, corrupt, partition, bandwidth")]
         public string Action { get; set; } = "loss";
 
         [ResourceProperty("A domain/cname, like servicebus.windows.net")]
-        public string ExternalTargets { get; set; }
+        public List<string> ExternalTargets { get; set; }
+
+        public override void Write()
+        {
+            Write(Path.Join("templates", $"{Name}-network-chaos.yaml"));
+        }
 
         public NetworkChaos() : base()
         {

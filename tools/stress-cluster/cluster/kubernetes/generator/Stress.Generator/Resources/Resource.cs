@@ -4,29 +4,20 @@ using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Text.Json;
+using System.IO;
 
 namespace Stress.Generator
 {
     public abstract class Resource
     {
-        public string TemplatePath;
         public List<string> Template;
         public List<string> Rendered;
-        public bool IsLoaded = false;
         public bool IsRendered = false;
 
-        public Resource()
+        public Resource(params string[] templates)
         {
-            Template = new List<string>();
+            Template = string.Join('\n', templates).Split('\n').ToList();
             Rendered = new List<string>();
-        }
-
-        private void CheckLoaded()
-        {
-            if (!IsLoaded)
-            {
-                throw new Exception("Template is not loaded");
-            }
         }
 
         public IEnumerable<ResourcePropertyInfo> Properties()
@@ -54,12 +45,6 @@ namespace Stress.Generator
             prop.SetValue(this, value);
         }
 
-        public void Load()
-        {
-            Template = new List<string>();
-            IsLoaded = true;
-        }
-
         // Pulling in a large templating library like Razor is more trouble than it's worth
         // and other popular mustache-style templating libraries don't have great support
         // for overridding the delimeters from curly braces, in order to not overlap
@@ -83,28 +68,33 @@ namespace Stress.Generator
                 var val = this.GetType().GetProperty(prop)?.GetValue(this);
                 if (val == null)
                 {
-                    Console.WriteLine($"Missing property {prop} in {TemplatePath}:line {lineNumber}");
+                    Console.WriteLine($"Missing property {prop} on line {lineNumber}");
+                    Console.WriteLine($">>> line");
                     hasError = true;
                     _rendered.Add(line);
                     continue;
                 }
 
-                var replaced = line.Replace(match.Groups[0].ToString(), JsonSerializer.Serialize(val));
+                var replaced = line.Replace(match.Groups[0].ToString(), JsonSerializer.Serialize(val).Trim('"'));
                 _rendered.Add(replaced);
             }
 
             if (hasError)
             {
-                throw new Exception("Error rendering template.");
+                throw new Exception("Error rendering template, see details above.");
             }
 
             Rendered = _rendered;
             IsRendered = true;
         }
 
-        public void Write()
+        public void Write(string outputPath)
         {
-            CheckLoaded();
+            var dirs = Path.GetDirectoryName(outputPath);
+            Directory.CreateDirectory(dirs);
+            File.WriteAllLines(outputPath, Rendered);
         }
+
+        public abstract void Write();
     }
 }

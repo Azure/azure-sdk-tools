@@ -61,42 +61,45 @@ namespace Stress.Generator
 
             foreach (var prop in resource.Properties())
             {
-                PromptSetProperty(resource, prop);
+                PromptSetProperty(resource, prop.Prop, prop.Help);
             }
 
             foreach (var prop in resource.OptionalProperties())
             {
+                Console.WriteLine($"=== [{prop.Prop.Name}] {prop.Help} ===");
                 var set = "";
                 while (set != "y" && set != "n")
                 {
-                    set = Prompt<string>($"Set a value for optional property {prop.Name}? (y/n): ");
+                    set = Prompt<string>($"Set a value for optional property {prop.Prop.Name}? (y/n): ");
                 }
                 if (set == "y")
                 {
-                    PromptSetProperty(resource, prop);
+                    PromptSetProperty(resource, prop.Prop, prop.Help);
                 }
             }
 
             return resource;
         }
 
-        public void PromptSetProperty(Resource resource, PropertyInfo property)
+        public void PromptSetProperty(Resource resource, PropertyInfo property, string propertyHelp)
         {
+            Console.WriteLine($"=== [{property.Name}] {propertyHelp} ===");
+
             if (property.PropertyType == typeof(string))
             {
-                resource.SetProperty(property, Prompt<string>($"Enter value for {property.Name}: "));
+                resource.SetProperty(property, Prompt<string>($"Enter value: "));
             }
             else if (property.PropertyType == typeof(double))
             {
-                resource.SetProperty(property, Prompt<double>($"Enter number value for {property.Name}: "));
+                resource.SetProperty(property, Prompt<double>($"Enter number value: "));
             }
             else if (property.PropertyType == typeof(bool))
             {
-                resource.SetProperty(property, Prompt<bool>($"Enter true/false for {property.Name}: "));
+                resource.SetProperty(property, Prompt<bool>($"Enter true or false: "));
             }
             else if (property.PropertyType == typeof(List<string>))
             {
-                resource.SetProperty(property, PromptList<string>($"Enter item for list {property.Name}: "));
+                resource.SetProperty(property, PromptList<string>($"Enter item for list: "));
             }
             else
             {

@@ -93,6 +93,7 @@ namespace Stress.Generator.Tests
             // Test resource name selection
             prompter.AddResponse("Job");
             prompter.AddResponse("TestJobName");
+            prompter.AddResponse("TestJobImage");
             prompter.AddResponse(new List<string>{"binary", "-flag", "flagValue"});
 
             Job resource = (Job)generator.GenerateResource();
@@ -102,11 +103,28 @@ namespace Stress.Generator.Tests
             // Test resource index selector
             prompter.SetResponse("0");
             prompter.AddResponse("TestJobName");
+            prompter.AddResponse("TestJobImage");
             prompter.AddResponse(new List<string>{"binary"});
 
             resource = (Job)generator.GenerateResource();
             resource.Name.Should().Be("TestJobName");
+            resource.Image.Should().Be("TestJobImage");
             resource.Command.Should().Equal(new List<string>{"binary"});
+        }
+
+        [Fact]
+        public void TestGenerateOptionalResource()
+        {
+            var prompter = new TestPrompter();
+            var generator = new Generator(prompter);
+
+            prompter.AddResponse("NetworkChaos");
+            prompter.AddResponse("bing.com");
+            prompter.AddResponse("n");
+
+            NetworkChaos resource = (NetworkChaos)generator.GenerateResource();
+            resource.ExternalTargets.Should().Be("bing.com");
+            resource.Action.Should().Be("loss");
         }
 
         [Fact]
@@ -117,6 +135,7 @@ namespace Stress.Generator.Tests
 
             prompter.AddResponse("Job");
             prompter.AddResponse("TestJobName");
+            prompter.AddResponse("TestJobImage");
             prompter.AddResponse(new List<string>{"binary", "-flag", "flagValue"});
             prompter.AddResponse("y");
             prompter.AddResponse("NetworkChaos");
@@ -128,6 +147,7 @@ namespace Stress.Generator.Tests
             var resources = generator.GenerateResources();
             var job = (Job)resources[0];
             job.Name.Should().Be("TestJobName");
+            job.Image.Should().Be("TestJobImage");
             job.Command.Should().Equal(new List<string>{"binary", "-flag", "flagValue"});
             var chaos = (NetworkChaos)resources[1];
             chaos.ExternalTargets.Should().Be("bing.com");

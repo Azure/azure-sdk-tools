@@ -23,18 +23,24 @@ namespace Stress.Generator
             }
         }
         
-        public IEnumerable<PropertyInfo> Properties()
+        public IEnumerable<ResourcePropertyInfo> Properties()
         {
-            return this.GetType().GetProperties().Where(p =>
-                p.GetCustomAttributes(typeof(ResourceProperty)).Count() > 0
-            );
+            return this.GetType().GetProperties()
+                   .Where(p => p.GetCustomAttribute(typeof(ResourceProperty)) != null)
+                   .Select(p => {
+                       var prop = p.GetCustomAttribute(typeof(ResourceProperty)) as ResourceProperty;
+                       return new ResourcePropertyInfo(p, prop.Help);
+                   });
         }
 
-        public IEnumerable<PropertyInfo> OptionalProperties()
+        public IEnumerable<ResourcePropertyInfo> OptionalProperties()
         {
-            return this.GetType().GetProperties().Where(p =>
-                p.GetCustomAttributes(typeof(OptionalResourceProperty)).Count() > 0
-            );
+            return this.GetType().GetProperties()
+                   .Where(p => p.GetCustomAttribute(typeof(OptionalResourceProperty)) != null)
+                   .Select(p => {
+                       var prop = p.GetCustomAttribute(typeof(OptionalResourceProperty)) as OptionalResourceProperty;
+                       return new ResourcePropertyInfo(p, prop.Help);
+                   });
         }
         
         public void SetProperty(PropertyInfo prop, object value)

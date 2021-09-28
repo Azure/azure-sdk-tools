@@ -1,10 +1,24 @@
 using System;
+using System.Reflection;
 
 namespace Stress.Generator
 {
+    public class ResourcePropertyInfo
+    {
+        public PropertyInfo Prop;
+        public string Help;
+
+        public ResourcePropertyInfo(PropertyInfo prop, string help)
+        {
+            Prop = prop;
+            Help = help;
+        }
+    }
+
     public class ResourceProperty : Attribute
     {
-        string Help { get; set; }
+        public string Help { get; set; }
+
         public ResourceProperty(string help)
         {
             this.Help = help;
@@ -13,12 +27,11 @@ namespace Stress.Generator
 
     public class OptionalResourceProperty : Attribute
     {
-        string Help { get; set; }
-        string Default { get; set; }
-        public OptionalResourceProperty(string help, string @default)
+        public string Help { get; set; }
+
+        public OptionalResourceProperty(string help)
         {
             this.Help = help;
-            this.Default = @default;
         }
     }
 }

@@ -79,28 +79,14 @@ final class SnippetReplacer {
             return;
         }
 
-        // Codesnippet root directory isn't a directory, throw an exception.
-        if (!codesnippetRootDirectory.toFile().isDirectory()) {
-            throw new MojoExecutionException(String.format("Codesnippet root directory isn't a directory: %s",
-                codesnippetRootDirectory));
-        }
-
         // Get the files that match the codesnippet glob and are contained in the codesnippet root directory.
-        List<Path> codesnippetFiles = globFiles(codesnippetRootDirectory, FileSystems.getDefault()
-            .getPathMatcher("glob:" + codesnippetGlob));
+        List<Path> codesnippetFiles = globFiles(codesnippetRootDirectory, codesnippetGlob, false);
 
         // Only get the source files if sources are included in the update.
         List<Path> sourceFiles = Collections.emptyList();
         if (includeSources) {
-            // Sources root directory isn't a directory, throw an exception.
-            if (!sourcesRootDirectory.toFile().isDirectory()) {
-                throw new MojoExecutionException(String.format("Sources root directory isn't a directory: %s",
-                    sourcesRootDirectory));
-            }
-
             // Get the files that match the sources glob and are contained in the sources root directory.
-            sourceFiles = globFiles(sourcesRootDirectory, FileSystems.getDefault()
-                .getPathMatcher("glob:" + sourcesGlob));
+            sourceFiles = globFiles(sourcesRootDirectory, sourcesGlob, true);
         }
 
         List<VerifyResult> snippetsNeedingUpdate = new ArrayList<>();
@@ -182,28 +168,14 @@ final class SnippetReplacer {
             return;
         }
 
-        // Codesnippet root directory isn't a directory, throw an exception.
-        if (!codesnippetRootDirectory.toFile().isDirectory()) {
-            throw new MojoExecutionException(String.format("Codesnippet root directory isn't a directory: %s",
-                codesnippetRootDirectory));
-        }
-
         // Get the files that match the codesnippet glob and are contained in the codesnippet root directory.
-        List<Path> codesnippetFiles = globFiles(codesnippetRootDirectory, FileSystems.getDefault()
-            .getPathMatcher("glob:" + codesnippetGlob));
+        List<Path> codesnippetFiles = globFiles(codesnippetRootDirectory, codesnippetGlob, false);
 
         // Only get the source files if sources are included in the update.
         List<Path> sourceFiles = Collections.emptyList();
         if (includeSources) {
-            // Sources root directory isn't a directory, throw an exception.
-            if (!sourcesRootDirectory.toFile().isDirectory()) {
-                throw new MojoExecutionException(String.format("Sources root directory isn't a directory: %s",
-                    sourcesRootDirectory));
-            }
-
             // Get the files that match the sources glob and are contained in the sources root directory.
-            sourceFiles = globFiles(sourcesRootDirectory, FileSystems.getDefault()
-                .getPathMatcher("glob:" + sourcesGlob));
+            sourceFiles = globFiles(sourcesRootDirectory, sourcesGlob, true);
         }
 
         // scan the sample files for all the snippet files
@@ -517,8 +489,19 @@ final class SnippetReplacer {
         return target;
     }
 
-    static List<Path> globFiles(Path rootFolder, PathMatcher pathMatcher) throws IOException {
+    private static List<Path> globFiles(Path rootFolder, String glob, boolean validate)
+        throws IOException, MojoExecutionException {
+        if (rootFolder == null || !rootFolder.toFile().isDirectory()) {
+            if (validate) {
+                throw new MojoExecutionException(String.format("Expected '%s' to be a directory but it wasn't.",
+                    rootFolder));
+            } else {
+                return new ArrayList<>();
+            }
+        }
+
         List<Path> locatedPaths = new ArrayList<>();
+        PathMatcher pathMatcher = FileSystems.getDefault().getPathMatcher("glob:" + glob);
 
         Files.walkFileTree(rootFolder, new SimpleFileVisitor<Path>() {
             @Override

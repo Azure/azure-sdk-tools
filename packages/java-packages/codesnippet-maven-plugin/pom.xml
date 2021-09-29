@@ -1,16 +1,48 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.azure.tools</groupId>
   <artifactId>codesnippet-maven-plugin</artifactId>
   <version>1.0.0-beta.1</version>
   <packaging>maven-plugin</packaging>
-  <name>Codesnippet Maven Plugin</name>
 
-  <url>https://github.com/azure/azure-sdk-tools</url>
+  <name>Codesnippet Maven Plugin</name>
+  <description>Codesnippet Maven Plugin</description>
+  <url>https://github.com/Azure/azure-sdk-tools</url>
+  <organization>
+    <name>Microsoft Corporation</name>
+    <url>http://microsoft.com</url>
+  </organization>
+
+  <licenses>
+    <license>
+      <name>The MIT License (MIT)</name>
+      <url>http://opensource.org/licenses/MIT</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <id>microsoft</id>
+      <name>Microsoft Corporation</name>
+    </developer>
+  </developers>
+
+  <issueManagement>
+    <system>GitHub</system>
+    <url>https://github.com/Azure/azure-sdk-tools/issues</url>
+  </issueManagement>
+
+  <scm>
+    <url>https://github.com/Azure/azure-sdk-tools</url>
+    <connection>scm:git:https://github.com/Azure/azure-sdk-tools.git</connection>
+    <developerConnection/>
+    <tag>HEAD</tag>
+  </scm>
 
   <prerequisites>
     <maven>${maven.version}</maven>
@@ -20,7 +52,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.source>8</maven.compiler.source>
     <maven.compiler.target>8</maven.compiler.target>
-    <maven.version>3.8.1</maven.version>
+    <maven.version>3.6.3</maven.version>
   </properties>
 
   <dependencies>

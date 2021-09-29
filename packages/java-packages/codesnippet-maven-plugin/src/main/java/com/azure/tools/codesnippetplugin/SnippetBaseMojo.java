@@ -180,12 +180,19 @@ public abstract class SnippetBaseMojo extends AbstractMojo {
         return skip;
     }
 
+    /**
+     * Runs codesnippets for the specified {@link ExecutionMode}.
+     *
+     * @param executionMode The codesnippet execution mode.
+     * @throws MojoExecutionException If codesnippets fails to run successfully.
+     */
     protected void executeCodesnippet(ExecutionMode executionMode) throws MojoExecutionException {
+        Log log = getLog();
+
         if (isSkip()) {
+            log.info("Skipping codesnippet execution since skip is set.");
             return;
         }
-
-        Log log = getLog();
 
         Path codesnippetRootDirectory = getCodesnippetRootDirectory().toPath();
         log.debug(String.format("Using codesnippet root directory: %s", codesnippetRootDirectory));

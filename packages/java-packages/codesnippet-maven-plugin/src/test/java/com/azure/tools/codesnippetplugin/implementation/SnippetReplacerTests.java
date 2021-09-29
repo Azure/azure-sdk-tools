@@ -1,4 +1,4 @@
-package com.azure.tools.codesnippetplugin;
+package com.azure.tools.codesnippetplugin.implementation;
 
 import org.junit.Test;
 

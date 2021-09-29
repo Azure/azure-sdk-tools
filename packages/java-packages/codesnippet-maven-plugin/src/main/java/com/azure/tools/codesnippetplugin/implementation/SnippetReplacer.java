@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-package com.azure.tools.codesnippetplugin;
+package com.azure.tools.codesnippetplugin.implementation;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
@@ -25,7 +25,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-final class SnippetReplacer {
+public final class SnippetReplacer {
     static final Pattern SNIPPET_DEF_BEGIN =
         Pattern.compile("\\s*\\/\\/\\s*BEGIN\\:\\s+([a-zA-Z0-9\\.\\#\\-\\_]*)\\s*");
     static final Pattern SNIPPET_DEF_END = Pattern.compile("\\s*\\/\\/\\s*END\\:\\s+([a-zA-Z0-9\\.\\#\\-\\_]*)\\s*");
@@ -34,13 +34,10 @@ final class SnippetReplacer {
     static final Pattern SNIPPET_SRC_CALL_END =
         Pattern.compile("(\\s*)\\*?\\s*<!--\\s+end\\s+([a-zA-Z0-9\\.\\#\\-\\_]*)\\s*-->");
     static final Pattern SNIPPET_README_CALL_BEGIN =
-        Pattern.compile("```(\\s*)?Java\\s+([a-zA-Z0-9\\.\\#\\-\\_]*)\\s*");
+        Pattern.compile("```(\\s*)?java\\s+([a-zA-Z0-9\\.\\#\\-\\_]*)\\s*");
     static final Pattern SNIPPET_README_CALL_END = Pattern.compile("```");
     static final Pattern WHITESPACE_EXTRACTION = Pattern.compile("(\\s*)(.*)");
     static final Pattern END_OF_LINE_WHITESPACES = Pattern.compile("[\\s]+$");
-
-    static final String DEFAULT_CODESNIPPET_GLOB = "**/src/samples/java/**/*.java";
-    static final String DEFAULT_SOURCE_GLOB = "**/*.java";
 
     // Ordering matters. If the ampersand (&) isn't done first it will double encode ampersands used in other
     // replacements.
@@ -70,7 +67,7 @@ final class SnippetReplacer {
      * See {@link #updateCodesnippets(Path, String, Path, String, boolean, Path, boolean, int, Log)} for details on
      * actually defining and calling snippets.
      */
-    static void verifyCodesnippets(Path codesnippetRootDirectory, String codesnippetGlob, Path sourcesRootDirectory,
+    public static void verifyCodesnippets(Path codesnippetRootDirectory, String codesnippetGlob, Path sourcesRootDirectory,
         String sourcesGlob, boolean includeSources, Path readmePath, boolean includeReadme, int maxLineLength,
         Log logger) throws IOException, MojoExecutionException {
         // Neither sources nor README is included in the update, there is no work to be done.
@@ -159,7 +156,7 @@ final class SnippetReplacer {
      * After finishing update operations, this function will throw a MojoExecutionException after reporting all snippet
      * CALLS that have no DEFINITION.
      */
-    static void updateCodesnippets(Path codesnippetRootDirectory, String codesnippetGlob, Path sourcesRootDirectory,
+    public static void updateCodesnippets(Path codesnippetRootDirectory, String codesnippetGlob, Path sourcesRootDirectory,
         String sourcesGlob, boolean includeSources, Path readmePath, boolean includeReadme, int maxLineLength,
         Log logger) throws IOException, MojoExecutionException {
         // Neither sources nor README is included in the update, there is no work to be done.

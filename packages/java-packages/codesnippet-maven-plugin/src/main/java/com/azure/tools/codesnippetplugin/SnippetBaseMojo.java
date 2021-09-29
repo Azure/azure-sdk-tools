@@ -3,6 +3,7 @@
 
 package com.azure.tools.codesnippetplugin;
 
+import com.azure.tools.codesnippetplugin.implementation.SnippetReplacer;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
@@ -15,13 +16,23 @@ import java.nio.file.Path;
 /**
  * Base Mojo for the codesnippet plugin.
  */
-abstract class SnippetBaseMojo extends AbstractMojo {
+public abstract class SnippetBaseMojo extends AbstractMojo {
+    /**
+     * Default glob to match codesnippet files.
+     */
+    public static final String DEFAULT_CODESNIPPET_GLOB = "**/src/samples/java/**/*.java";
+
+    /**
+     * Default glob to match source files.
+     */
+    public static final String DEFAULT_SOURCE_GLOB = "**/src/main/java/**/*.java";
+
     /**
      * Glob for the files that contain codesnippet definitions.
      * <p>
-     * Default value is {@link SnippetReplacer#DEFAULT_CODESNIPPET_GLOB}.
+     * Default value is {@link #DEFAULT_CODESNIPPET_GLOB}.
      */
-    @Parameter(property = "codesnippetGlob", defaultValue = SnippetReplacer.DEFAULT_CODESNIPPET_GLOB)
+    @Parameter(property = "codesnippetGlob", defaultValue = DEFAULT_CODESNIPPET_GLOB)
     private String codesnippetGlob;
 
     /**
@@ -35,9 +46,9 @@ abstract class SnippetBaseMojo extends AbstractMojo {
     /**
      * Glob for the source files to inject codesnippets.
      * <p>
-     * Default value is {@link SnippetReplacer#DEFAULT_SOURCE_GLOB}.
+     * Default value is {@link #DEFAULT_SOURCE_GLOB}.
      */
-    @Parameter(property = "sourceGlob", defaultValue = SnippetReplacer.DEFAULT_SOURCE_GLOB)
+    @Parameter(property = "sourceGlob", defaultValue = DEFAULT_SOURCE_GLOB)
     private String sourceGlob;
 
     /**

@@ -329,7 +329,7 @@ Services:
 - Service: eventhubs
   Languages:
     Net:
-      Project: sdk/eventhub/Azure.Messaging.EventHubs/perf
+      Project: sdk/eventhub/Azure.Messaging.EventHubs/perf/Azure.Messaging.EventHubs.Perf.csproj
       PackageVersions:
       - Azure.Messaging.EventHubs: 5.6.0
       - Azure.Messaging.EventHubs: source
@@ -344,7 +344,7 @@ Services:
 - Service: eventhubs-processor
   Languages:
     Net:
-      Project: sdk/eventhub/Azure.Messaging.EventHubs.Processor/perf
+      Project: sdk/eventhub/Azure.Messaging.EventHubs.Processor/perf/Azure.Messaging.EventHubs.Processor.Perf.csproj
       PackageVersions:
       - Azure.Messaging.EventHubs.Processor: 5.6.0
       - Azure.Messaging.EventHubs.Processor: source

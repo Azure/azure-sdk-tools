@@ -1,4 +1,4 @@
-package com.azure.tools.codesnippetplugin;
+package com.azure.tools.codesnippetplugin.implementation;
 
 import org.junit.Test;
 
@@ -20,7 +20,7 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 public class SnippetReplacerTests {
-    private static final String TEST_RESOURCES_DIRECTORY = "../../../../project-to-test/";
+    private static final String TEST_RESOURCES_DIRECTORY = "../../../../../project-to-test/";
 
     private Path getPathToResource(String fileName) {
         String relativeLocation = TEST_RESOURCES_DIRECTORY + fileName;

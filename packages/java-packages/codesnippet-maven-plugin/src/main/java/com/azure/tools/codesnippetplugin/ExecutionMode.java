@@ -6,7 +6,7 @@ package com.azure.tools.codesnippetplugin;
 /**
  * Execution modes that the codesnippet plugin supports.
  */
-enum ExecutionMode {
+public enum ExecutionMode {
     /**
      * Updates the injected codesnippets.
      */

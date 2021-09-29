@@ -1,25 +1,42 @@
-# Snippet Replacer
+# Codesnippet Maven Plugin
 
-`snippet-replacer-maven-plugin` allows java devs to reference actual java code in their javadoc comments. Developers running code written by the Azure team want their documentation to be useful. This plugin helps the Azure SDK team deliver on that promise by ensuring that code samples presented in doc-comments is always _actual running code_.
+`codesnippet-maven-plugin` allows for Javadocs and READMEs to reference actual Java code. Developers running code 
+written by the Azure team want their documentation to be useful. This plugin helps the Azure SDK team deliver on 
+that promise by ensuring that code samples presented in doc-comments are always _actual running code_.
 
-### How does it work?
+## How does it work?
 
 First, reference the plugin in your maven project's `pom.xml` file.
 
 ```xml
 <plugin>
   <groupId>com.azure.tools</groupId>
-  <artifactId>snippet-replacer-maven-plugin</artifactId>
-  <version>1.0.0</version>
+  <artifactId>codesnippet-maven-plugin</artifactId>
+  <version>1.0.0-beta.1</version>
   <configuration>
-    <mode>update</mode>
-    <targetDir>${project.basedir}</targetDir>
+    <codesnippetGlob>**/src/samples/java/**/*.java</codesnippetGlob>
+    <codesnippetRootDirectory>${project.basedir}/src/samples/java</codesnippetRootDirectory>
+    <sourceGlob>**/src/main/java/**/*.java</sourceGlob>
+    <sourceRootDirectory>${project.basedir}/src/main/java</sourceRootDirectory>
+    <includeSource>true</includeSource>
+    <readmePath>${project.basedir}/README.md</readmePath>
+    <includeReadme>true</includeReadme>
+    <maxLineLength>120</maxLineLength>
+    <skip>false</skip>
   </configuration>
   <executions>
     <execution>
+      <id>update-codesnippet</id>
       <phase>process-sources</phase>
       <goals>
-        <goal>snippet-engine</goal>
+        <goal>update-codesnippet</goal>
+      </goals>
+    </execution>
+    <execution>
+      <id>verify-codesnippet</id>
+      <phase>verify</phase>
+      <goals>
+        <goal>verify-codesnippet</goal>
       </goals>
     </execution>
   </executions>
@@ -27,20 +44,20 @@ First, reference the plugin in your maven project's `pom.xml` file.
 
 ```
 
-The plugin is intended to be run in the `process-sources` phase. 
+## Execution Goals
 
-### The modes of operation
+`codesnippet-maven-plugin` has two execution goals, `update-codesnippet` and `verify-codesnippet`.
 
-`snippet-replacer` has two modes, `update` and `verify`.
+`update-codesnippet` mode runs during your build and _actually updates_ your Javadoc and README codesnippets with 
+referenced source code.
 
-`update` mode runs during your build and _actually updates_ your Javadoc comments with referenced source code.
-`verify` mode is intended to be run during CI/PR builds. It will error a  javadoc comment that is not updated.
+`verify-codesnippet` mode is intended to run during CI/PR builds. It will error if Javadoc or README codesnippets don't 
+match the reference.
 
-## How to define a referencable snippet
+## Defining a Codesnippet Reference
 
-Embed a beginning and end html comment wherever you want the source code inserted.
-
-Within working java code, we have a snippet definition. The string after the `BEGIN:` or `END:` comments is an identifer that can be referenced from javadoc or readmes.
+Within working Java code, we have a snippet definition. The string after the `BEGIN:` or `END:` comments is an 
+identifier that can be referenced from Javadocs or READMEs.
 
 ```
 public ConfigurationClient createSyncConfigurationClient() {
@@ -53,11 +70,12 @@ public ConfigurationClient createSyncConfigurationClient() {
     return configurationClient;
 }
 ```
+
 The above example defines a code snippet of identifier `com.azure.data.applicationconfig.configurationclient.instantiation`.
 
-### Example of `update`
+## Injecting Codesnippets into Javadocs
 
-Within a javadoc comment, a snippet is referenced by a matching pair html comments. 
+Within a javadoc comment, a snippet is referenced by a matching pair html comments.
 
 ```
 ...
@@ -74,6 +92,7 @@ Within a javadoc comment, a snippet is referenced by a matching pair html commen
 public final class ConfigurationClient {
 ...
 ```
+
 After update runs:
 ```
 ...
@@ -98,25 +117,22 @@ public final class ConfigurationClient {
 
 The referenced code snippet will be embedded (with javadoc appropriate encoding) with the properly spaced code snippet.
 
-### Example of `verify`
+## Injecting Codesnippets into READMEs
 
-This mode is intended for use within CI systems. It will throw an error detailing where snippets are in need of updating. Any dev can rebuild your project with `update` mode and commit the result.
-
-### Functionality against root README.md
-
-While the plugin is mostly intended for use in Javadoc comments, it also will run update and verify operations against the file ${project.basedir}/README.md.
+While the plugin is mostly intended for use in Javadoc comments, it also will run update and verify operations against 
+README files.
 
 Example reference before update:
 
 ````
-```Java com.azure.data.applicationconfig.configurationclient.instantiation
+```java com.azure.data.applicationconfig.configurationclient.instantiation
 ```
 ````
 
 Example of README.md after update:
 
 ````
-```Java com.azure.data.applicationconfig.configurationclient.instantiation
+```java com.azure.data.applicationconfig.configurationclient.instantiation
 ConfigurationClient configurationClient = new ConfigurationClientBuilder()
     .connectionString(connectionString)
     .buildClient();
@@ -125,7 +141,7 @@ ConfigurationClient configurationClient = new ConfigurationClientBuilder()
 
 Which Renders:
 
-```Java com.azure.data.applicationconfig.configurationclient.instantiation
+```java com.azure.data.applicationconfig.configurationclient.instantiation
 ConfigurationClient configurationClient = new ConfigurationClientBuilder()
     .connectionString(connectionString)
     .buildClient();

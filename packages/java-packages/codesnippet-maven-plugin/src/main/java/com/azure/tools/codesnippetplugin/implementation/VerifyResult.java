@@ -1,14 +1,14 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-package com.azure.tools.codesnippetplugin;
+package com.azure.tools.codesnippetplugin.implementation;
 
 import java.nio.file.Path;
 
 /**
  * Verification result for a codesnippet.
  */
-class VerifyResult {
+public final class VerifyResult {
     public String snippetWithIssues;
     public Path readmeLocation;
 

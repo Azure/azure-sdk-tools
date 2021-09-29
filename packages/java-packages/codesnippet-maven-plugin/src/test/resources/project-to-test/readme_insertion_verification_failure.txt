@@ -2,7 +2,7 @@
 
 Once you have the value of the connection string you can create the configuration client:
 
-```Java com.azure.data.applicationconfig.configurationclient.instantiation
+```java com.azure.data.applicationconfig.configurationclient.instantiation
 ConfigurationClient configurationClient = new ConfigurationClientBuilder()
     .connectionString(connectionString)
     .buildClient();
@@ -10,7 +10,7 @@ ConfigurationClient configurationClient = new ConfigurationClientBuilder()
 
 or
 
-``` Java com.azure.core.http.rest.pagedflux.instantiation
+``` java com.azure.core.http.rest.pagedflux.instantiation
 Supplier<Mono<PagedResponse<Integer>>> firstPageRetriever = () -> getFirstPage();
 
 // A function that fetches subsequent pages of data from source/service given a continuation token

@@ -1,14 +1,17 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-package com.azure.tools.codesnippetplugin;
+package com.azure.tools.codesnippetplugin.implementation;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-class SnippetDictionary {
+/**
+ * Maintains the known codesnippets in a run.
+ */
+public final class SnippetDictionary {
     private final Map<String, List<String>> snippetDictionary = new HashMap<>();
 
     public boolean isActive() {

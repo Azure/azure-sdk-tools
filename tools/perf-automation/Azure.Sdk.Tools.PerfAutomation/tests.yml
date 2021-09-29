@@ -337,6 +337,22 @@ Services:
   - Test: publish-batches-to-gateway
     Arguments:
     - --body-size 1 --batch-size 1 --warmup 0 --duration 1
-    - --body-size 500 --batch-size 50 --parallel 64
+    - --body-size 1024 --batch-size 100 --parallel 64
     TestNames:
       Net: PublishBatchesToGateway
+
+- Service: eventhubs-processor
+  Languages:
+    Net:
+      Project: sdk/eventhub/Azure.Messaging.EventHubs.Processor/perf
+      PackageVersions:
+      - Azure.Messaging.EventHubs.Processor: 5.6.0
+      - Azure.Messaging.EventHubs.Processor: source
+  Tests:
+  - Test: receive
+    Arguments:
+    - --warmup 0 --duration 1
+    - --parallel 1
+    - --parallel 1 --checkpoint-interval 100
+    TestNames:
+      Net: ProcessEvent

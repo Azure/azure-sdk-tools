@@ -81,6 +81,14 @@ abstract class SnippetBaseMojo extends AbstractMojo {
     private int maxLineLength;
 
     /**
+     * Skip running the plugin.
+     * <p>
+     * Default value is false.
+     */
+    @Parameter(property = "skip", defaultValue = "false")
+    private boolean skip;
+
+    /**
      * Gets the glob for the files that contain codesnippet definitions.
      *
      * @return The glob for the files that contain codesnippet definitions.
@@ -152,7 +160,20 @@ abstract class SnippetBaseMojo extends AbstractMojo {
         return maxLineLength;
     }
 
+    /**
+     * Gets whether the plugin execution should be skipped.
+     *
+     * @return Whether the plugin execution should be skipped.
+     */
+    protected boolean isSkip() {
+        return skip;
+    }
+
     protected void executeCodesnippet(ExecutionMode executionMode) throws MojoExecutionException {
+        if (isSkip()) {
+            return;
+        }
+
         Log log = getLog();
 
         Path codesnippetRootDirectory = getCodesnippetRootDirectory().toPath();

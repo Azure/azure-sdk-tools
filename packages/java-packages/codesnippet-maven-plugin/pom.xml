@@ -5,10 +5,10 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.azure.tools</groupId>
-  <artifactId>codesnippet-plugin</artifactId>
+  <artifactId>codesnippet-maven-plugin</artifactId>
   <version>1.0.0-beta.1</version>
   <packaging>maven-plugin</packaging>
-  <name>snippet-replacer-maven-plugin Maven Plugin</name>
+  <name>Codesnippet Maven Plugin</name>
 
   <url>https://github.com/azure/azure-sdk-tools</url>
 

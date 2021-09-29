@@ -2,7 +2,7 @@
 
 `codesnippet-maven-plugin` allows for Javadocs and READMEs to reference actual Java code. Developers running code 
 written by the Azure team want their documentation to be useful. This plugin helps the Azure SDK team deliver on 
-that promise by ensuring that code samples presented in doc-comments is always _actual running code_.
+that promise by ensuring that code samples presented in doc-comments are always _actual running code_.
 
 ## How does it work?
 

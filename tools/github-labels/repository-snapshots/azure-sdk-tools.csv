@@ -1,19 +1,4 @@
 Processing Azure\azure-sdk-tools repo.
-Label,Check Enforcer,,e99695
-Label,Pipeline Witness,,e99695
-Label,Webhook Router,,e99695
-Label,GitHub Issues,,e99695
-Label,Pull Request Labeler,,e99695
-Label,Fabric Bot,Issues about creating rules for the fabric bot,e99695
-Label,Docs,,e99695
-Label,Client,This issue points to a problem in the data-plane of the library.,ffeb77
-Label,auto-merge,Apply to PR's that we want to auto-merge when green,5df772
-Label,needs-triage,This is a new issue that needs to be triaged to the appropriate team.,ededed
-Label,Central-EngSys,This issue is owned by the Engineering System team.,ffeb77
-Label,C99,C Language,c2e0c6
-Label,C++,C++ Language,c2e0c6
-Label,Network - Private Link,,e99695
-Label,LLCView,,e99695
 Label,.NET,,c2e0c6
 Label,AAD,,e99695
 Label,ACS,,e99695
@@ -39,6 +24,7 @@ Label,ARO,Azure Redhat OpenShift,e99695
 Label,Attestation,,e99695
 Label,Authentication,,e99695
 Label,Authorization,,e99695
+Label,auto-merge,Apply to PR's that we want to auto-merge when green,5df772
 Label,Automation,,e99695
 Label,AVS,,e99695
 Label,Azure Arc enabled servers,,e99695
@@ -53,6 +39,11 @@ Label,Blueprint,,e99695
 Label,Bot Service,,e99695
 Label,breaking-change,,d73a49
 Label,bug,This issue requires a change to an existing behavior in the product in order to be resolved.,eaa875
+Label,C++,C++ Language,c2e0c6
+Label,C99,C Language,c2e0c6
+Label,Central-EngSys,This issue is owned by the Engineering System team.,ffeb77
+Label,Check Enforcer,,e99695
+Label,Client,This issue points to a problem in the data-plane of the library.,ffeb77
 Label,Cloud Shell,,e99695
 Label,CodeGen,Issues that relate to code generation,e99695
 Label,Cognitive - Anomaly Detector,,e99695
@@ -96,6 +87,7 @@ Label,Cost Management,,e99695
 Label,Custom Providers,,e99695
 Label,Customer Insights,,e99695
 Label,customer-reported,Issues that are reported by GitHub users external to the Azure organization.,3800e0
+Label,CXP Attention,The Azure CXP Support Team is responsible for this issue.,10066b
 Label,CycleCloud,,e99695
 Label,Data Bricks,,e99695
 Label,Data Catalog,,e99695
@@ -115,14 +107,17 @@ Label,DevOps,,e99695
 Label,Devtestlab,,e99695
 Label,Digital Twins,,e99695
 Label,Do Not Merge,,b60205
+Label,Docs,,e99695
 Label,duplicate,This issue is the duplicate of another issue,e4c288
 Label,EngSys,This issue is impacting the engineering system.,e99695
 Label,enhancement,New feature or request,a2eeef
 Label,Epic,,3E4B9E
 Label,Event Grid,,e99695
 Label,Event Hubs,,e99695
+Label,Fabric Bot,Issues about creating rules for the fabric bot,e99695
 Label,feature-request,This issue requires a new behavior in the product in order be resolved.,eaa875
 Label,Functions,,e99695
+Label,GitHub Issues,,e99695
 Label,good first issue,This issue tracks work that may be a good starting point for a first-time contributor,64c170
 Label,Graph,,e99695
 Label,Graph.Microsoft,,e99695
@@ -142,6 +137,8 @@ Label,KeyVault,,e99695
 Label,Kubernetes Configuration,,e99695
 Label,Kusto,,e99695
 Label,Lab Services,,e99695
+Label,LLC,,e99695
+Label,LLCView,,e99695
 Label,Logic App,,e99695
 Label,LOUIS,,e99695
 Label,Machine Learning,,e99695
@@ -149,6 +146,7 @@ Label,Machine Learning Compute,,e99695
 Label,Machine Learning Experimentation,,e99695
 Label,Managed Identity,,e99695
 Label,ManagedServices,,e99695
+Label,Maps,,e99695
 Label,MariaDB,,e99695
 Label,Marketplace Ordering,,e99695
 Label,Media Services,,e99695
@@ -175,6 +173,7 @@ Label,MySQL,,e99695
 Label,needs-author-feedback,More information is needed from author to address the issue.,f72598
 Label,needs-team-attention,This issue needs attention from Azure service team or SDK team,3BA0F8
 Label,needs-team-triage,This issue needs the team to triage.,ededed
+Label,needs-triage,This is a new issue that needs to be triaged to the appropriate team.,ededed
 Label,Network,,e99695
 Label,Network - Application Gateway,,e99695
 Label,Network - Bastion,,e99695
@@ -187,6 +186,7 @@ Label,Network - Front Door,Service: Azure Front Door,e99695
 Label,Network - Load Balancer,,e99695
 Label,Network - Network Virtual Appliance,,e99695
 Label,Network - Network Watcher,,e99695
+Label,Network - Private Link,,e99695
 Label,Network - Traffic Manager,,e99695
 Label,Network - Virtual Network,,e99695
 Label,Network - Virtual Network NAT,,e99695
@@ -201,10 +201,12 @@ Label,pillar-compatibility,"This issue is related to compatibility between versi
 Label,pillar-performance,"The issue is related to performance, one of our core engineering pillars.",65a5c9
 Label,pillar-reliability,"The issue is related to reliability, one of our core engineering pillars. (includes stress testing)",65a5c9
 Label,Pipeline Generator,,e99695
+Label,Pipeline Witness,,e99695
 Label,Policy,,e99695
 Label,Policy Insights,,e99695
 Label,PostgreSQL,,e99695
 Label,PowerBI,,e99695
+Label,Pull Request Labeler,,e99695
 Label,Purview,,e99695
 Label,Quantum,,e99695
 Label,question,The issue doesn't require a change to the product in order to be resolved. Most issues start as that,eaa875
@@ -252,4 +254,5 @@ Label,Training,Work items that track the work to build training materials for bu
 Label,VideoAnalyzer,Azure Video Analyzer,e99695
 Label,Visual Studio,,e99695
 Label,Web Apps,,e99695
+Label,Webhook Router,,e99695
 Label,WebPubSub,,e99695

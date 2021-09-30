@@ -1,11 +1,4 @@
 Processing Azure\azure-sdk-for-c repo.
-Label,blocking-release,Blocks release,d73a49
-Label,auto-merge,Apply to PR's that we want to auto-merge when green,5df772
-Label,Central-EngSys,This issue is owned by the Engineering System team.,ffeb77
-Label,Network - Private Link,,e99695
-Label,Azure Sphere,This issue affects Azure Sphere.,e99695
-Label,VideoAnalyzer,Azure Video Analyzer,e99695
-Label,issue-addressed,The Azure SDK team member assisting with this issue believes it to be addressed and ready to close.,5df772
 Label,AAD,,e99695
 Label,ACS,,e99695
 Label,Advisor,,e99695
@@ -28,19 +21,23 @@ Label,ARO,Azure Redhat OpenShift,e99695
 Label,Attestation,,e99695
 Label,Authentication,,e99695
 Label,Authorization,,e99695
+Label,auto-merge,Apply to PR's that we want to auto-merge when green,5df772
 Label,Automation,,e99695
 Label,AVS,,e99695
 Label,Azure Arc enabled servers,,e99695
+Label,Azure Sphere,This issue affects Azure Sphere.,e99695
 Label,Azure Stack,,e99695
 Label,Azure.Core,,e99695
 Label,Azure.Identity,,e99695
 Label,Batch,,e99695
 Label,BatchAI,,e99695
 Label,Billing,,e99695
+Label,blocking-release,Blocks release,d73a49
 Label,Blueprint,,e99695
 Label,Bot Service,,e99695
 Label,breaking-change,,d73a49
 Label,bug,This issue requires a change to an existing behavior in the product in order to be resolved.,eaa875
+Label,Central-EngSys,This issue is owned by the Engineering System team.,ffeb77
 Label,Client,This issue points to a problem in the data-plane of the library.,ffeb77
 Label,Cloud Shell,,e99695
 Label,CodeGen,Issues that relate to code generation,e99695
@@ -85,6 +82,7 @@ Label,Cost Management,,e99695
 Label,Custom Providers,,e99695
 Label,Customer Insights,,e99695
 Label,customer-reported,Issues that are reported by GitHub users external to the Azure organization.,3800e0
+Label,CXP Attention,The Azure CXP Support Team is responsible for this issue.,10066b
 Label,CycleCloud,,e99695
 Label,Data Bricks,,e99695
 Label,Data Catalog,,e99695
@@ -125,10 +123,12 @@ Label,Insights,,e99695
 Label,Intune,,e99695
 Label,IoT,,e99695
 Label,IoT/CLI,,e99695
+Label,issue-addressed,The Azure SDK team member assisting with this issue believes it to be addressed and ready to close.,5df772
 Label,KeyVault,,e99695
 Label,Kubernetes Configuration,,e99695
 Label,Kusto,,e99695
 Label,Lab Services,,e99695
+Label,LLC,,e99695
 Label,Logic App,,e99695
 Label,LOUIS,,e99695
 Label,Machine Learning,,e99695
@@ -136,6 +136,7 @@ Label,Machine Learning Compute,,e99695
 Label,Machine Learning Experimentation,,e99695
 Label,Managed Identity,,e99695
 Label,ManagedServices,,e99695
+Label,Maps,,e99695
 Label,MariaDB,,e99695
 Label,Marketplace Ordering,,e99695
 Label,Media Services,,e99695
@@ -175,6 +176,7 @@ Label,Network - Front Door,Service: Azure Front Door,e99695
 Label,Network - Load Balancer,,e99695
 Label,Network - Network Virtual Appliance,,e99695
 Label,Network - Network Watcher,,e99695
+Label,Network - Private Link,,e99695
 Label,Network - Traffic Manager,,e99695
 Label,Network - Virtual Network,,e99695
 Label,Network - Virtual Network NAT,,e99695
@@ -236,6 +238,7 @@ Label,test-manual-pass,,c0eaf9
 Label,test-reliability,Issue that causes tests to be unreliable,7365c9
 Label,TimeseriesInsights,,e99695
 Label,Training,Work items that track the work to build training materials for building Client libraries,e99695
+Label,VideoAnalyzer,Azure Video Analyzer,e99695
 Label,Visual Studio,,e99695
 Label,Web Apps,,e99695
 Label,WebPubSub,,e99695

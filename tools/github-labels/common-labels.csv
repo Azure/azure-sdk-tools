@@ -76,6 +76,7 @@ Label,Cost Management,,e99695
 Label,Custom Providers,,e99695
 Label,Customer Insights,,e99695
 Label,CycleCloud,,e99695
+Label,CXP Attention,The Azure CXP Support Team is responsible for this issue.,10066b
 Label,Data Bricks,,e99695
 Label,Data Catalog,,e99695
 Label,Data Factory,,e99695
@@ -113,6 +114,7 @@ Label,IoT/CLI,,e99695
 Label,KeyVault,,e99695
 Label,Kubernetes Configuration,,e99695
 Label,Kusto,,e99695
+Label,LLC,,e99695
 Label,LOUIS,,e99695
 Label,Lab Services,,e99695
 Label,Logic App,,e99695
@@ -122,6 +124,7 @@ Label,Machine Learning Compute,,e99695
 Label,Machine Learning Experimentation,,e99695
 Label,Managed Identity,,e99695
 Label,ManagedServices,,e99695
+Label,Maps,,e99695
 Label,MariaDB,,e99695
 Label,Marketplace Ordering,,e99695
 Label,Media Services,,e99695

@@ -145,7 +145,7 @@ namespace APIViewWeb.Repositories
 
             var stringBuilder = new StringBuilder();
             var diffUrl = REVIEW_DIFF_URL.Replace("{ReviewId}",review.ReviewId).Replace("{NewRevision}", review.Revisions.Last().RevisionId);
-            stringBuilder.Append($"API changes have been detected in this PR. You can review API changes [here]({diffUrl})").Append(Environment.NewLine);
+            stringBuilder.Append($"API changes have been detected in `{codeFile.PackageName}`. You can review API changes [here]({diffUrl})").Append(Environment.NewLine);
             // If review doesn't match with any revisions then generate formatted diff against last revision of automatic review
             await GetFormattedDiff(renderedCodeFile, review.Revisions.Last(), stringBuilder);
 
@@ -171,7 +171,7 @@ namespace APIViewWeb.Repositories
             }
 
             stringBuilder.Append(Environment.NewLine).Append("**API changes**").Append(Environment.NewLine);
-            stringBuilder.Append("```").Append(Environment.NewLine);
+            stringBuilder.Append("```diff").Append(Environment.NewLine);
             foreach (var line in diffLines)
             {
                 if (line.Kind == DiffLineKind.Added)

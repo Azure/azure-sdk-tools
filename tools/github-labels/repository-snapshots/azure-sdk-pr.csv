@@ -1,44 +1,5 @@
 Processing Azure\azure-sdk-pr repo.
-Label,Partner Ask,Dependencies from outside of Azure SDK,3E4B9E
-Label,Epic,,3E4B9E
-Label,Our Ask,Dependencies we have against other teams,3E4B9E
-Label,Docs,,e99695
-Label,API,"Items related to tooling, process, or education of building good APIs in Azure",3E4B9E
-Label,Training,Work items that track the work to build training materials for building Client libraries,e99695
-Label,Quality,,0b097a
-Label,Library Implementation,,3E4B9E
-Label,Central-EngSys,This issue is owned by the Engineering System team.,ffeb77
-Label,Cosmos,,e99695
-Label,Event Hubs,,e99695
-Label,JavaScript,,c2e0c6
-Label,Java,,c2e0c6
-Label,Python,,c2e0c6
 Label,.NET,,c2e0c6
-Label,Service Bus,,e99695
-Label,Cognitive - Text Analytics,,e99695
-Label,Storage,"Storage Service (Queues, Blobs, Files)",e99695
-Label,KeyVault,,e99695
-Label,Cognitive - Form Recognizer,,e99695
-Label,Cognitive - Metrics Advisor,,e99695
-Label,Cognitive - Vision,,e99695
-Label,Cognitive - Anomaly Detector,,e99695
-Label,Training - Reference,,c5def5
-Label,Training - Videos,,fef2c0
-Label,Training - Activities,,e99695
-Label,Training - Navigability,,c2e0c6
-Label,Training - Effective Transition,,d4c5f9
-Label,Training - Small,,c5def5
-Label,Training - Medium,,bfdadc
-Label,Training - Large,,f9d0c4
-Label,Training - Lower Prio,,1d76db
-Label,Training - Higher Prio,,e50688
-Label,Training - .NET,,5319e7
-Label,Training - Python,,1d76db
-Label,Training - JS/TS,,fbca04
-Label,Training - Java,,d93f0b
-Label,Monitor,"Monitor, Operational Insights",e99695
-Label,Event Grid,,e99695
-Label,C++,,c2e0c6
 Label,AAD,,e99695
 Label,ACS,,e99695
 Label,Advisor,,e99695
@@ -46,6 +7,7 @@ Label,AgriFood,,e99695
 Label,AKS,,e99695
 Label,Alerts Management,,e99695
 Label,Analysis Services,,e99695
+Label,API,"Items related to tooling, process, or education of building good APIs in Azure",3E4B9E
 Label,API Management,,e99695
 Label,APIChange,This PR contains an addition or change to the API signature and must be reviewed by an architect.,d8f74c
 Label,App Configuration,Azure.ApplicationModel.Configuration,e99695
@@ -65,6 +27,7 @@ Label,Authorization,,e99695
 Label,auto-merge,Apply to PR's that we want to auto-merge when green,5df772
 Label,Automation,,e99695
 Label,AVS,,e99695
+Label,AwaitingGAsignoff,,C70CC9
 Label,Azure Arc enabled servers,,e99695
 Label,Azure Stack,,e99695
 Label,Azure.Core,,e99695
@@ -77,23 +40,30 @@ Label,Blueprint,,e99695
 Label,Bot Service,,e99695
 Label,breaking-change,,d73a49
 Label,bug,This issue requires a change to an existing behavior in the product in order to be resolved.,eaa875
+Label,C++,,c2e0c6
+Label,Central-EngSys,This issue is owned by the Engineering System team.,ffeb77
 Label,Client,This issue points to a problem in the data-plane of the library.,ffeb77
 Label,Cloud Shell,,e99695
 Label,CodeGen,Issues that relate to code generation,e99695
+Label,Cognitive - Anomaly Detector,,e99695
 Label,Cognitive - Bing,,e99695
 Label,Cognitive - Computer Vision,,e99695
 Label,Cognitive - Content Moderator,,e99695
 Label,Cognitive - Custom Vision,,e99695
 Label,Cognitive - Face,,e99695
+Label,Cognitive - Form Recognizer,,e99695
 Label,Cognitive - Immersive Reader,,e99695
 Label,Cognitive - Ink Recognizer,,e99695
 Label,Cognitive - Language,,e99695
 Label,Cognitive - LUIS,,e99695
+Label,Cognitive - Metrics Advisor,,e99695
 Label,Cognitive - Mgmt,,e99695
 Label,Cognitive - Personalizer,,e99695
 Label,Cognitive - QnA Maker,,e99695
 Label,Cognitive - Speech,,e99695
+Label,Cognitive - Text Analytics,,e99695
 Label,Cognitive - Translator,,e99695
+Label,Cognitive - Vision,,e99695
 Label,Cognitive Services,,e99695
 Label,Commerce,,e99695
 Label,Communication,,e99695
@@ -111,10 +81,12 @@ Label,Consumption,,e99695
 Label,Container Instances,,e99695
 Label,Container Registry,,e99695
 Label,Container Service,,e99695
+Label,Cosmos,,e99695
 Label,Cost Management,,e99695
 Label,Custom Providers,,e99695
 Label,Customer Insights,,e99695
 Label,customer-reported,Issues that are reported by GitHub users external to the Azure organization.,3800e0
+Label,CXP Attention,The Azure CXP Support Team is responsible for this issue.,10066b
 Label,CycleCloud,,e99695
 Label,Data Bricks,,e99695
 Label,Data Catalog,,e99695
@@ -134,10 +106,15 @@ Label,DevOps,,e99695
 Label,Devtestlab,,e99695
 Label,Digital Twins,,e99695
 Label,Do Not Merge,,b60205
+Label,Docs,,e99695
 Label,duplicate,This issue is the duplicate of another issue,e4c288
 Label,EngSys,This issue is impacting the engineering system.,e99695
+Label,Epic,,3E4B9E
+Label,Event Grid,,e99695
+Label,Event Hubs,,e99695
 Label,feature-request,This issue requires a new behavior in the product in order be resolved.,eaa875
 Label,Functions,,e99695
+Label,GAsignoffcomplete,APEX Launch,6DFDEC
 Label,good first issue,This issue tracks work that may be a good starting point for a first-time contributor,64c170
 Label,Graph,,e99695
 Label,Graph.Microsoft,,e99695
@@ -152,9 +129,14 @@ Label,Intune,,e99695
 Label,IoT,,e99695
 Label,IoT/CLI,,e99695
 Label,issue-addressed,The Azure SDK team member assisting with this issue believes it to be addressed and ready to close.,5df772
+Label,Java,,c2e0c6
+Label,JavaScript,,c2e0c6
+Label,KeyVault,,e99695
 Label,Kubernetes Configuration,,e99695
 Label,Kusto,,e99695
 Label,Lab Services,,e99695
+Label,Library Implementation,,3E4B9E
+Label,LLC,,e99695
 Label,Logic App,,e99695
 Label,LOUIS,,e99695
 Label,Machine Learning,,e99695
@@ -162,6 +144,7 @@ Label,Machine Learning Compute,,e99695
 Label,Machine Learning Experimentation,,e99695
 Label,Managed Identity,,e99695
 Label,ManagedServices,,e99695
+Label,Maps,,e99695
 Label,MariaDB,,e99695
 Label,Marketplace Ordering,,e99695
 Label,Media Services,,e99695
@@ -171,6 +154,7 @@ Label,Mgmt-EngSys,Engineering System (Management Plane Specific),ffeb77
 Label,Migrate,,e99695
 Label,Mixed Reality,,e99695
 Label,Mobile Engagement,,e99695
+Label,Monitor,"Monitor, Operational Insights",e99695
 Label,Monitor - ActionGroups,,e99695
 Label,Monitor - ActivityLogs,,e99695
 Label,Monitor - Alerts,,e99695
@@ -210,6 +194,8 @@ Label,Network - VPN Gateway,,e99695
 Label,no-recent-activity,There has been no recent activity on this issue.,bbbbbb
 Label,Notification Hub,,e99695
 Label,Operations Management,,e99695
+Label,Our Ask,Dependencies we have against other teams,3E4B9E
+Label,Partner Ask,Dependencies from outside of Azure SDK,3E4B9E
 Label,Peering,,e99695
 Label,pillar-acquisition,"This issue is related to the ability to acquire new customers, one of our core engineering pillars.",65a5c9
 Label,pillar-compatibility,"This issue is related to compatibility between versions, one of our core engineering pillars.",65a5c9
@@ -219,7 +205,10 @@ Label,Policy,,e99695
 Label,Policy Insights,,e99695
 Label,PostgreSQL,,e99695
 Label,PowerBI,,e99695
+Label,PublicPreviewSignoffComplete,APEX LAUNCH,BD35A8
 Label,Purview,,e99695
+Label,Python,,c2e0c6
+Label,Quality,,0b097a
 Label,Quantum,,e99695
 Label,question,The issue doesn't require a change to the product in order to be resolved. Most issues start as that,eaa875
 Label,Quota,Quota Service,e99695
@@ -231,6 +220,7 @@ Label,Reservations,,e99695
 Label,Resource Authorization,,e99695
 Label,Resource Graph,,e99695
 Label,Resource Health,,e99695
+Label,Revised Engagement Model,,b60205
 Label,Scheduler,,e99695
 Label,Schema Registry,,e99695
 Label,Search,,e99695
@@ -239,9 +229,11 @@ Label,SecurityInsights,,e99695
 Label,Server Management,,e99695
 Label,Service,This issue points to a problem in the service.,ffeb77
 Label,Service Attention,This issue is responsible by Azure service team.,10066b
+Label,Service Bus,,e99695
 Label,Service Fabric,,e99695
 Label,Service Map,,e99695
 Label,SignalR,,e99695
+Label,signoffwithexception,APEX Launch,254F0A
 Label,SQL,,e99695
 Label,SQL - Backup & Restore,,e99695
 Label,SQL - Data Security,,e99695
@@ -249,6 +241,7 @@ Label,SQL - Elastic Jobs,,e99695
 Label,SQL - Managed Instance,,e99695
 Label,SQL - Replication & Failover,,e99695
 Label,SQL - VM,,e99695
+Label,Storage,"Storage Service (Queues, Blobs, Files)",e99695
 Label,Storsimple,,e99695
 Label,Stream Analytics,,e99695
 Label,Stress,"This issue is related to stress testing, part of our reliability pillar.",65a5c9
@@ -260,6 +253,21 @@ Label,test-enhancement,,7365c9
 Label,test-manual-pass,,c0eaf9
 Label,test-reliability,Issue that causes tests to be unreliable,e04545
 Label,TimeseriesInsights,,e99695
+Label,Training,Work items that track the work to build training materials for building Client libraries,e99695
+Label,Training - .NET,,5319e7
+Label,Training - Activities,,e99695
+Label,Training - Effective Transition,,d4c5f9
+Label,Training - Higher Prio,,e50688
+Label,Training - Java,,d93f0b
+Label,Training - JS/TS,,fbca04
+Label,Training - Large,,f9d0c4
+Label,Training - Lower Prio,,1d76db
+Label,Training - Medium,,bfdadc
+Label,Training - Navigability,,c2e0c6
+Label,Training - Python,,1d76db
+Label,Training - Reference,,c5def5
+Label,Training - Small,,c5def5
+Label,Training - Videos,,fef2c0
 Label,VideoAnalyzer,Azure Video Analyzer,e99695
 Label,Visual Studio,,e99695
 Label,Web Apps,,e99695

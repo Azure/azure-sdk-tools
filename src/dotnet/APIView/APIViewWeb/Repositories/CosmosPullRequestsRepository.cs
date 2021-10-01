@@ -48,8 +48,13 @@ namespace APIViewWeb
             var itemQueryIterator = _pullRequestsContainer.GetItemQueryIterator<PullRequestModel>(query);
             if (itemQueryIterator.HasMoreResults)
             {
+                var allRequests = new List<PullRequestModel>();
                 var result = await itemQueryIterator.ReadNextAsync();
-                return result.Resource?.GetEnumerator()?.Current;
+                allRequests.AddRange(result.Resource);
+                if (allRequests.Count > 0)
+                {
+                   return allRequests[0];
+                }
             }
 
             return null;

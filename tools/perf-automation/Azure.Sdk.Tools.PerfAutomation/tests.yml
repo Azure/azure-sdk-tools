@@ -349,7 +349,7 @@ Services:
       - Azure.Messaging.EventHubs.Processor: 5.6.0
       - Azure.Messaging.EventHubs.Processor: source
   Tests:
-  - Test: receive
+  - Test: process-event
     Arguments:
     - --warmup 0 --duration 1
     - --parallel 1

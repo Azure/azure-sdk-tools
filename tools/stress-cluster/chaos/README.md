@@ -46,7 +46,7 @@ To access the cluster, run the following:
 ```
 az login
 # Download the kubeconfig for the cluster
-az aks get-credentials --subscription 'Azure SDK Test Resources' -g rg-stress-test-cluster- -n stress-test
+az aks get-credentials --subscription "Azure SDK Test Resources" -g rg-stress-test-cluster- -n stress-test
 ```
 
 You should now be able to access the cluster. To verify, you should see a list of namespaces when running the command:

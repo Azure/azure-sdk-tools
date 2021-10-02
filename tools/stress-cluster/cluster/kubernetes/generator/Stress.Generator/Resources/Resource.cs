@@ -33,32 +33,19 @@ namespace Stress.Generator
             Rendered = new List<string>();
         }
 
-        public IEnumerable<ResourcePropertyInfo> Properties()
+        public IEnumerable<ResourcePropertyInfo> TProperties<T>()
+            where T : BaseResourceProperty
         {
             return this.GetType().GetProperties()
-                   .Where(p => p.GetCustomAttribute(typeof(ResourceProperty)) != null)
-                   .Select(p =>
-                   {
-                       var rp = p.GetCustomAttribute(typeof(ResourceProperty)) as ResourceProperty;
-                       return new ResourcePropertyInfo(p, rp);
-                   });
+                   .Where(p => p.GetCustomAttribute<T>() != null)
+                   .Select(p => new ResourcePropertyInfo(p, p.GetCustomAttribute<T>()));
         }
 
-        public IEnumerable<ResourcePropertyInfo> OptionalProperties()
-        {
-            return this.GetType().GetProperties()
-                   .Where(p => p.GetCustomAttribute(typeof(OptionalResourceProperty)) != null)
-                   .Select(p =>
-                   {
-                       var rp = p.GetCustomAttribute(typeof(OptionalResourceProperty)) as OptionalResourceProperty;
-                       return new ResourcePropertyInfo(p, rp);
-                   });
-        }
+        public IEnumerable<ResourcePropertyInfo> Properties() => TProperties<ResourceProperty>();
 
-        public void SetProperty(PropertyInfo prop, object value)
-        {
-            prop.SetValue(this, value);
-        }
+        public IEnumerable<ResourcePropertyInfo> OptionalProperties() => TProperties<OptionalResourceProperty>();
+
+        public void SetProperty(PropertyInfo prop, object value) => prop.SetValue(this, value);
 
         // Pulling in a large templating library like Razor is more trouble than it's worth
         // and other popular mustache-style templating libraries don't have great support

@@ -7,17 +7,26 @@ namespace Stress.Generator
     public abstract class BaseJob : Resource
     {
         public override string Template { get; set; } = @"
+# This template includes the `metadata` and `spec` fields from the kubernetes Pod schema:
+# https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.22/#pod-v1-core
+# When rendered by helm, the values here will be embedded within a kubernetes Job manifest.
+# https://kubernetes.io/docs/concepts/workloads/controllers/job/
 {{- include 'stress-test-addons.(( TemplateInclude )).from-pod' (list . 'stress.(( Name ))') -}}
 {{- define 'stress.(( Name ))' -}}
 metadata:
   labels:
-    testInstance: '(( Name ))-{{ .Release.Name }}-{{ .Release.Revision }}'
-    testName: (( Name ))
+    # Only pods with a `chaos` label will work with chaos resources and services that require this selector.
     chaos: (( ChaosEnabled ))
+    # The testInstance label should also be defined for any chaos resources that need to target this pod.
+    testInstance: '(( Name ))-{{ .Release.Name }}-{{ .Release.Revision }}'
+    # testName allows for consistent querying across test instances via
+    # kubectl commands (e.g. `kubectl logs -l testName=(( Name )) -n <namespace>)
+    testName: (( Name ))
 spec:
   containers:
     - name: (( Name ))
       command: (( Command ))
+      # Only override this if needed for local development, otherwise it will be calculated by deployment scripts.
       image: {{ default '' .Values.repository }}/(( ImageName )):{{ default 'v1' .Values.tag }}
       {{- include 'stress-test-addons.container-env' . | nindent 6 }}
 {{- end -}}
@@ -79,8 +88,8 @@ spec:
         public override void Write()
         {
             base.Write();
-            File.WriteAllText("test-resources.bicep", BicepContents);
-            File.WriteAllText("parameters.json", ArmParameterContents);
+            File.WriteAllText("test-resources.bicep", BicepContents.TrimStart('\n'));
+            File.WriteAllText("parameters.json", ArmParameterContents.TrimStart('\n'));
         }
     }
 }

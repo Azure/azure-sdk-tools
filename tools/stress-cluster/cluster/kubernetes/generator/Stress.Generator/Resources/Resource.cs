@@ -66,33 +66,44 @@ namespace Stress.Generator
         // with helm. It ends up being simpler to handle it ourselves :/
         public void Render()
         {
-            var expr = new Regex(@"\(\(\s*(\w*)\s*\)\)");
+            // match '((propertyName))', '(( propertyName ))', etc.
+            var re = new Regex(@"\(\(\s*(\w*)\s*\)\)");
             var hasError = false;
-            var _rendered = new List<string>();
-            var _template = Template.Split('\n');
+            var _template = Template.Trim('\n').Split('\n').ToList();
+            var lineNumber = 0;
 
-            for (var lineNumber = 0; lineNumber < _template.Count(); lineNumber++)
+            while (lineNumber < _template.Count)
             {
                 var line = _template[lineNumber];
-                var match = expr.Match(line);
+                var match = re.Match(line);
+
+                // Done matching current line, move to next. This approach is easier to understand than
+                // a regex statement for capturing repeated groups and parsing a nested capture.
                 if (!match.Success)
                 {
-                    _rendered.Add(line);
+                    lineNumber++;
                     continue;
                 }
+
                 var prop = match.Groups[1].Value;
                 var val = this.GetType().GetProperty(prop)?.GetValue(this);
+
+                // NOTE: This will skip over any missing properties declared after the first missing property on a line.
                 if (val == null)
                 {
                     Console.WriteLine($"Error rendering template for {this.GetType().Name}: Missing property {prop} on line {lineNumber}");
                     Console.WriteLine($">>> {line}");
                     hasError = true;
-                    _rendered.Add(line);
+                    lineNumber++;
                     continue;
                 }
 
-                var replaced = line.Replace(match.Groups[0].ToString(), JsonSerializer.Serialize(val).Trim('"'));
-                _rendered.Add(replaced);
+                var matchString = match.Groups[0].Value;
+                var matchPos = line.IndexOf(matchString);
+                // matchPos should never be -1 (indexOf fail to find). If it is, then fail catastrophically trying to Substring with -1.
+                _template[lineNumber] = line.Substring(0, matchPos) +
+                                        JsonSerializer.Serialize(val).Trim('"') +
+                                        line.Substring(matchPos + matchString.Length);
             }
 
             if (hasError)
@@ -100,7 +111,7 @@ namespace Stress.Generator
                 throw new Exception("Error rendering template, see details above.");
             }
 
-            Rendered = _rendered;
+            Rendered = _template;
             IsRendered = true;
         }
 

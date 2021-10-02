@@ -26,18 +26,11 @@ namespace Stress.Generator
             return resources;
         }
 
-        private List<string> PadStrings(IEnumerable<string> left)
-        {
-            var leftSize = left.OrderBy(s => s.Length).Last().Length;
-            return left.Select(s => s + new string(' ', leftSize - s.Length)).ToList();
-        }
-
         public IResource GenerateResource()
         {
-            var resourceTypeNames = ResourceTypes.Select(t => t.GetType().Name);
+            var resourceTypeNames = ResourceTypes.Select(t => t.GetType().Name).ToList();
             var resourceTypeHelp = ResourceTypes.Select(t => t.Help).ToList();
-            var padded = PadStrings(resourceTypeNames);
-            var selection = PromptMultipleChoice(padded, resourceTypeHelp, "Which resource would you like to generate? Available resources are:");
+            var selection = PromptMultipleChoice(resourceTypeNames, resourceTypeHelp, "Which resource would you like to generate? Available resources are:");
             var resourceType = ResourceTypes.Where(t => t.GetType().Name == selection);
             var resource = (IResource)Activator.CreateInstance(resourceType.First().GetType());
 
@@ -94,25 +87,34 @@ namespace Stress.Generator
             }
         }
 
+        private List<string> PadStrings(IEnumerable<string> left)
+        {
+            var leftSize = left.OrderBy(s => s.Length).Last().Length;
+            return left.Select(s => s + new string(' ', leftSize - s.Length)).ToList();
+        }
+
         public string PromptMultipleChoice(List<string> options, List<string> help, string promptMessage)
         {
             if (options.Count != help.Count)
             {
                 throw new Exception("Expected multiple choice options to be the same length as options help.");
             }
+
+            var padded = PadStrings(options);
             var selected = "";
+
             while (string.IsNullOrEmpty(selected))
             {
                 Console.WriteLine(promptMessage);
-                for (int i = 0; i < options.Count; i++)
+                for (int i = 0; i < padded.Count; i++)
                 {
-                    Console.WriteLine($"    ({i}) {options[i]} - {help[i]}");
+                    Console.WriteLine($"    ({i}) {padded[i]} - {help[i]}");
                 }
 
                 var optionSelection = Prompt<string>();
                 if (uint.TryParse(optionSelection, out var idx) && idx < options.Count)
                 {
-                    optionSelection = ResourceTypes[(int)idx].GetType().Name;
+                    optionSelection = options[(int)idx];
                 }
                 selected = options.Find(o => o == optionSelection);
             }

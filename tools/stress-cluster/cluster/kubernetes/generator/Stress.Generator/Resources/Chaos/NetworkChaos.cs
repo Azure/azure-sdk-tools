@@ -4,29 +4,169 @@ using System.IO;
 
 namespace Stress.Generator
 {
-    public class NetworkChaos : Resource
+    // This class is a type wrapper around the chaos-mesh networkchaos type:
+    // https://chaos-mesh.org/docs/simulate-network-chaos-on-kubernetes
+    // https://github.com/chaos-mesh/chaos-mesh/blob/master/api/v1alpha1/networkchaos_types.go
+    public class NetworkChaos : Resource, IResource
     {
+        public const string NetworkChaosDocSite = "https://chaos-mesh.org/docs/simulate-network-chaos-on-kubernetes";
+
+        public abstract class NetworkChaosAction : Resource, IResource
+        {
+        }
+
+        public class LossAction : NetworkChaosAction
+        {
+            public override string Help { get; set; } = $"Configuration for network loss. See {NetworkChaosDocSite}/#loss";
+
+            public override string Template { get; set; } = @"
+  # (( Help ))
+  action: loss
+  loss:
+    loss: (( Loss ))
+    correlation: (( Correlation ))
+";
+
+            [ResourceProperty("Probability of packet loss, e.g. '0.5'.")]
+            public double Loss { get; set; }
+
+            [OptionalResourceProperty("Correlation between the current loss and the previous one, e.g. '0.5'.")]
+            public double? Correlation { get; set; }
+        }
+
+        public class DelayAction : NetworkChaosAction {
+            public override string Help { get; set; } = $"Configuration for packet delay. See {NetworkChaosDocSite}/#delay";
+
+            public override string Template { get; set; } = @"
+  # (( Help ))
+  action: delay
+  delay:
+    latency: (( Latency ))
+    correlation: (( Correlation ))
+    jitter: (( Jitter ))
+(( Reorder ))
+";
+
+            [ResourceProperty("Network latency, e.g. '50ms'")]
+            public string Latency { get; set; }
+
+            [OptionalResourceProperty("Correlation between the current latency and the previous one, e.g. '0.5'.")]
+            public double? Correlation { get; set; }
+
+            [OptionalResourceProperty("Range of the network latency.")]
+            public double? Jitter { get; set; }
+
+            [OptionalNestedResourceProperty("Network packet reordering.", new Type[]{typeof(ReorderSpec)})]
+            public ReorderSpec Reorder { get; set; }
+        }
+
+        public class ReorderSpec : Resource, IResource
+        {
+            public override string Help { get; set; } = $"Configuration for packet reordering. See {NetworkChaosDocSite}/#reorder";
+
+            public override string Template { get; set; } = @"
+    # (( Help ))
+    reorder:
+      gap: (( Gap ))
+      reorder: (( Reorder ))
+      correlation: (( Correlation ))
+";
+
+            [ResourceProperty("Gap before and after packet reordering.")]
+            public int Gap { get; set; }
+
+            [ResourceProperty("Probability of packet re-ordering.")]
+            public double Reorder { get; set; }
+
+            [OptionalResourceProperty("Correlation between the current re-order and the previous one, e.g. '0.5'.")]
+            public double? Correlation { get; set; }
+        }
+
+        public class DuplicateAction : NetworkChaosAction {
+            public override string Help { get; set; } = $"Configuration for packet duplication. See {NetworkChaosDocSite}/#duplicate";
+
+            public override string Template { get; set; } = @"
+  # (( Help ))
+  action: duplicate
+  duplicate:
+    duplicate: (( Duplicate ))
+    correlation: (( Correlation ))
+";
+
+            [ResourceProperty("Probability of packet duplication, e.g. '0.5'.")]
+            public string Duplicate { get; set; }
+
+            [OptionalResourceProperty("Correlation between the current duplication and the previous one, e.g. '0.5'.")]
+            public string? Correlation { get; set; }
+        }
+
+        public class CorruptAction : NetworkChaosAction {
+            public override string Help { get; set; } = $"Configuration for packet corruption. See {NetworkChaosDocSite}/#corrupt";
+
+            public override string Template { get; set; } = @"
+  # (( Help ))
+  action: corrupt
+  corrupt:
+    corrupt: (( Corrupt ))
+    correlation: (( Correlation ))
+";
+
+            [ResourceProperty("Probability of packet corruption, e.g. '0.5'.")]
+            public string Corrupt { get; set; }
+
+            [OptionalResourceProperty("Correlation between the current corruption and the previous one, e.g. '0.5'.")]
+            public string? Correlation { get; set; }
+        }
+
+        public class BandwidthAction : NetworkChaosAction {
+            public override string Help { get; set; } = $"Configuration for bandwidth restriction. See {NetworkChaosDocSite}/#bandwidth";
+
+            public override string Template { get; set; } = @"
+  # (( Help ))
+  action: bandwidth
+  bandwidth:
+    rate: (( Rate ))
+    limit: (( Limit ))
+    peakrate: (( PeakRate ))
+    minburst: (( MinBurst ))
+";
+
+            [ResourceProperty("Rate of bandwidth limit, e.g. '1mbps'. Available units: bps, kbps, mbps, gpbs, tpbs (bytes per second).")]
+            public string Rate { get; set; }
+
+            [ResourceProperty("Number of bytes that can be queued (minimum 1).")]
+            public int Limit { get; set; }
+
+            [ResourceProperty("Max bytes that can be sent simultaneously (minimum 1).")]
+            public int Buffer { get; set; }
+
+            [OptionalResourceProperty("Max consumption of bucket. set if perfect millescond timescale shaping is needed.")]
+            public int? PeakRate { get; set; }
+
+            [OptionalResourceProperty("Size of peakrate bucket.")]
+            public int? MinBurst { get; set; }
+        }
+
+        public static Dictionary<string, Type> DD { get; set; } = new Dictionary<string, Type>();
+
         public override string Template { get; set; } = @"
+# (( Help ))
 apiVersion: chaos-mesh.org/v1alpha1
 kind: NetworkChaos
 metadata:
   name: '{{ .Release.Name }}-{{ .Release.Revision }}'
   namespace: {{ .Release.Namespace }}
 spec:
-  action: loss
-  direction: to
-  externalTargets:
-    - bing.com
-  mode: one
   selector:
     labelSelectors:
-      testInstance: 'packet-loss-{{ .Release.Name }}-{{ .Release.Revision }}'
+      testInstance: '(( Name ))-{{ .Release.Name }}-{{ .Release.Revision }}'
       chaos: 'true'
     namespaces:
       - {{ .Release.Namespace }}
-  loss:
-    loss: '100'
-    correlation: '100'
+  direction: (( Direction ))
+  externalTargets: (( ExternalTargets ))
+  mode: all  # target all matching pods
+(( Action ))
 ";
 
         public override string Help { get; set; } = "Configuration for network chaos. See https://chaos-mesh.org/docs/simulate-network-chaos-on-kubernetes/";
@@ -34,15 +174,21 @@ spec:
         [ResourceProperty("Network Chaos Name")]
         public string Name { get; set; }
 
-        [OptionalResourceProperty("loss, delay, netem, duplicate, corrupt, partition, bandwidth")]
-        public string Action { get; set; } = "loss";
+        [ResourceProperty("Packet direction. Options: 'to', 'from', 'both'")]
+        public string Direction { get; set; }
 
-        [ResourceProperty("A domain/cname, like servicebus.windows.net")]
+        [NestedResourceProperty(
+          "Type of network chaos.",
+          new Type[]{typeof(LossAction), typeof(DelayAction), typeof(DuplicateAction), typeof(CorruptAction), typeof(BandwidthAction)}
+        )]
+        public NetworkChaosAction Action { get; set; }
+
+        [ResourceProperty("A list of domains/CNAME records, like servicebus.windows.net")]
         public List<string> ExternalTargets { get; set; }
 
         public override void Write()
         {
-            Write(Path.Join("templates", $"{Name}-network-chaos.yaml"));
+            Write(Path.Join("templates", $"{Name}-network-{Action}.yaml"));
         }
 
         public NetworkChaos() : base()

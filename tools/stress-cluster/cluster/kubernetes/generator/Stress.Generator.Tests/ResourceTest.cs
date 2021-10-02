@@ -60,5 +60,40 @@ chaos: (( ChaosEnabled ))";
             lines[1].Should().Be("command: [\"sleep\",\"infinity\"]");
             lines[2].Should().Be("chaos: true");
         }
+
+        [Fact]
+        public void TestRenderNestedProperties()
+        {
+            var template =
+@"name: (( Name ))
+(( Action ))
+";
+            var net = new NetworkChaos{
+                Name = "TestNetworkChaos",
+                Action = new NetworkChaos.DelayAction{
+                    Latency = "50ms",
+                    Reorder = new NetworkChaos.ReorderSpec{
+                        Gap = 1,
+                        Reorder = 0.2,
+                    }
+                },
+                Template = template
+            };
+
+            net.Render();
+            var lines = net.Rendered.ToList();
+            lines.Count().Should().Be(2);
+            lines[0].Should().Be("name: TestNetworkChaos");
+            var delayRender = lines[1].Split('\n');
+            delayRender.Count().Should().Be(8);
+            delayRender[0].Should().StartWith("  #");
+            delayRender[1].Should().Be("  action: delay");
+            delayRender[2].Should().Be("  delay:");
+            delayRender[3].Should().Be("    latency: 50ms");
+            delayRender[4].Should().StartWith("    #");
+            delayRender[5].Should().Be("    reorder:");
+            delayRender[6].Should().Be("      gap: 1");
+            delayRender[7].Should().Be("      reorder: 0.2");
+        }
     }
 }

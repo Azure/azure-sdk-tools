@@ -29,8 +29,7 @@ spec:
       # Only override this if needed for local development, otherwise it will be calculated by deployment scripts.
       image: {{ default '' .Values.repository }}/(( ImageName )):{{ default 'v1' .Values.tag }}
       {{- include 'stress-test-addons.container-env' . | nindent 6 }}
-{{- end -}}
-";
+{{- end -}} ";
 
         public string ImageName { get; set; }
 
@@ -88,8 +87,8 @@ spec:
         public override void Write()
         {
             base.Write();
-            File.WriteAllText("test-resources.bicep", BicepContents.TrimStart('\n'));
-            File.WriteAllText("parameters.json", ArmParameterContents.TrimStart('\n'));
+            File.WriteAllText("test-resources.bicep", BicepContents);
+            File.WriteAllText("parameters.json", ArmParameterContents);
         }
     }
 }

@@ -12,9 +12,11 @@ namespace Stress.Generator
     {
         string Template { get; set; }
         string Help { get; set; }
-
-        IEnumerable<ResourcePropertyInfo> OptionalProperties();
-        IEnumerable<ResourcePropertyInfo> Properties();
+        List<string> Rendered { get; set; }
+        IEnumerable<ResourcePropertyInfo<ResourceProperty>> Properties();
+        IEnumerable<ResourcePropertyInfo<OptionalResourceProperty>> OptionalProperties();
+        IEnumerable<ResourcePropertyInfo<NestedResourceProperty>> NestedProperties();
+        IEnumerable<ResourcePropertyInfo<OptionalNestedResourceProperty>> OptionalNestedProperties();
         void Render();
         void SetProperty(PropertyInfo prop, object value);
         void Write(string outputPath);
@@ -23,7 +25,7 @@ namespace Stress.Generator
 
     public abstract class Resource : IResource
     {
-        public List<string> Rendered;
+        public List<string> Rendered { get; set; }
         public bool IsRendered = false;
         public abstract string Template { get; set; }
         public abstract string Help { get; set; }
@@ -33,17 +35,21 @@ namespace Stress.Generator
             Rendered = new List<string>();
         }
 
-        public IEnumerable<ResourcePropertyInfo> TProperties<T>()
+        public IEnumerable<ResourcePropertyInfo<T>> TProperties<T>()
             where T : BaseResourceProperty
         {
             return this.GetType().GetProperties()
                    .Where(p => p.GetCustomAttribute<T>() != null)
-                   .Select(p => new ResourcePropertyInfo(p, p.GetCustomAttribute<T>()));
+                   .Select(p => new ResourcePropertyInfo<T>(p, p.GetCustomAttribute<T>()));
         }
 
-        public IEnumerable<ResourcePropertyInfo> Properties() => TProperties<ResourceProperty>();
+        public IEnumerable<ResourcePropertyInfo<ResourceProperty>> Properties() => TProperties<ResourceProperty>();
 
-        public IEnumerable<ResourcePropertyInfo> OptionalProperties() => TProperties<OptionalResourceProperty>();
+        public IEnumerable<ResourcePropertyInfo<OptionalResourceProperty>> OptionalProperties() => TProperties<OptionalResourceProperty>();
+
+        public IEnumerable<ResourcePropertyInfo<NestedResourceProperty>> NestedProperties() => TProperties<NestedResourceProperty>();
+
+        public IEnumerable<ResourcePropertyInfo<OptionalNestedResourceProperty>> OptionalNestedProperties() => TProperties<OptionalNestedResourceProperty>();
 
         public void SetProperty(PropertyInfo prop, object value) => prop.SetValue(this, value);
 
@@ -58,6 +64,7 @@ namespace Stress.Generator
             var hasError = false;
             var _template = Template.Trim('\n').Split('\n').ToList();
             var lineNumber = 0;
+            var sentinel = ";;EXCLUDE;;";
 
             while (lineNumber < _template.Count)
             {
@@ -72,11 +79,11 @@ namespace Stress.Generator
                     continue;
                 }
 
-                var prop = match.Groups[1].Value;
-                var val = this.GetType().GetProperty(prop)?.GetValue(this);
+                var propName = match.Groups[1].Value;
+                var prop = this.GetType().GetProperty(propName);
 
                 // NOTE: This will skip over any missing properties declared after the first missing property on a line.
-                if (val == null)
+                if (prop == null)
                 {
                     Console.WriteLine($"Error rendering template for {this.GetType().Name}: Missing property {prop} on line {lineNumber}");
                     Console.WriteLine($">>> {line}");
@@ -85,12 +92,38 @@ namespace Stress.Generator
                     continue;
                 }
 
+                var val = prop.GetValue(this);
+
+                // Exclude lines with optional/nullable properties that aren't set
+                if (val == null)
+                {
+                    _template[lineNumber] = sentinel;
+                    lineNumber++;
+                    continue;
+                }
+
+                var resourceVal = val as IResource;
+                if (resourceVal != null)
+                {
+                    try
+                    {
+                        resourceVal.Render();
+                    }
+                    catch (Exception)
+                    {
+                        hasError = true;
+                    }
+                    val = string.Join('\n', resourceVal.Rendered);
+                }
+                else
+                {
+                    val = JsonSerializer.Serialize(val).Trim('"');
+                }
+
                 var matchString = match.Groups[0].Value;
                 var matchPos = line.IndexOf(matchString);
                 // matchPos should never be -1 (indexOf fail to find). If it is, then fail catastrophically trying to Substring with -1.
-                _template[lineNumber] = line.Substring(0, matchPos) +
-                                        JsonSerializer.Serialize(val).Trim('"') +
-                                        line.Substring(matchPos + matchString.Length);
+                _template[lineNumber] = line.Substring(0, matchPos) + val + line.Substring(matchPos + matchString.Length);
             }
 
             if (hasError)
@@ -98,7 +131,7 @@ namespace Stress.Generator
                 throw new Exception("Error rendering template, see details above.");
             }
 
-            Rendered = _template;
+            Rendered = _template.Where(l => l != sentinel).ToList();
             IsRendered = true;
         }
 

@@ -1,14 +1,15 @@
 using System;
 using System.Reflection;
+using System.Collections.Generic;
 
 namespace Stress.Generator
 {
-    public class ResourcePropertyInfo
+    public class ResourcePropertyInfo<T>
     {
         public PropertyInfo Info;
-        public IResourceProperty Property;
+        public T Property;
 
-        public ResourcePropertyInfo(PropertyInfo info, IResourceProperty property)
+        public ResourcePropertyInfo(PropertyInfo info, T property)
         {
             Info = info;
             Property = property;
@@ -38,5 +39,30 @@ namespace Stress.Generator
     public class OptionalResourceProperty : BaseResourceProperty
     {
         public OptionalResourceProperty(string help) : base(help) {}
+    }
+
+    public class NestedResourceProperty : BaseResourceProperty
+    {
+        public Type[] Types { get; set; }
+
+        public NestedResourceProperty(string help, Type[] types) : base(help)
+        {
+            Types = types;
+        }
+    }
+
+    public class OptionalNestedResourceProperty : BaseResourceProperty
+    {
+        public Type[] Types { get; set; }
+
+        public NestedResourceProperty AsNestedResourceProperty()
+        {
+            return new NestedResourceProperty(Help, Types);
+        }
+
+        public OptionalNestedResourceProperty(string help, Type[] types) : base(help)
+        {
+            Types = types;
+        }
     }
 }

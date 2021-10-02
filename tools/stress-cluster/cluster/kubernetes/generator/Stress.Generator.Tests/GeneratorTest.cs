@@ -141,9 +141,11 @@ namespace Stress.Generator.Tests
             prompter.AddResponse("y");
             prompter.AddResponse("NetworkChaos");
             prompter.AddResponse("TestNetChaos");
+            prompter.AddResponse("to");
             prompter.AddResponse("bing.com");
-            prompter.AddResponse("y");
-            prompter.AddResponse("loss");
+            prompter.AddResponse("LossAction");
+            prompter.AddResponse("0.5");
+            prompter.AddResponse("0.2");
             prompter.AddResponse("n");
 
             var resources = generator.GenerateResources();
@@ -154,6 +156,31 @@ namespace Stress.Generator.Tests
             var chaos = (NetworkChaos)resources[1];
             chaos.ExternalTargets.Should().Equal(new List<string>{"bing.com"});
             chaos.Action.Should().Be("loss");
+        }
+
+        [Fact]
+        public void TestGenerateNestedResources()
+        {
+            var prompter = new TestPrompter();
+            var generator = new Generator(prompter);
+
+            prompter.AddResponse("NetworkChaos");
+            prompter.AddResponse("TestNetChaos");
+            prompter.AddResponse("to");
+            prompter.AddResponse("bing.com");
+            prompter.AddResponse("DelayAction");
+            prompter.AddResponse("50ms");
+            prompter.AddResponse("n");
+            prompter.AddResponse("n");
+            prompter.AddResponse("y");
+            prompter.AddResponse("2");
+            prompter.AddResponse("0.5");
+            prompter.AddResponse("n");
+
+            var resources = generator.GenerateResources();
+            var chaos = (NetworkChaos)resources[0];
+            chaos.ExternalTargets.Should().Equal(new List<string>{"bing.com"});
+            chaos.Action.Should().BeAssignableTo(typeof(NetworkChaos.DelayAction));
         }
     }
 }

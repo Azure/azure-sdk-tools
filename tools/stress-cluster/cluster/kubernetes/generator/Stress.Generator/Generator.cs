@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
 namespace Stress.Generator
 {
@@ -32,11 +33,19 @@ namespace Stress.Generator
             var resourceTypeHelp = ResourceTypes.Select(t => t.Help).ToList();
             var selection = PromptMultipleChoice(resourceTypeNames, resourceTypeHelp, "Which resource would you like to generate? Available resources are:");
             var resourceType = ResourceTypes.Where(t => t.GetType().Name == selection);
-            var resource = (IResource)Activator.CreateInstance(resourceType.First().GetType());
 
+            var resource = PrompSetResourceProperties(resourceType.First().GetType());
+
+            resource.Render();
+            return resource;
+        }
+
+        public IResource PrompSetResourceProperties(Type resourceType)
+        {
+            var resource = (IResource)Activator.CreateInstance(resourceType);
             foreach (var prop in resource.Properties())
             {
-                PromptSetProperty(resource, prop);
+                PromptSetProperty(resource, prop.Info, prop.Property.Help);
             }
 
             foreach (var prop in resource.OptionalProperties())
@@ -44,11 +53,20 @@ namespace Stress.Generator
                 PromptSetOptionalProperty(resource, prop);
             }
 
-            resource.Render();
+            foreach (var prop in resource.NestedProperties())
+            {
+                PromptSetNestedProperty(resource, prop);
+            }
+
+            foreach (var prop in resource.OptionalNestedProperties())
+            {
+                PromptSetOptionalNestedProperty(resource, prop);
+            }
+
             return resource;
         }
 
-        public void PromptSetOptionalProperty(IResource resource, ResourcePropertyInfo prop)
+        public void PromptSetOptionalProperty(IResource resource, ResourcePropertyInfo<OptionalResourceProperty> prop)
         {
             var set = "";
             while (set != "y" && set != "n")
@@ -57,33 +75,83 @@ namespace Stress.Generator
             }
             if (set == "y")
             {
-                PromptSetProperty(resource, prop);
+                PromptSetProperty(resource, prop.Info, prop.Property.Help);
             }
         }
 
-        public void PromptSetProperty(IResource resource, ResourcePropertyInfo prop)
+        public void PromptSetProperty(IResource resource, PropertyInfo prop, string help)
         {
-            Console.WriteLine($"--> {prop.Info.Name} ({prop.Property.Help})");
+            Console.WriteLine($"--> {prop.Name} ({help})");
 
-            if (prop.Info.PropertyType == typeof(string))
+            if (prop.PropertyType == typeof(string))
             {
-                resource.SetProperty(prop.Info, Prompt<string>($"(string): "));
+                resource.SetProperty(prop, Prompt<string>($"(string): "));
             }
-            else if (prop.Info.PropertyType == typeof(double))
+            else if (prop.PropertyType == typeof(double))
             {
-                resource.SetProperty(prop.Info, Prompt<double>($"(number): "));
+                resource.SetProperty(prop, Prompt<double>($"(number): "));
             }
-            else if (prop.Info.PropertyType == typeof(bool))
+            else if (prop.PropertyType == typeof(int))
             {
-                resource.SetProperty(prop.Info, Prompt<bool>($"(true/false): "));
+                resource.SetProperty(prop, Prompt<int>($"(number): "));
             }
-            else if (prop.Info.PropertyType == typeof(List<string>))
+            else if (prop.PropertyType == typeof(bool))
             {
-                resource.SetProperty(prop.Info, PromptList($"(list item string): "));
+                resource.SetProperty(prop, Prompt<bool>($"(true/false): "));
+            }
+            else if (prop.PropertyType == typeof(List<string>))
+            {
+                resource.SetProperty(prop, PromptList($"(list item string): "));
             }
             else
             {
-                throw new Exception("Unsupported value type: {property.PropertyType.Name}");
+                throw new Exception($"Unsupported value type: {prop.PropertyType.Name}");
+            }
+        }
+
+        public void PromptSetNestedProperty(IResource resource, ResourcePropertyInfo<NestedResourceProperty> prop)
+        {
+            var resourceTypeMap = prop.Property.Types.ToDictionary(t => t.Name, t => t);
+            var resourceTypeHelp = prop.Property.Types.Select(t =>
+            {
+                var r = (IResource)Activator.CreateInstance(t);
+                return r.Help;
+            }).ToList();
+
+            Type resourceType = null;
+            while (resourceType == null)
+            {
+                var selection = "";
+                if (resourceTypeMap.Count == 1)
+                {
+                    selection = resourceTypeMap.Keys.First();
+                }
+                else
+                {
+                    selection = PromptMultipleChoice(
+                                        resourceTypeMap.Keys.ToList(),
+                                        resourceTypeHelp,
+                                        $"Select a type of {prop.Info.PropertyType.Name}"
+                                    );
+                }
+                resourceTypeMap.TryGetValue(selection, out resourceType);
+            }
+
+            var nestedResource = PrompSetResourceProperties(resourceType);
+            resource.SetProperty(prop.Info, nestedResource);
+        }
+
+        public void PromptSetOptionalNestedProperty(IResource resource, ResourcePropertyInfo<OptionalNestedResourceProperty> prop)
+        {
+            var set = "";
+            while (set != "y" && set != "n")
+            {
+                set = Prompt<string>($"Set a value for optional property {prop.Info.Name}? (y/n): ");
+            }
+            if (set == "y")
+            {
+                var nestedProp = new ResourcePropertyInfo<NestedResourceProperty>(prop.Info, prop.Property.AsNestedResourceProperty());
+                PromptSetNestedProperty(resource, nestedProp);
             }
         }
 
@@ -141,6 +209,15 @@ namespace Stress.Generator
             if (typeof(T) == typeof(double))
             {
                 if (!double.TryParse(value, out double parsed))
+                {
+                    return Prompt<T>(retryMessage);
+                }
+                return (T)(object)parsed;
+            }
+
+            if (typeof(T) == typeof(int))
+            {
+                if (!int.TryParse(value, out int parsed))
                 {
                     return Prompt<T>(retryMessage);
                 }

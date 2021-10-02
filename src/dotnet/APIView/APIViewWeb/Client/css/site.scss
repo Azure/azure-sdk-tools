@@ -208,12 +208,20 @@ form.comment {
     tab-size: 8;
     border-spacing: 0;
     background-color: white; // prevents code-window from overlapping stickySidebar
-    table-layout: fixed;
     width: 100%;
 }
 
+.code-lines-header {
+    border-bottom: 1px solid #DEE2E6;
+    vertical-align: middle;
+    padding-top: 9px;
+    padding-left: 10px;
+    font-size: small;
+    font-weight: normal;
+}
+
 .code-line {
-    white-space: pre-wrap;
+    display: table-row;
     font-family: Consolas, monospace;
     line-height: 20px;
 }
@@ -238,6 +246,18 @@ form.comment {
 
 .code-line.active {
     animation: glow normal 1.5s ease-in-out;
+}
+
+.line-number {
+    width: 1%;
+    min-width: 50px;
+    padding-left: 10px;
+    padding-right: 10px;
+    text-align: right;
+    white-space: nowrap;
+    cursor: pointer;
+    vertical-align: top;
+    border-right: 1px solid #DEE2E6;
 }
 
 .line-comment-button:hover {
@@ -268,18 +288,16 @@ form.comment {
 }
 
 .code {
-    line-height: 20px;
     padding-left: 10px;
     padding-right: 10px;
     position: relative;
     vertical-align: top;
-    width: 100%;
 }
 
-code-inner {
-    color: #24292E;
+.code-inner {
     overflow: visible;
     word-wrap: normal;
+    white-space: pre;
 }
 
 .rounded-1 {
@@ -355,18 +373,6 @@ code-inner {
 .info-text {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     font-size: 14px;
-}
-
-.line-comment-button-cell {
-    user-select: none;
-    width: 1em;
-    white-space: normal;
-}
-
-.line-comment-button-cell::before {
-    display: block;
-    height: 0;
-    width: 0;
 }
 
 .btn-link.line-comment-button {

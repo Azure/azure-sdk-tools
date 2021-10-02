@@ -155,6 +155,12 @@
     <div id="review-right" class="col-10">
         <table class="code-window border rounded-1">
             <tbody>
+            <th class="code-lines-header" scope="rowgroup" colspan="2">
+                <label>
+                    <input type="checkbox" id="hide-line-numbers">
+                    Hide Line Numbers
+                </label>
+            </th>
                 @foreach (var line in Model.Lines)
                 {
                     <partial name="_CodeLine" model="@line" />

@@ -163,7 +163,8 @@ metadata:
 spec:
   selector:
     labelSelectors:
-      testInstance: '(( ContainerTarget ))-{{ .Release.Name }}-{{ .Release.Revision }}'
+      # This label must match the testInstance label of the pod(s) to target chaos against.
+      testInstance: '(( Name ))-{{ .Release.Name }}-{{ .Release.Revision }}'
       chaos: 'true'
     namespaces:
       - {{ .Release.Namespace }}
@@ -175,11 +176,7 @@ spec:
 
         public override string Help { get; set; } = "Configuration for network chaos. See https://chaos-mesh.org/docs/simulate-network-chaos-on-kubernetes/";
 
-        [ResourceProperty("Network Chaos Name")]
         public string? Name { get; set; }
-
-        [ResourceProperty("Containers to target with chaos. This should match the `Name` entered for a Job resource.")]
-        public string? ContainerTarget { get; set; }
 
         [ResourceProperty("A list of domains/CNAME records, like servicebus.windows.net")]
         public List<string>? ExternalTargets { get; set; }

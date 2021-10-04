@@ -29,11 +29,11 @@ spec:
       # Only override this if needed for local development, otherwise it will be calculated by deployment scripts.
       image: {{ default '' .Values.repository }}/(( ImageName )):{{ default 'v1' .Values.tag }}
       {{- include 'stress-test-addons.container-env' . | nindent 6 }}
-{{- end -}} ";
+{{- end -}}
+";
 
         public string ImageName { get; set; }
 
-        [ResourceProperty("Test name")]
         public string? Name { get; set; }
 
         [ResourceProperty("Container command. If using multiple scenarios, use a template like `node dist/{{ .Scenario }}.js`")]
@@ -51,9 +51,7 @@ spec:
         {
             // Default image name to stress test directory. The deploy-stress-tests.ps1 script also defaults
             // the image name in docker build/push to this.
-            var dir = new FileInfo(Directory.GetCurrentDirectory());
-            ImageName = dir.DirectoryName ?? "images";
-            ImageName = Directory.GetCurrentDirectory();
+            ImageName = new DirectoryInfo(Directory.GetCurrentDirectory()).Name;
         }
     }
 
@@ -87,8 +85,8 @@ spec:
         public override void Write()
         {
             base.Write();
-            File.WriteAllText("test-resources.bicep", BicepContents);
-            File.WriteAllText("parameters.json", ArmParameterContents);
+            WriteAllText("test-resources.bicep", BicepContents);
+            WriteAllText("parameters.json", ArmParameterContents);
         }
     }
 }

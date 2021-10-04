@@ -1,21 +1,8 @@
 using System;
 using System.Reflection;
-using System.Collections.Generic;
 
 namespace Stress.Generator
 {
-    public class ResourcePropertyInfo<T>
-    {
-        public PropertyInfo Info;
-        public T Property;
-
-        public ResourcePropertyInfo(PropertyInfo info, T property)
-        {
-            Info = info;
-            Property = property;
-        }
-    }
-
     public interface IResourceProperty
     {
         public string Help { get; set; }
@@ -45,15 +32,17 @@ namespace Stress.Generator
     {
         public Type[] Types { get; set; }
 
+        public bool Multiple = false;
+
         public NestedResourceProperty(string help, Type[] types) : base(help)
         {
             Types = types;
             foreach (var t in Types)
             {
                 // TODO: is there a way to compile check for this?
-                if (!(t is IResource))
+                if (!t.IsAssignableTo(typeof(IResource)))
                 {
-                    throw new Exception("NestedResourceProperty type array must implement IResource");
+                    throw new Exception("NestedResourceProperty type array items must implement IResource");
                 }
             }
         }

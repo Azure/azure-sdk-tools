@@ -6,13 +6,12 @@ namespace Stress.Generator
     {
         public static void Main()
         {
-            var generator = new Generator();
-            var resources = generator.GenerateResources();
+            Console.WriteLine("This program will help generate a stress test package.");
+            Console.WriteLine("CAUTION: This program may overwrite existing files.");
 
-            foreach (var resource in resources)
-            {
-                resource.Write();
-            }
+            var generator = new Generator();
+            var package = generator.GenerateResource<StressTestPackage>();
+            package.Write();
         }
     }
 }

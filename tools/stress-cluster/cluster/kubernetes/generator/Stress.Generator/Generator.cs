@@ -9,12 +9,6 @@ namespace Stress.Generator
     {
         public IPrompter Prompter;
 
-        public static List<IResource> ResourceTypes = new List<IResource>{
-            new JobWithoutAzureResourceDeployment(),
-            new JobWithAzureResourceDeployment(),
-            new NetworkChaos(),
-        };
-
         public Generator()
         {
             Prompter = new Prompter();
@@ -25,24 +19,12 @@ namespace Stress.Generator
             Prompter = prompter;
         }
 
-        public List<IResource> GenerateResources()
+        public T GenerateResource<T>()
+            where T : IResource
         {
-            var resources = new List<IResource>();
-            PromptMultiple(() => resources.Add(GenerateResource()), "Enter another resource?");
-            return resources;
-        }
-
-        public IResource GenerateResource()
-        {
-            var resourceTypeNames = ResourceTypes.Select(t => t.GetType().Name).ToList();
-            var resourceTypeHelp = ResourceTypes.Select(t => t.Help).ToList();
-            var selection = PromptMultipleChoice(resourceTypeNames, resourceTypeHelp, "Which resource would you like to generate? Available resources are:");
-            var resourceType = ResourceTypes.Where(t => t.GetType().Name == selection);
-
-            var resource = PrompSetResourceProperties(resourceType.First().GetType());
-
+            var resource = PrompSetResourceProperties(typeof(T));
             resource.Render();
-            return resource;
+            return (T)resource;
         }
 
         public IResource PrompSetResourceProperties(Type resourceType)
@@ -65,7 +47,7 @@ namespace Stress.Generator
 
             foreach (var prop in resource.NestedProperties())
             {
-                PromptSetNestedProperty(resource, prop);
+                PromptSetNestedProperties(resource, prop);
             }
 
             foreach (var prop in resource.OptionalNestedProperties())
@@ -121,8 +103,26 @@ namespace Stress.Generator
             }
         }
 
-        public void PromptSetNestedProperty(IResource resource, ResourcePropertyInfo<NestedResourceProperty> prop)
-        {
+        public void PromptSetNestedProperties(
+            IResource resource,
+            ResourcePropertyInfo<NestedResourceProperty> prop
+        ) {
+            if (prop.Info.PropertyType.IsAssignableTo(typeof(IList<IResource>)))
+            {
+                var nestedList = new List<IResource>();
+                Action action = () => nestedList.Add(PromptGetNestedProperty(resource, prop));
+                PromptMultiple(action, "Enter another resource?");
+                resource.SetProperty(prop.Info, nestedList);
+            } else {
+                var nested = PromptGetNestedProperty(resource, prop);
+                resource.SetProperty(prop.Info, nested);
+            }
+        }
+
+        public IResource PromptGetNestedProperty(
+            IResource resource,
+            ResourcePropertyInfo<NestedResourceProperty> prop
+        ) {
             var resourceTypeMap = prop.Property.Types.ToDictionary(t => t.Name, t => t);
             var resourceTypeHelp = prop.Property.Types.Select(t =>
             {
@@ -140,21 +140,19 @@ namespace Stress.Generator
                 }
                 else
                 {
-                    selection = PromptMultipleChoice(
-                                        resourceTypeMap.Keys.ToList(),
-                                        resourceTypeHelp,
-                                        $"Select a type of {prop.Info.PropertyType.Name}"
-                                    );
+                    selection = PromptMultipleChoice(resourceTypeMap.Keys.ToList(), resourceTypeHelp, prop.Property.Help);
                 }
                 resourceTypeMap.TryGetValue(selection, out resourceType);
             }
 
             var nestedResource = PrompSetResourceProperties(resourceType);
-            resource.SetProperty(prop.Info, nestedResource);
+            return nestedResource;
         }
 
-        public void PromptSetOptionalNestedProperty(IResource resource, ResourcePropertyInfo<OptionalNestedResourceProperty> prop)
-        {
+        public void PromptSetOptionalNestedProperty(
+            IResource resource,
+            ResourcePropertyInfo<OptionalNestedResourceProperty> prop
+        ) {
             var set = "";
             while (set != "y" && set != "n")
             {
@@ -162,8 +160,9 @@ namespace Stress.Generator
             }
             if (set == "y")
             {
-                var nestedProp = new ResourcePropertyInfo<NestedResourceProperty>(prop.Info, prop.Property.AsNestedResourceProperty());
-                PromptSetNestedProperty(resource, nestedProp);
+                var nestedProp = new ResourcePropertyInfo<NestedResourceProperty>(
+                                        prop.Info, prop.Property.AsNestedResourceProperty());
+                PromptSetNestedProperties(resource, nestedProp);
             }
         }
 

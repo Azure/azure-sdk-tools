@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.IO;
 
 namespace Stress.Generator
@@ -23,14 +25,14 @@ dependencies:
 
         public override string Help { get; set; } = "Top level information for the stress test package.";
 
-        private string DockerfileContents = @"
-# Build your dockerfile here
-# Reference docs: https://docs.docker.com/engine/reference/builder/
-# Best practices docs: https://docs.docker.com/develop/develop-images/dockerfile_best-practices/
-";
-
         private string SrcReadmeContents = @"
 Place files relevant to your application code within this directory
+";
+
+        private string DockerfileContents = @"
+# Build your Dockerfile here
+# Reference docs: https://docs.docker.com/engine/reference/builder/
+# Best practices docs: https://docs.docker.com/develop/develop-images/dockerfile_best-practices/
 ";
 
         private string HelmIgnoreContents = @"
@@ -51,10 +53,11 @@ This is a stress test package, used for deploying and testing Azure SDKs in real
 Docs: https://github.com/Azure/azure-sdk-tools/blob/main/tools/stress-cluster/chaos/README.md
 ";
 
-        public string Namespace => new DirectoryInfo(Directory.GetCurrentDirectory()).Name;
-
         [ResourceProperty("Stress Test Name")]
         public string? Name { get; set; }
+
+        [ResourceProperty("Stress Test Namespace (e.g. language name or alias for development)")]
+        public string? Namespace { get; set; }
 
         [NestedResourceProperty(
             "Which resource(s) would you like to generate? Available resources are:",
@@ -64,18 +67,44 @@ Docs: https://github.com/Azure/azure-sdk-tools/blob/main/tools/stress-cluster/ch
                 typeof(NetworkChaos),
             }
         )]
-        public IResource? StressTestResource { get; set; }
+        public List<IResource>? Resources { get; set; }
+
+        public override void Render()
+        {
+            if (string.IsNullOrEmpty(Name))
+            {
+                throw new Exception($"Property {this.GetType().Name}{nameof(Name)} cannot be empty.");
+            }
+
+            foreach (var resource in Resources ?? Enumerable.Empty<IResource>())
+            {
+                var prop = resource.GetType().GetProperty(nameof(Name));
+                if (prop != null)
+                {
+                    resource.SetProperty(prop, Name);
+                }
+
+                resource.Render();
+            }
+
+            base.Render();
+        }
 
         public override void Write()
         {
-            Write(Path.Join($"Chart.yaml"));
+            Write("Chart.yaml");
 
-            File.WriteAllText("Dockerfile", DockerfileContents);
             Directory.CreateDirectory("src");
-            File.WriteAllText(Path.Join("src", "README.md"), SrcReadmeContents);
-            File.WriteAllText(".helmignore", HelmIgnoreContents);
-            File.WriteAllText("values.yaml", ValuesContents);
-            File.WriteAllText("README.md", ReadmeContents);
+            WriteAllText(Path.Join("src", "README.md"), SrcReadmeContents);
+            WriteAllText("Dockerfile", DockerfileContents);
+            WriteAllText(".helmignore", HelmIgnoreContents);
+            WriteAllText("values.yaml", ValuesContents);
+            WriteAllText("README.md", ReadmeContents);
+
+            foreach (var resource in Resources ?? Enumerable.Empty<IResource>())
+            {
+                resource.Write();
+            }
         }
     }
 }

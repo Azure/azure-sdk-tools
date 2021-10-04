@@ -91,24 +91,11 @@ namespace Stress.Generator.Tests
             var generator = new Generator(prompter);
 
             // Test resource name selection
-            prompter.AddResponse("JobWithoutAzureResourceDeployment");
-            prompter.AddResponse("TestJobName");
             prompter.AddResponse("bash -c sleep 3600");
             prompter.AddResponse("true");
 
-            var resource = (JobWithoutAzureResourceDeployment)generator.GenerateResource();
-            resource.Name.Should().Be("TestJobName");
+            var resource = generator.GenerateResource<JobWithoutAzureResourceDeployment>();
             resource.Command.Should().Equal(new List<string>{"bash", "-c", "sleep", "3600"});
-
-            // Test resource index selector
-            prompter.SetResponse("0");
-            prompter.AddResponse("TestJobName");
-            prompter.AddResponse("binary");
-            prompter.AddResponse("true");
-
-            resource = (JobWithoutAzureResourceDeployment)generator.GenerateResource();
-            resource.Name.Should().Be("TestJobName");
-            resource.Command.Should().Equal(new List<string>{"binary"});
             resource.ChaosEnabled.Should().Be(true);
         }
 
@@ -118,9 +105,6 @@ namespace Stress.Generator.Tests
             var prompter = new TestPrompter();
             var generator = new Generator(prompter);
 
-            prompter.AddResponse("NetworkChaos");
-            prompter.AddResponse("TestNetChaos");
-            prompter.AddResponse("TestJobName");
             prompter.AddResponse("bing.com");
             prompter.AddResponse("to");
             prompter.AddResponse("LossAction");
@@ -129,7 +113,7 @@ namespace Stress.Generator.Tests
             prompter.AddResponse("0.2");
             prompter.AddResponse("n");
 
-            NetworkChaos resource = (NetworkChaos)generator.GenerateResource();
+            NetworkChaos resource = generator.GenerateResource<NetworkChaos>();
             resource.ExternalTargets.Should().Equal(new List<string>{"bing.com"});
             resource.Action.Should().BeAssignableTo<NetworkChaos.LossAction>();
             var loss = resource.Action as NetworkChaos.LossAction;
@@ -138,19 +122,97 @@ namespace Stress.Generator.Tests
         }
 
         [Fact]
-        public void TestGenerateResources()
+        public void TestMultipleChoiceWithIntSelection()
         {
             var prompter = new TestPrompter();
             var generator = new Generator(prompter);
 
-            prompter.AddResponse("JobWithoutAzureResourceDeployment");
-            prompter.AddResponse("TestJobName");
+            prompter.AddResponse("TestStressPackage");
+            prompter.AddResponse("TestStressNamespace");
+            prompter.AddResponse("0");
+            prompter.AddResponse("bash -c sleep 3600");
+            prompter.AddResponse("true");
+            prompter.AddResponse("n");
+
+            var package = generator.GenerateResource<StressTestPackage>();
+            package.Resources.Count.Should().Be(1);
+
+            var job = package.Resources[0] as JobWithoutAzureResourceDeployment;
+            job.Name.Should().Be("TestStressPackage");
+            job.Command.Should().Equal(new List<string>{"bash", "-c", "sleep", "3600"});
+            job.ChaosEnabled.Should().Be(true);
+        }
+
+        [Fact]
+        public void TestGenerateInvalidValueRetry()
+        {
+            var prompter = new TestPrompter();
+            var generator = new Generator(prompter);
+
+            prompter.AddResponse("bing.com");
+            prompter.AddResponse("to");
+            prompter.AddResponse("LossAction");
+            prompter.AddResponse("invalid1");
+            prompter.AddResponse("invalid2");
+            prompter.AddResponse("0.5");
+            prompter.AddResponse("invalidOptional1");
+            prompter.AddResponse("invalidOptional2");
+            prompter.AddResponse("y");
+            prompter.AddResponse("0.2");
+            prompter.AddResponse("n");
+
+            NetworkChaos resource = generator.GenerateResource<NetworkChaos>();
+            resource.ExternalTargets.Should().Equal(new List<string>{"bing.com"});
+            resource.Action.Should().BeAssignableTo<NetworkChaos.LossAction>();
+            var loss = resource.Action as NetworkChaos.LossAction;
+            loss.Loss.Should().Be(0.5);
+            loss.Correlation.Should().Be(0.2);
+        }
+
+        [Fact]
+        public void TestGenerateInvalidMultipleChoiceRetry()
+        {
+            var prompter = new TestPrompter();
+            var generator = new Generator(prompter);
+
+            prompter.AddResponse("TestStressPackage");
+            prompter.AddResponse("TestStressNamespace");
+            prompter.AddResponse("invalid1");
+            prompter.AddResponse("invalid2");
+            prompter.AddResponse("999");
+            prompter.AddResponse("-1");
+            prompter.AddResponse(nameof(JobWithoutAzureResourceDeployment));
+            prompter.AddResponse("bash -c sleep 3600");
+            prompter.AddResponse("invalidBool1");
+            prompter.AddResponse("invalidBool2");
+            prompter.AddResponse("true");
+            prompter.AddResponse("invalidOptional1");
+            prompter.AddResponse("n");
+
+            var package = generator.GenerateResource<StressTestPackage>();
+            package.Resources.Count.Should().Be(1);
+            package.Name.Should().Be("TestStressPackage");
+            package.Namespace.Should().Be("TestStressNamespace");
+
+            var job = package.Resources[0] as JobWithoutAzureResourceDeployment;
+            job.Name.Should().Be("TestStressPackage");
+            job.Command.Should().Equal(new List<string>{"bash", "-c", "sleep", "3600"});
+            job.ChaosEnabled.Should().Be(true);
+        }
+
+        [Fact]
+        public void TestGeneratePackage()
+        {
+            var prompter = new TestPrompter();
+            var generator = new Generator(prompter);
+
+            prompter.AddResponse("TestStressPackage");
+            prompter.AddResponse("TestStressNamespace");
+            prompter.AddResponse(nameof(JobWithoutAzureResourceDeployment));
             prompter.AddResponse("bash -c sleep 3600");
             prompter.AddResponse("true");
             prompter.AddResponse("y");
-            prompter.AddResponse("NetworkChaos");
-            prompter.AddResponse("TestNetChaos");
-            prompter.AddResponse("TestJobName");
+            prompter.AddResponse(nameof(NetworkChaos));
             prompter.AddResponse("bing.com");
             prompter.AddResponse("to");
             prompter.AddResponse("LossAction");
@@ -158,14 +220,21 @@ namespace Stress.Generator.Tests
             prompter.AddResponse("n");
             prompter.AddResponse("n");
 
-            var resources = generator.GenerateResources();
-            var job = (JobWithoutAzureResourceDeployment)resources[0];
-            job.Name.Should().Be("TestJobName");
+            var package = generator.GenerateResource<StressTestPackage>();
+            package.Resources.Count.Should().Be(2);
+            package.Name.Should().Be("TestStressPackage");
+            package.Namespace.Should().Be("TestStressNamespace");
+
+            var job = package.Resources[0] as JobWithoutAzureResourceDeployment;
+            job.Name.Should().Be("TestStressPackage");
             job.Command.Should().Equal(new List<string>{"bash", "-c", "sleep", "3600"});
             job.ChaosEnabled.Should().Be(true);
-            var chaos = (NetworkChaos)resources[1];
+
+            var chaos = package.Resources[1] as NetworkChaos;
+            chaos.Name.Should().Be("TestStressPackage");
             chaos.ExternalTargets.Should().Equal(new List<string>{"bing.com"});
             chaos.Action.Should().BeAssignableTo<NetworkChaos.LossAction>();
+
             var loss = chaos.Action as NetworkChaos.LossAction;
             loss.Loss.Should().Be(0.5);
             loss.Correlation.Should().BeNull();
@@ -177,9 +246,9 @@ namespace Stress.Generator.Tests
             var prompter = new TestPrompter();
             var generator = new Generator(prompter);
 
-            prompter.AddResponse("NetworkChaos");
-            prompter.AddResponse("TestNetChaos");
-            prompter.AddResponse("TestJobName");
+            prompter.AddResponse("TestStressPackage");
+            prompter.AddResponse("TestStressNamespace");
+            prompter.AddResponse(nameof(NetworkChaos));
             prompter.AddResponse("bing.com");
             prompter.AddResponse("to");
             prompter.AddResponse("DelayAction");
@@ -192,14 +261,19 @@ namespace Stress.Generator.Tests
             prompter.AddResponse("n");
             prompter.AddResponse("n");
 
-            var resources = generator.GenerateResources();
-            var chaos = (NetworkChaos)resources[0];
+            var package = generator.GenerateResource<StressTestPackage>();
+
+            var chaos = package.Resources[0] as NetworkChaos;
+            chaos.Name.Should().Be("TestStressPackage");
             chaos.ExternalTargets.Should().Equal(new List<string>{"bing.com"});
             chaos.Action.Should().BeAssignableTo<NetworkChaos.DelayAction>();
+
             var delay = chaos.Action as NetworkChaos.DelayAction;
+
             delay.Latency.Should().Be("50ms");
             delay.Correlation.Should().BeNull();
             delay.Jitter.Should().BeNull();
+
             delay.Reorder.Should().BeAssignableTo<NetworkChaos.ReorderSpec>();
             delay.Reorder.Gap.Should().Be(2);
             delay.Reorder.Reorder.Should().Be(0.5);

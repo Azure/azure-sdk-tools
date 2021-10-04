@@ -53,13 +53,23 @@ namespace Stress.Generator
 
         public IEnumerable<ResourcePropertyInfo<OptionalNestedResourceProperty>> OptionalNestedProperties() => TProperties<OptionalNestedResourceProperty>();
 
-        public void SetProperty(PropertyInfo prop, object value) => prop.SetValue(this, value);
+        public void SetProperty(PropertyInfo prop, object value)
+        {
+            if (value == null)
+            {
+                throw new NullReferenceException($"Cannot set property {this.GetType().Name}.{prop.PropertyType.Name} to null");
+            }
+            var source = this.GetType().Name;
+            var dest = value.GetType().Name;
+            var t = prop.PropertyType.Name;
+            prop.SetValue(this, value);
+        }
 
         // Pulling in a large templating library like Razor is more trouble than it's worth
         // and other popular mustache-style templating libraries don't have great support
         // for overridding the delimeters from curly braces, in order to not overlap
         // with helm. It ends up being simpler to handle it ourselves :/
-        public void Render()
+        public virtual void Render()
         {
             // match '((propertyName))', '(( propertyName ))', etc.
             var re = new Regex(@"\(\(\s*(\w*)\s*\)\)");
@@ -137,6 +147,12 @@ namespace Stress.Generator
             IsRendered = true;
         }
 
+        public void WriteAllText(string outputPath, string text)
+        {
+            Console.WriteLine($"Writing {outputPath}");
+            File.WriteAllText(outputPath, text.TrimStart('\n'));
+        }
+
         public void Write(string outputPath)
         {
             if (!IsRendered)
@@ -145,10 +161,11 @@ namespace Stress.Generator
             }
 
             var dirs = Path.GetDirectoryName(outputPath);
-            if (dirs != null)
+            if (!string.IsNullOrEmpty(dirs))
             {
                 Directory.CreateDirectory(dirs);
             }
+            Console.WriteLine($"Writing {outputPath}");
             File.WriteAllLines(outputPath, Rendered);
         }
 

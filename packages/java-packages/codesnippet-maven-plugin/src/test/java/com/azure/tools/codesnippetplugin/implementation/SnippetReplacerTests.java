@@ -2,11 +2,11 @@ package com.azure.tools.codesnippetplugin.implementation;
 
 import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -20,17 +20,11 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 public class SnippetReplacerTests {
-    private static final String TEST_RESOURCES_DIRECTORY = "../../../../../project-to-test/";
-
     private Path getPathToResource(String fileName) {
-        String relativeLocation = TEST_RESOURCES_DIRECTORY + fileName;
-        String pathToTestFile = SnippetReplacerTests.class.getResource(relativeLocation).getPath();
+        File resourcesFile = new File(SnippetReplacerTests.class.getClassLoader().getResource(".").getPath(),
+            "project-to-test/");
 
-        if (pathToTestFile.startsWith("/")) {
-            pathToTestFile = pathToTestFile.substring(1);
-        }
-
-        return Paths.get(pathToTestFile);
+        return new File(resourcesFile, fileName).toPath();
     }
 
     @Test

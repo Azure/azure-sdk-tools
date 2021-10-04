@@ -39,8 +39,10 @@ namespace Stress.Generator
             where T : BaseResourceProperty
         {
             return this.GetType().GetProperties()
-                   .Where(p => p.GetCustomAttribute<T>() != null)
+                   .Where(p =>  p.GetCustomAttribute<T>() != null)
+#nullable disable
                    .Select(p => new ResourcePropertyInfo<T>(p, p.GetCustomAttribute<T>()));
+#nullable enable
         }
 
         public IEnumerable<ResourcePropertyInfo<ResourceProperty>> Properties() => TProperties<ResourceProperty>();
@@ -137,8 +139,16 @@ namespace Stress.Generator
 
         public void Write(string outputPath)
         {
+            if (!IsRendered)
+            {
+                throw new Exception($"Render() must be called before Write() for {GetType().Name}.");
+            }
+
             var dirs = Path.GetDirectoryName(outputPath);
-            Directory.CreateDirectory(dirs);
+            if (dirs != null)
+            {
+                Directory.CreateDirectory(dirs);
+            }
             File.WriteAllLines(outputPath, Rendered);
         }
 

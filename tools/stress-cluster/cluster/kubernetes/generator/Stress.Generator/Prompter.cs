@@ -11,7 +11,7 @@ namespace Stress.Generator
     {
         public string Prompt()
         {
-            return Console.ReadLine();
+            return Console.ReadLine() ?? "";
         }
     }
 }

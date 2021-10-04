@@ -52,7 +52,7 @@ namespace Stress.Generator
 ";
 
             [ResourceProperty("Network latency, e.g. '50ms'")]
-            public string Latency { get; set; }
+            public string? Latency { get; set; }
 
             [OptionalResourceProperty("Correlation between the current latency and the previous one, e.g. '0.5'.")]
             public double? Correlation { get; set; }
@@ -61,7 +61,7 @@ namespace Stress.Generator
             public double? Jitter { get; set; }
 
             [OptionalNestedResourceProperty("Network packet reordering.", new Type[]{typeof(ReorderSpec)})]
-            public ReorderSpec Reorder { get; set; }
+            public ReorderSpec? Reorder { get; set; }
         }
 
         public class ReorderSpec : Resource, IResource
@@ -98,7 +98,7 @@ namespace Stress.Generator
 ";
 
             [ResourceProperty("Probability of packet duplication, e.g. '0.5'.")]
-            public string Duplicate { get; set; }
+            public string? Duplicate { get; set; }
 
             [OptionalResourceProperty("Correlation between the current duplication and the previous one, e.g. '0.5'.")]
             public string? Correlation { get; set; }
@@ -116,7 +116,7 @@ namespace Stress.Generator
 ";
 
             [ResourceProperty("Probability of packet corruption, e.g. '0.5'.")]
-            public string Corrupt { get; set; }
+            public string? Corrupt { get; set; }
 
             [OptionalResourceProperty("Correlation between the current corruption and the previous one, e.g. '0.5'.")]
             public string? Correlation { get; set; }
@@ -136,7 +136,7 @@ namespace Stress.Generator
 ";
 
             [ResourceProperty("Rate of bandwidth limit, e.g. '1mbps'. Available units: bps, kbps, mbps, gpbs, tpbs (bytes per second).")]
-            public string Rate { get; set; }
+            public string? Rate { get; set; }
 
             [ResourceProperty("Number of bytes that can be queued (minimum 1).")]
             public int Limit { get; set; }
@@ -176,22 +176,22 @@ spec:
         public override string Help { get; set; } = "Configuration for network chaos. See https://chaos-mesh.org/docs/simulate-network-chaos-on-kubernetes/";
 
         [ResourceProperty("Network Chaos Name")]
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         [ResourceProperty("Containers to target with chaos. This should match the `Name` entered for a Job resource.")]
-        public string ContainerTarget { get; set; }
+        public string? ContainerTarget { get; set; }
 
         [ResourceProperty("A list of domains/CNAME records, like servicebus.windows.net")]
-        public List<string> ExternalTargets { get; set; }
+        public List<string>? ExternalTargets { get; set; }
 
         [ResourceProperty("Packet direction. Options: 'to', 'from', 'both'")]
-        public string Direction { get; set; }
+        public string? Direction { get; set; }
 
         [NestedResourceProperty(
           "Type of network chaos.",
           new Type[]{typeof(LossAction), typeof(DelayAction), typeof(DuplicateAction), typeof(CorruptAction), typeof(BandwidthAction)}
         )]
-        public NetworkChaosAction Action { get; set; }
+        public NetworkChaosAction? Action { get; set; }
 
         public override void Write()
         {

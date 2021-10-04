@@ -34,13 +34,13 @@ spec:
         public string ImageName { get; set; }
 
         [ResourceProperty("Test name")]
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         [ResourceProperty("Container command. If using multiple scenarios, use a template like `node dist/{{ .Scenario }}.js`")]
-        public List<string> Command { get; set; }
+        public List<string>? Command { get; set; }
 
         [ResourceProperty("Set if job should support chaos")]
-        public bool ChaosEnabled { get; set; }
+        public bool? ChaosEnabled { get; set; }
 
         public override void Write()
         {
@@ -52,7 +52,7 @@ spec:
             // Default image name to stress test directory. The deploy-stress-tests.ps1 script also defaults
             // the image name in docker build/push to this.
             var dir = new FileInfo(Directory.GetCurrentDirectory());
-            ImageName = dir.DirectoryName;
+            ImageName = dir.DirectoryName ?? "images";
             ImageName = Directory.GetCurrentDirectory();
         }
     }

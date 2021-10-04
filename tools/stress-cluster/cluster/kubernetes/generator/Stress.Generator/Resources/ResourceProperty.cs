@@ -48,6 +48,14 @@ namespace Stress.Generator
         public NestedResourceProperty(string help, Type[] types) : base(help)
         {
             Types = types;
+            foreach (var t in Types)
+            {
+                // TODO: is there a way to compile check for this?
+                if (!(t is IResource))
+                {
+                    throw new Exception("NestedResourceProperty type array must implement IResource");
+                }
+            }
         }
     }
 

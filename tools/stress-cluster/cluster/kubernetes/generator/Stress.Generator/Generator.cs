@@ -15,9 +15,14 @@ namespace Stress.Generator
             new NetworkChaos(),
         };
 
-        public Generator(IPrompter prompter = null)
+        public Generator()
         {
-            Prompter = prompter ?? new Prompter();
+            Prompter = new Prompter();
+        }
+
+        public Generator(IPrompter prompter)
+        {
+            Prompter = prompter;
         }
 
         public List<IResource> GenerateResources()
@@ -42,7 +47,12 @@ namespace Stress.Generator
 
         public IResource PrompSetResourceProperties(Type resourceType)
         {
-            var resource = (IResource)Activator.CreateInstance(resourceType);
+            var resource = Activator.CreateInstance(resourceType) as IResource;
+            if (resource == null)
+            {
+                throw new NullReferenceException();
+            }
+
             foreach (var prop in resource.Properties())
             {
                 PromptSetProperty(resource, prop.Info, prop.Property.Help);
@@ -116,11 +126,11 @@ namespace Stress.Generator
             var resourceTypeMap = prop.Property.Types.ToDictionary(t => t.Name, t => t);
             var resourceTypeHelp = prop.Property.Types.Select(t =>
             {
-                var r = (IResource)Activator.CreateInstance(t);
-                return r.Help;
+                var r = Activator.CreateInstance(t) as IResource;
+                return r?.Help ?? "";
             }).ToList();
 
-            Type resourceType = null;
+            Type? resourceType = null;
             while (resourceType == null)
             {
                 var selection = "";

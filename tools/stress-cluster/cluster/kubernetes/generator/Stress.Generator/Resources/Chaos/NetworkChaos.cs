@@ -13,6 +13,10 @@ namespace Stress.Generator
 
         public abstract class NetworkChaosAction : Resource, IResource
         {
+            public override string ToString()
+            {
+                return GetType().Name.Replace("Action", "").ToLower();
+            }
         }
 
         public class LossAction : NetworkChaosAction

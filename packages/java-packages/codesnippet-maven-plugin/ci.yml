@@ -23,7 +23,7 @@ stages:
 
         steps:
           - task: Maven@3
-            displayName: 'Build and Package, JDK Version: $(JavaBuildVersion)'
+            displayName: 'Validate Build'
             inputs:
               mavenPomFile: packages/java-packages/codesnippet-maven-plugin/pom.xml
               goals: 'clean install'

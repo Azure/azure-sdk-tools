@@ -174,4 +174,24 @@ public class SnippetReplacerTests {
         assertNotNull(opResult);
         assertEquals(3, opResult.errorList.size());
     }
+
+    /**
+     * Tests that when a README has a code fence without a snippet declaration the code fence isn't mutated in any way.
+     */
+    @Test
+    public void readmeCodeFenceNoSnippet() throws Exception {
+        Path snippetSourceFile = getPathToResource("basic_src_snippet_parse.txt");
+        Path codeForReplacement = getPathToResource("readme_code_fence_no_snippet_before.txt");
+        Path expectedOutCome = getPathToResource("readme_code_fence_no_snippet_after.txt");
+        byte[] rawBytes = Files.readAllBytes(expectedOutCome);
+        String expectedString = new String(rawBytes, StandardCharsets.UTF_8);
+
+        Map<String, List<String>> foundSnippets = SnippetReplacer.getAllSnippets(
+            new ArrayList<>(Collections.singletonList(snippetSourceFile.toAbsolutePath())));
+        SnippetOperationResult<StringBuilder> opResult = SnippetReplacer.updateSnippets(codeForReplacement,
+            SnippetReplacer.SNIPPET_README_CALL_BEGIN, SnippetReplacer.SNIPPET_README_CALL_END, foundSnippets, "", "",
+            0, "", true);
+
+        assertEquals(opResult.result.toString(), expectedString);
+    }
 }

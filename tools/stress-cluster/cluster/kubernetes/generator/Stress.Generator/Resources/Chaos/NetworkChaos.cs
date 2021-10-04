@@ -154,12 +154,12 @@ namespace Stress.Generator
 apiVersion: chaos-mesh.org/v1alpha1
 kind: NetworkChaos
 metadata:
-  name: '{{ .Release.Name }}-{{ .Release.Revision }}'
+  name: '(( Name ))-{{ .Release.Name }}-{{ .Release.Revision }}'
   namespace: {{ .Release.Namespace }}
 spec:
   selector:
     labelSelectors:
-      testInstance: '(( Name ))-{{ .Release.Name }}-{{ .Release.Revision }}'
+      testInstance: '(( ContainerTarget ))-{{ .Release.Name }}-{{ .Release.Revision }}'
       chaos: 'true'
     namespaces:
       - {{ .Release.Namespace }}
@@ -174,6 +174,12 @@ spec:
         [ResourceProperty("Network Chaos Name")]
         public string Name { get; set; }
 
+        [ResourceProperty("Containers to target with chaos. This should match the `Name` entered for a Job resource.")]
+        public string ContainerTarget { get; set; }
+
+        [ResourceProperty("A list of domains/CNAME records, like servicebus.windows.net")]
+        public List<string> ExternalTargets { get; set; }
+
         [ResourceProperty("Packet direction. Options: 'to', 'from', 'both'")]
         public string Direction { get; set; }
 
@@ -182,9 +188,6 @@ spec:
           new Type[]{typeof(LossAction), typeof(DelayAction), typeof(DuplicateAction), typeof(CorruptAction), typeof(BandwidthAction)}
         )]
         public NetworkChaosAction Action { get; set; }
-
-        [ResourceProperty("A list of domains/CNAME records, like servicebus.windows.net")]
-        public List<string> ExternalTargets { get; set; }
 
         public override void Write()
         {

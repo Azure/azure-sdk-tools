@@ -18,14 +18,11 @@ chaos: (( ChaosEnabled ))";
 
             var job = new JobWithoutAzureResourceDeployment{
                 Name = "TestJob",
+                Command = new List<string>{"sleep", "infinity"},
                 ChaosEnabled = true,
                 Template = template
             };
 
-            Action act = () => job.Render();
-            act.Should().Throw<Exception>();
-
-            job.Command = new List<string>{"sleep", "infinity"};
             job.Render();
             var lines = job.Rendered.ToList();
             lines.Count().Should().Be(3);
@@ -35,10 +32,10 @@ chaos: (( ChaosEnabled ))";
         }
 
         [Fact]
-        public void TestRenderMultiplePropertiesSameLine()
+        public void TestRenderUnsetProperty()
         {
             var template =
-@"name: (( TemplateInclude )).(( Name ))
+@"name: (( Name ))
 command: (( Command ))
 chaos: (( ChaosEnabled ))";
 
@@ -48,17 +45,50 @@ chaos: (( ChaosEnabled ))";
                 Template = template
             };
 
-            // Test with missing property Command
             Action act = () => job.Render();
-            act.Should().Throw<Exception>();
 
-            job.Command = new List<string>{"sleep", "infinity"};
             job.Render();
             var lines = job.Rendered.ToList();
-            lines.Count().Should().Be(3);
+            lines.Count().Should().Be(2);
+            lines[0].Should().Be("name: TestJob");
+            lines[1].Should().Be("chaos: true");
+        }
+
+        [Fact]
+        public void TestRenderMissingPropertyShouldFail()
+        {
+            var template =
+@"name: (( Name ))
+na: (( DoesNotExist ))";
+
+            var job = new JobWithoutAzureResourceDeployment{
+                Name = "TestJob",
+                Template = template
+            };
+
+            Action act = () => job.Render();
+            act.Should().Throw<Exception>();
+        }
+
+
+        [Fact]
+        public void TestRenderMultiplePropertiesSameLine()
+        {
+            var template =
+@"name: (( TemplateInclude )).(( Name ))
+chaos: (( ChaosEnabled ))";
+
+            var job = new JobWithoutAzureResourceDeployment{
+                Name = "TestJob",
+                ChaosEnabled = true,
+                Template = template
+            };
+
+            job.Render();
+            var lines = job.Rendered.ToList();
+            lines.Count().Should().Be(2);
             lines[0].Should().Be("name: env-job-template.TestJob");
-            lines[1].Should().Be("command: [\"sleep\",\"infinity\"]");
-            lines[2].Should().Be("chaos: true");
+            lines[1].Should().Be("chaos: true");
         }
 
         [Fact]
@@ -84,6 +114,7 @@ chaos: (( ChaosEnabled ))";
             var lines = net.Rendered.ToList();
             lines.Count().Should().Be(2);
             lines[0].Should().Be("name: TestNetworkChaos");
+
             var delayRender = lines[1].Split('\n');
             delayRender.Count().Should().Be(8);
             delayRender[0].Should().StartWith("  #");

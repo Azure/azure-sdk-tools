@@ -120,12 +120,21 @@ namespace Stress.Generator.Tests
 
             prompter.AddResponse("NetworkChaos");
             prompter.AddResponse("TestNetChaos");
+            prompter.AddResponse("TestJobName");
             prompter.AddResponse("bing.com");
+            prompter.AddResponse("to");
+            prompter.AddResponse("LossAction");
+            prompter.AddResponse("0.5");
+            prompter.AddResponse("y");
+            prompter.AddResponse("0.2");
             prompter.AddResponse("n");
 
             NetworkChaos resource = (NetworkChaos)generator.GenerateResource();
             resource.ExternalTargets.Should().Equal(new List<string>{"bing.com"});
-            resource.Action.Should().Be("loss");
+            resource.Action.Should().BeAssignableTo<NetworkChaos.LossAction>();
+            var loss = resource.Action as NetworkChaos.LossAction;
+            loss.Loss.Should().Be(0.5);
+            loss.Correlation.Should().Be(0.2);
         }
 
         [Fact]
@@ -141,11 +150,12 @@ namespace Stress.Generator.Tests
             prompter.AddResponse("y");
             prompter.AddResponse("NetworkChaos");
             prompter.AddResponse("TestNetChaos");
-            prompter.AddResponse("to");
+            prompter.AddResponse("TestJobName");
             prompter.AddResponse("bing.com");
+            prompter.AddResponse("to");
             prompter.AddResponse("LossAction");
             prompter.AddResponse("0.5");
-            prompter.AddResponse("0.2");
+            prompter.AddResponse("n");
             prompter.AddResponse("n");
 
             var resources = generator.GenerateResources();
@@ -155,7 +165,10 @@ namespace Stress.Generator.Tests
             job.ChaosEnabled.Should().Be(true);
             var chaos = (NetworkChaos)resources[1];
             chaos.ExternalTargets.Should().Equal(new List<string>{"bing.com"});
-            chaos.Action.Should().Be("loss");
+            chaos.Action.Should().BeAssignableTo<NetworkChaos.LossAction>();
+            var loss = chaos.Action as NetworkChaos.LossAction;
+            loss.Loss.Should().Be(0.5);
+            loss.Correlation.Should().BeNull();
         }
 
         [Fact]
@@ -166,8 +179,9 @@ namespace Stress.Generator.Tests
 
             prompter.AddResponse("NetworkChaos");
             prompter.AddResponse("TestNetChaos");
-            prompter.AddResponse("to");
+            prompter.AddResponse("TestJobName");
             prompter.AddResponse("bing.com");
+            prompter.AddResponse("to");
             prompter.AddResponse("DelayAction");
             prompter.AddResponse("50ms");
             prompter.AddResponse("n");
@@ -176,11 +190,20 @@ namespace Stress.Generator.Tests
             prompter.AddResponse("2");
             prompter.AddResponse("0.5");
             prompter.AddResponse("n");
+            prompter.AddResponse("n");
 
             var resources = generator.GenerateResources();
             var chaos = (NetworkChaos)resources[0];
             chaos.ExternalTargets.Should().Equal(new List<string>{"bing.com"});
-            chaos.Action.Should().BeAssignableTo(typeof(NetworkChaos.DelayAction));
+            chaos.Action.Should().BeAssignableTo<NetworkChaos.DelayAction>();
+            var delay = chaos.Action as NetworkChaos.DelayAction;
+            delay.Latency.Should().Be("50ms");
+            delay.Correlation.Should().BeNull();
+            delay.Jitter.Should().BeNull();
+            delay.Reorder.Should().BeAssignableTo<NetworkChaos.ReorderSpec>();
+            delay.Reorder.Gap.Should().Be(2);
+            delay.Reorder.Reorder.Should().Be(0.5);
+            delay.Reorder.Correlation.Should().BeNull();
         }
     }
 }

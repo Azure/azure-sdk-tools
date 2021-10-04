@@ -83,23 +83,25 @@ namespace Stress.Generator
         {
             Console.WriteLine($"--> {prop.Name} ({help})");
 
-            if (prop.PropertyType == typeof(string))
+            var propType = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
+
+            if (propType == typeof(string))
             {
                 resource.SetProperty(prop, Prompt<string>($"(string): "));
             }
-            else if (prop.PropertyType == typeof(double))
+            else if (propType == typeof(double))
             {
                 resource.SetProperty(prop, Prompt<double>($"(number): "));
             }
-            else if (prop.PropertyType == typeof(int))
+            else if (propType == typeof(int))
             {
                 resource.SetProperty(prop, Prompt<int>($"(number): "));
             }
-            else if (prop.PropertyType == typeof(bool))
+            else if (propType == typeof(bool))
             {
                 resource.SetProperty(prop, Prompt<bool>($"(true/false): "));
             }
-            else if (prop.PropertyType == typeof(List<string>))
+            else if (propType == typeof(List<string>))
             {
                 resource.SetProperty(prop, PromptList($"(list item string): "));
             }

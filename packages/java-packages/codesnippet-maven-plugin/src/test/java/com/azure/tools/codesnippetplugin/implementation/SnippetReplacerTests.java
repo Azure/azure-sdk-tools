@@ -2,11 +2,11 @@ package com.azure.tools.codesnippetplugin.implementation;
 
 import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -20,17 +20,11 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 public class SnippetReplacerTests {
-    private static final String TEST_RESOURCES_DIRECTORY = "../../../../../project-to-test/";
-
     private Path getPathToResource(String fileName) {
-        String relativeLocation = TEST_RESOURCES_DIRECTORY + fileName;
-        String pathToTestFile = SnippetReplacerTests.class.getResource(relativeLocation).getPath();
+        File resourcesFile = new File(SnippetReplacerTests.class.getClassLoader().getResource(".").getPath(),
+            "project-to-test/");
 
-        if (pathToTestFile.startsWith("/")) {
-            pathToTestFile = pathToTestFile.substring(1);
-        }
-
-        return Paths.get(pathToTestFile);
+        return new File(resourcesFile, fileName).toPath();
     }
 
     @Test
@@ -173,5 +167,25 @@ public class SnippetReplacerTests {
 
         assertNotNull(opResult);
         assertEquals(3, opResult.errorList.size());
+    }
+
+    /**
+     * Tests that when a README has a code fence without a snippet declaration the code fence isn't mutated in any way.
+     */
+    @Test
+    public void readmeCodeFenceNoSnippet() throws Exception {
+        Path snippetSourceFile = getPathToResource("basic_src_snippet_parse.txt");
+        Path codeForReplacement = getPathToResource("readme_code_fence_no_snippet_before.txt");
+        Path expectedOutCome = getPathToResource("readme_code_fence_no_snippet_after.txt");
+        byte[] rawBytes = Files.readAllBytes(expectedOutCome);
+        String expectedString = new String(rawBytes, StandardCharsets.UTF_8);
+
+        Map<String, List<String>> foundSnippets = SnippetReplacer.getAllSnippets(
+            new ArrayList<>(Collections.singletonList(snippetSourceFile.toAbsolutePath())));
+        SnippetOperationResult<StringBuilder> opResult = SnippetReplacer.updateSnippets(codeForReplacement,
+            SnippetReplacer.SNIPPET_README_CALL_BEGIN, SnippetReplacer.SNIPPET_README_CALL_END, foundSnippets, "", "",
+            0, "", true);
+
+        assertEquals(opResult.result.toString(), expectedString);
     }
 }

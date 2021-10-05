@@ -11,8 +11,8 @@
     };
 }
 
-<tr class="code-line" data-line-id="@(isRemoved ? string.Empty : Model.CodeLine.ElementId)">
-    <td class="line-number">@Model.LineNumber</td>
+<tr class="code-line @lineClass" data-line-id="@(isRemoved ? string.Empty : Model.CodeLine.ElementId)">
+    <td class="line-number @lineClass">@Model.LineNumber</td>
     <td class="line-comment-button-cell">
         @if (!isRemoved && Model.CodeLine.ElementId != null)
         {

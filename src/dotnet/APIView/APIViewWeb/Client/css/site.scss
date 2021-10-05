@@ -254,7 +254,7 @@ form.comment {
     width: 1%;
     min-width: 50px;
     padding-left: 10px;
-    padding-right: 10px;
+    padding-right: 12px;
     text-align: right;
     white-space: nowrap;
     cursor: pointer;
@@ -264,6 +264,7 @@ form.comment {
     z-index:1;
     position: sticky;
     left: 0;
+    color: darkcyan;
 }
 
 .line-number-hidden {
@@ -305,7 +306,6 @@ form.comment {
 }
 
 .code {
-    padding-left: 10px;
     padding-right: 10px;
     position: relative;
     vertical-align: top;
@@ -506,6 +506,13 @@ form.comment {
 
 .code-diagnostics p {
     margin: 0;
+}
+
+.code-diagnostics div {
+    position: sticky;
+    left: 0px;
+    padding-left: 10px;
+    max-width: 2000px;
 }
 
 /* ICONS */

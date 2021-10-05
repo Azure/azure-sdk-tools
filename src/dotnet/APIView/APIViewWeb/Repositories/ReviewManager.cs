@@ -492,7 +492,7 @@ namespace APIViewWeb.Respositories
             // Enabling this only for manual reviews in the beginning to check impact on system performance
             // We will enable it for all reviews based on the perf details
             // Automatic reviews are already updated as part of scheduled upload daily
-            var reviews = await _reviewsRepository.GetReviewsAsync(false, "Alrrrl");
+            var reviews = await _reviewsRepository.GetReviewsAsync(false, "All");
             foreach(var review in reviews.Where(r => IsUpdateAvailable(r)))
             {
                 var requestTelemetry = new RequestTelemetry { Name = "Updating Review " + review.ReviewId };

@@ -8,7 +8,7 @@
 @if (Model != null && Model.Comments.Any())
 {
     <tr class="comment-row" data-line-id="@Model.LineId">
-        <td class="comment-cell border-top border-bottom" colspan="4">
+        <td class="comment-cell border-top border-bottom" colspan="3">
             @if (Model.IsResolved)
             {
                 @:This thread is marked resolved by @Model.ResolvedBy <a href="#" class="toggle-comments">(show)</a>

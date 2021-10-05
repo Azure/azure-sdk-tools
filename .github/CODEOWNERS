@@ -2,7 +2,7 @@
 # Eng Sys
 ###########
 /eng/       @azure/azure-sdk-eng
-/eng/common/TestResources/  @heaths @danieljurek @weshaggard
+/eng/common/TestResources/  @heaths @benbp @weshaggard
 
 ###########
 # Eng Sys Services
@@ -14,3 +14,4 @@
 /tools/github-issues/ @weshaggard @praveenkuttappan @AlexGhiondea
 /tools/pipeline-generator/ @weshaggard @benbp
 /tools/test-proxy/ @scbedd @mikeharder
+/tools/stress-cluster/ @benbp @ckairen

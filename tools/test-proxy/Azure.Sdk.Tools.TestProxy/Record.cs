@@ -2,7 +2,11 @@
 // Licensed under the MIT License.
 
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -34,12 +38,11 @@ namespace Azure.Sdk.Tools.TestProxy
         }
 
         [HttpPost]
-        public void Stop()
+        public void Stop([FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] SortedDictionary<string, string> variables = null)
         {
             string id = RecordingHandler.GetHeader(Request, "x-recording-id");
 
-            _recordingHandler.StopRecording(id);
-
+            _recordingHandler.StopRecording(id, variables: variables);
         }
 
         public async Task HandleRequest()

@@ -155,6 +155,8 @@ form.comment {
 
 .comment-holder {
     max-width: 780px;
+    position: sticky;
+    left: 10px;
 }
 
 .comment-icon {
@@ -258,6 +260,14 @@ form.comment {
     cursor: pointer;
     vertical-align: top;
     border-right: 1px solid #DEE2E6;
+    background-color: white;
+    z-index:1;
+    position: sticky;
+    left: 0;
+}
+
+.line-number-hidden {
+    display: none;
 }
 
 .line-comment-button:hover {
@@ -267,10 +277,9 @@ form.comment {
 .line-comment-button {
     position: relative;
     z-index: 5;
-    float: left;
+    float: right;
     width: 22px;
     height: 22px;
-    margin: -2px -10px -2px -20px;
     line-height: 21px;
     color: #fff !important;
     text-align: center;
@@ -285,6 +294,14 @@ form.comment {
     transform: scale(.8);
     user-select: none;
     text-decoration: none;
+}
+
+.line-comment-button-cell {
+    user-select: none;
+    width: 1em;
+    white-space: normal;
+    positon: sticky;
+    left: 0px;
 }
 
 .code {
@@ -399,7 +416,10 @@ form.comment {
 
 #review-right {
     // Override values from bootsrap
-    max-width: none;
+    max-width: 100%;
+    min-width: 100px;
+    overflow-x: auto;
+    padding: 0px;
 }
 
 .gutter {

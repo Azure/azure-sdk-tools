@@ -3,6 +3,9 @@ kind: NetworkChaos
 metadata:
   name: "{{ .Release.Name }}-{{ .Release.Revision }}"
   namespace: {{ .Release.Namespace }}
+  annotations:
+    'experiment.chaos-mesh.org/pause': 'true'
+
 spec:
   action: loss
   direction: to

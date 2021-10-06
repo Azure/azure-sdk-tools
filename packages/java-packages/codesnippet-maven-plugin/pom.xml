@@ -6,7 +6,7 @@
 
   <groupId>com.azure.tools</groupId>
   <artifactId>codesnippet-maven-plugin</artifactId>
-  <version>1.0.0-beta.1</version>
+  <version>1.0.0-beta.2</version>
   <packaging>maven-plugin</packaging>
 
   <name>Codesnippet Maven Plugin</name>
@@ -111,10 +111,6 @@
         <plugin>
           <artifactId>maven-clean-plugin</artifactId>
           <version>3.1.0</version>
-        </plugin>
-        <plugin>
-          <artifactId>maven-resources-plugin</artifactId>
-          <version>3.0.2</version>
         </plugin>
         <plugin>
           <artifactId>maven-compiler-plugin</artifactId>
@@ -233,6 +229,20 @@
             </configuration>
           </execution>
         </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>3.0.2</version>
+        <configuration>
+          <outputDirectory>${basedir}/target/test-classes</outputDirectory>
+          <resources>
+            <resource>
+              <directory>${basedir}/src/test/resources</directory>
+            </resource>
+          </resources>
+        </configuration>
       </plugin>
     </plugins>
   </build>

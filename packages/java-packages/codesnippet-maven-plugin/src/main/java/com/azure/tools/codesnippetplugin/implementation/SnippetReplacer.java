@@ -289,6 +289,10 @@ public final class SnippetReplacer {
                     modifiedLines.append(line).append(lineSep);
                     needsAmend = true;
                     inSnippet = false;
+                } else {
+                    // Hit an end code fence without being in a snippet, just append the line.
+                    // This can happen in README files with non-Java code fences.
+                    modifiedLines.append(line).append(lineSep);
                 }
             } else if (!inSnippet) {
                 // Only modify the lines if not in the codesnippet.

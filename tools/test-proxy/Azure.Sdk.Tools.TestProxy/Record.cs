@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using Azure.Sdk.Tools.TestProxy.Common;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Newtonsoft.Json;
@@ -38,6 +39,7 @@ namespace Azure.Sdk.Tools.TestProxy
         }
 
         [HttpPost]
+        [AllowEmptyBody]
         public void Stop([FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] SortedDictionary<string, string> variables = null)
         {
             string id = RecordingHandler.GetHeader(Request, "x-recording-id");

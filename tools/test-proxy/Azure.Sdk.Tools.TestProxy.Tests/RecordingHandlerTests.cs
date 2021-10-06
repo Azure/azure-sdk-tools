@@ -3,6 +3,7 @@ using Azure.Sdk.Tools.TestProxy.Matchers;
 using Azure.Sdk.Tools.TestProxy.Sanitizers;
 using Azure.Sdk.Tools.TestProxy.Transforms;
 using Microsoft.AspNetCore.Http;
+using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -196,7 +197,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
-        public async void TestStopRecordingWithVariables()
+        public void TestStopRecordingWithVariables()
         {
             var tmpPath = Path.GetTempPath();
             var startHttpContext = new DefaultHttpContext();
@@ -226,12 +227,12 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         public void TestStopRecordingWithoutVariables()
         {
             var tmpPath = Path.GetTempPath();
-            var startHttpContext = new DefaultHttpContext();
+            var httpContext = new DefaultHttpContext();
             var pathToRecording = "recordings/oauth_request_new.json";
             var recordingHandler = new RecordingHandler(tmpPath);
 
-            recordingHandler.StartRecording(pathToRecording, startHttpContext.Response);
-            var sessionId = startHttpContext.Response.Headers["x-recording-id"].ToString();
+            recordingHandler.StartRecording(pathToRecording, httpContext.Response);
+            var sessionId = httpContext.Response.Headers["x-recording-id"].ToString();
             recordingHandler.StopRecording(sessionId, variables: new SortedDictionary<string, string>());
 
             var storedVariables = TestHelpers.LoadRecordSession(Path.Combine(tmpPath, pathToRecording)).Session.Variables;
@@ -243,12 +244,12 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         public void TestStopRecordingNullVariables()
         {
             var tmpPath = Path.GetTempPath();
-            var startHttpContext = new DefaultHttpContext();
+            var httpContext = new DefaultHttpContext();
             var pathToRecording = "recordings/oauth_request_new.json";
             var recordingHandler = new RecordingHandler(tmpPath);
 
-            recordingHandler.StartRecording(pathToRecording, startHttpContext.Response);
-            var sessionId = startHttpContext.Response.Headers["x-recording-id"].ToString();
+            recordingHandler.StartRecording(pathToRecording, httpContext.Response);
+            var sessionId = httpContext.Response.Headers["x-recording-id"].ToString();
             recordingHandler.StopRecording(sessionId, variables: null);
 
             var storedVariables = TestHelpers.LoadRecordSession(Path.Combine(tmpPath, pathToRecording)).Session.Variables;
@@ -259,30 +260,28 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [Fact]
         public async void TestStartPlaybackWithVariables()
         {
-            var tmpPath = Path.GetTempPath();
-            var startHttpContext = new DefaultHttpContext();
+            var httpContext = new DefaultHttpContext();
             var recordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            httpContext.Response.Body = new MemoryStream();
 
-            await recordingHandler.StartPlayback("Test.RecordEntries/oauth_request_with_variables.json", startHttpContext.Response);
-            var sessionId = startHttpContext.Response.Headers["x-recording-id"].ToString();
-            var body = startHttpContext.Response.Body;
+            await recordingHandler.StartPlayback("Test.RecordEntries/oauth_request_with_variables.json", httpContext.Response);
+            
+            Dictionary<string, string> results = JsonConvert.DeserializeObject<Dictionary<string, string>>(
+                TestHelpers.GenerateStringFromStream(httpContext.Response.Body)
+            );
 
-            // TODO: figure out why body isn't set here
+            Assert.Equal(2, results.Count);
+            Assert.Equal("value1", results["key1"]);
+            Assert.Equal("value2", results["key2"]);
         }
 
         [Fact]
         public async void TestStartPlaybackWithoutVariables()
         {
-            var tmpPath = Path.GetTempPath();
             var startHttpContext = new DefaultHttpContext();
-            var pathToRecording = "recordings/oauth_request_new.json";
             var recordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
 
-            recordingHandler.StartPlayback("Test.RecordEntries/oauth_request.json", startHttpContext.Response);
-            var sessionId = startHttpContext.Response.Headers["x-recording-id"].ToString();
-            var body = startHttpContext.Response.Body;
-            
-            // TODO: figure out why body isn't set here
+            await recordingHandler.StartPlayback("Test.RecordEntries/oauth_request.json", startHttpContext.Response);
         }
     }
 }

@@ -11,6 +11,14 @@ using Newtonsoft.Json;
 
 namespace APIViewWeb
 {
+    public enum ReviewFilterType
+    {
+        None = 0,
+        Manual,
+        Automatic,
+        PullRequest
+    }
+
     public class ReviewModel
     {
         private bool _runAnalysis;
@@ -81,5 +89,7 @@ namespace APIViewWeb
 
         // Master version of review for each package will be auto created
         public bool IsAutomatic { get; set; }
+
+        public ReviewFilterType FilterType { get; set; }
     }
 }

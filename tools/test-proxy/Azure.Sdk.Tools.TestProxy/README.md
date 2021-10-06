@@ -156,13 +156,15 @@ POST to the proxy server:
 URL: https://localhost:5001/record/stop
 headers: {
     "x-recording-id": "<x-recording-id>",
-    "Content-Type": "application/json" // This header needs setting ONLY if a body with values is also sent
+    "Content-Type": "application/json"
 }
 <optional> body: {
     "key1": "value1",
     "key2": "value2"
 }
 ```
+
+The `Content-Type` must be set ONLY if a body with values is also sent. Read section directly below [storing variables](#storing-variables) for a description.
 
 This will **finalize** your recording by:
 

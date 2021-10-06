@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:5.0.303-nanoserver-1809 AS build_env
+FROM mcr.microsoft.com/dotnet/sdk:5.0.401-nanoserver-1809 AS build_env
 
 # copy the code
 COPY docker_build/Azure.Sdk.Tools.TestProxy/ /proxyservercode
@@ -6,7 +6,7 @@ COPY docker_build/Azure.Sdk.Tools.TestProxy/ /proxyservercode
 # publish the package
 RUN cd /proxyservercode && dotnet publish -c Release -o /proxyserver -f net5.0
 
-FROM mcr.microsoft.com/dotnet/aspnet:5.0.3-nanoserver-1809 AS build
+FROM mcr.microsoft.com/dotnet/aspnet:5.0.10-nanoserver-1809 AS build
 
 # Copy PowerShell Core from the installer container
 ENV ProgramFiles="C:\Program Files" \

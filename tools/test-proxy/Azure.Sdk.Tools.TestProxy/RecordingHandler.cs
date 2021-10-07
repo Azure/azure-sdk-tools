@@ -3,6 +3,8 @@ using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Transforms;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.Http.Json;
+using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
 using System;
 using System.Collections.Concurrent;
@@ -63,7 +65,7 @@ namespace Azure.Sdk.Tools.TestProxy
         #endregion
 
         #region recording functionality
-        public void StopRecording(string sessionId)
+        public void StopRecording(string sessionId, IDictionary<string, string> variables = null)
         {
             if (!RecordingSessions.TryRemove(sessionId, out var fileAndSession))
             {
@@ -75,6 +77,14 @@ namespace Azure.Sdk.Tools.TestProxy
             foreach (RecordedTestSanitizer sanitizer in Sanitizers.Concat(session.AdditionalSanitizers))
             {
                 session.Session.Sanitize(sanitizer);
+            }
+
+            if(variables != null)
+            {
+                foreach(var kvp in variables)
+                {
+                    session.Session.Variables[kvp.Key] = kvp.Value;
+                }
             }
 
             if (String.IsNullOrEmpty(file))
@@ -280,6 +290,15 @@ namespace Azure.Sdk.Tools.TestProxy
             }
 
             outgoingResponse.Headers.Add("x-recording-id", id);
+
+            if(session.Session.Variables.Count > 0)
+            {
+                var json = JsonSerializer.Serialize(session.Session.Variables);
+                outgoingResponse.Headers.Add("Content-Type", "application/json");
+
+                // Write to the response
+                await outgoingResponse.WriteAsync(json);
+            }
         }
 
         public void StopPlayback(string recordingId, bool purgeMemoryStore = false)

@@ -3,7 +3,8 @@ using Azure.Sdk.Tools.TestProxy.Matchers;
 using Azure.Sdk.Tools.TestProxy.Sanitizers;
 using Azure.Sdk.Tools.TestProxy.Transforms;
 using Microsoft.AspNetCore.Http;
-using System;
+using Newtonsoft.Json;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Xunit;
@@ -193,6 +194,94 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             await Assert.ThrowsAsync<FileNotFoundException>(
                async () => await recordingHandler.StartPlayback(pathToRecording, httpContext.Response)
             );
+        }
+
+        [Fact]
+        public void TestStopRecordingWithVariables()
+        {
+            var tmpPath = Path.GetTempPath();
+            var startHttpContext = new DefaultHttpContext();
+            var pathToRecording = "recordings/oauth_request_new.json";
+            var recordingHandler = new RecordingHandler(tmpPath);
+            var dict = new Dictionary<string, string>{
+                { "key1","valueabc123" },
+                { "key2", "value123abc" }
+            };
+            var endHttpContext = new DefaultHttpContext();
+
+            recordingHandler.StartRecording(pathToRecording, startHttpContext.Response);
+            var sessionId = startHttpContext.Response.Headers["x-recording-id"].ToString();
+            
+            recordingHandler.StopRecording(sessionId, variables: new SortedDictionary<string, string>(dict));
+            var storedVariables = TestHelpers.LoadRecordSession(Path.Combine(tmpPath, pathToRecording)).Session.Variables;
+
+            Assert.Equal(dict.Count, storedVariables.Count);
+
+            foreach(var kvp in dict)
+            {
+                Assert.Equal(kvp.Value, storedVariables[kvp.Key]);
+            }
+        }
+
+        [Fact]
+        public void TestStopRecordingWithoutVariables()
+        {
+            var tmpPath = Path.GetTempPath();
+            var httpContext = new DefaultHttpContext();
+            var pathToRecording = "recordings/oauth_request_new.json";
+            var recordingHandler = new RecordingHandler(tmpPath);
+
+            recordingHandler.StartRecording(pathToRecording, httpContext.Response);
+            var sessionId = httpContext.Response.Headers["x-recording-id"].ToString();
+            recordingHandler.StopRecording(sessionId, variables: new SortedDictionary<string, string>());
+
+            var storedVariables = TestHelpers.LoadRecordSession(Path.Combine(tmpPath, pathToRecording)).Session.Variables;
+
+            Assert.Empty(storedVariables);
+        }
+
+        [Fact]
+        public void TestStopRecordingNullVariables()
+        {
+            var tmpPath = Path.GetTempPath();
+            var httpContext = new DefaultHttpContext();
+            var pathToRecording = "recordings/oauth_request_new.json";
+            var recordingHandler = new RecordingHandler(tmpPath);
+
+            recordingHandler.StartRecording(pathToRecording, httpContext.Response);
+            var sessionId = httpContext.Response.Headers["x-recording-id"].ToString();
+            recordingHandler.StopRecording(sessionId, variables: null);
+
+            var storedVariables = TestHelpers.LoadRecordSession(Path.Combine(tmpPath, pathToRecording)).Session.Variables;
+
+            Assert.Empty(storedVariables);
+        }
+
+        [Fact]
+        public async void TestStartPlaybackWithVariables()
+        {
+            var httpContext = new DefaultHttpContext();
+            var recordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            httpContext.Response.Body = new MemoryStream();
+
+            await recordingHandler.StartPlayback("Test.RecordEntries/oauth_request_with_variables.json", httpContext.Response);
+            
+            Dictionary<string, string> results = JsonConvert.DeserializeObject<Dictionary<string, string>>(
+                TestHelpers.GenerateStringFromStream(httpContext.Response.Body)
+            );
+
+            Assert.Equal(2, results.Count);
+            Assert.Equal("value1", results["key1"]);
+            Assert.Equal("value2", results["key2"]);
+        }
+
+        [Fact]
+        public async void TestStartPlaybackWithoutVariables()
+        {
+            var startHttpContext = new DefaultHttpContext();
+            var recordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+
+            await recordingHandler.StartPlayback("Test.RecordEntries/oauth_request.json", startHttpContext.Response);
         }
     }
 }

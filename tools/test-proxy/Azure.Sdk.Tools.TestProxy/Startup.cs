@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Reflection;
+using Azure.Sdk.Tools.TestProxy.Common;
 
 namespace Azure.Sdk.Tools.TestProxy
 {
@@ -92,7 +93,10 @@ namespace Azure.Sdk.Tools.TestProxy
             });
 
 
-            services.AddControllers();
+            services.AddControllers(options =>
+            {
+                options.InputFormatters.Add(new EmptyBodyFormatter());
+            });
             services.AddControllersWithViews();
             services.AddRazorPages();
             services.AddSingleton<RecordingHandler>(new RecordingHandler(TargetLocation));

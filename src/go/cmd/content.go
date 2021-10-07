@@ -67,8 +67,13 @@ func (c *content) addConst(pkg pkg, g *ast.GenDecl) {
 				// const FooConst = -1
 				co.Type = skip
 				v = pkg.getText(ce.Pos(), ce.End())
+			} else if se, ok := vs.Values[0].(*ast.SelectorExpr); ok {
+				co.Type = skip
+				v = pkg.getText(se.Pos(), se.End())
 			} else {
-				panic("unhandled case for adding constant")
+				//panic("unhandled case for adding constant")
+				fmt.Printf("WARNING: unhandled constant %s\n", pkg.getText(vs.Values[0].Pos(), vs.Values[0].End()))
+				continue
 			}
 		}
 		co.Value = v

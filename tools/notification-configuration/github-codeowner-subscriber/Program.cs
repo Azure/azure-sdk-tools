@@ -1,16 +1,16 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.Build.WebApi;
-using NotificationConfiguration;
-using NotificationConfiguration.Enums;
-using NotificationConfiguration.Helpers;
-using NotificationConfiguration.Models;
-using NotificationConfiguration.Services;
+using Azure.Sdk.Tools.NotificationConfiguration;
+using Azure.Sdk.Tools.NotificationConfiguration.Enums;
+using Azure.Sdk.Tools.NotificationConfiguration.Helpers;
+using Azure.Sdk.Tools.NotificationConfiguration.Models;
+using Azure.Sdk.Tools.NotificationConfiguration.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace GitHubCodeownerSubscriber
+namespace Azure.Sdk.Tools.GithubCodeownerSubscriber
 {
     class Program
     {

@@ -1,4 +1,4 @@
-namespace NotificationConfiguration.Models
+namespace Azure.Sdk.Tools.NotificationConfiguration.Models
 {
     /// <summary>
     /// Object describing employee github mapping information.

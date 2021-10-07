@@ -1,10 +1,10 @@
 ﻿using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using NotificationConfiguration.Helpers;
+using Azure.Sdk.Tools.NotificationConfiguration.Helpers;
 using System;
 using System.Threading.Tasks;
 
-namespace identity_resolver
+namespace Azure.Sdk.Tools.IdentityResolver
 {
     class Program
     {
@@ -18,7 +18,7 @@ namespace identity_resolver
         /// <param name="kustoUrlVar">Kusto URL environment variable name</param>
         /// <param name="kustoDatabaseVar">Kusto DB environment variable name</param>
         /// <param name="kustoTableVar">Kusto Table environment variable name</param>
-        /// <param name="identity">The full name of the employee</param>
+        /// <param name="identity">The email of the employee like alias@microsoft.com</param>
         /// <param name="targetvar">The name of DevOps output variable</param>
         /// <returns></returns>
         public static async Task Main(
@@ -51,7 +51,7 @@ namespace identity_resolver
                         loggerFactory.CreateLogger<GitHubNameResolver>()
                     );
 
-                    var result = await githubNameResolver.GetMappingInformationFromAADName(identity);
+                    var result = await githubNameResolver.GetMappingInformationFromAADUpn(identity);
 
                     if (!String.IsNullOrEmpty(targetvar))
                     {

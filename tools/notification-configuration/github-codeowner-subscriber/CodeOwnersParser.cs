@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace NotificationConfiguration
+namespace Azure.Sdk.Tools.NotificationConfiguration
 {
     /// <summary>
     /// Performs rudimentary parsing of a CODEOWNERS file for synchornizing into 

@@ -42,7 +42,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         public static string GenerateStringFromStream(Stream s)
         {
             s.Position = 0;
-            StreamReader reader = new StreamReader(s);
+            using StreamReader reader = new StreamReader(s);
 
             return reader.ReadToEnd();
         }

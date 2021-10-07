@@ -65,7 +65,7 @@ namespace Azure.Sdk.Tools.TestProxy
         #endregion
 
         #region recording functionality
-        public void StopRecording(string sessionId, SortedDictionary<string, string> variables = null)
+        public void StopRecording(string sessionId, IDictionary<string, string> variables = null)
         {
             if (!RecordingSessions.TryRemove(sessionId, out var fileAndSession))
             {

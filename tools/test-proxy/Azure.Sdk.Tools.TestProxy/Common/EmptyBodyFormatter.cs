@@ -8,7 +8,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
     public sealed class AllowEmptyBodyAttribute : Attribute
     {
-
     }
 
     public class EmptyBodyFormatter : IInputFormatter

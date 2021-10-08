@@ -67,7 +67,6 @@ func (c *content) addConst(pkg pkg, g *ast.GenDecl) {
 }
 
 func getConstValue(pkg pkg, expr ast.Expr) string {
-	// get the type from the token type
 	if bl, ok := expr.(*ast.BasicLit); ok {
 		// const DefaultLinkCredit = 1
 		return bl.Value

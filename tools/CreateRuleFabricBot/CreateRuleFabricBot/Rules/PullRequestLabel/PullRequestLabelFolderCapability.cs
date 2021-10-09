@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using CodeOwnersParser;
+using Newtonsoft.Json.Linq;
 using OutputColorizer;
 using System;
 using System.Collections.Generic;

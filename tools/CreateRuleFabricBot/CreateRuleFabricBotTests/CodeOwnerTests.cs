@@ -1,3 +1,4 @@
+using CodeOwnersParser;
 using CreateRuleFabricBot;
 using CreateRuleFabricBot.Rules.PullRequestLabel;
 using CreateRuleFabricBotTests;

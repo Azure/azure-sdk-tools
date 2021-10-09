@@ -1,9 +1,8 @@
-﻿using CreateRuleFabricBot.Helpers;
-using OutputColorizer;
+﻿using OutputColorizer;
 using System.Collections.Generic;
 using System.IO;
 
-namespace CreateRuleFabricBot
+namespace CodeOwnersParser
 {
     public static class CodeOwnersFile
     {

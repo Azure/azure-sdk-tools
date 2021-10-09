@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using CodeOwnersParser;
 
 namespace Azure.Sdk.Tools.GithubCodeownerSubscriber
 {
@@ -129,17 +130,15 @@ namespace Azure.Sdk.Tools.GithubCodeownerSubscriber
 
                         var process = group.Pipeline.Process as YamlProcess;
 
-                        // Find matching contacts for the YAML file's path
-                        var parser = new CodeOwnersParser(codeownersContent);
                         logger.LogInformation("Searching CODEOWNERS for matching path for {0}", process.YamlFilename);
-                        var contacts = parser.GetContactsForPath(process.YamlFilename);
+                        var codeOwnerEntries = CodeOwnersFile.ParseContent(codeownersContent);
+                        var contacts = codeOwnerEntries.FindLast(x => x.PathExpression.Trim('/').StartsWith(process.YamlFilename.Trim('/'))).Owners;
 
                         logger.LogInformation("Matching Contacts Path = {0}, NumContacts = {1}", process.YamlFilename, contacts.Count);
 
                         // Get set of team members in the CODEOWNERS file
                         var contactResolutionTasks = contacts
-                            .Where(contact => contact.StartsWith("@"))
-                            .Select(contact => githubNameResolver.GetInternalUserPrincipal(contact.Substring(1)));
+                            .Select(contact => githubNameResolver.GetInternalUserPrincipal(contact));
                         var codeownerPrincipals = await Task.WhenAll(contactResolutionTasks);
 
                         var codeownersDescriptorsTasks = codeownerPrincipals

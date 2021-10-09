@@ -1,10 +1,8 @@
-﻿using CreateRuleFabricBot.Rules.IssueRouting;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection.Emit;
 
-namespace CreateRuleFabricBot
+namespace CodeOwnersParser
 {
     /// <summary>
     /// The entry for CODEOWNERS has the following structure:
@@ -16,9 +14,9 @@ namespace CreateRuleFabricBot
     {
         const char LabelSeparator = '%';
         const char OwnerSeparator = '@';
-        internal const string PRLabelMoniker = "PRLabel";
-        internal const string ServiceLabelMoniker = "ServiceLabel";
-        internal const string MissingFolder = "#/<NotInRepo>/";
+        public const string PRLabelMoniker = "PRLabel";
+        public const string ServiceLabelMoniker = "ServiceLabel";
+        public const string MissingFolder = "#/<NotInRepo>/";
 
         public string PathExpression { get; set; } = "";
 

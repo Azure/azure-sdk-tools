@@ -1,0 +1,45 @@
+# Node.js
+# Build a general Node.js project with npm.
+# Add steps that analyze code, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
+
+trigger:
+- main
+
+variables:
+  NugetSecurityAnalysisWarningLevel: 'none'
+
+strategy:
+  matrix:
+    linux:
+      imageName: 'ubuntu-latest'
+    mac:
+      imageName: 'macos-latest'
+    windows:
+      imageName: 'windows-latest'
+
+pool:
+  vmImage: $(imageName)
+
+steps:
+- task: NodeTool@0
+  inputs:
+    versionSpec: '13.x'
+  displayName: 'Install Node.js'
+
+- script: |
+    npm install
+  displayName: 'npm install'
+  workingDirectory: $(System.DefaultWorkingDirectory)/tools/mock-service-host
+
+- script: |
+    . renew-ssh.sh
+    renew-ssh.bat
+    npm run test
+  displayName: 'npm test'
+  workingDirectory: $(System.DefaultWorkingDirectory)/tools/mock-service-host
+
+- script: |
+    npm run eslint
+  displayName: 'Eslint'
+  workingDirectory: $(System.DefaultWorkingDirectory)/tools/mock-service-host

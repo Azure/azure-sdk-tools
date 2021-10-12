@@ -11,7 +11,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Sdk.Tools.GithubCodeo
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Sdk.Tools.IdentityResolver", "identity-resolver\Azure.Sdk.Tools.IdentityResolver.csproj", "{104DCF1B-E0B2-4BB3-B3EF-31BFCF09D21B}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CodeOwnersParser", "..\code-owners-parser\CodeOwnersParser\CodeOwnersParser.csproj", "{3BA5F6E1-02C1-422D-8E1D-B0128E917ADF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Sdk.Tools.CodeOwnersParser", "..\code-owners-parser\CodeOwnersParser\Azure.Sdk.Tools.CodeOwnersParser.csproj", "{9513900B-36DD-45A5-91F7-C12842464603}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -35,10 +35,10 @@ Global
 		{104DCF1B-E0B2-4BB3-B3EF-31BFCF09D21B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{104DCF1B-E0B2-4BB3-B3EF-31BFCF09D21B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{104DCF1B-E0B2-4BB3-B3EF-31BFCF09D21B}.Release|Any CPU.Build.0 = Release|Any CPU
-		{3BA5F6E1-02C1-422D-8E1D-B0128E917ADF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{3BA5F6E1-02C1-422D-8E1D-B0128E917ADF}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{3BA5F6E1-02C1-422D-8E1D-B0128E917ADF}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{3BA5F6E1-02C1-422D-8E1D-B0128E917ADF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9513900B-36DD-45A5-91F7-C12842464603}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9513900B-36DD-45A5-91F7-C12842464603}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9513900B-36DD-45A5-91F7-C12842464603}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9513900B-36DD-45A5-91F7-C12842464603}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

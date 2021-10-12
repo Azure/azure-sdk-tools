@@ -59,14 +59,14 @@ namespace Azure.Sdk.Tools.IdentityResolver
                     }
                     Console.WriteLine(JsonConvert.SerializeObject(result));
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
                     if (!String.IsNullOrEmpty(targetvar))
                     {
                         Console.WriteLine(String.Format("##vso[task.setvariable variable={0};]{1}", targetvar, ""));
                     }
 
-                    throw e;
+                    throw;
                 }
             }
         }

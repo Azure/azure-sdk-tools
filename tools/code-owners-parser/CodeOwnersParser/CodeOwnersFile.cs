@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 
-namespace CodeOwnersParser
+namespace Azure.Sdk.Tools.CodeOwnersParser
 {
     public static class CodeOwnersFile
     {
@@ -41,7 +41,7 @@ namespace CodeOwnersParser
                         continue;
                     }
 
-                    if (!line.StartsWith('#') || line.IndexOf(CodeOwnerEntry.MissingFolder, System.StringComparison.OrdinalIgnoreCase) >= 0)
+                    if (!line.StartsWith("#") || line.IndexOf(CodeOwnerEntry.MissingFolder, System.StringComparison.OrdinalIgnoreCase) >= 0)
                     {
                         // If this is not a comment line OR this is a placeholder entry
 
@@ -56,7 +56,7 @@ namespace CodeOwnersParser
                         // create a new entry.
                         entry = new CodeOwnerEntry();
                     }
-                    else if (line.StartsWith('#'))
+                    else if (line.StartsWith("#"))
                     {
                         // try to process the line in case there are markers that need to be extracted
                         entry.ProcessLabelsOnLine(line);

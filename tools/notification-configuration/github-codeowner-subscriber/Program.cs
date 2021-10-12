@@ -9,7 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using CodeOwnersParser;
+using Azure.Sdk.Tools.CodeOwnersParser;
 
 namespace Azure.Sdk.Tools.GithubCodeownerSubscriber
 {

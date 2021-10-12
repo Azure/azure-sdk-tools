@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\code-owners-parser\CodeOwnersParser\CodeOwnersParser.csproj" />
+    <ProjectReference Include="..\..\code-owners-parser\CodeOwnersParser\Azure.Sdk.Tools.CodeOwnersParser.csproj" />
     <ProjectReference Include="..\CreateRuleFabricBot\CreateRuleFabricBot.csproj" />
   </ItemGroup>
 

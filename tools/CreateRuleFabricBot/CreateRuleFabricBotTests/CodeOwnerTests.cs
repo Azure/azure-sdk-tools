@@ -1,4 +1,4 @@
-using CodeOwnersParser;
+using Azure.Sdk.Tools.CodeOwnersParser;
 using CreateRuleFabricBot;
 using CreateRuleFabricBot.Rules.PullRequestLabel;
 using CreateRuleFabricBotTests;

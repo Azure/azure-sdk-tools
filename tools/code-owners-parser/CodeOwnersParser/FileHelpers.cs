@@ -2,7 +2,7 @@
 using System.IO;
 using System.Net.Http;
 
-namespace CodeOwnersParser
+namespace Azure.Sdk.Tools.CodeOwnersParser
 {
     public static class FileHelpers
     {

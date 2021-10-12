@@ -1,4 +1,4 @@
-﻿using CodeOwnersParser;
+﻿using Azure.Sdk.Tools.CodeOwnersParser;
 using Newtonsoft.Json.Linq;
 using OutputColorizer;
 using System;

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace CodeOwnersParser
+namespace Azure.Sdk.Tools.CodeOwnersParser
 {
     /// <summary>
     /// The entry for CODEOWNERS has the following structure:
@@ -38,12 +38,12 @@ namespace CodeOwnersParser
 
         private static string[] SplitLine(string line, char splitOn)
         {
-            return line.Split(splitOn, StringSplitOptions.RemoveEmptyEntries);
+            return line.Split(new char[] { splitOn }, StringSplitOptions.RemoveEmptyEntries);
         }
 
         public override string ToString()
         {
-            return $"HasWildcard:{ContainsWildcard} Expression:{PathExpression} Owners:{string.Join(',', Owners)}  PRLabels:{string.Join(',', PRLabels)}   ServiceLabels:{string.Join(',', ServiceLabels)}";
+            return $"HasWildcard:{ContainsWildcard} Expression:{PathExpression} Owners:{string.Join(",", Owners)}  PRLabels:{string.Join(",", PRLabels)}   ServiceLabels:{string.Join(",", ServiceLabels)}";
         }
 
         public bool ProcessLabelsOnLine(string line)
@@ -89,7 +89,7 @@ namespace CodeOwnersParser
         public void ParseOwnersAndPath(string line)
         {
             if (string.IsNullOrEmpty(line) ||
-               (line.StartsWith('#') && !(line.IndexOf(CodeOwnerEntry.MissingFolder, StringComparison.OrdinalIgnoreCase) >= 0)))
+               (line.StartsWith("#") && !(line.IndexOf(CodeOwnerEntry.MissingFolder, StringComparison.OrdinalIgnoreCase) >= 0)))
             {
                 return;
             }

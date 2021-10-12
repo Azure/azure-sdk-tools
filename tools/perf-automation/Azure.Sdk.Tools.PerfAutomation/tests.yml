@@ -9,19 +9,19 @@
     DefaultVersions:
     - 1.8.0_292
     OptionalVersions:
-    - 15.0.2+7
+    - 17+35
 
   JS:
     DefaultVersions:
-    - 14.17.6
+    - 14.18.1
     OptionalVersions:
-    - 16.8.0
+    - 16.11.1
   
   Python:
     DefaultVersions:
-    - 3.7.11
+    - 3.7.12
     OptionalVersions:
-    - 3.9.7
+    - 3.10.0
 
   Cpp:
     DefaultVersions:

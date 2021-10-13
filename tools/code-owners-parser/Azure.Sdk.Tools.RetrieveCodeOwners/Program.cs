@@ -10,12 +10,6 @@ using Azure.Sdk.Tools.CodeOwnersParser;
 
 namespace Azure.Sdk.Tools.RetrieveCodeOwners
 {
-    public class CodeOwnersInfo 
-    {
-        public List<string> users { get; set; }
-        public List<string> teams { get; set; }
-        public List<string> labels { get; set; }
-    }
     class Program
     {
         private static readonly HttpClient client = new HttpClient();
@@ -24,18 +18,18 @@ namespace Azure.Sdk.Tools.RetrieveCodeOwners
         /// </summary>
         /// <param name="targetDirectory">The directory whose information is to be retrieved</param>
         /// <param name="rootDirectory">The root of the repo or $(Build.SourcesDirectory) on DevOps</param>
-        /// <param name="authToken">GitHub api auth token</param>
         /// <param name="vsoOwningUsers">Variable for setting user aliases</param>
         /// <param name="vsoOwningTeams">Variable for setting user aliases</param>
         /// <param name="vsoOwningLabels">Variable for setting user aliases</param>
         /// <returns></returns>
-        static async Task<string> Main(
+
+        public static void Main(
             string targetDirectory,
             string rootDirectory,
-            string authToken,
             string vsoOwningUsers,
             string vsoOwningTeams,
-            string vsoOwningLabels)
+            string vsoOwningLabels
+            )
         {
             var target = targetDirectory.ToLower().Trim();
             var codeOwnersLocation = Path.Join(rootDirectory, ".github", "CODEOWNERS");
@@ -44,7 +38,10 @@ namespace Azure.Sdk.Tools.RetrieveCodeOwners
             var filteredEntries = parsedEntries.Where(
                 entries => entries.PathExpression.Trim(new char[] {'/','\\' }).Equals(targetDirectory.Trim(new char[] { '/', '\\' })));
 
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authToken);
+            client.BaseAddress = new Uri("https://api.github.com/");
+            client.DefaultRequestHeaders.UserAgent.Add(new System.Net.Http.Headers.ProductInfoHeaderValue("CodeOwnerRetriever", "1.0"));
+            client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+            
             List<string> users = new List<string>();
             List<string> teams = new List<string>();
             List<string> labels = new List<string>();
@@ -57,27 +54,17 @@ namespace Azure.Sdk.Tools.RetrieveCodeOwners
                 {
                     foreach (var alias in entry.Owners)
                     {
-                        if (alias.IndexOf('/') != -1) // Check if it's a team alias e.g. Azure/azure-sdk-eng
+                        var userUriStub = $"users/{alias}";
+                        if (VerifyAlias(userUriStub))
                         {
-                            var org = alias.Substring(0, alias.IndexOf('/'));
-                            var team_slug = alias.Substring(alias.IndexOf('/') + 1);
-                            var teamApiUrl = $"https://api.github.com/orgs/{org}/teams/{team_slug}";
-                            if (await VerifyAlias(teamApiUrl)) 
-                            {
-                                teams.Add(team_slug);
-                                continue;
-                            }
+                            users.Add(alias);
+                            continue;
                         }
-                        else 
+                        else
                         {
-                            var userApiUrl = $"https://api.github.com/users/{alias}";
-                            if (await VerifyAlias(userApiUrl))
-                            {
-                                users.Add(alias);
-                                continue;
-                            }
+                            // Assume its a team alias
+                            teams.Add(alias);
                         }
-                        Console.WriteLine($"Alias {alias} is neither a recognized github user nor a team");
                     }
                     labels.AddRange(entry.PRLabels);
                     labels.AddRange(entry.ServiceLabels);
@@ -85,15 +72,15 @@ namespace Azure.Sdk.Tools.RetrieveCodeOwners
             }
 
             if (vsoOwningUsers != null) {
-                var presentOwningLabels = Environment.GetEnvironmentVariable(vsoOwningUsers);
-                if (presentOwningLabels != null)
+                var presentOwningUsers = Environment.GetEnvironmentVariable(vsoOwningUsers);
+                if (presentOwningUsers != null)
                 {
-                    foreach (var item in presentOwningLabels.Split(","))
+                    foreach (var item in presentOwningUsers.Split(","))
                     {
                         users.Add(item.Trim());
                     }
                 }
-                Console.WriteLine(String.Format("##vso[task.setvariable variable=VsoOwningUsers;]{0}", (String.Join(",", users))));
+                Console.WriteLine(String.Format("##vso[task.setvariable variable={0};]{1}", vsoOwningUsers, String.Join(",", users)));
             }
 
             if (vsoOwningTeams != null)
@@ -106,7 +93,7 @@ namespace Azure.Sdk.Tools.RetrieveCodeOwners
                         teams.Add(item.Trim());
                     }
                 }
-                Console.WriteLine(String.Format("##vso[task.setvariable variable=vsoOwningTeams;]{0}", (String.Join(",", teams))));
+                Console.WriteLine(String.Format("##vso[task.setvariable variable={0};]{1}", vsoOwningTeams, (String.Join(",", teams))));
             }
 
             if (vsoOwningLabels != null)
@@ -119,25 +106,22 @@ namespace Azure.Sdk.Tools.RetrieveCodeOwners
                         users.Add(item.Trim());
                     }
                 }
-                Console.WriteLine(String.Format("##vso[task.setvariable variable=vsoOwningLabels;]{0}", (String.Join(",", labels))));
+                Console.WriteLine(String.Format("##vso[task.setvariable variable={0};]{1}", vsoOwningLabels, (String.Join(",", labels))));
             }
-            var SerializerPptions = new JsonSerializerOptions() { WriteIndented = true };
-            return JsonSerializer.Serialize<CodeOwnersInfo>(
-                new CodeOwnersInfo() { users = users, teams = teams, labels = labels }, SerializerPptions);
         }
 
-        private static async Task<bool> VerifyAlias(string apiUrl)
+        private static bool VerifyAlias(string uriStub)
         {
             try {
-                var response = await client.GetAsync(apiUrl);
-                if (response.IsSuccessStatusCode)
+                var response = client.GetAsync(uriStub);
+                if (response.Result.IsSuccessStatusCode)
                 {
                     return true;
                 }
                 return false;
             } catch 
             {
-                Console.WriteLine($"Http call {apiUrl} to failed.");
+                Console.WriteLine($"Http call {uriStub} to failed.");
                 throw;
             }
         }

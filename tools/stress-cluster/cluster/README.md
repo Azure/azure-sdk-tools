@@ -122,9 +122,11 @@ az ad sp create-for-rbac -n 'stress-test-provisioner' --role Contributor --scope
 Create an env file with the service principal values created above:
 
 ```
+AZURE_CLIENT_OID=<app object id>
 AZURE_CLIENT_ID=<app id>
 AZURE_CLIENT_SECRET=<password/secret>
 AZURE_TENANT_ID=<tenant id>
+AZURE_SUBSCRIPTION_ID=<subscription id>
 ```
 
 Upload it to the static keyvault:

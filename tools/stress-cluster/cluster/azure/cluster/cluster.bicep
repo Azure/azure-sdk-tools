@@ -4,20 +4,52 @@ param groupSuffix string
 param dnsPrefix string = 's1'
 param clusterName string
 param location string = resourceGroup().location
-param agentVMSize string = 'Standard_D2_v3'
-
-@minValue(1)
-@maxValue(50)
-@description('The number of nodes for the cluster.')
-param agentCount int = 3
+param enableHighMemAgentPool bool = false
 
 // monitoring parameters
 param enableMonitoring bool = false
 param workspaceId string
 
-var kubernetesVersion = '1.20.5'
+var kubernetesVersion = '1.21.2'
 var nodeResourceGroup = 'rg-nodes-${dnsPrefix}-${clusterName}-${groupSuffix}'
-var agentPoolName = 'agentpool01'
+
+var defaultAgentPool = {
+  name: 'default'
+  count: 3
+  minCount: 3
+  maxCount: 9
+  mode: 'System'
+  vmSize: 'Standard_D2_v3'
+  type: 'VirtualMachineScaleSets'
+  osType: 'Linux'
+  enableAutoScaling: true
+  enableEncryptionAtHost: true
+  nodeLabels: {
+      'sku': 'default'
+  }
+}
+
+var highMemAgentPool = {
+  name: 'highmemory'
+  count: 1
+  minCount: 1
+  maxCount: 3
+  mode: 'System'
+  vmSize: 'Standard_D4ds_v4'
+  type: 'VirtualMachineScaleSets'
+  osType: 'Linux'
+  enableAutoScaling: true
+  enableEncryptionAtHost: true
+  nodeLabels: {
+      'sku': 'highMem'
+  }
+}
+
+var agentPools = concat([
+        defaultAgentPool
+    ], enableHighMemAgentPool ? [
+        highMemAgentPool
+    ] : [])
 
 resource cluster 'Microsoft.ContainerService/managedClusters@2020-09-01' = {
   name: clusterName
@@ -41,17 +73,7 @@ resource cluster 'Microsoft.ContainerService/managedClusters@2020-09-01' = {
     kubernetesVersion: kubernetesVersion
     enableRBAC: true
     dnsPrefix: dnsPrefix
-    agentPoolProfiles: [
-      {
-        name: agentPoolName
-        count: agentCount
-        mode: 'System'
-        vmSize: agentVMSize
-        type: 'VirtualMachineScaleSets'
-        osType: 'Linux'
-        enableAutoScaling: false
-      }
-    ]
+    agentPoolProfiles: agentPools
     servicePrincipalProfile: {
       clientId: 'msi'
     }

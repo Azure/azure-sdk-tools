@@ -1,5 +1,5 @@
 {{ define "stress-test-addons.init-deploy" }}
-- name: azure-deployer
+- name: init-azure-deployer
   image: mcr.microsoft.com/azure-cli
   command: ['bash', '-c']
   args:

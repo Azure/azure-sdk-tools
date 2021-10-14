@@ -53,7 +53,7 @@ Within the container, recording outputs are written within the directory `/etc/t
 
 #### A note about docker caching
 
-The azure-sdk team regularly update the image associated with the `latest` tag. Combined with the fact that docker will aggressively cache if possible, it is very possible that developers' local machines are running with an outdated version of the test proxy.
+The azure-sdk team regularly update the image associated with the `latest` tag. Combined with the fact that docker will aggressively cache if possible, it is very possible that developers' local machines may be running outdated versions of the test-proxy.
 
 To ensure that your local copy is up to date, run:
 

@@ -1,0 +1,14 @@
+apiVersion: v2
+name: debug-share-example
+description: An example stress test chart that uses a file share for debugging (e.g. for large log files, heap dumps)
+version: 0.1.1
+appVersion: v0.1
+annotations:
+  stressTest: 'true'  # enable auto-discovery of this test via `find-all-stress-packages.ps1`
+  example: 'true'  # enable auto-discovery filtering `find-all-stress-packages.ps1 -filters @{example='true'}`
+  namespace: 'examples'
+
+dependencies:
+- name: stress-test-addons
+  version: 0.1.9
+  repository: https://stresstestcharts.blob.core.windows.net/helm/

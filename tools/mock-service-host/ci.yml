@@ -35,6 +35,10 @@ steps:
 - script: |
     . renew-ssh.sh
     renew-ssh.bat
+  displayName: 'renew ssh certs'
+  workingDirectory: $(System.DefaultWorkingDirectory)/tools/mock-service-host
+
+- script: |
     npm run test
   displayName: 'npm test'
   workingDirectory: $(System.DefaultWorkingDirectory)/tools/mock-service-host

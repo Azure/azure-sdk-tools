@@ -100,6 +100,12 @@
                         <label>Show documentation</label>
                     </a>
                 </span>
+                <span class="dropdown-item checkbox">
+                    <label>
+                        <input type="checkbox" id="hide-line-numbers">
+                        Hide Line Number
+                    </label>
+                </span>
                 @if (!String.IsNullOrEmpty(Model.DiffRevisionId))
                 {
                     <span class="dropdown-item">
@@ -142,8 +148,8 @@
         </div>
     </div>
 </div>
-<div class="row" data-review-id="@Model.Review.ReviewId" data-revision-id="@Model.Revision.RevisionId" data-language="@Model.Review.Language">
-    <div id="review-left" class="col-lg-2 col">
+<div class="row pr-3 pl-3" data-review-id="@Model.Review.ReviewId" data-revision-id="@Model.Revision.RevisionId" data-language="@Model.Review.Language">
+    <div id="review-left" class="col-lg-2 col rounded-1 border">
         <div class="namespace-view">
             @if (Model.CodeFile != null)
             {
@@ -152,8 +158,8 @@
         </div>
     </div>
 
-    <div id="review-right" class="col-10">
-        <table class="code-window border rounded-1">
+    <div id="review-right" class="col-10 rounded-1 border">
+        <table class="code-window">
             <tbody>
                 @foreach (var line in Model.Lines)
                 {

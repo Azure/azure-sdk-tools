@@ -12,7 +12,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
     /// <summary>
     /// Used to sanitize "session" variables. A "session" variable is one that is returned as a result of Response A, then used as INPUT of Response B.
     /// 
-    /// The value inserted defaults to a new guid if one is not provided.
+    /// The value inserted defaults to a new guid if one is not provided. This sanitizer applies at the session level.
     /// </summary>
     public class ContinuationSanitizer : RecordedTestSanitizer
     {

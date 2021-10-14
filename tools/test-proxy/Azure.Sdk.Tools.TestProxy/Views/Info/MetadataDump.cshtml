@@ -65,7 +65,23 @@ BODY: {
             </li>
         </ul>
 
-        This is due to the fact that during playback, there is no session context. The test-proxy can only operate against the request that just came in.
+        This is due to the fact that during playback, there is no session context. The test-proxy can only operate against the request that just came in. 
+
+        Sanitizers are optionally prefixed with a title that indicates where each sanitizer applies. These prefixes are:
+
+        <ul>
+            <li>
+                <code>Uri</code>
+            </li>
+            <li>
+                <code>Header</code>
+            </li>
+            <li>
+                <code>Body</code>
+            </li>
+        </ul>
+
+        For example, A sanitizer prefixed with <code>Body</code> will only ever operate on the request/response body. The target URI and request/response headers will be left unaffected.
     </p>
     @foreach (var extension in Model.Sanitizers)
     {

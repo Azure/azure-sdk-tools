@@ -1,8 +1,10 @@
 ﻿using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Azure.Sdk.Tools.NotificationConfiguration.Helpers;
+using Azure.Sdk.Tools.NotificationConfiguration.Models;
 using System;
 using System.Threading.Tasks;
+using OutputColorizer;
 
 namespace Azure.Sdk.Tools.IdentityResolver
 {
@@ -18,7 +20,8 @@ namespace Azure.Sdk.Tools.IdentityResolver
         /// <param name="kustoUrlVar">Kusto URL environment variable name</param>
         /// <param name="kustoDatabaseVar">Kusto DB environment variable name</param>
         /// <param name="kustoTableVar">Kusto Table environment variable name</param>
-        /// <param name="identity">The email of the employee like alias@microsoft.com</param>
+        /// <param name="identityName">The full name of the employee</param>
+        /// <param name="identityEmail">The email of the employee like alias@microsoft.com</param>
         /// <param name="targetvar">The name of DevOps output variable</param>
         /// <returns></returns>
         public static async Task Main(
@@ -28,7 +31,8 @@ namespace Azure.Sdk.Tools.IdentityResolver
             string kustoUrlVar,
             string kustoDatabaseVar,
             string kustoTableVar,
-            string identity,
+            string identityName,
+            string identityEmail,
             string targetvar
             )
         {
@@ -51,13 +55,33 @@ namespace Azure.Sdk.Tools.IdentityResolver
                         loggerFactory.CreateLogger<GitHubNameResolver>()
                     );
 
-                    var result = await githubNameResolver.GetMappingInformationFromAADUpn(identity);
+                    if (identityName == null && identityEmail == null)
+                    {
+                        Colorizer.WriteLine("You must specify either [Yellow!identityName] or [Yellow!identityEmail].");
+                        return;
+                    }
+
+                    var result = default(IdentityDetail);
+
+                    if (identityName != null)
+                    {
+                        result = await githubNameResolver.GetMappingInformationFromAADName(identityName);
+                    }
+
+                    if (result == default(IdentityDetail) && identityEmail != null)
+                    {
+                        result = await githubNameResolver.GetMappingInformationFromAADUpn(identityEmail);
+                    }
 
                     if (!String.IsNullOrEmpty(targetvar))
                     {
                         Console.WriteLine(String.Format("##vso[task.setvariable variable={0};]{1}", targetvar, result.GithubUserName));
                     }
-                    Console.WriteLine(JsonConvert.SerializeObject(result));
+                    if (result != default(IdentityDetail))
+                    {
+                        Colorizer.WriteLine("[Green!User resolved successfully.]");
+                        Console.WriteLine(JsonConvert.SerializeObject(result));
+                    }
                 }
                 catch (Exception)
                 {
@@ -65,8 +89,7 @@ namespace Azure.Sdk.Tools.IdentityResolver
                     {
                         Console.WriteLine(String.Format("##vso[task.setvariable variable={0};]{1}", targetvar, ""));
                     }
-
-                    throw;
+                    Colorizer.WriteLine("Ensure that a valid [Yellow!identityName] or [Yellow!identityEmail] has been specified.");
                 }
             }
         }

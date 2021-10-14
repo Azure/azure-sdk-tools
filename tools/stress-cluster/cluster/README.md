@@ -1,5 +1,4 @@
 Table of Contents
-
 * [Layout](#layout)
 * [Dependencies](#dependencies)
 * [Deploying Cluster(s)](#deploying-clusters)
@@ -64,6 +63,18 @@ First, update the `./azure/parameters/dev.json` parameters file with the values 
 
 ```
 ./provision.ps1 -env dev
+```
+
+To deploy stress test packages to the dev environment
+(e.g. the [examples](https://github.com/Azure/bicep/tree/main/docs/examples)), pass in `-Environment dev` (see below).
+The provision script will update the `./kubernetes/stress-test-addons/values.yaml` file with all the relevant
+resource values from the newly provisioned dev environment that are required by the stress test common configuration.
+
+Avoid checking in the updated dev values, they are for local use only.
+
+```
+# -Login only needs to be run once or if the azure container registry credentials have expired (~24 hours)
+<tools repo>/eng/common/scripts/stress-testing/deploy-stress-tests.ps1 -Login -Environment dev
 ```
 
 ## Test Cluster

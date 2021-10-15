@@ -71,8 +71,6 @@ stages:
       jobs:
       - job: approve
         pool: server
-        dependsOn: Pack
-        condition: succeeded()
         steps:
         - task: ManualValidation@0
           inputs:

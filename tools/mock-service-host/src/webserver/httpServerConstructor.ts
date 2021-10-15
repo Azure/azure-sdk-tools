@@ -17,7 +17,7 @@ export function getHttpsServer(app: any | express.Application) {
         if (process.platform === 'win32') {
             chile_process.execSync(`${__dirname}\\..\\..\\..\\script\\renew-ssh.bat`)
         } else {
-            chile_process.execSync(`. ${__dirname}/../../../script/renew-ssh.sh`)
+            chile_process.execSync(`bash ${__dirname}/../../../script/renew-ssh.sh`)
         }
     }
     const certs = {

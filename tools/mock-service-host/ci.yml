@@ -20,7 +20,7 @@ variables:
 stages:
   - stage: InstallAndTest
     jobs:
-      - job: Install
+      - job: Test
         strategy:
           matrix:
             linux:
@@ -55,14 +55,14 @@ stages:
         - script: 'cp mock-service-host-*.tgz $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
           displayName: 'copy to staging dir'
           workingDirectory: $(System.DefaultWorkingDirectory)/tools/mock-service-host
-          condition: contains(variables['OSVmImage'], 'ubuntu')
+          condition: contains(variables['imageName'], 'ubuntu')
 
         - task: PublishBuildArtifacts@1
           inputs:
             PathtoPublish: '$(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
             ArtifactName: '$(VAR_ARIFACT_NAME)'
             publishLocation: 'Container'
-          condition: contains(variables['OSVmImage'], 'ubuntu')
+          condition: contains(variables['imageName'], 'ubuntu')
         
   - ${{if ne(variables['Build.Reason'], 'PullRequest')}}:
     - stage: Release

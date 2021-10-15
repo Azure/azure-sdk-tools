@@ -47,6 +47,12 @@ The Azure SDK Team maintains a public Azure Container Registry.
 > docker run -v <your-volume-name-or-location>:/etc/testproxy -p 5001:5001 -p 5000:5000 azsdkengsys.azurecr.io/engsys/testproxy-lin:latest
 ```
 
+For example, to save test recordings to disk in your repo's `/sdk/<service>/tests/recordings` directory, provide the path to the root of the repo:
+
+```powershell
+> docker run -v C:\\repo\\azure-sdk-for-<language>:/etc/testproxy -p 5001:5001 -p 5000:5000 azsdkengsys.azurecr.io/engsys/testproxy-lin:latest
+```
+
 Note the **port and volume mapping** as arguments! Any files that exist in this volume locally will only be appended to/updated in place. It is a non-destructive initialize.
 
 Within the container, recording outputs are written within the directory `/etc/testproxy`.

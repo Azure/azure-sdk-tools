@@ -24,5 +24,5 @@ pr:
 extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
   parameters:
-    ToolDirectory: tools/notification-configuration
-    SkipDotNetInstall: true
+    ToolDirectory: tools/code-owners-parser
+    DotNetCoreVersion: 5.0.301

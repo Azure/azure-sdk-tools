@@ -25,4 +25,4 @@ extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
   parameters:
     ToolDirectory: tools/notification-configuration
-    SkipDotNetInstall: true
+    DotNetCoreVersion: 5.0.301

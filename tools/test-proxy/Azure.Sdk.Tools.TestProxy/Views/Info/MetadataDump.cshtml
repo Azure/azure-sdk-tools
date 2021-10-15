@@ -1,4 +1,4 @@
-﻿@using Azure.Sdk.Tools.TestProxy.Models; 
+﻿@using Azure.Sdk.Tools.TestProxy.Models;
 @model AvailableMetadataModel
 
 @{
@@ -66,6 +66,22 @@ BODY: {
         </ul>
 
         This is due to the fact that during playback, there is no session context. The test-proxy can only operate against the request that just came in.
+
+        Sanitizers are optionally prefixed with a title that indicates where each sanitizer applies. These prefixes are:
+
+        <ul>
+            <li>
+                <code>Uri</code>
+            </li>
+            <li>
+                <code>Header</code>
+            </li>
+            <li>
+                <code>Body</code>
+            </li>
+        </ul>
+
+        For example, A sanitizer prefixed with <code>Body</code> will only ever operate on the request/response body. The target URI and request/response headers will be left unaffected.
     </p>
     @foreach (var extension in Model.Sanitizers)
     {
@@ -90,7 +106,7 @@ BODY: {
                     @if (!String.IsNullOrEmpty(extension.ConstructorDetails.Description) || extension.ConstructorDetails.Arguments.Count() > 0)
                     {
                         <p>
-                            @extension.ConstructorDetails.Description
+                            @Html.Raw(@extension.ConstructorDetails.Description)
                         </p>
                         <ul>
                             @foreach (var arg in extension.ConstructorDetails.Arguments)
@@ -140,7 +156,7 @@ BODY: {
                     @if (!String.IsNullOrEmpty(extension.ConstructorDetails.Description) || extension.ConstructorDetails.Arguments.Count() > 0)
                     {
                         <p>
-                            @extension.ConstructorDetails.Description
+                            @Html.Raw(@extension.ConstructorDetails.Description)
                         </p>
                         <ul>
                             @foreach (var arg in extension.ConstructorDetails.Arguments)
@@ -185,7 +201,7 @@ BODY: {
                     @if (!String.IsNullOrEmpty(extension.ConstructorDetails.Description) || extension.ConstructorDetails.Arguments.Count() > 0)
                     {
                         <p>
-                            @extension.ConstructorDetails.Description
+                            @Html.Raw(@extension.ConstructorDetails.Description)
                         </p>
                         <ul>
                             @foreach (var arg in extension.ConstructorDetails.Arguments)

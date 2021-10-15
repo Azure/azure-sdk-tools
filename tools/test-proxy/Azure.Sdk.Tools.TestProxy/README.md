@@ -57,6 +57,16 @@ Note the **port and volume mapping** as arguments! Any files that exist in this 
 
 Within the container, recording outputs are written within the directory `/etc/testproxy`.
 
+#### A note about docker caching
+
+The azure-sdk team regularly update the image associated with the `latest` tag. Combined with the fact that docker will aggressively cache if possible, it is very possible that developers' local machines may be running outdated versions of the test-proxy.
+
+To ensure that your local copy is up to date, run:
+
+```powershell
+> docker pull azsdkengsys.azurecr.io/engsys/testproxy-lin:latest
+```
+
 ## Command line arguments
 
 The test-proxy resolves the its storage location via:
@@ -294,6 +304,16 @@ body: {
     "groupForReplace": "account"
 }
 ```
+
+#### A note about where sanitizers apply
+
+Each sanitizer is optionally prefaced with the **specific part** of the request/response pair that it applies to. These prefixes are
+
+- `Uri`
+- `Header`
+- `Body`
+
+A sanitizer that does _not_ include this prefix is something different, and probably applies at the session level instead on an individual request/response pair.
 
 ### For Sanitizers, Matchers, or Transforms in general
 

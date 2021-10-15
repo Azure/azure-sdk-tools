@@ -49,7 +49,7 @@ namespace Azure.Sdk.Tools.TestProxy.Models
                     {
                         if (child.Name == "summary")
                         {
-                            description = child.InnerText;
+                            description = child.InnerXml;
                         }
                         if (child.Name == "param")
                         {

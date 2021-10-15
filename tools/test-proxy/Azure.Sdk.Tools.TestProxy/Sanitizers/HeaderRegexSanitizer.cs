@@ -4,7 +4,8 @@ using System.Collections.Generic;
 namespace Azure.Sdk.Tools.TestProxy.Sanitizers
 {
     /// <summary>
-    /// This sanitizer operates on a RecordSession entry and applies itself to the headers containered therein.
+    /// This sanitizer operates on a RecordSession entry and applies itself to the headers contained therein. This sanitizer ONLY applies to the request/response headers, 
+    /// body and URI are left untouched.
     /// </summary>
     public class HeaderRegexSanitizer : RecordedTestSanitizer
     {

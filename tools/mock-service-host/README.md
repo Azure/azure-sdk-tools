@@ -57,18 +57,18 @@ Use git to clone this repo to your local workspace.
 
 ```shell
 # cd MY_WORKSPACE
-# git clone devdiv@vs-ssh.visualstudio.com:v3/devdiv/DevDiv/avs
+# git clone git@github.com:Azure/azure-sdk-tools.git
+# cd tools/mock-service-host
 ```
 
-### 1.2 Configure avs running environment to use your local swagger
+### 1.2 Configure mock-service-host running environment to use your local swagger
 
-The Azrue Rest Api Spec repo is a companion repo of avs. By default, the avs download [the public azure swagger repo](https://github.com/Azure/azure-rest-api-specs) to cache folder and load the target Resource provider based on configuration. You can ask it to load all RPs by updating configs in file '.env'.
+The Azrue Rest Api Spec repo is a companion repo of mock-service-host. By default, the mock-service-host download [the public azure swagger repo](https://github.com/Azure/azure-rest-api-specs) to cache folder and load the target Resource provider based on configuration. You can ask it to load all RPs by updating configs in file '.env'.
 
 ```
-+-- MY_WORKSPACE/
-|   +-- avs/
-|      +-- cache/                   // swagger repos will be downloaded here in the first start-up of Avs
-|      +-- .env                     // you can create this file, and add configs in it.
++-- mock-service-host/
+|   +-- cache/                   // swagger repos will be downloaded here in the first start-up of mock-service-host
+|   +-- .env                     // you can create this file, and add configs in it.
 ```
 
 Set target swagger files as bellow in .env:
@@ -80,27 +80,29 @@ specRetrievalGitCommitID=xxx
 validationPathsPattern=specification/*/resource-manager/*/**/*.json
 ```
 
-Change specRetrievalGitUrl and specRetrievalGitBranch if you are not using the public swagger main branch. Change specRetrievalGitCommitID if you are not using the branch head. And you can specify a narrow rule to enable only your own RP's json files to accelerate the loading speed of avs. For instance:
+Change specRetrievalGitUrl and specRetrievalGitBranch if you are not using the public swagger main branch. Change specRetrievalGitCommitID if you are not using the branch head. And you can specify a narrow rule to enable only your own RP's json files to accelerate the loading speed of mock-service-host. For instance:
 
 ```
 validationPathsPattern=specification/mediaservices/resource-manager/Microsoft.Media/**/*.json
 ```
 
-### 1.3 download \*.pem files for self-signed certificate.
+### 1.3 [Optional] download \*.pem files for self-signed certificate.
+The SSL certificates are required when launching the mock-service-host. This step download the default *.pem certificate files from Azure KeyVault.
 
 ```shell
 # az login ...      // login azure cli with your credential
-# cd avs
-# . ./initiate.sh   // for LINUX or mac
+# . initiate.sh   // for LINUX or mac
 ```
 
 or
 
 ```bat
-> .\initiate.ps1    // for Windows, need to run in powershell
+> initiate.ps1    // for Windows, need to run in powershell
 ```
 
 If failed for permission reasons, please contact [CodeGen Core team vsccodegen@microsoft.com](vsccodegen@microsoft.com) for authentication on keyvault used in the scripts. Or you may create self-signed key&cert by your self, the required files can be found in [src/webserver/httpServerConstructor.ts](./src/webserver/httpServerConstructor.ts)
+
+> **_NOTE:_** If you don't do this step, the mock-service-host will try to create new certificates when lauching. This will require [OpenSSL Toolkit](https://www.openssl.org/) must be available in your computer.
 
 ### 1.4 start Mock Service Host
 
@@ -266,15 +268,14 @@ PASSED ..\azure-cli-extensions\src\guestconfig\...::test_guest_configuration_hcr
 
 # Configuration
 
-You can create a file .env to customize the configurations used at runtime. The file .env should be located at:
+You can create a file .env to customize the configurations used at runtime. The file .env should be located at current working directory, for instance:
 
 ```
-+-- MY_WORKSPACE
-|   +-- avs                     // this repo
-|      +-- .env                 // configuration files
++-- mock-service-host
+|   +-- .env                 // configuration files
 ```
 
-## Customize avs listen ports
+## Customize mock-service-host listen ports
 
 Bellow options in .env are available to configure the server to listen specific local TCP ports.
 
@@ -314,9 +315,9 @@ With below configuration, the REST calling request and mocked response can be pr
 enableExampleGeneration=true
 ```
 
-The example files are generated in the **avs** sub-folder relative to the swagger directory, for example:
+The example files are generated in the **mock** sub-folder relative to the swagger directory, for example:
 
--   [specRetrievalLocalRelativePath]\specification\apimanagement\resource-manager\Microsoft.ApiManagement\preview\2018-01-01\avs
+-   [specRetrievalLocalRelativePath]\specification\apimanagement\resource-manager\Microsoft.ApiManagement\preview\2018-01-01\mock
     You can update exampleGenerationFolder in file .env to use another folder, for instance:
 
 ```
@@ -331,3 +332,4 @@ The cascadeEnabled is false by default, you can enable it in file .env like belo
 ```
 cascadeEnabled=true
 ```
+

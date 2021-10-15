@@ -122,7 +122,7 @@ export const configSchema = convict<Config>({
     exampleGenerationFolder: {
         doc: 'The folder name used for example generation for each REST calling.',
         format: String,
-        default: 'avs',
+        default: 'mock',
         env: 'exampleGenerationFolder',
         sensitive: true
     },

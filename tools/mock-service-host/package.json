@@ -16,6 +16,11 @@
   },
   "author": "",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Azure/azure-sdk-tools",
+    "directory": "tools/mock-service-host"
+  },
   "dependencies": {
     "@azure-tools/openapi-tools-common": "^1.2.2",
     "@types/mkdirp": "^1.0.2",
@@ -73,5 +78,12 @@
     "ts-jest": "^26.1.1",
     "tslib": "^2.0.0",
     "typescript": "^3.9.5"
-  }
+  },
+  "files": [
+    "dist/src",
+    "doc",
+    ".ssh/*.crt",
+    "script",
+    "README.md"
+  ]
 }

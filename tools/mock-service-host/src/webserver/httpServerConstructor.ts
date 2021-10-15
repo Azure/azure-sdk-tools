@@ -1,23 +1,33 @@
+import * as chile_process from 'child_process'
 import * as express from 'express'
 import * as fs from 'fs'
+import * as path from 'path'
+import * as process from 'process'
 import * as tls from 'tls'
 import https = require('https')
 import http = require('http')
 import { logger } from '../common/utils'
 
 export function getHttpsServer(app: any | express.Application) {
+    const certFolder = path.join(__dirname, '..', '..', '..', '.ssh')
+    if (
+        !fs.existsSync(path.join(certFolder, '127-0-0-1-ca.pem')) ||
+        !fs.existsSync(path.join(certFolder, 'localhost-ca.pem'))
+    ) {
+        if (process.platform === 'win32') {
+            chile_process.execSync(`${__dirname}\\..\\..\\..\\script\\renew-ssh.bat`)
+        } else {
+            chile_process.execSync(`${__dirname}/../../../script/renew-ssh.bat`)
+        }
+    }
     const certs = {
         '127.0.0.1': {
-            key: '.ssh/127-0-0-1-ca.pem',
-            cert: '.ssh/127-0-0-1-ca.cer'
+            key: path.join(certFolder, '127-0-0-1-ca.pem'),
+            cert: path.join(certFolder, '127-0-0-1-ca.crt')
         },
         localhost: {
-            key: '.ssh/localhost-ca.pem',
-            cert: '.ssh/localhost-ca.crt'
-        },
-        'login.microsoftonline.com': {
-            key: '.ssh/login-microsoftonline-com-ca.pem',
-            cert: '.ssh/login-microsoftonline-com-ca.crt'
+            key: path.join(certFolder, 'localhost-ca.pem'),
+            cert: path.join(certFolder, 'localhost-ca.crt')
         }
     }
     const secureContexts = getSecureContexts(certs)

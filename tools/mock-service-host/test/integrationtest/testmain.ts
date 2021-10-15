@@ -19,9 +19,8 @@ const specDir = path.join(__dirname, '../../test/testData/swaggers')
 const optionsForTest = {
     directory: specDir
 }
-const requestOptions = {
-    json: true,
-    ca: fs.readFileSync(path.join(__dirname, '..', '..', '.ssh', 'localhost-ca.crt'))
+const requestOptions: Record<string, any> = {
+    json: true
 }
 
 async function startVirtualServer() {
@@ -57,12 +56,15 @@ describe('Start virtual server and send requests', () => {
 
     beforeAll(async () => {
         await startVirtualServer()
+        requestOptions.ca = fs.readFileSync(
+            path.join(__dirname, '..', '..', '.ssh', 'localhost-ca.crt')
+        )
         await validator.initialize()
         process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '1'
     })
 
     afterAll(async () => {
-        request.post(createTestUrl('/avs/shutdown'), requestOptions)
+        request.post(createTestUrl('/mock-service-host/shutdown'), requestOptions)
     })
 
     it('stateless request', (done) => {

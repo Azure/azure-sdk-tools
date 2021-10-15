@@ -66,14 +66,14 @@ export class ValidateAndMockController extends BaseHttpController {
         )
     }
 
-    @httpGet('avs/status')
+    @httpGet('mock-service-host/status')
     public async getstatus() {
         const response = new HttpResponseMessage(200)
         response.content = new StringContent(this.coordinator.ValidatorStatus)
         return response
     }
 
-    @httpPost('avs/shutdown')
+    @httpPost('mock-service-host/shutdown')
     public async shutdown(req: express.Request, res: express.Response) {
         setTimeout(() => {
             process.exit()

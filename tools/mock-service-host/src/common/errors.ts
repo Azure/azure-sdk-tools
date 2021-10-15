@@ -7,7 +7,7 @@ export enum HttpStatusCode {
     NO_CONTENT = 204,
     BAD_REQUEST = 400,
     NOT_FOUND = 404,
-    // ----- start of avs error codes -----
+    // ----- start of mock-service-host error codes -----
     OPERATION_NOT_FOUND = 452,
     VALIDATION_FAIL = 453,
     EXAMPLE_NOT_FOUND = 454,
@@ -17,7 +17,7 @@ export enum HttpStatusCode {
     HAS_CHILD_RESOURCE = 458,
     NO_RESPONSE_DEFINED = 459,
     LRO_CALLBACK_NOT_FOUND = 460,
-    // ----- end of avs error codes -----
+    // ----- end of mock-service-host error codes -----
     INTERNAL_SERVER = 500
 }
 

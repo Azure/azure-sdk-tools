@@ -10,11 +10,13 @@ spec:
       command: ['sh', '-c']
       args:
         - |
+            set -ex;
+            mkdir -p $DEBUG_SHARE;
             cd $DEBUG_SHARE;
             pwd;
-            mkdir example;
-            echo "debug share example success" > example/success;
-            ls; ls example; cat example/success;
+            ls -R $DEBUG_SHARE_ROOT;
+            echo "debug share example success" > success;
+            cat success;
       # The file share is mounted by default at the path $DEBUG_SHARE
       # when including the container-env template
       {{- include "stress-test-addons.container-env" . | nindent 6 }}

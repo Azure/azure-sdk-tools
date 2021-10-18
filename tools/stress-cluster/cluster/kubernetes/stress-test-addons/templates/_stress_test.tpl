@@ -46,6 +46,7 @@ spec:
 ---
 {{- /* Copy scenario name into top level key of global context */}}
 {{ $instance := deepCopy $global | merge (dict "Scenario" . ) -}}
+{{- $jobOverride := fromYaml (include "stress-test-addons.job-wrapper.tpl" (list $instance $podDefinition)) -}}
 {{- /*
     The .Values context here corresponds to the parent chart that includes this library as a dependency,
     meaning there will be a .Values.stress-test-addons key that contains the values specific to this library.
@@ -53,7 +54,6 @@ spec:
     context for this sub-chart.
 */ -}}
 {{ $_ := set $instance "Values" (index $instance "Values" "stress-test-addons") -}}
-{{- $jobOverride := fromYaml (include "stress-test-addons.job-wrapper.tpl" (list $instance $podDefinition)) -}}
 {{- $tpl := fromYaml (include "stress-test-addons.deploy-job-template.tpl" $instance) -}}
 {{- toYaml (merge $jobOverride $tpl) -}}
 {{- end }}
@@ -95,6 +95,7 @@ spec:
 ---
 {{- /* Copy scenario name into top level key of global context */}}
 {{ $instance := deepCopy $global | merge (dict "Scenario" . ) -}}
+{{- $jobOverride := fromYaml (include "stress-test-addons.job-wrapper.tpl" (list $instance $podDefinition)) -}}
 {{- /*
     The .Values context here corresponds to the parent chart that includes this library as a dependency,
     meaning there will be a .Values.stress-test-addons key that contains the values specific to this library.
@@ -102,7 +103,6 @@ spec:
     context for this sub-chart.
 */ -}}
 {{ $_ := set $instance "Values" (index $instance "Values" "stress-test-addons") -}}
-{{- $jobOverride := fromYaml (include "stress-test-addons.job-wrapper.tpl" (list $instance $podDefinition)) -}}
 {{- $tpl := fromYaml (include "stress-test-addons.env-job-template.tpl" $instance) -}}
 {{- toYaml (merge $jobOverride $tpl) -}}
 {{- end }}

@@ -1,6 +1,7 @@
 Processing Azure\autorest repo.
 Label,AutoRest v2,Related to AutoRest v2 Core,7ae80d
 Label,AutoRest v3,Related to AutoRest v3 Core,7ae80d
+Label,Azure Arc Enabled Servers,,e99695
 Label,blocking-release,Blocks release,d73a49
 Label,breaking-change,,d73a49
 Label,bug,This issue requires a change to an existing behavior in the product in order to be resolved.,eaa875
@@ -25,14 +26,24 @@ Label,Compute - VM,,e99695
 Label,Compute - VMSS,,e99695
 Label,Confidential Ledger,,e99695
 Label,Connected Kubernetes,,e99695
-Label,Consumption,,e99695
+Label,Consumption - Billing,All issues in consumption where billing/price-related data is shown.,e99695
+Label,Consumption - Budget,"All issues in consumption for Budgets API, Alert API and other Notification scenarios.",e99695
+Label,Consumption - Query,"All issues in consumption associated with tags, dimensions and forecasts.",e99695
+Label,Consumption - RIandShowBack,All issues in consumption associated with Reservation and ShowBack.,e99695
+Label,Consumption - UsageDetailsAndExport,All issues in consumption for usage details API and exports API.,e99695
 Label,Container Instances,,e99695
 Label,Container Registry,,e99695
 Label,Container Service,,e99695
+Label,Cost Management - Billing,All issues in cost management where billing/price-related data is shown.,e99695
+Label,Cost Management - Budget,"All issues in cost management for Budgets API, Alert API and other Notification scenarios.",e99695
+Label,Cost Management - Query,"All issues in cost management associated with tags, dimensions and forecasts.",e99695
+Label,Cost Management - RIandShowBack,All issues in cost management associated with Reservation and ShowBack.,e99695
+Label,Cost Management - UsageDetailsAndExport,All issues in cost management for usage details API and exports API.,e99695
 Label,customer-reported,Issues that are reported by GitHub users external to the Azure organization.,3800e0
 Label,CXP Attention,The Azure CXP Support Team is responsible for this issue.,10066b
 Label,DataPlane Feature,,5319e7
 Label,design-discussion,An area of design currently under discussion and open to team and community feedback.,0BABDF
+Label,Device Update,,e99695
 Label,Do Not Merge,,b60205
 Label,documentation,,c5def5
 Label,duplicate,This issue is the duplicate of another issue,e4c288

@@ -55,7 +55,7 @@ namespace Tests
       ""capabilityId"": ""PrAutoLabel"",
       ""subCapability"": ""Path"",
       ""version"": ""1.0"",
-      ""id"": ""AzureSDKPullRequestLabelFolder_test_repo"",
+      ""id"": ""AzureSDKPullRequestLabelFolder_repo_test"",
       ""config"": {
         ""configs"": [
             { ""labels"": [""Label1""], ""pathFilter"": [""test""], ""exclude"": [ """" ]  }

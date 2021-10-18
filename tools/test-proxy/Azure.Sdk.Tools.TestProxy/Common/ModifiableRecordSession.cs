@@ -21,5 +21,12 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         public List<RecordedTestSanitizer> AdditionalSanitizers { get; }= new List<RecordedTestSanitizer>();
 
         public string SourceRecordingId { get; set; }
+
+        public void ResetExtensions()
+        {
+            AdditionalTransforms.Clear();
+            AdditionalSanitizers.Clear();
+            CustomMatcher = null;
+        }
     }
 }

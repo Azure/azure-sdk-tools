@@ -34,7 +34,9 @@ namespace Azure.Sdk.Tools.TestProxy
         [HttpPost]
         public void Reset()
         {
-            _recordingHandler.SetDefaultExtensions();
+            var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
+
+            _recordingHandler.SetDefaultExtensions(recordingId);
         }
 
         [HttpGet]

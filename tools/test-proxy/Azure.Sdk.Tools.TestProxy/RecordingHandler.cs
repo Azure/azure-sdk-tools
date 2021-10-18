@@ -423,20 +423,38 @@ namespace Azure.Sdk.Tools.TestProxy
 
         #region common functions
 
-        public void SetDefaultExtensions()
+        public void SetDefaultExtensions(string recordingId = null)
         {
-            Sanitizers = new List<RecordedTestSanitizer>
+            if (recordingId != null)
             {
-                new RecordedTestSanitizer()
-            };
-
-            Transforms = new List<ResponseTransform>
+                if (PlaybackSessions.TryGetValue(recordingId, out var playbackSession))
+                {
+                    playbackSession.ResetExtensions();
+                }
+                if (RecordingSessions.TryGetValue(recordingId, out var recordSession))
+                {
+                    recordSession.ModifiableSession.ResetExtensions();
+                }
+                if (InMemorySessions.TryGetValue(recordingId, out var inMemSession))
+                {
+                    inMemSession.ResetExtensions();
+                }
+            }
+            else
             {
-                new StorageRequestIdTransform(),
-                new ClientIdTransform()
-            };
+                Sanitizers = new List<RecordedTestSanitizer>
+                {
+                    new RecordedTestSanitizer()
+                };
 
-            Matcher = new RecordMatcher();
+                Transforms = new List<ResponseTransform>
+                {
+                    new StorageRequestIdTransform(),
+                    new ClientIdTransform()
+                };
+
+                Matcher = new RecordMatcher();
+            }
         }
 
 

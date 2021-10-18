@@ -325,7 +325,7 @@ When invoked as basic requests to the `Admin` controller, these settings will be
 
 Currently, the configured set of transforms/playback/sanitizers are NOT propogated onto disk alongside the recording.
 
-### Viewing Available/Active Sanitizers, Matchers, and Transforms
+### Viewing available/active Sanitizers, Matchers, and Transforms
 
 Launch the test-proxy through your chosen method, then visit:
 
@@ -333,6 +333,33 @@ Launch the test-proxy through your chosen method, then visit:
 - `<proxyUrl>/Info/Active` to see all currently active.
 
 Note that the `constructor arguments` that are documented must be present (where documented as such) in the body of the POST sent to the Admin Interface.
+
+### Resetting active Sanitizers, Matchers, and Transforms
+
+Given that the test-proxy offers the ability to set up customizations for an entire session or a single recording, it also must provide the ability to **reset** these settings without entirely restarting the server.
+
+This is allowed through the use of the `/Admin/Reset` API. A `reset` operation "returns to default".
+
+#### Reset the session
+
+```json
+POST
+url: <proxyURL>/Admin/Reset
+```
+
+This API operates exclusively on the `Session` level if no recordingId is provided in the header. Any customizations on individual recordings are left untouched.
+
+#### Reset for a specific recordingId
+
+```json
+POST
+url: <proxyURL>/Admin/Reset
+headers: {
+    "x-recording-id": "<guid>"
+}
+```
+
+If the recordingId is specified in the header, that individual recording's settings will be cleared. The session level updates will remain unchanged.
 
 ## Testing
 

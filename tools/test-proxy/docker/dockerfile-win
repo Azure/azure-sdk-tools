@@ -8,7 +8,6 @@ RUN cd /proxyservercode && dotnet publish -c Release -o /proxyserver -f net5.0
 
 FROM mcr.microsoft.com/dotnet/aspnet:5.0.10-nanoserver-1809 AS build
 
-# Copy PowerShell Core from the installer container
 ENV ProgramFiles="C:\Program Files" \
     # set a fixed location for the Module analysis cache
     PSModuleAnalysisCachePath="C:\Users\Public\AppData\Local\Microsoft\Windows\PowerShell\docker\ModuleAnalysisCache" \
@@ -31,6 +30,8 @@ ENV ProgramFiles="C:\Program Files" \
     # default URL of localhost:5000 or localhost:50001 are not usable from outside the container
     ASPNETCORE_URLS="http://0.0.0.0:5000;https://0.0.0.0:5001"
 
+USER ContainerAdministrator
+
 # while it may seem a bit strange to use "etc" on a windows container. We are mirroring
 # the methodology from the primary container, which is linux.
 RUN mkdir certwork & mkdir etc & cd etc & mkdir testproxy
@@ -40,15 +41,14 @@ ADD docker_build/dotnet-devcert.pfx certwork
 # available through the environment variables is causing some inconsistent weirdness.    
 COPY --from=build_env ["C:/Program Files/dotnet/sdk/5.0.401/DotnetTools/dotnet-dev-certs/5.0.10-servicing.21410.22/tools/net5.0/any/", "C:/dotnet-dev-certs/"]
 
-USER ContainerAdministrator
 RUN dotnet /dotnet-dev-certs/dotnet-dev-certs.dll https --clean --import /certwork/dotnet-devcert.pfx -p "password"
-USER ContainerUser
 
 WORKDIR /proxyserver
+ADD host-patcher.cmd .
 
 COPY --from=build_env /proxyserver .
 
 EXPOSE 5001
 EXPOSE 5000
 
-ENTRYPOINT ["dotnet", "Azure.Sdk.Tools.TestProxy.dll", "--storage-location", "/etc/testproxy"]
+ENTRYPOINT ["host-patcher.cmd", "&",  "dotnet", "Azure.Sdk.Tools.TestProxy.dll", "--storage-location", "/etc/testproxy"]

@@ -118,6 +118,18 @@ namespace APIViewWeb.Repositories
             }
         }
 
+        private async Task<bool> IsReviewSame(ReviewModel review, RenderedCodeFile renderedCodeFile)
+        {
+            foreach (var revision in review.Revisions.Reverse())
+            {
+                if (await _reviewManager.IsReviewSame(revision, renderedCodeFile))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         public async Task<string> GetApiDiffFromAutomaticReview(CodeFile codeFile, int prNumber, string originalFileName, MemoryStream memoryStream, PullRequestModel pullRequestModel)
         {
             // Get automatically generated master review for package or previously cloned review for this pull request
@@ -129,12 +141,17 @@ namespace APIViewWeb.Repositories
 
             // Check if API surface level matches with any revisions
             var renderedCodeFile = new RenderedCodeFile(codeFile);
-            foreach (var revision in review.Revisions.Reverse())
+            if (await IsReviewSame(review, renderedCodeFile))
+                return "";
+
+            if(pullRequestModel.ReviewId != null)
             {
-                if (await _reviewManager.IsReviewSame(revision, renderedCodeFile))
-                {
+                // If baseline review was already created and if APIs in current commit doesn't match any of the revisions in generated review then create new baseline using main branch and compare again.
+                // If APIs are still different, find the diff against latest baseline.
+                review = await GetBaseLineReview(codeFile.Language, codeFile.PackageName, pullRequestModel, true);
+                review.ReviewId = pullRequestModel.ReviewId;
+                if (await IsReviewSame(review, renderedCodeFile))
                     return "";
-                }
             }
 
             var newRevision = new ReviewRevisionModel()
@@ -153,6 +170,7 @@ namespace APIViewWeb.Repositories
             reviewCodeFileModel.FileName = originalFileName;
             newRevision.Files.Add(reviewCodeFileModel);
             review.Revisions.Add(newRevision);
+            pullRequestModel.ReviewId = review.ReviewId;
             await _reviewsRepository.UpsertReviewAsync(review);
             await _pullRequestsRepository.UpsertPullRequestAsync(pullRequestModel);
 
@@ -186,11 +204,11 @@ namespace APIViewWeb.Repositories
             stringBuilder.Append("```");
         }
 
-        private async Task<ReviewModel> GetBaseLineReview(string Language, string packageName, PullRequestModel pullRequestModel)
+        private async Task<ReviewModel> GetBaseLineReview(string Language, string packageName, PullRequestModel pullRequestModel, bool forceBaseline = false)
         {
             // Get  previously cloned review for this pull request or automatically generated master review for package
             ReviewModel review;
-            if (pullRequestModel.ReviewId != null)
+            if (pullRequestModel.ReviewId != null && !forceBaseline)
             {
                 review = await _reviewsRepository.GetReviewAsync(pullRequestModel.ReviewId);
             }
@@ -198,7 +216,6 @@ namespace APIViewWeb.Repositories
             {
                 var autoReview = await _reviewsRepository.GetMasterReviewForPackageAsync(Language, packageName);
                 review = CloneReview(autoReview);
-                pullRequestModel.ReviewId = review.ReviewId;
             }
             return review;
         }

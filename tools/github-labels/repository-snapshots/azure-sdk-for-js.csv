@@ -24,7 +24,7 @@ Label,Authorization,,e99695
 Label,auto-merge,Apply to PR's that we want to auto-merge when green,5df772
 Label,Automation,,e99695
 Label,AVS,,e99695
-Label,Azure Arc enabled servers,,e99695
+Label,Azure Arc Enabled Servers,,e99695
 Label,Azure Stack,,e99695
 Label,Azure.Core,,e99695
 Label,Azure.Identity,,e99695
@@ -73,22 +73,20 @@ Label,Compute - VM,,e99695
 Label,Compute - VMSS,,e99695
 Label,Confidential Ledger,,e99695
 Label,Connected Kubernetes,,e99695
-Label,Consumption,,e99695
-Label,Consumption- RIandShowBack,All issues in cost management and Consumption for query API associated to Ri and showback,e99695
-Label,Consumption-Billing,All issues in cost management and Consumption API where billing/price related data is shown,e99695
-Label,Consumption-Budget,"This label is for all issues under Costs Management where we see budget, alerts, notification",e99695
-Label,Consumption-Query,"All issues in cost management and Consumption for query API associated to tags, dimensions and forec",e99695
-Label,Consumption-UsageDetailsandExport,All issues in cost management and Consumption for usage details api and export,e99695
+Label,Consumption - Billing,All issues in consumption where billing/price-related data is shown.,e99695
+Label,Consumption - Budget,"All issues in consumption for Budgets API, Alert API and other Notification scenarios.",e99695
+Label,Consumption - Query,"All issues in consumption associated with tags, dimensions and forecasts.",e99695
+Label,Consumption - RIandShowBack,All issues in consumption associated with Reservation and ShowBack.,e99695
+Label,Consumption - UsageDetailsAndExport,All issues in consumption for usage details API and exports API.,e99695
 Label,Container Instances,,e99695
 Label,Container Registry,,e99695
 Label,Container Service,,e99695
 Label,Cosmos,,e99695
-Label,Cost Management,,e99695
-Label,Cost Management-Billing,All issues in cost management and Consumption API where billing/price related data is shown,e99695
-Label,Cost Management-Budget,"This label is for all issues under Costs Management where we see budget, alerts, notification",e99695
-Label,Cost Management-Query,"All issues in cost management and Consumption for query API associated to tags, dimensions and forec",e99695
-Label,Cost Management-RIandShowBack,All issues in cost management and Consumption for query API associated to Ri and showback,e99695
-Label,Cost Management-UsageDetailsAndExport,All issues in cost management and Consumption for usage details api and export,e99695
+Label,Cost Management - Billing,All issues in cost management where billing/price-related data is shown.,e99695
+Label,Cost Management - Budget,"All issues in cost management for Budgets API, Alert API and other Notification scenarios.",e99695
+Label,Cost Management - Query,"All issues in cost management associated with tags, dimensions and forecasts.",e99695
+Label,Cost Management - RIandShowBack,All issues in cost management associated with Reservation and ShowBack.,e99695
+Label,Cost Management - UsageDetailsAndExport,All issues in cost management for usage details API and exports API.,e99695
 Label,cross-language alignment,mark issues need to be aligned across different languages,abd159
 Label,Custom Providers,,e99695
 Label,Customer Insights,,e99695
@@ -110,6 +108,7 @@ Label,DataBox Edge,,e99695
 Label,design-discussion,An area of design currently under discussion and open to team and community feedback.,0BABDF
 Label,Dev Spaces,,e99695
 Label,dev-tool,Issues related to the Azure SDK for JS dev-tool,0052cc
+Label,Device Update,,e99695
 Label,DevOps,,e99695
 Label,Devtestlab,,e99695
 Label,Digital Twins,,e99695

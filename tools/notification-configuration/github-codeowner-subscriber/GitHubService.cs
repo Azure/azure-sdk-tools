@@ -5,7 +5,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 
-namespace GitHubCodeownerSubscriber
+namespace Azure.Sdk.Tools.GithubCodeownerSubscriber
 {
     /// <summary>
     /// Interface for interacting with GitHub

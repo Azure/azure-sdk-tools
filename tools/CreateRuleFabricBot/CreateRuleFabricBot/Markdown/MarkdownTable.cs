@@ -1,4 +1,4 @@
-﻿using CreateRuleFabricBot.Helpers;
+﻿using Azure.Sdk.Tools.CodeOwnersParser;
 using System;
 using System.Collections.Generic;
 using System.IO;

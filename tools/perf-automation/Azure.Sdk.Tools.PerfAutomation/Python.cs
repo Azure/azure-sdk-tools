@@ -32,9 +32,6 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var python = Path.Combine(env, _envBin, "python");
             var pip = Path.Combine(env, _envBin, "pip");
 
-            // Upgrade pip
-            await Util.RunAsync(python, "-m pip install --upgrade pip", projectDirectory, outputBuilder, errorBuilder);
-
             // Install dev reqs
             await Util.RunAsync(pip, "install -r dev_requirements.txt", projectDirectory, outputBuilder, errorBuilder);
 

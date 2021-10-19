@@ -111,6 +111,7 @@ Services:
       Java: uploadblob
       JS: StorageBlobUploadTest
       Python: UploadTest
+      Cpp: UploadBlob
 
   - Test: upload-file
     Arguments:
@@ -130,6 +131,7 @@ Services:
       Java: listblobs
       JS: StorageBlobListTest
       Python: ListBlobsTest
+      Cpp: ListBlob
 
   - Test: download-sas-http-client
     Arguments:

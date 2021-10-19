@@ -3,13 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29025.244
 MinimumVisualStudioVersion = 15.0.26124.0
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "notification-creator", "notification-creator\notification-creator.csproj", "{830329BC-1EF9-4057-8A58-9335C8869DDF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Sdk.Tools.NotificationConfiguration", "notification-creator\Azure.Sdk.Tools.NotificationConfiguration.csproj", "{830329BC-1EF9-4057-8A58-9335C8869DDF}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "common", "common\common.csproj", "{7D97E43B-D184-4F45-B740-204577ACB0C8}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "github-codeowner-subscriber", "github-codeowner-subscriber\github-codeowner-subscriber.csproj", "{70BE6FEC-1AE2-44B1-B7D4-824A4A7C3BBD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Sdk.Tools.GithubCodeownerSubscriber", "github-codeowner-subscriber\Azure.Sdk.Tools.GithubCodeownerSubscriber.csproj", "{70BE6FEC-1AE2-44B1-B7D4-824A4A7C3BBD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "identity-resolver", "identity-resolver\identity-resolver.csproj", "{104DCF1B-E0B2-4BB3-B3EF-31BFCF09D21B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Sdk.Tools.IdentityResolver", "identity-resolver\Azure.Sdk.Tools.IdentityResolver.csproj", "{104DCF1B-E0B2-4BB3-B3EF-31BFCF09D21B}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Sdk.Tools.CodeOwnersParser", "..\code-owners-parser\CodeOwnersParser\Azure.Sdk.Tools.CodeOwnersParser.csproj", "{9513900B-36DD-45A5-91F7-C12842464603}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{104DCF1B-E0B2-4BB3-B3EF-31BFCF09D21B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{104DCF1B-E0B2-4BB3-B3EF-31BFCF09D21B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{104DCF1B-E0B2-4BB3-B3EF-31BFCF09D21B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9513900B-36DD-45A5-91F7-C12842464603}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9513900B-36DD-45A5-91F7-C12842464603}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9513900B-36DD-45A5-91F7-C12842464603}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9513900B-36DD-45A5-91F7-C12842464603}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

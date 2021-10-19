@@ -5,10 +5,10 @@ using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using System;
 using System.Threading.Tasks;
-using NotificationConfiguration.Models;
+using Azure.Sdk.Tools.NotificationConfiguration.Models;
 using System.Collections.Concurrent;
 
-namespace NotificationConfiguration.Helpers
+namespace Azure.Sdk.Tools.NotificationConfiguration.Helpers
 {
     /// <summary>
     /// Class used to enable the retrieval of github<->aad mapping questions
@@ -124,6 +124,34 @@ namespace NotificationConfiguration.Helpers
                 }
 
                 logger.LogWarning("Could Not Resolve Identity of Name = {0}", aadName);
+                return default;
+            }
+        }
+
+        /// <summary>
+        /// Queries Kusto for mapping information present in a target table. Assumes githubemployeelink. 
+        /// </summary>
+        /// <param name="aadUpn">Employee email like alias@microsodt.com. Can be sourced from devops variable $(Build.RequestedForEmail).</param>
+        /// <returns>Internal alias or null if no internal user found</returns>
+        public async Task<IdentityDetail> GetMappingInformationFromAADUpn(string aadUpn)
+        {
+            var query = $"{kustoTable} | where aadUpn == '{aadUpn}' | project githubUserName, aadId, aadName, aadAlias, aadUpn | limit 1;";
+
+            // TODO: Figure out how to make this async
+            using (var reader = client.ExecuteQuery(query))
+            {
+                if (reader.Read())
+                {
+                    return new IdentityDetail(){
+                        GithubUserName = reader.GetString(0),
+                        AadId = reader.GetString(1),
+                        Name = reader.GetString(2),
+                        Alias = reader.GetString(3),
+                        AadUpn = reader.GetString(4)
+                    };
+                }
+
+                logger.LogWarning("Could Not Resolve Identity of User = {0}", aadUpn);
                 return default;
             }
         }

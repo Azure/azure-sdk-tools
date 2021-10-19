@@ -8,7 +8,7 @@ trigger:
       - hotfix/*
   paths:
     include:
-      - tools/notification-configuration
+      - tools/code-owners-parser
 
 pr:
   branches:
@@ -19,10 +19,10 @@ pr:
       - hotfix/*
   paths:
     include:
-      - tools/notification-configuration
+      - tools/code-owners-parser
 
 extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
   parameters:
-    ToolDirectory: tools/notification-configuration
+    ToolDirectory: tools/code-owners-parser
     DotNetCoreVersion: 5.0.301

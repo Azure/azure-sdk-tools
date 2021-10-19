@@ -1,4 +1,4 @@
-﻿namespace NotificationConfiguration
+﻿namespace Azure.Sdk.Tools.NotificationConfiguration
 {
     /// <summary>
     /// Describes strategy to use when selecting pipelines

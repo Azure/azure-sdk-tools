@@ -1,9 +1,11 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
-    <RootNamespace>github_codeowner_subscriber</RootNamespace>
+    <TargetFramework>net5.0</TargetFramework>
+    <RootNamespace>Azure.Sdk.Tools.GithubCodeownerSubscriber</RootNamespace>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>github-codeowner-subscriber</ToolCommandName>
   </PropertyGroup>
 
   <ItemGroup>
@@ -12,6 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\code-owners-parser\CodeOwnersParser\Azure.Sdk.Tools.CodeOwnersParser.csproj" />
     <ProjectReference Include="..\common\common.csproj" />
   </ItemGroup>
 

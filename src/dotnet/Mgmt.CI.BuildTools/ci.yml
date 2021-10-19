@@ -8,7 +8,7 @@ resources:
     - repository: azure-sdk-build-tools
       type: git
       name: internal/azure-sdk-build-tools
-      ref: refs/tags/azure-sdk-build-tools_20210603.1
+      ref: refs/tags/azure-sdk-build-tools_20211019.1
 
 variables:
   - template: /eng/pipelines/templates/variables/globals.yml

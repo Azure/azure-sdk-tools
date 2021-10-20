@@ -1,0 +1,113 @@
+# Node.js
+# Build a general Node.js project with npm.
+# Add steps that analyze code, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
+
+# Node.js
+# Build a general Node.js project with npm.
+# Add steps that analyze code, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
+
+trigger:
+- main
+
+variables:
+  NodeVersion: '13.x'
+  VAR_ARIFACT_NAME: "drop"
+  VAR_BUILD_ARTIFACT_STAGING_DIRECTORY: $(Build.ArtifactStagingDirectory)
+  NugetSecurityAnalysisWarningLevel: 'none'
+
+stages:
+  - stage: InstallAndTest
+    jobs:
+      - job: Test
+        strategy:
+          matrix:
+            linux:
+              imageName: 'ubuntu-latest'
+            mac:
+              imageName: 'macos-latest'
+            windows:
+              imageName: 'windows-latest'
+        pool:
+          vmImage: $(imageName)
+        steps:
+        - task: NodeTool@0
+          inputs:
+            versionSpec: '13.x'
+          displayName: 'Install Node.js'
+
+        - script: |
+            npm install
+          displayName: 'npm install'
+          workingDirectory: $(System.DefaultWorkingDirectory)/tools/mock-service-host
+
+        - script: |
+            npm run test
+          displayName: 'npm test'
+          workingDirectory: $(System.DefaultWorkingDirectory)/tools/mock-service-host
+
+        - script: |
+            npm run eslint
+          displayName: 'Eslint'
+          workingDirectory: $(System.DefaultWorkingDirectory)/tools/mock-service-host
+
+        - script: |
+            npm pack
+          displayName: 'npm pack'
+          workingDirectory: $(System.DefaultWorkingDirectory)/tools/mock-service-host
+          condition: contains(variables['imageName'], 'ubuntu')
+
+        - script: 'cp mock-service-host-*.tgz $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
+          displayName: 'copy to staging dir'
+          workingDirectory: $(System.DefaultWorkingDirectory)/tools/mock-service-host
+          condition: contains(variables['imageName'], 'ubuntu')
+
+        - task: PublishBuildArtifacts@1
+          inputs:
+            PathtoPublish: '$(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
+            ArtifactName: '$(VAR_ARIFACT_NAME)'
+            publishLocation: 'Container'
+          condition: contains(variables['imageName'], 'ubuntu')
+        
+  - ${{if ne(variables['Build.Reason'], 'PullRequest')}}:
+    - stage: Release
+      dependsOn: InstallAndTest
+      condition: succeeded()
+      jobs:
+      - job: approve
+        pool: server
+        steps:
+        - task: ManualValidation@0
+          inputs:
+            notifyUsers: 'Click to approve if it''s an expected public release.'
+      - job: release
+        dependsOn: approve
+        condition: and(succeeded(), ne(variables['USER_SKIP_PUBLIC_RELEASE'], 'true'))
+        steps:
+        - task: NodeTool@0
+          inputs:
+            versionSpec: '$(NodeVersion)'
+          displayName: 'Install Node.js'
+        - task: DownloadBuildArtifacts@0
+          inputs:
+            buildType: 'current'
+            downloadType: 'single'
+            artifactName: '$(VAR_ARIFACT_NAME)'
+            downloadPath: '$(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
+        - script: |
+            echo -e "\e[32m[$(date -u)] LOG: Ensure latest npm is installed"
+            sudo npm install -g npm || { echo 'npm install failed' ; exit 1; }
+            sudo npm install -g pnpm || { echo 'pnpm install failed' ; exit 1; }
+
+            echo -e "\e[32m[$(date -u)] LOG: publish the package"
+            echo "//registry.npmjs.org/:_authToken=$(azure-sdk-npm-token)" >> ~/.npmrc 
+            for file in $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/$(VAR_ARIFACT_NAME)/*.tgz
+            do
+              echo -e "\e[32m[$(date -u)] LOG: File: $file"
+              pnpm publish $file --tag latest --access public --no-git-checks || { echo 'publish $file failed' ; exit 1; }
+            done
+            rm ~/.npmrc || { echo 'rm ~/.npmrc failed' ; exit 1; }
+          displayName: Publish
+          workingDirectory: $(System.DefaultWorkingDirectory)/tools/mock-service-host
+

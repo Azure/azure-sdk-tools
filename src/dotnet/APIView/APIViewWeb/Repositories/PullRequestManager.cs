@@ -179,7 +179,7 @@ namespace APIViewWeb.Repositories
 
         private async Task GetFormattedDiff(RenderedCodeFile renderedCodeFile, ReviewRevisionModel lastRevision, StringBuilder stringBuilder)
         {
-            RenderedCodeFile autoReview = await _codeFileRepository.GetCodeFileAsync(lastRevision);
+            RenderedCodeFile autoReview = await _codeFileRepository.GetCodeFileAsync(lastRevision, false);
             var autoReviewTextFile = autoReview.RenderText(showDocumentation: false, skipDiff: true);
             var prCodeTextFile = renderedCodeFile.RenderText(showDocumentation: false, skipDiff: true);
             var diffLines = InlineDiff.Compute(autoReviewTextFile, prCodeTextFile, autoReviewTextFile, prCodeTextFile);

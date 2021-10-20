@@ -4,6 +4,7 @@ using Azure.Sdk.Tools.TestProxy.Sanitizers;
 using Azure.Sdk.Tools.TestProxy.Transforms;
 using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -13,17 +14,38 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 {
     public class RecordingHandlerTests
     {
-        private void _checkDefaultExtensions(RecordingHandler handlerForTest)
+
+        [Flags]
+        enum CheckSkips
         {
-            Assert.Equal(2, handlerForTest.Transforms.Count);
-            Assert.IsType<StorageRequestIdTransform>(handlerForTest.Transforms[0]);
-            Assert.IsType<ClientIdTransform>(handlerForTest.Transforms[1]);
+            None = 0,
+            IncludeTransforms = 1,
+            IncludeSanitizers = 2,
+            IncludeMatcher = 4,
 
-            Assert.NotNull(handlerForTest.Matcher);
-            Assert.IsType<RecordMatcher>(handlerForTest.Matcher);
+            Default = IncludeTransforms | IncludeSanitizers | IncludeMatcher
+        }
 
-            Assert.Single(handlerForTest.Sanitizers);
-            Assert.IsType<RecordedTestSanitizer>(handlerForTest.Sanitizers[0]);
+        private void _checkDefaultExtensions(RecordingHandler handlerForTest, CheckSkips skipsToCheck = CheckSkips.Default)
+        {
+            if (skipsToCheck.HasFlag(CheckSkips.IncludeTransforms))
+            {
+                Assert.Equal(2, handlerForTest.Transforms.Count);
+                Assert.IsType<StorageRequestIdTransform>(handlerForTest.Transforms[0]);
+                Assert.IsType<ClientIdTransform>(handlerForTest.Transforms[1]);
+            }
+
+            if (skipsToCheck.HasFlag(CheckSkips.IncludeMatcher))
+            {
+                Assert.NotNull(handlerForTest.Matcher);
+                Assert.IsType<RecordMatcher>(handlerForTest.Matcher);
+            }
+
+            if (skipsToCheck.HasFlag(CheckSkips.IncludeSanitizers))
+            {
+                Assert.Single(handlerForTest.Sanitizers);
+                Assert.IsType<RecordedTestSanitizer>(handlerForTest.Sanitizers[0]);
+            }
         }
 
         [Fact]
@@ -55,6 +77,51 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             testRecordingHandler.SetDefaultExtensions();
 
             //assert
+            _checkDefaultExtensions(testRecordingHandler);
+        }
+
+        [Fact]
+        public void TestResetTargetsRecordingOnly()
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            testRecordingHandler.StartRecording("recordingings/cool.json", httpContext.Response);
+            var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
+
+
+            testRecordingHandler.Sanitizers.Clear();
+            testRecordingHandler.Sanitizers.Add(new BodyRegexSanitizer("sanitized", ".*"));
+            testRecordingHandler.AddRecordSanitizer(recordingId, new GeneralRegexSanitizer("sanitized", ".*"));
+            testRecordingHandler.SetDefaultExtensions(recordingId);
+            var session = testRecordingHandler.RecordingSessions.First().Value;
+
+            // session sanitizer is still set to a single one
+            Assert.Single(testRecordingHandler.Sanitizers);
+            Assert.IsType<BodyRegexSanitizer>(testRecordingHandler.Sanitizers[0]);
+            _checkDefaultExtensions(testRecordingHandler, CheckSkips.IncludeMatcher | CheckSkips.IncludeTransforms);
+            Assert.Empty(session.ModifiableSession.AdditionalSanitizers);
+            Assert.Empty(session.ModifiableSession.AdditionalTransforms);
+            Assert.Null(session.ModifiableSession.CustomMatcher);
+        }
+
+        [Fact]
+        public void TestResetTargetsSessionOnly()
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            testRecordingHandler.StartRecording("recordingings/cool.json", httpContext.Response);
+            var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
+
+            testRecordingHandler.Sanitizers.Clear();
+            testRecordingHandler.Sanitizers.Add(new BodyRegexSanitizer("sanitized", ".*"));
+            testRecordingHandler.Transforms.Clear();
+            testRecordingHandler.AddRecordSanitizer(recordingId, new GeneralRegexSanitizer("sanitized", ".*"));
+            testRecordingHandler.SetDefaultExtensions();
+            var session = testRecordingHandler.RecordingSessions.First().Value;
+
+            Assert.Single(session.ModifiableSession.AdditionalSanitizers);
+            Assert.IsType<GeneralRegexSanitizer>(session.ModifiableSession.AdditionalSanitizers[0]);
+
             _checkDefaultExtensions(testRecordingHandler);
         }
 

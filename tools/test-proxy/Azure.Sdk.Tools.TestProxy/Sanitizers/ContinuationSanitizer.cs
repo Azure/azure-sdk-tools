@@ -10,9 +10,9 @@ using System.Threading.Tasks;
 namespace Azure.Sdk.Tools.TestProxy.Sanitizers
 {
     /// <summary>
-    /// Used to sanitize "session" variables. A "session" variable is one that is returned as a result of Response A, then used as INPUT of Response B.
+    /// Used to sanitize "session" variables. A "session" variable is one that is returned as a result of Response A, then used as INPUT of Response B. 
     /// 
-    /// The value inserted defaults to a new guid if one is not provided. This sanitizer applies at the session level.
+    /// The value inserted defaults to a new guid if one is not provided. This sanitizer applies at the session level, and looks at the HEADERS of the request/response pairs.
     /// </summary>
     public class ContinuationSanitizer : RecordedTestSanitizer
     {
@@ -33,13 +33,14 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
         /// <summary>
         /// This sanitizer is applied at the session level, and is used to anonymize private keys in response/request pairs.
         /// 
-        /// For instance, a request hands back a "sessionId" that needs to be present in the next request.
+        /// For instance, request/response pair A has a RESPONSE that contains a "sessionId" header whos value must be present in the REQUEST of the next request/response pair.
         /// 
-        /// Supports "all further requests get this key" as well as "single response/request pair". Defaults to maintaining same key 
-        /// for rest of recording.
+        /// This sanitizer supports "all further requests get this the value of this first key" as well as as the more standard "response value gets used in next request". 
+        /// 
+        /// Defaults to maintaining same key for rest of recording.
         /// </summary>
         /// <param name="key">The name of the header whos value will be replaced from response -> next request.</param>
-        /// <param name="method">The method by which the value of the targeted key will be replaced. Defaults to guid replacement.</param>
+        /// <param name="method">The method by which the value of the targeted key will be replaced. Currently only supports generating a new guid for the value replacement..</param>
         /// <param name="resetAfterFirst">Do we need multiple pairs replaced? Or do we want to replace each value with the same value.</param>
         public ContinuationSanitizer(string key, string method, string resetAfterFirst = "false")
         {
@@ -72,7 +73,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
 
                 if (currentEntry.Request.Headers.ContainsKey(_targetKey) && !String.IsNullOrWhiteSpace(newValue))
                 {
-                    currentEntry.Response.Headers[_targetKey] = new string[] { newValue };
+                    currentEntry.Request.Headers[_targetKey] = new string[] { newValue };
 
                     if (_resetAfterFirst)
                     {

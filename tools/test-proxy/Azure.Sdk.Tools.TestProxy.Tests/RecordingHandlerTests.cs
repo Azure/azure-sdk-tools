@@ -93,15 +93,15 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             testRecordingHandler.Sanitizers.Add(new BodyRegexSanitizer("sanitized", ".*"));
             testRecordingHandler.AddRecordSanitizer(recordingId, new GeneralRegexSanitizer("sanitized", ".*"));
             testRecordingHandler.SetDefaultExtensions(recordingId);
-            var session = testRecordingHandler.RecordingSessions.First();
+            var session = testRecordingHandler.RecordingSessions.First().Value;
 
             // session sanitizer is still set to a single one
             Assert.Single(testRecordingHandler.Sanitizers);
             Assert.IsType<BodyRegexSanitizer>(testRecordingHandler.Sanitizers[0]);
             _checkDefaultExtensions(testRecordingHandler, CheckSkips.IncludeMatcher | CheckSkips.IncludeTransforms);
-            Assert.Empty(session.Value.ModifiableSession.AdditionalSanitizers);
-            Assert.Empty(session.Value.ModifiableSession.AdditionalTransforms);
-            Assert.Null(session.Value.ModifiableSession.CustomMatcher);
+            Assert.Empty(session.ModifiableSession.AdditionalSanitizers);
+            Assert.Empty(session.ModifiableSession.AdditionalTransforms);
+            Assert.Null(session.ModifiableSession.CustomMatcher);
         }
 
         [Fact]

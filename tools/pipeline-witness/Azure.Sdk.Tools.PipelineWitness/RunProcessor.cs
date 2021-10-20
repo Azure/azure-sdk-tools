@@ -1,47 +1,45 @@
-﻿using Azure.Cosmos;
-using Azure.Identity;
-using Azure.Sdk.Tools.PipelineWitness.Entities.AzurePipelines;
-using Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis;
-using Azure.Security.KeyVault.Secrets;
-using Microsoft.AspNetCore.WebUtilities;
-using Microsoft.Extensions.Caching.Memory;
+﻿using System;
+using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+
+using Azure.Cosmos;
+using Azure.Storage.Blobs;
 using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.TeamFoundation.Core.WebApi;
-using Microsoft.VisualStudio.Services.Common;
-using Microsoft.VisualStudio.Services.Organization.Client;
 using Microsoft.VisualStudio.Services.WebApi;
-using Microsoft.WindowsAzure.Storage.Blob.Protocol;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
+
+using Azure.Sdk.Tools.PipelineWitness.Entities.AzurePipelines;
+using Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis;
+using Azure.Sdk.Tools.PipelineWitness.Services;
 
 namespace Azure.Sdk.Tools.PipelineWitness
 {
+
+
     public class RunProcessor
     {
-        public RunProcessor(IFailureAnalyzer failureAnalyzer, ILogger<RunProcessor> logger, IMemoryCache cache, SecretClient secretClient, CosmosClient cosmosClient, VssConnection vssConnection)
+        public RunProcessor(IFailureAnalyzer failureAnalyzer, ILogger<RunProcessor> logger, BuildLogProvider logProvider, CosmosClient cosmosClient, BlobContainerClient containerClient, VssConnection vssConnection)
         {
             this.failureAnalyzer = failureAnalyzer;
             this.logger = logger;
-            this.cache = cache;
-            this.secretClient = secretClient;
+            this.logProvider = logProvider;
             this.cosmosClient = cosmosClient;
+            this.containerClient = containerClient;
             this.vssConnection = vssConnection;
         }
 
-        private IFailureAnalyzer failureAnalyzer;
-        private ILogger<RunProcessor> logger;
-        private IMemoryCache cache;
-        private SecretClient secretClient;
-        private CosmosClient cosmosClient;
-        private VssConnection vssConnection;
+        private static readonly JsonSerializerSettings jsonSettings = new () { ContractResolver = new CamelCasePropertyNamesContractResolver(), Formatting = Formatting.None };
+        private readonly IFailureAnalyzer failureAnalyzer;
+        private readonly ILogger<RunProcessor> logger;
+        private readonly BuildLogProvider logProvider;
+        private readonly CosmosClient cosmosClient;
+        private readonly BlobContainerClient containerClient;
+        private readonly VssConnection vssConnection;
 
         private bool IsValidAzureDevOpsUri(Uri uri)
         {
@@ -67,8 +65,8 @@ namespace Azure.Sdk.Tools.PipelineWitness
             var buildClient = vssConnection.GetClient<BuildHttpClient>();
             var projectClient = vssConnection.GetClient<ProjectHttpClient>();
 
-            var build = await buildClient.GetBuildAsync(projectGuid, runId);
             var project = await projectClient.GetProject(projectGuid.ToString());
+            var build = await buildClient.GetBuildAsync(projectGuid, runId);
             var pipeline = await buildClient.GetDefinitionAsync(project.Id, build.Definition.Id);
             var timeline = await buildClient.GetBuildTimelineAsync(projectGuid, runId);
 
@@ -144,6 +142,8 @@ namespace Azure.Sdk.Tools.PipelineWitness
 
             var container = await GetItemContainerAsync("azure-pipelines-runs");
             await container.UpsertItemAsync(run);
+
+            await UploadLogsBlobAsync(build, timeline);
         }
 
         public async Task<Failure[]> GetFailureClassificationsAsync(Build build, Timeline timeline)
@@ -152,6 +152,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
             if (timeline == null) return new Failure[0];
 
             var failures = await failureAnalyzer.AnalyzeFailureAsync(build, timeline);
+            
             return failures.ToArray();
         }
 
@@ -160,6 +161,75 @@ namespace Azure.Sdk.Tools.PipelineWitness
             var database = cosmosClient.GetDatabase("records");
             var container = cosmosClient.GetContainer(database.Id, containerName);
             return container;
+        }
+
+        private async Task UploadLogsBlobAsync(Build build, Timeline timeline)
+        {
+            if (timeline.Records == null)
+            {
+                return;
+            }
+
+            const string timeFormat = @"yyyy-MM-dd\THH:mm:ss.fffffff\Z";
+
+            var hasErrors = false;
+
+            await using var messagesWriter = new StringWriter();
+            foreach(var record in timeline.Records)
+            {
+                var logLines = await this.logProvider.GetTimelineRecordLogsAsync(build, record);
+
+                var lastTimeStamp = record.StartTime;
+
+                for(var lineNumber = 1; lineNumber <= logLines.Count; lineNumber++)
+                {
+                    var line = logLines[lineNumber - 1];
+                    var match = Regex.Match(line, @"^([^Z]{20,28}Z) (.*)$");
+                    var timestamp = match.Success
+                        ? DateTime.ParseExact(match.Groups[1].Value, timeFormat, null, System.Globalization.DateTimeStyles.AssumeUniversal).ToUniversalTime()
+                        : lastTimeStamp;
+                        
+                    var message = match.Success ? match.Groups[2].Value : line;
+
+                    if (timestamp == null)
+                    {
+                        messagesWriter.WriteLine("ERROR: NO LEADING TIMESTAMP");
+                        hasErrors = true;
+                    }
+
+                    await messagesWriter.WriteLineAsync(JsonConvert.SerializeObject(new
+                    {
+                        OrganizationName = "azure-sdk", 
+                        ProjectId = build.Project.Id, 
+                        BuildId = build.Id, 
+                        BuildDefinitionId = build.Definition.Id, 
+                        LogId = record.Log.Id, 
+                        LineNumber = lineNumber, 
+                        Length = message.Length,
+                        Timestamp = timestamp?.ToString(timeFormat),
+                        Message = message,
+                        EtlIngestDate = DateTime.UtcNow.ToString(timeFormat),
+                    }, jsonSettings));
+                    
+                    lastTimeStamp = timestamp;
+                }
+            }
+
+            var blobPathPrefix = $"{build.QueueTime:yyyy/MM/dd}/{build.Project.Name}-{build.Id}";
+            var blobClient = containerClient.GetBlobClient($"/success/{blobPathPrefix}.jsonl");
+
+            if (hasErrors)
+            {
+                var attempt = 1;
+
+                do
+                {
+                    blobClient = containerClient.GetBlobClient($"/error/{blobPathPrefix}-{attempt++}.jsonl");
+                }
+                while (await blobClient.ExistsAsync());
+            }
+            
+            await blobClient.UploadAsync(new BinaryData(messagesWriter.ToString()));
         }
     }
 }

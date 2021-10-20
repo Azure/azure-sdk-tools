@@ -33,9 +33,10 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
         /// <summary>
         /// This sanitizer is applied at the session level, and is used to anonymize private keys in response/request pairs.
         /// 
-        /// For instance, request/response pair A has a RESPONSE that contains a "sessionId" header whos value must be present in the REQUEST of the next request/response pair.
+        /// For instance, request/response pair A has a RESPONSE that contains a "sessionId" header whos value must be present in the REQUEST of the next request/response pair B.
         /// 
-        /// This sanitizer supports "all further requests get this the value of this first key" as well as as the more standard "response value gets used in next request". 
+        /// This sanitizer supports "all further requests get this the value of this first key" as well as as the more standard "response value gets used in next request" that is described 
+        /// in the scenario before. 
         /// 
         /// Defaults to maintaining same key for rest of recording.
         /// </summary>

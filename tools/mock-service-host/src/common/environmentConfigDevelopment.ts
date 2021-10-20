@@ -8,8 +8,5 @@ export const environmentConfigDevelopment: Partial<Config> = {
     specRetrievalLocalRelativePath: './cache',
     specRetrievalRefreshEnabled: false,
     specRetrievalRefreshIntervalMilliseconds: 300000,
-    validationPathsPattern: [
-        'specification/apimanagement/resource-manager/Microsoft.ApiManagement/**/*.json',
-        'specification/mediaservices/resource-manager/Microsoft.Media/**/*.json'
-    ]
+    validationPathsPattern: ['specification/**/resource-manager/**/*.json']
 }

@@ -4,7 +4,7 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net5.0</TargetFramework>
     <PackAsTool>true</PackAsTool>
-    <ToolCommandName>notification-configuration</ToolCommandName>
+    <ToolCommandName>notification-creator</ToolCommandName>
     <RootNamespace>Azure.Sdk.Tools.NotificationConfiguration</RootNamespace>
   </PropertyGroup>
 

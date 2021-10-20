@@ -36,7 +36,7 @@ namespace Azure.Sdk.Tools.RetrieveCodeOwners
 
             var parsedEntries = CodeOwnersFile.ParseFile(codeOwnersLocation);
             var filteredEntries = parsedEntries.Where(
-                entries => entries.PathExpression.Trim(new char[] {'/','\\' }).Equals(targetDirectory.Trim(new char[] { '/', '\\' })));
+                entries => entries.PathExpression.Trim(new char[] {'/','\\' }).Equals(target.Trim(new char[] { '/', '\\' })));
 
             client.BaseAddress = new Uri("https://api.github.com/");
             client.DefaultRequestHeaders.UserAgent.Add(new System.Net.Http.Headers.ProductInfoHeaderValue("CodeOwnerRetriever", "1.0"));

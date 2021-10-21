@@ -102,12 +102,10 @@ stages:
 
             echo -e "\e[32m[$(date -u)] LOG: publish the package"
             echo "//registry.npmjs.org/:_authToken=$(azure-sdk-npm-token)" >> ~/.npmrc 
-            npm unpublish mock-service-host@0.1.2
-            npm unpublish mock-service-host@0.1.3
             for file in $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/$(VAR_ARIFACT_NAME)/*.tgz
             do
               echo -e "\e[32m[$(date -u)] LOG: File: $file"
-              pnpm22 publish $file --tag latest --access public --no-git-checks || { echo 'publish $file failed' ; exit 1; }
+              pnpm publish $file --tag latest --access public --no-git-checks || { echo 'publish $file failed' ; exit 1; }
             done
             rm ~/.npmrc || { echo 'rm ~/.npmrc failed' ; exit 1; }
           displayName: Publish

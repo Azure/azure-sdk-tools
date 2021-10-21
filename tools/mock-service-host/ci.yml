@@ -102,6 +102,8 @@ stages:
 
             echo -e "\e[32m[$(date -u)] LOG: publish the package"
             echo "//registry.npmjs.org/:_authToken=$(azure-sdk-npm-token)" >> ~/.npmrc 
+            npm unpublish mock-service-host@0.1.2
+            npm unpublish mock-service-host@0.1.3
             for file in $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/$(VAR_ARIFACT_NAME)/*.tgz
             do
               echo -e "\e[32m[$(date -u)] LOG: File: $file"

@@ -42,8 +42,8 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
         /// </summary>
         /// <param name="key">The name of the header whos value will be replaced from response -> next request.</param>
         /// <param name="method">The method by which the value of the targeted key will be replaced. Currently only supports generating a new guid for the value replacement..</param>
-        /// <param name="resetAfterFirst">Do we need multiple pairs replaced? Or do we want to replace each value with the same value.</param>
-        public ContinuationSanitizer(string key, string method, string resetAfterFirst = "false")
+        /// <param name="resetAfterFirst">Do we need multiple pairs replaced? Or do we want to stop after the first set.</param>
+        public ContinuationSanitizer(string key, string method, string resetAfterFirst = "true")
         {
             _targetKey = key;
             _method = method;

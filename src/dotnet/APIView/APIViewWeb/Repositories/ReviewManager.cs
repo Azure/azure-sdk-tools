@@ -360,7 +360,7 @@ namespace APIViewWeb.Respositories
         public async Task<bool> IsReviewSame(ReviewRevisionModel revision, RenderedCodeFile renderedCodeFile)
         {
             //This will compare and check if new code file content is same as revision in parameter
-            var lastRevisionFile = await _codeFileRepository.GetCodeFileAsync(revision);
+            var lastRevisionFile = await _codeFileRepository.GetCodeFileAsync(revision, false);
             var lastRevisionTextLines = lastRevisionFile.RenderText(showDocumentation: false, skipDiff: true);
             var fileTextLines = renderedCodeFile.RenderText(showDocumentation: false, skipDiff: true);
             return lastRevisionTextLines.SequenceEqual(fileTextLines);

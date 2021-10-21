@@ -8,6 +8,8 @@ using k8s.Models;
 using Serilog;
 using Serilog.Context;
 using Serilog.Sinks.SystemConsole.Themes;
+using Azure.ResourceManager;
+using Azure.ResourceManager.Resources;
 
 namespace Stress.Watcher
 {
@@ -37,6 +39,8 @@ namespace Stress.Watcher
         private Kubernetes Client;
         private GenericChaosClient ChaosClient;
 
+        private ArmClient ARMClient;
+
         private Serilog.Core.Logger Logger;
 
         public string Namespace;
@@ -44,11 +48,13 @@ namespace Stress.Watcher
         public PodEventHandler(
             Kubernetes client,
             GenericChaosClient chaosClient,
+            ArmClient armClient,
             string watchNamespace = ""
         )
         {
             Client = client;
             ChaosClient = chaosClient;
+            ARMClient = armClient;
             Namespace = watchNamespace;
 
             Logger = new LoggerConfiguration()
@@ -125,6 +131,13 @@ namespace Stress.Watcher
                     {
                         // TODO: handle watch event re-queue on failure
                         Logger.Error(t.Exception, "Error handling pod event.");
+                    }
+                });
+                DeleteResources(pod).ContinueWith(t =>
+                {
+                    if (t.Exception != null)
+                    {
+                        Logger.Error(t.Exception, "Error deleting resources.");
                     }
                 });
             }
@@ -214,6 +227,62 @@ namespace Stress.Watcher
             }
 
             return true;
+        }
+
+        public async Task DeleteResources(V1Pod pod)
+        {
+            if (!ShouldDeleteResources(pod))
+            {
+                Logger.Debug("Skipping pod.");
+                return;
+            }
+
+            var rgName = GetResourceGroupName(pod);
+
+            if (rgName == "")
+            {
+                Logger.Error("Failed to find resource group name.");
+                return;
+            }
+
+            Subscription subscription = ARMClient.DefaultSubscription;
+
+            ResourceGroup resourceGroup;
+            try {
+                resourceGroup = await subscription.GetResourceGroups().GetAsync(rgName);
+            } catch {
+                Logger.Error($"Failed to get resource group {rgName}");
+                return;
+            }
+
+            await resourceGroup.DeleteAsync();
+            Logger.Information($"Deleting Resources {rgName}");
+        }
+
+        public bool ShouldDeleteResources(V1Pod pod)
+        {
+            if (!string.IsNullOrEmpty(Namespace) && Namespace != pod.Namespace())
+            {
+                return false;
+            }
+            return (pod.Status.Phase == "Succeeded");// || (pod.Status.Phase == "Failed");
+        }
+
+        public string GetResourceGroupName(V1Pod pod)
+        {
+            var deployContainers = pod.Spec.InitContainers.Where(c => c.Name == "azure-deployer");
+            if (deployContainers.Count() == 0)
+            {
+                return "";
+            }
+
+            var baseName = deployContainers.First().Env.Where(e => e.Name == "BASE_NAME").Select(e => e.Value);
+            if (baseName.Count() == 0)
+            {
+                return "";
+            }
+
+            return baseName.First().ToString();
         }
     }
 }

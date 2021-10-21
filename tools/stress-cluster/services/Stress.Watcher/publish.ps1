@@ -1,14 +1,8 @@
 param(
-    [string] $Tag = "latest",
-    [bool] $Login = $true
+    [string] $Tag = "latest"
 )
 
-docker build . -t stresswatcher
-docker tag stresswatcher stresstestregistry.azurecr.io/services/stresswatcher:$Tag
-docker tag stresswatcher stressprodregistry.azurecr.io/services/stresswatcher:$Tag
+docker build . -t azsdkengsys.azurecr.io/stress/stresswatcher:$Tag
 
-az acr login -n stresstestregistry
-docker push stresstestregistry.azurecr.io/services/stresswatcher:$Tag
-
-az acr login -n stressprodregistry
-docker push stressprodregistry.azurecr.io/services/stresswatcher:$Tag
+az acr login -n azsdkengsys
+docker push azsdkengsys.azurecr.io/stress/stresswatcher:$Tag

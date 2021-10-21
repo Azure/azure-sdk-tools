@@ -18,8 +18,20 @@ spec:
     spec:
       containers:
       - name: stresswatcher
-        image: stress{{ .Values.repository }}registry.azurecr.io/services/stresswatcher:{{ .Values.tag }}
+        imagePullPolicy: Always
+        image: azsdkengsys.azurecr.io/stress/stresswatcher:latest
         command: ["dotnet", "Stress.Watcher.dll"]
+        volumeMounts:
+        - name: public
+          mountPath: /mnt/outputs
+          readOnly: true
+      volumes:
+      - name: public
+        secret:
+          secretName: public
+          items:
+          - key: value
+            path: .env
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole

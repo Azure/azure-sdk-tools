@@ -58,7 +58,7 @@ stages:
           workingDirectory: $(System.DefaultWorkingDirectory)/tools/mock-service-host
           condition: contains(variables['imageName'], 'ubuntu')
 
-        - script: 'cp mock-service-host-*.tgz $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
+        - script: 'cp azure-tools-mock-service-host-*.tgz $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
           displayName: 'copy to staging dir'
           workingDirectory: $(System.DefaultWorkingDirectory)/tools/mock-service-host
           condition: contains(variables['imageName'], 'ubuntu')

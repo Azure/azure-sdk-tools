@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
       - name: stresswatcher
-        image: stress{{ .Values.repository }}registry.azurecr.io/services/stresswatcher:{{ .Values.tag }}
+        image: azsdkengsys.azurecr.io/stress/watcher:{{ .Values.tag }}
         command: ["dotnet", "Stress.Watcher.dll"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1

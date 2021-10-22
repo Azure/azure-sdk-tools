@@ -1,6 +1,6 @@
 apiVersion: v2
-name: deployment-example
-description: An example stress test chart for performing azure resource deployments
+name: debug-share-example
+description: An example stress test chart that uses a file share for debugging (e.g. for large log files, heap dumps)
 version: 0.1.1
 appVersion: v0.1
 annotations:

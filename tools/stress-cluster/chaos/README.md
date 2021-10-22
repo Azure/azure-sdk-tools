@@ -10,6 +10,7 @@ The chaos environment is an AKS cluster (Azure Kubernetes Service) with several 
   * [Creating a Stress Test](#creating-a-stress-test)
      * [Layout](#layout)
      * [Stress Test Secrets](#stress-test-secrets)
+     * [Stress Test File Share](#stress-test-file-share)
      * [Stress Test Azure Resources](#stress-test-azure-resources)
      * [Helm Chart Dependencies](#helm-chart-dependencies)
      * [Job Manifest](#job-manifest)
@@ -41,12 +42,14 @@ You will need the following tools to create and run tests:
 
 ## Access
 
-To access the cluster, run the following:
+To access the cluster, run the following. These commands are unnecessary for stress test deployment but can be useful
+for verifying permissions and directly interacting with containers via the kubernetes command line tool `kubectl`. For
+running the build and deployment script, see [Deploying a Stress Test](#deploying-a-stress-test).
 
 ```
 az login
 # Download the kubeconfig for the cluster
-az aks get-credentials --subscription "Azure SDK Test Resources" -g rg-stress-test-cluster- -n stress-test
+az aks get-credentials --subscription "Azure SDK Developer Playground" -g rg-stress-cluster-test -n stress-test
 ```
 
 You should now be able to access the cluster. To verify, you should see a list of namespaces when running the command:
@@ -197,6 +200,28 @@ APPINSIGHTS_INSTRUMENTATIONKEY=<value>
 # Bicep template outputs inserted here as well, for example
 RESOURCE_GROUP=<value>
 ```
+
+### Stress Test File Share
+
+Stress tests are encouraged to use app insights logs and metrics as much as possible for diagnostics. However there
+are some times where larger files (such as verbose logs, heap dumps, packet captures, etc.) need to be persisted for
+a duration longer than the lifespan of the test itself.
+
+All stress tests have an azure file share automatically mounted into the container by default. The path to this share
+is available via the environment variable `$DEBUG_SHARE` and is global to all tests in the cluster. 
+The `$DEBUG_SHARE` path includes the namespace and pod name of the test in order to avoid path overlaps with other
+tests. The `$DEBUG_SHARE_ROOT` path is also available, which points to the root of the file share, but this directory
+should only be used in special circumstances and with caution.
+
+NOTE: The share directory path MUST be created by the test before using it.
+
+After writing debug files to the share, the files can be viewed by navigating to the [file share
+portal](https://aka.ms/azsdk/stress/share),
+selecting the `namespace/<pod name>` directory, and clicking the download link for any files in that directory.
+
+See
+[stress-debug-share-example](https://github.com/Azure/azure-sdk-tools/tree/main/tools/stress-cluster/chaos/examples/stress-debug-share-example)
+for example usage.
 
 ### Stress Test Azure Resources
 

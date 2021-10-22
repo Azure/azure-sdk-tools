@@ -2,6 +2,9 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "subscriptionId": {
+      "value": "2cd617ea-1866-46b1-90e3-fffb087ebf9b"
+    },
     "groupSuffix": {
       "value": "prod"
     },
@@ -15,10 +18,10 @@
       "value": "centralus"
     },
     "staticTestSecretsKeyvaultName": {
-      "value": "StressTestSecrets"
+      "value": "stress-secrets-prod"
     },
     "staticTestSecretsKeyvaultGroup": {
-      "value": "rg-StressTestSecrets"
+      "value": "rg-stress-secrets-prod"
     },
     "enableMonitoring": {
         "value": true

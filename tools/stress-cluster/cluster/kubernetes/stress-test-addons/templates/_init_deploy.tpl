@@ -1,5 +1,5 @@
 {{ define "stress-test-addons.init-deploy" }}
-- name: azure-deployer
+- name: init-azure-deployer
   image: mcr.microsoft.com/azure-cli
   command: ['bash', '-c']
   args:
@@ -27,7 +27,7 @@
     - name: ENV_FILE
       value: /mnt/outputs/.env
   volumeMounts:
-    - name: "{{ .Release.Name }}-test-resources"
+    - name: "{{ .Release.Name }}-{{ .Release.Revision }}-test-resources"
       mountPath: /mnt/testresources
     - name: test-env-{{ lower .Scenario }}-{{ .Release.Name }}-{{ .Release.Revision }}
       mountPath: /mnt/outputs

@@ -42,12 +42,14 @@ You will need the following tools to create and run tests:
 
 ## Access
 
-To access the cluster, run the following:
+To access the cluster, run the following. These commands are unnecessary for stress test deployment but can be useful
+for verifying permissions and directly interacting with containers via the kubernetes command line tool `kubectl`. For
+running the build and deployment script, see [Deploying a Stress Test](#deploying-a-stress-test).
 
 ```
 az login
 # Download the kubeconfig for the cluster
-az aks get-credentials --subscription "Azure SDK Test Resources" -g rg-stress-test-cluster- -n stress-test
+az aks get-credentials --subscription "Azure SDK Developer Playground" -g rg-stress-cluster-test -n stress-test
 ```
 
 You should now be able to access the cluster. To verify, you should see a list of namespaces when running the command:

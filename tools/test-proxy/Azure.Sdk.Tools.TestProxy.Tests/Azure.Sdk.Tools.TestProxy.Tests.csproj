@@ -27,6 +27,9 @@
     <None Update="Test.RecordEntries\post_delete_get_content.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="Test.RecordEntries\requests_with_continuation.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="Test.RecordEntries\request_with_subscriptionid.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

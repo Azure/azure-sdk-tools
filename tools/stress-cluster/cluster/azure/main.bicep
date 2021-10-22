@@ -49,6 +49,14 @@ module appInsights 'monitoring/app-insights.bicep' = if (enableMonitoring) {
     }
 }
 
+module dashboard 'monitoring/workbook.bicep' = if (enableMonitoring) {
+    name: 'dashboard'
+    scope: group
+    params: {
+        logAnalyticsResource: logWorkspace.outputs.id
+    }
+}
+
 module cluster 'cluster/cluster.bicep' = {
     name: 'cluster'
     scope: group
@@ -140,6 +148,8 @@ output APPINSIGHTS_KEY_SECRET_NAME string = appInsightsInstrumentationKeySecretN
 output DEBUG_STORAGE_KEY_SECRET_NAME string = debugStorageKeySecretName
 output DEBUG_STORAGE_ACCOUNT_SECRET_NAME string = debugStorageAccountSecretName
 output DEBUG_FILESHARE_NAME string = storage.outputs.fileShareName
+output DASHBOARD_RESOURCE string = dashboard.outputs.id
+output DASHBOARD_LINK string = 'https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/${dashboard.outputs.id}/workbook'
 output RESOURCE_GROUP string = group.name
 output SUBSCRIPTION_ID string = subscriptionId
 output TENANT_ID string = subscription().tenantId

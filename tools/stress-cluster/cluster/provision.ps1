@@ -82,7 +82,8 @@ function UpdateOutputs([hashtable]$params) {
 
     $values | ConvertTo-Yaml | Out-File $valuesFile
 
-    Write-Host "$valuesFile has been updated and must be checked in."
+    Write-Warning "Update https://aka.ms/azsdk/stress/dashboard link page with new dashbaord link: $($outputs.DASHBOARD_LINK.value)"
+    Write-Warning "$valuesFile has been updated and must be checked in."
 }
 
 function DeployClusterResources([hashtable]$params) {

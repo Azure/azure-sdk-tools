@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "core-js": "^3.3.2",
+    "datatables.net": "^1.11.3",
+    "datatables.net-dt": "^1.11.3",
     "jquery": "3.4.1",
     "split.js": "^1.5.11",
     "vue": "^2.6.10",

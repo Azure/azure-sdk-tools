@@ -43,7 +43,7 @@ stages:
         inputs:
           command: custom
           custom: 'tool'
-          arguments: 'install --global --add-source "$(DotNetDevOpsFeed)" --version "1.0.0-dev.20211018.1" "Azure.Sdk.Tools.NotificationConfiguration"'
+          arguments: 'install --global --add-source "$(DotNetDevOpsFeed)" --version "$(NotificationsCreatorVersion)" "Azure.Sdk.Tools.NotificationConfiguration"'
           workingDirectory: '$(Agent.BuildDirectory)'
 
       - task: DotNetCoreCLI@2
@@ -51,7 +51,7 @@ stages:
         inputs:
           command: custom
           custom: 'tool'
-          arguments: 'install --global --add-source "$(DotNetDevOpsFeed)" --version "1.0.0-dev.20211018.1" "Azure.Sdk.Tools.GithubCodeownerSubscriber"'
+          arguments: 'install --global --add-source "$(DotNetDevOpsFeed)" --version "$(CodeOwnersSubscriberVersion)" "Azure.Sdk.Tools.GithubCodeownerSubscriber"'
           workingDirectory: '$(Agent.BuildDirectory)'
 
       - pwsh: |

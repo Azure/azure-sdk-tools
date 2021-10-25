@@ -9,7 +9,12 @@
 # https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
 
 trigger:
-- main
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - tools/pipeline-generator
 
 variables:
   NodeVersion: '13.x'

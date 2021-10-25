@@ -27,4 +27,7 @@
 
 
 // Add DataTables
-(<any>$('#reviews-table')).DataTable();
+(<any>$('#reviews-table')).DataTable({
+  "pageLength" : 25,
+  "search.smart" : true
+});

@@ -38,11 +38,11 @@ namespace APIViewWeb
 
         public async Task<ReviewModel> GetMasterReviewForPackageAsync(string language, string packageName)
         {
-            var reviews = await GetReviewsAsync(false, language, packageName, ReviewFilterType.Automatic);
+            var reviews = await GetReviewsAsync(false, language, packageName, ReviewType.Automatic);
             return reviews.FirstOrDefault();
         }
 
-        public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(bool isClosed, string language, string packageName = null, ReviewFilterType filterType = ReviewFilterType.None)
+        public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(bool isClosed, string language, string packageName = null, ReviewType filterType = ReviewType.None)
         {
             var queryStringBuilder = new StringBuilder("SELECT * FROM Reviews r WHERE (IS_DEFINED(r.IsClosed) ? r.IsClosed : false) = @isClosed ");
 

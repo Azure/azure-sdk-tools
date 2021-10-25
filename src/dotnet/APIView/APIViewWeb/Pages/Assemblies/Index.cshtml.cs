@@ -29,7 +29,7 @@ namespace APIViewWeb.Pages.Assemblies
         public string Language { get; set; } = "All";
 
         [BindProperty(SupportsGet = true)]
-        public ReviewFilterType FilterType { get; set; } = ReviewFilterType.Manual;
+        public ReviewType FilterType { get; set; } = ReviewType.Manual;
 
         public IEnumerable<ReviewModel> Assemblies { get; set; }
 
@@ -59,7 +59,7 @@ namespace APIViewWeb.Pages.Assemblies
             return RedirectToPage();
         }
 
-        public Dictionary<string, string> GetRoutingData(string language = null, bool? closed = null, ReviewFilterType filterType = ReviewFilterType.Manual)
+        public Dictionary<string, string> GetRoutingData(string language = null, bool? closed = null, ReviewType filterType = ReviewType.Manual)
         {
             var routingData = new Dictionary<string, string>();
             routingData["language"] = language ?? Language;

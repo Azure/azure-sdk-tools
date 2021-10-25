@@ -85,9 +85,6 @@ var workbookContent = {
                 {
                   durationMs: 604800000
                 }
-                {
-                  durationMs: 2592000000
-                }
               ]
               allowCustom: true
             }

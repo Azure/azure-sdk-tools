@@ -1,7 +1,7 @@
 {{ define "stress-test-addons.init-deploy" }}
 - name: azure-deployer
   image: stresstestregistry.azurecr.io/testing/eng-common-tools
-  command: ['pwsh', '-c', './common/TestResources/deploy-stress-test.ps1']
+  command: ['pwsh', '-NonInteractive', '-NoProfile', '-c', './common/TestResources/deploy-stress-test-resources.ps1']
   env:
     - name: ENV_FILE
       value: /mnt/outputs/.env
@@ -10,7 +10,7 @@
 
   volumeMounts:
     - name: "{{ .Release.Name }}-test-resources"
-      mountPath: /mnt/azure
+      mountPath: /mnt/testresources
     - name: test-env-{{ lower .Scenario }}-{{ .Release.Name }}-{{ .Release.Revision }}
       mountPath: /mnt/outputs
     - name: "static-secrets-{{ .Release.Name }}"

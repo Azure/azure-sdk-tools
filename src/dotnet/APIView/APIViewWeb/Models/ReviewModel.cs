@@ -11,14 +11,6 @@ using Newtonsoft.Json;
 
 namespace APIViewWeb
 {
-    public enum ReviewType
-    {
-        None = 0,
-        Manual,
-        Automatic,
-        PullRequest
-    }
-
     public class ReviewModel
     {
         private bool _runAnalysis;

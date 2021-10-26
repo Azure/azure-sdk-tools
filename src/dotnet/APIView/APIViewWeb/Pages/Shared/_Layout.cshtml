@@ -7,7 +7,6 @@
 
     <environment include="Development">
         <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.css" />
-        <link rel="stylesheet" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.css">
     </environment>
     <environment exclude="Development">
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
@@ -15,15 +14,14 @@
               asp-fallback-test-class="sr-only" asp-fallback-test-property="position" asp-fallback-test-value="absolute"
               crossorigin="anonymous"
               integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" />
-        <link rel="stylesheet" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.css"
-              asp-fallback-href="~/lib/datatables/css/jquery.dataTables.min.css"
-              crossorigin="anonymous" />
     </environment>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/v/dt/dt-1.11.3/rg-1.1.3/datatables.min.css" />
     <link rel="stylesheet" href="~/site.css" asp-append-version="true" />
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark bg-dark border-bottom mb-3">
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark bg-dark">
             <div class="container-fluid">
                 <a href="/" class="navbar-brand"><img class="apiview-logo" src="~/icons/apiview.png" />apiview.dev</a>
                 <button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".navbar-collapse" aria-controls="navbarSupportedContent"
@@ -65,8 +63,6 @@
         <script src="~/lib/ResizeSensor/dist/ResizeSensor.js"></script>
         <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.js"></script>
         <script src="~/lib/mark/dist/jquery.mark.js"></script>
-        <script src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.js"></script>
-
     </environment>
     <environment exclude="Development">
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"
@@ -92,15 +88,10 @@
                 crossorigin="anonymous"
                 integrity="sha384-xrRywqdh3PHs8keKZN+8zzc5TX0GRTLCcmivcbNJWm2rs5C8PRhcEn3czEjhAO9o">
         </script>
-        <script src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.js"
-                asp-fallback-src="~/lib/datatables/js/jquery.dataTables.min.js"
-                crossorigin="anonymous">
-        </script>
     </environment>
+    <script src="https://cdn.datatables.net/v/dt/dt-1.11.3/rg-1.1.3/datatables.min.js"></script>
     <script src="~/site.js" asp-append-version="true"></script>
     
-
-
     @RenderSection("Scripts", required: false)
 </body>
 </html>

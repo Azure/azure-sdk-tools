@@ -14,7 +14,7 @@ trigger:
       - main
   paths:
     include:
-      - tools/pipeline-generator
+      - tools/mock-service-host
 
 variables:
   NodeVersion: '13.x'

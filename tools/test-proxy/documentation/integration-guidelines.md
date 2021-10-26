@@ -1,6 +1,6 @@
 # Test-Proxy Integration Guidelines
 
-This document is intended to make help users integrate the test-proxy with their specific language. While it is not intended to get into extreme technical details, it should definitely go far enough to direct where necessary.
+This document is intended to help users integrate the test-proxy with their specific language, while it is not intended to get into extreme technical details, it will elaborate enough to direct where necessary.
 
 ## General Guidance
 

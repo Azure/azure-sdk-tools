@@ -9,7 +9,12 @@
 # https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
 
 trigger:
-- main
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - tools/mock-service-host
 
 variables:
   NodeVersion: '13.x'
@@ -105,7 +110,7 @@ stages:
             for file in $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/$(VAR_ARIFACT_NAME)/*.tgz
             do
               echo -e "\e[32m[$(date -u)] LOG: File: $file"
-              pnpm publish $file --tag latest --access public --no-git-checks || { echo 'publish $file failed' ; exit 1; }
+              npm publish $file --access public || { echo 'publish $file failed' ; exit 1; }
             done
             rm ~/.npmrc || { echo 'rm ~/.npmrc failed' ; exit 1; }
           displayName: Publish

@@ -298,6 +298,8 @@
          * not set or if a remote matching the provided remote URL is not found.
          */
         // "defaultRemote": "origin"
+        "url": "https://github.com/Azure/azure-sdk-tools",
+        "defaultBranch": "main"
     },
 
     /**

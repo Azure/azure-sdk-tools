@@ -588,3 +588,11 @@ mark {
 .apiview-logo {
     width: 30px;
 }
+
+.reviews-table-filter-label {
+    border-top-left-radius: 0.25rem;
+    border-top-right-radius: 0rem;
+    border-bottom-left-radius: 0.25rem;
+    border-bottom-right-radius: 0rem;
+    border-right: 0px;
+}

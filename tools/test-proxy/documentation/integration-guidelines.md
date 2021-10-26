@@ -25,9 +25,9 @@ At any point, when you run into issues, feel free to reach out to `scbedd`. The 
   
 ## General guidance
 
-- [x] You **should** support use SSL when communicating with the test-proxy. (Local URL: `https://localhost:5001`)
+- [x] You **should** support using SSL communication with the test-proxy. (Local URL: `https://localhost:5001`)
 
-This can be expensive, as every language needs to trust the https certificate differently. Read [trust-cert-per-language.md](https://github.com/Azure/azure-sdk-tools/blob/main/tools/test-proxy/documentation/trusting-cert-per-language.md)
+This can be expensive, as every language needs to trust the https certificate differently. Read [trust-cert-per-language.md](https://github.com/Azure/azure-sdk-tools/blob/main/tools/test-proxy/documentation/trusting-cert-per-language.md) for information about how each language implements this.
 
 - [x] You **should** start a local test server alongside your test run.
 

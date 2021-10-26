@@ -12,10 +12,13 @@ trigger:
       - hotfix/*
   paths:
     include:
-      - tools/sdk-test
+      - tools/sdk-testgen
 
 pool:
   vmImage: "ubuntu-latest"
+
+variables:
+  NugetSecurityAnalysisWarningLevel: 'none'
 
 stages:
   - stage: build
@@ -24,42 +27,42 @@ stages:
       - job: build
         displayName: "Build"
         steps:
-          - template: ../../eng/pipelines/templates/steps/sdk-test-set-env.yaml
+          - template: ../../eng/pipelines/templates/steps/sdk-testgen-set-env.yaml
 
           - script: |
               rush rebuild -v
             displayName: "Build all packages"
-            workingDirectory: $(Build.SourcesDirectory)/tools/sdk-test
+            workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen
           - script: |
               rush lint -v
             displayName: "Lint all packages"
-            workingDirectory: $(Build.SourcesDirectory)/tools/sdk-test
+            workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen
 
           - script: |
               export PATH=$PATH:$HOME/go/bin
               rush test -v
             displayName: "Test all packages"
-            workingDirectory: $(Build.SourcesDirectory)/tools/sdk-test
+            workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen
           - task: PublishTestResults@2
             inputs:
               testRunner: JUnit
-              testResultsFiles: $(Build.SourcesDirectory)/tools/sdk-test/packages/**/junit.xml
+              testResultsFiles: $(Build.SourcesDirectory)/tools/sdk-testgen/packages/**/junit.xml
           - task: PublishCodeCoverageResults@1
             inputs:
               codeCoverageTool: Cobertura
-              summaryFileLocation: $(Build.SourcesDirectory)/tools/sdk-test/packages/**/coverage/cobertura-coverage.xml
-              reportDirectory: $(Build.SourcesDirectory)/tools/sdk-test/packages/**/coverage
+              summaryFileLocation: $(Build.SourcesDirectory)/tools/sdk-testgen/packages/**/coverage/cobertura-coverage.xml
+              reportDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen/packages/**/coverage
 
           - script: |
               commitId=$(git rev-parse --short HEAD)
               rush publish --apply --prerelease-name="ci.$commitId"
             displayName: Bump versions
-            workingDirectory: $(Build.SourcesDirectory)/tools/sdk-test
+            workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen
           - script: |
               rush publish --publish --pack --include-all
             displayName: "Pack packages"
-            workingDirectory: $(Build.SourcesDirectory)/tools/sdk-test
-          - publish: $(Build.SourcesDirectory)/tools/sdk-test/common/temp/artifacts/packages
+            workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen
+          - publish: $(Build.SourcesDirectory)/tools/sdk-testgen/common/temp/artifacts/packages
             artifact: packages
             displayName: Publish packages(.tgz) as pipeline artifacts
 
@@ -81,14 +84,14 @@ stages:
           dependsOn: approve
           condition: and(succeeded(), ne(variables['USER_SKIP_PUBLIC_RELEASE'], 'true'))
           steps:
-          - template: ../../eng/pipelines/templates/steps/sdk-test-set-env.yaml
+          - template: ../../eng/pipelines/templates/steps/sdk-testgen-set-env.yaml
 
           - script: |
               rush publish --publish --pack --include-all
             displayName: "Pack packages"
-            workingDirectory: $(Build.SourcesDirectory)/tools/sdk-test
+            workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen
           
           - script: |
               NPM_AUTH_TOKEN="$(azure-sdk-npm-token)" rush publish --publish --include-all --set-access-level public
             displayName: Publish packages
-            workingDirectory: $(Build.SourcesDirectory)/tools/sdk-test
+            workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen

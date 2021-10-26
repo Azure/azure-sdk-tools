@@ -12,4 +12,4 @@ steps:
       npm install -g "@microsoft/rush"
       rush install
     displayName: "Install dependencies"
-    workingDirectory: $(Build.SourcesDirectory)/tools/sdk-test
+    workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen

@@ -19,6 +19,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryApplication.json
 func ExampleGalleryApplicationsClient_BeginCreateOrUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -55,6 +56,7 @@ func ExampleGalleryApplicationsClient_BeginCreateOrUpdate() {
 	log.Printf("GalleryApplication.ID: %s\n", *res.ID)
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryApplication.json
 func ExampleGalleryApplicationsClient_BeginUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -88,6 +90,7 @@ func ExampleGalleryApplicationsClient_BeginUpdate() {
 	log.Printf("GalleryApplication.ID: %s\n", *res.ID)
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryApplication.json
 func ExampleGalleryApplicationsClient_Get() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -108,6 +111,7 @@ func ExampleGalleryApplicationsClient_Get() {
 	log.Printf("GalleryApplication.ID: %s\n", *res.ID)
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryApplication.json
 func ExampleGalleryApplicationsClient_BeginDelete() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -131,6 +135,7 @@ func ExampleGalleryApplicationsClient_BeginDelete() {
 	}
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleryApplicationsInAGallery.json
 func ExampleGalleryApplicationsClient_ListByGallery() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {

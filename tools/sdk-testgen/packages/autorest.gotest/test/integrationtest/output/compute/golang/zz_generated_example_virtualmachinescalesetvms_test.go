@@ -19,6 +19,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachineScaleSetVM.json
 func ExampleVirtualMachineScaleSetVMsClient_BeginDelete() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -42,6 +43,7 @@ func ExampleVirtualMachineScaleSetVMsClient_BeginDelete() {
 	}
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMWithUserData.json
 func ExampleVirtualMachineScaleSetVMsClient_Get() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -62,6 +64,7 @@ func ExampleVirtualMachineScaleSetVMsClient_Get() {
 	log.Printf("VirtualMachineScaleSetVM.ID: %s\n", *res.ID)
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMInstanceViewAutoPlacedOnDedicatedHostGroup.json
 func ExampleVirtualMachineScaleSetVMsClient_GetInstanceView() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -81,6 +84,7 @@ func ExampleVirtualMachineScaleSetVMsClient_GetInstanceView() {
 	}
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RetrieveBootDiagnosticsDataVMScaleSetVM.json
 func ExampleVirtualMachineScaleSetVMsClient_RetrieveBootDiagnosticsData() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -100,6 +104,7 @@ func ExampleVirtualMachineScaleSetVMsClient_RetrieveBootDiagnosticsData() {
 	}
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/SimulateEvictionOfVmssVM.json
 func ExampleVirtualMachineScaleSetVMsClient_SimulateEviction() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -119,6 +124,7 @@ func ExampleVirtualMachineScaleSetVMsClient_SimulateEviction() {
 	}
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VMScaleSetRunCommand.json
 func ExampleVirtualMachineScaleSetVMsClient_BeginRunCommand() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {

@@ -19,6 +19,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateVirtualMachineScaleSetVMRunCommands.json
 func ExampleVirtualMachineScaleSetVMRunCommandsClient_BeginCreateOrUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -67,6 +68,7 @@ func ExampleVirtualMachineScaleSetVMRunCommandsClient_BeginCreateOrUpdate() {
 	log.Printf("VirtualMachineRunCommand.ID: %s\n", *res.ID)
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVirtualMachineScaleSetVMRunCommands.json
 func ExampleVirtualMachineScaleSetVMRunCommandsClient_BeginUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -99,6 +101,7 @@ func ExampleVirtualMachineScaleSetVMRunCommandsClient_BeginUpdate() {
 	log.Printf("VirtualMachineRunCommand.ID: %s\n", *res.ID)
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteVirtualMachineScaleSetVMRunCommands.json
 func ExampleVirtualMachineScaleSetVMRunCommandsClient_BeginDelete() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -123,6 +126,7 @@ func ExampleVirtualMachineScaleSetVMRunCommandsClient_BeginDelete() {
 	}
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMRunCommands.json
 func ExampleVirtualMachineScaleSetVMRunCommandsClient_Get() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -144,6 +148,7 @@ func ExampleVirtualMachineScaleSetVMRunCommandsClient_Get() {
 	log.Printf("VirtualMachineRunCommand.ID: %s\n", *res.ID)
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachineScaleSetVMRunCommands.json
 func ExampleVirtualMachineScaleSetVMRunCommandsClient_List() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {

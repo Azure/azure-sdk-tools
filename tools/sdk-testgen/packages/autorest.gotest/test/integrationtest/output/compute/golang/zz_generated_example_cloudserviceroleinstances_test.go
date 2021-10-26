@@ -18,6 +18,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteCloudServiceRoleInstance.json
 func ExampleCloudServiceRoleInstancesClient_BeginDelete() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -41,6 +42,7 @@ func ExampleCloudServiceRoleInstancesClient_BeginDelete() {
 	}
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceRoleInstance.json
 func ExampleCloudServiceRoleInstancesClient_Get() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -61,6 +63,7 @@ func ExampleCloudServiceRoleInstancesClient_Get() {
 	log.Printf("RoleInstance.ID: %s\n", *res.ID)
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetInstanceViewOfCloudServiceRoleInstance.json
 func ExampleCloudServiceRoleInstancesClient_GetInstanceView() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -80,6 +83,7 @@ func ExampleCloudServiceRoleInstancesClient_GetInstanceView() {
 	}
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceRolesInstances.json
 func ExampleCloudServiceRoleInstancesClient_List() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -102,6 +106,7 @@ func ExampleCloudServiceRoleInstancesClient_List() {
 	}
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RestartCloudServiceRoleInstance.json
 func ExampleCloudServiceRoleInstancesClient_BeginRestart() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -125,6 +130,7 @@ func ExampleCloudServiceRoleInstancesClient_BeginRestart() {
 	}
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReimageCloudServiceRoleInstance.json
 func ExampleCloudServiceRoleInstancesClient_BeginReimage() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -148,6 +154,7 @@ func ExampleCloudServiceRoleInstancesClient_BeginReimage() {
 	}
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RebuildCloudServiceRoleInstance.json
 func ExampleCloudServiceRoleInstancesClient_BeginRebuild() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {

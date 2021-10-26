@@ -19,6 +19,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryWithSharingProfile.json
 func ExampleGalleriesClient_BeginCreateOrUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -53,6 +54,7 @@ func ExampleGalleriesClient_BeginCreateOrUpdate() {
 	log.Printf("Gallery.ID: %s\n", *res.ID)
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGallery.json
 func ExampleGalleriesClient_BeginUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -81,6 +83,7 @@ func ExampleGalleriesClient_BeginUpdate() {
 	log.Printf("Gallery.ID: %s\n", *res.ID)
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryWithSelectPermissions.json
 func ExampleGalleriesClient_Get() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -100,6 +103,7 @@ func ExampleGalleriesClient_Get() {
 	log.Printf("Gallery.ID: %s\n", *res.ID)
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGallery.json
 func ExampleGalleriesClient_BeginDelete() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -122,6 +126,7 @@ func ExampleGalleriesClient_BeginDelete() {
 	}
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleriesInAResourceGroup.json
 func ExampleGalleriesClient_ListByResourceGroup() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -143,6 +148,7 @@ func ExampleGalleriesClient_ListByResourceGroup() {
 	}
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleriesInASubscription.json
 func ExampleGalleriesClient_List() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {

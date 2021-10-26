@@ -16,6 +16,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceOSVersion.json
 func ExampleCloudServiceOperatingSystemsClient_GetOSVersion() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -35,6 +36,7 @@ func ExampleCloudServiceOperatingSystemsClient_GetOSVersion() {
 	log.Printf("OSVersion.ID: %s\n", *res.ID)
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceOSVersions.json
 func ExampleCloudServiceOperatingSystemsClient_ListOSVersions() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -56,6 +58,7 @@ func ExampleCloudServiceOperatingSystemsClient_ListOSVersions() {
 	}
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceOSFamily.json
 func ExampleCloudServiceOperatingSystemsClient_GetOSFamily() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -75,6 +78,7 @@ func ExampleCloudServiceOperatingSystemsClient_GetOSFamily() {
 	log.Printf("OSFamily.ID: %s\n", *res.ID)
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceOSFamilies.json
 func ExampleCloudServiceOperatingSystemsClient_ListOSFamilies() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {

@@ -3386,6 +3386,7 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
               clientParams:
                 - *ref_52
           protocol: {}
+        originalFile: ''
         responses:
           '201':
             body:
@@ -3501,6 +3502,7 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
             parameter: *ref_71
         operation: *ref_127
         operationGroup: *ref_128
+        originalFile: ''
         responses:
           '200':
             body:
@@ -3616,6 +3618,7 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
             parameter: *ref_85
         operation: *ref_133
         operationGroup: *ref_128
+        originalFile: ''
         responses:
           '200':
             body:
@@ -3731,6 +3734,7 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
             parameter: *ref_98
         operation: *ref_137
         operationGroup: *ref_128
+        originalFile: ''
         responses:
           '200': {}
           '204': {}
@@ -3761,6 +3765,7 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
             parameter: *ref_112
         operation: *ref_113
         operationGroup: *ref_128
+        originalFile: ''
         responses:
           '200':
             body:
@@ -4929,6 +4934,7 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
               clientCtorName: NewFarmBeatsExtensionsClient
               clientName: FarmBeatsExtensionsClient
           protocol: {}
+        originalFile: ''
         responses:
           '200':
             body:
@@ -5481,6 +5487,7 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
             parameter: *ref_209
         operation: *ref_223
         operationGroup: *ref_224
+        originalFile: ''
         responses:
           '200':
             body:
@@ -7622,6 +7629,7 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
               clientParams:
                 - *ref_52
           protocol: {}
+        originalFile: ''
         responses:
           '200':
             body:
@@ -7759,6 +7767,7 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
             parameter: *ref_254
         operation: *ref_322
         operationGroup: *ref_323
+        originalFile: ''
         responses:
           '200':
             body:
@@ -7971,6 +7980,7 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
             parameter: *ref_267
         operation: *ref_331
         operationGroup: *ref_323
+        originalFile: ''
         responses:
           '200':
             body:
@@ -8083,6 +8093,7 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
             parameter: *ref_281
         operation: *ref_334
         operationGroup: *ref_323
+        originalFile: ''
         responses:
           '200': {}
           '204': {}
@@ -8103,6 +8114,7 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
         methodParameters: []
         operation: *ref_292
         operationGroup: *ref_323
+        originalFile: ''
         responses:
           '200':
             body:
@@ -8218,6 +8230,7 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
             parameter: *ref_307
         operation: *ref_308
         operationGroup: *ref_323
+        originalFile: ''
         responses:
           '200':
             body:
@@ -8727,6 +8740,7 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
               clientParams:
                 - *ref_52
           protocol: {}
+        originalFile: ''
         responses:
           '200':
             body:
@@ -8775,6 +8789,7 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
             parameter: *ref_354
         operation: *ref_367
         operationGroup: *ref_368
+        originalFile: ''
         responses:
           '200':
             body:
@@ -9384,6 +9399,7 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
               clientCtorName: NewOperationsClient
               clientName: OperationsClient
           protocol: {}
+        originalFile: ''
         responses:
           '200':
             body:
@@ -12750,6 +12766,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
               clientParams:
                 - *ref_52
           protocol: {}
+        originalFile: ''
         responses:
           '201':
             body:
@@ -12865,6 +12882,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
             parameter: *ref_71
         operation: *ref_127
         operationGroup: *ref_128
+        originalFile: ''
         responses:
           '200':
             body:
@@ -12980,6 +12998,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
             parameter: *ref_85
         operation: *ref_133
         operationGroup: *ref_128
+        originalFile: ''
         responses:
           '200':
             body:
@@ -13095,6 +13114,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
             parameter: *ref_98
         operation: *ref_137
         operationGroup: *ref_128
+        originalFile: ''
         responses:
           '200': {}
           '204': {}
@@ -13125,6 +13145,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
             parameter: *ref_112
         operation: *ref_113
         operationGroup: *ref_128
+        originalFile: ''
         responses:
           '200':
             body:
@@ -14293,6 +14314,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
               clientCtorName: NewFarmBeatsExtensionsClient
               clientName: FarmBeatsExtensionsClient
           protocol: {}
+        originalFile: ''
         responses:
           '200':
             body:
@@ -14845,6 +14867,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
             parameter: *ref_209
         operation: *ref_223
         operationGroup: *ref_224
+        originalFile: ''
         responses:
           '200':
             body:
@@ -16986,6 +17009,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
               clientParams:
                 - *ref_52
           protocol: {}
+        originalFile: ''
         responses:
           '200':
             body:
@@ -17123,6 +17147,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
             parameter: *ref_254
         operation: *ref_322
         operationGroup: *ref_323
+        originalFile: ''
         responses:
           '200':
             body:
@@ -17335,6 +17360,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
             parameter: *ref_267
         operation: *ref_331
         operationGroup: *ref_323
+        originalFile: ''
         responses:
           '200':
             body:
@@ -17447,6 +17473,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
             parameter: *ref_281
         operation: *ref_334
         operationGroup: *ref_323
+        originalFile: ''
         responses:
           '200': {}
           '204': {}
@@ -17467,6 +17494,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
         methodParameters: []
         operation: *ref_292
         operationGroup: *ref_323
+        originalFile: ''
         responses:
           '200':
             body:
@@ -17582,6 +17610,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
             parameter: *ref_307
         operation: *ref_308
         operationGroup: *ref_323
+        originalFile: ''
         responses:
           '200':
             body:
@@ -18091,6 +18120,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
               clientParams:
                 - *ref_52
           protocol: {}
+        originalFile: ''
         responses:
           '200':
             body:
@@ -18139,6 +18169,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
             parameter: *ref_354
         operation: *ref_367
         operationGroup: *ref_368
+        originalFile: ''
         responses:
           '200':
             body:
@@ -18748,6 +18779,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
               clientCtorName: NewOperationsClient
               clientName: OperationsClient
           protocol: {}
+        originalFile: ''
         responses:
           '200':
             body:
@@ -19051,6 +19083,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
             parameter: *ref_51
         operation: *ref_66
         operationGroup: *ref_128
+        originalFile: ''
         responses:
           '201':
             body:
@@ -19166,6 +19199,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
             parameter: *ref_71
         operation: *ref_127
         operationGroup: *ref_128
+        originalFile: ''
         responses:
           '200':
             body:
@@ -19281,6 +19315,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
             parameter: *ref_85
         operation: *ref_133
         operationGroup: *ref_128
+        originalFile: ''
         responses:
           '200':
             body:
@@ -19396,6 +19431,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
             parameter: *ref_98
         operation: *ref_137
         operationGroup: *ref_128
+        originalFile: ''
         responses:
           '200': {}
           '204': {}
@@ -19426,6 +19462,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
             parameter: *ref_112
         operation: *ref_113
         operationGroup: *ref_128
+        originalFile: ''
         responses:
           '200':
             body:
@@ -19529,6 +19566,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
         methodParameters: []
         operation: *ref_200
         operationGroup: *ref_224
+        originalFile: ''
         responses:
           '200':
             body:
@@ -20081,6 +20119,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
             parameter: *ref_209
         operation: *ref_223
         operationGroup: *ref_224
+        originalFile: ''
         responses:
           '200':
             body:
@@ -20631,6 +20670,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
             parameter: *ref_241
         operation: *ref_253
         operationGroup: *ref_323
+        originalFile: ''
         responses:
           '200':
             body:
@@ -20768,6 +20808,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
             parameter: *ref_254
         operation: *ref_322
         operationGroup: *ref_323
+        originalFile: ''
         responses:
           '200':
             body:
@@ -20980,6 +21021,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
             parameter: *ref_267
         operation: *ref_331
         operationGroup: *ref_323
+        originalFile: ''
         responses:
           '200':
             body:
@@ -21092,6 +21134,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
             parameter: *ref_281
         operation: *ref_334
         operationGroup: *ref_323
+        originalFile: ''
         responses:
           '200': {}
           '204': {}
@@ -21112,6 +21155,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
         methodParameters: []
         operation: *ref_292
         operationGroup: *ref_323
+        originalFile: ''
         responses:
           '200':
             body:
@@ -21227,6 +21271,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
             parameter: *ref_307
         operation: *ref_308
         operationGroup: *ref_323
+        originalFile: ''
         responses:
           '200':
             body:
@@ -21351,6 +21396,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
             parameter: *ref_354
         operation: *ref_367
         operationGroup: *ref_368
+        originalFile: ''
         responses:
           '200':
             body:
@@ -21399,6 +21445,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
             parameter: *ref_354
         operation: *ref_367
         operationGroup: *ref_368
+        originalFile: ''
         responses:
           '200':
             body:
@@ -21422,6 +21469,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
         methodParameters: []
         operation: *ref_392
         operationGroup: *ref_401
+        originalFile: ''
         responses:
           '200':
             body:

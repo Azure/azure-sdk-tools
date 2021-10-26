@@ -17,6 +17,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnSshPublicKey.json
 func ExampleSSHPublicKeysClient_Create() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -44,6 +45,7 @@ func ExampleSSHPublicKeysClient_Create() {
 	log.Printf("SSHPublicKeyResource.ID: %s\n", *res.ID)
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetAnSshPublicKey.json
 func ExampleSSHPublicKeysClient_Get() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -63,6 +65,7 @@ func ExampleSSHPublicKeysClient_Get() {
 	log.Printf("SSHPublicKeyResource.ID: %s\n", *res.ID)
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GenerateSshKeyPair.json
 func ExampleSSHPublicKeysClient_GenerateKeyPair() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {

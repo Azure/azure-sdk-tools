@@ -19,6 +19,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryApplicationVersion.json
 func ExampleGalleryApplicationVersionsClient_BeginCreateOrUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -71,6 +72,7 @@ func ExampleGalleryApplicationVersionsClient_BeginCreateOrUpdate() {
 	log.Printf("GalleryApplicationVersion.ID: %s\n", *res.ID)
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryApplicationVersion.json
 func ExampleGalleryApplicationVersionsClient_BeginUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -120,6 +122,7 @@ func ExampleGalleryApplicationVersionsClient_BeginUpdate() {
 	log.Printf("GalleryApplicationVersion.ID: %s\n", *res.ID)
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryApplicationVersionWithReplicationStatus.json
 func ExampleGalleryApplicationVersionsClient_Get() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -141,6 +144,7 @@ func ExampleGalleryApplicationVersionsClient_Get() {
 	log.Printf("GalleryApplicationVersion.ID: %s\n", *res.ID)
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryApplicationVersion.json
 func ExampleGalleryApplicationVersionsClient_BeginDelete() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -165,6 +169,7 @@ func ExampleGalleryApplicationVersionsClient_BeginDelete() {
 	}
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleryApplicationVersionsInAGalleryApplication.json
 func ExampleGalleryApplicationVersionsClient_ListByGalleryApplication() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {

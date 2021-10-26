@@ -182,4 +182,14 @@ export class Helper {
 
         return jp.query(obj, jsonPath);
     }
+
+    public static getExampleRelativePath(src: string): string {
+        src = src ? src : '';
+        const dst = src.match('specification/.*/examples/.*\\.json');
+        if (dst !== null) {
+            return dst[0];
+        } else {
+            return src;
+        }
+    }
 }

@@ -19,6 +19,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskEncryptionSetWithKeyVaultFromADifferentSubscription.json
 func ExampleDiskEncryptionSetsClient_BeginCreateOrUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -56,6 +57,7 @@ func ExampleDiskEncryptionSetsClient_BeginCreateOrUpdate() {
 	log.Printf("DiskEncryptionSet.ID: %s\n", *res.ID)
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSetWithRotationToLatestKeyVersionEnabled.json
 func ExampleDiskEncryptionSetsClient_BeginUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -91,6 +93,7 @@ func ExampleDiskEncryptionSetsClient_BeginUpdate() {
 	log.Printf("DiskEncryptionSet.ID: %s\n", *res.ID)
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutADiskEncryptionSet.json
 func ExampleDiskEncryptionSetsClient_Get() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -110,6 +113,7 @@ func ExampleDiskEncryptionSetsClient_Get() {
 	log.Printf("DiskEncryptionSet.ID: %s\n", *res.ID)
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteADiskEncryptionSet.json
 func ExampleDiskEncryptionSetsClient_BeginDelete() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -132,6 +136,7 @@ func ExampleDiskEncryptionSetsClient_BeginDelete() {
 	}
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskEncryptionSetsInAResourceGroup.json
 func ExampleDiskEncryptionSetsClient_ListByResourceGroup() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -153,6 +158,7 @@ func ExampleDiskEncryptionSetsClient_ListByResourceGroup() {
 	}
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskEncryptionSetsInASubscription.json
 func ExampleDiskEncryptionSetsClient_List() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -173,6 +179,7 @@ func ExampleDiskEncryptionSetsClient_List() {
 	}
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskEncryptionSetAssociatedResources.json
 func ExampleDiskEncryptionSetsClient_ListAssociatedResources() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {

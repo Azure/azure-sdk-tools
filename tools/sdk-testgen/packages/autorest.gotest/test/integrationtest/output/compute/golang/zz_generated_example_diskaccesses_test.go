@@ -19,6 +19,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskAccess.json
 func ExampleDiskAccessesClient_BeginCreateOrUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -47,6 +48,7 @@ func ExampleDiskAccessesClient_BeginCreateOrUpdate() {
 	log.Printf("DiskAccess.ID: %s\n", *res.ID)
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskAccess.json
 func ExampleDiskAccessesClient_BeginUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -76,6 +78,7 @@ func ExampleDiskAccessesClient_BeginUpdate() {
 	log.Printf("DiskAccess.ID: %s\n", *res.ID)
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutADiskAccessWithPrivateEndpoints.json
 func ExampleDiskAccessesClient_Get() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -95,6 +98,7 @@ func ExampleDiskAccessesClient_Get() {
 	log.Printf("DiskAccess.ID: %s\n", *res.ID)
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteADiskAccess.json
 func ExampleDiskAccessesClient_BeginDelete() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -117,6 +121,7 @@ func ExampleDiskAccessesClient_BeginDelete() {
 	}
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskAccessesInAResourceGroup.json
 func ExampleDiskAccessesClient_ListByResourceGroup() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -138,6 +143,7 @@ func ExampleDiskAccessesClient_ListByResourceGroup() {
 	}
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskAccessesInASubscription.json
 func ExampleDiskAccessesClient_List() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -158,6 +164,7 @@ func ExampleDiskAccessesClient_List() {
 	}
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetDiskAccessPrivateLinkResources.json
 func ExampleDiskAccessesClient_GetPrivateLinkResources() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -176,6 +183,7 @@ func ExampleDiskAccessesClient_GetPrivateLinkResources() {
 	}
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ApprovePrivateEndpointConnection.json
 func ExampleDiskAccessesClient_BeginUpdateAPrivateEndpointConnection() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -208,6 +216,7 @@ func ExampleDiskAccessesClient_BeginUpdateAPrivateEndpointConnection() {
 	log.Printf("PrivateEndpointConnection.ID: %s\n", *res.ID)
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutAPrivateEndpointConnection.json
 func ExampleDiskAccessesClient_GetAPrivateEndpointConnection() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -228,6 +237,7 @@ func ExampleDiskAccessesClient_GetAPrivateEndpointConnection() {
 	log.Printf("PrivateEndpointConnection.ID: %s\n", *res.ID)
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteAPrivateEndpointConnection.json
 func ExampleDiskAccessesClient_BeginDeleteAPrivateEndpointConnection() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -251,6 +261,7 @@ func ExampleDiskAccessesClient_BeginDeleteAPrivateEndpointConnection() {
 	}
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListPrivateEndpointConnectionsInADiskAccess.json
 func ExampleDiskAccessesClient_ListPrivateEndpointConnections() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {

@@ -19,6 +19,7 @@ import (
 {%- for exampleGroup in exampleGroups %}
 {%- for example in exampleGroup.examples %}
 {%- if loop.first %}
+// x-ms-original-file: {{example.originalFile}}
 func Example{{example.operationGroup.language.go.name}}Client_{{example.opName}}() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {

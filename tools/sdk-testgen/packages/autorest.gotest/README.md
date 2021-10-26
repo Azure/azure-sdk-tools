@@ -7,7 +7,7 @@ https://github.com/Azure/azure-rest-api-specs
 ## How to Generate GO Test Code
 
 ```
-autorest --version=3.2.1 --use=@autorest/go@4.0.0-preview.28 --use=<testgen extension> --go --track2 --output-folder=<RP package path> --file-prefix="zz_generated_" --clear-output-folder=false --go.clear-output-folder=false --testmodeler.generate-mock-test --testmodeler.generate-sdk-example --testmodeler.generate-scenario-test --generate-sdk=false --debug  <RP config md file path>
+autorest --version=3.6.2 --use=@autorest/go@4.0.0-preview.28 --use=<testgen extension> --go --track2 --output-folder=<RP package path> --file-prefix="zz_generated_" --clear-output-folder=false --go.clear-output-folder=false --testmodeler.generate-mock-test --testmodeler.generate-sdk-example --testmodeler.generate-scenario-test --generate-sdk=false --debug  <RP config md file path>
 ```
 
 ## Configurations
@@ -38,6 +38,11 @@ Generate scenario test.
 
 ```yaml $(go)
 clear-output-folder: false
+
+modelerfour:
+    include-x-ms-examples-original-file: true
+
+version: 3.6.2
 
 use-extension:
   "@autorest/go" : "4.0.0-preview.28"

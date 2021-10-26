@@ -19,6 +19,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/LogAnalyticsRequestRateByInterval.json
 func ExampleLogAnalyticsClient_BeginExportRequestRateByInterval() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -49,6 +50,7 @@ func ExampleLogAnalyticsClient_BeginExportRequestRateByInterval() {
 	}
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/LogAnalyticsThrottledRequests.json
 func ExampleLogAnalyticsClient_BeginExportThrottledRequests() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {

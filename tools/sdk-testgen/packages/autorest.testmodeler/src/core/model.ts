@@ -35,6 +35,7 @@ export interface ExampleExtensionResponse {
 export interface ExampleExtension {
     parameters?: Record<string, any>;
     responses?: Record<string, ExampleExtensionResponse>;
+    'x-ms-original-file'?: string;
 }
 
 export type TestStepModel = {
@@ -201,6 +202,7 @@ export class ExampleModel {
     clientParameters: ExampleParameter[] = [];
     methodParameters: ExampleParameter[] = [];
     responses: Record<string, ExampleResponse> = {}; // statusCode-->ExampleResponse
+    originalFile: string;
 
     public constructor(name: string, operation: Operation, operationGroup: OperationGroup) {
         this.name = name;
@@ -236,6 +238,7 @@ export class TestCodeModeler {
     private createExampleModel(exampleExtension: ExampleExtension, exampleName, operation: Operation, operationGroup: OperationGroup): ExampleModel {
         const parametersInExample = exampleExtension.parameters;
         const exampleModel = new ExampleModel(exampleName, operation, operationGroup);
+        exampleModel.originalFile = Helper.getExampleRelativePath(exampleExtension['x-ms-original-file']);
         for (const parameter of Helper.allParameters(operation)) {
             if (parameter.flattened) {
                 continue;

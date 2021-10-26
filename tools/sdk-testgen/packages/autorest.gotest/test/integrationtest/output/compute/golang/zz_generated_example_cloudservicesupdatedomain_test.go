@@ -18,6 +18,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateCloudServiceUpdateDomain.json
 func ExampleCloudServicesUpdateDomainClient_BeginWalkUpdateDomain() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -41,6 +42,7 @@ func ExampleCloudServicesUpdateDomainClient_BeginWalkUpdateDomain() {
 	}
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceUpdateDomain.json
 func ExampleCloudServicesUpdateDomainClient_GetUpdateDomain() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -61,6 +63,7 @@ func ExampleCloudServicesUpdateDomainClient_GetUpdateDomain() {
 	log.Printf("UpdateDomain.ID: %s\n", *res.ID)
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceUpdateDomains.json
 func ExampleCloudServicesUpdateDomainClient_ListUpdateDomains() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {

@@ -19,6 +19,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateVirtualMachineScaleSetVMExtensions.json
 func ExampleVirtualMachineScaleSetVMExtensionsClient_BeginCreateOrUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -78,6 +79,7 @@ func ExampleVirtualMachineScaleSetVMExtensionsClient_BeginCreateOrUpdate() {
 	log.Printf("VirtualMachineScaleSetVMExtension.ID: %s\n", *res.ID)
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVirtualMachineScaleSetVMExtensions.json
 func ExampleVirtualMachineScaleSetVMExtensionsClient_BeginUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -114,6 +116,7 @@ func ExampleVirtualMachineScaleSetVMExtensionsClient_BeginUpdate() {
 	log.Printf("VirtualMachineScaleSetVMExtension.ID: %s\n", *res.ID)
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteVirtualMachineScaleSetVMExtensions.json
 func ExampleVirtualMachineScaleSetVMExtensionsClient_BeginDelete() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -138,6 +141,7 @@ func ExampleVirtualMachineScaleSetVMExtensionsClient_BeginDelete() {
 	}
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMExtensions.json
 func ExampleVirtualMachineScaleSetVMExtensionsClient_Get() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -159,6 +163,7 @@ func ExampleVirtualMachineScaleSetVMExtensionsClient_Get() {
 	log.Printf("VirtualMachineScaleSetVMExtension.ID: %s\n", *res.ID)
 }
 
+// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachineScaleSetVMExtensions.json
 func ExampleVirtualMachineScaleSetVMExtensionsClient_List() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {

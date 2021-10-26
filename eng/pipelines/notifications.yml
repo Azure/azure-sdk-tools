@@ -55,7 +55,7 @@ stages:
           workingDirectory: '$(Agent.BuildDirectory)'
 
       - pwsh: |
-          notification-configuration `
+          notification-creator `
             --organization $(Organization) `
             --project $(Project) `
             --path-prefix \"\\$(PathPrefix)\" `

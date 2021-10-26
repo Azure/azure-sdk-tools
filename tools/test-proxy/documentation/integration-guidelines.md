@@ -44,7 +44,7 @@ Doing so allows you to unit test your language's interactions with the test-prox
 
 `azure-core` in each language supported by the azure-sdk _normally_ ships with some way to make changes to the requests before they leave the machine. The easiest and most straightforward way to direct traffic to the test-proxy is to exploit these mechanisms.
 
-* JavaScript uses a [custom policy](TODO) for track 2 recordings, and falls back to a [custom httpclient]() for track 1/
+* JavaScript uses a [custom policy](TODO) for track 2 recordings, and falls back to a [custom httpclient]() for track 1.(Same for performance tests)
 * Python uses a [custom policy](https://github.com/Azure/azure-sdk-for-python/blob/main/tools/azure-devtools/src/azure_devtools/perfstress_tests/_policies.py) for performance tests, but uses a lightweight [test decorator](https://github.com/Azure/azure-sdk-for-python/blob/main/tools/azure-sdk-tools/devtools_testutils/proxy_testcase.py#L107) to redirect traffic to the test-proxy during tests.
 
 - [x] You **should** take advantage of the `variables` API to store and retrieve non-secret "random" elements of your tests.

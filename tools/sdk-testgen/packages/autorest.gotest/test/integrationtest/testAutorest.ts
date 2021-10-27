@@ -5,7 +5,7 @@ import { Helper } from '@autorest/testmodeler/dist/src/util/helper';
 import { exec } from 'child_process';
 
 async function compare(dir1: string, dir2: string) {
-    const cmd = 'diff -r --exclude=gen.zip --strip-trailing-cr -I _filePath ' + dir1 + ' ' + dir2;
+    const cmd = 'diff -r --exclude=gen.zip --strip-trailing-cr -I _filePath -I x-ms-original-file -I file:/// ' + dir1 + ' ' + dir2;
     console.log(cmd);
     return await new Promise<boolean>((resolve, reject) => {
         exec(cmd, (error, stdout) => {

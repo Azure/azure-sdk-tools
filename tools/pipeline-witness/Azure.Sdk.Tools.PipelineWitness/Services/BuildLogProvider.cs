@@ -26,21 +26,16 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
         {
         }
 
-        public virtual async Task<IReadOnlyList<string>> GetTimelineRecordLogsAsync(Build build, TimelineRecord record)
+        public virtual async Task<IReadOnlyList<string>> GetLogLinesAsync(Build build, int logId)
         {
-            if (record.Log == null)
-            {
-                return null;
-            }
-
-            var cacheKey = $"{build.Id}:{record.Log.Id}";
+            var cacheKey = $"{build.Id}:{logId}";
 
             logger.LogTrace("Getting logs for {CacheKey} from cache", cacheKey);
             var lines = await this.cache.GetOrCreateAsync(cacheKey, async entry =>
             {
                 logger.LogTrace("Cache miss for {CacheKey}, falling back to rest api", cacheKey);
                 var buildHttpClient = vssConnection.GetClient<BuildHttpClient>();
-                var response = await buildHttpClient.GetBuildLogLinesAsync(build.Project.Id, build.Id, record.Log.Id);
+                var response = await buildHttpClient.GetBuildLogLinesAsync(build.Project.Id, build.Id, logId);
                 var characterCount = response.Sum(x => x.Length);
                 entry.Priority = CacheItemPriority.Low;
                 entry.Size =characterCount + 4;

@@ -25,7 +25,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
 
             foreach (var failedTask in failedTasks)
             {
-                var lines = await this.buildLogProvider.GetTimelineRecordLogsAsync(context.Build, failedTask);
+                var lines = await this.buildLogProvider.GetLogLinesAsync(context.Build, failedTask.Log.Id);
 
                 if (lines.Any(line => line.Contains("Transfer failed for https://pkgs.dev.azure.com") && line.Contains("503 Service Unavailable")))
                 {

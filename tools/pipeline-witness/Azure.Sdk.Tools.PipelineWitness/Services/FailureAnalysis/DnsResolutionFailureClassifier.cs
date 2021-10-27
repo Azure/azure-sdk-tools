@@ -37,7 +37,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
 
             foreach (var failedTask in failedTasks)
             {
-                var lines = await buildLogProvider.GetTimelineRecordLogsAsync(context.Build, failedTask);
+                var lines = await buildLogProvider.GetLogLinesAsync(context.Build, failedTask.Log.Id);
 
                 if (lines.Any(line => IsDnsResolutionFailure(line)))
                 {

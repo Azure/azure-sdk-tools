@@ -12,6 +12,20 @@ trigger:
   branches:
     include:
       - main
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - tools/mock-service-host
+
+pr:
+  branches:
+    include:
+      - main
+      - feature/*
+      - release/*
+      - hotfix/*
   paths:
     include:
       - tools/mock-service-host

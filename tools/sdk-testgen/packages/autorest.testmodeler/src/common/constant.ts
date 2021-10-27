@@ -6,6 +6,7 @@ export enum Config {
     testResources = 'test-resources',
     test = 'test',
     splitParentsValue = 'testmodeler.split-parents-value',
+    disabledExamples = 'testmodeler.mock.disabled-examples',
 }
 
 export enum TestScenarioVariableNames {

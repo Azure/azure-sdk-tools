@@ -20,4 +20,12 @@ export class TestConfig {
         }
         return undefined;
     }
+
+    public isDisabledExample(exampleName: string): boolean {
+        const disabledExamples = this.getValue(Config.disabledExamples);
+        if (disabledExamples !== undefined && disabledExamples !== null && Array.isArray(disabledExamples)) {
+            return (disabledExamples as string[]).indexOf(exampleName) >= 0;
+        }
+        return false;
+    }
 }

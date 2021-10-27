@@ -287,7 +287,9 @@ export class TestCodeModeler {
             operationGroup.operations.forEach((operation) => {
                 const exampleGroup = new ExampleGroup(operationGroup.language.default.name + '_' + operation.language.default.name);
                 for (const [exampleName, rawValue] of Object.entries(operation.extensions?.[ExtensionName.xMsExamples] ?? {})) {
-                    exampleGroup.examples.push(this.createExampleModel(rawValue as ExampleExtension, exampleName, operation, operationGroup));
+                    if (!this.testConfig.isDisabledExample(exampleName)) {
+                        exampleGroup.examples.push(this.createExampleModel(rawValue as ExampleExtension, exampleName, operation, operationGroup));
+                    }
                 }
                 this.codeModel.testModel.mockTest.exampleGroups.push(exampleGroup);
             });

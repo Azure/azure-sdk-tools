@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31702.278
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Sdk.Tools.CodeOwnersParser", "CodeOwnersParser\Azure.Sdk.Tools.CodeOwnersParser.csproj", "{55D665BF-A4B3-45EA-A2A0-B33AFB208766}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.Sdk.Tools.RetrieveCodeOwners", "Azure.Sdk.Tools.RetrieveCodeOwners\Azure.Sdk.Tools.RetrieveCodeOwners.csproj", "{FE65F92D-C71B-4E38-A4B2-3089EA7C5FEC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{55D665BF-A4B3-45EA-A2A0-B33AFB208766}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{55D665BF-A4B3-45EA-A2A0-B33AFB208766}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{55D665BF-A4B3-45EA-A2A0-B33AFB208766}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{55D665BF-A4B3-45EA-A2A0-B33AFB208766}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FE65F92D-C71B-4E38-A4B2-3089EA7C5FEC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FE65F92D-C71B-4E38-A4B2-3089EA7C5FEC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FE65F92D-C71B-4E38-A4B2-3089EA7C5FEC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FE65F92D-C71B-4E38-A4B2-3089EA7C5FEC}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E32EEF98-9184-4346-8801-C5A8A1C7FD7D}
+	EndGlobalSection
+EndGlobal

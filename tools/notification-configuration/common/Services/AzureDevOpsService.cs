@@ -15,7 +15,7 @@ using Microsoft.VisualStudio.Services.Identity;
 using System.Threading;
 using System.Linq;
 
-namespace NotificationConfiguration.Services
+namespace Azure.Sdk.Tools.NotificationConfiguration.Services
 {
     /// <summary>
     /// Provides access to DevOps entities

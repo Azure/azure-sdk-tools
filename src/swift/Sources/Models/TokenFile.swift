@@ -587,6 +587,16 @@ class TokenFile: Codable {
         }
     }
 
+    private func handle(async: AsyncKind) {
+        switch `async` {
+        case .async:
+            keyword(value: `async`.textDescription)
+            whitespace()
+        default:
+            return
+        }
+    }
+
     private func handle(throws: ThrowsKind) {
         switch `throws` {
         case .throwing, .rethrowing:
@@ -645,6 +655,7 @@ class TokenFile: Codable {
         }
         punctuation(")")
         whitespace()
+        handle(async: signature.asyncKind)
         handle(throws: signature.throwsKind)
         handle(result: signature.result?.type)
         whitespace()

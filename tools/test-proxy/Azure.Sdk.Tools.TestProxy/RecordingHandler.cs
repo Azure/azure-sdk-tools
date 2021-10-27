@@ -2,6 +2,9 @@
 using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Transforms;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.Http.Json;
+using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
 using System;
 using System.Collections.Concurrent;
@@ -11,6 +14,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -61,7 +65,7 @@ namespace Azure.Sdk.Tools.TestProxy
         #endregion
 
         #region recording functionality
-        public void StopRecording(string sessionId)
+        public void StopRecording(string sessionId, IDictionary<string, string> variables = null)
         {
             if (!RecordingSessions.TryRemove(sessionId, out var fileAndSession))
             {
@@ -73,6 +77,14 @@ namespace Azure.Sdk.Tools.TestProxy
             foreach (RecordedTestSanitizer sanitizer in Sanitizers.Concat(session.AdditionalSanitizers))
             {
                 session.Session.Sanitize(sanitizer);
+            }
+
+            if(variables != null)
+            {
+                foreach(var kvp in variables)
+                {
+                    session.Session.Variables[kvp.Key] = kvp.Value;
+                }
             }
 
             if (String.IsNullOrEmpty(file))
@@ -99,6 +111,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 var writer = new Utf8JsonWriter(stream, options);
                 session.Session.Serialize(writer);
                 writer.Flush();
+                stream.Write(Encoding.UTF8.GetBytes(Environment.NewLine));
             }
         }
 
@@ -277,6 +290,15 @@ namespace Azure.Sdk.Tools.TestProxy
             }
 
             outgoingResponse.Headers.Add("x-recording-id", id);
+
+            if(session.Session.Variables.Count > 0)
+            {
+                var json = JsonSerializer.Serialize(session.Session.Variables);
+                outgoingResponse.Headers.Add("Content-Type", "application/json");
+
+                // Write to the response
+                await outgoingResponse.WriteAsync(json);
+            }
         }
 
         public void StopPlayback(string recordingId, bool purgeMemoryStore = false)
@@ -401,25 +423,51 @@ namespace Azure.Sdk.Tools.TestProxy
 
         #region common functions
 
-        public void SetDefaultExtensions()
+        public void SetDefaultExtensions(string recordingId = null)
         {
-            Sanitizers = new List<RecordedTestSanitizer>
+            if (recordingId != null)
             {
-                new RecordedTestSanitizer()
-            };
-
-            Transforms = new List<ResponseTransform>
+                if (PlaybackSessions.TryGetValue(recordingId, out var playbackSession))
+                {
+                    playbackSession.ResetExtensions();
+                }
+                if (RecordingSessions.TryGetValue(recordingId, out var recordSession))
+                {
+                    recordSession.ModifiableSession.ResetExtensions();
+                }
+                if (InMemorySessions.TryGetValue(recordingId, out var inMemSession))
+                {
+                    inMemSession.ResetExtensions();
+                }
+            }
+            else
             {
-                new StorageRequestIdTransform(),
-                new ClientIdTransform()
-            };
+                Sanitizers = new List<RecordedTestSanitizer>
+                {
+                    new RecordedTestSanitizer()
+                };
 
-            Matcher = new RecordMatcher();
+                Transforms = new List<ResponseTransform>
+                {
+                    new StorageRequestIdTransform(),
+                    new ClientIdTransform()
+                };
+
+                Matcher = new RecordMatcher();
+            }
         }
+
 
         public string GetRecordingPath(string file)
         {
-            return Path.Join(RepoPath, file + (!file.EndsWith(".json") ? ".json" : String.Empty)).Replace("\\", "/");
+            var path = file;
+
+            if (!Path.IsPathFullyQualified(file))
+            {
+                path = Path.Join(RepoPath, file);
+            }
+
+            return (path + (!path.EndsWith(".json") ? ".json" : String.Empty)).Replace("\\", "/");
         }
 
         public static string GetHeader(HttpRequest request, string name, bool allowNulls = false)
@@ -438,13 +486,14 @@ namespace Azure.Sdk.Tools.TestProxy
 
         public static Uri GetRequestUri(HttpRequest request)
         {
-            var uri = new RequestUriBuilder();
-            uri.Reset(new Uri(GetHeader(request, "x-recording-upstream-base-uri")));
-            uri.Path = request.Path;
-            uri.Query = request.QueryString.ToUriComponent();
-            var result = uri.ToUri();
-
-            return result;
+            // Instead of obtaining the Path of the request from request.Path, we use this
+            // more complicated method obtaining the raw string from the httpcontext. Unfortunately,
+            // The native request functions implicitly decode the Path value. EG: "aa%27bb" is decoded into 'aa'bb'.
+            // Using the RawTarget PREVENTS this automatic decode. We still lean on the URI constructors
+            // to give us some amount of safety, but note that we explicitly disable escaping in that combination.
+            var rawTarget = request.HttpContext.Features.Get<IHttpRequestFeature>().RawTarget;
+            var host = new Uri(GetHeader(request, "x-recording-upstream-base-uri"));
+            return new Uri(host, rawTarget);
         }
 
         private static bool IncludeHeader(string header)

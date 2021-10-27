@@ -10,6 +10,7 @@ The chaos environment is an AKS cluster (Azure Kubernetes Service) with several 
   * [Creating a Stress Test](#creating-a-stress-test)
      * [Layout](#layout)
      * [Stress Test Secrets](#stress-test-secrets)
+     * [Stress Test File Share](#stress-test-file-share)
      * [Stress Test Azure Resources](#stress-test-azure-resources)
      * [Helm Chart Dependencies](#helm-chart-dependencies)
      * [Job Manifest](#job-manifest)
@@ -41,12 +42,14 @@ You will need the following tools to create and run tests:
 
 ## Access
 
-To access the cluster, run the following:
+To access the cluster, run the following. These commands are unnecessary for stress test deployment but can be useful
+for verifying permissions and directly interacting with containers via the kubernetes command line tool `kubectl`. For
+running the build and deployment script, see [Deploying a Stress Test](#deploying-a-stress-test).
 
 ```
 az login
 # Download the kubeconfig for the cluster
-az aks get-credentials --subscription 'Azure SDK Test Resources' -g rg-stress-test-cluster- -n stress-test
+az aks get-credentials --subscription "Azure SDK Developer Playground" -g rg-stress-cluster-test -n stress-test
 ```
 
 You should now be able to access the cluster. To verify, you should see a list of namespaces when running the command:
@@ -146,20 +149,20 @@ The basic layout for a stress test is the following (see `examples/stress_deploy
 
 ```
 <stress test root directory>
-    Dockerfile                   # A Dockerfile for building the stress test image
-    test-resources.[bicep|json]  # An Azure Bicep or ARM template for deploying stress test azure resources.
-    parameters.json              # An ARM template parameters file that will be used at runtime along with the ARM template
+    Dockerfile                          # A Dockerfile for building the stress test image
+    stress-test-resources.[bicep|json]  # An Azure Bicep or ARM template for deploying stress test azure resources.
+    parameters.json                     # An ARM template parameters file that will be used at runtime along with the ARM template
 
-    Chart.yaml                   # A YAML file containing information about the helm chart and its dependencies
-    templates/                   # A directory of helm templates that will generate Kubernetes manifest files.
-                                 # Most commonly this will contain a Job/Pod spec snippet and a chaos mesh manifest.
+    Chart.yaml                          # A YAML file containing information about the helm chart and its dependencies
+    templates/                          # A directory of helm templates that will generate Kubernetes manifest files.
+                                        # Most commonly this will contain a Job/Pod spec snippet and a chaos mesh manifest.
 
     # Optional files/directories
 
     values.yaml                  # Any default helm template values for this chart, e.g. a `scenarios` list
     <misc scripts/configs>       # Any language specific files for building/running/deploying the test
     <source directories>         # Directories containing code for stress tests
-    <bicep modules>              # Any additional bicep module files/directories referenced by test-resources.bicep
+    <bicep modules>              # Any additional bicep module files/directories referenced by stress-test-resources.bicep
 ```
 
 ### Stress Test Metadata
@@ -198,10 +201,32 @@ APPINSIGHTS_INSTRUMENTATIONKEY=<value>
 RESOURCE_GROUP=<value>
 ```
 
+### Stress Test File Share
+
+Stress tests are encouraged to use app insights logs and metrics as much as possible for diagnostics. However there
+are some times where larger files (such as verbose logs, heap dumps, packet captures, etc.) need to be persisted for
+a duration longer than the lifespan of the test itself.
+
+All stress tests have an azure file share automatically mounted into the container by default. The path to this share
+is available via the environment variable `$DEBUG_SHARE` and is global to all tests in the cluster. 
+The `$DEBUG_SHARE` path includes the namespace and pod name of the test in order to avoid path overlaps with other
+tests. The `$DEBUG_SHARE_ROOT` path is also available, which points to the root of the file share, but this directory
+should only be used in special circumstances and with caution.
+
+NOTE: The share directory path MUST be created by the test before using it.
+
+After writing debug files to the share, the files can be viewed by navigating to the [file share
+portal](https://aka.ms/azsdk/stress/share),
+selecting the `namespace/<pod name>` directory, and clicking the download link for any files in that directory.
+
+See
+[stress-debug-share-example](https://github.com/Azure/azure-sdk-tools/tree/main/tools/stress-cluster/chaos/examples/stress-debug-share-example)
+for example usage.
+
 ### Stress Test Azure Resources
 
 Stress test resources can either be defined as azure bicep files, or an ARM template directly, provided there is
-a `chart/test-resources.json` file in place before running `helm install`.
+a `chart/stress-test-resources.json` file in place before running `helm install`.
 The stress test cluster and config boilerplate will handle running ARM deployments in an init container before
 stress test container startup.
 
@@ -244,12 +269,13 @@ description: <description>
 version: 0.1.0
 appVersion: v0.1
 annotations:
-  stressTest: 'true'
+  stressTest: 'true'  # enable auto-discovery of this test via `find-all-stress-packages.ps1`
   namespace: <your stress test namespace>
+  <optional key/value annotations for filtering>
 
 dependencies:
 - name: stress-test-addons
-  version: 0.1.1
+  version: 0.1.6
   repository: https://stresstestcharts.blob.core.windows.net/helm/
 ```
 

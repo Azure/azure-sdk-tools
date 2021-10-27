@@ -30,7 +30,7 @@ namespace CreateRuleFabricBot.Rules.PullRequestLabel
         public JObject GetJsonPayload()
         {
             return new JObject(
-                new JProperty("labels", new JArray(new JValue(Label))),
+                new JProperty("label", new JValue(Label)),
                 new JProperty("pathFilter", new JArray(new JValue(Path))),
                 new JProperty("exclude", new JArray(new JValue(""))));
             // Note: By using an empty string in the exclude property above, 

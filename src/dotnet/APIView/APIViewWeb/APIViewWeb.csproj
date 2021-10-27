@@ -7,7 +7,7 @@
     <AssemblyName>APIViewWeb</AssemblyName>
     <UserSecretsId>79cceff6-d533-4370-a0ee-f3321a343907</UserSecretsId>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
-    <JavaProcessor>..\..\..\java\apiview-java-processor\target\apiview-java-processor-1.23.0.jar</JavaProcessor>
+    <JavaProcessor>..\..\..\java\apiview-java-processor\target\apiview-java-processor-1.24.0.jar</JavaProcessor>
     <PythonProcessor>..\..\..\..\packages\python-packages\api-stub-generator\dist\api_stub_generator-0.1.0-py3-none-any.whl</PythonProcessor>
     <JavaScriptProcessor>..\..\..\ts\ts-genapi\</JavaScriptProcessor>
     <TypeScriptToolsVersion>latest</TypeScriptToolsVersion>
@@ -15,6 +15,7 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <NoWarn>$(NoWarn);8002</NoWarn>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <WarningsAsErrors>NU5105</WarningsAsErrors>
   </PropertyGroup>
@@ -27,6 +28,7 @@
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="2.1.9" PrivateAssets="All" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta2-19367-01" PrivateAssets="All" />
     <PackageReference Include="Markdig.Signed" Version="0.17.1" />
+    <PackageReference Include="Octokit" Version="0.50.0" />
     <PackageReference Include="Sendgrid" Version="9.12.0" />
   </ItemGroup>
 

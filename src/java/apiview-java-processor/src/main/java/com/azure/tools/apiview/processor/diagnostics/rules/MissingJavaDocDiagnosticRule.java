@@ -4,8 +4,9 @@ import com.azure.tools.apiview.processor.diagnostics.DiagnosticRule;
 import com.azure.tools.apiview.processor.model.APIListing;
 import com.azure.tools.apiview.processor.model.Diagnostic;
 import com.github.javaparser.ast.CompilationUnit;
-import com.github.javaparser.ast.nodeTypes.NodeWithJavadoc;
+import com.github.javaparser.ast.body.BodyDeclaration;
 
+import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.attemptToFindJavadocComment;
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.getClasses;
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.getPublicOrProtectedConstructors;
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.getPublicOrProtectedFields;
@@ -14,12 +15,12 @@ import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.makeId;
 import static com.azure.tools.apiview.processor.model.DiagnosticKind.WARNING;
 
 public class MissingJavaDocDiagnosticRule implements DiagnosticRule {
-    private static boolean IGNORE_OVERRIDES = true;
+    private static final boolean IGNORE_OVERRIDES = true;
 
     @Override
     public void scanIndividual(final CompilationUnit cu, final APIListing listing) {
         getClasses(cu).forEach(typeDeclaration -> {
-            if (!typeDeclaration.hasJavaDocComment()) {
+            if (!attemptToFindJavadocComment(typeDeclaration).isPresent()) {
                 // the type is missing JavaDoc
                 listing.addDiagnostic(new Diagnostic(WARNING, makeId(typeDeclaration), "This API is missing JavaDoc."));
             }
@@ -39,8 +40,8 @@ public class MissingJavaDocDiagnosticRule implements DiagnosticRule {
         });
     }
 
-    private void checkJavaDoc(NodeWithJavadoc n, String id, APIListing listing) {
-        if (!n.hasJavaDocComment()) {
+    private void checkJavaDoc(BodyDeclaration<?> n, String id, APIListing listing) {
+        if (!attemptToFindJavadocComment(n).isPresent()) {
             listing.addDiagnostic(new Diagnostic(WARNING, id, "This API is missing JavaDoc."));
         }
     }

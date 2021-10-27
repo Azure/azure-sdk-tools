@@ -25,12 +25,12 @@ namespace APIViewWeb
         }
 
 
-        public Task<RenderedCodeFile> GetCodeFileAsync(ReviewRevisionModel revision)
+        public Task<RenderedCodeFile> GetCodeFileAsync(ReviewRevisionModel revision, bool updateCache = true)
         {
-            return GetCodeFileAsync(revision.RevisionId, revision.SingleFile.ReviewFileId);
+            return GetCodeFileAsync(revision.RevisionId, revision.SingleFile.ReviewFileId, updateCache);
         }
 
-        public async Task<RenderedCodeFile> GetCodeFileAsync(string revisionId, string codeFileId)
+        public async Task<RenderedCodeFile> GetCodeFileAsync(string revisionId, string codeFileId, bool updateCache = true)
         {
             var client = GetBlobClient(revisionId, codeFileId, out var key);
 
@@ -42,9 +42,12 @@ namespace APIViewWeb
             var info = await client.DownloadAsync();
             codeFile = new RenderedCodeFile(await CodeFile.DeserializeAsync(info.Value.Content));
 
-            using var _ = _cache.CreateEntry(key)
-                .SetSlidingExpiration(TimeSpan.FromDays(1))
+            if (updateCache)
+            {
+                using var _ = _cache.CreateEntry(key)
+                .SetSlidingExpiration(TimeSpan.FromHours(2))
                 .SetValue(codeFile);
+            }            
 
             return codeFile;
         }

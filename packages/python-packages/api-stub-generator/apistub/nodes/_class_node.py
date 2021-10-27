@@ -54,13 +54,14 @@ class ClassNode(NodeEntityBase):
     """Class node to represent parsed class node and children
     """
 
-    def __init__(self, namespace, parent_node, obj):
+    def __init__(self, namespace, parent_node, obj, pkg_root_namespace):
         super().__init__(namespace, parent_node, obj)
         self.base_class_names = []
         self.errors = []
         self.namespace_id = self.generate_id()
         self.full_name = self.namespace_id
         self.implements = []
+        self.pkg_root_namespace = pkg_root_namespace
         self._inspect()
         self._set_abc_implements()
         self._sort_elements()
@@ -101,7 +102,7 @@ class ClassNode(NodeEntityBase):
             return False
         if hasattr(func_obj, "__module__"):
             function_module = getattr(func_obj, "__module__")
-            return function_module and function_module.startswith(self.namespace)
+            return function_module and function_module.startswith(self.pkg_root_namespace)
 
         return False
 

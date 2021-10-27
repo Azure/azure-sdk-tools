@@ -27,6 +27,8 @@ spec:
         {{- include "stress-test-addons.env-volumes" . | nindent 8 }}
         # Volume template for mounting ARM templates
         {{- include "stress-test-addons.deploy-volumes" . | nindent 8 }}
+        # Volume template for mounting azure file share for debugging
+        {{- include "stress-test-addons.debug-file-volumes" . | nindent 8 }}
       initContainers:
         # Init container template for injecting secrets
         # (e.g. app insights instrumentation key, azure client credentials)
@@ -45,6 +47,13 @@ spec:
 {{- /* Copy scenario name into top level key of global context */}}
 {{ $instance := deepCopy $global | merge (dict "Scenario" . ) -}}
 {{- $jobOverride := fromYaml (include "stress-test-addons.job-wrapper.tpl" (list $instance $podDefinition)) -}}
+{{- /*
+    The .Values context here corresponds to the parent chart that includes this library as a dependency,
+    meaning there will be a .Values.stress-test-addons key that contains the values specific to this library.
+    Given that we are calling into library templates, replace the values context with only the nested
+    context for this sub-chart.
+*/ -}}
+{{ $_ := set $instance "Values" (index $instance "Values" "stress-test-addons") -}}
 {{- $tpl := fromYaml (include "stress-test-addons.deploy-job-template.tpl" $instance) -}}
 {{- toYaml (merge $jobOverride $tpl) -}}
 {{- end }}
@@ -71,6 +80,7 @@ spec:
       volumes:
         # Volume template for mounting secrets
         {{- include "stress-test-addons.env-volumes" . | nindent 8 }}
+        {{- include "stress-test-addons.debug-file-volumes" . | nindent 8 }}
       initContainers:
         # Init container template for injecting secrets
         # (e.g. app insights instrumentation key, azure client credentials)
@@ -86,6 +96,13 @@ spec:
 {{- /* Copy scenario name into top level key of global context */}}
 {{ $instance := deepCopy $global | merge (dict "Scenario" . ) -}}
 {{- $jobOverride := fromYaml (include "stress-test-addons.job-wrapper.tpl" (list $instance $podDefinition)) -}}
+{{- /*
+    The .Values context here corresponds to the parent chart that includes this library as a dependency,
+    meaning there will be a .Values.stress-test-addons key that contains the values specific to this library.
+    Given that we are calling into library templates, replace the values context with only the nested
+    context for this sub-chart.
+*/ -}}
+{{ $_ := set $instance "Values" (index $instance "Values" "stress-test-addons") -}}
 {{- $tpl := fromYaml (include "stress-test-addons.env-job-template.tpl" $instance) -}}
 {{- toYaml (merge $jobOverride $tpl) -}}
 {{- end }}

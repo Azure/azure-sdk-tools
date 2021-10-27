@@ -1,0 +1,40 @@
+﻿{
+  "Entries": [
+    {
+      "RequestUri": "https://management.azure.com/subscriptions/12345678-1234-1234-5678-123456789010/providers/Microsoft.ContainerRegistry/checkNameAvailability?api-version=2019-05-01",
+      "RequestMethod": "POST",
+      "RequestHeaders": {
+        ":authority": "localhost:5001",
+        ":method": "POST",
+        ":path": "/",
+        ":scheme": "https",
+        "Accept-Encoding": "gzip",
+        "Content-Length": "0",
+        "User-Agent": "Go-http-client/2.0"
+      },
+      "RequestBody": null,
+      "StatusCode": 400,
+      "ResponseHeaders": {
+        "Cache-Control": "no-cache",
+        "Content-Length": "137",
+        "Content-Type": "application/json; charset=utf-8",
+        "Date": "Thu, 09 Sep 2021 20:48:18 GMT",
+        "Expires": "-1",
+        "Pragma": "no-cache",
+        "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+        "X-Content-Type-Options": "nosniff",
+        "x-ms-correlation-request-id": "f9a33867-6efc-4748-b322-303b2b933466",
+        "x-ms-failure-cause": "gateway",
+        "x-ms-request-id": "f9a33867-6efc-4748-b322-303b2b933466",
+        "x-ms-routing-request-id": "WESTUS:20210909T204819Z:f9a33867-6efc-4748-b322-303b2b933466"
+      },
+      "ResponseBody": {
+        "error": {
+          "code": "MissingApiVersionParameter",
+          "message": "The api-version query parameter (?api-version=) is required for all requests."
+        }
+      }
+    }
+  ],
+  "Variables": {}
+}

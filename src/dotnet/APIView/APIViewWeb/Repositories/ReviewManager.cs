@@ -3,13 +3,13 @@
 
 using System;
 using System.Collections.Generic;
-using System.Data.Odbc;
 using System.IO;
 using System.Linq;
 using System.Security.Claims;
-using System.Threading;
+using System.Text;
 using System.Threading.Tasks;
 using ApiView;
+using APIView.DIff;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.ApplicationInsights;
@@ -21,6 +21,7 @@ namespace APIViewWeb.Respositories
 {
     public class ReviewManager
     {
+
         private readonly IAuthorizationService _authorizationService;
 
         private readonly CosmosReviewRepository _reviewsRepository;
@@ -34,6 +35,8 @@ namespace APIViewWeb.Respositories
         private readonly IEnumerable<LanguageService> _languageServices;
 
         private readonly NotificationManager _notificationManager;
+
+        static TelemetryClient _telemetryClient = new TelemetryClient(TelemetryConfiguration.CreateDefault());
 
         public ReviewManager(
             IAuthorizationService authorizationService,
@@ -134,19 +137,26 @@ namespace APIViewWeb.Respositories
                         continue;
                     }
 
-                    var fileOriginal = await _originalsRepository.GetOriginalAsync(file.ReviewFileId);
-                    var languageService = GetLanguageService(file.Language);
+                    try
+                    {
+                        var fileOriginal = await _originalsRepository.GetOriginalAsync(file.ReviewFileId);
+                        var languageService = GetLanguageService(file.Language);
 
-                    // file.Name property has been repurposed to store package name and version string
-                    // This is causing issue when updating review using latest parser since it expects Name field as file name
-                    // We have added a new property FileName which is only set for new reviews
-                    // All older reviews needs to be handled by checking Name field
-                    // If name field has no extension and File Name is Emtpy then use review.Name
-                    var fileName = file.FileName ?? (Path.HasExtension(file.Name)? file.Name : review.Name);
-                    var codeFile = await languageService.GetCodeFileAsync(fileName, fileOriginal, review.RunAnalysis);
-                    await _codeFileRepository.UpsertCodeFileAsync(revision.RevisionId, file.ReviewFileId, codeFile);
-                    InitializeFromCodeFile(file, codeFile);
-                    file.FileName = fileName;
+                        // file.Name property has been repurposed to store package name and version string
+                        // This is causing issue when updating review using latest parser since it expects Name field as file name
+                        // We have added a new property FileName which is only set for new reviews
+                        // All older reviews needs to be handled by checking Name field
+                        // If name field has no extension and File Name is Emtpy then use review.Name
+                        var fileName = file.FileName ?? (Path.HasExtension(file.Name) ? file.Name : review.Name);
+                        var codeFile = await languageService.GetCodeFileAsync(fileName, fileOriginal, review.RunAnalysis);
+                        await _codeFileRepository.UpsertCodeFileAsync(revision.RevisionId, file.ReviewFileId, codeFile);
+                        InitializeFromCodeFile(file, codeFile);
+                        file.FileName = fileName;
+                    }
+                    catch (Exception ex) {
+                        _telemetryClient.TrackTrace("Failed to update review " + review.ReviewId);
+                        _telemetryClient.TrackException(ex);
+                    }                    
                 }
             }
 
@@ -212,7 +222,7 @@ namespace APIViewWeb.Respositories
             return reviewCodeFileModel;
         }
 
-        private async Task<CodeFile> CreateCodeFile(
+        public async Task<CodeFile> CreateCodeFile(
             string originalName,
             Stream fileStream,
             bool runAnalysis,
@@ -230,7 +240,7 @@ namespace APIViewWeb.Respositories
             return codeFile;
         }
 
-        private async Task<ReviewCodeFileModel> CreateReviewCodeFileModel(string revisionId, MemoryStream memoryStream, CodeFile codeFile)
+        public async Task<ReviewCodeFileModel> CreateReviewCodeFileModel(string revisionId, MemoryStream memoryStream, CodeFile codeFile)
         {
             var reviewCodeFileModel = new ReviewCodeFileModel
             {
@@ -347,10 +357,10 @@ namespace APIViewWeb.Respositories
                .Any(f => f.HasOriginal && GetLanguageService(f.Language).CanUpdate(f.VersionString));
         }
 
-        private async Task<bool> IsReviewSame(ReviewRevisionModel revision, RenderedCodeFile renderedCodeFile)
+        public async Task<bool> IsReviewSame(ReviewRevisionModel revision, RenderedCodeFile renderedCodeFile)
         {
             //This will compare and check if new code file content is same as revision in parameter
-            var lastRevisionFile = await _codeFileRepository.GetCodeFileAsync(revision);
+            var lastRevisionFile = await _codeFileRepository.GetCodeFileAsync(revision, false);
             var lastRevisionTextLines = lastRevisionFile.RenderText(showDocumentation: false, skipDiff: true);
             var fileTextLines = renderedCodeFile.RenderText(showDocumentation: false, skipDiff: true);
             return lastRevisionTextLines.SequenceEqual(fileTextLines);
@@ -361,6 +371,7 @@ namespace APIViewWeb.Respositories
             //Generate code file from new uploaded package
             using var memoryStream = new MemoryStream();
             var codeFile = await CreateCodeFile(originalName, fileStream, false, memoryStream);
+            var renderedCodeFile = new RenderedCodeFile(codeFile);
 
             //Get current master review for package and language
             var review = await _reviewsRepository.GetMasterReviewForPackageAsync(codeFile.Language, codeFile.PackageName);
@@ -371,13 +382,11 @@ namespace APIViewWeb.Respositories
                 // Delete pending revisions if it is not in approved state before adding new revision
                 // This is to keep only one pending revision since last approval or from initial review revision
                 var lastRevision = review.Revisions.LastOrDefault();
-                while (lastRevision.Approvers.Count == 0 && review.Revisions.Count > 1)
+                while (lastRevision.Approvers.Count == 0 && review.Revisions.Count > 1 && !await IsReviewSame(lastRevision, renderedCodeFile))
                 {
                     review.Revisions.Remove(lastRevision);
                     lastRevision = review.Revisions.LastOrDefault();
                 }
-
-                var renderedCodeFile = new RenderedCodeFile(codeFile);
                 // We should compare against only latest revision when calling this API from scheduled CI runs
                 // But any manual pipeline run at release time should compare against all approved revisions to ensure hotfix release doesn't have API change
                 // If review surface doesn't match with any approved revisions then we will create new revision if it doesn't match pending latest revision
@@ -480,8 +489,6 @@ namespace APIViewWeb.Respositories
 
         public async void UpdateReviewBackground()
         {
-            TelemetryClient telemetryClient = new TelemetryClient(TelemetryConfiguration.CreateDefault());
-
             // Enabling this only for manual reviews in the beginning to check impact on system performance
             // We will enable it for all reviews based on the perf details
             // Automatic reviews are already updated as part of scheduled upload daily
@@ -489,7 +496,7 @@ namespace APIViewWeb.Respositories
             foreach(var review in reviews.Where(r => IsUpdateAvailable(r)))
             {
                 var requestTelemetry = new RequestTelemetry { Name = "Updating Review " + review.ReviewId };
-                var operation = telemetryClient.StartOperation(requestTelemetry);
+                var operation = _telemetryClient.StartOperation(requestTelemetry);
                 try
                 {
                     await Task.Delay(5000);
@@ -497,11 +504,11 @@ namespace APIViewWeb.Respositories
                 }
                 catch (Exception e)
                 {
-                    telemetryClient.TrackException(e);
+                    _telemetryClient.TrackException(e);
                 }
                 finally
                 {
-                    telemetryClient.StopOperation(operation);
+                    _telemetryClient.StopOperation(operation);
                 }
             }
         }

@@ -1,32 +1,107 @@
-This directory contains [Azure Bicep](https://docs.microsoft.com/en-us/azure/azure-resource-manager/bicep/overview)
+Table of Contents
+* [Layout](#layout)
+* [Dependencies](#dependencies)
+* [Deploying Cluster(s)](#deploying-clusters)
+   * [Dev Cluster](#dev-cluster)
+   * [Test Cluster](#test-cluster)
+   * [Prod Cluster](#prod-cluster)
+   * [Local Cluster](#local-cluster)
+* [Development](#development)
+   * [Bicep templates](#bicep-templates)
+   * [Helm templates](#helm-templates)
+
+
+# Layout
+
+This directory contains all configuration used for stress test cluster buildout (azure and kubernetes buildout), as well
+as a set of common stress test config boilerplate (helm library).
+
+The `./azure` directory contains [Azure Bicep](https://docs.microsoft.com/en-us/azure/azure-resource-manager/bicep/overview)
 files for deploying Azure resources (mainly [AKS clusters](https://azure.microsoft.com/en-us/services/kubernetes-service/)
 to support stress testing (for dev/test and/or production).
 
 Azure Bicep comes pre-installed with the Azure CLI, and is a DSL for generating ARM templates.
 
+The `./kubernetes/stress-infrastructure` directory contains a helm chart for deploying the core services
+that must be installed into any stress cluster: chaos-mesh (for chaos) and stress-watcher (for event handling like chaos
+resource start and resource group cleanup).
+
+The `./kubernetes/stress-test-addons` directory contains a [library chart](https://helm.sh/docs/topics/library_charts/)
+for use by stress test packages. This common set of config boilerplate simplifies stress test authoring, and makes it
+easier to make and roll out config changes to tests across repos by using helm chart dependency versioning.
+
+
 # Dependencies
 
+- [Powershell Core](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell-core-on-linux?view=powershell-7.1#ubuntu-2004)
 - [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
-    - If using app insights, install the az extension: `az extension add --name application-insights`
-- [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) (if accessing clusters)
-- [helm](https://helm.sh) (if installing stress infrastructure)
+- [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl)
+- [helm](https://helm.sh)
 - [kind](https://github.com/kubernetes-sigs/kind/releases) (if testing locally)
 - [Docker](https://docs.docker.com/get-docker/) (if deploying/testing locally)
 
-# Cluster Deployment Quick Start
 
-## Deploying a Dev Cluster
+# Deploying Cluster(s)
 
-First, update the `./azure/parameters/dev.json` parameters file with the values marked `// add me`, then:
+The cluster-specific configurations can be found at `./azure/parameters/<environment>.json`.
+
+Almost all stress test infrastructure is local to the cluster resource group, including storage accounts, keyvaults,
+log workspaces and the AKS cluster. There is also a set of static resources, including a subscription service principal
+and a keyvault containing the credential configuration. These are shared across clusters located in the same subscription
+and are provisioned independently of the bicep templates.
+
+Cluster buildout and deployment involves three main steps which are automated in `./provision.ps1`:
+
+1. Provision static resources (service principal, role assignments, static keyvault).
+1. Provision cluster resources (`main.bicep` entrypoint, standard ARM subscription deployment).
+1. Provision stress infrastructures resources into the Azure Kubernetes Service cluster via helm
+   (`./kubernetes/stress-infrastructure` helm chart).
+
+## Dev Cluster
+
+First, update the `./azure/parameters/dev.json` parameters file with the values marked `// add me`, then run:
 
 ```
-az deployment sub create -o json -n <your name> -l westus -f ./azure/main.bicep --parameters ./azure/parameters/dev.json
-
-# wait until resource group and AKS cluster are deployed
-az aks get-credentials stress-azuresdk -g rg-stress-test-cluster-<group suffix parameter>
+./provision.ps1 -env dev
 ```
 
-## Deploying a Local Cluster
+To deploy stress test packages to the dev environment
+(e.g. the [examples](https://github.com/Azure/bicep/tree/main/docs/examples)), pass in `-Environment dev` (see below).
+The provision script will update the `./kubernetes/stress-test-addons/values.yaml` file with all the relevant
+resource values from the newly provisioned dev environment that are required by the stress test common configuration.
+
+Avoid checking in the updated dev values, they are for local use only.
+
+```
+# -Login only needs to be run once or if the azure container registry credentials have expired (~24 hours)
+<tools repo>/eng/common/scripts/stress-testing/deploy-stress-tests.ps1 -Login -Environment dev
+```
+
+## Test Cluster
+
+The test cluster is the main ad-hoc cluster made available to SDK developers and partners. Changes to this cluster
+should be made carefully and announced in advance in order not to disrupt people's work.
+
+```
+./provision.ps1 -env test
+```
+
+## Prod Cluster
+
+The "prod" cluster is the main cluster used for auto-deployment of checked-in stress tests via the StressTestRelease pipeline.
+Currently, new instances of all stress tests across the language repositories are deployed on a weekly cadence.
+Changes to the prod cluster should ideally be made around the stress test deployment cycle so as to avoid disruption
+of test metrics.
+
+```
+./provision.ps1 -env prod
+```
+
+## Local Cluster
+
+For quick testing of various kubernetes configurations, it can be faster and cheaper to use a local cluster.
+Not all components of stress testing work in local clusters, however. If testing these components is necessary, the
+recommended action is to spin up a dev cluster.
 
 NOTE: Chaos-Mesh may not work on all local deployments (e.g. Docker Desktop on Windows via WSL).
 It may be easier to test services, manifests and containers locally with KIND, and test chaos
@@ -37,16 +112,10 @@ in an Azure AKS cluster (shared or personal).
 kind create cluster
 ```
 
-## Deploying Stress Infrastructure into Cluster
-
-```
-helm repo add chaos-mesh https://charts.chaos-mesh.org
-helm dependency update ./kubernetes/stress-infrastructure
-helm install stress-infra -n stress-infra --create-namespace ./kubernetes/stress-infrastructure
-```
-
 
 # Development
+
+## Bicep templates
 
 Examples detailing the Azure Bicep DSL can be found [here](https://github.com/Azure/bicep/tree/main/docs/examples).
 
@@ -58,103 +127,34 @@ To validate file changes/compilation:
 az bicep build -f ./azure/main.bicep
 ```
 
-To deploy and access resources:
+## Helm templates
+
+When making changes to `stress-test-addons`, it is easiest to validate them by building one of the [example projects
+](https://github.com/Azure/azure-sdk-tools/tree/main/tools/stress-cluster/chaos/examples).
+
+First, update the `dependencies section of the example's `Chart.yaml` file to point to your local changes on disk:
 
 ```
-# Edit ./azure/parameters/dev.json, replacing // add me values
-# Add -c to dry run changes with a chance to confirm
-az deployment sub create -o json -n <your name> -l westus -f ./azure/main.bicep --parameters ./azure/parameters/dev.json
-
-# Copy the relevant outputs from the deployment to ./kubernetes/environments/<environment yaml file>
-# for deploying stress tests later on
-az deployment sub show -o json -n <your name> --query properties.outputs
-
-az aks list -g rg-stress-test-cluster-<group suffix parameter>
-az aks get-credentials stress-test -g rg-stress-test-cluster-<group suffix parameter>
-
-# Verify cluster access
-kubectl get pods
-
-# Install stress infrastructure components
-helm repo add chaos-mesh https://charts.chaos-mesh.org
-helm dependency update ./kubernetes/stress-infrastructure
-helm install stress-infra -n stress-infra --create-namespace ./kubernetes/stress-infrastructure
-kubectl get pods --namespace stress-infra
+dependencies:
+- name: stress-test-addons
+  version: <latest version on disk in stress-test-addons Chart.yaml>
+  repository: https://stresstestcharts.blob.core.windows.net/helm/
+  repository: file:///<path to azure-sdk-tools repo>/tools/stress-cluster/cluster/kubernetes/stress-test-addons
 ```
 
-To access the chaos-mesh dashboard, run the below command then navigate to `localhost:2333` in the browser:
+Then you can test out the template changes by running, in the example stress test package directory:
 
 ```
-kubectl port-forward -n stress-infra svc/chaos-dashboard 2333:2333
+helm template testrelease .
 ```
 
-To remove AKS cluster stress testing resources:
+If there are any issues, the helm command will print any errors. If there are no errors, the rendered yaml
+may still be an invalid kubernetes manifest, so the example stress test should also be deployed to validate
+the full set of changes:
 
 ```
-helm uninstall stress-infra --namespace stress-infra
+# -Login only needs to be run once or if the azure container registry credentials have expired (~24 hours)
+<tools repo>/eng/common/scripts/stress-testing/deploy-stress-tests.ps1 -Login
 ```
 
-To remove Azure resources:
-
-```
-az group delete <resource group name>
-az keyvault purge -n <keyvault name>
-```
-
-# Building out the Main/Prod Testing Cluster
-
-If not already done, enable the relevant preview features in the subscription and CLI:
-- [AKS-AzureKeyVaultSecretsProvider](https://docs.microsoft.com/en-us/azure/aks/csi-secrets-store-driver#register-the-aks-azurekeyvaultsecretsprovider-preview-feature)
-
-## Initializing static identities
-
-The "official" stress testing clusters rely on a separately created keyvault containing secrets with subscription credentials for stress test resource deployments.
-The identities/credentials in these keyvaults can't be created via ARM/Bicep, and should be managed independently of the individual environments.
-
-To initialize these resources, if they don't exist:
-
-```
-az group create rg-StressTestSecrets
-az keyvault create -n StressTestSecrets -g rg-StressTestSecrets
-az ad sp create-for-rbac -n 'stress-test-provisioner' --role Contributor --scopes '/subscriptions/<subscription id>'
-```
-
-Create an env file with the service principal values created above:
-
-```
-AZURE_CLIENT_ID=<app id>
-AZURE_CLIENT_SECRET=<password/secret>
-AZURE_TENANT_ID=<tenant id>
-```
-
-Upload it to the static keyvault:
-
-```
-az keyvault secret set --vault-name StressTestSecrets  -f ./<env file> -n public
-```
-
-## Building Out Stress Test Cluster Resources
-
-Various environment configurations are located in `./azure/parameters/<env>.json` to be configured when deploying.
-
-Deploy the cluster and related components (app insights, container registry, keyvault, access policies, etc.)
-
-```
-az deployment sub create -o json -n stress-test-deploy -l westus -f ./azure/main.bicep --parameters ./azure/parameters/test.json
-```
-
-Gain access to the cluster and install the stress infrastructure components:
-
-```
-az aks get-credentials stress-test -g rg-stress-test-cluster-<group suffix>
-
-helm repo add chaos-mesh https://charts.chaos-mesh.org
-helm dependency update ./kubernetes/stress-infrastructure
-helm install stress-infra -n stress-infra --create-namespace ./kubernetes/stress-infrastructure
-```
-
-Update the values in `./kubernetes/stress-test-addons/values.yaml` to match the deployment outputs and check in the changes.
-
-```
-az deployment sub show -o json -n <your name> --query properties.outputs
-```
+For more helm debugging info, see [here](https://helm.sh/docs/chart_template_guide/debugging/).

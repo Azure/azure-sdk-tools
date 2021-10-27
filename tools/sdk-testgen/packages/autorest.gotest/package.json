@@ -10,7 +10,6 @@
         "lint": "eslint . --ext .ts --ignore-pattern *.d.ts --max-warnings=0",
         "build": "tsc -p .",
         "watch": "tsc -p . --watch",
-        "prepare": "npm run build",
         "test": "npm run build && cross-env NODE_ENV=test jest --ci --reporters=default --reporters=jest-junit",
         "unittest": "npm run build && cross-env NODE_ENV=test jest --ci --reporters=default --reporters=jest-junit --config ./jest.unittest.config.js",
         "unittest-update": "npm run build && cross-env NODE_ENV=test jest --ci --reporters=default --reporters=jest-junit --updateSnapshot --config ./jest.unittest.config.js",

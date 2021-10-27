@@ -85,13 +85,12 @@ stages:
           condition: and(succeeded(), ne(variables['USER_SKIP_PUBLIC_RELEASE'], 'true'))
           steps:
           - template: ../../eng/pipelines/templates/steps/sdk-testgen-set-env.yaml
-
           - script: |
               rush publish --publish --pack --include-all
             displayName: "Pack packages"
             workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen
-          
           - script: |
-              NPM_AUTH_TOKEN="$(azure-sdk-npm-token)" rush publish --publish --include-all --set-access-level public
+              NPM_AUTH_TOKEN="$(azure-sdk-npm-token)"
+              rush publish --publish --include-all --set-access-level public
             displayName: Publish packages
             workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen

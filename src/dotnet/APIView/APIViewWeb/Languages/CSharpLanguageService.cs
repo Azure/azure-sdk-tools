@@ -61,7 +61,7 @@ namespace APIViewWeb
                 }
 
                 var assemblySymbol = CompilationFactory.GetCompilation(dllStream, docStream);
-                return Task.FromResult(new CodeFileBuilder().Build(assemblySymbol, runAnalysis));
+                return Task.FromResult(new CodeFileBuilder().Build(assemblySymbol, runAnalysis, originalName));
             }
             finally
             {

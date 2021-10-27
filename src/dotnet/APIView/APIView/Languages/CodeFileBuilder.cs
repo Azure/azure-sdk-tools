@@ -11,12 +11,14 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace ApiView
 {
     public class CodeFileBuilder
     {
         private static readonly char[] _newlineChars = new char[] { '\r', '\n' };
+        private static Regex _packageNameParser = new Regex("([A-Za-z.]*[a-z]).([\\S]*)", RegexOptions.Compiled);
 
         SymbolDisplayFormat _defaultDisplayFormat = new SymbolDisplayFormat(
             SymbolDisplayGlobalNamespaceStyle.Omitted,
@@ -68,48 +70,71 @@ namespace ApiView
             }
         }
 
-        public CodeFile Build(IAssemblySymbol assemblySymbol, bool runAnalysis)
+        public CodeFile Build(IAssemblySymbol assemblySymbol, bool runAnalysis, string originalName)
         {
-            _assembly = assemblySymbol;
-            var analyzer = new Analyzer();
-
-            if (runAnalysis)
-            {
-                analyzer.VisitAssembly(assemblySymbol);
-            }
             var builder = new CodeFileTokensBuilder();
             var navigationItems = new List<NavigationItem>();
-            foreach (var namespaceSymbol in SymbolOrderProvider.OrderNamespaces(EnumerateNamespaces(assemblySymbol)))
+            var analyzer = new Analyzer();
+            var packageName = "";
+            var reviewName = "";
+
+            if (assemblySymbol != null)
             {
-                if (namespaceSymbol.IsGlobalNamespace)
+                packageName = assemblySymbol.Name;
+                reviewName = $"{assemblySymbol.Name} ({assemblySymbol.Identity.Version})";
+                _assembly = assemblySymbol;
+
+                if (runAnalysis)
                 {
-                    foreach (var namedTypeSymbol in SymbolOrderProvider.OrderTypes(namespaceSymbol.GetTypeMembers()))
+                    analyzer.VisitAssembly(assemblySymbol);
+                }
+
+                foreach (var namespaceSymbol in SymbolOrderProvider.OrderNamespaces(EnumerateNamespaces(assemblySymbol)))
+                {
+                    if (namespaceSymbol.IsGlobalNamespace)
                     {
-                        BuildType(builder, namedTypeSymbol, navigationItems);
+                        foreach (var namedTypeSymbol in SymbolOrderProvider.OrderTypes(namespaceSymbol.GetTypeMembers()))
+                        {
+                            BuildType(builder, namedTypeSymbol, navigationItems);
+                        }
                     }
+                    else
+                    {
+                        Build(builder, namespaceSymbol, navigationItems);
+                    }
+                }
+            }
+            else if (originalName != null)
+            {
+                packageName = Path.GetFileNameWithoutExtension(originalName);
+                var packageNameMatch = _packageNameParser.Match(packageName);
+                if (packageNameMatch.Success)
+                {
+                    packageName = packageNameMatch.Groups[1].Value;
+                    reviewName = $"{packageName} ({packageNameMatch.Groups[2].Value})";
                 }
                 else
                 {
-                    Build(builder, namespaceSymbol, navigationItems);
+                    reviewName = $"{packageName} (metapackage)";
                 }
             }
 
             NavigationItem assemblyNavigationItem = new NavigationItem()
             {
-                Text = assemblySymbol.Name + ".dll",
+                Text = packageName + ".dll",
                 ChildItems = navigationItems.ToArray(),
                 Tags = { { "TypeKind", "assembly" } }
             };
 
             var node = new CodeFile()
             {
-                Name = $"{assemblySymbol.Name} ({assemblySymbol.Identity.Version})",
+                Name = reviewName,
                 Language = "C#",
                 Tokens = builder.Tokens.ToArray(),
                 VersionString = CurrentVersion,
                 Navigation = new[] { assemblyNavigationItem },
                 Diagnostics = analyzer.Results.ToArray(),
-                PackageName = assemblySymbol.Name
+                PackageName = packageName
             };
 
             return node;

@@ -7,8 +7,7 @@ namespace APIViewWeb
 {
     public enum ReviewType
     {
-        None = 0,
-        Manual,
+        Manual = 0,
         Automatic,
         PullRequest
     }

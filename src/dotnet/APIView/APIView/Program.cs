@@ -10,7 +10,7 @@ namespace ApiView
             {
                 var assemblySymbol = CompilationFactory.GetCompilation(args[0]);
                 var renderer = new CodeFileRenderer();
-                var codeNode = new CodeFileBuilder().Build(assemblySymbol, false, args[0]);
+                var codeNode = new CodeFileBuilder().Build(assemblySymbol, false);
                 Console.WriteLine(renderer.Render(codeNode));
             }
             catch (Exception e)

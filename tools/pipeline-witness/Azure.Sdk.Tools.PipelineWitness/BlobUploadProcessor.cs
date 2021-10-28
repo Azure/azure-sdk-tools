@@ -18,7 +18,7 @@
     public class BlobUploadProcessor
     {
         private const string TimeFormat = @"yyyy-MM-dd\THH:mm:ss.fffffff\Z";
-        private static readonly JsonSerializerSettings jsonSettings = new()
+        private static readonly JsonSerializerSettings jsonSettings = new JsonSerializerSettings()
         {
             ContractResolver = new CamelCasePropertyNamesContractResolver(),
             Formatting = Formatting.None,

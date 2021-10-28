@@ -216,6 +216,7 @@ namespace APIViewWeb.Repositories
             {
                 var autoReview = await _reviewsRepository.GetMasterReviewForPackageAsync(Language, packageName);
                 review = CloneReview(autoReview);
+                review.Author = pullRequestModel.Author;
             }
             return review;
         }

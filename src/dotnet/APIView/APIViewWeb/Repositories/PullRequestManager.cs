@@ -171,6 +171,7 @@ namespace APIViewWeb.Repositories
             newRevision.Files.Add(reviewCodeFileModel);
             review.Revisions.Add(newRevision);
             pullRequestModel.ReviewId = review.ReviewId;
+            review.FilterType = ReviewType.PullRequest;
             await _reviewsRepository.UpsertReviewAsync(review);
             await _pullRequestsRepository.UpsertPullRequestAsync(pullRequestModel);
 

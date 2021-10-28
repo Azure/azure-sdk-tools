@@ -63,15 +63,16 @@ namespace APIViewWeb.Respositories
                 Author = user.GetGitHubLogin(),
                 CreationDate = DateTime.UtcNow,
                 RunAnalysis = runAnalysis,
-                Name = originalName
+                Name = originalName,
+                FilterType = ReviewType.Manual
             };
             await AddRevisionAsync(user, review, originalName, label, fileStream);
             return review;
         }
 
-        public Task<IEnumerable<ReviewModel>> GetReviewsAsync(bool closed, string language, string packageName = null, bool? automatic = null)
+        public Task<IEnumerable<ReviewModel>> GetReviewsAsync(bool closed, string language, string packageName = null, ReviewType filterType = ReviewType.Manual)
         {
-            return _reviewsRepository.GetReviewsAsync(closed, language, packageName: packageName, isAutomatic: automatic);
+            return _reviewsRepository.GetReviewsAsync(closed, language, packageName: packageName, filterType: filterType);
         }
 
         public async Task DeleteReviewAsync(ClaimsPrincipal user, string id)
@@ -416,7 +417,7 @@ namespace APIViewWeb.Respositories
                     CreationDate = DateTime.UtcNow,
                     RunAnalysis = false,
                     Name = originalName,
-                    IsAutomatic = true
+                    FilterType = ReviewType.Automatic
                 };
             }
 
@@ -471,7 +472,9 @@ namespace APIViewWeb.Respositories
             var codeFile = await _codeFileRepository.GetCodeFileAsync(revisionModel);
 
             // Get manual reviews to check if a matching review is in approved state
-            var reviews = await _reviewsRepository.GetReviewsAsync(false, revisionFile.Language, revisionFile.PackageName, false);
+            var reviews = await _reviewsRepository.GetReviewsAsync(false, revisionFile.Language, revisionFile.PackageName, ReviewType.Manual);
+            var prReviews = await _reviewsRepository.GetReviewsAsync(false, revisionFile.Language, revisionFile.PackageName, ReviewType.PullRequest);
+            reviews = reviews.Concat(prReviews);
             foreach (var r in reviews)
             {
                 var approvedRevision = r.Revisions.Where(r => r.IsApproved).LastOrDefault();
@@ -492,7 +495,7 @@ namespace APIViewWeb.Respositories
             // Enabling this only for manual reviews in the beginning to check impact on system performance
             // We will enable it for all reviews based on the perf details
             // Automatic reviews are already updated as part of scheduled upload daily
-            var reviews = await _reviewsRepository.GetReviewsAsync(false, "All");
+            var reviews = await _reviewsRepository.GetReviewsAsync(false, "All", filterType: ReviewType.Manual);
             foreach(var review in reviews.Where(r => IsUpdateAvailable(r)))
             {
                 var requestTelemetry = new RequestTelemetry { Name = "Updating Review " + review.ReviewId };

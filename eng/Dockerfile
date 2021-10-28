@@ -1,8 +1,7 @@
 FROM mcr.microsoft.com/powershell
 
-RUN pwsh -c Install-Module Az -Force
-RUN pwsh -c Install-Module Az.Accounts -Force
-RUN mkdir -p /common
+RUN pwsh -c Install-Module Az -Force; \
+    pwsh -c Install-Module Az.Accounts -Force;
 
 COPY ./common /common
 

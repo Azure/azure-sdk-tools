@@ -17,6 +17,9 @@ using System.Text;
 
 namespace Azure.Sdk.Tools.PipelineWitness
 {
+    using Microsoft.TeamFoundation.Build.WebApi;
+    using Microsoft.TeamFoundation.Core.WebApi;
+
     public class Startup : FunctionsStartup
     {
         private string GetWebsiteResourceGroupEnvironmentVariable()
@@ -25,14 +28,23 @@ namespace Azure.Sdk.Tools.PipelineWitness
             return websiteResourceGroupEnvironmentVariable;
         }
 
+        private string GetBuildBlobStorageEnvironmentVariable()
+        {
+            var environmentVariable = Environment.GetEnvironmentVariable("BUILD_BLOB_STORAGE_URI");
+            return environmentVariable;
+        }
+
         public override void Configure(IFunctionsHostBuilder builder)
         {
             var websiteResourceGroupEnvironmentVariable = GetWebsiteResourceGroupEnvironmentVariable();
+            var buildBlobStorageUri = GetBuildBlobStorageEnvironmentVariable();
 
             builder.Services.AddAzureClients(builder =>
             {
                 var keyVaultUri = new Uri($"https://{websiteResourceGroupEnvironmentVariable}.vault.azure.net/");
                 builder.AddSecretClient(keyVaultUri);
+
+                builder.AddBlobServiceClient(new Uri(buildBlobStorageUri));
             });
 
             builder.Services.AddSingleton<CosmosClient>(provider =>
@@ -68,6 +80,9 @@ namespace Azure.Sdk.Tools.PipelineWitness
                 var connection = new VssConnection(new Uri("https://dev.azure.com/azure-sdk"), credential);
                 return connection;
             });
+
+            builder.Services.AddSingleton(provider => provider.GetRequiredService<VssConnection>().GetClient<ProjectHttpClient>());
+            builder.Services.AddSingleton(provider => provider.GetRequiredService<VssConnection>().GetClient<BuildHttpClient>());
 
             builder.Services.AddLogging();
             builder.Services.AddMemoryCache();

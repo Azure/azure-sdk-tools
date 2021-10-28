@@ -14,6 +14,17 @@ trigger:
     include:
       - tools/sdk-testgen
 
+pr:
+  branches:
+    include:
+      - main
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - tools/sdk-testgen
+
 pool:
   vmImage: "ubuntu-latest"
 
@@ -27,7 +38,7 @@ stages:
       - job: build
         displayName: "Build"
         steps:
-          - template: ../../eng/pipelines/templates/steps/sdk-testgen-set-env.yaml
+          - template: ../../eng/pipelines/templates/steps/sdk-testgen-set-env.yml
 
           - script: |
               rush rebuild -v
@@ -84,7 +95,7 @@ stages:
           dependsOn: approve
           condition: and(succeeded(), ne(variables['USER_SKIP_PUBLIC_RELEASE'], 'true'))
           steps:
-          - template: ../../eng/pipelines/templates/steps/sdk-testgen-set-env.yaml
+          - template: ../../eng/pipelines/templates/steps/sdk-testgen-set-env.yml
           - script: |
               rush rebuild -v
             displayName: "Build all packages"

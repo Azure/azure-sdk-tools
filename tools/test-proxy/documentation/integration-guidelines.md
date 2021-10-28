@@ -6,7 +6,7 @@ This document is intended to help users integrate the test-proxy with their spec
 
 Every language will need to follow the same basic process.
 
-1. Read the test-proxy readme.
+1. Read the [test-proxy readme](https://github.com/Azure/azure-sdk-tools/blob/main/tools/test-proxy/README.md)
 2. Spin up a local version of the test-proxy
 3. Transition a single test to flow through the test-proxy
 4. Submit a PR

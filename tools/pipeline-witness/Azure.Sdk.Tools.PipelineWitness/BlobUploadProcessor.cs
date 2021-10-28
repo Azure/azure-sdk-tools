@@ -10,13 +10,14 @@
 
     using Microsoft.Extensions.Logging;
     using Microsoft.TeamFoundation.Build.WebApi;
-    using Microsoft.VisualStudio.Services.WebApi;
 
     using Newtonsoft.Json;
     using Newtonsoft.Json.Serialization;
 
     public class BlobUploadProcessor
     {
+        private const string BuildLogLinesContainerName = "buildloglines";
+
         private const string TimeFormat = @"yyyy-MM-dd\THH:mm:ss.fffffff\Z";
         private static readonly JsonSerializerSettings jsonSettings = new JsonSerializerSettings()
         {
@@ -29,11 +30,11 @@
         private readonly BlobContainerClient containerClient;
         private readonly BuildHttpClient buildClient;
 
-        public BlobUploadProcessor(ILogger<BlobUploadProcessor> logger, BuildLogProvider logProvider, BlobContainerClient containerClient, BuildHttpClient buildClient)
+        public BlobUploadProcessor(ILogger<BlobUploadProcessor> logger, BuildLogProvider logProvider, BlobServiceClient blobServiceClient, BuildHttpClient buildClient)
         {
             this.logger = logger;
             this.logProvider = logProvider;
-            this.containerClient = containerClient;
+            this.containerClient = blobServiceClient.GetBlobContainerClient(BuildLogLinesContainerName);
             this.buildClient = buildClient;
         }
 

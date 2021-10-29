@@ -18,16 +18,16 @@ namespace APIViewWeb
 
         private readonly string _pythonExecutablePath;
         public override string ProcessName => _pythonExecutablePath;
-        private readonly string _apiStubWheelPath;
+        private readonly string _apiScriptPath;
 
         public PythonLanguageService(IConfiguration configuration)
         {
             _pythonExecutablePath = configuration["PYTHONEXECUTABLEPATH"] ?? "python";
-            _apiStubWheelPath = Path.Combine(Path.GetDirectoryName(typeof(PythonLanguageService).Assembly.Location), "api-stub-generator");
+            _apiScriptPath = Path.Combine(Path.GetDirectoryName(typeof(PythonLanguageService).Assembly.Location), "api-stub-generator", "apistubgen.py");
         }
         public override string GetProcessorArguments(string originalName, string tempDirectory, string jsonPath)
         {
-            return $"--pkg-path {originalName} --temp-path {tempDirectory}" +
+            return $"{_apiScriptPath} --pkg-path {originalName} --temp-path {tempDirectory}" +
                 $" --out-path {jsonPath} --hide-report";
         }
 
@@ -35,17 +35,7 @@ namespace APIViewWeb
         {
             // Create virtual instance
             RunProcess(tempDirectory, ProcessName, $" -m virtualenv {tempDirectory} --system-site-packages");
-            string venvPath = Path.Combine(tempDirectory, "Scripts", "python.exe");
-            if (File.Exists(venvPath))
-            {
-                RunProcess(tempDirectory, venvPath, $" -m pip install {_apiStubWheelPath}");
-            }
-            else
-            {
-                throw new InvalidOperationException("Failed to create virtualenv for python package parser");
-            }
-
-            return Path.Combine(tempDirectory, "Scripts", "apistubgen");
+            return Path.Combine(tempDirectory, "Scripts", "python.exe");
         }
 
         public override async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis)

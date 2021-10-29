@@ -23,11 +23,11 @@ namespace Azure.Sdk.Tools.PipelineWitness
             VssConnection vssConnection,
             BlobUploadProcessor blobUploadProcessor)
         {
-            this.failureAnalyzer = failureAnalyzer;
-            this.logger = logger;
-            this.blobUploadProcessor = blobUploadProcessor;
-            this.cosmosClient = cosmosClient;
-            this.vssConnection = vssConnection;
+            this.failureAnalyzer = failureAnalyzer ?? throw new ArgumentNullException(nameof(failureAnalyzer));
+            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            this.blobUploadProcessor = blobUploadProcessor ?? throw new ArgumentNullException(nameof(blobUploadProcessor));
+            this.cosmosClient = cosmosClient ?? throw new ArgumentNullException(nameof(cosmosClient));
+            this.vssConnection = vssConnection ?? throw new ArgumentNullException(nameof(vssConnection));
         }
 
         private readonly IFailureAnalyzer failureAnalyzer;

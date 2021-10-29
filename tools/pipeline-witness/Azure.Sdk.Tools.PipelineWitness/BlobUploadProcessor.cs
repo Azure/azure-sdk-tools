@@ -32,10 +32,15 @@
 
         public BlobUploadProcessor(ILogger<BlobUploadProcessor> logger, BuildLogProvider logProvider, BlobServiceClient blobServiceClient, BuildHttpClient buildClient)
         {
-            this.logger = logger;
-            this.logProvider = logProvider;
+            if (blobServiceClient == null)
+            {
+                throw new ArgumentNullException(nameof(blobServiceClient));
+            }
+
+            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            this.logProvider = logProvider ?? throw new ArgumentNullException(nameof(logProvider));
+            this.buildClient = buildClient ?? throw new ArgumentNullException(nameof(buildClient));
             this.containerClient = blobServiceClient.GetBlobContainerClient(BuildLogLinesContainerName);
-            this.buildClient = buildClient;
         }
 
         public async Task UploadLogBlobsAsync(Build build)

@@ -17,6 +17,8 @@ using System.Text;
 
 namespace Azure.Sdk.Tools.PipelineWitness
 {
+    using Azure.Sdk.Tools.PipelineWitness.Services;
+
     using Microsoft.TeamFoundation.Build.WebApi;
     using Microsoft.TeamFoundation.Core.WebApi;
 
@@ -87,6 +89,8 @@ namespace Azure.Sdk.Tools.PipelineWitness
             builder.Services.AddLogging();
             builder.Services.AddMemoryCache();
             builder.Services.AddSingleton<RunProcessor>();
+            builder.Services.AddSingleton<BlobUploadProcessor>();
+            builder.Services.AddSingleton<BuildLogProvider>();
             builder.Services.AddSingleton<IFailureAnalyzer, FailureAnalyzer>();
             builder.Services.AddSingleton<IFailureClassifier, AzuriteInstallFailureClassifier>();
             builder.Services.AddSingleton<IFailureClassifier, CancelledTaskClassifier>();

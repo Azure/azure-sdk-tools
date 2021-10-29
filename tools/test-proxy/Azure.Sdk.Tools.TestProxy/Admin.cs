@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -101,25 +102,24 @@ namespace Azure.Sdk.Tools.TestProxy
 
         public object GetSanitizer(string name, JsonDocument body)
         {
-            return GenerateInstance("Azure.Sdk.Tools.TestProxy.Sanitizers.", name, body);
+            return GenerateInstance("Azure.Sdk.Tools.TestProxy.Sanitizers.", name, new string[] { "value" }, documentBody: body);
         }
 
         public object GetTransform(string name, JsonDocument body)
         {
-            return GenerateInstance("Azure.Sdk.Tools.TestProxy.Transforms.", name, body);
+            return GenerateInstance("Azure.Sdk.Tools.TestProxy.Transforms.", name, new string[]{}, documentBody: body);
         }
 
         public object GetMatcher(string name, JsonDocument body)
         {
-            return GenerateInstance("Azure.Sdk.Tools.TestProxy.Matchers.", name, body);
+            return GenerateInstance("Azure.Sdk.Tools.TestProxy.Matchers.", name, new string[]{}, documentBody:body);
         }
 
-        public object GenerateInstance(string typePrefix, string name, JsonDocument body = null)
+        public object GenerateInstance(string typePrefix, string name, string[] acceptableEmptyArgs, JsonDocument documentBody = null)
         {
             try
             {
                 Type t = Type.GetType(typePrefix + name);
-
 
                 var arg_list = new List<Object> { };
 
@@ -130,9 +130,18 @@ namespace Azure.Sdk.Tools.TestProxy
                 // walk across our constructor params. check inside the body for a resulting value for each of them
                 foreach (var param in paramsSet)
                 {
-                    if (body != null && body.RootElement.TryGetProperty(param.Name, out var jsonElement))
+                    if (documentBody != null && documentBody.RootElement.TryGetProperty(param.Name, out var jsonElement))
                     {
                         var valueResult = jsonElement.GetString();
+
+                        if(String.IsNullOrEmpty(valueResult))
+                        {
+                            if (!acceptableEmptyArgs.Contains(param.Name))
+                            {
+                                throw new BadHttpRequestException($"Parameter {param.Name} was passed with no value. Please check the request body and try again.");
+                            }
+                        }
+                        
                         arg_list.Add((object)valueResult);
                     }
                     else
@@ -144,7 +153,7 @@ namespace Azure.Sdk.Tools.TestProxy
                         else
                         {
                             // TODO: make this a specific argument not found exception
-                            throw new Exception(String.Format("Required parameter key {0} was not found in the request body.", param));
+                            throw new BadHttpRequestException($"Required parameter key {param} was not found in the request body.");
                         }
                     }
                 }

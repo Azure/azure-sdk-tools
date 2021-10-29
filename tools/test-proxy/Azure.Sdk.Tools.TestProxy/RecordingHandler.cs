@@ -382,9 +382,6 @@ namespace Azure.Sdk.Tools.TestProxy
         #endregion
 
         #region common functions
-
-
-
         public void AddSanitizerToRecording(string recordingId, RecordedTestSanitizer sanitizer)
         {
             if (PlaybackSessions.TryGetValue(recordingId, out var playbackSession))

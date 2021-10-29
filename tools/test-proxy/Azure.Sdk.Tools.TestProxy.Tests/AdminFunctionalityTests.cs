@@ -115,70 +115,47 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [Fact]
         public async void TestAddSanitizerWrongEmptyValue()
         {
-            //RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
-            //var httpContext = new DefaultHttpContext();
-            //httpContext.Request.Headers["x-abstraction-identifier"] = "HeaderRegexSanitizer";
-            //httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{ \"key\": \"Location\", \"value\": \"https://fakeazsdktestaccount.table.core.windows.net/Tables\" }");
-            //httpContext.Request.ContentLength = 92;
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            httpContext.Request.Headers["x-abstraction-identifier"] = "HeaderRegexSanitizer";
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{ \"key\": \"\", \"value\": \"https://fakeazsdktestaccount.table.core.windows.net/Tables\" }");
+            httpContext.Request.ContentLength = 92;
 
-            //var controller = new Admin(testRecordingHandler)
-            //{
-            //    ControllerContext = new ControllerContext()
-            //    {
-            //        HttpContext = httpContext
-            //    }
-            //};
-            //testRecordingHandler.Sanitizers.Clear();
-            //await controller.AddSanitizer();
-
-            //var result = testRecordingHandler.Sanitizers.First();
-            //Assert.True(result is HeaderRegexSanitizer);
+            var controller = new Admin(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+            testRecordingHandler.Sanitizers.Clear();
+            
+            await Assert.ThrowsAsync<BadHttpRequestException>(
+               async () => await controller.AddSanitizer()
+            );
         }
 
         [Fact]
         public async void TestAddSanitizerAcceptableEmptyValue()
         {
-            //RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
-            //var httpContext = new DefaultHttpContext();
-            //httpContext.Request.Headers["x-abstraction-identifier"] = "HeaderRegexSanitizer";
-            //httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{ \"key\": \"Location\", \"value\": \"https://fakeazsdktestaccount.table.core.windows.net/Tables\" }");
-            //httpContext.Request.ContentLength = 92;
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            httpContext.Request.Headers["x-abstraction-identifier"] = "HeaderRegexSanitizer";
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{ \"key\": \"Location\", \"value\": \"\" }");
+            httpContext.Request.ContentLength = 92;
 
-            //var controller = new Admin(testRecordingHandler)
-            //{
-            //    ControllerContext = new ControllerContext()
-            //    {
-            //        HttpContext = httpContext
-            //    }
-            //};
-            //testRecordingHandler.Sanitizers.Clear();
-            //await controller.AddSanitizer();
+            var controller = new Admin(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+            testRecordingHandler.Sanitizers.Clear();
+            await controller.AddSanitizer();
 
-            //var result = testRecordingHandler.Sanitizers.First();
-            //Assert.True(result is HeaderRegexSanitizer);
-        }
-
-        [Fact]
-        public async void TestAddSanitizerUnsetResolvesNull()
-        {
-            //RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
-            //var httpContext = new DefaultHttpContext();
-            //httpContext.Request.Headers["x-abstraction-identifier"] = "HeaderRegexSanitizer";
-            //httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{ \"key\": \"Location\", \"value\": \"https://fakeazsdktestaccount.table.core.windows.net/Tables\" }");
-            //httpContext.Request.ContentLength = 92;
-
-            //var controller = new Admin(testRecordingHandler)
-            //{
-            //    ControllerContext = new ControllerContext()
-            //    {
-            //        HttpContext = httpContext
-            //    }
-            //};
-            //testRecordingHandler.Sanitizers.Clear();
-            //await controller.AddSanitizer();
-
-            //var result = testRecordingHandler.Sanitizers.First();
-            //Assert.True(result is HeaderRegexSanitizer);
+            var result = testRecordingHandler.Sanitizers.First();
+            Assert.True(result is HeaderRegexSanitizer);
         }
 
         [Fact]

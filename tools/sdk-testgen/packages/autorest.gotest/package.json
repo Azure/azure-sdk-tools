@@ -8,15 +8,14 @@
         "debug": "node --max_old_space_size=4096 --inspect-brk ./dist/src/index.js",
         "lint:fix": "eslint . --fix --ext .ts --ignore-pattern *.d.ts --max-warnings=0",
         "lint": "eslint . --ext .ts --ignore-pattern *.d.ts --max-warnings=0",
-        "build": "tsc -p .",
+        "build": "tsc -p . && cpy template ../dist/src --cwd=src/ --parents",
         "watch": "tsc -p . --watch",
         "test": "npm run build && cross-env NODE_ENV=test jest --ci --reporters=default --reporters=jest-junit",
         "unittest": "npm run build && cross-env NODE_ENV=test jest --ci --reporters=default --reporters=jest-junit --config ./jest.unittest.config.js",
         "unittest-update": "npm run build && cross-env NODE_ENV=test jest --ci --reporters=default --reporters=jest-junit --updateSnapshot --config ./jest.unittest.config.js",
         "clean": "ver > nul 2>&1 nul && npm run --silent clean-cmd || npm run --silent clean-bash",
         "clean-cmd": "if exist dist rmdir /s /q dist && exit 0 || exit 0 ",
-        "clean-bash": "rm nul && rm -rf dist && exit 0 || exit 0",
-        "postbuild": "cpy template ../dist/src --cwd=src/ --parents"
+        "clean-bash": "rm nul && rm -rf dist && exit 0 || exit 0"
     },
     "repository": {
         "type": "git",

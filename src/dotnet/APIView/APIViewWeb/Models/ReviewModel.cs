@@ -37,7 +37,7 @@ namespace APIViewWeb
         public bool RunAnalysis
         {
 #pragma warning disable 618
-            get => _runAnalysis || Revisions.SelectMany(r=>r.Files).Any(f => f.RunAnalysis);
+            get => _runAnalysis || Revisions.SelectMany(r => r.Files).Any(f => f.RunAnalysis);
 #pragma warning restore 618
             set => _runAnalysis = value;
         }
@@ -78,6 +78,22 @@ namespace APIViewWeb
 
         [JsonIgnore]
         public string Language => Revisions.LastOrDefault()?.Files.LastOrDefault()?.Language;
+
+        [JsonIgnore]
+        public string PackageName {
+            get
+            {
+                var packageName = Revisions.LastOrDefault()?.Files.LastOrDefault()?.PackageName;
+                if (String.IsNullOrWhiteSpace(packageName))
+                {
+                    return "Other";
+                }
+                else 
+                {
+                    return packageName;
+                }
+            }
+        }
 
         // Master version of review for each package will be auto created
         public bool IsAutomatic { get; set; }

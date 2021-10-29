@@ -29,21 +29,54 @@
 $(() => {
     const languageSelect = $("#reviews-table-language-filter");
     const searchBox = $("#reviews-table-search-box");
+    var collapsedGroups = {};
 
     var reviewsTable = (<any>$('#reviews-table')).DataTable({
+      "order": [
+        [6, 'asc']
+      ],
       "rowGroup": {
-        dataSrc: 0
+        dataSrc: 6,
+        startRender: function(rows, group) {
+          var collapsed = !!collapsedGroups[group];
+          var arrowClass = "fa-chevron-up";
+          if (!collapsed) {
+            arrowClass = "fa-chevron-down";
+          }
+
+          rows.nodes().each(function(r) {
+            r.style.display = 'none';
+            if (collapsed) {
+              r.style.display = '';
+            }
+          });
+
+          return $('<tr/>')
+            .append('<td colspan="6" class="clickable"><i class="fas ' + arrowClass + '"></i>&nbsp;' + group + ' (' + rows.count() + ')</td>')
+            .attr('data-name', group)
+            .toggleClass('collapsed', collapsed);
+        }
       },
       "dom": 't<"pl-2 pr-2"ipr>',
       "columnDefs" : [
-        { orderable: false, targets: 5 }
+        { orderable: false, targets: 5 },
+        { visible: false, targets: 6 }
       ],
-      "pageLength" : 25,
+      "pageLength" : 100,
       "search.smart" : true,
       "drawCallback": function (settings){
         // Enable bootstraps tooltip
         (<any>$('[data-toggle="tooltip"]')).tooltip();
       }
+    });
+
+    $('#reviews-table tbody').on('click', 'tr.dtrg-start', function() {
+      var name = $(this).data('name');
+      var arrowIcon = $(this).find("td > i");
+      arrowIcon.toggleClass('fa-chevron-down');
+      arrowIcon.toggleClass('fa-chevron-up');
+      collapsedGroups[name] = !collapsedGroups[name];
+      reviewsTable.draw(false);
     });
 
     searchBox.on("input", function (e) {

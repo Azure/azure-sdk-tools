@@ -38,6 +38,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             "x-ms-date",
             "x-ms-client-request-id",
             "User-Agent",
+            "x-ms-useragent",
             "Request-Id",
             "traceparent"
         };
@@ -49,6 +50,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             "x-ms-date",
             "x-ms-client-request-id",
             "User-Agent",
+            "x-ms-useragent",
             "Request-Id",
             "If-Match",
             "If-None-Match",

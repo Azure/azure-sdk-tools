@@ -1,0 +1,1141 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`GoTestGenerator from RP agrifood Generate MockTest and SDK example 1`] = `
+Object {
+  "example_extensions_test.go": "//go:build go1.16
+// +build go1.16
+
+
+
+package armagfood_test
+
+import (
+	\\"context\\"
+	\\"log\\"
+
+	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore\\"
+	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm\\"
+	\\"github.com/Azure/azure-sdk-for-go/sdk/azidentity\\"
+	\\"github.com/Azure/azure-sdk-for-go/sdk/agfood/armagfood\\"
+)
+
+// x-ms-original-file: 
+func ExampleExtensionsClient_Create() {
+	cred, err := azidentity.NewDefaultAzureCredential(nil)
+	if err != nil {
+		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
+	}
+	con := arm.NewDefaultConnection(cred, nil)
+	ctx := context.Background()
+	client := armagfood.NewExtensionsClient(con,
+\\"<subscription-id>\\")
+	res, err := client.Create(ctx,
+\\"<extension-id>\\",
+\\"<farm-beats-resource-name>\\",
+\\"<resource-group-name>\\",
+nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf(\\"Extension.ID: %s\\\\n\\", *res.ID)
+}
+
+// x-ms-original-file: 
+func ExampleExtensionsClient_Get() {
+	cred, err := azidentity.NewDefaultAzureCredential(nil)
+	if err != nil {
+		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
+	}
+	con := arm.NewDefaultConnection(cred, nil)
+	ctx := context.Background()
+	client := armagfood.NewExtensionsClient(con,
+\\"<subscription-id>\\")
+	res, err := client.Get(ctx,
+\\"<extension-id>\\",
+\\"<farm-beats-resource-name>\\",
+\\"<resource-group-name>\\",
+nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf(\\"Extension.ID: %s\\\\n\\", *res.ID)
+}
+
+// x-ms-original-file: 
+func ExampleExtensionsClient_Update() {
+	cred, err := azidentity.NewDefaultAzureCredential(nil)
+	if err != nil {
+		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
+	}
+	con := arm.NewDefaultConnection(cred, nil)
+	ctx := context.Background()
+	client := armagfood.NewExtensionsClient(con,
+\\"<subscription-id>\\")
+	res, err := client.Update(ctx,
+\\"<extension-id>\\",
+\\"<farm-beats-resource-name>\\",
+\\"<resource-group-name>\\",
+nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf(\\"Extension.ID: %s\\\\n\\", *res.ID)
+}
+
+// x-ms-original-file: 
+func ExampleExtensionsClient_Delete() {
+	cred, err := azidentity.NewDefaultAzureCredential(nil)
+	if err != nil {
+		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
+	}
+	con := arm.NewDefaultConnection(cred, nil)
+	ctx := context.Background()
+	client := armagfood.NewExtensionsClient(con,
+\\"<subscription-id>\\")
+	_, err = client.Delete(ctx,
+\\"<extension-id>\\",
+\\"<farm-beats-resource-name>\\",
+\\"<resource-group-name>\\",
+nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+// x-ms-original-file: 
+func ExampleExtensionsClient_ListByFarmBeats() {
+	cred, err := azidentity.NewDefaultAzureCredential(nil)
+	if err != nil {
+		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
+	}
+	con := arm.NewDefaultConnection(cred, nil)
+	ctx := context.Background()
+	client := armagfood.NewExtensionsClient(con,
+\\"<subscription-id>\\")
+	pager := client.ListByFarmBeats(\\"<resource-group-name>\\",
+\\"<farm-beats-resource-name>\\",
+nil)
+	for pager.NextPage(ctx) {
+		if err := pager.Err(); err != nil {
+			log.Fatalf(\\"failed to advance page: %v\\", err)
+		}
+		for _, v := range pager.PageResponse().Value {
+			log.Printf(\\"Extension.ID: %s\\\\n\\", *v.ID)
+		}
+	}
+}
+
+",
+  "example_farmbeatsextensions_test.go": "//go:build go1.16
+// +build go1.16
+
+
+
+package armagfood_test
+
+import (
+	\\"context\\"
+	\\"log\\"
+
+	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore\\"
+	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm\\"
+	\\"github.com/Azure/azure-sdk-for-go/sdk/azidentity\\"
+	\\"github.com/Azure/azure-sdk-for-go/sdk/agfood/armagfood\\"
+)
+
+// x-ms-original-file: 
+func ExampleFarmBeatsExtensionsClient_List() {
+	cred, err := azidentity.NewDefaultAzureCredential(nil)
+	if err != nil {
+		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
+	}
+	con := arm.NewDefaultConnection(cred, nil)
+	ctx := context.Background()
+	client := armagfood.NewFarmBeatsExtensionsClient(con)
+	pager := client.List(nil)
+	for pager.NextPage(ctx) {
+		if err := pager.Err(); err != nil {
+			log.Fatalf(\\"failed to advance page: %v\\", err)
+		}
+		for _, v := range pager.PageResponse().Value {
+			log.Printf(\\"FarmBeatsExtension.ID: %s\\\\n\\", *v.ID)
+		}
+	}
+}
+
+// x-ms-original-file: 
+func ExampleFarmBeatsExtensionsClient_Get() {
+	cred, err := azidentity.NewDefaultAzureCredential(nil)
+	if err != nil {
+		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
+	}
+	con := arm.NewDefaultConnection(cred, nil)
+	ctx := context.Background()
+	client := armagfood.NewFarmBeatsExtensionsClient(con)
+	res, err := client.Get(ctx,
+\\"<farm-beats-extension-id>\\",
+nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf(\\"FarmBeatsExtension.ID: %s\\\\n\\", *res.ID)
+}
+
+",
+  "example_farmbeatsmodels_test.go": "//go:build go1.16
+// +build go1.16
+
+
+
+package armagfood_test
+
+import (
+	\\"context\\"
+	\\"log\\"
+
+	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore\\"
+	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm\\"
+	\\"github.com/Azure/azure-sdk-for-go/sdk/azidentity\\"
+	\\"github.com/Azure/azure-sdk-for-go/sdk/agfood/armagfood\\"
+)
+import \\"github.com/Azure/azure-sdk-for-go/sdk/azcore/to\\"
+
+
+// x-ms-original-file: 
+func ExampleFarmBeatsModelsClient_Get() {
+	cred, err := azidentity.NewDefaultAzureCredential(nil)
+	if err != nil {
+		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
+	}
+	con := arm.NewDefaultConnection(cred, nil)
+	ctx := context.Background()
+	client := armagfood.NewFarmBeatsModelsClient(con,
+\\"<subscription-id>\\")
+	res, err := client.Get(ctx,
+\\"<resource-group-name>\\",
+\\"<farm-beats-resource-name>\\",
+nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf(\\"FarmBeats.ID: %s\\\\n\\", *res.ID)
+}
+
+// x-ms-original-file: 
+func ExampleFarmBeatsModelsClient_CreateOrUpdate() {
+	cred, err := azidentity.NewDefaultAzureCredential(nil)
+	if err != nil {
+		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
+	}
+	con := arm.NewDefaultConnection(cred, nil)
+	ctx := context.Background()
+	client := armagfood.NewFarmBeatsModelsClient(con,
+\\"<subscription-id>\\")
+	res, err := client.CreateOrUpdate(ctx,
+\\"<farm-beats-resource-name>\\",
+\\"<resource-group-name>\\",
+armagfood.FarmBeats{
+TrackedResource: armagfood.TrackedResource{
+Tags: map[string]*string{
+\\"key1\\": to.StringPtr(\\"value1\\"),
+\\"key2\\": to.StringPtr(\\"value2\\"),
+},
+Location: to.StringPtr(\\"<location>\\"),
+},
+},
+nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf(\\"FarmBeats.ID: %s\\\\n\\", *res.ID)
+}
+
+// x-ms-original-file: 
+func ExampleFarmBeatsModelsClient_Update() {
+	cred, err := azidentity.NewDefaultAzureCredential(nil)
+	if err != nil {
+		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
+	}
+	con := arm.NewDefaultConnection(cred, nil)
+	ctx := context.Background()
+	client := armagfood.NewFarmBeatsModelsClient(con,
+\\"<subscription-id>\\")
+	res, err := client.Update(ctx,
+\\"<farm-beats-resource-name>\\",
+\\"<resource-group-name>\\",
+armagfood.FarmBeatsUpdateRequestModel{
+Tags: map[string]*string{
+\\"key1\\": to.StringPtr(\\"value1\\"),
+\\"key2\\": to.StringPtr(\\"value2\\"),
+},
+},
+nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf(\\"FarmBeats.ID: %s\\\\n\\", *res.ID)
+}
+
+// x-ms-original-file: 
+func ExampleFarmBeatsModelsClient_Delete() {
+	cred, err := azidentity.NewDefaultAzureCredential(nil)
+	if err != nil {
+		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
+	}
+	con := arm.NewDefaultConnection(cred, nil)
+	ctx := context.Background()
+	client := armagfood.NewFarmBeatsModelsClient(con,
+\\"<subscription-id>\\")
+	_, err = client.Delete(ctx,
+\\"<resource-group-name>\\",
+\\"<farm-beats-resource-name>\\",
+nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+// x-ms-original-file: 
+func ExampleFarmBeatsModelsClient_ListBySubscription() {
+	cred, err := azidentity.NewDefaultAzureCredential(nil)
+	if err != nil {
+		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
+	}
+	con := arm.NewDefaultConnection(cred, nil)
+	ctx := context.Background()
+	client := armagfood.NewFarmBeatsModelsClient(con,
+\\"<subscription-id>\\")
+	pager := client.ListBySubscription(nil)
+	for pager.NextPage(ctx) {
+		if err := pager.Err(); err != nil {
+			log.Fatalf(\\"failed to advance page: %v\\", err)
+		}
+		for _, v := range pager.PageResponse().Value {
+			log.Printf(\\"FarmBeats.ID: %s\\\\n\\", *v.ID)
+		}
+	}
+}
+
+// x-ms-original-file: 
+func ExampleFarmBeatsModelsClient_ListByResourceGroup() {
+	cred, err := azidentity.NewDefaultAzureCredential(nil)
+	if err != nil {
+		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
+	}
+	con := arm.NewDefaultConnection(cred, nil)
+	ctx := context.Background()
+	client := armagfood.NewFarmBeatsModelsClient(con,
+\\"<subscription-id>\\")
+	pager := client.ListByResourceGroup(\\"<resource-group-name>\\",
+nil)
+	for pager.NextPage(ctx) {
+		if err := pager.Err(); err != nil {
+			log.Fatalf(\\"failed to advance page: %v\\", err)
+		}
+		for _, v := range pager.PageResponse().Value {
+			log.Printf(\\"FarmBeats.ID: %s\\\\n\\", *v.ID)
+		}
+	}
+}
+
+",
+  "example_locations_test.go": "//go:build go1.16
+// +build go1.16
+
+
+
+package armagfood_test
+
+import (
+	\\"context\\"
+	\\"log\\"
+
+	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore\\"
+	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm\\"
+	\\"github.com/Azure/azure-sdk-for-go/sdk/azidentity\\"
+	\\"github.com/Azure/azure-sdk-for-go/sdk/agfood/armagfood\\"
+)
+import \\"github.com/Azure/azure-sdk-for-go/sdk/azcore/to\\"
+
+
+// x-ms-original-file: 
+func ExampleLocationsClient_CheckNameAvailability() {
+	cred, err := azidentity.NewDefaultAzureCredential(nil)
+	if err != nil {
+		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
+	}
+	con := arm.NewDefaultConnection(cred, nil)
+	ctx := context.Background()
+	client := armagfood.NewLocationsClient(con,
+\\"<subscription-id>\\")
+	_, err = client.CheckNameAvailability(ctx,
+armagfood.CheckNameAvailabilityRequest{
+Name: to.StringPtr(\\"<name>\\"),
+Type: to.StringPtr(\\"<type>\\"),
+},
+nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+",
+  "example_operations_test.go": "//go:build go1.16
+// +build go1.16
+
+
+
+package armagfood_test
+
+import (
+	\\"context\\"
+	\\"log\\"
+
+	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore\\"
+	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm\\"
+	\\"github.com/Azure/azure-sdk-for-go/sdk/azidentity\\"
+	\\"github.com/Azure/azure-sdk-for-go/sdk/agfood/armagfood\\"
+)
+
+// x-ms-original-file: 
+func ExampleOperationsClient_List() {
+	cred, err := azidentity.NewDefaultAzureCredential(nil)
+	if err != nil {
+		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
+	}
+	con := arm.NewDefaultConnection(cred, nil)
+	ctx := context.Background()
+	client := armagfood.NewOperationsClient(con)
+	pager := client.List(nil)
+	for pager.NextPage(ctx) {
+		if err := pager.Err(); err != nil {
+			log.Fatalf(\\"failed to advance page: %v\\", err)
+		}
+	}
+}
+
+",
+  "mock_test.go": "//go:build go1.16
+// +build go1.16
+
+
+
+package armagfood
+
+import (
+	\\"context\\"
+	\\"fmt\\"
+	\\"net/http\\"
+	\\"os\\"
+	\\"runtime/debug\\"
+	\\"testing\\"
+
+	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore\\"
+	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm\\"
+	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy\\"
+	\\"github.com/Azure/azure-sdk-for-go/sdk/azidentity\\"
+	\\"golang.org/x/net/http2\\"
+)
+import \\"github.com/Azure/azure-sdk-for-go/sdk/azcore/to\\"
+
+
+
+var (
+	ctx            context.Context
+	subscriptionId string
+	cred           azcore.TokenCredential
+	err            error
+	con            *arm.Connection
+	mockHost       string
+)
+
+
+func TestExtensions_Create(t *testing.T) {
+    // From example Extensions_Create
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
+		}
+	}()
+	client := NewExtensionsClient(con,
+\\"11111111-2222-3333-4444-555555555555\\")
+	res, err := client.Create(ctx,
+\\"provider.extension\\",
+\\"examples-farmbeatsResourceName\\",
+\\"examples-rg\\",
+&ExtensionsCreateOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.Extension.ID == nil {
+		t.Fatal(\\"Extension.ID should not be nil!\\")
+	}
+}
+
+func TestExtensions_Get(t *testing.T) {
+    // From example Extensions_Get
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
+		}
+	}()
+	client := NewExtensionsClient(con,
+\\"11111111-2222-3333-4444-555555555555\\")
+	res, err := client.Get(ctx,
+\\"provider.extension\\",
+\\"examples-farmbeatsResourceName\\",
+\\"examples-rg\\",
+&ExtensionsGetOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.Extension.ID == nil {
+		t.Fatal(\\"Extension.ID should not be nil!\\")
+	}
+}
+
+func TestExtensions_Update(t *testing.T) {
+    // From example Extensions_Update
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
+		}
+	}()
+	client := NewExtensionsClient(con,
+\\"11111111-2222-3333-4444-555555555555\\")
+	res, err := client.Update(ctx,
+\\"provider.extension\\",
+\\"examples-farmbeatsResourceName\\",
+\\"examples-rg\\",
+&ExtensionsUpdateOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.Extension.ID == nil {
+		t.Fatal(\\"Extension.ID should not be nil!\\")
+	}
+}
+
+func TestExtensions_Delete(t *testing.T) {
+    // From example Extensions_Delete
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
+		}
+	}()
+	client := NewExtensionsClient(con,
+\\"11111111-2222-3333-4444-555555555555\\")
+	_, err := client.Delete(ctx,
+\\"provider.extension\\",
+\\"examples-farmbeatsResourceName\\",
+\\"examples-rg\\",
+&ExtensionsDeleteOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestExtensions_ListByFarmBeats(t *testing.T) {
+    // From example Extensions_ListByFarmBeats
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
+		}
+	}()
+	client := NewExtensionsClient(con,
+\\"11111111-2222-3333-4444-555555555555\\")
+	pager := client.ListByFarmBeats(\\"examples-rg\\",
+\\"examples-farmbeatsResourceName\\",
+&ExtensionsListByFarmBeatsOptions{})
+	for pager.NextPage(ctx) {
+		if err := pager.Err(); err != nil {
+			t.Fatalf(\\"failed to advance page: %v\\", err)
+		}
+		for _, v := range pager.PageResponse().Value {
+			fmt.Printf(\\"Extension.ID: %s\\\\n\\", *v.ID)
+			if v.ID == nil {
+				t.Fatal(\\"Extension.ID should not be nil!\\")
+			}
+		}
+	}
+}
+
+func TestFarmBeatsExtensions_List(t *testing.T) {
+    // From example FarmBeatsExtensions_List
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
+		}
+	}()
+	client := NewFarmBeatsExtensionsClient(con)
+	pager := client.List(&FarmBeatsExtensionsListOptions{})
+	for pager.NextPage(ctx) {
+		if err := pager.Err(); err != nil {
+			t.Fatalf(\\"failed to advance page: %v\\", err)
+		}
+		for _, v := range pager.PageResponse().Value {
+			fmt.Printf(\\"FarmBeatsExtension.ID: %s\\\\n\\", *v.ID)
+			if v.ID == nil {
+				t.Fatal(\\"FarmBeatsExtension.ID should not be nil!\\")
+			}
+		}
+	}
+}
+
+func TestFarmBeatsExtensions_Get(t *testing.T) {
+    // From example FarmBeatsExtensions_Get
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
+		}
+	}()
+	client := NewFarmBeatsExtensionsClient(con)
+	res, err := client.Get(ctx,
+\\"DTN.ContentServices\\",
+&FarmBeatsExtensionsGetOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.FarmBeatsExtension.ID == nil {
+		t.Fatal(\\"FarmBeatsExtension.ID should not be nil!\\")
+	}
+}
+
+func TestFarmBeatsModels_Get(t *testing.T) {
+    // From example FarmBeatsModels_Get
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
+		}
+	}()
+	client := NewFarmBeatsModelsClient(con,
+\\"11111111-2222-3333-4444-555555555555\\")
+	res, err := client.Get(ctx,
+\\"examples-rg\\",
+\\"examples-farmBeatsResourceName\\",
+&FarmBeatsModelsGetOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.FarmBeats.ID == nil {
+		t.Fatal(\\"FarmBeats.ID should not be nil!\\")
+	}
+}
+
+func TestFarmBeatsModels_CreateOrUpdate(t *testing.T) {
+    // From example FarmBeatsModels_CreateOrUpdate
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
+		}
+	}()
+	client := NewFarmBeatsModelsClient(con,
+\\"11111111-2222-3333-4444-555555555555\\")
+	res, err := client.CreateOrUpdate(ctx,
+\\"examples-farmbeatsResourceName\\",
+\\"examples-rg\\",
+FarmBeats{
+TrackedResource: TrackedResource{
+Tags: map[string]*string{
+\\"key1\\": to.StringPtr(\\"value1\\"),
+\\"key2\\": to.StringPtr(\\"value2\\"),
+},
+Location: to.StringPtr(\\"eastus2\\"),
+},
+},
+&FarmBeatsModelsCreateOrUpdateOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.FarmBeats.ID == nil {
+		t.Fatal(\\"FarmBeats.ID should not be nil!\\")
+	}
+}
+
+func TestFarmBeatsModels_Update(t *testing.T) {
+    // From example FarmBeatsModels_Update
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
+		}
+	}()
+	client := NewFarmBeatsModelsClient(con,
+\\"11111111-2222-3333-4444-555555555555\\")
+	res, err := client.Update(ctx,
+\\"examples-farmBeatsResourceName\\",
+\\"examples-rg\\",
+FarmBeatsUpdateRequestModel{
+Tags: map[string]*string{
+\\"key1\\": to.StringPtr(\\"value1\\"),
+\\"key2\\": to.StringPtr(\\"value2\\"),
+},
+},
+&FarmBeatsModelsUpdateOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.FarmBeats.ID == nil {
+		t.Fatal(\\"FarmBeats.ID should not be nil!\\")
+	}
+}
+
+func TestFarmBeatsModels_Delete(t *testing.T) {
+    // From example FarmBeatsModels_Delete
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
+		}
+	}()
+	client := NewFarmBeatsModelsClient(con,
+\\"11111111-2222-3333-4444-555555555555\\")
+	_, err := client.Delete(ctx,
+\\"examples-rg\\",
+\\"examples-farmBeatsResourceName\\",
+&FarmBeatsModelsDeleteOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestFarmBeatsModels_ListBySubscription(t *testing.T) {
+    // From example FarmBeatsModels_ListBySubscription
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
+		}
+	}()
+	client := NewFarmBeatsModelsClient(con,
+\\"11111111-2222-3333-4444-555555555555\\")
+	pager := client.ListBySubscription(&FarmBeatsModelsListBySubscriptionOptions{})
+	for pager.NextPage(ctx) {
+		if err := pager.Err(); err != nil {
+			t.Fatalf(\\"failed to advance page: %v\\", err)
+		}
+		for _, v := range pager.PageResponse().Value {
+			fmt.Printf(\\"FarmBeats.ID: %s\\\\n\\", *v.ID)
+			if v.ID == nil {
+				t.Fatal(\\"FarmBeats.ID should not be nil!\\")
+			}
+		}
+	}
+}
+
+func TestFarmBeatsModels_ListByResourceGroup(t *testing.T) {
+    // From example FarmBeatsModels_ListByResourceGroup
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
+		}
+	}()
+	client := NewFarmBeatsModelsClient(con,
+\\"11111111-2222-3333-4444-555555555555\\")
+	pager := client.ListByResourceGroup(\\"examples-rg\\",
+&FarmBeatsModelsListByResourceGroupOptions{})
+	for pager.NextPage(ctx) {
+		if err := pager.Err(); err != nil {
+			t.Fatalf(\\"failed to advance page: %v\\", err)
+		}
+		for _, v := range pager.PageResponse().Value {
+			fmt.Printf(\\"FarmBeats.ID: %s\\\\n\\", *v.ID)
+			if v.ID == nil {
+				t.Fatal(\\"FarmBeats.ID should not be nil!\\")
+			}
+		}
+	}
+}
+
+func TestLocations_CheckNameAvailability(t *testing.T) {
+    // From example Locations_CheckNameAvailability_AlreadyExists
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
+		}
+	}()
+	client := NewLocationsClient(con,
+\\"11111111-2222-3333-4444-555555555555\\")
+	_, err := client.CheckNameAvailability(ctx,
+CheckNameAvailabilityRequest{
+Name: to.StringPtr(\\"existingaccountname\\"),
+Type: to.StringPtr(\\"Microsoft.AgFoodPlatform/farmBeats\\"),
+},
+&LocationsCheckNameAvailabilityOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+
+    // From example Locations_CheckNameAvailability_Available
+	_, err = client.CheckNameAvailability(ctx,
+CheckNameAvailabilityRequest{
+Name: to.StringPtr(\\"newaccountname\\"),
+Type: to.StringPtr(\\"Microsoft.AgFoodPlatform/farmBeats\\"),
+},
+&LocationsCheckNameAvailabilityOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestOperations_List(t *testing.T) {
+    // From example Operations_List
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
+		}
+	}()
+	client := NewOperationsClient(con)
+	pager := client.List(&OperationsListOptions{})
+	for pager.NextPage(ctx) {
+		if err := pager.Err(); err != nil {
+			t.Fatalf(\\"failed to advance page: %v\\", err)
+		}
+	}
+}
+
+
+// TestMain will exec each test
+func TestMain(m *testing.M) {
+	setUp()
+	retCode := m.Run() // exec test and this returns an exit code to pass to os
+	tearDown()
+	os.Exit(retCode)
+}
+
+func getEnv(key, fallback string) string {
+    if value, ok := os.LookupEnv(key); ok {
+        return value
+    }
+    return fallback
+}
+
+func setUp() {
+	ctx = context.Background()
+	subscriptionId = getEnv(\\"SUBSCRIPTION_ID\\", \\"00000000-0000-0000-0000-000000000000\\")
+	mockHost = getEnv(\\"AZURE_VIRTUAL_SERVER_HOST\\", \\"https://localhost:8443\\")
+
+	tr := &http.Transport{}
+	if err := http2.ConfigureTransport(tr); err != nil {
+		fmt.Printf(\\"Failed to configure http2 transport: %v\\", err)
+	}
+	tr.TLSClientConfig.InsecureSkipVerify = true
+	client := &http.Client{Transport: tr}
+	cred, err = azidentity.NewEnvironmentCredential(&azidentity.EnvironmentCredentialOptions{AuthorityHost: mockHost, HTTPClient: client})
+	if err != nil {
+		panic(err)
+	}
+
+	con = arm.NewConnection(mockHost, cred, &arm.ConnectionOptions{
+		Logging: policy.LogOptions{
+			IncludeBody: true,
+		},
+		HTTPClient: client,
+	})
+}
+
+func tearDown() {
+
+}
+",
+}
+`;
+
+exports[`GoTestGenerator from RP signalR Generate scenario test 1`] = `
+Object {
+  "scenario/signalR_test.go": "//go:build go1.16
+// +build go1.16
+
+
+
+package armsignalr_scenario
+
+import (
+	\\"context\\"
+	\\"encoding/json\\"
+	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore\\"
+	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm\\"
+	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore/to\\"
+	\\"github.com/Azure/azure-sdk-for-go/sdk/azidentity\\"
+	\\"github.com/Azure/azure-sdk-for-go/sdk/resources/armresources\\"
+	\\"github.com/Azure/azure-sdk-for-go/sdk/signalr/armsignalr\\"
+	\\"log\\"
+	\\"os\\"
+	\\"runtime/debug\\"
+	\\"testing\\"
+	\\"time\\"
+)
+
+
+
+var (
+	ctx            context.Context
+	cred           azcore.TokenCredential
+	con            *arm.Connection
+	err            error
+	resourceGroup	*armresources.ResourceGroup
+    resourceName = \\"aaa\\"
+    resourceGroupPrefix = \\"apiTest-\\"
+    subscriptionId  string
+    location  string
+    resourceGroupName  string
+)
+func scenarioMicrosoftSignalrserviceSignalrSignalrCreateorupdat(t *testing.T) {
+	// From step Generate_Unique_string
+	{
+	var deploymentExtend *armresources.DeploymentExtended
+	deploymentExtend, err = createDeployment(ctx, \\"Generate_Unique_string\\", getAnyJson([]byte(\`{\\"$schema\\":\\"https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#\\",\\"contentVersion\\":\\"1.0.0.0\\",\\"parameters\\":{\\"resourceNamePrefix\\":{\\"type\\":\\"string\\",\\"defaultValue\\":\\"signalr-\\"}},\\"variables\\":{\\"resourceName\\":\\"[concat(parameters('resourceNamePrefix'), uniqueString(resourceGroup().id))]\\"},\\"resources\\":[],\\"outputs\\":{\\"resourceName\\":{\\"type\\":\\"string\\",\\"value\\":\\"[variables('resourceName')]\\"}}}\`)), getAnyJson([]byte(\`{}\`)))
+	if err != nil {
+		t.Fatalf(\\"%v\\\\n %v\\", err, string(debug.Stack()))
+	}
+	resourceName = deploymentExtend.Properties.Outputs[\\"resourceName\\"].(map[string]interface{})[\\"value\\"].(string)
+	}
+
+    
+	// From step SignalR_checknameAvailability
+			signalRClient := armsignalr.NewSignalRClient(con,
+subscriptionId)
+	{
+			_, err = signalRClient.CheckNameAvailability(ctx,
+location,
+&armsignalr.SignalRCheckNameAvailabilityOptions{Parameters: &armsignalr.NameAvailabilityParameters{
+Type: to.StringPtr(\\"Microsoft.SignalRService/SignalR\\"),
+Name: to.StringPtr(\\"my-signalr-service\\"),
+},
+})
+		if err != nil {
+			t.Fatalf(\\"%v\\\\n %v\\", err, string(debug.Stack()))
+		}
+	}
+
+    
+	// From step SignalR_CreateOrUpdate
+	{
+			signalRCreateOrUpdatePollerResponse, err := signalRClient.BeginCreateOrUpdate(ctx,
+resourceGroupName,
+resourceName,
+&armsignalr.SignalRBeginCreateOrUpdateOptions{Parameters: &armsignalr.SignalRResource{
+TrackedResource: armsignalr.TrackedResource{
+Location: to.StringPtr(location),
+Tags: map[string]*string{
+\\"key1\\": to.StringPtr(\\"value1\\"),
+},
+},
+SKU: &armsignalr.ResourceSKU{
+Name: to.StringPtr(\\"Standard_S1\\"),
+Tier: armsignalr.SignalRSKUTierStandard.ToPtr(),
+Capacity: to.Int32Ptr(1),
+},
+Properties: &armsignalr.SignalRProperties{
+SignalRCreateOrUpdateProperties: armsignalr.SignalRCreateOrUpdateProperties{
+Features: []*armsignalr.SignalRFeature{
+{
+Flag: armsignalr.FeatureFlagsServiceMode.ToPtr(),
+Value: to.StringPtr(\\"Serverless\\"),
+Properties: map[string]*string{
+},
+},
+{
+Flag: armsignalr.FeatureFlagsEnableConnectivityLogs.ToPtr(),
+Value: to.StringPtr(\\"True\\"),
+Properties: map[string]*string{
+},
+},
+{
+Flag: armsignalr.FeatureFlagsEnableMessagingLogs.ToPtr(),
+Value: to.StringPtr(\\"False\\"),
+Properties: map[string]*string{
+},
+}},
+Cors: &armsignalr.SignalRCorsSettings{
+AllowedOrigins: []*string{
+to.StringPtr(\\"https://foo.com\\"),
+to.StringPtr(\\"https://bar.com\\")},
+},
+Upstream: &armsignalr.ServerlessUpstreamSettings{
+Templates: []*armsignalr.UpstreamTemplate{
+{
+HubPattern: to.StringPtr(\\"*\\"),
+EventPattern: to.StringPtr(\\"connect,disconnect\\"),
+CategoryPattern: to.StringPtr(\\"*\\"),
+URLTemplate: to.StringPtr(\\"https://example.com/chat/api/connect\\"),
+Auth: &armsignalr.UpstreamAuthSettings{
+Type: armsignalr.UpstreamAuthTypeManagedIdentity.ToPtr(),
+ManagedIdentity: &armsignalr.ManagedIdentitySettings{
+Resource: to.StringPtr(\\"api://example\\"),
+},
+},
+}},
+},
+NetworkACLs: &armsignalr.SignalRNetworkACLs{
+DefaultAction: armsignalr.ACLActionDeny.ToPtr(),
+PublicNetwork: &armsignalr.NetworkACL{
+Allow: []*armsignalr.SignalRRequestType{
+armsignalr.SignalRRequestTypeClientConnection.ToPtr()},
+Deny: nil,
+},
+PrivateEndpoints: []*armsignalr.PrivateEndpointACL{
+{
+NetworkACL: armsignalr.NetworkACL{
+Allow: []*armsignalr.SignalRRequestType{
+armsignalr.SignalRRequestTypeServerConnection.ToPtr()},
+Deny: nil,
+},
+Name: to.StringPtr(\\"mySignalRService.1fa229cd-bf3f-47f0-8c49-afb36723997e\\"),
+}},
+},
+},
+TLS: &armsignalr.SignalRTLSSettings{
+ClientCertEnabled: to.BoolPtr(false),
+},
+},
+Kind: armsignalr.ServiceKindSignalR.ToPtr(),
+Identity: &armsignalr.ManagedIdentity{
+Type: armsignalr.ManagedIdentityTypeSystemAssigned.ToPtr(),
+},
+},
+})
+		if err != nil {
+			t.Fatalf(\\"%v\\\\n %v\\", err, string(debug.Stack()))
+		}
+		response, err := signalRCreateOrUpdatePollerResponse.PollUntilDone(ctx, 10*time.Second)
+		if err != nil {
+			t.Fatalf(\\"%v\\\\n %v\\", err, string(debug.Stack()))
+		}
+		log.Printf(\\"SignalRResource.ID: %s\\\\n\\", *response.ID)
+	}
+
+    
+	// From step SignalR_ListKey
+	{
+			_, err = signalRClient.ListKeys(ctx,
+resourceGroupName,
+resourceName,
+nil)
+		if err != nil {
+			t.Fatalf(\\"%v\\\\n %v\\", err, string(debug.Stack()))
+		}
+	}
+
+    
+	// From step SignalR_Delete
+	{
+			signalRDeletePollerResponse, err := signalRClient.BeginDelete(ctx,
+resourceGroupName,
+resourceName,
+nil)
+		if err != nil {
+			t.Fatalf(\\"%v\\\\n %v\\", err, string(debug.Stack()))
+		}
+		_, err = signalRDeletePollerResponse.PollUntilDone(ctx, 10*time.Second)
+		if err != nil {
+			t.Fatalf(\\"%v\\\\n %v\\", err, string(debug.Stack()))
+		}
+	}
+}
+
+func prepare() {
+}
+
+func TestSignalr(t *testing.T) {
+	setUp()
+	scenarioMicrosoftSignalrserviceSignalrSignalrCreateorupdat(t)
+	tearDown()
+}
+
+func getEnv(key, fallback string) string {
+    if value, ok := os.LookupEnv(key); ok {
+        return value
+    }
+    return fallback
+}
+
+func createResourceGroup(ctx context.Context, connection *arm.Connection) (*armresources.ResourceGroup, error) {
+	rgClient := armresources.NewResourceGroupsClient(connection, subscriptionId)
+
+	param := armresources.ResourceGroup{
+		Location: to.StringPtr(location),
+	}
+
+	resp, err := rgClient.CreateOrUpdate(ctx, resourceGroupName, param, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.ResourceGroup, nil
+}
+
+func deleteResourceGroup(ctx context.Context, connection *arm.Connection) error {
+	rgClient := armresources.NewResourceGroupsClient(connection, subscriptionId)
+
+	poller, err := rgClient.BeginDelete(ctx, resourceGroupName, nil)
+	if err != nil {
+		return err
+	}
+	if _, err := poller.PollUntilDone(ctx, 10*time.Second); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func setUp() {
+	ctx = context.Background()
+    subscriptionId = getEnv(\\"SUBSCRIPTION_ID\\", \\"00000000-00000000-00000000-00000000\\")
+    location = getEnv(\\"LOCATION\\", \\"westus\\")
+    resourceGroupName = getEnv(\\"RESOURCE_GROUP_NAME\\", \\"scenarioTestTempGroup\\")
+
+	cred, err = azidentity.NewEnvironmentCredential(nil)
+	if err != nil {
+		panic(err)
+	}
+
+	con = arm.NewDefaultConnection(cred, &arm.ConnectionOptions{
+		Logging: azcore.LogOptions{
+			IncludeBody: true,
+		},
+	})
+	resourceGroup, err := createResourceGroup(ctx, con)
+	if err != nil {
+		panic(err)
+	}
+	log.Printf(\\"Resource Group %s created\\", *resourceGroup.ID)
+    prepare()
+}
+
+func tearDown() {
+	deleteResourceGroup(ctx, con)
+}
+
+func createDeployment(ctx context.Context, deploymentName string, template, params map[string]interface{}) (de *armresources.DeploymentExtended, err error) {
+	deployClient := armresources.NewDeploymentsClient(con, subscriptionId)
+	poller, err := deployClient.BeginCreateOrUpdate(
+		ctx,
+		resourceGroupName,
+		deploymentName,
+		armresources.Deployment{
+			Properties: &armresources.DeploymentProperties{
+				Template:   template,
+				Parameters: params,
+				Mode:       armresources.DeploymentModeIncremental.ToPtr(),
+			},
+		},
+		&armresources.DeploymentsBeginCreateOrUpdateOptions{},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := poller.PollUntilDone(ctx, 10*time.Second)
+	if err != nil {
+		return nil, err
+	}
+
+	return res.DeploymentExtended, nil
+}
+
+func getAnyJson(customJSON []byte) map[string]interface{} {
+	var anyJson map[string]interface{}
+	_ = json.Unmarshal(customJSON, &anyJson)
+	return anyJson
+}",
+}
+`;

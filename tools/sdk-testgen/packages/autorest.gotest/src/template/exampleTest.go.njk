@@ -1,0 +1,74 @@
+//go:build go1.16
+// +build go1.16
+
+{{copyright}}
+
+package {{packageName}}_test
+
+import (
+	"context"
+	"log"
+
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
+	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+	"{{packagePath}}"
+)
+{{imports}}
+
+{%- for exampleGroup in exampleGroups %}
+{%- for example in exampleGroup.examples %}
+{%- if loop.first %}
+// x-ms-original-file: {{example.originalFile}}
+func Example{{example.operationGroup.language.go.name}}Client_{{example.opName}}() {
+	cred, err := azidentity.NewDefaultAzureCredential(nil)
+	if err != nil {
+		log.Fatalf("failed to obtain a credential: %v", err)
+	}
+	con := arm.NewDefaultConnection(cred, nil)
+	ctx := context.Background()
+	client := {{packageName}}.New{{example.operationGroup.language.go.name}}Client({{example.clientParametersOutputForExample}})
+
+	{%- if example.returnInfo.length == 2 %}
+	{%- if example.isLRO %}
+	poller, err {% if loop.first %}:{% endif %}= client.{{example.opName}}({{example.methodParametersOutputForExample}})
+	{%- else %}
+	{% if example.checkResponse %}res{% else %}_{% endif %}, err {% if loop.first and example.checkResponse %}:{% endif %}= client.{{example.opName}}({{example.methodParametersOutputForExample}})
+	{%- endif %}
+	if err != nil {
+		log.Fatal(err)
+	}
+	{%- if example.isLRO %}
+	{% if example.checkResponse %}res{% else %}_{% endif %}, err {% if loop.first and example.checkResponse %}:{% endif %}= poller.PollUntilDone(ctx, 30*time.Second)
+	if err != nil {
+		log.Fatal(err)
+	}
+	{%- endif %}
+	{%- elif  (example.returnInfo.length == 1) and (example.isPageable) %}
+	pager {% if loop.first %}:{% endif %}= client.{{example.opName}}({{example.methodParametersOutputForExample}})
+	for pager.NextPage(ctx) {
+		if err := pager.Err(); err != nil {
+			log.Fatalf("failed to advance page: %v", err)
+		}
+		{%- if example.nonNilReturns.length > 0 %}
+		for _, v := range pager.PageResponse().Value {
+			{%- for variable in example.nonNilReturns %}
+			{%- set p = variable.split(".").slice(1).join(".") %}
+			log.Printf("{{variable}}: %s\n", *v.{{p}})
+			{%- endfor %}
+		}
+		{%- endif %}
+	}
+	{%- else %}
+	client.{{example.opName}}({{example.methodParametersOutputForExample}})
+	{%- endif %}
+	{%- if example.checkResponse and not example.isPageable%}
+	{%- for variable in example.nonNilReturns %}
+	{%- set p = variable.split(".").slice(1).join(".") %}
+	log.Printf("{{variable}}: %s\n", *res.{{p}})
+	{%- endfor %}
+	{%- endif %}
+}
+{% endif %}
+{%- endfor %}
+{%- endfor %}

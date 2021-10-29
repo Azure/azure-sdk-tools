@@ -1,0 +1,66 @@
+{
+    "name": "@autorest/testmodeler",
+    "version": "1.0.0",
+    "description": "Autorest extension for testmodeler",
+    "main": "dist/index.js",
+    "scripts": {
+        "start": "node dist/src/index.js",
+        "debug": "node --max_old_space_size=4096 --inspect-brk ./dist/src/index.js",
+        "lint:fix": "eslint . --fix --ext .ts --ignore-pattern *.d.ts --max-warnings=0",
+        "lint": "eslint . --ext .ts --ignore-pattern *.d.ts --max-warnings=0",
+        "build": "tsc -p .",
+        "watch": "tsc -p . --watch",
+        "test": "npm run build && cross-env NODE_ENV=test jest --ci --reporters=default --reporters=jest-junit",
+        "unittest": "npm run build && cross-env NODE_ENV=test jest --ci --reporters=default --reporters=jest-junit --config ./jest.unittest.config.js",
+        "unittest-update": "npm run build && cross-env NODE_ENV=test jest --ci --reporters=default --reporters=jest-junit --updateSnapshot --config ./jest.unittest.config.js",
+        "clean": "ver > nul 2>&1 nul && npm run --silent clean-cmd || npm run --silent clean-bash",
+        "clean-cmd": "if exist dist rmdir /s /q dist && exit 0 || exit 0 ",
+        "clean-bash": "rm nul && rm -rf dist && exit 0 || exit 0"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Azure/azure-sdk-tools.git"
+    },
+    "keywords": [
+        "autorest",
+        "extension"
+    ],
+    "author": "Microsoft Corporation",
+    "license": "MIT",
+    "devDependencies": {
+        "@types/jest": "^26.0.24",
+        "@types/node": "10.17.0",
+        "@typescript-eslint/eslint-plugin": "^4.22.0",
+        "@typescript-eslint/parser": "^4.22.0",
+        "cpy-cli": "^3.1.1",
+        "eslint": "^7.25.0",
+        "eslint-config-prettier": "^8.3.0",
+        "eslint-plugin-prettier": "^3.4.0",
+        "eslint-plugin-sort-imports-es6-autofix": "^0.6.0",
+        "jest": "^26.6.3",
+        "prettier": "^2.2.1",
+        "ts-jest": "^26.5.5",
+        "typescript": "^4.2.4"
+    },
+    "dependencies": {
+        "@autorest/codemodel": "~4.15.0",
+        "@autorest/extension-base": "^3.3.0",
+        "@azure-tools/codegen": "^2.6.0",
+        "@types/lodash": "~4.14.176",
+        "autorest": "^3.2.3",
+        "cross-env": "^7.0.3",
+        "jest-junit": "^12.2.0",
+        "js-yaml": "~4.0.0",
+        "jsonpath": "^1.1.1",
+        "lodash": "~4.17.21",
+        "node-yaml": "^3.2.0",
+        "oav": "~2.8.3",
+        "reflect-metadata": "~0.1.13"
+    },
+    "files": [
+        "dist/src",
+        "src",
+        "index.*",
+        "README.md"
+    ]
+}

@@ -1,0 +1,166 @@
+//go:build go1.16
+// +build go1.16
+
+{{copyright}}
+
+package {{packageName}}_scenario
+
+{{imports}}
+
+var (
+	ctx            context.Context
+	cred           azcore.TokenCredential
+	con            *arm.Connection
+	err            error
+{%- if scope.toLowerCase() == 'resourcegroup'%}
+	resourceGroup	*armresources.ResourceGroup
+{%- endif %}
+{%- for name, value in variables %}
+    {{name}} = {{jsFunc.quotedEscapeString(value)}}
+{%- endfor %}
+{%- for variable, _ in requiredVariablesDefault %}
+{%- if not variables.hasOwnProperty(variable) %}
+    {{variable}}  string
+{%- endif %}
+{%- endfor %}
+{%- for outputVariableName in outputVariableNames %}
+{%- if not variables.hasOwnProperty(outputVariableName) and not requiredVariablesDefault.hasOwnProperty(outputVariableName)%}
+    {{outputVariableName}} string
+{%- endif %}
+{%- endfor %}
+)
+
+{%- for testScenario in testScenarios %}
+func scenario{{jsFunc.descToTestname(testScenario.description)}}(t *testing.T) {
+	{%- for variable, value in testScenario.requiredVariablesDefault %}
+	{%- if not requiredVariablesDefault.hasOwnProperty(variable) %}
+    {{variable}} := getEnv("{{jsFunc.toSnakeCase(variable).toUpperCase()}}, "{{value}}")
+	{%- endif %}
+	{%- endfor %}
+	{%- for name, value in testScenario.variables %}
+    {{name}} := {{jsFunc.quotedEscapeString(value)}}
+	{%- endfor %}
+	
+	{%- set steps = testScenario.steps %}
+	{%- include "./scenarioContent.go.njk" %}
+}
+{% endfor %}
+func prepare() {
+	{%- set steps = prepareSteps %}
+	{%- include "./scenarioContent.go.njk" %}
+}
+
+func Test{{testCaseName}}(t *testing.T) {
+	setUp()
+	{%- for testScenario in testScenarios %}
+	scenario{{jsFunc.descToTestname(testScenario.description)}}(t)
+	{%- endfor %}
+	tearDown()
+}
+
+func getEnv(key, fallback string) string {
+    if value, ok := os.LookupEnv(key); ok {
+        return value
+    }
+    return fallback
+}
+{%- if scope.toLowerCase() == 'resourcegroup'%}
+
+func createResourceGroup(ctx context.Context, connection *arm.Connection) (*armresources.ResourceGroup, error) {
+	rgClient := armresources.NewResourceGroupsClient(connection, subscriptionId)
+
+	param := armresources.ResourceGroup{
+		Location: to.StringPtr(location),
+	}
+
+	resp, err := rgClient.CreateOrUpdate(ctx, resourceGroupName, param, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.ResourceGroup, nil
+}
+
+func deleteResourceGroup(ctx context.Context, connection *arm.Connection) error {
+	rgClient := armresources.NewResourceGroupsClient(connection, subscriptionId)
+
+	poller, err := rgClient.BeginDelete(ctx, resourceGroupName, nil)
+	if err != nil {
+		return err
+	}
+	if _, err := poller.PollUntilDone(ctx, 10*time.Second); err != nil {
+		return err
+	}
+
+	return nil
+}
+{%- endif %}
+
+func setUp() {
+	ctx = context.Background()
+
+	{%- for variable, value in requiredVariablesDefault %}
+    {{variable}} = getEnv("{{jsFunc.toSnakeCase(variable).toUpperCase()}}", "{{value}}")
+	{%- endfor %}
+
+	cred, err = azidentity.NewEnvironmentCredential(nil)
+	if err != nil {
+		panic(err)
+	}
+
+	con = arm.NewDefaultConnection(cred, &arm.ConnectionOptions{
+		Logging: azcore.LogOptions{
+			IncludeBody: true,
+		},
+	})
+{%- if scope.toLowerCase() == 'resourcegroup'%}
+	resourceGroup, err := createResourceGroup(ctx, con)
+	if err != nil {
+		panic(err)
+	}
+	log.Printf("Resource Group %s created", *resourceGroup.ID)
+{%- endif %}
+    prepare()
+}
+
+func tearDown() {
+{%- if scope.toLowerCase() == 'resourcegroup'%}
+	deleteResourceGroup(ctx, con)
+{%- endif %}
+}
+
+{%- if useArmTemplate %}
+
+func createDeployment(ctx context.Context, deploymentName string, template, params map[string]interface{}) (de *armresources.DeploymentExtended, err error) {
+	deployClient := armresources.NewDeploymentsClient(con, subscriptionId)
+	poller, err := deployClient.BeginCreateOrUpdate(
+		ctx,
+		resourceGroupName,
+		deploymentName,
+		armresources.Deployment{
+			Properties: &armresources.DeploymentProperties{
+				Template:   template,
+				Parameters: params,
+				Mode:       armresources.DeploymentModeIncremental.ToPtr(),
+			},
+		},
+		&armresources.DeploymentsBeginCreateOrUpdateOptions{},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := poller.PollUntilDone(ctx, 10*time.Second)
+	if err != nil {
+		return nil, err
+	}
+
+	return res.DeploymentExtended, nil
+}
+
+func getAnyJson(customJSON []byte) map[string]interface{} {
+	var anyJson map[string]interface{}
+	_ = json.Unmarshal(customJSON, &anyJson)
+	return anyJson
+}
+{%- endif %}

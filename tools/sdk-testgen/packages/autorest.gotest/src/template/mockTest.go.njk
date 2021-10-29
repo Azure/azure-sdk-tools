@@ -1,0 +1,144 @@
+//go:build go1.16
+// +build go1.16
+
+{{copyright}}
+
+package {{packageName}}
+
+import (
+	"context"
+	"fmt"
+	"net/http"
+	"os"
+	"runtime/debug"
+	"testing"
+
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
+	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+	"golang.org/x/net/http2"
+)
+{{imports}}
+
+var (
+	ctx            context.Context
+	subscriptionId string
+	cred           azcore.TokenCredential
+	err            error
+	con            *arm.Connection
+	mockHost       string
+)
+
+{% for exampleGroup in exampleGroups %}
+func Test{{exampleGroup.operationId}}(t *testing.T) {
+{%- for example in exampleGroup.examples %}
+    // From example {{example.name}}
+	{%- if config.testmodeler.mock['send-example-id'] %}
+	ctx = azcore.WithHTTPHeader(ctx, map[string][]string{
+        "example-id": {"{{example.name}}"},
+    })
+	{%- endif %}
+	{%- if loop.first %}
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
+		}
+	}()
+	client := New{{example.operationGroup.language.go.name}}Client({{example.clientParametersOutput}})
+	{%- endif %}
+	{%- if example.returnInfo.length == 2 %}
+	{%- if example.isLRO %}
+	poller, err {% if loop.first %}:{% endif %}= client.{{example.opName}}({{example.methodParametersOutput}})
+	{%- else %}
+	{% if example.checkResponse %}res{% else %}_{% endif %}, err {% if loop.first %}:{% endif %}= client.{{example.opName}}({{example.methodParametersOutput}})
+	{%- endif %}
+	if err != nil {
+		t.Fatal(err)
+	}
+	{%- if example.isLRO %}
+	{% if example.checkResponse %}res{% else %}_{% endif %}, err {% if loop.first and example.checkResponse %}:{% endif %}= poller.PollUntilDone(ctx, 30*time.Second)
+	if err != nil {
+		t.Fatal(err)
+	}
+	{%- endif %}
+	{%- elif  (example.returnInfo.length == 1) and (example.isPageable) %}
+	pager {% if loop.first %}:{% endif %}= client.{{example.opName}}({{example.methodParametersOutput}})
+	for pager.NextPage(ctx) {
+		if err := pager.Err(); err != nil {
+			t.Fatalf("failed to advance page: %v", err)
+		}
+		{%- if example.nonNilReturns.length > 0 %}
+		for _, v := range pager.PageResponse().Value {
+			{%- for variable in example.nonNilReturns %}
+			{%- set p = variable.split(".").slice(1).join(".") %}
+			fmt.Printf("{{variable}}: %s\n", *v.{{p}})
+			if v.{{p}} == nil {
+				t.Fatal("{{variable}} should not be nil!")
+			}
+			{%- endfor %}
+		}
+		{%- endif %}
+	}
+	{%- else %}
+	client.{{example.opName}}({{example.methodParametersOutput}})
+	{%- endif %}
+	{%- if example.checkResponse and not example.isPageable%}
+	{%- for variable in example.nonNilReturns %}
+	if res.{{variable}} == nil {
+		t.Fatal("{{variable}} should not be nil!")
+	}
+	{%- endfor %}
+	{%- endif %}
+{%- if not loop.last %}
+
+{% endif %}
+{%- endfor %}
+{%- if exampleGroup.examples|length <=0 %}
+	t.Skip("Warning: No test steps for this operation!")
+{%- endif %}
+}
+{% endfor %}
+
+// TestMain will exec each test
+func TestMain(m *testing.M) {
+	setUp()
+	retCode := m.Run() // exec test and this returns an exit code to pass to os
+	tearDown()
+	os.Exit(retCode)
+}
+
+func getEnv(key, fallback string) string {
+    if value, ok := os.LookupEnv(key); ok {
+        return value
+    }
+    return fallback
+}
+
+func setUp() {
+	ctx = context.Background()
+	subscriptionId = getEnv("SUBSCRIPTION_ID", "00000000-0000-0000-0000-000000000000")
+	mockHost = getEnv("AZURE_VIRTUAL_SERVER_HOST", "https://localhost:8443")
+
+	tr := &http.Transport{}
+	if err := http2.ConfigureTransport(tr); err != nil {
+		fmt.Printf("Failed to configure http2 transport: %v", err)
+	}
+	tr.TLSClientConfig.InsecureSkipVerify = true
+	client := &http.Client{Transport: tr}
+	cred, err = azidentity.NewEnvironmentCredential(&azidentity.EnvironmentCredentialOptions{AuthorityHost: mockHost, HTTPClient: client})
+	if err != nil {
+		panic(err)
+	}
+
+	con = arm.NewConnection(mockHost, cred, &arm.ConnectionOptions{
+		Logging: policy.LogOptions{
+			IncludeBody: true,
+		},
+		HTTPClient: client,
+	})
+}
+
+func tearDown() {
+
+}

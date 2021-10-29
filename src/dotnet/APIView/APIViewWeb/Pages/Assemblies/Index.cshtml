@@ -4,17 +4,15 @@
 @{
     ViewData["Title"] = "Reviews";
 }
-<nav>
-    <div class="container-xxl py-2 px-5 border-bottom">
-        <div class="row d-flex flex-row align-items-center">
-            <div class="col"></div>
-            <div class="col-7 d-flex flex-row align-items-center">
-                <div class="input-group mr-2">
-                    <label class="input-group-text reviews-table-filter-label"><i class="fas fa-search"></i></label>
-                    <input type="search" class="form-control" id="reviews-table-search-box" placeholder="Filter by review name" autofocus>
+<nav class="navbar-light shadow-sm bg-light sticky-top">
+    <div class="container-fluid py-2">
+        <div class="row mx-5 d-flex flex-row align-items-center">
+            <div class="col px-0 d-flex flex-row align-items-center">
+                <div class="input-group mr-2" style="min-width: 200px;">
+                    <input type="search" class="form-control" id="reviews-table-search-box" placeholder="Search by Review Name">
                 </div>
                 <div class="mb-0 mr-2">
-                    <select id="reviews-table-language-filter" class="form-select">
+                    <select id="reviews-table-language-filter" class="custom-select" style="width: auto;">
                         <option value="">Filter by Language</option>
                         <option value="">All</option>
                         <option value="^C$">C</option>
@@ -22,98 +20,55 @@
                         <option value="^C\+\+$">C++</option>
                         <option value="^Go$">Go</option>
                         <option value="^Java$">Java</option>
-                        <option value="^JavaScript$">JavaScript / TypeScript</option>
+                        <option value="^JavaScript$">JavaScript | TypeScript</option>
                         <option value="^Python$">Python</option>
                         <option value="^Protocol$">Protocol</option>
                         <option value="^Swift$">Swift</option>
                         <option value="^Xml$">Xml</option>
                     </select>
                 </div>
-                <div class="dropdown mr-2">
-                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        <i class="fas fa-sliders-h"></i>
-                        &nbsp;More Options
+            </div>
+            <div class="col px-0 d-flex flex-row-reverse">
+                <div class="dropdown">
+                    <button class="btn btn-light dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fas fa-sm fa-sliders-h"></i>
+                        &nbsp; Options
                     </button>
 
-                    <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
-                        <div class="dropdown-item">
-                            <div class="btn-group pr-1">
-                                <a class="toggle-buttons-left btn btn-sm btn-outline-secondary" active-if="!@Model.Closed" asp-all-route-data=@Model.GetRoutingData(closed: false)>Open</a>
-                                <a class="toggle-buttons-right btn btn-sm btn-outline-secondary" active-if="@Model.Closed" asp-all-route-data=@Model.GetRoutingData(closed: true)>Closed</a>
+                    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuLink">
+                        <form>
+                            <div class="dropdown-item">
+                                <div class="btn-group">
+                                    <a class="toggle-buttons-left btn btn-sm btn-light" active-if="!@Model.Closed" asp-all-route-data=@Model.GetRoutingData(closed: false)>Open</a>
+                                    <a class="toggle-buttons-right btn btn-sm btn-light" active-if="@Model.Closed" asp-all-route-data=@Model.GetRoutingData(closed: true)>Closed</a>
+                                </div>
                             </div>
-                        </div>
-                        <div class="dropdown-item">
-                            <div class="btn-group ">
-                                <a class="toggle-buttons-left btn btn-sm btn-outline-secondary" active-if="!@Model.Automatic" asp-all-route-data=@Model.GetRoutingData(automatic: false)>Manual</a>
-                                <a class="toggle-buttons-right btn btn-sm btn-outline-secondary" active-if="@Model.Automatic" asp-all-route-data=@Model.GetRoutingData(automatic: true)>Automatic</a>
+                            <div class="dropdown-item">
+                                <div class="btn-group">
+                                    <a class="toggle-buttons-right btn btn-sm btn-light" active-if="@Model.FilterType == ReviewType.Manual" asp-all-route-data=@Model.GetRoutingData(filterType: ReviewType.Manual)>Manual</a>
+                                    <a class="toggle-buttons-right btn btn-sm btn-light" active-if="@Model.FilterType == ReviewType.Automatic" asp-all-route-data=@Model.GetRoutingData(filterType: ReviewType.Automatic)>Automatic</a>
+                                    <a class="toggle-buttons-right btn btn-sm btn-light" active-if="@Model.FilterType == ReviewType.PullRequest" asp-all-route-data=@Model.GetRoutingData(filterType: ReviewType.PullRequest)>Pull Request Reviews</a>
+                                </div>
                             </div>
-                        </div>
+                            <div class="dropdown-divider"></div>
+                            <h6 class="dropdown-header">GROUP BY</h6>
+                            <div class="dropdown-item">
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="groupbyRadioOptions" id="groupbyPackageRadio" value="package" checked>
+                                    <label class="form-check-label" >Package</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="groupbyRadioOptions" id="groupbyNoneRadio" value="service">
+                                    <label class="form-check-label" >None</label>
+                                </div>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
-            <div class="col"></div>
         </div>
     </div>
 </nav>
-
-<div class="row d-flex flex-row pr-5 pl-5 pt-2 pb-2 mt-0 align-items-center" style="background-color: #E7E9EB;">
-        <div class="col">
-            <div class="float-left">
-                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#uploadModel"><i class="fas fa-plus"></i>&nbsp;&nbsp;Create Review</button>
-            </div>
-            <div class="float-right">
-                <div class="input-group mb-0">
-                    <label class="input-group-text reviews-table-filter-label"><i class="fas fa-filter m-1"></i></label>
-                    <select id="reviews-table-language-filter" class="form-select">
-                        <option value="">All</option>
-                        <option value="^C$">C</option>
-                        <option value="^C#$">C#</option>
-                        <option value="^C\+\+$">C++</option>
-                        <option value="^Go$">Go</option>
-                        <option value="^Java$">Java</option>
-                        <option value="^JavaScript$">JavaScript / TypeScript</option>
-                        <option value="^Python$">Python</option>
-                        <option value="^Protocol$">Protocol</option>
-                        <option value="^Swift$">Swift</option>
-                        <option value="^Xml$">Xml</option>
-                    </select>
-                </div>
-            </div>
-        </div>
-        <div class="col">
-            <div class="input-group">
-                <label class="input-group-text reviews-table-filter-label"><i class="fas fa-search"></i></label>
-                <input type="search" class="form-control" id="reviews-table-search-box" placeholder="Filter by review name" autofocus>
-            </div>
-        </div>
-        <div class="col">
-            <div class="float-right">
-                <div class="dropleft">
-                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        Options&nbsp;
-                        <i class="fas fa-sliders-h"></i>
-                    </button>
-
-                    <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
-                        <div class="dropdown-item">
-                            <div class="btn-group pr-1">
-                                <a class="toggle-buttons-left btn btn-sm btn-outline-secondary" active-if="!@Model.Closed" asp-all-route-data=@Model.GetRoutingData(closed: false)>Open</a>
-                                <a class="toggle-buttons-right btn btn-sm btn-outline-secondary" active-if="@Model.Closed" asp-all-route-data=@Model.GetRoutingData(closed: true)>Closed</a>
-                            </div>
-                        </div>
-                        <div class="dropdown-item">
-                            <div class="btn-group ">
-                                <a class="toggle-buttons-left btn btn-sm btn-outline-secondary" active-if="!@Model.Automatic" asp-all-route-data=@Model.GetRoutingData(automatic: false)>Manual</a>
-                                <a class="toggle-buttons-right btn btn-sm btn-outline-secondary" active-if="@Model.Automatic" asp-all-route-data=@Model.GetRoutingData(automatic: true)>Automatic</a>
-                                <a class="btn btn-secondary" active-if="@Model.FilterType == ReviewType.PullRequest" asp-all-route-data=@Model.GetRoutingData(filterType: ReviewType.PullRequest)>Pull Request Reviews</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-</div>
-
 
 <div class="modal fade" id="uploadModel" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-lg" role="document">
@@ -282,76 +237,85 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary"><i class="fas fa-cloud-upload-alt"></i> Upload</button>
+                    <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary" onclick="this.form.submit(); this.disabled = true;"><i class="fas fa-cloud-upload-alt"></i> Upload</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-<div class="mr-5 ml-5 mt-2 mb-2 pb-1 border rounded">
-    <table id="reviews-table" class="display nowrap">
-        <thead >
-            <tr>
-                <th scope="col">Name</th>
-                <th scope="col">Creator</th>
-                <th scope="col">Updated</th>
-                <th scope="col">Type</th>
-                <th scope="col">Language</th>
-                <th></th>
-                <th scope="col">PackageName</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var assembly in Model.Assemblies)
-            {
-                <tr>
-                    <td>
-                        <a class="review-name" asp-page="./Review" asp-route-id="@assembly.ReviewId">@assembly.DisplayName</a>
-                        @if (assembly.Revisions.LastOrDefault()?.IsApproved == true)
-                        {
-                            <span class="badge badge-pill badge-success ml-1 p-1"><i class="fas fa-check-circle"></i> APPROVED</span>
-                        }
-                    </td>
-                    <td>
-                        <a username="@assembly.Author">@assembly.Author</a>
-                    </td>
-                    <td>
-                        <span data-placement="left" data-toggle="tooltip" title="@assembly.LastUpdated" date="@assembly.LastUpdated.ToLocalTime()"></span>
-                    </td>
-                    <td>
-                        @if (assembly.IsAutomatic)
-                        {
-                            <span>Automatic</span>
-                        }
-                        else
-                        {
-                            <span>Manual</span>
-                        }
-                    </td>
-                    <td>
-                        <span>@assembly.Language</span>
-                    </td>
-                    <td>
-                        @if (assembly.Author == User.GetGitHubLogin())
-                        {
-                            <a asp-page="./Delete" asp-route-id="@assembly.ReviewId">
-                                <button type="button" class="btn pt-0 pb-0 pl-1 pr-1 btn-outline-danger"><i class="fas fa-times-circle"></i> Delete</button>
-                            </a>
-                        }
-                        else
-                        {
-                            <span data-placement="left" data-toggle="tooltip" title="Only review creator can delete.">
-                                <button type="button" class="btn pt-0 pb-0 pl-1 pr-1 btn-outline-secondary invisible" disabled="true"><i class="fas fa-times-circle"></i> Delete</button>
-                            </span>
-                        }
-                    </td>
-                    <td>
-                        <span>@assembly.PackageName</span>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+<div class="container-fluid">
+    <div class="bottom-right-floating">
+        <button type="button" class="btn btn-primary btn-circle btn-circle-xl" data-toggle="modal" data-target="#uploadModel"><small>CREATE</small></br><i class="fas fa-plus"></i></br><small>REVIEW</small></button>
+    </div>
+
+    <div class="mx-5 mt-3 row">
+        <div class="col">
+            <table id="reviews-table" class="table table-striped" style="width:100%">
+                <thead>
+                    <tr>
+                        <th scope="col" class="border-top-0">Name</th>
+                        <th scope="col" class="border-top-0">Creator</th>
+                        <th scope="col" class="border-top-0">Updated</th>
+                        <th scope="col" class="border-top-0">Type</th>
+                        <th scope="col" class="border-top-0">Language</th>
+                        <th class="border-top-0"></th>
+                        <th scope="col" class="border-top-0">PackageName</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var assembly in Model.Assemblies)
+                    {
+                        <tr>
+                            <td class="border-right align-middle">
+                                <a class="review-name ml-4" asp-page="./Review" asp-route-id="@assembly.ReviewId">@assembly.DisplayName</a>
+                                @if (assembly.Revisions.LastOrDefault()?.IsApproved == true)
+                                {
+                                    <span class="badge badge-pill badge-success ml-1 p-1"><i class="fas fa-check-circle"></i> APPROVED</span>
+                                }
+                            </td>
+                            <td class="border-right align-middle">
+                                <a username="@assembly.Author">@assembly.Author</a>
+                            </td>
+                            <td class="border-right align-middle">
+                                <span data-placement="left" data-toggle="tooltip" title="@assembly.LastUpdated" date="@assembly.LastUpdated.ToLocalTime()"></span>
+                            </td>
+                            <td class="border-right align-middle">
+                                @if (assembly.IsAutomatic)
+                                {
+                                    <span>Automatic</span>
+                                }
+                                else
+                                {
+                                    <span>Manual</span>
+                                }
+                            </td>
+                            <td class="border-right align-middle">
+                                <span>@assembly.Language</span>
+                            </td>
+                            <td>
+                                @if (assembly.Author == User.GetGitHubLogin())
+                                {
+                                    <a asp-page="./Delete" asp-route-id="@assembly.ReviewId">
+                                        <button type="button" class="btn pt-0 pb-0 pl-1 pr-1 btn-outline-danger"><i class="fas fa-times-circle"></i> Delete</button>
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span data-placement="left" data-toggle="tooltip" title="Only review creator can delete.">
+                                        <button type="button" class="btn pt-0 pb-0 pl-1 pr-1 btn-outline-secondary invisible" disabled="true"><i class="fas fa-times-circle"></i> Delete</button>
+                                    </span>
+                                }
+                            </td>
+                            <td>
+                                <span>@assembly.PackageName</span>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
+

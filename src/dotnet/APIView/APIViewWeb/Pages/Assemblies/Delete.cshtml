@@ -3,12 +3,15 @@
 @{
     ViewData["Title"] = "Delete";
 }
-
-<h3>Are you sure you want to delete @Model.AssemblyName?</h3>
-<br />
-<form method="post">
-    <input type="hidden" />
-    <input type="submit" value="Delete" class="btn btn-danger" /> |
-    <a asp-page="./Index">Back to List</a>
-</form>
+<div class="container-fluid">
+    <div class="mx-5 mt-2">
+        <h3>Are you sure you want to delete @Model.AssemblyName?</h3>
+        <br />
+        <form method="post">
+            <input type="hidden" />
+            <input type="submit" value="Delete" class="btn btn-danger" /> |
+            <a asp-page="./Index">Back to List</a>
+        </form>
+    </div>
+</div>
 

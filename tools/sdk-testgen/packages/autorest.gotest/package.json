@@ -46,7 +46,7 @@
         "@autorest/codemodel": "~4.15.0",
         "@autorest/extension-base": "^3.3.0",
         "@autorest/go": "4.0.0-preview.24",
-        "@autorest/testmodeler": "~0.1.0-preview",
+        "@autorest/testmodeler": "~1.0.0",
         "@azure-tools/codegen": "^2.6.0",
         "@azure-tools/linq": "~3.1.263",
         "@types/lodash": "~4.14.176",

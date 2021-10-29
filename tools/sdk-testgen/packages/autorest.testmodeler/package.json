@@ -1,6 +1,6 @@
 {
     "name": "@autorest/testmodeler",
-    "version": "0.1.0-preview",
+    "version": "1.0.0",
     "description": "Autorest extension for testmodeler",
     "main": "dist/index.js",
     "scripts": {

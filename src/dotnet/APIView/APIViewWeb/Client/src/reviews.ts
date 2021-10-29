@@ -1,66 +1,44 @@
-﻿//$(() => {
-//  const searchBox = $("#searchBox");
-//  const context = $(".review-name") as any;
-//
-//  // if already populated from navigating back, filter again
-//  if (searchBox.val()) {
-//    filter();
-//  }
-//  
-//  searchBox.on("input", function () {
-//    setTimeout(filter, 300);
-//  });
-//
-//  function filter() {
-//    // highlight matching text using mark.js framework and hide rows that don't match
-//    const searchText = (searchBox.val() as string).toUpperCase();
-//    context.closest("tr").show().unmark();
-//    if (searchText) {
-//      context.mark(searchText, {
-//        done: function () {
-//          context.not(":has(mark)").closest("tr").hide();
-//        }
-//      });
-//    }
-//  }
-//});
-
-// Add DataTables
-$(() => {
+﻿$(() => {
     const languageSelect = $("#reviews-table-language-filter");
     const searchBox = $("#reviews-table-search-box");
+    const groupbyPackage = $("#groupbyPackageRadio");
+    const disableRowgroup = $("#groupbyNoneRadio");
     var collapsedGroups = {};
 
+    // Enable data Tables
     var reviewsTable = (<any>$('#reviews-table')).DataTable({
+      "responsive": true,
       "order": [
         [6, 'asc']
       ],
       "rowGroup": {
+        enable: true,
         dataSrc: 6,
         startRender: function(rows, group) {
-          var collapsed = !!collapsedGroups[group];
+          var collapsed = !collapsedGroups[group];
           var arrowClass = "fa-chevron-up";
-          if (!collapsed) {
+          if (collapsed) {
             arrowClass = "fa-chevron-down";
           }
 
           rows.nodes().each(function(r) {
-            r.style.display = 'none';
+            r.style.display = '';
             if (collapsed) {
-              r.style.display = '';
+              r.style.display = 'none';
             }
           });
 
           return $('<tr/>')
-            .append('<td colspan="6" class="clickable"><i class="fas ' + arrowClass + '"></i>&nbsp;' + group + ' (' + rows.count() + ')</td>')
+            .append('<td colspan="6" class="clickable bg-light bg-gradient font-weight-normal"><i class="fas ' + arrowClass + '"></i>&nbsp;&nbsp;' + group + ' (' + rows.count() + ')</td>')
             .attr('data-name', group)
             .toggleClass('collapsed', collapsed);
         }
       },
-      "dom": 't<"pl-2 pr-2"ipr>',
+      "dom": '<"row"t><"row"<"col-3 px-0"i><"col px-0"p>>',
       "columnDefs" : [
-        { orderable: false, targets: 5 },
-        { visible: false, targets: 6 }
+        { orderable: false, targets: 5 }, 
+        { visible: false, targets: 6 },
+        { className: 'dt-body-center', targets: 5 }
       ],
       "pageLength" : 100,
       "search.smart" : true,
@@ -70,6 +48,7 @@ $(() => {
       }
     });
 
+    // Row Groups toggling
     $('#reviews-table tbody').on('click', 'tr.dtrg-start', function() {
       var name = $(this).data('name');
       var arrowIcon = $(this).find("td > i");
@@ -79,10 +58,24 @@ $(() => {
       reviewsTable.draw(false);
     });
 
+    // Group Rows by Package
+    groupbyPackage.on("click", function() {
+      collapsedGroups = {};
+      reviewsTable.rowGroup().enable().draw();
+    });
+
+    // Disable Row Grouping
+    disableRowgroup.on("click", function() {
+      reviewsTable.rowGroup().disable().draw();
+      $('#reviews-table tr').css("display", "");
+    });
+
+    // Search
     searchBox.on("input", function (e) {
       reviewsTable.search($(this).val() as string).draw();
     });
 
+    // Filter by Language
     languageSelect.on('change', function(e) {
       reviewsTable.columns(4).search($(this).val() as string, true, false, false).draw();
     });

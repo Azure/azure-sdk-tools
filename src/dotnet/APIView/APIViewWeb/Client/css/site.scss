@@ -596,3 +596,33 @@ mark {
     border-bottom-right-radius: 0rem;
     border-right: 0px;
 }
+
+#reviews-table {
+    border-radius: 0.5rem !important;
+    border: 1px solid #dee2e6;
+}
+
+.bottom-right-floating {
+    position:fixed;
+    z-index: 10;
+    bottom:100px;
+    right:100px;
+}
+
+.btn-circle {
+    width: 45px;
+    height: 45px;
+    line-height: 45px;
+    text-align: center;
+    padding: 0;
+    border-radius: 50%;
+}
+
+.btn-circle-xl {
+    width: 100px;
+    height: 100px;
+    line-height: 1.2rem;
+    font-weight: bold;
+    font-size: 1.0rem;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+}

@@ -22,4 +22,8 @@
     $(SHOW_DIFFONLY_HREF)[0].click();
   });
 
+  // enable tooltip and popover
+  (<any>$('[data-toggle="tooltip"]')).tooltip();
+  (<any>$('[data-toggle="popover"]')).popover();
+
 });

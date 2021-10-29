@@ -47,7 +47,7 @@ namespace Azure.Sdk.Tools.TestProxy
         }
 
         [HttpPost]
-        public async void AddTransform()
+        public async Task AddTransform()
         {
             var tName = RecordingHandler.GetHeader(Request, "x-abstraction-identifier");
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
@@ -56,7 +56,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (recordingId != null)
             {
-                _recordingHandler.AddPlaybackTransform(recordingId, t);
+                _recordingHandler.AddTransformToRecording(recordingId, t);
             }
             else
             {
@@ -65,7 +65,7 @@ namespace Azure.Sdk.Tools.TestProxy
         }
 
         [HttpPost]
-        public async void AddSanitizer()
+        public async Task AddSanitizer()
         {
             var sName = RecordingHandler.GetHeader(Request, "x-abstraction-identifier");
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
@@ -74,7 +74,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (recordingId != null)
             {
-                _recordingHandler.AddRecordSanitizer(recordingId, s);
+                _recordingHandler.AddSanitizerToRecording(recordingId, s);
             }
             else
             {
@@ -83,7 +83,7 @@ namespace Azure.Sdk.Tools.TestProxy
         }
 
         [HttpPost]
-        public async void SetMatcher()
+        public async Task SetMatcher()
         {
             var mName = RecordingHandler.GetHeader(Request, "x-abstraction-identifier");
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
@@ -92,7 +92,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (recordingId != null)
             {
-                _recordingHandler.SetPlaybackMatcher(recordingId, m);
+                _recordingHandler.SetMatcherForRecording(recordingId, m);
             }
             else
             {

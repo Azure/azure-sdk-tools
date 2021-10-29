@@ -292,7 +292,7 @@ export class Coordinator {
             //set name
             const path = getPath(getPureUrl(req.url))
             ret = replacePropertyValue('name', path[path.length - 1], ret, (v) => {
-                return typeof v === 'string'
+                return typeof v === 'string' && v.match(/^a+$/) !== null
             })
 
             res.set(code, ret)
